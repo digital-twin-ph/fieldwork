@@ -419,7 +419,13 @@ export interface ParamsByType {
   /** `keyField` is the table column holding the name of a part. `normalisation` is declared
    *  rather than assumed, because folding punctuation is what takes South London from 23 of 32
    *  matches to 32 of 32 and a reader is owed the chance to disagree with it. */
-  join_table_to_area:{label:string;keyField:string;normalisation:'exact'|'fuzzy'};
+  join_table_to_area:{label:string;keyField:string;normalisation:'exact'|'fuzzy';
+    /** A SECOND COLUMN TO CARRY, as the class each part belongs to rather than as a quantity.
+     *
+     *  Optional and unset by default: a join states a value, and a class is an extra claim the
+     *  practitioner makes on purpose. Must name a key column other than the one matched on --
+     *  matching and classifying on the same column would make every part its own class. */
+    categoryField?:string};
   /** `populationYear` is which published WorldPop year the download button offers; it chooses a
    *  link, never the data, which arrives only when a file is prepared. */
   raster_input:{provenance?:import('./input-provenance.js').InputProvenance;label:string;asset?:import('./raster.js').RasterAsset;populationYear?:string;
@@ -474,6 +480,13 @@ export interface ParamsByType {
      *  map, and until this existed they were drawn identically and the class lived only in the
      *  popup. */
     pinClassField?:Record<string,string>;
+    /** WHICH PROPERTY NAMES EACH LAYER'S MARKS ON THE FIGURE, keyed by source node the way
+     *  `pinClassField` and `layerSymbols` are. Absent means the layer is drawn unnamed.
+     *
+     *  Nominated rather than guessed, which is the rule this application keeps everywhere a
+     *  column could be read for meaning. And capped: `LABEL_CEILING` leaves a large layer
+     *  unnamed, because a figure that printed 250 names is a figure nobody can read. */
+    labelField?:Record<string,string>;
     /** Whether every point mark is drawn over a dark halo. On by default, because the reason it
      *  exists is a terrain basemap: a mark in the palette's own values over OpenTopoMap was hard
      *  to pick out. It is a checkbox rather than a rule because a map on a pale ground, or one

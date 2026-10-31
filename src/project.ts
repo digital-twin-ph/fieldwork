@@ -1,3 +1,4 @@
+import type {Boundary,BoundaryProvenance} from './types.js';
 import {isRecord} from './guards.js';
 import {readNotes} from './notes.js';
 import {readAuthors,readRepository} from './identity.js';
@@ -269,8 +270,31 @@ export function validateProject(raw:unknown):Project{
  *  none at all -- so `study_area` is in the input stage and is deliberately not here. The
  *  distinction is acquired against authored: a `point_input` records where it came from, and two
  *  workflows holding one are holding one thing twice; a drawn boundary is a decision made per
- *  question, which is why `study_area` alone carries `AreaRevision` and a node-scoped IRI. */
-export const SHAREABLE_INPUT_TYPES:readonly string[]=['point_input','table_input','network_input'];
+ *  question, which is why `study_area` alone carries `AreaRevision` and a node-scoped IRI.
+ *
+ *  `polygon_input` JOINED ON 2026-10-31, and by that same test rather than by exception. A read
+ *  layer is acquired in the plainest sense -- it carries `retrieval`, the box it was read within
+ *  and what the read dropped -- and the practitioner's eighth South London workflow needs the
+ *  32 sub-districts that the second one already read. Measured in that project: 114,662 bytes
+ *  for the sub-districts and 182,581 for the Thames, against a 5,226,496-byte store written
+ *  twice per save.
+ *
+ *  AND IT IS THE ONE TYPE WHERE SHARING COSTS NOTHING AT ALL. The three above only acquire a
+ *  digest by being shared FROM -- `point_input` and `table_input` have no digesting path of
+ *  their own, so their source stays inline and the project holds two copies, one of them
+ *  deduplicated. `polygon_input` writes a `dataRef` on both of its read paths already, so both
+ *  ends dehydrate and the project holds ONE copy. The comment at the sharing handler claims the
+ *  first behaviour for all of them; it is true of `network_input` and of this, and not of the
+ *  other two. That is a defect in those two widgets' acquisition, recorded here and not fixed
+ *  here.
+ *
+ *  `map_image_input` is the remaining candidate and is deliberately not added: it digests its
+ *  plate like this one, but what the palette offers is a NODE to add, and a plate is wired to a
+ *  map's `ground` port rather than standing on its own. South London shares one between two
+ *  workflows by digest without the palette, which is the evidence that the two mechanisms are
+ *  separable. */
+export const SHAREABLE_INPUT_TYPES:readonly string[]=
+  ['point_input','table_input','network_input','polygon_input'];
 
 export interface SiblingInput {workflowKey:string; workflowName:string; nodeId:string; type:string; label:string; records:number|null; dataRef?:string}
 
@@ -315,6 +339,78 @@ export function siblingInputs(currentKey:string,projects:readonly Project[],save
   return found;
 }
 
+/** The STUDY AREAS of the other workflows of this project, for reuse in the one being edited.
+ *
+ *  The practitioner, 2026-10-31: *"if the widget is used in a new workflow within a project, there
+ *  should be a dropdown ... of existing study areas in the project to import to this workflow."*
+ *
+ *  A SIBLING OF `siblingInputs`, NOT A CASE OF IT, and the separation is the point. `siblingInputs`
+ *  exists to move an acquired PAYLOAD between workflows without storing it twice, which is why its
+ *  entries carry a record count and a `dataRef` and why its door is the palette: what it offers is
+ *  a node to add. A study area is 116 bytes of geometry on the node itself -- no `data`, no
+ *  `dataRef`, nothing for `keepDataset` to deduplicate -- and the thing a practitioner wants is not
+ *  a second node but THIS one, filled. So it is collected separately and offered where the shape is
+ *  chosen, and `study_area` stays out of SHAREABLE_INPUT_TYPES: putting it there would lengthen the
+ *  palette group the request is trying to shorten.
+ *
+ *  READ FROM STORAGE AS IT SITS. `dehydrateWorkflow` drops only `params.data` behind a `dataRef`,
+ *  so a study area's geometry is inline in the saved workflow and needs no hydration to read.
+ *
+ *  Refusals are silent and per-node: a workflow that cannot be read, a node that is not a drawn
+ *  area, an area nobody has drawn yet, a selection mode this application does not name. Each is a
+ *  thing there is nothing to offer FROM, not an error to report at the far end of a dropdown. */
+export interface SiblingArea {
+  workflowKey:string; workflowName:string; nodeId:string; label:string;
+  selectionMode:'bbox'|'polygon'|'circle';
+  geometry:Boundary;
+  /** THE PUBLISHED OUTLINE IT WAS ACQUIRED FROM, carried WHOLE so the copy does not claim to
+   *  have been drawn here. Kept as the declared type rather than the three fields a dropdown
+   *  shows: `BoundaryProvenance` also carries the licence, the licence's source, the year
+   *  represented and the published hash, and an area reused without them is an area whose terms
+   *  of use stopped travelling with it at the workflow boundary. */
+  boundary?:BoundaryProvenance;
+  vertices:number;
+}
+
+export const areaVertices=(g:Boundary):number=>
+  (g.type==='MultiPolygon'?g.coordinates.flat():g.coordinates)
+    .reduce((n,ring)=>n+ring.length,0);
+
+export function siblingAreas(currentKey:string,projects:readonly Project[],
+  saved:Record<string,unknown>):SiblingArea[]{
+  const project=projectOfWorkflow(currentKey,projects);
+  if(!project)return [];
+  const found:SiblingArea[]=[];
+  for(const key of project.workflows){
+    if(key===currentKey)continue;
+    const workflow=saved[key];
+    if(!isRecord(workflow)||!Array.isArray(workflow.nodes))continue;
+    const workflowName=typeof workflow.name==='string'&&workflow.name?workflow.name:key;
+    for(const node of workflow.nodes){
+      if(!isRecord(node)||node.type!=='study_area')continue;
+      const params=isRecord(node.params)?node.params:{};
+      if(params.source!=='drawn')continue;
+      const mode=params.selectionMode;
+      if(mode!=='bbox'&&mode!=='polygon'&&mode!=='circle')continue;
+      const g=params.geometry;
+      if(!isRecord(g)||!Array.isArray(g.coordinates)||!g.coordinates.length)continue;
+      if(g.type!=='Polygon'&&g.type!=='MultiPolygon')continue;
+      const geometry=g as unknown as Boundary;
+      const from=params.boundary;
+      found.push({workflowKey:key,workflowName,nodeId:String(node.id??''),
+        label:typeof params.label==='string'&&params.label.trim()?params.label:'Study area',
+        selectionMode:mode,geometry,vertices:areaVertices(geometry),
+        // TAKEN AS IT SITS, on one structural check. Validating the whole of
+        // `BoundaryProvenance` here would mean a second copy of a contract that
+        // `validateAreaParams` already enforces on the way in and on the way out; what this
+        // guards against is a node whose `boundary` is absent or is not an object at all.
+        ...(isRecord(from)&&typeof from.boundaryID==='string'
+          ?{boundary:from as unknown as BoundaryProvenance}:{})});
+    }
+  }
+  return found;
+}
+
 /** The digest a shared payload is stored under.
  *
  *  SHA-256 over the payload as JSON. Not a security boundary and not a canonical serialisation:
@@ -345,6 +441,53 @@ export async function payloadDigest(payload:unknown):Promise<string>{
  *  project look like it had vanished. Found 2026-10-20 while testing the round trip the
  *  practitioner asked for. Called without `held`, nothing is stripped, which is the safe default
  *  for every caller that does not know what the store contains. */
+/** A REFERENCE DESCRIBES THE PAYLOAD IT WAS COMPUTED FROM, AND NOTHING ELSE.
+ *
+ *  Reproduced in the running application on 2026-10-31, on a point layer imported from a sibling
+ *  workflow: delete a record, press Save edits, and the dialog closes reporting success. What is
+ *  written is the node holding its INHERITED `dataRef` and the new data; `save()` skips its
+ *  repair write because that digest is already in the store, `dehydrateWorkflow` strips the new
+ *  data behind the old reference, and the reload hydrates the payload the digest names. The
+ *  deleted record comes back. Nothing refuses, because no digest is ever checked against the
+ *  payload it claims to describe.
+ *
+ *  Seven places write a `dataRef` and NOT ONE clears it, while four editors overwrite
+ *  `params.data` without touching it -- so this is a property of the pair, not a bug in any one
+ *  of them, and fixing it at four call sites would leave the fifth to find it again. It is
+ *  reconciled here because `change` is the one gate every edit passes through.
+ *
+ *  THE RULE: data rewritten and the digest left alone means the digest is now a claim about
+ *  bytes that are gone. The reference is dropped and the payload becomes the node's own, inline.
+ *  Compared by REFERENCE rather than by value: every editor hands back a `structuredClone`, so a
+ *  new object is exactly the signal, and hashing on every edit would charge a megabyte payload
+ *  for a label change. A path that sets both -- every acquisition does -- changes the digest too
+ *  and is left alone.
+ *
+ *  WHAT THIS DOES NOT DO. It does not recompute the digest, which would keep the deduplication
+ *  across the edit; `payloadDigest` is asynchronous and this gate is not. The edited node goes
+ *  inline and is shared again the next time somebody imports it. Nor does it drop the payload it
+ *  stopped referencing: there is no reference counting, and deleting a payload another workflow
+ *  may hold is the one failure worse than keeping an orphan. Both are recorded rather than
+ *  half-done. */
+export interface HeldPayload {data:unknown; ref:unknown}
+/** What each node holds RIGHT NOW, captured before an edit runs. Reference identity is the whole
+ *  point, so this must be taken from the live workflow and never from a clone. */
+export const heldPayloadsOf=(w:{nodes:readonly {id:string;params:unknown}[]}):Map<string,HeldPayload>=>
+  new Map(w.nodes.map(n=>[n.id,{data:(n.params as Record<string,unknown>)?.data,
+    ref:(n.params as Record<string,unknown>)?.dataRef}]));
+
+export function reconcilePayloadRefs(before:Map<string,HeldPayload>,
+  w:{nodes:readonly {id:string;params:unknown}[]}):void{
+  for(const node of w.nodes){
+    const was=before.get(node.id);
+    if(!was)continue;                                    // a node added by this edit, not rewritten
+    const params=node.params as Record<string,unknown>;
+    if(typeof params.dataRef!=='string'||params.dataRef!==was.ref)continue;
+    if(params.data===was.data)continue;
+    delete params.dataRef;
+  }
+}
+
 export function dehydrateWorkflow<T extends {nodes:unknown[]}>(workflow:T,held:(digest:string)=>boolean=()=>false):T{
   return {...workflow,nodes:workflow.nodes.map(node=>{
     if(!isRecord(node)||!isRecord(node.params))return node;

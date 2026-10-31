@@ -73,7 +73,11 @@ test('every part of the body is returned, including the empty ones',{skip},()=>{
   const groups=groupNotes(notes);
   assert.deepEqual(groups.map(g=>g.section),[...WRITE_UP_PARTS]);
   const counted=Object.fromEntries(groups.map(g=>[g.section,g.count]));
-  assert.deepEqual(counted,{Introduction:2,Methods:5,Results:0,Discussion:2});
+  // REFERENCES JOINED THE OUTLINE on 2026-10-30, on the practitioner's ruling that the aggregate
+  // list is a part rather than a panel. It counts 0 NOTES here and is not empty on the screen:
+  // the works are assembled from what the workflows cite and are not notes, which is the whole
+  // distinction `references.ts` is built around. Asserted so that staying at 0 is a decision.
+  assert.deepEqual(counted,{Introduction:2,Methods:5,Results:0,Discussion:2,References:0});
   // An absent Results section is a fact about the write-up and the place a practitioner adds one.
   assert.deepEqual(groups.find(g=>g.section==='Results').groups,[]);
 });

@@ -50,7 +50,10 @@ test('Snow’s own sentences are readable, in the order a reader meets them',{sk
   // The body in IMRAD order, every part shown -- an absent Results section is a fact about the
   // write-up, not something to hide.
   const parts=await page.locator('.notes-part h3').allTextContents();
-  expect(parts.map(p=>p.split(' ')[0])).toEqual(['Introduction','Methods','Results','Discussion']);
+  // Five parts since References joined the outline: a workflow can write that one by itself,
+  // from what its inputs declare, which is why it is here without anybody having written a note.
+  expect(parts.map(p=>p.split(' ')[0]))
+    .toEqual(['Introduction','Methods','Results','Discussion','References']);
   await expect(page.locator('.notes-part').nth(2)).toHaveClass(/is-empty/);
 });
 

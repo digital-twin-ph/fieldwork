@@ -65,11 +65,13 @@ import {suggestUTM,utmScaleFactor,workflowPositions} from './utm.js';
 import {mountCanvas} from './canvas.js';
 import {DATASET,OLD_TYPES,oldNalediWorkflow,tierLabel} from './old-naledi.js';
 import {oldInspector,oldEvidence,resultTable,oldMap,mapFrame,distanceText} from './old-naledi-ui.js';
-import {mapLayerList,membersOfPolygons,LAYER_LABEL_LIMIT,type MapLayer} from './map-layer-list.js';
+import {mapLayerList,membersOfPolygons,portIsDrawn,LAYER_LABEL_LIMIT,type MapLayer} from './map-layer-list.js';
 import {openPolygonReview} from './polygon-review.js';
 import {notesPanel,openNoteDialog,noteKey} from './notes-ui.js';
 // THE WRITE-UP IS THE PROJECT'S. A run contributes its notes to a store the Notes tab reads
 // across every workflow of the project, rather than the tab reading the open run alone.
+import {figureFor,describedNode} from './write-up-figures.js';
+import {referenceList} from './references.js';
 import {WRITE_UP_STORE,readWriteUp,entryForRun,recordEntry,writeUpOf,sourceOfNote,
   type WriteUp,type WriteUpEntry} from './write-up.js';
 import {typeset} from './prose.js';
@@ -106,7 +108,7 @@ import {populationRastersForCountry,WORLDPOP_LICENCE,WORLDPOP_TAKEN,WORLDPOP_BYT
 import type {BoundaryProvenance} from './types.js';
 import {basemapAvailable,extentSpanKm,NATURAL_EARTH_MIN_SPAN_KM} from './basemaps.js';
 import {naturalEarthMarkup,NATURAL_EARTH,NATURAL_EARTH_CREDIT} from './natural-earth.js';
-import {mapImage,mapImageMarkup,mapImageCredit,type MapImage} from './map-image.js';
+import {mapImage,mapImageMarkup,mapImageCredit,withGroundUnder,type MapImage} from './map-image.js';
 import {mapImageInspector} from './map-image-ui.js';
 import {readWorldFile,boundsFromWorldFile} from './map-image.js';
 
@@ -126,11 +128,11 @@ import {projectDocument,readProjectDocument,unbundledReferences,PROJECT_DOCUMENT
 import {rasterExample} from './raster-example.js';
 import {openPackageDialog} from './package-ui.js';
 import {syncProjectManifest} from './project-manifest.js';
-import {BUILT_IN_PROJECTS,WORKFLOW_LABELS,projectOfWorkflow,projectById,newProject,validateProject,siblingInputs,payloadDigest,dehydrateWorkflow,hydrateWorkflow,projectSafety,unexportedWork,exportPredatesWork,type Project,type ProjectWork} from './project.js';
+import {BUILT_IN_PROJECTS,WORKFLOW_LABELS,projectOfWorkflow,projectById,siblingAreas,newProject,validateProject,siblingInputs,payloadDigest,heldPayloadsOf,reconcilePayloadRefs,dehydrateWorkflow,hydrateWorkflow,projectSafety,unexportedWork,exportPredatesWork,type Project,type ProjectWork} from './project.js';
 import {mountPanelLayout} from './panel-layout.js';
 import {newMapOutput,mapEvidence} from './map-output.js';
 import {newTableOutput,pointTableMarkup,pointTableEvidence} from './table-output.js';
-import {pointPort,MAX_POINT_LAYERS} from './point-layers.js';
+import {pointPort,MAX_POINT_LAYERS,markedPoints,markLabel,LABEL_CEILING} from './point-layers.js';
 const esc=(s:unknown)=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
 function chartControls(n:WorkflowNode<'chart_output'>,options:{omitOrientation?:boolean}={}){
   const p=n.params;
@@ -564,9 +566,26 @@ void fetch('./build/asset-manifest.json',{cache:'no-store'})
 function readWriteUpStore():WriteUp{
   try{return readWriteUp(localStorage.getItem(WRITE_UP_STORE),runningBuild);}catch{return {};}
 }
+/** THE RUNS THIS SESSION HAS MADE, by workflow, so a figure can be drawn from one.
+ *
+ *  IN MEMORY AND NEVER STORED, which is the same line `write-up.ts` draws for the same reason: a
+ *  run holds geometry, rasters and street graphs, and six workflows of them would not fit in
+ *  `localStorage` and would not belong there if they did. The words of a write-up are kept; the
+ *  figures are redrawn from runs, and a workflow that has not run this session says so and offers
+ *  the button rather than showing a stale picture.
+ *
+ *  Pruned to the project's own workflows on every run, so a project left open all afternoon holds
+ *  that project's runs and not every run the session has ever made. */
+const runsByWorkflow=new Map<string,{run:WorkflowRun; workflow:Workflow}>();
+
 function rememberRunNotes(ran:Workflow,run:WorkflowRun):void{
   const key=storageKey(ran);
   if(!key)return;
+  // THE WORKFLOW IS KEPT WITH THE RUN, because a map figure needs the `map_output` node's own
+  // presentation -- its title, key and source note -- and those live on the node rather than in
+  // the run. Reading them off the OPEN canvas would title another workflow's map with whatever
+  // shares its node id here, which is the trap `labelOf` already exists for.
+  runsByWorkflow.set(key,{run,workflow:ran});
   const entry=entryForRun(key,ran.name||key,run,
     id=>ran.nodes.find(node=>node.id===id)?.params.label,new Date().toISOString(),runningBuild);
   if(!entry)return;
@@ -575,6 +594,10 @@ function rememberRunNotes(ran:Workflow,run:WorkflowRun):void{
   // until a reader asks what a paragraph is doing there.
   const project=projectOfWorkflow(key,allProjects())
     ??(ran.projectId?projectById(ran.projectId,allProjects()):undefined);
+  if(project?.workflows?.length){
+    const keep=new Set(project.workflows);
+    for(const held of [...runsByWorkflow.keys()])if(!keep.has(held))runsByWorkflow.delete(held);
+  }
   try{
     localStorage.setItem(WRITE_UP_STORE,
       JSON.stringify(recordEntry(readWriteUpStore(),entry,project?.workflows)));
@@ -819,7 +842,7 @@ function upstreamKeyValues(node:WorkflowNode,seen=new Set<string>(),
   return undefined;
 }
 
-function change(fn:(w:Workflow)=>void,{spatial=true,requirePersistence=false}={}){if(busy)return false;const previous=structuredClone(workflow);try{fn(workflow);syncProjectManifest(workflow,true);workflow=validateWorkflow(workflow);const persisted=save();if(requirePersistence&&!persisted){const bytes=JSON.stringify(workflow).length;workflow=previous;dropFocus();render();toast(storageRefusal(bytes),{tone:'failure'});return false;}history.push(previous);if(history.length>40)history.shift();future=[];if(spatial){dirty=true;runFailed=false;statuses={};}dropFocus();render();return persisted;}catch(e){
+function change(fn:(w:Workflow)=>void,{spatial=true,requirePersistence=false}={}){if(busy)return false;const previous=structuredClone(workflow);const heldPayloads=heldPayloadsOf(workflow);try{fn(workflow);reconcilePayloadRefs(heldPayloads,workflow);syncProjectManifest(workflow,true);workflow=validateWorkflow(workflow);const persisted=save();if(requirePersistence&&!persisted){const bytes=JSON.stringify(workflow).length;workflow=previous;dropFocus();render();toast(storageRefusal(bytes),{tone:'failure'});return false;}history.push(previous);if(history.length>40)history.shift();future=[];if(spatial){dirty=true;runFailed=false;statuses={};}dropFocus();render();return persisted;}catch(e){
   // The edit is rolled back and the panel is rewritten -- WHILE the control that made the edit
   // still holds focus. Chromium throws "The node to be removed is no longer a child of this
   // node. Perhaps it was moved in a 'blur' event handler?" from the innerHTML assignment,
@@ -1485,10 +1508,20 @@ function renderLibrary(search=''){
     if(!isRecord(node)||!isRecord(node.params)||node.params.data===undefined){
       toast('That input could not be read from the other workflow.',{tone:'failure'});return;}
     const payload=node.params.data;
-    const digest=typeof node.params.dataRef==='string'?node.params.dataRef:await payloadDigest(payload);
+    // WHETHER THE SOURCE CAN SHARE, OR ONLY BE COPIED FROM. A node that already carries a digest
+    // is dehydrated in its own workflow, so the project ends up holding ONE copy. A node that
+    // does not is inline where it sits and stays there -- nothing backfills a digest, and
+    // reaching into a workflow that is not being edited is the one thing this handler refuses to
+    // do -- so the project holds two, one of them deduplicated.
+    //
+    // Measured 2026-10-31 on South London's sub-district layer, whose bundle authored it inline:
+    // the new node dehydrated behind `790740810996` and the source stayed at 107,962 bytes. The
+    // toast said "The project holds one copy of its data" over that, which is the application
+    // asserting a saving it did not make. `point_input` and `table_input` have no digesting path
+    // at all, so for those it is never true on a first share.
+    const held=typeof node.params.dataRef==='string'?node.params.dataRef:null;
+    const digest=held??await payloadDigest(payload);
     if(!await keepDataset(digest,payload))return;
-    // The sibling keeps its inline copy until its own next save, when dehydration finds the digest
-    // already in the store. Nothing reaches into a workflow that is not being edited.
     const id=`${input.type}-${Date.now()}`;
     const copied=structuredClone(node) as Record<string,unknown>;
     const didAdd=change(w=>{w.nodes.push({...copied,id,
@@ -1496,7 +1529,11 @@ function renderLibrary(search=''){
       params:{...(copied.params as Record<string,unknown>),dataRef:digest}} as unknown as WorkflowNode);selected=id;});
     if(didAdd===false)return;
     flow?.fit();
-    toast(`"${input.label}" added from "${input.workflowName}". The project holds one copy of its data; rename this node freely.`);
+    toast(`"${input.label}" added from "${input.workflowName}". `
+      +(held
+        ?'The project holds one copy of its data; rename this node freely.'
+        :`This node holds a reference to the data and "${input.workflowName}" still holds its own `
+          +'copy, so the project holds two until that one is read in again. Rename this node freely.'));
   });
   $('#node-library').querySelectorAll<HTMLButtonElement>('[data-composition]').forEach(b=>b.onclick=()=>{
     const found=bundledCompositions().find(c=>`${c.id}@${c.version}`===b.dataset.composition);
@@ -1785,6 +1822,35 @@ function renderInspector(){
               +`${esc(key)}</option>`).join('')
             +`</select></div>`;
         }).join('');
+        // WHICH PROPERTY NAMES EACH MARK. Offered per layer beside the pin class, because it is
+        // the same kind of decision: a property the practitioner nominates, never one inferred
+        // from being called `name`. A layer with more drawn marks than the ceiling says so here
+        // rather than being silently left unnamed on the figure.
+        const labelPicker=sources.map(source=>{
+          const records=(source.params as {data?:{features?:{properties?:Record<string,unknown>}[]}}).data?.features||[];
+          const keys=[...new Set(records.flatMap(f=>Object.keys(f.properties??{})))].sort();
+          if(!keys.length)return '';
+          const chosen=n.params.labelField?.[source.id]||'';
+          const over=records.length>LABEL_CEILING;
+          return `<div class="field"><label class="field-label" for="mark-label-${esc(source.id)}">`
+            +`Name each mark of ${esc((source.params as {label?:string}).label||TYPES[source.type].title)}</label>`
+            +`<select id="mark-label-${esc(source.id)}" data-mark-label="${esc(source.id)}">`
+            +`<option value="">Not named \u00b7 the key says which layer</option>`
+            +keys.map(key=>`<option value="${esc(key)}" ${chosen===key?'selected':''}>`
+              +`${esc(key)}</option>`).join('')
+            +`</select>`
+            +(over?`<p class="muted">${records.length.toLocaleString()} records, over the `
+              +`${LABEL_CEILING} a figure can name legibly \u2014 this layer is drawn unnamed `
+              +`whatever is chosen here.</p>`:'')
+            +`</div>`;
+        }).join('');
+        const named=labelPicker
+          ?`<span class="inspector-section">Mark names</span>`
+            +`<p class="muted">The property that prints beside each mark on the figure. Nominated `
+            +`rather than guessed, and left off by default: a key naming the layer is enough for `
+            +`most maps, and a handful of named marks is what a publication figure wants.</p>`
+            +labelPicker
+          :'';
         const classed=classPicker
           ?`<span class="inspector-section">Pin class</span>`
             +`<p class="muted">What each record IS, drawn with a mark of its own and named in the `
@@ -1792,7 +1858,7 @@ function renderInspector(){
           :'';
 
         const chosen=n.params.layerSymbols||{};
-        return classed+`<span class="inspector-section">Layer symbols</span>`
+        return classed+named+`<span class="inspector-section">Layer symbols</span>`
           +`<p class="muted">Hue and mark say which source a point came from; whether it is filled says whether it is inside the study area. Marks are named as OGC Symbology Encoding names them.</p>`
           +sources.map((source,index)=>{
             const held=chosen[source.id],resolved=resolveLayerSymbol(index,held);
@@ -1917,7 +1983,22 @@ function renderInspector(){
       +`<option value="exact" ${n.params.normalisation==='exact'?'selected':''}>Exactly as written</option>`
       +`</select>`
       +`<p class="description">Names are compared for equality, never for resemblance. Ignoring punctuation is what matches "St. George, Camberwell" to "St. George  Camberwell"; it will not match an abbreviation to a full name, and says so rather than guessing.</p>`
-      +`<div class="notice">A part no row names is drawn and left empty. Two parts sharing a name both take the value, which is true of a rate and is not true of a count.</div>`;
+      +`<div class="notice">A part no row names is drawn and left empty. Two parts sharing a name both take the value, which is true of a rate and is not true of a count.</div>`
+      // SHADE BY A CLASS, which is a different question from the value and is asked separately.
+      // Offered from the same columns, less the one being matched on: classifying by the key
+      // would make every part its own class.
+      +`<label class="field-label" for="join-category">Shade by a class (optional)</label>`
+      +`<select id="join-category"${columns.length?'':' disabled'}>`
+      +`<option value="">No class \u2014 shade by the value</option>`
+      +columns.filter(column=>column!==n.params.keyField)
+        .map(column=>`<option value="${esc(column)}" ${n.params.categoryField===column?'selected':''}>${esc(column)}</option>`).join('')
+      +`</select>`
+      // Two sentences, because `validate:inspector-prose` holds a 240-character ceiling and this
+      // control was the fourth explanation past it. What came out is the REASON -- that a
+      // light-to-dark ramp would tell a reader to rank things that have no order -- which is
+      // recorded where the decision is, in `categoricalSteps`, with the practitioner's own words
+      // for it. A control says what the setting does; it is not where an argument is kept.
+      +`<p class="description">A class is a kind, not an amount: which company supplied a sub-district, which zone a ward is in. One colour per class, named in the key, and a part the table gives no class is drawn in the neutral rather than in the first class.</p>`;
   }else if(n.type==='derive_value'){
     const p=n.params,shape=upstreamKeyValues(n),columns=Object.keys(shape??{});
     const held=shape?.[p.keyColumn]??[];
@@ -3289,6 +3370,17 @@ function renderInspector(){
     apply.disabled=!!missing;
     note.textContent=missing||'Ready. Nothing is placed until you choose this.';
   };
+  // WHICH PROPERTY NAMES A LAYER'S MARKS. Stored per source node, beside the pin class.
+  document.querySelectorAll<HTMLSelectElement>('[data-mark-label]').forEach(select=>{
+    select.onchange=()=>change(w=>{
+      const target=getNode(w,n.id,'map_output');
+      const held={...(target.params.labelField||{})};
+      if(select.value)held[select.dataset.markLabel!]=select.value;
+      else delete held[select.dataset.markLabel!];
+      if(Object.keys(held).length)target.params.labelField=held;
+      else delete target.params.labelField;
+    });
+  });
   // WHICH ATTRIBUTE HOLDS A LAYER'S PIN CLASS. Stored per source node, the way the symbols are.
   document.querySelectorAll<HTMLSelectElement>('[data-pin-class]').forEach(select=>{
     select.onchange=()=>change(w=>{
@@ -3542,6 +3634,12 @@ function renderInspector(){
     change(w=>{getNode(w,n.id,'join_table_to_area').params.keyField=control(e).value;}));
   optionalElement('#join-normalisation')?.addEventListener('change',e=>
     change(w=>{getNode(w,n.id,'join_table_to_area').params.normalisation=control(e).value as 'exact'|'fuzzy';}));
+  optionalElement('#join-category')?.addEventListener('change',e=>
+    change(w=>{const value=control(e).value.trim();
+      const params=getNode(w,n.id,'join_table_to_area').params;
+      // Deleted rather than set empty: a category exists only where one was asked for, and that
+      // is what keeps a figure from becoming categorical by accident.
+      if(value)params.categoryField=value;else delete params.categoryField;}));
   optionalElement('#prepare-raster')?.addEventListener('click',()=>{
     let source=workflow.nodes.find(x=>x.id===workflow.edges.find(e=>e.to===n.id&&e.port==='area')?.from);const visited=new Set<string>();
     while(source?.type==='measure_area'&&!visited.has(source.id)){visited.add(source.id);source=workflow.nodes.find(x=>x.id===workflow.edges.find(e=>e.to===source!.id&&e.port==='area')?.from);}
@@ -3633,7 +3731,14 @@ function renderInspector(){
       toast(`${area.boundary.unitName||'Boundary'} applied as published \u00b7 ${ring.toLocaleString()} vertices \u00b7 `
         +`${area.boundary.licence||'see the evidence panel for terms'}`);
     else if(ring)toast(`Study area applied \u00b7 ${ring.toLocaleString()} vertices.`);
-  },{requirePersistence:true}),{refusal:saveFailureMessage}));
+  },{requirePersistence:true}),
+    // THE PROJECT'S OTHER STUDY AREAS, read here because this is where the open project and the
+    // saved workflows are known. `study-area-map.ts` draws a map and holds no import from
+    // storage; it is handed the offers and renders them, or renders nothing when there are none.
+    // Read at CLICK rather than at render, so a workflow saved in another tab since this
+    // inspector was drawn is still offered.
+    {refusal:saveFailureMessage,
+      areas:siblingAreas(storageKey(workflow),allProjects(),readSavedWorkflows())}));
   optionalElement('#area-view-n3')?.addEventListener('click',()=>{renderN3();switchView('rules');});
   // The knobs, and the decisions the review band asks for. A decision is stored WITH a signature
   // of the pair it was made about, so editing either record lapses it rather than letting a stale
@@ -4118,11 +4223,17 @@ function resultsOnScreen(){return $('.work-area').classList.contains('showing-re
  *
  *  Undefined where nothing is connected, where the connected node has no image yet, or where its
  *  georeference does not survive `mapImage` -- a figure without ground rather than a broken one. */
-function groundImageFor(mapNodeId:string|undefined):(MapImage&{sourceNodeId:string})|undefined{
+function groundImageFor(mapNodeId:string|undefined,
+  /** WHICH CANVAS TO READ IT OFF, because the write-up draws figures for workflows that are not
+   *  the open one. The default is the open canvas, which is what the live map wants: a plate is
+   *  presentation and must appear the moment it is wired, not at the next run. The write-up
+   *  passes the workflow its run came from, so a figure in one project's write-up cannot pick up
+   *  the plate of whatever canvas happens to be open. */
+  source:Workflow=workflow):(MapImage&{sourceNodeId:string})|undefined{
   if(!mapNodeId)return undefined;
-  const edge=workflow.edges.find(e=>e.to===mapNodeId&&e.port==='ground');
+  const edge=source.edges.find(e=>e.to===mapNodeId&&e.port==='ground');
   if(!edge)return undefined;
-  const node=workflow.nodes.find((n):n is WorkflowNode<'map_image_input'>=>
+  const node=source.nodes.find((n):n is WorkflowNode<'map_image_input'>=>
     n.id===edge.from&&n.type==='map_image_input');
   if(!node)return undefined;
   // The node id travels with it: the layer list keys a checkbox by the SOURCE node, the way it
@@ -4396,6 +4507,21 @@ function renderMap(){
     if(banded){svg.setAttribute('viewBox','0 0 850 650');svg.innerHTML=catchmentPlot(result.polygons,esc,result.contextPoints);}
     else svg.innerHTML=polygonSvg(result.polygons,esc);
     const polygonGround=banded?catchmentFrame(result.polygons,result.contextPoints):polygonFrame(result.polygons);
+    // AND THE POINTS THIS MAP COMPOSED, over the polygons rather than instead of them. See
+    // `markedPoints`: the value has carried them since 2026-10-29 and this renderer did not read
+    // them, so a map with a river, 32 sub-districts and four intakes drew no intakes while the
+    // layer control offered a checkbox for them.
+    if(polygonGround&&rows.length)
+      svg.insertAdjacentHTML('beforeend',markedPoints(rows,
+        c=>polygonGround.project(c) as [number,number],
+        {esc,markPath,
+         symbols:(result as {layerSymbols?:Record<string,import('./point-layers.js').MarkStyle>}).layerSymbols||{},
+         classes:(result as {pinClasses?:Record<string,{value:string;colour:string}[]>}).pinClasses||{},
+         hidden:hiddenMapLayers.get(result.nodeId),
+         labelField:(workflow.nodes.find((x):x is WorkflowNode<'map_output'>=>
+           x.id===result.nodeId&&x.type==='map_output')?.params.labelField)||{},
+         focusId:rows.find(r=>`result:${r.id}`===selected)?.id,
+         label:row=>[row.excluded?'Excluded':row.relation,row.layerLabel].filter(Boolean).join(' \u00b7 ')}));
     if(polygonGround)void drawStaticBasemap(result,svg,
       {bounds:polygonGround.bounds,project:c=>polygonGround.project(c) as [number,number]});
     const method=document.createElement('p');method.className='muted';
@@ -4438,7 +4564,8 @@ function renderMap(){
   }
   if(result?.pointTable){svg.innerHTML='';return;}
   if(result?.kind==='study-area'){svg.innerHTML=areaSvg(required(result.boundary),result.label);return;}
-  if(result?.boundary){svg.innerHTML=oldMap(result,selected,esc,statusLabel);
+  if(result?.boundary){svg.innerHTML=oldMap(result,selected,esc,statusLabel,
+    workflow.nodes.find((x):x is WorkflowNode<'map_output'>=>x.id===result.nodeId&&x.type==='map_output')?.params.labelField||{});
     // GROUND UNDER A STATIC FIGURE. Experiment 137. Choosing a basemap used to switch the map to
     // the interactive presentation, "the only one that draws tiles", so the figure this project
     // most wants to publish was the one that could never have any context under it. The tiles are
@@ -5026,10 +5153,43 @@ function renderProjectDetails(){
  *  the grouping does not. */
 /** The notes on screen, so a click can find the one it names. Rebuilt with the view. */
 let shownNotes:Note[]=[];
+/** THE PROJECT THE OPEN WORKFLOW BELONGS TO, read for DISPLAY and so read from all of them.
+ *
+ *  This asked `readProjects()` until 2026-10-31, which is localStorage only -- so the seven
+ *  BUILT_IN_PROJECTS were invisible to it and every shipped example reported itself as belonging
+ *  to no project. `renderProjectDetails` does the same lookup one line differently
+ *  (`allProjects()`), so the Project tab and the Notes tab contradicted each other on the same
+ *  open canvas: "Heat outreach screening" against "This workflow is not in a project". Found
+ *  while answering the practitioner's question about project-less workflows, on the `heat`
+ *  example -- which is the first-visit default, so it was the first thing a new practitioner saw.
+ *
+ *  THE SPLIT IS DISPLAY AGAINST MUTATION, and it is the rule the rest of this file already
+ *  follows: every call that is about to rename, delete or add reads `readProjects()`, because a
+ *  built-in is not in storage and cannot be written to; every call that is about to show
+ *  something reads `allProjects()`. `projectNow` served both doors through the mutating lookup.
+ *  `writeNotes` below keeps the mutation side honest on its own -- it looks the project up in
+ *  storage and refuses when it is not there -- so this reads for display and the writes still
+ *  refuse where there is nothing to write to. What a built-in's read-only write-up must not do is
+ *  OFFER to take a note, which is what `keptHere` is for. */
 const projectNow=()=>{
   const key=storageKey(workflow);
-  return workflow.projectId?readProjects().find(p=>p.id===workflow.projectId)
-    :projectOfWorkflow(key,readProjects());
+  return workflow.projectId?allProjects().find(p=>p.id===workflow.projectId)
+    :projectOfWorkflow(key,allProjects());
+};
+/** WHY A NOTE CANNOT BE KEPT HERE, or null where one can.
+ *
+ *  The practitioner, 2026-10-31: *"we can gray out the + notes to make it clear notes cannot be
+ *  added without a project."* Two different states need that, and they need different sentences:
+ *  an unfiled canvas has nowhere to keep a note, and a shipped example has a project that is not
+ *  on this device to be written to. Both end at `writeNotes` returning false; only one of them is
+ *  about a missing project, so one message for both would be wrong half the time. */
+const keptHere=(project:Project|undefined):string|null=>{
+  if(!project)return 'This workflow is not in a project, so there is nowhere to keep a note. '
+    +'File it under a project on the Project tab, and its notes become that investigation\u2019s.';
+  if(readProjects().some(p=>p.id===project.id))return null;
+  return `${project.name} is a worked example that ships with Fieldwork, so its write-up is `
+    +`read-only. Its notes, tables, charts and maps are below; to write your own, `
+    +`make a project of your own on the Project tab.`;
 };
 /** Write notes back to the project they belong to. A note is about the investigation, so it does
  *  not travel on the workflow -- which also means `change()` is the wrong door for it. */
@@ -5090,11 +5250,19 @@ function renderNotesView(){
     const entry=of.get(noteKey(note));
     return entry?sourceOfNote(entry,storageKey(workflow)):undefined;
   };
-  // WHICH WORKFLOWS HAVE CONTRIBUTED NOTHING, by name. A workflow that has never run is not a
-  // defect and not a gap in the write-up; it is a step of the investigation that has not been
-  // computed, and the Notes tab is the one place a practitioner would otherwise mistake the two.
-  const contributed=new Set(entries.map(e=>e.workflowKey));
-  const pendingKeys=(project?.workflows||[]).filter(key=>!contributed.has(key));
+  // WHICH WORKFLOWS CANNOT BE DRAWN, by name. Asked of MEMORY rather than of the store, which is
+  // the correction of 2026-10-30: the words are kept and the figures are not, so a write-up
+  // reopened tomorrow has every note, no figure, and -- under the old question -- nothing
+  // pending and no way to fix it. A workflow that has never run is still not a defect and still
+  // not a gap in the write-up; it is a step that has not been computed, and this is the one
+  // surface where a practitioner would otherwise mistake the two.
+  const heldFor=(key:string|undefined)=>{
+    if(!key)return undefined;
+    if(key===storageKey(workflow)&&result)return {run:result,workflow:runWorkflow||workflow};
+    return runsByWorkflow.get(key);
+  };
+  const runOf=(key:string|undefined):WorkflowRun|undefined=>heldFor(key)?.run;
+  const pendingKeys=(project?.workflows||[]).filter(key=>!runOf(key));
   const pending=pendingKeys
     .map(key=>{
       const saved=readSavedWorkflows()[key] as {name?:unknown}|undefined;
@@ -5102,8 +5270,111 @@ function renderNotesView(){
         ?saved.name.trim():WORKFLOW_LABELS[key]??key;
     });
   shownNotes=[...(project?.notes||[]),...derived,...machined] as Note[];
+  // THE ARTIFACT A DESCRIPTION NOTE SPEAKS FOR, drawn from the run that produced it. The note
+  // carries its workflow, so a table from another workflow is drawn from THAT workflow's run
+  // rather than from whatever shares its node id on the open canvas -- the same trap `labelOf`
+  // exists for, one level further in.
+  // THE MAP A STEP PUBLISHED, composed from the run and its workflow with the same two pure
+  // functions the live map uses -- `oldMap` for the drawing, `mapPresentation` for the title, key
+  // and source note -- rather than a second map drawn here.
+  //
+  // WITH ITS PLATE AND WITHOUT ITS TILES, which is one gap closed and one left open rather than
+  // the single gap this comment claimed. `renderMap` composites ground into the live SVG
+  // asynchronously and the SVG download copies the element after that, so a figure composed here
+  // carried the extent and the marks and not Snow's plate underneath -- visible the moment the
+  // figure and the screen were put side by side on 2026-10-30, and asserted nowhere.
+  //
+  // But the two kinds of ground are asynchronous for different reasons, and only one of them is.
+  // A basemap tile has to be fetched, and a figure that renders and then changes under a reader
+  // is worse in a write-up than one that renders once. A plate is a data URI the node already
+  // holds and `mapImageMarkup` places it by its corners, so it composes here synchronously, in
+  // the same frame the content was drawn in. See `withGroundUnder` and 143.
+  const mapSvgOf=(held:{run:WorkflowRun; workflow:Workflow}|undefined)=>(nodeId:string)=>{
+    if(!held)return null;
+    const output=held.run.outputs?.find(o=>o.nodeId===nodeId);
+    const node=held.workflow.nodes.find(
+      (n):n is WorkflowNode<'map_output'>=>n.id===nodeId&&n.type==='map_output');
+    if(!output||!node)return null;
+    try{
+      // THE SAME CHOICE OF RENDERER THE SVG DOWNLOAD MAKES, and getting this wrong is what the
+      // practitioner saw: *"We still need the map with the subdistricts."*
+      //
+      // `oldMap` draws `output.boundary` -- ONE geometry, the study extent -- and nothing else.
+      // South London's 32 sub-districts are features of `output.polygons`, which it never
+      // touches, so the figure was a green rectangle with the extent's outline and four points
+      // while its own key said "Polygons · 34 features". `polygonSvg` is the renderer that draws
+      // them, classifies them where they carry a value, and writes the key; `catchmentPlot` is
+      // its sibling for travel-time bands. Mirrored from `#map-download-svg` rather than decided
+      // again here, so the figure in the write-up and the exported SVG cannot diverge.
+      const banded=!!output.polygons?.features.some(f=>f.minutes!==undefined);
+      const content=output.polygons
+        ?(banded?catchmentPlot(output.polygons,esc,output.contextPoints)
+          :polygonSvg(output.polygons,esc))
+        // No selection: a highlighted node is a state of the canvas and not a fact about the
+        // figure, and a published map that dimmed everything but one record would be wrong.
+        :output.boundary?oldMap(output,undefined,esc,statusLabel,node.params.labelField||{}):null;
+      if(!content)return null;
+      const plotted=banded?catchmentFrame(output.polygons!,output.contextPoints):null;
+      // THE FRAME THE CONTENT WAS DRAWN IN, per renderer, because each projects its own extent:
+      // the walking-time plot is 850x650 and the rest are 850x295, and a plate placed from the
+      // wrong frame is a plate in the wrong place. The same three-way choice `renderMap` makes.
+      const frame=plotted||(output.polygons?polygonFrame(output.polygons)
+        :output.boundary?mapFrame(output):null);
+      const plate=groundImageFor(node.id,held.workflow);
+      // SWITCHED OFF MEANS NOT DRAWN, read from the setting the workflow KEEPS. The checkboxes
+      // under the live map hold their state in `hiddenMapLayers`, which is memory lost on
+      // reload; a published figure cannot be decided by that, and `node.params.layers` is the
+      // one of the two that persists.
+      const drawn=!plate||portIsDrawn(mapLayerList(node,held.workflow.edges,
+        id=>held.workflow.nodes.find(n=>n.id===id)?.params.label),'ground');
+      const ground=plate&&drawn&&frame
+        ?mapImageMarkup(plate,frame.project as (c:[number,number])=>[number,number]):'';
+      // THE SAME MARKS THE SCREEN DRAWS. `oldMap` draws its own rows; the polygon plot does not,
+      // so a published figure of a river, its sub-districts and four intakes carried no intakes
+      // while the live map carried them. Drawn through the one function both callers share.
+      const marks=output.polygons&&frame&&output.rows?.length
+        ?markedPoints(output.rows,frame.project as (c:[number,number])=>[number,number],
+          {esc,markPath,
+           symbols:(output as {layerSymbols?:Record<string,import('./point-layers.js').MarkStyle>}).layerSymbols||{},
+           classes:(output as {pinClasses?:Record<string,{value:string;colour:string}[]>}).pinClasses||{},
+           labelField:node.params.labelField||{},
+           label:row=>[row.excluded?'Excluded':row.relation,row.layerLabel].filter(Boolean).join(' \u00b7 ')})
+        :'';
+      return standaloneMapSvg(withGroundUnder(content,ground)+marks,banded?'0 0 850 650':'0 0 850 295',
+        mapPresentation(node,output,held.workflow),
+        plotted?{metresPerPixel:metresPerPixel(plotted.pixelsPerDegreeLatitude)}:undefined);
+    }catch{return null;/* A figure that cannot be drawn says so; the write-up still reads. */}
+  };
+  // WHICH NOTES CARRY A FIGURE, and the two kinds carry one for different reasons.
+  //
+  // A MACHINED DESCRIPTION speaks for an artifact a step PUBLISHED -- a table, a chart, a map --
+  // and the figure is that artifact. A machined equation is excluded: its artifact is already in
+  // its own text as typeset mathematics, and `describedNode` is what tells the two apart.
+  //
+  // A DERIVED SOURCE NOTE names the data an input brought in, and the practitioner, 2026-10-30,
+  // looking at three of them in Methods: *"The tables here should also be reproduced."* Which is
+  // the same argument one level upstream -- a note reading "Snow 1855, Table IX -- houses and
+  // cholera deaths by water company" states what the table is and shows none of it, and a reader
+  // checking a published analysis against its source needs the source. `run.tables` already holds
+  // every table a run passed between steps, inputs included, so the table is there to draw.
+  const figureOf=(note:Note)=>{
+    const id='nodeId' in note&&note.nodeId?note.nodeId:undefined;
+    if(!id)return undefined;
+    if(note.kind==='machined'&&!describedNode(note.id))return undefined;
+    if(note.kind!=='machined'&&note.kind!=='derived')return undefined;
+    const key='workflowKey' in note&&note.workflowKey?note.workflowKey:storageKey(workflow);
+    const held=heldFor(key);
+    return figureFor(id,held?{...held.run,mapSvg:mapSvgOf(held)}:undefined,esc)||undefined;
+  };
+  // THE WORKS THIS PROJECT CITES, assembled from the entries rather than stored beside them.
+  const references=referenceList(entries.map(e=>
+    ({workflowName:e.workflowName,machined:e.machined,derived:e.derived})));
   $('#notes-view').innerHTML=notesPanel(project?.notes||[],machined,
-    labelOf,esc,derived,sourceOf,pending);
+    labelOf,esc,derived,sourceOf,
+    // AND HOW MANY THERE ARE AT ALL, so the control can tell a project whose workflows have all
+    // run from a workflow that is in no project. 0 is the second of those, not the first.
+    {pending,total:(project?.workflows||[]).length,readOnly:keptHere(project)},
+    figureOf,references);
   // THE FORMULAE, ONCE THE PANEL IS IN THE DOCUMENT. `notesPanel` returns the LaTeX on the
   // element that will hold it, so a note reads correctly before the converter has loaded and on
   // any machine where it never does. See `src/prose.ts`.
@@ -5113,7 +5384,10 @@ function renderNotesView(){
   // it starts, so these are sequential rather than six runs racing each other -- which is the
   // shape experiment 142's defect took when a run outlived the canvas that started it.
   optionalElement('[data-run-pending]')?.addEventListener('click',async()=>{
-    const was=storageKey(workflow),todo=[...pendingKeys];
+    // WITH NOTHING PENDING THE BUTTON RE-RUNS THE PROJECT, which is what "Run them again" says
+    // it does. The control is on the tab whether or not the application has something to suggest.
+    const was=storageKey(workflow);
+    const todo=pendingKeys.length?[...pendingKeys]:[...(project?.workflows||[])];
     if(!todo.length)return;
     const button=optionalElement('[data-run-pending]') as HTMLButtonElement|null;
     if(button){button.disabled=true;button.textContent='Running\u2026';}
@@ -5143,10 +5417,19 @@ function renderNotesView(){
  *  `notes-ui` says which of the two is about to happen before the button is pressed; this does
  *  it. The split lives here because only this module knows where a project's notes are kept. */
 function writeInNoteDialog(note:Note){
+  // AND THE DIALOG IS READ-ONLY WHERE A NOTE CANNOT BE KEPT. `openNoteDialog` decides whether to
+  // offer writing by whether it was handed a `write`, so withholding it is how the dialog is told
+  // -- rather than opening a textarea, a formatting toolbar and a Save over a callback that will
+  // refuse. Until 2026-10-31 a machined note on an unfiled canvas opened fully writable (machined
+  // is an editable kind, because an edit forks it into an authored note) and the refusal came
+  // back as "That note could not be kept on this device", which blames the device for a missing
+  // project. Found by the survey of 2026-10-31; it is the same false affordance as the "+ note"
+  // buttons, one dialog further in.
+  const keeps=!keptHere(projectNow());
   openNoteDialog(note,{
     labelOf:id=>workflow.nodes.find(n=>n.id===id)?.params.label,
     machined:Object.values(result?.machined||{}).flat(),
-    write:(which,draft)=>{
+    write:keeps?(which,draft)=>{
       const project=projectNow();
       if(!project)return false;
       const held=[...(project.notes||[])] as Note[];
@@ -5178,7 +5461,7 @@ function writeInNoteDialog(note:Note){
         return true;
       }
       return false;
-    }},esc);
+    }:undefined},esc);
 }
 function applyProjectDetails(){
   const key=storageKey(workflow);
@@ -6620,9 +6903,12 @@ document.addEventListener('click',event=>{
   // ADDED AS AUTHORED, because that is the only kind a person writes here. It carries a marker
   // rather than prose: a note with placeholder sentences in it is a note somebody has to notice
   // and delete, and `readNotes` drops one carrying nothing at all.
+  // THE SAME SENTENCE THE DISABLED BUTTON CARRIES. The button is disabled where this refuses, so
+  // this is now the keyboard and the stale-render door rather than the ordinary one -- and a
+  // second wording for the same refusal is how two surfaces come to disagree about one fact.
   const project=projectNow();
-  if(!project){toast('A note belongs to an investigation. File this workflow under a project first.',
-    {tone:'failure'});return;}
+  const why=keptHere(project);
+  if(why||!project){toast(why||'',{tone:'failure'});return;}
   const held=[...(project.notes||[])] as Note[];
   // A UUID, because a note somebody writes has no natural key and the whole point of the id is
   // that another note can point at it. `Date.now()` collides within a millisecond, which is never

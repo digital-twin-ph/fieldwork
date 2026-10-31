@@ -1,6 +1,6 @@
 # 146 — Which join, and what it commits you to
 
-_Created 2026-10-28 · Updated 2026-10-28_
+_Created 2026-10-28 · Updated 2026-10-30_
 
 **Status:** asked — what shipped is a report, not an answer, and the question below is open.
 

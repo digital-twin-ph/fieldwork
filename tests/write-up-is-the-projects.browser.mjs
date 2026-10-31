@@ -119,30 +119,42 @@ test('a freshly opened project says why its write-up has no figures yet',{skip},
   await open(page);
   await notes(page);
   await expect(machined(page)).toHaveCount(0);
-  const line=page.locator('.notes-pending');
-  await expect(line).toContainText('6 of this project\u2019s workflows'.replace('\u2019',"'"));
-  await expect(line).toContainText('have not run');
-  await expect(line).toContainText('not in this write-up yet');
+  const bar=page.locator('.notes-run');
+  await expect(bar).toContainText("6 of this project's 6 workflows");
+  await expect(bar).toContainText('have not run');
+  await expect(bar).toContainText('not in this write-up yet');
   // NAMED AND CAPPED, which is `relate_table`'s rule for its gap keys: a count tells nobody what
   // to do, and six long workflow names is a paragraph nobody reads.
-  await expect(line).toContainText('Deaths per 1,000 people, by sub-district');
-  await expect(line).toContainText('and 3 more');
+  await expect(bar).toContainText('Deaths per 1,000 people, by sub-district');
+  await expect(bar).toContainText('and 3 more');
+  // AND IT IS THE FIRST THING IN THE TAB, which is the second report of 2026-10-31: the markup
+  // was there and the control was not, because it rendered as a sentence under the counts and
+  // the description. A button filed below two paragraphs of prose is a button nobody finds.
+  const button=bar.locator('[data-run-pending]');
+  await expect(button).toHaveText('Run workflows');
+  await expect(button).toHaveClass(/\bprimary\b/);
+  expect(await page.locator('#notes-view').evaluate(v=>
+    v.firstElementChild.className)).toContain('notes-run');
 });
 
-test('the line shrinks as workflows run, and goes when none are left',{skip},async({page})=>{
+test('the control reports what has run, and stays once everything has',{skip},async({page})=>{
   await open(page);
   await run(page,'Deaths per 1,000 people, by sub-district');
   await notes(page);
-  await expect(page.locator('.notes-pending')).toContainText('5 of this project');
+  await expect(page.locator('.notes-run')).toContainText('5 of this project');
   // It reports and does not grade: no score, no completeness bar, no warning tone. A
   // practitioner who has run one of six is not doing anything wrong.
-  await expect(page.locator('.notes-pending')).not.toContainText(/incomplete|missing|warning/i);
+  await expect(page.locator('.notes-run')).not.toContainText(/incomplete|missing|warning/i);
   for(const name of ['The ground: an extent, its sub-districts and the river',
     'Cholera in 1849 compared with 1854','Deaths per 1,000 people, mapped',
     'Deaths per house, by water company','Died or survived, by water supply'])
     await run(page,name);
   await notes(page);
-  await expect(page.locator('.notes-pending')).toHaveCount(0);
+  // THE CONTROL DOES NOT GO WHEN THE WORK IS DONE. It used to, and a practitioner whose six
+  // workflows had all run correctly was shown nothing -- with no way to tell a tab that had
+  // decided against a button from a tab that never had one. Reported 2026-10-30.
+  await expect(page.locator('.notes-run')).toContainText("All 6 of this project's workflows");
+  await expect(page.locator('.notes-run [data-run-pending]')).toHaveText('Run workflows again');
   // And the whole investigation is now in one write-up.
   expect(await machined(page).count()).toBeGreaterThan(8);
 });
@@ -155,12 +167,23 @@ test('one button runs the rest and assembles the whole write-up',{skip},async({p
   await notes(page);
   await expect(machined(page)).toHaveCount(0);
   await page.locator('[data-run-pending]').click();
-  await expect(page.locator('.notes-pending')).toHaveCount(0,{timeout:60000});
+  await expect(page.locator('.notes-run')).toContainText('All 6',{timeout:60000});
   // Every artifact kind is now in one write-up, from six different workflows.
   expect(await machined(page).count()).toBeGreaterThan(8);
   await expect(machined(page).filter({hasText:'bottom to top'}).first()).toBeVisible();
-  await expect(machined(page).filter({hasText:'Mortality by sub-district'})).toHaveCount(1);
+  // MATCHED ON THE SENTENCE THE NOTE MACHINED, not on any text in the tab. This read
+  // `hasText:'Mortality by sub-district'` until 2026-10-31, when it began finding two notes: the
+  // table's description, and the choropleth note whose MAP now draws that name as its title. A
+  // figure printing a layer's name is not a second note about it, and the assertion is that the
+  // artifact is described once across six workflows rather than once per workflow.
+  await expect(machined(page).filter({has:page.locator('strong',
+    {hasText:'Mortality by sub-district.'})})).toHaveCount(1);
   await expect(machined(page).filter({hasText:'The four cells'})).toHaveCount(1);
+  // AND THE FIGURES ARE DRAWN, which is what the practitioner reported missing four times on
+  // 2026-10-30: tables, charts and maps in the write-up rather than prose about them.
+  const view=page.locator('#notes-view');
+  expect(await view.locator('.notes-figure table').count()).toBeGreaterThan(6);
+  expect(await view.locator('.notes-figure svg').count()).toBeGreaterThan(1);
 });
 
 test('running the rest returns the practitioner to the workflow they were reading',{skip},
@@ -170,7 +193,7 @@ test('running the rest returns the practitioner to the workflow they were readin
     const before=await page.locator('#workflow-select').inputValue();
     await notes(page);
     await page.locator('[data-run-pending]').click();
-    await expect(page.locator('.notes-pending')).toHaveCount(0,{timeout:60000});
+    await expect(page.locator('.notes-run')).toContainText('All 6',{timeout:60000});
     // The canvas moves once per workflow and is put back. Leaving a practitioner on whichever
     // workflow happened to be last would be the surface rearranging their work to do its own.
     await page.locator('[data-view="workflow"]').click();

@@ -116,6 +116,41 @@ export function mapImageMarkup(image:MapImage,
     +`preserveAspectRatio="none" href="${image.data}"/>`;
 }
 
+/** PLACE THAT GROUND UNDER A FIGURE'S VECTOR CONTENT, as a string.
+ *
+ *  `drawStaticBasemap` does this to the live map's SVG element -- insert the image after the
+ *  background rect, then withdraw the fill from every shape that encodes nothing so the ground
+ *  shows through. The write-up's figure is composed as a string and never becomes an element
+ *  before it is published, so it could not call that, and the known consequence was recorded in
+ *  `write-up-figures.ts` and read in the application on 2026-10-30: South London's figures
+ *  carried the extent and the marks and not Snow's plate underneath, while the same map on the
+ *  screen carried all three.
+ *
+ *  A PLATE AND A TILE ARE NOT THE SAME GAP. Fetching basemap tiles is asynchronous and a figure
+ *  that renders and then changes under a reader is worse in a write-up than one that renders
+ *  once; a placed plate is `mapImageMarkup` of a data URI the node already holds, which is a
+ *  pure function and needs no network. So the plate half closes here and the tile half stays
+ *  open, rather than both waiting on the harder one.
+ *
+ *  The withdrawal is the same rule and for the same reason: `data-fill-role="context"` marks a
+ *  shape that says WHERE the study area is and measures nothing, and a pale wash over a plate
+ *  hides the ink it was drawn to show.
+ *
+ *  An empty `markup` returns the content untouched, which is what a figure with no plate wired,
+ *  no image chosen yet, or a projection that puts the plate nowhere finite all arrive as. */
+export function withGroundUnder(content:string,markup:string):string{
+  if(!markup.trim())return content;
+  // The background rect, which both static renderers emit first and nothing else emits at all.
+  // Inserted after it rather than before, because a figure whose ground sits under its own
+  // background is a figure with no ground.
+  const background=/^\s*<rect\b[^>]*>/.exec(content);
+  const placed=background
+    ?content.slice(0,background[0].length)+markup+content.slice(background[0].length)
+    :markup+content;
+  return placed.replace(/<path\b[^>]*\bdata-fill-role="context"[^>]*>/g,
+    tag=>tag.replace(/\bfill="[^"]*"/,'fill="none"'));
+}
+
 /** One line of credit, from what the plate declares. Public domain or not, a reader of a figure
  *  is entitled to know which ground it was drawn on and when that ground was made. */
 export const mapImageCredit=(image:MapImage):string=>{

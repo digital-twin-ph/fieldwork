@@ -1,4 +1,4 @@
-import {orderedSteps,categoricalSteps,classifyValues,FIGURE_ROLE,markPath} from './presentation.js';
+import {orderedSteps,categoricalSteps,classifyValues,classifyCategories,FIGURE_ROLE,markPath} from './presentation.js';
 import type {Polygons} from './catchments.js';
 import type {DisplayValue,Receipt} from './results.js';
 import type {Escape,Position,PointCollection,WorkflowNode} from './types.js';
@@ -85,7 +85,18 @@ export function polygonSvg(p:Polygons,esc:Escape):string{
   // says which catchment; a choropleth's colour says how much, and reading the second as the
   // first is the misreading this whole figure exists to avoid. `classifyValues` returns null
   // when nothing carries a value, which is every figure this renderer drew before today.
-  const classed=classifyValues(p.features.map(f=>f.value));
+  // CLASSES THAT CANNOT BE RANKED, and they take precedence because ASKING FOR THEM IS A
+  // DECISION SOMEBODY MADE.
+  //
+  // A feature carries a category only where the join was told to carry one, and telling it to is
+  // the practitioner declaring that this figure is about the class. The first version of this
+  // let a numeric value win, reasoning that a choropleth must never silently become a map of
+  // water companies -- but the table behind Snow's exposure map carries deaths per sub-district
+  // AS WELL as the supplying company, so that rule drew the wrong figure for the one case the
+  // feature was built for. The protection is real and belongs upstream: a category exists only
+  // when it was asked for, so nothing can become categorical by accident.
+  const grouped=classifyCategories(p.features.map(f=>f.category));
+  const classed=grouped?null:classifyValues(p.features.map(f=>f.value));
   // ORDERED WHERE THERE IS AN ORDER. Bands carry `minutes` and rank; named regions do not, and
   // YlGnBu's whole design is a lightness ramp a reader is meant to rank. Tidal and non-tidal
   // drawn in two steps of it assert a sequence the categories do not have.
@@ -94,7 +105,7 @@ export function polygonSvg(p:Polygons,esc:Escape):string{
   // A HUE PER FEATURE ONLY WHERE THE FEATURES ARE NAMED THINGS, for the reason `categoricalKey`
   // gives: numbered parts of one layer are not categories, and colouring them as though they
   // were asserts a grouping nobody made.
-  const categorical=classed||banded||p.featuresNamed===false?null
+  const categorical=classed||grouped||banded||p.featuresNamed===false?null
     :categoricalSteps(p.features.length);
   // THE WASH THE PALETTE PROMISES. `categoricalSteps` returns null past its length and says in
   // its own comment that "the caller keeps its neutral fill"; this caller fell through to
@@ -105,17 +116,20 @@ export function polygonSvg(p:Polygons,esc:Escape):string{
   //
   // Bands keep the ramp, because minutes DO have an order. Everything else past the palette is
   // one neutral: no hue competing, and the naming left to the labels and the key.
-  const wash=!classed&&!banded&&!categorical;
+  const wash=!classed&&!grouped&&!banded&&!categorical;
   const colors=classed?classed.colours
+    :grouped?grouped.colours
     :categorical??(wash?[FIGURE_ROLE.unknown]:orderedSteps(p.features.length));
-  return '<rect width="850" height="295" fill="#f7faf8"/>'+p.features.map((f,i)=>{const polys=f.geometry.type==='Polygon'?[f.geometry.coordinates]:f.geometry.coordinates;const at=classed?classed.classOf(f.value):null;
+  return '<rect width="850" height="295" fill="#f7faf8"/>'+p.features.map((f,i)=>{const polys=f.geometry.type==='Polygon'?[f.geometry.coordinates]:f.geometry.coordinates;const at=classed?classed.classOf(f.value):grouped?grouped.classOf(f.category):null;
     // A part with no value is drawn in a neutral, never in the lowest class: an unmatched
     // boundary would otherwise read as a finding of low incidence rather than as no data.
-    const fill=classed?(at===null?FIGURE_ROLE.unknown:colors[at]):colors[i%colors.length];
+    // A part with no class is drawn in the neutral for the same reason a part with no value is:
+    // a sub-district nobody has assigned a company to must not read as belonging to the first.
+    const fill=classed||grouped?(at===null?FIGURE_ROLE.unknown:colors[at]):colors[i%colors.length];
     // Value-bearing fills are readable at full strength; a catchment's identity wash is not
     // the same thing and keeps the lighter tint it has always had.
-    const opacity=classed?(at===null?'.18':'.78'):categorical?'.55':wash?'.16':'.22';
-    return `<path data-catchment="${esc(f.id)}"${classed&&f.value!==undefined?` data-value="${f.value}"`:''} d="${polys.flat().map(r=>'M'+r.map(c=>project(c).join(',')).join('L')+'Z').join('')}" fill="${fill}" fill-opacity="${opacity}" fill-rule="evenodd" stroke="${classed?FIGURE_ROLE.quietInk:fill}" stroke-width="${classed?'.6':'1'}"><title>${esc(f.name)}${f.value===undefined?'':` · ${f.value}`}${f.count===undefined?'':` · ${f.count} locations`}</title></path>`;}).join('')+(p.observations?.features||[]).filter(f=>f.geometry).map(f=>{const [x,y]=project(f.geometry!.coordinates);return `<circle cx="${x}" cy="${y}" r="1.8" fill="#70523a"><title>${esc(f.properties.name)}</title></circle>`;}).join('')+p.sites.filter(f=>f.geometry).map(f=>{const [x,y]=project(f.geometry!.coordinates);return `<rect x="${x-4}" y="${y-4}" width="8" height="8" fill="#174d47"><title>${esc(f.properties.name)}</title></rect>`;}).join('')+plotKey(p,classed,esc);
+    const opacity=classed||grouped?(at===null?'.18':'.78'):categorical?'.55':wash?'.16':'.22';
+    return `<path data-catchment="${esc(f.id)}"${classed&&f.value!==undefined?` data-value="${f.value}"`:''}${grouped&&f.category?` data-category="${esc(f.category)}"`:''} d="${polys.flat().map(r=>'M'+r.map(c=>project(c).join(',')).join('L')+'Z').join('')}" fill="${fill}" fill-opacity="${opacity}" fill-rule="evenodd" stroke="${classed?FIGURE_ROLE.quietInk:fill}" stroke-width="${classed?'.6':'1'}"><title>${esc(f.name)}${f.category?` · ${esc(f.category)}`:''}${f.value===undefined?'':` · ${f.value}`}${f.count===undefined?'':` · ${f.count} locations`}</title></path>`;}).join('')+(p.observations?.features||[]).filter(f=>f.geometry).map(f=>{const [x,y]=project(f.geometry!.coordinates);return `<circle cx="${x}" cy="${y}" r="1.8" fill="#70523a"><title>${esc(f.properties.name)}</title></circle>`;}).join('')+p.sites.filter(f=>f.geometry).map(f=>{const [x,y]=project(f.geometry!.coordinates);return `<rect x="${x-4}" y="${y-4}" width="8" height="8" fill="#174d47"><title>${esc(f.properties.name)}</title></rect>`;}).join('')+plotKey(p,classed,esc,grouped);
 }
 
 // THE KEY NAMES WHAT IS DRAWN, and nothing else. This line was a fixed string -- "Squares:
@@ -124,7 +138,8 @@ export function polygonSvg(p:Polygons,esc:Escape):string{
 // observations and no modeled catchment anywhere on it. A key that describes marks the figure
 // does not carry is worse than no key: it is the one part of a figure a reader trusts without
 // checking. `EveryMarkIsInTheKey` in map-conformance asks the converse of the same question.
-function plotKey(p:Polygons,classed:ReturnType<typeof classifyValues>,esc:Escape):string{
+function plotKey(p:Polygons,classed:ReturnType<typeof classifyValues>,esc:Escape,
+  grouped:ReturnType<typeof classifyCategories>=null):string{
   const marks:string[]=[];
   if(p.sites.some(f=>f.geometry))marks.push('squares: sites');
   if((p.observations?.features||[]).some(f=>f.geometry))marks.push('dots: observations');
@@ -142,9 +157,29 @@ function plotKey(p:Polygons,classed:ReturnType<typeof classifyValues>,esc:Escape
   // across the polygons it was explaining.
   const method=classed?` · ${classed.classes} ${classed.method==='quantile'
     ?'quantile classes, about equal counts, so the shade shows rank'
-    :'equal-interval classes, equal value spans, so the shade shows magnitude'}`:'';
-  const key=`<text x="20" y="${classed?290:282}" font-size="10">`
+    :'equal-interval classes, equal value spans, so the shade shows magnitude'}`
+    // SAID, so a reader is not left to infer from the absence of breaks that there is an order.
+    :grouped?` · polygon shade: the class each part belongs to, which has no order`:'';
+  const key=`<text x="20" y="${classed||grouped?290:282}" font-size="10">`
     +esc(marks.join(' · ').replace(/^./,c=>c.toUpperCase())+method)+'</text>';
+  // THE CLASSES, NAMED. A categorical figure's key is the only place a reader learns what a hue
+  // MEANS -- there is no ramp to read and no breaks to interpolate -- so a swatch without its
+  // label is a colour with no referent. `EveryMarkIsInTheKey` asks the converse of this.
+  //
+  // Laid out in rows of two rather than a strip, because a class label is a phrase ("Southwark
+  // and Vauxhall Company only") and not a number, and a strip of 34-pixel swatches has nowhere
+  // to put one.
+  if(grouped){
+    const perRow=2,swatch=11;
+    return grouped.labels.map((label,i)=>{
+      const x=22+(i%perRow)*402,y=250+Math.floor(i/perRow)*18;
+      return `<rect x="${x}" y="${y}" width="${swatch}" height="${swatch}" `
+        +`fill="${grouped.colours[i]}" fill-opacity=".78" `
+        +`stroke="${FIGURE_ROLE.quietInk}" stroke-width=".4"/>`
+        +`<text x="${x+swatch+6}" y="${y+swatch-1}" font-size="9" `
+        +`fill="${FIGURE_ROLE.quietInk}">${esc(label)}</text>`;
+    }).join('')+key;
+  }
   if(!classed)return key;
 
   // A SHADE WITHOUT ITS BREAKS SAYS ONLY "MORE" AND "LESS". The classes are quantiles taken from

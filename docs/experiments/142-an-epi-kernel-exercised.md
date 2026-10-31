@@ -1,6 +1,6 @@
 # 142 — An epi kernel, exercised rather than listed
 
-_Created 2026-10-26 · Updated 2026-10-27_
+_Created 2026-10-26 · Updated 2026-10-30_
 
 **Status:** tried — three operations built, exercised end to end in the South London worked
 example, and one of them checked against an independent implementation.

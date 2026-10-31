@@ -791,8 +791,25 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 .notes-source{font-size:.78rem;color:var(--muted);opacity:.9;font-style:italic}
 /* WHY THE WRITE-UP IS THINNER THAN THE INVESTIGATION. A plain notice, not a warning: a
    workflow nobody has run is a step not yet computed, which is an ordinary state. */
-.notes-pending{font-size:.86rem;color:var(--muted);border-left:2px solid var(--rule,#2a3a36);
-  padding:.1rem 0 .1rem .6rem;margin:.4rem 0 0}
+/* THE WRITE-UP'S ONE CONTROL, as a control. The rule this replaces made it .86rem muted prose
+   with a .button.small inside it and dimmed the whole row to 80% once everything had run, which
+   is how a button a practitioner asked for twice went unfound. Button first at full weight, the
+   account of the state as prose beside it. */
+.notes-run{display:flex;gap:.8rem;align-items:center;flex-wrap:wrap;margin:0 0 1rem;
+  padding:.7rem .8rem;border:1px solid var(--line);border-radius:.4rem;
+  background:var(--surface-raised-1)}
+.notes-run>.button{flex:0 0 auto}
+.notes-run p{margin:0;flex:1 1 20rem;min-width:0;font-size:.86rem;color:var(--muted);
+  line-height:1.55}
+/* No button where there is nothing to run, so the row is prose and reads as prose. */
+.notes-run.is-absent{border-style:dashed}
+/* WHY THE GRAYED-OUT CONTROLS ARE GRAYED OUT, said once at the top. `button:disabled` already
+   carries the graying (opacity .55, no pointer), so nothing here restyles the buttons: what was
+   missing was the account, not the dimming. Full width of the row, under the state sentence. */
+.notes-run .notes-readonly{flex:1 1 100%;margin:0;font-size:.86rem;color:var(--muted);
+  line-height:1.55}
+.notes-run.is-ready .notes-readonly,.notes-run:not(.is-absent) .notes-readonly{
+  padding-top:.45rem;border-top:1px dashed var(--line)}
 .notes-kind-derived{background:rgba(95,74,120,.2)}
 
 /* THE NOTES BOARD. Ordinals and counts in mono so a reader can scan them; a card's left edge
@@ -849,3 +866,31 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 #note-dialog .panel{margin-top:.8rem;padding-top:.7rem;border-top:1px solid var(--rule,#2a3a36)}
 #note-dialog .dlg-foot{display:flex;gap:.6rem;align-items:center}
 #note-dialog .grow{margin-left:auto}
+
+/* A FIGURE IN THE WRITE-UP: the artifact itself, above the sentence machined about it.
+   Sized for a column of prose rather than for a result tab — a table a reader scrolls
+   sideways is a table nobody checks. */
+.notes-figure{margin:0 0 .6rem;padding:.5rem;border:1px solid var(--line);border-radius:6px;
+  background:var(--surface-2,rgba(127,127,127,.06));overflow-x:auto}
+.notes-figure table{border-collapse:collapse;width:100%;font-size:.82rem}
+.notes-figure th,.notes-figure td{border-bottom:1px solid var(--line);padding:.22rem .45rem;
+  text-align:left;white-space:nowrap}
+.notes-figure th{font-weight:600;position:sticky;top:0;background:inherit}
+.notes-figure .figure-number{text-align:right;font-variant-numeric:tabular-nums}
+/* An empty cell is unknown and not zero, which the description says in words and this says
+   in the figure. Dimmed rather than blank: a blank cell reads as a measured nothing. */
+.notes-figure .figure-empty{text-align:right;opacity:.45}
+.notes-figure figcaption{margin-top:.4rem;font-size:.78rem}
+.notes-figure.is-absent{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}
+.notes-figure.is-absent p{margin:0}
+/* The run control sits on the tab whether or not there is anything pending. */
+
+
+/* THE ASSEMBLED REFERENCES: what the workflows cite, above the author's own notes in the part.
+   Not a card, because it is not a note and must not look draggable. */
+.notes-references{margin:0 0 .7rem;padding:.55rem .7rem;border-left:3px solid var(--line)}
+.notes-references ol{margin:.3rem 0 0;padding-left:1.2rem}
+.notes-reference{margin:.3rem 0;font-size:.86rem;line-height:1.45}
+.notes-reference .notes-source{display:block;margin-top:.1rem;font-size:.76rem;opacity:.7}
+/* A method nobody has looked up is listed, not hidden — and marked so a venue can find it. */
+.notes-reference.is-uncited{opacity:.78;font-style:italic}

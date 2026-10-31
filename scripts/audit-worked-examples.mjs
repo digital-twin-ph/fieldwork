@@ -327,7 +327,22 @@ if(process.argv.includes('--write')){
     +`examples, ${unused.length} widgets no workflow uses, ${totalUndeclared} nodes carrying data `
     +`that declare no source.`);
   const current=(()=>{try{return readFileSync(`${root}/${path}`,'utf8');}catch{return null;}})();
-  if(current!==document){
+  // THE STAMP IS NOT COMPARED, and the whole rule depended on it being excluded.
+  //
+  // This file carries `Updated ${today}`, so a byte-for-byte comparison asks the committed file
+  // to have been generated TODAY -- which is unsatisfiable by construction and fails on the day
+  // after any day it was satisfied. Found on 2026-10-30, by a gate that went red on a file whose
+  // measurements had not changed at all: 54 widgets, 11 examples, 12 unused, 11 undeclared, the
+  // same numbers the committed file already stated.
+  //
+  // `scripts/stamp-docs.mjs` had already written this argument down for its own stamps, in the
+  // same terms: a rule of the form "the stamp equals a date" is "unsatisfiable by construction,
+  // and a gate built on it fails immediately after it is satisfied". The same shape in a second
+  // generator, which is a reason to compare what the audit MEASURES and leave the date to the
+  // one check that can hold -- that it exists and parses.
+  const measured=text=>text===null?null
+    :text.replace(/^_Created \d{4}-\d{2}-\d{2} \u00b7 Updated \d{4}-\d{2}-\d{2}_$/m,'');
+  if(measured(current)!==measured(document)){
     console.log(`\n${path} is stale. Run: node scripts/audit-worked-examples.mjs --write`);
     process.exitCode=1;
   }

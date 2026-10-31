@@ -134,10 +134,37 @@ const southLondonTables=()=>{
   catch{throw new Error('example-1855-cholera-south-london is not checked out beside this repository, '
     +'and these fixtures are built from its tables rather than from figures retyped here. '
     +'Clone it at ../example-1855-cholera-south-london and run this again.');}
-  const workflow=bundle.workflows.find(w=>w.key==='south-london/contingency');
-  if(!workflow)throw new Error('That checkout carries no south-london/contingency workflow.');
+  // FOUND BY NAME, BECAUSE A KEY IS MINTED AND A NAME IS CHOSEN.
+  //
+  // These three fixtures resolved `south-london/contingency` and `south-london/choropleth` until
+  // 2026-10-31, when all three stopped building: the pinned bundle's keys had become
+  // `snow-s-south-london-water-supply-study-1854-4/w1` through `/w8`. Nothing was renamed. The
+  // eighth workflow was built BY HAND from the palette, per the standing rule that a worked
+  // example must be reproducible that way, and the rebuilt bundle therefore carries the keys the
+  // APPLICATION mints rather than the ones an earlier scripted bundle carried.
+  //
+  // `mintWorkflowKey` (app.ts) is the only thing that makes a workflow key and it makes exactly
+  // `${projectId}/w${n}`. So a semantic key is not something a practitioner can produce, and a
+  // fixture that resolves one is pinned to a bundle no hand-built example can reproduce. Worse,
+  // the project id carries a dedupe counter -- the `-4` above -- so the key changes again the next
+  // time the project is rebuilt, and a lookup by key would break on a rebuild that renamed
+  // nothing.
+  //
+  // The name is what the practitioner wrote and what the catalog shows. It can be edited, which a
+  // key cannot, so this fails loudly and lists what the checkout holds rather than resolving to
+  // the wrong workflow.
+  const byName=name=>{
+    const found=bundle.workflows.filter(w=>w.document?.name===name);
+    if(found.length===1)return found[0];
+    throw new Error(`That checkout carries ${found.length===0?'no':found.length} workflow`
+      +`${found.length===1?'':'s'} named "${name}". It holds: `
+      +bundle.workflows.map(w=>`"${w.document?.name}"`).join(', ')
+      +'. These fixtures find a workflow by the name a practitioner gave it, because a workflow '
+      +'KEY is minted as `${projectId}/w${n}` and carries no meaning across a rebuild.');
+  };
+  const workflow=byName('Died or survived, by water supply');
   const node=id=>workflow.document.nodes.find(n=>n.id===id).params.data;
-  const choropleth=bundle.workflows.find(w=>w.key==='south-london/choropleth');
+  const choropleth=byName('Deaths per 1,000 people, mapped');
   const cnode=id=>choropleth.document.nodes.find(n=>n.id===id);
   return {left:node('table-viii'),right:node('table-xii'),
     // The choropleth chain: Table VIII, the rate declared over it, and the study area's named

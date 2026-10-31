@@ -259,7 +259,8 @@ export function rateRatioEquationNote(result:RateRatioResult,nodeId:string):Mach
     +`The interval describes sampling variation in these counts alone. It is not a p-value, and `
     +`nothing here adjusts for anything the two groups did not share.`
     +references([method]);
-  return {kind:'machined',id:`${nodeId}:equation`,section:'Methods',fn:'method',text,nodeId};
+  return {kind:'machined',id:`${nodeId}:equation`,section:'Methods',fn:'method',text,nodeId,
+    cites:[method]};
 }
 
 /** One estimate's pair of equations, symbolic then instantiated, in the a/b/c/d letters. */
@@ -338,7 +339,8 @@ export function twoByTwoEquationNote(result:TwoByTwoResult,nodeId:string):Machin
       +`${result.strataLeftOut.map(v=>`"${v}"`).join(', ')} in ${exposureColumn}, which is in `
       +`neither group, so the letters above total ${said(result.total)} and not the table.`;
   text+=references(used);
-  return {kind:'machined',id:`${nodeId}:equation`,section:'Methods',fn:'method',text,nodeId};
+  return {kind:'machined',id:`${nodeId}:equation`,section:'Methods',fn:'method',text,nodeId,
+    cites:[...new Set(used)]};
 }
 
 /** THE NOTE, AS N3, for the receipt that already asserts the computation.
@@ -361,6 +363,25 @@ export function machinedNoteFacts(subject:string,notes:readonly MachinedNote[]):
   // theirs before this runs -- `rate` emits a statement per group -- so a `;` continuation would
   // be appended after a `.` and the receipt would not parse. A separate triple with the same
   // predicate says the same thing and does not depend on where the caller stopped writing.
+  // THE FUNCTION AND THE METHODS TRAVEL WITH THE NOTE, added 2026-10-30 so the shapes in
+  // ontology/shapes/write-up.ttl have something to hold a receipt to. `fw:noteFunction` had been
+  // named in an ontology comment since 2026-10-29 and declared nowhere, and the works a note
+  // cited could only be recovered by matching its prose -- which breaks the first time a venue
+  // changes citation style.
+  const citation=(method:string):string=>{
+    const rendered=renderMethodCitation(method);
+    const uncited=METHOD_REFERENCES[method]?.uncited;
+    // EITHER a reference OR the reason there is none, never neither and never both, which is
+    // what `fw:MethodCitationShape` holds this to. The fallback is a sentence rather than
+    // silence, for the reason `references()` prints one.
+    const stated=rendered
+      ?`fw:methodReference ${quote(rendered)}`
+      :`fw:methodUncited ${quote(uncited||'No source has been read for this method.')}`;
+    return `fw:citesMethod [ a fw:MethodCitation; fw:methodName ${quote(method)}; ${stated} ]`;
+  };
   return notes.map(note=>`${subject} fw:machinedNote [ a fw:MachinedNote; `
-    +`fw:noteSection ${quote(note.section)}; fw:noteText ${quote(note.text)} ].\n`).join('');
+    +`fw:noteSection ${quote(note.section)}; `
+    +(note.fn?`fw:noteFunction ${quote(note.fn)}; `:'')
+    +[...new Set(note.cites||[])].map(method=>`${citation(method)}; `).join('')
+    +`fw:noteText ${quote(note.text)} ].\n`).join('');
 }

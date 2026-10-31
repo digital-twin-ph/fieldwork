@@ -1,6 +1,6 @@
 # 147 — Table shells: begin with the end in mind
 
-_Created 2026-10-28 · Updated 2026-10-29_
+_Created 2026-10-28 · Updated 2026-10-30_
 
 **Status:** asked — and the central question was answered on the day it was asked, by the practitioner, in the section below. What remains unanswered is narrower and is named there.
 

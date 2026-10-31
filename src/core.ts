@@ -63,8 +63,8 @@ import {rateEquationNote,rateRatioEquationNote,twoByTwoEquationNote,machinedNote
 // WHAT AN ARTIFACT DECLARES ABOUT ITSELF. A table, a map and a chart are what a Results
 // section is mostly made of, and until now not one of them put a word into the write-up. NOT a
 // caption: that is the author's, and 141 records why.
-import {tableDescriptionNote,mapDescriptionNote,chartDescriptionNote}
-  from './artifact-notes.js';
+import {tableDescriptionNote,mapDescriptionNote,chartDescriptionNote,publishedArtifactFacts,
+  type PublishedArtifact} from './artifact-notes.js';
 import {derivedNotes} from './notes-derived.js';
 import {polygonLayer,polygonLayerFacts} from './polygon-layer.js';
 import {shareAlike} from './input-provenance.js';
@@ -978,6 +978,15 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
     receipt.facts+=facts;
     if(receipt.input)receipt.input+=facts;
   };
+  // WHAT THE STEP PUBLISHED, beside the note about it. Both land on the same output entity, so
+  // `fw:PublishedArtifactIsDescribedShape` can hold one against the other on a real receipt.
+  const withArtifact=(into:Receipt[],run:string,nodeId:string,artifact:PublishedArtifact)=>{
+    const receipt=into[into.length-1];
+    if(receipt?.nodeId!==nodeId)return;
+    const facts=publishedArtifactFacts(`<urn:fieldwork:run:${run}:output:${nodeId}>`,artifact);
+    receipt.facts+=facts;
+    if(receipt.input)receipt.input+=facts;
+  };
   const sources=derivedNotes(workflow.nodes,workflow.workflowKey);
   const expansion=expandMicroWorkflows(workflow,resolveComposition,runId);
   workflow=expansion.workflow;receipts.push(...expansion.receipts);
@@ -1132,7 +1141,8 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         // that failed with "Cannot read properties of undefined" and named neither port.
         const joined=joinTableToAreas(units,
           inputs.records as unknown as import('./data-table.js').DataTable,
-          {keyField:node.params.keyField,normalisation:node.params.normalisation});
+          {keyField:node.params.keyField,normalisation:node.params.normalisation,
+            categoryField:node.params.categoryField});
         value=joinedPolygons(inputs.area.boundary,joined,node.params.label);
         receipts.push(areaJoinReceipt(node,joined,runId,
           workflow.edges.find(e=>e.to===node.id&&e.port==='records')!.from,
@@ -1907,11 +1917,16 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
     if(node.type==='table_output'&&(value as {kind?:string})?.kind==='data-table'){
       const note=tableDescriptionNote(value as unknown as import('./data-table.js').DataTable,
         node.params.label,node.id,portSourceName(workflow,node.id,'table',''));
-      if(note){machined[node.id]=[note];withNote(receipts,runId,node.id,[note]);}
+      if(note){machined[node.id]=[note];withNote(receipts,runId,node.id,[note]);
+        const table=value as unknown as import('./data-table.js').DataTable;
+        withArtifact(receipts,runId,node.id,{kind:'table',rowCount:table.rowCount,
+          missingValueCount:table.missingValueCount});}
     }
     if(node.type==='chart_output'&&isRecord(value)&&(value as {chart?:ChartSummary}).chart){
-      const note=chartDescriptionNote((value as {chart:ChartSummary}).chart,node.params.label,node.id);
-      if(note){machined[node.id]=[note];withNote(receipts,runId,node.id,[note]);}
+      const chart=(value as {chart:ChartSummary}).chart;
+      const note=chartDescriptionNote(chart,node.params.label,node.id);
+      if(note){machined[node.id]=[note];withNote(receipts,runId,node.id,[note]);
+        withArtifact(receipts,runId,node.id,{kind:'chart',barCount:chart.bins.length});}
     }
     if(node.type==='map_output'&&isRecord(value)){
       const plan=mapLayerList(node,workflow.edges,
@@ -1927,7 +1942,10 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
       assertSomethingToDraw(plan,node.params.label||node.id);
       (value as unknown as {mapLayers?:MapLayer[]}).mapLayers=plan;
       const note=mapDescriptionNote(plan,node.params.label,node.id);
-      if(note){machined[node.id]=[note];withNote(receipts,runId,node.id,[note]);}
+      if(note){machined[node.id]=[note];withNote(receipts,runId,node.id,[note]);
+        // DRAWN, not connected: the distinction `fw:layerDrawn` exists for.
+        withArtifact(receipts,runId,node.id,
+          {kind:'map',layerCount:plan.filter(l=>l.drawn).length});}
     }
     values.set(node.id,value);trace.push({nodeId:node.id,type:node.type,milliseconds:performance.now()-begin});
     // WHEN THIS STEP RAN, in the receipt, in PROV's own terms.

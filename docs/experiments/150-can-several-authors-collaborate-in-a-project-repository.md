@@ -2,7 +2,10 @@
 
 _Created 2026-10-29 · Updated 2026-10-29_
 
-**Status:** asked — the question is posed and the architecture is unbuilt. Step 1 of the pilot below is done, and what exists was measured; those measurements already rule one option out. What exists was measured, and the
+**Status:** asked — the question is posed and the architecture is part built. **Competency
+question 1 was decided on 2026-10-31 by the measurement this document asked for, and the layout is
+published as `digital-twin-ph/fieldwork-project-template`.** The converter between that layout and
+the application is still unbuilt, which is now the whole of the remaining work. Step 1 of the pilot below is done, and what exists was measured; those measurements already rule one option out. What exists was measured, and the
 measurement already rules one option out. What would answer the rest is named at the end.
 
 The practitioner, 2026-10-29, after [149](149-the-notes-spike.md) showed that notes carry their own
@@ -532,16 +535,356 @@ practitioner. A shared lab machine breaks it, and the breakage is social rather 
     claiming rather than reporting.
 
 
+## The layout, decided by measurement — 2026-10-31
+
+The measurement this document named as the next step was run, on eight workflows rather than one,
+and it decided competency questions 1 and 2 by demonstration. **Every workflow graph is small**
+once payloads come out:
+
+| workflow | in the bundle | graph alone |
+| --- | ---: | ---: |
+| Snow's Map 2, as published | 351,988 | 4,593 |
+| Cholera in 1849 compared with 1854 | 9,742 | 4,628 |
+| Deaths per house, by water company | 5,595 | 5,033 |
+| Deaths per 1,000 people, by sub-district | 25,067 | 6,240 |
+| The ground | 287,964 | 8,370 |
+| Died or survived, by water supply | 21,385 | 11,378 |
+| Deaths per 1,000 people, mapped | 465,822 | 11,119 |
+| The river as it runs | 1,247,622 | 40,942 |
+| **total** | **2,415,185** | **≈92,000 — 3.8%** |
+
+Three findings the 2026-10-29 version could not have had:
+
+**`params.data` behind `params.dataRef` already is the externalisation mechanism.** Stripping it
+alone takes 2,415,185 to 181,232. Question 2 asked whether a node could reference an asset instead
+of inlining it; the payload store has been doing exactly that since experiment 121, and what is
+missing is only its spelling on disk.
+
+**A study area's geometry is the last inlined asset, and it is the entire outlier.** The choropleth
+stays at 99,600 after `data` comes out because its `sub-districts` node carries 85,435 bytes of
+geometry and 3,066 of boundary provenance, and `AreaParams` declares neither `data` nor `dataRef`.
+Externalising it brings that workflow to 11,119. This is the same gap the study-area reuse control
+met on 2026-10-31 from the other side: reusing that boundary copies 85 kB because there is no
+digest for geometry to be shared by.
+
+**The largest legitimate graph is a decision, not data.** *The river as it runs* is 41 kB because
+`hidden` is 14,415 bytes — the 859 OpenStreetMap feature ids a practitioner set aside, beside the
+seven reaches merged. That is precisely what co-ownership needs in a diff: a reviewer can see which
+features a co-author discarded. It is an argument for the format rather than a cost of it.
+
+Notes measure **646 bytes each**, so one file per note costs nothing.
+
+### What the template ships, and the two rulings behind it
+
+Published at `digital-twin-ph/fieldwork-project-template`, `is_template` set:
+
+```
+project.json            the project: name, subject, authors, createdAt, workflow list
+workflows/<name>.json   one workflow graph per file          ← the unit of collaboration
+notes/<id>.json         one note per file
+assets/manifest.json    payloads by path + sha256 + bytes, or as a declaration
+.fieldwork/format.json  the version of this layout
+```
+
+**A file is a workflow.** Two authors on different workflows must not collide; two on the same one
+must, because a canvas is a graph and a silently merged graph is a graph neither author drew.
+
+**A file is named for the workflow, never for its key** — written here as `<key>.json` until
+2026-10-31, when the distinction turned out to matter. The conversion had slugged the name all
+along, so nothing in the layout changed; what changed is that the reason is now known. A workflow
+KEY is minted by `mintWorkflowKey` as `${projectId}/w${n}` and is the only kind of key the
+application can produce, so the key is `w5` and the project id carries a dedupe counter that
+increments every time the project is rebuilt. Three validation-lab fixtures were resolving
+`south-london/contingency` and `south-london/choropleth`, and all three stopped building the day
+the eighth workflow was added, because the rebuilt bundle carried `…-1854-4/w1` through `/w8`.
+Nothing had been renamed. Those fixtures now find a workflow by its name, which is what the
+layout does and what a reader of a pull request needs: `died-or-survived-by-water-supply.json`
+says what a reviewer is looking at and `w7.json` does not. The cost is that a rename moves a file,
+which git records as a rename and a key would have hidden.
+
+**An acquired payload is not committed — the declaration that reproduces it is.** The practitioner
+ruled this on 2026-10-31 for question 3, over the river workflow's 1.07 MB OSM read. The cost is
+stated in the template rather than left to be discovered: a clone rebuilds by reading the extract
+again, so reproducibility depends on that extract still being obtainable, and Geofabrik rotates
+them. **The digest proves you got the right file; it does not get you the file.** A project that
+must survive its source going away commits the read and accepts the size.
+
+**No `LICENSE` ships in the template**, deliberately: a template that picks one picks it for every
+project copied from it.
+
+### What this changes about the steps above
+
+- **Step 0a is done** — the repository exists and is a template. Its layout *is* step 5, as this
+  document predicted, so both are settled together.
+- **Step 5 is done**, by measurement rather than by argument.
+- **Step 6 is built** — `attestIdentity` calls `GET /user`, and `currentIdentity` /
+  `setCurrentIdentity` exist. This document's *"there is no current identity anywhere in `src/`"*
+  is stale, as is *"nothing today records when a project began"*: `Project.createdAt` exists and
+  `newProject` sets it.
+- **Step 7 is not** — nothing in `src/` writes to the Contents API, and no converter reads or
+  writes the layout above. A repository made from the template is a place to put work, not a thing
+  the application can open.
+- **Step 4 is open** — sea level rise is still a widget pack, not a project repository.
+
+### And the divergence this document predicted is now permanent
+
+South London's notes were *"stored twice"* on 2026-10-29 and *"diverged within hours"*. Measured
+2026-10-31: the bundle holds **13** notes and `notes/snow-quotations.json` holds **9**. The nine
+quoted ones are in both; the four authored ones exist only inside the gzip. The plain file is not
+a second copy any more, it is a stale subset — which is what happens to the readable half when the
+opaque half is the one the application writes.
+
+## The two-author test, run — 2026-10-31
+
+South London was converted into the layout on the branch `repository-layout` of
+`example-1855-cholera-south-london`, cloned twice, and edited by two authors. Steps 8 and 9 of
+the pilot were run against it, with the current format as the control. Nobody was helped: these
+are `git merge`'s own answers.
+
+### The control — today's format, the same two edits
+
+Amina renames a layer on *The ground*; Ben widens an interval on *Deaths per house*. **Different
+workflows, nothing in common.**
+
+```
+ fieldwork-project.json.gz | Bin 1001476 -> 1008632 bytes
+ 1 file changed, 0 insertions(+), 0 deletions(-)
+
+warning: Cannot merge binary files: fieldwork-project.json.gz (HEAD vs. origin/main)
+CONFLICT (content): Merge conflict in fieldwork-project.json.gz
+```
+
+Two things, and the first is as bad as the second. **A reviewer is told nothing**: zero insertions,
+zero deletions, 7 kB of binary moved. And **two edits that share nothing conflict**, with no
+resolution available except to take one author's whole project and discard the other's. This is
+the prediction of 2026-10-29 measured rather than argued.
+
+### Step 9 — different workflows. Passes.
+
+Clean merge. `1 file changed, 1 insertion(+), 1 deletion(-)` — the diff is the rename.
+
+### Step 8 — the same note, from stale state. Passes.
+
+Conflicted, and this is the whole of what the step asks:
+
+```
+<<<<<<< HEAD
+ "establishes": "That circumstances, not the investigator, assigned the exposure.",
+=======
+ "establishes": "That the comparison was a natural experiment and not a designed one.",
+>>>>>>> origin/repository-layout
+```
+
+Two versions of one sentence. 150 predicted that is *"a thing an epidemiologist can adjudicate"*,
+and it is.
+
+### And the case this document guessed at, which it got wrong
+
+> *"Two authors on the **same** workflow probably must [conflict] — a canvas is a graph, and a
+> silently merged graph is a graph neither author drew."*
+
+Right about what should happen, **wrong that choosing the file would deliver it.**
+
+| | without `.gitattributes` | with `workflows/*.json -merge` |
+| --- | --- | --- |
+| different workflows | clean merge | clean merge |
+| same workflow, **different nodes** | **merged silently** | conflict |
+| same workflow, same node, different field | conflict | conflict |
+| same workflow, same node, same field | conflict | conflict |
+
+**Git merges by hunk, not by file.** Two authors renaming two different nodes of one workflow
+produced, with no warning, a graph neither of them drew — which is the precise outcome the
+granularity rule was chosen to prevent. File granularity delivers the *good* half of the rule and
+not the half it was argued from.
+
+**One line fixes it**, and it is now in the template and on the branch:
+
+```
+workflows/*.json -merge
+```
+
+### The lesson that generalises: granularity is only half the merge strategy
+
+The other half is **which write path is used**, and the two substrates did not agree until that
+line was added:
+
+- **A checkout** merges by line. Silent interleave was its default.
+- **The Contents API** from the browser merges not at all: the blob `sha` precondition refuses a
+  stale write for the whole file.
+
+A project co-owned by one person using the application and one using a git checkout therefore had
+**two different conflict regimes on the same file**. `-merge` makes the checkout behave like the
+precondition. This document had measured the browser path carefully and had not asked what the
+other path would do with the same bytes.
+
+## What the conversion itself cost and saved
+
+| payload | what happened to it | count |
+| --- | --- | --- |
+| the OSM water read, 1,095,655 B | **declaration only** — `acquired` in the manifest, not committed | 1 |
+| table data with `convertOnRun` | **dropped** — the node already declares how to rebuild it | 6 |
+| the plate, 347,405 B of base64 ×2 | **referenced** — `geo/map2.jpg`, already in the repository, digest matched exactly | 2 |
+| boundaries, intakes | written once to `assets/`, **shared by two nodes each** | 3 written, 2 shared |
+
+The plate is the clearest case: two nodes carried 694,810 bytes of base64 between them for a file
+the repository already held, at 260,535 bytes, whose digest the node was already recording.
+
+**And the geometry gap is worse here than in the bundle.** The eight graphs are 306,289 bytes on
+disk pretty-printed; **133,910 of that is one study area's geometry**, the node `sub-districts` on
+the choropleth — 44 per cent of the whole `workflows/` directory, for one boundary, because
+`AreaParams` declares no payload reference and indentation multiplies what cannot be externalised.
+Compact it is 85,435. Take it out and the eight graphs come to 168,743.
+
+So the gap this document found from one side and the study-area reuse control found from the other
+is the same gap, and it is now the largest single item in a format whose whole argument is that
+graphs are small.
+
+## Discussions, measured — 2026-10-31
+
+The practitioner asked whether GitHub has a discussions API that can download and submit
+discussions. Probed from the deployed Pages origin, unauthenticated, because the standing reminder
+in this document is that `*` is measured per request and not per host.
+
+| request | result |
+| --- | --- |
+| `GET /repos/{owner}/{repo}/discussions` on a public repo with them enabled | **200**, `access-control-allow-origin: *`, `x-ratelimit-limit: 60`, `Link` pagination |
+| the same on a repo without them | **410** — *"Discussions are disabled for this repo"*, CORS headers intact |
+| `GET /repos/{owner}/{repo}/discussions/{n}/comments` | **200** |
+| `OPTIONS` preflight, `POST` on the collection, `authorization,content-type` | **204**, `allow-methods: GET, POST, PATCH, PUT, DELETE`, `allow-origin: *` |
+| `OPTIONS` preflight, `POST /graphql` | **204**, `allow-origin: *`, Authorization allowed |
+| `POST /graphql`, no token | **403**, `x-ratelimit-limit: **0**` |
+
+**Both download and submit are reachable from a browser with no backend**, and the correction worth
+recording is that **this is REST, not only GraphQL.** Discussions are widely described as a
+GraphQL-only feature; the 410 above carries GitHub's own
+`documentation_url: .../rest/repos/discussions#list-discussions-for-repository`, and the 200 on a
+repository that has them enabled returns whole objects — `number`, `title`, `body`, `category`,
+`comments`, `reactions`, `labels`, `author_association`, `answer_chosen_by`, `state`, `locked`.
+
+Three consequences for this thread:
+
+1. **Reads need no token**, exactly as `raw.githubusercontent.com` reads do. That matches the trust
+   model the example catalogue already has, and it is the opposite of GraphQL, whose
+   `x-ratelimit-limit: 0` means there is no unauthenticated access at any volume. Choosing REST
+   here keeps reading a project's conversation available to someone who has no credential.
+2. **It is a different permission from the one step 0b specifies.** That token grants
+   **Contents: Read and write and nothing else**. Writing a discussion needs **Discussions: Read
+   and write**, so submitting from the application widens the token or adds a second one — a
+   decision, not a detail, and the reason to make it deliberately is the same reason Workflows was
+   refused.
+3. **A discussion is not in the clone — and the practitioner ruled that this is not a defect.**
+   2026-10-31: *"the fact that the discussion is hosted on GitHub is good enough. That is the joint
+   public record of a collaboration like any open source project. This actually promotes open
+   research."*
+
+   The objection this replaces was that discussions are not pinned by commit, not digest-verified
+   and not carried by `git clone`. That conflated two needs. **Pinning answers "did I get the same
+   bytes", which is a question about artifacts.** A record of deliberation needs to be public,
+   attributed, timestamped and linkable, and Discussions is all four — the substrate open-source
+   projects have used for years, and a better record of reasoning than most published research
+   produces, because the argument is visible and not only the conclusion.
+
+   **And it fixes something these documents do badly.** The rulings in this corpus reached the
+   record by being transcribed — every practitioner quote above, this one included, is the
+   assistant's rendering of what was said. That is one point of paraphrase and it has no
+   co-author. A discussion is the practitioners writing in their own words under their own
+   accounts. For the multi-author case that is a stronger record than an experiment file, not a
+   weaker one.
+
+   **What survives is narrow, and it is a rule this corpus already applies one level in:** a
+   decision that reaches only the thread has not been acted on, in the same way a direction that
+   reaches only the docs has not. The deliberation belongs in the discussion; the ruling still has
+   to land in a parameter, a note or an experiment record, carrying a link to the thread that
+   settled it.
+
+   The measurement strengthens the ruling rather than qualifying it. Because the REST read path
+   needs **no token** and answers `access-control-allow-origin: *`, a thread can be archived into
+   the repository at a decision point by anyone, with no credential. *"Outside git"* is therefore a
+   choice about when to snapshot, not a durability gap. Citing a discussion is stable; preserving
+   one is cheap.
+
+   It remains the wrong home for a **note**, which [149](149-the-notes-spike.md) established is
+   material the write-up is made of rather than talk about the write-up — and it is the natural
+   home for the conflict adjudication competency question 7 asks about.
+
+None of our three repositories has Discussions enabled (`has_discussions: false` on `fieldwork`,
+`example-1855-cholera-south-london` and `fieldwork-project-template`), so nothing was submitted and
+no write is claimed here. The read path is measured; the write path is measured only as far as its
+preflight, which is the same standard the Contents API write was held to on 2026-10-29.
+
+## Governance the authors exercise — 2026-10-31
+
+The practitioner, extending the ruling above: *"research discussions should have user exercised
+governance. For example always document decisions and free text can also have some structure the
+ways issues are described on GitHub."*
+
+**The mechanism exists and was verified rather than assumed.** `.github/DISCUSSION_TEMPLATE/<category-slug>.yml`,
+on the issue-forms schema — `body:` of `textarea` / `input` / `dropdown` with
+`validations.required` — bound to a discussion category by file name. Confirmed by reading
+`vercel/next.js`'s `ideas.yml`, which is that schema in production; four other large repositories
+probed carry no such directory, so this is a feature in real use rather than a documented one
+nobody has adopted.
+
+**The property that answers the governance question is that a form is a FILE.** Discussions live
+outside the clone; the rules for them do not. A project changes how it deliberates by opening a
+pull request against a YAML file, which is reviewable, diffable, attributable and carried by the
+template — so the governance is version-controlled even though the conversation is not. Nothing in
+Fieldwork reads or enforces it, which is the same division this document already applies to
+permissions: **authorization is GitHub's, structure is the authors', and the application
+implements neither.**
+
+**One form, not four.** Shipped in the template as `decisions.yml`. Structure imposed on
+exploration is friction and the mission is to decrease friction, so a decision is the only kind of
+post with required fields. Four of them are the record — what was decided, what it rules out, the
+evidence (*"if nothing was measured, write that plainly"*), and what this does not establish, which
+is this corpus's own experiment vocabulary reused rather than a new one coined. Two of them are the
+governance:
+
+- **Where the ruling lands**, which makes the rule from the section above structural rather than
+  remembered: a decision that reaches only the thread has not been acted on.
+- **Who carries it out**, asked for rather than inferred, because attribution is a claim about who
+  did the work.
+
+**Unverified, and named rather than assumed:** whether discussion *categories* travel when a
+repository is generated from a template. The form is a file and certainly does; categories are
+repository settings and may not. Worth checking at the first generation, like the question this
+document already records about whether git history comes across.
+
+## The repository checks its own claims — 2026-10-31
+
+A format that says a payload is named by path and digest is worth nothing if nothing checks it,
+and the failure it prevents belongs to somebody else: a co-author commits a graph referencing an
+asset they forgot to add, and the project is broken for every other author rather than for them.
+That is the review problem co-ownership creates, and it is answerable without any application.
+
+`scripts/validate-project.mjs` ships in the template and runs on every push and pull request. No
+dependencies and no Fieldwork — a project repository stands on its own. It checks only what the
+format promises: that the workflows listed and the workflows present are the same set, that every
+payload a node references is named in the manifest and matches its digest and byte count, that
+every declared read carries what would rebuild it, that every edge joins two nodes that exist, and
+that a note's id is its filename.
+
+**Proven both ways.** It passes on the real conversion — 8 workflows, 43 nodes, 14 of them
+referencing a payload, 13 notes, 4 assets, 1 declared read — and it was then broken six times on
+purpose: a deleted asset, an asset changed under its digest, a workflow file nobody lists, a note
+whose id stopped matching its filename, a node pointing at an undeclared asset, and an edge to a
+node that is not there. Each was named by file and by discrepancy. A check that has only ever
+said yes is not a check.
+
 ## What would answer it
 
 Not a design document. The measurement above came from unpacking one file, and the next step is the
 same kind:
 
-- **Re-express one workflow as files** — `south-london/ground`, 287,549 bytes, with its four assets
-  referenced by path and digest instead of inlined — and measure what is left. If the graph is a few
-  KB of readable JSON, questions 1 and 2 are answered by demonstration.
-- **Then run the two-author test on it**: two clones, two authors, one changing a note and one
-  changing a node parameter, and see what `git merge` does without being helped.
+- ~~Re-express one workflow as files~~ — **done 2026-10-31**, for all eight, above.
+- ~~Then run the two-author test on it~~ — **done 2026-10-31**, above. Steps 8 and 9 pass; the
+  same-workflow case failed and was fixed with `.gitattributes`.
+- **Now: a converter, in the application.** Everything above was done with a Python script against
+  the bundle. Nothing in `src/` reads or writes the layout, so a repository made from the template
+  is still a place to put work rather than a thing Fieldwork can open. That is step 7's
+  prerequisite and the whole of the remaining work.
+- **Give a study area's geometry a payload reference**, so the one asset this layout cannot
+  externalise stops being 44 per cent of it.
 - Question 6 is answerable separately and cheaply, because identity is a name and a handle attached
   to a note, not a login.
 
@@ -568,3 +911,25 @@ same kind:
   may answer differently elsewhere, and the 2026-10-23 `HEAD` trap is the standing reminder that
   this is measured per request and not per host — though `HEAD` on `api.github.com` does *not*
   reproduce it.
+
+## What changed our minds
+
+**That choosing the file chooses the merge.** This document argued granularity from the browser's
+constraint — no merge base, so conflicts are made rare and legible rather than merged — and
+concluded that *"file granularity is the merge strategy"*. One line of that is wrong, and two
+authors found it in ten minutes: git merges by **hunk**, so a file is the unit of *collision
+detection* only on the substrate that has no merge at all. On a checkout, one file per workflow
+bought clean different-workflow merges and silently interleaved same-workflow ones. The rule the
+document stated had to be asserted separately, in `.gitattributes`, rather than following from the
+layout.
+
+The general form, which is the part worth carrying: **a storage format does not decide a merge
+policy; the tool that writes it does.** Two co-owners on two different write paths had two
+different conflict regimes over identical bytes, and nothing in the format said which was intended.
+
+**That the heavy thing was the data.** It was, until it wasn't. With payloads externalised the
+largest remaining item is a *study area's geometry* — 133,910 bytes pretty-printed, 44 per cent of
+all eight graphs — because `AreaParams` alone declares no payload reference. The 92%-is-data
+finding of 2026-10-29 was right about the bundle and stops being the interesting number the moment
+the bundle is taken apart.
+

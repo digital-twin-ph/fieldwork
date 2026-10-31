@@ -49,6 +49,17 @@ export interface AreaJoinDiagnostic {code:AreaJoinCode; subject:string; says:str
 export interface JoinedPart {
   index:number; id:string; name:string; key:string;
   value:number|null; matched:boolean;
+  /** THE CLASS THIS PART BELONGS TO, where the join was told to carry one.
+   *
+   *  A second thing a table says about a place, and a different KIND of thing from `value`: a
+   *  rate is a quantity a reader ranks, a water company is a category a reader cannot. Carried
+   *  separately so a renderer cannot mistake one for the other -- colouring categories along a
+   *  lightness ramp is the precise misreading the cartographic work of 2026-10-28 was done to
+   *  prevent, and it is only avoidable if the two arrive under different names.
+   *
+   *  Added 2026-10-30 for Snow's exposure map: which company supplied each sub-district, which
+   *  is the variable his natural experiment turns on and which no map could draw. */
+  category?:string;
   /** True when another part of the boundary carries the same name and therefore the same value. */
   shared:boolean;
 }
@@ -59,15 +70,29 @@ export interface AreaJoinResult {
   counts:{parts:number; rows:number; matchedParts:number; matchedRows:number;
     unmatchedParts:number; unmatchedRows:number; sharedParts:number};
   /** What the join was told to do, carried so the receipt can state it. */
-  declared:{keyField:string; valueField:string; normalisation:'exact'|'fuzzy'};
+  declared:{keyField:string; valueField:string; normalisation:'exact'|'fuzzy';
+    categoryField?:string};
 }
+
+/** A table cell as a class name, or nothing. A number is a legitimate class label -- a year, a
+ *  ward number -- so it is accepted and rendered as text rather than refused. */
+const text=(value:unknown):string|undefined=>{
+  if(value===null||value===undefined)return undefined;
+  const said=String(value).trim();
+  return said?said:undefined;
+};
 
 export function joinTableToAreas(
   units:{id:string;name:string}[], table:DataTable,
-  options:{keyField:string; normalisation?:'exact'|'fuzzy'}
+  options:{keyField:string; normalisation?:'exact'|'fuzzy'; categoryField?:string}
 ):AreaJoinResult{
   const normalisation=options.normalisation??'fuzzy';
   const keyField=options.keyField;
+  const categoryField=options.categoryField?.trim()||undefined;
+  if(categoryField&&!table.keys.includes(categoryField))
+    throw new Error(`The table has no column "${categoryField}" to classify by. It is keyed by ${table.keys.join(', ')||'nothing'}.`);
+  if(categoryField&&categoryField===keyField)
+    throw new Error('The column a part is matched on cannot also be the column it is classified by: every part would be its own class.');
   if(!table.keys.includes(keyField))
     throw new Error(`The table has no column "${keyField}". It is keyed by ${table.keys.join(', ')||'nothing'}.`);
   const fold=(value:unknown)=>normaliseName(value,normalisation);
@@ -76,14 +101,15 @@ export function joinTableToAreas(
   // THE TABLE SIDE, folded once. Two different raw keys landing on one folded key is the hazard
   // the normalisation itself creates, so it is checked before anything is matched rather than
   // discovered as a silently overwritten row.
-  const byKey=new Map<string,{raw:string;value:number|null;rows:number}>();
+  const byKey=new Map<string,{raw:string;value:number|null;rows:number;category?:string}>();
   for(const row of table.rows){
     const raw=row.key[keyField];
     const key=fold(raw);
     if(!key){diagnostics.push({code:'missing-data-key',subject:String(raw??''),
       says:'A row has no value in the key column, so there is nothing to match it on.'});continue;}
     const held=byKey.get(key);
-    if(!held){byKey.set(key,{raw:String(raw),value:row.value,rows:1});continue;}
+    if(!held){byKey.set(key,{raw:String(raw),value:row.value,rows:1,
+      ...(categoryField?{category:text(row.key[categoryField])}:{})});continue;}
     held.rows++;
     if(fold(held.raw)===key&&held.raw!==String(raw))
       diagnostics.push({code:'ambiguous-data-key',subject:`${held.raw} / ${raw}`,
@@ -110,7 +136,10 @@ export function joinTableToAreas(
     else diagnostics.push({code:'unmatched-boundary',subject:unit.name,
       says:`No row of the table names "${unit.name}", so this part has no value.`});
     return {index,id:unit.id,name:unit.name,key,
-      value:row?row.value:null,matched:!!row,shared:(timesSeen.get(key)||0)>1};
+      value:row?row.value:null,matched:!!row,shared:(timesSeen.get(key)||0)>1,
+      // Absent rather than empty where the row names no class: an unclassified part is drawn in
+      // the neutral a renderer keeps for "no data", never in the first class.
+      ...(row?.category?{category:row.category}:{})};
   });
 
   for(const [key,row] of byKey)
@@ -118,7 +147,9 @@ export function joinTableToAreas(
       says:`The table names "${row.raw}", which is not a part of this boundary.`});
 
   const matchedParts=parts.filter(part=>part.matched).length;
-  return {parts,diagnostics,declared:{keyField,valueField:table.valueField,normalisation},
+  return {parts,diagnostics,
+    declared:{keyField,valueField:table.valueField,normalisation,
+      ...(categoryField?{categoryField}:{})},
     counts:{parts:parts.length,rows:table.rows.length,matchedParts,
       matchedRows:used.size,unmatchedParts:parts.length-matchedParts,
       unmatchedRows:byKey.size-used.size,
@@ -141,8 +172,11 @@ export function joinedPolygons(boundary:Boundary,result:AreaJoinResult,label:str
     id:part.id,name:part.name,siteId:part.id,
     geometry:{type:'Polygon' as const,coordinates:rings[index]??rings[0]},
     ...(part.value===null?{}:{value:part.value}),
+    ...(part.category?{category:part.category}:{}),
     properties:{[result.declared.valueField]:part.value,
-      [result.declared.keyField]:part.name} as Record<string,Scalar>,
+      [result.declared.keyField]:part.name,
+      ...(result.declared.categoryField&&part.category
+        ?{[result.declared.categoryField]:part.category}:{})} as Record<string,Scalar>,
   }));
   const {counts}=result;
   return {features:features as unknown as Polygons['features'],sites:[],boundary:structuredClone(boundary),

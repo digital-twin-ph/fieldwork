@@ -1,0 +1,95 @@
+@prefix fw: <urn:fieldwork:>.
+@prefix sh: <http://www.w3.org/ns/shacl#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+
+# WHAT A STEP OWES A READER OF THE WRITE-UP, as rules a receipt is held to.
+#
+# The practitioner, 2026-10-30, after four rounds of being told the figures were there:
+# *"These above can be minted as ontology rules so the receipts can also be validated."*
+#
+# Which is the right place for them. Every rule below was already true of the code, stated in a
+# comment and pinned by a unit test -- and a unit test checks the function that writes the prose,
+# while these check the RECEIPT a run actually produced. `tests/evidence.browser.mjs` validates a
+# live South London run against the loaded shapes, so a regression that stopped a step describing
+# what it published would fail the gate on real receipts rather than on a fixture.
+#
+# STRUCTURAL, NEVER A PATTERN OVER PROSE. The first draft of the numbering rule was a regular
+# expression refusing "Figure 3" in a note's text. Snow's plate is NAMED "Snow's Map 2, 1855",
+# so that rule fails on this project's own data -- found by a unit test on 2026-10-30, and the
+# argument for the rule rather than a flaw in it. A machined note is held to carrying no
+# fw:figureNumber, which is a thing a shape can check without reading English.
+
+# --- The note itself ------------------------------------------------------------------------
+
+fw:MachinedNoteShape a sh:NodeShape; sh:targetClass fw:MachinedNote;
+  # THE SECTION IS A CLOSED SET and the only closed one here: fw:WRITE_UP_PARTS is a closed
+  # const in src/notes.ts, so a note filed under anything else is a defect and not a dialect.
+  # References joined the four on 2026-10-30, as a part of the outline rather than a panel.
+  sh:property [ sh:path fw:noteSection; sh:minCount 1; sh:maxCount 1;
+                sh:in ( "Introduction" "Methods" "Results" "Discussion" "References" ) ];
+  sh:property [ sh:path fw:noteText; sh:minCount 1; sh:maxCount 1;
+                sh:datatype xsd:string; sh:minLength 1 ];
+  # AT MOST ONE, AND NOT FROM A CLOSED LIST. The seven functions were reconciled by the
+  # practitioner personally and the ontology records that the set is OPEN because its producers
+  # did not exist yet. An artifact's self-description states none at all, deliberately, so a
+  # minCount of 1 here would refuse the notes this whole experiment was about.
+  sh:property [ sh:path fw:noteFunction; sh:maxCount 1;
+                sh:datatype xsd:string; sh:minLength 1 ];
+  # A MACHINED NOTE NEVER NUMBERS ITSELF. The number is computed when a document is rendered,
+  # from the note's place in the outline and the venue's convention.
+  sh:property [ sh:path fw:figureNumber; sh:maxCount 0 ].
+
+# --- What was published, and the account owed of it -------------------------------------------
+
+fw:PublishedArtifactShape a sh:NodeShape; sh:targetClass fw:PublishedArtifact;
+  sh:property [ sh:path fw:artifactKind; sh:minCount 1; sh:maxCount 1;
+                sh:in ( "table" "chart" "map" ) ];
+  # EACH KIND DECLARES WHAT A READER NEEDS TO INTERPRET IT, and exactly one kind applies.
+  sh:xone (
+    [ sh:property [ sh:path fw:artifactKind; sh:hasValue "table" ];
+      sh:property [ sh:path fw:artifactRowCount; sh:minCount 1; sh:maxCount 1;
+                    sh:datatype xsd:integer; sh:minInclusive 0 ];
+      # AN EMPTY CELL IS UNKNOWN AND NOT ZERO, so it is COUNTED rather than left to be noticed.
+      # This application refuses to compute a two-by-two over a missing value for that reason;
+      # a published table whose gaps are unstated hands a reader measured absence.
+      sh:property [ sh:path fw:missingValueCount; sh:minCount 1; sh:maxCount 1;
+                    sh:datatype xsd:integer; sh:minInclusive 0 ] ]
+    [ sh:property [ sh:path fw:artifactKind; sh:hasValue "chart" ];
+      sh:property [ sh:path fw:artifactBarCount; sh:minCount 1; sh:maxCount 1;
+                    sh:datatype xsd:integer; sh:minInclusive 0 ] ]
+    [ sh:property [ sh:path fw:artifactKind; sh:hasValue "map" ];
+      sh:property [ sh:path fw:artifactLayerCount; sh:minCount 1; sh:maxCount 1;
+                    sh:datatype xsd:integer; sh:minInclusive 0 ] ]
+  ).
+
+# THE RULE THE PRACTITIONER'S FOUR REPORTS WERE ABOUT.
+#
+# A step that published something a reader meets must have machined a note about it. Before this,
+# a step could draw a table, record a receipt, and contribute nothing to the write-up with every
+# gate green -- which is exactly what happened, and what no test could see because the tests asked
+# whether the note generator worked rather than whether a run produced one.
+#
+# Targeted at the SUBJECT of fw:publishesArtifact rather than at the artifact, so the note stays
+# where it already lives -- on the step's output entity -- and nothing has to be duplicated under
+# the artifact to satisfy a shape.
+fw:PublishedArtifactIsDescribedShape a sh:NodeShape;
+  sh:targetSubjectsOf fw:publishesArtifact;
+  sh:property [ sh:path fw:machinedNote; sh:minCount 1; sh:class fw:MachinedNote;
+    sh:message "A step that publishes a table, chart or map must machine a note about it." ].
+
+# --- The method a computation used ------------------------------------------------------------
+
+fw:MethodCitationShape a sh:NodeShape; sh:targetClass fw:MethodCitation;
+  sh:property [ sh:path fw:methodName; sh:minCount 1; sh:maxCount 1;
+                sh:datatype xsd:string; sh:minLength 1 ];
+  # CITED, OR STATED AS UNCITABLE -- never neither, and never both. Omitting the second would
+  # leave a reader to read a missing reference as "nothing to say", when it means "nobody has
+  # looked it up". Asserting both would be a work and an excuse for not having one.
+  sh:xone (
+    [ sh:property [ sh:path fw:methodReference; sh:minCount 1; sh:maxCount 1;
+                    sh:datatype xsd:string; sh:minLength 1 ];
+      sh:property [ sh:path fw:methodUncited; sh:maxCount 0 ] ]
+    [ sh:property [ sh:path fw:methodUncited; sh:minCount 1; sh:maxCount 1;
+                    sh:datatype xsd:string; sh:minLength 1 ];
+      sh:property [ sh:path fw:methodReference; sh:maxCount 0 ] ]
+  ).

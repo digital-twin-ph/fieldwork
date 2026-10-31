@@ -200,6 +200,47 @@ fw:noteSection a owl:DatatypeProperty; rdfs:range xsd:string;
   rdfs:comment "The part of a write-up the note belongs under, spelled as the quoted notes spell it -- capitalised, because that schema had a spelling first and two kinds of note that cannot be grouped together cannot be read in one place. A join maps to \"Methods\": it is a thing done to the data, and the count of what it excluded is Methods prose in an epidemiology paper. Ranges over the IMRAD body only: a title and an abstract are front matter AND are assembled from declarations across a workflow rather than owned by one node, so neither is a value here.".
 fw:noteText a owl:DatatypeProperty; rdfs:range xsd:string;
   rdfs:comment "The note itself, written as sentences for a reader of the paper.".
+fw:noteFunction a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:label "What the note does inside its section";
+  rdfs:comment "Reconciled by the practitioner on 2026-10-29 against a prototype: context, rationale, source, method, verification, finding, limitation. DELIBERATELY NOT A CLOSED SET IN THE SHAPE, which is the position fw:creditRole's comment already records -- the set is open because its producers were still being written. An artifact's self-description states NO function at all, because none of the seven describes what it does and coining an eighth to file it under is how a vocabulary gets withdrawn; absent is therefore a legitimate value and the shape requires at most one, not at least one. Declared 2026-10-30, having been named in a comment since 2026-10-29 and declared nowhere.".
+fw:figureNumber a owl:DatatypeProperty; rdfs:range xsd:integer;
+  rdfs:label "The number a figure carries in a rendered document";
+  rdfs:comment "DECLARED SO THAT A SHAPE CAN FORBID IT ON A MACHINED NOTE, which is this project's habit of asserting an absence rather than leaving a silence. A number depends on where an artifact sits in the outline and on the venue's convention, so it is computed when a document is rendered: set one figure aside and the ones after it move up. A number written into machined prose would be right when it was machined and wrong the first time somebody moved a card. The rule is structural and not a pattern over the text, because \"Map 2, 1855\" is the NAME of Snow's plate and any pattern that caught a figure number would catch it too -- found by a unit test on 2026-10-30.".
+
+# --- WHAT A STEP PUBLISHED, and the account it owes of it (experiment 141) ------------------
+#
+# The practitioner, 2026-10-30, four times across one afternoon: *"charts, maps and tables are
+# not there"*. They were not, and nothing in the record said so -- a step could draw a table,
+# record a receipt for it, and put nothing in the write-up, and every gate stayed green because
+# no rule said a published artifact owes a reader anything.
+fw:publishesArtifact a owl:ObjectProperty;
+  rdfs:label "An artifact this step published for a reader";
+  rdfs:comment "A table, a chart or a map that a step PUBLISHED, as distinct from a value it passed on. The distinction is the widget's own: only an output widget publishes, which is why a table computed mid-chain is kept for inspection and is not an artifact here.".
+fw:PublishedArtifact a owl:Class; rdfs:subClassOf prov:Entity;
+  rdfs:label "Published artifact";
+  rdfs:comment "A thing a reader of the write-up meets as a figure or a table. It declares its kind and the shape a reader needs to interpret it, and the step that published it owes it a machined note.".
+fw:artifactKind a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:comment "table, chart or map. A CLOSED set, unlike fw:noteFunction: these three are the output widgets this application has, and a fourth would be a new widget rather than a new word for an existing one.".
+fw:artifactRowCount a owl:DatatypeProperty; rdfs:range xsd:nonNegativeInteger;
+  rdfs:comment "Rows in a published table, as the table reports them rather than as a figure drew them -- a figure may draw fewer and says so.".
+fw:artifactBarCount a owl:DatatypeProperty; rdfs:range xsd:nonNegativeInteger;
+  rdfs:comment "Bars in a published chart. A bar at zero is counted: a withheld value and a measured zero are drawn the same way, and the count is what lets a reader find the difference in the table.".
+fw:artifactLayerCount a owl:DatatypeProperty; rdfs:range xsd:nonNegativeInteger;
+  rdfs:comment "Layers a published map DREW, which is not the number connected to it. fw:layerDrawn exists so a receipt can tell a map that showed three of five layers from one only ever wired to three.".
+
+# --- THE METHOD A COMPUTATION USED, cited or stated as uncitable (experiment 151) -----------
+fw:citesMethod a owl:ObjectProperty;
+  rdfs:label "An estimator this computation used, with its source";
+  rdfs:comment "Named rather than left to be read out of the prose, so an aggregate References part does not have to recover works by matching text against sentences -- which would break the first time a citation style changed, and a venue changes citation style on purpose.".
+fw:MethodCitation a owl:Class;
+  rdfs:label "Method citation";
+  rdfs:comment "One estimator and what is known about where it comes from. It carries EITHER a rendered reference OR a stated reason there is none, never neither: a reader meeting a short list cannot tell a method nobody has looked up from a method with nothing to look up, and that is the distinction fw:epiInfoLabelSource exists to keep, one field over.".
+fw:methodName a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:comment "The estimator as the implementation names it -- \"Katz log\", \"Wald unpooled\" -- which is the key its reference is held under.".
+fw:methodReference a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:comment "The work, rendered in the citation style the application uses. Absent where no primary source has been read; a half-rendered reference is refused entirely, because one looks checkable and is not.".
+fw:methodUncited a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:comment "Why this estimator carries no reference, in words a reader can act on. Present exactly when fw:methodReference is absent. A plausible-looking reference would be worse than none: it is the point at which a reader stops checking.".
 
 # A SCANNED OR PUBLISHED MAP, drawn as ground. Typed apart from fw:Raster on purpose: a raster
 # carries measurements and may be clipped and sampled, and a plate carries a printer's ink. The

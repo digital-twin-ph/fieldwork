@@ -36,7 +36,18 @@ import {validLogin} from './identity.js';
  *  docs/experiments/147-table-shells-begin-with-the-end-in-mind.md. `Results` is in the list and has
  *  no producer: a Results section is mostly figures and tables, which this application makes as
  *  artifacts rather than as prose. */
-export const WRITE_UP_PARTS=['Introduction','Methods','Results','Discussion'] as const;
+/** THE PUBLICATION OUTLINE. IMRaD, and then the references the body cites.
+ *
+ *  References was added on 2026-10-30, on the practitioner's ruling that the aggregate list is a
+ *  part of the write-up rather than a panel beside it: it is where a reader expects it, an author
+ *  can add a reference the application never saw, and it can be reordered and set aside per venue
+ *  like any other part.
+ *
+ *  THE LIST ITSELF IS NOT STORED AS NOTES. What a workflow cites is already recorded -- a derived
+ *  note carries its input's attribution, a machined equation names the method it used -- so the
+ *  list is assembled from those on every render. Storing it too would be a second copy that goes
+ *  out of date against the first, and `src/references.ts` says why at length. */
+export const WRITE_UP_PARTS=['Introduction','Methods','Results','Discussion','References'] as const;
 export type WriteUpPart=typeof WRITE_UP_PARTS[number];
 
 /** What the note DOES inside its section, in the practitioner's own breakdown: *"Introduction can
@@ -133,6 +144,14 @@ export interface QuotedNote {
  *  second, this type moves ... and nothing else about it changes."* The second reader arrived
  *  before the second producer -- this module, which has to group it beside a quoted note. */
 export interface MachinedNote {
+  /** THE METHODS THIS NOTE CITED, by the name `METHOD_REFERENCES` holds them under.
+   *
+   *  Named rather than parsed back out of the prose. The note already prints its own reference
+   *  line, and an aggregate References part that recovered the works by matching text against the
+   *  sentences would break the first time a citation style changed -- which is a thing a venue
+   *  changes on purpose. A method with no source is still named here, because the References part
+   *  has to say that nobody has looked it up rather than leave it out. */
+  cites?:string[];
   kind:'machined';
   /** Stable across runs, because a note that re-machines must stay the same note: the widget
    *  rewrites its wording and the thing a link points at does not move. */
@@ -320,6 +339,7 @@ export function readNotes(raw:unknown):{notes:Note[]; unreadable:number}{
         ...(text(entry.detail)?{detail:text(entry.detail)}:{}),
         ...(text(entry.nodeId)?{nodeId:text(entry.nodeId)}:{}),
         ...(text(entry.workflowKey)?{workflowKey:text(entry.workflowKey)}:{}),
+        ...(edges(entry.cites).length?{cites:edges(entry.cites)}:{}),
         ...(edges(entry.relatesTo).length?{relatesTo:edges(entry.relatesTo)}:{})});
       continue;
     }
@@ -356,6 +376,7 @@ export function readNotes(raw:unknown):{notes:Note[]; unreadable:number}{
         ...(text(entry.fn)?{fn:text(entry.fn)}:{}),
         ...(text(entry.nodeId)?{nodeId:text(entry.nodeId)}:{}),
         ...(text(entry.workflowKey)?{workflowKey:text(entry.workflowKey)}:{}),
+        ...(edges(entry.cites).length?{cites:edges(entry.cites)}:{}),
         ...(edges(entry.relatesTo).length?{relatesTo:edges(entry.relatesTo)}:{})});
       continue;
     }

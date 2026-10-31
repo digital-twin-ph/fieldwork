@@ -1,7 +1,7 @@
 {
   "schema": "fieldwork/example-catalog/1",
   "catalogVersion": "0.1.0",
-  "updated": "2026-10-28",
+  "updated": "2026-10-31",
   "description": "Curated worked-example repositories. This file is the trust root, on the same terms as widgets/packs.json: an example is admitted only at a full commit SHA, only from a curated owner, and every file it may fetch is pinned by digest here. A branch is never fetched, because a digest pinned against a moving ref verifies nothing.\n\nAn example is a RESOURCE -- a workflow document, data and a provenance record -- and declares no node type, so runtimeFetching: \"none\" in widgets/packs.json does not reach it. That rule governs widget definitions. See docs/experiments/127-examples-as-repositories.md.",
   "governance": {
     "curatedOwners": [
@@ -16,7 +16,7 @@
       "id": "urn:fieldwork:example:south-london-1854",
       "title": "Snow's South London water supply study, 1854",
       "repository": "https://github.com/digital-twin-ph/example-1855-cholera-south-london",
-      "commit": "2b966f2bf0c8fdd2c0f6127a99f464b9a80ed9a8",
+      "commit": "85130bb8428186231f84a19bba619a138115616c",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-1855-cholera-south-london",
       "licence": {
         "data": "CC0-1.0, except geo/sub-districts-csds.geojson which is BSD-2-Clause and geo/thames-reaches.geojson and geo/thames-tidal-limit.geojson which are ODbL-1.0",
@@ -29,22 +29,22 @@
         "data": true,
         "geography": true
       },
-      "notYet": "The georeferenced plate and the three traced supply zones in geo/ are still for other tools: nothing in Fieldwork reads a raster plate or those zones onto a canvas. geo/thames-tidal-limit.geojson is unread for a different reason -- it is a LineString, and no widget takes a line as a layer, so the limit ships as a file and is drawn by nothing. The two Thames reaches ARE live, through polygon_input on the ground workflow. The figures, the boundaries and the choropleth are all live -- the 32 rates land on the 33 named parts through join_table_to_area.",
+      "notYet": "The three traced supply zones in geo/ are still for other tools: nothing in Fieldwork reads map2-water-supply-zones.geojson onto a canvas. geo/thames-tidal-limit.geojson is unread for a different reason -- it is a LineString, and no widget takes a line as a layer, so the limit ships as a file and is drawn by nothing. Everything else is live: the figures, the boundaries, the choropleth -- the 32 rates land on the 33 named parts through join_table_to_area -- the two Thames reaches through polygon_input, and Snow's Map 2 through map_image_input, both as ground under the choropleth and as a figure of its own.",
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "51c29b4c7d19a6e4049929b56d8c29c85e35e5e43027cb9850599d26eb5aa264",
-          "bytes": 399642
+          "sha256": "590169ca4e34b2ea67d32feb8aa4116bfcd06f5967638c99c9e672ee5c0a8275",
+          "bytes": 999933
         },
         {
           "path": "README.md",
-          "sha256": "3259233328db1596b6fbdbea80ef7af27668874463bffc32ee3f3aa55b149488",
-          "bytes": 33306
+          "sha256": "3fd61fe8785c155febeaa2ea641376123e497fc8d74f9203f0d7f93633c15628",
+          "bytes": 38869
         },
         {
           "path": "NOTICE.txt",
-          "sha256": "5419a566290f202283fe4af6985e981ebca5ce17e9c852afd7dd9c2a7f12d8ab",
-          "bytes": 9892
+          "sha256": "d18f35ca5b63e4d9060428583410801ac2002bced2e1d0a2cc1e6713c96e3942",
+          "bytes": 12211
         },
         {
           "path": "LICENSE",
@@ -127,12 +127,19 @@
           "bytes": 1114
         }
       ],
-      "notYetCorrected": {
-        "date": "2026-10-27",
-        "was": "Nothing joins a table to the parts of a study area, so the 32 mortality rates and the 32 named boundaries cannot colour one another. That join is the choropleth this example argues for in prose.",
-        "why": "That sentence was true when the pin was written and false from 2026-10-25, when join_table_to_area shipped and the bundle gained a working choropleth workflow. The example repository corrected its own README the same day -- it says \"Both are now false\" and keeps the old sentence as the record of what the join was built to close -- and this field did not. THIS FIELD IS THE ONE A READER SEES: renderExampleCatalog prints it as \"Not yet: ...\" on the catalog card, so the deployed application advertised the example as missing the very workflow it ships. Found 2026-10-27 while asking what was left of the join work."
-      },
-      "workflowCount": 6,
+      "notYetCorrected": [
+        {
+          "date": "2026-10-27",
+          "was": "Nothing joins a table to the parts of a study area, so the 32 mortality rates and the 32 named boundaries cannot colour one another. That join is the choropleth this example argues for in prose.",
+          "why": "That sentence was true when the pin was written and false from 2026-10-25, when join_table_to_area shipped and the bundle gained a working choropleth workflow. The example repository corrected its own README the same day -- it says \"Both are now false\" and keeps the old sentence as the record of what the join was built to close -- and this field did not. THIS FIELD IS THE ONE A READER SEES: renderExampleCatalog prints it as \"Not yet: ...\" on the catalog card, so the deployed application advertised the example as missing the very workflow it ships. Found 2026-10-27 while asking what was left of the join work."
+        },
+        {
+          "date": "2026-10-31",
+          "was": "The georeferenced plate and the three traced supply zones in geo/ are still for other tools: nothing in Fieldwork reads a raster plate or those zones onto a canvas.",
+          "why": "The plate half was true when the pin was written and false from 2026-10-27, when map_image_input shipped and the bundle wired Map 2 as ground under the choropleth. This is the SECOND time this field has advertised the example as missing a workflow it ships, and the second time it was found by somebody working on the thing rather than by a check -- the bundle is verified byte for byte and this sentence is verified by nobody. Found 2026-10-31 while giving the plate a workflow of its own. The zones half is still true and stays."
+        }
+      ],
+      "workflowCount": 8,
       "uses": [
         "chart_output",
         "derive_value",

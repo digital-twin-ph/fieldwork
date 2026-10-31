@@ -1978,6 +1978,91 @@ takes, and the 4 GB heap exhaustion recorded at London scale was a single buffer
 - **Is it a kernel or a widget?** Nothing here needs a new palette entry; this is an
   implementation swap underneath existing widgets, so it is not a primitive admission.
 
+### A mark's size should be able to carry a count, and a map should be able to carry time
+
+Raised 2026-10-31 by the practitioner, on the label ceiling: *"The 24 marks cap might not be
+realistic for a public health map because outbreaks can easily go into hundreds of marks, the
+point being to visualize point density."* And, on why South London has none: *"We did not
+visualize point density for South London because we did not have individual records but if we
+did that's one of the maps we would first draw."* **Individual records** meaning person
+records — *"person, place and time"* — which is to say a line list.
+
+The ceiling itself was not the obstacle. `LABEL_CEILING` bounds how many marks a figure
+**names**, not how many it draws, and a layer over it is drawn unlabelled with the Inspector
+saying so. The cap that does bind a spot map is `pointLayers`: **2,000 records combined** across
+at most 8 layers, a hard stop that `map_output` and `table_output` both pass through.
+
+**This repository holds exactly one line list, and it is not South London.**
+`examples/hagelloch-1861/cases.json` is 188 measles cases, one row per child, qualifying on all
+three: person (age, sex, family, and the infector), place (household coordinates), time (dates of
+prodrome, rash and death). It is already wired as the `hagelloch` template. South London cannot
+exercise any of this and is not the example to reach for — its unit is the sub-district.
+
+#### 1. The number of marks is never the number of cases
+
+It misses in a different direction in every dataset here. Measured 2026-10-31:
+
+| dataset | rows | a row is | marks drawn | cases |
+|---|---|---|---|---|
+| South London | 32 | a sub-district | 32 polygons | aggregate only |
+| `examples/john-snow/cholera_deaths.csv` | 250 | an address, with a count | 250 | **489** deaths |
+| `examples/snow-gboh/deaths_nd_by_house.csv` | 1,852 | a house, 1,483 with no deaths | 1,852 | **706** deaths |
+| `examples/hagelloch-1861/cases.json` | 188 | **a person** | **56** | 188 cases |
+
+250 marks understate 489 deaths by half. 1,852 marks overstate 706 deaths by 2.6×, because four
+houses in five had none. And Hagelloch is the case that matters most, because it is the line list:
+188 person records collapse onto **56 household locations**, 3.4 cases per mark. Person-level
+records, household-level places. **Having person records does not get a map out of this** — the
+map is only ever as fine as the place column, and a line list's place is usually a dwelling, a
+village or a ward rather than a person.
+
+So: **mark radius from a nominated count field, as a declared per-layer choice**, beside colour,
+shape and size in `resolveLayerSymbol`. Nominated and never inferred, the rule `labelField` and
+`pinClassField` already keep. Three things make it cheap rather than new:
+
+- **It has been built once already.** [33](docs/experiments/33-isochrone-plot-and-interactive-map.md)
+  scales a death marker by DEATHS with a 2–20 pixel cap. It was never made a setting, so no
+  practitioner can reach it.
+- **The place to put it exists.** `MARK_RADIUS_DEFAULT/MIN/MAX` is a per-layer setting from the
+  practitioner's 2026-10-25 observation that 250 addresses *"merge like a blob"*. A count field
+  is the same control taking its value from the data instead of a slider.
+- **`case_series` already takes a `weightField`** — so a weighted count exists in the time
+  dimension and not in the spatial one. The same asymmetry the *weighted mean centre* item above
+  records for `mean_center`. Three widgets now want the same missing idea.
+
+#### 2. The curve and the map are the same children, and nothing joins them
+
+Found 2026-10-31 by reading `src/hagelloch-example.ts`. The example branches the one `cases` node
+two ways — `cases → curve → chart_output` for when, `cases → map_output` for where — and its own
+comment states the intent: *"the curve above and the map below are the same children, which is
+what this example exists to demonstrate."* They are, and **the two branches never rejoin**. The
+curve knows the dates. The map draws all 188 at once.
+
+For a line list that is the bigger gap, because person-place-time is one observation and FW
+currently renders two projections of it side by side. A static density map of a whole outbreak
+shows concentration; a map in time slices shows **spread**, which is the question an outbreak
+investigation is actually asking, and Hagelloch has the infector column to check an answer
+against. Not specified here: whether that is a parameter on `map_output` (draw the records in a
+period), a filter widget upstream of it, or a small-multiple output. It is a design question and
+belongs in an experiment record before any of it is built.
+
+#### What this does not establish
+
+A graduated mark is not a density estimate and not a rate. It shows where the counts are large,
+which is also where the people are — the denominator problem is the *Snow's denominator* item
+above, and `snow-gboh` is the only data here that carries one. Kernel density and hot-spot
+detection stay under *Gap: spatial statistics* below; this is the renderer, not the statistic.
+Binned density is a third thing and is closer than it looks: `src/geoprivacy.ts` already counts
+points per H3 cell and shades none of it, because it was built to report disclosure rather than
+concentration. And a map in time is not an epidemic curve: the curve has a denominator of days
+and the map does not.
+
+**Not urgent**, at the practitioner's direction 2026-10-31. One thing to weigh before building
+the graduated mark: the aggregation FW already has may be the better map for Soho.
+`summarize_points_to_polygon` with `valueField: 'DEATHS'` puts deaths into nearest-pump
+catchments, and there the polygon is the hypothesis. A graduated mark asks a reader to compare
+circles; a catchment asks the question Snow was asking.
+
 ### Gap: spatial statistics
 
 Named 2026-10-10 while decomposing the process stages. The studio computes the

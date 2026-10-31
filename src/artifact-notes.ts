@@ -166,3 +166,49 @@ export function chartDescriptionNote(chart:ChartSummary,label:string|undefined,
       +`are drawn the same way here and the table is where they are told apart.`;
   return describes(nodeId,text);
 }
+
+/** WHAT THE STEP PUBLISHED, as facts a shape can hold a receipt to.
+ *
+ *  The practitioner, 2026-10-30: *"These above can be minted as ontology rules so the receipts
+ *  can also be validated."* The rules this feeds are in `ontology/shapes/write-up.ttl`, and the
+ *  one they exist for is that a step which publishes a table, a chart or a map must have machined
+ *  a note about it -- which was true of the code, stated in a comment, pinned by a unit test
+ *  against the generator, and checked nowhere against an actual run. A step could draw a table,
+ *  record a receipt and contribute nothing to the write-up with every gate green.
+ *
+ *  WHAT EACH KIND DECLARES is what a reader needs to interpret it and nothing more: a table's
+ *  rows AND its empty cells, because an empty cell is unknown rather than zero and a count is the
+ *  only thing that makes the gaps visible; a chart's bars, counting the ones at zero, because a
+ *  withheld value and a measured zero are drawn the same way; a map's DRAWN layers, which is not
+ *  the number connected to it.
+ *
+ *  NO NUMBER AND NO CAPTION HERE EITHER. This states what exists, and the shape refuses a
+ *  `fw:figureNumber` on the note beside it. */
+export interface PublishedArtifact {
+  kind:'table'|'chart'|'map';
+  rowCount?:number;
+  missingValueCount?:number;
+  barCount?:number;
+  layerCount?:number;
+}
+
+export function publishedArtifactFacts(subject:string,artifact:PublishedArtifact):string{
+  const whole=(value:number|undefined):number|undefined=>
+    typeof value==='number'&&Number.isFinite(value)?Math.max(0,Math.round(value)):undefined;
+  const counts=artifact.kind==='table'
+    // Both or neither: a row count without a missing-value count is the half-statement the shape
+    // refuses, and emitting one alone would make the receipt fail rather than the generator.
+    ?(whole(artifact.rowCount)===undefined||whole(artifact.missingValueCount)===undefined?null
+      :`fw:artifactRowCount ${whole(artifact.rowCount)}; `
+        +`fw:missingValueCount ${whole(artifact.missingValueCount)}`)
+    :artifact.kind==='chart'
+    ?(whole(artifact.barCount)===undefined?null:`fw:artifactBarCount ${whole(artifact.barCount)}`)
+    :(whole(artifact.layerCount)===undefined?null
+      :`fw:artifactLayerCount ${whole(artifact.layerCount)}`);
+  // NOTHING RATHER THAN A HALF-STATEMENT. A receipt that asserted an artifact without the counts
+  // its kind owes would be refused by the shape, which would report the ABSENCE of a count as the
+  // defect when the defect is upstream in whatever failed to measure it.
+  if(counts===null)return '';
+  return `${subject} fw:publishesArtifact [ a fw:PublishedArtifact; `
+    +`fw:artifactKind ${JSON.stringify(artifact.kind)}; ${counts} ].\n`;
+}

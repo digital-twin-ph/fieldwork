@@ -1,6 +1,7 @@
 import {test,expect} from '@playwright/test';
 import {readFileSync,existsSync} from 'node:fs';
 import {collectPageErrors} from './page-errors.mjs';
+const catalog=JSON.parse(readFileSync(new URL('../widgets/examples.json',import.meta.url),'utf8'));
 
 /** THE CATALOG HAS A SURFACE, and refusing is part of it.
  *
@@ -79,14 +80,21 @@ test('a curated example opens as a project with its workflows',{skip},async({pag
   await openProjects(page);
   await page.locator('[data-open-example]').click();
   await expect(page.locator('[data-example-status]')).toContainText('digest matched',{timeout:20000});
-  // A PROJECT, named, with all six questions under it -- not a loose canvas. Three until
-  // 2026-10-25, when the choropleth joined the rates to the boundaries; five and then six on 2026-10-26, when the
-  // water-company comparison brought Table IX and the rate ratio, and the contingency table
-  // brought the 2x2 that a rate table cannot be. The count is asserted
-  // rather than ignored because a bundle that quietly loses a workflow is the failure this
-  // pinned catalog exists to catch.
+  // A PROJECT, named, with every question under it -- not a loose canvas. Three until 2026-10-25,
+  // when the choropleth joined the rates to the boundaries; five and then six on 2026-10-26, when
+  // the water-company comparison brought Table IX and the rate ratio, and the contingency table
+  // brought the 2x2 that a rate table cannot be; seven on 2026-10-30 with the plate, and eight on
+  // 2026-10-31 with the river. The count is asserted rather than ignored because a bundle that
+  // quietly loses a workflow is the failure this pinned catalog exists to catch.
+  //
+  // AGAINST THE CATALOG'S DECLARATION, not against a literal. The literal said 6 through three
+  // re-pins and only a gate noticed. `workflowCount` is what the catalog PROMISES a reader of
+  // this example will find, so comparing the interface to it still catches a bundle that lost a
+  // workflow -- that is the whole tripwire -- while a number typed here catches only the day
+  // somebody forgets to retype it.
   await expect(page.locator('#project-select')).toContainText("Snow's South London");
-  await expect(page.locator('#project-select')).toContainText('6 workflows');
+  await expect(page.locator('#project-select'))
+    .toContainText(`${catalog.examples[0].workflowCount} workflows`);
   const workflows=await page.locator('#workflow-select option').allTextContents();
   expect(workflows).toContain('Deaths per 1,000 people, by sub-district');
   // Renamed on 2026-10-29, when the study area became the bounding extent and the 32

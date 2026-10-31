@@ -1,6 +1,6 @@
 # 150 — Can several authors collaborate on a publication in a project repository?
 
-_Created 2026-10-29 · Updated 2026-10-29_
+_Created 2026-10-29 · Updated 2026-10-31_
 
 **Status:** asked — the question is posed and the architecture is part built. **Competency
 question 1 was decided on 2026-10-31 by the measurement this document asked for, and the layout is

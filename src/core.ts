@@ -50,7 +50,7 @@ import type {AreaValue,CoverageValue,DisplayValue,WorkflowRun,Output,Receipt,Nea
 import {declarationGaps,dataIssuesOf} from './results.js';
 import type {OldInputs} from './old-naledi.js';
 import {isRecord,required} from './guards.js';
-interface ExecutionInputs extends OldInputs {area2:AreaValue;polygons:Polygons;subjects:PointCollection;network:Network;sites:PointCollection;reached:PointCollection;points:PointCollection&{spatialReference?:import('./types.js').AnySpatialReference};original:PointCollection;moved:PointCollection;pumps:PointCollection;originalCenter:MeanCenter;movedCenter:MeanCenter;comparison:PointComparison;raster:RasterGrid;table:import('./data-table.js').DataTable;projections:import('./sea-level.js').ProjectionTable;series:import('./case-series.js').SeriesTable;records:PointCollection;cases:import('./data-table.js').DataTable;related:import('./data-table.js').DataTable;rates:import('./data-table.js').DataTable&{rate?:import('./rate.js').RateResult};assignments:import('./sea-level.js').AssignmentTable;coverage?:CoverageValue;candidates:PointCollection;distances:{rows:NearestRow[];centers:PointFeature[];method:string};alert:ParamsByType['alert'];decisions:DisplayValue}
+interface ExecutionInputs extends OldInputs {area2:AreaValue;polygons:Polygons;subjects:PointCollection;network:Network;sites:PointCollection;reached:PointCollection;points:PointCollection&{spatialReference?:import('./types.js').AnySpatialReference};original:PointCollection;moved:PointCollection;pumps:PointCollection;originalCenter:MeanCenter;movedCenter:MeanCenter;comparison:PointComparison;raster:RasterGrid;table:import('./data-table.js').DataTable;projections:import('./sea-level.js').ProjectionTable;series:import('./case-series.js').SeriesTable;records:PointCollection;cases:import('./data-table.js').DataTable;related:import('./data-table.js').DataTable;rates:import('./data-table.js').DataTable&{rate?:import('./rate.js').RateResult};assignments:import('./sea-level.js').AssignmentTable;coverage?:CoverageValue;candidates:PointCollection;distances:{rows:NearestRow[];centers:PointFeature[];method:string};alert:ParamsByType['alert'];decisions:DisplayValue;design:import('./study-design.js').DeclaredDesign}
 import classification from '../widgets/classification.json' with {type:'json'};
 import {OLD_TYPES,validateOldNode,executeOldNode,migrateFacilitySources,applyAccessReview,applyFacilityGrading,gradedPointLayer,distancesAsAccess} from './old-naledi.js';
 import {resolveRuleset,bindParameters,tableContractFailures,rulesetCitation} from './rulesets.js';
@@ -112,7 +112,10 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
     inputs:[['records','table'],['area','area']],output:'polygons'},
   rate_ratio:{title:'Rate ratio with an interval',group:'Epidemiology',icon:'⚖',color:'teal',
     description:'Divide one group\'s rate by another\'s, with an interval and the counts behind it',
-    inputs:[['rates','table']],output:'table'},
+    // The same optional `design` as `two_by_two`, for the same reason: a rate ratio is a
+    // comparison, and what a comparison can be read as depends on the design that produced it.
+    // Optional, so every existing workflow runs unchanged. Experiment 154.
+    inputs:[['rates','table'],['design','design']],output:'table'},
   derive_value:{title:'Derive a value',group:'Summaries',icon:'∓',color:'teal',
     description:'Compute a new value in a key column from two of its existing values, group by group',
     inputs:[['records','table']],output:'table'},
@@ -138,7 +141,13 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
     inputs:[],output:'design'},
   two_by_two:{title:'Two-by-two table',group:'Epidemiology',icon:'⊞',color:'teal',
     description:'Risk in each group, the risk ratio, the odds ratio and the risk difference, each naming its method',
-    inputs:[['records','table']],output:'table'},
+    // `design` IS OPTIONAL AND THE OPTIONALITY IS THE POINT. A two-by-two with no declared design
+    // computes exactly as it did before -- 147's doubt, that a practitioner may not know which
+    // design they have and an application demanding the answer before computing anything would be
+    // worse than one that stays quiet. Connected, it is what step 3 will gate on; today it makes
+    // the result SAY which design and which unit of analysis, which is what the study-design audit
+    // predicted a declaration would buy. Experiment 154.
+    inputs:[['records','table'],['design','design']],output:'table'},
   rate:{title:'Rate with a denominator',group:'Epidemiology',icon:'÷',color:'teal',description:'Divide counts by a declared population at risk, stating what the denominator counts',inputs:[['records','points']],output:'table'},
   case_series:{title:'Cases by period',group:'Epidemiology',icon:'▦',color:'teal',description:'Count cases per day, week or month by a declared kind of date',inputs:[['points','points']],output:'table'},
   slr_extract_import:{title:'Sea-level projection extract',group:'Sources',icon:'≈',color:'blue',description:'Declare an imported long-format table as a bounded extract of published AR6 projections',inputs:[['projections','table']],output:'table'},
@@ -243,6 +252,12 @@ export function requiredInputs(node:WorkflowNode,options?:{coverageConnected?:bo
   // canvas, which is where a source widget has to be.
   if(node.type==='network_input'||node.type==='polygon_input')
     return all.filter(([port])=>port!=='area');
+  // A DESIGN IS DECLARED OR IT IS ABSENT, and absent must keep working. Requiring it would make
+  // every existing workflow with a two-by-two refuse to run until somebody answered a question
+  // they may not be able to answer -- and would drop the widget's own contract into one that
+  // cannot be satisfied from a blank canvas. Experiment 154.
+  if(node.type==='two_by_two'||node.type==='rate_ratio')
+    return all.filter(([port])=>port!=='design');
   // A COLLECTOR TAKES WHAT IT IS GIVEN. `stack_polygons` declares six polygon ports and required
   // all six, so a widget whose own description is "gather SEVERAL polygon layers" and whose
   // implementation refuses with *"Connect at least one polygon layer to collect"* could only run
@@ -1365,6 +1380,8 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         const table=inputs.records as unknown as import('./data-table.js').DataTable;
         if(table?.kind!=='data-table')throw new Error('Connect a table: this step reads four cells of one.');
         const result=computeTwoByTwo(table,node.params);
+        const declaredDesign=inputs.design as unknown as
+          {design:string;period:string;unitOfAnalysis:string;sentence:string}|undefined;
         // THE COUNTS ARE THE VALUE AND THE ESTIMATES RIDE ON IT, the arrangement `rate_ratio`
         // settled on 2026-10-26 after one row holding 8.40 showed the summary and hid the thing
         // a reader checks it against. An epidemiologist reads the cells first.
@@ -1383,8 +1400,13 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           // puts its own on the value, where `app.ts` renders it as the result statement. This
           // one did not, so the step with three estimates was the one that stated none of them
           // on screen. Found 2026-10-31; experiment 153.
+          // THE DECLARED DESIGN TRAVELS WITH THE RESULT where one is connected, so the figure
+          // and the receipt can state it. Nothing is gated on it yet -- step 3 -- and an absent
+          // design leaves every measure exactly as it was.
           rowCount:4,missingValueCount:0,twoByTwo:result,
-          sentence:twoByTwoSentence(result)} as unknown as DisplayValue;
+          ...(declaredDesign?{design:declaredDesign}:{}),
+          sentence:twoByTwoSentence(result)
+            +(declaredDesign?` ${declaredDesign.sentence}`:'')} as unknown as DisplayValue;
         receipts.push(twoByTwoReceipt(node,result,runId,
           workflow.edges.find(e=>e.to===node.id&&e.port==='records')!.from));
         machined[node.id]=[twoByTwoEquationNote(result,node.id)];
@@ -1412,7 +1434,10 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         // quantities. `rateTable` carries the RateResult on the value it emits, which is the only
         // place that declaration survives a port.
         const comparison=computeRateRatio(inputs.rates?.rate!,node.params);
-        const sentence=rateRatioSentence(comparison);
+        const declaredFor=inputs.design as unknown as
+          {design:string;period:string;unitOfAnalysis:string;sentence:string}|undefined;
+        const sentence=rateRatioSentence(comparison)
+          +(declaredFor?` ${declaredFor.sentence}`:'');
         // THE TABLE IS THE 2x2 THE RATIO WAS COMPUTED FROM, not the ratio on its own. One row
         // holding 8.40 showed the summary and hid the thing a reader checks it against: an
         // epidemiologist reads the counts first and the ratio second, and until 2026-10-26 the
@@ -1439,7 +1464,8 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
             cell(side,`${unit} at risk`,side.unitsAtRisk),
             cell(side,`per ${per.toLocaleString()} ${unit}`,side.rate*per),
           ]),
-          rowCount:6,missingValueCount:0,rateRatio:comparison,sentence} as unknown as DisplayValue;
+          rowCount:6,missingValueCount:0,rateRatio:comparison,
+          ...(declaredFor?{design:declaredFor}:{}),sentence} as unknown as DisplayValue;
         receipts.push(rateRatioReceipt(node,comparison,runId,
           workflow.edges.find(e=>e.to===node.id&&e.port==='rates')!.from));
         machined[node.id]=[rateRatioEquationNote(comparison,node.id)];

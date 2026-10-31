@@ -135,6 +135,48 @@ retrospective cohort — while `contingency` reads Tables VIII and XII where it 
 sub-district. Two workflows, two designs, one study. That is the case the walk has to get right,
 and it is why a design is declared per workflow rather than per project.
 
+## The licences are a lookup table, and they should probably be knowledge
+
+The practitioner, 2026-10-31: *"If the study designs is an epi ontology figuring out computations
+will be knowledge engineering."*
+
+**That is what the thing built here is not yet.** `DESIGN_LICENCES` in `study-design.ts` is a
+hand-written TypeScript `Record<StudyDesign,DesignLicence>`: six rows, each naming the estimates
+its design permits and a sentence saying why. The ontology carries `fw:licensedEstimate`, but as a
+DATATYPE PROPERTY ASSERTED ON A RECEIPT — a fact about one run, recording what the code decided.
+Nothing in `ontology/` says what a cohort licenses. The knowledge lives in the code, and the
+ontology writes down its output.
+
+**What the other shape would be.** The design classes carry their licensed estimands as axioms,
+and which measures a computation may report is DERIVED rather than looked up. This application
+already has the stack for it and uses it elsewhere: N3, a bundled EYE reasoner, `apply_ruleset`,
+and a receipt that separates stated facts from derived conclusions — the very distinction
+`receiptText` draws, and which this widget had to be taught today when a declaration fell through
+to the rule branch.
+
+Three things that would change, and they are the argument:
+
+- **Adding a design becomes an ontology edit rather than a code change.** The closed set of six is
+  currently closed by a TypeScript union; D1 said the vocabulary should be closed, not that it
+  should be closed *in a type*.
+- **A refusal becomes explainable by derivation.** Step 3 refuses a risk ratio on case-control
+  data. A lookup can say *that* it refused; a reasoner can show the chain it refused along, which
+  is this project's stated position on every other rule it runs.
+- **The taxonomy becomes reviewable by an epidemiologist.** A Turtle file naming estimands against
+  designs is something a domain expert can read and contest. A `Record<StudyDesign,DesignLicence>`
+  is something a TypeScript reader can.
+
+**Not decided here, and deliberately not built that way today.** Step 3 is the first thing that
+consumes the licences, so it is the point at which the choice has to be made, and making it before
+anything consumed them would have been designing the mechanism before the use. What this records
+is that the lookup table is a placeholder with a known replacement — and that if step 3 is written
+as a filter over `DESIGN_LICENCES`, the knowledge will have been engineered into procedure at
+exactly the moment it could have been engineered into knowledge.
+
+The honest risk on the other side: a reasoner in the gate path makes a refusal depend on the
+reasoner, and `two-by-two.ts` is arithmetic that runs today with no such dependency. Whether a
+measure is reported is not obviously a place to introduce one.
+
 ## What this does not establish
 
 - **That a practitioner will declare one.** The one thing that would settle it is watching

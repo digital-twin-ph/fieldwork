@@ -12,6 +12,7 @@
   "major",
   "minor",
   "patch",
+  "port",
   "unchanged"
  ],
  "widgets": {
@@ -654,12 +655,16 @@
    "migrationFrom": []
   },
   "rate_ratio": {
-   "version": "0.2.0",
-   "released": "2026-10-30",
+   "version": "0.3.0",
+   "released": "2026-10-31",
    "changes": [
     {
      "kind": "minor",
      "description": "Machine the equation into a Methods note. Every run of this widget now writes a note to the Notes tab under Methods, carrying each computation twice -- once as the formula and once with this run's numbers substituted into it -- as LaTeX the browser typesets to MathML. The claim this answers is experiment 141's, made on 2026-10-26 and unbuilt until now: \"all of our computations have equations, and these can be automatically constructed in LaTeX for automatic rendering as notes\". Experiment 151 built the renderer four days later and recorded that the first machined equation was still unwritten, which is what made the 212KB converter correct rather than earned. Both forms are carried because a symbolic formula restates a textbook and the instantiated one lets a reader check the arithmetic without rerunning anything. Nothing about the arithmetic changed: the formulas were read off this widget's own implementation, which is why they state what it computes and not what a source paper states -- the computations audit that would establish the second is recorded in TODO.md and does not exist. Each interval method is cited from a source that was looked up, or the note says no source has been read for it. The two outcomes are printed rather than one being an absence, for the reason `epiInfoLabelSource` exists: a missing reference reads as nothing to say when it means nobody has looked it up. No source is cited here: a log-normal interval on a ratio of two rates is a standard construction that the implementations consulted state without attributing, so the note names none rather than naming a plausible textbook."
+    },
+    {
+     "kind": "port",
+     "description": "An optional `design` input, so a declared study design can reach the comparison it governs. The rate ratio's stated sentence then carries the design and the unit of analysis. Nothing is gated yet; gating is step 3 of the sequence in docs/directions.json. Experiment 154."
     }
    ],
    "breaking": false,
@@ -990,12 +995,16 @@
    "migrationFrom": []
   },
   "two_by_two": {
-   "version": "0.2.0",
-   "released": "2026-10-30",
+   "version": "0.3.0",
+   "released": "2026-10-31",
    "changes": [
     {
      "kind": "minor",
      "description": "Machine the equation into a Methods note. Every run of this widget now writes a note to the Notes tab under Methods, carrying each computation twice -- once as the formula and once with this run's numbers substituted into it -- as LaTeX the browser typesets to MathML. The claim this answers is experiment 141's, made on 2026-10-26 and unbuilt until now: \"all of our computations have equations, and these can be automatically constructed in LaTeX for automatic rendering as notes\". Experiment 151 built the renderer four days later and recorded that the first machined equation was still unwritten, which is what made the 212KB converter correct rather than earned. Both forms are carried because a symbolic formula restates a textbook and the instantiated one lets a reader check the arithmetic without rerunning anything. Nothing about the arithmetic changed: the formulas were read off this widget's own implementation, which is why they state what it computes and not what a source paper states -- the computations audit that would establish the second is recorded in TODO.md and does not exist. Each interval method is cited from a source that was looked up, or the note says no source has been read for it. The two outcomes are printed rather than one being an absence, for the reason `epiInfoLabelSource` exists: a missing reference reads as nothing to say when it means nobody has looked it up. Katz 1978 for the risk ratio's log interval and Woolf 1955 for the odds ratio's, both verified against the bibliographic record on 2026-10-30 with DOIs; none for the unpooled Wald risk difference. The note writes the cells as a, b, c and d, which is the vocabulary experiment 147 settled on the practitioner's ruling and which `two-by-two.ts` has destructured to internally since it was written while surfacing it nowhere."
+    },
+    {
+     "kind": "port",
+     "description": "An optional `design` input, so a declared study design can reach the computation it governs. Nothing is refused on it yet: this version REPORTS the design and the unit of analysis with the result, which is what the 2026-10-28 study-design audit predicted a declaration would buy -- South London's `contingency` workflow attaches a company per sub-district, so its measures are group-level quantities and nothing said so. Experiment 154."
     }
    ],
    "breaking": false,

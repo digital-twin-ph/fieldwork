@@ -49,7 +49,13 @@ import {OLD_TYPES} from '../build/old-naledi.js';
 // is exactly why it cannot ride on the `table` port. If step 3 wires the gate through edges
 // instead of walks this gains consumers; if it does not, the honest conclusion is that the port
 // never earned its own type and the walk is the whole mechanism. Experiment 154.
-const CUSTOM_STUDS_TODAY=9;
+// AND BACK TO 8 THE SAME DAY, which is the ratchet working rather than against it. `design` was
+// a stud for as long as `two_by_two` was its only consumer; `rate_ratio` gained the same optional
+// port an hour later -- a rate ratio is a comparison, and what a comparison may be read as
+// depends on the design that produced it -- so the port now fits two blocks and is not a stud.
+// The 9 above stood for part of one afternoon and is left recorded rather than erased: a count
+// that only ever goes down tells you nothing about which way it moved.
+const CUSTOM_STUDS_TODAY=8;
 
 const definitions={...TYPES,...OLD_TYPES};
 const union=[...new Set(readFileSync(new URL('../src/types.ts',import.meta.url),'utf8')

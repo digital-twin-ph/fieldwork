@@ -134,6 +134,9 @@ import {newMapOutput,mapEvidence} from './map-output.js';
 import {newTableOutput,pointTableMarkup,pointTableEvidence} from './table-output.js';
 import {pointPort,MAX_POINT_LAYERS,markedPoints,markLabel,LABEL_CEILING} from './point-layers.js';
 import {twoByTwoMarkup} from './two-by-two-view.js';
+import {openMappingDialog} from './two-by-two-mapping.js';
+import {repositoryFiles} from './project-repository.js';
+import {ZipWriter,BlobWriter,TextReader} from '@zip.js/zip.js';
 import {DESIGN_LICENCES,STUDY_DESIGNS} from './study-design.js';
 import type {TwoByTwoResult} from './two-by-two.js';
 const esc=(s:unknown)=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
@@ -1095,7 +1098,12 @@ function render(){
 }
 function describeNode(n:WorkflowNode,status?:string):NodeDescription{const d=describe(n,status);if(n.type==='isochrone'){d.subtitle=(n.params.thresholds?.length?n.params.thresholds.join(', '):n.params.minutes)+' min / '+n.params.speedMPerMin+' m per min';d.detail=n.params.direction+' / '+n.params.bufferM+' m corridor';}if(n.type==='mean_center'){d.subtitle='Unweighted center of point locations';d.detail='UTM zone '+n.params.zone+(n.params.hemisphere==='north'?'N':'S')+' → CRS84';}if(n.type==='compare_point_sets'){d.subtitle='Original + moved + two centers + pumps';d.detail=`UTM zone ${n.params.zone}${n.params.hemisphere==='north'?'N':'S'} · metres`;}if(n.type==='comparison_map'){d.subtitle='Side-by-side maps · shared extent';d.detail='Private evaluation view';}if(n.type==='buffer_area')d.detail=n.params.distanceM+' m acquisition buffer';if(['map_output','table_output','chart_output'].includes(n.type)&&'inputMode' in n.params&&n.params.inputMode==='polygons'){d.subtitle='Display polygon geometry and existing summaries';d.detail='Creates a Results tab';}if(n.type==='map_output'&&n.params.inputMode==='raster'){d.subtitle='Native raster cells and clipping boundary';d.detail='GeoTIFF download';}if(n.type==='table_input'){d.subtitle=n.params.keys.length?`${n.params.keys.length} key columns -> ${n.params.valueField}`:'Choose key and value columns';d.detail=n.params.data.rows.length?`${n.params.data.rowCount} rows`:'Import a long-format CSV';}if(n.type==='reproject'){d.subtitle=`CRS84 degrees \u2192 EPSG:${n.params.hemisphere==='south'?32700+n.params.zone:32600+n.params.zone} metres`;d.detail='Projects connected points';}if(n.type==='raster_input')d.detail=n.params.asset?`${n.params.asset.metadata.width} x ${n.params.asset.metadata.height} retained cells`:'Prepare GeoTIFF input';if(n.type==='study_area'&&n.params.source==='drawn'){d.subtitle=n.params.geometry?`${n.params.selectionMode==='bbox'?'Bounding box':'Polygon'} · ${geometryVertices(n.params.geometry)} vertices`:'Choose a boundary on the map';d.detail=n.params.geometry?'GeoJSON → N3 · CRS84':'Not configured';}if(n.type==='measure_area'){d.subtitle='Study area → study area + area';d.detail=`${AREA_UNITS[n.params.unit].symbol} · spherical calculation`;}return d;}
 function runEvidenceText(){return result?result.receipts.map(receiptText).join('\n\n')+(result.provenanceN3?'\n\n# WORKFLOW, WIDGET AND REFERENCE PROVENANCE (recorded metadata, not rule premises)\n'+result.provenanceN3:''):'';}
-function receiptText(r:Receipt){return r.kind==='presentation'?`# PRESENTATION NODE: ${r.nodeId}\n# SOURCE FACTS AND VIEW PROVENANCE (no new inference)\n${r.input}`:r.kind==='computation'?`# COMPUTATION NODE: ${r.nodeId}\n# COMPUTED FACTS (not inferred)\n${r.input}`:`# RULE NODE: ${r.nodeId}\n${r.input}\n# DERIVED CONCLUSIONS\n${r.conclusions.map(quadToN3).join('\n')}`;}
+// A DECLARATION NODE STATES FACTS AND INFERS NOTHING, which is a third kind and not a rule with
+// an empty conclusion list. Added 2026-10-31 with `study_design`: without it a declaration fell
+// through to the rule branch and the run died on `conclusions.map`. Experiment 154.
+function receiptText(r:Receipt){return r.kind==='declaration'
+  ?`# DECLARATION NODE: ${r.nodeId}\n# WHAT THE PRACTITIONER DECLARED (no computation, no inference)\n${r.input}`
+  :r.kind==='presentation'?`# PRESENTATION NODE: ${r.nodeId}\n# SOURCE FACTS AND VIEW PROVENANCE (no new inference)\n${r.input}`:r.kind==='computation'?`# COMPUTATION NODE: ${r.nodeId}\n# COMPUTED FACTS (not inferred)\n${r.input}`:`# RULE NODE: ${r.nodeId}\n${r.input}\n# DERIVED CONCLUSIONS\n${r.conclusions.map(quadToN3).join('\n')}`;}
 function renderN3(){
   const drawn=workflow.nodes.filter((n):n is WorkflowNode<'study_area'> & {params:Extract<import('./types.js').AreaParams,{source:'drawn'}>}=>n.type==='study_area'&&n.params.source==='drawn');
   const area=drawn.find(n=>n.params.geometry);$('#area-semantic-graph').hidden=!area;
@@ -2246,6 +2254,13 @@ function renderInspector(){
     };
     const unnamed=p.exposureColumn?valuesOf(p.exposureColumn)
       .filter(v=>v!==p.exposed&&v!==p.unexposed):[];
+    // THE MAPPING HAS ITS OWN DIALOG, on the practitioner's reasoning of 2026-10-31: *"I think
+    // in the 2x2 widget, that mapping exercise, being important, deserves a modal dialog."* Six
+    // fields in an Inspector column could not show the table they produce, and which rows become
+    // which letter is the step where the arithmetic acquires its meaning. The fields stay below
+    // -- the dialog is a better place to do it, not the only place -- and both write the same
+    // six parameters. Experiment 153.
+    content+=`<button class="button" id="twobytwo-map">Map the table onto a, b, c, d\u2026</button>`;
     content+='<p class="description">Risk in each group, the risk ratio, the odds ratio and the risk difference, each naming the method that produced it. The table must already be totalled: one row per combination of the exposure and the outcome.</p>'
       +labelForm('twobytwo-label','Node label',p.label||'Two-by-two table')
       +column('twobytwo-exposure','exposureColumn','Exposure column')
@@ -3039,6 +3054,15 @@ function renderInspector(){
       anchor.append(block);
     }
   }
+  optionalElement('#twobytwo-map')?.addEventListener('click',()=>{
+    const node=workflow.nodes.find(x=>x.id===selected) as WorkflowNode<'two_by_two'>|undefined;
+    if(!node)return;
+    openMappingDialog(tableOnPort(workflow,node.id,'records')??undefined,node.params,esc,next=>{
+      // Written through `change()` like every other edit, so a mapping made in a dialog is
+      // undoable, persisted and validated on exactly the same terms as one typed in the panel.
+      change(w=>{Object.assign(getNode(w,node.id,'two_by_two').params,next);});
+    });
+  });
   optionalElement('#output-quick-look')?.addEventListener('click',()=>{
     const produced=result?.tables?.[n.id];
     if(!produced)return;
@@ -4084,9 +4108,11 @@ function renderResults(){
   // are written in, its four margins, its total and its estimates with their intervals. Drawn
   // through the same function the write-up's figure calls, so the screen and the publication
   // cannot disagree about what the instrument says. Experiment 153.
-  const instrument=(output as unknown as {twoByTwo?:TwoByTwoResult})?.twoByTwo;
+  const carried=output as unknown as {twoByTwo?:TwoByTwoResult;unit?:string;
+    design?:{design:string;unitOfAnalysis:string;sentence:string}};
+  const instrument=carried?.twoByTwo;
   $('#result-statement').innerHTML=(stated?`<p class="result-statement">${esc(stated)}</p>`:'')
-    +(instrument?.kind==='two-by-two'?twoByTwoMarkup(instrument,esc):'');
+    +(instrument?.kind==='two-by-two'?twoByTwoMarkup(instrument,esc,carried.design,carried.unit):'');
   $('#result-statement').hidden=!stated&&!instrument;
   if(output?.kind==='data-table'){const t=output as unknown as import('./data-table.js').DataTable;$('#result-metrics').innerHTML=`<span class="metric"><b>${t.rowCount}</b> rows</span><span class="metric unknown"><b>${t.missingValueCount}</b> values absent</span><span class="metric">${t.keys.length} key columns · value in ${esc(t.unit||'an unstated unit')}</span>`;}
   if(output?.kind==='point-table')$('#result-metrics').innerHTML=`<span class="metric"><b>${rows.length}</b> records</span><span class="metric"><b>${rows.filter(r=>!r.coordinates).length}</b> missing coordinates</span><span class="metric">CRS84 · longitude, latitude</span>`;
@@ -6181,11 +6207,17 @@ function renderProjectView():void{
       // Same class: exportProject opens with the same guard, and this button is rebuilt by
       // render() on every state change, so it carries the state rather than being set once.
       backup.className='button small';backup.dataset.exportProject=project.id;backup.disabled=busy;
+      // THE SECOND EXPORT, beside the first rather than instead of it. One file backs a project
+      // up; a repository lets several authors own one. Experiment 150.
+      const repository=document.createElement('button');
+      repository.className='button small';
+      repository.dataset.exportRepository=project.id;repository.disabled=busy;
+      repository.textContent='Export as repository';
       backup.textContent='\u2193 Back up';
       const remove=document.createElement('button');
       remove.className='button small danger';remove.dataset.deleteProject=project.id;
       remove.textContent='Delete project';
-      actions.append(backup,remove);
+      actions.append(backup,repository,remove);
     }else{
       // Its workflows can still be backed up one at a time; the PROJECT cannot, because the
       // dialog's project export renders only for a project that can be deleted.
@@ -6405,6 +6437,67 @@ function renderStorageStatus(){
  *  get it off". */
 
 
+/** A PROJECT AS A GIT REPOSITORY, zipped, ready to be committed.
+ *
+ *  The practitioner, 2026-10-31, on why this is not a side quest: *"it is a selling point of FW,
+ *  to decrease friction everywhere in the epidemiologist's workflow, from designing an
+ *  investigation, implementing its workflows and managing evidence generation, and
+ *  publication."*
+ *
+ *  The sibling of `exportProject` and deliberately NOT a replacement for it. One file is for
+ *  backing a project up and moving it; this is for co-owning one — one workflow per file,
+ *  pretty-printed so a diff reads, named for the workflow so a pull request can be reviewed.
+ *  Experiment 150 designed and published the layout; until now nothing in the application wrote
+ *  it, and the published template had to say so in its own format declaration.
+ *
+ *  A ZIP RATHER THAN A DIRECTORY, because a browser cannot write one. The practitioner unzips it
+ *  into a clone of the template, or into an empty directory and `git init`. Stated in the toast
+ *  rather than left to be worked out.
+ *
+ *  ONE-WAY, AND IT SAYS SO. Reading a repository back is unbuilt, and the format declaration this
+ *  writes carries that rather than implying a round trip. */
+async function exportProjectRepository(id:string){
+  if(busy)return;
+  const project=readProjects().find(p=>p.id===id);
+  if(!project)return;
+  try{
+    save();
+    const saved=readSavedWorkflows();
+    const held=project.workflows.filter(key=>Object.hasOwn(saved,key));
+    if(!held.length)throw new Error('That project has no saved workflow to export.');
+    const workflows:{key:string;document:unknown}[]=[];
+    for(const key of held){
+      // The OPEN canvas as it stands, the same rule `exportProject` keeps: a practitioner looking
+      // at their work would not expect an older copy in the file.
+      const source=key===storageKey(workflow)?workflow:validateWorkflow(structuredClone(saved[key]));
+      workflows.push({key,document:await workflowDocument(source)});
+    }
+    // THE AUTHORED NOTES, AND DELIBERATELY NOT THE MACHINED ONES.
+    //
+    // A quoted or authored note is somebody's writing: it is the project's, it survives a run,
+    // and losing it would lose work nobody can regenerate. A machined note is prose this
+    // application wrote from a run, stamped with the build that wrote it and dropped on read
+    // when the build moves on — committing it would put derived output in a repository and
+    // guarantee a conflict on every re-run, for text a clone reproduces by pressing Run.
+    //
+    // The same rule the layout already applies to payloads: an acquired one is not committed,
+    // the declaration that reproduces it is. Found by exporting and counting -- the first
+    // version read `entry.notes` off the write-up store, which has no such field, and wrote
+    // eleven files where the published conversion has twenty-four.
+    const notes:Record<string,unknown>={};
+    for(const note of readNotes((project as {notes?:unknown}).notes).notes)
+      if(note.id)notes[note.id]=note;
+    const files=repositoryFiles({project:{...project,workflows:held},workflows,notes});
+    const zip=new ZipWriter(new BlobWriter('application/zip'));
+    for(const [path,text] of files)await zip.add(path,new TextReader(text));
+    const blob=await zip.close();
+    const name=`${project.name.replace(/[^a-z0-9]+/gi,'-').toLowerCase()}-repository.zip`;
+    downloadBlob(name,blob);
+    toast(`${files.size} files. Unzip into a clone of fieldwork-project-template, or into an `
+      +`empty directory and \`git init\`. Fieldwork cannot open one back yet.`,{tone:'notice'});
+  }catch(error){toast(errorMessage(error),{tone:'failure'});}
+}
+
 /** A PROJECT AS ONE FILE. *"Where is the export project button?"* -- 2026-10-21. There was none:
  *  Export and Encrypted ZIP are both workflow-scoped, so four workflows about one province moved
  *  as four unrelated files with nothing recording that they belonged together. */
@@ -6613,6 +6706,8 @@ const projectListAction=async(event:Event)=>{
   if(openWorkflow){loadExample(openWorkflow);return;}
   if(removeProject){deleteProject(removeProject);return;}
   if(button.dataset.exportProject){await exportProject(button.dataset.exportProject);return;}
+  if(button.dataset.exportRepository){
+    await exportProjectRepository(button.dataset.exportRepository);return;}
   if(removeKey){deleteWorkflow(removeKey);renderStorageStatus();
     if(currentView==='project')renderProjectView();return;}
   if(exportWorkflow){

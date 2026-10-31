@@ -922,3 +922,13 @@ table.two-by-two-estimates td.tbt-value,table.two-by-two-estimates td.tbt-interv
 .tbt-warning{font-size:12px;margin:0}
 /* The corner header labels the ROW names, so it aligns with them and not with the counts. */
 table.two-by-two thead th:first-child{text-align:left}
+.tbt-unit{opacity:.75}
+
+/* THE MAPPING DIALOG. The grid of six choosers above, the two-by-two they produce below, so a
+   practitioner sees the cells land as they choose rather than after the step runs. */
+#two-by-two-mapping{max-width:720px;width:92vw}
+.mapping-body{display:flex;flex-direction:column;gap:14px}
+.mapping-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+table.mapping-preview td.map-cell{min-width:150px;height:58px;vertical-align:middle}
+td.map-cell-problem{background:color-mix(in srgb,#b4553a 12%,transparent)}
+.map-problem{display:block;font-size:11px;opacity:.85;text-align:right;font-style:italic}

@@ -57,7 +57,7 @@ export interface MapValue extends Omit<AreaValue,'kind'|'rows'> {kind:'spatial-m
   markHalo?:boolean;
   layerNames?:Record<string,string>; pointLayers:LayerSummary[]; sourceNodeId:string|null}
 export interface TableValue {kind:'point-table'; rows:PointRow[]; centers:never[]; spatialReference:AnySpatialReference; pointLayers:LayerSummary[]; pointTable?:boolean}
-export interface Receipt {nodeId:string; references?:EvidenceReference[]; ruleset?:import('./rulesets.js').RulesetCitation; kind?:'computation'|'presentation'; facts:string; rules:string; input:string; conclusions:ReasonerQuad[]; source?:string; method?:string; measurement?:Measurement; areaId?:string; geometryId?:string; exclusions?:Exclusion[]}
+export interface Receipt {nodeId:string; references?:EvidenceReference[]; ruleset?:import('./rulesets.js').RulesetCitation; kind?:'computation'|'presentation'|'declaration'; facts:string; rules:string; input:string; conclusions:ReasonerQuad[]; source?:string; method?:string; measurement?:Measurement; areaId?:string; geometryId?:string; exclusions?:Exclusion[]}
 export interface RegistryValue {boundary:Boundary; facilities:Facility[]; radiusKm:number; facilitySource?:{nodeId?:string; sourceInfo?:import('./types.js').SourceInfo; inputCount:number; missingLocationCount:number}}
 export interface GradedRegistryValue extends Omit<RegistryValue,'facilities'> {facilities:GradedFacility[]}
 export interface SamplesValue extends PointCollection {boundary:Boundary; rows:Sample[]; spacingM:number}

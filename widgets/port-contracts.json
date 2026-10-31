@@ -268,7 +268,12 @@
               "table"
             ]
           ],
-          "optional": []
+          "optional": [
+            [
+              "design",
+              "design"
+            ]
+          ]
         }
       ]
     },
@@ -372,7 +377,12 @@
               "table"
             ]
           ],
-          "optional": []
+          "optional": [
+            [
+              "design",
+              "design"
+            ]
+          ]
         }
       ]
     },

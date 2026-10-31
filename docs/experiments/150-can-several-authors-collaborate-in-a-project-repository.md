@@ -937,6 +937,64 @@ still true for reading. What is emitted now says it writes and cannot yet read, 
 declaration that implied a round trip would invite somebody to export a repository and expect to
 open it again.
 
+## Governance the authors exercise, and the two files that do not divide
+
+The practitioner, 2026-10-31: a study needs *"a study governance recommendation, where authors
+cleanly divide up the work to avoid clashes and use the discussion feature to avoid those
+clashes."* And earlier, on what a discussion is for: *"research discussions should have user
+exercised governance. For example always document decisions and free text can also have some
+structure the ways issues are described on GitHub."*
+
+**This layout makes a clash legible and cannot make it rare.** `workflows/*.json -merge` means git
+refuses rather than interleaves, because there is no merge base in a browser — so two authors on
+one workflow get a conflict that no machine can settle and that a person has to resolve by
+choosing one graph over another. That is the right behaviour and it is a last resort. Avoiding the
+collision is social, and the recommendation below is what the layout implies rather than general
+advice about communicating.
+
+### Divide by workflow, because that is the unit the layout makes atomic
+
+One file is one workflow. Two authors on different workflows never touch the same blob, however
+much they each change. So the division of labour should follow the file boundary exactly: an
+author owns workflows, not topics, not sections, not "the analysis".
+
+### THE TWO FILES THAT DO NOT DIVIDE, which is the finding
+
+Writing the exporter on 2026-10-31 made the shared surface visible, and it is small and specific.
+Of everything a project emits, exactly two files are shared by construction:
+
+| File | Why every author touches it |
+| --- | --- |
+| `project.json` | carries the workflow list, so **adding** a workflow edits it |
+| `assets/manifest.json` | carries every payload reference, so **adding** an asset edits it |
+
+Everything else is per-author: a workflow file has one owner, and a note file is one note.
+
+So the recommendation is not "coordinate" but something a person can act on: **divide workflows
+freely and without ceremony, and coordinate on the two acts that touch shared files — adding a
+workflow, and adding an asset.** Both collide on ADDITION, which is append-shaped and resolvable
+by hand in a way a graph is not; neither carries the `-merge` attribute, so git will attempt them
+and usually succeed.
+
+### What a discussion is for, and what it is not
+
+Claiming a workflow before editing it, and recording a decision after making it. Not review —
+that is a pull request — and not the work itself.
+
+The template already ships `.github/DISCUSSION_TEMPLATE/decisions.yml`, which is the structure the
+practitioner asked for: a decision form rather than free text, on the reasoning that an issue is
+legible because its shape is agreed. It binds only once a category with the slug `decisions`
+exists, and enabling Discussions is an account action that belongs to a person rather than to this
+application.
+
+**ONE ASYMMETRY TO STATE BEFORE IT IS DISCOVERED.** A repository is self-contained and clones; a
+discussion is hosted and does not. The artifact travels and the conversation stays behind. The
+practitioner has ruled that hosting on GitHub is good enough — *"That is the joint public record
+of a collaboration like any open source project. This actually promotes open research."* — so this
+is not an objection to the choice. It is a limit on where the decision record is durable, and an
+export of decisions back into the repository is what would close it. That belongs to experiment
+155, not here.
+
 ## What this does not establish
 
 - **That the current format is wrong for its current job.** One gzipped bundle is a good *export*:

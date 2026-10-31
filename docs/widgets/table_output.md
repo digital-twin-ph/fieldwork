@@ -30,6 +30,24 @@ path is the general one.
 
 Nothing is required. A table with nothing connected is **unfinished**, not broken, and says so.
 
+### It states its own shape in the write-up
+
+Every run machines a note into **Results** on the Notes tab stating what this table is made of. It names the columns as the table spells them, says how many rows, reports empty cells as unknown rather than zero, and names the source file and digest where the table came in as a file. Only in the table mode: the point, polygon and decision views are not published tables.
+
+Column names are shown as they are, in `code`, rather than bent into a sentence. A generator cannot tell whether `measure` or `group` is a noun, so it states them and leaves the prose to you.
+
+**The caption is yours.** A caption states the subject, the population, the place and the period
+in your words, and none of that can be read off a table. What this writes is what the table
+declares about itself — the material you write the caption from, sitting beside it in the same
+section.
+
+**And it carries no number.** A figure's number depends on where it sits in the write-up and on
+the venue you are preparing — set one figure aside and the ones after it move up — so the number
+is worked out when the document is rendered. Nothing here says "Figure 1".
+
+Edit it and it forks into a note of your own, like any machined note; the machined one goes on
+being rewritten by every run.
+
 ## What it will not do
 
 - **It will not ask you what shape your data is.** There is no mode to set, and connecting

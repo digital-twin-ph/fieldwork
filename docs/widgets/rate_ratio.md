@@ -53,6 +53,22 @@ denominators, what the denominator counts, the bounds, the level and the method 
 1,000 cancels the per-1,000 — so "8.40 per 10,000" is not a quantity, and there is deliberately
 nowhere to write one. Change the rate's multiplier and the ratio does not move.
 
+### The equation, as a note for your Methods section
+
+Every run machines a note into **Methods** on the Notes tab: the ratio and its interval, each
+written once as the formula and once with this run's numbers in it.
+
+$$\mathrm{RR} = \frac{a_1 / n_1}{a_0 / n_0} \qquad
+\exp\left(\ln \mathrm{RR} \pm z \sqrt{\frac{1}{a_1} + \frac{1}{a_0}}\right)$$
+
+**The interval is the half worth printing.** A reader can reconstruct a ratio of two rates
+unaided; what a report usually replaces with a software citation is the interval, and that is the
+line this note supplies.
+
+**No source is cited for the interval method, and the note says so.** A log-normal interval on a
+ratio of two rates is a standard construction that the implementations consulted state without
+attributing. Naming a plausible textbook instead would be worse than naming nothing.
+
 ## What it will not do
 
 - **It will not divide by zero events.** A group with no events has no ratio and no interval.

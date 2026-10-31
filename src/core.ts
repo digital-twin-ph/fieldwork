@@ -56,6 +56,15 @@ import {OLD_TYPES,validateOldNode,executeOldNode,migrateFacilitySources,applyAcc
 import {resolveRuleset,bindParameters,tableContractFailures,rulesetCitation} from './rulesets.js';
 import {deriveValue,selectRows,OPERATORS} from './derive-value.js';
 import {relateTable,relateOutcome,machinedNotes,relateReceiptFacts,type RelateOutcome} from './relate-table.js';
+// THE EQUATIONS THE COMPUTATIONS USED, machined as Methods notes. The second, third and fourth
+// producers of a machined note, which is the state `relate-table.ts` wrote its type for.
+import {rateEquationNote,rateRatioEquationNote,twoByTwoEquationNote,machinedNoteFacts}
+  from './equations.js';
+// WHAT AN ARTIFACT DECLARES ABOUT ITSELF. A table, a map and a chart are what a Results
+// section is mostly made of, and until now not one of them put a word into the write-up. NOT a
+// caption: that is the author's, and 141 records why.
+import {tableDescriptionNote,mapDescriptionNote,chartDescriptionNote}
+  from './artifact-notes.js';
 import {derivedNotes} from './notes-derived.js';
 import {polygonLayer,polygonLayerFacts} from './polygon-layer.js';
 import {shareAlike} from './input-provenance.js';
@@ -954,8 +963,21 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
   // produced, so a step that silently halved a stratification looks exactly like one that did
   // not. See `relateOutcome` in src/relate-table.ts.
   const relations:Record<string,RelateOutcome>={};
-  // NOTES THE WIDGETS MACHINED, for the write-up rather than for a panel. One producer so far.
+  // NOTES THE WIDGETS MACHINED, for the write-up rather than for a panel. Four producers:
+  // `relate_table` reports what the join did, and `rate`, `rate_ratio` and `two_by_two` state
+  // the equation they computed with this run's numbers substituted into it.
   const machined:Record<string,MachinedNote[]>={};
+  // A NOTE GOES IN THE RECEIPT OF THE STEP THAT MACHINED IT, which is where `relate_table` has
+  // put its own since 0.3.0. Appended to the receipt just pushed rather than threaded through
+  // three receipt builders, because the note is assembled from the result those builders already
+  // have and passing it in would mean changing all three signatures to carry it back out again.
+  const withNote=(into:Receipt[],run:string,nodeId:string,notes:MachinedNote[])=>{
+    const receipt=into[into.length-1];
+    if(receipt?.nodeId!==nodeId)return;
+    const facts=machinedNoteFacts(`<urn:fieldwork:run:${run}:output:${nodeId}>`,notes);
+    receipt.facts+=facts;
+    if(receipt.input)receipt.input+=facts;
+  };
   const sources=derivedNotes(workflow.nodes,workflow.workflowKey);
   const expansion=expandMicroWorkflows(workflow,resolveComposition,runId);
   workflow=expansion.workflow;receipts.push(...expansion.receipts);
@@ -1327,6 +1349,8 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           rowCount:4,missingValueCount:0,twoByTwo:result} as unknown as DisplayValue;
         receipts.push(twoByTwoReceipt(node,result,runId,
           workflow.edges.find(e=>e.to===node.id&&e.port==='records')!.from));
+        machined[node.id]=[twoByTwoEquationNote(result,node.id)];
+        withNote(receipts,runId,node.id,machined[node.id]);
         break;}
       case 'select_rows':{
         const table=inputs.records as unknown as import('./data-table.js').DataTable;
@@ -1340,7 +1364,10 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
       case 'rate':{const records=node.params.source==='table'
         ?fromTable(inputs.records as unknown as import('./data-table.js').DataTable,node.params.measureKey||'measure')
         :fromPoints(inputs.records);
-        const result=computeRate(records,node.params);value={...rateTable(result),chart:rateChart(result)} as unknown as DisplayValue;receipts.push(rateReceipt(node,result,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='records')!.from));break;}
+        const result=computeRate(records,node.params);value={...rateTable(result),chart:rateChart(result)} as unknown as DisplayValue;receipts.push(rateReceipt(node,result,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='records')!.from));
+        const rateNote=rateEquationNote(result,node.id);
+        if(rateNote){machined[node.id]=[rateNote];withNote(receipts,runId,node.id,[rateNote]);}
+        break;}
       case 'rate_ratio':{
         // THE INPUT IS A RATE, NOT A TABLE OF NUMBERS. Only a rate declares what its numbers are
         // per, and dividing a per-house rate by a per-person one is arithmetic on two different
@@ -1377,6 +1404,8 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           rowCount:6,missingValueCount:0,rateRatio:comparison,sentence} as unknown as DisplayValue;
         receipts.push(rateRatioReceipt(node,comparison,runId,
           workflow.edges.find(e=>e.to===node.id&&e.port==='rates')!.from));
+        machined[node.id]=[rateRatioEquationNote(comparison,node.id)];
+        withNote(receipts,runId,node.id,machined[node.id]);
         break;}
       case 'case_series':{const series=node.params.source==='table'?caseSeriesFromTable(inputs.cases,{dateField:node.params.dateField,dateKind:node.params.dateKind,period:node.params.period}):caseSeries(inputs.points,{dateField:node.params.dateField,dateKind:node.params.dateKind,period:node.params.period,weightField:node.params.weightField});value={...seriesTable(series),chart:seriesChart(series)} as unknown as DisplayValue;receipts.push(seriesReceipt(node,series,runId,workflow.edges.find(e=>e.to===node.id&&(e.port==='points'||e.port==='cases'))!.from));break;}
       case 'slr_extract_import':{const extract=projectionExtract(inputs.projections,{datasetIRI:node.params.datasetIRI,datasetVersion:node.params.datasetVersion,baselinePeriod:node.params.baselinePeriod,citations:node.params.citations,basisKind:node.params.basisKind,familyValues:node.params.familyValues,sourceNote:node.params.sourceNote});value=projectionTable(extract) as unknown as DisplayValue;receipts.push(extractReceipt(node,extract,runId));break;}
@@ -1871,6 +1900,19 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
     // draw the same layers in the same order under the same names -- rather than each inventing
     // its own labels at the point of drawing, which is how the layer control came to offer
     // "Observations (red circles)" beside a practitioner's own node label.
+    // THE DESCRIPTIONS, after the switch because a map's layer list is assembled here and because
+    // all three read the value the node just produced rather than anything only the case knows.
+    // Gated on the node TYPE and not on what the value carries: a `rate` emits a chart on its own
+    // table, and captioning that would caption a computation as though it were a figure.
+    if(node.type==='table_output'&&(value as {kind?:string})?.kind==='data-table'){
+      const note=tableDescriptionNote(value as unknown as import('./data-table.js').DataTable,
+        node.params.label,node.id,portSourceName(workflow,node.id,'table',''));
+      if(note){machined[node.id]=[note];withNote(receipts,runId,node.id,[note]);}
+    }
+    if(node.type==='chart_output'&&isRecord(value)&&(value as {chart?:ChartSummary}).chart){
+      const note=chartDescriptionNote((value as {chart:ChartSummary}).chart,node.params.label,node.id);
+      if(note){machined[node.id]=[note];withNote(receipts,runId,node.id,[note]);}
+    }
     if(node.type==='map_output'&&isRecord(value)){
       const plan=mapLayerList(node,workflow.edges,
         id=>workflow.nodes.find(n=>n.id===id)?.params.label,
@@ -1884,6 +1926,8 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           })]);
       assertSomethingToDraw(plan,node.params.label||node.id);
       (value as unknown as {mapLayers?:MapLayer[]}).mapLayers=plan;
+      const note=mapDescriptionNote(plan,node.params.label,node.id);
+      if(note){machined[node.id]=[note];withNote(receipts,runId,node.id,[note]);}
     }
     values.set(node.id,value);trace.push({nodeId:node.id,type:node.type,milliseconds:performance.now()-begin});
     // WHEN THIS STEP RAN, in the receipt, in PROV's own terms.

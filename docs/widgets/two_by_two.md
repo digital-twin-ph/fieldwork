@@ -99,6 +99,31 @@ here. Dropping the qualifier would make this label claim both.
 different scale, and the estimate says so where the number is, so nobody reads the two screens
 side by side and concludes the implementations disagree.
 
+### The equation, as a note for your Methods section
+
+Every run machines a note into **Methods** on the Notes tab, writing the four cells as `a`, `b`,
+`c` and `d` — the letters every textbook formula is in, and the ones an FETP trainee is taught —
+and then each measure twice: once as the formula, once with this run's numbers substituted.
+
+$$\mathrm{RR} = \frac{a/(a+b)}{c/(c+d)} \qquad \mathrm{OR} = \frac{ad}{bc}$$
+
+**Why both forms.** A formula on its own restates a textbook. The same formula with your numbers
+in it lets a reader check the arithmetic without rerunning anything, which is the thing a Methods
+section is for.
+
+**Each interval method is cited, or it says no source has been read for it.** A citation here is
+read off a source or it is absent; none is written from memory, because a plausible-looking
+reference is the kind of error a reader stops checking at.
+
+| method | source |
+| --- | --- |
+| risk ratio · Katz log | Katz D, Baptista J, Azen SP, Pike MC. Obtaining confidence intervals for the risk ratio in cohort studies. Biometrics. 1978;34(3):469-474. doi:10.2307/2530610 |
+| odds ratio · Wald log | Woolf B. On estimating the relation between blood group and disease. Annals of Human Genetics. 1955;19(4):251-253. doi:10.1111/j.1469-1809.1955.tb01348.x |
+| risk difference · Wald unpooled | **None read.** The construction is standard and the implementations consulted state it without attributing it. |
+
+The note is editable like any machined note: editing it forks it into a note of your own, and the
+machined one goes on being rewritten by every run.
+
 ## What it will not do
 
 - **It will not claim agreement with Epi Info.** These are standard methods, named honestly, with
@@ -117,6 +142,10 @@ side by side and concludes the implementations disagree.
   The stratum you left out is excluded, not controlled for, and no estimate here is an effect.
 - **It will not test a hypothesis.** Chi-square, Mantel-Haenszel, Yates, Fisher exact and mid-P are
   not built. They are a larger piece and were not started to meet a date.
+- **It will not check that the equation it prints is the one the source paper states.** The
+  formulas in the note were read off this widget's own code, so they state what it computes. That
+  the code matches Katz and Woolf is a different question, and the computations audit that would
+  answer it is not written.
 
 ## Where it is used
 

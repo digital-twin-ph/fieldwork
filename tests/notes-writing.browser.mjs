@@ -159,10 +159,16 @@ test('a derived note is still changed at the input, not here',{skip},async({page
   await expect(page.locator('#note-why')).toContainText('Change it at the input');
 });
 
-/** THE ONLY WIDGET THAT MACHINES A NOTE is `relate`, and no example reached from the picker uses
- *  one: South London's contingency table is the one workflow that joins two of Snow's tables, and
- *  it is selected by name after the bundle is imported. Found by writing this test against the
- *  workflow the example opens on, where there is no machined note to edit. */
+/** THE WIDGET WHOSE MACHINED NOTE THIS FORKS is `relate`, and no example reached from the picker
+ *  uses one: South London's contingency table is the one workflow that joins two of Snow's
+ *  tables, and it is selected by name after the bundle is imported. Found by writing this test
+ *  against the workflow the example opens on, where there was no machined note to edit.
+ *
+ *  It was the ONLY producer until 2026-10-30, when `rate`, `rate_ratio` and `two_by_two` began
+ *  machining their equations (experiment 151, amendment). This workflow now carries two machined
+ *  notes, so
+ *  the locator below takes the first -- the relate's, since nodes machine in execution order --
+ *  rather than the only one. */
 const contingency=async page=>{
   await page.goto('/');await page.evaluate(()=>localStorage.clear());
   await page.goto('/?example=blank');

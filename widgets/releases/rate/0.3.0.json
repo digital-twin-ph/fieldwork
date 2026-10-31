@@ -1,0 +1,74 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:rate",
+  "nodeType": "rate",
+  "version": "0.3.0",
+  "title": "Rate with a denominator",
+  "released": "2026-10-30",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['rate']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "validationStatus": "application-only",
+    "shaclShapes": []
+  },
+  "ports": {
+    "inputs": [
+      {
+        "name": "records",
+        "type": "points"
+      }
+    ],
+    "output": "table",
+    "optionalInputs": [],
+    "note": "Records in, a keyed table of rates out, so a Table output displays them and a Chart output draws them. The declared port is the static one; the type it accepts follows the stated kind of input, so with a table selected the same `records` port takes a table instead. The port keeps its name either way, because what it carries is the records to divide. A denominator usually arrives as a table -- Snow's two water companies are rows, not places -- which is why the table variant exists. The person axis needs no new port type: the counts are already attributes of the input."
+  },
+  "ontology": {
+    "status": "partial",
+    "mappings": [
+      {
+        "role": "activity",
+        "iri": "urn:fieldwork:RateComputation",
+        "file": "ontology/runtime.ttl"
+      },
+      {
+        "role": "entity",
+        "iri": "urn:fieldwork:RateResult",
+        "file": "ontology/runtime.ttl"
+      }
+    ],
+    "note": "fw:RateResultShape requires the denominator unit and the rate kind from closed sets and records whether the numerator period and denominator vintage agree, so a rate that does not say what it is a rate of cannot conform. Verified in tests; this registry version records application validation only.",
+    "emits": {
+      "classes": [],
+      "properties": []
+    }
+  },
+  "implementation": {
+    "files": [
+      "src/app.ts",
+      "src/core.ts",
+      "src/equations.ts",
+      "src/notes.ts",
+      "src/rate.ts"
+    ],
+    "definition": "src/core.ts#TYPES"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": null
+  },
+  "changes": [
+    {
+      "kind": "minor",
+      "description": "Machine the equation into a Methods note. Every run of this widget now writes a note to the Notes tab under Methods, carrying each computation twice -- once as the formula and once with this run's numbers substituted into it -- as LaTeX the browser typesets to MathML. The claim this answers is experiment 141's, made on 2026-10-26 and unbuilt until now: \"all of our computations have equations, and these can be automatically constructed in LaTeX for automatic rendering as notes\". Experiment 151 built the renderer four days later and recorded that the first machined equation was still unwritten, which is what made the 212KB converter correct rather than earned. Both forms are carried because a symbolic formula restates a textbook and the instantiated one lets a reader check the arithmetic without rerunning anything. Nothing about the arithmetic changed: the formulas were read off this widget's own implementation, which is why they state what it computes and not what a source paper states -- the computations audit that would establish the second is recorded in TODO.md and does not exist. A rate has no interval and therefore no method to cite, and the note says that rather than ending on an empty reference list. A rate whose denominator is zero machines no note at all, because a symbolic formula with nothing substituted into it is the textbook restatement this decision rejected."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Unit checks cover the required declarations, refusal of a proportion exceeding one, banding and order, suppression at a zero or small denominator with the counts still reported, refusal of non-numeric and negative values, and comparison of the two vintages. Division is arithmetic; nothing here establishes that a denominator is the right population at risk, which is a judgment about the data. The table path is checked against Snow's Table IX (1855), published outside this project: the pivot reproduces its houses and deaths columns, and the rates computed from them are 315.39, 37.54 and 55.46 per 10,000 houses. Snow printed 315, 37 and 59. Four of his five printed rates are the quotient with the fraction dropped; Rest of London is not reproduced under either rounding rule, because 59 per 10,000 from 1,422 deaths implies about 241,000 houses rather than the 256,423 printed beside it. The widget divides the columns and does not reproduce 59, which is a discrepancy in the source and is recorded, not smoothed away. The equation note added in 0.3.0 is covered by tests/equations.test.mjs (13 unit checks, including that a method reference either renders completely or is null, that no note carries a table or a heading, and that a column name with an underscore is escaped rather than read as a subscript) and by tests/equation-notes.browser.mjs over the South London example on Chromium and WebKit, which is where it is established that the LaTeX is typeset to MathML rather than shown as its source. Both suites were mutation-checked by removing the behaviour and confirming they fail."
+  }
+}

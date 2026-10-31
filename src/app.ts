@@ -68,9 +68,13 @@ import {oldInspector,oldEvidence,resultTable,oldMap,mapFrame,distanceText} from 
 import {mapLayerList,membersOfPolygons,LAYER_LABEL_LIMIT,type MapLayer} from './map-layer-list.js';
 import {openPolygonReview} from './polygon-review.js';
 import {notesPanel,openNoteDialog,noteKey} from './notes-ui.js';
+// THE WRITE-UP IS THE PROJECT'S. A run contributes its notes to a store the Notes tab reads
+// across every workflow of the project, rather than the tab reading the open run alone.
+import {WRITE_UP_STORE,readWriteUp,entryForRun,recordEntry,writeUpOf,sourceOfNote,
+  type WriteUp,type WriteUpEntry} from './write-up.js';
 import {typeset} from './prose.js';
 import {readNotes,WRITE_UP_PARTS,type Note,type WriteUpPart,moveNote,forkMachinedNote,
-  UNWRITTEN} from './notes.js';
+  UNWRITTEN,type MachinedNote} from './notes.js';
 import {readAuthors,currentIdentity,attestIdentity,setCurrentIdentity,authorLabel} from './identity.js';
 
 /** A polygon layer's chosen file, waiting for Apply. Keyed by node, outside the DOM, because the
@@ -122,7 +126,7 @@ import {projectDocument,readProjectDocument,unbundledReferences,PROJECT_DOCUMENT
 import {rasterExample} from './raster-example.js';
 import {openPackageDialog} from './package-ui.js';
 import {syncProjectManifest} from './project-manifest.js';
-import {BUILT_IN_PROJECTS,WORKFLOW_LABELS,projectOfWorkflow,newProject,validateProject,siblingInputs,payloadDigest,dehydrateWorkflow,hydrateWorkflow,projectSafety,unexportedWork,exportPredatesWork,type Project,type ProjectWork} from './project.js';
+import {BUILT_IN_PROJECTS,WORKFLOW_LABELS,projectOfWorkflow,projectById,newProject,validateProject,siblingInputs,payloadDigest,dehydrateWorkflow,hydrateWorkflow,projectSafety,unexportedWork,exportPredatesWork,type Project,type ProjectWork} from './project.js';
 import {mountPanelLayout} from './panel-layout.js';
 import {newMapOutput,mapEvidence} from './map-output.js';
 import {newTableOutput,pointTableMarkup,pointTableEvidence} from './table-output.js';
@@ -533,6 +537,49 @@ function save(){
  *  is replaced: the edits stay until the practitioner asks for the published version, because
  *  discarding somebody's work to deliver news is not an improvement on withholding the news. */
 const REVISIONS='fieldwork-example-revisions-v1';
+
+/** THE WRITE-UP STORE: what each workflow's last run contributed, by workflow key.
+ *
+ *  Notes only, never a run's outputs -- see `src/write-up.ts` for why. Read tolerantly and
+ *  written best-effort: a write-up is a convenience over runs that can be repeated, so a full
+ *  store costs a re-run rather than the practitioner's work, and it must never fail a run. */
+/** THE BUILD THIS PAGE IS RUNNING, for stamping the write-up and for telling a stale one apart.
+ *
+ *  Read from `build/asset-manifest.json`, which `build.mjs` writes with the same content hash the
+ *  service worker names its cache after, and which is deliberately NOT in the precache list -- so
+ *  this fetch reports the build ON DISK rather than the one the worker is serving. Undefined
+ *  until it resolves, and undefined for ever if it cannot be read, in which case nothing is
+ *  stamped and nothing is dropped: a write-up that cannot be checked is kept rather than thrown
+ *  away. */
+let runningBuild:string|undefined;
+/** Declared as a function so it may be called before `currentView` is initialised; it reads it
+ *  only when the manifest resolves, which is after this module has finished evaluating. */
+function refreshNotesIfOpen(){if(currentView==='notes')renderNotesView();}
+void fetch('./build/asset-manifest.json',{cache:'no-store'})
+  .then(r=>r.ok?r.json():null)
+  .then(m=>{const id=m&&typeof m.cache==='string'?m.cache:undefined;
+    if(id&&id!==runningBuild){runningBuild=id;refreshNotesIfOpen();}})
+  .catch(()=>{/* Offline, or the manifest is absent. The write-up is kept unstamped. */});
+
+function readWriteUpStore():WriteUp{
+  try{return readWriteUp(localStorage.getItem(WRITE_UP_STORE),runningBuild);}catch{return {};}
+}
+function rememberRunNotes(ran:Workflow,run:WorkflowRun):void{
+  const key=storageKey(ran);
+  if(!key)return;
+  const entry=entryForRun(key,ran.name||key,run,
+    id=>ran.nodes.find(node=>node.id===id)?.params.label,new Date().toISOString(),runningBuild);
+  if(!entry)return;
+  // A WORKFLOW THE PROJECT NO LONGER LISTS STOPS CONTRIBUTING. Nothing else would remove it, and
+  // a deleted workflow going on writing into a publication is the kind of thing nobody notices
+  // until a reader asks what a paragraph is doing there.
+  const project=projectOfWorkflow(key,allProjects())
+    ??(ran.projectId?projectById(ran.projectId,allProjects()):undefined);
+  try{
+    localStorage.setItem(WRITE_UP_STORE,
+      JSON.stringify(recordEntry(readWriteUpStore(),entry,project?.workflows)));
+  }catch{/* Storage may be full. The run stands; the write-up shows this workflow from memory. */}
+}
 /** Stable over a template's shape: the nodes it has and how they are wired. A label or a
  *  coordinate changing is not worth interrupting anybody for; a workflow gaining two halves is. */
 function exampleRevision(w:Workflow){
@@ -600,7 +647,12 @@ function noticeIfRepublished(key:string){
  *  example could reach -- the twelve keys are compiled in -- and both arrive the moment a
  *  practitioner's project mints a key of its own. */
 const isExampleKey=(key:string):boolean=>!key.includes('/');
-function loadExample(key:string){if(busy)return;
+/** Opens a workflow, and hands back the run it starts so a caller can wait for it.
+ *
+ *  It already started one; it simply never returned it, so nothing could sequence several. Added
+ *  2026-10-30 for *Run the rest*, which assembles a project's write-up by running the workflows
+ *  that have not contributed. Every existing caller ignores the promise and behaves as before. */
+function loadExample(key:string):Promise<void>{if(busy)return Promise.resolve();
   // A KEY WITH NOTHING UNDER IT is not a workflow, and this used to leave the canvas exactly where
   // it was and say nothing -- the row looked selectable and did nothing. Reported 2026-10-21:
   // *"test-project/w*, and *-template workflows I find in the list do not load at all on canvas"*.
@@ -609,7 +661,7 @@ function loadExample(key:string){if(busy)return;
     renderProjectOptions();render();
     toast(removed?'That row was a workflow registered in this project and never saved, so there is nothing to open. It has been removed from the list.'
       :'There is nothing saved under that workflow, so there is nothing to open.',{tone:'warning'});
-    return;
+    return Promise.resolve();
   }
   // A SAVED WORKFLOW THE APPLICATION REFUSES TO OPEN is a row that did nothing when chosen, which
   // is how one became unreachable AND undeletable. It now says what is wrong with it and offers
@@ -621,10 +673,10 @@ function loadExample(key:string){if(busy)return;
       renderProjectOptions();render();
       toast(why.startsWith('Shared input data is missing')?why:`That workflow could not be opened: ${why}`,
         {tone:'failure',action:{label:'Delete it',run:()=>deleteWorkflow(key)}});
-      return;
+      return Promise.resolve();
     }
   }
-  save();let fromTemplate=true;try{const saved=readSavedWorkflows()[key];fromTemplate=!saved;workflow=saved?validateWorkflow(structuredClone(saved)):isExampleKey(key)?template(key):workflow;}catch(error){if(errorMessage(error).startsWith('Shared input data is missing')){toast(errorMessage(error),{tone:'failure'});return;}if(isExampleKey(key))workflow=template(key);}if(!isExampleKey(key)){/* nothing published to compare against */}else if(fromTemplate)recordRevision(key);else setTimeout(()=>noticeIfRepublished(key),400);selected=key==='snow-geoprivacy'?'move':key.startsWith('snow-')?'catchments':key==='raster'?'raster-input':key==='old-naledi'?'access':'criteria';result=null;runWorkflow=null;activeOutputId=null;history=[];future=[];statuses={};dirty=true;save();renderLibrary();renderResults();render();switchView('workflow');setTimeout(()=>flow?.fit(),80);if(canAutoRun(workflow)&&key!=='blank')run();}
+  save();let fromTemplate=true;try{const saved=readSavedWorkflows()[key];fromTemplate=!saved;workflow=saved?validateWorkflow(structuredClone(saved)):isExampleKey(key)?template(key):workflow;}catch(error){if(errorMessage(error).startsWith('Shared input data is missing')){toast(errorMessage(error),{tone:'failure'});return Promise.resolve();}if(isExampleKey(key))workflow=template(key);}if(!isExampleKey(key)){/* nothing published to compare against */}else if(fromTemplate)recordRevision(key);else setTimeout(()=>noticeIfRepublished(key),400);selected=key==='snow-geoprivacy'?'move':key.startsWith('snow-')?'catchments':key==='raster'?'raster-input':key==='old-naledi'?'access':'criteria';result=null;runWorkflow=null;activeOutputId=null;history=[];future=[];statuses={};dirty=true;save();renderLibrary();renderResults();render();switchView('workflow');setTimeout(()=>flow?.fit(),80);return canAutoRun(workflow)&&key!=='blank'?run():Promise.resolve();}
 /** Drop focus before the panel holding the focused control is rewritten.
  *
  *  Removing a focused input fires blur, and the blur handler re-renders underneath the removal
@@ -4482,6 +4534,11 @@ async function run(){if(busy)return;
     // never touched that is true, and clearing it here marked a freshly adopted workflow as
     // already run.
     result=next;runWorkflow=snapshot;if(stillOurs)dirty=false;
+    // WHAT THIS RUN CONTRIBUTES TO THE WRITE-UP, kept so the Notes tab can show every workflow of
+    // the project rather than whichever one is open. Written for the workflow that RAN, which is
+    // `snapshot` and not necessarily the one now open -- the same distinction `stillOurs` makes
+    // just above, for the same reason.
+    rememberRunNotes(snapshot,next);
     // A use instance is a widget connected and RUN, so it is counted here and nowhere else:
     // placing one on a canvas is not using it. Local to this browser, never sent.
     recordRun(next.trace);
@@ -4985,20 +5042,95 @@ function writeNotes(notes:Note[]):boolean{
   stored[at]={...stored[at],notes};
   return writeProjects(stored);
 }
+/** THE WRITE-UP OF THE OPEN PROJECT: every workflow of it that has run.
+ *
+ *  The practitioner, 2026-10-30: *"It's supposed to hold notes from all workflows in that
+ *  project."* The open workflow's live result takes precedence over its own stored entry, so a
+ *  run just finished is read from memory rather than from what was written a moment ago. */
+function writeUpNow():WriteUpEntry[]{
+  const project=projectNow();
+  const keys=project?.workflows?.length?project.workflows:[storageKey(workflow)];
+  const stored=writeUpOf(readWriteUpStore(),keys);
+  const open=storageKey(workflow);
+  const live=result?entryForRun(open,workflow.name||open,result,
+    id=>workflow.nodes.find(node=>node.id===id)?.params.label,new Date().toISOString(),
+    runningBuild):null;
+  const entries=live?[...stored.filter(e=>e.workflowKey!==open),live]:stored;
+  // IN THE PROJECT'S OWN WORKFLOW ORDER, which `writeUpOf` already applies to the stored ones;
+  // the live entry has to be put back in its place rather than appended, or a re-run would move
+  // its workflow to the end of the write-up.
+  return keys.flatMap(key=>entries.filter(e=>e.workflowKey===key));
+}
 function renderNotesView(){
   const project=projectNow();
-  const labelOf=(id:string)=>workflow.nodes.find(node=>node.id===id)?.params.label;
-  const fromRun=Object.entries(result?.machined||{})
-    .flatMap(([nodeId,list])=>list.map(note=>({...note,nodeId})));
-  shownNotes=[...(project?.notes||[]),...(result?.derived||[]),...fromRun] as Note[];
-  $('#notes-view').innerHTML=notesPanel(project?.notes||[],result?.machined,
-    labelOf,esc,result?.derived||[]);
+  const entries=writeUpNow();
+  const of=new Map<string,WriteUpEntry>();
+  const machined:MachinedNote[]=[],derived:Note[]=[];
+  for(const entry of entries){
+    for(const note of entry.machined){
+      const tagged={...note,workflowKey:entry.workflowKey};
+      machined.push(tagged);of.set(noteKey(tagged),entry);
+    }
+    for(const note of entry.derived){
+      const tagged={...note,workflowKey:entry.workflowKey};
+      derived.push(tagged as Note);of.set(noteKey(tagged as Note),entry);
+    }
+  }
+  // A NODE LABEL IS RESOLVED IN THE WORKFLOW THAT PRODUCED THE NOTE, not in the open one. A node
+  // id repeats across a project -- South London has `table-viii` in three workflows -- so reading
+  // the open canvas would have labelled another workflow's step with whatever shares its id here.
+  const labelOf=(note:Note)=>{
+    const id='nodeId' in note?note.nodeId:undefined;
+    if(!id)return undefined;
+    const entry=of.get(noteKey(note));
+    if(entry&&entry.workflowKey!==storageKey(workflow))return entry.labels[id];
+    return workflow.nodes.find(node=>node.id===id)?.params.label??entry?.labels[id];
+  };
+  const sourceOf=(note:Note)=>{
+    const entry=of.get(noteKey(note));
+    return entry?sourceOfNote(entry,storageKey(workflow)):undefined;
+  };
+  // WHICH WORKFLOWS HAVE CONTRIBUTED NOTHING, by name. A workflow that has never run is not a
+  // defect and not a gap in the write-up; it is a step of the investigation that has not been
+  // computed, and the Notes tab is the one place a practitioner would otherwise mistake the two.
+  const contributed=new Set(entries.map(e=>e.workflowKey));
+  const pendingKeys=(project?.workflows||[]).filter(key=>!contributed.has(key));
+  const pending=pendingKeys
+    .map(key=>{
+      const saved=readSavedWorkflows()[key] as {name?:unknown}|undefined;
+      return typeof saved?.name==='string'&&saved.name.trim()
+        ?saved.name.trim():WORKFLOW_LABELS[key]??key;
+    });
+  shownNotes=[...(project?.notes||[]),...derived,...machined] as Note[];
+  $('#notes-view').innerHTML=notesPanel(project?.notes||[],machined,
+    labelOf,esc,derived,sourceOf,pending);
   // THE FORMULAE, ONCE THE PANEL IS IN THE DOCUMENT. `notesPanel` returns the LaTeX on the
   // element that will hold it, so a note reads correctly before the converter has loaded and on
   // any machine where it never does. See `src/prose.ts`.
   void typeset($('#notes-view'));
-  const total=(project?.notes||[]).length+(result?.derived||[]).length
-    +Object.values(result?.machined||{}).reduce((n,list)=>n+list.length,0);
+  // RUN THE REST, AND COME BACK. Each run needs its workflow open, so the canvas moves once per
+  // workflow and is returned to where the practitioner left it. `loadExample` hands back the run
+  // it starts, so these are sequential rather than six runs racing each other -- which is the
+  // shape experiment 142's defect took when a run outlived the canvas that started it.
+  optionalElement('[data-run-pending]')?.addEventListener('click',async()=>{
+    const was=storageKey(workflow),todo=[...pendingKeys];
+    if(!todo.length)return;
+    const button=optionalElement('[data-run-pending]') as HTMLButtonElement|null;
+    if(button){button.disabled=true;button.textContent='Running\u2026';}
+    let ran=0,failed=0;
+    for(const key of todo){
+      try{await loadExample(key);ran++;}
+      catch{failed++;/* The one that failed says so on its own canvas; the rest still run. */}
+    }
+    // Back to the workflow they were reading, and back to the write-up.
+    if(was&&was!==storageKey(workflow))await loadExample(was);
+    switchView('notes');renderNotesView();
+    toast(failed
+      ?`${ran} of ${todo.length} ran; ${failed} could not. The write-up holds what ran.`
+      :`${ran} workflow${ran===1?'':'s'} ran. The write-up now holds the whole project.`,
+      {tone:failed?'warning':'notice'});
+  });
+  const total=(project?.notes||[]).length+derived.length+machined.length;
   $('#notes-view-count').textContent=total?String(total):'';
 }
 /** OPEN A NOTE, AND LET THE TWO EDITABLE KINDS BE WRITTEN.

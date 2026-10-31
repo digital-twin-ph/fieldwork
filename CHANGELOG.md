@@ -3,6 +3,56 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.13.0 — In development
+
+Covers the work of 2026-10-30.
+
+- **The epidemiology widgets write their own equations.** Rate, Rate ratio and Two-by-two now
+  machine a note into **Methods** on the Notes tab every time they run, carrying each computation
+  twice: once as the formula, once with this run's numbers substituted into it. Snow's two-by-two
+  reads `OR = (844 × 19,115) / (166,810 × 18) = 5.37` as typeset mathematics, which is a line a
+  reader can check with a calculator — the symbolic form alone would only restate a textbook. The
+  claim that this is possible was written down on 2026-10-26 and the renderer that draws it was
+  built on 2026-10-30; until now nothing had ever constructed one.
+- **The two-by-two is written in a, b, c and d.** The four letters every textbook formula uses, and
+  the ones an FETP trainee is taught, with what each one counts. The code has used them internally
+  since it was written and showed them nowhere.
+- **Each interval method is cited, or the note says no source has been read for it.** Katz 1978 for
+  the risk ratio's interval and Woolf 1955 for the odds ratio's, both with DOIs and both looked up
+  rather than written from memory. The unpooled Wald risk difference and the rate ratio's
+  log-normal interval have **no** primary source and the note says so, because the construction is
+  standard and the implementations consulted attribute it to nobody. A plausible-looking reference
+  is worse than none: it is the point a reader stops checking.
+- **A rate cites nothing, and says why.** There is no interval, so there is no estimator — the
+  division is arithmetic and the multiplier is a scale. A reference list that was empty for an
+  unstated reason would read as an oversight.
+
+**What this does not do, stated because a typeset formula invites the assumption.** The equations
+were read off each widget's own implementation, so they say what this application computes. That
+the code matches what Katz and Woolf published is a different question, and the computations audit
+that would answer it is recorded in `TODO.md` and does not exist. Nor does anything here check
+whether a measure is estimable under the study design it was computed for: a case-control table is
+still offered a risk ratio, and this change renders that formula beautifully.
+
+- **Tables, maps and charts state their own shape in the write-up.** The three things a Results
+  section is mostly made of could draw a figure, record a receipt for it, and put no words at all
+  into the write-up. Each now machines a note into Results: a table names its columns as it spells
+  them and reports empty cells as unknown rather than zero; a map lists its layers bottom to top
+  with their feature counts, including any layer connected and not drawn; a chart carries the line
+  it already stated — which had existed for weeks and reached no reader — and warns where a bar at
+  zero may be a withheld value rather than a measured one.
+- **The caption stays yours.** A caption states the subject, the population, the place and the
+  period in your words, and none of that can be read off a table. What is machined is the material
+  you write it from. An earlier build of this version called its output a caption, which claimed
+  the writing rather than doing it.
+- **Nothing machined writes its own number.** A figure's number depends on where it sits and on
+  the venue being prepared, so it is worked out when a document is rendered rather than written
+  into the text — right when machined and wrong the first time somebody moved a card.
+
+See [experiment 151](docs/experiments/151-typesetting-an-equation-a-practitioner-wrote.md),
+amendment of 2026-10-30, and [experiment 141](docs/experiments/141-organising-snows-notes.md)'s
+amendment of the same date for captions, numbering and cross-references.
+
 ## 0.12.0 — In development
 
 _A note on the number: `package.json` read 0.11.0 while the newest section below was 0.10.0, so

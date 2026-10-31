@@ -458,7 +458,7 @@ write-up, IMRAD, table shell, author contribution or journal:
 
 | owner | what it owns |
 | --- | --- |
-| **141** (this) | the notes, the report they assemble into, its apparatus: equations, author contributions |
+| **141** (this) | the notes, the report they assemble into, its apparatus: equations, author contributions, captions and cross-references |
 | **147** | the chain from study design to required variables to table shells, and the open question of how a design is **declared or detected** |
 | `docs/research/fieldwork-study-designs-v1.1.md` | the design taxonomy itself — generated elsewhere, unverified here, and labelled as such |
 | `docs/audits/study-designs-and-our-computations.md` | which designs our computations actually serve, read from the code |
@@ -739,6 +739,496 @@ only widget that machines a note, and no example reached from the picker uses on
 contingency table is the single workflow that joins two of Snow's tables, and it is selected by
 name after the bundle is imported. The first version of the test ran against the workflow the
 example opens on, where there is no machined note to edit, and failed by finding nothing.
+
+## Amendment, 2026-10-30 — captions, numbers, and referring to a thing that has not settled
+
+The practitioner, after the equation notes landed:
+
+> Tables, maps, charts and equations need to be captioned and numbered but when organizing the
+> notes, the positions of those artifacts in the emergent document may be temporary so referring
+> to them from other notes requires having a flexible table/chart/map/equation referencing
+> system.
+
+**Nothing is built.** This records the design settled in conversation the same day, because a
+design that lives only in a conversation is one this project cannot check itself against — the
+reason the Notes Board prototype was written down in [149](149-the-notes-spike.md) rather than
+left in an artifact.
+
+### A number is a rendering, not a property
+
+The same distinction `fw:layerIndex` already draws — *"the index is the order the ports are
+declared, which is the order they are drawn today; when a practitioner can state the order, that
+order belongs here instead"* — and the same reason derived notes exist: *"nothing should be
+written by hand, because anything written by hand can disagree with the digest."*
+
+A hand-typed "Table 2" is a hand-typed citation. It looks right, and it is wrong the first time
+somebody drags a card. So a note stores a **reference to an identity**, and the number is computed
+when the document is rendered.
+
+**The identity already exists.** Every artifact is a node output, addressed in every receipt as
+`urn:fieldwork:run:{runId}:output:{nodeId}`. And `relatesTo` already carries edges between notes
+with exactly the right semantics for the hard case: *"An id naming nothing yet is KEPT: a note
+whose companion has not been written is an ordinary state of a draft, and dropping the edge would
+quietly undo a practitioner's decision at the moment it is hardest to notice."* A reference to an
+artifact not yet placed is that state.
+
+### IMRaD is the ordering, because IMRaD is the document
+
+The practitioner, settling which of the three arrangements numbers come from: *"IMRaD is the more
+document focused view, that's the publication outline."*
+
+So Chronological and Board are working views and renumber nothing. **There is exactly one ordering
+that counts**, which is a larger simplification than it sounds: dragging a card in Board view
+cannot move a figure number.
+
+**And it hands over the placement rule.** If notes are ordered within the outline, the order of
+**first mention** is already a total order on the artifacts, with nothing extra to place or
+maintain:
+
+- a figure appears where it is first referenced, which is what a journal does anyway;
+- its number is the position of that first mention in IMRaD order, computed and never stored;
+- drag the note and the figure follows, so a figure **cannot drift away from the prose discussing
+  it**, having no independent position to drift to.
+
+One thing to drag rather than two. Note that this makes dragging a card **renumber figures with no
+text changing**, which is the condition the instrument below has to make visible.
+
+**The body is not the whole outline.** [147](147-table-shells-begin-with-the-end-in-mind.md) fixed
+the boundary: IMRaD is the body, title and abstract are front matter, references and appendix are
+back matter. Counters run over the body and an appendix figure numbers separately.
+
+### The artifact nothing mentions, and the instrument for it
+
+First-mention placement leaves a gap, and it falls in the richest section: 149 found Results is
+*"mostly figures and tables"* with little connecting prose, so a figure nobody writes a sentence
+about would never land.
+
+The practitioner's answer, which is better than making the application place it: *"During the
+notes organizing stage of publication, we can have an audit button to check which tables, charts,
+maps, equations have no references in text."*
+
+**This is the third case of omission made computable, and the most computable of them.** 119 could
+notice only a map omitting what its own objective named; this document added a workflow whose
+answer appears in no section; both sides of this one are already in the data — the artifacts the
+run produced, and the references the notes carry.
+
+**It reports and does not grade**, which is this document's own rule arriving where it is most
+tempting to break: *"Said quietly, as a count beside the sections rather than an accusation."* And
+149's: no completeness gate, no score, no badge. **An unreferenced figure is frequently correct.**
+A green list here would be the assurance this record already warned cannot fail and is therefore
+worthless.
+
+Four conditions, which must not be run together:
+
+| | What it means |
+| --- | --- |
+| referenced by nothing, placed in no section | invisible in the write-up — the case the button is for |
+| referenced but not placed | the reference renders with nothing to number |
+| a reference to an artifact that no longer exists | an **error** only when the thing is gone from the project — see the venue section below, which is what reclassified this row |
+| referenced more than once | not a problem, but **first mention sets the number** |
+
+**It is buildable before everything else here**, needing no renderer, no placement and no
+numbering — only the artifacts on `WorkflowRun` and the references parsed out of note text, the
+way `equationsIn` already parses formulas out of it. So it is also the **instrument that would
+answer the rest**: run it on South London and the count of unmentioned artifacts says whether
+first-mention placement is viable at all.
+
+**Not to be called an audit.** In this repository that word means a procedure document run against
+the codebase — the ontology audit, the rule audit, the worked-example audit, D1-D10 — and the
+glossary already carries a *"same token, different subject"* warning for one such clash. *Check
+references* says what it does and collides with nothing.
+
+### A note set aside is not a note deleted, and that makes a venue a thing
+
+The practitioner, reading the row above:
+
+> It is possible that we may set aside some notes judged to be extraneous or unnecessary for a
+> communication venue. So that means we should be able to save versions of the notes configured
+> for selected communication venues.
+
+Which breaks the row. A reference whose target is missing was recorded above as the one condition
+that is an error rather than a choice, and it is not: a note set aside **for this venue** is an
+editorial decision, and a reference left pointing at it is a consequence of that decision rather
+than a fault. Three states, where the table had one:
+
+| | |
+| --- | --- |
+| the note or node is gone from the **project** | an error — nothing can resolve it |
+| the note is **set aside for this venue** | a decision, and the reference has to be dealt with, not flagged |
+| the note is in the venue and **unplaced** | the earlier condition, unchanged |
+
+**And it resolves something left open two sections up.** The caption convention was settled as
+belonging to "the rendering", which was the right shape and the wrong noun. MMWR against a journal
+that sets display math is not a difference of *form* — both are documents. It is a difference of
+**venue**, and a venue is what carries both halves: which notes are in it, and how its captions
+and numbers are written. One object, not two settings in different places.
+
+This is distinct from the four renderings this document already names. **Report, story map,
+infographic and dashboard differ in reading order and in their relation to time**; two venues can
+share a form entirely and differ only in what they include and what they call a figure. So the
+axes are:
+
+- **form** — how it is read: report, story map, infographic, dashboard;
+- **venue** — what is included, in what order, under whose caption convention.
+
+### A venue selects; it does not copy
+
+**The practitioner's phrase is "save versions of the notes", and the thing to be careful about is
+whether a version is a copy.** It must not be, and this project has already measured the cost of
+the alternative. [150](150-can-several-authors-collaborate-in-a-project-repository.md) found South
+London storing its notes twice — once as a plain file and once inside the bundle — and recorded
+what that did: *"on 2026-10-29 the two copies diverged within hours: nine edges written to the
+plain file reached the bundle only when they were synced by hand."*
+
+A venue that copies its notes reproduces that divergence once per venue. Correcting a sentence
+would then mean correcting it in each, and the failure is silent — the journal version and the
+field-report version quietly disagree about a number, which is precisely the drift this document's
+*"a report may quote a note verbatim; it must not quote a number"* rule exists to prevent, arriving
+by a different route.
+
+**So a venue is a selection over one set of notes**: what is set aside, the order within each
+part, the caption convention, and which parts exist at all — a policy brief has no Methods
+section. The notes stay single-source. Edit one and every venue that includes it is correct.
+
+Three consequences, each falling out rather than being added:
+
+1. **Numbers are per venue, and this is the argument that settles "compute, never store."** Set
+   Figure 3 aside and 4 and 5 move up. A stored number would be wrong in every venue but the one
+   it was written for; a computed one is right in all of them.
+2. **Check references runs against a venue**, not against the project. An artifact referenced in
+   one venue and not in another is an ordinary state, and reporting it at project level would make
+   the instrument noisy in exactly the situation it exists for.
+3. **A selection is small and it merges.** 150's granularity finding applies directly: a venue
+   stored as a list of ids and an order is a file two authors can both edit; a venue stored as a
+   copy of the notes is another opaque blob to conflict on.
+
+**What a reference to a set-aside note should do is open**, and it is the one question here with
+no candidate answer. Dropping the sentence silently edits the author's prose; leaving it to
+dangle publishes a reference to nothing; reporting it at render time is honest and may be noise
+if setting notes aside is routine. Nothing is known about which, because nobody has assembled two
+venues from one project.
+
+### Caption conventions are a setting on the rendering
+
+Settled after the evidence and the request disagreed. The practitioner asked for equations to be
+numbered; the MMWR article read in full for this document carries one equation and does **not**
+number it, and names its artifacts *"Table 1, Table 2 and the Figure"* — not "Figure 1", because
+with one figure the genre drops the number. So numbering is conditional on count and on genre.
+The practitioner's resolution: *"we can have settings for captions."*
+
+**The setting belongs on the rendering**, which follows from the first section: the number is
+computed at render time, so the convention producing it lives on the same object. One project then
+renders for MMWR and for a journal that sets display math and gets different numbering from the
+same notes.
+
+**Presets, not knobs, and `CITATION_STYLES` is the pattern.** [144](144-provenance-as-structured-data.md)
+encoded three styles from three named manuals, each carrying the `authority` it was read from,
+rather than offering a punctuation editor. A practitioner picks a convention; they do not tick
+eight boxes. What varies, from the evidence rather than from imagination:
+
+| | MMWR, as observed | elsewhere |
+| --- | --- | --- |
+| equations | **not numbered**, inline in a footnote | numbered where cross-referenced |
+| a sole figure | *"the Figure"* | "Figure 1" |
+| maps and charts | one counter, Figure | sometimes separate |
+| label case | `TABLE 1` | `Table 1` |
+| appendix | its own counter | |
+
+**And the first preset carries 144's honesty constraint.** A style encoded from a manual nobody
+read is the professional-looking-and-wrong failure. What exists for MMWR is **one article read in
+full**, which this document already says is *"one article's practice, verified, and not a measured
+frequency across the journal"* — so the preset ships labelled as observed from one article rather
+than read off a style guide, the way `epiInfoLabelSource` separates deduced from verified. The
+`authority` field is the slot for that sentence.
+
+**The default decides more than the settings do.** If the default numbers everything, then the
+MMWR behaviour becomes the thing a field epidemiologist switches off, which makes the common case
+for this audience the configured one. Unresolved, and the practitioner's to choose.
+
+### Built 2026-10-30 — the three artifacts state their own shape
+
+The practitioner, continuing: *"We need to add the tables next, then maps, then charts as machined
+notes."* Built in that order, in `src/artifact-notes.ts`.
+
+**The gap it closes is this document's own measurement.** 147 found a Results section is *"mostly
+artifacts, plus connecting prose"*, and 149 found the surface carrying none of it. Until today not
+one artifact in this application could put a single word into a write-up: the figure was drawn,
+the receipt recorded what it drew, and the Notes tab had nothing from it.
+
+Nine notes on South London, one per output node, all in Results:
+
+| | what it says |
+| --- | --- |
+| **table** | the columns **as the table spells them**, the row count, empty cells as unknown rather than zero, and the source file and digest where it came in as one |
+| **map** | the layers bottom to top with their feature counts, and any layer connected and **not** drawn |
+| **chart** | the caption the chart already stated, plus the bar count, the category column, and a bar at zero that may be a withheld value |
+
+**None of them carries a number**, which is the amendment above applied at the first place it
+could have been broken.
+
+**What reading them found, again.** The first version of the table note wrote
+`${valueField} by ${keys}` as prose, which reads only when the columns happen to be nouns. On this
+application's own output it produced *"per 1,000 people by group"* and *"count by group and
+measure"* — because `rateTable` sets `valueField` to a unit phrase and keys a long table by the
+literal word `measure`. **A generator cannot know whether a column name is a noun.** It now states
+them in code spans, which says they are the table's own spelling, and leaves prose to the author —
+who forks the note the moment they touch it. Three readings, three rounds of this on one day.
+
+**And the map note is the one that reads best**, which was not expected: *"4 layers, bottom to
+top: South London, the study extent; Registration sub-districts (32 features); Thames reaches (2
+features); Where the water came from, and the tidal limit."* It reads well because every string in
+it was named by a practitioner and the machine only ordered them. The table note reads worst
+because `group` and `measure` are names this application gave itself.
+
+**A test for the numbering rule cannot work by pattern**, which is worth recording because the
+first one did not. Matching the whole note for `Figure \d` failed on `Snow's Map 2, 1855` — the
+name of the plate, not a number. That is the argument for the rule rather than a flaw in the test:
+"Map 2" is a legitimate thing for such a note to contain, so a number cannot be found or avoided by
+inspection, and only a generator that never writes one is safe. The test strips the author's own
+strings and checks what the module wrote.
+
+#### Corrected the same day: these are not captions
+
+The first version of this work called its output a caption and filed it under `fn: 'caption'`, an
+eighth function word invented for the purpose. The practitioner:
+
+> Captions are the user's responsibility, unless there is a way to machine it based on table, map,
+> chart or equation semantics.
+
+**Which is right, and the correction is to the name rather than to the content.** Every sentence
+machined here is read off a declaration — `DataTable.keys`, `MapLayer.index`, `ChartSummary.unit`
+— so it satisfies the exception the rule names. What it is not is a caption. A caption states the
+subject, the population, the place and the period in the author's own words — *"Deaths and
+survivals among persons supplied by the Southwark and Vauxhall Company and the Lambeth Company,
+South London, 1854"* — and none of that is derivable from a `DataTable`. Machining the shape and
+calling it the caption claimed the authorial act while delivering something else.
+
+It is 149's rule arriving one level down — *"that is not the application's job, it's the user's
+and the user alone"* — and it was easier to miss here because what is machined is genuinely
+useful. The test for it is now mechanical: no note may contain the word, asserted in the unit
+suite and in the browser.
+
+**What a real caption would need is already written down**, in 147's chain for the machined title:
+design, place, outcome, period. Place is declared today on `study_area`. Period is declared per
+rate as two free strings whose agreement is checked with `===`, which 147 records as broken.
+Design is declared nowhere. **So a caption is partly machinable and mostly not yet, and the
+missing parts are the ones already blocking the machined title** rather than anything peculiar to
+figures — which means this is not a separate piece of work to schedule.
+
+**And the vocabulary question dissolved rather than being settled.** With the output no longer
+claiming to be a caption, there is nothing to file under an eighth function: these notes carry no
+`fn` at all, which is what `relate_table`'s machined note already did, so the two producers now
+agree. `KNOWN_NOTE_FUNCTIONS` is untouched, and the seven the practitioner reconciled on
+2026-10-29 stay seven. Whether a machined self-description deserves a function word of its own is
+a question for whenever one is needed, not a hole to fill now.
+
+**Validation.** `tests/artifact-notes.test.mjs`, 14 unit checks; three more in
+`tests/equation-notes.browser.mjs` on Chromium and WebKit over the published bundle. 16 passed
+there across both engines; 72 across the notes and output suites; 1,138 unit. Mutation-checked:
+numbering a note fails the rule test, and dropping the undrawn-layer sentence fails the map test. Released as `table_output` 0.6.0, `map_output` 0.17.0, `chart_output` 0.8.0.
+
+**What it does not do.** No caption is written, which is the point above. Nothing places these
+notes anywhere — placement, ordering and numbering
+are all still the unbuilt part, and a caption with no document to sit in is a caption in a list.
+And no note is reachable by a reference, because nothing
+references anything yet.
+
+#### Corrected the same day: the write-up is the project's, not the open workflow's
+
+The practitioner, after looking for the artifacts on the Notes tab and not finding them, twice:
+
+> I still do not see the tables, maps, charts in the notes for the South London example.
+
+And then, on being told the write-up held one workflow's artifacts at a time:
+
+> This is not the model we are building. It's supposed to hold notes from all workflows in that
+> project.
+
+**Which was a defect, not a design question, and the whole of this amendment had already settled
+the model it violated.** IMRaD is the publication outline; a publication is a project. The
+implementation had the run scope: `result` in `app.ts` is one variable holding the open workflow's
+last run, set to `null` on every workflow switch, and `renderNotesView` read `result.machined`
+directly. Measured on South London before the fix:
+
+| | Notes tab |
+| --- | --- |
+| open the example from the catalog | **13 notes, 0 machined** |
+| run *Deaths per 1,000 people* | 3 machined |
+| then run *The ground* | **1 machined** — the previous three gone |
+
+So a six-workflow investigation could show one workflow's artifacts at a time, and a freshly
+opened project showed none at all, which is what the practitioner was looking at.
+
+**How it was missed, which is the part worth keeping.** Every test written for the machined notes
+and the descriptions ran ONE workflow and then looked at the Notes tab. All sixteen passed and all
+sixteen were blind to this, because the sequence that exposes it — run one workflow, run a second,
+look — is the sequence a practitioner performs and no test performed. This is the third time in
+two days that a surface passed its tests and failed the first thing a person did with it; 141
+already records the drag gesture and the dialog. **The pattern is now explicit enough to name: a
+test that exercises one of a thing cannot see a defect in how several of them combine.**
+
+**And the author's own diagnosis was wrong twice before it was right.** Told the notes were not
+visible, this project first explained it as a stale service-worker cache — and produced real
+evidence for that explanation, including the cache-first rule in `sw.js` and a build hash to
+compare. The explanation was plausible, the evidence was true, and it was not the cause. What
+found the cause was running the practitioner's actual sequence instead of re-proving the one that
+already worked.
+
+**What was built.** `src/write-up.ts`: what each workflow's last run contributed, by workflow key,
+persisted and read across every workflow the project lists.
+
+- **Notes only, never a run's outputs.** Keeping six workflows' tables, geometry and rasters would
+  put megabytes in `localStorage` to show a paragraph. Notes are text.
+- **Kept rather than recomputed.** Re-running six workflows to read a write-up would make opening
+  a project expensive and make the write-up depend on a reasoner; a practitioner organising a
+  publication is reading, not computing. The cost is that a stored note can go stale, so every
+  entry carries `runAt` and a note from another workflow says when its run happened — the same
+  call `forkHasDrifted` makes for an edited note.
+- **A node id is unique within a workflow and not within a project.** South London has
+  `table-viii` in three of its six, so the panel could no longer key machined notes by node id:
+  it silently dropped two of every three, and two cards sharing a `data-note` attribute would
+  make opening one act on the other. `MachinedNote` and `DerivedNote` gained `workflowKey`, which
+  is honest modelling rather than a workaround — a machined note does belong to a workflow — and
+  `noteKey` is scoped by it.
+- **A step's label is resolved in the workflow that produced the note**, not in the open one, for
+  the same reason. The labels travel with the entry.
+- **A workflow the project no longer lists stops contributing.** Nothing else would remove it, and
+  a deleted workflow going on writing into a publication is what nobody notices until a reader
+  asks what a paragraph is doing there.
+- **The project's workflow order, not the order things ran.** Ordering by `runAt` would re-sort
+  the write-up every time somebody re-ran a step.
+
+**Validation.** `tests/write-up.test.mjs`, 8 unit checks. `tests/write-up-is-the-projects.browser.mjs`,
+4 checks driving the sequence that exposed it: a second workflow ADDS rather than replaces; a note
+from elsewhere says which workflow and when; the write-up survives a reload; and notes from three
+workflows that share a node id neither collide nor drop. Mutation-checked by restoring the
+run-scoped read — all four fail. Nothing is injected through `localStorage`: the write-up is built
+by running workflows in the interface, because the two silent setup traps recorded in
+`tests/version-supersession.browser.mjs` are exactly how a test like this comes to assert against
+the published template.
+
+**What it does not do.** The write-up now holds the project's notes and still places none of them:
+ordering within a section, numbering and references are all unbuilt, which is what the rest of
+this amendment is about. And a stored note whose workflow has since been edited is reported by its
+run date rather than by a comparison — there is no `forkHasDrifted` for a machined note against a
+canvas that moved under it.
+
+#### And a second time: a kept write-up outlives the build that wrote it
+
+The practitioner, having run every workflow: *"After I ran every workflow the notes and equations
+appeared but still no maps, charts and tables."*
+
+**What settled it was a screenshot, not a test.** The card it showed carried
+*"Deaths per 1,000 people, mapped · ran 2026-10-30"* — a source attribution added in the same hour
+— which proved the build was current and the write-up WAS accumulating across workflows. Both of
+this author's diagnoses to that point were dead: a stale service worker, then a stale server. Each
+had produced real evidence for a false cause, including the cache-first rule in `sw.js` and a build
+hash to compare.
+
+**The actual cause was introduced by the fix above.** A write-up is kept rather than recomputed,
+so the store outlives the build that filled it. Equations were wired into the widgets early in
+0.13.0 and the artifact descriptions were added later the same day. A store filled in between held
+equations and no descriptions — and because entries are read rather than regenerated, updating the
+application changed nothing. Running every workflow would have refreshed them; running every
+workflow *before* the descriptions existed did not, and nothing distinguished the two states.
+
+**So an entry now records the build that machined it**, read from `build/asset-manifest.json` —
+which `build.mjs` writes with the same content hash the worker names its cache after, and which is
+deliberately not precached, so it reports what is on disk rather than what is being served. An
+entry from another build is dropped on read, the Notes tab reports that workflow as not yet run,
+which is true of this build, and the button below fixes it. Nothing is dropped when the build
+cannot be read: a write-up that cannot be checked is kept rather than thrown away.
+
+**The general shape, which is this corpus's own rule arriving somewhere new.** Machined prose is
+only as current as the code that wrote it, exactly as a machined note is only as current as the
+run that wrote it. `forkHasDrifted` already makes that argument for an edited note against its
+run; this is the same argument one level up, for a stored note against its generator. **Anything
+this application keeps that it also generates needs to record what generated it.**
+
+#### Run the rest: a button, and why not on open
+
+Measured on South London on 2026-10-30, because the choice turned on a number:
+
+| | |
+| --- | --- |
+| all six workflows | **1.9 s** — 0.1, 0.5, 0.1, 0.5, 0.1, 0.1 |
+| the write-up they assemble | 39 notes — 15 machined, 11 derived, 4 authored, 9 quoted |
+
+Two seconds made running them automatically tempting. The practitioner chose the button, and the
+reasons are the ones that generalise past this example: **a project with an isochrone or a raster
+download is not 1.9 seconds**, and each run switches the open canvas, which is the run-in-flight
+hazard [142](142-an-epi-kernel-exercised.md) spent a day finding on a deployed instance. So the
+practitioner asks, the runs are sequential rather than racing, and the canvas is returned to the
+workflow they were reading — leaving them on whichever ran last would be the surface rearranging
+their work to do its own.
+
+`loadExample` now returns the run it starts. It always started one; it simply never handed it
+back, so nothing could sequence several.
+
+#### What three wrong diagnoses in a row say about the method
+
+Worth recording because the pattern is the finding, not the defects.
+
+| | the diagnosis | why it was believed | what it was |
+| --- | --- | --- | --- |
+| 1 | a stale service worker | `sw.js` really is cache-first over unhashed entry points | wrong |
+| 2 | a stale server | two servers were running, two days old | wrong; both served current bytes |
+| 3 | the write-up is run-scoped | true, and really was a defect | right, and **not the whole cause** |
+| 4 | the store outlives its build | — | right |
+
+**Every wrong answer came with true evidence.** That is the part to carry: a mechanism that could
+explain a symptom is not evidence that it did, and this project's habit of measuring rather than
+asserting protected it from inventing facts while doing nothing to stop it from attributing real
+ones to the wrong cause.
+
+**What actually located each one was the practitioner's own sequence.** Three rounds of tests
+passed while the surface was broken, because every test ran one workflow and looked; the defect
+lived in running several, in opening a project, and in updating the application. The author could
+not see any of it from inside a test that set up its own world. [149](149-the-notes-spike.md)
+already named this once — *"found by putting the thing on screen and looking at it, which is the
+argument for spikes"* — and it has now cost four rounds in one day.
+
+### What this amendment does not establish
+
+- **That any of it works**, which is the ordinary state of a design recorded before it is built.
+  Nothing here has been tried against a write-up, and the placement rule in particular is argued
+  from how journals behave rather than from anything measured here.
+- **That an equation can be referenced at all under this scheme.** A table, map and chart are node
+  outputs with ids. An equation lives **inside a note's text** as `$$...$$`, so its identity is a
+  position within prose that somebody is editing. `equationsIn` reads them back in order, which is
+  the hook, but it is a different addressing problem and nothing solves it yet.
+- **That first mention is the order a write-up wants.** It is the order journals use, and the
+  cheapest way to find out whether it suits this material is the check-references pass over South
+  London, which has not been run.
+- **That the settings are worth building before a renderer exists.** They are inert until something
+  renders a document, and nothing does.
+- **That a write-up assembled from six workflows reads as one account.** It now holds them, which
+  is a different claim. Nine artifact notes and thirteen authored and quoted ones sit in four
+  sections in the project's workflow order, and nobody has read the result to see whether it is a
+  write-up or a list.
+- **That one project ever has two venues.** The whole venue section is argued from a practitioner
+  saying they would set notes aside, and from the cost of the copying alternative. No project here
+  has produced two write-ups, so the selection model answers a need that is stated rather than
+  observed.
+- **That setting a note aside is the only selection a venue needs.** A venue may also want a
+  shorter version of the same note, which is an edit and not a selection — and an edited machined
+  note already forks. Whether a venue-specific wording is a fork, a variant, or a thing to refuse
+  is unexamined, and refusing it is the option that keeps the single source.
+
+### What would close it
+
+1. **Check references, over South London.** It needs nothing that is not built, and it produces
+   the evidence for items 2 and 3.
+2. The hand-written cross-reference pass over the same example, done **with** that instrument
+   rather than by eye: how many figures, whether they want numbers at that count, and whether
+   first-mention order is the order the write-up wants.
+3. A decision on the equation addressing problem, which is the one thing above with no candidate.
+4. **Two venues from South London** — the full account and something MMWR-shaped — which is the
+   cheapest way to find out whether a venue is a selection, what a reference to a set-aside note
+   should do, and whether the numbering really does come out right per venue.
+5. **The declarations 147's chain needs** — a study design, and a study period that is one
+   declared thing rather than two free strings compared with `===`. They are what would make a
+   caption and a title partly machinable, and they are one piece of work, not two.
 
 ## What this does not establish
 

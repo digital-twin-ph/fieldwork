@@ -507,6 +507,9 @@ none.
 4. **Ask on 2026-10-30.** Epidemiology colleagues see this application that day, and every one of
    them has written table shells. Whether they would draw one in a tool, or only in Word before
    opening the tool, decides whether this is a feature or a document.
+   **Corrected 2026-10-30: the demo moved to 2026-11-06** to refine this thread, recorded in
+   [docs/directions.json](../directions.json). The question is unchanged and unasked; what changed
+   is that the ordering is no longer constrained to what fits in two days.
 5. **Declare the design on the two South London workflows**, which costs nothing and is the
    smallest test of the chain above: `water-company` is a retrospective cohort, `contingency` is
    ecological. If a declared design cannot make the machined note say "the unit of analysis is the

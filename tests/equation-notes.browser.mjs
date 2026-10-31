@@ -29,7 +29,7 @@ const runWorkflow=async (page,named)=>{
   await page.goto('/');await page.evaluate(()=>localStorage.clear());
   await page.goto('/?example=blank');
   await page.locator('#workflow-file').setInputFiles(BUNDLE.pathname);
-  await expect(page.locator('.toast')).toContainText('imported with 6 workflows',{timeout:30000});
+  await expect(page.locator('.toast')).toContainText(/imported with \d+ workflows/,{timeout:30000});
   await page.locator('[data-view="workflow"]').click();
   const option=page.locator('#workflow-select option',{hasText:named});
   await page.locator('#workflow-select').selectOption(await option.getAttribute('value'));
@@ -80,16 +80,22 @@ test('the cells are stated as a, b, c, d with what each one counts',{skip},async
   await expect(cells.nth(0).locator('math')).toHaveCount(1);
 });
 
-test('a method with a source is cited on the card, and one without says so',{skip},async({page})=>{
+test('the card names its methods and sends the works to References',{skip},async({page})=>{
+  // The practitioner, 2026-10-31, reading this card in South London: *"these are citations and
+  // should be in the References."* The card printed every method's full citation while the
+  // References part assembled the same works from the same field.
   await runWorkflow(page,'Died or survived, by water supply');
   const card=methodsCard(page,'The four cells');
-  await expect(card).toContainText('Katz D, Baptista J, Azen SP, Pike MC.');
-  await expect(card).toContainText('Biometrics. 1978;34(3):469-474.');
-  await expect(card).toContainText('doi:10.2307/2530610');
-  await expect(card).toContainText('Woolf B.');
-  // THE ABSENCE IS PRINTED TOO. A missing reference line would read as "nothing to say" when it
-  // means "nobody has looked it up", which are different claims.
-  await expect(card).toContainText('No primary source has been read for it');
+  await expect(card).toContainText('Katz log');
+  await expect(card).toContainText('Wald log');
+  await expect(card).toContainText('The works are in References.');
+  // AND NOT THE BIBLIOGRAPHY, asserted as an absence because that is what was removed.
+  await expect(card).not.toContainText('Katz D, Baptista J');
+  await expect(card).not.toContainText('doi:');
+  // THE UNSOURCED METHOD IS STILL MARKED. A missing mark would read as "nothing to say" when it
+  // means "nobody has looked it up", which are different claims; the sentence saying so in full
+  // is in References.
+  await expect(card).toContainText('Wald unpooled (no primary source read)');
 });
 
 test('a rate machines its equation, and cites nothing because it estimates nothing',

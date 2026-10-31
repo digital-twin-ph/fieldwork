@@ -309,3 +309,99 @@ export function twoByTwoReceipt(node:{id:string},result:TwoByTwoResult,runId:str
       +' here adjusts for anything the two groups did not share.'
       +result.warnings.map(warning=>` ${warning}`).join('')};
 }
+
+/** THE COMPLETE TWO-BY-TWO: the four cells in their letters, every margin, and the total.
+ *
+ *  The practitioner, 2026-10-31, on the figure the node published: *"This 2x2 table claims it has
+ *  the risk ratio but it does not"*, and then: *"The margin totals are also missing ... The
+ *  rationale for labeling each cell A, B, C, D, totals A+C, etc. is because the equations map
+ *  these labels, and in fact should come as a unit. You see the complete 2x2 table, the equations
+ *  and the value substitutions, that makes for a very clear process in the Methods."*
+ *
+ *  WHAT WAS WRONG. `core.ts` published four bare counts and carried this whole result along on
+ *  the value, where nothing read it: `caseTotal`, `nonCaseTotal` and `total` reached no surface at
+ *  all, and `riskExposed`/`riskUnexposed` reached none either. The machined note meanwhile names
+ *  $a$, $b$, $c$ and $d$ and writes every formula in $a+b$ and $c+d$ -- and justified doing so by
+ *  saying the letters were "prose about the letters rather than a second rendering of the table
+ *  the node already draws". The table the node already drew had no letters and no margins, so the
+ *  formulas pointed at nothing a reader could see.
+ *
+ *  THE LETTERS ARE THE JOIN, which is the practitioner's point and the reason this is one
+ *  structure rather than two. $\mathrm{RR} = (a/(a+b)) / (c/(c+d))$ is checkable by eye only when
+ *  $a$ and $a+b$ are both on the figure. An FETP-trained reader is taught the letters; the
+ *  equations are written in them; the table has to carry them or the notation is decoration.
+ *
+ *  A MARGIN IS DERIVED AND IS NOT A CELL. Each one carries the expression it was computed from
+ *  rather than a bare number, so a total cannot be read as a fifth observed count -- the same
+ *  distinction `cellOf` enforces when it refuses to treat an empty cell as a zero. `total` is
+ *  the two named groups and not the source table, which is what `strataLeftOut` warns about and
+ *  what this makes checkable: South London's N is 186,787 against a table of 486,936.
+ *
+ *  Pure, and stating no markup: the result tab, Quick Look and the write-up's figure all draw
+ *  from this, and a second arrangement of the same numbers is how two surfaces come to disagree.
+ */
+export interface TwoByTwoMargin {
+  /** The margin in the letters the equations use: `a+b`, `a+c`, `N`. */
+  expression:string;
+  value:number;
+}
+export interface TwoByTwoGrid {
+  exposureColumn:string; outcomeColumn:string;
+  /** Exposed then unexposed, as the request named them. */
+  rowLabels:[string,string];
+  /** Case then non-case. */
+  columnLabels:[string,string];
+  /** In reading order: a, b on the first row; c, d on the second. */
+  cells:[[{letter:string;value:number},{letter:string;value:number}],
+         [{letter:string;value:number},{letter:string;value:number}]];
+  rowTotals:[TwoByTwoMargin,TwoByTwoMargin];
+  columnTotals:[TwoByTwoMargin,TwoByTwoMargin];
+  total:TwoByTwoMargin;
+}
+
+export function twoByTwoGrid(result:TwoByTwoResult):TwoByTwoGrid{
+  const {exposureColumn,outcomeColumn,exposed,unexposed,caseValue,nonCaseValue}=result.request;
+  const c=result.cells;
+  return {
+    exposureColumn,outcomeColumn,
+    rowLabels:[exposed,unexposed],
+    columnLabels:[caseValue,nonCaseValue],
+    cells:[[{letter:'a',value:c.exposedCases},{letter:'b',value:c.exposedNonCases}],
+           [{letter:'c',value:c.unexposedCases},{letter:'d',value:c.unexposedNonCases}]],
+    rowTotals:[{expression:'a+b',value:result.exposedTotal},
+               {expression:'c+d',value:result.unexposedTotal}],
+    columnTotals:[{expression:'a+c',value:result.caseTotal},
+                  {expression:'b+d',value:result.nonCaseTotal}],
+    total:{expression:'N',value:result.total},
+  };
+}
+
+/** AN ESTIMATE AS A READER OF A JOURNAL MEETS IT: the value, its interval, and the method that
+ *  produced the interval.
+ *
+ *  The practitioner, 2026-10-31: *"And confidence intervals are reported where needed. Certain
+ *  journals will even require them."* They are computed already, at the level the step declares
+ *  -- `INTERVAL_LEVELS` offers 90, 95 and 99 -- and until now they reached a reader only as
+ *  typeset mathematics inside the Methods note. Nothing is estimated here that was not estimated
+ *  before; this reports what `computeTwoByTwo` already returned.
+ *
+ *  AN ESTIMATE WITHOUT AN INTERVAL SAYS WHY, rather than printing a blank. `unavailable` carries
+ *  the reason and `interval` is null, which are two different facts from an interval of zero
+ *  width -- the distinction every other absence in this project is held to. */
+export interface TwoByTwoEstimateRow {
+  name:string;
+  value:number|null;
+  /** Null where there is none, in which case `unavailable` says why. */
+  interval:{lower:number;upper:number;level:IntervalLevel}|null;
+  method:string;
+  unavailable:string|null;
+  /** What Epi Info calls the same quantity, where a source has been read for it. */
+  epiInfoLabel:string|null;
+}
+
+export const twoByTwoEstimateRows=(result:TwoByTwoResult):TwoByTwoEstimateRow[]=>
+  result.estimates.map(e=>({
+    name:e.name,value:e.value,
+    interval:e.lower===null||e.upper===null?null:{lower:e.lower,upper:e.upper,level:e.level},
+    method:e.method,unavailable:e.unavailable,epiInfoLabel:e.epiInfoLabel,
+  }));

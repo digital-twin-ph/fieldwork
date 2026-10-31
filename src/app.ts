@@ -133,6 +133,8 @@ import {mountPanelLayout} from './panel-layout.js';
 import {newMapOutput,mapEvidence} from './map-output.js';
 import {newTableOutput,pointTableMarkup,pointTableEvidence} from './table-output.js';
 import {pointPort,MAX_POINT_LAYERS,markedPoints,markLabel,LABEL_CEILING} from './point-layers.js';
+import {twoByTwoMarkup} from './two-by-two-view.js';
+import type {TwoByTwoResult} from './two-by-two.js';
 const esc=(s:unknown)=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
 function chartControls(n:WorkflowNode<'chart_output'>,options:{omitOrientation?:boolean}={}){
   const p=n.params;
@@ -4045,8 +4047,15 @@ function renderResults(){
   // not see rate ratio". A result that carries a stated finding says it here; one that does not
   // is unaffected.
   const stated=(output as unknown as {sentence?:string})?.sentence;
-  $('#result-statement').innerHTML=stated?`<p class="result-statement">${esc(stated)}</p>`:'';
-  $('#result-statement').hidden=!stated;
+  // AND THE INSTRUMENT ITSELF, WHERE THE RESULT IS ONE. A two-by-two is not a table in the data
+  // sense -- it is the epidemiological instrument, with its cells in the letters the equations
+  // are written in, its four margins, its total and its estimates with their intervals. Drawn
+  // through the same function the write-up's figure calls, so the screen and the publication
+  // cannot disagree about what the instrument says. Experiment 153.
+  const instrument=(output as unknown as {twoByTwo?:TwoByTwoResult})?.twoByTwo;
+  $('#result-statement').innerHTML=(stated?`<p class="result-statement">${esc(stated)}</p>`:'')
+    +(instrument?.kind==='two-by-two'?twoByTwoMarkup(instrument,esc):'');
+  $('#result-statement').hidden=!stated&&!instrument;
   if(output?.kind==='data-table'){const t=output as unknown as import('./data-table.js').DataTable;$('#result-metrics').innerHTML=`<span class="metric"><b>${t.rowCount}</b> rows</span><span class="metric unknown"><b>${t.missingValueCount}</b> values absent</span><span class="metric">${t.keys.length} key columns · value in ${esc(t.unit||'an unstated unit')}</span>`;}
   if(output?.kind==='point-table')$('#result-metrics').innerHTML=`<span class="metric"><b>${rows.length}</b> records</span><span class="metric"><b>${rows.filter(r=>!r.coordinates).length}</b> missing coordinates</span><span class="metric">CRS84 · longitude, latitude</span>`;
   if(output?.comparison)$('#result-metrics').innerHTML=`<span class="metric"><b>${output.comparison.original.features.length}</b> locations in each set</span><span class="metric"><b>${output.comparison.pumps.features.length}</b> reference pumps</span><span class="metric"><b>${output.comparison.centerShiftM.toFixed(1)} m</b> mean-center shift</span>`;

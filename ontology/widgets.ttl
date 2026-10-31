@@ -89,6 +89,8 @@
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/table_output.md>.
 <urn:fieldwork:widget:travel_time> a fw:WidgetDefinition; fw:nodeType "travel_time"; rdfs:label "Travel time from distance".
 <urn:fieldwork:widget:travel_time_band> a fw:WidgetDefinition; fw:nodeType "travel_time_band"; rdfs:label "Travel time band".
+<urn:fieldwork:widget:study_design> a fw:WidgetDefinition; fw:nodeType "study_design"; rdfs:label "Study design";
+  fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/study_design.md>.
 <urn:fieldwork:widget:two_by_two> a fw:WidgetDefinition; fw:nodeType "two_by_two"; rdfs:label "Two-by-two table";
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/two_by_two.md>.
 <urn:fieldwork:widget:voronoi> a fw:WidgetDefinition; fw:nodeType "voronoi"; rdfs:label "Voronoi catchments".

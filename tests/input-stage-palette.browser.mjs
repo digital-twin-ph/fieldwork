@@ -16,7 +16,7 @@ test('a canvas with no input offers the input stage, and everything after one is
   await page.goto('/?example=blank');
 
   const entries=page.locator('#node-library [data-add]');
-  await expect(entries).toHaveCount(6);
+  await expect(entries).toHaveCount(7);
   // The input stage is nine by contract; `places` and `centers` are retired from the palette,
   // and `alert` joined them on 2026-10-25 -- a declaration wearing a node type, whose condition
   // is now stated on the node that applies the ruleset asking for it. Six are offered.
@@ -33,8 +33,13 @@ test('a canvas with no input offers the input stage, and everything after one is
   // commit, so the addition reached the palette with this test red. The count is derived nowhere:
   // it is typed here, which is why it goes stale, and it is typed here deliberately so that a
   // widget cannot quietly join the first thing a practitioner sees.
+  // SEVEN FROM 2026-10-31, with `study_design` -- and this time the count was raised in the same
+  // commit as the widget, which is what the two paragraphs above are for. It joins the input
+  // stage by the same contract as the rest (an output, and nothing required), and it BELONGS
+  // there rather than merely qualifying: a workflow opens with two declarations, WHERE and HOW,
+  // and the design is the second. Experiment 154.
   for(const name of ['Study area','Point data','Tabular data','Street network',
-    'Georeferenced map image','Polygon layer'])
+    'Georeferenced map image','Polygon layer','Study design'])
     await expect(page.locator('#node-library [data-add]').filter({hasText:name})).toHaveCount(1);
   // Nothing that needs something is offered yet. Asserted by NODE TYPE rather than by title
   // text: `hasText:'Map'` also matched "Georeferenced map image" once a plate joined the input

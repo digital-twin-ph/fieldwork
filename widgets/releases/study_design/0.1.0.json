@@ -1,0 +1,64 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "released": "2026-10-31",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "validationStatus": "application-only",
+    "shaclShapes": [],
+    "typescriptType": "ParamsByType['study_design']"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": null
+  },
+  "id": "urn:fieldwork:widget:study_design",
+  "nodeType": "study_design",
+  "version": "0.1.0",
+  "title": "Study design",
+  "ports": {
+    "inputs": [],
+    "output": "design",
+    "optionalInputs": [],
+    "note": "Takes nothing and emits a declaration. It consumes no input on purpose: a design is something a practitioner knows about their study rather than something derivable from data, and giving this an input port would invite exactly the inference it exists to refuse. The `design` port is its own type so that connecting a table where a design belongs is refused by the port union rather than by a message -- which is what licenses adding to a closed, compiled-in union. A consumer wired by an edge reads the design from its inputs; a consumer with no such port finds it by walking upstream, and refuses when two different designs are found rather than choosing one."
+  },
+  "ontology": {
+    "status": "gap",
+    "mappings": [],
+    "note": "GAP, meaning no alignment to an external epidemiological vocabulary -- not meaning the terms are undeclared. fw:StudyDesign and its properties are declared in ontology/runtime.ttl, so every term the receipt asserts is declared and the coupling gate passes. No alignment is claimed to OBI, SIO or the EPI ontologies: their study-design classes carry commitments about sampling and temporality that have not been read here, and asserting an equivalence nobody has checked is the professional-looking-and-wrong failure this project names. The vocabulary is six designs, closed, each one the 2026-10-28 audit found reachable with the widgets that exist.",
+    "emits": {
+      "classes": [
+        "StudyDesign"
+      ],
+      "properties": [
+        "licensedEstimate",
+        "studyDesignKind",
+        "studyPeriod",
+        "unitOfAnalysis"
+      ]
+    }
+  },
+  "implementation": {
+    "files": [
+      "src/study-design.ts",
+      "src/types.ts",
+      "src/core.ts",
+      "src/app.ts"
+    ],
+    "definition": "src/study-design.ts"
+  },
+  "changes": [
+    {
+      "kind": "initial",
+      "description": "A workflow declares HOW as well as WHERE. The practitioner, 2026-10-28: 'Case control, cohort, cross-sectional studies carry with them pathways to specific epidemiology computations. So identifying the study design is key.' Declares one of six designs and the study period, and states what that design licenses -- in a case-control study a+b and c+d are artefacts of how many cases and controls were sampled, so a/(a+b) is not a risk and only the odds ratio survives; in a cross-sectional one the same arithmetic is a prevalence and loses the name risk. Nothing is gated yet: this is step 2 of the sequence in docs/directions.json, and step 3 is the gate. Experiment 154."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "There is no arithmetic to certify. The tests are about the distinction rather than a computation: that a design is never inferred from data, that two different designs upstream of one computation are refused rather than resolved, that two nodes agreeing on one design is not an ambiguity, that an undeclared design is reported as absent rather than defaulted to cohort, and that the vocabulary admits only the six designs the audit found this application serves. What is NOT established is that a practitioner will declare one, or will know which design they have -- experiment 147 records the same doubt, and it is a field question rather than one a test can answer. This widget lowers no effort on its own and will be worth retiring if steps 3 and 4 of the sequence do not follow it."
+  }
+}

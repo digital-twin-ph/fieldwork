@@ -306,6 +306,20 @@ export interface ParamsByType {
     unmatched?:import('./relate-table.js').UnmatchedDeclaration};
   group_table:{label:string;by:string[]};
   two_by_two:{label:string;exposureColumn:string;exposed:string;unexposed:string;outcomeColumn:string;caseValue:string;nonCaseValue:string;level:90|95|99};
+  /** WHAT KIND OF STUDY THIS IS, declared and never inferred.
+   *
+   *  The practitioner, 2026-10-28: *"Case control, cohort, cross-sectional studies carry with
+   *  them pathways to specific epidemiology computations. So identifying the study design is
+   *  key."* Experiment 154, and the audit in docs/audits/study-designs-and-our-computations.md
+   *  that found the six this application actually serves.
+   *
+   *  THE PERIOD BELONGS HERE AND NOT ON A COMPUTATION. `rate` carries `numeratorPeriod` and
+   *  `denominatorVintage` and `case_series` carries a period, all properties of one computation
+   *  -- which is backwards for a study, and backwards for a machined title, whose <time> is the
+   *  period of the STUDY. Declared as the practitioner writes it ("1854", "July-September 1854")
+   *  because it is read by people; checking that a denominator's period COVERS a numerator's
+   *  needs a structured period and is not built. */
+  study_design:{label:string;design:StudyDesign;period:string;unitOfAnalysis:string;note:string};
   case_series:{label:string;source?:'points'|'table';dateField:string;dateKind:import('./case-series.js').DateKind;period:import('./case-series.js').Period;weightField?:string};
   summarize_combined_area:{label:string;zone:number;hemisphere:'north'|'south';yields?:'area'};
   snap_to_network:{label:string;zone:number;hemisphere:'north'|'south';maxSnapM:number};
@@ -557,7 +571,10 @@ export interface CandidateCondition {field:string; comparator:'in'|'notIn'; valu
  *  colour of a line -- a number with no referent, arrived at through a connection the application
  *  offered. D4 asks whether a wrong producer needs a hard stop; here it does, and a separate port
  *  type is the stop. See docs/experiments/143-a-georeferenced-plate-as-ground.md. */
-export type PortType = 'points'|'table'|'alert'|'distances'|'decisions'|'area'|'facilities'|'gradedFacilities'|'access'|'coverage-check'|'raster'|'ground'|'polygons'|'network'|'mean-center'|'point-comparison';
+import type {StudyDesign} from './study-design.js';
+export type {StudyDesign};
+
+export type PortType = 'points'|'table'|'alert'|'distances'|'decisions'|'area'|'facilities'|'gradedFacilities'|'access'|'coverage-check'|'raster'|'ground'|'polygons'|'network'|'mean-center'|'point-comparison'|'design';
 export interface NodeDefinition {title:string; group:string; icon:string; color:string; description:string; inputs:[string,PortType][]; output:PortType|null}
 export type Escape = (value:unknown)=>string;
 export type SpatialRelation = 'Inside'|'Boundary'|'Outside'|'MissingLocation';

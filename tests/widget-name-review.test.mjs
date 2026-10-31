@@ -102,6 +102,9 @@ test('the shipped ledger passes and covers every live widget', ()=>{
   // about increasing the widgets because I see some more widgets to retire" -- so the room is
   // promised from retirements they will name, and this count records the rise rather than a trade
   // that has not happened.
+  // 55 on 2026-10-31, with study_design: a workflow declares HOW as well as WHERE, and nothing
+  // declared a study design anywhere -- so a case-control table was offered a risk, a risk ratio
+  // and a risk difference, none of which case-control sampling can estimate. Experiment 154.
   // 54 on 2026-10-28, with polygon_input: a polygon layer READ rather than derived. Seven node
   // types emitted the polygons port type and every one of them computed its polygons from
   // something else, so a layer that existed as a file had no way in -- and South London's three
@@ -111,7 +114,7 @@ test('the shipped ledger passes and covers every live widget', ()=>{
   // Its near miss is study_area, and what keeps them apart is frame against layer -- one boundary
   // the workflow is about, against many attributed features inside it. The practitioner settled
   // that by revising the study area to the extent enclosing Snow's Map 2.
-  assert.equal(review.reviews.length,54);
+  assert.equal(review.reviews.length,55);
 });
 
 test('the generated table shows the palette words beside the identifier', ()=>{

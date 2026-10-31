@@ -1308,6 +1308,18 @@
       ]
     },
     {
+      "id": "urn:fieldwork:widget:study_design",
+      "nodeType": "study_design",
+      "currentVersion": "0.1.0",
+      "releases": [
+        {
+          "version": "0.1.0",
+          "path": "widgets/releases/study_design/0.1.0.json",
+          "sha256": "40f2af5b65abf814e9dd434853369d2706a3d10be6a533717e1a044382a1e5e9"
+        }
+      ]
+    },
+    {
       "id": "urn:fieldwork:widget:two_by_two",
       "nodeType": "two_by_two",
       "currentVersion": "0.2.0",

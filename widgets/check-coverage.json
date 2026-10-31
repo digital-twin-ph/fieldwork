@@ -8,10 +8,10 @@
   },
   "measuredAt": "2026-10-27",
   "counts": {
-    "widgets": 54,
+    "widgets": 55,
     "covered": 26,
     "awaiting": 14,
-    "none": 13,
+    "none": 14,
     "blocked": 1
   },
   "widgets": [
@@ -260,6 +260,11 @@
       "nodeType": "study_area",
       "expectation": "none",
       "reason": "A study-area input: the boundary is supplied or drawn, not computed."
+    },
+    {
+      "nodeType": "study_design",
+      "expectation": "none",
+      "reason": "Declares a study design and its period and computes nothing, so there is no value an independent implementation could recompute. What it owes is not a parity check but a FIELD question -- whether a practitioner knows which design they have, recorded in docs/field-questions.md and in experiment 147 -- and no laboratory notebook can answer that."
     },
     {
       "nodeType": "summarize_combined_area",

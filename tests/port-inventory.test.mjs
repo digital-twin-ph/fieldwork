@@ -42,7 +42,14 @@ import {OLD_TYPES} from '../build/old-naledi.js';
 // the workflow -- so moving it to produce `ground` would shrink that enumeration and give the type
 // a second end. If that does not happen, the honest conclusion is that `ground` never earned its
 // own type and belongs folded back, which is the resolution this comment exists to make reachable.
-const CUSTOM_STUDS_TODAY=8;
+// RAISED TO 9 ON 2026-10-31, for `design`. Deliberate, and the reason is the one D4a asks for:
+// `study_design` is the sole producer and the epi widgets it governs mostly find it by WALKING
+// upstream rather than by an edge, so the port has few consumers by construction rather than by
+// accident. It is not two things glued together -- a design is not derivable from a table, which
+// is exactly why it cannot ride on the `table` port. If step 3 wires the gate through edges
+// instead of walks this gains consumers; if it does not, the honest conclusion is that the port
+// never earned its own type and the walk is the whole mechanism. Experiment 154.
+const CUSTOM_STUDS_TODAY=9;
 
 const definitions={...TYPES,...OLD_TYPES};
 const union=[...new Set(readFileSync(new URL('../src/types.ts',import.meta.url),'utf8')

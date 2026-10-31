@@ -432,6 +432,9 @@ fw:DistancesPort a fw:PortType; rdfs:label "distances";
 fw:DecisionsPort a fw:PortType; rdfs:label "decisions".
 fw:FacilitiesPort a fw:PortType; rdfs:label "facilities".
 fw:CoverageCheckPort a fw:PortType; rdfs:label "coverage-check".
+fw:DesignPort a fw:PortType; rdfs:label "design";
+  rdfs:comment "A declared study design, travelling from the node that declares it to the computations it governs. Its own type rather than a string on an existing port, because the wrong connection has to be impossible rather than reported after it is made (D4): a table carries numbers and a design carries what may be computed FROM numbers, and nothing can derive the second from the first. A custom stud under D4a -- one producer and, for now, consumers that mostly find it by walking upstream instead -- and recorded as such in tests/port-inventory.test.mjs. What makes it a port at all rather than only a walk is explicitness: an edge SAYS which design governs a computation, where a walk has to decide, and where two designs are found the walk refuses rather than choosing.";
+  fw:implementationStatus "implemented".
 fw:MeanCenterPort a fw:PortType; rdfs:label "mean-center";
   rdfs:comment "The mean of point coordinates, which is NOT a polygon centroid. GeoSPARQL exposes centroid as a function and there is no class to be disjoint with, so the distinction is stated here.".
 fw:PointComparisonPort a fw:PortType; rdfs:label "point-comparison".

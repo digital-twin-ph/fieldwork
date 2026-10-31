@@ -977,6 +977,18 @@
    "breaking": false,
    "migrationFrom": []
   },
+  "study_design": {
+   "version": "0.1.0",
+   "released": "2026-10-31",
+   "changes": [
+    {
+     "kind": "initial",
+     "description": "A workflow declares HOW as well as WHERE. The practitioner, 2026-10-28: 'Case control, cohort, cross-sectional studies carry with them pathways to specific epidemiology computations. So identifying the study design is key.' Declares one of six designs and the study period, and states what that design licenses -- in a case-control study a+b and c+d are artefacts of how many cases and controls were sampled, so a/(a+b) is not a risk and only the odds ratio survives; in a cross-sectional one the same arithmetic is a prevalence and loses the name risk. Nothing is gated yet: this is step 2 of the sequence in docs/directions.json, and step 3 is the gate. Experiment 154."
+    }
+   ],
+   "breaking": false,
+   "migrationFrom": []
+  },
   "two_by_two": {
    "version": "0.2.0",
    "released": "2026-10-30",

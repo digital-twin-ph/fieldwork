@@ -71,6 +71,7 @@ import {shareAlike} from './input-provenance.js';
 import type {MachinedNote} from './notes.js';
 import {groupTable} from './group-table.js';
 import {computeTwoByTwo,twoByTwoReceipt,twoByTwoSentence} from './two-by-two.js';
+import {studyDesignSentence,studyDesignReceipt,DESIGN_LICENCES} from './study-design.js';
 import {outreachProjection,extentN3,extentProjection,projectionOf,RULESET_FOR_NODE_TYPE,pinnedRuleset,parametersFor} from './rule-application.js';
 import {authoredFacts,authoredProjection,authoredReceipt,authoredDataIssues} from './authored-application.js';
 import {applyRepairs} from './column-profile.js';
@@ -129,6 +130,12 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   group_table:{title:'Total within groups',group:'Summaries',icon:'Σ',color:'teal',
     description:'Add up the values of the rows that agree on the key columns you keep',
     inputs:[['records','table']],output:'table'},
+  // A DECLARATION THAT OPENS A WORKFLOW, as `study_area` does for WHERE. It consumes nothing:
+  // a design is something a practitioner knows about their study, not something derived from
+  // data, and giving it an input would invite the inference this refuses. Experiment 154.
+  study_design:{title:'Study design',group:'Epidemiology',icon:'◇',color:'teal',
+    description:'Declare the study design and its period, so the computations downstream are the ones the design can estimate',
+    inputs:[],output:'design'},
   two_by_two:{title:'Two-by-two table',group:'Epidemiology',icon:'⊞',color:'teal',
     description:'Risk in each group, the risk ratio, the odds ratio and the risk difference, each naming its method',
     inputs:[['records','table']],output:'table'},
@@ -1339,6 +1346,20 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
               +`${result.gaps.length===1?'' :'s'} held an empty cell and total to nothing known`:''),
           groups:result.groups,collapsedFrom:result.collapsedFrom,
           dropped:result.dropped,gaps:result.gaps} as unknown as Receipt);
+        break;}
+      // A DECLARATION RUNS BY BEING TRUE. There is nothing to compute, so the step emits the
+      // declaration itself and a receipt saying what was declared -- which is what makes it
+      // auditable rather than a comment. The value carries the design so a consumer wired by an
+      // edge reads it from its inputs; a consumer with no edge walks upstream for the node
+      // instead. Experiment 154.
+      case 'study_design':{
+        const sentence=studyDesignSentence(node as WorkflowNode<'study_design'>);
+        value={kind:'study-design',design:node.params.design,period:node.params.period,
+          unitOfAnalysis:node.params.unitOfAnalysis
+            ||DESIGN_LICENCES[node.params.design].unitOfAnalysis,
+          licence:DESIGN_LICENCES[node.params.design],sentence} as unknown as DisplayValue;
+        const declared=studyDesignReceipt(node as WorkflowNode<'study_design'>,runId);
+        receipts.push(declared as unknown as Receipt);
         break;}
       case 'two_by_two':{
         const table=inputs.records as unknown as import('./data-table.js').DataTable;

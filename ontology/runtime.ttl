@@ -415,6 +415,21 @@ fw:PackCatalog owl:disjointWith fw:WidgetDefinition, fw:WorkflowNodePlan, fw:Can
 # deliberately not claiming agreement with it: every estimate names the method that produced it,
 # and `fw:epiInfoLabelStatus` records that nobody has verified what Epi Info displays for the
 # same quantity. See docs/directions.json, recognisable-not-identical-an-epi-kernel-of-our-own.
+fw:StudyDesign a owl:Class;
+  rdfs:label "Study design"; rdfs:subClassOf prov:Entity;
+  rdfs:comment "What kind of study a workflow is, DECLARED by a practitioner and never inferred from data. A design is not a property of a table: the same four counts arise from a cohort, a case-control study and a cross-sectional survey, and which measures are estimable differs in each, so nothing here reads a design off the numbers. Six are admitted, each one reachable with the computations this application has; a seventh that licenses nothing would be a declaration doing no work. What a design licenses is carried on this entity rather than left to a reader, because the refusal it causes downstream has to be explainable.".
+fw:studyDesignKind a owl:DatatypeProperty; rdfs:label "study design kind";
+  rdfs:domain fw:StudyDesign; rdfs:range xsd:string;
+  rdfs:comment "One of cohort, case-control, cross-sectional, ecological, case-series or surveillance. A closed set: an open one would let a workflow declare a design that gates nothing, which is indistinguishable from declaring none.".
+fw:studyPeriod a owl:DatatypeProperty; rdfs:label "study period";
+  rdfs:domain fw:StudyDesign; rdfs:range xsd:string;
+  rdfs:comment "When the study ran, as a practitioner writes it for a reader -- 1854, or July-September 1854. A property of the STUDY and not of any one computation, which is why it is here rather than beside a numerator or a denominator vintage. Free text, so it can fill a title's time element; checking that a denominator period COVERS a numerator period needs a structured period and is not built, and the check `rate` performs today is string equality where the condition is coverage.".
+fw:unitOfAnalysis a owl:DatatypeProperty; rdfs:label "unit of analysis";
+  rdfs:domain fw:StudyDesign; rdfs:range xsd:string;
+  rdfs:comment "What one row counts. An ecological design counts groups and not people, and a relation between group-level measures need not hold between individuals -- the inference this property exists to make visible on the result rather than in a textbook.".
+fw:licensedEstimate a owl:DatatypeProperty; rdfs:label "licensed estimate";
+  rdfs:domain fw:StudyDesign; rdfs:range xsd:string;
+  rdfs:comment "An estimate this design can support, by the name this application gives it. Written once per permitted estimate, and written NOT AT ALL where a design permits none -- a case series has no comparison group, and a receipt omitting the property is then saying so rather than predating it. In a case-control design only the odds ratio appears, because the row totals are artefacts of how many cases and controls were sampled.".
 fw:TwoByTwo a owl:Class;
   rdfs:label "Two-by-two table"; rdfs:subClassOf prov:Entity;
   rdfs:comment "Four counts -- two groups by two outcomes -- and the estimates computed from them. The two groups are NAMED rather than taken as the first two values present, because a table may hold more: Snow's people-denominated table has three water supply strata, 16 of 32 sub-districts having been supplied by both companies. Any stratum left out is carried on this entity, since a stratum silently excluded from a comparison is the commonest way a two-by-two misleads. A contrast between two groups as they were supplied, not a measured effect: nothing adjusts for anything the two groups did not share.".

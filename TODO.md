@@ -1,6 +1,6 @@
 # TODO
 
-_Created 2026-10-10 · Updated 2026-10-31_
+_Created 2026-10-10 · Updated 2026-11-01_
 
 The project's one list of open work. **Merged 2026-10-26 from two**: a root `TODO.md` of
 deferred work created 2026-10-10 and a `docs/todo.md` of committed work created 2026-10-11, one
@@ -1333,6 +1333,12 @@ the running application and are not yet experiments.
   comparison per sub-district — two bars or a slope — coloured by supplying company and **ordered
   by the change, largest fall first**. The chart widget today draws one value per category in the
   order the keys arrive, so it can express neither half.
+
+- **Offer cohort and case series together for one followed group.** Settled 2026-11-01, decision 1
+  of [the review](docs/research/study-design-decision-tree-2026-11-01.md): cohort first, definition
+  recorded. It waits for the guided questions, since no shipped surface asks D5. Decision 5 shipped
+  in `two_by_two` 0.5.0, without its "asked, not settled" state, which also needs the questions.
+  Worked examples with no design wired now show neutral names: wire one where the design is known.
 
 - **The study design deserves a dialog, and the practitioner picks the computations.** Raised
   2026-10-31: *"for study design widget — a modal dialog should allow the user to select the study

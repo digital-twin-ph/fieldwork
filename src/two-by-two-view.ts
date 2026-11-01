@@ -107,6 +107,10 @@ export function twoByTwoEstimatesMarkup(result:TwoByTwoResult,esc:Escape):string
     +`<th scope="col">Method</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
+/** Said wherever the measures carry neutral names, so the names read as a state and not a style. */
+export const NO_DESIGN='No study design is connected, so these measures are named by their '
+  +'arithmetic. Connect a study design to say what they measure.';
+
 /** The instrument whole: the table, then the estimates, then whatever the computation warned
  *  about. The warnings are drawn rather than dropped because the one that matters most here --
  *  a stratum left out of the comparison -- is what makes N smaller than the table it came from. */
@@ -137,6 +141,7 @@ export function twoByTwoMarkup(result:TwoByTwoResult,esc:Escape,
     +twoByTwoTableMarkup(result,esc)
     +reported
     +(left.length?`<p class="tbt-warning muted">Not reported: ${esc(left.join(', '))}.</p>`:'')
+    +(result.reading?.design===null?`<p class="tbt-warning muted" data-no-design>${esc(NO_DESIGN)}</p>`:'')
     +warnings
     +`</div>`;
 }

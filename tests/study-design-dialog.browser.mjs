@@ -64,3 +64,25 @@ test('unticking a measure removes it from the result of the next run',async({pag
   await expect(estimates(page)).toHaveText(['risk ratio','risk difference']);
   await expect(page.locator('.two-by-two-figure')).toContainText('Not reported: odds ratio');
 });
+
+test('with no design connected the figure names the arithmetic and says why',async({page})=>{
+  const w=blankWorkflow();
+  w.nodes=[{id:'cells',type:'table_input',x:40,y:240,
+      params:{label:'Cells',keys:['group','outcome'],valueField:'n',data:TABLE}},
+    {id:'tbt',type:'two_by_two',x:360,y:120,params:{label:'Two by two',exposureColumn:'group',
+      exposed:'exposed',unexposed:'unexposed',outcomeColumn:'outcome',caseValue:'case',
+      nonCaseValue:'well',level:95}},
+    {id:'out',type:'table_output',x:680,y:120,params:{label:'The table',inputMode:'table'}}];
+  w.edges=[{id:'e1',from:'cells',to:'tbt',port:'records'},{id:'e3',from:'tbt',to:'out',port:'table'}];
+  await page.goto('/');
+  await page.evaluate(()=>localStorage.clear());
+  await page.goto('/?example=blank');
+  await page.locator('#workflow-file').setInputFiles(
+    {name:'none.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(w))});
+  await page.locator('[data-view="workflow"]').click();
+  await page.locator('#run-button').click();
+  await page.locator('[data-view="results"]').click();
+  await expect(estimates(page)).toHaveText(['ratio of row proportions','cross-product ratio',
+    'difference of row proportions']);
+  await expect(page.locator('[data-no-design]').first()).toContainText('No study design is connected');
+});

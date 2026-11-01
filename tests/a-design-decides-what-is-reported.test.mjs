@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {DESIGN_LICENCES,includedMeasures,notEstimable,readUnderDesign,studyDesignReceipt}
+import {DESIGN_LICENCES,includedMeasures,notEstimable,readUnderDesign,readUndeclared,studyDesignReceipt}
   from '../build/study-design.js';
 import {withDesign,withMeasure} from '../build/study-design-dialog.js';
 import {computeTwoByTwo,twoByTwoSentence,twoByTwoReceipt,twoByTwoEstimateRows}
@@ -27,7 +27,28 @@ const esc=v=>String(v);
 const surfaces=r=>[twoByTwoSentence(r),twoByTwoEquationNote(r,'n').text,
   twoByTwoReceipt({id:'n'},r,'run','src').facts,twoByTwoMarkup(r,esc)];
 
-test('no declaration leaves every surface as it was',()=>{
+test('with no design every measure stays, named by its arithmetic, and the surfaces say so',()=>{
+  const computed=computeTwoByTwo(table,request),r=readUndeclared(computed);
+  assert.deepEqual(twoByTwoEstimateRows(r).map(e=>[e.name,e.value]),
+    computed.estimates.map((e,i)=>[['ratio of row proportions','cross-product ratio',
+      'difference of row proportions'][i],e.value]));
+  const [sentence,note,facts,markup]=surfaces(r);
+  for(const text of [sentence,note,markup])assert.doesNotMatch(text,/\brisks?\b|odds ratio|\\mathrm\{(RR|OR|RD)\}/i);
+  assert.match(sentence,/a ratio of row proportions of 3\.00/);
+  assert.match(note,/The row proportions are/);
+  assert.match(note,/No study design was connected/);
+  assert.match(markup,/data-no-design/);
+  assert.match(facts,/fw:noDesignDeclared true/);
+});
+
+test('a declared design is not told none was connected',()=>{
+  const [,note,facts,markup]=surfaces(read(params('cohort')));
+  assert.doesNotMatch(note,/No study design/);
+  assert.doesNotMatch(facts,/noDesignDeclared/);
+  assert.doesNotMatch(markup,/data-no-design/);
+});
+
+test('the bare computation keeps its own names, which is what the lab checks',()=>{
   const r=computeTwoByTwo(table,request);
   assert.equal(r.reading,undefined);
   assert.deepEqual(r.estimates.map(e=>e.name),['risk ratio','odds ratio','risk difference']);

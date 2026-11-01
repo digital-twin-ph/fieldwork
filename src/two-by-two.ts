@@ -87,9 +87,10 @@ export interface TwoByTwoResult {
    *  because a stratum silently excluded from a comparison is the commonest way a 2x2 misleads. */
   strataLeftOut:string[];
   warnings:string[];
-  /** Present only where a design was declared. `rowProportion` null means a/(a+b) is no quantity
-   *  under that design, so no surface may call it one. */
-  reading?:{design:string; rowProportion:string|null; withheld:string[]; notEstimable:string[]};
+  /** How a run read this table. `design` null means none was connected, so the measures carry
+   *  neutral names. `rowProportion` null means a/(a+b) is no quantity under that design, so no
+   *  surface may call it one. Absent only where `computeTwoByTwo` is called directly. */
+  reading?:{design:string|null; rowProportion:string|null; withheld:string[]; notEstimable:string[]};
 }
 
 /** Below this many cases the normal approximations are doing most of the work. Reported, never
@@ -249,7 +250,7 @@ export function computeTwoByTwo(table:DataTable,request:TwoByTwoRequest):TwoByTw
  *  table and the receipt cannot word the same finding three ways. */
 export const twoByTwoSentence=(r:TwoByTwoResult):string=>{
   const {exposed,unexposed,caseValue}=r.request;
-  const pct=(risk:number|null)=>risk===null?'no risk':`${(risk*100).toFixed(3)}%`;
+  const pct=(risk:number|null)=>risk===null?'none':`${(risk*100).toFixed(3)}%`;
   // THE FIRST MEASURE REPORTED LEADS, which is the risk ratio unless a design or a practitioner
   // removed it. A difference is printed finer than a ratio because it is usually far smaller.
   const lead=r.estimates[0];
@@ -310,6 +311,7 @@ export function twoByTwoReceipt(node:{id:string},result:TwoByTwoResult,runId:str
     +result.strataLeftOut.map(value=>`;\n  fw:stratumLeftOut ${quote(value)}`).join('')
     +(result.reading?.withheld??[]).map(name=>`;\n  fw:withheldEstimate ${quote(name)}`).join('')
     +(result.reading?.notEstimable??[]).map(name=>`;\n  fw:notEstimable ${quote(name)}`).join('')
+    +(result.reading?.design===null?`;\n  fw:noDesignDeclared true`:'')
     +`.\n`
     +estimateFacts+'\n';
   return {nodeId:node.id,kind:'computation' as const,facts,rules:'',input:facts,conclusions:[],

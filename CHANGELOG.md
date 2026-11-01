@@ -7,6 +7,11 @@ shown in a local build is not a claim that it has been published.
 
 Covers the work of 2026-10-30.
 
+- **A two-by-two with no design no longer claims one.** With no *Study design* connected it still
+  computes every measure, now named by its arithmetic: ratio of row proportions, cross-product
+  ratio, difference of row proportions. A line says so, and the receipt records it. Saved workflows
+  run unchanged and give the same numbers, under the new names until a design is connected.
+
 - **The epidemiology widgets write their own equations.** Rate, Rate ratio and Two-by-two now
   machine a note into **Methods** on the Notes tab every time they run, carrying each computation
   twice: once as the formula, once with this run's numbers substituted into it. Snow's two-by-two

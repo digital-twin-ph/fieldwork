@@ -1,6 +1,6 @@
 # Fieldwork semantic development checkpoints
 
-_Created 2026-10-07 · Updated 2026-10-26_
+_Created 2026-10-07 · Updated 2026-11-01_
 
 ## Developmental evaluation
 

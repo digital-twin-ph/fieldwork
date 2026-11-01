@@ -61,6 +61,9 @@ export function quantileFor(level:number):number {
 export interface EpiEstimate {
   /** What this estimate IS, in this project's words: `risk ratio`, not `RR`. */
   name:string;
+  /** What a declared design calls it, where that differs: the same arithmetic as `name`, measuring
+   *  a prevalence rather than a risk. `name` stays the computation; every surface prints this. */
+  reportedAs?:string;
   /** The point estimate, or null when it is undefined for this table. */
   value:number|null;
   lower:number|null;

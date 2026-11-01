@@ -83,8 +83,7 @@ Three consequences worth knowing:
 
 1. **Add it before the computations it governs.** It takes no input, so it sits at the start of a
    branch the way a study area does.
-2. **Choose the design.** The panel states what each one licenses as you pick it, so you can see
-   what the choice buys before making it rather than discovering it when a measure goes missing.
+2. **Choose the design and its measures.** The dialog shows what each design licenses before you choose it. What it cannot estimate has no box; untick anything it can estimate that the write-up should not carry.
 3. **Write the study period** as it should read in a title: `1854`.
 4. **Say what one row counts** if it is not a person. An ecological study counts groups —
    sub-districts, wards, districts — and this is where that is said once instead of in every
@@ -98,8 +97,6 @@ a guessed declaration is worse than none.
 
 ## What it will not do
 
-- **It will not stop a wrong measure being printed.** Not yet — that is the next piece of work.
-  Declaring a design today records what you know; it does not yet change which numbers appear.
 - **It will not work out your design from your data.** Four counts look identical whether they
   came from a cohort, a case-control study or a survey. Only you know which you ran.
 - **It will not choose between two declarations.** If two different designs sit upstream of one
@@ -111,11 +108,9 @@ a guessed declaration is worse than none.
 
 ## What it does not do yet
 
-**It gates nothing.** This is step 2 of a four-step sequence; step 3 is the gate that stops a
-measure the design cannot estimate from being printed. Until that lands, declaring a design
-records a fact and changes no output.
+**It governs the two-by-two only.** A connected design decides what `two_by_two` reports: case-control keeps the odds ratio and drops the word risk, cross-sectional reports prevalence measures, and case series and surveillance report no comparison measure. `rate_ratio` carries the design and is not changed by it.
 
-**An undeclared design is reported, not punished.** A workflow with no declaration computes
+**An undeclared design is reported, not punished.** With no design connected, every measure is reported as it was. A workflow with no declaration computes
 exactly as it did before. A practitioner with their own data may not be sure which design they
 have, and an application that refused to compute until told would be worse than one that stays
 quiet.

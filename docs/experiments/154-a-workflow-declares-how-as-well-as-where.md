@@ -177,6 +177,17 @@ The honest risk on the other side: a reasoner in the gate path makes a refusal d
 reasoner, and `two-by-two.ts` is arithmetic that runs today with no such dependency. Whether a
 measure is reported is not obviously a place to introduce one.
 
+## The dialog, and step 3
+
+Built 2026-11-01, after the practitioner found it missing. The design proposes and the practitioner
+disposes: `study-design-dialog.ts` shows what each design licenses, offers a box only for what it
+can estimate, and stores what was left out in `computations`. `readUnderDesign` applies that to a
+two-by-two before anything is worded, so the table, sentence, note, receipt and write-up agree.
+
+The question TODO left unsettled is answered as a receipt: a measure withheld on purpose is written
+as `fw:withheldEstimate`, and one the design cannot estimate as `fw:notEstimable`. `rate_ratio` is
+not governed, and `designFor`'s upstream walk is still not called by the run, which uses the edge.
+
 ## What this does not establish
 
 - **That a practitioner will declare one.** The one thing that would settle it is watching

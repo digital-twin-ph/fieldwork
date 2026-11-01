@@ -326,7 +326,7 @@ export interface ParamsByType {
    *  period of the STUDY. Declared as the practitioner writes it ("1854", "July-September 1854")
    *  because it is read by people; checking that a denominator's period COVERS a numerator's
    *  needs a structured period and is not built. */
-  study_design:{label:string;design:StudyDesign;period:string;unitOfAnalysis:string;note:string};
+  study_design:{label:string;design:StudyDesign;period:string;unitOfAnalysis:string;note:string;computations?:string[]};
   case_series:{label:string;source?:'points'|'table';dateField:string;dateKind:import('./case-series.js').DateKind;period:import('./case-series.js').Period;weightField?:string};
   summarize_combined_area:{label:string;zone:number;hemisphere:'north'|'south';yields?:'area'};
   snap_to_network:{label:string;zone:number;hemisphere:'north'|'south';maxSnapM:number};

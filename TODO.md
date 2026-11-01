@@ -1354,9 +1354,11 @@ the running application and are not yet experiments.
   shows the consequence of each design as it is selected lets somebody decide by reading what it
   would license, rather than by committing first and discovering later.
 
-  Unsettled: whether unticking a licensed measure is a presentation choice or a declaration that
-  belongs in the receipt. It should be the second — a measure withheld on purpose is a fact about
-  the analysis — but that needs deciding rather than assuming.
+  **BUILT 2026-11-01**, with step 3: see [154](docs/experiments/154-a-workflow-declares-how-as-well-as-where.md).
+  An unticked measure is a declaration and reaches the receipt as `fw:withheldEstimate`. Still
+  open: `rate_ratio` is not governed by the design, `designFor`'s walk is not called by the run, and
+  [a decision tree for choosing the design](docs/research/study-design-decision-tree-2026-11-01.md)
+  is proposed and unbuilt.
 
 - **MERGE: two tables that share a key cannot be brought into one.** Found 2026-10-31 by re-running
   the by-hand test that [157](experiments/157-summarize-is-the-command-group-table-is-part-of.md)

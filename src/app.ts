@@ -140,7 +140,8 @@ import {orderableBins} from './chart-output.js';
 import {AGGREGATES,type Aggregate} from './group-table.js';
 import type {BarOrder} from './results.js';
 import {ZipWriter,BlobWriter,TextReader} from '@zip.js/zip.js';
-import {DESIGN_LICENCES,STUDY_DESIGNS} from './study-design.js';
+import {DESIGN_LICENCES,includedMeasures} from './study-design.js';
+import {openDesignDialog} from './study-design-dialog.js';
 import type {TwoByTwoResult} from './two-by-two.js';
 const esc=(s:unknown)=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
 function chartControls(n:WorkflowNode<'chart_output'>,options:{omitOrientation?:boolean}={}){
@@ -2271,14 +2272,13 @@ function renderInspector(){
     // beneath, so a practitioner can see what the choice buys before making it rather than
     // discovering it when a measure goes missing.
     const p=n.params,licence=DESIGN_LICENCES[p.design];
-    const options=STUDY_DESIGNS.map(value=>
-      `<option value="${esc(value)}" ${p.design===value?'selected':''}>${esc(value)}</option>`).join('');
+    const reported=includedMeasures(p).join(', ')||'no measure';
     content+='<p class="description">Declares what kind of study this workflow is, so the '
       +'computations downstream are the ones its design can estimate. Declared and never inferred: '
       +'nothing reads a design off a table.</p>'
       +labelForm('design-label','Node label',p.label||'Study design')
-      +`<div class="field"><label class="field-label" for="design-kind">Study design</label>`
-      +`<select id="design-kind" data-slr="design">${options}</select></div>`
+      +`<p class="description"><b>${esc(p.design)}</b>: reports ${esc(reported)}.</p>`
+      +`<button class="button" id="design-open">Choose the design and its measures\u2026</button>`
       +`<p class="description">${esc(licence.because)}</p>`
       +`<div class="field"><label class="field-label" for="design-period">Study period</label>`
       +`<input id="design-period" data-slr="period" maxlength="120" value="${esc(p.period)}" `
@@ -3132,6 +3132,13 @@ function renderInspector(){
     const id=selected;
     if(!id)return;
     change(w=>{getNode(w,id,'chart_output').params.barOrder=order;},{spatial:false});
+  });
+  optionalElement('#design-open')?.addEventListener('click',()=>{
+    openDesignDialog(getNode(workflow,n.id,'study_design').params,esc,next=>{
+      // Replaced rather than merged: a design change removes `computations`, and `Object.assign`
+      // would leave the old design's choice standing.
+      change(w=>{getNode(w,n.id,'study_design').params=next;});
+    });
   });
   optionalElement('#twobytwo-map')?.addEventListener('click',()=>{
     const node=workflow.nodes.find(x=>x.id===selected) as WorkflowNode<'two_by_two'>|undefined;

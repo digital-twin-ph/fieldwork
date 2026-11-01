@@ -1,6 +1,6 @@
 # 157 · SUMMARIZE is the command `group_table` is one aggregate of
 
-_Created 2026-11-01 · Updated 2026-11-01_
+_Created 2026-10-31 · Updated 2026-10-31_
 
 **Status:** asked — the admission review is answered below and the implementation follows it. The
 need was established by a test rather than by argument, and two alternatives were tried and ruled

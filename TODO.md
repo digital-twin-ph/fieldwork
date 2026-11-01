@@ -1342,8 +1342,8 @@ the running application and are not yet experiments.
   only, so it reaches `case-series`, or within-case comparisons, and no attack rate. A cohort of the
   village's children needs a denominator the file does not carry. The source thesis was not read.
 
-- **Stage 2 does not yet ask A1, A2 or T1.** Their tables have another shape, so they were left out
-  of [159](docs/experiments/159-the-study-design-is-the-workflows-checklist.md). Option sentences
+- **Stage 2 notes:** see [159](docs/experiments/159-the-study-design-is-the-workflows-checklist.md).
+  Investigator allocation (A1) should stop the declaration and only says so. Option sentences
   carry no links to their evidence: the sources are named in plain text. New nodes still default to
   cohort.
 

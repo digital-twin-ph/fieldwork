@@ -94,11 +94,11 @@ test('the dialog pages through a design, keeps text on Next, and ends on the che
   const onto=async id=>{for(let i=0;i<20&&!(await dialog.locator(`[data-question="${id}"]`).count());i++)await next.click();};
   await expect(back).toBeDisabled();
   await dialog.locator('[name="design-kind"][value="case-control"]').check();
-  await expect(dialog.locator('#design-page')).toHaveText('Page 1 of 10');
+  await expect(dialog.locator('#design-page')).toHaveText('Page 1 of 12');
   await next.click();
   await expect(dialog.locator('[data-question]')).toHaveCount(1);
   await dialog.locator('[data-question="SRC"] input[value="SRC.1"]').check();
-  await expect(dialog.locator('#design-page')).toHaveText('Page 2 of 21');
+  await expect(dialog.locator('#design-page')).toHaveText('Page 2 of 23');
   // TYPED AND NEVER LEFT: Next has to commit it, or the sentence is lost.
   await dialog.locator('[data-slot="system"]').fill('PIDSR');
   await next.click();
@@ -124,14 +124,13 @@ test('the dialog pages through a design, keeps text on Next, and ends on the che
 test('Escape keeps text still in its box',async({page})=>{
   await open(page);
   const dialog=page.locator('#study-design-dialog');
-  await dialog.locator('#design-next').click();
+  await dialog.locator('[name="design-kind"][value="case-control"]').check();
   await dialog.locator('#design-next').click();
   await dialog.locator('input[value="SRC.2"]').check();
   await dialog.locator('[data-slot="survey"]').fill('NDHS');
   await page.keyboard.press('Escape');
   await expect(dialog).toHaveCount(0);
   await page.locator('#design-open').click();
-  await dialog.locator('#design-next').click();
   await dialog.locator('#design-next').click();
   await expect(dialog.locator('[data-slot="survey"]')).toHaveValue('NDHS');
 });
@@ -141,15 +140,36 @@ test('South London: the cohort table is named on page 2, and its sentence surviv
   const dialog=page.locator('#study-design-dialog');
   await dialog.locator('#design-next').click();
   await expect(dialog.locator('#design-table')).toBeVisible();
-  await expect(dialog.locator('td.design-fixed')).toHaveText(['a+b','c+d']);
+  await expect(dialog.locator('td.design-fixed summary b')).toHaveText(['a+b','c+d']);
   await dialog.locator('[data-table-field="exposed"]').fill('Southwark and Vauxhall Company');
   await dialog.locator('[data-table-field="unexposed"]').fill('Lambeth Company');
   await dialog.locator('[data-table-field="outcome"]').fill('a death from cholera');
-  await dialog.locator('[data-table-source="a"]').fill('the Registrar General');
-  await dialog.locator('[data-table-source="a+b"]').fill('a return to Parliament');
+  await dialog.locator('[data-cell="a"] summary').click();
+  await dialog.locator('[data-cell-counts="a"]').fill('deaths');
+  await dialog.locator('[data-cell-source="a"]').fill('the Registrar General');
+  await dialog.locator('[data-cell="b"] summary').click();
+  await dialog.locator('[data-cell-derived="b"]').check();
+  await expect(dialog.locator('[data-cell-source="b"]')).toBeDisabled();
+  await dialog.locator('[data-cell="a+b"] summary').click();
+  await dialog.locator('[data-cell-source="a+b"]').fill('a return to Parliament');
   await dialog.locator('#design-next').click();
   await expect(dialog.locator('[data-question="SRC"]')).toBeVisible();
   await dialog.locator('#design-back').click();
   await expect(dialog.locator('thead [data-table-show="outcome"]')).toHaveText('a death from cholera');
   await expect(dialog.locator('#design-table-sentence')).toContainText('a+b came from a return to Parliament.');
+  await expect(dialog.locator('#design-table-sentence')).toContainText('a counts deaths.');
+  await expect(dialog.locator('[data-cell-summary="a"]')).toHaveText('deaths');
+  await expect(dialog.locator('input[type="number"]')).toHaveCount(0);
+});
+
+test('the table page, read at dialog and phone width',async({page})=>{
+  await open(page);
+  const dialog=page.locator('#study-design-dialog');
+  await dialog.locator('#design-next').click();
+  await dialog.locator('[data-cell="a"] summary').click();
+  await page.screenshot({path:process.env.DESIGN_SHOT||test.info().outputPath('wide.png')});
+  await page.setViewportSize({width:390,height:844});
+  const overflow=await dialog.evaluate(d=>d.scrollWidth-d.clientWidth);
+  expect(overflow).toBeLessThanOrEqual(0);
+  await page.screenshot({path:process.env.DESIGN_SHOT_NARROW||test.info().outputPath('narrow.png')});
 });

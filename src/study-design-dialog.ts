@@ -11,8 +11,8 @@
  *  EVERY DESIGN SHOWS ITS CONSEQUENCE BEFORE IT IS CHOSEN, which answers the doubt 154 carried: a
  *  practitioner unsure which design they have can decide by reading what each would license. */
 import {DESIGN_LICENCES,STUDY_DESIGNS,includedMeasures,notEstimable} from './study-design.js';
-import {answerSentence,chosenOption,designQuestions,slotsIn,DESIGN_TABLES,TABLE_QUANTITIES,tableSentences} from './study-design-questions.js';
-import type {DeclaredTable,DesignQuestion} from './study-design-questions.js';
+import {answerSentence,chosenOptions,designQuestions,inheritedFill,slotsIn,DESIGN_TABLES,cellDescribed,tableSentences} from './study-design-questions.js';
+import type {DeclaredCell,DeclaredTable,DesignQuestion} from './study-design-questions.js';
 import type {ChecklistItem} from './study-design-checklist.js';
 import type {StudyDesign} from './study-design.js';
 import type {Escape,ParamsByType} from './types.js';
@@ -43,6 +43,21 @@ export function withAnswer(params:DesignParams,questionId:string,option:string):
   const fills=params.answers?.[questionId]?.fills;
   return {...params,answers:{...params.answers,[questionId]:{option,...(fills?{fills}:{})}}};
 }
+/** One box of a choose-all-that-apply question. "None" and "not sure" stand alone, so ticking either
+ *  clears the rest, and ticking anything else clears them. */
+export function withToggle(params:DesignParams,q:DesignQuestion,option:string,on:boolean):DesignParams{
+  const alone=(id:string)=>{
+    const o=q.options.find(x=>x.id===id);
+    return Boolean(o?.unknown||o?.label==='None');
+  };
+  const held=(params.answers?.[q.id]?.option.split(' ')??[]).filter(Boolean);
+  const next=!on?held.filter(id=>id!==option)
+    :alone(option)?[option]:[...held.filter(id=>!alone(id)),option];
+  const {[q.id]:_old,...others}=params.answers??{};
+  const fills=params.answers?.[q.id]?.fills;
+  return {...params,answers:next.length?{...others,[q.id]:{option:next.join(' '),...(fills?{fills}:{})}}:others};
+}
+
 export function withFill(params:DesignParams,questionId:string,slot:string,value:string):DesignParams{
   const answer=params.answers?.[questionId];
   if(!answer)return params;
@@ -51,18 +66,18 @@ export function withFill(params:DesignParams,questionId:string,slot:string,value
 }
 
 function questionMarkup(q:DesignQuestion,params:DesignParams,esc:Escape):string{
-  const answer=params.answers?.[q.id],option=chosenOption(q,answer);
-  const sentence=answerSentence(q,answer);
-  const blanks=option?.sentence?slotsIn(option.sentence):[];
+  const answer=params.answers?.[q.id],chosen=chosenOptions(q,answer);
+  const sentence=answerSentence(q,answer,params.table);
+  const blanks=[...new Set(chosen.flatMap(o=>o.sentence?slotsIn(o.sentence):[]))];
   return `<fieldset class="design-question" data-question="${esc(q.id)}">`
     +`<legend class="field-label">${esc(q.text)}</legend>`
-    +q.options.map(o=>`<label class="design-choice"><input type="radio" name="answer-${esc(q.id)}" `
-      +`data-answer="${esc(q.id)}" value="${esc(o.id)}" ${o.id===option?.id?'checked':''}> `
-      +`<span>${esc(o.label)}</span></label>`).join('')
-    +(option?.caveat?`<p class="description design-caveat">${esc(option.caveat)}</p>`:'')
+    +q.options.map(o=>`<label class="design-choice"><input type="${q.multi?'checkbox':'radio'}" `
+      +`name="answer-${esc(q.id)}" data-answer="${esc(q.id)}" ${q.multi?'data-answer-multi':''} `
+      +`value="${esc(o.id)}" ${chosen.includes(o)?'checked':''}> <span>${esc(o.label)}</span></label>`).join('')
+    +chosen.filter(o=>o.caveat).map(o=>`<p class="description design-caveat">${esc(o.caveat!)}</p>`).join('')
     +blanks.map(slot=>`<label class="design-slot"><span>${esc(slot)}</span><input type="text" `
       +`data-slot="${esc(slot)}" data-slot-question="${esc(q.id)}" maxlength="240" `
-      +`value="${esc(answer?.fills?.[slot]??'')}"></label>`).join('')
+      +`value="${esc(answer?.fills?.[slot]??inheritedFill(slot,params.table))}"></label>`).join('')
     +(sentence?`<p class="description design-sentence">${esc(sentence)}</p>`:'')
     +`</fieldset>`;
 }
@@ -70,39 +85,54 @@ function questionMarkup(q:DesignQuestion,params:DesignParams,esc:Escape):string{
 export function withTableField(params:DesignParams,field:keyof DeclaredTable,value:string):DesignParams{
   return {...params,table:{...params.table,[field]:value}};
 }
-export function withTableSource(params:DesignParams,key:string,value:string):DesignParams{
-  return {...params,table:{...params.table,sources:{...params.table?.sources,[key]:value}}};
+export function withCell(params:DesignParams,key:string,change:Partial<DeclaredCell>):DesignParams{
+  const cells=params.table?.cells;
+  return {...params,table:{...params.table,cells:{...cells,[key]:{...cells?.[key],...change}}}};
 }
 
 const tableField=(field:string,label:string,value:string|undefined,esc:Escape)=>
   `<label class="design-slot"><span>${esc(label)}</span><input type="text" maxlength="120" `
   +`data-table-field="${field}" value="${esc(value??'')}"></label>`;
 
-/** THE TABLE PAGE. Named in the practitioner's words, then each quantity gets its own source,
- *  because a numerator and its denominator often come from different places. */
+/** What a closed cell shows, so a filled table reads without opening anything. */
+const cellSummary=(cell?:DeclaredCell):string=>!cell||!cell.counts?.trim()?'not described':cell.counts.trim();
+
+/** ONE CELL, OPENED WHEN SELECTED. Six cells holding two boxes each do not fit a grid at dialog
+ *  width, so the grid stays readable and the boxes open where they are used. */
+function cellMarkup(key:string,cell:DeclaredCell|undefined,fixed:boolean,esc:Escape):string{
+  return `<td${fixed?' class="design-fixed" title="Fixed by the study"':''}><details data-cell="${esc(key)}">`
+    +`<summary><b>${esc(key)}</b> <span class="muted" data-cell-summary="${esc(key)}">${esc(cellSummary(cell))}</span></summary>`
+    +`<label class="design-slot"><span>What it counts</span><input type="text" maxlength="120" `
+    +`data-cell-counts="${esc(key)}" value="${esc(cell?.counts??'')}"></label>`
+    +`<label class="design-slot"><span>Where it comes from</span><input type="text" maxlength="240" `
+    +`data-cell-source="${esc(key)}" value="${esc(cell?.source??'')}" ${cell?.derived?'disabled':''}></label>`
+    +`<label class="check"><input type="checkbox" data-cell-derived="${esc(key)}" `
+    +`${cell?.derived?'checked':''}> Worked out from other cells</label></details></td>`;
+}
+
+/** THE TABLE PAGE. The table IS the form: each cell says what it counts and where it comes from,
+ *  because the two can differ cell by cell, and a list beneath loses which is which. No numbers:
+ *  they arrive with the data, and the wording holds for a study not yet begun. */
 export function tablePageMarkup(params:DesignParams,esc:Escape):string{
-  const shape=DESIGN_TABLES[params.design]!,table=params.table;
+  const shape=DESIGN_TABLES[params.design]!,table=params.table,rows=shape.fixed==='rows';
   const name=(field:keyof DeclaredTable,blank:string)=>
     `<span data-table-show="${String(field)}">${esc(String(table?.[field]??'')||blank)}</span>`;
-  const fixed=shape.fixed==='rows'?' class="design-fixed" title="Fixed by the study"':'';
+  const cell=(key:string,fixed=false)=>cellMarkup(key,table?.cells?.[key],fixed,esc);
   return `<div class="mapping-body"><section id="design-table"><h3>The table this ${esc(params.design)} study is about</h3>`
     +`<p class="description">${esc(shape.note)}</p>`
+    +`<p class="description">No numbers here: they come with the data. Say what each cell will `
+    +`hold, whether or not the study has begun. Select a cell to describe it.</p>`
     +`<div class="mapping-grid">`
     +tableField('exposed','Exposed',table?.exposed,esc)+tableField('unexposed','Unexposed',table?.unexposed,esc)
-    +tableField('outcome','Outcome',table?.outcome,esc)+tableField('noOutcome','No outcome',table?.noOutcome,esc)
     +tableField('exposureKnownFor','Exposure is known for',table?.exposureKnownFor,esc)
-    +tableField('cellsCount','The cells count',table?.cellsCount,esc)
-    +`</div><table class="two-by-two mapping-preview"><thead><tr><th></th><th>${name('outcome','outcome')}</th>`
+    +tableField('outcome','Outcome',table?.outcome,esc)+tableField('noOutcome','No outcome',table?.noOutcome,esc)
+    +`</div><table class="two-by-two mapping-preview design-table-form"><thead><tr><th></th><th>${name('outcome','outcome')}</th>`
     +`<th>${name('noOutcome','no outcome')}</th><th>Total</th></tr></thead><tbody>`
-    +`<tr><th scope="row">${name('exposed','exposed')}</th><td>a</td><td>b</td><td${fixed}>a+b</td></tr>`
-    +`<tr><th scope="row">${name('unexposed','unexposed')}</th><td>c</td><td>d</td><td${fixed}>c+d</td></tr>`
+    +`<tr><th scope="row">${name('exposed','exposed')}</th>${cell('a')}${cell('b')}${cell('a+b',rows)}</tr>`
+    +`<tr><th scope="row">${name('unexposed','unexposed')}</th>${cell('c')}${cell('d')}${cell('c+d',rows)}</tr>`
     +`</tbody></table>`
     +(shape.fixed?`<p class="description">Marked totals are the ones the study fixed.</p>`:'')
-    +`<fieldset class="design-question"><legend class="field-label">Where did each quantity come from?</legend>`
-    +TABLE_QUANTITIES.map(([key,label])=>`<label class="design-slot"><span>${esc(label)}</span>`
-      +`<input type="text" maxlength="240" data-table-source="${esc(key)}" `
-      +`value="${esc(table?.sources?.[key]??'')}"></label>`).join('')
-    +`</fieldset><p class="description design-sentence" id="design-table-sentence">`
+    +`<p class="description design-sentence" id="design-table-sentence">`
     +`${esc(tableSentences(table).join(' '))}</p></section></div>`;
 }
 
@@ -126,7 +156,7 @@ export function designPageMarkup(params:DesignParams,page:number,esc:Escape,
     +`is untested.</p>${questionMarkup(q,params,esc)}</section></div>`;
 }
 
-const STATUS_WORD={done:'done',open:'open',unknown:'stated as unknown'} as const;
+const STATUS_WORD={done:'done',open:'open',unknown:'stated as unknown',differs:'differs'} as const;
 
 /** The two kinds are listed apart, under headings that say what each can claim. */
 export function checklistMarkup(items:readonly ChecklistItem[],esc:Escape):string{
@@ -208,7 +238,10 @@ export function openDesignDialog(params:DesignParams,esc:Escape,
     dialog.querySelector<HTMLButtonElement>('#design-next')!.onclick=()=>go(1);
     dialog.querySelector<HTMLButtonElement>('#design-close')!.onclick=close;
     dialog.querySelectorAll<HTMLInputElement>('[data-answer]').forEach(radio=>{
-      radio.onchange=()=>apply(withAnswer(current,radio.dataset.answer!,radio.value));
+      const q=designQuestions(current).find(x=>x.id===radio.dataset.answer);
+      radio.onchange=()=>apply('answerMulti' in radio.dataset&&q
+        ?withToggle(current,q,radio.value,radio.checked)
+        :withAnswer(current,radio.dataset.answer!,radio.value));
     });
     dialog.querySelectorAll<HTMLInputElement>('[data-slot]').forEach(box=>{
       // NO REDRAW HERE. A box commits as it loses focus, which is the press of Next: redrawing
@@ -219,25 +252,50 @@ export function openDesignDialog(params:DesignParams,esc:Escape,
         onChange(current);
         const q=designQuestions(current).find(x=>x.id===id);
         const line=dialog.querySelector('.design-sentence');
-        if(q&&line)line.textContent=answerSentence(q,current.answers?.[id])??'';
+        if(q&&line)line.textContent=answerSentence(q,current.answers?.[id],current.table)??'';
       };
     });
-    const showTable=()=>{
+    const showTable=(table=current.table)=>{
       const line=dialog.querySelector('#design-table-sentence');
-      if(line)line.textContent=tableSentences(current.table).join(' ');
+      if(line)line.textContent=tableSentences(table).join(' ');
     };
     // NO REDRAW, for the reason the blanks above give: this commits as Next is pressed.
     dialog.querySelectorAll<HTMLInputElement>('[data-table-field]').forEach(box=>{
-      box.onchange=()=>{
-        const field=box.dataset.tableField as keyof DeclaredTable;
-        current=withTableField(current,field,box.value);onChange(current);
-        dialog.querySelectorAll(`[data-table-show="${field}"]`).forEach(el=>{if(box.value)el.textContent=box.value;});
-        showTable();
+      const field=box.dataset.tableField as keyof DeclaredTable;
+      // SHOWN AS IT IS TYPED, COMMITTED ON LEAVING. A long name reflows the table and a new sentence
+      // grows the centred dialog, and doing either at blur moved the cell being clicked, so the
+      // click landed nowhere. Found by the page test. Nothing may change size on blur here.
+      box.oninput=()=>{
+        dialog.querySelectorAll(`[data-table-show="${field}"]`)
+          .forEach(el=>{if(box.value)el.textContent=box.value;});
+        showTable(withTableField(current,field,box.value).table);
       };
+      box.onchange=()=>{current=withTableField(current,field,box.value);onChange(current);showTable();};
     });
-    dialog.querySelectorAll<HTMLInputElement>('[data-table-source]').forEach(box=>{
+    const setCell=(key:string,change:Partial<DeclaredCell>)=>{
+      current=withCell(current,key,change);onChange(current);
+      const shown=dialog.querySelector(`[data-cell-summary="${CSS.escape(key)}"]`);
+      if(shown)shown.textContent=cellSummary(current.table?.cells?.[key]);
+      showTable();
+    };
+    dialog.querySelectorAll<HTMLInputElement>('[data-cell-counts]').forEach(box=>{
+      box.oninput=()=>{
+        const shown=dialog.querySelector(`[data-cell-summary="${CSS.escape(box.dataset.cellCounts!)}"]`);
+        if(shown)shown.textContent=box.value.trim()||'not described';
+        showTable(withCell(current,box.dataset.cellCounts!,{counts:box.value}).table);
+      };
+      box.onchange=()=>setCell(box.dataset.cellCounts!,{counts:box.value});
+    });
+    dialog.querySelectorAll<HTMLInputElement>('[data-cell-source]').forEach(box=>{
+      box.oninput=()=>showTable(withCell(current,box.dataset.cellSource!,{source:box.value}).table);
+      box.onchange=()=>setCell(box.dataset.cellSource!,{source:box.value});
+    });
+    dialog.querySelectorAll<HTMLInputElement>('[data-cell-derived]').forEach(box=>{
       box.onchange=()=>{
-        current=withTableSource(current,box.dataset.tableSource!,box.value);onChange(current);showTable();
+        const key=box.dataset.cellDerived!;
+        setCell(key,{derived:box.checked});
+        const source=dialog.querySelector<HTMLInputElement>(`[data-cell-source="${CSS.escape(key)}"]`);
+        if(source)source.disabled=box.checked;
       };
     });
     dialog.querySelectorAll<HTMLInputElement>('[name="design-kind"]').forEach(radio=>{

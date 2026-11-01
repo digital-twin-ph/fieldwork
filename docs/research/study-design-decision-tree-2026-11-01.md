@@ -201,11 +201,11 @@ Each table follows its design terminal. All questions here are Constructed unles
 | | Lost, reasons explained by measured factors | Assumption cannot be proven over MNAR | `‹n› were lost; loss was assumed to depend on measured factors.` |
 | | Lost, related to unmeasured risk | Sensitivity bounds needed | `‹n› were lost, plausibly in relation to risk.` |
 | | Not sure / not stated | Report counts if any; treat as MNAR at planning | N2 |
-| C4 Did exposure begin before follow-up? | No, all new | Initiation effect | `All subjects began exposure at time zero.` |
-| | Yes, question is continuing or stopping | Valid for that contrast only | `The contrast is ‹continuing | stopping›, not starting, exposure.` |
-| | Yes, question is initiation, effect assumed constant | Assumption must be stated | `Some subjects were already exposed; the effect was assumed constant over time.` |
-| | Yes, question is initiation, effect varies | Result describes survivors | `Some subjects were already exposed, so the result describes those who remained.` |
-| | Not sure / not stated | Initiation effect not named | N2 |
+| C4 Were subjects already exposed when follow-up began? | No, exposure began when follow-up began | This estimates the effect of starting exposure | `All subjects began exposure at time zero.` |
+| | Yes, and the question is about continuing or stopping | Valid for that contrast only | `The contrast is ‹continuing | stopping›, not starting, exposure.` |
+| | Yes, and the question is what starting exposure does, assuming its effect is constant | Assumption must be stated | `Some subjects were already exposed; the effect was assumed constant over time.` |
+| | Yes, and the question is what starting exposure does, though its effect may change over time | Result describes survivors | `Some subjects were already exposed, so the result describes those who remained.` |
+| | Not sure / not stated | The effect of starting exposure is not named | N2 |
 
 ### Case-control
 
@@ -304,23 +304,23 @@ ROBINS-E has no case-control variant, and any use here would be by analogy ([Hig
 
 | Q | Option | Caveat carried | Machined note |
 |---|---|---|---|
-| E1 What is the claim about? | The effect of a population intervention, the causal link being established elsewhere | The ecological fallacy is moot only on that condition, and group analysis is then preferred ([Morgenstern 1982](https://doi.org/10.2105/ajph.72.12.1336) [Direct, PDF supplied by the practitioner], p. 1342). Confounding between groups and time trends remain | `The claim concerns the effect of ‹intervention› on ‹group› rates; the underlying link is established by ‹source›.` |
-| | Group rates, with cause not established | The target is the group, but the data do not establish cause. This option is constructed from Morgenstern's condition | `The claim concerns ‹group›-level rates, and it does not establish a cause.` |
+| E1 What is the claim about? | The effect of a population intervention, the causal link being established elsewhere | The ecological fallacy is moot only on that condition, and group analysis is then preferred ([Morgenstern 1982](https://doi.org/10.2105/ajph.72.12.1336) [Direct, PDF supplied by the practitioner], p. 1342). Confounding between groups and time trends remain | `The claim concerns the effect of ‹intervention› on rates across ‹group›; the underlying link is established by ‹source›.` |
+| | Group rates, with cause not established | The target is the group, but the data do not establish cause. This option is constructed from Morgenstern's condition | `The claim concerns rates across ‹group›, and it does not establish a cause.` |
 | | Individual risk | Hypothesis-generating; no individual ratio. Schwartz limits this to cases where the group variable is an aggregate (E8) | `The claim concerns individuals, and these data are group-level, so a relation between groups is reported as a lead and not as an individual effect.` |
 | | Individual risk, exposure not normally measurable per person | WHO's first exception. The fallacy still applies; no individual ratio | `The claim concerns individuals. ‹Exposure› is not normally measured per person, so the relation between groups is reported as the available evidence and not as an individual ratio.` |
-| | Size of an effect already established at individual level | WHO's second exception. Establishment rests on the named source and not on these data | `An effect established by ‹source› is quantified over time at ‹group› level.` |
+| | Size of an effect already established at individual level | WHO's second exception. Establishment rests on the named source and not on these data | `An effect established by ‹source› is quantified over time across ‹group›.` |
 | | Individual risk, group variable argued as an instrument | Four conditions (Loney and Nagelkerke). Geographic comparisons are harder to justify | `‹Group variable› is argued to act as an instrument for ‹exposure› because ‹argument›. This is an argument and not a demonstration.` |
 | | Not sure / not stated | Treated as individual | N2 |
 | E2 Is the within-group exposure distribution known? | Known, narrow | Group mean may stand as a stated proxy | `Exposure varied little within ‹group›: ‹range›.` |
 | | Known, wide | Report the distribution; consider a hybrid design | `Exposure varied within ‹group›: ‹range›.` |
-| | Not known | Exposure is area-level only; no conversion of a group slope to an individual ratio | `Exposure within each ‹group› was not known.` |
+| | Not known | Exposure is area-level only; no conversion of a group slope to an individual ratio | `Exposure within ‹group› was not known.` |
 | | Not sure / not stated | As above | N2 |
-| E3 Were group-level confounders measured at the same level and period? | Measured and adjusted | Ecologic adjustment does not guarantee individual-level control: a confounder at one level may not be one at the other ([Morgenstern 1982](https://doi.org/10.2105/ajph.72.12.1336) [Direct, PDF supplied by the practitioner], p. 1340) | `‹Confounders› were adjusted for at the ‹group› level.` |
+| E3 Were group-level confounders measured at the same level and period? | Measured and adjusted | Ecologic adjustment does not guarantee individual-level control: a confounder at one level may not be one at the other ([Morgenstern 1982](https://doi.org/10.2105/ajph.72.12.1336) [Direct, PDF supplied by the practitioner], p. 1340) | `‹Confounders› were adjusted for across ‹group›.` |
 | | Measured, not adjusted | "Adjusted" not available as a label | `‹Confounders› were measured and not adjusted for.` |
-| | Not measured | Confounding by group open | `Confounders at the ‹group› level were not measured.` |
+| | Not measured | Confounding by group open | `Confounders across ‹group› were not measured.` |
 | | Not sure / not stated | No adjustment claimed | N2 |
 | E4 Does the group match the exposure, with a stable population? | Yes | State the proxy | `‹Group› was taken to represent exposure.` |
-| | Partly, mixed strata | Report or exclude the mixed stratum, and say which | `‹Mixed stratum› was ‹reported separately | excluded›; it was not controlled for.` |
+| | Partly, mixed strata | Report or exclude the mixed stratum, and say which | `‹Mixed stratum›: ‹reported separately | excluded›, and not controlled for.` |
 | | No | Proxy; migration and lag concerns | `‹Group› is a proxy for exposure.` |
 | | Not sure / not stated | Proxy assumed | N2 |
 | E5 Is an individual-level result available? | Agrees | Triangulation | `Individual-level results agree: ‹source›.` |
@@ -335,7 +335,7 @@ ROBINS-E has no case-control variant, and any use here would be by analogy ([Hig
 | | By the outcome or a correlate of it | Group estimates are more biased than individual ones (same source) | `Groups were formed by ‹outcome›, which biases the group estimates.` |
 | | Not sure / not stated | Grouping process unknown | N2 |
 | E8 What does the group variable measure? | An average of an individual attribute, standing in for individuals | The ecological fallacy is live | `‹Variable› stands in for an attribute of individuals.` |
-| | An integral variable: it affects virtually all members, and varies between groups but not within them, such as a law, altitude or a disaster | Not a substitute for an individual study, and individual analysis may be impossible ([Susser 1994](https://doi.org/10.2105/AJPH.84.5.825) [Direct, PDF supplied by the practitioner], p. 826). It may be a cause in its own right ([Schwartz 1994](https://doi.org/10.2105/AJPH.84.5.819) [Direct, PDF supplied by the practitioner], pp. 820-821) | `‹Variable› is an integral property of ‹group›, shared by virtually all its members.` |
+| | An integral variable: it affects virtually all members, and varies between groups but not within them, such as a law, altitude or a disaster | Not a substitute for an individual study, and individual analysis may be impossible ([Susser 1994](https://doi.org/10.2105/AJPH.84.5.825) [Direct, PDF supplied by the practitioner], p. 826). It may be a cause in its own right ([Schwartz 1994](https://doi.org/10.2105/AJPH.84.5.819) [Direct, PDF supplied by the practitioner], pp. 820-821) | `‹Variable› is an integral property of ‹group›, shared by virtually all their members.` |
 | | A derived variable taken as a group property: built from members' attributes, but acting on each member through the group, such as vaccination coverage | A proportion can be more than an average, as herd immunity shows ([Susser 1994](https://doi.org/10.2105/AJPH.84.5.825) [Direct, PDF supplied by the practitioner], p. 826). It has an individual effect only over and above the member's own attribute | `‹Variable› is derived from members and is taken to act on them as a group property.` |
 | | A group measure of a physical or chemical exposure, such as air pollution or water supply | Usually a proxy for individual exposure, not a group property ([Diez-Roux 1998](https://doi.org/10.2105/ajph.88.2.216) [Direct, PDF supplied by the practitioner], p. 218). Treat it as standing in for individuals | `‹Variable› is a group measure of a physical exposure, used as a proxy for individual exposure.` |
 | | Testing that context acts on individuals | Needs both levels; group data alone cannot show it. Return to D2's multilevel option | `The effect of ‹context› on individuals cannot be separated from composition with group data alone.` |

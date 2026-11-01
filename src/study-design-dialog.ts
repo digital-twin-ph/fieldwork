@@ -99,9 +99,9 @@ const cellSummary=(cell?:DeclaredCell):string=>!cell||!cell.counts?.trim()?'not 
 
 /** ONE CELL, OPENED WHEN SELECTED. Six cells holding two boxes each do not fit a grid at dialog
  *  width, so the grid stays readable and the boxes open where they are used. */
-function cellMarkup(key:string,cell:DeclaredCell|undefined,fixed:boolean,esc:Escape):string{
+function cellMarkup(key:string,cell:DeclaredCell|undefined,fixed:boolean,esc:Escape,column:string):string{
   return `<td${fixed?' class="design-fixed" title="Fixed by the study"':''}><details data-cell="${esc(key)}">`
-    +`<summary><b>${esc(key)}</b> <span class="muted" data-cell-summary="${esc(key)}">${esc(cellSummary(cell))}</span></summary>`
+    +`<summary><b>${esc(key)}</b> <span class="design-cell-column">${column}</span> <span class="muted" data-cell-summary="${esc(key)}">${esc(cellSummary(cell))}</span></summary>`
     +`<label class="design-slot"><span>What it counts</span><input type="text" maxlength="120" `
     +`data-cell-counts="${esc(key)}" value="${esc(cell?.counts??'')}"></label>`
     +`<label class="design-slot"><span>Where it comes from</span><input type="text" maxlength="240" `
@@ -117,7 +117,10 @@ export function tablePageMarkup(params:DesignParams,esc:Escape):string{
   const shape=DESIGN_TABLES[params.design]!,table=params.table,rows=shape.fixed==='rows';
   const name=(field:keyof DeclaredTable,blank:string)=>
     `<span data-table-show="${String(field)}">${esc(String(table?.[field]??'')||blank)}</span>`;
-  const cell=(key:string,fixed=false)=>cellMarkup(key,table?.cells?.[key],fixed,esc);
+  // A COLUMN'S NAME IN EACH CELL, shown only where the table stacks: at phone width the headings go,
+  // and `a` and `b` would be two cells in one row with nothing to tell them apart.
+  const cell=(key:string,column:string,fixed=false)=>cellMarkup(key,table?.cells?.[key],fixed,esc,column);
+  const yes=name('outcome','outcome'),no=name('noOutcome','no outcome');
   return `<div class="mapping-body"><section id="design-table"><h3>The table this ${esc(params.design)} study is about</h3>`
     +`<p class="description">${esc(shape.note)}</p>`
     +`<p class="description">No numbers here: they come with the data. Say what each cell will `
@@ -128,8 +131,8 @@ export function tablePageMarkup(params:DesignParams,esc:Escape):string{
     +tableField('outcome','Outcome',table?.outcome,esc)+tableField('noOutcome','No outcome',table?.noOutcome,esc)
     +`</div><table class="two-by-two mapping-preview design-table-form"><thead><tr><th></th><th>${name('outcome','outcome')}</th>`
     +`<th>${name('noOutcome','no outcome')}</th><th>Total</th></tr></thead><tbody>`
-    +`<tr><th scope="row">${name('exposed','exposed')}</th>${cell('a')}${cell('b')}${cell('a+b',rows)}</tr>`
-    +`<tr><th scope="row">${name('unexposed','unexposed')}</th>${cell('c')}${cell('d')}${cell('c+d',rows)}</tr>`
+    +`<tr><th scope="row">${name('exposed','exposed')}</th>${cell('a',yes)}${cell('b',no)}${cell('a+b','total',rows)}</tr>`
+    +`<tr><th scope="row">${name('unexposed','unexposed')}</th>${cell('c',yes)}${cell('d',no)}${cell('c+d','total',rows)}</tr>`
     +`</tbody></table>`
     +(shape.fixed?`<p class="description">Marked totals are the ones the study fixed.</p>`:'')
     +`<p class="description design-sentence" id="design-table-sentence">`

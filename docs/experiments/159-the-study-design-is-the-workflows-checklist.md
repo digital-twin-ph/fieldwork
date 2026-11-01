@@ -117,8 +117,18 @@ ecological one is 14 sentences.
 A1 and T1 are asked of every design. A2 and a new A3 follow only when exposure was decided outside
 the investigators. A3 asks whether to print "natural experiment", with its definition named, which
 is decision 4's recommendation. A2 is the first choose-all question, so an answer may hold several
-options. Investigator allocation says it is outside the five designs but does not yet withdraw the
-declaration, which decision 3 calls a stop: the checklist does not say so either.
+options. Investigator allocation stops the declaration, under decision 3: the receipt records
+`fw:designStopped`, computations run under neutral names, and later questions are not asked.
+
+## Found on the way, 2026-11-01
+
+Two designs on one computation were suspected of running silently, because `designFor`, which
+refuses them, is not called by a run. They cannot: `validateWorkflow` allows one connection per input
+port. Reading the code had missed it, and the test that was meant to prove the fix found it. A
+workflow may hold two designs on separate branches, and a test now shows each governs its own table.
+
+Machined notes named a node label, which says what the analysis was and not what wrote it. Each now
+records the widget, its title and the version that ran.
 
 ## Left out
 

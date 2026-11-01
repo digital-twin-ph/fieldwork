@@ -10,7 +10,7 @@
  *  IT REPORTS AND DOES NOT GRADE. No item stops a run and there is no score. An item read from the
  *  graph says the workflow holds a thing, never that the thing is right. */
 import {DESIGN_LICENCES,includedMeasures,upstreamNodeIds} from './study-design.js';
-import {designQuestions,chosenOption,openSlots,DESIGN_TABLES,TABLE_CELLS,cellDescribed} from './study-design-questions.js';
+import {designQuestions,chosenOption,investigatorAllocated,openSlots,DESIGN_TABLES,TABLE_CELLS,cellDescribed} from './study-design-questions.js';
 import type {Workflow,WorkflowNode} from './types.js';
 
 /** `unknown` is "not sure / not stated", which is an answer. `open` is no answer yet. `differs`
@@ -51,6 +51,9 @@ function implemented(w:Workflow,node:WorkflowNode<'study_design'>):ChecklistItem
   const tables=governed.filter(n=>n.type==='two_by_two') as WorkflowNode<'two_by_two'>[];
   const rest=governed.filter(n=>n.type!=='two_by_two');
   const items:ChecklistItem[]=[];
+  if(investigatorAllocated(node.params))return [item('stopped',
+    'No design is declared, because investigators allocated exposure',false,
+    'The five designs are observational. Computations run under neutral names. Change the answer on allocation, or remove this node.')];
 
   if(licence.estimates.length){
     // A RATE RATIO IS A COMPARISON, and South London's cohort is computed by one. It counts here;
@@ -103,8 +106,9 @@ function declared(node:WorkflowNode<'study_design'>):ChecklistItem[]{
   const table=node.params.table;
   const hasTable=Boolean(DESIGN_TABLES[node.params.design]);
   const blanks=TABLE_CELLS.filter(key=>!cellDescribed(table?.cells?.[key]));
-  return [stated('period','Study period stated',node.params.period),
-    ...(hasTable?[stated('table-groups','The groups and outcome are named',
+  const stop=investigatorAllocated(node.params);
+  return [...(stop?[]:[stated('period','Study period stated',node.params.period)]),
+    ...(hasTable&&!stop?[stated('table-groups','The groups and outcome are named',
       table?.exposed&&table.unexposed&&table.outcome?'yes':''),
     {...stated('table-cells','Each cell says what it counts and where it comes from',blanks.length?'':'yes'),
       ...(blanks.length?{detail:`Not yet described: ${blanks.join(', ')}.`}:{})}]:[]),

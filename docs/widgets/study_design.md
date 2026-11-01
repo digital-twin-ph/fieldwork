@@ -132,8 +132,12 @@ The checklist reports and does not grade. Nothing on it stops a run. *Open* mean
 
 - **It will not work out your design from your data.** Four counts look identical whether they
   came from a cohort, a case-control study or a survey. Only you know which you ran.
-- **It will not choose between two declarations.** If two different designs sit upstream of one
-  computation, it refuses and asks you to resolve it rather than picking one.
+- **It will not choose between two declarations.** A computation has one design port, and it
+  takes one connection. Connect each design to its own computation: a workflow may hold two, on
+  separate branches.
+- **It will not declare a study whose investigators allocated exposure.** The five designs are
+  observational, so answering that investigators allocated exposure stops the declaration, and
+  computations run under neutral names.
 - **It will not check that your period is consistent with your data.** The period is text for a
   reader and a title. Whether a denominator covers the numerator's period is not checked.
 - **It will not travel to another workflow.** A design governs the workflow it is in. A project of

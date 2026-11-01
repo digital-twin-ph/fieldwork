@@ -586,11 +586,15 @@
       "recordedIn": "docs/experiments/140-provenance-as-a-port.md",
       "workItem": "docs/experiments/140-provenance-as-a-port.md — the obligation text, its revision receipt, and the validator that refuses an unexplained obligation",
       "status": "open",
-      "lastChecked": "2026-10-26",
+      "lastChecked": "2026-11-01",
       "checks": [
         {
           "date": "2026-10-26",
           "found": "Stated on the day it corrected a design. Nothing built yet: the obligation field is written into rulesets/extract-contract/1.0.0.json as declared data, the Ruleset type does not carry it, no Inspector shows it, and no receipt records a revision. The boundary it draws is already load-bearing in experiment 140, which cites it for why the error state stops at no output rather than reaching further."
+        },
+        {
+          "date": "2026-11-01",
+          "found": "Checked against the code. The extract contract obligation is now shown in the Inspector, read from the ruleset (src/app.ts); the Ruleset type still does not carry it and no receipt records a revision of it, so the 2026-10-26 gap is narrower and still open. The boundary held in new work: the study design checklist blocks nothing and states that it cannot check what was declared."
         }
       ]
     },

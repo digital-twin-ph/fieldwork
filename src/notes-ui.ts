@@ -1,3 +1,4 @@
+import {hasManual,openManual} from './manual.js';
 import type {Escape} from './types.js';
 import {element} from './dom.js';
 import {toHTML,typeset,hasMarkup} from './prose.js';
@@ -44,6 +45,13 @@ export interface NoteContext {
  *  one forks it rather than overwriting it -- the practitioner's rule of 2026-10-29. A quotation
  *  is somebody else's sentence and a derived note restates what an input declares, so neither
  *  has anything editable here; the place to change a derived note is the widget. */
+/** WHICH WIDGET, THEN WHICH NODE OF IT. A label alone names the analysis and not the tool, so the
+ *  widget comes first. A label left at the widget's own title is said once. */
+export function producedBy(note:Note,label:string):string{
+  const title=note.kind==='machined'?note.widget?.title:undefined;
+  return !title||title===label?label:`${title} · ${label}`;
+}
+
 const EDITABLE:Partial<Record<Note['kind'],true>>={authored:true,machined:true};
 
 /** Why a part has nothing in it, which differs by part and is not a failure in any of them. */
@@ -278,10 +286,11 @@ export function notesPanel(notes:readonly Note[],
           +(from?`<button class="chip flowlink" data-open-node="${esc(from)}"`
             +`${'workflowKey' in note&&note.workflowKey
               ?` data-open-workflow="${esc(note.workflowKey)}"`:''}>`
-            +`${esc(labelOf(note)||from)}</button>`:'')
+            +`${esc(producedBy(note,labelOf(note)||from))}</button>`:'')
           +(source?`<span class="notes-source">${esc(source)}</span>`:'')
           +(note.kind==='authored'&&note.forkedFrom
-            ?`<span class="notes-fork">edited from a machined note`
+            ?`<span class="notes-fork">edited from a machined note${note.forkedFrom.widget
+              ?` by ${esc(note.forkedFrom.widget.title)}`:''}`
               +`${forkHasDrifted(note,fromRun as MachinedNote[])
                 ?' · the run has moved since':''}</span>`:'')
           +`<button class="chip notes-open" data-note-open="${esc(id)}">open</button>`
@@ -373,6 +382,7 @@ export function openNoteDialog(note:Note,context:NoteContext,esc:Escape){
   const text=bodyOf(note);
   const fn=('fn' in note&&note.fn)||'';
   const from=('nodeId' in note&&note.nodeId)||undefined;
+  const widget=note.kind==='machined'?note.widget:note.kind==='authored'?note.forkedFrom?.widget:undefined;
   const writing=!!EDITABLE[note.kind]&&!!context.write;
   // A NOTE NOBODY HAS WRITTEN YET IS A NEW NOTE, and the dialog is where it is written, so it
   // says so and its button says "Add note" rather than "Save". The Notes Board prototype's own
@@ -413,8 +423,11 @@ export function openNoteDialog(note:Note,context:NoteContext,esc:Escape){
     +`<span class="field"><label>Produced by</label>`
     // SAID RATHER THAN LEFT BLANK. A note with no workflow behind it is a fact about the note --
     // it is the author's own, and nothing will rewrite it on the next run.
-    +`<span class="fixed">${from?esc(context.labelOf(from)||from)
-      :'written here — no workflow'}</span></span>`;
+    +`<span class="fixed">${from?esc(producedBy(note,context.labelOf(from)||from))
+      :'written here — no workflow'}${widget?` <span class="muted">${esc(widget.type)} ${esc(widget.version)}</span>`
+        +(hasManual(widget.type)?` <button class="chip" id="note-widget-manual">Manual</button>`:''):''}</span></span>`;
+  const manual=dialog.querySelector<HTMLButtonElement>('#note-widget-manual');
+  if(manual&&widget)manual.onclick=()=>openManual(widget.type,widget.title,esc);
   const gloss=$('#note-gloss');
   const sayGloss=(which:string)=>{gloss.textContent=which&&FUNCTION_GLOSS[which]
     ?`${which} — ${FUNCTION_GLOSS[which]}`

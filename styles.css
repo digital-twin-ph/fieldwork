@@ -939,10 +939,11 @@ table.two-by-two thead th:first-child{text-align:left}
 .design-fixed{font-weight:700;outline:2px solid color-mix(in srgb,currentColor 45%,transparent);outline-offset:-2px}
 table.two-by-two.design-table-form td,table.two-by-two.design-table-form summary{text-align:left;vertical-align:top;min-width:0}
 .design-table-form summary{cursor:pointer}
+.design-cell-column{display:none;font-size:12px}
 .design-table-form .design-slot{align-items:stretch}
 .design-table-form .check{display:flex;gap:6px;align-items:baseline;font-size:12px}
 .design-table-form details[open]{display:flex;flex-direction:column;gap:6px}
-@media (max-width:640px){.design-table-form,.design-table-form tbody,.design-table-form tr,.design-table-form td,.design-table-form th{display:block;width:100%}.design-table-form thead{display:none}}
+@media (max-width:640px){.design-table-form,.design-table-form tbody,.design-table-form tr,.design-table-form td,.design-table-form th{display:block;width:100%}.design-table-form thead{display:none}.design-cell-column{display:inline;font-weight:600}}
 .design-caveat{font-style:italic;margin:2px 0 0}
 .design-sentence{margin:2px 0 0;padding-left:10px;border-left:2px solid color-mix(in srgb,currentColor 35%,transparent)}
 .design-slot{display:flex;flex-direction:column;gap:2px;font-size:12px}

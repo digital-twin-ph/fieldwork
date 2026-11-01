@@ -141,6 +141,12 @@ export const DESIGN_QUESTIONS:DesignQuestion[]=[
 const SECTION_OF:Record<string,string>={'cohort':'cohort','case-control':'case-control',
   'cross-sectional':'cross-sectional','ecological':'ecological','case-series':'case-series'};
 const SURVEILLANCE_SOURCE='SRC.1';
+const INVESTIGATOR_ALLOCATION=['A1.1','A1.2'];
+/** DECISION 3: A STOP. The five are observational, so a study whose investigators allocated exposure
+ *  is not one of them, whatever its sampling looks like. Nothing is declared and the workflow keeps
+ *  running under neutral names. Settled 2026-11-01: "Stop for now". */
+export const investigatorAllocated=(params:Pick<Params,'answers'>):boolean=>
+  INVESTIGATOR_ALLOCATION.includes(params.answers?.A1?.option??'');
 const OUTSIDE_ALLOCATION=['A1.3','A1.4','A1.5','A1.6'];
 
 type Params=Pick<ParamsByType['study_design'],'design'|'answers'|'table'>;
@@ -164,6 +170,8 @@ const worded=(q:DesignQuestion,design:string):DesignQuestion=>
  *  claim about allocation needs support, and only allocation outside the investigators can be
  *  called a natural experiment, which is why neither is asked before A1 is answered. */
 export function designQuestions(params:Params):DesignQuestion[]{
+  if(investigatorAllocated(params))return DESIGN_QUESTIONS.filter(q=>q.id==='SRC'||q.id==='A1')
+    .map(q=>worded(q,params.design));
   const fromSurveillance=params.answers?.SRC?.option===SURVEILLANCE_SOURCE;
   const outside=OUTSIDE_ALLOCATION.includes(params.answers?.A1?.option??'');
   return DESIGN_QUESTIONS.filter(q=>q.id==='A2'||q.id==='A3'?outside

@@ -143,6 +143,12 @@ export interface QuotedNote {
  *  would happen: *"Defined here because `relate_table` is its only producer. When there is a
  *  second, this type moves ... and nothing else about it changes."* The second reader arrived
  *  before the second producer -- this module, which has to group it beside a quoted note. */
+/** THE WIDGET THAT WROTE A NOTE, recorded when it was written. A label names the analysis and can
+ *  say anything, so it does not answer which widget this was, and wording changes between releases
+ *  so the version has to be the one that ran rather than the one installed today. The practitioner,
+ *  2026-11-01: *"we do not have an idea which widget they came from"*. */
+export interface NoteWidget {type:string; title:string; version:string}
+
 export interface MachinedNote {
   /** THE METHODS THIS NOTE CITED, by the name `METHOD_REFERENCES` holds them under.
    *
@@ -165,6 +171,7 @@ export interface MachinedNote {
   /** The node that machined it, where the run recorded one. A note produced by a workflow links to
    *  the workflow, which the practitioner asked for of the prototype. */
   nodeId?:string;
+  widget?:NoteWidget;
   /** WHICH WORKFLOW PRODUCED IT, where it was not the one being read.
    *
    *  Added 2026-10-30 when the Notes tab became the PROJECT's write-up rather than the open
@@ -231,6 +238,7 @@ export interface AuthoredNote {
    *  to know is to compare -- which `forkHasDrifted` does, rather than leaving a reader to
    *  believe an edited sentence still describes the current run. */
   forkedFrom?:{
+    widget?:NoteWidget;
     /** The node whose widget machined the original. */
     nodeId?:string;
     /** The machined wording this was forked from. */
@@ -287,6 +295,13 @@ export interface DerivedNote {
 }
 
 export type Note=QuotedNote|MachinedNote|AuthoredNote|DerivedNote;
+
+const widgetOf=(value:unknown):NoteWidget|undefined=>{
+  if(!isRecord(value))return undefined;
+  const {type,title,version}=value;
+  return typeof type==='string'&&typeof title==='string'&&typeof version==='string'
+    ?{type,title,version}:undefined;
+};
 
 const part=(value:unknown):WriteUpPart|null=>
   WRITE_UP_PARTS.includes(value as WriteUpPart)?value as WriteUpPart:null;
@@ -364,6 +379,7 @@ export function readNotes(raw:unknown):{notes:Note[]; unreadable:number}{
         ...(text(entry.about)?{about:text(entry.about)}:{}),
         ...(was?{forkedFrom:{text:was,
           ...(text(from!.nodeId)?{nodeId:text(from!.nodeId)}:{}),
+          ...(widgetOf(from!.widget)?{widget:widgetOf(from!.widget)!}:{}),
           ...(text(from!.at)?{at:text(from!.at)}:{})}}:{}),
         ...(edges(entry.relatesTo).length?{relatesTo:edges(entry.relatesTo)}:{})});
       continue;
@@ -459,7 +475,8 @@ export function groupNotes(notes:Note[]):PartGroup[]{
 export function forkMachinedNote(note:MachinedNote,id:string,text:string,at?:string):AuthoredNote{
   return {kind:'authored',id,section:note.section,text,
     ...(note.fn?{fn:note.fn}:{}),
-    forkedFrom:{text:note.text,...(note.nodeId?{nodeId:note.nodeId}:{}),...(at?{at}:{})}};
+    forkedFrom:{text:note.text,...(note.nodeId?{nodeId:note.nodeId}:{}),
+      ...(note.widget?{widget:note.widget}:{}),...(at?{at}:{})}};
 }
 
 /** Whether what was machined has moved since the fork was taken.

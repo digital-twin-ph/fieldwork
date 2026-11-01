@@ -143,6 +143,7 @@ import {ZipWriter,BlobWriter,TextReader} from '@zip.js/zip.js';
 import {DESIGN_LICENCES,includedMeasures} from './study-design.js';
 import {openDesignDialog} from './study-design-dialog.js';
 import {designChecklist,checklistSummary} from './study-design-checklist.js';
+import {investigatorAllocated} from './study-design-questions.js';
 import type {TwoByTwoResult} from './two-by-two.js';
 const esc=(s:unknown)=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
 function chartControls(n:WorkflowNode<'chart_output'>,options:{omitOrientation?:boolean}={}){
@@ -2278,7 +2279,8 @@ function renderInspector(){
       +'computations downstream are the ones its design can estimate. Declared and never inferred: '
       +'nothing reads a design off a table.</p>'
       +labelForm('design-label','Node label',p.label||'Study design')
-      +`<p class="description"><b>${esc(p.design)}</b>: reports ${esc(reported)}.</p>`
+      +(investigatorAllocated(p)?`<p class="description"><b>No design declared</b>: investigators allocated exposure.</p>`
+        :`<p class="description"><b>${esc(p.design)}</b>: reports ${esc(reported)}.</p>`)
       +`<button class="button" id="design-open">Choose the design and answer its questions\u2026</button>`
       +`<p class="description" id="design-checklist-summary">${esc(checklistSummary(designChecklist(workflow,n.id)))}</p>`
       +`<p class="description">${esc(licence.because)}</p>`

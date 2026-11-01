@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {STUDY_DESIGNS,migrateSurveillanceDesign,studyDesignReceipt} from '../build/study-design.js';
+import {STUDY_DESIGNS,migrateSurveillanceDesign,studyDesignReceipt,studyDesignSentence} from '../build/study-design.js';
 import {DESIGN_QUESTIONS,designQuestions,refinementSentences,answerSentence,openSlots,tableSentences,inheritedFill}
   from '../build/study-design-questions.js';
 import {designChecklist,checklistSummary} from '../build/study-design-checklist.js';
@@ -246,4 +246,17 @@ test('A2 holds several options, and None and not sure stand alone',()=>{
   const r=withAnswer(params('cohort',{answers:{A1:{option:'A1.5'},A2:{option:'A2.1 A2.3'}}}),'T1','T1.1');
   const {facts}=studyDesignReceipt({id:'d',params:r},'run');
   assert.match(facts,/refinementAnswer "A2\.1";\n  fw:refinementAnswer "A2\.3"/);
+});
+
+test('investigator allocation stops the declaration, and nothing pretends otherwise',()=>{
+  const p=params('cohort',{period:'1854',answers:{A1:{option:'A1.1'}}});
+  assert.equal(studyDesignSentence({params:p}),'No study design was declared.');
+  assert.deepEqual(ids(p),['SRC','A1']);
+  const {facts}=studyDesignReceipt({id:'d',params:p},'run');
+  assert.match(facts,/fw:designStopped true/);
+  assert.doesNotMatch(facts,/studyDesignKind|licensedEstimate/);
+  assert.match(facts,/fw:refinementAnswer "A1\.1"/);
+  const items=designChecklist(workflow('cohort',p),'d');
+  assert.equal(items.find(i=>i.id==='stopped').status,'open');
+  assert.equal(items.some(i=>i.id==='computation'||i.id==='period'||i.id==='C1'),false);
 });

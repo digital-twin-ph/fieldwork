@@ -1343,7 +1343,7 @@ the running application and are not yet experiments.
   village's children needs a denominator the file does not carry. The source thesis was not read.
 
 - **Stage 2 notes:** see [159](docs/experiments/159-the-study-design-is-the-workflows-checklist.md).
-  Investigator allocation (A1) should stop the declaration and only says so. Option sentences
+  Option sentences
   carry no links to their evidence: the sources are named in plain text. New nodes still default to
   cohort.
 

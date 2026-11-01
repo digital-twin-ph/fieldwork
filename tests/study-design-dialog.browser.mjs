@@ -167,9 +167,12 @@ test('the table page, read at dialog and phone width',async({page})=>{
   const dialog=page.locator('#study-design-dialog');
   await dialog.locator('#design-next').click();
   await dialog.locator('[data-cell="a"] summary').click();
+  await expect(dialog.locator('[data-cell="a"] .design-cell-column')).toBeHidden();
   await page.screenshot({path:process.env.DESIGN_SHOT||test.info().outputPath('wide.png')});
   await page.setViewportSize({width:390,height:844});
   const overflow=await dialog.evaluate(d=>d.scrollWidth-d.clientWidth);
   expect(overflow).toBeLessThanOrEqual(0);
+  await expect(dialog.locator('[data-cell="a"] .design-cell-column')).toBeVisible();
+  await expect(dialog.locator('[data-cell="b"] .design-cell-column')).toHaveText('no outcome');
   await page.screenshot({path:process.env.DESIGN_SHOT_NARROW||test.info().outputPath('narrow.png')});
 });

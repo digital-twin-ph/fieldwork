@@ -433,6 +433,9 @@ fw:licensedEstimate a owl:DatatypeProperty; rdfs:label "licensed estimate";
 fw:withheldEstimate a owl:DatatypeProperty; rdfs:label "withheld estimate";
   rdfs:range xsd:string;
   rdfs:comment "A measure the declared design licenses and the practitioner chose not to report. Written so that a measure left out on purpose can be told from one nobody ran." .
+fw:designStopped a owl:DatatypeProperty; rdfs:label "design stopped";
+  rdfs:domain fw:StudyDesign; rdfs:range xsd:boolean;
+  rdfs:comment "Investigators allocated exposure, so no study design is declared: the five designs are observational." .
 fw:refinementAnswer a owl:DatatypeProperty; rdfs:label "refinement answer";
   rdfs:domain fw:StudyDesign; rdfs:range xsd:string;
   rdfs:comment "The option chosen for one stage 2 question, by its identifier. A claim by the practitioner, which the application records and cannot check." .

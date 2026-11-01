@@ -55,6 +55,7 @@ import classification from '../widgets/classification.json' with {type:'json'};
 import {OLD_TYPES,validateOldNode,executeOldNode,migrateFacilitySources,applyAccessReview,applyFacilityGrading,gradedPointLayer,distancesAsAccess} from './old-naledi.js';
 import {resolveRuleset,bindParameters,tableContractFailures,rulesetCitation} from './rulesets.js';
 import {deriveValue,selectRows,OPERATORS} from './derive-value.js';
+import widgetRegistry from '../widgets/registry.json';
 import {relateTable,relateOutcome,machinedNotes,relateReceiptFacts,type RelateOutcome} from './relate-table.js';
 // THE EQUATIONS THE COMPUTATIONS USED, machined as Methods notes. The second, third and fourth
 // producers of a machined note, which is the state `relate-table.ts` wrote its type for.
@@ -72,7 +73,7 @@ import type {MachinedNote} from './notes.js';
 import {groupTable,migrateGroupTableNulls} from './group-table.js';
 import {computeTwoByTwo,twoByTwoReceipt,twoByTwoSentence} from './two-by-two.js';
 import {studyDesignSentence,studyDesignReceipt,DESIGN_LICENCES,includedMeasures,readUnderDesign,readUndeclared,migrateSurveillanceDesign} from './study-design.js';
-import {refinementSentences} from './study-design-questions.js';
+import {refinementSentences,investigatorAllocated} from './study-design-questions.js';
 import type {DeclaredDesign} from './study-design.js';
 import {outreachProjection,extentN3,extentProjection,projectionOf,RULESET_FOR_NODE_TYPE,pinnedRuleset,parametersFor} from './rule-application.js';
 import {authoredFacts,authoredProjection,authoredReceipt,authoredDataIssues} from './authored-application.js';
@@ -977,6 +978,16 @@ export function makeN3(rows:NearestRow[],alert:ParamsByType['alert'],threshold:n
   const rules=bindParameters(ruleset,{threshold:Number(t)});
   return {facts:prefix+facts+'\n',rules:prefix+rules,input:prefix+facts+'\n\n'+rules,ruleset:rulesetCitation(ruleset)};
 }
+/** Every machined note says which widget wrote it, stamped here so no producer can forget. */
+function signedByWidget(machined:Record<string,MachinedNote[]>,workflow:Workflow){
+  return Object.fromEntries(Object.entries(machined).map(([id,notes])=>{
+    const type=workflow.nodes.find(n=>n.id===id)?.type;
+    const version=widgetRegistry.widgets.find(w=>w.nodeType===type)?.currentVersion;
+    return [id,type&&version
+      ?notes.map(note=>({...note,widget:{type,title:TYPES[type].title,version}})):notes];
+  }));
+}
+
 export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProgress:(id:string,status:'running'|'done'|'failed')=>void=()=>{},resolveCredential?:CredentialResolver):Promise<WorkflowRun> {
   workflow=validateWorkflow(workflow);
   // A composition runs by becoming its members, after the authored graph has been validated
@@ -1406,7 +1417,8 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
       // instead. Experiment 154.
       case 'study_design':{
         const sentence=studyDesignSentence(node as WorkflowNode<'study_design'>);
-        value={kind:'study-design',design:node.params.design,period:node.params.period,
+        value={kind:'study-design',...(investigatorAllocated(node.params)?{stopped:true}:{}),
+          design:node.params.design,period:node.params.period,
           unitOfAnalysis:node.params.unitOfAnalysis
             ||DESIGN_LICENCES[node.params.design].unitOfAnalysis,
           licence:DESIGN_LICENCES[node.params.design],sentence,
@@ -1428,7 +1440,8 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         if(table?.kind!=='data-table')throw new Error('Connect a table: this step reads four cells of one.');
         // STEP 3: A DECLARED DESIGN DECIDES WHAT IS REPORTED. An absent one keeps every measure
         // under a neutral name, because an undeclared design is not a cohort.
-        const declaredDesign=inputs.design as unknown as DeclaredDesign|undefined;
+        const connected=inputs.design as unknown as DeclaredDesign|undefined;
+        const declaredDesign=connected?.stopped?undefined:connected;
         const computed=computeTwoByTwo(table,node.params);
         const result=declaredDesign?readUnderDesign(computed,declaredDesign):readUndeclared(computed);
         // THE COUNTS ARE THE VALUE AND THE ESTIMATES RIDE ON IT, the arrangement `rate_ratio`
@@ -2117,7 +2130,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
     ...(Object.keys(tables).length?{tables}:{}),
     ...(Object.keys(linkages).length?{linkages}:{}),
     ...(Object.keys(relations).length?{relations}:{}),
-    ...(Object.keys(machined).length?{machined}:{}),
+    ...(Object.keys(machined).length?{machined:signedByWidget(machined,workflow)}:{}),
     // THE SOURCES THIS WORKFLOW CITES, read back from what its inputs declare rather than asked
     // for again. Experiment 141, trying the design on a real write-up: "References are the one
     // section a workflow can write by itself."

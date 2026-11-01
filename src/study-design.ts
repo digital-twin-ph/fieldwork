@@ -25,7 +25,7 @@
  */
 import type {ParamsByType,Workflow,WorkflowNode} from './types.js';
 import type {TwoByTwoResult} from './two-by-two.js';
-import {designQuestions} from './study-design-questions.js';
+import {designQuestions,investigatorAllocated} from './study-design-questions.js';
 
 /** THE STUDY DESIGNS THIS APPLICATION SERVES, as a closed set.
  *
@@ -214,6 +214,7 @@ export function designFor(w:Workflow,nodeId:string):DesignFinding{
 /** The sentence a receipt and a machined note both use, so one declaration is not worded two
  *  ways -- the rule `twoByTwoSentence` and `rateRatioSentence` already keep. */
 export const studyDesignSentence=(node:WorkflowNode<'study_design'>):string=>{
+  if(investigatorAllocated(node.params))return 'No study design was declared.';
   const {design,period,unitOfAnalysis}=node.params;
   const licence=DESIGN_LICENCES[design];
   const unit=unitOfAnalysis.trim()||licence.unitOfAnalysis;
@@ -241,6 +242,8 @@ export const studyDesignSentence=(node:WorkflowNode<'study_design'>):string=>{
  *  had to look the design up again could disagree with the sentence beside it. */
 export interface DeclaredDesign {
   kind:'study-design';
+  /** Investigators allocated exposure, so nothing here governs a computation. */
+  stopped?:boolean;
   design:StudyDesign;
   period:string;
   unitOfAnalysis:string;
@@ -258,17 +261,18 @@ export function studyDesignReceipt(node:WorkflowNode<'study_design'>,runId:strin
   const unit=node.params.unitOfAnalysis.trim()||licence.unitOfAnalysis;
   const included=includedMeasures(node.params);
   const withheld=licence.estimates.filter(name=>!included.includes(name));
+  const stopped=investigatorAllocated(node.params);
   const facts=`@prefix fw: <urn:fieldwork:>.\n`
     +`${entity} a fw:StudyDesign;\n`
-    +`  fw:studyDesignKind ${quote(node.params.design)};\n`
+    +(stopped?`  fw:designStopped true`:`  fw:studyDesignKind ${quote(node.params.design)};\n`
     +(node.params.period.trim()?`  fw:studyPeriod ${quote(node.params.period.trim())};\n`:'')
-    +`  fw:unitOfAnalysis ${quote(unit)}`
-    +(licence.estimates.length
+    +`  fw:unitOfAnalysis ${quote(unit)}`)
+    +(!stopped&&licence.estimates.length
       ?`;\n`+licence.estimates.map(name=>`  fw:licensedEstimate ${quote(name)}`).join(';\n')
       :'')
     // A MEASURE WITHHELD ON PURPOSE IS A FACT ABOUT THE ANALYSIS, not a presentation choice, so a
     // reader can tell one nobody ran from one somebody decided to leave out.
-    +withheld.map(name=>`;\n  fw:withheldEstimate ${quote(name)}`).join('')
+    +(stopped?[]:withheld).map(name=>`;\n  fw:withheldEstimate ${quote(name)}`).join('')
     +designQuestions(node.params).flatMap(q=>{
       const answer=node.params.answers?.[q.id]?.option;
       return answer?answer.split(' ').map(id=>`;\n  fw:refinementAnswer ${quote(id)}`):[];

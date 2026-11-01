@@ -1,7 +1,7 @@
 {
   "schema": "fieldwork/directions/1",
   "note": "A DE moment is a point at which the direction should change. The practitioner named it on 2026-10-15, after finding that a map still had an Input mode a day after the discussion that ruled against modes: \"The map output discussion is what we call a DE moment, a moment when things should head in a different direction, and it did not.\"\n\nThis file is the answer to that. Every direction a discussion settles is recorded here with what it requires IN CODE and a clock on it, because the failure mode is specific and this project has produced it at least three times: the direction is written into a spec page, a glossary entry or an ontology term, the code is left alone, and the record now says the matter is settled while the running application still does the old thing. A widget page is not a work item and no ratchet can see one.\n\nIt is deliberately not the blocker ledger. A blocker is a claim that something CANNOT be done yet. A direction is a decision that something SHOULD now be done differently, and the two fail in opposite ways: a blocker rots by being lifted and not noticed, a direction rots by being agreed and not built.",
-  "measuredAt": "2026-10-22",
+  "measuredAt": "2026-11-01",
   "checkWindowDays": 7,
   "windowBasis": "The same window the blocker ledger uses, for the same reason: this project changes in days. A direction nobody has checked in a week is a direction nobody is acting on, and saying so is the entire point of the file.",
   "directions": [
@@ -976,6 +976,26 @@
         {
           "date": "2026-10-29",
           "found": "Stated on reading the audit generated the same day. Measured at statement: 11 shipped examples, none meeting more than 2 of 4 conditions; the pinned south-london-1854 meeting 3; 11 nodes carrying data with no declared source; 1 workflow of 6 with a from-scratch rebuild; 4 widgets attached to one example."
+        }
+      ]
+    },
+    {
+      "id": "codified-and-then-some",
+      "stated": "2026-10-31",
+      "statedBy": "the practitioner",
+      "inTheirWords": "In Epi Info AI we argued that it codified epidemiology practice, but with ontology-based knowledge engineering, FW has not only codified epidemiology practice, it has made it visual, semantically consistent, stricter on provenance and attribution, browser-first, collaboration friendly, friction-less GIS, friction-less, short-circuit evidence generation (publication).",
+      "requiresInCode": "SEVEN CLAIMS, AND EACH ONE IS CHECKABLE, which is the only reason to record a positioning statement in a register that expects code. Four are demonstrated and measured, two are half-built and say so, one cannot be established by this project at all. (1) VISUAL: the canvas, the palette gated on an input stage, and figures drawn from the run. Demonstrated. (2) SEMANTICALLY CONSISTENT: `validate:ontology-coupling` reports 554 terms asserted against 986 typed in the ontology with 0 undeclared, and refuses a build that asserts a term the ontology does not declare. Demonstrated and gated. (3) STRICTER ON PROVENANCE AND ATTRIBUTION: `InputProvenance` carries source, url, published, edition, retrieved, represents, a structured `Citation`, an SPDX licence, where the licence was read and the obligation it imposes; a worked example is pinned by per-file digest; and the discipline bites -- snow-gboh is held and NOT transformed because its licence forbids it. Demonstrated. (4) BROWSER-FIRST: no server, IndexedDB payloads, a precaching service worker, vendored WASM. Demonstrated, and the offline path was repaired on 2026-10-31 when twelve WebKit tests found a worker handing a rejection to respondWith. (5) COLLABORATION FRIENDLY: HALF. The repository layout is published as a template, the application WRITES it from 2026-10-31 -- 24 files against the 24 a hand conversion produced -- and reading one back is unbuilt. The format declaration the application emits says so rather than implying a round trip. (6) FRICTION-LESS GIS: the spatial half is real -- study areas, polygon layers read from a file, OSM extracts clipped to a box, georeferenced plates placed by their corners -- and `friction-less` is a claim about a PRACTITIONER, which no measurement here can make. (7) SHORT-CIRCUIT EVIDENCE GENERATION: the write-up is assembled from notes a step machined or a practitioner authored, References is assembled from what those notes cite, and the figures are drawn from the run rather than captured -- so there is no separate writing phase to short-circuit. Structurally demonstrated; never used to publish anything by anybody outside this project. WHAT THE CLAIM SET IS FOR: it is the `above` sweep of the five directions written down, and it should be re-derived rather than quoted. The two half-built entries name their missing halves, and (6) and (7) name the kind of evidence they would need, which is a field question and not a test.",
+      "recordedIn": [
+        "docs/audits/epi-info-commands-and-our-widgets.md",
+        "docs/experiments/150-can-several-authors-collaborate-in-a-project-repository.md"
+      ],
+      "workItem": "No new work item. Two halves are already open -- reading a project repository back (150) and the chart/map validation that would check a figure says what it claims (TODO, experiment 156). The claims that need a practitioner rather than a test belong in docs/field-questions.md.",
+      "status": "open",
+      "lastChecked": "2026-10-31",
+      "checks": [
+        {
+          "date": "2026-10-31",
+          "found": "Stated and recorded the same day, at the end of the exchange that withdrew parity with Epi Info as a goal. The sequence matters: the practitioner first established that Epi Info is defunded and that Epi Info AI is their own translation, then that what is wanted are PATTERNS rather than commands, then that apply_ruleset carries IF and RECODE in one widget because a rule language makes a condition and a conclusion one form -- and only then this. So the claim is not that Fieldwork is a better Epi Info. It is that an ontology substrate realises the same codified practice differently, and the audit's closing section measures the three things that have no row in any of the seven legacy command groups: a declared stage, a declared currency of seventeen port types against one current dataset, and notes that accumulate into a publication rather than a print stream. FOUR OF SEVEN DEMONSTRATED, two half, one unanswerable here -- recorded that way rather than as seven."
         }
       ]
     }

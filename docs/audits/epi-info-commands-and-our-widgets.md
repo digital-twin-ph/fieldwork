@@ -1,6 +1,6 @@
 # Epi Info's commands, against the widgets we actually have
 
-_Created 2026-11-01 · Updated 2026-11-01_
+_Created 2026-10-31 · Updated 2026-10-31_
 
 **Status:** an audit, not a disposition. Nothing is renamed, built or retired by this document.
 Every mapping below was read from `epi-info-ai/COMMAND_SET.md` and from this repository's own
@@ -25,14 +25,53 @@ example, we can consider renaming what it is in Epi Info and creating/adapting t
 command set equivalents in FW."* This audit is the measurement that proposal needs. It is
 deliberately not the proposal.
 
+## What this audit is NOT measuring against, corrected 2026-10-31
+
+This document first read as though Epi Info were a standard to be faithful to, and said so in a
+dozen places. The practitioner corrected it the same day:
+
+> Let's forget that we are establishing parity with Epi Info, it's a project that died and was
+> defunded a long time ago. Epi Info AI was an exploration to translate the code to a browser
+> based language, Rust and then Web Assembly, so even if I call it Epi Info AI, it's not Epi Info
+> anymore.
+
+**So there is no reference implementation to agree with, and no parity to disclaim.** A disclaimer
+defends against a comparison somebody might make; nobody can make this one against a defunded
+product, and writing "no parity is claimed" implies a live standard where there is none.
+
+**What survives the correction, and it is the part that mattered:**
+
+- **The shape is worth keeping because it is TAUGHT**, not because a program printed it. The
+  direction `recognisable-not-identical-an-epi-kernel-of-our-own` says this in its own words — the
+  workflow is *"codified knowledge for field epidemiology practice. That is what they teach to
+  FETP trainees in more than 80 countries. And to Epidemic Intelligence Services Officers at
+  CDC."* The authority is the training; the software was how it was distributed.
+- **The command names are worth taking** for the same reason: they are the words a trained
+  practitioner already has, which is the naming rule this project keeps.
+- **Not stating a label nobody has verified** stays right, and is what `epiInfoLabelSource`
+  actually protects: it refuses a fabricated label, which has nothing to do with parity.
+
+**What changes:**
+
+- `epi-info-ai` is the practitioner's own Apache-2.0 translation of that codified practice into
+  Rust and WebAssembly. Reusing its kernel is an ordinary dependency decision about one's own
+  code, not an act of fidelity to a third party.
+- The `epi-info` arm of `EPI_INFO_LABEL_SOURCES` points at something unmaintained. It was built to
+  mark the stronger claim; that claim may now be unreachable, which is worth recording rather than
+  leaving as an aspiration.
+- Wherever this repository hedges about agreement with Epi Info, it is hedging about the wrong
+  thing. **Fourteen files carry the framing** and are listed as a sweep in TODO rather than
+  rewritten here, because an audit measures and does not dispose.
+
 ## What the command set holds
 
 `COMMAND_SET.md` lists **48 command rows** across seven legacy groups: Data 7, Variables 6,
 Select/If 5, Statistics 8, Advanced Statistics 7, Output 7, User Interaction 4, plus Options.
 Its own status column reads 23 `BV`, 11 `Gap`, 7 `Candidate`.
 
-**That is a catalogue of another application's surface, not a specification of ours.** It is used
-here as a map — a place to look when a workflow needs something this application lacks — and the
+**That is a record of codified field-epidemiology practice, written down in the practitioner's
+own translation of it — not a specification of ours and not a standard to match.** It is used here as
+a map — a place to look when a workflow needs something this application lacks — and the
 rule that decides what gets built is unchanged: D10 and the usage ledger admit a widget because a
 worked example needs it.
 
@@ -59,7 +98,7 @@ worked example needs it.
 | --- | --- | --- |
 | **`MERGE`** | combine two tables sharing a key so their measures sit in one column | the Dulwich bound needs Table XII's deaths beside Table VIII's populations, and `RELATE` carries categories, not values. Found 2026-10-31 by the by-hand test failing. |
 | **`MEANS`** | a report of a measure by a cross-tab | named by `group_table`'s old comment as the command it was not |
-| `RECODE` | band a value into categories | `apply_ruleset` does this semantically, by authored rules. Whether that IS RECODE under another name is **not established** and is the obvious next thing this audit would check. |
+| `RECODE` | band a value into categories | `apply_ruleset` takes the PATTERN and is not the command — see below. Not a gap. |
 | `IF` | a conditional | the conditional half of ASSIGN. Rules express per-subject conditions; nothing expresses a conditional assignment into a table. |
 | `SORT` | order rows | `chart_output` gained a bar order on 2026-10-31; the table has none. |
 
@@ -98,19 +137,66 @@ declares a rename the application does not perform, so a saved workflow migrates
 audit corrects a claim made earlier the same day, that renaming would rewrite every saved
 workflow holding the type. It would not; that is what the map is for.
 
+## What this application has that the command set has no row for
+
+An audit that only measured what is missing would be measuring in one direction. The practitioner,
+closing the thread, named three things that have no entry in any of the seven legacy groups:
+
+> FW also provided a better overarching framework for workflows — inputs, process, outputs.
+
+> FW also made explicit the currency of those workflows — tables, points, polygons, rasters, study
+> area, study design.
+
+> and notes that become substrate for publications all resting on ontology foundations.
+
+**A stage, not a sequence.** `STAGE_VERBS` declares ten — discover, acquire, extract, import,
+check, compute, relate, summarize, classify, view — and the palette gates on the first of them: an
+input must be on the canvas before anything that processes one is offered. A command language runs
+top to bottom and a statement's place in the file is the only thing that says where it belongs.
+Here the stage is declared, a composition states which one it is in, and the reveal measurement in
+experiment 112 reads the same declaration the palette does.
+
+**A declared currency, which the glossary calls a port type**: *"the declared name of what one
+port carries, and the thing a connection is actually checked against"*. Seventeen of them —
+`points`, `table`, `polygons`, `raster`, `area`, `design`, `network`, `decisions` and the rest.
+Epi Info has one currency, the current dataset, and every command acts on whatever it is. **That
+single fact is what makes the new economy above possible**: because what flows is typed and
+checked, one widget can serve several commands' worth of work without ambiguity about what it is
+acting on, and a wrong connection is impossible rather than reported afterwards. `design` is the
+newest of them and was added on 2026-10-31 for exactly that reason — a study design is not a
+table, and giving it the `table` port would have made it checkable only by convention.
+
+**Notes that become the publication.** Epi Info's Output group is a print stream — `ROUTEOUT`,
+`PRINTOUT`, `REPORT` — which sends a rendering somewhere. This application has no analogue and
+does not want one. A note is machined by the step that earned it or authored by a practitioner,
+it carries its section, its function and its edges, the write-up is assembled from the project's
+notes at render time, and References is assembled from what those notes cite. **The output is not
+a thing printed at the end; it is accumulated as the work is done.** That is why a forked note
+keeps the wording it diverged from, and why a declared exclusion writes its own caveat into
+Methods.
+
+**And all of it asserts into an ontology.** Every step emits a receipt, the receipts are N3,
+`validate:ontology-coupling` refuses a term the ontology does not declare, and a result can be
+read as facts rather than as a rendering. A command language has no equivalent because it has no
+need of one: its output is for a person to read, and once printed it makes no further claim.
+
+**None of these is a gap this audit found. They are the reason the command set reads as a map
+rather than as a specification** — four of the seven legacy groups describe a procedural
+environment this application deliberately is not.
+
 ## What this audit does not establish
 
-- **That sharing a name is safe.** A name is a stronger claim than a label, and this project
-  already separates "what Epi Info AI prints" from "what Epi Info prints" in
-  `epiInfoLabelSource` precisely because the two are different claims. Nothing here is validated
-  against either application. A widget called `SUMMARIZE` will be read by somebody as behaving
-  like Epi Info's, and whatever is renamed has to say, where a practitioner meets it, that the
-  name is borrowed and the behaviour is not certified.
+- **What a borrowed name obliges.** The first version of this section said a renamed widget must
+  state that no parity is claimed. After the correction above that is defending against the wrong
+  thing. What a shared name does oblige is narrower and still real: a practitioner who was taught
+  `SUMMARIZE` will expect the aggregates they were taught, and this one offers three of eleven.
+  The obligation is to say what is NOT there, which `AGGREGATES` already does, rather than to
+  disclaim an agreement nobody can check.
 - **That the mappings above are faithful.** Each row was read from one source file and this
   application's implementation. None was run side by side against Epi Info or Epi Info AI, and
   the "how faithful" column is an argument rather than a measurement.
-- **Whether `apply_ruleset` is RECODE.** The likeliest duplication in the table above, and
-  unchecked. If it is, the honest move is one command with two surfaces rather than two names.
+- ~~**Whether `apply_ruleset` is RECODE.**~~ **Withdrawn the same day — it was the wrong
+  question.** See *What we are actually looking for* below.
 - **That a split vocabulary is coherent.** This is a GIS studio as well as an epidemiological
   one, and `buffer_area`, `isochrone` and `study_area` have no Epi Info equivalent. Adopting Epi
   Info names for the epi half produces a deliberately two-vocabulary palette. That may be right —
@@ -119,6 +205,73 @@ workflow holding the type. It would not; that is what the map is for.
 - **That the command set should be completed.** It is a map of another application's surface.
   Building toward it as a target would invert the rule that a widget is admitted because a worked
   example needs it, and the budget already stands at 55 against a reference of 41.
+
+## What we are actually looking for: patterns, not commands
+
+The practitioner, closing the parity question: *"What we are looking for are the right patterns to
+incorporate in FW."* And then the example that makes it concrete: *"The apply_ruleset widget is an
+example of not seeking parity, if we think about geometry."*
+
+**`apply_ruleset` is the proof that this already works.** It does what `RECODE` is for — declare
+how values become categories, and keep the declaration where a reader can check it — and it does
+it as authored rules compiled to N3 and run by a reasoner, over records that may carry geometry.
+Epi Info had no spatial record to classify, so there is no command to be faithful to and nothing
+was lost by not being faithful to one. The widget is recognisable in what it ACCOMPLISHES and
+owes nothing to how the accomplishment was spelled.
+
+So this audit's question *"is `apply_ruleset` RECODE?"* was the parity frame returning by the back
+door. It treats a command as the thing. **A command is how a pattern was spelled; the pattern is the thing.**
+
+Read that way, the mappings earlier in this document change meaning without changing content.
+They are not a fidelity scorecard. They record which patterns this application has already
+arrived at, which it has arrived at under a different name, and which it has not met yet:
+
+| pattern | carried by Epi Info as | Fieldwork |
+| --- | --- | --- |
+| declare how values become categories, auditably | `RECODE` | `apply_ruleset`, over geometry too — **a wider realisation, not a narrower one** |
+| name a new variable and say how it is computed | `DEFINE` + `ASSIGN` | `derive_value`, without a constant or a condition |
+| aggregate within strata, emit a dataset | `SUMMARIZE` | `group_table`, three aggregates of eleven |
+| bring one table's column onto another's rows | `RELATE` | `relate_table`, categories only — values are the gap |
+| combine two tables sharing a key | `MERGE` | **not met** |
+| the recognisable two-by-two: cells, margins, estimates, tests | `TABLES` | cells, margins and estimates; **tests not met** |
+
+### One widget carried two commands, and that is the economy
+
+The practitioner: *"And IF is in apply_ruleset, so in effect we combined two commands in one
+widget, I think that's new economy."*
+
+It is, and the count is arguably three. An `AuthoredRule` is
+`any: [{all: [conditions]}] → then: [conclusions]`. The conditions ARE `IF`. The conclusions are
+`RECODE` where they band a value into a category, and a conditional `ASSIGN` where they assert a
+fact about a subject. Epi Info files those in two different groups — `IF` under Select/If,
+`RECODE` and `ASSIGN` under Variables — because in a command language they are separate
+statements. **In a rule language the condition and the conclusion are one form, so one widget
+carries what three commands carried.**
+
+**That inverts the widget-budget worry.** 55 widgets against a reference of 41 reads as inflation
+only if a widget is the unit a command maps onto. It is not: `apply_ruleset` is one entry in the
+palette and several entries in the command set. Counting widgets against commands measures the
+wrong thing in the wrong direction, and the honest comparison — which this audit does not make,
+because nobody has done the mapping for the spatial half — would have to count PATTERNS served,
+not palette entries.
+
+**And it shows where the split actually falls.** Fieldwork does not divide assignment by command;
+it divides it by KIND. `derive_value` is arithmetic assignment — `DEFINE` plus an arithmetic
+`ASSIGN`, unconditional, over numeric measures. `apply_ruleset` is categorical assignment —
+conditional, over declared vocabulary, auditable as N3. Epi Info's line runs between statements;
+this one runs between kinds of value. That is a substrate decision and it is why the two widgets
+do not overlap despite sharing `ASSIGN` between them.
+
+**So the measure of a good realisation is how many commands it collapses without losing what each
+accomplished** — and the failure mode to watch is the opposite one, a widget that collapses two
+commands and quietly drops what one of them did. `apply_ruleset` does not: the conditions are as
+expressive as `IF` needs for a classification, and the conclusions are checkable in a way a
+procedural `RECODE` never was, because they compile to facts with a receipt.
+
+**The test for adopting a pattern is not whether Epi Info had it.** It is whether a field workflow
+in this application needs it — which is the rule D10 and the usage ledger already enforce — and
+whether this application's own substrate can realise it better than the command did. `RECODE` to
+`apply_ruleset` is the case where the answer was yes and the realisation is wider.
 
 ## What a sweep of this would look for next
 

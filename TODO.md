@@ -1372,10 +1372,14 @@ the running application and are not yet experiments.
   until it was checked, and one has no mention of it anywhere. A practitioner who knows Epi Info
   has to rediscover each one.
 
-  What to do with it is a D7 question over widgets that have already shipped, where a rename costs
-  every saved workflow that holds the node type — the same bind the naming convention has been in
-  since nine findings produced no renames. The cheap half is the manual and the Inspector saying
-  which command a widget is, which costs nothing and is most of the value.
+  **Measured in [the Epi Info command audit](audits/epi-info-commands-and-our-widgets.md),
+  2026-10-31**, which also corrects what this entry first claimed a rename would cost:
+  `RENAMED_NODE_TYPES` already maps six old node types to new ones, and `validate:widgets` refuses
+  a registry declaring a rename the application does not perform — so a saved workflow migrates
+  on open. Six of the table widgets are South-London-only and could be renamed in one pass;
+  `case_series` and `table_input` could not, being used by other examples. The cheap half remains
+  the manual and the Inspector saying which command a widget is, which costs nothing and is most
+  of the value.
 
   **And it predicts where the gaps are**, which is the useful part: MERGE was found by needing it,
   but the command set names the rest. Worth a deliberate pass against `COMMAND_SET.md` rather than

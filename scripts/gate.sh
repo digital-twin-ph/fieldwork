@@ -12,6 +12,9 @@ port="${FIELDWORK_TEST_PORT:-4184}"
 # which is whatever the last gate left there.
 sha=$(git -C "$here" rev-parse "${1:-HEAD}")
 
+# Before the worktree moves, so a machine that cannot run a browser costs seconds and no run.
+(cd "$here" && node scripts/gate-preflight.mjs)
+
 if [ ! -d "$tree/.git" ] && [ ! -f "$tree/.git" ]; then
   git -C "$here" worktree add --detach "$tree" "$sha"
   # Shared rather than installed: 230 MB and several minutes saved per setup, and the gate then

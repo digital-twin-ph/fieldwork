@@ -260,6 +260,9 @@ consequences, both wanted:
   the freeze.
 - **What is validated is what would be pushed.** The order becomes commit, then gate, then
   fix and amend if it fails — rather than gate, then commit something slightly different.
+- **It refuses to start on a machine that cannot run a browser.** `scripts/gate-preflight.mjs`
+  checks that the desktop session is yours and that each browser launches, before the worktree
+  moves. A session that logs out DURING a gate is not caught: lock the Mac, do not log out.
 
 Each tree has its own `build/`, so **building in the main tree while a gate runs is fine** —
 which is the point, and it is what makes the main tree usable rather than merely editable.

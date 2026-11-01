@@ -1,2 +1,2 @@
-import{a,b,c,d,e,f,g,h,i,j,k}from"./chunks/chunk-CAOYEDTR.js";import"./chunks/chunk-KVMUXFPB.js";export{b as DESIGN_LICENCES,a as STUDY_DESIGNS,i as designFor,c as includedMeasures,g as isStudyDesign,d as notEstimable,f as readUndeclared,e as readUnderDesign,k as studyDesignReceipt,j as studyDesignSentence,h as upstreamNodeIds};
+import{a,b,c,d,e,f,g,h,i,j,k,l}from"./chunks/chunk-O6NES34S.js";import"./chunks/chunk-ALFDO73N.js";import"./chunks/chunk-KVMUXFPB.js";export{b as DESIGN_LICENCES,a as STUDY_DESIGNS,j as designFor,c as includedMeasures,h as isStudyDesign,g as migrateSurveillanceDesign,d as notEstimable,f as readUndeclared,e as readUnderDesign,l as studyDesignReceipt,k as studyDesignSentence,i as upstreamNodeIds};
 //# sourceMappingURL=study-design.js.map

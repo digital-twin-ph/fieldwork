@@ -1,2 +1,2 @@
-import{a,b,c,d}from"./chunks/chunk-XHPRHIQB.js";import"./chunks/chunk-CAOYEDTR.js";import"./chunks/chunk-KVMUXFPB.js";export{c as designMarkup,d as openDesignDialog,b as withDesign,a as withMeasure};
+import{a,b,c,d,e,f,g,h,i,j,k,l}from"./chunks/chunk-6NNKCQJW.js";import"./chunks/chunk-O6NES34S.js";import"./chunks/chunk-ALFDO73N.js";import"./chunks/chunk-KVMUXFPB.js";export{j as checklistMarkup,k as designMarkup,h as designPageCount,i as designPageMarkup,l as openDesignDialog,g as tablePageMarkup,c as withAnswer,b as withDesign,d as withFill,a as withMeasure,e as withTableField,f as withTableSource};
 //# sourceMappingURL=study-design-dialog.js.map

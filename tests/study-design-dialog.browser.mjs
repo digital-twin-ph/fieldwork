@@ -35,7 +35,7 @@ const estimates=page=>page.locator('.two-by-two-estimates tbody th');
 test('every design shows what it licenses before it is chosen',async({page})=>{
   await open(page);
   const dialog=page.locator('#study-design-dialog');
-  await expect(dialog.locator('[name="design-kind"]')).toHaveCount(6);
+  await expect(dialog.locator('[name="design-kind"]')).toHaveCount(5);
   await expect(dialog.locator('.design-choice').filter({hasText:'case-control'})).toContainText('odds ratio');
   await expect(dialog.locator('[data-design-measure]')).toHaveCount(3);
 });
@@ -85,4 +85,71 @@ test('with no design connected the figure names the arithmetic and says why',asy
   await expect(estimates(page)).toHaveText(['ratio of row proportions','cross-product ratio',
     'difference of row proportions']);
   await expect(page.locator('[data-no-design]').first()).toContainText('No study design is connected');
+});
+
+test('the dialog pages through a design, keeps text on Next, and ends on the checklist',async({page})=>{
+  await open(page);
+  const dialog=page.locator('#study-design-dialog');
+  const next=dialog.locator('#design-next'),back=dialog.locator('#design-back');
+  const onto=async id=>{for(let i=0;i<20&&!(await dialog.locator(`[data-question="${id}"]`).count());i++)await next.click();};
+  await expect(back).toBeDisabled();
+  await dialog.locator('[name="design-kind"][value="case-control"]').check();
+  await expect(dialog.locator('#design-page')).toHaveText('Page 1 of 10');
+  await next.click();
+  await expect(dialog.locator('[data-question]')).toHaveCount(1);
+  await dialog.locator('[data-question="SRC"] input[value="SRC.1"]').check();
+  await expect(dialog.locator('#design-page')).toHaveText('Page 2 of 21');
+  // TYPED AND NEVER LEFT: Next has to commit it, or the sentence is lost.
+  await dialog.locator('[data-slot="system"]').fill('PIDSR');
+  await next.click();
+  await back.click();
+  await expect(dialog.locator('[data-slot="system"]')).toHaveValue('PIDSR');
+  await expect(dialog.locator('.design-sentence')).toHaveText('Cases came from PIDSR, a surveillance system.');
+  await onto('CC3');
+  await expect(dialog.locator('[data-question="C1"]')).toHaveCount(0);
+  await onto('S1');
+  await expect(dialog.locator('[data-question="S1"]')).toBeVisible();
+  for(let i=0;i<20&&await next.isEnabled();i++)await next.click();
+  await expect(next).toBeDisabled();
+  await expect(dialog.locator('[data-check="computation"]')).toHaveAttribute('data-status','done');
+  await expect(dialog.locator('[data-check="SRC"]')).toHaveAttribute('data-status','done');
+  await expect(dialog.locator('[data-check="CC3"]')).toHaveAttribute('data-status','open');
+  await dialog.locator('#design-close').click();
+  await expect(page.locator('#design-checklist-summary')).toContainText('Checklist:');
+  await page.locator('#run-button').click();
+  await page.locator('[data-view="results"]').click();
+  await expect(page.locator('.two-by-two-estimates tbody th')).toHaveText(['odds ratio']);
+});
+
+test('Escape keeps text still in its box',async({page})=>{
+  await open(page);
+  const dialog=page.locator('#study-design-dialog');
+  await dialog.locator('#design-next').click();
+  await dialog.locator('#design-next').click();
+  await dialog.locator('input[value="SRC.2"]').check();
+  await dialog.locator('[data-slot="survey"]').fill('NDHS');
+  await page.keyboard.press('Escape');
+  await expect(dialog).toHaveCount(0);
+  await page.locator('#design-open').click();
+  await dialog.locator('#design-next').click();
+  await dialog.locator('#design-next').click();
+  await expect(dialog.locator('[data-slot="survey"]')).toHaveValue('NDHS');
+});
+
+test('South London: the cohort table is named on page 2, and its sentence survives Next',async({page})=>{
+  await open(page);
+  const dialog=page.locator('#study-design-dialog');
+  await dialog.locator('#design-next').click();
+  await expect(dialog.locator('#design-table')).toBeVisible();
+  await expect(dialog.locator('td.design-fixed')).toHaveText(['a+b','c+d']);
+  await dialog.locator('[data-table-field="exposed"]').fill('Southwark and Vauxhall Company');
+  await dialog.locator('[data-table-field="unexposed"]').fill('Lambeth Company');
+  await dialog.locator('[data-table-field="outcome"]').fill('a death from cholera');
+  await dialog.locator('[data-table-source="a"]').fill('the Registrar General');
+  await dialog.locator('[data-table-source="a+b"]').fill('a return to Parliament');
+  await dialog.locator('#design-next').click();
+  await expect(dialog.locator('[data-question="SRC"]')).toBeVisible();
+  await dialog.locator('#design-back').click();
+  await expect(dialog.locator('thead [data-table-show="outcome"]')).toHaveText('a death from cholera');
+  await expect(dialog.locator('#design-table-sentence')).toContainText('a+b came from a return to Parliament.');
 });

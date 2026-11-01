@@ -142,6 +142,7 @@ import type {BarOrder} from './results.js';
 import {ZipWriter,BlobWriter,TextReader} from '@zip.js/zip.js';
 import {DESIGN_LICENCES,includedMeasures} from './study-design.js';
 import {openDesignDialog} from './study-design-dialog.js';
+import {designChecklist,checklistSummary} from './study-design-checklist.js';
 import type {TwoByTwoResult} from './two-by-two.js';
 const esc=(s:unknown)=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
 function chartControls(n:WorkflowNode<'chart_output'>,options:{omitOrientation?:boolean}={}){
@@ -2266,8 +2267,8 @@ function renderInspector(){
           +'because a value nobody recorded is not a zero. Turn this on to total what was '
           +'recorded and say so.</p>');
   }else if(n.type==='study_design'){
-    // WHAT KIND OF STUDY, AND WHEN. Experiment 154. The design is a closed vocabulary of the six
-    // this application can actually serve, because offering a seventh that licenses no
+    // WHAT KIND OF STUDY, AND WHEN. Experiment 154. The design is a closed vocabulary of the five
+    // this application can actually serve, because offering a sixth that licenses no
     // computation would be a declaration that does nothing. What each one licenses is shown
     // beneath, so a practitioner can see what the choice buys before making it rather than
     // discovering it when a measure goes missing.
@@ -2278,7 +2279,8 @@ function renderInspector(){
       +'nothing reads a design off a table.</p>'
       +labelForm('design-label','Node label',p.label||'Study design')
       +`<p class="description"><b>${esc(p.design)}</b>: reports ${esc(reported)}.</p>`
-      +`<button class="button" id="design-open">Choose the design and its measures\u2026</button>`
+      +`<button class="button" id="design-open">Choose the design and answer its questions\u2026</button>`
+      +`<p class="description" id="design-checklist-summary">${esc(checklistSummary(designChecklist(workflow,n.id)))}</p>`
       +`<p class="description">${esc(licence.because)}</p>`
       +`<div class="field"><label class="field-label" for="design-period">Study period</label>`
       +`<input id="design-period" data-slr="period" maxlength="120" value="${esc(p.period)}" `
@@ -3138,7 +3140,7 @@ function renderInspector(){
       // Replaced rather than merged: a design change removes `computations`, and `Object.assign`
       // would leave the old design's choice standing.
       change(w=>{getNode(w,n.id,'study_design').params=next;});
-    });
+    },()=>designChecklist(workflow,n.id));
   });
   optionalElement('#twobytwo-map')?.addEventListener('click',()=>{
     const node=workflow.nodes.find(x=>x.id===selected) as WorkflowNode<'two_by_two'>|undefined;

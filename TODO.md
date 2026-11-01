@@ -1334,6 +1334,19 @@ the running application and are not yet experiments.
   by the change, largest fall first**. The chart widget today draws one value per category in the
   order the keys arrive, so it can express neither half.
 
+- **`group_table`'s missing-value note never reaches its receipt.** Found 2026-11-01 building 159:
+  `withNote` attaches to the last receipt, and `group_table` calls it BEFORE pushing its own, so the
+  guard returns and the note's facts are dropped. The note itself still shows. Another dropped layer.
+
+- **After South London, try `study_design` on Hagelloch.** Raised 2026-11-01. The file holds cases
+  only, so it reaches `case-series`, or within-case comparisons, and no attack rate. A cohort of the
+  village's children needs a denominator the file does not carry. The source thesis was not read.
+
+- **Stage 2 does not yet ask A1, A2 or T1.** Their tables have another shape, so they were left out
+  of [159](docs/experiments/159-the-study-design-is-the-workflows-checklist.md). Option sentences
+  carry no links to their evidence: the sources are named in plain text. New nodes still default to
+  cohort.
+
 - **Offer cohort and case series together for one followed group.** Settled 2026-11-01, decision 1
   of [the review](docs/research/study-design-decision-tree-2026-11-01.md): cohort first, definition
   recorded. It waits for the guided questions, since no shipped surface asks D5. Decision 5 shipped

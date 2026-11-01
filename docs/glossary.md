@@ -168,6 +168,12 @@ _For reading the project's records. Start here if you are catching up on why som
 | **Retained share** | What a join left of one numeric variable: its total over the rows that matched, against its total over every row offered. The decision-relevant figure rather than a diagnostic, because the arithmetic is exact and reversible — an inner join multiplies a rate of one variable over another by the ratio of their retained shares, so a reader holding a figure they did not expect can identify the join that produced it from the receipt alone. Where two shares differ, the rows that did not match are not a random sample of what is being measured |
 | **Citation style** | One of the three encoded in `CITATION_STYLES`, each recorded with the manual its rules were read from. A style absent from that table is one nobody has encoded, which is not the same as one that does not exist |
 
+## Surveillance data
+
+Added 2026-11-01. **Surveillance data** come from a standing system that monitors occurrence. This
+is a source of data and not a study design: a study of any design can use them. In `study_design` it
+is an answer to the source question asked after a design is selected.
+
 ## The three things that get counted
 
 _For reading or writing about the project precisely. These three get counted separately, and mixing them produces numbers nobody can compare._

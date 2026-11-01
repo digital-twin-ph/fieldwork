@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {groupTable} from '../build/group-table.js';
+import {groupTable,AGGREGATES} from '../build/group-table.js';
 
 /** EXCLUDING AN EMPTY CELL, DECLARED AND NEVER ASSUMED.
  *
@@ -100,4 +100,66 @@ test('IT EXCLUDES, IT DOES NOT ZERO, and the difference is the claim rather than
   // A zeroing override would have reported four contributors for the same total of 37.
   assert.equal(out.table.rows.find(r=>r.key.water_supply==='Lambeth only'
     &&r.key.measure==='deaths 1854').value,37);
+});
+
+/** SUMMARIZE: an aggregate within the key columns you keep.
+ *
+ *  Established by the by-hand test rather than by argument — the practitioner, 2026-10-31: *"The
+ *  test is whether we would be able to do the Dulwich assumptions by hand from an empty canvas."*
+ *  It could not be, because nothing in the application returned an extremum. Experiment 157. */
+
+const rates=()=>({kind:'data-table',keys:['company','sub_district'],valueField:'rate',
+  unit:'per 1,000 people',rowCount:5,missingValueCount:1,rows:[
+    {key:{company:'Lambeth only',sub_district:'Norwood'},value:6.1},
+    {key:{company:'Lambeth only',sub_district:'Streatham'},value:1.662},
+    {key:{company:'Lambeth only',sub_district:'Dulwich'},value:null},
+    {key:{company:'S&V only',sub_district:'St. Olave'},value:20.087},
+    {key:{company:'S&V only',sub_district:'Battersea'},value:5.114},
+  ]});
+const byCompany=(over={})=>groupTable(rates(),{by:['company'],...over});
+
+test('SUM IS THE DEFAULT, so every workflow saved before this keeps its meaning',()=>{
+  const out=byCompany();
+  assert.equal(out.aggregate,'sum');
+  assert.equal(out.table.rows.find(r=>r.key.company==='S&V only').value,25.201);
+});
+
+test('MINIMUM AND MAXIMUM, which is what a sensitivity bound needs',()=>{
+  const lo=byCompany({aggregate:'minimum',excludeMissing:true});
+  const hi=byCompany({aggregate:'maximum',excludeMissing:true});
+  assert.equal(lo.table.rows.find(r=>r.key.company==='S&V only').value,5.114);
+  assert.equal(hi.table.rows.find(r=>r.key.company==='S&V only').value,20.087);
+  // And across the Lambeth group, excluding the cell Snow left blank.
+  assert.equal(lo.table.rows.find(r=>r.key.company==='Lambeth only').value,1.662);
+  assert.equal(hi.table.rows.find(r=>r.key.company==='Lambeth only').value,6.1);
+  assert.equal(hi.aggregate,'maximum');
+});
+
+test('AN EXTREMUM OF NOTHING IS NOT ZERO, which is where it differs from a sum',()=>{
+  // The error this whole module is about, in its one new shape. A group whose every cell was
+  // excluded adds up to 0 -- nothing added to nothing -- and has NO minimum, because there is no
+  // value to be the smallest. Returning 0 would invent an observation.
+  const empty={kind:'data-table',keys:['g','measure'],valueField:'v',rowCount:2,
+    missingValueCount:2,
+    rows:[{key:{g:'x',measure:'a'},value:null},{key:{g:'x',measure:'b'},value:null}]};
+  assert.equal(groupTable(empty,{by:['g'],excludeMissing:true}).table.rows[0].value,0);
+  for(const aggregate of ['minimum','maximum'])
+    assert.equal(groupTable(empty,{by:['g'],aggregate,excludeMissing:true}).table.rows[0].value,
+      null,`an ${aggregate} over no values must be unknown, not zero`);
+});
+
+test('an empty cell still makes the group unknown unless it is excluded',()=>{
+  // The default refusal is not weakened by the new aggregates.
+  for(const aggregate of ['sum','minimum','maximum'])
+    assert.equal(byCompany({aggregate}).table.rows.find(r=>r.key.company==='Lambeth only').value,
+      null,`${aggregate} ignored an unrecorded cell`);
+});
+
+test('THE VOCABULARY IS BOUNDED, and the absences are an argument',()=>{
+  // Epi Info AI's SUMMARIZE offers AVG COUNT FIRST LAST MAX MIN STDEV STDEVP SUM VAR VARP.
+  // Three are admitted. AVG has the referent problem that kept this step sum-only -- rates do
+  // not average meaningfully when the groups differ in size -- STDEVP and VARP are population
+  // variants this step cannot tell it has, and FIRST and LAST depend on a row order a long table
+  // does not promise.
+  assert.deepEqual([...AGGREGATES],['sum','minimum','maximum']);
 });

@@ -1,4 +1,4 @@
-/** `GROUP`: totals within the key columns you keep.
+/** `SUMMARIZE`: an aggregate within the key columns you keep.
  *
  *  The operation the Snow chain needed and nothing could do. `rate` groups and sums internally --
  *  `computeRate` accumulates a numerator and a denominator per group -- but it emits a RATE, so
@@ -13,12 +13,32 @@
  *  somebody has already read. Name what is kept and a new column is dropped, leaving the same
  *  groups; name what is dropped and a new column silently becomes a grouping key.
  *
- *  SUM AND NOTHING ELSE, deliberately. Epi Info separates `MEANS` from `GROUP`, and the
- *  separation is not bureaucratic: summing counts gives a count, while summing rates gives a
+ *  SUM AND NOTHING ELSE UNTIL 2026-10-31, deliberately, and the reason is kept because it still
+ *  decides most of the vocabulary: summing counts gives a count, while summing rates gives a
  *  number with no referent -- deaths per 1,000 in three sub-districts do not add to deaths per
- *  3,000 in one. This step cannot tell a count from a rate, so it offers the operation that is
- *  right for the counts a contingency table is made of and leaves the other command unbuilt
- *  rather than offering a choice it cannot police.
+ *  3,000 in one. This step cannot tell a count from a rate, so it offered the operation that is
+ *  right for the counts a contingency table is made of and left the rest unbuilt rather than
+ *  offering a choice it could not police.
+ *
+ *  WHAT CHANGED, AND WHAT DID NOT. The additivity argument does not reach `MIN` and `MAX`: a
+ *  maximum of three rates IS a rate, and an extremum is meaningful on counts and rates alike.
+ *  It is strictly safer than the sum this step already offered. So the two were admitted and
+ *  everything else stayed out -- `AVG` has the referent problem the argument is about, `STDEVP`
+ *  and `VARP` are population variants that are right on a census and wrong on a sample, and
+ *  `FIRST` and `LAST` depend on a row order a long table does not promise.
+ *
+ *  AND THE COMMAND IS `SUMMARIZE`, not `MEANS`, which the old comment had wrong. Read from
+ *  `epi-info-ai` rather than from memory: `COMMAND_SET.md` lists both as separate Statistics
+ *  commands, and `classic-summarize.ts` takes an `aggregate`, a `stratifyBy`, a `resultField`
+ *  and an `outputTable` -- it emits a DATASET -- while `ClassicMeansStatement` takes a field, a
+ *  cross-tab and options and emits a REPORT. This step emits a table, so it was always the first
+ *  of the two. It has been `SUMMARIZE` restricted to `SUM` all along, under a name that did not
+ *  say so. Experiment 157; the node type stays `group_table` because renaming one rewrites every
+ *  saved workflow that holds it, and the naming finding is recorded rather than acted on.
+ *
+ *  NO PARITY WITH EPI INFO IS CLAIMED by sharing the name. `epiInfoLabelSource` keeps "what Epi
+ *  Info AI prints" apart from "what Epi Info prints", and nothing here is checked against
+ *  either.
  *
  *  A NULL IS NOT A ZERO, which is the whole risk of this operation. Every long table here can
  *  hold a null, meaning the cell was empty, and summing over one quietly produces a total that
@@ -28,9 +48,20 @@
  */
 import type {DataTable} from './data-table.js';
 
+/** THE AGGREGATES THIS STEP CAN POLICE, and no others.
+ *
+ *  Epi Info AI's `SUMMARIZE` offers AVG, COUNT, FIRST, LAST, MAX, MIN, STDEV, STDEVP, SUM, VAR
+ *  and VARP. Three are admitted here and the absences are an argument rather than an oversight;
+ *  see the note at the head of this file. */
+export const AGGREGATES=['sum','minimum','maximum'] as const;
+export type Aggregate=typeof AGGREGATES[number];
+
 export interface GroupRequest {
   /** The key columns to keep. Rows agreeing on all of them become one row. */
   by:string[];
+  /** Which aggregate. `sum` is the default and is what this step did before 2026-10-31, so every
+   *  saved workflow keeps its meaning without carrying the field. */
+  aggregate?:Aggregate;
   /** TOTAL WHAT IS PRESENT, EXCLUDING EMPTY CELLS — declared, and never assumed.
    *
    *  The default is false and the default is this project's position: a group holding an empty
@@ -65,6 +96,8 @@ export interface GroupRequest {
 export interface GroupGap {group:string; rowsSummed:number; rowsEmpty:number}
 export interface GroupResult {
   table:DataTable; groups:number; collapsedFrom:number; dropped:string[]; gaps:GroupGap[];
+  /** Which aggregate produced the values, so a receipt and a caption need not infer it. */
+  aggregate:Aggregate;
   /** What the override covered: how many empty cells were left out, from how many groups, and
    *  for each of those groups how many rows did contribute. Absent when the override is off,
    *  which is how a reader tells "nothing was excluded" from "the field did not exist". */
@@ -85,22 +118,31 @@ export function groupTable(table:DataTable,request:GroupRequest):GroupResult {
       +'group and totalling would change nothing. Leave out the column whose rows should be added up.');
 
   const groups=new Map<string,{key:Record<string,string>; label:string;
-    total:number; summed:number; empty:number}>();
+    total:number; summed:number; empty:number; values:number[]}>();
   for(const row of table.rows){
     const key=Object.fromEntries(by.map(name=>[name,row.key[name]??'']));
     const id=by.map(name=>key[name]).join('\u0000');
     const group=groups.get(id)??{key,label:by.map(name=>key[name]).join(' · '),
-      total:0,summed:0,empty:0};
+      total:0,summed:0,empty:0,values:[]};
     // An empty cell still COUNTS as empty whichever way this is set: the override changes what
     // the total is, never what was in the table. `gaps` is what the surfaces report from.
     // An empty cell is counted as empty whichever way this is set. `summed` stays the number of
     // rows that CONTRIBUTED a value, so "3 of 4" can be said rather than inferred.
     if(row.value===null)group.empty++;
-    else{group.total+=row.value;group.summed++;}
+    else{group.total+=row.value;group.summed++;group.values.push(row.value);}
     groups.set(id,group);
   }
+  const aggregate=request.aggregate??'sum';
+  /** AN EXTREMUM OF NOTHING IS NOT ZERO, which is where this differs from a sum. A group whose
+   *  every cell was excluded has a total of 0 -- nothing added up to nothing -- and has no
+   *  minimum at all, because there is no value to be the smallest. Returning 0 there would
+   *  invent an observation, which is the error this whole file is about. */
+  const aggregated=(group:{total:number; values:number[]}):number|null=>
+    aggregate==='sum'?group.total
+    :!group.values.length?null
+    :aggregate==='minimum'?Math.min(...group.values):Math.max(...group.values);
   const rows=[...groups.values()].map(group=>({key:group.key,
-    value:group.empty&&!request.excludeMissing?null:group.total}));
+    value:group.empty&&!request.excludeMissing?null:aggregated(group)}));
   const gaps=[...groups.values()].filter(group=>group.empty)
     .map(group=>({group:group.label,rowsSummed:group.summed,rowsEmpty:group.empty}));
   const overridden=request.excludeMissing
@@ -109,7 +151,7 @@ export function groupTable(table:DataTable,request:GroupRequest):GroupResult {
       of:[...groups.values()].filter(g=>g.empty)
         .map(g=>({group:g.label,rowsSummed:g.summed,rowsEmpty:g.empty}))}
     :undefined;
-  return {...(overridden?{excluded:overridden}:{}),
+  return {aggregate,...(overridden?{excluded:overridden}:{}),
     table:{...table,keys:by,rows,rowCount:rows.length,
     missingValueCount:rows.filter(row=>row.value===null).length},
     groups:rows.length,collapsedFrom:table.rows.length,dropped,gaps};

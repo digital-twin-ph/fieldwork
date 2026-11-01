@@ -137,6 +137,7 @@ import {twoByTwoMarkup} from './two-by-two-view.js';
 import {openMappingDialog} from './two-by-two-mapping.js';
 import {repositoryFiles} from './project-repository.js';
 import {orderableBins} from './chart-output.js';
+import {AGGREGATES,type Aggregate} from './group-table.js';
 import type {BarOrder} from './results.js';
 import {ZipWriter,BlobWriter,TextReader} from '@zip.js/zip.js';
 import {DESIGN_LICENCES,STUDY_DESIGNS} from './study-design.js';
@@ -2226,6 +2227,21 @@ function renderInspector(){
           +`<textarea id="group-by" data-group-text rows="3">${esc(p.by.join('\n'))}</textarea></div>`)
       // Why KEPT and not dropped, said where the choice is made rather than only in the manual.
       +'<div class="notice">You name what is kept, not what is dropped, because files change: a column added later is simply dropped and you keep the same groups, where naming the dropped columns would let a new one silently become a grouping key. Only addition is offered — adding counts gives a count, while adding rates gives a number with no referent. A group holding any empty value totals to nothing known and is named in the evidence, because an unrecorded population should come out unknown rather than small.</div>'
+      // WHICH AGGREGATE. Three, not Epi Info AI's eleven: the absent ones are absent because
+      // this step cannot tell a count from a rate, which is the same argument that kept it
+      // sum-only until 2026-10-31. Said here rather than only in the source, because a
+      // practitioner looking for AVG should learn why it is missing where they look for it.
+      +`<label class="field-label" for="group-aggregate">Aggregate</label>`
+      +`<select id="group-aggregate">`
+      +AGGREGATES.map(value=>`<option value="${esc(value)}" `
+        +`${(p.aggregate||'sum')===value?'selected':''}>`
+        +`${esc(value==='sum'?'Sum':value==='minimum'?'Minimum':'Maximum')}</option>`).join('')
+      +`</select>`
+      +(p.aggregate&&p.aggregate!=='sum'
+        ?'<p class="description">A group whose cells were all excluded has no minimum or maximum '
+          +'at all, and is reported as unknown rather than as zero.</p>'
+        :'<p class="description">Mean is not offered: summing or averaging rates gives a number '
+          +'with no referent, and this step cannot tell a count from a rate.</p>')
       // EXCLUDING AN EMPTY CELL, offered where it could act and explained where it bites.
       // The default is the refusal, and the refusal is right: a value nobody recorded is not a
       // zero. The override EXCLUDES rather than zeroing, which is the practitioner's correction
@@ -3092,6 +3108,12 @@ function renderInspector(){
       anchor.append(block);
     }
   }
+  optionalElement('#group-aggregate')?.addEventListener('change',event=>{
+    const value=(event.target as HTMLSelectElement).value as Aggregate;
+    const id=selected;
+    if(!id)return;
+    change(w=>{getNode(w,id,'group_table').params.aggregate=value;},{spatial:false});
+  });
   optionalElement('#group-exclude-missing')?.addEventListener('change',event=>{
     const on=(event.target as HTMLInputElement).checked;
     const id=selected;

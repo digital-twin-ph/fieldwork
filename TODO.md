@@ -1051,6 +1051,24 @@ and also why the stale list only grows.
 **Not a reason to stop bumping.** The alternative is a release note that does not exist for a
 control a practitioner can see, which is the fault paid off earlier the same day.
 
+**And the same drift has now reached the LESSONS, which have no ledger to catch it.** Measured
+2026-10-31: `validate:widgets` lists twelve widgets whose parity covers an older release than the
+one that ships -- reproject, clip_raster, mean_center, reachable_nodes, summarize_combined_area,
+stack_polygons, snap_to_network, policy, access_policy, xpert, rate_ratio, two_by_two. One of them
+is `mean_center`, and `mean-center.ipynb` is one of the **two** lessons in `dive-deeper`. So half
+the lesson library teaches a widget two minor versions behind what ships, and **nothing in that
+repository says so**: a parity entry degrades visibly to `partial · earlier release`, while a
+notebook just reads as current.
+
+That is the control-that-cannot-act rule applied to prose rather than to a button. The coverage
+gap itself is NOT the defect and is correctly sequenced -- the practitioner, 2026-10-31: *"There
+are still gaps on the dive deeper side, but that's easy to close when the widgets stabilize"*, and
+lessons are cheap to write and expensive to keep true, so they follow stabilisation. What does not
+wait is the NOTICE. A lesson should state the widget release it was written against, and something
+should report when that release is no longer current, so a reader learns a method from a notebook
+that admits its age. Whether that check belongs in `dive-deeper` or in this repository's validator
+is open; the validator already holds the version it would compare against.
+
 ### The planning stage: where a note about the world goes
 
 Raised 2026-10-24, reading Snow's chloride measurements: *"The tide part is interesting because

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {orderBins,orderableBins,BAR_ORDERS,chartMarkup} from '../build/chart-output.js';
+import {chartVegaSpec} from '../build/chart-vega.js';
 
 /** A BAR CHART THAT CAN ORDER ITS BARS.
  *
@@ -85,4 +86,31 @@ test('the vertical renderer orders too, so one orientation is not a different fi
   const labels=[...chartMarkup(chart({barOrder:'largest'}),esc,'vertical')
     .matchAll(/<span>([^<]+)<\/span>/g)].map(m=>m[1]);
   assert.deepEqual(labels,['Camberwell','Battersea','Brixton','Dulwich']);
+});
+
+test('THE SVG RENDERER ORDERS TOO, which it did not — the eighth dropped layer',()=>{
+  // Found 2026-10-31 in the running application, on South London's 1849/1854 figure: the node
+  // asked for `smallest` and the chart drew largest-first. `orderBins` was called in
+  // `chartMarkup` and NOWHERE ELSE, so the order was composed correctly and dropped before the
+  // picture -- and this renderer is the one that draws the Results tab and the exported SVG,
+  // which is to say the one a reader of the published figure actually sees.
+  const spec=order=>chartVegaSpec(chart({barOrder:order}),{},{})
+    .data.values.map(v=>v.label);
+  assert.deepEqual(spec('largest'),['Camberwell','Battersea','Brixton','Dulwich']);
+  assert.deepEqual(spec('smallest'),['Dulwich','Brixton','Battersea','Camberwell']);
+  assert.deepEqual(spec('category'),['Battersea','Brixton','Camberwell','Dulwich']);
+  // And the two renderers agree, which is the property that was actually broken.
+  for(const order of BAR_ORDERS)
+    assert.deepEqual(spec(order),
+      [...chartMarkup(chart({barOrder:order}),esc).matchAll(/<span>([^<]+)<\/span>/g)].map(m=>m[1]),
+      `${order}: the SVG and the markup draw different orders`);
+});
+
+test('a sequence keeps its order in the SVG, whatever the chart asks for',()=>{
+  const days=[{key:'1',label:'21 Nov',count:3,order:1},
+    {key:'2',label:'22 Nov',count:17,order:2},
+    {key:'3',label:'23 Nov',count:9,order:3}];
+  for(const order of BAR_ORDERS)
+    assert.deepEqual(chartVegaSpec(chart({bins:days,barOrder:order}),{},{})
+      .data.values.map(v=>v.label),['21 Nov','22 Nov','23 Nov'],`${order} re-ordered a curve`);
 });

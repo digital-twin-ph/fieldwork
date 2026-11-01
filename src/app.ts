@@ -2071,10 +2071,17 @@ function renderInspector(){
       +(columns.length?'':`<option value="${esc(p.keyColumn)}">Connect a table first</option>`)
       +columns.map(column=>`<option value="${esc(column)}" ${p.keyColumn===column?'selected':''}>${esc(column)}</option>`).join('')
       +`</select></div>`
+      // A VALUE THE PARAMS HOLD AND THE TABLE DOES NOT still gets a checkbox, marked as absent.
+      // Offering only the upstream values left a stale one -- saved, reported `absent` on every
+      // run, and with nothing in the Inspector that could show or remove it. The box is the only
+      // way to unset it by hand, so it is rendered last and says why it is there.
       +(held.length
         ?`<span class="inspector-section">Values to keep</span>`
           +held.map(value=>`<label class="check"><input type="checkbox" data-select-value="${esc(value)}" `
             +`${p.values.includes(value)?'checked':''}> ${esc(value)}</label>`).join('')
+          +p.values.filter(value=>!held.includes(value))
+            .map(value=>`<label class="check absent"><input type="checkbox" data-select-value="${esc(value)}" `
+              +`checked> ${esc(value)} <span class="absent-note">not in this table</span></label>`).join('')
         :`<div class="field"><label class="field-label" for="select-values">Values to keep, one per line</label>`
           +`<textarea id="select-values" data-select-text rows="3">${esc(p.values.join('\n'))}</textarea></div>`)
       +'<div class="notice">A value this table does not hold is reported rather than ignored, because asking for a row that is not there is usually a typo or a changed table upstream. Keeping nothing the table holds is refused instead of returning an empty table.</div>';

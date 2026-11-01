@@ -1,6 +1,7 @@
 import type {ChartSummary} from './results.js';
 import type {WorkflowNode} from './types.js';
 import appPackage from '../package.json';
+import {orderBins} from './chart-output.js';
 import {FIGURE_PALETTE,FIGURE_ROLE,FIGURE_TYPE,FIGURE_GRID,TUFTE_AXIS} from './presentation.js';
 
 type ChartParams=WorkflowNode<'chart_output'>['params'];
@@ -122,7 +123,13 @@ export function chartVegaSpec(chart:ChartSummary,params:ChartParams,context:{sou
       if(ordered[i].count<ordered[i-1].count)
         throw new Error(`These bands are not nested: ${ordered[i].label} holds fewer records (${ordered[i].count}) than ${ordered[i-1].label} (${ordered[i-1].count}), so differences between them would be negative.`);
   }
-  const source=difference?ordered:chart.bins;
+  // ORDERED HERE TOO, which it was not. `orderBins` ran in `chartMarkup` and nowhere else, so the
+  // figure a reader actually sees -- this renderer draws the Results tab and the exported SVG --
+  // kept the bins in arrival order whatever the practitioner chose. Caught on the South London
+  // 1849/1854 chart, which asked for `smallest` and drew largest-first. `orderBins` leaves a
+  // sequence alone, so the epidemic curve and the travel-time bands are unaffected, and the
+  // difference chart keeps its own nesting sort.
+  const source=difference?ordered:orderBins(chart.bins,chart.barOrder);
   const values=source.map(b=>({key:b.key,label:b.label,displayLabel:duplicateLabels?`${b.label} (${b.key})`:b.label,count:b.count,...(b.order===undefined?{}:{order:b.order})}));
   // LABELS THAT FIT. Vega-Lite thins overlapping labels by default on quantitative and temporal
   // axes and NOT on nominal ones, so a date axis modelled as categories -- which an epidemic

@@ -71,7 +71,8 @@ import {shareAlike} from './input-provenance.js';
 import type {MachinedNote} from './notes.js';
 import {groupTable,migrateGroupTableNulls} from './group-table.js';
 import {computeTwoByTwo,twoByTwoReceipt,twoByTwoSentence} from './two-by-two.js';
-import {studyDesignSentence,studyDesignReceipt,DESIGN_LICENCES} from './study-design.js';
+import {studyDesignSentence,studyDesignReceipt,DESIGN_LICENCES,includedMeasures,readUnderDesign} from './study-design.js';
+import type {DeclaredDesign} from './study-design.js';
 import {outreachProjection,extentN3,extentProjection,projectionOf,RULESET_FOR_NODE_TYPE,pinnedRuleset,parametersFor} from './rule-application.js';
 import {authoredFacts,authoredProjection,authoredReceipt,authoredDataIssues} from './authored-application.js';
 import {applyRepairs} from './column-profile.js';
@@ -1406,16 +1407,21 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         value={kind:'study-design',design:node.params.design,period:node.params.period,
           unitOfAnalysis:node.params.unitOfAnalysis
             ||DESIGN_LICENCES[node.params.design].unitOfAnalysis,
-          licence:DESIGN_LICENCES[node.params.design],sentence} as unknown as DisplayValue;
+          licence:DESIGN_LICENCES[node.params.design],sentence,
+          included:includedMeasures(node.params),
+          withheld:DESIGN_LICENCES[node.params.design].estimates
+            .filter(name=>!includedMeasures(node.params).includes(name))} as unknown as DisplayValue;
         const declared=studyDesignReceipt(node as WorkflowNode<'study_design'>,runId);
         receipts.push(declared as unknown as Receipt);
         break;}
       case 'two_by_two':{
         const table=inputs.records as unknown as import('./data-table.js').DataTable;
         if(table?.kind!=='data-table')throw new Error('Connect a table: this step reads four cells of one.');
-        const result=computeTwoByTwo(table,node.params);
-        const declaredDesign=inputs.design as unknown as
-          {design:string;period:string;unitOfAnalysis:string;sentence:string}|undefined;
+        // STEP 3: A DECLARED DESIGN DECIDES WHAT IS REPORTED. An absent one leaves every measure
+        // exactly as it was, because an undeclared design is not a cohort.
+        const declaredDesign=inputs.design as unknown as DeclaredDesign|undefined;
+        const computed=computeTwoByTwo(table,node.params);
+        const result=declaredDesign?readUnderDesign(computed,declaredDesign):computed;
         // THE COUNTS ARE THE VALUE AND THE ESTIMATES RIDE ON IT, the arrangement `rate_ratio`
         // settled on 2026-10-26 after one row holding 8.40 showed the summary and hid the thing
         // a reader checks it against. An epidemiologist reads the cells first.
@@ -1435,8 +1441,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           // one did not, so the step with three estimates was the one that stated none of them
           // on screen. Found 2026-10-31; experiment 153.
           // THE DECLARED DESIGN TRAVELS WITH THE RESULT where one is connected, so the figure
-          // and the receipt can state it. Nothing is gated on it yet -- step 3 -- and an absent
-          // design leaves every measure exactly as it was.
+          // and the receipt can state it.
           rowCount:4,missingValueCount:0,twoByTwo:result,
           ...(declaredDesign?{design:declaredDesign}:{}),
           sentence:twoByTwoSentence(result)

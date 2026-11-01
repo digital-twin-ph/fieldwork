@@ -87,6 +87,9 @@ export interface TwoByTwoResult {
    *  because a stratum silently excluded from a comparison is the commonest way a 2x2 misleads. */
   strataLeftOut:string[];
   warnings:string[];
+  /** Present only where a design was declared. `rowProportion` null means a/(a+b) is no quantity
+   *  under that design, so no surface may call it one. */
+  reading?:{design:string; rowProportion:string|null; withheld:string[]; notEstimable:string[]};
 }
 
 /** Below this many cases the normal approximations are doing most of the work. Reported, never
@@ -247,14 +250,21 @@ export function computeTwoByTwo(table:DataTable,request:TwoByTwoRequest):TwoByTw
 export const twoByTwoSentence=(r:TwoByTwoResult):string=>{
   const {exposed,unexposed,caseValue}=r.request;
   const pct=(risk:number|null)=>risk===null?'no risk':`${(risk*100).toFixed(3)}%`;
-  const ratio=r.estimates.find(e=>e.name==='risk ratio');
-  return `${exposed} against ${unexposed}: `
-    +`${pct(r.riskExposed)} ${caseValue} against ${pct(r.riskUnexposed)}`
-    +(ratio?.value!==null&&ratio!==undefined
-      ?`, a risk ratio of ${ratio.value!.toFixed(2)} `
-        +`(${ratio.level}% interval ${ratio.lower!.toFixed(2)} to ${ratio.upper!.toFixed(2)}, `
-        +`${ratio.method})`
-      :`, with no risk ratio: ${ratio?.unavailable??''}`)
+  // THE FIRST MEASURE REPORTED LEADS, which is the risk ratio unless a design or a practitioner
+  // removed it. A difference is printed finer than a ratio because it is usually far smaller.
+  const lead=r.estimates[0];
+  const said=lead?(lead.reportedAs??lead.name):'';
+  const digits=/difference/.test(said)?4:2;
+  const proportions=r.reading?.rowProportion===null?''
+    :` ${pct(r.riskExposed)} ${caseValue} against ${pct(r.riskUnexposed)}`;
+  const comma=proportions?',':'';
+  return `${exposed} against ${unexposed}:`+proportions
+    +(!lead?`${comma} with no measure reported under this design`
+      :lead.value!==null
+      ?`${comma} ${/^[aeiou]/.test(said)?'an':'a'} ${said} of ${lead.value.toFixed(digits)} `
+        +`(${lead.level}% interval ${lead.lower!.toFixed(digits)} to ${lead.upper!.toFixed(digits)}, `
+        +`${lead.method})`
+      :`${comma} with no ${said}: ${lead.unavailable??''}`)
     +`, from ${r.exposedTotal.toLocaleString()} and ${r.unexposedTotal.toLocaleString()} subjects.`;
 };
 
@@ -265,7 +275,7 @@ export function twoByTwoReceipt(node:{id:string},result:TwoByTwoResult,runId:str
   const num=(v:number)=>`"${v}"^^xsd:double`;
   const {cells,request}=result;
   const estimateFacts=result.estimates.map(estimate=>
-    `${entity} fw:estimate [ a fw:EpiEstimate; fw:estimateName ${quote(estimate.name)}; `
+    `${entity} fw:estimate [ a fw:EpiEstimate; fw:estimateName ${quote(estimate.reportedAs??estimate.name)}; `
     +`fw:intervalMethod ${quote(estimate.method)}; `
     +`fw:intervalLevel "${estimate.level}"^^xsd:integer; `
     +(estimate.value===null
@@ -297,7 +307,10 @@ export function twoByTwoReceipt(node:{id:string},result:TwoByTwoResult,runId:str
     +`  fw:unexposedCaseCount "${cells.unexposedCases}"^^xsd:integer;\n`
     +`  fw:unexposedNonCaseCount "${cells.unexposedNonCases}"^^xsd:integer;\n`
     +`  fw:subjectCount "${result.total}"^^xsd:integer`
-    +result.strataLeftOut.map(value=>`;\n  fw:stratumLeftOut ${quote(value)}`).join('')+`.\n`
+    +result.strataLeftOut.map(value=>`;\n  fw:stratumLeftOut ${quote(value)}`).join('')
+    +(result.reading?.withheld??[]).map(name=>`;\n  fw:withheldEstimate ${quote(name)}`).join('')
+    +(result.reading?.notEstimable??[]).map(name=>`;\n  fw:notEstimable ${quote(name)}`).join('')
+    +`.\n`
     +estimateFacts+'\n';
   return {nodeId:node.id,kind:'computation' as const,facts,rules:'',input:facts,conclusions:[],
     method:twoByTwoSentence(result)
@@ -401,7 +414,7 @@ export interface TwoByTwoEstimateRow {
 
 export const twoByTwoEstimateRows=(result:TwoByTwoResult):TwoByTwoEstimateRow[]=>
   result.estimates.map(e=>({
-    name:e.name,value:e.value,
+    name:e.reportedAs??e.name,value:e.value,
     interval:e.lower===null||e.upper===null?null:{lower:e.lower,upper:e.upper,level:e.level},
     method:e.method,unavailable:e.unavailable,epiInfoLabel:e.epiInfoLabel,
   }));

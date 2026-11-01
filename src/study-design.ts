@@ -23,7 +23,8 @@
  *  `relateTable` already uses for an ambiguous key. The cost of the walk over an edge is exactly
  *  this: an edge would say which design governs a computation, and a walk has to decide.
  */
-import type {Workflow,WorkflowNode} from './types.js';
+import type {ParamsByType,Workflow,WorkflowNode} from './types.js';
+import type {TwoByTwoResult} from './two-by-two.js';
 
 /** THE STUDY DESIGNS THIS APPLICATION SERVES, as a closed set.
  *
@@ -42,7 +43,7 @@ export type StudyDesign=typeof STUDY_DESIGNS[number];
  *
  *  Stated here rather than inside the gate so that a surface can EXPLAIN a refusal rather than
  *  only perform one, which is the separation `citationGaps` keeps from `renderCitation`. Step 3
- *  of the sequence consumes this; nothing gates on it yet. */
+ *  of the sequence is `readUnderDesign`, below. */
 export interface DesignLicence {
   /** What `a/(a+b)` is under this design, or null where it is not a quantity at all. */
   rowProportion:string|null;
@@ -96,6 +97,41 @@ export const DESIGN_LICENCES:Record<StudyDesign,DesignLicence>={
     because:'Surveillance counts cases over periods. A two-by-two needs a comparison this design '
       +'does not declare.'},
 };
+
+/** THE ARITHMETIC BEHIND A LICENSED NAME. A prevalence ratio is computed exactly as a risk ratio
+ *  is; only what it measures differs, so the three names map onto the three computations. */
+const COMPUTED_AS:Record<string,string>={'prevalence ratio':'risk ratio',
+  'prevalence odds ratio':'odds ratio','prevalence difference':'risk difference'};
+const computedAs=(measure:string):string=>COMPUTED_AS[measure]??measure;
+const COMPUTED=['risk ratio','odds ratio','risk difference'];
+
+/** What the practitioner kept of what the design licenses. An absent `computations` is everything
+ *  licensed, so a workflow saved before the choice existed reads as it always did. A name the
+ *  design does not license cannot survive here, which is what a design change or an edited file
+ *  would otherwise leave behind. */
+export const includedMeasures=(params:Pick<ParamsByType['study_design'],'design'|'computations'>):string[]=>
+  DESIGN_LICENCES[params.design].estimates
+    .filter(name=>!params.computations||params.computations.includes(name));
+
+/** Computed measures this design cannot estimate at all, as distinct from ones somebody unticked. */
+export const notEstimable=(design:StudyDesign):string[]=>{
+  const reachable=DESIGN_LICENCES[design].estimates.map(computedAs);
+  return COMPUTED.filter(name=>!reachable.includes(name));
+};
+
+/** What a declaration does to a two-by-two: the step that makes it more than a label.
+ *
+ *  Filtered HERE, once, before anything is worded, so the table, the sentence, the equation note,
+ *  the receipt and the write-up cannot disagree about which measures were reported. */
+export function readUnderDesign(result:TwoByTwoResult,declared:DeclaredDesign):TwoByTwoResult{
+  const estimates=declared.included.flatMap(measure=>{
+    const found=result.estimates.find(e=>e.name===computedAs(measure));
+    return found?[measure===found.name?found:{...found,reportedAs:measure}]:[];
+  });
+  return {...result,estimates,reading:{design:declared.design,
+    rowProportion:declared.licence.rowProportion,withheld:declared.withheld,
+    notEstimable:notEstimable(declared.design)}};
+}
 
 export const isStudyDesign=(value:unknown):value is StudyDesign=>
   typeof value==='string'&&(STUDY_DESIGNS as readonly string[]).includes(value);
@@ -188,6 +224,9 @@ export interface DeclaredDesign {
   unitOfAnalysis:string;
   licence:DesignLicence;
   sentence:string;
+  /** Of `licence.estimates`, what the practitioner kept and what they withheld. */
+  included:string[];
+  withheld:string[];
 }
 
 export function studyDesignReceipt(node:WorkflowNode<'study_design'>,runId:string){
@@ -195,6 +234,8 @@ export function studyDesignReceipt(node:WorkflowNode<'study_design'>,runId:strin
   const quote=(v:string)=>JSON.stringify(v);
   const licence=DESIGN_LICENCES[node.params.design];
   const unit=node.params.unitOfAnalysis.trim()||licence.unitOfAnalysis;
+  const included=includedMeasures(node.params);
+  const withheld=licence.estimates.filter(name=>!included.includes(name));
   const facts=`@prefix fw: <urn:fieldwork:>.\n`
     +`${entity} a fw:StudyDesign;\n`
     +`  fw:studyDesignKind ${quote(node.params.design)};\n`
@@ -203,6 +244,9 @@ export function studyDesignReceipt(node:WorkflowNode<'study_design'>,runId:strin
     +(licence.estimates.length
       ?`;\n`+licence.estimates.map(name=>`  fw:licensedEstimate ${quote(name)}`).join(';\n')
       :'')
+    // A MEASURE WITHHELD ON PURPOSE IS A FACT ABOUT THE ANALYSIS, not a presentation choice, so a
+    // reader can tell one nobody ran from one somebody decided to leave out.
+    +withheld.map(name=>`;\n  fw:withheldEstimate ${quote(name)}`).join('')
     +`.\n`;
   // THE SAME SHAPE EVERY OTHER RECEIPT HAS, including the empty fields. `receiptText` renders a
   // receipt by its kind and falls through to a RULE node's shape, which reads `conclusions` --
@@ -214,5 +258,5 @@ export function studyDesignReceipt(node:WorkflowNode<'study_design'>,runId:strin
   return {nodeId:node.id,kind:'declaration' as const,facts,rules:'',input:facts,conclusions:[],
     method:studyDesignSentence(node),
     design:node.params.design,period:node.params.period,unitOfAnalysis:unit,
-    licenses:[...licence.estimates]};
+    licenses:[...licence.estimates],withheld};
 }

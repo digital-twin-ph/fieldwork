@@ -278,8 +278,11 @@ export function rateRatioEquationNote(result:RateRatioResult,nodeId:string):Mach
 }
 
 /** One estimate's pair of equations, symbolic then instantiated, in the a/b/c/d letters. */
+const SYMBOL:Record<string,string>={'risk ratio':'RR','odds ratio':'OR','risk difference':'RD',
+  'prevalence ratio':'PR','prevalence odds ratio':'POR','prevalence difference':'PD'};
+
 const estimateLines=(estimate:EpiEstimate,symbolic:string,instantiated:string):string=>
-  `\n\n**${estimate.name}**, ${estimate.method}:`
+  `\n\n**${estimate.reportedAs??estimate.name}**, ${estimate.method}:`
   +(estimate.unavailable
     // AN UNAVAILABLE ESTIMATE KEEPS ITS EQUATION AND LOSES ITS NUMBERS, which is the shape
     // `estimateUnavailable` already has: the method is stated even when the value is null, so a
@@ -307,18 +310,22 @@ export function twoByTwoEquationNote(result:TwoByTwoResult,nodeId:string):Machin
   const A=figure(a),B=figure(b),C=figure(c),D=figure(d);
   const ab=figure(result.exposedTotal),cd=figure(result.unexposedTotal);
   const of=(label:string)=>`${exposureColumn} "${label}"`;
+  // Null where a/(a+b) is no quantity at all, which is what case-control sampling makes it.
+  const proportion=result.reading?result.reading.rowProportion:'risk';
   let text=`The four cells, in the letters every formula below is written in:`
     +`\n\n- $a$ = ${said(a)} — ${of(exposed)}, ${caseValue}`
     +`\n- $b$ = ${said(b)} — ${of(exposed)}, ${nonCaseValue}`
     +`\n- $c$ = ${said(c)} — ${of(unexposed)}, ${caseValue}`
     +`\n- $d$ = ${said(d)} — ${of(unexposed)}, ${nonCaseValue}`
-    +`\n\nThe risks are $a/(a+b)$ and $c/(c+d)$:`
-    +`\n\n$$\\frac{${A}}{${ab}} = ${round(result.riskExposed??0,5)} \\qquad `
-    +`\\frac{${C}}{${cd}} = ${round(result.riskUnexposed??0,5)}$$`;
+    +(proportion===null?''
+      :`\n\nThe ${proportion}s are $a/(a+b)$ and $c/(c+d)$:`
+      +`\n\n$$\\frac{${A}}{${ab}} = ${round(result.riskExposed??0,5)} \\qquad `
+      +`\\frac{${C}}{${cd}} = ${round(result.riskUnexposed??0,5)}$$`);
 
   const used:string[]=[];
   for(const estimate of result.estimates){
     used.push(estimate.method);
+    const before=text.length;
     if(estimate.name==='risk ratio')
       text+=estimateLines(estimate,
         '\\mathrm{RR} = \\frac{a/(a+b)}{c/(c+d)}',
@@ -346,8 +353,13 @@ export function twoByTwoEquationNote(result:TwoByTwoResult,nodeId:string):Machin
           +`contributing its own variance rather than a pooled one:`
           +intervalLines(estimate,
             '\\mathrm{RD} \\pm z \\sqrt{\\frac{p_1(1-p_1)}{a+b} + \\frac{p_0(1-p_0)}{c+d}}'));
+    // THE SAME ARITHMETIC UNDER ITS OWN SYMBOL, so a prevalence ratio is not written as an RR.
+    if(estimate.reportedAs)text=text.slice(0,before)+text.slice(before)
+      .split(`\\mathrm{${SYMBOL[estimate.name]}}`).join(`\\mathrm{${SYMBOL[estimate.reportedAs]}}`);
   }
 
+  const left=[...(result.reading?.withheld??[]),...(result.reading?.notEstimable??[])];
+  if(left.length)text+=`\n\nNot reported under this design: ${left.join(', ')}.`;
   if(result.strataLeftOut.length)
     text+=`\n\nThis table also holds `
       +`${result.strataLeftOut.map(v=>`"${v}"`).join(', ')} in ${exposureColumn}, which is in `

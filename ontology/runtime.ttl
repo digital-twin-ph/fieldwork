@@ -430,6 +430,12 @@ fw:unitOfAnalysis a owl:DatatypeProperty; rdfs:label "unit of analysis";
 fw:licensedEstimate a owl:DatatypeProperty; rdfs:label "licensed estimate";
   rdfs:domain fw:StudyDesign; rdfs:range xsd:string;
   rdfs:comment "An estimate this design can support, by the name this application gives it. Written once per permitted estimate, and written NOT AT ALL where a design permits none -- a case series has no comparison group, and a receipt omitting the property is then saying so rather than predating it. In a case-control design only the odds ratio appears, because the row totals are artefacts of how many cases and controls were sampled.".
+fw:withheldEstimate a owl:DatatypeProperty; rdfs:label "withheld estimate";
+  rdfs:range xsd:string;
+  rdfs:comment "A measure the declared design licenses and the practitioner chose not to report. Written so that a measure left out on purpose can be told from one nobody ran." .
+fw:notEstimable a owl:DatatypeProperty; rdfs:label "not estimable";
+  rdfs:domain fw:TwoByTwo; rdfs:range xsd:string;
+  rdfs:comment "A measure the declared design cannot support, as distinct from one the practitioner withheld. Under case-control sampling the risk ratio and the risk difference are not estimable." .
 fw:TwoByTwo a owl:Class;
   rdfs:label "Two-by-two table"; rdfs:subClassOf prov:Entity;
   rdfs:comment "Four counts -- two groups by two outcomes -- and the estimates computed from them. The two groups are NAMED rather than taken as the first two values present, because a table may hold more: Snow's people-denominated table has three water supply strata, 16 of 32 sub-districts having been supplied by both companies. Any stratum left out is carried on this entity, since a stratum silently excluded from a comparison is the commonest way a two-by-two misleads. A contrast between two groups as they were supplied, not a measured effect: nothing adjusts for anything the two groups did not share.".

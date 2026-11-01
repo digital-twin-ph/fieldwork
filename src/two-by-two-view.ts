@@ -129,10 +129,14 @@ export function twoByTwoMarkup(result:TwoByTwoResult,esc:Escape,
     ?`<p class="tbt-design"><b>${esc(declared.design)}</b> \u00b7 unit of analysis: `
       +`${esc(declared.unitOfAnalysis)}${counts?' \u00b7 ':''}${counts}</p>`
     :(counts?`<p class="tbt-design">${counts}</p>`:'');
+  const left=[...(result.reading?.withheld??[]),...(result.reading?.notEstimable??[])];
+  const reported=result.estimates.length?twoByTwoEstimatesMarkup(result,esc)
+    :`<p class="tbt-warning muted">No measure is reported under this design.</p>`;
   return `<div class="two-by-two-figure" data-figure="two-by-two">`
     +design
     +twoByTwoTableMarkup(result,esc)
-    +twoByTwoEstimatesMarkup(result,esc)
+    +reported
+    +(left.length?`<p class="tbt-warning muted">Not reported: ${esc(left.join(', '))}.</p>`:'')
     +warnings
     +`</div>`;
 }

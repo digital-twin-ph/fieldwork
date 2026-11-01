@@ -1472,6 +1472,23 @@ the running application and are not yet experiments.
   the case where a silent mis-ordering would be invisible and consequential. Writing the validator
   first would mean writing it against figures that do not exist yet.
 
+  **BUILT FOR CHARTS 2026-10-31, and the sequencing paid off immediately: the 1849/1854 figure
+  produced the defect before the validator was written.** That figure asked for `smallest` and
+  drew largest-first, because `orderBins` was called in `chartMarkup` and the Vega renderer --
+  the one behind the Results tab and the exported SVG -- never called it. Published in that
+  state, with nothing red. `src/figure-check.ts` now checks coverage, order and bar length off
+  the drawn figure, and `a-drawn-figure-matches-its-claim.browser.mjs` runs it on the real
+  renderer in all three orders. Shown to work by reverting the fix and watching it fail by name
+  -- and ONLY ONE of the three orders failed, because `largest` matched the arrival order by
+  luck and `category` matched Vega's own alphabetical default. A single-order check would have
+  passed and seen nothing. Written up as [156](docs/experiments/156-does-the-picture-say-what-the-figure-claims.md).
+
+  **MAPS ARE NOT BUILT and are the harder half.** A bar has one length; a choropleth has a class,
+  a colour, a boundary, a projection and a legend, and "the drawn layers are the layers it
+  composed" wants `fw:layerDrawn` read back rather than measured off an SVG. Also unbuilt: any
+  figure that is not a vertical bar chart, and running the check over the worked examples rather
+  than over fixtures, so that a figure which is PUBLISHED is a figure that was read.
+
 ### Known defects, not blocking
 
 Recorded because they are real, ordered by nothing in particular. Each says what it waits on.

@@ -1055,10 +1055,10 @@ control a practitioner can see, which is the fault paid off earlier the same day
 2026-10-31: `validate:widgets` lists twelve widgets whose parity covers an older release than the
 one that ships -- reproject, clip_raster, mean_center, reachable_nodes, summarize_combined_area,
 stack_polygons, snap_to_network, policy, access_policy, xpert, rate_ratio, two_by_two. One of them
-is `mean_center`, and `mean-center.ipynb` is one of the **two** lessons in `dive-deeper`. So half
-the lesson library teaches a widget two minor versions behind what ships, and **nothing in that
-repository says so**: a parity entry degrades visibly to `partial · earlier release`, while a
-notebook just reads as current.
+is `mean_center`, and `mean-center.ipynb` is one of the **two** lessons in `dive-deeper`. The
+notebook names no widget version at all, so WHICH release it was written against cannot be read
+from it, and whether its content has drifted has not been checked. That is the finding: a parity
+entry degrades visibly to `partial · earlier release`, while a notebook just reads as current.
 
 That is the control-that-cannot-act rule applied to prose rather than to a button. The coverage
 gap itself is NOT the defect and is correctly sequenced -- the practitioner, 2026-10-31: *"There

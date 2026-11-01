@@ -9,12 +9,12 @@ import {checkDrawnBars,LENGTH_TOLERANCE} from '../build/figure-check.js';
  *  down so a machine can make them. The cases below are the real figures, with the real numbers. */
 
 const southLondon=()=>({field:'value',measure:'value',unit:'',total:3,barOrder:'smallest',
-  bins:[{key:'sv',label:'Southwark and Vauxhall Company',count:1.087},
-        {key:'both',label:'Lambeth Company and Southwark and Vauxhall',count:0.646},
-        {key:'lam',label:'Lambeth Company only',count:0.224}]});
-// Drawn smallest-first and in proportion: 0.224, 0.646, 1.087 against the longest.
-const drawnWell=()=>[{label:'Lambeth Company only',length:0.224/1.087*300},
-  {label:'Lambeth Company and Southwark and Vauxhall',length:0.646/1.087*300},
+  bins:[{key:'sv',label:'Southwark and Vauxhall Company',count:1.0871},
+        {key:'both',label:'Lambeth Company and Southwark and Vauxhall',count:0.6522},
+        {key:'lam',label:'Lambeth Company only',count:0.2284}]});
+// Drawn smallest-first and in proportion: 0.2284, 0.6522, 1.0871, computed from Table XII.
+const drawnWell=()=>[{label:'Lambeth Company only',length:0.2284/1.0871*300},
+  {label:'Lambeth Company and Southwark and Vauxhall',length:0.6522/1.0871*300},
   {label:'Southwark and Vauxhall Company',length:300}];
 
 test('a figure that agrees with itself reports nothing',()=>{
@@ -38,7 +38,7 @@ test('a bar that is not its value is reported, with the bar named and the gap me
   const faults=checkDrawnBars(southLondon(),drawn);
   assert.equal(faults.length,1);
   assert.equal(faults[0].check,'length');
-  assert.match(faults[0].detail,/^Lambeth Company only holds 0\.224/);
+  assert.match(faults[0].detail,/^Lambeth Company only holds 0\.2284/);
 });
 
 test('rounding is not a defect, and the tolerance is stated rather than guessed',()=>{

@@ -13,7 +13,7 @@ import {checkDrawnBars} from '../build/figure-check.js';
  *  supplying company. Lambeth moved its intake above the tidal limit in 1852 and Southwark and
  *  Vauxhall did not. */
 
-const BINS=[['Southwark and Vauxhall',1.087],['Jointly supplied',0.646],['Lambeth only',0.224]];
+const BINS=[['Southwark and Vauxhall',1.0871],['Jointly supplied',0.6522],['Lambeth only',0.2284]];
 const TABLE={kind:'data-table',keys:['water_supply'],valueField:'ratio',unit:'',
   rows:BINS.map(([water_supply,value])=>({key:{water_supply},value})),
   rowCount:3,missingValueCount:0};

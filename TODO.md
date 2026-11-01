@@ -1340,6 +1340,52 @@ the running application and are not yet experiments.
   belongs in the receipt. It should be the second — a measure withheld on purpose is a fact about
   the analysis — but that needs deciding rather than assuming.
 
+- **STATCALC is organised by study design, and it reaches a phase Fieldwork does not have.**
+  Raised 2026-10-31: *"what may be useful for study design, in Epi Info AI, there is STATCALC."*
+  Read from `epi-info-ai/README.md` rather than from memory, the discipline SUMMARIZE established
+  the same day. Four slices exist there:
+
+  | slice | what it takes and gives |
+  | --- | --- |
+  | Population Survey | five inputs, a seven-level cluster/total sample table |
+  | **Cohort or Cross-Sectional** | linked effect measures, Kelsey/Fleiss sample-size output |
+  | **Unmatched Case-Control** | linked exposure measures, cases/controls sample-size output |
+  | Chi Square for Trend | editable exposure-score/case/control table, row odds ratios, Extended Mantel-Haenszel |
+
+  **THREE OF THE FOUR ARE NAMED BY STUDY DESIGN**, in the same vocabulary
+  [154](experiments/154-a-workflow-declares-how-as-well-as-where.md) made declarable. That is the
+  connection: a workflow that has declared itself a cohort does not need to be asked again which
+  calculator applies — the declaration selects it. Nothing else in this application has had a use
+  for the design beyond gating what a two-by-two may report.
+
+  **AND IT IS THE PHASE THIS APPLICATION DOES NOT REACH.** Every widget here consumes data that
+  exists. A sample-size calculation happens BEFORE there is any, which is the "designing an
+  investigation" end of the arc the practitioner described — *"from designing an investigation,
+  implementing its workflows and managing evidence generation, and publication"* — and the only
+  end Fieldwork has nothing for. A calculator takes typed inputs and no port, which is the shape
+  `study_design` already is: a declaration node rather than an operation.
+
+  Three things to settle before any of it is built.
+
+  **The 2×2 overlap is a D2 question, not a detail.** `epi-info-ai` also has a StatCalc 2×2, and
+  this application has `two_by_two`. They differ in where the numbers come from — typed counts
+  against a table that arrived on a port — and that difference is either a second widget or a
+  second input mode on the first. Getting it wrong is how a registry ends up with three
+  implementations of one operation, which is what experiment 64 is for.
+
+  **A sample size is an assumption, not a measurement.** Kelsey and Fleiss need an expected
+  exposure prevalence, a detectable effect, a power and a confidence level, and every one is
+  something somebody chose. Whatever is built has to carry those choices into the receipt and the
+  write-up the way the design declaration already does, or it will print an authoritative-looking
+  number whose inputs nobody can see.
+
+  **No parity is claimed by sharing a name.** `epiInfoLabelSource` already separates "what Epi
+  Info AI prints" from "what Epi Info prints", and neither has been checked here.
+
+  Unverified: only the README's descriptions were read, not the implementations. Which formulas
+  the Kelsey/Fleiss slice actually uses, and what the Chi Square for Trend slice computes, are
+  open.
+
 - **A chart or a map that lies is not a failing test — experiment 156, after the two items
   above.** Raised 2026-10-31: *"I think we need some form of automated chart and map
   validation."* The evidence is the day it was raised. Every defect in the chart thread was found

@@ -1359,17 +1359,20 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         // assumption that reaches the receipt and not the publication is an assumption the
         // reader of the publication never meets -- which is the whole failure the override had
         // to avoid being. Machined rather than written, because nobody should have to remember.
-        if(result.missingAsZero?.cells){
-          const {cells,groups}=result.missingAsZero;
-          machined[node.id]=[{kind:'machined',id:`${node.id}:missing-as-zero`,section:'Methods',
+        if(result.excluded?.cells){
+          const {cells,groups,of}=result.excluded;
+          // EACH AFFECTED GROUP SAYS WHAT IT COVERS, "3 of 4", rather than a bare count of what
+          // was left out: a reader needs the denominator of the total they are looking at.
+          const covered=of.map(g=>`${g.group} (${g.rowsSummed} of ${g.rowsSummed+g.rowsEmpty})`)
+            .join('; ');
+          machined[node.id]=[{kind:'machined',id:`${node.id}:excluded-missing`,section:'Methods',
             fn:'limitation',nodeId:node.id,
-            text:`${cells} empty cell${cells===1?'':'s'} in ${groups} group`
-              +`${groups===1?'':'s'} of "${node.params.label||node.id}" `
-              +`${cells===1?'was':'were'} counted as zero when totalling. An empty cell is not a `
-              +`zero in the source: it is a value nobody recorded, and treating it as one was a `
-              +`declared choice rather than something this application inferred. Every total `
-              +`below that includes ${cells===1?'that cell':'those cells'} is smaller than the `
-              +`truth if ${cells===1?'it was':'they were'} in fact unrecorded.`}];
+            text:`${cells} empty cell${cells===1?'':'s'} ${cells===1?'was':'were'} excluded when `
+              +`totalling "${node.params.label||node.id}", so ${groups===1?'one total covers':
+                `${groups} totals cover`} fewer rows than the group holds: ${covered}. `
+              +`An excluded cell is NOT a zero — nothing here claims there were none, only that `
+              +`what was totalled is what was recorded. Any figure divided by the number of rows `
+              +`in ${groups===1?'that group':'those groups'} has the smaller denominator.`}];
           withNote(receipts,runId,node.id,machined[node.id]);
         }
         receipts.push({nodeId:node.id,kind:'computation',
@@ -1377,11 +1380,11 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
             +`${node.params.by.join(' and ')}, dropping ${result.dropped.join(' and ')}`
             // THE OVERRIDE IS IN THE RECEIPT'S OWN SENTENCE, not only in a field beside it. A
             // reader checking how a total was reached meets the assumption here or not at all.
-            +(result.missingAsZero
-              ?`; ${result.missingAsZero.cells} empty cell`
-                +`${result.missingAsZero.cells===1?'':'s'} in `
-                +`${result.missingAsZero.groups} group`
-                +`${result.missingAsZero.groups===1?'':'s'} counted as zero, as declared`
+            +(result.excluded
+              ?`; ${result.excluded.cells} empty cell`
+                +`${result.excluded.cells===1?'':'s'} excluded from `
+                +`${result.excluded.groups} group`
+                +`${result.excluded.groups===1?'':'s'}, as declared`
               :result.gaps.length?`; ${result.gaps.length} group`
               +`${result.gaps.length===1?'' :'s'} held an empty cell and total to nothing known`:''),
           groups:result.groups,collapsedFrom:result.collapsedFrom,

@@ -2226,20 +2226,21 @@ function renderInspector(){
           +`<textarea id="group-by" data-group-text rows="3">${esc(p.by.join('\n'))}</textarea></div>`)
       // Why KEPT and not dropped, said where the choice is made rather than only in the manual.
       +'<div class="notice">You name what is kept, not what is dropped, because files change: a column added later is simply dropped and you keep the same groups, where naming the dropped columns would let a new one silently become a grouping key. Only addition is offered — adding counts gives a count, while adding rates gives a number with no referent. A group holding any empty value totals to nothing known and is named in the evidence, because an unrecorded population should come out unknown rather than small.</div>'
-      // COUNTING AN EMPTY CELL AS ZERO, offered where it could act and explained where it bites.
-      // The default is the refusal, and the refusal is right: an empty cell is unknown, not
-      // zero. But it is sometimes wrong about the world -- Snow's Table XII leaves Dulwich's
-      // 1854 cell blank while his own summary row totals the four Lambeth sub-districts at 37,
-      // which 10 + 15 + 12 satisfies only if the blank is a nothing. So the override exists, is
-      // declared, and carries its caveat into the write-up by itself.
-      +`<label class="check"><input type="checkbox" id="group-missing-as-zero" `
-      +`${p.missingAsZero?'checked':''}> Count an empty cell as zero</label>`
-      +(p.missingAsZero
-        ?'<div class="notice notice-warning">Totals will include empty cells as zeros. The '
-          +'write-up gets a Methods note saying so, and the receipt records how many.</div>'
+      // EXCLUDING AN EMPTY CELL, offered where it could act and explained where it bites.
+      // The default is the refusal, and the refusal is right: a value nobody recorded is not a
+      // zero. The override EXCLUDES rather than zeroing, which is the practitioner's correction
+      // of 2026-10-31 and is the more prudent of the two -- for a sum they give the same number,
+      // and they make different claims. Zeroing asserts there were none; excluding asserts only
+      // that what was totalled is what was recorded.
+      +`<label class="check"><input type="checkbox" id="group-exclude-missing" `
+      +`${p.excludeMissing?'checked':''}> Total what is present, excluding empty cells</label>`
+      +(p.excludeMissing
+        ?'<div class="notice notice-warning">Totals will cover fewer rows than the group holds. '
+          +'The write-up gets a Methods note saying which groups and how many, and the receipt '
+          +'records it. An excluded cell is not a zero: nothing claims there were none.</div>'
         :'<p class="description">Off, a group holding an empty cell totals to nothing known, '
-          +'because a value nobody recorded is not a zero. Turn this on only where the source '
-          +'says the blank means none.</p>');
+          +'because a value nobody recorded is not a zero. Turn this on to total what was '
+          +'recorded and say so.</p>');
   }else if(n.type==='study_design'){
     // WHAT KIND OF STUDY, AND WHEN. Experiment 154. The design is a closed vocabulary of the six
     // this application can actually serve, because offering a seventh that licenses no
@@ -3091,11 +3092,11 @@ function renderInspector(){
       anchor.append(block);
     }
   }
-  optionalElement('#group-missing-as-zero')?.addEventListener('change',event=>{
+  optionalElement('#group-exclude-missing')?.addEventListener('change',event=>{
     const on=(event.target as HTMLInputElement).checked;
     const id=selected;
     if(!id)return;
-    change(w=>{getNode(w,id,'group_table').params.missingAsZero=on;},{spatial:false});
+    change(w=>{getNode(w,id,'group_table').params.excludeMissing=on;},{spatial:false});
   });
   optionalElement('#chart-bar-order')?.addEventListener('change',event=>{
     const order=(event.target as HTMLSelectElement).value as BarOrder;

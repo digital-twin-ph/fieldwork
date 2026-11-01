@@ -1289,11 +1289,16 @@ the running application and are not yet experiments.
   Camberwell — so the label already claims the capability that does not exist, which is the
   sharpest argument for adding it.
 
-  Noticed in the same figure and NOT yet diagnosed: the printed values do not look proportional to
-  the bars. Brixton's bar is roughly a quarter of Battersea's and reads 0 against Battersea's 5,
-  and Dulwich has neither a bar nor a number. Either the printed value and the bar length are not
-  the same quantity, or a rate is being rounded to whole numbers and everything under 1 is
-  reported as 0. Read off a screenshot and worth ten minutes before anything is built on it.
+  ~~Noticed in the same figure: the printed values do not look proportional to the bars.~~
+  **CHECKED 2026-10-31 AND THERE IS NO DEFECT.** Measured in the running application over all 32
+  rows: Battersea prints 5.114 at 77.33% of the track, Brixton 0.616 at 9.32%, and every row
+  agrees with its bar to the precision the number is printed at. Dulwich prints 0 at width 0%
+  because Dulwich recorded no deaths, which is the documented behaviour — a row with no value is
+  kept and drawn zero-length rather than dropped.
+  **The screenshot was cropped mid-number**: "5.114" lost its decimals at the right edge and read
+  as "5". Recorded rather than deleted, because a suspicion raised off a screenshot and then
+  measured is worth more than one quietly withdrawn — and because the measuring took ten minutes
+  against the hours a redesign of `barNumber` would have cost.
 
 - **Snow's natural experiment is loaded and not shown.** The practitioner: *"how did John Snow
   demonstrate change in mortality from the Lambeth Company moving their water intake beyond the
@@ -1310,6 +1315,29 @@ the running application and are not yet experiments.
   comparison per sub-district — two bars or a slope — coloured by supplying company and **ordered
   by the change, largest fall first**. The chart widget today draws one value per category in the
   order the keys arrive, so it can express neither half.
+
+- **A chart or a map that lies is not a failing test — experiment 156, after the two items
+  above.** Raised 2026-10-31: *"I think we need some form of automated chart and map
+  validation."* The evidence is the day it was raised. Every defect in the chart thread was found
+  by LOOKING — a node labelled "ranked" over alphabetical bars, printed values that do not look
+  proportional to the bar lengths, a category with neither a bar nor a number — and the suite saw
+  none of them, through 1,272 unit tests and 740 browser tests. What is testable today is THAT a
+  chart rendered, not that it says what it claims.
+
+  The same shape as the dropped-layer family this codebase keeps meeting: `fw:layerDrawn` exists
+  because composing correctly and drawing correctly are different claims, and the seventh instance
+  of that family landed the same day.
+
+  What a check could assert without becoming a screenshot differ, all readable off the SVG the
+  application already produces: a bar's length is proportional to the value printed beside it; a
+  stated order matches the drawn order; every category with a value has a bar and every bar has a
+  value; a map's drawn layers are the layers it composed; a legend entry exists for every class
+  drawn and no others.
+
+  **Deliberately sequenced after the ordering option and the 1849/1854 figure**, because those two
+  produce the first figures worth validating — a paired comparison ordered by change is exactly
+  the case where a silent mis-ordering would be invisible and consequential. Writing the validator
+  first would mean writing it against figures that do not exist yet.
 
 ### Known defects, not blocking
 

@@ -76,6 +76,11 @@ test('bounded Vega-Lite enhancement preserves source counts and validates its se
   const n=DataFactory.namedNode,l=DataFactory.literal,subject=n('urn:fieldwork:run:run:chart-spec:chart'),predicate=n('urn:fieldwork:chartRenderer');
   graph.removeQuad(subject,predicate,l('vega-lite'));graph.addQuad(subject,predicate,l('arbitrary'));
   assert.equal((await validateGraph(graph)).conforms,false);
-  assert.throws(()=>chartVegaSpec({...shown.value.chart,bins:[{key:'bad',label:'Bad',count:-1}]},node.params),/nonnegative/);
+  // A negative count is drawn from 2026-10-31 -- a change is the quantity that goes negative --
+  // so what the contract still refuses is a value that is not a finite number at all.
+  assert.doesNotThrow(()=>chartVegaSpec(
+    {...shown.value.chart,bins:[{key:'fell',label:'Fell',count:-125}]},node.params));
+  assert.throws(()=>chartVegaSpec(
+    {...shown.value.chart,bins:[{key:'bad',label:'Bad',count:Number.NaN}]},node.params),/finite/);
   const invalid=structuredClone(node);invalid.params.mark='arc';assert.throws(()=>validateWorkflow({schema:'fieldwork/workflow/1',name:'Invalid',nodes:[{...invalid,x:0,y:0}],edges:[]}),/supported chart/);
 });

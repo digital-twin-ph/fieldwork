@@ -1,5 +1,5 @@
 import type {WorkflowNode} from './types.js';
-import type {ChartSummary,DisplayValue,Receipt} from './results.js';
+import type {BarOrder,ChartSummary,DisplayValue,Receipt} from './results.js';
 import type {DataTable} from './data-table.js';
 import {chartSpecificationFacts} from './chart-vega.js';
 
@@ -88,15 +88,95 @@ export function chartOutput(node:WorkflowNode<'chart_output'>,input:DisplayValue
  *  Vertical is for a series, where the x axis is time and a reader follows it left to
  *  right; horizontal is for categories, where the label needs room. Both render the same
  *  numbers from the same bins: the orientation changes the reading, not the measure. */
+/** HOW THE BARS ARE ORDERED.
+ *
+ *  The practitioner, 2026-10-31: *"there should be an option in the widget to display a bar chart
+ *  where the bars are ordered from largest to smallest or reverse or category name-ordered
+ *  (current display)."* The argument for it was already on the canvas: South London's chart node
+ *  is labelled **"Deaths per 1,000 people, ranked"** and drew them alphabetically, so the label
+ *  claimed a capability that did not exist.
+ *
+ *  AND IT IS REFUSED WHERE THE CATEGORIES ARE A SEQUENCE. A bin may carry an `order`, which is
+ *  what an epidemic curve's days and a travel-time band's thresholds use: those categories mean
+ *  something in the order they are in, and sorting them by size would destroy the one thing the
+ *  figure is for. `orderableBins` answers whether a chart may be re-ordered at all, so the
+ *  Inspector can decline to offer a control that could not act -- this project's rule, and the
+ *  reason the option is not simply applied to whatever arrives. */
+export const BAR_ORDERS:readonly BarOrder[]=['category','largest','smallest'];
+
+/** Whether these bins may be re-ordered. False where any bin declares its place in a sequence. */
+export const orderableBins=(bins:readonly {order?:number}[]):boolean=>
+  !bins.some(bin=>bin.order!==undefined);
+
+/** The bins in the order asked for, or in the order they arrived where that cannot be honoured.
+ *
+ *  Pure, and it never mutates: `chart.bins` is carried on a run's value and a renderer that
+ *  sorted it in place would reorder the chart every other surface draws from the same object. */
+export function orderBins<T extends {label:string; count:number; order?:number}>(
+  bins:readonly T[],order:BarOrder|undefined):T[]{
+  if(!order||order==='category'||!orderableBins(bins))return [...bins];
+  const by=order==='largest'?-1:1;
+  // Ties keep the order they arrived in, which for a table is its own row order: a sort that
+  // shuffled equal values would make the same data draw differently on two runs.
+  return [...bins].map((bin,at)=>({bin,at}))
+    .sort((a,b)=>(a.bin.count-b.bin.count)*by||a.at-b.at)
+    .map(({bin})=>bin);
+}
+
 export function chartMarkup(chart:ChartSummary,esc:(text:string)=>string,
   orientation:'horizontal'|'vertical'='horizontal'):string{
   const maximum=Math.max(1,...chart.bins.map(bin=>bin.count));
+  // BARS THAT GO BOTH WAYS, because a CHANGE is the quantity that goes negative.
+  //
+  // The practitioner, 2026-10-31, after the Snow 1849/1854 figure could not be drawn: *"There
+  // should be a way to present bars with positive and negative values."* Until then the Vega
+  // renderer refused outright -- "at most 100 nonnegative, finite bins" -- and this one would
+  // have clamped a negative bar to zero width SILENTLY, which is the worse of the two.
+  //
+  // The scale runs from the lowest value or zero, whichever is lower, to the highest. So a chart
+  // with no negative value has `low` of 0, every offset is 0 and every width is `count/high`,
+  // which is byte-for-byte what it drew before -- the `left` is emitted only where it is needed,
+  // so no existing figure changes at all.
+  const low=Math.min(0,...chart.bins.map(bin=>bin.count));
+  const high=Math.max(1,...chart.bins.map(bin=>bin.count));
+  const span=high-low||1;
+  const diverging=low<0;
+  /** Where a bar starts and how long it is, as percentages of the whole track. A negative bar
+   *  runs leftward FROM zero; a positive one runs rightward from it. */
+  const geometry=(count:number)=>count<0
+    ?{offset:(count-low)/span*100,size:(0-count)/span*100}
+    :{offset:(0-low)/span*100,size:count/span*100};
+  /** The zero line, drawn only where values fall on both sides of it: a baseline on a chart that
+   *  has no negative value marks the left edge and tells a reader nothing. */
+  const baseline=diverging
+    ?`<i class="bar-zero" aria-hidden="true" style="left:${((0-low)/span*100).toFixed(4)}%"></i>`
+    :'';
+  // The ORDER the chart carries, decided where the node's parameters were known. Both renderers
+  // read it from the same place, so the figure in the write-up and the figure on the screen
+  // cannot be sorted differently.
+  const bins=orderBins(chart.bins,chart.barOrder);
   const caption=`<p class="muted">${esc(chart.caption)} · ${chart.total} records · grouping: ${esc(chart.field)}`
     +`${chart.unit?' · '+esc(chart.unit):''}</p>`;
   if(orientation==='vertical')
     return caption+`<div class="bar-columns" role="img" aria-label="${esc(chart.caption)}">`
-      +chart.bins.map(bin=>`<div class="bar-column"><b>${esc(barNumber(bin.count,chart.measure))}</b>`
-        +`<div class="bar-stack" aria-hidden="true"><div style="height:${bin.count/maximum*100}%"></div></div>`
-        +`<span>${esc(bin.label)}</span></div>`).join('')+`</div>`;
-  return caption+chart.bins.map(bin=>`<div class="bar-row"><span>${esc(bin.label)}</span><div class="bar-track" aria-hidden="true"><div style="width:${bin.count/maximum*100}%"></div></div><b>${esc(barNumber(bin.count,chart.measure))}</b></div>`).join('');
+      +bins.map(bin=>{
+        const g=geometry(bin.count);
+        const style=diverging
+          ?`bottom:${g.offset.toFixed(4)}%;height:${g.size.toFixed(4)}%`
+          :`height:${bin.count/maximum*100}%`;
+        return `<div class="bar-column"><b>${esc(barNumber(bin.count,chart.measure))}</b>`
+          +`<div class="bar-stack${diverging?' diverging':''}" aria-hidden="true">${baseline}`
+          +`<div class="${bin.count<0?'bar-negative':'bar-positive'}" style="${style}"></div></div>`
+          +`<span>${esc(bin.label)}</span></div>`;
+      }).join('')+`</div>`;
+  return caption+bins.map(bin=>{
+    const g=geometry(bin.count);
+    const style=diverging
+      ?`left:${g.offset.toFixed(4)}%;width:${g.size.toFixed(4)}%`
+      :`width:${bin.count/maximum*100}%`;
+    return `<div class="bar-row${diverging?' diverging':''}"><span>${esc(bin.label)}</span>`
+      +`<div class="bar-track" aria-hidden="true">${baseline}`
+      +`<div class="${bin.count<0?'bar-negative':'bar-positive'}" style="${style}"></div></div>`
+      +`<b>${esc(barNumber(bin.count,chart.measure))}</b></div>`;
+  }).join('');
 }

@@ -84,8 +84,12 @@ test('the receipt records which renderer version wrote the specification', ()=>{
 test('a specification is refused rather than stored broken', ()=>{
   // The durability promise only holds for specifications that were valid when written.
   assert.throws(()=>chartVegaSpec(series,{renderer:'html',inputMode:'series'},{}),/not selected/);
-  assert.throws(()=>chartVegaSpec({bins:[{key:'a',label:'A',count:-1}],caption:'c',field:'count'},
-    {renderer:'vega-lite'},{}),/nonnegative/);
+  // A negative value is drawn, not refused: see chart-output.ts. Infinity still is.
+  assert.doesNotThrow(()=>chartVegaSpec(
+    {bins:[{key:'a',label:'Fell',count:-125}],caption:'c',field:'count'},{renderer:'vega-lite'},{}));
+  assert.throws(()=>chartVegaSpec(
+    {bins:[{key:'a',label:'A',count:Number.NaN}],caption:'c',field:'count'},
+    {renderer:'vega-lite'},{}),/finite/);
   assert.throws(()=>chartVegaSpec({bins:[{key:'a',label:'A',count:1},{key:'a',label:'B',count:2}],caption:'c',field:'count'},
     {renderer:'vega-lite'},{}),/unique stable keys/);
 });

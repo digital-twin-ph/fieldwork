@@ -31,11 +31,32 @@ import type {DataTable} from './data-table.js';
 export interface GroupRequest {
   /** The key columns to keep. Rows agreeing on all of them become one row. */
   by:string[];
+  /** COUNT AN EMPTY CELL AS ZERO, declared and never assumed.
+   *
+   *  The default is false and the default is the position this project takes everywhere: an empty
+   *  cell is unknown, not zero, so a group holding one has an unknown total rather than a smaller
+   *  one. That refusal is right and it is sometimes wrong about the world — the practitioner,
+   *  2026-10-31: *"We should add a checkbox for overriding nulls."*
+   *
+   *  The case that produced it is a good one. Snow's Table XII leaves Dulwich's 1854 cell BLANK,
+   *  and Dulwich is one of four sub-districts supplied by the Lambeth Company alone — so the
+   *  group carrying his strongest contrast could not be totalled. His own summary row reads 37
+   *  for those four, and 10 + 15 + 12 = 37, so the blank is a nothing rather than a gap. The
+   *  evidence for the override is the source's own arithmetic.
+   *
+   *  So it is offered, and it is DECLARED: the result counts what it overrode, the receipt
+   *  records it, and the write-up carries the caveat automatically. An assumption nobody can see
+   *  in the output is the thing this project refuses, not the assumption itself. */
+  missingAsZero?:boolean;
 }
 /** A group that held an empty cell, so its total is unknown rather than smaller. */
 export interface GroupGap {group:string; rowsSummed:number; rowsEmpty:number}
 export interface GroupResult {
   table:DataTable; groups:number; collapsedFrom:number; dropped:string[]; gaps:GroupGap[];
+  /** How many empty cells were counted as zero, and in how many groups. Zero when the override
+   *  is off, which is how a reader tells "nothing was overridden" from "the field did not
+   *  exist". */
+  missingAsZero?:{cells:number; groups:number};
 }
 
 export function groupTable(table:DataTable,request:GroupRequest):GroupResult {
@@ -58,14 +79,22 @@ export function groupTable(table:DataTable,request:GroupRequest):GroupResult {
     const id=by.map(name=>key[name]).join('\u0000');
     const group=groups.get(id)??{key,label:by.map(name=>key[name]).join(' · '),
       total:0,summed:0,empty:0};
-    if(row.value===null)group.empty++;else{group.total+=row.value;group.summed++;}
+    // An empty cell still COUNTS as empty whichever way this is set: the override changes what
+    // the total is, never what was in the table. `gaps` is what the surfaces report from.
+    if(row.value===null){group.empty++;if(request.missingAsZero)group.summed++;}
+    else{group.total+=row.value;group.summed++;}
     groups.set(id,group);
   }
   const rows=[...groups.values()].map(group=>({key:group.key,
-    value:group.empty?null:group.total}));
+    value:group.empty&&!request.missingAsZero?null:group.total}));
   const gaps=[...groups.values()].filter(group=>group.empty)
     .map(group=>({group:group.label,rowsSummed:group.summed,rowsEmpty:group.empty}));
-  return {table:{...table,keys:by,rows,rowCount:rows.length,
+  const overridden=request.missingAsZero
+    ?{cells:[...groups.values()].reduce((n,g)=>n+g.empty,0),
+      groups:[...groups.values()].filter(g=>g.empty).length}
+    :undefined;
+  return {...(overridden?{missingAsZero:overridden}:{}),
+    table:{...table,keys:by,rows,rowCount:rows.length,
     missingValueCount:rows.filter(row=>row.value===null).length},
     groups:rows.length,collapsedFrom:table.rows.length,dropped,gaps};
 }

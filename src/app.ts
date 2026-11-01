@@ -136,6 +136,8 @@ import {pointPort,MAX_POINT_LAYERS,markedPoints,markLabel,LABEL_CEILING} from '.
 import {twoByTwoMarkup} from './two-by-two-view.js';
 import {openMappingDialog} from './two-by-two-mapping.js';
 import {repositoryFiles} from './project-repository.js';
+import {orderableBins} from './chart-output.js';
+import type {BarOrder} from './results.js';
 import {ZipWriter,BlobWriter,TextReader} from '@zip.js/zip.js';
 import {DESIGN_LICENCES,STUDY_DESIGNS} from './study-design.js';
 import type {TwoByTwoResult} from './two-by-two.js';
@@ -145,6 +147,27 @@ function chartControls(n:WorkflowNode<'chart_output'>,options:{omitOrientation?:
   return `<div class="field"><label class="field-label" for="chart-renderer">Chart enhancement</label><select id="chart-renderer"><option value="html" ${chartRenderer(p)!=='vega-lite'?'selected':''}>Classic bars</option><option value="vega-lite" ${p.renderer==='vega-lite'?'selected':''}>Vega-Lite (experimental)</option></select></div>`+
     (chartRenderer(p)==='vega-lite'?`<label class="field-label" for="chart-mark">Mark</label><select id="chart-mark"><option value="bar" ${p.mark!=='point'?'selected':''}>Bars</option><option value="point" ${p.mark==='point'?'selected':''}>Dots</option></select>
     ${options.omitOrientation?'':`<label class="field-label" for="chart-orientation">Orientation</label><select id="chart-orientation"><option value="horizontal" ${p.orientation!=='vertical'?'selected':''}>Horizontal</option><option value="vertical" ${p.orientation==='vertical'?'selected':''}>Vertical</option></select>`}
+    ${(()=>{
+      // BAR ORDER, and the control is offered only where it could act. A chart whose bins carry
+      // an `order` is a SEQUENCE -- an epidemic curve's days, a band's thresholds -- and sorting
+      // it by size destroys the one thing the figure is for. The last run says which this is,
+      // so the control appears when the chart can be re-ordered and says why when it cannot:
+      // "a control that cannot act must not look like one".
+      const drawn=result?.outputs.find(o=>o.nodeId===n.id)?.chart;
+      const sequence=drawn&&!orderableBins(drawn.bins);
+      const option=(value:string,label:string)=>
+        `<option value="${esc(value)}" ${(p.barOrder||'category')===value?'selected':''}>${esc(label)}</option>`;
+      return `<label class="field-label" for="chart-bar-order">Bar order</label>`
+        +`<select id="chart-bar-order"${sequence?' disabled':''}>`
+        +option('category','By category name')
+        +option('largest','Largest first')
+        +option('smallest','Smallest first')
+        +`</select>`
+        +(sequence
+          ?`<p class="description">These categories are a sequence, so they stay in it. Sorting an
+             epidemic curve by size would lose the one thing it shows.</p>`
+          :'');
+    })()}
     <label class="field-label" for="chart-title">Chart title</label><input id="chart-title" maxlength="120" value="${esc(p.chartTitle||'')}" placeholder="Default: result caption">
     <label class="field-label" for="chart-subtitle">Subtitle / context</label><input id="chart-subtitle" maxlength="280" value="${esc(p.subtitle||'')}" placeholder="Optional context or limitation">
     <label class="field-label" for="chart-x-axis">Horizontal axis label</label><input id="chart-x-axis" maxlength="80" value="${esc(p.xAxisTitle||'')}" placeholder="Default from data">
@@ -2202,7 +2225,21 @@ function renderInspector(){
         :`<div class="field"><label class="field-label" for="group-by">Key columns to keep, one per line</label>`
           +`<textarea id="group-by" data-group-text rows="3">${esc(p.by.join('\n'))}</textarea></div>`)
       // Why KEPT and not dropped, said where the choice is made rather than only in the manual.
-      +'<div class="notice">You name what is kept, not what is dropped, because files change: a column added later is simply dropped and you keep the same groups, where naming the dropped columns would let a new one silently become a grouping key. Only addition is offered — adding counts gives a count, while adding rates gives a number with no referent. A group holding any empty value totals to nothing known and is named in the evidence, because an unrecorded population should come out unknown rather than small.</div>';
+      +'<div class="notice">You name what is kept, not what is dropped, because files change: a column added later is simply dropped and you keep the same groups, where naming the dropped columns would let a new one silently become a grouping key. Only addition is offered — adding counts gives a count, while adding rates gives a number with no referent. A group holding any empty value totals to nothing known and is named in the evidence, because an unrecorded population should come out unknown rather than small.</div>'
+      // COUNTING AN EMPTY CELL AS ZERO, offered where it could act and explained where it bites.
+      // The default is the refusal, and the refusal is right: an empty cell is unknown, not
+      // zero. But it is sometimes wrong about the world -- Snow's Table XII leaves Dulwich's
+      // 1854 cell blank while his own summary row totals the four Lambeth sub-districts at 37,
+      // which 10 + 15 + 12 satisfies only if the blank is a nothing. So the override exists, is
+      // declared, and carries its caveat into the write-up by itself.
+      +`<label class="check"><input type="checkbox" id="group-missing-as-zero" `
+      +`${p.missingAsZero?'checked':''}> Count an empty cell as zero</label>`
+      +(p.missingAsZero
+        ?'<div class="notice notice-warning">Totals will include empty cells as zeros. The '
+          +'write-up gets a Methods note saying so, and the receipt records how many.</div>'
+        :'<p class="description">Off, a group holding an empty cell totals to nothing known, '
+          +'because a value nobody recorded is not a zero. Turn this on only where the source '
+          +'says the blank means none.</p>');
   }else if(n.type==='study_design'){
     // WHAT KIND OF STUDY, AND WHEN. Experiment 154. The design is a closed vocabulary of the six
     // this application can actually serve, because offering a seventh that licenses no
@@ -3054,6 +3091,18 @@ function renderInspector(){
       anchor.append(block);
     }
   }
+  optionalElement('#group-missing-as-zero')?.addEventListener('change',event=>{
+    const on=(event.target as HTMLInputElement).checked;
+    const id=selected;
+    if(!id)return;
+    change(w=>{getNode(w,id,'group_table').params.missingAsZero=on;},{spatial:false});
+  });
+  optionalElement('#chart-bar-order')?.addEventListener('change',event=>{
+    const order=(event.target as HTMLSelectElement).value as BarOrder;
+    const id=selected;
+    if(!id)return;
+    change(w=>{getNode(w,id,'chart_output').params.barOrder=order;},{spatial:false});
+  });
   optionalElement('#twobytwo-map')?.addEventListener('click',()=>{
     const node=workflow.nodes.find(x=>x.id===selected) as WorkflowNode<'two_by_two'>|undefined;
     if(!node)return;

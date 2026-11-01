@@ -1354,10 +1354,35 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         if(table?.kind!=='data-table')throw new Error('Connect a table: this step totals the rows of one.');
         const result=groupTable(table,node.params);
         value=result.table as unknown as DisplayValue;
+        // AND THE WRITE-UP CARRIES IT, automatically. The practitioner, 2026-10-31: *"Once we
+        // check that override box, it automatically adds the caveat in the machined note."* An
+        // assumption that reaches the receipt and not the publication is an assumption the
+        // reader of the publication never meets -- which is the whole failure the override had
+        // to avoid being. Machined rather than written, because nobody should have to remember.
+        if(result.missingAsZero?.cells){
+          const {cells,groups}=result.missingAsZero;
+          machined[node.id]=[{kind:'machined',id:`${node.id}:missing-as-zero`,section:'Methods',
+            fn:'limitation',nodeId:node.id,
+            text:`${cells} empty cell${cells===1?'':'s'} in ${groups} group`
+              +`${groups===1?'':'s'} of "${node.params.label||node.id}" `
+              +`${cells===1?'was':'were'} counted as zero when totalling. An empty cell is not a `
+              +`zero in the source: it is a value nobody recorded, and treating it as one was a `
+              +`declared choice rather than something this application inferred. Every total `
+              +`below that includes ${cells===1?'that cell':'those cells'} is smaller than the `
+              +`truth if ${cells===1?'it was':'they were'} in fact unrecorded.`}];
+          withNote(receipts,runId,node.id,machined[node.id]);
+        }
         receipts.push({nodeId:node.id,kind:'computation',
           method:`${result.collapsedFrom} rows totalled into ${result.groups} within `
             +`${node.params.by.join(' and ')}, dropping ${result.dropped.join(' and ')}`
-            +(result.gaps.length?`; ${result.gaps.length} group`
+            // THE OVERRIDE IS IN THE RECEIPT'S OWN SENTENCE, not only in a field beside it. A
+            // reader checking how a total was reached meets the assumption here or not at all.
+            +(result.missingAsZero
+              ?`; ${result.missingAsZero.cells} empty cell`
+                +`${result.missingAsZero.cells===1?'':'s'} in `
+                +`${result.missingAsZero.groups} group`
+                +`${result.missingAsZero.groups===1?'':'s'} counted as zero, as declared`
+              :result.gaps.length?`; ${result.gaps.length} group`
               +`${result.gaps.length===1?'' :'s'} held an empty cell and total to nothing known`:''),
           groups:result.groups,collapsedFrom:result.collapsedFrom,
           dropped:result.dropped,gaps:result.gaps} as unknown as Receipt);
@@ -1763,6 +1788,12 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
             // from the rows alone cannot know.
             :arrived.chart??tableChart(arrived as unknown as import('./data-table.js').DataTable,
               node.params.keyColumn);
+          // THE ORDER THE PRACTITIONER CHOSE, attached where the node's parameters are known so
+          // every renderer downstream reads it off the summary rather than being told separately.
+          // `orderBins` ignores it where the categories are a sequence, so an epidemic curve
+          // stays in its days whatever is stored here. Experiment 156's first assertion.
+          const ordered=node.params.barOrder&&node.params.barOrder!=='category'
+            ?{...chart,barOrder:node.params.barOrder}:chart;
           const measure=chart.measure??'record-count';
           const facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n`
             +`<urn:fieldwork:run:${runId}:view:${node.id}> a fw:ChartView, prov:Activity; `
@@ -1770,7 +1801,8 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
             +`fw:groupingField ${JSON.stringify(chart.categoryTitle??chart.field)}`
             +`${chart.unit?`; fw:chartValueUnit ${JSON.stringify(chart.unit)}`:''}.\n`
             +chartSpecificationFacts(node,runId,recordsEdge.from,chart,measure);
-          value={...structuredClone(arrived) as unknown as DisplayValue,chart,rows:[],centers:[]};
+          value={...structuredClone(arrived) as unknown as DisplayValue,chart:ordered,
+            rows:[],centers:[]};
           receipts.push({nodeId:node.id,kind:'presentation',facts,rules:'',input:facts,
             conclusions:[],method:chart.caption});
           break;

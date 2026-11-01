@@ -99,7 +99,13 @@ export function chartVegaSpec(chart:ChartSummary,params:ChartParams,context:{sou
   if(chartRenderer(params)!=='vega-lite')throw new Error('Vega-Lite rendering is not selected.');
   const mark=params.mark||'bar',orientation=chartOrientation(params);
   if(!['bar','point'].includes(mark)||!['horizontal','vertical'].includes(orientation))throw new Error('Unsupported chart encoding.');
-  if(!Array.isArray(chart.bins)||chart.bins.length>100||chart.bins.some(b=>!Number.isFinite(b.count)||b.count<0||typeof b.label!=='string'||typeof b.key!=='string'))throw new Error('Chart requires at most 100 nonnegative, finite bins.');
+  // A NEGATIVE VALUE IS NOT A MALFORMED ONE. This refused `b.count<0` until 2026-10-31, which
+  // made the one quantity a before-and-after produces -- a change -- undrawable: Snow's 1849
+  // against 1854 gives Southwark and Vauxhall +197 and Lambeth -125, and the step stopped the
+  // whole run rather than the figure. The practitioner: *"There should be a way to present bars
+  // with positive and negative values."* What is still refused is what was always wrong: a
+  // value that is not finite, a bin with no label, and more bins than a figure can carry.
+  if(!Array.isArray(chart.bins)||chart.bins.length>100||chart.bins.some(b=>!Number.isFinite(b.count)||typeof b.label!=='string'||typeof b.key!=='string'))throw new Error('Chart requires at most 100 labelled, finite bins.');
   if(new Set(chart.bins.map(b=>b.key)).size!==chart.bins.length)throw new Error('Chart categories require unique stable keys.');
   if(params.colorByCategory&&chart.bins.length>colors.length)throw new Error(`Category legend supports at most ${colors.length} distinct categories, and this chart has ${chart.bins.length}. The palette is six validated hues rather than eight, because the yellow and the black fell outside the usable lightness band; past six the honest move is to group the tail upstream rather than invent a seventh hue. Turn off the legend, or reduce the categories.`);
   const labels=chart.bins.map(b=>b.label),duplicateLabels=new Set(labels).size!==labels.length;

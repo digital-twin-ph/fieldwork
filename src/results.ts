@@ -92,8 +92,16 @@ export interface DisplayRow {
  *  `count` keeps its name, which is now a misnomer for the `value` measure. Renaming it reaches
  *  every chart producer, consumer and test; stating the measure beside it is what makes the
  *  figure honest, and the rename is recorded as debt rather than smuggled in here. */
+export type BarOrder='category'|'largest'|'smallest';
 export interface ChartSummary {field:'status'|'zone'|'tier'|'count'|'total'|'period'|'value'; caption:string; categoryTitle?:string; total:number;
   measure?:'record-count'|'numeric-total'|'value'; unit?:string;
+  /** How the bars are ordered, where the practitioner chose. Carried on the summary rather than
+   *  passed to each renderer so the screen and the write-up cannot disagree. Experiment 156's
+   *  first assertion is that a stated order matches the drawn one.
+   *
+   *  Declared here rather than imported from `chart-output.ts`: that import pulled the HTML
+   *  renderer into the worker compilation, which has no DOM. */
+  barOrder?:BarOrder;
   bins:{key:string; label:string; count:number; order?:number}[]}
 export interface DisplayValue {
   comparison?:import('./point-comparison.js').PointComparison;

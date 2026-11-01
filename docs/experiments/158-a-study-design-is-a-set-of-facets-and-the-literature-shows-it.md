@@ -73,10 +73,46 @@ papers. That is an editorial position and not a test.
 2. Live search across open indexes, reporting which source each result came from.
 3. "Classify this yourself": a trainee fills in the facets and sees whether the label holds.
 
+## The query comes from the ontology
+
+The practitioner, 2026-11-01: *"If our facets become part of the ontology, I think we can engineer
+the right query parameters for the index search."*
+
+- Each facet value is an ontology term, carrying one query mapping per index, because syntax and
+  vocabulary differ. Mappings use `skos:closeMatch` rather than `exactMatch`: an index term is not
+  the design.
+- The generated query is shown and goes in the receipt, so a search can be rerun and read.
+- A facet with no usable index term records that limit. No mapping is faked.
+- The order is the checked collection, settled values as terms after the ontology admission review,
+  mappings, then measurement. For each value and index: how many collection papers the query finds,
+  and how many results really are that design. Those figures stay with the mapping.
+
+**It is also a second purpose.** The practitioner: *"The transparency itself behind query generation,
+being ontology-based, introduces the field of public health informatics to epidemmiology trainees
+(knowledge representation and reasoning)."* This is a design intention. It stays one step off the
+main path, as the N3 and evidence view does.
+
+**Practitioner observation, written before any result exists:** can a trainee explain why a query
+returned what it did, and predict what changes when a mapping changes? This can come out badly:
+trainees may ignore the query entirely.
+
+## AI was considered and set aside
+
+Asked 2026-11-01 whether a WebGPU local model could filter results. The practitioner: *"My position,
+if we can do away with AI in FW, unless compelling, better."* Index fields filter, the checked
+collection handles mislabelled papers, and caveats written as fixed prompts tied to facets question
+the trainee. All three work offline on any device. WebGPU would also exclude the low-resource
+settings this is for.
+
+**What would reopen it:** evidence that fixed prompts fail trainees because they cannot respond to
+what a trainee wrote. Any exception must improve the trainee's own analysis, reasoning, synthesis and
+communication, stay optional, and leave everything else working without it.
+
 ## What this does not establish
 
 - That any of this helps a trainee learn. No controlled evidence was found for flowcharts, and none
   was sought for faceted search.
+- That seeing a query teaches informatics, or that any index term maps usefully to a facet.
 - That the facets are right, or that raters agree on them. They are a draft from the review.
 - That a free index stays free: OpenAlex already limits use without a key.
 - That the counts mean what they say, given how often labels are wrong.

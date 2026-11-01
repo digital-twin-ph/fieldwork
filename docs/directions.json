@@ -1023,6 +1023,40 @@
           "found": "Applied to the decision tree report: its link list is split into open sources still to read and closed ones set aside. All DOIs resolved at Crossref. No measurement yet of the citations the application itself shows."
         }
       ]
+    },
+    {
+      "id": "no-ai-in-fieldwork-unless-compelling",
+      "stated": "2026-11-01",
+      "statedBy": "the practitioner",
+      "inTheirWords": "My position, if we can do away with AI in FW, unless compelling, better. And on any exception: We should use local AI model not to prevent trainees from learning what they should to build expertise but to improve their ability to analyze, reason, synthesize and communicate.",
+      "requiresInCode": "No model in a shipped path where a non-AI route works. A proposal must show why that route is not enough. Any exception works on the trainee's own work, is optional, and leaves search and the checked collection working offline without it.",
+      "recordedIn": "docs/experiments/158-a-study-design-is-a-set-of-facets-and-the-literature-shows-it.md",
+      "workItem": "None while nothing is compelling; experiment 158 records the option as set aside and the condition for reopening it",
+      "status": "open",
+      "lastChecked": "2026-11-01",
+      "checks": [
+        {
+          "date": "2026-11-01",
+          "found": "Considered for filtering faceted search results and set aside: index fields, the checked collection and fixed prompts tied to facets cover it. No model exists in the search design."
+        }
+      ]
+    },
+    {
+      "id": "facets-as-ontology-terms-generate-the-query",
+      "stated": "2026-11-01",
+      "statedBy": "the practitioner",
+      "inTheirWords": "If our facets become part of the ontology, I think we can engineer the right query parameters for the index search. And: The transparency itself behind query generation, being ontology-based, introduces the field of public health informatics to epidemmiology trainees (knowledge representation and reasoning).",
+      "requiresInCode": "Search parameters live as data on facet terms in the ontology, one mapping per index, and not in widget code. The generated query is visible and goes in the receipt. A facet with no usable index term records that limit and fakes no mapping.",
+      "recordedIn": "docs/experiments/158-a-study-design-is-a-set-of-facets-and-the-literature-shows-it.md",
+      "workItem": "Checked collection, then settled facet values as terms after admission review, then per-index mappings, then measure them against the collection",
+      "status": "open",
+      "lastChecked": "2026-11-01",
+      "checks": [
+        {
+          "date": "2026-11-01",
+          "found": "Design recorded in experiment 158. Nothing built: no facet term or mapping exists yet."
+        }
+      ]
     }
   ]
 }

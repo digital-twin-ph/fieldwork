@@ -1360,6 +1360,11 @@ the running application and are not yet experiments.
   [a decision tree for choosing the design](docs/research/study-design-decision-tree-2026-11-01.md)
   is proposed and unbuilt.
 
+- **Facets, and open literature to study them in — [158](docs/experiments/158-a-study-design-is-a-set-of-facets-and-the-literature-shows-it.md).**
+  Raised 2026-11-01: *"The best thing we can do next for study design widget to be really useful is to a faceted search of literature (open access)."*
+  Browser access to five open indexes is measured and works. The checked collection comes first, because an index
+  holds a label and not a design, and the audits judged 34–97% of self-labelled case-control papers not to be.
+
 - **MERGE: two tables that share a key cannot be brought into one.** Found 2026-10-31 by re-running
   the by-hand test that [157](experiments/157-summarize-is-the-command-group-table-is-part-of.md)
   was opened for. SUMMARIZE closed the gap it was built for and the chain now breaks one step

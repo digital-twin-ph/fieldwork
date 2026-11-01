@@ -983,15 +983,16 @@
    "migrationFrom": []
   },
   "study_design": {
-   "version": "0.2.0",
+   "version": "0.3.0",
    "released": "2026-11-01",
    "changes": [
     {
-     "kind": "minor",
-     "description": "A dialog chooses the design and the measures to report downstream, and the Inspector opens it. Each design shows what it licenses before it is chosen. What a design cannot estimate gets no checkbox. An unticked measure is stored in the new optional `computations` parameter and written to the receipt as fw:withheldEstimate; a workflow saved without the parameter reports everything its design licenses."
+     "kind": "major",
+     "description": "Surveillance is removed from the design vocabulary: it is a source, asked in stage 2, and a saved surveillance declaration is removed by migration, leaving the workflow undeclared. No outside users, so no deprecation period. Selecting a design now asks its questions in the optional `answers` parameter, each answer writes a sentence into a machined Methods note and fw:refinementAnswer into the receipt. A checklist reads the workflow against the design and keeps what it read apart from what was declared; it reports and blocks nothing.",
+     "breaking": true
     }
    ],
-   "breaking": false,
+   "breaking": true,
    "migrationFrom": []
   },
   "two_by_two": {

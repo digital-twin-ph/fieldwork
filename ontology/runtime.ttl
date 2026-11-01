@@ -420,7 +420,7 @@ fw:StudyDesign a owl:Class;
   rdfs:comment "What kind of study a workflow is, DECLARED by a practitioner and never inferred from data. A design is not a property of a table: the same four counts arise from a cohort, a case-control study and a cross-sectional survey, and which measures are estimable differs in each, so nothing here reads a design off the numbers. Six are admitted, each one reachable with the computations this application has; a seventh that licenses nothing would be a declaration doing no work. What a design licenses is carried on this entity rather than left to a reader, because the refusal it causes downstream has to be explainable.".
 fw:studyDesignKind a owl:DatatypeProperty; rdfs:label "study design kind";
   rdfs:domain fw:StudyDesign; rdfs:range xsd:string;
-  rdfs:comment "One of cohort, case-control, cross-sectional, ecological, case-series or surveillance. A closed set: an open one would let a workflow declare a design that gates nothing, which is indistinguishable from declaring none.".
+  rdfs:comment "One of cohort, case-control, cross-sectional, ecological or case-series. A closed set: an open one would let a workflow declare a design that gates nothing, which is indistinguishable from declaring none.".
 fw:studyPeriod a owl:DatatypeProperty; rdfs:label "study period";
   rdfs:domain fw:StudyDesign; rdfs:range xsd:string;
   rdfs:comment "When the study ran, as a practitioner writes it for a reader -- 1854, or July-September 1854. A property of the STUDY and not of any one computation, which is why it is here rather than beside a numerator or a denominator vintage. Free text, so it can fill a title's time element; checking that a denominator period COVERS a numerator period needs a structured period and is not built, and the check `rate` performs today is string equality where the condition is coverage.".
@@ -433,6 +433,9 @@ fw:licensedEstimate a owl:DatatypeProperty; rdfs:label "licensed estimate";
 fw:withheldEstimate a owl:DatatypeProperty; rdfs:label "withheld estimate";
   rdfs:range xsd:string;
   rdfs:comment "A measure the declared design licenses and the practitioner chose not to report. Written so that a measure left out on purpose can be told from one nobody ran." .
+fw:refinementAnswer a owl:DatatypeProperty; rdfs:label "refinement answer";
+  rdfs:domain fw:StudyDesign; rdfs:range xsd:string;
+  rdfs:comment "The option chosen for one stage 2 question, by its identifier. A claim by the practitioner, which the application records and cannot check." .
 fw:noDesignDeclared a owl:DatatypeProperty; rdfs:label "no design declared";
   rdfs:domain fw:TwoByTwo;
   rdfs:comment "No study design was connected to this two-by-two, so its measures carry neutral names." ;

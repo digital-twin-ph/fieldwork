@@ -7,6 +7,11 @@ shown in a local build is not a claim that it has been published.
 
 Covers the work of 2026-10-30.
 
+- **Study design asks what the selected design needs, and reads the workflow against it.** Selecting
+  a design now shows its questions, and each answer writes a sentence into Methods. A checklist
+  separates what Fieldwork read from the canvas from what you declared. Surveillance is no longer a
+  design: it is a source, and a saved surveillance declaration is removed by migration.
+
 - **A two-by-two with no design no longer claims one.** With no *Study design* connected it still
   computes every measure, now named by its arithmetic: ratio of row proportions, cross-product
   ratio, difference of row proportions. A line says so, and the receipt records it. Saved workflows

@@ -8,7 +8,7 @@ design can actually support.
 
 ## What it does
 
-It computes nothing. It declares one of six designs and the period the study covers, and the
+It computes nothing. It declares one of five designs and the period the study covers, and the
 computations downstream find it by walking upstream from themselves.
 
 | Design | What one row counts | What a two-by-two may estimate under it |
@@ -18,10 +18,9 @@ computations downstream find it by walking upstream from themselves.
 | **cross-sectional** | a person | prevalence, prevalence ratio, prevalence odds ratio |
 | **ecological** | **a group** | the same measures, as group-level quantities |
 | **case-series** | a person | counts and intervals — no comparison group, so no ratio |
-| **surveillance** | a person | counts and rates over periods |
 
-Six, not the twenty-two of the reference survey. Each is one this application can actually serve
-with the widgets it has; a seventh that licensed no computation would be a declaration doing no
+Five, not the twenty-two of the reference survey. Each is one this application can actually serve
+with the widgets it has; a sixth that licensed no computation would be a declaration doing no
 work.
 
 ## Why case-control is the one that matters
@@ -95,6 +94,37 @@ Three consequences worth knowing:
 If you are not sure which design you have, leave it out. Everything computes as it did before, and
 a guessed declaration is worse than none.
 
+## What is asked after you select a design
+
+**Surveillance is not on the list.** It says where data came from, and a study of any design can use
+such data. It is an answer to the source question below. A workflow that only describes surveillance
+counts declares no design.
+
+For a cohort or an ecological study, the first page after the design is **the table**: you name the groups and the outcome, say what exposure is known for and what the cells count, the dialog draws the 2×2 in those words and marks the totals the study fixed, and each of `a`, `c`, `a+b` and `c+d` gets its own source. The other designs do not have this page yet.
+
+The dialog runs one page at a time with **Next**, **Back** and **Close**. There is no Save: every change is kept as you make it. Selecting a design sets its questions, starting with where the data came from. For a case-control
+study that means how cases arose, when controls were sampled, whether they were matched, and where
+they came from. Each answer writes a sentence into **Methods**, and some carry a caveat. Answer
+*not sure / not stated* when that is the truth: nothing stops, and the note says what is unknown. A
+blank you leave stays visible in the sentence as `‹blank›`.
+
+Answers stay stored if you change design, so trying another one loses nothing. The wording of these
+questions is untested.
+
+## The checklist
+
+The last page of the dialog reads your workflow against your design, and the Inspector gives the counts.
+
+**Read from this workflow** is checked against the canvas and changes as you build: whether a
+two-by-two reads the design, whether data are connected, whether each input says where it came from,
+whether the result reaches an output. It says the workflow holds these things, not that they are
+right.
+
+**Declared by you** is what you stated. Fieldwork records it and cannot check it.
+
+The checklist reports and does not grade. Nothing on it stops a run. *Open* means no answer yet, and
+*stated as unknown* means you answered that you do not know, which is a different fact.
+
 ## What it will not do
 
 - **It will not work out your design from your data.** Four counts look identical whether they
@@ -108,7 +138,7 @@ a guessed declaration is worse than none.
 
 ## What it does not do yet
 
-**It governs the two-by-two only.** A connected design decides what `two_by_two` reports: case-control keeps the odds ratio and drops the word risk, cross-sectional reports prevalence measures, and case series and surveillance report no comparison measure. `rate_ratio` carries the design and is not changed by it.
+**It governs the two-by-two only.** A connected design decides what `two_by_two` reports: case-control keeps the odds ratio and drops the word risk, cross-sectional reports prevalence measures, and a case series reports no comparison measure. `rate_ratio` carries the design and is not changed by it.
 
 **An undeclared design is reported, not punished.** With no design connected, every measure is still computed, under a name for its arithmetic: ratio of row proportions, cross-product ratio, difference of row proportions. A line says no design is connected. The numbers are the same as before; only the names differ, because `a/(a+b)` is a risk only under some designs. A practitioner with their own data may not be sure which design they
 have, and an application that refused to compute until told would be worse than one that stays
@@ -120,4 +150,4 @@ period check `rate` performs today is string equality where the condition is cov
 
 See [experiment 154](../experiments/154-a-workflow-declares-how-as-well-as-where.md) for the
 admission review, and [the study-design audit](../audits/study-designs-and-our-computations.md)
-for how the six were chosen.
+for how the designs were chosen.

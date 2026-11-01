@@ -105,7 +105,7 @@ test('an ecological design counts GROUPS, which is the inference it is read past
 
 test('THE VOCABULARY IS CLOSED, and every member licenses something or says why not',()=>{
   assert.deepEqual([...STUDY_DESIGNS],
-    ['cohort','case-control','cross-sectional','ecological','case-series','surveillance']);
+    ['cohort','case-control','cross-sectional','ecological','case-series']);
   for(const kind of STUDY_DESIGNS){
     const licence=DESIGN_LICENCES[kind];
     assert.ok(licence,`${kind} has no licence`);

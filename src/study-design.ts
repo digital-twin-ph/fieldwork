@@ -25,18 +25,18 @@
  */
 import type {ParamsByType,Workflow,WorkflowNode} from './types.js';
 import type {TwoByTwoResult} from './two-by-two.js';
+import {designQuestions} from './study-design-questions.js';
 
 /** THE STUDY DESIGNS THIS APPLICATION SERVES, as a closed set.
  *
- *  Six, not the twenty-two of `docs/research/fieldwork-study-designs-v1.1.md`, which is a reading
+ *  Five, not the twenty-two of `docs/research/fieldwork-study-designs-v1.1.md`, which is a reading
  *  list. Each is one the 2026-10-28 audit found reachable with the widgets that exist; offering a
- *  seventh that licenses no computation would be a declaration doing no work.
+ *  sixth that licenses no computation would be a declaration doing no work.
  *
  *  Here rather than in `types.ts` because that file is types only and emits no JavaScript -- a
  *  runtime value there resolves to a module that does not exist. The vocabulary belongs beside
  *  the thing that gives it meaning anyway. */
-export const STUDY_DESIGNS=['cohort','case-control','cross-sectional','ecological','case-series',
-  'surveillance'] as const;
+export const STUDY_DESIGNS=['cohort','case-control','cross-sectional','ecological','case-series'] as const;
 export type StudyDesign=typeof STUDY_DESIGNS[number];
 
 /** What a design licenses, in the letters `two_by_two` is written in.
@@ -89,13 +89,11 @@ export const DESIGN_LICENCES:Record<StudyDesign,DesignLicence>={
   'ecological':{rowProportion:'group-level proportion',
     estimates:['risk ratio','odds ratio','risk difference'],
     unitOfAnalysis:'group',
-    because:'The rows count GROUPS and not people, so every measure here is a group-level '
-      +'quantity. A relation between group-level measures need not hold between individuals.'},
+    because:'Exposure is known only for GROUPS, even where the cells count people, so every '
+      +'measure here is a group-level quantity. A relation between group-level measures need not '
+      +'hold between individuals.'},
   'case-series':{rowProportion:null,estimates:[],unitOfAnalysis:'person',
     because:'A case series has no comparison group, so there is no ratio to form.'},
-  'surveillance':{rowProportion:null,estimates:[],unitOfAnalysis:'person',
-    because:'Surveillance counts cases over periods. A two-by-two needs a comparison this design '
-      +'does not declare.'},
 };
 
 /** THE ARITHMETIC BEHIND A LICENSED NAME. A prevalence ratio is computed exactly as a risk ratio
@@ -144,6 +142,18 @@ const UNDECLARED_NAME:Record<string,string>={'risk ratio':'ratio of row proporti
 export const readUndeclared=(result:TwoByTwoResult):TwoByTwoResult=>({...result,
   estimates:result.estimates.map(e=>({...e,reportedAs:UNDECLARED_NAME[e.name]??e.name})),
   reading:{design:null,rowProportion:'row proportion',withheld:[],notEstimable:[]}});
+
+/** SURVEILLANCE LEFT THIS LIST ON 2026-11-01. It says where data came from, and a study of any
+ *  design can use such data, so it never competed with the designs: the fault natural experiment
+ *  had. It is now a stage 2 source. A saved declaration of it is removed with its edges, which
+ *  leaves the workflow undeclared, under the regime in AGENTS.md: nobody outside uses this yet. */
+export function migrateSurveillanceDesign(workflow:Workflow):void{
+  const gone=new Set(workflow.nodes.filter(n=>n?.type==='study_design'
+    &&(n.params as {design?:string})?.design==='surveillance').map(n=>n.id));
+  if(!gone.size)return;
+  workflow.nodes=workflow.nodes.filter(n=>!gone.has(n.id));
+  workflow.edges=workflow.edges.filter(e=>!gone.has(e.from)&&!gone.has(e.to));
+}
 
 export const isStudyDesign=(value:unknown):value is StudyDesign=>
   typeof value==='string'&&(STUDY_DESIGNS as readonly string[]).includes(value);
@@ -259,6 +269,10 @@ export function studyDesignReceipt(node:WorkflowNode<'study_design'>,runId:strin
     // A MEASURE WITHHELD ON PURPOSE IS A FACT ABOUT THE ANALYSIS, not a presentation choice, so a
     // reader can tell one nobody ran from one somebody decided to leave out.
     +withheld.map(name=>`;\n  fw:withheldEstimate ${quote(name)}`).join('')
+    +designQuestions(node.params).flatMap(q=>{
+      const answer=node.params.answers?.[q.id]?.option;
+      return answer?[`;\n  fw:refinementAnswer ${quote(answer)}`]:[];
+    }).join('')
     +`.\n`;
   // THE SAME SHAPE EVERY OTHER RECEIPT HAS, including the empty fields. `receiptText` renders a
   // receipt by its kind and falls through to a RULE node's shape, which reads `conclusions` --

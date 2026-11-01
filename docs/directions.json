@@ -1057,6 +1057,23 @@
           "found": "Design recorded in experiment 158. Nothing built: no facet term or mapping exists yet."
         }
       ]
+    },
+    {
+      "id": "the-study-design-is-the-workflows-checklist",
+      "stated": "2026-11-01",
+      "statedBy": "the practitioner",
+      "inTheirWords": "it may be that the study design widget is where the feedback loop happens, for each workflow that gets develop it should map to making the study design real and implemented. The question is how to make the study design the workflow checklist that addresses the study design implementation.",
+      "requiresInCode": "study_design reads the workflow against the declared design and reports it, keeping what was read from the graph apart from what the practitioner declared. It blocks nothing and gives no score. Surveillance is a source asked in stage 2, not a design.",
+      "recordedIn": "docs/experiments/159-the-study-design-is-the-workflows-checklist.md",
+      "workItem": "Observe whether a practitioner can tell the two kinds of item apart; add A1, A2 and T1",
+      "status": "open",
+      "lastChecked": "2026-11-01",
+      "checks": [
+        {
+          "date": "2026-11-01",
+          "found": "Stage 2 and a first checklist built in study_design 0.3.0: 40 questions across five designs. Not yet observed with a practitioner."
+        }
+      ]
     }
   ]
 }

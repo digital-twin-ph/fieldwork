@@ -71,7 +71,8 @@ import {shareAlike} from './input-provenance.js';
 import type {MachinedNote} from './notes.js';
 import {groupTable,migrateGroupTableNulls} from './group-table.js';
 import {computeTwoByTwo,twoByTwoReceipt,twoByTwoSentence} from './two-by-two.js';
-import {studyDesignSentence,studyDesignReceipt,DESIGN_LICENCES,includedMeasures,readUnderDesign,readUndeclared} from './study-design.js';
+import {studyDesignSentence,studyDesignReceipt,DESIGN_LICENCES,includedMeasures,readUnderDesign,readUndeclared,migrateSurveillanceDesign} from './study-design.js';
+import {refinementSentences} from './study-design-questions.js';
 import type {DeclaredDesign} from './study-design.js';
 import {outreachProjection,extentN3,extentProjection,projectionOf,RULESET_FOR_NODE_TYPE,pinnedRuleset,parametersFor} from './rule-application.js';
 import {authoredFacts,authoredProjection,authoredReceipt,authoredDataIssues} from './authored-application.js';
@@ -608,6 +609,7 @@ export function validateWorkflow(raw:unknown):Workflow {
   migrateFacilitySources(w);
   migrateOutputNodes(w);
   migrateGroupTableNulls(w);
+  migrateSurveillanceDesign(w);
   // Every migration above has run, so a node still naming a retired widget is one that cannot be
   // migrated — and the practitioner's rule is that such a workflow ceases to work, naming the
   // widget. It used to fail further down as "Incompatible node connection", which told a reader
@@ -1411,8 +1413,15 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           included:includedMeasures(node.params),
           withheld:DESIGN_LICENCES[node.params.design].estimates
             .filter(name=>!includedMeasures(node.params).includes(name))} as unknown as DisplayValue;
+        // STAGE 2 WRITES ITSELF INTO METHODS, one sentence per answer. No answers, no note.
+        const refined=refinementSentences(node.params);
+        if(refined.length){
+          machined[node.id]=[{kind:'machined',id:`${node.id}:design`,section:'Methods',fn:'method',
+            nodeId:node.id,text:[sentence,...refined].join(' ')}];
+        }
         const declared=studyDesignReceipt(node as WorkflowNode<'study_design'>,runId);
         receipts.push(declared as unknown as Receipt);
+        if(machined[node.id])withNote(receipts,runId,node.id,machined[node.id]!);
         break;}
       case 'two_by_two':{
         const table=inputs.records as unknown as import('./data-table.js').DataTable;

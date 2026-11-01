@@ -304,7 +304,10 @@ export interface ParamsByType {
      *  anything is unmatched -- the choice changes the totals, so the application does not make
      *  it. Carries a signature of the gap, so editing the data or the comparison lapses it. */
     unmatched?:import('./relate-table.js').UnmatchedDeclaration};
-  group_table:{label:string;by:string[]};
+  group_table:{label:string;by:string[];
+    /** Count an empty cell as zero when totalling. Declared, never assumed: the default is that
+     *  a group holding an empty cell totals to nothing known. See `GroupRequest`. */
+    missingAsZero?:boolean};
   two_by_two:{label:string;exposureColumn:string;exposed:string;unexposed:string;outcomeColumn:string;caseValue:string;nonCaseValue:string;level:90|95|99};
   /** WHAT KIND OF STUDY THIS IS, declared and never inferred.
    *
@@ -513,7 +516,11 @@ export interface ParamsByType {
     keyColumn?:string;
     /** Retained so a workflow saved under the old modes keeps drawing what it drew. It is read
      *  LAST, after the connected port, which is what stopped it deciding which ports exist. */
-    inputMode?:'decisions'|'polygons'|'series';renderer?:'html'|'vega-lite';mark?:'bar'|'point';orientation?:'horizontal'|'vertical';chartTitle?:string;subtitle?:string;xAxisTitle?:string;yAxisTitle?:string;colorByCategory?:boolean;sourceNote?:string;bandMeasure?:'cumulative'|'difference'};
+    inputMode?:'decisions'|'polygons'|'series';renderer?:'html'|'vega-lite';mark?:'bar'|'point';orientation?:'horizontal'|'vertical';chartTitle?:string;subtitle?:string;xAxisTitle?:string;yAxisTitle?:string;colorByCategory?:boolean;sourceNote?:string;bandMeasure?:'cumulative'|'difference';
+    /** Largest first, smallest first, or by category name, which is what it has always done and
+     *  stays the default. Ignored where the categories are a sequence -- an epidemic curve's days
+     *  mean something in the order they are in. */
+    barOrder?:import('./results.js').BarOrder};
   output:{label?:string; view:'map'|'table'|'bars'};
   facilities:{dataset:string; radiusKm:number; sourceMode?:'connected'}; point_grid:{spacingM:number};
   xpert:Record<string,never>; facility_audit:Record<string,never>;

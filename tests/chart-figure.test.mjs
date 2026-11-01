@@ -55,8 +55,18 @@ test('every value is drawn, including a zero', async()=>{
 
 test('the renderer refuses what the specification refuses', async()=>{
   // The export cannot become a way around the checks the specification makes.
-  await assert.rejects(standaloneChartSvg({bins:[{key:'a',label:'A',count:-1}],caption:'c',field:'count'},{},{}),
-    /nonnegative/);
+  //
+  // A NEGATIVE VALUE IS NO LONGER ONE OF THEM. It was refused until 2026-10-31, which made a
+  // CHANGE undrawable -- the one quantity a before-and-after produces. What is still refused is
+  // what was always wrong: a value that is not finite, and a key that is not unique.
+  const negative=await standaloneChartSvg(
+    {bins:[{key:'a',label:'Fell',count:-125},{key:'b',label:'Rose',count:197}],
+     caption:'change',field:'count'},{},{});
+  assert.ok(negative.includes('Fell')&&negative.includes('Rose'),
+    'a chart with a negative value exports');
+  await assert.rejects(standaloneChartSvg(
+    {bins:[{key:'a',label:'A',count:Number.POSITIVE_INFINITY}],caption:'c',field:'count'},{},{}),
+    /finite/);
   await assert.rejects(standaloneChartSvg(
     {bins:[{key:'a',label:'A',count:1},{key:'a',label:'B',count:2}],caption:'c',field:'count'},{},{}),
     /unique stable keys/);

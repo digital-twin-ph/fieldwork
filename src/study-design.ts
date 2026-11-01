@@ -271,7 +271,7 @@ export function studyDesignReceipt(node:WorkflowNode<'study_design'>,runId:strin
     +withheld.map(name=>`;\n  fw:withheldEstimate ${quote(name)}`).join('')
     +designQuestions(node.params).flatMap(q=>{
       const answer=node.params.answers?.[q.id]?.option;
-      return answer?[`;\n  fw:refinementAnswer ${quote(answer)}`]:[];
+      return answer?answer.split(' ').map(id=>`;\n  fw:refinementAnswer ${quote(id)}`):[];
     }).join('')
     +`.\n`;
   // THE SAME SHAPE EVERY OTHER RECEIPT HAS, including the empty fields. `receiptText` renders a

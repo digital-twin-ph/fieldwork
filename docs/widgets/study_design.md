@@ -100,16 +100,19 @@ a guessed declaration is worse than none.
 such data. It is an answer to the source question below. A workflow that only describes surveillance
 counts declares no design.
 
-For a cohort or an ecological study, the first page after the design is **the table**: you name the groups and the outcome, say what exposure is known for and what the cells count, the dialog draws the 2×2 in those words and marks the totals the study fixed, and each of `a`, `c`, `a+b` and `c+d` gets its own source. The other designs do not have this page yet.
+For a cohort or an ecological study, the first page after the design is **the table**: you name the groups and the outcome and say what exposure is known for. The dialog draws the 2×2 in those words and marks the totals the study fixed. Select a cell to say what it counts and where it comes from, or that it was worked out from other cells. There are no numbers on this page: they come with the data, so it works for a study not yet begun. The other designs do not have this page yet.
 
-The dialog runs one page at a time with **Next**, **Back** and **Close**. There is no Save: every change is kept as you make it. Selecting a design sets its questions, starting with where the data came from. For a case-control
+The dialog runs one page at a time with **Next**, **Back** and **Close**. There is no Save: every change is kept as you make it. Selecting a design sets its questions. Where the table already says where each cell comes from, the first asks only whether any of it comes from a surveillance system. A blank for the group is filled from the table page, and you can change it. For a case-control
 study that means how cases arose, when controls were sampled, whether they were matched, and where
 they came from. Each answer writes a sentence into **Methods**, and some carry a caveat. Answer
 *not sure / not stated* when that is the truth: nothing stops, and the note says what is unknown. A
 blank you leave stays visible in the sentence as `‹blank›`.
 
-Answers stay stored if you change design, so trying another one loses nothing. The wording of these
-questions is untested.
+Answers stay stored if you change design, so trying another one loses nothing. Three questions come with every design: who or what decided who was exposed, how time is structured,
+and whether the outcome can spread or cluster. If exposure was decided outside the investigators, two
+more follow: what supports that claim, and whether to call this a natural experiment. That term has
+more than one definition, so the note always names which one it means, and it never licenses causal
+language. The wording of these questions is untested.
 
 ## The checklist
 
@@ -123,7 +126,7 @@ right.
 **Declared by you** is what you stated. Fieldwork records it and cannot check it.
 
 The checklist reports and does not grade. Nothing on it stops a run. *Open* means no answer yet, and
-*stated as unknown* means you answered that you do not know, which is a different fact.
+*stated as unknown* means you answered that you do not know, which is a different fact. *Differs* means your words and the computation's do not match: they may still be one group, and that is for you to judge.
 
 ## What it will not do
 

@@ -1315,7 +1315,7 @@
     {
       "id": "urn:fieldwork:widget:study_design",
       "nodeType": "study_design",
-      "currentVersion": "0.3.0",
+      "currentVersion": "0.4.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -1331,6 +1331,11 @@
           "version": "0.3.0",
           "path": "widgets/releases/study_design/0.3.0.json",
           "sha256": "5e6b5b4bee4bc751dc8332b5b9923e525499407dc9b86ffcb0daf26a4ac33e7f"
+        },
+        {
+          "version": "0.4.0",
+          "path": "widgets/releases/study_design/0.4.0.json",
+          "sha256": "13a67f3a391b44ebe3e042b305c0a5e595fb34536aa981dcfefedff4a853aeb3"
         }
       ]
     },

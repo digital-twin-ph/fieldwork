@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {STUDY_DESIGNS,migrateSurveillanceDesign,studyDesignReceipt} from '../build/study-design.js';
-import {DESIGN_QUESTIONS,designQuestions,refinementSentences,answerSentence,openSlots,tableSentences}
+import {DESIGN_QUESTIONS,designQuestions,refinementSentences,answerSentence,openSlots,tableSentences,inheritedFill}
   from '../build/study-design-questions.js';
 import {designChecklist,checklistSummary} from '../build/study-design-checklist.js';
-import {checklistMarkup,designPageCount,withAnswer,withDesign,withFill,withTableField,withTableSource} from '../build/study-design-dialog.js';
+import {checklistMarkup,designPageCount,withToggle,withAnswer,withDesign,withFill,withCell,withTableField} from '../build/study-design-dialog.js';
 
 /** EXPERIMENT 159. Stage 2 asks what the selected design needs, and the checklist reads the
  *  workflow against it. What it must never do is pass a declaration off as something it checked. */
@@ -34,8 +34,8 @@ test('a saved surveillance declaration is removed with its edges',()=>{
 });
 
 test('each design asks its own questions, and every question can be answered not sure',()=>{
-  assert.deepEqual(ids(params('case-control')),['SRC','CC1','CC2','CC3','CC4','CC5','CC6','G1']);
-  assert.deepEqual(ids(params('cohort')),['SRC','C1','C2','C3','C4','G1']);
+  assert.deepEqual(ids(params('case-control')),['SRC','A1','T1','CC1','CC2','CC3','CC4','CC5','CC6','G1']);
+  assert.deepEqual(ids(params('cohort')),['SRC','A1','T1','C1','C2','C3','C4','G1']);
   for(const q of DESIGN_QUESTIONS)assert.ok(q.options.some(o=>o.unknown),q.id);
   assert.equal(new Set(DESIGN_QUESTIONS.flatMap(q=>q.options.map(o=>o.id))).size,
     DESIGN_QUESTIONS.reduce((n,q)=>n+q.options.length,0));
@@ -66,7 +66,7 @@ test('a blank stays visible, and not sure says what is unknown',()=>{
   const q=DESIGN_QUESTIONS.find(x=>x.id==='CC6');
   assert.match(answerSentence(q,{option:'CC6.1'}),/‹population›/);
   assert.deepEqual(openSlots(q,{option:'CC6.1'}),['population']);
-  assert.match(answerSentence(q,{option:'CC6.3'}),/answered not sure or not stated/);
+  assert.match(answerSentence(q,{option:'CC6.3'}),/answered not sure or not stated, so any reading that depends on it is not given\./);
 });
 
 test('answers survive a change of design',()=>{
@@ -129,12 +129,15 @@ test('South London, cohort: Table IX declared in the practitioner words, with tw
   let p=params('cohort',{period:'1854',unitOfAnalysis:'house'});
   for(const [f,v] of [['exposed','Southwark and Vauxhall Company'],['unexposed','Lambeth Company'],
     ['outcome','a death from cholera'],['noOutcome','no death']])p=withTableField(p,f,v);
-  for(const [k,v] of [['a','the Registrar General'],['c','the Registrar General'],
-    ['a+b','a return to Parliament'],['c+d','a return to Parliament']])p=withTableSource(p,k,v);
+  for(const k of ['a','c'])p=withCell(p,k,{counts:'deaths',source:'the Registrar General'});
+  for(const k of ['a+b','c+d'])p=withCell(p,k,{counts:'houses',source:'a return to Parliament'});
+  for(const k of ['b','d'])p=withCell(p,k,{counts:'houses with no death',derived:true});
   assert.deepEqual(tableSentences(p.table),[
     'Exposed was Southwark and Vauxhall Company, unexposed was Lambeth Company, and the outcome was a death from cholera.',
-    'a and c came from the Registrar General.','a+b and c+d came from a return to Parliament.']);
-  assert.equal(designPageCount(p),9);
+    'a and c count deaths.','b and d count houses with no death.','a+b and c+d count houses.',
+    'a and c came from the Registrar General.','a+b and c+d came from a return to Parliament.',
+    'b and d were worked out from other cells.']);
+  assert.equal(designPageCount(p),11);
   const w=workflow('cohort',p);
   w.nodes[0].params=p;
   w.nodes[2]={id:'t',type:'rate_ratio',params:{label:'ratio',compared:'Southwark and Vauxhall Company',reference:'Lambeth Company'}};
@@ -142,15 +145,16 @@ test('South London, cohort: Table IX declared in the practitioner words, with tw
   assert.equal(status(items,'computation'),'done');
   assert.match(items.find(i=>i.id==='computation').detail,/does not yet obey/);
   assert.equal(status(items,'table-groups'),'done');
-  assert.equal(status(items,'table-sources'),'done');
+  assert.equal(status(items,'table-cells'),'done');
   assert.equal(status(items,'table-match'),'done');
 });
 
 test('a two-by-two with other groups is reported, never corrected',()=>{
   const w=workflow('ecological',{table:{exposed:'Southwark and Vauxhall Company only',unexposed:'Lambeth Company only',outcome:'death'}});
   let items=designChecklist(w,'d');
-  assert.equal(status(items,'table-match'),'open');
-  assert.match(items.find(i=>i.id==='table-match').detail,/the computation has e against u/);
+  assert.equal(status(items,'table-match'),'differs');
+  assert.match(items.find(i=>i.id==='table-match').detail,/the computation has e against u\. Are these the same groups\?/);
+  assert.match(checklistSummary(items),/1 to compare\.$/);
   w.nodes[2].params.exposed='southwark and vauxhall company only';
   w.nodes[2].params.unexposed='Lambeth Company only';
   items=designChecklist(w,'d');
@@ -158,13 +162,25 @@ test('a two-by-two with other groups is reported, never corrected',()=>{
 });
 
 test('designs other than South London have no table page yet',()=>{
-  assert.equal(designPageCount(params('case-control')),10);
-  assert.equal(designPageCount(params('cohort')),9);
+  assert.equal(designPageCount(params('case-control')),12);
+  assert.equal(designPageCount(params('cohort')),11);
 });
 
-test('exposure and what the cells count are two facts, for any design, and neither is South London',()=>{
-  const p=withTableField(withTableField(params('ecological'),'exposureKnownFor','villages'),'cellsCount','children');
-  assert.ok(tableSentences(p.table).includes('Exposure was known for villages, and the cells count children.'));
+test('exposure and what a cell counts are two facts, for any design, and neither is South London',()=>{
+  const p=withCell(withTableField(params('ecological'),'exposureKnownFor','villages'),'a',{counts:'children'});
+  assert.deepEqual(tableSentences(p.table),['Exposure was known for villages.','a counts children.']);
+});
+
+test('a cell needs what it counts and a source, unless it was worked out',()=>{
+  let w=workflow('cohort');
+  const blank=designChecklist(w,'d').find(i=>i.id==='table-cells');
+  assert.equal(blank.status,'open');
+  assert.match(blank.detail,/a, b, a\+b, c, d, c\+d/);
+  let p=w.nodes[0].params;
+  for(const k of ['a','a+b','c','c+d'])p=withCell(p,k,{counts:'x'});
+  for(const k of ['b','d'])p=withCell(p,k,{counts:'y',derived:true});
+  w.nodes[0].params=p;
+  assert.match(designChecklist(w,'d').find(i=>i.id==='table-cells').detail,/a, a\+b, c, c\+d/);
 });
 
 test('no worked example is written into the design source',async()=>{
@@ -174,4 +190,60 @@ test('no worked example is written into the design source',async()=>{
       .split('\n').filter(l=>!/^\s*(\*|\/\/|\/\*)/.test(l)).join('\n');
     assert.doesNotMatch(code,/Southwark|Lambeth|Vauxhall|Registrar|Parliament|sub-district/i,f);
   }
+});
+
+test('where the table holds the sources, stage 2 asks only about surveillance',()=>{
+  for(const design of ['cohort','ecological']){
+    const q=designQuestions(params(design)).find(x=>x.id==='SRC');
+    assert.equal(q.text,'Does any of this come from a surveillance system?');
+    assert.deepEqual(q.options.map(o=>o.label),['Yes','No','Not sure / not stated']);
+    assert.ok(ids(withAnswer(params(design),'SRC','SRC.1')).includes('S1'));
+    assert.ok(!ids(withAnswer(params(design),'SRC','SRC.9')).includes('S1'));
+  }
+  assert.equal(designQuestions(params('case-series')).find(x=>x.id==='SRC').options.length,8);
+});
+
+test('a group blank is filled from the table, and the practitioner can overrule it',()=>{
+  const table={exposureKnownFor:'villages'};
+  const q=DESIGN_QUESTIONS.find(x=>x.id==='E2');
+  const option=q.options.find(o=>o.sentence?.includes('‹group›')&&/not known/.test(o.sentence)).id;
+  assert.equal(inheritedFill('group',table),'villages');
+  assert.equal(inheritedFill('Outcome',table),'');
+  assert.equal(answerSentence(q,{option},table),'Exposure within villages was not known.');
+  assert.deepEqual(openSlots(q,{option},table),[]);
+  assert.deepEqual(openSlots(q,{option}),['group']);
+  assert.equal(answerSentence(q,{option,fills:{group:'the upland villages'}},table),'Exposure within the upland villages was not known.');
+  assert.equal(inheritedFill('Group',table),'');
+});
+
+test('A2 and the natural experiment question follow only from outside allocation',()=>{
+  const with_=o=>ids(withAnswer(params('cohort'),'A1',o));
+  assert.ok(!ids(params('cohort')).includes('A2'));
+  for(const o of ['A1.3','A1.4','A1.5','A1.6'])assert.deepEqual(with_(o).slice(1,5),['A1','A2','A3','T1'],o);
+  for(const o of ['A1.1','A1.2','A1.7','A1.8','A1.9'])assert.ok(!with_(o).includes('A3'),o);
+});
+
+test('the natural experiment always names its definition',()=>{
+  const q=DESIGN_QUESTIONS.find(x=>x.id==='A3');
+  assert.match(answerSentence(q,{option:'A3.2'}),/broad sense.*Craig et al\. 2025.*not thereby.*narrow sense.*Dunning 2008/);
+  assert.match(answerSentence(q,{option:'A3.3',fills:{'narrow argument':'x'}}),/narrow sense.*Dunning 2008.*because x/);
+  assert.equal(answerSentence(q,{option:'A3.1'}),null);
+});
+
+test('A2 holds several options, and None and not sure stand alone',()=>{
+  const q=DESIGN_QUESTIONS.find(x=>x.id==='A2');
+  let p=withToggle(params('cohort'),q,'A2.1',true);
+  p=withToggle(p,q,'A2.3',true);
+  assert.equal(p.answers.A2.option,'A2.1 A2.3');
+  assert.deepEqual(openSlots(q,p.answers.A2),['allocation source','control']);
+  assert.match(answerSentence(q,p.answers.A2),/documented.*negative control/i);
+  p=withToggle(p,q,'A2.4',true);
+  assert.equal(p.answers.A2.option,'A2.4');
+  p=withToggle(p,q,'A2.2',true);
+  assert.equal(p.answers.A2.option,'A2.2');
+  p=withToggle(p,q,'A2.2',false);
+  assert.equal(p.answers.A2,undefined);
+  const r=withAnswer(params('cohort',{answers:{A1:{option:'A1.5'},A2:{option:'A2.1 A2.3'}}}),'T1','T1.1');
+  const {facts}=studyDesignReceipt({id:'d',params:r},'run');
+  assert.match(facts,/refinementAnswer "A2\.1";\n  fw:refinementAnswer "A2\.3"/);
 });

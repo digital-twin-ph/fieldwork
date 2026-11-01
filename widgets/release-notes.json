@@ -983,16 +983,15 @@
    "migrationFrom": []
   },
   "study_design": {
-   "version": "0.3.0",
+   "version": "0.4.0",
    "released": "2026-11-01",
    "changes": [
     {
-     "kind": "major",
-     "description": "Surveillance is removed from the design vocabulary: it is a source, asked in stage 2, and a saved surveillance declaration is removed by migration, leaving the workflow undeclared. No outside users, so no deprecation period. Selecting a design now asks its questions in the optional `answers` parameter, each answer writes a sentence into a machined Methods note and fw:refinementAnswer into the receipt. A checklist reads the workflow against the design and keeps what it read apart from what was declared; it reports and blocks nothing.",
-     "breaking": true
+     "kind": "minor",
+     "description": "The table becomes the form: each cell and row total says what it counts and where it comes from, or that it was worked out from other cells, with no numbers. Asked of every design: who decided exposure, and how time is structured. What supports that claim and whether to call it a natural experiment follow from outside allocation, and the term always names its definition. The source question narrows where the table already holds sources. The group check can report that wordings differ."
     }
    ],
-   "breaking": true,
+   "breaking": false,
    "migrationFrom": []
   },
   "two_by_two": {

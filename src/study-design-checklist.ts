@@ -10,11 +10,14 @@
  *  IT REPORTS AND DOES NOT GRADE. No item stops a run and there is no score. An item read from the
  *  graph says the workflow holds a thing, never that the thing is right. */
 import {DESIGN_LICENCES,includedMeasures,upstreamNodeIds} from './study-design.js';
-import {designQuestions,chosenOption,openSlots,DESIGN_TABLES,TABLE_QUANTITIES} from './study-design-questions.js';
+import {designQuestions,chosenOption,openSlots,DESIGN_TABLES,TABLE_CELLS,cellDescribed} from './study-design-questions.js';
 import type {Workflow,WorkflowNode} from './types.js';
 
-/** `unknown` is "not sure / not stated", which is an answer. `open` is no answer yet. */
-export type ChecklistStatus='done'|'open'|'unknown';
+/** `unknown` is "not sure / not stated", which is an answer. `open` is no answer yet. `differs`
+ *  is two wordings that may or may not be one group: a person's to judge, so nothing is left to do
+ *  and nothing is wrong. Saying `open` here contradicted the page's advice to name a row as the
+ *  group it is, which was found walking South London. */
+export type ChecklistStatus='done'|'open'|'unknown'|'differs';
 export interface ChecklistItem {
   id:string;
   kind:'declared'|'implemented';
@@ -85,9 +88,10 @@ function implemented(w:Workflow,node:WorkflowNode<'study_design'>):ChecklistItem
   if(said?.exposed?.trim()&&said.unexposed?.trim()&&computed.length){
     const same=(x?:string,y?:string)=>x?.trim().toLowerCase()===y?.trim().toLowerCase();
     const differing=computed.find(([e,u])=>!same(e,said.exposed)||!same(u,said.unexposed));
-    items.push(item('table-match','The computation has the groups this design declared',!differing,
+    items.push({...item('table-match','The computation has the groups this design declared',!differing,
       differing?`Declared ${said.exposed} against ${said.unexposed}; the computation has `
-        +`${differing[0]} against ${differing[1]}.`:undefined));
+        +`${differing[0]} against ${differing[1]}. Are these the same groups?`:undefined),
+      ...(differing?{status:'differs' as const}:{})});
   }
   return items;
 }
@@ -98,16 +102,16 @@ function declared(node:WorkflowNode<'study_design'>):ChecklistItem[]{
     ({id,kind:'declared',text,status:value.trim()?'done':'open'});
   const table=node.params.table;
   const hasTable=Boolean(DESIGN_TABLES[node.params.design]);
-  const blanks=TABLE_QUANTITIES.filter(([key])=>!table?.sources?.[key]?.trim()).map(([key])=>key);
+  const blanks=TABLE_CELLS.filter(key=>!cellDescribed(table?.cells?.[key]));
   return [stated('period','Study period stated',node.params.period),
     ...(hasTable?[stated('table-groups','The groups and outcome are named',
       table?.exposed&&table.unexposed&&table.outcome?'yes':''),
-    {...stated('table-sources','Each quantity in the table has a source',blanks.length?'':'yes'),
-      ...(blanks.length?{detail:`No source yet: ${blanks.join(', ')}.`}:{})}]:[]),
+    {...stated('table-cells','Each cell says what it counts and where it comes from',blanks.length?'':'yes'),
+      ...(blanks.length?{detail:`Not yet described: ${blanks.join(', ')}.`}:{})}]:[]),
     ...designQuestions(node.params).map((q):ChecklistItem=>{
       const option=chosenOption(q,answers?.[q.id]);
-      const blanks=openSlots(q,answers?.[q.id]);
-      return {id:q.id,kind:'declared',text:q.text,
+      const blanks=openSlots(q,answers?.[q.id],node.params.table);
+      return {id:q.id,kind:'declared',text:q.text.split('? ')[0]!.replace(/\?*$/,'?'),
         status:!option||blanks.length?'open':option.unknown?'unknown':'done',
         ...(option?{detail:blanks.length?`Answered; still to fill: ${blanks.join(', ')}.`:option.label}:{})};
     })];
@@ -122,5 +126,6 @@ export function designChecklist(w:Workflow,nodeId:string):ChecklistItem[]{
  *  would read as a grade. */
 export function checklistSummary(items:readonly ChecklistItem[]):string{
   const count=(s:ChecklistStatus)=>items.filter(i=>i.status===s).length;
-  return `Checklist: ${count('done')} done, ${count('unknown')} stated as unknown, ${count('open')} open.`;
+  const differing=count('differs')?`, ${count('differs')} to compare`:'';
+  return `Checklist: ${count('done')} done, ${count('unknown')} stated as unknown, ${count('open')} open${differing}.`;
 }

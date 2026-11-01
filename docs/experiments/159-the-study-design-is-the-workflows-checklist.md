@@ -71,8 +71,13 @@ says. A second question: does anyone work through stage 2, or close it?
 The practitioner, 2026-11-01: *"I think a better way to do the study design is to start mapping to
 ABCD as early as study design."* And: *"One at a time, South London first."* A design is a statement
 about which totals the study fixed, so the 2×2 now follows the design selection, for cohort and
-ecological only. Each of `a`, `c`, `a+b` and `c+d` has its own source, which is what Snow needs:
-deaths and houses came from different places.
+ecological only. Deaths and houses came from different places in Snow, so sources are per cell.
+
+The practitioner, reading the first version the same day: *"I am not sure we will be able to provide
+counts for ABCD when study has not begun yet, but what might help here is for every cell, where the
+data would come from, what cells count, etc."* So the table became the form. Every cell and row total
+says what it counts and where it comes from, or that it was worked out from other cells. One
+"the cells count" field could not hold a table whose `a` counts deaths and whose `a+b` counts houses.
 
 Found while wiring it to the pinned workflows on 2026-11-01:
 
@@ -81,14 +86,43 @@ Found while wiring it to the pinned workflows on 2026-11-01:
   the design.
 - South London's ecological `two_by_two` counts people (844 of 167,654), under a licence saying
   the rows count groups. Settled the same day: exposure is known for groups while the cells count
-  people, so the table page asks both, and the licence now says so. On a condition from the
+  people, so the table page says so, and the licence does too. On a condition from the
   practitioner: *"as long as it does not become hand crafted for South London."* The fields are
   free text for any design, and no South London value is in the source.
 - The check of declared groups against computed ones now reads a `rate_ratio` as well.
 
+## Walked on South London, 2026-11-01
+
+Both real workflows, `Deaths per house, by water company` and `Died or survived, by water supply`,
+loaded from the pinned project, answered in full on Chromium, and ran. The answers are the author's
+reading of Snow. What it found, all fixed the same day:
+
+| Found | Change |
+| --- | --- |
+| Every "not sure" sentence had a double negative | Reworded |
+| The source question repeated the table page and could not hold two sources | With a table, it asks only whether any of it is surveillance |
+| `‹group›` was retyped on two pages | Filled from "exposure is known for", and editable |
+| The advice to name a row as its group made the group check report open | A new status, `differs`, leaves it for a person to judge |
+| "Sub-districts ... was excluded; it was" | The sentence no longer needs a verb that agrees |
+| C4 spoke of initiation, and could not be answered for a water supply | Reworded for exposures in general; the report's table changed with it |
+
+A second walk, after allocation and time were added, answered every question on both workflows on
+Chromium. The run did not stop, no blank was left, and the whole note reached Notes, with Snow's
+allocation argument and the natural experiment in its broad sense on the house comparison. That shows
+the words arrive. It does not show an epidemiologist would write them, and the note runs long: the
+ecological one is 14 sentences.
+
+## Allocation and time, added 2026-11-01
+
+A1 and T1 are asked of every design. A2 and a new A3 follow only when exposure was decided outside
+the investigators. A3 asks whether to print "natural experiment", with its definition named, which
+is decision 4's recommendation. A2 is the first choose-all question, so an answer may hold several
+options. Investigator allocation says it is outside the five designs but does not yet withdraw the
+declaration, which decision 3 calls a stop: the checklist does not say so either.
+
 ## Left out
 
-A1, A2 and T1 are not asked, as their tables have another shape. Decision 1's cohort or case series
+Decision 1's cohort or case series
 choice is not asked either, because selecting a design comes first. Caveats name their sources in
 plain text and carry no links.
 

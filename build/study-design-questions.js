@@ -1,2 +1,2 @@
-import{a,b,c,d,e,f,g,h,i,j}from"./chunks/chunk-ALFDO73N.js";import"./chunks/chunk-KVMUXFPB.js";export{d as DESIGN_QUESTIONS,a as DESIGN_TABLES,b as TABLE_QUANTITIES,h as answerSentence,f as chosenOption,e as designQuestions,i as openSlots,j as refinementSentences,g as slotsIn,c as tableSentences};
+import{a,b,c,d,e,f,g,h,i,j,k,l,m}from"./chunks/chunk-2W3VHXPQ.js";import"./chunks/chunk-KVMUXFPB.js";export{e as DESIGN_QUESTIONS,a as DESIGN_TABLES,b as TABLE_CELLS,k as answerSentence,c as cellDescribed,h as chosenOption,g as chosenOptions,f as designQuestions,j as inheritedFill,l as openSlots,m as refinementSentences,i as slotsIn,d as tableSentences};
 //# sourceMappingURL=study-design-questions.js.map

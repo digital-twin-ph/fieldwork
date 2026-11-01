@@ -31,32 +31,44 @@ import type {DataTable} from './data-table.js';
 export interface GroupRequest {
   /** The key columns to keep. Rows agreeing on all of them become one row. */
   by:string[];
-  /** COUNT AN EMPTY CELL AS ZERO, declared and never assumed.
+  /** TOTAL WHAT IS PRESENT, EXCLUDING EMPTY CELLS — declared, and never assumed.
    *
-   *  The default is false and the default is the position this project takes everywhere: an empty
-   *  cell is unknown, not zero, so a group holding one has an unknown total rather than a smaller
-   *  one. That refusal is right and it is sometimes wrong about the world — the practitioner,
-   *  2026-10-31: *"We should add a checkbox for overriding nulls."*
+   *  The default is false and the default is this project's position: a group holding an empty
+   *  cell has an unknown total rather than a smaller one. That refusal is right and it is
+   *  sometimes wrong about the world, so an override exists.
    *
-   *  The case that produced it is a good one. Snow's Table XII leaves Dulwich's 1854 cell BLANK,
-   *  and Dulwich is one of four sub-districts supplied by the Lambeth Company alone — so the
-   *  group carrying his strongest contrast could not be totalled. His own summary row reads 37
-   *  for those four, and 10 + 15 + 12 = 37, so the blank is a nothing rather than a gap. The
-   *  evidence for the override is the source's own arithmetic.
+   *  IT EXCLUDES; IT DOES NOT ZERO. The practitioner, 2026-10-31, correcting the first version of
+   *  this: *"I think the more prudent action to deal with blanks is to opt to exclude them, not
+   *  assign a zero value."* For a SUM the two give the same number, which is exactly why the
+   *  difference is easy to miss and worth insisting on — they make different CLAIMS. Counting a
+   *  blank as zero asserts a measurement: that there were none. Excluding it asserts only that
+   *  what was totalled is what was recorded. The first can be wrong about the world; the second
+   *  cannot, because it says less.
    *
-   *  So it is offered, and it is DECLARED: the result counts what it overrode, the receipt
-   *  records it, and the write-up carries the caveat automatically. An assumption nobody can see
-   *  in the output is the thing this project refuses, not the assumption itself. */
-  missingAsZero?:boolean;
+   *  And the difference stops being invisible the moment anything divides. A mean, a rate or a
+   *  per-unit figure over an excluded group has a denominator of what remains; over a zeroed one
+   *  it has a denominator that includes a unit contributing nothing. Same total, different
+   *  quantity.
+   *
+   *  The case that produced it: Snow's Table XII leaves Dulwich's 1854 cell BLANK — verified
+   *  against Project Gutenberg #72894, where it is not a zero, not a dash, but nothing printed —
+   *  and Dulwich is one of four sub-districts supplied by the Lambeth Company alone. His own
+   *  summary row totals those four at 37, and 10 + 15 + 12 = 37. So the figure is reachable by
+   *  totalling the three that are recorded, which is what this does, rather than by deciding what
+   *  the blank meant.
+   *
+   *  Either way it is DECLARED: the result counts what it excluded, the receipt records it, and
+   *  the write-up carries the caveat automatically. */
+  excludeMissing?:boolean;
 }
 /** A group that held an empty cell, so its total is unknown rather than smaller. */
 export interface GroupGap {group:string; rowsSummed:number; rowsEmpty:number}
 export interface GroupResult {
   table:DataTable; groups:number; collapsedFrom:number; dropped:string[]; gaps:GroupGap[];
-  /** How many empty cells were counted as zero, and in how many groups. Zero when the override
-   *  is off, which is how a reader tells "nothing was overridden" from "the field did not
-   *  exist". */
-  missingAsZero?:{cells:number; groups:number};
+  /** What the override covered: how many empty cells were left out, from how many groups, and
+   *  for each of those groups how many rows did contribute. Absent when the override is off,
+   *  which is how a reader tells "nothing was excluded" from "the field did not exist". */
+  excluded?:{cells:number; groups:number; of:GroupGap[]};
 }
 
 export function groupTable(table:DataTable,request:GroupRequest):GroupResult {
@@ -81,19 +93,23 @@ export function groupTable(table:DataTable,request:GroupRequest):GroupResult {
       total:0,summed:0,empty:0};
     // An empty cell still COUNTS as empty whichever way this is set: the override changes what
     // the total is, never what was in the table. `gaps` is what the surfaces report from.
-    if(row.value===null){group.empty++;if(request.missingAsZero)group.summed++;}
+    // An empty cell is counted as empty whichever way this is set. `summed` stays the number of
+    // rows that CONTRIBUTED a value, so "3 of 4" can be said rather than inferred.
+    if(row.value===null)group.empty++;
     else{group.total+=row.value;group.summed++;}
     groups.set(id,group);
   }
   const rows=[...groups.values()].map(group=>({key:group.key,
-    value:group.empty&&!request.missingAsZero?null:group.total}));
+    value:group.empty&&!request.excludeMissing?null:group.total}));
   const gaps=[...groups.values()].filter(group=>group.empty)
     .map(group=>({group:group.label,rowsSummed:group.summed,rowsEmpty:group.empty}));
-  const overridden=request.missingAsZero
+  const overridden=request.excludeMissing
     ?{cells:[...groups.values()].reduce((n,g)=>n+g.empty,0),
-      groups:[...groups.values()].filter(g=>g.empty).length}
+      groups:[...groups.values()].filter(g=>g.empty).length,
+      of:[...groups.values()].filter(g=>g.empty)
+        .map(g=>({group:g.label,rowsSummed:g.summed,rowsEmpty:g.empty}))}
     :undefined;
-  return {...(overridden?{missingAsZero:overridden}:{}),
+  return {...(overridden?{excluded:overridden}:{}),
     table:{...table,keys:by,rows,rowCount:rows.length,
     missingValueCount:rows.filter(row=>row.value===null).length},
     groups:rows.length,collapsedFrom:table.rows.length,dropped,gaps};

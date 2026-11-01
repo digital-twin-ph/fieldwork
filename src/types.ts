@@ -305,9 +305,10 @@ export interface ParamsByType {
      *  it. Carries a signature of the gap, so editing the data or the comparison lapses it. */
     unmatched?:import('./relate-table.js').UnmatchedDeclaration};
   group_table:{label:string;by:string[];
-    /** Count an empty cell as zero when totalling. Declared, never assumed: the default is that
-     *  a group holding an empty cell totals to nothing known. See `GroupRequest`. */
-    missingAsZero?:boolean};
+    /** Total what is present, excluding empty cells. Declared, never assumed: the default is
+     *  that a group holding an empty cell totals to nothing known. It EXCLUDES rather than
+     *  zeroing — see `GroupRequest` for why those are different claims. */
+    excludeMissing?:boolean};
   two_by_two:{label:string;exposureColumn:string;exposed:string;unexposed:string;outcomeColumn:string;caseValue:string;nonCaseValue:string;level:90|95|99};
   /** WHAT KIND OF STUDY THIS IS, declared and never inferred.
    *

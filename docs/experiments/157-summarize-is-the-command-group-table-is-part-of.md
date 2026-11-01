@@ -2,7 +2,8 @@
 
 _Created 2026-10-31 · Updated 2026-10-31_
 
-**Status:** asked — the admission review is answered below and the implementation follows it. The
+**Status:** tried — SUMMARIZE is built, and the by-hand test that justified it was re-run on the
+same day and STILL FAILS, one step earlier, for want of a MERGE. Both results are recorded. The
 need was established by a test rather than by argument, and two alternatives were tried and ruled
 out before this was proposed.
 
@@ -167,6 +168,50 @@ command. The widget budget stands at 55 against a reference of 41 and this would
 addition this week, which argues for extending. The recorded "sum and nothing else" decision and
 Epi Info's own separation argue for a separate command. The practitioner's answer to *"Yes to
 SUMMARIZE"* settles the name and not the shape.
+
+## The test was re-run, and it still fails — one step later
+
+2026-10-31, after SUMMARIZE landed. The practitioner: *"let's test."*
+
+| step | widget | possible |
+| --- | --- | --- |
+| Table XII deaths, Table VIII population | `table_input` ×2, by reuse | yes |
+| **bring the population onto the deaths rows** | `relate_table` | **no** |
+| 1854 deaths per head by sub-district | `rate` | blocked |
+| the lowest and the highest of those rates | `group_table`, minimum/maximum | **yes, now** |
+| that rate × Dulwich's population | `derive_value` | blocked |
+| add to the Lambeth-only total | `group_table` | yes |
+
+**SUMMARIZE was necessary and is not sufficient.** The extremum gap this experiment was opened for
+is closed and the chain now breaks earlier, at the join.
+
+`relateTable` requires `bring` to name a column of the right table's KEYS — it carries a category
+across, not a value. Table VIII is keyed by `sub_district` and `measure`, so with it as the
+related table the Inspector's "bring" list is **empty**: `sub_district` is the join key and
+`measure` is already a column of the left table. Checked in the running application, not inferred
+from the types.
+
+So Table XII's deaths and Table VIII's populations cannot be brought into one table, and the rate
+that the bound is read from cannot be computed on the canvas at all. The period trap recorded
+above makes the obvious substitute wrong: Table VIII can give a rate from its own deaths, but
+those are seven weeks to 26 August against Table XII's 21 October, and using them understates the
+worst case threefold.
+
+**The missing operation is MERGE**, and Epi Info AI has it: `COMMAND_SET.md` lists `RELATE` and
+`MERGE` as separate Data commands. Fieldwork has RELATE — `relate-table.ts` opens with the word —
+and nothing for the other.
+
+**That is the third table operation this week found to be an Epi Info command**, after
+`derive_value` as DEFINE and ASSIGN and `group_table` as SUMMARIZE. At three it stops being a
+coincidence and becomes a finding about the shape of this application: its table operations are
+the Epi Info Data and Statistics commands, arrived at independently and named inconsistently —
+`relate_table` knows its name, `group_table` did not, `derive_value` still does not. Recorded in
+TODO as its own item rather than resolved here.
+
+**What this changes about this experiment:** nothing in the review above, and everything about the
+closing condition. SUMMARIZE was admitted on a test it does not by itself pass, which is a real
+result and is left standing rather than rewritten — the admission argument was that no aggregation
+returned an extremum, and that was and is true.
 
 ## What this does not establish
 

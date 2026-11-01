@@ -1340,6 +1340,47 @@ the running application and are not yet experiments.
   belongs in the receipt. It should be the second — a measure withheld on purpose is a fact about
   the analysis — but that needs deciding rather than assuming.
 
+- **MERGE: two tables that share a key cannot be brought into one.** Found 2026-10-31 by re-running
+  the by-hand test that [157](experiments/157-summarize-is-the-command-group-table-is-part-of.md)
+  was opened for. SUMMARIZE closed the gap it was built for and the chain now breaks one step
+  earlier.
+
+  `relate_table` brings a column of the right table's KEYS across — a category — and Table VIII's
+  population is a VALUE. Checked in the running application: with Table VIII as the related table
+  the Inspector's "bring" list is **empty**, because `sub_district` is the join key and `measure`
+  already exists on the left. So Snow's deaths and his populations cannot meet in one table, and
+  the rate a sensitivity bound is read from cannot be computed on the canvas at all.
+
+  The obvious substitute is wrong and the reason is recorded in 157: Table VIII can produce a rate
+  from its own deaths, but those cover seven weeks to 26 August against Table XII's 21 October,
+  and using them understates the worst case threefold. **A rate must come from the same table as
+  the count it is applied to.**
+
+  Epi Info AI has the operation: `COMMAND_SET.md` lists `RELATE` and `MERGE` as separate Data
+  commands, MERGE as a "reviewed current-project upsert". What Fieldwork needs is narrower than a
+  general upsert — two long tables with the same key columns, appended, so their measures sit in
+  one `measure` column — and that narrowness should be designed deliberately rather than inherited.
+
+- **THREE TABLE OPERATIONS ARE EPI INFO COMMANDS WEARING DIFFERENT NAMES.** Found across one day:
+  `derive_value` is DEFINE and ASSIGN, `group_table` is SUMMARIZE restricted to SUM, and
+  `relate_table` is RELATE — which that file already knew, since its first line says so. At three
+  this stops being a coincidence.
+
+  The finding is not that the names are wrong. It is that this application arrived independently
+  at the Epi Info Data and Statistics command set and named it **inconsistently**: one widget
+  carries the command name in its documentation, one had the wrong command in its documentation
+  until it was checked, and one has no mention of it anywhere. A practitioner who knows Epi Info
+  has to rediscover each one.
+
+  What to do with it is a D7 question over widgets that have already shipped, where a rename costs
+  every saved workflow that holds the node type — the same bind the naming convention has been in
+  since nine findings produced no renames. The cheap half is the manual and the Inspector saying
+  which command a widget is, which costs nothing and is most of the value.
+
+  **And it predicts where the gaps are**, which is the useful part: MERGE was found by needing it,
+  but the command set names the rest. Worth a deliberate pass against `COMMAND_SET.md` rather than
+  discovering them one failed workflow at a time.
+
 - **STATCALC is organised by study design, and it reaches a phase Fieldwork does not have.**
   Raised 2026-10-31: *"what may be useful for study design, in Epi Info AI, there is STATCALC."*
   Read from `epi-info-ai/README.md` rather than from memory, the discipline SUMMARIZE established

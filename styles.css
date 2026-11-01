@@ -281,6 +281,9 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 #relate-join .manual-head{padding:20px 24px;border-bottom:1px solid var(--line);margin:0}
 #relate-join .table-viewer-body{overflow:auto}
 #relate-join .inspector-section{margin-top:18px}
+.check.absent{color:var(--warning-1)}
+.absent-note{font-size:10px;letter-spacing:.4px;text-transform:uppercase;opacity:.85}
+
 .relate-row{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:0 0 10px}
 .relate-row .description{margin:0;flex:1 1 320px;min-width:0}
 .relate-row .field-label{margin:0}

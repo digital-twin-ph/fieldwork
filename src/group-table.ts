@@ -47,6 +47,7 @@
  *  reported by name, which is the same choice `deriveValue` makes about a missing operand.
  */
 import type {DataTable} from './data-table.js';
+import type {Workflow} from './types.js';
 
 /** THE AGGREGATES THIS STEP CAN POLICE, and no others.
  *
@@ -155,4 +156,20 @@ export function groupTable(table:DataTable,request:GroupRequest):GroupResult {
     table:{...table,keys:by,rows,rowCount:rows.length,
     missingValueCount:rows.filter(row=>row.value===null).length},
     groups:rows.length,collapsedFrom:table.rows.length,dropped,gaps};
+}
+
+/** Drops `missingAsZero`, which no longer decides anything.
+ *
+ *  An empty cell was once overridable to a zero. That was withdrawn for the rule the practitioner
+ *  settled on -- *the more prudent action to deal with blanks is to opt to exclude them, not
+ *  assign a zero value* -- and `excludeMissing` replaced it. The parameter stayed on workflows
+ *  saved before the change, where it is inert and WORSE THAN INERT IN A PUBLISHED FILE: a reader
+ *  of the JSON finds `missingAsZero: true` beside `excludeMissing: true` and has every reason to
+ *  read the first one, which states the opposite of what the step does. Removed on open rather
+ *  than tolerated, because the file is the thing a collaborator reads. */
+export function migrateGroupTableNulls(workflow:Workflow):void{
+  for(const node of workflow.nodes){
+    if(!node||node.type!=='group_table'||!node.params)continue;
+    if('missingAsZero' in node.params)delete (node.params as Record<string,unknown>).missingAsZero;
+  }
 }

@@ -69,7 +69,7 @@ import {derivedNotes} from './notes-derived.js';
 import {polygonLayer,polygonLayerFacts} from './polygon-layer.js';
 import {shareAlike} from './input-provenance.js';
 import type {MachinedNote} from './notes.js';
-import {groupTable} from './group-table.js';
+import {groupTable,migrateGroupTableNulls} from './group-table.js';
 import {computeTwoByTwo,twoByTwoReceipt,twoByTwoSentence} from './two-by-two.js';
 import {studyDesignSentence,studyDesignReceipt,DESIGN_LICENCES} from './study-design.js';
 import {outreachProjection,extentN3,extentProjection,projectionOf,RULESET_FOR_NODE_TYPE,pinnedRuleset,parametersFor} from './rule-application.js';
@@ -606,6 +606,7 @@ export function validateWorkflow(raw:unknown):Workflow {
   migrateHealthsitesNodes(w);
   migrateFacilitySources(w);
   migrateOutputNodes(w);
+  migrateGroupTableNulls(w);
   // Every migration above has run, so a node still naming a retired widget is one that cannot be
   // migrated — and the practitioner's rule is that such a workflow ceases to work, naming the
   // widget. It used to fail further down as "Incompatible node connection", which told a reader

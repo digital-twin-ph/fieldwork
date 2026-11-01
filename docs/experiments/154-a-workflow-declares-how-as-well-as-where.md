@@ -1,6 +1,6 @@
 # 154 · A workflow declares HOW as well as WHERE
 
-_Created 2026-10-31 · Updated 2026-10-31_
+_Created 2026-10-31 · Updated 2026-11-01_
 
 **Status:** asked — the primitive design audit is answered below and the implementation follows it.
 This record exists before the code, which is what the adding-a-widget procedure requires.

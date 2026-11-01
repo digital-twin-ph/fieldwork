@@ -995,12 +995,12 @@
    "migrationFrom": []
   },
   "two_by_two": {
-   "version": "0.4.0",
+   "version": "0.5.0",
    "released": "2026-11-01",
    "changes": [
     {
      "kind": "minor",
-     "description": "A connected design now decides what is reported. Case-control reports the odds ratio alone and no surface calls a/(a+b) a risk. Cross-sectional reports the same arithmetic as prevalence measures, under PR, POR and PD. Case series and surveillance report no comparison measure. Measures the practitioner withheld or the design cannot estimate are stated on the figure, in the note and in the receipt. With no design connected every surface is unchanged. The sentence leads with the first measure reported."
+     "description": "With no design connected, every measure is still computed, under a name for its arithmetic: ratio of row proportions, cross-product ratio, difference of row proportions. Every surface says no design is connected, and the receipt records fw:noDesignDeclared. Decision 5 of the study design review: printing \"risk ratio\" over an undeclared table asserted a design nobody chose."
     }
    ],
    "breaking": false,

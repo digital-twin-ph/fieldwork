@@ -1332,7 +1332,7 @@
     {
       "id": "urn:fieldwork:widget:two_by_two",
       "nodeType": "two_by_two",
-      "currentVersion": "0.4.0",
+      "currentVersion": "0.5.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -1353,6 +1353,11 @@
           "version": "0.4.0",
           "path": "widgets/releases/two_by_two/0.4.0.json",
           "sha256": "0dfd0d128e6ad4bd4c81a0254bb9c755eba39fc77bdc6f0469ff7e943ee4fb95"
+        },
+        {
+          "version": "0.5.0",
+          "path": "widgets/releases/two_by_two/0.5.0.json",
+          "sha256": "65d8e397cf28168f5c743233b092ed0dc57dc224de01a9ff9633e6f1cdd16829"
         }
       ]
     },

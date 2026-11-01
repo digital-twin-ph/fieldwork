@@ -279,7 +279,9 @@ export function rateRatioEquationNote(result:RateRatioResult,nodeId:string):Mach
 
 /** One estimate's pair of equations, symbolic then instantiated, in the a/b/c/d letters. */
 const SYMBOL:Record<string,string>={'risk ratio':'RR','odds ratio':'OR','risk difference':'RD',
-  'prevalence ratio':'PR','prevalence odds ratio':'POR','prevalence difference':'PD'};
+  'prevalence ratio':'PR','prevalence odds ratio':'POR','prevalence difference':'PD',
+  'ratio of row proportions':'ratio','cross-product ratio':'cross\\ product',
+  'difference of row proportions':'difference'};
 
 const estimateLines=(estimate:EpiEstimate,symbolic:string,instantiated:string):string=>
   `\n\n**${estimate.reportedAs??estimate.name}**, ${estimate.method}:`
@@ -360,6 +362,8 @@ export function twoByTwoEquationNote(result:TwoByTwoResult,nodeId:string):Machin
 
   const left=[...(result.reading?.withheld??[]),...(result.reading?.notEstimable??[])];
   if(left.length)text+=`\n\nNot reported under this design: ${left.join(', ')}.`;
+  if(result.reading?.design===null)text+=`\n\nNo study design was connected, so these measures `
+    +`are named by their arithmetic and not by what they measure.`;
   if(result.strataLeftOut.length)
     text+=`\n\nThis table also holds `
       +`${result.strataLeftOut.map(v=>`"${v}"`).join(', ')} in ${exposureColumn}, which is in `

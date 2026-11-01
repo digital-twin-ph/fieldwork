@@ -44,6 +44,18 @@ safe, which it is not. Make the outcome common instead of rare and the two part 
 
 This widget supplies the estimate. **Reading the denominator is still yours.**
 
+**The names above assume a declared cohort.** Connect a *Study design* and it decides what is
+reported. With none connected, every measure is still computed, named by its arithmetic:
+
+| With a cohort declared | With no design connected |
+| --- | --- |
+| Risk ratio | Ratio of row proportions |
+| Odds ratio | Cross-product ratio |
+| Risk difference | Difference of row proportions |
+
+The numbers do not change. A line under the estimates says no design is connected, and the receipt
+records it, because *"risk ratio"* over an undeclared table claims a design nobody chose.
+
 ## What you connect
 
 **records** — a table holding **one row per combination** of the exposure and the outcome. Total it

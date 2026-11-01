@@ -2,7 +2,7 @@
 
 _Created 2026-11-01 · Updated 2026-11-01_
 
-**Status:** asked — nothing is built. The access question was measured; everything else is proposed.
+**Status:** asked — the search is not built. The access question was measured, the facets are drafted, and the search itself is proposed.
 
 ## The task
 
@@ -19,12 +19,22 @@ and the rule on open sources is the direction `open-evidence-for-low-resource-se
 
 A tree forces one path, and allocation and sampling are independent. Natural experiment broke the
 first draft for that reason: Snow's house comparison is outside allocation and cohort-like sampling
-at once. A strict hierarchy would repeat the fault, so the proposal is facets: unit, entry,
-comparison, allocation, time, group variable and collection. A design label would follow from
-facet values. The tree stays as one guided path through them, because a novice needs a place to
+at once. A strict hierarchy would repeat the fault, so the proposal is eight facets: collection,
+unit, entry, comparison, observation, allocation, time and group variable. *(Corrected 2026-11-01:
+first listed as seven; observation was split from time, because following subjects and calendar
+structure answer different questions.)* A design label would follow from facet values, and the
+review now holds [the mapping](../research/study-design-decision-tree-2026-11-01.md). The tree stays as one guided path through them, because a novice needs a place to
 start.
 
 **A rule may propose a label and never declares one.** That keeps "declared, never inferred".
+
+## Settled, 2026-11-01
+
+- **Facet values that fit two labels offer both.** One followed group with no comparison offers
+  cohort and case series, cohort first, and records the definition used. Decision 1 of the review.
+  Not built: no shipped surface asks the questions yet.
+- **Facet values that fit no label compute under neutral names.** Decision 5. Built in
+  `two_by_two` 0.5.0.
 
 ## Measured, 2026-11-01
 
@@ -53,6 +63,9 @@ themselves case-control not to be. A search on that term would show trainees mis
 models. So a result is shown as "indexed as case-control", never "is case-control".
 
 ## The proposal
+
+Pearce recommends teaching epidemiology through real problems, which fits a collection of real
+papers. That is an editorial position and not a test.
 
 1. A small checked collection first: open papers classified by a person against the facets, with
    the reasoning and the machined sentences each would produce. It ships with example data, so it

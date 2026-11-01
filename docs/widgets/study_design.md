@@ -1,6 +1,6 @@
 # Study design
 
-_Created 2026-10-31 · Updated 2026-10-31_
+_Created 2026-10-31 · Updated 2026-11-01_
 
 **A workflow declares HOW as well as WHERE.** `study_area` says where a study is; nothing said what
 kind of study it is. This declares the design and the study period, and states which measures that
@@ -110,8 +110,7 @@ a guessed declaration is worse than none.
 
 **It governs the two-by-two only.** A connected design decides what `two_by_two` reports: case-control keeps the odds ratio and drops the word risk, cross-sectional reports prevalence measures, and case series and surveillance report no comparison measure. `rate_ratio` carries the design and is not changed by it.
 
-**An undeclared design is reported, not punished.** With no design connected, every measure is reported as it was. A workflow with no declaration computes
-exactly as it did before. A practitioner with their own data may not be sure which design they
+**An undeclared design is reported, not punished.** With no design connected, every measure is still computed, under a name for its arithmetic: ratio of row proportions, cross-product ratio, difference of row proportions. A line says no design is connected. The numbers are the same as before; only the names differ, because `a/(a+b)` is a risk only under some designs. A practitioner with their own data may not be sure which design they
 have, and an application that refused to compute until told would be worse than one that stays
 quiet.
 

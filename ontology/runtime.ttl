@@ -433,6 +433,10 @@ fw:licensedEstimate a owl:DatatypeProperty; rdfs:label "licensed estimate";
 fw:withheldEstimate a owl:DatatypeProperty; rdfs:label "withheld estimate";
   rdfs:range xsd:string;
   rdfs:comment "A measure the declared design licenses and the practitioner chose not to report. Written so that a measure left out on purpose can be told from one nobody ran." .
+fw:noDesignDeclared a owl:DatatypeProperty; rdfs:label "no design declared";
+  rdfs:domain fw:TwoByTwo;
+  rdfs:comment "No study design was connected to this two-by-two, so its measures carry neutral names." ;
+  rdfs:range xsd:boolean .
 fw:notEstimable a owl:DatatypeProperty; rdfs:label "not estimable";
   rdfs:domain fw:TwoByTwo; rdfs:range xsd:string;
   rdfs:comment "A measure the declared design cannot support, as distinct from one the practitioner withheld. Under case-control sampling the risk ratio and the risk difference are not estimable." .

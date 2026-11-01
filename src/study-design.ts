@@ -133,6 +133,18 @@ export function readUnderDesign(result:TwoByTwoResult,declared:DeclaredDesign):T
     notEstimable:notEstimable(declared.design)}};
 }
 
+/** THE NAMES A TWO-BY-TWO CARRIES WHEN NOTHING DECIDED WHAT IT MEASURES. `a/(a+b)` is a risk only
+ *  under some designs, so printing "risk ratio" over an undeclared table asserts a design nobody
+ *  chose: the failure the audit calls the worse of the two, because the number is right. These
+ *  name the arithmetic alone. Decision 5 of the study design review, settled 2026-11-01. */
+const UNDECLARED_NAME:Record<string,string>={'risk ratio':'ratio of row proportions',
+  'odds ratio':'cross-product ratio','risk difference':'difference of row proportions'};
+
+/** Every measure stays, because an undeclared workflow must keep working. Only the names move. */
+export const readUndeclared=(result:TwoByTwoResult):TwoByTwoResult=>({...result,
+  estimates:result.estimates.map(e=>({...e,reportedAs:UNDECLARED_NAME[e.name]??e.name})),
+  reading:{design:null,rowProportion:'row proportion',withheld:[],notEstimable:[]}});
+
 export const isStudyDesign=(value:unknown):value is StudyDesign=>
   typeof value==='string'&&(STUDY_DESIGNS as readonly string[]).includes(value);
 

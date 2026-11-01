@@ -1316,6 +1316,30 @@ the running application and are not yet experiments.
   by the change, largest fall first**. The chart widget today draws one value per category in the
   order the keys arrive, so it can express neither half.
 
+- **The study design deserves a dialog, and the practitioner picks the computations.** Raised
+  2026-10-31: *"for study design widget — a modal dialog should allow the user to select the study
+  design and to unselect or select which computations to include downstream."* The same reasoning
+  that gave the 2×2 its mapping dialog: a declaration that decides what every computation
+  downstream may report is not a field in a column of fields.
+
+  **It changes what step 3 of the sequence is.** Gating was recorded as the design deciding which
+  measures a `two_by_two` may report. This makes the design PROPOSE and the practitioner DISPOSE:
+  the dialog lists what the declared design licenses — for a cohort, risk ratio, odds ratio and
+  risk difference; for case-control, the odds ratio alone — and the practitioner ticks what the
+  write-up should carry. That is the difference between an application that refuses a measure and
+  one that tells a practitioner which measures their design supports and lets them choose, which
+  is 149's "report rather than grade" applied to the one place it would have been easiest to
+  grade.
+
+  It also answers the doubt experiment 147 recorded and [154](experiments/154-a-workflow-declares-how-as-well-as-where.md)
+  carried forward — that a practitioner may not be sure which design they have. A dialog that
+  shows the consequence of each design as it is selected lets somebody decide by reading what it
+  would license, rather than by committing first and discovering later.
+
+  Unsettled: whether unticking a licensed measure is a presentation choice or a declaration that
+  belongs in the receipt. It should be the second — a measure withheld on purpose is a fact about
+  the analysis — but that needs deciding rather than assuming.
+
 - **A chart or a map that lies is not a failing test — experiment 156, after the two items
   above.** Raised 2026-10-31: *"I think we need some form of automated chart and map
   validation."* The evidence is the day it was raised. Every defect in the chart thread was found

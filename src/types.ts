@@ -305,6 +305,9 @@ export interface ParamsByType {
      *  it. Carries a signature of the gap, so editing the data or the comparison lapses it. */
     unmatched?:import('./relate-table.js').UnmatchedDeclaration};
   group_table:{label:string;by:string[];
+    /** Which aggregate: the sum this step has always computed, or a minimum or maximum. See
+     *  `AGGREGATES` for why the rest of Epi Info AI's SUMMARIZE vocabulary is absent. */
+    aggregate?:import('./group-table.js').Aggregate;
     /** Total what is present, excluding empty cells. Declared, never assumed: the default is
      *  that a group holding an empty cell totals to nothing known. It EXCLUDES rather than
      *  zeroing — see `GroupRequest` for why those are different claims. */

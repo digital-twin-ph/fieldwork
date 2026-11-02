@@ -77,3 +77,35 @@ test('the table the viewer shows is the one this step produced, not a neighbour\
   expect(rows).toBeGreaterThan(0);
   expect(errors).toEqual([]);
 });
+
+test('a step offers its table at the top, and toggles before and after',async({page})=>{
+  const row=(group,outcome,value)=>({key:{group,outcome},value});
+  const data={kind:'data-table',keys:['group','outcome'],valueField:'n',rowCount:4,missingValueCount:0,
+    rows:[row('e','c',30),row('e','w',70),row('u','c',10),row('u','w',90)]};
+  const w={schema:'fieldwork/workflow/1',id:'w',label:'w',nodes:[
+    {id:'cells',type:'table_input',x:40,y:240,params:{label:'Cells',keys:['group','outcome'],valueField:'n',data}},
+    {id:'t',type:'two_by_two',x:360,y:120,params:{label:'Table',exposureColumn:'group',exposed:'e',unexposed:'u',
+      outcomeColumn:'outcome',caseValue:'c',nonCaseValue:'w',level:95}},
+    {id:'out',type:'table_output',x:680,y:120,params:{label:'Out',inputMode:'table'}}],
+    edges:[{id:'1',from:'cells',to:'t',port:'records'},{id:'2',from:'t',to:'out',port:'table'}]};
+  await page.goto('/');await page.evaluate(()=>localStorage.clear());await page.goto('/?example=blank');
+  await page.locator('#workflow-file').setInputFiles({name:'w.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(w))});
+  await page.locator('#run-button').click();
+  await page.locator('[data-view="workflow"]').click();
+  await page.locator('.react-flow__node[data-id="t"]').click({force:true});
+  const look=page.locator('#output-quick-look');
+  await expect(look).toHaveText(/View this table/);
+  await expect(look).toBeInViewport();
+  await look.click();
+  const viewer=page.locator('#table-viewer');
+  await expect(viewer.locator('[data-table-step]')).toHaveText(['Before','After']);
+  await expect(viewer.locator('[data-table-step="1"]')).toHaveAttribute('aria-pressed','true');
+  await expect(viewer).toContainText('Before this step: 2 rows');
+  await viewer.locator('[data-table-step="0"]').click();
+  await expect(page.locator('#table-viewer [data-table-step="0"]')).toHaveAttribute('aria-pressed','true');
+  await expect(page.locator('#table-viewer h2')).toContainText('before: Cells');
+  await page.locator('#table-viewer [data-table-step="1"]').click();
+  await expect(page.locator('#table-viewer [data-table-step="1"]')).toHaveAttribute('aria-pressed','true');
+  await page.locator('#table-viewer-close').click();
+  await expect(page.locator('#table-viewer')).toHaveCount(0);
+});

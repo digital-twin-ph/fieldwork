@@ -12,6 +12,13 @@ supply categories. Totalling within the supply category and the measure turns 64
 the people and the deaths in each category. That six-row table is a contingency table, and it is
 what the next steps turn into a two-by-two.
 
+
+## Seeing what this step did
+
+After a run, **View this table** at the top of the Inspector opens the output. **Before** and
+**After** switch between the table that came in and the one that went out, and After says how many
+rows and columns there were before.
+
 ## What you connect
 
 **records** — any table.

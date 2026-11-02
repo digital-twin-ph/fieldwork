@@ -4,6 +4,7 @@ import {existsSync,readFileSync} from 'node:fs';
 import {riskRatio,oddsRatio,riskDifference,rateRatio} from '../build/epi-estimate.js';
 import {groupTable} from '../build/group-table.js';
 import {computeExposures} from '../build/exposure-table.js';
+import {DESIGN_LICENCES,readUnderDesign} from '../build/study-design.js';
 import {computeTwoByTwo} from '../build/two-by-two.js';
 
 /** THE KERNEL'S ARITHMETIC, reached without a widget. Experiment 161, step 1.
@@ -117,8 +118,8 @@ test('every food in one table matches its own two-by-two',
       assert.equal(cell(food,'upper'),Math.round(100*one.estimates[0].upper)/100,food);
       assert.deepEqual(out.rows.find(row=>row.column===food).result.estimates[0],one.estimates[0],food);
     }
-    assert.equal(cell('Mashed potato','not recorded'),1);
-    assert.equal(cell('Spinach','not recorded'),0);
+    assert.equal(cell('Mashed potato','left out'),1);
+    assert.equal(cell('Spinach','left out'),0);
     assert.match(out.sentence,/14 exposures compared.*none adjusted for the number of comparisons/);
   });
 test('one unusable exposure is a row saying so, not a failed run',()=>{
@@ -129,7 +130,7 @@ test('one unusable exposure is a row saying so, not a failed run',()=>{
     nonCaseValue:'W',level:95,rowsAreSubjects:true};
   const out=computeExposures(table,request,['e','f'],keep);
   assert.ok(out.rows[0].result);
-  assert.equal(out.rows[0].notRecorded,1,'the 9 is not recorded, and is counted as such');
+  assert.equal(out.rows[0].leftOut,1,'the 9 is left out, and counted');
   assert.equal(out.rows[1].result,null);
   assert.match(out.sentence,/Not read: f /);
 });
@@ -137,4 +138,25 @@ test('several exposures need a line list',()=>{
   const table={kind:'data-table',keys:['e','o'],valueField:'v',missingValueCount:0,rowCount:0,rows:[]};
   assert.throws(()=>computeExposures(table,{exposureColumn:'e',exposed:'Y',unexposed:'N',outcomeColumn:'o',
     caseValue:'I',nonCaseValue:'W',level:95},['e'],keep),/one subject/);
+});
+
+/** STEP 5: CASE-CONTROL. The columns were fixed, so no risk is reported, and a second control group
+ *  is a choice of non-case value that the result names. */
+test('under a case-control design the table has cells and odds, and no attack rate',()=>{
+  const row=(id,e,o)=>({key:{id,e,o},value:1});
+  const rows=[];let id=0;
+  const many=(n,e,o)=>{for(let i=0;i<n;i++)rows.push(row(String(id++),e,o));};
+  many(6,'1','1');many(2,'0','1');many(3,'1','0');many(9,'0','0');many(4,'1','2');many(4,'0','2');
+  const table={kind:'data-table',keys:['id','e','o'],valueField:'v',missingValueCount:0,rowCount:rows.length,rows};
+  const request={exposureColumn:'e',exposed:'1',unexposed:'0',outcomeColumn:'o',caseValue:'1',
+    nonCaseValue:'0',level:95,rowsAreSubjects:true};
+  const declared={design:'case-control',licence:DESIGN_LICENCES['case-control'],
+    included:DESIGN_LICENCES['case-control'].estimates,withheld:[]};
+  const out=computeExposures(table,request,['e','e'],found=>readUnderDesign(found,declared));
+  const measures=[...new Set(out.table.rows.map(r=>r.key.measure))];
+  assert.deepEqual(measures,['a','b','c','d','odds ratio','lower','upper','left out']);
+  const cell=measure=>out.table.rows.find(r=>r.key.measure===measure).value;
+  assert.equal(cell('odds ratio'),9);
+  assert.equal(cell('left out'),8,'the second control group is counted as left out');
+  assert.match(out.sentence,/Left out of every comparison: o "2"/);
 });

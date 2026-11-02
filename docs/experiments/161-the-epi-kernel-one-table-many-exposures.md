@@ -2,7 +2,7 @@
 
 _Created 2026-11-02 · Updated 2026-11-02_
 
-**Status:** tried — steps 1 to 4 done, and the measures run in Rust. The arithmetic is shared. The substrate, plural exposures and the
+**Status:** tried — steps 1 to 4 done, step 5 in narrow form, and the measures run in Rust. The arithmetic is shared. The substrate, plural exposures and the
 widget change are designed here and not built.
 
 ## The task
@@ -173,3 +173,12 @@ general words, which holds where one description fits every exposure; an exposur
 description is not served. **The new question has no evidence review**, unlike the others in the tree, so
 its wording is a proposal: the report's standard is that every branch and caveat is backed. It was not
 exercised by declaring a design on Oswego, which stays undeclared.
+
+**Step 5, narrow form, 2026-11-02.** Under a declared case-control design the table shows the four cells and
+the odds ratio, and no attack rate. A second control group is a choice of non-case value, and the result
+names the other as left out, so `not recorded` became `left out`, which is true of both kinds of row. Run
+by a throwaway script on Luczynska et al., Germany 2021 (Zenodo 10.5281/zenodo.7333295, CC-BY 4.0, codebook
+read for the case variable only, paper not read): 31 foods on one node, 3 unusable and named. Galia melon
+is 12/3 against 20/107, odds ratio 21.4 (5.5 to 82.7), with classical controls, and 12/10 against 20/146, 8.8
+(3.4 to 22.9), with panel controls. These figures are not compared with the paper. The example has not been
+built in the app and is not a repository.

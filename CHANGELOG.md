@@ -14,8 +14,8 @@ Covers the work of 2026-10-30.
   rather than flagging each as different from the declared groups.
 
 - **A two-by-two compares several exposures on one node.** With a line list, tick the exposures and get
-  one table with a row each, unranked, with those not recorded counted and the number of comparisons
-  stated. Oswego's menu goes from 43 nodes to 3.
+  one table with a row each, unranked, with rows left out counted and the number of comparisons
+  stated. Under a declared case-control design it shows odds and no attack rates. Oswego's menu goes from 43 nodes to 3.
 
 - **A two-by-two reads a line list directly.** Tick *Each row is one subject* and connect the list, with
   no count first. Measures now compute in FW's own Rust kernel. Reported values are unchanged.

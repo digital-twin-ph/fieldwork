@@ -94,11 +94,11 @@ test('the dialog pages through a design, keeps text on Next, and ends on the che
   const onto=async id=>{for(let i=0;i<20&&!(await dialog.locator(`[data-question="${id}"]`).count());i++)await next.click();};
   await expect(back).toBeDisabled();
   await dialog.locator('[name="design-kind"][value="case-control"]').check();
-  await expect(dialog.locator('#design-page')).toHaveText('Page 1 of 12');
+  await expect(dialog.locator('#design-page')).toHaveText('Page 1 of 13');
   await next.click();
   await expect(dialog.locator('[data-question]')).toHaveCount(1);
   await dialog.locator('[data-question="SRC"] input[value="SRC.1"]').check();
-  await expect(dialog.locator('#design-page')).toHaveText('Page 2 of 23');
+  await expect(dialog.locator('#design-page')).toHaveText('Page 2 of 24');
   // TYPED AND NEVER LEFT: Next has to commit it, or the sentence is lost.
   await dialog.locator('[data-slot="system"]').fill('PIDSR');
   await next.click();

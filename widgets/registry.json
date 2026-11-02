@@ -1320,7 +1320,7 @@
     {
       "id": "urn:fieldwork:widget:study_design",
       "nodeType": "study_design",
-      "currentVersion": "0.5.0",
+      "currentVersion": "0.6.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -1346,13 +1346,18 @@
           "version": "0.5.0",
           "path": "widgets/releases/study_design/0.5.0.json",
           "sha256": "5322d1d3f884c76efc759b195d3758e0b457ee799efc3f8031764e0995cfc3ab"
+        },
+        {
+          "version": "0.6.0",
+          "path": "widgets/releases/study_design/0.6.0.json",
+          "sha256": "fc7bebbd6f10b58ad4d891268821fe98a9770cbdc45e0c47da44494317bc4ee8"
         }
       ]
     },
     {
       "id": "urn:fieldwork:widget:two_by_two",
       "nodeType": "two_by_two",
-      "currentVersion": "0.5.0",
+      "currentVersion": "0.6.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -1378,6 +1383,11 @@
           "version": "0.5.0",
           "path": "widgets/releases/two_by_two/0.5.0.json",
           "sha256": "65d8e397cf28168f5c743233b092ed0dc57dc224de01a9ff9633e6f1cdd16829"
+        },
+        {
+          "version": "0.6.0",
+          "path": "widgets/releases/two_by_two/0.6.0.json",
+          "sha256": "510e447a6a0004d8ec2b3a2c0118d35a39fe16eddc4908da6b013c82c077ed2a"
         }
       ]
     },

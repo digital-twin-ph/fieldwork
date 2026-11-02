@@ -983,24 +983,24 @@
    "migrationFrom": []
   },
   "study_design": {
-   "version": "0.5.0",
-   "released": "2026-11-01",
+   "version": "0.6.0",
+   "released": "2026-11-02",
    "changes": [
     {
      "kind": "minor",
-     "description": "Answering that investigators allocated exposure now stops the declaration: the receipt records fw:designStopped, computations run under neutral names, and later questions are not asked. At phone width each cell names its column."
+     "description": "Asks how the exposures were chosen: one named in advance, a few named in advance, everything available as a screen, or not sure. The answer writes a sentence into Methods. The checklist no longer compares several exposures with the one declared pair of groups, which raised a false difference for every exposure, and reports how many were compared instead. The wording of the new question rests on no evidence review yet."
     }
    ],
    "breaking": false,
    "migrationFrom": []
   },
   "two_by_two": {
-   "version": "0.5.0",
-   "released": "2026-11-01",
+   "version": "0.6.0",
+   "released": "2026-11-02",
    "changes": [
     {
      "kind": "minor",
-     "description": "With no design connected, every measure is still computed, under a name for its arithmetic: ratio of row proportions, cross-product ratio, difference of row proportions. Every surface says no design is connected, and the receipt records fw:noDesignDeclared. Decision 5 of the study design review: printing \"risk ratio\" over an undeclared table asserted a design nobody chose."
+     "description": "Adds a declared role: each row is one subject. A line list then reaches a two-by-two directly, with no count upstream, and a cell is how many rows agree. Off, each row holds a count, which is what every saved workflow means, so none changes. The two readings differ on an empty cell: in totals a missing row means nobody counted it and is refused, while in a line list a combination nobody fell into is a true zero. The role is declared and never inferred, because the table does not say which it is. Outcome values the mapping does not name are now reported, as exposure values already were. The measures are computed by the Rust kernel. With a line list it also compares several exposures on one node: one table with a row per exposure in the order chosen, unranked, counting those not recorded and stating that no interval is adjusted for the number of comparisons. Oswego's 14 foods take 3 nodes in place of 43."
     }
    ],
    "breaking": false,

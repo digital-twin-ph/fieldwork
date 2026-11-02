@@ -126,6 +126,7 @@ export function tablePageMarkup(params:DesignParams,esc:Escape):string{
     +`<p class="description">No numbers here: they come with the data. Say what each cell will `
     +`hold, whether or not the study has begun. Select a cell to describe it.</p>`
     +`<div class="mapping-grid">`
+    +`<p class="description">With several exposures, describe the groups in general, such as ate and did not eat.</p>`
     +tableField('exposed','Exposed',table?.exposed,esc)+tableField('unexposed','Unexposed',table?.unexposed,esc)
     +tableField('exposureKnownFor','Exposure is known for',table?.exposureKnownFor,esc)
     +tableField('outcome','Outcome',table?.outcome,esc)+tableField('noOutcome','No outcome',table?.noOutcome,esc)

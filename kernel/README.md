@@ -8,10 +8,10 @@ The statistical arithmetic under Fieldwork: Rust, compiled to WebAssembly, with 
 Its start is recorded in `ORIGIN.md`. The design is in
 [experiment 161](../docs/experiments/161-the-epi-kernel-one-table-many-exposures.md).
 
-**Not used by the application yet.**
+Every measure in `src/epi-estimate.ts` calls this kernel.
 
-`fieldwork-kernel.wasm` is committed, so building FW needs no Rust. To rebuild it after changing the
-source, with Rust and the `wasm32-unknown-unknown` target:
+`fieldwork-kernel.wasm` and `src/kernel-bytes.ts` are committed, so building FW needs no Rust. To rebuild
+both after changing the source, with Rust and the `wasm32-unknown-unknown` target:
 
     npm run build:kernel
 

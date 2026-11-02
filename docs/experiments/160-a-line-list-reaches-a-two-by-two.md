@@ -89,3 +89,6 @@ nothing is computed from it.
 `tests/oswego-from-scratch.browser.mjs` and the `COUNT READS NO VALUE` unit test; runs are recorded
 in the commit that lands this. Rule fired: none. The gap was in implementation, and only a second
 example could find it.
+
+_Updated 2026-11-02: the finding led to [161](161-the-epi-kernel-one-table-many-exposures.md). Oswego is now two
+workflows of 3 nodes each. The 46-node project stands in the example's history at its first pinned commit._

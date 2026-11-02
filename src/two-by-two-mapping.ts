@@ -59,6 +59,7 @@ export function resolveCells(table:DataTable|undefined,
     if(!table||!request.exposureColumn||!request.outcomeColumn||!exposure||!outcome)
       return {letter,exposure,outcome,rows:0,value:null,problem:'Not mapped yet.'};
     const rows=matching(table,request,exposure,outcome);
+    if(request.rowsAreSubjects)return {letter,exposure,outcome,rows:rows.length,value:rows.length,problem:null};
     if(!rows.length)return {letter,exposure,outcome,rows:0,value:null,
       problem:'No row has this combination. A missing cell is not a zero: nobody counted it.'};
     if(rows.length>1)return {letter,exposure,outcome,rows:rows.length,value:null,

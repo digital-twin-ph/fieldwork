@@ -7,6 +7,19 @@ shown in a local build is not a claim that it has been published.
 
 Covers the work of 2026-10-30.
 
+- **Fast editing no longer fails in Safari.** Every edit rewrote the page address, and Safari refuses more
+  than 100 of those in ten seconds, which stopped the edit. It now writes only when the address changes.
+
+- **Study design asks how the exposures were chosen,** and the checklist reports how many were compared
+  rather than flagging each as different from the declared groups.
+
+- **A two-by-two compares several exposures on one node.** With a line list, tick the exposures and get
+  one table with a row each, unranked, with those not recorded counted and the number of comparisons
+  stated. Oswego's menu goes from 43 nodes to 3.
+
+- **A two-by-two reads a line list directly.** Tick *Each row is one subject* and connect the list, with
+  no count first. Measures now compute in FW's own Rust kernel. Reported values are unchanged.
+
 - **A line list can be counted.** *Total within groups* gains **Count rows**, which says how many
   rows agree without reading their value, so a person-level line list reaches a two-by-two. It counts
   rows, not people: import one value column.

@@ -1092,13 +1092,17 @@
       "inTheirWords": "This is a DE project and we cannot mandate emergence. Emergence is arrived at. ... When we work on computational workflows, we do best effort to make sure those are validated once those workflows are stable. ... this should not be a gate. ... In fact looking at the rest, they are all false gates, this being a DE project. ... The one who decides when the framework is stable is when the rubber meets the road and the users test the app with their workflows. We do best effort to exercise those workflows using worked examples and that's one type of validation. The other is field testing, which is still quite down the road.",
       "requiresInCode": "No gate may demand that a direction has moved by a date. validate-directions.mjs keeps its checks on the record -- quoted, requires something in code, names a work item, a check is a dated finding -- and reports age without failing on it. Validation is opportunistic: best effort once a computation is stable, not a precondition. Stability is decided by users running their own workflows, so no check here may claim it. Worked examples are one type of validation, best effort; field testing is the other and has not begun.",
       "recordedIn": "docs/audits/rule-audit.md",
-      "workItem": "Whether the blocker ledger's 7-day window is the same false gate is an open question, in TODO.md.",
+      "workItem": "None open. The blocker clock went the same day.",
       "status": "built",
       "lastChecked": "2026-11-02",
       "checks": [
         {
           "date": "2026-11-02",
           "found": "The clock is removed from validate-directions.mjs and the window from the register. It had blocked b4908c1, which had passed the full gate, from main, and stopped CI's verify before its browser tests, on a date and no change to the code."
+        },
+        {
+          "date": "2026-11-02",
+          "found": "\"There is no blocker clock.\" Removed from validate-blockers.mjs and widgets/blockers.json. Its checks on the record stay."
         }
       ]
     }

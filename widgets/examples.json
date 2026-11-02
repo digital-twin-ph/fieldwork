@@ -227,6 +227,87 @@
         }
       ],
       "workflowCount": 2
+    },
+    {
+      "id": "urn:fieldwork:example:nigeria-immunization-2024",
+      "title": "DTP coverage and zero-dose children in Nigeria, 2024",
+      "repository": "https://github.com/digital-twin-ph/example-2024-nigeria-immunization",
+      "commit": "e34152c7c97aa6d3bfba36a564a7e601b26c6786",
+      "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2024-nigeria-immunization",
+      "licence": {
+        "data": "CC-BY-4.0",
+        "source": "WorldPop, Modelled vaccination coverage and zero-dose estimates for Nigeria, 2000-2024, version 1.0. doi:10.5258/SOTON/WP00880",
+        "note": "Stated on the WorldPop dataset page. Attribution is required and is in NOTICE.txt. Boundaries were not reviewed separately."
+      },
+      "description": "Four questions about 774 LGAs from modelled estimates: lowest coverage, highest burden, change since 2018, and an illustrative rule over both values.",
+      "carries": {
+        "workflow": true,
+        "data": true,
+        "geography": true
+      },
+      "notYet": "Coverage intervals do not reach a map or a rule. Persistence, facilities, access and measles are not built.",
+      "workflowCount": 4,
+      "uses": [
+        "apply_ruleset",
+        "derive_value",
+        "join_table_to_area",
+        "map_output",
+        "polygon_input",
+        "select_rows",
+        "table_input"
+      ],
+      "files": [
+        {
+          "path": "fieldwork-project.json.gz",
+          "sha256": "9b0a1f499eb47112b52379e6814b39ea6a9d415df31cf6e9eb1d2c5bb67ccfc0",
+          "bytes": 6486585
+        },
+        {
+          "path": "data/nga-lga-2018.csv",
+          "sha256": "9bffa053b4c468739f6bbddf0d4b5d402f7f7599d196eb0add13c7213bb80472",
+          "bytes": 153251
+        },
+        {
+          "path": "data/nga-lga-2021.csv",
+          "sha256": "3e3fc343c513eeb6bc58f6129e0b39896e5e8769ec5b100e96af17ee60169068",
+          "bytes": 153265
+        },
+        {
+          "path": "data/nga-lga-2024.csv",
+          "sha256": "56f59be0532d91a7526481cefe34d0a27282942b4defde841e17f400d98bd773",
+          "bytes": 153429
+        },
+        {
+          "path": "data/nga-lga-dtp1-by-year.csv",
+          "sha256": "9292993dec0ea88fcdbef703558c16e69231533868178452fd2f9354d0cb4204",
+          "bytes": 52012
+        },
+        {
+          "path": "geo/nga-lgas.geojson",
+          "sha256": "b0e28ad270783889272612676a5198e1176a6cd74c90dc199156acac0adff81c",
+          "bytes": 4567761
+        },
+        {
+          "path": "provenance.json",
+          "sha256": "a0a6c61dde5fd23bedd310ece037d171ed9e742b4165ee767df09d2079e83953",
+          "bytes": 1820
+        },
+        {
+          "path": "README.md",
+          "sha256": "7c3196ada829b818a8fd3658ca09b7d91771aaa40075829c0a361fdbc3b7c5ad",
+          "bytes": 3706
+        },
+        {
+          "path": "NOTICE.txt",
+          "sha256": "6fafb2b9b799e361f30cef5eb1a8c0281a8f8f72259a033905d1c410ef7165c5",
+          "bytes": 1045
+        },
+        {
+          "path": "LICENSE-data",
+          "sha256": "9ba9550ad48438d0836ddab3da480b3b69ffa0aac7b7878b5a0039e7ab429411",
+          "bytes": 18657
+        }
+      ]
     }
   ]
 }

@@ -15,6 +15,7 @@
   "snow-voronoi"
  ],
  "examplesPinned": [
+  "nigeria-immunization-2024",
   "oswego-1940",
   "south-london-1854"
  ],
@@ -55,12 +56,13 @@
    "nodeType": "apply_ruleset",
    "exampleUses": [
     "heat",
+    "nigeria-immunization-2024",
     "old-naledi",
     "rulesets",
     "sea-level",
     "snow-extent"
    ],
-   "exampleUseCount": 5,
+   "exampleUseCount": 6,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],
@@ -184,9 +186,10 @@
   {
    "nodeType": "derive_value",
    "exampleUses": [
+    "nigeria-immunization-2024",
     "south-london-1854"
    ],
-   "exampleUseCount": 1,
+   "exampleUseCount": 2,
    "lab": "awaiting",
    "labOwed": true,
    "fieldUse": [],
@@ -270,9 +273,10 @@
   {
    "nodeType": "join_table_to_area",
    "exampleUses": [
+    "nigeria-immunization-2024",
     "south-london-1854"
    ],
-   "exampleUseCount": 1,
+   "exampleUseCount": 2,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],
@@ -295,6 +299,7 @@
     "coverage",
     "hagelloch",
     "heat",
+    "nigeria-immunization-2024",
     "old-naledi",
     "oswego-1940",
     "raster",
@@ -306,7 +311,7 @@
     "snow-voronoi",
     "south-london-1854"
    ],
-   "exampleUseCount": 13,
+   "exampleUseCount": 14,
    "lab": "none",
    "labOwed": false,
    "fieldUse": [],
@@ -400,9 +405,10 @@
   {
    "nodeType": "polygon_input",
    "exampleUses": [
+    "nigeria-immunization-2024",
     "south-london-1854"
    ],
-   "exampleUseCount": 1,
+   "exampleUseCount": 2,
    "lab": "awaiting",
    "labOwed": true,
    "fieldUse": [],
@@ -494,9 +500,10 @@
   {
    "nodeType": "select_rows",
    "exampleUses": [
+    "nigeria-immunization-2024",
     "south-london-1854"
    ],
-   "exampleUseCount": 1,
+   "exampleUseCount": 2,
    "lab": "none",
    "labOwed": false,
    "fieldUse": [],
@@ -609,6 +616,7 @@
   {
    "nodeType": "table_input",
    "exampleUses": [
+    "nigeria-immunization-2024",
     "oswego-1940",
     "rulesets",
     "sea-level",
@@ -617,7 +625,7 @@
     "snow-voronoi",
     "south-london-1854"
    ],
-   "exampleUseCount": 7,
+   "exampleUseCount": 8,
    "lab": "none",
    "labOwed": false,
    "fieldUse": [],

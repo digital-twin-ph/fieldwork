@@ -166,3 +166,19 @@ test('Oswego opens from its pin as one project, its counts intact',
     await page.locator('[data-view="results"]').click();
     await expect(page.locator('main').first()).toContainText('14 exposures compared on one outcome');
   });
+
+// THE THIRD EXAMPLE, opened from its pin. 774 polygons in each of four workflows, through the fetch.
+const NIGERIA=new URL('../../example-2024-nigeria-immunization/fieldwork-project.json.gz',import.meta.url);
+test('Nigeria opens from its pin as four workflows and runs',
+  {skip:existsSync(NIGERIA)?false:'example-2024-nigeria-immunization is not checked out beside this repository.'},
+  async({page})=>{
+    const bytes=readFileSync(NIGERIA);
+    await page.route(/raw\.githubusercontent\.com/,route=>route.fulfill({status:200,body:bytes}));
+    await openProjects(page);
+    await page.locator('[data-open-example="urn:fieldwork:example:nigeria-immunization-2024"]').click();
+    await expect(page.locator('[data-example-status="urn:fieldwork:example:nigeria-immunization-2024"]'))
+      .toContainText('digest matched',{timeout:30000});
+    await expect(page.locator('#project-select')).toContainText('4 workflows');
+    await page.locator('#run-button').click();
+    await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
+  });

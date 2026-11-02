@@ -24,6 +24,14 @@ attributes exactly as a CSV does. This widget matches the two on one named colum
   there is nothing to key on and this says so rather than drawing an empty choropleth that looks
   like a finding.
 
+**Or a polygon layer.** Connect a *Polygon layer* in place of a study area when there are many parts. A
+study area is one extent of about 26,000 vertices, and Nigeria's 774 LGAs are about 218,000. The layer's
+name property is what rows are matched on. Connect one or the other.
+
+**Joining twice** adds a column: what a polygon holds is kept. Join coverage and then zero-dose counts and
+each LGA carries both, which is what a rule needs to read both. A layer joined this way can be matched on
+a code, which matters where names repeat: 5 of Nigeria's LGA names belong to two places each.
+
 ## How to use it
 
 | Setting | What it decides |

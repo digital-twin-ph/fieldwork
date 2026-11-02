@@ -148,3 +148,21 @@ test('a part with no row is drawn, and carries a null rather than a number',asyn
   assert.equal(polygons.features[1].properties.deaths,null);
   assert.ok(polygons.notes.some(n=>n.startsWith('unmatched-boundary:')));
 });
+
+/** A POLYGON LAYER IS RECORDS, 2026-11-02. A join keeps what a polygon already holds, as a merge on a
+ *  GeoDataFrame does, so a second join gives one record with both values for a rule to read. */
+test('a second join adds a column and keeps the first',async()=>{
+  const {joinedPolygons}=await import('../build/area-join.js');
+  const table=(field,rows)=>({kind:'data-table',keys:['ID'],valueField:field,rowCount:rows.length,
+    missingValueCount:0,rows:rows.map(([ID,value])=>({key:{ID},value}))});
+  const units=[{id:'a',name:'1'},{id:'b',name:'2'}];
+  const square={type:'MultiPolygon',coordinates:[[[[0,0],[1,0],[1,1],[0,0]]]]};
+  const first=joinedPolygons(undefined,joinTableToAreas(units,table('cover',[['1',.4],['2',.9]]),
+    {keyField:'ID',normalisation:'exact'}),'First',[square,square]);
+  const second=joinedPolygons(undefined,joinTableToAreas(units,table('burden',[['1',7000],['2',10]]),
+    {keyField:'ID',normalisation:'exact'}),'Second',[square,square],first.features.map(f=>f.properties));
+  assert.equal(second.features[0].properties.cover,.4);
+  assert.equal(second.features[0].properties.burden,7000);
+  assert.deepEqual(second.features[1].geometry,square,'a multipolygon stays as published');
+  assert.equal(second.boundary,undefined);
+});

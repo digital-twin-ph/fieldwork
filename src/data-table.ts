@@ -7,7 +7,9 @@ import type {Scalar} from './types.js';
  *  lives in a module that uses it. Parsing stays the caller's job. */
 export interface TableRows {headers:string[]; rows:string[][]}
 
-export const MAX_TABLE_ROWS=2000;
+/** RAISED FROM 2,000 ON 2026-11-02: Nigeria's 774 LGAs over three years are 2,322 rows once a wide file
+ *  is read, and the source holds 19,350. A CSV file is still read up to 2,000 rows by `input-data.ts`. */
+export const MAX_TABLE_ROWS=20000;
 export interface DataTableSource {filename:string; bytes:number; sha256:string; rows:number}
 export interface DataTable {
   kind:'data-table'; keys:string[]; valueField:string; unit?:string;

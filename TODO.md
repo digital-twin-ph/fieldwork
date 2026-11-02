@@ -892,17 +892,14 @@ nearest-neighbour-with-distance, and `slr_threshold_comparison` this file has ca
 domain-bound"*, which under the domain-agnostic direction is a question rather than a settled
 exemption. Both are still classified `domain` in `widgets/classification.json`.
 
-### Is the blocker ledger's window the same false gate?
+### From Nigeria, 2026-11-02 ([162](docs/experiments/162-polygons-are-records.md))
 
-`validate-blockers.mjs` fails the build on the same 7-day window that was removed from directions on
-2026-11-02. A blocker differs: it says something cannot be done, and rots by being lifted unnoticed.
-The practitioner's ruling was on directions, so this is left as it is and asked. The oldest standing
-blocker was last revisited 2026-10-29.
-
-### The Rust epi kernel
-
-`kernel/` is FW's own, started 2026-11-02 from the Epi Info AI engine, and every measure runs on it. It
-grows here. New measures go in Rust, then `npm run build:kernel`. Step 5 is done in narrow form; next, build the Germany 2021 example in the app and read its paper. Also read evidence on how exposures are chosen and on multiple comparisons, which EX1 and the unadjusted intervals rest on.
+- **Declare `MAX_TABLE_ROWS` and `MAX_LAYER_VERTICES` in `widgets/caps.json`**, with measured evidence.
+- **Boundary selection has no "select all", and hangs without refusing past one extent's budget.** It also
+  said 773 units when 774 were selected.
+- **Uncertainty does not reach a map or a rule.** A table holds one value per row.
+- **The priority map shows a value key beside the class key.** A change map wants a diverging scale at zero.
+- **A rule's layer note still reads "Values on the study area".**
 
 ### Nowhere to record a hypothesis as a hypothesis
 
@@ -911,14 +908,6 @@ Found 2026-11-02, reading the Nigeria specification. A note can hold the words, 
 Machined notes already carry a role (`fn:'limitation'`), so this may be a role and not a structure; the
 notes code is not read yet. Possibly an evidence kernel matter. Let Oswego and Nigeria show what it needs.
 
-### Nigeria immunization, next look
-
-Postponed by the practitioner 2026-11-02 until a better connection: the host gave about 3.6 KB/s and does
-not resume, so 9.5 MB and 37 MB are too slow here. Direct links are on the WorldPop page. Then read the
-real columns. WorldPop confirms the model uses geospatial covariates; check which, because travel time
-among them would build a link with access into the estimates.
-Expected limits, unrun: `MAX_TABLE_ROWS` of 2,000, one value per row with bounds to carry, and intervals
-FW did not compute.
 
 ### Found building Oswego, 2026-11-02 ([160](docs/experiments/160-a-line-list-reaches-a-two-by-two.md))
 

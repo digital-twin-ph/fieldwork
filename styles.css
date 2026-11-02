@@ -966,3 +966,5 @@ td.map-cell-problem{background:color-mix(in srgb,#b4553a 12%,transparent)}
 i.bar-zero{position:absolute;top:0;bottom:0;width:1px;background:var(--ink,#2b2b2b);opacity:.45}
 .bar-stack.diverging i.bar-zero{left:0;right:0;top:auto;width:auto;height:1px}
 .bar-negative{background:var(--bar-negative,#a8734f)}
+.exposure-list .check{display:flex;align-items:center;gap:6px;margin:2px 0}
+.exposure-list .check input{margin:0}

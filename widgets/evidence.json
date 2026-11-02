@@ -248,10 +248,9 @@
   {
    "nodeType": "group_table",
    "exampleUses": [
-    "oswego-1940",
     "south-london-1854"
    ],
-   "exampleUseCount": 2,
+   "exampleUseCount": 1,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],

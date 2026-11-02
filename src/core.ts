@@ -71,7 +71,8 @@ import {polygonLayer,polygonLayerFacts} from './polygon-layer.js';
 import {shareAlike} from './input-provenance.js';
 import type {MachinedNote} from './notes.js';
 import {groupTable,migrateGroupTableNulls} from './group-table.js';
-import {computeTwoByTwo,twoByTwoReceipt,twoByTwoSentence} from './two-by-two.js';
+import {computeTwoByTwo,twoByTwoReceipt,twoByTwoSentence,type TwoByTwoResult} from './two-by-two.js';
+import {computeExposures} from './exposure-table.js';
 import {studyDesignSentence,studyDesignReceipt,DESIGN_LICENCES,includedMeasures,readUnderDesign,readUndeclared,migrateSurveillanceDesign} from './study-design.js';
 import {refinementSentences,investigatorAllocated} from './study-design-questions.js';
 import type {DeclaredDesign} from './study-design.js';
@@ -1443,8 +1444,22 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         // under a neutral name, because an undeclared design is not a cohort.
         const connected=inputs.design as unknown as DeclaredDesign|undefined;
         const declaredDesign=connected?.stopped?undefined:connected;
+        const read=(found:TwoByTwoResult)=>
+          declaredDesign?readUnderDesign(found,declaredDesign):readUndeclared(found);
+        if((node.params.exposureColumns?.length??0)>1){
+          const several=computeExposures(table,node.params,node.params.exposureColumns!,read);
+          value={...several.table,sentence:several.sentence
+            +(declaredDesign?` ${declaredDesign.sentence}`:'')} as unknown as DisplayValue;
+          receipts.push({nodeId:node.id,kind:'computation',method:several.sentence,
+            exposures:several.rows.map(row=>row.column),
+            unreadable:several.rows.filter(row=>!row.result).map(row=>row.column)} as unknown as Receipt);
+          machined[node.id]=[{kind:'machined',id:`${node.id}:comparisons`,section:'Methods',
+            fn:'limitation',nodeId:node.id,text:several.sentence}];
+          withNote(receipts,runId,node.id,machined[node.id]);
+          break;
+        }
         const computed=computeTwoByTwo(table,node.params);
-        const result=declaredDesign?readUnderDesign(computed,declaredDesign):readUndeclared(computed);
+        const result=read(computed);
         // THE COUNTS ARE THE VALUE AND THE ESTIMATES RIDE ON IT, the arrangement `rate_ratio`
         // settled on 2026-10-26 after one row holding 8.40 showed the summary and hid the thing
         // a reader checks it against. An epidemiologist reads the cells first.
@@ -1452,7 +1467,8 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           ({key:{[node.params.exposureColumn]:exposure,[node.params.outcomeColumn]:outcome},value:count});
         const {exposed,unexposed,caseValue,nonCaseValue}=node.params;
         value={kind:'data-table',keys:[node.params.exposureColumn,node.params.outcomeColumn],
-          valueField:table.valueField,...(table.unit?{unit:table.unit}:{}),
+          ...(node.params.rowsAreSubjects?{valueField:'rows'}
+            :{valueField:table.valueField,...(table.unit?{unit:table.unit}:{})}),
           rows:[cell(exposed,caseValue,result.cells.exposedCases),
             cell(exposed,nonCaseValue,result.cells.exposedNonCases),
             cell(unexposed,caseValue,result.cells.unexposedCases),

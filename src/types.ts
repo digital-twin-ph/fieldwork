@@ -313,7 +313,12 @@ export interface ParamsByType {
      *  that a group holding an empty cell totals to nothing known. It EXCLUDES rather than
      *  zeroing — see `GroupRequest` for why those are different claims. */
     excludeMissing?:boolean};
-  two_by_two:{label:string;exposureColumn:string;exposed:string;unexposed:string;outcomeColumn:string;caseValue:string;nonCaseValue:string;level:90|95|99};
+  two_by_two:{label:string;exposureColumn:string;exposed:string;unexposed:string;outcomeColumn:string;caseValue:string;nonCaseValue:string;level:90|95|99;
+    /** Each row is one subject, so a cell is how many rows agree. See `TwoByTwoRequest`. */
+    rowsAreSubjects?:boolean;
+    /** Every exposure compared, where there is more than one. `exposureColumn` stays the first of
+     *  them, so the two values and the mapping read from a real column. */
+    exposureColumns?:string[]};
   /** WHAT KIND OF STUDY THIS IS, declared and never inferred.
    *
    *  The practitioner, 2026-10-28: *"Case control, cohort, cross-sectional studies carry with

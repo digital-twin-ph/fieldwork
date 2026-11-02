@@ -2629,3 +2629,39 @@ mod tests {
         assert!(matched_odds_ratio(100_000.0, 1.0).is_nan());
     }
 }
+
+/// Rate ratio of events over units. The first measure written here rather than inherited.
+#[unsafe(no_mangle)]
+pub extern "C" fn rate_ratio(events_a: f64, units_a: f64, events_b: f64, units_b: f64) -> f64 {
+    ratio(events_a / units_a, events_b / units_b)
+}
+
+/// Log-normal: se(ln RR) = sqrt(1/a + 1/b). It treats events as independent, which a transmitted
+/// disease is not, and a zero count has no interval.
+fn rate_ratio_interval(
+    events_a: f64,
+    units_a: f64,
+    events_b: f64,
+    units_b: f64,
+    z: f64,
+    upper: bool,
+) -> f64 {
+    let estimate = rate_ratio(events_a, units_a, events_b, units_b);
+    if !valid_confidence_multiplier(z) || !estimate.is_finite() || events_a <= 0.0 || events_b <= 0.0
+    {
+        return f64::NAN;
+    }
+    let standard_error = libm::sqrt(1.0 / events_a + 1.0 / events_b);
+    let direction = if upper { 1.0 } else { -1.0 };
+    libm::exp(libm::log(estimate) + direction * z * standard_error)
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn rate_ratio_ci_lower(a: f64, ua: f64, b: f64, ub: f64, z: f64) -> f64 {
+    rate_ratio_interval(a, ua, b, ub, z, false)
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn rate_ratio_ci_upper(a: f64, ua: f64, b: f64, ub: f64, z: f64) -> f64 {
+    rate_ratio_interval(a, ua, b, ub, z, true)
+}

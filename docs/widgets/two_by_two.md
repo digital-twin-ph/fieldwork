@@ -62,6 +62,22 @@ records it, because *"risk ratio"* over an undeclared table claims a design nobo
 first with *Total within groups*: a cell matching more than one row is refused rather than added up
 here, because summing silently is how a two-by-two acquires subjects nobody counted.
 
+**Or a line list.** Tick **Each row is one subject** and connect it directly: a cell is how many rows
+agree. The tick is yours to make, because a table does not say which it is, and the two disagree about
+an empty cell. In a table of totals a missing row means nobody counted it, and it is refused. In a line
+list everybody is present, so a combination nobody fell into is a true zero.
+
+This cannot tell whether a person appears on two rows.
+
+**Several exposures.** With a line list, tick more than one under **Exposures to compare**, and the
+result is one table with a row per exposure: the counts, the risk in each group, the ratio and its
+interval, and how many people are **not recorded**, in neither group. Oswego's 14 foods take one node.
+
+The rows stay in the order you ticked them. Nothing is ranked or highlighted: seeing which exposure
+stands apart is the reading. The result says how many comparisons were made and that **no interval is
+adjusted for that number**. Exposures also overlap, so one food's association can belong to another,
+and this table cannot separate them.
+
 ## How to use it
 
 | Setting | What it decides |

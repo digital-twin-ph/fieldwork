@@ -87,7 +87,15 @@ function implemented(w:Workflow,node:WorkflowNode<'study_design'>):ChecklistItem
   const groupsOf=(n:WorkflowNode):[string|undefined,string|undefined]|null=>
     n.type==='two_by_two'?[(n as WorkflowNode<'two_by_two'>).params.exposed,(n as WorkflowNode<'two_by_two'>).params.unexposed]
     :n.type==='rate_ratio'?[(n as WorkflowNode<'rate_ratio'>).params.compared,(n as WorkflowNode<'rate_ratio'>).params.reference]:null;
-  const computed=governed.flatMap(n=>{const g=groupsOf(n);return g?[g]:[];});
+  // SEVERAL EXPOSURES ARE NOT COMPARED WITH THE ONE DECLARED PAIR. Declared groups in words, "ate" and
+  // "did not eat", against a file's Y and N would read as a difference for every food, which is a
+  // false alarm and teaches a reader to ignore the real one. They report what they are instead.
+  const many=(n:WorkflowNode)=>n.type==='two_by_two'
+    &&((n as WorkflowNode<'two_by_two'>).params.exposureColumns?.length??0)>1;
+  for(const table of tables.filter(many))items.push(item('exposures',
+    `${table.params.exposureColumns!.length} exposures are compared on one outcome`,true,
+    'No interval is adjusted for the number of comparisons, and overlapping exposures are not separated.'));
+  const computed=governed.filter(n=>!many(n)).flatMap(n=>{const g=groupsOf(n);return g?[g]:[];});
   if(said?.exposed?.trim()&&said.unexposed?.trim()&&computed.length){
     const same=(x?:string,y?:string)=>x?.trim().toLowerCase()===y?.trim().toLowerCase();
     const differing=computed.find(([e,u])=>!same(e,said.exposed)||!same(u,said.unexposed));

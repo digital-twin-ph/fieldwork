@@ -164,6 +164,5 @@ test('Oswego opens from its pin as one project, its counts intact',
     await page.locator('#run-button').click();
     await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
     await page.locator('[data-view="results"]').click();
-    await page.locator('#result-tabs [data-output]').filter({hasText:'vanilla'}).click();
-    await expect(page.locator('main').first()).toContainText('from 54 and 21 subjects');
+    await expect(page.locator('main').first()).toContainText('14 exposures compared on one outcome');
   });

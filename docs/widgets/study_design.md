@@ -158,3 +158,11 @@ period check `rate` performs today is string equality where the condition is cov
 See [experiment 154](../experiments/154-a-workflow-declares-how-as-well-as-where.md) for the
 admission review, and [the study-design audit](../audits/study-designs-and-our-computations.md)
 for how the designs were chosen.
+
+## More than one exposure
+
+Most investigations of a shared meal compare a whole menu. **How were the exposures chosen?** records
+whether they were named in advance or all compared as a screen. A screen raises a question and needs
+other evidence to answer it. With several exposures, describe the table's groups in general, such as
+*ate* and *did not eat*, because the same description applies to each. The checklist then says how many
+were compared, and does not compare each with the declared groups.

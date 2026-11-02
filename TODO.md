@@ -901,8 +901,24 @@ blocker was last revisited 2026-10-29.
 
 ### The Rust epi kernel
 
-`kernel/` is FW's own, started 2026-11-02 from the Epi Info AI engine and not wired in yet. It grows
-here. New measures go in Rust.
+`kernel/` is FW's own, started 2026-11-02 from the Epi Info AI engine, and every measure runs on it. It
+grows here. New measures go in Rust, then `npm run build:kernel`. Next: step 5, case-control, then read evidence on how exposures are chosen and on multiple comparisons, which EX1 and the unadjusted intervals rest on.
+
+### Nowhere to record a hypothesis as a hypothesis
+
+Found 2026-11-02, reading the Nigeria specification. A note can hold the words, but nothing separates
+"this generated a question" from "this found something", and a machined sentence can read as a finding.
+Machined notes already carry a role (`fn:'limitation'`), so this may be a role and not a structure; the
+notes code is not read yet. Possibly an evidence kernel matter. Let Oswego and Nigeria show what it needs.
+
+### Nigeria immunization, next look
+
+Postponed by the practitioner 2026-11-02 until a better connection: the host gave about 3.6 KB/s and does
+not resume, so 9.5 MB and 37 MB are too slow here. Direct links are on the WorldPop page. Then read the
+real columns. WorldPop confirms the model uses geospatial covariates; check which, because travel time
+among them would build a link with access into the estimates.
+Expected limits, unrun: `MAX_TABLE_ROWS` of 2,000, one value per row with bounds to carry, and intervals
+FW did not compute.
 
 ### Found building Oswego, 2026-11-02 ([160](docs/experiments/160-a-line-list-reaches-a-two-by-two.md))
 
@@ -919,10 +935,9 @@ here. New measures go in Rust.
   read from a case-control study. Zenodo 10.5281/zenodo.7333295, CC-BY 4.0: 32 cases and two control
   groups, 298 rows and 82 columns, German variable names, codebook in xlsx. Codebook and paper not
   read yet. Three groups in one file is a test in itself.
-- **There is no food-specific attack rate table.** Oswego takes 43 nodes and shows its answer across
-  14 result tabs; an investigator's product is one table with a row per food. The main finding.
-- **The two-by-two mapping dialog is disabled before a run and does not say why.** The Inspector's
-  fields use `upstreamKeyValues` and work unrun; the dialog uses `tableOnPort`.
+- **The two-by-two mapping dialog is disabled before a run and does not say why**, when a step sits
+  upstream. Directly on a table it works. The Inspector's fields use `upstreamKeyValues`; the dialog
+  uses `tableOnPort`.
 - **Tidy overlaps unconnected nodes**, covering a port so a drag misses.
 - **`table_output` labels a port "Point data undefined".**
 - **Y and N read badly in the sentence:** "Y against N: 79.630% Y against 14.286%". The values are

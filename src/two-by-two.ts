@@ -70,6 +70,14 @@ export interface TwoByTwoRequest {
   /** The key column holding the outcome, and which of its values is the case. */
   outcomeColumn:string; caseValue:string; nonCaseValue:string;
   level:IntervalLevel;
+  /** THE TABLE'S ROLE, declared and never inferred: each row is one subject, as in a line list, so
+   *  a cell is how many rows agree. Absent, each row holds a count, as every saved workflow means.
+   *  Experiment 161, step 2.
+   *
+   *  THE TWO READINGS DISAGREE ABOUT AN EMPTY CELL, which is why this cannot be guessed. In a table
+   *  of totals a missing row means nobody counted it. In a line list everybody is present, so a
+   *  combination nobody fell into is a true zero. */
+  rowsAreSubjects?:boolean;
 }
 export interface TwoByTwoCells {
   exposedCases:number; exposedNonCases:number;
@@ -86,6 +94,8 @@ export interface TwoByTwoResult {
   /** Values of the exposure column this table held and the request did not name. Reported
    *  because a stratum silently excluded from a comparison is the commonest way a 2x2 misleads. */
   strataLeftOut:string[];
+  /** The same for the outcome column. A subject with an unrecorded outcome is in neither column. */
+  outcomesLeftOut:string[];
   warnings:string[];
   /** How a run read this table. `design` null means none was connected, so the measures carry
    *  neutral names. `rowProportion` null means a/(a+b) is no quantity under that design, so no
@@ -100,6 +110,7 @@ export const SMALL_CELL=5;
 const cellOf=(table:DataTable,request:TwoByTwoRequest,exposure:string,outcome:string):number=>{
   const matching=table.rows.filter(row=>row.key[request.exposureColumn]===exposure
     &&row.key[request.outcomeColumn]===outcome);
+  if(request.rowsAreSubjects)return matching.length;
   if(!matching.length)
     throw new Error(`This table has no row for ${request.exposureColumn} "${exposure}" with `
       +`${request.outcomeColumn} "${outcome}". A two-by-two needs all four cells, and a missing `
@@ -221,7 +232,15 @@ export function computeTwoByTwo(table:DataTable,request:TwoByTwoRequest):TwoByTw
   const named=new Set([exposed,unexposed]);
   const strataLeftOut=[...new Set(table.rows.map(row=>row.key[exposureColumn]))]
     .filter(value=>value!==undefined&&!named.has(value));
+  const namedOutcomes=new Set([caseValue,nonCaseValue]);
+  const outcomesLeftOut=[...new Set(table.rows.map(row=>row.key[outcomeColumn]))]
+    .filter(value=>value!==undefined&&!namedOutcomes.has(value));
   const warnings:string[]=[];
+  if(request.rowsAreSubjects)warnings.push('Counted rows, one subject each. This cannot tell whether '
+    +'a person appears on two rows.');
+  if(outcomesLeftOut.length)warnings.push(
+    `This table also holds ${outcomesLeftOut.map(v=>`"${v}"`).join(', ')} in `
+    +`"${outcomeColumn}", left out of this comparison. Those subjects are in neither column.`);
   const small=empty.filter(([count])=>count<SMALL_CELL);
   if(small.length)warnings.push(
     `${small.map(([count,label])=>`${label} is ${count}`).join(', ')}. `
@@ -233,7 +252,7 @@ export function computeTwoByTwo(table:DataTable,request:TwoByTwoRequest):TwoByTw
     +'the totals below are of the two named groups and not of the table.');
   return {kind:'two-by-two',request,cells,exposedTotal,unexposedTotal,
     caseTotal:a+c,nonCaseTotal:b+d,total:exposedTotal+unexposedTotal,
-    riskExposed,riskUnexposed,estimates,strataLeftOut,warnings};
+    riskExposed,riskUnexposed,estimates,strataLeftOut,outcomesLeftOut,warnings};
 }
 
 /** The sentence a reader should be given, with both groups named and the estimand said out loud.

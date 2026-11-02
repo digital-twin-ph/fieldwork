@@ -34,8 +34,8 @@ test('a saved surveillance declaration is removed with its edges',()=>{
 });
 
 test('each design asks its own questions, and every question can be answered not sure',()=>{
-  assert.deepEqual(ids(params('case-control')),['SRC','A1','T1','CC1','CC2','CC3','CC4','CC5','CC6','G1']);
-  assert.deepEqual(ids(params('cohort')),['SRC','A1','T1','C1','C2','C3','C4','G1']);
+  assert.deepEqual(ids(params('case-control')),['SRC','A1','T1','EX1','CC1','CC2','CC3','CC4','CC5','CC6','G1']);
+  assert.deepEqual(ids(params('cohort')),['SRC','A1','T1','EX1','C1','C2','C3','C4','G1']);
   for(const q of DESIGN_QUESTIONS)assert.ok(q.options.some(o=>o.unknown),q.id);
   assert.equal(new Set(DESIGN_QUESTIONS.flatMap(q=>q.options.map(o=>o.id))).size,
     DESIGN_QUESTIONS.reduce((n,q)=>n+q.options.length,0));
@@ -137,7 +137,7 @@ test('South London, cohort: Table IX declared in the practitioner words, with tw
     'a and c count deaths.','b and d count houses with no death.','a+b and c+d count houses.',
     'a and c came from the Registrar General.','a+b and c+d came from a return to Parliament.',
     'b and d were worked out from other cells.']);
-  assert.equal(designPageCount(p),11);
+  assert.equal(designPageCount(p),12);
   const w=workflow('cohort',p);
   w.nodes[0].params=p;
   w.nodes[2]={id:'t',type:'rate_ratio',params:{label:'ratio',compared:'Southwark and Vauxhall Company',reference:'Lambeth Company'}};
@@ -162,8 +162,8 @@ test('a two-by-two with other groups is reported, never corrected',()=>{
 });
 
 test('designs other than South London have no table page yet',()=>{
-  assert.equal(designPageCount(params('case-control')),12);
-  assert.equal(designPageCount(params('cohort')),11);
+  assert.equal(designPageCount(params('case-control')),13);
+  assert.equal(designPageCount(params('cohort')),12);
 });
 
 test('exposure and what a cell counts are two facts, for any design, and neither is South London',()=>{
@@ -259,4 +259,18 @@ test('investigator allocation stops the declaration, and nothing pretends otherw
   const items=designChecklist(workflow('cohort',p),'d');
   assert.equal(items.find(i=>i.id==='stopped').status,'open');
   assert.equal(items.some(i=>i.id==='computation'||i.id==='period'||i.id==='C1'),false);
+});
+
+test('several exposures report what they are, and raise no false difference',()=>{
+  const design={id:'d',type:'study_design',x:0,y:0,params:{label:'Study design',design:'cohort',period:'',
+    unitOfAnalysis:'',note:'',table:{exposed:'ate',unexposed:'did not eat',outcome:'ill',noOutcome:'well'}}};
+  const tableNode={id:'t',type:'two_by_two',x:0,y:0,params:{label:'Foods',exposureColumn:'ham',
+    exposureColumns:['ham','milk','cake'],exposed:'Y',unexposed:'N',outcomeColumn:'Ill',caseValue:'Y',
+    nonCaseValue:'N',level:95,rowsAreSubjects:true}};
+  const w={nodes:[design,tableNode],edges:[{from:'d',to:'t',port:'design'}]};
+  const items=designChecklist(w,'d');
+  assert.equal(items.find(i=>i.id==='table-match'),undefined);
+  const said=items.find(i=>i.id==='exposures');
+  assert.match(said.text,/3 exposures/);
+  assert.match(said.detail,/No interval is adjusted/);
 });

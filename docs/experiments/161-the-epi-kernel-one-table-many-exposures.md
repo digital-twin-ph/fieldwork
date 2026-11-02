@@ -2,7 +2,7 @@
 
 _Created 2026-11-02 · Updated 2026-11-02_
 
-**Status:** tried — step 1 only. The arithmetic is shared. The substrate, plural exposures and the
+**Status:** tried — steps 1 to 4 done, and the measures run in Rust. The arithmetic is shared. The substrate, plural exposures and the
 widget change are designed here and not built.
 
 ## The task
@@ -102,6 +102,23 @@ bytes differ, the 81 functions do not, and 292,755 values across the estimates, 
 exact tests and Mantel-Haenszel functions are identical to the copied file. The build from source is
 the one kept.
 
+**The application now runs on it, 2026-11-02.** A run could already wait, so the four TypeScript formulas
+were removed. The kernel is embedded in `src/kernel-bytes.ts` and loaded once by a top-level await in
+`src/kernel.ts`, so there is no fetch to fail offline. `rate_ratio` was added in Rust, the first measure
+written here. Over the same 118,188 outputs nothing changed in kind: every refusal, message and undefined
+case is identical. 27,822 numbers differ in their last digits, none shown at any reported precision:
+
+| Numbers | Differ | Worst relative |
+| --- | --- | --- |
+| Risk ratio bounds | 27,456 | 1.3e-11 |
+| Odds ratio bounds | 346 | 1.8e-15 |
+| Rate ratio bounds | 20 | 8.7e-16 |
+
+The largest are on extreme tables, such as 166,810 / 3 / 1 / 0. FW wrote `1/a - 1/(a+b)`, subtracting two
+nearly equal numbers, where the kernel writes `b/(a(a+b))`, so the kernel's value should be the more
+accurate of the two. That was reasoned from the formulas and not tested. Lab checks 27 and 30 were not
+re-run, and their tolerance of 1e-9 is wider than these differences.
+
 **What stays from `recognisable-not-identical-an-epi-kernel-of-our-own`.** Each method is named by what it
 is, and FW claims no parity. `stratified_legacy_woolf_*` exist in the engine and are not surfaced, since
 the direction's objection was to a statistic labelled as something it is not. The validation lab stays
@@ -127,3 +144,32 @@ levels, and 3,375 rate pairs, including zero cells and refusals. The two files a
 the test. Lab checks 27 and 30 were not re-run.
 
 Step 1 changes nothing a reader sees, so no widget release is owed.
+
+**Step 2, 2026-11-02.** `two_by_two` 0.6.0 takes a declared role, each row is one subject. Oswego's 14 foods
+give identical cells and estimates from the rows and through `group_table`'s count, and one question now
+takes three nodes. The role is on the node and not yet on a substrate of its own, which is as far as one
+exposure needs; step 3 decides whether that holds. The step also found that an empty cell means different
+things in the two readings, and that unnamed outcome values were being dropped without a word.
+
+**Found on the way, 2026-11-02.** `render()` called `history.replaceState` on every edit, and WebKit throws
+after 100 calls in ten seconds, which stopped the edit. The long Oswego build reached that limit on an
+idle machine and passed the gate on a loaded one, so a passing run had hidden it. It now writes only when
+the address changes.
+
+**Step 3, 2026-11-02.** `two_by_two` takes several exposure columns of a line list and gives one table,
+in `src/exposure-table.ts`. Oswego is rebuilt from an empty canvas as two workflows of 3 nodes each, in
+place of one of 46, with every count checked against the CSV. The panel holds: ticking 14 boxes is one
+list, and the single-exposure dropdown goes away in this mode. Stegen, run through the same code from
+a throwaway script and not yet through the app, gives tiramisu 94/121 against 7/165, ratio 18.31 (8.81 to 38.04),
+and counts its `NA` and `9` answers as not recorded rather than as a third group.
+
+The ratio beside each exposure comes first in the design's list, so a table reports one measure. A
+reader wanting the odds ratio beside the ratio has not been served. Whether trainees read a row per
+exposure better than separate tables is still the observation to keep.
+
+**Step 4, 2026-11-02.** `study_design` asks how the exposures were chosen, and the checklist reports how many
+were compared in place of the false `differs` from 160. The declared table stays one table described in
+general words, which holds where one description fits every exposure; an exposure needing its own
+description is not served. **The new question has no evidence review**, unlike the others in the tree, so
+its wording is a proposal: the report's standard is that every branch and caveat is backed. It was not
+exercised by declaring a design on Oswego, which stays undeclared.

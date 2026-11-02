@@ -1054,7 +1054,11 @@ function describe(n:WorkflowNode,status?:string):NodeDescription{let subtitle=TY
     availablePorts:nodeInputs(n).filter(([,type])=>workflow.nodes.some(x=>x.id!==n.id&&outputOf(x)===type)).map(([port])=>port),
     type:n.type,label:n.params.label||TYPES[n.type].title,subtitle,detail,status,glow:justFinished.has(n.id),alert:alert?alertHeadline(alert):undefined};}
 function render(){
-  const url=new URL(location.href);url.searchParams.set('example',exampleKey(workflow));window.history.replaceState(null,'',url);
+  // ONLY WHEN IT CHANGES. This runs on every edit, and Safari refuses a hundred calls in ten seconds
+  // by throwing, which stopped the edit that triggered it. Found 2026-11-02 building Oswego.
+  const url=new URL(location.href);
+  if(url.searchParams.get('example')!==exampleKey(workflow)){
+    url.searchParams.set('example',exampleKey(workflow));window.history.replaceState(null,'',url);}
   renderLibrary($('#node-search').value);
   const old=exampleKey(workflow)==='old-naledi';
   renderProjectOptions();renderProjectDetails();renderStorageStatus();renderProjectSafety();
@@ -2331,12 +2335,27 @@ function renderInspector(){
     content+=`<button class="button" id="twobytwo-map">Map the table onto a, b, c, d\u2026</button>`;
     content+='<p class="description">Risk in each group, the risk ratio, the odds ratio and the risk difference, each naming the method that produced it. The table must already be totalled: one row per combination of the exposure and the outcome.</p>'
       +labelForm('twobytwo-label','Node label',p.label||'Two-by-two table')
-      +column('twobytwo-exposure','exposureColumn','Exposure column')
+      +(p.rowsAreSubjects?'':column('twobytwo-exposure','exposureColumn','Exposure column'))
       +value('twobytwo-exposed','exposed','Exposed',p.exposureColumn,'the group a claim is being made about')
       +value('twobytwo-unexposed','unexposed','Unexposed',p.exposureColumn,'the group it is compared with')
       +column('twobytwo-outcome','outcomeColumn','Outcome column')
       +value('twobytwo-case','caseValue','Case',p.outcomeColumn,'died')
       +value('twobytwo-noncase','nonCaseValue','Non-case',p.outcomeColumn,'survived')
+      +`<label class="check"><input type="checkbox" id="twobytwo-rows" `
+      +`${p.rowsAreSubjects?'checked':''}> Each row is one subject, as in a line list</label>`
+      +(p.rowsAreSubjects
+        ?'<p class="description">A cell is how many rows agree, so a combination nobody fell into '
+          +'is a true zero.</p>'
+        :'<p class="description">Off, each row holds a count and a missing row is not a zero.</p>')
+      // SEVERAL EXPOSURES, offered only for a line list. Ticking one column is the ordinary
+      // two-by-two, and `exposureColumn` is kept as the first ticked so nothing else has to know.
+      +(p.rowsAreSubjects&&columns.length
+        ?`<fieldset class="field exposure-list"><legend class="field-label">Exposures to compare</legend>`
+          +columns.filter(name=>name!==p.outcomeColumn).map(name=>
+            `<label class="check"><input type="checkbox" data-twobytwo-exposure="${esc(name)}" `
+            +`${(p.exposureColumns?.length?p.exposureColumns:[p.exposureColumn]).includes(name)?'checked':''}> `
+            +`${esc(name)}</label>`).join('')+`</fieldset>`
+        :'')
       +`<div class="field"><label class="field-label" for="twobytwo-level">Interval level</label>`
       +`<select id="twobytwo-level">`
       +[90,95,99].map(level=>`<option value="${level}" ${p.level===level?'selected':''}>${level}%</option>`).join('')
@@ -3151,6 +3170,23 @@ function renderInspector(){
       change(w=>{getNode(w,n.id,'study_design').params=next;});
     },()=>designChecklist(workflow,n.id));
   });
+  optionalElement('#twobytwo-rows')?.addEventListener('change',event=>{
+    const on=(event.target as HTMLInputElement).checked;
+    const id=selected;
+    if(!id)return;
+    change(w=>{const node=getNode(w,id,'two_by_two');
+      if(on)node.params.rowsAreSubjects=true;else delete node.params.rowsAreSubjects;});
+  });
+  document.querySelectorAll<HTMLInputElement>('[data-twobytwo-exposure]').forEach(el=>
+    el.addEventListener('change',()=>{
+      const id=selected;
+      if(!id)return;
+      const order=[...document.querySelectorAll<HTMLInputElement>('[data-twobytwo-exposure]')]
+        .filter(box=>box.checked).map(box=>required(box.dataset.twobytwoExposure));
+      change(w=>{const node=getNode(w,id,'two_by_two');
+        node.params.exposureColumn=order[0]??'';
+        if(order.length>1)node.params.exposureColumns=order;else delete node.params.exposureColumns;});
+    }));
   optionalElement('#twobytwo-map')?.addEventListener('click',()=>{
     const node=workflow.nodes.find(x=>x.id===selected) as WorkflowNode<'two_by_two'>|undefined;
     if(!node)return;

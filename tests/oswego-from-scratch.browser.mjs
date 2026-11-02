@@ -22,6 +22,8 @@ const add=async(page,type)=>{
 };
 const connect=async(page,from,to,port)=>{
   const source=page.locator(`.react-flow__node[data-id="${from}"] [data-handleid="out"]`);
+  // A node just added may not be drawn yet, and counting its ports then finds none.
+  await expect(page.locator(`.react-flow__node[data-id="${to}"] [data-handleid]`).first()).toBeAttached();
   const declared=await page.locator(`.react-flow__node[data-id="${to}"] [data-handleid="${port}"]`).count();
   const target=page.locator(`.react-flow__node[data-id="${to}"] [data-handleid="${declared?port:'layer'}"]`);
   await expect(source).toBeVisible();await expect(target).toBeVisible();
@@ -39,8 +41,8 @@ const wire=async(page,from,to,port)=>{
 const saved=page=>page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));
 const idOf=async(page,type,nth=0)=>(await saved(page)).nodes.filter(n=>n.type===type)[nth].id;
 
-test('the Oswego line list reaches a two-by-two for each of its 14 foods',{skip},async({page})=>{
-  test.setTimeout(900_000);
+test('Oswego is two short workflows: which food, and where',{skip},async({page})=>{
+  test.setTimeout(300_000);
   await page.goto('/');await page.evaluate(()=>localStorage.clear());
   await page.goto('/?example=blank');
   await page.locator('#new-project').click();
@@ -62,38 +64,48 @@ test('the Oswego line list reaches a two-by-two for each of its 14 foods',{skip}
   }
   await expect(page.locator('#table-save')).toBeEnabled();
   await page.locator('#table-save').click();
+  await add(page,'two_by_two');
+  const table=await idOf(page,'two_by_two');
+  await tidy(page);await wire(page,list,table,'records');
+  await add(page,'table_output');
+  const shown=await idOf(page,'table_output');
+  await tidy(page);await wire(page,table,shown,'table');
+  await page.locator(`.react-flow__node[data-id="${table}"]`).click();
+  await page.locator('#twobytwo-label').fill('Attack rates by food');
+  await page.locator('#twobytwo-label').press('Enter');
+  await page.locator('#twobytwo-rows').check();
+  await page.locator('[data-slr="outcomeColumn"]').selectOption('Ill');
+  for(const food of FOODS)await page.locator(`[data-twobytwo-exposure="${food}"]`).check();
+  const pick=async(key,value)=>{await page.locator(`[data-slr="${key}"]`).selectOption(value);};
+  await pick('exposed','Y');await pick('unexposed','N');await pick('caseValue','Y');await pick('nonCaseValue','N');
+  await page.locator(`.react-flow__node[data-id="${shown}"]`).click();
+  await page.locator('#table-label').fill('Attack rates by food');
+  await page.locator('#table-label').press('Tab');
+  await page.locator('#run-button').click();
+  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:120000});
+  await page.locator('[data-view="results"]').click();
+  const text=await page.locator('main').first().innerText();
+  expect(text).toContain('14 exposures compared on one outcome');
 
-  for(const [index,food] of FOODS.entries()){
-    await add(page,'group_table');
-    const counted=await idOf(page,'group_table',index);
-    await tidy(page);await wire(page,list,counted,'records');
-    await add(page,'two_by_two');
-    const table=await idOf(page,'two_by_two',index);
-    await tidy(page);await wire(page,counted,table,'records');
-    await add(page,'table_output');
-    const shown=await idOf(page,'table_output',index);
-    await tidy(page);await wire(page,table,shown,'table');
-
-    await page.locator(`.react-flow__node[data-id="${counted}"]`).click();
-    await page.locator('#group-label').fill(`Count by ${food}`);
-    await page.locator('#group-label').press('Enter');
-    await page.locator('[data-group-by="Ill"]').check();
-    await page.locator(`[data-group-by="${food}"]`).check();
-    await page.locator('#group-aggregate').selectOption('count');
-
-    await page.locator(`.react-flow__node[data-id="${table}"]`).click();
-    await page.locator('#twobytwo-label').fill(food);
-    await page.locator('#twobytwo-label').press('Enter');
-    const map=async(key,value)=>{await page.locator(`[data-slr="${key}"]`).selectOption(value);};
-    await map('exposureColumn',food);await map('outcomeColumn','Ill');
-    await map('exposed','Y');await map('unexposed','N');await map('caseValue','Y');await map('nonCaseValue','N');
-
-    await page.locator(`.react-flow__node[data-id="${shown}"]`).click();
-    await page.locator('#table-label').fill(food);
-    await page.locator('#table-label').press('Tab');
+  // THE FILE'S OWN COUNTS, computed here rather than copied from a paper.
+  const rows=readFileSync(LIST,'utf8').trim().split(/\r?\n/);
+  const head=rows[0].split(',');
+  const people=rows.slice(1).map(line=>Object.fromEntries(line.split(',').map((v,i)=>[head[i],v])));
+  const count=(food,ate,ill)=>people.filter(p=>p[food]===ate&&p.Ill===ill).length;
+  const cells=(await page.locator('#result-rows tr, table tr').allInnerTexts()).filter(line=>FOODS.some(f=>line.startsWith(f)));
+  for(const food of FOODS){
+    const row=cells.find(line=>line.startsWith(food+'\t')||line.startsWith(food+' '))?.split(/\t/).map(v=>v.trim());
+    expect(row,`${food} has no row`).toBeTruthy();
+    expect(Number(row[1])).toBe(count(food,'Y','Y'));
+    expect(Number(row[2])).toBe(count(food,'Y','Y')+count(food,'Y','N'));
+    expect(Number(row[4])).toBe(count(food,'N','Y'));
+    expect(Number(row[5])).toBe(count(food,'N','Y')+count(food,'N','N'));
   }
+  await page.screenshot({path:'test-results/oswego-menu.png'});
 
-  // THE PLACE. A box around the church and one point in it: a setting, not an analysis.
+  // THE PLACE, AS ITS OWN QUESTION. A box around the church and one point: a setting, not an analysis.
+  await page.locator('[data-view="workflow"]').click();
+  await page.locator('#add-workflow').click();
   await add(page,'study_area');
   const extent=await idOf(page,'study_area');
   await page.locator(`.react-flow__node[data-id="${extent}"]`).click();
@@ -123,41 +135,101 @@ test('the Oswego line list reaches a two-by-two for each of its 14 foods',{skip}
   await page.locator(`.react-flow__node[data-id="${where}"]`).click();
   await page.locator('#map-label').fill('Lycoming');
   await page.locator('#map-label').press('Tab');
-
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:120000});
-  await page.locator('[data-view="results"]').click();
-  await page.waitForTimeout(500);
-
-  // THE FILE'S OWN COUNTS, computed from the CSV in this test rather than copied from a paper.
-  const rows=readFileSync(LIST,'utf8').trim().split(/\r?\n/);
-  const head=rows[0].split(',');
-  const people=rows.slice(1).map(line=>Object.fromEntries(line.split(',').map((v,i)=>[head[i],v])));
-  const count=(food,ate,ill)=>people.filter(p=>p[food]===ate&&p.Ill===ill).length;
-  const w=await saved(page);
-  expect(w.nodes.length).toBe(1+3*FOODS.length+3);
-  for(const food of FOODS){
-    await page.locator('#result-tabs [data-output]').filter({hasText:food}).click();
-    const a=count(food,'Y','Y'),b=count(food,'Y','N'),c=count(food,'N','Y'),d=count(food,'N','N');
-    const text=await page.locator('main').first().innerText();
-    const said=text.match(/Y against N: ([\d.]+)% Y against ([\d.]+)%.*from (\d+) and (\d+) subjects/);
-    expect(said,`${food} printed no comparison`).not.toBeNull();
-    expect(Number(said[1])).toBeCloseTo(100*a/(a+b),2);
-    expect(Number(said[2])).toBeCloseTo(100*c/(c+d),2);
-    expect([Number(said[3]),Number(said[4])]).toEqual([a+b,c+d]);
-    // THE ANSWER NOBODY RECORDED STAYS VISIBLE. One person's `?` for each of these two foods is in
-    // neither group, and the comparison says so rather than quietly covering 74 of 75.
-    if(food==='Mashed potato'||food==='Ice cream (chocolate)')
-      expect(text).toContain(`This table also holds "?" in "${food}", left out of this comparison.`);
-  }
-  await page.locator('#result-tabs [data-output]').filter({hasText:'vanilla'}).click();
+  expect((await saved(page)).nodes.length).toBe(3);
 
   // THE PROJECT, written where the example repository can take it when asked for.
+  await page.locator('[data-view="workflow"]').click();
+  await page.locator('#storage-status').click();
+  const block=page.locator('.project-view-block').filter({hasText:'The Oswego church supper'}).first();
+  await expect(block).toContainText('2 workflows');
   if(process.env.OSWEGO_EXPORT){
-    await page.locator('#storage-status').click();
-    const block=page.locator('.project-view-block').filter({hasText:'The Oswego church supper'}).first();
     const download=page.waitForEvent('download');
     await block.locator('button[data-export-project]').click();
     await (await download).saveAs(process.env.OSWEGO_EXPORT);
   }
+});
+
+// STEP 2 OF THE KERNEL: THE SAME ANSWER WITHOUT THE COUNT. Three nodes, and the mapping dialog works
+// before a run, because a line list needs nothing upstream to have run first.
+test('a line list reaches a two-by-two directly, with nothing counted first',{skip},async({page})=>{
+  await page.goto('/');await page.evaluate(()=>localStorage.clear());
+  await page.goto('/?example=blank');
+  await add(page,'table_input');
+  const list=await idOf(page,'table_input');
+  await page.locator('#open-table').click();
+  await page.locator('#table-file').setInputFiles(LIST);
+  await page.locator('#table-shape').selectOption('long');
+  await page.locator('#table-value').selectOption('Age');
+  const boxes=page.locator('#table-keys input');
+  for(let i=0;i<await boxes.count();i++){
+    const box=boxes.nth(i),name=await box.getAttribute('value');
+    if(await box.isDisabled())continue;
+    await box.setChecked(['ID','Ill',...FOODS].includes(name));
+  }
+  await page.locator('#table-save').click();
+  await add(page,'two_by_two');
+  const table=await idOf(page,'two_by_two');
+  await tidy(page);await wire(page,list,table,'records');
+  await add(page,'table_output');
+  const shown=await idOf(page,'table_output');
+  await tidy(page);await wire(page,table,shown,'table');
+
+  await page.locator(`.react-flow__node[data-id="${table}"]`).click();
+  await page.locator('#twobytwo-rows').check();
+  await page.locator('#twobytwo-map').click();
+  const map=async(key,value)=>{await page.locator(`[data-mapping="${key}"]`).selectOption(value);};
+  await map('exposureColumn','Ice cream (vanilla)');await map('exposed','Y');await map('unexposed','N');
+  await map('outcomeColumn','Ill');await map('caseValue','Y');await map('nonCaseValue','N');
+  await expect(page.locator('.map-cell').first()).toContainText('43');
+  await page.locator('#mapping-close').click();
+
+  await page.locator('#run-button').click();
+  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
+  await page.locator('[data-view="results"]').click();
+  await expect(page.locator('main').first()).toContainText('from 54 and 21 subjects');
+  await expect(page.locator('main').first()).toContainText('5.57');
+  expect((await saved(page)).nodes.length).toBe(3);
+});
+
+// STEP 3: THE WHOLE MENU ON ONE NODE. The question Oswego took 43 nodes to ask, in three.
+test('all 14 foods on one node give one table, in file order, unranked',{skip},async({page})=>{
+  await page.goto('/');await page.evaluate(()=>localStorage.clear());
+  await page.goto('/?example=blank');
+  await add(page,'table_input');
+  const list=await idOf(page,'table_input');
+  await page.locator('#open-table').click();
+  await page.locator('#table-file').setInputFiles(LIST);
+  await page.locator('#table-shape').selectOption('long');
+  await page.locator('#table-value').selectOption('Age');
+  const boxes=page.locator('#table-keys input');
+  for(let i=0;i<await boxes.count();i++){
+    const box=boxes.nth(i),name=await box.getAttribute('value');
+    if(await box.isDisabled())continue;
+    await box.setChecked(['ID','Ill',...FOODS].includes(name));
+  }
+  await page.locator('#table-save').click();
+  await add(page,'two_by_two');
+  const table=await idOf(page,'two_by_two');
+  await tidy(page);await wire(page,list,table,'records');
+  await add(page,'table_output');
+  const shown=await idOf(page,'table_output');
+  await tidy(page);await wire(page,table,shown,'table');
+  await page.locator(`.react-flow__node[data-id="${table}"]`).click();
+  await page.locator('#twobytwo-rows').check();
+  await page.locator('[data-slr="outcomeColumn"]').selectOption('Ill');
+  for(const food of FOODS)await page.locator(`[data-twobytwo-exposure="${food}"]`).check();
+  const pick=async(key,value)=>{await page.locator(`[data-slr="${key}"]`).selectOption(value);};
+  await pick('exposed','Y');await pick('unexposed','N');await pick('caseValue','Y');await pick('nonCaseValue','N');
+  await page.screenshot({path:'test-results/oswego-menu-panel.png'});
+  await page.locator('#run-button').click();
+  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
+  await page.locator('[data-view="results"]').click();
+  await expect(page.locator('main').first()).toContainText('14 exposures compared on one outcome');
+  await page.waitForTimeout(400);
+  await page.screenshot({path:'test-results/oswego-menu.png',fullPage:false});
+  const text=await page.locator('main').first().innerText();
+  expect(text.indexOf('Baked ham')).toBeLessThan(text.indexOf('Fruit salad'));
+  expect((await saved(page)).nodes.length).toBe(3);
 });

@@ -38,6 +38,27 @@ export interface TableView {
    *  column and told what the practitioner asked for; the dialog closes and the caller decides
    *  what to record. */
   onRepair?:(column:string,to:ColumnKind)=>void;
+  /** The other sides of this step, offered as a toggle where a step has any. */
+  steps?:{labels:string[];at:number;go:(index:number)=>void};
+}
+
+/** BEFORE AND AFTER ONE STEP. The practitioner, 2026-11-01, on a chain of table widgets: the output
+ *  should be viewable *"to enable the user to see the evolution of the table through that part of
+ *  the workflow"*, and a before and after toggle *"would be useful indeed."* Two inputs are two
+ *  befores, so each is named. No input means nothing to compare, so no toggle. */
+export function stepLabels(inputs:readonly string[]):string[]{
+  return [...(inputs.length===1?['Before']:inputs.map(name=>`Before: ${name}`)),'After'];
+}
+
+/** What changed, in the After view's note, for a step with one table in. */
+export const shapeChange=(before:TableView):string=>
+  `Before this step: ${before.rows.length} rows, ${before.columns.length} columns.`;
+
+/** Opens on After, which is what the button promises. Each press reopens with the other side. */
+export function openStepViewer(views:readonly TableView[],labels:readonly string[],esc:Escape,
+  at=views.length-1):void{
+  openTableViewer({...views[at]!,...(views.length>1?{steps:{labels:[...labels],at,
+    go:index=>openStepViewer(views,labels,esc,index)}}:{})},esc);
 }
 
 /** Beyond this, rendering every row costs more than a quick look is worth. The count always
@@ -99,6 +120,10 @@ export function openTableViewer(view:TableView,esc:Escape):void{
     dialog.innerHTML=`<div class="manual-head"><h2 id="table-viewer-title">${esc(view.title)}</h2>`
       +`<div><button class="button primary" id="table-viewer-close">Close</button></div></div>`
       +`<div class="table-viewer-body">`
+      +(view.steps?`<div class="table-viewer-steps" role="group" aria-label="Before and after this step">`
+        +view.steps.labels.map((label,i)=>`<button class="button small${i===view.steps!.at?' primary':''}" `
+          +`data-table-step="${i}" aria-pressed="${i===view.steps!.at}">${esc(label)}</button>`).join('')
+        +`</div>`:'')
       +(view.note?`<p class="description">${esc(view.note)}</p>`:'')
       +`<div class="record-controls">`
       +`<input id="table-viewer-filter" type="search" placeholder="Filter rows…" value="${esc(filter)}" aria-label="Filter rows">`
@@ -126,6 +151,9 @@ export function openTableViewer(view:TableView,esc:Escape):void{
         :`<div class="notice">No row matches that filter.</div>`)
       +`</div>`;
     dialog.querySelector<HTMLButtonElement>('#table-viewer-close')!.onclick=close;
+    dialog.querySelectorAll<HTMLButtonElement>('[data-table-step]').forEach(button=>{
+      button.onclick=()=>{close();view.steps!.go(Number(button.dataset.tableStep));};
+    });
     dialog.querySelectorAll<HTMLButtonElement>('[data-repair]').forEach(button=>{
       button.onclick=()=>{
         const column=button.dataset.repair!;

@@ -7,6 +7,11 @@ shown in a local build is not a claim that it has been published.
 
 Covers the work of 2026-10-30.
 
+- **Every table widget shows its table, before and after.** **View this table** now sits at the top
+  of the Inspector rather than below *Remove node*. It opens on the step's output, with a toggle to
+  the table that came in, so a chain can be read one change at a time. A step with two inputs names
+  each. If settings have changed since the run, the viewer says it shows the last run.
+
 - **Study design asks what the selected design needs, and reads the workflow against it.** Selecting
   a design now shows its questions, and each answer writes a sentence into Methods. A checklist
   separates what Fieldwork read from the canvas from what you declared. Surveillance is no longer a

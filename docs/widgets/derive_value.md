@@ -22,6 +22,13 @@ and import the answer.
 This step computes it once per group: all the rows sharing the other key columns are one group,
 and `measure` is the column holding the names of the values to combine.
 
+
+## Seeing what this step did
+
+After a run, **View this table** at the top of the Inspector opens the output. **Before** and
+**After** switch between the table that came in and the one that went out, and After says how many
+rows and columns there were before.
+
 ## What you connect
 
 **records** — a table. It gives back the same table with the derived rows added.

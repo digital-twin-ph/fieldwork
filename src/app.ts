@@ -32,7 +32,7 @@ import {seaLevelExample} from './sea-level-example.js';
 import {rulesetExample} from './ruleset-example.js';
 import {hagellochExample} from './hagelloch-example.js';
 import {openRuleEditor} from './rule-editor.js';
-import {openTableViewer,tableViewOf} from './table-viewer.js';
+import {openStepViewer,openTableViewer,shapeChange,stepLabels,tableViewOf} from './table-viewer.js';
 import {openRelateJoin} from './relate-ui.js';
 import {relateShape} from './relate-table.js';
 import {wideDataTable} from './data-table.js';
@@ -3108,7 +3108,7 @@ function renderInspector(){
       const block=document.createElement('div');
       if(produced){
         block.innerHTML='<div class="inspector-actions">'
-          +'<button id="output-quick-look" class="button">\u2922 Quick look at the output table</button></div>';
+          +'<button id="output-quick-look" class="button">\u2922 View this table</button></div>';
       }else{
         // Said rather than hidden. A missing button reads as "this widget cannot do that"; the
         // truth is that there is nothing to look at yet, which is a different thing and is
@@ -3116,7 +3116,11 @@ function renderInspector(){
         block.innerHTML=`<p class="description">This step emits a table. Run the workflow to `
           +'look at what it produces.</p>';
       }
-      anchor.append(block);
+      // AT THE TOP, under what the widget does. Appended, it sat below "Remove node", 1,500 pixels
+      // down a long panel, and a practitioner reported on 2026-11-01 that these widgets had no way
+      // to view their table. They had; nobody could find it. Measured on South London's workflow.
+      const first=anchor.querySelector(':scope > .description');
+      if(first)first.after(block);else anchor.prepend(block);
     }
   }
   optionalElement('#group-aggregate')?.addEventListener('change',event=>{
@@ -3182,7 +3186,23 @@ function renderInspector(){
           +`${relation.on} ${relation.gaps.map(g=>g.key).join(', ')}, which are not shown here `
           +`because they are not in this table`:' and none dropped')+'.';
     }
-    openTableViewer(view,esc);
+    // THE TABLES THAT CAME IN, so a chain can be read one change at a time. A port with nothing
+    // on it is left out rather than shown empty.
+    const inputs=(TYPES[n.type].inputs as readonly (readonly [string,string])[])
+      .filter(([,type])=>type==='table').flatMap(([port])=>{
+        const table=tableOnPort(workflow,n.id,port);
+        return table?[{port,table}]:[];
+      });
+    const stale=dirty?'Settings have changed since this ran, so this is the last run. ':'';
+    const befores=inputs.map(({port,table})=>{
+      const name=portSourceName(workflow,n.id,port,port);
+      const before=tableViewOf(table,`${n.params.label||TYPES[n.type].title} \u00b7 before: ${name}`);
+      return {...before,note:`${stale}${before.note??''}`};
+    });
+    if(befores.length===1)view.note=`${view.note??''} ${shapeChange(befores[0]!)}`;
+    view.note=`${stale}${view.note??''}`;
+    openStepViewer([...befores,view],
+      stepLabels(inputs.map(({port})=>portSourceName(workflow,n.id,port,port))),esc);
   });
   // DECIDING THE JOIN. The dialog is given the two tables and a way to re-plan, so changing the
   // comparison or the category name inside it redraws the consequence without touching the

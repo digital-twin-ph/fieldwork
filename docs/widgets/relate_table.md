@@ -121,7 +121,7 @@ rather than only know that something is missing. Where nothing was dropped it sa
 Underneath, which table each column came from, and the distinct values that actually landed —
 what you need to see before grouping by it.
 
-Quick look at the output table repeats the column origins above each column heading, so a wide
+**View this table** repeats the column origins above each column heading, so a wide
 related table says which half of the row came from where.
 
 ### The Methods note

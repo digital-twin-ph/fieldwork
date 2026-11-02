@@ -16,6 +16,13 @@ every house twice.
 Keeping `deaths` and `houses without a death` leaves exactly the 2×2, and its totals come out as
 the houses supplied.
 
+
+## Seeing what this step did
+
+After a run, **View this table** at the top of the Inspector opens the output. **Before** and
+**After** switch between the table that came in and the one that went out, and After says how many
+rows and columns there were before.
+
 ## What you connect
 
 **records** — a table. It gives back the same table with fewer rows. Key columns, value field and

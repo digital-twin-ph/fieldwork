@@ -7,7 +7,7 @@
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {tableViewOf} from '../build/table-viewer.js';
+import {shapeChange,stepLabels,tableViewOf} from '../build/table-viewer.js';
 
 const table=(keys,valueField,rows,unit)=>({kind:'data-table',keys,valueField,...(unit?{unit}:{}),
   rows,rowCount:rows.length,missingValueCount:rows.filter(r=>r.value===null).length});
@@ -67,4 +67,11 @@ test('an empty cell is carried as unknown rather than dropped',()=>{
 test('the unit is stated where there is one and named as unstated where there is not',()=>{
   assert.match(tableViewOf(TABLE_VIII,'t').note,/an unstated unit/);
   assert.match(tableViewOf({...TABLE_VIII,unit:'people'},'t').note,/in people/);
+});
+
+test('one input is Before, two inputs are named, and no input offers no toggle',()=>{
+  assert.deepEqual(stepLabels(['Cases']),['Before','After']);
+  assert.deepEqual(stepLabels(['Cases','Companies']),['Before: Cases','Before: Companies','After']);
+  assert.deepEqual(stepLabels([]),['After']);
+  assert.equal(shapeChange({rows:[{},{}],columns:['a','b','c']}),'Before this step: 2 rows, 3 columns.');
 });

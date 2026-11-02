@@ -2,8 +2,6 @@
   "schema": "fieldwork/directions/1",
   "note": "A DE moment is a point at which the direction should change. The practitioner named it on 2026-10-15, after finding that a map still had an Input mode a day after the discussion that ruled against modes: \"The map output discussion is what we call a DE moment, a moment when things should head in a different direction, and it did not.\"\n\nThis file is the answer to that. Every direction a discussion settles is recorded here with what it requires IN CODE and a clock on it, because the failure mode is specific and this project has produced it at least three times: the direction is written into a spec page, a glossary entry or an ontology term, the code is left alone, and the record now says the matter is settled while the running application still does the old thing. A widget page is not a work item and no ratchet can see one.\n\nIt is deliberately not the blocker ledger. A blocker is a claim that something CANNOT be done yet. A direction is a decision that something SHOULD now be done differently, and the two fail in opposite ways: a blocker rots by being lifted and not noticed, a direction rots by being agreed and not built.",
   "measuredAt": "2026-10-31",
-  "checkWindowDays": 7,
-  "windowBasis": "The same window the blocker ledger uses, for the same reason: this project changes in days. A direction nobody has checked in a week is a direction nobody is acting on, and saying so is the entire point of the file.",
   "directions": [
     {
       "id": "a-map-has-layers-not-modes",
@@ -75,7 +73,7 @@
       ],
       "workItem": "A sweep. Findings go to TODO.md, widgets/blockers.json or this register, per AGENTS.md.",
       "status": "open",
-      "lastChecked": "2026-10-29",
+      "lastChecked": "2026-11-02",
       "checks": [
         {
           "date": "2026-10-15",
@@ -92,6 +90,10 @@
         {
           "date": "2026-10-29",
           "found": "Checked by use, which is what this direction asks for -- that a sweep happens and that its findings land as work items rather than as prose. A sweep ran on 2026-10-29 and five findings landed as commits the same day: the layer description was inverted to read from the ontology that already declared it (585b001, 142932a), the worked example gained the one input a reader could not download (example repo af88dff), a from-scratch rebuild became a test rather than a claim (cc1942b), widget usefulness became a measurement the gate prints (351aafa), and the audit the practitioner asked for is generated rather than written (737344d). Looking BACK found that fw:layer had reserved the slot for a feature built eighteen days later without reading it; looking BELOW found that no declared cap has LAYER in its id while two layer caps refuse a practitioner's work; looking SIDEWAYS found that use propagates from a composition to its members but not from an equivalent monolith. Claim stands: the stance is in use, and this is the record of one pass."
+        },
+        {
+          "date": "2026-11-02",
+          "found": "The practitioner: \"The real 5 directions are being exercised.\" Exercised in the work rather than as scheduled sweeps. Backward and sideways: widgets retired and still being retired, rate_ratio next through the epi kernel, and the inventory read when a new requirement arises. Above: three kernels emerging, GIS, epidemiology, and evidence-based practice in the notes. Synthesis: reflection on future direction, most recently the epi kernel. And additional worked examples: Oswego found the one-exposure assumption that South London could not show, with Stegen and a case-control study to follow. Today's own example of sideways was the Epi Info AI engine, found only when the practitioner pointed at it, after a design had been written without reading it."
         }
       ]
     },
@@ -1080,6 +1082,23 @@
         {
           "date": "2026-11-01",
           "found": "Stage 2 and a first checklist built in study_design 0.3.0: 40 questions across five designs. Not yet observed with a practitioner."
+        }
+      ]
+    },
+    {
+      "id": "emergence-is-arrived-at-not-mandated",
+      "stated": "2026-11-02",
+      "statedBy": "the practitioner",
+      "inTheirWords": "This is a DE project and we cannot mandate emergence. Emergence is arrived at. ... When we work on computational workflows, we do best effort to make sure those are validated once those workflows are stable. ... this should not be a gate. ... In fact looking at the rest, they are all false gates, this being a DE project. ... The one who decides when the framework is stable is when the rubber meets the road and the users test the app with their workflows. We do best effort to exercise those workflows using worked examples and that's one type of validation. The other is field testing, which is still quite down the road.",
+      "requiresInCode": "No gate may demand that a direction has moved by a date. validate-directions.mjs keeps its checks on the record -- quoted, requires something in code, names a work item, a check is a dated finding -- and reports age without failing on it. Validation is opportunistic: best effort once a computation is stable, not a precondition. Stability is decided by users running their own workflows, so no check here may claim it. Worked examples are one type of validation, best effort; field testing is the other and has not begun.",
+      "recordedIn": "docs/audits/rule-audit.md",
+      "workItem": "Whether the blocker ledger's 7-day window is the same false gate is an open question, in TODO.md.",
+      "status": "built",
+      "lastChecked": "2026-11-02",
+      "checks": [
+        {
+          "date": "2026-11-02",
+          "found": "The clock is removed from validate-directions.mjs and the window from the register. It had blocked b4908c1, which had passed the full gate, from main, and stopped CI's verify before its browser tests, on a date and no change to the code."
         }
       ]
     }

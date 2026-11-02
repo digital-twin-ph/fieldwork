@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** A direction is a decision that something should now be done differently. This is the clock.
+/** A direction is a decision that something should now be done differently. This checks its record.
  *
  * The practitioner named the failure on 2026-10-15, on finding that a map still had an Input mode
  * a day after the discussion that ruled against modes: "The map output discussion is what we call
@@ -16,9 +16,13 @@
  *
  *   1 · A direction states what it requires IN CODE, and names a work item. "Recorded in
  *       docs/..." is where it was written down, which is the thing that was not enough.
- *   2 · An OPEN direction is checked inside the window, with a dated note saying what was found.
- *       Not checked means not acted on, and the date cannot move without a finding -- the same
- *       rule the blocker ledger needed for the same reason.
+ *   2 · A check is a dated note saying what was found, and the date cannot move without a finding.
+ *
+ * THERE IS NO CLOCK, and rule 2 used to be one: every open direction checked within seven days or
+ * the build failed. Retired 2026-11-02, the day it blocked a commit that had passed the full gate
+ * from reaching main and stopped CI before its browser tests. The practitioner: "This is a DE
+ * project and we cannot mandate emergence. Emergence is arrived at." A direction moves when the
+ * work reaches it. How long since anyone looked is reported below and fails nothing.
  *
  * Deliberately not the blocker ledger. A blocker says something CANNOT be done yet; a direction
  * says something SHOULD now be done differently. A blocker rots by being lifted and not noticed,
@@ -58,8 +62,8 @@ for(const direction of register.directions){
     problems.push(`${at} is ${status} and records no check saying what changed.`);
   if(status==='open'){
     if(!(checks??[]).length)
-      problems.push(`${at} is open and records no checks. The clock is satisfied by a dated note `
-        +`saying what you found, not by moving lastChecked.`);
+      problems.push(`${at} is open and records no checks. A check is a dated note saying what you `
+        +`found, not a moved lastChecked.`);
     else{
       for(const check of checks)
         if(!check?.date||!check?.found?.trim())problems.push(`${at}: every check needs a date and what it found.`);
@@ -68,10 +72,6 @@ for(const direction of register.directions){
         problems.push(`${at}: lastChecked is ${lastChecked} and the newest check is ${newest}. `
           +`The date and the finding have to be the same event.`);
     }
-    const window=direction.checkWindowDays??register.checkWindowDays;
-    if(lastChecked&&days(today,lastChecked)>window)
-      problems.push(`${at} is open and was last checked ${lastChecked}, ${days(today,lastChecked)} `
-        +`days ago, against a window of ${window}. ${register.windowBasis}`);
   }
 }
 
@@ -84,6 +84,6 @@ const counts=Object.fromEntries([...STATUSES].map(s=>[s,register.directions.filt
 const oldest=register.directions.filter(d=>d.status==='open')
   .sort((a,b)=>new Date(a.lastChecked)-new Date(b.lastChecked))[0];
 console.log(`Directions: ${counts.open} open, ${counts.built} built, ${counts.withdrawn} withdrawn. `
-  +`Check window ${register.checkWindowDays} days.`);
+  +`No clock: age is reported, not enforced.`);
 if(oldest)console.log(`  oldest open: ${oldest.id}, checked ${oldest.lastChecked} `
   +`(${days(today,oldest.lastChecked)} days ago)`);

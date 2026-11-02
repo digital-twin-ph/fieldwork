@@ -277,3 +277,15 @@ and has never fired, so it stays a finding and does not become a rule.
   [73](../experiments/73-workflow-stage-vocabulary.md). Whether this needs a
   mechanised check — a commit touching the glossary or an audit should name an
   experiment — is one incident old, so it stays a finding.
+
+## The direction clock, retired 2026-11-02
+
+**What it was.** `validate-directions.mjs` failed the build when an open direction went seven days
+without a dated check. Written 2026-10-15 for a real failure: a model agreed and not built.
+
+**Why it went.** It failed the second test on this page, *does it bind*. A date passing, with no change
+to the code, blocked a commit that had passed the full gate and stopped CI before its browser tests. It
+was also satisfied by a note, which rewards writing about a direction over acting on it. The
+practitioner: *"This is a DE project and we cannot mandate emergence. Emergence is arrived at."*
+
+**What stays.** The checks on the record, and the age, reported without failing.

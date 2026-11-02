@@ -1,6 +1,6 @@
 # Select rows by value
 
-_Created 2026-10-26 · Updated 2026-10-26_
+_Created 2026-10-26 · Updated 2026-11-01_
 
 **A selection.** It keeps the rows whose chosen column holds one of the values you name, in the
 order you name them, and drops the rest.

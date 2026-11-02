@@ -641,7 +641,7 @@
       "recordedIn": "TODO.md",
       "workItem": "docs/experiments/142-an-epi-kernel-exercised.md",
       "status": "built",
-      "lastChecked": "2026-10-26",
+      "lastChecked": "2026-11-02",
       "checks": [
         {
           "date": "2026-10-26",
@@ -658,6 +658,10 @@
         {
           "date": "2026-10-26",
           "found": "The recognisability half is no longer empty. The practitioner pointed at the source this author had treated as unavailable -- \"The Epi Info labels can be deduced from the results panel that Epi Info AI prints. That's the closest I got to the real thing\" -- and the three labels were transcribed from the classic TABLES estimate table in epi-info-ai/wasm/demo/app.ts: Risk Ratio (RR), Odds Ratio (cross product), Risk Difference (RD%).\n\nTHE DIRECTION'S OWN DISCIPLINE SURVIVED THE FILLING, which was the risk. A sibling project's rendering of Epi Info is a deduction and not a reading, so `epiInfoLabelSource` was added beside the label, the receipt writes `deduced` rather than `verified`, and lab check 30's criterion INVERTED rather than relaxing -- from 'every label must be null' to 'every label must name its source, and the source must not be epi-info'. A field that can be filled unverifiably is still worse than no field; what it polices moved from the absence to the provenance.\n\nTwo findings from the panel itself. The qualifier in 'Odds Ratio (cross product)' is load-bearing: that panel prints an 'Odds Ratio (conditional MLE)' beside it, a different estimator not computed here, so shortening the label would make it claim both. And the panel prints the risk difference as a PERCENTAGE -- 0.4093% where this carries 0.004093 -- a recognisability difference on the same quantity, said on the estimate rather than reconciled.\n\nStill open: reading the labels off Epi Info itself, which would upgrade the source and either confirm the words or change them."
+        },
+        {
+          "date": "2026-11-02",
+          "found": "Amended by the practitioner: \"we have an epi kernel to reuse from Epi Info AI workspace.\" Read, not recalled: 28,495 bytes of WebAssembly, no imports, Apache-2.0, 81 functions. Its 2x2 estimates equal FW's on 62,208 values and its bounds agree to 2e-15 on 124,416. So the computation is to be reused and FW's kernel is the substrate over it. Naming each method by what it is, claiming no parity and not surfacing stratified_legacy_woolf_* all stand. Nothing wired in yet; see 161."
         }
       ]
     },

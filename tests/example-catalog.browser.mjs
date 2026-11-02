@@ -46,8 +46,8 @@ test('a curated example is listed with its terms, and is not fetched until asked
   // silently: listing an example must cost nothing until the practitioner asks for it.
   expect(requests).toBe(0);
 
-  await page.locator('[data-open-example]').click();
-  await expect(page.locator('[data-example-status]')).toContainText('digest matched',{timeout:20000});
+  await page.locator('[data-open-example="urn:fieldwork:example:south-london-1854"]').click();
+  await expect(page.locator('[data-example-status="urn:fieldwork:example:south-london-1854"]')).toContainText('digest matched',{timeout:20000});
   expect(requests).toBe(1);
   // It opened: the workflow is on the canvas and is the one the example publishes.
   await page.locator('[data-view="workflow"]').click();
@@ -64,8 +64,8 @@ test('bytes that do not match the pinned digest are refused, not loaded',{skip},
     // Right size, wrong bytes: this is the case a length check alone would wave through.
     status:200,body:Buffer.alloc(bundle.length,7)}));
   await openProjects(page);
-  await page.locator('[data-open-example]').click();
-  await expect(page.locator('[data-example-status]')).toContainText('does not match the digest',{timeout:20000});
+  await page.locator('[data-open-example="urn:fieldwork:example:south-london-1854"]').click();
+  await expect(page.locator('[data-example-status="urn:fieldwork:example:south-london-1854"]')).toContainText('does not match the digest',{timeout:20000});
   // REFUSED, NOT PARTLY LOADED: the canvas is still the blank one.
   await page.locator('[data-view="workflow"]').click();
   await expect(page.locator('.react-flow__node[data-id="mortality"]')).toHaveCount(0);
@@ -78,8 +78,8 @@ test('bytes that do not match the pinned digest are refused, not loaded',{skip},
 test('a curated example opens as a project with its workflows',{skip},async({page})=>{
   await page.route(/raw\.githubusercontent\.com/,route=>route.fulfill({status:200,body:bundle}));
   await openProjects(page);
-  await page.locator('[data-open-example]').click();
-  await expect(page.locator('[data-example-status]')).toContainText('digest matched',{timeout:20000});
+  await page.locator('[data-open-example="urn:fieldwork:example:south-london-1854"]').click();
+  await expect(page.locator('[data-example-status="urn:fieldwork:example:south-london-1854"]')).toContainText('digest matched',{timeout:20000});
   // A PROJECT, named, with every question under it -- not a loose canvas. Three until 2026-10-25,
   // when the choropleth joined the rates to the boundaries; five and then six on 2026-10-26, when
   // the water-company comparison brought Table IX and the rate ratio, and the contingency table
@@ -124,8 +124,8 @@ test('an imported example is resettable, from the bytes already verified',{skip}
     route.fulfill({status:200,body:bundle});});
   page.on('dialog',dialog=>dialog.accept());
   await openProjects(page);
-  await page.locator('[data-open-example]').click();
-  await expect(page.locator('[data-example-status]')).toContainText('digest matched',{timeout:20000});
+  await page.locator('[data-open-example="urn:fieldwork:example:south-london-1854"]').click();
+  await expect(page.locator('[data-example-status="urn:fieldwork:example:south-london-1854"]')).toContainText('digest matched',{timeout:20000});
   await page.locator('[data-view="workflow"]').click();
   const node=page.locator('.react-flow__node[data-id="mortality"]');
   await expect(node).toBeVisible();
@@ -148,3 +148,22 @@ test('an imported example is resettable, from the bytes already verified',{skip}
   await expect(page.locator('#delete-workflow')).toBeEnabled();
   expect(errors).toEqual([]);
 });
+
+// THE SECOND EXAMPLE, opened from its pin rather than rebuilt. `oswego-from-scratch` proves it can
+// be made by hand; this proves what was published is what opens.
+const OSWEGO=new URL('../../example-1940-oswego-church-supper/fieldwork-project.json.gz',import.meta.url);
+test('Oswego opens from its pin as one project, its counts intact',
+  {skip:existsSync(OSWEGO)?false:'example-1940-oswego-church-supper is not checked out beside this repository.'},
+  async({page})=>{
+    const bytes=readFileSync(OSWEGO);
+    await page.route(/raw\.githubusercontent\.com/,route=>route.fulfill({status:200,body:bytes}));
+    await openProjects(page);
+    await page.locator('[data-open-example="urn:fieldwork:example:oswego-1940"]').click();
+    await expect(page.locator('[data-example-status="urn:fieldwork:example:oswego-1940"]')).toContainText('digest matched',{timeout:20000});
+    await expect(page.locator('#project-select')).toContainText('The Oswego church supper, 1940');
+    await page.locator('#run-button').click();
+    await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
+    await page.locator('[data-view="results"]').click();
+    await page.locator('#result-tabs [data-output]').filter({hasText:'vanilla'}).click();
+    await expect(page.locator('main').first()).toContainText('from 54 and 21 subjects');
+  });

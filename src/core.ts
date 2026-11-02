@@ -1392,11 +1392,12 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         }
         receipts.push({nodeId:node.id,kind:'computation',
           // THE AGGREGATE IS NAMED, because "totalled" was true of every run until 2026-10-31
-          // and is now one of three. A receipt that still said "totalled" over a maximum would
+          // and is now one of four. A receipt that still said "totalled" over a maximum would
           // be the kind of stale sentence this project keeps finding.
           method:`${result.collapsedFrom} rows ${result.aggregate==='sum'?'totalled'
             :result.aggregate==='minimum'?'reduced to their minimum'
-            :'reduced to their maximum'} into ${result.groups} within `
+            :result.aggregate==='maximum'?'reduced to their maximum'
+            :'counted'} into ${result.groups} within `
             +`${node.params.by.join(' and ')}, dropping ${result.dropped.join(' and ')}`
             // THE OVERRIDE IS IN THE RECEIPT'S OWN SENTENCE, not only in a field beside it. A
             // reader checking how a total was reached meets the assumption here or not at all.

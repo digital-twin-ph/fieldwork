@@ -15,6 +15,7 @@
   "snow-voronoi"
  ],
  "examplesPinned": [
+  "oswego-1940",
   "south-london-1854"
  ],
  "ladder": [
@@ -247,9 +248,10 @@
   {
    "nodeType": "group_table",
    "exampleUses": [
+    "oswego-1940",
     "south-london-1854"
    ],
-   "exampleUseCount": 1,
+   "exampleUseCount": 2,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],
@@ -295,6 +297,7 @@
     "hagelloch",
     "heat",
     "old-naledi",
+    "oswego-1940",
     "raster",
     "rulesets",
     "sea-level",
@@ -304,7 +307,7 @@
     "snow-voronoi",
     "south-london-1854"
    ],
-   "exampleUseCount": 12,
+   "exampleUseCount": 13,
    "lab": "none",
    "labOwed": false,
    "fieldUse": [],
@@ -380,6 +383,7 @@
     "hagelloch",
     "heat",
     "old-naledi",
+    "oswego-1940",
     "rulesets",
     "sea-level",
     "snow-extent",
@@ -388,7 +392,7 @@
     "snow-voronoi",
     "south-london-1854"
    ],
-   "exampleUseCount": 11,
+   "exampleUseCount": 12,
    "lab": "none",
    "labOwed": false,
    "fieldUse": [],
@@ -545,6 +549,7 @@
     "coverage",
     "hagelloch",
     "old-naledi",
+    "oswego-1940",
     "raster",
     "rulesets",
     "sea-level",
@@ -553,7 +558,7 @@
     "snow-voronoi",
     "south-london-1854"
    ],
-   "exampleUseCount": 10,
+   "exampleUseCount": 11,
    "lab": "none",
    "labOwed": false,
    "fieldUse": [],
@@ -605,6 +610,7 @@
   {
    "nodeType": "table_input",
    "exampleUses": [
+    "oswego-1940",
     "rulesets",
     "sea-level",
     "snow-extent",
@@ -612,7 +618,7 @@
     "snow-voronoi",
     "south-london-1854"
    ],
-   "exampleUseCount": 6,
+   "exampleUseCount": 7,
    "lab": "none",
    "labOwed": false,
    "fieldUse": [],
@@ -624,6 +630,7 @@
     "hagelloch",
     "heat",
     "old-naledi",
+    "oswego-1940",
     "rulesets",
     "sea-level",
     "snow-extent",
@@ -632,7 +639,7 @@
     "snow-voronoi",
     "south-london-1854"
    ],
-   "exampleUseCount": 10,
+   "exampleUseCount": 11,
    "lab": "none",
    "labOwed": false,
    "fieldUse": [],
@@ -661,9 +668,10 @@
   {
    "nodeType": "two_by_two",
    "exampleUses": [
+    "oswego-1940",
     "south-london-1854"
    ],
-   "exampleUseCount": 1,
+   "exampleUseCount": 2,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],

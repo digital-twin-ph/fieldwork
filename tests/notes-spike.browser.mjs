@@ -25,8 +25,8 @@ const southLondon=async page=>{
   await page.goto('/');await page.evaluate(()=>localStorage.clear());
   await page.goto('/?example=blank');
   await page.locator('[data-view="project"]').click();
-  await page.locator('[data-open-example]').click();
-  await expect(page.locator('[data-example-status]')).toContainText('digest matched',{timeout:20000});
+  await page.locator('[data-open-example="urn:fieldwork:example:south-london-1854"]').click();
+  await expect(page.locator('[data-example-status="urn:fieldwork:example:south-london-1854"]')).toContainText('digest matched',{timeout:20000});
   // THE WRITE-UP IS ITS OWN TAB. The practitioner, 2026-10-29: *"It should be a tab."*
   await page.locator('[data-view="notes"]').click();
 };

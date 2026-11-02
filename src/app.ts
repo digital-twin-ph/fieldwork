@@ -2236,8 +2236,8 @@ function renderInspector(){
         :`<div class="field"><label class="field-label" for="group-by">Key columns to keep, one per line</label>`
           +`<textarea id="group-by" data-group-text rows="3">${esc(p.by.join('\n'))}</textarea></div>`)
       // Why KEPT and not dropped, said where the choice is made rather than only in the manual.
-      +'<div class="notice">You name what is kept, not what is dropped, because files change: a column added later is simply dropped and you keep the same groups, where naming the dropped columns would let a new one silently become a grouping key. Only addition is offered — adding counts gives a count, while adding rates gives a number with no referent. A group holding any empty value totals to nothing known and is named in the evidence, because an unrecorded population should come out unknown rather than small.</div>'
-      // WHICH AGGREGATE. Three, not Epi Info AI's eleven: the absent ones are absent because
+      +'<div class="notice">You name what is kept, not what is dropped, because files change: a column added later is simply dropped and you keep the same groups, where naming the dropped columns would let a new one silently become a grouping key. A group holding any empty value totals to nothing known and is named in the evidence, because an unrecorded population should come out unknown rather than small.</div>'
+      // WHICH AGGREGATE. Four, not Epi Info AI's eleven: the absent ones are absent because
       // this step cannot tell a count from a rate, which is the same argument that kept it
       // sum-only until 2026-10-31. Said here rather than only in the source, because a
       // practitioner looking for AVG should learn why it is missing where they look for it.
@@ -2245,9 +2245,12 @@ function renderInspector(){
       +`<select id="group-aggregate">`
       +AGGREGATES.map(value=>`<option value="${esc(value)}" `
         +`${(p.aggregate||'sum')===value?'selected':''}>`
-        +`${esc(value==='sum'?'Sum':value==='minimum'?'Minimum':'Maximum')}</option>`).join('')
+        +`${esc(value==='sum'?'Sum':value==='minimum'?'Minimum':value==='maximum'?'Maximum':'Count rows')}</option>`).join('')
       +`</select>`
-      +(p.aggregate&&p.aggregate!=='sum'
+      +(p.aggregate==='count'
+        ?'<p class="description">Counts rows, not people. Import one value column from a line '
+          +'list, or each person counts once per column.</p>'
+        :p.aggregate&&p.aggregate!=='sum'
         ?'<p class="description">A group whose cells were all excluded has no minimum or maximum '
           +'at all, and is reported as unknown rather than as zero.</p>'
         :'<p class="description">Mean is not offered: summing or averaging rates gives a number '
@@ -2258,7 +2261,7 @@ function renderInspector(){
       // of 2026-10-31 and is the more prudent of the two -- for a sum they give the same number,
       // and they make different claims. Zeroing asserts there were none; excluding asserts only
       // that what was totalled is what was recorded.
-      +`<label class="check"><input type="checkbox" id="group-exclude-missing" `
+      +(p.aggregate==='count'?'':`<label class="check"><input type="checkbox" id="group-exclude-missing" `
       +`${p.excludeMissing?'checked':''}> Total what is present, excluding empty cells</label>`
       +(p.excludeMissing
         ?'<div class="notice notice-warning">Totals will cover fewer rows than the group holds. '
@@ -2266,7 +2269,7 @@ function renderInspector(){
           +'records it. An excluded cell is not a zero: nothing claims there were none.</div>'
         :'<p class="description">Off, a group holding an empty cell totals to nothing known, '
           +'because a value nobody recorded is not a zero. Turn this on to total what was '
-          +'recorded and say so.</p>');
+          +'recorded and say so.</p>'));
   }else if(n.type==='study_design'){
     // WHAT KIND OF STUDY, AND WHEN. Experiment 154. The design is a closed vocabulary of the five
     // this application can actually serve, because offering a sixth that licenses no

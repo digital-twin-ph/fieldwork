@@ -7,6 +7,10 @@ shown in a local build is not a claim that it has been published.
 
 Covers the work of 2026-10-30.
 
+- **A line list can be counted.** *Total within groups* gains **Count rows**, which says how many
+  rows agree without reading their value, so a person-level line list reaches a two-by-two. It counts
+  rows, not people: import one value column.
+
 - **Every table widget shows its table, before and after.** **View this table** now sits at the top
   of the Inspector rather than below *Remove node*. It opens on the step's output, with a toggle to
   the table that came in, so a chain can be read one change at a time. A step with two inputs names

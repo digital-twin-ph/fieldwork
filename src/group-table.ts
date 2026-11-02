@@ -36,6 +36,15 @@
  *  say so. Experiment 157; the node type stays `group_table` because renaming one rewrites every
  *  saved workflow that holds it, and the naming finding is recorded rather than acted on.
  *
+ *  AND COUNT, ON 2026-11-02, because a line list has nothing else to add. Oswego's 75 people are
+ *  a row each with a Y or an N under every food and no count anywhere, so no sum reaches a
+ *  two-by-two: the file holds no column worth adding, and writing a column of 1s into a published
+ *  line list would be editing the source to suit the tool. The additivity argument does not reach
+ *  COUNT, because it never reads the value: it says how many rows agree, and that means the same
+ *  thing over a count, a rate or an age. What it cannot know is that a row is a subject. A wide
+ *  import with two value columns has two rows per person, so the receipt says ROWS and never
+ *  people, and the manual says to import one value column.
+ *
  *  NO PARITY WITH EPI INFO IS CLAIMED by sharing the name. `epiInfoLabelSource` keeps "what Epi
  *  Info AI prints" apart from "what Epi Info prints", and nothing here is checked against
  *  either.
@@ -52,9 +61,9 @@ import type {Workflow} from './types.js';
 /** THE AGGREGATES THIS STEP CAN POLICE, and no others.
  *
  *  Epi Info AI's `SUMMARIZE` offers AVG, COUNT, FIRST, LAST, MAX, MIN, STDEV, STDEVP, SUM, VAR
- *  and VARP. Three are admitted here and the absences are an argument rather than an oversight;
+ *  and VARP. Four are admitted here and the absences are an argument rather than an oversight;
  *  see the note at the head of this file. */
-export const AGGREGATES=['sum','minimum','maximum'] as const;
+export const AGGREGATES=['sum','minimum','maximum','count'] as const;
 export type Aggregate=typeof AGGREGATES[number];
 
 export interface GroupRequest {
@@ -134,6 +143,15 @@ export function groupTable(table:DataTable,request:GroupRequest):GroupResult {
     groups.set(id,group);
   }
   const aggregate=request.aggregate??'sum';
+  /** A COUNT HAS NO EMPTY CELLS TO WORRY ABOUT. It never reads the value, so a row with a blank
+   *  value is still a row, there is nothing to exclude, and the result no longer measures what
+   *  the input's value column measured. */
+  if(aggregate==='count'){
+    const rows=[...groups.values()].map(group=>({key:group.key,value:group.summed+group.empty}));
+    const {unit:_unit,...rest}=table;
+    return {aggregate,table:{...rest,keys:by,valueField:'rows',rows,rowCount:rows.length,
+      missingValueCount:0},groups:rows.length,collapsedFrom:table.rows.length,dropped,gaps:[]};
+  }
   /** AN EXTREMUM OF NOTHING IS NOT ZERO, which is where this differs from a sum. A group whose
    *  every cell was excluded has a total of 0 -- nothing added up to nothing -- and has no
    *  minimum at all, because there is no value to be the smallest. Returning 0 there would

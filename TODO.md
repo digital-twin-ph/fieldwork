@@ -892,6 +892,45 @@ nearest-neighbour-with-distance, and `slr_threshold_comparison` this file has ca
 domain-bound"*, which under the domain-agnostic direction is a question rather than a settled
 exemption. Both are still classified `domain` in `widgets/classification.json`.
 
+### Five directions to check on Friday 2026-11-06
+
+Postponed by the practitioner on 2026-11-02, so `validate:directions` and the pre-push hook stay red
+until then. Each needs a real look, not a new date: `the-epi-kernel-is-a-kernel-not-a-palette-of-statistics`,
+`a-project-is-a-story-because-a-graph-is-not-a-narrative`, `the-real-debt-is-unexplored-opportunity`,
+`the-validation-lab-is-integral-in-lifecycle-and-independent-in-method`,
+`the-siblings-are-fieldworks-arms-not-its-dependencies`.
+
+### The Rust epi kernel
+
+`kernel/` is FW's own, started 2026-11-02 from the Epi Info AI engine and not wired in yet. It grows
+here. New measures go in Rust.
+
+### Found building Oswego, 2026-11-02 ([160](docs/experiments/160-a-line-list-reaches-a-two-by-two.md))
+
+- **Design *Attack rates by exposure* against Oswego and Stegen together**, decided 2026-11-02, so it
+  is not fitted to one example. Stegen 1998: 291 people, 103 cases, 14 exposures, `0`/`1` with both
+  `NA` and `9` for missing, portions eaten, and tiramisu at 18.31 with several desserts above 2, so
+  overlap between exposures is visible. In `reconhub/learn`. First check its licence, MIT on the
+  repository and CC-BY 4.0 on the page, and the original outbreak report.
+- **The Thai sports-day outbreak, 1990, as a later example.** `Outbreak` in `epiDisplay`: 1,094
+  people, four exposures, eclair pieces as dose, `9`, `80` and `90` as missing or uncertain codes.
+  GPL (>= 2), and the catalog notes GPL data can be held and not transformed, so settle the terms
+  first or work from the 1995 paper it cites.
+- **An open case-control line list: Luczynska et al., Germany 2021**, because attack rates cannot be
+  read from a case-control study. Zenodo 10.5281/zenodo.7333295, CC-BY 4.0: 32 cases and two control
+  groups, 298 rows and 82 columns, German variable names, codebook in xlsx. Codebook and paper not
+  read yet. Three groups in one file is a test in itself.
+- **There is no food-specific attack rate table.** Oswego takes 43 nodes and shows its answer across
+  14 result tabs; an investigator's product is one table with a row per food. The main finding.
+- **The two-by-two mapping dialog is disabled before a run and does not say why.** The Inspector's
+  fields use `upstreamKeyValues` and work unrun; the dialog uses `tableOnPort`.
+- **Tidy overlaps unconnected nodes**, covering a port so a drag misses.
+- **`table_output` labels a port "Point data undefined".**
+- **Y and N read badly in the sentence:** "Y against N: 79.630% Y against 14.286%". The values are
+  the file's, so any fix must not relabel them silently.
+- **A line list must name a numeric value column it does not use.** Oswego uses `Age`.
+- **`group_table`'s palette line and title still say it adds up**, now that it can count.
+
 ## Deferred — decided to do later, which is not a decision to do it
 
 _Carried over whole from the root `TODO.md` of 2026-10-10 in the merge above, headings

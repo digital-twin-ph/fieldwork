@@ -1,6 +1,6 @@
 # Derive a value
 
-_Created 2026-10-26 · Updated 2026-10-26_
+_Created 2026-10-26 · Updated 2026-11-01_
 
 **Arithmetic.** It takes a table, combines two of its values with one operation, and gives the
 table back with a new value added for every group of rows.

@@ -157,9 +157,23 @@ test('an empty cell still makes the group unknown unless it is excluded',()=>{
 
 test('THE VOCABULARY IS BOUNDED, and the absences are an argument',()=>{
   // Epi Info AI's SUMMARIZE offers AVG COUNT FIRST LAST MAX MIN STDEV STDEVP SUM VAR VARP.
-  // Three are admitted. AVG has the referent problem that kept this step sum-only -- rates do
+  // Four are admitted. AVG has the referent problem that kept this step sum-only -- rates do
   // not average meaningfully when the groups differ in size -- STDEVP and VARP are population
   // variants this step cannot tell it has, and FIRST and LAST depend on a row order a long table
   // does not promise.
-  assert.deepEqual([...AGGREGATES],['sum','minimum','maximum']);
+  assert.deepEqual([...AGGREGATES],['sum','minimum','maximum','count']);
+});
+test('COUNT READS NO VALUE: a line list reaches its four cells, and a blank is still a row',()=>{
+  const person=(ill,ate,value)=>({key:{id:String(person.n=(person.n||0)+1),ill,ate,measure:'Age'},value});
+  const table={kind:'data-table',keys:['id','ill','ate','measure'],valueField:'Age',unit:'years',
+    rows:[person('Y','Y',11),person('Y','Y',null),person('Y','N',30),person('N','N',52)],
+    rowCount:4,missingValueCount:1};
+  const out=groupTable(table,{by:['ill','ate'],aggregate:'count'});
+  assert.deepEqual(out.table.rows.map(r=>[r.key.ill,r.key.ate,r.value]),
+    [['Y','Y',2],['Y','N',1],['N','N',1]]);
+  // The result measures rows, so it must not go on calling itself years of age.
+  assert.equal(out.table.valueField,'rows');
+  assert.equal(out.table.unit,undefined);
+  assert.equal(out.table.missingValueCount,0);
+  assert.deepEqual(out.gaps,[],'a count has no unknown total to report');
 });

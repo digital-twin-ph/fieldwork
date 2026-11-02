@@ -77,7 +77,7 @@ import {studyDesignSentence,studyDesignReceipt,DESIGN_LICENCES,includedMeasures,
 import {refinementSentences,investigatorAllocated} from './study-design-questions.js';
 import type {DeclaredDesign} from './study-design.js';
 import {outreachProjection,extentN3,extentProjection,projectionOf,RULESET_FOR_NODE_TYPE,pinnedRuleset,parametersFor} from './rule-application.js';
-import {authoredFacts,authoredProjection,authoredReceipt,authoredDataIssues} from './authored-application.js';
+import {authoredConclusions,authoredFacts,authoredProjection,authoredReceipt,authoredDataIssues} from './authored-application.js';
 import {applyRepairs} from './column-profile.js';
 import {compileAuthoredRuleset,authoredUnitProblems} from './authored-rules.js';
 import {travelTime,travelTimeReceipt,validateTravelTime,TRAVEL_TIME_METHOD} from './travel-time.js';
@@ -113,7 +113,7 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   table_input:{title:'Tabular data',group:'Sources',icon:'▤',color:'blue',description:'Import a long-format table keyed by declared columns; no geometry',inputs:[],output:'table'},
   join_table_to_area:{title:'Join a table to the study area',group:'Summaries',icon:'⋈',color:'teal',
     description:'Put a value from each row onto the part of the boundary it names',
-    inputs:[['records','table'],['area','area']],output:'polygons'},
+    inputs:[['records','table'],['area','area'],['polygons','polygons']],output:'polygons'},
   rate_ratio:{title:'Rate ratio with an interval',group:'Epidemiology',icon:'⚖',color:'teal',
     description:'Divide one group\'s rate by another\'s, with an interval and the counts behind it',
     // The same optional `design` as `two_by_two`, for the same reason: a rate ratio is a
@@ -270,6 +270,10 @@ export function requiredInputs(node:WorkflowNode,options?:{coverageConnected?:bo
   // first is required because a collector of nothing has nothing to emit; the rest are extra
   // slots, which is what they were always meant to be.
   if(node.type==='stack_polygons')return all.filter(([port])=>port==='polygons');
+  // THE PARTS MAY BE A STUDY AREA OR A POLYGON LAYER, so neither is required of itself and the run
+  // says so if both are missing. Nigeria's 774 LGAs are 218,000 vertices, which a study area, one
+  // extent of about 26,000, cannot hold and a polygon layer exists for.
+  if(node.type==='join_table_to_area')return all.filter(([port])=>port==='records');
   // `chart_output` joins them on 2026-10-28, the day it stopped choosing its ports by a mode.
   // A chart insists on nothing for the same reason a map and a table do not: it draws what it is
   // given, and declaring three ports while requiring them all turned one unconnected node into
@@ -1172,7 +1176,11 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         // THE NAMES HAVE TO BE THERE. An area drawn by hand has no named parts, so there is
         // nothing to key on and saying so is better than matching nothing and drawing an empty
         // choropleth that looks like a finding.
-        const units=(inputs.area as {units?:{id:string;name:string}[]}).units;
+        const layer=inputs.polygons as unknown as import('./catchments.js').Polygons|undefined;
+        if(layer&&inputs.area)throw new Error('Connect a study area or a polygon layer to join to, not both.');
+        if(!layer&&!inputs.area)throw new Error('Connect a study area or a polygon layer to join to.');
+        const units=layer?layer.features.map(f=>({id:String(f.id),name:String(f.name)}))
+          :(inputs.area as {units?:{id:string;name:string}[]}).units;
         if(!units?.length)throw new Error('This study area has no named parts to join to. Acquire a boundary whose features carry names, or import one from a file and choose the name column.');
         // `records`, not `table`: `inputs` is keyed by PORT name, and the port is called records
         // to match every other widget that takes rows. Reading `inputs.table` here cost a run
@@ -1181,10 +1189,13 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           inputs.records as unknown as import('./data-table.js').DataTable,
           {keyField:node.params.keyField,normalisation:node.params.normalisation,
             categoryField:node.params.categoryField});
-        value=joinedPolygons(inputs.area.boundary,joined,node.params.label);
+        value=layer?joinedPolygons(undefined,joined,node.params.label,
+          layer.features.map(f=>f.geometry as import('./types.js').Boundary),
+          layer.features.map(f=>(f as unknown as {properties?:Record<string,Scalar>}).properties??{}))
+          :joinedPolygons(inputs.area.boundary,joined,node.params.label);
         receipts.push(areaJoinReceipt(node,joined,runId,
           workflow.edges.find(e=>e.to===node.id&&e.port==='records')!.from,
-          workflow.edges.find(e=>e.to===node.id&&e.port==='area')!.from));
+          workflow.edges.find(e=>e.to===node.id&&(e.port==='area'||e.port==='polygons'))!.from));
         break;}
       case 'raster_input':{if(!node.params.asset)throw new Error('Prepare the raster window before running.');const grid=await loadRaster(node.params.asset,inputs.area);value=grid;receipts.push(rasterReceipt(node,grid,inputs.area,runId));break;}
       case 'clip_raster':{const grid=clipRaster(inputs.raster,node.params.cutline?.geometry||inputs.area.boundary,node.params);value=grid;receipts.push(rasterReceipt(node,grid,inputs.area,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='raster')!.from));break;}
@@ -1703,6 +1714,23 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           // What the records could not say, counted before anything is concluded from them.
           const dataIssues=authoredDataIssues(subjects,authored.fields);
           const judged=authoredProjection(subjects,authored.fields,conclusions);
+          // POLYGONS IN, POLYGONS OUT, each a row with a geometry: the conclusion is a property of
+          // the record and its class on the map. A part no rule reached has no class, and is drawn
+          // in the neutral. The practitioner, 2026-11-02: "apply_ruleset should apply to polygon
+          // records as well like geopandas."
+          if(node.params.ruleset?.output==='polygons'){
+            const reached=authoredConclusions(conclusions);
+            const layer=subjects as unknown as import('./catchments.js').Polygons;
+            value=({...layer,method:authored.title,layerName:node.params.label||authored.title,
+              features:layer.features.map((feature,index)=>{
+                const concluded=reached.get(encodeURIComponent(String(feature.id)))??{};
+                const category=Object.values(concluded)[0];
+                return {...feature,...judged.features[index],geometry:feature.geometry,
+                  ...(category?{category}:{})};}),
+              ...(dataIssues.length?{dataIssues,issuedBy:node.id}:{})}) as unknown as DisplayValue;
+            receipts.push(authoredReceipt(node,authored,facts,rules,conclusions,judged.unmatched,runId,workflow.edges,dataIssues));
+            break;
+          }
           // A table in, a table out -- carrying what the rules concluded as further key columns,
           // so a Table output renders the judgement beside the number it was made about. A point
           // layer in, the records back whole, as extent-review 1.1.0 returns its polygons.

@@ -77,12 +77,12 @@
    ]
   },
   "apply_ruleset": {
-   "version": "0.1.0",
-   "released": "2026-10-12",
+   "version": "0.2.0",
+   "released": "2026-11-02",
    "changes": [
     {
-     "kind": "baseline",
-     "description": "One widget for every declared ruleset, replacing policy, access_policy and xpert, which differed only in which rules they ran. All three carried their rules as template literals inside their executors while policy described itself as 'Apply N3 rules with EYE-JS', as though rules were an input; they were not. The rules became declared, versioned, digested artefacts earlier on 2026-10-12 with byte-identical output, and this is the node type that hosts them. What this merge does: it collapses three palette entries to one and three widget contracts to one. What it does not do: collapse the three projections. Each ruleset still assembles a different carrier for whatever consumes it, and that code is dispatched here by declared data rather than deleted -- a merge that claimed to remove code and only moved it would be worse than no merge. A saved workflow holding any of the three is rewritten with its ruleset pinned at the version that produced its results, and stamped so the Inspector names the replacement. Ports are declared empty here and pinned per node from the ruleset, which is exactly how micro_workflow declares a composition's: src/core.ts nodeInputs and outputOf already vary per node, so this reuses the mechanism compositions established rather than inventing one."
+     "kind": "minor",
+     "description": "Rules written on a step can read polygons, as well as points and tables: a polygon is a record with columns. Conclusions come back on each polygon and as its class on a map. Columns are read again when the editor opens, so rules begun before records were connected are not left with none. Proportion, percent and counts are accepted as units."
     }
    ],
    "breaking": false,
@@ -387,12 +387,12 @@
    "migrationFrom": []
   },
   "join_table_to_area": {
-   "version": "0.1.0",
-   "released": "2026-10-25",
+   "version": "0.2.0",
+   "released": "2026-11-02",
    "changes": [
     {
-     "kind": "initial",
-     "description": "Puts a value from each row of a table onto the part of a study area that row names, matching on a key column by equality after a declared normalisation. One feature per part, undissolved, each carrying the value in an open properties bag. Four conditions are reported by name rather than folded into a count: a part no row names, a row naming no part, two raw keys that normalise together, and two parts sharing one name. See docs/experiments/138-a-table-and-a-boundary-are-two-tables.md."
+     "kind": "minor",
+     "description": "Joins to a polygon layer as well as a study area, so a boundary file too large to be one extent can still be joined: Nigeria's 774 LGAs are about 218,000 vertices. What a polygon already holds is kept, so a second join adds a column as a merge on a GeoDataFrame does. Multipolygons stay as published."
     }
    ],
    "breaking": false,

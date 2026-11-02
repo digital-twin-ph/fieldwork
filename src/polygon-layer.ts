@@ -42,8 +42,11 @@ import type {Polygons} from './catchments.js';
  *  `network-tiles.ts` had already written the rule this breaks: *"nothing here decides in advance
  *  how much a practitioner may have."* Snow's three territories are 367 vertices, which is what
  *  the old comment offered as its evidence -- a vertex figure, for a feature cap, from the
- *  smallest case in the project. */
-export const MAX_LAYER_VERTICES=200_000;
+ *  smallest case in the project.
+ *
+ *  RAISED FROM 200,000 ON 2026-11-02 for the same reason: Nigeria's 774 LGAs are about 218,000
+ *  vertices and the example's own boundary file was refused. */
+export const MAX_LAYER_VERTICES=1_000_000;
 
 /** CUT EACH FEATURE TO A BOX, keeping only what falls inside it.
  *

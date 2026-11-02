@@ -166,20 +166,24 @@ export function joinTableToAreas(
  *  A part with no value is still drawn. `properties` carries the joined value under the table's
  *  own field name, and `value` repeats it in a fixed place so a renderer can colour by it
  *  without being told which column to look at. */
-export function joinedPolygons(boundary:Boundary,result:AreaJoinResult,label:string):Polygons{
-  const rings=boundary.type==='MultiPolygon'?boundary.coordinates:[boundary.coordinates];
+export function joinedPolygons(boundary:Boundary|undefined,result:AreaJoinResult,label:string,
+  geometries?:Boundary[],carried?:Record<string,Scalar>[]):Polygons{
+  const rings=!boundary?[]:boundary.type==='MultiPolygon'?boundary.coordinates:[boundary.coordinates];
   const features=result.parts.map((part,index)=>({
     id:part.id,name:part.name,siteId:part.id,
-    geometry:{type:'Polygon' as const,coordinates:rings[index]??rings[0]},
+    geometry:geometries?.[index]??{type:'Polygon' as const,coordinates:rings[index]??rings[0]},
     ...(part.value===null?{}:{value:part.value}),
     ...(part.category?{category:part.category}:{}),
-    properties:{[result.declared.valueField]:part.value,
+    // WHAT THE POLYGON ALREADY HELD STAYS, so joining a second table adds a column as a merge on a
+    // GeoDataFrame does, and one record can carry coverage and zero-dose for a rule to read.
+    properties:{...carried?.[index],[result.declared.valueField]:part.value,
       [result.declared.keyField]:part.name,
       ...(result.declared.categoryField&&part.category
         ?{[result.declared.categoryField]:part.category}:{})} as Record<string,Scalar>,
   }));
   const {counts}=result;
-  return {features:features as unknown as Polygons['features'],sites:[],boundary:structuredClone(boundary),
+  return {features:features as unknown as Polygons['features'],sites:[],
+    ...(boundary?{boundary:structuredClone(boundary)}:{}),
     // The node's own label names the layer: it is what the practitioner called this join, and
     // what they will look for when they toggle it beside the study area.
     layerName:label,

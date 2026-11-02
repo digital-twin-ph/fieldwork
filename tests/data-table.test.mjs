@@ -75,6 +75,6 @@ test('a nonnumeric value, an empty key and an oversized table are refused', () =
   assert.throws(()=>dataTable(csv(projection.headers,[['145','ssp126','2050','0.5','high']]),selection),/nonnumeric value "high"/);
   assert.throws(()=>dataTable(csv(projection.headers,[['','ssp126','2050','0.5','0.2']]),selection),/no value in key column "site_id"/);
   const many=csv(['k','v'],Array.from({length:MAX_TABLE_ROWS+1},(_,i)=>[String(i),'1']));
-  assert.throws(()=>dataTable(many,{keys:['k'],valueField:'v'}),/at most 2,000 rows/);
+  assert.throws(()=>dataTable(many,{keys:['k'],valueField:'v'}),/at most 20,000 rows/);
   assert.throws(()=>dataTable(csv(['k','v'],[]),{keys:['k'],valueField:'v'}),/no rows/);
 });

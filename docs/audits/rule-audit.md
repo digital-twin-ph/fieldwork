@@ -289,3 +289,6 @@ was also satisfied by a note, which rewards writing about a direction over actin
 practitioner: *"This is a DE project and we cannot mandate emergence. Emergence is arrived at."*
 
 **What stays.** The checks on the record, and the age, reported without failing.
+
+The same clock on `widgets/blockers.json` was retired the same day: *"There is no blocker clock."* Its
+checks on the record stay: a lift test, and a revisit as a dated finding.

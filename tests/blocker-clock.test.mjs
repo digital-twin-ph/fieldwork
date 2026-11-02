@@ -10,29 +10,11 @@ const run=(today)=>{
   }catch(error){return {ok:false,out:(error.stdout||'')+(error.stderr||'')};}
 };
 
-// The revisit window used to be measured against `measuredAt`, a field inside the file being
-// checked, so a blocker could never breach it unless somebody also advanced that field -- and
-// advancing it is what a person who forgot to revisit would also forget. The clock measured itself.
-
-test('a blocker left standing past the window fails the build', ()=>{
+// THE CLOCK IS GONE, 2026-11-02: "There is no blocker clock." A month of silence fails nothing.
+test('a standing blocker fails nothing by being old', ()=>{
   const {ok,out}=run('2026-11-30');
-  assert.equal(ok,false,'a month of silence must not pass');
-  assert.match(out,/is standing and was last revisited/);
-  assert.match(out,/against a window of 7/);
-});
-
-test('a blocker revisited inside the window passes', ()=>{
-  // Pinned after the ledger's own measuredAt and inside the window. It used to read 2026-10-14,
-  // which began failing the moment the ledger was re-derived on 2026-10-15 -- not because a
-  // blocker was stale but because the pinned clock was then BEHIND measuredAt, which the
-  // validator refuses for its own reason. A date before the file was written is not a test of
-  // the window.
-  // Moved again on 2026-10-22, when six blockers were re-derived and the ledger's measuredAt
-  // advanced with them. The pin has to sit at or after measuredAt and before the oldest standing
-  // blocker's window closes -- which is a dependency on two dates inside the file under test, and
-  // is why this pin has now moved twice.
-  const {ok,out}=run('2026-10-23');
   assert.equal(ok,true,out);
+  assert.match(out,/No clock/);
 });
 
 // Added 2026-10-15 with the rules they lock. The clock was satisfiable by editing one date, which

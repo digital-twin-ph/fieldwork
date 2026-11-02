@@ -763,6 +763,12 @@ function tableKeyColumns(node:WorkflowNode|undefined,seen=new Set<string>()):rea
     case 'slr_extract_import':{
       const up=workflow.edges.find(e=>e.to===node.id&&e.port==='projections');
       return tableKeyColumns(up?workflow.nodes.find(m=>m.id===up.from):undefined,seen);}
+    // PASS-THROUGHS, which keep the columns of the table they read. Found 2026-11-02 joining Nigeria's
+    // change in coverage: the same "Connect a table first", past a select, over a connected table.
+    case 'select_rows':case 'derive_value':{
+      const up=workflow.edges.find(e=>e.to===node.id&&e.port==='records');
+      return tableKeyColumns(up?workflow.nodes.find(m=>m.id===up.from):undefined,seen);}
+    case 'group_table':return node.params.by;
     default:return [];
   }
 }
@@ -1214,6 +1220,17 @@ function rulesList(rules:ShownRule[],
     +`</div>`;
 }
 
+/** THE COLUMNS A JOINED POLYGON CARRIES, walked up the chain, since a run has not happened yet. */
+function recordColumns(node:WorkflowNode|undefined,seen=new Set<string>()):string[]|null{
+  if(node?.type!=='join_table_to_area'||seen.has(node.id))return null;
+  seen.add(node.id);
+  const from=(port:string)=>{
+    const edge=workflow.edges.find(e=>e.to===node.id&&e.port===port);
+    return edge?workflow.nodes.find(m=>m.id===edge.from):undefined;};
+  const table=from('records');
+  const value=table?.type==='table_input'?table.params.valueField:'';
+  return [...new Set([...(recordColumns(from('polygons'),seen)??[]),...(value?[value]:[])])];
+}
 function candidateFields(workflow:Workflow,nodeId:string){
   // Any incoming edge, not only one on a port called `subjects`. A step converted from a
   // declared ruleset keeps that ruleset's port names -- `polygons` for extent-review -- and
@@ -1229,6 +1246,9 @@ function candidateFields(workflow:Workflow,nodeId:string){
   // written on it at all. The attributes of a row are its key columns plus the declared value
   // field, which is `authoredSubjects` read the same way round. Found 2026-10-26 on the Manila
   // extract step.
+  const carried=recordColumns(source);
+  if(carried)return carried.map(attribute=>({attribute,kind:'number' as const,label:attribute,
+    predicate:`fwa:${attribute.replace(/[^A-Za-z0-9]+(.)/g,(_,c:string)=>c.toUpperCase()).replace(/[^A-Za-z0-9]/g,'')}`}));
   const records=data?.kind==='data-table'
     ?(data.rows??[]).slice(0,200).map(row=>({...row.key,...(data.valueField?{[data.valueField]:row.value}:{})}))
     :(data?.features??[]).slice(0,200).map(feature=>feature.properties??{});
@@ -1266,7 +1286,7 @@ function candidateFields(workflow:Workflow,nodeId:string){
  *  rules for want of a unit, which is the honest outcome rather than a guess at what they meant.
  *  Millimetres were added 2026-10-26 when a seeded binding declared `mm` and nothing could
  *  resolve it. */
-const UNIT_IRIS:Record<string,string>={minutes:'MIN',minute:'MIN',min:'MIN',hours:'HR',hour:'HR',hr:'HR',seconds:'SEC',second:'SEC',days:'DAY',day:'DAY',metres:'M',meters:'M',m:'M',kilometres:'KiloM',kilometers:'KiloM',km:'KiloM',millimetres:'MilliM',millimeters:'MilliM',millimetre:'MilliM',millimeter:'MilliM',mm:'MilliM',percent:'PERCENT'};
+const UNIT_IRIS:Record<string,string>={proportion:'FRAC',fraction:'FRAC',count:'NUM',children:'NUM',people:'NUM',cases:'NUM',minutes:'MIN',minute:'MIN',min:'MIN',hours:'HR',hour:'HR',hr:'HR',seconds:'SEC',second:'SEC',days:'DAY',day:'DAY',metres:'M',meters:'M',m:'M',kilometres:'KiloM',kilometers:'KiloM',km:'KiloM',millimetres:'MilliM',millimeters:'MilliM',millimetre:'MilliM',millimeter:'MilliM',mm:'MilliM',percent:'PERCENT'};
 const unitIriFor=(label?:string)=>{
   const code=UNIT_IRIS[(label??'').trim().toLowerCase()];
   return code?`http://qudt.org/vocab/unit/${code}`:undefined;
@@ -1451,6 +1471,15 @@ function wireAuthorRules(node:WorkflowNode){
       settingValues:getNode(workflow,node.id,'apply_ruleset').params.parameters,
       note:`These are the rules ${ruleset.title} ${ruleset.version} applies, laid out the way rules you write are laid out. `
         +`Nothing here can be changed: this ruleset is published and pinned, and the run evidence names it by version.`});
+  });
+  optionalElement('#ruleset-records')?.addEventListener('change',event=>{
+    const kind=(event.target as HTMLSelectElement).value as import('./types.js').PortType;
+    change(w=>{
+      const target=getNode(w,node.id,'apply_ruleset');
+      if(!target.params.ruleset)return;
+      target.params.ruleset={...target.params.ruleset,inputs:[['subjects',kind]],output:kind};
+      w.edges=w.edges.filter(e=>e.to!==node.id&&e.from!==node.id);
+    });
   });
   optionalElement('#author-rules')?.addEventListener('click',async()=>{
     authorRulesOn(node.id,node.params.label??'');
@@ -2759,6 +2788,13 @@ function renderInspector(){
     // about a widget is for. The pin gives such a node its ports and nothing else.
     const authored=n.params.authored;
     if(authored){
+      // WHAT KIND OF RECORD THE RULES READ. A row, a point and a polygon are all a record with
+      // columns, so the rules are the same and only the ports differ.
+      const reads=n.params.ruleset?.output??'points';
+      content+=`<div class="field"><label class="field-label" for="ruleset-records">Records arrive as</label>`
+        +`<select id="ruleset-records">`+([['points','Points'],['table','A table'],['polygons','Polygons']] as const)
+          .map(([value,label])=>`<option value="${value}" ${reads===value?'selected':''}>${label}</option>`).join('')
+        +`</select></div>`;
       const comparator=(c:string)=>({equals:'is',greaterThan:'is more than',notGreaterThan:'is at most',
         lessThan:'is less than',notLessThan:'is at least'}[c]??c);
       const readable=(value:import('./authored-rules.js').AuthoredValue)=>{
@@ -2841,8 +2877,14 @@ function renderInspector(){
           const code=UNIT_IRIS[typed.toLowerCase()];
           field.unit=code?`http://qudt.org/vocab/unit/${code}`:undefined;
         })));
+      wireAuthorRules(n);
       optionalElement('#edit-rules')?.addEventListener('click',async()=>{
-        const edited=await openRuleEditor(authored,esc,{settingValues:n.params.parameters});
+        // THE COLUMNS OF WHAT IS CONNECTED NOW, where there are none. They were read once, when the
+        // rules were started, so rules started before the records were wired had no column to choose.
+        // Rules that have columns keep exactly those: an added number with no unit would stop them.
+        if(!authored.fields.length)change(w=>{const held=getNode(w,n.id,'apply_ruleset').params.authored;
+          if(held)held.fields=candidateFields(w,n.id) as never;},{spatial:false});
+        const edited=await openRuleEditor(getNode(workflow,n.id,'apply_ruleset').params.authored!,esc,{settingValues:n.params.parameters});
         if(edited)change(w=>{getNode(w,n.id,'apply_ruleset').params.authored!.rules=edited.rules as never;});
       });
       // An EMPTY box is an unset setting, not zero. `Number('')` is 0, so clearing this field

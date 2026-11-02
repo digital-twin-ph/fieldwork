@@ -10,6 +10,11 @@ Covers the work of 2026-10-30.
 - **Fast editing no longer fails in Safari.** Every edit rewrote the page address, and Safari refuses more
   than 100 of those in ten seconds, which stopped the edit. It now writes only when the address changes.
 
+- **Polygons are records.** *Join a table* takes a polygon layer and keeps what each polygon holds, and
+  *Apply ruleset* reads polygons and returns classes a map can shade. Nigeria's 774 LGAs now reach a map,
+  and a rule over two values, from an empty canvas. A table can hold 20,000 rows and a layer 1,000,000
+  vertices, up from 2,000 and 200,000.
+
 - **Study design asks how the exposures were chosen,** and the checklist reports how many were compared
   rather than flagging each as different from the declared groups.
 

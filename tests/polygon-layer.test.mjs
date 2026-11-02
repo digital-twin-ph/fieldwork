@@ -117,9 +117,9 @@ test('a thousand small features import, because how many is not what costs',()=>
 });
 
 test('a layer past the vertex budget is refused on the total it actually carries',()=>{
-  // A ring of 1,002 positions is 1,001 vertices; 220 of them pass 200,000.
+  // A ring of 1,002 positions is 1,001 vertices; 1,100 of them pass 1,000,000.
   const ring=[...Array.from({length:1001},(_,i)=>[-0.1+i*1e-6,51.5]),[-0.1,51.5]];
-  const heavy=collection(Array.from({length:220},()=>({type:'Feature',properties:{},
+  const heavy=collection(Array.from({length:1100},()=>({type:'Feature',properties:{},
     geometry:{type:'Polygon',coordinates:[ring]}})));
   assert.throws(()=>readPolygonFeatures(heavy,{}),
     new RegExp(`${MAX_LAYER_VERTICES.toLocaleString()} vertices`));

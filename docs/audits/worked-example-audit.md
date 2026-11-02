@@ -14,13 +14,13 @@ asset shows up.
 
 ## 1 · Widget utilization
 
-55 live widgets across 11 shipped examples and 2 pinned in its own repository.
+55 live widgets across 11 shipped examples and 3 pinned in its own repository.
 
 | Reach | Widgets |
 | --- | --- |
 | Used by no workflow | **12** |
-| Used by exactly one | 30 |
-| Used by two or more | **13** |
+| Used by exactly one | 26 |
+| Used by two or more | **17** |
 
 `isochrone` and `compute_walking_catchment` are a special case the practitioner ruled on
 2026-10-29: use of the monolith is use of its components. Four of the unused names below are
@@ -67,15 +67,11 @@ Each of these has one workflow's worth of evidence. If that example changes, it 
 | `isochrone` | snow-isochrone |
 | `network_input` | snow-isochrone |
 | `voronoi` | snow-voronoi |
-| `derive_value` | south-london-1854 |
 | `group_table` | south-london-1854 |
-| `join_table_to_area` | south-london-1854 |
 | `map_image_input` | south-london-1854 |
-| `polygon_input` | south-london-1854 |
 | `rate` | south-london-1854 |
 | `rate_ratio` | south-london-1854 |
 | `relate_table` | south-london-1854 |
-| `select_rows` | south-london-1854 |
 | `stack_polygons` | south-london-1854 |
 | `study_design` | south-london-1854 |
 
@@ -87,17 +83,21 @@ evidence about that example.
 
 | Widget | Examples | Which |
 | --- | ---: | --- |
-| `map_output` | 13 | coverage, hagelloch, heat, old-naledi, oswego-1940, raster, rulesets, sea-level, snow-extent, snow-geoprivacy, snow-isochrone, snow-voronoi, south-london-1854 |
+| `map_output` | 14 | coverage, hagelloch, heat, nigeria-immunization-2024, old-naledi, oswego-1940, raster, rulesets, sea-level, snow-extent, snow-geoprivacy, snow-isochrone, snow-voronoi, south-london-1854 |
 | `point_input` | 12 | coverage, hagelloch, heat, old-naledi, oswego-1940, rulesets, sea-level, snow-extent, snow-geoprivacy, snow-isochrone, snow-voronoi, south-london-1854 |
 | `study_area` | 11 | coverage, hagelloch, old-naledi, oswego-1940, raster, rulesets, sea-level, snow-geoprivacy, snow-isochrone, snow-voronoi, south-london-1854 |
 | `table_output` | 11 | hagelloch, heat, old-naledi, oswego-1940, rulesets, sea-level, snow-extent, snow-geoprivacy, snow-isochrone, snow-voronoi, south-london-1854 |
-| `table_input` | 7 | oswego-1940, rulesets, sea-level, snow-extent, snow-isochrone, snow-voronoi, south-london-1854 |
+| `table_input` | 8 | nigeria-immunization-2024, oswego-1940, rulesets, sea-level, snow-extent, snow-isochrone, snow-voronoi, south-london-1854 |
+| `apply_ruleset` | 6 | heat, nigeria-immunization-2024, old-naledi, rulesets, sea-level, snow-extent |
 | `chart_output` | 6 | hagelloch, old-naledi, snow-extent, snow-isochrone, snow-voronoi, south-london-1854 |
-| `apply_ruleset` | 5 | heat, old-naledi, rulesets, sea-level, snow-extent |
 | `case_series` | 4 | hagelloch, snow-extent, snow-isochrone, snow-voronoi |
 | `clip_polygons` | 2 | snow-isochrone, snow-voronoi |
+| `derive_value` | 2 | nigeria-immunization-2024, south-london-1854 |
+| `join_table_to_area` | 2 | nigeria-immunization-2024, south-london-1854 |
 | `measure_distance` | 2 | heat, old-naledi |
+| `polygon_input` | 2 | nigeria-immunization-2024, south-london-1854 |
 | `reproject` | 2 | snow-isochrone, snow-voronoi |
+| `select_rows` | 2 | nigeria-immunization-2024, south-london-1854 |
 | `summarize_points_to_polygon` | 2 | snow-isochrone, snow-voronoi |
 | `two_by_two` | 2 | oswego-1940, south-london-1854 |
 
@@ -111,7 +111,7 @@ rows above `case_series` are the ones that have genuinely done both.
 
 | Example | Widgets it is the sole user of |
 | --- | --- |
-| south-london-1854 | **11** — `derive_value`, `group_table`, `join_table_to_area`, `map_image_input`, `polygon_input`, `rate`, `rate_ratio`, `relate_table`, `select_rows`, `stack_polygons`, `study_design` |
+| south-london-1854 | **7** — `group_table`, `map_image_input`, `rate`, `rate_ratio`, `relate_table`, `stack_polygons`, `study_design` |
 | snow-geoprivacy | **5** — `aggregate_points_to_h3_cell`, `compare_point_sets`, `comparison_map`, `donut_geomask`, `mean_center` |
 | old-naledi | **4** — `facilities`, `facility_audit`, `point_grid`, `travel_time` |
 | snow-isochrone | **3** — `buffer_area`, `isochrone`, `network_input` |
@@ -266,6 +266,7 @@ be read, selected and named inside the application, and claim B would hold for t
 
 - `urn:fieldwork:example:south-london-1854` declares 18 node types. Its inputs are files in its own repository, and `geo/water-intakes.geojson` was written on 2026-10-29 because those four features existed only inside the bundle until then — the one input a reader could not download.
 - `urn:fieldwork:example:oswego-1940` declares 6 node types. Its inputs are files in its own repository, and `geo/water-intakes.geojson` was written on 2026-10-29 because those four features existed only inside the bundle until then — the one input a reader could not download.
+- `urn:fieldwork:example:nigeria-immunization-2024` declares 7 node types. Its inputs are files in its own repository, and `geo/water-intakes.geojson` was written on 2026-10-29 because those four features existed only inside the bundle until then — the one input a reader could not download.
 
 ## 3 · Recommendations
 
@@ -279,7 +280,7 @@ doing: that is a decision with a cost, and this file measures.
 
 **R3. Settle what a monolith and its decomposition owe each other.** Use propagates from a composition to its members and not from an equivalent monolith, so 4 widgets read as unreached while a workflow performs their work. It is a question about the admission criteria rather than about those widgets, and the count is deliberately left as it is until it is answered.
 
-**R4. Give a second workflow to the widgets one example carries alone.** `south-london-1854` is the sole evidence for 11 widgets. Restructuring an example can take that evidence with it and nothing reports the loss. Closing it means a second workflow reaching those widgets, or recording the fragility as accepted.
+**R4. Give a second workflow to the widgets one example carries alone.** `south-london-1854` is the sole evidence for 7 widgets. Restructuring an example can take that evidence with it and nothing reports the loss. Closing it means a second workflow reaching those widgets, or recording the fragility as accepted.
 
 **R5. Extend the from-scratch rebuild past one workflow.** `tests/recreate-from-scratch.browser.mjs` proves `south-london/ground` can be built from an empty canvas and published files. The other five South London workflows and all 11 shipped examples are unproven, and it is the only test that can show a parameter is reachable from its own panel.
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** A blocker is a dated claim, and this is the clock on it.
+/** A blocker is a dated claim, and this checks its record.
  *
  * The practitioner's rule of 2026-10-12: even blockers are not permanent, and each should be
  * revisited in DE mode. The evidence for it is what re-deriving the two recorded blockers found
@@ -12,12 +12,15 @@
  *
  *   1 · Every blocker states a **liftTest**: the check that would show it has gone. A blocker that
  *       cannot be falsified is a mood, not a finding.
- *   2 · A **standing** blocker is revisited inside the window, or this fails. Not revisited means
- *       not known, and the project has twice treated "recorded" as "still true".
+ *   2 · A revisit is a dated finding, and the date cannot move without one.
+ *
+ * THERE IS NO CLOCK. A standing blocker once failed the build after seven days unrevisited. Retired
+ * 2026-11-02, after the same clock on directions blocked a fully gated commit. The practitioner:
+ * "There is no blocker clock." A blocker is revisited when the work reaches it; age is reported.
  *
  * And the teeth: every `gatedOn` in widgets/standardization.json must name a standing blocker
- * here. That turns the reduction ledger's gates from prose into claims with a clock, which is the
- * difference between a gate and an excuse.
+ * here. That turns the reduction ledger's gates from prose into claims, which is the difference
+ * between a gate and an excuse.
  *
  * Usage: node scripts/validate-blockers.mjs
  */
@@ -39,10 +42,7 @@ const registry=read('widgets/registry.json');
 const STATUSES=new Set(['standing','narrowed','lifted','withdrawn','finding']);
 const problems=[];
 const days=(a,b)=>Math.round((a-new Date(b))/86400000);
-// The revisit window is measured against the REAL date, not against a field inside the file being
-// checked. It used to read `ledger.measuredAt`, so a blocker could never breach the window unless
-// somebody also advanced that field -- and advancing it is exactly what a person who forgot to
-// revisit would also forget. The clock measured itself, so it never ticked.
+// The age reported below is measured against the real date, not a field in the file being checked.
 //
 // FIELDWORK_TODAY exists so a check can pin the date; nothing in the application reads it.
 const today=process.env.FIELDWORK_TODAY?new Date(process.env.FIELDWORK_TODAY):new Date();
@@ -51,8 +51,6 @@ if(days(today,ledger.measuredAt)<0)
   problems.push(`widgets/blockers.json records measuredAt ${ledger.measuredAt}, which is in the `
     +`future. The counts cannot have been taken yet.`);
 const byId=new Map();
-// An entry may hold the clock open longer than the ledger default, with a stated reason.
-const window=blocker=>blocker.revisitWindowDays??ledger.revisitWindowDays;
 
 for(const blocker of ledger.blockers){
   const {id,claim,status,recorded,lastRevisited,liftTest}=blocker;
@@ -67,17 +65,13 @@ for(const blocker of ledger.blockers){
   if(!recorded||!lastRevisited)problems.push(`\`${id}\`: both recorded and lastRevisited are required.`);
   else if(days(new Date(lastRevisited),recorded)<0)
     problems.push(`\`${id}\`: lastRevisited ${lastRevisited} is before recorded ${recorded}.`);
-  else if(status==='standing'&&days(today,lastRevisited)>window(blocker))
-    problems.push(`\`${id}\` is standing and was last revisited ${lastRevisited}, `
-      +`${days(today,lastRevisited)} days ago, against a window of ${window(blocker)}. `
-      +`Re-derive it and record what you found in revisits, or change its status. ${ledger.windowBasis}`);
   // The clock used to be satisfiable by editing one date, which rewards the person who forgot to
   // re-derive with a one-character fix. A standing blocker now carries dated revisit notes and the
   // newest one has to BE lastRevisited, so the date cannot move unless somebody writes a finding.
   if(status==='standing'){
     const revisits=blocker.revisits??[];
     if(!revisits.length)
-      problems.push(`\`${id}\` is standing and records no revisits. The clock is satisfied by a dated `
+      problems.push(`\`${id}\` is standing and records no revisits. A revisit is a dated `
         +`note saying what re-deriving the claim found -- not by moving lastRevisited, which is the `
         +`edit a person who skipped the re-derivation would also make.`);
     else{
@@ -96,11 +90,6 @@ for(const blocker of ledger.blockers){
   if(status==='finding'&&(blocker.blocks??[]).length)
     problems.push(`\`${id}\` is a finding and lists ${blocker.blocks.length} thing(s) it blocks. `
       +`Something waiting on it makes it standing, with a clock.`);
-  if(blocker.revisitWindowDays&&blocker.revisitWindowDays>ledger.revisitWindowDays&&!blocker.windowReason?.trim())
-    problems.push(`\`${id}\` raises its revisit window to ${blocker.revisitWindowDays} days above the `
-      +`ledger's ${ledger.revisitWindowDays} and states no windowReason. A longer window is defensible `
-      +`-- re-deriving a claim that waits on a mechanism nobody is building buys nothing -- but it is a `
-      +`claim about the claim and has to be argued.`);
   if(['lifted','withdrawn'].includes(status)&&!blocker.whatChanged?.trim())
     problems.push(`\`${id}\` is ${status} and does not say what changed. A blocker that disappears `
       +`without a record is indistinguishable from one that was forgotten.`);
@@ -148,6 +137,6 @@ const findings=counts.finding?`, ${counts.finding} finding${counts.finding===1?'
 const oldest=ledger.blockers.filter(b=>b.status==='standing')
   .sort((a,b)=>new Date(a.lastRevisited)-new Date(b.lastRevisited))[0];
 console.log(`Blockers: ${counts.standing} standing, ${counts.narrowed} narrowed, ${counts.lifted} lifted, `
-  +`${counts.withdrawn} withdrawn${findings}. Revisit window ${ledger.revisitWindowDays} days.`);
+  +`${counts.withdrawn} withdrawn${findings}. No clock: age is reported, not enforced.`);
 if(oldest)console.log(`  oldest standing: ${oldest.id}, revisited ${oldest.lastRevisited} `
   +`(${days(today,oldest.lastRevisited)} days ago)`);

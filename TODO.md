@@ -902,7 +902,7 @@ blocker was last revisited 2026-10-29.
 ### The Rust epi kernel
 
 `kernel/` is FW's own, started 2026-11-02 from the Epi Info AI engine, and every measure runs on it. It
-grows here. New measures go in Rust, then `npm run build:kernel`. Next: step 5, case-control, then read evidence on how exposures are chosen and on multiple comparisons, which EX1 and the unadjusted intervals rest on.
+grows here. New measures go in Rust, then `npm run build:kernel`. Step 5 is done in narrow form; next, build the Germany 2021 example in the app and read its paper. Also read evidence on how exposures are chosen and on multiple comparisons, which EX1 and the unadjusted intervals rest on.
 
 ### Nowhere to record a hypothesis as a hypothesis
 

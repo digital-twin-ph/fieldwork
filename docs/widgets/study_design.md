@@ -1,6 +1,6 @@
 # Study design
 
-_Created 2026-10-31 · Updated 2026-11-01_
+_Created 2026-10-31 · Updated 2026-11-02_
 
 **A workflow declares HOW as well as WHERE.** `study_area` says where a study is; nothing said what
 kind of study it is. This declares the design and the study period, and states which measures that

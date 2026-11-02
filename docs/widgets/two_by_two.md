@@ -1,6 +1,6 @@
 # Two-by-two table
 
-_Created 2026-10-26 · Updated 2026-11-01_
+_Created 2026-10-26 · Updated 2026-11-02_
 
 **The analysis under the table.** It takes four counts — two groups by two outcomes — and reports
 the risk in each group, the risk ratio, the odds ratio and the risk difference, each naming the
@@ -71,7 +71,10 @@ This cannot tell whether a person appears on two rows.
 
 **Several exposures.** With a line list, tick more than one under **Exposures to compare**, and the
 result is one table with a row per exposure: the counts, the risk in each group, the ratio and its
-interval, and how many people are **not recorded**, in neither group. Oswego's 14 foods take one node.
+interval, and how many rows are **left out**, in neither group, whether nobody recorded the answer or
+the mapping did not name it. Oswego's 14 foods take one node. Under a declared case-control design the
+table shows the four cells and the odds ratio, and no attack rate, because the study fixed the columns.
+Choose a control group by choosing the non-case value; the others are named as left out.
 
 The rows stay in the order you ticked them. Nothing is ranked or highlighted: seeing which exposure
 stands apart is the reading. The result says how many comparisons were made and that **no interval is

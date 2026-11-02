@@ -1,7 +1,7 @@
 {
   "schema": "fieldwork/example-catalog/1",
   "catalogVersion": "0.1.0",
-  "updated": "2026-10-31",
+  "updated": "2026-11-02",
   "description": "Curated worked-example repositories. This file is the trust root, on the same terms as widgets/packs.json: an example is admitted only at a full commit SHA, only from a curated owner, and every file it may fetch is pinned by digest here. A branch is never fetched, because a digest pinned against a moving ref verifies nothing.\n\nAn example is a RESOURCE -- a workflow document, data and a provenance record -- and declares no node type, so runtimeFetching: \"none\" in widgets/packs.json does not reach it. That rule governs widget definitions. See docs/experiments/127-examples-as-repositories.md.",
   "governance": {
     "curatedOwners": [
@@ -162,6 +162,72 @@
       ],
       "usesNote": "The node types the pinned bundle's workflows instantiate, DECLARED HERE rather than read from the clone, so widgets/evidence.json is the same on a machine that has the checkout and one that does not. A generated ledger whose value depends on what somebody happens to have cloned is not a measurement. validate:examples recomputes this list from the bundle wherever the checkout exists and refuses on a difference, so the declaration cannot drift from the bytes it describes.",
       "largePlateNote": "geo/map2-large.jpg is in the example repository at 5,341,773 bytes and is deliberately NOT pinned here. It is the same plate as geo/map2.jpg, sharing one georeference, and pinning it would multiply what a reader fetches by about fourteen for detail a figure at screen size cannot show. The small plate is about 16 metres per pixel over south London, which is ground. Anyone wanting the 5000-pixel scan has the repository and its digest."
+    },
+    {
+      "id": "urn:fieldwork:example:oswego-1940",
+      "title": "The Oswego church supper, 1940",
+      "repository": "https://github.com/digital-twin-ph/example-1940-oswego-church-supper",
+      "commit": "9924656f92f5d117c86822f4e9dde735f51afd5f",
+      "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-1940-oswego-church-supper",
+      "licence": {
+        "data": "Stated as unconfirmed public domain for the line list; geo/lycoming-church.geojson is ODbL-1.0; the arrangement is CC0-1.0",
+        "source": "CDC Case Studies in Applied Epidemiology No. 401-303, which carries no copyright notice that was found.",
+        "note": "No explicit public-domain statement was read for the CDC guide, so this is a reasonable reading and not a confirmed fact."
+      },
+      "description": "A person-level line list of 75 people and 14 foods, counted into a two-by-two per food, with a locator map whose church is placed by inference. No study design is declared.",
+      "carries": {
+        "workflow": true,
+        "data": true,
+        "geography": true
+      },
+      "notYet": "No epidemic curve or incubation period: onset times are text here. No single table of attack rates by food exists, so the comparison is spread over 14 result tabs.",
+      "uses": [
+        "group_table",
+        "map_output",
+        "point_input",
+        "study_area",
+        "table_input",
+        "table_output",
+        "two_by_two"
+      ],
+      "files": [
+        {
+          "path": "fieldwork-project.json.gz",
+          "sha256": "20336717053720d2d595583fb0bbbef492ec512cb303aa2006ec93e98ee40398",
+          "bytes": 4329
+        },
+        {
+          "path": "data/oswego-line-list.csv",
+          "sha256": "ec8c9e41ebb957b5786f022cb4bfde95bf2a988a43145354802e0b529bec7f62",
+          "bytes": 4216
+        },
+        {
+          "path": "geo/lycoming-church.geojson",
+          "sha256": "da78570217df29d394068117fdc1ce0ef1dbd2154cedcd665785fdaf6a139dca",
+          "bytes": 368
+        },
+        {
+          "path": "provenance.json",
+          "sha256": "6fa2b1612b1b2f1bb39bd99510677fdf7c8c397208e4e03335a9f5ee0a13c545",
+          "bytes": 2625
+        },
+        {
+          "path": "README.md",
+          "sha256": "f5d6b11f626d164f11ffc3095da361e40032a132284136ce62f08160eb39141b",
+          "bytes": 5742
+        },
+        {
+          "path": "NOTICE.txt",
+          "sha256": "1f2ab980eefb2dc2433c09f40cf166f2fa043b62b4067616dcaa7086ce1bde33",
+          "bytes": 1693
+        },
+        {
+          "path": "LICENSE",
+          "sha256": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499",
+          "bytes": 7048
+        }
+      ],
+      "workflowCount": 1
     }
   ]
 }

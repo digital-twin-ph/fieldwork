@@ -25,8 +25,8 @@ const ground=async page=>{
   await page.goto('/');await page.evaluate(()=>localStorage.clear());
   await page.goto('/?example=blank');
   await page.locator('[data-view="project"]').click();
-  await page.locator('[data-open-example]').click();
-  await expect(page.locator('[data-example-status]')).toContainText('digest matched',{timeout:20000});
+  await page.locator('[data-open-example="urn:fieldwork:example:south-london-1854"]').click();
+  await expect(page.locator('[data-example-status="urn:fieldwork:example:south-london-1854"]')).toContainText('digest matched',{timeout:20000});
   await page.locator('#workflow-select').selectOption({label:'The ground: an extent, its sub-districts and the river'});
   await page.locator('#run-button').click();
   await expect(page.locator('#run-summary')).toContainText('ran in',{timeout:30000});

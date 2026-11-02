@@ -1,9 +1,9 @@
 # Total within groups
 
-_Created 2026-10-26 · Updated 2026-10-27_
+_Created 2026-10-26 · Updated 2026-11-01_
 
-**Addition.** It takes a table, keeps the key columns you name, and adds up the values of every
-row that agrees on them.
+**Addition, or a count.** It takes a table, keeps the key columns you name, and adds up the values
+of every row that agrees on them, or counts those rows.
 
 ## What it does
 
@@ -34,6 +34,16 @@ rows and columns there were before.
 Because files change. Name the columns you keep and a column added to the file later is simply
 dropped, leaving you the same groups you had before. Name the columns you drop and that new column
 silently becomes a grouping key, splitting your groups without telling you.
+
+### Counting a line list
+
+A line list has no count in it: Oswego's 75 people are a row each, with a Y or an N under every
+food. Choose **Count rows** and each group holds how many rows agree, which is what a two-by-two
+needs. Keep the exposure and the outcome and the four cells come out.
+
+Count rows never reads the value, so a blank is still a row and the result's value is called
+`rows`. **It counts rows, not people.** Import one value column from a line list: two value columns
+give two rows per person, and each person then counts twice. The step cannot detect that.
 
 ### Why it only adds up
 

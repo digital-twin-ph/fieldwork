@@ -39,7 +39,7 @@ export type IntervalMethod=typeof INTERVAL_METHODS[number];
  *  that has already been found rounded once must exist in exactly one place -- otherwise the next
  *  estimate reintroduces check 27's defect by typing a textbook number into its own file. */
 export {INTERVAL_LEVELS} from './epi-estimate.js';
-import {Z_FOR_LEVEL} from './epi-estimate.js';
+import {Z_FOR_LEVEL,rateRatio,type IntervalLevel} from './epi-estimate.js';
 
 export interface RateRatioOptions {
   /** The group whose rate goes on top -- the one a claim is being made about.
@@ -122,12 +122,8 @@ export function computeRateRatio(result:RateResult,options:RateRatioOptions):Rat
   // rates. Dividing a per-house rate by a per-person one would be arithmetic on two different
   // quantities, which is why `rate` is the input and a table is not: only a rate declares this.
   const rateA=a.numerator/a.denominator,rateB=b.numerator/b.denominator;
-  const ratio=rateA/rateB;
-  const z=Z_FOR_LEVEL[options.level];
-  // ln(RR) +/- z*sqrt(1/a + 1/b), back-transformed. The standard error is on the log scale
-  // because a ratio is not symmetric about its point estimate: 2x and 0.5x are the same distance.
-  const se=Math.sqrt(1/a.numerator+1/b.numerator);
-  const lower=Math.exp(Math.log(ratio)-z*se),upper=Math.exp(Math.log(ratio)+z*se);
+  const {value:ratio,lower,upper}=rateRatio(a.numerator,a.denominator,b.numerator,b.denominator,
+    options.level as IntervalLevel);
 
   const small=[a,b].filter(r=>r.numerator<SMALL_COUNT);
   return {kind:'rate-ratio',

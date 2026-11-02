@@ -107,3 +107,42 @@ export const logInterval=(ratio:number,standardError:number,level:IntervalLevel)
   return {lower:Math.exp(Math.log(ratio)-z*standardError),
     upper:Math.exp(Math.log(ratio)+z*standardError)};
 };
+
+/** THE MEASURES, as functions of counts and nothing else. Experiment 161, step 1.
+ *
+ *  Until 2026-11-02 each formula lived inside the widget that reported it, so the kernel the
+ *  direction asks for existed as a result shape and not as a computation. These take numbers and
+ *  give numbers. What a measure is called, what it refuses and what is said beside it stay with
+ *  the caller, because those depend on the declared design and the table's own words.
+ *
+ *  A CALLER CHECKS FOR ZERO FIRST. Each reason a measure is undefined is worth saying in the
+ *  reader's terms, which only the caller has, so a zero here gives Infinity or NaN and not a
+ *  sentence. */
+export interface Interval {value:number; lower:number; upper:number}
+
+/** Risk ratio. Katz: se(ln RR) = sqrt(1/a - 1/(a+b) + 1/c - 1/(c+d)). A risk has its numerator
+ *  inside its denominator, which is what separates this from the rate ratio's sqrt(1/a + 1/c). */
+export function riskRatio(a:number,b:number,c:number,d:number,level:IntervalLevel):Interval{
+  const value=(a/(a+b))/(c/(c+d));
+  return {value,...logInterval(value,Math.sqrt(1/a-1/(a+b)+1/c-1/(c+d)),level)};
+}
+/** Odds ratio, ad/bc. Wald on the log scale: every cell is in the standard error, so one empty
+ *  cell takes this out and can leave the risk ratio standing. */
+export function oddsRatio(a:number,b:number,c:number,d:number,level:IntervalLevel):Interval{
+  const value=(a*d)/(b*c);
+  return {value,...logInterval(value,Math.sqrt(1/a+1/b+1/c+1/d),level)};
+}
+/** Risk difference, unpooled Wald, symmetric: a difference stays on the scale it was measured on,
+ *  and each group contributes its own variance. */
+export function riskDifference(a:number,b:number,c:number,d:number,level:IntervalLevel):Interval{
+  const p=a/(a+b),q=c/(c+d),z=quantileFor(level),value=p-q;
+  const se=Math.sqrt(p*(1-p)/(a+b)+q*(1-q)/(c+d));
+  return {value,lower:value-z*se,upper:value+z*se};
+}
+/** Rate ratio of events over units, log-normal: se(ln RR) = sqrt(1/events + 1/events). This
+ *  treats events as independent, which a transmitted disease is not. */
+export function rateRatio(eventsA:number,unitsA:number,eventsB:number,unitsB:number,
+  level:IntervalLevel):Interval{
+  const value=(eventsA/unitsA)/(eventsB/unitsB);
+  return {value,...logInterval(value,Math.sqrt(1/eventsA+1/eventsB),level)};
+}

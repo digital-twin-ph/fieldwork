@@ -42,7 +42,7 @@
 import type {DataTable} from './data-table.js';
 import type {EpiEstimate,IntervalLevel} from './epi-estimate.js';
 import type {EpiInfoLabelSource} from './epi-estimate.js';
-import {estimateUnavailable,logInterval,quantileFor} from './epi-estimate.js';
+import {estimateUnavailable,oddsRatio,quantileFor,riskDifference,riskRatio} from './epi-estimate.js';
 
 /** What the Epi Info AI classic TABLES results panel prints for each of these quantities,
  *  transcribed from `epi-info-ai/wasm/demo/app.ts` where that table is built from literal
@@ -169,9 +169,7 @@ export function computeTwoByTwo(table:DataTable,request:TwoByTwoRequest):TwoByTw
     `"${exposed}" has 0 ${caseValue}, so the ratio is 0 and its log interval is undefined.`,
     RISK_RATIO_LABEL,EPI_INFO_AI_PANEL));
   else {
-    const ratio=riskExposed/riskUnexposed;
-    const se=Math.sqrt(1/a-1/exposedTotal+1/c-1/unexposedTotal);
-    estimates.push({name:RISK_RATIO,value:ratio,...logInterval(ratio,se,level),level,
+    estimates.push({name:RISK_RATIO,...riskRatio(a,b,c,d,level),level,
       method:KATZ,epiInfoLabel:RISK_RATIO_LABEL,epiInfoLabelSource:EPI_INFO_AI_PANEL,
       unavailable:null,
       // THE SUBJECT, not the estimand. What makes this incomparable with another ratio on this
@@ -196,9 +194,7 @@ export function computeTwoByTwo(table:DataTable,request:TwoByTwoRequest):TwoByTw
     +'The Wald interval takes the reciprocal of every cell, so a zero cell leaves it undefined.',
     ODDS_RATIO_LABEL,EPI_INFO_AI_PANEL));
   else {
-    const ratio=(a*d)/(b*c);
-    const se=Math.sqrt(1/a+1/b+1/c+1/d);
-    estimates.push({name:ODDS_RATIO,value:ratio,...logInterval(ratio,se,level),level,
+    estimates.push({name:ODDS_RATIO,...oddsRatio(a,b,c,d,level),level,
       method:WALD_LOG,epiInfoLabel:ODDS_RATIO_LABEL,epiInfoLabelSource:EPI_INFO_AI_PANEL,
       unavailable:null,
       notes:[...(riskExposed<0.1&&riskUnexposed<0.1
@@ -210,12 +206,8 @@ export function computeTwoByTwo(table:DataTable,request:TwoByTwoRequest):TwoByTw
 
   // THE RISK DIFFERENCE, unpooled Wald, and symmetric: a difference is on the scale it was
   // measured on, so no log and no back-transformation.
-  const z=quantileFor(level);
-  const difference=riskExposed-riskUnexposed;
-  const seDifference=Math.sqrt(riskExposed*(1-riskExposed)/exposedTotal
-    +riskUnexposed*(1-riskUnexposed)/unexposedTotal);
-  estimates.push({name:'risk difference',value:difference,
-    lower:difference-z*seDifference,upper:difference+z*seDifference,level,
+  const difference=riskDifference(a,b,c,d,level);
+  estimates.push({name:'risk difference',...difference,level,
     method:'Wald unpooled',epiInfoLabel:'Risk Difference (RD%)',
     epiInfoLabelSource:EPI_INFO_AI_PANEL,unavailable:null,
     notes:['A difference of risks, on the same scale as the risks themselves. '
@@ -224,7 +216,7 @@ export function computeTwoByTwo(table:DataTable,request:TwoByTwoRequest):TwoByTw
       // value does not. A reader comparing the two screens must not read 0.004093 against 0.4093%
       // and conclude the implementations disagree.
       `Epi Info AI's panel prints this as a percentage under "Risk Difference (RD%)": `
-      +`${(difference*100).toFixed(4)}% for the same figure. Same quantity, different scale.`]});
+      +`${(difference.value*100).toFixed(4)}% for the same figure. Same quantity, different scale.`]});
 
   const named=new Set([exposed,unexposed]);
   const strataLeftOut=[...new Set(table.rows.map(row=>row.key[exposureColumn]))]

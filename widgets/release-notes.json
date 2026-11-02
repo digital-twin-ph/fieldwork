@@ -355,12 +355,12 @@
    ]
   },
   "group_table": {
-   "version": "0.1.0",
-   "released": "2026-10-26",
+   "version": "0.2.0",
+   "released": "2026-11-02",
    "changes": [
     {
-     "kind": "initial",
-     "description": "Adds up the values of the rows agreeing on the key columns you keep. Epi Info's GROUP. `rate` has grouped and summed internally since it was written, but it emits a rate, so the totals are consumed on the way out and no other step can use them; a stratified contingency table needs those totals and no rate. The columns KEPT are named rather than the columns dropped, for the reason `wideDataTable` names its value columns explicitly: name what is kept and a column added to a file later is dropped, leaving the same groups, while naming what is dropped would let a new column silently become a grouping key. Sum and nothing else, because Epi Info separates MEANS from GROUP and the separation is not bureaucratic -- summing counts gives a count, and summing rates gives a number with no referent. A group holding any empty cell totals to NOTHING KNOWN and is named, because summing over an empty cell quietly produces a total too small by an unknown amount."
+     "kind": "minor",
+     "description": "Adds Count rows, and records the minimum and maximum admitted on 2026-10-31 without a release. A line list has no count to add: Oswego's 75 people are a row each with Y or N under every food, so no sum reaches a two-by-two, and writing a column of 1s into a published line list would be editing the source to suit the tool. A count never reads the value, so the additivity argument that bounds this step does not reach it, a blank is still a row, and the result's value is called rows. It counts rows and not people: a wide import with two value columns has two rows per person, which this step cannot detect."
     }
    ],
    "breaking": false,

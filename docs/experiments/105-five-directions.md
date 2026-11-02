@@ -238,6 +238,10 @@ trial, retirable along with the prediction. They are not: the method is the stan
 falsifiable. Whether the sweeps are actually being made is tracked as a direction with a clock, in
 [docs/directions.json](../directions.json), rather than as this document's closing condition._
 
+_Corrected 2026-11-02: the clock is gone. Entries in `docs/directions.json` are decisions recorded under
+the same word, not these five directions, and the method was never on it. Sweeps are tracked by the
+entry `five-directions-as-a-method`, with no date attached._
+
 ## What changed our minds
 
 **A number in this document was wrong for the sixth time today.** The sideways table first claimed

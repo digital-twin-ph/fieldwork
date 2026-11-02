@@ -1,6 +1,6 @@
 # TODO
 
-_Created 2026-10-10 · Updated 2026-11-01_
+_Created 2026-10-10 · Updated 2026-11-02_
 
 The project's one list of open work. **Merged 2026-10-26 from two**: a root `TODO.md` of
 deferred work created 2026-10-10 and a `docs/todo.md` of committed work created 2026-10-11, one
@@ -892,13 +892,12 @@ nearest-neighbour-with-distance, and `slr_threshold_comparison` this file has ca
 domain-bound"*, which under the domain-agnostic direction is a question rather than a settled
 exemption. Both are still classified `domain` in `widgets/classification.json`.
 
-### Five directions to check on Friday 2026-11-06
+### Is the blocker ledger's window the same false gate?
 
-Postponed by the practitioner on 2026-11-02, so `validate:directions` and the pre-push hook stay red
-until then. Each needs a real look, not a new date: `the-epi-kernel-is-a-kernel-not-a-palette-of-statistics`,
-`a-project-is-a-story-because-a-graph-is-not-a-narrative`, `the-real-debt-is-unexplored-opportunity`,
-`the-validation-lab-is-integral-in-lifecycle-and-independent-in-method`,
-`the-siblings-are-fieldworks-arms-not-its-dependencies`.
+`validate-blockers.mjs` fails the build on the same 7-day window that was removed from directions on
+2026-11-02. A blocker differs: it says something cannot be done, and rots by being lifted unnoticed.
+The practitioner's ruling was on directions, so this is left as it is and asked. The oldest standing
+blocker was last revisited 2026-10-29.
 
 ### The Rust epi kernel
 

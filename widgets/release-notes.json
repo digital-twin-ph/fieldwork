@@ -1002,6 +1002,10 @@
     {
      "kind": "patch",
      "description": "Columns declared as a primary or secondary key are left out of Exposures to compare."
+    },
+    {
+     "kind": "patch",
+     "description": "With several exposures on one node, the formulas are machined once in symbols. The numbers stay in the step's table, which a connected Table output draws in the write-up."
     }
    ],
    "breaking": false,

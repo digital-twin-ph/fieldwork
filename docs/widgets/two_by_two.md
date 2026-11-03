@@ -1,6 +1,6 @@
 # Two-by-two table
 
-_Created 2026-10-26 · Updated 2026-11-02_
+_Created 2026-10-26 · Updated 2026-11-03_
 
 **The analysis under the table.** It takes four counts — two groups by two outcomes — and reports
 the risk in each group, the risk ratio, the odds ratio and the risk difference, each naming the
@@ -85,6 +85,11 @@ and this table cannot separate them.
 the outcome, any column with more than 12 distinct values, and any column with a different value on every row,
 so a numbered `ID` is not offered. Once Exposed and Unexposed are chosen, a column must hold both, whether they
 are `Y` and `N` or `1` and `0`. A column coded differently from those two is not offered, so recode it first.
+
+**What it writes into the notes.** A Methods note gives the four cells, each formula the declared design
+reports, the numbers substituted and the interval method, and cites the method. With several exposures on one
+node the formulas are written once, in symbols. The numbers are in the step's table, which a Table output
+connected to it draws in the write-up with a note of its own.
 
 ## How to use it
 

@@ -1469,8 +1469,15 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           receipts.push({nodeId:node.id,kind:'computation',method:several.sentence,
             exposures:several.rows.map(row=>row.column),
             unreadable:several.rows.filter(row=>!row.result).map(row=>row.column)} as unknown as Receipt);
-          machined[node.id]=[{kind:'machined',id:`${node.id}:comparisons`,section:'Methods',
-            fn:'limitation',nodeId:node.id,text:several.sentence}];
+          // THE KERNEL'S ARITHMETIC, ONCE, IN SYMBOLS. The practitioner, 2026-11-03: the two-by-two
+          // "should emit the kernel computations for the study design in the notes", and with many
+          // exposures "best to present the notes as a table". The numbers are not retyped: the table
+          // this step emits is drawn where a Table output describes it, which machines its own note.
+          const first=several.rows.find(row=>row.result);
+          machined[node.id]=[
+            ...(first?.result?[twoByTwoEquationNote(first.result,node.id,true)]:[]),
+            {kind:'machined',id:`${node.id}:comparisons`,section:'Methods',
+              fn:'limitation',nodeId:node.id,text:several.sentence}];
           withNote(receipts,runId,node.id,machined[node.id]);
           break;
         }

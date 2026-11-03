@@ -181,6 +181,18 @@ function chartControls(n:WorkflowNode<'chart_output'>,options:{omitOrientation?:
     <label class="field-label" for="chart-source-note">Source / method note</label><textarea id="chart-source-note" maxlength="500" rows="2" placeholder="Default: connected result and run">${esc(p.sourceNote||'')}</textarea>
     <p class="description">The title, note, axes and legend travel with the SVG. Both renderers use the same recorded values. Add a Method reference for supporting research.</p>`:'');
 }
+/** WHICH ATTRIBUTE NAMES A PART, from what the last run drew. Interactive only: the static figure names
+ *  no parts. */
+function partLabelControl(n:WorkflowNode<'map_output'>):string{
+  if(n.params.presentation!=='interactive')return '';
+  const features=result?.outputs.find(o=>o.nodeId===n.id)?.polygons?.features??[];
+  const names=[...new Set(features.flatMap(f=>Object.keys((f as {properties?:object}).properties??{})))];
+  if(!names.length)return '';
+  return `<label class="field-label" for="map-part-label">Label parts with</label>`
+    +`<select id="map-part-label"><option value="">The key they are joined on</option>`
+    +names.map(name=>`<option value="${esc(name)}" ${n.params.partLabel===name?'selected':''}>${esc(name)}</option>`).join('')
+    +`</select>`;
+}
 /** THE ONE-TIME IMPORT, on the interactive map only. The boundary is what the map draws, so it needs
  *  a run first. Experiment 163. */
 function tileImportControls(p:WorkflowNode<'map_output'>['params']):string{
@@ -202,6 +214,7 @@ function mapControls(n:WorkflowNode<'map_output'>){
     <label><input id="map-halo-toggle" type="checkbox" ${p.markHalo!==false?'checked':''}> Dark outline on point symbols</label>
     <label class="field-label" for="map-source-note">Source / method note</label><textarea id="map-source-note" maxlength="500" rows="3" placeholder="Default: connected source labels and method">${esc(p.mapSourceNote||'')}</textarea>
     <label class="field-label" for="map-basemap">Basemap</label><select id="map-basemap">${basemapOptions(p.basemap,p.presentation==='interactive'?'interactive':'plot',workflowSpanKm())}</select>
+    ${partLabelControl(n)}
     ${tileImportControls(p)}
     <p class="description">A basemap is layer 0, under everything the workflow produced.${p.presentation==='interactive'?'':' OpenStreetMap and OpenTopoMap are drawn into the figure itself. The OpenFreeMap styles are vector, so they move this map to the interactive presentation.'}</p>
     <p class="description">Title, key and note appear with the map and in its local SVG export. Interactive maps export connected data as a static plot; online basemap tiles are excluded. Selecting an online basemap sends the viewed area to its provider.</p></div>`;
@@ -4238,6 +4251,10 @@ function renderInspector(){
       });
     });
   });
+  optionalElement('#map-part-label')?.addEventListener('change',e=>change(w=>{
+    const target=getNode(w,n.id,'map_output');const value=control(e).value;
+    if(value)target.params.partLabel=value;else delete target.params.partLabel;
+  }));
   optionalElement('#map-import-tiles')?.addEventListener('click',async e=>{
     const button=e.currentTarget as HTMLButtonElement,say=$('#map-tile-status');
     const drawn=drawnBounds(result?.outputs.find(o=>o.nodeId===n.id));
@@ -4819,7 +4836,7 @@ function renderMap(){
       // The node is the view's identity. Without it every presentation change -- and Mark radius
       // is one -- remounted the map and refitted it, throwing away the pan and zoom the
       // practitioner had chosen in order to judge the change they were making.
-      mapNode?.id,mapNode?.params.tileExtract);
+      mapNode?.id,mapNode?.params.tileExtract,mapNode?.params.partLabel);
     if(result.polygons){
       // ONE OF THESE, NOT ONE PER RENDER. This was inserted into the panel on every render and
       // nothing removed the last, so a map rendered three times carried the same paragraph three

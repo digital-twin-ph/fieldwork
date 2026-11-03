@@ -430,6 +430,10 @@
     {
      "kind": "minor",
      "description": "An interactive map can import an OpenStreetMap extract as PMTiles, once, for what it draws, and keep it on the device. The workflow keeps the spec, not the tiles. A category now shades and keys the interactive map too."
+    },
+    {
+     "kind": "minor",
+     "description": "An interactive map can label polygon parts with any attribute they carry, shown above the key they are joined on."
     }
    ],
    "breaking": false,

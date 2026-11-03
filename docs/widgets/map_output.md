@@ -131,6 +131,12 @@ being rewritten by every run.
 *How this widget is built, what it assumes, and what has been measured about it:
 [docs/widget-specs/map_output.md](../widget-specs/map_output.md).*
 
+## Naming the parts
+
+On an interactive map, **Label parts with** chooses which attribute names a polygon part when it is clicked.
+The key it was joined on is shown beneath, so a layer keyed by `ID` can still be read by name. Nigeria's LGAs
+are joined on `ID`, because 769 names cover 774 places, and labelled with `shapeName`.
+
 ## Tiles imported for this map
 
 On an interactive map, **Import tiles** fetches an OpenStreetMap extract once, while connected, for the area

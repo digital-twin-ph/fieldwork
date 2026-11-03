@@ -9,6 +9,7 @@ shown in a local build is not a claim that it has been published.
 - A polygon layer's key, figure and interactive map now agree on what shades it. A ruleset's classes are keyed by name, and the interactive map draws them.
 - Two-by-two: Exposures to compare offers only columns holding the two chosen groups, and reads down one left edge.
 - Nigeria carries an illustrative 20-year report and a fifth workflow. All three worked examples are laid out with Tidy.
+- A note cites works from a Citations tab. The note is marked with numbers and References is assembled from what is cited; References no longer holds notes of its own.
 - Deduplicate records takes rows of one table: rows repeating the primary key are compared, exact copies merge, and a person decides the rest and which row stays.
 - Import tiles works for a map of a study area or points, not only polygons.
 - A table is no longer refused for a quality problem. Primary and secondary keys can be declared, and findings flag the node, fill a Findings tab in Data quality and reach the write-up.

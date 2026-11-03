@@ -303,6 +303,76 @@
           "bytes": 294251
         }
       ]
+    },
+    {
+      "id": "urn:fieldwork:example:salmonella-germany-2021",
+      "title": "Salmonella Braenderup and melons, Germany 2021",
+      "repository": "https://github.com/digital-twin-ph/example-2021-salmonella-germany",
+      "commit": "2383c0850b1378bbf5e25cbf287e4020dc5a4a53",
+      "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2021-salmonella-germany",
+      "licence": {
+        "data": "CC-BY-4.0",
+        "source": "Łuczyńska et al., dataset on Zenodo, doi:10.5281/zenodo.7333295",
+        "note": "Stated on the Zenodo record. Attribution is in NOTICE.txt."
+      },
+      "description": "A case-control study with two control groups: 32 cases against 110 classical controls and against 81 matched panel controls, six melon items each, with a declared case-control design so only odds ratios are reported.",
+      "carries": {
+        "workflow": true,
+        "data": true,
+        "geography": false
+      },
+      "notYet": "Crude odds ratios only; the paper's are adjusted for age and sex.",
+      "uses": [
+        "append_rows",
+        "select_rows",
+        "study_design",
+        "table_input",
+        "table_output",
+        "two_by_two"
+      ],
+      "files": [
+        {
+          "path": "fieldwork-project.json.gz",
+          "sha256": "36a66ecd8e4756ab6937ad2fb9ce806a1fb7a8c48dcabcb9ba90ddfc1934a5ff",
+          "bytes": 10340
+        },
+        {
+          "path": "data/Complete_dataset_Luczynska_et_al_2022.csv",
+          "sha256": "87260d4fbb31a1e5b73c6e49e1505338d3a31e7cdeb70333da78119fc7b6e2b5",
+          "bytes": 130172
+        },
+        {
+          "path": "data/FM_HuGo_controls_Luczynska_et_al_2022.csv",
+          "sha256": "01b1b9cf4d9d2f23189c7dbdef5a39f98adcb4cdd1a5aafa507602cff4990c5d",
+          "bytes": 37758
+        },
+        {
+          "path": "data/Codebook_Luczynska_et_al_2022.xlsx",
+          "sha256": "7462225d90a50f7b8775089ed551e188cde94f5cb2c7081259af84b038814e73",
+          "bytes": 16818
+        },
+        {
+          "path": "provenance.json",
+          "sha256": "b61a6de584f0ff497ef56b815dffa130a8e6bc67d6666201285293775389641e",
+          "bytes": 1645
+        },
+        {
+          "path": "README.md",
+          "sha256": "03c76f6ce4e2b9f0b22b448264d8b4d9703d7194b18e754e6b998b80ebf57aa0",
+          "bytes": 4367
+        },
+        {
+          "path": "NOTICE.txt",
+          "sha256": "90bad9ad749e6ae093af4008d7d75ad852d5cfdc4abaeda8703e28cf39baed3d",
+          "bytes": 795
+        },
+        {
+          "path": "LICENSE-data",
+          "sha256": "9ba9550ad48438d0836ddab3da480b3b69ffa0aac7b7878b5a0039e7ab429411",
+          "bytes": 18657
+        }
+      ],
+      "workflowCount": 3
     }
   ]
 }

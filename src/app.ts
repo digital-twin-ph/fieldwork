@@ -2157,9 +2157,8 @@ function renderInspector(){
       +'<div class="notice">A group missing either value gets no derived row and is named in the evidence, because a group whose first value nobody recorded has an unknown result, not a zero. A name the column already uses is refused, since two rows would then share a key. Dividing by zero is unknown rather than infinite.</div>';
   }else if(n.type==='append_rows'){
     const p=n.params;
-    content+='<p class="description">Stacks the rows of the second table under the first, as pandas <code>concat</code> does. '
-      +'Columns are lined up by name; a column only one table has is empty on the other\'s rows, and the run says which. '
-      +'The two tables must measure the same thing in the same unit.</p>'
+    content+='<p class="description">Stacks the second table\'s rows under the first, as pandas <code>concat</code> does, '
+      +'lining columns up by name. Both must measure the same thing in the same unit.</p>'
       +labelForm('append-label','Node label',p.label||'Append rows')
       +`<label class="check"><input type="checkbox" id="append-name-source" ${p.nameSource?'checked':''}> Name the source of each row</label>`
       +(p.nameSource

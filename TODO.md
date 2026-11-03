@@ -935,6 +935,7 @@ notes code is not read yet. Possibly an evidence kernel matter. Let Oswego and N
   people, four exposures, eclair pieces as dose, `9`, `80` and `90` as missing or uncertain codes.
   GPL (>= 2), and the catalog notes GPL data can be held and not transformed, so settle the terms
   first or work from the 1995 paper it cites.
+- **Built 2026-11-03** as `example-2021-salmonella-germany`, three workflows. Relate as a merge (suffixes, indicator) is designed in experiment 166 and not built.
 - **An open case-control line list: Luczynska et al., Germany 2021**, because attack rates cannot be
   read from a case-control study. Zenodo 10.5281/zenodo.7333295, CC-BY 4.0: 32 cases and two control
   groups, 298 rows and 82 columns, German variable names, codebook in xlsx. Codebook and paper not

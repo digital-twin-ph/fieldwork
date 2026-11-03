@@ -306,7 +306,11 @@ const estimateLines=(estimate:EpiEstimate,symbolic:string,instantiated:string):s
  *  receipt, and retyping one as prose would produce a table with none. The four cells as four
  *  bullets are prose about the letters rather than a second rendering of the table the node
  *  already draws. */
-export function twoByTwoEquationNote(result:TwoByTwoResult,nodeId:string):MachinedNote{
+export function twoByTwoEquationNote(result:TwoByTwoResult,nodeId:string,
+  /** IN SYMBOLS ONLY, for a step comparing several exposures: the numbers are in its table, one row per
+   *  exposure, and are not retyped here. The practitioner, 2026-11-03: *"If there are many exposures
+   *  perhaps it's best to present the notes as a table so it's more concise."* */
+  symbolic=false):MachinedNote{
   const {exposed,unexposed,caseValue,nonCaseValue,exposureColumn}=result.request;
   const {exposedCases:a,exposedNonCases:b,unexposedCases:c,unexposedNonCases:d}=result.cells;
   const A=figure(a),B=figure(b),C=figure(c),D=figure(d);
@@ -314,6 +318,34 @@ export function twoByTwoEquationNote(result:TwoByTwoResult,nodeId:string):Machin
   const of=(label:string)=>`${exposureColumn} "${label}"`;
   // Null where a/(a+b) is no quantity at all, which is what case-control sampling makes it.
   const proportion=result.reading?result.reading.rowProportion:'risk';
+  if(symbolic){
+    let text=`Every exposure on this step is computed from its own four cells, with these formulas. `
+      +`Each exposure's cells and estimates are in the step's table.`
+      +`\n\n- $a$ — exposed ("${exposed}"), ${caseValue}\n- $b$ — exposed ("${exposed}"), ${nonCaseValue}`
+      +`\n- $c$ — unexposed ("${unexposed}"), ${caseValue}\n- $d$ — unexposed ("${unexposed}"), ${nonCaseValue}`;
+    const used:string[]=[];
+    const FORMULA:Record<string,[string,string]>={
+      'risk ratio':['\\mathrm{RR} = \\frac{a/(a+b)}{c/(c+d)}','\\exp\\left(\\ln \\mathrm{RR} \\pm z \\sqrt{\\tfrac{1}{a} - \\tfrac{1}{a+b} + \\tfrac{1}{c} - \\tfrac{1}{c+d}}\\right)'],
+      'odds ratio':['\\mathrm{OR} = \\frac{ad}{bc}','\\exp\\left(\\ln \\mathrm{OR} \\pm z \\sqrt{\\tfrac{1}{a} + \\tfrac{1}{b} + \\tfrac{1}{c} + \\tfrac{1}{d}}\\right)'],
+      'risk difference':['\\mathrm{RD} = \\frac{a}{a+b} - \\frac{c}{c+d}','\\mathrm{RD} \\pm z \\sqrt{\\frac{p_1(1-p_1)}{a+b} + \\frac{p_0(1-p_0)}{c+d}}'],
+    };
+    for(const estimate of result.estimates){
+      const formula=FORMULA[estimate.name];
+      if(!formula)continue;
+      used.push(estimate.method);
+      let lines=`\n\n**${estimate.reportedAs??estimate.name}**, ${estimate.method}:\n\n$$${formula[0]}$$`
+        +`\n\nwith a ${estimate.level}% interval\n\n$$${formula[1]}$$`;
+      if(estimate.reportedAs)lines=lines.split(`\\mathrm{${SYMBOL[estimate.name]}}`).join(`\\mathrm{${SYMBOL[estimate.reportedAs]}}`);
+      text+=lines;
+    }
+    const left=[...(result.reading?.withheld??[]),...(result.reading?.notEstimable??[])];
+    if(left.length)text+=`\n\nNot reported under this design: ${left.join(', ')}.`;
+    if(result.reading?.design===null)text+=`\n\nNo study design was connected, so these measures `
+      +`are named by their arithmetic and not by what they measure.`;
+    text+=references(used);
+    return {kind:'machined',id:`${nodeId}:equation`,section:'Methods',fn:'method',text,nodeId,
+      cites:[...new Set(used)]};
+  }
   let text=`The four cells, in the letters every formula below is written in:`
     +`\n\n- $a$ = ${said(a)} — ${of(exposed)}, ${caseValue}`
     +`\n- $b$ = ${said(b)} — ${of(exposed)}, ${nonCaseValue}`

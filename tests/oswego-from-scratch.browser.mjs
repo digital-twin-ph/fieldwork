@@ -139,6 +139,17 @@ test('Oswego is two short workflows: which food, and where',async({page})=>{test
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:120000});
   expect((await saved(page)).nodes.length).toBe(3);
 
+  // THE KERNEL'S ARITHMETIC IN THE WRITE-UP, once and in symbols, with the numbers in the Table
+  // output's own figure rather than retyped. The practitioner, 2026-11-03.
+  await page.locator('[data-view="notes"]').click();
+  await page.locator('.notes-part').first().waitFor();
+  const formulas=page.locator('.notes-note.k-machined').filter({hasText:'computed from its own four cells'});
+  await expect(formulas).toHaveCount(1);
+  await expect(formulas.locator('.notes-figure')).toHaveCount(0);
+  const described=page.locator('.notes-note.k-machined').filter({hasText:'Attack rates by food'});
+  await expect(described.locator('.notes-figure table')).toHaveCount(1);
+  await page.screenshot({path:'test-results/oswego-notes.png',fullPage:true});
+
   // THE PROJECT, written where the example repository can take it when asked for.
   await page.locator('[data-view="workflow"]').click();
   await tidy(page);

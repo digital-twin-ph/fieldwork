@@ -47,6 +47,10 @@ export const VALUE_UNITS:Record<string,number>={metre:1,millimetre:0.001};
 const UNIT_IRIS:Record<string,string>={metre:'http://qudt.org/vocab/unit/M',millimetre:'http://qudt.org/vocab/unit/MilliM'};
 
 export function projectionExtract(table:DataTable,provenance:ExtractProvenance):ProjectionExtract{
+  // ONE QUANTILE, ONE NUMBER. A table now loads whatever it holds (164), so a repeat that would make
+  // a projection ambiguous stops here, at the run, where it names what to resolve.
+  const repeated=table.findings?.find(f=>f.kind==='repeated-key');
+  if(repeated)throw new Error(`${repeated.text} A projection needs one value for each key. Open Data quality on the table.`);
   if(table?.kind!=='data-table')throw new Error('Import a long-format projection extract first.');
   const missing=PROJECTION_KEYS.filter(key=>!table.keys.includes(key));
   if(missing.length)throw new Error(`The extract is missing key columns: ${missing.join(', ')}. A projected value without its full key cannot be interpreted.`);

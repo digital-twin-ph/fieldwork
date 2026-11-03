@@ -12,7 +12,7 @@ const BUNDLE=new URL('../../example-1855-cholera-south-london/fieldwork-project.
 const skip=existsSync(BUNDLE)?false
   :'example-1855-cholera-south-london is not checked out beside this repository.';
 
-test('an imported workflow can be deleted; a shipped example still cannot',{skip},async({page})=>{
+test('an imported workflow can be deleted; a shipped example still cannot',async({page})=>{test.skip(!!skip,skip);
   await page.goto('/');await page.evaluate(()=>localStorage.clear());
   await page.goto('/?example=blank');
   await page.locator('#workflow-file').setInputFiles(BUNDLE.pathname);

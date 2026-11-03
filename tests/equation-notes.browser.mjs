@@ -43,7 +43,7 @@ const runWorkflow=async (page,named)=>{
 const methodsCard=(page,holds)=>
   page.locator(`${METHODS} .notes-note.k-machined`).filter({hasText:holds});
 
-test('a two-by-two machines its equations into Methods, typeset',{skip},async({page})=>{
+test('a two-by-two machines its equations into Methods, typeset',async({page})=>{test.skip(!!skip,skip);
   await runWorkflow(page,'Died or survived, by water supply');
   const card=methodsCard(page,'The four cells');
   await expect(card).toHaveCount(1);
@@ -63,7 +63,7 @@ test('a two-by-two machines its equations into Methods, typeset',{skip},async({p
   await expect(card.locator('.prose-math[title*="could not be read"]')).toHaveCount(0);
 });
 
-test('the cells are stated as a, b, c, d with what each one counts',{skip},async({page})=>{
+test('the cells are stated as a, b, c, d with what each one counts',async({page})=>{test.skip(!!skip,skip);
   await runWorkflow(page,'Died or survived, by water supply');
   const card=methodsCard(page,'The four cells');
   // Experiment 147's vocabulary, on a surface for the first time. An FETP-trained reader is
@@ -80,7 +80,7 @@ test('the cells are stated as a, b, c, d with what each one counts',{skip},async
   await expect(cells.nth(0).locator('math')).toHaveCount(1);
 });
 
-test('the card names its methods and sends the works to References',{skip},async({page})=>{
+test('the card names its methods and sends the works to References',async({page})=>{test.skip(!!skip,skip);
   // The practitioner, 2026-10-31, reading this card in South London: *"these are citations and
   // should be in the References."* The card printed every method's full citation while the
   // References part assembled the same works from the same field.
@@ -98,8 +98,7 @@ test('the card names its methods and sends the works to References',{skip},async
   await expect(card).toContainText('Wald unpooled (no primary source read)');
 });
 
-test('a rate machines its equation, and cites nothing because it estimates nothing',
-  {skip},async({page})=>{
+test('a rate machines its equation, and cites nothing because it estimates nothing',async({page})=>{test.skip(!!skip,skip);
     await runWorkflow(page,'Deaths per 1,000 people, by sub-district');
     const card=methodsCard(page,'divided by');
     await expect(card).toHaveCount(1);
@@ -110,7 +109,7 @@ test('a rate machines its equation, and cites nothing because it estimates nothi
     await expect(card).toContainText('No interval is computed here, so no method is cited');
   });
 
-test('a machined equation survives a reload and is still the same note',{skip},async({page})=>{
+test('a machined equation survives a reload and is still the same note',async({page})=>{test.skip(!!skip,skip);
   await runWorkflow(page,'Died or survived, by water supply');
   await expect(methodsCard(page,'The four cells')).toHaveCount(1);
   await page.reload();
@@ -141,7 +140,7 @@ test('a machined equation survives a reload and is still the same note',{skip},a
 const RESULTS='.notes-part[data-section="Results"]';
 const described=page=>page.locator(`${RESULTS} .notes-note.k-machined`);
 
-test('a table and a chart describe themselves into Results',{skip},async({page})=>{
+test('a table and a chart describe themselves into Results',async({page})=>{test.skip(!!skip,skip);
   await runWorkflow(page,'Deaths per 1,000 people, by sub-district');
   await expect(described(page)).toHaveCount(2);
   const table=described(page).filter({hasText:'Mortality by sub-district'});
@@ -155,7 +154,7 @@ test('a table and a chart describe themselves into Results',{skip},async({page})
   await expect(chart).toContainText('(proportion)');
 });
 
-test('a map describes its layers, bottom to top',{skip},async({page})=>{
+test('a map describes its layers, bottom to top',async({page})=>{test.skip(!!skip,skip);
   await runWorkflow(page,'The ground: an extent, its sub-districts and the river');
   const map=described(page).filter({hasText:'bottom to top'});
   await expect(map).toHaveCount(1);
@@ -165,8 +164,8 @@ test('a map describes its layers, bottom to top',{skip},async({page})=>{
   await expect(map).toContainText('Registration sub-districts (32 features)');
 });
 
-test('nothing machined numbers its own artifact, or claims to be the caption',{skip},
-  async({page})=>{
+test('nothing machined numbers its own artifact, or claims to be the caption',
+  async({page})=>{test.skip(!!skip,skip);
     // Two rules at once, both the practitioner's. A number is computed per venue when a document
     // is rendered, so writing one would be wrong the first time a card moved; and the caption is
     // the author's, so nothing machined may present itself as one.

@@ -16,7 +16,7 @@
       "id": "urn:fieldwork:example:south-london-1854",
       "title": "Snow's South London water supply study, 1854",
       "repository": "https://github.com/digital-twin-ph/example-1855-cholera-south-london",
-      "commit": "ae8a2527c2ca203211018ed3b5d662f4f41b2675",
+      "commit": "a1ff70d07e8b639cbdba7933b4eb1300541a151f",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-1855-cholera-south-london",
       "licence": {
         "data": "CC0-1.0, except geo/sub-districts-csds.geojson which is BSD-2-Clause and geo/thames-reaches.geojson and geo/thames-tidal-limit.geojson which are ODbL-1.0",
@@ -33,8 +33,8 @@
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "457e2aaa1f95c6e0fbbb963f16aa27124ae9b96513b397310441b3611c394f33",
-          "bytes": 1002777
+          "sha256": "d1bab962525a4fe1cee55bddda0249b067189cf4fa20124fdc63ee3b39e51aae",
+          "bytes": 1001077
         },
         {
           "path": "README.md",
@@ -167,7 +167,7 @@
       "id": "urn:fieldwork:example:oswego-1940",
       "title": "The Oswego church supper, 1940",
       "repository": "https://github.com/digital-twin-ph/example-1940-oswego-church-supper",
-      "commit": "3e62b2c84c313a581c5bc42c3a8c5912357158f9",
+      "commit": "d5853debe60633e51fa0c11a129f6b585a133e03",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-1940-oswego-church-supper",
       "licence": {
         "data": "Stated as unconfirmed public domain for the line list; geo/lycoming-church.geojson is ODbL-1.0; the arrangement is CC0-1.0",
@@ -192,8 +192,8 @@
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "10f02254dfe80b05365804377aadfcf5621fe9cebdba6f669bc0aab720fd1065",
-          "bytes": 2823
+          "sha256": "3916a50cd5acf907213fed5665bc4a179ca0b6092550d9c72606f669b3c7929a",
+          "bytes": 2698
         },
         {
           "path": "data/oswego-line-list.csv",
@@ -232,21 +232,21 @@
       "id": "urn:fieldwork:example:nigeria-immunization-2024",
       "title": "DTP coverage and zero-dose children in Nigeria, 2024",
       "repository": "https://github.com/digital-twin-ph/example-2024-nigeria-immunization",
-      "commit": "e34152c7c97aa6d3bfba36a564a7e601b26c6786",
+      "commit": "936bac2080a8e11f91b59a2f6a32e42ff197cc33",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2024-nigeria-immunization",
       "licence": {
         "data": "CC-BY-4.0",
         "source": "WorldPop, Modelled vaccination coverage and zero-dose estimates for Nigeria, 2000-2024, version 1.0. doi:10.5258/SOTON/WP00880",
         "note": "Stated on the WorldPop dataset page. Attribution is required and is in NOTICE.txt. Boundaries were not reviewed separately."
       },
-      "description": "Four questions about 774 LGAs from modelled estimates: lowest coverage, highest burden, change since 2018, and an illustrative rule over both values.",
+      "description": "Five questions about 774 LGAs from modelled estimates: lowest coverage, highest burden, change over 20 years, and an illustrative rule over both values.",
       "carries": {
         "workflow": true,
         "data": true,
         "geography": true
       },
       "notYet": "Coverage intervals do not reach a map or a rule. Persistence, facilities, access and measles are not built.",
-      "workflowCount": 4,
+      "workflowCount": 5,
       "uses": [
         "apply_ruleset",
         "derive_value",
@@ -259,18 +259,8 @@
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "9b0a1f499eb47112b52379e6814b39ea6a9d415df31cf6e9eb1d2c5bb67ccfc0",
-          "bytes": 6486585
-        },
-        {
-          "path": "data/nga-lga-2018.csv",
-          "sha256": "9bffa053b4c468739f6bbddf0d4b5d402f7f7599d196eb0add13c7213bb80472",
-          "bytes": 153251
-        },
-        {
-          "path": "data/nga-lga-2021.csv",
-          "sha256": "3e3fc343c513eeb6bc58f6129e0b39896e5e8769ec5b100e96af17ee60169068",
-          "bytes": 153265
+          "sha256": "8ee6b4cafd70e2bd5b657142f177c76ae4c32641523d11597dbe9a0cbaeae7f3",
+          "bytes": 8261846
         },
         {
           "path": "data/nga-lga-2024.csv",
@@ -279,8 +269,8 @@
         },
         {
           "path": "data/nga-lga-dtp1-by-year.csv",
-          "sha256": "9292993dec0ea88fcdbef703558c16e69231533868178452fd2f9354d0cb4204",
-          "bytes": 52012
+          "sha256": "a844aff2bf1b17577a65cf95cb2c6f01e0fd967ce21f213ea35ccda62fd29ca3",
+          "bytes": 287979
         },
         {
           "path": "geo/nga-lgas.geojson",
@@ -289,23 +279,28 @@
         },
         {
           "path": "provenance.json",
-          "sha256": "a0a6c61dde5fd23bedd310ece037d171ed9e742b4165ee767df09d2079e83953",
-          "bytes": 1820
+          "sha256": "961e45a65d5e4cee4fa6573e8988304fdea3276c614b22562f1323ea00967ce2",
+          "bytes": 2118
         },
         {
           "path": "README.md",
-          "sha256": "7c3196ada829b818a8fd3658ca09b7d91771aaa40075829c0a361fdbc3b7c5ad",
-          "bytes": 3706
+          "sha256": "02391afafce5f47428d52b0d5661df1297aca5c026f2938a6ebcd0ae91a3bbc7",
+          "bytes": 6998
         },
         {
           "path": "NOTICE.txt",
-          "sha256": "6fafb2b9b799e361f30cef5eb1a8c0281a8f8f72259a033905d1c410ef7165c5",
-          "bytes": 1045
+          "sha256": "b70ef003dac6f9d03dafbd0d2f2f2f31b914f3a86d3ded91b8ab3861cb2b8b2c",
+          "bytes": 1056
         },
         {
           "path": "LICENSE-data",
           "sha256": "9ba9550ad48438d0836ddab3da480b3b69ffa0aac7b7878b5a0039e7ab429411",
           "bytes": 18657
+        },
+        {
+          "path": "data/nga-lga-zero-dose-by-year.csv",
+          "sha256": "3a48d45ef51d5b2af1b038fa9bad59e06b13861514d9a861ef37af52d54e6e48",
+          "bytes": 294251
         }
       ]
     }

@@ -12,7 +12,7 @@ const BUNDLE=new URL('../../example-1855-cholera-south-london/fieldwork-project.
 const skip=existsSync(BUNDLE)?false
   :'example-1855-cholera-south-london is not checked out beside this repository.';
 
-test('importing a workflow clears the previous run',{skip},async({page})=>{
+test('importing a workflow clears the previous run',async({page})=>{test.skip(!!skip,skip);
   await page.goto('/');await page.evaluate(()=>localStorage.clear());
   // A worked example that produces results, run to completion so there is something to be stale.
   await page.goto('/?example=snow-geoprivacy');

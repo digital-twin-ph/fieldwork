@@ -37,7 +37,7 @@ const openContingency=async page=>{
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
 };
 
-test('the relate step reports the join before the table it produced',{skip},async({page})=>{
+test('the relate step reports the join before the table it produced',async({page})=>{test.skip(!!skip,skip);
   const errors=collectPageErrors(page);
   await openContingency(page);
   await page.locator('.react-flow__node[data-id="supply"]').click();
@@ -152,7 +152,7 @@ const buildTwoTables=async page=>{
 const selectRelate=page=>
   page.locator('.react-flow__node[data-id^="relate_table-"]').dispatchEvent('click');
 
-test('a join with unmatched rows refuses to run until the practitioner decides',{skip},async({page})=>{
+test('a join with unmatched rows refuses to run until the practitioner decides',async({page})=>{test.skip(!!skip,skip);
   const errors=collectPageErrors(page);
   await buildTwoTables(page);
   await page.locator('#run-button').click();
@@ -172,7 +172,7 @@ test('a join with unmatched rows refuses to run until the practitioner decides',
   expect(errors).toEqual([]);
 });
 
-test('the dialog shows the shape, the effect on each variable, the note and the table',{skip},async({page})=>{
+test('the dialog shows the shape, the effect on each variable, the note and the table',async({page})=>{test.skip(!!skip,skip);
   const errors=collectPageErrors(page);
   await buildTwoTables(page);
   await page.locator('#run-button').click();
@@ -218,7 +218,7 @@ test('the dialog shows the shape, the effect on each variable, the note and the 
   expect(errors).toEqual([]);
 });
 
-test('finalizing drops the rows, names them, and the choice reaches the receipt',{skip},async({page})=>{
+test('finalizing drops the rows, names them, and the choice reaches the receipt',async({page})=>{test.skip(!!skip,skip);
   const errors=collectPageErrors(page);
   await buildTwoTables(page);
   await page.locator('#run-button').click();
@@ -265,7 +265,7 @@ test('finalizing drops the rows, names them, and the choice reaches the receipt'
   expect(errors).toEqual([]);
 });
 
-test('the Quick Look says which table each column came from',{skip},async({page})=>{
+test('the Quick Look says which table each column came from',async({page})=>{test.skip(!!skip,skip);
   const errors=collectPageErrors(page);
   await openContingency(page);
   await page.locator('.react-flow__node[data-id="supply"]').click();

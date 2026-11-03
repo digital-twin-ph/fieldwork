@@ -42,7 +42,7 @@ const rows=page=>page.locator('#layer-dialog-rows .layer-row');
  *  equivalent for a set of them. */
 const values=locator=>locator.evaluateAll(cells=>cells.map(cell=>cell.textContent.trim()));
 
-test('every connected input is listed, and a collection is listed as its parts',{skip},async({page})=>{
+test('every connected input is listed, and a collection is listed as its parts',async({page})=>{test.skip(!!skip,skip);
   await ground(page);
   await openDialog(page);
   // Four layers from three ports: the extent, the two layers inside the collection, the intakes.
@@ -58,7 +58,7 @@ test('every connected input is listed, and a collection is listed as its parts',
   await expect(page.locator('#layer-dialog-note')).toContainText('Drawn bottom to top');
 });
 
-test('a layer\u2019s name is inherited and cannot be forked here',{skip},async({page})=>{
+test('a layer\u2019s name is inherited and cannot be forked here',async({page})=>{test.skip(!!skip,skip);
   await ground(page);
   await openDialog(page);
   // The practitioner, 2026-10-29: *"this form allow me to edit the inherited label of the polygon
@@ -70,7 +70,7 @@ test('a layer\u2019s name is inherited and cannot be forked here',{skip},async({
   await expect(page.locator('.layer-row-origin').first()).toContainText(/named by the (widget|data)/);
 });
 
-test('a group is declared first and layers are added to it afterwards',{skip},async({page})=>{
+test('a group is declared first and layers are added to it afterwards',async({page})=>{test.skip(!!skip,skip);
   await ground(page);
   await openDialog(page);
   // Nothing to join until something is declared: the practitioner's own order of operations.
@@ -90,7 +90,7 @@ test('a group is declared first and layers are added to it afterwards',{skip},as
   await expect(page.locator('#layer-dialog-note')).toContainText('Thames reaches');
 });
 
-test('a group needs a name before anything can be added to it',{skip},async({page})=>{
+test('a group needs a name before anything can be added to it',async({page})=>{test.skip(!!skip,skip);
   await ground(page);
   await openDialog(page);
   await page.locator('#layer-dialog-declare').click();
@@ -98,7 +98,7 @@ test('a group needs a name before anything can be added to it',{skip},async({pag
   await expect(page.locator('.layer-row-group option')).toHaveCount(4);
 });
 
-test('a layer switched off stays connected, and switching all of them off is refused',{skip},async({page})=>{
+test('a layer switched off stays connected, and switching all of them off is refused',async({page})=>{test.skip(!!skip,skip);
   await ground(page);
   await openDialog(page);
   for(const box of await page.locator('[data-layer-visible]').all())await box.uncheck();
@@ -108,7 +108,7 @@ test('a layer switched off stays connected, and switching all of them off is ref
   await expect(rows(page)).toHaveCount(4);
 });
 
-test('the stack can be reordered, and the order is the workflow’s not the view’s',{skip},async({page})=>{
+test('the stack can be reordered, and the order is the workflow’s not the view’s',async({page})=>{test.skip(!!skip,skip);
   await ground(page);
   await openDialog(page);
   const before=await values(page.locator('[data-layer-label]'));

@@ -5,10 +5,20 @@ shown in a local build is not a claim that it has been published.
 
 ## 0.13.0 — In development
 
+- An interactive map can import an OpenStreetMap extract as PMTiles, once, for the area it draws. The workflow keeps the spec and the device keeps the tiles.
+- A polygon layer's key, figure and interactive map now agree on what shades it. A ruleset's classes are keyed by name, and the interactive map draws them.
+- Two-by-two: Exposures to compare offers only columns holding the two chosen groups, and reads down one left edge.
+- Nigeria carries an illustrative 20-year report and a fifth workflow. All three worked examples are laid out with Tidy.
+- A table is no longer refused for a quality problem. Primary and secondary keys can be declared, and findings flag the node, fill a Findings tab in Data quality and reach the write-up.
+- CI: `verify` is pinned to `ubuntu-24.04`, checks out all three examples, and a missing sibling now skips its test instead of failing it.
+
 Covers the work of 2026-10-30.
 
 - **Fast editing no longer fails in Safari.** Every edit rewrote the page address, and Safari refuses more
   than 100 of those in ten seconds, which stopped the edit. It now writes only when the address changes.
+
+- **A map says its basemap is context.** Over an online basemap, Methods gains a machined limitation: the
+  tiles can change or go, and no value depends on them.
 
 - **Polygons are records.** *Join a table* takes a polygon layer and keeps what each polygon holds, and
   *Apply ruleset* reads polygons and returns classes a map can shade. Nigeria's 774 LGAs now reach a map,

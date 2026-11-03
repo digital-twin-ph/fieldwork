@@ -12,8 +12,7 @@
   "major",
   "minor",
   "patch",
-  "port",
-  "unchanged"
+  "port"
  ],
  "widgets": {
   "access": {
@@ -419,12 +418,20 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.17.0",
-   "released": "2026-10-30",
+   "version": "0.18.0",
+   "released": "2026-11-02",
    "changes": [
     {
      "kind": "minor",
-     "description": "Declare its own shape into the write-up. Every run now machines a note into the Results section of the Notes tab stating what this artifact is made of. Experiment 147 measured that a Results section is mostly artifacts rather than prose, and until now not one artifact in this application could put a single word into a write-up: the figure was drawn, the receipt recorded what it drew, and the Notes tab had nothing from it. THE NOTE CARRIES NO NUMBER, which is the rule the whole change is shaped around -- experiment 141's amendment of 2026-10-30 settled that a figure's number is computed when a document is rendered, from the note's position in the IMRaD outline and the venue's own convention, because setting one figure aside for a venue moves every number after it. A note that wrote \"Table 1\" into its text would be right when machined and wrong the first time somebody dragged a card. The note is editable like any machined note: editing it forks it into a note of the author's own and the machined one goes on being rewritten by every run. Read off `mapLayers`, the same list the interactive map, the static figure and the key already draw from, so the note cannot disagree with the picture: the layers bottom to top, their feature counts where known, and the layers that are connected and NOT drawn, which `fw:layerDrawn` exists to distinguish. Experiment 148 recorded this description as exhaust that nothing reads back; this note is a second reader of it, which is not the inversion 148 asks for but is one more consumer on that side. THE CAPTION IS NOT MACHINED AND IS NOT CLAIMED. The practitioner, 2026-10-30: \"Captions are the user's responsibility, unless there is a way to machine it based on table, map, chart or equation semantics.\" Everything in this note is read off a declaration, which is the exception that rule names; the caption itself states the subject, the population, the place and the period in the author's words and none of that is derivable here. The first version of this release called its output a caption and filed it under a function word invented for the purpose, which claimed an authorial act while delivering something else -- the same error experiment 149 settled for notes in general, arriving one level down. What would make a real caption machinable is 147's chain for the machined title -- design, place, outcome, period -- of which only place is declared today."
+     "description": "A map over an online basemap writes a machined Methods limitation: the tiles are context, can change or go, and no value depends on them. Bundled ground writes none."
+    },
+    {
+     "kind": "patch",
+     "description": "A polygon layer that carries a category is keyed by its classes, as the figure shades it. A layer classified by a ruleset was keyed by the value ranges it no longer showed."
+    },
+    {
+     "kind": "minor",
+     "description": "An interactive map can import an OpenStreetMap extract as PMTiles, once, for what it draws, and keep it on the device. The workflow keeps the spec, not the tiles. A category now shades and keys the interactive map too."
     }
    ],
    "breaking": false,
@@ -909,24 +916,12 @@
    "migrationFrom": []
   },
   "table_input": {
-   "version": "0.2.0",
-   "released": "2026-10-27",
+   "version": "0.3.0",
+   "released": "2026-11-02",
    "changes": [
     {
-     "kind": "added",
-     "description": "Reads a WIDE file, and assumes wide on a fresh import. One row per subject and a column per variable is what a line list, a surveillance export and a published table look like, and until now every such file had to be melted outside the application -- including the ones its own worked examples ship. The practitioner's instruction, 2026-10-26: \"We have to assume wide in as default, that's the epidemiology mindset.\" The reader for it was written the same day and wired to nothing, which is the defect this release closes rather than the capability it adds."
-    },
-    {
-     "kind": "added",
-     "description": "Detects a file that is already long and REFUSES TO CONVERT IT SILENTLY. The subject keys of a wide file identify a row; a long file repeats them, which is the whole signature. Detected from the data rather than by catching the reader's refusal, reported with the number of repeated rows and an example, and acted on only by a button that says what it will do. Asked for on 2026-10-27: \"Table input should alert the user if table is in long format and confirm to convert.\""
-    },
-    {
-     "kind": "added",
-     "description": "The receipt states the shape the file was read in -- fw:readAs, asserted for long as well as wide -- and for a melt names the subject keys, the measure key and every column taken. The columns are named rather than inferred from what is left over, so a column absent from the receipt was not asked for rather than not present."
-    },
-    {
-     "kind": "unchanged",
-     "description": "The stored table is long in both shapes, so nothing downstream learns a second representation. Both readers are kept because they give opposite diagnoses of the same file: a repeated key tuple is the long shape to one and a duplicate subject record to the other. A table saved before this release has no wide selection and reopens as long, because re-reading it as wide would change the table under a workflow already built on it."
+     "kind": "minor",
+     "description": "A repeated key, an empty key and a non-numeric value load as findings instead of refusing the file. You can declare primary and secondary keys, and a finding flags the node, is listed in Data quality and reaches the write-up as a limitation."
     }
    ],
    "breaking": false,
@@ -995,12 +990,16 @@
    "migrationFrom": []
   },
   "two_by_two": {
-   "version": "0.6.0",
+   "version": "0.6.1",
    "released": "2026-11-02",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Adds a declared role: each row is one subject. A line list then reaches a two-by-two directly, with no count upstream, and a cell is how many rows agree. Off, each row holds a count, which is what every saved workflow means, so none changes. The two readings differ on an empty cell: in totals a missing row means nobody counted it and is refused, while in a line list a combination nobody fell into is a true zero. The role is declared and never inferred, because the table does not say which it is. Outcome values the mapping does not name are now reported, as exposure values already were. The measures are computed by the Rust kernel. With a line list it also compares several exposures on one node: one table with a row per exposure in the order chosen, unranked, counting rows left out and stating that no interval is adjusted for the number of comparisons. Oswego's 14 foods take 3 nodes in place of 43. Under a declared case-control design it shows the four cells and the odds ratio, and no attack rate."
+     "kind": "patch",
+     "description": "Exposures to compare offers only columns holding the two chosen groups, so an identifier is not offered, and the list reads down one left edge."
+    },
+    {
+     "kind": "patch",
+     "description": "Columns declared as a primary or secondary key are left out of Exposures to compare."
     }
    ],
    "breaking": false,

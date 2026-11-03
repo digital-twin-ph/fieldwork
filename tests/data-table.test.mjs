@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {dataTable,keyDomains,tableReceipt,MAX_TABLE_ROWS} from '../build/data-table.js';
+import {findingsSummary,dataTable,keyDomains,tableReceipt,MAX_TABLE_ROWS} from '../build/data-table.js';
 
 const csv=(headers,rows)=>({headers,rows});
 const projection=csv(['site_id','scenario','year','quantile','value_m'],[
@@ -23,15 +23,31 @@ test('a long-format table keeps its key and its value', () => {
   assert.deepEqual(keyDomains(table).scenario,['ssp126','ssp585']);
 });
 
-test('a duplicate key tuple is refused, because one value would overwrite another', () => {
+test('a repeated key loads and is a finding naming the rows, because a refused file cannot be diagnosed', () => {
   const duplicated=csv(projection.headers,[...projection.rows,['145','ssp126','2050','0.5','0.99']]);
-  assert.throws(()=>dataTable(duplicated,selection),/share the key site_id=145, scenario=ssp126/);
+  const table=dataTable(duplicated,selection);
+  assert.equal(table.rowCount,duplicated.rows.length);
+  assert.equal(table.findings.length,1);
+  assert.equal(table.findings[0].kind,'repeated-key');
+  assert.match(table.findings[0].text,/repeat site_id=145, scenario=ssp126/);
 });
 
-test('dropping a key column is refused rather than silently collapsing rows', () => {
+test('uniqueness is checked on the declared primary key, and a secondary key may repeat', () => {
+  const list=csv(['ID','Household','Food','Age'],[['1','A','Y','30'],['2','A','Y','31'],['2','B','N','32']]);
+  const none=dataTable(list,{keys:['ID','Household','Food'],valueField:'Age'});
+  assert.equal(none.findings,undefined);
+  const table=dataTable(list,{keys:['ID','Household','Food'],valueField:'Age',primaryKey:['ID'],secondaryKeys:['Household']});
+  assert.deepEqual(table.primaryKey,['ID']);
+  assert.deepEqual(table.secondaryKeys,['Household']);
+  assert.deepEqual(table.findings.map(f=>f.rows),[[2,3]]);
+  assert.equal(findingsSummary(table),'1 repeated key value');
+});
+
+test('dropping a key column keeps every row and says the key repeats', () => {
   // Without the year, the remaining key repeats: the signature of a wide table or a missing key.
-  assert.throws(()=>dataTable(projection,{keys:['site_id','scenario','quantile'],valueField:'value_m'}),
-    /check whether a key column is missing/);
+  const table=dataTable(projection,{keys:['site_id','scenario','quantile'],valueField:'value_m'});
+  assert.equal(table.rowCount,projection.rows.length);
+  assert.ok(table.findings.every(f=>f.kind==='repeated-key'));
 });
 
 test('an absent value is kept as unknown and counted, never read as zero', () => {
@@ -71,9 +87,13 @@ test('an absent or contradictory column selection is refused', () => {
   assert.throws(()=>dataTable(projection,{keys:['site_id','scenario','year','quantile'],valueField:'absent'}),/no column named "absent"/);
 });
 
-test('a nonnumeric value, an empty key and an oversized table are refused', () => {
-  assert.throws(()=>dataTable(csv(projection.headers,[['145','ssp126','2050','0.5','high']]),selection),/nonnumeric value "high"/);
-  assert.throws(()=>dataTable(csv(projection.headers,[['','ssp126','2050','0.5','0.2']]),selection),/no value in key column "site_id"/);
+test('a nonnumeric value and an empty key are findings; an oversized or empty table is refused', () => {
+  const unreadable=dataTable(csv(projection.headers,[['145','ssp126','2050','0.5','high']]),selection);
+  assert.equal(unreadable.rows[0].value,null);
+  assert.equal(unreadable.findings[0].value,'high');
+  assert.match(unreadable.findings[0].text,/nonnumeric value "high"/);
+  const blank=dataTable(csv(projection.headers,[['','ssp126','2050','0.5','0.2']]),selection);
+  assert.match(blank.findings[0].text,/no value in key column "site_id"/);
   const many=csv(['k','v'],Array.from({length:MAX_TABLE_ROWS+1},(_,i)=>[String(i),'1']));
   assert.throws(()=>dataTable(many,{keys:['k'],valueField:'v'}),/at most 20,000 rows/);
   assert.throws(()=>dataTable(csv(['k','v'],[]),{keys:['k'],valueField:'v'}),/no rows/);

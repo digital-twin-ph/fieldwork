@@ -42,8 +42,7 @@ const andRun=async page=>{
 
 const RESULTS='.notes-part[data-section="Results"]';
 
-test('an added note opens for writing, and what is written is what the write-up says',
-  {skip},async({page})=>{
+test('an added note opens for writing, and what is written is what the write-up says',async({page})=>{test.skip(!!skip,skip);
   await southLondon(page);
   await page.locator(RESULTS).locator('[data-add-note]').first().click();
   // IT OPENS FOR WRITING. Adding a note and being handed a card with nothing to do is how this
@@ -68,7 +67,7 @@ test('an added note opens for writing, and what is written is what the write-up 
   await expect(page.locator(RESULTS)).toContainText(written);
 });
 
-test('a note with no words is refused, and says why',{skip},async({page})=>{
+test('a note with no words is refused, and says why',async({page})=>{test.skip(!!skip,skip);
   await southLondon(page);
   await page.locator(RESULTS).locator('[data-add-note]').first().click();
   await expect(page.locator('#note-dialog')).toBeVisible();
@@ -82,7 +81,7 @@ test('a note with no words is refused, and says why',{skip},async({page})=>{
   await expect(page.locator(RESULTS)).toContainText('(unwritten)');
 });
 
-test('a new note is discarded, and an edit says what leaving would cost',{skip},async({page})=>{
+test('a new note is discarded, and an edit says what leaving would cost',async({page})=>{test.skip(!!skip,skip);
   await southLondon(page);
   await page.locator(RESULTS).locator('[data-add-note]').first().click();
   // A note being written for the first time has nothing to go back to, so its exit says Discard
@@ -107,7 +106,7 @@ test('a new note is discarded, and an edit says what leaving would cost',{skip},
   await expect(page.locator('#notes-view')).not.toContainText('Edited, and not kept');
 });
 
-test('an authored note’s section and function are the author’s to choose',{skip},async({page})=>{
+test('an authored note’s section and function are the author’s to choose',async({page})=>{test.skip(!!skip,skip);
   await southLondon(page);
   await page.locator(RESULTS).locator('[data-add-note]').first().click();
   // FIXED FOR THE OTHER THREE, chosen here: the prototype's two drop-downs. The section one is a
@@ -136,7 +135,7 @@ test('an authored note’s section and function are the author’s to choose',{s
     expect(offered).toContain(kept);
 });
 
-test('a quotation has nothing to write',{skip},async({page})=>{
+test('a quotation has nothing to write',async({page})=>{test.skip(!!skip,skip);
   await southLondon(page);
   await page.locator('.notes-note.k-quoted').first().locator('[data-note-open]').click();
   await expect(page.locator('#note-dialog')).toBeVisible();
@@ -147,7 +146,7 @@ test('a quotation has nothing to write',{skip},async({page})=>{
   await expect(page.locator('#note-why')).toContainText('An edited quotation is not a quotation');
 });
 
-test('a derived note is still changed at the input, not here',{skip},async({page})=>{
+test('a derived note is still changed at the input, not here',async({page})=>{test.skip(!!skip,skip);
   await southLondon(page);
   await andRun(page);
   await page.locator('.notes-note.k-derived').first().locator('[data-note-open]').click();
@@ -184,7 +183,7 @@ const contingency=async page=>{
   await page.locator('.notes-part').first().waitFor();
 };
 
-test('editing a machined note forks it, and leaves the machined note alone',{skip},async({page})=>{
+test('editing a machined note forks it, and leaves the machined note alone',async({page})=>{test.skip(!!skip,skip);
   await contingency(page);
   const machined=page.locator('.notes-note.k-machined').first();
   await expect(machined).toBeVisible();

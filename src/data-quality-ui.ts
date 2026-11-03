@@ -21,6 +21,8 @@ import {profileColumn,columnStates,histogram,type ColumnKind,type ColumnProfile}
 export interface QualityRepair {column:string; to:ColumnKind; cast:number; unreadable:string[]; at:string}
 export interface QualityView {
   title:string;
+  /** What reading the table found, listed before the columns. */
+  findings?:readonly {text:string}[];
   columns:string[];
   /** The records as they will be READ: declared repairs already applied. */
   rows:Record<string,unknown>[];
@@ -215,18 +217,24 @@ export function openDataQuality(view:QualityView,esc:Escape):void{
       +`</section>`;
   }).join('');
 
-  let tab:'columns'|'shapes'='columns';
+  let tab:'findings'|'columns'|'shapes'=view.findings?.length?'findings':'columns';
 
   const render=()=>{
     dialog.innerHTML=`<div class="manual-head"><h2 id="data-quality-title">${esc(view.title)}</h2>`
       +`<div><button class="button primary" id="data-quality-close">Close</button></div></div>`
       +`<div class="result-switch quality-tabs" role="tablist">`
-      +([['columns','Columns'],['shapes','Shapes and gaps']] as const).map(([key,label])=>
+      +([...(view.findings?.length?[['findings',`Findings (${view.findings.length})`]] as const:[]),
+        ['columns','Columns'],['shapes','Shapes and gaps']] as const).map(([key,label])=>
         `<button role="tab" aria-selected="${key===tab}" data-quality-tab="${key}" `
         +`class="${key===tab?'active':''}">${label}</button>`).join('')
       +`</div>`
       +`<div class="quality-body">`
-      +(tab==='shapes'
+      +(tab==='findings'
+        ?`<p class="description">What reading the file found. Every row was kept as it stands.</p>`
+         +`<ul class="quality-problems" data-quality-findings>${view.findings!.slice(0,200).map(f=>
+           `<li class="quality-problem">${esc(f.text)}</li>`).join('')}</ul>`
+         +(view.findings!.length>200?`<p class="muted">200 of ${view.findings!.length} shown.</p>`:'')
+        :tab==='shapes'
         ?`<p class="description">What is in each column, and where it is not. Drawn from the records `
          +`as the steps downstream will read them, declared repairs included.</p>`
          +`<h3 class="quality-heading">Where values are missing or unreadable</h3>`
@@ -263,7 +271,7 @@ export function openDataQuality(view:QualityView,esc:Escape):void{
       +`tail will flag its largest values every time, and that is a property of the distribution.</p>`)
       +`</div>`;
     dialog.querySelectorAll<HTMLButtonElement>('[data-quality-tab]').forEach(button=>{
-      button.onclick=()=>{tab=button.dataset.qualityTab as 'columns'|'shapes';render();};
+      button.onclick=()=>{tab=button.dataset.qualityTab as typeof tab;render();};
     });
     dialog.querySelector<HTMLButtonElement>('#data-quality-close')!.onclick=close;
     dialog.querySelectorAll<HTMLButtonElement>('[data-repair]').forEach(button=>{

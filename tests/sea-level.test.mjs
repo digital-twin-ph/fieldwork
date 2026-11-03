@@ -36,10 +36,10 @@ test('an extract is admissible only with the full key, the unit, the baseline an
   const ok=extract();
   assert.deepEqual(ok.siteIds,['145','394']);
   assert.equal(selectionDomains(ok).family.length,2);
-  // Dropping a key the table needs for uniqueness is caught by the table contract first, which is
-  // the right order: experiment 48's unique-key rule fires before this widget sees the table.
-  assert.throws(()=>dataTable({headers,rows},{keys:['site_id','scenario','year','quantile'],valueField:'value_m',unit:'metre'}),
-    /share the key/);
+  // Dropping a key the table needs for uniqueness loads as a finding (164), and this widget stops
+  // on it: experiment 48's unique-key rule now fires at the run, where it can name the rows.
+  assert.throws(()=>projectionExtract(dataTable({headers,rows},{keys:['site_id','scenario','year','quantile'],valueField:'value_m',unit:'metre'}),provenance),
+    /repeat site_id=.*one value for each key/s);
   // A table whose reduced key is still unique reaches this widget, which then names what is absent.
   const unique=[rows[0],rows[1],rows[3]];
   const partial=dataTable({headers,rows:unique},{keys:['site_id','scenario','year','quantile'],valueField:'value_m',unit:'metre'});

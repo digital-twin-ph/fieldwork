@@ -41,7 +41,7 @@ const wire=async(page,from,to,port)=>{
 const saved=page=>page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));
 const idOf=async(page,type,nth=0)=>(await saved(page)).nodes.filter(n=>n.type===type)[nth].id;
 
-test('Oswego is two short workflows: which food, and where',{skip},async({page})=>{
+test('Oswego is two short workflows: which food, and where',async({page})=>{test.skip(!!skip,skip);
   test.setTimeout(300_000);
   await page.goto('/');await page.evaluate(()=>localStorage.clear());
   await page.goto('/?example=blank');
@@ -141,6 +141,7 @@ test('Oswego is two short workflows: which food, and where',{skip},async({page})
 
   // THE PROJECT, written where the example repository can take it when asked for.
   await page.locator('[data-view="workflow"]').click();
+  await tidy(page);
   await page.locator('#storage-status').click();
   const block=page.locator('.project-view-block').filter({hasText:'The Oswego church supper'}).first();
   await expect(block).toContainText('2 workflows');
@@ -153,7 +154,7 @@ test('Oswego is two short workflows: which food, and where',{skip},async({page})
 
 // STEP 2 OF THE KERNEL: THE SAME ANSWER WITHOUT THE COUNT. Three nodes, and the mapping dialog works
 // before a run, because a line list needs nothing upstream to have run first.
-test('a line list reaches a two-by-two directly, with nothing counted first',{skip},async({page})=>{
+test('a line list reaches a two-by-two directly, with nothing counted first',async({page})=>{test.skip(!!skip,skip);
   await page.goto('/');await page.evaluate(()=>localStorage.clear());
   await page.goto('/?example=blank');
   await add(page,'table_input');
@@ -194,7 +195,7 @@ test('a line list reaches a two-by-two directly, with nothing counted first',{sk
 });
 
 // STEP 3: THE WHOLE MENU ON ONE NODE. The question Oswego took 43 nodes to ask, in three.
-test('all 14 foods on one node give one table, in file order, unranked',{skip},async({page})=>{
+test('all 14 foods on one node give one table, in file order, unranked',async({page})=>{test.skip(!!skip,skip);
   await page.goto('/');await page.evaluate(()=>localStorage.clear());
   await page.goto('/?example=blank');
   await add(page,'table_input');
@@ -220,6 +221,13 @@ test('all 14 foods on one node give one table, in file order, unranked',{skip},a
   await page.locator('#twobytwo-rows').check();
   await page.locator('[data-slr="outcomeColumn"]').selectOption('Ill');
   for(const food of FOODS)await page.locator(`[data-twobytwo-exposure="${food}"]`).check();
+  // AN ID IS NOT AN EXPOSURE, and the list reads down one left edge. Both reported 2026-11-02.
+  await expect(page.locator('[data-twobytwo-exposure="ID"]')).toHaveCount(0);
+  const edges=await page.locator('.exposure-list input').evaluateAll(boxes=>
+    [...new Set(boxes.map(box=>Math.round(box.getBoundingClientRect().left)))]);
+  expect(edges).toHaveLength(1);
+  const legend=await page.locator('.exposure-list legend').boundingBox();
+  expect(edges[0]-legend.x).toBeLessThan(20);
   const pick=async(key,value)=>{await page.locator(`[data-slr="${key}"]`).selectOption(value);};
   await pick('exposed','Y');await pick('unexposed','N');await pick('caseValue','Y');await pick('nonCaseValue','N');
   await page.screenshot({path:'test-results/oswego-menu-panel.png'});

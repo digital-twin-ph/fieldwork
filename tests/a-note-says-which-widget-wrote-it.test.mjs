@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {executeWorkflow} from '../build/core.js';
+import {basemapLimitation} from '../build/basemaps.js';
 import {forkMachinedNote} from '../build/notes.js';
 import {producedBy} from '../build/notes-ui.js';
 
@@ -57,4 +58,12 @@ test('investigator allocation leaves a connected table under neutral names',asyn
     [{id:'1',from:'cells',to:'t',port:'records'},{id:'2',from:'d',to:'t',port:'design'},{id:'3',from:'t',to:'o',port:'table'}]));
   assert.match(r.machined.t[0].text,/ratio of row proportions/);
   assert.match(r.machined.d[0].text,/^No study design was declared\. Exposure was allocated by the investigators/);
+});
+
+test('online ground is a stated limitation, and bundled ground needs none',()=>{
+  assert.match(basemapLimitation('osm'),/online service as context.*No value here depends on it/);
+  assert.match(basemapLimitation('ofm-positron'),/another machine may show different ground/);
+  assert.equal(basemapLimitation('natural-earth-110m'),null);
+  assert.equal(basemapLimitation('none'),null);
+  assert.equal(basemapLimitation(undefined),null);
 });

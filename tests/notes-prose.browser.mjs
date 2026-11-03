@@ -30,7 +30,7 @@ const southLondon=async page=>{
   await page.locator('.notes-part').first().waitFor();
 };
 
-test('a note is written in markdown and read as markdown',{skip},async({page})=>{
+test('a note is written in markdown and read as markdown',async({page})=>{test.skip(!!skip,skip);
   await southLondon(page);
   await page.locator(RESULTS).locator('[data-add-note]').first().click();
   await page.locator('#note-text').fill(
@@ -53,7 +53,7 @@ test('a note is written in markdown and read as markdown',{skip},async({page})=>
   await expect(page.locator('#note-text')).toHaveValue(/\*\*Lambeth\*\*/);
 });
 
-test('a plain note is not given a preview it does not need',{skip},async({page})=>{
+test('a plain note is not given a preview it does not need',async({page})=>{test.skip(!!skip,skip);
   await southLondon(page);
   await page.locator(RESULTS).locator('[data-add-note]').first().click();
   await page.locator('#note-text').fill('Plain prose, which needs no second reading.');
@@ -61,7 +61,7 @@ test('a plain note is not given a preview it does not need',{skip},async({page})
   await expect(page.locator('#note-preview')).toBeHidden();
 });
 
-test('the toolbar writes markdown, not formatting of its own',{skip},async({page})=>{
+test('the toolbar writes markdown, not formatting of its own',async({page})=>{test.skip(!!skip,skip);
   await southLondon(page);
   await page.locator(RESULTS).locator('[data-add-note]').first().click();
   const area=page.locator('#note-text');
@@ -77,7 +77,7 @@ test('the toolbar writes markdown, not formatting of its own',{skip},async({page
   await expect(area).toHaveValue('1. above the tidal limit\n2. in 1852');
 });
 
-test('a formula is typeset, and its source is what shows until it is',{skip},async({page})=>{
+test('a formula is typeset, and its source is what shows until it is',async({page})=>{test.skip(!!skip,skip);
   await southLondon(page);
   await page.locator(RESULTS).locator('[data-add-note]').first().click();
   await page.locator('#note-text').fill(
@@ -95,7 +95,7 @@ test('a formula is typeset, and its source is what shows until it is',{skip},asy
   await expect(page.locator('#note-text')).toHaveValue(/\\frac\{d\}\{p\}/);
 });
 
-test('a formula that is not LaTeX keeps its source and says so',{skip},async({page})=>{
+test('a formula that is not LaTeX keeps its source and says so',async({page})=>{test.skip(!!skip,skip);
   await southLondon(page);
   await page.locator(RESULTS).locator('[data-add-note]').first().click();
   await page.locator('#note-text').fill('Broken: $\\frac{1}$ here.');

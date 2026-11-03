@@ -11,12 +11,55 @@ export interface TableRows {headers:string[]; rows:string[][]}
  *  is read, and the source holds 19,350. A CSV file is still read up to 2,000 rows by `input-data.ts`. */
 export const MAX_TABLE_ROWS=20000;
 export interface DataTableSource {filename:string; bytes:number; sha256:string; rows:number}
+/** WHAT IS WRONG WITH A TABLE, FOUND ON READING IT. The practitioner, 2026-11-02: *"We cannot refuse an
+ *  upload because of a quality problem."* A refused file cannot be looked at, so the table loads and
+ *  these say what to look at. Row numbers are the file's, from 1. Experiment 164. */
+export interface TableFinding {
+  kind:'repeated-key'|'missing-key'|'unreadable-value';
+  rows:number[];
+  column?:string;
+  /** What the file holds there, as it was written. */
+  value?:string;
+  text:string;
+}
 export interface DataTable {
   kind:'data-table'; keys:string[]; valueField:string; unit?:string;
+  /** The columns a person declared identify a row. Checked for uniqueness. Absent: all of `keys`. */
+  primaryKey?:string[];
+  /** Columns that group or link rows and may repeat. */
+  secondaryKeys?:string[];
+  findings?:TableFinding[];
   rows:{key:Record<string,string>; value:number|null}[];
   rowCount:number; missingValueCount:number; source?:DataTableSource;
 }
-export interface TableSelection {keys:string[]; valueField:string; unit?:string}
+export interface TableSelection {keys:string[]; valueField:string; unit?:string;
+  primaryKey?:string[]; secondaryKeys?:string[]}
+
+/** Rows sharing the columns that should identify one, gathered into one finding per value. */
+function repeatedKeys(rows:readonly Record<string,string>[],columns:readonly string[]):TableFinding[]{
+  const groups=new Map<string,number[]>();
+  rows.forEach((row,position)=>{
+    const signature=columns.map(name=>row[name]).join('\u0000');
+    groups.set(signature,[...(groups.get(signature)??[]),position+1]);
+  });
+  const named=(at:number)=>columns.map(name=>`${name}=${rows[at]![name]}`).join(', ');
+  return [...groups.values()].filter(found=>found.length>1).map(found=>({kind:'repeated-key',rows:found,
+    value:named(found[0]!-1),text:`Rows ${found.join(', ')} repeat ${named(found[0]!-1)}.`}));
+}
+const declaredKeys=(selection:TableSelection,keys:readonly string[])=>{
+  const inKeys=(names?:string[])=>(names??[]).map(trimmed).filter(name=>keys.includes(name));
+  const primaryKey=inKeys(selection.primaryKey),secondaryKeys=inKeys(selection.secondaryKeys);
+  return {...(primaryKey.length?{primaryKey}:{}),...(secondaryKeys.length?{secondaryKeys}:{})};
+};
+const summed=(findings:TableFinding[])=>findings.length?{findings}:{};
+/** One sentence for the Inspector and the write-up, or nothing. */
+export function findingsSummary(table:Pick<DataTable,'findings'>):string{
+  const held=table.findings??[];
+  const count=(kind:TableFinding['kind'])=>held.filter(f=>f.kind===kind).length;
+  const parts=[[count('repeated-key'),'repeated key value'],[count('missing-key'),'row with no key value'],
+    [count('unreadable-value'),'value that is not a number']] as const;
+  return parts.filter(([n])=>n).map(([n,word])=>`${n} ${n===1?word:word.replace('row','rows').replace('value that is','values that are').replace('repeated key value','repeated key values')}`).join(', ');
+}
 
 const trimmed=(value:string)=>value.trim();
 
@@ -37,24 +80,26 @@ export function dataTable(table:TableRows,selection:TableSelection):DataTable {
   if(!table.rows.length)throw new Error('The selected file contains no rows.');
   if(table.rows.length>MAX_TABLE_ROWS)throw new Error(`Tabular input supports at most ${MAX_TABLE_ROWS.toLocaleString()} rows.`);
   const index=(name:string)=>headers.indexOf(name);
-  const seen=new Map<string,number>();
+  const findings:TableFinding[]=[];
   let missingValueCount=0;
   const rows=table.rows.map((row,position)=>{
     const key=Object.fromEntries(keys.map(name=>[name,trimmed(row[index(name)]??'')]));
-    for(const name of keys)if(!key[name])throw new Error(`Row ${position+1} has no value in key column ${JSON.stringify(name)}.`);
-    // A long table's key must be unique. A duplicate is the signature of a wide table, or of a
-    // long one missing a key column, where one value would silently overwrite another.
-    const signature=keys.map(name=>key[name]).join('\u0000');
-    const earlier=seen.get(signature);
-    if(earlier!==undefined)throw new Error(`Rows ${earlier+1} and ${position+1} share the key ${keys.map(name=>`${name}=${key[name]}`).join(', ')}. A long-format table needs one row per key; check whether a key column is missing.`);
-    seen.set(signature,position);
+    for(const name of keys)if(!key[name])findings.push({kind:'missing-key',rows:[position+1],column:name,
+      text:`Row ${position+1} has no value in key column ${JSON.stringify(name)}.`});
     const raw=trimmed(row[index(valueField)]??'');
     if(!raw){missingValueCount++;return {key,value:null};}
     const value=Number(raw);
-    if(!Number.isFinite(value))throw new Error(`Row ${position+1} has a nonnumeric value ${JSON.stringify(raw)} in ${JSON.stringify(valueField)}.`);
+    if(!Number.isFinite(value)){
+      missingValueCount++;
+      findings.push({kind:'unreadable-value',rows:[position+1],column:valueField,value:raw,
+        text:`Row ${position+1} has a nonnumeric value ${JSON.stringify(raw)} in ${JSON.stringify(valueField)}. It is kept as unknown.`});
+      return {key,value:null};
+    }
     return {key,value};
   });
-  return {kind:'data-table',keys,valueField,...(selection.unit?{unit:trimmed(selection.unit)}:{}),
+  const declared=declaredKeys(selection,keys);
+  findings.push(...repeatedKeys(rows.map(row=>row.key),declared.primaryKey??keys));
+  return {kind:'data-table',keys,valueField,...declared,...summed(findings),...(selection.unit?{unit:trimmed(selection.unit)}:{}),
     rows,rowCount:rows.length,missingValueCount};
 }
 
@@ -78,6 +123,7 @@ export function dataTable(table:TableRows,selection:TableSelection):DataTable {
  *  names them: a Rate takes its measure key, and a derived value names two of its values. */
 export interface WideSelection {
   keys:string[]; valueFields:string[]; measureKey:string; valueField:string; unit?:string;
+  primaryKey?:string[]; secondaryKeys?:string[];
   /** WHAT A VALUE COLUMN IS CALLED IN THE ANALYSIS, where that is not what the file calls it.
    *  Keyed by column name; a column absent here keeps its own.
    *
@@ -144,33 +190,33 @@ export function wideDataTable(table:TableRows,selection:WideSelection):DataTable
     +`supports at most ${MAX_TABLE_ROWS.toLocaleString()}. Choose fewer value columns.`);
 
   const index=(name:string)=>headers.indexOf(name);
-  const seen=new Map<string,number>();
+  const findings:TableFinding[]=[],subjects:Record<string,string>[]=[];
   const rows:DataTable['rows']=[];
   let missingValueCount=0;
   table.rows.forEach((row,position)=>{
     const key=Object.fromEntries(keys.map(name=>[name,trimmed(row[index(name)]??'')]));
-    for(const name of keys)
-      if(!key[name])throw new Error(`Row ${position+1} has no value in key column ${JSON.stringify(name)}.`);
-    // In a wide file one row IS one subject, so a repeated key is a duplicate record rather than
-    // the long shape -- the opposite diagnosis from the one the long reader gives, and the
-    // reason these are two readers instead of one with a flag.
-    const signature=keys.map(name=>key[name]).join('\u0000');
-    const earlier=seen.get(signature);
-    if(earlier!==undefined)throw new Error(`Rows ${earlier+1} and ${position+1} both describe `
-      +`${keys.map(name=>`${name}=${key[name]}`).join(', ')}. A wide table has one row per subject; `
-      +'check whether a column identifying the subject is missing.');
-    seen.set(signature,position);
+    subjects.push(key);
+    for(const name of keys)if(!key[name])findings.push({kind:'missing-key',rows:[position+1],column:name,
+      text:`Row ${position+1} has no value in key column ${JSON.stringify(name)}.`});
     for(const name of valueFields){
       const raw=trimmed(row[index(name)]??'');
       if(!raw){missingValueCount++;rows.push({key:{...key,[measureKey]:measureOf(name)},value:null});continue;}
       const value=Number(raw);
-      if(!Number.isFinite(value))throw new Error(`Row ${position+1} has a nonnumeric value `
-        +`${JSON.stringify(raw)} in ${JSON.stringify(name)}.`);
+      if(!Number.isFinite(value)){
+        missingValueCount++;
+        findings.push({kind:'unreadable-value',rows:[position+1],column:name,value:raw,
+          text:`Row ${position+1} has a nonnumeric value ${JSON.stringify(raw)} in ${JSON.stringify(name)}. It is kept as unknown.`});
+        rows.push({key:{...key,[measureKey]:measureOf(name)},value:null});continue;
+      }
       rows.push({key:{...key,[measureKey]:measureOf(name)},value});
     }
   });
+  // In a wide file one row IS one subject, so a repeat is a duplicate record rather than the long
+  // shape: the opposite diagnosis from the long reader's, and why these are two readers.
+  const declared=declaredKeys(selection,keys);
+  findings.push(...repeatedKeys(subjects,declared.primaryKey??keys));
   return {kind:'data-table',keys:[...keys,measureKey],valueField,
-    ...(selection.unit?{unit:trimmed(selection.unit)}:{}),
+    ...(selection.unit?{unit:trimmed(selection.unit)}:{}),...declared,...summed(findings),
     rows,rowCount:rows.length,missingValueCount};
 }
 

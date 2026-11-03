@@ -901,6 +901,21 @@ exemption. Both are still classified `domain` in `widgets/classification.json`.
 - **The priority map shows a value key beside the class key.** A change map wants a diverging scale at zero.
 - **A rule's layer note still reads "Values on the study area".**
 
+### PMTiles on the map ([163](docs/experiments/163-tiles-from-a-saved-spec.md))
+
+Next: fetch from Source Cooperative in a real browser, and measure a Nigeria extract. Then the import on
+`map_output`, exercised by Nigeria. The note in "where PMTiles is the other offline-capable candidate"
+that MapLibre would be a new dependency is out of date.
+
+### Nigeria: 20 years and campaigns
+
+The example covers 2005 to 2024. A year slider on the interactive map is designed and not built: classes must
+be fixed across all years, or a frame hides the trend. WHO's measles-rubella campaign records are at
+`xmart-api-public.who.int/WIISE/V_SIA_MAIN_MR`, 24 for Nigeria, national with free-text areas. WHO's data
+terms allow public-health reuse with attribution but not alteration, and no text names this API. Campaigns
+are not model inputs, and values are by birth cohort, so a campaign must not be read as a step in its year.
+No open LGA source was found; NBS PMCCS 2018 and IPCCS 2024 give state coverage.
+
 ### Nowhere to record a hypothesis as a hypothesis
 
 Found 2026-11-02, reading the Nigeria specification. A note can hold the words, but nothing separates
@@ -3699,3 +3714,19 @@ worth asserting here is that `fw:MeanCenterResult` is **not** a centroid — `me
 of point coordinates, and the names invite the confusion — but GeoSPARQL exposes centroid as a
 *function*, so there is no class to be disjoint with. That one stays in an `rdfs:comment`, and the
 missing axiom does not mean the question went unasked.
+
+## Found 2026-11-02, Nigeria report
+
+- An input widget has no form to declare its source, so `derived` notes and automatic References need `provenance` written into the file. South London's was. Nigeria's works are authored notes.
+- Machined notes on a map are one caption sentence. The report's findings are authored; nothing machines a sum of zero-dose children over years.
+- Interactive map names no places, because labels need fonts from a server.
+- Import tiles: confirm an import in WebKit against the real archive, and the map offline afterwards.
+
+## Deduplicate, after the main problems are finished (practitioner, 2026-11-02)
+
+- Polygons: same-place by overlap. Test on building footprints from two open sources.
+- Point and polygon: the same facility as a point in one dataset and a polygon in another. Point inside, or within a set distance of the edge. Settle what shape a merged record has.
+
+## Citation builder for References (practitioner, 2026-11-02, after deduplicate)
+
+- Every item in References cites something. An authored note in References is written with a citation builder, reusing `Citation` and `renderCitation` from `input-provenance.ts`, with gaps shown before saving. Nigeria's seven references then move to structured citations.

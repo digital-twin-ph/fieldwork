@@ -14,7 +14,7 @@ const BUNDLE=new URL('../../example-1855-cholera-south-london/fieldwork-project.
 const skip=existsSync(BUNDLE)?false
   :'example-1855-cholera-south-london is not checked out beside this repository.';
 
-test('a rate ratio offers the rate\'s own groups, and says which way it reads',{skip},async({page})=>{
+test('a rate ratio offers the rate\'s own groups, and says which way it reads',async({page})=>{test.skip(!!skip,skip);
   const errors=collectPageErrors(page);
   await page.goto('/');
   await page.evaluate(()=>localStorage.clear());

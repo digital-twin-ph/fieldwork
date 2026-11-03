@@ -73,6 +73,7 @@ import type {MachinedNote} from './notes.js';
 import {groupTable,migrateGroupTableNulls} from './group-table.js';
 import {computeTwoByTwo,twoByTwoReceipt,twoByTwoSentence,type TwoByTwoResult} from './two-by-two.js';
 import {computeExposures} from './exposure-table.js';
+import {basemapLimitation} from './basemaps.js';
 import {studyDesignSentence,studyDesignReceipt,DESIGN_LICENCES,includedMeasures,readUnderDesign,readUndeclared,migrateSurveillanceDesign} from './study-design.js';
 import {refinementSentences,investigatorAllocated} from './study-design-questions.js';
 import type {DeclaredDesign} from './study-design.js';
@@ -89,7 +90,7 @@ import {MAX_POINT_LAYERS,pointPort,isPointPort} from './point-layers.js';
 import {validateAttributeSchema} from './attribute-schema.js';
 import {defaultSpatialReference,validateSpatialReference} from './spatial-reference.js';
 import {utmDefinition,projectFromCRS84} from './reproject.js';
-import {dataTable,wideDataTable,tableReceipt,MAX_TABLE_ROWS} from './data-table.js';
+import {findingsSummary,dataTable,wideDataTable,tableReceipt,MAX_TABLE_ROWS} from './data-table.js';
 import {mapImage,mapImageReceipt} from './map-image.js';
 import type {DataTable} from './data-table.js';
 import {computeRate,fromPoints,fromTable,rateTable,rateChart,rateReceipt,validateRateNode} from './rate.js';
@@ -1599,7 +1600,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
       case 'table_input':{
         const p=node.params;
         const table=p.convertOnRun&&p.sourceTable&&p.wide
-          ?wideDataTable(p.sourceTable,{...p.wide,valueField:p.valueField,...(p.unit?{unit:p.unit}:{})})
+          ?wideDataTable(p.sourceTable,{...p.wide,valueField:p.valueField,primaryKey:p.data.primaryKey,secondaryKeys:p.data.secondaryKeys,...(p.unit?{unit:p.unit}:{})})
           :p.data;
         if(!table.rows.length)throw new Error(p.convertOnRun
           ?'This step converts its source table on each run, and that source is empty.'
@@ -2113,6 +2114,25 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         // DRAWN, not connected: the distinction `fw:layerDrawn` exists for.
         withArtifact(receipts,runId,node.id,
           {kind:'map',layerCount:plan.filter(l=>l.drawn).length});}
+    }
+    if(node.type==='table_input'&&node.params.data.findings?.length){
+      // STATED ONCE AT THE TABLE, so an unresolved problem cannot leave the data quality dialog
+      // behind and reach a figure unsaid. Experiment 164.
+      const note:MachinedNote={kind:'machined',id:`${node.id}:quality`,section:'Methods',fn:'limitation',
+        nodeId:node.id,text:`${node.params.label||'This table'} has unresolved data quality findings: `
+          +`${findingsSummary(node.params.data)}. Its rows were used as they stand.`};
+      machined[node.id]=[...(machined[node.id]??[]),note];
+      withNote(receipts,runId,node.id,[note]);
+    }
+    if(node.type==='map_output'){
+      const says=basemapLimitation(node.params.basemap);
+      if(says){
+        // BESIDE any note the map already wrote, which this must not replace.
+        const note:MachinedNote={kind:'machined',id:`${node.id}:basemap`,section:'Methods',fn:'limitation',
+          nodeId:node.id,text:says};
+        machined[node.id]=[...(machined[node.id]??[]),note];
+        withNote(receipts,runId,node.id,[note]);
+      }
     }
     values.set(node.id,value);trace.push({nodeId:node.id,type:node.type,milliseconds:performance.now()-begin});
     // WHEN THIS STEP RAN, in the receipt, in PROV's own terms.

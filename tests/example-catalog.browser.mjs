@@ -31,7 +31,7 @@ const openProjects=async page=>{
   await expect(page.locator('#project-examples')).toBeVisible();
 };
 
-test('a curated example is listed with its terms, and is not fetched until asked',{skip},async({page})=>{
+test('a curated example is listed with its terms, and is not fetched until asked',async({page})=>{test.skip(!!skip,skip);
   const errors=collectPageErrors(page);
   let requests=0;
   await page.route(/raw\.githubusercontent\.com/,route=>{requests++;
@@ -59,7 +59,7 @@ test('a curated example is listed with its terms, and is not fetched until asked
   expect(errors).toEqual([]);
 });
 
-test('bytes that do not match the pinned digest are refused, not loaded',{skip},async({page})=>{
+test('bytes that do not match the pinned digest are refused, not loaded',async({page})=>{test.skip(!!skip,skip);
   await page.route(/raw\.githubusercontent\.com/,route=>route.fulfill({
     // Right size, wrong bytes: this is the case a length check alone would wave through.
     status:200,body:Buffer.alloc(bundle.length,7)}));
@@ -75,7 +75,7 @@ test('bytes that do not match the pinned digest are refused, not loaded',{skip},
  *
  *  The practitioner, 2026-10-24: *"when we import South London, we import a project and its
  *  workflows. Right now it just one workflow."* It was, and it landed under "-- No project --". */
-test('a curated example opens as a project with its workflows',{skip},async({page})=>{
+test('a curated example opens as a project with its workflows',async({page})=>{test.skip(!!skip,skip);
   await page.route(/raw\.githubusercontent\.com/,route=>route.fulfill({status:200,body:bundle}));
   await openProjects(page);
   await page.locator('[data-open-example="urn:fieldwork:example:south-london-1854"]').click();
@@ -117,7 +117,7 @@ test('a curated example opens as a project with its workflows',{skip},async({pag
  *  can still reset; and that the workflow is still the practitioner's afterwards, because a reset
  *  that restored the published identity along with the published content would have made it
  *  undeletable again, which is the defect this pair of controls already had once. */
-test('an imported example is resettable, from the bytes already verified',{skip},async({page})=>{
+test('an imported example is resettable, from the bytes already verified',async({page})=>{test.skip(!!skip,skip);
   const errors=collectPageErrors(page);
   let requests=0;
   await page.route(/raw\.githubusercontent\.com/,route=>{requests++;
@@ -153,8 +153,7 @@ test('an imported example is resettable, from the bytes already verified',{skip}
 // be made by hand; this proves what was published is what opens.
 const OSWEGO=new URL('../../example-1940-oswego-church-supper/fieldwork-project.json.gz',import.meta.url);
 test('Oswego opens from its pin as one project, its counts intact',
-  {skip:existsSync(OSWEGO)?false:'example-1940-oswego-church-supper is not checked out beside this repository.'},
-  async({page})=>{
+  async({page})=>{test.skip(!existsSync(OSWEGO),'example-1940-oswego-church-supper is not checked out beside this repository.');
     const bytes=readFileSync(OSWEGO);
     await page.route(/raw\.githubusercontent\.com/,route=>route.fulfill({status:200,body:bytes}));
     await openProjects(page);
@@ -169,16 +168,15 @@ test('Oswego opens from its pin as one project, its counts intact',
 
 // THE THIRD EXAMPLE, opened from its pin. 774 polygons in each of four workflows, through the fetch.
 const NIGERIA=new URL('../../example-2024-nigeria-immunization/fieldwork-project.json.gz',import.meta.url);
-test('Nigeria opens from its pin as four workflows and runs',
-  {skip:existsSync(NIGERIA)?false:'example-2024-nigeria-immunization is not checked out beside this repository.'},
-  async({page})=>{
+test('Nigeria opens from its pin as five workflows and runs',
+  async({page})=>{test.skip(!existsSync(NIGERIA),'example-2024-nigeria-immunization is not checked out beside this repository.');
     const bytes=readFileSync(NIGERIA);
     await page.route(/raw\.githubusercontent\.com/,route=>route.fulfill({status:200,body:bytes}));
     await openProjects(page);
     await page.locator('[data-open-example="urn:fieldwork:example:nigeria-immunization-2024"]').click();
     await expect(page.locator('[data-example-status="urn:fieldwork:example:nigeria-immunization-2024"]'))
       .toContainText('digest matched',{timeout:30000});
-    await expect(page.locator('#project-select')).toContainText('4 workflows');
+    await expect(page.locator('#project-select')).toContainText('5 workflows');
     await page.locator('#run-button').click();
     await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
   });

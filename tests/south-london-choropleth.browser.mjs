@@ -19,7 +19,7 @@ const BUNDLE=new URL('../../example-1855-cholera-south-london/fieldwork-project.
 const skip=existsSync(BUNDLE)?false
   :'example-1855-cholera-south-london is not checked out beside this repository.';
 
-test('a table of rates joins to named parts and draws a classed figure',{skip},async({page})=>{
+test('a table of rates joins to named parts and draws a classed figure',async({page})=>{test.skip(!!skip,skip);
   const errors=collectPageErrors(page);
   await page.goto('/');
   await page.evaluate(()=>localStorage.clear());

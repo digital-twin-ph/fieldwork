@@ -130,3 +130,18 @@ being rewritten by every run.
 
 *How this widget is built, what it assumes, and what has been measured about it:
 [docs/widget-specs/map_output.md](../widget-specs/map_output.md).*
+
+## Tiles imported for this map
+
+On an interactive map, **Import tiles** fetches an OpenStreetMap extract once, while connected, for the area
+the map draws, and keeps it on this device. Run the workflow first, because the boundary comes from the run.
+
+The workflow keeps the source, boundary, zoom range and build date, not the tiles. On another device the map
+says it holds no tiles, and **Import tiles** fetches what is published then. Nigeria to zoom 10 was 1,344 tiles
+and 49.2 MB. The map has no place names, because labels need fonts from a server.
+
+## The basemap is context
+
+No value on a map depends on the tiles under it. They come from an online service and can change or stop
+being served, so another machine may show different ground. A map over an online basemap writes this into
+Methods as a limitation, by itself. Natural Earth is bundled and writes no such note.

@@ -7,6 +7,11 @@ repair and takes it back, and the rest of the scope below is open. The practitio
 correction options for different scenarios — missing data, missingness, mixed data types — and
 increase awareness of data shapes, including outliers, frequency analysis, etc."*
 
+> **Superseded in part, 2026-11-02.** A table no longer refuses a repeated key, an empty key or a non-numeric
+> value on import: each loads as a finding, under the practitioner's *"We cannot refuse an upload because of a
+> quality problem."* *Refuse rather than convert* still holds for casting. See
+> [164](164-diagnose-before-deduplicate.md). The text below stands as it was written.
+
 ## The question
 
 A ruleset classifies records against bindings a practitioner declared. Everything it concludes

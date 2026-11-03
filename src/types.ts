@@ -426,6 +426,8 @@ export interface ParamsByType {
    *  N3 receipts."* `decisions` holds the review band's human answers, each pinned to a signature
    *  of the pair it was made about, so editing either record lapses the judgement. */
   deduplicate_points:{label:string; pointInputCount?:number; nameField:string;
+    /** What the records are. Absent means points, as every workflow before 2026-11-02. */
+    format?:'points'|'table'; blockColumns?:string[]; compareColumns?:string[];
     nameMatch:import('./deduplicate-points.js').NameMatch; fuzzyThreshold:number;
     blockDistanceM:number; nearDistanceM:number; matchThreshold:number; reviewThreshold:number;
     decisions:import('./deduplicate-points.js').PairDecision[]};

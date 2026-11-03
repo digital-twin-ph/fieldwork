@@ -24,7 +24,7 @@ export interface DeduplicateReviewView {
   title:string;
   candidates:Candidate[];
   decided:Map<string,{decision:'match'|'non-match';reason:string}>;
-  onDecide:(key:string,decision:'match'|'non-match',reason:string)=>void;
+  onDecide:(key:string,decision:'match'|'non-match',reason:string,keep?:'a'|'b')=>void;
   onClear:(key:string)=>void;
 }
 
@@ -56,8 +56,55 @@ export function openDeduplicateReview(view:DeduplicateReviewView,esc:Escape):voi
       +`<p class="muted">${r.coordinates[1].toFixed(6)}, ${r.coordinates[0].toFixed(6)} · record ${esc(r.id)}</p></div>`;
   }
 
+  /** ROWS OF A TABLE are one source, so the question is which row stands, not which place. */
+  function drawRows(candidate:Candidate){
+    const already=view.decided.get(candidate.key);
+    const columns=Object.keys(candidate.a.attributes);
+    const shown=(v:unknown)=>v===null||v===undefined||v===''?'<span class="absent" aria-label="no value">—</span>':esc(String(v));
+    dialog.innerHTML=`<h2 id="dedup-review-title">Are these the same record?</h2>
+      <p class="muted">${index+1} of ${view.candidates.length} waiting · both rows share ${esc(candidate.a.name||'')}, and
+        ${candidate.differs?.length} compared ${candidate.differs?.length===1?'column differs':'columns differ'}.</p>
+      <table class="dedup-fields"><thead><tr><th>Column</th><th>Row ${esc(candidate.a.id)}</th><th>Row ${esc(candidate.b.id)}</th></tr></thead>
+        <tbody>${columns.map(c=>`<tr class="${candidate.differs?.includes(c)?'':'agrees'}"><th scope="row">${esc(c)}</th>`
+          +`<td>${shown(candidate.a.attributes[c])}</td><td>${shown(candidate.b.attributes[c])}</td></tr>`).join('')}</tbody></table>
+      <label class="field-label" for="dedup-review-reason">Why</label>
+      <input id="dedup-review-reason" maxlength="200" value="${esc(already?.reason||'')}"
+        placeholder="What makes them one record, or two">
+      <p class="muted">The row you do not keep is left out of this step's table and named in its receipt. The input table is not changed.</p>
+      <div class="dialog-actions">
+        <button id="dedup-previous" class="button small" ${index?'':'disabled'}>Previous</button>
+        <button id="dedup-next" class="button small" ${index<view.candidates.length-1?'':'disabled'}>Skip</button>
+        <span class="spacer"></span>
+        ${already?`<button id="dedup-undecide" class="text-button">Take the decision back</button>`:''}
+        <button id="dedup-different" class="button">Two records</button>
+        <button id="dedup-keep-a" class="button primary">Same record, keep row ${esc(candidate.a.id)}</button>
+        <button id="dedup-keep-b" class="button primary">Same record, keep row ${esc(candidate.b.id)}</button>
+        <button id="dedup-review-close" class="button small">Close</button>
+      </div>`;
+    wire(candidate);
+    dialog.querySelector<HTMLButtonElement>('#dedup-keep-a')!.onclick=()=>decide(candidate,'match','a');
+    dialog.querySelector<HTMLButtonElement>('#dedup-keep-b')!.onclick=()=>decide(candidate,'match','b');
+  }
+  const decide=(candidate:Candidate,decision:'match'|'non-match',keep?:'a'|'b')=>{
+    const field=dialog.querySelector<HTMLInputElement>('#dedup-review-reason')!,why=field.value.trim();
+    if(!why){field.focus();return;}
+    view.onDecide(candidate.key,decision,why,keep);
+    view.decided.set(candidate.key,{decision,reason:why});
+    if(index<view.candidates.length-1)index++;
+    draw();
+  };
+  function wire(candidate:Candidate){
+    dialog.querySelector<HTMLButtonElement>('#dedup-different')!.onclick=()=>decide(candidate,'non-match');
+    dialog.querySelector<HTMLButtonElement>('#dedup-review-close')!.onclick=close;
+    dialog.querySelector<HTMLButtonElement>('#dedup-previous')!.onclick=()=>{if(index){index--;draw();}};
+    dialog.querySelector<HTMLButtonElement>('#dedup-next')!.onclick=()=>{if(index<view.candidates.length-1){index++;draw();}};
+    dialog.querySelector<HTMLButtonElement>('#dedup-undecide')?.addEventListener('click',()=>{
+      view.onClear(candidate.key);view.decided.delete(candidate.key);draw();});
+  }
+
   function draw(){
     const candidate=view.candidates[index];
+    if(candidate?.differs){drawRows(candidate);return;}
     if(!candidate){dialog.innerHTML=`<h2 id="dedup-review-title">Nothing left to review</h2>`
       +`<p>Every pair this run offered has been decided. Run the workflow again to act on them.</p>`
       +`<div class="dialog-actions"><button id="dedup-review-close" class="button primary">Close</button></div>`;

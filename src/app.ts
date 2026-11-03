@@ -26,7 +26,7 @@ import {addableTypes,PALETTE_GROUPS,ADDABLE_VIA_COMPOSITION,ADDABLE_VIA_RULESET}
 import {MARK_RADIUS_MIN,MARK_RADIUS_MAX} from './presentation.js';
 import {compositionEntry,explodeMicroWorkflow,detectDrift} from './compositions.js';
 import {tidyLayout,alreadyTidy} from './layout.js';
-import {TILE_DEFAULT_MAX_ZOOM,TILE_MAX_ZOOMS,TILE_SOURCE,importTiles,type TileExtractSpec} from './tile-extract.js';
+import {TILE_DEFAULT_MAX_ZOOM,TILE_MAX_ZOOMS,TILE_SOURCE,drawnBounds,importTiles,type TileExtractSpec} from './tile-extract.js';
 import {bundledCompositions,resolveComposition} from './composition-registry.js';
 import {OVERTURE_DEFAULT_CONFIDENCE} from './overture-places.js';
 import {seaLevelExample} from './sea-level-example.js';
@@ -2553,10 +2553,35 @@ function renderInspector(){
       +`<label class="field-option"><input type="checkbox" data-param="showExcluded"${n.params.showExcluded!==false?' checked':''}> Show the excluded points on a connected map</label>`
       +`<p class="muted">They are drawn in the colour the map already uses for outside, and are not passed to anything downstream. A count tells you how many were set aside; seeing them tells you whether setting them aside was right.</p>`;
   }else if(n.type==='deduplicate_points'){
-    const p=n.params,linkage=result?.linkages?.[n.id];
+    const p=n.params,linkage=result?.linkages?.[n.id],tabular=p.format==='table';
+    const offered=tabular?Object.keys(upstreamKeyValues(n)??{}):[];
+    const upTable=(()=>{const edge=workflow.edges.find(e=>e.to===n.id&&e.port==='records');
+      const up=edge?workflow.nodes.find(m=>m.id===edge.from):undefined;
+      return up?.type==='table_input'?up.params.data:undefined;})();
+    const tableColumns=upTable?[...upTable.keys,upTable.valueField]:offered;
+    const pick=(key:'blockColumns'|'compareColumns',legend:string,fallback:string[])=>
+      `<fieldset class="field exposure-list"><legend class="field-label">${legend}</legend>`
+      +tableColumns.map(name=>`<label class="check"><input type="checkbox" data-dedup-columns="${key}" value="${esc(name)}" `
+        +`${(p[key]?.length?p[key]:fallback).includes(name)?'checked':''}> ${esc(name)}</label>`).join('')+`</fieldset>`;
     content+=labelForm('dedup-label','Node label',p.label||'Deduplicated records')
-      +`<p class="description">Finds records in two or more sources that are the same place. A pair must pass BOTH tests to merge on its own; passing one asks you.</p>`
-      +`<label class="field-label" for="dedup-name-field">Name attribute</label>`
+      +`<label class="field-label" for="dedup-format">The records are</label>`
+      +`<select id="dedup-format"><option value="points" ${tabular?'':'selected'}>Points, in two or more sources</option>`
+      +`<option value="table" ${tabular?'selected':''}>Rows of one table</option></select>`;
+    if(tabular){
+      const block=p.blockColumns?.length?p.blockColumns:upTable?.primaryKey??[];
+      content+=`<p class="description">Compares rows that share the columns identifying a row, by default the table's primary key. `
+        +`Rows identical on every compared column are one record entered twice and merge on their own. Any disagreement comes to you, and you choose which row to keep.</p>`
+        +(tableColumns.length?pick('blockColumns','Rows are the same record only if they share',upTable?.primaryKey??[])
+          +pick('compareColumns','Compare these columns',tableColumns.filter(c=>!block.includes(c)))
+          :'<p class="description">Connect a table to choose its columns.</p>')
+        +`<label class="field-label" for="dedup-name-match">Text comparison</label>`
+        +`<select id="dedup-name-match" data-dedup="nameMatch">`
+        +`<option value="exact" ${p.nameMatch==='exact'?'selected':''}>Exact, after normalising</option>`
+        +`<option value="fuzzy" ${p.nameMatch==='fuzzy'?'selected':''}>Jaro-Winkler similarity</option></select>`
+        +(p.nameMatch==='fuzzy'?`<label class="field-label" for="dedup-fuzzy">Similarity at or above</label>`
+          +`<input id="dedup-fuzzy" data-dedup="fuzzyThreshold" type="number" min="0.5" max="1" step="0.01" value="${p.fuzzyThreshold}">`:'');
+    }else content+=`<p class="description">Finds records in two or more sources that are the same place. A pair must pass BOTH tests to merge on its own; passing one asks you.</p>`
+    if(!tabular)content+=`<label class="field-label" for="dedup-name-field">Name attribute</label>`
       +`<input id="dedup-name-field" data-dedup="nameField" maxlength="60" value="${esc(p.nameField)}">`
       +`<label class="field-label" for="dedup-name-match">Name comparison</label>`
       +`<select id="dedup-name-match" data-dedup="nameMatch">`
@@ -4031,6 +4056,21 @@ function renderInspector(){
       const value=(el as HTMLInputElement).type==='number'?Number(el.value):el.value;
       (node.params as unknown as Record<string,unknown>)[key]=value;
     })));
+  // WHAT THE RECORDS ARE decides the ports, so the edges that no longer fit are removed with it.
+  optionalElement('#dedup-format')?.addEventListener('change',e=>change(w=>{
+    const node=getNode(w,n.id,'deduplicate_points');
+    node.params.format=control(e).value==='table'?'table':'points';
+    // Text in a table is compared exactly unless somebody asks otherwise; names across sources are not.
+    node.params.nameMatch=node.params.format==='table'?'exact':'fuzzy';
+    const ports=new Set(nodeInputs(node).map(([port])=>port));
+    w.edges=w.edges.filter(edge=>edge.to!==n.id||ports.has(edge.port));
+  }));
+  $('#inspector-content').querySelectorAll<HTMLInputElement>('[data-dedup-columns]').forEach(el=>
+    el.addEventListener('change',()=>change(w=>{
+      const node=getNode(w,n.id,'deduplicate_points');
+      const key=el.dataset.dedupColumns as 'blockColumns'|'compareColumns';
+      node.params[key]=[...document.querySelectorAll<HTMLInputElement>(`[data-dedup-columns="${key}"]:checked`)].map(box=>box.value);
+    })));
   optionalElement('#dedup-review-open')?.addEventListener('click',()=>{
     const linkage=result?.linkages?.[n.id];
     if(!linkage)return;
@@ -4040,13 +4080,13 @@ function renderInspector(){
     const decided=new Map(node.params.decisions.map(d=>[d.key,{decision:d.decision,reason:d.reason}]));
     openDeduplicateReview({
       title:node.params.label,candidates:waiting,decided,
-      onDecide:(key,decision,reason)=>{
+      onDecide:(key,decision,reason,keep)=>{
         const candidate=waiting.find(c=>c.key===key);
         if(!candidate)return;
         change(w=>{
           const target=getNode(w,n.id,'deduplicate_points');
           target.params.decisions=[...target.params.decisions.filter(d=>d.key!==key),
-            {key,decision,reason,signature:pairSignature(candidate)}];
+            {key,decision,reason,signature:pairSignature(candidate),...(keep?{keep}:{})}];
         });
       },
       onClear:key=>change(w=>{
@@ -4200,12 +4240,13 @@ function renderInspector(){
   });
   optionalElement('#map-import-tiles')?.addEventListener('click',async e=>{
     const button=e.currentTarget as HTMLButtonElement,say=$('#map-tile-status');
-    const features=result?.outputs.find(o=>o.nodeId===n.id)?.polygons?.features;
-    if(!features?.length){say.textContent='Run the workflow first: the boundary is what this map draws.';return;}
-    const points=features.flatMap(f=>f.geometry.type==='Polygon'?f.geometry.coordinates.flat():f.geometry.coordinates.flat(2));
-    const lons=points.map(p=>p[0]!),lats=points.map(p=>p[1]!);
-    const bounds:TileExtractSpec['bounds']=[lons.reduce((a,b)=>Math.min(a,b)),lats.reduce((a,b)=>Math.min(a,b)),
-      lons.reduce((a,b)=>Math.max(a,b)),lats.reduce((a,b)=>Math.max(a,b))];
+    const drawn=drawnBounds(result?.outputs.find(o=>o.nodeId===n.id));
+    if(!drawn){say.textContent='Run the workflow first: the boundary is what this map draws, and nothing has been drawn yet.';return;}
+    // A POINT OR A TINY AREA STILL NEEDS GROUND AROUND IT: at least about a kilometre each way.
+    const pad=(low:number,high:number)=>high-low<0.02?[(low+high)/2-0.01,(low+high)/2+0.01]:[low,high];
+    const [west,east]=pad(drawn[0],drawn[2]),[south,north]=pad(drawn[1],drawn[3]);
+    const bounds:TileExtractSpec['bounds']=[west!,south!,east!,north!];
+    say.textContent='Reading the archive\u2026';
     button.disabled=true;
     try{
       const spec=await importTiles({source:TILE_SOURCE,bounds,minZoom:0,

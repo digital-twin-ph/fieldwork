@@ -117,13 +117,13 @@
     },
     {
       "nodeType": "deduplicate_points",
-      "title": "Deduplicate point records",
+      "title": "Deduplicate records",
       "group": "Comparisons and checks",
-      "fingerprint": "58ef45f0c0d2",
+      "fingerprint": "de453fa41ffa",
       "verdict": "accepted",
-      "reviewed": "2026-10-21",
-      "reviewedBy": "the practitioner and Claude, in the exchange that asked for it",
-      "note": "A transform verb and what it acts on, which is the rule this ledger states: deduplicate_points beside clip_points_to_area and compare_point_sets. The palette says \"Deduplicate point records\" rather than \"Link records\" because the practitioner asked for deduplication and that is the sentence they are holding; RECORD LINKAGE is the method and is named as such in the receipt and the manual, where the distinction is worth drawing. It is in Comparisons and checks rather than Spatial operations because the question it answers is about two records being one thing, which the distance only helps decide."
+      "reviewed": "2026-11-02",
+      "reviewedBy": "the practitioner and Claude, in the exchange that generalised it",
+      "note": "A transform verb and what it acts on, which is the rule this ledger states: deduplicate_points beside clip_points_to_area and compare_point_sets. The palette says \"Deduplicate point records\" rather than \"Link records\" because the practitioner asked for deduplication and that is the sentence they are holding; RECORD LINKAGE is the method and is named as such in the receipt and the manual, where the distinction is worth drawing. It is in Comparisons and checks rather than Spatial operations because the question it answers is about two records being one thing, which the distance only helps decide. Re-reviewed 2026-11-02: the practitioner asked for this widget to be generalised rather than a second one added (\"I would rather use the deduplicate widget, generalized to handle different formats\"), so the palette now says Deduplicate records. The node type keeps its old name until the rename is taken as its own step; see experiment 164."
     },
     {
       "nodeType": "derive_value",

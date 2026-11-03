@@ -69,6 +69,8 @@
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/relate_table.md>.
 <urn:fieldwork:widget:reproject> a fw:WidgetDefinition; fw:nodeType "reproject"; rdfs:label "Reproject points".
 <urn:fieldwork:widget:sample_raster> a fw:WidgetDefinition; fw:nodeType "sample_raster"; rdfs:label "Sample raster at points".
+<urn:fieldwork:widget:append_rows> a fw:WidgetDefinition; fw:nodeType "append_rows"; rdfs:label "Append rows";
+  fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/append_rows.md>.
 <urn:fieldwork:widget:select_rows> a fw:WidgetDefinition; fw:nodeType "select_rows"; rdfs:label "Select rows by value";
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/select_rows.md>.
 <urn:fieldwork:widget:slr_extract_import> a fw:WidgetDefinition; fw:nodeType "slr_extract_import"; rdfs:label "Sea-level projection extract".

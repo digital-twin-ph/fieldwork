@@ -769,6 +769,18 @@
    "breaking": false,
    "migrationFrom": []
   },
+  "append_rows": {
+   "version": "0.1.0",
+   "released": "2026-11-03",
+   "changes": [
+    {
+     "kind": "initial",
+     "description": "Stacks the rows of a second table under the first, as pandas concat does. Options: name the source of each row; create a new primary key, keeping the old key and, with the source named, source and old key as an alternate key. Experiment 166."
+    }
+   ],
+   "breaking": false,
+   "migrationFrom": []
+  },
   "select_rows": {
    "version": "0.1.0",
    "released": "2026-10-26",

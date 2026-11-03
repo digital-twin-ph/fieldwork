@@ -28,6 +28,9 @@ export interface DataTable {
   primaryKey?:string[];
   /** Columns that group or link rows and may repeat. */
   secondaryKeys?:string[];
+  /** OTHER COLUMN SETS THAT ARE ALSO UNIQUE, checked as the primary key is. Appending two tables under a new
+   *  key keeps each row's source and old key as one of these. Experiment 166. */
+  alternateKeys?:string[][];
   findings?:TableFinding[];
   rows:{key:Record<string,string>; value:number|null}[];
   rowCount:number; missingValueCount:number; source?:DataTableSource;
@@ -36,7 +39,7 @@ export interface TableSelection {keys:string[]; valueField:string; unit?:string;
   primaryKey?:string[]; secondaryKeys?:string[]}
 
 /** Rows sharing the columns that should identify one, gathered into one finding per value. */
-function repeatedKeys(rows:readonly Record<string,string>[],columns:readonly string[]):TableFinding[]{
+export function repeatedKeys(rows:readonly Record<string,string>[],columns:readonly string[]):TableFinding[]{
   const groups=new Map<string,number[]>();
   rows.forEach((row,position)=>{
     const signature=columns.map(name=>row[name]).join('\u0000');

@@ -228,6 +228,7 @@ export interface ParamsByType {
   rate:{label:string;source?:'points'|'table';measureKey?:string;numeratorField:string;denominatorField:string;groupBy?:string;bandWidth?:number;denominatorUnit:import('./rate.js').DenominatorUnit;rateKind:import('./rate.js').RateKind;multiplier:number;minimumDenominator:number;numeratorPeriod:string;denominatorVintage:string};
   derive_value:{label:string;keyColumn:string;left:string;operator:import('./derive-value.js').Operator;right:string;name:string};
   select_rows:{label:string;keyColumn:string;values:string[]};
+  append_rows:{label:string;nameSource?:boolean;sourceColumn?:string;firstLabel?:string;secondLabel?:string;newKey?:string};
   /** A POLYGON LAYER READ FROM A FILE, which nothing could do until 2026-10-28.
    *
    *  Seven node types emit `polygons` and every one of them DERIVES polygons from something else --

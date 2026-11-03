@@ -1,0 +1,65 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:append_rows",
+  "nodeType": "append_rows",
+  "version": "0.1.0",
+  "title": "Append rows",
+  "released": "2026-11-03",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['append_rows']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "validationStatus": "application-only",
+    "shaclShapes": []
+  },
+  "ports": {
+    "inputs": [
+      {
+        "name": "records",
+        "type": "table"
+      },
+      {
+        "name": "records_2",
+        "type": "table"
+      }
+    ],
+    "output": "table",
+    "optionalInputs": [],
+    "note": "Two tables in, one out: the rows of the second under the first, columns lined up by name. Both must have the same value column and unit; a key column only one has is empty on the other's rows."
+  },
+  "ontology": {
+    "status": "gap",
+    "mappings": [],
+    "note": "No ontology mapping yet. The receipt names how many rows came from each table and every column only one of them has.",
+    "emits": {
+      "classes": [],
+      "properties": []
+    }
+  },
+  "implementation": {
+    "files": [
+      "src/append-rows.ts",
+      "src/core.ts",
+      "src/app.ts"
+    ],
+    "definition": "src/append-rows.ts"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": null
+  },
+  "changes": [
+    {
+      "kind": "initial",
+      "description": "Stacks the rows of a second table under the first, as pandas concat does. Options: name the source of each row; create a new primary key, keeping the old key and, with the source named, source and old key as an alternate key. Experiment 166."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Unit tested on columns both, one and neither table hold, different value columns and units, and a source column that clashes. The Salmonella example uses it to stack 32 cases on 81 matched panel controls. Nothing here establishes that two tables are fit to be stacked."
+  }
+}

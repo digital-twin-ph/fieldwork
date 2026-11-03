@@ -1079,6 +1079,18 @@
       ]
     },
     {
+      "id": "urn:fieldwork:widget:append_rows",
+      "nodeType": "append_rows",
+      "currentVersion": "0.1.0",
+      "releases": [
+        {
+          "version": "0.1.0",
+          "path": "widgets/releases/append_rows/0.1.0.json",
+          "sha256": "f763b18cd7571840858194fe4dd8f06067ba59f2d39239882243988347e01e7b"
+        }
+      ]
+    },
+    {
       "id": "urn:fieldwork:widget:select_rows",
       "nodeType": "select_rows",
       "currentVersion": "0.1.0",

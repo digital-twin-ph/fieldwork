@@ -27,6 +27,12 @@ main body (any IMRAD section) where provenance is known - that's the citation bu
 - **"et al."** became a field. The DHS Guide's own recommended citation names three authors and "et al.", and
   the full list is defined nowhere, so listing three would have presented them as all.
 
+## Correcting a citation, 2026-11-03
+
+The practitioner: *"I should be able to edit existing citations in case there is an erroneous entry. So there
+should be an edit button in addition to remove."* Each cited work now has **Edit**, which puts it back in the form
+as entered; the button reads **Update citation** until it is saved or cancelled.
+
 ## What changed in the example
 
 Nigeria's seven References notes are gone. The seven body notes that relied on them cite their works through

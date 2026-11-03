@@ -518,7 +518,10 @@ export interface ParamsByType {
      *  exists is a terrain basemap: a mark in the palette's own values over OpenTopoMap was hard
      *  to pick out. It is a checkbox rather than a rule because a map on a pale ground, or one
      *  going into a printed figure, may not want it. */
-    markHalo?:boolean; inputMode?:'spatial'|'decisions'|'raster'|'polygons'|'network';presentation?:'plot'|'interactive';contextPoints?:boolean;mapTitle?:string;mapSubtitle?:string;mapSourceNote?:string;showLegend?:boolean;basemap?:BasemapChoice}; table_output:{label:string; pointInputCount?:number; inputMode?:'spatial'|'decisions'|'polygons'|'table'; totalsAsserted?:boolean};
+    markHalo?:boolean;
+    /** Where a `tile-extract` basemap came from. The spec travels; the tiles stay on the device. */
+    tileExtract?:import('./tile-extract.js').TileExtractSpec;
+    inputMode?:'spatial'|'decisions'|'raster'|'polygons'|'network';presentation?:'plot'|'interactive';contextPoints?:boolean;mapTitle?:string;mapSubtitle?:string;mapSourceNote?:string;showLegend?:boolean;basemap?:BasemapChoice}; table_output:{label:string; pointInputCount?:number; inputMode?:'spatial'|'decisions'|'polygons'|'table'; totalsAsserted?:boolean};
   chart_output:{label:string;
     /** Which key column a table is charted against. Absent takes the table's first, which is the
      *  whole answer for a table with one key column -- a rate's is `group` -- and a stated

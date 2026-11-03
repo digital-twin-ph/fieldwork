@@ -11,7 +11,7 @@ test('the Inspector offers every basemap the map itself can draw',async({page})=
   await page.locator('.react-flow__node[data-id="interactive"]').click();
 
   const inspector=page.locator('#map-basemap option');
-  await expect(inspector).toHaveCount(6);
+  await expect(inspector).toHaveCount(7);
   for(const style of ['ofm-liberty','ofm-positron','ofm-bright'])
     await expect(page.locator(`#map-basemap option[value="${style}"]`)).toHaveCount(1);
 

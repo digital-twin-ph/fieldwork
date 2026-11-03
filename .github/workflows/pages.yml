@@ -64,7 +64,11 @@ jobs:
 
   # THE GATE, unchanged, in parallel with the deploy rather than in front of it.
   verify:
-    runs-on: ubuntu-latest
+    # Named rather than `ubuntu-latest`. GitHub moved that label to 26.04 between 2026-10-30 and
+    # 2026-11-02, and WebKit stopped launching: every WebKit test failed at launch on
+    # libicudata.so.74, so a browser nobody had changed reported 389 failures. The image moves when
+    # this line does, and then it is a change someone reads.
+    runs-on: ubuntu-24.04
     # Raised from 20 on 2026-10-14, after c316bc5 was cancelled at 20m16s. The suite grew: 490
     # unit tests and 220 browser tests across chromium and webkit, plus four validators added the
     # day before. A shared runner is slower than the machine this is developed on, where the same
@@ -160,6 +164,24 @@ jobs:
           ref: ${{ steps.example.outputs.commit }}
           fetch-depth: 0
           path: example-south-london-checkout
+      # The other two worked examples, on the same terms: the browser tests rebuild each one from an
+      # empty canvas and open each from its pin, so without these checkouts both go unverified.
+      - id: oswego
+        run: echo "commit=$(jq -r '.examples[] | select(.repository|endswith("/example-1940-oswego-church-supper")) | .commit' widgets/examples.json)" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v6
+        with:
+          repository: digital-twin-ph/example-1940-oswego-church-supper
+          ref: ${{ steps.oswego.outputs.commit }}
+          fetch-depth: 0
+          path: example-oswego-checkout
+      - id: nigeria
+        run: echo "commit=$(jq -r '.examples[] | select(.repository|endswith("/example-2024-nigeria-immunization")) | .commit' widgets/examples.json)" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v6
+        with:
+          repository: digital-twin-ph/example-2024-nigeria-immunization
+          ref: ${{ steps.nigeria.outputs.commit }}
+          fetch-depth: 0
+          path: example-nigeria-checkout
       - uses: actions/setup-node@v6
         with:
           node-version: '22'
@@ -173,12 +195,14 @@ jobs:
       # install-deps is fast because apt has them.
       - name: Resolve the Playwright version
         id: pw
-        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+        run: |
+          echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+          echo "image=$ImageOS" >> "$GITHUB_OUTPUT"
       - uses: actions/cache@v4
         id: browsers
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
+          key: playwright-${{ steps.pw.outputs.image }}-${{ steps.pw.outputs.version }}
       - run: npx playwright install --with-deps chromium webkit
         if: steps.browsers.outputs.cache-hit != 'true'
       # A cache hit still needs the system libraries, which live outside the cached path.
@@ -192,5 +216,9 @@ jobs:
         run: mv dive-deeper-checkout ../dive-deeper
       - name: Place the worked example beside this repository
         run: mv example-south-london-checkout ../example-1855-cholera-south-london
+      - name: Place the other worked examples beside this repository
+        run: |
+          mv example-oswego-checkout ../example-1940-oswego-church-supper
+          mv example-nigeria-checkout ../example-2024-nigeria-immunization
       - name: Type check, build and run regression tests
         run: npm run check

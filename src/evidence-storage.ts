@@ -25,6 +25,10 @@ function openDatabase():Promise<IDBDatabase> {
 export async function storePDFs(files:Map<string,Uint8Array<ArrayBuffer>>,refs?:Map<string,ProjectFile>):Promise<void> {
   if(!files.size)return;
   for(const [hash,bytes] of files){const ref=refs?.get(hash);if(ref)await verifyProjectFile(ref,bytes);else if(await pdfDigest(bytes)!==hash)throw new Error('PDF checksum mismatch.');}
+  await keepBytes(files);
+}
+/** Bytes by digest, already checked by the caller. Imported basemap tiles are the other user. */
+export async function keepBytes(files:Map<string,Uint8Array<ArrayBuffer>>):Promise<void> {
   const db=await openDatabase();
   try{await new Promise<void>((resolve,reject)=>{
     const tx=db.transaction(STORE,'readwrite');

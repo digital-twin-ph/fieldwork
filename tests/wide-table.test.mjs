@@ -53,10 +53,11 @@ test('an empty cell is unknown, and is not read as zero',()=>{
 });
 
 test('a repeated subject is diagnosed as a duplicate record, not as a long table',()=>{
-  assert.throws(()=>wideDataTable({headers:TABLE_IX.headers,
+  const table=wideDataTable({headers:TABLE_IX.headers,
     rows:[TABLE_IX.rows[0],TABLE_IX.rows[0]]},
-    {keys:['supplier'],valueFields:['houses'],measureKey:'measure',valueField:'count'}),
-    /both describe supplier=Southwark and Vauxhall Company.*one row per subject/s);
+    {keys:['supplier'],valueFields:['houses'],measureKey:'measure',valueField:'count'});
+  assert.deepEqual(table.findings.map(f=>f.rows),[[1,2]]);
+  assert.match(table.findings[0].text,/repeat supplier=Southwark and Vauxhall Company/);
 });
 
 test('a column that is both a key and a value is refused',()=>{
@@ -68,10 +69,10 @@ test('a measure column colliding with a key column is refused',()=>{
 });
 
 test('a nonnumeric value names the row and the column',()=>{
-  assert.throws(()=>wideDataTable({headers:TABLE_IX.headers,
+  const table=wideDataTable({headers:TABLE_IX.headers,
     rows:[['Lambeth Company','many','98','37']]},
-    {keys:['supplier'],valueFields:['houses'],measureKey:'measure',valueField:'count'}),
-    /Row 1 has a nonnumeric value "many" in "houses"/);
+    {keys:['supplier'],valueFields:['houses'],measureKey:'measure',valueField:'count'});
+  assert.match(table.findings[0].text,/Row 1 has a nonnumeric value "many" in "houses"/);
 });
 
 test('the row ceiling counts melted values, not file rows',()=>{

@@ -37,7 +37,7 @@ const andRun=async page=>{
   await page.locator('[data-view="notes"]').click();
 };
 
-test('Snow’s own sentences are readable, in the order a reader meets them',{skip},async({page})=>{
+test('Snow’s own sentences are readable, in the order a reader meets them',async({page})=>{test.skip(!!skip,skip);
   await southLondon(page);
   // THIRTEEN, not the nine quotations this started as. The example gained four notes of its own
   // on 2026-10-29, when the lessons of experiment 141 were exercised on it, and these two
@@ -57,7 +57,7 @@ test('Snow’s own sentences are readable, in the order a reader meets them',{sk
   await expect(page.locator('.notes-part').nth(2)).toHaveClass(/is-empty/);
 });
 
-test('each note says what it is and what it does',{skip},async({page})=>{
+test('each note says what it is and what it does',async({page})=>{test.skip(!!skip,skip);
   await southLondon(page);
   // Snow's words are quoted, with the claim they support -- which is the reason for the quote and
   // not part of the write-up, so it is shown apart from it.
@@ -71,12 +71,12 @@ test('each note says what it is and what it does',{skip},async({page})=>{
   for(const retired of ['purpose','background'])expect(functions).not.toContain(retired);
 });
 
-test('the tab counts what it holds',{skip},async({page})=>{
+test('the tab counts what it holds',async({page})=>{test.skip(!!skip,skip);
   await southLondon(page);
   await expect(page.locator('#notes-view-count')).toHaveText('13');
 });
 
-test('an empty section says why it is empty, and offers a note',{skip},async({page})=>{
+test('an empty section says why it is empty, and offers a note',async({page})=>{test.skip(!!skip,skip);
   await southLondon(page);
   const results=page.locator('.notes-part').nth(2);
   await expect(results).toContainText('Results');
@@ -87,7 +87,7 @@ test('an empty section says why it is empty, and offers a note',{skip},async({pa
   await expect(results.locator('[data-add-note]').first()).toBeEnabled();
 });
 
-test('a note can be added to a section, and it is yours',{skip},async({page})=>{
+test('a note can be added to a section, and it is yours',async({page})=>{test.skip(!!skip,skip);
   await southLondon(page);
   const before=await page.locator('.notes-note').count();
   await page.locator('.notes-part').nth(2).locator('[data-add-note]').first().click();
@@ -96,7 +96,7 @@ test('a note can be added to a section, and it is yours',{skip},async({page})=>{
   await expect(page.locator('.notes-part').nth(2).locator('.notes-kind-authored')).toHaveCount(1);
 });
 
-test('a note opens in a modal, and says why it may not be edited',{skip},async({page})=>{
+test('a note opens in a modal, and says why it may not be edited',async({page})=>{test.skip(!!skip,skip);
   await southLondon(page);
   await page.locator('.notes-note').first().locator('[data-note-open]').click();
   await expect(page.locator('#note-dialog')).toBeVisible();
@@ -110,7 +110,7 @@ test('a note opens in a modal, and says why it may not be edited',{skip},async({
   await expect(page.locator('#note-dialog')).not.toBeVisible();
 });
 
-test('a derived note is sent to the input that declares it',{skip},async({page})=>{
+test('a derived note is sent to the input that declares it',async({page})=>{test.skip(!!skip,skip);
   await southLondon(page);
   await andRun(page);
   await page.locator('.notes-note.k-derived').first().locator('[data-note-open]').click();
@@ -128,7 +128,7 @@ test('a derived note is sent to the input that declares it',{skip},async({page})
  *
  *  A practitioner who told an input what its data is has already written the Methods sentence
  *  that cites it. */
-test('the inputs cite themselves, without being asked twice',{skip},async({page})=>{
+test('the inputs cite themselves, without being asked twice',async({page})=>{test.skip(!!skip,skip);
   await southLondon(page);
   await andRun(page);
   const derived=page.locator('.notes-kind-derived');

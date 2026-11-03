@@ -52,6 +52,7 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:T
     +'<div id="table-shape-alert" class="notice" hidden role="alert"><p id="table-shape-says"></p>'
     +'<button id="table-shape-accept" class="button" type="button"></button></div>'
     +'<fieldset id="table-keys" hidden><legend>Key columns</legend><p class="muted" id="table-keys-says"></p></fieldset>'
+    +'<fieldset id="table-key-roles" hidden></fieldset>'
     +'<fieldset id="table-values" hidden><legend>Value columns</legend><p class="muted">The variables to take. Named rather than inferred, so a column the file gains later is absent from this analysis by decision rather than by accident.</p></fieldset>'
     +'<div id="table-long-value"><label class="field-label" for="table-value">Value column</label><select id="table-value" disabled></select></div>'
     +'<div id="table-wide-names" hidden><label class="field-label" for="table-measure-key">Name for the column holding the variable names</label><input id="table-measure-key" maxlength="40" value="measure">'
@@ -159,6 +160,23 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:T
     return headers.filter(h=>role(h)==='untaken');
   }
 
+  /** WHICH KEY COLUMNS IDENTIFY A ROW, the practitioner's judgement. Experiment 164. */
+  const rolesBox=q<HTMLElement>('#table-key-roles');
+  const roleOf=(name:string)=>rolesBox.querySelector<HTMLSelectElement>(`select[data-key-role="${CSS.escape(name)}"]`)?.value??'';
+  function renderRoles(keys:string[]){
+    const held=Object.fromEntries(keys.map(name=>[name,roleOf(name)||(existing?.primaryKey?.includes(name)?'primary'
+      :existing?.secondaryKeys?.includes(name)?'secondary':'')]));
+    rolesBox.hidden=!keys.length;
+    rolesBox.innerHTML='<legend>What identifies a row?</legend>'
+      +'<p class="muted">A primary key is unique. A secondary key groups or links rows and may repeat. Leave a column as neither if it is a value such as an answer.</p>'
+      +keys.map(name=>`<label class="field">${esc(name)} <select data-key-role="${esc(name)}">`
+        +[['','Neither'],['primary','Primary key'],['secondary','Secondary key']].map(([value,label])=>
+          `<option value="${value}"${held[name]===value?' selected':''}>${label}</option>`).join('')
+        +'</select></label>').join('');
+  }
+  const declaredRoles=(keys:string[])=>({primaryKey:keys.filter(k=>roleOf(k)==='primary'),
+    secondaryKeys:keys.filter(k=>roleOf(k)==='secondary')});
+
   /** What the reading claims, as arithmetic a reader can check against the two panes rather than
    *  as a sentence they have to trust. */
   function renderReconcile(lines:string[]){
@@ -173,6 +191,8 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:T
     const unit=unitInput.value.trim();
     try{
       const keys=chosenKeys();
+      renderRoles(keys);
+      const roles=declaredRoles(keys);
       let table:DataTable,imported:TableImport;
       if(wide){
         const valueFields=chosenValues();
@@ -221,7 +241,7 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:T
           save.disabled=true;result=undefined;
           return;
         }
-        table=wideDataTable(parsed,{keys,valueFields,measureKey,valueField,...(unit?{unit}:{})});
+        table=wideDataTable(parsed,{keys,valueFields,measureKey,valueField,...roles,...(unit?{unit}:{})});
         imported={data:table,source:{filename:file.name,bytes:file.size,sha256:'',rows:table.rowCount},
           keys:table.keys,valueField,...(unit?{unit}:{}),wide:{keys,valueFields,measureKey},
           source_table:{headers:parsed.headers.map(h=>h.trim()),rows:parsed.rows}};
@@ -248,7 +268,7 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:T
           +`${table.missingValueCount} values absent.`;
       }else{
         const valueField=valueSelect.value;
-        table=dataTable(parsed,{keys,valueField,...(unit?{unit}:{})});
+        table=dataTable(parsed,{keys,valueField,...roles,...(unit?{unit}:{})});
         imported={data:table,source:{filename:file.name,bytes:file.size,sha256:'',rows:table.rowCount},
           keys,valueField,...(unit?{unit}:{})};
         const untaken=renderBefore(keys,[valueField]);
@@ -383,6 +403,7 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:T
       applyShape();
     }catch(e){if(request===serial){status.textContent='The file could not be read.';fail(e);}}
   };
+  rolesBox.onchange=build;
   valueSelect.onchange=build;unitInput.onchange=build;
   measureKeyInput.onchange=build;valueNameInput.onchange=build;
   cancel.onclick=()=>dialog.close();dialog.oncancel=e=>{if(busy)e.preventDefault();};

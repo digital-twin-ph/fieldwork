@@ -1,12 +1,13 @@
 import L from 'leaflet';
 /** HOW MANY STREET SEGMENTS AN INTERACTIVE MAP DRAWS. See the sampling below for the measurement
  *  this comes from: past about a quarter of a million, every pan and zoom reprojects them all. */
+import {TILE_CREDIT,tilesOnDevice,unpackTile,type TileExtractSpec} from './tile-extract.js';
 export const INTERACTIVE_SEGMENT_LIMIT=200_000;
 import type {Polygons} from './catchments.js';
 import type {PointCollection,Escape,Position} from './types.js';
 
 import {BASEMAP_CHOICES,basemapAvailable,basemapOptions,BASEMAP_LABELS,type BasemapChoice} from './basemaps.js';
-import {layerSymbol,markPath,markRadius,classifyValues,categoricalSteps,FIGURE_ROLE} from './presentation.js';
+import {layerSymbol,markPath,markRadius,polygonShading,categoricalSteps,FIGURE_ROLE} from './presentation.js';
 import type {LayerShape,FillClass,FillEncoding} from './presentation.js';
 import {fillClass,SPATIAL_RELATION_FILL,MARK_HALO} from './presentation.js';
 import {rasterImage} from './raster-image.js';
@@ -43,7 +44,7 @@ const VECTOR_BASEMAPS={
   'ofm-positron':{label:'OpenFreeMap Positron (muted)',style:'https://tiles.openfreemap.org/styles/positron'},
   'ofm-bright':{label:'OpenFreeMap Bright',style:'https://tiles.openfreemap.org/styles/bright'},
 } as const;
-let workerReady=false;
+let workerReady=false,extractProtocol=false;
 export const isVectorBasemap=(choice:BasemapChoice):choice is keyof typeof VECTOR_BASEMAPS=>
   Object.hasOwn(VECTOR_BASEMAPS,choice);
 const BASEMAPS={
@@ -135,7 +136,7 @@ export interface MapLayers {
  *  practitioner their new result rather than stranding them over the old extent. */
 let rememberedView:{key:string;lat:number;lng:number;zoom:number}|undefined;
 
-export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,context:PointCollection|undefined,esc:Escape,basemap:BasemapChoice='none',onBasemapChange?:(choice:BasemapChoice)=>void,viewKey?:string){
+export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,context:PointCollection|undefined,esc:Escape,basemap:BasemapChoice='none',onBasemapChange?:(choice:BasemapChoice)=>void,viewKey?:string,tileExtract?:TileExtractSpec){
   // A Polygons value passed directly is the old call, kept working: it is one layer set with no
   // boundary and no rows.
   const layers:MapLayers=(source as Polygons)?.features!==undefined&&!(source as MapLayers).polygons
@@ -209,7 +210,7 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
   // the practitioner, 2026-10-26: "when I shift to Interactive, the choropleth loses its shades."
   // Both renderers now read the same `classifyValues`, because a figure whose meaning depends on
   // which renderer drew it is two different figures.
-  const classed=classifyValues(p.features.map(f=>f.value));
+  const {grouped,classed}=polygonShading(p.features);
   // A NAMED LAYER IS CATEGORICAL. Every feature without a value took one hard-coded `#1f77b4`,
   // so a layer of two named reaches drew as one shape. Bands with `minutes` are a sequence and
   // keep their own treatment below; anything else is told apart by hue.
@@ -217,22 +218,23 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
   // A HUE PER FEATURE ONLY WHERE THE FEATURES ARE NAMED THINGS. Numbered parts of one layer are
   // not categories; the layer carries which it is, because a read numbers what it could not name
   // and the name alone cannot tell them apart.
-  const categorical=!classed&&!banded&&p.featuresNamed!==false
+  const categorical=!classed&&!grouped&&!banded&&p.featuresNamed!==false
     ?categoricalSteps(p.features.length):null;
   const hueOf=new Map<string,string>(categorical?p.features.map((f,i)=>[f.id,categorical[i]]):[]);
   // One group for every part a value-classed layer draws, so the control lists the LAYER.
   const themed=L.featureGroup();
   const round=(v:number)=>{const a=Math.abs(v);return a>=100?v.toFixed(0):a>=10?v.toFixed(1):v.toFixed(2);};
   for(const f of sorted){
-    const at=classed?classed.classOf(f.value):null;
+    const shaded=classed??grouped;
+    const at=grouped?grouped.classOf(f.category):classed?classed.classOf(f.value):null;
     // A part with no value is neutral, never the lowest class: pale-for-absent reads as a
     // finding of low incidence, which is the opposite of what it means.
     const hue=hueOf.get(f.id);
-    const fillColor=classed?(at===null?FIGURE_ROLE.unknown:classed.colours[at]):hue??'#1f77b4';
+    const fillColor=shaded?(at===null?FIGURE_ROLE.unknown:shaded.colours[at]):hue??'#1f77b4';
     // A categorical fill is readable at the strength a value-bearing one is: the identity wash
     // was tuned for nested catchments drawn over each other, and two named regions are not that.
-    const fillOpacity=classed?(at===null?.18:.78):hue?.55:.2;
-    const layer=L.geoJSON(f.geometry,{style:{color:classed?FIGURE_ROLE.quietInk:hue??'#39779e',weight:1,fillColor,fillOpacity}});
+    const fillOpacity=shaded?(at===null?.18:.78):hue?.55:.2;
+    const layer=L.geoJSON(f.geometry,{style:{color:shaded?FIGURE_ROLE.quietInk:hue??'#39779e',weight:1,fillColor,fillOpacity}});
     // THE VALUE THE SHADE ENCODES, in the popup. A choropleth whose popup names only the polygon
     // leaves a reader with a colour and no number, and reading a value off a five-class ramp is
     // exactly what a legend cannot do. The practitioner, 2026-10-26.
@@ -508,6 +510,21 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
     };
     legend.addTo(map);
   }
+  // THE CLASSES, NAMED, for the same reason the static figure names them: a hue with no label says
+  // nothing, and `polygonShading` is what makes this agree with the fills above.
+  if(grouped){
+    const legend=new L.Control({position:'bottomleft'});
+    legend.onAdd=()=>{
+      const box=L.DomUtil.create('div','map-class-legend');
+      box.innerHTML=grouped.labels.map((label,i)=>`<p><i style="display:inline-block;width:12px;height:12px;`
+        +`background:${grouped.colours[i]}"></i> ${esc(label)}</p>`).join('')
+        +(p.features.some(f=>!f.category?.trim())?`<p><i style="display:inline-block;width:12px;height:12px;`
+          +`background:${FIGURE_ROLE.unknown}"></i> No class</p>`:'');
+      L.DomEvent.disableClickPropagation(box);
+      return box;
+    };
+    legend.addTo(map);
+  }
   const fit=()=>{if(all.getBounds().isValid())map.fitBounds(all.getBounds(),{padding:[20,20]});else map.setView([0,0],2);};
   // The identity of what is being looked at: this node, showing these bounds. `fit` is the
   // right arrival for a map nobody has moved yet and the wrong one for a remount caused by a
@@ -575,6 +592,30 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
       if(credit)map.attributionControl.removeAttribution(credit);
     }
     if(choice==='none'){status.textContent='Local layers work offline';return;}
+    if(choice==='tile-extract'){
+      // NOTHING HELD IS A STATE, NOT A FAILURE: a workflow from another device carries the spec only.
+      status.textContent='Reading the imported tiles\u2026';
+      Promise.all([tilesOnDevice(tileExtract?.digest),import('maplibre-gl'),import('@maplibre/maplibre-gl-leaflet'),
+        import('@protomaps/basemaps')]).then(([packed,maplibre,,protomaps])=>{
+        if(generation!==pending)return;
+        if(!packed||!tileExtract?.digest){
+          status.textContent='No tiles on this device. Use Import tiles in the Inspector while connected.';return;}
+        if(!workerReady){maplibre.setWorkerUrl(new URL('./maplibre-gl-worker.mjs',import.meta.url).href);workerReady=true;}
+        if(!extractProtocol){extractProtocol=true;maplibre.addProtocol('fieldwork-tiles',async params=>{
+          const [digest,...tile]=params.url.replace('fieldwork-tiles://','').split('/');
+          const held=await tilesOnDevice(digest);
+          return {data:(held&&unpackTile(held,tile.join('/')))?.buffer??new ArrayBuffer(0)};});}
+        // No labels, because labels need glyphs from a server and this map is meant to work offline.
+        const style={version:8,sources:{protomaps:{type:'vector',attribution:TILE_CREDIT,maxzoom:tileExtract.maxZoom,
+          tiles:[`fieldwork-tiles://${tileExtract.digest}/{z}/{x}/{y}`]}},
+          layers:protomaps.layers('protomaps',protomaps.namedFlavor('light'))};
+        const layer=(L as unknown as {maplibreGL:(o:unknown)=>L.Layer}).maplibreGL({style});
+        tiles=layer as L.TileLayer;layer.addTo(map);
+        (layer as unknown as {bringToBack?:()=>void}).bringToBack?.();
+        status.textContent=`OpenStreetMap extract \u00b7 ${tileExtract.tiles??0} tiles held on this device`;
+      }).catch(()=>{status.textContent='The imported tiles could not be drawn; local layers remain visible.';});
+      return;
+    }
     if(isVectorBasemap(choice)){
       const design=VECTOR_BASEMAPS[choice];
       // Loaded on demand. maplibre-gl is the largest dependency this application would carry, and
@@ -630,7 +671,7 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
   // been reported: the static figure's key on 2026-10-25, the results-panel key and this one on
   // 2026-10-26.
   const note=document.createElement('p');note.className='muted';
-  note.textContent=(classifyValues(p.features.map(f=>f.value))
+  note.textContent=(polygonShading(p.features).classed
     ?'Polygon shade: the joined value, in classes shown in the key. Click a part for its number. '
     :'Blue nested regions: cumulative travel times. Red circles: observations (DEATHS radius capped at 20 px); blue squares: sites/context. ')
     +'Use layer controls and click features for details.';

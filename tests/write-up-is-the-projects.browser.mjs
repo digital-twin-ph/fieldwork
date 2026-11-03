@@ -62,7 +62,7 @@ const notes=async page=>{
 };
 const machined=page=>page.locator('.notes-note.k-machined');
 
-test('a second workflow adds to the write-up instead of replacing it',{skip},async({page})=>{
+test('a second workflow adds to the write-up instead of replacing it',async({page})=>{test.skip(!!skip,skip);
   await open(page);
   await run(page,'Deaths per 1,000 people, by sub-district');
   await notes(page);
@@ -79,7 +79,7 @@ test('a second workflow adds to the write-up instead of replacing it',{skip},asy
   await expect(machined(page).filter({hasText:'bottom to top'})).toHaveCount(1);
 });
 
-test('a note from another workflow says which workflow it came from',{skip},async({page})=>{
+test('a note from another workflow says which workflow it came from',async({page})=>{test.skip(!!skip,skip);
   await open(page);
   await run(page,'Deaths per 1,000 people, by sub-district');
   await run(page,'The ground: an extent, its sub-districts and the river');
@@ -94,7 +94,7 @@ test('a note from another workflow says which workflow it came from',{skip},asyn
   await expect(elsewhere.locator('.notes-source')).toContainText('ran 20');
 });
 
-test('the write-up survives a reload, because a publication is not a run',{skip},async({page})=>{
+test('the write-up survives a reload, because a publication is not a run',async({page})=>{test.skip(!!skip,skip);
   await open(page);
   await run(page,'Deaths per 1,000 people, by sub-district');
   await run(page,'Died or survived, by water supply');
@@ -109,8 +109,8 @@ test('the write-up survives a reload, because a publication is not a run',{skip}
   await expect(machined(page).filter({hasText:'Mortality by sub-district'})).toHaveCount(1);
 });
 
-test('notes from several workflows do not collide on a node id they share',{skip},
-  async({page})=>{
+test('notes from several workflows do not collide on a node id they share',
+  async({page})=>{test.skip(!!skip,skip);
     await open(page);
     // `table-viii` is a node in three of South London's six workflows, so a write-up keyed by
     // node id silently dropped two of every three notes, and two cards sharing a `data-note`
@@ -128,7 +128,7 @@ test('notes from several workflows do not collide on a node id they share',{skip
       .toHaveCount(1);
   });
 
-test('a freshly opened project says why its write-up has no figures yet',{skip},async({page})=>{
+test('a freshly opened project says why its write-up has no figures yet',async({page})=>{test.skip(!!skip,skip);
   // THE CASE THREE ROUNDS OF TESTING MISSED. Every test ran a workflow and then looked, so none
   // of them ever saw what a practitioner meets first: thirteen quoted and authored notes, no
   // tables, no maps, no charts, and no account of why. The notes are correct -- nothing has run
@@ -154,7 +154,7 @@ test('a freshly opened project says why its write-up has no figures yet',{skip},
     v.firstElementChild.className)).toContain('notes-run');
 });
 
-test('the control reports what has run, and stays once everything has',{skip},async({page})=>{
+test('the control reports what has run, and stays once everything has',async({page})=>{test.skip(!!skip,skip);
   await open(page);
   await run(page,'Deaths per 1,000 people, by sub-district');
   await notes(page);
@@ -176,7 +176,7 @@ test('the control reports what has run, and stays once everything has',{skip},as
   expect(await machined(page).count()).toBeGreaterThan(8);
 });
 
-test('one button runs the rest and assembles the whole write-up',{skip},async({page})=>{
+test('one button runs the rest and assembles the whole write-up',async({page})=>{test.skip(!!skip,skip);
   // The practitioner's choice of 2026-10-30, against running them on open: South London's six
   // run in 1.9 seconds, but a project with an isochrone or a raster download does not, and each
   // run switches the open canvas -- the run-in-flight hazard experiment 142 spent a day finding.
@@ -203,8 +203,8 @@ test('one button runs the rest and assembles the whole write-up',{skip},async({p
   expect(await view.locator('.notes-figure svg').count()).toBeGreaterThan(1);
 });
 
-test('running the rest returns the practitioner to the workflow they were reading',{skip},
-  async({page})=>{
+test('running the rest returns the practitioner to the workflow they were reading',
+  async({page})=>{test.skip(!!skip,skip);
     await open(page);
     await run(page,'Died or survived, by water supply');
     const before=await page.locator('#workflow-select').inputValue();

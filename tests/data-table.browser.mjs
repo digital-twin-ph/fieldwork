@@ -58,11 +58,11 @@ test('Tabular data imports a long-format extract, displays it and replays offlin
   await expect(page.locator('#table-reconcile')).toContainText('already long');
   await expect(page.locator('#table-reconcile')).toContainText('No unit stated');
 
-  // Dropping a key column makes the remaining key repeat, which is refused rather than
-  // collapsed: two different projections would otherwise share one row.
+  // Dropping a key column makes the remaining key repeat. The table still loads, every row kept,
+  // because a file refused here could not be diagnosed. 164.
   await page.locator('#table-keys input[value="year"]').uncheck();
-  await expect(page.locator('#table-error')).toContainText('share the key');
-  await expect(page.locator('#table-save')).toBeDisabled();
+  await expect(page.locator('#table-error')).toBeHidden();
+  await expect(page.locator('#table-save')).toBeEnabled();
   await page.locator('#table-keys input[value="year"]').check();
   await expect(page.locator('#table-save')).toBeEnabled();
 
@@ -161,7 +161,10 @@ test('a wide table imports, and the refusals each shape can state still hold',as
   await page.locator('#table-file').setInputFiles({name:'text.csv',mimeType:'text/csv',
     buffer:Buffer.from('psgc_code,scenario,value_m,value_b\n1380100000,ssp126,high,2\n')});
   await expect(page.locator('#table-keys')).toBeVisible();
-  await expect(page.locator('#table-error')).toContainText('nonnumeric value "high"');
-  await page.locator('#table-cancel').click();
-  await expect(page.locator('.inspector')).toContainText('cannot run until a table is imported');
+  await expect(page.locator('#table-error')).toBeHidden();
+  await page.locator('#table-save').click();
+  await expect(page.locator('[data-table-findings]')).toContainText('Check Data quality');
+  await expect(page.locator('[data-table-findings]')).toContainText('1 value that is not a number');
+  await page.locator('#table-quality').click();
+  await expect(page.locator('[data-quality-findings]')).toContainText('nonnumeric value "high"');
 });

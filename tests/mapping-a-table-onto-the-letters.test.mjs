@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {resolveCells,strataNotNamed,mappingMarkup}
+import {resolveCells,strataNotNamed,mappingMarkup,exposureColumnsOffered}
   from '../build/two-by-two-mapping.js';
 
 /** MAPPING A TABLE'S VARIABLES ONTO a, b, c AND d.
@@ -100,4 +100,12 @@ test('a table with no rows for a column offers nothing rather than a stale list'
   const markup=mappingMarkup(undefined,request(),esc);
   assert.match(markup,/Not mapped yet\./);
   assert.doesNotMatch(markup,/Not named by this mapping/);
+});
+
+test('exposures offered: 1 and 0 work, and a numbered ID is still not one',()=>{
+  const values={ID:['0','1','2','3','4','5'],Ill:['0','1'],Ham:['0','1'],Rolls:['0','1'],Milk:['Y','N'],
+    Age:Array.from({length:40},(_,i)=>String(i))};
+  assert.deepEqual(exposureColumnsOffered(values,{outcomeColumn:'Ill',exposed:'1',unexposed:'0'},6),['Ham','Rolls']);
+  assert.deepEqual(exposureColumnsOffered(values,{outcomeColumn:'Ill',exposed:'Y',unexposed:'N'},6),['Milk']);
+  assert.deepEqual(exposureColumnsOffered(values,{outcomeColumn:'Ill'},6),['Ham','Rolls','Milk']);
 });

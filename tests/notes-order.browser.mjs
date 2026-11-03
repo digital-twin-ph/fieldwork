@@ -73,7 +73,7 @@ const drag=async(page,from,to)=>{
   await page.mouse.up();
 };
 
-test('a note moves within its section, and stays where it was put',{skip},async({page})=>{
+test('a note moves within its section, and stays where it was put',async({page})=>{test.skip(!!skip,skip);
   await southLondon(page);
   const before=await keys(page);
   expect(before.length,'Methods carries enough notes to reorder').toBeGreaterThan(2);
@@ -90,7 +90,7 @@ test('a note moves within its section, and stays where it was put',{skip},async(
   expect(await keys(page)).toEqual(after);
 });
 
-test('a note dropped on itself does not move',{skip},async({page})=>{
+test('a note dropped on itself does not move',async({page})=>{test.skip(!!skip,skip);
   await southLondon(page);
   const before=await keys(page);
   // A real drag that ends on the card it began on. It has to travel far enough to BE a drag:
@@ -115,7 +115,7 @@ test('a note dropped on itself does not move',{skip},async({page})=>{
   await expect(page.locator('.toast.visible')).toHaveCount(0);
 });
 
-test('a drop below the last card ends that section, not the write-up',{skip},async({page})=>{
+test('a drop below the last card ends that section, not the write-up',async({page})=>{test.skip(!!skip,skip);
   await southLondon(page);
   // Introduction, not Methods: a drop into the empty space below the last card can only be
   // performed where that space is on screen, and Methods is taller than the viewport.

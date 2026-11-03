@@ -84,7 +84,8 @@
 <urn:fieldwork:widget:summarize_hull> a fw:WidgetDefinition; fw:nodeType "summarize_hull"; rdfs:label "Convex hull";
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/summarize_hull.md>.
 <urn:fieldwork:widget:summarize_points_to_polygon> a fw:WidgetDefinition; fw:nodeType "summarize_points_to_polygon"; rdfs:label "Summarize points to polygons".
-<urn:fieldwork:widget:table_input> a fw:WidgetDefinition; fw:nodeType "table_input"; rdfs:label "Tabular data".
+<urn:fieldwork:widget:table_input> a fw:WidgetDefinition; fw:nodeType "table_input"; rdfs:label "Tabular data";
+  fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/table_input.md>.
 <urn:fieldwork:widget:table_output> a fw:WidgetDefinition; fw:nodeType "table_output"; rdfs:label "Table";
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/table_output.md>.
 <urn:fieldwork:widget:travel_time> a fw:WidgetDefinition; fw:nodeType "travel_time"; rdfs:label "Travel time from distance".

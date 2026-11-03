@@ -178,3 +178,22 @@ export function openMappingDialog(table:DataTable|undefined,request:MappingParam
   dialog.addEventListener('cancel',event=>{event.preventDefault();close();});
   dialog.showModal();
 }
+
+/** More levels than this is a measurement, not groups to compare. */
+export const MAX_EXPOSURE_LEVELS=12;
+
+/** WHICH COLUMNS ARE OFFERED AS EXPOSURES. The practitioner ticks them; this only takes out what
+ *  cannot be compared. Holding the two groups is not enough on its own, as the practitioner asked
+ *  on 2026-11-02: *"What if it's 1 and 0 not Y and N?"* A numbered `ID` holds both 1 and 0. So a
+ *  column with a different value on every row is an identifier, and too many levels is a measurement,
+ *  whatever the chosen groups. A column coded differently from the chosen groups is not offered. */
+export function exposureColumnsOffered(values:Record<string,readonly string[]>,
+  request:{outcomeColumn?:string;exposed?:string;unexposed?:string},rows?:number):string[]{
+  const {outcomeColumn,exposed,unexposed}=request;
+  return Object.keys(values).filter(name=>{
+    const held=values[name]!;
+    if(name===outcomeColumn||held.length>MAX_EXPOSURE_LEVELS)return false;
+    if(rows&&rows>2&&held.length===rows)return false;
+    return exposed&&unexposed?held.includes(exposed)&&held.includes(unexposed):true;
+  });
+}

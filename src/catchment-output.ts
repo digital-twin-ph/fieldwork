@@ -1,4 +1,4 @@
-import {orderedSteps,categoricalSteps,classifyValues,classifyCategories,FIGURE_ROLE,markPath} from './presentation.js';
+import {orderedSteps,categoricalSteps,polygonShading,type classifyValues,type classifyCategories,FIGURE_ROLE,markPath} from './presentation.js';
 import type {Polygons} from './catchments.js';
 import type {DisplayValue,Receipt} from './results.js';
 import type {Escape,Position,PointCollection,WorkflowNode} from './types.js';
@@ -95,8 +95,7 @@ export function polygonSvg(p:Polygons,esc:Escape):string{
   // AS WELL as the supplying company, so that rule drew the wrong figure for the one case the
   // feature was built for. The protection is real and belongs upstream: a category exists only
   // when it was asked for, so nothing can become categorical by accident.
-  const grouped=classifyCategories(p.features.map(f=>f.category));
-  const classed=grouped?null:classifyValues(p.features.map(f=>f.value));
+  const {grouped,classed}=polygonShading(p.features);
   // ORDERED WHERE THERE IS AN ORDER. Bands carry `minutes` and rank; named regions do not, and
   // YlGnBu's whole design is a lightness ramp a reader is meant to rank. Tidal and non-tidal
   // drawn in two steps of it assert a sequence the categories do not have.

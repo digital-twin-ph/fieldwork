@@ -81,6 +81,11 @@ stands apart is the reading. The result says how many comparisons were made and 
 adjusted for that number**. Exposures also overlap, so one food's association can belong to another,
 and this table cannot separate them.
 
+**Which columns are offered.** The widget does not know which columns are exposures: you tick them. It leaves out
+the outcome, any column with more than 12 distinct values, and any column with a different value on every row,
+so a numbered `ID` is not offered. Once Exposed and Unexposed are chosen, a column must hold both, whether they
+are `Y` and `N` or `1` and `0`. A column coded differently from those two is not offered, so recode it first.
+
 ## How to use it
 
 | Setting | What it decides |

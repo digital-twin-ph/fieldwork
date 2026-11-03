@@ -79,7 +79,7 @@ const idOf=async(page,type,nth=0)=>{
   return found[nth].id;
 };
 
-test('the worked example is rebuilt from an empty canvas and the published inputs',{skip},async({page})=>{
+test('the worked example is rebuilt from an empty canvas and the published inputs',async({page})=>{test.skip(!!skip,skip);
   test.slow();
   await page.goto('/');await page.evaluate(()=>localStorage.clear());
   await page.goto('/?example=blank');
@@ -202,7 +202,7 @@ test('the worked example is rebuilt from an empty canvas and the published input
  *  What this does NOT claim: that clicking a map reproduces Snow's coordinates. Those are
  *  geocoded from the landmarks he names, and the test asserts the path exists, not that a click
  *  lands on Vauxhall Bridge. */
-test('the water intakes can be made with pushpins and a form, from Snow’s text',{skip},async({page})=>{
+test('the water intakes can be made with pushpins and a form, from Snow’s text',async({page})=>{test.skip(!!skip,skip);
   test.slow();
   await page.goto('/');await page.evaluate(()=>localStorage.clear());
   await page.goto('/?example=blank');

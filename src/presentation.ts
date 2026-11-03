@@ -465,3 +465,12 @@ export function classifyCategories(values:(string|null|undefined)[]):CategoryCla
       return at<0?null:at;
     }};
 }
+
+/** WHAT A POLYGON LAYER IS SHADED BY, decided once for the figure, its key and the interactive map.
+ *  A category outranks a value: a joined layer a ruleset then classified carries both. Each surface
+ *  deciding this for itself is how Nigeria's priority map came to be keyed by zero-dose ranges over
+ *  polygons shaded by rule class, 2026-11-02. */
+export function polygonShading(features:readonly {value?:number|null;category?:string|null}[]){
+  const grouped=classifyCategories(features.map(f=>f.category));
+  return {grouped,classed:grouped?null:classifyValues(features.map(f=>f.value))};
+}

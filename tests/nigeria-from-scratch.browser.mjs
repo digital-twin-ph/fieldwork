@@ -1,5 +1,6 @@
 import {test,expect} from '@playwright/test';
-import {existsSync} from 'node:fs';
+import {serveArchive,smallArchive} from './small-pmtiles.mjs';
+import {existsSync,readFileSync,writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 
 /** NIGERIA FROM AN EMPTY CANVAS, one question to a workflow. South London's rule again, on a third
@@ -95,10 +96,12 @@ const joinAndMap=async(page,from,area,title)=>{
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:120000});
   await page.locator('[data-view="results"]').click();
   await expect(page.locator('main').first()).toContainText('774 of 774 parts carry a value');
+  await page.locator('[data-view="workflow"]').click();
+  await tidy(page);
 };
 
-test('three questions about 774 LGAs, each its own short workflow',{skip},async({page})=>{
-  test.setTimeout(300_000);
+test('five questions about 774 LGAs, each its own short workflow',async({page})=>{test.skip(!!skip,skip);
+  test.setTimeout(process.env.NIGERIA_REAL_TILES?1_200_000:480_000);
   await page.goto('/');await page.evaluate(()=>localStorage.clear());
   await page.goto('/?example=blank');
   await page.locator('#new-project').click();
@@ -128,28 +131,28 @@ test('three questions about 774 LGAs, each its own short workflow',{skip},async(
     await page.screenshot({path:'test-results/nga-zd.png'});
   }
 
-  // 3. WHAT CHANGED? 6 nodes: 2,322 rows, because three years were read together.
+  // 3. WHAT CHANGED? 6 nodes: 15,480 rows, because twenty years were read together.
   await page.locator('[data-view="workflow"]').click();
   await page.locator('#add-workflow').click();
-  await named(page,'What changed from 2018 to 2024?');
+  await named(page,'What changed from 2005 to 2024?');
   {
     const table=await importTable(page,'data/nga-lga-dtp1-by-year.csv','wide',
-      ['dtp1_2018','dtp1_2021','dtp1_2024'],['ID']);
+      Array.from({length:20},(_,i)=>`dtp1_${2005+i}`),['ID']);
     await add(page,'derive_value');
     const derive=await idOf(page,'derive_value');
     await tidy(page);await wire(page,table,derive,'records');
     await page.locator(`.react-flow__node[data-id="${derive}"]`).click();
     const pick=async(key,value)=>{await page.locator(`[data-slr="${key}"]`).selectOption(value);};
-    await pick('keyColumn','measure');await pick('left','dtp1_2024');await pick('right','dtp1_2018');
-    await page.locator('[data-slr="name"]').fill('change 2018 to 2024');
+    await pick('keyColumn','measure');await pick('left','dtp1_2024');await pick('right','dtp1_2005');
+    await page.locator('[data-slr="name"]').fill('change 2005 to 2024');
     await page.locator('[data-slr="name"]').press('Tab');
     await add(page,'select_rows');
     const select=await idOf(page,'select_rows');
     await tidy(page);await wire(page,derive,select,'records');
     await page.locator(`.react-flow__node[data-id="${select}"]`).click();
-    await page.locator('[data-select-value="change 2018 to 2024"]').check();
+    await page.locator('[data-select-value="change 2005 to 2024"]').check();
     area=await importLgas(page);
-    await joinAndMap(page,select,area,'Change in DTP1 coverage, 2018 to 2024');
+    await joinAndMap(page,select,area,'Change in DTP1 coverage, 2005 to 2024');
     await page.waitForTimeout(800);
     await page.screenshot({path:'test-results/nga-change.png'});
     expect((await saved(page)).nodes.length).toBe(6);
@@ -228,18 +231,80 @@ test('three questions about 774 LGAs, each its own short workflow',{skip},async(
     await page.screenshot({path:'test-results/nga-priority.png'});
     // THE CLASS ON THE MAP, against the source: 127 LGAs meet both conditions, counted from the file
     // by hand and asserted in the example's README.
-    const fills=await page.locator('svg path[fill]').evaluateAll(paths=>{
+    const fills=await page.locator('svg path[data-catchment]').evaluateAll(paths=>{
       const counts={};
       for(const path of paths){const fill=path.getAttribute('fill');counts[fill]=(counts[fill]||0)+1;}
       return counts;});
     expect(Object.values(fills),JSON.stringify(fills)).toContain(127);
+    // THE KEY NAMES WHAT THE SHADE MEANS. It carried zero-dose ranges here until 2026-11-02.
+    const key=page.locator('#map-communication-header-key');
+    await expect(key).toContainText('Priority_for_data_review');
+    await expect(key).toContainText('No class');
+    await expect(key).not.toContainText(' to ');
+    // EVERY SHADE DRAWN IS A SHADE THE KEY NAMES. Asserted as agreement, so a palette change moves both.
+    const named=await key.locator('path').evaluateAll(marks=>marks.map(m=>m.getAttribute('fill').toUpperCase()));
+    for(const fill of Object.keys(fills))expect(named).toContain(fill.toUpperCase());
+    await page.locator('[data-view="workflow"]').click();
+    await tidy(page);
     expect((await saved(page)).nodes.length).toBe(7);
   }
+
+  // 5. THE SAME COVERAGE ON THE GROUND. An interactive map over tiles imported once for what it draws.
+  // The test answers from a one-tile archive; NIGERIA_REAL_TILES reaches the real one.
+  if(!process.env.NIGERIA_REAL_TILES)await serveArchive(page,smallArchive());
+  await page.locator('#add-workflow').click();
+  await named(page,'Where is coverage lowest, on the ground?');
+  {
+    const table=await importTable(page,'data/nga-lga-2024.csv','long','mean_dtp1',['ID']);
+    const lgas=await importLgas(page);
+    await joinAndMap(page,table,lgas,'DTP1 coverage on OpenStreetMap, 2024');
+    const map=await idOf(page,'map_output');
+    await page.locator(`.react-flow__node[data-id="${map}"]`).click();
+    await page.locator('#polygon-presentation').selectOption('interactive');
+    await page.locator('#run-button').click();
+    await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:120000});
+    await page.locator('#map-import-tiles').click();
+    await expect(page.locator('#map-tile-status')).toContainText('The project keeps this description',{timeout:600000});
+    const spec=(await saved(page)).nodes.find(n=>n.id===map).params;
+    expect(spec.basemap).toBe('tile-extract');
+    expect(spec.tileExtract.bounds[0]).toBeGreaterThan(2);
+    expect(spec.tileExtract.bounds[2]).toBeLessThan(15);
+    await page.locator('#run-button').click();
+    await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:120000});
+    await page.locator('[data-view="results"]').click();
+    await expect(page.locator('[data-tile-status]')).toContainText('tiles held on this device',{timeout:30000});
+    await page.waitForTimeout(process.env.NIGERIA_REAL_TILES?8000:500);
+    await page.screenshot({path:'test-results/nga-ground.png'});
+    await page.locator('[data-view="workflow"]').click();
+    await tidy(page);
+  }
+
+  // THE REPORT OVER THE 20 YEARS. Authored notes go in through the dialog, as a practitioner would
+  // write them, and the machined ones come from running the rest.
+  const {notes}=JSON.parse(readFileSync(file('notes/report-notes.json'),'utf8'));
+  await page.locator('[data-view="notes"]').click();
+  await page.locator('.notes-part').first().waitFor();
+  for(const note of notes){
+    await page.locator(`[data-add-note="${note.section}"]`).first().click();
+    await expect(page.locator('#note-text')).toBeVisible();
+    await page.locator('#note-text').fill(note.text);
+    await page.locator('#note-function').selectOption(note.fn);
+    await page.locator('#note-save').click();
+    await expect(page.locator('#note-dialog')).not.toBeVisible();
+  }
+  await page.locator('[data-run-pending]').click();
+  await expect(page.locator('.notes-run')).toContainText('All 5',{timeout:120000});
+  await page.waitForTimeout(1200);
+  const view=page.locator('#notes-view');
+  await expect(view.locator('.notes-note.k-authored')).toHaveCount(notes.length);
+  expect(await view.locator('.notes-note.k-machined').count()).toBeGreaterThan(3);
+  await page.screenshot({path:'test-results/nga-report.png',fullPage:true});
+  if(process.env.NIGERIA_REPORT)writeFileSync(process.env.NIGERIA_REPORT,await view.innerText());
 
   await page.locator('[data-view="workflow"]').click();
   await page.locator('#storage-status').click();
   const block=page.locator('.project-view-block').filter({hasText:'DTP coverage and zero-dose'}).first();
-  await expect(block).toContainText('4 workflows');
+  await expect(block).toContainText('5 workflows');
   await page.screenshot({path:'test-results/nga-project.png'});
   if(process.env.NIGERIA_EXPORT){
     const download=page.waitForEvent('download');

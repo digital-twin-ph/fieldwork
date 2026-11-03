@@ -17,7 +17,7 @@ const BUNDLE=new URL('../../example-1855-cholera-south-london/fieldwork-project.
 const skip=existsSync(BUNDLE)?false
   :'example-1855-cholera-south-london is not checked out beside this repository.';
 
-test('the water-company 2x2 is derived from Table IX rather than imported as an answer',{skip},async({page})=>{
+test('the water-company 2x2 is derived from Table IX rather than imported as an answer',async({page})=>{test.skip(!!skip,skip);
   const errors=collectPageErrors(page);
   await page.goto('/');
   await page.evaluate(()=>localStorage.clear());

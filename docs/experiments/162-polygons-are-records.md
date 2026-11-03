@@ -34,7 +34,7 @@ DOI 10.5258/SOTON/WP00880, CC BY 4.0. Read from the files, replacing the specifi
 | --- | --- | --- |
 | Boundaries hang on "Drawing" | A study area is one extent, about 26,000 vertices; these are about 218,000 | The join takes a polygon layer |
 | The layer is refused | `MAX_LAYER_VERTICES` of 200,000, whose stated basis was what the application assumes | 1,000,000 |
-| Three years will not load | `MAX_TABLE_ROWS` of 2,000 counts melted rows; 774 by 3 is 2,322 | 20,000 |
+| Three years will not load | `MAX_TABLE_ROWS` of 2,000 counts melted rows; 774 by 3 is 2,322, and the example now reads 20 years | 20,000 |
 | "Connect a table first", table connected | Column lookup stopped at *Select rows* and *Derive a value* | They pass through |
 | No rule over two values | A join dropped what a polygon held | It keeps it |
 | Rules could not read polygons | The port was points or a table | *Records arrive as* |
@@ -50,7 +50,7 @@ are what Nigeria needed with margin. The read took 326 ms and each run under 600
 | --- | --- | --- |
 | Where is DTP1 coverage lowest? | 4 | 774 of 774 joined on ID |
 | Where are the most zero-dose children? | 4 | 774 of 774 |
-| What changed from 2018 to 2024? | 6 | 2,322 rows in, one value per LGA out |
+| What changed from 2005 to 2024? | 6 | 15,480 rows in, one value per LGA out |
 | Which LGAs have low coverage and a high burden? | 7 | 127 LGAs, equal to a count from the file |
 
 The rule is the specification's illustration, DTP1 below 0.7 and more than 5,000 zero-dose children. Its
@@ -63,8 +63,8 @@ thresholds are arbitrary and are not programme policy.
   have an interval across it. One value per row is still the table's shape.
 - The persistence question, years below a threshold, which is not built.
 - Facilities, access and measles, all out of this first release.
-- That the model's covariates are independent of access. WorldPop says geospatial covariates were used.
-  Which ones was not read, so a link with remoteness could reflect the model's inputs.
+- That the model's covariates are independent of access. Distance to urban areas is one, significant and
+  negative for DTP1, so a link with remoteness can reflect the model's inputs. Travel time is not one.
 - The change map reads well. It uses quantile classes of a sequential scale over negative and positive
   changes, so its midpoint is not zero.
 - Whether a reader is confused by the priority map, which shows a value key beside the class key.

@@ -17,11 +17,11 @@
  *  style is a stylesheet a renderer applies, and a static figure carries no renderer. That is a
  *  property of the format, not of the provider, which is why this list is not "OpenFreeMap".
  */
-export const BASEMAP_CHOICES=['none','osm','topo','natural-earth-110m','ofm-liberty','ofm-positron','ofm-bright'] as const;
+export const BASEMAP_CHOICES=['none','osm','topo','natural-earth-110m','ofm-liberty','ofm-positron','ofm-bright','tile-extract'] as const;
 export type BasemapChoice=typeof BASEMAP_CHOICES[number];
 
 /** The styles a static figure cannot bake. */
-export const VECTOR_BASEMAP_CHOICES=['ofm-liberty','ofm-positron','ofm-bright'] as const;
+export const VECTOR_BASEMAP_CHOICES=['ofm-liberty','ofm-positron','ofm-bright','tile-extract'] as const;
 export const isVectorBasemapChoice=(choice:BasemapChoice):boolean=>
   (VECTOR_BASEMAP_CHOICES as readonly string[]).includes(choice);
 
@@ -72,6 +72,7 @@ export const BASEMAP_LABELS:Record<BasemapChoice,string>={
   'ofm-liberty':'OpenFreeMap Liberty',
   'ofm-positron':'OpenFreeMap Positron (muted)',
   'ofm-bright':'OpenFreeMap Bright',
+  'tile-extract':'OpenStreetMap extract (PMTiles) \u00b7 imported to this device',
   // THE SCALE IS IN THE NAME, because experiment 52 says a profile that names a static context
   // layer must name its scale, and because 1:110m is a limit rather than a setting: these lines
   // are displaced by kilometres and a reader has to see which generalisation they are looking at
@@ -90,3 +91,19 @@ export const basemapOptions=(selected:BasemapChoice|undefined,
   .filter(option=>!presentation||basemapAvailable(option.value,presentation,spanKm))
   .map(option=>`<option value="${option.value}" ${(selected||'none')===option.value?'selected':''}>${option.label}</option>`)
   .join('');
+
+/** WHAT A READER SHOULD KNOW ABOUT THE GROUND. The practitioner, 2026-11-02: *"The reproducibility
+ *  constraint goes into machine notes for limitations."* Tiles under a map are context: no value here
+ *  depends on them, and exact reproduction of them is not asked for. They can change or go, so that
+ *  is said once, by the machine, and travels with the write-up. Bundled ground needs no such note. */
+export function basemapLimitation(choice:string|undefined):string|null{
+  if(!choice||choice==='none'||choice==='natural-earth-110m')return null;
+  if(choice==='tile-extract')return 'The basemap is an OpenStreetMap extract, imported once as PMTiles and '
+    +'kept on one device as context. The project keeps its source, boundary, zoom range and build date, not '
+    +'the tiles, so another machine imports what is published then and may show different ground. No '
+    +'value here depends on it.';
+  const label=BASEMAP_LABELS[choice as BasemapChoice]??choice;
+  return `The basemap, ${label}, is drawn from an online service as context. Its tiles can change or `
+    +'stop being served, so another machine may show different ground under this map. No value here '
+    +'depends on it.';
+}

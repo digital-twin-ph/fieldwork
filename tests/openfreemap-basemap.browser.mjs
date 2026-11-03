@@ -28,7 +28,7 @@ test('an OpenFreeMap vector style draws under the workflow layers, and is credit
   // Six basemaps: offline, two raster, three vector designs.
   await expect(page.locator('[data-basemap] option')).toHaveText([
     'None \u00b7 works offline','OpenStreetMap streets','OpenTopoMap terrain',
-    'OpenFreeMap Liberty','OpenFreeMap Positron (muted)','OpenFreeMap Bright']);
+    'OpenFreeMap Liberty','OpenFreeMap Positron (muted)','OpenFreeMap Bright','OpenStreetMap extract (PMTiles) · imported to this device']);
 
   await page.locator('[data-basemap]').selectOption('ofm-positron');
   await expect(page.locator('[data-tile-status]')).toContainText('OpenFreeMap Positron',{timeout:30000});

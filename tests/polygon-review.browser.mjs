@@ -45,7 +45,7 @@ const open=async page=>{
   await expect(page.locator('#polygon-dialog')).toBeVisible();
 };
 
-test('every feature the read returned is a row, named by its own property',{skip},async({page})=>{
+test('every feature the read returned is a row, named by its own property',async({page})=>{test.skip(!!skip,skip);
   await layer(page);
   await open(page);
   await expect(page.locator('.polygon-review-row')).toHaveCount(32);
@@ -54,7 +54,7 @@ test('every feature the read returned is a row, named by its own property',{skip
   await expect(page.locator('#polygon-review-status')).toContainText('32 of 32 features kept');
 });
 
-test('selecting a row marks it, so one feature can be found among many',{skip},async({page})=>{
+test('selecting a row marks it, so one feature can be found among many',async({page})=>{test.skip(!!skip,skip);
   await layer(page);
   await open(page);
   const third=page.locator('.polygon-review-row').nth(2);
@@ -65,7 +65,7 @@ test('selecting a row marks it, so one feature can be found among many',{skip},a
   await expect(page.locator('.polygon-review-row.is-picked')).toHaveCount(1);
 });
 
-test('a feature set aside leaves the layer, and the read is untouched',{skip},async({page})=>{
+test('a feature set aside leaves the layer, and the read is untouched',async({page})=>{test.skip(!!skip,skip);
   const id=await layer(page);
   await open(page);
   await page.locator('[data-keep]').nth(0).uncheck();
@@ -86,7 +86,7 @@ test('a feature set aside leaves the layer, and the read is untouched',{skip},as
   await expect(page.locator('#polygon-review-status')).toContainText('30 of 32 features kept');
 });
 
-test('a feature comes back by ticking it again',{skip},async({page})=>{
+test('a feature comes back by ticking it again',async({page})=>{test.skip(!!skip,skip);
   const id=await layer(page);
   await open(page);
   await page.locator('[data-keep]').nth(0).uncheck();
@@ -98,7 +98,7 @@ test('a feature comes back by ticking it again',{skip},async({page})=>{
   expect((await saved(page)).nodes.find(n=>n.id===id).params.hidden).toBe(undefined);
 });
 
-test('setting every feature aside is refused, because the layer would hold nothing',{skip},async({page})=>{
+test('setting every feature aside is refused, because the layer would hold nothing',async({page})=>{test.skip(!!skip,skip);
   await layer(page);
   await open(page);
   for(const box of await page.locator('[data-keep]').all())await box.uncheck();
@@ -106,7 +106,7 @@ test('setting every feature aside is refused, because the layer would hold nothi
   await expect(page.locator('#polygon-review-apply')).toBeDisabled();
 });
 
-test('cancel keeps what was there before',{skip},async({page})=>{
+test('cancel keeps what was there before',async({page})=>{test.skip(!!skip,skip);
   const id=await layer(page);
   await open(page);
   await page.locator('[data-keep]').nth(0).uncheck();
@@ -128,7 +128,7 @@ const choose=async(page,count)=>{
     await page.locator('.polygon-review-row').nth(i).locator('.muted').click();
 };
 
-test('polygons chosen on the map can be kept, and the rest set aside',{skip},async({page})=>{
+test('polygons chosen on the map can be kept, and the rest set aside',async({page})=>{test.skip(!!skip,skip);
   const id=await layer(page);
   await open(page);
   await choose(page,2);
@@ -141,7 +141,7 @@ test('polygons chosen on the map can be kept, and the rest set aside',{skip},asy
   expect((await saved(page)).nodes.find(n=>n.id===id).params.hidden.length).toBe(30);
 });
 
-test('polygons chosen on the map can be discarded instead',{skip},async({page})=>{
+test('polygons chosen on the map can be discarded instead',async({page})=>{test.skip(!!skip,skip);
   await layer(page);
   await open(page);
   await choose(page,3);
@@ -149,7 +149,7 @@ test('polygons chosen on the map can be discarded instead',{skip},async({page})=
   await expect(page.locator('#polygon-review-status')).toContainText('29 of 32 features kept, 3 set aside');
 });
 
-test('clearing the selection decides nothing',{skip},async({page})=>{
+test('clearing the selection decides nothing',async({page})=>{test.skip(!!skip,skip);
   await layer(page);
   await open(page);
   await choose(page,2);
@@ -169,7 +169,7 @@ test('clearing the selection decides nothing',{skip},async({page})=>{
  *  stating: this proves the condition that made clicks impossible is gone, not that a click on a
  *  given polygon selects it. Aiming at one 25-vertex island among hundreds is what the row list
  *  is for, and that path is covered above. */
-test('the features share one canvas, so the map can be clicked at all',{skip},async({page})=>{
+test('the features share one canvas, so the map can be clicked at all',async({page})=>{test.skip(!!skip,skip);
   await layer(page);
   await open(page);
   await expect(page.locator('#polygon-review-map canvas')).toHaveCount(1);
@@ -186,7 +186,7 @@ test('the features share one canvas, so the map can be clicked at all',{skip},as
  *  The preview and the run share one `clipToBox`, so what is on screen before Apply is what the
  *  layer carries after it. This drives a layer read for a study area, because the frame comes
  *  from the read and a file layer connected to nothing has none. */
-test('the clip is offered only where there is a frame to clip to',{skip},async({page})=>{
+test('the clip is offered only where there is a frame to clip to',async({page})=>{test.skip(!!skip,skip);
   await layer(page);
   await open(page);
   // A file layer connected to no study area has no box, so there is nothing to cut to and the
@@ -197,7 +197,7 @@ test('the clip is offered only where there is a frame to clip to',{skip},async({
 /** THREE REDUCTIONS AND A NAME. The practitioner, 2026-10-29: *"polygon input enables three forms
  *  of reduction: keep/discard, clip and merge selected adjacents."* And on naming: *"That's a
  *  major gap if we were to have maps showing polygons with meaningful names."* */
-test('a feature can be named here, and the name is kept',{skip},async({page})=>{
+test('a feature can be named here, and the name is kept',async({page})=>{test.skip(!!skip,skip);
   const id=await layer(page);
   await open(page);
   const first=page.locator('[data-name]').first();
@@ -209,7 +209,7 @@ test('a feature can be named here, and the name is kept',{skip},async({page})=>{
   await expect(page.locator('[data-name]').first()).toHaveValue('Rotherhithe, 1854');
 });
 
-test('two chosen features merge into one, keeping the first name',{skip},async({page})=>{
+test('two chosen features merge into one, keeping the first name',async({page})=>{test.skip(!!skip,skip);
   await layer(page);
   await open(page);
   const before=await page.locator('.polygon-review-row').count();
@@ -222,7 +222,7 @@ test('two chosen features merge into one, keeping the first name',{skip},async({
   await expect(page.locator('#polygon-review-selection')).toBeHidden();
 });
 
-test('merging needs two, and says so rather than doing nothing',{skip},async({page})=>{
+test('merging needs two, and says so rather than doing nothing',async({page})=>{test.skip(!!skip,skip);
   await layer(page);
   await open(page);
   await choose(page,1);
@@ -230,7 +230,7 @@ test('merging needs two, and says so rather than doing nothing',{skip},async({pa
   await expect(page.locator('#polygon-review-status')).toContainText('at least two features to merge');
 });
 
-test('the unnamed can be set aside in one go',{skip},async({page})=>{
+test('the unnamed can be set aside in one go',async({page})=>{test.skip(!!skip,skip);
   await layer(page);
   await open(page);
   // Every sub-district carries `subdist`, so with that nominated none is unnamed and the

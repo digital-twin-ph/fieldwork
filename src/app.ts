@@ -26,6 +26,7 @@ import {addableTypes,PALETTE_GROUPS,ADDABLE_VIA_COMPOSITION,ADDABLE_VIA_RULESET}
 import {MARK_RADIUS_MIN,MARK_RADIUS_MAX} from './presentation.js';
 import {compositionEntry,explodeMicroWorkflow,detectDrift} from './compositions.js';
 import {tidyLayout,alreadyTidy} from './layout.js';
+import {TILE_DEFAULT_MAX_ZOOM,TILE_MAX_ZOOMS,TILE_SOURCE,importTiles,type TileExtractSpec} from './tile-extract.js';
 import {bundledCompositions,resolveComposition} from './composition-registry.js';
 import {OVERTURE_DEFAULT_CONFIDENCE} from './overture-places.js';
 import {seaLevelExample} from './sea-level-example.js';
@@ -35,7 +36,7 @@ import {openRuleEditor} from './rule-editor.js';
 import {openStepViewer,openTableViewer,shapeChange,stepLabels,tableViewOf} from './table-viewer.js';
 import {openRelateJoin} from './relate-ui.js';
 import {relateShape} from './relate-table.js';
-import {wideDataTable} from './data-table.js';
+import {findingsSummary,wideDataTable} from './data-table.js';
 import {castColumn,applyRepairs} from './column-profile.js';
 import {openDataQuality} from './data-quality-ui.js';
 import {settingNamed} from './authored-rules.js';
@@ -134,7 +135,7 @@ import {newMapOutput,mapEvidence} from './map-output.js';
 import {newTableOutput,pointTableMarkup,pointTableEvidence} from './table-output.js';
 import {pointPort,MAX_POINT_LAYERS,markedPoints,markLabel,LABEL_CEILING} from './point-layers.js';
 import {twoByTwoMarkup} from './two-by-two-view.js';
-import {openMappingDialog} from './two-by-two-mapping.js';
+import {exposureColumnsOffered,openMappingDialog} from './two-by-two-mapping.js';
 import {repositoryFiles} from './project-repository.js';
 import {orderableBins} from './chart-output.js';
 import {AGGREGATES,type Aggregate} from './group-table.js';
@@ -180,6 +181,18 @@ function chartControls(n:WorkflowNode<'chart_output'>,options:{omitOrientation?:
     <label class="field-label" for="chart-source-note">Source / method note</label><textarea id="chart-source-note" maxlength="500" rows="2" placeholder="Default: connected result and run">${esc(p.sourceNote||'')}</textarea>
     <p class="description">The title, note, axes and legend travel with the SVG. Both renderers use the same recorded values. Add a Method reference for supporting research.</p>`:'');
 }
+/** THE ONE-TIME IMPORT, on the interactive map only. The boundary is what the map draws, so it needs
+ *  a run first. Experiment 163. */
+function tileImportControls(p:WorkflowNode<'map_output'>['params']):string{
+  if(p.presentation!=='interactive')return '';
+  const held=p.tileExtract;
+  return `<div data-tile-import><label class="field-label" for="map-tile-zoom">Import tiles up to zoom</label>
+    <select id="map-tile-zoom">${TILE_MAX_ZOOMS.map(z=>`<option value="${z}" ${(held?.maxZoom??TILE_DEFAULT_MAX_ZOOM)===z?'selected':''}>${z}</option>`).join('')}</select>
+    <button id="map-import-tiles" class="button">Import tiles</button>
+    <p id="map-tile-status" class="description">${held?.digest
+      ?`${held.tiles} tiles, ${(Number(held.bytes)/1048576).toFixed(1)} MB, from the OpenStreetMap build of ${esc(held.built||'an unstated date')}. The project keeps this description, not the tiles.`
+      :'Fetches the tiles under this map once, while connected, and keeps them on this device.'}</p></div>`;
+}
 function mapControls(n:WorkflowNode<'map_output'>){
   const p=n.params;
   return `<div class="source-card" data-map-communication><span class="inspector-section">Standalone map</span>
@@ -189,6 +202,7 @@ function mapControls(n:WorkflowNode<'map_output'>){
     <label><input id="map-halo-toggle" type="checkbox" ${p.markHalo!==false?'checked':''}> Dark outline on point symbols</label>
     <label class="field-label" for="map-source-note">Source / method note</label><textarea id="map-source-note" maxlength="500" rows="3" placeholder="Default: connected source labels and method">${esc(p.mapSourceNote||'')}</textarea>
     <label class="field-label" for="map-basemap">Basemap</label><select id="map-basemap">${basemapOptions(p.basemap,p.presentation==='interactive'?'interactive':'plot',workflowSpanKm())}</select>
+    ${tileImportControls(p)}
     <p class="description">A basemap is layer 0, under everything the workflow produced.${p.presentation==='interactive'?'':' OpenStreetMap and OpenTopoMap are drawn into the figure itself. The OpenFreeMap styles are vector, so they move this map to the interactive presentation.'}</p>
     <p class="description">Title, key and note appear with the map and in its local SVG export. Interactive maps export connected data as a static plot; online basemap tiles are excluded. Selecting an online basemap sends the viewed area to its provider.</p></div>`;
 }
@@ -835,6 +849,20 @@ function tableUnitFor(output:WorkflowNode):string|undefined{
 /** `port` so a widget with TWO table inputs can ask about either one: `relate_table` needs the
  *  columns of the table being read from as well as the table being added to, and they are
  *  different questions with different answers. */
+/** A column someone declared a key is not an exposure, whatever it holds. Experiment 164. */
+function withoutDeclaredKeys(node:WorkflowNode,values:Record<string,string[]>):Record<string,string[]>{
+  const edge=workflow.edges.find(e=>e.to===node.id&&e.port==='records');
+  const up=edge?workflow.nodes.find(m=>m.id===edge.from):undefined;
+  if(up?.type!=='table_input')return values;
+  const declared=new Set([...(up.params.data.primaryKey??[]),...(up.params.data.secondaryKeys??[])]);
+  return Object.fromEntries(Object.entries(values).filter(([name])=>!declared.has(name)));
+}
+/** How many rows reach this node, where the table is connected directly. */
+function upstreamRows(node:WorkflowNode):number|undefined{
+  const edge=workflow.edges.find(e=>e.to===node.id&&e.port==='records');
+  const up=edge?workflow.nodes.find(m=>m.id===edge.from):undefined;
+  return up?.type==='table_input'?up.params.data.rows.length:undefined;
+}
 function upstreamKeyValues(node:WorkflowNode,seen=new Set<string>(),
   port='records'):Record<string,string[]>|undefined{
   const edge=workflow.edges.find(e=>e.to===node.id&&e.port===port);
@@ -2027,12 +2055,14 @@ function renderInspector(){
         +`row${p.sourceTable.rows.length===1?'':'s'} of ${p.sourceTable.headers.length} columns -- `
         +`and melted when the workflow runs, so the run's receipt names the columns it took. `
         +`Unchecked, the table stored at import is used and the source is kept only as provenance.</p>`:'')
-      +'<p class="description">Reads a long-format CSV: one row per observation, with the key columns you choose and one value column. Every key tuple must be unique, so a wide table or a missing key column is refused rather than silently collapsed.</p>';
+      +'<p class="description">Reads a long-format CSV: one row per observation, with the key columns you choose and one value column. If rows repeat a key, every row is kept and Data quality names them. Declare which columns identify a row.</p>';
     // The table itself, at a width it can be read at. The Inspector is 292px wide and this
     // offered a description of the table's shape inside it -- everything about the table except
     // the table. The practitioner's call, 2026-10-16.
     if(p.data.rows.length)content+=`<div class="inspector-actions"><button id="quick-look" class="button">Quick look at the table</button>`
       +`<button id="table-quality" class="button">Data quality</button></div>`
+      +(p.data.findings?.length?`<div class="notice" data-table-findings><strong>Check Data quality.</strong> `
+        +`${esc(findingsSummary(p.data))}. The rows are kept as they stand.</div>`:'')
       +`<p>${esc(p.source?.filename||'Imported file')}<br>${p.data.rowCount} rows, ${p.data.missingValueCount} values absent and kept as unknown.</p><details><summary>Table shape</summary><pre>${esc(JSON.stringify({keys:p.data.keys,valueField:p.data.valueField,unit:p.data.unit||'(unstated)',rows:p.data.rowCount,source:p.source},null,2))}</pre></details>`;
     else content+='<p class="description">No table imported yet. This node cannot run until a table is imported.</p>';
     content+='<div class="notice">A unit is recorded as you state it and never inferred. An absent value is kept as unknown, never read as zero. Connect a Table output to display it.</div>';
@@ -2380,7 +2410,7 @@ function renderInspector(){
       // two-by-two, and `exposureColumn` is kept as the first ticked so nothing else has to know.
       +(p.rowsAreSubjects&&columns.length
         ?`<fieldset class="field exposure-list"><legend class="field-label">Exposures to compare</legend>`
-          +columns.filter(name=>name!==p.outcomeColumn).map(name=>
+          +exposureColumnsOffered(withoutDeclaredKeys(n,shape??{}),p,upstreamRows(n)).map(name=>
             `<label class="check"><input type="checkbox" data-twobytwo-exposure="${esc(name)}" `
             +`${(p.exposureColumns?.length?p.exposureColumns:[p.exposureColumn]).includes(name)?'checked':''}> `
             +`${esc(name)}</label>`).join('')+`</fieldset>`
@@ -3840,11 +3870,12 @@ function renderInspector(){
   optionalElement('#table-quality')?.addEventListener('click',()=>{
     const table=getNode(workflow,n.id,'table_input').params;
     openDataQuality({title:`${n.params.label||'Tabular data'} · data quality`,
+      findings:table.data.findings??[],
       columns:[...table.data.keys,table.data.valueField],
       rows:table.data.rows.map(row=>({...row.key,[table.data.valueField]:row.value})),
       declared:declaredKinds(workflow,n.id),repairs:[],
-      // A tabular import casts its value column at import and refuses a non-numeric cell by row
-      // number, so a repair here would have nothing to repair: the file never got in. 117.
+      // A tabular import casts its value column at import, and a cell it cannot read is a finding
+      // kept as unknown. No repair is offered here yet. 117, 164.
       onRepair:()=>{},onRemoveRepair:()=>{}},esc);
   });
   optionalElement('#add-table-view')?.addEventListener('click',()=>change(w=>{const id=`table-view-${Date.now()}`;w.nodes.push({id,type:'table_output',x:n.x+270,y:n.y,params:{label:'Imported table'}});w.edges.push({id:`e-${Date.now()}`,from:n.id,to:id,port:'table'});selected=id;}));
@@ -3862,7 +3893,7 @@ function renderInspector(){
         // something to convert and the node can say what it was made from either way.
         if(result.source_table)node.params.sourceTable=result.source_table;
         else{delete node.params.sourceTable;delete node.params.convertOnRun;}},{requirePersistence:true});
-    },current.keys.length?{keys:current.keys,valueField:current.valueField,unit:current.unit,
+    },current.keys.length?{keys:current.keys,valueField:current.valueField,unit:current.unit,primaryKey:current.data.primaryKey,secondaryKeys:current.data.secondaryKeys,
       ...(current.wide?{wide:current.wide}:{})}:undefined);
   });
   optionalElement('#open-manual')?.addEventListener('click',()=>openManual(n.type,TYPES[n.type].title,esc));
@@ -4166,6 +4197,25 @@ function renderInspector(){
         target.params.layerSymbols=held;
       });
     });
+  });
+  optionalElement('#map-import-tiles')?.addEventListener('click',async e=>{
+    const button=e.currentTarget as HTMLButtonElement,say=$('#map-tile-status');
+    const features=result?.outputs.find(o=>o.nodeId===n.id)?.polygons?.features;
+    if(!features?.length){say.textContent='Run the workflow first: the boundary is what this map draws.';return;}
+    const points=features.flatMap(f=>f.geometry.type==='Polygon'?f.geometry.coordinates.flat():f.geometry.coordinates.flat(2));
+    const lons=points.map(p=>p[0]!),lats=points.map(p=>p[1]!);
+    const bounds:TileExtractSpec['bounds']=[lons.reduce((a,b)=>Math.min(a,b)),lats.reduce((a,b)=>Math.min(a,b)),
+      lons.reduce((a,b)=>Math.max(a,b)),lats.reduce((a,b)=>Math.max(a,b))];
+    button.disabled=true;
+    try{
+      const spec=await importTiles({source:TILE_SOURCE,bounds,minZoom:0,
+        maxZoom:Number(($('#map-tile-zoom') as HTMLSelectElement).value)},
+        (done,total)=>{say.textContent=`Importing tiles: ${done} of ${total}`;});
+      change(w=>{const target=getNode(w,n.id,'map_output');target.params.tileExtract=spec;target.params.basemap='tile-extract';});
+    }catch(error){
+      button.disabled=false;
+      say.textContent=`The tiles could not be imported: ${error instanceof Error?error.message:'unknown error'}.`;
+    }
   });
   optionalElement('#map-basemap')?.addEventListener('change',e=>{
     const choice=control(e).value as BasemapChoice;
@@ -4728,7 +4778,7 @@ function renderMap(){
       // The node is the view's identity. Without it every presentation change -- and Mark radius
       // is one -- remounted the map and refitted it, throwing away the pan and zoom the
       // practitioner had chosen in order to judge the change they were making.
-      mapNode?.id);
+      mapNode?.id,mapNode?.params.tileExtract);
     if(result.polygons){
       // ONE OF THESE, NOT ONE PER RENDER. This was inserted into the panel on every render and
       // nothing removed the last, so a map rendered three times carried the same paragraph three

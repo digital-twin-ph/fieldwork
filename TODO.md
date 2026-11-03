@@ -3732,3 +3732,18 @@ missing axiom does not mean the question went unasked.
 
 - Built 2026-11-02, experiment 165. Still open: an author-year style choice, and looking a work up by DOI.
 - Every item in References cites something. An authored note in References is written with a citation builder, reusing `Citation` and `renderCitation` from `input-provenance.ts`, with gaps shown before saving. Nigeria's seven references then move to structured citations.
+
+## Next worked example: NYC child asthma and ozone (practitioner, 2026-11-03)
+
+- **Data:** Lian et al., Zenodo [10.5281/zenodo.22757330](https://zenodo.org/records/22757330), CC BY 4.0 for the authors' own materials. `Data/Core/Derived/analysis_master_raw_rebuild.csv`: 3,653 daily rows, 2016–2025, citywide asthma-syndrome ED `count` for ages 5–17, with `o3`, `pm25`, `no2`, `tmean`, lags, `stratum`, `holiday`, `total_ed`.
+- **Check against:** the authors' archived Table 2, RR 1.061 (1.035–1.088) per 10 ppb ozone, time-stratified multipollutant Poisson on 3,643 days and 123,265 visits. No published or preprint paper, so "checkable" means against the archived outputs; the app computes crude comparisons only.
+- **A by-hand question:** the June 2023 Canadian smoke days, 49 visits on 2023-06-07 at PM2.5 190 µg/m³ against a June 1–5 mean of 25.
+- **Before shipping the data:** read NYC DOHMH EpiQuery's terms for the daily counts (the package says to check DOHMH, EPA and NOAA terms); run the package's own R code to confirm the archived numbers.
+- Research notes and ranking: `reports/Climate asthma worked examples.md` in the workspace root.
+
+## After NYC: London ozone and deaths, 2002–2006 (Bhaskaran et al. 2013)
+
+- **Why:** the open paper publishes three rate ratios per 10 µg/m³ ozone, a ready check that shows confounding step by step: 0.991 (0.987–0.994) crude, 1.007 (1.003–1.010) adjusted for season and trend, 1.003 (0.999–1.006) also adjusted for temperature. Int J Epidemiol 2013;42(4):1187, doi:10.1093/ije/dyt092, CC BY-NC 3.0.
+- **Data:** `londondataset2002_2006.dta` (34,540 bytes) in `gasparrini/2013_bhaskaran_IJE_codedata`, also the journal's supplement. Stata format, so it needs converting to CSV, and the conversion recorded.
+- **Terms, our reading:** the paper names no data source and states no data terms. It says the code is published "to reproduce our analyses, along with the dataset itself". The practitioner, 2026-11-03: *"this means to me they are fine with reproducing the results."* Ship it non-commercially with citation, quoting that sentence in NOTICE as the basis, and say it is our reading, not a stated licence. The GitHub repo carries no licence.
+- The app cannot fit the adjusted models yet; show crude comparisons beside the published ratios, as Salmonella does.

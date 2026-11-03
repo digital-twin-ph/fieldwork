@@ -1,6 +1,6 @@
 # 165 · A reference is cited from its note
 
-_Created 2026-11-02 · Updated 2026-11-02_
+_Created 2026-11-02 · Updated 2026-11-03_
 
 **Status:** tried — the Citations tab, the markers and the assembled References are built and exercised by
 the Nigeria example. No practitioner has written a report with it.

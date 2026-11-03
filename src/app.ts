@@ -5717,7 +5717,7 @@ function renderNotesView(){
   };
   // THE WORKS THIS PROJECT CITES, assembled from the entries rather than stored beside them.
   const references=referenceList(entries.map(e=>
-    ({workflowName:e.workflowName,machined:e.machined,derived:e.derived})));
+    ({workflowName:e.workflowName,machined:e.machined,derived:e.derived})),(project?.notes||[]) as Note[]);
   $('#notes-view').innerHTML=notesPanel(project?.notes||[],machined,
     labelOf,esc,derived,sourceOf,
     // AND HOW MANY THERE ARE AT ALL, so the control can tell a project whose workflows have all
@@ -5789,8 +5789,8 @@ function writeInNoteDialog(note:Note){
         // THE FUNCTION IS DROPPED WHEN IT IS CLEARED, not stored empty: `readNotes` keeps `fn`
         // only when it has a value, so an empty string here would be written and then read back
         // as absent -- two states that look the same and are not.
-        const {fn:_was,...rest}=held[at] as Note&{fn?:string};
-        held[at]={...rest,text,section,...(fn?{fn}:{})} as Note;
+        const {fn:_was,works:_cited,...rest}=held[at] as Note&{fn?:string;works?:unknown};
+        held[at]={...rest,text,section,...(fn?{fn}:{}),...(draft.works?.length?{works:draft.works}:{})} as Note;
         if(!writeNotes(held))return false;
         renderNotesView();
         toast('Your note was kept.');
@@ -7365,6 +7365,10 @@ document.addEventListener('drop',event=>{
   const key=event.dataTransfer?.getData('text/plain');
   const into=drop.getAttribute('data-drop') as WriteUpPart;
   if(!key||!WRITE_UP_PARTS.includes(into))return;
+  if(into==='References'){
+    toast('References is assembled from what is cited. Cite a work from the note that relies on it.',{tone:'failure'});
+    return;
+  }
   const project=projectNow();
   const held=[...(project?.notes||[])] as Note[];
   const at=held.findIndex(n=>noteKey(n)===key);

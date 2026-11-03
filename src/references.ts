@@ -27,8 +27,9 @@
  *  it -- which is also why this list cannot be sorted into silence: an uncited method sorts
  *  among the rest rather than into a footnote.
  */
-import type {DerivedNote,MachinedNote} from './notes.js';
-import {METHOD_REFERENCES,renderMethodCitation} from './equations.js';
+import type {CitedWork,DerivedNote,MachinedNote,Note} from './notes.js';
+import {METHOD_CITATION_STYLE,METHOD_REFERENCES,renderMethodCitation} from './equations.js';
+import {normaliseDoi,renderCitation} from './input-provenance.js';
 
 /** One work, and who cited it. */
 export interface ReferenceEntry {
@@ -36,7 +37,9 @@ export interface ReferenceEntry {
   text:string;
   /** `source` is a dataset an input declared; `method` is an estimator a computation used. A
    *  publication cites the two differently and a venue may want only one of them. */
-  kind:'source'|'method';
+  kind:'source'|'method'|'work';
+  /** For a work a note cites: what identifies it, so every note citing it gets the same number. */
+  workKey?:string;
   /** True where there is no work to cite and the line says so. Kept as a field rather than left
    *  for a reader of the text to infer, because a venue that drops uncited lines needs to find
    *  them without matching prose. */
@@ -62,7 +65,22 @@ const clean=(value:string|undefined):string=>(value||'').trim();
  *  imposing it here would make the part reorder itself when a dataset is renamed. 141's rule
  *  about numbering, applied to ordering -- what the document does with the list is the
  *  document's business, and this states what is cited. */
-export function referenceList(entries:readonly CitingEntry[]):ReferenceEntry[] {
+/** One work, however many notes cite it: by DOI where there is one, otherwise by title and year. */
+export const workKey=(work:CitedWork):string=>normaliseDoi(work.citation.doi)
+  ?`doi:${normaliseDoi(work.citation.doi)!.toLowerCase()}`
+  :`${work.citation.title.trim().toLowerCase()}|${work.published.slice(0,4)}`;
+
+export function referenceList(entries:readonly CitingEntry[],
+  /** The project's own notes, whose cited works come first, numbered in the order they are met. */
+  notes:readonly Note[]=[]):ReferenceEntry[] {
+  const works=new Map<string,ReferenceEntry>();
+  for(const note of notes)if(note.kind==='authored')for(const work of note.works??[]){
+    const key=workKey(work);
+    if(works.has(key))continue;
+    const rendered=renderCitation({licence:'unstated',citation:work.citation,published:work.published,
+      ...(work.url?{url:work.url}:{}),...(work.retrieved?{retrieved:work.retrieved}:{})},METHOD_CITATION_STYLE);
+    if(rendered)works.set(key,{text:rendered,kind:'work',workKey:key,citedBy:['Notes']});
+  }
   const found=new Map<string,ReferenceEntry>();
   const add=(text:string,kind:ReferenceEntry['kind'],workflow:string,uncited?:boolean)=>{
     const key=`${kind}:${text}`;
@@ -89,7 +107,7 @@ export function referenceList(entries:readonly CitingEntry[]):ReferenceEntry[] {
       }
   }
   const all=[...found.values()];
-  return [...all.filter(r=>r.kind==='source'),...all.filter(r=>r.kind==='method')];
+  return [...works.values(),...all.filter(r=>r.kind==='source'),...all.filter(r=>r.kind==='method')];
 }
 
 /** How many works, and how many of them are a stated absence. For the one line the part puts

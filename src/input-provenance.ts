@@ -94,7 +94,8 @@ export interface CitationAuthor {family:string; given?:string; corporate?:boolea
 
 /** What kind of work, because each style punctuates the kinds differently and two of them add a
  *  bracketed designator for the non-print ones. */
-export type CitationType='book'|'chapter'|'article'|'map'|'dataset'|'report'|'webpage';
+export const CITATION_TYPES=['article','book','chapter','report','dataset','webpage','map'] as const;
+export type CitationType=typeof CITATION_TYPES[number];
 
 /** THE WORK AN INPUT CAME FROM, IN FIELDS A STYLE CAN RENDER.
  *
@@ -138,6 +139,10 @@ export interface Citation {
    *  its site, which is the one thing a URL in a reference list does not do. `citationOmissions`
    *  says where one is expected and missing. */
   doi?:string;
+  /** THE WORK NAMES MORE AUTHORS THAN ARE LISTED, so every style ends the list with "et al." rather than
+   *  presenting the listed ones as all. The DHS Guide's own recommended citation names three and "et al.";
+   *  the full list is defined nowhere, 2026-11-02. */
+  etAl?:boolean;
 }
 
 /** A DOI is `10.`, a registrant, a slash and a suffix. Accepts the three forms a reader copies and
@@ -178,8 +183,9 @@ const initials=(given:string):string=>
   given.split(/[\s.-]+/).filter(Boolean).map(part=>part[0].toUpperCase()).join('');
 
 const joinAuthors=(authors:CitationAuthor[],one:(a:CitationAuthor,first:boolean)=>string,
-  last:string):string=>{
+  last:string,etAl=false):string=>{
   const parts=authors.map((a,i)=>one(a,i===0));
+  if(etAl)return `${parts.join(', ')}, et al`;
   if(parts.length<=1)return parts.join('');
   return parts.slice(0,-1).join(', ')+last+parts[parts.length-1];
 };
@@ -285,7 +291,7 @@ export function renderCitation(p:InputProvenance|undefined,
   if(style==='vancouver'){
     // `Snow J. Title [map]. 2nd ed. In: Container. London: John Churchill; 1855.`
     bits.push(dot(joinAuthors(c.authors,
-      a=>a.corporate||!a.given?a.family:`${a.family} ${initials(a.given)}`,', ')));
+      a=>a.corporate||!a.given?a.family:`${a.family} ${initials(a.given)}`,', ',c.etAl)));
     bits.push(dot(c.title+(designator?` ${designator.vancouver}`:'')));
     if(ed)bits.push(`${ed} ed.`);
     if(c.type==='article'&&c.container){
@@ -304,7 +310,7 @@ export function renderCitation(p:InputProvenance|undefined,
     // `Snow, J. (1855). Title (2nd ed.) [Map]. John Churchill.`
     bits.push(dot(joinAuthors(c.authors,
       a=>a.corporate||!a.given?a.family
-        :`${a.family}, ${initials(a.given).split('').map(i=>`${i}.`).join(' ')}`,', & ')));
+        :`${a.family}, ${initials(a.given).split('').map(i=>`${i}.`).join(' ')}`,', & ',c.etAl)));
     bits.push(`(${year}).`);
     const brackets=designator?.apa?` ${designator.apa}`:'';
     bits.push(dot(c.title+(ed?` (${ed} ed.)`:'')+brackets));
@@ -325,7 +331,7 @@ export function renderCitation(p:InputProvenance|undefined,
   // Only the first author is inverted; the rest read forename-first.
   bits.push(dot(joinAuthors(c.authors,(a,first)=>
     a.corporate||!a.given?a.family
-      :first?`${a.family}, ${a.given}`:`${a.given} ${a.family}`,', and ')));
+      :first?`${a.family}, ${a.given}`:`${a.given} ${a.family}`,', and ',c.etAl)));
   bits.push(`${year}.`);
   bits.push(dot(c.title));
   if(ed)bits.push(`${ed} ed.`);

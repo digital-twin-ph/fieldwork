@@ -4,7 +4,10 @@ import {element} from './dom.js';
 import {toHTML,typeset,hasMarkup} from './prose.js';
 import {groupNotes,notesOfPart,noteExtent,forkHasDrifted,KNOWN_NOTE_FUNCTIONS,UNWRITTEN,
   WRITE_UP_PARTS,type Note,type MachinedNote,type WriteUpPart} from './notes.js';
-import {referenceCount,type ReferenceEntry} from './references.js';
+import {referenceCount,workKey,type ReferenceEntry} from './references.js';
+import {CITATION_TYPES,citationGaps,renderCitation,type CitationType} from './input-provenance.js';
+import {METHOD_CITATION_STYLE} from './equations.js';
+import type {CitedWork} from './notes.js';
 
 /** THE NOTES SURFACE, reaching for the Notes Board prototype.
  *
@@ -28,7 +31,7 @@ import {referenceCount,type ReferenceEntry} from './references.js';
  *  authored note is rewritten in place, and a machined one is forked, leaving the machined note
  *  for the next run to rewrite. The dialog's part is to say which of the two is about to happen
  *  before the button is pressed. */
-export interface NoteDraft {text:string; section:WriteUpPart; fn:string}
+export interface NoteDraft {text:string; section:WriteUpPart; fn:string; works?:CitedWork[]}
 export type NoteWrite=(note:Note,draft:NoteDraft)=>boolean;
 
 export interface NoteContext {
@@ -56,9 +59,9 @@ const EDITABLE:Partial<Record<Note['kind'],true>>={authored:true,machined:true};
 
 /** Why a part has nothing in it, which differs by part and is not a failure in any of them. */
 const EMPTINESS:Record<string,string>={
-  References:'References gather themselves from what the workflows cite — a source an input '
-    +'declares, a method a computation uses. Nothing has cited anything yet. A work this '
-    +'application never saw is the author’s to add here.',
+  References:'References gather themselves from what is cited: a source an input declares, a '
+    +'method a computation uses, and a work a note cites from its Citations tab. Nothing has '
+    +'cited anything yet. To add a work, cite it from the note that relies on it.',
   Introduction:'An introduction holds background, related literature and purpose — and no '
     +'workflow produces any of the three. All of it is the author’s to write.',
   Methods:'Methods fill themselves as inputs declare their sources and steps report what they '
@@ -179,9 +182,9 @@ const referenceBlock=(list:readonly ReferenceEntry[],esc:Escape):string=>{
   if(!list.length)return '';
   const {works,uncited}=referenceCount(list);
   return `<div class="notes-references">`
-    +`<p class="muted">${works} work${works===1?'':'s'} cited by this project's workflows`
+    +`<p class="muted">${works} work${works===1?'':'s'} cited`
     +(uncited?` · ${uncited} method${uncited===1?'':'s'} with no source read`:'')
-    +`. Assembled from what the workflows declare, so it cannot be edited here.</p>`
+    +`. Assembled from what the workflows declare and the works notes cite. Cite a work from its note.</p>`
     +`<ol>`+list.map(entry=>
       `<li class="notes-reference r-${entry.kind}${entry.uncited?' is-uncited':''}">`
       +`${esc(entry.text)}`
@@ -234,6 +237,16 @@ export function notesPanel(notes:readonly Note[],
     +`Quoted and authored notes belong to the investigation; derived and machined ones come from `
     +`the last run of each workflow in this project.</p>`;
 
+  // THE MARKERS A NOTE'S WORKS GET, numbered as References lists them, so a work cited by two notes
+  // carries one number in both. Placed at the end of the note's last paragraph.
+  const numberOf=new Map<string,number>(references.flatMap((entry,at)=>entry.workKey?[[entry.workKey,at+1] as const]:[]));
+  const cite=(html:string,note:Note)=>{
+    const numbers=note.kind==='authored'?[...new Set((note.works??[]).map(w=>numberOf.get(workKey(w))).filter(Boolean))]:[];
+    if(!numbers.length)return html;
+    const marker=` <span class="notes-cite" data-cites="${numbers.join(',')}">[${numbers.join(', ')}]</span>`;
+    const at=html.lastIndexOf('</p>');
+    return at<0?html+marker:html.slice(0,at)+marker+html.slice(at);
+  };
   let ordinal=0;
   // GRAYED OUT RATHER THAN GONE, which is the practitioner's ruling of 2026-10-31 and the better
   // reading of today's other rule. "A control that cannot act must not look like one" was applied
@@ -246,14 +259,17 @@ export function notesPanel(notes:readonly Note[],
   const blocked=run.readOnly
     ? ` disabled title="${esc(run.readOnly)}" aria-disabled="true"`:'';
   const body=parts.map(part=>{
-    const add=`<button class="button small" data-add-note="${esc(part.section)}"${blocked}>`
+    // NO NOTES OF ITS OWN IN REFERENCES. The practitioner, 2026-11-02: *"A Reference entry is there because
+    // there is an entry in the main body ... where provenance is known."* A work is cited from its note.
+    const assembled=part.section==='References';
+    const add=assembled?'':`<button class="button small" data-add-note="${esc(part.section)}"${blocked}>`
       +`+ note</button>`;
     const cited=part.section==='References'?referenceBlock(references,esc):'';
     if(!part.count&&!cited)return `<section class="notes-part is-empty" data-section="${esc(part.section)}">`
       +`<h3>${esc(part.section)} <span class="muted">nothing yet</span>${add}</h3>`
       +`<div class="notes-empty"><p class="muted">${esc(EMPTINESS[part.section]||'')}</p>`
-      +`<button class="button" data-add-note="${esc(part.section)}"${blocked}>`
-      +`Add note to ${esc(part.section)}</button></div></section>`;
+      +(assembled?'':`<button class="button" data-add-note="${esc(part.section)}"${blocked}>`
+      +`Add note to ${esc(part.section)}</button>`)+`</div></section>`;
     // IN THE ORDER A PERSON PUT THEM, not re-sorted by function on every render. The function
     // survives as the chip on the card; what it no longer does is bracket the part and undo a
     // practitioner's arrangement. See `notesOfPart`.
@@ -307,7 +323,7 @@ export function notesPanel(notes:readonly Note[],
             // carried verbatim, and a derived note restates what somebody typed into a widget,
             // so neither is reinterpreted here.
             :EDITABLE[note.kind]&&text!==UNWRITTEN
-            ?`<div class="prose">${toHTML(text)}</div>`
+            ?`<div class="prose">${cite(toHTML(text),note)}</div>`
             :`<p${text===UNWRITTEN?' class="unwritten"':''}>${esc(text)}</p>`
               +(note.kind==='derived'&&note.detail
                 ?`<p class="muted">${esc(note.detail)}</p>`:''))
@@ -344,6 +360,10 @@ const DIALOG=`<dialog id="note-dialog" aria-labelledby="note-dialog-title">
 <button type="button" class="chip" data-line="&gt; " title="Quotation">&ldquo;</button>
 <button type="button" class="chip" data-wrap="$" title="Formula, written in LaTeX">&fnof;(x)</button>
 </div>
+<div id="note-tabs" class="result-switch" role="tablist" hidden>
+<button type="button" role="tab" data-note-tab="write" class="active">Write</button>
+<button type="button" role="tab" data-note-tab="cite">Citations</button></div>
+<div id="note-cite-panel" hidden></div>
 <textarea id="note-text" class="note-text" rows="9" hidden
   aria-label="The note" spellcheck="true"></textarea>
 <div id="note-preview" class="prose note-preview" hidden aria-live="polite"></div>
@@ -411,7 +431,7 @@ export function openNoteDialog(note:Note,context:NoteContext,esc:Escape){
     ?KNOWN_NOTE_FUNCTIONS:[...KNOWN_NOTE_FUNCTIONS,fn];
   $('#note-coords').innerHTML=`<span class="field"><label>IMRaD section</label>`
     +(choose
-      ?`<select id="note-section">${WRITE_UP_PARTS.map(value=>`<option value="${esc(value)}"`
+      ?`<select id="note-section">${WRITE_UP_PARTS.filter(value=>value!=='References'||note.section==='References').map(value=>`<option value="${esc(value)}"`
         +`${value===note.section?' selected':''}>${esc(value)}</option>`).join('')}</select>`
       :`<span class="fixed">${esc(note.section)} — fixed</span>`)
     +`</span>`
@@ -471,7 +491,8 @@ export function openNoteDialog(note:Note,context:NoteContext,esc:Escape){
     tell(area.value);
     save.textContent=fresh?'Add note':'Save';
     const unchanged=()=>area.value.trim()===was
-      &&(!section||section.value===note.section)&&(!workFn||workFn.value===fn);
+      &&(!section||section.value===note.section)&&(!workFn||workFn.value===fn)
+      &&JSON.stringify(works)===startedWith;
     // SAY WHAT LEAVING WOULD COST, once there is something to lose. A dialog whose only exit is
     // labelled "Close" discards an edit without ever having said so. A note being written for
     // the first time has nothing to go back to, so its exit is "Discard" throughout.
@@ -498,6 +519,73 @@ export function openNoteDialog(note:Note,context:NoteContext,esc:Escape){
     };
     area.oninput=touched;
     show();
+    // THE CITATION BUILDER, a tab of the note. A work is added from fields, checked by the same gaps the
+    // inputs' citations are, and shown as it will print; the note's sentence carries no citation of its own.
+    const works:CitedWork[]=note.kind==='authored'?structuredClone(note.works??[]):[];
+    const startedWith=JSON.stringify(works);
+    const tabs=$('#note-tabs'),panel=$('#note-cite-panel');
+    tabs.hidden=note.kind!=='authored';
+    const tab=(which:'write'|'cite')=>{
+      tabs.querySelectorAll<HTMLButtonElement>('[data-note-tab]').forEach(b=>b.classList.toggle('active',b.dataset.noteTab===which));
+      panel.hidden=which!=='cite';area.hidden=which==='cite';toolbar.hidden=which==='cite';
+      if(which==='cite')drawCitations();else show();
+      const label=tabs.querySelector<HTMLButtonElement>('[data-note-tab="cite"]');
+      if(label)label.textContent=works.length?`Citations (${works.length})`:'Citations';
+    };
+    tabs.querySelectorAll<HTMLButtonElement>('[data-note-tab]').forEach(b=>b.onclick=()=>tab(b.dataset.noteTab as 'write'|'cite'));
+    const field=(id:string,label:string,value='',hint='')=>`<label class="field-label" for="${id}">${label}</label>`
+      +`<input id="${id}" value="${esc(value)}"${hint?` placeholder="${esc(hint)}"`:''}>`;
+    const read=(id:string)=>(panel.querySelector<HTMLInputElement|HTMLTextAreaElement|HTMLSelectElement>(`#${id}`)?.value??'').trim();
+    const draftWork=():CitedWork=>{
+      const authors=read('cite-authors').split('\n').map(line=>line.trim()).filter(Boolean).map(line=>{
+        const comma=line.indexOf(',');
+        return comma<0?{family:line,corporate:true}:{family:line.slice(0,comma).trim(),given:line.slice(comma+1).trim()};
+      });
+      const optional=(key:string,id:string)=>read(id)?{[key]:read(id)}:{};
+      return {citation:{type:(read('cite-type')||'article') as CitationType,authors,title:read('cite-title'),
+          ...optional('container','cite-container'),...optional('volume','cite-volume'),...optional('issue','cite-issue'),
+          ...optional('pages','cite-pages'),...optional('publisher','cite-publisher'),...optional('place','cite-place'),
+          ...optional('doi','cite-doi'),
+          ...(panel.querySelector<HTMLInputElement>('#cite-et-al')?.checked?{etAl:true}:{})},
+        published:read('cite-published'),...optional('url','cite-url'),...optional('retrieved','cite-retrieved')} as CitedWork;
+    };
+    const asProvenance=(w:CitedWork)=>({licence:'unstated' as const,citation:w.citation,published:w.published,
+      ...(w.url?{url:w.url}:{}),...(w.retrieved?{retrieved:w.retrieved}:{})});
+    const drawCitations=()=>{
+      panel.innerHTML=(works.length?`<ol class="note-works">${works.map((w,i)=>`<li>${esc(renderCitation(asProvenance(w),METHOD_CITATION_STYLE)||w.citation.title)}`
+          +` <button type="button" class="text-button" data-remove-work="${i}">Remove</button></li>`).join('')}</ol>`
+          :'<p class="muted">No works cited. A work added here is marked on the note and listed in References.</p>')
+        +`<div class="note-cite-form"><label class="field-label" for="cite-type">Kind of work</label><select id="cite-type">`
+        +CITATION_TYPES.map(t=>`<option value="${t}">${t}</option>`).join('')+`</select>`
+        +`<label class="field-label" for="cite-authors">Authors, one per line</label>`
+        +`<textarea id="cite-authors" rows="3" placeholder="Utazi, C. Edson&#10;World Health Organization"></textarea>`
+        +`<p class="muted">Family name, comma, given names. A line with no comma is an organisation.</p>`
+        +`<label class="check"><input type="checkbox" id="cite-et-al"> The work names more authors than these (et al.)</label>`
+        +field('cite-title','Title')+field('cite-published','Published','','2022 or 2022-11-26')
+        +field('cite-container','Journal or containing work')
+        +field('cite-volume','Volume')+field('cite-issue','Issue')+field('cite-pages','Pages')
+        +field('cite-publisher','Publisher')+field('cite-place','Place')
+        +field('cite-doi','DOI','','10.1016/j.vaccine.2022.11.026')+field('cite-url','URL')
+        +field('cite-retrieved','Accessed','','2026-11-02')
+        +`<p id="cite-preview" class="note-preview"></p><ul id="cite-gaps" class="quality-problems"></ul>`
+        +`<button type="button" id="cite-add" class="button primary">Add citation</button></div>`;
+      const check=()=>{
+        const w=draftWork(),gaps=citationGaps(asProvenance(w));
+        panel.querySelector('#cite-gaps')!.innerHTML=gaps.map(g=>`<li class="quality-problem">${esc(g)}</li>`).join('');
+        panel.querySelector('#cite-preview')!.textContent=gaps.length?'':renderCitation(asProvenance(w),METHOD_CITATION_STYLE)||'';
+        (panel.querySelector('#cite-add') as HTMLButtonElement).disabled=!!gaps.length;
+      };
+      panel.querySelectorAll('input,textarea,select').forEach(el=>el.addEventListener('input',check));
+      panel.querySelector('#cite-type')!.addEventListener('change',check);
+      panel.querySelector('#cite-et-al')!.addEventListener('change',check);
+      check();
+      (panel.querySelector('#cite-add') as HTMLButtonElement).onclick=()=>{
+        const w=draftWork();if(citationGaps(asProvenance(w)).length)return;
+        works.push(w);relabel();tab('cite');};
+      panel.querySelectorAll<HTMLButtonElement>('[data-remove-work]').forEach(b=>b.onclick=()=>{
+        works.splice(Number(b.dataset.removeWork),1);relabel();tab('cite');});
+    };
+    tab('write');
     // THE TOOLBAR WRITES MARKDOWN, rather than holding formatting of its own. A button wraps the
     // selection or starts the lines it covers, so what it produces is what somebody could have
     // typed -- and what is stored stays the text that was typed either way.
@@ -545,7 +633,7 @@ export function openNoteDialog(note:Note,context:NoteContext,esc:Escape){
       if(unchanged()){dialog.close();return;}
       if(context.write!(note,{text:written,
         section:(section?section.value:note.section) as WriteUpPart,
-        fn:workFn?workFn.value:fn}))dialog.close();
+        fn:workFn?workFn.value:fn,works}))dialog.close();
       else{
         status.textContent='That note could not be kept on this device.';
         status.classList.add('is-failure');

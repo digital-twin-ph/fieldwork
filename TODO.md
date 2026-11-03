@@ -3729,4 +3729,5 @@ missing axiom does not mean the question went unasked.
 
 ## Citation builder for References (practitioner, 2026-11-02, after deduplicate)
 
+- Built 2026-11-02, experiment 165. Still open: an author-year style choice, and looking a work up by DOI.
 - Every item in References cites something. An authored note in References is written with a citation builder, reusing `Citation` and `renderCitation` from `input-provenance.ts`, with gaps shown before saving. Nigeria's seven references then move to structured citations.

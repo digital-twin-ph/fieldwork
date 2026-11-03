@@ -281,7 +281,23 @@ test('five questions about 774 LGAs, each its own short workflow',async({page})=
 
   // THE REPORT OVER THE 20 YEARS. Authored notes go in through the dialog, as a practitioner would
   // write them, and the machined ones come from running the rest.
-  const {notes}=JSON.parse(readFileSync(file('notes/report-notes.json'),'utf8'));
+  const {notes,works}=JSON.parse(readFileSync(file('notes/report-notes.json'),'utf8'));
+  // EACH WORK THROUGH THE CITATIONS TAB, field by field, as a practitioner would build it.
+  const cite=async work=>{
+    const c=work.citation;
+    await page.locator('#cite-type').selectOption(c.type);
+    await page.locator('#cite-authors').fill(c.authors.map(a=>a.corporate?a.family:`${a.family}, ${a.given}`).join('\n'));
+    if(c.etAl)await page.locator('#cite-et-al').check();
+    await page.locator('#cite-title').fill(c.title);
+    await page.locator('#cite-published').fill(work.published);
+    for(const [key,id] of [['container','cite-container'],['volume','cite-volume'],['issue','cite-issue'],
+      ['pages','cite-pages'],['publisher','cite-publisher'],['place','cite-place'],['doi','cite-doi']])
+      if(c[key])await page.locator(`#${id}`).fill(c[key]);
+    if(work.url)await page.locator('#cite-url').fill(work.url);
+    if(work.retrieved)await page.locator('#cite-retrieved').fill(work.retrieved);
+    await expect(page.locator('#cite-add')).toBeEnabled();
+    await page.locator('#cite-add').click();
+  };
   await page.locator('[data-view="notes"]').click();
   await page.locator('.notes-part').first().waitFor();
   for(const note of notes){
@@ -289,6 +305,11 @@ test('five questions about 774 LGAs, each its own short workflow',async({page})=
     await expect(page.locator('#note-text')).toBeVisible();
     await page.locator('#note-text').fill(note.text);
     await page.locator('#note-function').selectOption(note.fn);
+    if(note.cites?.length){
+      await page.locator('[data-note-tab="cite"]').click();
+      for(const id of note.cites)await cite(works[id]);
+      await expect(page.locator('.note-works li')).toHaveCount(note.cites.length);
+    }
     await page.locator('#note-save').click();
     await expect(page.locator('#note-dialog')).not.toBeVisible();
   }
@@ -297,6 +318,13 @@ test('five questions about 774 LGAs, each its own short workflow',async({page})=
   await page.waitForTimeout(1200);
   const view=page.locator('#notes-view');
   await expect(view.locator('.notes-note.k-authored')).toHaveCount(notes.length);
+  // REFERENCES ASSEMBLED FROM WHAT THE NOTES CITE: seven works, numbered once each, and no notes of its own.
+  const assembled=view.locator('[data-section="References"] .notes-reference.r-work');
+  await expect(assembled).toHaveCount(Object.keys(works).length);
+  await expect(assembled.first()).toContainText('WorldPop');
+  await expect(view.locator('[data-section="References"] [data-add-note]')).toHaveCount(0);
+  await expect(view.locator('.notes-cite').first()).toHaveText('[1, 2]');
+  await expect(assembled.filter({hasText:'Croft TN, Allen CK, Zachary BW, et al.'})).toHaveCount(1);
   expect(await view.locator('.notes-note.k-machined').count()).toBeGreaterThan(3);
   await page.screenshot({path:'test-results/nga-report.png',fullPage:true});
   if(process.env.NIGERIA_REPORT)writeFileSync(process.env.NIGERIA_REPORT,await view.innerText());

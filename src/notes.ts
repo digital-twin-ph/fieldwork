@@ -204,6 +204,17 @@ export interface MachinedNote {
  *  `about` is what it annotates: another note's id, or a node's. An annotation on Snow's chloride
  *  test is not a free-standing remark, and a reader who cannot see what it is about has half of
  *  it. Absent where the note stands on its own. */
+/** A WORK AN AUTHORED NOTE CITES, built in the note rather than typed into its sentence. The practitioner,
+ *  2026-11-02: the citation *"should be built within the note by a citation builder ... automatically
+ *  attached when the note is rendered and the citation automatically shows up in the References."*
+ *  The fields are `Citation`'s, so the three encoded styles render it and `citationGaps` checks it. */
+export interface CitedWork {
+  citation:import('./input-provenance.js').Citation;
+  /** When it was published: what every style prints as the year. */
+  published:string;
+  url?:string;
+  retrieved?:string;
+}
 export interface AuthoredNote {
   kind:'authored';
   id:string;
@@ -248,6 +259,8 @@ export interface AuthoredNote {
   };
   /** Other notes this one stands with: the edges of the composition. */
   relatesTo?:NoteId[];
+  /** The works this note cites. Marked where the note renders and listed in References. */
+  works?:CitedWork[];
 }
 
 /** WHAT AN INPUT DECLARES ABOUT ITSELF, as a note.
@@ -329,6 +342,16 @@ export const UNWRITTEN='(unwritten)';
  *  A note whose section is not a part of the body is DROPPED rather than coerced into one: putting
  *  somebody's sentence under a heading they did not choose is worse than leaving it out, and the
  *  count of what was dropped is returned so a caller can say so. */
+/** Works read back only when each has a title, an author and a date: a citation missing those cannot be
+ *  printed in any style, so it is dropped rather than carried as something that looks citable. */
+const worksOf=(raw:unknown):CitedWork[]=>!Array.isArray(raw)?[]:raw.flatMap(work=>{
+  if(!isRecord(work)||!isRecord(work.citation))return [];
+  const c=work.citation as Record<string,unknown>;
+  const published=text(work.published);
+  if(!text(c.title)||!published||!Array.isArray(c.authors)||!c.authors.length)return [];
+  return [{citation:structuredClone(c) as unknown as CitedWork['citation'],published,
+    ...(text(work.url)?{url:text(work.url)}:{}),...(text(work.retrieved)?{retrieved:text(work.retrieved)}:{})}];
+});
 export function readNotes(raw:unknown):{notes:Note[]; unreadable:number}{
   if(!Array.isArray(raw))return {notes:[],unreadable:0};
   const notes:Note[]=[];
@@ -381,7 +404,8 @@ export function readNotes(raw:unknown):{notes:Note[]; unreadable:number}{
           ...(text(from!.nodeId)?{nodeId:text(from!.nodeId)}:{}),
           ...(widgetOf(from!.widget)?{widget:widgetOf(from!.widget)!}:{}),
           ...(text(from!.at)?{at:text(from!.at)}:{})}}:{}),
-        ...(edges(entry.relatesTo).length?{relatesTo:edges(entry.relatesTo)}:{})});
+        ...(edges(entry.relatesTo).length?{relatesTo:edges(entry.relatesTo)}:{}),
+        ...(worksOf(entry.works).length?{works:worksOf(entry.works)}:{})});
       continue;
     }
     if(entry.kind==='machined'){

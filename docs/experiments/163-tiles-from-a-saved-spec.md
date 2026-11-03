@@ -1,6 +1,6 @@
 # 163 · PMTiles on a map: can a saved spec fetch the tiles again?
 
-_Created 2026-11-03 · Updated 2026-11-03_
+_Created 2026-11-02 · Updated 2026-11-02_
 
 **Status:** tried — built 2026-11-02 and imported into a Chromium page from the real archive once. WebKit reached a
 one-tile local archive only.

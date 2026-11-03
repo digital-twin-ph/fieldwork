@@ -26,7 +26,7 @@
 <urn:fieldwork:widget:compare_point_sets> a fw:WidgetDefinition; fw:nodeType "compare_point_sets"; rdfs:label "Compare point sets".
 <urn:fieldwork:widget:comparison_map> a fw:WidgetDefinition; fw:nodeType "comparison_map"; rdfs:label "Comparison map".
 <urn:fieldwork:widget:coverage_check> a fw:WidgetDefinition; fw:nodeType "coverage_check"; rdfs:label "Check spatial coverage".
-<urn:fieldwork:widget:deduplicate_points> a fw:WidgetDefinition; fw:nodeType "deduplicate_points"; rdfs:label "Deduplicate point records";
+<urn:fieldwork:widget:deduplicate_points> a fw:WidgetDefinition; fw:nodeType "deduplicate_points"; rdfs:label "Deduplicate records";
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/deduplicate_points.md>.
 <urn:fieldwork:widget:derive_value> a fw:WidgetDefinition; fw:nodeType "derive_value"; rdfs:label "Derive a value";
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/derive_value.md>.

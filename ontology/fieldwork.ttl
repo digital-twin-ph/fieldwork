@@ -1322,6 +1322,8 @@ fw:nameMatchMethod a owl:DatatypeProperty; rdfs:range xsd:string;
 fw:fuzzyThreshold a owl:DatatypeProperty; rdfs:range xsd:decimal.
 fw:blockDistanceM a owl:DatatypeProperty; rdfs:range xsd:decimal;
   rdfs:comment "Pairs further apart than this were never compared.".
+fw:blockColumns a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:comment "Rows of a table were compared only when they shared these columns. The table form of fw:blockDistanceM.".
 fw:nearDistanceM a owl:DatatypeProperty; rdfs:range xsd:decimal.
 fw:matchThreshold a owl:DatatypeProperty; rdfs:range xsd:decimal.
 fw:reviewThreshold a owl:DatatypeProperty; rdfs:range xsd:decimal.

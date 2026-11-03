@@ -65,6 +65,9 @@ export interface Candidate {
   /** A person's answer, when the band asked for one. */
   decided?:'match'|'non-match';
   reason?:string;
+  /** For rows of a table: the columns that disagree, and which row a person chose to keep. */
+  differs?:string[];
+  keep?:'a'|'b';
 }
 
 /** NFKC, trimmed, lower case. Fuzzy comparison also replaces runs of anything that is not a
@@ -114,10 +117,11 @@ export const candidateKey=(a:{sourceNodeId:string;id:string},b:{sourceNodeId:str
 /** What a decision was made ABOUT, so that editing either record lapses it rather than letting a
  *  stale judgement ride on changed data. The retired coverage check used the same device; this is
  *  the place where a judgement is genuinely required. */
-export const pairSignature=(candidate:Candidate)=>JSON.stringify([
-  candidate.a.name,candidate.a.coordinates,candidate.b.name,candidate.b.coordinates]);
+export const pairSignature=(candidate:Candidate)=>JSON.stringify(candidate.differs
+  ?[candidate.a.attributes,candidate.b.attributes]
+  :[candidate.a.name,candidate.a.coordinates,candidate.b.name,candidate.b.coordinates]);
 
-export interface PairDecision {key:string; decision:'match'|'non-match'; reason:string; signature:string}
+export interface PairDecision {key:string; decision:'match'|'non-match'; reason:string; signature:string; keep?:'a'|'b'}
 
 export interface DeduplicateResult {
   collection:PointCollection;
@@ -246,4 +250,34 @@ export function deduplicateReceipt(node:WorkflowNode<'deduplicate_points'>,resul
       +`(${result.blocked} never compared), names by ${p.nameMatch==='fuzzy'?`Jaro-Winkler at ${p.fuzzyThreshold}`:'exact match'}, `
       +`${result.matched} matched automatically, ${result.awaiting} awaiting a decision, `
       +`${result.merged} records merged. A pair in the review band stays two records until a person decides.`};
+}
+
+/** The table form's receipt: the same vocabulary, with the blocking columns where the distance was,
+ *  and every row removed named, so nothing leaves a table without saying which. Experiment 164. */
+export function deduplicateTableReceipt(node:WorkflowNode<'deduplicate_points'>,
+  result:import('./deduplicate-table.js').TableDeduplicateResult,runId:string,sourceNodeId:string):Receipt{
+  const p=node.params;
+  const entity=`urn:fieldwork:run:${runId}:output:${node.id}`,activity=`${entity}:activity`;
+  const quote=(v:unknown)=>JSON.stringify(String(v));
+  let facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n`
+    +`<${activity}> a fw:RecordDeduplication, prov:Activity; prov:used <urn:fieldwork:source:${sourceNodeId}>; `
+    +`fw:blockColumns ${quote((p.blockColumns?.length?p.blockColumns:['the declared primary key']).join(', '))}; `
+    +`fw:nameMatchMethod ${quote(p.nameMatch==='fuzzy'?'jaro-winkler':'exact')}; fw:fuzzyThreshold ${p.fuzzyThreshold}; `
+    +`fw:comparedPairCount ${result.compared}; fw:blockedPairCount ${result.blocked}; `
+    +`fw:matchedPairCount ${result.matched}; fw:awaitingDecisionCount ${result.awaiting}; `
+    +`fw:mergedRecordCount ${result.merged}.\n`
+    +`<${entity}> a fw:DataTable, prov:Entity; fw:recordCount ${result.table.rowCount}; prov:wasGeneratedBy <${activity}>.\n`;
+  for(const candidate of result.candidates){
+    const pair=`<${entity}:pair:${encodeURIComponent(candidate.key)}>`;
+    facts+=`${pair} a fw:LinkageCandidate; fw:candidateClass ${quote(candidate.decided||candidate.classification)}; `
+      +`fw:candidateScore ${candidate.score}; `
+      +`prov:wasDerivedFrom <urn:fieldwork:record:${sourceNodeId}:${candidate.a.id}>, <urn:fieldwork:record:${sourceNodeId}:${candidate.b.id}>`
+      +(candidate.reason?`; fw:decisionReason ${quote(candidate.reason)}`:'')+`.\n`;
+    facts+=`<${activity}> fw:linkageCandidate ${pair}.\n`;
+  }
+  return {nodeId:node.id,kind:'computation',facts,input:facts,rules:'',conclusions:[],
+    method:`Within-table record linkage: ${result.compared} pairs sharing the blocking columns compared, `
+      +`${result.matched} identical on every compared column and merged, ${result.awaiting} awaiting a decision, `
+      +`${result.merged} rows removed${result.removedRows.length?` (file rows ${result.removedRows.join(', ')})`:''}. `
+      +'A pair that disagrees stays two rows until a person decides which to keep.'};
 }

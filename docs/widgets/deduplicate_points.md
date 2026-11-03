@@ -1,4 +1,4 @@
-# Deduplicate point records
+# Deduplicate records
 
 _Created 2026-10-21 · Updated 2026-10-21_
 
@@ -19,6 +19,20 @@ This compares records **across** sources and asks two questions of every pair it
 Each question that answers yes is worth one point. A pair scoring two merges on its own. A pair
 scoring one **waits for you**, because the two questions disagree and that is a judgement rather
 than a calculation. A pair scoring none was never a candidate.
+
+## Rows of one table
+
+Choose **Rows of one table** under **The records are**. The widget then takes one table and compares rows that
+share the columns identifying a row, by default the table's declared primary key. These are the rows Data
+quality reports as repeating a key.
+
+| Pair | What happens |
+| --- | --- |
+| Identical on every compared column | One record entered twice: the later row is left out on its own |
+| Any compared column differs | Waits for you. Choose **Two records**, or **Same record** and which row to keep |
+
+The rows left out are named in the receipt, and the input table is not changed. A row is never dropped because
+it came second: keeping the first row of a pair that disagrees would silently delete a case.
 
 ## What you connect
 

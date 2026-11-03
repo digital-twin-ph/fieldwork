@@ -1,8 +1,8 @@
 # 164 · Diagnose a table, then deduplicate it
 
-_Created 2026-11-03 · Updated 2026-11-03_
+_Created 2026-11-02 · Updated 2026-11-02_
 
-**Status:** tried — keys, findings and the flag are built. The generalised `deduplicate` widget is not.
+**Status:** tried — keys, findings and the flag are built, and the deduplicate widget takes rows of one table.
 
 ## The task
 
@@ -43,7 +43,23 @@ Structural limits stay refusals: no rows, too many rows, a column that does not 
   machined limitation.
 - The two-by-two leaves declared keys out of Exposures. Its row-count guess remains for undeclared tables.
 
-## The generalised widget, not built
+## The generalised widget, tables built 2026-11-02
+
+`deduplicate_points` takes **Rows of one table** beside points. Its internal name is kept for now: renaming
+touches the validation lab's parity record and every generated contract, and is a separate step once the
+behaviour has settled. Its title is now *Deduplicate records*.
+
+| | Points | Rows of one table |
+| --- | --- | --- |
+| Sources | Two or more | One |
+| Blocking | Distance | Shared columns, by default the primary key |
+| Merges on its own | Name and place both agree | Every compared column agrees |
+| A person decides | Same place or not | Two records, or the same record and which row stays |
+
+Measured: an exact copy merges, a pair differing in one column waits, a decision to keep the second row removes
+the first, and editing either row lapses the decision. Unit tests and one browser test on Chromium and WebKit.
+
+## Still open from the generalised widget
 
 `deduplicate_points` becomes `deduplicate`, one widget over formats, with one source allowed. Three outcomes,
 untouched sources and decisions in the receipt carry over. Exact copies merge; rows that disagree wait for a

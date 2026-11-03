@@ -43,6 +43,28 @@ export function tilesIn(bounds:TileExtractSpec['bounds'],minZoom:number,maxZoom:
   return found;
 }
 
+/** THE EXTENT OF EVERYTHING A MAP DREW, from every `coordinates` array in its output: a study area,
+ *  points and polygons alike. The first version read polygon layers only, so a map of a study area
+ *  imported nothing; the practitioner, 2026-11-02: *"import tiles does not work"*. */
+export function drawnBounds(value:unknown):TileExtractSpec['bounds']|null{
+  let west=Infinity,south=Infinity,east=-Infinity,north=-Infinity;
+  const visit=(node:unknown,inCoordinates:boolean)=>{
+    if(Array.isArray(node)){
+      if(inCoordinates&&node.length>=2&&typeof node[0]==='number'&&typeof node[1]==='number'){
+        const [lon,lat]=node as number[];
+        if(Number.isFinite(lon)&&Number.isFinite(lat)&&Math.abs(lon!)<=180&&Math.abs(lat!)<=90){
+          west=Math.min(west,lon!);east=Math.max(east,lon!);south=Math.min(south,lat!);north=Math.max(north,lat!);}
+        return;
+      }
+      for(const item of node)visit(item,inCoordinates);return;
+    }
+    if(node&&typeof node==='object')
+      for(const [key,item] of Object.entries(node))visit(item,inCoordinates||key==='coordinates');
+  };
+  visit(value,false);
+  return west<=east&&south<=north?[west,south,east,north]:null;
+}
+
 /** A four-byte index length, the index as JSON, then the tiles end to end. */
 export function packTiles(tiles:Map<string,Uint8Array>):Uint8Array<ArrayBuffer>{
   const index:Record<string,[number,number]>={};let at=0;

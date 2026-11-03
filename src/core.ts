@@ -39,6 +39,8 @@ import {referencedPDFs,evidenceProvenance} from './evidence.js';
 import type {Exclusion,Workflow,WorkflowNode,NodeDefinition,NodeType,PortType,PointFeature,PointCollection,Position,ParamsByType,PointInput,Scalar,DistanceUnit,RetiredNodeType,RenamedNodeType,CandidateCondition} from './types.js';
 import {RENAMED_NODE_TYPES,isProjectedReference,BASEMAP_CHOICES} from './types.js';
 import {deduplicatePoints,deduplicateReceipt} from './deduplicate-points.js';
+import {deduplicateTable} from './deduplicate-table.js';
+import {deduplicateTableReceipt} from './deduplicate-points.js';
 import type {DeduplicateResult} from './deduplicate-points.js';
 import {clipPointsToArea,clipPointsReceipt} from './clip-points.js';
 import {workflowMetricCRS,metricCRSFacts} from './metric-crs.js';
@@ -159,9 +161,9 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   slr_site_assignment:{title:'Assign projection site',group:'Spatial operations',icon:'⊕',color:'teal',description:'Assign each point its nearest published projection site and record the distance',inputs:[['points','points'],['sites','points'],['projections','table']],output:'table'},
   slr_threshold_comparison:{title:'Compare level to elevation',group:'Comparisons and checks',icon:'⋚',color:'purple',description:'Compare one projected change against a supplied elevation on a stated datum',inputs:[['assignments','table']],output:'decisions'},
   reproject:{title:'Reproject points',group:'Spatial operations',icon:'⇄',color:'blue',description:'Project longitude/latitude points into a UTM zone, in metres',inputs:[['points','points']],output:'points'},
-  deduplicate_points:{title:'Deduplicate point records',group:'Comparisons and checks',icon:'⧉',color:'purple',
-    description:'Find records in two sources that are the same place, and merge the ones that agree',
-    inputs:[['points','points'],['points_2','points']],output:'points'},
+  deduplicate_points:{title:'Deduplicate records',group:'Comparisons and checks',icon:'⧉',color:'purple',
+    description:'Find records that are the same, in two point sources or within one table, and merge the ones that agree',
+    inputs:[['points','points'],['points_2','points'],['records','table']],output:'points'},
   clip_points_to_area:{title:'Keep points inside the area',group:'Spatial operations',icon:'⊂',color:'teal',description:'Keep the points that fall inside the study area, and count what fell outside',inputs:[['area','area'],['points','points']],output:'points'},
   raster_input:{title:'Raster input',group:'Sources',icon:'▦',color:'blue',description:'Import a window from a local GeoTIFF around the study area',inputs:[['area','area']],output:'raster'},
   // Extracted from `access`, which derived proxy minutes inside a nearest-neighbour search. A
@@ -237,6 +239,7 @@ export function outputOf(node:WorkflowNode):PortType|null{
   if(node.type==='summarize_combined_area')return node.params.yields==='area'?'area':'polygons';
   if(node.type==='apply_ruleset')return node.params.ruleset?.output??null;
   if(node.type==='micro_workflow')return node.params.composition?.output??null;
+  if(node.type==='deduplicate_points'&&node.params.format==='table')return 'table';
   return TYPES[node.type].output;
 }
 
@@ -415,6 +418,7 @@ export function nodeInputs(node:WorkflowNode):[string,PortType][]{
   // `network` and none of them was an output, so a downloaded network could not be seen.
   // Deduplication compares ACROSS sources, so two layers is its floor rather than its shape: a
   // practitioner with OSM, Overture and HDX over one area has three.
+  if(node.type==='deduplicate_points'&&node.params.format==='table')return [['records','table']];
   if(node.type==='deduplicate_points')
     return Array.from({length:Math.max(2,Math.min(MAX_POINT_LAYERS,node.params.pointInputCount??2))},
       (_,i)=>[pointPort(i),'points']) as [string,PortType][];
@@ -1608,6 +1612,17 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         const imported=tableReceipt(node,table,runId);value=imported.value;receipts.push(imported.receipt);break;}
       // The conversion ran when the file was saved; execution replays it offline without reprojecting again.
       case 'deduplicate_points':{
+        if(node.params.format==='table'){
+          const table=inputs.records as unknown as import('./data-table.js').DataTable;
+          if(table?.kind!=='data-table')throw new Error('Connect a table: this step compares its rows.');
+          const from=workflow.edges.find(e=>e.to===node.id&&e.port==='records')?.from??node.id;
+          const label=String(workflow.nodes.find(n=>n.id===from)?.params.label||'Table');
+          const linked=deduplicateTable(table,from,label,node.params,node.params.decisions);
+          linkages[node.id]=linked as unknown as DeduplicateResult;
+          value=linked.table as unknown as DisplayValue;
+          receipts.push(deduplicateTableReceipt(node,linked,runId,from));
+          break;
+        }
         const layers=pointInputs().layers;
         if(layers.length<2)throw new Error('Deduplication compares records ACROSS sources, so it needs at least two point layers.');
         const linked=deduplicatePoints(layers,node.params,node.params.decisions);

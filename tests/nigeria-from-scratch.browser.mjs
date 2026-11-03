@@ -271,8 +271,19 @@ test('five questions about 774 LGAs, each its own short workflow',async({page})=
     expect(spec.tileExtract.bounds[2]).toBeLessThan(15);
     await page.locator('#run-button').click();
     await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:120000});
+    // EACH LGA BY ITS NAME, with the ID it is joined on beneath.
+    await page.locator('[data-view="workflow"]').click();
+    await page.locator(`.react-flow__node[data-id="${map}"]`).click();
+    await page.locator('#map-part-label').selectOption('shapeName');
+    await page.locator('#run-button').click();
+    await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:120000});
     await page.locator('[data-view="results"]').click();
     await expect(page.locator('[data-tile-status]')).toContainText('tiles held on this device',{timeout:30000});
+    await page.locator('#catchment-map-host path.leaflet-interactive').nth(400).click({force:true});
+    const popup=page.locator('.leaflet-popup-content');
+    await expect(popup.locator('b')).not.toHaveText(/^\d+$/);
+    await expect(popup.locator('.muted')).toHaveText(/^\d+$/);
+    await page.keyboard.press('Escape');
     await page.waitForTimeout(process.env.NIGERIA_REAL_TILES?8000:500);
     await page.screenshot({path:'test-results/nga-ground.png'});
     await page.locator('[data-view="workflow"]').click();

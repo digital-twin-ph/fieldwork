@@ -136,7 +136,7 @@ export interface MapLayers {
  *  practitioner their new result rather than stranding them over the old extent. */
 let rememberedView:{key:string;lat:number;lng:number;zoom:number}|undefined;
 
-export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,context:PointCollection|undefined,esc:Escape,basemap:BasemapChoice='none',onBasemapChange?:(choice:BasemapChoice)=>void,viewKey?:string,tileExtract?:TileExtractSpec){
+export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,context:PointCollection|undefined,esc:Escape,basemap:BasemapChoice='none',onBasemapChange?:(choice:BasemapChoice)=>void,viewKey?:string,tileExtract?:TileExtractSpec,partLabel?:string){
   // A Polygons value passed directly is the old call, kept working: it is one layer set with no
   // boundary and no rows.
   const layers:MapLayers=(source as Polygons)?.features!==undefined&&!(source as MapLayers).polygons
@@ -240,7 +240,12 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
     // exactly what a legend cannot do. The practitioner, 2026-10-26.
     const shade=f.value===undefined||!classed?''
       :`<br>${round(f.value)}${at===null?'':` · class ${at+1} of ${classed.classes}`}`;
-    layer.bindPopup(`<b>${esc(f.name)}</b>${shade}${f.minutes===undefined?'':`<br>Within ${f.minutes} minutes (cumulative)`}${f.count===undefined?'':`<br>${f.count} locations${p.summary?.valueField?`<br>${esc(p.summary.valueField)}: ${f.total}`:''}`}`);
+    // THE PART BY ITS NAME, AND ITS KEY BENEATH. Nigeria's LGAs are keyed by ID because 769 names cover
+    // 774 places, and the popup showed only "483". The practitioner, 2026-11-02.
+    const said=partLabel?(f as {properties?:Record<string,unknown>}).properties?.[partLabel]:undefined;
+    const title=said!==undefined&&said!==null&&String(said).trim()
+      ?`<b>${esc(String(said))}</b> <span class="muted">${esc(f.name)}</span>`:`<b>${esc(f.name)}</b>`;
+    layer.bindPopup(`${title}${shade}${f.minutes===undefined?'':`<br>Within ${f.minutes} minutes (cumulative)`}${f.count===undefined?'':`<br>${f.count} locations${p.summary?.valueField?`<br>${esc(p.summary.valueField)}: ${f.total}`:''}`}`);
     // NOT ADDED TO THE MAP HERE. A feature that belongs to a group is drawn BY that group, and
     // adding it individually as well is what made the control lie: the checkbox reflects the
     // group, which was never on the map, while the features were -- so "Polygon layer" sat

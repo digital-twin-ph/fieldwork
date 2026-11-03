@@ -523,6 +523,8 @@ export interface ParamsByType {
     markHalo?:boolean;
     /** Where a `tile-extract` basemap came from. The spec travels; the tiles stay on the device. */
     tileExtract?:import('./tile-extract.js').TileExtractSpec;
+    /** Which attribute names a polygon part where a reader clicks it. The key stays what joins it. */
+    partLabel?:string;
     inputMode?:'spatial'|'decisions'|'raster'|'polygons'|'network';presentation?:'plot'|'interactive';contextPoints?:boolean;mapTitle?:string;mapSubtitle?:string;mapSourceNote?:string;showLegend?:boolean;basemap?:BasemapChoice}; table_output:{label:string; pointInputCount?:number; inputMode?:'spatial'|'decisions'|'polygons'|'table'; totalsAsserted?:boolean};
   chart_output:{label:string;
     /** Which key column a table is charted against. Absent takes the table's first, which is the

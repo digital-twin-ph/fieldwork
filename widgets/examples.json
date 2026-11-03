@@ -232,7 +232,7 @@
       "id": "urn:fieldwork:example:nigeria-immunization-2024",
       "title": "DTP coverage and zero-dose children in Nigeria, 2024",
       "repository": "https://github.com/digital-twin-ph/example-2024-nigeria-immunization",
-      "commit": "8e2b3c769251e33f5f96e522dd4607305bed8864",
+      "commit": "5e26f90c04250a546860f243ff8f3d7da13f7512",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2024-nigeria-immunization",
       "licence": {
         "data": "CC-BY-4.0",
@@ -259,8 +259,8 @@
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "ddbc8ab5823c7b5eba32229635defd419af317cf66e3c7177447855c84439a11",
-          "bytes": 8261972
+          "sha256": "8dc4dd3bbd5f5b510a311076aee6fa3ef08b4d9360f780080ba861e647ded841",
+          "bytes": 8261983
         },
         {
           "path": "data/nga-lga-2024.csv",

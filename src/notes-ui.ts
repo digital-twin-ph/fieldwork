@@ -523,6 +523,7 @@ export function openNoteDialog(note:Note,context:NoteContext,esc:Escape){
     // inputs' citations are, and shown as it will print; the note's sentence carries no citation of its own.
     const works:CitedWork[]=note.kind==='authored'?structuredClone(note.works??[]):[];
     const startedWith=JSON.stringify(works);
+    let editing:number|null=null;
     const tabs=$('#note-tabs'),panel=$('#note-cite-panel');
     tabs.hidden=note.kind!=='authored';
     const tab=(which:'write'|'cite')=>{
@@ -553,6 +554,7 @@ export function openNoteDialog(note:Note,context:NoteContext,esc:Escape){
       ...(w.url?{url:w.url}:{}),...(w.retrieved?{retrieved:w.retrieved}:{})});
     const drawCitations=()=>{
       panel.innerHTML=(works.length?`<ol class="note-works">${works.map((w,i)=>`<li>${esc(renderCitation(asProvenance(w),METHOD_CITATION_STYLE)||w.citation.title)}`
+          +` <button type="button" class="text-button" data-edit-work="${i}">Edit</button>`
           +` <button type="button" class="text-button" data-remove-work="${i}">Remove</button></li>`).join('')}</ol>`
           :'<p class="muted">No works cited. A work added here is marked on the note and listed in References.</p>')
         +`<div class="note-cite-form"><label class="field-label" for="cite-type">Kind of work</label><select id="cite-type">`
@@ -568,7 +570,20 @@ export function openNoteDialog(note:Note,context:NoteContext,esc:Escape){
         +field('cite-doi','DOI','','10.1016/j.vaccine.2022.11.026')+field('cite-url','URL')
         +field('cite-retrieved','Accessed','','2026-11-02')
         +`<p id="cite-preview" class="note-preview"></p><ul id="cite-gaps" class="quality-problems"></ul>`
-        +`<button type="button" id="cite-add" class="button primary">Add citation</button></div>`;
+        +`<button type="button" id="cite-add" class="button primary">${editing===null?'Add citation':'Update citation'}</button>`
+        +(editing===null?'':` <button type="button" id="cite-cancel" class="button">Cancel</button>`)+`</div>`;
+      // AN ENTRY BEING CORRECTED is put back in the form as it was entered, so a wrong field can be fixed
+      // without retyping the rest. The practitioner, 2026-11-03.
+      if(editing!==null){
+        const w=works[editing]!,c=w.citation;
+        const put=(id:string,value:string|undefined)=>{const el=panel.querySelector<HTMLInputElement|HTMLTextAreaElement|HTMLSelectElement>(`#${id}`);if(el)el.value=value??'';};
+        put('cite-type',c.type);
+        put('cite-authors',c.authors.map(a=>a.corporate||!a.given?a.family:`${a.family}, ${a.given}`).join('\n'));
+        const etAl=panel.querySelector<HTMLInputElement>('#cite-et-al');if(etAl)etAl.checked=!!c.etAl;
+        put('cite-title',c.title);put('cite-published',w.published);put('cite-container',c.container);
+        put('cite-volume',c.volume);put('cite-issue',c.issue);put('cite-pages',c.pages);put('cite-publisher',c.publisher);
+        put('cite-place',c.place);put('cite-doi',c.doi);put('cite-url',w.url);put('cite-retrieved',w.retrieved);
+      }
       const check=()=>{
         const w=draftWork(),gaps=citationGaps(asProvenance(w));
         panel.querySelector('#cite-gaps')!.innerHTML=gaps.map(g=>`<li class="quality-problem">${esc(g)}</li>`).join('');
@@ -581,9 +596,13 @@ export function openNoteDialog(note:Note,context:NoteContext,esc:Escape){
       check();
       (panel.querySelector('#cite-add') as HTMLButtonElement).onclick=()=>{
         const w=draftWork();if(citationGaps(asProvenance(w)).length)return;
-        works.push(w);relabel();tab('cite');};
+        if(editing===null)works.push(w);else works[editing]=w;
+        editing=null;relabel();tab('cite');};
+      panel.querySelector<HTMLButtonElement>('#cite-cancel')?.addEventListener('click',()=>{editing=null;tab('cite');});
+      panel.querySelectorAll<HTMLButtonElement>('[data-edit-work]').forEach(b=>b.onclick=()=>{
+        editing=Number(b.dataset.editWork);tab('cite');});
       panel.querySelectorAll<HTMLButtonElement>('[data-remove-work]').forEach(b=>b.onclick=()=>{
-        works.splice(Number(b.dataset.removeWork),1);relabel();tab('cite');});
+        works.splice(Number(b.dataset.removeWork),1);editing=null;relabel();tab('cite');});
     };
     tab('write');
     // THE TOOLBAR WRITES MARKDOWN, rather than holding formatting of its own. A button wraps the

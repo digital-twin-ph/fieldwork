@@ -57,6 +57,7 @@ import classification from '../widgets/classification.json' with {type:'json'};
 import {OLD_TYPES,validateOldNode,executeOldNode,migrateFacilitySources,applyAccessReview,applyFacilityGrading,gradedPointLayer,distancesAsAccess} from './old-naledi.js';
 import {resolveRuleset,bindParameters,tableContractFailures,rulesetCitation} from './rulesets.js';
 import {deriveValue,selectRows,OPERATORS} from './derive-value.js';
+import {appendRows,appendSentence} from './append-rows.js';
 import widgetRegistry from '../widgets/registry.json';
 import {relateTable,relateOutcome,machinedNotes,relateReceiptFacts,type RelateOutcome} from './relate-table.js';
 // THE EQUATIONS THE COMPUTATIONS USED, machined as Methods notes. The second, third and fourth
@@ -126,6 +127,9 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   derive_value:{title:'Derive a value',group:'Summaries',icon:'∓',color:'teal',
     description:'Compute a new value in a key column from two of its existing values, group by group',
     inputs:[['records','table']],output:'table'},
+  append_rows:{title:'Append rows',group:'Summaries',icon:'⊕',color:'teal',
+    description:'Stack the rows of a second table under the first, lining columns up by name',
+    inputs:[['records','table'],['records_2','table']],output:'table'},
   select_rows:{title:'Select rows by value',group:'Summaries',icon:'⊂',color:'teal',
     description:'Keep only the rows whose key column holds one of the values you name, in that order',
     inputs:[['records','table']],output:'table'},
@@ -1512,6 +1516,16 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           workflow.edges.find(e=>e.to===node.id&&e.port==='records')!.from));
         machined[node.id]=[twoByTwoEquationNote(result,node.id)];
         withNote(receipts,runId,node.id,machined[node.id]);
+        break;}
+      case 'append_rows':{
+        const first=inputs.records as unknown as import('./data-table.js').DataTable;
+        const second=(inputs as unknown as Record<string,unknown>).records_2 as import('./data-table.js').DataTable;
+        if(first?.kind!=='data-table'||second?.kind!=='data-table')
+          throw new Error('Connect two tables: this step stacks the rows of the second under the first.');
+        const result=appendRows(first,second,node.params);
+        value={...result.table,sentence:appendSentence(result,node.params)} as unknown as DisplayValue;
+        receipts.push({nodeId:node.id,kind:'computation',method:appendSentence(result,node.params),
+          fromFirst:result.fromFirst,fromSecond:result.fromSecond,missing:result.missing} as unknown as Receipt);
         break;}
       case 'select_rows':{
         const table=inputs.records as unknown as import('./data-table.js').DataTable;

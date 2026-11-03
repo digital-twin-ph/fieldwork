@@ -8,10 +8,10 @@
   },
   "measuredAt": "2026-10-27",
   "counts": {
-    "widgets": 55,
+    "widgets": 56,
     "covered": 26,
     "awaiting": 14,
-    "none": 14,
+    "none": 15,
     "blocked": 1
   },
   "widgets": [
@@ -228,6 +228,11 @@
       "expectation": "parity",
       "check": null,
       "computes": "Reads a raster value at each point's position."
+    },
+    {
+      "nodeType": "append_rows",
+      "expectation": "none",
+      "reason": "Stacks rows already present and computes nothing: every value it emits was read from one of the two tables, unchanged. What could be wrong is which columns line up, what is left empty and the source labels, which the unit tests assert directly."
     },
     {
       "nodeType": "select_rows",

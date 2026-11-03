@@ -297,6 +297,25 @@
         }
       ]
     },
+    "append_rows": {
+      "output": "table",
+      "contracts": [
+        {
+          "when": "default",
+          "required": [
+            [
+              "records",
+              "table"
+            ],
+            [
+              "records_2",
+              "table"
+            ]
+          ],
+          "optional": []
+        }
+      ]
+    },
     "select_rows": {
       "output": "table",
       "contracts": [

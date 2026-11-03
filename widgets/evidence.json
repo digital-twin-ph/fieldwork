@@ -35,7 +35,7 @@
   "parity only": 9,
   "example, lab not applicable": 13,
   "example+parity": 17,
-  "neither applies": 1
+  "neither applies": 2
  },
  "compositionsUsedByNoExample": [
   "compute_walking_catchment"
@@ -51,6 +51,15 @@
    "labOwed": false,
    "fieldUse": [],
    "rung": "example+parity"
+  },
+  {
+   "nodeType": "append_rows",
+   "exampleUses": [],
+   "exampleUseCount": 0,
+   "lab": "none",
+   "labOwed": false,
+   "fieldUse": [],
+   "rung": "neither applies"
   },
   {
    "nodeType": "apply_ruleset",

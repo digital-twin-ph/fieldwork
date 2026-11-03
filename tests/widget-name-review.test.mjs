@@ -114,7 +114,9 @@ test('the shipped ledger passes and covers every live widget', ()=>{
   // Its near miss is study_area, and what keeps them apart is frame against layer -- one boundary
   // the workflow is about, against many attributed features inside it. The practitioner settled
   // that by revising the study area to the extent enclosing Snow's Map 2.
-  assert.equal(review.reviews.length,55);
+  // 56 on 2026-11-03, with append_rows: rows of one table after another's, which relate (a merge) and
+  // select (one column's values) could not produce. Experiment 166.
+  assert.equal(review.reviews.length,56);
 });
 
 test('the generated table shows the palette words beside the identifier', ()=>{

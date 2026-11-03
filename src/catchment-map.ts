@@ -7,7 +7,7 @@ import type {Polygons} from './catchments.js';
 import type {PointCollection,Escape,Position} from './types.js';
 
 import {BASEMAP_CHOICES,basemapAvailable,basemapOptions,BASEMAP_LABELS,type BasemapChoice} from './basemaps.js';
-import {layerSymbol,markPath,markRadius,polygonShading,categoricalSteps,FIGURE_ROLE} from './presentation.js';
+import {layerSymbol,markPath,markRadius,polygonShading,shadedValues,categoricalSteps,FIGURE_ROLE} from './presentation.js';
 import type {LayerShape,FillClass,FillEncoding} from './presentation.js';
 import {fillClass,SPATIAL_RELATION_FILL,MARK_HALO} from './presentation.js';
 import {rasterImage} from './raster-image.js';
@@ -136,7 +136,7 @@ export interface MapLayers {
  *  practitioner their new result rather than stranding them over the old extent. */
 let rememberedView:{key:string;lat:number;lng:number;zoom:number}|undefined;
 
-export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,context:PointCollection|undefined,esc:Escape,basemap:BasemapChoice='none',onBasemapChange?:(choice:BasemapChoice)=>void,viewKey?:string,tileExtract?:TileExtractSpec,partLabel?:string){
+export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,context:PointCollection|undefined,esc:Escape,basemap:BasemapChoice='none',onBasemapChange?:(choice:BasemapChoice)=>void,viewKey?:string,tileExtract?:TileExtractSpec,partLabel?:string,frameCaption?:string){
   // A Polygons value passed directly is the old call, kept working: it is one layer set with no
   // boundary and no rows.
   const layers:MapLayers=(source as Polygons)?.features!==undefined&&!(source as MapLayers).polygons
@@ -210,7 +210,14 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
   // the practitioner, 2026-10-26: "when I shift to Interactive, the choropleth loses its shades."
   // Both renderers now read the same `classifyValues`, because a figure whose meaning depends on
   // which renderer drew it is two different figures.
-  const {grouped,classed}=polygonShading(p.features);
+  const shading=polygonShading(p.features);
+  const {grouped}=shading;
+  // FRAMES SHARE ONE KEY. Classes come from every value in every frame, so a part darker in one frame
+  // than another really is higher; classes recomputed per frame would hide the trend. Experiment 168.
+  const frameNames=!grouped&&p.frames?.length?p.frames:[];
+  const classed=shading.classed;
+  let stopFrames=()=>{};
+  const framedParts:{f:typeof p.features[number];layer:L.GeoJSON;title:string}[]=[];
   // A NAMED LAYER IS CATEGORICAL. Every feature without a value took one hard-coded `#1f77b4`,
   // so a layer of two named reaches drew as one shape. Bands with `minutes` are a sequence and
   // keep their own treatment below; anything else is told apart by hue.
@@ -245,6 +252,7 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
     const said=partLabel?(f as {properties?:Record<string,unknown>}).properties?.[partLabel]:undefined;
     const title=said!==undefined&&said!==null&&String(said).trim()
       ?`<b>${esc(String(said))}</b> <span class="muted">${esc(f.name)}</span>`:`<b>${esc(f.name)}</b>`;
+    if(frameNames.length)framedParts.push({f,layer,title});
     layer.bindPopup(`${title}${shade}${f.minutes===undefined?'':`<br>Within ${f.minutes} minutes (cumulative)`}${f.count===undefined?'':`<br>${f.count} locations${p.summary?.valueField?`<br>${esc(p.summary.valueField)}: ${f.total}`:''}`}`);
     // NOT ADDED TO THE MAP HERE. A feature that belongs to a group is drawn BY that group, and
     // adding it individually as well is what made the control lie: the checkbox reflects the
@@ -497,8 +505,7 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
   // map should also show the value classes, as in the static map." Built from the same
   // `classifyValues`, so the two renderers cannot state different breaks for one figure.
   if(classed){
-    const values=p.features.map(f=>f.value)
-      .filter((v):v is number=>typeof v==='number'&&Number.isFinite(v));
+    const values=shadedValues(p.features);
     const edges=[Math.min(...values),...classed.breaks];
     const legend=new L.Control({position:'bottomleft'});
     legend.onAdd=()=>{
@@ -514,6 +521,55 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
       return box;
     };
     legend.addTo(map);
+  }
+  // THE FRAME CONTROL. A slider, Play, Pause and a step each way; the caption is the practitioner's and
+  // the frame label is the data's. It plays only while every part is in view, the practitioner's rule
+  // for any map that plays: "We only need the playback for maps where the zoom level has all the data."
+  if(frameNames.length&&classed){
+    let at=frameNames.length-1,timer:number|undefined;
+    const control=new L.Control({position:'topleft'});
+    const box=L.DomUtil.create('div','map-frame-control');
+    const draw=(index:number)=>{
+      at=index;const name=frameNames[at]!;
+      for(const {f,layer,title} of framedParts){
+        const value=f.frames?.[name]??null;
+        const cls=value===null?null:classed.classOf(value);
+        layer.setStyle({fillColor:cls===null?FIGURE_ROLE.unknown:classed.colours[cls],fillOpacity:cls===null?.18:.78});
+        layer.setPopupContent(`${title}<br>${esc(name)}: ${value===null?'no value':`${round(value)}${cls===null?'':` · class ${cls+1} of ${classed.classes}`}`}`);
+      }
+      (box.querySelector('[data-frame-slider]') as HTMLInputElement).value=String(at);
+      box.querySelector('[data-frame-label]')!.textContent=`${frameCaption?`${frameCaption} · `:''}${name}`;
+    };
+    const stop=()=>{if(timer!==undefined){clearInterval(timer);timer=undefined;}
+      box.querySelector('[data-frame-play]')!.textContent='Play';};
+    stopFrames=stop;
+    const inView=()=>!all.getBounds().isValid()||map.getBounds().contains(all.getBounds());
+    box.innerHTML=`<p class="map-frame-label" data-frame-label aria-live="polite"></p>`
+      +`<input type="range" min="0" max="${frameNames.length-1}" step="1" data-frame-slider aria-label="Frame">`
+      +`<div class="map-frame-buttons"><button type="button" data-frame-step="-1" aria-label="Previous frame">◀</button>`
+      +`<button type="button" data-frame-play>Play</button>`
+      +`<button type="button" data-frame-step="1" aria-label="Next frame">▶</button>`
+      +`<select data-frame-pace aria-label="Pace"><option value="2000">Slow</option><option value="1000" selected>Normal</option><option value="500">Fast</option></select></div>`
+      +`<p class="muted" data-frame-says></p>`;
+    const says=box.querySelector('[data-frame-says]')!;
+    (box.querySelector('[data-frame-slider]') as HTMLInputElement).oninput=e=>{stop();draw(Number((e.target as HTMLInputElement).value));};
+    box.querySelectorAll<HTMLButtonElement>('[data-frame-step]').forEach(b=>b.onclick=()=>{
+      stop();draw(Math.min(frameNames.length-1,Math.max(0,at+Number(b.dataset.frameStep))));});
+    box.querySelector<HTMLButtonElement>('[data-frame-play]')!.onclick=()=>{
+      if(timer!==undefined){stop();return;}
+      if(!inView()){says.textContent='Some parts are outside the view. Fit all layers to play.';return;}
+      says.textContent='';
+      if(at===frameNames.length-1)draw(0);
+      box.querySelector('[data-frame-play]')!.textContent='Pause';
+      timer=window.setInterval(()=>{
+        if(!inView()){stop();says.textContent='Paused: some parts moved out of view.';return;}
+        draw(at+1);
+        if(at>=frameNames.length-1)stop();
+      },Number((box.querySelector('[data-frame-pace]') as HTMLSelectElement).value));
+    };
+    L.DomEvent.disableClickPropagation(box);
+    control.onAdd=()=>box;control.addTo(map);
+    draw(at);
   }
   // THE CLASSES, NAMED, for the same reason the static figure names them: a hue with no label says
   // nothing, and `polygonShading` is what makes this agree with the fills above.
@@ -682,7 +738,7 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
     +'Use layer controls and click features for details.';
   host.append(note);
   let disposed=false;const observer=new ResizeObserver(()=>{if(!disposed)map.invalidateSize();});observer.observe(canvas);observer.observe(panel());
-  return ()=>{disposed=true;observer.disconnect();
+  return ()=>{disposed=true;stopFrames();observer.disconnect();
     for(const event of ['fullscreenchange','webkitfullscreenchange'])document.removeEventListener(event,markFullscreen);
     map.stop();map.remove();host.replaceChildren();};
 }

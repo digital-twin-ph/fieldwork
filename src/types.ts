@@ -450,6 +450,8 @@ export interface ParamsByType {
    *  rather than assumed, because folding punctuation is what takes South London from 23 of 32
    *  matches to 32 of 32 and a reader is owed the chance to disagree with it. */
   join_table_to_area:{label:string;keyField:string;normalisation:'exact'|'fuzzy';
+    /** A key column whose values are frames, so each part carries one value per frame. Experiment 168. */
+    frameField?:string;
     /** A SECOND COLUMN TO CARRY, as the class each part belongs to rather than as a quantity.
      *
      *  Optional and unset by default: a join states a value, and a class is an extra claim the
@@ -526,6 +528,8 @@ export interface ParamsByType {
     tileExtract?:import('./tile-extract.js').TileExtractSpec;
     /** Which attribute names a polygon part where a reader clicks it. The key stays what joins it. */
     partLabel?:string;
+    /** What a frame is, written by the practitioner: "Birth cohort". The frame's own name is the data's. */
+    frameCaption?:string;
     inputMode?:'spatial'|'decisions'|'raster'|'polygons'|'network';presentation?:'plot'|'interactive';contextPoints?:boolean;mapTitle?:string;mapSubtitle?:string;mapSourceNote?:string;showLegend?:boolean;basemap?:BasemapChoice}; table_output:{label:string; pointInputCount?:number; inputMode?:'spatial'|'decisions'|'polygons'|'table'; totalsAsserted?:boolean};
   chart_output:{label:string;
     /** Which key column a table is charted against. Absent takes the table's first, which is the

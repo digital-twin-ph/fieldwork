@@ -3,8 +3,9 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## 0.13.0 — In development
+## 0.14.0 — 2026-11-03
 
+- **An interactive map plays through frames.** A join given **Frames from** keeps one value per frame on every part, such as a year; the interactive map then plays through them with one key for every frame, only while every part is in view. Nigeria's third workflow plays 20 birth cohorts. Experiment 168.
 - An interactive map can import an OpenStreetMap extract as PMTiles, once, for the area it draws. The workflow keeps the spec and the device keeps the tiles.
 - A polygon layer's key, figure and interactive map now agree on what shades it. A ruleset's classes are keyed by name, and the interactive map draws them.
 - Two-by-two: Exposures to compare offers only columns holding the two chosen groups, and reads down one left edge.
@@ -18,14 +19,17 @@ shown in a local build is not a claim that it has been published.
 - Import tiles works for a map of a study area or points, not only polygons.
 - A table is no longer refused for a quality problem. Primary and secondary keys can be declared, and findings flag the node, fill a Findings tab in Data quality and reach the write-up.
 - CI: `verify` is pinned to `ubuntu-24.04`, checks out all three examples, and a missing sibling now skips its test instead of failing it.
+- **A map says its basemap is context.** Over an online basemap, Methods gains a machined limitation: the
+  tiles can change or go, and no value depends on them.
+- Validation is as gated per commit: Chromium and WebKit browser tests and the unit suite. The adjusted estimates the new examples publish are not reproduced; the app computes crude measures.
+
+## 0.13.0 — 2026-11-02
 
 Covers the work of 2026-10-30.
 
 - **Fast editing no longer fails in Safari.** Every edit rewrote the page address, and Safari refuses more
   than 100 of those in ten seconds, which stopped the edit. It now writes only when the address changes.
 
-- **A map says its basemap is context.** Over an online basemap, Methods gains a machined limitation: the
-  tiles can change or go, and no value depends on them.
 
 - **Polygons are records.** *Join a table* takes a polygon layer and keeps what each polygon holds, and
   *Apply ruleset* reads polygons and returns classes a map can shade. Nigeria's 774 LGAs now reach a map,

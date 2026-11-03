@@ -473,7 +473,7 @@
     {
       "id": "urn:fieldwork:widget:join_table_to_area",
       "nodeType": "join_table_to_area",
-      "currentVersion": "0.2.0",
+      "currentVersion": "0.3.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -484,6 +484,11 @@
           "version": "0.2.0",
           "path": "widgets/releases/join_table_to_area/0.2.0.json",
           "sha256": "7bf448534289eca5696adb836376b9d32b136ab324d20651faae9ff8e05574dc"
+        },
+        {
+          "version": "0.3.0",
+          "path": "widgets/releases/join_table_to_area/0.3.0.json",
+          "sha256": "7ffd1da62f55d0ae498f77399eafcad8c3b794c22967cda4c2e3d02239a60025"
         }
       ]
     },
@@ -502,7 +507,7 @@
     {
       "id": "urn:fieldwork:widget:map_output",
       "nodeType": "map_output",
-      "currentVersion": "0.18.0",
+      "currentVersion": "0.19.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -593,6 +598,11 @@
           "version": "0.18.0",
           "path": "widgets/releases/map_output/0.18.0.json",
           "sha256": "9346204ec0692d6a9f8dd69aa18c7e75b989e94c39a3d5e0afe2f4e3ed5c8631"
+        },
+        {
+          "version": "0.19.0",
+          "path": "widgets/releases/map_output/0.19.0.json",
+          "sha256": "0f12f76b0b866d8c66acda0880520f59206cb40b384f6810739de681245390aa"
         }
       ]
     },

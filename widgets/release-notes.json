@@ -384,12 +384,12 @@
    "migrationFrom": []
   },
   "join_table_to_area": {
-   "version": "0.2.0",
-   "released": "2026-11-02",
+   "version": "0.3.0",
+   "released": "2026-11-03",
    "changes": [
     {
      "kind": "minor",
-     "description": "Joins to a polygon layer as well as a study area, so a boundary file too large to be one extent can still be joined: Nigeria's 774 LGAs are about 218,000 vertices. What a polygon already holds is kept, so a second join adds a column as a merge on a GeoDataFrame does. Multipolygons stay as published."
+     "description": "An optional frame column, such as the measure holding each year, keeps one value per frame on every part; the part's single value is the last frame's, so other consumers are unchanged. A key repeated across frames is not a repeat. Experiment 168."
     }
    ],
    "breaking": false,
@@ -416,24 +416,12 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.18.0",
-   "released": "2026-11-02",
+   "version": "0.19.0",
+   "released": "2026-11-03",
    "changes": [
     {
      "kind": "minor",
-     "description": "A map over an online basemap writes a machined Methods limitation: the tiles are context, can change or go, and no value depends on them. Bundled ground writes none."
-    },
-    {
-     "kind": "patch",
-     "description": "A polygon layer that carries a category is keyed by its classes, as the figure shades it. A layer classified by a ruleset was keyed by the value ranges it no longer showed."
-    },
-    {
-     "kind": "minor",
-     "description": "An interactive map can import an OpenStreetMap extract as PMTiles, once, for what it draws, and keep it on the device. The workflow keeps the spec, not the tiles. A category now shades and keys the interactive map too."
-    },
-    {
-     "kind": "minor",
-     "description": "An interactive map can label polygon parts with any attribute they carry, shown above the key they are joined on."
+     "description": "An interactive map of a layer with frames plays through them: a slider, Play, Pause and a step each way, at a chosen pace, only while every part is in view. Every frame, the static figure and both keys share one set of classes. The practitioner names what a frame is; the frame keeps the data's name. Experiment 168."
     }
    ],
    "breaking": false,

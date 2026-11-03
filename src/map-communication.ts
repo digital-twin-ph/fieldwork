@@ -4,7 +4,7 @@ import type {WorkflowNode,Workflow} from './types.js';
 import {basemapAvailable} from './basemaps.js';
 import {attributionsFor,provenanceOf} from './input-provenance.js';
 import type {LayerShape} from './presentation.js';
-import {polygonShading,markPath,resolveLayerSymbol,SPATIAL_RELATION_FILL,FIGURE_PALETTE_NAME,FIGURE_PALETTE_AUTHORITY,MARK_VOCABULARY,FIGURE_ROLE,FIGURE_TYPE,FIGURE_PALETTE,scaleBarSvg,northArrowSvg,metresPerPixel,classifyValues,categoricalSteps} from './presentation.js';
+import {polygonShading,shadedValues,markPath,resolveLayerSymbol,SPATIAL_RELATION_FILL,FIGURE_PALETTE_NAME,FIGURE_PALETTE_AUTHORITY,MARK_VOCABULARY,FIGURE_ROLE,FIGURE_TYPE,FIGURE_PALETTE,scaleBarSvg,northArrowSvg,metresPerPixel,classifyValues,categoricalSteps} from './presentation.js';
 import {applyDesignRules,figureDesign,designRuleFacts,designRuleDeclarations,designChoiceFacts} from './map-conformance.js';
 
 export interface MapPresentation {title:string; subtitle:string; sourceNote:string; legend:boolean; items:{label:string;color:string;shape?:LayerShape;hollow?:boolean}[]; presentation:'plot'|'interactive'; basemap:import('./types.js').BasemapChoice;
@@ -19,7 +19,7 @@ export interface MapPresentation {title:string; subtitle:string; sourceNote:stri
 /** The key a value-classed polygon layer deserves: one entry per class, labelled by the values
  *  that bound it, drawn from the same classification the figure colours with. Null when nothing
  *  carries a value, which is every catchment figure. */
-function classedItems(polygons:{features:{value?:number;category?:string}[]}):{label:string;color:string}[]|null{
+function classedItems(polygons:{features:{value?:number;category?:string;frames?:Record<string,number|null>}[]}):{label:string;color:string}[]|null{
   // A CATEGORY OUTRANKS A VALUE, as it does in the figure. A joined layer that a ruleset then
   // classified carries both, and until 2026-11-02 this keyed Nigeria's priority map by zero-dose
   // ranges over polygons shaded by rule class.
@@ -27,8 +27,7 @@ function classedItems(polygons:{features:{value?:number;category?:string}[]}):{l
   if(grouped)return [...grouped.labels.map((label,i)=>({label,color:grouped.colours[i]!})),
     ...(polygons.features.some(f=>!f.category?.trim())?[{label:'No class',color:FIGURE_ROLE.unknown}]:[])];
   if(!classed)return null;
-  const values=polygons.features.map(f=>f.value)
-    .filter((v):v is number=>typeof v==='number'&&Number.isFinite(v));
+  const values=shadedValues(polygons.features);
   const lowest=Math.min(...values);
   const round=(v:number)=>{const a=Math.abs(v);return a>=100?v.toFixed(0):a>=10?v.toFixed(1):v.toFixed(2);};
   const edges=[lowest,...classed.breaks];

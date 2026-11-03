@@ -1197,7 +1197,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         const joined=joinTableToAreas(units,
           inputs.records as unknown as import('./data-table.js').DataTable,
           {keyField:node.params.keyField,normalisation:node.params.normalisation,
-            categoryField:node.params.categoryField});
+            categoryField:node.params.categoryField,frameField:node.params.frameField});
         value=layer?joinedPolygons(undefined,joined,node.params.label,
           layer.features.map(f=>f.geometry as import('./types.js').Boundary),
           layer.features.map(f=>(f as unknown as {properties?:Record<string,Scalar>}).properties??{}))

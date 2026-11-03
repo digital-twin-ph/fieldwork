@@ -226,6 +226,8 @@ export const graphLimits=(maxNodes=NETWORK_NODE_LIMIT)=>
  *  delivery, so `Catchment` overclaims even for the producer it was named after, and it now also
  *  carries H3 cells, a hull, a union and administrative units. */
 export interface Catchment {id:string;name:string;
+  /** One value per frame, where the layer carries frames. Experiment 168. */
+  frames?:Record<string,number|null>;
   /** WHICH LAYER THIS POLYGON CAME FROM, where it came from one that was collected.
    *
    *  `stack_polygons` concatenated several layers into one feature list and kept no record of
@@ -290,6 +292,8 @@ export interface Polygons {kind?:'hexbin';siteSourceNodeId?:string;
    *  ONE layer -- 33 sub-districts shaded by a rate are not 33 things to switch on and off
    *  -- so the control needs a name for the whole rather than one per part. */
   layerName?:string;
+  /** THE FRAMES each part carries a value for, in order, where a join was given a frame column. */
+  frames?:string[];
   /** Whether the features are NAMED THINGS or numbered parts of one layer. A read numbers what
    *  it could not name, so a renderer cannot tell by looking, and the difference decides whether
    *  a hue per feature says anything at all. */

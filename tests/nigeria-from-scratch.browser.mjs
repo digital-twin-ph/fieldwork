@@ -155,7 +155,49 @@ test('five questions about 774 LGAs, each its own short workflow',async({page})=
     await joinAndMap(page,select,area,'Change in DTP1 coverage, 2005 to 2024');
     await page.waitForTimeout(800);
     await page.screenshot({path:'test-results/nga-change.png'});
-    expect((await saved(page)).nodes.length).toBe(6);
+    // AND EVERY YEAR, PLAYED. The same table joined with its years kept as frames, on an interactive
+    // map with one key for all twenty. Experiment 168.
+    await page.locator('[data-view="workflow"]').click();
+    await add(page,'join_table_to_area');
+    const frames=(await saved(page)).nodes.filter(n=>n.type==='join_table_to_area')[1].id;
+    await tidy(page);await wire(page,table,frames,'records');
+    await tidy(page);await wire(page,area,frames,'polygons');
+    await page.locator(`.react-flow__node[data-id="${frames}"]`).click();
+    await page.locator('#join-key').selectOption('ID');
+    await page.locator('#join-normalisation').selectOption('exact');
+    await page.locator('#join-frames').selectOption('measure');
+    await add(page,'map_output');
+    const played=(await saved(page)).nodes.filter(n=>n.type==='map_output')[1].id;
+    await tidy(page);await wire(page,frames,played,'polygons');
+    await page.locator(`.react-flow__node[data-id="${played}"]`).click();
+    await page.locator('#map-label').fill('DTP1 coverage by birth cohort, 2005 to 2024');
+    await page.locator('#map-label').press('Tab');
+    await page.locator('#polygon-presentation').selectOption('interactive');
+    await page.locator('#run-button').click();
+    await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:120000});
+    await page.locator('[data-view="workflow"]').click();
+    await page.locator(`.react-flow__node[data-id="${played}"]`).click();
+    await page.locator('#map-frame-caption').fill('Birth cohort');
+    await page.locator('#map-frame-caption').press('Tab');
+    await page.locator('#map-part-label').selectOption('shapeName');
+    await page.locator('#run-button').click();
+    await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:120000});
+    await page.locator('[data-view="results"]').click();
+    await page.locator(`#result-tabs [data-output="${played}"]`).click();
+    const control=page.locator('.map-frame-control');
+    await expect(control.locator('[data-frame-label]')).toHaveText('Birth cohort · dtp1_2024');
+    await expect(control.locator('[data-frame-slider]')).toHaveAttribute('max','19');
+    await control.locator('[data-frame-step="-1"]').click();
+    await expect(control.locator('[data-frame-label]')).toHaveText('Birth cohort · dtp1_2023');
+    await control.locator('[data-frame-pace]').selectOption('500');
+    await control.locator('[data-frame-play]').click();
+    await expect(control.locator('[data-frame-play]')).toHaveText('Pause');
+    await expect(control.locator('[data-frame-label]')).toHaveText('Birth cohort · dtp1_2024',{timeout:10000});
+    await expect(control.locator('[data-frame-play]')).toHaveText('Play',{timeout:3000});
+    await page.screenshot({path:'test-results/nga-frames.png'});
+    await page.locator('[data-view="workflow"]').click();
+    await tidy(page);
+    expect((await saved(page)).nodes.length).toBe(8);
   }
 
   // 4. WHICH LGAS ARE BOTH? Two joins make one record with both values, and a rule reads the record

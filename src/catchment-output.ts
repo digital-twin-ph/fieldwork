@@ -1,4 +1,4 @@
-import {orderedSteps,categoricalSteps,polygonShading,type classifyValues,type classifyCategories,FIGURE_ROLE,markPath} from './presentation.js';
+import {orderedSteps,categoricalSteps,polygonShading,shadedValues,type classifyValues,type classifyCategories,FIGURE_ROLE,markPath} from './presentation.js';
 import type {Polygons} from './catchments.js';
 import type {DisplayValue,Receipt} from './results.js';
 import type {Escape,Position,PointCollection,WorkflowNode} from './types.js';
@@ -184,7 +184,7 @@ function plotKey(p:Polygons,classed:ReturnType<typeof classifyValues>,esc:Escape
   // A SHADE WITHOUT ITS BREAKS SAYS ONLY "MORE" AND "LESS". The classes are quantiles taken from
   // the data, so every break printed here is a value that occurs in it and a reader can find the
   // sub-district that sits on one. Experiment 137.
-  const values=p.features.map(f=>f.value).filter((v):v is number=>typeof v==='number'&&Number.isFinite(v));
+  const values=shadedValues(p.features);
   const lowest=Math.min(...values);
   const width=34,left=20,top=250;
   const round=(v:number)=>{const a=Math.abs(v);return a>=100?v.toFixed(0):a>=10?v.toFixed(1):v.toFixed(2);};

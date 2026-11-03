@@ -470,7 +470,17 @@ export function classifyCategories(values:(string|null|undefined)[]):CategoryCla
  *  A category outranks a value: a joined layer a ruleset then classified carries both. Each surface
  *  deciding this for itself is how Nigeria's priority map came to be keyed by zero-dose ranges over
  *  polygons shaded by rule class, 2026-11-02. */
-export function polygonShading(features:readonly {value?:number|null;category?:string|null}[]){
+/** The values a polygon layer is classed over: every frame's where it has frames, else each part's one. */
+export const shadedValues=(features:readonly {value?:number|null;frames?:Record<string,number|null>}[]):number[]=>
+  (features.some(f=>f.frames)?features.flatMap(f=>Object.values(f.frames??{})):features.map(f=>f.value))
+    .filter((v):v is number=>typeof v==='number'&&Number.isFinite(v));
+
+export function polygonShading(features:readonly {value?:number|null;category?:string|null;
+  frames?:Record<string,number|null>}[]){
   const grouped=classifyCategories(features.map(f=>f.category));
-  return {grouped,classed:grouped?null:classifyValues(features.map(f=>f.value))};
+  // A LAYER WITH FRAMES IS CLASSED OVER EVERY FRAME, so the figure, its key and every frame of the
+  // interactive map share one set of breaks. Experiment 168.
+  const values=features.some(f=>f.frames)
+    ?features.flatMap(f=>Object.values(f.frames??{})):features.map(f=>f.value);
+  return {grouped,classed:grouped?null:classifyValues(values)};
 }

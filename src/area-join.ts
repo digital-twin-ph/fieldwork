@@ -62,6 +62,9 @@ export interface JoinedPart {
   category?:string;
   /** True when another part of the boundary carries the same name and therefore the same value. */
   shared:boolean;
+  /** ONE VALUE PER FRAME, where the join was given a frame column: `dtp1_2005` to `dtp1_2024`.
+   *  `value` is then the last frame's, so a consumer reading one value is unchanged. Experiment 168. */
+  frames?:Record<string,number|null>;
 }
 
 export interface AreaJoinResult {
@@ -71,7 +74,9 @@ export interface AreaJoinResult {
     unmatchedParts:number; unmatchedRows:number; sharedParts:number};
   /** What the join was told to do, carried so the receipt can state it. */
   declared:{keyField:string; valueField:string; normalisation:'exact'|'fuzzy';
-    categoryField?:string};
+    categoryField?:string; frameField?:string};
+  /** The frames, in the order the table first gives them. */
+  frames?:string[];
 }
 
 /** A table cell as a class name, or nothing. A number is a legitimate class label -- a year, a
@@ -84,11 +89,17 @@ const text=(value:unknown):string|undefined=>{
 
 export function joinTableToAreas(
   units:{id:string;name:string}[], table:DataTable,
-  options:{keyField:string; normalisation?:'exact'|'fuzzy'; categoryField?:string}
+  options:{keyField:string; normalisation?:'exact'|'fuzzy'; categoryField?:string; frameField?:string}
 ):AreaJoinResult{
   const normalisation=options.normalisation??'fuzzy';
   const keyField=options.keyField;
   const categoryField=options.categoryField?.trim()||undefined;
+  const frameField=options.frameField?.trim()||undefined;
+  if(frameField&&!table.keys.includes(frameField))
+    throw new Error(`The table has no column "${frameField}" to take frames from. It is keyed by ${table.keys.join(', ')||'nothing'}.`);
+  if(frameField&&frameField===keyField)
+    throw new Error('The column a part is matched on cannot also be the frames: each part would have one frame of its own.');
+  const frameOrder:string[]=[];
   if(categoryField&&!table.keys.includes(categoryField))
     throw new Error(`The table has no column "${categoryField}" to classify by. It is keyed by ${table.keys.join(', ')||'nothing'}.`);
   if(categoryField&&categoryField===keyField)
@@ -101,12 +112,24 @@ export function joinTableToAreas(
   // THE TABLE SIDE, folded once. Two different raw keys landing on one folded key is the hazard
   // the normalisation itself creates, so it is checked before anything is matched rather than
   // discovered as a silently overwritten row.
-  const byKey=new Map<string,{raw:string;value:number|null;rows:number;category?:string}>();
+  const byKey=new Map<string,{raw:string;value:number|null;rows:number;category?:string;
+    frames?:Record<string,number|null>}>();
   for(const row of table.rows){
     const raw=row.key[keyField];
     const key=fold(raw);
     if(!key){diagnostics.push({code:'missing-data-key',subject:String(raw??''),
       says:'A row has no value in the key column, so there is nothing to match it on.'});continue;}
+    // WITH FRAMES, a key repeats once per frame by design; it is a repeat only within a frame.
+    if(frameField){
+      const frame=text(row.key[frameField]);
+      if(!frame)continue;
+      if(!frameOrder.includes(frame))frameOrder.push(frame);
+      const held=byKey.get(key)??{raw:String(raw),value:null,rows:0,frames:{}};
+      if(Object.hasOwn(held.frames!,frame))diagnostics.push({code:'multiple-data-rows',subject:`${raw} / ${frame}`,
+        says:`"${raw}" appears in more than one row for ${frame}, and a part carries one value per frame.`});
+      else held.frames![frame]=row.value;
+      held.rows++;byKey.set(key,held);continue;
+    }
     const held=byKey.get(key);
     if(!held){byKey.set(key,{raw:String(raw),value:row.value,rows:1,
       ...(categoryField?{category:text(row.key[categoryField])}:{})});continue;}
@@ -135,8 +158,11 @@ export function joinTableToAreas(
     if(row)used.add(key);
     else diagnostics.push({code:'unmatched-boundary',subject:unit.name,
       says:`No row of the table names "${unit.name}", so this part has no value.`});
+    const last=frameOrder.at(-1);
     return {index,id:unit.id,name:unit.name,key,
-      value:row?row.value:null,matched:!!row,shared:(timesSeen.get(key)||0)>1,
+      value:row?(row.frames&&last!==undefined?row.frames[last]??null:row.value):null,
+      matched:!!row,shared:(timesSeen.get(key)||0)>1,
+      ...(frameField?{frames:Object.fromEntries(frameOrder.map(f=>[f,row?.frames?.[f]??null]))}:{}),
       // Absent rather than empty where the row names no class: an unclassified part is drawn in
       // the neutral a renderer keeps for "no data", never in the first class.
       ...(row?.category?{category:row.category}:{})};
@@ -149,7 +175,8 @@ export function joinTableToAreas(
   const matchedParts=parts.filter(part=>part.matched).length;
   return {parts,diagnostics,
     declared:{keyField,valueField:table.valueField,normalisation,
-      ...(categoryField?{categoryField}:{})},
+      ...(categoryField?{categoryField}:{}),...(frameField?{frameField}:{})},
+    ...(frameField?{frames:frameOrder}:{}),
     counts:{parts:parts.length,rows:table.rows.length,matchedParts,
       matchedRows:used.size,unmatchedParts:parts.length-matchedParts,
       unmatchedRows:byKey.size-used.size,
@@ -174,6 +201,7 @@ export function joinedPolygons(boundary:Boundary|undefined,result:AreaJoinResult
     geometry:geometries?.[index]??{type:'Polygon' as const,coordinates:rings[index]??rings[0]},
     ...(part.value===null?{}:{value:part.value}),
     ...(part.category?{category:part.category}:{}),
+    ...(part.frames?{frames:part.frames}:{}),
     // WHAT THE POLYGON ALREADY HELD STAYS, so joining a second table adds a column as a merge on a
     // GeoDataFrame does, and one record can carry coverage and zero-dose for a rule to read.
     properties:{...carried?.[index],[result.declared.valueField]:part.value,
@@ -187,6 +215,7 @@ export function joinedPolygons(boundary:Boundary|undefined,result:AreaJoinResult
     // The node's own label names the layer: it is what the practitioner called this join, and
     // what they will look for when they toggle it beside the study area.
     layerName:label,
+    ...(result.frames?{frames:result.frames}:{}),
     method:`Keyed join on ${result.declared.keyField}, ${result.declared.normalisation} normalisation: `
       +`${counts.matchedParts} of ${counts.parts} parts carry a value from ${counts.matchedRows} of ${counts.rows} rows.`,
     crs:'OGC:CRS84',

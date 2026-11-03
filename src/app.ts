@@ -183,6 +183,14 @@ function chartControls(n:WorkflowNode<'chart_output'>,options:{omitOrientation?:
 }
 /** WHICH ATTRIBUTE NAMES A PART, from what the last run drew. Interactive only: the static figure names
  *  no parts. */
+function frameCaptionControl(n:WorkflowNode<'map_output'>):string{
+  if(n.params.presentation!=='interactive')return '';
+  const framed=result?.outputs.find(o=>o.nodeId===n.id)?.polygons as {frames?:string[]}|undefined;
+  if(!framed?.frames?.length)return '';
+  return `<label class="field-label" for="map-frame-caption">What a frame is</label>`
+    +`<input id="map-frame-caption" maxlength="60" value="${esc(n.params.frameCaption??'')}" placeholder="e.g. Birth cohort">`
+    +`<p class="description">${framed.frames.length} frames, ${esc(framed.frames[0]!)} to ${esc(framed.frames.at(-1)!)}, shown as the data names them.</p>`;
+}
 function partLabelControl(n:WorkflowNode<'map_output'>):string{
   if(n.params.presentation!=='interactive')return '';
   const features=result?.outputs.find(o=>o.nodeId===n.id)?.polygons?.features??[];
@@ -215,6 +223,7 @@ function mapControls(n:WorkflowNode<'map_output'>){
     <label class="field-label" for="map-source-note">Source / method note</label><textarea id="map-source-note" maxlength="500" rows="3" placeholder="Default: connected source labels and method">${esc(p.mapSourceNote||'')}</textarea>
     <label class="field-label" for="map-basemap">Basemap</label><select id="map-basemap">${basemapOptions(p.basemap,p.presentation==='interactive'?'interactive':'plot',workflowSpanKm())}</select>
     ${partLabelControl(n)}
+    ${frameCaptionControl(n)}
     ${tileImportControls(p)}
     <p class="description">A basemap is layer 0, under everything the workflow produced.${p.presentation==='interactive'?'':' OpenStreetMap and OpenTopoMap are drawn into the figure itself. The OpenFreeMap styles are vector, so they move this map to the interactive presentation.'}</p>
     <p class="description">Title, key and note appear with the map and in its local SVG export. Interactive maps export connected data as a static plot; online basemap tiles are excluded. Selecting an online basemap sends the viewed area to its provider.</p></div>`;
@@ -2116,6 +2125,13 @@ function renderInspector(){
       // SHADE BY A CLASS, which is a different question from the value and is asked separately.
       // Offered from the same columns, less the one being matched on: classifying by the key
       // would make every part its own class.
+      +`<label class="field-label" for="join-frames">Frames from (optional)</label>`
+      +`<select id="join-frames"${columns.length?'':' disabled'}>`
+      +`<option value="">No frames \u2014 one value per part</option>`
+      +columns.filter(column=>column!==n.params.keyField)
+        .map(column=>`<option value="${esc(column)}" ${n.params.frameField===column?'selected':''}>${esc(column)}</option>`).join('')
+      +`</select>`
+      +`<p class="description">Each part carries one value per frame, such as a year, and an interactive map can play through them.</p>`
       +`<label class="field-label" for="join-category">Shade by a class (optional)</label>`
       +`<select id="join-category"${columns.length?'':' disabled'}>`
       +`<option value="">No class \u2014 shade by the value</option>`
@@ -3987,6 +4003,10 @@ function renderInspector(){
     change(w=>{getNode(w,n.id,'join_table_to_area').params.keyField=control(e).value;}));
   optionalElement('#join-normalisation')?.addEventListener('change',e=>
     change(w=>{getNode(w,n.id,'join_table_to_area').params.normalisation=control(e).value as 'exact'|'fuzzy';}));
+  optionalElement('#join-frames')?.addEventListener('change',e=>
+    change(w=>{const value=control(e).value.trim();
+      const params=getNode(w,n.id,'join_table_to_area').params;
+      if(value)params.frameField=value;else delete params.frameField;}));
   optionalElement('#join-category')?.addEventListener('change',e=>
     change(w=>{const value=control(e).value.trim();
       const params=getNode(w,n.id,'join_table_to_area').params;
@@ -4292,6 +4312,9 @@ function renderInspector(){
   optionalElement('#append-new-key')?.addEventListener('change',e=>change(w=>{
     const node=getNode(w,n.id,'append_rows');
     if((e.target as HTMLInputElement).checked)node.params.newKey='row';else delete node.params.newKey;}));
+  optionalElement('#map-frame-caption')?.addEventListener('change',e=>change(w=>{
+    const target=getNode(w,n.id,'map_output');const value=control(e).value.trim();
+    if(value)target.params.frameCaption=value;else delete target.params.frameCaption;}));
   optionalElement('#map-part-label')?.addEventListener('change',e=>change(w=>{
     const target=getNode(w,n.id,'map_output');const value=control(e).value;
     if(value)target.params.partLabel=value;else delete target.params.partLabel;
@@ -4877,7 +4900,7 @@ function renderMap(){
       // The node is the view's identity. Without it every presentation change -- and Mark radius
       // is one -- remounted the map and refitted it, throwing away the pan and zoom the
       // practitioner had chosen in order to judge the change they were making.
-      mapNode?.id,mapNode?.params.tileExtract,mapNode?.params.partLabel);
+      mapNode?.id,mapNode?.params.tileExtract,mapNode?.params.partLabel,mapNode?.params.frameCaption);
     if(result.polygons){
       // ONE OF THESE, NOT ONE PER RENDER. This was inserted into the panel on every render and
       // nothing removed the last, so a map rendered three times carried the same paragraph three

@@ -99,3 +99,9 @@ too readily would score. The check constructs one: a part renamed to `Camberwell
 this join reports unmatched. Jaro-Winkler to `Camberwell` is 0.925, so a similarity-based linkage
 at the usual 0.90 threshold would have accepted it. That figure is what having no threshold here
 is worth.
+
+## Frames
+
+**Frames from** names a key column whose values are frames, such as `measure` holding `dtp1_2005` to `dtp1_2024`.
+Each part then carries one value per frame, and an interactive map can play through them. The part's single value is
+the last frame's. A key repeated across frames is expected; a key repeated within a frame is reported.

@@ -131,6 +131,14 @@ being rewritten by every run.
 *How this widget is built, what it assumes, and what has been measured about it:
 [docs/widget-specs/map_output.md](../widget-specs/map_output.md).*
 
+## Playing through frames
+
+Where the layer carries frames, from a join given **Frames from**, the interactive map shows a frame control: a
+slider, **Play**, **Pause**, a step each way and a pace. Every frame shares one key, with classes computed across all
+of them, so a part darker in one frame than another is higher. **What a frame is** sets a caption such as "Birth
+cohort"; the frame keeps the name the data gives it. Play works only while every part is in view, and pauses if one
+moves out. The static figure draws the last frame.
+
 ## Naming the parts
 
 On an interactive map, **Label parts with** chooses which attribute names a polygon part when it is clicked.

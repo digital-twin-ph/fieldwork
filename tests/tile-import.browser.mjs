@@ -1,6 +1,9 @@
 import {test,expect} from '@playwright/test';
 import {collectPageErrors} from './page-errors.mjs';
 import {serveArchive,smallArchive} from './small-pmtiles.mjs';
+// THE ARCHIVE IS ANSWERED HERE ONLY IF THE SERVICE WORKER IS OUT OF THE WAY. In WebKit it fetched the
+// requests itself, so the test reached the real 134.8 GB archive and timed out, 2026-11-03.
+test.use({serviceWorkers:'block'});
 
 // THE PRACTITIONER'S CASE, 2026-11-02: a study area wired straight to an interactive map, and Import
 // tiles did nothing, because the boundary was read from polygon layers only. The archive is the
@@ -31,6 +34,8 @@ test('a map of a study area imports the tiles under it, and draws over them',asy
   const spec=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1'))
     .nodes.find(n=>n.id==='map').params.tileExtract);
   expect(spec.bounds).toEqual([25.8,-24.7,26,-24.5]);
+  // ONE TILE, because the stand-in archive holds one: more would mean the real archive answered.
+  expect(spec.tiles).toBe(1);
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:30000});
   await page.locator('[data-view="results"]').click();

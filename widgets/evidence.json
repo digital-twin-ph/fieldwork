@@ -17,6 +17,7 @@
  "examplesPinned": [
   "nigeria-immunization-2024",
   "oswego-1940",
+  "salmonella-germany-2021",
   "south-london-1854"
  ],
  "ladder": [
@@ -33,9 +34,9 @@
   "declared only": 2,
   "example only": 13,
   "parity only": 9,
-  "example, lab not applicable": 13,
+  "example, lab not applicable": 14,
   "example+parity": 17,
-  "neither applies": 2
+  "neither applies": 1
  },
  "compositionsUsedByNoExample": [
   "compute_walking_catchment"
@@ -54,12 +55,14 @@
   },
   {
    "nodeType": "append_rows",
-   "exampleUses": [],
-   "exampleUseCount": 0,
+   "exampleUses": [
+    "salmonella-germany-2021"
+   ],
+   "exampleUseCount": 1,
    "lab": "none",
    "labOwed": false,
    "fieldUse": [],
-   "rung": "neither applies"
+   "rung": "example, lab not applicable"
   },
   {
    "nodeType": "apply_ruleset",
@@ -510,9 +513,10 @@
    "nodeType": "select_rows",
    "exampleUses": [
     "nigeria-immunization-2024",
+    "salmonella-germany-2021",
     "south-london-1854"
    ],
-   "exampleUseCount": 2,
+   "exampleUseCount": 3,
    "lab": "none",
    "labOwed": false,
    "fieldUse": [],
@@ -582,9 +586,10 @@
   {
    "nodeType": "study_design",
    "exampleUses": [
+    "salmonella-germany-2021",
     "south-london-1854"
    ],
-   "exampleUseCount": 1,
+   "exampleUseCount": 2,
    "lab": "none",
    "labOwed": false,
    "fieldUse": [],
@@ -628,13 +633,14 @@
     "nigeria-immunization-2024",
     "oswego-1940",
     "rulesets",
+    "salmonella-germany-2021",
     "sea-level",
     "snow-extent",
     "snow-isochrone",
     "snow-voronoi",
     "south-london-1854"
    ],
-   "exampleUseCount": 8,
+   "exampleUseCount": 9,
    "lab": "none",
    "labOwed": false,
    "fieldUse": [],
@@ -648,6 +654,7 @@
     "old-naledi",
     "oswego-1940",
     "rulesets",
+    "salmonella-germany-2021",
     "sea-level",
     "snow-extent",
     "snow-geoprivacy",
@@ -655,7 +662,7 @@
     "snow-voronoi",
     "south-london-1854"
    ],
-   "exampleUseCount": 11,
+   "exampleUseCount": 12,
    "lab": "none",
    "labOwed": false,
    "fieldUse": [],
@@ -685,9 +692,10 @@
    "nodeType": "two_by_two",
    "exampleUses": [
     "oswego-1940",
+    "salmonella-germany-2021",
     "south-london-1854"
    ],
-   "exampleUseCount": 2,
+   "exampleUseCount": 3,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],

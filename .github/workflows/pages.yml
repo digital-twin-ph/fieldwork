@@ -182,6 +182,14 @@ jobs:
           ref: ${{ steps.nigeria.outputs.commit }}
           fetch-depth: 0
           path: example-nigeria-checkout
+      - id: salmonella
+        run: echo "commit=$(jq -r '.examples[] | select(.repository|endswith("/example-2021-salmonella-germany")) | .commit' widgets/examples.json)" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v6
+        with:
+          repository: digital-twin-ph/example-2021-salmonella-germany
+          ref: ${{ steps.salmonella.outputs.commit }}
+          fetch-depth: 0
+          path: example-salmonella-checkout
       - uses: actions/setup-node@v6
         with:
           node-version: '22'
@@ -220,5 +228,6 @@ jobs:
         run: |
           mv example-oswego-checkout ../example-1940-oswego-church-supper
           mv example-nigeria-checkout ../example-2024-nigeria-immunization
+          mv example-salmonella-checkout ../example-2021-salmonella-germany
       - name: Type check, build and run regression tests
         run: npm run check

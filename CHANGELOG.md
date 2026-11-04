@@ -15,6 +15,8 @@ shown in a local build is not a claim that it has been published.
   adjusted for age group and sex, 96.4 (15.4–2067), published 96 (15–2100); against panel controls 18.4 (4.6–101),
   published 18 (4.6–100).
 - NYC and Salmonella each gain a fourth workflow that fits these models; NYC's manual covers its.
+- The detached manual opens over the canvas beside the library, lower than before, instead of over the Inspector whose
+  fields it tells you to fill.
 - Select rows offers its date range even before a fetched table's rows are on the device. Opened from the catalogue,
   NYC's 1 to 14 June showed as an empty text box until Fetch the table was pressed.
 - Validation: Chromium locally; WebKit in CI. No independent laboratory check yet.

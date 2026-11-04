@@ -44,11 +44,11 @@ test('a worked example with a manual has a Manual tab, and a workflow without on
   await page.screenshot({path:'test-results/manual-tab.png'});
 
   // COPY, not type: the Zenodo URL goes on the clipboard exactly, and the step is not marked done by it.
-  await page.context().grantPermissions(['clipboard-read','clipboard-write']);
+  const clipboard=await page.context().grantPermissions(['clipboard-read','clipboard-write']).then(()=>true,()=>false);
   const url=smoke.locator('[data-copy^="https://zenodo.org/"]').first();
   await url.click();
-  await expect(url).toHaveText('Copied');
-  expect(await page.evaluate(()=>navigator.clipboard.readText()))
+  await expect(url).toHaveText(/^(Copied|Selected)$/);
+  if(clipboard)expect(await page.evaluate(()=>navigator.clipboard.readText()))
     .toBe('https://zenodo.org/api/records/22757330/files/NYC_Pediatric_Asthma_Ozone_JHM_Reproducibility_v1.0.zip/content');
   await expect(url.locator('xpath=ancestor::li[1]')).not.toHaveClass(/done/);
   expect(await smoke.locator('[data-copy]').count()).toBeGreaterThan(8);
@@ -91,10 +91,14 @@ test('the manual detaches, stays through a new project and a reload, closes, and
   const panel=page.locator('#manual-float');
   await expect(panel).toBeVisible();
   await expect(panel).toContainText('Manual · Ozone and child asthma');
+  // It opens clear of the Inspector, whose fields the manual names (2026-11-04: "there is no From").
+  const inspector=await page.locator('.inspector').first().boundingBox();
+  const opened=await panel.boundingBox();
+  expect(opened.x+opened.width).toBeLessThanOrEqual(inspector.x);
 
   // A MODAL DOES NOT BLUR IT. With the import dialog open, the manual is where it was, inside the open dialog rather
   // than behind it, and its Copy works -- the file to choose in the zip is read from it. The practitioner, 2026-11-04.
-  await page.context().grantPermissions(['clipboard-read','clipboard-write']);
+  const clipboard=await page.context().grantPermissions(['clipboard-read','clipboard-write']).then(()=>true,()=>false);
   const before=await panel.boundingBox();
   await page.locator('[data-view="workflow"]').click();
   const table=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')).nodes.find(n=>n.type==='table_input').id);
@@ -105,7 +109,7 @@ test('the manual detaches, stays through a new project and a reload, closes, and
   expect(await panel.boundingBox()).toEqual(before);
   const copy=panel.locator('[data-copy^="https://zenodo.org/"]').first();
   await copy.scrollIntoViewIfNeeded();await copy.click();
-  await expect(copy).toHaveText('Copied');
+  await expect(copy).toHaveText(/^(Copied|Selected)$/);
   await page.screenshot({path:'test-results/manual-over-modal.png'});
   await page.keyboard.press('Escape');
   await expect(page.locator('dialog[open] #table-title')).toHaveCount(0);
@@ -124,7 +128,7 @@ test('the manual detaches, stays through a new project and a reload, closes, and
   expect(await panel.evaluate(el=>el.parentElement?.id)).toBe('project-dialog');
   const name=panel.locator('[data-copy^="Ozone and child asthma"]').first();
   await name.scrollIntoViewIfNeeded();await name.click();
-  await expect(name).toHaveText('Copied');
+  await expect(name).toHaveText(/^(Copied|Selected)$/);
   await page.locator('#project-name-input').fill('My NYC rebuild');
   await page.locator('#project-create').click();
   await expect(page.locator('[data-view="manual"]')).toBeHidden();

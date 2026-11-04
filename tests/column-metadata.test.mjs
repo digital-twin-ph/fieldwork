@@ -61,3 +61,30 @@ test('NYC: the authors\' dictionary against their analysis file, all 92 columns 
   assert.equal(entries.get('count').missing,7);
   assert.match(entries.get('count').description,/asthma-syndrome ED visit count for ages 5-17/);
 });
+
+import {suggestConnections,dictionaryCsv,entriesFrom} from '../build/column-metadata.js';
+import {readXlsx} from '../build/xlsx.js';
+const SALMONELLA=new URL('../../example-2021-salmonella-germany/data/',import.meta.url);
+test('Salmonella: the codebook connected to the data file, the same names connected and the near ones only suggested',
+  {skip:existsSync(SALMONELLA)?false:'example-2021-salmonella-germany is not checked out'},()=>{
+  const [codebook]=readXlsx(readFileSync(new URL('Codebook_Luczynska_et_al_2022.xlsx',SALMONELLA)));
+  const variables=codebook.rows.map(r=>r[0]).filter(Boolean);
+  const file=parseCSV(readFileSync(new URL('Complete_dataset_Luczynska_et_al_2022.csv',SALMONELLA),'utf8'),20000);
+  const columns=file.headers.map(h=>h.trim());
+  const s=suggestConnections(columns,variables);
+  assert.deepEqual(s.fall,{variable:'fall',how:'same name'});
+  assert.deepEqual(s.sex,{variable:'sex*',how:'suggested'},'the codebook marks sex with an asterisk');
+  assert.deepEqual(s.galiamelo_apr2,{variable:'galiamelo*',how:'suggested'},'the April week of the codebook\'s variable');
+  assert.deepEqual(s.galiamelo2,{variable:'galiamelo*',how:'suggested'});
+  // The codebook writes it in capitals; case alone does not make a different variable.
+  assert.deepEqual(s.vruntime,{variable:'vRUNTIME',how:'suggested'});
+});
+
+test('a dictionary made from accepted descriptions, as a CSV and as entries for the next table from the same source',()=>{
+  const declared={count:{label:'Visits, ages 5 to 17',unit:'visits/day',origin:'practitioner',confirmed:true},
+    o3:{label:'Ozone, "8-hour"',origin:'practitioner',confirmed:true},
+    pm25:{label:'PM2.5',origin:'dictionary',confirmed:false}};
+  assert.equal(dictionaryCsv(declared,['date','count','o3','pm25']),
+    'variable,label,unit,description\ncount,"Visits, ages 5 to 17",visits/day,\no3,"Ozone, ""8-hour""",,\n');
+  assert.deepEqual([...entriesFrom(declared).keys()],['count','o3']);
+});

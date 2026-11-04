@@ -72,29 +72,60 @@ export function readDictionary(headers:readonly string[],rows:readonly string[][
   return entries;
 }
 
+/** WHICH DICTIONARY VARIABLE DESCRIBES WHICH COLUMN: the practitioner's connection, column to variable. The
+ *  practitioner, 2026-11-04: *"we need an explicit user focused mapping tool so the dictionary actually gets connected
+ *  to the data set."* A column absent here, or connected to '', is not described by the dictionary. */
+export type Connections=Record<string,string>;
+export interface Suggestion {variable:string; how:'same name'|'suggested'}
+
+/** A name reduced to what a person would see as the same variable: case, spaces and the marks a codebook adds
+ *  (`sex*`) removed. */
+const plain=(name:string)=>name.toLowerCase().replace(/[\s*]+/g,'');
+/** A column's name without the suffix a data file adds to a codebook variable for a period or a wave: `galiamelo_apr2`
+ *  and `galiamelo2` are both `galiamelo`. Suggested only, never connected without the practitioner. */
+const stem=(name:string)=>plain(name).replace(/(_[a-z]{3}\d+|_\d+|\d+)$/,'');
+
+/** SUGGESTIONS, MARKED AS SUCH. The same name connects; a plain or stemmed match is suggested and waits to be confirmed. */
+export function suggestConnections(columns:readonly string[],variables:readonly string[]):Record<string,Suggestion>{
+  const out:Record<string,Suggestion>={};
+  for(const column of columns){
+    if(variables.includes(column)){out[column]={variable:column,how:'same name'};continue;}
+    const byPlain=variables.find(v=>plain(v)===plain(column));
+    const byStem=byPlain??variables.find(v=>plain(v)===stem(column))??variables.find(v=>stem(v)===stem(column)&&stem(v).length>2);
+    if(byStem)out[column]={variable:byStem,how:'suggested'};
+  }
+  return out;
+}
+/** Connections as the identity, for a dictionary whose names are the file's. */
+export const sameNames=(columns:readonly string[],entries:Map<string,DictionaryEntry>):Connections=>
+  Object.fromEntries(columns.filter(c=>entries.has(c)).map(c=>[c,c]));
+
 /** THE MECHANICAL MATCH: every column of the file against the dictionary, and every stated missing count against
  *  the file's. The practitioner, 2026-11-03: *"Matching a codebook to the provided tables is a mechanical,
  *  deterministic step"*. Missing is an empty cell or `NA`, as the file's readers count it. */
 export function checkDictionary(source:string,entries:Map<string,DictionaryEntry>,
-    file:{headers:readonly string[];rows:readonly string[][]}):DictionaryCheck{
+    file:{headers:readonly string[];rows:readonly string[][]},connections?:Connections):DictionaryCheck{
   const headers=file.headers.map(h=>h.trim());
+  const linked=connections??sameNames(headers,entries);
   const missingDisagree:DictionaryCheck['missingDisagree']=[];
   headers.forEach((column,i)=>{
-    const declared=entries.get(column)?.missing;
+    const declared=linked[column]?entries.get(linked[column]!)?.missing:undefined;
     if(declared===undefined)return;
     const found=file.rows.filter(row=>{const v=(row[i]??'').trim();return v===''||v.toUpperCase()==='NA';}).length;
     if(found!==declared)missingDisagree.push({column,declared,found});
   });
-  return {source,notInFile:[...entries.keys()].filter(name=>!headers.includes(name)),
-    notInDictionary:headers.filter(name=>!entries.has(name)),missingDisagree,checked:headers.length};
+  const used=new Set(Object.values(linked).filter(Boolean));
+  return {source,notInFile:[...entries.keys()].filter(name=>!used.has(name)),
+    notInDictionary:headers.filter(name=>!linked[name]||!entries.has(linked[name]!)),missingDisagree,checked:headers.length};
 }
 
 /** A dictionary's entries as declarations for the kept columns, unconfirmed, keeping anything already confirmed. */
 export function proposeFrom(entries:Map<string,DictionaryEntry>,source:string,columns:readonly string[],
-    held:ColumnDeclarations={}):ColumnDeclarations{
+    held:ColumnDeclarations={},connections?:Connections):ColumnDeclarations{
   const next:ColumnDeclarations={...held};
+  const linked=connections??sameNames(columns,entries);
   for(const column of columns){
-    const entry=entries.get(column);
+    const entry=linked[column]?entries.get(linked[column]!):undefined;
     if(!entry||held[column]?.confirmed)continue;
     next[column]={...(entry.label?{label:entry.label}:{}),...(entry.description?{description:entry.description}:{}),
       ...(entry.unit?{unit:entry.unit}:{}),origin:'dictionary',confirmed:false,from:source};
@@ -156,4 +187,18 @@ export function metadataFindings(table:Pick<DataTable,'keys'|'valueField'>,decla
       text:`${check.source} does not describe ${kept.length===1?'this kept column':'these kept columns'}: ${kept.join(', ')}.`});
   }
   return findings;
+}
+
+/** A DICTIONARY MADE FROM THE DECLARATIONS, when the source came without one. The practitioner, 2026-11-04: *"if there
+ *  is no data dictionary that the user is able to create one for the data source."* Accepted descriptions only; as a
+ *  CSV a person can open, share or publish beside the data. */
+export function dictionaryCsv(declared:ColumnDeclarations,columns:readonly string[]):string{
+  const cell=(v?:string)=>{const t=v??'';return /[",\n]/.test(t)?`"${t.replace(/"/g,'""')}"`:t;};
+  return ['variable,label,unit,description',...columns.filter(c=>isDescribed(declared[c])).map(c=>{
+    const m=declared[c]!;return [c,m.label,m.unit,m.description].map(cell).join(',');})].join('\n')+'\n';
+}
+/** The same, as entries, for offering to another table that reads the same source. */
+export function entriesFrom(declared:ColumnDeclarations):Map<string,DictionaryEntry>{
+  return new Map(Object.entries(declared).filter(([,m])=>isDescribed(m)).map(([c,m])=>[c,
+    {...(m.label?{label:m.label}:{}),...(m.unit?{unit:m.unit}:{}),...(m.description?{description:m.description}:{})}]));
 }

@@ -3742,6 +3742,13 @@ missing axiom does not mean the question went unasked.
 - Research notes and ranking: `reports/Climate asthma worked examples.md` in the workspace root.
 - **Decided 2026-11-03:** NYC.gov reserves all rights to the counts, so they are fetched from the authors' Zenodo record at open, never republished (experiment 170). Repository `example-2025-nyc-ozone`, documents only.
 - **Later (practitioner, 2026-11-03):** augment with real downloads from remote sensing providers beside the monitors the authors used, such as satellite-derived PM2.5 or ozone, aerosol optical depth, or NOAA HMS smoke for June 2023, fetched at open by the same mechanism.
+- **Remote sensing: the plan (practitioner, 2026-11-04).** [EO discovery and tabular integration for the NYC asthma example](docs/research/eo-stac-nyc-architecture-and-plan-2026-11-04.md), a research note generated with ChatGPT and committed by the practitioner: an EO Satellite Viewer and a STAC Browser as widgets, a STAC branch that creates a daily measurement table, and a merge with the Zenodo table by date. Proposed, nothing established. Its phases:
+  - **0 · contracts first**, as a numbered experiment with an admission review: the original variable and lag definitions (now in the authors' dictionary, readable through experiment 172), one NYC boundary, the time basis, a short NO₂ pilot interval, and the table representation. The note flags two limits this application has: `DataTable` carries one value per row, so several numeric measures need an adapter or a contract change; and tables are capped at 20,000 rows (7 measures × 3,653 days is 25,571).
+  - **1 · access, all three tracks**: a source matrix for NO₂, PM2.5 and ozone with real bytes decoded in a browser, not metadata alone (experiment 91 is where STAC access was first examined).
+  - **2 · table preparation and a numeric merge**: a left join from the Zenodo table that never multiplies the counts, with duplicate keys, missing dates and name collisions shown before committing. Relate and Append are not to be widened into it silently; this is the "Relate as a merge" item with a concrete case.
+  - **3 · NO₂ end to end**, then **4 · PM2.5** (AOD kept as AOD; a surface estimate only from a product that makes one) and **5 · ozone** (total column, partial column and surface kept apart; an 8-hour maximum needs the within-day sampling to support it), each with its own exit evidence.
+  - **6 · full period and new models**, and **7 · practitioner evaluation**.
+  - The measurement dictionary it asks for (variable, unit, spatial and temporal statistic, coverage, product and lineage) is experiment 172's column descriptions extended, not a separate mechanism.
 
 ## After NYC: London ozone and deaths, 2002–2006 (Bhaskaran et al. 2013)
 

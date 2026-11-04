@@ -3,6 +3,16 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.21.0 — 2026-11-04
+
+- **Connect a dictionary to the data, explicitly.** After choosing which dictionary column holds what, a Connect step
+  lists every column of the table with the dictionary variable that describes it: the same name connected, a near one
+  (`sex*` for `sex`, `galiamelo*` for `galiamelo_apr2`) suggested and marked for you to check, the rest "not in the
+  dictionary". Proposals and the check follow your connections.
+- **Make a dictionary when the source has none.** Accepted descriptions become your dictionary for that source, kept on
+  this device and offered to any other table reading the same file; **Download as a data dictionary (CSV)** to share it.
+- Validation: Chromium locally; WebKit in CI.
+
 ## 0.20.0 — 2026-11-04
 
 - **What the columns mean.** **Describe columns…** on a table opens a dialog for each column's label, unit and

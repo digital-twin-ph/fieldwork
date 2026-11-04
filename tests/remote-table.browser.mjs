@@ -51,7 +51,11 @@ test('fetched from a zip, kept as a spec, fetched again by digest, and refused w
   expect(sent.data.rows).toEqual([]);
   expect(sent.remote.sha256).toBe(node.remote.sha256);
 
-  // AND ARRIVES ON ANOTHER: imported into a fresh workspace, it says its rows are not kept.
+  // AND ARRIVES ON ANOTHER: imported into a fresh workspace, it says its rows are not kept. Another device holds no copy
+  // of the file either, so the byte store is emptied too: a cleared localStorage alone left the copy in IndexedDB.
+  await page.evaluate(()=>new Promise(resolve=>{const tx=indexedDB.open('fieldwork-evidence-v1');
+    tx.onsuccess=()=>{const db=tx.result,clear=db.transaction('pdfs','readwrite');clear.objectStore('pdfs').clear();
+      clear.oncomplete=()=>{db.close();resolve();};};}));
   await page.evaluate(()=>localStorage.clear());
   await page.goto('/?example=blank');
   await page.locator('#workflow-file').setInputFiles(file);
@@ -72,5 +76,20 @@ test('fetched from a zip, kept as a spec, fetched again by digest, and refused w
   await expect.poll(async()=>(await stored(page)).data.rows.length).toBe(2);
   expect((await stored(page)).data.rows.map(r=>[r.key.date,r.value])).toEqual([['2016-01-01',31],['2016-01-02',28]]);
   expect(node.remote.sha256).toBe((await stored(page)).remote.sha256);
+
+  // AND NOW THE DEVICE HAS IT: fetched again, it is read from the device's copy, checked by digest, with the source
+  // serving something else entirely. One download per file, not one per workflow (2026-11-04).
+  // The same export opened again, as another project on this device would: its rows are not kept, the device's copy is.
+  served=archive(csv.replace('31','77'));
+  let requests=0;page.on('request',request=>{if(request.url()===URL)requests++;});
+  await page.evaluate(()=>localStorage.clear());
+  await page.goto('/?example=blank');
+  await page.locator('#workflow-file').setInputFiles(file);
+  await page.locator('[data-view="workflow"]').click();
+  const reopened=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')).nodes.find(n=>n.type==='table_input').id);
+  await page.locator(`.react-flow__node[data-id="${reopened}"]`).click();
+  await page.locator('#table-fetch-remote').click();
+  await expect.poll(async()=>(await stored(page)).data.rows.map(r=>r.value)).toEqual([31,28]);
+  expect(requests,'requests to the source').toBe(0);
   expect(errors).toEqual([]);
 });

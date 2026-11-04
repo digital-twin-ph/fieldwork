@@ -58,6 +58,13 @@ open workflow: a new project, a change of workflow or a reload keeps it, and onl
 (or pressed with Enter) is done; progress is kept per manual digest, shown in the tab and the panel alike, and
 detaching again scrolls to the first step not done. The panel is the base the playback dialog will build on.
 
+## Reusing a node within the project (added 2026-11-04)
+
+The practitioner: *"The duplication is specific to a widget if that widget gets used again in a different workflow in
+the same project."* A manual step can say to add a node another workflow already holds, from the library's **From this
+project** group, which shares its data and keeps its settings. NYC's second workflow does that; the third reads the
+same file differently (wide), so it has its own table node and reads the device's copy of the file (experiment 170).
+
 ## Validation
 
 | Date | Check | Result |

@@ -25,6 +25,10 @@ test('two questions about child asthma visits in New York City, built by followi
     const bytes=readFileSync(local);
     await page.route(ZENODO,route=>route.fulfill({status:200,body:bytes,headers:{'access-control-allow-origin':'*'}}));
   }
+  // ONE DOWNLOAD FOR ALL THREE WORKFLOWS: the second and third read the device's copy. The practitioner, 2026-11-04:
+  // *"I had to download the data set for NYC twice for 2 workflows. Double download."*
+  let downloads=0;
+  page.on('request',request=>{if(request.url()===ZENODO)downloads++;});
   const manual=JSON.parse(readFileSync(MANUAL,'utf8'));
   await page.goto('/');await page.evaluate(()=>localStorage.clear());
   await page.goto('/?example=blank');
@@ -34,6 +38,7 @@ test('two questions about child asthma visits in New York City, built by followi
     await page.locator('[data-view="workflow"]').click();await page.locator('#tidy-button').click();
   }
 
+  expect(downloads,'requests for the Zenodo package').toBe(1);
   await page.locator('#storage-status').click();
   const block=page.locator('.project-view-block').filter({hasText:'Ozone and child asthma'}).first();
   await expect(block).toContainText(`${manual.workflows.length} workflows`);

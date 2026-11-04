@@ -1627,6 +1627,8 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         const table=p.convertOnRun&&p.sourceTable&&p.wide
           ?wideDataTable(p.sourceTable,{...p.wide,valueField:p.valueField,primaryKey:p.data.primaryKey,secondaryKeys:p.data.secondaryKeys,...(p.unit?{unit:p.unit}:{})})
           :p.data;
+        if(!table.rows.length&&p.remote)throw new Error(`This table is fetched from ${p.remote.url} and its rows are not kept `
+          +'in the project. Select the node and choose Fetch the table.');
         if(!table.rows.length)throw new Error(p.convertOnRun
           ?'This step converts its source table on each run, and that source is empty.'
           :'Import a table before running.');

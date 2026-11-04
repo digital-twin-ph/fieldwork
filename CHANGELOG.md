@@ -5,6 +5,7 @@ shown in a local build is not a claim that it has been published.
 
 ## 0.14.0 — 2026-11-03
 
+- **A table can be fetched from a URL**, a zip included. The project keeps where it came from instead of the rows, so an export does not republish it, and another device fetches the same file by digest. Experiment 170.
 - **Tables can be imported from Stata files**, Stata 8 onward, as well as CSV. Dates read as dates and missing values are empty; value labels are not applied. Experiment 169.
 - **An interactive map plays through frames.** A join given **Frames from** keeps one value per frame on every part, such as a year; the interactive map then plays through them with one key for every frame, only while every part is in view. Nigeria's third workflow plays 20 birth cohorts. Experiment 168.
 - An interactive map can import an OpenStreetMap extract as PMTiles, once, for the area it draws. The workflow keeps the spec and the device keeps the tiles.

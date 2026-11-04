@@ -37,6 +37,7 @@ import {openStepViewer,openTableViewer,shapeChange,stepLabels,tableViewOf} from 
 import {openRelateJoin} from './relate-ui.js';
 import {relateShape} from './relate-table.js';
 import {findingsSummary,wideDataTable} from './data-table.js';
+import {fetchRemoteTable} from './remote-table.js';
 import {castColumn,applyRepairs} from './column-profile.js';
 import {openDataQuality} from './data-quality-ui.js';
 import {settingNamed} from './authored-rules.js';
@@ -117,7 +118,7 @@ import {readWorldFile,boundsFromWorldFile} from './map-image.js';
  *  the Inspector re-renders on every setting change and a file input cannot carry a selection
  *  across that. */
 const pendingPlateFiles=new Map<string,{image?:File;world?:File}>();
-import {openTableEditor,dataTableMarkup} from './data-table-ui.js';
+import {openTableEditor,dataTableMarkup,tableFromFetched} from './data-table-ui.js';
 import {openCatalogDialog,identityMarkup} from './catalog-ui.js';
 import {initTheme,applyTheme,saveThemePreference,isThemePreference} from './theme.js';
 import {previewArea,prepareRasterPreview,rasterOfNode} from './raster-preview.js';
@@ -2096,6 +2097,12 @@ function renderInspector(){
     // The table itself, at a width it can be read at. The Inspector is 292px wide and this
     // offered a description of the table's shape inside it -- everything about the table except
     // the table. The practitioner's call, 2026-10-16.
+    // A TABLE FETCHED FROM WHERE IT IS PUBLISHED says so, and one that arrived without its rows offers to fetch them.
+    if(p.remote)content+=`<div class="notice" data-table-remote>Fetched from <a href="${esc(p.remote.url)}" rel="noopener" target="_blank">`
+      +`${esc(new URL(p.remote.url).hostname)}</a>${p.remote.entry?`, ${esc(p.remote.entry.split('/').at(-1))}`:''}. `
+      +(p.data.rows.length?'The project keeps where it came from, not the rows.'
+        :'Its rows are not kept in the project. <button id="table-fetch-remote" class="button small">Fetch the table</button>')
+      +`<span id="table-fetch-status" class="muted"></span></div>`;
     if(p.data.rows.length)content+=`<div class="inspector-actions"><button id="quick-look" class="button">Quick look at the table</button>`
       +`<button id="table-quality" class="button">Data quality</button></div>`
       +(p.data.findings?.length?`<div class="notice" data-table-findings><strong>Check Data quality.</strong> `
@@ -3956,6 +3963,19 @@ function renderInspector(){
   });
   // A table's columns are its keys plus its one value field, which is the contract the widget
   // already declares. A ruleset reads them by those names, so the profile speaks of them too.
+  optionalElement('#table-fetch-remote')?.addEventListener('click',async e=>{
+    const button=e.currentTarget as HTMLButtonElement,say=$('#table-fetch-status');
+    const params=getNode(workflow,n.id,'table_input').params;
+    if(!params.remote)return;
+    button.disabled=true;say.textContent=` Fetching from ${new URL(params.remote.url).hostname}…`;
+    try{
+      const file=await fetchRemoteTable(params.remote);
+      const read=await tableFromFetched(file,{keys:params.keys,valueField:params.valueField,unit:params.unit,
+        ...(params.wide?{wide:params.wide}:{}),primaryKey:params.data.primaryKey,secondaryKeys:params.data.secondaryKeys});
+      change(w=>{const node=getNode(w,n.id,'table_input');node.params.data={...read.data,...(node.params.data.source?{source:node.params.data.source}:{})};
+        if(read.sourceTable)node.params.sourceTable=read.sourceTable;});
+    }catch(error){button.disabled=false;say.textContent=` ${error instanceof Error?error.message:'The table could not be fetched.'}`;}
+  });
   optionalElement('#table-quality')?.addEventListener('click',()=>{
     const table=getNode(workflow,n.id,'table_input').params;
     openDataQuality({title:`${n.params.label||'Tabular data'} · data quality`,
@@ -3978,6 +3998,7 @@ function renderInspector(){
         // stored `wide` block that no longer describes the table is a claim, and core.ts refuses
         // one that disagrees with the keys.
         if(result.wide)node.params.wide=result.wide;else delete node.params.wide;
+        if(result.remote)node.params.remote=result.remote;else delete node.params.remote;
         // The file as published, kept whenever it was read as wide, so `convertOnRun` has
         // something to convert and the node can say what it was made from either way.
         if(result.source_table)node.params.sourceTable=result.source_table;

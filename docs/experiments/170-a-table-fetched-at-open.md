@@ -1,8 +1,8 @@
 # 170 · A table fetched when the example opens
 
-_Created 2026-11-04 · Updated 2026-11-04_
+_Created 2026-11-03 · Updated 2026-11-03_
 
-**Status:** asked — designed here, not built.
+**Status:** tried — built as a spike on Table input. The NYC example does not use it yet.
 
 ## The task
 
@@ -35,6 +35,19 @@ row. Publishing NYC that way republishes the counts.
 Measured 2026-11-03: Zenodo answers a cross-origin request with `access-control-allow-origin: *`; the archive is
 8,817,679 bytes, md5 `ba80a4dbfe2393e505cdb4bfa750b14d`; the entry
 `Data/Core/Derived/analysis_master_raw_rebuild.csv` is 2,869,419 bytes, 559,901 compressed.
+
+## Built, 2026-11-03
+
+- **Or fetch from a URL** in the table dialog: a CSV, Stata file or zip; for a zip, the file inside is chosen. The
+  fetched file is handed to the dialog as a chosen file would be, so everything after is unchanged.
+- The node keeps `remote`: URL, entry, the file's and the archive's digests, bytes.
+- `workflowDocument`, which every export goes through, removes the rows of a remote table.
+- **Fetch the table** on a node that has the spec and no rows; a run before it says to fetch.
+- Not built: fetching on opening an example. The node's button is the explicit action for now.
+
+Validated: unit tests on stripping and on reading an archive; a browser test, Chromium and WebKit, that fetches a
+zip, saves, exports and finds no rows in the file, imports it into a fresh workspace, is refused a changed file and
+reads the original again to the same rows.
 
 ## Design audit
 

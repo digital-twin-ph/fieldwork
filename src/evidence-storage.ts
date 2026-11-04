@@ -1,3 +1,4 @@
+import {withoutRemoteRows} from './remote-table.js';
 import type {Workflow} from './types.js';
 import type {EvidenceBundle,EvidenceFile,EvidenceReference} from './evidence.js';
 import {decodeFile,encodeFile,pdfDigest,referencedPDFs,MAX_PDF_BYTES} from './evidence.js';
@@ -79,7 +80,7 @@ export async function exportEvidenceFiles(workflow:Workflow):Promise<EvidenceFil
   return result;
 }
 export async function workflowDocument(workflow:Workflow):Promise<Workflow|EvidenceBundle> {
-  assertProjectManifest(workflow);const snapshot=structuredClone(workflow);syncProjectManifest(snapshot);const attachments=await exportEvidenceFiles(snapshot);
+  assertProjectManifest(workflow);const snapshot=withoutRemoteRows(structuredClone(workflow));syncProjectManifest(snapshot);const attachments=await exportEvidenceFiles(snapshot);
   return attachments.length?{schema:'fieldwork/bundle/1',workflow:snapshot,attachments}:snapshot;
 }
 export async function importWorkflowDocument(raw:unknown,validate:(raw:unknown)=>Workflow):Promise<Workflow> {

@@ -3740,6 +3740,8 @@ missing axiom does not mean the question went unasked.
 - **A by-hand question:** the June 2023 Canadian smoke days, 49 visits on 2023-06-07 at PM2.5 190 µg/m³ against a June 1–5 mean of 25.
 - **Before shipping the data:** read NYC DOHMH EpiQuery's terms for the daily counts (the package says to check DOHMH, EPA and NOAA terms); run the package's own R code to confirm the archived numbers.
 - Research notes and ranking: `reports/Climate asthma worked examples.md` in the workspace root.
+- **Decided 2026-11-03:** NYC.gov reserves all rights to the counts, so they are fetched from the authors' Zenodo record at open, never republished (experiment 170). Repository `example-2025-nyc-ozone`, documents only.
+- **Later (practitioner, 2026-11-03):** augment with real downloads from remote sensing providers beside the monitors the authors used, such as satellite-derived PM2.5 or ozone, aerosol optical depth, or NOAA HMS smoke for June 2023, fetched at open by the same mechanism.
 
 ## After NYC: London ozone and deaths, 2002–2006 (Bhaskaran et al. 2013)
 

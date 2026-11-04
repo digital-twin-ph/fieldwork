@@ -1,6 +1,6 @@
 # 169 · Stata files as tables
 
-_Created 2026-11-04 · Updated 2026-11-04_
+_Created 2026-11-03 · Updated 2026-11-03_
 
 **Status:** tried — the table import reads Stata files, checked on the London example's file.
 

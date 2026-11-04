@@ -3749,3 +3749,7 @@ missing axiom does not mean the question went unasked.
 - **Data:** `londondataset2002_2006.dta` (34,540 bytes) in `gasparrini/2013_bhaskaran_IJE_codedata`, also the journal's supplement. Stata format, so it needs converting to CSV, and the conversion recorded.
 - **Terms, our reading:** the paper names no data source and states no data terms. It says the code is published "to reproduce our analyses, along with the dataset itself". The practitioner, 2026-11-03: *"this means to me they are fine with reproducing the results."* Ship it non-commercially with citation, quoting that sentence in NOTICE as the basis, and say it is our reading, not a stated licence. The GitHub repo carries no licence.
 - The app cannot fit the adjusted models yet; show crude comparisons beside the published ratios, as Salmonella does.
+
+## Found 2026-11-03, building NYC
+
+- **A wide file is slow to set up.** NYC's daily table has about 100 columns, mostly ready-made lags, all ticked as keys by default, and each untick rebuilds the preview of 3,653 rows: seconds a column. A "select none" for key columns, or a preview of the first rows only, would fix it.

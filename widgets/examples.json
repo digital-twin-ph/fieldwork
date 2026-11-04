@@ -373,6 +373,54 @@
         }
       ],
       "workflowCount": 3
+    },
+    {
+      "id": "urn:fieldwork:example:nyc-asthma-ozone-2016-2025",
+      "title": "Ozone and child asthma emergency visits, New York City, 2016–2025",
+      "repository": "https://github.com/digital-twin-ph/example-2025-nyc-ozone",
+      "commit": "5d3f93588cbcfd372949c244151cf101342afafe",
+      "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2025-nyc-ozone",
+      "licence": {
+        "data": "Not redistributed",
+        "source": "Lian et al., Zenodo doi:10.5281/zenodo.22757330; counts from NYC DOHMH EpiQuery",
+        "note": "The daily counts are fetched from the authors' Zenodo package when the example is opened and checked by digest. NYC.gov reserves all rights to them, so this repository holds none."
+      },
+      "description": "Daily asthma emergency visits among children aged 5 to 17 in New York City with ozone, PM2.5 and weather, the table fetched from where it is published. The June 2023 smoke days, and ten years of daily visits.",
+      "carries": {
+        "workflow": true,
+        "data": false,
+        "geography": false
+      },
+      "notYet": "The authors' ozone rate ratio needs regression, which Fieldwork does not have yet.",
+      "uses": [
+        "chart_output",
+        "select_rows",
+        "table_input",
+        "table_output"
+      ],
+      "files": [
+        {
+          "path": "fieldwork-project.json.gz",
+          "sha256": "2df18cca1fc7ba1a55284307d973332e0d76570802400b521aa87d379cdfb932",
+          "bytes": 1310
+        },
+        {
+          "path": "provenance.json",
+          "sha256": "79a7e82286e931afae20e2fbfbcbd7f68c1d71253250a4010f2b763af8a9c98c",
+          "bytes": 1266
+        },
+        {
+          "path": "README.md",
+          "sha256": "9a876f596fe36181774fad69dff01664a7648ab2bd867a822d60399defd9c79e",
+          "bytes": 3369
+        },
+        {
+          "path": "NOTICE.txt",
+          "sha256": "57954277116f3d18732ab80b63239bb84445785a2d81feb9eb4ead85c8935531",
+          "bytes": 939
+        }
+      ],
+      "workflowCount": 2
     }
   ]
 }

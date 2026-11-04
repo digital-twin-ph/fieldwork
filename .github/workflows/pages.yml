@@ -182,6 +182,14 @@ jobs:
           ref: ${{ steps.nigeria.outputs.commit }}
           fetch-depth: 0
           path: example-nigeria-checkout
+      - id: nyc
+        run: echo "commit=$(jq -r '.examples[] | select(.repository|endswith("/example-2025-nyc-ozone")) | .commit' widgets/examples.json)" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v6
+        with:
+          repository: digital-twin-ph/example-2025-nyc-ozone
+          ref: ${{ steps.nyc.outputs.commit }}
+          fetch-depth: 0
+          path: example-nyc-checkout
       - id: salmonella
         run: echo "commit=$(jq -r '.examples[] | select(.repository|endswith("/example-2021-salmonella-germany")) | .commit' widgets/examples.json)" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v6
@@ -229,5 +237,6 @@ jobs:
           mv example-oswego-checkout ../example-1940-oswego-church-supper
           mv example-nigeria-checkout ../example-2024-nigeria-immunization
           mv example-salmonella-checkout ../example-2021-salmonella-germany
+          mv example-nyc-checkout ../example-2025-nyc-ozone
       - name: Type check, build and run regression tests
         run: npm run check

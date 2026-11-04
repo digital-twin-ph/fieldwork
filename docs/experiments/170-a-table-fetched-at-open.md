@@ -2,7 +2,7 @@
 
 _Created 2026-11-03 · Updated 2026-11-03_
 
-**Status:** tried — built as a spike on Table input. The NYC example does not use it yet.
+**Status:** tried — built on Table input and used by the NYC example, Chromium.
 
 ## The task
 
@@ -48,6 +48,15 @@ Measured 2026-11-03: Zenodo answers a cross-origin request with `access-control-
 Validated: unit tests on stripping and on reading an archive; a browser test, Chromium and WebKit, that fetches a
 zip, saves, exports and finds no rows in the file, imports it into a fresh workspace, is refused a changed file and
 reads the original again to the same rows.
+
+## The NYC example, 2026-11-03
+
+`example-2025-nyc-ozone`, two workflows, pinned in the catalogue. Its exported project is 6,191 bytes and holds no row
+of either table. Opened from its pin, the table says its rows are not kept, **Fetch the table** reads the package from
+Zenodo by digest, and the run completes. Built from an empty canvas with a real fetch from Zenodo for the export.
+
+Found on the way: the CSV reader capped every file at 2,000 rows, though tables allow 20,000; a table now passes its own
+ceiling. And a wide file of about 100 columns is slow to set up, recorded in TODO.
 
 ## Design audit
 

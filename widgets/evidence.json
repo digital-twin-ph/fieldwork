@@ -16,6 +16,7 @@
  ],
  "examplesPinned": [
   "nigeria-immunization-2024",
+  "nyc-asthma-ozone-2016-2025",
   "oswego-1940",
   "salmonella-germany-2021",
   "south-london-1854"
@@ -118,13 +119,14 @@
    "nodeType": "chart_output",
    "exampleUses": [
     "hagelloch",
+    "nyc-asthma-ozone-2016-2025",
     "old-naledi",
     "snow-extent",
     "snow-isochrone",
     "snow-voronoi",
     "south-london-1854"
    ],
-   "exampleUseCount": 6,
+   "exampleUseCount": 7,
    "lab": "none",
    "labOwed": false,
    "fieldUse": [],
@@ -513,10 +515,11 @@
    "nodeType": "select_rows",
    "exampleUses": [
     "nigeria-immunization-2024",
+    "nyc-asthma-ozone-2016-2025",
     "salmonella-germany-2021",
     "south-london-1854"
    ],
-   "exampleUseCount": 3,
+   "exampleUseCount": 4,
    "lab": "none",
    "labOwed": false,
    "fieldUse": [],
@@ -631,6 +634,7 @@
    "nodeType": "table_input",
    "exampleUses": [
     "nigeria-immunization-2024",
+    "nyc-asthma-ozone-2016-2025",
     "oswego-1940",
     "rulesets",
     "salmonella-germany-2021",
@@ -640,7 +644,7 @@
     "snow-voronoi",
     "south-london-1854"
    ],
-   "exampleUseCount": 9,
+   "exampleUseCount": 10,
    "lab": "none",
    "labOwed": false,
    "fieldUse": [],
@@ -651,6 +655,7 @@
    "exampleUses": [
     "hagelloch",
     "heat",
+    "nyc-asthma-ozone-2016-2025",
     "old-naledi",
     "oswego-1940",
     "rulesets",
@@ -662,7 +667,7 @@
     "snow-voronoi",
     "south-london-1854"
    ],
-   "exampleUseCount": 12,
+   "exampleUseCount": 13,
    "lab": "none",
    "labOwed": false,
    "fieldUse": [],

@@ -30,11 +30,13 @@ export interface GeoPackageLayer {table_name:string; column_name:string; srs_id:
 import {geometryBounds} from './study-area.js';
 import {pointRelation} from './spatial-predicates.js';
 const feature=(id:string,name:string,coordinates:Position|null):PointFeature=>({type:'Feature',id,properties:{name},geometry:coordinates?{type:'Point',coordinates}:null});
-export function parseCSV(text:string):CSVTable{
+/** `maxRecords` is the caller's: points stay at 2,000, and a table passes its own ceiling, MAX_TABLE_ROWS. The
+ *  NYC example's daily table is 3,653 rows, and the shared 2,000 refused it, 2026-11-03. */
+export function parseCSV(text:string,maxRecords=2000):CSVTable{
   if(text.length>5e6)throw new Error('CSV exceeds the 5 MB prototype limit.');
   text=text.replace(/^\uFEFF/,'');const rows:string[][]=[];let row:string[]=[],field='',quoted=false,closed=false;
   const endField=()=>{row.push(field);field='';closed=false;};
-  const endRow=()=>{endField();if(row.some(s=>s.trim()))rows.push(row);row=[];if(rows.length>2001)throw new Error('CSV supports at most 2,000 records.');};
+  const endRow=()=>{endField();if(row.some(s=>s.trim()))rows.push(row);row=[];if(rows.length>maxRecords+1)throw new Error(`CSV supports at most ${maxRecords.toLocaleString('en-US')} records.`);};
   for(let i=0;i<text.length;i++){const c=text[i];if(quoted){if(c==='"'){if(text[i+1]==='"'){field+='"';i++;}else{quoted=false;closed=true;}}else field+=c;continue;}
     if(c===',')endField();else if(c==='\n'||c==='\r'){if(c==='\r'&&text[i+1]==='\n')i++;endRow();}else if(c==='"'&&!field&&!closed)quoted=true;else{if(closed||c==='"')throw new Error('Malformed CSV quoting.');field+=c;}}
   if(quoted)throw new Error('CSV has an unclosed quoted field.');if(field||row.length||closed)endRow();

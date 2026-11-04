@@ -5,6 +5,8 @@ shown in a local build is not a claim that it has been published.
 
 ## 0.14.0 — 2026-11-03
 
+- A fifth worked example: ozone and child asthma emergency visits, New York City, 2016 to 2025. Its counts are fetched from the authors' Zenodo package when it is opened, and never held in the example.
+- A table read from CSV can have up to 20,000 rows, as tables allow; points stay at 2,000.
 - **A table can be fetched from a URL**, a zip included. The project keeps where it came from instead of the rows, so an export does not republish it, and another device fetches the same file by digest. Experiment 170.
 - **Tables can be imported from Stata files**, Stata 8 onward, as well as CSV. Dates read as dates and missing values are empty; value labels are not applied. Experiment 169.
 - **An interactive map plays through frames.** A join given **Frames from** keeps one value per frame on every part, such as a year; the interactive map then plays through them with one key for every frame, only while every part is in view. Nigeria's third workflow plays 20 birth cohorts. Experiment 168.

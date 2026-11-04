@@ -3,6 +3,17 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.20.0 — 2026-11-04
+
+- **What the columns mean.** **Describe columns…** on a table opens a dialog for each column's label, unit and
+  description. A data dictionary (CSV, Excel or Stata, from disk or from the same fetched zip) proposes them; you
+  accept. The dictionary is matched mechanically against the table, missing counts included. A Stata file's variable
+  labels are proposed at import. Table input 0.6.0, experiment 172.
+- **Undescribed columns are a data quality finding**, in Data quality, on the node and in the write-up's Methods; never
+  a refusal. A dictionary that disagrees with the table is one too.
+- A regression's terms and a chart's panels show each column's meaning beside its name.
+- Validation: Chromium locally; WebKit in CI.
+
 ## 0.19.1 — 2026-11-04
 
 - **A fetched table already on this device fills itself.** Opening or running a workflow reads its table from the copy

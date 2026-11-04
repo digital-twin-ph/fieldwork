@@ -12,6 +12,8 @@ export interface TableImport {data:DataTable; source:DataTableSource; keys:strin
   /** Present when the file was fetched from a URL: the spec the project keeps in place of the rows. */
   remote?:RemoteTableSource;
   unit?:string; wide?:WideChoice;
+  /** What the file itself says its columns mean (Stata's variable labels), as unconfirmed proposals. */
+  proposed?:import('./column-metadata.js').ColumnDeclarations;
   /** The parsed file, carried only for a wide read, so the node can melt it again on each run. */
   source_table?:{headers:string[];rows:string[][]}}
 /** What the editor reopens with. `wide` present means the file was read as wide. */
@@ -552,8 +554,13 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:T
     if(!result||!file||busy)return;busy=true;save.disabled=true;cancel.disabled=true;fileInput.disabled=true;error.hidden=true;
     try{
       const sha256=await contentHash(stata?new Uint8Array(await file!.arrayBuffer()) as Uint8Array<ArrayBuffer>:new TextEncoder().encode(text) as Uint8Array<ArrayBuffer>);
+      // A STATA FILE'S OWN VARIABLE LABELS, proposed for what its kept columns mean and not yet accepted
+      // (experiment 172). A label the file does not have is no proposal.
+      const kept=result.wide?[...result.wide.keys,...result.wide.valueFields]:[...result.keys,result.valueField];
+      const proposed=stata?Object.fromEntries(kept.map(c=>[c,stata!.labels[stata!.headers.indexOf(c)]?.trim()??''])
+        .filter(([,label])=>label).map(([c,label])=>[c,{label,origin:'file' as const,confirmed:false,from:result!.source.filename}])):{};
       const saved:TableImport={...result,data:{...result.data,source:{...result.source,sha256}},source:{...result.source,sha256},
-        ...(remote?{remote}:{})};
+        ...(remote?{remote}:{}),...(Object.keys(proposed).length?{proposed}:{})};
       if(!onSave(saved))throw new Error('The table could not be saved. Your previous project is unchanged; retry Save.');
       dialog.close();
     }catch(e){fail(e);status.textContent='This table has not been added to the project.';}
@@ -768,7 +775,8 @@ export function dataTableMarkup(table:DataTable,esc:Escape,{query='',page=0,page
       +grid.columns.map(c=>`<th scope="col">${esc(c)}</th>`).join('')
       +(grid.grandTotal===null?'':'<th scope="col">Total</th>')
       +`</tr></thead><tbody>`
-      +grid.rows.map(r=>`<tr><th scope="row">${esc(r.label)}</th>`
+      // A ROW'S MEANING BESIDE ITS NAME, where the table carries one (a regression's terms, experiment 172).
+      +grid.rows.map(r=>`<tr><th scope="row">${esc(r.label)}${table.meanings?.[r.label]?`<span class="meaning"> · ${esc(table.meanings[r.label]!)}</span>`:''}</th>`
         +r.cells.map(v=>`<td>${v===undefined?'<span class="muted">—</span>'
           :v===null?'<span class="muted">unknown</span>':esc(v)}</td>`).join('')
         +(r.total===null?'':`<td class="crosstab-total">${esc(r.total)}</td>`)

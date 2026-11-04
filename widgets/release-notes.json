@@ -926,7 +926,7 @@
    "migrationFrom": []
   },
   "table_input": {
-   "version": "0.5.0",
+   "version": "0.6.0",
    "released": "2026-11-04",
    "changes": [
     {
@@ -944,6 +944,10 @@
     {
      "kind": "minor",
      "description": "More than 12 columns are chosen in a dialog of their own, with names pasted or typed, find, untick all and ticked only; read long, such a file starts with nothing ticked. The practitioner: \"This is choice overload\". Experiment 173."
+    },
+    {
+     "kind": "minor",
+     "description": "What the columns mean: Describe columns opens a dialog for each kept column's label, unit and description, typed or proposed from a data dictionary (CSV, Excel or Stata, from disk or from the same fetched archive) and accepted. The dictionary is matched mechanically against the table. Stata's variable labels are proposed at import. An undescribed column, an unaccepted proposal and a disagreeing dictionary are findings, never refusals. The declarations travel with the table. Experiment 172."
     }
    ],
    "breaking": false,

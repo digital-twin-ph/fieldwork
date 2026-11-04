@@ -208,6 +208,9 @@ export interface ParamsByType {
      *  melt done once in a dialog is invisible, and a melt done by the run is a step with a
      *  receipt -- which is what "prepared outside the application" meant and what this ends. */
     sourceTable?:{headers:string[];rows:string[][]};
+    /** What the columns mean (experiment 172), and the last dictionary checked against the file. */
+    columns?:import('./column-metadata.js').ColumnDeclarations;
+    dictionaryCheck?:import('./column-metadata.js').DictionaryCheck;
     /** Where `sourceTable` is kept on the device: `source:` and the file's SHA-256. Kept out of the saved workflow
      *  like `dataRef` data, because a wide file of 92 columns did not fit in it (2026-11-04, NYC). */
     sourceRef?:string;

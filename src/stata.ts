@@ -14,7 +14,9 @@ import type {CSVTable} from './input-data.js';
  *    itself says so. A datetime (`%tc`) is read as a date and time. Other formats are left as numbers.
  *  - VALUE LABELS ARE NOT APPLIED. A labelled code stays the code, and `notes` says which variables carry labels.
  *    Replacing codes with labels would relabel the data on the reader's behalf. */
-export interface StataTable extends CSVTable {format:number; notes:string[]}
+/** `labels` are the variable labels Stata keeps for each column, in column order; empty where there is none. They
+ *  describe the column, which experiment 172 offers as a proposal for what it means. */
+export interface StataTable extends CSVTable {format:number; notes:string[]; labels:string[]}
 
 const MISSING={byte:100,int:32740,long:2147483620,float:1.701e38,double:8.988e307} as const;
 const DAY=86_400_000,STATA_EPOCH=Date.UTC(1960,0,1);
@@ -73,6 +75,7 @@ function readOld(bytes:Uint8Array,view:DataView,ascii:(f:number,l:number)=>strin
   const fmtWidth=format===113?12:49;
   const formats=Array.from({length:nvar},(_,i)=>ascii(p+fmtWidth*i,fmtWidth));p+=fmtWidth*nvar;
   const labelled=Array.from({length:nvar},(_,i)=>ascii(p+33*i,33));p+=33*nvar;
+  const labels=Array.from({length:nvar},(_,i)=>ascii(p+81*i,81));p+=81*nvar;
   // THE RECORDS. Expansion fields are walked; where a writer has laid them out otherwise, the records are the
   // last nobs x record bytes, which holds only when nothing follows them, so that is checked.
   const record=kinds.reduce((sum,k)=>sum+width(k),0);
@@ -90,7 +93,7 @@ function readOld(bytes:Uint8Array,view:DataView,ascii:(f:number,l:number)=>strin
     start=bytes.length-nobs*record;
   }
   const rows=cellsOf(bytes,view,little,kinds,formats,start,nobs,ascii,()=>'');
-  return {headers,rows,format,notes:labelNotes(headers,labelled)};
+  return {headers,rows,format,notes:labelNotes(headers,labelled),labels};
 }
 
 /** Formats 117 to 119: tagged sections, located through the map. */
@@ -117,6 +120,9 @@ function readModern(bytes:Uint8Array,view:DataView,ascii:(f:number,l:number)=>st
   const formats=Array.from({length:nvar},(_,i)=>ascii(p+fmtWidth*i,fmtWidth));
   p=offset(6)+'<value_label_names>'.length;
   const labelled=Array.from({length:nvar},(_,i)=>ascii(p+nameWidth*i,nameWidth));
+  const labelWidth=release===117?81:321;
+  p=offset(7)+'<variable_labels>'.length;
+  const labels=Array.from({length:nvar},(_,i)=>ascii(p+labelWidth*i,labelWidth));
   // LONG STRINGS live in their own section, each keyed by variable and observation.
   const strls=new Map<string,string>();
   let s=offset(10)+'<strls>'.length;
@@ -135,7 +141,7 @@ function readModern(bytes:Uint8Array,view:DataView,ascii:(f:number,l:number)=>st
     return v===0&&o===0?'':strls.get(`${v}:${o}`)??'';
   };
   const rows=cellsOf(bytes,view,little,kinds,formats,offset(9)+'<data>'.length,nobs,ascii,strl);
-  return {headers,rows,format:release,notes:labelNotes(headers,labelled)};
+  return {headers,rows,format:release,notes:labelNotes(headers,labelled),labels};
 }
 
 const labelNotes=(headers:string[],labelled:string[])=>{

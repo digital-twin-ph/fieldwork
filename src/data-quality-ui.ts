@@ -22,7 +22,7 @@ export interface QualityRepair {column:string; to:ColumnKind; cast:number; unrea
 export interface QualityView {
   title:string;
   /** What reading the table found, listed before the columns. */
-  findings?:readonly {text:string}[];
+  findings?:readonly {text:string;kind?:string}[];
   columns:string[];
   /** The records as they will be READ: declared repairs already applied. */
   rows:Record<string,unknown>[];
@@ -217,7 +217,10 @@ export function openDataQuality(view:QualityView,esc:Escape):void{
       +`</section>`;
   }).join('');
 
-  let tab:'findings'|'columns'|'shapes'=view.findings?.length?'findings':'columns';
+  // OPENED ON FINDINGS WHEN THE ROWS OR THE DICTIONARY HAVE A PROBLEM. Columns nobody has described yet is a finding
+  // every new table carries (experiment 172), and opening on it every time hid the column profile this dialog leads with.
+  const pressing=(view.findings??[]).some(f=>f.kind!=='undescribed-column'&&f.kind!=='unconfirmed-description');
+  let tab:'findings'|'columns'|'shapes'=pressing?'findings':'columns';
 
   const render=()=>{
     dialog.innerHTML=`<div class="manual-head"><h2 id="data-quality-title">${esc(view.title)}</h2>`

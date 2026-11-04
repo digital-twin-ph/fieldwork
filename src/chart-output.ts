@@ -90,7 +90,12 @@ function panelChart(table:DataTable,keyColumn:string|undefined,panelsBy:string):
   const labels=bins.map(bin=>bin.label);
   const temporal=orderOf(labels)==='date'&&labels.every(label=>label.length===10);
   const absent=bins.filter(bin=>bin.missing).length;
+  // WHAT EACH PANEL MEASURES, where the table carries an accepted description of the column it came from.
+  const meanings=Object.fromEntries(panels.map(name=>{const m=table.columns?.[name];
+    const text=m?.confirmed?(m.label?.trim()||m.description?.trim()||''):'';
+    return [name,text?`${text}${m!.unit?.trim()?` (${m!.unit.trim()})`:''}`:''];}).filter(([,m])=>m));
   return {field:'value',measure:'value',...(table.unit?{unit:table.unit}:{}),categoryTitle:column,
+    ...(Object.keys(meanings).length?{meanings}:{}),
     caption:`${table.valueField} by ${column}, one panel per ${panelsBy}`
       +(absent?` · ${absent} point${absent===1?'':'s'} with no value, left as gaps`:''),
     total:table.rows.length,panels,temporal,bins};

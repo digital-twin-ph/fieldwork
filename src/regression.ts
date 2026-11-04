@@ -250,12 +250,17 @@ export function rowsOf(table:{keys:string[];valueField:string;rows:{key:Record<s
 }
 
 /** THE RESULT AS A TABLE: one row per term and statistic, so Table output draws a term per row. */
-export function regressionTable(result:RegressionResult){
+export function regressionTable(result:RegressionResult,columns?:Record<string,{label?:string;unit?:string;description?:string;confirmed:boolean}>){
+  // EACH TERM'S MEANING, from the column it comes from, where that column has an accepted description (experiment 172).
+  const meaningOf=(column:string)=>{const m=columns?.[column];if(!m?.confirmed)return '';
+    const text=m.label?.trim()||m.description?.trim()||'';return text?`${text}${m.unit?.trim()?` (${m.unit.trim()})`:''}`:'';};
+  const meanings=Object.fromEntries(result.estimates.map(e=>[e.term,meaningOf(e.column)+(e.level&&meaningOf(e.column)?`: ${e.level}`:'')]).filter(([,m])=>m));
   const name=result.measure;
   const statistics:[string,(e:Estimate)=>number][]=[[name,e=>e.ratio],[`lower ${result.level}%`,e=>e.lower],
     [`upper ${result.level}%`,e=>e.upper],['p',e=>e.p]];
   const rows=result.estimates.flatMap(e=>statistics.map(([statistic,read])=>({key:{term:e.term,statistic},value:read(e)})));
-  return {kind:'data-table' as const,keys:['term','statistic'],valueField:'value',rows,rowCount:rows.length,missingValueCount:0};
+  return {kind:'data-table' as const,keys:['term','statistic'],valueField:'value',rows,rowCount:rows.length,missingValueCount:0,
+    ...(Object.keys(meanings).length?{meanings}:{})};
 }
 
 /** What was fitted, in a sentence a reader can check against the paper they are reproducing. */

@@ -1,2 +1,2 @@
-import{a,b}from"./chunks/chunk-FHPR2PNY.js";import"./chunks/chunk-BGYGCWDE.js";import"./chunks/chunk-KVMUXFPB.js";export{a as appendRows,b as appendSentence};
+import{a,b}from"./chunks/chunk-CY73R2UG.js";import"./chunks/chunk-6DZDMT4U.js";import"./chunks/chunk-KVMUXFPB.js";export{a as appendRows,b as appendSentence};
 //# sourceMappingURL=append-rows.js.map

@@ -37,7 +37,9 @@ import {openStepViewer,openTableViewer,shapeChange,stepLabels,tableViewOf} from 
 import {openRelateJoin} from './relate-ui.js';
 import {relateShape} from './relate-table.js';
 import {findingsSummary,wideDataTable} from './data-table.js';
-import {fetchRemoteTable,useDeviceCopies} from './remote-table.js';
+import {fetchRemoteTable,useDeviceCopies,archiveOnDevice} from './remote-table.js';
+import {describableColumns,fileRows,isDescribed,metadataFindings} from './column-metadata.js';
+import {openColumnsDialog} from './columns-dialog.js';
 import {castColumn,applyRepairs} from './column-profile.js';
 import {openDataQuality} from './data-quality-ui.js';
 import {settingNamed} from './authored-rules.js';
@@ -2136,6 +2138,14 @@ function renderInspector(){
       +`<button id="table-quality" class="button">Data quality</button></div>`
       +(p.data.findings?.length?`<div class="notice" data-table-findings><strong>Check Data quality.</strong> `
         +`${esc(findingsSummary(p.data))}. The rows are kept as they stand.</div>`:'')
+      // WHAT THE COLUMNS MEAN, said apart from the rows' quality: every table starts undescribed, and that is a
+      // different fact from a repeated key (experiment 172).
+      +(()=>{const columns=describableColumns(p.data,p.wide),described=columns.filter(c=>isDescribed(p.columns?.[c])).length;
+        const proposed=columns.filter(c=>p.columns?.[c]&&!p.columns[c]!.confirmed).length;
+        return `<div class="notice" data-table-meaning><strong>What the columns mean.</strong> ${described} of ${columns.length} described`
+          +(proposed?`, ${proposed} proposed and not yet accepted`:'')+'.'
+          +(described<columns.length?' A column nobody has described is a data quality finding.':'')
+          +` <button id="describe-columns" class="button small">Describe columns…</button></div>`;})()
       +`<p>${esc(p.source?.filename||'Imported file')}<br>${p.data.rowCount} rows, ${p.data.missingValueCount} values absent and kept as unknown.</p><details><summary>Table shape</summary><pre>${esc(JSON.stringify({keys:p.data.keys,valueField:p.data.valueField,unit:p.data.unit||'(unstated)',rows:p.data.rowCount,source:p.source},null,2))}</pre></details>`;
     else content+='<p class="description">No table imported yet. This node cannot run until a table is imported.</p>';
     content+='<div class="notice">A unit is recorded as you state it and never inferred. An absent value is kept as unknown, never read as zero. Connect a Table output to display it.</div>';
@@ -4180,13 +4190,25 @@ function renderInspector(){
   optionalElement('#table-quality')?.addEventListener('click',()=>{
     const table=getNode(workflow,n.id,'table_input').params;
     openDataQuality({title:`${n.params.label||'Tabular data'} · data quality`,
-      findings:table.data.findings??[],
+      findings:[...(table.data.findings??[]),...metadataFindings(table.data,table.columns,table.dictionaryCheck,table.wide)],
       columns:[...table.data.keys,table.data.valueField],
       rows:table.data.rows.map(row=>({...row.key,[table.data.valueField]:row.value})),
       declared:declaredKinds(workflow,n.id),repairs:[],
       // A tabular import casts its value column at import, and a cell it cannot read is a finding
       // kept as unknown. No repair is offered here yet. 117, 164.
       onRepair:()=>{},onRemoveRepair:()=>{}},esc);
+  });
+  // DESCRIBE COLUMNS, from the Inspector at any time; a fetched zip offers its own files as the dictionary.
+  optionalElement('#describe-columns')?.addEventListener('click',async()=>{
+    const table=getNode(workflow,n.id,'table_input').params;
+    const columns=describableColumns(table.data,table.wide);
+    const archive=table.remote?await archiveOnDevice(table.remote):undefined;
+    openColumnsDialog({title:n.params.label||'Tabular data',columns,held:table.columns??{},
+      rows:fileRows(table.data,table.wide),
+      ...(archive?{archive:{entries:archive.entries,read:async entry=>archive.read(entry)}}:{}),
+      onSave:(declared,check)=>change(w=>{const node=getNode(w,n.id,'table_input');
+        if(Object.keys(declared).length)node.params.columns=declared;else delete node.params.columns;
+        if(check)node.params.dictionaryCheck=check;})!==false},esc);
   });
   optionalElement('#add-table-view')?.addEventListener('click',()=>change(w=>{const id=`table-view-${Date.now()}`;w.nodes.push({id,type:'table_output',x:n.x+270,y:n.y,params:{label:'Imported table'}});w.edges.push({id:`e-${Date.now()}`,from:n.id,to:id,port:'table'});selected=id;}));
   optionalElement('#open-table')?.addEventListener('click',()=>{
@@ -4200,6 +4222,9 @@ function renderInspector(){
         // one that disagrees with the keys.
         if(result.wide)node.params.wide=result.wide;else delete node.params.wide;
         if(result.remote)node.params.remote=result.remote;else delete node.params.remote;
+        // The file's own labels as proposals; what the practitioner has accepted is never replaced by them.
+        if(result.proposed){const held=node.params.columns??{};
+          node.params.columns={...result.proposed,...Object.fromEntries(Object.entries(held).filter(([,m])=>m.confirmed))};}
         // The file as published, kept whenever it was read as wide, so `convertOnRun` has
         // something to convert and the node can say what it was made from either way.
         if(result.source_table){node.params.sourceTable=result.source_table;

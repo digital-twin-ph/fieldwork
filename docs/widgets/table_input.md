@@ -55,6 +55,22 @@ Key columns are read as labels. Among them you decide what identifies a row:
 
 With no primary key declared, the check is on all the key columns together.
 
+## What the columns mean
+
+**Describe columns…** on the node opens a dialog for every column the table keeps: a **label**, a **unit** and a
+**description**. The column's name stays as the file spells it; the label is shown beside it, in a regression's
+terms and a chart's panels. Describing the columns is your step, and a data quality check: a column nobody has
+described is a finding in Data quality and in the write-up's Methods, never a reason to refuse the table.
+
+**From a data dictionary.** Under *Propose from a data dictionary*, choose a CSV, Excel workbook or Stata file with one
+row per variable, or, for a table fetched from a zip, a file in the same archive (read from this device). Say which of
+its columns holds the variable name, label, description, unit and missing count; a first guess from its headers is
+filled in. **Propose descriptions** fills the columns it describes, marked *not yet accepted*, and checks it against
+the table: which kept columns it does not describe, and whether each missing count it states agrees with the table's.
+Accept each proposal, or **Accept every proposal**; typing in a field makes the description yours.
+
+A Stata file's own variable labels are proposed the same way when it is imported.
+
 ## Data quality
 
 A file is not refused for a quality problem. Every row is kept, the node says **Check Data quality**, and the

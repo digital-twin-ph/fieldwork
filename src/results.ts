@@ -105,6 +105,8 @@ export interface ChartSummary {field:'status'|'zone'|'tier'|'count'|'total'|'per
   /** Panels, in the order first met, when the chart is drawn one panel per value of a key column. `temporal` says the
    *  category axis is dates, so it is drawn as time. Experiment 174. */
   panels?:string[]; temporal?:boolean;
+  /** A panel's meaning, from the table's declared columns, shown beside its name (experiment 172). */
+  meanings?:Record<string,string>;
   bins:{key:string; label:string; count:number; order?:number; panel?:string; missing?:true}[]}
 export interface DisplayValue {
   comparison?:import('./point-comparison.js').PointComparison;

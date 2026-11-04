@@ -2,7 +2,7 @@
 
 _Created 2026-11-03 · Updated 2026-11-03_
 
-**Status:** asked — designed, with a first measurement by script; nothing built in Fieldwork.
+**Status:** tried — the Columns dialog, dictionary matching and the findings built on Table input, Chromium. Value codings and the CSVW export are not built.
 
 ## The task
 
@@ -72,6 +72,37 @@ Salmonella:
 | Variables coded differently in the questionnaire and in Stata | 46 |
 
 None of the disagreeing columns is used by the Salmonella example, whose numbers come from the food columns, which agree.
+
+## Built, 2026-11-04
+
+The practitioner, 2026-11-04, on a regression table whose terms read `o3_lag02_10`: *"So let's include the data
+dictionary work. It's actually critical for data quality work. Which is upstream."* And: *"data dictionary could be
+CSV, Stata or Excel."*
+
+| Part | What it does |
+| --- | --- |
+| **Describe columns…** on Table input | A dialog of its own, after import, for each column the table keeps (for a wide read, the file's subject and value columns): label, unit, description. Typing is declaring: an edited description is the practitioner's and accepted |
+| A data dictionary | CSV, Excel (`src/xlsx.ts`, no library) or Stata, from disk or, for a fetched zip, from the same archive on this device. Which of its columns holds the name, label, description, unit and missing count is proposed from its headers and shown for the practitioner to change |
+| The mechanical match | Every kept column against the dictionary, every stated missing count against the table's (`checkDictionary`); for a wide read the file's rows are rebuilt one per subject first |
+| Stata's variable labels | Read by `src/stata.ts` and proposed at import, unconfirmed, attributed to the file |
+| Findings | An undescribed column, a proposal not yet accepted, and a dictionary that disagrees: in Data quality, in their own notice on the node, and in the write-up as their own limitation. Never a refusal |
+| Downstream | The declarations travel on the table. A regression's terms and a chart's panels show the meaning beside the name; the receipt records the declarations the run used |
+
+**Found building it:** the reader's synthetic Stata fixture had no variable-label section, which every format 113–115
+file has; London's real file confirmed the layout, so the fixture was corrected. And the dictionary's header guess
+first matched `nonmissing_n` for "missing", because it took the first header matching any pattern; patterns are now
+tried in order of preference.
+
+## Validation
+
+| Date | Check | Result |
+| --- | --- | --- |
+| 2026-11-04 | `tests/column-metadata.test.mjs` with `NYC_PKG` | 3 of 3: findings for undescribed and unconfirmed columns, a dictionary read and checked, and NYC's dictionary against its file: 92 of 92 columns, no column on one side only, every missing count equal |
+| 2026-11-04 | `tests/stata.test.mjs` | 5 of 5, including variable labels read |
+| 2026-11-04 | Salmonella's codebook read by `readXlsx` | 69 variables, its columns Variable, Bedeutung, Description, Coding, Coding in Stata |
+| 2026-11-04 | `tests/columns-dialog.browser.mjs`, Chromium | NYC's regression table: 0 of 8 described; the dictionary chosen from the same zip on this device, its mapping proposed, every kept column described and every missing count agreeing; 8 of 8 accepted; the run shows `o3_lag02_10 · O3 mean over lag 0-2; divided by 10 for model scaling (10 ppb)`. One download in all |
+
+WebKit was not run locally.
 
 ## Validation it commits to
 

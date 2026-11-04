@@ -55,6 +55,17 @@ export function archiveEntry(bytes:Uint8Array,entry:string):Uint8Array<ArrayBuff
   return new Uint8Array(found);
 }
 
+/** THE ARCHIVE A FETCHED TABLE CAME FROM, read from this device, and the files in it that could be a data dictionary:
+ *  CSV, Excel or Stata (experiment 172). Undefined when the device does not hold it; nothing is downloaded here. */
+export async function archiveOnDevice(spec:RemoteTableSource):Promise<{entries:string[];read:(entry:string)=>Uint8Array}|undefined>{
+  if(!spec.archiveSha256)return undefined;
+  const bytes=await fromDevice(spec.archiveSha256);
+  if(!bytes)return undefined;
+  const entries:string[]=[];
+  unzipSync(bytes,{filter:file=>{if(/\.(csv|xlsx|dta)$/i.test(file.name))entries.push(file.name);return false;}});
+  return {entries,read:entry=>archiveEntry(bytes,entry)};
+}
+
 /** What a dialog reads, as the file a person would have chosen: name and bytes. */
 export const asFile=(bytes:Uint8Array<ArrayBuffer>,path:string)=>new File([bytes],nameOf(path));
 

@@ -65,6 +65,34 @@ the same project."* A manual step can say to add a node another workflow already
 project** group, which shares its data and keeps its settings. NYC's second workflow does that; the third reads the
 same file differently (wide), so it has its own table node and reads the device's copy of the file (experiment 170).
 
+## Copy, not type; and which dialog (added 2026-11-04)
+
+The practitioner: *"On the manual whenever there is an opportunity to copy and paste instead of typing we should offer
+it for labels, titles, subjects, URLs like the Zenodo one."* Every value a step says to type carries a **Copy** button;
+copying does not mark the step done. Where the clipboard is refused, the value is selected for the person to copy.
+
+And: *"There's no need for Step 4 in the Manual because New Project already creates the project."* Checked against the
+application before changing anything: every New project control opens a dialog, and the project exists only once
+**Create project** is pressed, so the step stays. What changed is the wording: a step can name the dialog it is in, the
+dialog is named where its steps begin, and the runner checks that the named dialog is the one open.
+
+## Above a modal, not behind it (added 2026-11-04)
+
+The practitioner: *"when the table input modal is visible the manual becomes blurred so picking the right file from the
+long list of files in the zip becomes difficult without seeing the right file name to pick from the manual."* A modal
+dialog makes everything outside itself blurred and unusable. While one is open the detached panel is moved inside it,
+fixed where it was on screen, and moved back when the modal closes. Seen in the same screenshot: the manual named the
+file by a shortened path while the dialog lists full paths, so NYC's manual now gives the path as the list shows it.
+
+## Choice overload in the key columns (added 2026-11-04)
+
+Following the manual, the practitioner met NYC's 92 key column checkboxes, all ticked, with five to keep: *"This is
+choice overload"*, and *"I think the table column filtering should be another dialog."* A file with more than 12
+columns now lists them in a dialog of its own, opened from a one-line summary, where the names to keep can be pasted --
+which is what the manual's Copy gives -- and a file read long starts with nothing ticked. The manual's step became
+paste and **Keep these**. Every test that builds a worked example by hand moved to the same dialog through one helper
+(`tests/keep-columns.mjs`), and NYC's manual ran in 21 seconds instead of about 90, without a rebuild per untick.
+
 ## Validation
 
 | Date | Check | Result |
@@ -73,6 +101,10 @@ same file differently (wide), so it has its own table node and reads the device'
 | 2026-11-04 | `tests/manual-tab.browser.mjs`, Chromium | Passed: NYC opened from its pin, both files served by path and checked by digest, the tab shown, the open workflow first, the mark moving with the workflow; hidden on a blank canvas |
 | 2026-11-04 | `tests/nyc-from-scratch.browser.mjs` performing `manual.json` against Zenodo, Chromium | Passed, every label the manual names equal to the label on screen |
 | 2026-11-04 | `tests/manual-tab.browser.mjs`, detach and resume, Chromium | Passed: detached, two steps done by click and by keyboard, a new project made with the panel open and the library searched through it, the panel and its progress kept through a reload, closed, and on detaching again from the example opened at step 3 |
+
+| 2026-11-04 | `tests/manual-tab.browser.mjs`, the import dialog open, Chromium | Passed: the panel inside the open dialog at the same position, Copy of the Zenodo URL working through it, back on the page after Escape |
+| 2026-11-04 | `tests/column-dialog.browser.mjs`, Chromium | Passed: 20 columns start unticked behind a summary, paste with an unknown name reported, find, ticked only, untick all, a short file inline, the dialog gone with the import |
+| 2026-11-04 | Nigeria, Oswego and Salmonella from-scratch tests through the column dialog, Chromium | 5 of 5 passed |
 
 WebKit was not run locally; CI runs it.
 

@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {keepColumns,columnsOffered} from './keep-columns.mjs';
 import {existsSync,readFileSync,writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 
@@ -45,15 +46,10 @@ const importList=async(page,name,columns)=>{
   await page.locator(`.react-flow__node[data-id="${node}"]`).click();
   await page.locator('#open-table').click();
   await page.locator('#table-file').setInputFiles(file(name));
-  await expect(page.locator('#table-keys')).toBeVisible();
+  await columnsOffered(page);
   await page.locator('#table-shape').selectOption('long');
   await page.locator('#table-value').selectOption('alter');
-  const boxes=page.locator('#table-keys input');
-  for(let i=0;i<await boxes.count();i++){
-    const box=boxes.nth(i),column=await box.getAttribute('value');
-    if(await box.isDisabled())continue;
-    await box.setChecked(['id','fall',...columns].includes(column));
-  }
+  await keepColumns(page,'table-keys',['id','fall',...columns]);
   await page.locator('#table-save').click();
   return node;
 };

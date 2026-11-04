@@ -796,6 +796,19 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 .manual-see{font-style:italic}
 .manual-note{margin:10px 0 4px;color:var(--muted, inherit)}
 .manual-workflow code{overflow-wrap:anywhere}
+.manual-copy{margin-left:6px;padding:0 6px;font-size:11px;line-height:1.6;border:1px solid var(--line);border-radius:4px;
+  background:var(--surface,#fff);color:var(--ink);cursor:pointer;vertical-align:baseline}
+.manual-copy:hover,.manual-copy:focus-visible{background:var(--surface-tint)}
+/* A long column list, chosen in its own dialog (2026-11-04): the import dialog keeps a one-line summary. */
+.column-summary{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 10px;margin:8px 0}
+.column-summary p{margin:0;flex:1 1 16rem;overflow-wrap:anywhere}
+.column-dialog{width:min(640px,94vw)}
+.column-tools-row{display:flex;gap:8px;align-items:center;margin:4px 0 8px;flex-wrap:wrap}
+.column-tools-row input:not([type=checkbox]){flex:1 1 12rem;min-width:0}
+.column-dialog-list{max-height:min(50vh,420px);overflow:auto}
+.column-dialog-list fieldset{border:0;padding:0;margin:0}
+.column-dialog-list label{display:inline-flex;gap:4px;margin:2px 10px 2px 0}
+.column-dialog-list label[hidden]{display:none}
 .manual-step{cursor:pointer;border-radius:4px;padding:1px 4px}
 .manual-step:hover,.manual-step:focus-visible{background:var(--surface-tint);outline:none}
 .manual-step.done{color:var(--muted);text-decoration:line-through;text-decoration-thickness:1px}

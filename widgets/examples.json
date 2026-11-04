@@ -378,14 +378,14 @@
       "id": "urn:fieldwork:example:nyc-asthma-ozone-2016-2025",
       "title": "Ozone and child asthma emergency visits, New York City, 2016–2025",
       "repository": "https://github.com/digital-twin-ph/example-2025-nyc-ozone",
-      "commit": "21749e410ee90b712e9225d9a5c2770bb2bb4ef4",
+      "commit": "a34b79ce632ea0dfb255829533f49f73ec19ba15",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2025-nyc-ozone",
       "licence": {
         "data": "Not redistributed",
         "source": "Lian et al., Zenodo doi:10.5281/zenodo.22757330; counts from NYC DOHMH EpiQuery",
         "note": "The daily counts are fetched from the authors' Zenodo package when the example is opened and checked by digest. NYC.gov reserves all rights to them, so this repository holds none."
       },
-      "description": "Daily asthma emergency visits among children aged 5 to 17 in New York City with ozone, PM2.5 and weather, the table fetched from where it is published. The June 2023 smoke days, and ten years of daily visits.",
+      "description": "Daily asthma emergency visits among children aged 5 to 17 in New York City with ozone, PM2.5 and weather, the table fetched from where it is published. The June 2023 smoke days, ten years of daily visits, and visits with ozone, PM2.5 and temperature in aligned panels.",
       "carries": {
         "workflow": true,
         "data": false,
@@ -401,8 +401,8 @@
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "84f325b26d54f78e7cb3d5b3d45fd03f0e87244a3fb6e7254e158e1bb8a55734",
-          "bytes": 1499
+          "sha256": "499695483f9e0d8c7f5dcb2db6817ce3543b057e7e6b3a9459cd4a5ec9e291a0",
+          "bytes": 1917
         },
         {
           "path": "provenance.json",
@@ -411,8 +411,8 @@
         },
         {
           "path": "README.md",
-          "sha256": "452dbf83d830107104340dab98be2c36f5b2b6ed2fb6e31f1442fbed6cfc924c",
-          "bytes": 3516
+          "sha256": "f1a6206c648ae85a36eb695d6cef1f8316ed4e428fbf7991156e478fe51fec75",
+          "bytes": 3685
         },
         {
           "path": "NOTICE.txt",
@@ -421,11 +421,11 @@
         },
         {
           "path": "manual.json",
-          "sha256": "555f3524fbc759f53bb055e82ba43f3bee911a3247e06ea0dea5825c37068583",
-          "bytes": 6667
+          "sha256": "ebd9ad77949eea7298078f60b77cb6ca989d861e8b141b19631fb51ae28a6478",
+          "bytes": 14596
         }
       ],
-      "workflowCount": 2
+      "workflowCount": 3
     }
   ]
 }

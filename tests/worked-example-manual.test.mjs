@@ -51,5 +51,5 @@ test('a manual that could not be followed is refused, saying where',()=>{
 const NYC=new URL('../../example-2025-nyc-ozone/manual.json',import.meta.url);
 test('the NYC manual is one that can be followed',{skip:existsSync(NYC)?false:'example-2025-nyc-ozone is not checked out'},()=>{
   const nyc=validateManual(JSON.parse(readFileSync(NYC,'utf8')));
-  assert.deepEqual(nyc.workflows.map(w=>w.name),['What happened during the June 2023 smoke?','Ten years of daily visits']);
+  assert.deepEqual(nyc.workflows.map(w=>w.name),['What happened during the June 2023 smoke?','Ten years of daily visits','Did visits move with the air?']);
 });

@@ -74,6 +74,8 @@ export function withoutRemoteRows<W extends Workflow>(workflow:W):W{
     p.data={...p.data,rows:[],rowCount:0,missingValueCount:0};
     delete (p.data as {findings?:unknown}).findings;
     delete p.sourceTable;
+    // And its reference: another device holds no such source, and a reference to it would refuse the import.
+    delete (p as {sourceRef?:unknown}).sourceRef;
   }
   return workflow;
 }

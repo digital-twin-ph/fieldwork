@@ -31,7 +31,7 @@ test('a worked example with a manual has a Manual tab, and a workflow without on
   await tab.click();
   const view=page.locator('#manual-view');
   // Both workflows, the open one first and marked.
-  await expect(view.locator('[data-manual-workflow]')).toHaveCount(2);
+  await expect(view.locator('[data-manual-workflow]')).toHaveCount(3);
   const open=view.locator('.manual-workflow.open');
   await expect(open).toHaveCount(1);
   await expect(view.locator('[data-manual-workflow]').first()).toHaveClass(/open/);

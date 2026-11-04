@@ -2,6 +2,7 @@ import type {WorkflowNode} from './types.js';
 import type {BarOrder,ChartSummary,DisplayValue,Receipt} from './results.js';
 import type {DataTable} from './data-table.js';
 import {chartSpecificationFacts} from './chart-vega.js';
+import {orderOf} from './derive-value.js';
 
 /** A BAR'S NUMBER, written for a reader.
  *
@@ -26,7 +27,8 @@ export function barNumber(value:number,measure?:ChartSummary['measure']):string{
  *  A row with no value is kept and shown as zero-length rather than dropped, and counted in the
  *  caption: a sub-district whose rate was suppressed is not a sub-district with a rate of zero,
  *  and a chart that silently omitted it would be shorter than the table beside it. */
-export function tableChart(table:DataTable,keyColumn?:string):ChartSummary{
+export function tableChart(table:DataTable,keyColumn?:string,panelsBy?:string):ChartSummary{
+  if(panelsBy?.trim())return panelChart(table,keyColumn,panelsBy.trim());
   if(table.kind!=='data-table')throw new Error('A chart of a table needs a table.');
   const column=keyColumn?.trim()||table.keys[0];
   if(!column)throw new Error('This table has no key column, so there is nothing to put a bar '
@@ -54,6 +56,44 @@ export function tableChart(table:DataTable,keyColumn?:string):ChartSummary{
       +(other.length?` · one bar per row, keyed also by ${other.join(', ')}`:'')
       +(absent?` · ${absent} row${absent===1?'':'s'} with no value, drawn at zero`:''),
     total:table.rows.length,bins};
+}
+
+/** ONE PANEL PER VALUE of a key column, for variables that move together through time (experiment 174).
+ *
+ *  The practitioner, 2026-11-04: *"How do we show the dependent and independent variables moving together through
+ *  time?"* A wide file melted by Table input holds them as one variable column and one value column; each variable
+ *  becomes a panel with its own scale, on one shared x axis. A missing value is marked rather than drawn at zero, so a
+ *  line breaks there instead of diving to nothing. */
+export const PANEL_POINT_LIMIT=20000;
+function panelChart(table:DataTable,keyColumn:string|undefined,panelsBy:string):ChartSummary{
+  if(table.kind!=='data-table')throw new Error('A chart of a table needs a table.');
+  const column=keyColumn?.trim()||table.keys.find(key=>key!==panelsBy);
+  if(!column)throw new Error('Panels need a key column to run along, besides the one the panels are made from.');
+  for(const name of [column,panelsBy])if(!table.keys.includes(name))
+    throw new Error(`This table has no "${name}" column. Its columns are ${table.keys.join(', ')}.`);
+  if(column===panelsBy)throw new Error(`"${column}" cannot be both the axis and the panels.`);
+  if(!table.rows.length)throw new Error('This table holds no rows, so there is nothing to chart.');
+  if(table.rows.length>PANEL_POINT_LIMIT)throw new Error(`Panels draw at most ${PANEL_POINT_LIMIT.toLocaleString('en')} `
+    +`points, and this table has ${table.rows.length.toLocaleString('en')}. Select a period first.`);
+  const panels:string[]=[],seen=new Set<string>();
+  const bins=table.rows.map(row=>{
+    const panel=row.key[panelsBy]??'',label=row.key[column]??'';
+    if(!panels.includes(panel))panels.push(panel);
+    // Unique within its panel, which is what the renderer needs; two rows on one date in one panel is a repeated key,
+    // already a finding of the table, and is refused here rather than drawn as two points on one day.
+    const key=`${panel}\u0000${label}`;
+    if(seen.has(key))throw new Error(`"${label}" appears twice in the ${panel} panel. Each panel needs one row per `
+      +`${column}; the table's findings name the repeat.`);
+    seen.add(key);
+    return {key,label,count:row.value??0,panel,...(row.value===null?{missing:true as const}:{})};
+  });
+  const labels=bins.map(bin=>bin.label);
+  const temporal=orderOf(labels)==='date'&&labels.every(label=>label.length===10);
+  const absent=bins.filter(bin=>bin.missing).length;
+  return {field:'value',measure:'value',...(table.unit?{unit:table.unit}:{}),categoryTitle:column,
+    caption:`${table.valueField} by ${column}, one panel per ${panelsBy}`
+      +(absent?` · ${absent} point${absent===1?'':'s'} with no value, left as gaps`:''),
+    total:table.rows.length,panels,temporal,bins};
 }
 
 /** Bounded categorical frequency adapter. No filtering or population weighting. */
@@ -125,6 +165,10 @@ export function orderBins<T extends {label:string; count:number; order?:number}>
 
 export function chartMarkup(chart:ChartSummary,esc:(text:string)=>string,
   orientation:'horizontal'|'vertical'='horizontal'):string{
+  // PANELS ARE NOT DRAWN HERE. This renderer has one scale, and panels exist because their variables do not share one;
+  // drawing them as bars on it would be the figure experiment 174 refuses.
+  if(chart.panels?.length)return `<p class="notice">${esc(chart.caption)}. Panels are drawn by the Vega-Lite renderer: `
+    +`choose it under Chart enhancement to see them.</p>`;
   const maximum=Math.max(1,...chart.bins.map(bin=>bin.count));
   // BARS THAT GO BOTH WAYS, because a CHANGE is the quantity that goes negative.
   //

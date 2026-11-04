@@ -36,7 +36,7 @@ test('two questions about child asthma visits in New York City, built by followi
 
   await page.locator('#storage-status').click();
   const block=page.locator('.project-view-block').filter({hasText:'Ozone and child asthma'}).first();
-  await expect(block).toContainText('2 workflows');
+  await expect(block).toContainText(`${manual.workflows.length} workflows`);
   if(process.env.NYC_EXPORT){
     const download=page.waitForEvent('download');
     await block.locator('button[data-export-project]').click();

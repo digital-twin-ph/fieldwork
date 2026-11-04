@@ -3,6 +3,17 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.16.0 — 2026-11-04
+
+- **A chart can draw one panel per variable** on a shared axis, each with its own scale: visits, ozone, PM2.5 and
+  temperature moving together through time. Bars or a line per panel, a period shaded across them all, a missing value
+  as a gap. No second y axis. Experiment 174.
+- NYC gains a third workflow, *Did visits move with the air?*, May to July 2023 with the smoke days shaded, and its
+  manual covers it.
+- A wide table's source file is kept on the device by digest, like other node data, instead of inside the saved
+  workflow, which a 92-column file did not fit. An export still carries no rows of a fetched table.
+- Validation: Chromium locally; WebKit in CI.
+
 ## 0.15.0 — 2026-11-04
 
 - **A worked example can carry a manual**, shown in a new **Manual** tab: how to build each of its workflows by hand,

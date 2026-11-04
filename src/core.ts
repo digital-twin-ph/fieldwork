@@ -1910,7 +1910,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
             // vintage disagreement and the groups it could not report, which a chart derived
             // from the rows alone cannot know.
             :arrived.chart??tableChart(arrived as unknown as import('./data-table.js').DataTable,
-              node.params.keyColumn);
+              node.params.keyColumn,node.params.panelsBy);
           // THE ORDER THE PRACTITIONER CHOSE, attached where the node's parameters are known so
           // every renderer downstream reads it off the summary rather than being told separately.
           // `orderBins` ignores it where the categories are a sequence, so an epidemic curve

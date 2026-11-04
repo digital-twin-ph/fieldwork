@@ -153,9 +153,10 @@ function chartControls(n:WorkflowNode<'chart_output'>,options:{omitOrientation?:
   const p=n.params;
   return `<div class="field"><label class="field-label" for="chart-renderer">Chart enhancement</label><select id="chart-renderer"><option value="html" ${chartRenderer(p)!=='vega-lite'?'selected':''}>Classic bars</option><option value="vega-lite" ${p.renderer==='vega-lite'?'selected':''}>Vega-Lite (experimental)</option></select></div>`+
     (chartRenderer(p)==='vega-lite'?`<label class="field-label" for="chart-mark">Mark</label><select id="chart-mark"><option value="bar" ${p.mark!=='point'?'selected':''}>Bars</option><option value="point" ${p.mark==='point'?'selected':''}>Dots</option></select>
-    ${options.omitOrientation?'':`<label class="field-label" for="chart-orientation">Orientation</label><select id="chart-orientation"><option value="horizontal" ${p.orientation!=='vertical'?'selected':''}>Horizontal</option><option value="vertical" ${p.orientation==='vertical'?'selected':''}>Vertical</option></select>`}
-    ${(()=>{
-      // BAR ORDER, and the control is offered only where it could act. A chart whose bins carry
+    ${options.omitOrientation||p.panelsBy?'':`<label class="field-label" for="chart-orientation">Orientation</label><select id="chart-orientation"><option value="horizontal" ${p.orientation!=='vertical'?'selected':''}>Horizontal</option><option value="vertical" ${p.orientation==='vertical'?'selected':''}>Vertical</option></select>`}
+    ${p.panelsBy?'':(()=>{
+      // BAR ORDER, and the control is offered only where it could act. Not with panels (experiment 174): they run
+      // along time, which is the order they mean. A chart whose bins carry
       // an `order` is a SEQUENCE -- an epidemic curve's days, a band's thresholds -- and sorting
       // it by size destroys the one thing the figure is for. The last run says which this is,
       // so the control appears when the chart can be re-ordered and says why when it cannot:
@@ -178,7 +179,7 @@ function chartControls(n:WorkflowNode<'chart_output'>,options:{omitOrientation?:
     <label class="field-label" for="chart-title">Chart title</label><input id="chart-title" maxlength="120" value="${esc(p.chartTitle||'')}" placeholder="Default: result caption">
     <label class="field-label" for="chart-subtitle">Subtitle / context</label><input id="chart-subtitle" maxlength="280" value="${esc(p.subtitle||'')}" placeholder="Optional context or limitation">
     <label class="field-label" for="chart-x-axis">Horizontal axis label</label><input id="chart-x-axis" maxlength="80" value="${esc(p.xAxisTitle||'')}" placeholder="Default from data">
-    <label class="field-label" for="chart-y-axis">Vertical axis label</label><input id="chart-y-axis" maxlength="80" value="${esc(p.yAxisTitle||'')}" placeholder="Default from data">
+    ${p.panelsBy?'':`<label class="field-label" for="chart-y-axis">Vertical axis label</label><input id="chart-y-axis" maxlength="80" value="${esc(p.yAxisTitle||'')}" placeholder="Default from data">`}
     <label><input id="chart-legend" type="checkbox" ${p.colorByCategory?'checked':''}> Color categories and show legend</label>
     <label class="field-label" for="chart-source-note">Source / method note</label><textarea id="chart-source-note" maxlength="500" rows="2" placeholder="Default: connected result and run">${esc(p.sourceNote||'')}</textarea>
     <p class="description">The title, note, axes and legend travel with the SVG. Both renderers use the same recorded values. Add a Method reference for supporting research.</p>`:'');
@@ -581,6 +582,8 @@ function save(){
       const params=node.params as unknown as Record<string,unknown>;
       if(typeof params.dataRef==='string'&&params.data!==undefined&&!Object.hasOwn(cachedPayloads(),params.dataRef))
         void putPayload(params.dataRef,params.data);
+      if(typeof params.sourceRef==='string'&&params.sourceTable!==undefined&&!Object.hasOwn(cachedPayloads(),params.sourceRef))
+        void putPayload(params.sourceRef,params.sourceTable);
     }
     const kept=cachedPayloads();
     const stored=dehydrateWorkflow(workflow,digest=>Object.hasOwn(kept,digest));workspaces[storageKey(workflow)]=stored;localStorage.setItem(KEY,JSON.stringify(stored));localStorage.setItem(WORKSPACES,JSON.stringify(workspaces));forgetSavedWorkflows();
@@ -3226,6 +3229,31 @@ function renderInspector(){
           +`<select id="chart-key-column"><option value="">First column \u00b7 ${esc(columns[0])}</option>`
           +columns.map(name=>`<option value="${esc(name)}" ${n.params.keyColumn===name?'selected':''}>${esc(name)}</option>`).join('')
           +`</select><small>This table keys on ${esc(columns.join(', '))}. One bar per row either way; the column chosen is the one the bars are labelled by.</small></div>`;
+      // PANELS, for variables moving together through time (experiment 174): one per value of another key column,
+      // stacked on the shared axis, each on its own scale. A mark per panel, and a period shaded across them all.
+      if(columns.length>1){
+        const p=n.params,held=upstreamKeyValues(n)??{};
+        const axis=p.keyColumn||columns[0]!;
+        const panels=p.panelsBy?held[p.panelsBy]??[]:[];
+        const dates=held[axis]??[],temporal=orderOf(dates)==='date'&&dates.every(d=>d.length===10);
+        const sorted=[...dates].sort();
+        content+=`<div class="field"><label class="field-label" for="chart-panels-by">One panel per</label>`
+          +`<select id="chart-panels-by"><option value="">No panels \u00b7 one chart</option>`
+          +columns.filter(name=>name!==axis).map(name=>`<option value="${esc(name)}" ${p.panelsBy===name?'selected':''}>${esc(name)}</option>`).join('')
+          +`</select><small>Each value of the column gets its own panel and scale, on one shared ${esc(axis)} axis, so a count and a concentration are never drawn on one scale.</small></div>`
+          +(panels.length
+            ?panels.map(panel=>`<div class="field"><label class="field-label" for="chart-panel-mark-${esc(panel)}">Mark for ${esc(panel)}</label>`
+              +`<select id="chart-panel-mark-${esc(panel)}" data-panel-mark="${esc(panel)}"><option value="">Automatic</option>`
+              +`<option value="bar" ${p.panelMarks?.[panel]==='bar'?'selected':''}>Bars</option>`
+              +`<option value="line" ${p.panelMarks?.[panel]==='line'?'selected':''}>Line</option></select></div>`).join('')
+              +(temporal
+                ?`<div class="field"><span class="inspector-section">Shade a period</span>`
+                  +`<label class="field-label" for="chart-shade-from">From</label><input id="chart-shade-from" type="date" data-chart-shade="from" min="${esc(sorted[0]??'')}" max="${esc(sorted.at(-1)??'')}" value="${esc(p.shade?.from??'')}">`
+                  +`<label class="field-label" for="chart-shade-to">To</label><input id="chart-shade-to" type="date" data-chart-shade="to" min="${esc(sorted[0]??'')}" max="${esc(sorted.at(-1)??'')}" value="${esc(p.shade?.to??'')}">`
+                  +`<small>Shaded behind every panel, both days included. Leave both empty for none.</small></div>`
+                :'')
+            :'');
+      }
       // WHAT THE READER CALLS IT, and how it is shown. Both were in the markup this branch
       // replaced and both are still the practitioner's to set; only the question about shape is
       // gone.
@@ -3533,6 +3561,21 @@ function renderInspector(){
     flow?.fit();
     toast('Exploded into its primitives. Undo to put it back as one step.');
   });
+  optionalElement('#chart-panels-by')?.addEventListener('change',e=>change(w=>{
+    const target=getNode(w,n.id,'chart_output'),raw=control(e).value.trim();
+    if(raw===''){delete target.params.panelsBy;delete target.params.panelMarks;delete target.params.shade;}
+    else target.params.panelsBy=raw;
+  }));
+  document.querySelectorAll<HTMLSelectElement>('[data-panel-mark]').forEach(el=>el.addEventListener('change',()=>change(w=>{
+    const target=getNode(w,n.id,'chart_output'),marks={...target.params.panelMarks};
+    if(el.value)marks[required(el.dataset.panelMark)]=el.value as 'bar'|'line';else delete marks[required(el.dataset.panelMark)];
+    if(Object.keys(marks).length)target.params.panelMarks=marks;else delete target.params.panelMarks;
+  })));
+  document.querySelectorAll<HTMLInputElement>('[data-chart-shade]').forEach(el=>el.addEventListener('change',()=>change(w=>{
+    const target=getNode(w,n.id,'chart_output'),shade={from:'',to:'',...target.params.shade};
+    shade[el.dataset.chartShade as 'from'|'to']=el.value.trim();
+    if(shade.from||shade.to)target.params.shade=shade;else delete target.params.shade;
+  })));
   optionalElement('#chart-key-column')?.addEventListener('change',e=>change(w=>{
     const target=getNode(w,n.id,'chart_output'),raw=control(e).value.trim();
     if(raw==='')delete target.params.keyColumn;else target.params.keyColumn=raw;
@@ -4057,8 +4100,9 @@ function renderInspector(){
         if(result.remote)node.params.remote=result.remote;else delete node.params.remote;
         // The file as published, kept whenever it was read as wide, so `convertOnRun` has
         // something to convert and the node can say what it was made from either way.
-        if(result.source_table)node.params.sourceTable=result.source_table;
-        else{delete node.params.sourceTable;delete node.params.convertOnRun;}},{requirePersistence:true});
+        if(result.source_table){node.params.sourceTable=result.source_table;
+          if(result.source?.sha256)node.params.sourceRef=`source:${result.source.sha256}`;else delete node.params.sourceRef;}
+        else{delete node.params.sourceTable;delete node.params.sourceRef;delete node.params.convertOnRun;}},{requirePersistence:true});
     },current.keys.length?{keys:current.keys,valueField:current.valueField,unit:current.unit,primaryKey:current.data.primaryKey,secondaryKeys:current.data.secondaryKeys,
       ...(current.wide?{wide:current.wide}:{})}:undefined);
   });

@@ -17,14 +17,17 @@
 
 use libm::{exp, fabs, log, sqrt};
 
-pub const MAX_ROWS: usize = 20_000;
+/// The table's limit, measured 2026-11-04 (experiment 175): a 250,000-row Poisson fit with strata and HAC ran in 2 s.
+pub const MAX_ROWS: usize = 250_000;
 pub const MAX_COLS: usize = 32;
 const NO_STRATUM: u32 = u32::MAX;
 
 static mut X: [f64; MAX_ROWS * MAX_COLS] = [0.0; MAX_ROWS * MAX_COLS];
 static mut Y: [f64; MAX_ROWS] = [0.0; MAX_ROWS];
 static mut OFFSET: [f64; MAX_ROWS] = [0.0; MAX_ROWS];
-static mut STRATUM: [u32; MAX_ROWS] = [NO_STRATUM; MAX_ROWS];
+// Zero, not NO_STRATUM: `glm_reset` marks every row it uses, and a non-zero start is written into the binary --
+// at 250,000 rows that was 1 MB on every download (experiment 175).
+static mut STRATUM: [u32; MAX_ROWS] = [0; MAX_ROWS];
 static mut MU: [f64; MAX_ROWS] = [0.0; MAX_ROWS];
 static mut BETA: [f64; MAX_COLS] = [0.0; MAX_COLS];
 static mut INFO_INVERSE: [f64; MAX_COLS * MAX_COLS] = [0.0; MAX_COLS * MAX_COLS];

@@ -1,12 +1,12 @@
 import type {Escape} from './types.js';
 import type {DataTable,DataTableSource,TableSelection} from './data-table.js';
-import {dataTable,wideDataTable,keyDomains,MAX_TABLE_ROWS,type TableRows} from './data-table.js';
+import {dataTable,wideDataTable,keyDomains,MAX_TABLE_ROWS,MAX_TABLE_FILE_BYTES,type TableRows} from './data-table.js';
 import {parseCSV} from './input-data.js';
 import {readStata,type StataTable} from './stata.js';
 import {fetchOrDeviceCopy,tablesInArchive,archiveEntry,asFile,type RemoteTableSource} from './remote-table.js';
 import {contentHash} from './project-files.js';
 
-const FILE_BYTES=5_000_000;
+const FILE_BYTES=MAX_TABLE_FILE_BYTES;
 export interface WideChoice {keys:string[]; valueFields:string[]; measureKey:string}
 export interface TableImport {data:DataTable; source:DataTableSource; keys:string[]; valueField:string;
   /** Present when the file was fetched from a URL: the spec the project keeps in place of the rows. */
@@ -121,7 +121,7 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:T
   const dialog=document.createElement('dialog');dialog.id='table-dialog';dialog.setAttribute('aria-labelledby','table-title');
   dialog.innerHTML='<h2 id="table-title">Import tabular data</h2>'
     +'<p>A <strong>wide</strong> CSV is assumed: one row per subject and a column per variable, which is what a line list, a surveillance export and a published table look like. Name the columns that identify the subject and the columns holding values; the rest of the application reads one long table, and this converts. A table has no geometry; latitude and longitude columns, if present, are ordinary columns.</p>'
-    +'<label class="field-label" for="table-file">CSV or Stata file (up to 5 MB, '+MAX_TABLE_ROWS.toLocaleString()+' rows)</label><input id="table-file" type="file" accept=".csv,text/csv,.dta">'
+    +'<label class="field-label" for="table-file">CSV or Stata file (up to '+FILE_BYTES/1e6+' MB, '+MAX_TABLE_ROWS.toLocaleString()+' rows)</label><input id="table-file" type="file" accept=".csv,text/csv,.dta">'
     // OR FROM WHERE IT IS PUBLISHED. The project then keeps the URL and the file's digest, and an export carries no
     // rows: another device fetches the same file when it opens. Experiment 170.
     +'<details id="table-remote"><summary>Or fetch from a URL</summary>'
@@ -505,14 +505,14 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:T
     valueSelect.innerHTML='';result=undefined;save.disabled=true;error.hidden=true;
     check.hidden=true;beforePane.innerHTML='';afterPane.innerHTML='';reconcile.innerHTML='';
     if(!file){status.textContent='';return;}
-    if(file.size>FILE_BYTES){status.textContent='';fail(new Error('Select a file of at most 5 MB.'));return;}
+    if(file.size>FILE_BYTES){status.textContent='';fail(new Error(`Select a file of at most ${FILE_BYTES/1e6} MB.`));return;}
     status.textContent='Reading the file…';
     try{
       // A STATA FILE IS READ AS STATA WROTE IT, then meets the same dialog a CSV does. Experiment 169.
       stata=/\.dta$/i.test(file.name)?readStata(new Uint8Array(await file.arrayBuffer())):undefined;
       if(request!==serial)return;
       text=stata?'':await file.text();if(request!==serial)return;
-      parsed=stata??parseCSV(text,MAX_TABLE_ROWS);
+      parsed=stata??parseCSV(text,MAX_TABLE_ROWS,FILE_BYTES);
       status.textContent=stata?`Stata format ${stata.format}: ${stata.rows.length.toLocaleString()} rows of ${stata.headers.length} variables.`
         +(stata.notes.length?` ${stata.notes.join(' ')}`:''):'';
       const guessValue=parsed.headers.findIndex(h=>/^(value|value_m|amount|measure|level)$/i.test(h.trim()));
@@ -803,7 +803,7 @@ export function dataTableMarkup(table:DataTable,esc:Escape,{query='',page=0,page
  *  same shape, keys, value column and key roles, so a second device gets the same table. Experiment 170. */
 export async function tableFromFetched(file:File,settings:{keys:string[];valueField:string;unit?:string;
   wide?:WideChoice;primaryKey?:string[];secondaryKeys?:string[]}):Promise<{data:DataTable;sourceTable?:TableRows}>{
-  const parsed:TableRows=/\.dta$/i.test(file.name)?readStata(new Uint8Array(await file.arrayBuffer())):parseCSV(await file.text(),MAX_TABLE_ROWS);
+  const parsed:TableRows=/\.dta$/i.test(file.name)?readStata(new Uint8Array(await file.arrayBuffer())):parseCSV(await file.text(),MAX_TABLE_ROWS,FILE_BYTES);
   const roles={...(settings.primaryKey?.length?{primaryKey:settings.primaryKey}:{}),...(settings.secondaryKeys?.length?{secondaryKeys:settings.secondaryKeys}:{})};
   if(settings.wide){
     const data=wideDataTable(parsed,{keys:settings.wide.keys,valueFields:settings.wide.valueFields,measureKey:settings.wide.measureKey,

@@ -95,6 +95,6 @@ test('a nonnumeric value and an empty key are findings; an oversized or empty ta
   const blank=dataTable(csv(projection.headers,[['','ssp126','2050','0.5','0.2']]),selection);
   assert.match(blank.findings[0].text,/no value in key column "site_id"/);
   const many=csv(['k','v'],Array.from({length:MAX_TABLE_ROWS+1},(_,i)=>[String(i),'1']));
-  assert.throws(()=>dataTable(many,{keys:['k'],valueField:'v'}),/at most 20,000 rows/);
+  assert.throws(()=>dataTable(many,{keys:['k'],valueField:'v'}),/at most 250,000 rows/);
   assert.throws(()=>dataTable(csv(['k','v'],[]),{keys:['k'],valueField:'v'}),/no rows/);
 });

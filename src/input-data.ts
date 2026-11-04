@@ -32,8 +32,8 @@ import {pointRelation} from './spatial-predicates.js';
 const feature=(id:string,name:string,coordinates:Position|null):PointFeature=>({type:'Feature',id,properties:{name},geometry:coordinates?{type:'Point',coordinates}:null});
 /** `maxRecords` is the caller's: points stay at 2,000, and a table passes its own ceiling, MAX_TABLE_ROWS. The
  *  NYC example's daily table is 3,653 rows, and the shared 2,000 refused it, 2026-11-03. */
-export function parseCSV(text:string,maxRecords=2000):CSVTable{
-  if(text.length>5e6)throw new Error('CSV exceeds the 5 MB prototype limit.');
+export function parseCSV(text:string,maxRecords=2000,maxChars=5_000_000):CSVTable{
+  if(text.length>maxChars)throw new Error(`CSV exceeds the ${maxChars/1e6} MB limit.`);
   text=text.replace(/^\uFEFF/,'');const rows:string[][]=[];let row:string[]=[],field='',quoted=false,closed=false;
   const endField=()=>{row.push(field);field='';closed=false;};
   const endRow=()=>{endField();if(row.some(s=>s.trim()))rows.push(row);row=[];if(rows.length>maxRecords+1)throw new Error(`CSV supports at most ${maxRecords.toLocaleString('en-US')} records.`);};

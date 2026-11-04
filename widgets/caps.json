@@ -13,7 +13,9 @@
     "src/street-network.ts",
     "src/raster.ts",
     "src/catchment-map.ts",
-    "src/evidence.ts"
+    "src/evidence.ts",
+    "src/data-table.ts",
+    "src/chart-output.ts"
   ],
   "measuredAt": "2026-10-22",
   "caps": [
@@ -388,6 +390,42 @@
       "evidence": "Every cited PDF in one workflow together, so a workflow's evidence stays something a reader can receive.",
       "refuses": "A workflow whose attached PDFs exceed 10 MB in total.",
       "liftTest": "The same measurement as pdf-bytes, taken across a workflow."
+    },
+    {
+      "id": "table-rows",
+      "constant": "MAX_TABLE_ROWS",
+      "iri": "urn:fieldwork:cap:table-rows",
+      "value": 250000,
+      "unit": "rows",
+      "basis": "measured",
+      "evidence": "Measured 2026-11-04 in Chromium on a build with every row ceiling lifted: at 250,000 rows import, save, reload, a date range, panel charts, a Poisson regression with strata and HAC, and export all completed (slowest: the panel chart, 26-32 s). At 500,000 the page stopped answering clicks for over 15 s during the panel chart and the regression; at 1,000,000 the tab crashed. The regression kernel's buffers (kernel/src/glm.rs MAX_ROWS) are set to the same number. docs/experiments/175-how-large-a-table.md.",
+      "refuses": "A table of more rows, or a wide file whose melted values exceed it.",
+      "liftTest": "Measure again past 250,000 with the steps that slowed first (the panel chart, the page holding every row) changed; the cap follows the first step that fails.",
+      "kind": "discovery"
+    },
+    {
+      "id": "table-file-bytes",
+      "constant": "MAX_TABLE_FILE_BYTES",
+      "iri": "urn:fieldwork:cap:table-file-bytes",
+      "value": 40000000,
+      "unit": "bytes",
+      "basis": "measured",
+      "evidence": "Measured 2026-11-04 in Chromium: a 42.4 MB, 1,000,000-row CSV was read and previewed in 10.4 s. Rows, not bytes, are where the application stopped coping, so the file limit sits below the largest file read. Raised from 5 MB, which had been a second, unrecorded ceiling inside the CSV reader as well as the dialog. docs/experiments/175-how-large-a-table.md.",
+      "refuses": "A table file larger than 40 MB.",
+      "liftTest": "Read a larger file with many columns and few rows; if it is read whole and quickly, the file limit can follow the row limit alone.",
+      "kind": "discovery"
+    },
+    {
+      "id": "panel-points",
+      "constant": "PANEL_POINT_LIMIT",
+      "iri": "urn:fieldwork:cap:panel-points",
+      "value": 250000,
+      "unit": "points",
+      "basis": "measured",
+      "evidence": "Measured 2026-11-04 in Chromium: 250,000 points in seven panels drew in 26-32 s, 100,000 in 10 s, 25,571 in 2.7 s. At 500,000 the page stopped answering. Equal to the table limit, so a table that can be read can be drawn. docs/experiments/175-how-large-a-table.md.",
+      "refuses": "A panel chart of more points than that.",
+      "liftTest": "Whether 30 s for a chart is read as the application failing or the data being large is the practitioner observation in the experiment; drawing fewer marks per pixel would change the measurement.",
+      "kind": "discovery"
     }
   ],
   "kindVocabulary": {

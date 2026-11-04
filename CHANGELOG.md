@@ -3,6 +3,16 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.23.0 — 2026-11-04
+
+- **A table holds up to 250,000 rows, from a file of up to 40 MB** (was 20,000 rows and 5 MB). The number was measured,
+  not chosen: at 250,000 rows importing, saving, reopening, selecting a date range, panel charts, regression and export
+  all completed in Chromium; at 500,000 the page stopped answering, and at 1,000,000 the tab crashed. A panel chart of
+  250,000 points takes about 30 seconds to draw. Experiment 175.
+- Regression fits up to 250,000 rows; panel charts draw up to 250,000 points.
+- The regression kernel downloads at 37 KB, down from 117 KB.
+- Limits: measured on one Mac in Chromium, with tables of seven columns. Not measured in WebKit or on a smaller machine.
+
 ## 0.22.0 — 2026-11-04
 
 - **A table's rows are kept in the dataset store, not in the saved workflow.** Every other input already kept its data

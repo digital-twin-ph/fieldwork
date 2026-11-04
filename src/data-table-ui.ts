@@ -2,6 +2,7 @@ import type {Escape} from './types.js';
 import type {DataTable,DataTableSource,TableSelection} from './data-table.js';
 import {dataTable,wideDataTable,keyDomains,MAX_TABLE_ROWS} from './data-table.js';
 import {parseCSV} from './input-data.js';
+import {readStata,type StataTable} from './stata.js';
 import {contentHash} from './project-files.js';
 
 const FILE_BYTES=5_000_000;
@@ -41,7 +42,7 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:T
   const dialog=document.createElement('dialog');dialog.id='table-dialog';dialog.setAttribute('aria-labelledby','table-title');
   dialog.innerHTML='<h2 id="table-title">Import tabular data</h2>'
     +'<p>A <strong>wide</strong> CSV is assumed: one row per subject and a column per variable, which is what a line list, a surveillance export and a published table look like. Name the columns that identify the subject and the columns holding values; the rest of the application reads one long table, and this converts. A table has no geometry; latitude and longitude columns, if present, are ordinary columns.</p>'
-    +'<label class="field-label" for="table-file">CSV file (up to 5 MB, '+MAX_TABLE_ROWS.toLocaleString()+' rows)</label><input id="table-file" type="file" accept=".csv,text/csv">'
+    +'<label class="field-label" for="table-file">CSV or Stata file (up to 5 MB, '+MAX_TABLE_ROWS.toLocaleString()+' rows)</label><input id="table-file" type="file" accept=".csv,text/csv,.dta">'
     +'<label class="field-label" for="table-shape">Shape of the file</label><select id="table-shape">'
     +'<option value="wide">Wide \u00b7 one row per subject, a column per variable</option>'
     +'<option value="long">Long \u00b7 one row per observation, one value column</option></select>'
@@ -94,6 +95,7 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:T
   // whatever was built on it.
   shapeSelect.value=existing?(existing.wide?'wide':'long'):'wide';
   if(existing?.wide){measureKeyInput.value=existing.wide.measureKey;valueNameInput.value=existing.valueField;}
+  let stata:StataTable|undefined;
   let file:File|undefined,text='',parsed:ReturnType<typeof parseCSV>|undefined,result:TableImport|undefined,busy=false,serial=0;
   const shape=()=>shapeSelect.value==='wide'?'wide':'long';
   const fail=(e:unknown)=>{error.textContent=e instanceof Error?e.message:String(e);error.hidden=false;save.disabled=true;result=undefined;error.scrollIntoView({block:'nearest'});};
@@ -373,8 +375,13 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:T
     if(file.size>FILE_BYTES){status.textContent='';fail(new Error('Select a file of at most 5 MB.'));return;}
     status.textContent='Reading the file…';
     try{
-      text=await file.text();if(request!==serial)return;
-      parsed=parseCSV(text);
+      // A STATA FILE IS READ AS STATA WROTE IT, then meets the same dialog a CSV does. Experiment 169.
+      stata=/\.dta$/i.test(file.name)?readStata(new Uint8Array(await file.arrayBuffer())):undefined;
+      if(request!==serial)return;
+      text=stata?'':await file.text();if(request!==serial)return;
+      parsed=stata??parseCSV(text);
+      status.textContent=stata?`Stata format ${stata.format}: ${stata.rows.length.toLocaleString()} rows of ${stata.headers.length} variables.`
+        +(stata.notes.length?` ${stata.notes.join(' ')}`:''):'';
       const guessValue=parsed.headers.findIndex(h=>/^(value|value_m|amount|measure|level)$/i.test(h.trim()));
       keysBox.innerHTML+=parsed.headers.map((header,i)=>{
         const escaped=header.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]!);
@@ -411,7 +418,7 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:T
   save.onclick=async()=>{
     if(!result||!file||busy)return;busy=true;save.disabled=true;cancel.disabled=true;fileInput.disabled=true;error.hidden=true;
     try{
-      const sha256=await contentHash(new TextEncoder().encode(text) as Uint8Array<ArrayBuffer>);
+      const sha256=await contentHash(stata?new Uint8Array(await file!.arrayBuffer()) as Uint8Array<ArrayBuffer>:new TextEncoder().encode(text) as Uint8Array<ArrayBuffer>);
       const saved:TableImport={...result,data:{...result.data,source:{...result.source,sha256}},source:{...result.source,sha256}};
       if(!onSave(saved))throw new Error('The table could not be saved. Your previous project is unchanged; retry Save.');
       dialog.close();

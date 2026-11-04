@@ -2,11 +2,11 @@
 
 _Created 2026-11-02 · Updated 2026-11-02_
 
-**A source.** It reads a CSV file into a table.
+**A source.** It reads a CSV or Stata file into a table.
 
 ## What it does
 
-It reads a CSV file in wide or long shape and hands a table to the next step. An absent value is kept as
+It reads a CSV or Stata (`.dta`) file in wide or long shape and hands a table to the next step. An absent value is kept as
 unknown, never read as zero.
 
 ## How to use it
@@ -15,6 +15,12 @@ unknown, never read as zero.
 2. Tick the key columns and choose the value column or columns.
 3. Under **What identifies a row?**, mark any primary and secondary keys.
 4. Save. If the node says **Check Data quality**, open it before relying on the table.
+
+## Stata files
+
+A Stata file, from Stata 8 onward, is read as Stata wrote it and then set up as a CSV is. Numbers are as stored. A
+missing value, `.` or `.a` to `.z`, is empty, never zero. A variable Stata formats as a date is read as a date. Value
+labels are not applied: codes stay as stored, and the import says which variables carry labels.
 
 ## Keys
 

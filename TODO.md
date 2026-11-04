@@ -3765,3 +3765,11 @@ Design and first measurement in [experiment 172](docs/experiments/172-what-the-c
 - **Match a codebook mechanically** against its tables (names, declared codes against values, missing counts) and test it on the three examples that ship metadata: NYC (all 92 agree), London (labels in the file), Salmonella (68 of 82 columns unmatched by name, `sex` as text, `schule`/`ausbildung`/`biolm` values outside the declared coding). The Salmonella codebook is xlsx, which Fieldwork does not read.
 - An undescribed kept column is a finding; declarations travel on the table, reach receipts and figures, make a run stale when edited, and export as a sidecar.
 - Write the Salmonella findings into that example's README data notes when the match is built, so the authored notes can cite them.
+
+## Worked example manuals (practitioner, 2026-11-04)
+
+Experiment 173. The Manual tab is built and NYC has a manual.
+
+- **Play back the build from the manual**: each step in a dialog with Previous, Next and Close, the canvas holding the nodes added so far.
+- Manuals for South London, Oswego, Nigeria and Salmonella, each performed by its from-scratch test.
+- The library heading reads "Node library" and its search "Find a node…"; by the glossary, what it lists are widgets. Not renamed yet.

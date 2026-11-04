@@ -3,6 +3,15 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.15.0 — 2026-11-04
+
+- **A worked example can carry a manual**, shown in a new **Manual** tab: how to build each of its workflows by hand,
+  step by step, the open one first. NYC is the first. The example's from-scratch test performs the same file, so a
+  step that stops matching the screen fails a test. Experiment 173.
+- Each step that adds a widget says to find it by name in the library's search.
+- CI checks out the London example and keeps failed tests' screenshots and traces.
+- Validation: Chromium locally; WebKit in CI.
+
 ## 0.14.0 — 2026-11-03
 
 - **Select rows by value keeps a range**: From and To, for a column of dates or numbers. A long list of values can be searched. Experiment 171.

@@ -8,6 +8,7 @@
 //                   | measure-area-001 | mean-center-001
 //                   | reachability-soho-001 | corridor-soho-001
 //                   | relate-snow-001 | group-snow-001 | area-join-snow-001
+//                   | select-range-london-001
 import {createHash} from 'node:crypto';
 import {readFile,writeFile} from 'node:fs/promises';
 import {reprojectToCRS84,projectFromCRS84} from '../build/reproject.js';
@@ -30,6 +31,8 @@ import {aggregateHex} from '../build/geoprivacy.js';
 import {caseSeriesFromTable} from '../build/case-series.js';
 import {relateTable,relateShape,gapSignature} from '../build/relate-table.js';
 import {groupTable} from '../build/group-table.js';
+import {selectRange} from '../build/derive-value.js';
+import {readStata} from '../build/stata.js';
 import {joinTableToAreas} from '../build/area-join.js';
 import {computeRate,fromTable,rateTable as rateTableOf} from '../build/rate.js';
 import {gunzipSync} from 'node:zlib';
@@ -1122,6 +1125,43 @@ const builders={
           groups:withHole.groups,collapsedFrom:withHole.collapsedFrom,
           dropped:withHole.dropped,gaps:withHole.gaps}]},
       note:'Recompute both cases from `input` and `declaredParameters`. Case 2 empties the row named in `emptied` and is the case where the two implementations are meant to disagree under pandas\' default.'
+    },files:{}};
+  },
+
+  'select-range-london-001'(){
+    // A RANGE IS "BETWEEN", and pandas has one: `Series.between(left, right, inclusive='both')`. The
+    // table is London's daily deaths 2002 to 2006 as the Stata reader reads it, so the dates are the
+    // dates `%td` declares. Ozone is a key here so a range of NUMBERS is checked too, where 9 must
+    // come before 10 -- the case a text comparison gets wrong.
+    const dta=new URL('../../example-2002-london-ozone/data/londondataset2002_2006.dta',import.meta.url);
+    const read=readStata(readFileSync(dta));
+    const at=name=>read.headers.indexOf(name);
+    const table={kind:'data-table',keys:['date','ozone'],valueField:'numdeaths',
+      rows:read.rows.map(row=>({key:{date:row[at('date')],ozone:row[at('ozone')]},value:Number(row[at('numdeaths')])})),
+      rowCount:read.rows.length,missingValueCount:0};
+    // 4. One ozone cell emptied, inside the range: a row with no value is outside every range.
+    const target=table.rows.find(row=>Number(row.key.ozone)>=60&&Number(row.key.ozone)<=90);
+    const holed={...table,rows:table.rows.map(row=>row===target?{...row,key:{...row.key,ozone:''}}:row)};
+    const requests=[
+      {note:'The August 2003 heatwave: a range of dates, both ends kept',keyColumn:'date',from:'2003-08-01',to:'2003-08-15',emptied:null},
+      {note:'Ozone from 60 to 90: a range of numbers, compared as numbers',keyColumn:'ozone',from:'60',to:'90',emptied:null},
+      {note:'An open end: every day from Christmas 2006',keyColumn:'date',from:'2006-12-25',to:'',emptied:null},
+      {note:'Ozone from 60 to 90 with one in-range cell emptied: that row is dropped',keyColumn:'ozone',from:'60',to:'90',
+        emptied:{date:target.key.date,wasOzone:target.key.ozone}}];
+    const cases=requests.map(request=>{
+      const result=selectRange(request.emptied?holed:table,request.keyColumn,request.from,request.to);
+      return {...request,kept:result.kept,dropped:result.dropped,dates:result.table.rows.map(row=>row.key.date)};
+    });
+    return {fixture:{
+      ...base('select-range-london-001','select_rows','Select rows by value','src/derive-value.ts#selectRange'),
+      source:'Armstrong, Gasparrini and Tobias, London daily ozone, temperature and deaths 2002 to 2006, as published in londondataset2002_2006.dta; read by src/stata.ts.',
+      declaredParameters:{semantics:'Keep the rows whose key column lies from `from` to `to`, both included. An empty end is open. Dates (ISO, year-month-day) compare as dates, numbers as numbers. A row with no value in the column is outside every range. Rows keep the table\'s order.',
+        equivalentTo:"pandas: df[df[column].between(from, to, inclusive='both')] with the column parsed as dates or numbers; an open end is a one-sided comparison. NaN is outside, as here."},
+      input:{dtaSha256:sha256(readFileSync(dta)),
+        table:{keys:table.keys,valueField:table.valueField,rowCount:table.rowCount,
+          rows:table.rows.map(row=>({key:row.key,value:row.value}))}},
+      output:{cases},
+      note:'Recompute each case from `input` and its own from, to and keyColumn. Case 4 empties the ozone of the row named in `emptied` first.'
     },files:{}};
   },
 

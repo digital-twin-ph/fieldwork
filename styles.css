@@ -968,6 +968,12 @@ i.bar-zero{position:absolute;top:0;bottom:0;width:1px;background:var(--ink,#2b2b
 .bar-negative{background:var(--bar-negative,#a8734f)}
 .exposure-list .check{display:flex;align-items:flex-start;justify-content:flex-start;gap:6px;margin:2px 0;text-align:left}
 .exposure-list .check input{flex:none;width:auto;margin:2px 0 0}
+/* A select's values: left-aligned like the exposure list, and a long list scrolls in its own box
+   so the Inspector below it stays in reach. */
+.select-values{max-height:320px;overflow-y:auto}
+.select-values .check,.select-filter .check{display:flex;align-items:flex-start;justify-content:flex-start;gap:6px;margin:2px 0;text-align:left}
+.select-values .check input,.select-filter .check input{flex:none;width:auto;margin:2px 0 0}
+.select-values .check[hidden]{display:none}
 
 /* The frame control on an interactive map: experiment 168. */
 .map-frame-control{background:var(--surface,#fff);color:var(--ink,#1a1a1a);padding:8px 10px;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,.3);min-width:220px}

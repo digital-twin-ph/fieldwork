@@ -3,7 +3,7 @@
   "description": "Independent recomputation of implemented widgets by an external process, recorded after release. Release files are immutable once committed, so evidence about a release lives here and accrues as checks run. A fixture digest recorded in a result is over canonical JSON content rather than the file’s bytes, revised 2026-10-11 because byte identity is unsatisfiable in the browser the lab publishes to. A parity result establishes numerical agreement with a named external implementation under a stated criterion. It is not scientific certification, and it says nothing about whether a method is appropriate for a question.",
   "lab": {
     "repository": "https://github.com/digital-twin-ph/validation-lab",
-    "commit": "8800053f030b5468bafa670eedb253781b56547d",
+    "commit": "725ca72120d91bc34f449acdaf5c7323e533c3fd",
     "pinNote": "The commit CI checks the lab out at: .github/workflows/pages.yml reads it with `jq -r .lab.commit widgets/parity.json`. So this pin, not the clone beside this repository, is what `validate:dive-deeper` verifies against on a clean runner -- and it must be advanced whenever a check lands in the lab, in the same push-then-pin order the worked examples use."
   },
   "outcomes": {
@@ -610,6 +610,26 @@
       "measured": "Three cases over Snow's Table VIII through the declared rate. Folding punctuation: 33 of 33 parts and 32 of 32 rows matched, 2 shared, one duplicate-boundary-key diagnostic. Raw strings: 24 of 33 parts and 23 of 32 rows, with nine parts unmatched and named. Negative control: 'Camberwell Green' reported unmatched with an unmatched-boundary diagnostic naming it, the other 32 parts unchanged. The folding won 9 rows, 28 per cent of the table, every pair differing only in characters that are not letters or digits.",
       "note": "WHAT IS INDEPENDENT HERE IS NOT THE NORMALISATION, and the check says so rather than pretending otherwise. `normaliseName` is this project's own; a second copy written by the same author is not a second opinion, which is the trap check 27's record names. So three separable things are recomputed. The merge given keys is pandas' and fully independent. The raw-string baseline needs no normalisation at all. The folding is checked as a PROPERTY -- every folded key equals its name's alphanumeric reduction and no two distinct names fold together -- which is weaker than an independent fold and still refuses one that expanded St. to Saint, dropped a word, folded two names together or touched a letter.\n\nAND THE DATA CANNOT SUPPLY A NEGATIVE CONTROL, which is the finding worth carrying. Snow's table and these boundaries have no pair differing by more than punctuation, so nothing in the example tests a name that OUGHT not to match -- 32 of 32 is also the score of a rule that matched too readily. One part is renamed to Camberwell Green, a real place the table does not carry. Jaro-Winkler to the name it replaced is 0.925 by rapidfuzz and 0.925 by jellyfish, so a similarity-based linkage at the usual 0.90 threshold would have ACCEPTED it. This widget has no threshold and no review band and reports the part unmatched; the two figures are what that decision is worth, and are reported rather than asserted, in the role the score interval plays in check 27.",
       "notebook": "31-area-join-vs-pandas.ipynb"
+    },
+    {
+      "widget": "urn:fieldwork:widget:select_rows",
+      "coversRelease": "0.2.0",
+      "check": "32-select-range",
+      "result": "content/results/check-32-select-range.json",
+      "sha256": "c2fe9d759419d313ed71fdfe6642f13ad2ce7dfe4cc52f9db971af35b8054072",
+      "external": [
+        "pandas 2.3.3"
+      ],
+      "criterion": "each case keeps the same dates in the same order as Series.between(inclusive='both') on the column parsed by pandas as dates or numbers; an open end is a one-sided comparison; an emptied cell is outside every range",
+      "outcome": "agrees",
+      "measured": "4 of 4 cases row for row on London 2002 to 2006: the August 2003 heatwave 15, ozone 60 to 90 as numbers 137, from Christmas 2006 7, and 136 with one in-range cell emptied. Compared as text, ozone 60 to 90 would keep 193.",
+      "notEstablished": [
+        "That a range was the right selection. A period chosen to show a peak is still a choice, and the receipt records it without judging it.",
+        "Datetime columns. The fixture's dates carry no time, and a To given as a date excludes times later that day."
+      ],
+      "ranAt": "2026-11-04T03:36:42.207065+00:00",
+      "note": "Only the range is recomputed. Selecting listed values computes nothing and is asserted by unit tests.",
+      "notebook": "32-select-range-vs-pandas.ipynb"
     }
   ],
   "notebookNote": "`notebook` names the lab notebook that carries the check, and `diveDeeper` the heading of its Dive Deeper section where it has one -- the part written for a practitioner who wants to understand the widget rather than for a reviewer checking it (experiment 94). Both are recorded rather than derived from the check id: `24-project-forward` lives in `24-project-vs-pyproj.ipynb`, so matching on the leading number works by luck and would break the first time a check and its notebook are named differently. The application reads `diveDeeper` to decide which widgets offer the link, and scripts/validate-dive-deeper.mjs refuses a heading the notebook does not actually carry."

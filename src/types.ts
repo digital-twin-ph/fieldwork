@@ -230,7 +230,9 @@ export interface ParamsByType {
   rate_ratio:{label:string;compared:string;reference:string;level:90|95|99;method:import('./rate-ratio.js').IntervalMethod};
   rate:{label:string;source?:'points'|'table';measureKey?:string;numeratorField:string;denominatorField:string;groupBy?:string;bandWidth?:number;denominatorUnit:import('./rate.js').DenominatorUnit;rateKind:import('./rate.js').RateKind;multiplier:number;minimumDenominator:number;numeratorPeriod:string;denominatorVintage:string};
   derive_value:{label:string;keyColumn:string;left:string;operator:import('./derive-value.js').Operator;right:string;name:string};
-  select_rows:{label:string;keyColumn:string;values:string[]};
+  /** `range`, when present, keeps the rows between two values instead of the ones named, both
+   *  ends included; an empty end is open. `values` is kept so switching back loses nothing. */
+  select_rows:{label:string;keyColumn:string;values:string[];range?:{from:string;to:string}};
   append_rows:{label:string;nameSource?:boolean;sourceColumn?:string;firstLabel?:string;secondLabel?:string;newKey?:string};
   /** A POLYGON LAYER READ FROM A FILE, which nothing could do until 2026-10-28.
    *

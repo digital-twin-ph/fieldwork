@@ -56,7 +56,7 @@ interface ExecutionInputs extends OldInputs {area2:AreaValue;polygons:Polygons;s
 import classification from '../widgets/classification.json' with {type:'json'};
 import {OLD_TYPES,validateOldNode,executeOldNode,migrateFacilitySources,applyAccessReview,applyFacilityGrading,gradedPointLayer,distancesAsAccess} from './old-naledi.js';
 import {resolveRuleset,bindParameters,tableContractFailures,rulesetCitation} from './rulesets.js';
-import {deriveValue,selectRows,OPERATORS} from './derive-value.js';
+import {deriveValue,selectRows,selectRange,rangeSentence,OPERATORS} from './derive-value.js';
 import {appendRows,appendSentence} from './append-rows.js';
 import widgetRegistry from '../widgets/registry.json';
 import {relateTable,relateOutcome,machinedNotes,relateReceiptFacts,type RelateOutcome} from './relate-table.js';
@@ -1530,10 +1530,13 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
       case 'select_rows':{
         const table=inputs.records as unknown as import('./data-table.js').DataTable;
         if(table?.kind!=='data-table')throw new Error('Connect a table: this step keeps rows of one.');
-        const result=selectRows(table,node.params.keyColumn,node.params.values);
+        const range=node.params.range;
+        const result=range?selectRange(table,node.params.keyColumn,range.from,range.to)
+          :selectRows(table,node.params.keyColumn,node.params.values);
         value=result.table as unknown as DisplayValue;
         receipts.push({nodeId:node.id,kind:'computation',
-          method:`kept ${node.params.values.join(', ')} of ${node.params.keyColumn}`,
+          method:range?`kept ${rangeSentence(node.params.keyColumn,range.from.trim(),range.to.trim())}, both ends included`
+            :`kept ${node.params.values.join(', ')} of ${node.params.keyColumn}`,
           kept:result.kept,dropped:result.dropped,absent:result.absent} as unknown as Receipt);
         break;}
       case 'rate':{const records=node.params.source==='table'

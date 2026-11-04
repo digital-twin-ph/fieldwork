@@ -29,6 +29,9 @@ export async function performManual(page,workflow,{timeout=120000}={}){
   for(const [index,step] of workflow.steps.entries()){
     const where=`"${workflow.name}" step ${index+1}`;
     if('note' in step)continue;
+    // THE DIALOG THE MANUAL NAMES is the one open, by its heading.
+    if(step.dialog)await expect(page.locator('dialog[open] h2').filter({hasText:step.dialog}).first(),
+      `${where}: the "${step.dialog}" dialog`).toBeVisible({timeout});
     if('add' in step){
       await view(page,'workflow');
       // As the manual says: the name typed into the library's search, then the entry it leaves.

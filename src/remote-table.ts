@@ -23,14 +23,23 @@ const nameOf=(path:string)=>path.split('/').at(-1)||path;
 
 /** The bytes at a URL. A refusal names the URL and the status, because a host that stopped answering is the
  *  likeliest cause and the practitioner can check it. */
-export async function fetchBytes(url:string):Promise<Uint8Array<ArrayBuffer>>{
-  let response:Response;
-  // REVALIDATED, NOT TAKEN FROM THE CACHE: a file corrected at its source must be seen, and the digest is checked
-  // either way. A cached copy of a refused file kept refusing after the source was fixed, found 2026-11-03.
-  try{response=await fetch(url,{mode:'cors',credentials:'omit',cache:'no-cache'});}
-  catch{throw new Error(`${url} could not be reached from this browser. The host may be down, or may not allow a browser to fetch from it.`);}
-  if(!response.ok)throw new Error(`${url} answered ${response.status}.`);
-  return new Uint8Array(await response.arrayBuffer());
+/** How long a source has to answer and finish, before the fetch is stopped and said to have failed. Found 2026-11-04:
+ *  Zenodo twice left the dialog at "Fetching…" with nothing to say, after many downloads of the NYC package in a day. */
+export const FETCH_TIMEOUT_MS=120_000;
+export async function fetchBytes(url:string,timeoutMs=FETCH_TIMEOUT_MS):Promise<Uint8Array<ArrayBuffer>>{
+  const stop=new AbortController(),timer=setTimeout(()=>stop.abort(),timeoutMs);
+  const late=()=>new Error(`${url} did not finish answering within ${Math.round(timeoutMs/60000)} minutes. Nothing was `
+    +'read. The host may be slow or limiting downloads; try again later.');
+  try{
+    let response:Response;
+    // REVALIDATED, NOT TAKEN FROM THE CACHE: a file corrected at its source must be seen, and the digest is checked
+    // either way. A cached copy of a refused file kept refusing after the source was fixed, found 2026-11-03.
+    try{response=await fetch(url,{mode:'cors',credentials:'omit',cache:'no-cache',signal:stop.signal});}
+    catch{throw stop.signal.aborted?late():new Error(`${url} could not be reached from this browser. The host may be down, or may not allow a browser to fetch from it.`);}
+    if(!response.ok)throw new Error(`${url} answered ${response.status}.`);
+    try{return new Uint8Array(await response.arrayBuffer());}
+    catch(error){throw stop.signal.aborted?late():error;}
+  }finally{clearTimeout(timer);}
 }
 
 /** The readable tables in an archive, CSV and Stata, in the archive's order. */

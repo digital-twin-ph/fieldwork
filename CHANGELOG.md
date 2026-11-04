@@ -11,6 +11,15 @@ shown in a local build is not a claim that it has been published.
 - A manual can say to reuse a node from another workflow of the project (**From this project**); NYC's second
   workflow now shares the first's table, so nothing is fetched or set up twice. Experiment 173.
 - A fetched wide table's source file is kept by digest too, so several workflows on one file do not fill the save.
+- **Every value the manual says to type has a Copy button**: names, subjects, titles, labels, units, dates, and URLs
+  such as the Zenodo package's. A step inside a dialog names the dialog where its steps begin, so **New project** and
+  **Create project** read as one action.
+- A fetch that has not finished after two minutes is stopped and says so, instead of showing "Fetching…" forever.
+- **Many columns are chosen in a dialog of their own.** A file with more than 12 columns shows a one-line summary and
+  **Choose key columns…**, where names can be pasted (the manual's Copy gives them), found, or all unticked. Read long,
+  such a file starts with nothing ticked instead of every column but one. Table input 0.5.0.
+- **The detached manual stays usable above a dialog.** Opening Import tabular data (or any modal) no longer blurs it:
+  it stays where it is, readable, scrollable and copyable, so the file to choose in a zip can be read off it.
 - Validation: Chromium locally; WebKit in CI.
 
 ## 0.17.0 — 2026-11-04

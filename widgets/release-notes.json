@@ -926,8 +926,8 @@
    "migrationFrom": []
   },
   "table_input": {
-   "version": "0.4.0",
-   "released": "2026-11-03",
+   "version": "0.5.0",
+   "released": "2026-11-04",
    "changes": [
     {
      "kind": "minor",
@@ -936,6 +936,14 @@
     {
      "kind": "minor",
      "description": "A table can be fetched from a URL, a zip included, choosing the file inside. The project keeps the URL, the file and both digests in place of the rows, an export carries no rows, and Fetch the table on another device reads the same file again, refusing one whose digest has changed. Experiment 170."
+    },
+    {
+     "kind": "minor",
+     "description": "A fetched file is kept on the device by digest and read from there by any table that names it, in any project, instead of being downloaded again; the dialog reads the copy of a URL fetched before and offers Fetch again from the source. A fetch that has not finished in two minutes is stopped. A wide read's source file is kept by digest rather than in the saved workflow. Experiment 170."
+    },
+    {
+     "kind": "minor",
+     "description": "More than 12 columns are chosen in a dialog of their own, with names pasted or typed, find, untick all and ticked only; read long, such a file starts with nothing ticked. The practitioner: \"This is choice overload\". Experiment 173."
     }
    ],
    "breaking": false,

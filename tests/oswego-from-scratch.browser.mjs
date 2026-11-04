@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {keepColumns,columnsOffered} from './keep-columns.mjs';
 import {existsSync,readFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 
@@ -53,15 +54,10 @@ test('Oswego is two short workflows: which food, and where',async({page})=>{test
   const list=await idOf(page,'table_input');
   await page.locator('#open-table').click();
   await page.locator('#table-file').setInputFiles(LIST);
-  await expect(page.locator('#table-keys')).toBeVisible();
+  await columnsOffered(page);
   await page.locator('#table-shape').selectOption('long');
   await page.locator('#table-value').selectOption('Age');
-  const boxes=page.locator('#table-keys input');
-  for(let i=0;i<await boxes.count();i++){
-    const box=boxes.nth(i),name=await box.getAttribute('value');
-    if(await box.isDisabled())continue;
-    await box.setChecked(['ID','Ill',...FOODS].includes(name));
-  }
+  await keepColumns(page,'table-keys',['ID','Ill',...FOODS]);
   await expect(page.locator('#table-save')).toBeEnabled();
   await page.locator('#table-save').click();
   await add(page,'two_by_two');
@@ -174,12 +170,7 @@ test('a line list reaches a two-by-two directly, with nothing counted first',asy
   await page.locator('#table-file').setInputFiles(LIST);
   await page.locator('#table-shape').selectOption('long');
   await page.locator('#table-value').selectOption('Age');
-  const boxes=page.locator('#table-keys input');
-  for(let i=0;i<await boxes.count();i++){
-    const box=boxes.nth(i),name=await box.getAttribute('value');
-    if(await box.isDisabled())continue;
-    await box.setChecked(['ID','Ill',...FOODS].includes(name));
-  }
+  await keepColumns(page,'table-keys',['ID','Ill',...FOODS]);
   await page.locator('#table-save').click();
   await add(page,'two_by_two');
   const table=await idOf(page,'two_by_two');
@@ -215,12 +206,7 @@ test('all 14 foods on one node give one table, in file order, unranked',async({p
   await page.locator('#table-file').setInputFiles(LIST);
   await page.locator('#table-shape').selectOption('long');
   await page.locator('#table-value').selectOption('Age');
-  const boxes=page.locator('#table-keys input');
-  for(let i=0;i<await boxes.count();i++){
-    const box=boxes.nth(i),name=await box.getAttribute('value');
-    if(await box.isDisabled())continue;
-    await box.setChecked(['ID','Ill',...FOODS].includes(name));
-  }
+  await keepColumns(page,'table-keys',['ID','Ill',...FOODS]);
   await page.locator('#table-save').click();
   await add(page,'two_by_two');
   const table=await idOf(page,'two_by_two');

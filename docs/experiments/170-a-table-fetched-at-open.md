@@ -1,6 +1,6 @@
 # 170 · A table fetched when the example opens
 
-_Created 2026-11-03 · Updated 2026-11-03_
+_Created 2026-11-03 · Updated 2026-11-04_
 
 **Status:** tried — built on Table input and used by the NYC example, Chromium.
 
@@ -96,3 +96,8 @@ no copy of the named file to read instead. Either way only the named file is eve
 | 2026-11-04 | `tests/remote-table.test.mjs` | 5 of 5, three of them new: three reads of one file make one request, a damaged copy is fetched again, a URL typed again reads the copy and Fetch again goes to the source |
 | 2026-11-04 | `tests/remote-table.browser.mjs`, Chromium | Passed: on a second device (byte store emptied) a changed file is refused; opened again as another project on the same device, the table is read with no request to the source while the source serves different bytes |
 | 2026-11-04 | `tests/nyc-from-scratch.browser.mjs` against Zenodo, Chromium | Passed: three workflows, one request for the package |
+
+**A source that does not answer** is stopped after two minutes and said to be late (`FETCH_TIMEOUT_MS`). Found the same
+day: Zenodo twice left the dialog at "Fetching…" during a day of repeated full downloads, while a direct request
+answered in under two seconds. The browser tests now serve the package from a local copy (`NYC_PKG`) checked against
+the pinned archive digest, so they no longer download 9 MB from Zenodo on every run.

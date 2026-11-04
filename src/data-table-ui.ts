@@ -41,6 +41,80 @@ export interface TableReopen extends TableSelection {wide?:WideChoice}
 const esc:Escape=(value:unknown)=>String(value??'')
   .replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
 
+/** More columns than this and a column list gets tools to find, clear and paste, and a long read starts unticked. */
+export const MANY_COLUMNS=12;
+/** How each column list refreshes its summary when it is ticked in code -- a change of shape -- rather than by a person. */
+const refreshers=new WeakMap<Element,()=>void>();
+/** A LONG COLUMN LIST IS CHOSEN IN A DIALOG OF ITS OWN. The practitioner, 2026-11-04, on NYC's 92 key column checkboxes:
+ *  *"This is choice overload"*, and *"I think the table column filtering should be another dialog."* The import dialog
+ *  keeps a one-line summary and a button; the list, with find, clear and paste, opens over it. Each action ticks or
+ *  unticks in one go and rebuilds once: unticking 87 columns one by one rebuilt a 3,653-row preview 87 times. Pasting
+ *  names is what a manual's Copy feeds, and a name the file does not have is said rather than ignored. A short list
+ *  stays where it was, inline. */
+function columnTools(box:HTMLFieldSetElement,prefix:string,title:string,changed:()=>void):void{
+  // HOME FIRST: a file read before may have left the list in its dialog, and this file may be a short one.
+  const placeholder=document.getElementById(`${prefix}-summary-row`);
+  if(placeholder){placeholder.before(box);placeholder.remove();}
+  refreshers.delete(box);
+  const boxes=()=>[...box.querySelectorAll<HTMLInputElement>('label > input[type=checkbox]')];
+  if(boxes().length<=MANY_COLUMNS)return;
+  const ticked=()=>boxes().filter(b=>b.checked).map(b=>b.value.trim());
+  const row=document.createElement('div');row.id=`${prefix}-summary-row`;row.className='column-summary';
+  box.before(row);
+  // Closing the import dialog takes the column dialog with it, so no stale list keeps the same ids in the page.
+  row.closest('dialog')?.addEventListener('close',()=>{document.getElementById(`${prefix}-dialog`)?.remove();},{once:true});
+  // The summary stands in for the list, so it is hidden whenever the list is: value columns belong to a wide read only.
+  const summarise=()=>{const chosen=ticked();row.hidden=box.hidden;
+    row.innerHTML=`<span class="field-label">${title}</span><p id="${prefix}-summary">${chosen.length} of ${boxes().length}`
+      +(chosen.length?`: ${chosen.map(n=>n.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]!)).join(', ')}`:' ticked')+`</p>`
+      +`<button type="button" class="button small" id="${prefix}-choose">Choose ${title.toLowerCase()}…</button>`;
+    row.querySelector<HTMLButtonElement>(`#${prefix}-choose`)!.onclick=()=>{dialog!.showModal();};};
+  let dialog=document.getElementById(`${prefix}-dialog`) as HTMLDialogElement|null;
+  if(!dialog){
+    dialog=document.createElement('dialog');dialog.id=`${prefix}-dialog`;dialog.className='column-dialog';
+    document.body.append(dialog);
+  }
+  dialog.innerHTML=`<h2>${title}</h2>`
+    +`<label class="field-label" for="${prefix}-paste">Columns to keep, pasted or typed</label>`
+    +`<div class="column-tools-row"><input id="${prefix}-paste" placeholder="for example date, o3, pm25">`
+    +`<button type="button" class="button small" id="${prefix}-keep">Keep these</button></div>`
+    +`<div class="column-tools-row"><input id="${prefix}-find" type="search" placeholder="Find a column…" aria-label="Find a column">`
+    +`<button type="button" class="button small" id="${prefix}-none">Untick all</button>`
+    +`<label class="check"><input type="checkbox" id="${prefix}-ticked"> Ticked only</label></div>`
+    +`<p class="muted" id="${prefix}-count" role="status"></p><div class="column-dialog-list"></div>`
+    +`<div class="package-actions"><button type="button" class="button primary" id="${prefix}-done">Done</button></div>`;
+  dialog.querySelector('.column-dialog-list')!.append(box);
+  const tools=dialog,say=tools.querySelector<HTMLElement>(`#${prefix}-count`)!;
+  const count=()=>{say.textContent=`${ticked().length} of ${boxes().length} ticked.`;summarise();};
+  const narrow=()=>{
+    const wanted=tools.querySelector<HTMLInputElement>(`#${prefix}-find`)!.value.trim().toLowerCase();
+    const tickedOnly=tools.querySelector<HTMLInputElement>(`#${prefix}-ticked`)!.checked;
+    for(const b of boxes())(b.parentElement as HTMLElement).hidden=
+      (!!wanted&&!b.value.toLowerCase().includes(wanted))||(tickedOnly&&!b.checked);
+  };
+  tools.querySelector<HTMLInputElement>(`#${prefix}-find`)!.oninput=narrow;
+  tools.querySelector<HTMLInputElement>(`#${prefix}-ticked`)!.onchange=narrow;
+  tools.querySelector<HTMLButtonElement>(`#${prefix}-none`)!.onclick=()=>{
+    for(const b of boxes())if(!b.disabled)b.checked=false;changed();count();narrow();};
+  const keep=()=>{
+    const names=tools.querySelector<HTMLInputElement>(`#${prefix}-paste`)!.value.split(/[,;\t\n]+/).map(n=>n.trim()).filter(Boolean);
+    if(!names.length){say.textContent='Name at least one column.';return;}
+    const have=new Set(boxes().map(b=>b.value.trim()));
+    for(const b of boxes())if(!b.disabled)b.checked=names.includes(b.value.trim());
+    changed();count();narrow();
+    const missing=names.filter(n=>!have.has(n));
+    if(missing.length)say.textContent+=` Not in this file: ${missing.join(', ')}.`;
+  };
+  tools.querySelector<HTMLButtonElement>(`#${prefix}-keep`)!.onclick=keep;
+  tools.querySelector<HTMLInputElement>(`#${prefix}-paste`)!.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();keep();}};
+  tools.querySelector<HTMLButtonElement>(`#${prefix}-done`)!.onclick=()=>dialog!.close();
+  for(const b of boxes())b.addEventListener('change',count);
+  refreshers.set(box,count);
+  // The box's own legend repeats the dialog's heading, so it is hidden while the list is in here.
+  const legend=box.querySelector('legend');if(legend)legend.hidden=true;
+  count();
+}
+
 export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:TableReopen):void{
   const dialog=document.createElement('dialog');dialog.id='table-dialog';dialog.setAttribute('aria-labelledby','table-title');
   dialog.innerHTML='<h2 id="table-title">Import tabular data</h2>'
@@ -349,7 +423,10 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:T
     }else{
       const guess=headers.findIndex(h=>/^(value|value_m|amount|measure|level)$/i.test(h));
       const valueAt=guess<0?headers.length-1:guess;
-      keyNames=headers.filter((_,i)=>i!==valueAt);
+      // A WIDE FILE READ LONG STARTS WITH NOTHING TICKED. Every column but the value was ticked, which for NYC's 92 was
+      // 87 to untick to keep 5. The practitioner, 2026-11-04: *"This is choice overload"*. A small file keeps the
+      // old default, where it is usually right.
+      keyNames=headers.length>MANY_COLUMNS?[]:headers.filter((_,i)=>i!==valueAt);
       valueSelect.value=headers[valueAt];
     }
     const held=existing?.wide;
@@ -365,11 +442,14 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:T
   function applyShape(){
     const wide=shape()==='wide';
     valuesBox.hidden=!wide;wideNames.hidden=!wide;longValue.hidden=wide;
+    const many=(parsed?.headers.length??0)>MANY_COLUMNS;
     keysSays.textContent=wide
       ?'The columns that identify the subject of a row. A wide file has one row per subject, so together these must be unique.'
-      :'Together these identify a row. Every key tuple must be unique.';
+      :'Together these identify a row. Every key tuple must be unique.'
+        +(many?` This file has ${parsed!.headers.length} columns: tick the ones you need, or paste their names below.`:'');
     preselect();
     syncValueBoxes();
+    refreshers.get(keysBox)?.();refreshers.get(valuesBox)?.();
     build();
   }
   shapeSelect.onchange=applyShape;
@@ -458,6 +538,8 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:T
       for(const box of keysBox.querySelectorAll<HTMLInputElement>('input[type=checkbox]'))
         box.onchange=()=>{syncValueBoxes();build();};
       for(const box of valuesBox.querySelectorAll<HTMLInputElement>('input[type=checkbox]'))box.onchange=build;
+      columnTools(keysBox,'table-keys','Key columns',()=>{syncValueBoxes();build();});
+      columnTools(valuesBox,'table-values','Value columns',build);
       applyShape();
     }catch(e){if(request===serial){status.textContent='The file could not be read.';fail(e);}}
   };

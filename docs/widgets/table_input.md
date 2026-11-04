@@ -32,7 +32,18 @@ exported project carries no rows, so sharing it does not republish data whose te
 device the node says its rows are not kept, and **Fetch the table** reads the same file again with the same
 settings. A file whose digest has changed is refused, and nothing is read.
 
+**Downloaded once per device.** What is fetched is kept on the device by its digest. Any table, in any project on the
+device, that names the same file reads it from there, checked again, instead of downloading it. Typed again in the
+dialog, a URL reads the copy and says when it was fetched; **Fetch again from the source** checks for a newer file. A
+source that has not finished after two minutes is stopped and said to be late.
+
 ## Keys
+
+**A file with more than 12 columns** lists them in a dialog of its own: Key columns shows how many are ticked and which,
+and **Choose key columns…** opens the list, with **Columns to keep** (paste or type names, separated by commas, then
+**Keep these**), **Find a column**, **Untick all** and **Ticked only**. A name the file does not have is said. Read long,
+such a file starts with nothing ticked; a smaller one ticks every column but the value, and lists them inline. Value
+columns, for a wide read, work the same way.
 
 Key columns are read as labels. Among them you decide what identifies a row:
 

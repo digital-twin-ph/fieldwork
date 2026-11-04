@@ -67,3 +67,9 @@ test('a URL typed again in the dialog reads the copy, and Fetch again goes to th
   assert.equal((await fetchOrDeviceCopy(spec.url,{fresh:true})).from,'source');
   assert.equal(calls.n,2);
 });
+
+test('a source that does not answer is stopped and said to be late, not left fetching',async()=>{
+  const {fetchBytes}=await import('../build/remote-table.js');
+  globalThis.fetch=(url,{signal})=>new Promise((_,reject)=>signal.addEventListener('abort',()=>reject(new Error('aborted'))));
+  await assert.rejects(()=>fetchBytes('https://slow.test/a.zip',30),/did not finish answering within 0 minutes. Nothing was read/);
+});

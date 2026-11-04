@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {keepColumns,columnsOffered} from './keep-columns.mjs';
 import {serveArchive,smallArchive} from './small-pmtiles.mjs';
 import {existsSync,readFileSync,writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
@@ -41,24 +42,14 @@ const importTable=async(page,csv,shape,value,keys)=>{
   const table=nodes.at(-1).id;
   await page.locator('#open-table').click();
   await page.locator('#table-file').setInputFiles(file(csv));
-  await expect(page.locator('#table-keys')).toBeVisible();
+  await columnsOffered(page);
   if(shape==='long'){
     await page.locator('#table-shape').selectOption('long');
     await page.locator('#table-value').selectOption(value);
   }
-  const boxes=page.locator('#table-keys input');
-  for(let i=0;i<await boxes.count();i++){
-    const box=boxes.nth(i),name=await box.getAttribute('value');
-    if(await box.isDisabled())continue;
-    await box.setChecked(keys.includes(name));
-  }
+  await keepColumns(page,'table-keys',keys);
   if(shape==='wide'){
-    const values=page.locator('#table-values input');
-    for(let i=0;i<await values.count();i++){
-      const box=values.nth(i),name=await box.getAttribute('value');
-      if(await box.isDisabled())continue;
-      await box.setChecked(value.includes(name));
-    }
+    await keepColumns(page,'table-values',Array.isArray(value)?value:[value]);
   }
   await expect(page.locator('#table-save')).toBeEnabled();
   await page.locator('#table-save').click();

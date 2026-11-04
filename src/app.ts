@@ -6642,6 +6642,23 @@ const saveManualProgress=(digest:string,done:Set<string>)=>{
 const manualTitle=(manual:WorkedExampleManual)=>(type:string)=>TYPES[type as NodeType]?.title??type;
 /** A step clicked, or pressed with Enter or Space, is done; again, it is not. */
 function wireManualSteps(host:HTMLElement,digest:string){
+  // COPY puts the exact value on the clipboard. It is a control inside a step, so it does not mark the step done.
+  host.querySelectorAll<HTMLButtonElement>('[data-copy]').forEach(button=>{
+    button.onclick=async e=>{
+      e.stopPropagation();
+      const value=required(button.dataset.copy);
+      try{await navigator.clipboard.writeText(value);}
+      catch{
+        // Without clipboard permission, select the text so the person can copy it themselves.
+        const code=button.previousElementSibling;
+        if(code){const range=document.createRange();range.selectNodeContents(code);
+          const selection=getSelection();selection?.removeAllRanges();selection?.addRange(range);}
+        button.textContent='Selected';setTimeout(()=>{button.textContent='Copy';},1500);return;
+      }
+      button.textContent='Copied';setTimeout(()=>{button.textContent='Copy';},1500);
+    };
+    button.onkeydown=e=>e.stopPropagation();
+  });
   host.querySelectorAll<HTMLElement>('[data-step]').forEach(step=>{
     const toggle=()=>{const done=manualProgress(digest),key=required(step.dataset.step);
       if(done.has(key))done.delete(key);else done.add(key);saveManualProgress(digest,done);
@@ -6686,6 +6703,24 @@ function detachManual(state:DetachedManual):void{
   keepDetached({...detachedManual(),...state});renderManualFloat(true);
   if(currentView==='manual')renderManualView();
 }
+/** ABOVE A MODAL, NOT BEHIND IT. The practitioner, 2026-11-04: *"when the table input modal is visible the manual
+ *  becomes blurred so picking the right file from the long list of files in the zip becomes difficult"*. A modal
+ *  dialog blurs and blocks everything outside itself, so while one is open the panel is moved inside it: fixed in
+ *  place, it does not move on screen, and it can be read, scrolled and copied from. It goes back when the modal
+ *  closes. */
+// THE ORDER MODALS OPENED IN, because the top one is the last opened and neither the page order nor the browser says
+// which that is: a dialog over a dialog (the column list over Import tabular data) must hold the panel.
+const openedModals:HTMLDialogElement[]=[];
+function placeManualFloat():void{
+  for(const d of [...openedModals])if(!d.isConnected||!d.open)openedModals.splice(openedModals.indexOf(d),1);
+  for(const d of document.querySelectorAll<HTMLDialogElement>('dialog[open]'))
+    if(d.matches(':modal')&&!openedModals.includes(d))openedModals.push(d);
+  const panel=document.getElementById('manual-float');
+  if(!panel)return;
+  const home=openedModals.at(-1)??document.body;
+  if(panel.parentElement!==home)home.append(panel);
+}
+new MutationObserver(placeManualFloat).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['open']});
 function renderManualFloat(resume=false):void{
   const state=detachedManual(),manual=manualByDigest(state?.digest);
   let panel=document.getElementById('manual-float');
@@ -6693,7 +6728,7 @@ function renderManualFloat(resume=false):void{
   if(!panel){
     panel=document.createElement('aside');panel.id='manual-float';panel.className='manual-float';
     panel.setAttribute('role','dialog');panel.setAttribute('aria-label','Manual');
-    document.body.append(panel);
+    document.body.append(panel);placeManualFloat();
   }
   const done=manualProgress(state.digest);
   const steps=manual.workflows.reduce((n,w)=>n+w.steps.filter(s=>!('note' in s)).length,0);

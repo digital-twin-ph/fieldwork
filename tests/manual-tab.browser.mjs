@@ -38,10 +38,20 @@ test('a worked example with a manual has a Manual tab, and a workflow without on
   // Steps read as sentences, the library search named, the range as two dates.
   const smoke=view.locator('[data-manual-workflow="What happened during the June 2023 smoke?"]');
   await expect(smoke).toContainText('type its name in Find a node…');
-  await expect(smoke).toContainText('Set From to 2023-06-01.');
+  await expect(smoke).toContainText('Set From to 2023-06-01');
   await expect(smoke).toContainText('Connect the output of Tabular data to the records input of Select rows by value.');
   await expect(smoke).toContainText('In Project, set This workflow’s name');
   await page.screenshot({path:'test-results/manual-tab.png'});
+
+  // COPY, not type: the Zenodo URL goes on the clipboard exactly, and the step is not marked done by it.
+  await page.context().grantPermissions(['clipboard-read','clipboard-write']);
+  const url=smoke.locator('[data-copy^="https://zenodo.org/"]').first();
+  await url.click();
+  await expect(url).toHaveText('Copied');
+  expect(await page.evaluate(()=>navigator.clipboard.readText()))
+    .toBe('https://zenodo.org/api/records/22757330/files/NYC_Pediatric_Asthma_Ozone_JHM_Reproducibility_v1.0.zip/content');
+  await expect(url.locator('xpath=ancestor::li[1]')).not.toHaveClass(/done/);
+  expect(await smoke.locator('[data-copy]').count()).toBeGreaterThan(8);
 
   // Switching workflow moves the mark.
   const other=await page.locator('#workflow-select option').filter({hasText:'Ten years'}).getAttribute('value');
@@ -70,6 +80,25 @@ test('the manual detaches, stays through a new project and a reload, closes, and
   const panel=page.locator('#manual-float');
   await expect(panel).toBeVisible();
   await expect(panel).toContainText('Manual · Ozone and child asthma');
+
+  // A MODAL DOES NOT BLUR IT. With the import dialog open, the manual is where it was, inside the open dialog rather
+  // than behind it, and its Copy works -- the file to choose in the zip is read from it. The practitioner, 2026-11-04.
+  await page.context().grantPermissions(['clipboard-read','clipboard-write']);
+  const before=await panel.boundingBox();
+  await page.locator('[data-view="workflow"]').click();
+  const table=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')).nodes.find(n=>n.type==='table_input').id);
+  await page.locator(`.react-flow__node[data-id="${table}"]`).click();
+  await page.locator('#open-table').click();
+  await expect(page.locator('dialog[open] #table-title')).toBeVisible();
+  expect(await panel.evaluate(el=>el.parentElement?.matches('dialog[open]'))).toBe(true);
+  expect(await panel.boundingBox()).toEqual(before);
+  const copy=panel.locator('[data-copy^="https://zenodo.org/"]').first();
+  await copy.scrollIntoViewIfNeeded();await copy.click();
+  await expect(copy).toHaveText('Copied');
+  await page.screenshot({path:'test-results/manual-over-modal.png'});
+  await page.keyboard.press('Escape');
+  await expect(page.locator('dialog[open] #table-title')).toHaveCount(0);
+  expect(await panel.evaluate(el=>el.parentElement===document.body)).toBe(true);
 
   // Two steps done, by click and by keyboard.
   await panel.locator('[data-step="0:0"]').click();

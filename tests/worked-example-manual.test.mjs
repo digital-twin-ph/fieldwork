@@ -24,10 +24,10 @@ test('a step reads as a sentence that names what is on screen',()=>{
   assert.match(stepSentence({add:'select_rows',as:'days'},types,title,esc),/Add <strong>Select rows by value<\/strong>: type its name in <strong>Find a node…<\/strong>/);
   assert.equal(stepSentence({connect:{from:'daily',to:'days',port:'records'}},types,title,esc),
     'Connect the output of <strong>Tabular data</strong> to the <em>records</em> input of <strong>Select rows by value</strong>.');
-  assert.equal(stepSentence({fill:'select-from',label:'From',value:'2023-06-01'},types,title,esc),
-    'Set <strong>From</strong> to <code>2023-06-01</code>.');
-  assert.equal(stepSentence({fill:'x',view:'project',label:'Name',value:'First'},types,title,esc),
-    'In <strong>Project</strong>, set <strong>Name</strong> to <code>First</code>.');
+  assert.match(stepSentence({fill:'select-from',label:'From',value:'2023-06-01'},types,title,esc),
+    /^Set <strong>From<\/strong> to <code>2023-06-01<\/code><button type="button" class="manual-copy" data-copy="2023-06-01"/);
+  assert.match(stepSentence({fill:'x',view:'project',label:'Name',value:'First'},types,title,esc),
+    /^In <strong>Project<\/strong>, set <strong>Name<\/strong> to <code>First<\/code>/);
 });
 
 test('notes are not numbered, and the steps after one number on',()=>{
@@ -61,4 +61,16 @@ test('a node reused from another workflow of the project reads as such, and coun
   const reused={schema:MANUAL_SCHEMA,example:'urn:test',workflows:[{name:'Second',steps:[
     {reuse:'table_input',from:'First',as:'daily'},{select:'daily'}]}]};
   assert.doesNotThrow(()=>validateManual(reused));
+});
+
+test('a step inside a dialog says so where the dialog begins, not on every step in it',()=>{
+  const html=renderManual(validateManual({schema:MANUAL_SCHEMA,example:'urn:test',workflows:[{name:'W',steps:[
+    {click:'#new-project',label:'New project',opens:'New project'},
+    {fill:'project-name-input',label:'Name',value:'NYC',dialog:'New project'},
+    {fill:'project-subject-input',label:'Subject',value:'Daily',dialog:'New project'},
+    {click:'#project-create',label:'Create project',dialog:'New project'}]}]}),'W',title,esc);
+  assert.match(html,/Press <strong>New project<\/strong>\. The New project dialog opens\./);
+  assert.match(html,/In the <strong>New project<\/strong> dialog, set <strong>Name<\/strong>/);
+  assert.equal((html.match(/In the <strong>New project<\/strong> dialog/g)??[]).length,1);
+  assert.match(html,/Press <strong>Create project<\/strong>\./);
 });

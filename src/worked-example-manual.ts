@@ -20,11 +20,11 @@ export type ManualStep=
   | {reuse:string; from:string; as:string}
   | {select:string}
   | {connect:{from:string; to:string; port:string}}
-  | {click:string; label:string; view?:ManualView}
-  | {fill:string; label:string; value:string; in?:string; view?:ManualView}
-  | {choose:string; label:string; value:string; shown?:string; in?:string; view?:ManualView}
-  | {tick:string; label:string; values:string[]}
-  | {keyRole:string; value:'primary'|'secondary'|''; shown:string}
+  | {click:string; label:string; view?:ManualView; dialog?:string; opens?:string}
+  | {fill:string; label:string; value:string; in?:string; view?:ManualView; dialog?:string}
+  | {choose:string; label:string; value:string; shown?:string; in?:string; view?:ManualView; dialog?:string}
+  | {tick:string; label:string; values:string[]; dialog?:string}
+  | {keyRole:string; value:'primary'|'secondary'|''; shown:string; dialog?:string}
   | {run:true}
   | {see:string; check?:string}
   | {note:string};
@@ -65,10 +65,13 @@ const bold=(text:string,esc:(s:string)=>string)=>`<strong>${esc(text)}</strong>`
 
 /** One step, as a sentence a practitioner follows. `title` names a widget as the library does. */
 export function stepSentence(step:ManualStep,types:Record<string,string>,title:(type:string)=>string,
-    esc:(s:string)=>string):string{
+    esc:(s:string)=>string,{sameDialog=false}:{sameDialog?:boolean}={}):string{
   const node=(handle:string)=>bold(title(types[handle]??handle),esc);
   const where=(handle?:string)=>handle?` in ${node(handle)}`:'';
-  const tab=('view' in step&&step.view)?`In ${bold(VIEW_NAMES[step.view],esc)}, `:'';
+  // WHERE IT HAPPENS: a dialog when there is one, which is nearer than the tab behind it.
+  // Named where it changes, not on every step inside it: ten steps in one dialog say so once.
+  const tab=('dialog' in step&&step.dialog)?(sameDialog?'':`In the ${bold(step.dialog,esc)} dialog, `)
+    :('view' in step&&step.view)?`In ${bold(VIEW_NAMES[step.view],esc)}, `:'';
   const sentence=(text:string)=>tab?tab+text.charAt(0).toLowerCase()+text.slice(1):text;
   // THE LIBRARY'S SEARCH, named in every add: the practitioner, 2026-11-04, *"so users while building by hand and
   // following the manual can zero in on the right widgets right away."* Named as the box reads.
@@ -79,11 +82,14 @@ export function stepSentence(step:ManualStep,types:Record<string,string>,title:(
   if('select' in step)return `Select ${node(step.select)} on the canvas.`;
   if('connect' in step)return `Connect the output of ${node(step.connect.from)} to the <em>${esc(step.connect.port)}</em> `
     +`input of ${node(step.connect.to)}.`;
-  if('click' in step)return sentence(`Press ${bold(step.label,esc)}.`);
-  if('fill' in step)return sentence(`Set ${bold(step.label,esc)}${where(step.in)} to <code>${esc(step.value)}</code>.`);
+  if('click' in step)return sentence(`Press ${bold(step.label,esc)}.${step.opens?` The ${esc(step.opens)} dialog opens.`:''}`);
+  // A VALUE TO TYPE CAN BE COPIED. The practitioner, 2026-11-04: *"whenever there is an opportunity to copy and paste
+  // instead of typing we should offer it for labels, titles, subjects, URLs like the Zenodo one."*
+  if('fill' in step)return sentence(`Set ${bold(step.label,esc)}${where(step.in)} to <code>${esc(step.value)}</code>`
+    +`<button type="button" class="manual-copy" data-copy="${esc(step.value)}" aria-label="Copy ${esc(step.label)}">Copy</button>.`);
   if('choose' in step)return sentence(`For ${bold(step.label,esc)}${where(step.in)}, choose ${bold(step.shown??step.value,esc)}.`);
-  if('tick' in step)return `Under ${bold(step.label,esc)}, keep only ${step.values.map(v=>`<code>${esc(v)}</code>`).join(', ')}.`;
-  if('keyRole' in step)return `Make <code>${esc(step.keyRole)}</code> a ${bold(step.shown,esc)}.`;
+  if('tick' in step)return sentence(`Under ${bold(step.label,esc)}, keep only ${step.values.map(v=>`<code>${esc(v)}</code>`).join(', ')}.`);
+  if('keyRole' in step)return sentence(`Make <code>${esc(step.keyRole)}</code> a ${bold(step.shown,esc)}.`);
   if('run' in step)return `Press ${bold('Run workflow',esc)}.`;
   if('see' in step)return `You should see ${esc(step.see)}.`;
   return esc(step.note);
@@ -111,13 +117,14 @@ export function renderManual(manual:WorkedExampleManual,openName:string|undefine
       const types:Record<string,string>={};
       for(const step of workflow.steps){if('add' in step)types[step.as]=step.add;if('reuse' in step)types[step.as]=step.reuse;}
       // Notes are prose between steps, so they are not numbered: the numbers count what you do.
-      let n=0;
+      let n=0,dialog:string|undefined;
       const items=workflow.steps.map((step,i)=>{
         if('note' in step)return `<p class="manual-note">${stepSentence(step,types,title,esc)}</p>`;
+        const here='dialog' in step?step.dialog:undefined,sameDialog=!!here&&here===dialog;dialog=here;
         const key=stepKey(w,i),ticked=done.has(key);
         return `<li value="${++n}" class="manual-step${'see' in step?' manual-see':''}${ticked?' done':''}" data-step="${key}" `
           +`tabindex="0" aria-pressed="${ticked}" title="${ticked?'Done. Click to mark not done.':'Click when done.'}">`
-          +`${stepSentence(step,types,title,esc)}</li>`;
+          +`${stepSentence(step,types,title,esc,{sameDialog})}</li>`;
       });
       // A run of numbered steps is one list; a note closes it and the next step opens another, numbered on.
       let html='',open=false;

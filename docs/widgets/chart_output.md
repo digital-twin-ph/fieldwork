@@ -65,8 +65,8 @@ between panels.
 | **Mark for** each panel | Bars or a line. *Automatic* is bars up to 60 points and a line beyond |
 | **Shade a period**, From and To | Dates shaded behind every panel, both days included. Offered when the axis is dates |
 
-A value missing from a panel is a gap in its line, never a zero. Panels draw up to 20,000 points, which is four daily
-series over ten years. They are drawn by the Vega-Lite renderer; the plain renderer and the write-up figure say so
+A value missing from a panel is a gap in its line, never a zero. Panels draw up to 250,000 points, the same as a
+table holds; measured in Chromium, 100,000 points took about 10 seconds to draw and 250,000 about 30 (experiment 175). They are drawn by the Vega-Lite renderer; the plain renderer and the write-up figure say so
 instead of drawing them on one scale. Experiment 174.
 
 **Two y axes on one plot are not offered.** The ratio between two axes is arbitrary, so it can make any two series

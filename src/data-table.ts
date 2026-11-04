@@ -9,7 +9,13 @@ export interface TableRows {headers:string[]; rows:string[][]}
 
 /** RAISED FROM 2,000 ON 2026-11-02: Nigeria's 774 LGAs over three years are 2,322 rows once a wide file
  *  is read, and the source holds 19,350. A CSV file is still read up to 2,000 rows by `input-data.ts`. */
-export const MAX_TABLE_ROWS=20000;
+/** MEASURED, 2026-11-04 (experiment 175): 250,000 rows is the largest size at which every step the NYC plan uses
+ *  worked in Chromium -- import, save, reload, a date range, panel charts, regression, export. At 500,000 the page
+ *  stopped answering clicks for over 15 s during the panel chart and the regression; at 1,000,000 the tab crashed.
+ *  Raised from 20,000 once tables moved out of the saved workflow. A finding, open to revision. */
+export const MAX_TABLE_ROWS=250_000;
+/** The file a table is read from. Rows are the measured limit; a 1,000,000-row, 42 MB file was read in 10 s. */
+export const MAX_TABLE_FILE_BYTES=40_000_000;
 export interface DataTableSource {filename:string; bytes:number; sha256:string; rows:number}
 /** WHAT IS WRONG WITH A TABLE, FOUND ON READING IT. The practitioner, 2026-11-02: *"We cannot refuse an
  *  upload because of a quality problem."* A refused file cannot be looked at, so the table loads and

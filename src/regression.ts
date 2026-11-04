@@ -155,7 +155,7 @@ export function fitRegression(input:Row[],spec:RegressionSpec):RegressionResult{
   /** Loads the design, optionally with column `held` removed and its coefficient fixed at `at`, and fits it. */
   const fit=(held?:number,at=0):number=>{
     const width=columns.length-(held===undefined?0:1);
-    if(!kernel.glm_reset(used.length,width))throw new Error(`The kernel fits at most 20,000 rows; this has ${used.length.toLocaleString('en')}.`);
+    if(!kernel.glm_reset(used.length,width))throw new Error(`The kernel fits at most 250,000 rows; this has ${used.length.toLocaleString('en')}.`);
     design.forEach((values,i)=>{
       let c=0;
       values.forEach((v,j)=>{if(j!==held)kernel.glm_set_x(i,c++,v);});

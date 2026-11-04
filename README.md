@@ -132,7 +132,9 @@ simulation, learning and scoring, publication products, GADM download widgets, a
 STAC browser or acquisition adapter, runtime widget-version pinning, widget
 packs, and a live SHACL report in the browser.
 
-Input data and Tabular data each accept up to 2,000 rows and 5 MB files. A
+Input data accepts up to 2,000 rows and 5 MB files; Tabular data up to 250,000
+rows and 40 MB files, limits measured rather than chosen
+([experiment 175](docs/experiments/175-how-large-a-table.md)). A
 tabular value must be a number or empty; a non-numeric value is refused rather
 than coerced, and no unit is inferred. GeoPackage import supports
 2D POINT layers in EPSG:4326; CSV needs longitude and latitude in degrees. The

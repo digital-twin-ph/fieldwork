@@ -76,10 +76,11 @@ test('a nonnumeric value names the row and the column',()=>{
 });
 
 test('the row ceiling counts melted values, not file rows',()=>{
-  const rows=Array.from({length:7000},(_,i)=>[`s${i}`,'1','2','3']);
+  // 84,000 file rows, under the 250,000-row ceiling; melted, three values each are 252,000 (experiment 175).
+  const rows=Array.from({length:84000},(_,i)=>[`s${i}`,'1','2','3']);
   assert.throws(()=>wideDataTable({headers:TABLE_IX.headers,rows},
     {keys:['supplier'],valueFields:['houses','deaths','deaths_per_10000_houses'],
-      measureKey:'measure',valueField:'count'}),/is 21,000 values/);
+      measureKey:'measure',valueField:'count'}),/is 252,000 values/);
 });
 
 // THE READING IS IN THE RECEIPT, from 2026-10-27. Melting is something done to the file the

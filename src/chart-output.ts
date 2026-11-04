@@ -64,7 +64,8 @@ export function tableChart(table:DataTable,keyColumn?:string,panelsBy?:string):C
  *  time?"* A wide file melted by Table input holds them as one variable column and one value column; each variable
  *  becomes a panel with its own scale, on one shared x axis. A missing value is marked rather than drawn at zero, so a
  *  line breaks there instead of diving to nothing. */
-export const PANEL_POINT_LIMIT=20000;
+/** The table's own limit, measured (experiment 175): 250,000 points drew in 32 s in Chromium, 100,000 in 10 s. */
+export const PANEL_POINT_LIMIT=250_000;
 function panelChart(table:DataTable,keyColumn:string|undefined,panelsBy:string):ChartSummary{
   if(table.kind!=='data-table')throw new Error('A chart of a table needs a table.');
   const column=keyColumn?.trim()||table.keys.find(key=>key!==panelsBy);

@@ -183,7 +183,7 @@ test('Nigeria opens from its pin as five workflows and runs',
 
 // THE FOURTH EXAMPLE, a case-control study, opened from its pin and run.
 const SALMONELLA=new URL('../../example-2021-salmonella-germany/fieldwork-project.json.gz',import.meta.url);
-test('the Salmonella example opens from its pin as three workflows and runs',
+test('the Salmonella example opens from its pin as four workflows and runs',
   async({page})=>{test.skip(!existsSync(SALMONELLA),'example-2021-salmonella-germany is not checked out beside this repository.');
     const bytes=readFileSync(SALMONELLA);
     await page.route(/raw\.githubusercontent\.com/,route=>route.fulfill({status:200,body:bytes}));
@@ -191,7 +191,7 @@ test('the Salmonella example opens from its pin as three workflows and runs',
     await page.locator('[data-open-example="urn:fieldwork:example:salmonella-germany-2021"]').click();
     await expect(page.locator('[data-example-status="urn:fieldwork:example:salmonella-germany-2021"]'))
       .toContainText('digest matched',{timeout:30000});
-    await expect(page.locator('#project-select')).toContainText('3 workflows');
+    await expect(page.locator('#project-select')).toContainText('4 workflows');
     await page.locator('#run-button').click();
     await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
   });

@@ -236,6 +236,12 @@ export interface ParamsByType {
   /** `range`, when present, keeps the rows between two values instead of the ones named, both
    *  ends included; an empty end is open. `values` is kept so switching back loses nothing. */
   select_rows:{label:string;keyColumn:string;values:string[];range?:{from:string;to:string}};
+  /** Logistic or Poisson regression over a table's rows (experiment 167). Terms name columns of the table: the row's
+   *  key columns and its value field alike. `order` is the column rows are sorted by for HAC errors. */
+  regression:{label:string;family:'logistic'|'poisson';outcome:string;cases?:string[];controls?:string[];
+    exposure:{column:string;as:'numeric'|'categorical'|'spline';reference?:string;df?:number};
+    adjust:{column:string;as:'numeric'|'categorical'|'spline';reference?:string;df?:number}[];
+    strata?:string;offset?:string;errors:'wald'|'profile'|'overdispersed'|'hac';hacLag?:number;order?:string;level?:number};
   append_rows:{label:string;nameSource?:boolean;sourceColumn?:string;firstLabel?:string;secondLabel?:string;newKey?:string};
   /** A POLYGON LAYER READ FROM A FILE, which nothing could do until 2026-10-28.
    *

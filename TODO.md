@@ -3773,3 +3773,12 @@ Experiment 173. The Manual tab is built and NYC has a manual.
 - **Play back the build from the manual**: each step in a dialog with Previous, Next and Close, the canvas holding the nodes added so far.
 - Manuals for South London, Oswego, Nigeria and Salmonella, each performed by its from-scratch test.
 - The library heading reads "Node library" and its search "Find a node…"; by the glossary, what it lists are widgets. Not renamed yet.
+
+
+## Regression (practitioner, 2026-11-04)
+
+Built (experiment 167): NYC's 1.061 and Salmonella's 96 and 18 reproduced on the authors' data.
+
+- **Laboratory check**: refit the NYC and Salmonella models independently (statsmodels or R) for parity.
+- **London** (Bhaskaran et al. 2013): its seasonal and temperature terms, then the published 0.991, 1.007 and 1.003.
+- Later, as the design said: conditional logistic regression for individually matched studies, interactions.

@@ -533,6 +533,16 @@
       "reviewed": "2026-11-03",
       "reviewedBy": "the practitioner and Claude, in the exchange that asked for it",
       "note": "A transform verb and what it acts on, beside select_rows. The practitioner framed it by pandas: \"think about how pandas merges dataframes - relate or append\". Append is what a practitioner says for stacking rows; concat is the pandas word and is named in the manual, where the comparison helps. In Summaries beside Select rows and Relate, because it reshapes a table and computes nothing. Experiment 166."
+    },
+    {
+      "nodeType": "regression",
+      "title": "Regression",
+      "group": "Epidemiology",
+      "fingerprint": "d682e4bbecb9",
+      "verdict": "accepted",
+      "reviewed": "2026-11-04",
+      "reviewedBy": "the practitioner and Claude, in the exchange that asked for it",
+      "note": "The practitioner's own word: \"So do we need a regression widget?\" (2026-11-03) and \"Why don't we develop the regression widget\" (2026-11-04). One widget for logistic and Poisson regression, because the choice between them is the model, not the operation; the Inspector names each by what it reports. In Epidemiology beside the two-by-two, whose crude measures it adjusts."
     }
   ],
   "rule": "After a transform verb the slot names what the verb acts ON. A second operand is stated with a preposition -- summarize_points_to_polygon, aggregate_points_to_h3_cell, snap_to_network -- never left to the reader and never put in the object slot. A method name stands in for the operation only where the method name IS the practitioner's term, which is the existing exemption that keeps `voronoi`, `isochrone` and `summarize_hull`. Recorded 2026-10-19 with the first two reviews; see docs/audits/ontology-audit.md for the convention it corrects.",

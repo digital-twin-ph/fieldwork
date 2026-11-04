@@ -308,7 +308,7 @@
       "id": "urn:fieldwork:example:salmonella-germany-2021",
       "title": "Salmonella Braenderup and melons, Germany 2021",
       "repository": "https://github.com/digital-twin-ph/example-2021-salmonella-germany",
-      "commit": "2383c0850b1378bbf5e25cbf287e4020dc5a4a53",
+      "commit": "2ed5622907cf929934cbc1b51247fa99cd9486b2",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2021-salmonella-germany",
       "licence": {
         "data": "CC-BY-4.0",
@@ -321,9 +321,10 @@
         "data": true,
         "geography": false
       },
-      "notYet": "Crude odds ratios only; the paper's are adjusted for age and sex.",
+      "notYet": "The paper's multivariable model (Table 4) came from stepwise selection, which is not reproduced; its single-food adjusted ratios are.",
       "uses": [
         "append_rows",
+        "regression",
         "select_rows",
         "study_design",
         "table_input",
@@ -333,8 +334,8 @@
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "36a66ecd8e4756ab6937ad2fb9ce806a1fb7a8c48dcabcb9ba90ddfc1934a5ff",
-          "bytes": 10340
+          "sha256": "9e1df4063c7d073ec934a999ec70fbb6ecc0f720ffd6d0adaad9b96374871649",
+          "bytes": 14828
         },
         {
           "path": "data/Complete_dataset_Luczynska_et_al_2022.csv",
@@ -358,8 +359,8 @@
         },
         {
           "path": "README.md",
-          "sha256": "03c76f6ce4e2b9f0b22b448264d8b4d9703d7194b18e754e6b998b80ebf57aa0",
-          "bytes": 4367
+          "sha256": "bd4dffa81daae8d4e22a92f3d2b7123039a6b12a6cce5ecb9660f00b656bcb63",
+          "bytes": 5020
         },
         {
           "path": "NOTICE.txt",
@@ -372,13 +373,13 @@
           "bytes": 18657
         }
       ],
-      "workflowCount": 3
+      "workflowCount": 4
     },
     {
       "id": "urn:fieldwork:example:nyc-asthma-ozone-2016-2025",
       "title": "Ozone and child asthma emergency visits, New York City, 2016–2025",
       "repository": "https://github.com/digital-twin-ph/example-2025-nyc-ozone",
-      "commit": "1417ccec6eb2f80302a5f4bde68a77c69b759975",
+      "commit": "e00408f107e23f188ba6310cd1706cb9fa14c258",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2025-nyc-ozone",
       "licence": {
         "data": "Not redistributed",
@@ -391,9 +392,9 @@
         "data": false,
         "geography": false
       },
-      "notYet": "The authors' ozone rate ratio needs regression, which Fieldwork does not have yet.",
       "uses": [
         "chart_output",
+        "regression",
         "select_rows",
         "table_input",
         "table_output"
@@ -401,8 +402,8 @@
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "c7d0d07cee8dee0d0f400c0fe63a4d5a49005f379c20333a4e32f67847506717",
-          "bytes": 1973
+          "sha256": "00fae38ea6325e416ba703117ce55c50404b02d66299ac310d142e0dcc9edbae",
+          "bytes": 2286
         },
         {
           "path": "provenance.json",
@@ -411,8 +412,8 @@
         },
         {
           "path": "README.md",
-          "sha256": "f1a6206c648ae85a36eb695d6cef1f8316ed4e428fbf7991156e478fe51fec75",
-          "bytes": 3685
+          "sha256": "92eb5770220e413f7db771e55ad7f5be2dd50423ee69473b6468d23c1f3b2488",
+          "bytes": 4000
         },
         {
           "path": "NOTICE.txt",
@@ -421,11 +422,11 @@
         },
         {
           "path": "manual.json",
-          "sha256": "adf48c1196f528034728fa1ac5f11fc8754b4e3077337c084de933e99e455f90",
-          "bytes": 15126
+          "sha256": "5e7c9a61537cf4cb5d79a697476755bed504c671179253567d9704456b073343",
+          "bytes": 21555
         }
       ],
-      "workflowCount": 3
+      "workflowCount": 4
     }
   ]
 }

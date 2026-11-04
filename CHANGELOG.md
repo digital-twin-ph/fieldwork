@@ -3,6 +3,20 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.19.0 — 2026-11-04
+
+- **Regression**, a new widget: logistic regression (odds ratios) and Poisson regression (rate ratios) of an outcome
+  on an exposure, adjusted for numeric, categorical and spline terms, fitted in Fieldwork's own kernel. Poisson takes
+  strata as fixed effects and an offset. Intervals are likelihood-ratio (the default), Wald, scaled for
+  overdispersion, or HAC for counts correlated from day to day. A declared case-control design allows logistic only.
+  Experiment 167.
+- **Published results reproduced on the authors' data.** NYC: ozone 1.061 (1.035–1.088) per 10 ppb, the coefficient
+  and HAC standard error equal to the authors' archived R result to 12 significant figures. Salmonella: Galia melon
+  adjusted for age group and sex, 96.4 (15.4–2067), published 96 (15–2100); against panel controls 18.4 (4.6–101),
+  published 18 (4.6–100).
+- NYC and Salmonella each gain a fourth workflow that fits these models; NYC's manual covers its.
+- Validation: Chromium locally; WebKit in CI. No independent laboratory check yet.
+
 ## 0.18.0 — 2026-11-04
 
 - **A fetched file is downloaded once per device**, not once per workflow. It is kept by its digest and read from the

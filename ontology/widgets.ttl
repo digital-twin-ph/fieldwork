@@ -98,3 +98,5 @@
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/two_by_two.md>.
 <urn:fieldwork:widget:voronoi> a fw:WidgetDefinition; fw:nodeType "voronoi"; rdfs:label "Voronoi catchments".
 <urn:fieldwork:widget:xpert> a fw:WidgetDefinition; fw:nodeType "xpert"; rdfs:label "Diagnostic evidence".
+<urn:fieldwork:widget:regression> a fw:WidgetDefinition; fw:nodeType "regression"; rdfs:label "Regression";
+  fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/regression.md>.

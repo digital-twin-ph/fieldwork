@@ -241,7 +241,9 @@ function panelVegaSpec(chart:ChartSummary,params:ChartParams,context:{sourceId?:
           ?{type:'bar' as const,color:FIGURE_ROLE.primary}
           :{type:'line' as const,color:FIGURE_ROLE.primary,strokeWidth:1.4,invalid:'break-paths-show-path-domains' as const},
         encoding:{x,
-          y:{field:'count',type:'quantitative' as const,title:panel,scale:{zero:mark==='bar'}},
+          // The name as the file spells it, its meaning beside it, over two lines so a long meaning fits the panel.
+          y:{field:'count',type:'quantitative' as const,title:chart.meanings?.[panel]?[panel,...wrapToWidth(chart.meanings[panel]!,height)]:panel,
+            scale:{zero:mark==='bar'}},
           tooltip:[{field:'label',type:temporal?'temporal' as const:'nominal' as const,title:chart.categoryTitle??'',...(temporal?{format:'%-d %b %Y'}:{})},
             {field:'count',type:'quantitative' as const,title:panel}]}};
       return {width,height,layer:[...(shade?[shade]:[]),drawn]};

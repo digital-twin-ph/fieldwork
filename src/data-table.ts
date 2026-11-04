@@ -15,7 +15,8 @@ export interface DataTableSource {filename:string; bytes:number; sha256:string; 
  *  upload because of a quality problem."* A refused file cannot be looked at, so the table loads and
  *  these say what to look at. Row numbers are the file's, from 1. Experiment 164. */
 export interface TableFinding {
-  kind:'repeated-key'|'missing-key'|'unreadable-value';
+  /** The last three are about the columns' declared meaning, not the rows (experiment 172). */
+  kind:'repeated-key'|'missing-key'|'unreadable-value'|'undescribed-column'|'unconfirmed-description'|'dictionary-mismatch';
   rows:number[];
   column?:string;
   /** What the file holds there, as it was written. */
@@ -32,6 +33,11 @@ export interface DataTable {
    *  key keeps each row's source and old key as one of these. Experiment 166. */
   alternateKeys?:string[][];
   findings?:TableFinding[];
+  /** What the columns mean, as declared on the Table input and carried with the table. Experiment 172. */
+  columns?:Record<string,{label?:string;unit?:string;description?:string;origin:'practitioner'|'dictionary'|'file';confirmed:boolean;from?:string}>;
+  /** What a value of the first key column means, for a table whose rows name columns of another (a regression's
+   *  terms): shown beside the value, never instead of it. */
+  meanings?:Record<string,string>;
   rows:{key:Record<string,string>; value:number|null}[];
   rowCount:number; missingValueCount:number; source?:DataTableSource;
 }

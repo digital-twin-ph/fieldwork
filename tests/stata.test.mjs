@@ -26,7 +26,10 @@ function format115(labelled=false){
   const head=Buffer.alloc(109);head[0]=115;head[1]=2;head[2]=1;head.writeUInt16LE(vars.length,4);head.writeUInt32LE(3,6);
   const types=Buffer.from(vars.map(v=>typeof v.type==='object'?v.type.str:v.type==='int'?252:v.type==='float'?254:255));
   return Buffer.concat([head,types,...vars.map(v=>pad(v.name,33)),Buffer.alloc(2*(vars.length+1)),
-    ...vars.map(v=>pad(v.fmt,49)),...vars.map((v,i)=>pad(labelled&&i===2?'deathlbl':'',33)),Buffer.alloc(5),records()]);
+    ...vars.map(v=>pad(v.fmt,49)),...vars.map((v,i)=>pad(labelled&&i===2?'deathlbl':'',33)),
+    // VARIABLE LABELS, 81 bytes each, which every format 113-115 file has between the value-label names and the
+    // expansion fields. Missing here until 2026-11-04, when the reader started reading them; London's file has them.
+    ...vars.map((v,i)=>pad(i===2?'Deaths in the period':'',81)),Buffer.alloc(5),records()]);
 }
 function format118(){
   const tag=t=>Buffer.from(t,'latin1');
@@ -68,4 +71,11 @@ test('value labels are not applied, and the import says which variables carry th
 test('a format this reader does not know is refused with what to do instead',()=>{
   const old=Buffer.alloc(200);old[0]=105;
   assert.throws(()=>readStata(new Uint8Array(old)),/format 105.*export it as CSV/s);
+});
+
+test('variable labels are read, as proposals for what each column means (experiment 172)',()=>{
+  const old=readStata(format115());
+  assert.equal(old.labels.length,old.headers.length);
+  assert.equal(old.labels[2],'Deaths in the period');
+  assert.equal(old.labels[0],'');
 });

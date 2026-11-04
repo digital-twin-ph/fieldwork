@@ -59,6 +59,7 @@ import {resolveRuleset,bindParameters,tableContractFailures,rulesetCitation} fro
 import {deriveValue,selectRows,selectRange,rangeSentence,OPERATORS} from './derive-value.js';
 import {appendRows,appendSentence} from './append-rows.js';
 import {fitRegression,specFrom,rowsOf,regressionTable,regressionSentence} from './regression.js';
+import {metadataFindings} from './column-metadata.js';
 import widgetRegistry from '../widgets/registry.json';
 import {relateTable,relateOutcome,machinedNotes,relateReceiptFacts,type RelateOutcome} from './relate-table.js';
 // THE EQUATIONS THE COMPUTATIONS USED, machined as Methods notes. The second, third and fourth
@@ -1532,7 +1533,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           throw new Error('A case-control study estimates odds ratios. Choose logistic regression.');
         const result=fitRegression(rowsOf(table,node.params.order),specFrom(node.params));
         const sentence=regressionSentence(result,node.params);
-        value={...regressionTable(result),sentence} as unknown as DisplayValue;
+        value={...regressionTable(result,table.columns),sentence} as unknown as DisplayValue;
         receipts.push({nodeId:node.id,kind:'computation',method:sentence,
           estimates:result.estimates,columns:result.columns,rows:result.rows,errors:result.errors,
           iterations:result.iterations,dispersion:result.dispersion,...(result.strata?{strata:result.strata}:{})} as unknown as Receipt);
@@ -1655,7 +1656,12 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         if(!table.rows.length)throw new Error(p.convertOnRun
           ?'This step converts its source table on each run, and that source is empty.'
           :'Import a table before running.');
-        const imported=tableReceipt(node,table,runId);value=imported.value;receipts.push(imported.receipt);break;}
+        // WHAT THE COLUMNS MEAN TRAVELS WITH THE TABLE, so every step after it can say it; and the receipt records the
+        // declarations this run used (experiment 172).
+        const described=p.columns&&Object.keys(p.columns).length?{...table,columns:p.columns}:table;
+        const imported=tableReceipt(node,described,runId);
+        value={...imported.value,...(described.columns?{columns:described.columns}:{})} as unknown as DisplayValue;
+        receipts.push({...imported.receipt,...(described.columns?{columns:described.columns}:{})} as Receipt);break;}
       // The conversion ran when the file was saved; execution replays it offline without reprojecting again.
       case 'deduplicate_points':{
         if(node.params.format==='table'){
@@ -2175,6 +2181,16 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         // DRAWN, not connected: the distinction `fw:layerDrawn` exists for.
         withArtifact(receipts,runId,node.id,
           {kind:'map',layerCount:plan.filter(l=>l.drawn).length});}
+    }
+    // COLUMNS NOBODY HAS DESCRIBED, said in the write-up as their own limitation and not as a fault in the rows.
+    if(node.type==='table_input'){
+      const unstated=metadataFindings(node.params.data,node.params.columns,node.params.dictionaryCheck,node.params.wide);
+      if(unstated.length){
+        const note:MachinedNote={kind:'machined',id:`${node.id}:meaning`,section:'Methods',fn:'limitation',nodeId:node.id,
+          text:`${node.params.label||'This table'}: ${unstated.map(f=>f.text.replace(/\.$/,'')).join('; ')}.`};
+        machined[node.id]=[...(machined[node.id]??[]),note];
+        withNote(receipts,runId,node.id,[note]);
+      }
     }
     if(node.type==='table_input'&&node.params.data.findings?.length){
       // STATED ONCE AT THE TABLE, so an unresolved problem cannot leave the data quality dialog

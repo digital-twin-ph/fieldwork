@@ -241,6 +241,13 @@ alone, and the gap surfaced only when a CI deploy failed on a WebKit test. Runni
 defect that time, which is the uncomfortable part — the habit was wrong whether or not it cost
 anything on the day, and a method that happens to be lucky is not a method.
 
+**The local gate runs Chromium only, since 2026-11-03.** The practitioner: *"Since we are not deploying on Linux can
+we hold off on WebKit, it's slowing us down"*, and, told that WebKit stands for Safari and the macOS desktop app,
+*"And I am testing on Chromium anyway not Safari."* WebKit roughly doubled each gate and caused most of its flaky
+failures. CI's `verify` job still runs Chromium and WebKit on every push, so a WebKit-only break surfaces there,
+after the push and not before it. A local result is therefore a Chromium result and is reported as one;
+`FIELDWORK_BROWSERS=chromium,webkit scripts/gate.sh` gates both when a change is aimed at Safari.
+
 ### Where a gate runs, and when to start one
 
 `npm run check` takes about 25 minutes. It is a landing check, not a development loop, and

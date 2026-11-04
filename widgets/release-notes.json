@@ -918,12 +918,12 @@
    "migrationFrom": []
   },
   "table_input": {
-   "version": "0.3.0",
-   "released": "2026-11-02",
+   "version": "0.4.0",
+   "released": "2026-11-03",
    "changes": [
     {
      "kind": "minor",
-     "description": "A repeated key, an empty key and a non-numeric value load as findings instead of refusing the file. You can declare primary and secondary keys, and a finding flags the node, is listed in Data quality and reaches the write-up as a limitation."
+     "description": "Reads Stata files (formats 113 to 115 and 117 to 119) as well as CSV: dates formatted as dates are read as dates, missing values are empty, and value labels are not applied, with the import saying which variables carry them. Experiment 169."
     }
    ],
    "breaking": false,

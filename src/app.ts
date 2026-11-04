@@ -37,14 +37,14 @@ import {openStepViewer,openTableViewer,shapeChange,stepLabels,tableViewOf} from 
 import {openRelateJoin} from './relate-ui.js';
 import {relateShape} from './relate-table.js';
 import {findingsSummary,wideDataTable} from './data-table.js';
-import {fetchRemoteTable} from './remote-table.js';
+import {fetchRemoteTable,useDeviceCopies} from './remote-table.js';
 import {castColumn,applyRepairs} from './column-profile.js';
 import {openDataQuality} from './data-quality-ui.js';
 import {settingNamed} from './authored-rules.js';
 import {FACILITY_SOURCES,FACILITY_SOURCE_KEYS,FACILITY_KINDS,downloadFacilities,requireRunnableFindHealthFacilities} from './health-facilities.js';
 
 import {evidenceInspector,openEvidenceEditor} from './evidence-ui.js';
-import {workflowDocument,importWorkflowDocument,exportEvidenceFiles} from './evidence-storage.js';
+import {workflowDocument,importWorkflowDocument,exportEvidenceFiles,keepBytes,readPDF} from './evidence-storage.js';
 import {curatedExamples,exampleById,verifiedFile,type CatalogExample} from './example-catalog.js';
 import {validateManual,renderManual,firstUndone,type WorkedExampleManual} from './worked-example-manual.js';
 import {saveRefusalMessage} from './save-refusal.js';
@@ -544,6 +544,8 @@ await loadPayloads();
 // the cached assets."* A session-only cache gave the opposite -- ground on the first visit and
 // none on the one that mattered.
 useTileStore({read:key=>cachedPayload(key),write:(key,value)=>putPayload(key,value)});
+// A FETCHED TABLE'S FILE, kept by digest so a second workflow on the same file reads it from the device.
+useDeviceCopies({read:readPDF,keep:(digest,bytes)=>keepBytes(new Map([[digest,bytes]]))});
 try{const saved=localStorage.getItem(KEY);if(saved)workflow=validateWorkflow(hydrateWorkflow(JSON.parse(saved),readDatasets(),true));}catch(error){toast(errorMessage(error).startsWith('Shared input data is missing')?errorMessage(error):'Saved workflow could not be loaded. The example is ready.');}
 if(!workflow.nodes.some(n=>n.id===selected))selected=exampleKey(workflow)==='raster'?'raster-input':exampleKey(workflow)==='old-naledi'?'access':workflow.nodes[0]?.id;
 /** What the last refused save knew, so a caller can say something a practitioner can act on. */
@@ -4069,10 +4071,12 @@ function renderInspector(){
     button.disabled=true;say.textContent=` Fetching from ${new URL(params.remote.url).hostname}…`;
     try{
       const file=await fetchRemoteTable(params.remote);
+      if(file.from==='device')say.textContent=' Read from the copy on this device, checked by digest.';
       const read=await tableFromFetched(file,{keys:params.keys,valueField:params.valueField,unit:params.unit,
         ...(params.wide?{wide:params.wide}:{}),primaryKey:params.data.primaryKey,secondaryKeys:params.data.secondaryKeys});
       change(w=>{const node=getNode(w,n.id,'table_input');node.params.data={...read.data,...(node.params.data.source?{source:node.params.data.source}:{})};
-        if(read.sourceTable)node.params.sourceTable=read.sourceTable;});
+        // KEPT BY THE FILE'S DIGEST, so every workflow on the same file shares one copy and none overflows the save.
+        if(read.sourceTable){node.params.sourceTable=read.sourceTable;node.params.sourceRef=`source:${params.remote!.sha256}`;}});
     }catch(error){button.disabled=false;say.textContent=` ${error instanceof Error?error.message:'The table could not be fetched.'}`;}
   });
   optionalElement('#table-quality')?.addEventListener('click',()=>{

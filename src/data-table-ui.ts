@@ -3,7 +3,7 @@ import type {DataTable,DataTableSource,TableSelection} from './data-table.js';
 import {dataTable,wideDataTable,keyDomains,MAX_TABLE_ROWS,type TableRows} from './data-table.js';
 import {parseCSV} from './input-data.js';
 import {readStata,type StataTable} from './stata.js';
-import {fetchBytes,tablesInArchive,archiveEntry,asFile,type RemoteTableSource} from './remote-table.js';
+import {fetchOrDeviceCopy,tablesInArchive,archiveEntry,asFile,type RemoteTableSource} from './remote-table.js';
 import {contentHash} from './project-files.js';
 
 const FILE_BYTES=5_000_000;
@@ -381,24 +381,33 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:T
       sha256:await contentHash(bytes),bytes:bytes.length};
     await load(asFile(bytes,path),true);
   };
-  q<HTMLButtonElement>('#table-fetch').onclick=async()=>{
+  // THE DEVICE'S COPY FIRST, for a URL fetched before: the same file, checked by digest, without downloading it again.
+  // Fetch again from the source is one click, for a file that may have changed where it is published.
+  const fetchURL=async(fresh:boolean)=>{
     const url=urlInput.value.trim();
     if(!/^https:\/\//.test(url)){fail(new Error('Give an https address.'));return;}
     status.textContent=`Fetching ${url}…`;error.hidden=true;
     try{
-      const bytes=await fetchBytes(url);
+      const got=await fetchOrDeviceCopy(url,{fresh});
+      const bytes=got.bytes;
+      const said=got.from==='device'
+        ?`Read from the copy on this device, fetched ${new Date(got.fetchedAt??'').toLocaleString()} and checked by digest. `
+        :'';
+      const again=got.from==='device'?' <button type="button" id="table-refetch" class="text-button">Fetch again from the source</button>':'';
       const inside=tablesInArchive(bytes);
       if(inside.length){
-        archive=bytes;archiveSha256=await contentHash(bytes);
+        archive=bytes;archiveSha256=got.digest;
         entrySelect.innerHTML='<option value="">Choose a file…</option>'+inside.map(name=>`<option value="${esc(name)}">${esc(name)}</option>`).join('');
         entrySelect.hidden=false;(entrySelect.previousElementSibling as HTMLElement).hidden=false;
-        status.textContent=`The archive holds ${inside.length} table${inside.length===1?'':'s'}. Choose one.`;
+        status.innerHTML=`${esc(said)}The archive holds ${inside.length} table${inside.length===1?'':'s'}. Choose one.${again}`;
+        q<HTMLElement>('#table-refetch')?.addEventListener?.('click',()=>void fetchURL(true));
         return;
       }
       archive=undefined;archiveSha256=undefined;
       await readFetched(bytes,url);
     }catch(e){status.textContent='Nothing was fetched.';fail(e);}
   };
+  q<HTMLButtonElement>('#table-fetch').onclick=()=>void fetchURL(false);
   entrySelect.onchange=async()=>{
     if(!archive||!entrySelect.value)return;
     try{await readFetched(archiveEntry(archive,entrySelect.value),entrySelect.value);}

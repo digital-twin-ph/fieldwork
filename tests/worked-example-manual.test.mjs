@@ -53,3 +53,12 @@ test('the NYC manual is one that can be followed',{skip:existsSync(NYC)?false:'e
   const nyc=validateManual(JSON.parse(readFileSync(NYC,'utf8')));
   assert.deepEqual(nyc.workflows.map(w=>w.name),['What happened during the June 2023 smoke?','Ten years of daily visits','Did visits move with the air?']);
 });
+
+test('a node reused from another workflow of the project reads as such, and counts as added',()=>{
+  const types={daily:'table_input'};
+  assert.match(stepSentence({reuse:'table_input',from:'First',as:'daily'},types,title,esc),
+    /Under <strong>From this project<\/strong> in the library, add the <strong>Tabular data<\/strong> of “First”/);
+  const reused={schema:MANUAL_SCHEMA,example:'urn:test',workflows:[{name:'Second',steps:[
+    {reuse:'table_input',from:'First',as:'daily'},{select:'daily'}]}]};
+  assert.doesNotThrow(()=>validateManual(reused));
+});

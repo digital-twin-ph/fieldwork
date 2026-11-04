@@ -75,3 +75,24 @@ This changes `table_input` and adds no widget.
 - That the custodian's terms permit even fetching and analysing locally. They reserve rights over republication; private
   analysis of a file the authors published openly is the reading here, recorded as a reading.
 - Offline use before the first fetch.
+
+## One download per file (added 2026-11-04)
+
+The practitioner: *"I had to download the data set for NYC twice for 2 workflows. Double download."* and *"How does
+another widget know that what it needs is already downloaded? Assume it's a different project."*
+
+**By digest, not by project.** What is fetched is kept on the device under its SHA-256, in the store imported tiles
+use, and a table whose spec names that digest reads it from there after checking it again; a copy that no longer
+matches is fetched afresh. The store is the device's, so another project on the same device finds it; another device,
+or a browser whose site data was cleared, downloads again. A URL typed in the dialog is remembered with the digest it
+gave, and asked for again it reads the device's copy, saying when it was fetched, with **Fetch again from the source**
+for a file that may have changed.
+
+What this changes about the refusal above: a changed file at the source is still refused, but only when the device has
+no copy of the named file to read instead. Either way only the named file is ever read.
+
+| Date | Check | Result |
+| --- | --- | --- |
+| 2026-11-04 | `tests/remote-table.test.mjs` | 5 of 5, three of them new: three reads of one file make one request, a damaged copy is fetched again, a URL typed again reads the copy and Fetch again goes to the source |
+| 2026-11-04 | `tests/remote-table.browser.mjs`, Chromium | Passed: on a second device (byte store emptied) a changed file is refused; opened again as another project on the same device, the table is read with no request to the source while the source serves different bytes |
+| 2026-11-04 | `tests/nyc-from-scratch.browser.mjs` against Zenodo, Chromium | Passed: three workflows, one request for the package |

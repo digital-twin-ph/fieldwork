@@ -14,6 +14,10 @@ export const MANUAL_SCHEMA='fieldwork/worked-example-manual/1';
 
 export type ManualStep=
   | {add:string; as:string}
+  /** A node another workflow of this project already holds, added from the library's *From this project* group: the
+   *  same data and settings, nothing fetched or set up again. The practitioner, 2026-11-04: *"The duplication is
+   *  specific to a widget if that widget gets used again in a different workflow in the same project."* */
+  | {reuse:string; from:string; as:string}
   | {select:string}
   | {connect:{from:string; to:string; port:string}}
   | {click:string; label:string; view?:ManualView}
@@ -32,7 +36,7 @@ const VIEW_NAMES:Record<ManualView,string>={project:'Project',workflow:'Workflow
 export interface ManualWorkflow {name:string; question?:string; steps:ManualStep[]}
 export interface WorkedExampleManual {schema:string; example:string; intro?:string; workflows:ManualWorkflow[]}
 
-const KINDS=['add','select','connect','click','fill','choose','tick','keyRole','run','see','note'] as const;
+const KINDS=['add','reuse','select','connect','click','fill','choose','tick','keyRole','run','see','note'] as const;
 const kindOf=(step:ManualStep):string=>KINDS.find(kind=>kind in step)??'';
 
 /** Refuses a manual that could not be followed: an unknown step, a node named before it is added, a handle used
@@ -48,7 +52,7 @@ export function validateManual(value:unknown):WorkedExampleManual{
       const kind=kindOf(step);
       if(!kind)throw new Error(`${where} is not a step this manual knows.`);
       const named=(handle:string)=>{if(!added.has(handle))throw new Error(`${where} names "${handle}" before it is added.`);};
-      if('add' in step){if(added.has(step.as))throw new Error(`${where} adds a second "${step.as}".`);added.add(step.as);}
+      if('add' in step||'reuse' in step){if(added.has(step.as))throw new Error(`${where} adds a second "${step.as}".`);added.add(step.as);}
       if('select' in step)named(step.select);
       if('connect' in step){named(step.connect.from);named(step.connect.to);}
       if(('fill' in step||'choose' in step)&&step.in)named(step.in);
@@ -70,6 +74,8 @@ export function stepSentence(step:ManualStep,types:Record<string,string>,title:(
   // following the manual can zero in on the right widgets right away."* Named as the box reads.
   if('add' in step)return `Add ${bold(title(step.add),esc)}: type its name in ${bold('Find a node…',esc)} above the `
     +'library, then click it.';
+  if('reuse' in step)return `Under ${bold('From this project',esc)} in the library, add the ${bold(title(step.reuse),esc)} `
+    +`of “${esc(step.from)}”. It keeps that workflow's table and settings, so nothing is fetched or set up again.`;
   if('select' in step)return `Select ${node(step.select)} on the canvas.`;
   if('connect' in step)return `Connect the output of ${node(step.connect.from)} to the <em>${esc(step.connect.port)}</em> `
     +`input of ${node(step.connect.to)}.`;
@@ -103,7 +109,7 @@ export function renderManual(manual:WorkedExampleManual,openName:string|undefine
   return (manual.intro?`<p class="description">${esc(manual.intro)}</p>`:'')
     +ordered.map(([w,workflow])=>{
       const types:Record<string,string>={};
-      for(const step of workflow.steps)if('add' in step)types[step.as]=step.add;
+      for(const step of workflow.steps){if('add' in step)types[step.as]=step.add;if('reuse' in step)types[step.as]=step.reuse;}
       // Notes are prose between steps, so they are not numbered: the numbers count what you do.
       let n=0;
       const items=workflow.steps.map((step,i)=>{

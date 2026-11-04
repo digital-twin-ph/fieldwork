@@ -42,6 +42,19 @@ export async function performManual(page,workflow,{timeout=120000}={}){
       nodes[step.as]=(await saved(page)).nodes.filter(n=>n.type===step.add).at(-1).id;
       continue;
     }
+    if('reuse' in step){
+      await view(page,'workflow');
+      // The library's search narrows this group too; the entry is the one from the named workflow.
+      await page.locator('#node-search').fill(step.from);
+      const entry=page.locator('#node-library [data-sibling]').filter({hasText:step.from}).first();
+      await expect(entry,`${where}: "${step.from}" under From this project`).toBeVisible();
+      const before=(await saved(page)).nodes.filter(n=>n.type===step.reuse).length;
+      await entry.click();
+      await expect.poll(async()=>(await saved(page)).nodes.filter(n=>n.type===step.reuse).length,{message:where}).toBe(before+1);
+      nodes[step.as]=(await saved(page)).nodes.filter(n=>n.type===step.reuse).at(-1).id;
+      await page.locator('#node-search').fill('');
+      continue;
+    }
     if('select' in step){
       await view(page,'workflow');
       await page.locator(`.react-flow__node[data-id="${nodes[step.select]}"]`).click();

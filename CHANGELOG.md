@@ -3,6 +3,16 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.18.0 — 2026-11-04
+
+- **A fetched file is downloaded once per device**, not once per workflow. It is kept by its digest and read from the
+  device, checked again, whenever a table in any project names the same file. The table dialog reads the device's copy
+  of a URL fetched before and offers **Fetch again from the source**. Experiment 170.
+- A manual can say to reuse a node from another workflow of the project (**From this project**); NYC's second
+  workflow now shares the first's table, so nothing is fetched or set up twice. Experiment 173.
+- A fetched wide table's source file is kept by digest too, so several workflows on one file do not fill the save.
+- Validation: Chromium locally; WebKit in CI.
+
 ## 0.17.0 — 2026-11-04
 
 - **The manual detaches** into a panel that stays beside you while you build in a project of your own: New project,

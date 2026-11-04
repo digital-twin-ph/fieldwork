@@ -1,6 +1,6 @@
 # 172 · What the columns mean: column metadata, declared and matched
 
-_Created 2026-11-04 · Updated 2026-11-04_
+_Created 2026-11-03 · Updated 2026-11-03_
 
 **Status:** asked — designed, with a first measurement by script; nothing built in Fieldwork.
 

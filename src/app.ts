@@ -46,6 +46,7 @@ import {FACILITY_SOURCES,FACILITY_SOURCE_KEYS,FACILITY_KINDS,downloadFacilities,
 import {evidenceInspector,openEvidenceEditor} from './evidence-ui.js';
 import {workflowDocument,importWorkflowDocument,exportEvidenceFiles} from './evidence-storage.js';
 import {curatedExamples,exampleById,verifiedFile,type CatalogExample} from './example-catalog.js';
+import {validateManual,renderManual,type WorkedExampleManual} from './worked-example-manual.js';
 import {saveRefusalMessage} from './save-refusal.js';
 import {MAX_BUNDLE_BYTES} from './evidence.js';
 import type {Workflow,WorkflowNode,NodeType,NodeSpec,Boundary,Position,SpatialRelation,ParamsByType,ColumnRepair,BasemapChoice} from './types.js';
@@ -5284,6 +5285,7 @@ function switchView(view:string){
   $('#rules-view').hidden=view!=='rules';
   $('#project-view').hidden=view!=='project';
   $('#notes-view').hidden=view!=='notes';
+  $('#manual-view').hidden=view!=='manual';
   document.querySelectorAll<HTMLButtonElement>('[data-view]').forEach(b=>{
     const active=b.dataset.view===view;
     b.classList.toggle('active',active);b.setAttribute('aria-selected',String(active));
@@ -5299,6 +5301,7 @@ function switchView(view:string){
   // controls: a reader of a write-up should not scroll past backup buttons to reach the
   // Introduction.
   if(view==='notes')renderNotesView();
+  if(view==='manual')renderManualView();
   if(view==='results')renderMap();
   if(view==='workflow')requestAnimationFrame(()=>flow?.fit());
 }
@@ -5559,6 +5562,9 @@ function renderProjectOptions(){
   // The blank canvas is not a worked example either: "New empty canvas" is its gesture.
   // An imported example has no template, but it has an origin, and that is published work too.
   $('#reset-example').hidden=!WORKED_EXAMPLE_KEYS.includes(key)&&!originOf(key);
+  const manualTab=$('[data-view="manual"]');manualTab.hidden=!exampleManual();
+  if(manualTab.hidden&&currentView==='manual')switchView('workflow');
+  else if(currentView==='manual')renderManualView();
   remove.disabled=busy||published;
   remove.title=published
     ?'A worked example ships with the application and stays. "Reset example" discards your edits to it.'
@@ -6444,7 +6450,8 @@ const rememberFetched=(id:string)=>{
  *  it was read from. So record the severed end. The digest is the catalog's pinned one, which is
  *  also the payload-store key the verified bytes are kept under, so a reset reads the same bytes
  *  that were verified at import and goes back to the network only if the cache has lost them. */
-interface ExampleOrigin {exampleId:string; path:string; sha256:string; index:number}
+/** `manual` is the digest of the example's manual.json, when it publishes one (experiment 173). */
+interface ExampleOrigin {exampleId:string; path:string; sha256:string; index:number; manual?:string}
 const EXAMPLE_ORIGINS='fieldwork-example-origins-v1';
 const exampleOrigins=():Record<string,ExampleOrigin>=>{
   try{const raw=localStorage.getItem(EXAMPLE_ORIGINS);return raw?JSON.parse(raw) as Record<string,ExampleOrigin>:{};}
@@ -6533,8 +6540,19 @@ async function openCuratedExample(id:string,button:HTMLButtonElement):Promise<vo
       const keys=await importProjectDocument(parsed);
       // Written AFTER the import, because an import that refuses leaves nothing to reset to.
       await putPayload(workflowFile.sha256,parsed);
+      // THE MANUAL, when the example publishes one: verified like the project, kept by digest, and shown in the
+      // Manual tab of every workflow this import opened. A manual that fails verification is not shown; the
+      // project still opens, because the steps are a guide to the work and not part of it.
+      let manual:string|undefined;
+      const manualFile=example.files.find(f=>f.path==='manual.json');
+      if(manualFile){
+        try{
+          const parsed=validateManual(JSON.parse(new TextDecoder().decode(await verifiedFile(example,manualFile.path))));
+          await putPayload(manualFile.sha256,parsed);manual=manualFile.sha256;
+        }catch(error){toast(`The manual was not opened: ${errorMessage(error)}`,{tone:'failure'});}
+      }
       rememberOrigins(Object.fromEntries(keys.map((key,index)=>
-        [key,{exampleId:example.id,path:workflowFile.path,sha256:workflowFile.sha256,index}])));
+        [key,{exampleId:example.id,path:workflowFile.path,sha256:workflowFile.sha256,index,manual}])));
       // The import opens the workflow and draws the bar BEFORE the origin exists, so the bar was
       // drawn for a workflow with no way back and RESET EXAMPLE stayed hidden until something
       // else happened to redraw it. Draw it again now that the origin is recorded.
@@ -6553,6 +6571,21 @@ async function openCuratedExample(id:string,button:HTMLButtonElement):Promise<vo
     say(errorMessage(error));
     toast(errorMessage(error),{tone:'failure'});
   }finally{button.disabled=false;button.textContent=label;}
+}
+/** The manual of the worked example this workflow was opened from, if it published one. */
+function exampleManual():WorkedExampleManual|undefined{
+  const digest=originOf(storageKey(workflow))?.manual;
+  const held=digest?cachedPayload(digest):undefined;
+  try{return held?validateManual(held):undefined;}catch{return undefined;}
+}
+/** THE MANUAL TAB: how to build each of this example's workflows by hand, the open one first. Experiment 173. */
+function renderManualView():void{
+  const manual=exampleManual(),host=$('#manual-view');
+  host.innerHTML=manual
+    ?'<div class="manual-intro"><strong>Build it by hand</strong><span>Each workflow from an empty canvas, step by step. '
+      +'Play back the build shows the same steps one at a time.</span></div>'
+      +renderManual(manual,workflow.name,type=>TYPES[type as NodeType]?.title??type,esc)
+    :'<p class="muted">This workflow has no manual.</p>';
 }
 function renderProjectView():void{
   renderUnfiled();

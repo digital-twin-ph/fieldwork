@@ -1,0 +1,50 @@
+import {test,expect} from '@playwright/test';
+import {readFileSync,existsSync} from 'node:fs';
+
+/** THE MANUAL TAB, on the NYC example opened from its pin (experiment 173). The practitioner, 2026-11-04: *"worked
+ *  examples should come with a Manual tab that lays out step by step how to build the workflows by hand."*
+ *
+ *  The network is stubbed: each pinned file is answered from the checkout beside this repository, by its path, so the
+ *  digests the catalogue pins are the ones checked. Nothing is run, so the Zenodo package is not needed. */
+test.use({serviceWorkers:'block'});
+
+const REPO=new URL('../../example-2025-nyc-ozone/',import.meta.url);
+const skip=existsSync(new URL('manual.json',REPO))?false:'example-2025-nyc-ozone is not checked out beside this repository.';
+
+test('a worked example with a manual has a Manual tab, and a workflow without one does not',async({page})=>{test.skip(!!skip,skip);
+  await page.route(/raw\.githubusercontent\.com/,route=>{
+    const path=new URL(route.request().url()).pathname.split('/').slice(4).join('/');
+    route.fulfill({status:200,body:readFileSync(new URL(path,REPO))});
+  });
+  await page.goto('/');await page.evaluate(()=>localStorage.clear());
+  await page.goto('/?example=blank');
+  // A blank canvas is no worked example, so there is nothing to follow.
+  await expect(page.locator('[data-view="manual"]')).toBeHidden();
+
+  await page.locator('[data-view="project"]').click();
+  await page.locator('[data-open-example="urn:fieldwork:example:nyc-asthma-ozone-2016-2025"]').click();
+  await expect(page.locator('[data-example-status="urn:fieldwork:example:nyc-asthma-ozone-2016-2025"]'))
+    .toContainText('digest matched',{timeout:30000});
+
+  const tab=page.locator('[data-view="manual"]');
+  await expect(tab).toBeVisible();
+  await tab.click();
+  const view=page.locator('#manual-view');
+  // Both workflows, the open one first and marked.
+  await expect(view.locator('[data-manual-workflow]')).toHaveCount(2);
+  const open=view.locator('.manual-workflow.open');
+  await expect(open).toHaveCount(1);
+  await expect(view.locator('[data-manual-workflow]').first()).toHaveClass(/open/);
+  // Steps read as sentences, the library search named, the range as two dates.
+  const smoke=view.locator('[data-manual-workflow="What happened during the June 2023 smoke?"]');
+  await expect(smoke).toContainText('type its name in Find a node…');
+  await expect(smoke).toContainText('Set From to 2023-06-01.');
+  await expect(smoke).toContainText('Connect the output of Tabular data to the records input of Select rows by value.');
+  await expect(smoke).toContainText('In Project, set This workflow’s name');
+  await page.screenshot({path:'test-results/manual-tab.png'});
+
+  // Switching workflow moves the mark.
+  const other=await page.locator('#workflow-select option').filter({hasText:'Ten years'}).getAttribute('value');
+  await page.locator('#workflow-select').selectOption(other);
+  await expect(view.locator('[data-manual-workflow]').first()).toHaveAttribute('data-manual-workflow','Ten years of daily visits');
+});

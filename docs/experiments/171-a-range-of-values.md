@@ -1,6 +1,6 @@
 # 171 · Selecting rows by a range of values
 
-_Created 2026-11-04 · Updated 2026-11-04_
+_Created 2026-11-03 · Updated 2026-11-03_
 
 **Status:** tried — built on Select rows by value and used by the NYC example, Chromium.
 

@@ -60,4 +60,63 @@ test('the regression table\'s columns described from the dictionary in the same 
   await page.locator('[data-view="results"]').click();
   await expect(page.locator('main').first()).toContainText('o3_lag02_10 · O3 mean over lag 0-2; divided by 10 for model scaling (10 ppb)');
   await page.screenshot({path:'test-results/regression-meanings.png'});
+
+  // A DICTIONARY MADE HERE IS OFFERED TO THE NEXT TABLE FROM THE SAME SOURCE, and can be downloaded (2026-11-04: "if
+  // there is no data dictionary that the user is able to create one for the data source").
+  const smoke=await page.locator('#workflow-select option').filter({hasText:'What happened'}).getAttribute('value');
+  await page.locator('#workflow-select').selectOption(smoke);
+  await page.locator('[data-view="workflow"]').click();
+  const first=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')).nodes.find(n=>n.type==='table_input').id);
+  await page.locator(`.react-flow__node[data-id="${first}"]`).click();
+  await expect(meaning).toContainText('of 6 described',{timeout:60000});
+  await page.locator('#describe-columns').click();
+  await dialog.locator('#columns-own').click();
+  await expect(dialog.locator('[data-column="count"] legend')).toContainText('not yet accepted');
+  await expect(dialog.locator('[data-column="date"] legend')).toContainText('not yet accepted');
+  await expect(dialog.locator('[data-column="o3"] legend')).toContainText('Not described');
+  await dialog.locator('#columns-accept-all').click();
+  const download=page.waitForEvent('download');
+  await dialog.locator('#columns-download').click();
+  const csv=readFileSync(await (await download).path(),'utf8');
+  expect(csv.split('\n')[0]).toBe('variable,label,unit,description');
+  expect(csv).toContain('count,');
+  expect(downloads).toBe(1);
+});
+
+/** THE CONNECTION MADE BY HAND where the names differ: Salmonella's Excel codebook writes `sex*` and `galiamelo*`, and
+ *  the data file `sex` and `galiamelo_apr2`. The same name connects, a near one is suggested and marked, and a column
+ *  the codebook does not describe is said. */
+const SALMONELLA=new URL('../../example-2021-salmonella-germany/data/',import.meta.url);
+test('Salmonella\'s Excel codebook connected to its data, near names suggested and checked',async({page})=>{
+  test.skip(!existsSync(SALMONELLA),'example-2021-salmonella-germany is not checked out beside this repository.');
+  await page.goto('/');await page.evaluate(()=>localStorage.clear());
+  await page.goto('/?example=blank');
+  await page.locator('[data-view="workflow"]').click();
+  await page.locator('#node-library [data-add="table_input"]').click();
+  const id=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')).nodes.find(n=>n.type==='table_input').id);
+  await page.locator(`.react-flow__node[data-id="${id}"]`).click();
+  await page.locator('#open-table').click();
+  await page.locator('#table-file').setInputFiles(new URL('Complete_dataset_Luczynska_et_al_2022.csv',SALMONELLA).pathname);
+  await page.locator('#table-shape').selectOption('long');
+  await page.locator('#table-value').selectOption('alter');
+  await page.locator('#table-keys-choose').click();
+  await page.locator('#table-keys-paste').fill('id, fall, galiamelo_apr2, age_group7, sex');
+  await page.locator('#table-keys-keep').click();await page.locator('#table-keys-done').click();
+  await page.locator('#table-save').click();
+  await page.locator('#describe-columns').click();
+  const dialog=page.locator('#columns-dialog');
+  await dialog.locator('summary').click();
+  await dialog.locator('#columns-dictionary-file').setInputFiles(new URL('Codebook_Luczynska_et_al_2022.xlsx',SALMONELLA).pathname);
+  await expect(dialog.locator('#columns-map-name')).toHaveValue('Variable');
+  await expect(dialog.locator('#columns-map-description')).toHaveValue('Description');
+  await expect(dialog.locator('#columns-connect-fall')).toHaveValue('fall');
+  await expect(dialog.locator('#columns-connect-sex')).toHaveValue('sex*');
+  await expect(dialog.locator('#columns-connect-galiamelo_apr2')).toHaveValue('galiamelo*');
+  await expect(dialog.locator('#columns-connect-age_group7')).toHaveValue('');
+  await expect(dialog.locator('.columns-connect-row').filter({has:page.locator('#columns-connect-sex')})).toContainText('suggested · check it');
+  await page.screenshot({path:'test-results/columns-connect.png'});
+  await dialog.locator('#columns-propose').click();
+  await expect(dialog.locator('#columns-check')).toContainText('It does not describe age_group7');
+  await expect(dialog.locator('[data-column="sex"] legend')).toContainText('not yet accepted');
+  await expect(dialog.locator('#column-description-sex')).toHaveValue('sex');
 });

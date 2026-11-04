@@ -1,6 +1,6 @@
 # 172 · What the columns mean: column metadata, declared and matched
 
-_Created 2026-11-03 · Updated 2026-11-03_
+_Created 2026-11-03 · Updated 2026-11-04_
 
 **Status:** tried — the Columns dialog, dictionary matching and the findings built on Table input, Chromium. Value codings and the CSVW export are not built.
 
@@ -103,6 +103,30 @@ tried in order of preference.
 | 2026-11-04 | `tests/columns-dialog.browser.mjs`, Chromium | NYC's regression table: 0 of 8 described; the dictionary chosen from the same zip on this device, its mapping proposed, every kept column described and every missing count agreeing; 8 of 8 accepted; the run shows `o3_lag02_10 · O3 mean over lag 0-2; divided by 10 for model scaling (10 ppb)`. One download in all |
 
 WebKit was not run locally.
+
+## Connecting, and making a dictionary (added 2026-11-04)
+
+The practitioner: *"Perhaps for the data dictionaries we need an explicit user focused mapping tool so the dictionary
+actually gets connected to the data set. And if there is no data dictionary that the user is able to create one for
+the data source."*
+
+Matching by identical name failed on the first real codebook: Salmonella's writes `sex*`, `galiamelo*` and `vRUNTIME`
+where the data has `sex`, `galiamelo_apr2` and `vruntime`. The dialog now has three steps: which dictionary column is
+which; **Connect**, a row per table column with the dictionary variable that describes it, identical names connected
+and near ones (case, a trailing `*`, a period suffix such as `_apr2` or `2`) suggested and marked; then **Propose**,
+which follows the connections. Nothing a suggestion connects counts until its description is accepted.
+
+Accepted descriptions are kept as the practitioner's dictionary for the source, keyed by the digests of the file (and,
+for a fetched table, the archive and the entry), on this device; another table reading the same source is offered it.
+**Download as a data dictionary (CSV)** writes variable, label, unit and description.
+
+**Correction:** experiment 172's first measurement listed `vruntime` among the Salmonella columns with no codebook entry.
+The codebook has it as `vRUNTIME`; case alone hid the match.
+
+| Date | Check | Result |
+| --- | --- | --- |
+| 2026-11-04 | `tests/column-metadata.test.mjs` | Salmonella's codebook against its file: `fall` connected, `sex`→`sex*`, `galiamelo_apr2`→`galiamelo*`, `galiamelo2`→`galiamelo*`, `vruntime`→`vRUNTIME` suggested; a dictionary CSV made from accepted descriptions only |
+| 2026-11-04 | `tests/columns-dialog.browser.mjs`, Chromium | Salmonella's Excel codebook connected in the dialog, `age_group7` reported as not described; NYC's dictionary made in one workflow offered to another reading the same file, and downloaded |
 
 ## Validation it commits to
 

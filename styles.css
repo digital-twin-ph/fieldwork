@@ -803,6 +803,14 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 .column-summary{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 10px;margin:8px 0}
 .column-summary p{margin:0;flex:1 1 16rem;overflow-wrap:anywhere}
 .column-dialog{width:min(640px,94vw)}
+.columns-dialog .column-meaning{border:1px solid var(--line);border-radius:6px;padding:8px 10px;margin:8px 0}
+.columns-dialog .column-meaning legend{padding:0 4px}
+.columns-connect{max-height:min(40vh,360px);overflow:auto;margin:6px 0}
+.columns-dialog .inspector-section{display:block;margin:14px 0 4px}
+.columns-map{display:grid;grid-template-columns:repeat(auto-fill,minmax(9rem,1fr));gap:4px 12px}
+.columns-map select{width:100%}
+.columns-connect-row{display:grid;grid-template-columns:minmax(8rem,1fr) minmax(10rem,1.4fr) auto;gap:6px 10px;align-items:center;margin:3px 0}
+.columns-connect-row .field-label{margin:0}
 .column-tools-row{display:flex;gap:8px;align-items:center;margin:4px 0 8px;flex-wrap:wrap}
 .column-tools-row input:not([type=checkbox]){flex:1 1 12rem;min-width:0}
 .column-dialog-list{max-height:min(50vh,420px);overflow:auto}

@@ -6,8 +6,8 @@
 import {parseCSV} from './input-data.js';
 import {readXlsx,type Sheet} from './xlsx.js';
 import {readStata} from './stata.js';
-import {guessMapping,readDictionary,checkDictionary,proposeFrom,isDescribed,
-  type ColumnDeclarations,type DictionaryCheck,type DictionaryMapping} from './column-metadata.js';
+import {guessMapping,readDictionary,checkDictionary,proposeFrom,isDescribed,suggestConnections,dictionaryCsv,
+  type ColumnDeclarations,type DictionaryCheck,type DictionaryMapping,type DictionaryEntry,type Connections,type Suggestion} from './column-metadata.js';
 
 type Escape=(text:string)=>string;
 export interface ColumnsDialogOptions {
@@ -19,6 +19,8 @@ export interface ColumnsDialogOptions {
   rows:string[][];
   /** Files inside the archive a fetched table came from, readable from this device. */
   archive?:{entries:string[]; read:(entry:string)=>Promise<Uint8Array>};
+  /** The dictionary the practitioner made for this same source before, from accepted descriptions. */
+  own?:{name:string; entries:Map<string,DictionaryEntry>; savedAt:string};
   onSave:(declared:ColumnDeclarations,check?:DictionaryCheck)=>boolean;
 }
 
@@ -37,6 +39,16 @@ export function openColumnsDialog(options:ColumnsDialogOptions,esc:Escape):void{
   let declared:ColumnDeclarations=structuredClone(options.held);
   let check:DictionaryCheck|undefined;
   let sheets:Sheet[]=[],sheetName='',source='';
+  // THE CONNECTION, kept as the dialog redraws: which dictionary column is which, and which variable describes each
+  // of the table's columns. The practitioner, 2026-11-04: *"we need an explicit user focused mapping tool so the
+  // dictionary actually gets connected to the data set."*
+  let mapping:DictionaryMapping={name:''};
+  let connections:Connections={},suggested:Record<string,Suggestion>={};
+  const sheet=()=>sheets.find(s=>s.name===sheetName)??sheets[0]!;
+  const variables=()=>{const at=sheet().headers.indexOf(mapping.name);
+    return at<0?[]:[...new Set(sheet().rows.map(r=>(r[at]??'').trim()).filter(Boolean))];};
+  const suggest=()=>{suggested=suggestConnections(options.columns,variables());
+    connections=Object.fromEntries(Object.entries(suggested).map(([c,s])=>[c,s.variable]));};
 
   const row=(column:string)=>{
     const meta=declared[column];
@@ -57,18 +69,34 @@ export function openColumnsDialog(options:ColumnsDialogOptions,esc:Escape):void{
     +(options.archive?.entries.length?`<label class="field-label" for="columns-dictionary-entry">Or a file in the same archive</label>`
       +`<select id="columns-dictionary-entry"><option value="">Choose a file…</option>`
       +options.archive.entries.map(e=>`<option value="${esc(e)}" ${e===source?'selected':''}>${esc(e)}</option>`).join('')+`</select>`:'')
-    +(sheets.length?mappingFields():'')+`</details>`;
+    +(sheets.length?mappingFields()+connectFields():'')+`</details>`
+    +(options.own?`<p class="description"><button type="button" class="button small" id="columns-own">Propose from your dictionary for this source</button> `
+      +`${options.own.entries.size} variable${options.own.entries.size===1?'':'s'}, made ${esc(new Date(options.own.savedAt).toLocaleDateString())}.</p>`:'');
   const mappingFields=()=>{
-    const sheet=sheets.find(s=>s.name===sheetName)??sheets[0]!;
-    const guess=guessMapping(sheet.headers);
+    const at=sheet();
     const pick=(key:keyof DictionaryMapping,label:string,optional:boolean)=>`<label class="field-label" for="columns-map-${key}">${label}</label>`
       +`<select id="columns-map-${key}" data-map="${key}">${optional?'<option value="">None</option>':''}`
-      +sheet.headers.map(h=>`<option value="${esc(h)}" ${guess[key]===h?'selected':''}>${esc(h)}</option>`).join('')+`</select>`;
+      +at.headers.map(h=>`<option value="${esc(h)}" ${mapping[key]===h?'selected':''}>${esc(h)}</option>`).join('')+`</select>`;
     return (sheets.length>1?`<label class="field-label" for="columns-sheet">Sheet</label><select id="columns-sheet">`
-        +sheets.map(s=>`<option value="${esc(s.name)}" ${s.name===sheet.name?'selected':''}>${esc(s.name)}</option>`).join('')+`</select>`:'')
-      +`<p class="description">${sheet.rows.length} variables in ${esc(source)}. Which of its columns holds what:</p>`
-      +pick('name','Variable name',false)+pick('label','Label',true)+pick('description','Description',true)
-      +pick('unit','Unit',true)+pick('missing','Missing count',true)
+        +sheets.map(s=>`<option value="${esc(s.name)}" ${s.name===at.name?'selected':''}>${esc(s.name)}</option>`).join('')+`</select>`:'')
+      +`<span class="inspector-section">1 · Which dictionary column is which</span>`
+      +`<p class="description">${at.rows.length} variables in ${esc(source)}.</p>`
+      +`<div class="columns-map">`
+      +[pick('name','Variable name',false),pick('label','Label',true),pick('description','Description',true),
+        pick('unit','Unit',true),pick('missing','Missing count',true)].map(f=>`<div>${f}</div>`).join('')+`</div>`;
+  };
+  const connectFields=()=>{
+    const names=variables();
+    const linked=options.columns.filter(c=>connections[c]).length;
+    return `<span class="inspector-section">2 · Connect the dictionary to the columns</span>`
+      +`<p class="description">Which dictionary variable describes each column of the table. The same name is connected; a near one is suggested for you to check. ${linked} of ${options.columns.length} connected.</p>`
+      +`<div class="columns-connect">`+options.columns.map(c=>`<div class="columns-connect-row">`
+        +`<label class="field-label" for="columns-connect-${esc(c)}"><code>${esc(c)}</code></label>`
+        +`<select id="columns-connect-${esc(c)}" data-connect="${esc(c)}"><option value="">Not in the dictionary</option>`
+        +names.map(v=>`<option value="${esc(v)}" ${connections[c]===v?'selected':''}>${esc(v)}</option>`).join('')+`</select>`
+        +(suggested[c]?.how==='suggested'&&connections[c]===suggested[c]!.variable?'<span class="pill warning">suggested · check it</span>':'')
+        +`</div>`).join('')+`</div>`
+      +`<span class="inspector-section">3 · Propose</span>`
       +`<button type="button" class="button" id="columns-propose">Propose descriptions</button>`;
   };
   const summary=()=>{
@@ -87,7 +115,11 @@ export function openColumnsDialog(options:ColumnsDialogOptions,esc:Escape):void{
       +`<p class="muted" id="columns-count">${described} of ${options.columns.length} described.</p>`
       +(Object.values(declared).some(m=>!m.confirmed)?`<button type="button" class="button small" id="columns-accept-all">Accept every proposal</button>`:'')
       +options.columns.map(row).join('')
-      +`<p id="columns-error" role="alert" hidden></p><div class="package-actions"><button type="button" class="button" id="columns-cancel">Cancel</button>`
+      +`<p id="columns-error" role="alert" hidden></p><div class="package-actions">`
+      // A DICTIONARY MADE HERE, when the source came without one: the practitioner, 2026-11-04, *"if there is no data
+      // dictionary that the user is able to create one for the data source."*
+      +(described?`<button type="button" class="button" id="columns-download">Download as a data dictionary (CSV)</button>`:'')
+      +`<button type="button" class="button" id="columns-cancel">Cancel</button>`
       +`<button type="button" class="button primary" id="columns-save">Save</button></div>`;
     wire();
   };
@@ -95,6 +127,7 @@ export function openColumnsDialog(options:ColumnsDialogOptions,esc:Escape):void{
     try{sheets=dictionarySheets(name,bytes);sheetName=sheets[0]?.name??'';source=name.split('/').at(-1)!;}
     catch(error){sheets=[];showError(error);return;}
     if(!sheets.length||!sheets[0]!.headers.length){sheets=[];showError(new Error(`${name} holds no table to read.`));return;}
+    mapping=guessMapping(sheet().headers);suggest();
     render();
   };
   const showError=(error:unknown)=>{const at=dialog.querySelector<HTMLElement>('#columns-error');
@@ -106,18 +139,33 @@ export function openColumnsDialog(options:ColumnsDialogOptions,esc:Escape):void{
     q<HTMLSelectElement>('#columns-dictionary-entry')?.addEventListener('change',async e=>{
       const entry=(e.target as HTMLSelectElement).value;if(!entry||!options.archive)return;
       try{await readSource(entry,await options.archive.read(entry));}catch(error){showError(error);}});
-    q<HTMLSelectElement>('#columns-sheet')?.addEventListener('change',e=>{sheetName=(e.target as HTMLSelectElement).value;render();});
+    q<HTMLSelectElement>('#columns-sheet')?.addEventListener('change',e=>{sheetName=(e.target as HTMLSelectElement).value;
+      mapping=guessMapping(sheet().headers);suggest();render();});
+    dialog.querySelectorAll<HTMLSelectElement>('[data-map]').forEach(el=>el.addEventListener('change',()=>{
+      const key=el.dataset.map as keyof DictionaryMapping;
+      if(el.value)mapping={...mapping,[key]:el.value};else{const next={...mapping};delete next[key];mapping=next;}
+      // A different name column is a different list of variables, so the connections are suggested again.
+      if(key==='name')suggest();
+      render();}));
+    dialog.querySelectorAll<HTMLSelectElement>('[data-connect]').forEach(el=>el.addEventListener('change',()=>{
+      const column=el.dataset.connect!;
+      if(el.value)connections[column]=el.value;else delete connections[column];
+      render();}));
     q<HTMLButtonElement>('#columns-propose')?.addEventListener('click',()=>{
-      const sheet=sheets.find(s=>s.name===sheetName)??sheets[0]!;
-      const mapping=Object.fromEntries([...dialog.querySelectorAll<HTMLSelectElement>('[data-map]')]
-        .filter(s=>s.value).map(s=>[s.dataset.map,s.value])) as unknown as DictionaryMapping;
       try{
-        const entries=readDictionary(sheet.headers,sheet.rows,mapping);
-        declared=proposeFrom(entries,source,options.columns,declared);
-        check=checkDictionary(source,entries,{headers:options.columns,rows:options.rows});
+        const entries=readDictionary(sheet().headers,sheet().rows,mapping);
+        declared=proposeFrom(entries,source,options.columns,declared,connections);
+        check=checkDictionary(source,entries,{headers:options.columns,rows:options.rows},connections);
         render();
       }catch(error){showError(error);}
     });
+    q<HTMLButtonElement>('#columns-own')?.addEventListener('click',()=>{
+      declared=proposeFrom(options.own!.entries,'your dictionary',options.columns,declared);render();});
+    q<HTMLButtonElement>('#columns-download')?.addEventListener('click',()=>{
+      const url=URL.createObjectURL(new Blob([dictionaryCsv(declared,options.columns)],{type:'text/csv'}));
+      const a=document.createElement('a');a.href=url;
+      a.download=`${options.title.replace(/[^\w.-]+/g,'-').replace(/^-|-$/g,'')||'table'}-data-dictionary.csv`;
+      a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);});
     q<HTMLButtonElement>('#columns-accept-all')?.addEventListener('click',()=>{
       for(const m of Object.values(declared))m.confirmed=true;render();});
     dialog.querySelectorAll<HTMLFieldSetElement>('[data-column]').forEach(set=>{

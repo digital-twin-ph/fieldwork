@@ -38,7 +38,7 @@ import {openRelateJoin} from './relate-ui.js';
 import {relateShape} from './relate-table.js';
 import {findingsSummary,wideDataTable} from './data-table.js';
 import {fetchRemoteTable,useDeviceCopies,archiveOnDevice} from './remote-table.js';
-import {describableColumns,fileRows,isDescribed,metadataFindings} from './column-metadata.js';
+import {describableColumns,fileRows,isDescribed,metadataFindings,entriesFrom} from './column-metadata.js';
 import {openColumnsDialog} from './columns-dialog.js';
 import {castColumn,applyRepairs} from './column-profile.js';
 import {openDataQuality} from './data-quality-ui.js';
@@ -4198,17 +4198,27 @@ function renderInspector(){
       // kept as unknown. No repair is offered here yet. 117, 164.
       onRepair:()=>{},onRemoveRepair:()=>{}},esc);
   });
-  // DESCRIBE COLUMNS, from the Inspector at any time; a fetched zip offers its own files as the dictionary.
+  // DESCRIBE COLUMNS, from the Inspector at any time; a fetched zip offers its own files as the dictionary, and a
+  // dictionary made here for the same source before is offered too.
   optionalElement('#describe-columns')?.addEventListener('click',async()=>{
     const table=getNode(workflow,n.id,'table_input').params;
     const columns=describableColumns(table.data,table.wide);
     const archive=table.remote?await archiveOnDevice(table.remote):undefined;
+    const key=dictionaryKey(table),own=key?ownDictionaries()[key]:undefined;
     openColumnsDialog({title:n.params.label||'Tabular data',columns,held:table.columns??{},
       rows:fileRows(table.data,table.wide),
       ...(archive?{archive:{entries:archive.entries,read:async entry=>archive.read(entry)}}:{}),
-      onSave:(declared,check)=>change(w=>{const node=getNode(w,n.id,'table_input');
-        if(Object.keys(declared).length)node.params.columns=declared;else delete node.params.columns;
-        if(check)node.params.dictionaryCheck=check;})!==false},esc);
+      ...(own?{own:{name:own.name,entries:new Map(Object.entries(own.entries)),savedAt:own.savedAt}}:{}),
+      onSave:(declared,check)=>{
+        const saved=change(w=>{const node=getNode(w,n.id,'table_input');
+          if(Object.keys(declared).length)node.params.columns=declared;else delete node.params.columns;
+          if(check)node.params.dictionaryCheck=check;})!==false;
+        // THE PRACTITIONER'S DICTIONARY FOR THIS SOURCE, kept on this device so the next table reading the same file
+        // is offered it. Accepted descriptions only.
+        const entries=entriesFrom(declared);
+        if(saved&&key&&entries.size)keepOwnDictionary(key,{name:n.params.label||'Tabular data',
+          entries:Object.fromEntries(entries),savedAt:new Date().toISOString()});
+        return saved;}},esc);
   });
   optionalElement('#add-table-view')?.addEventListener('click',()=>change(w=>{const id=`table-view-${Date.now()}`;w.nodes.push({id,type:'table_output',x:n.x+270,y:n.y,params:{label:'Imported table'}});w.edges.push({id:`e-${Date.now()}`,from:n.id,to:id,port:'table'});selected=id;}));
   optionalElement('#open-table')?.addEventListener('click',()=>{
@@ -5308,6 +5318,21 @@ function supersessionNotice(ran:Workflow):string{
   return ` Note: ${named.join('; ')}. The run used the pinned version${stale.length===1?'':'s'}, `
     +`which is what reproduces these results; the Inspector says what changed.`;
 }
+/** A SOURCE'S IDENTITY for the dictionaries a practitioner makes: the file inside a fetched archive, or a file read
+ *  from disk, by digest. Undefined for a table that names no source. */
+function dictionaryKey(table:WorkflowNode<'table_input'>['params']):string|undefined{
+  if(table.remote)return `remote:${table.remote.archiveSha256??''}:${table.remote.entry??''}:${table.remote.sha256}`;
+  const digest=table.data.source?.sha256||table.source?.sha256;
+  return digest?`file:${digest}`:undefined;
+}
+interface OwnDictionary {name:string; entries:Record<string,import('./column-metadata.js').DictionaryEntry>; savedAt:string}
+const OWN_DICTIONARIES='fieldwork-dictionaries-v1';
+const ownDictionaries=():Record<string,OwnDictionary>=>{
+  try{return JSON.parse(localStorage.getItem(OWN_DICTIONARIES)||'{}') as Record<string,OwnDictionary>;}catch{return {};}
+};
+const keepOwnDictionary=(key:string,dictionary:OwnDictionary)=>{
+  try{localStorage.setItem(OWN_DICTIONARIES,JSON.stringify({...ownDictionaries(),[key]:dictionary}));}catch{/* kept in the project either way */}
+};
 /** Where each fetched table's rows came from in this session, for the Inspector to say. */
 const rowsReadFrom=new Map<string,'device'|'source'>();
 /** A fetched file read into its table node, with the settings the table was first read with. */

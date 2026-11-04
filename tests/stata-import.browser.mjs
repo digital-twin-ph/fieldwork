@@ -1,5 +1,6 @@
 import {test,expect} from '@playwright/test';
 import {collectPageErrors} from './page-errors.mjs';
+import {storedTable} from './stored-table.mjs';
 
 // A STATA FILE IMPORTED THROUGH THE TABLE DIALOG, as a CSV is. Experiment 169. The file is written here.
 test.use({serviceWorkers:'block'});
@@ -24,7 +25,7 @@ test('a Stata file becomes a table: dates read as dates, and a missing value is 
   await page.locator('#table-value').selectOption('numdeaths');
   for(const name of ['date','ozone'])await page.locator(`#table-keys input[value="${name}"]`).setChecked(name==='date');
   await page.locator('#table-save').click();
-  const stored=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')).nodes.find(n=>n.type==='table_input').params.data);
+  const stored=async()=>(await storedTable(page)).data;
   await expect.poll(async()=>(await stored()).rows.map(r=>[r.key.date,r.value])).toEqual([['2002-01-01',199],['2002-01-02',231]]);
   expect(errors).toEqual([]);
 });

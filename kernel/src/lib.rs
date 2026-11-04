@@ -9,6 +9,9 @@ fn panic(_info: &PanicInfo) -> ! {
     loop {}
 }
 
+/// Logistic and Poisson regression. Experiment 167.
+pub mod glm;
+
 fn ratio(numerator: f64, denominator: f64) -> f64 {
     if denominator > 0.0 {
         numerator / denominator

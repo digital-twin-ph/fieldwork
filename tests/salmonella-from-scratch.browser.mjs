@@ -97,7 +97,7 @@ const rowOf=async(page,column)=>{
   return lines.find(line=>line.split('\t')[0].trim()===column)?.split('\t').map(v=>v.trim());
 };
 
-test('three questions about a Salmonella outbreak, each its own short workflow',async({page})=>{test.skip(!!skip,skip);
+test('four questions about a Salmonella outbreak, each its own short workflow',async({page})=>{test.skip(!!skip,skip);
   test.setTimeout(600_000);
   const all=parse(COMPLETE),matched=parse(MATCHED);
   const cases=all.filter(r=>r.fall==='1'),classical=all.filter(r=>r.fall==='0');
@@ -175,9 +175,37 @@ test('three questions about a Salmonella outbreak, each its own short workflow',
     await page.locator('[data-view="workflow"]').click();await tidy(page);
   }
 
+  // 4. ADJUSTED. The paper's Galia melon odds ratio adjusted for age group and sex, 96 (15-2100), from the Regression
+  // widget (experiment 167). The interval is likelihood-ratio, as R's confint() gives and the paper reports.
+  await page.locator('#add-workflow').click();
+  await named(page,'Adjusted for age and sex, is Galia melon still the answer?');
+  {
+    const list=await importList(page,COMPLETE,['galiamelo_apr2','age_group7','sex']);
+    await add(page,'regression');const model=await idOf(page,'regression');
+    await tidy(page);await wire(page,list,model,'records');
+    await caseControl(page,model);
+    await page.locator(`.react-flow__node[data-id="${model}"]`).click();
+    await page.locator('#reg-outcome').selectOption('fall');
+    await page.locator('[data-reg-case="1"]').check();
+    await page.locator('[data-reg-control="0"]').check();
+    await page.locator('#reg-exposure').selectOption('galiamelo_apr2');
+    await expect(page.locator('#reg-exposure-reference')).toHaveValue('0');
+    await page.locator('#reg-adjust-add').selectOption('age_group7');
+    await page.locator('#reg-adjust-add').selectOption('sex');
+    await expect(page.locator('[data-reg-adjust-kind]')).toHaveCount(2);
+    await expect(page.locator('#reg-errors')).toHaveValue('profile');
+    await show(page,model,'Galia melon, adjusted for age group and sex');
+    await run(page);
+    const galia=await rowOf(page,'galiamelo_apr21');
+    expect(galia,'the galiamelo_apr21 row').toBeTruthy();
+    expect(galia.slice(1).map(v=>Number(v.replace(/,/g,'')))).toEqual(expect.arrayContaining([expect.closeTo(96.4,1)]));
+    await page.screenshot({path:'test-results/salmonella-regression.png'});
+    await page.locator('[data-view="workflow"]').click();await tidy(page);
+  }
+
   await page.locator('#storage-status').click();
   const block=page.locator('.project-view-block').filter({hasText:'Salmonella Braenderup'}).first();
-  await expect(block).toContainText('3 workflows');
+  await expect(block).toContainText('4 workflows');
   if(process.env.SALMONELLA_EXPORT){
     const download=page.waitForEvent('download');
     await block.locator('button[data-export-project]').click();

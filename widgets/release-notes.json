@@ -1055,6 +1055,18 @@
    "breaking": false,
    "migrationFrom": [],
    "replacementCandidate": "urn:fieldwork:widget:apply_ruleset"
+  },
+  "regression": {
+   "version": "0.1.0",
+   "released": "2026-11-04",
+   "changes": [
+    {
+     "kind": "initial",
+     "description": "Logistic and Poisson regression of an outcome on an exposure, adjusted for numeric, categorical (treatment-coded) and B-spline (R's bs()) terms, fitted by IRLS in the Rust kernel. Poisson takes an offset and strata absorbed as fixed effects. Intervals: likelihood-ratio (profile), Wald, Wald scaled for overdispersion, or HAC (Newey-West). Experiment 167."
+    }
+   ],
+   "breaking": false,
+   "migrationFrom": []
   }
  }
 }

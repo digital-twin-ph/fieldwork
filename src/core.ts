@@ -58,6 +58,7 @@ import {OLD_TYPES,validateOldNode,executeOldNode,migrateFacilitySources,applyAcc
 import {resolveRuleset,bindParameters,tableContractFailures,rulesetCitation} from './rulesets.js';
 import {deriveValue,selectRows,selectRange,rangeSentence,OPERATORS} from './derive-value.js';
 import {appendRows,appendSentence} from './append-rows.js';
+import {fitRegression,specFrom,rowsOf,regressionTable,regressionSentence} from './regression.js';
 import widgetRegistry from '../widgets/registry.json';
 import {relateTable,relateOutcome,machinedNotes,relateReceiptFacts,type RelateOutcome} from './relate-table.js';
 // THE EQUATIONS THE COMPUTATIONS USED, machined as Methods notes. The second, third and fourth
@@ -127,6 +128,10 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   derive_value:{title:'Derive a value',group:'Summaries',icon:'∓',color:'teal',
     description:'Compute a new value in a key column from two of its existing values, group by group',
     inputs:[['records','table']],output:'table'},
+  // Experiment 167. `design` is optional, as on the two-by-two; a declared case-control design allows odds ratios only.
+  regression:{title:'Regression',group:'Epidemiology',icon:'∿',color:'teal',
+    description:'Logistic or Poisson regression of an outcome on an exposure, adjusted for other columns, from a table',
+    inputs:[['records','table'],['design','design']],output:'table'},
   append_rows:{title:'Append rows',group:'Summaries',icon:'⊕',color:'teal',
     description:'Stack the rows of a second table under the first, lining columns up by name',
     inputs:[['records','table'],['records_2','table']],output:'table'},
@@ -268,7 +273,7 @@ export function requiredInputs(node:WorkflowNode,options?:{coverageConnected?:bo
   // every existing workflow with a two-by-two refuse to run until somebody answered a question
   // they may not be able to answer -- and would drop the widget's own contract into one that
   // cannot be satisfied from a blank canvas. Experiment 154.
-  if(node.type==='two_by_two'||node.type==='rate_ratio')
+  if(node.type==='two_by_two'||node.type==='rate_ratio'||node.type==='regression')
     return all.filter(([port])=>port!=='design');
   // A COLLECTOR TAKES WHAT IT IS GIVEN. `stack_polygons` declares six polygon ports and required
   // all six, so a widget whose own description is "gather SEVERAL polygon layers" and whose
@@ -1516,6 +1521,21 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           workflow.edges.find(e=>e.to===node.id&&e.port==='records')!.from));
         machined[node.id]=[twoByTwoEquationNote(result,node.id)];
         withNote(receipts,runId,node.id,machined[node.id]);
+        break;}
+      case 'regression':{
+        const table=inputs.records as unknown as import('./data-table.js').DataTable;
+        if(table?.kind!=='data-table')throw new Error('Connect a table: a regression reads the rows of one.');
+        // A DECLARED CASE-CONTROL DESIGN LICENSES ODDS RATIOS: a rate ratio from case-control sampling has no
+        // population to be a rate of. A validation rule, through the design port the two-by-two reads.
+        const declared=inputs.design as unknown as DeclaredDesign|undefined;
+        if(declared&&!declared.stopped&&declared.design==='case-control'&&node.params.family!=='logistic')
+          throw new Error('A case-control study estimates odds ratios. Choose logistic regression.');
+        const result=fitRegression(rowsOf(table,node.params.order),specFrom(node.params));
+        const sentence=regressionSentence(result,node.params);
+        value={...regressionTable(result),sentence} as unknown as DisplayValue;
+        receipts.push({nodeId:node.id,kind:'computation',method:sentence,
+          estimates:result.estimates,columns:result.columns,rows:result.rows,errors:result.errors,
+          iterations:result.iterations,dispersion:result.dispersion,...(result.strata?{strata:result.strata}:{})} as unknown as Receipt);
         break;}
       case 'append_rows':{
         const first=inputs.records as unknown as import('./data-table.js').DataTable;

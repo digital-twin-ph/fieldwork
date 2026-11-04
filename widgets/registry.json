@@ -1496,6 +1496,18 @@
           "sha256": "a6d462d1a7085ef527243ebe270cd70d0c51c37c20af834f4ab0a30a0141b898"
         }
       ]
+    },
+    {
+      "id": "urn:fieldwork:widget:regression",
+      "nodeType": "regression",
+      "currentVersion": "0.1.0",
+      "releases": [
+        {
+          "version": "0.1.0",
+          "path": "widgets/releases/regression/0.1.0.json",
+          "sha256": "cca8fa4e68b95540e4983540fc9bc2b825dc195cc56583e281b666f39ea508a3"
+        }
+      ]
     }
   ]
 }

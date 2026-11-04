@@ -297,6 +297,26 @@
         }
       ]
     },
+    "regression": {
+      "output": "table",
+      "contracts": [
+        {
+          "when": "default",
+          "required": [
+            [
+              "records",
+              "table"
+            ]
+          ],
+          "optional": [
+            [
+              "design",
+              "design"
+            ]
+          ]
+        }
+      ]
+    },
     "append_rows": {
       "output": "table",
       "contracts": [

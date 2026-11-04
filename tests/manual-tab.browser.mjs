@@ -31,7 +31,7 @@ test('a worked example with a manual has a Manual tab, and a workflow without on
   await tab.click();
   const view=page.locator('#manual-view');
   // Both workflows, the open one first and marked.
-  await expect(view.locator('[data-manual-workflow]')).toHaveCount(3);
+  await expect(view.locator('[data-manual-workflow]')).toHaveCount(4);
   const open=view.locator('.manual-workflow.open');
   await expect(open).toHaveCount(1);
   await expect(view.locator('[data-manual-workflow]').first()).toHaveClass(/open/);
@@ -106,8 +106,14 @@ test('the manual detaches, stays through a new project and a reload, closes, and
   await expect(panel.locator('.manual-float-head')).toContainText('2 of');
   await expect(panel.locator('[data-step="0:0"]')).toHaveClass(/done/);
 
-  // A project of the practitioner's own: the panel stays, the tab goes.
+  // A project of the practitioner's own: the panel stays, the tab goes. And while the New project dialog is open the
+  // manual is inside it, readable and copyable, not blurred behind it (the practitioner, 2026-11-04).
   await page.locator('#new-project').click();
+  await expect(page.locator('#project-dialog')).toBeVisible();
+  expect(await panel.evaluate(el=>el.parentElement?.id)).toBe('project-dialog');
+  const name=panel.locator('[data-copy^="Ozone and child asthma"]').first();
+  await name.scrollIntoViewIfNeeded();await name.click();
+  await expect(name).toHaveText('Copied');
   await page.locator('#project-name-input').fill('My NYC rebuild');
   await page.locator('#project-create').click();
   await expect(page.locator('[data-view="manual"]')).toBeHidden();

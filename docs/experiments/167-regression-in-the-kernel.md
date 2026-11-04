@@ -2,7 +2,7 @@
 
 _Created 2026-11-03 · Updated 2026-11-03_
 
-**Status:** asked — designed and audited here. Nothing is built.
+**Status:** tried — built as the Regression widget and used by the NYC and Salmonella examples, Chromium.
 
 ## The task
 
@@ -62,6 +62,34 @@ change to how the kernel is called since it was copied in.
   the rate ratio widget.
 - **Independent:** the validation lab refits each example in R, which Fieldwork does not read.
 - **Published:** each example's figures above, with any difference stated, not tuned away.
+
+## Built, 2026-11-04
+
+The practitioner, 2026-11-04: *"Why don't we develop the regression widget"*.
+
+| Part | What was built |
+| --- | --- |
+| Kernel (`kernel/src/glm.rs`) | IRLS for logistic and Poisson with an offset, as R's glm.fit; Poisson strata absorbed through the conditional likelihood, which has the indicators' coefficients without their columns; inverse information; HAC (Newey-West, Bartlett) over the rows' order |
+| Model (`src/regression.ts`) | The design matrix as R's model.matrix builds it for these terms: intercept, treatment-coded categories with the first level as reference, `bs(x, df, degree = 3)` with knots at R's type-7 quantiles. Complete cases, counted by reason. Wald, overdispersed, HAC and likelihood-ratio (profile) intervals |
+| Widget `regression` 0.1.0 | Outcome, cases and controls, exposure, variables added one at a time, strata, offset, intervals; the optional design port refuses Poisson under a declared case-control design |
+
+**What changed from the design.** Two things the design put "later" were needed first. *Splines*: NYC's model adjusts
+for temperature as `bs(tmean_lag03, df = 4)`, so R's B-spline basis was built rather than a natural spline.
+*Likelihood-ratio intervals*: Salmonella's published intervals are asymmetric on the log scale, 96 (15–2100); Wald
+gives 96 (10.3–903) on the same model, the profile gives 96 (15.4–2067). And HAC standard errors, not in the design at
+all, are what NYC's published interval uses. **Found on the way**: the Salmonella paper's age adjustment is the
+seven-group variable; the file's other three groupings give 90 to 92 and 20 to 21.
+
+## Validation
+
+| Date | Check | Result |
+| --- | --- | --- |
+| 2026-11-04 | `kernel/src/glm.rs` tests | 5 of 5: a two-by-two as logistic regression gives ad/bc and Woolf's standard error to 1e-9; an unadjusted Poisson model gives the rate ratio; absorbed strata give the indicator model's coefficient and standard error to 1e-8; collinear columns refused |
+| 2026-11-04 | NYC primary model on the authors' file, `tests/regression.test.mjs` with `NYC_PKG` | Coefficient 0.0591331329660 and HAC SE 0.01272768228 against the archived 0.059133132965951 and 0.0127276822785079; N 3,643; 840 strata. The offset model and the other two pollutants agree to the same precision |
+| 2026-11-04 | Salmonella, `tests/regression.test.mjs` | 96.4 (15.4–2067) and 18.4 (4.6–101) against the published 96 (15–2100) and 18 (4.6–100) |
+| 2026-11-04 | Built by hand in the browser, Chromium: NYC manual's fourth workflow and Salmonella's from-scratch test | Passed: 1.061 (1.035 to 1.088) and 96.4 shown in Results |
+
+The independent laboratory refit is not done: the widget awaits a lab check. WebKit was not run locally.
 
 ## What this does not establish
 

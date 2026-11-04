@@ -1,0 +1,68 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:regression",
+  "nodeType": "regression",
+  "version": "0.1.0",
+  "title": "Regression",
+  "released": "2026-11-04",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['regression']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "validationStatus": "application-only",
+    "shaclShapes": []
+  },
+  "ports": {
+    "inputs": [
+      {
+        "name": "records",
+        "type": "table"
+      },
+      {
+        "name": "design",
+        "type": "design"
+      }
+    ],
+    "output": "table",
+    "optionalInputs": [
+      "design"
+    ],
+    "note": "A table in, a table of estimates out: one row per reported term with its ratio, interval limits and p. The design port is optional; a declared case-control design allows logistic regression only."
+  },
+  "ontology": {
+    "status": "gap",
+    "mappings": [],
+    "note": "No ontology mapping yet. The receipt states the model in a sentence, every column of the design matrix in R's naming, the rows used and left out with reasons, strata used and dropped, the interval method and the estimates.",
+    "emits": {
+      "classes": [],
+      "properties": []
+    }
+  },
+  "implementation": {
+    "files": [
+      "kernel/src/glm.rs",
+      "src/regression.ts",
+      "src/core.ts",
+      "src/app.ts"
+    ],
+    "definition": "src/regression.ts"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": null
+  },
+  "changes": [
+    {
+      "kind": "initial",
+      "description": "Logistic and Poisson regression of an outcome on an exposure, adjusted for numeric, categorical (treatment-coded) and B-spline (R's bs()) terms, fitted by IRLS in the Rust kernel. Poisson takes an offset and strata absorbed as fixed effects. Intervals: likelihood-ratio (profile), Wald, Wald scaled for overdispersion, or HAC (Newey-West). Experiment 167."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Kernel unit tests: a two-by-two as logistic regression gives its odds ratio and Woolf's standard error; an unadjusted Poisson model gives the rate ratio; absorbed strata give the coefficients of the model with stratum indicators. Published figures reproduced on the authors' own data: NYC ozone 1.0609 per 10 ppb, coefficient and HAC standard error equal to the authors' archived R result to 12 significant figures; Salmonella Galia melon adjusted for age group (7 groups) and sex, 96 (15-2067) and 18 (4.6-101) against the published 96 (15-2100) and 18 (4.6-100). Nothing here establishes that a model is well specified."
+  }
+}

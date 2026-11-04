@@ -14,13 +14,13 @@ asset shows up.
 
 ## 1 · Widget utilization
 
-56 live widgets across 11 shipped examples and 5 pinned in its own repository.
+57 live widgets across 11 shipped examples and 5 pinned in its own repository.
 
 | Reach | Widgets |
 | --- | --- |
 | Used by no workflow | **12** |
 | Used by exactly one | 26 |
-| Used by two or more | **18** |
+| Used by two or more | **19** |
 
 `isochrone` and `compute_walking_catchment` are a special case the practitioner ruled on
 2026-10-29: use of the monolith is use of its components. Four of the unused names below are
@@ -98,6 +98,7 @@ evidence about that example.
 | `join_table_to_area` | 2 | nigeria-immunization-2024, south-london-1854 |
 | `measure_distance` | 2 | heat, old-naledi |
 | `polygon_input` | 2 | nigeria-immunization-2024, south-london-1854 |
+| `regression` | 2 | nyc-asthma-ozone-2016-2025, salmonella-germany-2021 |
 | `reproject` | 2 | snow-isochrone, snow-voronoi |
 | `study_design` | 2 | salmonella-germany-2021, south-london-1854 |
 | `summarize_points_to_polygon` | 2 | snow-isochrone, snow-voronoi |
@@ -269,8 +270,8 @@ be read, selected and named inside the application, and claim B would hold for t
 - `urn:fieldwork:example:south-london-1854` declares 18 node types. Its inputs are files in its own repository, and `geo/water-intakes.geojson` was written on 2026-10-29 because those four features existed only inside the bundle until then — the one input a reader could not download.
 - `urn:fieldwork:example:oswego-1940` declares 6 node types. Its inputs are files in its own repository, and `geo/water-intakes.geojson` was written on 2026-10-29 because those four features existed only inside the bundle until then — the one input a reader could not download.
 - `urn:fieldwork:example:nigeria-immunization-2024` declares 7 node types. Its inputs are files in its own repository, and `geo/water-intakes.geojson` was written on 2026-10-29 because those four features existed only inside the bundle until then — the one input a reader could not download.
-- `urn:fieldwork:example:salmonella-germany-2021` declares 6 node types. Its inputs are files in its own repository, and `geo/water-intakes.geojson` was written on 2026-10-29 because those four features existed only inside the bundle until then — the one input a reader could not download.
-- `urn:fieldwork:example:nyc-asthma-ozone-2016-2025` declares 4 node types. Its inputs are files in its own repository, and `geo/water-intakes.geojson` was written on 2026-10-29 because those four features existed only inside the bundle until then — the one input a reader could not download.
+- `urn:fieldwork:example:salmonella-germany-2021` declares 7 node types. Its inputs are files in its own repository, and `geo/water-intakes.geojson` was written on 2026-10-29 because those four features existed only inside the bundle until then — the one input a reader could not download.
+- `urn:fieldwork:example:nyc-asthma-ozone-2016-2025` declares 5 node types. Its inputs are files in its own repository, and `geo/water-intakes.geojson` was written on 2026-10-29 because those four features existed only inside the bundle until then — the one input a reader could not download.
 
 ## 3 · Recommendations
 

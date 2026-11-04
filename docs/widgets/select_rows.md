@@ -33,7 +33,14 @@ unit are unchanged, because selecting rows does not change what a table measures
 | Setting | What it decides |
 | --- | --- |
 | **Key column to choose by** | Which column the values belong to. |
-| **Values to keep** | Ticked from the values on offer, or typed one per line. |
+| **Keep** | **The values I tick**, or **A range of dates** (or numbers). The range is offered only when every value in the column is a date, or every one a number. |
+| **Values to keep** | Ticked from the values on offer, or typed one per line. A list of more than 12 can be searched, and **Ticked only** shows what you have kept. |
+| **From** and **To** | The range. Both ends are kept; leave one empty to run from the start or to the end. |
+
+**A range keeps the table's order**, and a row with no value in the column is outside every range. For 1 to 14 June
+2023 out of ten years of days, that is two fields instead of fourteen ticks. Dates compare as dates written
+year-month-day; numbers as numbers, so 9 comes before 10. A column of names gets no range, because any order for it
+would be one the application made up.
 
 **Order matters.** The rows come out in the order you name the values, so a 2×2 reads the way you
 asked for rather than the way the file happened to be written. Unticking a value and ticking it
@@ -45,7 +52,9 @@ again moves it to the end, which is how you reorder without a second control.
 usually a typo, or a table upstream that changed. Quietly returning fewer rows than you asked for
 is how a figure loses a category nobody noticed.
 
-**Keeping nothing the table holds is refused** rather than handing back an empty table.
+**Keeping nothing the table holds is refused** rather than handing back an empty table. So is a range that keeps
+nothing, which says where the column runs from and to; a range written backwards; and an end that is not a date, or
+not a number, when the column holds those.
 
 ## What it will not do
 

@@ -13,7 +13,6 @@ const ZENODO='https://zenodo.org/api/records/22757330/files/NYC_Pediatric_Asthma
 const ENTRY='NYC_Pediatric_Asthma_Ozone_JHM_Reproducibility_v1.0/Data/Core/Derived/analysis_master_raw_rebuild.csv';
 const local=process.env.NYC_PKG;
 const skip=process.env.NYC_REAL||(local&&existsSync(local))?false:'Set NYC_PKG to a local copy of the Zenodo package, or NYC_REAL=1.';
-const JUNE=Array.from({length:14},(_,i)=>`2023-06-${String(i+1).padStart(2,'0')}`);
 
 const add=async(page,type)=>{
   await page.locator('[data-view="workflow"]').click();
@@ -58,6 +57,8 @@ const fetchTable=async page=>{
     boxes.find(box=>!box.disabled)?.dispatchEvent(new Event('change',{bubbles:true}));
   },['date','o3','pm25','no2','tmean']);
   await page.locator('[data-key-role="date"]').selectOption('primary');
+  // THE UNIT, as the authors' dictionary gives it for `count` (Metadata/Core/ANALYSIS_DATA_DICTIONARY.csv).
+  await page.locator('#table-unit').fill('visits/day');
   await page.locator('#table-save').click();
   await expect.poll(async()=>(await saved(page)).nodes.find(n=>n.id===table).params.remote?.entry,{timeout:30000}).toBe(ENTRY);
   return table;
@@ -91,12 +92,29 @@ test('two questions about child asthma visits in New York City, the table fetche
     await wire(page,table,days,'records');
     await select(page,days);
     await page.locator('#select-key').selectOption('date');
-    for(const day of JUNE)await page.locator(`[data-select-value="${day}"]`).check();
+    // TWO DATES, NOT FOURTEEN TICKS (experiment 171).
+    await page.locator('#select-mode').selectOption('range');
+    await page.locator('#select-from').fill('2023-06-01');await page.locator('#select-from').press('Tab');
+    await page.locator('#select-to').fill('2023-06-14');await page.locator('#select-to').press('Tab');
+    await expect.poll(async()=>(await saved(page)).nodes.find(n=>n.id===days).params.range)
+      .toEqual({from:'2023-06-01',to:'2023-06-14'});
     await add(page,'chart_output');const chart=await newest(page,'chart_output');
     await select(page,chart);
     await page.locator('#chart-records').selectOption(days);
     await page.locator('#output-label').fill('Asthma ED visits, ages 5 to 17, 1 to 14 June 2023');
     await page.locator('#output-label').press('Tab');
+    // A WORKED EXAMPLE'S FIGURE IS FINISHED. The practitioner, 2026-11-03: *"worked examples should have their chart
+    // labels completed so they do not look raw like this. That's the reason it's called a "worked" example."* The
+    // wording is from the authors' dictionary and from the rows themselves.
+    for(const [field,text] of [
+      ['#chart-title','Child asthma emergency department visits, New York City, 1 to 14 June 2023'],
+      ['#chart-subtitle','Citywide asthma-syndrome visits, ages 5 to 17. 7 June had the highest PM2.5 of the ten years, 190 µg/m³, and the most visits of these two weeks, 49.'],
+      ['#chart-x-axis','Date'],
+      ['#chart-y-axis','Emergency department visits (visits/day)'],
+      ['#chart-source-note','NYC DOHMH EpiQuery counts, from the authors\' reproducibility package (Zenodo 10.5281/zenodo.22757330), analysis_master_raw_rebuild.csv.'],
+    ]){await page.locator(field).fill(text);await page.locator(field).press('Tab');}
+    await expect.poll(async()=>(await saved(page)).nodes.find(n=>n.id===chart).params.yAxisTitle)
+      .toBe('Emergency department visits (visits/day)');
     await add(page,'table_output');const shown=await newest(page,'table_output');
     await select(page,shown);
     await page.locator('#table-table').selectOption(days);

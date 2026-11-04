@@ -57,7 +57,7 @@ import {element as $,optionalElement,control} from './dom.js';
 import {errorMessage,isRecord,required} from './guards.js';
 import {resolveRuleset,bundledRulesets,supersession} from './rulesets.js';
 import type {Ruleset} from './rulesets.js';
-import {OPERATORS} from './derive-value.js';
+import {OPERATORS,orderOf,inRange} from './derive-value.js';
 import {pinnedRuleset} from './rule-application.js';
 function getNode<K extends NodeType>(w:Workflow,id:string,type:K):WorkflowNode<K>{const node=required(w.nodes.find(n=>n.id===id));if(node.type!==type)throw new Error('Node type changed while editing');return node as WorkflowNode<K>;}
 function updateParam(w:Workflow,id:string,key:string,value:unknown){Object.assign(required(w.nodes.find(n=>n.id===id)).params,{[key]:value});}
@@ -214,6 +214,9 @@ function tileImportControls(p:WorkflowNode<'map_output'>['params']):string{
       ?`${held.tiles} tiles, ${(Number(held.bytes)/1048576).toFixed(1)} MB, from the OpenStreetMap build of ${esc(held.built||'an unstated date')}. The project keeps this description, not the tiles.`
       :'Fetches the tiles under this map once, while connected, and keeps them on this device.'}</p></div>`;
 }
+/** What a select's value list was narrowed to, kept across the re-render a tick causes, so finding
+ *  the next value does not mean typing the search again. */
+let selectNarrowing={node:'',text:'',ticked:false};
 function mapControls(n:WorkflowNode<'map_output'>){
   const p=n.params;
   return `<div class="source-card" data-map-communication><span class="inspector-section">Standalone map</span>
@@ -906,6 +909,11 @@ function upstreamKeyValues(node:WorkflowNode,seen=new Set<string>(),
   if(up.type==='select_rows'){
     const below=upstreamKeyValues(up,seen);
     if(!below)return undefined;
+    const range=up.params.range,held=below[up.params.keyColumn];
+    if(range&&held){
+      const order=orderOf(held);
+      return order?{...below,[up.params.keyColumn]:held.filter(value=>inRange(value,order,range.from.trim(),range.to.trim()))}:below;
+    }
     const kept=up.params.values.filter(value=>value.trim());
     return kept.length?{...below,[up.params.keyColumn]:kept}:below;
   }
@@ -2200,7 +2208,7 @@ function renderInspector(){
         :'');
   }else if(n.type==='select_rows'){
     const p=n.params,shape=upstreamKeyValues(n),columns=Object.keys(shape??{});
-    const held=shape?.[p.keyColumn]??[];
+    const held=shape?.[p.keyColumn]??[],order=orderOf(held);
     content+='<p class="description">Keeps only the rows whose chosen column holds one of the values you name, in the order you name them. What a figure should show is often less than what a table carries.</p>'
       +labelForm('select-label','Node label',p.label||'Select rows by value')
       +`<div class="field"><label class="field-label" for="select-key">Key column to choose by</label>`
@@ -2212,13 +2220,39 @@ function renderInspector(){
       // Offering only the upstream values left a stale one -- saved, reported `absent` on every
       // run, and with nothing in the Inspector that could show or remove it. The box is the only
       // way to unset it by hand, so it is rendered last and says why it is there.
-      +(held.length
+      // A RANGE, WHERE THE COLUMN HAS AN ORDER. Fourteen days out of 3,653 were fourteen ticks in a
+      // list nobody could search; from and to are two fields. Offered only for a column that is all
+      // dates or all numbers, because `orderOf` will not invent an order for anything else.
+      +(order
+        ?`<div class="field"><label class="field-label" for="select-mode">Keep</label>`
+          +`<select id="select-mode"><option value="values" ${p.range?'':'selected'}>The values I tick</option>`
+          +`<option value="range" ${p.range?'selected':''}>A range of ${order==='date'?'dates':'numbers'}</option></select></div>`
+        :'')
+      +(order&&p.range
+        ?(()=>{const sorted=held.filter(Boolean).sort(order==='number'?(a,b)=>Number(a)-Number(b):undefined);
+          const kind=order==='number'?'number':sorted.every(value=>value.length===10)?'date':'text';
+          const end=(id:string,key:'from'|'to',label:string)=>`<label class="field-label" for="${id}">${label}</label>`
+            +`<input id="${id}" type="${kind}" data-select-range="${key}" value="${esc(p.range![key])}" `
+            +`min="${esc(sorted[0]??'')}" max="${esc(sorted.at(-1)??'')}" placeholder="${esc(key==='from'?sorted[0]??'':sorted.at(-1)??'')}">`;
+          return `<div class="field">${end('select-from','from','From')}${end('select-to','to','To')}`
+            +`<p class="description">Both ends are kept. Leave one empty to run from the start or to the end. `
+            +`${esc(p.keyColumn)} runs from ${esc(sorted[0]??'')} to ${esc(sorted.at(-1)??'')}; rows keep the table's order.</p></div>`;})()
+        :held.length
         ?`<span class="inspector-section">Values to keep</span>`
+          // A LONG LIST IS SEARCHED, not scrolled. The filter only hides boxes, so nothing is
+          // unticked by narrowing the list, and Ticked only shows what is already kept.
+          +(held.length>12
+            ?`<div class="field select-filter"><input id="select-filter" type="search" placeholder="Find a value…" aria-label="Find a value" value="${esc(selectNarrowing.node===n.id?selectNarrowing.text:'')}">`
+              +`<label class="check"><input type="checkbox" id="select-ticked-only" ${selectNarrowing.node===n.id&&selectNarrowing.ticked?'checked':''}> Ticked only</label>`
+              +`<p class="description" id="select-count">${p.values.length} of ${held.length} ticked</p></div>`
+            :'')
+          +`<div class="select-values">`
           +held.map(value=>`<label class="check"><input type="checkbox" data-select-value="${esc(value)}" `
             +`${p.values.includes(value)?'checked':''}> ${esc(value)}</label>`).join('')
           +p.values.filter(value=>!held.includes(value))
             .map(value=>`<label class="check absent"><input type="checkbox" data-select-value="${esc(value)}" `
               +`checked> ${esc(value)} <span class="absent-note">not in this table</span></label>`).join('')
+          +`</div>`
         :`<div class="field"><label class="field-label" for="select-values">Values to keep, one per line</label>`
           +`<textarea id="select-values" data-select-text rows="3">${esc(p.values.join('\n'))}</textarea></div>`)
       +'<div class="notice">A value this table does not hold is reported rather than ignored, because asking for a row that is not there is usually a typo or a changed table upstream. Keeping nothing the table holds is refused instead of returning an empty table.</div>';
@@ -3915,6 +3949,27 @@ function renderInspector(){
       node.params.values=el.checked
         ?[...node.params.values.filter(held=>held!==value),value]
         :node.params.values.filter(held=>held!==value);})));
+  document.querySelector<HTMLSelectElement>('#select-mode')?.addEventListener('change',e=>change(w=>{
+    const node=getNode(w,n.id,'select_rows');
+    if(control(e).value==='range')node.params.range=node.params.range??{from:'',to:''};
+    else delete node.params.range;}));
+  document.querySelectorAll<HTMLInputElement>('[data-select-range]').forEach(el=>
+    el.addEventListener('change',()=>change(w=>{
+      const node=getNode(w,n.id,'select_rows'),range=node.params.range??{from:'',to:''};
+      range[el.dataset.selectRange as 'from'|'to']=el.value.trim();node.params.range=range;})));
+  {
+    const filter=document.querySelector<HTMLInputElement>('#select-filter'),
+      tickedOnly=document.querySelector<HTMLInputElement>('#select-ticked-only');
+    const narrow=()=>{
+      const wanted=(filter?.value??'').trim().toLowerCase();
+      document.querySelectorAll<HTMLInputElement>('[data-select-value]').forEach(box=>{
+        const shown=(!wanted||required(box.dataset.selectValue).toLowerCase().includes(wanted))&&(!tickedOnly?.checked||box.checked);
+        (box.closest('label') as HTMLElement).hidden=!shown;});
+    };
+    const keep=()=>{selectNarrowing={node:n.id,text:filter?.value??'',ticked:!!tickedOnly?.checked};narrow();};
+    filter?.addEventListener('input',keep);tickedOnly?.addEventListener('change',keep);
+    if(filter)narrow();
+  }
   document.querySelectorAll<HTMLTextAreaElement>('[data-select-text]').forEach(el=>
     el.addEventListener('change',()=>change(w=>{
       getNode(w,n.id,'select_rows').params.values=el.value.split('\n')

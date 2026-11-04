@@ -3753,3 +3753,15 @@ missing axiom does not mean the question went unasked.
 ## Found 2026-11-03, building NYC
 
 - **A wide file is slow to set up.** NYC's daily table has about 100 columns, mostly ready-made lags, all ticked as keys by default, and each untick rebuilds the preview of 3,653 rows: seconds a column. A "select none" for key columns, or a preview of the first rows only, would fix it.
+- **Picking many values in Select rows was not frictionless** (practitioner, 2026-11-03). Done: a range of dates or numbers, and search over a long list. Experiment 171, lab check 32.
+- **Worked example charts were left raw** (practitioner, 2026-11-03: *"That's the reason it's called a "worked" example."*). NYC's chart finished; `tests/worked-example-charts-are-finished.test.mjs` requires every pinned example's chart to carry its own title. Axis labels wait for column metadata. Nigeria's six maps and Oswego's map have no subtitle or source note; not written here, because captions are the practitioner's.
+
+## Next: what the columns mean (practitioner, 2026-11-03)
+
+Design and first measurement in [experiment 172](docs/experiments/172-what-the-columns-mean.md). Describing columns is the practitioner's step.
+
+- A Columns step in Table input: label, unit, description per kept column, as a CSVW table schema with QUDT units.
+- Pre-fill from Stata variable labels (the reader skips them today) and from an imported dictionary (CSVW, Frictionless, or a CSV dictionary mapped by the practitioner); unconfirmed until accepted.
+- **Match a codebook mechanically** against its tables (names, declared codes against values, missing counts) and test it on the three examples that ship metadata: NYC (all 92 agree), London (labels in the file), Salmonella (68 of 82 columns unmatched by name, `sex` as text, `schule`/`ausbildung`/`biolm` values outside the declared coding). The Salmonella codebook is xlsx, which Fieldwork does not read.
+- An undescribed kept column is a finding; declarations travel on the table, reach receipts and figures, make a run stale when edited, and export as a sidecar.
+- Write the Salmonella findings into that example's README data notes when the match is built, so the authored notes can cite them.

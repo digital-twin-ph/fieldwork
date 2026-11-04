@@ -9,9 +9,9 @@
   "measuredAt": "2026-10-27",
   "counts": {
     "widgets": 56,
-    "covered": 26,
+    "covered": 27,
     "awaiting": 14,
-    "none": 15,
+    "none": 14,
     "blocked": 1
   },
   "widgets": [
@@ -236,8 +236,9 @@
     },
     {
       "nodeType": "select_rows",
-      "expectation": "none",
-      "reason": "Selects rows already present and computes nothing: every value it emits was read from the table it was given, unchanged. What could be wrong is which rows survive and in what order, which the unit tests assert directly rather than by recomputation."
+      "expectation": "parity",
+      "computes": "Which rows lie in a range: from and to, both kept, comparing dates as dates and numbers as numbers. An independent implementation recomputes the kept rows, in order, for a date range, a number range, an open end and an emptied cell. Listed values compute nothing and are asserted by unit tests.",
+      "check": "32-select-range"
     },
     {
       "nodeType": "slr_site_assignment",

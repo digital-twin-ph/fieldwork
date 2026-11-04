@@ -181,10 +181,14 @@ test('five questions about 774 LGAs, each its own short workflow',async({page})=
     await control.locator('[data-frame-step="-1"]').click();
     await expect(control.locator('[data-frame-label]')).toHaveText('Birth cohort · dtp1_2023');
     await control.locator('[data-frame-pace]').selectOption('500');
+    // PAUSE LASTS ONE FRAME here, half a second, so it is recorded as it happens rather than looked for afterwards: on
+    // a starved CI runner (2026-11-04, 31 minutes against 14 locally) the playback had ended before the first look.
+    await control.locator('[data-frame-play]').evaluate(button=>{window.__playLabels=[];
+      new MutationObserver(()=>window.__playLabels.push(button.textContent)).observe(button,{childList:true,characterData:true,subtree:true});});
     await control.locator('[data-frame-play]').click();
-    await expect(control.locator('[data-frame-play]')).toHaveText('Pause');
     await expect(control.locator('[data-frame-label]')).toHaveText('Birth cohort · dtp1_2024',{timeout:10000});
     await expect(control.locator('[data-frame-play]')).toHaveText('Play',{timeout:3000});
+    expect(await page.evaluate(()=>window.__playLabels),'the button said Pause while playing').toContain('Pause');
     await page.screenshot({path:'test-results/nga-frames.png'});
     await page.locator('[data-view="workflow"]').click();
     await tidy(page);

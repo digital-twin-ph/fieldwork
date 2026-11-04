@@ -86,11 +86,22 @@ jobs:
     # than both. Raised with headroom rather than to just past the one run that has finished,
     # for the same reason recorded above.
     timeout-minutes: 75
+    # ONE JOB PER BROWSER, side by side. On 2026-11-04 the run for 94d4e50 was cancelled at the 75-minute bound with
+    # Chromium and WebKit in one job, one after the other; the last complete run had taken 56 minutes. Split, each job
+    # does half the browser work, a WebKit-only break reports as its own job, and neither waits on the other.
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, webkit]
+    name: verify (${{ matrix.browser }})
+    env:
+      FIELDWORK_BROWSERS: ${{ matrix.browser }}
     # A superseded verify is verifying a commit nobody is looking at any more, and two 30-minute
     # gates queued behind each other is how the old lag was built. The newest commit is the one
     # that gets checked; an older one that was cancelled is recorded as cancelled, not as green.
+    # Per browser, so the two jobs of one run do not cancel each other.
     concurrency:
-      group: pages-verify
+      group: pages-verify-${{ matrix.browser }}
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v6
@@ -253,9 +264,10 @@ jobs:
       # A FAILURE THAT REPRODUCES ONLY HERE needs its screenshot and trace. On 2026-11-04 the Nigeria playback test
       # failed on this runner, passed locally, and left nothing to look at.
       - name: Keep the failed tests' screenshots and traces
-        if: failure()
+        # Also when cancelled: a run stopped at the time bound is when they are most needed (2026-11-04).
+        if: failure() || cancelled()
         uses: actions/upload-artifact@v4
         with:
-          name: test-results
+          name: test-results-${{ matrix.browser }}
           path: test-results/artifacts
           retention-days: 14

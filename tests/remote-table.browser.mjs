@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {storedTable} from './stored-table.mjs';
 import {zipSync,strToU8} from 'fflate';
 import {collectPageErrors} from './page-errors.mjs';
 import {readFileSync} from 'node:fs';
@@ -10,7 +11,7 @@ test.use({serviceWorkers:'block'});
 const csv='date,count,o3\n2016-01-01,31,20.5\n2016-01-02,28,22\n';
 const archive=content=>Buffer.from(zipSync({'pkg/README.md':strToU8('read me'),'pkg/Data/master.csv':strToU8(content)}));
 const URL='https://data.example.test/pkg.zip';
-const stored=page=>page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')).nodes.find(n=>n.type==='table_input').params);
+const stored=storedTable;
 
 test('fetched from a zip, kept as a spec, fetched again by digest, and refused when the file has changed',async({page})=>{
   const errors=collectPageErrors(page);

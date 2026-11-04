@@ -133,7 +133,7 @@ import {projectDocument,readProjectDocument,unbundledReferences,PROJECT_DOCUMENT
 import {rasterExample} from './raster-example.js';
 import {openPackageDialog} from './package-ui.js';
 import {syncProjectManifest} from './project-manifest.js';
-import {BUILT_IN_PROJECTS,WORKFLOW_LABELS,projectOfWorkflow,projectById,siblingAreas,newProject,validateProject,siblingInputs,payloadDigest,heldPayloadsOf,reconcilePayloadRefs,dehydrateWorkflow,hydrateWorkflow,projectSafety,unexportedWork,exportPredatesWork,type Project,type ProjectWork} from './project.js';
+import {BUILT_IN_PROJECTS,WORKFLOW_LABELS,projectOfWorkflow,projectById,siblingAreas,newProject,validateProject,siblingInputs,payloadDigest,tableDataKey,heldPayloadsOf,reconcilePayloadRefs,dehydrateWorkflow,hydrateWorkflow,projectSafety,unexportedWork,exportPredatesWork,type Project,type ProjectWork} from './project.js';
 import {mountPanelLayout} from './panel-layout.js';
 import {newMapOutput,mapEvidence} from './map-output.js';
 import {newTableOutput,pointTableMarkup,pointTableEvidence} from './table-output.js';
@@ -572,6 +572,15 @@ function touchProject(id:string|undefined,field:'changedAt'|'exportedAt'):void{
 }
 
 function save(){
+  // TABLES ARE KEPT IN THE DATASET STORE, by content, like every other input's data: inline, a wide file of 92 columns
+  // already failed to save, and no larger table could (experiment 175). A table with no rows here -- one fetched and
+  // not yet read on this device -- has nothing to keep.
+  for(const node of workflow.nodes){
+    if(node.type!=='table_input')continue;
+    const params=node.params as {data?:{rows?:unknown[]};dataRef?:string};
+    if(params.data?.rows?.length){const key=tableDataKey(params.data as {rows:unknown[]});if(params.dataRef!==key)params.dataRef=key;}
+    else delete params.dataRef;
+  }
   syncProjectManifest(workflow);
   const previous=new Map<string,string|null>();
   try{for(const key of [KEY,WORKSPACES])previous.set(key,localStorage.getItem(key));const workspaces=JSON.parse(previous.get(WORKSPACES)||'{}');// A payload that arrived with an imported workflow is written to the store on the way past, so

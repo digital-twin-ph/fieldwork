@@ -419,6 +419,21 @@ export function siblingAreas(currentKey:string,projects:readonly Project[],
  *  the harmless direction. The case this has to get right is the common one -- several workflows
  *  holding `structuredClone`s of one imported file, which preserve key order exactly -- and there
  *  the digests agree. */
+/** A TABLE'S ROWS, KEPT BY CONTENT in the dataset store rather than inside the saved workflow (experiment 175).
+ *  The practitioner, 2026-11-04: *"We need to move tables to IndexedDB"*. Synchronous, because a save is: a 64-bit
+ *  content hash (cyrb53, two independent 32-bit lanes) of the table as JSON, computed on every save -- not cached by
+ *  object, because a table edited in place would keep a key that no longer describes it; its cost is measured. A
+ *  collision would need two different tables with the same 64 bits, and costs a wrong table where it happens --
+ *  which is why the key names the table's row count too, a second, cheap disagreement. */
+export function tableDataKey(table:{rows:unknown[]}):string{
+  const text=JSON.stringify(table);
+  let h1=0xdeadbeef,h2=0x41c6ce57;
+  for(let i=0;i<text.length;i++){const c=text.charCodeAt(i);h1=Math.imul(h1^c,2654435761);h2=Math.imul(h2^c,1597334677);}
+  h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);
+  h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);
+  return `table-${table.rows.length}-${(h2>>>0).toString(16).padStart(8,'0')}${(h1>>>0).toString(16).padStart(8,'0')}`;
+}
+
 export async function payloadDigest(payload:unknown):Promise<string>{
   const bytes=new TextEncoder().encode(JSON.stringify(payload));
   const hash=await crypto.subtle.digest('SHA-256',bytes);

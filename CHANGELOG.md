@@ -3,6 +3,14 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.22.0 — 2026-11-04
+
+- **A table's rows are kept in the dataset store, not in the saved workflow.** Every other input already kept its data
+  once in IndexedDB with the workflow holding a reference; Table input kept its rows inline, so a large table (NYC's
+  92-column wide read) could not be saved within the browser's local storage. Rows are now stored under a content key
+  (`table-<rows>-<hash>`) set on every save. Exports are unchanged and still carry the rows. This removes what held the
+  20,000-row cap; the cap itself is not changed yet — experiment 175 measures where the application stops coping.
+
 ## 0.21.0 — 2026-11-04
 
 - **Connect a dictionary to the data, explicitly.** After choosing which dictionary column holds what, a Connect step

@@ -3,6 +3,15 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.19.1 — 2026-11-04
+
+- **A fetched table already on this device fills itself.** Opening or running a workflow reads its table from the copy
+  the device keeps, with no download and nothing to press; only a file not yet on the device needs **Fetch the
+  table**. On the published 0.19.0, each NYC workflow stopped with "Select the node and choose Fetch the table".
+- The table says where its rows came from, read from this device or downloaded, and the message stays.
+- Notes' **Run workflows** counts only workflows that ran, and names any that still need their table fetched.
+- Validation: Chromium locally; WebKit in CI.
+
 ## 0.19.0 — 2026-11-04
 
 - **Regression**, a new widget: logistic regression (odds ratios) and Poisson regression (rate ratios) of an outcome

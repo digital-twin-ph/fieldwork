@@ -778,7 +778,7 @@ function loadExample(key:string):Promise<void>{if(busy)return Promise.resolve();
       return Promise.resolve();
     }
   }
-  save();let fromTemplate=true;try{const saved=readSavedWorkflows()[key];fromTemplate=!saved;workflow=saved?validateWorkflow(structuredClone(saved)):isExampleKey(key)?template(key):workflow;}catch(error){if(errorMessage(error).startsWith('Shared input data is missing')){toast(errorMessage(error),{tone:'failure'});return Promise.resolve();}if(isExampleKey(key))workflow=template(key);}if(!isExampleKey(key)){/* nothing published to compare against */}else if(fromTemplate)recordRevision(key);else setTimeout(()=>noticeIfRepublished(key),400);selected=key==='snow-geoprivacy'?'move':key.startsWith('snow-')?'catchments':key==='raster'?'raster-input':key==='old-naledi'?'access':'criteria';result=null;runWorkflow=null;activeOutputId=null;history=[];future=[];statuses={};dirty=true;save();renderLibrary();renderResults();render();switchView('workflow');setTimeout(()=>flow?.fit(),80);return canAutoRun(workflow)&&key!=='blank'?run():Promise.resolve();}
+  save();let fromTemplate=true;try{const saved=readSavedWorkflows()[key];fromTemplate=!saved;workflow=saved?validateWorkflow(structuredClone(saved)):isExampleKey(key)?template(key):workflow;}catch(error){if(errorMessage(error).startsWith('Shared input data is missing')){toast(errorMessage(error),{tone:'failure'});return Promise.resolve();}if(isExampleKey(key))workflow=template(key);}if(!isExampleKey(key)){/* nothing published to compare against */}else if(fromTemplate)recordRevision(key);else setTimeout(()=>noticeIfRepublished(key),400);selected=key==='snow-geoprivacy'?'move':key.startsWith('snow-')?'catchments':key==='raster'?'raster-input':key==='old-naledi'?'access':'criteria';result=null;runWorkflow=null;activeOutputId=null;history=[];future=[];statuses={};dirty=true;save();renderLibrary();renderResults();render();switchView('workflow');setTimeout(()=>flow?.fit(),80);return fillFetchedTables().then(()=>canAutoRun(workflow)&&key!=='blank'?run():undefined);}
 /** Drop focus before the panel holding the focused control is rewritten.
  *
  *  Removing a focused input fires blur, and the blur handler re-renders underneath the removal
@@ -2125,7 +2125,12 @@ function renderInspector(){
     if(p.remote)content+=`<div class="notice" data-table-remote>Fetched from <a href="${esc(p.remote.url)}" rel="noopener" target="_blank">`
       +`${esc(new URL(p.remote.url).hostname)}</a>${p.remote.entry?`, ${esc(p.remote.entry.split('/').at(-1))}`:''}. `
       +(p.data.rows.length?'The project keeps where it came from, not the rows.'
-        :'Its rows are not kept in the project. <button id="table-fetch-remote" class="button small">Fetch the table</button>')
+          // WHERE THESE ROWS CAME FROM THIS TIME, said where it stays: a line written beside the button was erased by the
+          // redraw that showed the rows, so a read from the device looked like another download (2026-11-04).
+          +(rowsReadFrom.get(n.id)==='device'?' These rows were read from the copy on this device, checked by its digest: nothing was downloaded.'
+            :rowsReadFrom.get(n.id)==='source'?` These rows were downloaded from ${esc(new URL(p.remote.url).hostname)}, and the file is now kept on this device.`:'')
+        :'Its rows are not kept in the project. <button id="table-fetch-remote" class="button small">Fetch the table</button>'
+          +' A file already on this device is read from there, without downloading it.')
       +`<span id="table-fetch-status" class="muted"></span></div>`;
     if(p.data.rows.length)content+=`<div class="inspector-actions"><button id="quick-look" class="button">Quick look at the table</button>`
       +`<button id="table-quality" class="button">Data quality</button></div>`
@@ -4169,12 +4174,7 @@ function renderInspector(){
     button.disabled=true;say.textContent=` Fetching from ${new URL(params.remote.url).hostname}…`;
     try{
       const file=await fetchRemoteTable(params.remote);
-      if(file.from==='device')say.textContent=' Read from the copy on this device, checked by digest.';
-      const read=await tableFromFetched(file,{keys:params.keys,valueField:params.valueField,unit:params.unit,
-        ...(params.wide?{wide:params.wide}:{}),primaryKey:params.data.primaryKey,secondaryKeys:params.data.secondaryKeys});
-      change(w=>{const node=getNode(w,n.id,'table_input');node.params.data={...read.data,...(node.params.data.source?{source:node.params.data.source}:{})};
-        // KEPT BY THE FILE'S DIGEST, so every workflow on the same file shares one copy and none overflows the save.
-        if(read.sourceTable){node.params.sourceTable=read.sourceTable;node.params.sourceRef=`source:${params.remote!.sha256}`;}});
+      await readFetchedInto(n.id,file);
     }catch(error){button.disabled=false;say.textContent=` ${error instanceof Error?error.message:'The table could not be fetched.'}`;}
   });
   optionalElement('#table-quality')?.addEventListener('click',()=>{
@@ -5283,7 +5283,31 @@ function supersessionNotice(ran:Workflow):string{
   return ` Note: ${named.join('; ')}. The run used the pinned version${stale.length===1?'':'s'}, `
     +`which is what reproduces these results; the Inspector says what changed.`;
 }
+/** Where each fetched table's rows came from in this session, for the Inspector to say. */
+const rowsReadFrom=new Map<string,'device'|'source'>();
+/** A fetched file read into its table node, with the settings the table was first read with. */
+async function readFetchedInto(id:string,file:File&{from?:'device'|'source'}):Promise<void>{
+  if(file.from)rowsReadFrom.set(id,file.from);
+  const params=getNode(workflow,id,'table_input').params;
+  const read=await tableFromFetched(file,{keys:params.keys,valueField:params.valueField,unit:params.unit,
+    ...(params.wide?{wide:params.wide}:{}),primaryKey:params.data.primaryKey,secondaryKeys:params.data.secondaryKeys});
+  change(w=>{const node=getNode(w,id,'table_input');node.params.data={...read.data,...(node.params.data.source?{source:node.params.data.source}:{})};
+    // KEPT BY THE FILE'S DIGEST, so every workflow on the same file shares one copy and none overflows the save.
+    if(read.sourceTable){node.params.sourceTable=read.sourceTable;node.params.sourceRef=`source:${params.remote!.sha256}`;}});
+}
+/** BEFORE A RUN, a fetched table with no rows here reads the copy this device keeps, by digest, with no network. The
+ *  practitioner, 2026-11-04: *"For NYC when I run workflows from notes it only runs 2 and there are 4 workflows"* --
+ *  the other two tables had not been fetched in their own workflows, though the file was on the device. A table whose
+ *  file is not on this device still needs Fetch the table, and the run says so. */
+async function fillFetchedTables():Promise<void>{
+  for(const node of workflow.nodes){
+    if(node.type!=='table_input'||!node.params.remote||node.params.data.rows.length)continue;
+    try{const file=await fetchRemoteTable(node.params.remote,{deviceOnly:true});if(file)await readFetchedInto(node.id,file);}
+    catch{/* the run reports the empty table in its own words */}
+  }
+}
 async function run(){if(busy)return;
+  await fillFetchedTables();
   // A refusal BEFORE the run starts is still a refused run, and the canvas has to say so. It
   // returned early here without touching the state, so the workflow went on reading "Changed ·
   // rerun to update" -- an invitation to press the button that had just refused -- while the
@@ -6049,18 +6073,26 @@ function renderNotesView(){
     if(!todo.length)return;
     const button=optionalElement('[data-run-pending]') as HTMLButtonElement|null;
     if(button){button.disabled=true;button.textContent='Running\u2026';}
-    let ran=0,failed=0;
+    let ran=0,failed=0;const waiting:string[]=[];
     for(const key of todo){
-      try{await loadExample(key);ran++;}
+      try{
+        await loadExample(key);
+        // LOADED IS NOT RAN. A workflow whose fetched table is not on this device loads and does not run; counting it
+        // as run told the practitioner the write-up held the whole project when it held half (2026-11-04).
+        if(canAutoRun(workflow))ran++;else waiting.push(workflow.name);
+      }
       catch{failed++;/* The one that failed says so on its own canvas; the rest still run. */}
     }
     // Back to the workflow they were reading, and back to the write-up.
     if(was&&was!==storageKey(workflow))await loadExample(was);
     switchView('notes');renderNotesView();
-    toast(failed
+    toast(waiting.length
+      ?`${ran} of ${todo.length} ran. ${waiting.length===1?'This one needs its table fetched':'These need their tables fetched'}`
+        +` first (select the table and choose Fetch the table): ${waiting.join('; ')}.`
+      :failed
       ?`${ran} of ${todo.length} ran; ${failed} could not. The write-up holds what ran.`
       :`${ran} workflow${ran===1?'':'s'} ran. The write-up now holds the whole project.`,
-      {tone:failed?'warning':'notice'});
+      {tone:failed||waiting.length?'warning':'notice'});
   });
   const total=(project?.notes||[]).length+derived.length+machined.length;
   $('#notes-view-count').textContent=total?String(total):'';

@@ -101,9 +101,14 @@ export async function fetchOrDeviceCopy(url:string,{fresh=false}={}):Promise<{by
 
 /** Fetches a table its spec describes and refuses one that is not the file the spec names. The device's copy is read
  *  first when it has the file the spec names by digest; `from` says which it was. */
-export async function fetchRemoteTable(spec:RemoteTableSource):Promise<File&{from?:'device'|'source'}>{
+export async function fetchRemoteTable(spec:RemoteTableSource):Promise<File&{from?:'device'|'source'}>;
+export async function fetchRemoteTable(spec:RemoteTableSource,options:{deviceOnly:true}):Promise<(File&{from?:'device'|'source'})|undefined>;
+/** `deviceOnly` reads the device's copy or nothing: never the network. A run uses it, so running a workflow does not
+ *  download anything a person did not ask for. */
+export async function fetchRemoteTable(spec:RemoteTableSource,{deviceOnly=false}:{deviceOnly?:boolean}={}):Promise<(File&{from?:'device'|'source'})|undefined>{
   const wanted=spec.archiveSha256??(spec.entry?undefined:spec.sha256);
   const held=wanted?await fromDevice(wanted):undefined;
+  if(deviceOnly&&!held)return undefined;
   const fetched=held??(await fromSource(spec.url)).bytes;
   const file=readSpec(spec,fetched,await (async()=>held?wanted!:await contentHash(fetched))());
   return Object.assign(await file,{from:held?'device' as const:'source' as const});

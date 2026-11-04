@@ -84,18 +84,35 @@ export function stepSentence(step:ManualStep,types:Record<string,string>,title:(
 }
 
 /** The whole manual as HTML, the open workflow's section first and marked. */
+/** A step's key in the practitioner's progress: its workflow's and its own position in the file. Positions rather than
+ *  text, so rewording a step keeps its tick; a manual that adds or removes steps moves later ticks, which is why the
+ *  progress is kept per manual digest and starts over when the manual changes. */
+export const stepKey=(workflowIndex:number,stepIndex:number)=>`${workflowIndex}:${stepIndex}`;
+
+/** The first step not yet done, in file order, for resuming where the practitioner left off. */
+export function firstUndone(manual:WorkedExampleManual,done:ReadonlySet<string>):string|undefined{
+  for(const [w,workflow] of manual.workflows.entries())
+    for(const [i,step] of workflow.steps.entries())
+      if(!('note' in step)&&!done.has(stepKey(w,i)))return stepKey(w,i);
+  return undefined;
+}
+
 export function renderManual(manual:WorkedExampleManual,openName:string|undefined,
-    title:(type:string)=>string,esc:(s:string)=>string):string{
-  const ordered=[...manual.workflows].sort((a,b)=>Number(b.name===openName)-Number(a.name===openName));
+    title:(type:string)=>string,esc:(s:string)=>string,done:ReadonlySet<string>=new Set()):string{
+  const ordered=[...manual.workflows.entries()].sort(([,a],[,b])=>Number(b.name===openName)-Number(a.name===openName));
   return (manual.intro?`<p class="description">${esc(manual.intro)}</p>`:'')
-    +ordered.map(workflow=>{
+    +ordered.map(([w,workflow])=>{
       const types:Record<string,string>={};
       for(const step of workflow.steps)if('add' in step)types[step.as]=step.add;
       // Notes are prose between steps, so they are not numbered: the numbers count what you do.
       let n=0;
-      const items=workflow.steps.map(step=>'note' in step
-        ?`<p class="manual-note">${stepSentence(step,types,title,esc)}</p>`
-        :`<li value="${++n}" class="manual-step${'see' in step?' manual-see':''}">${stepSentence(step,types,title,esc)}</li>`);
+      const items=workflow.steps.map((step,i)=>{
+        if('note' in step)return `<p class="manual-note">${stepSentence(step,types,title,esc)}</p>`;
+        const key=stepKey(w,i),ticked=done.has(key);
+        return `<li value="${++n}" class="manual-step${'see' in step?' manual-see':''}${ticked?' done':''}" data-step="${key}" `
+          +`tabindex="0" aria-pressed="${ticked}" title="${ticked?'Done. Click to mark not done.':'Click when done.'}">`
+          +`${stepSentence(step,types,title,esc)}</li>`;
+      });
       // A run of numbered steps is one list; a note closes it and the next step opens another, numbered on.
       let html='',open=false;
       for(const item of items){

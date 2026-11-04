@@ -2,7 +2,7 @@
 
 _Created 2026-11-04 · Updated 2026-11-04_
 
-**Status:** tried — the Manual tab, on the NYC example, Chromium. The playback dialog is designed, not built.
+**Status:** tried — the Manual tab and its detached panel, on the NYC example, Chromium. The playback dialog is designed, not built.
 
 ## The task
 
@@ -45,6 +45,19 @@ and the test adds each widget by typing its name there.
 A manual that fails verification is not shown, and the project still opens: the steps guide the work and are not part
 of it.
 
+## Detached, beside a project of one's own (added 2026-11-04)
+
+The practitioner, the same day: *"while we are in the worked example project there is no way to get to a blank canvas
+other than add a workflow that will duplicate the one being built by hand. Can the manual be detached, become a
+surface dialog so the user can create a new project? When the user decides to finish the activity he or she can close
+the dialog. If user wants to resume user can go back to the manual tab and detach it again to resume."*
+
+The tab belongs to the example's workflow, so it disappears exactly when the practitioner starts building. **Detach**
+opens the manual as a panel that is not modal, can be dragged and resized, and is held on the device rather than by the
+open workflow: a new project, a change of workflow or a reload keeps it, and only **Close** removes it. A step clicked
+(or pressed with Enter) is done; progress is kept per manual digest, shown in the tab and the panel alike, and
+detaching again scrolls to the first step not done. The panel is the base the playback dialog will build on.
+
 ## Validation
 
 | Date | Check | Result |
@@ -52,6 +65,7 @@ of it.
 | 2026-11-04 | `tests/worked-example-manual.test.mjs` | 4 of 4: sentences, numbering around notes, refusals naming the step, NYC's manual readable |
 | 2026-11-04 | `tests/manual-tab.browser.mjs`, Chromium | Passed: NYC opened from its pin, both files served by path and checked by digest, the tab shown, the open workflow first, the mark moving with the workflow; hidden on a blank canvas |
 | 2026-11-04 | `tests/nyc-from-scratch.browser.mjs` performing `manual.json` against Zenodo, Chromium | Passed, every label the manual names equal to the label on screen |
+| 2026-11-04 | `tests/manual-tab.browser.mjs`, detach and resume, Chromium | Passed: detached, two steps done by click and by keyboard, a new project made with the panel open and the library searched through it, the panel and its progress kept through a reload, closed, and on detaching again from the example opened at step 3 |
 
 WebKit was not run locally; CI runs it.
 

@@ -1,6 +1,6 @@
 # Chart
 
-_Created 2026-10-28 · Updated 2026-10-30_
+_Created 2026-10-28 · Updated 2026-11-04_
 
 **An output widget.** It draws bars: a set of labelled categories with a number each. It creates a
 named tab in Results and changes nothing about the data it is given.

@@ -421,7 +421,7 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:T
       stata=/\.dta$/i.test(file.name)?readStata(new Uint8Array(await file.arrayBuffer())):undefined;
       if(request!==serial)return;
       text=stata?'':await file.text();if(request!==serial)return;
-      parsed=stata??parseCSV(text);
+      parsed=stata??parseCSV(text,MAX_TABLE_ROWS);
       status.textContent=stata?`Stata format ${stata.format}: ${stata.rows.length.toLocaleString()} rows of ${stata.headers.length} variables.`
         +(stata.notes.length?` ${stata.notes.join(' ')}`:''):'';
       const guessValue=parsed.headers.findIndex(h=>/^(value|value_m|amount|measure|level)$/i.test(h.trim()));
@@ -704,7 +704,7 @@ export function dataTableMarkup(table:DataTable,esc:Escape,{query='',page=0,page
  *  same shape, keys, value column and key roles, so a second device gets the same table. Experiment 170. */
 export async function tableFromFetched(file:File,settings:{keys:string[];valueField:string;unit?:string;
   wide?:WideChoice;primaryKey?:string[];secondaryKeys?:string[]}):Promise<{data:DataTable;sourceTable?:TableRows}>{
-  const parsed:TableRows=/\.dta$/i.test(file.name)?readStata(new Uint8Array(await file.arrayBuffer())):parseCSV(await file.text());
+  const parsed:TableRows=/\.dta$/i.test(file.name)?readStata(new Uint8Array(await file.arrayBuffer())):parseCSV(await file.text(),MAX_TABLE_ROWS);
   const roles={...(settings.primaryKey?.length?{primaryKey:settings.primaryKey}:{}),...(settings.secondaryKeys?.length?{secondaryKeys:settings.secondaryKeys}:{})};
   if(settings.wide){
     const data=wideDataTable(parsed,{keys:settings.wide.keys,valueFields:settings.wide.valueFields,measureKey:settings.wide.measureKey,

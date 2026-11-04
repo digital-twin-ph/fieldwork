@@ -195,3 +195,26 @@ test('the Salmonella example opens from its pin as three workflows and runs',
     await page.locator('#run-button').click();
     await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
   });
+
+// THE FIFTH EXAMPLE, whose table is fetched rather than carried: opened from its pin, it holds no counts, says
+// so, fetches them by digest, and runs. The package is answered from NYC_PKG; without one this is skipped.
+const NYC=new URL('../../example-2025-nyc-ozone/fieldwork-project.json.gz',import.meta.url);
+const NYC_ZENODO='https://zenodo.org/api/records/22757330/files/NYC_Pediatric_Asthma_Ozone_JHM_Reproducibility_v1.0.zip/content';
+test('the NYC example opens without its counts, fetches them by digest, and runs',
+  async({page})=>{test.skip(!existsSync(NYC)||!process.env.NYC_PKG,'example-2025-nyc-ozone is not beside this repository, or NYC_PKG is unset.');
+    const bytes=readFileSync(NYC);
+    await page.route(/raw\.githubusercontent\.com/,route=>route.fulfill({status:200,body:bytes}));
+    await page.route(NYC_ZENODO,route=>route.fulfill({status:200,body:readFileSync(process.env.NYC_PKG),headers:{'access-control-allow-origin':'*'}}));
+    await openProjects(page);
+    await page.locator('[data-open-example="urn:fieldwork:example:nyc-asthma-ozone-2016-2025"]').click();
+    await expect(page.locator('[data-example-status="urn:fieldwork:example:nyc-asthma-ozone-2016-2025"]'))
+      .toContainText('digest matched',{timeout:30000});
+    await page.locator('[data-view="workflow"]').click();
+    const table=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')).nodes.find(n=>n.type==='table_input').id);
+    await page.locator(`.react-flow__node[data-id="${table}"]`).click();
+    await expect(page.locator('[data-table-remote]')).toContainText('Its rows are not kept in the project');
+    await page.locator('#table-fetch-remote').click();
+    await expect(page.locator('[data-table-remote]')).toContainText('not the rows',{timeout:60000});
+    await page.locator('#run-button').click();
+    await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
+  });

@@ -1,13 +1,16 @@
 import type {Escape} from './types.js';
 import type {DataTable,DataTableSource,TableSelection} from './data-table.js';
-import {dataTable,wideDataTable,keyDomains,MAX_TABLE_ROWS} from './data-table.js';
+import {dataTable,wideDataTable,keyDomains,MAX_TABLE_ROWS,type TableRows} from './data-table.js';
 import {parseCSV} from './input-data.js';
 import {readStata,type StataTable} from './stata.js';
+import {fetchBytes,tablesInArchive,archiveEntry,asFile,type RemoteTableSource} from './remote-table.js';
 import {contentHash} from './project-files.js';
 
 const FILE_BYTES=5_000_000;
 export interface WideChoice {keys:string[]; valueFields:string[]; measureKey:string}
 export interface TableImport {data:DataTable; source:DataTableSource; keys:string[]; valueField:string;
+  /** Present when the file was fetched from a URL: the spec the project keeps in place of the rows. */
+  remote?:RemoteTableSource;
   unit?:string; wide?:WideChoice;
   /** The parsed file, carried only for a wide read, so the node can melt it again on each run. */
   source_table?:{headers:string[];rows:string[][]}}
@@ -43,6 +46,13 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:T
   dialog.innerHTML='<h2 id="table-title">Import tabular data</h2>'
     +'<p>A <strong>wide</strong> CSV is assumed: one row per subject and a column per variable, which is what a line list, a surveillance export and a published table look like. Name the columns that identify the subject and the columns holding values; the rest of the application reads one long table, and this converts. A table has no geometry; latitude and longitude columns, if present, are ordinary columns.</p>'
     +'<label class="field-label" for="table-file">CSV or Stata file (up to 5 MB, '+MAX_TABLE_ROWS.toLocaleString()+' rows)</label><input id="table-file" type="file" accept=".csv,text/csv,.dta">'
+    // OR FROM WHERE IT IS PUBLISHED. The project then keeps the URL and the file's digest, and an export carries no
+    // rows: another device fetches the same file when it opens. Experiment 170.
+    +'<details id="table-remote"><summary>Or fetch from a URL</summary>'
+    +'<label class="field-label" for="table-url">URL of a CSV, Stata file or zip</label><input id="table-url" type="url" placeholder="https://">'
+    +'<button type="button" id="table-fetch" class="button">Fetch</button>'
+    +'<label class="field-label" for="table-entry" hidden>File inside the archive</label><select id="table-entry" hidden></select>'
+    +'<p class="muted">The project keeps where it came from, not the rows, so a shared project does not republish it.</p></details>'
     +'<label class="field-label" for="table-shape">Shape of the file</label><select id="table-shape">'
     +'<option value="wide">Wide \u00b7 one row per subject, a column per variable</option>'
     +'<option value="long">Long \u00b7 one row per observation, one value column</option></select>'
@@ -364,8 +374,40 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:T
   }
   shapeSelect.onchange=applyShape;
   shapeAccept.onclick=()=>{shapeSelect.value='long';applyShape();};
-  fileInput.onchange=async()=>{
-    const request=++serial;file=fileInput.files?.[0];parsed=undefined;keysBox.hidden=true;valueSelect.disabled=true;
+  let remote:RemoteTableSource|undefined,archive:Uint8Array<ArrayBuffer>|undefined,archiveSha256:string|undefined;
+  const urlInput=q<HTMLInputElement>('#table-url'),entrySelect=q<HTMLSelectElement>('#table-entry');
+  const readFetched=async(bytes:Uint8Array<ArrayBuffer>,path:string)=>{
+    remote={url:urlInput.value.trim(),...(archive?{entry:path,archiveSha256}:{}),
+      sha256:await contentHash(bytes),bytes:bytes.length};
+    await load(asFile(bytes,path),true);
+  };
+  q<HTMLButtonElement>('#table-fetch').onclick=async()=>{
+    const url=urlInput.value.trim();
+    if(!/^https:\/\//.test(url)){fail(new Error('Give an https address.'));return;}
+    status.textContent=`Fetching ${url}…`;error.hidden=true;
+    try{
+      const bytes=await fetchBytes(url);
+      const inside=tablesInArchive(bytes);
+      if(inside.length){
+        archive=bytes;archiveSha256=await contentHash(bytes);
+        entrySelect.innerHTML='<option value="">Choose a file…</option>'+inside.map(name=>`<option value="${esc(name)}">${esc(name)}</option>`).join('');
+        entrySelect.hidden=false;(entrySelect.previousElementSibling as HTMLElement).hidden=false;
+        status.textContent=`The archive holds ${inside.length} table${inside.length===1?'':'s'}. Choose one.`;
+        return;
+      }
+      archive=undefined;archiveSha256=undefined;
+      await readFetched(bytes,url);
+    }catch(e){status.textContent='Nothing was fetched.';fail(e);}
+  };
+  entrySelect.onchange=async()=>{
+    if(!archive||!entrySelect.value)return;
+    try{await readFetched(archiveEntry(archive,entrySelect.value),entrySelect.value);}
+    catch(e){fail(e);}
+  };
+  fileInput.onchange=()=>{remote=undefined;void load(fileInput.files?.[0],false);};
+  const load=async(chosen:File|undefined,fetched:boolean)=>{
+    if(!fetched)remote=undefined;
+    const request=++serial;file=chosen;parsed=undefined;keysBox.hidden=true;valueSelect.disabled=true;
     keysBox.innerHTML='<legend>Key columns</legend><p class="muted" id="table-keys-says"></p>';
     valuesBox.innerHTML='<legend>Value columns</legend><p class="muted">The variables to take. Named rather than inferred, so a column the file gains later is absent from this analysis by decision rather than by accident.</p>';
     valuesBox.hidden=true;shapeAlert.hidden=true;
@@ -419,7 +461,8 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:T
     if(!result||!file||busy)return;busy=true;save.disabled=true;cancel.disabled=true;fileInput.disabled=true;error.hidden=true;
     try{
       const sha256=await contentHash(stata?new Uint8Array(await file!.arrayBuffer()) as Uint8Array<ArrayBuffer>:new TextEncoder().encode(text) as Uint8Array<ArrayBuffer>);
-      const saved:TableImport={...result,data:{...result.data,source:{...result.source,sha256}},source:{...result.source,sha256}};
+      const saved:TableImport={...result,data:{...result.data,source:{...result.source,sha256}},source:{...result.source,sha256},
+        ...(remote?{remote}:{})};
       if(!onSave(saved))throw new Error('The table could not be saved. Your previous project is unchanged; retry Save.');
       dialog.close();
     }catch(e){fail(e);status.textContent='This table has not been added to the project.';}
@@ -655,4 +698,18 @@ export function dataTableMarkup(table:DataTable,esc:Escape,{query='',page=0,page
     +`<table><thead><tr>${table.keys.map(k=>`<th>${esc(k)}</th>`).join('')}<th>${esc(table.valueField)}</th></tr></thead><tbody>`
     +shown.map(row=>`<tr>${table.keys.map(k=>`<td>${esc(row.key[k])}</td>`).join('')}<td>${row.value===null?'<span class="muted">unknown</span>':esc(row.value)}</td></tr>`).join('')
     +`</tbody></table>`+(pages>1?`<div class="table-page-group"><button class="button small" data-table-page="${page-1}" ${page===0?'disabled':''}>Previous rows</button><span role="status">Page ${page+1} of ${pages}</span><button class="button small" data-table-page="${page+1}" ${page+1>=pages?'disabled':''}>Next rows</button></div>`:'');
+}
+
+/** THE TABLE A REMOTE SPEC DESCRIBES, re-read from its fetched file with the settings it was first read with: the
+ *  same shape, keys, value column and key roles, so a second device gets the same table. Experiment 170. */
+export async function tableFromFetched(file:File,settings:{keys:string[];valueField:string;unit?:string;
+  wide?:WideChoice;primaryKey?:string[];secondaryKeys?:string[]}):Promise<{data:DataTable;sourceTable?:TableRows}>{
+  const parsed:TableRows=/\.dta$/i.test(file.name)?readStata(new Uint8Array(await file.arrayBuffer())):parseCSV(await file.text());
+  const roles={...(settings.primaryKey?.length?{primaryKey:settings.primaryKey}:{}),...(settings.secondaryKeys?.length?{secondaryKeys:settings.secondaryKeys}:{})};
+  if(settings.wide){
+    const data=wideDataTable(parsed,{keys:settings.wide.keys,valueFields:settings.wide.valueFields,measureKey:settings.wide.measureKey,
+      valueField:settings.valueField,...roles,...(settings.unit?{unit:settings.unit}:{})});
+    return {data,sourceTable:{headers:parsed.headers.map(h=>h.trim()),rows:parsed.rows}};
+  }
+  return {data:dataTable(parsed,{keys:settings.keys,valueField:settings.valueField,...roles,...(settings.unit?{unit:settings.unit}:{})})};
 }

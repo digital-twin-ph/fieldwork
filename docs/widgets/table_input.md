@@ -22,6 +22,16 @@ A Stata file, from Stata 8 onward, is read as Stata wrote it and then set up as 
 missing value, `.` or `.a` to `.z`, is empty, never zero. A variable Stata formats as a date is read as a date. Value
 labels are not applied: codes stay as stored, and the import says which variables carry labels.
 
+## Fetched from a URL
+
+Under **Or fetch from a URL**, give the address of a CSV, a Stata file or a zip. For a zip, choose the file inside.
+The table is then set up as any other.
+
+The project keeps where the table came from, the URL, the file inside and the digests, in place of its rows. An
+exported project carries no rows, so sharing it does not republish data whose terms do not allow that. On another
+device the node says its rows are not kept, and **Fetch the table** reads the same file again with the same
+settings. A file whose digest has changed is refused, and nothing is read.
+
 ## Keys
 
 Key columns are read as labels. Among them you decide what identifies a row:

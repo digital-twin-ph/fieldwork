@@ -47,6 +47,10 @@
     {
       "kind": "minor",
       "description": "Reads Stata files (formats 113 to 115 and 117 to 119) as well as CSV: dates formatted as dates are read as dates, missing values are empty, and value labels are not applied, with the import saying which variables carry them. Experiment 169."
+    },
+    {
+      "kind": "minor",
+      "description": "A table can be fetched from a URL, a zip included, choosing the file inside. The project keeps the URL, the file and both digests in place of the rows, an export carries no rows, and Fetch the table on another device reads the same file again, refusing one whose digest has changed. Experiment 170."
     }
   ],
   "evidence": {

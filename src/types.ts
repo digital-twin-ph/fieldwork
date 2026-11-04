@@ -208,6 +208,9 @@ export interface ParamsByType {
      *  melt done once in a dialog is invisible, and a melt done by the run is a step with a
      *  receipt -- which is what "prepared outside the application" meant and what this ends. */
     sourceTable?:{headers:string[];rows:string[][]};
+    /** Where `sourceTable` is kept on the device: `source:` and the file's SHA-256. Kept out of the saved workflow
+     *  like `dataRef` data, because a wide file of 92 columns did not fit in it (2026-11-04, NYC). */
+    sourceRef?:string;
     /** Melt `sourceTable` on every run rather than reading the stored `data`. */
     convertOnRun?:boolean};
   /** A SCANNED OR PUBLISHED MAP, drawn under a workflow in the workflow's own projection.
@@ -537,6 +540,9 @@ export interface ParamsByType {
     frameCaption?:string;
     inputMode?:'spatial'|'decisions'|'raster'|'polygons'|'network';presentation?:'plot'|'interactive';contextPoints?:boolean;mapTitle?:string;mapSubtitle?:string;mapSourceNote?:string;showLegend?:boolean;basemap?:BasemapChoice}; table_output:{label:string; pointInputCount?:number; inputMode?:'spatial'|'decisions'|'polygons'|'table'; totalsAsserted?:boolean};
   chart_output:{label:string;
+    /** ONE PANEL PER VALUE of this key column, stacked on a shared x axis, each with its own y scale (experiment 174).
+     *  `panelMarks` names a mark per panel; `shade` marks a period across every panel. */
+    panelsBy?:string;panelMarks?:Record<string,'bar'|'line'>;shade?:{from:string;to:string};
     /** Which key column a table is charted against. Absent takes the table's first, which is the
      *  whole answer for a table with one key column -- a rate's is `group` -- and a stated
      *  choice for one with several. Nothing is guessed from a column's name. */

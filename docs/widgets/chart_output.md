@@ -52,6 +52,27 @@ than the table beside it.
    because the validated palette is six hues; past that, group the tail upstream rather than ask
    for a seventh colour.
 
+### Variables moving together through time: one panel each
+
+When a table carries several variables in one column — what Table input's **Wide** shape makes of a file with a
+column per variable — set **One panel per** to that column. Each variable gets its own panel and its own scale,
+stacked on one shared axis, so a reader runs down one date and reads every series, and a lag shows as an offset
+between panels.
+
+| Setting | What it decides |
+| --- | --- |
+| **One panel per** | The key column whose values become panels. *No panels* is one chart, as before |
+| **Mark for** each panel | Bars or a line. *Automatic* is bars up to 60 points and a line beyond |
+| **Shade a period**, From and To | Dates shaded behind every panel, both days included. Offered when the axis is dates |
+
+A value missing from a panel is a gap in its line, never a zero. Panels draw up to 20,000 points, which is four daily
+series over ten years. They are drawn by the Vega-Lite renderer; the plain renderer and the write-up figure say so
+instead of drawing them on one scale. Experiment 174.
+
+**Two y axes on one plot are not offered.** The ratio between two axes is arbitrary, so it can make any two series
+look correlated. **Aligned panels show timing, not effect**: that visits rose with PM2.5 in the same week is not a
+measure of how much PM2.5 raises them.
+
 ### It states its own shape in the write-up
 
 Every run machines a note into **Results** on the Notes tab stating what this chart is made of. It carries the line the chart already states rather than writing over it, and adds the number of bars, the column they are one per, and a warning where a bar sits at zero — because a withheld value and a measured zero are drawn the same way.
@@ -82,6 +103,8 @@ total nobody asked for, and rates cannot be added at all.
 
 **It will not draw more than 100 bars**, and will not colour more than six categories.
 
+**It will not put a count and a concentration on one scale.** Use panels.
+
 **It is not a time series by itself.** Connect **Cases by period** and the periods come with it; a
 plain table of dates is a table, and its rows are drawn in the order they are in.
 
@@ -89,6 +112,9 @@ plain table of dates is a table, and its rows are drawn in the order they are in
 receipt records the renderer, its version, the specification and what each bar's number means.
 
 ## Worked examples that use it
+
+**NYC child asthma and ozone, 2016 to 2025** draws daily visits, ozone, PM2.5 and temperature as four aligned
+panels for May to July 2023, with the June smoke days shaded.
 
 **Snow's South London water supply study, 1854** draws the 32 registration sub-districts as bars of
 deaths per 1,000 people, from the rate's own chart, so the figure carries the vintage caveat with

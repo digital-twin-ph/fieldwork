@@ -491,8 +491,12 @@ export function reconcilePayloadRefs(before:Map<string,HeldPayload>,
 export function dehydrateWorkflow<T extends {nodes:unknown[]}>(workflow:T,held:(digest:string)=>boolean=()=>false):T{
   return {...workflow,nodes:workflow.nodes.map(node=>{
     if(!isRecord(node)||!isRecord(node.params))return node;
-    const params=node.params;
-    if(typeof params.dataRef!=='string'||params.data===undefined||!held(params.dataRef))return node;
+    let params=node.params;
+    // A wide table's source file goes the same way as data, under its own reference.
+    if(typeof params.sourceRef==='string'&&params.sourceTable!==undefined&&held(params.sourceRef)){
+      const {sourceTable:_source,...rest}=params;params=rest;}
+    if(typeof params.dataRef!=='string'||params.data===undefined||!held(params.dataRef))
+      return params===node.params?node:{...node,params};
     const {data:_omitted,...rest}=params;
     return {...node,params:rest};
   })};
@@ -513,8 +517,13 @@ export function hydrateWorkflow(raw:unknown,datasets:Record<string,unknown>,clon
   const missing:string[]=[];
   const nodes=raw.nodes.map(node=>{
     if(!isRecord(node)||!isRecord(node.params))return node;
-    const params=node.params;
-    if(typeof params.dataRef!=='string'||params.data!==undefined)return node;
+    let params=node.params;
+    if(typeof params.sourceRef==='string'&&params.sourceTable===undefined){
+      const source=datasets[params.sourceRef];
+      if(source===undefined){missing.push(`${String(node.id??node.type??'a node')} (${params.sourceRef.slice(0,19)})`);return node;}
+      params={...params,sourceTable:clone?structuredClone(source):source};
+    }
+    if(typeof params.dataRef!=='string'||params.data!==undefined)return params===node.params?node:{...node,params};
     const payload=datasets[params.dataRef];
     if(payload===undefined){missing.push(`${String(node.id??node.type??'a node')} (${params.dataRef.slice(0,12)})`);return node;}
     return {...node,params:{...params,data:clone?structuredClone(payload):payload}};

@@ -98,6 +98,7 @@ export function wrapToWidth(value:string,width:number):string[]{
 
 export function chartVegaSpec(chart:ChartSummary,params:ChartParams,context:{sourceId?:string;runId?:string;sourceLabel?:string}={}){
   if(chartRenderer(params)!=='vega-lite')throw new Error('Vega-Lite rendering is not selected.');
+  if(chart.panels?.length)return panelVegaSpec(chart,params,context);
   const mark=params.mark||'bar',orientation=chartOrientation(params);
   if(!['bar','point'].includes(mark)||!['horizontal','vertical'].includes(orientation))throw new Error('Unsupported chart encoding.');
   // A NEGATIVE VALUE IS NOT A MALFORMED ONE. This refused `b.count<0` until 2026-10-31, which
@@ -194,6 +195,66 @@ export function chartVegaSpec(chart:ChartSummary,params:ChartParams,context:{sou
       legend:{labelFontSize:FIGURE_TYPE.legend,titleFontSize:FIGURE_TYPE.legend,labelColor:FIGURE_ROLE.quietInk,
         symbolStrokeWidth:0,offset:12},
       bar:{binSpacing:2}},
+  };
+}
+
+/** The mark a panel is drawn with: the practitioner's, or bars up to 60 points and a line beyond, because 3,653 daily
+ *  bars are a solid block. Experiment 174. */
+export const PANEL_BAR_LIMIT=60;
+export const panelMark=(chart:ChartSummary,params:ChartParams,panel:string):'bar'|'line'=>
+  params.panelMarks?.[panel]??(chart.bins.filter(b=>b.panel===panel).length<=PANEL_BAR_LIMIT?'bar':'line');
+
+/** ALIGNED PANELS ON ONE SHARED X AXIS, each with its own y scale (experiment 174). Concatenated rather than faceted,
+ *  because a facet draws every panel with one mark and the practitioner chooses a mark per panel. Only the bottom panel
+ *  carries the x axis, so the panels read as one figure. A shaded period is a rectangle behind every panel; it needs a
+ *  time axis, since a range of categories has no width to shade. */
+function panelVegaSpec(chart:ChartSummary,params:ChartParams,context:{sourceId?:string;runId?:string;sourceLabel?:string}){
+  const panels=chart.panels!,temporal=!!chart.temporal;
+  const values=chart.bins.map(b=>({panel:b.panel,label:b.label,count:b.missing?null:b.count}));
+  const width=640,height=Math.max(90,Math.min(160,Math.round(420/panels.length)));
+  const shade=temporal&&params.shade&&(params.shade.from||params.shade.to)?(()=>{
+    const dates=chart.bins.map(b=>b.label).sort();
+    const from=params.shade!.from||dates[0]!,to=params.shade!.to||dates.at(-1)!;
+    // To the end of the last day, so the last day's bar is inside the shading rather than cut through its middle.
+    const end=new Date(Date.parse(`${to}T00:00:00Z`)+86_400_000).toISOString().slice(0,10);
+    return {data:{values:[{from,to:end}]},mark:{type:'rect' as const,color:FIGURE_ROLE.quietInk,opacity:.12},
+      encoding:{x:{field:'from',type:'temporal' as const},x2:{field:'to'}}};
+  })():null;
+  const sourceNote=chartSourceNote(params,context.sourceId,context.runId,context.sourceLabel);
+  return {
+    $schema:'https://vega.github.io/schema/vega-lite/v6.json',
+    background:FIGURE_ROLE.background,
+    description:chart.caption,
+    data:{values},
+    title:{text:params.chartTitle?.trim()||chart.caption,
+      subtitle:[params.subtitle?.trim(),sourceNote].filter((part):part is string=>!!part).flatMap(part=>wrapToWidth(part,width)),
+      anchor:'start' as const},
+    vconcat:panels.map((panel,index)=>{
+      const mark=panelMark(chart,params,panel),last=index===panels.length-1;
+      const x=temporal
+        ?{field:'label',type:'temporal' as const,title:last?(params.xAxisTitle?.trim()||chart.categoryTitle||null):null,
+          axis:last?{labelOverlap:true,format:'%-d %b %Y'}:{labels:false,ticks:false,title:null}}
+        :{field:'label',type:'nominal' as const,sort:null,title:last?(params.xAxisTitle?.trim()||chart.categoryTitle||null):null,
+          axis:last?{labelOverlap:'parity' as const}:{labels:false,ticks:false,title:null}};
+      const drawn={transform:[{filter:{field:'panel',equal:panel}}],
+        mark:mark==='bar'
+          ?{type:'bar' as const,color:FIGURE_ROLE.primary}
+          :{type:'line' as const,color:FIGURE_ROLE.primary,strokeWidth:1.4,invalid:'break-paths-show-path-domains' as const},
+        encoding:{x,
+          y:{field:'count',type:'quantitative' as const,title:panel,scale:{zero:mark==='bar'}},
+          tooltip:[{field:'label',type:temporal?'temporal' as const:'nominal' as const,title:chart.categoryTitle??'',...(temporal?{format:'%-d %b %Y'}:{})},
+            {field:'count',type:'quantitative' as const,title:panel}]}};
+      return {width,height,layer:[...(shade?[shade]:[]),drawn]};
+    }),
+    resolve:{scale:{x:'shared' as const,y:'independent' as const}},
+    spacing:6,
+    config:{view:{stroke:null},font:FIGURE_TYPE.family,
+      axis:{...TUFTE_AXIS,labelFontSize:FIGURE_TYPE.tick,titleFontSize:FIGURE_TYPE.axisTitle,
+        labelColor:FIGURE_ROLE.quietInk,titleColor:FIGURE_ROLE.ink},
+      axisQuantitative:{grid:true,gridColor:FIGURE_GRID,gridWidth:1},
+      title:{fontSize:FIGURE_TYPE.title,subtitleFontSize:FIGURE_TYPE.subtitle,color:FIGURE_ROLE.ink,subtitleColor:FIGURE_ROLE.quietInk,
+        subtitlePadding:8,offset:12},
+      bar:{binSpacing:1}},
   };
 }
 

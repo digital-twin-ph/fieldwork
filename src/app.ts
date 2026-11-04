@@ -46,7 +46,7 @@ import {FACILITY_SOURCES,FACILITY_SOURCE_KEYS,FACILITY_KINDS,downloadFacilities,
 import {evidenceInspector,openEvidenceEditor} from './evidence-ui.js';
 import {workflowDocument,importWorkflowDocument,exportEvidenceFiles} from './evidence-storage.js';
 import {curatedExamples,exampleById,verifiedFile,type CatalogExample} from './example-catalog.js';
-import {validateManual,renderManual,type WorkedExampleManual} from './worked-example-manual.js';
+import {validateManual,renderManual,firstUndone,type WorkedExampleManual} from './worked-example-manual.js';
 import {saveRefusalMessage} from './save-refusal.js';
 import {MAX_BUNDLE_BYTES} from './evidence.js';
 import type {Workflow,WorkflowNode,NodeType,NodeSpec,Boundary,Position,SpatialRelation,ParamsByType,ColumnRepair,BasemapChoice} from './types.js';
@@ -6617,19 +6617,112 @@ async function openCuratedExample(id:string,button:HTMLButtonElement):Promise<vo
   }finally{button.disabled=false;button.textContent=label;}
 }
 /** The manual of the worked example this workflow was opened from, if it published one. */
-function exampleManual():WorkedExampleManual|undefined{
-  const digest=originOf(storageKey(workflow))?.manual;
+const exampleManualDigest=():string|undefined=>originOf(storageKey(workflow))?.manual;
+const manualByDigest=(digest:string|undefined):WorkedExampleManual|undefined=>{
   const held=digest?cachedPayload(digest):undefined;
   try{return held?validateManual(held):undefined;}catch{return undefined;}
+};
+function exampleManual():WorkedExampleManual|undefined{return manualByDigest(exampleManualDigest());}
+
+/** WHAT THE PRACTITIONER HAS DONE, per manual, on this device. Keyed by the manual's digest, so a changed manual starts
+ *  over rather than ticking steps that moved. */
+const MANUAL_PROGRESS='fieldwork-manual-progress-v1';
+const manualProgress=(digest:string):Set<string>=>{
+  try{return new Set((JSON.parse(localStorage.getItem(MANUAL_PROGRESS)||'{}') as Record<string,string[]>)[digest]??[]);}
+  catch{return new Set();}
+};
+const saveManualProgress=(digest:string,done:Set<string>)=>{
+  try{const all=JSON.parse(localStorage.getItem(MANUAL_PROGRESS)||'{}') as Record<string,string[]>;
+    all[digest]=[...done];localStorage.setItem(MANUAL_PROGRESS,JSON.stringify(all));}catch{/* progress is a convenience */}
+};
+const manualTitle=(manual:WorkedExampleManual)=>(type:string)=>TYPES[type as NodeType]?.title??type;
+/** A step clicked, or pressed with Enter or Space, is done; again, it is not. */
+function wireManualSteps(host:HTMLElement,digest:string){
+  host.querySelectorAll<HTMLElement>('[data-step]').forEach(step=>{
+    const toggle=()=>{const done=manualProgress(digest),key=required(step.dataset.step);
+      if(done.has(key))done.delete(key);else done.add(key);saveManualProgress(digest,done);
+      renderManualFloat();if(currentView==='manual')renderManualView();};
+    step.onclick=toggle;
+    step.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle();}};
+  });
 }
 /** THE MANUAL TAB: how to build each of this example's workflows by hand, the open one first. Experiment 173. */
 function renderManualView():void{
-  const manual=exampleManual(),host=$('#manual-view');
-  host.innerHTML=manual
+  const digest=exampleManualDigest(),manual=manualByDigest(digest),host=$('#manual-view');
+  host.innerHTML=manual&&digest
     ?'<div class="manual-intro"><strong>Build it by hand</strong><span>Each workflow from an empty canvas, step by step. '
-      +'Play back the build shows the same steps one at a time.</span></div>'
-      +renderManual(manual,workflow.name,type=>TYPES[type as NodeType]?.title??type,esc)
+      +'Click a step when it is done. Detach the manual to keep it beside you in a project of your own.</span>'
+      +`<div class="inspector-actions"><button class="button small" id="manual-detach">${detachedManual()?.digest===digest?'Detached':'Detach'}</button></div></div>`
+      +renderManual(manual,workflow.name,manualTitle(manual),esc,manualProgress(digest))
     :'<p class="muted">This workflow has no manual.</p>';
+  if(manual&&digest){
+    wireManualSteps(host,digest);
+    optionalElement('#manual-detach')?.addEventListener('click',()=>{
+      const origin=originOf(storageKey(workflow));
+      detachManual({digest,title:exampleById(origin?.exampleId??'')?.title??'Worked example'});
+    });
+  }
+}
+
+/** THE MANUAL, DETACHED: a panel that stays while the practitioner builds in a project of their own. The practitioner,
+ *  2026-11-04: *"Can the manual be detached, become a surface dialog so the user can create a new project? When the
+ *  user decides to finish the activity he or she can close the dialog. If user wants to resume user can go back to the
+ *  manual tab and detach it again to resume."* Not modal, so every control stays in reach; held on this device, so a
+ *  reload or a change of project keeps it; closed only by Close. Experiment 173. */
+const MANUAL_DETACHED='fieldwork-manual-detached-v1';
+interface DetachedManual {digest:string; title:string; left?:number; top?:number}
+const detachedManual=():DetachedManual|undefined=>{
+  try{const raw=localStorage.getItem(MANUAL_DETACHED);return raw?JSON.parse(raw) as DetachedManual:undefined;}catch{return undefined;}
+};
+const keepDetached=(state:DetachedManual|undefined)=>{
+  try{if(state)localStorage.setItem(MANUAL_DETACHED,JSON.stringify(state));else localStorage.removeItem(MANUAL_DETACHED);}
+  catch{/* the panel still opens; it is not remembered */}
+};
+function detachManual(state:DetachedManual):void{
+  keepDetached({...detachedManual(),...state});renderManualFloat(true);
+  if(currentView==='manual')renderManualView();
+}
+function renderManualFloat(resume=false):void{
+  const state=detachedManual(),manual=manualByDigest(state?.digest);
+  let panel=document.getElementById('manual-float');
+  if(!state||!manual){panel?.remove();return;}
+  if(!panel){
+    panel=document.createElement('aside');panel.id='manual-float';panel.className='manual-float';
+    panel.setAttribute('role','dialog');panel.setAttribute('aria-label','Manual');
+    document.body.append(panel);
+  }
+  const done=manualProgress(state.digest);
+  const steps=manual.workflows.reduce((n,w)=>n+w.steps.filter(s=>!('note' in s)).length,0);
+  const scroll=panel.querySelector('.manual-float-body')?.scrollTop??0;
+  panel.innerHTML=`<header class="manual-float-head"><strong>Manual \u00b7 ${esc(state.title)}</strong>`
+    +`<span class="muted">${done.size} of ${steps} done</span>`
+    +`<button class="button small" id="manual-float-close">Close</button></header>`
+    +`<div class="manual-float-body">${renderManual(manual,undefined,manualTitle(manual),esc,done)}</div>`;
+  if(state.left!==undefined&&state.top!==undefined){
+    panel.style.left=`${Math.max(0,Math.min(state.left,innerWidth-120))}px`;
+    panel.style.top=`${Math.max(0,Math.min(state.top,innerHeight-60))}px`;
+    panel.style.right='auto';panel.style.bottom='auto';
+  }
+  const body=panel.querySelector<HTMLElement>('.manual-float-body')!;
+  // RESUMING opens where the practitioner left off; a tick keeps the scroll where it was.
+  if(resume){const next=firstUndone(manual,done);
+    body.querySelector<HTMLElement>(`[data-step="${next}"]`)?.scrollIntoView({block:'center'});}
+  else body.scrollTop=scroll;
+  wireManualSteps(body,state.digest);
+  panel.querySelector<HTMLButtonElement>('#manual-float-close')!.onclick=()=>{
+    keepDetached(undefined);renderManualFloat();if(currentView==='manual')renderManualView();};
+  // Dragged by its header, and remembered where it was put.
+  const head=panel.querySelector<HTMLElement>('.manual-float-head')!;
+  head.onpointerdown=e=>{
+    if((e.target as HTMLElement).closest('button'))return;
+    const box=panel!.getBoundingClientRect(),dx=e.clientX-box.left,dy=e.clientY-box.top;
+    head.setPointerCapture(e.pointerId);
+    head.onpointermove=m=>{panel!.style.left=`${m.clientX-dx}px`;panel!.style.top=`${m.clientY-dy}px`;
+      panel!.style.right='auto';panel!.style.bottom='auto';};
+    head.onpointerup=()=>{head.onpointermove=null;head.onpointerup=null;
+      const placed=panel!.getBoundingClientRect();const now=detachedManual();
+      if(now)keepDetached({...now,left:Math.round(placed.left),top:Math.round(placed.top)});};
+  };
 }
 function renderProjectView():void{
   renderUnfiled();
@@ -7725,5 +7818,7 @@ if('serviceWorker' in navigator){
   }
 }
 if(canAutoRun(workflow))setTimeout(run,350);
+// A manual left detached stays detached across a reload, until Close.
+renderManualFloat(true);
 
 setInterval(()=>{const button=document.querySelector<HTMLButtonElement>('#download-network'),message=document.querySelector<HTMLElement>('#network-download-status');if(!button||!message)return;const state=networkDownloadStatus();button.disabled=busy||state.inFlight||state.waitSeconds>0;message.textContent=state.inFlight?(networkDownloadPhase??'One OSM request is in progress.'):networkDownloadError?networkDownloadError+(state.waitSeconds?' Next attempt available in '+state.waitSeconds+' seconds.':''):state.waitSeconds?'Next OSM download available in '+state.waitSeconds+' seconds. Saved graphs are available offline.':'Ready for one bounded OSM request; no automatic refresh.';},1000);

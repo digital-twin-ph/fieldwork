@@ -48,3 +48,61 @@ test('a worked example with a manual has a Manual tab, and a workflow without on
   await page.locator('#workflow-select').selectOption(other);
   await expect(view.locator('[data-manual-workflow]').first()).toHaveAttribute('data-manual-workflow','Ten years of daily visits');
 });
+
+/** THE MANUAL DETACHED, beside a project of the practitioner's own. The practitioner, 2026-11-04: *"Can the manual be
+ *  detached, become a surface dialog so the user can create a new project? When the user decides to finish the
+ *  activity he or she can close the dialog. If user wants to resume user can go back to the manual tab and detach it
+ *  again to resume."* */
+test('the manual detaches, stays through a new project and a reload, closes, and resumes where it was left',async({page})=>{test.skip(!!skip,skip);
+  await page.route(/raw\.githubusercontent\.com/,route=>{
+    const path=new URL(route.request().url()).pathname.split('/').slice(4).join('/');
+    route.fulfill({status:200,body:readFileSync(new URL(path,REPO))});
+  });
+  await page.goto('/');await page.evaluate(()=>localStorage.clear());
+  await page.goto('/?example=blank');
+  await page.locator('[data-view="project"]').click();
+  await page.locator('[data-open-example="urn:fieldwork:example:nyc-asthma-ozone-2016-2025"]').click();
+  await expect(page.locator('[data-example-status="urn:fieldwork:example:nyc-asthma-ozone-2016-2025"]'))
+    .toContainText('digest matched',{timeout:30000});
+  const exampleProject=await page.locator('#project-select').inputValue();
+  await page.locator('[data-view="manual"]').click();
+  await page.locator('#manual-detach').click();
+  const panel=page.locator('#manual-float');
+  await expect(panel).toBeVisible();
+  await expect(panel).toContainText('Manual · Ozone and child asthma');
+
+  // Two steps done, by click and by keyboard.
+  await panel.locator('[data-step="0:0"]').click();
+  await panel.locator('[data-step="0:1"]').focus();await page.keyboard.press('Enter');
+  await expect(panel.locator('.manual-float-head')).toContainText('2 of');
+  await expect(panel.locator('[data-step="0:0"]')).toHaveClass(/done/);
+
+  // A project of the practitioner's own: the panel stays, the tab goes.
+  await page.locator('#new-project').click();
+  await page.locator('#project-name-input').fill('My NYC rebuild');
+  await page.locator('#project-create').click();
+  await expect(page.locator('[data-view="manual"]')).toBeHidden();
+  await expect(panel).toBeVisible();
+  // Every control stays in reach: the library can be searched with the panel open.
+  await page.locator('[data-view="workflow"]').click();
+  await page.locator('#node-search').fill('Tabular');
+  await page.locator('#node-library [data-add="table_input"]').click();
+
+  // A reload keeps it, and its progress.
+  await page.reload();
+  await expect(panel).toBeVisible();
+  await expect(panel.locator('.manual-float-head')).toContainText('2 of');
+
+  // Close finishes the activity.
+  await panel.locator('#manual-float-close').click();
+  await expect(panel).toHaveCount(0);
+
+  // Resuming: back to the example, the tab shows the ticks, and detaching again opens at the next step.
+  await page.locator('#project-select').selectOption(exampleProject);
+  await page.locator('[data-view="manual"]').click();
+  await expect(page.locator('#manual-view [data-step="0:0"]')).toHaveClass(/done/);
+  await page.locator('#manual-detach').click();
+  await expect(panel).toBeVisible();
+  await expect(panel.locator('[data-step="0:2"]')).toBeInViewport();
+  await page.screenshot({path:'test-results/manual-detached.png'});
+});

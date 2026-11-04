@@ -3,6 +3,14 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.17.0 — 2026-11-04
+
+- **The manual detaches** into a panel that stays beside you while you build in a project of your own: New project,
+  the library and the canvas all stay in reach. Click a step when it is done; progress is kept on this device, the
+  panel survives a reload, and **Close** ends it. Detach again from the Manual tab to resume at the first step not
+  done. Experiment 173.
+- Validation: Chromium locally; WebKit in CI.
+
 ## 0.16.0 — 2026-11-04
 
 - **A chart can draw one panel per variable** on a shared axis, each with its own scale: visits, ozone, PM2.5 and

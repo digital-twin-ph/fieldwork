@@ -796,6 +796,18 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 .manual-see{font-style:italic}
 .manual-note{margin:10px 0 4px;color:var(--muted, inherit)}
 .manual-workflow code{overflow-wrap:anywhere}
+.manual-step{cursor:pointer;border-radius:4px;padding:1px 4px}
+.manual-step:hover,.manual-step:focus-visible{background:var(--surface-tint);outline:none}
+.manual-step.done{color:var(--muted);text-decoration:line-through;text-decoration-thickness:1px}
+.manual-step.done::marker{content:'✓  '}
+/* The detached manual: beside the work, never over the controls it describes. Resizable by its corner. */
+.manual-float{position:fixed;right:16px;bottom:16px;z-index:60;width:min(420px,calc(100vw - 32px));height:min(70vh,640px);
+  min-width:260px;min-height:180px;display:flex;flex-direction:column;resize:both;overflow:hidden;
+  background:var(--surface,#fff);color:var(--ink);border:1px solid var(--line);border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.22)}
+.manual-float-head{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid var(--line);cursor:move;user-select:none}
+.manual-float-head strong{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
+.manual-float-body{overflow:auto;padding:4px 12px 12px;font-size:13px}
+.manual-float-body h3{font-size:14px}
 .notes-view .notes-part h3{border-bottom:1px solid var(--rule,#2a3a36);padding-bottom:.25rem}
 .notes-kind-authored{background:rgba(156,59,46,.18)}
 .notes-fork{color:#9c3b2e;opacity:.85}

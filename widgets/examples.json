@@ -378,7 +378,7 @@
       "id": "urn:fieldwork:example:nyc-asthma-ozone-2016-2025",
       "title": "Ozone and child asthma emergency visits, New York City, 2016–2025",
       "repository": "https://github.com/digital-twin-ph/example-2025-nyc-ozone",
-      "commit": "a34b79ce632ea0dfb255829533f49f73ec19ba15",
+      "commit": "72e9d882f2884ab506cd0540049ecd157aac9df0",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2025-nyc-ozone",
       "licence": {
         "data": "Not redistributed",
@@ -421,8 +421,8 @@
         },
         {
           "path": "manual.json",
-          "sha256": "ebd9ad77949eea7298078f60b77cb6ca989d861e8b141b19631fb51ae28a6478",
-          "bytes": 14596
+          "sha256": "8516b95af0936faa17fe7b5c04f6bb2028602029f96bf7709a0e25ef165c636d",
+          "bytes": 14601
         }
       ],
       "workflowCount": 3

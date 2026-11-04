@@ -101,3 +101,12 @@ no copy of the named file to read instead. Either way only the named file is eve
 day: Zenodo twice left the dialog at "Fetching…" during a day of repeated full downloads, while a direct request
 answered in under two seconds. The browser tests now serve the package from a local copy (`NYC_PKG`) checked against
 the pinned archive digest, so they no longer download 9 MB from Zenodo on every run.
+
+**Read from the device without being asked (2026-11-04).** The practitioner, on the published 0.19.0: *"For NYC when I
+run workflows from notes it only runs 2 and there are 4 workflows"*, *"I am back to having to download it for every
+tabular input"*, and a photograph of the regression workflow stopped with "Select the node and choose Fetch the
+table". Measured on the live site: one download across two fetches, so the copy was kept, but the second fetch said
+nothing (its line was erased by the redraw), and a workflow whose table had not been fetched loaded without running,
+which Notes counted as run. Now a table whose file the device holds is filled from it, by digest and with no network,
+whenever its workflow is opened or run; the explicit action is kept for what still downloads. `tests/fetched-once.browser.mjs`:
+NYC from its pin, one download, the other three workflows filled and run on opening, all four in the write-up.

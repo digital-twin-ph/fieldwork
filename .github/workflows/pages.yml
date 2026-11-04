@@ -198,6 +198,15 @@ jobs:
           ref: ${{ steps.salmonella.outputs.commit }}
           fetch-depth: 0
           path: example-salmonella-checkout
+      # LONDON IS NOT IN THE CATALOGUE YET, so widgets/examples.json has no commit to read. Validation fixture
+      # select-range-london-001 reads its Stata file, and CI failed on 2026-11-04 without it. Pinned here
+      # until London becomes a catalogue entry; then read it from examples.json like the others.
+      - uses: actions/checkout@v6
+        with:
+          repository: digital-twin-ph/example-2002-london-ozone
+          ref: b89c7e4573f2a876c0c078b22b5686f634e4f53a
+          fetch-depth: 0
+          path: example-london-checkout
       - uses: actions/setup-node@v6
         with:
           node-version: '22'
@@ -238,5 +247,6 @@ jobs:
           mv example-nigeria-checkout ../example-2024-nigeria-immunization
           mv example-salmonella-checkout ../example-2021-salmonella-germany
           mv example-nyc-checkout ../example-2025-nyc-ozone
+          mv example-london-checkout ../example-2002-london-ozone
       - name: Type check, build and run regression tests
         run: npm run check

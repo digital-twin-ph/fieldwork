@@ -250,3 +250,12 @@ jobs:
           mv example-london-checkout ../example-2002-london-ozone
       - name: Type check, build and run regression tests
         run: npm run check
+      # A FAILURE THAT REPRODUCES ONLY HERE needs its screenshot and trace. On 2026-11-04 the Nigeria playback test
+      # failed on this runner, passed locally, and left nothing to look at.
+      - name: Keep the failed tests' screenshots and traces
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test-results/artifacts
+          retention-days: 14

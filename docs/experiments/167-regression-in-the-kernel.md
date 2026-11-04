@@ -1,6 +1,6 @@
 # 167 · Regression in the kernel
 
-_Created 2026-11-03 · Updated 2026-11-03_
+_Created 2026-11-03 · Updated 2026-11-04_
 
 **Status:** tried — built as the Regression widget and used by the NYC and Salmonella examples, Chromium.
 

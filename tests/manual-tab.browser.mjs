@@ -53,6 +53,17 @@ test('a worked example with a manual has a Manual tab, and a workflow without on
   await expect(url.locator('xpath=ancestor::li[1]')).not.toHaveClass(/done/);
   expect(await smoke.locator('[data-copy]').count()).toBeGreaterThan(8);
 
+  // A RANGE ON A TABLE NOT YET FETCHED is still a range. Opened from its pin, the table has no rows on this device, and
+  // the smoke workflow's 1 to 14 June showed as an empty text box (the practitioner, 2026-11-04, on the published site).
+  await page.locator('[data-view="workflow"]').click();
+  const days=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')).nodes.find(n=>n.type==='select_rows').id);
+  await page.locator(`.react-flow__node[data-id="${days}"]`).click();
+  await expect(page.locator('#select-mode')).toHaveValue('range');
+  await expect(page.locator('#select-from')).toHaveValue('2023-06-01');
+  await expect(page.locator('#select-to')).toHaveValue('2023-06-14');
+  await expect(page.locator('#select-values')).toHaveCount(0);
+  await page.locator('[data-view="manual"]').click();
+
   // Switching workflow moves the mark.
   const other=await page.locator('#workflow-select option').filter({hasText:'Ten years'}).getAttribute('value');
   await page.locator('#workflow-select').selectOption(other);

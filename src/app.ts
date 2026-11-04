@@ -2272,6 +2272,8 @@ function renderInspector(){
   }else if(n.type==='select_rows'){
     const p=n.params,shape=upstreamKeyValues(n),columns=Object.keys(shape??{});
     const held=shape?.[p.keyColumn]??[],order=orderOf(held);
+    // The column is known but its values are not: a table whose rows are not on this device.
+    const unseen=!held.length&&!!p.keyColumn&&!!shape&&p.keyColumn in shape;
     content+='<p class="description">Keeps only the rows whose chosen column holds one of the values you name, in the order you name them. What a figure should show is often less than what a table carries.</p>'
       +labelForm('select-label','Node label',p.label||'Select rows by value')
       +`<div class="field"><label class="field-label" for="select-key">Key column to choose by</label>`
@@ -2286,10 +2288,20 @@ function renderInspector(){
       // A RANGE, WHERE THE COLUMN HAS AN ORDER. Fourteen days out of 3,653 were fourteen ticks in a
       // list nobody could search; from and to are two fields. Offered only for a column that is all
       // dates or all numbers, because `orderOf` will not invent an order for anything else.
-      +(order
+      // VALUES NOT ON THIS DEVICE YET -- a fetched table opened from a catalogue keeps no rows until Fetch the table --
+      // are not a reason to hide the range. Found 2026-11-04 by the practitioner following NYC's manual on the published
+      // site: the saved 1 to 14 June showed as an empty text box. The range is offered, and checked when the run reads it.
+      +(order||unseen
         ?`<div class="field"><label class="field-label" for="select-mode">Keep</label>`
           +`<select id="select-mode"><option value="values" ${p.range?'':'selected'}>The values I tick</option>`
-          +`<option value="range" ${p.range?'selected':''}>A range of ${order==='date'?'dates':'numbers'}</option></select></div>`
+          +`<option value="range" ${p.range?'selected':''}>A range of ${order==='date'?'dates':order==='number'?'numbers':'dates or numbers'}</option></select></div>`
+        :'')
+      +(unseen&&p.range
+        ?`<div class="field"><label class="field-label" for="select-from">From</label>`
+          +`<input id="select-from" data-select-range="from" value="${esc(p.range.from)}" placeholder="for example 2023-06-01">`
+          +`<label class="field-label" for="select-to">To</label>`
+          +`<input id="select-to" data-select-range="to" value="${esc(p.range.to)}" placeholder="for example 2023-06-14">`
+          +`<p class="description">This table's values are not on this device yet, so the range is checked when the workflow runs. Both ends are kept; dates are written year-month-day.</p></div>`
         :'')
       +(order&&p.range
         ?(()=>{const sorted=held.filter(Boolean).sort(order==='number'?(a,b)=>Number(a)-Number(b):undefined);
@@ -2316,6 +2328,7 @@ function renderInspector(){
             .map(value=>`<label class="check absent"><input type="checkbox" data-select-value="${esc(value)}" `
               +`checked> ${esc(value)} <span class="absent-note">not in this table</span></label>`).join('')
           +`</div>`
+        :unseen&&p.range?''
         :`<div class="field"><label class="field-label" for="select-values">Values to keep, one per line</label>`
           +`<textarea id="select-values" data-select-text rows="3">${esc(p.values.join('\n'))}</textarea></div>`)
       +'<div class="notice">A value this table does not hold is reported rather than ignored, because asking for a row that is not there is usually a typo or a changed table upstream. Keeping nothing the table holds is refused instead of returning an empty table.</div>';

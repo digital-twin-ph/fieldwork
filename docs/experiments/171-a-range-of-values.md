@@ -58,3 +58,9 @@ established.
   it without judging it.
 - Ranges over text (alphabetical). Deliberately not offered.
 - Datetime columns are offered a text range, and a `To` given as a date excludes times later that day.
+
+**Found 2026-11-04 by the practitioner, following NYC's manual on the published site:** a select over a fetched table
+opened from the catalogue showed an empty text box instead of its saved range, because the range was offered only when
+the column's values were on the device and such a table has none until **Fetch the table**. The range is now offered
+whenever the column is known, with plain From and To fields when its values are not, and checked when the run reads
+them. `tests/manual-tab.browser.mjs` opens NYC from its pin and finds 2023-06-01 to 2023-06-14 in place.

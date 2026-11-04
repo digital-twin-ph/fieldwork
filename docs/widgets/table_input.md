@@ -1,6 +1,6 @@
 # Tabular data
 
-_Created 2026-11-02 · Updated 2026-11-02_
+_Created 2026-11-02 · Updated 2026-11-03_
 
 **A source.** It reads a CSV or Stata file into a table.
 

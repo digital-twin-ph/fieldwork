@@ -68,8 +68,22 @@ test('a URL typed again in the dialog reads the copy, and Fetch again goes to th
   assert.equal(calls.n,2);
 });
 
-test('a source that does not answer is stopped and said to be late, not left fetching',async()=>{
+test('a slow source is not stopped by a clock; it is stopped when the practitioner says so, and says how much came',async()=>{
+  // 2026-11-05: a two-minute limit stopped Zenodo sending the NYC package at 5 KB/s. Replaced by progress and a Stop.
   const {fetchBytes}=await import('../build/remote-table.js');
-  globalThis.fetch=(url,{signal})=>new Promise((_,reject)=>signal.addEventListener('abort',()=>reject(new Error('aborted'))));
-  await assert.rejects(()=>fetchBytes('https://slow.test/a.zip',30),/did not finish answering within 0 minutes. Nothing was read/);
+  const data=new Uint8Array(3000).fill(65);
+  globalThis.fetch=(url,{signal})=>{let at=0;
+    return Promise.resolve(new Response(new ReadableStream({async pull(c){
+      await new Promise(r=>setTimeout(r,5));
+      if(signal?.aborted){c.error(new Error('aborted'));return;}
+      if(at>=data.length){c.close();return;}c.enqueue(data.subarray(at,at+=1000));}}),
+      {status:200,headers:{'content-length':'3000'}}));};
+  const seen=[];
+  const whole=await fetchBytes('https://slow.test/a.zip',{onProgress:(read,total)=>seen.push([read,total])});
+  assert.equal(whole.length,3000);
+  assert.deepEqual(seen.map(([read])=>read),[0,1000,2000,3000]);
+  assert.equal(seen[0][1],3000);
+  const stop=new AbortController();
+  await assert.rejects(()=>fetchBytes('https://slow.test/a.zip',{signal:stop.signal,onProgress:read=>{if(read>=1000)stop.abort();}}),
+    /was stopped after 0\.0 of 0\.0 MB. Nothing was read/);
 });

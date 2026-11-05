@@ -60,7 +60,7 @@ for(const [nodeType,entry] of declared){
   if(entry.check&&!checked.get(nodeType)?.has(entry.check))
     problems.push(`${nodeType}: claims check "${entry.check}", which parity.json does not record for it.`);
   if(!entry.check&&checked.has(nodeType))
-    problems.push(`${nodeType}: parity.json records check "${checked.get(nodeType)}" and this file does not. Record it, so the count falls.`);
+    problems.push(`${nodeType}: parity.json records check "${[...checked.get(nodeType)].join('", "')}" and this file does not. Record it, so the count falls.`);
 }
 
 const actual={widgets:declared.size,

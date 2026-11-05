@@ -88,6 +88,7 @@ seven-group variable; the file's other three groupings give 90 to 92 and 20 to 2
 | 2026-11-04 | NYC primary model on the authors' file, `tests/regression.test.mjs` with `NYC_PKG` | Coefficient 0.0591331329660 and HAC SE 0.01272768228 against the archived 0.059133132965951 and 0.0127276822785079; N 3,643; 840 strata. The offset model and the other two pollutants agree to the same precision |
 | 2026-11-04 | Salmonella, `tests/regression.test.mjs` | 96.4 (15.4–2067) and 18.4 (4.6–101) against the published 96 (15–2100) and 18 (4.6–100) |
 | 2026-11-04 | Built by hand in the browser, Chromium: NYC manual's fourth workflow and Salmonella's from-scratch test | Passed: 1.061 (1.035 to 1.088) and 96.4 shown in Results |
+| 2026-11-05 | Validation lab check 33, statsmodels 0.15.0 on CPython (lab commit `12bc09f`) | Agrees: coefficients and standard errors to 1.3e-10 (Salmonella) and 1.1e-12 (NYC, HAC and model-based), likelihood-ratio limits to about 1e-9. statsmodels' default tolerance had to be tightened to 1e-12: at its default it stopped one iteration short of Fieldwork's converged standard error. **Finding:** the panel case's 80+ age group is separated, and Fieldwork reports it as an odds ratio of 1.27e8 with no warning |
 
 The independent laboratory refit is not done: the widget awaits a lab check. WebKit was not run locally.
 

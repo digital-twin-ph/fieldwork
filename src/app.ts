@@ -37,7 +37,7 @@ import {openStepViewer,openTableViewer,shapeChange,stepLabels,tableViewOf} from 
 import {openRelateJoin} from './relate-ui.js';
 import {relateShape} from './relate-table.js';
 import {findingsSummary,wideDataTable} from './data-table.js';
-import {fetchRemoteTable,useDeviceCopies,archiveOnDevice} from './remote-table.js';
+import {fetchRemoteTable,useDeviceCopies,archiveOnDevice,progressText} from './remote-table.js';
 import {describableColumns,fileRows,isDescribed,metadataFindings,entriesFrom} from './column-metadata.js';
 import {openColumnsDialog} from './columns-dialog.js';
 import {castColumn,applyRepairs} from './column-profile.js';
@@ -4190,9 +4190,15 @@ function renderInspector(){
     const button=e.currentTarget as HTMLButtonElement,say=$('#table-fetch-status');
     const params=getNode(workflow,n.id,'table_input').params;
     if(!params.remote)return;
-    button.disabled=true;say.textContent=` Fetching from ${new URL(params.remote.url).hostname}…`;
+    // PROGRESS AND A STOP, not a time limit: a slow source is still a working one (2026-11-05, Zenodo at 5 KB/s).
+    const host=new URL(params.remote.url).hostname,stop=new AbortController();
+    button.disabled=true;say.innerHTML=` <span data-fetch-progress>Fetching from ${esc(host)}…</span> `
+      +'<button type="button" class="text-button" data-fetch-stop>Stop</button>';
+    say.querySelector<HTMLButtonElement>('[data-fetch-stop]')!.onclick=()=>stop.abort();
+    const progress=say.querySelector('[data-fetch-progress]')!;
     try{
-      const file=await fetchRemoteTable(params.remote);
+      const file=await fetchRemoteTable(params.remote,{signal:stop.signal,
+        onProgress:(read,total)=>{progress.textContent=`Fetching from ${host}: ${progressText(read,total)}`;}});
       await readFetchedInto(n.id,file);
     }catch(error){button.disabled=false;say.textContent=` ${error instanceof Error?error.message:'The table could not be fetched.'}`;}
   });

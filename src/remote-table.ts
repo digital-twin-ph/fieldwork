@@ -21,25 +21,47 @@ export interface RemoteTableSource {
 const isZip=(bytes:Uint8Array)=>bytes[0]===0x50&&bytes[1]===0x4b&&bytes[2]===0x03&&bytes[3]===0x04;
 const nameOf=(path:string)=>path.split('/').at(-1)||path;
 
+/** HOW MUCH HAS ARRIVED, for a progress line: bytes read, and the total when the host declares one. */
+export type FetchProgress=(read:number,total:number|undefined)=>void;
+export interface FetchOptions {onProgress?:FetchProgress; signal?:AbortSignal}
+/** "1.5 of 8.8 MB", or "1.5 MB" when the host declared no length. */
+export const progressText=(read:number,total?:number)=>`${(read/1e6).toFixed(1)}${total?` of ${(total/1e6).toFixed(1)}`:''} MB`;
+
 /** The bytes at a URL. A refusal names the URL and the status, because a host that stopped answering is the
- *  likeliest cause and the practitioner can check it. */
-/** How long a source has to answer and finish, before the fetch is stopped and said to have failed. Found 2026-11-04:
- *  Zenodo twice left the dialog at "Fetching…" with nothing to say, after many downloads of the NYC package in a day. */
-export const FETCH_TIMEOUT_MS=120_000;
-export async function fetchBytes(url:string,timeoutMs=FETCH_TIMEOUT_MS):Promise<Uint8Array<ArrayBuffer>>{
-  const stop=new AbortController(),timer=setTimeout(()=>stop.abort(),timeoutMs);
-  const late=()=>new Error(`${url} did not finish answering within ${Math.round(timeoutMs/60000)} minutes. Nothing was `
-    +'read. The host may be slow or limiting downloads; try again later.');
+ *  likeliest cause and the practitioner can check it.
+ *
+ *  NO TIME LIMIT. Until 2026-11-05 a fetch was stopped after two minutes, a chosen number: that day Zenodo answered in
+ *  half a second and then sent the NYC package at about 5 KB/s, so a download that was working was stopped and called a
+ *  failure. A limit on how long a source may take bounds what can be fetched at all, and the caps ledger admits no new
+ *  unmeasured limit of that kind. So the bytes are counted as they arrive, the practitioner sees them, and stopping is
+ *  theirs (`signal`). A connection that dies is still an error, from the browser. */
+export async function fetchBytes(url:string,{onProgress,signal}:FetchOptions={}):Promise<Uint8Array<ArrayBuffer>>{
+  const stopped=(read:number,total?:number)=>new Error(`The download from ${url} was stopped after ${progressText(read,total)}. `
+    +'Nothing was read.');
+  let response:Response;
+  // REVALIDATED, NOT TAKEN FROM THE CACHE: a file corrected at its source must be seen, and the digest is checked
+  // either way. A cached copy of a refused file kept refusing after the source was fixed, found 2026-11-03.
+  try{response=await fetch(url,{mode:'cors',credentials:'omit',cache:'no-cache',...(signal?{signal}:{})});}
+  catch{throw signal?.aborted?stopped(0):new Error(`${url} could not be reached from this browser. The host may be down, or may not allow a browser to fetch from it.`);}
+  if(!response.ok)throw new Error(`${url} answered ${response.status}.`);
+  const total=Number(response.headers.get('content-length'))||undefined;
+  if(!response.body){try{return new Uint8Array(await response.arrayBuffer());}catch(error){throw signal?.aborted?stopped(0,total):error;}}
+  const reader=response.body.getReader(),chunks:Uint8Array[]=[];
+  let read=0;
+  onProgress?.(0,total);
   try{
-    let response:Response;
-    // REVALIDATED, NOT TAKEN FROM THE CACHE: a file corrected at its source must be seen, and the digest is checked
-    // either way. A cached copy of a refused file kept refusing after the source was fixed, found 2026-11-03.
-    try{response=await fetch(url,{mode:'cors',credentials:'omit',cache:'no-cache',signal:stop.signal});}
-    catch{throw stop.signal.aborted?late():new Error(`${url} could not be reached from this browser. The host may be down, or may not allow a browser to fetch from it.`);}
-    if(!response.ok)throw new Error(`${url} answered ${response.status}.`);
-    try{return new Uint8Array(await response.arrayBuffer());}
-    catch(error){throw stop.signal.aborted?late():error;}
-  }finally{clearTimeout(timer);}
+    for(;;){
+      const next=await reader.read();
+      if(next.done)break;
+      chunks.push(next.value);read+=next.value.length;onProgress?.(read,total);
+    }
+  }catch(error){
+    throw signal?.aborted?stopped(read,total):new Error(`The download from ${url} broke off after ${progressText(read,total)}. `
+      +'Nothing was read. Fetch it again to start over.');
+  }
+  const joined=new Uint8Array(read);let offset=0;
+  for(const chunk of chunks){joined.set(chunk,offset);offset+=chunk.length;}
+  return joined;
 }
 
 /** The readable tables in an archive, CSV and Stata, in the archive's order. */
@@ -94,33 +116,33 @@ async function fromDevice(digest:string):Promise<Uint8Array<ArrayBuffer>|undefin
   return held&&await contentHash(held)===digest?held:undefined;
 }
 /** Fetched from the source, then kept by its digest. */
-async function fromSource(url:string):Promise<{bytes:Uint8Array<ArrayBuffer>;digest:string}>{
-  const bytes=await fetchBytes(url),digest=await contentHash(bytes);
+async function fromSource(url:string,options:FetchOptions={}):Promise<{bytes:Uint8Array<ArrayBuffer>;digest:string}>{
+  const bytes=await fetchBytes(url,options),digest=await contentHash(bytes);
   await store?.keep(digest,bytes).catch(()=>undefined);
   rememberCopy(url,{sha256:digest,bytes:bytes.length,fetchedAt:new Date().toISOString()});
   return {bytes,digest};
 }
 
 /** For the dialog: the device's copy of what this URL gave last time, unless `fresh`; else the source. */
-export async function fetchOrDeviceCopy(url:string,{fresh=false}={}):Promise<{bytes:Uint8Array<ArrayBuffer>;digest:string;
+export async function fetchOrDeviceCopy(url:string,{fresh=false,...options}:{fresh?:boolean}&FetchOptions={}):Promise<{bytes:Uint8Array<ArrayBuffer>;digest:string;
     from:'device'|'source';fetchedAt?:string}>{
   const copy=fresh?undefined:deviceCopyOf(url);
   const held=copy?await fromDevice(copy.sha256):undefined;
   if(held&&copy)return {bytes:held,digest:copy.sha256,from:'device',fetchedAt:copy.fetchedAt};
-  return {...await fromSource(url),from:'source'};
+  return {...await fromSource(url,options),from:'source'};
 }
 
 /** Fetches a table its spec describes and refuses one that is not the file the spec names. The device's copy is read
  *  first when it has the file the spec names by digest; `from` says which it was. */
-export async function fetchRemoteTable(spec:RemoteTableSource):Promise<File&{from?:'device'|'source'}>;
+export async function fetchRemoteTable(spec:RemoteTableSource,options?:FetchOptions):Promise<File&{from?:'device'|'source'}>;
 export async function fetchRemoteTable(spec:RemoteTableSource,options:{deviceOnly:true}):Promise<(File&{from?:'device'|'source'})|undefined>;
 /** `deviceOnly` reads the device's copy or nothing: never the network. A run uses it, so running a workflow does not
  *  download anything a person did not ask for. */
-export async function fetchRemoteTable(spec:RemoteTableSource,{deviceOnly=false}:{deviceOnly?:boolean}={}):Promise<(File&{from?:'device'|'source'})|undefined>{
+export async function fetchRemoteTable(spec:RemoteTableSource,{deviceOnly=false,...options}:{deviceOnly?:boolean}&FetchOptions={}):Promise<(File&{from?:'device'|'source'})|undefined>{
   const wanted=spec.archiveSha256??(spec.entry?undefined:spec.sha256);
   const held=wanted?await fromDevice(wanted):undefined;
   if(deviceOnly&&!held)return undefined;
-  const fetched=held??(await fromSource(spec.url)).bytes;
+  const fetched=held??(await fromSource(spec.url,options)).bytes;
   const file=readSpec(spec,fetched,await (async()=>held?wanted!:await contentHash(fetched))());
   return Object.assign(await file,{from:held?'device' as const:'source' as const});
 }

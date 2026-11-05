@@ -72,7 +72,12 @@ with h5py.File(io.BufferedReader(f, buffer_size=1 << 16), 'r') as h:
         sel = inside[r0:r1, :]
         units = p['nitrogendioxide_tropospheric_column'].attrs.get('units')
         fill = p['nitrogendioxide_tropospheric_column'].attrs.get('_FillValue')
-        vals = no2[sel]; q = qa[sel]
+        vals = no2[sel]
+        qa_raw = qa[sel]
+        scale = float(np.ravel(p['qa_value'].attrs.get('scale_factor', 1.0))[0])
+        q = qa_raw * scale  # h5py does not apply scale_factor; the stored values are 0-100
+        print(f'qa_value raw: min {qa_raw.min()} max {qa_raw.max()}; scale_factor {scale}; '
+              f'scaled: {sorted(set(round(float(x),2) for x in q))}')
         good = vals[(q >= 0.75) & (vals != fill)] if fill is not None else vals[q >= 0.75]
         print(f'NO2 units {units!r}; pixels {sel.sum()}, with qa_value >= 0.75: {good.size}; '
               f'mean {float(good.mean()) if good.size else None}')

@@ -2,7 +2,7 @@
 
 _Created 2026-11-05 · Updated 2026-11-05_
 
-**Status:** tried — the practitioner's requirements, and phase 1's first side experiments (S1 to S5 done, S6 and S7 pending). No widget code yet. Phases 0 and 1 of
+**Status:** tried — the practitioner's requirements, and phase 1's first side experiments (S1 to S6 done, S7 pending). No widget code yet. Phases 0 and 1 of
 [the 2026-11-04 plan](../research/eo-stac-nyc-architecture-and-plan-2026-11-04.md) come next.
 
 ## The task
@@ -108,6 +108,12 @@ file's layout and not one JavaScript library's.
 58 pixels fall in the five boroughs' bounding box (W −74.26, S 40.49, E −73.70, N 40.92), all with `qa_value` ≥ 0.75;
 their mean tropospheric NO₂ column is 3.86 × 10⁻⁵ mol m⁻², the product's own unit.
 
+**Corrected 2026-11-05, the same day: none of the 58 passes `qa_value` ≥ 0.75.** The sentence above compared the
+STORED quality values, 0 to 100, against 0.75: h5py does not apply the variable's `scale_factor` of 0.01, and the probe
+did not either, so almost any pixel passed. Applied, every one of the 58 reads 0.74. Found because h5wasm, in S6, read
+the scale factor and counted none; the two readers then agreed once the probe was fixed. The mean 3.86 × 10⁻⁵ mol m⁻²
+is of 58 pixels the usual threshold excludes, and is not a result. The byte cost is unaffected.
+
 **What this does not establish:**
 
 - **That a browser can do it.** h5py read it; a JavaScript HDF5 reader that makes range reads is still to be chosen
@@ -130,8 +136,26 @@ including the ones not yet run, so what was measured, what was only read and wha
 | S3 | 2026-11-05 | Can a browser get Sentinel-5P NO₂ without sign-in? | catalog searches and response headers from Copernicus CDSE and Planetary Computer, `Origin` set to Fieldwork's; no data | done: CDSE needs sign-in, Planetary Computer does not | *Phase 1, first measurements* |
 | S4 | 2026-11-05 | Which aerosol and ozone routes need no sign-in? | Planetary Computer collection list and item searches over NYC, 7 June 2023; licence links read from the catalog, the legal notice itself not read | done: S5P O₃ (total column), S5P aerosol index and layer height, S3 SYN AOD; MODIS MAIAC is not there | the same section |
 | S5 | 2026-11-05 | How many bytes of a swath does NYC need? | `scripts/s5p_range_probe.py`, h5py through counted 64 KB range reads, capped at 20 MB; one 63.2 MB file, approved by the practitioner | done: **2.25 MB in 35 requests** | *Phase 1: how much of a swath NYC needs* |
-| S6 | pending | Which browser HDF5 reader can read by range? | candidates from the npm registry's metadata: `netcdfjs` 4.0.0 (MIT, 0.07 MB; believed to read classic NetCDF only, which these files are not), `jsfive` 0.4.2 (pure JavaScript, 1.6 MB), `h5wasm` 0.10.3 (HDF5 compiled to WebAssembly, 14.7 MB); the last two give their licence as "see LICENSE.txt", not yet read. The test: install each into a scratch folder outside Fieldwork, read its licence, read the same file under the same cap, and compare its bytes with S5's 2.25 MB | **awaiting the practitioner's approval to install the two packages** | here |
+| S6 | 2026-11-05 | Which browser HDF5 reader can read by range? | installed into a scratch folder outside Fieldwork with the practitioner's approval, licences read first: `jsfive` 0.4.2 (public domain, after pyfive) and `h5wasm` 0.10.3 (NIST notice; bundles the HDF5 library). Run in Chromium by `scripts/probes/h5wasm-range-probe.mjs`, the storage requests counted, capped at 20 MB | done: **jsfive cannot** (its README: "only for reading HDF5 files as an ArrayBuffer representation of the file", so all 63.2 MB; not run). **h5wasm can**, in a worker, through Emscripten's lazy file: 1 header request and 7 range reads of 1 MB, **6.58 MB of 63.2 MB**, the same 58 pixels and the same quality values as h5py. Slow: 2 and 8 minutes on two runs, each 1 MB block a synchronous request in turn | *S6, measured* below |
 | S7 | not started | Reading the Sentinel Data Legal Notice | read the notice the catalogs link before any of these products is called open in the EO catalogue | not started | — |
+
+## S6, measured: a browser reads the swath by range
+
+| Reader | Reads by range? | Bytes for NYC | Requests | Notes |
+| --- | --- | --- | --- | --- |
+| h5py (S5, the yardstick) | yes, 64 KB blocks | 2.25 MB | 35 | Python; not a browser reader |
+| `h5wasm` 0.10.3 in a Chromium worker | **yes**, 1 MB blocks (Emscripten's lazy file, `FS.createLazyFile`) | **6.58 MB** | 8 | needs the server to expose `Accept-Ranges` and `Content-Length`, which Planetary Computer's storage does to any origin; 14.7 MB package |
+| `jsfive` 0.4.2 | **no** | would be 63.2 MB | — | reads only from a whole file in memory; not run |
+
+So NetCDF-4 is a reader to add, not a blocker: h5wasm in a worker reads NYC's part of a Sentinel-5P swath with no
+account, at about a tenth of the file. **Not established:** whether the lazy file's block size can be lowered to bring
+6.58 MB toward h5py's 2.25 MB; why the two runs took 2 and 8 minutes, which looks like the network and sequential
+requests and was not measured; whether h5wasm's 14.7 MB can be loaded only when a satellite file is opened; and any of
+this in WebKit.
+
+**The quality finding stands on its own.** That day's near-real-time swath over NYC has every pixel at 0.74, so a
+practitioner applying the documented threshold gets nothing for that overpass. A widget has to say so, per date,
+rather than show an empty value.
 
 ## What is already known to be a limit
 

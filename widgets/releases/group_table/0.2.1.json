@@ -1,0 +1,61 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "released": "2026-11-05",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "validationStatus": "application-only",
+    "shaclShapes": [],
+    "typescriptType": "ParamsByType['group_table']"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": null
+  },
+  "id": "urn:fieldwork:widget:group_table",
+  "nodeType": "group_table",
+  "version": "0.2.1",
+  "title": "Total within groups",
+  "ports": {
+    "inputs": [
+      {
+        "name": "records",
+        "type": "table"
+      }
+    ],
+    "output": "table",
+    "optionalInputs": [],
+    "note": "Takes a table and gives back one row per distinct combination of the key columns kept, holding the sum, minimum or maximum of the rows that collapsed into it, or how many there were. The key columns not kept are gone from the result."
+  },
+  "ontology": {
+    "status": "gap",
+    "mappings": [],
+    "note": "No ontology mapping yet. The receipt names the columns kept, the columns dropped, how many rows collapsed into how many groups, and every group that held an empty cell.",
+    "emits": {
+      "classes": [],
+      "properties": []
+    }
+  },
+  "implementation": {
+    "files": [
+      "src/group-table.ts",
+      "src/core.ts",
+      "src/app.ts"
+    ],
+    "definition": "src/group-table.ts"
+  },
+  "changes": [
+    {
+      "kind": "patch",
+      "description": "Ticking several key columns at once keeps all of them: every box is read on any change. Found when a worked example's manual ticked three in one step and only the first was kept. The boxes are a named group, Key columns to keep."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Unit tested as the second step of the Snow chain: 64 rows of Table VIII, related to a water supply category, totalled into six -- three supply categories by two measures -- and matching the hand-computed table exactly. Covers an empty cell, which totals to nothing known, and grouping by every column, which is refused as a no-op. Nothing here establishes that the rows totalled TOGETHER belong together: this step cannot tell a count from a rate and will add up rates on request, which is why only sum is offered and why the table's own unit is the only thing saying what the total counts. Lab check 29. Count rows is unit tested over a four-row table holding a blank; it establishes that rows are counted and not that a row is a subject."
+  }
+}

@@ -199,6 +199,31 @@ export function browserFetchableUrl(url:string):string{
  *  that matters. */
 export interface BoundaryUnit {id:string; name:string; geometry:Polygon|Boundary}
 
+/** HOW A UNIT IS OFFERED IN THE PICKER: by its name, and, where that name repeats in the level, by where it is.
+ *
+ *  Found 2026-11-05 choosing New York City's five boroughs from geoBoundaries' 3,233 US counties: 444 names repeat
+ *  (5 Richmonds, 2 Kings) and each unit carries only `shapeName` and `shapeID`, with no state. A list of names alone
+ *  offered five identical "Richmond" entries. The position is the mean of the unit's vertices, to two decimals: enough
+ *  to tell Staten Island (40.58 N, 74.17 W) from Richmond, Virginia, and a statement of where the shape lies rather
+ *  than a claim about its centre. The VALUE is the unit's own id where ids are unique, so a choice survives a
+ *  re-ordered list and a manual can name it. */
+export function unitOptions(units:readonly BoundaryUnit[]):{value:string;label:string}[]{
+  const names=new Map<string,number>();
+  for(const u of units)names.set(u.name,(names.get(u.name)??0)+1);
+  const uniqueIds=new Set(units.map(u=>u.id)).size===units.length;
+  const where=(u:BoundaryUnit):string=>{
+    const c=(u.geometry as {coordinates?:unknown}).coordinates;
+    const flat:number[][]=[];
+    const walk=(v:unknown):void=>{if(Array.isArray(v)&&typeof v[0]==='number')flat.push(v as number[]);
+      else if(Array.isArray(v))v.forEach(walk);};
+    walk(c);
+    if(!flat.length)return '';
+    const x=flat.reduce((a,p)=>a+p[0]!,0)/flat.length,y=flat.reduce((a,p)=>a+p[1]!,0)/flat.length;
+    return ` \u00b7 ${Math.abs(y).toFixed(2)}\u00b0 ${y>=0?'N':'S'}, ${Math.abs(x).toFixed(2)}\u00b0 ${x>=0?'E':'W'}`;
+  };
+  return units.map((u,i)=>({value:uniqueIds?u.id:String(i),label:u.name+((names.get(u.name)??0)>1?where(u):'')}));
+}
+
 export function readUnits(level:BoundaryLevel,geojson:unknown):BoundaryUnit[]{
   const features=(geojson as {features?:unknown[]})?.features;
   if(!Array.isArray(features))return [];

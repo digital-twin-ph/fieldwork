@@ -24,6 +24,8 @@ export type ManualStep=
   | {fill:string; label:string; value:string; in?:string; view?:ManualView; dialog?:string}
   | {choose:string; label:string; value:string; shown?:string; in?:string; view?:ManualView; dialog?:string}
   | {tick:string; label:string; values:string[]; dialog?:string}
+  /** Several options of one list, named as the reader sees them: the boroughs among a level's units. */
+  | {pick:string; label:string; values:string[]; dialog?:string}
   | {keyRole:string; value:'primary'|'secondary'|''; shown:string; dialog?:string}
   | {run:true}
   | {see:string; check?:string}
@@ -36,7 +38,7 @@ const VIEW_NAMES:Record<ManualView,string>={project:'Project',workflow:'Workflow
 export interface ManualWorkflow {name:string; question?:string; steps:ManualStep[]}
 export interface WorkedExampleManual {schema:string; example:string; intro?:string; workflows:ManualWorkflow[]}
 
-const KINDS=['add','reuse','select','connect','click','fill','choose','tick','keyRole','run','see','note'] as const;
+const KINDS=['add','reuse','select','connect','click','fill','choose','tick','pick','keyRole','run','see','note'] as const;
 const kindOf=(step:ManualStep):string=>KINDS.find(kind=>kind in step)??'';
 
 /** Refuses a manual that could not be followed: an unknown step, a node named before it is added, a handle used
@@ -89,6 +91,8 @@ export function stepSentence(step:ManualStep,types:Record<string,string>,title:(
     +`<button type="button" class="manual-copy" data-copy="${esc(step.value)}" aria-label="Copy ${esc(step.label)}">Copy</button>.`);
   if('choose' in step)return sentence(`For ${bold(step.label,esc)}${where(step.in)}, choose ${bold(step.shown??step.value,esc)}.`);
   if('tick' in step)return sentence(`Under ${bold(step.label,esc)}, keep only ${step.values.map(v=>`<code>${esc(v)}</code>`).join(', ')}.`);
+  if('pick' in step)return sentence(`Under ${bold(step.label,esc)}, choose ${step.values.map(v=>bold(v,esc)).join(', ')}. `
+    +'Hold Ctrl, or \u2318 on a Mac, to choose more than one.');
   if('keyRole' in step)return sentence(`Make <code>${esc(step.keyRole)}</code> a ${bold(step.shown,esc)}.`);
   if('run' in step)return `Press ${bold('Run workflow',esc)}.`;
   if('see' in step)return `You should see ${esc(step.see)}.`;

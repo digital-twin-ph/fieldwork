@@ -3,6 +3,23 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.27.0 — 2026-11-05
+
+- **Point data reads points from a table in the workflow**, as geopandas' `points_from_xy` does. Connect a table and
+  name its **x (longitude)** and **y (latitude)** columns. A row whose coordinates are empty, not numbers or out of
+  range is kept with no position and counted, never a refusal of the table, and the result says how many rows share a
+  position. Read as CRS84. Point data 0.4.0; lab check 34 agrees with geopandas. Experiment 178.
+- **The NYC example has a study-area map for the Introduction**: the five boroughs from geoBoundaries and the six
+  ozone monitors, read from the authors' site-day file. Its manual builds it from an empty canvas.
+- **A boundary unit whose name repeats is listed with where it lies.** US counties carry no state, and five are
+  called Richmond; they now read *Richmond · 40.58° N, 74.17° W* and so on. Study area 0.5.1.
+- Fixed: ticking several columns at once in Total within groups kept only the first (0.2.1). The Country field's
+  label no longer reads as the whole country list.
+- A widget under Sources may now read data already in the workflow when it can run without it; only one that
+  requires it is treated as a transform. The naming ledger no longer caps how many known exceptions may stand: each
+  is held to its own reason and what would clear it.
+- Validation: Chromium locally; WebKit in CI.
+
 ## 0.26.0 — 2026-11-05
 
 - **Choose where a figure goes in the write-up.** Every Map, Table and Chart output has **In the write-up, under**:

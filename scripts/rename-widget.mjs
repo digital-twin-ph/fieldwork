@@ -68,11 +68,10 @@ for(const file of ['widgets/classification.json','widgets/evidence.json','widget
   if(after!==before){write(file,JSON.parse(after));console.log(`  rewrote ${file}`);}
 }
 
-// 5. the naming ledger: the violations this rename clears, and the ceiling that can only fall
+// 5. the naming ledger: the violations this rename clears
 const naming=read('widgets/naming.json');
 const cleared=naming.knownViolations.filter(v=>v.nodeType===from);
 naming.knownViolations=naming.knownViolations.filter(v=>v.nodeType!==from);
-naming.maxKnownViolations=naming.knownViolations.length;
 write('widgets/naming.json',naming);
 
 // 6. a review is of a name, and the name changed
@@ -113,5 +112,4 @@ for(const [script,target] of DERIVED){
   } else console.log(`  regenerated ${target}`);
 }
 
-console.log(`${from} -> ${to}: release ${version}, ${cleared.length} naming violation(s) cleared, `
-  +`ceiling now ${naming.maxKnownViolations}`);
+console.log(`${from} -> ${to}: release ${version}, ${cleared.length} naming violation(s) cleared`);

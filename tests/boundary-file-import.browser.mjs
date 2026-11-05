@@ -53,7 +53,7 @@ test('a boundary file becomes named units, and each part keeps its name',async({
   await expect(page.locator('#area-boundary-pick option')).toHaveCount(3);
   await expect(page.locator('#area-boundary-pick')).toContainText('Rotherhithe');
 
-  await page.locator('#area-boundary-pick').selectOption(['0','1','2']);
+  await page.locator('#area-boundary-pick').selectOption([{index:0},{index:1},{index:2}]);
   await page.locator('#area-boundary-use').click();
   // WAIT FOR THE ASSEMBLY, not for the button. #area-apply is already enabled from the example's
   // own study area, so clicking it on enablement alone races the async assembly and saves the

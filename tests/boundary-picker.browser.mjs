@@ -100,7 +100,7 @@ test('a study area can be chosen from administrative boundaries',async({page})=>
   expect(country[0],'west of the country extent').toBeGreaterThan(28);
   expect(country[0]).toBeLessThan(31);
 
-  await page.locator('#area-boundary-pick').selectOption(['0']);
+  await page.locator('#area-boundary-pick').selectOption([{index:0}]);
   // And to the UNIT when one is chosen: a tighter extent inside the country's.
   const unit=(await lookingAt()).split(',').map(Number);
   expect(unit[2]-unit[0],'the unit is narrower than the whole level')
@@ -184,7 +184,7 @@ test('several units are several parts, each as published, and never a bounding b
   await page.locator('#area-iso').fill('Democratic Republic of the Congo');
   await page.locator('#area-boundary-check').click();
   await expect(page.locator('#area-boundary-units')).toBeVisible({timeout:20000});
-  await page.locator('#area-boundary-pick').selectOption(['0','1']);
+  await page.locator('#area-boundary-pick').selectOption([{index:0},{index:1}]);
   await page.locator('#area-boundary-use').click();
 
   // They used to collapse to "A BOUNDING BOX AROUND 2 UNITS, not their outlines" -- honest, but a

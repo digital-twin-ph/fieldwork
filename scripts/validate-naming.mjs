@@ -1,5 +1,4 @@
 import {readFileSync} from 'node:fs';
-import {ceilingProblems} from './ceiling.mjs';
 import {fileURLToPath, pathToFileURL} from 'node:url';
 import {sourceDefinitions} from './validate-widgets.mjs';
 
@@ -42,7 +41,16 @@ export const AUDITED_NAMES={
 const ROLE_WORDS=['input','output'];
 const significant=type=>type.split('_').filter(t=>t.length>=3&&!ROLE_WORDS.includes(t));
 
-export function violations({definitions,classification,domainPrefixes={}}){
+/** The ports each widget can run without, from the generated port contracts: optional in every contract it has. */
+export function optionalPortsFromContracts(contracts=JSON.parse(readFileSync(root+'widgets/port-contracts.json','utf8'))){
+  return Object.fromEntries(Object.entries(contracts.widgets??{}).map(([nodeType,w])=>{
+    const sets=(w.contracts??[]).map(c=>new Set((c.optional??[]).map(([port])=>port)));
+    const always=sets.length?[...sets[0]].filter(port=>sets.every(set=>set.has(port))):[];
+    return [nodeType,new Set(always)];
+  }));
+}
+
+export function violations({definitions,classification,domainPrefixes={},optionalPorts=optionalPortsFromContracts()}){
   const byType=Object.fromEntries(classification.widgets.map(w=>[w.nodeType,w]));
   const found=[];
   const add=(nodeType,rule,detail)=>found.push({nodeType,rule,detail});
@@ -75,10 +83,15 @@ export function violations({definitions,classification,domainPrefixes={}}){
     // group says. This catches `slr_extract_import`, which takes a `table` on an input port and
     // only validates and annotates it. The transform-verb rule above missed it: that rule keys on
     // the verb a name opens with, and a verb list is never complete, while a contract can be read.
+    //
+    // AMENDED 2026-11-05: what makes a source a transform is REQUIRING data already in the workflow, not being able to
+    // read it. Point data took an optional table, so a table the workflow fetched or totalled need not be imported a
+    // second time, and this rule called that a violation. The practitioner: "Reading data already in the workflow is
+    // efficiency." A source that cannot run without workflow data is still caught; an optional data input is not.
     if(group==='Sources')
       for(const [port,portType] of definition.inputs??[])
-        if(!SCOPE_PORT_TYPES.includes(portType))
-          add(nodeType,'source-consumes-data',`Grouped under Sources but consumes "${portType}" on port "${port}". A source may take a scope (${SCOPE_PORT_TYPES.join(', ')}), not data already in the workflow.`);
+        if(!SCOPE_PORT_TYPES.includes(portType)&&!optionalPorts?.[nodeType]?.has(port))
+          add(nodeType,'source-consumes-data',`Grouped under Sources but requires "${portType}" on port "${port}". A source may take a scope (${SCOPE_PORT_TYPES.join(', ')}), or optional data already in the workflow, but a widget that cannot run without workflow data is a transform.`);
 
     // A domain widget carries its domain in the identifier a reader meets first. The prefix is an
     // abbreviation a person chooses -- `slr_` for sea-level rise -- and is not derivable from the
@@ -127,18 +140,17 @@ export function validateNaming({definitions,classification,baseline}){
       problems.push(`Stale entry in widgets/naming.json: "${k}" no longer violates the convention. `
         +`Remove it, so the count ratchets down.`);
 
-  for(const v of baseline.knownViolations)
+  // EACH KNOWN VIOLATION IS HELD TO ITS OWN RECORD: why it stands and what would clear it. There is no ceiling on how
+  // many there are. The practitioner, 2026-11-05, of the count the ledger capped: "If that's another cap then it's a
+  // false one." A total capped is a budget, and a needed exception then costs an unrelated one; see
+  // widgets/naming.json's ceilingHistory for the ceiling this replaced.
+  for(const v of baseline.knownViolations){
     if(!v.reason||typeof v.reason!=='string')problems.push(`Known violation "${key(v)}" carries no reason`);
-
-  problems.push(...ceilingProblems('widgets/naming.json',
-    {current:baseline.maxKnownViolations,initial:baseline.initialCeiling,raises:baseline.raises}));
-  if(baseline.knownViolations.length>baseline.maxKnownViolations)
-    problems.push(`${baseline.knownViolations.length} known violations exceeds the ceiling of `
-      +`${baseline.maxKnownViolations}. The ceiling may be lowered, never raised.`);
+    if(!v.clearedBy||typeof v.clearedBy!=='string')problems.push(`Known violation "${key(v)}" says nothing of what would clear it`);
+  }
 
   if(problems.length)throw new Error(problems.join('\n'));
-  return {checked:Object.keys(definitions).length,known:baseline.knownViolations.length,
-    ceiling:baseline.maxKnownViolations};
+  return {checked:Object.keys(definitions).length,known:baseline.knownViolations.length};
 }
 
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
@@ -154,6 +166,6 @@ if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
   try{
     const result=validateNaming({definitions,classification,baseline});
     console.log(`Naming convention: ${result.checked} node types checked, `
-      +`${result.known} known violations (ceiling ${result.ceiling}).`);
+      +`${result.known} known violations, each with its reason and its route out.`);
   }catch(error){console.error(error.message);process.exit(1);}
 }

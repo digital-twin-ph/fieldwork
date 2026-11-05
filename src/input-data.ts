@@ -127,3 +127,4 @@ export function geoPackagePoints(db:Database,layer:string):PointCollection{
 }
 let sqlite:Promise<SqlJsStatic>|null=null;
 export function loadSQLite(){if(!sqlite)sqlite=new Promise<SqlJsStatic>((resolve,reject)=>{const script=document.createElement('script');script.src='./vendor/sql-wasm.js';script.onload=()=>globalThis.initSqlJs({locateFile:()=>new URL('./vendor/sql-wasm.wasm',location.href).href}).then(resolve,reject);script.onerror=()=>reject(new Error('The local GeoPackage reader could not load.'));document.head.append(script);}).catch(error=>{sqlite=null;throw error;});return sqlite;}
+

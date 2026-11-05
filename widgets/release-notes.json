@@ -351,12 +351,12 @@
    ]
   },
   "group_table": {
-   "version": "0.2.0",
-   "released": "2026-11-02",
+   "version": "0.2.1",
+   "released": "2026-11-05",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Adds Count rows, and records the minimum and maximum admitted on 2026-10-31 without a release. A line list has no count to add: Oswego's 75 people are a row each with Y or N under every food, so no sum reaches a two-by-two, and writing a column of 1s into a published line list would be editing the source to suit the tool. A count never reads the value, so the additivity argument that bounds this step does not reach it, a blank is still a row, and the result's value is called rows. It counts rows and not people: a wide import with two value columns has two rows per person, which this step cannot detect."
+     "kind": "patch",
+     "description": "Ticking several key columns at once keeps all of them: every box is read on any change. Found when a worked example's manual ticked three in one step and only the first was kept. The boxes are a named group, Key columns to keep."
     }
    ],
    "breaking": false,
@@ -575,16 +575,12 @@
    "migrationFrom": []
   },
   "point_input": {
-   "version": "0.3.0",
-   "released": "2026-10-13",
+   "version": "0.4.0",
+   "released": "2026-11-05",
    "changes": [
     {
      "kind": "minor",
-     "description": "Renamed from `observations` to `point_input`. The old identifier keeps resolving: a saved workflow naming `observations` is rewritten on open and stamped with sourceMigration, because the operation is unchanged and a rename must not refuse work the way a retirement does. `observations` is a category noun, and the title \"Input data\" said \"input\" where the identifier did not and shared no word with it -- so a reader had to learn a mapping that carried no information. The operation is importing observed points, and the title is now \"Point data\", which matches `table_input` and \"Tabular data\". Clears three violations: audited-name, role-word-in-title and title-type-agreement. No contract change: ports, output, parameters and behaviour are identical."
-    },
-    {
-     "kind": "minor",
-     "description": "Heat examples use shared input editing. Legacy places and centers normalize on load without changing IDs, labels, references, geometry or scalar attributes; sourceMigration records adapter version 1."
+     "description": "Reads points from a table a workflow computed, as geopandas' points_from_xy does. Connect a table to the new optional `records` input and name its x (longitude) and y (latitude) columns, and optionally a record ID and a label. Read as CRS84. A row whose coordinates are empty, not numbers or out of range is kept with no position and counted, never a refusal of the table; rows sharing a position are counted too, the sign that a table needs totalling to one row per place first. Every column travels as an attribute. Unconnected, the widget is the source it always was. The receipt states fw:PointsFromTable with the columns read and what was placed, written by src/table-points.ts and held by fw:PointsFromTableShape. The practitioner, 2026-11-05: 'Point data widget has input options that include CSV' -- so a source of this widget, and no new one. Experiment 178."
     }
    ],
    "breaking": false,
@@ -857,20 +853,12 @@
    "migrationFrom": []
   },
   "study_area": {
-   "version": "0.5.0",
-   "released": "2026-10-24",
+   "version": "0.5.1",
+   "released": "2026-11-05",
    "changes": [
     {
-     "kind": "feature",
-     "description": "A study area accepts a GeoJSON polygon file from the practitioner's own device, named by a property they name, and each feature becomes a selectable unit exactly as a downloaded administrative level does. Of the five port types only `polygons` had no source widget; the answer was not a sixth source, because a study area already held several published outlines with provenance naming each. The practitioner, 2026-10-24: \"Study area then for polygon input. I have mentioned before that a study area is actually a polygon input.\" Provenance for a local file states \"not stated\" for licence, authority and year rather than inventing them, and names the file."
-    },
-    {
-     "kind": "fix",
-     "description": "ADJACENT UNITS ARE ADMITTED. Parts sharing a border were refused -- two squares meeting along an edge were rejected while the same two with a gap were accepted -- so a multi-part study area worked only for units that do not touch, which administrative units tiling their ground almost never are. The practitioner, 2026-10-24: \"Study area can hold adjacent units, like North Kivu and Ituri Provinces for Ebola outbreak.\" Two causes, both fixed: the edge test refused touching as well as crossing between parts, and the containment test probed from a vertex that for an adjacent unit usually lies on the shared border, which ray casting reads as inside. Crossing interiors and true containment are still refused, and within one part a ring that touches itself is still a drawing fault. Combined area's manual already argued this position -- two provinces sharing a border come through as two parts, not one welded outline -- so the widget kept the border while acquisition refused it; that is resolved."
-    },
-    {
-     "kind": "feature",
-     "description": "Per-part identity survives into the workflow. BoundaryProvenance gains `units`, so `units[i]` names part i. A54 asks to select boundary members without forcing a union and acquisition honoured it, but application did not: several units became one MultiPolygon and one comma-joined name, so nothing could match a figure to the boundary it belongs to."
+     "kind": "patch",
+     "description": "A unit whose name repeats in a geoBoundaries level is listed with where it lies, and each unit is chosen by its own id. Found choosing New York City's five boroughs from 3,233 US counties: 444 names repeat, five Richmonds among them, and a unit carries no state. Experiment 177."
     }
    ],
    "breaking": false,

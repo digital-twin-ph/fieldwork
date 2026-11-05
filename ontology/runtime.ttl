@@ -363,6 +363,19 @@ fw:seriesPeriod a owl:DatatypeProperty; rdfs:range xsd:string; rdfs:label "Serie
 fw:caseWeightField a owl:DatatypeProperty; rdfs:range xsd:string;
   rdfs:comment "The attribute holding how many cases a record stands for. Absent means one case per record, which is a claim about the data and not a default to be assumed quietly.".
 fw:seriesTotal a owl:DatatypeProperty; rdfs:range xsd:decimal.
+fw:PointsFromTable a owl:Class; rdfs:subClassOf prov:Entity;
+  rdfs:label "Points read from a table";
+  rdfs:comment "Point data read at run time from a table a workflow computed, one point per row from the row's x (longitude) and y (latitude) columns, in CRS84: geopandas' points_from_xy. A row whose coordinates are empty, not numbers or out of range is kept with no geometry and counted, never a refusal of the table. Experiment 178.".
+fw:xAttribute a owl:DatatypeProperty; rdfs:domain fw:PointsFromTable; rdfs:range xsd:string;
+  rdfs:label "x attribute"; rdfs:comment "The column read as x, the longitude. Named by the practitioner, never inferred from a column name.".
+fw:yAttribute a owl:DatatypeProperty; rdfs:domain fw:PointsFromTable; rdfs:range xsd:string;
+  rdfs:label "y attribute"; rdfs:comment "The column read as y, the latitude.".
+fw:placedRecordCount a owl:DatatypeProperty; rdfs:domain fw:PointsFromTable; rdfs:range xsd:integer;
+  rdfs:label "placed record count".
+fw:unplacedRecordCount a owl:DatatypeProperty; rdfs:domain fw:PointsFromTable; rdfs:range xsd:integer;
+  rdfs:label "unplaced record count"; rdfs:comment "Rows kept with no geometry because a coordinate was empty, not a number, or outside the longitude and latitude range.".
+fw:distinctPositionCount a owl:DatatypeProperty; rdfs:domain fw:PointsFromTable; rdfs:range xsd:integer;
+  rdfs:label "distinct position count"; rdfs:comment "How many different positions the placed rows hold. Fewer than the rows placed means rows share a position: on a table of one row per site and day, the sign it needs totalling to one row per site first.".
 fw:datedRecordCount a owl:DatatypeProperty; rdfs:range xsd:integer.
 fw:undatedRecordCount a owl:DatatypeProperty; rdfs:range xsd:integer;
   rdfs:comment "Records excluded for want of a usable date. Reported rather than silently dropped: a curve computed from fewer records than were supplied is a different curve.".

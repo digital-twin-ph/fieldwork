@@ -2468,9 +2468,9 @@ function renderInspector(){
     content+='<p class="description">Adds up the values of the rows that agree on the key columns you keep. The columns you do not keep are gone from the result.</p>'
       +labelForm('group-label','Node label',p.label||'Total within groups')
       +(columns.length
-        ?`<span class="inspector-section">Key columns to keep</span>`
-          +columns.map(column=>`<label class="check"><input type="checkbox" data-group-by="${esc(column)}" `
-            +`${p.by.includes(column)?'checked':''}> ${esc(column)}</label>`).join('')
+        ?`<fieldset id="group-keep" class="field"><legend class="inspector-section">Key columns to keep</legend>`
+          +columns.map(column=>`<label class="check"><input type="checkbox" value="${esc(column)}" data-group-by="${esc(column)}" `
+            +`${p.by.includes(column)?'checked':''}> ${esc(column)}</label>`).join('')+`</fieldset>`
           +(p.by.length&&p.by.length===columns.length
             ?'<div class="notice notice-warning">Keeping every column means every row is already its own group, so nothing would be totalled. Leave out the column whose rows should be added up.</div>'
             :p.by.length?`<div class="notice">Dropping ${esc(columns.filter(c=>!p.by.includes(c)).join(', '))}.</div>`:'')
@@ -2979,6 +2979,24 @@ function renderInspector(){
         }).join('')+`</ul>`;
     }
     content+=`<button id="edit-study-area" class="button primary">${n.params.geometry?'Edit area on map':'Select area on map'}</button>${n.params.geometry?'<button id="area-view-n3" class="text-button">Inspect N3 facts and rule ↗</button>':''}<div class="notice">Evaluation prompt: what should the next workflow node receive from this selection?</div>`;
+  }else if(n.type==='point_input'&&workflow.edges.some(e=>e.to===n.id&&e.port==='records')){
+    // FROM A TABLE IN THIS WORKFLOW: x (longitude) and y (latitude), named and never guessed, as geopandas'
+    // points_from_xy reads them. The columns are the table's as last run, or as declared upstream. Experiment 178.
+    const edge=workflow.edges.find(e=>e.to===n.id&&e.port==='records')!;
+    const ran=result?.tables?.[edge.from] as import('./data-table.js').DataTable|undefined;
+    const declared=Object.keys(upstreamKeyValues(n)??{});
+    const columns=[...new Set([...(ran?.keys??[]),...(ran?.valueField?[ran.valueField]:[]),...declared])];
+    const m=n.params.fromTable;
+    const pick=(id:string,key:'x'|'y'|'id'|'name',label:string,optional:boolean)=>
+      `<div class="field"><label class="field-label" for="${id}">${label}</label>`
+      +`<select id="${id}" data-from-table="${key}"><option value="">${optional?'Generate automatically':'Choose a column…'}</option>`
+      +columns.map(c=>`<option value="${esc(c)}" ${m?.[key]===c?'selected':''}>${esc(c)}</option>`).join('')+`</select></div>`;
+    content+=labelForm('source-label','Source label',n.params.label||'Point data')
+      +'<p class="description">One point per row of the connected table, from its longitude and latitude columns, read as CRS84 (WGS 84 degrees). Every column travels with the point.</p>'
+      +(columns.length?'':'<p class="notice">Run the workflow once to list the table\'s columns.</p>')
+      +pick('from-table-x','x','x (longitude)',false)+pick('from-table-y','y','y (latitude)',false)
+      +pick('from-table-id','id','Record ID',true)+pick('from-table-name','name','Label',true)
+      +'<div class="notice">A row whose longitude or latitude is empty, not a number, or out of range is kept with no position and counted on the result; the table is not refused. Rows at the same position stay separate points, and the result says how many share one: total the table within the columns that name a place first if one point per place is meant. UTM metres are read by the CSV import, not here.</div>';
   }else if(n.type==='point_input'){
     if(n.sourceMigration)content+=`<p class="notice">${n.sourceMigration.fromType==='output'
       ?`Replaced the retired <strong>Visual output</strong> widget; name and connections retained.`
@@ -3458,6 +3476,12 @@ function renderInspector(){
       change(w=>{getNode(w,n.id,'study_design').params=next;});
     },()=>designChecklist(workflow,n.id));
   });
+  document.querySelectorAll<HTMLSelectElement>('[data-from-table]').forEach(el=>el.addEventListener('change',()=>change(w=>{
+    const node=getNode(w,n.id,'point_input');
+    const next={x:'',y:'',...(node.params.fromTable??{})} as import('./table-points.js').TableMapping;
+    const key=required(el.dataset.fromTable) as keyof import('./table-points.js').TableMapping;
+    if(el.value)next[key]=el.value;else if(key==='id'||key==='name')delete next[key];else next[key]='';
+    node.params.fromTable=next;})));
   optionalElement('#output-section')?.addEventListener('change',event=>{
     const chosen=(event.target as HTMLSelectElement).value as FigureSection;
     change(w=>{const node=required(w.nodes.find(x=>x.id===n.id));
@@ -4118,12 +4142,14 @@ function renderInspector(){
     el.addEventListener('change',()=>change(w=>{
       getNode(w,n.id,'select_rows').params.values=el.value.split('\n')
         .map(line=>line.trim()).filter(Boolean);})));
+  // EVERY BOX IS READ ON ANY CHANGE, so several ticked at once -- as a manual's step does -- are all kept. The order
+  // is the order already kept, then any newly ticked in the order shown.
   document.querySelectorAll<HTMLInputElement>('[data-group-by]').forEach(el=>
     el.addEventListener('change',()=>change(w=>{
-      const node=getNode(w,n.id,'group_table'),column=required(el.dataset.groupBy);
-      node.params.by=el.checked
-        ?[...node.params.by.filter(held=>held!==column),column]
-        :node.params.by.filter(held=>held!==column);})));
+      const node=getNode(w,n.id,'group_table');
+      const ticked=[...document.querySelectorAll<HTMLInputElement>('[data-group-by]')]
+        .filter(box=>box.checked).map(box=>required(box.dataset.groupBy));
+      node.params.by=[...node.params.by.filter(held=>ticked.includes(held)),...ticked.filter(c=>!node.params.by.includes(c))];})));
   document.querySelectorAll<HTMLTextAreaElement>('[data-group-text]').forEach(el=>
     el.addEventListener('change',()=>change(w=>{
       getNode(w,n.id,'group_table').params.by=el.value.split('\n')

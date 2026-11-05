@@ -1,0 +1,194 @@
+title: Remote Sensing Epidemiology Worked Examples for FieldWork document_type: research_note project: FieldWork created_utc: 2026-11-05T00:00:00Z version: ‘1.0’ status: research scoping
+
+Remote Sensing Epidemiology: FieldWork Research Note
+
+Date: 2026-11-05 (UTC; date-level timestamp)
+
+Purpose
+
+Identify open-data epidemiological worked examples requiring satellite remote sensing, and specify reproducible FieldWork workflows linking observations, exposures, analysis, provenance, and manuscript outputs. Data availability must be checked at file/schema/license level before implementation.
+
+Candidate studies
+
+|Case              |Remote sensing                                                        |Outcome                        |Spatial/temporal scale          |Readiness                                   |
+
+|------------------|----------------------------------------------------------------------|-------------------------------|--------------------------------|--------------------------------------------|
+
+|Brazil dengue     |MODIS land surface temperature (LST), vegetation, rainfall, land cover|Dengue notifications           |Municipality/week               |Strong candidate; verify integrated dataset |
+
+|Kenya malaria     |CHIRPS rainfall, ERA5-Land temperature, MODIS NDVI                    |Malaria cases or prevalence    |Subcounty/month                 |Health outcome access uncertain             |
+
+|Bangladesh cholera|Sentinel-1 flood extent, JRC surface water, precipitation             |Cholera cases                  |District or catchment/week-month|Outcome access uncertain                    |
+
+|European heat     |ERA5 temperature, MODIS LST, urban vegetation                         |Mortality                      |Region/day                      |Mortality access varies                     |
+
+|US air pollution  |Satellite aerosol optical depth and satellite-informed PM2.5          |Asthma/respiratory outcomes    |County/year or finer            |Strong aggregate-data candidate             |
+
+|Nigeria malaria   |CHIRPS, ERA5-Land, NDVI, surface water                                |Malaria cases or modeled burden|LGA/month                       |Monthly observed LGA cases not verified open|
+
+Recommended primary example: Brazil dengue
+
+Research question: Do satellite-derived temperature and vegetation measures improve prediction of municipal dengue incidence beyond seasonal patterns and historical notifications?
+
+Candidate datasets:
+
+● InfoDengue surveillance: https://info.dengue.mat.br/
+
+● Mosqlimate data: https://sprint.mosqlimate.org/data/
+
+● Candidate integrated dataset: https://zenodo.org/records/22029053 (verify record, files, license)
+
+● Candidate code: https://github.com/jssanchez-garreta/dataset-multimodal-dengue-brazil (verify repository)
+
+● MODIS products: https://lpdaac.usgs.gov/
+
+● CHIRPS: https://www.chc.ucsb.edu/data/chirps
+
+● IBGE boundaries: https://www.ibge.gov.br/en/geosciences/territorial-organization/territorial-meshes.html
+
+Data schema: municipality_id, epi_year, epi_week, cases, population, lst_day_c, lst_night_c, ndvi, rainfall_mm, source_version, observation_date, availability_date, qa_flag.
+
+Computations: satellite QA masking; zonal statistics; population-weighted exposure; epidemiological week alignment; incidence per 100,000; 0–12-week exposure lags; negative-binomial regression with population offset; distributed-lag nonlinear models; spatial autocorrelation; blocked temporal validation; predictive comparison with seasonality-only baselines.
+
+Safeguards: LST is not air temperature; avoid future-information leakage; distinguish modeled exposure from observed health outcomes; account for reporting changes, ecological fallacy, spatial confounding, and uncertainty.
+
+Deliverables: exposure maps, epidemic curves, lag-response plots, out-of-time validation, data dictionary, provenance manifest, manuscript methods/results sections.
+
+Kenya malaria
+
+Question: Are rainfall and vegetation anomalies associated with subsequent malaria burden by subcounty?
+
+Sources: CHIRPS, ERA5-Land, MODIS, administrative boundaries, population denominators, and an authorized/verified subcounty health series.
+
+Methods: monthly climate anomalies, lagged exposures, incidence when counts and denominators exist, hierarchical spatiotemporal regression, spatial residual checks.
+
+Gate: Do not substitute modeled malaria prevalence for observed monthly cases without labeling it as modeled.
+
+Bangladesh cholera and flooding
+
+Question: Does flood exposure precede increased cholera incidence?
+
+Sources: Sentinel-1 SAR, JRC Global Surface Water, CHIRPS/GPM rainfall, population, water/sanitation covariates, and verified geocoded cholera surveillance.
+
+Methods: flood area proportion, exposure buffers, temporal lags, regression or event studies with explicit assumptions.
+
+Gate: Confirm an open and legally reusable cholera outcome series; otherwise implement only flood-exposure mapping.
+
+European heat and mortality
+
+Question: How do extreme heat and urban greenness relate to short-term mortality?
+
+Sources: ERA5/ERA5-Land, MODIS LST, land cover, demographic data, public mortality records where available.
+
+Methods: heatwave definitions, percentile anomalies, quasi-Poisson time series, distributed-lag nonlinear models, attributable fractions and uncertainty.
+
+Gate: Verify mortality spatial/temporal coverage; do not treat LST as direct human ambient-temperature exposure.
+
+US satellite-informed air pollution and respiratory outcomes
+
+Question: Are satellite-informed PM2.5 exposures associated with variation in aggregate respiratory outcomes?
+
+Sources: CDC Environmental Public Health Tracking, EPA AirData, NASA Earthdata, Census boundaries/population.
+
+Methods: exposure aggregation, age standardization where supported, ecological regression, spatial diagnostics, sensitivity to exposure measurement error and suppressed counts.
+
+Gate: Check outcome suppression, reporting definitions, and whether PM2.5 estimates already assimilate ground monitoring data.
+
+Nigeria malaria
+
+Question: Do climate anomalies predict variation in malaria burden at LGA level?
+
+Sources: GRID3 LGA boundaries, WorldPop, CHIRPS, ERA5-Land, MODIS vegetation, verified malaria data.
+
+Methods: monthly climate cube, baseline anomalies, 0–3-month lags, negative-binomial or hierarchical models, spatial validation.
+
+Gate: Observed monthly LGA case series are not assumed public. If only modeled burden exists, do not claim surveillance-based inference.
+
+FieldWork architecture
+
+Dataset catalogue / license validation
+
+  -> Remote sensing acquisition (STAC, COG, raster tiles)
+
+  -> QA masking and CRS/time alignment
+
+  -> Zonal or population-weighted exposure aggregation
+
+  -> Epidemiological space-time join
+
+  -> Study-design-aware statistical modeling
+
+  -> Spatial/temporal validation
+
+  -> Figures, provenance, GitHub manuscript workflow
+
+Suggested registry operations: discover_asset, validate_license, mask_quality, aggregate_exposure, align_epi_calendar, build_lags, fit_model, validate_temporally, export_provenance.
+
+Store CRS, units, observation period, source retrieval date, version, uncertainty, and missingness for every transformation. Keep large imagery outside Git and version references/checksums. Never commit identifiable or restricted health data.
+
+Implementation milestones
+
+1. Data readiness: Verify Brazil source URLs, actual files, licenses, geographic identifiers, time coverage, and missingness.
+
+2. Baseline: Reproduce dengue incidence and seasonality maps using prepared data.
+
+3. Satellite pipeline: Independently derive at least one MODIS exposure from original observations; compare with supplied features.
+
+4. Analysis: Fit lagged models, quantify uncertainty, and evaluate blocked temporal generalization against baselines.
+
+5. Publication: Generate manuscript, figures, methods, and machine-readable provenance with GitHub review.
+
+6. Generalization: Implement US PM2.5 example to test non-infectious environmental epidemiology.
+
+References and source portals
+
+1. Funk C, et al. (2015). The climate hazards infrared precipitation with stations. Scientific Data 2:150066. https://doi.org/10.1038/sdata.2015.66
+
+2. Hersbach H, et al. (2020). The ERA5 global reanalysis. QJRMS. https://doi.org/10.1002/qj.3803
+
+3. Pekel J-F, et al. (2016). High-resolution mapping of global surface water. Nature. https://doi.org/10.1038/nature20584
+
+4. Gasparrini A, Armstrong B, Kenward MG (2010). Distributed lag non-linear models. Statistics in Medicine. https://doi.org/10.1002/sim.3940
+
+5. von Elm E, et al. (2007). STROBE statement. PLoS Medicine. https://doi.org/10.1371/journal.pmed.0040296
+
+6. NASA LP DAAC MODIS products: https://lpdaac.usgs.gov/
+
+7. NASA Earthdata: https://www.earthdata.nasa.gov/
+
+8. CHIRPS: https://www.chc.ucsb.edu/data/chirps
+
+9. Copernicus Climate Data Store: https://cds.climate.copernicus.eu/
+
+10. InfoDengue: https://info.dengue.mat.br/
+
+11. Mosqlimate: https://sprint.mosqlimate.org/data/
+
+12. IBGE territorial meshes: https://www.ibge.gov.br/en/geosciences/territorial-organization/territorial-meshes.html
+
+13. CDC Environmental Public Health Tracking: https://ephtracking.cdc.gov/
+
+14. EPA AirData: https://www.epa.gov/outdoor-air-quality-data
+
+15. WorldPop: https://www.worldpop.org/
+
+16. GRID3: https://grid3.org/
+
+17. Candidate Brazil integrated dataset (verify): https://zenodo.org/records/22029053
+
+18. Candidate Brazil code (verify): https://github.com/jssanchez-garreta/dataset-multimodal-dengue-brazil
+
+Open research questions
+
+● Is the Brazil integrated dataset downloadable and licensed for reuse, with reproducible processing code?
+
+● Which satellite variables are directly observed versus modeled or interpolated?
+
+● Can administrative identifiers be reconciled across changing municipal boundaries?
+
+● Which other case has an openly downloadable subnational health outcome time series?
+
+● Which raster operations should run in browser WASM versus optional remote processing?
+
+Status: Research note and implementation proposal, not a claim that every data source has been independently verified or joined.
+ 

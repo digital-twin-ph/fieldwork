@@ -55,7 +55,9 @@ import {OLD_TYPES} from '../build/old-naledi.js';
 // depends on the design that produced it -- so the port now fits two blocks and is not a stud.
 // The 9 above stood for part of one afternoon and is left recorded rather than erased: a count
 // that only ever goes down tells you nothing about which way it moved.
-const CUSTOM_STUDS_TODAY=8;
+// 9 on 2026-11-05, with satellite-product: find_satellite_products feeds only search_satellite_catalog, because a
+// catalog search without a chosen product searches nothing (experiment 179, D4).
+const CUSTOM_STUDS_TODAY=9;
 
 const definitions={...TYPES,...OLD_TYPES};
 const union=[...new Set(readFileSync(new URL('../src/types.ts',import.meta.url),'utf8')

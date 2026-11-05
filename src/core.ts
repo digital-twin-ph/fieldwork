@@ -65,6 +65,7 @@ import {relateTable,relateOutcome,machinedNotes,relateReceiptFacts,type RelateOu
 // THE EQUATIONS THE COMPUTATIONS USED, machined as Methods notes. The second, third and fourth
 // producers of a machined note, which is the state `relate-table.ts` wrote its type for.
 import {tablePoints,tablePointsSentence,tablePointsFacts} from './table-points.js';
+import {productFor,productFacts,productSentence} from './satellite-products.js';
 import {figureSection,figureSectionDeclared} from './notes.js';
 import {rateEquationNote,rateTwoByTwoEquationNote,twoByTwoEquationNote,machinedNoteFacts}
   from './equations.js';
@@ -154,6 +155,11 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   // A DECLARATION THAT OPENS A WORKFLOW, as `study_area` does for WHERE. It consumes nothing:
   // a design is something a practitioner knows about their study, not something derived from
   // data, and giving it an input would invite the inference this refuses. Experiment 154.
+  // WHICH SATELLITES AND PRODUCTS MEASURE A VARIABLE, adapted from JLT's EO Satellite Guide. Takes nothing and fetches
+  // nothing: it chooses where data will come from. Experiment 179.
+  find_satellite_products:{title:'Find satellite products',group:'Sources',icon:'◎',color:'blue',
+    description:'Choose the satellite product that measures a variable, seeing what it measures, its licence and whether it needs sign-in',
+    inputs:[],output:'satellite-product'},
   study_design:{title:'Study design',group:'Epidemiology',icon:'◇',color:'teal',
     description:'Declare the study design and its period, so the computations downstream are the ones the design can estimate',
     inputs:[],output:'design'},
@@ -1465,6 +1471,14 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
       // auditable rather than a comment. The value carries the design so a consumer wired by an
       // edge reads it from its inputs; a consumer with no edge walks upstream for the node
       // instead. Experiment 154.
+      case 'find_satellite_products':{
+        const product=node.params.topic&&node.params.route?productFor(node.params.topic,node.params.route):null;
+        if(!product)throw new Error('Choose a satellite product: open Find satellite products and choose one.');
+        value={kind:'satellite-product',product,sentence:productSentence(product)} as unknown as DisplayValue;
+        const facts=productFacts(`<urn:fieldwork:run:${runId}:output:${node.id}>`,product);
+        receipts.push({nodeId:node.id,kind:'computation',facts,rules:'',input:facts,conclusions:[],
+          method:productSentence(product)} as unknown as Receipt);
+        break;}
       case 'study_design':{
         const sentence=studyDesignSentence(node as WorkflowNode<'study_design'>);
         value={kind:'study-design',...(investigatorAllocated(node.params)?{stopped:true}:{}),

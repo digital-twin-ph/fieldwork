@@ -399,6 +399,16 @@
         }
       ]
     },
+    "find_satellite_products": {
+      "output": "satellite-product",
+      "contracts": [
+        {
+          "when": "default",
+          "required": [],
+          "optional": []
+        }
+      ]
+    },
     "study_design": {
       "output": "design",
       "contracts": [

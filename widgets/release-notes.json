@@ -1050,6 +1050,18 @@
    ],
    "breaking": false,
    "migrationFrom": []
+  },
+  "find_satellite_products": {
+   "version": "0.1.0",
+   "released": "2026-11-05",
+   "changes": [
+    {
+     "kind": "initial",
+     "description": "Choose the satellite product that measures a variable. Type a topic or a measurement, or pick one: the dialog shows the chain from question to collection, the caution about what a satellite measures, and one card per product, with what it measures and its unit, sign-in, the licence as read, whether a browser can read it and the quality rule. Products needing no sign-in come first. Adapted from JLT's EO Satellite Guide (MIT, commit 684833c), in Fieldwork's dialog style. Experiment 179."
+    }
+   ],
+   "breaking": false,
+   "migrationFrom": []
   }
  }
 }

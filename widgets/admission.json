@@ -1,8 +1,8 @@
 {
   "schema": "fieldwork/admission-state/1",
   "note": "Admission is a claim made at a point in time against a stated standard, not a permanent property. This is a developmental evaluation: the criteria change as lessons are learned, so what passed D1 at widget 20 may fail the D1 of widget 51. Treating admission as permanent is what left three implementations of one operation, nine example-bound widgets and four port names encoding a use in a registry whose every member had passed its own review honestly. The widget audit's own Method section is where the permanence came from: D3 and D4 were sampled because 'doing it retroactively for all of them is a separate task', and D5, D6, D8 and D9 were declared 'not applicable retroactively'. That separate task was never scheduled. So each criterion now records when it last CHANGED and when the set was last SWEPT against it. A criterion changed after its last sweep is a re-admission debt: validate:admission fails, and the only ways to clear it are to sweep or to record why the change does not reach the existing set.",
-  "measuredAt": "2026-11-03",
-  "widgets": 67,
+  "measuredAt": "2026-11-05",
+  "widgets": 68,
   "criteria": [
     {
       "id": "D1",
@@ -123,10 +123,10 @@
     }
   ],
   "setChanged": {
-    "at": "2026-11-04",
-    "registry": 67,
+    "at": "2026-11-05",
+    "registry": 68,
     "live": 57,
-    "retired": 10,
-    "note": "regression added 2026-11-04, reviewed in docs/experiments/167-regression-in-the-kernel.md. D1: a practitioner asks for it by name (\"logistic regression\", \"adjust for age and sex\"), and adjusting for several variables at once does not decompose into the two-by-two. D2: nothing in Fieldwork fits a model; the two-by-two, rate and rate ratio compute closed-form measures. D3: a model that does not converge reports no estimate; a declared case-control design allows logistic regression only; a stratum without events is dropped and counted. D10: Salmonella and NYC examples."
+    "retired": 11,
+    "note": "rate_ratio retired into the two-by-two (experiment 161, step 6), and find_satellite_products added, reviewed in docs/experiments/179-eo-and-stac-for-the-nyc-monitors.md. D1: a practitioner asks for it by name (\"EO identifies the satellite groups for those variables\"). D2: examined first; nothing in the palette chooses a remote-sensing source, Raster input reads a local file. D4: a satellite-product port, because a catalog search without a chosen product searches nothing. D11: the curated route choice with what was read about it. D10: no worked example yet; NYC is the first intended."
   }
 }

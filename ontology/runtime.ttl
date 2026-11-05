@@ -363,6 +363,31 @@ fw:seriesPeriod a owl:DatatypeProperty; rdfs:range xsd:string; rdfs:label "Serie
 fw:caseWeightField a owl:DatatypeProperty; rdfs:range xsd:string;
   rdfs:comment "The attribute holding how many cases a record stands for. Absent means one case per record, which is a claim about the data and not a default to be assumed quietly.".
 fw:seriesTotal a owl:DatatypeProperty; rdfs:range xsd:decimal.
+fw:SatelliteProductChoice a owl:Class; rdfs:subClassOf prov:Entity;
+  rdfs:label "Satellite product choice";
+  rdfs:comment "Which satellite product a practitioner chose for a research topic, and what was and was not read about it. A choice, not data: nothing is downloaded by the step that makes it. Routes are curated in JLT's EO Satellite Guide (eo:STACCollection in its vocabulary, vendored in examples/eo) and in Fieldwork's additions. Experiment 179.".
+fw:researchTopic a owl:DatatypeProperty; rdfs:domain fw:SatelliteProductChoice; rdfs:range xsd:string; rdfs:label "research topic".
+fw:satelliteRoute a owl:DatatypeProperty; rdfs:domain fw:SatelliteProductChoice; rdfs:range xsd:string; rdfs:label "satellite route".
+fw:stacCatalog a owl:DatatypeProperty; rdfs:domain fw:SatelliteProductChoice; rdfs:range xsd:string; rdfs:label "STAC catalog".
+fw:stacCollection a owl:DatatypeProperty; rdfs:domain fw:SatelliteProductChoice; rdfs:range xsd:string; rdfs:label "STAC collection".
+fw:productType a owl:DatatypeProperty; rdfs:domain fw:SatelliteProductChoice; rdfs:range xsd:string; rdfs:label "product type";
+  rdfs:comment "Where one collection holds several products, which one: Sentinel-5P's L2__NO2___ beside L2__O3____.".
+fw:measuredQuantity a owl:DatatypeProperty; rdfs:domain fw:SatelliteProductChoice; rdfs:range xsd:string; rdfs:label "measured quantity";
+  rdfs:comment "column, optical-depth, index or surface; unread where nobody has read it. A satellite column, an optical depth and a surface concentration are different quantities, and a ground monitor measures the last.".
+fw:observationKind a owl:DatatypeProperty; rdfs:domain fw:SatelliteProductChoice; rdfs:range xsd:string; rdfs:label "observation kind";
+  rdfs:comment "observation or model. A gap-filled product or a reanalysis is a model, never an observation.".
+fw:signIn a owl:DatatypeProperty; rdfs:domain fw:SatelliteProductChoice; rdfs:range xsd:string; rdfs:label "sign-in";
+  rdfs:comment "none, anonymous-token or account; unread where nobody has checked.".
+fw:licenceRead a owl:ObjectProperty; rdfs:domain fw:SatelliteProductChoice; rdfs:label "licence read";
+  rdfs:comment "The licence as read from the licence itself, with where and when. A catalog's licence field is not enough: Sentinel-5P's says proprietary and links a dead host, while the notice grants free, full and open access.".
+fw:licenceName a owl:DatatypeProperty; rdfs:range xsd:string; rdfs:label "licence name".
+fw:licenceReadAt a owl:DatatypeProperty; rdfs:range xsd:string; rdfs:label "licence read at".
+fw:licenceReadOn a owl:DatatypeProperty; rdfs:range xsd:date; rdfs:label "licence read on".
+fw:licenceOpen a owl:DatatypeProperty; rdfs:range xsd:boolean; rdfs:label "licence open".
+fw:licenceUnread a owl:DatatypeProperty; rdfs:domain fw:SatelliteProductChoice; rdfs:range xsd:boolean; rdfs:label "licence unread";
+  rdfs:comment "Nobody has read this route's licence. Said, so an unread licence is not read as an open one.".
+fw:curatedBy a owl:DatatypeProperty; rdfs:domain fw:SatelliteProductChoice; rdfs:range xsd:string; rdfs:label "curated by";
+  rdfs:comment "eo-satellite-guide or fieldwork: whose curated list the route came from.".
 fw:PointsFromTable a owl:Class; rdfs:subClassOf prov:Entity;
   rdfs:label "Points read from a table";
   rdfs:comment "Point data read at run time from a table a workflow computed, one point per row from the row's x (longitude) and y (latitude) columns, in CRS84: geopandas' points_from_xy. A row whose coordinates are empty, not numbers or out of range is kept with no geometry and counted, never a refusal of the table. Experiment 178.".

@@ -1,0 +1,449 @@
+{
+  "version": "1.0.0",
+  "verified": "2026-11-03",
+  "scope": "An editorial SKOS/SOSA/DCAT application profile and deterministic alias matcher. Matches indicate potential data relevance, not study validity or complete language understanding.",
+  "topics": [
+    {
+      "id": "no2",
+      "label": "Nitrogen dioxide (NO\u2082)",
+      "aliases": [
+        "no2",
+        "nitrogen dioxide",
+        "nitrogen-dioxide"
+      ],
+      "broader": "air-quality",
+      "property": "tropospheric nitrogen dioxide column",
+      "platforms": [
+        "sentinel-5p",
+        "aura",
+        "intelsat-40e",
+        "meteosat-13",
+        "metop-sg-a1"
+      ],
+      "routes": [
+        "s5p-no2",
+        "tempo-no2",
+        "omi-no2"
+      ],
+      "chain": "NO\u2082 question \u2192 atmospheric column retrieval \u2192 TROPOMI / OMI / TEMPO \u2192 platform \u2192 provider collection",
+      "caution": "Satellite NO\u2082 columns are not ground-level concentrations or personal exposure. Check retrieval version, units, clouds, quality flags, averaging kernels, overpass time and validation before analysis.",
+      "sources": [
+        "tropomi-no2",
+        "tempo-products",
+        "eumetsat-sentinel4",
+        "eumetsat-sentinel5"
+      ]
+    },
+    {
+      "id": "aerosol",
+      "label": "Aerosols and particulate matter context",
+      "aliases": [
+        "aerosol",
+        "aerosols",
+        "aod",
+        "pm2.5",
+        "particulate matter",
+        "smoke"
+      ],
+      "broader": "air-quality",
+      "property": "aerosol optical depth",
+      "platforms": [
+        "terra",
+        "aqua",
+        "suomi-npp",
+        "noaa-20",
+        "noaa-21",
+        "sentinel-5p",
+        "sentinel-3a",
+        "sentinel-3b"
+      ],
+      "routes": [
+        "sentinel3-aod",
+        "modis-aod"
+      ],
+      "chain": "Particle question \u2192 aerosol optical properties \u2192 MODIS / VIIRS / TROPOMI \u2192 platform \u2192 aerosol product",
+      "caution": "Aerosol optical depth and UV aerosol index differ. Neither is directly PM\u2082.\u2085 mass concentration. Surface PM\u2082.\u2085 inference needs a validated model, meteorology and ground measurements.",
+      "sources": [
+        "nasa-aerosols",
+        "tropomi-no2"
+      ]
+    },
+    {
+      "id": "air-quality",
+      "label": "Air quality",
+      "aliases": [
+        "air quality",
+        "air pollution",
+        "pollution"
+      ],
+      "narrower": [
+        "no2",
+        "aerosol"
+      ],
+      "property": "atmospheric composition",
+      "platforms": [
+        "sentinel-5p",
+        "aura",
+        "intelsat-40e",
+        "terra",
+        "aqua",
+        "suomi-npp",
+        "noaa-20",
+        "noaa-21",
+        "sentinel-3a",
+        "sentinel-3b",
+        "meteosat-13",
+        "metop-sg-a1"
+      ],
+      "routes": [
+        "s5p-no2",
+        "tempo-no2",
+        "sentinel3-aod",
+        "omi-no2",
+        "modis-aod"
+      ],
+      "chain": "Air-quality question \u2192 choose a pollutant and observable \u2192 instrument \u2192 product \u2192 validation",
+      "caution": "Specify the pollutant and whether you need a column, optical depth or near-surface concentration. Broad air-quality matches are possible measurement pathways, not interchangeable products.",
+      "sources": [
+        "tropomi-no2",
+        "tempo-products",
+        "nasa-aerosols",
+        "eumetsat-sentinel4",
+        "eumetsat-sentinel5"
+      ]
+    },
+    {
+      "id": "heat",
+      "label": "Surface heat and urban heat",
+      "aliases": [
+        "heat",
+        "temperature",
+        "urban heat",
+        "land surface temperature",
+        "lst"
+      ],
+      "property": "land surface temperature",
+      "platforms": [
+        "landsat-8",
+        "landsat-9",
+        "landsat-7",
+        "landsat-5",
+        "terra",
+        "aqua",
+        "iss"
+      ],
+      "routes": [
+        "landsat-temperature"
+      ],
+      "chain": "Heat question \u2192 surface thermal radiance \u2192 retrieved land surface temperature \u2192 thermal sensor \u2192 product",
+      "caution": "Surface skin temperature differs from air temperature and heat exposure. Cloud masks, acquisition time, emissivity and resampling matter. Health claims need a suitable study design.",
+      "sources": [
+        "landsat-products"
+      ]
+    },
+    {
+      "id": "vegetation",
+      "label": "Vegetation and land cover",
+      "aliases": [
+        "vegetation",
+        "ndvi",
+        "land cover",
+        "crop",
+        "agriculture",
+        "forest",
+        "deforestation"
+      ],
+      "property": "surface reflectance",
+      "platforms": [
+        "landsat-8",
+        "landsat-9",
+        "sentinel-2a",
+        "sentinel-2b",
+        "sentinel-2c",
+        "enmap",
+        "eo-1",
+        "terra",
+        "aqua"
+      ],
+      "routes": [
+        "sentinel2-reflectance",
+        "landsat-temperature"
+      ],
+      "chain": "Land question \u2192 reflectance / vegetation indices \u2192 optical sensor \u2192 surface reflectance collection",
+      "caution": "Indices and classifications are derived quantities. Inspect spectral response, atmospheric correction, seasonality, cloud QA and validation labels.",
+      "sources": [
+        "landsat-products",
+        "stac-earth-search"
+      ]
+    },
+    {
+      "id": "flood",
+      "label": "Flooding and surface water",
+      "aliases": [
+        "flood",
+        "flooding",
+        "inundation",
+        "surface water"
+      ],
+      "property": "surface water extent",
+      "platforms": [
+        "sentinel-1a",
+        "sentinel-1b",
+        "sentinel-1c",
+        "sentinel-1d",
+        "alos-2",
+        "sentinel-2a",
+        "sentinel-2b",
+        "sentinel-2c",
+        "landsat-8",
+        "landsat-9"
+      ],
+      "routes": [
+        "sentinel1-radar",
+        "sentinel2-reflectance"
+      ],
+      "chain": "Flood question \u2192 water extent inference \u2192 radar backscatter or optical reflectance \u2192 sensor \u2192 product",
+      "caution": "Radar measures backscatter, not a flood class. Detection needs pre-event comparison, terrain/urban/vegetation handling and validation; optical results are cloud limited.",
+      "sources": [
+        "stac-pc",
+        "stac-earth-search"
+      ]
+    },
+    {
+      "id": "ocean",
+      "label": "Ocean colour and coastal water",
+      "aliases": [
+        "ocean colour",
+        "ocean color",
+        "chlorophyll",
+        "coastal",
+        "water quality",
+        "algal bloom"
+      ],
+      "property": "water-leaving radiance",
+      "platforms": [
+        "sentinel-3a",
+        "sentinel-3b",
+        "terra",
+        "aqua",
+        "suomi-npp",
+        "noaa-20",
+        "noaa-21",
+        "pace",
+        "eos-06"
+      ],
+      "routes": [
+        "sentinel3-ocean"
+      ],
+      "chain": "Coastal question \u2192 radiance / ocean-colour retrieval \u2192 optical sensor \u2192 product and regional validation",
+      "caution": "Chlorophyll and water-quality estimates are retrievals, not direct measurements of toxicity or pathogens. Coastal atmospheric correction and algorithm applicability need review.",
+      "sources": [
+        "stac-cdse"
+      ]
+    },
+    {
+      "id": "snow",
+      "label": "Snow and ice cover",
+      "aliases": [
+        "snow",
+        "snow cover",
+        "ice",
+        "snowmelt"
+      ],
+      "property": "snow cover",
+      "platforms": [
+        "terra",
+        "aqua",
+        "sentinel-2a",
+        "sentinel-2b",
+        "sentinel-2c",
+        "landsat-8",
+        "landsat-9"
+      ],
+      "routes": [
+        "sentinel2-reflectance"
+      ],
+      "chain": "Snow question \u2192 snow-cover inference \u2192 optical reflectance \u2192 sensor \u2192 product",
+      "caution": "Cloud, terrain shadow and forest obscure snow. Snow cover does not determine snow water equivalent or an isochrone. FieldWork's John Snow example concerns cholera and travel time, not snow cover.",
+      "sources": [
+        "stac-earth-search"
+      ]
+    }
+  ],
+  "routes": [
+    {
+      "id": "s5p-no2",
+      "label": "Sentinel-5P \u00b7 TROPOMI NO\u2082 OFFL",
+      "endpoint": "https://stac.dataspace.copernicus.eu/v1",
+      "collection": "sentinel-5p-l2-no2-offl",
+      "collection_url": "https://stac.dataspace.copernicus.eu/v1/collections/sentinel-5p-l2-no2-offl",
+      "measurement": "NO\u2082 atmospheric columns",
+      "format": "NetCDF",
+      "access_note": "Metadata public; CDSE asset downloads require authentication",
+      "note": "Check timeliness, version, qa_value, units and averaging kernels.",
+      "platforms": [
+        "sentinel-5p"
+      ],
+      "sources": [
+        "tropomi-no2",
+        "stac-cdse"
+      ],
+      "verified": "2026-11-03"
+    },
+    {
+      "id": "tempo-no2",
+      "label": "Intelsat 40e \u00b7 TEMPO NO\u2082 V04",
+      "endpoint": "https://cmr.earthdata.nasa.gov/stac/LARC_CLOUD",
+      "collection": "TEMPO_NO2_L2_V04",
+      "collection_url": "https://cmr.earthdata.nasa.gov/stac/LARC_CLOUD/collections/TEMPO_NO2_L2_V04",
+      "measurement": "NO\u2082 atmospheric columns, North America",
+      "format": "NetCDF",
+      "access_note": "Metadata public; Earthdata Login may be required for assets",
+      "note": "A regional, daytime geostationary pathway. TEMPO is an instrument on Intelsat 40e.",
+      "platforms": [
+        "intelsat-40e"
+      ],
+      "sources": [
+        "tempo-products"
+      ],
+      "verified": "2026-11-03"
+    },
+    {
+      "id": "sentinel3-aod",
+      "label": "Sentinel-3 \u00b7 SYNERGY aerosol optical depth",
+      "endpoint": "https://planetarycomputer.microsoft.com/api/stac/v1",
+      "collection": "sentinel-3-synergy-aod-l2-netcdf",
+      "collection_url": "https://planetarycomputer.microsoft.com/api/stac/v1/collections/sentinel-3-synergy-aod-l2-netcdf",
+      "measurement": "Aerosol optical depth",
+      "format": "NetCDF",
+      "access_note": "Metadata public; asset access may need provider signing",
+      "note": "AOD is not PM\u2082.\u2085. This route serves Sentinel-3, not every aerosol candidate.",
+      "platforms": [
+        "sentinel-3a",
+        "sentinel-3b"
+      ],
+      "sources": [
+        "stac-pc"
+      ],
+      "verified": "2026-11-03"
+    },
+    {
+      "id": "sentinel1-radar",
+      "label": "Sentinel-1 \u00b7 radiometric terrain-corrected radar",
+      "endpoint": "https://planetarycomputer.microsoft.com/api/stac/v1",
+      "collection": "sentinel-1-rtc",
+      "collection_url": "https://planetarycomputer.microsoft.com/api/stac/v1/collections/sentinel-1-rtc",
+      "measurement": "Radar backscatter for water-extent inference",
+      "format": "GeoTIFF / COG",
+      "access_note": "Metadata public; asset access may need provider signing",
+      "note": "Flood maps require additional processing. Inspect actual Item platform and polarisation.",
+      "platforms": [
+        "sentinel-1a",
+        "sentinel-1b",
+        "sentinel-1c"
+      ],
+      "sources": [
+        "stac-pc"
+      ],
+      "verified": "2026-11-03"
+    },
+    {
+      "id": "landsat-temperature",
+      "label": "Landsat \u00b7 Collection 2 Level 2",
+      "endpoint": "https://earth-search.aws.element84.com/v1",
+      "collection": "landsat-c2-l2",
+      "collection_url": "https://earth-search.aws.element84.com/v1/collections/landsat-c2-l2",
+      "measurement": "Surface reflectance and surface temperature",
+      "format": "GeoTIFF / COG",
+      "access_note": "Public metadata and open-data assets; inspect Item license",
+      "note": "Collection spans Landsat 4/5/7/8/9. Temperature is a retrieval, not air temperature.",
+      "platforms": [
+        "landsat-4",
+        "landsat-5",
+        "landsat-7",
+        "landsat-8",
+        "landsat-9"
+      ],
+      "sources": [
+        "stac-earth-search",
+        "landsat-products"
+      ],
+      "verified": "2026-11-03"
+    },
+    {
+      "id": "sentinel2-reflectance",
+      "label": "Sentinel-2 \u00b7 Level-2A surface reflectance",
+      "endpoint": "https://earth-search.aws.element84.com/v1",
+      "collection": "sentinel-2-l2a",
+      "collection_url": "https://earth-search.aws.element84.com/v1/collections/sentinel-2-l2a",
+      "measurement": "Surface reflectance; vegetation, snow and water inference",
+      "format": "GeoTIFF / COG",
+      "access_note": "Public metadata and open-data assets; inspect Item license",
+      "note": "Audited collection summary names Sentinel-2A/2B. Confirm platform per Item; 2C support is not assumed here.",
+      "platforms": [
+        "sentinel-2a",
+        "sentinel-2b"
+      ],
+      "sources": [
+        "stac-earth-search"
+      ],
+      "verified": "2026-11-03"
+    },
+    {
+      "id": "sentinel3-ocean",
+      "label": "Sentinel-3 \u00b7 OLCI water full-resolution NTC",
+      "endpoint": "https://stac.dataspace.copernicus.eu/v1",
+      "collection": "sentinel-3-olci-2-wfr-ntc",
+      "collection_url": "https://stac.dataspace.copernicus.eu/v1/collections/sentinel-3-olci-2-wfr-ntc",
+      "measurement": "Water-leaving radiance and ocean-colour retrievals",
+      "format": "NetCDF product",
+      "access_note": "Metadata public; CDSE asset downloads require authentication",
+      "note": "Inspect coastal algorithm validity, atmospheric correction and QA.",
+      "platforms": [
+        "sentinel-3a",
+        "sentinel-3b"
+      ],
+      "sources": [
+        "stac-cdse"
+      ],
+      "verified": "2026-11-03"
+    },
+    {
+      "id": "omi-no2",
+      "label": "Aura \u00b7 OMI NO\u2082 V004",
+      "endpoint": "https://cmr.earthdata.nasa.gov/cloudstac/GES_DISC",
+      "collection": "OMNO2_004",
+      "collection_url": "https://cmr.earthdata.nasa.gov/cloudstac/GES_DISC/collections/OMNO2_004",
+      "measurement": "NO\u2082 atmospheric columns",
+      "format": "HDF-EOS5",
+      "access_note": "Metadata public; Earthdata Login may be required for assets",
+      "note": "Inspect row-anomaly flags, retrieval version, units, QA and sampling. Archive availability is not current instrument health.",
+      "platforms": [
+        "aura"
+      ],
+      "sources": [
+        "omi-mission"
+      ],
+      "verified": "2026-11-03"
+    },
+    {
+      "id": "modis-aod",
+      "label": "Terra + Aqua \u00b7 MODIS MAIAC aerosol optical depth",
+      "endpoint": "https://cmr.earthdata.nasa.gov/cloudstac/LPCLOUD",
+      "collection": "MCD19A2_061",
+      "collection_url": "https://cmr.earthdata.nasa.gov/cloudstac/LPCLOUD/collections/MCD19A2_061",
+      "measurement": "Aerosol optical depth",
+      "format": "HDF-EOS2",
+      "access_note": "Metadata public; Earthdata Login may be required for assets",
+      "note": "MAIAC AOD is not surface PM2.5 concentration. Check QA, cloud/snow masks and validation.",
+      "platforms": [
+        "terra",
+        "aqua"
+      ],
+      "sources": [
+        "nasa-aerosols"
+      ],
+      "verified": "2026-11-03"
+    }
+  ]
+}

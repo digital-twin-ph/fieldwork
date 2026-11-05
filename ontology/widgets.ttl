@@ -102,3 +102,5 @@
 <urn:fieldwork:widget:xpert> a fw:WidgetDefinition; fw:nodeType "xpert"; rdfs:label "Diagnostic evidence".
 <urn:fieldwork:widget:regression> a fw:WidgetDefinition; fw:nodeType "regression"; rdfs:label "Regression";
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/regression.md>.
+<urn:fieldwork:widget:find_satellite_products> a fw:WidgetDefinition; fw:nodeType "find_satellite_products"; rdfs:label "Find satellite products";
+  fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/find_satellite_products.md>.

@@ -120,7 +120,8 @@ test('the shipped ledger passes and covers every live widget', ()=>{
   // measures could not give. Experiment 167.
   // 56 on 2026-11-05: rate_ratio retired into the two-by-two's rate layout, the practitioner's "It should be in the Epi
   // kernel 2x2 widget". Experiment 161, step 6.
-  assert.equal(review.reviews.length,56);
+  // 57 on 2026-11-05, with find_satellite_products, the name chosen by the practitioner. Experiment 179.
+  assert.equal(review.reviews.length,57);
 });
 
 test('the generated table shows the palette words beside the identifier', ()=>{

@@ -3,6 +3,14 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.28.0 — In development
+
+- **Find satellite products** (new, under Sources): type a research topic or a measurement, such as NO₂, aerosols or
+  ozone, and see which satellites and products measure it. Each product says what it measures and its unit, whether it
+  needs sign-in, its licence as read from the licence itself, whether a browser can read it, and its quality rule.
+  Products needing no sign-in come first. Adapted from JLT's EO Satellite Guide, in Fieldwork's dialog style.
+  Experiment 179.
+
 ## 0.27.1 — 2026-11-05
 
 - **In the write-up, under** now sits just below **Results tab name** in a Map, Table or Chart's Inspector. In 0.26.0

@@ -25,6 +25,22 @@ fw:RateGroupShape a sh:NodeShape; sh:targetClass fw:RateGroup;
   sh:property [ sh:path fw:numeratorCount; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:decimal; sh:minInclusive 0 ];
   sh:property [ sh:path fw:denominatorCount; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:decimal; sh:minInclusive 0 ];
   sh:property [ sh:path fw:rateValue; sh:maxCount 1; sh:datatype xsd:decimal ].
+fw:SatelliteProductChoiceShape a sh:NodeShape; sh:targetClass fw:SatelliteProductChoice;
+  sh:property [ sh:path fw:researchTopic; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string; sh:minLength 1 ];
+  sh:property [ sh:path fw:satelliteRoute; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string; sh:minLength 1 ];
+  sh:property [ sh:path fw:stacCatalog; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string ];
+  sh:property [ sh:path fw:stacCollection; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string ];
+  sh:property [ sh:path fw:measuredQuantity; sh:minCount 1; sh:maxCount 1; sh:in ( "column" "optical-depth" "index" "surface" "unread" ) ];
+  sh:property [ sh:path fw:observationKind; sh:minCount 1; sh:maxCount 1; sh:in ( "observation" "model" "unread" ) ];
+  sh:property [ sh:path fw:signIn; sh:minCount 1; sh:maxCount 1; sh:in ( "none" "anonymous-token" "account" "unread" ) ];
+  sh:property [ sh:path fw:curatedBy; sh:minCount 1; sh:maxCount 1; sh:in ( "eo-satellite-guide" "fieldwork" ) ];
+  # A LICENCE IS READ OR SAID TO BE UNREAD, never neither: an unread licence must not pass as an open one.
+  sh:xone (
+    [ sh:property [ sh:path fw:licenceRead; sh:minCount 1; sh:maxCount 1 ];
+      sh:property [ sh:path ( fw:licenceRead fw:licenceReadAt ); sh:minCount 1 ];
+      sh:property [ sh:path ( fw:licenceRead fw:licenceReadOn ); sh:minCount 1; sh:datatype xsd:date ] ]
+    [ sh:property [ sh:path fw:licenceUnread; sh:minCount 1; sh:hasValue true ] ]
+  ).
 fw:PointsFromTableShape a sh:NodeShape; sh:targetClass fw:PointsFromTable;
   sh:property [ sh:path fw:xAttribute; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string; sh:minLength 1 ];
   sh:property [ sh:path fw:yAttribute; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string; sh:minLength 1 ];

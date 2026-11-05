@@ -1,0 +1,60 @@
+@prefix eo: <https://jltobias.github.io/JupyterLite-EO-Satellite-Guide/vocab/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix sosa: <http://www.w3.org/ns/sosa/> .
+@prefix dcat: <http://www.w3.org/ns/dcat#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix schema: <https://schema.org/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix geo: <http://www.opengis.net/ont/geosparql#> .
+
+eo: a owl:Ontology ;
+  dcterms:title "Global EO research discovery application profile" ;
+  owl:versionInfo "1.0.0, 2026-11-03" ;
+  dcterms:license <https://opensource.org/license/mit> ;
+  rdfs:comment "Original editorial vocabulary. Potential relevance is not scientific validation, data acquisition or proof of surface exposure. This is not an official STAC ontology or a FieldWork importer." ;
+  rdfs:seeAlso <https://www.w3.org/TR/vocab-ssn/>,
+    <https://www.w3.org/TR/skos-reference/>, <https://www.w3.org/TR/vocab-dcat-3/>,
+    <https://github.com/digital-twin-ph/fieldwork/blob/main/ontology/stac.ttl> .
+
+eo:ResearchQuestion a owl:Class ; rdfs:subClassOf schema:Question ;
+  rdfs:label "Research question" .
+eo:ResearchTopic a owl:Class ; rdfs:subClassOf skos:Concept ;
+  rdfs:label "Curated research concept" .
+eo:MissionGroup a owl:Class ; rdfs:subClassOf prov:Entity ;
+  rdfs:comment "A constellation or ambiguous mission grouping, not a single spacecraft." .
+eo:OrbitType a owl:Class ; rdfs:subClassOf skos:Concept .
+eo:STACCollection a owl:Class ; rdfs:subClassOf dcat:Dataset ;
+  rdfs:comment "Metadata-described collection. Extent and membership do not verify asset access." .
+
+eo:researchTopic a owl:ObjectProperty ; rdfs:domain eo:ResearchQuestion ; rdfs:range eo:ResearchTopic .
+eo:studyArea a owl:ObjectProperty ; rdfs:domain eo:ResearchQuestion ; rdfs:range geo:Feature ;
+  rdfs:comment "The question's declared area; its GeoSPARQL geometry is not inferred from a satellite footprint." .
+eo:observableProperty a owl:ObjectProperty ; rdfs:domain eo:ResearchTopic ; rdfs:range sosa:ObservableProperty .
+eo:potentialPlatform a owl:ObjectProperty ; rdfs:domain eo:ResearchTopic ;
+  rdfs:comment "Editorial candidate, requiring product-specific review. No claim of study suitability." .
+eo:relevantCollection a owl:ObjectProperty ; rdfs:domain eo:ResearchTopic ; rdfs:range eo:STACCollection .
+eo:platformMention a owl:ObjectProperty ; rdfs:domain eo:STACCollection ;
+  rdfs:comment "Provider metadata names this platform; may include archives, planned or derived data." .
+eo:orbitType a owl:ObjectProperty ; rdfs:range eo:OrbitType .
+eo:qualification a owl:DatatypeProperty ; rdfs:comment "Conditions required to interpret a potential match." .
+eo:accessNote a owl:DatatypeProperty ; rdfs:comment "Advertised access conditions, not a successful download receipt." .
+
+eo:sso a eo:OrbitType ; skos:prefLabel "Sun-synchronous LEO" ;
+  skos:definition "Near-polar orbit that maintains approximately the same local solar time of crossing." .
+eo:geo a eo:OrbitType ; skos:prefLabel "Geostationary" ;
+  skos:definition "Equatorial circular geosynchronous orbit; nominally fixed relative to the rotating Earth." .
+eo:inclined a eo:OrbitType ; skos:prefLabel "Inclined LEO" ;
+  skos:definition "An inclined low Earth orbit; local observation time need not be Sun-synchronous." .
+eo:unknown a eo:OrbitType ; skos:prefLabel "Unknown / not curated" ;
+  skos:definition "An explicit knowledge gap, never inferred from a STAC orbit_state value." .
+eo:l1 a eo:OrbitType ; skos:prefLabel "Sun-Earth L1 Lissajous" ;
+  skos:definition "Motion near the Sun-Earth L1 libration point, distinct from a low Earth orbit; Earth distance is not a LEO altitude." .
+eo:heo a eo:OrbitType ; skos:prefLabel "Highly elliptical" ;
+  skos:definition "A highly eccentric orbit with variable altitude. Some designs dwell near apogee over high latitudes; observation geometry and acquisition schedules require separate evidence." .
+
+eo:MissionRecord a owl:Class ; rdfs:comment "A registry mission record; physical platform identity may remain under review." .
+eo:HostedInstrumentMission a owl:Class ; rdfs:comment "An instrument mission carried by a separately identified host spacecraft." .
+eo:hostPlatform a owl:ObjectProperty ; rdfs:comment "Links a hosted instrument mission to its host, without creating a duplicate spacecraft." .
+eo:missionFamily a owl:DatatypeProperty ; rdfs:comment "A nonexclusive mission-family or agency-partnership browsing tag." .

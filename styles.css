@@ -1027,3 +1027,12 @@ i.bar-zero{position:absolute;top:0;bottom:0;width:1px;background:var(--ink,#2b2b
 .map-frame-control input[type=range]{width:100%}
 .map-frame-buttons{display:flex;gap:6px;align-items:center}
 .map-frame-label{margin:0 0 4px;font-weight:600}
+
+/* Find satellite products: layout only, in Fieldwork's dialog style. Experiment 179. */
+.satellite-dialog{max-width:880px}
+.satellite-ask{display:flex;gap:8px}
+.satellite-ask input{flex:1}
+.satellite-chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 14px}
+.satellite-topic h3{font-size:14px;margin:14px 0 4px}
+.satellite-card.is-chosen{border-color:var(--accent)}
+.satellite-note{font-size:11px;margin:6px 0 0}

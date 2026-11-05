@@ -1,0 +1,83 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:find_satellite_products",
+  "nodeType": "find_satellite_products",
+  "version": "0.1.0",
+  "title": "Find satellite products",
+  "released": "2026-11-05",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['find_satellite_products']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "validationStatus": "application-only",
+    "shaclShapes": []
+  },
+  "ports": {
+    "inputs": [],
+    "output": "satellite-product",
+    "optionalInputs": [],
+    "note": "Takes nothing and fetches nothing: it chooses where data will come from. Emits a satellite-product, its own port type, because a catalog search without a chosen product searches nothing."
+  },
+  "ontology": {
+    "status": "partial",
+    "mappings": [
+      {
+        "role": "entity",
+        "iri": "urn:fieldwork:SatelliteProductChoice",
+        "file": "ontology/runtime.ttl"
+      }
+    ],
+    "note": "The receipt states the route chosen and what was and was not read about it: what it measures, whether it is an observation or a model, sign-in, and the licence as read with where and when, or that it is unread. Held by fw:SatelliteProductChoiceShape. The routes are curated in JLT's EO Satellite Guide, whose eo: vocabulary is vendored in examples/eo and not yet loaded into the ontology.",
+    "emits": {
+      "classes": [
+        "SatelliteProductChoice"
+      ],
+      "properties": [
+        "curatedBy",
+        "licenceName",
+        "licenceOpen",
+        "licenceRead",
+        "licenceReadAt",
+        "licenceReadOn",
+        "licenceUnread",
+        "measuredQuantity",
+        "observationKind",
+        "productType",
+        "researchTopic",
+        "satelliteRoute",
+        "signIn",
+        "stacCatalog",
+        "stacCollection"
+      ]
+    }
+  },
+  "implementation": {
+    "files": [
+      "examples/eo/research-topics.json",
+      "examples/eo/routes-fieldwork.json",
+      "src/app.ts",
+      "src/core.ts",
+      "src/satellite-products-ui.ts",
+      "src/satellite-products.ts"
+    ],
+    "definition": "src/satellite-products.ts"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": null
+  },
+  "changes": [
+    {
+      "kind": "initial",
+      "description": "Choose the satellite product that measures a variable. Type a topic or a measurement, or pick one: the dialog shows the chain from question to collection, the caution about what a satellite measures, and one card per product, with what it measures and its unit, sign-in, the licence as read, whether a browser can read it and the quality rule. Products needing no sign-in come first. Adapted from JLT's EO Satellite Guide (MIT, commit 684833c), in Fieldwork's dialog style. Experiment 179."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "The facts on each card were read in experiment 179's side experiments S3 to S8; a fact nobody read is shown as not read. Nothing here establishes that a product suits a health question, that its files hold data for a given place and date, or any citation: dataset citations are unread for every route."
+  }
+}

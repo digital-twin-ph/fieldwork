@@ -2,7 +2,7 @@
 
 _Created 2026-11-05 · Updated 2026-11-05_
 
-**Status:** tried — the practitioner's requirements, and phase 1's first side experiments (S1 to S6 done, S7 pending). No widget code yet. Phases 0 and 1 of
+**Status:** tried — the practitioner's requirements, and phase 1's first side experiments (S1 to S7 done). No widget code yet. Phases 0 and 1 of
 [the 2026-11-04 plan](../research/eo-stac-nyc-architecture-and-plan-2026-11-04.md) come next.
 
 ## The task
@@ -28,6 +28,7 @@ question about either goes to JLT.
 | EO identifies the satellite groups for a variable | Variable → missions, instruments and products, each with what it measures (column, optical depth, surface) and its unit |
 | Future-proof Fieldwork for remote sensing workflows (*"The EO and STAC widgets should future proof FW for remote sensing workflows"*) | NYC's three pollutants are the first instance, not the design scope. Variables, missions, products and catalogs are data, versioned and added without code, as rulesets are; the widgets' contracts carry any variable, area and interval; nothing NYC-specific is compiled in. Tested against at least one non-NYC case before it is called general |
 | Sources needing no sign-in first (*"Before sign in lets use those that don't require sign ins first"*) | Routes a browser reads with no account, an anonymous token included, are built and offered first. A route behind sign-in is listed, marked as such, and left for later |
+| Make the user aware of quality issues in what was downloaded, here its completeness (*"widget has to make user aware of download data quality issues in this case completeness"*, agreeing with S6's finding) | Per date and per place: how many pixels covered it and how many passed the product's quality threshold, stated, never an empty value. A date with pixels and none usable is a finding the widget reports, as the data quality tab does for a table |
 | STAC zeroes in on the source URLs | From the product EO chose, over the study area and dates, to the items and their asset URLs, each with licence and whether this browser can read it |
 
 ## The current widgets, examined first
@@ -137,7 +138,7 @@ including the ones not yet run, so what was measured, what was only read and wha
 | S4 | 2026-11-05 | Which aerosol and ozone routes need no sign-in? | Planetary Computer collection list and item searches over NYC, 7 June 2023; licence links read from the catalog, the legal notice itself not read | done: S5P O₃ (total column), S5P aerosol index and layer height, S3 SYN AOD; MODIS MAIAC is not there | the same section |
 | S5 | 2026-11-05 | How many bytes of a swath does NYC need? | `scripts/s5p_range_probe.py`, h5py through counted 64 KB range reads, capped at 20 MB; one 63.2 MB file, approved by the practitioner | done: **2.25 MB in 35 requests** | *Phase 1: how much of a swath NYC needs* |
 | S6 | 2026-11-05 | Which browser HDF5 reader can read by range? | installed into a scratch folder outside Fieldwork with the practitioner's approval, licences read first: `jsfive` 0.4.2 (public domain, after pyfive) and `h5wasm` 0.10.3 (NIST notice; bundles the HDF5 library). Run in Chromium by `scripts/probes/h5wasm-range-probe.mjs`, the storage requests counted, capped at 20 MB | done: **jsfive cannot** (its README: "only for reading HDF5 files as an ArrayBuffer representation of the file", so all 63.2 MB; not run). **h5wasm can**, in a worker, through Emscripten's lazy file: 1 header request and 7 range reads of 1 MB, **6.58 MB of 63.2 MB**, the same 58 pixels and the same quality values as h5py. Slow: 2 and 8 minutes on two runs, each 1 MB block a synchronous request in turn | *S6, measured* below |
-| S7 | not started | Reading the Sentinel Data Legal Notice | read the notice the catalogs link before any of these products is called open in the EO catalogue | not started | — |
+| S7 | 2026-11-05 | Reading the Sentinel Data Legal Notice | the notice the catalogs link, read in full (2 pages, European Commission, DG GROW; PDF created 2015) | done: **open, with attribution**. See *S7* below | *S7* |
 
 ## S6, measured: a browser reads the swath by range
 
@@ -156,6 +157,28 @@ this in WebKit.
 **The quality finding stands on its own.** That day's near-real-time swath over NYC has every pixel at 0.74, so a
 practitioner applying the documented threshold gets nothing for that overpass. A widget has to say so, per date,
 rather than show an empty value.
+
+## S7: what the Sentinel licence says
+
+Both Planetary Computer collections give their licence as `proprietary` and link
+`https://sentinel.esa.int/documents/247904/690755/Sentinel_Data_Legal_Notice`. **That host no longer resolves**: the
+link a catalog gives for a licence is dead. The same document is served at `https://sentinels.copernicus.eu/…`, and was
+read there.
+
+| Question | The notice |
+| --- | --- |
+| Open? | "free, full and open access", without warranty; under Regulation (EU) No 377/2014 and Delegated Regulation 1159/2013 |
+| Uses allowed | reproduction; distribution; communication to the public; adaptation, modification and combination with other data |
+| Limits | "in the rare cases of security concerns, protection of third party rights or risk of service disruption" |
+| Attribution, original data | 'Copernicus Sentinel data [Year]' |
+| Attribution, modified data | 'Contains modified Copernicus Sentinel data [Year]': what values sampled at the monitors are |
+| Registration to use | none required by the notice. The sign-in met in S3 is the Copernicus hub's access policy, not a condition of the data |
+| Liability | no warranty; the user waives claims against the EU and the providers |
+
+**So these products are open**, and the catalog's word `proprietary` misdescribes them. Two consequences for the
+widgets: the EO catalogue states licences from the licence itself, not from a catalog's licence field, and records where
+it was read; and a dead licence link is a finding the widget shows, not a reason to call a product closed. Every output
+built from Sentinel data carries the attribution sentence, as the figures already carry a source note.
 
 ## What is already known to be a limit
 

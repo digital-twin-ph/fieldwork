@@ -429,6 +429,25 @@
         }
       ]
     },
+    "sample_satellite_files_at_points": {
+      "output": "table",
+      "contracts": [
+        {
+          "when": "default",
+          "required": [
+            [
+              "points",
+              "points"
+            ],
+            [
+              "files",
+              "satellite-files"
+            ]
+          ],
+          "optional": []
+        }
+      ]
+    },
     "study_design": {
       "output": "design",
       "contracts": [

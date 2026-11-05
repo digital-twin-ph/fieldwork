@@ -283,7 +283,7 @@ imputation step, and the hand-off to Raster input. The UI says what it cannot do
 | Widget | What was checked | Result |
 | --- | --- | --- |
 | Find satellite products 0.1.0 | `tests/satellite-products.test.mjs`, `tests/find-satellite-products.browser.mjs` | 4 of 4 and 1 of 1, Chromium: JLT's file vendored at its digest; the matcher; the open product first for NO₂; an unread licence refused unless said to be unread |
-| Search a satellite catalog 0.1.0 | `tests/satellite-catalog.test.mjs`, `tests/search-satellite-catalog.browser.mjs` | 5 of 5 against a stubbed catalog (paging, the product filter, the 500-item bound, the failure messages, a receipt claiming completeness refused); 1 of 1 in Chromium against a stub **and against the live Planetary Computer catalog**: over the five boroughs on 7 June 2023 it returned 20 items and kept the 2 NO₂ overpasses |
+| Search a satellite catalog 0.1.0 | `tests/satellite-catalog.test.mjs`, `tests/search-satellite-catalog.browser.mjs` | 5 of 5 against a stubbed catalog (paging, the product filter, the 500-item bound, the failure messages, a receipt claiming completeness refused); 1 of 1 in Chromium against a stub **and against the live Planetary Computer catalog**: over the five boroughs on 7 June 2023 it returned 20 items and kept the 2 NO₂ overpasses _(corrected 2026-11-05: 2 NO₂ items, one overpass, orbit 29273, in the near-real-time and offline streams; see "Built: Sample satellite files at points")_ |
 
 **A rule amended on the way.** `source-consumes-data` fired on Search a satellite catalog, which requires a
 `satellite-product`. A scope says what a source acquires and carries no data: `area` says where, a chosen product
@@ -348,6 +348,66 @@ recognises, where one widget doing all three would put every product, item and p
 
 **Not in the first slice:** products other than Sentinel-5P Level 2 swaths; reading by the borough outlines rather
 than at points; averaging over pixels near a point. Each is said where it is met.
+
+## Built: Sample satellite files at points, 2026-11-05 (0.29.0)
+
+Built to the admission review above, with one change of rule and three findings met on the way.
+
+**One overpass, two items.** The search over NYC on 7 June 2023 returned two NO₂ items, and 0.28.0's changelog, the
+search manual and this record (the validation table above) called them two overpasses. They are one: orbit 29273,
+published as a five-minute near-real-time granule (`NRTI`, 373 × 450 pixels) and as the whole orbit processed offline
+(`OFFL`, 4,172 × 450, 606 MB). The catalog states both on each item, `s5p:processing_mode` and `sat:absolute_orbit`.
+Sampling both would count one reading twice. The search now shows the stream and orbit and, where an orbit has an
+offline item, does not keep its near-real-time items by default; the sampler records a finding if one orbit is read
+twice. S5 and S6 read the near-real-time granule, so their numbers stand.
+
+**The cost is the chunk, not the pixel.** Read with h5py over counted range requests:
+
+| Dataset, offline NO₂ file | Chunk | One pixel costs |
+| --- | --- | --- |
+| latitude, longitude | 2,086 × 225 | 2.1 MB each |
+| nitrogendioxide_tropospheric_column | 2,086 × 225 | 3.2 MB |
+| qa_value | the whole orbit, 4,172 × 450 | 2.1 MB |
+| latitude_bounds, longitude_bounds | 2,086 × 225 × 1, sixteen per variable | not finished: the read timed out; eight more chunks |
+
+**The pixel rule changed: nearest centre, not containing pixel.** The corners would roughly double a read, to about
+25–30 MB an overpass, against 10–15 MB. The two rules differ only for a point near a pixel's edge, on pixels about
+3.5 × 5.5 km. Asked, the practitioner chose the nearest centre. The reader takes latitude and longitude one chunk at
+a time, later scanlines first for a northern point (a daytime orbit runs south to north), and stops once every point
+has a centre within one and a half times half the pixel spacing; a point with none is off the swath.
+
+**The browser here is slow against that storage.** From the machine this was built on, Chromium fetched 1 MB ranges
+from the storage in 35–55 seconds, inside the command sandbox and outside it; curl fetched the same ranges in 1–4
+seconds, and later, from Python, 2 MB took 179 seconds. S6 had already met it (2 and 8 minutes for 6.58 MB). Not
+diagnosed. Whether a practitioner's browser elsewhere is as slow is not known.
+
+**The stored integer.** `qa_value` is an 8-bit integer with `scale_factor` stored in 32 bits as 0.0099999998, so a
+stored 75 multiplies out to 0.74999998 and would fail "at or above 0.75". The rule compares integers. A first note
+blamed 32-bit arithmetic for the product; the unit test showed the product rounds back to 0.75 in 32 bits, and the
+trap is the 32-bit scale factor multiplied in 64 bits.
+
+**Sizes are hidden from the page.** The storage sends no `Timing-Allow-Origin`, so the browser reports 0 bytes for
+every range request. The first live result said "0.0 MB in 15 requests"; it now says the requests and that their size
+is not visible.
+
+**Two more defects found by the live run.** The table viewer pivots a long table on its last key column when every
+other key describes the row, and it pivoted `gap`, showing "below quality threshold" as a column heading. A final
+`measure` column naming the variable, Fieldwork's convention for a melted table, fixes it. And a workflow holding the
+new node did not load at all until the widget had its release and registry records: the canvas was empty with no
+error.
+
+### Validation, 2026-11-05
+
+| Check | Platform | Result |
+| --- | --- | --- |
+| `tests/satellite-sample.test.mjs` | Node | 7 of 7: the nearest centre tile by tile, off-swath, tile order; the three gaps and the integer rule; the long table and its `measure` column; one orbit read twice as a finding; hidden sizes; the receipt conforms and refuses `fw:imputed true`, `fw:completenessRead false` and an unknown operator |
+| `tests/sample-satellite-files-offline.browser.mjs` | Chromium | 1 of 1: a Sentinel-5P-shaped file made by h5wasm in Node (4 × 6 pixels, two column chunks), served by range; the real worker reads one point per outcome |
+| `tests/sample-satellite-files.browser.mjs`, `SATELLITE_LIVE=1` | Chromium | 1 of 1, 8.3 minutes: the real offline file at two NYC ozone monitors. Queens College 2, scanline 2409, ground pixel 74: 4.21 × 10⁻⁵ mol m⁻², qa 0.74. IS 52, scanline 2411, pixel 73: 2.53 × 10⁻⁵ mol m⁻², qa 0.74. Both below the threshold, as S5 found for the whole city that day |
+
+**What this does not establish.** No independent recomputation: `check-coverage.json` records the check as owed.
+Nothing about WebKit or Safari, which CI runs. Nothing about a month of readings: one day was read. Whether a
+practitioner understands the three gaps from the table is not observed. The nearest-centre rule's disagreements with
+the containing pixel were not counted.
 
 ## What is already known to be a limit
 

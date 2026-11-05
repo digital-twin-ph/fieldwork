@@ -1,6 +1,6 @@
 {
   "name": "fieldwork-semantic-gis",
-  "version": "0.28.1",
+  "version": "0.29.0",
   "private": true,
   "license": "Apache-2.0",
   "type": "module",
@@ -76,6 +76,7 @@
     "fflate": "^0.8.3",
     "geotiff": "3.0.5",
     "h3-js": "4.5.0",
+    "h5wasm": "^0.10.3",
     "hyparquet": "^1.31.3",
     "hyparquet-compressors": "^1.1.2",
     "leaflet": "^1.9.4",

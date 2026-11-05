@@ -3,6 +3,28 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.29.0 — 2026-11-05
+
+- **Sample satellite files at points** (new, under Spatial operations): connect your points and the files **Search a
+  satellite catalog** found, and run. At each point, for every overpass, it reads the value of the pixel whose centre
+  is nearest, fetching only the parts of each file it needs, in the browser. The result is a long table: the value
+  where it passed the product's quality rule, the value as read, `qa_value`, and where there is no usable value, which
+  gap it is: **no overpass**, **no retrieval**, or **below quality threshold**. Nothing is filled. Sentinel-5P NO₂ on
+  Planetary Computer is the first product it reads, with no account. Read live at two NYC ozone monitors on 7 June
+  2023: both pixels had `qa_value` 0.74, just below the 0.75 threshold.
+- **Quality rule:** the NO₂ product's readme says above 0.75 and its manual's table at or above; the Inspector lets you
+  choose, and the result says which. The comparison is made on the stored integer, so a stored 75 is not wrongly
+  failed as 0.74999998.
+- **One overpass, two items:** Search a satellite catalog now shows each item's processing stream (near real time or
+  offline) and orbit, and keeps only the offline item of an orbit by default, so no reading is counted twice. 0.28.0
+  called the two NO₂ items over NYC on 7 June 2023 two overpasses; they are one.
+- **Cost:** an offline orbit file is about 600 MB, stored in large compressed chunks; expect about 10–15 MB per
+  overpass, much the same for 2 points as for 50. From the machine this was built on, the browser read that storage at
+  35–55 seconds per MB: the live read took 8.3 minutes.
+- New dependency: h5wasm 0.10.3 (NIST), loaded only when a file is read and not stored for offline use.
+- Validation: Chromium locally; WebKit in CI. The live read runs only on request (`SATELLITE_LIVE=1`); the gate reads a
+  Sentinel-5P-shaped file made on the spot, by range, through the same worker.
+
 ## 0.28.1 — 2026-11-05
 
 - **Search a satellite catalog** no longer needs a Study area. With none connected, type the area's west, south, east
@@ -22,7 +44,8 @@ shown in a local build is not a claim that it has been published.
   and search the product's catalog. Three columns, after JLT's STAC Browser: the search, the study area with each
   overpass's footprint, and each file with its sign-in, licence as read, whether a browser can read it and the
   attribution to use. Reads catalog records only; it says that completeness is not known until a file is read.
-  Checked against Planetary Computer from a browser: 2 Sentinel-5P NO₂ overpasses over New York City on 7 June 2023.
+  Checked against Planetary Computer from a browser: 2 Sentinel-5P NO₂ items over New York City on 7 June 2023.
+  _Corrected in 0.29.0: they are one overpass, orbit 29273, in two processing streams, not two overpasses._
 - Custom studs and known naming violations are no longer capped by count: each states its own reason.
 - Validation: Chromium locally; WebKit in CI.
 

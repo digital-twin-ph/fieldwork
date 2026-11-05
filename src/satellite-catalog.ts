@@ -56,7 +56,25 @@ async function fetchJSON(url:string,fetcher:typeof fetch):Promise<unknown>{
 }
 
 export interface CatalogFile {key:string; host:string; href:string; type:string|null; roles:string[]}
-export interface CatalogItem {id:string; datetime:string|null; bbox:BBox|null; platform:string|null; files:CatalogFile[]}
+export interface CatalogItem {id:string; datetime:string|null; bbox:BBox|null; platform:string|null; files:CatalogFile[];
+  /** The processing stream as the item states it (`s5p:processing_mode`): NRTI, near real time, or OFFL, offline. */
+  stream?:string|null;
+  /** The orbit as the item states it (`sat:absolute_orbit`). Two items with one orbit are one overpass. */
+  orbit?:number|null;
+}
+
+/** ONE OVERPASS, TWO STREAMS. Found 2026-11-05 building the sampler: the two NO₂ items over New York City on 7 June
+ *  2023, which 0.28.0 called two overpasses, are orbit 29273 twice: a five-minute near-real-time granule and the whole
+ *  orbit processed offline. Sampling both would count one reading twice. Where an orbit has an offline item, its
+ *  near-real-time items are not kept by default; the product's facts recommend the offline stream for time series. A
+ *  practitioner can still tick one back. Items with no stated orbit or stream are all kept. */
+export function defaultKept(items:readonly CatalogItem[]):string[]{
+  const offline=new Set(items.filter(i=>i.stream==='OFFL'&&i.orbit!=null).map(i=>i.orbit));
+  return items.filter(i=>!(i.stream==='NRTI'&&i.orbit!=null&&offline.has(i.orbit))).map(i=>i.id);
+}
+/** How many distinct overpasses the items are: distinct orbits, plus every item that states none. */
+export const overpassCount=(items:readonly CatalogItem[]):number=>
+  new Set(items.filter(i=>i.orbit!=null).map(i=>i.orbit)).size+items.filter(i=>i.orbit==null).length;
 export interface CatalogSearch {
   catalog:string; collection:string; productType:string|null; bbox:BBox; from:string; until:string;
   /** Items the catalog returned for the area and dates, before the product filter. */
@@ -93,6 +111,8 @@ const toItem=(raw:Record<string,unknown>):CatalogItem=>{
   return {id:String(raw.id),datetime:(props.datetime as string|undefined)??(props.start_datetime as string|undefined)??null,
     bbox:Array.isArray(raw.bbox)&&raw.bbox.length>=4?(raw.bbox.slice(0,4) as BBox):null,
     platform:(props.platform as string|undefined)??null,
+    stream:typeof props['s5p:processing_mode']==='string'?props['s5p:processing_mode'] as string:null,
+    orbit:typeof props['sat:absolute_orbit']==='number'?props['sat:absolute_orbit'] as number:null,
     files:Object.entries(assets).filter(([,a])=>typeof a?.href==='string').map(([key,a])=>{
       const href=String(a.href);let host=href;try{host=new URL(href).host;}catch{/* an s3:// address keeps its form */}
       return {key,host,href,type:(a.type as string|undefined)??null,roles:Array.isArray(a.roles)?a.roles.map(String):[]};})};
@@ -130,6 +150,8 @@ export const searchSentence=(s:CatalogSearch,product:SatelliteProduct):string=>
   `${s.items.length} ${product.route.productType?`${product.route.productType} `:''}item${s.items.length===1?'':'s'} in `
   +`${s.collection} over ${s.areaFrom==='typed extent'?'the typed extent':'the study area'} from ${s.from} to ${s.until}`
   +(product.route.productType?`, of ${s.returned} the catalog returned for the area and dates`:'')+'.'
+  +(s.items.some(i=>i.orbit!=null)&&overpassCount(s.items)!==s.items.length
+    ?` They are ${overpassCount(s.items)} overpass${overpassCount(s.items)===1?'':'es'}: an orbit can come in more than one processing stream.`:'')
   +(s.truncated?` The search stopped at ${MAX_ITEMS} items; narrow the dates for the rest.`:'')
   +' Metadata only: no file was read, so how many pixels each holds, and of what quality, is not yet known.';
 

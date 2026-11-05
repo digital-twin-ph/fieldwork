@@ -360,6 +360,8 @@ export interface ParamsByType {
   /** A chosen satellite product: a curated route and what Fieldwork has read about it. Experiment 179. */
   find_satellite_products:{label:string; question?:string; topic?:string; route?:string};
   /** A catalog search for the chosen product over the study area and dates, and the items kept. Experiment 179. */
+  /** Experiment 179. The quality rule's operator, where the product's documents differ; absent: the reader's default. */
+  sample_satellite_files_at_points:{label:string; qaOperator?:'>='|'>'};
   search_satellite_catalog:{label:string; from:string; until:string;
     /** Edges typed in the dialog, W/S/E/N, used when no Study area is connected. */
     box?:[number,number,number,number];

@@ -39,15 +39,16 @@
  *  rendered, from its position in the IMRaD outline and the venue's own convention.
  */
 import type {DataTable} from './data-table.js';
-import type {MachinedNote} from './notes.js';
+import type {MachinedNote,FigureSection} from './notes.js';
+import {DEFAULT_FIGURE_SECTION} from './notes.js';
 import type {MapLayer} from './map-layer-list.js';
 import type {ChartSummary} from './results.js';
 
 /** One note per artifact, identified by the node that drew it. Stable across runs for the reason
  *  an equation note's id is: re-running rewrites the wording, and a reference pointing at the
  *  note must not move when it does. */
-const describes=(nodeId:string,text:string):MachinedNote=>
-  ({kind:'machined',id:`${nodeId}:description`,section:'Results',text,nodeId});
+const describes=(nodeId:string,text:string,section:FigureSection=DEFAULT_FIGURE_SECTION):MachinedNote=>
+  ({kind:'machined',id:`${nodeId}:description`,section,text,nodeId});
 
 const count=(n:number,one:string,many=one+'s')=>`${n.toLocaleString()} ${n===1?one:many}`;
 /** The label a practitioner gave the node, or nothing. NEVER a default like "Table": an unnamed
@@ -190,6 +191,9 @@ export interface PublishedArtifact {
   missingValueCount?:number;
   barCount?:number;
   layerCount?:number;
+  /** Where the figure goes in the write-up, and whether the practitioner chose it or it is the widget's default. */
+  section?:FigureSection;
+  sectionDeclared?:boolean;
 }
 
 export function publishedArtifactFacts(subject:string,artifact:PublishedArtifact):string{
@@ -209,6 +213,11 @@ export function publishedArtifactFacts(subject:string,artifact:PublishedArtifact
   // its kind owes would be refused by the shape, which would report the ABSENCE of a count as the
   // defect when the defect is upstream in whatever failed to measure it.
   if(counts===null)return '';
+  // THE PLACEMENT IS THE STEP'S, beside its note, so `fw:FigureFiledWhereDeclaredShape` can hold the note's section
+  // against it on a real receipt.
+  const placed=artifact.section
+    ?`${subject} fw:figureSection ${JSON.stringify(artifact.section)}; `
+      +`fw:figureSectionDeclared ${artifact.sectionDeclared?'true':'false'}.\n`:'';
   return `${subject} fw:publishesArtifact [ a fw:PublishedArtifact; `
-    +`fw:artifactKind ${JSON.stringify(artifact.kind)}; ${counts} ].\n`;
+    +`fw:artifactKind ${JSON.stringify(artifact.kind)}; ${counts} ].\n`+placed;
 }

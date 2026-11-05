@@ -48,6 +48,24 @@ import {validLogin} from './identity.js';
  *  list is assembled from those on every render. Storing it too would be a second copy that goes
  *  out of date against the first, and `src/references.ts` says why at length. */
 export const WRITE_UP_PARTS=['Introduction','Methods','Results','Discussion','References'] as const;
+/** WHERE AN OUTPUT'S FIGURE GOES IN THE WRITE-UP. The practitioner, 2026-11-05: *"all output widgets may have default
+ *  IMRAD sections but it should be flexible."* Results by default, for every output widget; a study-area map belongs in
+ *  the Introduction, a flow of the analysis in the Methods. References holds works, not figures, so it is not offered. */
+export const FIGURE_SECTIONS=['Introduction','Methods','Results','Discussion'] as const;
+export type FigureSection=typeof FIGURE_SECTIONS[number];
+export const DEFAULT_FIGURE_SECTION:FigureSection='Results';
+/** EACH OUTPUT WIDGET'S DEFAULT, stated per widget so a widget whose figures belong elsewhere by default can say so.
+ *  Today all three say Results. Read by scripts/widget-manual.mjs into ontology/widgets.ttl as fw:defaultFigureSection,
+ *  so the ontology states the same defaults the application applies. */
+export const DEFAULT_FIGURE_SECTIONS:Record<'map_output'|'table_output'|'chart_output',FigureSection>={
+  map_output:'Results',table_output:'Results',chart_output:'Results'};
+export const figureSection=(params:{section?:string}|undefined,
+  nodeType?:keyof typeof DEFAULT_FIGURE_SECTIONS):FigureSection=>
+  (FIGURE_SECTIONS as readonly string[]).includes(params?.section??'')?params!.section as FigureSection
+    :nodeType?DEFAULT_FIGURE_SECTIONS[nodeType]:DEFAULT_FIGURE_SECTION;
+/** Whether the section was chosen, as distinct from defaulted: a receipt says which. */
+export const figureSectionDeclared=(params:{section?:string}|undefined):boolean=>
+  (FIGURE_SECTIONS as readonly string[]).includes(params?.section??'');
 export type WriteUpPart=typeof WRITE_UP_PARTS[number];
 
 /** What the note DOES inside its section, in the practitioner's own breakdown: *"Introduction can

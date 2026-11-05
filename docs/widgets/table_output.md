@@ -48,6 +48,14 @@ is worked out when the document is rendered. Nothing here says "Figure 1".
 Edit it and it forks into a note of your own, like any machined note; the machined one goes on
 being rewritten by every run.
 
+### Where it goes in the write-up
+
+**In the write-up, under** chooses the part of the Notes write-up this output's figure and its note go in:
+Introduction, Methods, Results or Discussion. **Results** is the default. A map of the study area belongs in the
+Introduction; a figure that shows how the analysis was done can go in Methods. References is not offered, because it
+holds works and not figures. The run's receipt states the section and whether you chose it, and a validation rule
+checks that the note describing the figure is filed in that same section.
+
 ## What it will not do
 
 - **It will not ask you what shape your data is.** There is no mode to set, and connecting

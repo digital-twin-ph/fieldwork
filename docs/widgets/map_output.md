@@ -78,6 +78,14 @@ The map's receipt records all of this — which channel carries which variable, 
 authority it comes from, and each layer's mark and colour with whether you chose it or the map
 derived it — so a figure in a publication can be attributed.
 
+### Where it goes in the write-up
+
+**In the write-up, under** chooses the part of the Notes write-up this output's figure and its note go in:
+Introduction, Methods, Results or Discussion. **Results** is the default. A map of the study area belongs in the
+Introduction; a figure that shows how the analysis was done can go in Methods. References is not offered, because it
+holds works and not figures. The run's receipt states the section and whether you chose it, and a validation rule
+checks that the note describing the figure is filed in that same section.
+
 ## Worked examples that use it
 
 | Example | What the map shows |

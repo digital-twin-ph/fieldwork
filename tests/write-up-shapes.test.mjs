@@ -32,8 +32,8 @@ const EQUATION={kind:'machined',id:'n1:equation',section:'Methods',fn:'method',
   text:'$$RR = 5.35$$',cites:['Katz log']};
 
 test('a published table, described, with its rows and its empty cells, conforms',async()=>{
-  await conforms(publishedArtifactFacts(OUT,{kind:'table',rowCount:32,missingValueCount:0})
-    +machinedNoteFacts(OUT,[DESCRIPTION]));
+  await conforms(publishedArtifactFacts(OUT,{kind:'table',rowCount:32,missingValueCount:0,section:'Results',
+    sectionDeclared:false})+machinedNoteFacts(OUT,[DESCRIPTION]));
 });
 
 test('A STEP THAT PUBLISHES AND DESCRIBES NOTHING IS REFUSED',async()=>{
@@ -53,12 +53,12 @@ test('a table that does not count its empty cells is refused',async()=>{
 });
 
 test('a chart counts its bars and a map counts the layers it drew',async()=>{
-  await conforms(publishedArtifactFacts(OUT,{kind:'chart',barCount:32})
+  await conforms(publishedArtifactFacts(OUT,{kind:'chart',barCount:32,section:'Results',sectionDeclared:false})
     +machinedNoteFacts(OUT,[DESCRIPTION]));
-  await conforms(publishedArtifactFacts(OUT,{kind:'map',layerCount:4})
+  await conforms(publishedArtifactFacts(OUT,{kind:'map',layerCount:4,section:'Results',sectionDeclared:false})
     +machinedNoteFacts(OUT,[DESCRIPTION]));
   // A bar at zero is still a bar; zero bars is still a count and not an absence.
-  await conforms(publishedArtifactFacts(OUT,{kind:'chart',barCount:0})
+  await conforms(publishedArtifactFacts(OUT,{kind:'chart',barCount:0,section:'Results',sectionDeclared:false})
     +machinedNoteFacts(OUT,[DESCRIPTION]));
   await refused(`${OUT} fw:publishesArtifact [ a fw:PublishedArtifact; `
     +`fw:artifactKind "chart" ].\n`+machinedNoteFacts(OUT,[DESCRIPTION]));
@@ -124,4 +124,41 @@ test('a half-stated artifact emits nothing rather than a receipt the shape would
   assert.equal(publishedArtifactFacts(OUT,{kind:'chart'}),'');
   assert.equal(publishedArtifactFacts(OUT,{kind:'map'}),'');
   assert.match(publishedArtifactFacts(OUT,{kind:'map',layerCount:4}),/fw:artifactLayerCount 4/);
+});
+
+// THE SECTION MAPPING OF OUTPUT WIDGETS. The practitioner, 2026-11-05: *"all output widgets may have default IMRAD
+// sections but it should be flexible"*, and *"esp rules for section mapping of output widgets."*
+test('a figure filed where the step says it goes conforms, in any of the four parts',async()=>{
+  for(const section of ['Introduction','Methods','Results','Discussion'])
+    await conforms(publishedArtifactFacts(OUT,{kind:'map',layerCount:2,section,sectionDeclared:section!=='Results'})
+      +machinedNoteFacts(OUT,[{...DESCRIPTION,section}]));
+});
+
+test('A FIGURE WHOSE NOTE IS FILED ELSEWHERE IS REFUSED',async()=>{
+  // The figure is drawn beside its note, so a note under Results and a placement stated as Introduction would put the
+  // map somewhere nobody chose.
+  await refused(publishedArtifactFacts(OUT,{kind:'map',layerCount:2,section:'Introduction',sectionDeclared:true})
+    +machinedNoteFacts(OUT,[DESCRIPTION]));
+});
+
+test('a figure filed under References, or with no section stated, is refused',async()=>{
+  await refused(publishedArtifactFacts(OUT,{kind:'map',layerCount:2,section:'References',sectionDeclared:true})
+    +machinedNoteFacts(OUT,[{...DESCRIPTION,section:'References'}]));
+  await refused(publishedArtifactFacts(OUT,{kind:'map',layerCount:2})+machinedNoteFacts(OUT,[DESCRIPTION]));
+});
+
+test('each output widget declares its default section in the ontology, and the application applies the same',async()=>{
+  const {readFileSync}=await import('node:fs');
+  const {DEFAULT_FIGURE_SECTIONS,figureSection,figureSectionDeclared}=await import('../build/notes.js');
+  const ttl=readFileSync(new URL('../ontology/widgets.ttl',import.meta.url),'utf8');
+  for(const [type,section] of Object.entries(DEFAULT_FIGURE_SECTIONS)){
+    const block=ttl.split('\n<urn:').find(b=>b.startsWith(`fieldwork:widget:${type}>`));
+    assert.match(block,new RegExp(`fw:defaultFigureSection "${section}"\\.$`));
+    assert.equal(figureSection({},type),section);
+  }
+  assert.equal(figureSection({section:'Introduction'},'map_output'),'Introduction');
+  assert.equal(figureSectionDeclared({section:'Introduction'}),true);
+  assert.equal(figureSectionDeclared({}),false);
+  // A value outside the four falls back to the default rather than being filed nowhere.
+  assert.equal(figureSection({section:'References'},'map_output'),'Results');
 });

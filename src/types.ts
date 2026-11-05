@@ -514,7 +514,7 @@ export interface ParamsByType {
    *  parameters stay so the registry entry resolves and a saved workflow that still names the type
    *  can be migrated rather than refused. Nothing adds one, nothing runs one. */
   coverage_check:{exclusions:Exclusion[]; pointInputCount?:number};
-  map_output:{label:string; pointInputCount?:number;
+  map_output:{label:string; section?:import('./notes.js').FigureSection; pointInputCount?:number;
     /** What the practitioner decided about each layer in Manage layers, keyed by layer id.
      *  Absent means "as it comes": a map nobody has opened that dialog on draws the default
      *  stack, and a layer wired afterwards arrives with its own default rather than at the
@@ -551,8 +551,8 @@ export interface ParamsByType {
     partLabel?:string;
     /** What a frame is, written by the practitioner: "Birth cohort". The frame's own name is the data's. */
     frameCaption?:string;
-    inputMode?:'spatial'|'decisions'|'raster'|'polygons'|'network';presentation?:'plot'|'interactive';contextPoints?:boolean;mapTitle?:string;mapSubtitle?:string;mapSourceNote?:string;showLegend?:boolean;basemap?:BasemapChoice}; table_output:{label:string; pointInputCount?:number; inputMode?:'spatial'|'decisions'|'polygons'|'table'; totalsAsserted?:boolean};
-  chart_output:{label:string;
+    inputMode?:'spatial'|'decisions'|'raster'|'polygons'|'network';presentation?:'plot'|'interactive';contextPoints?:boolean;mapTitle?:string;mapSubtitle?:string;mapSourceNote?:string;showLegend?:boolean;basemap?:BasemapChoice}; table_output:{label:string; section?:import('./notes.js').FigureSection; pointInputCount?:number; inputMode?:'spatial'|'decisions'|'polygons'|'table'; totalsAsserted?:boolean};
+  chart_output:{label:string; section?:import('./notes.js').FigureSection;
     /** ONE PANEL PER VALUE of this key column, stacked on a shared x axis, each with its own y scale (experiment 174).
      *  `panelMarks` names a mark per panel; `shade` marks a period across every panel. */
     panelsBy?:string;panelMarks?:Record<string,'bar'|'line'>;shade?:{from:string;to:string};

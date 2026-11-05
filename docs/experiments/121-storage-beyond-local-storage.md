@@ -1,12 +1,13 @@
 # 121 · Storage beyond localStorage
 
-_Created 2026-10-19 · Updated 2026-10-21_
+_Created 2026-10-19 · Updated 2026-11-05_
 
-**Status:** tried — the payload store is built and in use, and holds a node's `data` and nothing
-else: geometry, revisions, repairs, decisions and raster assets still sit in `localStorage`, written
-twice per save. What it costs in time, and what happens under eviction, is still unmeasured. What a
-study area may hold is still decided by the smallest store the browser offers, which nothing
-chose.
+**Status:** tried — the payload store is built and in use. It holds a node's `data`, a wide table's source
+(`sourceRef`, experiment 175) and, since 2026-11-05, an acquired study area's outline and revisions (`areaRef`).
+Repairs, decisions, raster assets and hand-drawn areas still sit in `localStorage`, written twice per save. What it
+costs in time, and what happens under eviction, is still unmeasured.
+_Status corrected 2026-11-05: it said "what a study area may hold is still decided by the smallest store the browser
+offers"; for an acquired outline it no longer is._
 
 ## The question
 
@@ -158,6 +159,53 @@ What this adds to the direction: moving `data` was the easy half, because a dige
 identified it and a reference already stood in for it. The rest of a workflow has no such handle,
 so the asynchronous `save()` this experiment calls "not a tweak" is the only route for geometry.
 Until that is built, a project with two acquired provincial outlines is at the ceiling.
+
+## The geometry moved, 2026-11-05
+
+The practitioner picked Uganda at ADM0 in the Study area dialog: *"nothing showed up on the dialog map."* Reproduced
+against geoBoundaries' file: one unit, a MultiPolygon of 48 parts, 43,116 vertices. Three defects:
+
+| Defect | What it did |
+| --- | --- |
+| The 1 MiB extent budget (`GEOMETRY_BYTE_BUDGET`) | Refused the mainland alone, 37,760 vertices and 1,215 KB, and advised *"a coarser administrative level"*, which at ADM0 does not exist |
+| The refusal's place | A muted line under the unit list, while the map moved to Uganda and drew nothing |
+| One unit, one part | `publishedRings` kept the largest part and dropped the other 47, the Ssese Islands of Lake Victoria among them, under a note that one outline is what a study area holds, untrue since several units became several parts |
+
+The section above said the geometry could only move with an asynchronous `save()`. It did not need one. Experiment
+175 had since given tables a synchronous content key (cyrb53, computed on every save), and the same key serves an
+outline: `areaPayloadKey` over the geometry and its revisions, so an edited outline gets a new key and a stale one can
+never stand in for it. `dehydrateWorkflow` drops `geometry` and `revisions` behind `areaRef` when the store holds it;
+`hydrateWorkflow` puts them back, and refuses when it is missing, as for `data`. `payloadsOf` lists every payload a
+node holds, so `save()` and the project import write all three kinds from one list.
+
+**Only acquired outlines move.** One whose `boundary` record says it came from a published source or a file. A shape
+drawn by hand stays inline: small, and read as it sits by the sibling-area picker and by eight browser tests. The same
+line polygon layers draw. Templates clear `areaRef` with the outline, or a fresh template would have its outline
+restored from the store.
+
+**Both budgets are removed**, the extent's 1 MiB and the area's 1.5 MiB: what they protected was localStorage. A store
+that falls back to localStorage still refuses at save, and `storageRefusal` says why. Each was registered in
+`widgets/caps.json` as a discovery cap with the lift test *"geometry leaves localStorage"*; the test was met, so both
+leave the register and the ontology (`urn:fieldwork:cap:geometry-bytes`, `urn:fieldwork:cap:area-bytes`), and the
+ceiling on unmeasured discovery caps falls from 12 to 10. The gate's caps check found them first: a cap whose
+constant no file exports governs nothing. A first attempt kept them as deprecated terms; the vocabulary shapes require
+a deprecated term to name its replacement, and a lifted limit has none. **Every part is carried**, and a
+refusal is also said in the dialog's status line, as an alert.
+
+### Validation, 2026-11-05
+
+| Check | Platform | Result |
+| --- | --- | --- |
+| Uganda ADM0, geoBoundaries' file, in Node | Node | 48 parts, 43,068 vertices, 1.43 MB; `validateDrawnGeometry` 140 ms; the key 9 ms |
+| `tests/project.test.mjs` | Node | the area round trip: key, strip, restore, refuse when missing, a new key for an edited outline |
+| `tests/boundary-source.test.mjs` | Node | 27 of 27: a boundary past the old budget admitted; a unit's three parts all carried |
+| `tests/boundary-picker.browser.mjs` | Chromium | 10 of 10, two new: a country of three parts past 1 MiB applied with every part, kept in the store, back after a reload with the workflow under 200 KB; a crossing outline refused in the status line as an alert |
+| The real Uganda ADM0 through the dialog, once, from geoBoundaries (a scratch test, not kept) | Chromium | 48 parts drawn; *Use the selected units* 0.88 s, *Apply* 0.89 s; the outline in the store, the saved workflow 73,513 bytes |
+
+**What this does not establish.** WebKit, which CI runs and which has been slower on large outlines (North Kivu, 7.7 s
+where Chromium took 0.1). A size at which the dialog stops being usable: Uganda is the largest tried. Eviction: an
+outline in IndexedDB can be evicted by the browser, and a missing payload then refuses the workflow rather than
+emptying it, which has not been observed.
 
 ## What this does not establish
 

@@ -187,3 +187,23 @@ test('a payload digest is stable across structured clones and differs with conte
   const c=await payloadDigest({...payload,features:[{id:'a',properties:{DEATHS:4}}]});
   assert.notEqual(a,c);
 });
+
+test('a study area\'s outline and history leave the saved workflow under areaRef, and come back',async()=>{
+  // Uganda at ADM0 is 1.4 MB, past what localStorage held beside anything else (2026-11-05). The outline goes to the
+  // payload store as a table's rows do, keyed by content, and a missing payload refuses rather than emptying the area.
+  const {areaPayloadKey,payloadsOf}=await import('../build/project.js');
+  const geometry={type:'Polygon',coordinates:[[[30,0],[31,0],[31,1],[30,1],[30,0]]]};
+  const revisions=[{geometry:{type:'Polygon',coordinates:[[[30,0],[30.5,0],[30.5,0.5],[30,0.5],[30,0]]]},at:'2026-11-05T00:00:00Z'}];
+  const key=areaPayloadKey({geometry,revisions});
+  assert.match(key,/^area-5-[0-9a-f]{16}$/);
+  assert.notEqual(areaPayloadKey({geometry:{...geometry,coordinates:[[[30,0],[32,0],[32,1],[30,1],[30,0]]]},revisions}),key,'an edited outline gets a new key');
+  const workflow={nodes:[{id:'a',type:'study_area',params:{source:'drawn',label:'Uganda',selectionMode:'polygon',geometry,revisions,areaRef:key}}]};
+  assert.deepEqual(payloadsOf(workflow.nodes[0].params).map(([k])=>k),[key]);
+  assert.ok(dehydrateWorkflow(workflow).nodes[0].params.geometry,'nothing is stripped without a store to vouch for it');
+  const stored=dehydrateWorkflow(workflow,digest=>digest===key);
+  assert.equal(stored.nodes[0].params.geometry,undefined);assert.equal(stored.nodes[0].params.revisions,undefined);
+  assert.equal(stored.nodes[0].params.label,'Uganda');
+  const back=hydrateWorkflow(stored,{[key]:{geometry,revisions}});
+  assert.deepEqual(back.nodes[0].params.geometry,geometry);assert.deepEqual(back.nodes[0].params.revisions,revisions);
+  assert.throws(()=>hydrateWorkflow(stored,{}),/Shared input data is missing for a/);
+});

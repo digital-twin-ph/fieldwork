@@ -56,6 +56,7 @@ export function unbundledReferences(workflows:Workflow[]):number{
     for(const node of workflow.nodes??[]){
       const params=node.params as unknown as Record<string,unknown>;
       if(typeof params?.dataRef==='string'&&params.data===undefined)count++;
+      if(typeof params?.areaRef==='string'&&params.geometry===undefined)count++;
     }
   return count;
 }

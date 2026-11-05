@@ -17,7 +17,7 @@
     "src/data-table.ts",
     "src/chart-output.ts"
   ],
-  "measuredAt": "2026-10-22",
+  "measuredAt": "2026-11-05",
   "caps": [
     {
       "id": "storage-quota",
@@ -30,30 +30,6 @@
       "refuses": "A workflow whose saved form does not fit the browser's small store.",
       "liftTest": "Workflows move to the large store, at which point this governs nothing.",
       "kind": "platform"
-    },
-    {
-      "id": "geometry-bytes",
-      "constant": "GEOMETRY_BYTE_BUDGET",
-      "iri": "urn:fieldwork:cap:geometry-bytes",
-      "value": 1048576,
-      "unit": "bytes",
-      "basis": "derived",
-      "evidence": "One extent as JSON against the measured quota; about 26,000 vertices at the measured 39.2 bytes each.",
-      "refuses": "A single study-area outline too large to save.",
-      "liftTest": "The same as storage-quota: geometry leaves localStorage.",
-      "kind": "discovery"
-    },
-    {
-      "id": "area-bytes",
-      "constant": "AREA_BYTE_BUDGET",
-      "iri": "urn:fieldwork:cap:area-bytes",
-      "value": 1572864,
-      "unit": "bytes",
-      "basis": "derived",
-      "evidence": "Every extent one area has had, doubled by the two writes per save, leaving about 40% of the quota free.",
-      "refuses": "A study area whose revision history is too large to save.",
-      "liftTest": "The same as storage-quota.",
-      "kind": "discovery"
     },
     {
       "id": "graph-limit-default",
@@ -433,6 +409,6 @@
     "platform": "A limit the environment imposes, which this application measures and reports rather than chooses. The remedy is to name it, never to pretend it is not there.",
     "discovery": "Bounds what a practitioner can find out. These are the dangerous ones. The practitioner, 2026-10-22: \"There are reasonable caps and unreasonable ones... The others are unreasonable because they are imposing limits on things we have yet and need to discover (the DE angle).\" A number chosen here decides the answer to a question nobody has asked yet."
   },
-  "chosenDiscoveryCeiling": 12,
+  "chosenDiscoveryCeiling": 10,
   "ceilingRule": "It may be lowered freely and may never be raised. Widened 2026-10-22 from chosen numbers alone to every discovery cap whose basis is not a measurement. The practitioner, on finding a borrowed 180 seconds stopping a working download: \"That is the definition of an unreasonable cap, which I thought we know how to classify already.\" The classification was right -- attempt-seconds was declared discovery, derived, with a liftTest naming the measurement that would replace it -- and it bound nothing, because only undderived caps were counted. A derived number is still a number nobody measured here."
 }

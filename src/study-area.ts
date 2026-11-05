@@ -38,10 +38,13 @@ export function bboxPolygon(west:number,south:number,east:number,north:number):P
 // area's cost is its revisions doubled. The budgets below leave the rest of the quota for the
 // other workspaces. Serialized length is measured, not estimated from a vertex count.
 export const STORAGE_QUOTA_BYTES=5226496;
-/** One extent, as JSON. About 26,000 vertices at the measured 39.2 bytes per vertex. */
-export const GEOMETRY_BYTE_BUDGET=1048576;
-/** Every extent one area has had. Doubled by the two writes, this leaves ~40% of the quota free. */
-export const AREA_BYTE_BUDGET=1572864;
+// THE TWO BUDGETS ABOVE THIS LINE ARE GONE, 2026-11-05. One extent was held to 1,048,576 bytes and an area's history to
+// 1,572,864, both sized against localStorage. The practitioner picked Uganda at ADM0 and *"nothing showed up on the
+// dialog map"*: its outline is 1,215 KB in its largest part alone, and the refusal told them to choose a coarser
+// level, which at ADM0 does not exist. A study area's outline and its history now go to the payload store
+// (IndexedDB) under `areaRef`, as tables, networks and point layers already do, so what the budgets protected is
+// not at risk. What remains is the device: a store that falls back to localStorage still refuses at save, with
+// `storageRefusal` saying why. Experiment 179's TODO entry, and docs/experiments/121.
 
 /** Why a save was refused, in terms the practitioner can act on -- which means telling the truth
  *  about whether acting is possible.
@@ -198,9 +201,6 @@ export function validateDrawnGeometry(raw:unknown):Boundary{
   if(!isRecord(raw)||!Array.isArray(raw.coordinates))throw new Error('Draw or choose a polygon.');
   const multi=raw.type==='MultiPolygon';
   if(!multi&&raw.type!=='Polygon')throw new Error('Draw or choose a polygon.');
-  // Bytes first: a boundary too large to store is refused before anything walks its edges.
-  const bytes=geometryBytes(raw);
-  if(bytes>GEOMETRY_BYTE_BUDGET)throw new Error(`This boundary needs ${Math.round(bytes/1024)} KB and the budget for one extent is ${Math.round(GEOMETRY_BYTE_BUDGET/1024)} KB. Choose a smaller area or a coarser administrative level.`);
   const raw_parts=(multi?raw.coordinates:[raw.coordinates]) as unknown[];
   if(!raw_parts.length)throw new Error('Draw or choose a polygon.');
   const parts=raw_parts.map(part=>{
@@ -276,13 +276,6 @@ export function validateAreaParams(p:AreaParams){
       if(ring.length!==5||ring.slice(0,-1).some(([x,y])=>![b[0],b[2]].includes(x)||![b[1],b[3]].includes(y)))throw new Error('A bounding box must have four axis-aligned corners.');
     }
   }
-  // An area keeps every extent it has had, and a save writes the whole workflow twice, so what
-  // runs out is the sum over revisions rather than the size of the current one. Refusing here
-  // says so while the practitioner can still act on it -- a storage failure at save time can
-  // only report that the device is full.
-  const kept=[...(p.revisions??[]).map(r=>r.geometry),...(p.geometry?[p.geometry]:[])];
-  const total=kept.reduce((sum,g)=>sum+geometryBytes(g),0);
-  if(total>AREA_BYTE_BUDGET)throw new Error(`This area's ${kept.length} extents need ${Math.round(total/1024)} KB and the budget is ${Math.round(AREA_BYTE_BUDGET/1024)} KB. Remove an earlier extent from its history, or choose a coarser administrative level.`);
 }
 export function geometryWKT(g:Boundary){
   const ring=(r:Position[])=>'('+r.map(p=>p.join(' ')).join(', ')+')';

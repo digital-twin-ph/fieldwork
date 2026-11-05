@@ -159,7 +159,7 @@ export interface AreaRevision {at:string; geometry:Boundary; selectionMode:'bbox
  *  `basis` travels with it so a receipt cannot overstate the name: see `src/identity.ts`, where
  *  `declared` means somebody typed it and nothing checked it. */
 export type DrawnBy = {login:string; basis:import('./identity.js').IdentityBasis; at?:string};
-export type AreaParams = {source:'drawn'; label:string; selectionMode:'bbox'|'polygon'|'circle'; geometry:Boundary|null; spatialReference?:SpatialReference; country?:string} & {revisions?:AreaRevision[]; boundary?:BoundaryProvenance; drawnBy?:DrawnBy} | {source?:undefined; geometry?:never; selectionMode?:never; dataset:string; label?:string; spatialReference?:SpatialReference; country?:string};
+export type AreaParams = {source:'drawn'; label:string; selectionMode:'bbox'|'polygon'|'circle'; geometry:Boundary|null; spatialReference?:SpatialReference; country?:string} & {revisions?:AreaRevision[]; boundary?:BoundaryProvenance; drawnBy?:DrawnBy; /** The key the outline and its revisions are kept under in the payload store; written on save, read only by storage. */ areaRef?:string} | {source?:undefined; geometry?:never; selectionMode?:never; dataset:string; label?:string; spatialReference?:SpatialReference; country?:string};
 export interface Exclusion {sourceNodeId:string; featureId:string; signature:string; reason:string}
 export type AreaUnit = 'm2'|'km2'|'ha'|'ft2'|'acre'|'mi2';
 export interface Measurement {squareMetres:number; value:number; unit:AreaUnit; method:string}

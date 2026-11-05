@@ -3,6 +3,17 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.30.0 — 2026-11-05
+
+- **A whole country can be a study area.** Uganda at ADM0 drew nothing: its outline, 1.4 MB, was refused against a
+  1 MB limit sized for the browser's smallest store, in a line easy to miss, with advice to choose a coarser level
+  that ADM0 does not have. An outline taken from geoBoundaries or a file is now kept in the larger store (IndexedDB),
+  as tables and point layers are, and the limit is gone. Shapes drawn by hand are kept as before.
+- **Every part of a unit is kept.** A country or district with islands used to keep only its largest part: Uganda
+  lost 47, the islands of Lake Victoria among them.
+- **A refused outline says so where you are looking**, in the dialog's status line.
+- Validation: Chromium locally; WebKit in CI. The real Uganda ADM0 applies with all 48 parts.
+
 ## 0.29.1 — 2026-11-05
 
 - **Sample satellite files at points works on Pages.** In 0.29.0 the file reader it loads, h5wasm, was not published:

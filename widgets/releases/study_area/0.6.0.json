@@ -1,0 +1,62 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:study_area",
+  "version": "0.6.0",
+  "nodeType": "study_area",
+  "title": "Study area",
+  "released": "2026-11-05",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['study_area']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "shaclShapes": [],
+    "validationStatus": "application-only"
+  },
+  "ports": {
+    "inputs": [],
+    "output": "area",
+    "dynamicInputs": null
+  },
+  "ontology": {
+    "status": "partial",
+    "mappings": [
+      {
+        "role": "entity",
+        "iri": "urn:fieldwork:StudyArea",
+        "file": "ontology/fieldwork.ttl"
+      }
+    ],
+    "note": "Existing ontology alignment; full configuration and port shape contracts remain to be defined.",
+    "emits": {
+      "classes": [],
+      "properties": []
+    }
+  },
+  "implementation": {
+    "files": [
+      "src/area-buffer.ts",
+      "src/boundary-source.ts",
+      "src/study-area-map.ts",
+      "src/study-area.ts"
+    ],
+    "definition": "src/old-naledi.ts#OLD_TYPES"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": null
+  },
+  "changes": [
+    {
+      "kind": "minor",
+      "description": "An outline acquired from a published source or a file is kept in the payload store (IndexedDB) under areaRef, with its revisions, rather than in the saved workflow; the 1 MiB extent budget and the 1.5 MiB area budget, both sized for localStorage, are removed. A unit of several parts carries every part (Uganda at ADM0: 48, the islands of Lake Victoria among them), and a refusal is said in the dialog status line as well as under the unit list. Found when Uganda at ADM0 drew nothing. Experiment 121."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Repository regression coverage exists; this release entry does not certify a widget independently."
+  }
+}

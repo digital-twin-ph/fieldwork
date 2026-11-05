@@ -1386,24 +1386,6 @@ fw:capValueInForce a owl:DatatypeProperty;
   fw:capEvidence "localStorage accepted 5,226,496 bytes in both engines, probed 2026-10-19. docs/experiments/121-storage-beyond-local-storage.md.";
   fw:capRefuses "A workflow whose saved form does not fit the browser's small store.";
   fw:capLiftTest "Workflows move to the large store, at which point this governs nothing.".
-<urn:fieldwork:cap:geometry-bytes> a fw:Cap;
-  rdfs:label "geometry-bytes";
-  fw:capKind "discovery";
-  fw:capValue 1048576;
-  fw:capUnit "bytes";
-  fw:capBasis "derived";
-  fw:capEvidence "One extent as JSON against the measured quota; about 26,000 vertices at the measured 39.2 bytes each.";
-  fw:capRefuses "A single study-area outline too large to save.";
-  fw:capLiftTest "The same as storage-quota: geometry leaves localStorage.".
-<urn:fieldwork:cap:area-bytes> a fw:Cap;
-  rdfs:label "area-bytes";
-  fw:capKind "discovery";
-  fw:capValue 1572864;
-  fw:capUnit "bytes";
-  fw:capBasis "derived";
-  fw:capEvidence "Every extent one area has had, doubled by the two writes per save, leaving about 40% of the quota free.";
-  fw:capRefuses "A study area whose revision history is too large to save.";
-  fw:capLiftTest "The same as storage-quota.".
 <urn:fieldwork:cap:graph-limit-default> a fw:Cap;
   rdfs:label "graph-limit-default";
   fw:capKind "discovery";

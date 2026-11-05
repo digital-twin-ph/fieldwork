@@ -1,6 +1,7 @@
 import {test,expect} from '@playwright/test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {storedArea} from './stored-area.mjs';
 
 // "I tried to download North Kivu ADM1 study area and I think process hangs."
 //
@@ -89,11 +90,8 @@ test('the largest published DRC province can be acquired, and every phase is tim
   const ran=Date.now();
   await expect(page.locator('#workflow-state')).toContainText(/Run complete|Ready to run|Changed/,{timeout:180000});
   console.log(`MEASURED settle after apply: ${((Date.now()-ran)/1000).toFixed(1)} s`);
-  const stored=await page.evaluate(()=>{
-    const w=JSON.parse(localStorage.getItem('fieldwork-workflow-v1')||'{}');
-    const area=(w.nodes||[]).find(n=>n.type==='study_area'&&n.params.geometry);
-    return area?{vertices:area.params.geometry.coordinates[0].length,bytes:JSON.stringify(area.params.geometry).length}:null;
-  });
+  // Kept in the payload store since 2026-11-05: an acquired outline leaves the saved workflow.
+  const stored=await storedArea(page).then(p=>p.geometry?{vertices:p.geometry.coordinates[0].length,bytes:JSON.stringify(p.geometry).length}:null);
   console.log('MEASURED stored:',JSON.stringify(stored));
   // AS PUBLISHED, and the record says so. The point of admitting 16,548 vertices whole rather
   // than simplifying them is that the outline is still the jurisdiction's; that claim is only

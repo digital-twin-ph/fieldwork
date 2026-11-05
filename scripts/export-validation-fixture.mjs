@@ -35,6 +35,8 @@ import {groupTable} from '../build/group-table.js';
 import {selectRange} from '../build/derive-value.js';
 import {fitRegression,specFrom,rowsOf} from '../build/regression.js';
 import {computeRateTwoByTwo} from '../build/two-by-two-rates.js';
+import {tablePoints} from '../build/table-points.js';
+import {groupTable as totalWithin} from '../build/group-table.js';
 import {rateTwoByTwoSentence} from '../build/two-by-two.js';
 import {executeWorkflow} from '../build/core.js';
 import {parseCSV} from '../build/input-data.js';
@@ -1170,6 +1172,41 @@ const builders={
           rows:table.rows.map(row=>({key:row.key,value:row.value}))}},
       output:{cases},
       note:'Recompute each case from `input` and its own from, to and keyColumn. Case 4 empties the ozone of the row named in `emptied` first.'
+    },files:{}};
+  },
+
+  'points-from-xy-001'(){
+    // POINT DATA FROM A TABLE (experiment 178), against geopandas.points_from_xy. Two cases: NYC's ozone monitors, the
+    // authors' site-day file totalled by site and position as the worked example does it, holding positions only (the
+    // readings stay with their custodian); and a table of the rows a run must diagnose rather than refuse.
+    const pkg=process.env.NYC_PKG;
+    if(!pkg)throw new Error('Set NYC_PKG to a local copy of the NYC package: the monitors are read from it.');
+    const zip=unzipSync(readFileSync(pkg));
+    const name=Object.keys(zip).find(n=>n.endsWith('Data/Core/Derived/o3_site_day_raw_rebuild.csv'));
+    const csv=parseCSV(new TextDecoder().decode(zip[name]),100_000,50_000_000);
+    const at=h=>csv.headers.indexOf(h);
+    const daily={kind:'data-table',keys:['date','site','Latitude','Longitude'],valueField:'value',rowCount:csv.rows.length,
+      missingValueCount:0,rows:csv.rows.map(r=>({key:{date:r[at('date')],site:r[at('site')],Latitude:r[at('Latitude')],
+        Longitude:r[at('Longitude')]},value:Number(r[at('value')])}))};
+    const grouped=totalWithin(daily,{by:['site','Latitude','Longitude']}).table;
+    const positionsOnly={kind:'data-table',keys:grouped.keys,valueField:'',rowCount:grouped.rowCount,missingValueCount:0,
+      rows:grouped.rows.map(r=>({key:r.key,value:null}))};
+    const edge={kind:'data-table',keys:['id','lon','lat'],valueField:'',rowCount:9,missingValueCount:0,
+      rows:[['ok','-73.902','40.816'],['empty','',' 40.8'],['text','west','40.8'],['lat-high','-73.9','90.0001'],
+        ['lon-low','-180.5','40'],['edge','-180','90'],['edge-2','180','-90'],['same','-73.902','40.816'],['spaced',' -73.5 ','40.5']]
+        .map(([id,lon,lat])=>({key:{id,lon,lat},value:null}))};
+    const run=(note,table,mapping)=>{const r=tablePoints(table,mapping);
+      return {note,mapping,input:{keys:table.keys,rows:table.rows.map(row=>row.key)},
+        output:{features:r.points.features.map(f=>({id:f.id,coordinates:f.geometry?.coordinates??null})),
+          unplaced:r.unplaced,positions:r.positions,sharedPosition:r.sharedPosition}};};
+    return {fixture:{
+      ...base('points-from-xy-001','point_input','Point data','src/table-points.ts#tablePoints'),
+      source:"NYC ozone monitor positions from Lian et al.'s Zenodo package (doi:10.5281/zenodo.22757330), o3_site_day_raw_rebuild.csv, custodian US EPA AQS; positions only. The second case is constructed.",
+      declaredParameters:{semantics:'One point per row: x from the column named as x (the longitude), y from the column named as y (the latitude), CRS84. Values are trimmed text read as numbers. A row is not placed, and keeps no geometry, when either is empty, either is not a finite number, |x| > 180 or |y| > 90. Placed rows are counted by distinct position.',
+        equivalentTo:"geopandas.points_from_xy(pd.to_numeric(df[x]), pd.to_numeric(df[y]), crs='EPSG:4326'), with the declared rule deciding which rows are placed"},
+      output:{cases:[run('NYC ozone monitors, totalled by site and position',positionsOnly,{x:'Longitude',y:'Latitude',id:'site'}),
+        run('Rows a run must diagnose rather than refuse',edge,{x:'lon',y:'lat',id:'id'})]},
+      note:'Recompute each case from its input and mapping.'
     },files:{}};
   },
 

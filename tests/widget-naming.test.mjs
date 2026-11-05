@@ -91,22 +91,35 @@ test('the shipped baseline passes, and every known violation carries a reason', 
     assert.ok(v.reason&&v.reason.length>20,`${v.nodeType}:${v.rule} needs a reason`);
     assert.ok(v.clearedBy,`${v.nodeType}:${v.rule} needs a route out`);
   }
-  assert.ok(baseline.knownViolations.length<=baseline.maxKnownViolations);
 });
 
 test('a new violation fails, and a fixed one must be removed from the baseline', ()=>{
   const definitions={clip_raster:widget({title:'Clip raster input'})};
   const cls={widgets:[{nodeType:'clip_raster',classification:'standard'}]};
   assert.throws(()=>validateNaming({definitions,classification:cls,
-    baseline:{knownViolations:[],maxKnownViolations:0,domainPrefixes:prefixes}}),/New naming violation/);
+    baseline:{knownViolations:[],domainPrefixes:prefixes}}),/New naming violation/);
   // The ratchet: a listed violation that no longer occurs must be removed, so the count falls.
   assert.throws(()=>validateNaming({definitions:{clip_raster:widget()},classification:cls,
-    baseline:{knownViolations:[{nodeType:'clip_raster',rule:'role-word-in-title',reason:'x'.repeat(30)}],
-      maxKnownViolations:1,domainPrefixes:prefixes}}),/Stale entry/);
+    baseline:{knownViolations:[{nodeType:'clip_raster',rule:'role-word-in-title',reason:'x'.repeat(30),clearedBy:'rename'}],
+      domainPrefixes:prefixes}}),/Stale entry/);
 });
 
-test('the ceiling cannot be exceeded', ()=>{
-  assert.throws(()=>validateNaming({definitions:{},classification:{widgets:[]},
-    baseline:{knownViolations:[{nodeType:'a',rule:'r',reason:'y'.repeat(30)}],maxKnownViolations:0,
-      domainPrefixes:prefixes}}),/exceeds the ceiling/);
+test('a known violation states why it stands and what would clear it; how many there are is not capped', ()=>{
+  // The practitioner, 2026-11-05, of the ceiling this replaced: "If that's another cap then it's a false one."
+  const definitions={clip_raster:widget({title:'Clip raster input'})};
+  const cls={widgets:[{nodeType:'clip_raster',classification:'standard'}]};
+  const entry={nodeType:'clip_raster',rule:'role-word-in-title',reason:'y'.repeat(30)};
+  assert.throws(()=>validateNaming({definitions,classification:cls,
+    baseline:{knownViolations:[entry],domainPrefixes:prefixes}}),/says nothing of what would clear it/);
+  assert.doesNotThrow(()=>validateNaming({definitions,classification:cls,
+    baseline:{knownViolations:[{...entry,clearedBy:'a rename'}],domainPrefixes:prefixes}}));
+});
+
+test('a source may read data already in the workflow when it can run without it; requiring it makes a transform',()=>{
+  // The practitioner, 2026-11-05: "Reading data already in the workflow is efficiency." Point data's table is optional.
+  const definitions={point_input:widget({title:'Point data',group:'Sources',inputs:[['records','table']]})};
+  const cls={widgets:[{nodeType:'point_input',classification:'standard'}]};
+  const found=optionalPorts=>violations({definitions,classification:cls,optionalPorts}).filter(v=>v.rule==='source-consumes-data');
+  assert.equal(found({point_input:new Set(['records'])}).length,0);
+  assert.equal(found({point_input:new Set()}).length,1);
 });

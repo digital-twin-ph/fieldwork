@@ -1,6 +1,6 @@
 # Map
 
-_Created 2026-10-14 · Updated 2026-11-03_
+_Created 2026-10-14 · Updated 2026-11-05_
 
 **An output widget.** It draws what your workflow produced. It computes nothing, changes
 nothing and decides nothing — if a number looks wrong on the map, the step that produced it is

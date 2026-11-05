@@ -2,8 +2,8 @@
 
 _Created 2026-11-05 · Updated 2026-11-05_
 
-**Status:** tried — built in Map 0.20.0, Table 0.7.0 and Chart 0.10.0; no worked example files a figure outside Results
-yet. The NYC study-area map that prompted it waits on a way to make points from a table (below).
+**Status:** tried — built in Map 0.20.0, Table 0.7.0 and Chart 0.10.0. The NYC example's fifth workflow files its
+study-area map under Introduction, built from its manual in a browser on 2026-11-05 ([178](178-points-from-xy.md)).
 
 ## The task
 
@@ -44,13 +44,13 @@ drawn beside its note, so no table, chart or map could appear anywhere else in t
 | 2026-11-05 | `tests/evidence.browser.mjs` | a live South London run's receipts conform to the new shapes. Chromium |
 | 2026-11-05 | unit suite | 1,427 passed, 0 failed |
 
-## Found on the way: the NYC map cannot be built from the manual
+## Found on the way: the NYC map could not be built from the manual
 
 The NYC package carries no emergency-department locations: its outcome is one citywide daily count. It does carry
 each air monitor's coordinates, 15 sites across ozone, PM2.5 and NO2, in its site-day files. Nothing in Fieldwork
 turns a table's longitude and latitude columns into points. Point data reads a file from the practitioner's machine
 or takes pins placed by clicking, and a worked example's manual can do neither: it fetches by URL, and a clicked pin
-is not a monitor's position. The boroughs are reachable, as geoBoundaries USA ADM2 (Census TIGER 2018, public domain,
+is not a monitor's position. Resolved by giving Point data a table as a source ([178](178-points-from-xy.md)). The boroughs were reachable, as geoBoundaries USA ADM2 (Census TIGER 2018, public domain,
 3,233 units, 10.5 MB), through the study area.
 
 ## Practitioner observation, written before the result

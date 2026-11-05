@@ -9,9 +9,9 @@
   "measuredAt": "2026-10-27",
   "counts": {
     "widgets": 56,
-    "covered": 27,
+    "covered": 28,
     "awaiting": 14,
-    "none": 14,
+    "none": 13,
     "blocked": 1
   },
   "widgets": [
@@ -176,8 +176,9 @@
     },
     {
       "nodeType": "point_input",
-      "expectation": "none",
-      "reason": "Supplied point data."
+      "expectation": "parity",
+      "computes": "Points from a table's longitude and latitude columns, and which rows are placed.",
+      "check": "34-points-from-xy"
     },
     {
       "nodeType": "polygon_input",

@@ -1049,7 +1049,12 @@
         {
           "when": "default",
           "required": [],
-          "optional": []
+          "optional": [
+            [
+              "records",
+              "table"
+            ]
+          ]
         }
       ]
     },

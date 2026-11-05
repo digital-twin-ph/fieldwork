@@ -571,7 +571,7 @@ async function fetchWithProgress(url:string,estimate:number,onProgress:(read:num
       });
       const {readUnits}=await import('./boundary-source.js');
       pickedUnits=readUnits(level,JSON.parse(shapes));
-      unitPick.innerHTML=pickedUnits.map((u,i)=>`<option value="${i}">${u.name}</option>`).join('');
+      offerUnits((await import('./boundary-source.js')).unitOptions(pickedUnits));
       unitsBox.hidden=false;
       // The SIZE stays on screen rather than flashing past. It is the thing that makes
       // "only the boundaries we need" a decision the practitioner can take, and a message that
@@ -595,7 +595,14 @@ async function fetchWithProgress(url:string,estimate:number,onProgress:(read:num
         +(near.length?` Note: ${near.join(', ')} also match what you typed.`:'');
     }catch{boundaryStatus.textContent='That boundary could not be reached. The study area can still be drawn.';}
   };
-  function chosenUnits(){return [...unitPick.selectedOptions].map(o=>pickedUnits[Number(o.value)]).filter(Boolean);}
+  // Each option's value is the unit's id where ids are unique, its position otherwise (`unitOptions`), so a choice
+  // is found by value. The label is text, set as text: a geoBoundaries name is data, not markup.
+  let offered:{value:string;label:string}[]=[];
+  function offerUnits(options:{value:string;label:string}[]){
+    offered=options;
+    unitPick.replaceChildren(...options.map(o=>{const el=document.createElement('option');el.value=o.value;el.textContent=o.label;return el;}));
+  }
+  function chosenUnits(){return [...unitPick.selectedOptions].map(o=>pickedUnits[offered.findIndex(x=>x.value===o.value)]).filter(Boolean);}
   // THE MAP FOLLOWS THE CHOICE. The practitioner, 2026-10-18: *"if I select the country the map
   // should go there, and if I select an ADM unit, the map should go there, less friction."* The
   // dialog could sit over Gaborone while a practitioner picked units in the DRC, which left them
@@ -655,7 +662,7 @@ async function fetchWithProgress(url:string,estimate:number,onProgress:(read:num
       const level=localBoundaryLevel(file.name,parsed.features?.length??0);
       pickedUnits=unitsFromFile(parsed,key,level.boundaryID);
       pickedLevel=level;
-      unitPick.innerHTML=pickedUnits.map((u,i)=>`<option value="${i}">${u.name}</option>`).join('');
+      offerUnits((await import('./boundary-source.js')).unitOptions(pickedUnits));
       unitsBox.hidden=false;
       summarise=(_l,chosen)=>`${chosen.length} of ${pickedUnits.length} boundaries from ${file.name} \u00b7 licence not stated here`;
       showSelection();

@@ -5,7 +5,6 @@
   "domainPrefixes": {
     "urn:fieldwork:pack:sea-level-rise": "slr"
   },
-  "maxKnownViolations": 2,
   "knownViolations": [
     {
       "nodeType": "facilities",
@@ -21,20 +20,6 @@
       "clearedBy": "Decided with the presentation stage, which is where this widget is expected to land."
     }
   ],
-  "ceilingRule": "maxKnownViolations may be lowered freely and raised only when a NEW RULE is added and finds violations that already existed. Raising it for a newly introduced defect is forbidden. Every raise names the rule and the date, below, so the distinction is auditable rather than asserted -- otherwise the ratchet would quietly discourage adding rules, which is the opposite of what it is for. Checked from 2026-10-13: the ceiling must equal initialCeiling plus every recorded raise. Before that this rule was prose and nothing read it.",
-  "raises": [
-    {
-      "date": "2026-10-13",
-      "from": 13,
-      "to": 14,
-      "rule": "source-consumes-data",
-      "found": [
-        "slr_extract_import"
-      ],
-      "why": "A new rule asking whether a widget grouped under Sources actually acquires anything. The violation it found predates the rule by months: slr_extract_import has always taken a table on an input port. No new defect was admitted."
-    }
-  ],
-  "initialCeiling": 13,
   "clearedOn": [
     {
       "date": "2026-10-13",
@@ -46,5 +31,34 @@
       "how": "Both cleared by the split in experiment 111, not by renaming. The widget stopped importing its own data and became a points-to-points transform, so it moved from Sources to Spatial operations -- which is what transform-in-sources was waiting for -- and the title became 'Reproject points', which is the object the operation acts on rather than the role word 'input'. The ledger said the title should not be fixed while the contract still made it true; the contract changed first.",
       "ceiling": "6 -> 4"
     }
-  ]
+  ],
+  "ceilingHistory": {
+    "retired": "2026-11-05",
+    "why": "A cap on how many violations may stand is a cap on a shared total, which the practitioner has ruled against: a needed exception then costs an unrelated one. Of this ceiling, raised that day for Point data's table source: \"If that's another cap then it's a false one.\" What does the work is per item: a new violation fails the build until it is recorded with a reason and a route out, and a cleared one must be removed.",
+    "lastCeiling": 3,
+    "initialCeiling": 13,
+    "rule": "maxKnownViolations may be lowered freely and raised only when a NEW RULE is added and finds violations that already existed. Raising it for a newly introduced defect is forbidden, except by the practitioner's decision recorded in `raises` with its date and words (amended 2026-11-05, the first such admission, Point data's table source). Every raise names the rule and the date, below, so the distinction is auditable rather than asserted -- otherwise the ratchet would quietly discourage adding rules, which is the opposite of what it is for. Checked from 2026-10-13: the ceiling must equal initialCeiling plus every recorded raise. Before that this rule was prose and nothing read it.",
+    "raises": [
+      {
+        "date": "2026-10-13",
+        "from": 13,
+        "to": 14,
+        "rule": "source-consumes-data",
+        "found": [
+          "slr_extract_import"
+        ],
+        "why": "A new rule asking whether a widget grouped under Sources actually acquires anything. The violation it found predates the rule by months: slr_extract_import has always taken a table on an input port. No new defect was admitted."
+      },
+      {
+        "date": "2026-11-05",
+        "from": 2,
+        "to": 3,
+        "rule": "source-consumes-data",
+        "found": [
+          "point_input"
+        ],
+        "why": "The FIRST raise for a violation admitted rather than pre-existing, against the ceiling rule as it then read. The practitioner chose, 2026-11-05, to record Point data's table source as a known violation rather than change the rule or split the widget: 'Record a known violation'. The ceiling rule is amended the same day to say that a practitioner may admit one, on the record. Superseded the same day: the practitioner, \"Reading data already in the workflow is efficiency\", so the rule was amended to catch a source that REQUIRES workflow data, and Point data, whose table is optional, is no violation. The entry was removed."
+      }
+    ]
+  }
 }

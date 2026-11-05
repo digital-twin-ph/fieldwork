@@ -248,6 +248,14 @@ prevented. The gap between those columns is the finding.
 | D9, a worked example's node count must not increase | Agent | None | 0 | 0 | **Withdrawn.** Would have blocked a worked example |
 | A script that both prepares and checks data checks nothing | Agent | None | 0 | 0 | **Withdrawn 2026-10-10.** It was wrong |
 
+**2026-11-05, `source-consumes-data` fired on Point data** when it took an optional table as a source
+([178](../experiments/178-points-from-xy.md)). The rule was **amended**, not obeyed: the practitioner, *"Reading data
+already in the workflow is efficiency."* It now catches a source that requires workflow data, which is the case it was
+written for (Reproject), and passes an optional one. The same day the naming ledger's ceiling on known violations was
+**retired** as a cap on a shared total (*"If that's another cap then it's a false one"*): each violation is held to its
+own reason and route out instead. A rule that fired, prevented nothing, and was right about a different case than the
+one it caught.
+
 ## The withdrawn one worth reading
 
 "A script that both prepares data and checks it checks nothing" had no incidents

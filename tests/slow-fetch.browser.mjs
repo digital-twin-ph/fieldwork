@@ -6,7 +6,9 @@ import {createServer} from 'node:http';
  *  5 KB/s. A fetch now shows how much has arrived, has no time limit, and stops when the practitioner says so. */
 test.use({serviceWorkers:'block'});
 
-const CSV='date,count\n'+Array.from({length:4000},(_,i)=>`2020-01-${String(i%28+1).padStart(2,'0')},${i%50}`).join('\n')+'\n';
+// 680 KB, so progress printed in MB to one decimal moves within the first chunks. At 68 KB the first non-zero figure,
+// 0.1 MB, came only after 73% had arrived, which is how CI's runner finished before Stop (2026-11-05).
+const CSV='date,count\n'+Array.from({length:40000},(_,i)=>`2020-01-${String(i%28+1).padStart(2,'0')},${i%50}`).join('\n')+'\n';
 
 /** A real server, sending in small pieces with a pause between them, as a throttled host does. */
 const trickle=(bytes,{pieces,pauseMs})=>new Promise(resolve=>{
@@ -56,9 +58,14 @@ test('progress is counted as bytes arrive, and Stop stops it, saying how much ha
     const real=window.fetch;
     window.fetch=async(input,init)=>{
       if(!String(input).startsWith('https://slow.example.test/'))return real(input,init);
+      // HALF THE BODY, THEN NOTHING UNTIL STOP. At 40 chunks of 250 ms CI's Chromium sometimes finished the download
+      // before Stop was pressed, and there was nothing left to stop (0.25.0, 2026-11-05). Holding the stream open after
+      // half makes the order certain on any runner, and the progress still moves before it stalls.
       const data=new TextEncoder().encode(text),size=Math.ceil(data.length/40);let at=0;
+      const stopped=new Promise(r=>init?.signal?.addEventListener('abort',r,{once:true}));
       const body=new ReadableStream({async pull(controller){
         if(init?.signal?.aborted){controller.error(new DOMException('stopped','AbortError'));return;}
+        if(at>=data.length/2)await stopped;
         if(at>=data.length){controller.close();return;}
         await new Promise(r=>setTimeout(r,250));
         if(init?.signal?.aborted){controller.error(new DOMException('stopped','AbortError'));return;}

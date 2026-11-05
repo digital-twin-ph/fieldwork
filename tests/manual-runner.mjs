@@ -121,6 +121,15 @@ export async function performManual(page,workflow,{timeout=120000}={}){
       },[step.tick,step.values]);
       continue;
     }
+    if('pick' in step){
+      const field=page.locator(`#${step.pick}`);
+      await expect(field,where).toBeVisible({timeout});
+      await sameLabel(page,step.pick,step.label,where);
+      for(const label of step.values)
+        await expect(field.locator('option').filter({hasText:label}),`${where}: "${label}" is offered`).not.toHaveCount(0);
+      await field.selectOption(step.values.map(label=>({label})));
+      continue;
+    }
     if('keyRole' in step){
       const role=page.locator(`[data-key-role="${step.keyRole}"]`);
       const shown=await role.locator(`option[value="${step.value}"]`).textContent();

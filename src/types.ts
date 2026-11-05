@@ -62,7 +62,10 @@ export interface PointParams {label:string; data:PointCollection; dataRef?:strin
  *  so is the thing this application exists not to produce -- and the alteration is the same
  *  class of act as a unit conversion, which this project refuses to do silently. */
 export interface ColumnRepair {column:string; to:'number'|'boolean'|'term'; cast:number; unreadable:string[]; at:string}
-export interface ObservationParams extends PointParams {fields?:FormField[]; attributeRules?:AttributeDefinition[]; sourceInfo?:SourceInfo; pinIdStrategy?:'uuid'|'sequential'; repairs?:ColumnRepair[]}
+export interface ObservationParams extends PointParams {
+  /** Read from a connected table at run time: x (longitude) and y (latitude) columns, CRS84. Experiment 178. */
+  fromTable?:import('./table-points.js').TableMapping;
+  fields?:FormField[]; attributeRules?:AttributeDefinition[]; sourceInfo?:SourceInfo; pinIdStrategy?:'uuid'|'sequential'; repairs?:ColumnRepair[]}
 /** One committed extent of a study area: the shape, how it was drawn, and when it was kept. */
 /** Where an acquired boundary came from, carried so the receipt can say whose line it is.
  *

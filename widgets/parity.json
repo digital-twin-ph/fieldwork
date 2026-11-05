@@ -3,7 +3,7 @@
   "description": "Independent recomputation of implemented widgets by an external process, recorded after release. Release files are immutable once committed, so evidence about a release lives here and accrues as checks run. A fixture digest recorded in a result is over canonical JSON content rather than the file’s bytes, revised 2026-10-11 because byte identity is unsatisfiable in the browser the lab publishes to. A parity result establishes numerical agreement with a named external implementation under a stated criterion. It is not scientific certification, and it says nothing about whether a method is appropriate for a question.",
   "lab": {
     "repository": "https://github.com/digital-twin-ph/validation-lab",
-    "commit": "962e1e330cd9b4cc3f9721080d88c4d4c29d1093",
+    "commit": "867f6899df475c718eec78dd1e113a5b3a061ea0",
     "pinNote": "The commit CI checks the lab out at: .github/workflows/pages.yml reads it with `jq -r .lab.commit widgets/parity.json`. So this pin, not the clone beside this repository, is what `validate:dive-deeper` verifies against on a clean runner -- and it must be advanced whenever a check lands in the lab, in the same push-then-pin order the worked examples use."
   },
   "outcomes": {
@@ -677,6 +677,28 @@
       "measured": "Five comparisons. Salmonella, cases against classical controls (142 rows) and panel controls (113), likelihood-ratio and Wald: worst relative difference 1.3e-10, the published 96 (15-2067) and 18 (4.6-101) recomputed. NYC, 3,643 rows and 840 strata: HAC and model-based errors 1.1e-12, and the authors' R result reproduced. FINDING AGAINST FIELDWORK: the panel case's 80+ age group is separated (standard errors 29,232 and 1,596,022) and Fieldwork reports it as an odds ratio of 1.27e8 (0.016 to 2.8e10) with no warning.",
       "note": "NYC's daily counts are NYC DOHMH's, all rights reserved, so the fixture carries no rows: it names the authors' Zenodo package and its digest, and the check fetches it. External validation only; a lesson on regression belongs in dive-deeper.",
       "notebook": "33-regression-vs-statsmodels.ipynb"
+    },
+    {
+      "widget": "urn:fieldwork:widget:point_input",
+      "coversRelease": "0.4.0",
+      "check": "34-points-from-xy",
+      "result": "content/results/check-34-points-from-xy.json",
+      "sha256": "3b1f504593e35ce27c3cca8e2bed04032e6abe0cf88fad63473928b36ac515ef",
+      "external": [
+        "geopandas 1.2.0",
+        "shapely 2.2.0",
+        "pandas 2.3.3"
+      ],
+      "criterion": "the same rows placed and not placed; every placed x and y exactly geopandas.points_from_xy's; the same count of distinct positions; CRS EPSG:4326 with the longitude as x",
+      "outcome": "agrees",
+      "measured": "NYC ozone monitors, totalled by site and position: 6 of 6 placed, 6 distinct positions, every placed point exactly geopandas'; Rows a run must diagnose rather than refuse: 5 of 9 placed, 4 distinct positions, every placed point exactly geopandas'",
+      "ranAt": "2026-11-05T12:53:03.838138+00:00",
+      "notEstablished": [
+        "That a published position is where the monitor stands: it is the custodian's claim.",
+        "Any CRS but CRS84."
+      ],
+      "note": "Point data's table source only (Fieldwork experiment 178). Which rows are placed is Fieldwork's declared rule, restated in the check, since geopandas places any number it is given. The file, GeoJSON, GeoPackage and pin sources are not covered.",
+      "notebook": "34-points-from-xy-vs-geopandas.ipynb"
     }
   ],
   "notebookNote": "`notebook` names the lab notebook that carries the check, and `diveDeeper` the heading of its Dive Deeper section where it has one -- the part written for a practitioner who wants to understand the widget rather than for a reviewer checking it (experiment 94). Both are recorded rather than derived from the check id: `24-project-forward` lives in `24-project-vs-pyproj.ipynb`, so matching on the leading number works by luck and would break the first time a check and its notebook are named differently. The application reads `diveDeeper` to decide which widgets offer the link, and scripts/validate-dive-deeper.mjs refuses a heading the notebook does not actually carry."

@@ -51,7 +51,12 @@ test('a manual that could not be followed is refused, saying where',()=>{
 const NYC=new URL('../../example-2025-nyc-ozone/manual.json',import.meta.url);
 test('the NYC manual is one that can be followed',{skip:existsSync(NYC)?false:'example-2025-nyc-ozone is not checked out'},()=>{
   const nyc=validateManual(JSON.parse(readFileSync(NYC,'utf8')));
-  assert.deepEqual(nyc.workflows.map(w=>w.name),['What happened during the June 2023 smoke?','Ten years of daily visits','Did visits move with the air?','How much does ozone raise visits?']);
+  assert.deepEqual(nyc.workflows.map(w=>w.name),['What happened during the June 2023 smoke?','Ten years of daily visits','Did visits move with the air?','How much does ozone raise visits?','Where was the air measured?']);
+});
+
+test('several options of one list are named as the reader sees them',()=>{
+  assert.match(stepSentence({pick:'area-boundary-pick',label:'Units',values:['Bronx','Kings \u00b7 40.65\u00b0 N, 73.96\u00b0 W']},{},title,esc),
+    /^Under <strong>Units<\/strong>, choose <strong>Bronx<\/strong>, <strong>Kings · 40\.65° N, 73\.96° W<\/strong>\. Hold Ctrl, or ⌘ on a Mac, to choose more than one\.$/);
 });
 
 test('a node reused from another workflow of the project reads as such, and counts as added',()=>{

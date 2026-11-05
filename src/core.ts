@@ -64,6 +64,7 @@ import widgetRegistry from '../widgets/registry.json';
 import {relateTable,relateOutcome,machinedNotes,relateReceiptFacts,type RelateOutcome} from './relate-table.js';
 // THE EQUATIONS THE COMPUTATIONS USED, machined as Methods notes. The second, third and fourth
 // producers of a machined note, which is the state `relate-table.ts` wrote its type for.
+import {tablePoints,tablePointsSentence,tablePointsFacts} from './table-points.js';
 import {figureSection,figureSectionDeclared} from './notes.js';
 import {rateEquationNote,rateTwoByTwoEquationNote,twoByTwoEquationNote,machinedNoteFacts}
   from './equations.js';
@@ -220,7 +221,9 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   // "demonstration points", and it lived in one example's module. src/point-grid.ts holds it now.
   point_grid:{title:'Point grid',group:'Spatial operations',icon:'▦',color:'teal',description:'Generate a regular grid of points inside a boundary at a stated spacing',inputs:[['area','area']],output:'points'},
   measure_area:{title:'Calculate area',group:'Spatial operations',icon:'▱',color:'teal',description:'Attach an area measurement to the study area',inputs:[['area','area']],output:'area'},
-  point_input:{title:'Point data',group:'Sources',icon:'▦',color:'blue',description:'Import point observations or generate synthetic records',inputs:[],output:'points'},
+  // The `records` table is OPTIONAL, as Polygon layer's area is: unconnected, this is the source it always was;
+  // connected, the points are read from the table's x (longitude) and y (latitude) columns. Experiment 178.
+  point_input:{title:'Point data',group:'Sources',icon:'▦',color:'blue',description:'Import point observations or generate synthetic records, or read them from a table\'s longitude and latitude columns',inputs:[['records','table']],output:'points'},
   // Retired 2026-10-21 and archived here, not deleted: a registry entry must resolve to a
   // definition, and a saved workflow that still names this type is migrated to
   // `clip_points_to_area` on open. It is in the retired list, so the palette never offers it.
@@ -270,6 +273,7 @@ export function requiredInputs(node:WorkflowNode,options?:{coverageConnected?:bo
   // canvas, which is where a source widget has to be.
   if(node.type==='network_input'||node.type==='polygon_input')
     return all.filter(([port])=>port!=='area');
+  if(node.type==='point_input')return all.filter(([port])=>port!=='records');
   // A DESIGN IS DECLARED OR IT IS ABSENT, and absent must keep working. Requiring it would make
   // every existing workflow with a two-by-two refuse to run until somebody answered a question
   // they may not be able to answer -- and would drop the widget's own contract into one that
@@ -796,6 +800,7 @@ export function validateWorkflow(raw:unknown):Workflow {
     }
     // Reproject stores the already-converted CRS84 collection, so it is validated as geographic here.
     if(n.type==='reproject'){utmDefinition(n.params.zone,n.params.hemisphere);n.params.spatialReference??=defaultSpatialReference();validateSpatialReference(n.params.spatialReference);}
+    if(n.type==='point_input'&&n.params.fromTable!==undefined){const m=n.params.fromTable as unknown as Record<string,unknown>;if(!m||typeof m.x!=='string'||typeof m.y!=='string'||['id','name'].some(k=>m[k]!==undefined&&typeof m[k]!=='string'))throw new Error('A table mapping names its x (longitude) and y (latitude) columns as text.');}
     if(n.type==='point_input'){validateAttributeSchema(n.params.data,n.params.fields,n.params.attributeRules);if(n.params.pinIdStrategy!==undefined&&!['sequential','uuid'].includes(n.params.pinIdStrategy))throw new Error('Choose sequential or UUID identifiers for new pins.');}
     if((n.type==='map_output'||n.type==='table_output')&&n.params.inputMode!==undefined&&!(n.type==='map_output'?['spatial','decisions','raster','polygons','network']:['spatial','decisions','polygons','table']).includes(n.params.inputMode))throw new Error('Choose spatial inputs or reasoning results.');
     if(n.type==='map_output'&&((n.params.presentation!==undefined&&!['plot','interactive'].includes(n.params.presentation))||(n.params.contextPoints!==undefined&&typeof n.params.contextPoints!=='boolean')))throw new Error('Invalid polygon map presentation.');
@@ -1219,8 +1224,25 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         // Repairs are applied to a COPY, here, on the way out. What this node holds is what the
         // file held; what it hands on is what the practitioner declared it should be read as.
         // 2026-10-16: "there is always an option to use a copy, not the original."
-        const emitted=applyRepairs(node.params.data.features??[],node.params.repairs??[]);
-        value={...node.params.data,features:emitted,sourceNodeId:node.id,sourceKind:'input-points',sourceInfo:structuredClone(node.params.sourceInfo),spatialReference:structuredClone(node.params.spatialReference)};
+        // FROM A TABLE A WORKFLOW COMPUTED, where one is connected: geopandas' points_from_xy, diagnosing rather than
+        // refusing a row it cannot place. Experiment 178.
+        const table=(inputs as unknown as {records?:import('./data-table.js').DataTable}).records;
+        if(table&&table.kind!=='data-table')throw new Error('Connect a table: these points are read from its columns.');
+        if(table&&!node.params.fromTable)throw new Error('A table is connected. Choose its x (longitude) and y (latitude) columns.');
+        const mapping=table?node.params.fromTable:undefined;
+        const read=table&&mapping?tablePoints(table,mapping):null;
+        const emitted=applyRepairs(read?read.points.features:node.params.data.features??[],node.params.repairs??[]);
+        const tableEdge=workflow.edges.find(e=>e.to===node.id&&e.port==='records');
+        value={...node.params.data,features:emitted,sourceNodeId:node.id,sourceKind:'input-points',
+          sourceInfo:read?{format:'table',from:tableEdge?.from??''}:structuredClone(node.params.sourceInfo),
+          spatialReference:structuredClone(node.params.spatialReference),
+          ...(read&&mapping?{sentence:tablePointsSentence(read,mapping)}:{})};
+        if(read&&mapping&&tableEdge){
+          const facts=tablePointsFacts(`<urn:fieldwork:run:${runId}:output:${node.id}>`,
+            `<urn:fieldwork:run:${runId}:output:${tableEdge.from}>`,mapping,read);
+          receipts.push({nodeId:node.id,kind:'computation',facts,rules:'',input:facts,conclusions:[],
+            method:tablePointsSentence(read,mapping)} as unknown as Receipt);
+        }
         // A repaired column is stated in the evidence. The records this node emits are no longer
         // the records the file held, and a reader has to be able to learn that from the run
         // rather than from having been present when somebody pressed the button. Experiment 117.

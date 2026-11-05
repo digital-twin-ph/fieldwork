@@ -1,0 +1,85 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:point_input",
+  "version": "0.4.0",
+  "nodeType": "point_input",
+  "title": "Point data",
+  "released": "2026-11-05",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['point_input']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "shaclShapes": [],
+    "validationStatus": "application-only"
+  },
+  "ports": {
+    "inputs": [
+      {
+        "name": "records",
+        "type": "table"
+      }
+    ],
+    "output": "points",
+    "dynamicInputs": null,
+    "optionalInputs": [
+      {
+        "name": "records",
+        "type": "table"
+      }
+    ]
+  },
+  "ontology": {
+    "status": "partial",
+    "mappings": [
+      {
+        "role": "configuration",
+        "iri": "urn:fieldwork:GenericInputConfiguration",
+        "file": "ontology/processing.ttl"
+      }
+    ],
+    "note": "Design alignment to GenericInputConfiguration; not a claim that current receipts emit this type.",
+    "emits": {
+      "classes": [],
+      "properties": []
+    }
+  },
+  "implementation": {
+    "files": [
+      "src/app.ts",
+      "src/core.ts",
+      "src/input-data-ui.ts",
+      "src/input-data.ts",
+      "src/table-points.ts"
+    ],
+    "definition": "src/core.ts#TYPES"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [
+      {
+        "nodeType": "places",
+        "adapterVersion": "1",
+        "implementation": "src/core.ts#validateWorkflow"
+      },
+      {
+        "nodeType": "centers",
+        "adapterVersion": "1",
+        "implementation": "src/core.ts#validateWorkflow"
+      }
+    ],
+    "replacementCandidate": null
+  },
+  "changes": [
+    {
+      "kind": "minor",
+      "description": "Reads points from a table a workflow computed, as geopandas' points_from_xy does. Connect a table to the new optional `records` input and name its x (longitude) and y (latitude) columns, and optionally a record ID and a label. Read as CRS84. A row whose coordinates are empty, not numbers or out of range is kept with no position and counted, never a refusal of the table; rows sharing a position are counted too, the sign that a table needs totalling to one row per place first. Every column travels as an attribute. Unconnected, the widget is the source it always was. The receipt states fw:PointsFromTable with the columns read and what was placed, written by src/table-points.ts and held by fw:PointsFromTableShape. The practitioner, 2026-11-05: 'Point data widget has input options that include CSV' -- so a source of this widget, and no new one. Experiment 178."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Shared-input unit and Chromium regressions cover migration, data preservation, editor saving and offline EYE results; repository gate remains authoritative."
+  }
+}

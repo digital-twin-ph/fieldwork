@@ -19,8 +19,8 @@ asset shows up.
 | Reach | Widgets |
 | --- | --- |
 | Used by no workflow | **12** |
-| Used by exactly one | 25 |
-| Used by two or more | **19** |
+| Used by exactly one | 24 |
+| Used by two or more | **20** |
 
 `isochrone` and `compute_walking_catchment` are a special case the practitioner ruled on
 2026-10-29: use of the monolith is use of its components. Four of the unused names below are
@@ -68,7 +68,6 @@ Each of these has one workflow's worth of evidence. If that example changes, it 
 | `isochrone` | snow-isochrone |
 | `network_input` | snow-isochrone |
 | `voronoi` | snow-voronoi |
-| `group_table` | south-london-1854 |
 | `map_image_input` | south-london-1854 |
 | `rate` | south-london-1854 |
 | `relate_table` | south-london-1854 |
@@ -82,10 +81,10 @@ evidence about that example.
 
 | Widget | Examples | Which |
 | --- | ---: | --- |
-| `map_output` | 14 | coverage, hagelloch, heat, nigeria-immunization-2024, old-naledi, oswego-1940, raster, rulesets, sea-level, snow-extent, snow-geoprivacy, snow-isochrone, snow-voronoi, south-london-1854 |
+| `map_output` | 15 | coverage, hagelloch, heat, nigeria-immunization-2024, nyc-asthma-ozone-2016-2025, old-naledi, oswego-1940, raster, rulesets, sea-level, snow-extent, snow-geoprivacy, snow-isochrone, snow-voronoi, south-london-1854 |
+| `point_input` | 13 | coverage, hagelloch, heat, nyc-asthma-ozone-2016-2025, old-naledi, oswego-1940, rulesets, sea-level, snow-extent, snow-geoprivacy, snow-isochrone, snow-voronoi, south-london-1854 |
 | `table_output` | 13 | hagelloch, heat, nyc-asthma-ozone-2016-2025, old-naledi, oswego-1940, rulesets, salmonella-germany-2021, sea-level, snow-extent, snow-geoprivacy, snow-isochrone, snow-voronoi, south-london-1854 |
-| `point_input` | 12 | coverage, hagelloch, heat, old-naledi, oswego-1940, rulesets, sea-level, snow-extent, snow-geoprivacy, snow-isochrone, snow-voronoi, south-london-1854 |
-| `study_area` | 11 | coverage, hagelloch, old-naledi, oswego-1940, raster, rulesets, sea-level, snow-geoprivacy, snow-isochrone, snow-voronoi, south-london-1854 |
+| `study_area` | 12 | coverage, hagelloch, nyc-asthma-ozone-2016-2025, old-naledi, oswego-1940, raster, rulesets, sea-level, snow-geoprivacy, snow-isochrone, snow-voronoi, south-london-1854 |
 | `table_input` | 10 | nigeria-immunization-2024, nyc-asthma-ozone-2016-2025, oswego-1940, rulesets, salmonella-germany-2021, sea-level, snow-extent, snow-isochrone, snow-voronoi, south-london-1854 |
 | `chart_output` | 7 | hagelloch, nyc-asthma-ozone-2016-2025, old-naledi, snow-extent, snow-isochrone, snow-voronoi, south-london-1854 |
 | `apply_ruleset` | 6 | heat, nigeria-immunization-2024, old-naledi, rulesets, sea-level, snow-extent |
@@ -94,6 +93,7 @@ evidence about that example.
 | `two_by_two` | 3 | oswego-1940, salmonella-germany-2021, south-london-1854 |
 | `clip_polygons` | 2 | snow-isochrone, snow-voronoi |
 | `derive_value` | 2 | nigeria-immunization-2024, south-london-1854 |
+| `group_table` | 2 | nyc-asthma-ozone-2016-2025, south-london-1854 |
 | `join_table_to_area` | 2 | nigeria-immunization-2024, south-london-1854 |
 | `measure_distance` | 2 | heat, old-naledi |
 | `polygon_input` | 2 | nigeria-immunization-2024, south-london-1854 |
@@ -113,8 +113,8 @@ rows above `case_series` are the ones that have genuinely done both.
 | Example | Widgets it is the sole user of |
 | --- | --- |
 | snow-geoprivacy | **5** — `aggregate_points_to_h3_cell`, `compare_point_sets`, `comparison_map`, `donut_geomask`, `mean_center` |
-| south-london-1854 | **5** — `group_table`, `map_image_input`, `rate`, `relate_table`, `stack_polygons` |
 | old-naledi | **4** — `facilities`, `facility_audit`, `point_grid`, `travel_time` |
+| south-london-1854 | **4** — `map_image_input`, `rate`, `relate_table`, `stack_polygons` |
 | snow-isochrone | **3** — `buffer_area`, `isochrone`, `network_input` |
 | raster | **2** — `clip_raster`, `raster_input` |
 | sea-level | **2** — `find_health_facilities`, `slr_site_assignment` |
@@ -270,7 +270,7 @@ be read, selected and named inside the application, and claim B would hold for t
 - `urn:fieldwork:example:oswego-1940` declares 6 node types. Its inputs are files in its own repository, and `geo/water-intakes.geojson` was written on 2026-10-29 because those four features existed only inside the bundle until then — the one input a reader could not download.
 - `urn:fieldwork:example:nigeria-immunization-2024` declares 7 node types. Its inputs are files in its own repository, and `geo/water-intakes.geojson` was written on 2026-10-29 because those four features existed only inside the bundle until then — the one input a reader could not download.
 - `urn:fieldwork:example:salmonella-germany-2021` declares 7 node types. Its inputs are files in its own repository, and `geo/water-intakes.geojson` was written on 2026-10-29 because those four features existed only inside the bundle until then — the one input a reader could not download.
-- `urn:fieldwork:example:nyc-asthma-ozone-2016-2025` declares 5 node types. Its inputs are files in its own repository, and `geo/water-intakes.geojson` was written on 2026-10-29 because those four features existed only inside the bundle until then — the one input a reader could not download.
+- `urn:fieldwork:example:nyc-asthma-ozone-2016-2025` declares 9 node types. Its inputs are files in its own repository, and `geo/water-intakes.geojson` was written on 2026-10-29 because those four features existed only inside the bundle until then — the one input a reader could not download.
 
 ## 3 · Recommendations
 

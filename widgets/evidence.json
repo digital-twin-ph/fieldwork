@@ -35,8 +35,8 @@
   "declared only": 2,
   "example only": 13,
   "parity only": 9,
-  "example, lab not applicable": 13,
-  "example+parity": 18,
+  "example, lab not applicable": 12,
+  "example+parity": 19,
   "neither applies": 1
  },
  "compositionsUsedByNoExample": [
@@ -265,9 +265,10 @@
   {
    "nodeType": "group_table",
    "exampleUses": [
+    "nyc-asthma-ozone-2016-2025",
     "south-london-1854"
    ],
-   "exampleUseCount": 1,
+   "exampleUseCount": 2,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],
@@ -314,6 +315,7 @@
     "hagelloch",
     "heat",
     "nigeria-immunization-2024",
+    "nyc-asthma-ozone-2016-2025",
     "old-naledi",
     "oswego-1940",
     "raster",
@@ -325,7 +327,7 @@
     "snow-voronoi",
     "south-london-1854"
    ],
-   "exampleUseCount": 14,
+   "exampleUseCount": 15,
    "lab": "none",
    "labOwed": false,
    "fieldUse": [],
@@ -400,6 +402,7 @@
     "coverage",
     "hagelloch",
     "heat",
+    "nyc-asthma-ozone-2016-2025",
     "old-naledi",
     "oswego-1940",
     "rulesets",
@@ -410,11 +413,11 @@
     "snow-voronoi",
     "south-london-1854"
    ],
-   "exampleUseCount": 12,
-   "lab": "none",
+   "exampleUseCount": 13,
+   "lab": "parity",
    "labOwed": false,
    "fieldUse": [],
-   "rung": "example, lab not applicable"
+   "rung": "example+parity"
   },
   {
    "nodeType": "polygon_input",
@@ -571,6 +574,7 @@
    "exampleUses": [
     "coverage",
     "hagelloch",
+    "nyc-asthma-ozone-2016-2025",
     "old-naledi",
     "oswego-1940",
     "raster",
@@ -581,7 +585,7 @@
     "snow-voronoi",
     "south-london-1854"
    ],
-   "exampleUseCount": 11,
+   "exampleUseCount": 12,
    "lab": "none",
    "labOwed": false,
    "fieldUse": [],

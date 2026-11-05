@@ -237,6 +237,47 @@ strongest evidence; health-effect evidence is thin and mostly from abstracts.
 variables (cloud fraction, snow, model output) to be recorded by any imputation step. The report lists the Sentinel
 notice as unread: its writer did not have S7, which read it.
 
+## Admission review: two widgets, 2026-11-05
+
+The practitioner chose the names (*"Find products / Search catalog"*) and the style (*"Let's follow FW style for
+dialogs"*): JLT's layouts, step order and wording, in Fieldwork's own dialogs. UI first (*"build the UI for the widgets
+initially using as much of the design from the EO and STAC repos by JLT"*).
+
+| | `find_satellite_products`, "Find satellite products" | `search_satellite_catalog`, "Search a satellite catalog" |
+| --- | --- | --- |
+| Asks | which satellites and products measure a variable, and what each measures | where the files are, for a chosen product, over the study area and dates |
+| Adapted from | the EO Guide's *Start with a research question* panel: chips, alias matcher, chain, caution, route cards | the STAC Browser's three columns: *Connect & discover*, *Coverage, in context*, *Inspect & reuse* |
+| Inputs | none | `product` (`satellite-product`), `area` (`area`) |
+| Output | `satellite-product`: the route chosen, with what it measures, its unit, licence as read, sign-in, attribution and citation | `satellite-files` (UI-first: declared, consumed by nothing yet): the items and their files, each with licence, readability and completeness |
+| Group | Sources: it chooses where data will come from, and takes no data | Sources: it acquires, with the study area as its scope |
+
+- **D1.** A practitioner asks for both by name: *"EO identifies the satellite groups for those variables and STAC zeroes
+  in on the source URLs."* Neither decomposes into anything that exists.
+- **D2.** Examined first (the table above): nothing in the palette finds products or searches a catalog. Raster input
+  reads a local file; the extract and WorldPop catalogues are the pattern reused, not an equivalent.
+- **D4.** Two new port types. `satellite-product` exists because the wrong connection must be impossible: a search
+  without a chosen product is a search of nothing, and a table or a layer carries no route. `satellite-files` names what
+  a search hands on, so a consumer cannot mistake a list of remote files for data already read. Both are custom studs
+  under D4a, one producer and one consumer, recorded as such.
+- **D11.** The residual function of each is its own: a curated route choice, and a bounded catalog search with access
+  facts per file. Reading pixels stays with a reader (h5wasm, S6) behind Raster input or a sampling step, not inside
+  either widget.
+
+| Distinction | Enforced as |
+| --- | --- |
+| A satellite column, an optical depth and a surface concentration are different quantities | each route states what it measures and its unit; the caution is shown with the routes (limitation, stated) |
+| Open means the licence was read, not a catalog's licence field | the route's licence carries where and when it was read (validation rule, by shape, when receipts are written) |
+| Sign-in needed is shown before anything is fetched | a field per route, and routes needing none come first (run-time ordering) |
+| A gap-filled product is a model | a route's kind: observation or model (validation rule, by shape) |
+
+**Data, not code.** JLT's `data/research-topics.json` is vendored at `684833c` with its digest and MIT notice, credited
+in the file and in `NOTICE`. Fieldwork's additions, keyed by route id, sit beside it: the no-sign-in routes S3 and S4
+found (Planetary Computer Sentinel-5P NO₂, O₃, aerosol index; Sentinel-3 AOD), and for every route the fields JLT's
+routes lack. The `eo:` vocabulary is vendored with it, as the sea-level pack's is.
+
+**Not in the first slice:** reading pixels, the citation map's dataset citations (unread for every route so far), the
+imputation step, and the hand-off to Raster input. The UI says what it cannot do yet.
+
 ## What is already known to be a limit
 
 A satellite does not measure what a station measures. NO₂ from TROPOMI or TEMPO is a tropospheric column, not ppb at

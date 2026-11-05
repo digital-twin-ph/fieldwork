@@ -892,7 +892,12 @@ nearest-neighbour-with-distance, and `slr_threshold_comparison` this file has ca
 domain-bound"*, which under the domain-agnostic direction is a question rather than a settled
 exemption. Both are still classified `domain` in `widgets/classification.json`.
 
-### A country at ADM0 can be refused, and the dialog draws nothing (found on Pages, 2026-11-05)
+### ~~A country at ADM0 can be refused, and the dialog draws nothing (found on Pages, 2026-11-05)~~
+
+**DONE 2026-11-05, in 0.30.0.** Acquired outlines are kept in IndexedDB under `areaRef`, both budgets are removed, every
+part is carried and a refusal is said in the status line. The real Uganda ADM0 applies with all 48 parts in Chromium.
+Recorded in [experiment 121](docs/experiments/121-storage-beyond-local-storage.md), "The geometry moved". As found:
+
 
 The practitioner picked Uganda, ADM0, in the Study area dialog: *"nothing showed up on the dialog map."* Reproduced
 outside the browser against geoBoundaries' current UGA ADM0 file (1.6 MB, one unit, a MultiPolygon of 48 parts,

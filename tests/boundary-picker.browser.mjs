@@ -1,5 +1,6 @@
 import {test,expect} from '@playwright/test';
 import {collectPageErrors} from './page-errors.mjs';
+import {storedArea} from './stored-area.mjs';
 
 // "The study area still does not show geoboundary download" -- the practitioner, 2026-10-17.
 // Experiment 14 specified this on 2026-10-06 and its status said jurisdiction selection was
@@ -121,8 +122,9 @@ test('a study area can be chosen from administrative boundaries',async({page})=>
   // The chosen units became the study area, and it can be applied like any other.
   await expect(page.locator('#area-apply')).toBeEnabled();
   await page.locator('#area-apply').click();
-  const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1'))
-    .nodes.find(n=>n.type==='study_area').params);
+  const saved=await storedArea(page);
+  // AN ACQUIRED OUTLINE IS KEPT IN THE PAYLOAD STORE, not in the saved workflow (2026-11-05).
+  expect(saved.fromStore).toBe(true);
   expect(saved.geometry.type).toBe('Polygon');
   // The shape, not a box: 40 vertices went in and a rectangle has four. And AS PUBLISHED --
   // every vertex the source gave, none thinned to meet a count. The practitioner, 2026-10-18:
@@ -210,8 +212,7 @@ test('several units are several parts, each as published, and never a bounding b
   await expect(map).toHaveAttribute('data-drawn-pins','0');
 
   await page.locator('#area-apply').click();
-  const geometry=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1'))
-    .nodes.find(n=>n.type==='study_area').params.geometry);
+  const geometry=(await storedArea(page)).geometry;
   expect(geometry.type).toBe('MultiPolygon');
   expect(geometry.coordinates.length).toBe(2);
   expect(geometry.coordinates[0][0].length).toBe(41,'as published, not thinned');
@@ -249,4 +250,70 @@ test('a shape you drew yourself is still editable by its vertices',async({page})
   await map.click({position:{x:260,y:230}});
   await expect(page.locator('.area-vertex')).toHaveCount(2);
   await expect(page.locator('#area-feedback')).not.toContainText('cannot be dragged');
+});
+
+// UGANDA AT ADM0, 2026-11-05: *"I picked Uganda and ADM0 and nothing showed up on the dialog map."* Its outline is 48
+// parts and 1.4 MB; the dialog refused it against a 1 MB budget sized for localStorage, said so in a muted line, and
+// would have kept only the mainland had it fitted. Stubbed with a country of the same shape: one unit, a mainland past
+// the old budget and two islands.
+test('a whole country of several parts, past the old 1 MB budget, is applied with every part and survives a reload',async({page})=>{
+  test.setTimeout(120000);
+  const errors=collectPageErrors(page);
+  const ringOf=(n,x,y,r)=>{const pts=Array.from({length:n},(_,i)=>{const a=2*Math.PI*i/n;return [x+r*Math.cos(a),y+r*Math.sin(a)];});return [...pts,pts[0]];};
+  const country={type:'MultiPolygon',coordinates:[[ringOf(36000,32.5,1.5,2)],[ringOf(300,29.5,-0.8,0.1)],[ringOf(200,29.8,-1.0,0.08)]]};
+  await page.route(/geoboundaries\.org\/api/,r=>r.fulfill({status:200,contentType:'application/json',
+    body:JSON.stringify(level({boundaryID:'UGA-ADM0-62106908',boundaryISO:'UGA',boundaryType:'ADM0',boundaryName:'Uganda',
+      admUnitCount:'1',meanVertices:'43116.0',maxVertices:'43116',gjDownloadURL:'https://example.invalid/uga-adm0.geojson'}))}));
+  await page.route(/example\.invalid/,r=>r.fulfill({status:200,contentType:'application/json',
+    body:JSON.stringify({features:[{properties:{shapeID:'UGA-0',shapeName:'Uganda'},geometry:country}]})}));
+  await openArea(page);
+  await page.locator('#area-iso').fill('Uganda');
+  await page.locator('#area-adm').selectOption('ADM0');
+  await page.locator('#area-boundary-check').click();
+  await expect(page.locator('#area-boundary-units')).toBeVisible({timeout:30000});
+  await page.locator('#area-boundary-pick').selectOption([{index:0}]);
+  await page.locator('#area-boundary-use').click();
+  await expect(page.locator('#area-boundary-terms')).toContainText('3 separate parts, all carried',{timeout:30000});
+  await expect(page.locator('#area-boundary-terms')).not.toContainText('budget');
+  await expect(page.locator('#area-map')).toHaveAttribute('data-drawn-parts','3');
+  await page.locator('#area-apply').click();
+  await expect(page.locator('#area-dialog')).toBeHidden({timeout:60000});
+  const saved=await storedArea(page);
+  expect(saved.fromStore).toBe(true);
+  expect(saved.geometry.type).toBe('MultiPolygon');
+  expect(saved.geometry.coordinates.length).toBe(3);
+  expect(JSON.stringify(saved.geometry).length).toBeGreaterThan(1048576);
+  // The saved workflow holds the reference, not the 1.4 MB.
+  const inline=await page.evaluate(()=>localStorage.getItem('fieldwork-workflow-v1').length);
+  expect(inline).toBeLessThan(200000);
+  // And it comes back after a reload.
+  await page.reload();
+  await page.locator('[data-view="workflow"]').click();
+  await page.locator('.react-flow__node[data-id="village"]').click();
+  await expect(page.locator('#inspector-content')).toContainText('Uganda',{timeout:45000});
+  expect((await storedArea(page)).geometry.coordinates.length).toBe(3);
+  expect(errors).toEqual([]);
+});
+
+test('a refused outline is said in the dialog\'s status line, not only under the unit list',async({page})=>{
+  const errors=collectPageErrors(page);
+  // A bow tie: its edges cross, which no study area may.
+  const bowtie={type:'Polygon',coordinates:[[[30,0],[31,1],[31,0],[30,1],[30,0]]]};
+  await page.route(/geoboundaries\.org\/api/,r=>r.fulfill({status:200,contentType:'application/json',
+    body:JSON.stringify(level({boundaryISO:'UGA',boundaryType:'ADM0',boundaryName:'Uganda',admUnitCount:'1',
+      gjDownloadURL:'https://example.invalid/bowtie.geojson'}))}));
+  await page.route(/example\.invalid/,r=>r.fulfill({status:200,contentType:'application/json',
+    body:JSON.stringify({features:[{properties:{shapeID:'X-0',shapeName:'Crossed'},geometry:bowtie}]})}));
+  await openArea(page);
+  await page.locator('#area-iso').fill('Uganda');
+  await page.locator('#area-adm').selectOption('ADM0');
+  await page.locator('#area-boundary-check').click();
+  await expect(page.locator('#area-boundary-units')).toBeVisible({timeout:20000});
+  await page.locator('#area-boundary-pick').selectOption([{index:0}]);
+  await page.locator('#area-boundary-use').click();
+  const feedback=page.locator('#area-feedback');
+  await expect(feedback).toContainText('Crossed:');
+  await expect(feedback).toHaveAttribute('role','alert');
+  await expect(page.locator('#area-boundary-terms')).toContainText('Crossed:');
+  expect(errors).toEqual([]);
 });

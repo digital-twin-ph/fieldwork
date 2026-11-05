@@ -853,12 +853,12 @@
    "migrationFrom": []
   },
   "study_area": {
-   "version": "0.5.1",
+   "version": "0.6.0",
    "released": "2026-11-05",
    "changes": [
     {
-     "kind": "patch",
-     "description": "A unit whose name repeats in a geoBoundaries level is listed with where it lies, and each unit is chosen by its own id. Found choosing New York City's five boroughs from 3,233 US counties: 444 names repeat, five Richmonds among them, and a unit carries no state. Experiment 177."
+     "kind": "minor",
+     "description": "An outline acquired from a published source or a file is kept in the payload store (IndexedDB) under areaRef, with its revisions, rather than in the saved workflow; the 1 MiB extent budget and the 1.5 MiB area budget, both sized for localStorage, are removed. A unit of several parts carries every part (Uganda at ADM0: 48, the islands of Lake Victoria among them), and a refusal is said in the dialog status line as well as under the unit list. Found when Uganda at ADM0 drew nothing. Experiment 121."
     }
    ],
    "breaking": false,

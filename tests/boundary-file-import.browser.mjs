@@ -1,5 +1,6 @@
 import {test,expect} from '@playwright/test';
 import {collectPageErrors} from './page-errors.mjs';
+import {storedArea} from './stored-area.mjs';
 
 /** A STUDY AREA IS WHERE POLYGONS COME IN.
  *
@@ -62,8 +63,8 @@ test('a boundary file becomes named units, and each part keeps its name',async({
   await expect(page.locator('#area-apply')).toBeEnabled();
   await page.locator('#area-apply').click();
 
-  const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1'))
-    .nodes.find(n=>n.type==='study_area').params);
+  // An outline read from a file is acquired too, so it is kept in the payload store (2026-11-05).
+  const saved=await storedArea(page);
   // Three parts, as published -- not a bounding box around all of them.
   expect(saved.geometry.type).toBe('MultiPolygon');
   expect(saved.geometry.coordinates.length).toBe(3);

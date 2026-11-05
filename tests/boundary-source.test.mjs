@@ -151,7 +151,7 @@ test('nothing typed, and nothing matching, both resolve to nothing',()=>{
 });
 
 import {publishedRings,publishedNote} from '../build/boundary-source.js';
-import {validateDrawnGeometry,GEOMETRY_BYTE_BUDGET,geometryBytes} from '../build/study-area.js';
+import {validateDrawnGeometry,geometryBytes} from '../build/study-area.js';
 
 // "Selecting Bunia gave me a square not the jurisdictional polygon." It did. A bounding box
 // includes ground that is in no jurisdiction at all, which for an outbreak investigation is the
@@ -202,12 +202,12 @@ test('an interior ring outside the boundary is refused rather than silently kept
     /interior ring must lie inside/);
 });
 
-test('a boundary too large to store is refused, and the refusal names the size',()=>{
-  // The budget is bytes because bytes are what runs out: localStorage accepts 5,226,496 bytes,
-  // a save writes the workflow twice, and an area keeps every extent it has had.
+test('a boundary past the old 1 MB budget is admitted: the outline is kept in IndexedDB now',()=>{
+  // Until 2026-11-05 this was refused, "the budget for one extent is 1024 KB", a budget sized for localStorage.
+  // Uganda at ADM0 is 1.4 MB. The outline now goes to the payload store under `areaRef`.
   const huge={type:'Polygon',coordinates:[ring(40000)]};
-  assert.ok(geometryBytes(huge)>GEOMETRY_BYTE_BUDGET,'the fixture has to exceed the budget');
-  assert.throws(()=>validateDrawnGeometry(huge),/budget for one extent is \d+ KB/);
+  assert.ok(geometryBytes(huge)>1048576,'the fixture exceeds the retired budget');
+  assert.equal(validateDrawnGeometry(huge).type,'Polygon');
 });
 
 test('admitting a large boundary does not take the time a quadratic scan would',()=>{
@@ -228,14 +228,17 @@ test('a self-crossing boundary is still caught at scale',()=>{
     /must not cross or touch|collinear/);
 });
 
-test('a MultiPolygon keeps its largest part and reports what was not carried',()=>{
-  // Islands and exclaves. One outline is what a study area holds, and losing a part silently
-  // would be worse than losing it loudly. Measured, no DRC ADM2 unit is multi-part at all.
+test('a MultiPolygon unit carries every part, as Uganda with its islands needs',()=>{
+  // Until 2026-11-05 the largest part stood for the whole and the rest were dropped, with a note; Uganda at ADM0
+  // lost 47 parts, the Ssese Islands among them. A study area holds several parts, so a unit of several is carried.
   const b=publishedRings({type:'MultiPolygon',coordinates:[
     [ring(12,29,-1,0.1)],[ring(60,31,-2,0.3)],[ring(8,33,-3,0.05)]]});
-  assert.equal(b.vertices,60,'the largest part stands for the whole');
-  assert.equal(b.partsDropped,2);
-  assert.match(publishedNote('Bunia',b),/2 separate parts not carried/);
+  assert.equal(b.parts.length,3);
+  assert.equal(b.vertices,12+60+8,'every part counts');
+  assert.equal(b.rings[0].length,61,'the largest part is still named, for a caller that draws one');
+  assert.equal(b.partsDropped,0);
+  assert.match(publishedNote('Bunia',b),/3 separate parts, all carried/);
+  assert.equal(validateDrawnGeometry({type:'MultiPolygon',coordinates:b.parts}).coordinates.length,3);
 });
 
 test('geometry that is not a polygon yields nothing rather than a guess',()=>{

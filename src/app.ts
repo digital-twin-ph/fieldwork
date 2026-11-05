@@ -137,7 +137,7 @@ import {projectDocument,readProjectDocument,unbundledReferences,PROJECT_DOCUMENT
 import {rasterExample} from './raster-example.js';
 import {openPackageDialog} from './package-ui.js';
 import {syncProjectManifest} from './project-manifest.js';
-import {BUILT_IN_PROJECTS,WORKFLOW_LABELS,projectOfWorkflow,projectById,siblingAreas,newProject,validateProject,siblingInputs,payloadDigest,tableDataKey,heldPayloadsOf,reconcilePayloadRefs,dehydrateWorkflow,hydrateWorkflow,projectSafety,unexportedWork,exportPredatesWork,type Project,type ProjectWork} from './project.js';
+import {BUILT_IN_PROJECTS,WORKFLOW_LABELS,projectOfWorkflow,projectById,siblingAreas,newProject,validateProject,siblingInputs,payloadDigest,tableDataKey,areaPayloadKey,payloadsOf,heldPayloadsOf,reconcilePayloadRefs,dehydrateWorkflow,hydrateWorkflow,projectSafety,unexportedWork,exportPredatesWork,type Project,type ProjectWork} from './project.js';
 import {mountPanelLayout} from './panel-layout.js';
 import {newMapOutput,mapEvidence} from './map-output.js';
 import {newTableOutput,pointTableMarkup,pointTableEvidence} from './table-output.js';
@@ -585,6 +585,15 @@ function save(){
     if(params.data?.rows?.length){const key=tableDataKey(params.data as {rows:unknown[]});if(params.dataRef!==key)params.dataRef=key;}
     else delete params.dataRef;
   }
+  // AN ACQUIRED STUDY AREA'S OUTLINE goes the same way, keyed by its content on every save: a published jurisdiction is
+  // what runs large (Uganda at ADM0, 1.4 MB), as an acquired polygon layer is. A shape drawn by hand stays inline, where
+  // it is small and is read as it sits.
+  for(const node of workflow.nodes){
+    if(node.type!=='study_area')continue;
+    const params=node.params as {source?:string;geometry?:unknown;revisions?:unknown;areaRef?:string;boundary?:unknown};
+    if(params.source==='drawn'&&params.geometry&&params.boundary){const key=areaPayloadKey(params as {geometry:unknown});if(params.areaRef!==key)params.areaRef=key;}
+    else delete params.areaRef;
+  }
   syncProjectManifest(workflow);
   const previous=new Map<string,string|null>();
   try{for(const key of [KEY,WORKSPACES])previous.set(key,localStorage.getItem(key));const workspaces=JSON.parse(previous.get(WORKSPACES)||'{}');// A payload that arrived with an imported workflow is written to the store on the way past, so
@@ -595,13 +604,9 @@ function save(){
     // reference were unbacked -- which keeps the data INLINE and sends an eight-megabyte workflow
     // into a five-megabyte store. The save then failed and an imported project could not be kept
     // at all. Found 2026-10-20 by the large-project round trip, in the fix for the round trip.
-    for(const node of workflow.nodes){
-      const params=node.params as unknown as Record<string,unknown>;
-      if(typeof params.dataRef==='string'&&params.data!==undefined&&!Object.hasOwn(cachedPayloads(),params.dataRef))
-        void putPayload(params.dataRef,params.data);
-      if(typeof params.sourceRef==='string'&&params.sourceTable!==undefined&&!Object.hasOwn(cachedPayloads(),params.sourceRef))
-        void putPayload(params.sourceRef,params.sourceTable);
-    }
+    for(const node of workflow.nodes)
+      for(const [ref,payload] of payloadsOf(node.params as unknown as Record<string,unknown>))
+        if(!Object.hasOwn(cachedPayloads(),ref))void putPayload(ref,payload);
     const kept=cachedPayloads();
     const stored=dehydrateWorkflow(workflow,digest=>Object.hasOwn(kept,digest));workspaces[storageKey(workflow)]=stored;localStorage.setItem(KEY,JSON.stringify(stored));localStorage.setItem(WORKSPACES,JSON.stringify(workspaces));forgetSavedWorkflows();
     // WHICH store, when it is not the large one. A practitioner whose payloads are back under the
@@ -7504,9 +7509,8 @@ async function importProjectDocument(raw:unknown):Promise<string[]>{
   const kept=new Set<string>();
   for(const next of workflows)
     for(const node of next.nodes){
-      const params=node.params as unknown as {dataRef?:unknown;data?:unknown};
-      if(typeof params.dataRef!=='string'||params.data===undefined)continue;
-      if(await keepDataset(params.dataRef,params.data))kept.add(params.dataRef);
+      for(const [ref,payload] of payloadsOf(node.params as unknown as Record<string,unknown>))
+        if(await keepDataset(ref,payload))kept.add(ref);
     }
   try{
     const store=JSON.parse(localStorage.getItem(WORKSPACES)||'{}');

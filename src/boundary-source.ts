@@ -325,6 +325,8 @@ export interface PublishedBoundary {
   holes:number;
   /** Parts not carried, because one study area holds one outline. */
   partsDropped:number;
+  /** Every part, each its rings. `rings` is the largest, kept for callers that draw one. */
+  parts:[number,number][][][];
   bytes:number;
 }
 
@@ -345,18 +347,20 @@ export function publishedRings(geometry:unknown):PublishedBoundary|null{
   if(!polygons.length)return null;
   const usable=polygons.filter(poly=>Array.isArray(poly[0])&&poly[0].length>=4);
   if(!usable.length)return null;
-  // The largest part by vertex count stands for the whole, which is the usual case: a mainland
-  // with islands. Measured, no DRC ADM2 unit is multi-part at all, so this is the rarer branch.
-  const chosen=usable.reduce((a,b)=>b[0].length>a[0].length?b:a);
-  const rings=chosen.filter(r=>Array.isArray(r)&&r.length>=4);
-  const vertices=rings.reduce((sum,r)=>sum+r.length-1,0);
-  return {rings,vertices,holes:rings.length-1,partsDropped:usable.length-1,
-    bytes:JSON.stringify(rings).length};
+  // EVERY PART IS CARRIED. The largest part used to stand for the whole, because a study area held one outline; it has
+  // held several since units became parts of a MultiPolygon, and one unit with several parts is the same case. Uganda
+  // at ADM0 is 48 parts, the mainland and the islands of Lake Victoria among them; keeping only the mainland dropped
+  // the Ssese Islands, found 2026-11-05.
+  const parts=usable.map(poly=>poly.filter(r=>Array.isArray(r)&&r.length>=4));
+  const rings=parts.reduce((a,b)=>b[0]!.length>a[0]!.length?b:a);
+  const vertices=parts.reduce((sum,poly)=>sum+poly.reduce((n,r)=>n+r.length-1,0),0);
+  return {rings,parts,vertices,holes:parts.reduce((n,poly)=>n+poly.length-1,0),partsDropped:0,
+    bytes:JSON.stringify(parts).length};
 }
 
 /** What was admitted, for the practitioner to read before applying it. */
 export function publishedNote(unit:string,b:PublishedBoundary):string{
-  const parts=b.partsDropped?` ${b.partsDropped} separate part${b.partsDropped===1?'':'s'} not carried: one outline is what a study area holds.`:'';
+  const parts=b.parts.length>1?` ${b.parts.length} separate parts, all carried.`:'';
   const holes=b.holes?` ${b.holes} interior ring${b.holes===1?'':'s'} kept, so enclaves stay outside the area.`:'';
   return `${unit}: the boundary as published, ${b.vertices} vertices, ${Math.round(b.bytes/1024)} KB.`
     +`${holes}${parts}`;

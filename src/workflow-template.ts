@@ -31,7 +31,7 @@ import type {Workflow,WorkflowNode} from './types.js';
 /** Parameters that hold what a run acquired, by the key they are held under. Keyed rather than
  *  typed because the same key means the same thing everywhere in this application: `data` is
  *  records, `asset` is a raster, `geometry` is a drawn or fetched outline. */
-const MATERIAL=['data','dataRef','asset','assetRef','retrieved','geometry','revisions','boundary',
+const MATERIAL=['data','dataRef','asset','assetRef','areaRef','retrieved','geometry','revisions','boundary',
   'decisions','exclusions','repairs','composition'] as const;
 
 /** `composition` is a member list, not material, and a micro-workflow without it has no ports at
@@ -39,7 +39,9 @@ const MATERIAL=['data','dataRef','asset','assetRef','retrieved','geometry','revi
 const KEEP_ANYWAY=new Set(['composition']);
 
 /** The two material keys that hold a SCALAR: a digest standing in for content kept elsewhere. */
-const MATERIAL_SCALARS=new Set(['dataRef','assetRef']);
+// `areaRef` since 2026-11-05: an acquired study area's outline is kept in the payload store, and a template that kept the
+// reference would have its outline restored on load, the one thing a template exists not to carry.
+const MATERIAL_SCALARS=new Set(['dataRef','assetRef','areaRef']);
 
 /** Material is HELD CONTENT -- an object or an array -- and never a word.
  *

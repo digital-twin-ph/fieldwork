@@ -425,13 +425,24 @@ export function siblingAreas(currentKey:string,projects:readonly Project[],
  *  object, because a table edited in place would keep a key that no longer describes it; its cost is measured. A
  *  collision would need two different tables with the same 64 bits, and costs a wrong table where it happens --
  *  which is why the key names the table's row count too, a second, cheap disagreement. */
-export function tableDataKey(table:{rows:unknown[]}):string{
-  const text=JSON.stringify(table);
+export function tableDataKey(table:{rows:unknown[]}):string{return contentKey('table',table.rows.length,table);}
+
+/** A STUDY AREA'S OUTLINE AND ITS EARLIER EXTENTS, KEPT BY CONTENT, as a table's rows are. Uganda at ADM0 is 43,116
+ *  vertices, about 1.4 MB, past what localStorage could hold beside anything else (found 2026-11-05). Recomputed on
+ *  every save, so an edited outline gets a new key and a stale one can never stand in for it. */
+export function areaPayloadKey(area:{geometry:unknown;revisions?:unknown}):string{
+  const g=area.geometry as {type?:string;coordinates?:unknown}|null;
+  const vertices=(()=>{let n=0;const walk=(v:unknown):void=>{if(Array.isArray(v)&&typeof v[0]==='number')n++;else if(Array.isArray(v))v.forEach(walk);};walk(g?.coordinates);return n;})();
+  return contentKey('area',vertices,{geometry:area.geometry,revisions:area.revisions??[]});
+}
+
+function contentKey(prefix:string,count:number,value:unknown):string{
+  const text=JSON.stringify(value);
   let h1=0xdeadbeef,h2=0x41c6ce57;
   for(let i=0;i<text.length;i++){const c=text.charCodeAt(i);h1=Math.imul(h1^c,2654435761);h2=Math.imul(h2^c,1597334677);}
   h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);
   h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);
-  return `table-${table.rows.length}-${(h2>>>0).toString(16).padStart(8,'0')}${(h1>>>0).toString(16).padStart(8,'0')}`;
+  return `${prefix}-${count}-${(h2>>>0).toString(16).padStart(8,'0')}${(h1>>>0).toString(16).padStart(8,'0')}`;
 }
 
 export async function payloadDigest(payload:unknown):Promise<string>{
@@ -446,6 +457,17 @@ export async function payloadDigest(payload:unknown):Promise<string>{
  *  written once to the dataset store instead of once per workflow that uses it. Returns a shallow
  *  rebuild rather than mutating: the workflow in memory must keep its payload, because everything
  *  except the storage layer expects it to be there. */
+/** EVERY PAYLOAD A NODE HOLDS, with the key it is kept under: its data, a wide table's source, a study area's
+ *  outline. One list, so the places that write payloads cannot each forget a different one. */
+export function payloadsOf(params:Record<string,unknown>):[string,unknown][]{
+  const out:[string,unknown][]=[];
+  if(typeof params.dataRef==='string'&&params.data!==undefined)out.push([params.dataRef,params.data]);
+  if(typeof params.sourceRef==='string'&&params.sourceTable!==undefined)out.push([params.sourceRef,params.sourceTable]);
+  if(typeof params.areaRef==='string'&&params.geometry!==undefined&&params.geometry!==null)
+    out.push([params.areaRef,{geometry:params.geometry,revisions:params.revisions??[]}]);
+  return out;
+}
+
 /** `held` answers whether a digest is actually in the payload store.
  *
  *  Stripping a payload the store does not hold writes a workflow that cannot be read back. That
@@ -510,6 +532,9 @@ export function dehydrateWorkflow<T extends {nodes:unknown[]}>(workflow:T,held:(
     // A wide table's source file goes the same way as data, under its own reference.
     if(typeof params.sourceRef==='string'&&params.sourceTable!==undefined&&held(params.sourceRef)){
       const {sourceTable:_source,...rest}=params;params=rest;}
+    // A study area's outline and history go the same way, under `areaRef`.
+    if(typeof params.areaRef==='string'&&params.geometry!==undefined&&held(params.areaRef)){
+      const {geometry:_geometry,revisions:_revisions,...rest}=params;params=rest;}
     if(typeof params.dataRef!=='string'||params.data===undefined||!held(params.dataRef))
       return params===node.params?node:{...node,params};
     const {data:_omitted,...rest}=params;
@@ -537,6 +562,12 @@ export function hydrateWorkflow(raw:unknown,datasets:Record<string,unknown>,clon
       const source=datasets[params.sourceRef];
       if(source===undefined){missing.push(`${String(node.id??node.type??'a node')} (${params.sourceRef.slice(0,19)})`);return node;}
       params={...params,sourceTable:clone?structuredClone(source):source};
+    }
+    if(typeof params.areaRef==='string'&&params.geometry===undefined){
+      const area=datasets[params.areaRef] as {geometry?:unknown;revisions?:unknown[]}|undefined;
+      if(area===undefined){missing.push(`${String(node.id??node.type??'a node')} (${params.areaRef.slice(0,19)})`);return node;}
+      const kept=clone?structuredClone(area):area;
+      params={...params,geometry:kept.geometry??null,...(kept.revisions?.length?{revisions:kept.revisions}:{})};
     }
     if(typeof params.dataRef!=='string'||params.data!==undefined)return params===node.params?node:{...node,params};
     const payload=datasets[params.dataRef];

@@ -677,9 +677,14 @@ async function fetchWithProgress(url:string,estimate:number,onProgress:(read:num
       status.textContent=errorMessage(error);
     }finally{input.value='';}
   };
+  // A REFUSAL IS SAID WHERE THE PRACTITIONER IS LOOKING, as well as under the unit list. Uganda at ADM0, 2026-11-05:
+  // refused in a muted line under the list while the map moved to Uganda and drew nothing, which read as nothing having
+  // happened. The dialog's own status line carries it too, as an alert.
+  const refuse=(text:string)=>{$('#area-boundary-terms').textContent=text;message(text);
+    $('#area-feedback').classList.add('clip-preview-error');$('#area-feedback').setAttribute('role','alert');};
   $('#area-boundary-use').onclick=()=>{
     const chosen=chosenUnits();
-    if(!pickedLevel||!chosen.length){$('#area-boundary-terms').textContent='Select at least one unit.';return;}
+    if(!pickedLevel||!chosen.length){refuse('Select at least one unit.');return;}
     void (async()=>{
       // The same silence as Apply, in the phase WebKit spends it in: measured 2026-10-20, taking
       // North Kivu's 16,548 vertices through this button costs 7.7 s in WebKit and 0.1 s in
@@ -707,14 +712,15 @@ async function fetchWithProgress(url:string,estimate:number,onProgress:(read:num
       // outline is either admitted whole or refused with its size named.
       if(chosen.length===1){
         const rings=publishedRings(chosen[0].geometry);
-        if(!rings){$('#area-boundary-terms').textContent='That unit carries no usable outline.';return;}
-        try{geometry=validateDrawnGeometry({type:'Polygon',coordinates:rings.rings});}
-        catch(e){$('#area-boundary-terms').textContent=`${chosen[0].name}: ${errorMessage(e)}`;return;}
+        if(!rings){refuse('That unit carries no usable outline.');return;}
+        // EVERY PART, as published: one unit with islands is a MultiPolygon, not its mainland.
+        try{geometry=validateDrawnGeometry(rings.parts.length>1?{type:'MultiPolygon',coordinates:rings.parts}:{type:'Polygon',coordinates:rings.rings});}
+        catch(e){refuse(`${chosen[0].name}: ${errorMessage(e)}`);return;}
         acquired={boundaryID:pickedLevel!.boundaryID,unitID:chosen[0].id,unitName:chosen[0].name,
           source:pickedLevel!.source,licence:pickedLevel!.licence,licenceSource:pickedLevel!.licenceSource,
           yearRepresented:pickedLevel!.yearRepresented,canonical:pickedLevel!.canonical,
           retrievedFrom:pickedLevel!.geoJsonUrl,retrievedAt:new Date().toISOString(),
-          units:[{id:chosen[0].id,name:chosen[0].name}],
+          units:rings.parts.map(()=>({id:chosen[0].id,name:chosen[0].name})),
           vertices:rings.vertices,publishedHash:boundaryFingerprint(geometry)};
         selectionMode='polygon';setTool('pan');refresh();fit();
         $('#area-boundary-terms').textContent=
@@ -726,14 +732,15 @@ async function fetchWithProgress(url:string,estimate:number,onProgress:(read:num
       // twice -- and that was only ever because a study area could hold one polygon. It can hold
       // several now, so there is nothing left to collapse.
       const parts:[number,number][][][]=[];
-      const kept:typeof chosen=[];
+      const kept:typeof chosen=[],owners:typeof chosen=[];
       for(const u of chosen){
         const r=publishedRings(u.geometry);
-        if(r)       {parts.push(r.rings);kept.push(u);}
+        // Each unit's every part. `owners[i]` is the unit part i belongs to, so a unit of several parts names each.
+        if(r){kept.push(u);for(const part of r.parts){parts.push(part);owners.push(u);}}
       }
-      if(!parts.length){$('#area-boundary-terms').textContent='Those units carry no usable outline.';return;}
+      if(!parts.length){refuse('Those units carry no usable outline.');return;}
       try{geometry=validateDrawnGeometry({type:'MultiPolygon',coordinates:parts});}
-      catch(e){$('#area-boundary-terms').textContent=`${kept.map(u=>u.name).join(', ')}: ${errorMessage(e)}`;return;}
+      catch(e){refuse(`${kept.map(u=>u.name).join(', ')}: ${errorMessage(e)}`);return;}
       selectionMode='polygon';
       acquired={boundaryID:pickedLevel!.boundaryID,unitID:kept.map(u=>u.id).join(' '),
         unitName:kept.map(u=>u.name).join(', '),source:pickedLevel!.source,licence:pickedLevel!.licence,
@@ -744,7 +751,7 @@ async function fetchWithProgress(url:string,estimate:number,onProgress:(read:num
         // `parts` above and skips any unit with no usable outline, which is what keeps the two
         // in step. Without this the only record of which ring is which was the comma-joined
         // unitName, and a figure could not be joined to a boundary.
-        units:kept.map(u=>({id:u.id,name:u.name})),
+        units:owners.map(u=>({id:u.id,name:u.name})),
         vertices:parts.reduce((n,rings)=>n+rings.reduce((m,r)=>m+r.length-1,0),0),
         publishedHash:boundaryFingerprint(geometry)};
       setTool('pan');refresh();fit();

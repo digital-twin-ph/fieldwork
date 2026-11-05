@@ -1225,7 +1225,7 @@
     {
       "id": "urn:fieldwork:widget:study_area",
       "nodeType": "study_area",
-      "currentVersion": "0.5.1",
+      "currentVersion": "0.6.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -1256,6 +1256,11 @@
           "version": "0.5.1",
           "path": "widgets/releases/study_area/0.5.1.json",
           "sha256": "491c699e9da17789f1800edc735f3832763cc6def9e51c42aa2c8fe8b6a483c0"
+        },
+        {
+          "version": "0.6.0",
+          "path": "widgets/releases/study_area/0.6.0.json",
+          "sha256": "dcaddf554a94b4c13b95a5d123b389db575e8698581b58864dc9f57fcbd5e83c"
         }
       ],
       "previousNodeTypes": [

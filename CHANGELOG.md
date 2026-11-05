@@ -3,6 +3,11 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.27.1 — 2026-11-05
+
+- **In the write-up, under** now sits just below **Results tab name** in a Map, Table or Chart's Inspector. In 0.26.0
+  it was the last field, below Definition and Connections, and was easy to miss.
+
 ## 0.27.0 — 2026-11-05
 
 - **Point data reads points from a table in the workflow**, as geopandas' `points_from_xy` does. Connect a table and

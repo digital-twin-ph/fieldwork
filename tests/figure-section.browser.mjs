@@ -28,6 +28,10 @@ test('a map moved to the Introduction is filed there, and Results is the default
   await expect(section).toHaveValue('Results');
   await expect(section.locator('option[value="Results"]')).toHaveText('Results (default)');
   await expect(section.locator('option')).toHaveCount(4);
+  // Where it can be found: right after the Results tab name, not at the foot of the Inspector.
+  const next=await page.evaluate(()=>{const labels=[...document.querySelectorAll('#inspector-content label.field-label')]
+    .map(l=>l.textContent.trim());return labels[labels.indexOf('Results tab name')+1];});
+  expect(next).toBe("In the write-up, under");
   await section.selectOption('Introduction');
   const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));
   expect(saved.nodes.find(n=>n.id==='where').params.section).toBe('Introduction');

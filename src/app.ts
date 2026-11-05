@@ -3408,8 +3408,13 @@ function renderInspector(){
   // 2026-11-05: "all output widgets may have default IMRAD sections but it should be flexible."
   if(n.type==='map_output'||n.type==='table_output'||n.type==='chart_output'){
     const at=figureSection(n.params,n.type),fallback=DEFAULT_FIGURE_SECTIONS[n.type];
-    content+=`<div class="field"><label class="field-label" for="output-section">In the write-up, under</label>`
+    const field=`<div class="field"><label class="field-label" for="output-section">In the write-up, under</label>`
       +`<select id="output-section">${FIGURE_SECTIONS.map(s=>`<option value="${s}" ${s===at?'selected':''}>${s}${s===fallback?' (default)':''}</option>`).join('')}</select></div>`;
+    // BESIDE THE RESULTS TAB NAME, the other setting about how this output is presented. It was appended at the end
+    // until 2026-11-05, below Definition and Connections -- 3,200 px down a Map's Inspector, where the practitioner,
+    // looking for it on 0.26.0, did not find it.
+    const named=/Results tab name<\/label><input [^>]*>(<\/div>)?/;
+    content=named.test(content)?content.replace(named,match=>match+field):content+field;
   }
   $('#inspector-content').innerHTML=`<div class="inspector-body">${content}</div>`;
   // QUICK LOOK AT WHAT THIS STEP PRODUCED, for every widget that emits a table.

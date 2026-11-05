@@ -34,7 +34,9 @@ export type Row=Record<string,string|number|null|undefined>;
 export interface Estimate {term:string; column:string; level?:string; ratio:number; lower:number; upper:number;
   coefficient:number; se:number; p:number}
 export interface RegressionResult {
-  family:Family; measure:'odds ratio'|'rate ratio';
+  /** 'odds ratio' or 'rate ratio' as fitted; renamed by a declared design (a cross-sectional design's prevalence odds
+   *  ratio), which is the name every display and the receipt then carry. */
+  family:Family; measure:string;
   estimates:Estimate[];
   /** Columns adjusted for, as the model states them: an adjusted ratio names what it is adjusted for. */
   adjustedFor:string[];
@@ -276,4 +278,45 @@ export function regressionSentence(result:RegressionResult,params:RegressionPara
   return `${model} of ${params.outcome} on ${params.exposure.column}${adjusted}: ${result.measure} ${round(e.ratio)} `
     +`(${result.level}% ${round(e.lower)} to ${round(e.upper)}) for ${e.term}, ${result.errors} intervals, `
     +`${result.rows.used.toLocaleString('en')} rows.${strata}${left}`;
+}
+
+/** THE FIT AS RDF, so the N3 & evidence view shows a regression the way it shows a two-by-two. Experiment 176.
+ *  `fw:RegressionModel` states what was fitted and how; each coefficient is an `fw:EpiEstimate` that names its term,
+ *  its interval method and its level. `ontology/shapes/quality-and-design.ttl` holds the receipt to that. */
+export function regressionReceipt(node:{id:string},result:RegressionResult,params:RegressionParams,runId:string,
+  sourceNodeId:string,designDeclared:boolean){
+  const entity=`<urn:fieldwork:run:${runId}:output:${node.id}>`;
+  const quote=(v:string)=>JSON.stringify(v);
+  // xsd:double's own spellings for an unbounded profile interval; JavaScript's "Infinity" is not one.
+  const num=(v:number)=>`"${v===Infinity?'INF':v===-Infinity?'-INF':Number.isNaN(v)?'NaN':v}"^^xsd:double`;
+  const int=(v:number)=>`"${v}"^^xsd:integer`;
+  const term=(t:Term)=>`[ fw:termAttribute ${quote(t.column)}; fw:termEntry ${quote(t.as)}`
+    +(t.reference?`; fw:termReference ${quote(t.reference)}`:'')+(t.df?`; fw:termDegreesOfFreedom ${int(t.df)}`:'')+' ]';
+  const lines=[
+    `${entity} a fw:RegressionModel`,
+    `prov:wasDerivedFrom <urn:fieldwork:run:${runId}:output:${sourceNodeId}>`,
+    `fw:modelFamily ${quote(result.family)}`,
+    `fw:outcomeAttribute ${quote(params.outcome)}`,
+    `fw:exposureAttribute ${quote(params.exposure.column)}`,
+    `fw:exposureTerm ${term(params.exposure)}`,
+    ...(params.adjust??[]).map(t=>`fw:adjustmentTerm ${term(t)}`),
+    ...(params.strata?.trim()?[`fw:stratumAttribute ${quote(params.strata.trim())}`]:[]),
+    ...(params.offset?.trim()?[`fw:offsetAttribute ${quote(params.offset.trim())}`]:[]),
+    `fw:errorMethod ${quote(result.errors)}`,
+    `fw:usedRecordCount ${int(result.rows.used)}`,
+    `fw:leftOutRecordCount ${int(result.rows.leftOut)}`,
+    ...(result.strata?[`fw:usedStratumCount ${int(result.strata.used)}`,`fw:droppedStratumCount ${int(result.strata.dropped)}`]:[]),
+    `fw:iterationCount ${int(result.iterations)}`,
+    ...(designDeclared?[]:['fw:noDesignDeclared true']),
+  ];
+  const estimates=result.estimates.map(e=>`${entity} fw:estimate [ a fw:EpiEstimate; `
+    +`fw:estimateName ${quote(result.measure)}; fw:modelTerm ${quote(e.term)}; `
+    +`fw:estimateValue ${num(e.ratio)}; fw:intervalLower ${num(e.lower)}; fw:intervalUpper ${num(e.upper)}; `
+    +`fw:intervalMethod ${quote(result.errors)}; fw:intervalLevel ${int(result.level)} ].`).join('\n');
+  const facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n`
+    +`@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.\n`+lines.join(';\n  ')+'.\n'+estimates+'\n';
+  return {nodeId:node.id,kind:'computation' as const,facts,rules:'',input:facts,conclusions:[],
+    method:regressionSentence(result,params),
+    estimates:result.estimates,columns:result.columns,rows:result.rows,errors:result.errors,
+    iterations:result.iterations,dispersion:result.dispersion,...(result.strata?{strata:result.strata}:{})};
 }

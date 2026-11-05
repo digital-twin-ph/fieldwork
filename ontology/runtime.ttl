@@ -381,12 +381,12 @@ fw:comparedUnitsAtRisk a owl:DatatypeProperty; rdfs:label "compared units at ris
 fw:referenceEventCount a owl:DatatypeProperty; rdfs:label "reference event count"; rdfs:domain fw:RateRatio.
 fw:referenceUnitsAtRisk a owl:DatatypeProperty; rdfs:label "reference units at risk"; rdfs:domain fw:RateRatio.
 fw:ratioValue a owl:DatatypeProperty; rdfs:label "ratio value"; rdfs:domain fw:RateRatio.
-fw:intervalLower a owl:DatatypeProperty; rdfs:label "interval lower bound"; rdfs:domain fw:RateRatio.
-fw:intervalUpper a owl:DatatypeProperty; rdfs:label "interval upper bound"; rdfs:domain fw:RateRatio.
+fw:intervalLower a owl:DatatypeProperty; rdfs:label "interval lower bound"; rdfs:domain [ owl:unionOf ( fw:RateRatio fw:EpiEstimate ) ].
+fw:intervalUpper a owl:DatatypeProperty; rdfs:label "interval upper bound"; rdfs:domain [ owl:unionOf ( fw:RateRatio fw:EpiEstimate ) ].
 fw:intervalLevel a owl:DatatypeProperty; rdfs:label "interval level";
-  rdfs:domain fw:RateRatio; rdfs:comment "As a percentage. A 90% interval and a 95% interval are different claims, so the level is carried rather than assumed.".
+  rdfs:domain [ owl:unionOf ( fw:RateRatio fw:EpiEstimate ) ]; rdfs:comment "As a percentage. A 90% interval and a 95% interval are different claims, so the level is carried rather than assumed.".
 fw:intervalMethod a owl:DatatypeProperty; rdfs:label "interval method";
-  rdfs:domain fw:RateRatio; rdfs:comment "Named so a reader is never left guessing which interval they are looking at.".
+  rdfs:domain [ owl:unionOf ( fw:RateRatio fw:EpiEstimate ) ]; rdfs:comment "Named so a reader is never left guessing which interval they are looking at.".
 fw:numeratorField a owl:DatatypeProperty; rdfs:range xsd:string.
 fw:denominatorField a owl:DatatypeProperty; rdfs:range xsd:string.
 fw:denominatorUnit a owl:DatatypeProperty; rdfs:range xsd:string;
@@ -440,7 +440,7 @@ fw:refinementAnswer a owl:DatatypeProperty; rdfs:label "refinement answer";
   rdfs:domain fw:StudyDesign; rdfs:range xsd:string;
   rdfs:comment "The option chosen for one stage 2 question, by its identifier. A claim by the practitioner, which the application records and cannot check." .
 fw:noDesignDeclared a owl:DatatypeProperty; rdfs:label "no design declared";
-  rdfs:domain fw:TwoByTwo;
+  rdfs:domain [ owl:unionOf ( fw:TwoByTwo fw:RegressionModel ) ];
   rdfs:comment "No study design was connected to this two-by-two, so its measures carry neutral names." ;
   rdfs:range xsd:boolean .
 fw:notEstimable a owl:DatatypeProperty; rdfs:label "not estimable";
@@ -449,13 +449,48 @@ fw:notEstimable a owl:DatatypeProperty; rdfs:label "not estimable";
 fw:TwoByTwo a owl:Class;
   rdfs:label "Two-by-two table"; rdfs:subClassOf prov:Entity;
   rdfs:comment "Four counts -- two groups by two outcomes -- and the estimates computed from them. The two groups are NAMED rather than taken as the first two values present, because a table may hold more: Snow's people-denominated table has three water supply strata, 16 of 32 sub-districts having been supplied by both companies. Any stratum left out is carried on this entity, since a stratum silently excluded from a comparison is the commonest way a two-by-two misleads. A contrast between two groups as they were supplied, not a measured effect: nothing adjusts for anything the two groups did not share.".
+# Regression, 2026-11-04 (experiment 176). The fit a Regression step made, described so the N3 & evidence view shows
+# it as it shows a two-by-two. Its coefficients are fw:EpiEstimate, the same class as the two-by-two's estimates, and
+# fw:estimate, fw:exposureAttribute and fw:outcomeAttribute are shared by widening their domains to either class.
+fw:RegressionModel a owl:Class;
+  rdfs:label "Regression model"; rdfs:subClassOf prov:Entity;
+  rdfs:comment "A logistic or Poisson regression of an outcome column on an exposure column, adjusted for other columns, as fitted by a Regression step: the family, each term and how it entered the model, strata, an offset, how the intervals were made, and the rows used. An adjusted ratio is only as meaningful as what it is adjusted for, so every adjustment is stated. Under a declared study design the measure carries the name the design licenses; with none declared it keeps its neutral name, and fw:noDesignDeclared says so.".
+fw:modelFamily a owl:DatatypeProperty; rdfs:label "model family";
+  rdfs:domain fw:RegressionModel; rdfs:range xsd:string;
+  rdfs:comment "logistic or poisson. A logistic model estimates odds ratios, a Poisson model rate ratios.".
+fw:exposureTerm a owl:ObjectProperty; rdfs:label "exposure term"; rdfs:domain fw:RegressionModel;
+  rdfs:comment "The exposure as it entered the model: its column, and whether as a number, as categories against a reference, or as a spline.".
+fw:adjustmentTerm a owl:ObjectProperty; rdfs:label "adjustment term"; rdfs:domain fw:RegressionModel;
+  rdfs:comment "One column the estimate is adjusted for, and how it entered the model.".
+fw:termAttribute a owl:DatatypeProperty; rdfs:label "term attribute"; rdfs:range xsd:string.
+fw:termEntry a owl:DatatypeProperty; rdfs:label "term entry"; rdfs:range xsd:string;
+  rdfs:comment "numeric, categorical or spline. The same column entered two ways is two different models.".
+fw:termReference a owl:DatatypeProperty; rdfs:label "term reference"; rdfs:range xsd:string;
+  rdfs:comment "For a categorical term, the category every other is compared with.".
+fw:termDegreesOfFreedom a owl:DatatypeProperty; rdfs:label "term degrees of freedom"; rdfs:range xsd:integer;
+  rdfs:comment "For a spline term, how many columns it was given.".
+fw:stratumAttribute a owl:DatatypeProperty; rdfs:label "stratum attribute"; rdfs:domain fw:RegressionModel; rdfs:range xsd:string;
+  rdfs:comment "The column whose values are strata, absorbed by the conditional Poisson likelihood rather than estimated.".
+fw:offsetAttribute a owl:DatatypeProperty; rdfs:label "offset attribute"; rdfs:domain fw:RegressionModel; rdfs:range xsd:string;
+  rdfs:comment "The column holding the log of person-time or population, for a Poisson rate.".
+fw:errorMethod a owl:DatatypeProperty; rdfs:label "error method"; rdfs:domain fw:RegressionModel; rdfs:range xsd:string;
+  rdfs:comment "How the standard errors and intervals were made: model-based (Wald), likelihood-ratio (profile), scaled by the Pearson dispersion, or HAC (Newey-West) with its lag.".
+fw:usedRecordCount a owl:DatatypeProperty; rdfs:label "used record count"; rdfs:domain fw:RegressionModel; rdfs:range xsd:integer.
+fw:leftOutRecordCount a owl:DatatypeProperty; rdfs:label "left-out record count"; rdfs:domain fw:RegressionModel; rdfs:range xsd:integer;
+  rdfs:comment "Rows not in the fit. The step states why each was left out; a control group not chosen is not a missing value.".
+fw:usedStratumCount a owl:DatatypeProperty; rdfs:label "used stratum count"; rdfs:domain fw:RegressionModel; rdfs:range xsd:integer.
+fw:droppedStratumCount a owl:DatatypeProperty; rdfs:label "dropped stratum count"; rdfs:domain fw:RegressionModel; rdfs:range xsd:integer;
+  rdfs:comment "Strata with no events, which carry no information in a conditional Poisson model.".
+fw:iterationCount a owl:DatatypeProperty; rdfs:label "iteration count"; rdfs:domain fw:RegressionModel; rdfs:range xsd:integer.
+fw:modelTerm a owl:DatatypeProperty; rdfs:label "model term"; rdfs:domain fw:EpiEstimate; rdfs:range xsd:string;
+  rdfs:comment "Which coefficient of a regression this estimate is, in R's naming: o3_lag02_10, or age_group7 70+ against the reference.".
 fw:EpiEstimate a owl:Class;
   rdfs:label "Epidemiological estimate"; rdfs:subClassOf prov:Entity;
   rdfs:comment "One estimate with its interval, its level and the method that produced it. Carried even when it has no value: a zero cell removes an odds ratio and leaves a risk difference perfectly well defined, so an estimate states why it is unavailable rather than being omitted, which a reader cannot tell from an estimate nobody computed.".
 fw:exposureAttribute a owl:DatatypeProperty; rdfs:label "exposure attribute";
-  rdfs:domain fw:TwoByTwo; rdfs:comment "The column the exposure was read from. Declared, never inferred from a column name.".
+  rdfs:domain [ owl:unionOf ( fw:TwoByTwo fw:RegressionModel ) ]; rdfs:comment "The column the exposure was read from. Declared, never inferred from a column name.".
 fw:outcomeAttribute a owl:DatatypeProperty; rdfs:label "outcome attribute";
-  rdfs:domain fw:TwoByTwo.
+  rdfs:domain [ owl:unionOf ( fw:TwoByTwo fw:RegressionModel ) ].
 fw:exposedGroup a owl:DatatypeProperty; rdfs:label "exposed group"; rdfs:domain fw:TwoByTwo.
 fw:unexposedGroup a owl:DatatypeProperty; rdfs:label "unexposed group"; rdfs:domain fw:TwoByTwo.
 fw:caseValue a owl:DatatypeProperty; rdfs:label "case value";
@@ -469,7 +504,7 @@ fw:subjectCount a owl:DatatypeProperty; rdfs:label "subject count";
 fw:stratumLeftOut a owl:DatatypeProperty; rdfs:label "stratum left out";
   rdfs:domain fw:TwoByTwo; rdfs:comment "A value of the exposure column that this comparison did not name. Those subjects are in neither group; they are excluded, not controlled for.".
 fw:estimate a owl:ObjectProperty; rdfs:label "estimate";
-  rdfs:domain fw:TwoByTwo; rdfs:range fw:EpiEstimate.
+  rdfs:domain [ owl:unionOf ( fw:TwoByTwo fw:RegressionModel ) ]; rdfs:range fw:EpiEstimate.
 fw:estimateName a owl:DatatypeProperty; rdfs:label "estimate name";
   rdfs:domain fw:EpiEstimate; rdfs:comment "What the estimate is, in this project's words: \"risk ratio\", not \"RR\".".
 fw:estimateValue a owl:DatatypeProperty; rdfs:label "estimate value"; rdfs:domain fw:EpiEstimate.

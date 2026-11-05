@@ -15,7 +15,7 @@ builds the model's columns as R does, so the same model here and in R has the sa
 ## What you connect
 
 **records** — a table. The outcome and every variable are its columns: its key columns and its value column alike.
-**design** — optional, the study design. A declared case-control design allows logistic regression only.
+**design** — optional, the study design. A declared design decides what the result may be called, and which model it allows.
 
 It gives back a table: one row per reported term, with the ratio, the interval limits and p.
 
@@ -40,8 +40,23 @@ It gives back a table: one row per reported term, with the ratio, the interval l
 **It will not report a model that did not converge**, or one whose columns carry the same information twice
 (collinear). It says which.
 
-**It will not fit a rate ratio to a declared case-control study.** Case-control sampling fixes the number of cases, so
-there is no rate to divide.
+**A declared study design decides the measure**, read from the same declaration the Two-by-two table reads:
+
+| Design | Logistic | Poisson |
+| --- | --- | --- |
+| cohort | odds ratio | rate ratio |
+| case-control | odds ratio | stops: case-control sampling fixes the number of cases, so there is no population for a rate |
+| cross-sectional | prevalence odds ratio | stops: each subject is measured once, so there is no follow-up time |
+| ecological | odds ratio, of groups | rate ratio, of groups |
+| case series | stops: no comparison group | stops |
+
+With no design connected the measure keeps its plain name, odds ratio or rate ratio, and the receipt says no design was
+declared. The NYC study, a time series of daily counts, is none of these five and is run without one. Experiment 176.
+
+**In the N3 & evidence view** the fit is a `fw:RegressionModel`: the family, the outcome, the exposure and each
+adjustment with how it entered the model, strata, an offset, how the intervals were made, and the rows used. Each
+coefficient is an `fw:EpiEstimate` naming its term, interval method and level, and two SHACL shapes check that it
+says so.
 
 **It does not do** model selection, interaction terms, random effects, conditional logistic regression for individually
 matched studies, or exact methods.

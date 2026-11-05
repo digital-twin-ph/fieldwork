@@ -1061,12 +1061,16 @@
    "replacementCandidate": "urn:fieldwork:widget:apply_ruleset"
   },
   "regression": {
-   "version": "0.1.0",
+   "version": "0.2.0",
    "released": "2026-11-04",
    "changes": [
     {
      "kind": "initial",
      "description": "Logistic and Poisson regression of an outcome on an exposure, adjusted for numeric, categorical (treatment-coded) and B-spline (R's bs()) terms, fitted by IRLS in the Rust kernel. Poisson takes an offset and strata absorbed as fixed effects. Intervals: likelihood-ratio (profile), Wald, Wald scaled for overdispersion, or HAC (Newey-West). Experiment 167."
+    },
+    {
+     "kind": "minor",
+     "description": "The declared study design decides the measure, read from the same declaration the two-by-two reads (REGRESSION_LICENCES): the practitioner chose, 2026-11-04, a rate ratio under cohort and ecological designs only. The receipt now carries RDF facts (fw:RegressionModel, fw:EpiEstimate per coefficient), so the fit appears in the N3 & evidence view, checked by two SHACL shapes. Experiment 176."
     }
    ],
    "breaking": false,

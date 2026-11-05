@@ -409,6 +409,49 @@ Nothing about WebKit or Safari, which CI runs. Nothing about a month of readings
 practitioner understands the three gaps from the table is not observed. The nearest-centre rule's disagreements with
 the containing pixel were not counted.
 
+## Read against the practitioner's research note, 2026-11-05
+
+The practitioner uploaded [a research note](../research/remote-sensing-epidemiology-worked-examples.md.txt) proposing
+satellite-based worked examples for Fieldwork, with Brazil dengue as the primary one, and asked for it to be read
+against this experiment.
+
+**Where they agree.**
+
+| The note | Already here |
+| --- | --- |
+| Check availability at file, schema and licence level before building | S3, S4 and S7 opened real files; the licence was read at its source |
+| Distinguish modelled exposure from observed outcomes; check whether PM2.5 estimates already assimilate monitors | Each product carries `kind` (observation or model); provisional statement 3, a gap-filled product is a model |
+| LST is not air temperature | The same distinction in kind: a column amount, not a surface concentration, on every NO₂ row |
+| Satellite QA masking; missingness for every transformation | The sampler's quality rule and its three gaps |
+| Keep large imagery outside Git | Files are read by range and never stored |
+
+**Where it goes past what Fieldwork can do today.**
+
+1. **Area exposures.** Every case in the note is municipality, LGA or district by week or month: zonal and
+   population-weighted aggregation of a raster over polygons. Fieldwork samples at points (Sample raster at points,
+   Sample satellite files at points); Summarize points to polygons counts points. Nothing summarises a raster over
+   polygons. The largest gap.
+2. **Projected rasters.** MODIS LST and NDVI on Planetary Computer are COGs in the MODIS sinusoidal projection.
+   Raster input requires EPSG:4326 (`src/raster.ts`: *"This raster needs reprojection"*) and would refuse them.
+3. **Time.** Cases by period has weeks and Regression has logistic and Poisson. There are no lagged exposures (the
+   note's 0–12 weeks), no negative binomial, no distributed-lag models and no blocked temporal validation.
+4. **Uncertainty and version per transformation.** The sampler does not read the NO₂ product's precision, and records
+   no file checksum or processor version; the version is in the file name, unread.
+
+**Checked the same day** (metadata only, no data downloaded):
+
+| Item | Found |
+| --- | --- |
+| Zenodo 22029053 | Exists: *DATASET_MULTIMODAL_V8*, Brazil dengue 2010–2025, CC BY 4.0, open, published 2026-08-20; `dataset_multimodal_v8.parquet` 564.9 MB, `dataset_benchmark_v1.parquet` 157.3 MB. Fieldwork reads Parquet (hyparquet, for Overture places); nothing near this size has been tried in a browser |
+| `jssanchez-garreta/dataset-multimodal-dengue-brazil` | Exists, pushed 2026-11-05, licence not asserted (GitHub reports NOASSERTION): the data may be reused, the code's terms are not stated |
+| Planetary Computer collections | `modis-11A1-061`, `modis-11A2-061`, `modis-13A1-061`, `modis-13Q1-061`, `modis-21A2-061`, `era5-pds`, `gpm-imerg-hhr`, `jrc-gsw`, `sentinel-1-rtc`, `esa-worldcover`, Daymet. CHIRPS is not there. The catalog labels most licences "other" or "proprietary", so each is to be read at its source, as S7 did |
+
+**What it means.** Point sampling is the right first slice for the NYC monitor comparison and is not displaced. The
+note's Brazil dengue example needs an area-exposure operation (with the widget inventory examined first), raster
+reprojection and lagged exposures before it could run; its data side is verified open. The note's own status:
+*"not a claim that every data source has been independently verified or joined."* Neither is this section: one
+dataset record, one repository and one catalog listing were checked, and nothing was downloaded or joined.
+
 ## What is already known to be a limit
 
 A satellite does not measure what a station measures. NO₂ from TROPOMI or TEMPO is a tropospheric column, not ppb at

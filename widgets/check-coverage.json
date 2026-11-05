@@ -8,8 +8,8 @@
   },
   "measuredAt": "2026-10-27",
   "counts": {
-    "widgets": 57,
-    "covered": 28,
+    "widgets": 56,
+    "covered": 27,
     "awaiting": 14,
     "none": 14,
     "blocked": 1
@@ -195,11 +195,6 @@
       "expectation": "parity",
       "check": null,
       "computes": "Divides a numerator by a denominator and scales it, with a minimum denominator."
-    },
-    {
-      "nodeType": "rate_ratio",
-      "expectation": "parity",
-      "check": "27-rate-ratio"
     },
     {
       "nodeType": "reachable_corridor",

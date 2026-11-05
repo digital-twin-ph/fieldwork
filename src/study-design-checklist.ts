@@ -56,11 +56,10 @@ function implemented(w:Workflow,node:WorkflowNode<'study_design'>):ChecklistItem
     'The five designs are observational. Computations run under neutral names. Change the answer on allocation, or remove this node.')];
 
   if(licence.estimates.length){
-    // A RATE RATIO IS A COMPARISON, and South London's cohort is computed by one. It counts here;
-    // that the design does not yet govern it is a different fact, so it is said beside the tick.
-    const comparing=tables.length>0||rest.some(n=>n.type==='rate_ratio');
-    items.push(item('computation','A comparison reads this design',comparing,
-      !tables.length&&comparing?'A rate ratio is connected. It carries the design and does not yet obey it.':undefined));
+    // A REGRESSION IS A COMPARISON TOO, and reads the design's licences (experiment 176). The Rate ratio widget counted
+    // here with a note that it did not obey the design; it was retired into the two-by-two on 2026-11-05.
+    const comparing=tables.length>0||rest.some(n=>n.type==='regression');
+    items.push(item('computation','A comparison reads this design',comparing));
     items.push(item('measures','At least one measure is kept',includedMeasures(node.params).length>0));
     if(tables.length)items.push(item('mapping','The two-by-two names its groups and outcome',
       tables.every(t=>t.params.exposureColumn&&t.params.exposed&&t.params.unexposed
@@ -81,12 +80,10 @@ function implemented(w:Workflow,node:WorkflowNode<'study_design'>):ChecklistItem
   const outputs=(governed.length?w.nodes.filter(n=>after.has(n.id)):w.nodes).filter(isOutput);
   items.push(item('output','The result reaches an output',outputs.length>0));
   // THE TABLE DECLARED AGAINST THE TABLE COMPUTED. Compared as words, so it can only report a
-  // difference: two spellings may be one group, and that is for a person. A rate ratio names its
-  // groups differently from a two-by-two, so each computation says what its groups are.
+  // difference: two spellings may be one group, and that is for a person.
   const said=node.params.table;
   const groupsOf=(n:WorkflowNode):[string|undefined,string|undefined]|null=>
-    n.type==='two_by_two'?[(n as WorkflowNode<'two_by_two'>).params.exposed,(n as WorkflowNode<'two_by_two'>).params.unexposed]
-    :n.type==='rate_ratio'?[(n as WorkflowNode<'rate_ratio'>).params.compared,(n as WorkflowNode<'rate_ratio'>).params.reference]:null;
+    n.type==='two_by_two'?[(n as WorkflowNode<'two_by_two'>).params.exposed,(n as WorkflowNode<'two_by_two'>).params.unexposed]:null;
   // SEVERAL EXPOSURES ARE NOT COMPARED WITH THE ONE DECLARED PAIR. Declared groups in words, "ate" and
   // "did not eat", against a file's Y and N would read as a difference for every food, which is a
   // false alarm and teaches a reader to ignore the real one. They report what they are instead.

@@ -140,10 +140,12 @@ test('South London, cohort: Table IX declared in the practitioner words, with tw
   assert.equal(designPageCount(p),12);
   const w=workflow('cohort',p);
   w.nodes[0].params=p;
-  w.nodes[2]={id:'t',type:'rate_ratio',params:{label:'ratio',compared:'Southwark and Vauxhall Company',reference:'Lambeth Company'}};
+  // The two-by-two's rate layout, which replaced the Rate ratio widget on 2026-11-05 and obeys the design.
+  w.nodes[2]={id:'t',type:'two_by_two',params:{label:'ratio',exposureColumn:'supplier',exposed:'Southwark and Vauxhall Company',
+    unexposed:'Lambeth Company',outcomeColumn:'measure',caseValue:'deaths',nonCaseValue:'',unitsAtRiskValue:'houses',level:95}};
   const items=designChecklist(w,'d');
   assert.equal(status(items,'computation'),'done');
-  assert.match(items.find(i=>i.id==='computation').detail,/does not yet obey/);
+  assert.equal(items.find(i=>i.id==='computation').detail,undefined);
   assert.equal(status(items,'table-groups'),'done');
   assert.equal(status(items,'table-cells'),'done');
   assert.equal(status(items,'table-match'),'done');

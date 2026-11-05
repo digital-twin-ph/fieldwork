@@ -32,6 +32,7 @@
 import type {Escape} from './types.js';
 import type {TwoByTwoResult} from './two-by-two.js';
 import {twoByTwoGrid,twoByTwoEstimateRows} from './two-by-two.js';
+import {isRateLayout,rateTableMarkup,type RateTwoByTwoResult} from './two-by-two-rates.js';
 
 const count=(value:number):string=>value.toLocaleString('en-US');
 
@@ -88,7 +89,7 @@ export function twoByTwoTableMarkup(result:TwoByTwoResult,esc:Escape):string{
  *  different bounds on the same cells, and an interval whose method a reader cannot see is an
  *  interval they cannot check. The works themselves are in References -- 151's ruling, and 152's.
  */
-export function twoByTwoEstimatesMarkup(result:TwoByTwoResult,esc:Escape):string{
+export function twoByTwoEstimatesMarkup(result:TwoByTwoResult|RateTwoByTwoResult,esc:Escape):string{
   const rows=twoByTwoEstimateRows(result).map(row=>{
     const interval=row.interval
       ?`${esc(estimateValue(row.interval.lower))} to ${esc(estimateValue(row.interval.upper))}`
@@ -114,7 +115,7 @@ export const NO_DESIGN='No study design is connected, so these measures are name
 /** The instrument whole: the table, then the estimates, then whatever the computation warned
  *  about. The warnings are drawn rather than dropped because the one that matters most here --
  *  a stratum left out of the comparison -- is what makes N smaller than the table it came from. */
-export function twoByTwoMarkup(result:TwoByTwoResult,esc:Escape,
+export function twoByTwoMarkup(result:TwoByTwoResult|RateTwoByTwoResult,esc:Escape,
   declared?:{design:string;unitOfAnalysis:string;sentence:string},unit?:string):string{
   const warnings=result.warnings.length
     ?`<p class="tbt-warning muted">${result.warnings.map(w=>esc(w)).join(' ')}</p>`:'';
@@ -138,10 +139,11 @@ export function twoByTwoMarkup(result:TwoByTwoResult,esc:Escape,
     :`<p class="tbt-warning muted">No measure is reported under this design.</p>`;
   return `<div class="two-by-two-figure" data-figure="two-by-two">`
     +design
-    +twoByTwoTableMarkup(result,esc)
+    // THE RATE LAYOUT HAS ITS OWN TABLE: events, units at risk and the rate, in a1, n1, a0, n0. Experiment 161, step 6.
+    +(isRateLayout(result)?rateTableMarkup(result,esc):twoByTwoTableMarkup(result,esc))
     +reported
     +(left.length?`<p class="tbt-warning muted">Not reported: ${esc(left.join(', '))}.</p>`:'')
-    +(result.reading?.design===null?`<p class="tbt-warning muted" data-no-design>${esc(NO_DESIGN)}</p>`:'')
+    +(result.reading?.design===null&&!isRateLayout(result)?`<p class="tbt-warning muted" data-no-design>${esc(NO_DESIGN)}</p>`:'')
     +warnings
     +`</div>`;
 }

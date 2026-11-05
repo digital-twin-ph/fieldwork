@@ -1433,7 +1433,8 @@ the running application and are not yet experiments.
 
   **BUILT 2026-11-01**, with step 3: see [154](docs/experiments/154-a-workflow-declares-how-as-well-as-where.md).
   An unticked measure is a declaration and reaches the receipt as `fw:withheldEstimate`. Still
-  open: `rate_ratio` is not governed by the design, `designFor`'s walk is not called by the run, and
+  open: ~~`rate_ratio` is not governed by the design~~ (retired 2026-11-05 into the two-by-two, whose rate layout
+  is), `designFor`'s walk is not called by the run, and
   [a decision tree for choosing the design](docs/research/study-design-decision-tree-2026-11-01.md)
   is proposed and unbuilt.
 
@@ -1586,11 +1587,11 @@ Salmonella against the panel controls, the 80+ age group has no finite estimate 
 1.27e8 (0.016 to 2.8e10) with nothing to say why. It should say the term is separated, which category has no cases or
 no controls, and report no number for it. Waits on nothing; the exposure's estimate is unaffected.
 
-**Rate ratio belongs in the Two-by-two widget, not a widget of its own.** The practitioner, 2026-11-05: *"It should be in
-the Epi kernel 2x2 widget I think that's what we decided"* ([directions](docs/directions.json): one substrate, a family
-of measures over it). South London is the one example using `rate_ratio`; its comparison moves to a two-by-two with
-denominators, and the widget is retired outright (no outside users). Regression's design licences then cover the rate
-ratio's reading too.
+~~**Rate ratio belongs in the Two-by-two widget, not a widget of its own.**~~ **DONE 2026-11-05, in 0.25.0.** The
+practitioner: *"It should be in the Epi kernel 2x2 widget I think that's what we decided"*. Two-by-two 0.7.0 reads
+events and units at risk; `rate_ratio` is retired; South London's 8.40 is unchanged to the bit and lab check 27 agrees
+from the new path. Left open: no rate difference, and the study design dialog's tick list does not offer the rate
+ratio ([161](docs/experiments/161-the-epi-kernel-one-table-many-exposures.md), step 6).
 
 - ~~**A caught fetch still raises a page error offline, and nothing explains how.**~~ **FIXED
   2026-10-31, and the explanation was in the service worker rather than the page.** A rejected

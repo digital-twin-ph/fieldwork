@@ -2,8 +2,9 @@
 
 _Created 2026-11-02 · Updated 2026-11-02_
 
-**Status:** tried — steps 1 to 4 done, step 5 in narrow form, and the measures run in Rust. The arithmetic is shared. The substrate, plural exposures and the
-widget change are designed here and not built.
+**Status:** tried — steps 1 to 4 and 6 done, step 5 in narrow form, and the measures run in Rust. Step 7 is not
+started. _Corrected 2026-11-05: this line said the substrate, plural exposures and the widget change were not built;
+steps 2 and 3 built them on 2026-11-02._
 
 ## The task
 
@@ -131,7 +132,9 @@ independent of both.
   decision made; the evidence has not been read.
 - That the kernel's exact methods are right. They were compared with the copied file, which shows the build
   is faithful and says nothing about correctness. FW's own values were compared only for the 2x2 estimates.
-- That South London's rate ratio folds in cleanly. Its input is a `rate` result, not a table of counts.
+- ~~That South London's rate ratio folds in cleanly. Its input is a `rate` result, not a table of counts.~~
+  Settled by step 6, 2026-11-05: the two-by-two reads Table IX, which the Rate read, so the `rate` result was never
+  needed for the ratio.
 - That a practitioner reads a row per exposure better than 14 tabs. That is the observation to keep.
 
 ## Validation
@@ -182,3 +185,33 @@ read for the case variable only, paper not read): 31 foods on one node, 3 unusab
 is 12/3 against 20/107, odds ratio 21.4 (5.5 to 82.7), with classical controls, and 12/10 against 20/146, 8.8
 (3.4 to 22.9), with panel controls. These figures are not compared with the paper. The example has not been
 built in the app and is not a repository.
+
+**Step 6, 2026-11-05.** The practitioner: *"It should be in the Epi kernel 2x2 widget I think that's what we
+decided."* `two_by_two` 0.7.0 reads a table as **events and units at risk** as well as cases and non-cases, and
+`rate_ratio` is retired outright, as the regime in AGENTS.md allows while nobody outside uses it.
+
+| Distinction | Enforced as |
+| --- | --- |
+| A unit at risk is not a non-case: a house can hold two deaths, person-time counts nobody | validation rule: the layout is declared, and has no $b$, $d$ or risk ratio |
+| Events are counts; units at risk may be person-time | run-time check: a fractional event count stops the step, a fractional unit does not |
+| A rate ratio is reported only where the design licenses one | run-time check before the computation, cohort and ecological, the same designs as a Poisson regression and held equal by test |
+| A group with no events has no ratio | the estimate carries the reason and the counts stay; the Rate ratio widget refused the whole step |
+| A line list has no units at risk | hard stop, as does the layout with several exposures |
+
+| Check | Result |
+| --- | --- |
+| South London w6 through `executeWorkflow` | 8.401853429780243 (6.84096208049671 to 10.31889085553658), bit-identical to the retired widget |
+| Lab check 27, re-run from the two-by-two (lab `962e1e3`) | 4 of 4 comparisons agree with statsmodels `confint_poisson_2indep(method='wald-log')`, built from tables the South London workflows produce |
+| `tests/two-by-two-rates.test.mjs` | 7 of 7 |
+| `tests/two-by-two-rates.browser.mjs` | 2 of 2, Chromium |
+| Unit suite | 1,422 passed, 0 failed, before the two new test files |
+
+**Found on the way.** The declared cohort's sentence, appended to the result, ends *"a/(a+b) is a risk"*, which is
+false of events over houses. The rate layout now carries the rate-ratio licence's own reason. The four-cell
+licence's reasons are written for $a/(a+b)$ and nothing had checked them against another layout, because there was
+none.
+
+**Not done.** No rate difference: the retired widget had none, and adding one is a separate decision. The study
+design dialog's tick list does not list the rate ratio, so a practitioner cannot withhold it while keeping the design.
+A saved workflow holding the retired widget refuses to open rather than being rewritten: the rewrite would have to
+follow the Rate back to its table, and South London, the only workflow that used it, is rebuilt.

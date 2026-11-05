@@ -321,16 +321,6 @@
       "note": "Group changed from Summaries to Epidemiology on 2026-10-25, on the practitioner's call after they looked at the palette and said \"I do not see any epi widget\". The name is unchanged and was not re-argued; what changed is where a practitioner looks for it. Still pending on the name itself."
     },
     {
-      "nodeType": "rate_ratio",
-      "title": "Rate ratio with an interval",
-      "group": "Epidemiology",
-      "fingerprint": "0112db372238",
-      "verdict": "pending",
-      "reviewed": null,
-      "reviewedBy": null,
-      "note": "Pending. The name says what it computes and names the interval, which is the part a reader must not have to assume. What it does not say is which group is on top, and that is a parameter rather than a name."
-    },
-    {
       "nodeType": "reachable_corridor",
       "title": "Reachable corridor",
       "group": "Spatial operations",

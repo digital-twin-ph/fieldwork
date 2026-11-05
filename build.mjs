@@ -68,6 +68,11 @@ const generated=Object.keys({...application.metafile.outputs,...worker.metafile.
 // offline without it. Measured 2026-10-17: 1,035,119 bytes, against an app.js of 293,019.
 const ONLINE_ONLY=/leaflet-maplibre-gl|maplibre|h5wasm/;  // renderer, worker and their chunks; the satellite file reader
 const assets=[...new Set([...staticAssets,...generated])].filter(a=>!ONLINE_ONLY.test(a)).sort();
+// ONLINE-ONLY IS STILL PUBLISHED. Leaving these out of the precache also left them out of Pages, because the staging
+// script publishes what this manifest lists: found 2026-11-05 when the satellite reader answered 404 on Pages, and the
+// MapLibre worker with it, so the vector basemaps' renderer had never been served there. Listed apart, published, not
+// precached.
+const online=[...new Set([...generated.filter(a=>ONLINE_ONLY.test(a)),'./build/maplibre-gl-worker.mjs','./vendor/h5wasm-0.10.3.js'])].sort();
 const hash=createHash('sha256');
 for(const asset of assets){hash.update(asset);hash.update(await readFile(asset==='./'?'index.html':asset));}
 hash.update(await readFile('src/sw.ts'));
@@ -76,5 +81,5 @@ const cache='fieldwork-ts-'+hash.digest('hex').slice(0,16);
 // guessed at. 2026-10-15.
 const appVersion=JSON.parse(await readFile('package.json','utf8')).version;
 await build({entryPoints:['src/sw.ts'],bundle:true,format:'iife',outfile:'sw.js',minify:true,define:{__PRECACHE_ASSETS__:JSON.stringify(assets),__CACHE_VERSION__:JSON.stringify(cache),__APP_VERSION__:JSON.stringify(appVersion)}});
-await writeFile('build/asset-manifest.json',JSON.stringify({cache,assets},null,2)+'\n');
+await writeFile('build/asset-manifest.json',JSON.stringify({cache,assets,online},null,2)+'\n');
 console.log('Built TypeScript application, workers and offline asset manifest.');

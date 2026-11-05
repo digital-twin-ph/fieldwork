@@ -3,6 +3,14 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.29.1 — 2026-11-05
+
+- **Sample satellite files at points works on Pages.** In 0.29.0 the file reader it loads, h5wasm, was not published:
+  files left out of the offline download were also left out of the site. The MapLibre worker behind the vector
+  basemaps was missing the same way, which may have stopped those basemaps drawing on Pages. Both are now published
+  and still not downloaded for offline use.
+- Validation: Chromium locally; WebKit in CI.
+
 ## 0.29.0 — 2026-11-05
 
 - **Sample satellite files at points** (new, under Spatial operations): connect your points and the files **Search a

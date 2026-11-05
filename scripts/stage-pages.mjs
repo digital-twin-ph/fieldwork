@@ -7,7 +7,7 @@ const destination=path.resolve(root,'_site');
 if(path.dirname(destination)!==path.resolve(root))throw new Error('Invalid staging directory');
 const manifest=JSON.parse(await readFile(path.join(root,'build/asset-manifest.json'),'utf8'));
 const files=new Set(['sw.js','LICENSE','build/asset-manifest.json']);
-for(const asset of manifest.assets){
+for(const asset of [...manifest.assets,...(manifest.online??[])]){
   const file=asset==='./'?'index.html':asset.replace(/^\.\//,'');
   if(file.includes('\\')||file.split('/').some(part=>part.startsWith('.')||!part)||path.isAbsolute(file))throw new Error('Invalid asset path');
   if(!/^(index\.html|styles\.css|study-area\.css|icon\.svg|manifest\.webmanifest|build\/.+|vendor\/.+|examples\/old-naledi\/(data\.js|provenance\.json)|examples\/john-snow\/(NOTICE\.txt|upstream-LICENSE|provenance\.json|network\.json|soho\.graphml|pumps\.csv|cholera_deaths\.csv))$/.test(file))throw new Error('Unexpected browser asset');

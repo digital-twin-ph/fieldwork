@@ -55,9 +55,24 @@ import {OLD_TYPES} from '../build/old-naledi.js';
 // depends on the design that produced it -- so the port now fits two blocks and is not a stud.
 // The 9 above stood for part of one afternoon and is left recorded rather than erased: a count
 // that only ever goes down tells you nothing about which way it moved.
-// 9 on 2026-11-05, with satellite-product: find_satellite_products feeds only search_satellite_catalog, because a
-// catalog search without a chosen product searches nothing (experiment 179, D4).
-const CUSTOM_STUDS_TODAY=9;
+// THE COUNT IS RETIRED, 2026-11-05, AND EACH STUD STANDS ON ITS OWN REASON. The practitioner, asked whether this cap
+// should go the way of the naming ledger's ceiling ("If that's another cap then it's a false one"): "Yes to custom
+// studs but adjust as evidence emerges." A count of studs is a shared total: a needed port then has to be paid for by
+// collapsing an unrelated one. What D4a actually asks is per port -- does a wrong producer need a hard stop, and what
+// would resolve it -- so every stud is listed with that answer, and the list changes as evidence does: a stud that
+// gains a second end is no longer one and must leave, and one whose reason stops holding is folded back. The history
+// above is kept; the last count was 9.
+const CUSTOM_STUDS={
+  'alert':'Retired with its widgets; a retired producer still declares it, and it carries nothing live.',
+  'facilities':'An archived definition still declares it; no live widget produces it.',
+  'gradedFacilities':'Retired 2026-10-12 with xpert; kept so archived definitions resolve.',
+  'access':'Retired 2026-10-12 with the access widget; kept so archived definitions resolve.',
+  'coverage-check':'Produced by the retired coverage check and consumed by nothing live.',
+  'ground':'A printed map must not reach clip_raster or sample_raster: sampling it returns the colour of a line. Resolved by a second producer (Natural Earth as ground), or folded back.',
+  'mean-center':'The mean of point coordinates is not a polygon centroid; compare_point_sets is its consumer.',
+  'point-comparison':'A two-set comparison drawn only by its own map.',
+  'satellite-product':'A catalog search without a chosen product searches nothing (experiment 179, D4). Gains its consumer with search_satellite_catalog.',
+};
 
 const definitions={...TYPES,...OLD_TYPES};
 const union=[...new Set(readFileSync(new URL('../src/types.ts',import.meta.url),'utf8')
@@ -84,16 +99,15 @@ test('every portType is either produced or consumed, and says which',()=>{
       `${portType} is in PortType and nothing touches it`);
 });
 
-test('the number of custom studs does not grow unnoticed',()=>{
+test('every custom stud states its own reason, and the list follows the evidence',()=>{
   const studs=union.filter(c=>producers[c].length<=1&&consumers[c].length<=1);
-  assert.ok(studs.length<=CUSTOM_STUDS_TODAY,
-    `custom studs rose to ${studs.length} (${studs.join(', ')}). D4a: a block with a connector `
-    +`that fits only one other block is not a block, it is two things glued together and shipped `
-    +`as one. Collapsing them is what turns the blocked merges into renames. Adding one is `
-    +`allowed and must be deliberate: update CUSTOM_STUDS_TODAY and say why in the commit.`);
-  if(studs.length<CUSTOM_STUDS_TODAY)
-    assert.fail(`custom studs fell to ${studs.length}, which is the direction this is for — `
-      +`lower CUSTOM_STUDS_TODAY to ${studs.length} so the number keeps meaning something.`);
+  const unexplained=studs.filter(c=>!CUSTOM_STUDS[c]?.trim());
+  assert.deepEqual(unexplained,[],`${unexplained.join(', ')} fit${unexplained.length===1?'s':''} only one other block and `
+    +`state${unexplained.length===1?'s':''} no reason. D4a: say why a wrong producer needs a hard stop here, and what would `
+    +`resolve it, in CUSTOM_STUDS.`);
+  // A port that gained a second end is no longer a stud: its entry must go, so the list says what is true today.
+  const stale=Object.keys(CUSTOM_STUDS).filter(c=>!studs.includes(c));
+  assert.deepEqual(stale,[],`${stale.join(', ')} ${stale.length===1?'is':'are'} no longer a custom stud: remove from CUSTOM_STUDS.`);
 });
 
 test('the six general port types carry most of the traffic',()=>{

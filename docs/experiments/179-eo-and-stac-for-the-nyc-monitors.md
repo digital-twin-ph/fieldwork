@@ -60,6 +60,16 @@ endpoints.
 | Missing as fields | licence, unit, column or surface, coverage dates, temporal resolution | — |
 | Licence | MIT; `catalog.json` and the mission registry are CEOS MIM data, CC BY 4.0 | MIT; vendored GeoTIFF.js, Proj4js, Geoman (MIT), Leaflet (BSD-2) |
 
+**Ontology in the two repositories, read 2026-11-05** (the practitioner: *"I am not sure how much ontology integration
+is in those two repos"*). The EO Guide has `data/research-ontology.ttl`, 60 lines under its own `eo:` namespace: 9
+classes and 11 properties aligned to SKOS (a research topic is a `skos:Concept`), SOSA (`eo:observableProperty` ranges
+over `sosa:ObservableProperty`), DCAT (`eo:STACCollection` is a `dcat:Dataset`), PROV (`eo:MissionGroup` is a
+`prov:Entity`), GeoSPARQL and schema.org; and `data/catalog.jsonld`, 958 satellites as `sosa:Platform` hosting
+instruments. No SHACL shapes and no rules. The STAC Browser has no RDF: a JSON Schema for its hand-off file only. So
+Fieldwork reuses the `eo:` vocabulary, vendored at a pinned commit as the sea-level pack's is, and maps to it rather
+than minting near-duplicates. What is Fieldwork's own to add: what a run chose, fetched and from where; the licence
+and citation as read; completeness by its three kinds; and the shapes that hold real receipts to them.
+
 **The finding:** the routes NYC needs are curated for NO₂ and aerosol, and all of them are NetCDF or HDF, behind sign-in
 or URL signing. The crop path that works in a browser covers GeoTIFF. So the first use needs, beyond adaptation: an
 ozone route, the fields that make "open" visible (licence, unit, measured quantity, coverage), a reader for NetCDF or

@@ -141,6 +141,7 @@ including the ones not yet run, so what was measured, what was only read and wha
 | S5 | 2026-11-05 | How many bytes of a swath does NYC need? | `scripts/s5p_range_probe.py`, h5py through counted 64 KB range reads, capped at 20 MB; one 63.2 MB file, approved by the practitioner | done: **2.25 MB in 35 requests** | *Phase 1: how much of a swath NYC needs* |
 | S6 | 2026-11-05 | Which browser HDF5 reader can read by range? | installed into a scratch folder outside Fieldwork with the practitioner's approval, licences read first: `jsfive` 0.4.2 (public domain, after pyfive) and `h5wasm` 0.10.3 (NIST notice; bundles the HDF5 library). Run in Chromium by `scripts/probes/h5wasm-range-probe.mjs`, the storage requests counted, capped at 20 MB | done: **jsfive cannot** (its README: "only for reading HDF5 files as an ArrayBuffer representation of the file", so all 63.2 MB; not run). **h5wasm can**, in a worker, through Emscripten's lazy file: 1 header request and 7 range reads of 1 MB, **6.58 MB of 63.2 MB**, the same 58 pixels and the same quality values as h5py. Slow: 2 and 8 minutes on two runs, each 1 MB block a synchronous request in turn | *S6, measured* below |
 | S7 | 2026-11-05 | Reading the Sentinel Data Legal Notice | the notice the catalogs link, read in full (2 pages, European Commission, DG GROW; PDF created 2015) | done: **open, with attribution**. See *S7* below | *S7* |
+| S8 | 2026-11-05 | Best practice for gaps in satellite NO₂ and AOD in health studies | open-access literature review, and which gap-filled products are openly available and browser-readable | running | `reports/` in the workspace, summarised here when done |
 
 ## S6, measured: a browser reads the swath by range
 
@@ -188,6 +189,22 @@ read there.
 widgets: the EO catalogue states licences from the licence itself, not from a catalog's licence field, and records where
 it was read; and a dead licence link is a finding the widget shows, not a reason to call a product closed. Every output
 built from Sentinel data carries the attribution sentence, as the figures already carry a source note.
+
+## Gaps and imputation: provisional statements
+
+The practitioner, 2026-11-05: *"If missing can we impute data? Are there best practices for doing this with EO data?"*
+Answered from general knowledge, no paper read; three statements proposed and agreed (*"Yes to all"*). They are
+statements to explore, not rules, and S8 reviews the evidence for them.
+
+1. **The station comparison is not imputed.** Imputed satellite values compared with the stations would partly compare
+   a model with the ground. Compare where both exist, and report completeness by its three kinds.
+2. **Imputation is a separate, declared step, never a default.** Imputed values keep their own column and flag, their
+   method goes in the receipt and the Notes, and the complete-case result can be shown beside the imputed one.
+3. **A ready-made gap-filled product is a model, not an observation.** A reanalysis (CAMS, MERRA-2, GEOS-CF) or a
+   full-coverage estimate is offered under its own label in EO, never as satellite data.
+
+The reason behind all three: satellite gaps are not random. Clouds remove NO₂ and AOD retrievals, and cloudy days differ
+in weather, which itself bears on pollution and on asthma, so missing-not-at-random is the default.
 
 ## What is already known to be a limit
 

@@ -292,6 +292,41 @@ says which collection. It was added to the rule's scope types, rather than recor
 **Seen in the live run, for evaluation:** a Sentinel-5P swath is far larger than New York City, so in *Coverage, in
 context* the boroughs are a small box inside it.
 
+## Admission review: Sample satellite files at points, 2026-11-05
+
+The practitioner, asked whether to extend Sample raster at points or add a widget: *"Sample satellite files seems to
+be more straightforward and less confusing."* So `sample_satellite_files_at_points`, "Sample satellite files at
+points", under Spatial operations beside Sample raster at points, which stays unchanged.
+
+**The current widgets, examined first.** Sample raster at points does the same operation, the value of the cell
+containing a point, on a regular grid already loaded from a local GeoTIFF, and returns the point layer with one
+attribute. A Sentinel-5P swath is not a regular grid (each pixel has its own corners), is remote, comes as one file per
+overpass, and carries a quality value per pixel. Extending it would make its output depend on its input, a layer for a
+raster and a table for satellite files; the practitioner judged that the more confusing of the two.
+
+| | |
+| --- | --- |
+| Inputs | `points` (the monitors, from Point data) and `files` (`satellite-files`, from Search a satellite catalog) |
+| Output | `table`, long: one row per point per overpass, with the value, its unit as the file states it, the quality value, whether it passed the product's rule, and the kind of gap where there is no usable value |
+| Reading | by HTTP range in a browser worker (h5wasm, S6), only the bytes a point's pixel needs, with Planetary Computer's anonymous token |
+
+- **D1.** A practitioner asks for it by name: the satellite value at each ground monitor, per overpass.
+- **D2.** Sample raster at points is the near miss, for the reasons above; nothing else reads a swath.
+- **D4.** No new port type: it takes `points` and the existing `satellite-files`, and emits `table`, so the result
+  meets the chart, relate and regression widgets beside the station readings. `satellite-files` gains its consumer.
+- **D11.** The residual function is reading a swath at points, with its quality rule and completeness.
+
+| Distinction | Enforced as |
+| --- | --- |
+| The value is the pixel containing the point, not an interpolation | the method, stated on the result; kept from Sample raster at points |
+| No overpass, no retrieval, and below the quality threshold are different gaps | a column per row naming which; never an empty value standing for all three |
+| The quality rule's operator, where the documents differ, is stated | on the result and in the receipt |
+| A satellite column is not a surface concentration | the unit and measured quantity travel on every row, from the product |
+| Imputation is not done here | out of scope (provisional statement 2): this widget reads, it never fills |
+
+**Not in the first slice:** products other than Sentinel-5P Level 2 swaths; reading by the borough outlines rather
+than at points; averaging over pixels near a point. Each is said where it is met.
+
 ## What is already known to be a limit
 
 A satellite does not measure what a station measures. NO₂ from TROPOMI or TEMPO is a tropospheric column, not ppb at

@@ -3,6 +3,31 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.25.0 — 2026-11-05
+
+- **The Two-by-two table reports a rate ratio.** Under **The outcome column holds**, choose **events and units at
+  risk**, then name the value holding the events and the one holding the units at risk (houses, people, person-time).
+  The figure shows each group's events, units at risk and rate in the letters $a_1$, $n_1$, $a_0$, $n_0$; the
+  Methods note writes the ratio and its log-normal interval in those letters. Units at risk need not be whole numbers.
+  A group with no events keeps its counts and says why there is no ratio. Two-by-two widget 0.7.0.
+- **A declared design decides whether a rate ratio may be reported**: under a cohort or an ecological design, as for a
+  Poisson regression, and the step stops under any other, naming the reason. With no design connected it keeps its
+  name.
+- South London's *Deaths per house, by water company* reads Table IX through the two-by-two: **8.40 (6.84 to 10.32)**,
+  the same to the last digit. A table of deaths per 10,000 houses sits beside it. Lab check 27 compared the new path
+  with statsmodels on all four of its comparisons and it agrees.
+
+### Retired
+
+- **Rate ratio with an interval**, into the Two-by-two table. It could read only a Rate step's result, South London
+  was its one user, and its arithmetic was already shared with the two-by-two. Retired outright, with no deprecation
+  period, because nobody outside this project uses it. **A workflow saved with one refuses to open**, naming it:
+  rebuild the step as a two-by-two on the table the Rate read. Experiment 161, step 6.
+
+### Validation limits
+
+- Chromium locally; WebKit runs in CI.
+
 ## 0.24.1 — 2026-11-05
 
 - **A slow download is no longer stopped after two minutes.** Fetching a table from where it is published now shows how

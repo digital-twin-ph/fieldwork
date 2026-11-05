@@ -11,8 +11,7 @@
   "initial",
   "major",
   "minor",
-  "patch",
-  "port"
+  "patch"
  ],
  "widgets": {
   "access": {
@@ -656,20 +655,20 @@
    "migrationFrom": []
   },
   "rate_ratio": {
-   "version": "0.3.0",
-   "released": "2026-10-31",
+   "version": "1.0.0",
+   "released": "2026-11-05",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Machine the equation into a Methods note. Every run of this widget now writes a note to the Notes tab under Methods, carrying each computation twice -- once as the formula and once with this run's numbers substituted into it -- as LaTeX the browser typesets to MathML. The claim this answers is experiment 141's, made on 2026-10-26 and unbuilt until now: \"all of our computations have equations, and these can be automatically constructed in LaTeX for automatic rendering as notes\". Experiment 151 built the renderer four days later and recorded that the first machined equation was still unwritten, which is what made the 212KB converter correct rather than earned. Both forms are carried because a symbolic formula restates a textbook and the instantiated one lets a reader check the arithmetic without rerunning anything. Nothing about the arithmetic changed: the formulas were read off this widget's own implementation, which is why they state what it computes and not what a source paper states -- the computations audit that would establish the second is recorded in TODO.md and does not exist. Each interval method is cited from a source that was looked up, or the note says no source has been read for it. The two outcomes are printed rather than one being an absence, for the reason `epiInfoLabelSource` exists: a missing reference reads as nothing to say when it means nobody has looked it up. No source is cited here: a log-normal interval on a ratio of two rates is a standard construction that the implementations consulted state without attributing, so the note names none rather than naming a plausible textbook."
-    },
-    {
-     "kind": "port",
-     "description": "An optional `design` input, so a declared study design can reach the comparison it governs. The rate ratio's stated sentence then carries the design and the unit of analysis. Nothing is gated yet; gating is step 3 of the sequence in docs/directions.json. Experiment 154."
+     "kind": "major",
+     "description": "Retired into the two-by-two, which reads events and units at risk from a table and reports the rate ratio. The practitioner, 2026-11-05: 'It should be in the Epi kernel 2x2 widget I think that's what we decided' -- experiment 161, step 6, one substrate and a family of measures over it. This widget read only a Rate step's result, so a table had to pass through a Rate to be compared, and South London was the only workflow that used it. The arithmetic was already shared: both widgets called the kernel's rateRatio, so Snow's 8.401853429780243 (6.84096208049671 to 10.31889085553658) is unchanged to the bit. Retired outright, with no deprecation period, because nobody outside this project uses it (AGENTS.md). A workflow saved with one refuses to open and names it.",
+     "breaking": true
     }
    ],
-   "breaking": false,
-   "migrationFrom": []
+   "breaking": true,
+   "migrationFrom": [],
+   "replacementCandidate": [
+    "urn:fieldwork:widget:two_by_two"
+   ]
   },
   "reachable_corridor": {
    "version": "0.3.0",
@@ -1016,20 +1015,12 @@
    "migrationFrom": []
   },
   "two_by_two": {
-   "version": "0.6.1",
-   "released": "2026-11-02",
+   "version": "0.7.0",
+   "released": "2026-11-05",
    "changes": [
     {
-     "kind": "patch",
-     "description": "Exposures to compare offers only columns holding the two chosen groups, so an identifier is not offered, and the list reads down one left edge."
-    },
-    {
-     "kind": "patch",
-     "description": "Columns declared as a primary or secondary key are left out of Exposures to compare."
-    },
-    {
-     "kind": "patch",
-     "description": "With several exposures on one node, the formulas are machined once in symbols. The numbers stay in the step's table, which a connected Table output draws in the write-up."
+     "kind": "minor",
+     "description": "Reads a table of events and units at risk, and reports the rate ratio with a log-normal interval. Choose 'events and units at risk' under 'The outcome column holds', then name the value holding the events and the one holding the units at risk. The figure shows a1, n1, a0, n0 and each group's rate; the Methods note writes the ratio and its interval in those letters. A declared design licenses a rate ratio under a cohort or an ecological design, as for a Poisson regression, and stops the step under any other, naming the reason. Units at risk may be person-time, so need not be whole; events must be. A group with no events keeps its counts and says why the ratio has none. This replaces the Rate ratio widget, retired the same day; experiment 161, step 6."
     }
    ],
    "breaking": false,

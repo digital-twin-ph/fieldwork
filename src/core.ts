@@ -64,7 +64,7 @@ import widgetRegistry from '../widgets/registry.json';
 import {relateTable,relateOutcome,machinedNotes,relateReceiptFacts,type RelateOutcome} from './relate-table.js';
 // THE EQUATIONS THE COMPUTATIONS USED, machined as Methods notes. The second, third and fourth
 // producers of a machined note, which is the state `relate-table.ts` wrote its type for.
-import {rateEquationNote,rateRatioEquationNote,twoByTwoEquationNote,machinedNoteFacts}
+import {rateEquationNote,rateTwoByTwoEquationNote,twoByTwoEquationNote,machinedNoteFacts}
   from './equations.js';
 // WHAT AN ARTIFACT DECLARES ABOUT ITSELF. A table, a map and a chart are what a Results
 // section is mostly made of, and until now not one of them put a word into the write-up. NOT a
@@ -76,10 +76,10 @@ import {polygonLayer,polygonLayerFacts} from './polygon-layer.js';
 import {shareAlike} from './input-provenance.js';
 import type {MachinedNote} from './notes.js';
 import {groupTable,migrateGroupTableNulls} from './group-table.js';
-import {computeTwoByTwo,twoByTwoReceipt,twoByTwoSentence,type TwoByTwoResult} from './two-by-two.js';
+import {computeTwoByTwo,twoByTwoReceipt,twoByTwoSentence,rateTwoByTwoReceipt,rateTwoByTwoSentence,type TwoByTwoResult} from './two-by-two.js';
 import {computeExposures} from './exposure-table.js';
 import {basemapLimitation} from './basemaps.js';
-import {studyDesignSentence,studyDesignReceipt,DESIGN_LICENCES,includedMeasures,readUnderDesign,readUndeclared,migrateSurveillanceDesign,regressionMeasure} from './study-design.js';
+import {studyDesignSentence,studyDesignReceipt,DESIGN_LICENCES,includedMeasures,readUnderDesign,readUndeclared,migrateSurveillanceDesign,regressionMeasure,rateRatioMeasure,rateRatioDesignSentence} from './study-design.js';
 import {refinementSentences,investigatorAllocated} from './study-design-questions.js';
 import type {DeclaredDesign} from './study-design.js';
 import {outreachProjection,extentN3,extentProjection,projectionOf,RULESET_FOR_NODE_TYPE,pinnedRuleset,parametersFor} from './rule-application.js';
@@ -99,7 +99,7 @@ import {findingsSummary,dataTable,wideDataTable,tableReceipt,MAX_TABLE_ROWS} fro
 import {mapImage,mapImageReceipt} from './map-image.js';
 import type {DataTable} from './data-table.js';
 import {computeRate,fromPoints,fromTable,rateTable,rateChart,rateReceipt,validateRateNode} from './rate.js';
-import {computeRateRatio,rateRatioReceipt,rateRatioSentence,RATE_RATIO_TABLE_KEYS} from './rate-ratio.js';
+import {computeRateTwoByTwo,readRatesUnderDesign,readRatesUndeclared} from './two-by-two-rates.js';
 import {caseSeries,caseSeriesFromTable,seriesTable,seriesChart,seriesReceipt,validateCaseSeriesNode} from './case-series.js';
 import {joinTableToAreas,joinedPolygons,areaJoinReceipt} from './area-join.js';
 import {projectionExtract,projectionTable,readExtract,extractFromRuleset,assignSites,assignmentTable,compareToElevation,extractReceipt,assignmentReceipt,comparisonReceipt as thresholdReceipt,validateSeaLevelNode} from './sea-level.js';
@@ -120,11 +120,10 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   join_table_to_area:{title:'Join a table to the study area',group:'Summaries',icon:'⋈',color:'teal',
     description:'Put a value from each row onto the part of the boundary it names',
     inputs:[['records','table'],['area','area'],['polygons','polygons']],output:'polygons'},
+  // RETIRED 2026-11-05 into the Two-by-two's rate layout, which reads the table a Rate step read. Kept so a workflow
+  // naming it can say what it was. Experiment 161, step 6.
   rate_ratio:{title:'Rate ratio with an interval',group:'Epidemiology',icon:'⚖',color:'teal',
-    description:'Divide one group\'s rate by another\'s, with an interval and the counts behind it',
-    // The same optional `design` as `two_by_two`, for the same reason: a rate ratio is a
-    // comparison, and what a comparison can be read as depends on the design that produced it.
-    // Optional, so every existing workflow runs unchanged. Experiment 154.
+    description:'Retired — use Two-by-two table, reading events and units at risk',
     inputs:[['rates','table'],['design','design']],output:'table'},
   derive_value:{title:'Derive a value',group:'Summaries',icon:'∓',color:'teal',
     description:'Compute a new value in a key column from two of its existing values, group by group',
@@ -274,7 +273,7 @@ export function requiredInputs(node:WorkflowNode,options?:{coverageConnected?:bo
   // every existing workflow with a two-by-two refuse to run until somebody answered a question
   // they may not be able to answer -- and would drop the widget's own contract into one that
   // cannot be satisfied from a blank canvas. Experiment 154.
-  if(node.type==='two_by_two'||node.type==='rate_ratio'||node.type==='regression')
+  if(node.type==='two_by_two'||node.type==='regression')
     return all.filter(([port])=>port!=='design');
   // A COLLECTOR TAKES WHAT IT IS GIVEN. `stack_polygons` declares six polygon ports and required
   // all six, so a widget whose own description is "gather SEVERAL polygon layers" and whose
@@ -1472,6 +1471,32 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         const declaredDesign=connected?.stopped?undefined:connected;
         const read=(found:TwoByTwoResult)=>
           declaredDesign?readUnderDesign(found,declaredDesign):readUndeclared(found);
+        // THE RATE LAYOUT: events and units at risk per group, and the rate ratio. The design is read BEFORE the
+        // computation, so a rate ratio the design cannot support is never computed and then hidden. Experiment 161,
+        // step 6; the Rate ratio widget it replaces read only a Rate step's result.
+        if(node.params.unitsAtRiskValue!==undefined){
+          rateRatioMeasure(declaredDesign);
+          const computed=computeRateTwoByTwo(table,node.params);
+          const result=declaredDesign?readRatesUnderDesign(computed,declaredDesign.design):readRatesUndeclared(computed);
+          const cell=(exposure:string,outcome:string,count:number)=>
+            ({key:{[node.params.exposureColumn]:exposure,[node.params.outcomeColumn]:outcome},value:count});
+          const {exposed,unexposed,caseValue}=node.params,units=result.request.unitsAtRiskValue;
+          value={kind:'data-table',keys:[node.params.exposureColumn,node.params.outcomeColumn],
+            valueField:table.valueField,...(table.unit?{unit:table.unit}:{}),
+            rows:[cell(exposed,caseValue,result.cells.exposedEvents),
+              cell(exposed,units,result.cells.exposedUnitsAtRisk),
+              cell(unexposed,caseValue,result.cells.unexposedEvents),
+              cell(unexposed,units,result.cells.unexposedUnitsAtRisk)],
+            rowCount:4,missingValueCount:0,twoByTwo:result,
+            ...(declaredDesign?{design:{...declaredDesign,sentence:rateRatioDesignSentence(declaredDesign)}}:{}),
+            sentence:rateTwoByTwoSentence(result)
+              +(declaredDesign?` ${rateRatioDesignSentence(declaredDesign)}`:'')} as unknown as DisplayValue;
+          receipts.push(rateTwoByTwoReceipt(node,result,runId,
+            workflow.edges.find(e=>e.to===node.id&&e.port==='records')!.from) as unknown as Receipt);
+          machined[node.id]=[rateTwoByTwoEquationNote(result,node.id)];
+          withNote(receipts,runId,node.id,machined[node.id]);
+          break;
+        }
         if((node.params.exposureColumns?.length??0)>1){
           const several=computeExposures(table,node.params,node.params.exposureColumns!,read);
           value={...several.table,sentence:several.sentence
@@ -1568,49 +1593,6 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         const result=computeRate(records,node.params);value={...rateTable(result),chart:rateChart(result)} as unknown as DisplayValue;receipts.push(rateReceipt(node,result,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='records')!.from));
         const rateNote=rateEquationNote(result,node.id);
         if(rateNote){machined[node.id]=[rateNote];withNote(receipts,runId,node.id,[rateNote]);}
-        break;}
-      case 'rate_ratio':{
-        // THE INPUT IS A RATE, NOT A TABLE OF NUMBERS. Only a rate declares what its numbers are
-        // per, and dividing a per-house rate by a per-person one is arithmetic on two different
-        // quantities. `rateTable` carries the RateResult on the value it emits, which is the only
-        // place that declaration survives a port.
-        const comparison=computeRateRatio(inputs.rates?.rate!,node.params);
-        const declaredFor=inputs.design as unknown as
-          {design:string;period:string;unitOfAnalysis:string;sentence:string}|undefined;
-        const sentence=rateRatioSentence(comparison)
-          +(declaredFor?` ${declaredFor.sentence}`:'');
-        // THE TABLE IS THE 2x2 THE RATIO WAS COMPUTED FROM, not the ratio on its own. One row
-        // holding 8.40 showed the summary and hid the thing a reader checks it against: an
-        // epidemiologist reads the counts first and the ratio second, and until 2026-10-26 the
-        // counts existed on the result and reached no display at all. Two variables matrixed --
-        // group against measure -- which is the shape experiment 136 records as the other mode
-        // of displaying layers, in the long form every table here uses.
-        // The rate each group carries, at the multiplier the Rate step declared, because that is
-        // what makes the ratio checkable BY HAND: 315.4 over 37.5 is 8.40, and a reader who sees
-        // only the counts has to do the division themselves. The multiplier belongs to the rates
-        // and never to the ratio, which stays dimensionless.
-        const per=inputs.rates?.rate?.options.multiplier??1;
-        const unit=comparison.denominatorUnit;
-        // WHAT THE EVENTS ARE, from the Rate step's own declaration. "events" is the widget's
-        // word and is true of every rate ratio; `deaths` is the practitioner's, and it is what
-        // they will look for. The practitioner, 2026-10-26, reading the table: "events =
-        // deaths?" -- a question nobody should have to ask of their own data. Reading the
-        // declared numerator is not guessing: it is the column they named.
-        const events=inputs.rates?.rate?.options.numeratorField?.trim()||'events';
-        const cell=(side:typeof comparison.compared,measure:string,value:number)=>
-          ({key:{group:side.label,measure},value});
-        value={kind:'data-table',keys:[...RATE_RATIO_TABLE_KEYS],valueField:'count',
-          rows:[comparison.compared,comparison.reference].flatMap(side=>[
-            cell(side,events,side.events),
-            cell(side,`${unit} at risk`,side.unitsAtRisk),
-            cell(side,`per ${per.toLocaleString()} ${unit}`,side.rate*per),
-          ]),
-          rowCount:6,missingValueCount:0,rateRatio:comparison,
-          ...(declaredFor?{design:declaredFor}:{}),sentence} as unknown as DisplayValue;
-        receipts.push(rateRatioReceipt(node,comparison,runId,
-          workflow.edges.find(e=>e.to===node.id&&e.port==='rates')!.from));
-        machined[node.id]=[rateRatioEquationNote(comparison,node.id)];
-        withNote(receipts,runId,node.id,machined[node.id]);
         break;}
       case 'case_series':{const series=node.params.source==='table'?caseSeriesFromTable(inputs.cases,{dateField:node.params.dateField,dateKind:node.params.dateKind,period:node.params.period}):caseSeries(inputs.points,{dateField:node.params.dateField,dateKind:node.params.dateKind,period:node.params.period,weightField:node.params.weightField});value={...seriesTable(series),chart:seriesChart(series)} as unknown as DisplayValue;receipts.push(seriesReceipt(node,series,runId,workflow.edges.find(e=>e.to===node.id&&(e.port==='points'||e.port==='cases'))!.from));break;}
       case 'slr_extract_import':{const extract=projectionExtract(inputs.projections,{datasetIRI:node.params.datasetIRI,datasetVersion:node.params.datasetVersion,baselinePeriod:node.params.baselinePeriod,citations:node.params.citations,basisKind:node.params.basisKind,familyValues:node.params.familyValues,sourceNote:node.params.sourceNote});value=projectionTable(extract) as unknown as DisplayValue;receipts.push(extractReceipt(node,extract,runId));break;}

@@ -36,7 +36,7 @@
   "example only": 13,
   "parity only": 9,
   "example, lab not applicable": 13,
-  "example+parity": 19,
+  "example+parity": 18,
   "neither applies": 1
  },
  "compositionsUsedByNoExample": [
@@ -449,17 +449,6 @@
    "labOwed": true,
    "fieldUse": [],
    "rung": "example only"
-  },
-  {
-   "nodeType": "rate_ratio",
-   "exampleUses": [
-    "south-london-1854"
-   ],
-   "exampleUseCount": 1,
-   "lab": "parity",
-   "labOwed": false,
-   "fieldUse": [],
-   "rung": "example+parity"
   },
   {
    "nodeType": "reachable_corridor",

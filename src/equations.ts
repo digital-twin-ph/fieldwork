@@ -46,7 +46,7 @@ import type {Citation,CitationStyle} from './input-provenance.js';
 import {renderCitation} from './input-provenance.js';
 import type {MachinedNote} from './notes.js';
 import type {RateResult} from './rate.js';
-import type {RateRatioResult} from './rate-ratio.js';
+import type {RateTwoByTwoResult} from './two-by-two-rates.js';
 import type {TwoByTwoResult} from './two-by-two.js';
 import type {EpiEstimate} from './epi-estimate.js';
 
@@ -248,33 +248,51 @@ export function rateEquationNote(result:RateResult,nodeId:string):MachinedNote|n
   return {kind:'machined',id:`${nodeId}:equation`,section:'Methods',fn:'method',text,nodeId};
 }
 
-/** THE NOTE A RATE RATIO MACHINES.
+/** THE NOTE THE TWO-BY-TWO'S RATE LAYOUT MACHINES.
  *
  *  Two equations, because they answer different questions and 141 found the literature prints
  *  only the first: the ratio, which a reader could reconstruct, and the interval, which MMWR
- *  replaces with a software citation. */
-export function rateRatioEquationNote(result:RateRatioResult,nodeId:string):MachinedNote{
-  const {compared,reference,ratio,lower,upper,level,method}=result;
-  const z=Math.abs(Math.log(upper/ratio))/Math.sqrt(1/compared.events+1/reference.events);
-  const text=`The rate ratio is ${compared.label}'s rate over ${reference.label}'s. `
-    +`Both rates are per ${result.denominatorUnit}, so the multiplier cancels and the ratio is `
-    +`dimensionless:`
-    +`\n\n$$\\mathrm{RR} = \\frac{a_1 / n_1}{a_0 / n_0}$$\n\n`
-    +`with $a_1$ and $n_1$ the events and ${result.denominatorUnit} at risk in `
-    +`${compared.label}, and $a_0$ and $n_0$ the same in ${reference.label}:`
-    +`\n\n$$\\mathrm{RR} = \\frac{${figure(compared.events)} / ${figure(compared.unitsAtRisk)}}`
-    +`{${figure(reference.events)} / ${figure(reference.unitsAtRisk)}} = ${round(ratio,2)}$$\n\n`
-    +`The ${level}% interval is computed on the log scale and transformed back, because a ratio `
-    +`is not symmetric about its point estimate:`
-    +`\n\n$$\\exp\\left(\\ln \\mathrm{RR} \\pm z \\sqrt{\\frac{1}{a_1} + \\frac{1}{a_0}}\\right)$$`
-    +`\n\n$$\\exp\\left(\\ln ${round(ratio,4)} \\pm ${round(z,6)} `
-    +`\\sqrt{\\frac{1}{${figure(compared.events)}} + \\frac{1}{${figure(reference.events)}}}\\right)`
-    +` = ${round(lower,2)} \\text{ to } ${round(upper,2)}$$\n\n`
-    +`The interval describes sampling variation in these counts alone. It is not a p-value, and `
+ *  replaces with a software citation. Written in $a_1$, $n_1$, $a_0$ and $n_0$, the letters the
+ *  layout's figure carries. Moved from the retired Rate ratio widget on 2026-11-05. */
+export function rateTwoByTwoEquationNote(result:RateTwoByTwoResult,nodeId:string):MachinedNote{
+  const {exposed,unexposed,caseValue,unitsAtRiskValue,exposureColumn}=result.request;
+  const {exposedEvents:a1,exposedUnitsAtRisk:n1,unexposedEvents:a0,unexposedUnitsAtRisk:n0}=result.cells;
+  const of=(label:string)=>`${exposureColumn} "${label}"`;
+  let text=`The rate ratio is ${exposed}'s rate over ${unexposed}'s. Both rates are per `
+    +`${unitsAtRiskValue}, so the ratio is dimensionless. The cells, in the letters the formulas `
+    +`are written in:`
+    +`\n\n- $a_1$ = ${said(a1)} — ${of(exposed)}, ${caseValue}`
+    +`\n- $n_1$ = ${said(n1)} — ${of(exposed)}, ${unitsAtRiskValue}`
+    +`\n- $a_0$ = ${said(a0)} — ${of(unexposed)}, ${caseValue}`
+    +`\n- $n_0$ = ${said(n0)} — ${of(unexposed)}, ${unitsAtRiskValue}`;
+  const used:string[]=[];
+  for(const estimate of result.estimates){
+    used.push(estimate.method);
+    text+=`\n\n**${estimate.reportedAs??estimate.name}**, ${estimate.method}:`
+      +`\n\n$$\\mathrm{RR} = \\frac{a_1 / n_1}{a_0 / n_0}$$`;
+    const {value,lower,upper}=estimate;
+    if(value===null||lower===null||upper===null){
+      text+=`\n\nNot computed: ${estimate.unavailable??''}`;
+      continue;
+    }
+    const z=Math.abs(Math.log(upper/value))/Math.sqrt(1/a1+1/a0);
+    text+=`\n\n$$\\mathrm{RR} = \\frac{${figure(a1)} / ${figure(n1)}}`
+      +`{${figure(a0)} / ${figure(n0)}} = ${round(value,2)}$$\n\n`
+      +`The ${estimate.level}% interval is computed on the log scale and transformed back, because a ratio `
+      +`is not symmetric about its point estimate:`
+      +`\n\n$$\\exp\\left(\\ln \\mathrm{RR} \\pm z \\sqrt{\\frac{1}{a_1} + \\frac{1}{a_0}}\\right)$$`
+      +`\n\n$$\\exp\\left(\\ln ${round(value,4)} \\pm ${round(z,6)} `
+      +`\\sqrt{\\frac{1}{${figure(a1)}} + \\frac{1}{${figure(a0)}}}\\right)`
+      +` = ${round(lower,2)} \\text{ to } ${round(upper,2)}$$`;
+  }
+  if(result.reading?.design===null)text+=`\n\nNo study design was connected. The rate ratio keeps `
+    +`its name: events over units at risk is a rate under any design, and a design decides only `
+    +`whether one may be reported.`;
+  text+=`\n\nThe interval describes sampling variation in these counts alone. It is not a p-value, and `
     +`nothing here adjusts for anything the two groups did not share.`
-    +references([method]);
+    +references(used);
   return {kind:'machined',id:`${nodeId}:equation`,section:'Methods',fn:'method',text,nodeId,
-    cites:[method]};
+    cites:[...new Set(used)]};
 }
 
 /** One estimate's pair of equations, symbolic then instantiated, in the a/b/c/d letters. */

@@ -118,7 +118,9 @@ test('the shipped ledger passes and covers every live widget', ()=>{
   // select (one column's values) could not produce. Experiment 166.
   // 57 on 2026-11-04, with regression: an outcome modelled on an exposure with adjustment, which the two-by-two's crude
   // measures could not give. Experiment 167.
-  assert.equal(review.reviews.length,57);
+  // 56 on 2026-11-05: rate_ratio retired into the two-by-two's rate layout, the practitioner's "It should be in the Epi
+  // kernel 2x2 widget". Experiment 161, step 6.
+  assert.equal(review.reviews.length,56);
 });
 
 test('the generated table shows the palette words beside the identifier', ()=>{

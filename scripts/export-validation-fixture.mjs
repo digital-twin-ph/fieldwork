@@ -34,6 +34,9 @@ import {relateTable,relateShape,gapSignature} from '../build/relate-table.js';
 import {groupTable} from '../build/group-table.js';
 import {selectRange} from '../build/derive-value.js';
 import {fitRegression,specFrom,rowsOf} from '../build/regression.js';
+import {computeRateTwoByTwo} from '../build/two-by-two-rates.js';
+import {rateTwoByTwoSentence} from '../build/two-by-two.js';
+import {executeWorkflow} from '../build/core.js';
 import {parseCSV} from '../build/input-data.js';
 import {unzipSync} from 'fflate';
 import {readStata} from '../build/stata.js';
@@ -1167,6 +1170,49 @@ const builders={
           rows:table.rows.map(row=>({key:row.key,value:row.value}))}},
       output:{cases},
       note:'Recompute each case from `input` and its own from, to and keyColumn. Case 4 empties the ozone of the row named in `emptied` first.'
+    },files:{}};
+  },
+
+  async 'two-by-two-rates-snow-001'(){
+    // THE RATE RATIO, NOW THE TWO-BY-TWO'S (experiment 161, step 6). Lab check 27's four comparisons, made by the
+    // two-by-two's rate layout from tables the South London workflows themselves produce: Table IX as the bundle
+    // carries it, and the supply-group totals the people workflow's `by-supply` step computes from Tables VIII and
+    // XII. Nothing is retyped here, so a change to either workflow changes the fixture.
+    const path=new URL('../../example-1855-cholera-south-london/fieldwork-project.json.gz',import.meta.url);
+    const bundle=JSON.parse(gunzipSync(readFileSync(path)));
+    const named=name=>{const found=bundle.workflows.filter(w=>w.document?.name===name);
+      if(found.length!==1)throw new Error(`The South London checkout carries ${found.length} workflows named "${name}".`);
+      return found[0].document;};
+    const reasoner={reason:async()=>({conclusions:[]})};
+    const tableIX=named('Deaths per house, by water company').nodes.find(n=>n.id==='table-ix').params.data;
+    const people=(await executeWorkflow(structuredClone(named('Died or survived, by water supply')),reasoner)).tables['by-supply'];
+    const SV='Southwark and Vauxhall Company only',LB='Lambeth Company only',BOTH='Lambeth Company and Southwark and Vauxhall Company';
+    const houses={exposureColumn:'supplier',outcomeColumn:'measure',caseValue:'deaths',nonCaseValue:'',unitsAtRiskValue:'houses',level:95};
+    const persons={exposureColumn:'water_supply',outcomeColumn:'measure',caseValue:'deaths_seven_weeks',nonCaseValue:'',
+      unitsAtRiskValue:'population_1851',level:95};
+    const compare=(note,table,request,exposed,unexposed,denominatorUnit)=>{
+      const r=computeRateTwoByTwo(table,{...request,exposed,unexposed});
+      const [rr]=r.estimates;
+      const side=(label,events,unitsAtRisk)=>({name:label,label,events,unitsAtRisk,rate:events/unitsAtRisk});
+      return {note,level:95,method:rr.method,denominatorUnit,
+        request:{...request,exposed,unexposed},
+        compared:side(exposed,r.cells.exposedEvents,r.cells.exposedUnitsAtRisk),
+        reference:side(unexposed,r.cells.unexposedEvents,r.cells.unexposedUnitsAtRisk),
+        ratio:rr.value,lower:rr.lower,upper:rr.upper,strataLeftOut:r.strataLeftOut,sentence:rateTwoByTwoSentence(r)};};
+    const comparisons=[
+      compare('Snow Table IX, per house',tableIX,houses,'Southwark and Vauxhall Company','Lambeth Company','houses'),
+      compare('Table XII supply groups, per person',people,persons,SV,LB,'people'),
+      compare('the intermingled area against Lambeth only',people,persons,BOTH,LB,'people'),
+      compare('S&V only against the intermingled area',people,persons,SV,BOTH,'people')];
+    const plain=t=>({keys:t.keys,valueField:t.valueField,rows:t.rows.map(row=>({key:row.key,value:row.value}))});
+    return {fixture:{
+      ...base('two-by-two-rates-snow-001','two_by_two','Two-by-two table','src/two-by-two-rates.ts#computeRateTwoByTwo'),
+      source:'John Snow, On the Mode of Communication of Cholera, 2nd ed., 1855: Table IX for houses, as the South London example carries it; Tables VIII and XII totalled by declared water supply for people, by that example\'s own workflow.',
+      declaredParameters:{semantics:'The two-by-two read as events and units at risk: for each group, the events are the row whose outcome-column value is caseValue and the units at risk the row whose value is unitsAtRiskValue. Rate ratio (a1/n1)/(a0/n0), with a log-normal interval exp(ln RR +/- z sqrt(1/a1 + 1/a0)), z for 95% being 1.959963984540054.',
+        equivalentTo:"statsmodels.stats.rates.confint_poisson_2indep(a1, n1, a0, n0, method='wald-log')"},
+      input:{tableIX:plain(tableIX),bySupply:plain(people)},
+      output:{comparisons},
+      note:'Recompute each comparison from its counts. The counts are also recoverable from `input` with the comparison\'s `request`.'
     },files:{}};
   },
 

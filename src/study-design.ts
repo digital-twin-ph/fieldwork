@@ -135,6 +135,41 @@ export const REGRESSION_LICENCES:Record<StudyDesign,{logistic:RegressionLicence;
     poisson:{stops:'A case series has no comparison group, so there is no ratio to estimate.'}},
 };
 
+/** WHAT A DECLARED DESIGN LICENSES FROM THE TWO-BY-TWO'S RATE LAYOUT: the rate ratio under the designs that license
+ *  one from a Poisson regression, and nowhere else. Same designs, held equal by test; the reasons name the two-by-two's
+ *  remedy rather than the regression's. The practitioner chose these designs on 2026-11-04 ("Cohort, ecological"), and
+ *  on 2026-11-05 put the rate ratio in the two-by-two. */
+export const RATE_RATIO_LICENCES:Record<StudyDesign,{name:string;because:string}|{stops:string}>={
+  'cohort':{name:'rate ratio',because:'A cohort follows the subjects it sampled, so each group\'s units at risk are '
+    +'the denominator of its rate.'},
+  'case-control':{stops:'A case-control study estimates odds ratios: case-control sampling fixes how many cases and '
+    +'controls there are, so there is no population for a rate to be of. Read the table as cases and non-cases.'},
+  'cross-sectional':{stops:'A cross-sectional study measures each subject once, so there is no follow-up for a rate. '
+    +'Read the table as cases and non-cases, which gives a prevalence ratio.'},
+  'ecological':{name:'rate ratio',because:'Exposure is known only for GROUPS, so the rate ratio is a group-level '
+    +'quantity. A relation between group-level measures need not hold between individuals.'},
+  'case-series':{stops:'A case series has no comparison group, so there is no ratio to estimate.'},
+};
+
+/** The declaration's sentence for the rate layout: the design, period and unit as declared, and the rate-ratio
+ *  licence's reason in place of the four-cell one, which speaks of a/(a+b) and is false of events over units at risk. */
+export function rateRatioDesignSentence(declared:DeclaredDesign):string{
+  const licence=RATE_RATIO_LICENCES[declared.design];
+  const stated=declared.sentence.endsWith(declared.licence.because)
+    ?declared.sentence.slice(0,declared.sentence.length-declared.licence.because.length).trimEnd()
+    :declared.sentence;
+  return 'because' in licence?`${stated} ${licence.because}`:stated;
+}
+
+/** The rate ratio's name under a declared design, null when none is declared; a design that does not license one
+ *  stops the step, saying why. */
+export function rateRatioMeasure(declared:DeclaredDesign|undefined):string|null{
+  if(!declared||declared.stopped)return null;
+  const licence=RATE_RATIO_LICENCES[declared.design];
+  if('stops' in licence)throw new Error(licence.stops);
+  return licence.name;
+}
+
 /** The measure a regression reports under a declared design: its licensed name, or null when no design is declared and
  *  the measure keeps its neutral name. A measure the design does not license stops the step, saying why: a run-time
  *  check, read from the same declaration the two-by-two reads. */

@@ -3,7 +3,7 @@
   "description": "Independent recomputation of implemented widgets by an external process, recorded after release. Release files are immutable once committed, so evidence about a release lives here and accrues as checks run. A fixture digest recorded in a result is over canonical JSON content rather than the file’s bytes, revised 2026-10-11 because byte identity is unsatisfiable in the browser the lab publishes to. A parity result establishes numerical agreement with a named external implementation under a stated criterion. It is not scientific certification, and it says nothing about whether a method is appropriate for a question.",
   "lab": {
     "repository": "https://github.com/digital-twin-ph/validation-lab",
-    "commit": "12bc09fa16afadb34655db88486eac1793860bc6",
+    "commit": "962e1e330cd9b4cc3f9721080d88c4d4c29d1093",
     "pinNote": "The commit CI checks the lab out at: .github/workflows/pages.yml reads it with `jq -r .lab.commit widgets/parity.json`. So this pin, not the clone beside this repository, is what `validate:dive-deeper` verifies against on a clean runner -- and it must be advanced whenever a check lands in the lab, in the same push-then-pin order the worked examples use."
   },
   "outcomes": {
@@ -520,6 +520,28 @@
       "ranAt": "2026-10-26T11:58:23.418446+00:00",
       "measured": "Four comparisons agree in full. Snow's per-house ratio 8.4019 with a 95% interval of 6.8410 to 10.3189, against statsmodels at the same estimator; the per-person ratio 5.3511 (3.3549 to 8.5349) from the declared supply groups; the intermingled area 2.3090 (1.4456 to 3.6881) and 2.3175 (2.0924 to 2.5668) against Lambeth only and against the intermingled area. Ratios to within 1e-9 and both bounds to within 1e-6. The score method is reported beside each -- 6.8434 to 10.3152 on the first -- and never asserted equal, so what the declared approximation costs is visible rather than hidden.",
       "note": "The intervals missed by more than 1e-6 on every comparison while the ratios agreed exactly -- the signature of a rounded constant rather than a wrong formula. Fieldwork hard-coded z as 1.9600 where the quantile is 1.959963984540054, moving Snow's per-house lower bound from 6.8409 to 6.8410. Immaterial at two decimals, and exactly the kind of thing an independent check exists to find before a reader does. Fixed in the same commit; the fixture was regenerated and all four agree.",
+      "notebook": "27-rate-ratio-vs-statsmodels.ipynb"
+    },
+    {
+      "widget": "urn:fieldwork:widget:two_by_two",
+      "coversRelease": "0.7.0",
+      "check": "27-rate-ratio",
+      "result": "content/results/check-27-two-by-two-rates.json",
+      "sha256": "4e4a5fe08e0b3185e0b2cf3911a1fb824b758c7c2ac61314ed514a08e915bc42",
+      "external": [
+        "statsmodels 0.15.0",
+        "scipy 1.18.1"
+      ],
+      "criterion": "the ratio within 1e-9 and both interval bounds within 1e-6 of statsmodels.stats.rates.confint_poisson_2indep(method='wald-log'), which is the same estimator by other authors -- a rate ratio is not a risk ratio and comparing against the wrong one would have agreed about nothing; the hard-coded z quantile against scipy.stats.norm.ppf; and the ratio recomputed from raw counts so a multiplier leaking into a dimensionless quantity would show as disagreement. Four comparisons over Snow's figures, per house and per person.",
+      "outcome": "agrees",
+      "notEstablished": [
+        "That the comparison is fair: no interval speaks to confounding, and these customers were not randomised.",
+        "That the log-normal interval is adequate at small counts. The Lambeth-only group has 18 events; a score interval is reported beside it rather than asserted equal. An exact conditional interval would be the better comparison and statsmodels documents that method as not yet implemented.",
+        "What the right denominator is. Houses and people give different ratios over the same outbreak, and choosing between them is the practitioner's."
+      ],
+      "ranAt": "2026-11-05T11:03:12.767039+00:00",
+      "measured": "Snow Table IX, per house: 8.4019 (6.8410 to 10.3189), agrees; Table XII supply groups, per person: 5.3511 (3.3549 to 8.5349), agrees; the intermingled area against Lambeth only: 2.3090 (1.4456 to 3.6881), agrees; S&V only against the intermingled area: 2.3175 (2.0924 to 2.5668), agrees",
+      "note": "The two-by-two's rate layout, which replaced the Rate ratio widget on 2026-11-05 (Fieldwork experiment 161, step 6). The same four comparisons, made by that widget from tables the South London workflows produce -- Table IX as the example carries it and the supply-group totals its people workflow computes -- with the same estimator and criteria. Every ratio and bound equals the retired widget's to the last digit. Establishes nothing about confounding, nor that the log-normal interval is adequate at 18 events.",
       "notebook": "27-rate-ratio-vs-statsmodels.ipynb"
     },
     {

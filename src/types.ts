@@ -233,7 +233,8 @@ export interface ParamsByType {
      *  the ordinary case rather than an edge one. */
     opacity?:number;
     source?:{title?:string;url?:string;licence?:string;note?:string}};
-  rate_ratio:{label:string;compared:string;reference:string;level:90|95|99;method:import('./rate-ratio.js').IntervalMethod};
+  /** Retired 2026-11-05; the params a saved one held, so it can be named when refused. */
+  rate_ratio:{label:string;compared:string;reference:string;level:90|95|99;method:'log-normal'};
   rate:{label:string;source?:'points'|'table';measureKey?:string;numeratorField:string;denominatorField:string;groupBy?:string;bandWidth?:number;denominatorUnit:import('./rate.js').DenominatorUnit;rateKind:import('./rate.js').RateKind;multiplier:number;minimumDenominator:number;numeratorPeriod:string;denominatorVintage:string};
   derive_value:{label:string;keyColumn:string;left:string;operator:import('./derive-value.js').Operator;right:string;name:string};
   /** `range`, when present, keeps the rows between two values instead of the ones named, both
@@ -334,6 +335,9 @@ export interface ParamsByType {
   two_by_two:{label:string;exposureColumn:string;exposed:string;unexposed:string;outcomeColumn:string;caseValue:string;nonCaseValue:string;level:90|95|99;
     /** Each row is one subject, so a cell is how many rows agree. See `TwoByTwoRequest`. */
     rowsAreSubjects?:boolean;
+    /** The rate layout: the outcome column's value holding the units at risk, `caseValue` then holding the events,
+     *  and `nonCaseValue` unread. See `two-by-two-rates.ts`. */
+    unitsAtRiskValue?:string;
     /** Every exposure compared, where there is more than one. `exposureColumn` stays the first of
      *  them, so the two values and the mapping read from a real column. */
     exposureColumns?:string[]};
@@ -573,7 +577,7 @@ export type NodeType = keyof ParamsByType;
 export type NodeSpec<K extends NodeType = NodeType> = {[T in K]:{type:T; params:ParamsByType[T] & {label?:string}}}[K];
 /** The node types a saved workflow may still name and no canvas may still hold. A retired widget
  *  never runs, so loading one is a rewrite that must say so, or a refusal that names it. */
-export type RetiredNodeType='places'|'centers'|'output'|'policy'|'access_policy'|'xpert'|'coverage_check';
+export type RetiredNodeType='places'|'centers'|'output'|'policy'|'access_policy'|'xpert'|'coverage_check'|'rate_ratio';
 /** A node type that still exists but whose contract changed, so a node saved under the old one is
  *  migrated to a different type. `reproject` was a Source holding an imported file; from
  *  2026-10-13 it is a points-to-points transform, and the saved nodes become the `point_input`

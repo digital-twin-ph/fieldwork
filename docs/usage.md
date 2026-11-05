@@ -176,6 +176,12 @@ widget replaces it and a saved workflow holding it **refuses to open**, naming i
 with the *Access review* ruleset. The filter is where the evidence and service thresholds went: an
 attribute name and the values to match, which is the same condition form the rule builder uses.
 
+**Rate ratio with an interval** (`rate_ratio`) was retired on 2026-11-05. It divided one group's rate
+by another's, reading only a **Rate** step's result. **Two-by-two table** now does it from the table:
+choose **events and units at risk** under *The outcome column holds*, and name the two values. A saved
+workflow holding one **refuses to open**, naming it; rebuild that step as a two-by-two connected to the
+table the Rate read. South London's 8.40 is unchanged to the last digit.
+
 ## References and provenance
 
 **08 · Manila coastal exposure** is the worked example for sea-level projections. It holds 60 OpenStreetMap health facilities in a Manila bounding box, the eight published AR6 tide gauges for the Philippines, and the 288-value projection extract, and it assigns each facility its nearest gauge with the distance. It runs offline; everything is bundled. Two licences apply and both travel with anything you derive: the projections are CC BY 4.0 and oblige three citations, the facilities are ODbL and share-alike.

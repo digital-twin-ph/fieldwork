@@ -97,8 +97,9 @@ Whether the stop message, read under a declared design, is taken as the design b
 
 - That a declared design is the right one: it is the practitioner's claim, recorded and not checked.
 - A time-series or case-crossover design. NYC runs with no design and keeps the neutral name.
-- That the Rate ratio widget follows the same licences. It reads a design for its sentence and gates nothing; bringing it
-  under the rule is the same decision applied again, and is not done here.
+- ~~That the Rate ratio widget follows the same licences.~~ Settled 2026-11-05 another way: the widget was retired into
+  the two-by-two, whose rate layout reads `RATE_RATIO_LICENCES`, held equal by test to the Poisson licences here
+  ([161](161-the-epi-kernel-one-table-many-exposures.md), step 6).
 
 That the fitted numbers are right: that is the regression's parity check against R, 12 significant figures for NYC.
 A shape checks that a receipt says what it must, not that what it says is true.

@@ -43,6 +43,7 @@ import type {DataTable} from './data-table.js';
 import type {EpiEstimate,IntervalLevel} from './epi-estimate.js';
 import type {EpiInfoLabelSource} from './epi-estimate.js';
 import {estimateUnavailable,oddsRatio,quantileFor,riskDifference,riskRatio} from './epi-estimate.js';
+import type {RateTwoByTwoResult} from './two-by-two-rates.js';
 
 /** What the Epi Info AI classic TABLES results panel prints for each of these quantities,
  *  transcribed from `epi-info-ai/wasm/demo/app.ts` where that table is built from literal
@@ -78,6 +79,10 @@ export interface TwoByTwoRequest {
    *  of totals a missing row means nobody counted it. In a line list everybody is present, so a
    *  combination nobody fell into is a true zero. */
   rowsAreSubjects?:boolean;
+  /** THE RATE LAYOUT, declared and never inferred: the outcome column holds an event count under
+   *  `caseValue` and the units at risk under this value, in place of cases and non-cases. Absent,
+   *  the table is cases and non-cases, as every saved workflow means. See `two-by-two-rates.ts`. */
+  unitsAtRiskValue?:string;
 }
 export interface TwoByTwoCells {
   exposedCases:number; exposedNonCases:number;
@@ -107,7 +112,10 @@ export interface TwoByTwoResult {
  *  a refusal: the same threshold and the same choice as `rate_ratio`'s SMALL_COUNT. */
 export const SMALL_CELL=5;
 
-const cellOf=(table:DataTable,request:TwoByTwoRequest,exposure:string,outcome:string):number=>{
+/** One cell's value, refused where it is missing, repeated, empty, negative or, for a count, fractional.
+ *  `units` is the rate layout's units at risk, which may be person-time and so need not be whole. */
+export const cellOf=(table:DataTable,request:TwoByTwoRequest,exposure:string,outcome:string,
+  kind:'count'|'units'='count'):number=>{
   const matching=table.rows.filter(row=>row.key[request.exposureColumn]===exposure
     &&row.key[request.outcomeColumn]===outcome);
   if(request.rowsAreSubjects)return matching.length;
@@ -126,7 +134,7 @@ const cellOf=(table:DataTable,request:TwoByTwoRequest,exposure:string,outcome:st
       +'two-by-two computed as though it were zero would understate that group.');
   if(value<0)throw new Error(`The cell for "${exposure}" with "${outcome}" is ${value}. `
     +'A count cannot be negative, so this table is not counts of anything.');
-  if(!Number.isInteger(value))
+  if(kind==='count'&&!Number.isInteger(value))
     throw new Error(`The cell for "${exposure}" with "${outcome}" is ${value}, which is not a whole `
       +'number. A two-by-two counts subjects; a table of rates or percentages is a different thing '
       +'and these estimates would be meaningless on it.');
@@ -425,9 +433,70 @@ export interface TwoByTwoEstimateRow {
   epiInfoLabel:string|null;
 }
 
-export const twoByTwoEstimateRows=(result:TwoByTwoResult):TwoByTwoEstimateRow[]=>
+export const twoByTwoEstimateRows=(result:Pick<TwoByTwoResult,'estimates'>):TwoByTwoEstimateRow[]=>
   result.estimates.map(e=>({
     name:e.reportedAs??e.name,value:e.value,
     interval:e.lower===null||e.upper===null?null:{lower:e.lower,upper:e.upper,level:e.level},
     method:e.method,unavailable:e.unavailable,epiInfoLabel:e.epiInfoLabel,
   }));
+
+/** THE RATE LAYOUT'S SENTENCE AND RECEIPT, here with the four-cell ones so the widget's receipts are written in one
+ *  module. The layout itself is `two-by-two-rates.ts`. */
+const rateFigure=(value:number):string=>value.toLocaleString('en-US');
+
+/** The sentence a reader is given, with both groups and the units at risk named. One function, so the figure, the
+ *  table and the receipt cannot word the same finding three ways. */
+export const rateTwoByTwoSentence=(r:RateTwoByTwoResult):string=>{
+  const {exposed,unexposed,caseValue,unitsAtRiskValue}=r.request;
+  const lead=r.estimates[0];
+  const said=lead?.reportedAs??lead?.name??'';
+  const counts=`from ${rateFigure(r.cells.exposedEvents)} ${caseValue} in ${rateFigure(r.cells.exposedUnitsAtRisk)} `
+    +`${unitsAtRiskValue} and ${rateFigure(r.cells.unexposedEvents)} in ${rateFigure(r.cells.unexposedUnitsAtRisk)}.`;
+  return `${exposed} against ${unexposed}: `
+    +(!lead?'no measure reported under this design, '
+      :lead.value!==null
+      ?`a ${said} of ${lead.value.toFixed(2)} (${lead.level}% interval ${lead.lower!.toFixed(2)} to `
+        +`${lead.upper!.toFixed(2)}, ${lead.method}), `
+      :`no ${said}: ${lead.unavailable??''} `)
+    +counts;
+};
+
+export function rateTwoByTwoReceipt(node:{id:string},result:RateTwoByTwoResult,runId:string,sourceNodeId:string){
+  const entity=`<urn:fieldwork:run:${runId}:output:${node.id}>`;
+  const quote=(v:string)=>JSON.stringify(v);
+  const num=(v:number)=>`"${v}"^^xsd:double`;
+  const {cells,request}=result;
+  const estimateFacts=result.estimates.map(estimate=>
+    `${entity} fw:estimate [ a fw:EpiEstimate; fw:estimateName ${quote(estimate.reportedAs??estimate.name)}; `
+    +`fw:intervalMethod ${quote(estimate.method)}; fw:intervalLevel "${estimate.level}"^^xsd:integer; `
+    +(estimate.value===null
+      ?`fw:estimateUnavailable ${quote(estimate.unavailable??'')}`
+      :`fw:estimateValue ${num(estimate.value)}; fw:intervalLower ${num(estimate.lower!)}; `
+        +`fw:intervalUpper ${num(estimate.upper!)}`)
+    +'; fw:epiInfoLabelStatus "unread" ].').join('\n');
+  const facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n`
+    +`@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.\n`
+    +`${entity} a fw:TwoByTwo;\n`
+    +`  prov:wasDerivedFrom <urn:fieldwork:run:${runId}:output:${sourceNodeId}>;\n`
+    +`  fw:exposureAttribute ${quote(request.exposureColumn)};\n`
+    +`  fw:exposedGroup ${quote(request.exposed)};\n`
+    +`  fw:unexposedGroup ${quote(request.unexposed)};\n`
+    +`  fw:outcomeAttribute ${quote(request.outcomeColumn)};\n`
+    +`  fw:caseValue ${quote(request.caseValue)};\n`
+    +`  fw:unitsAtRiskValue ${quote(request.unitsAtRiskValue)};\n`
+    +`  fw:exposedCaseCount "${cells.exposedEvents}"^^xsd:integer;\n`
+    +`  fw:exposedUnitsAtRisk ${num(cells.exposedUnitsAtRisk)};\n`
+    +`  fw:unexposedCaseCount "${cells.unexposedEvents}"^^xsd:integer;\n`
+    +`  fw:unexposedUnitsAtRisk ${num(cells.unexposedUnitsAtRisk)}`
+    +result.strataLeftOut.map(value=>`;\n  fw:stratumLeftOut ${quote(value)}`).join('')
+    +(result.reading?.design===null?`;\n  fw:noDesignDeclared true`:'')
+    +`.\n`+estimateFacts+'\n';
+  return {nodeId:node.id,kind:'computation' as const,facts,rules:'',input:facts,conclusions:[],
+    method:rateTwoByTwoSentence(result)
+      +' The interval is a log-normal approximation and is not a p-value.'
+      +' It treats the events as independent, which a transmitted disease is not: deaths that cluster are'
+      +' over-dispersed, so an interval of this kind is narrower than the data warrants.'
+      +' A contrast between two groups as they were supplied, not a measured effect: nothing here adjusts for'
+      +' anything the two groups did not share.'
+      +result.warnings.map(warning=>` ${warning}`).join('')};
+}

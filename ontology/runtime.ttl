@@ -6,6 +6,8 @@
 @prefix dcat: <http://www.w3.org/ns/dcat#>.
 @prefix qudt: <http://qudt.org/schema/qudt/>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix dcterms: <http://purl.org/dc/terms/>.
+@prefix skos: <http://www.w3.org/2004/02/skos/core#>.
 
 <urn:fieldwork:ontology:runtime> a owl:Ontology; owl:versionInfo "0.6 experimental, 2026-10-09";
   rdfs:comment "Implemented run bindings and bounded network/catchment receipts. No learner/game runtime is implied.".
@@ -368,9 +370,13 @@ fw:RateGroup a owl:Class;
   rdfs:comment "One group's numerator, denominator and rate. A group with no rate is reported with its counts, because suppressing the rate is a decision the reader must be able to see.".
 fw:RateRatioComputation a owl:Class;
   rdfs:label "Rate ratio computation"; rdfs:subClassOf prov:Activity;
+  owl:deprecated true; dcterms:isReplacedBy fw:TwoByTwo; fw:implementationStatus "retired";
+  skos:changeNote "Retired 2026-11-05 with the Rate ratio widget. The rate ratio is computed by the two-by-two's rate layout, which reads events and units at risk from a table.";
   rdfs:comment "Divides one group's rate by another's. Both rates must be per the same thing: a per-house rate over a per-person rate is arithmetic on two different quantities. A group with no events is refused rather than given an undefined interval, because adding half an event to make one is an assumption and not a measurement.".
 fw:RateRatio a owl:Class;
   rdfs:label "Rate ratio"; rdfs:subClassOf prov:Entity;
+  owl:deprecated true; dcterms:isReplacedBy fw:TwoByTwo; fw:implementationStatus "retired";
+  skos:changeNote "Retired 2026-11-05 with the Rate ratio widget. A rate ratio is now an fw:EpiEstimate on an fw:TwoByTwo whose cells are events and units at risk.";
   rdfs:comment "A ratio of two rates, with an interval, carrying both counts and both denominators so a reader can see what was compared. It is dimensionless: the multiplier the rates were reported with cancels, and there is deliberately no multiplier on this entity. The interval states its level and method; it is not a p-value, and the ratio is a contrast between two populations rather than a measured effect.".
 fw:comparedGroup a owl:DatatypeProperty; rdfs:label "compared group";
   rdfs:domain fw:RateRatio; rdfs:comment "The group whose rate is the numerator -- the one a claim is being made about. Not named for exposure: an exposure is one use of a rate ratio, and two districts or two periods compared with each other are not one.".
@@ -499,6 +505,10 @@ fw:exposedCaseCount a owl:DatatypeProperty; rdfs:label "exposed case count"; rdf
 fw:exposedNonCaseCount a owl:DatatypeProperty; rdfs:label "exposed non-case count"; rdfs:domain fw:TwoByTwo.
 fw:unexposedCaseCount a owl:DatatypeProperty; rdfs:label "unexposed case count"; rdfs:domain fw:TwoByTwo.
 fw:unexposedNonCaseCount a owl:DatatypeProperty; rdfs:label "unexposed non-case count"; rdfs:domain fw:TwoByTwo.
+fw:unitsAtRiskValue a owl:DatatypeProperty; rdfs:label "units at risk value"; rdfs:range xsd:string;
+  rdfs:domain fw:TwoByTwo; rdfs:comment "The value of the outcome column holding the units at risk, in a two-by-two read as events and units at risk rather than cases and non-cases. Its presence is what says the table is of rates: a denominator is not a non-case count, because a unit can hold more than one event and person-time counts nobody.".
+fw:exposedUnitsAtRisk a owl:DatatypeProperty; rdfs:label "exposed units at risk"; rdfs:domain fw:TwoByTwo; rdfs:range xsd:double.
+fw:unexposedUnitsAtRisk a owl:DatatypeProperty; rdfs:label "unexposed units at risk"; rdfs:domain fw:TwoByTwo; rdfs:range xsd:double.
 fw:subjectCount a owl:DatatypeProperty; rdfs:label "subject count";
   rdfs:domain fw:TwoByTwo; rdfs:comment "The subjects in the two named groups, which is NOT the size of the table when a stratum was left out.".
 fw:stratumLeftOut a owl:DatatypeProperty; rdfs:label "stratum left out";

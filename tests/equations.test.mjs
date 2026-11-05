@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {rateEquationNote,rateRatioEquationNote,twoByTwoEquationNote,
+import {rateEquationNote,rateTwoByTwoEquationNote,twoByTwoEquationNote,
   renderMethodCitation,METHOD_REFERENCES} from '../build/equations.js';
 import {computeRate} from '../build/rate.js';
-import {computeRateRatio} from '../build/rate-ratio.js';
+import {computeRateTwoByTwo} from '../build/two-by-two-rates.js';
 import {computeTwoByTwo} from '../build/two-by-two.js';
 import {equationsIn,toHTML} from '../build/prose.js';
 import {citationGaps} from '../build/input-provenance.js';
@@ -28,13 +28,12 @@ const mortality=()=>computeRate(subDistricts,{numeratorField:'deaths_seven_weeks
   denominatorField:'population_1851',denominatorUnit:'people',rateKind:'ratio',multiplier:1000,
   minimumDenominator:0,numeratorPeriod:'7 weeks, 1854',denominatorVintage:'1851 census'});
 
-/** Table IX, per house: the 8.40 the project reports. */
-const byCompany=()=>computeRate([
-  {id:'sv',properties:{deaths:1263,houses:40046,supplier:'Southwark and Vauxhall'}},
-  {id:'lb',properties:{deaths:98,houses:26107,supplier:'Lambeth'}},
-],{numeratorField:'deaths',denominatorField:'houses',groupBy:'supplier',
-  denominatorUnit:'houses',rateKind:'ratio',multiplier:10000,minimumDenominator:0,
-  numeratorPeriod:'1854 outbreak',denominatorVintage:'1854'});
+/** Table IX, per house: the 8.40 the project reports, read by the two-by-two's rate layout. */
+const tableIX=()=>({kind:'data-table',keys:['supplier','measure'],valueField:'count',rowCount:4,missingValueCount:0,
+  rows:[['Southwark and Vauxhall','deaths',1263],['Southwark and Vauxhall','houses',40046],
+    ['Lambeth','deaths',98],['Lambeth','houses',26107]].map(([supplier,measure,value])=>({key:{supplier,measure},value}))});
+const byCompany=()=>computeRateTwoByTwo(tableIX(),{exposureColumn:'supplier',exposed:'Southwark and Vauxhall',
+  unexposed:'Lambeth',outcomeColumn:'measure',caseValue:'deaths',nonCaseValue:'',unitsAtRiskValue:'houses',level:95});
 
 /** The contingency table: people by water supply and outcome, three strata and two named. */
 const contingency=()=>computeTwoByTwo({kind:'data-table',
@@ -51,8 +50,7 @@ const contingency=()=>computeTwoByTwo({kind:'data-table',
   caseValue:'died',nonCaseValue:'survived',level:95});
 
 const everyNote=()=>[rateEquationNote(mortality(),'n1'),
-  rateRatioEquationNote(computeRateRatio(byCompany(),
-    {compared:'Southwark and Vauxhall',reference:'Lambeth',level:95,method:'log-normal'}),'n2'),
+  rateTwoByTwoEquationNote(byCompany(),'n2'),
   twoByTwoEquationNote(contingency(),'n3')];
 
 test('a machined equation lands in Methods, as a method, on the node that computed it',()=>{
@@ -98,8 +96,7 @@ test('a rate with no value machines no equation at all',()=>{
 });
 
 test('the rate ratio note reproduces 8.40 and its interval',()=>{
-  const note=rateRatioEquationNote(computeRateRatio(byCompany(),
-    {compared:'Southwark and Vauxhall',reference:'Lambeth',level:95,method:'log-normal'}),'n2');
+  const note=rateTwoByTwoEquationNote(byCompany(),'n2');
   assert.match(note.text,/= 8\.40/);
   assert.match(note.text,/6\.84 \\text\{ to \} 10\.32/);
   // The quantile is recovered from the bounds rather than typed, so the note cannot disagree

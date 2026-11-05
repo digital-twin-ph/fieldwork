@@ -1,0 +1,81 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:rate_ratio",
+  "nodeType": "rate_ratio",
+  "version": "1.0.0",
+  "title": "Rate ratio with an interval",
+  "released": "2026-11-05",
+  "implementationStatus": "retired",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['rate_ratio']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "validationStatus": "application-only",
+    "shaclShapes": []
+  },
+  "ports": {
+    "inputs": [
+      {
+        "name": "rates",
+        "type": "table"
+      },
+      {
+        "name": "design",
+        "type": "design"
+      }
+    ],
+    "output": "table",
+    "optionalInputs": [
+      {
+        "name": "design",
+        "type": "design"
+      }
+    ],
+    "note": "A RATE in, not a table of numbers. The port type is `table` because that is what `rate` emits, but the value carries the RateResult with it, and only that declares what the numbers are per. A plain table connected here is refused by name rather than divided: dividing a per-house rate by a per-person one is arithmetic on two different quantities. From 0.3.0 it also takes an OPTIONAL declared study design. A rate ratio is a comparison, and what a comparison may be read as depends on the design that produced it: on South London's Table IX the company is known PER HOUSE, which is a retrospective cohort, while the sibling workflow attributes a company per sub-district and is ecological. Optional, so every existing workflow runs unchanged; nothing is refused on it in this version."
+  },
+  "ontology": {
+    "status": "partial",
+    "mappings": [
+      {
+        "role": "activity",
+        "iri": "urn:fieldwork:RateRatioComputation",
+        "file": "ontology/runtime.ttl"
+      },
+      {
+        "role": "entity",
+        "iri": "urn:fieldwork:RateRatio",
+        "file": "ontology/runtime.ttl"
+      }
+    ],
+    "note": "Retired. fw:RateRatio and fw:RateRatioComputation carry owl:deprecated with dcterms:isReplacedBy fw:TwoByTwo in ontology/runtime.ttl. A rate ratio is now an fw:EpiEstimate on an fw:TwoByTwo whose cells are events and units at risk.",
+    "emits": {
+      "classes": [],
+      "properties": []
+    }
+  },
+  "implementation": {
+    "files": [
+      "src/core.ts"
+    ],
+    "definition": "src/core.ts#TYPES"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": [
+      "urn:fieldwork:widget:two_by_two"
+    ]
+  },
+  "changes": [
+    {
+      "kind": "major",
+      "description": "Retired into the two-by-two, which reads events and units at risk from a table and reports the rate ratio. The practitioner, 2026-11-05: 'It should be in the Epi kernel 2x2 widget I think that's what we decided' -- experiment 161, step 6, one substrate and a family of measures over it. This widget read only a Rate step's result, so a table had to pass through a Rate to be compared, and South London was the only workflow that used it. The arithmetic was already shared: both widgets called the kernel's rateRatio, so Snow's 8.401853429780243 (6.84096208049671 to 10.31889085553658) is unchanged to the bit. Retired outright, with no deprecation period, because nobody outside this project uses it (AGENTS.md). A workflow saved with one refuses to open and names it."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Lab check 27 compared this widget with statsmodels while it ran. The same check now runs against the two-by-two's rate layout; see that widget's release 0.7.0."
+  }
+}

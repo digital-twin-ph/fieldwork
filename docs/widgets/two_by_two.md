@@ -4,7 +4,7 @@ _Created 2026-10-26 · Updated 2026-11-03_
 
 **The analysis under the table.** It takes four counts — two groups by two outcomes — and reports
 the risk in each group, the risk ratio, the odds ratio and the risk difference, each naming the
-method that produced it.
+method that produced it. Read as **events and units at risk** instead, it reports the rate ratio.
 
 ## What it does
 
@@ -86,6 +86,29 @@ the outcome, any column with more than 12 distinct values, and any column with a
 so a numbered `ID` is not offered. Once Exposed and Unexposed are chosen, a column must hold both, whether they
 are `Y` and `N` or `1` and `0`. A column coded differently from those two is not offered, so recode it first.
 
+**Events and units at risk: the rate ratio.** Under **The outcome column holds**, choose **events and
+units at risk**, then name the value holding the events and the one holding the units at risk. Each
+group then needs two rows, not two outcomes: Snow's Table IX gives deaths and houses per company.
+
+| | deaths | houses | rate |
+| --- | --- | --- | --- |
+| **Southwark and Vauxhall Company** | $a_1$ = 1,263 | $n_1$ = 40,046 | 0.031539 |
+| **Lambeth Company** | $a_0$ = 98 | $n_0$ = 26,107 | 0.0037538 |
+
+**Rate ratio 8.40**, 6.84 to 10.32, log-normal. A unit at risk is not a non-case: a house can hold more
+than one death, and person-time counts nobody, so this layout has no $b$ and $d$ and no risk ratio.
+Units at risk may be person-time and need not be whole numbers; events must be. A group with no events
+keeps its counts and says why there is no ratio. The interval treats events as independent, which a
+transmitted disease is not, so it is narrower than clustered events warrant.
+
+A declared study design decides whether a rate ratio may be reported: a **cohort** or an
+**ecological** study, the same designs that license one from a Poisson regression. Under any other
+design the step stops and says why. With no design connected the rate ratio keeps its name, because
+events over units at risk is a rate under any design.
+
+This replaced the **Rate ratio with an interval** widget on 2026-11-05. That widget read only a Rate
+step's result; this reads the table. The numbers are the same to the last digit.
+
 **What it writes into the notes.** A Methods note gives the four cells, each formula the declared design
 reports, the numbers substituted and the interval method, and cites the method. With several exposures on one
 node the formulas are written once, in symbols. The numbers are in the step's table, which a Table output
@@ -98,7 +121,9 @@ connected to it draws in the write-up with a note of its own.
 | **Exposure column** | the column holding the groups |
 | **Exposed** / **Unexposed** | which two of its values are being compared |
 | **Outcome column** | the column holding the outcome |
+| **The outcome column holds** | cases and non-cases, or events and units at risk |
 | **Case** / **Non-case** | which value is the case |
+| **Events** / **Units at risk** | in the rate layout, which value holds each |
 | **Interval level** | 90%, 95% or 99% |
 
 ### Why you name the two groups
@@ -178,7 +203,7 @@ machined one goes on being rewritten by every run.
   and leaves the risk difference perfectly well defined, so each estimate reports its own
   availability and its own reason.
 - **It will not accept a table of rates or percentages.** These estimates count subjects. A
-  non-whole number is refused.
+  non-whole number is refused, except as units at risk in the rate layout, which may be person-time.
 - **It will not adjust for anything.** This is a contrast between two groups as they were supplied.
   The stratum you left out is excluded, not controlled for, and no estimate here is an effect.
 - **It will not test a hypothesis.** Chi-square, Mantel-Haenszel, Yates, Fisher exact and mid-P are
@@ -190,4 +215,5 @@ machined one goes on being rewritten by every run.
 
 ## Where it is used
 
-The South London example: *Died or survived, by water supply*.
+The South London example: *Died or survived, by water supply*, and, in the rate layout, *Deaths per
+house, by water company*.

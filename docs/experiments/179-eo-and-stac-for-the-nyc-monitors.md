@@ -2,7 +2,7 @@
 
 _Created 2026-11-05 · Updated 2026-11-05_
 
-**Status:** tried — the practitioner's requirements, and phase 1's first side experiments (S1 to S7 done). No widget code yet. Phases 0 and 1 of
+**Status:** tried — the practitioner's requirements, and phase 1's first side experiments (S1 to S8 done). No widget code yet. Phases 0 and 1 of
 [the 2026-11-04 plan](../research/eo-stac-nyc-architecture-and-plan-2026-11-04.md) come next.
 
 ## The task
@@ -151,7 +151,7 @@ including the ones not yet run, so what was measured, what was only read and wha
 | S5 | 2026-11-05 | How many bytes of a swath does NYC need? | `scripts/s5p_range_probe.py`, h5py through counted 64 KB range reads, capped at 20 MB; one 63.2 MB file, approved by the practitioner | done: **2.25 MB in 35 requests** | *Phase 1: how much of a swath NYC needs* |
 | S6 | 2026-11-05 | Which browser HDF5 reader can read by range? | installed into a scratch folder outside Fieldwork with the practitioner's approval, licences read first: `jsfive` 0.4.2 (public domain, after pyfive) and `h5wasm` 0.10.3 (NIST notice; bundles the HDF5 library). Run in Chromium by `scripts/probes/h5wasm-range-probe.mjs`, the storage requests counted, capped at 20 MB | done: **jsfive cannot** (its README: "only for reading HDF5 files as an ArrayBuffer representation of the file", so all 63.2 MB; not run). **h5wasm can**, in a worker, through Emscripten's lazy file: 1 header request and 7 range reads of 1 MB, **6.58 MB of 63.2 MB**, the same 58 pixels and the same quality values as h5py. Slow: 2 and 8 minutes on two runs, each 1 MB block a synchronous request in turn | *S6, measured* below |
 | S7 | 2026-11-05 | Reading the Sentinel Data Legal Notice | the notice the catalogs link, read in full (2 pages, European Commission, DG GROW; PDF created 2015) | done: **open, with attribution**. See *S7* below | *S7* |
-| S8 | 2026-11-05 | Best practice for gaps in satellite NO₂ and AOD in health studies | open-access literature review, and which gap-filled products are openly available and browser-readable | running | `reports/` in the workspace, summarised here when done |
+| S8 | 2026-11-05 | Best practice for gaps in satellite NO₂, AOD and ozone in health studies | four researchers and a report writer, open evidence only; each source marked as read in full or seen only as an abstract or snippet | done | `reports/Satellite data gaps in health studies.md` in the workspace; summarised below |
 
 ## S6, measured: a browser reads the swath by range
 
@@ -215,6 +215,27 @@ statements to explore, not rules, and S8 reviews the evidence for them.
 
 The reason behind all three: satellite gaps are not random. Clouds remove NO₂ and AOD retrievals, and cloudy days differ
 in weather, which itself bears on pollution and on asthma, so missing-not-at-random is the default.
+
+## S8: what the evidence says about gaps
+
+From `reports/Satellite data gaps in health studies.md` (workspace root). Product documents read in full are the
+strongest evidence; health-effect evidence is thin and mostly from abstracts.
+
+| Finding | Strength | Bearing on this design |
+| --- | --- | --- |
+| TROPOMI NO₂: keep `qa_value` > 0.75; the documents disagree on the operator ("above" in the readme, "greater than or equal to" in the manual's table); stored as integers 0–100 scaled by 0.01 | product documents, read in full | compare the stored integers and state the operator used |
+| A cloud radiance fraction above 0.5 multiplies `qa_value` by 0.74 | the manual's factor table, read in full | 7 June's 58 pixels at 0.74 are most likely error-free but cloudy; to confirm, read their cloud fraction. Whether smoke was registered as cloud is not established |
+| Total ozone `qa_value` > 0.5; the tropospheric ozone product covers 20° S to 20° N only; aerosol index ≥ 0.5, > 0.8 to remove sun glint; MAIAC QA bits 8–11 = 0000 | product documents | no TROPOMI ozone product is near-surface over NYC; the tropospheric one covers the Philippines |
+| Use the offline stream for June 2023: reprocessed data end mid-July 2022 | TROPOMI readme | the near-real-time granule S5 read is not the recommended one |
+| Surface NO₂ at US monitors is 36% higher on cloudy days than clear, 61.7% in the Northeast; a model overstated the gap (+58.7%) and was judged unfit to fill it | Goldberg et al. 2025, ACP, read in full | gaps are not random, and a clear-sky comparison describes clear-sky days only |
+| Ignoring missing AOD pulled odds ratios toward the null for 2 of 3 child ED outcomes | dissertation abstracts only | the direction of bias for NO₂ and ozone is not established |
+| No gap-filling error has been measured inside cloud gaps; validations hold out observed pixels | absence across the sources read | no fill is shown accurate where it is needed |
+| No source says "do not validate with imputed data"; every validation found uses filtered retrievals with a stated time window and pixel rule | validation papers read in full | supports statement 1, and adds a reporting duty: threshold and operator, stream, window, pixel rule, near-road status, completeness with its denominator |
+| For NYC in June 2023 there is no daily, openly licensed, observation-based gap-filled NO₂ or AOD product. GEOS-CF (model, no sign-in, no CORS, licence unread), NOAA NAQFC (forecast, browser-readable), ACAG (CC BY, monthly), CAMS reanalysis (CC BY, needs an account); TEMPO starts 2023-08-02 | catalog reads and command-line probes, not browser tests | statement 3: what fills a gap here is a model, and is labelled so |
+
+**The three provisional statements are supported**, with the reporting duty above added to the first and auxiliary
+variables (cloud fraction, snow, model output) to be recorded by any imputation step. The report lists the Sentinel
+notice as unread: its writer did not have S7, which read it.
 
 ## What is already known to be a limit
 

@@ -1,0 +1,152 @@
+# 179 · EO and STAC, for the NYC monitors
+
+_Created 2026-11-05 · Updated 2026-11-05_
+
+**Status:** tried — the practitioner's requirements, and phase 1's first side experiments (S1 to S5 done, S6 and S7 pending). No widget code yet. Phases 0 and 1 of
+[the 2026-11-04 plan](../research/eo-stac-nyc-architecture-and-plan-2026-11-04.md) come next.
+
+## The task
+
+The practitioner, 2026-11-05: *"After this let's work on the EO and STAC widgets. Because the pollution data in NYC was
+sourced from ground stations we can compare relevant remote sensing data for those variables."* Then: *"The EO and STAC
+widgets should identify the open data sources very easily"*, and *"EO identifies the satellite groups for those
+variables and STAC zeroes in on the source URLs."*
+
+The plan and the two repositories it adapts are the practitioner's own work with JLT, a colleague on Fieldwork who
+wrote [JupyterLite-EO-Satellite-Guide](https://github.com/jltobias/JupyterLite-EO-Satellite-Guide) and
+[JupyterLite-STAC-Browser](https://github.com/jltobias/JupyterLite-STAC-Browser), both MIT. The practitioner,
+2026-11-05: *"We planned the EO and STAC research together"*, and *"Those repos have code and UI specs already we can
+adapt for widget use."* So the widgets adapt that code and those specs, credited by repository and commit, and a
+question about either goes to JLT.
+
+## Requirements, as stated
+
+| Requirement | Meaning for the design |
+| --- | --- |
+| Compare remote sensing with the ground stations | The six ozone monitors Point data places ([178](178-points-from-xy.md)), a satellite raster, and Sample raster at points: a satellite value per monitor per date beside the station's |
+| Identify the open data sources very easily | Finding a usable source is the first thing the widgets do. Open and browser-readable sources first; the rest listed, marked, with the reason |
+| EO identifies the satellite groups for a variable | Variable → missions, instruments and products, each with what it measures (column, optical depth, surface) and its unit |
+| Future-proof Fieldwork for remote sensing workflows (*"The EO and STAC widgets should future proof FW for remote sensing workflows"*) | NYC's three pollutants are the first instance, not the design scope. Variables, missions, products and catalogs are data, versioned and added without code, as rulesets are; the widgets' contracts carry any variable, area and interval; nothing NYC-specific is compiled in. Tested against at least one non-NYC case before it is called general |
+| Sources needing no sign-in first (*"Before sign in lets use those that don't require sign ins first"*) | Routes a browser reads with no account, an anonymous token included, are built and offered first. A route behind sign-in is listed, marked as such, and left for later |
+| STAC zeroes in on the source URLs | From the product EO chose, over the study area and dates, to the items and their asset URLs, each with licence and whether this browser can read it |
+
+## The current widgets, examined first
+
+| Widget or piece | What it gives | Gap |
+| --- | --- | --- |
+| `raster_input` | a window of a local GeoTIFF around the study area | no URL or STAC source |
+| `sample_raster` | the cell value at each point | none for this purpose |
+| `clip_raster` | a raster masked to an area | none for this purpose |
+| Extract catalogue, WorldPop catalogue | a dated, curated catalogue offering sources that cover the study area | the pattern to reuse; no EO entries |
+| STAC routing (experiment 91) | 40 of 45 public STAC catalogs answer a browser; Earth Search Sentinel-2 ranges read | measured, not in the palette |
+
+## What JLT's repositories provide, read 2026-11-05
+
+Read at EO Satellite Guide `684833c` and STAC Browser `945d8b3`, code and documents only; nothing run against live
+endpoints.
+
+| | EO Satellite Guide | STAC Browser |
+| --- | --- | --- |
+| Runs as | plain browser JavaScript, data inlined at build | plain browser JavaScript ES modules, no Pyodide in the Explorer |
+| What to adapt | `data/research-topics.json` (15 KB): 8 topics with aliases, cautions and sources; 9 curated routes, each a catalog endpoint and collection id with format, access note and verification date. The whole-phrase alias matcher | search request builder (bbox, datetime, paging to 500 items, 20 s timeout); CORS, HTTP and timeout messages; `auth:refs` detection; `RangeSource` (206 only, never a whole download) and `clipRaster` on GeoTIFF.js; the `fieldwork-stac-selection/1` profile, which nothing in Fieldwork yet reads |
+| NO₂ | 3 routes: Sentinel-5P TROPOMI (Copernicus CDSE), TEMPO V04 (NASA CMR), OMI (NASA GES DISC) | — |
+| Aerosol | 2 routes: Sentinel-3 SYN AOD (Planetary Computer), MODIS MAIAC MCD19A2 (NASA, HDF-EOS2). The route note: AOD is not surface PM2.5 | — |
+| Ozone | **no topic and no route**; collections exist uncurated (S5P O3, TEMPO O3TOT, OMI OMTO3, OMPS, DSCOVR EPIC tropospheric O3) | — |
+| Formats | — | reads and crops **GeoTIFF/COG only**; NetCDF is download-only; HDF, Zarr and atmospheric products absent |
+| Access | free-text access notes; NASA routes "Earthdata Login may be required" | **no URL signing**: unsigned Planetary Computer ranges failed its own audit; a CDSE token path for one product only |
+| Missing as fields | licence, unit, column or surface, coverage dates, temporal resolution | — |
+| Licence | MIT; `catalog.json` and the mission registry are CEOS MIM data, CC BY 4.0 | MIT; vendored GeoTIFF.js, Proj4js, Geoman (MIT), Leaflet (BSD-2) |
+
+**The finding:** the routes NYC needs are curated for NO₂ and aerosol, and all of them are NetCDF or HDF, behind sign-in
+or URL signing. The crop path that works in a browser covers GeoTIFF. So the first use needs, beyond adaptation: an
+ozone route, the fields that make "open" visible (licence, unit, measured quantity, coverage), a reader for NetCDF or
+HDF, and an answer to signing and sign-in. TEMPO's operational record is understood to begin in August 2023, after the
+June pilot; that is to be read from its STAC extent, not assumed.
+
+## Phase 1, first measurements: Sentinel-5P NO₂, 7 June 2023, over NYC
+
+The practitioner, 2026-11-05: *"I have used Sentinel5P before and it may need log in."* Checked by catalog search and
+response headers only, with the browser's `Origin` set to Fieldwork's; no data file downloaded.
+
+| Route | Search from a browser | The file | Can a browser read it? |
+| --- | --- | --- | --- |
+| Copernicus CDSE, `sentinel-5p-l2-no2-offl` | yes, `*`; 2 swaths over NYC that day | `s3://eodata/…nc`, `auth:refs` s3 and OpenID Connect | **No without sign-in**: the asset is an S3 address behind a Copernicus account. The practitioner's experience, confirmed |
+| Planetary Computer, `sentinel-5p-l2-netcdf` | yes, `*`; 2 NO₂ swaths (near-real-time processing) | `https://sentinel5euwest.blob.core.windows.net/…nc`, NetCDF, 63.2 MB | **Yes, with no account.** The token service answers a browser anonymously (`*`) with a short-lived token; signed, the file answers 200 with `Accept-Ranges: bytes`; the Range preflight from Fieldwork's origin is allowed. Unsigned it answers 409 |
+
+**The same check for aerosol and ozone, routes with no sign-in only** (*"Before sign in lets use those that don't require
+sign ins first"*). Planetary Computer, 7 June 2023, over NYC:
+
+| Variable | Collection and product | Swaths that day | What it measures |
+| --- | --- | --- | --- |
+| NO₂ | `sentinel-5p-l2-netcdf`, `L2__NO2___` | 2 | tropospheric NO₂ column |
+| Ozone | `sentinel-5p-l2-netcdf`, `L2__O3____` | 2 | **total** ozone column, mostly stratospheric; not surface ozone. No tropospheric ozone product among that day's items |
+| Aerosol | `sentinel-5p-l2-netcdf`, `L2__AER_AI` and `L2__AER_LH` | 2 each | UV aerosol index (absorbing aerosol, such as smoke) and aerosol layer height; neither is PM2.5 |
+| Aerosol | `sentinel-3-synergy-aod-l2-netcdf`, `NTC_AOD.nc` | 2 (Sentinel-3A and 3B) | aerosol optical depth; not PM2.5 |
+
+Every one is NetCDF. Both collections give their licence as `proprietary`, linking the Sentinel Data Legal Notice,
+which has not been read here; that is the catalog's word, recorded as it stands. MODIS MAIAC AOD, which JLT's guide
+routes through NASA, is not on Planetary Computer; it is the sign-in route, kept for later.
+
+So the first open route for NO₂ needs no login, only an anonymous token the browser fetches for itself; JLT's STAC
+Browser does not sign, which is why its own audit found Planetary Computer ranges failing. **The remaining gap is the
+format**: a 63 MB NetCDF-4 (HDF5) swath, of which NYC needs a few pixels. Whether a browser reader can fetch only the
+needed chunks by range, rather than the whole file, is the next measurement.
+
+## Phase 1: how much of a swath NYC needs, measured 2026-11-05
+
+The practitioner approved reading parts of one file: `S5P_NRTI_L2__NO2____20230607T172349_…_20230607T175810.nc`,
+63.2 MB, Planetary Computer, with an anonymous token. `scripts/s5p_range_probe.py` reads it by HTTP range in 64 KB
+blocks, as a browser reader would, counting every request, capped at 20 MB. Read through h5py, so the cost is the
+file's layout and not one JavaScript library's.
+
+| Step | Requests | Bytes so far |
+| --- | --- | --- |
+| Open the HDF5 structure | 5 | 0.33 MB |
+| Latitude and longitude, `(1, 373, 450)` float32, one gzip chunk each | 19 | 1.25 MB |
+| NO₂ and `qa_value`, scanlines 19 to 29 only | 35 | **2.25 MB of 63.2 MB** |
+
+58 pixels fall in the five boroughs' bounding box (W −74.26, S 40.49, E −73.70, N 40.92), all with `qa_value` ≥ 0.75;
+their mean tropospheric NO₂ column is 3.86 × 10⁻⁵ mol m⁻², the product's own unit.
+
+**What this does not establish:**
+
+- **That a browser can do it.** h5py read it; a JavaScript HDF5 reader that makes range reads is still to be chosen
+  and measured. The byte cost is the file's layout, so a reader that reads only what h5py read should cost the same.
+- **That the cost holds for every product.** This is a near-real-time granule of 373 scanlines. The offline product is
+  a whole orbit, about ten times as many scanlines, so its latitude and longitude chunks may cost more.
+- **The borough outlines.** The bounding box takes in parts of New Jersey; the five outlines would take fewer pixels.
+- **Anything about the monitors.** 58 pixels of about 3.5 × 5.5 km over the box, against six points, is the next step's
+  question.
+
+## Side experiments, logged
+
+The practitioner, 2026-11-05: *"Please record these side experiments also in 179."* Every probe made for this record,
+including the ones not yet run, so what was measured, what was only read and what is pending stay distinguishable.
+
+| # | Date | Side experiment | How | Status | Record |
+| --- | --- | --- | --- | --- | --- |
+| S1 | 2026-11-05 | What JLT's EO Satellite Guide provides | read-only review of the repository at `684833c`, by an agent; no code run | done | *What JLT's repositories provide*, above |
+| S2 | 2026-11-05 | What JLT's STAC Browser provides | read-only review at `945d8b3`, by an agent; no code run | done | the same table |
+| S3 | 2026-11-05 | Can a browser get Sentinel-5P NO₂ without sign-in? | catalog searches and response headers from Copernicus CDSE and Planetary Computer, `Origin` set to Fieldwork's; no data | done: CDSE needs sign-in, Planetary Computer does not | *Phase 1, first measurements* |
+| S4 | 2026-11-05 | Which aerosol and ozone routes need no sign-in? | Planetary Computer collection list and item searches over NYC, 7 June 2023; licence links read from the catalog, the legal notice itself not read | done: S5P O₃ (total column), S5P aerosol index and layer height, S3 SYN AOD; MODIS MAIAC is not there | the same section |
+| S5 | 2026-11-05 | How many bytes of a swath does NYC need? | `scripts/s5p_range_probe.py`, h5py through counted 64 KB range reads, capped at 20 MB; one 63.2 MB file, approved by the practitioner | done: **2.25 MB in 35 requests** | *Phase 1: how much of a swath NYC needs* |
+| S6 | pending | Which browser HDF5 reader can read by range? | candidates from the npm registry's metadata: `netcdfjs` 4.0.0 (MIT, 0.07 MB; believed to read classic NetCDF only, which these files are not), `jsfive` 0.4.2 (pure JavaScript, 1.6 MB), `h5wasm` 0.10.3 (HDF5 compiled to WebAssembly, 14.7 MB); the last two give their licence as "see LICENSE.txt", not yet read. The test: install each into a scratch folder outside Fieldwork, read its licence, read the same file under the same cap, and compare its bytes with S5's 2.25 MB | **awaiting the practitioner's approval to install the two packages** | here |
+| S7 | not started | Reading the Sentinel Data Legal Notice | read the notice the catalogs link before any of these products is called open in the EO catalogue | not started | — |
+
+## What is already known to be a limit
+
+A satellite does not measure what a station measures. NO₂ from TROPOMI or TEMPO is a tropospheric column, not ppb at
+the surface; aerosol optical depth is extinction through the column, not µg/m³ of PM2.5; most ozone products are total
+columns. The comparison is whether the two move together over time at each monitor, not whether they agree in value,
+and every surface says which quantity it holds.
+
+## Next
+
+Phase 0 and 1 together: a source matrix for NO₂, AOD/PM2.5 and ozone over New York City, each entry checked by reading
+real bytes in a browser at the six monitors for the pilot interval, the June 2023 smoke. A product that fails is a
+result. Each file fetched beyond metadata is named, with its size, before it is downloaded. That matrix is the EO
+catalogue's first content.
+
+## What this does not establish
+
+Anything yet. It records what was asked.

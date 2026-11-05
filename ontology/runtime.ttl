@@ -221,6 +221,16 @@ fw:publishesArtifact a owl:ObjectProperty;
 fw:PublishedArtifact a owl:Class; rdfs:subClassOf prov:Entity;
   rdfs:label "Published artifact";
   rdfs:comment "A thing a reader of the write-up meets as a figure or a table. It declares its kind and the shape a reader needs to interpret it, and the step that published it owes it a machined note.".
+fw:figureSection a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:label "Where the step's figure goes in the write-up";
+  rdfs:comment "The part of the write-up that a published table, chart or map is filed under: Introduction, Methods, Results or Discussion. Asserted on the step that published it, beside its machined note, and held equal to that note's fw:noteSection by fw:FigureFiledWhereDeclaredShape. References holds works and is not a value here. The practitioner, 2026-11-05: all output widgets may have default IMRAD sections, but it should be flexible.".
+fw:figureSectionDeclared a owl:DatatypeProperty; rdfs:range xsd:boolean;
+  rdfs:label "Whether the section was chosen";
+  rdfs:comment "True when the practitioner chose the section on the output widget, false when it is the widget's fw:defaultFigureSection. A figure in Results by default and one placed there deliberately are the same placement and different decisions.".
+fw:defaultFigureSection a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:domain fw:WidgetDefinition;
+  rdfs:label "Where an output widget's figure goes unless the practitioner chooses otherwise";
+  rdfs:comment "Generated into ontology/widgets.ttl from DEFAULT_FIGURE_SECTIONS in src/notes.ts, the constant the application applies, so the ontology and the application cannot state different defaults.".
 fw:artifactKind a owl:DatatypeProperty; rdfs:range xsd:string;
   rdfs:comment "table, chart or map. A CLOSED set, unlike fw:noteFunction: these three are the output widgets this application has, and a fourth would be a new widget rather than a new word for an existing one.".
 fw:artifactRowCount a owl:DatatypeProperty; rdfs:range xsd:nonNegativeInteger;

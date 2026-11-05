@@ -1,6 +1,6 @@
 # Experiment 44: ontology competency questions
 
-_Created 2026-10-08 · Updated 2026-11-04_
+_Created 2026-10-08 · Updated 2026-11-05_
 
 Date: October 8, 2026. Status: question list with measured statuses, thirteen of
 them executable. No vocabulary term is changed by this document; it records what
@@ -56,6 +56,7 @@ a design decision with its own migration, not a bug fix.
 | P11 | How were this regression's intervals made, and from how many rows? | A reviewer, and anyone comparing with R | `fw:errorMethod`, `fw:intervalMethod` and `fw:intervalLevel` on each estimate, `fw:usedRecordCount` and `fw:leftOutRecordCount`; held by `fw:RegressionModelShape` | Answerable since Regression 0.2.0 |
 | P12 | Is this regression's measure one the declared design licenses? | A reviewer | The name the receipt carries is the licensed one, or the step stopped; `fw:noDesignDeclared` when none was | Answerable for the five designs; **not for a time-series or case-crossover study**, which declares none and keeps the neutral name |
 | P13 | Is this two-by-two a table of risks or of rates, and what were the units at risk? | A reviewer, and anyone reading a ratio beside another | `fw:unitsAtRiskValue` present, with `fw:exposedUnitsAtRisk` and `fw:unexposedUnitsAtRisk`, means events over units at risk and a rate ratio; absent, cases and non-cases | Answerable since Two-by-two 0.7.0. **Not whether a unit can hold more than one event**: that is the reason the layout exists, and it is declared by the choice, not recorded as a fact |
+| P14 | Which part of the write-up does this figure go in, and did somebody choose it? | An author assembling the paper | `fw:figureSection` and `fw:figureSectionDeclared` on the publishing step; the output widget's `fw:defaultFigureSection`; the note's section held equal by `fw:FigureFiledWhereDeclaredShape` | Answerable since Map 0.20.0, Table 0.7.0 and Chart 0.10.0. **Not why it was put there** |
 
 ## Spatial scope and coordinate reference
 
@@ -201,6 +202,7 @@ changed this file; a date stamp sweep is not an update._
 | 2026-10-08 | Match GDAL's all-touched rule, and record which rule a clip used |
 | 2026-10-08 | Date every documentation file from git history, and check it in the gate |
 | 2026-10-10 | Treat the project as developmental evaluation, and move the audits into docs/audits |
+| 2026-11-05 | P14 added for [177](177-where-a-figure-goes-in-the-write-up.md), when output widgets took a write-up section |
 | 2026-11-05 | P13 added for [161](161-the-epi-kernel-one-table-many-exposures.md) step 6, when the Rate ratio widget was retired into the two-by-two's rate layout. `fw:RateRatio` and `fw:RateRatioComputation` are deprecated; receipts from before carry them |
 | 2026-11-04 | P10, P11 and P12 added for [176](176-regression-in-the-ontology.md), when Regression began writing its fit as RDF. P12 is answerable only under the five declared designs: a time series such as NYC declares none |
 | 2026-10-30 | P7, P8 and P9 added for [151](151-typesetting-an-equation-a-practitioner-wrote.md)'s amendment of that date, when `rate`, `rate_ratio` and `two_by_two` began machining their equations into a Methods note with citations. P7 and P8 answer; **P9 is recorded as not answerable in the same breath**, because an equation set in mathematics and attributed to Katz reads as more checked than a number, and nothing checks that the code states what Katz states. R6 added for the same reason from the other side: the note makes a non-estimable measure more legible, not less |

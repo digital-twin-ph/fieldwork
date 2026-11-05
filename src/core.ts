@@ -64,6 +64,7 @@ import widgetRegistry from '../widgets/registry.json';
 import {relateTable,relateOutcome,machinedNotes,relateReceiptFacts,type RelateOutcome} from './relate-table.js';
 // THE EQUATIONS THE COMPUTATIONS USED, machined as Methods notes. The second, third and fourth
 // producers of a machined note, which is the state `relate-table.ts` wrote its type for.
+import {figureSection,figureSectionDeclared} from './notes.js';
 import {rateEquationNote,rateTwoByTwoEquationNote,twoByTwoEquationNote,machinedNoteFacts}
   from './equations.js';
 // WHAT AN ARTIFACT DECLARES ABOUT ITSELF. A table, a map and a chart are what a Results
@@ -2134,18 +2135,23 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
     // Gated on the node TYPE and not on what the value carries: a `rate` emits a chart on its own
     // table, and captioning that would caption a computation as though it were a figure.
     if(node.type==='table_output'&&(value as {kind?:string})?.kind==='data-table'){
-      const note=tableDescriptionNote(value as unknown as import('./data-table.js').DataTable,
+      const described=tableDescriptionNote(value as unknown as import('./data-table.js').DataTable,
         node.params.label,node.id,portSourceName(workflow,node.id,'table',''));
+      // FILED WHERE THE PRACTITIONER PUT IT, Results unless they chose otherwise.
+      const note=described&&{...described,section:figureSection(node.params,node.type)};
       if(note){machined[node.id]=[note];withNote(receipts,runId,node.id,[note]);
         const table=value as unknown as import('./data-table.js').DataTable;
         withArtifact(receipts,runId,node.id,{kind:'table',rowCount:table.rowCount,
-          missingValueCount:table.missingValueCount});}
+          missingValueCount:table.missingValueCount,section:figureSection(node.params,node.type),
+          sectionDeclared:figureSectionDeclared(node.params)});}
     }
     if(node.type==='chart_output'&&isRecord(value)&&(value as {chart?:ChartSummary}).chart){
       const chart=(value as {chart:ChartSummary}).chart;
-      const note=chartDescriptionNote(chart,node.params.label,node.id);
+      const described=chartDescriptionNote(chart,node.params.label,node.id);
+      const note=described&&{...described,section:figureSection(node.params,node.type)};
       if(note){machined[node.id]=[note];withNote(receipts,runId,node.id,[note]);
-        withArtifact(receipts,runId,node.id,{kind:'chart',barCount:chart.bins.length});}
+        withArtifact(receipts,runId,node.id,{kind:'chart',barCount:chart.bins.length,
+          section:figureSection(node.params,node.type),sectionDeclared:figureSectionDeclared(node.params)});}
     }
     if(node.type==='map_output'&&isRecord(value)){
       const plan=mapLayerList(node,workflow.edges,
@@ -2160,11 +2166,13 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           })]);
       assertSomethingToDraw(plan,node.params.label||node.id);
       (value as unknown as {mapLayers?:MapLayer[]}).mapLayers=plan;
-      const note=mapDescriptionNote(plan,node.params.label,node.id);
+      const described=mapDescriptionNote(plan,node.params.label,node.id);
+      const note=described&&{...described,section:figureSection(node.params,node.type)};
       if(note){machined[node.id]=[note];withNote(receipts,runId,node.id,[note]);
         // DRAWN, not connected: the distinction `fw:layerDrawn` exists for.
         withArtifact(receipts,runId,node.id,
-          {kind:'map',layerCount:plan.filter(l=>l.drawn).length});}
+          {kind:'map',layerCount:plan.filter(l=>l.drawn).length,
+            section:figureSection(node.params,node.type),sectionDeclared:figureSectionDeclared(node.params)});}
     }
     // COLUMNS NOBODY HAS DESCRIBED, said in the write-up as their own limitation and not as a fault in the rows.
     if(node.type==='table_input'){

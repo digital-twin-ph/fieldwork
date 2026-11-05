@@ -7,6 +7,7 @@
 import {readFileSync,writeFileSync,readdirSync,existsSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {join} from 'node:path';
+import {DEFAULT_FIGURE_SECTIONS} from '../build/notes.js';
 
 const root=fileURLToPath(new URL('../',import.meta.url));
 const registry=JSON.parse(readFileSync(join(root,'widgets/registry.json'),'utf8'));
@@ -45,7 +46,9 @@ export function turtle(){
   for(const nodeType of live){
     const iri=`<urn:fieldwork:widget:${nodeType}>`;
     lines.push(`${iri} a fw:WidgetDefinition; fw:nodeType ${escape(nodeType)}; rdfs:label ${escape(titles.get(nodeType))}`
-      +(documented.includes(nodeType)?`;\n  fw:userManual <${MANUAL_BASE}${nodeType}.md>`:'')+'.');
+      +(documented.includes(nodeType)?`;\n  fw:userManual <${MANUAL_BASE}${nodeType}.md>`:'')
+      // WHERE ITS FIGURE GOES IN THE WRITE-UP BY DEFAULT, from the constant the application applies.
+      +(DEFAULT_FIGURE_SECTIONS[nodeType]?`;\n  fw:defaultFigureSection ${escape(DEFAULT_FIGURE_SECTIONS[nodeType])}`:'')+'.');
   }
   return lines.join('\n')+'\n';
 }

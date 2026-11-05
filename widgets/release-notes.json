@@ -152,16 +152,12 @@
    "replacementCandidate": "urn:fieldwork:widget:observations"
   },
   "chart_output": {
-   "version": "0.9.0",
-   "released": "2026-11-04",
+   "version": "0.10.0",
+   "released": "2026-11-05",
    "changes": [
     {
      "kind": "minor",
-     "description": "Declare its own shape into the write-up. Every run now machines a note into the Results section of the Notes tab stating what this artifact is made of. Experiment 147 measured that a Results section is mostly artifacts rather than prose, and until now not one artifact in this application could put a single word into a write-up: the figure was drawn, the receipt recorded what it drew, and the Notes tab had nothing from it. THE NOTE CARRIES NO NUMBER, which is the rule the whole change is shaped around -- experiment 141's amendment of 2026-10-30 settled that a figure's number is computed when a document is rendered, from the note's position in the IMRaD outline and the venue's own convention, because setting one figure aside for a venue moves every number after it. A note that wrote \"Table 1\" into its text would be right when machined and wrong the first time somebody dragged a card. The note is editable like any machined note: editing it forks it into a note of the author's own and the machined one goes on being rewritten by every run. It does not write over the caption a chart already states. `ChartSummary.caption` has existed since well before this change -- `rateChart` names the numerator, the multiplier, the denominator unit and the rate kind, and says when the vintages disagree -- and it reached no write-up, which is the same shape experiment 149 found for the example's own notes: produced, stored, never put in front of a reader. The note carries that line and adds the bar count, the category column and a statement that a bar at zero may be a withheld value rather than a measured zero, which `chart-output.ts` already names in its own comment as the thing that has to be said. THE CAPTION IS NOT MACHINED AND IS NOT CLAIMED. The practitioner, 2026-10-30: \"Captions are the user's responsibility, unless there is a way to machine it based on table, map, chart or equation semantics.\" Everything in this note is read off a declaration, which is the exception that rule names; the caption itself states the subject, the population, the place and the period in the author's words and none of that is derivable here. The first version of this release called its output a caption and filed it under a function word invented for the purpose, which claimed an authorial act while delivering something else -- the same error experiment 149 settled for notes in general, arriving one level down. What would make a real caption machinable is 147's chain for the machined title -- design, place, outcome, period -- of which only place is declared today."
-    },
-    {
-     "kind": "minor",
-     "description": "One panel per value of a key column, stacked on a shared axis with a scale each: variables moving together through time. A mark per panel, bars or a line; a period shaded across every panel; a missing value drawn as a gap. No second y axis. Drawn by the Vega-Lite renderer only. Experiment 174."
+     "description": "Chooses where its figure goes in the Notes write-up: Introduction, Methods, Results or Discussion, under 'In the write-up, under'. Results is the default, declared per widget as fw:defaultFigureSection in ontology/widgets.ttl from the constant the application applies. The receipt states fw:figureSection and fw:figureSectionDeclared on the step, and fw:FigureFiledWhereDeclaredShape holds the step's machined note to the same section. The practitioner, 2026-11-05: 'all output widgets may have default IMRAD sections but it should be flexible.'"
     }
    ],
    "breaking": false,
@@ -419,12 +415,12 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.19.0",
-   "released": "2026-11-03",
+   "version": "0.20.0",
+   "released": "2026-11-05",
    "changes": [
     {
      "kind": "minor",
-     "description": "An interactive map of a layer with frames plays through them: a slider, Play, Pause and a step each way, at a chosen pace, only while every part is in view. Every frame, the static figure and both keys share one set of classes. The practitioner names what a frame is; the frame keeps the data's name. Experiment 168."
+     "description": "Chooses where its figure goes in the Notes write-up: Introduction, Methods, Results or Discussion, under 'In the write-up, under'. Results is the default, declared per widget as fw:defaultFigureSection in ontology/widgets.ttl from the constant the application applies. The receipt states fw:figureSection and fw:figureSectionDeclared on the step, and fw:FigureFiledWhereDeclaredShape holds the step's machined note to the same section. The practitioner, 2026-11-05: 'all output widgets may have default IMRAD sections but it should be flexible.'"
     }
    ],
    "breaking": false,
@@ -953,12 +949,12 @@
    "migrationFrom": []
   },
   "table_output": {
-   "version": "0.6.0",
-   "released": "2026-10-30",
+   "version": "0.7.0",
+   "released": "2026-11-05",
    "changes": [
     {
      "kind": "minor",
-     "description": "Declare its own shape into the write-up. Every run now machines a note into the Results section of the Notes tab stating what this artifact is made of. Experiment 147 measured that a Results section is mostly artifacts rather than prose, and until now not one artifact in this application could put a single word into a write-up: the figure was drawn, the receipt recorded what it drew, and the Notes tab had nothing from it. THE NOTE CARRIES NO NUMBER, which is the rule the whole change is shaped around -- experiment 141's amendment of 2026-10-30 settled that a figure's number is computed when a document is rendered, from the note's position in the IMRaD outline and the venue's own convention, because setting one figure aside for a venue moves every number after it. A note that wrote \"Table 1\" into its text would be right when machined and wrong the first time somebody dragged a card. The note is editable like any machined note: editing it forks it into a note of the author's own and the machined one goes on being rewritten by every run. Only in the data-table mode: the point, polygon and decision modes are views of things that are not a published table. The note names the columns AS THE TABLE SPELLS THEM, in code spans, rather than forcing them into a sentence -- the first version wrote \"${valueField} by ${keys}\" and produced \"per 1,000 people by group\" on this application's own output, because `rateTable` sets the value field to a unit phrase and keys a long table by the literal word `measure`. A generator cannot know whether a column name is a noun, so it states them and leaves prose to the author. It also reports empty cells as unknown rather than zero, and names the source file and digest where the table came in as one. THE CAPTION IS NOT MACHINED AND IS NOT CLAIMED. The practitioner, 2026-10-30: \"Captions are the user's responsibility, unless there is a way to machine it based on table, map, chart or equation semantics.\" Everything in this note is read off a declaration, which is the exception that rule names; the caption itself states the subject, the population, the place and the period in the author's words and none of that is derivable here. The first version of this release called its output a caption and filed it under a function word invented for the purpose, which claimed an authorial act while delivering something else -- the same error experiment 149 settled for notes in general, arriving one level down. What would make a real caption machinable is 147's chain for the machined title -- design, place, outcome, period -- of which only place is declared today."
+     "description": "Chooses where its figure goes in the Notes write-up: Introduction, Methods, Results or Discussion, under 'In the write-up, under'. Results is the default, declared per widget as fw:defaultFigureSection in ontology/widgets.ttl from the constant the application applies. The receipt states fw:figureSection and fw:figureSectionDeclared on the step, and fw:FigureFiledWhereDeclaredShape holds the step's machined note to the same section. The practitioner, 2026-11-05: 'all output widgets may have default IMRAD sections but it should be flexible.'"
     }
    ],
    "breaking": false,

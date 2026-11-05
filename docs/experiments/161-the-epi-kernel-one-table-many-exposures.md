@@ -1,6 +1,6 @@
 # 161 · The epi kernel: one table of counts, more than one exposure
 
-_Created 2026-11-02 · Updated 2026-11-02_
+_Created 2026-11-02 · Updated 2026-11-05_
 
 **Status:** tried — steps 1 to 4 and 6 done, step 5 in narrow form, and the measures run in Rust. Step 7 is not
 started. _Corrected 2026-11-05: this line said the substrate, plural exposures and the widget change were not built;

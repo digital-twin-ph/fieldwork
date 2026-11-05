@@ -18,7 +18,8 @@
 <urn:fieldwork:widget:case_series> a fw:WidgetDefinition; fw:nodeType "case_series"; rdfs:label "Cases by period".
 <urn:fieldwork:widget:centers> a fw:WidgetDefinition; fw:nodeType "centers"; rdfs:label "Cooling centers".
 <urn:fieldwork:widget:chart_output> a fw:WidgetDefinition; fw:nodeType "chart_output"; rdfs:label "Chart";
-  fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/chart_output.md>.
+  fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/chart_output.md>;
+  fw:defaultFigureSection "Results".
 <urn:fieldwork:widget:clip_points_to_area> a fw:WidgetDefinition; fw:nodeType "clip_points_to_area"; rdfs:label "Keep points inside the area";
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/clip_points_to_area.md>.
 <urn:fieldwork:widget:clip_polygons> a fw:WidgetDefinition; fw:nodeType "clip_polygons"; rdfs:label "Clip polygons".
@@ -44,7 +45,8 @@
 <urn:fieldwork:widget:map_image_input> a fw:WidgetDefinition; fw:nodeType "map_image_input"; rdfs:label "Georeferenced map image";
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/map_image_input.md>.
 <urn:fieldwork:widget:map_output> a fw:WidgetDefinition; fw:nodeType "map_output"; rdfs:label "Map";
-  fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/map_output.md>.
+  fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/map_output.md>;
+  fw:defaultFigureSection "Results".
 <urn:fieldwork:widget:mean_center> a fw:WidgetDefinition; fw:nodeType "mean_center"; rdfs:label "Mean center".
 <urn:fieldwork:widget:measure_area> a fw:WidgetDefinition; fw:nodeType "measure_area"; rdfs:label "Calculate area".
 <urn:fieldwork:widget:measure_distance> a fw:WidgetDefinition; fw:nodeType "measure_distance"; rdfs:label "Measure distance".
@@ -88,7 +90,8 @@
 <urn:fieldwork:widget:table_input> a fw:WidgetDefinition; fw:nodeType "table_input"; rdfs:label "Tabular data";
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/table_input.md>.
 <urn:fieldwork:widget:table_output> a fw:WidgetDefinition; fw:nodeType "table_output"; rdfs:label "Table";
-  fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/table_output.md>.
+  fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/table_output.md>;
+  fw:defaultFigureSection "Results".
 <urn:fieldwork:widget:travel_time> a fw:WidgetDefinition; fw:nodeType "travel_time"; rdfs:label "Travel time from distance".
 <urn:fieldwork:widget:travel_time_band> a fw:WidgetDefinition; fw:nodeType "travel_time_band"; rdfs:label "Travel time band".
 <urn:fieldwork:widget:study_design> a fw:WidgetDefinition; fw:nodeType "study_design"; rdfs:label "Study design";

@@ -3,6 +3,14 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.26.0 — 2026-11-05
+
+- **Choose where a figure goes in the write-up.** Every Map, Table and Chart output has **In the write-up, under**:
+  Introduction, Methods, Results or Discussion. Results is the default. A study-area map can now open the
+  Introduction. The receipt states the section and whether it was chosen, and a validation rule checks that the note
+  describing the figure is filed in the same section. Map 0.20.0, Table 0.7.0, Chart 0.10.0. Experiment 177.
+- Validation: Chromium locally; WebKit in CI.
+
 ## 0.25.0 — 2026-11-05
 
 - **The Two-by-two table reports a rate ratio.** Under **The outcome column holds**, choose **events and units at

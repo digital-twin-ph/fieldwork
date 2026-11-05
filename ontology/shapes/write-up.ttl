@@ -77,6 +77,32 @@ fw:PublishedArtifactIsDescribedShape a sh:NodeShape;
   sh:property [ sh:path fw:machinedNote; sh:minCount 1; sh:class fw:MachinedNote;
     sh:message "A step that publishes a table, chart or map must machine a note about it." ].
 
+# --- Where a figure goes, and the rule that its note goes there too ------------------------------
+
+# THE SECTION MAPPING OF OUTPUT WIDGETS. The practitioner, 2026-11-05: *"all output widgets may have default IMRAD
+# sections but it should be flexible"*, and *"don't forget to update the ontology, esp rules for section mapping of
+# output widgets."* Each output widget declares a default (fw:defaultFigureSection on its fw:WidgetDefinition); a step
+# states where its figure went and whether that was chosen.
+fw:FigureSectionShape a sh:NodeShape;
+  sh:targetSubjectsOf fw:publishesArtifact;
+  sh:property [ sh:path fw:figureSection; sh:minCount 1; sh:maxCount 1;
+                sh:in ( "Introduction" "Methods" "Results" "Discussion" );
+    sh:message "A step that publishes a table, chart or map states which part of the write-up it goes in, and References is not one: it holds works, not figures." ];
+  sh:property [ sh:path fw:figureSectionDeclared; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:boolean ].
+
+# THE NOTE GOES WHERE THE FIGURE GOES. The figure is drawn beside the note that describes it, so a note filed in one
+# section and a placement stated as another would put the figure somewhere nobody chose. Held structurally, on the
+# real receipt: the sections of the step's machined notes must be exactly its stated figure section.
+fw:FigureFiledWhereDeclaredShape a sh:NodeShape;
+  sh:targetSubjectsOf fw:figureSection;
+  sh:property [ sh:path ( fw:machinedNote fw:noteSection ); sh:equals fw:figureSection;
+    sh:message "The note describing a published figure is filed in the section the step states for it." ].
+
+# An output widget's default is one of the four, the same closed set.
+fw:DefaultFigureSectionShape a sh:NodeShape;
+  sh:targetSubjectsOf fw:defaultFigureSection;
+  sh:property [ sh:path fw:defaultFigureSection; sh:maxCount 1; sh:in ( "Introduction" "Methods" "Results" "Discussion" ) ].
+
 # --- The method a computation used ------------------------------------------------------------
 
 fw:MethodCitationShape a sh:NodeShape; sh:targetClass fw:MethodCitation;

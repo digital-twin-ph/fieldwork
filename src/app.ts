@@ -81,7 +81,7 @@ import {WRITE_UP_STORE,readWriteUp,entryForRun,recordEntry,writeUpOf,sourceOfNot
   type WriteUp,type WriteUpEntry} from './write-up.js';
 import {typeset} from './prose.js';
 import {readNotes,WRITE_UP_PARTS,type Note,type WriteUpPart,moveNote,forkMachinedNote,
-  UNWRITTEN,type MachinedNote} from './notes.js';
+  UNWRITTEN,type MachinedNote,FIGURE_SECTIONS,DEFAULT_FIGURE_SECTIONS,figureSection,type FigureSection} from './notes.js';
 import {readAuthors,currentIdentity,attestIdentity,setCurrentIdentity,authorLabel} from './identity.js';
 
 /** A polygon layer's chosen file, waiting for Apply. Keyed by node, outside the DOM, because the
@@ -3386,6 +3386,13 @@ function renderInspector(){
         +`</div>`;
     }
   }
+  // WHERE THIS FIGURE GOES IN THE WRITE-UP, for every output widget: Results unless chosen otherwise. The practitioner,
+  // 2026-11-05: "all output widgets may have default IMRAD sections but it should be flexible."
+  if(n.type==='map_output'||n.type==='table_output'||n.type==='chart_output'){
+    const at=figureSection(n.params,n.type),fallback=DEFAULT_FIGURE_SECTIONS[n.type];
+    content+=`<div class="field"><label class="field-label" for="output-section">In the write-up, under</label>`
+      +`<select id="output-section">${FIGURE_SECTIONS.map(s=>`<option value="${s}" ${s===at?'selected':''}>${s}${s===fallback?' (default)':''}</option>`).join('')}</select></div>`;
+  }
   $('#inspector-content').innerHTML=`<div class="inspector-body">${content}</div>`;
   // QUICK LOOK AT WHAT THIS STEP PRODUCED, for every widget that emits a table.
   //
@@ -3450,6 +3457,13 @@ function renderInspector(){
       // would leave the old design's choice standing.
       change(w=>{getNode(w,n.id,'study_design').params=next;});
     },()=>designChecklist(workflow,n.id));
+  });
+  optionalElement('#output-section')?.addEventListener('change',event=>{
+    const chosen=(event.target as HTMLSelectElement).value as FigureSection;
+    change(w=>{const node=required(w.nodes.find(x=>x.id===n.id));
+      const params=node.params as {section?:FigureSection};
+      if(chosen===DEFAULT_FIGURE_SECTIONS[node.type as keyof typeof DEFAULT_FIGURE_SECTIONS])delete params.section;
+      else params.section=chosen;});
   });
   optionalElement('#twobytwo-layout')?.addEventListener('change',event=>{
     const toRates=(event.target as HTMLSelectElement).value==='rates';

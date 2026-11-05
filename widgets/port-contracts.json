@@ -409,6 +409,25 @@
         }
       ]
     },
+    "search_satellite_catalog": {
+      "output": "satellite-files",
+      "contracts": [
+        {
+          "when": "default",
+          "required": [
+            [
+              "product",
+              "satellite-product"
+            ],
+            [
+              "area",
+              "area"
+            ]
+          ],
+          "optional": []
+        }
+      ]
+    },
     "study_design": {
       "output": "design",
       "contracts": [

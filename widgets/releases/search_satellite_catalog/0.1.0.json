@@ -1,0 +1,86 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:search_satellite_catalog",
+  "nodeType": "search_satellite_catalog",
+  "version": "0.1.0",
+  "title": "Search a satellite catalog",
+  "released": "2026-11-05",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['search_satellite_catalog']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "validationStatus": "application-only",
+    "shaclShapes": []
+  },
+  "ports": {
+    "inputs": [
+      {
+        "name": "product",
+        "type": "satellite-product"
+      },
+      {
+        "name": "area",
+        "type": "area"
+      }
+    ],
+    "output": "satellite-files",
+    "optionalInputs": [],
+    "note": "Takes the chosen product and the study area, whose extent is searched. Emits satellite-files: remote files not yet read, its own port type so nothing mistakes addresses for data."
+  },
+  "ontology": {
+    "status": "partial",
+    "mappings": [
+      {
+        "role": "entity",
+        "iri": "urn:fieldwork:SatelliteCatalogSearch",
+        "file": "ontology/runtime.ttl"
+      }
+    ],
+    "note": "The receipt states the catalog, collection, product, extent, dates, how many items were returned, matched and kept, whether the search stopped at its limit, and fw:completenessRead false: a search reads no pixels. Held by fw:SatelliteCatalogSearchShape.",
+    "emits": {
+      "classes": [
+        "SatelliteCatalogSearch"
+      ],
+      "properties": [
+        "completenessRead",
+        "itemsKept",
+        "itemsMatched",
+        "itemsReturned",
+        "productType",
+        "searchBBox",
+        "searchFrom",
+        "searchTruncated",
+        "searchUntil",
+        "stacCatalog",
+        "stacCollection"
+      ]
+    }
+  },
+  "implementation": {
+    "files": [
+      "src/app.ts",
+      "src/core.ts",
+      "src/satellite-catalog-ui.ts",
+      "src/satellite-catalog.ts"
+    ],
+    "definition": "src/satellite-catalog.ts"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": null
+  },
+  "changes": [
+    {
+      "kind": "initial",
+      "description": "Search the chosen product's STAC collection over the study area's extent and a date range, up to 500 items, catalog records only. Three columns from JLT's STAC Browser (MIT, commit 945d8b3), in Fieldwork's dialog style: Connect & discover, Coverage in context (the study area and each item's footprint), Inspect & reuse (each item's files, with sign-in, licence as read, whether a browser can read it, the attribution sentence, and that completeness and citation are not yet known). Keep or drop items. Experiment 179."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "The search builder, its messages and the 500-item bound are JLT's, ported. Unit tests use a stubbed catalog; a live search was run against Planetary Computer in a browser. Nothing here reads a file, so nothing establishes that an item holds usable pixels over the area."
+  }
+}

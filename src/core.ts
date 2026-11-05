@@ -65,6 +65,8 @@ import {relateTable,relateOutcome,machinedNotes,relateReceiptFacts,type RelateOu
 // THE EQUATIONS THE COMPUTATIONS USED, machined as Methods notes. The second, third and fourth
 // producers of a machined note, which is the state `relate-table.ts` wrote its type for.
 import {tablePoints,tablePointsSentence,tablePointsFacts} from './table-points.js';
+import {searchFacts,searchSentence} from './satellite-catalog.js';
+import type {SatelliteProduct} from './satellite-products.js';
 import {productFor,productFacts,productSentence} from './satellite-products.js';
 import {figureSection,figureSectionDeclared} from './notes.js';
 import {rateEquationNote,rateTwoByTwoEquationNote,twoByTwoEquationNote,machinedNoteFacts}
@@ -160,6 +162,11 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   find_satellite_products:{title:'Find satellite products',group:'Sources',icon:'◎',color:'blue',
     description:'Choose the satellite product that measures a variable, seeing what it measures, its licence and whether it needs sign-in',
     inputs:[],output:'satellite-product'},
+  // WHERE THE FILES ARE, for the chosen product over the study area and dates, adapted from JLT's STAC Browser. Reads
+  // catalog records only. Experiment 179.
+  search_satellite_catalog:{title:'Search a satellite catalog',group:'Sources',icon:'⌕',color:'blue',
+    description:'Find the files of the chosen satellite product over the study area and dates, each with its licence, sign-in and attribution',
+    inputs:[['product','satellite-product'],['area','area']],output:'satellite-files'},
   study_design:{title:'Study design',group:'Epidemiology',icon:'◇',color:'teal',
     description:'Declare the study design and its period, so the computations downstream are the ones the design can estimate',
     inputs:[],output:'design'},
@@ -1478,6 +1485,20 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         const facts=productFacts(`<urn:fieldwork:run:${runId}:output:${node.id}>`,product);
         receipts.push({nodeId:node.id,kind:'computation',facts,rules:'',input:facts,conclusions:[],
           method:productSentence(product)} as unknown as Receipt);
+        break;}
+      case 'search_satellite_catalog':{
+        const chosen=(inputs as unknown as {product?:{kind?:string;product?:SatelliteProduct}}).product;
+        if(chosen?.kind!=='satellite-product'||!chosen.product)throw new Error('Connect Find satellite products: a search needs a chosen product.');
+        const search=node.params.search;
+        if(!search)throw new Error('Search the catalog first: open Search a satellite catalog, choose the dates and search.');
+        if(search.collection!==chosen.product.route.collection||(search.productType??null)!==(chosen.product.route.productType??null))
+          throw new Error('The saved search is for a different product than the one connected. Search again.');
+        const kept=new Set(node.params.kept??search.items.map(i=>i.id));
+        const items=search.items.filter(i=>kept.has(i.id));
+        const sentence=searchSentence(search,chosen.product)+` ${items.length} kept.`;
+        value={kind:'satellite-files',product:chosen.product,search:{...search,items},sentence} as unknown as DisplayValue;
+        const facts=searchFacts(`<urn:fieldwork:run:${runId}:output:${node.id}>`,search,items.length);
+        receipts.push({nodeId:node.id,kind:'computation',facts,rules:'',input:facts,conclusions:[],method:sentence} as unknown as Receipt);
         break;}
       case 'study_design':{
         const sentence=studyDesignSentence(node as WorkflowNode<'study_design'>);

@@ -363,6 +363,21 @@ fw:seriesPeriod a owl:DatatypeProperty; rdfs:range xsd:string; rdfs:label "Serie
 fw:caseWeightField a owl:DatatypeProperty; rdfs:range xsd:string;
   rdfs:comment "The attribute holding how many cases a record stands for. Absent means one case per record, which is a claim about the data and not a default to be assumed quietly.".
 fw:seriesTotal a owl:DatatypeProperty; rdfs:range xsd:decimal.
+fw:SatelliteCatalogSearch a owl:Class; rdfs:subClassOf prov:Entity;
+  rdfs:label "Satellite catalog search";
+  rdfs:comment "A STAC search for a chosen product over a study area's extent and a date range: catalog records only, no file read. So how many pixels a file holds over the area, and of what quality, is not known from it: fw:completenessRead false says so. Adapted from JLT's STAC Browser. Experiment 179.".
+fw:searchBBox a owl:DatatypeProperty; rdfs:domain fw:SatelliteCatalogSearch; rdfs:range xsd:string; rdfs:label "search bounding box";
+  rdfs:comment "West, south, east, north, in degrees: the study area's extent, which is what a catalog search can take.".
+fw:searchFrom a owl:DatatypeProperty; rdfs:domain fw:SatelliteCatalogSearch; rdfs:range xsd:date; rdfs:label "search from".
+fw:searchUntil a owl:DatatypeProperty; rdfs:domain fw:SatelliteCatalogSearch; rdfs:range xsd:date; rdfs:label "search until".
+fw:itemsReturned a owl:DatatypeProperty; rdfs:domain fw:SatelliteCatalogSearch; rdfs:range xsd:integer; rdfs:label "items returned";
+  rdfs:comment "Items the catalog returned for the area and dates, before keeping only the chosen product.".
+fw:itemsMatched a owl:DatatypeProperty; rdfs:domain fw:SatelliteCatalogSearch; rdfs:range xsd:integer; rdfs:label "items matched".
+fw:itemsKept a owl:DatatypeProperty; rdfs:domain fw:SatelliteCatalogSearch; rdfs:range xsd:integer; rdfs:label "items kept".
+fw:searchTruncated a owl:DatatypeProperty; rdfs:domain fw:SatelliteCatalogSearch; rdfs:range xsd:boolean; rdfs:label "search truncated";
+  rdfs:comment "True when the search stopped at its item limit with more to read.".
+fw:completenessRead a owl:DatatypeProperty; rdfs:domain fw:SatelliteCatalogSearch; rdfs:range xsd:boolean; rdfs:label "completeness read";
+  rdfs:comment "Whether pixels were read to count coverage and quality. A search reads none, so this is false: absence of an overpass is known, absence of a retrieval or of quality is not.".
 fw:SatelliteProductChoice a owl:Class; rdfs:subClassOf prov:Entity;
   rdfs:label "Satellite product choice";
   rdfs:comment "Which satellite product a practitioner chose for a research topic, and what was and was not read about it. A choice, not data: nothing is downloaded by the step that makes it. Routes are curated in JLT's EO Satellite Guide (eo:STACCollection in its vocabulary, vendored in examples/eo) and in Fieldwork's additions. Experiment 179.".

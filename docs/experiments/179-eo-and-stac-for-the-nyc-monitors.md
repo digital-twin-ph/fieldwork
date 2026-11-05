@@ -2,7 +2,7 @@
 
 _Created 2026-11-05 · Updated 2026-11-05_
 
-**Status:** tried — the practitioner's requirements, and phase 1's first side experiments (S1 to S8 done). No widget code yet. Phases 0 and 1 of
+**Status:** tried — the practitioner's requirements, and phase 1's first side experiments (S1 to S8 done), and both widgets built in 0.28.0, UI first. Phases 0 and 1 of
 [the 2026-11-04 plan](../research/eo-stac-nyc-architecture-and-plan-2026-11-04.md) come next.
 
 ## The task
@@ -277,6 +277,20 @@ routes lack. The `eo:` vocabulary is vendored with it, as the sea-level pack's i
 
 **Not in the first slice:** reading pixels, the citation map's dataset citations (unread for every route so far), the
 imputation step, and the hand-off to Raster input. The UI says what it cannot do yet.
+
+## Built, 2026-11-05 (0.28.0)
+
+| Widget | What was checked | Result |
+| --- | --- | --- |
+| Find satellite products 0.1.0 | `tests/satellite-products.test.mjs`, `tests/find-satellite-products.browser.mjs` | 4 of 4 and 1 of 1, Chromium: JLT's file vendored at its digest; the matcher; the open product first for NO₂; an unread licence refused unless said to be unread |
+| Search a satellite catalog 0.1.0 | `tests/satellite-catalog.test.mjs`, `tests/search-satellite-catalog.browser.mjs` | 5 of 5 against a stubbed catalog (paging, the product filter, the 500-item bound, the failure messages, a receipt claiming completeness refused); 1 of 1 in Chromium against a stub **and against the live Planetary Computer catalog**: over the five boroughs on 7 June 2023 it returned 20 items and kept the 2 NO₂ overpasses |
+
+**A rule amended on the way.** `source-consumes-data` fired on Search a satellite catalog, which requires a
+`satellite-product`. A scope says what a source acquires and carries no data: `area` says where, a chosen product
+says which collection. It was added to the rule's scope types, rather than recorded as a violation.
+
+**Seen in the live run, for evaluation:** a Sentinel-5P swath is far larger than New York City, so in *Coverage, in
+context* the boroughs are a small box inside it.
 
 ## What is already known to be a limit
 

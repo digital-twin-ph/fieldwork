@@ -543,6 +543,16 @@
       "reviewed": "2026-11-05",
       "reviewedBy": "the practitioner, choosing among three pairs offered",
       "note": "The practitioner chose \"Find products / Search catalog\" over \"EO products / STAC search\" (the protocol, not the operation) and \"Satellite guide / catalog\" (category nouns). What they had called it: \"EO identifies the satellite groups for those variables\". Under Sources because it chooses where data will come from and takes none."
+    },
+    {
+      "nodeType": "search_satellite_catalog",
+      "title": "Search a satellite catalog",
+      "group": "Sources",
+      "fingerprint": "80125bd3d2d8",
+      "verdict": "accepted",
+      "reviewed": "2026-11-05",
+      "reviewedBy": "the practitioner, choosing among three pairs offered",
+      "note": "The practitioner chose \"Find products / Search catalog\". What they had called it: \"STAC zeroes in on the source URLs\". STAC is the method, named in the description and the receipt, as the convention asks. Under Sources because it acquires, with the study area as its scope."
     }
   ],
   "rule": "After a transform verb the slot names what the verb acts ON. A second operand is stated with a preposition -- summarize_points_to_polygon, aggregate_points_to_h3_cell, snap_to_network -- never left to the reader and never put in the object slot. A method name stands in for the operation only where the method name IS the practitioner's term, which is the existing exemption that keeps `voronoi`, `isochrone` and `summarize_hull`. Recorded 2026-10-19 with the first two reviews; see docs/audits/ontology-audit.md for the convention it corrects.",

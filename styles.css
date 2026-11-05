@@ -1036,3 +1036,13 @@ i.bar-zero{position:absolute;top:0;bottom:0;width:1px;background:var(--ink,#2b2b
 .satellite-topic h3{font-size:14px;margin:14px 0 4px}
 .satellite-card.is-chosen{border-color:var(--accent)}
 .satellite-note{font-size:11px;margin:6px 0 0}
+.satellite-catalog-dialog{max-width:1180px}
+.satellite-columns{display:grid;grid-template-columns:minmax(220px,1fr) minmax(300px,1.4fr) minmax(260px,1.2fr);gap:18px}
+@media (max-width:900px){.satellite-columns{grid-template-columns:1fr}}
+.satellite-coverage{width:100%;height:auto;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+.satellite-coverage .study-area{fill:none;stroke:var(--accent);stroke-width:2}
+.satellite-coverage .footprint{fill:var(--accent);fill-opacity:.06;stroke:var(--text-muted);stroke-width:.6;cursor:pointer}
+.satellite-coverage .footprint.is-selected{fill-opacity:.22;stroke:var(--text)}
+.satellite-items,.satellite-files{list-style:none;padding:0;margin:6px 0;max-height:220px;overflow:auto;font-size:12px}
+.satellite-items li.is-selected{font-weight:600}
+.satellite-columns h3{overflow-wrap:anywhere;font-size:13px}

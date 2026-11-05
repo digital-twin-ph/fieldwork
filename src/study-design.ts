@@ -117,6 +117,34 @@ export const notEstimable=(design:StudyDesign):string[]=>{
   return COMPUTED.filter(name=>!reachable.includes(name));
 };
 
+/** WHAT A DECLARED DESIGN LICENSES FROM A REGRESSION, kept apart from `DESIGN_LICENCES` so the two-by-two's list of
+ *  measures does not grow a rate ratio it cannot compute. Experiment 176; the practitioner chose, 2026-11-04, a rate
+ *  ratio under cohort and ecological designs only. Logistic follows the odds ratio's licences: a cross-sectional design
+ *  names it the prevalence odds ratio, and a case series, with no comparison group, licenses neither. */
+export type RegressionLicence={name:string}|{stops:string};
+export const REGRESSION_LICENCES:Record<StudyDesign,{logistic:RegressionLicence;poisson:RegressionLicence}>={
+  'cohort':{logistic:{name:'odds ratio'},poisson:{name:'rate ratio'}},
+  'case-control':{logistic:{name:'odds ratio'},
+    poisson:{stops:'A case-control study estimates odds ratios. Choose logistic regression: case-control sampling '
+      +'fixes how many cases and controls there are, so there is no population for a rate to be of.'}},
+  'cross-sectional':{logistic:{name:'prevalence odds ratio'},
+    poisson:{stops:'A cross-sectional study measures each subject once, so there is no follow-up time for a rate. '
+      +'Choose logistic regression, which reports a prevalence odds ratio.'}},
+  'ecological':{logistic:{name:'odds ratio'},poisson:{name:'rate ratio'}},
+  'case-series':{logistic:{stops:'A case series has no comparison group, so there is no ratio to estimate.'},
+    poisson:{stops:'A case series has no comparison group, so there is no ratio to estimate.'}},
+};
+
+/** The measure a regression reports under a declared design: its licensed name, or null when no design is declared and
+ *  the measure keeps its neutral name. A measure the design does not license stops the step, saying why: a run-time
+ *  check, read from the same declaration the two-by-two reads. */
+export function regressionMeasure(declared:DeclaredDesign|undefined,family:'logistic'|'poisson'):string|null{
+  if(!declared||declared.stopped)return null;
+  const licence=REGRESSION_LICENCES[declared.design][family];
+  if('stops' in licence)throw new Error(licence.stops);
+  return licence.name;
+}
+
 /** What a declaration does to a two-by-two: the step that makes it more than a label.
  *
  *  Filtered HERE, once, before anything is worded, so the table, the sentence, the equation note,

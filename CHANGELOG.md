@@ -3,6 +3,20 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.24.0 — 2026-11-04
+
+- **Regression follows the declared study design**, read from the same declaration the Two-by-two table reads. A rate
+  ratio is reported under a cohort or ecological design; an odds ratio wherever the two-by-two allows one, named the
+  prevalence odds ratio under a cross-sectional design. A Poisson model under a case-control or cross-sectional design,
+  or any model under a case series, stops and says why. With no design connected, nothing changes. Experiment 176.
+- **A regression appears in the N3 & evidence view**: the fit as `fw:RegressionModel`, each coefficient as an
+  `fw:EpiEstimate` naming its term, interval method and level. Two SHACL shapes check it, and the two-by-two's
+  estimates are now checked by the same shape. Regression widget 0.2.0.
+- Fixed in the ontology: the interval properties were declared for rate ratios only, so under inference every
+  two-by-two estimate would have been read as a rate ratio.
+- Not yet: the Rate ratio widget does not follow the same licences, and no worked example declares a design for a
+  regression.
+
 ## 0.23.0 — 2026-11-04
 
 - **A table holds up to 250,000 rows, from a file of up to 40 MB** (was 20,000 rows and 5 MB). The number was measured,

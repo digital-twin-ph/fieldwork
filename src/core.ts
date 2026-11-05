@@ -58,7 +58,7 @@ import {OLD_TYPES,validateOldNode,executeOldNode,migrateFacilitySources,applyAcc
 import {resolveRuleset,bindParameters,tableContractFailures,rulesetCitation} from './rulesets.js';
 import {deriveValue,selectRows,selectRange,rangeSentence,OPERATORS} from './derive-value.js';
 import {appendRows,appendSentence} from './append-rows.js';
-import {fitRegression,specFrom,rowsOf,regressionTable,regressionSentence} from './regression.js';
+import {fitRegression,specFrom,rowsOf,regressionTable,regressionSentence,regressionReceipt} from './regression.js';
 import {metadataFindings} from './column-metadata.js';
 import widgetRegistry from '../widgets/registry.json';
 import {relateTable,relateOutcome,machinedNotes,relateReceiptFacts,type RelateOutcome} from './relate-table.js';
@@ -79,7 +79,7 @@ import {groupTable,migrateGroupTableNulls} from './group-table.js';
 import {computeTwoByTwo,twoByTwoReceipt,twoByTwoSentence,type TwoByTwoResult} from './two-by-two.js';
 import {computeExposures} from './exposure-table.js';
 import {basemapLimitation} from './basemaps.js';
-import {studyDesignSentence,studyDesignReceipt,DESIGN_LICENCES,includedMeasures,readUnderDesign,readUndeclared,migrateSurveillanceDesign} from './study-design.js';
+import {studyDesignSentence,studyDesignReceipt,DESIGN_LICENCES,includedMeasures,readUnderDesign,readUndeclared,migrateSurveillanceDesign,regressionMeasure} from './study-design.js';
 import {refinementSentences,investigatorAllocated} from './study-design-questions.js';
 import type {DeclaredDesign} from './study-design.js';
 import {outreachProjection,extentN3,extentProjection,projectionOf,RULESET_FOR_NODE_TYPE,pinnedRuleset,parametersFor} from './rule-application.js';
@@ -1526,17 +1526,19 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
       case 'regression':{
         const table=inputs.records as unknown as import('./data-table.js').DataTable;
         if(table?.kind!=='data-table')throw new Error('Connect a table: a regression reads the rows of one.');
-        // A DECLARED CASE-CONTROL DESIGN LICENSES ODDS RATIOS: a rate ratio from case-control sampling has no
-        // population to be a rate of. A validation rule, through the design port the two-by-two reads.
+        // WHAT THE DECLARED DESIGN LICENSES, read from the declaration the two-by-two reads (experiment 176): a rate
+        // ratio under cohort and ecological designs, an odds ratio wherever the two-by-two allows one. A run-time check,
+        // before the fit, so a measure the design cannot support is never computed and then hidden.
         const declared=inputs.design as unknown as DeclaredDesign|undefined;
-        if(declared&&!declared.stopped&&declared.design==='case-control'&&node.params.family!=='logistic')
-          throw new Error('A case-control study estimates odds ratios. Choose logistic regression.');
-        const result=fitRegression(rowsOf(table,node.params.order),specFrom(node.params));
-        const sentence=regressionSentence(result,node.params);
+        const licensed=regressionMeasure(declared,node.params.family);
+        const fitted=fitRegression(rowsOf(table,node.params.order),specFrom(node.params));
+        const result=licensed?{...fitted,measure:licensed}:fitted;
+        const sentence=regressionSentence(result,node.params)
+          +(declared&&!declared.stopped?` ${declared.sentence}`:'');
         value={...regressionTable(result,table.columns),sentence} as unknown as DisplayValue;
-        receipts.push({nodeId:node.id,kind:'computation',method:sentence,
-          estimates:result.estimates,columns:result.columns,rows:result.rows,errors:result.errors,
-          iterations:result.iterations,dispersion:result.dispersion,...(result.strata?{strata:result.strata}:{})} as unknown as Receipt);
+        receipts.push({...regressionReceipt(node,result,node.params,runId,
+          workflow.edges.find(e=>e.to===node.id&&e.port==='records')!.from,!!declared&&!declared.stopped),
+          method:sentence} as unknown as Receipt);
         break;}
       case 'append_rows':{
         const first=inputs.records as unknown as import('./data-table.js').DataTable;

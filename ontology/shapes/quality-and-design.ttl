@@ -93,3 +93,37 @@ fw:DesignChoiceShape a sh:NodeShape; sh:targetClass fw:DesignChoice;
   sh:property [ sh:path fw:choiceSetting; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string ];
   sh:property [ sh:path fw:choiceMade; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string ];
   sh:property [ sh:path fw:choiceOffered; sh:datatype xsd:string ].
+
+# AN ESTIMATE SAYS HOW ITS INTERVAL WAS MADE, and either has a value with both bounds or says why it has none
+# (experiment 176). Held of every fw:EpiEstimate, the two-by-two's included: they were already written this way, and a
+# shape is what makes it a rule rather than a habit. INF is admitted as a bound: a profile interval can be unbounded.
+fw:EpiEstimateShape a sh:NodeShape; sh:targetClass fw:EpiEstimate;
+  sh:property [ sh:path fw:estimateName; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string; sh:minLength 1 ];
+  sh:property [ sh:path fw:intervalMethod; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string; sh:minLength 1 ];
+  sh:property [ sh:path fw:intervalLevel; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:integer;
+                sh:minExclusive 0; sh:maxExclusive 100 ];
+  sh:xone (
+    [ sh:property [ sh:path fw:estimateValue; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:double ];
+      sh:property [ sh:path fw:intervalLower; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:double ];
+      sh:property [ sh:path fw:intervalUpper; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:double ];
+      sh:property [ sh:path fw:estimateUnavailable; sh:maxCount 0 ] ]
+    [ sh:property [ sh:path fw:estimateUnavailable; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string ];
+      sh:property [ sh:path fw:estimateValue; sh:maxCount 0 ] ]
+  ).
+
+# A REGRESSION STATES WHAT IT FITTED: the family, the outcome, the exposure and how it entered, how the intervals were
+# made and how many rows were used; and each of its estimates names the term it is for.
+fw:RegressionModelShape a sh:NodeShape; sh:targetClass fw:RegressionModel;
+  sh:property [ sh:path fw:modelFamily; sh:minCount 1; sh:maxCount 1; sh:in ( "logistic" "poisson" ) ];
+  sh:property [ sh:path fw:outcomeAttribute; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string ];
+  sh:property [ sh:path fw:exposureAttribute; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string ];
+  sh:property [ sh:path fw:exposureTerm; sh:minCount 1; sh:maxCount 1; sh:node fw:ModelTermShape ];
+  sh:property [ sh:path fw:adjustmentTerm; sh:node fw:ModelTermShape ];
+  sh:property [ sh:path fw:errorMethod; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string; sh:minLength 1 ];
+  sh:property [ sh:path fw:usedRecordCount; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:integer; sh:minInclusive 1 ];
+  sh:property [ sh:path fw:leftOutRecordCount; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:integer; sh:minInclusive 0 ];
+  sh:property [ sh:path fw:estimate; sh:minCount 1;
+                sh:node [ sh:property [ sh:path fw:modelTerm; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string ] ] ].
+fw:ModelTermShape a sh:NodeShape;
+  sh:property [ sh:path fw:termAttribute; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string ];
+  sh:property [ sh:path fw:termEntry; sh:minCount 1; sh:maxCount 1; sh:in ( "numeric" "categorical" "spline" ) ].

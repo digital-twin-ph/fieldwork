@@ -324,6 +324,11 @@ raster and a table for satellite files; the practitioner judged that the more co
 | A satellite column is not a surface concentration | the unit and measured quantity travel on every row, from the product |
 | Imputation is not done here | out of scope (provisional statement 2): this widget reads, it never fills |
 
+**Three widgets, and why that is the lighter choice.** The practitioner, the same day: *"Considering this is remote
+sensing and earth observation discipline I can live with three widgets if they collectively reduce friction of EO data
+use"*, and *"The alternative is information overload."* Find, search, sample: each asks one question a practitioner
+recognises, where one widget doing all three would put every product, item and pixel decision in one panel.
+
 **Not in the first slice:** products other than Sentinel-5P Level 2 swaths; reading by the borough outlines rather
 than at points; averaging over pixels near a point. Each is said where it is met.
 

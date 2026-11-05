@@ -892,6 +892,27 @@ nearest-neighbour-with-distance, and `slr_threshold_comparison` this file has ca
 domain-bound"*, which under the domain-agnostic direction is a question rather than a settled
 exemption. Both are still classified `domain` in `widgets/classification.json`.
 
+### A country at ADM0 can be refused, and the dialog draws nothing (found on Pages, 2026-11-05)
+
+The practitioner picked Uganda, ADM0, in the Study area dialog: *"nothing showed up on the dialog map."* Reproduced
+outside the browser against geoBoundaries' current UGA ADM0 file (1.6 MB, one unit, a MultiPolygon of 48 parts,
+43,116 vertices):
+
+- **Refused by the extent budget.** The largest part alone is 37,760 vertices, 1,215 KB; `GEOMETRY_BYTE_BUDGET` is
+  1,024 KB (`src/study-area.ts`), so `validateDrawnGeometry` throws: *"Choose a smaller area or a coarser
+  administrative level."* At ADM0 there is no coarser level, so the advice leads nowhere.
+- **The refusal is easy to miss.** It is written to `#area-boundary-terms`, a muted line under the unit list. The map
+  has already moved to Uganda (`lookAt` moves the camera only) and draws no outline, which reads as "nothing happened".
+- **A single unit keeps only its largest part.** `publishedRings` drops the other 47 parts (Lake Victoria's islands,
+  among them the Ssese Islands) with the note *"one outline is what a study area holds"*. That stopped being true
+  when several units became several parts of a MultiPolygon; one unit with several parts should be carried the same
+  way.
+
+Open: the 1 MB budget was set against the 5 MB localStorage quota. Node data has since moved to IndexedDB by digest;
+whether a study area's geometry still lives in the workflow document, and so whether this budget still binds, is
+the first thing to establish, by measuring. Until then, at minimum: draw the refused outline as a preview, say the
+refusal where the practitioner is looking, and drop the "coarser level" advice at ADM0. Not yet fixed.
+
 ### From Nigeria, 2026-11-02 ([162](docs/experiments/162-polygons-are-records.md))
 
 - **Declare `MAX_TABLE_ROWS` and `MAX_LAYER_VERTICES` in `widgets/caps.json`**, with measured evidence.

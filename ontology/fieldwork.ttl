@@ -438,6 +438,9 @@ fw:DesignPort a fw:PortType; rdfs:label "design";
 fw:SatelliteProductPort a fw:PortType; rdfs:label "satellite-product";
   rdfs:comment "A chosen satellite product: a curated route to a STAC catalog and collection, with what Fieldwork has read about it -- what it measures, its unit, sign-in and its licence as read. Its own type because a catalog search without a chosen product is a search of nothing, and a table or a layer carries no route (D4). A custom stud under D4a: one producer, find_satellite_products, and one intended consumer, search_satellite_catalog, not yet built. Experiment 179.";
   fw:implementationStatus "implemented".
+fw:SatelliteFilesPort a fw:PortType; rdfs:label "satellite-files";
+  rdfs:comment "The files a catalog search found for a chosen satellite product over a study area and dates, each with its access facts. Remote files not yet read: its own type so a consumer cannot mistake a list of addresses for data already in the workflow. No consumer yet; a reader that samples the files at points is the intended one. Experiment 179.";
+  fw:implementationStatus "implemented".
 fw:MeanCenterPort a fw:PortType; rdfs:label "mean-center";
   rdfs:comment "The mean of point coordinates, which is NOT a polygon centroid. GeoSPARQL exposes centroid as a function and there is no class to be disjoint with, so the distinction is stated here.".
 fw:PointComparisonPort a fw:PortType; rdfs:label "point-comparison".

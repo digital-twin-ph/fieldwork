@@ -71,7 +71,8 @@ const CUSTOM_STUDS={
   'ground':'A printed map must not reach clip_raster or sample_raster: sampling it returns the colour of a line. Resolved by a second producer (Natural Earth as ground), or folded back.',
   'mean-center':'The mean of point coordinates is not a polygon centroid; compare_point_sets is its consumer.',
   'point-comparison':'A two-set comparison drawn only by its own map.',
-  'satellite-product':'A catalog search without a chosen product searches nothing (experiment 179, D4). Gains its consumer with search_satellite_catalog.',
+  'satellite-product':'A catalog search without a chosen product searches nothing (experiment 179, D4). One producer, find_satellite_products; one consumer, search_satellite_catalog.',
+  'satellite-files':'Remote files not yet read: nothing may take them for data already in the workflow (experiment 179, D4). No consumer yet; a reader sampling them at points is the intended one.',
 };
 
 const definitions={...TYPES,...OLD_TYPES};

@@ -25,6 +25,18 @@ fw:RateGroupShape a sh:NodeShape; sh:targetClass fw:RateGroup;
   sh:property [ sh:path fw:numeratorCount; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:decimal; sh:minInclusive 0 ];
   sh:property [ sh:path fw:denominatorCount; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:decimal; sh:minInclusive 0 ];
   sh:property [ sh:path fw:rateValue; sh:maxCount 1; sh:datatype xsd:decimal ].
+fw:SatelliteCatalogSearchShape a sh:NodeShape; sh:targetClass fw:SatelliteCatalogSearch;
+  sh:property [ sh:path fw:stacCatalog; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string ];
+  sh:property [ sh:path fw:stacCollection; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string ];
+  sh:property [ sh:path fw:searchBBox; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string ];
+  sh:property [ sh:path fw:searchFrom; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:date ];
+  sh:property [ sh:path fw:searchUntil; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:date ];
+  sh:property [ sh:path fw:itemsReturned; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:integer; sh:minInclusive 0 ];
+  sh:property [ sh:path fw:itemsMatched; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:integer; sh:minInclusive 0 ];
+  sh:property [ sh:path fw:itemsKept; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:integer; sh:minInclusive 0 ];
+  sh:property [ sh:path fw:searchTruncated; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:boolean ];
+  # A SEARCH NEVER CLAIMS COMPLETENESS IT DID NOT READ.
+  sh:property [ sh:path fw:completenessRead; sh:minCount 1; sh:maxCount 1; sh:hasValue false ].
 fw:SatelliteProductChoiceShape a sh:NodeShape; sh:targetClass fw:SatelliteProductChoice;
   sh:property [ sh:path fw:researchTopic; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string; sh:minLength 1 ];
   sh:property [ sh:path fw:satelliteRoute; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string; sh:minLength 1 ];

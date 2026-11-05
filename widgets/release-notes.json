@@ -1062,6 +1062,18 @@
    ],
    "breaking": false,
    "migrationFrom": []
+  },
+  "search_satellite_catalog": {
+   "version": "0.1.0",
+   "released": "2026-11-05",
+   "changes": [
+    {
+     "kind": "initial",
+     "description": "Search the chosen product's STAC collection over the study area's extent and a date range, up to 500 items, catalog records only. Three columns from JLT's STAC Browser (MIT, commit 945d8b3), in Fieldwork's dialog style: Connect & discover, Coverage in context (the study area and each item's footprint), Inspect & reuse (each item's files, with sign-in, licence as read, whether a browser can read it, the attribution sentence, and that completeness and citation are not yet known). Keep or drop items. Experiment 179."
+    }
+   ],
+   "breaking": false,
+   "migrationFrom": []
   }
  }
 }

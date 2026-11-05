@@ -359,6 +359,9 @@ export interface ParamsByType {
    *  needs a structured period and is not built. */
   /** A chosen satellite product: a curated route and what Fieldwork has read about it. Experiment 179. */
   find_satellite_products:{label:string; question?:string; topic?:string; route?:string};
+  /** A catalog search for the chosen product over the study area and dates, and the items kept. Experiment 179. */
+  search_satellite_catalog:{label:string; from:string; until:string;
+    search?:import('./satellite-catalog.js').CatalogSearch; kept?:string[]};
   study_design:{label:string;design:StudyDesign;period:string;unitOfAnalysis:string;note:string;computations?:string[];answers?:Record<string,import('./study-design-questions.js').DesignAnswer>;table?:import('./study-design-questions.js').DeclaredTable};
   case_series:{label:string;source?:'points'|'table';dateField:string;dateKind:import('./case-series.js').DateKind;period:import('./case-series.js').Period;weightField?:string};
   summarize_combined_area:{label:string;zone:number;hemisphere:'north'|'south';yields?:'area'};
@@ -632,7 +635,7 @@ export interface CandidateCondition {field:string; comparator:'in'|'notIn'; valu
 import type {StudyDesign} from './study-design.js';
 export type {StudyDesign};
 
-export type PortType = 'points'|'table'|'alert'|'distances'|'decisions'|'area'|'facilities'|'gradedFacilities'|'access'|'coverage-check'|'raster'|'ground'|'polygons'|'network'|'mean-center'|'point-comparison'|'design'|'satellite-product';
+export type PortType = 'points'|'table'|'alert'|'distances'|'decisions'|'area'|'facilities'|'gradedFacilities'|'access'|'coverage-check'|'raster'|'ground'|'polygons'|'network'|'mean-center'|'point-comparison'|'design'|'satellite-product'|'satellite-files';
 export interface NodeDefinition {title:string; group:string; icon:string; color:string; description:string; inputs:[string,PortType][]; output:PortType|null}
 export type Escape = (value:unknown)=>string;
 export type SpatialRelation = 'Inside'|'Boundary'|'Outside'|'MissingLocation';

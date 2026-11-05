@@ -23,7 +23,10 @@ export const ACQUISITION_VERBS=['find','fetch','import','load','acquire','read',
 
 /** Port types a source may legitimately consume: they state WHERE to acquire, not WHAT to
  *  transform. An `area` scopes a raster window and an OSM query; neither is data under analysis. */
-export const SCOPE_PORT_TYPES=['area'];
+// A SCOPE SAYS WHAT A SOURCE ACQUIRES, AND CARRIES NO DATA. `area` says where; `satellite-product`, added 2026-11-05,
+// says which collection: search_satellite_catalog acquires from the product a practitioner chose, as raster_input
+// acquires within an area. A table or a layer is data and stays out. Experiment 179.
+export const SCOPE_PORT_TYPES=['area','satellite-product'];
 
 /** Names the 2026-10-09 audit judged against the convention and that are still live. Each is a
  *  category noun, a bare adjective, or the content of one demonstration. */

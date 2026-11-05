@@ -1570,6 +1570,18 @@
           "sha256": "6bf471188f7d2661949fd23b49cba3c8b19469d21e909b93b35a0f625f07660f"
         }
       ]
+    },
+    {
+      "id": "urn:fieldwork:widget:search_satellite_catalog",
+      "nodeType": "search_satellite_catalog",
+      "currentVersion": "0.1.0",
+      "releases": [
+        {
+          "version": "0.1.0",
+          "path": "widgets/releases/search_satellite_catalog/0.1.0.json",
+          "sha256": "b2bf3bd8c3fd76dc6793a03745e1abfe2c121d364065046959d086e9e69aa6b1"
+        }
+      ]
     }
   ]
 }

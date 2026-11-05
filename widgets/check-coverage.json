@@ -8,10 +8,10 @@
   },
   "measuredAt": "2026-10-27",
   "counts": {
-    "widgets": 57,
+    "widgets": 58,
     "covered": 28,
     "awaiting": 14,
-    "none": 14,
+    "none": 15,
     "blocked": 1
   },
   "widgets": [
@@ -325,6 +325,11 @@
       "nodeType": "find_satellite_products",
       "expectation": "none",
       "reason": "A curated choice: nothing is computed. What its cards say was read by hand in experiment 179 and is a record, not a calculation; a lab check would have nothing to recompute."
+    },
+    {
+      "nodeType": "search_satellite_catalog",
+      "expectation": "none",
+      "reason": "Reads catalog records and reports them: nothing is computed that an independent implementation could recompute. The catalog is the authority for what it returns."
     }
   ]
 }

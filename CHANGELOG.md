@@ -3,13 +3,20 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## 0.28.0 — In development
+## 0.28.0 — 2026-11-05
 
 - **Find satellite products** (new, under Sources): type a research topic or a measurement, such as NO₂, aerosols or
   ozone, and see which satellites and products measure it. Each product says what it measures and its unit, whether it
   needs sign-in, its licence as read from the licence itself, whether a browser can read it, and its quality rule.
   Products needing no sign-in come first. Adapted from JLT's EO Satellite Guide, in Fieldwork's dialog style.
   Experiment 179.
+- **Search a satellite catalog** (new, under Sources): connect the chosen product and the study area, choose the dates,
+  and search the product's catalog. Three columns, after JLT's STAC Browser: the search, the study area with each
+  overpass's footprint, and each file with its sign-in, licence as read, whether a browser can read it and the
+  attribution to use. Reads catalog records only; it says that completeness is not known until a file is read.
+  Checked against Planetary Computer from a browser: 2 Sentinel-5P NO₂ overpasses over New York City on 7 June 2023.
+- Custom studs and known naming violations are no longer capped by count: each states its own reason.
+- Validation: Chromium locally; WebKit in CI.
 
 ## 0.27.1 — 2026-11-05
 

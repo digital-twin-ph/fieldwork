@@ -16,7 +16,7 @@ test('a canvas with no input offers the input stage, and everything after one is
   await page.goto('/?example=blank');
 
   const entries=page.locator('#node-library [data-add]');
-  await expect(entries).toHaveCount(7);
+  await expect(entries).toHaveCount(8);
   // The input stage is nine by contract; `places` and `centers` are retired from the palette,
   // and `alert` joined them on 2026-10-25 -- a declaration wearing a node type, whose condition
   // is now stated on the node that applies the ruleset asking for it. Six are offered.
@@ -38,8 +38,12 @@ test('a canvas with no input offers the input stage, and everything after one is
   // stage by the same contract as the rest (an output, and nothing required), and it BELONGS
   // there rather than merely qualifying: a workflow opens with two declarations, WHERE and HOW,
   // and the design is the second. Experiment 154.
+  // EIGHT FROM 2026-11-05, with `find_satellite_products`, raised in the same commit as the widget was meant to be and
+  // was not: the browser suite caught it, as it did twice before. It needs nothing and chooses what a satellite study
+  // acquires, so it belongs with the declarations a workflow opens with. Search a satellite catalog requires a product
+  // and an area, and is placed after them. Experiment 179.
   for(const name of ['Study area','Point data','Tabular data','Street network',
-    'Georeferenced map image','Polygon layer','Study design'])
+    'Georeferenced map image','Polygon layer','Study design','Find satellite products'])
     await expect(page.locator('#node-library [data-add]').filter({hasText:name})).toHaveCount(1);
   // Nothing that needs something is offered yet. Asserted by NODE TYPE rather than by title
   // text: `hasText:'Map'` also matched "Georeferenced map image" once a plate joined the input

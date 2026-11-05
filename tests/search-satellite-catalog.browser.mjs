@@ -60,3 +60,44 @@ test('a NO2 product, the five boroughs, and the overpasses of 7 June 2023, each 
   expect(saved.nodes.find(n=>n.id==='search').params.kept).toHaveLength(1);
   expect(errors).toEqual([]);
 });
+
+test('with no Study area, the area is typed in the dialog, checked as typed, drawn, and searched',async({page})=>{
+  const errors=collectPageErrors(page);
+  const requested=[];
+  await page.route(/planetarycomputer\.microsoft\.com\/api\/stac\/v1\/collections\/sentinel-5p-l2-netcdf\/items/,route=>{requested.push(route.request().url());
+    return route.fulfill({status:200,contentType:'application/geo+json',headers:{'access-control-allow-origin':'*'},
+      body:JSON.stringify({type:'FeatureCollection',links:[],features:[item('S5P_OFFL_L2__NO2____20230607T172349','L2__NO2___','2023-06-07T17:23:49Z',[-90,30,-65,50])]})});});
+  await page.goto('/');
+  await page.evaluate(()=>{
+    const w={schema:'fieldwork/workflow/1',name:'Typed extent',nodes:[
+      {id:'product',type:'find_satellite_products',x:40,y:220,params:{label:'NO₂ product',topic:'no2',route:'pc-s5p-no2'}},
+      {id:'search',type:'search_satellite_catalog',x:340,y:120,params:{label:'NO₂ overpasses',from:'',until:''}}],
+      edges:[{id:'e1',from:'product',to:'search',port:'product'}]};
+    localStorage.clear();localStorage.setItem('fieldwork-workflow-v1',JSON.stringify(w));
+    localStorage.setItem('fieldwork-examples-v1',JSON.stringify({blank:w}));});
+  await page.goto('/?example=blank');
+  await page.locator('[data-view="workflow"]').click();
+  await page.locator('.react-flow__node[data-id="search"]').click();
+  await page.locator('#catalog-search-open').click();
+  const dialog=page.locator('#satellite-catalog-dialog');
+  const search=dialog.locator('#cat-search');
+  await expect(dialog.locator('.satellite-box [role="status"]')).toContainText('Type all four edges');
+  await expect(search).toBeDisabled();
+  await dialog.locator('#cat-west').fill('-74.26');await dialog.locator('#cat-south').fill('40.49');
+  await dialog.locator('#cat-north').fill('40.92');await dialog.locator('#cat-east').fill('-75');
+  await expect(dialog.locator('.satellite-box [role="status"]')).toContainText('West must be less than east');
+  await expect(search).toBeDisabled();
+  await dialog.locator('#cat-east').fill('-73.70');await dialog.locator('#cat-east').dispatchEvent('change');
+  await expect(dialog.locator('.satellite-coverage .study-area')).toHaveCount(1);
+  await dialog.locator('#cat-from').fill('2023-06-07');await dialog.locator('#cat-from').dispatchEvent('change');
+  await dialog.locator('#cat-until').fill('2023-06-07');await dialog.locator('#cat-until').dispatchEvent('change');
+  await expect(search).toBeEnabled();
+  await search.click();
+  await expect(dialog).toContainText('1 L2__NO2___ item in sentinel-5p-l2-netcdf over the typed extent');
+  expect(requested[0]).toContain('bbox=-74.26%2C40.49%2C-73.7%2C40.92');
+  await dialog.locator('#cat-close').click();
+  await expect(page.locator('#inspector-content')).toContainText('typed extent: W -74.26, S 40.49, E -73.7, N 40.92');
+  const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));
+  expect(saved.nodes.find(n=>n.id==='search').params.box).toEqual([-74.26,40.49,-73.7,40.92]);
+  expect(errors).toEqual([]);
+});

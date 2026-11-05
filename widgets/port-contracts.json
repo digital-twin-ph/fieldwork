@@ -418,13 +418,14 @@
             [
               "product",
               "satellite-product"
-            ],
+            ]
+          ],
+          "optional": [
             [
               "area",
               "area"
             ]
-          ],
-          "optional": []
+          ]
         }
       ]
     },

@@ -368,6 +368,8 @@ fw:SatelliteCatalogSearch a owl:Class; rdfs:subClassOf prov:Entity;
   rdfs:comment "A STAC search for a chosen product over a study area's extent and a date range: catalog records only, no file read. So how many pixels a file holds over the area, and of what quality, is not known from it: fw:completenessRead false says so. Adapted from JLT's STAC Browser. Experiment 179.".
 fw:searchBBox a owl:DatatypeProperty; rdfs:domain fw:SatelliteCatalogSearch; rdfs:range xsd:string; rdfs:label "search bounding box";
   rdfs:comment "West, south, east, north, in degrees: the study area's extent, which is what a catalog search can take.".
+fw:searchAreaFrom a owl:DatatypeProperty; rdfs:domain fw:SatelliteCatalogSearch; rdfs:range xsd:string; rdfs:label "search area from";
+  rdfs:comment "Where the searched extent came from: \"study area\", a connected Study area's extent, or \"typed extent\", four edges typed in the dialog. Absent on searches saved before 0.28.1, which could only come from a Study area.".
 fw:searchFrom a owl:DatatypeProperty; rdfs:domain fw:SatelliteCatalogSearch; rdfs:range xsd:date; rdfs:label "search from".
 fw:searchUntil a owl:DatatypeProperty; rdfs:domain fw:SatelliteCatalogSearch; rdfs:range xsd:date; rdfs:label "search until".
 fw:itemsReturned a owl:DatatypeProperty; rdfs:domain fw:SatelliteCatalogSearch; rdfs:range xsd:integer; rdfs:label "items returned";

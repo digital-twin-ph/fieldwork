@@ -29,6 +29,7 @@ fw:SatelliteCatalogSearchShape a sh:NodeShape; sh:targetClass fw:SatelliteCatalo
   sh:property [ sh:path fw:stacCatalog; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string ];
   sh:property [ sh:path fw:stacCollection; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string ];
   sh:property [ sh:path fw:searchBBox; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string ];
+  sh:property [ sh:path fw:searchAreaFrom; sh:maxCount 1; sh:in ( "study area" "typed extent" ) ];
   sh:property [ sh:path fw:searchFrom; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:date ];
   sh:property [ sh:path fw:searchUntil; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:date ];
   sh:property [ sh:path fw:itemsReturned; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:integer; sh:minInclusive 0 ];

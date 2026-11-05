@@ -1574,12 +1574,17 @@
     {
       "id": "urn:fieldwork:widget:search_satellite_catalog",
       "nodeType": "search_satellite_catalog",
-      "currentVersion": "0.1.0",
+      "currentVersion": "0.2.0",
       "releases": [
         {
           "version": "0.1.0",
           "path": "widgets/releases/search_satellite_catalog/0.1.0.json",
           "sha256": "b2bf3bd8c3fd76dc6793a03745e1abfe2c121d364065046959d086e9e69aa6b1"
+        },
+        {
+          "version": "0.2.0",
+          "path": "widgets/releases/search_satellite_catalog/0.2.0.json",
+          "sha256": "9a5ee02b118695906b46e00630f289c10e5deda82d61d61de857c7260fb1329d"
         }
       ]
     }

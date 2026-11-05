@@ -165,7 +165,7 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   // WHERE THE FILES ARE, for the chosen product over the study area and dates, adapted from JLT's STAC Browser. Reads
   // catalog records only. Experiment 179.
   search_satellite_catalog:{title:'Search a satellite catalog',group:'Sources',icon:'⌕',color:'blue',
-    description:'Find the files of the chosen satellite product over the study area and dates, each with its licence, sign-in and attribution',
+    description:'Find the files of the chosen satellite product over an area and dates, each with its licence, sign-in and attribution',
     inputs:[['product','satellite-product'],['area','area']],output:'satellite-files'},
   study_design:{title:'Study design',group:'Epidemiology',icon:'◇',color:'teal',
     description:'Declare the study design and its period, so the computations downstream are the ones the design can estimate',
@@ -287,6 +287,9 @@ export function requiredInputs(node:WorkflowNode,options?:{coverageConnected?:bo
   if(node.type==='network_input'||node.type==='polygon_input')
     return all.filter(([port])=>port!=='area');
   if(node.type==='point_input')return all.filter(([port])=>port!=='records');
+  // A SEARCH'S AREA MAY BE TYPED IN ITS DIALOG, as in JLT's STAC Browser, so a Study area fills it but is not required.
+  // Requiring it left Search grey with no way forward inside the dialog (the practitioner, 2026-11-05).
+  if(node.type==='search_satellite_catalog')return all.filter(([port])=>port!=='area');
   // A DESIGN IS DECLARED OR IT IS ABSENT, and absent must keep working. Requiring it would make
   // every existing workflow with a two-by-two refuse to run until somebody answered a question
   // they may not be able to answer -- and would drop the widget's own contract into one that

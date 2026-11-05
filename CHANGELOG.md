@@ -3,6 +3,14 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.28.1 — 2026-11-05
+
+- **Search a satellite catalog** no longer needs a Study area. With none connected, type the area's west, south, east
+  and north edges in the dialog, as in JLT's STAC Browser; the dialog says what is wrong with an edge until the four
+  make an extent, and draws the area before you search. A connected Study area still fills it. In 0.28.0 the Search
+  button stayed grey without one and the dialog gave no way forward. The run records where the area came from.
+- Validation: Chromium locally; WebKit in CI.
+
 ## 0.28.0 — 2026-11-05
 
 - **Find satellite products** (new, under Sources): type a research topic or a measurement, such as NO₂, aerosols or

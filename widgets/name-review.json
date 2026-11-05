@@ -553,6 +553,16 @@
       "reviewed": "2026-11-05",
       "reviewedBy": "the practitioner, choosing among three pairs offered",
       "note": "The practitioner chose \"Find products / Search catalog\". What they had called it: \"STAC zeroes in on the source URLs\". STAC is the method, named in the description and the receipt, as the convention asks. Under Sources because it acquires, with the study area as its scope."
+    },
+    {
+      "nodeType": "sample_satellite_files_at_points",
+      "title": "Sample satellite files at points",
+      "group": "Spatial operations",
+      "fingerprint": "922af0f6913e",
+      "verdict": "accepted",
+      "reviewed": "2026-11-05",
+      "reviewedBy": "the practitioner, choosing between extending Sample raster at points and a widget of its own",
+      "note": "\"Sample satellite files seems to be more straightforward and less confusing.\" Beside Sample raster at points under Spatial operations, and named the same way: the verb, what is read, and where."
     }
   ],
   "rule": "After a transform verb the slot names what the verb acts ON. A second operand is stated with a preposition -- summarize_points_to_polygon, aggregate_points_to_h3_cell, snap_to_network -- never left to the reader and never put in the object slot. A method name stands in for the operation only where the method name IS the practitioner's term, which is the existing exemption that keeps `voronoi`, `isochrone` and `summarize_hull`. Recorded 2026-10-19 with the first two reviews; see docs/audits/ontology-audit.md for the convention it corrects.",

@@ -36,9 +36,18 @@ overpass with one or more files.
 
 A search tells you **whether there was an overpass**: which dates have an item over your area. It cannot tell you
 whether that overpass holds a usable value over your area. Clouds remove retrievals, and a product's quality flags
-mark others as unreliable. On 7 June 2023, the two Sentinel-5P NO₂ overpasses covered New York City and the one
-measured had no pixel passing the usual quality threshold. So every item says its completeness is not known until a
-reader opens the file, and the run records that it was not read.
+mark others as unreliable. On 7 June 2023, the one Sentinel-5P NO₂ overpass of New York City came as two items, and
+the near-real-time one measured had no pixel passing the usual quality threshold. So every item says its completeness
+is not known until a reader opens the file, and the run records that it was not read. **Sample satellite files at
+points** is the reader.
+
+## One overpass can be two items
+
+A Sentinel-5P orbit is published in more than one processing stream: **near real time** (`NRTI`, within hours, in
+five-minute pieces) and **offline** (`OFFL`, days later, the whole orbit, with better inputs). Each is an item, so
+one overpass can appear twice. Each item says its stream and orbit. Where an orbit has an offline item, its
+near-real-time items are not kept by default, so a reading is never counted twice; the product recommends the offline
+stream for time series. Tick one back if you need it.
 
 ## What it will not do
 

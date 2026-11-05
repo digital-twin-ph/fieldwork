@@ -25,6 +25,24 @@ fw:RateGroupShape a sh:NodeShape; sh:targetClass fw:RateGroup;
   sh:property [ sh:path fw:numeratorCount; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:decimal; sh:minInclusive 0 ];
   sh:property [ sh:path fw:denominatorCount; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:decimal; sh:minInclusive 0 ];
   sh:property [ sh:path fw:rateValue; sh:maxCount 1; sh:datatype xsd:decimal ].
+fw:SatellitePointSampleShape a sh:NodeShape; sh:targetClass fw:SatellitePointSample;
+  sh:property [ sh:path fw:sampledRoute; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string; sh:minLength 1 ];
+  sh:property [ sh:path fw:sampledVariable; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string; sh:minLength 1 ];
+  sh:property [ sh:path fw:satelliteValueUnit; sh:maxCount 1; sh:datatype xsd:string ];
+  sh:property [ sh:path fw:pixelConvention; sh:minCount 1; sh:maxCount 1; sh:hasValue "pixel whose centre is nearest; no interpolation" ];
+  sh:property [ sh:path fw:qualityVariable; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string ];
+  sh:property [ sh:path fw:qualityThreshold; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:decimal ];
+  sh:property [ sh:path fw:qualityOperator; sh:minCount 1; sh:maxCount 1; sh:in ( ">=" ">" ) ];
+  sh:property [ sh:path fw:filesRead; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:integer; sh:minInclusive 0 ];
+  sh:property [ sh:path fw:pointsSampled; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:integer; sh:minInclusive 0 ];
+  sh:property [ sh:path fw:rowsWritten; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:integer; sh:minInclusive 0 ];
+  sh:property [ sh:path fw:rowsPassing; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:integer; sh:minInclusive 0 ];
+  sh:property [ sh:path fw:rowsBelowQuality; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:integer; sh:minInclusive 0 ];
+  sh:property [ sh:path fw:rowsNoRetrieval; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:integer; sh:minInclusive 0 ];
+  sh:property [ sh:path fw:rowsNoOverpass; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:integer; sh:minInclusive 0 ];
+  # A READER READS COMPLETENESS AND NEVER FILLS.
+  sh:property [ sh:path fw:completenessRead; sh:minCount 1; sh:maxCount 1; sh:hasValue true ];
+  sh:property [ sh:path fw:imputed; sh:minCount 1; sh:maxCount 1; sh:hasValue false ].
 fw:SatelliteCatalogSearchShape a sh:NodeShape; sh:targetClass fw:SatelliteCatalogSearch;
   sh:property [ sh:path fw:stacCatalog; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string ];
   sh:property [ sh:path fw:stacCollection; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string ];

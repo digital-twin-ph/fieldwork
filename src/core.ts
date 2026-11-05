@@ -65,7 +65,7 @@ import {relateTable,relateOutcome,machinedNotes,relateReceiptFacts,type RelateOu
 // THE EQUATIONS THE COMPUTATIONS USED, machined as Methods notes. The second, third and fourth
 // producers of a machined note, which is the state `relate-table.ts` wrote its type for.
 import {tablePoints,tablePointsSentence,tablePointsFacts} from './table-points.js';
-import {searchFacts,searchSentence} from './satellite-catalog.js';
+import {defaultKept,searchFacts,searchSentence} from './satellite-catalog.js';
 import type {SatelliteProduct} from './satellite-products.js';
 import {productFor,productFacts,productSentence} from './satellite-products.js';
 import {figureSection,figureSectionDeclared} from './notes.js';
@@ -167,6 +167,11 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   search_satellite_catalog:{title:'Search a satellite catalog',group:'Sources',icon:'⌕',color:'blue',
     description:'Find the files of the chosen satellite product over an area and dates, each with its licence, sign-in and attribution',
     inputs:[['product','satellite-product'],['area','area']],output:'satellite-files'},
+  // THE VALUE AT EACH POINT, PER OVERPASS, from the files a search found: read by range in a worker, with the quality
+  // rule and the kind of gap where there is no usable value. Experiment 179.
+  sample_satellite_files_at_points:{title:'Sample satellite files at points',group:'Spatial operations',icon:'◴',color:'teal',
+    description:'Read the satellite value at each point for every overpass, with its quality, and say which days have no usable value and why',
+    inputs:[['points','points'],['files','satellite-files']],output:'table'},
   study_design:{title:'Study design',group:'Epidemiology',icon:'◇',color:'teal',
     description:'Declare the study design and its period, so the computations downstream are the ones the design can estimate',
     inputs:[],output:'design'},
@@ -1496,11 +1501,32 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         if(!search)throw new Error('Search the catalog first: open Search a satellite catalog, choose the dates and search.');
         if(search.collection!==chosen.product.route.collection||(search.productType??null)!==(chosen.product.route.productType??null))
           throw new Error('The saved search is for a different product than the one connected. Search again.');
-        const kept=new Set(node.params.kept??search.items.map(i=>i.id));
+        const kept=new Set(node.params.kept??defaultKept(search.items));
         const items=search.items.filter(i=>kept.has(i.id));
         const sentence=searchSentence(search,chosen.product)+` ${items.length} kept.`;
         value={kind:'satellite-files',product:chosen.product,search:{...search,items},sentence} as unknown as DisplayValue;
         const facts=searchFacts(`<urn:fieldwork:run:${runId}:output:${node.id}>`,search,items.length);
+        receipts.push({nodeId:node.id,kind:'computation',facts,rules:'',input:facts,conclusions:[],method:sentence} as unknown as Receipt);
+        break;}
+      case 'sample_satellite_files_at_points':{
+        const files=(inputs as unknown as {files?:{kind?:string;product?:SatelliteProduct;search?:import('./satellite-catalog.js').CatalogSearch}}).files;
+        if(files?.kind!=='satellite-files'||!files.product||!files.search)throw new Error('Connect Search a satellite catalog to files: there are no files to read yet.');
+        const sampling=await import('./satellite-sample.js');
+        const reader=sampling.readerFor(files.product);
+        if(!reader)throw new Error(`No reader is built yet for ${files.product.route.label}. The first is Sentinel-5P NO₂ on Planetary Computer; the others are next.`);
+        const raw=inputs.points as unknown as PointInput|undefined;
+        const features=!raw?[]:'layers' in raw?raw.layers.flatMap(l=>l.features):raw.features;
+        if(!features.length)throw new Error('Connect a point layer to points: the values are read at its points.');
+        const placed=features.filter(f=>f.geometry?.coordinates).map(f=>({id:String(f.id),name:String(f.properties?.name??f.id),
+          lon:(f.geometry!.coordinates as number[])[0]!,lat:(f.geometry!.coordinates as number[])[1]!}));
+        const operator=node.params.qaOperator??'>=';
+        const {readFiles}=await import('./satellite-sample-reader.js');
+        const readings=await readFiles(files.search.items,reader,placed);
+        const {table,counts}=sampling.sampleTable(placed,readings,files.search.from,files.search.until||files.search.from,reader,operator,features.length-placed.length);
+        const units=readings.find(r=>r.units)?.units??null;
+        const sentence=sampling.sampleSentence(counts,reader,operator,files.product);
+        value={...table,sentence} as unknown as DisplayValue;
+        const facts=sampling.sampleFacts(`<urn:fieldwork:run:${runId}:output:${node.id}>`,counts,reader,operator,files.product,units);
         receipts.push({nodeId:node.id,kind:'computation',facts,rules:'',input:facts,conclusions:[],method:sentence} as unknown as Receipt);
         break;}
       case 'study_design':{

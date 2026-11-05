@@ -132,5 +132,22 @@
       "browserReadable": "not checked; NASA Earthdata Login (S8)", "qualityRule": "QA bits 8 to 11 = 0000 for best quality (S8)",
       "stream": null, "coverageStart": null, "citation": null
     }
+  },
+  "readers": {
+    "_note": "HOW TO READ A ROUTE'S FILES AT POINTS, for Sample satellite files at points. Paths and attributes read from the files themselves on 2026-11-05 (experiment 179: S5, S6 and the sampler's structure probe), not from documentation. A route with no entry here has no reader yet, and the widget says so rather than guessing.",
+    "pc-s5p-no2": {
+      "format": "s5p-l2-netcdf", "readOn": "2026-11-05",
+      "variable": "PRODUCT/nitrogendioxide_tropospheric_column", "column": "nitrogendioxide_tropospheric_column",
+      "latitude": "PRODUCT/latitude", "longitude": "PRODUCT/longitude",
+      "latitudeBounds": "PRODUCT/SUPPORT_DATA/GEOLOCATIONS/latitude_bounds",
+      "longitudeBounds": "PRODUCT/SUPPORT_DATA/GEOLOCATIONS/longitude_bounds",
+      "time": "PRODUCT/time_utc",
+      "quality": {
+        "variable": "PRODUCT/qa_value", "threshold": 0.75,
+        "operators": {"readme": ">", "manual": ">="},
+        "note": "The product readme says above 0.75; the product user manual's table, greater than or equal to 0.75 (S8). The two differ only at exactly 0.75. qa_value is stored as an integer with scale_factor 0.01, so the comparison is made on the stored integer: the scale factor is stored in 32 bits as 0.0099999998, so 75 times it is 0.74999998, which a comparison on the scaled value would wrongly fail."
+      },
+      "token": "https://planetarycomputer.microsoft.com/api/sas/v1/token/sentinel-5p-l2-netcdf"
+    }
   }
 }

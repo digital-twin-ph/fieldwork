@@ -10,7 +10,7 @@
  *  Experiment 179. */
 import type {Escape} from './types.js';
 import {SIGN_IN_WORDS,type SatelliteProduct} from './satellite-products.js';
-import {MAX_ITEMS,searchCatalog,searchSentence,typedBox,type BBox,type CatalogItem,type CatalogSearch} from './satellite-catalog.js';
+import {MAX_ITEMS,defaultKept,searchCatalog,searchSentence,typedBox,type BBox,type CatalogItem,type CatalogSearch} from './satellite-catalog.js';
 
 /** Footprints and the study area, drawn as an outline map in longitude and latitude. Offline: no tiles. */
 export function coverageSvg(area:BBox,items:CatalogItem[],selected:string|undefined,esc:Escape):string{
@@ -25,6 +25,9 @@ export function coverageSvg(area:BBox,items:CatalogItem[],selected:string|undefi
     +rect(area,'study-area')+`</svg>`;
 }
 
+/** The streams in words. The codes stay beside them, as the catalog spells them. */
+export const STREAM_WORDS:Record<string,string>={NRTI:'near real time (NRTI)',OFFL:'offline (OFFL)',RPRO:'reprocessed (RPRO)'};
+
 /** What one file is, from the product: the column JLT's Inspect & reuse becomes. */
 export function inspectMarkup(item:CatalogItem|undefined,product:SatelliteProduct,esc:Escape):string{
   if(!item)return '<p class="muted">Select an item to inspect its files.</p>';
@@ -32,6 +35,7 @@ export function inspectMarkup(item:CatalogItem|undefined,product:SatelliteProduc
   const row=(label:string,value:string)=>`<div class="detail-row"><span>${esc(label)}</span><strong>${value}</strong></div>`;
   return `<h3>${esc(item.id)}</h3>`
     +row('Time',esc(item.datetime??'not stated'))+row('Platform',esc(item.platform??'not stated'))
+    +row('Stream',esc(item.stream?STREAM_WORDS[item.stream]??item.stream:'not stated'))+row('Orbit',esc(item.orbit!=null?String(item.orbit):'not stated'))
     +row('Sign-in',esc(f?SIGN_IN_WORDS[f.signIn]:'not checked'))
     +row('Licence',product.licence?`${product.licence.open?'Open':'Restricted'} <span class="muted">(read ${esc(product.licence.readOn)})</span>`
       :'<span class="muted">not yet read</span>')
@@ -60,12 +64,14 @@ export function openSatelliteCatalogDialog(product:SatelliteProduct|null,area:BB
   const searchArea=():BBox|null=>area??('box' in typed()?(typed() as {box:BBox}).box:null);
   const close=()=>{dialog.close();dialog.remove();};
   // COLUMN 02 ALONE, so typing an edge redraws the area without replacing the field being typed into.
-  const coverage=():string=>{const search=state.search,kept=new Set(state.kept??search?.items.map(i=>i.id)??[]),shown=searchArea();
+  const coverage=():string=>{const search=state.search,kept=new Set(state.kept??(search?defaultKept(search.items):[])),shown=searchArea();
     return search?coverageSvg(search.bbox,search.items,selected,esc)
         +`<p class="satellite-note">${esc(searchSentence(search,product!))}</p>`
         +`<ul class="satellite-items">`+search.items.map(i=>`<li class="${i.id===selected?'is-selected':''}">`
           +`<label class="check"><input type="checkbox" data-cat-keep="${esc(i.id)}" ${kept.has(i.id)?'checked':''}> </label>`
-          +`<button class="text-button" data-cat-select="${esc(i.id)}">${esc(i.datetime?.replace('T',' ').slice(0,16)??i.id)}</button></li>`).join('')+`</ul>`
+          +`<button class="text-button" data-cat-select="${esc(i.id)}">${esc(i.datetime?.replace('T',' ').slice(0,16)??i.id)}</button>`
+          +(i.stream||i.orbit!=null?` <span class="muted">${esc([i.stream?STREAM_WORDS[i.stream]??i.stream:'',i.orbit!=null?`orbit ${i.orbit}`:''].filter(Boolean).join(' · '))}</span>`:'')
+          +`</li>`).join('')+`</ul>`
         :shown?coverageSvg(shown,[],undefined,esc)+'<p class="muted">The area to search. No items loaded yet: choose the dates and search.</p>'
         :'<p class="muted">No items loaded. Choose the area and dates, and search.</p>';};
   const render=()=>{
@@ -107,7 +113,7 @@ export function openSatelliteCatalogDialog(product:SatelliteProduct|null,area:BB
       const bbox=searchArea();
       if(!product||!bbox)return;read();busy=true;message='';render();
       try{const result={...await searchCatalog(product,bbox,state.from,state.until),areaFrom:area?'study area' as const:'typed extent' as const};
-        state={...state,search:result,kept:result.items.map(i=>i.id)};selected=result.items[0]?.id;onChange(state);}
+        state={...state,search:result,kept:defaultKept(result.items)};selected=result.items[0]?.id;onChange(state);}
       catch(error){message=error instanceof Error?error.message:String(error);}
       finally{busy=false;render();}
     };
@@ -125,7 +131,7 @@ export function openSatelliteCatalogDialog(product:SatelliteProduct|null,area:BB
     dialog.querySelectorAll<HTMLButtonElement>('[data-cat-select]').forEach(b=>{b.onclick=()=>{selected=b.dataset.catSelect;render();};});
     dialog.querySelectorAll<SVGRectElement>('[data-sat-footprint]').forEach(r=>{r.addEventListener('click',()=>{selected=r.dataset.satFootprint;render();});});
     dialog.querySelectorAll<HTMLInputElement>('[data-cat-keep]').forEach(box=>{box.onchange=()=>{
-      const keep=new Set(state.kept??[]);if(box.checked)keep.add(box.dataset.catKeep!);else keep.delete(box.dataset.catKeep!);
+      const keep=new Set(state.kept??(state.search?defaultKept(state.search.items):[]));if(box.checked)keep.add(box.dataset.catKeep!);else keep.delete(box.dataset.catKeep!);
       state={...state,kept:[...keep]};onChange(state);};});
   };
   render();

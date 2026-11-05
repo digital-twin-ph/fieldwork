@@ -122,7 +122,8 @@ test('the shipped ledger passes and covers every live widget', ()=>{
   // kernel 2x2 widget". Experiment 161, step 6.
   // 57 on 2026-11-05, with find_satellite_products, the name chosen by the practitioner. Experiment 179.
   // 58 the same day, with search_satellite_catalog.
-  assert.equal(review.reviews.length,58);
+  // 59 the same day, with sample_satellite_files_at_points: "Sample satellite files seems to be more straightforward".
+  assert.equal(review.reviews.length,59);
 });
 
 test('the generated table shows the palette words beside the identifier', ()=>{

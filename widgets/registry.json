@@ -1574,7 +1574,7 @@
     {
       "id": "urn:fieldwork:widget:search_satellite_catalog",
       "nodeType": "search_satellite_catalog",
-      "currentVersion": "0.2.0",
+      "currentVersion": "0.3.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -1585,6 +1585,23 @@
           "version": "0.2.0",
           "path": "widgets/releases/search_satellite_catalog/0.2.0.json",
           "sha256": "9a5ee02b118695906b46e00630f289c10e5deda82d61d61de857c7260fb1329d"
+        },
+        {
+          "version": "0.3.0",
+          "path": "widgets/releases/search_satellite_catalog/0.3.0.json",
+          "sha256": "9e0dbcce51d4c3f432735285f4e4de79610f94ff27c22f77badcf0e8ec8ca726"
+        }
+      ]
+    },
+    {
+      "id": "urn:fieldwork:widget:sample_satellite_files_at_points",
+      "nodeType": "sample_satellite_files_at_points",
+      "currentVersion": "0.1.0",
+      "releases": [
+        {
+          "version": "0.1.0",
+          "path": "widgets/releases/sample_satellite_files_at_points/0.1.0.json",
+          "sha256": "3ede47ecba61ae20daf3fd08a92088e37d8139772120278a2e87c675dce0d948"
         }
       ]
     }

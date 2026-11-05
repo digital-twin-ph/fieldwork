@@ -29,6 +29,7 @@ question about either goes to JLT.
 | Future-proof Fieldwork for remote sensing workflows (*"The EO and STAC widgets should future proof FW for remote sensing workflows"*) | NYC's three pollutants are the first instance, not the design scope. Variables, missions, products and catalogs are data, versioned and added without code, as rulesets are; the widgets' contracts carry any variable, area and interval; nothing NYC-specific is compiled in. Tested against at least one non-NYC case before it is called general |
 | Sources needing no sign-in first (*"Before sign in lets use those that don't require sign ins first"*) | Routes a browser reads with no account, an anonymous token included, are built and offered first. A route behind sign-in is listed, marked as such, and left for later |
 | Make the user aware of quality issues in what was downloaded, here its completeness (*"widget has to make user aware of download data quality issues in this case completeness"*, agreeing with S6's finding) | Per date and per place: how many pixels covered it and how many passed the product's quality threshold, stated, never an empty value. A date with pixels and none usable is a finding the widget reports, as the data quality tab does for a table |
+| An accompanying citation for Notes (*"And accompanying citation for notes"*) | Every product used is a reference in the write-up's References, through the citation Fieldwork already keeps for an input (`Citation`, with a DOI where one exists), beside the licence's attribution sentence. Planetary Computer's collection record names ESA as producer and carries no DOI or citation text, so the citation is taken from ESA's product documentation and recorded with where it was read; a product with none says so, as `citationGaps` does for a table |
 | STAC zeroes in on the source URLs | From the product EO chose, over the study area and dates, to the items and their asset URLs, each with licence and whether this browser can read it |
 
 ## The current widgets, examined first
@@ -153,6 +154,13 @@ account, at about a tenth of the file. **Not established:** whether the lazy fil
 6.58 MB toward h5py's 2.25 MB; why the two runs took 2 and 8 minutes, which looks like the network and sequential
 requests and was not measured; whether h5wasm's 14.7 MB can be loaded only when a satellite file is opened; and any of
 this in WebKit.
+
+**Completeness has three kinds, and they are not the same gap** (the practitioner, 2026-11-05: *"So the data gap is
+dates without readings?"*). A date can have no overpass, so no reading at all; an overpass whose pixels carry the fill
+value, so no retrieval (clouds, failure); or pixels with values the product flags below its quality threshold, which is
+what 7 June shows. Per monitor there is a fourth view: usable pixels over the city, and the one containing a monitor
+missing or flagged. The widget reports which, per date and per monitor. Only one of that day's two NO₂ swaths was read,
+so "no usable NO₂ on 7 June" is not established.
 
 **The quality finding stands on its own.** That day's near-real-time swath over NYC has every pixel at 0.74, so a
 practitioner applying the documented threshold gets nothing for that overpass. A widget has to say so, per date,

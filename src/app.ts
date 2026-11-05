@@ -2987,9 +2987,10 @@ function renderInspector(){
     // WHERE THE FILES ARE: searched in a dialog adapted from JLT's STAC Browser. Experiment 179.
     const p=n.params,search=p.search,kept=p.kept??search?.items.map(i=>i.id)??[];
     content+=labelForm('catalog-label','Node label',p.label||'Search a satellite catalog')
-      +'<p class="description">Finds the files of the chosen product over the study area and dates. Reads catalog records only: no file is downloaded.</p>'
+      +'<p class="description">Finds the files of the chosen product over an area and dates. Connect a Study area, or type the area\'s edges in the dialog. Reads catalog records only: no file is downloaded.</p>'
       +`<button class="button primary" id="catalog-search-open">${search?'Search again…':'Search the catalog…'}</button>`
-      +(search?`<div class="detail-row"><span>Dates</span><strong>${esc(search.from)} to ${esc(search.until)}</strong></div>`
+      +(search?`<div class="detail-row"><span>Area</span><strong>${esc(search.areaFrom??'study area')}: W ${search.bbox[0]}, S ${search.bbox[1]}, E ${search.bbox[2]}, N ${search.bbox[3]}</strong></div>`
+        +`<div class="detail-row"><span>Dates</span><strong>${esc(search.from)} to ${esc(search.until)}</strong></div>`
         +`<div class="detail-row"><span>Items</span><strong>${search.items.length} found, ${kept.length} kept</strong></div>`
         +(search.truncated?'<p class="notice notice-warning">The search stopped at its limit; narrow the dates for the rest.</p>':'')
         :'<p class="notice">Not searched yet.</p>')
@@ -3519,7 +3520,7 @@ function renderInspector(){
     const product=finder?.type==='find_satellite_products'&&finder.params.topic&&finder.params.route
       ?productFor(finder.params.topic,finder.params.route):null;
     const geometry=area?.type==='study_area'?(area.params as {geometry?:{type:string;coordinates:unknown}}).geometry:undefined;
-    openSatelliteCatalogDialog(product,bboxOf(geometry),{from:node.params.from,until:node.params.until,search:node.params.search,kept:node.params.kept},esc,next=>{
+    openSatelliteCatalogDialog(product,bboxOf(geometry),{from:node.params.from,until:node.params.until,box:node.params.box,search:node.params.search,kept:node.params.kept},esc,next=>{
       change(w=>{Object.assign(getNode(w,n.id,'search_satellite_catalog').params,next);});
     });
   });

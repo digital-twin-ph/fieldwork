@@ -1046,3 +1046,10 @@ i.bar-zero{position:absolute;top:0;bottom:0;width:1px;background:var(--ink,#2b2b
 .satellite-items,.satellite-files{list-style:none;padding:0;margin:6px 0;max-height:220px;overflow:auto;font-size:12px}
 .satellite-items li.is-selected{font-weight:600}
 .satellite-columns h3{overflow-wrap:anywhere;font-size:13px}
+
+/* A typed search extent: four edges in a row, JLT's W/S/E/N field. */
+.satellite-box{border:1px solid var(--line,#ddd);border-radius:6px;padding:8px 10px;margin:8px 0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 10px}
+.satellite-box legend{padding:0 4px}
+.satellite-box label{display:flex;flex-direction:column;font-size:.85em;gap:2px}
+.satellite-box input{width:100%;min-width:0}
+.satellite-box p{grid-column:1/-1;margin:2px 0}

@@ -1064,12 +1064,12 @@
    "migrationFrom": []
   },
   "search_satellite_catalog": {
-   "version": "0.1.0",
+   "version": "0.2.0",
    "released": "2026-11-05",
    "changes": [
     {
-     "kind": "initial",
-     "description": "Search the chosen product's STAC collection over the study area's extent and a date range, up to 500 items, catalog records only. Three columns from JLT's STAC Browser (MIT, commit 945d8b3), in Fieldwork's dialog style: Connect & discover, Coverage in context (the study area and each item's footprint), Inspect & reuse (each item's files, with sign-in, licence as read, whether a browser can read it, the attribution sentence, and that completeness and citation are not yet known). Keep or drop items. Experiment 179."
+     "kind": "minor",
+     "description": "The area port is optional. With no Study area connected, the dialog takes four typed edges, west, south, east and north, checked as typed (all four numbers; longitudes within ±180 and latitudes within ±90; west less than east, south less than north) and drawn before the search, after JLT's W/S/E/N field. The practitioner on 0.28.0, whose Search stayed grey without a Study area: \"the search catalog UI is not enough for the search\". The receipt states fw:searchAreaFrom. Saved 0.1.0 searches run unchanged and read as from a study area."
     }
    ],
    "breaking": false,

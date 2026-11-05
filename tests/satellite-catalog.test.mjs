@@ -63,3 +63,22 @@ test('the receipt states the search and that completeness was not read, and conf
   // A search never claims completeness it did not read.
   assert.equal(await conforms(facts.replace('fw:completenessRead false','fw:completenessRead true')),false);
 });
+
+test('a typed extent is four edges, checked as typed, and the receipt says where the area came from',async()=>{
+  const {typedBox}=await import('../build/satellite-catalog.js');
+  assert.deepEqual(typedBox('-74.26','40.49','-73.70','40.92'),{box:NYC});
+  assert.match(typedBox('-74.26','','-73.70','40.92').problem,/all four edges/);
+  assert.match(typedBox('-190','40','-73','41').problem,/between -180 and 180/);
+  assert.match(typedBox('-74','95','-73','41').problem,/between -90 and 90/);
+  assert.match(typedBox('170','40','-170','41').problem,/antimeridian/);
+  assert.match(typedBox('-74','41','-73','40').problem,/South must be less/);
+  const {fetch}=stub([{type:'FeatureCollection',features:[item('a','L2__NO2___')],links:[]}]);
+  const product=productFor('no2','pc-s5p-no2');
+  const s={...await searchCatalog(product,NYC,'2023-06-07','2023-06-07',fetch),areaFrom:'typed extent'};
+  assert.match(searchSentence(s,product),/over the typed extent from/);
+  const facts=searchFacts('<urn:fieldwork:run:r:output:s>',s,1);
+  assert.match(facts,/fw:searchAreaFrom "typed extent"/);
+  const conforms=async f=>(await validateGraph(new Store(new Parser().parse(f)))).conforms;
+  assert.equal(await conforms(facts),true);
+  assert.equal(await conforms(facts.replace('"typed extent"','"guessed"')),false);
+});

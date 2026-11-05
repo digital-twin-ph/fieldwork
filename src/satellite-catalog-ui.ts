@@ -4,11 +4,13 @@
  *  commit 945d8b3, MIT): *Connect & discover*, *Coverage, in context*, *Inspect & reuse*. The practitioner, 2026-11-05:
  *  *"Let's follow FW style for dialogs."* What Fieldwork changes: the catalog and collection come from the chosen
  *  product and the area from the workflow's study area, so neither is chosen twice; each file says its licence as
- *  read, sign-in, whether a browser can read it, its attribution, and that its completeness is not yet known.
+ *  read, sign-in, whether a browser can read it, its attribution, and that its completeness is not yet known. The area
+ *  is a connected Study area's extent, or four edges typed here, JLT's W/S/E/N field: 0.28.0 required the Study area
+ *  and its Search stayed grey without one, *"not enough for the search"* (the practitioner, 2026-11-05).
  *  Experiment 179. */
 import type {Escape} from './types.js';
 import {SIGN_IN_WORDS,type SatelliteProduct} from './satellite-products.js';
-import {MAX_ITEMS,searchCatalog,searchSentence,type BBox,type CatalogItem,type CatalogSearch} from './satellite-catalog.js';
+import {MAX_ITEMS,searchCatalog,searchSentence,typedBox,type BBox,type CatalogItem,type CatalogSearch} from './satellite-catalog.js';
 
 /** Footprints and the study area, drawn as an outline map in longitude and latitude. Offline: no tiles. */
 export function coverageSvg(area:BBox,items:CatalogItem[],selected:string|undefined,esc:Escape):string{
@@ -44,7 +46,7 @@ export function inspectMarkup(item:CatalogItem|undefined,product:SatelliteProduc
     +`<p class="muted satellite-note">The files are not read here. Reading the pixels at your points is the next step.</p>`;
 }
 
-export interface CatalogDialogState {from:string; until:string; search?:CatalogSearch; kept?:string[]}
+export interface CatalogDialogState {from:string; until:string; box?:BBox; search?:CatalogSearch; kept?:string[]}
 
 export function openSatelliteCatalogDialog(product:SatelliteProduct|null,area:BBox|null,initial:CatalogDialogState,esc:Escape,
   onChange:(next:CatalogDialogState)=>void):void{
@@ -52,33 +54,45 @@ export function openSatelliteCatalogDialog(product:SatelliteProduct|null,area:BB
   dialog.id='satellite-catalog-dialog';dialog.className='wide-dialog satellite-dialog satellite-catalog-dialog';
   dialog.setAttribute('aria-labelledby','satellite-catalog-title');
   let state={...initial},selected=initial.search?.items[0]?.id,busy=false,message='';
+  // The edges as typed, kept as text so a half-typed value is not thrown away on re-render.
+  const edges=(state.box??['','','','']).map(String);
+  const typed=()=>typedBox(edges[0],edges[1],edges[2],edges[3]);
+  const searchArea=():BBox|null=>area??('box' in typed()?(typed() as {box:BBox}).box:null);
   const close=()=>{dialog.close();dialog.remove();};
+  // COLUMN 02 ALONE, so typing an edge redraws the area without replacing the field being typed into.
+  const coverage=():string=>{const search=state.search,kept=new Set(state.kept??search?.items.map(i=>i.id)??[]),shown=searchArea();
+    return search?coverageSvg(search.bbox,search.items,selected,esc)
+        +`<p class="satellite-note">${esc(searchSentence(search,product!))}</p>`
+        +`<ul class="satellite-items">`+search.items.map(i=>`<li class="${i.id===selected?'is-selected':''}">`
+          +`<label class="check"><input type="checkbox" data-cat-keep="${esc(i.id)}" ${kept.has(i.id)?'checked':''}> </label>`
+          +`<button class="text-button" data-cat-select="${esc(i.id)}">${esc(i.datetime?.replace('T',' ').slice(0,16)??i.id)}</button></li>`).join('')+`</ul>`
+        :shown?coverageSvg(shown,[],undefined,esc)+'<p class="muted">The area to search. No items loaded yet: choose the dates and search.</p>'
+        :'<p class="muted">No items loaded. Choose the area and dates, and search.</p>';};
   const render=()=>{
-    const search=state.search,kept=new Set(state.kept??search?.items.map(i=>i.id)??[]);
+    const search=state.search,check=typed();
     const missing=!product?'Connect Find satellite products and choose a product first.'
-      :!area?'Connect a Study area: the search is over its extent.':'';
+      :!area&&'problem' in check?check.problem:'';
     dialog.innerHTML=`<div class="manual-head"><h2 id="satellite-catalog-title">Search a satellite catalog</h2>`
       +`<div><button class="button primary" id="cat-close">Done</button></div></div>`
-      +(missing?`<p class="notice">${esc(missing)}</p>`:'')
+      +(!product?`<p class="notice">${esc(missing)}</p>`:'')
       +`<div class="satellite-columns">`
       // 01 · Connect & discover
       +`<section><span class="inspector-section">01 · Connect &amp; discover</span>`
       +(product?`<p><strong>${esc(product.route.label)}</strong></p><p class="muted satellite-note">Catalog <code>${esc(product.route.endpoint)}</code>`
         +` · collection <code>${esc(product.route.collection)}</code>${product.route.productType?` · product <code>${esc(product.route.productType)}</code>`:''}</p>`:'')
-      +(area?`<p class="muted satellite-note">Study area extent: W ${area[0].toFixed(3)}, S ${area[1].toFixed(3)}, E ${area[2].toFixed(3)}, N ${area[3].toFixed(3)}</p>`:'')
+      +(area?`<p class="muted satellite-note">Study area extent: W ${area[0].toFixed(3)}, S ${area[1].toFixed(3)}, E ${area[2].toFixed(3)}, N ${area[3].toFixed(3)}</p>`
+        :`<fieldset class="satellite-box"><legend class="field-label">Area to search, in decimal degrees</legend>`
+          +(['West','South','East','North'] as const).map((edge,i)=>`<label>${edge}<input id="cat-${edge.toLowerCase()}" inputmode="decimal" `
+            +`value="${esc(edges[i])}" placeholder="${['-74.26','40.49','-73.70','40.92'][i]}"></label>`).join('')
+          +`<p class="muted satellite-note">Or connect a Study area to the <strong>area</strong> port, and its extent is used.</p>`
+          +`<p class="notice" role="status"${product&&missing?'':' hidden'}>${esc(product?missing:'')}</p></fieldset>`)
       +`<div class="field"><label class="field-label" for="cat-from">From</label><input id="cat-from" type="date" value="${esc(state.from)}"></div>`
       +`<div class="field"><label class="field-label" for="cat-until">Until</label><input id="cat-until" type="date" value="${esc(state.until)}"></div>`
       +`<button class="button primary" id="cat-search"${missing||busy?' disabled':''}>${busy?'Searching…':'Search'}</button>`
       +`<p class="muted satellite-note">A search reads catalog records only, up to ${MAX_ITEMS} items. No data file is downloaded.</p>`
       +(message?`<p class="notice notice-warning" role="alert">${esc(message)}</p>`:'')+`</section>`
       // 02 · Coverage, in context
-      +`<section><span class="inspector-section">02 · Coverage, in context</span>`
-      +(search&&area?coverageSvg(area,search.items,selected,esc)
-        +`<p class="satellite-note">${esc(searchSentence(search,product!))}</p>`
-        +`<ul class="satellite-items">`+search.items.map(i=>`<li class="${i.id===selected?'is-selected':''}">`
-          +`<label class="check"><input type="checkbox" data-cat-keep="${esc(i.id)}" ${kept.has(i.id)?'checked':''}> </label>`
-          +`<button class="text-button" data-cat-select="${esc(i.id)}">${esc(i.datetime?.replace('T',' ').slice(0,16)??i.id)}</button></li>`).join('')+`</ul>`
-        :'<p class="muted">No items loaded. Choose the dates and search.</p>')+`</section>`
+      +`<section><span class="inspector-section">02 · Coverage, in context</span><div id="cat-coverage">`+coverage()+`</div></section>`
       // 03 · Inspect & reuse
       +`<section><span class="inspector-section">03 · Inspect &amp; reuse</span>`
       +(product&&search?inspectMarkup(search.items.find(i=>i.id===selected),product,esc):'<p class="muted">Select an item to inspect its files.</p>')
@@ -90,12 +104,24 @@ export function openSatelliteCatalogDialog(product:SatelliteProduct|null,area:BB
     dialog.querySelector<HTMLInputElement>('#cat-from')!.onchange=()=>{read();onChange(state);};
     dialog.querySelector<HTMLInputElement>('#cat-until')!.onchange=()=>{read();onChange(state);};
     dialog.querySelector<HTMLButtonElement>('#cat-search')!.onclick=async()=>{
-      if(!product||!area)return;read();busy=true;message='';render();
-      try{const result=await searchCatalog(product,area,state.from,state.until);
+      const bbox=searchArea();
+      if(!product||!bbox)return;read();busy=true;message='';render();
+      try{const result={...await searchCatalog(product,bbox,state.from,state.until),areaFrom:area?'study area' as const:'typed extent' as const};
         state={...state,search:result,kept:result.items.map(i=>i.id)};selected=result.items[0]?.id;onChange(state);}
       catch(error){message=error instanceof Error?error.message:String(error);}
       finally{busy=false;render();}
     };
+    // Typing an edge re-checks the box; the field keeps its focus because only the status and button change.
+    (['west','south','east','north'] as const).forEach((edge,i)=>{
+      const input=dialog.querySelector<HTMLInputElement>(`#cat-${edge}`);if(!input)return;
+      input.oninput=()=>{edges[i]=input.value;const now=typed();
+        dialog.querySelector<HTMLButtonElement>('#cat-search')!.disabled=busy||!product||'problem' in now;
+        const status=dialog.querySelector('.satellite-box [role="status"]');
+        if(status){status.textContent='problem' in now?now.problem:'';(status as HTMLElement).hidden=!('problem' in now);}};
+      input.onchange=()=>{const now=typed();if('box' in now){state={...state,box:now.box};onChange(state);}
+        // Once searched, column 02 shows the search's own extent and items, wired by render; it is left alone.
+        if(!state.search)dialog.querySelector('#cat-coverage')!.innerHTML=coverage();};
+    });
     dialog.querySelectorAll<HTMLButtonElement>('[data-cat-select]').forEach(b=>{b.onclick=()=>{selected=b.dataset.catSelect;render();};});
     dialog.querySelectorAll<SVGRectElement>('[data-sat-footprint]').forEach(r=>{r.addEventListener('click',()=>{selected=r.dataset.satFootprint;render();});});
     dialog.querySelectorAll<HTMLInputElement>('[data-cat-keep]').forEach(box=>{box.onchange=()=>{

@@ -361,6 +361,8 @@ export interface ParamsByType {
   find_satellite_products:{label:string; question?:string; topic?:string; route?:string};
   /** A catalog search for the chosen product over the study area and dates, and the items kept. Experiment 179. */
   search_satellite_catalog:{label:string; from:string; until:string;
+    /** Edges typed in the dialog, W/S/E/N, used when no Study area is connected. */
+    box?:[number,number,number,number];
     search?:import('./satellite-catalog.js').CatalogSearch; kept?:string[]};
   study_design:{label:string;design:StudyDesign;period:string;unitOfAnalysis:string;note:string;computations?:string[];answers?:Record<string,import('./study-design-questions.js').DesignAnswer>;table?:import('./study-design-questions.js').DeclaredTable};
   case_series:{label:string;source?:'points'|'table';dateField:string;dateKind:import('./case-series.js').DateKind;period:import('./case-series.js').Period;weightField?:string};

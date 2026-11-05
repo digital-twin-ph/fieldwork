@@ -64,6 +64,24 @@ export interface CatalogSearch {
   items:CatalogItem[];
   /** True when the search stopped at MAX_ITEMS with more to read. */
   truncated:boolean; requests:number; searchedAt:string;
+  /** Where the searched extent came from: a connected Study area, or edges typed in the dialog. Absent on searches
+   *  saved before 0.28.1, which could only come from a Study area. */
+  areaFrom?:AreaFrom;
+}
+export type AreaFrom='study area'|'typed extent';
+
+/** A TYPED EXTENT, CHECKED, the W/S/E/N field of JLT's STAC Browser. The practitioner, 2026-11-05, on a dialog whose
+ *  Search stayed grey until a Study area was connected: *"the search catalog UI is not enough for the search"*. Returns
+ *  the box, or the reason it is not one. Crossing the antimeridian is refused as JLT's is: split it into two searches. */
+export function typedBox(w:string,s:string,e:string,n:string):{box:BBox}|{problem:string}{
+  const v=[w,s,e,n].map(x=>x.trim()===''?NaN:Number(x));
+  if(v.some(x=>!Number.isFinite(x)))return {problem:'Type all four edges, in decimal degrees.'};
+  const [W,S,E,N]=v as BBox;
+  if([W,E].some(x=>x<-180||x>180))return {problem:'West and east are longitudes, between -180 and 180.'};
+  if([S,N].some(x=>x<-90||x>90))return {problem:'South and north are latitudes, between -90 and 90.'};
+  if(W>=E)return {problem:'West must be less than east. An extent across the antimeridian needs two searches.'};
+  if(S>=N)return {problem:'South must be less than north.'};
+  return {box:[W,S,E,N]};
 }
 
 const productTypeOf=(item:{id?:unknown;properties?:Record<string,unknown>}):string|null=>
@@ -110,7 +128,7 @@ export async function searchCatalog(product:SatelliteProduct,bbox:BBox,from:stri
 /** The sentence a search states. */
 export const searchSentence=(s:CatalogSearch,product:SatelliteProduct):string=>
   `${s.items.length} ${product.route.productType?`${product.route.productType} `:''}item${s.items.length===1?'':'s'} in `
-  +`${s.collection} over the study area from ${s.from} to ${s.until}`
+  +`${s.collection} over ${s.areaFrom==='typed extent'?'the typed extent':'the study area'} from ${s.from} to ${s.until}`
   +(product.route.productType?`, of ${s.returned} the catalog returned for the area and dates`:'')+'.'
   +(s.truncated?` The search stopped at ${MAX_ITEMS} items; narrow the dates for the rest.`:'')
   +' Metadata only: no file was read, so how many pixels each holds, and of what quality, is not yet known.';
@@ -123,6 +141,7 @@ export function searchFacts(entity:string,s:CatalogSearch,itemsKept:number):stri
     +`  fw:stacCatalog ${q(s.catalog)};\n  fw:stacCollection ${q(s.collection)};\n`
     +(s.productType?`  fw:productType ${q(s.productType)};\n`:'')
     +`  fw:searchBBox ${q(s.bbox.join(','))};\n`
+    +(s.areaFrom?`  fw:searchAreaFrom ${q(s.areaFrom)};\n`:'')
     +`  fw:searchFrom "${s.from}"^^xsd:date;\n  fw:searchUntil "${s.until}"^^xsd:date;\n`
     +`  fw:itemsReturned "${s.returned}"^^xsd:integer;\n  fw:itemsMatched "${s.items.length}"^^xsd:integer;\n`
     +`  fw:itemsKept "${itemsKept}"^^xsd:integer;\n  fw:searchTruncated ${s.truncated};\n`

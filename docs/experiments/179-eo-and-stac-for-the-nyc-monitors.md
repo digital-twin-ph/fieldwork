@@ -292,6 +292,23 @@ says which collection. It was added to the rule's scope types, rather than recor
 **Seen in the live run, for evaluation:** a Sentinel-5P swath is far larger than New York City, so in *Coverage, in
 context* the boroughs are a small box inside it.
 
+## On Pages: the area typed in the dialog, 2026-11-05 (0.28.1)
+
+The practitioner opened Search a satellite catalog on Pages with no Study area connected, set the dates, and found
+Search grey: *"I think the search catalog UI is not enough for the search and there is no point from satellite
+files."* Then: *"My bad I did not add a study area."* The cause was the practitioner's to name, but the defect is the
+dialog's: its only guidance was one muted line, and nothing inside it led anywhere. JLT's STAC Browser sets the area
+inside the browser (a drawn rectangle, a W/S/E/N field, the map extent). 0.28.1 adopts the W/S/E/N field. The area
+port is optional; with none connected, four edges are typed, checked as typed, and drawn in column 02 before the
+search. The receipt states `fw:searchAreaFrom`, "study area" or "typed extent".
+
+Found while testing it: an edge's `change` re-rendered the whole dialog, so moving to the next edge replaced the field
+being typed into and its value was lost. Only column 02 is redrawn now. The browser test types the edges in the order
+a person tabs through them.
+
+The second half of the remark, *"no point from satellite files"*, stands: nothing yet reads the files. That is the
+next widget, reviewed below.
+
 ## Admission review: Sample satellite files at points, 2026-11-05
 
 The practitioner, asked whether to extend Sample raster at points or add a widget: *"Sample satellite files seems to

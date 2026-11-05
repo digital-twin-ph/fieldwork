@@ -3,6 +3,15 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.24.1 — 2026-11-05
+
+- **A slow download is no longer stopped after two minutes.** Fetching a table from where it is published now shows how
+  much has arrived ("1.5 of 8.8 MB") and offers Stop; there is no time limit. Found when Zenodo answered at once and
+  then sent the NYC package at about 5 KB/s, and the old limit called a working download a failure.
+- Regression is checked by the validation lab (check 33) against statsmodels on the Salmonella and NYC models: it
+  agrees to 1e-10 or better. The check found one defect, recorded in TODO: a separated term (no finite estimate) is
+  shown as an ordinary odds ratio, without a warning.
+
 ## 0.24.0 — 2026-11-04
 
 - **Regression follows the declared study design**, read from the same declaration the Two-by-two table reads. A rate

@@ -3,7 +3,7 @@ import type {DataTable,DataTableSource,TableSelection} from './data-table.js';
 import {dataTable,wideDataTable,keyDomains,MAX_TABLE_ROWS,MAX_TABLE_FILE_BYTES,type TableRows} from './data-table.js';
 import {parseCSV} from './input-data.js';
 import {readStata,type StataTable} from './stata.js';
-import {fetchOrDeviceCopy,tablesInArchive,archiveEntry,asFile,type RemoteTableSource} from './remote-table.js';
+import {fetchOrDeviceCopy,tablesInArchive,archiveEntry,asFile,type RemoteTableSource,progressText} from './remote-table.js';
 import {contentHash} from './project-files.js';
 
 const FILE_BYTES=MAX_TABLE_FILE_BYTES;
@@ -468,9 +468,15 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:T
   const fetchURL=async(fresh:boolean)=>{
     const url=urlInput.value.trim();
     if(!/^https:\/\//.test(url)){fail(new Error('Give an https address.'));return;}
-    status.textContent=`Fetching ${url}…`;error.hidden=true;
+    // PROGRESS AND A STOP, not a time limit: a slow source is still a working one (2026-11-05, Zenodo at 5 KB/s).
+    const stop=new AbortController();
+    status.innerHTML=`<span data-fetch-progress>Fetching ${esc(url)}…</span> <button type="button" class="text-button" data-fetch-stop>Stop</button>`;
+    error.hidden=true;
+    status.querySelector<HTMLButtonElement>('[data-fetch-stop]')!.onclick=()=>stop.abort();
+    const progress=status.querySelector('[data-fetch-progress]')!;
     try{
-      const got=await fetchOrDeviceCopy(url,{fresh});
+      const got=await fetchOrDeviceCopy(url,{fresh,signal:stop.signal,
+        onProgress:(read,total)=>{progress.textContent=`Fetching ${url}: ${progressText(read,total)}`;}});
       const bytes=got.bytes;
       const said=got.from==='device'
         ?`Read from the copy on this device, fetched ${new Date(got.fetchedAt??'').toLocaleString()} and checked by digest. `

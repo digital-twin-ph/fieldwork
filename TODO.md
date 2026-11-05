@@ -1580,6 +1580,18 @@ A defect is not a blocker unless something is waiting on it — filing them as "
 highest first" overstated every one of them, and led to patching two things that need
 rebuilding (lesson 13 in [62](docs/experiments/62-workflow-traversal.md)).
 
+**Regression reports a separated term as an ordinary odds ratio.** Found by validation lab check 33, 2026-11-05: in
+Salmonella against the panel controls, the 80+ age group has no finite estimate (standard errors 29,232 in Fieldwork and
+1,596,022 in statsmodels, each stopping somewhere along the same ridge), and the result table shows an odds ratio of
+1.27e8 (0.016 to 2.8e10) with nothing to say why. It should say the term is separated, which category has no cases or
+no controls, and report no number for it. Waits on nothing; the exposure's estimate is unaffected.
+
+**Rate ratio belongs in the Two-by-two widget, not a widget of its own.** The practitioner, 2026-11-05: *"It should be in
+the Epi kernel 2x2 widget I think that's what we decided"* ([directions](docs/directions.json): one substrate, a family
+of measures over it). South London is the one example using `rate_ratio`; its comparison moves to a two-by-two with
+denominators, and the widget is retired outright (no outside users). Regression's design licences then cover the rate
+ratio's reading too.
+
 - ~~**A caught fetch still raises a page error offline, and nothing explains how.**~~ **FIXED
   2026-10-31, and the explanation was in the service worker rather than the page.** A rejected
   promise handed to `FetchEvent.respondWith` is an error the WORKER raises, and WebKit surfaces it

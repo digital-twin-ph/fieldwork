@@ -9,6 +9,7 @@
 //                   | reachability-soho-001 | corridor-soho-001
 //                   | relate-snow-001 | group-snow-001 | area-join-snow-001
 //                   | select-range-london-001
+//                   | regression-salmonella-001 | regression-nyc-001 (needs NYC_PKG)
 import {createHash} from 'node:crypto';
 import {readFile,writeFile} from 'node:fs/promises';
 import {reprojectToCRS84,projectFromCRS84} from '../build/reproject.js';
@@ -32,6 +33,9 @@ import {caseSeriesFromTable} from '../build/case-series.js';
 import {relateTable,relateShape,gapSignature} from '../build/relate-table.js';
 import {groupTable} from '../build/group-table.js';
 import {selectRange} from '../build/derive-value.js';
+import {fitRegression,specFrom,rowsOf} from '../build/regression.js';
+import {parseCSV} from '../build/input-data.js';
+import {unzipSync} from 'fflate';
 import {readStata} from '../build/stata.js';
 import {joinTableToAreas} from '../build/area-join.js';
 import {computeRate,fromTable,rateTable as rateTableOf} from '../build/rate.js';
@@ -55,6 +59,7 @@ const {version}=JSON.parse(await readFile(new URL('../package.json',import.meta.
 const registry=JSON.parse(await readFile(new URL('../widgets/registry.json',import.meta.url),'utf8'));
 const widgetOf=nodeType=>registry.widgets.find(w=>w.nodeType===nodeType);
 const sha256=data=>createHash('sha256').update(data).digest('hex');
+const MAX_ROWS_SALMONELLA=20000,MAX_ROWS_NYC=20000;
 
 /** JSON with every object's keys sorted and no whitespace.
  *
@@ -1165,6 +1170,73 @@ const builders={
     },files:{}};
   },
 
+  'regression-salmonella-001'(){
+    // THE SALMONELLA CASE-CONTROL MODEL, as the worked example declares it: Galia melon in April, adjusted for age group
+    // (seven groups) and sex, cases against the classical controls and, as a second case, against the panel controls.
+    // CC BY 4.0, Luczynska et al. 2022, so the rows travel in the fixture; only the four columns the model reads.
+    const dir=new URL('../../example-2021-salmonella-germany/data/',import.meta.url);
+    const read=name=>{const text=readFileSync(new URL(name,dir),'utf8');const t=parseCSV(text,MAX_ROWS_SALMONELLA);
+      const h=t.headers.map(x=>x.trim());
+      return {sha256:sha256(Buffer.from(text,'utf8')),rows:t.rows.map(v=>Object.fromEntries(h.map((x,i)=>[x,v[i]==='NA'?'':(v[i]??'')])))};};
+    const all=read('Complete_dataset_Luczynska_et_al_2022.csv'),panel=read('FM_HuGo_controls_Luczynska_et_al_2022.csv');
+    const COLUMNS=['fall','galiamelo_apr2','age_group7','sex'];
+    const keep=rows=>rows.map(r=>Object.fromEntries(COLUMNS.map(c=>[c,r[c]??''])));
+    const params={family:'logistic',outcome:'fall',cases:['1'],controls:['0'],exposure:{column:'galiamelo_apr2',as:'categorical'},
+      adjust:[{column:'age_group7',as:'categorical'},{column:'sex',as:'categorical'}]};
+    const fitted=(rows,errors)=>{const r=fitRegression(rows,specFrom({...params,errors}));
+      return {columns:r.columns,rows:r.rows,iterations:r.iterations,loglik:r.loglik,errors:r.errors,level:r.level,
+        estimates:r.estimates.map(e=>({term:e.term,column:e.column,coefficient:e.coefficient,se:e.se,ratio:e.ratio,lower:e.lower,upper:e.upper}))};};
+    const classical=keep(all.rows.filter(r=>r.fall==='1'||r.fall==='0'));
+    const matched=keep([...all.rows.filter(r=>r.fall==='1'),...panel.rows]);
+    const cases=[
+      {note:'Cases against the classical controls, likelihood-ratio intervals: the published 96 (15-2100)',rowsFrom:'classical',errors:'profile',...fitted(classical,'profile')},
+      {note:'Cases against the panel controls, likelihood-ratio intervals: the published 18 (4.6-100)',rowsFrom:'panel',errors:'profile',...fitted(matched,'profile')},
+      {note:'Cases against the classical controls, Wald intervals from the model',rowsFrom:'classical',errors:'wald',...fitted(classical,'wald')}];
+    return {fixture:{
+      ...base('regression-salmonella-001','regression','Regression','src/regression.ts#fitRegression'),
+      source:'Luczynska et al. 2022, Salmonella Braenderup outbreak, Germany 2021, case-control data. Zenodo doi:10.5281/zenodo.7333295, CC BY 4.0.',
+      declaredParameters:{semantics:'Logistic regression of fall (case 1, control 0; other values left out) on galiamelo_apr2, adjusted for age_group7 and sex, each entered as categories against the first value in sorted order. Fitted by maximum likelihood (IRLS). Wald: coefficient plus or minus z times the standard error from the inverse information. Likelihood-ratio (profile): each limit is where the log-likelihood, refitted with that coefficient held fixed, has fallen by z^2/2 from its maximum. z for 95% is 1.959963984540054. A row missing any of the four columns is left out.',
+        equivalentTo:"statsmodels: smf.glm('y ~ C(galiamelo_apr2) + C(age_group7) + C(sex)', family=Binomial()).fit(); R: glm(..., family = binomial) with confint() for the profile limits.",
+        params},
+      input:{columns:COLUMNS,classical:{sha256:all.sha256,rows:classical},panel:{sha256:panel.sha256,rows:matched}},
+      output:{cases},
+      note:'Recompute each case from its own rows (`rowsFrom`) and `errors`. Only reported terms are listed; the intercept is not.'
+    },files:{}};
+  },
+
+  'regression-nyc-001'(){
+    // THE NYC MODEL, fetched rather than carried. The daily counts are the New York City health department's, whose
+    // terms reserve all rights, so neither Fieldwork's example nor this fixture redistributes them: the fixture names
+    // the authors' Zenodo package, the member and its digest, and the lab fetches it. Exported from a local copy of
+    // the same package, NYC_PKG, checked against that digest.
+    const path=process.env.NYC_PKG;
+    if(!path)throw new Error('Set NYC_PKG to a local copy of the authors\' Zenodo package to export this fixture.');
+    const url='https://zenodo.org/api/records/22757330/files/NYC_Pediatric_Asthma_Ozone_JHM_Reproducibility_v1.0.zip/content';
+    const entry='NYC_Pediatric_Asthma_Ozone_JHM_Reproducibility_v1.0/Data/Core/Derived/analysis_master_raw_rebuild.csv';
+    const archive=readFileSync(path),zip=unzipSync(archive),bytes=zip[entry];
+    if(!bytes)throw new Error(`${entry} is not in ${path}.`);
+    const t=parseCSV(new TextDecoder().decode(bytes),MAX_ROWS_NYC);const h=t.headers.map(x=>x.trim());
+    const rows=t.rows.map(v=>Object.fromEntries(h.map((x,i)=>[x,v[i]==='NA'?'':(v[i]??'')]))).sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);
+    const params={family:'poisson',outcome:'count',exposure:{column:'o3_lag02_10',as:'numeric'},
+      adjust:[{column:'pm25_lag02_10',as:'numeric'},{column:'no2_lag02_10',as:'numeric'},{column:'tmean_lag03',as:'spline'},
+        {column:'holiday',as:'numeric'}],strata:'stratum',hacLag:14,order:'date'};
+    const fitted=errors=>{const r=fitRegression(rows,specFrom({...params,errors}));
+      return {columns:r.columns,rows:r.rows,strata:r.strata,iterations:r.iterations,loglik:r.loglik,errors:r.errors,level:r.level,
+        estimates:r.estimates.map(e=>({term:e.term,column:e.column,coefficient:e.coefficient,se:e.se,ratio:e.ratio,lower:e.lower,upper:e.upper}))};};
+    return {fixture:{
+      ...base('regression-nyc-001','regression','Regression','src/regression.ts#fitRegression'),
+      source:'Lian D, et al. Data and code for: Ambient ozone and pediatric asthma emergency department visits in New York City. Zenodo doi:10.5281/zenodo.22757330. The authors\' materials CC BY 4.0; the daily counts NYC DOHMH EpiQuery, all rights reserved, so not carried here.',
+      declaredParameters:{semantics:'Poisson regression of count on o3_lag02_10, adjusted for pm25_lag02_10, no2_lag02_10, a cubic B-spline of tmean_lag03 with 4 degrees of freedom (R splines::bs, interior knots at the type-7 quantiles, boundary at the range) and holiday, with one stratum per value of `stratum` absorbed by the conditional Poisson likelihood; a stratum with no events is dropped. Rows in date order; a row missing any model column is left out. Model-based errors from the inverse information; HAC errors Newey-West with Bartlett weights and 14 lags over the date-ordered rows, without small-sample correction.',
+        equivalentTo:"statsmodels: smf.glm('count ~ o3_lag02_10 + pm25_lag02_10 + no2_lag02_10 + bs(tmean_lag03, df=4) + holiday + C(stratum)', family=Poisson()).fit(cov_type='HAC', cov_kwds={'maxlags': 14}); fixed effects for the strata give the conditional model's slopes. R: gnm(..., eliminate = stratum) with sandwich::NeweyWest(lag = 14, prewhite = FALSE).",
+        params,authorsArchivedR:{coefficient:0.059133132965951,se:0.0127276822785079,note:'o3_lag02_10, HAC; from the authors\' archived R output in the package.'}},
+      input:{remote:{url,entry,archiveSha256:sha256(archive),sha256:sha256(Buffer.from(bytes))},rowCount:rows.length,
+        columns:['date','count','o3_lag02_10','pm25_lag02_10','no2_lag02_10','tmean_lag03','holiday','stratum']},
+      output:{cases:[{note:'HAC errors, 14 lags: the published 1.061 (1.035-1.088) per 10 ppb',errors:'hac',...fitted('hac')},
+        {note:'Model-based errors: the same coefficients, the information-matrix standard errors',errors:'wald',...fitted('wald')}]},
+      note:'Fetch input.remote, check both digests, read the member as CSV with NA empty, sort by date, and recompute each case.'
+    },files:{}};
+  },
+
   'area-join-snow-001'(){
     // THE CHOROPLETH'S JOIN, run exactly as the worked example runs it: Table VIII through the
     // declared rate, then onto the study area's 33 named parts.
@@ -1284,16 +1356,21 @@ const builders={
 // and `validate:examples` already treats a missing sibling the same way.
 if(process.argv.includes('--dry-run')){
   const missing=/is not checked out beside this repository/;
-  const broken=[];
+  // DATA NOBODY MAY REDISTRIBUTE: a builder that needs a local copy of a package whose terms keep it out of every
+  // repository (NYC's counts) cannot build where that copy is absent. Named, per builder, rather than counted broken.
+  const external=/Set NYC_PKG to a local copy/;
+  const broken=[],notHere=[];
   let skipped=null;
   for(const [fixtureId,build] of Object.entries(builders)){
     try{await build();}
     catch(error){
       const message=error instanceof Error?error.message:String(error);
       if(missing.test(message)){skipped=message;break;}
+      if(external.test(message)){notHere.push(fixtureId);continue;}
       broken.push({fixtureId,message});
     }
   }
+  if(notHere.length)console.log(`Validation fixtures: ${notHere.join(', ')} not built here: needs a local copy of data that is not redistributed.`);
   if(skipped){
     console.log('Validation fixtures: not built. '+skipped);
     process.exit(0);
@@ -1306,7 +1383,7 @@ if(process.argv.includes('--dry-run')){
     console.error('  parity check is pinned to a release the application no longer behaves like.');
     process.exit(1);
   }
-  console.log(`Validation fixtures: ${total} builders build, nothing written.`);
+  console.log(`Validation fixtures: ${total-notHere.length} of ${total} builders build, nothing written.`);
   process.exit(0);
 }
 

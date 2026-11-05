@@ -3,7 +3,7 @@
   "description": "Independent recomputation of implemented widgets by an external process, recorded after release. Release files are immutable once committed, so evidence about a release lives here and accrues as checks run. A fixture digest recorded in a result is over canonical JSON content rather than the file’s bytes, revised 2026-10-11 because byte identity is unsatisfiable in the browser the lab publishes to. A parity result establishes numerical agreement with a named external implementation under a stated criterion. It is not scientific certification, and it says nothing about whether a method is appropriate for a question.",
   "lab": {
     "repository": "https://github.com/digital-twin-ph/validation-lab",
-    "commit": "725ca72120d91bc34f449acdaf5c7323e533c3fd",
+    "commit": "12bc09fa16afadb34655db88486eac1793860bc6",
     "pinNote": "The commit CI checks the lab out at: .github/workflows/pages.yml reads it with `jq -r .lab.commit widgets/parity.json`. So this pin, not the clone beside this repository, is what `validate:dive-deeper` verifies against on a clean runner -- and it must be advanced whenever a check lands in the lab, in the same push-then-pin order the worked examples use."
   },
   "outcomes": {
@@ -630,6 +630,31 @@
       "ranAt": "2026-11-04T03:36:42.207065+00:00",
       "note": "Only the range is recomputed. Selecting listed values computes nothing and is asserted by unit tests.",
       "notebook": "32-select-range-vs-pandas.ipynb"
+    },
+    {
+      "widget": "urn:fieldwork:widget:regression",
+      "coversRelease": "0.2.0",
+      "check": "33-regression",
+      "result": "content/results/check-33-regression.json",
+      "sha256": "5ab2d0694bdbb3e7c53e278f7da7a4fffb64eee41e97f7ff70e7f9b3a05b00a6",
+      "external": [
+        "statsmodels 0.15.0",
+        "patsy 1.0.3",
+        "scipy 1.18.1",
+        "pandas 2.3.3"
+      ],
+      "criterion": "Every reported term's coefficient and model-based standard error within 1e-6 (relative) of statsmodels' GLM fitted to tol 1e-12; likelihood-ratio limits within 1e-4 of limits found by refitting statsmodels' model with the coefficient held fixed; NYC's HAC standard errors within 1e-6 of statsmodels' Newey-West at 14 lags without correction on the stratum fixed-effects model; NYC's ozone coefficient and HAC standard error within 1e-9 of the authors' archived R result; the same rows used. AMENDED after the first run: statsmodels' default tolerance stopped Salmonella one iteration early, and the tightened fit equals Fieldwork's to 15 digits. A term with a standard error above 1,000 is separated and compared only on being separated in both.",
+      "outcome": "agrees",
+      "notEstablished": [
+        "That either model is well specified, or that an adjusted estimate is causal.",
+        "Pyodide: this run is CPython. The NYC fixture fetches its data from Zenodo, which the browser kernel may not reach.",
+        "Offsets, overdispersed errors and wider categorical exposures: neither example uses them.",
+        "Separated terms: only that both implementations find them separated. Fieldwork reports them as ordinary odds ratios with no warning (the panel case's 80+ age group), which this check records and does not excuse."
+      ],
+      "ranAt": "2026-11-05T03:50:29.709039+00:00",
+      "measured": "Five comparisons. Salmonella, cases against classical controls (142 rows) and panel controls (113), likelihood-ratio and Wald: worst relative difference 1.3e-10, the published 96 (15-2067) and 18 (4.6-101) recomputed. NYC, 3,643 rows and 840 strata: HAC and model-based errors 1.1e-12, and the authors' R result reproduced. FINDING AGAINST FIELDWORK: the panel case's 80+ age group is separated (standard errors 29,232 and 1,596,022) and Fieldwork reports it as an odds ratio of 1.27e8 (0.016 to 2.8e10) with no warning.",
+      "note": "NYC's daily counts are NYC DOHMH's, all rights reserved, so the fixture carries no rows: it names the authors' Zenodo package and its digest, and the check fetches it. External validation only; a lesson on regression belongs in dive-deeper.",
+      "notebook": "33-regression-vs-statsmodels.ipynb"
     }
   ],
   "notebookNote": "`notebook` names the lab notebook that carries the check, and `diveDeeper` the heading of its Dive Deeper section where it has one -- the part written for a practitioner who wants to understand the widget rather than for a reviewer checking it (experiment 94). Both are recorded rather than derived from the check id: `24-project-forward` lives in `24-project-vs-pyproj.ipynb`, so matching on the leading number works by luck and would break the first time a check and its notebook are named differently. The application reads `diveDeeper` to decide which widgets offer the link, and scripts/validate-dive-deeper.mjs refuses a heading the notebook does not actually carry."

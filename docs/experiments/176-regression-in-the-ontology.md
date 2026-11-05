@@ -1,6 +1,6 @@
 # 176 · Regression in the ontology
 
-_Created 2026-11-05 · Updated 2026-11-05_
+_Created 2026-11-04 · Updated 2026-11-04_
 
 **Status:** tried — designed, decided by the practitioner, built in Regression 0.2.0; no worked example declares a design for a regression yet.
 

@@ -268,9 +268,10 @@
   {
    "nodeType": "find_satellite_products",
    "exampleUses": [
+    "brazil-dengue-rj-2024",
     "nyc-asthma-ozone-2016-2025"
    ],
-   "exampleUseCount": 1,
+   "exampleUseCount": 2,
    "lab": "none",
    "labOwed": false,
    "fieldUse": [],
@@ -537,9 +538,10 @@
   {
    "nodeType": "sample_satellite_files_at_points",
    "exampleUses": [
+    "brazil-dengue-rj-2024",
     "nyc-asthma-ozone-2016-2025"
    ],
-   "exampleUseCount": 1,
+   "exampleUseCount": 2,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],
@@ -548,9 +550,10 @@
   {
    "nodeType": "search_satellite_catalog",
    "exampleUses": [
+    "brazil-dengue-rj-2024",
     "nyc-asthma-ozone-2016-2025"
    ],
-   "exampleUseCount": 1,
+   "exampleUseCount": 2,
    "lab": "none",
    "labOwed": false,
    "fieldUse": [],
@@ -702,6 +705,7 @@
   {
    "nodeType": "table_output",
    "exampleUses": [
+    "brazil-dengue-rj-2024",
     "hagelloch",
     "heat",
     "nyc-asthma-ozone-2016-2025",
@@ -716,7 +720,7 @@
     "snow-voronoi",
     "south-london-1854"
    ],
-   "exampleUseCount": 13,
+   "exampleUseCount": 14,
    "lab": "none",
    "labOwed": false,
    "fieldUse": [],

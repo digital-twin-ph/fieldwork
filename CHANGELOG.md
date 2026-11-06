@@ -3,6 +3,18 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.35.0 — 2026-11-06
+
+- **The Brazil dengue example has a satellite workflow**, *How hot was the ground in each municipality?*: MODIS
+  land surface temperature over the 92 municipalities for every 8-day period of 2024, from Terra and Aqua. Played back
+  live: 180 files read in about 4 minutes in a browser, 8,188 rows, 8,064 with a mean.
+- **Sample satellite files at points or over areas takes a study area.** A study area's units, such as municipalities
+  picked from geoBoundaries, are read as they are, with no polygon layer in between.
+- **Fixed: half the state read as no cell.** Planetary Computer leaves the satellite off some 2024 MODIS items, and
+  they were read as a third satellite; the satellite now comes from the product's name where the item does not say.
+- **Fixed: the study area dialog's sections remembered being open**, so the click that opens one closed it.
+- Validation: Chromium locally; WebKit in CI.
+
 ## 0.34.1 — 2026-11-06
 
 - **A step's table is one button away even before a run.** After opening a project or reloading, a table step's

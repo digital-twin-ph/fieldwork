@@ -1260,7 +1260,7 @@
     {
       "id": "urn:fieldwork:widget:study_area",
       "nodeType": "study_area",
-      "currentVersion": "0.6.1",
+      "currentVersion": "0.6.2",
       "releases": [
         {
           "version": "0.1.0",
@@ -1301,6 +1301,11 @@
           "version": "0.6.1",
           "path": "widgets/releases/study_area/0.6.1.json",
           "sha256": "6aa7a568a38318a9c0ef7bf2ca472793113314c5a8a73c82b807dd07b4406c48"
+        },
+        {
+          "version": "0.6.2",
+          "path": "widgets/releases/study_area/0.6.2.json",
+          "sha256": "f8de178f7d05c9686415546a5e235d72fe8b2612640e13c115064aeff244b4e1"
         }
       ],
       "previousNodeTypes": [
@@ -1666,7 +1671,7 @@
     {
       "id": "urn:fieldwork:widget:sample_satellite_files_at_points",
       "nodeType": "sample_satellite_files_at_points",
-      "currentVersion": "0.3.0",
+      "currentVersion": "0.4.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -1687,6 +1692,11 @@
           "version": "0.3.0",
           "path": "widgets/releases/sample_satellite_files_at_points/0.3.0.json",
           "sha256": "b375fda7fad20309529ee088948a0431fdafea2b45d996a4fd24c6dbd02f4632"
+        },
+        {
+          "version": "0.4.0",
+          "path": "widgets/releases/sample_satellite_files_at_points/0.4.0.json",
+          "sha256": "18aa3985b4d31f5087b9bfa977151849040457a2bf3748bb137cf15c155850fe"
         }
       ]
     }

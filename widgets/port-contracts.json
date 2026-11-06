@@ -448,6 +448,10 @@
             [
               "areas",
               "polygons"
+            ],
+            [
+              "area",
+              "area"
             ]
           ]
         }

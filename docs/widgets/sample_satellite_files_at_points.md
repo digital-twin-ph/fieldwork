@@ -27,7 +27,8 @@ point per overpass, plus one row per point for each day with no overpass.
 ## Over areas
 
 Connect a polygon layer to **areas** instead of points: municipalities from **Join a table to the study area**, or a
-**Polygon layer**. This works for gridded products, which today means **MODIS land surface temperature** (8-day,
+**Polygon layer**. Or connect a **Study area** to **area**: its units, such as municipalities picked from an
+administrative boundary, are read as they are. One kind of place per node. This works for gridded products, which today means **MODIS land surface temperature** (8-day,
 1 km). Sentinel-5P is still read at points only.
 
 Each area is read by the cells whose centre is inside it, the rule **Clip raster** uses. A municipality made of

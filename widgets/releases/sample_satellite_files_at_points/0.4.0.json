@@ -1,0 +1,113 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:sample_satellite_files_at_points",
+  "nodeType": "sample_satellite_files_at_points",
+  "version": "0.4.0",
+  "title": "Sample satellite files at points or over areas",
+  "released": "2026-11-06",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['sample_satellite_files_at_points']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "validationStatus": "application-only",
+    "shaclShapes": []
+  },
+  "ports": {
+    "inputs": [
+      {
+        "name": "points",
+        "type": "points"
+      },
+      {
+        "name": "areas",
+        "type": "polygons"
+      },
+      {
+        "name": "area",
+        "type": "area"
+      },
+      {
+        "name": "files",
+        "type": "satellite-files"
+      }
+    ],
+    "output": "table",
+    "optionalInputs": [
+      "points",
+      "areas",
+      "area"
+    ],
+    "note": "Takes the places to read at, one kind of the three: points, a polygon layer, or a study area's units; and the files a search kept. Emits a long table: for points, one row per point per overpass or period; for areas, one row per area per period per satellite, with the cells counted."
+  },
+  "ontology": {
+    "status": "partial",
+    "mappings": [
+      {
+        "role": "entity",
+        "iri": "urn:fieldwork:SatellitePointSample",
+        "file": "ontology/runtime.ttl"
+      },
+      {
+        "role": "entity",
+        "iri": "urn:fieldwork:SatelliteAreaSample",
+        "file": "ontology/runtime.ttl"
+      }
+    ],
+    "note": "The receipt states the route, the variable, the unit as the file states it, the pixel convention, the quality variable, threshold and operator, files read, points, rows written, and rows passing, below the threshold, with no retrieval and with no overpass; fw:completenessRead true and fw:imputed false. Held by fw:SatellitePointSampleShape. Over areas, or at points in a gridded file: fw:SatelliteAreaSample, with the cell convention, the quality rule in words, places sampled and rows with no cell, held by fw:SatelliteAreaSampleShape.",
+    "emits": {
+      "classes": [
+        "SatellitePointSample"
+      ],
+      "properties": [
+        "completenessRead",
+        "filesRead",
+        "imputed",
+        "pixelConvention",
+        "pointsSampled",
+        "qualityOperator",
+        "qualityThreshold",
+        "qualityVariable",
+        "rowsBelowQuality",
+        "rowsNoOverpass",
+        "rowsNoRetrieval",
+        "rowsPassing",
+        "rowsWritten",
+        "sampledRoute",
+        "sampledVariable",
+        "satelliteValueUnit"
+      ]
+    }
+  },
+  "implementation": {
+    "files": [
+      "src/app.ts",
+      "src/core.ts",
+      "src/satellite-areas.ts",
+      "src/satellite-grid-sample.ts",
+      "src/satellite-pixels.ts",
+      "src/satellite-read.ts",
+      "src/satellite-sample-reader.ts",
+      "src/satellite-sample-worker.ts",
+      "src/satellite-sample.ts"
+    ],
+    "definition": "src/satellite-sample.ts"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": null
+  },
+  "changes": [
+    {
+      "kind": "minor",
+      "description": "Reads over a study area's units as well as a polygon layer: a third input, area, so the municipalities picked from geoBoundaries are read as they are. The satellite comes from the product's name (MOD11A2 Terra, MYD11A2 Aqua) where an item leaves its platform out, which Planetary Computer does for some 2024 MODIS items: they had been read as a third satellite, half a state each. Experiment 180."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Lab check 35 holds the point reading of Sentinel-5P against h5py and pyproj (0.2.1). The area reading has unit tests, an offline browser test with three areas, and a run in Node over the 92 Rio de Janeiro municipalities against real MODIS files (experiment 180, M2); no lab check yet."
+  }
+}

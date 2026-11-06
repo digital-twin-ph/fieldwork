@@ -59,3 +59,11 @@ test('sums keep every count, and two tiles add before anything is divided',()=>{
   assert.deepEqual([both.cells,both.passing,both.sum,both.min,both.max,both.clearSum],[4,2,31000,15000,16000,10]);
   assert.deepEqual(addSums(emptySums(),emptySums()).min,null);
 });
+
+test('the satellite comes from the item, or from the product name where the item leaves it out',async()=>{
+  const {platformOf}=await import('../build/satellite-grid-sample.js');
+  assert.equal(platformOf({id:'MOD11A2.A2024345.h14v11.061.2024354',platform:null}),'terra');
+  assert.equal(platformOf({id:'MYD11A2.A2024345.h14v11.061.2024354',platform:null}),'aqua');
+  assert.equal(platformOf({id:'MYD11A2.x',platform:'aqua'}),'aqua');
+  assert.equal(platformOf({id:'other',platform:null}),'');
+});

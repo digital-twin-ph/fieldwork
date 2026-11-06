@@ -171,7 +171,7 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   // rule and the kind of gap where there is no usable value. Experiment 179.
   sample_satellite_files_at_points:{title:'Sample satellite files at points or over areas',group:'Spatial operations',icon:'◴',color:'teal',
     description:'Read the satellite value at each point, or over each area, for every overpass or period, with its quality, and say where there is no usable value and why',
-    inputs:[['points','points'],['areas','polygons'],['files','satellite-files']],output:'table'},
+    inputs:[['points','points'],['areas','polygons'],['area','area'],['files','satellite-files']],output:'table'},
   study_design:{title:'Study design',group:'Epidemiology',icon:'◇',color:'teal',
     description:'Declare the study design and its period, so the computations downstream are the ones the design can estimate',
     inputs:[],output:'design'},
@@ -1518,8 +1518,17 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         const files=(inputs as unknown as {files?:{kind?:string;product?:SatelliteProduct;search?:import('./satellite-catalog.js').CatalogSearch}}).files;
         if(files?.kind!=='satellite-files'||!files.product||!files.search)throw new Error('Connect Search a satellite catalog to files: there are no files to read yet.');
         const raw=inputs.points as unknown as PointInput|undefined;
-        const polygons=(inputs as unknown as {areas?:{features?:{id:string|number;name?:string;geometry?:import('./types.js').Boundary|null}[]}}).areas;
-        if(raw&&polygons)throw new Error('Connect points or areas, not both: one table holds one kind of place.');
+        // AREAS FROM A POLYGON LAYER, OR FROM A STUDY AREA'S UNITS: the 92 municipalities picked from geoBoundaries are
+        // read as they are, one part per unit, parts of one unit sharing its id (experiment 180).
+        const study=(inputs as unknown as {area?:{units?:{id:string;name:string}[];boundary?:import('./types.js').Boundary}}).area;
+        const fromStudy=study?.units?.length&&study.boundary
+          ?{features:study.units.map((unit,index)=>({id:unit.id,name:unit.name,geometry:{type:'Polygon' as const,
+            coordinates:study.boundary!.type==='MultiPolygon'?study.boundary!.coordinates[index]!:study.boundary!.coordinates} as import('./types.js').Boundary}))}
+          :undefined;
+        if(study&&!fromStudy)throw new Error('This study area has no named parts to read over. Pick administrative units, or connect a polygon layer to areas.');
+        const polygons=(inputs as unknown as {areas?:{features?:{id:string|number;name?:string;geometry?:import('./types.js').Boundary|null}[]}}).areas??fromStudy;
+        if([raw,(inputs as {areas?:unknown}).areas,study].filter(Boolean).length>1)
+          throw new Error('Connect one kind of place: points, a polygon layer, or a study area. One table holds one kind.');
         // A GRIDDED PRODUCT (MODIS, experiment 180) is read over areas or at points by geotiff.js; a swath (Sentinel-5P) at
         // points by h5wasm. Which reader is the product's, not a setting.
         const grids=await import('./satellite-grid-sample.js');

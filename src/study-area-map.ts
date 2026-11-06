@@ -75,6 +75,9 @@ export function openStudyAreaEditor(node:WorkflowNode<'study_area'>,onApply:(par
   const nameLabel=dialog.querySelector('label[for="area-name"]')!,eyebrow=dialog.querySelector('.eyebrow')!,draftLabel=dialog.querySelector('.area-draft .inspector-section')!;
   const originalLabels=[nameLabel.textContent,eyebrow.textContent,draftLabel.textContent];
   if(context.clip){name.maxLength=60;nameLabel.textContent='Clipped raster label';eyebrow.textContent='CLIP RASTER · PROCESSING PARAMETERS';draftLabel.textContent='Cutline geometry · draft';$('#area-apply').textContent='Apply clip parameters';}
+  // EVERY SOURCE STARTS CLOSED. The dialog is built once and reused, so a section opened last time stayed open, and
+  // the click that opens it closed it instead: found 2026-11-06 following the Brazil manual's second study area.
+  dialog.querySelectorAll('details').forEach(d=>{d.open=false;});
   const boundsDetails=$('#area-west').closest('details')!,boundsWereOpen=boundsDetails.open;
   if(context.raster)boundsDetails.open=true;
   $('#area-online').checked=!context.raster&&navigator.onLine;

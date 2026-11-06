@@ -849,12 +849,12 @@
    "migrationFrom": []
   },
   "study_area": {
-   "version": "0.6.1",
+   "version": "0.6.2",
    "released": "2026-11-06",
    "changes": [
     {
      "kind": "patch",
-     "description": "Two rings of one unit may meet at a single point, as the OGC simple-features rule allows: a hole touching its outline at one vertex, an island meeting another at a corner. Refusing that refused Quatis and Rio de Janeiro city from geoBoundaries' Brazil, which shapely calls valid. A shared run of edge, or a crossing, is still refused. Experiment 180."
+     "description": "Every source in the dialog starts closed when it opens. A section opened last time stayed open, so the click that opens it closed it instead."
     }
    ],
    "breaking": false,
@@ -1056,12 +1056,12 @@
    "migrationFrom": []
   },
   "sample_satellite_files_at_points": {
-   "version": "0.3.0",
+   "version": "0.4.0",
    "released": "2026-11-06",
    "changes": [
     {
      "kind": "minor",
-     "description": "Reads over areas as well as at points, renamed Sample satellite files at points or over areas. A new areas input takes a polygon layer; MODIS land surface temperature is read by geotiff.js over the cells whose centre is in each area, one row per area per 8-day period per satellite, with the cells it rests on, the clear days and the quality rule on every row. The practitioner chose the rule: produced with an average LST error of 2 K or less. Sentinel-5P is still read at points. Experiment 180."
+     "description": "Reads over a study area's units as well as a polygon layer: a third input, area, so the municipalities picked from geoBoundaries are read as they are. The satellite comes from the product's name (MOD11A2 Terra, MYD11A2 Aqua) where an item leaves its platform out, which Planetary Computer does for some 2024 MODIS items: they had been read as a third satellite, half a state each. Experiment 180."
     }
    ],
    "breaking": false,

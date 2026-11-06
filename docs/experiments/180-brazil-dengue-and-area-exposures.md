@@ -272,6 +272,30 @@ per outcome, read by range from GeoTIFFs written in the test (`sample-satellite-
 **Not yet:** a lab parity check against rasterio and rasterstats; a live browser run; the worked example's workflow;
 night-time and Aqua compared with the dataset.
 
+## The satellite workflow, played back live, 2026-11-06 (0.35.0)
+
+**The practitioner, 2026-11-06,** choosing where the satellite steps go: *"Let the sampler take a study area"*, over
+extending the incidence workflow or rebuilding it. So the sampler gained a third input, `area`, and the example's
+third workflow, *How hot was the ground in each municipality?*, takes the incidence workflow's study area through the
+dialog's existing *Use a study area from this project*, not by picking 92 units again.
+
+**Played back live** in Chromium (`BRAZIL_SATELLITE_LIVE=1`), all three workflows in 4.6 minutes; the satellite run
+217 s. 180 files: 45 periods × 2 satellites × 2 tiles. 8,188 rows: 92 municipalities × 89 period-satellite pairs (one
+of the 90 had no file). 8,064 with a mean of passing cells; 17 with values none of which passed; 107 with no
+retrieval; 0 with no cell.
+
+**Found by the first live run:** 2,044 of 8,280 rows read "no cell in the area". Planetary Computer leaves
+`platform` off some MODIS items of 2024, mostly Terra's h14v11 tile; the sampler grouped them as a third satellite,
+each half of the state, so every municipality on the other tile had no cell. The satellite is now taken from the
+product's name where the item does not state it (MOD11A2 Terra, MYD11A2 Aqua). Gap: implementation, found by the
+first run over a full year; the February runs had their platforms.
+
+**Found following the manual:** the study area dialog is built once and reused, and a section opened in the second
+workflow was still open in the third, so the click that opens it closed it. Every section now starts closed.
+
+**Not established:** whether these values agree with the dataset's beyond February (M2); the night layer; and
+anything about dengue. Relating temperature to incidence, with lags, is the next workflow.
+
 ## What this does not establish
 
 Any design. Whether InfoDengue's data may be redistributed; how the Zenodo file's exposures were computed, or

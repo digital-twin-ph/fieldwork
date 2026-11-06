@@ -64,6 +64,13 @@ async function tokenFor(endpoint:string,fetcher:typeof fetch):Promise<string>{
 
 const gridKey=(g:Grid)=>`${g.origin.join(',')}|${g.resolution.join(',')}|${g.width}x${g.height}`;
 
+/** WHICH SATELLITE, from the item, or from the product's own name where the item does not say. Planetary Computer
+ *  left `platform` off some MODIS items of 2024 (Terra's h14v11 tile in most periods), and they were read as a third
+ *  satellite, each half a state, with every municipality on the other tile "no cell": 2,044 rows of 8,280 in the first
+ *  live run (experiment 180). MOD11A2 is Terra's product and MYD11A2 Aqua's, by NASA's naming. */
+export const platformOf=(item:{id:string;platform:string|null})=>
+  item.platform||(/^MOD/.test(item.id)?'terra':/^MYD/.test(item.id)?'aqua':'');
+
 /** Reads every file at every place. `open` is geotiff.js's `fromUrl(...).getImage()`, passed in so Node and the
  *  browser use the same code. One window per file covers all its places; the masks are made once per tile grid. */
 export async function readGridFiles(items:readonly CatalogItem[],reader:GridReader,layerKey:string,rule:ModisQualityRule,
@@ -89,7 +96,7 @@ export async function readGridFiles(items:readonly CatalogItem[],reader:GridRead
       return c>=0&&r>=0&&c<grid.width&&r<grid.height?{window:[c,r,c+1,r+1] as [number,number,number,number],mask:Uint8Array.of(1)}:null;}));
     const cells=masks.get(key)!;
     const present=cells.filter(Boolean) as {window:[number,number,number,number];mask:Uint8Array}[];
-    const period=(item.datetime??'').slice(0,10),end=item.end?.slice(0,10)??null,platform=item.platform??'';
+    const period=(item.datetime??'').slice(0,10),end=item.end?.slice(0,10)??null,platform=platformOf(item);
     if(present.length){
       const U=[Math.min(...present.map(c=>c.window[0])),Math.min(...present.map(c=>c.window[1])),
         Math.max(...present.map(c=>c.window[2])),Math.max(...present.map(c=>c.window[3]))];

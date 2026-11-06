@@ -967,9 +967,9 @@ function upstreamKeyValues(node:WorkflowNode,seen=new Set<string>(),
   if(up.type==='sample_satellite_files_at_points'){
     // A GRIDDED PRODUCT, or areas: the area table's fixed columns, with the place column as named (experiment 180).
     const grid=samplerProduct(up);
-    if(workflow.edges.some(e=>e.to===up.id&&e.port==='areas')||(grid&&gridReaderFor(grid))){
-      const column=(up.params as {placeColumn?:string}).placeColumn?.trim()
-        ||(workflow.edges.some(e=>e.to===up.id&&e.port==='areas')?'area':'point_id');
+    const overAreas=workflow.edges.some(e=>e.to===up.id&&(e.port==='areas'||e.port==='area'));
+    if(overAreas||(grid&&gridReaderFor(grid))){
+      const column=(up.params as {placeColumn?:string}).placeColumn?.trim()||(overAreas?'area':'point_id');
       return Object.fromEntries(GRID_KEYS.map(k=>[k==='area'?column:k,[]]));
     }
     const pointEdge=workflow.edges.find(e=>e.to===up.id&&e.port==='points');
@@ -3033,7 +3033,7 @@ function renderInspector(){
     content+=labelForm('satellite-sample-label','Node label',p.label||'Sample satellite files at points or over areas');
     if(grid){
       const rule=(p.qualityRule??grid.quality.default) as ModisQualityRule,layer=p.layer??'day';
-      const areas=workflow.edges.some(e=>e.to===n.id&&e.port==='areas');
+      const areas=workflow.edges.some(e=>e.to===n.id&&(e.port==='areas'||e.port==='area'));
       content+='<p class="description">Reads each file over each area, by the cells whose centre is inside it, or at each point. '
         +'Each row says how many cells the mean rests on. Nothing is filled.</p>'
         +`<div class="field"><label class="field-label" for="satellite-layer">Layer</label><select id="satellite-layer">`

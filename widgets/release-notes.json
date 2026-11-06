@@ -1057,12 +1057,12 @@
    "migrationFrom": []
   },
   "sample_satellite_files_at_points": {
-   "version": "0.5.0",
+   "version": "0.5.1",
    "released": "2026-11-06",
    "changes": [
     {
-     "kind": "minor",
-     "description": "A temperature is reported in degrees Celsius by default, or Fahrenheit or kelvin: the practitioner's choice. MODIS states kelvin; the conversion is exact and stated on the result and in the receipt (fw:unitAsStated, fw:unitConversion). Every file opened is read for its own unit and scale factor; one stating another stops the run, naming the file."
+     "kind": "patch",
+     "description": "Shows a progress panel while reading files: the step, a count of files read, and a bar."
     }
    ],
    "breaking": false,

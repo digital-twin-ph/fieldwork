@@ -1544,7 +1544,11 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           const layer=node.params.layer??'day',rule=node.params.qualityRule??gridReader.quality.default;
           const {fromUrl}=await import('geotiff');
           const tags={files:0,stated:0};
-          const readings=await grids.readGridFiles(files.search.items,gridReader,layer,rule,places,async url=>(await fromUrl(url)).getImage() as never,fetch,()=>{},tags);
+          const {runDetail}=await import('./run-progress.js');
+          const report=(done:number,of:number)=>runDetail({nodeId:node.id,label:node.params.label||'Sample satellite files',done,of,what:'satellite files'});
+          report(0,files.search.items.length);
+          const readings=await grids.readGridFiles(files.search.items,gridReader,layer,rule,places,async url=>(await fromUrl(url)).getImage() as never,fetch,report,tags)
+            .finally(()=>runDetail(null));
           const column=node.params.placeColumn?.trim()||(kind==='area'?'area':'point_id');
           const unit=node.params.unit;
           const {table,counts}=grids.gridTable(places,readings,gridReader,layer,rule,column,unit);
@@ -1565,7 +1569,10 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           lon:(f.geometry!.coordinates as number[])[0]!,lat:(f.geometry!.coordinates as number[])[1]!}));
         const operator=node.params.qaOperator??'>=';
         const {readFiles}=await import('./satellite-sample-reader.js');
-        const readings=await readFiles(files.search.items,reader,placed);
+        const {runDetail}=await import('./run-progress.js');
+        const report=(done:number,of:number)=>runDetail({nodeId:node.id,label:node.params.label||'Sample satellite files',done,of,what:'satellite files'});
+        report(0,files.search.items.length);
+        const readings=await readFiles(files.search.items,reader,placed,report).finally(()=>runDetail(null));
         const idColumn=!raw||'layers' in raw?undefined:raw.idColumn;
         const {table,counts}=sampling.sampleTable(placed,readings,files.search.from,files.search.until||files.search.from,reader,operator,features.length-placed.length,idColumn);
         const units=readings.find(r=>r.units)?.units??null;

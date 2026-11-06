@@ -1077,3 +1077,15 @@ i.bar-zero{position:absolute;top:0;bottom:0;width:1px;background:var(--ink,#2b2b
 #inspector-content label.check{display:flex;align-items:flex-start;justify-content:flex-start;gap:6px;margin:2px 0;text-align:left}
 #inspector-content label.check input[type=checkbox]{flex:none;width:auto;margin:2px 0 0}
 #inspector-content fieldset#group-keep{border:0;padding:0;margin:14px 0 0}
+
+/* A STEP IN PROGRESS: the panel a long read shows, with a spinner and a bar (2026-11-06). Still for reduced motion. */
+#run-progress{position:fixed;left:24px;bottom:24px;z-index:60;display:flex;gap:12px;align-items:center;max-width:380px;
+  padding:12px 16px;border-radius:10px;background:var(--surface,#fff);border:1px solid var(--line);box-shadow:0 6px 24px rgba(0,0,0,.14);font-size:13px}
+#run-progress strong{display:block;font-size:13px}
+#run-progress span{color:var(--muted)}
+.run-progress-bar{margin-top:6px;height:6px;width:240px;border-radius:3px;background:var(--line);overflow:hidden}
+.run-progress-bar>div{height:100%;background:var(--accent,#176b59);transition:width .4s ease}
+.run-progress-spinner{flex:none;width:22px;height:22px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--accent,#176b59);animation:run-spin 0.9s linear infinite}
+.run-spin{display:inline-block;animation:run-spin 1.2s linear infinite}
+@keyframes run-spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.run-progress-spinner,.run-spin{animation:none}.run-progress-bar>div{transition:none}}

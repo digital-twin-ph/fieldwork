@@ -67,7 +67,9 @@ whether that is enough is the analyst's call, and the numbers to make it are on 
    to **points**, and the search to **files**.
 3. In the Inspector, check the **Quality rule**. It is set to the product manual's: `qa_value` at or above 0.75.
 4. Connect a **Table output**, and run the workflow. The files are read during the run, and each file is read once per
-   session.
+   session. A year of files takes minutes: while they are read, a panel at the foot of the page names the step and
+   counts the files read so far, *Reading satellite files: 40 of 92*, and the run's state beside the canvas says the
+   same.
 
 ## The three gaps
 

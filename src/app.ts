@@ -41,6 +41,7 @@ import {openSatelliteCatalogDialog} from './satellite-catalog-ui.js';
 import {bboxOf,defaultKept} from './satellite-catalog.js';
 import {SAMPLE_KEYS,days as sampleDays} from './satellite-sample.js';
 import {productFor} from './satellite-products.js';
+import {onRunDetail} from './run-progress.js';
 import {GRID_KEYS,gridReaderFor} from './satellite-grid-sample.js';
 import {MODIS_RULES,type ModisQualityRule} from './satellite-areas.js';
 import {openProductsDialog,productCard} from './satellite-products-ui.js';
@@ -908,6 +909,19 @@ function upstreamRows(node:WorkflowNode):number|undefined{
   return up?.type==='table_input'?up.params.data.rows.length:undefined;
 }
 /** The product a sampler's files are of: its search's, which is its Find satellite products' choice. */
+/** THE STEP IN PROGRESS, drawn while a run reads files: a panel with the step, the count and a bar (2026-11-06). */
+let runProgress:import('./run-progress.js').RunDetail|null=null;
+function drawRunProgress(){
+  let panel=document.getElementById('run-progress');
+  if(!busy||!runProgress){panel?.remove();return;}
+  if(!panel){panel=document.createElement('div');panel.id='run-progress';panel.setAttribute('role','status');panel.setAttribute('aria-live','polite');document.body.append(panel);}
+  const {label,done,of,what}=runProgress,share=of?done/of:0;
+  panel.innerHTML=`<span class="run-progress-spinner" aria-hidden="true"></span><div><strong>${esc(label)}</strong>`
+    +`<span>Reading ${esc(what)}: ${done.toLocaleString('en-US')} of ${of.toLocaleString('en-US')}</span>`
+    +`<div class="run-progress-bar"><div style="width:${(share*100).toFixed(1)}%"></div></div></div>`;
+  const state=document.getElementById('workflow-state');
+  if(state)state.textContent=`Running · ${done} of ${of} ${what}`;
+}
 /** Relate's period choices while they are being made, and whether its section is open, per node: UI state only. */
 const relateWithinDraft=new Map<string,{date:string;start:string;end:string}>(),relateWithinOpen=new Set<string>();
 function samplerProduct(node:WorkflowNode){
@@ -1226,10 +1240,12 @@ function render(){
   // the canvas invited the practitioner to press the button that had just refused and the only
   // trace of the refusal was in the console. The flag clears when the next run starts, or when
   // they change something -- at which point rerunning IS the next thing to do.
-  $('#workflow-state').textContent=busy?'Running locally…':runFailed?'Run failed'
+  $('#workflow-state').textContent=busy?(runProgress?`Running · ${runProgress.done} of ${runProgress.of} ${runProgress.what}`:'Running locally…'):runFailed?'Run failed'
     :runIncomplete?'Not ready to run'
     :dirty?(result?'Changed · rerun to update':'Ready to run'):'✓ Run complete';
-  $('#run-button').disabled=busy;$('#run-button').innerHTML=busy?'◌ Running…':'<span>▶</span> Run workflow';
+  $('#run-button').disabled=busy;$('#run-button').innerHTML=busy?'<span class="run-spin" aria-hidden="true">◌</span> Running…':'<span>▶</span> Run workflow';
+  if(!busy)runProgress=null;
+  drawRunProgress();
   $('#run-summary').textContent=result?(dirty?'Previous run · settings have changed':`${result.outputs.length} outputs · ${lastRunMs===null?'':`ran in ${elapsedText(lastRunMs)} · `}${Math.round(result.trace.reduce((a,t)=>a+t.milliseconds,0))} ms computing`):'Run the workflow to see results';
   if(exampleKey(workflow)==='snow-geoprivacy')$('#run-summary').textContent=result?'Private project and run evidence contain original coordinates. Derived tabs are educational; review before sharing.':'Private source coordinates are included in this workflow.';
   ($('#project-select') as HTMLSelectElement).disabled=busy;($('#workflow-select') as HTMLSelectElement).disabled=busy;document.body.classList.toggle('busy',busy);flow?.setBusy(busy);renderInspector();
@@ -5765,7 +5781,7 @@ $('#canvas').addEventListener('click',event=>{
   dismissedAlerts.add(alertKey(button.dataset.dismissAlert!));
   render();
 });
-$('#run-button').onclick=run;$('#node-search').oninput=e=>renderLibrary(control(e).value);$('#zoom-in').onclick=()=>flow?.zoomIn();$('#zoom-out').onclick=()=>flow?.zoomOut();$('#fit-button').onclick=()=>flow?.fit();
+$('#run-button').onclick=run;onRunDetail(detail=>{runProgress=detail;drawRunProgress();});$('#node-search').oninput=e=>renderLibrary(control(e).value);$('#zoom-in').onclick=()=>flow?.zoomIn();$('#zoom-out').onclick=()=>flow?.zoomOut();$('#fit-button').onclick=()=>flow?.fit();
 // Columns in the order the work happens. Offered rather than applied: a canvas somebody has
 // arranged is theirs, and exploding a micro-workflow is the moment it stops being readable.
 $('#tidy-button').onclick=()=>{

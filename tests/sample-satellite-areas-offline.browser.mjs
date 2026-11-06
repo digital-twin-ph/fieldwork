@@ -30,8 +30,10 @@ test('three areas, one per outcome, read by range: the mean rests on the cells t
   test.setTimeout(120000);
   const errors=collectPageErrors(page);
   const files={LST_Day_1km:tif(VALUE,16),QC_Day:tif(QC,8),Clear_sky_days:tif(CLEAR,8)};
-  await page.route(/modiseuwest\.blob\.core\.windows\.net/,route=>{
+  await page.route(/modiseuwest\.blob\.core\.windows\.net/,async route=>{
     const name=Object.keys(files).find(k=>route.request().url().includes(`_${k}.tif`));
+    // Served slowly, so the run lasts long enough to see what it shows while it reads.
+    await new Promise(r=>setTimeout(r,250));
     return serveRange(route,files[name]);});
   await page.route(/planetarycomputer\.microsoft\.com\/api\/sas\/v1\/token\/modiseuwest/,route=>route.fulfill({status:200,
     contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({token:'st=fixture&sig=none','msft:expiry':'2099-01-01T00:00:00Z'})}));
@@ -64,7 +66,13 @@ test('three areas, one per outcome, read by range: the mean rests on the cells t
   await expect(page.locator('#satellite-unit')).toHaveValue('°C');
   await expect(page.locator('#satellite-unit option')).toHaveText(['degrees Celsius (K − 273.15)','degrees Fahrenheit (K × 9/5 − 459.67)','kelvin, as the file states it']);
   await page.locator('#run-button').click();
+  // WHILE IT READS, the run says so: a panel with the step, the count of files and a bar, and the state line counts too.
+  await expect(page.locator('#run-progress')).toContainText('Reading satellite files:',{timeout:30000});
+  await expect(page.locator('#run-progress')).toContainText('Sampled');
+  await page.screenshot({path:'test-results/run-progress.png'});
+  await expect(page.locator('#workflow-state')).toContainText('Running ·');
   await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:90000});
+  await expect(page.locator('#run-progress')).toHaveCount(0);
   await page.locator('[data-view="results"]').click();
   const main=page.locator('main').first();
   await expect(main).toContainText('at 3 areas over 1 8-day period: 3 rows, one per area per period per satellite, Terra and Aqua kept apart.');

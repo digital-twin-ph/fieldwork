@@ -136,10 +136,92 @@ Computer's `modis-11A2-061`. It was read with rasterio and with geotiff.js 3.0.5
 | A first reading | Over that window, 1,268 of 3,913 cells held a value; 19.5 °C to 38.2 °C at the surface. Both readers agree on those extremes (raw 14,632 and 15,566); their windows differed slightly, so this is not a cell-for-cell comparison |
 | Citation | The file carries `identifier_product_doi` 10.5067/MODIS/MOD11A2.061 |
 
-**Not read yet:** what each bit of `QC_Day` means, which needs the product's user guide; the licence at its source
-(Planetary Computer says "other"); NDVI and EVI, which come from `modis-13A1-061` or `modis-13Q1-061`, 16-day
+**Read the same day:**
+
+| | Found | Source |
+| --- | --- | --- |
+| `QC_Day`, `QC_Night` bits 0–1 | 00 *"LST produced, good quality"*; 01 produced, other quality, *"recommend examination of more detailed QA"*; 10 not produced, cloud; 11 not produced, other reasons | [LAADS file specification, MOD11A2 v61](https://ladsweb.modaps.eosdis.nasa.gov/filespec/MODIS/61/MOD11A2) |
+| Bits 2–3 | data quality: 00 good, 01 other | same |
+| Bits 4–5 | average emissivity error: ≤ 0.01, ≤ 0.02, ≤ 0.04, > 0.04 | same |
+| Bits 6–7 | average LST error: ≤ 1 K, ≤ 2 K, ≤ 3 K, > 3 K | same |
+| Terms | Open without restriction; NASA mission data are CC0 unless marked otherwise, and citation is *"very strongly urged"* | [Earthdata data use guidance](https://www.earthdata.nasa.gov/engage/open-data-services-software-policies/data-use-guidance), [MOD11A2 catalogue page](https://www.earthdata.nasa.gov/data/catalog/lpcloud-mod11a2-061) |
+| Citation | Wan Z, Hook S, Hulley G (2021). MODIS/Terra Land Surface Temperature/Emissivity 8-Day L3 Global 1km SIN Grid V061. NASA LP DAAC. doi:10.5067/MODIS/MOD11A2.061 | catalogue page |
+
+The [user guide](https://lpdaac.usgs.gov/documents/715/MOD11_User_Guide_V61.pdf) (Wan, June 2019, for C6; the C61
+cover says the science algorithm is unchanged) was read on its pages as images. Its Table 18 gives the same bit layout
+for MOD11A2. Section 4: *"LST over eight days is the averaged LSTs of the MOD11A1 product over eight days"*, by *"a
+simple average method"*, and `Clear_sky_days` and `Clear_sky_nights` count the days that went into it. So an 8-day
+value is a mean of clear days only: a week of cloud is a missing value, and a value from one clear day looks the same
+as one from eight unless `Clear_sky_days` is read beside it.
+
+Neither the guide nor the pages above recommend which QC values to keep, or state the product's accuracy; the ATBD
+was not read. So a quality rule, unlike Sentinel-5P's `qa_value` ≥ 0.75, has no stated basis yet. The QC bits do
+carry their own error bands (≤ 1 K to > 3 K), which a rule could quote.
+
+**Not read yet:** NDVI and EVI, which come from `modis-13A1-061` or `modis-13Q1-061`, 16-day
 composites; how many of a municipality's cells are clear in a given period. Land surface temperature is the ground's
 skin temperature where the sky was clear, not the air temperature a person or a mosquito is in.
+
+## Admission review: satellite files over areas, 2026-11-06 (admitted, not built)
+
+The practitioner, 2026-11-06: *"I thought we already have the sample satellite files over area?"* Not yet: Sample
+satellite files at points reads one pixel per point, from Sentinel-5P NetCDF; Search a satellite catalog takes an
+area only to choose files. Nothing reads a satellite file's values over a polygon.
+
+**The current widgets, examined first.**
+
+| Widget | What it shares with the need | What it lacks |
+| --- | --- | --- |
+| Sample satellite files at points | Files × places → a long table, one row per place per file and per day without one, gaps named, quality on every row, read by range in a worker | Places are points; one reader, Sentinel-5P NetCDF swaths |
+| Clip raster | Which cells fall in a polygon: `rasterCellPredicate`, cell centre or all-touched, lab check 02 | One local raster in EPSG:4326, one area, a raster out |
+| Summarize points to polygons | One value per polygon | Counts points |
+
+**The near miss is the point sampler, and its output already fits.** The practitioner chose a new widget over
+extending Sample raster at points because the output would have changed type, a layer for one input and a table for
+the other. That does not arise here: points or areas, the result is the same long table, keyed by place and period.
+So the proposal is **to extend Sample satellite files at points with an `areas` input**, not to add a widget, with
+the title changed to match. Decision 1 below.
+
+| | |
+| --- | --- |
+| Inputs | `points` **or** `areas` (`polygons`, from Join a table to the study area, Polygon layer, or a study area's units), and `files` |
+| Output | the same long table: one row per place per file read, and per day with no file. For an area: cells in it, cells with a value, cells that passed the quality rule, the mean of those, and the gap kind where none passed |
+| Reading | geotiff.js in the worker, by range, only the 512 × 512 blocks an area's box touches; a second reader beside h5wasm, chosen by the product |
+| Geometry | each polygon projected into the file's grid (the sinusoidal formula, M1), cells tested by centre with the predicate lab check 02 already holds against rasterio. The grid is never warped |
+
+- **D1.** Asked for by name: the mean land surface temperature in each municipality, per period.
+- **D2.** The point sampler, as above. Clip raster's predicate is reused, not reimplemented.
+- **D4.** No new port type. `polygons` and `table` exist.
+- **D11.** The residual function: a satellite file's values over a polygon, with the cells counted.
+
+| Distinction | Enforced as |
+| --- | --- |
+| A cell counts if its centre is in the area; not area-weighted | the method, stated on the result; a municipality with no cell centre in it is a gap named as such, not dropped |
+| No file, no clear cell, and below the quality rule are different gaps | the gap column, as for points |
+| How many cells the mean rests on | on every row: cells in the area, with a value, passing. A mean of 3 cells of 400 is not hidden |
+| Terra and Aqua are different measurements | a `platform` column, never pooled |
+| Day and night are different variables | one variable per read; both are offered |
+| Land surface temperature is not air temperature | the measured quantity on every row, from the product |
+| An 8-day value is a mean of clear days only | `Clear_sky_days` read beside it where the product has it |
+| No population weighting | out of scope for this slice: it needs a population raster, and is said |
+| No imputation | out of scope, as for points |
+
+**Decisions for the practitioner:**
+
+1. Extend the point sampler, renamed for both, or a separate widget? **Settled, 2026-11-06:** *"Sample satellite files
+   over geometry? Can do points or polygons?"* One widget, points or polygons; the title is decision 3.
+2. The quality rule. MODIS documents its bits and no rule (M1). **Settled, 2026-11-06:** *"Produced, error ≤ 2 K"*:
+   bits 0–1 = 00 or 01, and bits 6–7 (average LST error) 00 or 01. The default, stated on every row and changeable per
+   node; good quality only, and everything produced, are the alternatives offered.
+3. The title. **Settled, 2026-11-06:** *"Sample satellite files at points or over areas"*. The node type
+   `sample_satellite_files_at_points` is kept, since workflows already hold it; only the title changes.
+
+**Cost, estimated from file sizes, not measured:** Rio de Janeiro state spans two tiles. Whole files are 1.87 MB for
+a day temperature and 0.23 MB for its quality layer, so about 4.2 MB per period per satellite for daytime, 46 periods
+a year: about 190 MB per satellite per year, less where the state covers only part of a tile's blocks.
+
+**Then:** compare the result with the dataset's `LST_Day_mean` for the same municipalities and months; and the lab
+parity check, against rasterio and rasterstats, before it is called done.
 
 ## What this does not establish
 

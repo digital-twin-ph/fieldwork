@@ -856,7 +856,7 @@
     {
       "id": "urn:fieldwork:widget:point_input",
       "nodeType": "point_input",
-      "currentVersion": "0.4.0",
+      "currentVersion": "0.5.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -877,6 +877,11 @@
           "version": "0.4.0",
           "path": "widgets/releases/point_input/0.4.0.json",
           "sha256": "8174c4c981d6f9b6bb83760991a05e34d8d98a8ac772db664ef233f0f3ba67bd"
+        },
+        {
+          "version": "0.5.0",
+          "path": "widgets/releases/point_input/0.5.0.json",
+          "sha256": "14c618cc196a64ffde1842cce72027f8b891a805164c0613d58ecc5cda58f4ed"
         }
       ],
       "previousNodeTypes": [
@@ -1070,7 +1075,7 @@
     {
       "id": "urn:fieldwork:widget:relate_table",
       "nodeType": "relate_table",
-      "currentVersion": "0.3.0",
+      "currentVersion": "0.4.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -1086,6 +1091,11 @@
           "version": "0.3.0",
           "path": "widgets/releases/relate_table/0.3.0.json",
           "sha256": "850185676770af43f568aadae6e626a89b88a2832ec94ac464c5fbc5c6fb1aa9"
+        },
+        {
+          "version": "0.4.0",
+          "path": "widgets/releases/relate_table/0.4.0.json",
+          "sha256": "141e403b3b841571329695b5af7828574bce35d9ec953a80155fc162197a2403"
         }
       ]
     },
@@ -1601,12 +1611,17 @@
     {
       "id": "urn:fieldwork:widget:sample_satellite_files_at_points",
       "nodeType": "sample_satellite_files_at_points",
-      "currentVersion": "0.1.0",
+      "currentVersion": "0.2.0",
       "releases": [
         {
           "version": "0.1.0",
           "path": "widgets/releases/sample_satellite_files_at_points/0.1.0.json",
           "sha256": "3ede47ecba61ae20daf3fd08a92088e37d8139772120278a2e87c675dce0d948"
+        },
+        {
+          "version": "0.2.0",
+          "path": "widgets/releases/sample_satellite_files_at_points/0.2.0.json",
+          "sha256": "3b1e93fc7413d4f8c53182652820050043b7f1a85e59811fbf895949b8204ea4"
         }
       ]
     }

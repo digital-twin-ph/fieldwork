@@ -14,7 +14,7 @@ point per overpass, plus one row per point for each day with no overpass.
 
 | Column | What it holds |
 | --- | --- |
-| `point_id`, `point` | The point, as the point layer names it |
+| `point_id`, `point` | The point, as the point layer names it. Where Point data read its ids from a table column, the id column takes that column's name, `site` for the NYC monitors, so the result relates back to the source on it |
 | `date`, `overpass_time` | The day, and the time the pixel was scanned |
 | `stream`, `orbit` | The processing stream (`OFFL` offline, `NRTI` near real time) and the orbit |
 | `scanline`, `ground_pixel` | Which pixel of the swath was read |
@@ -80,4 +80,4 @@ Technology, whose notice travels with Fieldwork in `vendor/h5wasm-0.10.3-LICENSE
 
 ## Where it is used
 
-Not yet in a worked example. The NYC asthma and ozone example is the first intended use.
+The NYC example, *Did the satellite see the city's NO₂?*: Sentinel-5P NO₂ at the four NO₂ monitors over 1 to 14 June 2023, related to their daily readings on `site` and `date`.

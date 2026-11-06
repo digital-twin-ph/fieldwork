@@ -24,7 +24,7 @@ async function view(page,name){
   if(name)await page.locator(`[data-view="${name}"]`).click();
 }
 
-export async function performManual(page,workflow,{timeout=120000}={}){
+export async function performManual(page,workflow,{timeout=120000,runTimeout=timeout}={}){
   const nodes={};
   for(const [index,step] of workflow.steps.entries()){
     const where=`"${workflow.name}" step ${index+1}`;
@@ -139,7 +139,10 @@ export async function performManual(page,workflow,{timeout=120000}={}){
     }
     if('run' in step){
       await page.locator('#run-button').click();
-      await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout});
+      // A FAILED RUN ENDS THE WAIT: only the run gets the long timeout, and a run that stops on an error says so
+      // at once instead of waiting it out (a live satellite run sat silent for hours, 2026-11-05).
+      await expect(page.locator('#workflow-state')).toContainText(/Run complete|failed|stopped|not ready/i,{timeout:runTimeout});
+      await expect(page.locator('#workflow-state'),`${where}: the run`).toContainText('Run complete');
       await view(page,'results');
       continue;
     }

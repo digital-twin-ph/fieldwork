@@ -575,12 +575,12 @@
    "migrationFrom": []
   },
   "point_input": {
-   "version": "0.4.0",
+   "version": "0.5.0",
    "released": "2026-11-05",
    "changes": [
     {
      "kind": "minor",
-     "description": "Reads points from a table a workflow computed, as geopandas' points_from_xy does. Connect a table to the new optional `records` input and name its x (longitude) and y (latitude) columns, and optionally a record ID and a label. Read as CRS84. A row whose coordinates are empty, not numbers or out of range is kept with no position and counted, never a refusal of the table; rows sharing a position are counted too, the sign that a table needs totalling to one row per place first. Every column travels as an attribute. Unconnected, the widget is the source it always was. The receipt states fw:PointsFromTable with the columns read and what was placed, written by src/table-points.ts and held by fw:PointsFromTableShape. The practitioner, 2026-11-05: 'Point data widget has input options that include CSV' -- so a source of this widget, and no new one. Experiment 178."
+     "description": "Points read from a table say which column their ids came from (idColumn), for a step that writes a table of them to name its id column the same way. Experiment 179."
     }
    ],
    "breaking": false,
@@ -711,12 +711,12 @@
    "migrationFrom": []
   },
   "relate_table": {
-   "version": "0.3.0",
-   "released": "2026-10-28",
+   "version": "0.4.0",
+   "released": "2026-11-05",
    "changes": [
     {
      "kind": "minor",
-     "description": "The join becomes a decision the practitioner makes, with its consequence in front of them. Where any key of the first table has no row in the second, the run now REFUSES until they say whether to drop those rows or keep them under a category they name -- the two give different totals and the result cannot be read for which was chosen. The decision is stored with a signature of the gap, after `deduplicate_points`' review decisions, so editing either table or changing the key comparison lapses it instead of letting a stale answer ride on changed rows. A dialog shows the shape of the join as distinct keys on each side, what the join does to each numeric variable as a retained share, the Methods note the step will machine, and a preview of the table that will travel on; nothing is written until Finalize. Keys are now compared through `normaliseName` with punctuation folded by default, as `join_table_to_area` already did -- the weaker join had been the stricter one, and 9 of Snow's 32 sub-districts differ from the published boundaries by a single comma. The shares are the decision-relevant figure and are exact rather than advisory: an inner join multiplies a rate of one variable over another by the ratio of their retained shares, which also runs backwards, so a reader holding an unexpected figure can identify the join that produced it from the receipt alone. And the receipt is now N3 rather than a prose `method` string, which is what it had to be for any of that to leave the application."
+     "description": "Rows can relate on several key columns together (alsoOn): a row relates only where every one agrees, the receipt states one fw:matchedOn per key. The second table's value column can be brought across as well as a key column. The table viewer marks the join's key columns in every Before and in After, and the brought column in After. Asked by the practitioner: \"When we show the before and after table views with joins can we highlight the columns used as keys?\" Built for the NYC satellite example, where a satellite and a ground reading are one observation only for the same monitor on the same day. Experiment 179."
     }
    ],
    "breaking": false,
@@ -1076,12 +1076,12 @@
    "migrationFrom": []
   },
   "sample_satellite_files_at_points": {
-   "version": "0.1.0",
+   "version": "0.2.0",
    "released": "2026-11-05",
    "changes": [
     {
-     "kind": "initial",
-     "description": "Read, at each point, the value of the swath pixel whose centre is nearest it, in every file Search a satellite catalog kept, by HTTP range in a browser worker, one compressed chunk of latitude and longitude at a time until every point has its pixel, (h5wasm 0.10.3, NIST). Sentinel-5P L2 NO2 on Planetary Computer, with its anonymous token, is the first product with a reader. Each row says whether the value passed qa_value at or above 0.75 (the manual's table) or above it (the readme), compared on the stored integer; where there is no usable value, which gap: no overpass, no retrieval, or below the quality threshold. The value column holds only passing values; value_as_read keeps every value read. Nothing is filled. Experiment 179. The pixel rule is the nearest centre, not the containing pixel the admission review named: the corners cost eight more chunks, roughly doubling a read to 25-30 MB an overpass, and the practitioner chose the nearest centre (experiment 179, 2026-11-05)."
+     "kind": "minor",
+     "description": "The id column takes the name of the table column the points' ids were read from (site for the NYC monitors), so the result relates back to the source on that column; point_id otherwise. Its columns are known before a run, so a join downstream can be set up before the files are read. Experiment 179."
     }
    ],
    "breaking": false,

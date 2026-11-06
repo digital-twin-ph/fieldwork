@@ -378,14 +378,14 @@
       "id": "urn:fieldwork:example:nyc-asthma-ozone-2016-2025",
       "title": "Ozone and child asthma emergency visits, New York City, 2016–2025",
       "repository": "https://github.com/digital-twin-ph/example-2025-nyc-ozone",
-      "commit": "0682c42b6c4cf219cd6e3da1f396951af738e687",
+      "commit": "6ddcb7d2cfc2cd67aecfb3591de5d35ad7064d0a",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2025-nyc-ozone",
       "licence": {
         "data": "Not redistributed",
         "source": "Lian et al., Zenodo doi:10.5281/zenodo.22757330; counts from NYC DOHMH EpiQuery",
         "note": "The daily counts are fetched from the authors' Zenodo package when the example is opened and checked by digest. NYC.gov reserves all rights to them, so this repository holds none."
       },
-      "description": "Daily asthma emergency visits among children aged 5 to 17 in New York City with ozone, PM2.5 and weather, the tables fetched from where they are published. The June 2023 smoke days, ten years of daily visits, visits with ozone, PM2.5 and temperature in aligned panels, the authors' ozone model, and a study-area map of the five boroughs and six ozone monitors for the Introduction.",
+      "description": "Daily asthma emergency visits among children aged 5 to 17 in New York City with ozone, PM2.5 and weather, the tables fetched from where they are published. The June 2023 smoke days, ten years of daily visits, visits with ozone, PM2.5 and temperature in aligned panels, the authors' ozone model, a study-area map of the five boroughs and six ozone monitors for the Introduction, and Sentinel-5P NO₂ at the four NO₂ monitors beside their own readings.",
       "carries": {
         "workflow": true,
         "data": false,
@@ -393,10 +393,14 @@
       },
       "uses": [
         "chart_output",
+        "find_satellite_products",
         "group_table",
         "map_output",
         "point_input",
         "regression",
+        "relate_table",
+        "sample_satellite_files_at_points",
+        "search_satellite_catalog",
         "select_rows",
         "study_area",
         "table_input",
@@ -405,8 +409,8 @@
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "1cfac90f1074a708b092b875f54eed47f41957163f91de2a9b73ba8f76d974ea",
-          "bytes": 7569
+          "sha256": "dcfd96a96df260ee6bba0623fc8da48962c49efdd3c83cf2e672ca05b55fa3fb",
+          "bytes": 11131
         },
         {
           "path": "provenance.json",
@@ -415,21 +419,21 @@
         },
         {
           "path": "README.md",
-          "sha256": "2c19f8c10080589d61cefb477ae4751189ac254882d72eb4637095f9f4d2bc69",
-          "bytes": 5359
+          "sha256": "cc7c2f10ce97c77f66525e8bf45961611e729bf31038360e466505dcbc3b1764",
+          "bytes": 6456
         },
         {
           "path": "NOTICE.txt",
-          "sha256": "6616795f521a8ffadf5908a44c7b14e2657716782c178326b22b500bb6e1c7f2",
-          "bytes": 1304
+          "sha256": "5012260c38e1920d3e2e0c11133900dd8409f0f4d318598e7bd9ac4efc8e9029",
+          "bytes": 1668
         },
         {
           "path": "manual.json",
-          "sha256": "651ed9ab2d2f19bde4511882b0326a65dbb34549f000fef6dde5508f28274254",
-          "bytes": 28749
+          "sha256": "f02f05e707c61d573ffcb97bc5b8809bb59091f516451eeb768dd7f6d2973ef8",
+          "bytes": 40730
         }
       ],
-      "workflowCount": 5
+      "workflowCount": 6
     }
   ]
 }

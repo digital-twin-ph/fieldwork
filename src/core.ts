@@ -1257,7 +1257,10 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         value={...node.params.data,features:emitted,sourceNodeId:node.id,sourceKind:'input-points',
           sourceInfo:read?{format:'table',from:tableEdge?.from??''}:structuredClone(node.params.sourceInfo),
           spatialReference:structuredClone(node.params.spatialReference),
-          ...(read&&mapping?{sentence:tablePointsSentence(read,mapping)}:{})};
+          ...(read&&mapping?{sentence:tablePointsSentence(read,mapping)}:{}),
+          // WHICH COLUMN THE IDS CAME FROM, so a step that writes a table of these points can name its id column as the
+          // source table does and be related back to it on that column (2026-11-05, experiment 179).
+          ...(read&&mapping?.id?{idColumn:mapping.id}:{})};
         if(read&&mapping&&tableEdge){
           const facts=tablePointsFacts(`<urn:fieldwork:run:${runId}:output:${node.id}>`,
             `<urn:fieldwork:run:${runId}:output:${tableEdge.from}>`,mapping,read);
@@ -1420,7 +1423,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         const relateFacts=relateReceiptFacts(outcome,machined[node.id],{runId,nodeId:node.id});
         receipts.push({nodeId:node.id,kind:'computation',
           facts:relateFacts,rules:'',input:relateFacts,conclusions:[],
-          method:`${node.params.bring} brought across on ${node.params.on}`
+          method:`${node.params.bring} brought across on ${outcome.on}`
             +`, keys compared ${result.normalisation==='fuzzy'?'with punctuation folded':'exactly'}`
             +`, ${result.related} row${result.related===1?'':'s'} related`
             +(result.dropped?`, ${result.dropped} dropped for keys the second table does not carry `
@@ -1522,7 +1525,8 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         const operator=node.params.qaOperator??'>=';
         const {readFiles}=await import('./satellite-sample-reader.js');
         const readings=await readFiles(files.search.items,reader,placed);
-        const {table,counts}=sampling.sampleTable(placed,readings,files.search.from,files.search.until||files.search.from,reader,operator,features.length-placed.length);
+        const idColumn=!raw||'layers' in raw?undefined:raw.idColumn;
+        const {table,counts}=sampling.sampleTable(placed,readings,files.search.from,files.search.until||files.search.from,reader,operator,features.length-placed.length,idColumn);
         const units=readings.find(r=>r.units)?.units??null;
         const sentence=sampling.sampleSentence(counts,reader,operator,files.product);
         value={...table,sentence} as unknown as DisplayValue;

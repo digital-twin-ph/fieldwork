@@ -452,6 +452,76 @@ reprojection and lagged exposures before it could run; its data side is verified
 *"not a claim that every data source has been independently verified or joined."* Neither is this section: one
 dataset record, one repository and one catalog listing were checked, and nothing was downloaded or joined.
 
+## S9: is there a Level 3 NO₂ that needs no sign-in?, 2026-11-05
+
+Asked by the practitioner after learning the sampler reads Level 2 (*"Let's find out"*): a gridded product would be
+smaller to read, if one is open. Checked by querying each catalog and its files directly; a web search found the
+candidates.
+
+| Source | Level 3 NO₂ | Sign-in | Browser (CORS) | What reading NYC costs |
+| --- | --- | --- | --- | --- |
+| Planetary Computer | none: `sentinel-5p-l2-netcdf` is its only Sentinel-5P collection | | | |
+| S5P-PAL (ESA, `data-portal.s5p-pal.com/api/s5p-l3`) | `no2-tropospheric`, daily to yearly, from 2018-04-30; Copernicus licence linked | **none**: an anonymous 302 to a pre-signed object-store address valid about a year | STAC `*`; the store answers a range GET with `206` and `*`, but refuses the `OPTIONS` preflight (403), so only a request a browser need not preflight can reach it (not tried in a browser) | **Worse than Level 2.** One NetCDF per day, 551,548,348 bytes for 7 June 2023, a global 8,192 × 16,384 grid (about 2.4 km) in µmol m⁻² with a `weight` and an uncertainty, and **each variable one gzip chunk of the whole globe**, so any cell costs the whole chunk |
+| Terrascope (VITO, `stac.terrascope.be`) | `terrascope-s5p-l3-no2-td-v2`, daily, from 2018-05-01; also European-with-CAMS and a surface product | **file: yes**, the download answers 401 | the STAC and the tile server allow Fieldwork's origin | **The file**: a Cloud-Optimized GeoTIFF, EPSG:4326 at 0.02°, 134,508,168 bytes, behind an account. **The tile server** (`titiler.terrascope.be`) answers `point/{lon},{lat}` anonymously: a few hundred bytes and about 2 s per point-day |
+
+**Read at the four NO₂ monitors, 1 to 14 June 2023, through Terrascope's point endpoint:** 23 of 56 monitor-days
+hold a value; none on 7, 8 or 9 June, the smoke days, nor on 3 June; one request was reset by the server. On 7 June at
+Queens College 2 it returns no value and weight 0, where Level 2 read 4.21 × 10⁻⁵ mol m⁻² at qa 0.74: the Level 3
+product dropped the pixel, as a qa ≥ 0.75 filter would.
+
+**Not established, and needed before any use:**
+
+- **The scale.** Values run 3,431 to 32,588, labelled µmol m⁻². Typical tropospheric NO₂ columns are tens to a few
+  hundred µmol m⁻², so these are probably stored scaled, likely by 100. Not read from the product's documentation.
+- **The weight.** Some cells hold a value with weight 0 (Botanical Garden, 5-133, on 4, 6 and 10 June). Not
+  interpreted.
+- **The filter and binning.** Someone else chose them, so by provisional statement 3 this is a derived product, and
+  its gaps cannot be told apart: no overpass, no retrieval and below the threshold are all "no value".
+- **The terms.** The collection's licence is "other", and the tile server is VITO's service, anonymous today; neither
+  read.
+- **The cell.** That the point endpoint returns the 0.02° cell containing the point, not an interpolation, is
+  titiler's usual behaviour, not checked.
+
+**What it means.** For a few points over many days, Terrascope's point endpoint is far cheaper than Level 2: bytes
+instead of 10–15 MB per overpass. It is also coarser in what it can say: no quality value and no kinds of gap. The two
+answer different questions, so neither replaces the other. A reader for it would be a new route in Find satellite
+products, gated on the four points above.
+
+Sources: [S5P-PAL data portal](https://data-portal.s5p-pal.com/), [Terrascope Sentinel-5P products](https://docs.terrascope.be/DataProducts/Sentinel-5P/ProductsOverview.html),
+[Terrascope STAC browser](https://stacbrowser.terrascope.be/), [TEMIS monthly TROPOMI NO₂](https://www.temis.nl/airpollution/no2col/no2month_tropomi.php)
+(monthly only, not probed), [DLR EOC Geoservice](https://geoservice.dlr.de/web/datasets/s5ptropomi) (no NO₂ daily
+composite found, not probed), and NASA's [HAQAST TROPOMI Level 3 readme](https://acdisc.gesdisc.eosdis.nasa.gov/data/HAQAST/HAQ_TROPOMI_NO2_CONUS_A_L3.2.4/doc/README_TROPOMI_Level3_TropNO2_DG_20240222.pdf)
+(Earthdata sign-in, not probed).
+
+## The NYC worked example, played back live, 2026-11-05
+
+The sixth workflow of `example-2025-nyc-ozone`, *Did the satellite see the city's NO₂?*, played back from its manual
+in Chromium against the real catalog and the real files (`SATELLITE_LIVE=1`). All six workflows passed in 4.0 minutes.
+
+| | Count |
+| --- | --- |
+| Files read (OFFL orbits, 1–14 June 2023) | 19 |
+| Rows (4 monitors; one per point per overpass, one per point per day without one) | 76 |
+| Value passing `qa_value` ≥ 0.75 | 22 |
+| Below the quality threshold | 47 |
+| No retrieval | 0 |
+| No overpass | 7 |
+| Requests | 337; their sizes are hidden from the browser by the storage |
+
+Read from the run's own sentence, on screen. Some days have two orbits over the city (2, 3 and 8 June), so
+there are more files than days. At monitor 5-110 every value below the threshold that was seen on screen had
+`qa_value` 0.74.
+
+**A first attempt stalled, and the cause is not known.** Started at 19:00, it finished workflows 1 to 5 in a minute,
+then sat in the satellite workflow for 2 h 49 min with no open connection and almost no CPU. The test player gave
+the five-hour wait to every step of that workflow, so nothing was reported. It was stopped, the long wait was
+limited to the Run step, a failed run now ends the wait at once, and the rerun passed. Which step it stopped on was
+not captured.
+
+**Not established:** the per-monitor split of these counts, the related table (satellite against ground on `site`
+and `date`) beyond its having run, whether 0.74 is common across the swath or particular to these pixels, and a
+WebKit run. The 4-minute time is one evening's network, not a measured read rate.
+
 ## What is already known to be a limit
 
 A satellite does not measure what a station measures. NO₂ from TROPOMI or TEMPO is a tropospheric column, not ppb at

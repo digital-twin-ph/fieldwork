@@ -3,6 +3,21 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.31.0 — 2026-11-05
+
+- **Relate a column from another table matches on several columns together.** Choose **And also matched on** for a
+  second key, such as `date` beside `site`: a row relates only where every key agrees. It can also bring the second
+  table's **value column** across, such as a monitor's reading in ppb.
+- **Joins show their keys.** In **View this table**, each key column is tinted and labelled **Matched on** in every
+  *Before* and in *After*, and the column added is labelled **Brought across**.
+- **Sample satellite files at points names its id column after the points' source**, `site` for the NYC monitors, so
+  the result relates straight back to the ground readings.
+- **NYC example, sixth workflow: _Did the satellite see the city's NO₂?_** Sentinel-5P NO₂ at the four NO₂ monitors,
+  1 to 14 June 2023, beside the monitors' own readings, matched on monitor and day. Days where Queens College 2 has
+  no ground reading are kept and named. Played back live in Chromium on 5 November: 19 files read, 76 rows, 22 values
+  passing the quality rule, 47 below it, 7 days without an overpass (experiment 179).
+- Validation: Chromium locally; WebKit in CI.
+
 ## 0.30.0 — 2026-11-05
 
 - **A whole country can be a study area.** Uganda at ADM0 drew nothing: its outline, 1.4 MB, was refused against a

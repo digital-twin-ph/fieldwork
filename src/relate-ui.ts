@@ -77,6 +77,10 @@ function sharesTable(shares:MeasureShare[],esc:Escape):string{
     +'</tbody></table>';
 }
 
+/** THE KEY, COUNTED: "sub_districts" for one key column, "site and date combinations" for several, since a plural
+ *  on the last name of "site and date" would count dates (2026-11-05). */
+export const keyNoun=(on:string,n:number)=>on.includes(' and ')?`${on} combination${n===1?'':'s'}`:`${on}${n===1?'':'s'}`;
+
 export function openRelateJoin(view:RelateJoinView,esc:Escape):void{
   document.getElementById('relate-join')?.remove();
   const dialog=document.createElement('dialog');
@@ -165,7 +169,7 @@ export function openRelateJoin(view:RelateJoinView,esc:Escape):void{
       +(gaps.length
         ? '<label class="check"><input type="radio" name="relate-join-decision" value="drop" '
           +`${decision==='drop'?'checked':''}> Drop them — keep ${count(shape.overlap.matched)} `
-          +`matched ${esc(view.on)}${shape.overlap.matched===1?'':'s'}, and the totals above</label>`
+          +`matched ${esc(keyNoun(view.on,shape.overlap.matched))}, and the totals above</label>`
           +'<label class="check"><input type="radio" name="relate-join-decision" value="keep" '
           +`${decision==='keep'?'checked':''}> Keep them under a category I name — every row stays, `
           +'and the totals are the whole table’s</label>'

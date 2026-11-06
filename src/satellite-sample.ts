@@ -67,11 +67,16 @@ export interface SampleCounts {files:number; points:number; days:number; rows:nu
 export const SAMPLE_KEYS=['point_id','point','date','overpass_time','stream','orbit','scanline','ground_pixel',
   'value_as_read','qa_value','passes_quality','gap','measure'] as const;
 
+/** THE ID COLUMN IS NAMED AS THE POINTS' SOURCE NAMES IT: `site` when Point data read the ids from a table's `site`
+ *  column, `point_id` otherwise. So the result relates back to the source on that column, with nobody renaming it:
+ *  the NYC ground readings are keyed `site` and `date`, and so are these (2026-11-05, experiment 179). */
+const renameId=(keys:readonly string[],idColumn:string)=>keys.map(k=>k==='point_id'?idColumn:k);
+
 /** THE LONG TABLE: one row per point per overpass read, and one per point per day with no overpass. The value column
  *  holds a value only where it passed the quality rule; any value read is kept as read in `value_as_read`, so a
  *  reading below the threshold is visible and never silently used. Nothing is filled. */
 export function sampleTable(points:readonly SamplePoint[],readings:readonly FileReading[],from:string,until:string,
-  reader:SatelliteReader,operator:QualityOperator,unplaced=0):{table:DataTable;counts:SampleCounts}{
+  reader:SatelliteReader,operator:QualityOperator,unplaced=0,idColumn='point_id'):{table:DataTable;counts:SampleCounts}{
   const rows:DataTable['rows']=[];
   const counts:SampleCounts={files:readings.length,points:points.length,days:0,rows:0,passing:0,belowQuality:0,noRetrieval:0,
     noOverpass:0,unplaced,requests:null,bytes:null};
@@ -104,11 +109,15 @@ export function sampleTable(points:readonly SamplePoint[],readings:readonly File
   if(measured.length===readings.length&&readings.length&&readings.every(r=>(r.bytes??0)>0)){
     counts.bytes=measured.reduce((n,r)=>n+(r.bytes??0),0);}
   // ONE OVERPASS READ TWICE is a finding, not a refusal: two streams of one orbit both kept.
-  const twice=repeatedKeys(rows.filter(r=>r.key.orbit).map(r=>r.key),['point_id','orbit']).map(f=>({...f,
+  // The id column takes the source's name, last, so nothing above needs to know it.
+  if(idColumn!=='point_id'&&!SAMPLE_KEYS.includes(idColumn as typeof SAMPLE_KEYS[number]))
+    for(const r of rows){const {point_id,...rest}=r.key;r.key={[idColumn]:point_id!,...rest};}
+  else idColumn='point_id';
+  const twice=repeatedKeys(rows.filter(r=>r.key.orbit).map(r=>r.key),[idColumn,'orbit']).map(f=>({...f,
     text:`${f.text} One orbit is one overpass: two of its processing streams were read. Keep one in Search a satellite catalog.`}));
   const units=readings.find(r=>r.units)?.units??undefined;
-  const table:DataTable={kind:'data-table',keys:[...SAMPLE_KEYS],valueField:reader.column,...(units?{unit:units}:{}),
-    primaryKey:['point_id','date','overpass_time','stream'],secondaryKeys:['point_id','orbit'],
+  const table:DataTable={kind:'data-table',keys:renameId(SAMPLE_KEYS,idColumn),valueField:reader.column,...(units?{unit:units}:{}),
+    primaryKey:[idColumn,'date','overpass_time','stream'],secondaryKeys:[idColumn,'orbit'],
     ...(twice.length?{findings:twice}:{}),
     columns:{
       [reader.column]:{unit:units,description:`${reader.variable}, at the pixel whose centre is nearest the point, where it passed the quality rule. A column amount, not a surface concentration.`,origin:'file',confirmed:true},

@@ -34,6 +34,11 @@ export interface TableView {
    *  Only the columns named here are annotated. A table whose columns all came from one place
    *  passes nothing and reads as it did. */
   origins?:Record<string,string>;
+  /** WHAT A COLUMN DID IN A JOIN, marked in the heading and down the column. The practitioner, 2026-11-05: *"When we
+   *  show the before and after table views with joins can we highlight the columns used as keys?"* `key`: matched on,
+   *  in every Before and in After; `brought`: the column the join added, in After. A word as well as a tint, so the
+   *  mark does not rest on colour alone. */
+  roles?:Record<string,'key'|'brought'>;
   /** Offered per column when a repair is possible and the caller can carry it out. Given the
    *  column and told what the practitioner asked for; the dialog closes and the caller decides
    *  what to record. */
@@ -134,7 +139,9 @@ export function openTableViewer(view:TableView,esc:Escape):void{
           +view.columns.map(c=>{
             const p=profiles.get(c)!,said=summary(p);
             const from=view.origins?.[c];
-            return `<th>${esc(c)}`
+            const role=view.roles?.[c];
+            return `<th${role?` class="column-role-${role}" data-column-role="${role}"`:''}>${esc(c)}`
+              +(role?`<span class="column-role">${role==='key'?'matched on':'brought across'}</span>`:'')
               +(from?`<span class="column-origin">${esc(from)}</span>`:'')
               +(said?`<span class="profile">${said}</span>`:'')
               // The repair, where the column has values that would survive one and the caller
@@ -146,7 +153,8 @@ export function openTableViewer(view:TableView,esc:Escape):void{
               +`</th>`;
           }).join('')+`</tr></thead><tbody>`
           +shown.map((row,i)=>`<tr><td>${i+1}</td>`
-            +view.columns.map(c=>`<td${mismatches(c,row[c])?' class="cell-mismatch"':''}>${cell(row[c])}</td>`).join('')+`</tr>`).join('')
+            +view.columns.map(c=>{const classes=[mismatches(c,row[c])?'cell-mismatch':'',view.roles?.[c]?`column-role-${view.roles[c]}`:''].filter(Boolean);
+              return `<td${classes.length?` class="${classes.join(' ')}"`:''}>${cell(row[c])}</td>`;}).join('')+`</tr>`).join('')
           +`</tbody></table></div>`
         :`<div class="notice">No row matches that filter.</div>`)
       +`</div>`;

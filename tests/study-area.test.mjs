@@ -18,7 +18,7 @@ test('invalid drawings fail before they can become spatial facts',()=>{
   assert.deepEqual(validateDrawnGeometry(valid),valid);
   assert.throws(()=>validateAreaParams({source:'drawn',label:'Area',selectionMode:'bbox',geometry:valid}),/four axis-aligned/);
   // A ring repeated is not an enclave: it coincides with the boundary, so it is a fault.
-  assert.throws(()=>validateDrawnGeometry({...valid,coordinates:[...valid.coordinates,valid.coordinates[0]]}),/must not cross or touch/);
+  assert.throws(()=>validateDrawnGeometry({...valid,coordinates:[...valid.coordinates,valid.coordinates[0]]}),/must not cross, or touch along an edge/);
   // A genuine enclave IS admitted now. 22 of 189 DRC ADM2 units carry one, and the old contract
   // refused all of them outright -- the practitioner, 2026-10-18: "we want to admit polygons as
   // long as they do not overrun memory."
@@ -195,6 +195,11 @@ test('a study area holds adjacent parts, and still refuses overlapping ones',()=
   // WITHIN one part the old rule is unchanged: a ring touching itself is a drawing fault.
   assert.throws(()=>validateDrawnGeometry({type:'Polygon',
     coordinates:[[[0,0],[2,0],[2,2],[1,0],[0,2],[0,0]]]}),/must not cross or touch/);
+  // TWO RINGS OF ONE PART MAY MEET AT A POINT, as OGC allows: a hole touching its outline at one vertex (Quatis, in
+  // geoBoundaries' Brazil) is admitted; a hole lying along the outline for a length is not.
+  assert.doesNotThrow(()=>validateDrawnGeometry({type:'Polygon',coordinates:[[[0,0],[4,0],[4,4],[0,4],[0,0]],[[0,2],[1,1],[2,2],[1,3],[0,2]]]}));
+  assert.throws(()=>validateDrawnGeometry({type:'Polygon',coordinates:[[[0,0],[4,0],[4,4],[0,4],[0,0]],[[0,1],[1,1],[1,2],[0,2],[0,1]]]}),
+    /must not cross, or touch along an edge/);
   // Three in a row, each sharing a border with the next, which is what a tiled layer looks like.
   assert.doesNotThrow(()=>validateDrawnGeometry(parts([[sq(0,0)],[sq(1,0)],[sq(2,0)]])));
   // AND CONTAINMENT STILL CATCHES CONTAINMENT. Ray casting reads a point on a ring as inside it,

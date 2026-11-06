@@ -132,12 +132,17 @@
     {
       "id": "urn:fieldwork:widget:case_series",
       "nodeType": "case_series",
-      "currentVersion": "0.1.0",
+      "currentVersion": "0.1.1",
       "releases": [
         {
           "version": "0.1.0",
           "path": "widgets/releases/case_series/0.1.0.json",
           "sha256": "878ccedea4fa9c9abf95625e32807a160dfa8c4cb2c5ce461d3bda49f04a7731"
+        },
+        {
+          "version": "0.1.1",
+          "path": "widgets/releases/case_series/0.1.1.json",
+          "sha256": "dd19c81696365f1ff959bb724f5528d2868fbe9a99e7d48cf187537c3b437587"
         }
       ]
     },
@@ -488,7 +493,7 @@
     {
       "id": "urn:fieldwork:widget:join_table_to_area",
       "nodeType": "join_table_to_area",
-      "currentVersion": "0.3.0",
+      "currentVersion": "0.3.1",
       "releases": [
         {
           "version": "0.1.0",
@@ -504,6 +509,11 @@
           "version": "0.3.0",
           "path": "widgets/releases/join_table_to_area/0.3.0.json",
           "sha256": "7ffd1da62f55d0ae498f77399eafcad8c3b794c22967cda4c2e3d02239a60025"
+        },
+        {
+          "version": "0.3.1",
+          "path": "widgets/releases/join_table_to_area/0.3.1.json",
+          "sha256": "86d94193059e93bac2b6ac3d7a900cbd6211cfd8da9b2cf8a2fba090f0776113"
         }
       ]
     },
@@ -972,7 +982,7 @@
     {
       "id": "urn:fieldwork:widget:rate",
       "nodeType": "rate",
-      "currentVersion": "0.3.0",
+      "currentVersion": "0.3.1",
       "releases": [
         {
           "version": "0.1.0",
@@ -988,6 +998,11 @@
           "version": "0.3.0",
           "path": "widgets/releases/rate/0.3.0.json",
           "sha256": "97c8fbe7f9039b8ce483546eea02dd5f792ea510ed5b829bc78c7389a8f8d33e"
+        },
+        {
+          "version": "0.3.1",
+          "path": "widgets/releases/rate/0.3.1.json",
+          "sha256": "3cd3003458f1177a5502cae9da51959dc8544fa688f5fd97b11f8c140db4a240"
         }
       ]
     },
@@ -1240,7 +1255,7 @@
     {
       "id": "urn:fieldwork:widget:study_area",
       "nodeType": "study_area",
-      "currentVersion": "0.6.0",
+      "currentVersion": "0.6.1",
       "releases": [
         {
           "version": "0.1.0",
@@ -1276,6 +1291,11 @@
           "version": "0.6.0",
           "path": "widgets/releases/study_area/0.6.0.json",
           "sha256": "dcaddf554a94b4c13b95a5d123b389db575e8698581b58864dc9f57fcbd5e83c"
+        },
+        {
+          "version": "0.6.1",
+          "path": "widgets/releases/study_area/0.6.1.json",
+          "sha256": "6aa7a568a38318a9c0ef7bf2ca472793113314c5a8a73c82b807dd07b4406c48"
         }
       ],
       "previousNodeTypes": [
@@ -1334,7 +1354,7 @@
     {
       "id": "urn:fieldwork:widget:table_input",
       "nodeType": "table_input",
-      "currentVersion": "0.6.0",
+      "currentVersion": "0.6.1",
       "releases": [
         {
           "version": "0.1.0",
@@ -1365,6 +1385,11 @@
           "version": "0.6.0",
           "path": "widgets/releases/table_input/0.6.0.json",
           "sha256": "eaa538cdcd61265cb189767dece187256f7fa6932cd2c5792dc46d1b67da5e34"
+        },
+        {
+          "version": "0.6.1",
+          "path": "widgets/releases/table_input/0.6.1.json",
+          "sha256": "c6d11ef1437e694b3b59b6041274d036dd56f630eb9690c3220a467a24b2ae49"
         }
       ]
     },

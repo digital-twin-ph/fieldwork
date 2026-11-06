@@ -157,12 +157,24 @@ function crossingFault(parts:Position[][][]):string|null{
         if(crosses)return 'The parts of this area must not overlap each other. Parts that share a border are fine; these cross.';
         continue;
       }
-      return ringOf[p1]===ringOf[q1]?'Polygon edges must not cross or touch each other.'
-        :"The boundary's rings must not cross or touch each other.";
+      if(ringOf[p1]===ringOf[q1])return 'Polygon edges must not cross or touch each other.';
+      // TWO RINGS OF ONE PART MAY MEET AT A POINT, as the OGC simple-features rule allows and shapely, GEOS and
+      // PostGIS accept: a hole touching its outline at one vertex, an island meeting another at a corner. Refusing
+      // that refused real municipalities -- Quatis's hole and three of Rio de Janeiro city's islands, in
+      // geoBoundaries' Brazil, 2026-11-06 -- that shapely calls valid. A shared run of edge is still refused, and so
+      // is a crossing.
+      if(crosses||sharesRun(a,b,c,d))return "The boundary's rings must not cross, or touch along an edge.";
     }
   }
   return null;
 }
+/** True when two collinear edges overlap along a length, not just at a point. */
+const sharesRun=(a:Position,b:Position,c:Position,d:Position)=>{
+  if(Math.abs(cross(a,b,c))>=1e-12||Math.abs(cross(a,b,d))>=1e-12)return false;
+  const axis=Math.abs(b[0]-a[0])>=Math.abs(b[1]-a[1])?0:1;
+  const lo=Math.max(Math.min(a[axis],b[axis]),Math.min(c[axis],d[axis])),hi=Math.min(Math.max(a[axis],b[axis]),Math.max(c[axis],d[axis]));
+  return hi-lo>1e-12;
+};
 const cross=(a:Position,b:Position,c:Position)=>(b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0]);
 const on=(a:Position,b:Position,p:Position)=>Math.abs(cross(a,b,p))<1e-12&&p[0]>=Math.min(a[0],b[0])-1e-12&&p[0]<=Math.max(a[0],b[0])+1e-12&&p[1]>=Math.min(a[1],b[1])-1e-12&&p[1]<=Math.max(a[1],b[1])+1e-12;
 const encloses=(ring:Position[],p:Position)=>{

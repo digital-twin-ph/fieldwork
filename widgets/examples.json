@@ -434,6 +434,79 @@
         }
       ],
       "workflowCount": 6
+    },
+    {
+      "id": "urn:fieldwork:example:brazil-dengue-rj-2024",
+      "title": "Dengue in Rio de Janeiro state, Brazil, 2024",
+      "repository": "https://github.com/digital-twin-ph/example-2024-brazil-dengue",
+      "commit": "3d5b2d5acc0a335d148cee628519865c52f2115c",
+      "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2024-brazil-dengue",
+      "licence": {
+        "data": "CC-BY-4.0",
+        "source": "Sánchez-Marqués and Sánchez, DATASET_MULTIMODAL_V8, Zenodo, doi:10.5281/zenodo.22029053; counts from InfoDengue; boundaries from geoBoundaries (IBGE), CC BY 3.0 IGO",
+        "note": "Stated on the Zenodo record and by geoBoundaries. Attribution is in NOTICE.txt."
+      },
+      "description": "Weekly notified dengue cases in the 92 municipalities of Rio de Janeiro state during Brazil's largest epidemic on record: the state's epidemic curve, and notified cases per 100,000 residents by municipality on a map.",
+      "carries": {
+        "workflow": true,
+        "data": true,
+        "geography": true
+      },
+      "notYet": "The satellite half: temperature and vegetation over each municipality, computed in Fieldwork and set against the dataset's own monthly values. The research note's lagged models are not built.",
+      "uses": [
+        "append_rows",
+        "chart_output",
+        "group_table",
+        "join_table_to_area",
+        "map_output",
+        "rate",
+        "select_rows",
+        "study_area",
+        "table_input"
+      ],
+      "files": [
+        {
+          "path": "fieldwork-project.json.gz",
+          "sha256": "113f97535521458b7a4fbacdd80cfc9ddcab04ba05e9b06e290c85e2efb38aff",
+          "bytes": 406399
+        },
+        {
+          "path": "data/dengue-rj-2024.csv",
+          "sha256": "ce3ff3230f320f23b1c11c57c16688235ca77606bf849baf95b3e82602898934",
+          "bytes": 876805
+        },
+        {
+          "path": "geo/rj-municipalities.geojson",
+          "sha256": "5fc0f65562ae883af8ffbd3503cbb177661e1e92cedcad4062566074a3f2b2f1",
+          "bytes": 279559
+        },
+        {
+          "path": "provenance.json",
+          "sha256": "e689bd283e06dc36b4cd262604b9dd21b03ed86e70fe90dfe8b941b458fac0a7",
+          "bytes": 3408
+        },
+        {
+          "path": "README.md",
+          "sha256": "07106742791eb7076e18f62a0d88b75e5908fd90e2a8c3fedd8472a9b904a217",
+          "bytes": 3053
+        },
+        {
+          "path": "NOTICE.txt",
+          "sha256": "3c51083cad35c767e31083e52eca342ffc667cf59742ecac6ad03f83527e9eec",
+          "bytes": 1572
+        },
+        {
+          "path": "LICENSE-data",
+          "sha256": "9ba9550ad48438d0836ddab3da480b3b69ffa0aac7b7878b5a0039e7ab429411",
+          "bytes": 18657
+        },
+        {
+          "path": "manual.json",
+          "sha256": "c16288d1b28f1aacb0cfc26f532367a90975cb398ad4d004f2c85dbafe5c2683",
+          "bytes": 17811
+        }
+      ],
+      "workflowCount": 2
     }
   ]
 }

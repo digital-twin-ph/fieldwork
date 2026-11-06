@@ -1,6 +1,6 @@
 # Study area
 
-_Created 2026-10-19 · Updated 2026-10-29_
+_Created 2026-10-19 · Updated 2026-11-06_
 
 **An input widget.** It defines where your work takes place: one shape, kept on this device, that
 every later step can be scoped to.
@@ -61,6 +61,10 @@ boundary from a source so the receipt can say whose line it is.
 
 Several selected units stay several shapes. They are not merged into one outline and never become a
 bounding box around the group.
+
+It does not refuse units that share a border, or rings that meet at a single point, such as an island touching
+another at a corner or a hole touching its outline. Both are valid shapes, and Brazil's municipalities have them. It
+refuses shapes whose interiors overlap, and rings that cross or run along each other.
 
 ## Worked examples that use it
 

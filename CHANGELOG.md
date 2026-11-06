@@ -3,6 +3,25 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.33.0 — 2026-11-06
+
+- **New worked example: dengue in Rio de Janeiro state, Brazil, 2024.** Two workflows from an empty canvas: the
+  state's weekly epidemic curve, and notified cases per 100,000 residents for each of the 92 municipalities on a map,
+  from 54.6 in Nilópolis to 15,081 in Resende. The data are an extract of DATASET_MULTIMODAL_V8 (Zenodo, CC BY 4.0),
+  committed to the example with its findings: epidemiological week 1 missing, the last week doubled, and satellite
+  columns that are monthly values repeated weekly. It has a Manual tab. Experiment 180.
+- **Rate with a denominator and Cases by period can be added from the library.** A new node starts with its fields
+  empty, and saving refused that, so neither node was ever created. Known since October and recorded in TODO; fixed
+  now because the Brazil example needed Rate. An empty field is now refused when the workflow runs, with the same
+  message. One widget remains unaddable: Compare level to elevation.
+- **A study area takes units whose rings meet at a single point**, such as an island touching another at a corner,
+  as the OGC rule allows. Quatis and Rio de Janeiro city were refused.
+- **Reading a file as wide no longer blocks on repeated subjects.** The dialog still suggests reading it as long;
+  read as wide, every row is kept and each repeat is reported in Data quality.
+- **Join a table to the study area counts units, not parts.** A municipality's islands were each reported as a
+  repeated name.
+- Validation: Chromium locally; WebKit in CI.
+
 ## 0.32.0 — 2026-11-06
 
 - **Sample satellite files at points reads the nearest pixel across the file's chunks** (widget 0.2.1). A point near

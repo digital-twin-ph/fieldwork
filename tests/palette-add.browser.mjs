@@ -61,7 +61,10 @@ test('every palette entry can be added to a blank canvas as a draft',async({page
   // the extract-contract ruleset. The first time this list has shrunk, and it shrank because a
   // widget left rather than because one was fixed -- which still counts, since a widget nobody
   // can add is one nobody can use.
-  const known=['slr_threshold_comparison','rate','case_series'];
+  // ONE SINCE 2026-11-06: rate and case_series fixed, their save checks no longer requiring what only a run needs,
+  // when the Brazil dengue example had to add Rate by hand (experiment 180). The first time this list shrank because
+  // a widget was fixed.
+  const known=['slr_threshold_comparison'];
   expect(refused.filter(t=>!known.includes(t)),
     'these palette entries could not be added as drafts').toEqual([]);
   expect(refused.sort(),'the known-unaddable set must shrink, never grow').toEqual([...known].sort());

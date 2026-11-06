@@ -317,17 +317,18 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:T
             return;
           }
         }
+        // REPEATS ARE ADVICE, NOT A REFUSAL. Repeated subjects usually mean the file is long, and the button says so.
+        // But a wide file can repeat a subject because the source has a fault: DATASET_MULTIMODAL_V8 has one week twice
+        // for every Rio de Janeiro municipality, 92 of 4,876 rows, and refusing the wide read refused the file
+        // (2026-11-06). The wide reader keeps each repeat and reports it in Data quality as a duplicate record.
         if(repeated){
-          shapeSays.textContent=`This file looks like it is already in LONG format. `
+          shapeSays.textContent=`This file may already be in LONG format. `
             +`${repeated.repeats.toLocaleString()} row${repeated.repeats===1?'':'s'} repeat a subject that `
             +`${keys.length===1?'the key column':'the key columns'} should identify once -- for example `
-            +`${repeated.example}. A wide file has one row per subject, so reading this as wide would `
-            +`refuse it. Nothing has been changed.`;
+            +`${repeated.example}. If the file is long, read it as long. Read as wide, every row is kept and `
+            +`each repeat is reported in Data quality as a duplicate record.`;
           shapeAccept.textContent='Read it as long instead';
           shapeAlert.hidden=false;
-          status.textContent='This table has not been imported.';
-          save.disabled=true;result=undefined;
-          return;
         }
         table=wideDataTable(parsed,{keys,valueFields,measureKey,valueField,...roles,...(unit?{unit}:{})});
         imported={data:table,source:{filename:file.name,bytes:file.size,sha256:'',rows:table.rowCount},

@@ -1,6 +1,6 @@
 # Join a table to the study area
 
-_Created 2026-10-25 · Updated 2026-11-03_
+_Created 2026-10-25 · Updated 2026-11-06_
 
 **A join.** It takes a table of values and a study area whose parts are named, matches each row to
 the part it names, and hands on polygons that carry the value. A map downstream can then shade
@@ -65,6 +65,9 @@ The parts are kept separate rather than dissolved.
 - **Two parts sharing a name** both take the value. That is true of a rate and is **not** true of a
   count: Streatham is two polygons, and both carry its rate, which is why Snow's 32 sub-districts
   draw as 33 parts.
+- **The parts of one unit are not two places.** A municipality of several islands is one unit of several parts:
+  each part takes the value, and none of this is reported as a repeated name. Rio de Janeiro state's 92
+  municipalities draw as 155 parts.
 
 The receipt records the column matched on, the normalisation used, how many rows matched, how many
 did not, and every part left without a value, so a figure made from this can say what produced it.

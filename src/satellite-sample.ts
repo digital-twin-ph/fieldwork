@@ -30,7 +30,7 @@ export type GapKind='no overpass'|'no retrieval'|'below quality threshold';
 
 const READERS=(fieldwork as unknown as {readers:Record<string,SatelliteReader|string>}).readers;
 export const readerFor=(product:SatelliteProduct):SatelliteReader|null=>{
-  const found=READERS[product.route.id];return typeof found==='object'?found:null;};
+  const found=READERS[product.route.id];return typeof found==='object'&&found.format==='s5p-l2-netcdf'?found:null;};
 
 /** One point as the reader needs it. */
 export interface SamplePoint {id:string; name:string; lon:number; lat:number}

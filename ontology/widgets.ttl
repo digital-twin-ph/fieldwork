@@ -106,5 +106,5 @@
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/find_satellite_products.md>.
 <urn:fieldwork:widget:search_satellite_catalog> a fw:WidgetDefinition; fw:nodeType "search_satellite_catalog"; rdfs:label "Search a satellite catalog";
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/search_satellite_catalog.md>.
-<urn:fieldwork:widget:sample_satellite_files_at_points> a fw:WidgetDefinition; fw:nodeType "sample_satellite_files_at_points"; rdfs:label "Sample satellite files at points";
+<urn:fieldwork:widget:sample_satellite_files_at_points> a fw:WidgetDefinition; fw:nodeType "sample_satellite_files_at_points"; rdfs:label "Sample satellite files at points or over areas";
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/sample_satellite_files_at_points.md>.

@@ -1,0 +1,89 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:search_satellite_catalog",
+  "nodeType": "search_satellite_catalog",
+  "version": "0.3.2",
+  "title": "Search a satellite catalog",
+  "released": "2026-11-06",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['search_satellite_catalog']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "validationStatus": "application-only",
+    "shaclShapes": []
+  },
+  "ports": {
+    "inputs": [
+      {
+        "name": "product",
+        "type": "satellite-product"
+      },
+      {
+        "name": "area",
+        "type": "area"
+      }
+    ],
+    "output": "satellite-files",
+    "optionalInputs": [
+      "area"
+    ],
+    "note": "Takes the chosen product, and optionally a study area whose extent is searched; with no area connected, the extent is four edges typed in the dialog. Emits satellite-files: remote files not yet read, its own port type so nothing mistakes addresses for data."
+  },
+  "ontology": {
+    "status": "partial",
+    "mappings": [
+      {
+        "role": "entity",
+        "iri": "urn:fieldwork:SatelliteCatalogSearch",
+        "file": "ontology/runtime.ttl"
+      }
+    ],
+    "note": "The receipt states the catalog, collection, product, extent and where it came from (a study area or a typed extent), dates, how many items were returned, matched and kept, whether the search stopped at its limit, and fw:completenessRead false: a search reads no pixels. Held by fw:SatelliteCatalogSearchShape.",
+    "emits": {
+      "classes": [
+        "SatelliteCatalogSearch"
+      ],
+      "properties": [
+        "completenessRead",
+        "itemsKept",
+        "itemsMatched",
+        "itemsReturned",
+        "productType",
+        "searchAreaFrom",
+        "searchBBox",
+        "searchFrom",
+        "searchTruncated",
+        "searchUntil",
+        "stacCatalog",
+        "stacCollection"
+      ]
+    }
+  },
+  "implementation": {
+    "files": [
+      "src/app.ts",
+      "src/core.ts",
+      "src/satellite-catalog-ui.ts",
+      "src/satellite-catalog.ts"
+    ],
+    "definition": "src/satellite-catalog.ts"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": null
+  },
+  "changes": [
+    {
+      "kind": "patch",
+      "description": "Keeps the end of the period a composite covers, where an item states one, such as MODIS's 8-day periods."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "The search builder, its messages and the 500-item bound are JLT's, ported. Unit tests use a stubbed catalog; a live search was run against Planetary Computer in a browser. Nothing here reads a file, so nothing establishes that an item holds usable pixels over the area."
+  }
+}

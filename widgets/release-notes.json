@@ -1036,36 +1036,36 @@
    "migrationFrom": []
   },
   "find_satellite_products": {
-   "version": "0.2.0",
+   "version": "0.3.0",
    "released": "2026-11-06",
    "changes": [
     {
      "kind": "minor",
-     "description": "Each product carries the dataset citation its producer asks for, with the DOI for the processor version and where and when it was read; the receipt states it as fw:citationRead, or fw:citationUnread where nobody has read one. The three Sentinel-5P products on Planetary Computer carry ESA's Version 02 citations. Experiment 179."
+     "description": "Offers MODIS land surface temperature, 8-day, 1 km, on Planetary Computer under Surface heat, with its facts, licence (NASA Earthdata: open, CC0 unless marked) and citation read at source. Experiment 180."
     }
    ],
    "breaking": false,
    "migrationFrom": []
   },
   "search_satellite_catalog": {
-   "version": "0.3.1",
+   "version": "0.3.2",
    "released": "2026-11-06",
    "changes": [
     {
      "kind": "patch",
-     "description": "Inspect shows the product's dataset citation, with its DOI as a link, where Fieldwork has read one."
+     "description": "Keeps the end of the period a composite covers, where an item states one, such as MODIS's 8-day periods."
     }
    ],
    "breaking": false,
    "migrationFrom": []
   },
   "sample_satellite_files_at_points": {
-   "version": "0.2.1",
+   "version": "0.3.0",
    "released": "2026-11-06",
    "changes": [
     {
-     "kind": "patch",
-     "description": "The pixel is the nearest centre over the whole swath. A point near the edge of one of the file's chunks was placed on the nearest centre within the first chunk that covered it, though a centre across the edge could be nearer; and a point between two chunks of wide pixels could be in neither chunk's extent, so it was missed. Found by the validation lab's check 35, 2026-11-06. Experiment 179."
+     "kind": "minor",
+     "description": "Reads over areas as well as at points, renamed Sample satellite files at points or over areas. A new areas input takes a polygon layer; MODIS land surface temperature is read by geotiff.js over the cells whose centre is in each area, one row per area per 8-day period per satellite, with the cells it rests on, the clear days and the quality rule on every row. The practitioner chose the rule: produced with an average LST error of 2 K or less. Sentinel-5P is still read at points. Experiment 180."
     }
    ],
    "breaking": false,

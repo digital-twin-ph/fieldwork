@@ -1607,7 +1607,7 @@
     {
       "id": "urn:fieldwork:widget:find_satellite_products",
       "nodeType": "find_satellite_products",
-      "currentVersion": "0.2.0",
+      "currentVersion": "0.3.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -1618,13 +1618,18 @@
           "version": "0.2.0",
           "path": "widgets/releases/find_satellite_products/0.2.0.json",
           "sha256": "36deef11a371c6ad1bad717891000f6710f6b1531e762b311d33d3aac09ead57"
+        },
+        {
+          "version": "0.3.0",
+          "path": "widgets/releases/find_satellite_products/0.3.0.json",
+          "sha256": "29952596583b99673c344d67373ef365f38ffa99a59466c1edb0837b734948fc"
         }
       ]
     },
     {
       "id": "urn:fieldwork:widget:search_satellite_catalog",
       "nodeType": "search_satellite_catalog",
-      "currentVersion": "0.3.1",
+      "currentVersion": "0.3.2",
       "releases": [
         {
           "version": "0.1.0",
@@ -1645,13 +1650,18 @@
           "version": "0.3.1",
           "path": "widgets/releases/search_satellite_catalog/0.3.1.json",
           "sha256": "9f616f75ece0f1b63b1f8a3c6045ce03feca30d390d414a8e204d9aabff20422"
+        },
+        {
+          "version": "0.3.2",
+          "path": "widgets/releases/search_satellite_catalog/0.3.2.json",
+          "sha256": "6ac166eddd65739f6c117a253248893549a21bff79802e26ff403ec726dd58e3"
         }
       ]
     },
     {
       "id": "urn:fieldwork:widget:sample_satellite_files_at_points",
       "nodeType": "sample_satellite_files_at_points",
-      "currentVersion": "0.2.1",
+      "currentVersion": "0.3.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -1667,6 +1677,11 @@
           "version": "0.2.1",
           "path": "widgets/releases/sample_satellite_files_at_points/0.2.1.json",
           "sha256": "2a90c7b9949de1a35ce569c6109ec5f488621f882b3534d29fd5553f1c05460d"
+        },
+        {
+          "version": "0.3.0",
+          "path": "widgets/releases/sample_satellite_files_at_points/0.3.0.json",
+          "sha256": "b375fda7fad20309529ee088948a0431fdafea2b45d996a4fd24c6dbd02f4632"
         }
       ]
     }

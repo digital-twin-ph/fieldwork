@@ -22,6 +22,14 @@
         "original": "Copernicus Sentinel data [Year]",
         "modified": "Contains modified Copernicus Sentinel data [Year]"
       }
+    },
+    "nasa-eosdis": {
+      "name": "NASA Earthdata data use and citation guidance",
+      "terms": "Freely accessible and openly shared without restriction; NASA mission data are CC0 unless marked otherwise; citation very strongly urged.",
+      "open": true,
+      "readAt": "https://www.earthdata.nasa.gov/engage/open-data-services-software-policies/data-use-guidance",
+      "readOn": "2026-11-06",
+      "catalogSays": "other"
     }
   },
   "topics": [
@@ -40,7 +48,8 @@
   ],
   "topicRoutes": {
     "no2": ["pc-s5p-no2"],
-    "aerosol": ["pc-s5p-aer-ai"]
+    "aerosol": ["pc-s5p-aer-ai"],
+    "heat": ["pc-modis-lst-8day"]
   },
   "routes": [
     {
@@ -81,6 +90,18 @@
       "access_note": "No account: anonymous token",
       "platforms": ["sentinel-5p"],
       "verified": "2026-11-05"
+    },
+    {
+      "id": "pc-modis-lst-8day",
+      "label": "MODIS · land surface temperature, 8-day, 1 km (Planetary Computer)",
+      "endpoint": "https://planetarycomputer.microsoft.com/api/stac/v1",
+      "collection": "modis-11A2-061",
+      "collection_url": "https://planetarycomputer.microsoft.com/api/stac/v1/collections/modis-11A2-061",
+      "measurement": "Land surface temperature, day and night: the ground's skin where the sky was clear, not the air",
+      "format": "Cloud-Optimized GeoTIFF",
+      "access_note": "No account: anonymous token for the storage container",
+      "platforms": ["terra", "aqua"],
+      "verified": "2026-11-06"
     }
   ],
   "facts": {
@@ -131,6 +152,15 @@
       "signIn": "account", "licence": null,
       "browserReadable": "not checked; NASA Earthdata Login (S8)", "qualityRule": "QA bits 8 to 11 = 0000 for best quality (S8)",
       "stream": null, "coverageStart": null, "citation": null
+    },
+    "pc-modis-lst-8day": {
+      "kind": "observation", "quantity": "surface", "unit": "K", "unitReadFrom": "the file's own tags: units K, scale_factor 0.02 (experiment 180, M1)",
+      "signIn": "anonymous-token", "licence": "nasa-eosdis",
+      "browserReadable": "measured: range reads with geotiff.js, the 92 Rio de Janeiro municipalities (experiment 180, M2)",
+      "qualityRule": "QC bits documented, no rule recommended; default: produced with an average LST error of 2 K or less (experiment 180)",
+      "stream": "Terra (MOD11A2, mid-morning pass) and Aqua (MYD11A2, early afternoon) are different measurements; each 8-day value is the mean of its clear days",
+      "coverageStart": "2000-02-18",
+      "citation": {"text": "Wan Z, Hook S, Hulley G (2021). MODIS/Terra Land Surface Temperature/Emissivity 8-Day L3 Global 1km SIN Grid V061. NASA EOSDIS Land Processes Distributed Active Archive Center.", "doi": "10.5067/MODIS/MOD11A2.061", "appliesTo": "Terra files (MOD11A2); Aqua's (MYD11A2) carry their own DOI, 10.5067/MODIS/MYD11A2.061, not read", "readAt": "https://www.earthdata.nasa.gov/data/catalog/lpcloud-mod11a2-061", "readOn": "2026-11-06"}
     }
   },
   "readers": {
@@ -148,6 +178,19 @@
         "note": "The product readme says above 0.75; the product user manual's table, greater than or equal to 0.75 (S8). The two differ only at exactly 0.75. qa_value is stored as an integer with scale_factor 0.01, so the comparison is made on the stored integer: the scale factor is stored in 32 bits as 0.0099999998, so 75 times it is 0.74999998, which a comparison on the scaled value would wrongly fail."
       },
       "token": "https://planetarycomputer.microsoft.com/api/sas/v1/token/sentinel-5p-l2-netcdf"
+    },
+    "pc-modis-lst-8day": {
+      "format": "modis-cog", "readOn": "2026-11-06",
+      "layers": {
+        "day": {"label": "Daytime", "variable": "LST_Day_1km", "column": "LST_Day_1km", "quality": "QC_Day", "clear": "Clear_sky_days"},
+        "night": {"label": "Night-time", "variable": "LST_Night_1km", "column": "LST_Night_1km", "quality": "QC_Night", "clear": "Clear_sky_nights"}
+      },
+      "scale": 0.02, "fill": 0, "unit": "K", "projection": "modis-sinusoidal",
+      "quality": {
+        "default": "produced-2k",
+        "note": "MODIS documents its QC bits and recommends no rule (experiment 180, M1). Bits 0-1: 00 produced, good quality; 01 produced, other quality; 10 not produced, cloud; 11 not produced, other. Bits 6-7: average LST error <= 1, 2, 3 or > 3 K. Clear_sky_days and Clear_sky_nights are one bit per day of the eight (M2)."
+      },
+      "token": "https://planetarycomputer.microsoft.com/api/sas/v1/token/modiseuwest/modis-061-cogs"
     }
   }
 }

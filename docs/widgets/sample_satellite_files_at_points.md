@@ -1,9 +1,9 @@
-# Sample satellite files at points
+# Sample satellite files at points or over areas
 
 _Created 2026-11-05 · Updated 2026-11-05_
 
-**The satellite value at each of your points, for every overpass**, read from the files **Search a satellite catalog**
-found. Each value comes with its quality. Where a point has no usable value, it says which kind of gap it is. Nothing
+**The satellite value at each of your points, or over each of your areas, for every overpass or period**, read from
+the files **Search a satellite catalog** found. Each value comes with its quality. Where a point has no usable value, it says which kind of gap it is. Nothing
 is filled.
 
 ## What it does
@@ -23,6 +23,35 @@ point per overpass, plus one row per point for each day with no overpass.
 | `qa_value` | The pixel's quality value, 0 to 1 |
 | `passes_quality` | `yes` or `no` |
 | `gap` | Where there is no usable value: `no overpass`, `no retrieval` or `below quality threshold` |
+
+## Over areas
+
+Connect a polygon layer to **areas** instead of points: municipalities from **Join a table to the study area**, or a
+**Polygon layer**. This works for gridded products, which today means **MODIS land surface temperature** (8-day,
+1 km). Sentinel-5P is still read at points only.
+
+Each area is read by the cells whose centre is inside it, the rule **Clip raster** uses. A municipality made of
+several parts, such as one with islands, is one area. Where an area spans two of MODIS's tiles, both are read and
+added before the mean is taken.
+
+| Column | What it holds |
+| --- | --- |
+| the place column | the area's name; call it as the table you will relate it to does, such as `municipio` |
+| `period_start`, `period_end` | the 8-day period the file covers |
+| `platform` | `terra` (mid-morning pass) or `aqua` (early afternoon), never pooled |
+| `layer` | daytime or night-time |
+| `cells`, `cells_with_value`, `cells_passing` | how many cells the area holds, how many had a value, and how many passed the quality rule: **the mean rests on the last** |
+| `value_min`, `value_max` | the range of the passing cells, in kelvin |
+| `clear_days` | how many of the 8 days were clear, on average, behind the passing cells |
+| `LST_Day_1km` or `LST_Night_1km` | the mean of the passing cells, in kelvin as the file states it |
+| `gap` | `no cell in the area`, `no retrieval` or `below quality threshold` |
+
+**The quality rule for MODIS.** Its documents explain its quality bits and recommend no rule. The default keeps
+cells the product made, of good or other quality, whose average temperature error is 2 K or less. *Good quality only* and *everything produced* are the alternatives.
+
+**Read the counts.** Over Rio de Janeiro in February 2024 each 8-day value rested on about two clear days, and one
+week's value for Rio de Janeiro city came from 26 of its 1,400 cells. A mean is reported wherever any cell passed;
+whether that is enough is the analyst's call, and the numbers to make it are on the row.
 
 ## How to use it
 
@@ -61,8 +90,9 @@ or above 0.75".
   swath and wider at its edges. A pixel is not the value at the point.
 - **It will not turn a column into a concentration.** NO₂ here is a tropospheric column, molecules in the air above the
   pixel, not a surface concentration a monitor measures.
-- **It will not read other products yet.** Sentinel-5P NO₂ on Planetary Computer is the first with a reader. Ozone and
-  aerosols say so when connected.
+- **It will not read other products yet.** Sentinel-5P NO₂ (at points) and MODIS land surface temperature (at points
+  or over areas), both on Planetary Computer, have readers. Ozone and aerosols say so when connected.
+- **It will not weight by population or by how much of a cell lies in an area.** A cell counts whole, or not.
 - **It will not keep readings between sessions.** A reload reads the files again.
 
 ## What it costs

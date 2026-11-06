@@ -436,15 +436,20 @@
           "when": "default",
           "required": [
             [
-              "points",
-              "points"
-            ],
-            [
               "files",
               "satellite-files"
             ]
           ],
-          "optional": []
+          "optional": [
+            [
+              "points",
+              "points"
+            ],
+            [
+              "areas",
+              "polygons"
+            ]
+          ]
         }
       ]
     },

@@ -251,6 +251,27 @@ The largest differences are where the dataset's values look unlike a summer dayt
 nearer the truth. The dataset does not say whether it used Terra, Aqua or both, which days make its month (the
 period starting 26 February runs to 4 March), how it chose cells, or what quality rule it applied.
 
+## Built: over areas, 2026-11-06 (0.34.0)
+
+Sample satellite files at points or over areas, as admitted: an `areas` input beside `points`, either one; the reader
+chosen by the product. `src/satellite-areas.ts` (projection, cells, quality rules, sums) and
+`src/satellite-grid-sample.ts` (reading with geotiff.js, one window per file, masks once per tile grid, the table, the
+sentence and the receipt `fw:SatelliteAreaSample`).
+
+**Run end to end in Node on the real files** (the module the run uses, not a copy): February 2024, 92 municipalities,
+daytime, both satellites: 20 files in 30 s, 602 requests, 2.6 MB; 920 rows, 886 with a mean, 3 with values none of
+which passed, 31 with no retrieval; the receipt conforms to its shape. Rio de Janeiro city, Aqua, 25 January to
+1 February: 26 of 1,400 cells passed, from about one clear day.
+
+**Found building it:** geotiff.js's writer replaces a GeoTIFF's tie point with −180, 90 unless a coordinate system
+is declared, which made the test's first fixture read every area as off the grid. The fixture now declares a
+user-defined projected system, as MODIS files do.
+
+**Validation, Chromium:** 6 unit tests (`satellite-areas.test.mjs`); an offline browser test with three areas, one
+per outcome, read by range from GeoTIFFs written in the test (`sample-satellite-areas-offline.browser.mjs`).
+**Not yet:** a lab parity check against rasterio and rasterstats; a live browser run; the worked example's workflow;
+night-time and Aqua compared with the dataset.
+
 ## What this does not establish
 
 Any design. Whether InfoDengue's data may be redistributed; how the Zenodo file's exposures were computed, or

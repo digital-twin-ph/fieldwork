@@ -1,6 +1,6 @@
 # Relate a column from another table
 
-_Created 2026-10-26 · Updated 2026-11-01_
+_Created 2026-10-26 · Updated 2026-11-05_
 
 _Created 2026-10-26 · Updated 2026-11-05 (0.4.0)_
 
@@ -59,7 +59,8 @@ when it means one subject written twice.
    that nine unmatched sub-districts are eighteen unmatched things.
 2. **The effect on each numeric variable** — what each one totals over the whole table, over the
    rows that matched, and the share retained. Read this before anything else; see below.
-3. **The Methods note** this step will machine, and a **preview of the table** that will travel on.
+3. **The Methods note** this step will machine, and a **preview of the table** that will travel on, with the key
+   columns marked **Matched on** and the column added **Brought across**, as in **View this table**.
 
 Then **Finalize**. Nothing is written until you press it.
 

@@ -72,6 +72,14 @@ chunks of 2,086 × 225 pixels, so the first pixel of a chunk costs the whole chu
 longitude and quality, and 3 MB for the value, measured on 7 June 2023. **Expect roughly 10–15 MB per overpass**,
 much the same for 2 points as for 50 when they fall in one chunk. A month of daily overpasses is a few hundred MB.
 
+## How it was checked
+
+The lab's [check 35](https://github.com/digital-twin-ph/validation-lab) reads a Sentinel-5P-shaped file with h5py,
+a different HDF5 reader, and recomputes every point's pixel by comparing every centre in the swath, then rebuilds the
+table row by row for both quality rules. It agrees. Against 0.2.0 it found a point near the edge of one of the file's
+chunks read from the pixel across the edge from the nearest one: fixed in 0.2.1. The file is synthetic, so this says
+nothing about a real orbit's content.
+
 ## Where it comes from
 
 Admitted, built and measured in [experiment 179](../experiments/179-eo-and-stac-for-the-nyc-monitors.md). The files

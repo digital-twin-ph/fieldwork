@@ -26,6 +26,10 @@ test('a question about NO2 offers the open products first, and choosing one is s
   await expect(cards.first()).toContainText('No account (anonymous token)');
   await expect(cards.first()).toContainText('Open: Legal notice on the use of Copernicus Sentinel Data');
   await expect(cards.first()).toContainText('mol m-2');
+  // The citation ESA asks for, with its DOI as a link; a product nobody has read one for says so.
+  await expect(cards.first()).toContainText('TROPOMI Level 2 Nitrogen Dioxide total column products. Version 02.');
+  await expect(cards.first().locator('a[href="https://doi.org/10.5270/S5P-9bnp8q8"]')).toHaveText('doi:10.5270/S5P-9bnp8q8');
+  await expect(cards.filter({hasText:'TEMPO'}).first()).toContainText('not yet read for this product');
   await expect(dialog.locator('[data-sat-topic="no2"] .satellite-caution')).toContainText('not ground-level concentrations');
   await page.screenshot({path:'test-results/find-satellite-products.png'});
   await cards.first().locator('[data-sat-choose]').click();

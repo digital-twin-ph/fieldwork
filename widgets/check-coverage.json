@@ -9,8 +9,8 @@
   "measuredAt": "2026-10-27",
   "counts": {
     "widgets": 59,
-    "covered": 28,
-    "awaiting": 15,
+    "covered": 29,
+    "awaiting": 14,
     "none": 15,
     "blocked": 1
   },
@@ -335,8 +335,7 @@
       "nodeType": "sample_satellite_files_at_points",
       "expectation": "parity",
       "computes": "The value of the swath pixel whose centre is nearest each point, per file, with qa_value compared on the stored integer and each gap named: no overpass, no retrieval, below the quality threshold.",
-      "reason": "Worth recomputing independently because the pixel lookup on an irregular swath and the quality comparison are where implementations differ: the nearest centre on an irregular swath, a point near the swath edge, and qa_value 0.74 against 0.75 when the scale factor is applied in floating point. h5py or xarray reading the same files can be compared row by row. The S5 and S6 probes read these files by a second route but are not a lab check.",
-      "awaiting": true
+      "check": "35-sample-satellite"
     }
   ]
 }

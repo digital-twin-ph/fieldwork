@@ -6,11 +6,18 @@
  *  FW style for dialogs."* Each card adds what Fieldwork has read: what the product measures and its unit, sign-in,
  *  the licence as read, whether a browser can read it, the quality rule. Experiment 179. */
 import type {Escape} from './types.js';
-import {SATELLITE_TOPICS,SIGN_IN_WORDS,VENDORED,productsFor,resolve,type SatelliteProduct,type SatelliteTopic}
+import {SATELLITE_TOPICS,SIGN_IN_WORDS,VENDORED,productsFor,resolve,type SatelliteProduct,type SatelliteTopic,type DatasetCitation}
   from './satellite-products.js';
 
 const QUANTITY:Record<string,string>={column:'a column through the atmosphere','optical-depth':'an optical depth, unitless',
   index:'an index, unitless',surface:'a near-surface value'};
+
+/** The dataset citation with its DOI as a link, and which files it covers; or that nobody has read one. */
+export function citationMarkup(c:DatasetCitation|null,esc:Escape):string{
+  if(!c)return '<span class="muted">not yet read for this product</span>';
+  return `${esc(c.text)}${c.doi?` <a href="https://doi.org/${esc(c.doi)}" target="_blank" rel="noopener">doi:${esc(c.doi)}</a>`:''}`
+    +` <span class="muted">(for ${esc(c.appliesTo)}; read ${esc(c.readOn)})</span>`;
+}
 
 export function productCard(p:SatelliteProduct,chosen:boolean,esc:Escape):string{
   const f=p.facts;
@@ -26,6 +33,7 @@ export function productCard(p:SatelliteProduct,chosen:boolean,esc:Escape):string
     +row('Licence',p.licence?`${p.licence.open?'Open':'Restricted'}: ${esc(p.licence.name)} `
       +`<span class="muted">(read ${esc(p.licence.readOn)})</span>`:'<span class="muted">not yet read</span>')
     +row('In a browser',esc(f?.browserReadable??'not checked'))
+    +row('Citation',citationMarkup(f?.citation??null,esc))
     +(f?.qualityRule?row('Quality',esc(f.qualityRule)):'')
     +(f?.coverageStart?row('Data from',esc(f.coverageStart)):'')
     +(f?.kind==='model'?'<p class="notice">A model, not an observation.</p>':'')

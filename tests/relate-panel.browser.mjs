@@ -205,6 +205,14 @@ test('the dialog shows the shape, the effect on each variable, the note and the 
   const preview=dialog.locator('.relate-preview');
   await expect(preview).toContainText('supply');
   await expect(preview).toContainText('North works');
+  // THE JOIN'S COLUMNS, MARKED in the preview as in View this table: the key and the column brought across.
+  await expect(preview.locator('thead th[data-column-role="key"]')).toHaveCount(1);
+  await expect(preview.locator('thead th[data-column-role="key"]')).toContainText('district');
+  await expect(preview.locator('thead th[data-column-role="key"] .column-role')).toHaveText('matched on');
+  await expect(preview.locator('thead th[data-column-role="brought"]')).toContainText('supply');
+  await expect(preview.locator('thead th[data-column-role="brought"] .column-role')).toHaveText('brought across');
+  expect(await preview.locator('tbody .column-role-key').count()).toBeGreaterThan(0);
+  await dialog.locator('.table-viewer-body').evaluate(el=>{el.scrollTop=el.scrollHeight;});await page.screenshot({path:'test-results/relate-join-preview.png'});
 
   // CHOOSING THE OTHER JOIN redraws all three.
   await dialog.locator('input[value="keep"]').check();

@@ -3,6 +3,22 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.32.0 — 2026-11-06
+
+- **Sample satellite files at points reads the nearest pixel across the file's chunks** (widget 0.2.1). A point near
+  the edge of one of a file's compressed chunks was read from the nearest centre in that chunk, though a centre across
+  the edge could be nearer; and a point between two chunks of wide pixels could be missed. Found by the validation
+  lab's new check 35, which re-reads a Sentinel-5P-shaped file with h5py and recomputes every pixel and row: it now
+  agrees, in CPython and in the browser kernel. Only points within about half a pixel of a chunk edge were affected; a
+  real orbit file has chunk edges every 225 ground pixels and every 2,086 scanlines.
+- **Products carry their citations.** Find satellite products and Search a satellite catalog show the dataset
+  citation the producer asks for, with its DOI as a link. The three Sentinel-5P products on Planetary Computer carry
+  ESA's Version 02 citations, for the processor 2.x files served for June 2023, read on 6 November. The receipt states
+  the citation read, or that nobody has read one.
+- **The Relate dialog's preview marks the join's columns**, Matched on and Brought across, as View this table does.
+  The preview was also squeezed to a single line in a short dialog; it now shows its rows.
+- Validation: Chromium locally; WebKit in CI. Lab check 35 in CPython 3.13 and in Pyodide.
+
 ## 0.31.0 — 2026-11-05
 
 - **Relate a column from another table matches on several columns together.** Choose **And also matched on** for a

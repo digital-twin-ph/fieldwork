@@ -10,6 +10,7 @@
  *  Experiment 179. */
 import type {Escape} from './types.js';
 import {SIGN_IN_WORDS,type SatelliteProduct} from './satellite-products.js';
+import {citationMarkup} from './satellite-products-ui.js';
 import {MAX_ITEMS,defaultKept,searchCatalog,searchSentence,typedBox,type BBox,type CatalogItem,type CatalogSearch} from './satellite-catalog.js';
 
 /** Footprints and the study area, drawn as an outline map in longitude and latitude. Offline: no tiles. */
@@ -41,7 +42,7 @@ export function inspectMarkup(item:CatalogItem|undefined,product:SatelliteProduc
       :'<span class="muted">not yet read</span>')
     +row('In a browser',esc(f?.browserReadable??'not checked'))
     +row('Completeness','<span class="muted">not known until a reader opens the file</span>')
-    +row('Citation','<span class="muted">not yet read for this product</span>')
+    +row('Citation',citationMarkup(f?.citation??null,esc))
     +(product.licence?.attribution?`<p class="satellite-note">Attribute as <q>${esc(product.licence.attribution.original.replace('[Year]',year))}</q>; `
       +`once sampled or changed, <q>${esc(product.licence.attribution.modified.replace('[Year]',year))}</q>.</p>`:'')
     +`<h4>Files</h4><ul class="satellite-files">`+item.files.map(file=>

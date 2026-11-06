@@ -88,19 +88,19 @@
       "kind": "observation", "quantity": "column", "unit": "mol m-2", "unitReadFrom": "the file's own attribute, S5",
       "signIn": "anonymous-token", "licence": "copernicus-sentinel",
       "browserReadable": "measured: range reads in a browser worker, S6", "qualityRule": "qa_value 0.75; the readme says above, the manual's table greater than or equal (S8)",
-      "stream": "offline recommended for time series; near-real-time read in S5 and S6", "coverageStart": null, "citation": null
+      "stream": "offline recommended for time series; near-real-time read in S5 and S6", "coverageStart": null, "citation": {"text": "Copernicus Sentinel-5P (processed by ESA), 2021, TROPOMI Level 2 Nitrogen Dioxide total column products. Version 02. European Space Agency.", "doi": "10.5270/S5P-9bnp8q8", "appliesTo": "processor 2.x files; 1-14 June 2023 over New York City are collection 03, processor 02.05.00", "readAt": "https://www.tropomi.eu/data-products/nitrogen-dioxide", "readOn": "2026-11-06"}
     },
     "pc-s5p-o3": {
       "kind": "observation", "quantity": "column", "unit": null, "unitReadFrom": null,
       "signIn": "anonymous-token", "licence": "copernicus-sentinel",
       "browserReadable": "catalog and token checked (S4); file not opened", "qualityRule": "qa_value above 0.5 (S8)",
-      "stream": null, "coverageStart": null, "citation": null
+      "stream": null, "coverageStart": null, "citation": {"text": "Copernicus Sentinel-5P (processed by ESA), 2020, TROPOMI Level 2 Ozone Total Column products. Version 02. European Space Agency.", "doi": "10.5270/S5P-ft13p57", "appliesTo": "processor 2.x files; 1-14 June 2023 over New York City are collection 03, processor 02.04.01", "readAt": "https://www.tropomi.eu/data-products/ozone-total-column", "readOn": "2026-11-06"}
     },
     "pc-s5p-aer-ai": {
       "kind": "observation", "quantity": "index", "unit": null, "unitReadFrom": null,
       "signIn": "anonymous-token", "licence": "copernicus-sentinel",
       "browserReadable": "catalog and token checked (S4); file not opened", "qualityRule": "qa_value 0.5; above 0.8 removes sun glint (S8)",
-      "stream": null, "coverageStart": null, "citation": null
+      "stream": null, "coverageStart": null, "citation": {"text": "Copernicus Sentinel-5P (processed by ESA), 2021, TROPOMI Level 2 Aerosol Index products. Version 02. European Space Agency.", "doi": "10.5270/S5P-3dgz66p", "appliesTo": "processor 2.x files; 1-14 June 2023 over New York City are collection 03, processor 02.05.00", "readAt": "https://www.tropomi.eu/data-products/aerosol-index", "readOn": "2026-11-06"}
     },
     "sentinel3-aod": {
       "kind": "observation", "quantity": "optical-depth", "unit": null, "unitReadFrom": null,

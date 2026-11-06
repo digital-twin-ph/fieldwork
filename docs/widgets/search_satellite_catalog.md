@@ -18,7 +18,7 @@ overpass with one or more files.
 | --- | --- |
 | **01 · Connect & discover** | The catalog, collection and product, from the chosen product; the study area's extent, or the four edges to type; the dates; **Search** |
 | **02 · Coverage, in context** | The area searched and each item's footprint, and the list of items, each kept or dropped |
-| **03 · Inspect & reuse** | The selected item's files, with sign-in, the licence as read, whether a browser can read it, and the attribution sentence to use |
+| **03 · Inspect & reuse** | The selected item's files, with sign-in, the licence as read, whether a browser can read it, and the attribution sentence to use, and the dataset citation with its DOI where it has been read |
 
 ## How to use it
 
@@ -57,7 +57,8 @@ stream for time series. Tick one back if you need it.
 - **It will not search across the antimeridian or by the outline of the area**: the area's extent is searched, so
   items over nearby water or another country can appear. West must be less than east; split an area across the
   antimeridian into two searches.
-- **It will not cite the product yet.** Dataset citations have not been read for any product.
+- **It will not cite a product nobody has read a citation for.** It shows the citation Find satellite products
+  carries, and says "not yet read" otherwise.
 
 ## Where it comes from
 

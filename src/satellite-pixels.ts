@@ -31,21 +31,6 @@ export function nearestInTile(lon:number,lat:number,tile:SwathTile):{row:number;
   return at<0?null:{row:tile.r0+Math.floor(at/tile.cols),col:tile.c0+at%tile.cols,distance:Math.sqrt(best)};
 }
 
-/** Half the distance from a centre to its nearest neighbour in the tile: how far a point may be from the centre and
- *  still be in that pixel, give or take its shape. A point farther than that from every centre is off the swath. */
-export function halfSpacing(tile:SwathTile,row:number,col:number):number{
-  const i=(row-tile.r0)*tile.cols+(col-tile.c0),y=tile.lats[i]!,x=tile.lons[i]!,k=Math.cos(y*Math.PI/180);
-  let best=Infinity;
-  for(const [dr,dc] of [[-1,0],[1,0],[0,-1],[0,1]] as const){
-    const r=row-tile.r0+dr,c=col-tile.c0+dc;
-    if(r<0||c<0||r>=tile.rows||c>=tile.cols)continue;
-    const j=r*tile.cols+c,yy=tile.lats[j]!,xx=tile.lons[j]!;
-    if(!valid(yy,xx))continue;
-    best=Math.min(best,Math.hypot((xx-x)*k,yy-y));
-  }
-  return Number.isFinite(best)?best/2:0;
-}
-
 /** True when the point lies within a tile's extent, padded by a margin in degrees. */
 export function inTileExtent(lon:number,lat:number,tile:SwathTile,margin=0.1):boolean{
   let W=Infinity,S=Infinity,E=-Infinity,N=-Infinity;

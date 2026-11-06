@@ -10,6 +10,7 @@
 //                   | relate-snow-001 | group-snow-001 | area-join-snow-001
 //                   | select-range-london-001
 //                   | regression-salmonella-001 | regression-nyc-001 (needs NYC_PKG)
+//                   | sample-satellite-s5p-001
 import {createHash} from 'node:crypto';
 import {readFile,writeFile} from 'node:fs/promises';
 import {reprojectToCRS84,projectFromCRS84} from '../build/reproject.js';
@@ -50,6 +51,13 @@ import {extentN3,extentProjection} from '../build/rule-application.js';
 import {runInThisContext} from 'node:vm';
 import {readFileSync} from 'node:fs';
 import {resolveRuleset} from '../build/rulesets.js';
+import {readAtPoints,OFF_SWATH_FACTOR,OFF_SWATH_FLOOR} from '../build/satellite-read.js';
+import {sampleTable,readerFor} from '../build/satellite-sample.js';
+import {FILL} from '../build/satellite-pixels.js';
+import h5wasm from 'h5wasm/node';
+import {mkdtempSync,rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
 
 // The reasoner in node, the same engine and version the browser worker runs. `vendor/eye-21.1.24.js`
 // is a webpack bundle assigning to `var eyereasoner`, so `runInThisContext` puts it in scope --
@@ -1388,6 +1396,85 @@ const builders={
     },files:{}};
   },
 
+  async 'sample-satellite-s5p-001'(){
+    // SAMPLE SATELLITE FILES AT POINTS (experiment 179), against h5py and pyproj. A Sentinel-5P-shaped file made here,
+    // with the paths, attributes, dtypes and chunking of the offline NO2 file, read by the same `readAtPoints` the
+    // reading worker runs, and tabled by the same `sampleTable`. Synthetic, so it carries no Copernicus data and every
+    // pixel's part is known: a swath that shears and widens across track as a real one does, in 3 x 2 chunks, with one
+    // pixel per gap kind and qa_value 74, 75 and 76 beside each other, where the two operators differ.
+    await h5wasm.ready;
+    const rows=12,cols=10,chunks=[1,4,5],n=rows*cols;
+    const lat=(r,c)=>40.40+0.045*r+0.004*c, lon=(r,c)=>-74.30+0.06*c*(1+0.03*c)-0.006*r;
+    const FILL_VALUE=9.96921e36;
+    const special={'5,4':{qa:100},'6,4':{qa:100},'4,6':{no2:FILL_VALUE,qa:255},'7,2':{qa:74},'7,3':{qa:75},'7,7':{qa:76},'3,8':{qa:255}};
+    const no2=(r,c)=>special[`${r},${c}`]?.no2??3e-5+r*1e-6+c*1e-7;
+    const qa=(r,c)=>special[`${r},${c}`]?.qa??(r<2?50:100);
+    const grid=f=>Float32Array.from({length:n},(_,i)=>f(Math.floor(i/cols),i%cols));
+    const dir=mkdtempSync(join(tmpdir(),'s5p-lab-')),path=join(dir,'sample-satellite-s5p-001.nc');
+    let bytes,read;
+    try{
+      const out=new h5wasm.File(path,'w');
+      const product=out.create_group('PRODUCT'),shape=[1,rows,cols];
+      const put=(name,data,dtype,attrs)=>{const d=product.create_dataset({name,data,shape,dtype,chunks,compression:3});
+        for(const [k,v] of Object.entries(attrs))d.create_attribute(k,v);};
+      put('latitude',grid(lat),'<f',{units:'degrees_north'});
+      put('longitude',grid(lon),'<f',{units:'degrees_east'});
+      put('nitrogendioxide_tropospheric_column',grid(no2),'<f',{units:'mol m-2'});
+      product.create_dataset({name:'qa_value',data:Uint8Array.from({length:n},(_,i)=>qa(Math.floor(i/cols),i%cols)),shape,dtype:'<B',chunks,compression:3})
+        .create_attribute('scale_factor',new Float32Array([0.01]));
+      product.create_dataset({name:'time_utc',data:Array.from({length:rows},(_,r)=>`2023-06-07T17:24:${String(r).padStart(2,'0')}.000000Z`),shape:[1,rows]});
+      out.close();
+      bytes=readFileSync(path);
+      const centre=(r,c)=>[lon(r,c),lat(r,c)].map(v=>Math.fround(v));
+      const between=(a,b,t,dx=0,dy=0)=>{const p=centre(...a),q=centre(...b);return [p[0]+(q[0]-p[0])*t+dx,p[1]+(q[1]-p[1])*t+dy];};
+      // Each point says what it is there to test.
+      const points=[
+        ['on-centre','exactly on the centre of (5,4)',centre(5,4)],
+        ['near-tie-along','just past halfway from (5,4) to (6,4), along track',between([5,4],[6,4],0.5,0,2e-5)],
+        ['near-tie-across','just short of halfway from (5,4) to (5,5), across track',between([5,4],[5,5],0.4995)],
+        ['chunk-edge','between columns 4 and 5, which are in different chunks',between([9,4],[9,5],0.52)],
+        ['no-retrieval','on the pixel whose value is the fill',centre(4,6)],
+        ['qa-74','on a pixel with qa_value 74',centre(7,2)],
+        ['qa-75','on a pixel with qa_value 75: passes at or above, fails above',centre(7,3)],
+        ['qa-76','on a pixel with qa_value 76',centre(7,7)],
+        ['qa-fill','on a pixel whose qa_value is the fill, 255',centre(3,8)],
+        ['row-0','in the first scanline, where qa_value is 50',between([0,1],[1,2],0.3)],
+        ['past-edge-in','beyond the last column, within the off-swath margin (the margin is set by the nearer, along-track neighbour)',between([6,8],[6,9],1.4)],
+        ['past-edge-out','beyond the last column, past the margin',between([6,8],[6,9],2.4)],
+        ['far','far from the swath',[-73.0,41.5]],
+      ].map(([id,why,[x,y]])=>({id,name:why,lon:x,lat:y}));
+      const file=new h5wasm.File(path,'r');
+      try{read=readAtPoints(file,{variable:'PRODUCT/nitrogendioxide_tropospheric_column',latitude:'PRODUCT/latitude',
+        longitude:'PRODUCT/longitude',time:'PRODUCT/time_utc',quality:{variable:'PRODUCT/qa_value'}},points);}
+      finally{file.close();}
+      const reader=readerFor({route:{id:'pc-s5p-no2'}});
+      if(!reader)throw new Error('The routes carry no reader for pc-s5p-no2.');
+      const reading={itemId:'S5P_OFFL_L2__NO2____FIXTURE',href:'sample-satellite-s5p-001.nc',stream:'OFFL',orbit:29273,
+        datetime:'2023-06-07T17:24:00Z',units:read.units,qaScale:read.qaScale,pixels:read.pixels,requests:null,bytes:null};
+      // 8 June has no file, so every point has a "no overpass" row for it.
+      const cases=['>=','>'].map(operator=>{const {table,counts}=sampleTable(points,[reading],'2023-06-07','2023-06-08',reader,operator);
+        return {operator,counts:{rows:counts.rows,passing:counts.passing,belowQuality:counts.belowQuality,noRetrieval:counts.noRetrieval,
+          noOverpass:counts.noOverpass},rows:table.rows.map(r=>({...r.key,value:r.value}))};});
+      return {fixture:{
+        ...base('sample-satellite-s5p-001','sample_satellite_files_at_points','Sample satellite files at points',
+          'src/satellite-read.ts#readAtPoints, src/satellite-sample.ts#sampleTable'),
+        source:'Synthetic: a Sentinel-5P-shaped NetCDF-4 file written by h5wasm in Node with the PRODUCT paths, attributes, dtypes and chunking of the offline NO2 file read on 2026-11-05. No Copernicus data.',
+        declaredParameters:{file:'sample-satellite-s5p-001.nc',
+          paths:{value:'PRODUCT/nitrogendioxide_tropospheric_column',latitude:'PRODUCT/latitude',longitude:'PRODUCT/longitude',
+            quality:'PRODUCT/qa_value',time:'PRODUCT/time_utc'},
+          from:'2023-06-07',until:'2023-06-08',fileDate:'2023-06-07',fileDatetime:reading.datetime,stream:reading.stream,orbit:reading.orbit,
+          pixel:{rule:'the pixel whose centre is nearest the point, among centres with |lat| <= 90 and |lon| <= 180',
+            distance:'sqrt(((lon - lon_c) * cos(lat of the point))^2 + (lat - lat_c)^2), in degrees',
+            offSwath:`no pixel when that distance exceeds max(${OFF_SWATH_FACTOR} x half the distance from the centre to its nearest of the four neighbouring centres, measured the same way with cos(lat of the centre), ${OFF_SWATH_FLOOR} degrees)`},
+          fill:{value:`values at or above ${FILL} are no retrieval`,quality:'a qa_value stored as 255 is no retrieval'},
+          quality:{threshold:reader.quality.threshold,compare:'the stored integer against round(threshold / scale_factor)',operators:['>=','>']},
+          table:'one row per point per file read, and one per point per day with no file, gap "no overpass" and nothing else filled. A point the file does not cover is "no overpass" too, with the file\'s own time, stream and orbit, so the row says which file was looked at. The value is kept only where it passed; qa_value is the stored integer times the scale factor, to 2 decimals, empty where it is the fill'},
+        input:{points,file:'sample-satellite-s5p-001.nc',fileSHA256:sha256(bytes)},
+        output:{tilesRead:read.tilesRead,pixels:read.pixels,qaScale:read.qaScale,units:read.units,cases},
+        note:'Read the file with an independent HDF5 reader, find each point\'s pixel, read value, quality and time there, and rebuild both cases\' rows from `declaredParameters`.'
+      },files:{'sample-satellite-s5p-001.nc':bytes}};
+    }finally{rmSync(dir,{recursive:true,force:true});}
+  },
   'clip-all-touched-001'(){
     // A small north-up CRS84 grid with a deterministic ramp, so a value disagreement is
     // traceable to a cell rather than hidden in noise.

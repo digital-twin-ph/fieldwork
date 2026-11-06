@@ -1056,12 +1056,12 @@
    "migrationFrom": []
   },
   "sample_satellite_files_at_points": {
-   "version": "0.4.0",
+   "version": "0.5.0",
    "released": "2026-11-06",
    "changes": [
     {
      "kind": "minor",
-     "description": "Reads over a study area's units as well as a polygon layer: a third input, area, so the municipalities picked from geoBoundaries are read as they are. The satellite comes from the product's name (MOD11A2 Terra, MYD11A2 Aqua) where an item leaves its platform out, which Planetary Computer does for some 2024 MODIS items: they had been read as a third satellite, half a state each. Experiment 180."
+     "description": "A temperature is reported in degrees Celsius by default, or Fahrenheit or kelvin: the practitioner's choice. MODIS states kelvin; the conversion is exact and stated on the result and in the receipt (fw:unitAsStated, fw:unitConversion). Every file opened is read for its own unit and scale factor; one stating another stops the run, naming the file."
     }
    ],
    "breaking": false,

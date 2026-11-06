@@ -3,6 +3,16 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.36.0 — 2026-11-06
+
+- **Land surface temperature in °C by default, or °F or K.** MODIS states kelvin; Sample satellite files at points or
+  over areas now reports degrees Celsius unless told otherwise, with Fahrenheit and the file's kelvin offered. The
+  conversion is exact and stated on the result and in the receipt.
+- **Every file is read for its own unit and scale factor.** A MODIS file states both in its tags; each one opened is
+  checked, a file stating another unit or scale stops the run with its name, and the result says whether every file
+  stated them.
+- Validation: Chromium locally; WebKit in CI.
+
 ## 0.35.0 — 2026-11-06
 
 - **The Brazil dengue example has a satellite workflow**, *How hot was the ground in each municipality?*: MODIS

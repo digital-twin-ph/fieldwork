@@ -42,10 +42,15 @@ added before the mean is taken.
 | `platform` | `terra` (mid-morning pass) or `aqua` (early afternoon), never pooled |
 | `layer` | daytime or night-time |
 | `cells`, `cells_with_value`, `cells_passing` | how many cells the area holds, how many had a value, and how many passed the quality rule: **the mean rests on the last** |
-| `value_min`, `value_max` | the range of the passing cells, in kelvin |
+| `value_min`, `value_max` | the range of the passing cells, in the unit chosen |
 | `clear_days` | how many of the 8 days were clear, on average, behind the passing cells |
-| `LST_Day_1km` or `LST_Night_1km` | the mean of the passing cells, in kelvin as the file states it |
+| `LST_Day_1km` or `LST_Night_1km` | the mean of the passing cells, in the unit chosen |
 | `gap` | `no cell in the area`, `no retrieval` or `below quality threshold` |
+
+**The unit.** The files state kelvin. **Report temperature in** offers degrees Celsius (K − 273.15), the default,
+degrees Fahrenheit (K × 9/5 − 459.67) or kelvin. The conversions are exact, and the result says which was applied.
+How the unit is known: each file states it, with its scale factor, in its own tags, and every file opened is checked.
+A file that states another unit stops the run and is named.
 
 **The quality rule for MODIS.** Its documents explain its quality bits and recommend no rule. The default keeps
 cells the product made, of good or other quality, whose average temperature error is 2 K or less. *Good quality only* and *everything produced* are the alternatives.

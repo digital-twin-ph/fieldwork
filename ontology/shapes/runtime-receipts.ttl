@@ -47,6 +47,8 @@ fw:SatelliteAreaSampleShape a sh:NodeShape; sh:targetClass fw:SatelliteAreaSampl
   sh:property [ sh:path fw:sampledRoute; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string; sh:minLength 1 ];
   sh:property [ sh:path fw:sampledVariable; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string; sh:minLength 1 ];
   sh:property [ sh:path fw:satelliteValueUnit; sh:maxCount 1; sh:datatype xsd:string ];
+  sh:property [ sh:path fw:unitAsStated; sh:maxCount 1; sh:datatype xsd:string ];
+  sh:property [ sh:path fw:unitConversion; sh:maxCount 1; sh:datatype xsd:string ];
   sh:property [ sh:path fw:cellConvention; sh:minCount 1; sh:maxCount 1; sh:in ( "cells whose centre is inside or on the area; the mean of those that passed; not area-weighted" "the cell containing the point" ) ];
   sh:property [ sh:path fw:qualityVariable; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string ];
   sh:property [ sh:path fw:qualityRule; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string; sh:minLength 1 ];

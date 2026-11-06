@@ -367,7 +367,9 @@ export interface ParamsByType {
   /** Experiment 179. The quality rule's operator, where the product's documents differ; absent: the reader's default. */
   sample_satellite_files_at_points:{label:string; qaOperator?:'>='|'>';
     /** For a gridded product (experiment 180): which layer, the quality rule, and what the place column is called. */
-    layer?:string; qualityRule?:'produced-2k'|'good'|'produced'; placeColumn?:string};
+    layer?:string; qualityRule?:'produced-2k'|'good'|'produced'; placeColumn?:string;
+    /** A temperature in degrees Celsius, Fahrenheit or kelvin; Celsius when unset (2026-11-06). */
+    unit?:'K'|'°C'|'°F'};
   search_satellite_catalog:{label:string; from:string; until:string;
     /** Edges typed in the dialog, W/S/E/N, used when no Study area is connected. */
     box?:[number,number,number,number];

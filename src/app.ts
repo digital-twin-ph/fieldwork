@@ -3041,6 +3041,10 @@ function renderInspector(){
         +`<div class="field"><label class="field-label" for="satellite-quality-rule">Quality rule</label><select id="satellite-quality-rule">`
         +(Object.entries(MODIS_RULES) as [ModisQualityRule,string][]).map(([k,text])=>`<option value="${k}"${k===rule?' selected':''}>${esc(text)}</option>`).join('')
         +'</select><small>The product documents its quality bits and recommends no rule. The rule is stated on every row.</small></div>'
+        +(grid.unit==='K'?`<div class="field"><label class="field-label" for="satellite-unit">Report temperature in</label><select id="satellite-unit">`
+          +`<option value="°C"${(p.unit??'°C')==='°C'?' selected':''}>degrees Celsius (K − 273.15)</option>`
+          +`<option value="°F"${p.unit==='°F'?' selected':''}>degrees Fahrenheit (K × 9/5 − 459.67)</option>`
+          +`<option value="K"${p.unit==='K'?' selected':''}>kelvin, as the file states it</option></select></div>`:'')
         +`<div class="field"><label class="field-label" for="satellite-place-column">Name of the place column</label>`
         +`<input id="satellite-place-column" maxlength="60" value="${esc(p.placeColumn??'')}" placeholder="${areas?'area':'point_id'}">`
         +'<small>Name it as the table you will relate it to does, such as municipio.</small></div>'
@@ -3599,6 +3603,10 @@ function renderInspector(){
   optionalElement('#satellite-quality-rule')?.addEventListener('change',event=>{
     const value=(event.currentTarget as HTMLSelectElement).value as ModisQualityRule;
     change(w=>{getNode(w,n.id,'sample_satellite_files_at_points').params.qualityRule=value;});
+  });
+  optionalElement('#satellite-unit')?.addEventListener('change',event=>{
+    const value=(event.currentTarget as HTMLSelectElement).value as 'K'|'°C'|'°F';
+    change(w=>{getNode(w,n.id,'sample_satellite_files_at_points').params.unit=value;});
   });
   optionalElement('#satellite-place-column')?.addEventListener('change',event=>{
     const value=(event.currentTarget as HTMLInputElement).value.trim();

@@ -296,6 +296,24 @@ workflow was still open in the third, so the click that opens it closed it. Ever
 **Not established:** whether these values agree with the dataset's beyond February (M2); the night layer; and
 anything about dengue. Relating temperature to incidence, with lags, is the next workflow.
 
+## The unit, 2026-11-06 (0.36.0)
+
+The practitioner, asking *"For Brazil the ground temp is in Kelvin?"*, then choosing among offering °C by default,
+offering °C with kelvin the default, and kelvin only: *"Offer °C, stated"*; and then: *"I think we should have
+Kelvin, Celsius and Fahrenheit as well."* So the sampler reports a temperature in °C unless told otherwise, with °F
+and the file's kelvin offered. The receipt carries `fw:unitAsStated` and `fw:unitConversion` where a conversion was
+applied. This departs from reporting values as the file states them, deliberately and in the open: the file's unit
+and the formula travel with every result.
+
+Then: *"How do we know the unit is in K if we don't have a data dictionary?"* The file is its own dictionary: M1 read
+`units: K` and `scale_factor: 0.02` from one file's tags, the catalogue's `raster:bands` says Kelvin and 0.02, the
+user guide's Table 14 says K and 0.02, and the values over Rio, 285 to 318 after scaling, are only plausible as
+kelvin. But the reader used the route's stated unit and read no file's tags, where the Sentinel-5P reader reads each
+file's. Now every MODIS file opened is read for `units` and `scale_factor` (geotiff.js exposes them); one stating
+another stops the run, naming it, and the result says whether every file stated them. **Run live, 2026-11-06:**
+the 180 files of 2024 over Rio de Janeiro state all stated `K` and `0.02`; the result reads *"Every file stated its
+unit as K and its scale factor as 0.02, and was read by them."*
+
 ## What this does not establish
 
 Any design. Whether InfoDengue's data may be redistributed; how the Zenodo file's exposures were computed, or

@@ -996,6 +996,15 @@ Not opened yet. When Brazil's dengue work is done, the first pass is a review, n
   whether an open, citable Sierra Leone facility list exists with coordinates; how many names match, how many are
   ambiguous, how many have none, each reported rather than guessed; and whether a facility point is even needed, or
   the analysis is by chiefdom or district.
+- **The design to evaluate first: Find health facilities takes a list and geocodes it.** The practitioner, the same
+  day: *"What if Find health facilities is a list and the widget can geocode?"* A table input with the facility name
+  column (and a district or chiefdom column where there is one); the widget fetches the country's facilities as it
+  does now and matches each row's name to one, handing on one point per row. To settle in the admission review:
+  reuse Deduplicate records' name matching (Jaro-Winkler with a review band, lab check 26) rather than a second
+  matcher; every row marked matched exactly, matched allowing for spelling, ambiguous (candidates listed for the
+  practitioner to choose) or not found, with the counts on the result, and no row dropped or silently guessed; and
+  each point carrying its source and how it was matched, since OpenStreetMap and healthsites positions are
+  volunteered.
 - Report findings to the practitioner, with what is not established, before building workflows.
 
 ## Deferred — decided to do later, which is not a decision to do it

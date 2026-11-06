@@ -2,6 +2,8 @@
 
 _Created 2026-10-26 · Updated 2026-11-01_
 
+_Created 2026-10-26 · Updated 2026-11-05 (0.4.0)_
+
 **A join, narrowly.** It takes two tables that share a column, and brings a *category* from the
 second one onto the rows of the first.
 
@@ -32,7 +34,8 @@ only read.
 | Setting | What it decides |
 | --- | --- |
 | **Matched on** | the column both tables carry, such as `sub_district` |
-| **Bring across** | the second table's column to add, such as `water_supply` |
+| **And also matched on** | more shared columns, where one column does not identify a subject: a monitor's reading is one row per `site` **and** `date`. A row relates only where every chosen column agrees |
+| **Bring across** | the second table's column to add, such as `water_supply`, or its **value column**, such as a monitor's reading in ppb, which arrives as written |
 | **Compare keys** | folding punctuation and case, or exactly after trimming |
 
 Everything else happens in **Open the join**, a dialog wide enough to show what you are deciding.
@@ -122,7 +125,9 @@ Underneath, which table each column came from, and the distinct values that actu
 what you need to see before grouping by it.
 
 **View this table** repeats the column origins above each column heading, so a wide
-related table says which half of the row came from where.
+related table says which half of the row came from where. It also marks the join's own columns:
+each key column **Matched on**, tinted, in every *Before* and in *After*, and the column added
+**Brought across** in *After*.
 
 ### The Methods note
 
@@ -144,15 +149,17 @@ to it. The run records it in the evidence.
 - **It will not invent a category.** A key the second table has no row for is **reported by name**
   and those rows are dropped. Filling in "unknown" would put a stratum in your table that nobody
   measured.
-- **It will not match approximately.** The match is on the exact string, after trimming. A
-  sub-district spelled differently in two sources will not match, and this is Epi Info's `RELATE`
-  rather than its `MATCH`, which is a different problem.
+- **It will not match approximately.** Keys are compared exactly after trimming, or with
+  punctuation and case folded (see **Compare keys**), never by similarity. This is Epi Info's
+  `RELATE` rather than its `MATCH`, which is a different problem.
 - **It will not tell you the two tables describe the same subjects.** That is your judgement. The
   widget checks that the keys line up, not that they mean the same thing.
 
 ## Where it is used
 
-The South London example: *Died or survived, by water supply*.
+The South London example: *Died or survived, by water supply*. The NYC example: *Did the satellite
+see the city's NO₂?*, which matches satellite and ground readings on `site` and `date` together and
+brings the ground reading, the second table's value, across.
 
 ## How it was checked
 

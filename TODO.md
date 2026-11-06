@@ -981,6 +981,47 @@ notes code is not read yet. Possibly an evidence kernel matter. Let Oswego and N
 _Carried over whole from the root `TODO.md` of 2026-10-10 in the merge above, headings
 demoted one level and nothing else changed. An item here is a decision to do it later._
 
+### Search a satellite catalog: keep the full files, so they are not downloaded again (asked 2026-11-05)
+
+The practitioner, 2026-11-05: *"For STAC widget can we have the option to download the full files? Not urgent but
+would be useful for the future to avoid redownloads."* Today nothing is kept: Sample satellite files at points reads
+only the chunks it needs, by range, and a reload reads them again.
+
+What is known that shapes it:
+
+- **Size.** An offline Sentinel-5P NO₂ orbit file is about 600 MB (606,642,278 bytes for 7 June 2023); 1 to 14 June
+  is roughly 8.5 GB. A near-real-time granule is about 60 MB. The option has to state the size before anything starts.
+- **Speed.** From the machine this was built on, a browser fetched that storage at 35–55 s per MB and curl at 1–4 s
+  per MB (experiment 179). A full file through the browser is hours, so the choice and the progress both matter.
+- **Where it goes.** Two places, and they answer different needs: a file on disk the practitioner chooses (JLT's STAC
+  Browser does this: *Save original to file*, streamed where the browser can, a bounded download otherwise), or the
+  payload store (IndexedDB), where the sampler could then read it without the network. Only the second avoids a
+  re-download inside Fieldwork; the first serves Python and QGIS.
+- **What it must not do.** Start without saying the size, or fall back silently to a whole-file read where a range
+  read was asked for.
+
+**Chosen 2026-11-05: a file on disk that Fieldwork can read again.** Asked *"File on disk with the ability to read it
+again is that doable?"*, then *"Add to TODO"*. The shape agreed:
+
+| | Chromium (Chrome, Edge) | Safari, Firefox |
+| --- | --- | --- |
+| Saving | the practitioner chooses a folder once (File System Access API); files are written there, and the folder's handle is kept in IndexedDB | an ordinary download, since neither lets a page write to a chosen folder |
+| Reading again | one permission prompt per session for the kept folder, then no download | the practitioner picks the file, one click per file |
+
+- **Read in parts, not whole.** h5wasm reads a file on disk the way it reads a remote one (Emscripten's WORKERFS over
+  the `File`), so a 600 MB file is never loaded into memory at once. **Not yet tried: the first thing to prove.**
+- **The right file, or the network.** A saved file is matched to its catalog item by name and exact size; a mismatch
+  is said, and that item is read from the network instead.
+- **Per file, stated.** A saved copy where there is one, the network where there is not, and the receipt names which
+  for each file.
+- **The desktop app** (Tauri) could read and write directly without prompts; later.
+
+Open: whether a local read is fast enough in each browser (to be measured); whether name and size suffice or a checksum
+is needed, which costs time on 600 MB and which the catalog may not publish.
+
+Not started. Belongs to Search a satellite catalog's Inspect column, beside each file's access facts, and to Sample
+satellite files at points, which reads the saved copy.
+
 ### In progress
 
 - **Act on [the widget design audit](docs/audits/widget_audit.md)**, run 2026-10-09 against

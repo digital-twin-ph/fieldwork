@@ -62,4 +62,4 @@ Fieldwork adds the routes that need no sign-in, an ozone topic, and the facts on
 
 ## Where it is used
 
-Not yet in a worked example. The NYC asthma and ozone example is the first intended use.
+The NYC example, *Did the satellite see the city's NO₂?* (1 to 14 June 2023).

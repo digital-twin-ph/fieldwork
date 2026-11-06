@@ -285,6 +285,23 @@ test('the Quick Look says which table each column came from',async({page})=>{tes
     .toContainText('Table VIII');
   await expect(viewer).toContainText('64 of 64 offered rows related');
 
+  // THE JOIN'S COLUMNS, MARKED (2026-11-05): "can we highlight the columns used as keys?" The key in After and in
+  // every Before, the brought column in After only, each named in its heading.
+  await expect(viewer.locator('thead th[data-column-role="key"]')).toHaveCount(1);
+  await expect(viewer.locator('thead th[data-column-role="key"]')).toContainText('sub_district');
+  await expect(viewer.locator('thead th[data-column-role="key"] .column-role')).toHaveText('matched on');
+  await expect(viewer.locator('thead th[data-column-role="brought"]')).toContainText('water_supply');
+  await expect(viewer.locator('thead th[data-column-role="brought"] .column-role')).toHaveText('brought across');
+  expect(await viewer.locator('tbody td.column-role-key').count()).toBeGreaterThan(0);
+  await page.screenshot({path:'test-results/relate-key-columns.png'});
+  for(const step of await viewer.locator('[data-table-step]').all()){
+    if((await step.textContent()).startsWith('After'))continue;
+    await step.click();
+    await expect(page.locator('#table-viewer thead th[data-column-role="key"]')).toContainText('sub_district');
+    await expect(page.locator('#table-viewer thead th[data-column-role="brought"]')).toHaveCount(0);
+    break;
+  }
+
   await page.keyboard.press('Escape');
   await expect(viewer).toBeHidden();
   expect(errors).toEqual([]);

@@ -1,0 +1,85 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:point_input",
+  "version": "0.5.0",
+  "nodeType": "point_input",
+  "title": "Point data",
+  "released": "2026-11-05",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['point_input']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "shaclShapes": [],
+    "validationStatus": "application-only"
+  },
+  "ports": {
+    "inputs": [
+      {
+        "name": "records",
+        "type": "table"
+      }
+    ],
+    "output": "points",
+    "dynamicInputs": null,
+    "optionalInputs": [
+      {
+        "name": "records",
+        "type": "table"
+      }
+    ]
+  },
+  "ontology": {
+    "status": "partial",
+    "mappings": [
+      {
+        "role": "configuration",
+        "iri": "urn:fieldwork:GenericInputConfiguration",
+        "file": "ontology/processing.ttl"
+      }
+    ],
+    "note": "Design alignment to GenericInputConfiguration; not a claim that current receipts emit this type.",
+    "emits": {
+      "classes": [],
+      "properties": []
+    }
+  },
+  "implementation": {
+    "files": [
+      "src/app.ts",
+      "src/core.ts",
+      "src/input-data-ui.ts",
+      "src/input-data.ts",
+      "src/table-points.ts"
+    ],
+    "definition": "src/core.ts#TYPES"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [
+      {
+        "nodeType": "places",
+        "adapterVersion": "1",
+        "implementation": "src/core.ts#validateWorkflow"
+      },
+      {
+        "nodeType": "centers",
+        "adapterVersion": "1",
+        "implementation": "src/core.ts#validateWorkflow"
+      }
+    ],
+    "replacementCandidate": null
+  },
+  "changes": [
+    {
+      "kind": "minor",
+      "description": "Points read from a table say which column their ids came from (idColumn), for a step that writes a table of them to name its id column the same way. Experiment 179."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Shared-input unit and Chromium regressions cover migration, data preservation, editor saving and offline EYE results; repository gate remains authoritative."
+  }
+}

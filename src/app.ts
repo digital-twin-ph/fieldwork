@@ -33,12 +33,13 @@ import {seaLevelExample} from './sea-level-example.js';
 import {rulesetExample} from './ruleset-example.js';
 import {hagellochExample} from './hagelloch-example.js';
 import {openRuleEditor} from './rule-editor.js';
-import {openStepViewer,openTableViewer,shapeChange,stepLabels,tableViewOf} from './table-viewer.js';
-import {openRelateJoin} from './relate-ui.js';
+import {openStepViewer,openTableViewer,shapeChange,stepLabels,tableViewOf,type TableView} from './table-viewer.js';
+import {keyNoun,openRelateJoin} from './relate-ui.js';
 import {relateShape} from './relate-table.js';
 import {findingsSummary,wideDataTable} from './data-table.js';
 import {openSatelliteCatalogDialog} from './satellite-catalog-ui.js';
 import {bboxOf,defaultKept} from './satellite-catalog.js';
+import {SAMPLE_KEYS,days as sampleDays} from './satellite-sample.js';
 import {productFor} from './satellite-products.js';
 import {openProductsDialog,productCard} from './satellite-products-ui.js';
 import {fetchRemoteTable,useDeviceCopies,archiveOnDevice,progressText} from './remote-table.js';
@@ -951,6 +952,20 @@ function upstreamKeyValues(node:WorkflowNode,seen=new Set<string>(),
     if(!brought)return below;
     const other=upstreamKeyValues(up,new Set(seen),'related');
     return {...below,[brought]:other?.[brought]??[]};
+  }
+  // A SATELLITE SAMPLE'S COLUMNS ARE KNOWN BEFORE IT RUNS: its fixed ones, with the id column named as the points'
+  // source table names it, the ids read from that table and the days from the search. So a join downstream can be set
+  // up before the files are read, which takes minutes (2026-11-05, experiment 179).
+  if(up.type==='sample_satellite_files_at_points'){
+    const pointEdge=workflow.edges.find(e=>e.to===up.id&&e.port==='points');
+    const points=pointEdge?workflow.nodes.find(m=>m.id===pointEdge.from):undefined;
+    const fromTable=points?.type==='point_input'?points.params.fromTable:undefined;
+    const idColumn=fromTable?.id&&!(SAMPLE_KEYS as readonly string[]).includes(fromTable.id)?fromTable.id:'point_id';
+    const ids=points&&fromTable?.id?upstreamKeyValues(points,new Set(seen))?.[fromTable.id]??[]:[];
+    const fileEdge=workflow.edges.find(e=>e.to===up.id&&e.port==='files');
+    const search=fileEdge?workflow.nodes.find(m=>m.id===fileEdge.from):undefined;
+    const span=search?.type==='search_satellite_catalog'&&search.params.from?sampleDays(search.params.from,search.params.until||search.params.from):[];
+    return Object.fromEntries(SAMPLE_KEYS.map(k=>k==='point_id'?[idColumn,ids]:[k,k==='date'?span:[]]));
   }
   // Totalling DROPS the columns not kept, so offering them downstream would offer a column that
   // is no longer there.
@@ -2341,7 +2356,11 @@ function renderInspector(){
   }else if(n.type==='relate_table'){
     const p=n.params,here=upstreamKeyValues(n)??{},there=upstreamKeyValues(n,new Set(),'related')??{};
     const shared=Object.keys(here).filter(column=>column in there);
-    const bringable=Object.keys(there).filter(column=>column!==p.on&&!(column in here));
+    const keysOn=[p.on,...(p.alsoOn??[])];
+    // THE VALUE COLUMN CAN BE BROUGHT too: a ground reading is a table's value (2026-11-05, experiment 179).
+    const relatedValue=tableOnPort(workflow,n.id,'related')?.valueField;
+    const bringable=[...Object.keys(there),...(relatedValue&&!(relatedValue in there)?[relatedValue]:[])]
+      .filter(column=>!keysOn.includes(column)&&!(column in here));
     const picker=(id:string,key:'on'|'bring',label:string,options:string[],empty:string)=>
       `<div class="field"><label class="field-label" for="${id}">${label}</label>`
       +`<select id="${id}" data-slr="${key}"${options.length?'':' disabled'}>`
@@ -2360,6 +2379,12 @@ function renderInspector(){
       // to bring across. A column the first table already has is excluded here rather than
       // refused on the run, because the refusal is correct and arrives three steps from the choice.
       +picker('relate-on','on','Matched on',shared,'Connect both tables first')
+      // MORE KEYS, matched together with the first: a satellite and a ground reading are one observation only for the
+      // same monitor on the same day. Offered once the first key is chosen, from the other shared columns.
+      +(p.on&&shared.length>1?`<div class="field"><label class="field-label" for="relate-also">And also matched on</label>`
+        +`<select id="relate-also" multiple size="${Math.min(4,shared.length-1)}">`
+        +shared.filter(column=>column!==p.on).map(column=>`<option value="${esc(column)}" ${(p.alsoOn??[]).includes(column)?'selected':''}>${esc(column)}</option>`).join('')
+        +`</select><small>Rows relate only where every chosen column agrees. Hold Ctrl or ⌘ to choose more than one.</small></div>`:'')
       +picker('relate-bring','bring','Bring across',bringable,'Connect both tables first')
       +(Object.keys(there).length&&!shared.length
         ?'<div class="notice notice-warning">These two tables share no key column, so there is nothing to match on. Check that both carry the same kind of key.</div>':'')
@@ -2374,7 +2399,7 @@ function renderInspector(){
     const joinLeft=tableOnPort(workflow,n.id,'records');
     const joinRight=tableOnPort(workflow,n.id,'related');
     if(joinLeft&&joinRight&&p.on&&p.bring){
-      const request={on:p.on,bring:p.bring,
+      const request={on:p.on,...(p.alsoOn?.length?{alsoOn:p.alsoOn}:{}),bring:p.bring,
         ...(p.normalisation?{normalisation:p.normalisation}:{}),
         ...(p.measureKey?{measureKey:p.measureKey}:{})};
       let planned:ReturnType<typeof relateShape>|{refusal:string};
@@ -2392,8 +2417,7 @@ function renderInspector(){
         const decided=p.unmatched&&p.unmatched.signature===planned.signature?p.unmatched:undefined;
         content+=`<div class="overlap-bar">${seg(leftOnly,'left')}${seg(matched,'both')}`
           +`${seg(rightOnly,'right')}</div>`
-          +`<p class="muted">${matched.toLocaleString()} ${esc(p.on)}`
-          +`${matched===1?'':'s'} in both`
+          +`<p class="muted">${matched.toLocaleString()} ${esc(keyNoun([p.on,...(p.alsoOn??[])].join(' and '),matched))} in both`
           +(leftOnly?`, ${leftOnly.toLocaleString()} only in ${esc(portSourceName(workflow,n.id,'records','the first table'))}`:'')
           +(rightOnly?`, ${rightOnly.toLocaleString()} only in ${esc(portSourceName(workflow,n.id,'related','the second table'))}`:'')
           +`. Keys compared ${planned.normalisation==='fuzzy'?'with punctuation folded':'exactly'}.</p>`
@@ -3529,6 +3553,10 @@ function renderInspector(){
     const key=required(el.dataset.fromTable) as keyof import('./table-points.js').TableMapping;
     if(el.value)next[key]=el.value;else if(key==='id'||key==='name')delete next[key];else next[key]='';
     node.params.fromTable=next;})));
+  optionalElement('#relate-also')?.addEventListener('change',event=>{
+    const chosen=[...(event.currentTarget as HTMLSelectElement).selectedOptions].map(o=>o.value);
+    change(w=>{const node=getNode(w,n.id,'relate_table');if(chosen.length)node.params.alsoOn=chosen;else delete node.params.alsoOn;});
+  });
   optionalElement('#satellite-qa-operator')?.addEventListener('change',event=>{
     const value=(event.currentTarget as HTMLSelectElement).value as '>='|'>';
     change(w=>{getNode(w,n.id,'sample_satellite_files_at_points').params.qaOperator=value;});
@@ -3635,6 +3663,14 @@ function renderInspector(){
     });
     if(befores.length===1)view.note=`${view.note??''} ${shapeChange(befores[0]!)}`;
     view.note=`${stale}${view.note??''}`;
+    // THE JOIN'S COLUMNS, MARKED: the key columns in every Before and in After, and the column brought across in After.
+    if(n.type==='relate_table'){
+      const p=n.params,keys=[p.on,...(p.alsoOn??[])].filter(Boolean);
+      const mark=(v:TableView,extra?:string)=>{v.roles=Object.fromEntries([...keys.map(k=>[k,'key'] as const),
+        ...(extra?[[extra,'brought'] as const]:[])].filter(([c])=>v.columns.includes(c)));};
+      for(const before of befores)mark(before);
+      mark(view,p.bring);
+    }
     openStepViewer([...befores,view],
       stepLabels(inputs.map(({port})=>portSourceName(workflow,n.id,port,port))),esc);
   });
@@ -3652,12 +3688,12 @@ function renderInspector(){
       title:`${p.label||TYPES[n.type].title} \u00b7 the join`,
       leftLabel:portSourceName(workflow,n.id,'records','the first table'),
       rightLabel:portSourceName(workflow,n.id,'related','the second table'),
-      on:p.on,bring:p.bring,
+      on:[p.on,...(p.alsoOn??[])].join(' and '),bring:p.bring,
       normalisation:p.normalisation??'fuzzy',
       ...(p.unmatched?{settled:p.unmatched}:{}),
       shapeFor:(normalisation,label)=>{
         try{
-          return relateShape(left,right,{on:p.on,bring:p.bring,normalisation,
+          return relateShape(left,right,{on:p.on,...(p.alsoOn?.length?{alsoOn:p.alsoOn}:{}),bring:p.bring,normalisation,
             ...(p.measureKey?{measureKey:p.measureKey}:{}),
             ...(label!==undefined?{unmatched:{decision:'keep' as const,label,signature:''}}:{})});
         }catch(error){return {refusal:errorMessage(error)};}

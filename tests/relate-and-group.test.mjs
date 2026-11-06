@@ -409,3 +409,31 @@ test('keeping the rows machines a note that names the declared category, not an 
   assert.ok(!/absent from this analysis/.test(notes[0].text),
     'nothing left, so there is no exclusion to report');
 });
+
+// SEVERAL KEYS, AND THE VALUE BROUGHT ACROSS (2026-11-05, experiment 179). A satellite reading and a ground reading are
+// the same observation only for the same monitor on the same day; the ground reading is its table's value.
+test('rows relate on several keys together, and the second table\'s value column can be brought across',async()=>{
+  const {relateReceiptFacts}=await import('../build/relate-table.js');
+  const row=(key,value)=>({key,value});
+  const satellite={kind:'data-table',keys:['point_id','date','measure'],valueField:'nitrogendioxide_tropospheric_column',
+    rows:[row({point_id:'5-110',date:'2023-06-07',measure:'no2'},4.2e-5),row({point_id:'5-110',date:'2023-06-08',measure:'no2'},3.1e-5),
+      row({point_id:'81-124',date:'2023-06-07',measure:'no2'},2.5e-5)],rowCount:3,missingValueCount:0};
+  const ground={kind:'data-table',keys:['point_id','date'],valueField:'value',
+    rows:[row({point_id:'5-110',date:'2023-06-07'},21.4),row({point_id:'5-110',date:'2023-06-08'},18),
+      row({point_id:'81-124',date:'2023-06-07'},null),row({point_id:'81-124',date:'2023-06-08'},15)],rowCount:4,missingValueCount:1};
+  const request={on:'point_id',alsoOn:['date'],bring:'value',unmatched:undefined};
+  // Two monitor-days have a ground reading; the third's is empty, so it does not relate.
+  const shape=relateShape(satellite,ground,request);
+  assert.equal(shape.overlap.matched,2);
+  const kept={...request,unmatched:{decision:'keep',label:'no ground reading',signature:shape.signature}};
+  const result=relateTable(satellite,ground,kept);
+  assert.deepEqual(result.table.keys,['point_id','date','measure','value']);
+  assert.deepEqual(result.table.rows.map(r=>r.key.value),['21.4','18','no ground reading']);
+  // Matched on the first key alone, one monitor's two days would make the second table ambiguous.
+  assert.throws(()=>relateTable(satellite,ground,{on:'point_id',bring:'value'}),/more than one "value"/);
+  const outcome=relateOutcome(satellite,kept,result);
+  assert.equal(outcome.on,'point_id and date');
+  const facts=relateReceiptFacts(outcome,[],{runId:'r',nodeId:'n'});
+  assert.match(facts,/fw:matchedOn "point_id";\n\s+fw:matchedOn "date";/);
+  assert.throws(()=>relateTable(satellite,ground,{on:'point_id',alsoOn:['date'],bring:'date'}),/being matched on/);
+});

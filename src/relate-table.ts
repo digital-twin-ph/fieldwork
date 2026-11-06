@@ -42,7 +42,13 @@ export interface RelateRequest {
   /** The key column both tables carry. Key cells are trimmed at import (`data-table.ts`); how
    *  they are compared here is `normalisation`. */
   on:string;
-  /** The right table's key column to add to the left table's rows. */
+  /** MORE KEY COLUMNS, matched together with `on`: a row relates only where every one agrees. Added 2026-11-05 for
+   *  the NYC satellite example, where a satellite reading and a ground reading are the same observation only for the
+   *  same monitor on the same day; one column could match neither alone. Experiment 179. */
+  alsoOn?:string[];
+  /** The right table's column to add to the left table's rows: a key column, or its value column, whose numbers then
+   *  travel as written. The value column since 2026-11-05: a ground reading is a table's value, and bringing it beside
+   *  a satellite reading is the comparison. */
   bring:string;
   /** HOW KEY CELLS ARE COMPARED, in the vocabulary `join_table_to_area` already uses and through
    *  the same `normaliseName`: `fuzzy` folds every run of non-alphanumerics to one space, `exact`
@@ -177,7 +183,9 @@ export interface RelateShape {
 }
 
 interface RelatePlan {
-  on:string; bring:string; normalisation:'exact'|'fuzzy';
+  /** The key columns' names joined for a sentence, "site and date"; `keys` is each of them. */
+  on:string; keys:string[]; bring:string; normalisation:'exact'|'fuzzy';
+  keyOf:(row:{key:Record<string,string>})=>string;
   lookup:Map<string,string>;
   fold:(value:string)=>string;
   gaps:RelateGap[];
@@ -191,7 +199,8 @@ interface RelatePlan {
 
 /** Everything both entry points need, and every refusal that does not depend on the decision. */
 function planRelate(left:DataTable,right:DataTable,request:RelateRequest):RelatePlan {
-  const on=request.on.trim(),bring=request.bring.trim();
+  const keys=[request.on.trim(),...(request.alsoOn??[]).map(k=>k.trim()).filter(Boolean)].filter((k,i,all)=>all.indexOf(k)===i);
+  const on=keys.join(' and '),bring=request.bring.trim();
   const normalisation=request.normalisation??DEFAULT_NORMALISATION;
   // WHICH COLUMN NAMES THE VARIABLES, defaulted rather than demanded. `wideDataTable` writes
   // `measureKey||'measure'`, so every table this application melted from a wide file has a key
@@ -200,26 +209,36 @@ function planRelate(left:DataTable,right:DataTable,request:RelateRequest):Relate
   // because they agree here rather than each guessing.
   const measureKey=request.measureKey?.trim()
     ||(left.keys.includes('measure')?'measure':undefined);
-  if(!on)throw new Error('Name the column both tables share.');
+  if(!keys[0])throw new Error('Name the column both tables share.');
   if(!bring)throw new Error('Name the column to bring across.');
-  if(!left.keys.includes(on))
-    throw new Error(`The first table has no "${on}" column. Its columns are ${left.keys.join(', ')}.`);
-  if(!right.keys.includes(on))
-    throw new Error(`The second table has no "${on}" column. Its columns are ${right.keys.join(', ')}.`);
-  if(!right.keys.includes(bring))
-    throw new Error(`The second table has no "${bring}" column. Its columns are ${right.keys.join(', ')}.`);
-  if(on===bring)
-    throw new Error(`"${on}" is the column being matched on, so bringing it across would add nothing.`);
+  for(const key of keys){
+    if(!left.keys.includes(key))
+      throw new Error(`The first table has no "${key}" column. Its columns are ${left.keys.join(', ')}.`);
+    if(!right.keys.includes(key))
+      throw new Error(`The second table has no "${key}" column. Its columns are ${right.keys.join(', ')}.`);
+  }
+  const bringsValue=!right.keys.includes(bring)&&bring===right.valueField;
+  if(!right.keys.includes(bring)&&!bringsValue)
+    throw new Error(`The second table has no "${bring}" column. Its columns are ${[...right.keys,right.valueField].join(', ')}.`);
+  if(keys.includes(bring))
+    throw new Error(`"${bring}" is a column being matched on, so bringing it across would add nothing.`);
   if(left.keys.includes(bring))
     throw new Error(`The first table already has a "${bring}" column. Relating would give its rows two `
       +'values for one key, which is a table nobody can read.');
   if(measureKey&&!left.keys.includes(measureKey))
     throw new Error(`The first table has no "${measureKey}" column to read variable names from. `
       +`Its columns are ${left.keys.join(', ')}.`);
-  if(measureKey&&measureKey===on)
-    throw new Error(`"${on}" is the column being matched on, so it does not name the table's variables.`);
+  if(measureKey&&keys.includes(measureKey))
+    throw new Error(`"${measureKey}" is a column being matched on, so it does not name the table's variables.`);
 
   const fold=(value:string)=>normaliseName(value,normalisation);
+  // ONE KEY FROM SEVERAL COLUMNS: each folded, joined by a separator no folded cell contains. Empty where any part is,
+  // because a row missing its date names no observation even if it names the monitor.
+  const keyOf=(row:{key:Record<string,string>})=>{const parts=keys.map(k=>fold(row.key[k]??''));
+    return parts.some(p=>!p)?'':parts.join('\u001f');};
+  const rawOf=(row:{key:Record<string,string>})=>keys.map(k=>row.key[k]??'').join(' · ');
+  const broughtOf=(row:{key:Record<string,string>;value:number|null})=>
+    bringsValue?(row.value===null?undefined:String(row.value)):row.key[bring];
 
   // THE RIGHT TABLE'S LOOKUP, keyed by the FOLDED key, and built before anything is joined so an
   // ambiguous key is reported as ambiguity rather than as a number that came out wrong.
@@ -232,9 +251,9 @@ function planRelate(left:DataTable,right:DataTable,request:RelateRequest):Relate
   const spellings=new Map<string,Set<string>>();
   const ambiguous=new Map<string,Set<string>>();
   for(const row of right.rows){
-    const raw=row.key[on],value=row.key[bring];
-    if(raw===undefined||value===undefined)continue;
-    const key=fold(raw);
+    const raw=rawOf(row),value=broughtOf(row);
+    if(value===undefined)continue;
+    const key=keyOf(row);
     // A row whose key cell is empty names no subject. Skipped rather than matched against every
     // other empty cell, which would relate unrelated rows to one another.
     if(!key)continue;
@@ -266,8 +285,8 @@ function planRelate(left:DataTable,right:DataTable,request:RelateRequest):Relate
   const seen=new Set<string>();
   let matched=0;
   for(const row of left.rows){
-    const raw=row.key[on]??'';
-    const key=fold(raw);
+    const raw=rawOf(row);
+    const key=keyOf(row);
     leftKeys.add(key);
     const value=lookup.get(key);
     if(value===undefined){gapRows.set(raw,(gapRows.get(raw)??0)+1);continue;}
@@ -296,30 +315,30 @@ function planRelate(left:DataTable,right:DataTable,request:RelateRequest):Relate
   };
   for(const row of left.rows){
     add(variableOf(row.key),'all',row.value);
-    if(lookup.has(fold(row.key[on]??'')))add(variableOf(row.key),'related',row.value);
+    if(lookup.has(keyOf(row)))add(variableOf(row.key),'related',row.value);
   }
   const shares:MeasureShare[]=[...totals.entries()].map(([measure,t])=>
     ({measure,all:t.all,related:t.related,share:t.all?t.related/t.all:null}));
 
   const rightOnly=[...lookup.keys()].filter(key=>!leftKeys.has(key));
   const overlap:RelateOverlap={
-    leftOnly:new Set([...gapRows.keys()].map(fold)).size,
+    leftOnly:new Set(left.rows.filter(row=>!lookup.has(keyOf(row))).map(keyOf)).size,
     matched:matchedKeys.size,
     rightOnly:rightOnly.length,
     gaps,
     rightOnlyKeys:rightOnly.map(key=>[...(spellings.get(key)??new Set([key]))][0]),
   };
-  return {on,bring,normalisation,lookup,fold,gaps,overlap,shares,
+  return {on,keys,bring,normalisation,keyOf,lookup,fold,gaps,overlap,shares,
     signature:gapSignature(gaps,normalisation),values,matched,left};
 }
 
 /** The rows a decision produces, in the left table's own order. `label` undefined is the inner
  *  join; a label keeps the unmatched rows under it. */
 function buildRows(plan:RelatePlan,label:string|undefined):DataTable {
-  const {left,on,bring,lookup,fold}=plan;
+  const {left,bring,lookup,keyOf}=plan;
   const rows:DataTable['rows']=[];
   for(const row of left.rows){
-    const value=lookup.get(fold(row.key[on]??''));
+    const value=lookup.get(keyOf(row));
     if(value===undefined){
       if(label===undefined)continue;
       rows.push({key:{...row.key,[bring]:label},value:row.value});
@@ -410,7 +429,8 @@ export function relateTable(left:DataTable,right:DataTable,request:RelateRequest
  *  editable after the run; resolving it from the edges at the moment of display keeps one answer
  *  rather than two that can disagree. */
 export interface RelateOutcome {
-  on:string; bring:string;
+  /** The key columns for a sentence, "site and date"; `keys` names each. */
+  on:string; keys:string[]; bring:string;
   /** Rows the left table brought in: `related + dropped`, stated rather than derived, because it
    *  is the denominator the other two numbers mean something against. */
   offered:number;
@@ -448,7 +468,8 @@ export function rateMultiplier(shares:MeasureShare[],numerator:string,denominato
 /** The outcome of a relate, as the run records it. Separate from `relateTable` so the computation
  *  returns the table it computed and nothing about how it will be displayed. */
 export function relateOutcome(left:DataTable,request:RelateRequest,result:RelateResult):RelateOutcome{
-  return {on:request.on.trim(),bring:request.bring.trim(),
+  const keys=[request.on.trim(),...(request.alsoOn??[]).map(k=>k.trim()).filter(Boolean)].filter((k,i,all)=>all.indexOf(k)===i);
+  return {on:keys.join(' and '),keys,bring:request.bring.trim(),
     offered:left.rows.length,related:result.related,dropped:result.dropped,kept:result.kept,
     gaps:result.gaps,values:result.values,carried:[...left.keys],
     overlap:result.overlap,shares:result.shares,normalisation:result.normalisation,
@@ -563,7 +584,8 @@ export function relateReceiptFacts(
   const entity=`<urn:fieldwork:run:${context.runId}:output:${context.nodeId}>`;
   return `@prefix fw: <urn:fieldwork:>.\n@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.\n`
     +`${entity} a fw:TableRelate;\n`
-    +`  fw:matchedOn ${quote(outcome.on)};\n`
+    // ONE fw:matchedOn PER KEY COLUMN, as the tables spell it: rows relate where all of them agree.
+    +(outcome.keys??[outcome.on]).map(k=>`  fw:matchedOn ${quote(k)};\n`).join('')
     +`  fw:broughtColumn ${quote(outcome.bring)};\n`
     +`  fw:keyComparison ${quote(outcome.normalisation==='fuzzy'?'punctuation-folded':'exact')};\n`
     +`  fw:offeredRowCount "${outcome.offered}"^^xsd:integer;\n`

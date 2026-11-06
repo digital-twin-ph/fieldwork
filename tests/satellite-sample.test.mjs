@@ -94,3 +94,12 @@ test('the receipt reads completeness, never fills, states the operator, and conf
 test('days are UTC calendar days, inclusive',()=>{
   assert.deepEqual(days('2023-06-29','2023-07-01'),['2023-06-29','2023-06-30','2023-07-01']);
 });
+
+test('the id column takes the name the points\' source table gave it, so the result relates back on it',()=>{
+  const {table}=sampleTable(pts,[reading({})],'2023-06-07','2023-06-07',reader,'>=',0,'site');
+  assert.equal(table.keys[0],'site');assert.ok(!table.keys.includes('point_id'));
+  assert.deepEqual(table.rows.map(r=>r.key.site),['a','b']);
+  assert.deepEqual(table.primaryKey,['site','date','overpass_time','stream']);
+  // A name that would collide with a column the sampler writes keeps point_id.
+  assert.equal(sampleTable(pts,[reading({})],'2023-06-07','2023-06-07',reader,'>=',0,'date').table.keys[0],'point_id');
+});

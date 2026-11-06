@@ -391,6 +391,9 @@ dialog built their own requests without the new options and refused; they now pa
 draft ran before the weekly cases reached an output, and read the brought temperature, a key column, as
 categorical: 54 model columns against a limit of 32.
 
+**The figure for these five ratios** is asked in [181](181-lag-response-figure.md): a lag–response plot, which Chart
+cannot yet draw.
+
 ## What this does not establish
 
 Any design. Whether InfoDengue's data may be redistributed; how the Zenodo file's exposures were computed, or

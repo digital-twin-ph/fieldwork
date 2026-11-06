@@ -117,6 +117,30 @@ Both keep to epidemiological year 2024 (2023-12-31 to 2024-12-28), which leaves 
 about one resident in seven, as notified cases rather than infections, and whether the map's shading by rank reads as
 a statement about risk.
 
+## M1: what a MODIS land surface temperature file is, read 2026-11-06
+
+The practitioner asked what MODIS would be read for; nothing had been opened. One file was then opened by range reads
+only: `MOD11A2.A2024049.h13v11.061.2024061080931_LST_Day_1km.tif`, Terra, 18–25 February 2024, from Planetary
+Computer's `modis-11A2-061`. It was read with rasterio and with geotiff.js 3.0.5, the library Fieldwork already ships.
+
+| Question | Found |
+| --- | --- |
+| Products per period | **Two satellites**: MOD11A2 (Terra, mid-morning pass) and MYD11A2 (Aqua, early-afternoon pass), each an 8-day composite. Like Sentinel-5P's two streams, except these are different measurements, not two versions of one |
+| Tiles for Rio de Janeiro state | Two: h13v11 and h14v11. 20 items for February 2024 (5 periods × 2 satellites × 2 tiles) |
+| Format | Cloud-Optimized GeoTIFF, 1,200 × 1,200 cells of 1 km, 512 × 512 internal blocks, deflate, overviews at 2 and 4. One file per layer: `LST_Day_1km` 1,871,724 bytes, `QC_Day` 234,559 |
+| Values | uint16, `scale_factor` 0.02, `units` K, fill 0, valid range 7,500–65,535, as the file's tags and the catalogue's `raster:bands` both state |
+| Projection | MODIS sinusoidal, a sphere of radius 6,371,007.181 m, cells as areas. The forward formula is two lines, so a municipality can be projected into the grid rather than the grid warped |
+| Quality | `QC_Day` and `QC_Night`, separate uint8 layers. The file's own summary for this tile and period: 45% good quality, 23% other quality, 11% not produced for cloud, 21% not produced for other reasons |
+| Browser | CORS open on the files and on the token endpoint; range reads answer 206; the preflight allows `range`. The token is per storage container (`modiseuwest/modis-061-cogs`): a collection token is refused with 403 |
+| Cost | A window over Rio de Janeiro city, about 43 × 91 cells: 10 requests, 73,578 bytes with geotiff.js in Node |
+| A first reading | Over that window, 1,268 of 3,913 cells held a value; 19.5 °C to 38.2 °C at the surface. Both readers agree on those extremes (raw 14,632 and 15,566); their windows differed slightly, so this is not a cell-for-cell comparison |
+| Citation | The file carries `identifier_product_doi` 10.5067/MODIS/MOD11A2.061 |
+
+**Not read yet:** what each bit of `QC_Day` means, which needs the product's user guide; the licence at its source
+(Planetary Computer says "other"); NDVI and EVI, which come from `modis-13A1-061` or `modis-13Q1-061`, 16-day
+composites; how many of a municipality's cells are clear in a given period. Land surface temperature is the ground's
+skin temperature where the sky was clear, not the air temperature a person or a mosquito is in.
+
 ## What this does not establish
 
 Any design. Whether InfoDengue's data may be redistributed; how the Zenodo file's exposures were computed, or

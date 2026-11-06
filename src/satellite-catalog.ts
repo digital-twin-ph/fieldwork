@@ -59,6 +59,8 @@ export interface CatalogFile {key:string; host:string; href:string; type:string|
 export interface CatalogItem {id:string; datetime:string|null; bbox:BBox|null; platform:string|null; files:CatalogFile[];
   /** The processing stream as the item states it (`s5p:processing_mode`): NRTI, near real time, or OFFL, offline. */
   stream?:string|null;
+  /** The end of the period a composite covers, where the item states one (`end_datetime`). */
+  end?:string;
   /** The orbit as the item states it (`sat:absolute_orbit`). Two items with one orbit are one overpass. */
   orbit?:number|null;
 }
@@ -108,7 +110,10 @@ const productTypeOf=(item:{id?:unknown;properties?:Record<string,unknown>}):stri
 const toItem=(raw:Record<string,unknown>):CatalogItem=>{
   const props=(raw.properties??{}) as Record<string,unknown>;
   const assets=(raw.assets??{}) as Record<string,Record<string,unknown>>;
+  // A COMPOSITE COVERS A PERIOD: MODIS's 8-day items state a start and an end, and the end is kept so the period is
+  // said, not inferred from the next item (experiment 180).
   return {id:String(raw.id),datetime:(props.datetime as string|undefined)??(props.start_datetime as string|undefined)??null,
+    ...(typeof props.end_datetime==='string'?{end:props.end_datetime as string}:{}),
     bbox:Array.isArray(raw.bbox)&&raw.bbox.length>=4?(raw.bbox.slice(0,4) as BBox):null,
     platform:(props.platform as string|undefined)??null,
     stream:typeof props['s5p:processing_mode']==='string'?props['s5p:processing_mode'] as string:null,

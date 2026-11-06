@@ -365,7 +365,9 @@ export interface ParamsByType {
   find_satellite_products:{label:string; question?:string; topic?:string; route?:string};
   /** A catalog search for the chosen product over the study area and dates, and the items kept. Experiment 179. */
   /** Experiment 179. The quality rule's operator, where the product's documents differ; absent: the reader's default. */
-  sample_satellite_files_at_points:{label:string; qaOperator?:'>='|'>'};
+  sample_satellite_files_at_points:{label:string; qaOperator?:'>='|'>';
+    /** For a gridded product (experiment 180): which layer, the quality rule, and what the place column is called. */
+    layer?:string; qualityRule?:'produced-2k'|'good'|'produced'; placeColumn?:string};
   search_satellite_catalog:{label:string; from:string; until:string;
     /** Edges typed in the dialog, W/S/E/N, used when no Study area is connected. */
     box?:[number,number,number,number];

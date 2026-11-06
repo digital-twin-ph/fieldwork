@@ -169,9 +169,9 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
     inputs:[['product','satellite-product'],['area','area']],output:'satellite-files'},
   // THE VALUE AT EACH POINT, PER OVERPASS, from the files a search found: read by range in a worker, with the quality
   // rule and the kind of gap where there is no usable value. Experiment 179.
-  sample_satellite_files_at_points:{title:'Sample satellite files at points',group:'Spatial operations',icon:'◴',color:'teal',
-    description:'Read the satellite value at each point for every overpass, with its quality, and say which days have no usable value and why',
-    inputs:[['points','points'],['files','satellite-files']],output:'table'},
+  sample_satellite_files_at_points:{title:'Sample satellite files at points or over areas',group:'Spatial operations',icon:'◴',color:'teal',
+    description:'Read the satellite value at each point, or over each area, for every overpass or period, with its quality, and say where there is no usable value and why',
+    inputs:[['points','points'],['areas','polygons'],['files','satellite-files']],output:'table'},
   study_design:{title:'Study design',group:'Epidemiology',icon:'◇',color:'teal',
     description:'Declare the study design and its period, so the computations downstream are the ones the design can estimate',
     inputs:[],output:'design'},
@@ -295,6 +295,9 @@ export function requiredInputs(node:WorkflowNode,options?:{coverageConnected?:bo
   // A SEARCH'S AREA MAY BE TYPED IN ITS DIALOG, as in JLT's STAC Browser, so a Study area fills it but is not required.
   // Requiring it left Search grey with no way forward inside the dialog (the practitioner, 2026-11-05).
   if(node.type==='search_satellite_catalog')return all.filter(([port])=>port!=='area');
+  // POINTS OR AREAS: the sampler reads at one or the other, so neither is required on its own; the run says which is
+  // missing when neither is connected (experiment 180).
+  if(node.type==='sample_satellite_files_at_points')return all.filter(([port])=>port==='files');
   // A DESIGN IS DECLARED OR IT IS ABSENT, and absent must keep working. Requiring it would make
   // every existing workflow with a two-by-two refuse to run until somebody answered a question
   // they may not be able to answer -- and would drop the widget's own contract into one that
@@ -1514,10 +1517,37 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
       case 'sample_satellite_files_at_points':{
         const files=(inputs as unknown as {files?:{kind?:string;product?:SatelliteProduct;search?:import('./satellite-catalog.js').CatalogSearch}}).files;
         if(files?.kind!=='satellite-files'||!files.product||!files.search)throw new Error('Connect Search a satellite catalog to files: there are no files to read yet.');
+        const raw=inputs.points as unknown as PointInput|undefined;
+        const polygons=(inputs as unknown as {areas?:{features?:{id:string|number;name?:string;geometry?:import('./types.js').Boundary|null}[]}}).areas;
+        if(raw&&polygons)throw new Error('Connect points or areas, not both: one table holds one kind of place.');
+        // A GRIDDED PRODUCT (MODIS, experiment 180) is read over areas or at points by geotiff.js; a swath (Sentinel-5P) at
+        // points by h5wasm. Which reader is the product's, not a setting.
+        const grids=await import('./satellite-grid-sample.js');
+        const gridReader=grids.gridReaderFor(files.product);
+        if(gridReader){
+          const features=!raw?[]:'layers' in raw?raw.layers.flatMap(l=>l.features):raw.features;
+          const places:import('./satellite-grid-sample.js').Place[]=polygons
+            ?grids.areasFrom(polygons.features??[])
+            :features.filter(f=>f.geometry?.coordinates).map(f=>({id:String(f.id),name:String(f.properties?.name??f.id),kind:'point' as const,
+              lon:(f.geometry!.coordinates as number[])[0]!,lat:(f.geometry!.coordinates as number[])[1]!}));
+          if(!places.length)throw new Error(polygons?'The areas connected have no polygons to read over.':'Connect a point layer to points, or polygons to areas: the values are read there.');
+          const kind=polygons?'area' as const:'point' as const;
+          const layer=node.params.layer??'day',rule=node.params.qualityRule??gridReader.quality.default;
+          const {fromUrl}=await import('geotiff');
+          const readings=await grids.readGridFiles(files.search.items,gridReader,layer,rule,places,async url=>(await fromUrl(url)).getImage() as never);
+          const column=node.params.placeColumn?.trim()||(kind==='area'?'area':'point_id');
+          const {table,counts}=grids.gridTable(places,readings,gridReader,layer,rule,column);
+          counts.files=files.search.items.length;
+          const sentence=grids.gridSentence(counts,gridReader,layer,rule,files.product,kind);
+          value={...table,sentence} as unknown as DisplayValue;
+          const facts=grids.gridFacts(`<urn:fieldwork:run:${runId}:output:${node.id}>`,counts,gridReader,layer,rule,files.product,kind);
+          receipts.push({nodeId:node.id,kind:'computation',facts,rules:'',input:facts,conclusions:[],method:sentence} as unknown as Receipt);
+          break;
+        }
         const sampling=await import('./satellite-sample.js');
         const reader=sampling.readerFor(files.product);
-        if(!reader)throw new Error(`No reader is built yet for ${files.product.route.label}. The first is Sentinel-5P NO₂ on Planetary Computer; the others are next.`);
-        const raw=inputs.points as unknown as PointInput|undefined;
+        if(!reader)throw new Error(`No reader is built yet for ${files.product.route.label}. Sentinel-5P NO₂ and MODIS land surface temperature on Planetary Computer have one.`);
+        if(polygons)throw new Error(`${files.product.route.label} is read at points only: its files are swaths, and reading one over an area is not built. Connect points.`);
         const features=!raw?[]:'layers' in raw?raw.layers.flatMap(l=>l.features):raw.features;
         if(!features.length)throw new Error('Connect a point layer to points: the values are read at its points.');
         const placed=features.filter(f=>f.geometry?.coordinates).map(f=>({id:String(f.id),name:String(f.properties?.name??f.id),

@@ -380,24 +380,34 @@ fw:searchTruncated a owl:DatatypeProperty; rdfs:domain fw:SatelliteCatalogSearch
   rdfs:comment "True when the search stopped at its item limit with more to read.".
 fw:completenessRead a owl:DatatypeProperty; rdfs:range xsd:boolean; rdfs:label "completeness read";
   rdfs:comment "Whether pixels were read to count coverage and quality. A search reads none, so this is false: absence of an overpass is known, absence of a retrieval or of quality is not. A satellite point sample reads them, so it is true there. No domain since 0.29.0, when the sample began to state it.".
+fw:SatelliteAreaSample a owl:Class; rdfs:subClassOf prov:Entity; rdfs:label "satellite area sample";
+  rdfs:comment "A gridded satellite product read over areas, or at points as the cell containing each: one row per place per period per platform, with the cells counted, the quality rule stated and nothing filled. Experiment 180.".
+fw:cellConvention a owl:DatatypeProperty; rdfs:domain fw:SatelliteAreaSample; rdfs:range xsd:string; rdfs:label "cell convention";
+  rdfs:comment "Which cells of a grid a place is read from: those whose centre is inside or on an area, or the one containing a point.".
+fw:qualityRule a owl:DatatypeProperty; rdfs:domain fw:SatelliteAreaSample; rdfs:range xsd:string; rdfs:label "quality rule";
+  rdfs:comment "The rule a cell's quality bits passed, in words naming the bits read; a product that documents bits and no rule gets a rule the practitioner chose.".
+fw:placesSampled a owl:DatatypeProperty; rdfs:domain fw:SatelliteAreaSample; rdfs:range xsd:integer; rdfs:label "places sampled".
+fw:rowsNoCell a owl:DatatypeProperty; rdfs:domain fw:SatelliteAreaSample; rdfs:range xsd:integer; rdfs:label "rows with no cell";
+  rdfs:comment "Rows for a place no cell centre of the file falls in: a gap of its own, not a missing reading.".
 fw:SatellitePointSample a owl:Class; rdfs:subClassOf prov:Entity; rdfs:label "satellite point sample";
   rdfs:comment "Values read from satellite files at points, one per point per overpass, with the quality rule applied and each gap named. Sample satellite files at points. Experiment 179.".
-fw:sampledRoute a owl:DatatypeProperty; rdfs:domain fw:SatellitePointSample; rdfs:range xsd:string; rdfs:label "sampled route".
-fw:sampledVariable a owl:DatatypeProperty; rdfs:domain fw:SatellitePointSample; rdfs:range xsd:string; rdfs:label "sampled variable";
+# SHARED BY BOTH SAMPLES, so no domain: an area sample stating its files read is not thereby a point sample (2026-11-06).
+fw:sampledRoute a owl:DatatypeProperty; rdfs:range xsd:string; rdfs:label "sampled route".
+fw:sampledVariable a owl:DatatypeProperty; rdfs:range xsd:string; rdfs:label "sampled variable";
   rdfs:comment "The variable's path in the file, as the file spells it.".
-fw:satelliteValueUnit a owl:DatatypeProperty; rdfs:domain fw:SatellitePointSample; rdfs:range xsd:string; rdfs:label "satellite value unit";
+fw:satelliteValueUnit a owl:DatatypeProperty; rdfs:range xsd:string; rdfs:label "satellite value unit";
   rdfs:comment "The unit as the file's own units attribute states it.".
 fw:pixelConvention a owl:DatatypeProperty; rdfs:domain fw:SatellitePointSample; rdfs:range xsd:string; rdfs:label "pixel convention".
-fw:qualityVariable a owl:DatatypeProperty; rdfs:domain fw:SatellitePointSample; rdfs:range xsd:string; rdfs:label "quality variable".
+fw:qualityVariable a owl:DatatypeProperty; rdfs:range xsd:string; rdfs:label "quality variable".
 fw:qualityThreshold a owl:DatatypeProperty; rdfs:domain fw:SatellitePointSample; rdfs:range xsd:decimal; rdfs:label "quality threshold".
 fw:qualityOperator a owl:DatatypeProperty; rdfs:domain fw:SatellitePointSample; rdfs:range xsd:string; rdfs:label "quality operator";
   rdfs:comment "\">=\" or \">\": the product's documents differ, and only at exactly the threshold, so which was applied is stated.".
-fw:filesRead a owl:DatatypeProperty; rdfs:domain fw:SatellitePointSample; rdfs:range xsd:integer; rdfs:label "files read".
+fw:filesRead a owl:DatatypeProperty; rdfs:range xsd:integer; rdfs:label "files read".
 fw:pointsSampled a owl:DatatypeProperty; rdfs:domain fw:SatellitePointSample; rdfs:range xsd:integer; rdfs:label "points sampled".
-fw:rowsWritten a owl:DatatypeProperty; rdfs:domain fw:SatellitePointSample; rdfs:range xsd:integer; rdfs:label "rows written".
-fw:rowsPassing a owl:DatatypeProperty; rdfs:domain fw:SatellitePointSample; rdfs:range xsd:integer; rdfs:label "rows passing".
-fw:rowsBelowQuality a owl:DatatypeProperty; rdfs:domain fw:SatellitePointSample; rdfs:range xsd:integer; rdfs:label "rows below quality".
-fw:rowsNoRetrieval a owl:DatatypeProperty; rdfs:domain fw:SatellitePointSample; rdfs:range xsd:integer; rdfs:label "rows with no retrieval".
+fw:rowsWritten a owl:DatatypeProperty; rdfs:range xsd:integer; rdfs:label "rows written".
+fw:rowsPassing a owl:DatatypeProperty; rdfs:range xsd:integer; rdfs:label "rows passing".
+fw:rowsBelowQuality a owl:DatatypeProperty; rdfs:range xsd:integer; rdfs:label "rows below quality".
+fw:rowsNoRetrieval a owl:DatatypeProperty; rdfs:range xsd:integer; rdfs:label "rows with no retrieval".
 fw:rowsNoOverpass a owl:DatatypeProperty; rdfs:domain fw:SatellitePointSample; rdfs:range xsd:integer; rdfs:label "rows with no overpass".
 fw:imputed a owl:DatatypeProperty; rdfs:range xsd:boolean; rdfs:label "imputed";
   rdfs:comment "Whether any value was filled. A reader never fills: imputation is a declared step of its own (experiment 179, provisional statement 2).".

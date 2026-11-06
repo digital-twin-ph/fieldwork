@@ -3,6 +3,18 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.34.0 — 2026-11-06
+
+- **Sample satellite files at points or over areas.** The sampler takes a polygon layer as well as points, and reads
+  MODIS land surface temperature (8-day, 1 km, on Planetary Computer) over each area: the cells whose centre is in
+  it, one row per area per period per satellite, Terra and Aqua kept apart. Every row says how many cells the mean
+  rests on and how many days were clear. The quality rule is the practitioner's choice, since MODIS recommends none:
+  produced, with an average error of 2 K or less. Sentinel-5P is still read at points. Experiment 180.
+- **Find satellite products offers MODIS land surface temperature** under Surface heat, with its licence (NASA
+  Earthdata: open, CC0 unless marked) and citation read at source.
+- Validation: Chromium locally; WebKit in CI. Read in Node over the 92 Rio de Janeiro municipalities from real files;
+  no lab check of the area reading yet.
+
 ## 0.33.0 — 2026-11-06
 
 - **New worked example: dengue in Rio de Janeiro state, Brazil, 2024.** Two workflows from an empty canvas: the

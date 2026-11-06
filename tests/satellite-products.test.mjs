@@ -40,9 +40,12 @@ test('products needing no sign-in come first; what nobody has read is null, not 
   assert.equal(no2.find(p=>p.route.id==='tempo-no2').facts.citation,null);
   assert.equal(no2.find(p=>p.route.id==='tempo-no2').facts.coverageStart,'2023-08-02');
   assert.equal(no2.find(p=>p.route.id==='tempo-no2').licence,null);
-  // A route of JLT's that Fieldwork has no facts for says so.
+  // A route of JLT's that Fieldwork has no facts for says so. Heat gained Fieldwork's MODIS route on 2026-11-06
+  // (experiment 180), open and read, which comes first; JLT's Landsat route is still unread.
   const heat=productsFor(SATELLITE_TOPICS.find(t=>t.id==='heat'));
-  assert.ok(heat.every(p=>p.facts===null&&p.curatedBy==='eo-satellite-guide'));
+  assert.deepEqual(heat.map(p=>[p.route.id,p.curatedBy]),[['pc-modis-lst-8day','fieldwork'],['landsat-temperature','eo-satellite-guide']]);
+  assert.equal(heat[0].facts.unit,'K');assert.equal(heat[0].licence.open,true);
+  assert.ok(heat.filter(p=>p.curatedBy==='eo-satellite-guide').every(p=>p.facts===null));
 });
 
 const conforms=async facts=>validateGraph(new Store(new Parser().parse(facts)));

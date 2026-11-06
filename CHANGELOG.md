@@ -3,6 +3,15 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.38.1 — 2026-11-06
+
+- **A run that reads satellite files shows it is working.** While Sample satellite files at points or over areas
+  reads its files, a panel at the foot of the page names the step, turns, and counts the files read, *Reading
+  satellite files: 40 of 92*, with a bar; the Run button turns and the run's state says the same. A year of MODIS
+  files over Rio de Janeiro takes about five minutes, and the NO₂ month over New York City a few; until now the page
+  showed only *Running…*. Motion stops where the device asks for reduced motion; the count stays.
+- Validation: Chromium locally; WebKit in CI.
+
 ## 0.38.0 — 2026-11-06
 
 - **Relate a column matches a date to the period that contains it, and can shift it first.** Weekly cases against a

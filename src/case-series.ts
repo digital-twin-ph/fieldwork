@@ -152,7 +152,8 @@ export function seriesReceipt(node:{id:string},series:CaseSeries,runId:string,so
 export function validateCaseSeriesNode(node:WorkflowNode):void{
   if(node.type!=='case_series')return;
   const p=node.params;
-  if(!p.dateField?.trim())throw new Error('Name the event date attribute for Cases by period.');
+  // An empty date field is not refused on save: a node added from the library starts empty, and refusing it meant
+  // Cases by period could not be added (2026-11-06). The run refuses it.
   if(!DATE_KINDS.includes(p.dateKind))throw new Error('State which kind of date Cases by period uses.');
   if(!PERIODS.includes(p.period))throw new Error('Choose day, week or month for Cases by period.');
 }

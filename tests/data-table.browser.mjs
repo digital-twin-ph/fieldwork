@@ -32,8 +32,10 @@ test('Tabular data imports a long-format extract, displays it and replays offlin
   // converted: a wide table has a column per variable, and only `value_m` is left to be one here.
   // Nothing is read in the other shape until the button is pressed.
   await expect(page.locator('#table-shape-alert')).toBeVisible();
-  await expect(page.locator('#table-shape-says')).toContainText('already in LONG format');
-  await expect(page.locator('#table-save')).toBeDisabled();
+  await expect(page.locator('#table-shape-says')).toContainText('already be in LONG format');
+  // ADVICE, NOT A BLOCK, since 2026-11-06 (experiment 180): read as wide, every row would be kept and each repeat
+  // reported, so Save stays available. Taking the advice reads it as long.
+  await expect(page.locator('#table-save')).toBeEnabled();
   await page.locator('#table-shape-accept').click();
   await expect(page.locator('#table-shape-alert')).toBeHidden();
 

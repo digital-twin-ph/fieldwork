@@ -204,7 +204,17 @@ export function rateReceipt(node:{id:string},result:RateResult,runId:string,sour
     method:`${o.rateKind==='proportion'?'Proportion':'Ratio'} of ${o.numeratorField} to ${o.denominatorField}, per ${o.multiplier.toLocaleString()} ${o.denominatorUnit}. Numerator covers ${o.numeratorPeriod}; denominator vintage ${o.denominatorVintage}. Groups with a denominator below ${o.minimumDenominator} report no rate.`};
 }
 
+/** WHAT A SAVED RATE MAY NOT HOLD: a kind, unit or number that is wrong. Not a field left empty: a node added from the
+ *  library starts empty, and refusing that on save meant Rate could not be added at all (found 2026-11-06, building
+ *  the Brazil dengue example). The run still refuses an empty field, with the same words, through
+ *  `validateRateOptions`. */
 export function validateRateNode(node:WorkflowNode):void{
   if(node.type!=='rate')return;
-  validateRateOptions(node.params as unknown as RateOptions);
+  const o=node.params as unknown as RateOptions;
+  if(o.denominatorUnit!==undefined&&!DENOMINATOR_UNITS.includes(o.denominatorUnit))
+    throw new Error(`State what the denominator counts: ${DENOMINATOR_UNITS.join(', ')}.`);
+  if(o.rateKind!==undefined&&!RATE_KINDS.includes(o.rateKind))
+    throw new Error('State whether this is a proportion, where the numerator is part of the denominator, or a ratio of events per unit.');
+  if(o.multiplier!==undefined&&!(o.multiplier>0))throw new Error('Choose a multiplier, such as per 100 or per 1,000.');
+  if(o.minimumDenominator!==undefined&&!(o.minimumDenominator>=0))throw new Error('Set the smallest denominator for which a rate will be reported.');
 }

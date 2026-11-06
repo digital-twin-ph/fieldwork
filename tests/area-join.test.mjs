@@ -91,6 +91,17 @@ test('two parts of one name both take the value, and it is reported',()=>{
   assert.match(shared.says,/true of a rate and is not true of a count/);
 });
 
+test('the parts of one unit are not a repeated name: Angra dos Reis is 14 islands and one municipality',()=>{
+  const result=joinTableToAreas(
+    [{id:'angra',name:'Angra dos Reis'},{id:'angra',name:'Angra dos Reis'},{id:'angra',name:'Angra dos Reis'},{id:'paraty',name:'Paraty'}],
+    {kind:'data-table',keys:['group'],valueField:'per 100,000 people',
+      rows:[{key:{group:'Angra dos Reis'},value:1200},{key:{group:'Paraty'},value:300}],rowCount:2,missingValueCount:0},
+    {keyField:'group'});
+  assert.equal(result.counts.matchedParts,4);
+  assert.equal(result.counts.sharedParts,0);
+  assert.equal(result.diagnostics.filter(d=>d.code==='duplicate-boundary-key').length,0);
+});
+
 test('two keys that collapse into one are refused, not silently merged',()=>{
   const result=joinTableToAreas(
     [{id:'a',name:'St. Mary Newington'}],

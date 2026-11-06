@@ -103,7 +103,7 @@ const importTable=async (page,name,csv,{alreadyLong=false}={})=>{
   // variable -- which is the assignment table here. Stated by the fixture rather than detected
   // by the test, so a change in that detection fails this test instead of being absorbed by it.
   if(alreadyLong){
-    await expect(page.locator('#table-shape-says')).toContainText('already in LONG format');
+    await expect(page.locator('#table-shape-says')).toContainText('in LONG format');
     await page.locator('#table-shape-accept').click();
   }else{
     await expect(page.locator('#table-shape-alert')).toBeHidden();

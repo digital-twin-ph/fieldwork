@@ -145,11 +145,17 @@ export function joinTableToAreas(
   // Streatham is two polygons in Snow's South London -- the parish and its detached part -- and a
   // rate is an intensity that is true of both. It would NOT be true of a count, which is why this
   // is reported rather than passed over.
-  const timesSeen=new Map<string,number>();
-  for(const unit of units){const key=fold(unit.name);if(key)timesSeen.set(key,(timesSeen.get(key)||0)+1);}
-  for(const [key,count] of timesSeen)
-    if(count>1)diagnostics.push({code:'duplicate-boundary-key',subject:key,
-      says:`${count} parts of the boundary are named "${key}". Each is given the same value, which is true of a rate and is not true of a count.`});
+  //
+  // PARTS OF ONE UNIT ARE NOT A REPEAT. Since 0.30.0 a unit keeps every part, each carrying its unit's id: Angra dos
+  // Reis is 14 polygons, its islands, and one municipality. Counting parts called all 14 a duplicate name and buried
+  // the map under 30 such notices for Rio de Janeiro state (2026-11-06). Distinct units are counted; a part with no
+  // id counts as its own unit, as before.
+  const unitsNamed=new Map<string,Set<string>>();
+  units.forEach((unit,index)=>{const key=fold(unit.name);if(!key)return;
+    const seen=unitsNamed.get(key)??new Set<string>();seen.add(unit.id||`part ${index}`);unitsNamed.set(key,seen);});
+  for(const [key,ids] of unitsNamed)
+    if(ids.size>1)diagnostics.push({code:'duplicate-boundary-key',subject:key,
+      says:`${ids.size} parts of the boundary are named "${key}". Each is given the same value, which is true of a rate and is not true of a count.`});
 
   const used=new Set<string>();
   const parts:JoinedPart[]=units.map((unit,index)=>{
@@ -161,7 +167,7 @@ export function joinTableToAreas(
     const last=frameOrder.at(-1);
     return {index,id:unit.id,name:unit.name,key,
       value:row?(row.frames&&last!==undefined?row.frames[last]??null:row.value):null,
-      matched:!!row,shared:(timesSeen.get(key)||0)>1,
+      matched:!!row,shared:(unitsNamed.get(key)?.size||0)>1,
       ...(frameField?{frames:Object.fromEntries(frameOrder.map(f=>[f,row?.frames?.[f]??null]))}:{}),
       // Absent rather than empty where the row names no class: an unclassified part is drawn in
       // the neutral a renderer keeps for "no data", never in the first class.

@@ -3382,12 +3382,13 @@ Lab's parity for the buffer widgets and everything downstream. Record: [101](exp
 
 
 
-**Four widgets cannot be added from the palette as drafts.**
-`slr_extract_import`, `slr_threshold_comparison`, `rate` and `case_series`
-validate their full contract on every edit, so `change()` rolls back and the
+**One widget cannot be added from the palette as a draft: `slr_threshold_comparison`.**
+It validates its full contract on every edit, so `change()` rolls back and the
 canvas appears to ignore the click. Recorded in
-`tests/palette-add.browser.mjs`, which fails if the set grows. That test's
-comment referred to this list before it existed.
+`tests/palette-add.browser.mjs`, which fails if the set grows. Four once:
+`slr_extract_import` retired on 2026-10-26, and `rate` and `case_series` were
+fixed on 2026-11-06 (0.33.0) when the Brazil dengue example needed Rate
+(experiment 180).
 
 **Numeric Inspector fields revert visually after a change.**
 The model updates and the field does not. Affects every numeric parameter, not

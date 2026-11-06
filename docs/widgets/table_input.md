@@ -1,6 +1,6 @@
 # Tabular data
 
-_Created 2026-11-02 · Updated 2026-11-04_
+_Created 2026-11-02 · Updated 2026-11-06_
 
 **A source.** It reads a CSV or Stata file into a table.
 
@@ -83,6 +83,11 @@ A file is not refused for a quality problem. Every row is kept, the node says **
 A finding left unresolved goes into the write-up as a machined limitation.
 
 A file with no rows, too many rows or a missing column is still refused, because there is no table to look at.
+
+**Read as wide, a repeated subject is kept.** When the key columns repeat a subject, the dialog says the file may be
+long and offers to read it so. Usually it is. But a wide file can repeat a subject because the source has a fault,
+and the Brazil dengue file has one week twice for every municipality. Read as wide anyway, every row is kept and
+each repeat is a finding in Data quality.
 
 ## What it will not do
 

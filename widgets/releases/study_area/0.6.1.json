@@ -1,0 +1,62 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:study_area",
+  "version": "0.6.1",
+  "nodeType": "study_area",
+  "title": "Study area",
+  "released": "2026-11-06",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['study_area']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "shaclShapes": [],
+    "validationStatus": "application-only"
+  },
+  "ports": {
+    "inputs": [],
+    "output": "area",
+    "dynamicInputs": null
+  },
+  "ontology": {
+    "status": "partial",
+    "mappings": [
+      {
+        "role": "entity",
+        "iri": "urn:fieldwork:StudyArea",
+        "file": "ontology/fieldwork.ttl"
+      }
+    ],
+    "note": "Existing ontology alignment; full configuration and port shape contracts remain to be defined.",
+    "emits": {
+      "classes": [],
+      "properties": []
+    }
+  },
+  "implementation": {
+    "files": [
+      "src/area-buffer.ts",
+      "src/boundary-source.ts",
+      "src/study-area-map.ts",
+      "src/study-area.ts"
+    ],
+    "definition": "src/old-naledi.ts#OLD_TYPES"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": null
+  },
+  "changes": [
+    {
+      "kind": "patch",
+      "description": "Two rings of one unit may meet at a single point, as the OGC simple-features rule allows: a hole touching its outline at one vertex, an island meeting another at a corner. Refusing that refused Quatis and Rio de Janeiro city from geoBoundaries' Brazil, which shapely calls valid. A shared run of edge, or a crossing, is still refused. Experiment 180."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Repository regression coverage exists; this release entry does not certify a widget independently."
+  }
+}

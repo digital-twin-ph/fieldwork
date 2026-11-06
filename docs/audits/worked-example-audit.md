@@ -14,13 +14,13 @@ asset shows up.
 
 ## 1 · Widget utilization
 
-59 live widgets across 11 shipped examples and 5 pinned in its own repository.
+59 live widgets across 11 shipped examples and 6 pinned in its own repository.
 
 | Reach | Widgets |
 | --- | --- |
 | Used by no workflow | **12** |
-| Used by exactly one | 26 |
-| Used by two or more | **21** |
+| Used by exactly one | 24 |
+| Used by two or more | **23** |
 
 `isochrone` and `compute_walking_catchment` are a special case the practitioner ruled on
 2026-10-29: use of the monolith is use of its components. Four of the unused names below are
@@ -58,7 +58,6 @@ Each of these has one workflow's worth of evidence. If that example changes, it 
 | `travel_time` | old-naledi |
 | `clip_raster` | raster |
 | `raster_input` | raster |
-| `append_rows` | salmonella-germany-2021 |
 | `find_health_facilities` | sea-level |
 | `slr_site_assignment` | sea-level |
 | `summarize_hull` | snow-extent |
@@ -72,7 +71,6 @@ Each of these has one workflow's worth of evidence. If that example changes, it 
 | `network_input` | snow-isochrone |
 | `voronoi` | snow-voronoi |
 | `map_image_input` | south-london-1854 |
-| `rate` | south-london-1854 |
 | `stack_polygons` | south-london-1854 |
 
 ### Used across examples — emerging as genuinely useful
@@ -83,22 +81,24 @@ evidence about that example.
 
 | Widget | Examples | Which |
 | --- | ---: | --- |
-| `map_output` | 15 | coverage, hagelloch, heat, nigeria-immunization-2024, nyc-asthma-ozone-2016-2025, old-naledi, oswego-1940, raster, rulesets, sea-level, snow-extent, snow-geoprivacy, snow-isochrone, snow-voronoi, south-london-1854 |
+| `map_output` | 16 | brazil-dengue-rj-2024, coverage, hagelloch, heat, nigeria-immunization-2024, nyc-asthma-ozone-2016-2025, old-naledi, oswego-1940, raster, rulesets, sea-level, snow-extent, snow-geoprivacy, snow-isochrone, snow-voronoi, south-london-1854 |
 | `point_input` | 13 | coverage, hagelloch, heat, nyc-asthma-ozone-2016-2025, old-naledi, oswego-1940, rulesets, sea-level, snow-extent, snow-geoprivacy, snow-isochrone, snow-voronoi, south-london-1854 |
+| `study_area` | 13 | brazil-dengue-rj-2024, coverage, hagelloch, nyc-asthma-ozone-2016-2025, old-naledi, oswego-1940, raster, rulesets, sea-level, snow-geoprivacy, snow-isochrone, snow-voronoi, south-london-1854 |
 | `table_output` | 13 | hagelloch, heat, nyc-asthma-ozone-2016-2025, old-naledi, oswego-1940, rulesets, salmonella-germany-2021, sea-level, snow-extent, snow-geoprivacy, snow-isochrone, snow-voronoi, south-london-1854 |
-| `study_area` | 12 | coverage, hagelloch, nyc-asthma-ozone-2016-2025, old-naledi, oswego-1940, raster, rulesets, sea-level, snow-geoprivacy, snow-isochrone, snow-voronoi, south-london-1854 |
-| `table_input` | 10 | nigeria-immunization-2024, nyc-asthma-ozone-2016-2025, oswego-1940, rulesets, salmonella-germany-2021, sea-level, snow-extent, snow-isochrone, snow-voronoi, south-london-1854 |
-| `chart_output` | 7 | hagelloch, nyc-asthma-ozone-2016-2025, old-naledi, snow-extent, snow-isochrone, snow-voronoi, south-london-1854 |
+| `table_input` | 11 | brazil-dengue-rj-2024, nigeria-immunization-2024, nyc-asthma-ozone-2016-2025, oswego-1940, rulesets, salmonella-germany-2021, sea-level, snow-extent, snow-isochrone, snow-voronoi, south-london-1854 |
+| `chart_output` | 8 | brazil-dengue-rj-2024, hagelloch, nyc-asthma-ozone-2016-2025, old-naledi, snow-extent, snow-isochrone, snow-voronoi, south-london-1854 |
 | `apply_ruleset` | 6 | heat, nigeria-immunization-2024, old-naledi, rulesets, sea-level, snow-extent |
+| `select_rows` | 5 | brazil-dengue-rj-2024, nigeria-immunization-2024, nyc-asthma-ozone-2016-2025, salmonella-germany-2021, south-london-1854 |
 | `case_series` | 4 | hagelloch, snow-extent, snow-isochrone, snow-voronoi |
-| `select_rows` | 4 | nigeria-immunization-2024, nyc-asthma-ozone-2016-2025, salmonella-germany-2021, south-london-1854 |
+| `group_table` | 3 | brazil-dengue-rj-2024, nyc-asthma-ozone-2016-2025, south-london-1854 |
+| `join_table_to_area` | 3 | brazil-dengue-rj-2024, nigeria-immunization-2024, south-london-1854 |
 | `two_by_two` | 3 | oswego-1940, salmonella-germany-2021, south-london-1854 |
+| `append_rows` | 2 | brazil-dengue-rj-2024, salmonella-germany-2021 |
 | `clip_polygons` | 2 | snow-isochrone, snow-voronoi |
 | `derive_value` | 2 | nigeria-immunization-2024, south-london-1854 |
-| `group_table` | 2 | nyc-asthma-ozone-2016-2025, south-london-1854 |
-| `join_table_to_area` | 2 | nigeria-immunization-2024, south-london-1854 |
 | `measure_distance` | 2 | heat, old-naledi |
 | `polygon_input` | 2 | nigeria-immunization-2024, south-london-1854 |
+| `rate` | 2 | brazil-dengue-rj-2024, south-london-1854 |
 | `regression` | 2 | nyc-asthma-ozone-2016-2025, salmonella-germany-2021 |
 | `relate_table` | 2 | nyc-asthma-ozone-2016-2025, south-london-1854 |
 | `reproject` | 2 | snow-isochrone, snow-voronoi |
@@ -119,10 +119,9 @@ rows above `case_series` are the ones that have genuinely done both.
 | old-naledi | **4** — `facilities`, `facility_audit`, `point_grid`, `travel_time` |
 | snow-isochrone | **3** — `buffer_area`, `isochrone`, `network_input` |
 | nyc-asthma-ozone-2016-2025 | **3** — `find_satellite_products`, `sample_satellite_files_at_points`, `search_satellite_catalog` |
-| south-london-1854 | **3** — `map_image_input`, `rate`, `stack_polygons` |
 | raster | **2** — `clip_raster`, `raster_input` |
 | sea-level | **2** — `find_health_facilities`, `slr_site_assignment` |
-| salmonella-germany-2021 | **1** — `append_rows` |
+| south-london-1854 | **2** — `map_image_input`, `stack_polygons` |
 | coverage | **1** — `clip_points_to_area` |
 | snow-extent | **1** — `summarize_hull` |
 | snow-voronoi | **1** — `voronoi` |
@@ -275,6 +274,7 @@ be read, selected and named inside the application, and claim B would hold for t
 - `urn:fieldwork:example:nigeria-immunization-2024` declares 7 node types. Its inputs are files in its own repository, and `geo/water-intakes.geojson` was written on 2026-10-29 because those four features existed only inside the bundle until then — the one input a reader could not download.
 - `urn:fieldwork:example:salmonella-germany-2021` declares 7 node types. Its inputs are files in its own repository, and `geo/water-intakes.geojson` was written on 2026-10-29 because those four features existed only inside the bundle until then — the one input a reader could not download.
 - `urn:fieldwork:example:nyc-asthma-ozone-2016-2025` declares 13 node types. Its inputs are files in its own repository, and `geo/water-intakes.geojson` was written on 2026-10-29 because those four features existed only inside the bundle until then — the one input a reader could not download.
+- `urn:fieldwork:example:brazil-dengue-rj-2024` declares 9 node types. Its inputs are files in its own repository, and `geo/water-intakes.geojson` was written on 2026-10-29 because those four features existed only inside the bundle until then — the one input a reader could not download.
 
 ## 3 · Recommendations
 

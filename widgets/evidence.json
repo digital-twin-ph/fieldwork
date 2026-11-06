@@ -15,6 +15,7 @@
   "snow-voronoi"
  ],
  "examplesPinned": [
+  "brazil-dengue-rj-2024",
   "nigeria-immunization-2024",
   "nyc-asthma-ozone-2016-2025",
   "oswego-1940",
@@ -57,9 +58,10 @@
   {
    "nodeType": "append_rows",
    "exampleUses": [
+    "brazil-dengue-rj-2024",
     "salmonella-germany-2021"
    ],
-   "exampleUseCount": 1,
+   "exampleUseCount": 2,
    "lab": "none",
    "labOwed": false,
    "fieldUse": [],
@@ -118,6 +120,7 @@
   {
    "nodeType": "chart_output",
    "exampleUses": [
+    "brazil-dengue-rj-2024",
     "hagelloch",
     "nyc-asthma-ozone-2016-2025",
     "old-naledi",
@@ -126,7 +129,7 @@
     "snow-voronoi",
     "south-london-1854"
    ],
-   "exampleUseCount": 7,
+   "exampleUseCount": 8,
    "lab": "none",
    "labOwed": false,
    "fieldUse": [],
@@ -276,10 +279,11 @@
   {
    "nodeType": "group_table",
    "exampleUses": [
+    "brazil-dengue-rj-2024",
     "nyc-asthma-ozone-2016-2025",
     "south-london-1854"
    ],
-   "exampleUseCount": 2,
+   "exampleUseCount": 3,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],
@@ -299,10 +303,11 @@
   {
    "nodeType": "join_table_to_area",
    "exampleUses": [
+    "brazil-dengue-rj-2024",
     "nigeria-immunization-2024",
     "south-london-1854"
    ],
-   "exampleUseCount": 2,
+   "exampleUseCount": 3,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],
@@ -322,6 +327,7 @@
   {
    "nodeType": "map_output",
    "exampleUses": [
+    "brazil-dengue-rj-2024",
     "coverage",
     "hagelloch",
     "heat",
@@ -338,7 +344,7 @@
     "snow-voronoi",
     "south-london-1854"
    ],
-   "exampleUseCount": 15,
+   "exampleUseCount": 16,
    "lab": "none",
    "labOwed": false,
    "fieldUse": [],
@@ -456,9 +462,10 @@
   {
    "nodeType": "rate",
    "exampleUses": [
+    "brazil-dengue-rj-2024",
     "south-london-1854"
    ],
-   "exampleUseCount": 1,
+   "exampleUseCount": 2,
    "lab": "awaiting",
    "labOwed": true,
    "fieldUse": [],
@@ -552,12 +559,13 @@
   {
    "nodeType": "select_rows",
    "exampleUses": [
+    "brazil-dengue-rj-2024",
     "nigeria-immunization-2024",
     "nyc-asthma-ozone-2016-2025",
     "salmonella-germany-2021",
     "south-london-1854"
    ],
-   "exampleUseCount": 4,
+   "exampleUseCount": 5,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],
@@ -606,6 +614,7 @@
   {
    "nodeType": "study_area",
    "exampleUses": [
+    "brazil-dengue-rj-2024",
     "coverage",
     "hagelloch",
     "nyc-asthma-ozone-2016-2025",
@@ -619,7 +628,7 @@
     "snow-voronoi",
     "south-london-1854"
    ],
-   "exampleUseCount": 12,
+   "exampleUseCount": 13,
    "lab": "none",
    "labOwed": false,
    "fieldUse": [],
@@ -672,6 +681,7 @@
   {
    "nodeType": "table_input",
    "exampleUses": [
+    "brazil-dengue-rj-2024",
     "nigeria-immunization-2024",
     "nyc-asthma-ozone-2016-2025",
     "oswego-1940",
@@ -683,7 +693,7 @@
     "snow-voronoi",
     "south-london-1854"
    ],
-   "exampleUseCount": 10,
+   "exampleUseCount": 11,
    "lab": "none",
    "labOwed": false,
    "fieldUse": [],

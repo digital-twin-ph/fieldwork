@@ -2,8 +2,8 @@
 
 _Created 2026-11-06 · Updated 2026-11-06_
 
-**Status:** asked. The widget inventory and the first data-readiness probes are recorded; nothing is designed or
-built yet.
+**Status:** tried. The data are checked and the outcome half is built: two workflows in the example repository, played
+back in Chromium. The satellite half is not designed yet.
 
 ## The task
 
@@ -84,6 +84,38 @@ every row read by hyparquet in Node in 4.4 s.
 
 Each is a finding about the source, to be shown, not cleaned away: the example reads the file as published, and
 Fieldwork's data-quality tab is where these belong.
+
+## The outcome half, built 2026-11-06
+
+**The practitioner, 2026-11-06:** *"Yes"*, to building the outcome workflows with existing widgets first.
+
+**The example repository** (`example-2024-brazil-dengue`) holds `data/dengue-rj-2024.csv`, the Rio de Janeiro rows
+for 2024 with 18 of 87 columns as published (4,876 rows, SHA-256 `ce3ff323…`), and `geo/rj-municipalities.geojson`.
+The boundaries come from geoBoundaries' Brazil ADM2, 41.5 MB, downloaded with the practitioner's approval. IBGE's own
+boundary API timed out from here twice. All 92 names match the dataset's exactly; seven also name municipalities in
+other states, and for each the one at Rio's border was kept. geoBoundaries' state file spells the state "Rio de
+Jeneiro". The two rows of the doubled week differ only in rainfall, one of them 0.
+
+| Workflow | Nodes | Result, checked against the CSV in Python |
+| --- | --- | --- |
+| How did the 2024 epidemic unfold across the state? | 4 | 51 weeks; peak in the week starting 2024-02-18 |
+| Where was incidence highest? | 10 | 92 of 92 rows joined to 155 parts; 54.6 (Nilópolis) to 15,081 (Resende) per 100,000; 2,550.6 for the state, 423,795 cases among 16,615,526 |
+
+Both keep to epidemiological year 2024 (2023-12-31 to 2024-12-28), which leaves out the doubled week.
+
+**Five problems met by building it,** four of them defects, one already on record:
+
+| Found | Gap in | Fix |
+| --- | --- | --- |
+| Rate with a denominator and Cases by period could not be added from the library: saving refused their empty fields. **Already known**: recorded in TODO and in `palette-add.browser.mjs` since October, which I missed until the gate failed on the shrunken list | Implementation: the save check required what only the run needs | Save refuses only a wrong value; the run refuses an empty one |
+| A study area refused Quatis (a hole meeting its outline at one point) and Rio de Janeiro city (islands meeting at points), which shapely calls valid | Design: stricter than the OGC rule | A single-point touch between rings is accepted; a shared run of edge or a crossing is not |
+| Reading the file wide was blocked by the 92 repeated municipality-weeks | Design: advice was enforced as a refusal, against *"diagnose, never refuse data"* | The advice stays; the wide read keeps every row and reports the repeats |
+| Append rows refused cases and population together | Not a defect: they measure different things, and the wide read is the right route | None; the manual takes the wide read |
+| Join a table to the study area reported each island of a municipality as a repeated name, about 30 notices | Implementation: parts counted, not units, since 0.30.0 kept every part | Distinct units counted |
+
+**The practitioner observation, written before it is made:** whether a reader takes 15,081 per 100,000 in Resende,
+about one resident in seven, as notified cases rather than infections, and whether the map's shading by rank reads as
+a statement about risk.
 
 ## What this does not establish
 

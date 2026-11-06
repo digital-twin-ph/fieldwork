@@ -988,6 +988,14 @@ Not opened yet. When Brazil's dengue work is done, the first pass is a review, n
 - Find where the data came from and under what terms, before anything is committed beside it or redistributed: the
   NYC counts could not be, the Salmonella and Brazil data could.
 - Examine the widgets against what the data asks for, before proposing any (*examine widgets before proposing*).
+- **Can the facility names be geocoded?** The practitioner, the same day: *"It has an organizational unit column which
+  are facility names and I am wondering if those could be geocoded."* Look first at matching the names against
+  published facility lists rather than a geocoding service: Find health facilities already fetches named facility
+  points (OpenStreetMap, healthsites), and Deduplicate records already matches names allowing for spelling. Questions
+  for the review: what the names look like (a type prefix such as CHC or MCHP, a chiefdom or district beside them);
+  whether an open, citable Sierra Leone facility list exists with coordinates; how many names match, how many are
+  ambiguous, how many have none, each reported rather than guessed; and whether a facility point is even needed, or
+  the analysis is by chiefdom or district.
 - Report findings to the practitioner, with what is not established, before building workflows.
 
 ## Deferred — decided to do later, which is not a decision to do it

@@ -1005,6 +1005,11 @@ Not opened yet. When Brazil's dengue work is done, the first pass is a review, n
   practitioner to choose) or not found, with the counts on the result, and no row dropped or silently guessed; and
   each point carrying its source and how it was matched, since OpenStreetMap and healthsites positions are
   volunteered.
+- **Test GeoNames as a source too.** The practitioner, the same day: *"We can also test if we can find the
+  facilities in geonames.org"*. To check, not assumed: whether the Sierra Leone country file can be fetched without
+  an account and from a browser (its search service needs a username), its terms as stated at source, and which of
+  its feature codes are health facilities. Then how many of the file's names each source finds (GeoNames,
+  OpenStreetMap, healthsites), alone and together, and where two sources place one facility far apart.
 - Report findings to the practitioner, with what is not established, before building workflows.
 
 ## Deferred — decided to do later, which is not a decision to do it

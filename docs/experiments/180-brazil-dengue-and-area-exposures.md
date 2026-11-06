@@ -314,6 +314,46 @@ another stops the run, naming it, and the result says whether every file stated 
 the 180 files of 2024 over Rio de Janeiro state all stated `K` and `0.02`; the result reads *"Every file stated its
 unit as K and its scale factor as 0.02, and was read by them."*
 
+## Design: temperature beside incidence, with lags, 2026-11-06 (proposed, not built)
+
+The research note's question needs weekly cases per municipality beside land surface temperature some weeks earlier.
+The pieces Fieldwork has: weekly cases (the first two workflows), temperature per municipality per 8-day period per
+satellite (the third), and Poisson regression with absorbed strata, a spline option and overdispersion-scaled
+intervals (experiment 167). Two pieces are missing.
+
+**The practitioner's choices, 2026-11-06,** each the recommended one among the options offered:
+
+| Choice | Settled |
+| --- | --- |
+| Which 8-day value a week takes | *"The period containing the week's middle"*: the period holding the week's Wednesday. Nothing averaged; the period's dates stay on the row |
+| Satellite | *"Terra daytime"* |
+| Lags | *"0, 2, 4, 6 and 8 weeks"*: five models, one per lag |
+| Model | *"Poisson, municipality and month strata"*: weekly cases; temperature the exposure; fixed effects for municipality, which absorbs population since it is constant within 2024, and calendar month for seasonality; intervals scaled for overdispersion |
+
+**The widgets, examined first.** Relate a column from another table brings one table's column onto another's rows on
+equal keys, and since 0.31.0 on several keys and with the right table's value column. A week and an 8-day period are
+not equal keys: one is a date, the other a span. Nothing shifts a date. So the proposal is **two options on Relate,
+not a new widget**:
+
+1. **Match a date to the period that contains it.** On the left a date column (the week's middle); on the right a
+   start and an end column; a row relates where start ≤ date ≤ end, alongside any equal keys (`municipio`). A date
+   inside two periods is ambiguous and is refused by name, as an equal-key duplicate is.
+2. **Shift the date before matching, by a stated number of days**, so a lag of k weeks is a shift of −7k days. The
+   shift is stated on the result and in the receipt, and the shifted date kept on the row.
+
+A lagged workflow is then: weekly cases → Relate (municipio, and the week's middle shifted by −7k days within
+`period_start`–`period_end`, Terra rows only) → Regression (Poisson; cases; temperature; strata municipio and
+month; scaled intervals). Five such chains, or one with five Relate nodes.
+
+**Also needed, smaller:** the week's middle (its Wednesday) and its calendar month as columns. The dataset publishes
+`mes`; the extract does not carry it yet, and adding it from the source is the as-published route. The Wednesday is
+`data_iniSE` plus three days, which the date shift of option 2 can give with a shift of +3 days (so a lag of k weeks
+is +3 − 7k).
+
+**Not established, and to say on the result:** that land surface temperature stands for the temperature mosquitoes
+live in; that a week's clear days are representative of the week (often one or two in summer, M2); and any causal
+reading. One state, one year, 92 municipalities.
+
 ## What this does not establish
 
 Any design. Whether InfoDengue's data may be redistributed; how the Zenodo file's exposures were computed, or

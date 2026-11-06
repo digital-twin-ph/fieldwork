@@ -712,12 +712,12 @@
    "migrationFrom": []
   },
   "relate_table": {
-   "version": "0.4.1",
+   "version": "0.5.0",
    "released": "2026-11-06",
    "changes": [
     {
-     "kind": "patch",
-     "description": "The join dialog's preview marks the key columns Matched on and the column added Brought across, as View this table does; and the preview is no longer squeezed to one line when the dialog is short."
+     "kind": "minor",
+     "description": "Matches a date to the period that contains it, alongside equal keys, and can shift the date first by a stated number of days: a week to a satellite's 8-day period, and a lag of k weeks as a shift of 7k days fewer. The shifted date and the matched period's start stay on every row; a date inside two periods is refused by name; the receipt states the match and the shift (fw:matchedWithinPeriod, fw:dateShiftDays). Experiment 180."
     }
    ],
    "breaking": false,

@@ -159,6 +159,10 @@ fw:layerFileDigest a owl:DatatypeProperty; rdfs:range xsd:string;
 # they did not expect against the join that produced it, from the receipt alone.
 fw:TableRelate a owl:Class;
   rdfs:comment "One relate step: a key column brought from a second table onto the rows of a first, matched on a shared key. Epi Info's RELATE and deliberately not its MERGE -- the row count does not change, because a category brought across can only be a key column.".
+fw:matchedWithinPeriod a owl:DatatypeProperty; rdfs:domain fw:TableRelate; rdfs:range xsd:string; rdfs:label "matched within period";
+  rdfs:comment "A date of the first table matched to the row of the second whose start-end span contains it, among rows agreeing on the equal keys: a week to an 8-day satellite period. Experiment 180.".
+fw:dateShiftDays a owl:DatatypeProperty; rdfs:domain fw:TableRelate; rdfs:range xsd:integer; rdfs:label "date shift (days)";
+  rdfs:comment "Days added to the date before it was matched: a lag of k weeks is -7k.".
 fw:matchedOn a owl:DatatypeProperty; rdfs:range xsd:string;
   rdfs:comment "A key column both tables carry, as the tables spell it. Stated once per key column: since 2026-11-05 a relate may match on several together, a row relating only where all of them agree.".
 fw:broughtColumn a owl:DatatypeProperty; rdfs:range xsd:string;

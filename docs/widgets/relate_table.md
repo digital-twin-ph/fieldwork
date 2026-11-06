@@ -106,6 +106,22 @@ column — and a key column lands on every row, which is why **the row count doe
 Bringing *numbers* across would mean adding rows instead, and that is a different operation with a
 different way of going wrong: two tables can disagree about the same measure. It is not built.
 
+## A date within a period, and a lag
+
+Some tables do not share a date. Weekly cases have a week; a satellite product has an 8-day period with a start and
+an end. **Match a date within a period** relates each row to the row of the second table whose start and end hold
+its date, alongside the columns matched on as usual (the municipality, say).
+
+| Setting | What it decides |
+| --- | --- |
+| **Date, in the first table** | the date to place, such as `data_iniSE`, the Sunday a week starts |
+| **Period start** and **Period end**, in the second | the span each row of the second table covers |
+| **Shift the date first, in days** | added to the date before it is placed: **+3** takes a week's Sunday to its Wednesday, and a lag of *k* weeks is 7*k* days fewer, so a 2-week lag from the Wednesday is **−11** |
+
+The result keeps the shifted date and the matched period's start on every row, so each match can be checked. A
+date that falls inside two periods of the second table, such as two satellites' rows for one period, is refused
+by name: keep one row per period first. A date in no period is a row with no match, decided as any other.
+
 ## Reading what you get
 
 The same table with one more column — and, on the step itself after a run, **what the join did**:

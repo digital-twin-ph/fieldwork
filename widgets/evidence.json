@@ -482,10 +482,11 @@
   {
    "nodeType": "regression",
    "exampleUses": [
+    "brazil-dengue-rj-2024",
     "nyc-asthma-ozone-2016-2025",
     "salmonella-germany-2021"
    ],
-   "exampleUseCount": 2,
+   "exampleUseCount": 3,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],
@@ -494,10 +495,11 @@
   {
    "nodeType": "relate_table",
    "exampleUses": [
+    "brazil-dengue-rj-2024",
     "nyc-asthma-ozone-2016-2025",
     "south-london-1854"
    ],
-   "exampleUseCount": 2,
+   "exampleUseCount": 3,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],

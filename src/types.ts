@@ -318,6 +318,8 @@ export interface ParamsByType {
     /** What was read and on what terms, kept beside the features it produced. */
     retrieval?:import('./osm-areas.js').AreaRetrieval};
   relate_table:{label:string;on:string;bring:string;
+    /** A date matched to the period containing it, and the days it is shifted first (2026-11-06, experiment 180). */
+    within?:{date:string;start:string;end:string}; shiftDays?:number;
     /** More key columns, matched together with `on` (2026-11-05, experiment 179). */
     alsoOn?:string[];
     /** How key cells are compared, in `join_table_to_area`'s vocabulary and through the same

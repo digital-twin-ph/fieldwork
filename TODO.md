@@ -976,6 +976,19 @@ notes code is not read yet. Possibly an evidence kernel matter. Let Oswego and N
 - **A line list must name a numeric value column it does not use.** Oswego uses `Age`.
 - **`group_table`'s palette line and title still say it adds up**, now that it can count.
 
+### Brazil: temperature and vegetation on a map (asked 2026-11-06)
+
+The practitioner, 2026-11-06: *"And can we view the temperature and vegetation profiles on a map?"* After the lag
+workflow (experiment 180):
+
+- **Temperature, with what exists:** the sampler's table, Terra daytime, into Join a table to the study area on
+  `municipio`, with `period_start` as the frames, and a map that steps through the 8-day periods. A workflow in the
+  example, played back live.
+- **Vegetation needs a reader:** MODIS NDVI and EVI (`modis-13A1-061` 500 m or `modis-13Q1-061` 250 m, 16-day) on
+  Planetary Computer. Read one file's tags first, as M1 did for temperature: scale, fill, and its quality layer,
+  which is not the temperature product's. Then a route, a reader entry and a rule, with the rule the practitioner's
+  choice where the product recommends none.
+
 ### Next after Brazil: `example-2019-sierra-leone-measles` (asked 2026-11-06)
 
 The practitioner, 2026-11-06: *"After Brazil I'd like you to take a look at a new example repo

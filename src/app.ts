@@ -908,6 +908,8 @@ function upstreamRows(node:WorkflowNode):number|undefined{
   return up?.type==='table_input'?up.params.data.rows.length:undefined;
 }
 /** The product a sampler's files are of: its search's, which is its Find satellite products' choice. */
+/** Relate's period choices while they are being made, and whether its section is open, per node: UI state only. */
+const relateWithinDraft=new Map<string,{date:string;start:string;end:string}>(),relateWithinOpen=new Set<string>();
 function samplerProduct(node:WorkflowNode){
   const up=(id:string,port:string)=>{const e=workflow.edges.find(x=>x.to===id&&x.port===port);return e?workflow.nodes.find(m=>m.id===e.from):undefined;};
   const search=up(node.id,'files'),find=search?up(search.id,'product'):undefined;
@@ -957,9 +959,11 @@ function upstreamKeyValues(node:WorkflowNode,seen=new Set<string>(),
     const below=upstreamKeyValues(up,seen);
     if(!below)return undefined;
     const brought=up.params.bring.trim();
-    if(!brought)return below;
     const other=upstreamKeyValues(up,new Set(seen),'related');
-    return {...below,[brought]:other?.[brought]??[]};
+    // A DATE MATCHED WITHIN A PERIOD adds the shifted date and the period's start to every row (experiment 180).
+    const w=up.params.within,period=w?{...(up.params.shiftDays?{[`${w.date}_shifted`]:[]}:{}),[w.start]:other?.[w.start]??[]}:{};
+    if(!brought)return {...below,...period};
+    return {...below,...period,[brought]:other?.[brought]??[]};
   }
   // A SATELLITE SAMPLE'S COLUMNS ARE KNOWN BEFORE IT RUNS: its fixed ones, with the id column named as the points'
   // source table names it, the ids read from that table and the days from the search. So a join downstream can be set
@@ -2401,6 +2405,19 @@ function renderInspector(){
         +shared.filter(column=>column!==p.on).map(column=>`<option value="${esc(column)}" ${(p.alsoOn??[]).includes(column)?'selected':''}>${esc(column)}</option>`).join('')
         +`</select><small>Rows relate only where every chosen column agrees. Hold Ctrl or ⌘ to choose more than one.</small></div>`:'')
       +picker('relate-bring','bring','Bring across',bringable,'Connect both tables first')
+      // A DATE WITHIN A PERIOD, and a shift for a lag (experiment 180): a week against a satellite's 8-day period.
+      +(Object.keys(here).length&&Object.keys(there).length?(()=>{
+        // A PARTIAL CHOICE IS KEPT while the three are being chosen: each choice redraws the Inspector, and only a complete
+        // set is saved on the node, so the first choice used to vanish and the section close under the next.
+        const draft=relateWithinDraft.get(n.id),w=p.within??draft,opt=(cols:string[],current:string|undefined)=>`<option value="">Not used</option>`
+          +cols.map(c=>`<option value="${esc(c)}" ${current===c?'selected':''}>${esc(c)}</option>`).join('');
+        return `<details class="field" id="relate-within-box"${w||relateWithinOpen.has(n.id)?' open':''}><summary>Match a date within a period</summary>`
+          +`<label class="field-label" for="relate-within-date">Date, in the first table</label><select id="relate-within-date">${opt(Object.keys(here),w?.date)}</select>`
+          +`<label class="field-label" for="relate-within-start">Period start, in the second</label><select id="relate-within-start">${opt(Object.keys(there),w?.start)}</select>`
+          +`<label class="field-label" for="relate-within-end">Period end, in the second</label><select id="relate-within-end">${opt(Object.keys(there),w?.end)}</select>`
+          +`<label class="field-label" for="relate-shift">Shift the date first, in days</label>`
+          +`<input id="relate-shift" type="number" step="1" value="${p.shiftDays??0}">`
+          +`<small>A row relates to the period whose start and end hold its date. +3 takes a week's Sunday to its Wednesday; a lag of k weeks is 7k fewer.</small></details>`;})():'')
       +(Object.keys(there).length&&!shared.length
         ?'<div class="notice notice-warning">These two tables share no key column, so there is nothing to match on. Check that both carry the same kind of key.</div>':'')
       +'<div class="notice">A second table giving one key two different values is refused rather than resolved, because choosing between them would produce a grouping that is wrong in a way no total reveals. A key the second table does not carry is named in the evidence and those rows are dropped, since an invented “unknown” would put a stratum in your table that nobody measured. The match is on the exact text: this is Epi Info’s RELATE and not its MATCH.</div>';
@@ -2414,7 +2431,7 @@ function renderInspector(){
     const joinLeft=tableOnPort(workflow,n.id,'records');
     const joinRight=tableOnPort(workflow,n.id,'related');
     if(joinLeft&&joinRight&&p.on&&p.bring){
-      const request={on:p.on,...(p.alsoOn?.length?{alsoOn:p.alsoOn}:{}),bring:p.bring,
+      const request={on:p.on,...(p.alsoOn?.length?{alsoOn:p.alsoOn}:{}),...(p.within?{within:p.within}:{}),...(p.shiftDays?{shiftDays:p.shiftDays}:{}),bring:p.bring,
         ...(p.normalisation?{normalisation:p.normalisation}:{}),
         ...(p.measureKey?{measureKey:p.measureKey}:{})};
       let planned:ReturnType<typeof relateShape>|{refusal:string};
@@ -3592,6 +3609,20 @@ function renderInspector(){
     const key=required(el.dataset.fromTable) as keyof import('./table-points.js').TableMapping;
     if(el.value)next[key]=el.value;else if(key==='id'||key==='name')delete next[key];else next[key]='';
     node.params.fromTable=next;})));
+  const withinChange=()=>{
+    const read=(id:string)=>(document.querySelector<HTMLSelectElement>(id)?.value??'');
+    const date=read('#relate-within-date'),start=read('#relate-within-start'),end=read('#relate-within-end');
+    relateWithinDraft.set(n.id,{date,start,end});relateWithinOpen.add(n.id);
+    change(w=>{const node=getNode(w,n.id,'relate_table');
+      if(date&&start&&end)node.params.within={date,start,end};else delete node.params.within;});
+  };
+  for(const id of ['#relate-within-date','#relate-within-start','#relate-within-end'])optionalElement(id)?.addEventListener('change',withinChange);
+  optionalElement('#relate-within-box')?.addEventListener('toggle',event=>{
+    if((event.currentTarget as HTMLDetailsElement).open)relateWithinOpen.add(n.id);else relateWithinOpen.delete(n.id);});
+  optionalElement('#relate-shift')?.addEventListener('change',event=>{
+    const v=Number((event.currentTarget as HTMLInputElement).value);
+    change(w=>{const node=getNode(w,n.id,'relate_table');if(Number.isInteger(v)&&v!==0)node.params.shiftDays=v;else delete node.params.shiftDays;});
+  });
   optionalElement('#relate-also')?.addEventListener('change',event=>{
     const chosen=[...(event.currentTarget as HTMLSelectElement).selectedOptions].map(o=>o.value);
     change(w=>{const node=getNode(w,n.id,'relate_table');if(chosen.length)node.params.alsoOn=chosen;else delete node.params.alsoOn;});
@@ -3774,7 +3805,7 @@ function renderInspector(){
       ...(p.unmatched?{settled:p.unmatched}:{}),
       shapeFor:(normalisation,label)=>{
         try{
-          return relateShape(left,right,{on:p.on,...(p.alsoOn?.length?{alsoOn:p.alsoOn}:{}),bring:p.bring,normalisation,
+          return relateShape(left,right,{on:p.on,...(p.alsoOn?.length?{alsoOn:p.alsoOn}:{}),...(p.within?{within:p.within}:{}),...(p.shiftDays?{shiftDays:p.shiftDays}:{}),bring:p.bring,normalisation,
             ...(p.measureKey?{measureKey:p.measureKey}:{}),
             ...(label!==undefined?{unmatched:{decision:'keep' as const,label,signature:''}}:{})});
         }catch(error){return {refusal:errorMessage(error)};}

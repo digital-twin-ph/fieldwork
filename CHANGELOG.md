@@ -3,6 +3,18 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.38.0 — 2026-11-06
+
+- **Relate a column matches a date to the period that contains it, and can shift it first.** Weekly cases against a
+  satellite's 8-day periods, and a lag of *k* weeks as a shift of 7*k* days fewer. The shifted date and the matched
+  period stay on every row, and a date inside two periods is refused by name.
+- **The Brazil dengue example has a fourth workflow**, *Did warmer ground weeks earlier go with more cases?*: Terra's
+  land surface temperature 0, 2, 4, 6 and 8 weeks before each week, beside the week's cases, in five Poisson models
+  with municipality and month. Played back live. The rate ratios run from 0.963 per °C at 4 weeks to 1.063 at 8; the
+  example says plainly why they are a demonstration, not an effect.
+- Fixed in Relate's Inspector: choosing the first of the period columns lost the choice and closed the section.
+- Validation: Chromium locally; WebKit in CI.
+
 ## 0.37.0 — 2026-11-06
 
 - **Buffer study area is retired.** Its two uses are met elsewhere. To fetch data beyond an area, Street network and

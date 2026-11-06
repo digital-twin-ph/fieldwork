@@ -1067,3 +1067,13 @@ i.bar-zero{position:absolute;top:0;bottom:0;width:1px;background:var(--ink,#2b2b
 .relate-preview th.column-role-brought,.relate-preview td.column-role-brought{background:var(--semantic-wash);box-shadow:inset 2px 0 0 var(--semantic)}
 .relate-preview .column-role{display:block;font-size:9px;font-weight:650;letter-spacing:.6px;text-transform:uppercase;color:var(--info)}
 .relate-preview th.column-role-brought .column-role{color:var(--semantic)}
+
+/* Rows a step did not keep, in its Before (2026-11-06). Greyed, not hidden: the reader sees what was removed. */
+#table-viewer tr.row-excluded td{color:var(--muted);background:var(--surface-2,rgba(0,0,0,.03));text-decoration:line-through;text-decoration-color:rgba(0,0,0,.18)}
+#table-viewer .table-excluded-swatch{display:inline-block;width:12px;height:10px;margin-right:6px;vertical-align:-1px;background:var(--surface-2,rgba(0,0,0,.08));border:1px solid var(--line)}
+/* A CHECKBOX BESIDE ITS LABEL, everywhere in the Inspector. Inspector inputs are full width, so a checkbox took a line
+   of its own and its column name fell below it: reported on Total within groups, 2026-11-06. Select rows and the
+   two-by-two had fixed this one list at a time. */
+#inspector-content label.check{display:flex;align-items:flex-start;justify-content:flex-start;gap:6px;margin:2px 0;text-align:left}
+#inspector-content label.check input[type=checkbox]{flex:none;width:auto;margin:2px 0 0}
+#inspector-content fieldset#group-keep{border:0;padding:0;margin:14px 0 0}

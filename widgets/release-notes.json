@@ -765,16 +765,12 @@
    "migrationFrom": []
   },
   "select_rows": {
-   "version": "0.2.0",
-   "released": "2026-11-03",
+   "version": "0.2.1",
+   "released": "2026-11-06",
    "changes": [
     {
-     "kind": "initial",
-     "description": "Keeps only the rows whose chosen key column holds one of the values named, in the order named. Nothing in the application selected rows of a table before: `clip_points_to_area` filters points by geometry and has no equivalent for a table. A value the table does not hold is reported rather than ignored, because asking for a row that is not there is usually a typo or a changed table upstream, and quietly returning fewer rows is how a figure loses a category nobody noticed. Keeping nothing the table holds is refused rather than returning an empty table."
-    },
-    {
-     "kind": "minor",
-     "description": "Keeps a range as well as listed values: From and To, both kept, an empty end open, offered only for a column that is all dates or all numbers. A list of more than 12 values can be searched, with Ticked only. The receipt states the range. Experiment 171."
+     "kind": "patch",
+     "description": "Its Before view greys the rows it did not keep, with a line saying how many and by what rule, so what a selection removed is read beside what it kept."
     }
    ],
    "breaking": false,

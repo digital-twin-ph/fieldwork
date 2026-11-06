@@ -3543,8 +3543,12 @@ function renderInspector(){
         // Said rather than hidden. A missing button reads as "this widget cannot do that"; the
         // truth is that there is nothing to look at yet, which is a different thing and is
         // fixed by pressing Run.
-        block.innerHTML=`<p class="description">This step emits a table. Run the workflow to `
-          +'look at what it produces.</p>';
+        // A BUTTON, NOT A SENTENCE: after a reload the earlier run's tables are gone, and the grey line that stood here
+        // read as "this widget has no table view". The practitioner, 2026-11-06, of Select rows by value and Total
+        // within groups: *"does not have a before and after table view in the inspector"*. It runs, then opens it.
+        block.innerHTML='<div class="inspector-actions">'
+          +'<button id="output-run-look" class="button">\u2922 Run and view this table</button></div>'
+          +'<p class="description">This step emits a table, made when the workflow runs.</p>';
       }
       // AT THE TOP, under what the widget does. Appended, it sat below "Remove node", 1,500 pixels
       // down a long panel, and a practitioner reported on 2026-11-01 that these widgets had no way
@@ -3662,6 +3666,11 @@ function renderInspector(){
       change(w=>{Object.assign(getNode(w,node.id,'two_by_two').params,next);});
     });
   });
+  optionalElement('#output-run-look')?.addEventListener('click',async()=>{
+    await run();
+    // The Inspector is redrawn by the run; its button is the one to press now, if the step produced a table.
+    optionalElement('#output-quick-look')?.click();
+  });
   optionalElement('#output-quick-look')?.addEventListener('click',()=>{
     const produced=result?.tables?.[n.id];
     if(!produced)return;
@@ -3707,6 +3716,26 @@ function renderInspector(){
     if(befores.length===1)view.note=`${view.note??''} ${shapeChange(befores[0]!)}`;
     view.note=`${stale}${view.note??''}`;
     // THE JOIN'S COLUMNS, MARKED: the key columns in every Before and in After, and the column brought across in After.
+    // THE ROWS A SELECTION DROPPED, greyed in its Before by the step's own rule on each row's key value: in the list, or
+    // between the two ends, both ends kept. Where the key column is not a column of the view (a wide frame that spread
+    // it into columns), nothing is marked rather than guessed (2026-11-06).
+    if(n.type==='select_rows'&&befores.length===1){
+      const p=n.params,before=befores[0]!,column=p.keyColumn;
+      if(before.columns.includes(column)){
+        const text=(v:unknown)=>v==null?'':String(v);
+        const numeric=p.range&&[p.range.from,p.range.to].every(x=>x===''||Number.isFinite(Number(x)));
+        const kept=(v:unknown)=>{
+          if(!p.range)return p.values.includes(text(v));
+          const x=text(v),{from,to}=p.range;
+          if(numeric){const n=Number(x);return Number.isFinite(n)&&(from===''||n>=Number(from))&&(to===''||n<=Number(to));}
+          return (from===''||x>=from)&&(to===''||x<=to);
+        };
+        const dropped=new Set(before.rows.filter(row=>!kept(row[column])));
+        before.excluded={rows:dropped,why:p.range
+          ?`${column} outside ${p.range.from||'the start'} to ${p.range.to||'the end'}`
+          :`${column} not one of the values ticked`};
+      }
+    }
     if(n.type==='relate_table'){
       const p=n.params,keys=[p.on,...(p.alsoOn??[])].filter(Boolean);
       const mark=(v:TableView,extra?:string)=>{v.roles=Object.fromEntries([...keys.map(k=>[k,'key'] as const),

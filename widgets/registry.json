@@ -1163,7 +1163,7 @@
     {
       "id": "urn:fieldwork:widget:select_rows",
       "nodeType": "select_rows",
-      "currentVersion": "0.2.0",
+      "currentVersion": "0.2.1",
       "releases": [
         {
           "version": "0.1.0",
@@ -1174,6 +1174,11 @@
           "version": "0.2.0",
           "path": "widgets/releases/select_rows/0.2.0.json",
           "sha256": "3484aace3ae126689a552bf53ca640a37eab86db117bd90419db1c225d4c224c"
+        },
+        {
+          "version": "0.2.1",
+          "path": "widgets/releases/select_rows/0.2.1.json",
+          "sha256": "55e39d077377ebd10cbe11d340b5d141e5d1c761bafdbee6a525c5ceff0e0934"
         }
       ]
     },

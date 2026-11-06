@@ -976,6 +976,20 @@ notes code is not read yet. Possibly an evidence kernel matter. Let Oswego and N
 - **A line list must name a numeric value column it does not use.** Oswego uses `Age`.
 - **`group_table`'s palette line and title still say it adds up**, now that it can count.
 
+### Next after Brazil: `example-2019-sierra-leone-measles` (asked 2026-11-06)
+
+The practitioner, 2026-11-06: *"After Brazil I'd like you to take a look at a new example repo
+example-2019-sierra-leone-measles. It has a barebones README and a CSV data file that I have not reviewed yet."*
+
+Not opened yet. When Brazil's dengue work is done, the first pass is a review, not a build:
+
+- Read the README and the CSV as data: columns as the file spells them, row count, keys, time and place coverage,
+  missing values, anything the file says about itself.
+- Find where the data came from and under what terms, before anything is committed beside it or redistributed: the
+  NYC counts could not be, the Salmonella and Brazil data could.
+- Examine the widgets against what the data asks for, before proposing any (*examine widgets before proposing*).
+- Report findings to the practitioner, with what is not established, before building workflows.
+
 ## Deferred — decided to do later, which is not a decision to do it
 
 _Carried over whole from the root `TODO.md` of 2026-10-10 in the merge above, headings

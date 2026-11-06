@@ -1543,13 +1543,15 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           const kind=polygons?'area' as const:'point' as const;
           const layer=node.params.layer??'day',rule=node.params.qualityRule??gridReader.quality.default;
           const {fromUrl}=await import('geotiff');
-          const readings=await grids.readGridFiles(files.search.items,gridReader,layer,rule,places,async url=>(await fromUrl(url)).getImage() as never);
+          const tags={files:0,stated:0};
+          const readings=await grids.readGridFiles(files.search.items,gridReader,layer,rule,places,async url=>(await fromUrl(url)).getImage() as never,fetch,()=>{},tags);
           const column=node.params.placeColumn?.trim()||(kind==='area'?'area':'point_id');
-          const {table,counts}=grids.gridTable(places,readings,gridReader,layer,rule,column);
+          const unit=node.params.unit;
+          const {table,counts}=grids.gridTable(places,readings,gridReader,layer,rule,column,unit);
           counts.files=files.search.items.length;
-          const sentence=grids.gridSentence(counts,gridReader,layer,rule,files.product,kind);
+          const sentence=grids.gridSentence(counts,gridReader,layer,rule,files.product,kind,unit,tags);
           value={...table,sentence} as unknown as DisplayValue;
-          const facts=grids.gridFacts(`<urn:fieldwork:run:${runId}:output:${node.id}>`,counts,gridReader,layer,rule,files.product,kind);
+          const facts=grids.gridFacts(`<urn:fieldwork:run:${runId}:output:${node.id}>`,counts,gridReader,layer,rule,files.product,kind,unit);
           receipts.push({nodeId:node.id,kind:'computation',facts,rules:'',input:facts,conclusions:[],method:sentence} as unknown as Receipt);
           break;
         }

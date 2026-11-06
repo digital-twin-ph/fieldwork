@@ -386,6 +386,10 @@ fw:cellConvention a owl:DatatypeProperty; rdfs:domain fw:SatelliteAreaSample; rd
   rdfs:comment "Which cells of a grid a place is read from: those whose centre is inside or on an area, or the one containing a point.".
 fw:qualityRule a owl:DatatypeProperty; rdfs:domain fw:SatelliteAreaSample; rdfs:range xsd:string; rdfs:label "quality rule";
   rdfs:comment "The rule a cell's quality bits passed, in words naming the bits read; a product that documents bits and no rule gets a rule the practitioner chose.".
+fw:unitAsStated a owl:DatatypeProperty; rdfs:domain fw:SatelliteAreaSample; rdfs:range xsd:string; rdfs:label "unit as stated";
+  rdfs:comment "The unit the file states, where the result is reported in another: MODIS states kelvin.".
+fw:unitConversion a owl:DatatypeProperty; rdfs:domain fw:SatelliteAreaSample; rdfs:range xsd:string; rdfs:label "unit conversion";
+  rdfs:comment "The conversion applied, in words: degrees Celsius = kelvin - 273.15. Exact; nothing else changed.".
 fw:placesSampled a owl:DatatypeProperty; rdfs:domain fw:SatelliteAreaSample; rdfs:range xsd:integer; rdfs:label "places sampled".
 fw:rowsNoCell a owl:DatatypeProperty; rdfs:domain fw:SatelliteAreaSample; rdfs:range xsd:integer; rdfs:label "rows with no cell";
   rdfs:comment "Rows for a place no cell centre of the file falls in: a gap of its own, not a missing reading.".

@@ -67,3 +67,56 @@ test('the satellite comes from the item, or from the product name where the item
   assert.equal(platformOf({id:'MYD11A2.x',platform:'aqua'}),'aqua');
   assert.equal(platformOf({id:'other',platform:null}),'');
 });
+
+test("a temperature is reported in °C by default, or °F or K; the file's kelvin and the conversion stated; the receipt conforms",async()=>{
+  const {gridFacts,reportUnit}=await import('../build/satellite-grid-sample.js');
+  const {gridReaderFor}=await import('../build/satellite-grid-sample.js');
+  const {productFor}=await import('../build/satellite-products.js');
+  const {validateGraph}=await import('../scripts/validate-ontology.mjs');
+  const {Parser,Store}=await import('n3');
+  const product=productFor('heat','pc-modis-lst-8day'),reader=gridReaderFor(product);
+  assert.equal(reportUnit(reader,undefined),'°C');assert.equal(reportUnit(reader,'K'),'K');
+  const counts={files:1,places:2,periods:1,rows:2,passing:1,belowQuality:0,noRetrieval:1,noCell:0};
+  const celsius=gridFacts('<urn:fieldwork:run:r:output:n>',counts,reader,'day','produced-2k',product,'area');
+  assert.match(celsius,/fw:satelliteValueUnit "°C";\n  fw:unitAsStated "K";\n  fw:unitConversion "°C = K − 273.15";/);
+  assert.equal((await validateGraph(new Store(new Parser().parse(celsius)))).conforms,true);
+  const kelvin=gridFacts('<urn:fieldwork:run:r:output:n>',counts,reader,'day','produced-2k',product,'area','K');
+  assert.doesNotMatch(kelvin,/unitConversion/);
+  const fahrenheit=gridFacts('<urn:fieldwork:run:r:output:n>',counts,reader,'day','produced-2k',product,'area','°F');
+  assert.match(fahrenheit,/fw:unitConversion "°F = K × 9\/5 − 459.67";/);
+  assert.equal((await validateGraph(new Store(new Parser().parse(fahrenheit)))).conforms,true);
+  assert.equal((await validateGraph(new Store(new Parser().parse(kelvin)))).conforms,true);
+});
+
+test('the table converts every temperature it shows: 301 K is 27.85 °C and 82.13 °F',async()=>{
+  const {gridTable,gridReaderFor}=await import('../build/satellite-grid-sample.js');
+  const {productFor}=await import('../build/satellite-products.js');
+  const reader=gridReaderFor(productFor('heat','pc-modis-lst-8day'));
+  const places=[{id:'a',name:'A',kind:'area',boundary:{type:'Polygon',coordinates:[[[0,0],[1,0],[1,1],[0,0]]]}}];
+  // Two passing cells of 15000 and 15100, as stored: a mean of 15050 x 0.02 = 301 K.
+  const readings=[{placeId:'a',period:'2024-02-18',end:'2024-02-25',platform:'terra',
+    sums:{cells:2,withValue:2,passing:2,sum:30100,min:15000,max:15100,clearSum:4,clearCells:2}}];
+  const row=unit=>gridTable(places,readings,reader,'day','produced-2k','municipio',unit).table.rows[0];
+  assert.equal(row('K').value,301);assert.equal(row('°C').value,27.85);assert.equal(row('°F').value,82.13);
+  assert.equal(row(undefined).value,27.85);
+  assert.deepEqual([row('°F').key.value_min,row('°F').key.value_max],['80.33','83.93']);
+  assert.equal(gridTable(places,readings,reader,'day','produced-2k','municipio','°F').table.unit,'°F');
+});
+
+test('every file is read for its own unit and scale: one stating another unit stops the run, naming it',async()=>{
+  const {readGridFiles,gridReaderFor}=await import('../build/satellite-grid-sample.js');
+  const {productFor}=await import('../build/satellite-products.js');
+  const reader=gridReaderFor(productFor('heat','pc-modis-lst-8day'));
+  const fetcher=async()=>({ok:true,json:async()=>({token:'t','msft:expiry':'2099-01-01T00:00:00Z'})});
+  const image=tags=>({getOrigin:()=>[0,0],getResolution:()=>[1,-1],getWidth:()=>2,getHeight:()=>2,
+    readRasters:async()=>[[15000,15000,15000,15000]],getGDALMetadata:async()=>tags});
+  const item=(id)=>({id,datetime:'2024-02-18T00:00:00Z',platform:'terra',files:['LST_Day_1km','QC_Day','Clear_sky_days'].map(key=>({key,href:`https://x/${id}_${key}.tif`}))});
+  const places=[{id:'p',name:'P',kind:'point',lon:0,lat:0}];
+  const tags={files:0,stated:0};
+  await readGridFiles([item('MOD.ok')],reader,'day','produced-2k',places,async()=>image({units:'K',scale_factor:'0.02'}),fetcher,()=>{},tags);
+  assert.deepEqual(tags,{files:1,stated:1});
+  await assert.rejects(readGridFiles([item('MOD.celsius')],reader,'day','produced-2k',places,async()=>image({units:'C',scale_factor:'0.02'}),fetcher),
+    /MOD\.celsius states its unit as "C", not K\. Nothing was converted/);
+  await assert.rejects(readGridFiles([item('MOD.scale')],reader,'day','produced-2k',places,async()=>image({units:'K',scale_factor:'0.1'}),fetcher),
+    /MOD\.scale states a scale factor of 0\.1, not 0\.02/);
+});

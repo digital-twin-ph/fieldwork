@@ -60,20 +60,33 @@ test('three areas, one per outcome, read by range: the mean rests on the cells t
   await expect(page.locator('#satellite-quality-rule')).toHaveValue('produced-2k');
   await expect(page.locator('#satellite-layer')).toHaveValue('day');
   await expect(page.locator('#satellite-qa-operator')).toHaveCount(0);
+  // Celsius by default, the file's kelvin offered (the practitioner, 2026-11-06).
+  await expect(page.locator('#satellite-unit')).toHaveValue('°C');
+  await expect(page.locator('#satellite-unit option')).toHaveText(['degrees Celsius (K − 273.15)','degrees Fahrenheit (K × 9/5 − 459.67)','kelvin, as the file states it']);
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:90000});
   await page.locator('[data-view="results"]').click();
   const main=page.locator('main').first();
   await expect(main).toContainText('at 3 areas over 1 8-day period: 3 rows, one per area per period per satellite, Terra and Aqua kept apart.');
   await expect(main).toContainText('1 hold a mean of passing cells; 1 have values none of which passed, 0 no retrieval, 1 no cell in the area.');
-  // The table, read back from what was saved: A's mean is (15000+15100)/2 x 0.02 = 301.0 K on 2 of 4 cells, 2 clear days.
+  await expect(main).toContainText('land surface temperature in °C (the file states K; °C = K − 273.15)');
+  // The test's files carry no unit tags, and the result says the product's were used for them.
+  await expect(main).toContainText('1 of 1 files stated no unit or scale factor; the product\'s, K and 0.02, were used for them.');
+  // The table, read back from what was saved: A's mean is (15000+15100)/2 x 0.02 = 301.0 K, 27.85 °C, on 2 of 4 cells,
+  // 2 clear days.
   const result=await page.evaluate(()=>{
     const store=JSON.parse(localStorage.getItem('fieldwork-workflow-v1'));return store.nodes.find(n=>n.id==='sample').params;});
   expect(result.placeColumn).toBe('municipio');
   const rows=await page.locator('#results table tbody tr, main table tbody tr').allTextContents();
   const text=rows.join('\n');
-  expect(text).toContain('301');
+  expect(text).toContain('27.85');
   expect(text).toContain('below quality threshold');
   expect(text).toContain('no cell in the area');
+  // Kelvin, chosen, is saved on the node.
+  await page.locator('[data-view="workflow"]').click();
+  await page.locator('.react-flow__node[data-id="sample"]').click();
+  await page.locator('#satellite-unit').selectOption('K');
+  const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')).nodes.find(n=>n.id==='sample').params);
+  expect(saved.unit).toBe('K');
   expect(errors).toEqual([]);
 });

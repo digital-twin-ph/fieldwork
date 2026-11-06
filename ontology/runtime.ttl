@@ -424,6 +424,16 @@ fw:licenceReadOn a owl:DatatypeProperty; rdfs:range xsd:date; rdfs:label "licenc
 fw:licenceOpen a owl:DatatypeProperty; rdfs:range xsd:boolean; rdfs:label "licence open".
 fw:licenceUnread a owl:DatatypeProperty; rdfs:domain fw:SatelliteProductChoice; rdfs:range xsd:boolean; rdfs:label "licence unread";
   rdfs:comment "Nobody has read this route's licence. Said, so an unread licence is not read as an open one.".
+fw:citationRead a owl:ObjectProperty; rdfs:domain fw:SatelliteProductChoice; rdfs:label "citation read";
+  rdfs:comment "The dataset citation as the producer asks for it, read from the producer's own page with where and when, and which files it covers: a DOI is per processor version. Planetary Computer's collection record carries none.".
+fw:citationText a owl:DatatypeProperty; rdfs:range xsd:string; rdfs:label "citation text".
+fw:citationDoi a owl:DatatypeProperty; rdfs:range xsd:string; rdfs:label "citation DOI".
+fw:citationAppliesTo a owl:DatatypeProperty; rdfs:range xsd:string; rdfs:label "citation applies to";
+  rdfs:comment "Which files the citation covers, such as processor 2.x.".
+fw:citationReadAt a owl:DatatypeProperty; rdfs:range xsd:string; rdfs:label "citation read at".
+fw:citationReadOn a owl:DatatypeProperty; rdfs:range xsd:date; rdfs:label "citation read on".
+fw:citationUnread a owl:DatatypeProperty; rdfs:domain fw:SatelliteProductChoice; rdfs:range xsd:boolean; rdfs:label "citation unread";
+  rdfs:comment "Nobody has read this route's dataset citation. Said, so a missing reference is visible rather than silent.".
 fw:curatedBy a owl:DatatypeProperty; rdfs:domain fw:SatelliteProductChoice; rdfs:range xsd:string; rdfs:label "curated by";
   rdfs:comment "eo-satellite-guide or fieldwork: whose curated list the route came from.".
 fw:PointsFromTable a owl:Class; rdfs:subClassOf prov:Entity;

@@ -744,7 +744,20 @@ export function crossTab(table:DataTable,{assertCommensurable=false}={}):{rowKey
     grandTotal:sum(rows.flatMap(r=>r.cells))};
 }
 
-export function dataTableMarkup(table:DataTable,esc:Escape,{query='',page=0,pageSize=40,assertTotals=false}={}){
+/** A COLUMN'S PART IN A JOIN, marked where the column is drawn: the key a relate matched on, or the column it brought
+ *  across. The same marks as View this table's (`column-role-*`), so the Relate dialog's preview reads like its
+ *  Before and After (2026-11-05). */
+export type ColumnRoles=Readonly<Record<string,'key'|'brought'>>;
+const roleOf=(roles:ColumnRoles|undefined,column:string)=>roles&&Object.hasOwn(roles,column)?roles[column]:undefined;
+const roleAttr=(roles:ColumnRoles|undefined,column:string,also='')=>{const r=roleOf(roles,column);
+  const classes=[also,r?`column-role-${r}`:''].filter(Boolean).join(' ');
+  return (classes?` class="${classes}"`:'')+(r?` data-column-role="${r}"`:'');};
+const roleHead=(roles:ColumnRoles|undefined,column:string,esc:Escape,also='')=>{const r=roleOf(roles,column);
+  return `<th scope="col"${roleAttr(roles,column,also)}>${esc(column)}`
+    +(r?`<span class="column-role">${r==='key'?'matched on':'brought across'}</span>`:'')+'</th>';};
+
+export function dataTableMarkup(table:DataTable,esc:Escape,{query='',page=0,pageSize=40,assertTotals=false,roles}:
+  {query?:string;page?:number;pageSize?:number;assertTotals?:boolean;roles?:ColumnRoles}={}){
   const matching=query?table.rows.filter(row=>Object.values(row.key).some(v=>String(v).toLowerCase().includes(query.toLowerCase()))):table.rows;
   const pages=Math.max(1,Math.ceil(matching.length/pageSize)),shown=matching.slice(page*pageSize,page*pageSize+pageSize);
   const unit=table.unit?esc(table.unit):'<span class="muted">unit unstated</span>';
@@ -762,22 +775,22 @@ export function dataTableMarkup(table:DataTable,esc:Escape,{query='',page=0,page
       +`${esc(frame.subject)}${frame.attributes.length?' with '+frame.attributes.map(esc).join(', '):''}`
       +` \u00b7 ${frame.columns.length} variable${frame.columns.length===1?'':'s'} \u00b7 value in ${unit}</div>`
       +'<div class="table-scroll"><table class="wide-frame"><thead><tr>'
-      +`<th scope="col">${esc(frame.subject)}</th>`
+      +roleHead(roles,frame.subject,esc)
       // An attribute is marked, because it describes the subject rather than measuring it and a
       // reader totalling a column needs to know which columns are numbers.
-      +frame.attributes.map(a=>`<th scope="col" class="frame-attribute">${esc(a)}</th>`).join('')
-      +frame.columns.map(c=>`<th scope="col">${esc(c)}</th>`).join('')
+      +frame.attributes.map(a=>roleHead(roles,a,esc,'frame-attribute')).join('')
+      +frame.columns.map(c=>roleHead(roles,c,esc)).join('')
       +'</tr></thead><tbody>'
-      +frame.rows.map(r=>`<tr><th scope="row">${esc(r.label)}</th>`
-        +r.attributes.map(a=>`<td class="frame-attribute">${esc(a)}</td>`).join('')
-        +r.cells.map(v=>`<td>${v===undefined?'<span class="muted">\u2014</span>'
+      +frame.rows.map(r=>`<tr><th scope="row"${roleAttr(roles,frame.subject)}>${esc(r.label)}</th>`
+        +r.attributes.map((a,i)=>`<td${roleAttr(roles,frame.attributes[i]!,'frame-attribute')}>${esc(a)}</td>`).join('')
+        +r.cells.map((v,i)=>`<td${roleAttr(roles,frame.columns[i]!)}>${v===undefined?'<span class="muted">\u2014</span>'
           :v===null?'<span class="muted">unknown</span>':esc(v)}</td>`).join('')
         +'</tr>').join('')
       +'</tbody></table></div>';
   if(grid)
     return `<div class="table-meta muted">${table.rowCount} cells · ${esc(grid.rowKey)} by ${esc(grid.colKey)}`
       +` · value in ${unit}</div>`
-      +`<table class="crosstab"><thead><tr><th scope="col">${esc(grid.rowKey)}</th>`
+      +`<table class="crosstab"><thead><tr>${roleHead(roles,grid.rowKey,esc)}`
       +grid.columns.map(c=>`<th scope="col">${esc(c)}</th>`).join('')
       +(grid.grandTotal===null?'':'<th scope="col">Total</th>')
       +`</tr></thead><tbody>`
@@ -800,8 +813,8 @@ export function dataTableMarkup(table:DataTable,esc:Escape,{query='',page=0,page
         ?`<p class="table-meta muted">Totals are shown because this step was told these values `
           +`count the same thing. The table states no unit, so nothing here checks that.</p>`:'');
   return `<div class="table-meta muted">${matching.length} of ${table.rowCount} rows${table.missingValueCount?` · ${table.missingValueCount} values absent and kept as unknown`:''} · value in ${unit}</div>`
-    +`<table><thead><tr>${table.keys.map(k=>`<th>${esc(k)}</th>`).join('')}<th>${esc(table.valueField)}</th></tr></thead><tbody>`
-    +shown.map(row=>`<tr>${table.keys.map(k=>`<td>${esc(row.key[k])}</td>`).join('')}<td>${row.value===null?'<span class="muted">unknown</span>':esc(row.value)}</td></tr>`).join('')
+    +`<table><thead><tr>${table.keys.map(k=>roleHead(roles,k,esc)).join('')}${roleHead(roles,table.valueField,esc)}</tr></thead><tbody>`
+    +shown.map(row=>`<tr>${table.keys.map(k=>`<td${roleAttr(roles,k)}>${esc(row.key[k])}</td>`).join('')}<td${roleAttr(roles,table.valueField)}>${row.value===null?'<span class="muted">unknown</span>':esc(row.value)}</td></tr>`).join('')
     +`</tbody></table>`+(pages>1?`<div class="table-page-group"><button class="button small" data-table-page="${page-1}" ${page===0?'disabled':''}>Previous rows</button><span role="status">Page ${page+1} of ${pages}</span><button class="button small" data-table-page="${page+1}" ${page+1>=pages?'disabled':''}>Next rows</button></div>`:'');
 }
 

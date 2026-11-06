@@ -3689,6 +3689,7 @@ function renderInspector(){
       leftLabel:portSourceName(workflow,n.id,'records','the first table'),
       rightLabel:portSourceName(workflow,n.id,'related','the second table'),
       on:[p.on,...(p.alsoOn??[])].join(' and '),bring:p.bring,
+      roles:{...Object.fromEntries([p.on,...(p.alsoOn??[])].filter(Boolean).map(k=>[k,'key'])),...(p.bring?{[p.bring]:'brought'}:{})},
       normalisation:p.normalisation??'fuzzy',
       ...(p.unmatched?{settled:p.unmatched}:{}),
       shapeFor:(normalisation,label)=>{

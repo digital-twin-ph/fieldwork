@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {Parser,Store} from 'n3';
 import {validateGraph} from '../scripts/validate-ontology.mjs';
-import {nearestInTile,halfSpacing,inTileExtent,tileRowOrder,FILL} from '../build/satellite-pixels.js';
+import {nearestInTile,inTileExtent,tileRowOrder,FILL} from '../build/satellite-pixels.js';
+import {readAtPoints} from '../build/satellite-read.js';
 import {classify,rawThreshold,days,sampleTable,sampleSentence,sampleFacts,readerFor} from '../build/satellite-sample.js';
 import {defaultKept,overpassCount} from '../build/satellite-catalog.js';
 import {productFor} from '../build/satellite-products.js';
@@ -30,12 +31,29 @@ test('the pixel whose centre is nearest, found tile by tile; a point far from ev
   assert.equal(inTileExtent(3.2,1.2,left),false);
   assert.equal(inTileExtent(3.2,1.2,right),true);
   assert.deepEqual([nearestInTile(3.2,1.2,right).row,nearestInTile(3.2,1.2,right).col],[1,3]);
-  assert.ok(Math.abs(halfSpacing(left,0,0)-0.5*Math.cos(0.5*Math.PI/180))<1e-9);
   // A fill-valued centre is never the nearest.
   left.lats[0]=FILL;left.lons[0]=FILL;
   assert.notDeepEqual([nearestInTile(0.4,0.4,left).row,nearestInTile(0.4,0.4,left).col],[0,0]);
   // Northern points look in the later scanlines first; every row of chunks is still in the order.
   assert.deepEqual(tileRowOrder(2,40.7),[1,0]);assert.deepEqual(tileRowOrder(3,-1),[0,1,2]);
+});
+
+test('a point near a chunk edge is read from the nearest centre across the edge, not the nearest in its own chunk',()=>{
+  // A 2 x 4 swath of unit pixels in two column chunks, as an in-memory file. Found by the lab's check 35, 2026-11-05: a
+  // point 0.52 of the way from column 1 to column 2 was placed on column 1, the nearest in the first chunk read.
+  const rows=2,cols=4,chunks=[1,2,2];
+  const grid=f=>Float32Array.from({length:rows*cols},(_,i)=>f(Math.floor(i/cols),i%cols));
+  const dataset=(values,chunked=true)=>({shape:[1,rows,cols],metadata:{chunks:chunked?chunks:null},attrs:{},
+    slice:([[,],[r0,r1],[c0,c1]])=>{const out=[];for(let r=r0;r<r1;r++)for(let c=c0;c<c1;c++)out.push(values[r*cols+c]);return out;}});
+  const qa=dataset(grid(()=>100));qa.attrs.scale_factor={value:[0.01]};
+  const files={lat:dataset(grid(r=>40+r)),lon:dataset(grid((r,c)=>c)),no2:dataset(grid((r,c)=>c+1)),qa,
+    time:{shape:[1,rows],metadata:{},attrs:{},slice:([,[r0]])=>[`t${r0}`]}};
+  const file={get:path=>files[path]??null};
+  const paths={variable:'no2',latitude:'lat',longitude:'lon',time:'time',quality:{variable:'qa'}};
+  const read=readAtPoints(file,paths,[{id:'edge',lon:1.52,lat:40},{id:'inside',lon:0.1,lat:41},{id:'off',lon:9,lat:40}]);
+  assert.deepEqual(read.pixels.map(p=>[p.pointId,p.row,p.col]),[['edge',0,2],['inside',1,0],['off',null,null]]);
+  // Both chunks were read: the edge point's first answer was provisional.
+  assert.equal(read.tilesRead,2);
 });
 
 test('three gaps, kept apart; the quality rule compares the stored integer, so 75 passes at or above 0.75',()=>{

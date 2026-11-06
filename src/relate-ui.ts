@@ -1,6 +1,6 @@
 import type {RelateShape,UnmatchedDeclaration,MeasureShare} from './relate-table.js';
 import {rateMultiplier,machinedNotes} from './relate-table.js';
-import {dataTableMarkup,wideFrame} from './data-table-ui.js';
+import {dataTableMarkup,wideFrame,type ColumnRoles} from './data-table-ui.js';
 import type {Escape} from './types.js';
 
 /** DECIDING A JOIN, with the consequence in front of you.
@@ -33,6 +33,8 @@ export interface RelateJoinView {
   title:string;
   leftLabel:string; rightLabel:string;
   on:string; bring:string;
+  /** The key columns and the column brought across, marked in the preview as View this table marks them. */
+  roles?:ColumnRoles;
   normalisation:'exact'|'fuzzy';
   /** The decision already stored, where the practitioner has made one. */
   settled?:UnmatchedDeclaration;
@@ -222,7 +224,7 @@ export function openRelateJoin(view:RelateJoinView,esc:Escape):void{
         :`<div class="notice">This table has ${preview.keys.length} key columns, so it cannot be `
           +'drawn wide until something says which one spreads into columns. The rows below are as '
           +'stored, one value per row.</div>')
-      +`<div class="relate-preview">${dataTableMarkup(preview,esc,{pageSize:12})}</div>`
+      +`<div class="relate-preview">${dataTableMarkup(preview,esc,{pageSize:12,...(view.roles?{roles:view.roles}:{})})}</div>`
       +'</div>';
 
     dialog.querySelector<HTMLButtonElement>('#relate-join-close')!.onclick=close;

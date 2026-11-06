@@ -522,6 +522,38 @@ not captured.
 and `date`) beyond its having run, whether 0.74 is common across the swath or particular to these pixels, and a
 WebKit run. The 4-minute time is one evening's network, not a measured read rate.
 
+## Parity: lab check 35, and the citations read, 2026-11-06
+
+**Check 35** (validation-lab, `35-sample-satellite-vs-h5py`) reads a synthetic Sentinel-5P-shaped file, 12 × 10
+pixels in 3 × 2 chunks, with h5py, and recomputes each of 13 points' pixel by comparing every centre in the swath.
+Then it rebuilds both quality operators' tables field by field.
+
+| Against | Result |
+| --- | --- |
+| Sampler 0.2.0 | **Diverged at one point.** A point 0.52 of the way from column 4 to column 5, which sit in different chunks, was read from column 4: the nearest centre in the first chunk that covered it, not in the swath. Its row differed in `ground_pixel`, `value_as_read` and the value |
+| Sampler 0.2.1 | **Agrees**: 11 placed and 2 off the swath, every pixel, value, stored `qa_value` and time; 26 rows for each operator. CPython 3.13 and Pyodide |
+
+The fix makes a pixel on a chunk edge that faces an unread chunk provisional until that chunk is read. Writing a unit
+test for it found a second defect: a point is only looked for in a chunk whose extent, padded by a fixed 0.1°, holds
+it, so a point between two chunks of pixels wider than that was in neither. The pad is now 1.5 times the chunk's mean
+pixel spacing, never less than 0.1°.
+
+pyproj's geodesic nearest centre is the same pixel as the declared cos(latitude)-scaled rule at all 11 placed points.
+That is a measurement on one synthetic swath, not a proof that the approximation never picks differently.
+
+**What making the fixture found in the lab.** Its integrity digest failed: Python wrote values from 1e-6 to 1e-4 with
+an exponent, JavaScript in decimal, so canonical JSON differed for satellite columns in mol m⁻². The lab now writes
+numbers as ECMAScript does. Running every notebook again found three that fail in the browser kernel on packages it
+lacks (jellyfish, rapidfuzz, the lab's own `remote_zip`), unrelated to this and not fixed here. Check 34 failed in a
+fresh CPython environment because geopandas was never pinned; it is now.
+
+**Citations.** ESA's TROPOMI product pages give a citation per processor version. The files Planetary Computer
+serves over New York City for 1–14 June 2023 are collection 03, processor 02.05.00 (NO₂, aerosol index) and
+02.04.01 (ozone), so the Version 02 citations apply: NO₂ doi:10.5270/S5P-9bnp8q8, ozone doi:10.5270/S5P-ft13p57,
+aerosol index doi:10.5270/S5P-3dgz66p. Read 2026-11-06. The DOIs resolve, but DataCite's API has no record of them,
+so their metadata was not read from a registry. That "Version 02" means processor 2.x is read from the pages' own
+pairing of versions with years, not stated in those words. The other routes are still unread.
+
 ## What is already known to be a limit
 
 A satellite does not measure what a station measures. NO₂ from TROPOMI or TEMPO is a tropospheric column, not ppb at

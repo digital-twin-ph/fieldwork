@@ -71,6 +71,15 @@ fw:SatelliteProductChoiceShape a sh:NodeShape; sh:targetClass fw:SatelliteProduc
       sh:property [ sh:path ( fw:licenceRead fw:licenceReadAt ); sh:minCount 1 ];
       sh:property [ sh:path ( fw:licenceRead fw:licenceReadOn ); sh:minCount 1; sh:datatype xsd:date ] ]
     [ sh:property [ sh:path fw:licenceUnread; sh:minCount 1; sh:hasValue true ] ]
+  );
+  # A CITATION IS READ OR SAID TO BE UNREAD, never neither: a write-up must be able to tell a missing reference.
+  sh:xone (
+    [ sh:property [ sh:path fw:citationRead; sh:minCount 1; sh:maxCount 1 ];
+      sh:property [ sh:path ( fw:citationRead fw:citationText ); sh:minCount 1 ];
+      sh:property [ sh:path ( fw:citationRead fw:citationAppliesTo ); sh:minCount 1 ];
+      sh:property [ sh:path ( fw:citationRead fw:citationReadAt ); sh:minCount 1 ];
+      sh:property [ sh:path ( fw:citationRead fw:citationReadOn ); sh:minCount 1; sh:datatype xsd:date ] ]
+    [ sh:property [ sh:path fw:citationUnread; sh:minCount 1; sh:hasValue true ] ]
   ).
 fw:PointsFromTableShape a sh:NodeShape; sh:targetClass fw:PointsFromTable;
   sh:property [ sh:path fw:xAttribute; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string; sh:minLength 1 ];

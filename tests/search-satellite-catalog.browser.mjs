@@ -52,6 +52,7 @@ test('a NO2 product, the five boroughs, and the overpasses of 7 June 2023, each 
   await expect(dialog).toContainText('No account (anonymous token)');
   await expect(dialog).toContainText('Contains modified Copernicus Sentinel data 2023');
   await expect(dialog).toContainText('not known until a reader opens the file');
+  await expect(dialog.locator('a[href="https://doi.org/10.5270/S5P-9bnp8q8"]')).toBeVisible();
   await page.screenshot({path:'test-results/search-satellite-catalog.png'});
   await dialog.locator('[data-cat-keep]').nth(1).uncheck();
   await dialog.locator('#cat-close').click();

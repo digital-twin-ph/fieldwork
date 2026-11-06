@@ -711,12 +711,12 @@
    "migrationFrom": []
   },
   "relate_table": {
-   "version": "0.4.0",
-   "released": "2026-11-05",
+   "version": "0.4.1",
+   "released": "2026-11-06",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Rows can relate on several key columns together (alsoOn): a row relates only where every one agrees, the receipt states one fw:matchedOn per key. The second table's value column can be brought across as well as a key column. The table viewer marks the join's key columns in every Before and in After, and the brought column in After. Asked by the practitioner: \"When we show the before and after table views with joins can we highlight the columns used as keys?\" Built for the NYC satellite example, where a satellite and a ground reading are one observation only for the same monitor on the same day. Experiment 179."
+     "kind": "patch",
+     "description": "The join dialog's preview marks the key columns Matched on and the column added Brought across, as View this table does; and the preview is no longer squeezed to one line when the dialog is short."
     }
    ],
    "breaking": false,
@@ -1052,36 +1052,36 @@
    "migrationFrom": []
   },
   "find_satellite_products": {
-   "version": "0.1.0",
-   "released": "2026-11-05",
+   "version": "0.2.0",
+   "released": "2026-11-06",
    "changes": [
     {
-     "kind": "initial",
-     "description": "Choose the satellite product that measures a variable. Type a topic or a measurement, or pick one: the dialog shows the chain from question to collection, the caution about what a satellite measures, and one card per product, with what it measures and its unit, sign-in, the licence as read, whether a browser can read it and the quality rule. Products needing no sign-in come first. Adapted from JLT's EO Satellite Guide (MIT, commit 684833c), in Fieldwork's dialog style. Experiment 179."
+     "kind": "minor",
+     "description": "Each product carries the dataset citation its producer asks for, with the DOI for the processor version and where and when it was read; the receipt states it as fw:citationRead, or fw:citationUnread where nobody has read one. The three Sentinel-5P products on Planetary Computer carry ESA's Version 02 citations. Experiment 179."
     }
    ],
    "breaking": false,
    "migrationFrom": []
   },
   "search_satellite_catalog": {
-   "version": "0.3.0",
-   "released": "2026-11-05",
+   "version": "0.3.1",
+   "released": "2026-11-06",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Each item states its processing stream (near real time, NRTI; offline, OFFL) and orbit, as the catalog gives them (s5p:processing_mode, sat:absolute_orbit), in the list and in Inspect. Where an orbit has an offline item, its near-real-time items are not kept by default, so one overpass is not sampled twice; the sentence says how many overpasses the items are. Found building Sample satellite files at points: the two NO2 items over NYC on 7 June 2023, which 0.1.0 reported as two overpasses, are orbit 29273 in two streams. Experiment 179."
+     "kind": "patch",
+     "description": "Inspect shows the product's dataset citation, with its DOI as a link, where Fieldwork has read one."
     }
    ],
    "breaking": false,
    "migrationFrom": []
   },
   "sample_satellite_files_at_points": {
-   "version": "0.2.0",
-   "released": "2026-11-05",
+   "version": "0.2.1",
+   "released": "2026-11-06",
    "changes": [
     {
-     "kind": "minor",
-     "description": "The id column takes the name of the table column the points' ids were read from (site for the NYC monitors), so the result relates back to the source on that column; point_id otherwise. Its columns are known before a run, so a join downstream can be set up before the files are read. Experiment 179."
+     "kind": "patch",
+     "description": "The pixel is the nearest centre over the whole swath. A point near the edge of one of the file's chunks was placed on the nearest centre within the first chunk that covered it, though a centre across the edge could be nearer; and a point between two chunks of wide pixels could be in neither chunk's extent, so it was missed. Found by the validation lab's check 35, 2026-11-06. Experiment 179."
     }
    ],
    "breaking": false,

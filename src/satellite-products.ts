@@ -27,8 +27,13 @@ export interface RouteFacts {
   kind:'observation'|'model'; quantity:'column'|'optical-depth'|'index'|'surface'|string;
   unit:string|null; unitReadFrom:string|null; signIn:SignIn; licence:string|null;
   browserReadable:string; qualityRule:string|null; stream:string|null; coverageStart:string|null;
-  citation:string|null;
+  /** The dataset citation as the producer asks for it, with where and when it was read. Null: not yet read. */
+  citation:DatasetCitation|null;
 }
+/** A DATASET CITATION, as the producer states it, for the write-up's References. Read from the producer's own page,
+ *  not the catalog: Planetary Computer's collection record carries no citation or DOI (experiment 179, S7). A DOI is
+ *  per processor version, so `appliesTo` says which files it covers. */
+export interface DatasetCitation {text:string; doi:string|null; appliesTo:string; readAt:string; readOn:string}
 export interface Licence {
   name:string; terms:string; open:boolean; readAt:string; readOn:string; catalogSays?:string;
   attribution?:{original:string; modified:string};
@@ -112,5 +117,9 @@ export function productFacts(entity:string,p:SatelliteProduct):string{
     +`  fw:signIn ${q(p.facts?.signIn??'unread')};\n`
     +(p.licence?`  fw:licenceRead [ fw:licenceName ${q(p.licence.name)}; fw:licenceReadAt ${q(p.licence.readAt)}; `
       +`fw:licenceReadOn "${p.licence.readOn}"^^xsd:date; fw:licenceOpen ${p.licence.open} ];\n`:`  fw:licenceUnread true;\n`)
+    +(p.facts?.citation?`  fw:citationRead [ fw:citationText ${q(p.facts.citation.text)}; `
+      +(p.facts.citation.doi?`fw:citationDoi ${q(p.facts.citation.doi)}; `:'')
+      +`fw:citationAppliesTo ${q(p.facts.citation.appliesTo)}; fw:citationReadAt ${q(p.facts.citation.readAt)}; `
+      +`fw:citationReadOn "${p.facts.citation.readOn}"^^xsd:date ];\n`:`  fw:citationUnread true;\n`)
     +`  fw:curatedBy ${q(p.curatedBy)}.\n`;
 }

@@ -1,0 +1,94 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:sample_satellite_files_at_points",
+  "nodeType": "sample_satellite_files_at_points",
+  "version": "0.2.1",
+  "title": "Sample satellite files at points",
+  "released": "2026-11-06",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['sample_satellite_files_at_points']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "validationStatus": "application-only",
+    "shaclShapes": []
+  },
+  "ports": {
+    "inputs": [
+      {
+        "name": "points",
+        "type": "points"
+      },
+      {
+        "name": "files",
+        "type": "satellite-files"
+      }
+    ],
+    "output": "table",
+    "optionalInputs": [],
+    "note": "Takes the points to read at and the files a search kept. Emits a long table: one row per point per overpass, and one per point per day with no overpass."
+  },
+  "ontology": {
+    "status": "partial",
+    "mappings": [
+      {
+        "role": "entity",
+        "iri": "urn:fieldwork:SatellitePointSample",
+        "file": "ontology/runtime.ttl"
+      }
+    ],
+    "note": "The receipt states the route, the variable, the unit as the file states it, the pixel convention, the quality variable, threshold and operator, files read, points, rows written, and rows passing, below the threshold, with no retrieval and with no overpass; fw:completenessRead true and fw:imputed false. Held by fw:SatellitePointSampleShape.",
+    "emits": {
+      "classes": [
+        "SatellitePointSample"
+      ],
+      "properties": [
+        "completenessRead",
+        "filesRead",
+        "imputed",
+        "pixelConvention",
+        "pointsSampled",
+        "qualityOperator",
+        "qualityThreshold",
+        "qualityVariable",
+        "rowsBelowQuality",
+        "rowsNoOverpass",
+        "rowsNoRetrieval",
+        "rowsPassing",
+        "rowsWritten",
+        "sampledRoute",
+        "sampledVariable",
+        "satelliteValueUnit"
+      ]
+    }
+  },
+  "implementation": {
+    "files": [
+      "src/app.ts",
+      "src/core.ts",
+      "src/satellite-pixels.ts",
+      "src/satellite-read.ts",
+      "src/satellite-sample.ts",
+      "src/satellite-sample-reader.ts",
+      "src/satellite-sample-worker.ts"
+    ],
+    "definition": "src/satellite-sample.ts"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": null
+  },
+  "changes": [
+    {
+      "kind": "patch",
+      "description": "The pixel is the nearest centre over the whole swath. A point near the edge of one of the file's chunks was placed on the nearest centre within the first chunk that covered it, though a centre across the edge could be nearer; and a point between two chunks of wide pixels could be in neither chunk's extent, so it was missed. Found by the validation lab's check 35, 2026-11-06. Experiment 179."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Independently recomputed by validation-lab check 35 (h5py and pyproj, CPython and Pyodide) on a synthetic Sentinel-5P-shaped file: every pixel, value, quality and time, and both operators' tables. Unit tests cover pixel choice across chunk edges, the three gaps, the integer comparison, the table and the receipt. A live browser run read real files at the NYC monitors."
+  }
+}

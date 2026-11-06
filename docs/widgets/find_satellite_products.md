@@ -17,6 +17,7 @@ card per product:
 | **Measures** | A column through the atmosphere, an optical depth, an index, or a near-surface value |
 | **Unit** | As read from the product's own file, or "read from the file when it is opened" |
 | **Licence** | As read from the licence itself, with the date it was read; or "not yet read" |
+| **Citation** | The dataset citation the producer asks for, with its DOI, the files it covers and the date it was read; or "not yet read" |
 | **In a browser** | Whether a browser has been shown to read it, and how that was checked |
 | **Quality** | The product's own quality rule, where it has been read |
 
@@ -56,7 +57,10 @@ Fieldwork adds the routes that need no sign-in, an ozone topic, and the facts on
 
 - **It will not download anything**, or say that a product has data for your place and dates. That is the catalog
   search's question.
-- **It will not cite a product yet.** Dataset citations have not been read for any route, and every card says so.
+- **It will not cite a product nobody has read a citation for.** The three Sentinel-5P products on Planetary Computer
+  carry ESA's citations, read from the TROPOMI product pages on 2026-11-06. ESA gives one DOI per processor version,
+  and these are Version 02, for the processor 2.x files Planetary Computer serves for June 2023. Every other card says
+  "not yet read".
 - **It will not choose for you.** The order puts open products first; which one suits a study is yours to decide.
 - **It covers what has been curated.** A topic with no curated product says so rather than guessing one.
 

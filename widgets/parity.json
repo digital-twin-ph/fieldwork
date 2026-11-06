@@ -3,7 +3,7 @@
   "description": "Independent recomputation of implemented widgets by an external process, recorded after release. Release files are immutable once committed, so evidence about a release lives here and accrues as checks run. A fixture digest recorded in a result is over canonical JSON content rather than the file’s bytes, revised 2026-10-11 because byte identity is unsatisfiable in the browser the lab publishes to. A parity result establishes numerical agreement with a named external implementation under a stated criterion. It is not scientific certification, and it says nothing about whether a method is appropriate for a question.",
   "lab": {
     "repository": "https://github.com/digital-twin-ph/validation-lab",
-    "commit": "867f6899df475c718eec78dd1e113a5b3a061ea0",
+    "commit": "73c4c14f7297ab0fa23ac04380f4921916d39073",
     "pinNote": "The commit CI checks the lab out at: .github/workflows/pages.yml reads it with `jq -r .lab.commit widgets/parity.json`. So this pin, not the clone beside this repository, is what `validate:dive-deeper` verifies against on a clean runner -- and it must be advanced whenever a check lands in the lab, in the same push-then-pin order the worked examples use."
   },
   "outcomes": {
@@ -699,6 +699,30 @@
       ],
       "note": "Point data's table source only (Fieldwork experiment 178). Which rows are placed is Fieldwork's declared rule, restated in the check, since geopandas places any number it is given. The file, GeoJSON, GeoPackage and pin sources are not covered.",
       "notebook": "34-points-from-xy-vs-geopandas.ipynb"
+    },
+    {
+      "widget": "urn:fieldwork:widget:sample_satellite_files_at_points",
+      "coversRelease": "0.2.1",
+      "check": "35-sample-satellite",
+      "result": "content/results/check-35-sample-satellite.json",
+      "sha256": "ea919e84c360ee8926ab866ec7dc8c8f22a351c228bdfeb9ad40ac5bc01cb9e8",
+      "external": [
+        "h5py 3.16.0 (HDF5 2.0.0)",
+        "pyproj 3.8.0",
+        "numpy 2.5.3"
+      ],
+      "criterion": "every point placed or not as the declared rule says, on the same pixel; value, stored qa_value and scanline time exactly h5py's there; for both operators every table row rebuilt from the declared rule, field by field",
+      "outcome": "agrees",
+      "measured": "13 points on a synthetic 12 x 10 swath in 3 x 2 chunks: 11 placed and 2 off the swath, every pixel the declared rule's, with value, stored qa_value and time exactly h5py's; the geodesically nearest centre (pyproj) the same at 11 of 11; qa_value >= 0.75 and > 0.75 each 26 rows rebuilt field by field, 7 and 6 passing",
+      "ranAt": "2026-11-06T04:26:32.438397+00:00",
+      "notEstablished": [
+        "Anything about a real orbit file's content: the file is synthetic.",
+        "Reading a remote file by HTTP range, which is where the cost is.",
+        "Whether the nearest centre is the right pixel for a study.",
+        "A defect in libhdf5 itself, which h5py and h5wasm share."
+      ],
+      "note": "Against release 0.2.0 the same check placed the point near a chunk edge on the pixel across the edge from the nearest, the first chunk's nearest rather than the swath's; 0.2.1 fixes it (2026-11-06). The file is synthetic, written by h5wasm in Node with the offline NO2 file's paths, dtypes and chunking. Run in CPython; the notebook also agrees in Pyodide.",
+      "notebook": "35-sample-satellite-vs-h5py.ipynb"
     }
   ],
   "notebookNote": "`notebook` names the lab notebook that carries the check, and `diveDeeper` the heading of its Dive Deeper section where it has one -- the part written for a practitioner who wants to understand the widget rather than for a reviewer checking it (experiment 94). Both are recorded rather than derived from the check id: `24-project-forward` lives in `24-project-vs-pyproj.ipynb`, so matching on the leading number works by luck and would break the first time a check and its notebook are named differently. The application reads `diveDeeper` to decide which widgets offer the link, and scripts/validate-dive-deeper.mjs refuses a heading the notebook does not actually carry."

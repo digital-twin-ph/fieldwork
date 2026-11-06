@@ -8,8 +8,8 @@
   },
   "measuredAt": "2026-10-27",
   "counts": {
-    "widgets": 59,
-    "covered": 29,
+    "widgets": 58,
+    "covered": 28,
     "awaiting": 14,
     "none": 15,
     "blocked": 1
@@ -26,11 +26,6 @@
       "check": "23-rulesets",
       "computes": "Applies a declared ruleset: projects facts from a typed carrier, binds a parameter with its unit, evaluates N3, and extracts a classification against the ruleset's declared vocabulary.",
       "reason": "Checked by the Lab exhaustively rather than by sample: all three rulesets have finite input spaces, 46 cells in total, and check 23 reproduces every conclusion with a Python decision table and verifies the emitted receipt."
-    },
-    {
-      "nodeType": "buffer_area",
-      "expectation": "parity",
-      "check": "18-buffer-area"
     },
     {
       "nodeType": "buffer_point",

@@ -14,12 +14,12 @@ asset shows up.
 
 ## 1 · Widget utilization
 
-59 live widgets across 11 shipped examples and 6 pinned in its own repository.
+58 live widgets across 11 shipped examples and 6 pinned in its own repository.
 
 | Reach | Widgets |
 | --- | --- |
 | Used by no workflow | **12** |
-| Used by exactly one | 21 |
+| Used by exactly one | 20 |
 | Used by two or more | **26** |
 
 `isochrone` and `compute_walking_catchment` are a special case the practitioner ruled on
@@ -63,7 +63,6 @@ Each of these has one workflow's worth of evidence. If that example changes, it 
 | `comparison_map` | snow-geoprivacy |
 | `donut_geomask` | snow-geoprivacy |
 | `mean_center` | snow-geoprivacy |
-| `buffer_area` | snow-isochrone |
 | `isochrone` | snow-isochrone |
 | `network_input` | snow-isochrone |
 | `voronoi` | snow-voronoi |
@@ -117,9 +116,9 @@ rows above `case_series` are the ones that have genuinely done both.
 | --- | --- |
 | snow-geoprivacy | **5** — `aggregate_points_to_h3_cell`, `compare_point_sets`, `comparison_map`, `donut_geomask`, `mean_center` |
 | old-naledi | **4** — `facilities`, `facility_audit`, `point_grid`, `travel_time` |
-| snow-isochrone | **3** — `buffer_area`, `isochrone`, `network_input` |
 | raster | **2** — `clip_raster`, `raster_input` |
 | sea-level | **2** — `find_health_facilities`, `slr_site_assignment` |
+| snow-isochrone | **2** — `isochrone`, `network_input` |
 | south-london-1854 | **2** — `map_image_input`, `stack_polygons` |
 | coverage | **1** — `clip_points_to_area` |
 | snow-extent | **1** — `summarize_hull` |
@@ -147,7 +146,7 @@ that does not can be rebuilt only by copying this file.
 | `coverage` | 4 | 2 | 0 | **1** — observations (point_input) | 1 | — |
 | `raster` | 4 | 0 | 0 | — | — | — |
 | `snow-voronoi` | 15 | 4 | 2 | **1** — dates (table_input) | 1 | — |
-| `snow-isochrone` | 18 | 6 | 3 | **2** — dates (table_input), context-pumps (point_input) | 1 | — |
+| `snow-isochrone` | 17 | 6 | 3 | **2** — dates (table_input), context-pumps (point_input) | 1 | — |
 | `snow-geoprivacy` | 15 | 3 | 2 | — | 1 | `comparison_map` |
 | `sea-level` | 8 | 4 | 1 | **2** — facilities (find_health_facilities), projections (table_input) | 1 | `slr_site_assignment` |
 | `snow-extent` | 9 | 3 | 2 | **1** — dates (table_input) | — | — |
@@ -183,7 +182,7 @@ different things: an example can be four nodes and complete, or eighteen and not
 | --- | ---: | ---: | --- |
 | `hagelloch` | 6 | 2 / 4 | published files, rebuilt from scratch |
 | `raster` | 4 | 2 / 4 | published files, rebuilt from scratch |
-| `snow-isochrone` | 18 | 1 / 4 | sources, published files, rebuilt from scratch |
+| `snow-isochrone` | 17 | 1 / 4 | sources, published files, rebuilt from scratch |
 | `snow-voronoi` | 15 | 1 / 4 | sources, published files, rebuilt from scratch |
 | `snow-geoprivacy` | 15 | 1 / 4 | unattached, published files, rebuilt from scratch |
 | `rulesets` | 14 | 1 / 4 | sources, published files, rebuilt from scratch |

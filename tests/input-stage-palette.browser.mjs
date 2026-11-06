@@ -48,7 +48,7 @@ test('a canvas with no input offers the input stage, and everything after one is
   // Nothing that needs something is offered yet. Asserted by NODE TYPE rather than by title
   // text: `hasText:'Map'` also matched "Georeferenced map image" once a plate joined the input
   // stage, so a title that merely contains another widget's name could fail this on its own.
-  for(const type of ['map_output','buffer_area','reproject'])
+  for(const type of ['map_output','clip_raster','reproject'])
     await expect(page.locator(`#node-library [data-add="${type}"]`)).toHaveCount(0);
 
   // Place one input and the palette opens. The gate is "start with an input", not a running

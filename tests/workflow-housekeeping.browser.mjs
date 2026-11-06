@@ -5,6 +5,11 @@ import {test,expect} from '@playwright/test';
  *  workflows."* Three defects behind one list. */
 
 const newProject=async(page,name)=>{
+  // THE PAGE SETTLES FIRST. An example checks itself on load with the bar's buttons disabled, so on a slow runner a
+  // click on New project landed on a disabled button and the name field never appeared: this failed CI twice, on
+  // 0.31.0 and 0.35.0, and never locally (2026-11-06).
+  await expect(page.locator('#workflow-state')).not.toContainText('Running',{timeout:60000});
+  await expect(page.locator('#new-project')).toBeEnabled();
   await page.locator('#new-project').click();
   await page.locator('#project-name-input').fill(name);
   await page.locator('#project-create').click();

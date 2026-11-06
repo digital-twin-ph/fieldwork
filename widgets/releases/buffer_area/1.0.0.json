@@ -1,0 +1,64 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:buffer_area",
+  "nodeType": "buffer_area",
+  "version": "1.0.0",
+  "title": "Buffer study area",
+  "released": "2026-11-06",
+  "implementationStatus": "retired",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['buffer_area']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "validationStatus": "application-only",
+    "shaclShapes": []
+  },
+  "ports": {
+    "inputs": [
+      {
+        "name": "area",
+        "type": "area"
+      }
+    ],
+    "output": "area"
+  },
+  "ontology": {
+    "status": "partial",
+    "mappings": [
+      {
+        "role": "activity",
+        "iri": "urn:fieldwork:AreaBuffer",
+        "file": "ontology/fieldwork.ttl"
+      }
+    ],
+    "note": "GeoSPARQL geometry, PROV activity and QUDT buffer units. Configuration SHACL is future work.",
+    "emits": {
+      "classes": [],
+      "properties": []
+    }
+  },
+  "implementation": {
+    "files": [
+      "src/area-buffer.ts",
+      "src/core.ts"
+    ],
+    "definition": "src/core.ts#TYPES"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": null
+  },
+  "changes": [
+    {
+      "kind": "major",
+      "description": "Retired. Its two uses are met elsewhere. Widening an area to fetch data beyond it is each source's own margin: Street network and Polygon layer have one, and the Snow isochrone example, its only use, now sets the network's margin to 750 m, the same extent as its 500 m buffer plus the 250 m margin. Widening a jurisdiction for analysis, settled 2026-10-17 with the Ebola outbreak crossing from the DRC into Uganda, is a study area that straddles the border: the practitioner, 2026-11-06, \"When doing cross border studies the polygon approach can be used so the study area straddles borders\", by drawing it or picking units on both sides. The practitioner also reported that clicking it in the library did not add it, which was not reproduced. Retired outright: nobody outside the project builds on it. The buffering function stays, used by Area around a point's range check and held by lab check 18."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Synthetic numerical contracts and pinned source regression cases; no independent scientific certification."
+  }
+}

@@ -116,7 +116,7 @@ export function johnSnowExample(kind:'snow-voronoi'|'snow-isochrone'):Workflow{
       provenance:{licence:'ODbL-1.0',source:'OpenStreetMap contributors',
         what:'Soho street graph, GraphML snapshot from the PHI case study',
         licenceSource:'https://www.openstreetmap.org/copyright',
-        note:'Date of OSM extraction unknown; this is a present-day graph and not an 1854 street reconstruction.'},inputMethod:'file',marginM:250,data:structuredClone(graph)},references:[reference('network-source','Soho saved GraphML',isoSource+'outputs/soho.graphml','data','OpenStreetMap contributors, ODbL. Extraction date unknown. 738 nodes / 1619 directed edges; not a reconstructed 1854 network.')]});
+        note:'Date of OSM extraction unknown; this is a present-day graph and not an 1854 street reconstruction.'},inputMethod:'file',marginM:iso?750:250,data:structuredClone(graph)},references:[reference('network-source','Soho saved GraphML',isoSource+'outputs/soho.graphml','data','OpenStreetMap contributors, ODbL. Extraction date unknown. 738 nodes / 1619 directed edges; not a reconstructed 1854 network.')]});
   if(iso){
     const study=nodes.find(n=>n.id==='study')!;if(study.type==='study_area')study.params={source:'drawn',label:'Soho isochrone reporting extent (illustrative)',selectionMode:'bbox',geometry:{type:'Polygon',coordinates:[[[-.155,51.502],[-.119,51.502],[-.119,51.525],[-.155,51.525],[-.155,51.502]]]}};
     nodes.push({id:'context-pumps',type:'point_input',x:910,y:450,params:{label:'All eight pumps (map context)',data:{type:'FeatureCollection',features:pumps}},references:structuredClone(nodes.find(n=>n.id==='pumps')!.references)});
@@ -127,7 +127,7 @@ export function johnSnowExample(kind:'snow-voronoi'|'snow-isochrone'):Workflow{
   if(!iso)edges.push({id:'spot-area',from:'study',to:'spot-map',port:'area'},
     {id:'spot-points',from:'locations',to:'spot-map',port:'points'},
     {id:'spot-pumps',from:'pumps',to:'spot-map',port:'points_2'});
-  if(iso){edges.push({id:'summary-interactive',from:'summary',to:'interactive',port:'polygons'},...['map','interactive'].map(to=>({id:'context-'+to,from:'context-pumps',to,port:'context'})));nodes.push({id:'acquisition-buffer',type:'buffer_area',x:320,y:430,params:{label:'Network acquisition buffer',distanceM:500}});edges.push({id:'area-buffer',from:'study',to:'acquisition-buffer',port:'area'},{id:'area-network',from:'acquisition-buffer',to:'network',port:'area'});}
+  if(iso){edges.push({id:'summary-interactive',from:'summary',to:'interactive',port:'polygons'},...['map','interactive'].map(to=>({id:'context-'+to,from:'context-pumps',to,port:'context'})));edges.push({id:'area-network',from:'study',to:'network',port:'area'});/* The network's own margin, 750 m, where a Buffer study area of 500 m stood until its retirement on 2026-11-06: the 500 plus the margin's 250, the same extent. The network is read from its file, so neither changes a result. */}
 
   return {schema:'fieldwork/workflow/1',exampleId:kind,name:iso?'John Snow · network isochrones':'John Snow · Voronoi catchments',nodes,edges};
 }

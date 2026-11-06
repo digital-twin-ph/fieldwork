@@ -108,12 +108,17 @@
     {
       "id": "urn:fieldwork:widget:buffer_area",
       "nodeType": "buffer_area",
-      "currentVersion": "0.1.0",
+      "currentVersion": "1.0.0",
       "releases": [
         {
           "version": "0.1.0",
           "path": "widgets/releases/buffer_area/0.1.0.json",
           "sha256": "982d972afcfcb9fef4990e6b026a819d305c4b0227a70388170cc8ad83666789"
+        },
+        {
+          "version": "1.0.0",
+          "path": "widgets/releases/buffer_area/1.0.0.json",
+          "sha256": "a298f19fc76f280da7840a03de6372d8d1505838bc99324e671c9dc34ee43cfb"
         }
       ]
     },

@@ -129,12 +129,12 @@ test('Street network downloads bounded OSM data explicitly, preserves failed dow
       :route.fulfill({status:429,body:'Rate limited'}));await page.locator('#download-network').click();await expect(page.locator('#toast')).toContainText('HTTP 429');assert.deepEqual((await saved(page)).nodes,w.nodes);
 });
 });
-test('sized study boundaries and independent buffer preserve reporting geometry',async({page})=>{
+test('sized study boundaries preserve reporting geometry',async({page})=>{
   await page.goto('/?example=snow-voronoi');await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});await page.locator('.react-flow__node[data-id="study"]').click();await page.locator('#edit-study-area').click();await page.locator('#area-online').uncheck();await page.locator('#area-sized-box summary').click();await page.locator('#area-box-shape').selectOption('square');await page.locator('#area-box-width').fill('1000');await page.locator('#area-box-create').click();await page.locator('#area-apply').click();
   let w=await saved(page),area=w.nodes.find(n=>n.id==='study');assert.equal(area.params.selectionMode,'bbox');const original=area.params.geometry;
   await page.locator('[data-view="workflow"]').click();
-  await page.locator('[data-add="buffer_area"]').click();await expect(page.locator('#catchment-distanceM')).toHaveValue('500');await page.locator('#catchment-distanceM').fill('750');await page.locator('#catchment-distanceM').blur();w=await saved(page);assert.deepEqual(w.nodes.find(n=>n.id==='study').params.geometry,original);assert.equal(w.nodes.find(n=>n.type==='buffer_area').params.distanceM,750);
-  await page.locator('[data-view="workflow"]').click();
+  // Buffer study area was retired on 2026-11-06: a source's own margin fetches beyond an area. The study area's own
+  // geometry is what this test holds, and it is unchanged by anything downstream.
   await page.locator('.react-flow__node[data-id="study"]').click();await page.locator('#edit-study-area').click();await page.locator('#area-sized-box summary').click();await page.locator('#area-box-shape').selectOption('rectangle');await page.locator('#area-box-width').fill('2000');await page.locator('#area-box-height').fill('1000');await page.locator('#area-box-create').click();await page.locator('#area-apply').click();w=await saved(page);const ring=w.nodes.find(n=>n.id==='study').params.geometry.coordinates[0];assert.ok(ring[1][0]-ring[0][0]>original.coordinates[0][1][0]-original.coordinates[0][0][0]);
 });
 

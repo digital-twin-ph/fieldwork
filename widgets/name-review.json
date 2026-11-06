@@ -31,15 +31,6 @@
       "reviewedBy": null
     },
     {
-      "nodeType": "buffer_area",
-      "title": "Buffer study area",
-      "group": "Spatial operations",
-      "fingerprint": "71f44412b2ea",
-      "verdict": "pending",
-      "reviewed": null,
-      "reviewedBy": null
-    },
-    {
       "nodeType": "buffer_point",
       "title": "Area around a point",
       "group": "Spatial operations",

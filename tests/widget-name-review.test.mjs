@@ -123,7 +123,9 @@ test('the shipped ledger passes and covers every live widget', ()=>{
   // 57 on 2026-11-05, with find_satellite_products, the name chosen by the practitioner. Experiment 179.
   // 58 the same day, with search_satellite_catalog.
   // 59 the same day, with sample_satellite_files_at_points: "Sample satellite files seems to be more straightforward".
-  assert.equal(review.reviews.length,59);
+  // 58 on 2026-11-06, buffer_area retired: a source's own margin fetches beyond an area, and a cross-border study is a
+  // study area that straddles the border.
+  assert.equal(review.reviews.length,58);
 });
 
 test('the generated table shows the palette words beside the identifier', ()=>{

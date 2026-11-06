@@ -3,6 +3,17 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.37.0 — 2026-11-06
+
+- **Buffer study area is retired.** Its two uses are met elsewhere. To fetch data beyond an area, Street network and
+  Polygon layer each have their own margin; the Snow isochrone example now sets the network's to 750 m, the same
+  extent as before. For a cross-border study, the study area itself straddles the border, drawn or picked on both
+  sides. A workflow saved with the widget is refused on loading, as for every retired widget; nobody outside the
+  project builds on it.
+- **A flaky test made steady:** "Reset example only where there is a published example" pressed New project before
+  the page had finished checking itself, and failed twice in CI on slow runners. It now waits.
+- Validation: Chromium locally; WebKit in CI.
+
 ## 0.36.0 — 2026-11-06
 
 - **Land surface temperature in °C by default, or °F or K.** MODIS states kelvin; Sample satellite files at points or

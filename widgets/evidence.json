@@ -37,7 +37,7 @@
   "example only": 13,
   "parity only": 9,
   "example, lab not applicable": 14,
-  "example+parity": 20,
+  "example+parity": 19,
   "neither applies": 1
  },
  "compositionsUsedByNoExample": [
@@ -78,17 +78,6 @@
     "snow-extent"
    ],
    "exampleUseCount": 6,
-   "lab": "parity",
-   "labOwed": false,
-   "fieldUse": [],
-   "rung": "example+parity"
-  },
-  {
-   "nodeType": "buffer_area",
-   "exampleUses": [
-    "snow-isochrone"
-   ],
-   "exampleUseCount": 1,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],

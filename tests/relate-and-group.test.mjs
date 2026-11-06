@@ -437,3 +437,36 @@ test('rows relate on several keys together, and the second table\'s value column
   assert.match(facts,/fw:matchedOn "point_id";\n\s+fw:matchedOn "date";/);
   assert.throws(()=>relateTable(satellite,ground,{on:'point_id',alsoOn:['date'],bring:'date'}),/being matched on/);
 });
+
+// A DATE WITHIN A PERIOD, AND A LAG (experiment 180): Brazil's epidemiological weeks against MODIS's 8-day periods.
+test('a week relates to the 8-day period containing its Wednesday, shifted back k weeks for a lag',async()=>{
+  const {relateTable,relateOutcome,relateReceiptFacts}=await import('../build/relate-table.js');
+  const weeks={kind:'data-table',keys:['municipio','data_iniSE'],valueField:'casos',rowCount:3,missingValueCount:0,
+    rows:[['Rio','2024-02-18',100],['Rio','2024-02-25',120],['Niteroi','2024-02-18',30]].map(([m,d,v])=>({key:{municipio:m,data_iniSE:d},value:v}))};
+  const lst={kind:'data-table',keys:['municipio','period_start','period_end'],valueField:'LST_Day_1km',rowCount:6,missingValueCount:0,
+    rows:[['Rio','2024-02-02','2024-02-09',30.1],['Rio','2024-02-10','2024-02-17',30.5],['Rio','2024-02-18','2024-02-25',31.0],['Rio','2024-02-26','2024-03-04',29.0],
+      ['Niteroi','2024-02-10','2024-02-17',28.0],['Niteroi','2024-02-18','2024-02-25',28.5]]
+      .map(([m,a,b,v])=>({key:{municipio:m,period_start:a,period_end:b},value:v}))};
+  const within={date:'data_iniSE',start:'period_start',end:'period_end'};
+  // Lag 0: Sunday + 3 days = Wednesday. 2024-02-21 is in 18-25 Feb; 2024-02-28 is in 26 Feb-4 Mar.
+  const now=relateTable(weeks,lst,{on:'municipio',bring:'LST_Day_1km',within,shiftDays:3});
+  assert.deepEqual(now.table.rows.map(r=>[r.key.municipio,r.key.data_iniSE_shifted,r.key.period_start,r.key.LST_Day_1km]),
+    [['Rio','2024-02-21','2024-02-18','31'],['Rio','2024-02-28','2024-02-26','29'],['Niteroi','2024-02-21','2024-02-18','28.5']]);
+  // Lag 2 weeks: 3 - 14 = -11 days. 2024-02-07 is in 2-9 Feb; 2024-02-14 in 10-17 Feb; Niteroi has no period holding 7 Feb.
+  const two={on:'municipio',bring:'LST_Day_1km',within,shiftDays:-11,unmatched:undefined};
+  assert.throws(()=>relateTable(weeks,lst,two),/1 key in the first table has no row in the second/);
+  const {relateShape}=await import('../build/relate-table.js');
+  const shape=relateShape(weeks,lst,two);
+  assert.deepEqual(shape.previews.drop.rows.map(r=>[r.key.municipio,r.key.period_start,r.key.LST_Day_1km]),
+    [['Rio','2024-02-02','30.1'],['Rio','2024-02-10','30.5']]);
+  // The receipt states the period match and the shift; the outcome names the start as a key.
+  const dropped=relateTable(weeks,lst,{...two,unmatched:{decision:'drop',signature:shape.signature}});
+  const outcome=relateOutcome(weeks,two,dropped);
+  assert.deepEqual(outcome.keys,['municipio','period_start']);
+  const facts=relateReceiptFacts(outcome,[],{runId:'r',nodeId:'n'});
+  assert.match(facts,/fw:matchedWithinPeriod "data_iniSE between period_start and period_end";\n  fw:dateShiftDays "-11"\^\^xsd:integer;/);
+  // A date inside two periods is refused by name: two satellites' rows for one period, kept together.
+  const twice={...lst,rows:[...lst.rows,{key:{municipio:'Rio',period_start:'2024-02-19',period_end:'2024-02-26'},value:33}]};
+  assert.throws(()=>relateTable(weeks,twice,{on:'municipio',bring:'LST_Day_1km',within,shiftDays:3}),
+    /2024-02-21 falls inside 2 periods of the second table for Rio: 2024-02-18 and 2024-02-19/);
+});

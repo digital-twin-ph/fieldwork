@@ -439,20 +439,20 @@
       "id": "urn:fieldwork:example:brazil-dengue-rj-2024",
       "title": "Dengue in Rio de Janeiro state, Brazil, 2024",
       "repository": "https://github.com/digital-twin-ph/example-2024-brazil-dengue",
-      "commit": "8be7c9b2fce90296e14772bc204d74421d493ba3",
+      "commit": "5a42c4ece054589f429fc5bc97edeb415717a40b",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2024-brazil-dengue",
       "licence": {
         "data": "CC-BY-4.0",
         "source": "Sánchez-Marqués and Sánchez, DATASET_MULTIMODAL_V8, Zenodo, doi:10.5281/zenodo.22029053; counts from InfoDengue; boundaries from geoBoundaries (IBGE), CC BY 3.0 IGO",
         "note": "Stated on the Zenodo record and by geoBoundaries. Attribution is in NOTICE.txt."
       },
-      "description": "Weekly notified dengue cases in the 92 municipalities of Rio de Janeiro state during Brazil's largest epidemic on record: the state's epidemic curve, notified cases per 100,000 residents by municipality on a map, and MODIS land surface temperature over each municipality for every 8-day period of 2024.",
+      "description": "Weekly notified dengue cases in the 92 municipalities of Rio de Janeiro state during Brazil's largest epidemic on record: the state's epidemic curve, notified cases per 100,000 residents by municipality on a map, and MODIS land surface temperature over each municipality for every 8-day period of 2024. A fourth workflow sets weekly cases beside the temperature 0 to 8 weeks earlier, in five Poisson models.",
       "carries": {
         "workflow": true,
         "data": true,
         "geography": true
       },
-      "notYet": "Relating temperature to incidence, with lags, and the research note's models. The dataset's own satellite columns are compared with Fieldwork's in experiment 180, not in a workflow.",
+      "notYet": "Vegetation (NDVI, EVI), a map of temperature by period, rainfall and humidity in the models, and errors allowing for week-to-week correlation.",
       "uses": [
         "append_rows",
         "chart_output",
@@ -461,6 +461,8 @@
         "join_table_to_area",
         "map_output",
         "rate",
+        "regression",
+        "relate_table",
         "sample_satellite_files_at_points",
         "search_satellite_catalog",
         "select_rows",
@@ -471,13 +473,13 @@
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "5e5e3a9b4825f3767285c0ff6c7c37a6cd95b6566f5d836030915a21809a5053",
-          "bytes": 830047
+          "sha256": "778d6781b914ddfdd9f49b50cfd9ef6aade4adf49cc5cf29f792820b7ab8e662",
+          "bytes": 1259461
         },
         {
           "path": "data/dengue-rj-2024.csv",
-          "sha256": "ce3ff3230f320f23b1c11c57c16688235ca77606bf849baf95b3e82602898934",
-          "bytes": 876805
+          "sha256": "d1c76ce3248003f08f93fcc5469daec6c90aba00341f23e4cda4634ec9ed4623",
+          "bytes": 887849
         },
         {
           "path": "geo/rj-municipalities.geojson",
@@ -486,17 +488,17 @@
         },
         {
           "path": "provenance.json",
-          "sha256": "e689bd283e06dc36b4cd262604b9dd21b03ed86e70fe90dfe8b941b458fac0a7",
+          "sha256": "05c555bfbcad839fe1d92582ba677295a1c688c4eea7e4ad9d39a932343f064d",
           "bytes": 3408
         },
         {
           "path": "README.md",
-          "sha256": "23e4e845601a96d66f223e042b74738ea28c846edd8fa5af8deac98216005ec0",
-          "bytes": 4117
+          "sha256": "da96cda2a0d0800785c5b17f4229fdd311c80e901e5ed44358a43c874aa39541",
+          "bytes": 4851
         },
         {
           "path": "NOTICE.txt",
-          "sha256": "3fe3735a151fbe8e83b635448a2fd96eb67375b5c908599142a52671d1a2cdc2",
+          "sha256": "fcccd8d0436cf9f13cbe9bce231705ab4404ccdf27e1828be2af2a896acfceba",
           "bytes": 2112
         },
         {
@@ -506,11 +508,11 @@
         },
         {
           "path": "manual.json",
-          "sha256": "12d880e7a8f2a4304f87e06c99653d2676021d161941963eddc57b102341fc2e",
-          "bytes": 22497
+          "sha256": "c6151e3e311c552e20ff4d7425dd15f5ca590a2d79f137514958020fee49b5ba",
+          "bytes": 46910
         }
       ],
-      "workflowCount": 3
+      "workflowCount": 4
     }
   ]
 }

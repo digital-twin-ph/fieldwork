@@ -1,5 +1,5 @@
 import {test,expect} from '@playwright/test';
-import {existsSync,readFileSync} from 'node:fs';
+import {existsSync,readFileSync,writeFileSync} from 'node:fs';
 import {performManual} from './manual-runner.mjs';
 import {writeArrayBuffer} from 'geotiff';
 import {serveRange} from './fixtures/s5p-fixture.mjs';
@@ -22,27 +22,35 @@ test('dengue in Rio de Janeiro state, 2024, built by following the manual',async
     const path=new URL(route.request().url()).pathname.split('/').slice(4).join('/');
     route.fulfill({status:200,body:readFileSync(new URL(path,REPO)),headers:{'access-control-allow-origin':'*','content-type':'text/plain'}});
   });
-  // THE SATELLITE FILES ARE MADE HERE unless BRAZIL_SATELLITE_LIVE is set: two 8-day periods from each MODIS satellite,
-  // every one the same 60 x 40 km grid of 1 km cells over Rio de Janeiro city in the sinusoidal projection, all cells
-  // 15,000 (300 K) of good quality and clear every day. So some municipalities have cells and the rest say they have
-  // none, which is what the playback checks: the steps, not MODIS.
+  // THE SATELLITE FILES ARE MADE HERE unless BRAZIL_SATELLITE_LIVE is set: every 8-day period of 2024 from each MODIS
+  // satellite, each the same 60 x 40 km grid of 1 km cells over Rio de Janeiro city in the sinusoidal projection, good
+  // quality and clear every day. The temperature differs from period to period (14,500 + 40 per period, stored), so the
+  // lag models have something to estimate; some municipalities have cells and the rest say they have none. The
+  // playback checks the steps, not MODIS.
   if(!process.env.BRAZIL_SATELLITE_LIVE){
     const R=6371007.181,X0=Math.round(R*(-43.75*Math.PI/180)*Math.cos(-22.75*Math.PI/180)),Y0=Math.round(R*(-22.75*Math.PI/180)),W=60,H=40;
     const tif=(fill,bits)=>Buffer.from(writeArrayBuffer(bits===16?new Uint16Array(W*H).fill(fill):new Uint8Array(W*H).fill(fill),
       {width:W,height:H,BitsPerSample:[bits],SampleFormat:[1],SamplesPerPixel:[1],PhotometricInterpretation:1,
         ModelPixelScale:[1000,1000,0],ModelTiepoint:[0,0,0,X0,Y0,0],GTModelTypeGeoKey:1,GTRasterTypeGeoKey:1,ProjectedCSTypeGeoKey:32767}));
-    const layers={LST_Day_1km:tif(15000,16),QC_Day:tif(0,8),Clear_sky_days:tif(255,8),LST_Night_1km:tif(14500,16),QC_Night:tif(0,8),Clear_sky_nights:tif(255,8)};
+    const fixed={QC_Day:tif(0,8),Clear_sky_days:tif(255,8),QC_Night:tif(0,8),Clear_sky_nights:tif(255,8)};
+    const DAY=86400000,starts=Array.from({length:46},(_,i)=>new Date(Date.UTC(2024,0,1)+i*8*DAY).toISOString().slice(0,10));
+    const lst=new Map();
     await page.route(/modiseuwest\.blob\.core\.windows\.net/,route=>{
-      const key=Object.keys(layers).find(k=>route.request().url().includes(`_${k}.tif`));return serveRange(route,layers[key]);});
+      const url=route.request().url(),key=Object.keys({...fixed,LST_Day_1km:0,LST_Night_1km:0}).find(k=>url.includes(`_${k}.tif`));
+      if(fixed[key])return serveRange(route,fixed[key]);
+      const index=Number(/\.p(\d+)\./.exec(url)[1]);
+      if(!lst.has(index))lst.set(index,tif(14500+40*index,16));
+      return serveRange(route,lst.get(index));});
     await page.route(/planetarycomputer\.microsoft\.com\/api\/sas\/v1\/token\/modiseuwest/,route=>route.fulfill({status:200,
       contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({token:'st=fixture&sig=none','msft:expiry':'2099-01-01T00:00:00Z'})}));
-    const item=(platform,start,end)=>{const id=`${platform==='terra'?'MOD':'MYD'}11A2.A${start}.fixture`;
+    const item=(platform,index)=>{const start=starts[index],end=new Date(Date.parse(start)+7*DAY).toISOString().slice(0,10);
+      const id=`${platform==='terra'?'MOD':'MYD'}11A2.p${index}.fixture`;
       return {type:'Feature',id,bbox:[-45,-24,-40,-20],geometry:null,properties:{datetime:null,start_datetime:`${start}T00:00:00Z`,end_datetime:`${end}T23:59:59Z`,platform},
-        assets:Object.fromEntries(Object.keys(layers).map(k=>[k,{href:`https://modiseuwest.blob.core.windows.net/modis-061-cogs/fixture/${id}_${k}.tif`,
+        assets:Object.fromEntries(['LST_Day_1km','QC_Day','Clear_sky_days','LST_Night_1km','QC_Night','Clear_sky_nights'].map(k=>[k,{href:`https://modiseuwest.blob.core.windows.net/modis-061-cogs/fixture/${id}_${k}.tif`,
           type:'image/tiff; application=geotiff; profile=cloud-optimized',roles:['data']}]))};};
     await page.route(/planetarycomputer\.microsoft\.com\/api\/stac\/v1\/collections\/modis-11A2-061\/items/,route=>route.fulfill({status:200,
       contentType:'application/geo+json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({type:'FeatureCollection',links:[],
-        features:[item('terra','2024-02-18','2024-02-25'),item('aqua','2024-02-18','2024-02-25'),item('terra','2024-02-26','2024-03-04'),item('aqua','2024-02-26','2024-03-04')]})}));
+        features:starts.flatMap((_,i)=>[item('terra',i),item('aqua',i)])})}));
   }
   const manual=JSON.parse(readFileSync(MANUAL,'utf8'));
   await page.goto('/');await page.evaluate(()=>localStorage.clear());
@@ -77,6 +85,18 @@ test('dengue in Rio de Janeiro state, 2024, built by following the manual',async
     expect(await page.locator('#table-viewer tr[data-row-excluded]').count()).toBeGreaterThan(0);
     await page.locator('#table-viewer').screenshot({path:'test-results/select-before-greyed.png'});
     await page.locator('#table-viewer').getByRole('button',{name:'Close'}).click();
+  }
+  // THE MODELS' RESULTS, written out where BRAZIL_RESULTS names a file: the rate ratio per lag is what the example
+  // reports, and the exported project keeps no results.
+  if(process.env.BRAZIL_RESULTS){
+    await page.locator('[data-view="results"]').click();
+    const out={};
+    for(const tab of await page.locator('#result-tabs [data-output]').all()){
+      const label=(await tab.innerText()).replace(/^\S+\s/,'').trim();
+      await tab.click();await page.waitForTimeout(300);
+      out[label]=await page.locator('main').first().innerText();
+    }
+    writeFileSync(process.env.BRAZIL_RESULTS,JSON.stringify(out,null,1));
   }
   await page.locator('#storage-status').click();
   const block=page.locator('.project-view-block').filter({hasText:'Dengue in Rio de Janeiro state'}).first();

@@ -72,6 +72,56 @@ export interface RelateRequest {
   /** What to do with the left rows the right table has no key for, where there are any. Absent
    *  and non-empty gaps is a REFUSAL, not a default: see `relateTable`. */
   unmatched?:UnmatchedDeclaration;
+  /** A DATE MATCHED TO THE PERIOD THAT CONTAINS IT (experiment 180): the left table's `date` column against the right
+   *  table's `start` and `end`, among rows that agree on the equal keys. Brazil's epidemiological weeks against
+   *  MODIS's 8-day periods: a week and a period are not equal keys. */
+  within?:{date:string; start:string; end:string};
+  /** Days added to the left date before it is matched: +3 takes a week's Sunday to its Wednesday, and −7k more is a
+   *  lag of k weeks. Stated on the result, and the shifted date kept on the row. */
+  shiftDays?:number;
+}
+
+const DAY=86_400_000;
+const isoDate=(text:string)=>/^\d{4}-\d{2}-\d{2}/.test(text)?Date.parse(text.slice(0,10)+'T00:00:00Z'):NaN;
+const dateText=(ms:number)=>new Date(ms).toISOString().slice(0,10);
+
+/** THE PERIOD STEP, before an ordinary relate: each left row's date, shifted, is matched to the right row whose
+ *  start-end span contains it among those agreeing on the equal keys, and that row's start is written onto the left
+ *  row under the right table's own column name. The relate then matches on the equal keys and that start as usual, so
+ *  everything after it, the gap decision, the preview and the receipt, is unchanged; and the period's start, with
+ *  the shifted date, stays on every row. A date inside two periods is refused by name: relating cannot choose. */
+export function alignToPeriods(left:DataTable,right:DataTable,request:RelateRequest):{left:DataTable;request:RelateRequest}{
+  const within=request.within;
+  if(!within)return {left,request};
+  const {date,start,end}=within,shift=request.shiftDays??0;
+  if(!Number.isInteger(shift)||Math.abs(shift)>3660)throw new Error('Shift the date by a whole number of days, at most ten years either way.');
+  if(!left.keys.includes(date))throw new Error(`The first table has no "${date}" column. Its columns are ${left.keys.join(', ')}.`);
+  for(const c of [start,end])if(!right.keys.includes(c))
+    throw new Error(`The second table has no "${c}" column. Its columns are ${right.keys.join(', ')}.`);
+  if(left.keys.includes(start))throw new Error(`The first table already has a "${start}" column, which the matched period's start would take.`);
+  const equal=[request.on.trim(),...(request.alsoOn??[]).map(k=>k.trim())].filter(k=>k&&k!==start);
+  const shifted=shift?`${date}_shifted`:null;
+  if(shifted&&left.keys.includes(shifted))throw new Error(`The first table already has a "${shifted}" column.`);
+  const group=(row:{key:Record<string,string>})=>equal.map(k=>normaliseName(row.key[k]??'',request.normalisation??DEFAULT_NORMALISATION)).join('\u001f');
+  const periods=new Map<string,{from:number;to:number;start:string}[]>();
+  for(const row of right.rows){
+    const from=isoDate(row.key[start]??''),to=isoDate(row.key[end]??'');
+    if(!Number.isFinite(from)||!Number.isFinite(to))continue;
+    const g=group(row),list=periods.get(g)??[];
+    if(!list.some(p=>p.start===row.key[start]))list.push({from,to,start:row.key[start]!});
+    periods.set(g,list);
+  }
+  const rows=left.rows.map(row=>{
+    const at=isoDate(row.key[date]??'');
+    const when=Number.isFinite(at)?at+shift*DAY:NaN;
+    const hits=Number.isFinite(when)?(periods.get(group(row))??[]).filter(p=>p.from<=when&&when<=p.to):[];
+    if(hits.length>1)throw new Error(`${dateText(when)} falls inside ${hits.length} periods of the second table for `
+      +`${equal.map(k=>row.key[k]).join(' · ')||'the same keys'}: ${hits.map(h=>h.start).join(' and ')}. Relating cannot `
+      +'choose between them. Keep one row per period first, for example one satellite.');
+    return {...row,key:{...row.key,...(shifted?{[shifted]:Number.isFinite(when)?dateText(when):''}:{}),[start]:hits[0]?.start??''}};
+  });
+  const keys=[...left.keys,...(shifted?[shifted]:[]),start];
+  return {left:{...left,keys,rows},request:{...request,alsoOn:[...(request.alsoOn??[]).filter(k=>k!==start),start]}};
 }
 /** A left key the right table had no row for. Reported, never defaulted. */
 export interface RelateGap {key:string; rows:number}
@@ -366,6 +416,7 @@ function labelRefusalFor(plan:RelatePlan,label:string|undefined):string|null {
 }
 
 export function relateShape(left:DataTable,right:DataTable,request:RelateRequest):RelateShape {
+  ({left,request}=alignToPeriods(left,right,request));
   const plan=planRelate(left,right,request);
   const label=request.unmatched?.decision==='keep'?request.unmatched.label:undefined;
   const refusal=labelRefusalFor(plan,label);
@@ -377,6 +428,7 @@ export function relateShape(left:DataTable,right:DataTable,request:RelateRequest
 }
 
 export function relateTable(left:DataTable,right:DataTable,request:RelateRequest):RelateResult {
+  ({left,request}=alignToPeriods(left,right,request));
   const plan=planRelate(left,right,request);
   const {gaps,signature,bring,normalisation}=plan;
 
@@ -441,6 +493,8 @@ export interface RelateOutcome {
   carried:string[];
   /** Rows kept under a declared category rather than dropped. */
   kept:number;
+  /** Where a date was matched to the period containing it, and by how many days it was shifted first. */
+  within?:{date:string; start:string; end:string}; shiftDays?:number;
   /** The shape of the join and what it did to each numeric variable, so the step can draw the bar
    *  and the shares without recomputing them. */
   overlap:RelateOverlap;
@@ -468,10 +522,13 @@ export function rateMultiplier(shares:MeasureShare[],numerator:string,denominato
 /** The outcome of a relate, as the run records it. Separate from `relateTable` so the computation
  *  returns the table it computed and nothing about how it will be displayed. */
 export function relateOutcome(left:DataTable,request:RelateRequest,result:RelateResult):RelateOutcome{
-  const keys=[request.on.trim(),...(request.alsoOn??[]).map(k=>k.trim()).filter(Boolean)].filter((k,i,all)=>all.indexOf(k)===i);
+  const keys=[request.on.trim(),...(request.alsoOn??[]).map(k=>k.trim()).filter(Boolean),...(request.within?[request.within.start]:[])]
+    .filter((k,i,all)=>all.indexOf(k)===i);
+  const shifted=request.within&&request.shiftDays?[`${request.within.date}_shifted`]:[];
   return {on:keys.join(' and '),keys,bring:request.bring.trim(),
     offered:left.rows.length,related:result.related,dropped:result.dropped,kept:result.kept,
-    gaps:result.gaps,values:result.values,carried:[...left.keys],
+    gaps:result.gaps,values:result.values,carried:[...left.keys,...shifted],
+    ...(request.within?{within:request.within,shiftDays:request.shiftDays??0}:{}),
     overlap:result.overlap,shares:result.shares,normalisation:result.normalisation,
     ...(result.declared?{declared:result.declared}:{})};
 }
@@ -587,6 +644,9 @@ export function relateReceiptFacts(
     // ONE fw:matchedOn PER KEY COLUMN, as the tables spell it: rows relate where all of them agree.
     +(outcome.keys??[outcome.on]).map(k=>`  fw:matchedOn ${quote(k)};\n`).join('')
     +`  fw:broughtColumn ${quote(outcome.bring)};\n`
+    // A DATE WITHIN A PERIOD: which date, which span, and the shift, so the lag a row was matched at can be recomputed.
+    +(outcome.within?`  fw:matchedWithinPeriod ${quote(`${outcome.within.date} between ${outcome.within.start} and ${outcome.within.end}`)};\n`
+      +`  fw:dateShiftDays "${outcome.shiftDays??0}"^^xsd:integer;\n`:'')
     +`  fw:keyComparison ${quote(outcome.normalisation==='fuzzy'?'punctuation-folded':'exact')};\n`
     +`  fw:offeredRowCount "${outcome.offered}"^^xsd:integer;\n`
     +`  fw:relatedRowCount "${outcome.related}"^^xsd:integer;\n`

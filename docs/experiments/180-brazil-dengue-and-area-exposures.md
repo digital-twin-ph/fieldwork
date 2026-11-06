@@ -314,7 +314,7 @@ another stops the run, naming it, and the result says whether every file stated 
 the 180 files of 2024 over Rio de Janeiro state all stated `K` and `0.02`; the result reads *"Every file stated its
 unit as K and its scale factor as 0.02, and was read by them."*
 
-## Design: temperature beside incidence, with lags, 2026-11-06 (proposed, not built)
+## Design: temperature beside incidence, with lags, 2026-11-06 (built, 0.38.0)
 
 The research note's question needs weekly cases per municipality beside land surface temperature some weeks earlier.
 The pieces Fieldwork has: weekly cases (the first two workflows), temperature per municipality per 8-day period per
@@ -353,6 +353,43 @@ is +3 − 7k).
 **Not established, and to say on the result:** that land surface temperature stands for the temperature mosquitoes
 live in; that a week's clear days are representative of the week (often one or two in summer, M2); and any causal
 reading. One state, one year, 92 municipalities.
+
+## Built: temperature beside incidence, with lags, 2026-11-06 (0.38.0)
+
+**The practitioner, 2026-11-06:** *"Yes"*, to building it as designed. Relate a column gained **Match a date within a
+period** and **Shift the date first, in days** (`alignToPeriods` in `src/relate-table.ts`, before an ordinary relate,
+so the gap decision, preview and receipt are unchanged; the receipt adds `fw:matchedWithinPeriod` and
+`fw:dateShiftDays`). The example's fourth workflow, *Did warmer ground weeks earlier go with more cases?*: weekly
+cases with `mes`; the 92 municipalities from the project; MODIS land surface temperature, Terra only; five Relates at
+lags 0, 2, 4, 6, 8 weeks (shifts +3, −11, −25, −39, −53 days); five Poisson models with temperature in °C as a
+numeric exposure, `municipio` as absorbed strata and `mes` categorical (Regression absorbs one strata column; month
+as a categorical term is the same model), intervals scaled by the Pearson dispersion. Weeks whose period had no
+clear-sky value were dropped, with that reason in the evidence.
+
+**Played back live** in Chromium, all four workflows, 14.6 minutes (the satellite files read twice, for the run
+before the joins are decided and the run after).
+
+| Lag | Rate ratio per 1 °C (95%) | Rows | Pearson dispersion |
+| --- | --- | --- | --- |
+| 0 weeks | 0.993 (0.983–1.004) | 4,636 | 27.8 |
+| 2 weeks | 0.979 (0.969–0.989) | 4,549 | 26.5 |
+| 4 weeks | 0.963 (0.954–0.973) | 4,369 | 24.4 |
+| 6 weeks | 1.007 (0.997–1.017) | 4,185 | 22.3 |
+| 8 weeks | 1.063 (1.053–1.073) | 4,001 | 18.0 |
+
+**Not established, and the reasons these numbers should not be read as an effect:** the counts vary 18 to 28 times
+more than Poisson allows, and while the intervals are scaled for that, they allow nothing for correlation from week
+to week within a municipality, so they are too narrow. One year and one epidemic wave: the peak in February follows
+the hottest weeks, and a lag of 8 weeks lands the exposure in the warmest months of the year, so lag and season are
+hard to tell apart with only month strata. Rainfall and humidity, which the dataset carries, are not in the model.
+Each 8-day value rests on one or two clear days in the wet season (M2). Land surface temperature is not the air
+temperature mosquitoes live in. Nothing here is causal.
+
+**Found building it:** choosing the first of the three period columns redrew the Inspector, closing the section and
+losing the choice, because only a complete set was saved; partial choices are now kept. The join's preview and
+dialog built their own requests without the new options and refused; they now pass them. And the manual's first
+draft ran before the weekly cases reached an output, and read the brought temperature, a key column, as
+categorical: 54 model columns against a limit of 32.
 
 ## What this does not establish
 

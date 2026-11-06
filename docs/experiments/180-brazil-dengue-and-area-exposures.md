@@ -223,6 +223,34 @@ a year: about 190 MB per satellite per year, less where the state covers only pa
 **Then:** compare the result with the dataset's `LST_Day_mean` for the same municipalities and months; and the lab
 parity check, against rasterio and rasterstats, before it is called done.
 
+## M2: the 92 municipalities read in Node, February 2024, against the dataset
+
+`src/satellite-areas.ts`, the reading core the widget will use, run in Node with geotiff.js on the real files: Terra
+(MOD11A2) daytime land surface temperature, the four periods starting 2, 10, 18 and 26 February 2024, both tiles, the
+92 municipalities from the example. Rule: produced, LST error ≤ 2 K (decision 2).
+
+| Measured | |
+| --- | --- |
+| Files | 8 (4 periods × 2 tiles), 3 layers each: `LST_Day_1km`, `QC_Day`, `Clear_sky_days` |
+| Cost | Reading each municipality's window separately: 63 s, 1,428 requests, 49.8 MB, because the same blocks were fetched again for each. One window per file over all municipalities: 11 s, 240 requests, 1.0 MB (the sum of response sizes the server reported) |
+| Cells per municipality per period | 21 (smallest) to 4,715; median 443 |
+| Passing | every municipality had passing cells in February |
+| **Clear days per value** | median 2.3 of 8 per passing cell: each 8-day value over Rio de Janeiro in February rests on about two clear days |
+
+**`Clear_sky_days` is a bitmask, not a count.** Its values averaged 100 to 137 "days" for an 8-day period on the first
+run. The guide calls it *"the days in clear-sky conditions and with validate LSTs"*; the values only make sense as
+one bit per day. Fixed by counting set bits; recorded so the next reader does not make the same mistake.
+
+**Against the dataset's `LST_Day_mean` for February** (one value per municipality for the month; 90 of 92, since
+Laje do Muriaé and Miracema have none): Fieldwork's mean of the four Terra periods minus the dataset's is +0.14 °C on
+average, median −0.32 °C, from −3.00 to +7.04 °C; correlation across municipalities 0.78. Rio de Janeiro city 31.01
+against 30.83 °C.
+
+The largest differences are where the dataset's values look unlike a summer daytime surface: Areal 18.54 °C
+(Fieldwork 25.58), Duas Barras 21.24 (25.54), São Francisco de Itabapoana 25.13 (32.12). **Not established:** which is
+nearer the truth. The dataset does not say whether it used Terra, Aqua or both, which days make its month (the
+period starting 26 February runs to 4 March), how it chose cells, or what quality rule it applied.
+
 ## What this does not establish
 
 Any design. Whether InfoDengue's data may be redistributed; how the Zenodo file's exposures were computed, or

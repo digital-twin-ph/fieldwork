@@ -39,6 +39,10 @@ export interface TableView {
    *  in every Before and in After; `brought`: the column the join added, in After. A word as well as a tint, so the
    *  mark does not rest on colour alone. */
   roles?:Record<string,'key'|'brought'>;
+  /** ROWS THE STEP DID NOT KEEP, shown greyed in a Before rather than left out, so what a selection removed can be
+   *  read beside what it kept. The practitioner, 2026-11-06: *"it would be nice to show which rows weren't selected
+   *  grayed out"*. `why` says the rule, under the title. */
+  excluded?:{rows:Set<Record<string,unknown>>; why:string};
   /** Offered per column when a repair is possible and the caller can carry it out. Given the
    *  column and told what the practitioner asked for; the dialog closes and the caller decides
    *  what to record. */
@@ -130,6 +134,8 @@ export function openTableViewer(view:TableView,esc:Escape):void{
           +`data-table-step="${i}" aria-pressed="${i===view.steps!.at}">${esc(label)}</button>`).join('')
         +`</div>`:'')
       +(view.note?`<p class="description">${esc(view.note)}</p>`:'')
+      +(view.excluded?.rows.size?`<p class="description table-excluded-note"><span class="table-excluded-swatch"></span>`
+        +`${view.excluded.rows.size.toLocaleString('en-US')} of ${view.rows.length.toLocaleString('en-US')} rows greyed: not kept by this step, ${esc(view.excluded.why)}.</p>`:'')
       +`<div class="record-controls">`
       +`<input id="table-viewer-filter" type="search" placeholder="Filter rows…" value="${esc(filter)}" aria-label="Filter rows">`
       +`<span class="records-rows">${rows.length} of ${view.rows.length} rows`
@@ -152,7 +158,7 @@ export function openTableViewer(view:TableView,esc:Escape):void{
                 :'')
               +`</th>`;
           }).join('')+`</tr></thead><tbody>`
-          +shown.map((row,i)=>`<tr><td>${i+1}</td>`
+          +shown.map((row,i)=>`<tr${view.excluded?.rows.has(row)?' class="row-excluded" data-row-excluded':''}><td>${i+1}</td>`
             +view.columns.map(c=>{const classes=[mismatches(c,row[c])?'cell-mismatch':'',view.roles?.[c]?`column-role-${view.roles[c]}`:''].filter(Boolean);
               return `<td${classes.length?` class="${classes.join(' ')}"`:''}>${cell(row[c])}</td>`;}).join('')+`</tr>`).join('')
           +`</tbody></table></div>`

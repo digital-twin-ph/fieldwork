@@ -3,6 +3,16 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.34.1 — 2026-11-06
+
+- **A step's table is one button away even before a run.** After opening a project or reloading, a table step's
+  Inspector said only that the workflow had not run, which read as "no table view". It now offers **Run and view
+  this table**. A table read from a URL still has to be fetched first, in Tabular data.
+- **Select rows by value greys the rows it dropped**, in its Before view, and says how many and by what rule.
+- **Checkboxes sit beside their labels** everywhere in the Inspector. In Total within groups each box had a line of
+  its own above its column name.
+- Validation: Chromium locally; WebKit in CI.
+
 ## 0.34.0 — 2026-11-06
 
 - **Sample satellite files at points or over areas.** The sampler takes a polygon layer as well as points, and reads

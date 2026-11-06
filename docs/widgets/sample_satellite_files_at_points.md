@@ -1,6 +1,6 @@
 # Sample satellite files at points or over areas
 
-_Created 2026-11-05 · Updated 2026-11-05_
+_Created 2026-11-05 · Updated 2026-11-06_
 
 **The satellite value at each of your points, or over each of your areas, for every overpass or period**, read from
 the files **Search a satellite catalog** found. Each value comes with its quality. Where a point has no usable value, it says which kind of gap it is. Nothing

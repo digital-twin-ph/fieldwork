@@ -67,11 +67,18 @@ values."* A file with one row per place and week, recording cumulative cases, gi
 say whose rows these are (the place). In a file that is wide by period (`cum_w1`, `cum_w2`, …) the same sum is within
 one row, and needs nothing new.
 
-**That order is Epi Info's `SORT`, folded in.** The practitioner, the same day: *"Epi Info AI has a SORT function."*
-The [commands audit](../audits/epi-info-commands-and-our-widgets.md) records `SORT` as wanted and unbuilt: a chart has
-a bar order, a table none. A rule between rows cannot work without one, so it sorts by the order and group it names,
-under the hood, and the preview's After shows the rows in that order. No Sort widget: whether a table needs an order
-of its own, outside a rule, is a separate question, left open.
+**That order is Epi Info's `SORT`, and it is a prerequisite.** The practitioner, the same day: *"Epi Info AI has a
+SORT function."* Then: *"For between rows computation we can prerequisite table sort on a column. In cumulative values
+a date time column would be a candidate."* The [commands audit](../audits/epi-info-commands-and-our-widgets.md)
+records `SORT` as wanted and unbuilt: a chart has a bar order, a table none.
+
+- **A rule between rows needs the table sorted on a named column.** Until one is named, the rule does not run, and the
+  step says why. The order is never taken from the file, because a file's row order is not a declaration.
+- **Date and time columns are offered as the candidates**, first, because a cumulative count accumulates over time.
+  Any other column can still be chosen.
+- **The preview's After shows the rows in that order**, grouped by the columns that say whose rows these are.
+- **Where the sort lives is open:** a setting on Apply ruleset, or a Sort step before it. A setting keeps the canvas
+  as it is; a step would also give a table an order outside any rule, which nothing has needed yet.
 
 What a rule between rows must keep, each said and none refused:
 

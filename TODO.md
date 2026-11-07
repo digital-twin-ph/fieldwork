@@ -1012,6 +1012,18 @@ after, in the browser, so a cut is seen rather than claimed.
 5. **Spatial steps as black boxes.** A spatial operation shows what it changed, before and after, as table steps do:
    inputs, the operation's outline, what was kept or cut, animated where it helps. Start with Clip polygons. Measure:
    widgets that show what they changed, of those that change something.
+6. **What to do next, from the ontology.** The practitioner: *"We have play back build which is useful for replaying
+   workflows but none exists for widget use. Like what's the first thing to do."* Then: *"I think the steps is where
+   the widget ontology will help because it can constrain what's next."* Measured 2026-11-07: each widget's release
+   file declares its ports (inputs, which are optional, the output), but `ontology/widgets.ttl` carries only label,
+   manual and figure section, and **all 70 current releases leave `shaclShapes` empty**: no widget's required settings
+   are declared anywhere but in code. So: (a) generate each widget's ports into `widgets.ttl` from its release; (b)
+   write a SHACL shape per widget for its required settings, into the slot the release already has; (c) N3 rules over a
+   workflow's facts and those declarations name the one next step and why (connect an X here, and what produces X;
+   choose this setting; run; what accepts this output), shown in the Inspector and feeding the palette. A per-widget
+   "Show me" replays that widget's steps from a worked example; today the example manuals exercise 16 of 70 widgets.
+   Measure: widgets whose next step can be named from declarations alone, of 70. A widget that cannot be declared
+   cleanly is a port or Inspector problem (items 3 and 4).
 
 ### Plain checks on a note, before any model (agreed 2026-11-07)
 

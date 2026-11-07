@@ -44,6 +44,22 @@ each widget's Inspector is also inventoried**: whether it configures through a d
 the panel, and for each control whether changing it changes the step's settings or its result. A control that changes
 neither is stale, and is a row in the table rather than an impression.
 
+**A fourth, the same day:** *"Also the widget ports do not have a consistent way of working. Some input ports are
+like auto detect what's coming in and label the port type after success connection while the others are
+predetermined ports and form a clutter on the left side."* Then: *"The Map widget is an example of"* (unfinished when
+recorded). H4 and H8. **Measured the same day** from `nodeInputs` in `src/core.ts` and `widgets/port-contracts.json`:
+four models of input port, not one.
+
+| Model | How the ports appear | Widgets |
+| --- | --- | --- |
+| Fixed list | Every port drawn, used or not | `map_output` 8 optional, `stack_polygons` 6, `table_output` 5, `compare_point_sets` 5 |
+| Inferred from the wiring | The first connection settles the mode | `map_output`'s input mode (table, polygons, decisions or spatial) |
+| Switched by a setting | An Inspector choice swaps the ports | `case_series`, `rate`, `chart_output`, `deduplicate_points` |
+| Counted | The writer chooses how many | `append_rows`, point-layer inputs |
+
+Of 70 widgets, 28 take one input port, 23 two, 10 none, and 9 three or more. The clutter the practitioner names is in
+those nine. `map_output` carries two of the four models at once.
+
 **And the evaluation is done inside Fieldwork.** The practitioner: *"Perhaps we can make a pop up form for this JK
 evaluation for test sections e.g. widgets so it is in the workflow and can be saved to laptop so it can be reviewed."*
 Decided the same day: shown only when lab evaluation is switched on, in Help; saved as Markdown to read and JSON to

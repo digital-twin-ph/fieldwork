@@ -34,6 +34,25 @@ The practitioner, 2026-11-07, across one afternoon of [184](184-heuristic-evalua
 explanation of them. Explanation that only records how the widget was designed goes to the manual or the record, not
 the dialog ([184](184-heuristic-evaluation-in-the-lab.md)'s first lens).
 
+## The dialog, standard too
+
+The practitioner, 2026-11-07: *"The Inspector modal dialog also has to have a consistent look, feel and behavior to
+it."* Counted the same day: **24 dialogs**, headed in **four** different ways (`manual-head` 11, `dialog-heading` 4,
+`area-dialog-heading` 4, `dlg-head` 1), closed with **four** different words (Close 14, Cancel 10, × 9, Done 5), and
+with action bars under **seven** class names. So every widget's configuration dialog follows one shape:
+
+| Part | The same in every dialog |
+| --- | --- |
+| **Heading** | The widget's name, then the step's own name; one close control, top right, always × |
+| **Body** | Sections in one order: **Settings** (what the step uses), **Preview** (what it will do, with these settings, to this data), **Decisions** (anything the step will not decide for the person, such as unmatched rows) |
+| **Messages** | A refusal or warning in one place, above the footer, in plain words, saying what to change |
+| **Footer** | **Cancel** on the left, **Apply** on the right; Apply is the only primary button |
+| **Behaviour** | Opens with focus on the first setting; Escape or × with unapplied changes asks before discarding; Apply closes and the Inspector's Settings sentence and the canvas update at once; nothing changes the workflow until Apply |
+| **Size** | One width for configuration dialogs, readable text, the footer always visible |
+
+The other 23 dialogs (notes, evidence, catalog, help …) take the same heading, close control, footer and messages as
+they are touched, so the application has one dialog, not twenty-four.
+
 ## Relate first
 
 Relate's Inspector on 2026-11-07: its own two input lists, the match key, the column to bring, "and also matched on",
@@ -48,10 +67,12 @@ standard:
 
 ## What would close it
 
-**`tried`** when Relate meets the standard and its tests and the Brazil manuals pass against it.
+**`tried`** when Relate's Inspector and dialog meet both standards and its tests and the Brazil manuals pass against
+them.
 
 **`validated`** when a check fails for any Inspector that adds a section outside the six, or orders them differently,
-and the count of Inspectors meeting the standard is recorded, of 70.
+or any configuration dialog that departs from its shape; and the counts meeting each standard are recorded: Inspectors
+of 70, dialogs of 24.
 
 ## What this does not establish
 

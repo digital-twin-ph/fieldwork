@@ -991,11 +991,31 @@ workflow (experiment 180):
 
 ### Comprehensibility: five known problems, actionable now (2026-11-07)
 
+**The umbrella.** The practitioner: *"Overall FW is not minimalist. It has a very complex interface that can be
+streamlined to reduce the interface friction."* The items below are its parts. Its measure is the audit's count of
+visible controls and words per screen, which should fall as each item lands. Item 0 raised every word to a readable
+size on 2026-11-07, and that made the crowding plain: tabs and header wrap, and the note dialog's writing box falls
+below the fold.
+
 The practitioner's overall sense of the interface, recorded in
 [184](docs/experiments/184-heuristic-evaluation-in-the-lab.md) as its lenses, then: *"The above are already known and
 actionable."* So these are work, not candidates waiting on the rating. Each closes on a measurement taken before and
 after, in the browser, so a cut is seen rather than claimed.
 
+0. **Text too small and too faint to read — first, because it is every word.** The practitioner: *"much of the text
+   especially those that look like fine print I hardly read because I have poor eyesight … too verbose and unreadable,
+   often in technical prose not plain language."* Then: *"no need to wait for evaluation for things that are staring at
+   us in the face."* Measured 2026-11-07 with `tests/text-audit.browser.mjs` (`TEXT_AUDIT=1`, Chromium): words below
+   14 px were 311 of 323 on the Workflow tab, 1,623 of 1,639 on the Notes tab, 1,132 of 1,148 with the note dialog
+   open, down to 8 px; words under WCAG's 4.5:1 contrast were 215, 505 and 427. Floor 14 px, body 16 px, WCAG AA
+   contrast, no meaning carried only in small grey text, sizes that follow the browser's zoom. Measure: the same audit,
+   after.
+0a. **A high-contrast theme.** The practitioner, 2026-11-07: *"We should also have a high contrast theme - add this
+   to TODO. I actually switch themes depending on the job to be done."* A third choice beside Light and Dark in the
+   theme menu, kept per device like the others: near-black on white (or the reverse), no tinted surfaces behind text,
+   borders and focus rings strong enough to find every control, and colour never the only signal. Aim at WCAG AAA
+   contrast (7:1) for text. Respect the operating system's increased-contrast setting (`prefers-contrast: more`) when
+   the theme is Match device. Measure: the text audit in each theme, with AAA as the bar for this one.
 1. **Design explanation on screen.** Sort each surface's visible text into instruction, status and design explanation;
    move the third to the manual or the record. Start with the header subtitle, the Notes tab heading, the Inspector's
    step cards, and labels that are this project's terms (*machined*, *derived*, *authored*, *N3 & evidence*).

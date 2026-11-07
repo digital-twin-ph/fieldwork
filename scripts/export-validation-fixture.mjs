@@ -10,7 +10,7 @@
 //                   | relate-snow-001 | group-snow-001 | area-join-snow-001
 //                   | select-range-london-001
 //                   | regression-salmonella-001 | regression-nyc-001 (needs NYC_PKG)
-//                   | sample-satellite-s5p-001 | lag-response-brazil-001
+//                   | sample-satellite-s5p-001 | lag-response-brazil-001 | regression-strata-brazil-001
 import {createHash} from 'node:crypto';
 import {readFile,writeFile} from 'node:fs/promises';
 import {reprojectToCRS84,projectFromCRS84} from '../build/reproject.js';
@@ -1149,6 +1149,38 @@ const builders={
     },files:{}};
   },
 
+  'regression-strata-brazil-001'(){
+    // SEVERAL STRATA COLUMNS (experiment 182): weeks compared within a municipality, year and month. Two municipalities
+    // of the published 2010-2025 extract, the twelve doubled weeks left out, cases on the dataset's weekly air
+    // temperature and rainfall. The lab fits the same model with one indicator per combination, as statsmodels has no
+    // absorbed strata, and with an overdispersion scale from the Pearson statistic.
+    const csv=new URL('../../example-2024-brazil-dengue/data/dengue-rj-2010-2025.csv',import.meta.url);
+    const text=readFileSync(csv,'utf8');
+    const t=parseCSV(text,250_000,40_000_000);const h=t.headers.map(x=>x.trim());
+    // Two municipalities: one indicator per stratum makes a dense design, and six (1,104 strata) exhausted the browser
+    // kernel's memory in statsmodels. Two keep three strata columns over sixteen years.
+    const PLACES=['Angra dos Reis','Petrópolis'];
+    const EDGES=['2010-12-26','2011-12-25','2012-12-30','2013-12-29','2015-01-04','2016-12-25','2018-12-30','2019-12-29','2020-12-27','2021-12-26','2022-12-25','2024-12-29'];
+    const COLUMNS=['municipio','anio','mes','data_iniSE','casos','tempmed','precip_total_semana'];
+    const rows=t.rows.map(v=>Object.fromEntries(h.map((x,i)=>[x,v[i]??''])))
+      .filter(r=>PLACES.includes(r.municipio)&&!EDGES.includes(r.data_iniSE))
+      .map(r=>Object.fromEntries(COLUMNS.map(c=>[c,r[c]])));
+    const params={family:'poisson',outcome:'casos',exposure:{column:'tempmed',as:'numeric'},
+      adjust:[{column:'precip_total_semana',as:'numeric'}],strata:['municipio','anio','mes'],errors:'overdispersed'};
+    const fitted=strata=>{const r=fitRegression(rows,specFrom({...params,strata}));
+      return {strata:r.strata,rows:r.rows,dispersion:r.dispersion,residualDf:r.residualDf,adjustedFor:r.adjustedFor,
+        estimates:r.estimates.map(e=>({term:e.term,column:e.column,coefficient:e.coefficient,se:e.se,ratio:e.ratio,lower:e.lower,upper:e.upper}))};};
+    return {fixture:{
+      ...base('regression-strata-brazil-001','regression','Regression','src/regression.ts#fitRegression'),
+      source:'Sánchez-Marqués and Sánchez, DATASET_MULTIMODAL_V8, Zenodo doi:10.5281/zenodo.22029053, CC BY 4.0, as extracted to example-2024-brazil-dengue/data/dengue-rj-2010-2025.csv. tempmed is InfoDengue\'s weekly mean air temperature; precip_total_semana is CHIRPS at one grid cell.',
+      declaredParameters:{params,places:PLACES,leftOutWeeks:EDGES,
+        semantics:'Poisson regression of casos on tempmed, adjusted for precip_total_semana, with one stratum per combination of municipio, anio and mes absorbed by the conditional Poisson likelihood; a stratum with no events is dropped. A row missing a model column is left out. Overdispersed: model-based standard errors multiplied by the square root of the Pearson chi-square over the residual degrees of freedom, those being rows used minus columns minus strata used.',
+        equivalentTo:"statsmodels: sm.GLM(casos, [tempmed, precip_total_semana, indicators of municipio x anio x mes], family=Poisson()).fit(scale='X2'), over rows with every column present and strata with at least one case."},
+      input:{csvSha256:sha256(readFileSync(csv)),columns:COLUMNS,rowCount:rows.length,rows},
+      output:{cases:[{note:'Three strata columns together',strataColumns:['municipio','anio','mes'],...fitted(['municipio','anio','mes'])}]},
+      note:'Recompute from input.rows: drop rows missing any model column, drop strata with no cases, fit with one indicator per stratum, scale by the Pearson statistic.'
+    },files:{}};
+  },
   'lag-response-brazil-001'(){
     // FIVE REGRESSIONS STACKED AND DRAWN (experiment 181). The estimates are the five Brazil lag models as played back
     // live in experiment 180, with one month term each so the selection has something to drop. The lab rebuilds the

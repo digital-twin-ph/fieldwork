@@ -11,7 +11,18 @@
 import type {Escape} from './types.js';
 import {SIGN_IN_WORDS,type SatelliteProduct} from './satellite-products.js';
 import {citationMarkup} from './satellite-products-ui.js';
-import {MAX_ITEMS,defaultKept,searchCatalog,searchSentence,typedBox,type BBox,type CatalogItem,type CatalogSearch} from './satellite-catalog.js';
+import {defaultKept,searchCatalog,searchSentence,typedBox,type BBox,type CatalogItem,type CatalogSearch} from './satellite-catalog.js';
+import {gridReaderFor} from './satellite-grid-sample.js';
+import {readerFor} from './satellite-sample.js';
+
+/** THE FILES A READER READS, so a search stores those and not every asset an item lists (experiment 182). A product
+ *  with no reader keeps every file. */
+export function filesRead(product:SatelliteProduct):((key:string,file:{href:string;type:string|null})=>boolean)|undefined{
+  const grid=gridReaderFor(product);
+  if(grid){const keys=new Set(Object.values(grid.layers).flatMap(l=>[l.variable,l.quality,l.clear]));return key=>keys.has(key);}
+  if(readerFor(product))return (_key,file)=>/netcdf/i.test(file.type??'')||/\.nc(\?|$)/.test(file.href);
+  return undefined;
+}
 
 /** Footprints and the study area, drawn as an outline map in longitude and latitude. Offline: no tiles. */
 export function coverageSvg(area:BBox,items:CatalogItem[],selected:string|undefined,esc:Escape):string{
@@ -96,7 +107,7 @@ export function openSatelliteCatalogDialog(product:SatelliteProduct|null,area:BB
       +`<div class="field"><label class="field-label" for="cat-from">From</label><input id="cat-from" type="date" value="${esc(state.from)}"></div>`
       +`<div class="field"><label class="field-label" for="cat-until">Until</label><input id="cat-until" type="date" value="${esc(state.until)}"></div>`
       +`<button class="button primary" id="cat-search"${missing||busy?' disabled':''}>${busy?'Searching…':'Search'}</button>`
-      +`<p class="muted satellite-note">A search reads catalog records only, up to ${MAX_ITEMS} items. No data file is downloaded.</p>`
+      +`<p class="muted satellite-note">A search reads catalog records only, every page of them, and keeps the files a reader reads. No data file is downloaded.</p>`
       +(message?`<p class="notice notice-warning" role="alert">${esc(message)}</p>`:'')+`</section>`
       // 02 · Coverage, in context
       +`<section><span class="inspector-section">02 · Coverage, in context</span><div id="cat-coverage">`+coverage()+`</div></section>`
@@ -113,7 +124,7 @@ export function openSatelliteCatalogDialog(product:SatelliteProduct|null,area:BB
     dialog.querySelector<HTMLButtonElement>('#cat-search')!.onclick=async()=>{
       const bbox=searchArea();
       if(!product||!bbox)return;read();busy=true;message='';render();
-      try{const result={...await searchCatalog(product,bbox,state.from,state.until),areaFrom:area?'study area' as const:'typed extent' as const};
+      try{const result={...await searchCatalog(product,bbox,state.from,state.until,fetch,filesRead(product)),areaFrom:area?'study area' as const:'typed extent' as const};
         state={...state,search:result,kept:defaultKept(result.items)};selected=result.items[0]?.id;onChange(state);}
       catch(error){message=error instanceof Error?error.message:String(error);}
       finally{busy=false;render();}

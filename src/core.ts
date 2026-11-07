@@ -900,6 +900,33 @@ export function validateWorkflow(raw:unknown):Workflow {
 }
 /** Nodes the plan is built backwards from. A node with no output that nothing consumes is
  *  invisible to the walk, so a terminal node must be named here or it never runs. */
+/** STEPS UNDER CONSTRUCTION, computed when their inputs are complete (experiment 182). A run computed only the steps an
+ *  output needs, so a join chained after another join could not be set up: its preview needs the first join's table,
+ *  and nothing displayed that table yet. These are the steps that lead to no output and have every required input
+ *  connected, with whatever above them the run does not already make, in an order that computes inputs first. They
+ *  are optional: one that fails is marked failed and named, and the run goes on, since nothing displayed depends on it. */
+export function openEnds(w:Workflow,planned:readonly WorkflowNode[]):WorkflowNode[]{
+  const have=new Set(planned.map(n=>n.id)),outputs=new Set(resultNodes(w).map(n=>n.id));
+  const feeds=new Set(w.edges.map(e=>e.from));
+  const order:WorkflowNode[]=[];
+  for(const end of w.nodes){
+    if(have.has(end.id)||feeds.has(end.id)||outputs.has(end.id))continue;
+    const closure:WorkflowNode[]=[],seen=new Set<string>();let complete=true;
+    const visit=(node:WorkflowNode)=>{
+      if(seen.has(node.id)||have.has(node.id)||!complete)return;seen.add(node.id);
+      const covered=w.edges.some(e=>e.to===node.id&&e.port==='coverage');
+      for(const [port] of requiredInputs(node,{coverageConnected:covered})){
+        if(node.type==='network_input'&&port==='area')continue;
+        if(!w.edges.some(e=>e.to===node.id&&e.port===port)){complete=false;return;}
+      }
+      for(const e of w.edges.filter(e=>e.to===node.id)){const up=w.nodes.find(n=>n.id===e.from);if(up)visit(up);}
+      closure.push(node);
+    };
+    visit(end);
+    if(complete)for(const node of closure)if(!have.has(node.id)){have.add(node.id);order.push(node);}
+  }
+  return order;
+}
 function resultNodes(w:Pick<Workflow,'nodes'>){return w.nodes.filter(n=>['output','measure_area','coverage_check','map_output','table_output','chart_output','comparison_map'].includes(n.type));}
 /** A workflow that is NOT FINISHED, which is not a workflow that went wrong.
  *
@@ -1081,8 +1108,20 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
   const sources=derivedNotes(workflow.nodes,workflow.workflowKey);
   const expansion=expandMicroWorkflows(workflow,resolveComposition,runId);
   workflow=expansion.workflow;receipts.push(...expansion.receipts);
-  const plan=executionPlan(workflow), values=new Map<string,unknown>(), trace:WorkflowRun['trace']=[];
-  for(const node of plan){
+  const planned=executionPlan(workflow), values=new Map<string,unknown>(), trace:WorkflowRun['trace']=[];
+  const optional=new Set(openEnds(workflow,planned).map(n=>n.id));
+  const plan=[...planned,...workflow.nodes.filter(n=>optional.has(n.id))];
+  const unfinished:{nodeId:string;message:string}[]=[],failedOptional=new Set<string>();
+  for(const node of [...plan]){
+    // A STEP UNDER CONSTRUCTION that fails, or stands on one that did, is named and set aside; the run goes on.
+    if(optional.has(node.id)){
+      const above=workflow.edges.find(e=>e.to===node.id&&failedOptional.has(e.from));
+      if(above){failedOptional.add(node.id);plan.splice(plan.indexOf(node),1);continue;}
+      try{await runNode(node);}
+      catch(error){onProgress(node.id,'failed');failedOptional.add(node.id);plan.splice(plan.indexOf(node),1);
+        unfinished.push({nodeId:node.id,message:error instanceof Error?error.message:String(error)});}
+      continue;
+    }
     // Which node failed, reported before the error leaves this function.
     //
     // A refused step used to stay 'running' for ever: `onProgress(node.id,'done')` is the last
@@ -1727,10 +1766,11 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         if(table?.kind!=='data-table')throw new Error('Connect a table: this step keeps rows of one.');
         const range=node.params.range;
         const result=range?selectRange(table,node.params.keyColumn,range.from,range.to)
-          :selectRows(table,node.params.keyColumn,node.params.values);
+          :selectRows(table,node.params.keyColumn,node.params.values,!!node.params.leaveOut);
         value=result.table as unknown as DisplayValue;
         receipts.push({nodeId:node.id,kind:'computation',
           method:range?`kept ${rangeSentence(node.params.keyColumn,range.from.trim(),range.to.trim())}, both ends included`
+            :node.params.leaveOut?`left out ${node.params.values.join(', ')} of ${node.params.keyColumn}, ${result.dropped} rows`
             :`kept ${node.params.values.join(', ')} of ${node.params.keyColumn}`,
           kept:result.kept,dropped:result.dropped,absent:result.absent} as unknown as Receipt);
         break;}
@@ -2408,6 +2448,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
     if((value as {kind?:string})?.kind==='data-table')tables[nodeId]=value as DataTable;
   return {...provenance,alerts,outputs,trace,receipts,runId,engine:'EYE-JS 21.1.24 (WASM)',runAt:new Date().toISOString(),
     ...(Object.keys(tables).length?{tables}:{}),
+    ...(unfinished.length?{unfinished}:{}),
     ...(Object.keys(linkages).length?{linkages}:{}),
     ...(Object.keys(relations).length?{relations}:{}),
     ...(Object.keys(machined).length?{machined:signedByWidget(machined,workflow)}:{}),

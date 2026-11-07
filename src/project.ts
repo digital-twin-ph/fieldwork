@@ -430,6 +430,11 @@ export function tableDataKey(table:{rows:unknown[]}):string{return contentKey('t
 /** A STUDY AREA'S OUTLINE AND ITS EARLIER EXTENTS, KEPT BY CONTENT, as a table's rows are. Uganda at ADM0 is 43,116
  *  vertices, about 1.4 MB, past what localStorage could hold beside anything else (found 2026-11-05). Recomputed on
  *  every save, so an edited outline gets a new key and a stale one can never stand in for it. */
+/** A SATELLITE CATALOG SEARCH, kept in the payload store like a table (experiment 182): sixteen years of MODIS over Rio
+ *  de Janeiro is 2,891 items and 5.9 MB, more than the whole of local storage. */
+export function searchPayloadKey(search:{items?:unknown[]}):string{
+  return contentKey('search',search.items?.length??0,search);
+}
 export function areaPayloadKey(area:{geometry:unknown;revisions?:unknown}):string{
   const g=area.geometry as {type?:string;coordinates?:unknown}|null;
   const vertices=(()=>{let n=0;const walk=(v:unknown):void=>{if(Array.isArray(v)&&typeof v[0]==='number')n++;else if(Array.isArray(v))v.forEach(walk);};walk(g?.coordinates);return n;})();
@@ -465,6 +470,7 @@ export function payloadsOf(params:Record<string,unknown>):[string,unknown][]{
   if(typeof params.sourceRef==='string'&&params.sourceTable!==undefined)out.push([params.sourceRef,params.sourceTable]);
   if(typeof params.areaRef==='string'&&params.geometry!==undefined&&params.geometry!==null)
     out.push([params.areaRef,{geometry:params.geometry,revisions:params.revisions??[]}]);
+  if(typeof params.searchRef==='string'&&params.search!==undefined&&params.search!==null)out.push([params.searchRef,params.search]);
   return out;
 }
 
@@ -535,6 +541,9 @@ export function dehydrateWorkflow<T extends {nodes:unknown[]}>(workflow:T,held:(
     // A study area's outline and history go the same way, under `areaRef`.
     if(typeof params.areaRef==='string'&&params.geometry!==undefined&&held(params.areaRef)){
       const {geometry:_geometry,revisions:_revisions,...rest}=params;params=rest;}
+    // A catalog search's items go the same way, under `searchRef`.
+    if(typeof params.searchRef==='string'&&params.search!==undefined&&held(params.searchRef)){
+      const {search:_search,...rest}=params;params=rest;}
     if(typeof params.dataRef!=='string'||params.data===undefined||!held(params.dataRef))
       return params===node.params?node:{...node,params};
     const {data:_omitted,...rest}=params;
@@ -568,6 +577,11 @@ export function hydrateWorkflow(raw:unknown,datasets:Record<string,unknown>,clon
       if(area===undefined){missing.push(`${String(node.id??node.type??'a node')} (${params.areaRef.slice(0,19)})`);return node;}
       const kept=clone?structuredClone(area):area;
       params={...params,geometry:kept.geometry??null,...(kept.revisions?.length?{revisions:kept.revisions}:{})};
+    }
+    if(typeof params.searchRef==='string'&&params.search===undefined){
+      const search=datasets[params.searchRef];
+      if(search===undefined){missing.push(`${String(node.id??node.type??'a node')} (${params.searchRef.slice(0,19)})`);return node;}
+      params={...params,search:clone?structuredClone(search):search};
     }
     if(typeof params.dataRef!=='string'||params.data!==undefined)return params===node.params?node:{...node,params};
     const payload=datasets[params.dataRef];

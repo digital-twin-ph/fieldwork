@@ -470,3 +470,48 @@ test('a week relates to the 8-day period containing its Wednesday, shifted back 
   assert.throws(()=>relateTable(weeks,twice,{on:'municipio',bring:'LST_Day_1km',within,shiftDays:3}),
     /2024-02-21 falls inside 2 periods of the second table for Rio: 2024-02-18 and 2024-02-19/);
 });
+
+/** A WEEKLY TABLE RELATED TO ITSELF, SHIFTED (experiment 182): rainfall two weeks before each case week. The week's
+ *  own start is both the date and the period, so the matched start is written as data_iniSE_matched and the first
+ *  table's data_iniSE is kept as it was. */
+test('a table relates to itself shifted by whole weeks; its own date column is kept, the match named _matched',async()=>{
+  const {relateTable,relateOutcome}=await import('../build/relate-table.js');
+  const cases={kind:'data-table',keys:['municipio','data_iniSE'],valueField:'casos',rowCount:3,missingValueCount:0,
+    rows:[['Rio','2024-02-18',100],['Rio','2024-02-25',120],['Rio','2024-03-03',90]].map(([m,d,v])=>({key:{municipio:m,data_iniSE:d},value:v}))};
+  const rain={kind:'data-table',keys:['municipio','data_iniSE'],valueField:'precip_total_semana',rowCount:4,missingValueCount:0,
+    rows:[['Rio','2024-02-04',10],['Rio','2024-02-11',20],['Rio','2024-02-18',30],['Rio','2024-02-25',40]]
+      .map(([m,d,v])=>({key:{municipio:m,data_iniSE:d},value:v}))};
+  const request={on:'municipio',bring:'precip_total_semana',within:{date:'data_iniSE',start:'data_iniSE',end:'data_iniSE'},shiftDays:-14};
+  const r=relateTable(cases,rain,request);
+  assert.deepEqual(r.table.rows.map(x=>[x.key.data_iniSE,x.key.data_iniSE_shifted,x.key.data_iniSE_matched,x.key.precip_total_semana]),
+    [['2024-02-18','2024-02-04','2024-02-04','10'],['2024-02-25','2024-02-11','2024-02-11','20'],['2024-03-03','2024-02-18','2024-02-18','30']]);
+  assert.deepEqual(relateOutcome(cases,request,r).keys,['municipio','data_iniSE_matched']);
+});
+
+test('a second shifted relate on one table keeps both shifted dates, the second as _shifted_2',async()=>{
+  const {relateTable,relateOutcome}=await import('../build/relate-table.js');
+  const cases={kind:'data-table',keys:['municipio','data_iniSE','data_iniSE_shifted','period_start'],valueField:'casos',rowCount:1,missingValueCount:0,
+    rows:[{key:{municipio:'Rio',data_iniSE:'2024-02-18',data_iniSE_shifted:'2024-02-07',period_start:'2024-02-02'},value:100}]};
+  const rain={kind:'data-table',keys:['municipio','data_iniSE'],valueField:'precip_total_semana',rowCount:1,missingValueCount:0,
+    rows:[{key:{municipio:'Rio',data_iniSE:'2024-02-04'},value:10}]};
+  const request={on:'municipio',bring:'precip_total_semana',within:{date:'data_iniSE',start:'data_iniSE',end:'data_iniSE'},shiftDays:-14};
+  const r=relateTable(cases,rain,request);
+  assert.deepEqual([r.table.rows[0].key.data_iniSE_shifted,r.table.rows[0].key.data_iniSE_shifted_2,r.table.rows[0].key.precip_total_semana],
+    ['2024-02-07','2024-02-04','10']);
+  assert.ok(relateOutcome(cases,request,r).carried.includes('data_iniSE_shifted_2'));
+});
+
+test('a join decision is signed with a short digest, and one saved in the old written-out form still holds',async()=>{
+  const {relateTable,relateShape,legacyGapSignature}=await import('../build/relate-table.js');
+  const left={kind:'data-table',keys:['k'],valueField:'n',rowCount:3,missingValueCount:0,
+    rows:['a','b','c'].map(k=>({key:{k},value:1}))};
+  const right={kind:'data-table',keys:['k','cat'],valueField:'m',rowCount:1,missingValueCount:0,rows:[{key:{k:'a',cat:'x'},value:1}]};
+  const shape=relateShape(left,right,{on:'k',bring:'cat'});
+  assert.match(shape.signature,/^gap:\d+:[0-9a-f]{16}$/);
+  const drop=sig=>relateTable(left,right,{on:'k',bring:'cat',unmatched:{decision:'drop',signature:sig}});
+  assert.equal(drop(shape.signature).table.rows.length,1);
+  const legacy=legacyGapSignature(shape.overlap.gaps,'fuzzy');
+  assert.equal(drop(legacy).table.rows.length,1,'a decision saved before 0.41.0');
+  assert.throws(()=>drop('gap:1:0000000000000000'),/no longer describes this gap/);
+  assert.throws(()=>drop('something else entirely'),/no longer describes this gap/);
+});

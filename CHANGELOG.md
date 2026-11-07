@@ -3,6 +3,30 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.41.0 — 2026-11-07
+
+- **The Brazil example widens to sixteen years.** A fifth workflow sets weekly cases 2010–2025 beside Terra's land
+  surface temperature at five lags and two leads. Each week is compared only with weeks of the same municipality,
+  month and year, and the model adjusts for that week's rainfall. Played back live: 1.020 per 1 °C at 8 weeks before
+  and 1.021 at 6, and 1.005 for both leads, a quarter of 2024's 1.061. Still not a finding: the intervals allow nothing
+  for correlation between weeks. Experiment 182.
+- **Regression takes several strata columns together**, one stratum per combination: choose a column, then
+  **Together with**. Validation Lab check 37 agrees with statsmodels.
+- **Select rows by value can leave values out**: **Every value except those I tick**.
+- **Relate a column can relate a table to itself, shifted**, for rainfall *k* weeks before each week. A second shifted
+  date on one table is kept as `_shifted_2`.
+- **A satellite search reads every page**, with no 500-item limit, and keeps only the files its reader reads. Sixteen
+  years of MODIS over Rio de Janeiro is 2,891 items in 19 s, 5.9 MB stored instead of about 14 MB.
+- **A run computes steps that do not lead to an output yet**, when their inputs are connected, so the next step can be
+  set up against their table. One that fails is named in its Inspector, and the run goes on.
+- Fixed, each found building the sixteen-year workflow:
+  - **A large search could not be saved.** Every later edit was lost; searches are now kept in the browser's larger
+    store.
+  - **Join decisions over many rows were lost on save.** Each was stored with every unmatched key written out; now a
+    short digest, and a decision saved the old way still holds.
+  - **Relate offered the second table's value column only after a run**; now from the table's declaration.
+- Validation: Chromium locally; WebKit in CI.
+
 ## 0.40.0 — 2026-11-06
 
 - **Satellite files are read several at once**, and a run of them is about three times faster in a browser: three

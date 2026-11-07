@@ -1,8 +1,8 @@
 # 182 · Brazil across sixteen years: weeks compared within a municipality, month and year
 
-_Created 2026-11-07 · Updated 2026-11-07_
+_Created 2026-11-06 · Updated 2026-11-06_
 
-**Status:** asked. The design, the data and the three open questions are decided; nothing is built.
+**Status:** validated. Built in 0.41.0; the fifth workflow played back live from its manual, and Validation Lab check 37 agrees with statsmodels on the several-strata model in CPython and Pyodide.
 
 ## The question
 
@@ -59,13 +59,80 @@ say. Read by a fetching agent; the code read is the repository's, which may not 
 
 After the choices were set out, the practitioner chose:
 
-1. **The doubled weeks are left out of the models**, all 12, 1,104 rows. The data file keeps them untouched, and the
+1. **The doubled weeks are left out of the models**, all 12. Both copies go, 2,208 rows of 77,740 (2.8%); the 1,104
+   first written here counted one copy each, corrected 2026-11-07. The data file keeps them untouched, and the
    evidence and the README say so.
 2. **Rainfall is read from CHIRPS over each municipality by Fieldwork**, the way MODIS is: the cells whose centre is
    inside, summed over the case week, Sunday to Saturday, with a gap said rather than zeroed. The dataset's column is
    not used. A CHIRPS route has to be checked first: open, readable from a browser, no sign-in.
 3. **All four speed changes**: several files at once, with the number measured; each file read once per session; a
    failed file retried, then named; decoding in a worker pool. WebGPU is not built.
+
+**Rainfall, revised the same day.** CHIRPS daily files exist for 1981–2026 at
+`data.chc.ucsb.edu/products/CHIRPS/v2.0/global_daily/cogs/p05/`, 8.3 MB each, with range requests answered. **The
+server sends no `access-control-allow-origin` header**, so a web page cannot read them. Planetary Computer has no
+CHIRPS; it has GPM IMERG half-hourly, about 280,000 files for sixteen years, and ERA5, which needs a reader Fieldwork
+does not have. CHIRPS's README gives a citation, Funk et al. 2014, USGS Data Series 832, and no licence. Offered
+reading CHIRPS in Node and publishing a table, the practitioner chose: *"Use the dataset's column after all."* Its
+three limits are stated on every model: one grid cell per municipality, ISO weeks starting a day after the case weeks,
+and missing days counted as 0.
+
+## Built, 2026-11-06 and 07 (0.41.0)
+
+| What | Where | Why |
+| --- | --- | --- |
+| **Select rows leaves values out** (0.3.0) | `selectRows(..., leaveOut)` in `src/derive-value.ts` | Twelve ticks instead of 821 |
+| **Relate relates a table to itself, shifted** (0.6.0) | `matchedStart`, `shiftedName` in `src/relate-table.ts` | Rainfall *k* weeks earlier is the weekly table's own column; the matched week is `data_iniSE_matched`, a second shift `data_iniSE_shifted_2` |
+| **Regression takes several strata columns** (0.3.0) | `strataOf` in `src/regression.ts`; **Together with** in the Inspector | One stratum per municipality × year × month |
+| **A search reads every page and keeps the files read** (0.4.0) | `searchCatalog(..., keep)`, `filesRead` | 2,891 items in 29 pages, 19 s, 5.90 MB stored instead of about 14 MB |
+| **A search is saved in the payload store** | `searchRef`, `searchPayloadKey` in `src/project.ts` | 5.9 MB is more than local storage holds |
+| **A run computes steps under construction** | `openEnds` in `src/core.ts`; `unfinished` on the run | A join chained after a join could not be set up |
+| **A join decision is signed with a digest** | `gapSignature`, `legacyGapSignature`, `decisionMatches` | The written-out signature was 1.75 MB per join |
+
+**Found building it, each by the fifth workflow's playback failing:**
+
+1. **The 16-year search could not be saved.** Its items were held in the node, 5.9 MB, and local storage holds 5.2 MB.
+   The next node appeared on the canvas and was never saved. Now kept in IndexedDB by content, as tables already are.
+2. **The stand-in MODIS files overlapped at a year's end.** Their last period ran seven days into January, where the
+   real catalogue's ends on 31 December (read 2026-11-07). A fault of the test, not of the application.
+3. **A table read only by a join had no run output,** because a run computed only what an output needs. Relate now
+   offers the second table's value column from its declaration. The manual shows the rainfall table in its own tab.
+4. **A join chained after another join could not be previewed,** for the same reason, one step further on. A run now
+   also computes each step that leads to no output yet, when every input it needs is connected. One that fails is
+   marked and named in its Inspector, and the run goes on. The Inspector now names which table is missing.
+5. **A second shifted relate on one table was refused,** since the first had taken `data_iniSE_shifted`.
+6. **The join decisions were lost on save.** Each was signed with every unmatched key written out, 58,401 keys and
+   1.75 MB for one join. Now a 16-character digest; a decision signed the old way still holds.
+7. **The manual asked for a decision where there was none**: rainfall in the same week matches every row.
+8. **The playback outgrew its time limit**: 14.0 minutes offline for five workflows, against 10.
+
+**A limit met and not changed:** a workflow holds at most 50 nodes and 100 connections. The fifth workflow uses 43 and
+61. The number was chosen, not measured.
+
+## Played back live, 2026-11-07
+
+All five workflows from an empty canvas in Chromium, MODIS read live from Planetary Computer: **44.2 minutes**. Seven
+Poisson models over 2010–2025, weeks compared within municipality × year × month, adjusted for that week's rainfall as a
+spline, intervals scaled by the Pearson dispersion:
+
+| Weeks | Rate ratio per 1 °C (95%) | Rows | Strata used, without events dropped | Dispersion |
+| --- | --- | --- | --- | --- |
+| 4 after | 1.005 (1.003–1.007) | 69,816 | 11,534, 5,756 | 5.12 |
+| 2 after | 1.005 (1.003–1.007) | 69,988 | 11,511, 5,778 | 5.11 |
+| 0 | 1.004 (1.002–1.006) | 71,338 | 11,590, 5,700 | 5.00 |
+| 2 before | 1.003 (1.001–1.005) | 70,110 | 11,548, 5,746 | 5.06 |
+| 4 before | 0.989 (0.987–0.991) | 69,810 | 11,511, 5,778 | 5.06 |
+| 6 before | 1.021 (1.019–1.023) | 69,725 | 11,477, 5,681 | 4.90 |
+| 8 before | 1.020 (1.018–1.021) | 69,718 | 11,501, 5,695 | 4.83 |
+
+**The leads shrink, and do not vanish.** In 2024 alone the temperature 2 weeks after went with cases as strongly as 8
+weeks before (1.061 against 1.063). Here the leads are 1.005 and the 6- and 8-week lags about 1.02, four times larger.
+Holding municipality, month and year fixed removes most of what made the 2024 leads large. But 1.005 is still not 1.
+
+**Not established.** The intervals allow nothing for correlation between neighbouring weeks, so they are too narrow,
+and the leads' exclusion of 1 may be that. The dip at 4 weeks before has no mechanism. Rainfall is one grid cell per
+municipality, ISO weeks, missing days as 0. Land surface temperature is the ground's on clear days. Each point is its
+own model, not adjusted for the other lags. Nothing here is causal.
 
 ## Speed: where the time goes
 

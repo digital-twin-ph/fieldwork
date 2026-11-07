@@ -91,3 +91,22 @@ test('NYC: ozone per 10 ppb, the authors\' archived coefficient and HAC standard
   assert.ok(Math.abs(r.estimates[0].coefficient-0.059133132965951)<1e-12);
   assert.ok(Math.abs(r.estimates[0].se-0.0127276822785079)<1e-12);
 });
+
+/** SEVERAL STRATA COLUMNS ARE THEIR COMBINATION (experiment 182): municipality, year and month together are the same
+ *  model as one column holding all three, which is how a single-column fit would have to be given them. */
+test('strata over several columns fit the same model as one column of their combination, and say so',async()=>{
+  const rows=[];let seed=7;const rand=()=>(seed=(seed*16807)%2147483647)/2147483647;
+  for(const place of ['a','b','c'])for(const year of ['2023','2024'])for(const month of ['1','2'])for(let w=0;w<4;w++){
+    const x=20+10*rand(),mu=Math.exp(1+0.05*x+(place==='b'?0.4:0)+(month==='2'?0.3:0));
+    rows.push({place,year,month,combined:`${place}|${year}|${month}`,x,y:Math.round(mu+rand()*3)});}
+  const base={family:'poisson',outcome:'y',exposure:{column:'x',as:'numeric'},errors:{kind:'overdispersed'}};
+  const several=await fitRegression(rows,{...base,strata:['place','year','month']});
+  const one=await fitRegression(rows,{...base,strata:'combined'});
+  assert.equal(several.strata.used,one.strata.used);assert.equal(several.strata.used,12);
+  assert.ok(Math.abs(several.estimates[0].coefficient-one.estimates[0].coefficient)<1e-10);
+  assert.ok(Math.abs(several.estimates[0].se-one.estimates[0].se)<1e-10);
+  assert.deepEqual(several.adjustedFor,['place × year × month (strata)']);
+  assert.throws(()=>fitRegression(rows,{...base,strata:['place','x']}),/"x" is both a variable and a strata column/);
+  const lost=[...rows.slice(0,5).map(r=>({...r,month:''})),...rows.slice(5)];
+  assert.equal((await fitRegression(lost,{...base,strata:['place','year','month']})).rows.reasons['month missing'],5);
+});

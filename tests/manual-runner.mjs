@@ -40,9 +40,15 @@ export async function performManual(page,workflow,{timeout=120000,runTimeout=tim
         ??(await entry.textContent());
       await page.locator('#node-search').fill(name.trim());
       await expect(entry,`${where}: searching the library for "${name.trim()}"`).toBeVisible();
+      const known=new Set(Object.values(nodes));
+      const before=(await saved(page)).nodes.filter(n=>n.type===step.add).length;
       await entry.click();
       await page.locator('#node-search').fill('');
-      nodes[step.as]=(await saved(page)).nodes.filter(n=>n.type===step.add).at(-1).id;
+      // THE NEW NODE, once it is saved. A project holding two 77,740-row tables saves after the click returns, and
+      // reading the save at once found nothing (experiment 182).
+      await expect.poll(async()=>(await saved(page)).nodes.filter(n=>n.type===step.add).length,
+        {message:`${where}: the added ${step.add} is saved`,timeout}).toBeGreaterThan(before);
+      nodes[step.as]=(await saved(page)).nodes.filter(n=>n.type===step.add&&!known.has(n.id)).at(-1).id;
       continue;
     }
     if('reuse' in step){

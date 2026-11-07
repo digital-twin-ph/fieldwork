@@ -52,7 +52,10 @@ stream for time series. Tick one back if you need it.
 ## What it will not do
 
 - **It will not download a file.** Reading the pixels at your points is a separate step, not yet built.
-- **It will not search more than 500 items at once.** It says when it stopped there; narrow the dates for the rest.
+- **It does not stop at a number of items.** Sixteen years of MODIS over Rio de Janeiro state is 2,891 items, read in
+  29 pages in about 19 s. Up to 0.40.0 it stopped at 500, the bound of the STAC Browser it was adapted from.
+- **It keeps only the files a reader reads.** A MODIS item lists 15 files and the reader uses 6, so the other 9 are
+  not stored; the search says which were kept and how many each item offered. A product with no reader keeps them all.
 - **It will not search all time.** It needs dates.
 - **It will not search across the antimeridian or by the outline of the area**: the area's extent is searched, so
   items over nearby water or another country can appear. West must be less than east; split an area across the

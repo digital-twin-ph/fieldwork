@@ -244,13 +244,15 @@ export interface ParamsByType {
   derive_value:{label:string;keyColumn:string;left:string;operator:import('./derive-value.js').Operator;right:string;name:string};
   /** `range`, when present, keeps the rows between two values instead of the ones named, both
    *  ends included; an empty end is open. `values` is kept so switching back loses nothing. */
-  select_rows:{label:string;keyColumn:string;values:string[];range?:{from:string;to:string}};
+  select_rows:{label:string;keyColumn:string;values:string[];range?:{from:string;to:string};
+    /** Keep every row but those holding one of `values` (experiment 182). */ leaveOut?:boolean};
   /** Logistic or Poisson regression over a table's rows (experiment 167). Terms name columns of the table: the row's
    *  key columns and its value field alike. `order` is the column rows are sorted by for HAC errors. */
   regression:{label:string;family:'logistic'|'poisson';outcome:string;cases?:string[];controls?:string[];
     exposure:{column:string;as:'numeric'|'categorical'|'spline';reference?:string;df?:number};
     adjust:{column:string;as:'numeric'|'categorical'|'spline';reference?:string;df?:number}[];
-    strata?:string;offset?:string;errors:'wald'|'profile'|'overdispersed'|'hac';hacLag?:number;order?:string;level?:number};
+    /** One strata column, or several taken together (experiment 182). */
+    strata?:string|string[];offset?:string;errors:'wald'|'profile'|'overdispersed'|'hac';hacLag?:number;order?:string;level?:number};
   append_rows:{label:string;nameSource?:boolean;sourceColumn?:string;firstLabel?:string;secondLabel?:string;newKey?:string;
     /** How many tables it stacks, 2 and up; absent is 2 (experiment 181). */ tableCount?:number;
     labels?:string[];labelsAreNumbers?:{unit:string}};
@@ -377,7 +379,8 @@ export interface ParamsByType {
   search_satellite_catalog:{label:string; from:string; until:string;
     /** Edges typed in the dialog, W/S/E/N, used when no Study area is connected. */
     box?:[number,number,number,number];
-    search?:import('./satellite-catalog.js').CatalogSearch; kept?:string[]};
+    search?:import('./satellite-catalog.js').CatalogSearch; kept?:string[];
+    /** Where the search's items are kept in the payload store (experiment 182). Written on save. */ searchRef?:string};
   study_design:{label:string;design:StudyDesign;period:string;unitOfAnalysis:string;note:string;computations?:string[];answers?:Record<string,import('./study-design-questions.js').DesignAnswer>;table?:import('./study-design-questions.js').DeclaredTable};
   case_series:{label:string;source?:'points'|'table';dateField:string;dateKind:import('./case-series.js').DateKind;period:import('./case-series.js').Period;weightField?:string};
   summarize_combined_area:{label:string;zone:number;hemisphere:'north'|'south';yields?:'area'};

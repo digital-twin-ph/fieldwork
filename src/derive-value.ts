@@ -95,11 +95,21 @@ export interface SelectResult {table:DataTable; kept:number; dropped:number; abs
  *  A named value the table does not have is reported rather than ignored: asking for a row that
  *  is not there is usually a typo or a changed upstream table, and silently returning fewer rows
  *  than asked for is how a figure ends up missing a category nobody noticed. */
-export function selectRows(table:DataTable,keyColumn:string,values:string[]):SelectResult {
+export function selectRows(table:DataTable,keyColumn:string,values:string[],leaveOut=false):SelectResult {
   if(!table.keys.includes(keyColumn))
     throw new Error(`This table has no "${keyColumn}" column. Its columns are ${table.keys.join(', ')}.`);
   const wanted=values.map(value=>value.trim()).filter(Boolean);
-  if(!wanted.length)throw new Error(`Name at least one value of "${keyColumn}" to keep.`);
+  if(!wanted.length)throw new Error(`Name at least one value of "${keyColumn}" to ${leaveOut?'leave out':'keep'}.`);
+  // EVERY VALUE BUT THESE (experiment 182): twelve doubled weeks out of 833, which a list of values to keep would need
+  // 821 ticks to say. Rows keep the table's order; a value named and not present is reported, as for keeping.
+  if(leaveOut){
+    const present=new Set(table.rows.map(row=>row.key[keyColumn]));
+    const absent=wanted.filter(value=>!present.has(value)),out=new Set(wanted);
+    const rows=table.rows.filter(row=>!out.has(row.key[keyColumn]??''));
+    if(!rows.length)throw new Error(`Leaving out ${wanted.length===1?`"${wanted[0]}"`:`those ${wanted.length} values`} of "${keyColumn}" leaves no rows.`);
+    return {table:{...table,rows,rowCount:rows.length,missingValueCount:rows.filter(row=>row.value===null).length},
+      kept:rows.length,dropped:table.rows.length-rows.length,absent};
+  }
   const present=new Set(table.rows.map(row=>row.key[keyColumn]));
   const absent=wanted.filter(value=>!present.has(value));
   if(absent.length===wanted.length)

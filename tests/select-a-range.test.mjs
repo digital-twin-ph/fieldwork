@@ -64,3 +64,16 @@ test('an empty cell is outside every range',()=>{
   assert.equal(inRange('','number','',''),false);
   assert.equal(inRange('','date','2023-01-01',''),false);
 });
+
+/** EVERY VALUE BUT THESE (experiment 182): twelve doubled weeks left out of Brazil's 833, in the table's order. */
+test('leaving out values keeps every other row in order, counts what went, and names a value not present',async()=>{
+  const {selectRows}=await import('../build/derive-value.js');
+  const table={kind:'data-table',keys:['week','place'],valueField:'cases',rowCount:5,missingValueCount:0,
+    rows:[['2010-12-19','a',1],['2010-12-26','a',2],['2010-12-26','a',3],['2011-01-02','a',4],['2011-01-09','b',5]]
+      .map(([week,place,value])=>({key:{week,place},value}))};
+  const r=selectRows(table,'week',['2010-12-26','1999-01-01'],true);
+  assert.deepEqual(r.table.rows.map(x=>x.value),[1,4,5]);
+  assert.equal(r.kept,3);assert.equal(r.dropped,2);assert.deepEqual(r.absent,['1999-01-01']);
+  assert.throws(()=>selectRows(table,'place',['a','b'],true),/leaves no rows/);
+  assert.throws(()=>selectRows(table,'week',[],true),/to leave out/);
+});

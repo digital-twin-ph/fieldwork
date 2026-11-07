@@ -33,9 +33,13 @@ unit are unchanged, because selecting rows does not change what a table measures
 | Setting | What it decides |
 | --- | --- |
 | **Key column to choose by** | Which column the values belong to. |
-| **Keep** | **The values I tick**, or **A range of dates** (or numbers). The range is offered only when every value in the column is a date, or every one a number. |
+| **Keep** | **The values I tick**, **Every value except those I tick**, or **A range of dates** (or numbers). The range is offered only when every value in the column is a date, or every one a number. |
 | **Values to keep** | Ticked from the values on offer, or typed one per line. A list of more than 12 can be searched, and **Ticked only** shows what you have kept. |
 | **From** and **To** | The range. Both ends are kept; leave one empty to run from the start or to the end. |
+
+**Leaving values out keeps the table's order**, and every row whose value is not one of those ticked. The Brazil
+sixteen-year workflow leaves out the twelve weeks the file holds twice, with twelve ticks instead of 821. A value
+ticked that the table does not hold is reported, as when keeping.
 
 **A range keeps the table's order**, and a row with no value in the column is outside every range. For 1 to 14 June
 2023 out of ten years of days, that is two fields instead of fourteen ticks. Dates compare as dates written

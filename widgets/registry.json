@@ -1100,7 +1100,7 @@
     {
       "id": "urn:fieldwork:widget:relate_table",
       "nodeType": "relate_table",
-      "currentVersion": "0.5.0",
+      "currentVersion": "0.6.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -1131,6 +1131,11 @@
           "version": "0.5.0",
           "path": "widgets/releases/relate_table/0.5.0.json",
           "sha256": "2defc7f983e7b0aa043893f640fc0010aea9fcf9e242c2d430a8abee0911cf59"
+        },
+        {
+          "version": "0.6.0",
+          "path": "widgets/releases/relate_table/0.6.0.json",
+          "sha256": "9df0014c9e6325f5dd4e59b542c0d798fa3675fde5fab273b989471af362c3e4"
         }
       ]
     },
@@ -1183,7 +1188,7 @@
     {
       "id": "urn:fieldwork:widget:select_rows",
       "nodeType": "select_rows",
-      "currentVersion": "0.2.1",
+      "currentVersion": "0.3.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -1199,6 +1204,11 @@
           "version": "0.2.1",
           "path": "widgets/releases/select_rows/0.2.1.json",
           "sha256": "55e39d077377ebd10cbe11d340b5d141e5d1c761bafdbee6a525c5ceff0e0934"
+        },
+        {
+          "version": "0.3.0",
+          "path": "widgets/releases/select_rows/0.3.0.json",
+          "sha256": "5dca38899e1400e2215f79f596c2a4045d5010e8daa649f8e45f118e8790a905"
         }
       ]
     },
@@ -1620,7 +1630,7 @@
     {
       "id": "urn:fieldwork:widget:regression",
       "nodeType": "regression",
-      "currentVersion": "0.2.1",
+      "currentVersion": "0.3.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -1636,6 +1646,11 @@
           "version": "0.2.1",
           "path": "widgets/releases/regression/0.2.1.json",
           "sha256": "812bc6f7d096b0df66d23938a0cbda7df94e5efc42550df9aaf200730cebff52"
+        },
+        {
+          "version": "0.3.0",
+          "path": "widgets/releases/regression/0.3.0.json",
+          "sha256": "f1b4142030b24cb7a024fbe53aceb6f68f3713c13a62977a9c8b2db6983a20df"
         }
       ]
     },
@@ -1664,7 +1679,7 @@
     {
       "id": "urn:fieldwork:widget:search_satellite_catalog",
       "nodeType": "search_satellite_catalog",
-      "currentVersion": "0.3.2",
+      "currentVersion": "0.4.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -1690,6 +1705,11 @@
           "version": "0.3.2",
           "path": "widgets/releases/search_satellite_catalog/0.3.2.json",
           "sha256": "6ac166eddd65739f6c117a253248893549a21bff79802e26ff403ec726dd58e3"
+        },
+        {
+          "version": "0.4.0",
+          "path": "widgets/releases/search_satellite_catalog/0.4.0.json",
+          "sha256": "2e56ccaca0cb38a47c629f0911847d993748c4a8722acba1da2e1d33f798c156"
         }
       ]
     },

@@ -3,16 +3,17 @@
  *  The practitioner, 2026-11-05: *"STAC zeroes in on the source URLs."* Experiment 179.
  *
  *  ADAPTED FROM JLT'S STAC BROWSER (https://github.com/jltobias/JupyterLite-STAC-Browser, commit 945d8b3, MIT):
- *  `dateRange`, the error messages of `fetchJSON`, paging by `next` links and the 500-item bound are its `web/stac.js`,
- *  ported to TypeScript. It searches the collection's own items endpoint, which experiment 179's S3 and S4 used from a
+ *  `dateRange`, the error messages of `fetchJSON` and paging by `next` links are its `web/stac.js`, ported to
+ *  TypeScript. Its 500-item bound was kept until 0.41.0 and then lifted (experiment 182). It searches the collection's own items endpoint, which experiment 179's S3 and S4 used from a
  *  browser origin. Fieldwork adds what each file is, from the chosen product: licence as read, sign-in, whether a
  *  browser can read it, attribution, and that completeness is unknown until a reader opens the file.
  *
  *  METADATA ONLY. A search reads catalog records; no data file is downloaded here. */
 import type {SatelliteProduct} from './satellite-products.js';
 
-/** JLT's bound: a search stops at 500 items and says so. */
-export const MAX_ITEMS=500;
+/** NO ITEM BOUND. JLT's browser stops at 500 items; Fieldwork kept that until sixteen years of MODIS over Rio de Janeiro
+ *  needed about 2,900. The practitioner, 2026-11-06, chose to lift it and store only what a reader reads (experiment
+ *  182). A search still needs dates, so it cannot ask for all time. */
 export const REQUEST_TIMEOUT_MS=20_000;
 
 /** JLT's `dateRange`: real calendar dates, start not after end, an open end allowed. */
@@ -82,8 +83,11 @@ export interface CatalogSearch {
   /** Items the catalog returned for the area and dates, before the product filter. */
   returned:number;
   items:CatalogItem[];
-  /** True when the search stopped at MAX_ITEMS with more to read. */
+  /** True on a search saved before 0.41.0 that stopped at the old 500-item bound with more to read. */
   truncated:boolean; requests:number; searchedAt:string;
+  /** FILES PER ITEM KEPT, where a reader decides: only the files it reads are stored. `offered` is how many the first
+   *  item listed. Absent when every file was kept. */
+  files?:{kept:string[]; offered:number};
   /** Where the searched extent came from: a connected Study area, or edges typed in the dialog. Absent on searches
    *  saved before 0.28.1, which could only come from a Study area. */
   areaFrom?:AreaFrom;
@@ -107,7 +111,7 @@ export function typedBox(w:string,s:string,e:string,n:string):{box:BBox}|{proble
 const productTypeOf=(item:{id?:unknown;properties?:Record<string,unknown>}):string|null=>
   (item.properties?.['s5p:product_type'] as string|undefined)??null;
 
-const toItem=(raw:Record<string,unknown>):CatalogItem=>{
+const toItem=(raw:Record<string,unknown>,keep?:(key:string,file:{href:string;type:string|null})=>boolean):CatalogItem=>{
   const props=(raw.properties??{}) as Record<string,unknown>;
   const assets=(raw.assets??{}) as Record<string,Record<string,unknown>>;
   // A COMPOSITE COVERS A PERIOD: MODIS's 8-day items state a start and an end, and the end is kept so the period is
@@ -118,22 +122,24 @@ const toItem=(raw:Record<string,unknown>):CatalogItem=>{
     platform:(props.platform as string|undefined)??null,
     stream:typeof props['s5p:processing_mode']==='string'?props['s5p:processing_mode'] as string:null,
     orbit:typeof props['sat:absolute_orbit']==='number'?props['sat:absolute_orbit'] as number:null,
-    files:Object.entries(assets).filter(([,a])=>typeof a?.href==='string').map(([key,a])=>{
+    files:Object.entries(assets).filter(([key,a])=>typeof a?.href==='string'
+      &&(!keep||keep(key,{href:String(a.href),type:(a.type as string|undefined)??null}))).map(([key,a])=>{
       const href=String(a.href);let host=href;try{host=new URL(href).host;}catch{/* an s3:// address keeps its form */}
       return {key,host,href,type:(a.type as string|undefined)??null,roles:Array.isArray(a.roles)?a.roles.map(String):[]};})};
 };
 
-/** One search: the product's collection, over the box and dates, paging until the end or MAX_ITEMS. */
+/** One search: the product's collection, over the box and dates, paging to the end. `keep` names the files a reader
+ *  reads; the others are not stored, and the search says how many each item offered. */
 export async function searchCatalog(product:SatelliteProduct,bbox:BBox,from:string,until:string,
-  fetcher:typeof fetch=fetch):Promise<CatalogSearch>{
+  fetcher:typeof fetch=fetch,keep?:(key:string,file:{href:string;type:string|null})=>boolean):Promise<CatalogSearch>{
   const datetime=dateRange(from,until);
   if(!datetime)throw new Error('Choose the dates to search: a catalog search over all time is too large to read.');
   const url=new URL(`${product.route.endpoint.replace(/\/$/,'')}/collections/${encodeURIComponent(product.route.collection)}/items`);
   url.searchParams.set('bbox',bbox.map(v=>+v.toFixed(5)).join(','));
   url.searchParams.set('datetime',datetime);
   url.searchParams.set('limit','100');
-  let next:string|null=url.href,returned=0,requests=0;const items:CatalogItem[]=[];
-  while(next&&returned<MAX_ITEMS){
+  let next:string|null=url.href,returned=0,requests=0,offered=0;const items:CatalogItem[]=[];const keptKeys=new Set<string>();
+  while(next){
     const page=await fetchJSON(next,fetcher) as {type?:string;features?:Record<string,unknown>[];links?:{rel:string;href:string;method?:string}[]};
     requests++;
     if(page?.type!=='FeatureCollection'||!Array.isArray(page.features))
@@ -141,13 +147,15 @@ export async function searchCatalog(product:SatelliteProduct,bbox:BBox,from:stri
     for(const raw of page.features){
       returned++;
       if(product.route.productType&&productTypeOf(raw)!==product.route.productType)continue;
-      items.push(toItem(raw));
+      if(!items.length)offered=Object.values((raw.assets??{}) as Record<string,{href?:unknown}>).filter(a=>typeof a?.href==='string').length;
+      const item=toItem(raw,keep);item.files.forEach(f=>keptKeys.add(f.key));items.push(item);
     }
     const link=page.links?.find(l=>l.rel==='next'&&(l.method??'GET').toUpperCase()==='GET');
     next=link?.href??null;
   }
   return {catalog:product.route.endpoint,collection:product.route.collection,productType:product.route.productType??null,
-    bbox,from,until,returned,items,truncated:!!next,requests,searchedAt:new Date().toISOString()};
+    bbox,from,until,returned,items,truncated:false,requests,searchedAt:new Date().toISOString(),
+    ...(keep&&items.length&&keptKeys.size<offered?{files:{kept:[...keptKeys].sort(),offered}}:{})};
 }
 
 /** The sentence a search states. */
@@ -157,7 +165,8 @@ export const searchSentence=(s:CatalogSearch,product:SatelliteProduct):string=>
   +(product.route.productType?`, of ${s.returned} the catalog returned for the area and dates`:'')+'.'
   +(s.items.some(i=>i.orbit!=null)&&overpassCount(s.items)!==s.items.length
     ?` They are ${overpassCount(s.items)} overpass${overpassCount(s.items)===1?'':'es'}: an orbit can come in more than one processing stream.`:'')
-  +(s.truncated?` The search stopped at ${MAX_ITEMS} items; narrow the dates for the rest.`:'')
+  +(s.truncated?' The search stopped at the old limit of 500 items; search again for the rest.':'')
+  +(s.files?` Each item offered ${s.files.offered} files; the ${s.files.kept.length} the reader reads are kept: ${s.files.kept.join(', ')}.`:'')
   +' Metadata only: no file was read, so how many pixels each holds, and of what quality, is not yet known.';
 
 /** The receipt's facts. */

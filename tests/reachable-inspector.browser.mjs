@@ -3,7 +3,7 @@ import {collectPageErrors} from './page-errors.mjs';
 
 // `reachable_nodes` had no Inspector panel at all until 2026-10-17. It is addable,
 // implemented and tested, and every parameter it declares could only be set by editing the
-// workflow file or by adding the micro-workflow that pins them. `catchmentInspector` served the
+// workflow file. `catchmentInspector` served the
 // five CATCHMENT_TYPES and buffer_area; the node fell through every branch. The gap was found
 // while giving the widget a UTM zone of its own, which is the kind of thing a palette audit
 // cannot see: palette.ts asserts a widget is ADDABLE, and addable is not configurable.
@@ -14,10 +14,10 @@ test('the reachability step can be configured, and its optional frame can be uns
   await page.goto('/?example=snow-isochrone');
   await expect(page.locator('body')).toContainText('Complete in',{timeout:60000});
 
-  // Explode the bundled composition: that is how a reachable_nodes node reaches a canvas.
-  await page.locator('#node-library [data-composition]').first().click();
-  await page.locator('#micro-explode').click();
-  const node=page.locator('.react-flow__node').filter({hasText:'Walking catchment: reach'}).first();
+  // From the palette. Until 2026-11-07 this exploded the walking-catchment micro-workflow, retired that day.
+  await page.locator('#node-library [data-add="reachable_nodes"]').click();
+  await page.locator('[data-view="workflow"]').click();
+  const node=page.locator('.react-flow__node').filter({hasText:'Reachable junctions'}).first();
   await expect(node).toBeVisible({timeout:20000});
   await node.click();
 

@@ -22,7 +22,7 @@ async function settledNodes(page){
   return previous;
 }
 
-test('a worked example can be reset, and an exploded canvas can be laid out',async({page})=>{
+test('a worked example can be reset, and a crowded canvas can be laid out',async({page})=>{
   const errors=collectPageErrors(page);
   page.on('dialog',d=>d.accept());
   // Fieldwork saves each workspace to localStorage, so a test that edits snow-isochrone
@@ -51,7 +51,7 @@ test('a worked example can be reset, and an exploded canvas can be laid out',asy
     const boxes=[...document.querySelectorAll('.react-flow__node')].map(e=>e.getBoundingClientRect());
     return boxes.every((a,i)=>boxes.every((b,j)=>i===j||Math.abs(a.left-b.left)>2||a.bottom<=b.top+1||b.bottom<=a.top+1));
   })).toBe(true);
-  expect(await page.locator('.react-flow__node').count()).toBe(original+4);
+  expect(await page.locator('.react-flow__node').count()).toBe(original+3);
 
   // A second tidy says so rather than appearing to do nothing.
   await page.locator('#tidy-button').click();
@@ -61,7 +61,7 @@ test('a worked example can be reset, and an exploded canvas can be laid out',asy
   await openWorkflow(page,'snow-voronoi');
   await openWorkflow(page,'snow-isochrone');
   await page.locator('[data-view="workflow"]').click();
-  await expect.poll(()=>page.locator('.react-flow__node').count()).toBe(original+4);
+  await expect.poll(()=>page.locator('.react-flow__node').count()).toBe(original+3);
 
   // Reset returns it to the published example.
   await page.locator('#reset-example').click();

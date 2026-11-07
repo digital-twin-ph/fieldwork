@@ -10,7 +10,7 @@
 //                   | relate-snow-001 | group-snow-001 | area-join-snow-001
 //                   | select-range-london-001
 //                   | regression-salmonella-001 | regression-nyc-001 (needs NYC_PKG)
-//                   | sample-satellite-s5p-001
+//                   | sample-satellite-s5p-001 | lag-response-brazil-001
 import {createHash} from 'node:crypto';
 import {readFile,writeFile} from 'node:fs/promises';
 import {reprojectToCRS84,projectFromCRS84} from '../build/reproject.js';
@@ -33,8 +33,11 @@ import {aggregateHex} from '../build/geoprivacy.js';
 import {caseSeriesFromTable} from '../build/case-series.js';
 import {relateTable,relateShape,gapSignature} from '../build/relate-table.js';
 import {groupTable} from '../build/group-table.js';
-import {selectRange} from '../build/derive-value.js';
-import {fitRegression,specFrom,rowsOf} from '../build/regression.js';
+import {selectRange,selectRows} from '../build/derive-value.js';
+import {appendTables} from '../build/append-rows.js';
+import {tableChart} from '../build/chart-output.js';
+import {chartVegaSpec} from '../build/chart-vega.js';
+import {fitRegression,specFrom,rowsOf,regressionTable} from '../build/regression.js';
 import {computeRateTwoByTwo} from '../build/two-by-two-rates.js';
 import {tablePoints} from '../build/table-points.js';
 import {groupTable as totalWithin} from '../build/group-table.js';
@@ -1146,6 +1149,39 @@ const builders={
     },files:{}};
   },
 
+  'lag-response-brazil-001'(){
+    // FIVE REGRESSIONS STACKED AND DRAWN (experiment 181). The estimates are the five Brazil lag models as played back
+    // live in experiment 180, with one month term each so the selection has something to drop. The lab rebuilds the
+    // stack with pandas.concat and the points with a pivot, and checks the scale and the line from the declaration.
+    const LIVE=[[0,0.993,0.983,1.004],[2,0.979,0.969,0.989],[4,0.963,0.954,0.973],[6,1.007,0.997,1.017],[8,1.063,1.053,1.073]];
+    const tables=LIVE.map(([,ratio,lower,upper])=>regressionTable({family:'poisson',measure:'rate ratio',level:95,
+      estimates:[{term:'LST_Day_1km',column:'LST_Day_1km',ratio,lower,upper,p:0.01},
+        {term:'mes[2]',column:'mes',level:'2',ratio:1.5,lower:1.4,upper:1.6,p:0.001}]}));
+    const appendParams={nameSource:true,sourceColumn:'lag',labels:LIVE.map(([lag])=>String(lag)),labelsAreNumbers:{unit:'weeks before'}};
+    const stacked=appendTables(tables,appendParams).table;
+    const kept=selectRows(stacked,'term',['LST_Day_1km']).table;
+    const chartParams={label:'Rate ratio per °C at each lag'};
+    const chart=tableChart(kept,'lag');
+    const spec=chartVegaSpec(chart,chartParams);
+    const point=spec.layer.at(-1),line=spec.layer.length===3?spec.layer[0]:null;
+    return {fixture:{
+      ...base('lag-response-brazil-001','chart_output','Chart','src/chart-output.ts#tableChart; src/chart-vega.ts#chartVegaSpec'),
+      alsoExercises:[{widget:widgetOf('append_rows').id,release:widgetOf('append_rows').currentVersion,implementation:'src/append-rows.ts#appendTables'},
+        {widget:widgetOf('select_rows').id,release:widgetOf('select_rows').currentVersion,implementation:'src/derive-value.ts#selectRows'}],
+      source:'The five Brazil lag models of Fieldwork experiment 180, as Regression reported them in the live playback of 2026-11-06, each with one month term added.',
+      declaredParameters:{append:appendParams,select:{keyColumn:'term',values:['LST_Day_1km']},chart:{keyColumn:'lag',...chartParams},
+        semantics:'Stack the tables in port order, each row labelled with its table\'s label in `lag`, declared a number in weeks. Keep the exposure term. At each lag draw the row whose statistic is the interval\'s estimate as a point, from its lower to its upper as a whisker. A ratio is drawn on a log scale whose domain holds every limit and 1, with a line at 1.',
+        equivalentTo:"pandas: pd.concat(frames, keys=labels, names=['lag']).reset_index(level='lag'); lag as a number; df[df.term == 'LST_Day_1km'].pivot(index='lag', columns='statistic', values='value')"},
+      input:{interval:tables[0].interval,
+        tables:tables.map(t=>({keys:t.keys,valueField:t.valueField,rows:t.rows.map(r=>({key:r.key,value:r.value}))}))},
+      output:{stacked:{keys:stacked.keys,numericKeys:stacked.numericKeys,rowCount:stacked.rowCount,
+          rows:stacked.rows.map(r=>({key:r.key,value:r.value}))},
+        points:point.data.values.map(v=>({at:v.at,estimate:v.estimate,lower:v.lower,upper:v.upper})),
+        xType:point.encoding.x.type,yScale:point.encoding.y.scale.type,yDomain:point.encoding.y.scale.domain,
+        referenceLine:line?line.data.values[0].one:null},
+      note:'Rebuild the stack from `input.tables` and the labels, keep the exposure term, pivot the statistics, and compare each point and the scale.'
+    },files:{}};
+  },
   'select-range-london-001'(){
     // A RANGE IS "BETWEEN", and pandas has one: `Series.between(left, right, inclusive='both')`. The
     // table is London's daily deaths 2002 to 2006 as the Stata reader reads it, so the dates are the

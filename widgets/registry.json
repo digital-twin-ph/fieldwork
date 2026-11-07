@@ -176,7 +176,7 @@
     {
       "id": "urn:fieldwork:widget:chart_output",
       "nodeType": "chart_output",
-      "currentVersion": "0.10.0",
+      "currentVersion": "0.11.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -227,6 +227,11 @@
           "version": "0.10.0",
           "path": "widgets/releases/chart_output/0.10.0.json",
           "sha256": "cdc0cfd3faac7d3aec1b46cb84e66bc15714d3f3f028beef331467219804c24c"
+        },
+        {
+          "version": "0.11.0",
+          "path": "widgets/releases/chart_output/0.11.0.json",
+          "sha256": "ea268eddc8770de3176b2bad867a6d9d18404cea8f512b2675fcaa8947bf6a36"
         }
       ]
     },
@@ -1161,12 +1166,17 @@
     {
       "id": "urn:fieldwork:widget:append_rows",
       "nodeType": "append_rows",
-      "currentVersion": "0.1.0",
+      "currentVersion": "0.2.0",
       "releases": [
         {
           "version": "0.1.0",
           "path": "widgets/releases/append_rows/0.1.0.json",
           "sha256": "f763b18cd7571840858194fe4dd8f06067ba59f2d39239882243988347e01e7b"
+        },
+        {
+          "version": "0.2.0",
+          "path": "widgets/releases/append_rows/0.2.0.json",
+          "sha256": "0c57c48dd5010d9c53e314a97a4cf3a41a7ffac04220804f884a9466b2a4204c"
         }
       ]
     },
@@ -1610,7 +1620,7 @@
     {
       "id": "urn:fieldwork:widget:regression",
       "nodeType": "regression",
-      "currentVersion": "0.2.0",
+      "currentVersion": "0.2.1",
       "releases": [
         {
           "version": "0.1.0",
@@ -1621,6 +1631,11 @@
           "version": "0.2.0",
           "path": "widgets/releases/regression/0.2.0.json",
           "sha256": "7380caece67010d5452b43b5e6f24766e9b5734a8ebd8bd982565aeb15b3b56b"
+        },
+        {
+          "version": "0.2.1",
+          "path": "widgets/releases/regression/0.2.1.json",
+          "sha256": "812bc6f7d096b0df66d23938a0cbda7df94e5efc42550df9aaf200730cebff52"
         }
       ]
     },

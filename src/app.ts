@@ -42,6 +42,7 @@ import {bboxOf,defaultKept} from './satellite-catalog.js';
 import {SAMPLE_KEYS,days as sampleDays} from './satellite-sample.js';
 import {productFor} from './satellite-products.js';
 import {onRunDetail} from './run-progress.js';
+import {appendLabel,appendPort,appendTableCount} from './append-rows.js';
 import {GRID_KEYS,gridReaderFor} from './satellite-grid-sample.js';
 import {MODIS_RULES,type ModisQualityRule} from './satellite-areas.js';
 import {openProductsDialog,productCard} from './satellite-products-ui.js';
@@ -161,10 +162,23 @@ import type {TwoByTwoResult} from './two-by-two.js';
 const esc=(s:unknown)=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
 function chartControls(n:WorkflowNode<'chart_output'>,options:{omitOrientation?:boolean}={}){
   const p=n.params;
-  return `<div class="field"><label class="field-label" for="chart-renderer">Chart enhancement</label><select id="chart-renderer"><option value="html" ${chartRenderer(p)!=='vega-lite'?'selected':''}>Classic bars</option><option value="vega-lite" ${p.renderer==='vega-lite'?'selected':''}>Vega-Lite (experimental)</option></select></div>`+
-    (chartRenderer(p)==='vega-lite'?`<label class="field-label" for="chart-mark">Mark</label><select id="chart-mark"><option value="bar" ${p.mark!=='point'?'selected':''}>Bars</option><option value="point" ${p.mark==='point'?'selected':''}>Dots</option></select>
-    ${options.omitOrientation||p.panelsBy?'':`<label class="field-label" for="chart-orientation">Orientation</label><select id="chart-orientation"><option value="horizontal" ${p.orientation!=='vertical'?'selected':''}>Horizontal</option><option value="vertical" ${p.orientation==='vertical'?'selected':''}>Vertical</option></select>`}
-    ${p.panelsBy?'':(()=>{
+  // AN ESTIMATE WITH ITS INTERVAL is a point and a whisker: no mark or orientation to choose (experiment 181).
+  const interval=!!result?.outputs.find(o=>o.nodeId===n.id)?.chart?.interval;
+  return `<div class="field"><label class="field-label" for="chart-renderer">Chart enhancement</label><select id="chart-renderer"><option value="html" ${chartRenderer(p)!=='vega-lite'?'selected':''}>Classic bars</option><option value="vega-lite" ${chartRenderer(p)==='vega-lite'?'selected':''}>Vega-Lite (experimental)</option></select></div>`+
+    (chartRenderer(p)==='vega-lite'?`${interval?'':`<label class="field-label" for="chart-mark">Mark</label><select id="chart-mark"><option value="bar" ${p.mark!=='point'?'selected':''}>Bars</option><option value="point" ${p.mark==='point'?'selected':''}>Dots</option></select>`}
+    ${options.omitOrientation||p.panelsBy||interval?'':`<label class="field-label" for="chart-orientation">Orientation</label><select id="chart-orientation"><option value="horizontal" ${p.orientation!=='vertical'?'selected':''}>Horizontal</option><option value="vertical" ${p.orientation==='vertical'?'selected':''}>Vertical</option></select>`}
+    ${(()=>{
+      // AN ESTIMATE WITH ITS INTERVAL (experiment 181): for a ratio, the log scale and the line at 1 are on unless
+      // turned off here. Read off the last run, as the bar order is, since the table's shape arrives with it.
+      const drawn=result?.outputs.find(o=>o.nodeId===n.id)?.chart;
+      if(!drawn?.interval)return '';
+      return drawn.interval.ratio
+        ?`<label class="check"><input type="checkbox" id="chart-log-scale" ${p.ratioScale!=='linear'?'checked':''}> Log scale for the ${esc(drawn.interval.estimate)}</label>`
+          +`<label class="check"><input type="checkbox" id="chart-reference-line" ${p.referenceLine!==false?'checked':''}> A dashed line at 1, no association</label>`
+          +'<p class="description">On by default for a ratio: on a log scale a ratio and its inverse sit equally far from 1. The figure says so.</p>'
+        :'';
+    })()}
+    ${p.panelsBy||interval?'':(()=>{
       // BAR ORDER, and the control is offered only where it could act. Not with panels (experiment 174): they run
       // along time, which is the order they mean. A chart whose bins carry
       // an `order` is a SEQUENCE -- an epidemic curve's days, a band's thresholds -- and sorting
@@ -853,8 +867,10 @@ function tableKeyColumns(node:WorkflowNode|undefined,seen=new Set<string>()):rea
       const of=(port:string)=>{const up=workflow.edges.find(e=>e.to===node.id&&e.port===port);
         return tableKeyColumns(up?workflow.nodes.find(m=>m.id===up.from):undefined,new Set(seen));};
       const source=node.params.nameSource?node.params.sourceColumn?.trim():undefined,key=node.params.newKey?.trim();
-      return [...new Set([...(key?[key]:[]),...of('records'),...of('records_2'),...(source?[source]:[])])];}
+      return [...new Set([...(key?[key]:[]),...Array.from({length:appendTableCount(node.params)},(_,i)=>of(appendPort(i))).flat(),...(source?[source]:[])])];}
     case 'group_table':return node.params.by;
+    // A REGRESSION'S TABLE is always its terms by its statistics (experiment 181).
+    case 'regression':return ['term','statistic'];
     default:return [];
   }
 }
@@ -958,13 +974,21 @@ function upstreamKeyValues(node:WorkflowNode,seen=new Set<string>(),
     return name?{...below,[up.params.keyColumn]:[...(below[up.params.keyColumn]??[]),name]}:below;
   }
   if(up.type==='append_rows'){
-    const first=upstreamKeyValues(up,new Set(seen))??{},second=upstreamKeyValues(up,new Set(seen),'records_2')??{};
+    const count=appendTableCount(up.params);
+    const each=Array.from({length:count},(_,i)=>upstreamKeyValues(up,new Set(seen),appendPort(i))??{});
     const merged:Record<string,string[]>={};
-    for(const [name,values] of [...Object.entries(first),...Object.entries(second)])
+    for(const [name,values] of each.flatMap(held=>Object.entries(held)))
       merged[name]=[...new Set([...(merged[name]??[]),...values])];
     const source=up.params.nameSource?up.params.sourceColumn?.trim():undefined;
-    if(source)merged[source]=[up.params.firstLabel?.trim()||'first',up.params.secondLabel?.trim()||'second'];
+    if(source)merged[source]=Array.from({length:count},(_,i)=>appendLabel(up.params,i));
     return Object.keys(merged).length?merged:undefined;
+  }
+  // A REGRESSION'S COLUMNS ARE KNOWN BEFORE IT RUNS: its terms by its statistics. A numeric variable's term is its
+  // column; a categorical one's levels are known only from the data, so they are not offered here (experiment 181).
+  if(up.type==='regression'){
+    const p=up.params,level=p.level??95;
+    const terms=[p.exposure,...p.adjust].filter(v=>v.column&&v.as==='numeric').map(v=>v.column);
+    return {term:terms,statistic:[p.family==='logistic'?'odds ratio':'rate ratio',`lower ${level}%`,`upper ${level}%`,'p']};
   }
   // RELATING ADDS A COLUMN, and the values it will hold are the ones the second table holds --
   // read from THAT table rather than guessed, which is the same discipline as reading the
@@ -2259,18 +2283,30 @@ function renderInspector(){
       +`<input id="derive-name" data-slr="name" maxlength="80" value="${esc(p.name)}" placeholder="houses without a death"></div>`
       +'<div class="notice">A group missing either value gets no derived row and is named in the evidence, because a group whose first value nobody recorded has an unknown result, not a zero. A name the column already uses is refused, since two rows would then share a key. Dividing by zero is unknown rather than infinite.</div>';
   }else if(n.type==='append_rows'){
-    const p=n.params;
-    content+='<p class="description">Stacks the second table\'s rows under the first, as pandas <code>concat</code> does, '
-      +'lining columns up by name. Both must measure the same thing in the same unit.</p>'
+    const p=n.params,count=appendTableCount(p);
+    content+='<p class="description">Stacks the tables\' rows in order, as pandas <code>concat</code> does, '
+      +'lining columns up by name. All must measure the same thing in the same unit.</p>'
       +labelForm('append-label','Node label',p.label||'Append rows')
+      +`<div class="inspector-actions"><button id="append-add-table" class="button small">＋ Add a table</button>`
+      +`<button id="append-remove-table" class="button small" ${count<=2?'disabled':''}>Remove the last table</button></div>`
+      +`<p class="muted">${count} tables, one port each.</p>`
       +`<label class="check"><input type="checkbox" id="append-name-source" ${p.nameSource?'checked':''}> Name the source of each row</label>`
       +(p.nameSource
         ?`<label class="field-label" for="append-source">Column naming the source</label>`
           +`<input id="append-source" data-slr="sourceColumn" maxlength="60" value="${esc(p.sourceColumn??'')}" placeholder="source">`
-          +`<label class="field-label" for="append-first">Label for rows of the first table</label>`
-          +`<input id="append-first" data-slr="firstLabel" maxlength="60" value="${esc(p.firstLabel??'')}" placeholder="first">`
-          +`<label class="field-label" for="append-second">Label for rows of the second table</label>`
-          +`<input id="append-second" data-slr="secondLabel" maxlength="60" value="${esc(p.secondLabel??'')}" placeholder="second">`
+          // ONE LABEL PER TABLE. The first two keep their ids, which saved manuals and tests fill.
+          +Array.from({length:count},(_,i)=>{const id=i===0?'append-first':i===1?'append-second':`append-label-${i+1}`;
+            const name=count===2?(i===0?'the first table':'the second table'):`table ${i+1}`;
+            const placeholder=i===0?'first':i===1?'second':`table ${i+1}`;
+            const given=p.labels?.[i]??(i===0?p.firstLabel:i===1?p.secondLabel:undefined)??'';
+            return `<label class="field-label" for="${id}">Label for rows of ${name}</label>`
+              +`<input id="${id}" data-append-label="${i}" maxlength="60" value="${esc(given)}" placeholder="${esc(placeholder)}">`;}).join('')
+          +`<label class="check"><input type="checkbox" id="append-numbers" ${p.labelsAreNumbers?'checked':''}> The labels are numbers</label>`
+          +(p.labelsAreNumbers
+            ?`<label class="field-label" for="append-numbers-unit">Their unit</label>`
+              +`<input id="append-numbers-unit" maxlength="40" value="${esc(p.labelsAreNumbers.unit)}" placeholder="weeks before">`
+              +'<p class="description">Said by you, not read off the labels: a chart then spaces them as numbers, and titles the axis with the unit. A label that is not a number is a data quality finding, and its rows are kept.</p>'
+            :'')
         :'')
       +`<label class="check"><input type="checkbox" id="append-new-key" ${p.newKey?'checked':''}> Create a new primary key</label>`
       +(p.newKey!==undefined
@@ -3606,6 +3642,14 @@ function renderInspector(){
     if(!id)return;
     change(w=>{getNode(w,id,'group_table').params.excludeMissing=on;},{spatial:false});
   });
+  optionalElement('#chart-log-scale')?.addEventListener('change',event=>{
+    const on=(event.target as HTMLInputElement).checked,id=selected;if(!id)return;
+    change(w=>{const node=getNode(w,id,'chart_output');if(on)delete node.params.ratioScale;else node.params.ratioScale='linear';},{spatial:false});
+  });
+  optionalElement('#chart-reference-line')?.addEventListener('change',event=>{
+    const on=(event.target as HTMLInputElement).checked,id=selected;if(!id)return;
+    change(w=>{const node=getNode(w,id,'chart_output');if(on)delete node.params.referenceLine;else node.params.referenceLine=false;},{spatial:false});
+  });
   optionalElement('#chart-bar-order')?.addEventListener('change',event=>{
     const order=(event.target as HTMLSelectElement).value as BarOrder;
     const id=selected;
@@ -4806,6 +4850,23 @@ function renderInspector(){
   optionalElement('#append-name-source')?.addEventListener('change',e=>change(w=>{
     const node=getNode(w,n.id,'append_rows');const on=(e.target as HTMLInputElement).checked;
     node.params.nameSource=on;if(on&&!node.params.sourceColumn)node.params.sourceColumn='source';}));
+  optionalElement('#append-add-table')?.addEventListener('click',()=>change(w=>{
+    const node=getNode(w,n.id,'append_rows');node.params.tableCount=appendTableCount(node.params)+1;}));
+  optionalElement('#append-remove-table')?.addEventListener('click',()=>change(w=>{
+    const node=getNode(w,n.id,'append_rows'),count=appendTableCount(node.params);if(count<=2)return;
+    w.edges=w.edges.filter(e=>!(e.to===n.id&&e.port===appendPort(count-1)));
+    if(count-1===2)delete node.params.tableCount;else node.params.tableCount=count-1;
+    if(node.params.labels)node.params.labels=node.params.labels.slice(0,count-1);}));
+  document.querySelectorAll<HTMLInputElement>('[data-append-label]').forEach(el=>el.addEventListener('change',()=>change(w=>{
+    const node=getNode(w,n.id,'append_rows'),i=Number(el.dataset.appendLabel);
+    const labels=Array.from({length:appendTableCount(node.params)},(_,k)=>node.params.labels?.[k]
+      ??(k===0?node.params.firstLabel:k===1?node.params.secondLabel:undefined)??'');
+    labels[i]=el.value.trim();node.params.labels=labels;delete node.params.firstLabel;delete node.params.secondLabel;})));
+  optionalElement('#append-numbers')?.addEventListener('change',e=>change(w=>{
+    const node=getNode(w,n.id,'append_rows');
+    if((e.target as HTMLInputElement).checked)node.params.labelsAreNumbers={unit:''};else delete node.params.labelsAreNumbers;}));
+  optionalElement('#append-numbers-unit')?.addEventListener('change',e=>change(w=>{
+    const node=getNode(w,n.id,'append_rows');node.params.labelsAreNumbers={unit:(e.target as HTMLInputElement).value.trim()};}));
   optionalElement('#append-new-key')?.addEventListener('change',e=>change(w=>{
     const node=getNode(w,n.id,'append_rows');
     if((e.target as HTMLInputElement).checked)node.params.newKey='row';else delete node.params.newKey;}));

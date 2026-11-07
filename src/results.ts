@@ -107,7 +107,12 @@ export interface ChartSummary {field:'status'|'zone'|'tier'|'count'|'total'|'per
   panels?:string[]; temporal?:boolean;
   /** A panel's meaning, from the table's declared columns, shown beside its name (experiment 172). */
   meanings?:Record<string,string>;
-  bins:{key:string; label:string; count:number; order?:number; panel?:string; missing?:true}[]}
+  /** AN ESTIMATE WITH ITS INTERVAL per bin, read from the table's declaration (experiment 181). `ratio` puts the
+   *  no-difference line at 1 and makes a log scale the right one. */
+  interval?:{estimate:string; level:number; ratio:boolean};
+  /** The category axis is a number, as declared upstream, in this unit. */
+  numericCategory?:{unit:string};
+  bins:{key:string; label:string; count:number; order?:number; panel?:string; missing?:true; lower?:number; upper?:number}[]}
 export interface DisplayValue {
   comparison?:import('./point-comparison.js').PointComparison;
   polygonPresentation?:'plot'|'interactive';

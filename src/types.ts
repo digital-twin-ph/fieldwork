@@ -251,7 +251,9 @@ export interface ParamsByType {
     exposure:{column:string;as:'numeric'|'categorical'|'spline';reference?:string;df?:number};
     adjust:{column:string;as:'numeric'|'categorical'|'spline';reference?:string;df?:number}[];
     strata?:string;offset?:string;errors:'wald'|'profile'|'overdispersed'|'hac';hacLag?:number;order?:string;level?:number};
-  append_rows:{label:string;nameSource?:boolean;sourceColumn?:string;firstLabel?:string;secondLabel?:string;newKey?:string};
+  append_rows:{label:string;nameSource?:boolean;sourceColumn?:string;firstLabel?:string;secondLabel?:string;newKey?:string;
+    /** How many tables it stacks, 2 and up; absent is 2 (experiment 181). */ tableCount?:number;
+    labels?:string[];labelsAreNumbers?:{unit:string}};
   /** A POLYGON LAYER READ FROM A FILE, which nothing could do until 2026-10-28.
    *
    *  Seven node types emit `polygons` and every one of them DERIVES polygons from something else --
@@ -578,6 +580,8 @@ export interface ParamsByType {
     /** ONE PANEL PER VALUE of this key column, stacked on a shared x axis, each with its own y scale (experiment 174).
      *  `panelMarks` names a mark per panel; `shade` marks a period across every panel. */
     panelsBy?:string;panelMarks?:Record<string,'bar'|'line'>;shade?:{from:string;to:string};
+    /** For an estimate that is a ratio: a log scale and a dashed line at 1, on unless turned off (experiment 181). */
+    ratioScale?:'log'|'linear';referenceLine?:boolean;
     /** Which key column a table is charted against. Absent takes the table's first, which is the
      *  whole answer for a table with one key column -- a rate's is `group` -- and a stated
      *  choice for one with several. Nothing is guessed from a column's name. */

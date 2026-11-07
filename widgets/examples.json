@@ -439,14 +439,14 @@
       "id": "urn:fieldwork:example:brazil-dengue-rj-2024",
       "title": "Dengue in Rio de Janeiro state, Brazil, 2024",
       "repository": "https://github.com/digital-twin-ph/example-2024-brazil-dengue",
-      "commit": "5a42c4ece054589f429fc5bc97edeb415717a40b",
+      "commit": "6dead3d688a356ec0c36aec8f4096eb00c24c573",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2024-brazil-dengue",
       "licence": {
         "data": "CC-BY-4.0",
         "source": "Sánchez-Marqués and Sánchez, DATASET_MULTIMODAL_V8, Zenodo, doi:10.5281/zenodo.22029053; counts from InfoDengue; boundaries from geoBoundaries (IBGE), CC BY 3.0 IGO",
         "note": "Stated on the Zenodo record and by geoBoundaries. Attribution is in NOTICE.txt."
       },
-      "description": "Weekly notified dengue cases in the 92 municipalities of Rio de Janeiro state during Brazil's largest epidemic on record: the state's epidemic curve, notified cases per 100,000 residents by municipality on a map, and MODIS land surface temperature over each municipality for every 8-day period of 2024. A fourth workflow sets weekly cases beside the temperature 0 to 8 weeks earlier, in five Poisson models.",
+      "description": "Weekly notified dengue cases in the 92 municipalities of Rio de Janeiro state during Brazil's largest epidemic on record: the state's epidemic curve, notified cases per 100,000 residents by municipality on a map, and MODIS land surface temperature over each municipality for every 8-day period of 2024. A fourth workflow sets weekly cases beside the temperature 0 to 8 weeks earlier, in five Poisson models, drawn as a lag-response plot.",
       "carries": {
         "workflow": true,
         "data": true,
@@ -473,8 +473,8 @@
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "778d6781b914ddfdd9f49b50cfd9ef6aade4adf49cc5cf29f792820b7ab8e662",
-          "bytes": 1259461
+          "sha256": "d0a485945b72054e77332015eab87e93cd4178772c5b221c0a94f8d61667259f",
+          "bytes": 1259888
         },
         {
           "path": "data/dengue-rj-2024.csv",
@@ -493,8 +493,8 @@
         },
         {
           "path": "README.md",
-          "sha256": "da96cda2a0d0800785c5b17f4229fdd311c80e901e5ed44358a43c874aa39541",
-          "bytes": 4851
+          "sha256": "bd295ab408f382cf9a5f3972791face26610c390b80e39b67adf7e58c662ef90",
+          "bytes": 5006
         },
         {
           "path": "NOTICE.txt",
@@ -508,8 +508,8 @@
         },
         {
           "path": "manual.json",
-          "sha256": "c6151e3e311c552e20ff4d7425dd15f5ca590a2d79f137514958020fee49b5ba",
-          "bytes": 46910
+          "sha256": "f2e1d4db6bdf9f333558b5b969d0e66bb756c092db2cf8ec59b89bbd7412e572",
+          "bytes": 50993
         }
       ],
       "workflowCount": 4

@@ -153,12 +153,12 @@
    "replacementCandidate": "urn:fieldwork:widget:observations"
   },
   "chart_output": {
-   "version": "0.10.0",
-   "released": "2026-11-05",
+   "version": "0.11.0",
+   "released": "2026-11-06",
    "changes": [
     {
      "kind": "minor",
-     "description": "Chooses where its figure goes in the Notes write-up: Introduction, Methods, Results or Discussion, under 'In the write-up, under'. Results is the default, declared per widget as fw:defaultFigureSection in ontology/widgets.ttl from the constant the application applies. The receipt states fw:figureSection and fw:figureSectionDeclared on the step, and fw:FigureFiledWhereDeclaredShape holds the step's machined note to the same section. The practitioner, 2026-11-05: 'all output widgets may have default IMRAD sections but it should be flexible.'"
+     "description": "Draws an estimate with its interval at each category, from a table that declares one: a point and a whisker, and for a ratio a log scale and a dashed line at 1, on by default and said on the figure. A category declared numeric is placed as a number."
     }
    ],
    "breaking": false,
@@ -754,12 +754,12 @@
    "migrationFrom": []
   },
   "append_rows": {
-   "version": "0.1.0",
-   "released": "2026-11-03",
+   "version": "0.2.0",
+   "released": "2026-11-06",
    "changes": [
     {
-     "kind": "initial",
-     "description": "Stacks the rows of a second table under the first, as pandas concat does. Options: name the source of each row; create a new primary key, keeping the old key and, with the source named, source and old key as an alternate key. Experiment 166."
+     "kind": "minor",
+     "description": "Stacks any number of tables, one port each, added from the Inspector; a label per table; the labels can be declared numbers in a unit, and a label that is not one is a data quality finding."
     }
    ],
    "breaking": false,
@@ -1017,16 +1017,12 @@
    "replacementCandidate": "urn:fieldwork:widget:apply_ruleset"
   },
   "regression": {
-   "version": "0.2.0",
-   "released": "2026-11-04",
+   "version": "0.2.1",
+   "released": "2026-11-06",
    "changes": [
     {
-     "kind": "initial",
-     "description": "Logistic and Poisson regression of an outcome on an exposure, adjusted for numeric, categorical (treatment-coded) and B-spline (R's bs()) terms, fitted by IRLS in the Rust kernel. Poisson takes an offset and strata absorbed as fixed effects. Intervals: likelihood-ratio (profile), Wald, Wald scaled for overdispersion, or HAC (Newey-West). Experiment 167."
-    },
-    {
-     "kind": "minor",
-     "description": "The declared study design decides the measure, read from the same declaration the two-by-two reads (REGRESSION_LICENCES): the practitioner chose, 2026-11-04, a rate ratio under cohort and ecological designs only. The receipt now carries RDF facts (fw:RegressionModel, fw:EpiEstimate per coefficient), so the fit appears in the N3 & evidence view, checked by two SHACL shapes. Experiment 176."
+     "kind": "patch",
+     "description": "Its table declares which statistic is the estimate and which are the interval's limits, so a chart reads the interval without guessing from names."
     }
    ],
    "breaking": false,

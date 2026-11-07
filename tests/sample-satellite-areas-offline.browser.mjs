@@ -32,8 +32,10 @@ test('three areas, one per outcome, read by range: the mean rests on the cells t
   const files={LST_Day_1km:tif(VALUE,16),QC_Day:tif(QC,8),Clear_sky_days:tif(CLEAR,8)};
   await page.route(/modiseuwest\.blob\.core\.windows\.net/,async route=>{
     const name=Object.keys(files).find(k=>route.request().url().includes(`_${k}.tif`));
-    // Served slowly, so the run lasts long enough to see what it shows while it reads.
-    await new Promise(r=>setTimeout(r,250));
+    // Served slowly, so the run lasts long enough to see what it shows while it reads. Two seconds a file: since 0.40.0
+    // six files are read at once, and at 250 ms the whole read could finish before the panel was looked for (WebKit
+    // in CI, 2026-11-07).
+    await new Promise(r=>setTimeout(r,2000));
     return serveRange(route,files[name]);});
   await page.route(/planetarycomputer\.microsoft\.com\/api\/sas\/v1\/token\/modiseuwest/,route=>route.fulfill({status:200,
     contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({token:'st=fixture&sig=none','msft:expiry':'2099-01-01T00:00:00Z'})}));

@@ -391,8 +391,35 @@ dialog built their own requests without the new options and refused; they now pa
 draft ran before the weekly cases reached an output, and read the brought temperature, a key column, as
 categorical: 54 model columns against a limit of 32.
 
-**The figure for these five ratios** is asked in [181](181-lag-response-figure.md): a lag–response plot, which Chart
-cannot yet draw.
+## Leads: the falsification test, 2026-11-06
+
+**The practitioner, 2026-11-06:** *"Yes add the lead models"*, after the lag chart was read as most likely tracing the
+season. Two more Relates and models take the temperature 2 and 4 weeks **after** each case week (shifts of +17 and
++31 days), and the figure places them at −2 and −4. Later weather cannot cause earlier cases, so an association there
+as strong as at the lags says the season, not the temperature, is behind both.
+
+**Played back live** in Chromium, 18.0 minutes. A first attempt stopped in the third workflow on *Failed to fetch*
+while reading the satellite files; the re-run passed.
+
+| Weeks | Rate ratio per 1 °C (95%) | Rows | Pearson dispersion |
+| --- | --- | --- | --- |
+| 4 after | 1.031 (1.019–1.044) | 4,276 | 28.7 |
+| 2 after | 1.061 (1.050–1.072) | 4,455 | 27.4 |
+| 0 | 0.993 (0.983–1.004) | 4,636 | 27.8 |
+| 2 before | 0.979 (0.969–0.989) | 4,549 | 26.5 |
+| 4 before | 0.963 (0.954–0.973) | 4,369 | 24.4 |
+| 6 before | 1.007 (0.997–1.017) | 4,185 | 22.3 |
+| 8 before | 1.063 (1.053–1.073) | 4,001 | 18.0 |
+
+**The test fails.** The temperature 2 weeks after a case week goes with as many more cases as the temperature 8
+weeks before it, 1.061 against 1.063, and neither interval crosses 1. These models cannot tell an effect of
+temperature from the shape of one epidemic wave against one year's season, which month strata do not remove. The lag
+results above are not evidence of an effect at any lag.
+
+**Found:** one failed download among the satellite files stops the whole run, and *Failed to fetch* names no file.
+Not changed; a retry and a named file are a proposal.
+
+**The figure for these ratios** is [181](181-lag-response-figure.md): a lag–response plot, built in 0.39.0.
 
 ## What this does not establish
 

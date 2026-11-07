@@ -3,6 +3,14 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.39.1 — 2026-11-06
+
+- **The Brazil lag models get a falsification test, and it fails.** Two lead models, the temperature 2 and 4 weeks
+  *after* each case week, sit on the lag-response plot at −2 and −4. Played back live: 1.061 per 1 °C two weeks after,
+  against 1.063 eight weeks before. Later weather cannot cause earlier cases, so these models trace one year's season,
+  not an effect of temperature. Experiment 180.
+- Validation: Chromium locally; WebKit in CI.
+
 ## 0.39.0 — 2026-11-06
 
 - **Chart draws an estimate with its interval**: a point with a whisker at each category, from any table that

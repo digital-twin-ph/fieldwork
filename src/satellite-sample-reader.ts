@@ -8,6 +8,8 @@ import type {CatalogItem} from './satellite-catalog.js';
 import {dataFileOf,type FileReading,type SamplePoint,type SatelliteReader} from './satellite-sample.js';
 
 const cache=new Map<string,FileReading>();
+/** Forgets every file read this session; for a measurement or a test. */
+export const clearFileCache=()=>cache.clear();
 const tokens=new Map<string,{token:string;expires:number}>();
 
 async function tokenFor(endpoint:string):Promise<string>{
@@ -35,24 +37,41 @@ function readOne(url:string,reader:SatelliteReader,points:readonly SamplePoint[]
   });
 }
 
+/** Files in flight at once, and tries per file, for Sentinel-5P (experiment 182). The time is network waiting, so
+ *  files overlap; a file that fails is tried again before the run stops, naming it. */
+export interface FileReadOptions {concurrency?:number; attempts?:number; retryMs?:number}
+/** Measured on 2026-11-06 (experiment 182), 10 NYC overpasses in Chromium: 46.9 s one at a time, 21.8 s at 3, 18.3 s
+ *  at 6. Three, because each file in flight holds a worker and its chunks in memory, which a low-end device feels. */
+export const S5P_CONCURRENCY=3;
+
 export async function readFiles(items:readonly CatalogItem[],reader:SatelliteReader,points:readonly SamplePoint[],
-  onFile:(done:number,of:number)=>void=()=>{}):Promise<FileReading[]>{
+  onFile:(done:number,of:number)=>void=()=>{},options:FileReadOptions={},
+  read:(url:string,reader:SatelliteReader,points:readonly SamplePoint[])=>ReturnType<typeof readOne>=readOne):Promise<FileReading[]>{
   const signature=points.map(p=>`${p.id}@${p.lon},${p.lat}`).join(';');
-  const out:FileReading[]=[];
-  for(const [index,item] of items.entries()){
+  const concurrency=Math.max(1,Math.floor(options.concurrency??S5P_CONCURRENCY));
+  const attempts=Math.max(1,Math.floor(options.attempts??3)),retryMs=options.retryMs??1500;
+  const out:FileReading[]=new Array(items.length);
+  const one=async(item:CatalogItem):Promise<FileReading>=>{
     const file=dataFileOf(item);
     if(!file)throw new Error(`${item.id} has no NetCDF file to read.`);
     const key=`${file.href}|${reader.variable}|${signature}`;
-    let reading=cache.get(key);
-    if(!reading){
-      const url=reader.token?`${file.href}${file.href.includes('?')?'&':'?'}${await tokenFor(reader.token)}`:file.href;
-      let read;
-      try{read=await readOne(url,reader,points);}
-      catch(error){throw new Error(`${item.id}: ${error instanceof Error?error.message:String(error)}`);}
-      reading={...read,itemId:item.id,href:file.href,stream:item.stream??null,orbit:item.orbit??null,datetime:item.datetime};
-      cache.set(key,reading);
+    const held=cache.get(key);
+    if(held)return held;
+    for(let attempt=1;;attempt++){
+      try{
+        const url=reader.token?`${file.href}${file.href.includes('?')?'&':'?'}${await tokenFor(reader.token)}`:file.href;
+        const got=await read(url,reader,points);
+        const reading={...got,itemId:item.id,href:file.href,stream:item.stream??null,orbit:item.orbit??null,datetime:item.datetime};
+        cache.set(key,reading);return reading;
+      }catch(error){
+        const said=error instanceof Error?error.message:String(error);
+        if(attempt>=attempts)throw new Error(`${item.id}: ${said}${attempts>1?` (after ${attempts} attempts)`:''}`);
+        await new Promise(resolve=>setTimeout(resolve,retryMs*attempt));
+      }
     }
-    out.push(reading);onFile(index+1,items.length);
-  }
+  };
+  let next=0,done=0;
+  const lane=async()=>{while(next<items.length){const index=next++;out[index]=await one(items[index]!);onFile(++done,items.length);}};
+  await Promise.all(Array.from({length:Math.min(concurrency,items.length)},lane));
   return out;
 }

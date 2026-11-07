@@ -1053,12 +1053,12 @@
    "migrationFrom": []
   },
   "sample_satellite_files_at_points": {
-   "version": "0.5.1",
+   "version": "0.6.0",
    "released": "2026-11-06",
    "changes": [
     {
-     "kind": "patch",
-     "description": "Shows a progress panel while reading files: the step, a count of files read, and a bar."
+     "kind": "minor",
+     "description": "Reads several files at once (six MODIS, three Sentinel-5P, measured), retries a failed file and names one that still fails, and reads each MODIS file once per session."
     }
    ],
    "breaking": false,

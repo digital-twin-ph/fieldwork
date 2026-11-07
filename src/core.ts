@@ -57,7 +57,7 @@ import classification from '../widgets/classification.json' with {type:'json'};
 import {OLD_TYPES,validateOldNode,executeOldNode,migrateFacilitySources,applyAccessReview,applyFacilityGrading,gradedPointLayer,distancesAsAccess} from './old-naledi.js';
 import {resolveRuleset,bindParameters,tableContractFailures,rulesetCitation} from './rulesets.js';
 import {deriveValue,selectRows,selectRange,rangeSentence,OPERATORS} from './derive-value.js';
-import {appendRows,appendSentence} from './append-rows.js';
+import {appendTables,appendSentence,appendPort,appendTableCount} from './append-rows.js';
 import {fitRegression,specFrom,rowsOf,regressionTable,regressionSentence,regressionReceipt} from './regression.js';
 import {metadataFindings} from './column-metadata.js';
 import widgetRegistry from '../widgets/registry.json';
@@ -435,6 +435,10 @@ export function nodeInputs(node:WorkflowNode):[string,PortType][]{
   if(node.type==='chart_output')return node.params.inputMode==='series'
     ?[['series','table'],...TYPES.chart_output.inputs]
     :[...TYPES.chart_output.inputs];
+  // AS MANY TABLES AS THE PRACTITIONER ADDS, one port each, in order (experiment 181). Two is the floor and the
+  // ports of a workflow saved before keep their names.
+  if(node.type==='append_rows')return Array.from({length:appendTableCount(node.params)},
+    (_,i)=>[appendPort(i),'table'] as [string,PortType]);
   if(node.type==='case_series')return node.params.source==='table'?[['cases','table']]:[['points','points']];
   // The same shape, for the same reason: a rate's denominator usually arrives as a table.
   // The port keeps its name either way, because what it carries is the records to divide.
@@ -865,6 +869,7 @@ export function validateWorkflow(raw:unknown):Workflow {
     if (n.type==='alert' && (![true,false,null].includes(n.params.active) || !/^\d{4}-\d{2}-\d{2}$/.test(n.params.date) || !Number.isFinite(Date.parse(n.params.date)) || new Date(n.params.date).toISOString().slice(0,10)!==n.params.date)) throw new Error('Invalid heat alert or assessment date.');
     if(Object.hasOwn(OLD_TYPES,n.type))validateOldNode(n);
     if(n.type==='measure_area')validateAreaUnit(n.params.unit);
+    if(n.type==='append_rows'&&n.params.tableCount!==undefined&&(!Number.isInteger(n.params.tableCount)||n.params.tableCount<2))throw new Error('Append rows stacks two tables or more.');
     if((n.type==='map_output'||n.type==='table_output'||n.type==='deduplicate_points')&&n.params.pointInputCount!==undefined&&(!Number.isInteger(n.params.pointInputCount)||n.params.pointInputCount<1||n.params.pointInputCount>MAX_POINT_LAYERS))throw new Error('Use 1–8 point input ports.');
     if((n.type==='map_output'||n.type==='table_output'||n.type==='chart_output')&&(typeof n.params.label!=='string'||!n.params.label.trim()||n.params.label.length>60))throw new Error(`${TYPES[n.type].title} names must be text of 1–60 characters.`);
   }
@@ -1705,14 +1710,17 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           method:sentence} as unknown as Receipt);
         break;}
       case 'append_rows':{
-        const first=inputs.records as unknown as import('./data-table.js').DataTable;
-        const second=(inputs as unknown as Record<string,unknown>).records_2 as import('./data-table.js').DataTable;
-        if(first?.kind!=='data-table'||second?.kind!=='data-table')
-          throw new Error('Connect two tables: this step stacks the rows of the second under the first.');
-        const result=appendRows(first,second,node.params);
+        const count=appendTableCount(node.params);
+        const tables=Array.from({length:count},(_,i)=>(inputs as unknown as Record<string,unknown>)[appendPort(i)] as
+          import('./data-table.js').DataTable|undefined);
+        const absent=tables.flatMap((t,i)=>t?.kind==='data-table'?[]:[i+1]);
+        if(absent.length)throw new Error(count===2?'Connect two tables: this step stacks the rows of the second under the first.'
+          :`Connect a table to every port: ${absent.map(i=>`table ${i}`).join(', ')} ${absent.length===1?'has':'have'} none. `
+            +'Remove a port you do not need.');
+        const result=appendTables(tables as import('./data-table.js').DataTable[],node.params);
         value={...result.table,sentence:appendSentence(result,node.params)} as unknown as DisplayValue;
         receipts.push({nodeId:node.id,kind:'computation',method:appendSentence(result,node.params),
-          fromFirst:result.fromFirst,fromSecond:result.fromSecond,missing:result.missing} as unknown as Receipt);
+          from:result.from,fromFirst:result.fromFirst,fromSecond:result.fromSecond,missing:result.missing} as unknown as Receipt);
         break;}
       case 'select_rows':{
         const table=inputs.records as unknown as import('./data-table.js').DataTable;

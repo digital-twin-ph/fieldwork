@@ -1095,6 +1095,18 @@ fw:networkSegmentCount a owl:DatatypeProperty; rdfs:domain fw:MapView; rdfs:rang
 fw:rendererSpecification a owl:DatatypeProperty; rdfs:domain fw:ChartSpecification; rdfs:range xsd:string;
   rdfs:comment "Exact generated renderer JSON for the bounded, executable view; data values are inline from the recorded count bins.".
 fw:chartRendererVersion a owl:DatatypeProperty; rdfs:domain fw:ChartSpecification; rdfs:range xsd:string.
+fw:chartIntervalLevel a owl:DatatypeProperty; rdfs:domain fw:ChartSpecification; rdfs:range xsd:integer;
+  rdfs:label "Interval level drawn";
+  rdfs:comment "The level, in percent, of the intervals drawn as whiskers around each estimate. Experiment 181.";
+  fw:implementationStatus "implemented".
+fw:chartScale a owl:DatatypeProperty; rdfs:domain fw:ChartSpecification; rdfs:range xsd:string;
+  rdfs:label "Scale of the estimate axis";
+  rdfs:comment "log or linear. A ratio is drawn on a log scale unless the practitioner turned it off, so a ratio and its inverse sit equally far from 1. Experiment 181.";
+  fw:implementationStatus "implemented".
+fw:chartReferenceLine a owl:DatatypeProperty; rdfs:domain fw:ChartSpecification; rdfs:range xsd:boolean;
+  rdfs:label "Line at no association drawn";
+  rdfs:comment "Whether a dashed line marks a ratio of 1, no association. On by default for a ratio. Experiment 181.";
+  fw:implementationStatus "implemented".
 fw:CategoricalCount a owl:Class;
   rdfs:subClassOf prov:Activity;
   rdfs:label "Categorical frequency computation";

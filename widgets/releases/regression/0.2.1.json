@@ -1,0 +1,98 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:regression",
+  "nodeType": "regression",
+  "version": "0.2.1",
+  "title": "Regression",
+  "released": "2026-11-06",
+  "implementationStatus": "implemented",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['regression']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "validationStatus": "application-only",
+    "shaclShapes": []
+  },
+  "ports": {
+    "inputs": [
+      {
+        "name": "records",
+        "type": "table"
+      },
+      {
+        "name": "design",
+        "type": "design"
+      }
+    ],
+    "output": "table",
+    "optionalInputs": [
+      "design"
+    ],
+    "note": "A table in, a table of estimates out: one row per reported term with its ratio, interval limits and p. The design port is optional. A declared design decides the measure: a rate ratio under cohort and ecological designs, an odds ratio wherever the two-by-two allows one (a prevalence odds ratio under a cross-sectional design); anything else stops the step, saying why."
+  },
+  "ontology": {
+    "status": "gap",
+    "mappings": [],
+    "note": "GAP, meaning no mapping to an external vocabulary -- not meaning the terms are undeclared. fw:RegressionModel is declared in ontology/runtime.ttl, and each coefficient is an fw:EpiEstimate, the class the two-by-two uses. The receipt states the family, the outcome, the exposure and every adjustment with how it entered the model, strata, an offset, the error method, rows used and left out, strata used and dropped, and for each estimate its name, term, interval method and level. fw:RegressionModelShape and fw:EpiEstimateShape in ontology/shapes/quality-and-design.ttl hold the receipt to that. Experiment 176.",
+    "emits": {
+      "classes": [
+        "EpiEstimate",
+        "RegressionModel"
+      ],
+      "properties": [
+        "adjustmentTerm",
+        "droppedStratumCount",
+        "errorMethod",
+        "estimate",
+        "estimateName",
+        "estimateValue",
+        "exposureAttribute",
+        "exposureTerm",
+        "intervalLevel",
+        "intervalLower",
+        "intervalMethod",
+        "intervalUpper",
+        "iterationCount",
+        "leftOutRecordCount",
+        "modelFamily",
+        "modelTerm",
+        "noDesignDeclared",
+        "offsetAttribute",
+        "outcomeAttribute",
+        "stratumAttribute",
+        "termAttribute",
+        "termDegreesOfFreedom",
+        "termEntry",
+        "termReference",
+        "usedRecordCount",
+        "usedStratumCount"
+      ]
+    }
+  },
+  "implementation": {
+    "files": [
+      "kernel/src/glm.rs",
+      "src/regression.ts",
+      "src/core.ts",
+      "src/app.ts"
+    ],
+    "definition": "src/regression.ts"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": null
+  },
+  "changes": [
+    {
+      "kind": "patch",
+      "description": "Its table declares which statistic is the estimate and which are the interval's limits, so a chart reads the interval without guessing from names."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Kernel unit tests: a two-by-two as logistic regression gives its odds ratio and Woolf's standard error; an unadjusted Poisson model gives the rate ratio; absorbed strata give the coefficients of the model with stratum indicators. Published figures reproduced on the authors' own data: NYC ozone 1.0609 per 10 ppb, coefficient and HAC standard error equal to the authors' archived R result to 12 significant figures; Salmonella Galia melon adjusted for age group (7 groups) and sex, 96 (15-2067) and 18 (4.6-101) against the published 96 (15-2100) and 18 (4.6-100). Nothing here establishes that a model is well specified."
+  }
+}

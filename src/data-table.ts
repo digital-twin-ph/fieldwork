@@ -44,6 +44,14 @@ export interface DataTable {
   /** What a value of the first key column means, for a table whose rows name columns of another (a regression's
    *  terms): shown beside the value, never instead of it. */
   meanings?:Record<string,string>;
+  /** AN ESTIMATE WITH ITS INTERVAL, held as rows (experiment 181). Inside, a table holds one number per row, so a
+   *  regression's ratio and its limits are three rows told apart by `column`. Declared by the step that made them,
+   *  so a chart reads the interval from the declaration and never from the names. `ratio` says the estimate is a
+   *  ratio, whose no-difference value is 1. */
+  interval?:{column:string; estimate:string; lower:string; upper:string; level:number; ratio:boolean};
+  /** KEY COLUMNS DECLARED TO HOLD NUMBERS, with each one's unit (experiment 181). A key column is text unless a
+   *  person said otherwise; this is where they said it. */
+  numericKeys?:Record<string,string>;
   rows:{key:Record<string,string>; value:number|null}[];
   rowCount:number; missingValueCount:number; source?:DataTableSource;
 }

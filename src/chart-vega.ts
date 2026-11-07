@@ -99,6 +99,7 @@ export function wrapToWidth(value:string,width:number):string[]{
 export function chartVegaSpec(chart:ChartSummary,params:ChartParams,context:{sourceId?:string;runId?:string;sourceLabel?:string}={}){
   if(chartRenderer(params)!=='vega-lite')throw new Error('Vega-Lite rendering is not selected.');
   if(chart.panels?.length)return panelVegaSpec(chart,params,context);
+  if(chart.interval)return intervalVegaSpec(chart,params,context);
   const mark=params.mark||'bar',orientation=chartOrientation(params);
   if(!['bar','point'].includes(mark)||!['horizontal','vertical'].includes(orientation))throw new Error('Unsupported chart encoding.');
   // A NEGATIVE VALUE IS NOT A MALFORMED ONE. This refused `b.count<0` until 2026-10-31, which
@@ -200,6 +201,76 @@ export function chartVegaSpec(chart:ChartSummary,params:ChartParams,context:{sou
 
 /** The mark a panel is drawn with: the practitioner's, or bars up to 60 points and a line beyond, because 3,653 daily
  *  bars are a solid block. Experiment 174. */
+/** For a ratio: a log scale and a line at 1, unless the practitioner turned them off (experiment 181). */
+export const ratioScale=(chart:ChartSummary,params:ChartParams):{log:boolean;line:boolean}=>
+  ({log:!!chart.interval?.ratio&&params.ratioScale!=='linear',line:!!chart.interval?.ratio&&params.referenceLine!==false});
+
+/** WHY THE AXIS IS AS IT IS, said on the figure. The practitioner chose it on by default so a trainee meets the
+ *  convention with its reason, not as an unexplained axis (experiment 181). */
+export function ratioScaleNote(chart:ChartSummary,params:ChartParams):string|undefined{
+  const {log,line}=ratioScale(chart,params);
+  if(!log&&!line)return undefined;
+  return [log?'Log scale, so a ratio and its inverse sit equally far from 1':'',
+    line?`the dashed line at 1 marks no association`:''].filter(Boolean).join('; ')
+    +`. Whiskers are ${chart.interval!.level}% intervals.`;
+}
+
+/** AN ESTIMATE AND ITS INTERVAL AT EACH CATEGORY: a point, a whisker, and for a ratio a log scale and a dashed line
+ *  at 1 (experiment 181). A category declared numeric is placed as a number, so lags of 0, 1, 2, 4 and 8 weeks sit
+ *  at their distances; otherwise categories are evenly spaced in the table's order. */
+function intervalVegaSpec(chart:ChartSummary,params:ChartParams,context:{sourceId?:string;runId?:string;sourceLabel?:string}){
+  if(!Array.isArray(chart.bins)||chart.bins.length>100||chart.bins.some(b=>!Number.isFinite(b.count)))
+    throw new Error('Chart requires at most 100 estimates, each a finite number.');
+  const {log,line}=ratioScale(chart,params),interval=chart.interval!;
+  const numeric=!!chart.numericCategory&&chart.bins.every(b=>Number.isFinite(b.order));
+  const values=chart.bins.map(b=>({key:b.key,label:b.label,at:numeric?b.order:b.label,estimate:b.count,
+    lower:b.lower??null,upper:b.upper??null}));
+  const width=Math.min(560,Math.max(320,chart.bins.length*72)),height=300;
+  const x=numeric
+    ?{field:'at',type:'quantitative' as const,title:params.xAxisTitle?.trim()||chart.categoryTitle||'Category',
+      scale:{zero:false,nice:false,padding:24},axis:{values:values.map(v=>v.at as number),grid:false}}
+    :{field:'at',type:'nominal' as const,sort:values.map(v=>v.label),title:params.xAxisTitle?.trim()||chart.categoryTitle||'Category',
+      axis:{labelOverlap:'parity' as const,labelSeparation:2}};
+  // THE DOMAIN HOLDS EVERY LIMIT AND, FOR A RATIO, 1, so the line is never off the plot.
+  const all=values.flatMap(v=>[v.estimate,v.lower,v.upper]).filter((v):v is number=>typeof v==='number'&&Number.isFinite(v));
+  const lowest=Math.min(...all,...(line?[1]:[])),highest=Math.max(...all,...(line?[1]:[]));
+  const pad=log?Math.pow(highest/lowest,0.06):(highest-lowest)*0.06||Math.abs(highest)*0.06||1;
+  const domain=log?[lowest/pad,highest*pad]:[lowest-pad,highest+pad];
+  const yTitle=params.yAxisTitle?.trim()||[interval.estimate,chart.unit?.trim()].filter(Boolean).join(', ');
+  const y={type:'quantitative' as const,title:yTitle,
+    scale:{type:log?'log' as const:'linear' as const,domain,zero:false,nice:false},axis:{format:'~r',tickCount:6}};
+  const sourceNote=chartSourceNote(params,context.sourceId,context.runId,context.sourceLabel);
+  const note=ratioScaleNote(chart,params);
+  const tooltip=[{field:'label',type:'nominal' as const,title:chart.categoryTitle||'Category'},
+    {field:'estimate',type:'quantitative' as const,title:interval.estimate,format:'.4~r'},
+    {field:'lower',type:'quantitative' as const,title:`lower ${interval.level}%`,format:'.4~r'},
+    {field:'upper',type:'quantitative' as const,title:`upper ${interval.level}%`,format:'.4~r'}];
+  return {
+    $schema:'https://vega.github.io/schema/vega-lite/v6.json',
+    background:FIGURE_ROLE.background,
+    description:`${chart.caption}${note?` ${note}`:''}`,
+    title:{text:params.chartTitle?.trim()||chart.caption,
+      subtitle:[params.subtitle?.trim(),note,sourceNote].filter((part):part is string=>!!part).flatMap(part=>wrapToWidth(part,width)),
+      anchor:'start' as const},
+    width,height,
+    layer:[
+      ...(line?[{data:{values:[{one:1}]},mark:{type:'rule' as const,color:FIGURE_ROLE.quietInk,strokeDash:[5,4],strokeWidth:1.2},
+        encoding:{y:{...y,field:'one'}}}]:[]),
+      {data:{values},transform:[{filter:'isValid(datum.lower) && isValid(datum.upper)'}],
+        mark:{type:'rule' as const,color:FIGURE_ROLE.primary,strokeWidth:1.6},
+        encoding:{x,y:{...y,field:'lower'},y2:{field:'upper'},tooltip}},
+      {data:{values},mark:{type:'point' as const,filled:true,size:90,color:FIGURE_ROLE.primary,opacity:1},
+        encoding:{x,y:{...y,field:'estimate'},tooltip}},
+    ],
+    config:{view:{stroke:null},font:FIGURE_TYPE.family,
+      axis:{...TUFTE_AXIS,labelFontSize:FIGURE_TYPE.tick,titleFontSize:FIGURE_TYPE.axisTitle,
+        labelColor:FIGURE_ROLE.quietInk,titleColor:FIGURE_ROLE.ink},
+      axisQuantitative:{grid:true,gridColor:FIGURE_GRID,gridWidth:1},
+      title:{fontSize:FIGURE_TYPE.title,subtitleFontSize:FIGURE_TYPE.subtitle,color:FIGURE_ROLE.ink,subtitleColor:FIGURE_ROLE.quietInk,
+        subtitlePadding:8,offset:12}},
+  };
+}
+
 export const PANEL_BAR_LIMIT=60;
 export const panelMark=(chart:ChartSummary,params:ChartParams,panel:string):'bar'|'line'=>
   params.panelMarks?.[panel]??(chart.bins.filter(b=>b.panel===panel).length<=PANEL_BAR_LIMIT?'bar':'line');
@@ -282,6 +353,7 @@ export function chartSpecificationFacts(node:WorkflowNode<'chart_output'>,runId:
       ?`vega-lite@${appPackage.dependencies['vega-lite']}; vega-embed@${appPackage.dependencies['vega-embed']}`
       :`fieldwork@${appPackage.version} src/chart-output.ts#chartMarkup`)}.\n`+
     (rendererSpec?`${spec} fw:rendererSpecification ${JSON.stringify(rendererSpec)}.\n`:'')+
+    (chart.interval?`${spec} fw:chartIntervalLevel ${chart.interval.level}; fw:chartScale ${JSON.stringify(ratioScale(chart,node.params).log?'log':'linear')}; fw:chartReferenceLine ${ratioScale(chart,node.params).line}.\n`:'')+
     (node.params.subtitle?.trim()?`${spec} dcterms:description ${JSON.stringify(node.params.subtitle.trim())}.\n`:'')+
     (node.params.xAxisTitle?.trim()?`${spec} fw:chartXAxisTitle ${JSON.stringify(node.params.xAxisTitle.trim())}.\n`:'')+
     (node.params.yAxisTitle?.trim()?`${spec} fw:chartYAxisTitle ${JSON.stringify(node.params.yAxisTitle.trim())}.\n`:'')+

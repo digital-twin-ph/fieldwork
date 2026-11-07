@@ -3,6 +3,22 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.39.0 — 2026-11-06
+
+- **Chart draws an estimate with its interval**: a point with a whisker at each category, from any table that
+  declares an interval, as every Regression table now does. For a ratio, a log scale and a dashed line at 1 are on
+  by default, and the figure says why. Both can be turned off in the Inspector. A category declared a number is placed
+  as one. Experiment 181.
+- **Append rows stacks any number of tables in one step**: **＋ Add a table** adds a port, each table gets its own
+  label, and the labels can be declared numbers in a unit. A label declared a number that is not one is a data
+  quality finding; the rows are kept. Workflows saved with two tables load unchanged.
+- **The Brazil dengue example's fourth workflow ends in a lag-response plot**: the five lag models' rate ratios per
+  °C with their 95% intervals, from one Append rows, one Select rows and one Chart. Validation Lab check 36 rebuilds
+  it with pandas and agrees on every number, in CPython and Pyodide.
+- Fixed in Chart's Inspector: *Chart enhancement* read *Classic bars* while Vega-Lite drew the chart, unless Vega-Lite
+  had been chosen explicitly.
+- Validation: Chromium locally; WebKit in CI.
+
 ## 0.38.1 — 2026-11-06
 
 - **A run that reads satellite files shows it is working.** While Sample satellite files at points or over areas

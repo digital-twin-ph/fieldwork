@@ -86,6 +86,14 @@ test('dengue in Rio de Janeiro state, 2024, built by following the manual',async
     await page.locator('#table-viewer').screenshot({path:'test-results/select-before-greyed.png'});
     await page.locator('#table-viewer').getByRole('button',{name:'Close'}).click();
   }
+  // THE LAG-RESPONSE PLOT (experiment 181): five points with their whiskers, the log scale and the line at 1 said on
+  // the figure, the lags placed as numbers.
+  await page.locator('[data-view="results"]').click();
+  await page.locator('#result-tabs [data-output]').filter({hasText:'Rate ratio per °C at each lag'}).click();
+  const figure=page.locator('main').first();
+  await expect(figure).toContainText('Log scale, so a ratio and its inverse sit equally far from 1',{timeout:30000});
+  await expect(figure.locator('svg .mark-symbol path, svg .mark-symbol')).not.toHaveCount(0);
+  await page.screenshot({path:'test-results/brazil-lag-response.png'});
   // THE MODELS' RESULTS, written out where BRAZIL_RESULTS names a file: the rate ratio per lag is what the example
   // reports, and the exported project keeps no results.
   if(process.env.BRAZIL_RESULTS){

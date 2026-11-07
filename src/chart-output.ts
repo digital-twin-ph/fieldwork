@@ -30,6 +30,7 @@ export function barNumber(value:number,measure?:ChartSummary['measure']):string{
 export function tableChart(table:DataTable,keyColumn?:string,panelsBy?:string):ChartSummary{
   if(panelsBy?.trim())return panelChart(table,keyColumn,panelsBy.trim());
   if(table.kind!=='data-table')throw new Error('A chart of a table needs a table.');
+  if(table.interval)return intervalChart(table,keyColumn);
   const column=keyColumn?.trim()||table.keys[0];
   if(!column)throw new Error('This table has no key column, so there is nothing to put a bar '
     +'against.');
@@ -56,6 +57,59 @@ export function tableChart(table:DataTable,keyColumn?:string,panelsBy?:string):C
       +(other.length?` · one bar per row, keyed also by ${other.join(', ')}`:'')
       +(absent?` · ${absent} row${absent===1?'':'s'} with no value, drawn at zero`:''),
     total:table.rows.length,bins};
+}
+
+/** AN ESTIMATE AND ITS INTERVAL AT EACH CATEGORY, a lag-response or forest plot (experiment 181).
+ *
+ *  The practitioner, 2026-11-06: *"what is the best way to visualize the relationship between ground warming lag
+ *  times and dengue cases?"* A table that declares an interval holds the estimate and its two limits as three rows,
+ *  told apart by the declared column; they are gathered here into one point with a whisker. The rows that belong
+ *  together are those that agree on every other key column. A group missing a limit is drawn without its whisker and
+ *  counted in the caption; one missing the estimate is not drawn, and is counted. */
+function intervalChart(table:DataTable,keyColumn?:string):ChartSummary{
+  const interval=table.interval!;
+  const others=table.keys.filter(k=>k!==interval.column);
+  const column=keyColumn?.trim()||others[0];
+  if(!column)throw new Error('This table has no key column besides its statistics, so there is nothing to place an estimate at.');
+  if(column===interval.column)throw new Error(`"${column}" names the statistics; choose the column the estimates are placed at.`);
+  if(!table.keys.includes(column))
+    throw new Error(`This table has no "${column}" column. Its columns are ${table.keys.join(', ')}.`);
+  if(!table.rows.length)throw new Error('This table holds no rows, so there is nothing to chart.');
+  const groups=new Map<string,{label:string;estimate?:number|null;lower?:number|null;upper?:number|null;rest:string}>();
+  for(const row of table.rows){
+    const rest=others.filter(k=>k!==column).map(k=>row.key[k]??'').join(' · ');
+    const id=JSON.stringify(others.map(k=>row.key[k]??''));
+    const group=groups.get(id)??{label:row.key[column]??'',rest};
+    const statistic=row.key[interval.column];
+    if(statistic===interval.estimate)group.estimate=row.value;
+    else if(statistic===interval.lower)group.lower=row.value;
+    else if(statistic===interval.upper)group.upper=row.value;
+    groups.set(id,group);
+  }
+  const all=[...groups.values()];
+  const drawn=all.filter(g=>g.estimate!==undefined&&g.estimate!==null);
+  if(!drawn.length)throw new Error(`No row of this table holds the ${interval.estimate}, so there is nothing to draw.`);
+  const noEstimate=all.length-drawn.length;
+  const noLimits=drawn.filter(g=>g.lower===undefined||g.lower===null||g.upper===undefined||g.upper===null).length;
+  // A RATIO AT OR BELOW ZERO cannot sit on a log scale, and is not a ratio: stopped, naming it.
+  if(interval.ratio){
+    const bad=drawn.find(g=>[g.estimate,g.lower,g.upper].some(v=>typeof v==='number'&&v<=0));
+    if(bad)throw new Error(`The ${interval.estimate} at ${column} = ${bad.label} has a value at or below zero, which no ratio has.`);
+  }
+  const unit=table.numericKeys?.[column];
+  const repeated=new Set(drawn.map(g=>g.label)).size!==drawn.length;
+  const bins=drawn.map((g,i)=>({key:repeated?`${g.label}#${i+1}`:g.label||'(unnamed)',
+    label:repeated&&g.rest?`${g.label} (${g.rest})`:g.label||'(unnamed)',count:g.estimate as number,
+    ...(typeof g.lower==='number'?{lower:g.lower}:{}),...(typeof g.upper==='number'?{upper:g.upper}:{}),
+    ...(unit!==undefined&&Number.isFinite(Number(g.label))?{order:Number(g.label)}:{})}));
+  return {field:'value',measure:'value',categoryTitle:unit?`${column} (${unit})`:column,
+    interval:{estimate:interval.estimate,level:interval.level,ratio:interval.ratio},
+    ...(unit!==undefined?{numericCategory:{unit}}:{}),
+    caption:`${interval.estimate} with its ${interval.level}% interval by ${column}`
+      +(repeated&&others.length>1?` · one point per row, keyed also by ${others.filter(k=>k!==column).join(', ')}`:'')
+      +(noLimits?` · ${noLimits} without an interval`:'')
+      +(noEstimate?` · ${noEstimate} with no ${interval.estimate}, not drawn`:''),
+    total:all.length,bins};
 }
 
 /** ONE PANEL PER VALUE of a key column, for variables that move together through time (experiment 174).
@@ -175,6 +229,9 @@ export function chartMarkup(chart:ChartSummary,esc:(text:string)=>string,
   // drawing them as bars on it would be the figure experiment 174 refuses.
   if(chart.panels?.length)return `<p class="notice">${esc(chart.caption)}. Panels are drawn by the Vega-Lite renderer: `
     +`choose it under Chart enhancement to see them.</p>`;
+  // NOR ARE INTERVALS: a bar from zero is the wrong mark for an estimate whose whisker is the point (experiment 181).
+  if(chart.interval)return `<p class="notice">${esc(chart.caption)}. Estimates with their intervals are drawn by the `
+    +`Vega-Lite renderer: choose it under Chart enhancement to see them.</p>`;
   const maximum=Math.max(1,...chart.bins.map(bin=>bin.count));
   // BARS THAT GO BOTH WAYS, because a CHANGE is the quantity that goes negative.
   //

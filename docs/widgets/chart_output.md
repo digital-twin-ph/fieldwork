@@ -7,7 +7,7 @@ named tab in Results and changes nothing about the data it is given.
 
 ## What it does
 
-It takes whatever you connect and draws a bar per category.
+It takes whatever you connect and draws a bar per category, or an estimate with its interval.
 
 **A table.** One bar per row. The table already says which column names the categories and which
 number goes on the bar, so nothing is asked of you: a rate of deaths per 1,000 people across 32
@@ -73,6 +73,27 @@ instead of drawing them on one scale. Experiment 174.
 look correlated. **Aligned panels show timing, not effect**: that visits rose with PM2.5 in the same week is not a
 measure of how much PM2.5 raises them.
 
+### An estimate with its interval: a lag-response or forest plot
+
+A table that declares an interval, as every **Regression** table does, is drawn as a point at each estimate with a
+whisker from the lower to the upper limit. Choose the **Category column** the estimates are placed at. Keep one term
+upstream with **Select rows by value**; a table holding several terms gets one point per term, labelled with it.
+
+**For a ratio, a log scale and a dashed line at 1 are on by default.** On a log scale a ratio and its inverse, 0.5
+and 2, sit equally far from 1, and the line marks no association. The figure says both on its subtitle, with the
+interval's level. **Log scale** and **A dashed line at 1** in the Inspector turn them off.
+
+**A category declared a number is placed as one.** Append rows can declare its labels numbers in a unit, so lags of
+0, 1, 2, 4 and 8 weeks sit at their distances and the axis is titled with the unit. Otherwise the categories are
+evenly spaced, in the table's order.
+
+The Brazil dengue example's fourth workflow draws its five lag models this way: five Regression tables stacked by
+**Append rows**, the temperature term kept, one point per lag. Validation Lab check 36 rebuilds the stack and the
+points with pandas and agrees with every number. Experiment 181.
+
+**Each point is what the table holds, and no more.** Five points from five separate models are not adjusted for each
+other, and a figure cannot add what the models left out.
+
 ### It states its own shape in the write-up
 
 Every run machines a note into **Results** on the Notes tab stating what this chart is made of. It carries the line the chart already states rather than writing over it, and adds the number of bars, the column they are one per, and a warning where a bar sits at zero — because a withheld value and a measured zero are drawn the same way.
@@ -109,7 +130,7 @@ it uses the first, and says which in the caption. Nothing is guessed from a colu
 **It will not merge two rows that share a category.** They stay as two bars. Adding them would be a
 total nobody asked for, and rates cannot be added at all.
 
-**It will not draw more than 100 bars**, and will not colour more than six categories.
+**It will not draw more than 100 bars or estimates**, and will not colour more than six categories.
 
 **It will not put a count and a concentration on one scale.** Use panels.
 

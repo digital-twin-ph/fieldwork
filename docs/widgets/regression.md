@@ -17,7 +17,9 @@ builds the model's columns as R does, so the same model here and in R has the sa
 **records** — a table. The outcome and every variable are its columns: its key columns and its value column alike.
 **design** — optional, the study design. A declared design decides what the result may be called, and which model it allows.
 
-It gives back a table: one row per reported term, with the ratio, the interval limits and p.
+It gives back a table: one row per reported term, with the ratio, the interval limits and p. The table says which
+statistic is the ratio and which are its limits, so **Chart** draws each ratio with its interval without guessing
+from the names.
 
 ## How to use it
 

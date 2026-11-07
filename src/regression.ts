@@ -262,6 +262,9 @@ export function regressionTable(result:RegressionResult,columns?:Record<string,{
     [`upper ${result.level}%`,e=>e.upper],['p',e=>e.p]];
   const rows=result.estimates.flatMap(e=>statistics.map(([statistic,read])=>({key:{term:e.term,statistic},value:read(e)})));
   return {kind:'data-table' as const,keys:['term','statistic'],valueField:'value',rows,rowCount:rows.length,missingValueCount:0,
+    // THE INTERVAL, DECLARED: which statistic is the estimate and which are its limits (experiment 181).
+    interval:{column:'statistic',estimate:name,lower:`lower ${result.level}%`,upper:`upper ${result.level}%`,
+      level:result.level,ratio:true},
     ...(Object.keys(meanings).length?{meanings}:{})};
 }
 

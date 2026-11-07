@@ -46,7 +46,9 @@ All three put another author's finding in your words. The finding stays theirs, 
 
 ### A note that is none of the three
 
-Most notes are none of the three, and leave the form unstated:
+The form is optional. Until you choose one it reads **unknown**, and the note is kept as it is.
+
+Most notes are none of the three, and leave the form unknown:
 
 - **A note that draws on no literature**: what your data are, how a step was set up, what the run found. Cite the data source if there is one; it needs no form.
 - **A sentence carried word for word**: that is a quotation, and belongs in a quoted note.

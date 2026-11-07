@@ -1,6 +1,6 @@
 # Field questions
 
-_Created 2026-10-15 · Updated 2026-10-19_
+_Created 2026-10-15 · Updated 2026-11-07_
 
 **What this is.** The questions about Fieldwork that cannot be answered without a practitioner
 using it, kept in one place until there is a phase that can answer them. This project has not

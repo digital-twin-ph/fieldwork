@@ -2,8 +2,6 @@
 
 _Created 2026-10-26 · Updated 2026-11-07_
 
-_Created 2026-10-26 · Updated 2026-11-05 (0.4.0)_
-
 **A join, narrowly.** It takes two tables that share a column, and brings a *category* from the
 second one onto the rows of the first.
 
@@ -31,14 +29,27 @@ only read.
 
 ## How to use it
 
+The step's panel holds four things: its **Name**, its two **Inputs** (*Table being added to* and *Table read from*), one
+sentence saying what it will do, and **Configure…**. After a run it says, in one line, how many rows related and which
+were dropped. Under that, **Manual**, **Evidence** and **Version**, then **Duplicate** and **Remove**.
+
+**Configure…** opens the step's dialog, where everything is set. It has three parts, top to bottom:
+
+- **Settings**, below;
+- **Preview**: the join these settings would make, before anything is applied;
+- **Decisions**: what happens to rows that did not match, which the step will not choose for you.
+
+Nothing changes the workflow until **Apply**. **Cancel**, **×** and the Escape key leave the step as it was; if you
+have changed something, the dialog asks before discarding it.
+
 | Setting | What it decides |
 | --- | --- |
 | **Matched on** | the column both tables carry, such as `sub_district` |
 | **And also matched on** | more shared columns, where one column does not identify a subject: a monitor's reading is one row per `site` **and** `date`. A row relates only where every chosen column agrees |
 | **Bring across** | the second table's column to add, such as `water_supply`, or its **value column**, such as a monitor's reading in ppb, which arrives as written |
 | **Compare keys** | folding punctuation and case, or exactly after trimming |
-
-Everything else happens in **Open the join**, a dialog wide enough to show what you are deciding.
+| **A date within a period** | optional; see below |
+| **Shifts, in days** | optional; see below |
 
 ### Compare keys
 
@@ -50,9 +61,9 @@ is a single comma. So folding is the default, and the choice is recorded in the 
 Tighten it to **exactly** when a punctuation difference means two different subjects. Loosen it
 when it means one subject written twice.
 
-### The join, in the dialog
+### The preview
 
-**Open the join** shows three things, and they change together as you choose:
+The dialog's **Preview** shows three things, and they change together as you choose:
 
 1. **The shape of the join** — a bar of the keys only in the first table, in both, and only in the
    second. Keys, not rows: a table here holds several rows per subject, so counting rows would say
@@ -62,7 +73,7 @@ when it means one subject written twice.
 3. **The Methods note** this step will machine, and a **preview of the table** that will travel on, with the key
    columns marked **Matched on** and the column added **Brought across**, as in **View this table**.
 
-Then **Finalize**. Nothing is written until you press it.
+Then **Apply**. Nothing is written until you press it.
 
 ### What the shares are telling you
 
@@ -82,8 +93,9 @@ alone.
 ### The rows that did not match
 
 Where any key of the first table has no row in the second, **the step will not run until you say
-what to do**. The two answers give different totals and the result cannot be read for which one you
-got, so nothing here chooses for you.
+what to do**, under **Decisions** in the dialog. Neither choice is ticked to begin with: the two
+answers give different totals and the result cannot be read for which one you got, so nothing here
+chooses for you.
 
 | Choice | What you get |
 | --- | --- |
@@ -116,11 +128,17 @@ its date, alongside the columns matched on as usual (the municipality, say).
 | --- | --- |
 | **Date, in the first table** | the date to place, such as `data_iniSE`, the Sunday a week starts |
 | **Period start** and **Period end**, in the second | the span each row of the second table covers |
-| **Shift the date first, in days** | added to the date before it is placed: **+3** takes a week's Sunday to its Wednesday, and a lag of *k* weeks is 7*k* days fewer, so a 2-week lag from the Wednesday is **−11** |
+| **Shifts, in days** | **+ Add a shift**, then the days added to the date before it is placed: **+3** takes a week's Sunday to its Wednesday, and a lag of *k* weeks is 7*k* days fewer, so a 2-week lag from the Wednesday is **−11** |
 
 The result keeps the shifted date and the matched period's start on every row, so each match can be checked. A
 date that falls inside two periods of the second table, such as two satellites' rows for one period, is refused
 by name: keep one row per period first. A date in no period is a row with no match, decided as any other.
+
+**Several shifts in one step.** Add two or more shifts and the column is brought once per shift, each as a column of
+its own named by the shift: `LST_Day_1km_-11d`, `LST_Day_1km_-25d`. Every row is kept. A row with no value at a shift
+has that column left empty, and the preview and the run count the empties per shift. So there is no decision about
+unmatched rows to make: nothing is dropped. Several shifts need a date within a period; at most 24 in one step, whole
+days, none listed twice.
 
 **A table can be related to itself, shifted.** Rainfall two weeks before each case week is the weekly table's own
 rainfall, 14 days earlier: choose the week's start as the date, the period's start and its end. The first table
@@ -134,22 +152,15 @@ holds.
 
 ## Reading what you get
 
-The same table with one more column — and, on the step itself after a run, **what the join did**:
-
-| Rows | What it means |
-| --- | --- |
-| **Offered** | the rows the first table brought in |
-| **Related** | the rows that found a match and are in the result |
-| **Dropped** | the rows that did not, and are not |
+The same table with one more column, and, on the step after a run, one line saying **what the join did**: for
+example *4 of 6 rows related; 2 dropped, with no district in supply.csv: Charlie.*
 
 Read the dropped count first. A row that found no match is **absent from the table that travels
 on**, so the result is internally consistent whether it holds all of your rows or two thirds of
-them. The panel names the keys that did not match, so you can go and look at the second table
+them. The line names the keys that did not match, so you can go and look at the second table
 rather than only know that something is missing. Where nothing was dropped it says so, because
-"none" is the claim you need and a zero in a table is easy to pass over.
-
-Underneath, which table each column came from, and the distinct values that actually landed —
-what you need to see before grouping by it.
+"none" is the claim you need and a zero is easy to pass over. With several shifts, the line counts
+the empty rows per shift instead.
 
 **View this table** repeats the column origins above each column heading, so a wide
 related table says which half of the row came from where. It also marks the join's own columns:
@@ -164,8 +175,8 @@ excluded — which keys those were and what share of each variable survived. A j
 did to the data, and the count of what it excluded is Methods prose in an epidemiology paper rather
 than a limitation.
 
-The dialog shows the note each choice would produce, so you can read the sentence before committing
-to it. The run records it in the evidence.
+The dialog's preview shows the note each choice would produce, so you can read the sentence before
+applying it. The run records it in the evidence.
 
 ## What it will not do
 

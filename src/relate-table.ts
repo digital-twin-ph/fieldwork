@@ -513,12 +513,12 @@ export function relateTable(left:DataTable,right:DataTable,request:RelateRequest
       +`${gaps.length===1?'has':'have'} no row in the second: `
       +`${gaps.slice(0,4).map(g=>`"${g.key}"`).join(', ')}`
       +(gaps.length>4?`, and ${gaps.length-4} more`:'')
-      +`. Open the join and say whether to drop those rows or keep them under a category you name, `
+      +`. Under Decisions in Configure…, say whether to drop those rows or keep them under a category you name, `
       +`because the two give different totals and the result cannot be read for which you got.`);
   if(declared&&!decisionMatches(declared.signature,{signature,legacySignature:()=>legacyGapSignature(gaps,normalisation)}))
     throw new Error('The data or the key comparison changed since you decided what to do with the '
-      +'unmatched rows, so that decision no longer describes this gap. Open the join and look at '
-      +'it again.');
+      +'unmatched rows, so that decision no longer describes this gap. Open Configure… and decide '
+      +'again.');
 
   const label=declared?.decision==='keep'?(declared.label??''):undefined;
   const refusal=labelRefusalFor(plan,label);

@@ -1016,6 +1016,7 @@ after, in the browser, so a cut is seen rather than claimed.
    borders and focus rings strong enough to find every control, and colour never the only signal. Aim at WCAG AAA
    contrast (7:1) for text. Respect the operating system's increased-contrast setting (`prefers-contrast: more`) when
    the theme is Match device. Measure: the text audit in each theme, with AAA as the bar for this one.
+   **Ordered after the Sierra Leone review**, 2026-11-07: *"High contrast after Sierra Leone"*.
 7. **Fewer worked examples, each high quality and downloadable.** The practitioner: *"We can also declutter our worked
    examples. Better to have fewer high quality ones and make all of them downloadable."* Counted 2026-11-07: 13
    projects, 42 workflows — 7 built into the application (Heat outreach, Old Naledi, Spatial coverage, 1854 Cholera in
@@ -1086,7 +1087,9 @@ five-form design these checks belong to; the manual page is `docs/surfaces/notes
 The practitioner, 2026-11-06: *"After Brazil I'd like you to take a look at a new example repo
 example-2019-sierra-leone-measles. It has a barebones README and a CSV data file that I have not reviewed yet."*
 
-Not opened yet. When Brazil's dengue work is done, the first pass is a review, not a build:
+Not opened yet. **Ordered after 188** by the practitioner, 2026-11-07, answering where it falls: *"after 188"*. So
+it comes after Relate's standard dialog, 185, 187 and 188, and the high-contrast theme comes after it: *"High
+contrast after Sierra Leone"*. The first pass is a review, not a build:
 
 - Read the README and the CSV as data: columns as the file spells them, row count, keys, time and place coverage,
   missing values, anything the file says about itself.

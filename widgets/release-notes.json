@@ -709,12 +709,12 @@
    "migrationFrom": []
   },
   "relate_table": {
-   "version": "0.7.0",
+   "version": "0.8.0",
    "released": "2026-11-07",
    "changes": [
     {
      "kind": "minor",
-     "description": "Brings one column per shift when given a list of shifts (185): each named for its shift, as <column>_<n>d with a + sign for a lead, every row kept and the empty rows counted for each shift. The list is checked whole before the run: at least one shift, whole days, no repeats, at most 24, and a period to match within. One shift behaves exactly as before. The Inspector does not offer the list yet."
+     "description": "The first widget on the standard Inspector and configuration dialog (experiment 186). The panel holds the step's name, its two inputs, one sentence saying what it will do, Configure…, a one-line result after a run, the Manual, Evidence and Version links, and Duplicate and Remove. Every setting is in the dialog: what to match on, what to bring, how keys are compared, a date within a period, and the list of shifts, which the panel could not offer. The dialog shows the join before it is applied, and the decision about unmatched rows, which starts unchosen. Nothing is written until Apply; Cancel, × and Escape ask before discarding a change. What the step stores is unchanged, so saved workflows open as they were."
     }
    ],
    "breaking": false,

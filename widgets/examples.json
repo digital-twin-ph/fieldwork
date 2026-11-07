@@ -378,7 +378,7 @@
       "id": "urn:fieldwork:example:nyc-asthma-ozone-2016-2025",
       "title": "Ozone and child asthma emergency visits, New York City, 2016–2025",
       "repository": "https://github.com/digital-twin-ph/example-2025-nyc-ozone",
-      "commit": "6ddcb7d2cfc2cd67aecfb3591de5d35ad7064d0a",
+      "commit": "150e92d0a3d322d74ab66e1ad9e0c4be938d1ba2",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2025-nyc-ozone",
       "licence": {
         "data": "Not redistributed",
@@ -429,8 +429,8 @@
         },
         {
           "path": "manual.json",
-          "sha256": "f02f05e707c61d573ffcb97bc5b8809bb59091f516451eeb768dd7f6d2973ef8",
-          "bytes": 40730
+          "sha256": "a930fe71434c86cde4c2245db1c1a68a717a5602cb484b88647f4619a3394ccf",
+          "bytes": 41031
         }
       ],
       "workflowCount": 6
@@ -439,7 +439,7 @@
       "id": "urn:fieldwork:example:brazil-dengue-rj-2024",
       "title": "Dengue in Rio de Janeiro state, Brazil, 2024",
       "repository": "https://github.com/digital-twin-ph/example-2024-brazil-dengue",
-      "commit": "2178a4bc077e89c0d6ca453a23feb67d6350d4cd",
+      "commit": "ef5731218f9bc81f04b918fe69e57fdf2fb5c3a4",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2024-brazil-dengue",
       "licence": {
         "data": "CC-BY-4.0",
@@ -513,8 +513,8 @@
         },
         {
           "path": "manual.json",
-          "sha256": "1799d2d413145d6d22c282266a18746e4ffa41ce8eaada45cf7d6a594bf554a7",
-          "bytes": 111890
+          "sha256": "a77a89f7e08aa8aed37125a9d51ef2794a669b3cb6ebae49d5ef8567314455a7",
+          "bytes": 123192
         },
         {
           "path": "notes/what-aedes-mosquitoes-meet.md",

@@ -42,9 +42,23 @@ the rules run, and the result is folded back in. Nothing on the surface says "ke
 
 > then **change 2005 to 2024** is **dtp1_2024** minus **dtp1_2005**
 
-with each side a column or a typed number, and the four operators Derive a value has. It compiles to N3's own
-arithmetic (`math:difference`, `math:sum`, `math:product`, `math:quotient`), as comparisons already compile to
-`math:greaterThan`. A rule with no condition applies to every record, which is what Derive a value does today.
+with each side a column or a typed number, and the four operators Derive a value has. A rule with no condition
+applies to every record, which is what Derive a value does today.
+
+**N3 is not an obstacle.** The practitioner, 2026-11-07: *"But we cannot let N3 be an obstacle to functionality."*
+So the rules the dialog builds, a tree of conditions and conclusions, are what the step runs, and N3 is one way of
+running them, not the limit on what can be written:
+
+- **Where a rule can be written in N3, it is**, and the reasoner runs it, as today: a classification with its
+  receipt. Arithmetic compiles to N3's own (`math:difference`, `math:sum`, `math:product`, `math:quotient`), as
+  comparisons already compile to `math:greaterThan`.
+- **Where it cannot**, such as a row that reads the previous row after a sort, a condition on a value being absent,
+  or a nested expression, the step evaluates the same tree directly, and records a computation receipt, as 15 kinds of
+  step already do without N3.
+- **Both give the same answers where both apply**, checked by a test, the way B1 checked the compiler against the
+  reasoner in [106](106-rule-builder-ui.md).
+- **What the dialog offers is decided by what a workflow needs**, not by what N3 can express. The fixed form of
+  conditions, *(a and b) or (c and d)*, stays while it is enough; it is not a reason to refuse a rule.
 
 **3. Apply ruleset outputs a table**, so it gets the Before and After view every table step has, and anything
 downstream reads the new column.
@@ -146,8 +160,10 @@ repositories.
 ## What this does not establish
 
 - That EYE's arithmetic matches JavaScript's to the last digit. Not checked.
-- How a rule between rows compiles. Every rule today is about one record (`?s`); a rule that reads the previous row
-  joins two, and that is a change to the compiler, not yet designed in N3.
+- Whether a rule between rows can be written in N3 at all. Every compiled rule today is about one record (`?s`). If it
+  cannot, the step evaluates it directly, which is not yet built either.
+- Which receipt a reader trusts more, one from the reasoner or one from direct evaluation. Earlier the practitioner
+  judged that nobody but the project opens N3 receipts.
 - How a table that arrived long, with no wide import recorded, is shown. The design assumes each row is a record, as
   the file gives it; that is not tested.
 - That a preview makes the dialog less dry. That is the expectation, not a finding.

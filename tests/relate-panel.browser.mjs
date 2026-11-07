@@ -42,36 +42,36 @@ test('the relate step reports the join before the table it produced',async({page
   await openContingency(page);
   await page.locator('.react-flow__node[data-id="supply"]').click();
   const inspector=page.locator('#inspector-content');
-  await expect(inspector).toContainText('This run');
+
+  // THE STANDARD INSPECTOR (experiment 186): six sections in one order, and the settings in one sentence.
+  const sections=await inspector.locator('[data-standard-section]').evaluateAll(els=>els.map(e=>e.dataset.standardSection));
+  expect(sections).toEqual(['name','inputs','settings','result','learn and record']);
+  await expect(inspector.locator('#duplicate-node')).toBeVisible();
+  await expect(inspector.locator('#delete-node')).toBeVisible();
+  await expect(inspector.locator('.standard-sentence')).toContainText('Brings water_supply from');
+  await expect(inspector.locator('.standard-sentence')).toContainText('matched on sub_district');
 
   // Snow's Table VIII offers 32 sub-districts at two measures each, and Table XII names a
-  // company for every one of them. So the denominator is 64 and nothing left.
-  const summary=inspector.locator('.dedup-summary');
-  await expect(summary).toContainText('Offered');
-  await expect(summary).toContainText('64');
-  await expect(summary).toContainText('Related');
-  await expect(summary).toContainText('Dropped');
-  await expect(summary).toContainText('0');
-  // Said as a sentence as well as a row, because "0 dropped" is the claim a reader needs and a
-  // zero in a table is easy to pass over.
-  await expect(inspector).toContainText('No row was dropped');
+  // company for every one of them. So the denominator is 64 and nothing left -- said as a
+  // sentence, because "0 dropped" is the claim a reader needs.
+  await expect(inspector.locator('.standard-result')).toHaveText('64 of 64 rows related. No row was dropped.');
 
-  // WHICH COLUMN CAME FROM WHICH TABLE, by the labels on this canvas rather than by port name.
-  await expect(inspector).toContainText('sub_district, measure');
-  await expect(inspector).toContainText('Table XII');
-  await expect(inspector).toContainText('water_supply');
-  // The categories that actually landed: what a reader checks before grouping by them.
-  await expect(inspector).toContainText('Lambeth Company only');
-
-  // THE METHODS NOTE, on the example that is the demo. Asserted here and not only on the
-  // synthetic fixture: the note is the deliverable, and "the code path is the same" is not a
-  // verification of the workflow a reader will actually be shown.
-  const note=inspector.locator('.machined-note');
+  // THE METHODS NOTE AND THE JOINED TABLE, in the configuration dialog, on the example that is the demo. Asserted
+  // here and not only on the synthetic fixture: the note is the deliverable.
+  await inspector.locator('#configure-step').click();
+  const dialog=page.locator('#relate-config');
+  await expect(dialog).toBeVisible();
+  const note=dialog.locator('.machined-note');
   await expect(note).toContainText('water_supply was brought from');
   await expect(note).toContainText('Snow 1855 Table XII');
   await expect(note).toContainText('comparing keys with punctuation and case folded');
   await expect(note).toContainText('32 sub_district values appeared in both tables');
   await expect(note).toContainText('No row was excluded');
+  // The categories that actually landed: what a reader checks before grouping by them.
+  await expect(dialog.locator('.relate-preview')).toContainText('Lambeth Company only');
+  // NOTHING DECIDED, NOTHING CHANGED: Cancel with no edit closes at once.
+  await dialog.locator('#config-cancel').click();
+  await expect(dialog).toBeHidden();
 
   // AND THE RECEIPT, on the example too. No decision is recorded here because nothing was
   // unmatched, but the comparison and the per-variable shares are what a reader reconciling a
@@ -140,10 +140,13 @@ const buildTwoTables=async page=>{
     'district,supply,connections\nAlpha,North works,120\nBravo,South works,240\nDelta,West works,90\n',
     {alreadyLong:true});
   await page.locator('[data-add="relate_table"]').click();
-  await page.locator('#relate-records').selectOption({index:1});
-  await page.locator('#relate-related').selectOption({index:2});
+  await page.locator('#connect-records').selectOption({index:1});
+  await page.locator('#connect-related').selectOption({index:2});
+  await page.locator('#configure-step').click();
   await page.locator('#relate-on').selectOption('district');
   await page.locator('#relate-bring').selectOption('supply');
+  await page.locator('#config-apply').click();
+  await expect(page.locator('#relate-config')).toBeHidden();
   await page.locator('[data-add="table_output"]').click();
   const relateId=await page.locator('#table-table option')
     .filter({hasText:'Relate a column'}).first().getAttribute('value');
@@ -163,12 +166,15 @@ test('a join with unmatched rows refuses to run until the practitioner decides',
   await selectRelate(page);
   const inspector=page.locator('#inspector-content');
   await expect(inspector).toContainText('This join needs a decision before it can run');
-  // The shape is on the node even though no run succeeded: the dialog has to be able to draw the
+  await expect(inspector).toContainText('1 district in cases.csv has no row in supply.csv');
+  // The shape is drawn even though no run succeeded: the dialog has to be able to show the
   // thing being decided, so the tables are resolved without a run.
-  await expect(inspector).toContainText('2 districts in both');
-  await expect(inspector).toContainText('1 only in cases.csv');
-  await expect(inspector).toContainText('1 only in supply.csv');
-  await expect(page.locator('#relate-open-join')).toBeVisible();
+  await inspector.locator('#configure-step').click();
+  const dialog=page.locator('#relate-config');
+  await expect(dialog.locator('.overlap-both')).toContainText('2');
+  await expect(dialog.locator('.overlap-left')).toContainText('only in cases.csv');
+  await expect(dialog.locator('.overlap-right')).toContainText('only in supply.csv');
+  await expect(dialog.locator('[data-config-section="decisions"]')).toContainText('Not decided yet');
   expect(errors).toEqual([]);
 });
 
@@ -178,9 +184,15 @@ test('the dialog shows the shape, the effect on each variable, the note and the 
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toContainText('Run failed',{timeout:60000});
   await selectRelate(page);
-  await page.locator('#relate-open-join').click();
-  const dialog=page.locator('#relate-join');
+  await page.locator('#configure-step').click();
+  const dialog=page.locator('#relate-config');
   await expect(dialog).toBeVisible();
+  // THE STANDARD DIALOG: × at the top, Settings then Preview then Decisions, Cancel left of Apply.
+  await expect(dialog.locator('.config-head #config-close')).toHaveText('×');
+  expect(await dialog.locator('[data-config-section]').evaluateAll(els=>els.map(e=>e.dataset.configSection)))
+    .toEqual(['settings','preview','decisions']);
+  expect(await dialog.locator('.config-foot .button').allTextContents()).toEqual(['Cancel','Apply']);
+  await expect(dialog.locator('#relate-on')).toBeFocused();
 
   // THE VISUAL AID: three segments, because one key is only on each side.
   expect(await dialog.locator('.overlap-bar .overlap-seg').count()).toBe(3);
@@ -212,7 +224,7 @@ test('the dialog shows the shape, the effect on each variable, the note and the 
   await expect(preview.locator('thead th[data-column-role="brought"]')).toContainText('supply');
   await expect(preview.locator('thead th[data-column-role="brought"] .column-role')).toHaveText('brought across');
   expect(await preview.locator('tbody .column-role-key').count()).toBeGreaterThan(0);
-  await dialog.locator('.table-viewer-body').evaluate(el=>{el.scrollTop=el.scrollHeight;});await page.screenshot({path:'test-results/relate-join-preview.png'});
+  await dialog.locator('.config-body').evaluate(el=>{el.scrollTop=el.scrollHeight;});await page.screenshot({path:'test-results/relate-join-preview.png'});
 
   // CHOOSING THE OTHER JOIN redraws all three.
   await dialog.locator('input[value="keep"]').check();
@@ -223,6 +235,13 @@ test('the dialog shows the shape, the effect on each variable, the note and the 
   await expect(dialog.locator('.relate-preview')).toContainText('Supply not recorded');
   await expect(dialog.locator('.machined-note'))
     .toContainText('retained and recorded as \u201cSupply not recorded\u201d');
+
+  // AN UNAPPLIED CHANGE IS NOT LOST TO ESCAPE: the dialog asks, and Discard leaves the step as it was.
+  await page.keyboard.press('Escape');
+  await expect(dialog.locator('.config-message')).toContainText('These changes are not applied');
+  await dialog.locator('#config-discard').click();
+  await expect(dialog).toBeHidden();
+  await expect(page.locator('#inspector-content')).toContainText('This join needs a decision before it can run');
   expect(errors).toEqual([]);
 });
 
@@ -232,10 +251,11 @@ test('finalizing drops the rows, names them, and the choice reaches the receipt'
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toContainText('Run failed',{timeout:60000});
   await selectRelate(page);
-  await page.locator('#relate-open-join').click();
+  await page.locator('#configure-step').click();
+  await page.locator('#relate-config input[value="drop"]').check();
   await page.locator('#relate-join-reason').fill('Charlie has no supply record');
-  await page.locator('#relate-join-finalize').click();
-  await expect(page.locator('#relate-join')).toBeHidden();
+  await page.locator('#config-apply').click();
+  await expect(page.locator('#relate-config')).toBeHidden();
 
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
@@ -243,15 +263,8 @@ test('finalizing drops the rows, names them, and the choice reaches the receipt'
   const inspector=page.locator('#inspector-content');
   await expect(inspector).toContainText('Decided: drop the unmatched rows');
   await expect(inspector).toContainText('Charlie has no supply record');
-  const summary=inspector.locator('.dedup-summary');
-  await expect(summary).toContainText('Offered');
-  await expect(summary).toContainText('6');
-  await expect(summary).toContainText('4');
-  await expect(inspector).toContainText('2 rows left the table');
-  await expect(inspector).toContainText('4 of 6 rows');
-  // THE METHODS NOTE the run machined, on the step, and the choice inside it.
-  await expect(inspector.locator('.machined-note')).toContainText('were excluded');
-  await expect(inspector.locator('.machined-note')).toContainText('Charlie has no supply record');
+  await expect(inspector.locator('.standard-result'))
+    .toHaveText('4 of 6 rows related; 2 dropped, with no district in supply.csv: Charlie.');
 
   // AND IN THE RECEIPT, machine readable, which is where a reader checking the numbers goes.
   //

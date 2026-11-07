@@ -33,8 +33,8 @@ import {rulesetExample} from './ruleset-example.js';
 import {hagellochExample} from './hagelloch-example.js';
 import {openRuleEditor} from './rule-editor.js';
 import {openStepViewer,openTableViewer,shapeChange,stepLabels,tableViewOf,type TableView} from './table-viewer.js';
-import {keyNoun,openRelateJoin} from './relate-ui.js';
-import {relateShape,decisionMatches} from './relate-table.js';
+import {keyNoun,openRelateConfig,relateDraftOf,applyRelateDraft,relateSentence} from './relate-ui.js';
+import {relateShape,decisionMatches,relateAtShifts} from './relate-table.js';
 import {findingsSummary,wideDataTable} from './data-table.js';
 import {openSatelliteCatalogDialog} from './satellite-catalog-ui.js';
 import {bboxOf,defaultKept} from './satellite-catalog.js';
@@ -132,7 +132,7 @@ import {readWorldFile,boundsFromWorldFile} from './map-image.js';
  *  across that. */
 const pendingPlateFiles=new Map<string,{image?:File;world?:File}>();
 import {openTableEditor,dataTableMarkup,tableFromFetched} from './data-table-ui.js';
-import {openCatalogDialog,identityMarkup} from './catalog-ui.js';
+import {openCatalogDialog,identityMarkup,widgetIdentity} from './catalog-ui.js';
 import {initTheme,applyTheme,saveThemePreference,isThemePreference} from './theme.js';
 import {previewArea,prepareRasterPreview,rasterOfNode} from './raster-preview.js';
 import {polygonInputInspector} from './polygon-input-ui.js';
@@ -947,8 +947,10 @@ function drawRunProgress(){
   const state=document.getElementById('workflow-state');
   if(state)state.textContent=`Running · ${done} of ${of} ${what}`;
 }
-/** Relate's period choices while they are being made, and whether its section is open, per node: UI state only. */
-const relateWithinDraft=new Map<string,{date:string;start:string;end:string}>(),relateWithinOpen=new Set<string>();
+/** THE WIDGETS WHOSE INSPECTOR FOLLOWS THE STANDARD (experiment 186): Name, Inputs, Settings, Result, the links,
+ *  Actions, in that order and nothing else, with every setting in the widget's configuration dialog. One at a time,
+ *  Relate first; the set grows as each widget is moved, and a check holds them to it. */
+export const STANDARD_INSPECTOR=new Set<NodeType>(['relate_table']);
 function samplerProduct(node:WorkflowNode){
   const up=(id:string,port:string)=>{const e=workflow.edges.find(x=>x.to===id&&x.port===port);return e?workflow.nodes.find(m=>m.id===e.from):undefined;};
   const search=up(node.id,'files'),find=search?up(search.id,'product'):undefined;
@@ -1908,8 +1910,9 @@ function renderInspector(){
   // ONE SHAPE FOR EVERY PANEL: title, one line of what it does, the way in for a learner, then the
   // controls. The two links used to sit after whatever alerts a run had raised, so their position
   // moved with the state of the workflow and their size said they were an afterthought.
-  let content=title(n)+`<p class="description">${esc(n.type==='map_output'&&n.params.inputMode==='raster'?'Display native raster cells and the clipping boundary':TYPES[n.type].description)}. ${n.type==='policy'?'Turn computed spatial evidence into explicit, inspectable conclusions.':''}</p>`
-    +learnBlock(n.type,esc,hasManual(n.type)?n.type:'');
+  const standard=STANDARD_INSPECTOR.has(n.type);
+  let content=title(n)+(standard?'':`<p class="description">${esc(n.type==='map_output'&&n.params.inputMode==='raster'?'Display native raster cells and the clipping boundary':TYPES[n.type].description)}. ${n.type==='policy'?'Turn computed spatial evidence into explicit, inspectable conclusions.':''}</p>`
+    +learnBlock(n.type,esc,hasManual(n.type)?n.type:''));
   const alert=nodeAlert(n.id);
   // The heading names what was found. It read "Out of bounds" for every alert, which is right for
   // a site the streets could not reach and wrong for a field nobody filled in: a declaration gap
@@ -1920,7 +1923,7 @@ function renderInspector(){
   const issuesOnly=!!alert&&!!alert.dataIssues?.length&&!alert.gaps?.length
     &&!alert.unconnected.length&&!alert.offNetwork.length;
   if(alert)content+=`<div class="inspector-alert" role="alert"><strong>${issuesOnly?'Read as not recorded':gapsOnly?'Not declared':'Out of bounds'} · ${esc(alertHeadline(alert))}</strong><p>${esc(alertText(alert))}</p><table><thead><tr><th>${gapsOnly?'Field':'Site'}</th><th>What happened</th><th>${gapsOnly?'What is missing':'Distance'}</th></tr></thead><tbody>${alertRows(alert).map(r=>`<tr><td>${esc(r.name)}</td><td>${esc(r.outcome)}</td><td>${esc(r.detail)}</td></tr>`).join('')}</tbody></table>${dirty?'<p class="muted">From the previous run — rerun after changes.</p>':''}</div>`;
-  content+=diveDeeperPanel(n.type,esc);
+  if(!standard)content+=diveDeeperPanel(n.type,esc);
   if(n.type==='mean_center'){
     content+=`<div class="notice">${n.params.weightField?.trim()?`Weighted by <strong>${esc(n.params.weightField.trim())}</strong>: each point counts in proportion to that attribute, and the receipt asserts the field and the weight total beside the point count.`:'Unweighted mean of projected point locations. Name an attribute below to weight each point by it \u2014 250 addresses carrying 489 deaths have two different centres.'} The computation uses UTM internally and emits one CRS84 center; it does not create a projected point dataset. Keep source and result private when locations are sensitive.</div><div class="field"><label class="field-label" for="mean-center-weight">Weight each point by this attribute (optional)</label><input id="mean-center-weight" data-slr="weightField" maxlength="60" value="${esc(n.params.weightField||'')}" placeholder="DEATHS"><p class="description">Leave empty for one point, one vote. A missing, non-numeric or negative weight is refused and counted; zero is kept, because a house where nobody died contributes no deaths.</p></div><label class="field-label" for="mean-center-zone">WGS84 UTM zone</label><input id="mean-center-zone" type="number" min="1" max="60" value="${n.params.zone}"><label class="field-label" for="mean-center-hemisphere">Hemisphere</label><select id="mean-center-hemisphere"><option value="north" ${n.params.hemisphere==='north'?'selected':''}>North</option><option value="south" ${n.params.hemisphere==='south'?'selected':''}>South</option></select>`;
   }else if(n.type==='compare_point_sets'||n.type==='comparison_map'){
@@ -2391,172 +2394,49 @@ function renderInspector(){
           +`<textarea id="select-values" data-select-text rows="3">${esc(p.values.join('\n'))}</textarea></div>`)
       +'<div class="notice">A value this table does not hold is reported rather than ignored, because asking for a row that is not there is usually a typo or a changed table upstream. Keeping nothing the table holds is refused instead of returning an empty table.</div>';
   }else if(n.type==='relate_table'){
-    const p=n.params,here=upstreamKeyValues(n)??{},there=upstreamKeyValues(n,new Set(),'related')??{};
-    const shared=Object.keys(here).filter(column=>column in there);
-    const keysOn=[p.on,...(p.alsoOn??[])];
-    // THE VALUE COLUMN CAN BE BROUGHT too: a ground reading is a table's value (2026-11-05, experiment 179).
-    // Known before a run as well, from the table's own declaration: a run makes only the tables an output needs, so a
-    // table read only by this step has no run output until this step exists (experiment 182, the rainfall table).
-    const relatedValue=tableOnPort(workflow,n.id,'related')?.valueField
-      ??(()=>{const e=workflow.edges.find(x=>x.to===n.id&&x.port==='related');const up=e&&workflow.nodes.find(m=>m.id===e.from);
-        return up?.type==='table_input'?(up.params.data.valueField||up.params.valueField||undefined):up?upstreamValueField(up):undefined;})();
-    const bringable=[...Object.keys(there),...(relatedValue&&!(relatedValue in there)?[relatedValue]:[])]
-      .filter(column=>!keysOn.includes(column)&&!(column in here));
-    const picker=(id:string,key:'on'|'bring',label:string,options:string[],empty:string)=>
-      `<div class="field"><label class="field-label" for="${id}">${label}</label>`
-      +`<select id="${id}" data-slr="${key}"${options.length?'':' disabled'}>`
-      +(options.length?`<option value="">Choose a column…</option>`:`<option value="${esc(p[key])}">${esc(empty)}</option>`)
-      +options.map(column=>`<option value="${esc(column)}" ${p[key]===column?'selected':''}>${esc(column)}</option>`).join('')
-      +`</select></div>`;
-    content+='<p class="description">Brings a category from a second table onto these rows, matched on a column both tables carry. A table here is long, so a category can only be a key column — it lands on every row and the row count does not change.</p>'
-      +labelForm('relate-label','Node label',p.label||'Relate a column from another table')
-      +nodeInputs(n).map(([port,type])=>`<div class="field"><label class="field-label" for="relate-${port}">`
-        +`${port==='records'?'Table being added to':'Table read from'}</label>`
-        +`<select id="relate-${port}" data-map-port="${port}"><option value="">Select input</option>`
-        +workflow.nodes.filter(x=>x.id!==n.id&&outputOf(x)===type).map(x=>`<option value="${esc(x.id)}" `
-          +`${workflow.edges.some(e=>e.to===n.id&&e.port===port&&e.from===x.id)?'selected':''}>`
-          +`${esc(x.params.label||TYPES[x.type].title)}</option>`).join('')+`</select></div>`).join('')
-      // ONLY THE SHARED COLUMNS are offered to match on, and only the second table's own columns
-      // to bring across. A column the first table already has is excluded here rather than
-      // refused on the run, because the refusal is correct and arrives three steps from the choice.
-      +picker('relate-on','on','Matched on',shared,'Connect both tables first')
-      // MORE KEYS, matched together with the first: a satellite and a ground reading are one observation only for the
-      // same monitor on the same day. Offered once the first key is chosen, from the other shared columns.
-      +(p.on&&shared.length>1?`<div class="field"><label class="field-label" for="relate-also">And also matched on</label>`
-        +`<select id="relate-also" multiple size="${Math.min(4,shared.length-1)}">`
-        +shared.filter(column=>column!==p.on).map(column=>`<option value="${esc(column)}" ${(p.alsoOn??[]).includes(column)?'selected':''}>${esc(column)}</option>`).join('')
-        +`</select><small>Rows relate only where every chosen column agrees. Hold Ctrl or ⌘ to choose more than one.</small></div>`:'')
-      +picker('relate-bring','bring','Bring across',bringable,'Connect both tables first')
-      // A DATE WITHIN A PERIOD, and a shift for a lag (experiment 180): a week against a satellite's 8-day period.
-      +(Object.keys(here).length&&Object.keys(there).length?(()=>{
-        // A PARTIAL CHOICE IS KEPT while the three are being chosen: each choice redraws the Inspector, and only a complete
-        // set is saved on the node, so the first choice used to vanish and the section close under the next.
-        const draft=relateWithinDraft.get(n.id),w=p.within??draft,opt=(cols:string[],current:string|undefined)=>`<option value="">Not used</option>`
-          +cols.map(c=>`<option value="${esc(c)}" ${current===c?'selected':''}>${esc(c)}</option>`).join('');
-        return `<details class="field" id="relate-within-box"${w||relateWithinOpen.has(n.id)?' open':''}><summary>Match a date within a period</summary>`
-          +`<label class="field-label" for="relate-within-date">Date, in the first table</label><select id="relate-within-date">${opt(Object.keys(here),w?.date)}</select>`
-          +`<label class="field-label" for="relate-within-start">Period start, in the second</label><select id="relate-within-start">${opt(Object.keys(there),w?.start)}</select>`
-          +`<label class="field-label" for="relate-within-end">Period end, in the second</label><select id="relate-within-end">${opt(Object.keys(there),w?.end)}</select>`
-          +`<label class="field-label" for="relate-shift">Shift the date first, in days</label>`
-          +`<input id="relate-shift" type="number" step="1" value="${p.shiftDays??0}">`
-          +`<small>A row relates to the period whose start and end hold its date. +3 takes a week's Sunday to its Wednesday; a lag of k weeks is 7k fewer.</small></details>`;})():'')
-      +(Object.keys(there).length&&!shared.length
-        ?'<div class="notice notice-warning">These two tables share no key column, so there is nothing to match on. Check that both carry the same kind of key.</div>':'')
-      +'<div class="notice">A second table giving one key two different values is refused rather than resolved, because choosing between them would produce a grouping that is wrong in a way no total reveals. A key the second table does not carry is named in the evidence and those rows are dropped, since an invented “unknown” would put a stratum in your table that nobody measured. The match is on the exact text: this is Epi Info’s RELATE and not its MATCH.</div>';
-    // THE JOIN AS A DECISION, with the shape of it on the node and the deciding in a dialog.
-    //
-    // The band here is the glance -- the Inspector is 292px and a bar with three numbers fits it.
-    // The decision does not fit, and from 2026-10-21 this project has a standing answer for that:
-    // *"this really needs to be a modal dialog so the view is not limited by the inspector
-    // panel."* So the band says what the shape is and whether a decision is outstanding, and the
-    // dialog is where the preview and the choice live.
-    const joinLeft=tableOnPort(workflow,n.id,'records');
-    const joinRight=tableOnPort(workflow,n.id,'related');
-    if(joinLeft&&joinRight&&p.on&&p.bring){
-      const request={on:p.on,...(p.alsoOn?.length?{alsoOn:p.alsoOn}:{}),...(p.within?{within:p.within}:{}),...(p.shiftDays?{shiftDays:p.shiftDays}:{}),bring:p.bring,
-        ...(p.normalisation?{normalisation:p.normalisation}:{}),
-        ...(p.measureKey?{measureKey:p.measureKey}:{})};
-      let planned:ReturnType<typeof relateShape>|{refusal:string};
-      try{planned=relateShape(joinLeft,joinRight,request);}
-      catch(error){planned={refusal:errorMessage(error)};}
-      content+='<div class="inspector-divider"></div><span class="inspector-section">The join</span>';
-      if('refusal' in planned){
-        content+=`<div class="notice notice-warning">${esc(planned.refusal)}</div>`;
-      }else{
-        const {leftOnly,matched,rightOnly}=planned.overlap;
-        const total=leftOnly+matched+rightOnly||1;
-        const seg=(count:number,kind:string)=>count
-          ?`<div class="overlap-seg overlap-${kind}" style="flex:0 0 ${Math.max(count/total*100,7)}%">`
-            +`<strong>${count.toLocaleString()}</strong></div>`:'';
+    // THE STANDARD INSPECTOR (experiment 186): what the step is called, what feeds it, one sentence of what it will
+    // do, what the last run gave. Every setting, the preview of the join and the decision about unmatched rows are in
+    // the configuration dialog, which nothing changes the workflow from until Apply.
+    const p=n.params;
+    const left=portSourceName(workflow,n.id,'records','the first table');
+    const right=portSourceName(workflow,n.id,'related','the second table');
+    content+=standardSection('Name',labelForm('relate-label','Name',p.label||'Relate a column from another table'));
+    content+=standardSection('Inputs',standardInputs(n,{records:'Table being added to',related:'Table read from'}));
+    // WHETHER A DECISION IS OUTSTANDING, which the sentence alone cannot say. Planned from the tables where they can
+    // be resolved without a run, as the dialog's preview is.
+    const joinLeft=tableOnPort(workflow,n.id,'records'),joinRight=tableOnPort(workflow,n.id,'related');
+    let state='';
+    if(joinLeft&&joinRight&&p.on&&p.bring&&!((p.shifts?.length??0)>1)){
+      try{
+        const planned=relateShape(joinLeft,joinRight,{on:p.on,...(p.alsoOn?.length?{alsoOn:p.alsoOn}:{}),
+          ...(p.within?{within:p.within}:{}),...(p.shiftDays?{shiftDays:p.shiftDays}:{}),bring:p.bring,
+          ...(p.normalisation?{normalisation:p.normalisation}:{}),...(p.measureKey?{measureKey:p.measureKey}:{})});
+        const gaps=planned.overlap.gaps.length;
         const decided=p.unmatched&&decisionMatches(p.unmatched.signature,planned)?p.unmatched:undefined;
-        content+=`<div class="overlap-bar">${seg(leftOnly,'left')}${seg(matched,'both')}`
-          +`${seg(rightOnly,'right')}</div>`
-          +`<p class="muted">${matched.toLocaleString()} ${esc(keyNoun([p.on,...(p.alsoOn??[])].join(' and '),matched))} in both`
-          +(leftOnly?`, ${leftOnly.toLocaleString()} only in ${esc(portSourceName(workflow,n.id,'records','the first table'))}`:'')
-          +(rightOnly?`, ${rightOnly.toLocaleString()} only in ${esc(portSourceName(workflow,n.id,'related','the second table'))}`:'')
-          +`. Keys compared ${planned.normalisation==='fuzzy'?'with punctuation folded':'exactly'}.</p>`
-          +(!planned.overlap.gaps.length
-            ?'<div class="rule-preview">Nothing was left out, so there is no decision to make.</div>'
-            :decided
-              ?`<div class="rule-preview">Decided: `
-                +(decided.decision==='drop'
-                  ?`drop the unmatched rows`
-                  :`keep them as \u201c${esc(decided.label??'')}\u201d`)
-                +(decided.reason?` \u2014 ${esc(decided.reason)}`:'')+'.</div>'
-              :`<div class="notice notice-warning">This join needs a decision before it can run: `
-                +`${planned.overlap.gaps.length} key`
-                +`${planned.overlap.gaps.length===1?'':'s'} in the first table `
-                +`${planned.overlap.gaps.length===1?'has':'have'} no row in the second, and `
-                +`dropping them gives different totals from keeping them.</div>`)
-          +'<div class="inspector-actions"><button id="relate-open-join" class="button primary">'
-          +'\u2922 Open the join</button></div>';
-      }
-    }else if(p.on&&p.bring){
-      // WHICH TABLE IS MISSING, named: the first, the second or both (experiment 182). A step under construction above
-      // this one that the last run could not compute says so here too.
-      const missing=[...(joinLeft?[]:['records' as const]),...(joinRight?[]:['related' as const])];
-      const said=missing.map(port=>{const e=workflow.edges.find(x=>x.to===n.id&&x.port===port);
-        const why=e&&result?.unfinished?.find(u=>u.nodeId===e.from)?.message;
-        return `${esc(portSourceName(workflow,n.id,port,port==='records'?'the first table':'the second table'))}`
-          +(why?` (the last run could not compute it: ${esc(why)})`:'');});
-      content+='<div class="inspector-divider"></div><span class="inspector-section">The join</span>'
-        +`<p class="description">Run the workflow to look at the shape of this join: ${said.join(' and ')} `
-        +`${missing.length===1?'has':'have'} not been computed yet, so there is nothing to measure.</p>`;
+        state=!gaps?''
+          :decided?`<p class="standard-state">Decided: ${decided.decision==='drop'?'drop the unmatched rows'
+              :`keep them as \u201c${esc(decided.label??'')}\u201d`}${decided.reason?` \u2014 ${esc(decided.reason)}`:''}.</p>`
+          :`<div class="notice notice-warning">This join needs a decision before it can run: ${gaps} `
+            +`${esc(keyNoun([p.on,...(p.alsoOn??[])].join(' and '),gaps))} in ${esc(left)} ${gaps===1?'has':'have'} `
+            +`no row in ${esc(right)}. Decide what happens to them in Configure\u2026</div>`;
+      }catch(error){state=`<div class="notice notice-warning">${esc(errorMessage(error))}</div>`;}
     }
-    // WHAT THE JOIN DID, before the table it produced.
-    //
-    // The four numbers were computed from the first commit of `relate-table.ts` and shown
-    // nowhere: they went into the N3 receipt, which this project has already settled nobody
-    // opens for this purpose. So a relate missing a third of its keys produced a table that
-    // looked finished -- `rowCount` agreed with itself, the totals were internally consistent,
-    // and the rows that left had left quietly.
-    //
-    // THE ORDER IS THE POINT. A pandas left join keeps the unmatched row and writes NaN, so the
-    // reader meets the gap in the data. This application drops the row, which is the better
-    // default for a stratification -- an invented "unknown" stratum is worse than a smaller
-    // table -- and the worse one for anybody who only looks at the result. So the count comes
-    // first and the data second, and the gap keys are named rather than totalled: "three keys
-    // did not match" is a number, and `Rotherhithe` is something a practitioner can go and fix.
-    const relation=result?.relations?.[n.id];
-    if(relation){
-      const left=portSourceName(workflow,n.id,'records','the first table');
-      const right=portSourceName(workflow,n.id,'related','the second table');
-      const row=(label:string,count:number,{emphasis=false}={})=>
-        `<tr${emphasis?' class="emphasis"':''}><th scope="row">${esc(label)}</th>`
-        +`<td>${count.toLocaleString()}</td>`
-        +`<td>${relation.offered?`${(count/relation.offered*100).toFixed(count/relation.offered<0.01&&count?2:0)}%`:'\u2014'}</td></tr>`;
-      content+=`<div class="inspector-divider"></div><span class="inspector-section">This run</span>`
-        +`<table class="dedup-summary"><thead><tr><th>Rows</th><th>Count</th>`
-        +`<th title="Of the rows the first table offered">% offered</th></tr></thead><tbody>`
-        +row('Offered',relation.offered)
-        +row('Related',relation.related,{emphasis:true})
-        +row('Dropped',relation.dropped,{emphasis:!!relation.dropped})
-        +`</tbody></table>`
-        +(relation.dropped
-          ?`<div class="notice notice-warning">${relation.dropped.toLocaleString()} row`
-            +`${relation.dropped===1?'':'s'} left the table because `
-            +`${esc(right)} carries no ${esc(relation.on)} of `
-            +relation.gaps.map(g=>`<strong>${esc(g.key)}</strong>`).join(', ')
-            +`. They are not in the result and nothing downstream counts them — a total over `
-            +`this table is a total over ${relation.related.toLocaleString()} of `
-            +`${relation.offered.toLocaleString()} rows.</div>`
-          :`<div class="rule-preview">Every ${esc(relation.on)} in ${esc(left)} was found in `
-            +`${esc(right)}. No row was dropped, so a total over this table is a total over the `
-            +`whole of ${esc(left)}.</div>`)
-        // THE NOTE THE RUN MACHINED, where the run made one. The dialog shows the note a
-        // prospective choice would produce; this is the one that actually went into the evidence.
-        +((result?.machined?.[n.id]??[]).length
-          ?'<span class="inspector-section">Methods note</span>'
-            +'<div class="machined-note">'
-            +(result?.machined?.[n.id]??[]).map(note=>`<p>${esc(note.text)}</p>`).join('')
-            +'</div>'
-          :'')
-        +`<span class="inspector-section">Columns</span>`
-        +`<p class="muted">From ${esc(left)}: ${esc(relation.carried.join(', '))}. `
-        +`Brought from ${esc(right)}: <strong>${esc(relation.bring)}</strong>`
-        +(relation.values.length?`, holding ${relation.values.map(v=>esc(v)).join(', ')}`:'')
-        +`.</p>`;
-    }
+    content+=standardSection('Settings',`<p class="standard-sentence">${esc(relateSentence(p,right))}</p>${state}`
+      +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button></div>');
+    // RESULT: one line, what came out and what was left out, counted.
+    const relation=result?.relations?.[n.id],shifted=result?.relateShifts?.[n.id];
+    const why=result?.unfinished?.find(u=>u.nodeId===n.id)?.message;
+    const line=relation
+      ?`${relation.related.toLocaleString()} of ${relation.offered.toLocaleString()} rows related`
+        +(relation.dropped?`; ${relation.dropped.toLocaleString()} dropped, with no ${relation.on} in ${right}: `
+          +relation.gaps.map(g=>g.key).join(', '):'. No row was dropped')+'.'
+      :shifted
+        ?`${shifted.length} columns brought, every row kept. Empty: `
+          +shifted.map(c=>`${c.column} ${c.empty.toLocaleString()}`).join(', ')+'.'
+        :why?`The last run could not compute this step: ${why}`
+        :'Not run yet.';
+    content+=standardSection('Result',`<p class="standard-result${relation?.dropped||why?' standard-result-warning':''}">${esc(line)}</p>`
+      +'<div data-standard-result></div>');
   }else if(n.type==='group_table'){
     const p=n.params,shape=upstreamKeyValues(n),columns=Object.keys(shape??{});
     content+='<p class="description">Adds up the values of the rows that agree on the key columns you keep. The columns you do not keep are gone from the result.</p>'
@@ -3490,8 +3370,16 @@ function renderInspector(){
   // A map can always take another point layer: there is no mode in which it cannot draw points.
   if(n.type==='map_output'||(n.type==='table_output'&&(!n.params.inputMode||n.params.inputMode==='spatial')))content+=`<div class="inspector-actions"><button id="add-point-input" class="button small" ${(n.params.pointInputCount??1)>=MAX_POINT_LAYERS?'disabled':''}>＋ Add point input</button><button id="remove-point-input" class="button small" ${(n.params.pointInputCount??1)<=1?'disabled':''}>Remove last input</button></div><p class="muted">${n.type==='table_output'?'No boundary required for point inputs':'One study boundary'} · up to 8 point layers and 2,000 records combined. Each added port needs a source.</p>`;
   if(exampleKey(workflow)==='raster'&&(n.type==='raster_input'||n.type==='clip_raster'))content+='<div class="source-card"><span class="inspector-section">Raster workflow steps</span><p>Prepare your GeoTIFF and citation, preview the clip, then Run workflow to populate the map.</p><div class="inspector-actions">'+(['raster_input','clip_raster','map_output'] as NodeType[]).map((type,i)=>{const target=workflow.nodes.find(x=>x.type===type);return '<button class="button small" data-raster-step="'+esc(target?.id||'')+'" '+(!target?'disabled':'')+'>'+[ '1. Raster input','2. Clip parameters','3. Map'][i]+'</button>';}).join('')+'</div></div>';
+  if(standard){
+    // MANUAL · EVIDENCE · VERSION, the same three on every standard step, then the actions.
+    const identity=widgetIdentity(n.type);
+    content+=standardSection('Learn and record',`<div class="standard-links">${learnBlock(n.type,esc,hasManual(n.type)?n.type:'')}`
+      +`<button id="manage-references" class="button learn-link">Evidence (${(n.references||[]).length})</button></div>`
+      +(identity?`<details class="standard-version"><summary>Version ${esc(identity.version)}</summary>${identityMarkup(n.type,esc)}</details>`:''));
+  }else{
   content+=evidenceInspector(n);
   content+=identityMarkup(n.type,esc);
+  }
   // INPUTS: ONE WORDING AND ONE BEHAVIOUR FOR EVERY STEP THAT TAKES THEM. The practitioner, 2026-11-07: *"We need to have
   // consistent language and behavior for Inspector based port actions."* Each input is a list named in plain words:
   // "Not connected" first, which disconnects, then every step that can feed it -- the test the canvas applies to a drop
@@ -3499,7 +3387,7 @@ function renderInspector(){
   // no inputs and shows no section. The Map's layer manager keeps its own lists, which also order and name layers.
   const incoming=workflow.edges.filter(e=>e.to===n.id);
   const nameOf=(id:string)=>{const x=workflow.nodes.find(y=>y.id===id);return x?(x.params.label||TYPES[x.type].title):id;};
-  const ports=nodeInputs(n).filter(([port])=>!content.includes(`data-map-port="${port}"`));
+  const ports=nodeInputs(n).filter(([port])=>!content.includes(`data-map-port="${port}"`)&&!content.includes(`data-connect-port="${port}"`));
   if(ports.length)content+=`<div class="inspector-divider"></div><span class="inspector-section">Inputs</span>`
     +ports.map(([port])=>{
       const now=incoming.find(e=>e.port===port)?.from||'';
@@ -3622,8 +3510,9 @@ function renderInspector(){
       // AT THE TOP, under what the widget does. Appended, it sat below "Remove node", 1,500 pixels
       // down a long panel, and a practitioner reported on 2026-11-01 that these widgets had no way
       // to view their table. They had; nobody could find it. Measured on South London's workflow.
+      const slot=anchor.querySelector('[data-standard-result]');
       const first=anchor.querySelector(':scope > .description');
-      if(first)first.after(block);else anchor.prepend(block);
+      if(slot)slot.append(block);else if(first)first.after(block);else anchor.prepend(block);
     }
   }
   optionalElement('#group-aggregate')?.addEventListener('change',event=>{
@@ -3665,24 +3554,6 @@ function renderInspector(){
     const key=required(el.dataset.fromTable) as keyof import('./table-points.js').TableMapping;
     if(el.value)next[key]=el.value;else if(key==='id'||key==='name')delete next[key];else next[key]='';
     node.params.fromTable=next;})));
-  const withinChange=()=>{
-    const read=(id:string)=>(document.querySelector<HTMLSelectElement>(id)?.value??'');
-    const date=read('#relate-within-date'),start=read('#relate-within-start'),end=read('#relate-within-end');
-    relateWithinDraft.set(n.id,{date,start,end});relateWithinOpen.add(n.id);
-    change(w=>{const node=getNode(w,n.id,'relate_table');
-      if(date&&start&&end)node.params.within={date,start,end};else delete node.params.within;});
-  };
-  for(const id of ['#relate-within-date','#relate-within-start','#relate-within-end'])optionalElement(id)?.addEventListener('change',withinChange);
-  optionalElement('#relate-within-box')?.addEventListener('toggle',event=>{
-    if((event.currentTarget as HTMLDetailsElement).open)relateWithinOpen.add(n.id);else relateWithinOpen.delete(n.id);});
-  optionalElement('#relate-shift')?.addEventListener('change',event=>{
-    const v=Number((event.currentTarget as HTMLInputElement).value);
-    change(w=>{const node=getNode(w,n.id,'relate_table');if(Number.isInteger(v)&&v!==0)node.params.shiftDays=v;else delete node.params.shiftDays;});
-  });
-  optionalElement('#relate-also')?.addEventListener('change',event=>{
-    const chosen=[...(event.currentTarget as HTMLSelectElement).selectedOptions].map(o=>o.value);
-    change(w=>{const node=getNode(w,n.id,'relate_table');if(chosen.length)node.params.alsoOn=chosen;else delete node.params.alsoOn;});
-  });
   optionalElement('#satellite-layer')?.addEventListener('change',event=>{
     const value=(event.currentTarget as HTMLSelectElement).value;
     change(w=>{getNode(w,n.id,'sample_satellite_files_at_points').params.layer=value;});
@@ -3841,37 +3712,27 @@ function renderInspector(){
     openStepViewer([...befores,view],
       stepLabels(inputs.map(({port})=>portSourceName(workflow,n.id,port,port))),esc);
   });
-  // DECIDING THE JOIN. The dialog is given the two tables and a way to re-plan, so changing the
-  // comparison or the category name inside it redraws the consequence without touching the
-  // workflow. Only Finalize writes, and what it writes is the practitioner's choice together with
-  // a signature of the gap it was made about.
-  optionalElement('#relate-open-join')?.addEventListener('click',()=>{
+  // RELATE'S CONFIGURATION DIALOG (experiment 186). Given the columns each table declares and, where they resolve, the
+  // tables themselves, so the preview is the join this draft would make. Only Apply writes.
+  if(n.type==='relate_table')optionalElement('#configure-step')?.addEventListener('click',()=>{
     const node=workflow.nodes.find(x=>x.id===n.id);
     if(node?.type!=='relate_table')return;
-    const p=node.params;
+    const p=node.params,here=upstreamKeyValues(node)??{},there=upstreamKeyValues(node,new Set(),'related')??{};
     const left=tableOnPort(workflow,n.id,'records'),right=tableOnPort(workflow,n.id,'related');
-    if(!left||!right)return;
-    openRelateJoin({
-      title:`${p.label||TYPES[n.type].title} \u00b7 the join`,
+    const relatedValue=right?.valueField
+      ??(()=>{const e=workflow.edges.find(x=>x.to===n.id&&x.port==='related');const up=e&&workflow.nodes.find(m=>m.id===e.from);
+        return up?.type==='table_input'?(up.params.data.valueField||up.params.valueField||undefined):up?upstreamValueField(up):undefined;})();
+    openRelateConfig({
+      step:p.label||TYPES[n.type].title,
       leftLabel:portSourceName(workflow,n.id,'records','the first table'),
       rightLabel:portSourceName(workflow,n.id,'related','the second table'),
-      on:[p.on,...(p.alsoOn??[])].join(' and '),bring:p.bring,
-      roles:{...Object.fromEntries([p.on,...(p.alsoOn??[])].filter(Boolean).map(k=>[k,'key'])),...(p.bring?{[p.bring]:'brought'}:{})},
-      normalisation:p.normalisation??'fuzzy',
-      ...(p.unmatched?{settled:p.unmatched}:{}),
-      shapeFor:(normalisation,label)=>{
-        try{
-          return relateShape(left,right,{on:p.on,...(p.alsoOn?.length?{alsoOn:p.alsoOn}:{}),...(p.within?{within:p.within}:{}),...(p.shiftDays?{shiftDays:p.shiftDays}:{}),bring:p.bring,normalisation,
-            ...(p.measureKey?{measureKey:p.measureKey}:{}),
-            ...(label!==undefined?{unmatched:{decision:'keep' as const,label,signature:''}}:{})});
-        }catch(error){return {refusal:errorMessage(error)};}
-      },
-      onFinalize:choice=>{change(w=>{
-        const target=getNode(w,n.id,'relate_table');
-        target.params.normalisation=choice.normalisation;
-        if(choice.unmatched)target.params.unmatched=choice.unmatched;
-        else delete target.params.unmatched;
-      },{requirePersistence:true});},
+      hereColumns:Object.keys(here),thereColumns:Object.keys(there),
+      ...(relatedValue?{relatedValue}:{}),...(p.measureKey?{measureKey:p.measureKey}:{}),
+      ...(left?{left}:{}),...(right?{right}:{}),
+      plan:request=>{try{return relateShape(left!,right!,request);}catch(error){return {refusal:errorMessage(error)};}},
+      planShifts:(request,shifts)=>{try{return relateAtShifts(left!,right!,request,shifts);}catch(error){return {refusal:errorMessage(error)};}},
+      initial:relateDraftOf(p),
+      apply:(draft,plan)=>{change(w=>{applyRelateDraft(getNode(w,n.id,'relate_table').params,draft,plan);},{requirePersistence:true});},
     },esc);
   });
   document.querySelectorAll<HTMLButtonElement>('[data-raster-step]').forEach(button=>button.onclick=()=>{selected=button.dataset.rasterStep;render();});
@@ -5816,6 +5677,24 @@ const PORT_LABELS:Record<string,string>={area:'Study area',points:'Points',polyg
   original:'Original points',moved:'Moved points',pumps:'Reference points',originalCenter:'Original mean center',
   movedCenter:'Moved mean center',comparison:'Comparison',ground:'Ground',context:'Context points',centers:'Centers',
   catalog:'Catalog search',product:'Satellite product',files:'Satellite files'};
+/** ONE SECTION OF A STANDARD INSPECTOR, headed the same way in every widget (experiment 186). */
+function standardSection(name:string,body:string):string{
+  return `<section class="standard-section" data-standard-section="${esc(name.toLowerCase())}">`
+    +`<h3 class="inspector-section">${esc(name)}</h3>${body}</section>`;
+}
+/** THE INPUT LISTS, as every step shows them: one per input, "Not connected" first, then every step that can feed it.
+ *  `labels` names a port in the widget's own words where the generic name would not say which table is which. */
+function standardInputs(n:WorkflowNode,labels:Record<string,string>={}):string{
+  const incoming=workflow.edges.filter(e=>e.to===n.id);
+  const nameOf=(id:string)=>{const x=workflow.nodes.find(y=>y.id===id);return x?(x.params.label||TYPES[x.type].title):id;};
+  return nodeInputs(n).map(([port])=>{
+    const now=incoming.find(e=>e.port===port)?.from||'';
+    const offers=workflow.nodes.filter(x=>x.id===now||validConnection({source:x.id,target:n.id,sourceHandle:'out',targetHandle:port} as Connection));
+    return `<label class="field-label" for="connect-${esc(port)}">${esc(labels[port]??portLabel(port))}</label>`
+      +`<select id="connect-${esc(port)}" class="connect-port" data-connect-port="${esc(port)}"><option value="">${offers.length?'Not connected':'Nothing in this workflow can feed this yet'}</option>`
+      +offers.map(x=>`<option value="${esc(x.id)}"${x.id===now?' selected':''}>${esc(nameOf(x.id))}</option>`).join('')+`</select>`;
+  }).join('');
+}
 function portLabel(port:string):string{
   const [base,n]=port.split(/_(\d+)$/);
   const name=PORT_LABELS[base!]||base!.replace(/([a-z])([A-Z])/g,'$1 $2').replace(/_/g,' ').replace(/^./,c=>c.toUpperCase());

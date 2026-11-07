@@ -277,13 +277,39 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
    scanning rows is what somebody opened it to do. */
 /* DECIDING A JOIN. Sized like the table viewer, because it is the same kind of surface: a thing
    the Inspector's 292px cannot show, read and then acted on once. */
-#relate-join{width:min(1180px,94vw);max-width:min(1180px,94vw);padding:0}
-#relate-join .manual-head{padding:20px 24px;border-bottom:1px solid var(--line);margin:0}
-#relate-join .table-viewer-body{overflow:auto}
-/* The body scrolls, so nothing in it shrinks: the preview, which scrolls on its own, was the one child a flex column
-   could squeeze, and it collapsed to a line (found 2026-11-05). */
-#relate-join .table-viewer-body>*{flex-shrink:0}
-#relate-join .inspector-section{margin-top:18px}
+/* THE CONFIGURATION DIALOG (experiment 186): one width, the heading and × at the top, the body scrolling, a message
+   and the footer always in view. Text at 15px in the ink colour, not the faint grey other dialogs use for prose: the
+   practitioner reads it at low vision, and the preview is what they are deciding from. */
+.config-dialog{width:min(1100px,calc(100vw - 32px));max-width:min(1100px,calc(100vw - 32px));max-height:calc(100vh - 32px);
+  padding:0;display:flex;flex-direction:column;overflow:hidden}
+.config-dialog:not([open]){display:none}
+.config-head{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 24px;border-bottom:1px solid var(--line)}
+.config-head h2{font-size:20px;margin:0}
+.config-step{font-weight:400}
+.config-close{font-size:26px;line-height:1;min-width:44px;min-height:44px;border:1px solid var(--line);border-radius:8px;
+  background:transparent;color:var(--ink);cursor:pointer}
+.config-body{overflow:auto;padding:8px 24px 20px;flex:1 1 auto}
+.config-body>*{flex-shrink:0}
+.config-dialog p,.config-dialog li,.config-dialog label,.config-dialog td,.config-dialog th{font-size:15px;color:var(--ink)}
+.config-section{border-top:1px solid var(--line);padding-top:12px;margin-top:16px}
+.config-section:first-child{border-top:0;margin-top:4px}
+.config-section>h3{font-size:17px;margin:0 0 8px}
+.config-section h4{font-size:15px;margin:16px 0 4px}
+.config-section select,.config-section input:not([type=radio]):not([type=checkbox]){font-size:15px;min-height:36px}
+.config-list-row{display:flex;align-items:center;gap:10px;margin:6px 0}
+.config-list-row input{width:8em}
+.config-message{margin:0 24px;padding:12px 14px;border:2px solid var(--danger-3);background:var(--danger-wash-1);border-radius:6px}
+.config-message p{color:var(--danger-4);font-weight:600;margin:0}
+.config-message-actions{display:flex;gap:10px;margin-top:10px}
+.config-foot{display:flex;justify-content:space-between;gap:12px;padding:14px 24px;border-top:1px solid var(--line)}
+.config-foot .button{font-size:15px;min-height:40px;min-width:96px}
+/* THE STANDARD INSPECTOR's sections, each headed the same way. */
+.standard-section{margin-top:14px}
+.standard-sentence,.standard-result,.standard-state{font-size:15px;color:var(--ink);line-height:1.6}
+.standard-result-warning{font-weight:600}
+.standard-links{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.standard-links .learn-block{display:contents}
+.standard-version summary{font-size:15px;cursor:pointer;margin-top:8px}
 .check.absent{color:var(--warning-1)}
 .absent-note{font-size:14px;letter-spacing:.4px;text-transform:uppercase;opacity:.85}
 

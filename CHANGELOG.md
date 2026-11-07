@@ -3,6 +3,20 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.47.0 — 2026-11-07
+
+- **Relate is the first step with the standard panel and dialog** ([186](docs/experiments/186-one-standard-inspector.md)).
+  Its panel shows the name, the two inputs, one sentence saying what it will do, **Configure…**, one line of what the
+  last run gave, the Manual, Evidence and Version links, and Duplicate and Remove. Everything else is in its dialog:
+  - **Settings:** what to match on, what to bring across, how keys are compared, a date within a period, and the list
+    of shifts, which can now be set: one column per shift.
+  - **Preview:** the join these settings would make, with its effect on each numeric variable, the Methods note and
+    the table, before anything is applied.
+  - **Decisions:** what happens to rows that did not match. Neither choice is ticked to begin with.
+  - Nothing changes until **Apply**. Cancel, × and Escape leave the step as it was, and ask first if something was
+    changed.
+- The NYC and Brazil manuals are rewritten for the new dialog. Saved workflows open as they were.
+
 ## 0.46.0 — 2026-11-07
 
 - **Micro-workflows are retired.** No worked example used one. A workflow saved with one refuses to open and names

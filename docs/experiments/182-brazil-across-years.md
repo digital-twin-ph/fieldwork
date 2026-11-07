@@ -1,6 +1,6 @@
 # 182 · Brazil across sixteen years: weeks compared within a municipality, month and year
 
-_Created 2026-11-06 · Updated 2026-11-06_
+_Created 2026-11-06 · Updated 2026-11-07_
 
 **Status:** validated. Built in 0.41.0; the fifth workflow played back live from its manual, and Validation Lab check 37 agrees with statsmodels on the several-strata model in CPython and Pyodide.
 
@@ -176,6 +176,50 @@ a code path and buys nothing measurable. Recorded here so the decision can be re
 - **Retry.** A failed file is tried three times, 1.5 s then 3 s apart. A file that keeps failing stops the run,
   naming it. A file stating the wrong unit is not retried.
 - **Cache.** A MODIS file is read once per session for the same layer, rule and places; Sentinel-5P already was.
+
+## What the variables stand in for, 2026-11-07
+
+The practitioner, after check 37 was reported: *"Are there papers that confirm variables that mosquitoes meet?"*
+And then: *"include drought too"*.
+
+**No paper confirms that a station, reanalysis or satellite temperature is what a mosquito meets.** A first search
+(four queries, summaries read, not full texts) found the opposite: where loggers were put at resting sites or across
+urban land cover, the temperature there differed from the weather station's by enough to change modelled
+transmission. Athens, Georgia, *Ae. albopictus*: station temperature consistently over-predicted vectorial capacity
+against the measured microclimate ([PMC7529312](https://pmc.ncbi.nlm.nih.gov/articles/PMC7529312)). Germany, several
+genera: resting-site temperature moved the extrinsic incubation estimate by 2 to 4 days
+([Parasites & Vectors 2022](https://doi.org/10.1186/s13071-022-05505-2)). Larvae meet water, not air: in Delhi
+container water was cooler than the air by an amount set by the container
+([Geospatial Health 2018](https://geospatialhealth.net/gh/article/view/707)), and in Rio de Janeiro adult size rose
+with larval-habitat temperature ([Frontiers 2021](https://doi.org/10.3389/fevo.2021.626757)).
+
+**What that means for these models.** Their exposure is `LST_Day_1km`: MODIS daytime land-surface temperature,
+8-day clear-sky composites, read by Fieldwork over each municipality. That is the skin temperature of roofs, roads and
+canopy at the daily peak, the furthest of the available proxies from the air where *Ae. aegypti* rests, mostly
+indoors. The evidence suggests the error is not random: it plausibly differs between hot and cool places, and a week
+with no clear-sky value is dropped, so cloudy wet-season weeks leave the model more often. `tempmed`, which check 37
+fits, is InfoDengue's weekly air temperature, a different proxy. Rainfall reaches a mosquito only through containers, and stored household
+water, which drought increases, does not depend on rain at all. The ratios in the fifth workflow are associations
+with the dataset's columns, as the workflow already says; this is the evidence for why that wording is required, not
+a change to the models.
+
+**What check 37 covers and does not.** It fits 2 of the 92 municipalities (1,613 rows, 364 strata). The sixteen-year
+run's roughly 11,500 strata are the same code path and have not been compared with statsmodels at that size, and the
+lead models have no check of their own.
+
+**Recorded as notes on the example.** A fuller search (open copies only, five strands: resting-site microclimate,
+larval habitats and rainfall, drought, thermal biology, and the provenance of the dataset's climate columns) is in the
+example repository as `notes/what-aedes-mosquitoes-meet.md`, and its conclusions are written into the Brazil project
+as authored notes, each saying whether it is a précis, paraphrase or summary of the works it cites, so the write-up
+carries its limitations and its references. Nothing in the models changes on it; the options it lists (night LST or
+air temperature as a comparison exposure, errors allowing for correlation, a non-linear lag model, a drought index)
+are open, not chosen.
+
+**The form of a literature note.** The practitioner, as the notes were written: *"Our notes that cite literature can
+take the form of a precis, paraphrase or summary."* Then, on where the three are explained: *"Should be in add
+notes"*, and *"give a few examples of each in the manual"*. Built: authored notes carry an optional `form`, offered in
+the Add note dialog with a line saying what each means and an Examples button opening a new Notes page of the manual
+(`docs/surfaces/notes.md`, the first manual page for a surface rather than a widget).
 
 ## What would close it
 

@@ -2,7 +2,7 @@ import {hasManual,openManual} from './manual.js';
 import type {Escape} from './types.js';
 import {element} from './dom.js';
 import {toHTML,typeset,hasMarkup} from './prose.js';
-import {groupNotes,notesOfPart,noteExtent,forkHasDrifted,KNOWN_NOTE_FUNCTIONS,UNWRITTEN,
+import {groupNotes,notesOfPart,noteExtent,forkHasDrifted,KNOWN_NOTE_FUNCTIONS,KNOWN_NOTE_FORMS,UNWRITTEN,
   WRITE_UP_PARTS,type Note,type MachinedNote,type WriteUpPart} from './notes.js';
 import {referenceCount,workKey,type ReferenceEntry} from './references.js';
 import {CITATION_TYPES,citationGaps,renderCitation,type CitationType} from './input-provenance.js';
@@ -31,7 +31,7 @@ import type {CitedWork} from './notes.js';
  *  authored note is rewritten in place, and a machined one is forked, leaving the machined note
  *  for the next run to rewrite. The dialog's part is to say which of the two is about to happen
  *  before the button is pressed. */
-export interface NoteDraft {text:string; section:WriteUpPart; fn:string; works?:CitedWork[]}
+export interface NoteDraft {text:string; section:WriteUpPart; fn:string; works?:CitedWork[]; form?:string}
 export type NoteWrite=(note:Note,draft:NoteDraft)=>boolean;
 
 export interface NoteContext {
@@ -83,6 +83,19 @@ const FUNCTION_GLOSS:Record<string,string>={
   finding:'states what the work showed',
   limitation:'states what it cannot show',
 };
+
+/** What each form means, said where a note is written. A note that cites literature stands to it in one of three ways,
+ *  and a reader checking it needs to know which: a paraphrase can be held against a page, a summary only against the
+ *  works together. */
+const FORM_GLOSS:Record<string,string>={
+  'précis':'one work’s argument condensed, keeping its order and emphasis',
+  paraphrase:'a particular passage restated in your own words, about as long as the original',
+  summary:'the main points drawn together, often from several works',
+};
+const formGloss=(which:string)=>which&&FORM_GLOSS[which]?`${which} — ${FORM_GLOSS[which]}.`
+  :which?`${which} — a form this application does not name, kept as its author wrote it.`
+  :'How this note stands to the works it cites. '+KNOWN_NOTE_FORMS.map(f=>`${f[0]!.toUpperCase()+f.slice(1)}: ${FORM_GLOSS[f]}.`).join(' ')
+    +' Unstated is allowed.';
 
 const bodyOf=(note:Note)=>note.kind==='quoted'?note.quote:note.text;
 const words=(text:string)=>text.split(/\s+/).filter(Boolean).length;
@@ -299,6 +312,7 @@ export function notesPanel(notes:readonly Note[],
           +`<span class="ord">${ordinal}.</span>`
           +`<span class="notes-kind notes-kind-${note.kind}">${note.kind}</span>`
           +(('fn' in note&&note.fn)?`<span class="notes-fn">${esc(note.fn)}</span>`:'')
+          +(note.kind==='authored'&&note.form?`<span class="notes-form" title="How this note stands to the works it cites">${esc(note.form)}</span>`:'')
           +(from?`<button class="chip flowlink" data-open-node="${esc(from)}"`
             +`${'workflowKey' in note&&note.workflowKey
               ?` data-open-workflow="${esc(note.workflowKey)}"`:''}>`
@@ -401,6 +415,7 @@ export function openNoteDialog(note:Note,context:NoteContext,esc:Escape){
   const $=<S extends string>(s:S)=>element(s,dialog);
   const text=bodyOf(note);
   const fn=('fn' in note&&note.fn)||'';
+  const form=(note.kind==='authored'&&note.form)||'';
   const from=('nodeId' in note&&note.nodeId)||undefined;
   const widget=note.kind==='machined'?note.widget:note.kind==='authored'?note.forkedFrom?.widget:undefined;
   const writing=!!EDITABLE[note.kind]&&!!context.write;
@@ -440,6 +455,14 @@ export function openNoteDialog(note:Note,context:NoteContext,esc:Escape){
       ?`<select id="note-function">${options(functions,fn,'unstated')}</select>`
       :`<span class="fixed">${esc(fn||'unstated')}${fn?' — fixed':''}</span>`)
     +`</span>`
+    // THE FORM, on an authored note only: a quotation is verbatim by its kind, and the other two are this
+    // application's wording. Read-only where it was set and the note cannot be edited here.
+    +(choose?`<span class="field"><label>Form</label><select id="note-form">${options(
+        KNOWN_NOTE_FORMS.includes(form)||!form?KNOWN_NOTE_FORMS:[...KNOWN_NOTE_FORMS,form],form,'unstated')}</select></span>`
+        +`<p id="note-form-gloss" class="gloss">${esc(formGloss(form))}`
+        +(hasManual('surface:notes')?` <button class="chip" id="note-form-examples">Examples</button>`:'')+`</p>`
+      :form?`<span class="field"><label>Form</label><span class="fixed">${esc(form)}</span></span>`
+        +`<p id="note-form-gloss" class="gloss">${esc(formGloss(form))}</p>`:'')
     +`<span class="field"><label>Produced by</label>`
     // SAID RATHER THAN LEFT BLANK. A note with no workflow behind it is a fact about the note --
     // it is the author's own, and nothing will rewrite it on the next run.
@@ -447,6 +470,8 @@ export function openNoteDialog(note:Note,context:NoteContext,esc:Escape){
       :'written here — no workflow'}${widget?` <span class="muted">${esc(widget.type)} ${esc(widget.version)}</span>`
         +(hasManual(widget.type)?` <button class="chip" id="note-widget-manual">Manual</button>`:''):''}</span></span>`;
   const manual=dialog.querySelector<HTMLButtonElement>('#note-widget-manual');
+  const examples=dialog.querySelector<HTMLButtonElement>('#note-form-examples');
+  if(examples)examples.onclick=()=>openManual('surface:notes','Notes',esc);
   if(manual&&widget)manual.onclick=()=>openManual(widget.type,widget.title,esc);
   const gloss=$('#note-gloss');
   const sayGloss=(which:string)=>{gloss.textContent=which&&FUNCTION_GLOSS[which]
@@ -483,6 +508,7 @@ export function openNoteDialog(note:Note,context:NoteContext,esc:Escape){
   }else{
     const section=choose?$('#note-section') as HTMLSelectElement:null;
     const workFn=choose?$('#note-function') as HTMLSelectElement:null;
+    const workForm=choose?$('#note-form') as HTMLSelectElement:null;
     // AN UNWRITTEN NOTE OPENS EMPTY. Its marker exists because `readNotes` drops a note with no
     // words, not because anybody wrote it, so presenting it as prose to delete first would make
     // the application's bookkeeping the practitioner's problem.
@@ -491,7 +517,7 @@ export function openNoteDialog(note:Note,context:NoteContext,esc:Escape){
     tell(area.value);
     save.textContent=fresh?'Add note':'Save';
     const unchanged=()=>area.value.trim()===was
-      &&(!section||section.value===note.section)&&(!workFn||workFn.value===fn)
+      &&(!section||section.value===note.section)&&(!workFn||workFn.value===fn)&&(!workForm||workForm.value===form)
       &&JSON.stringify(works)===startedWith;
     // SAY WHAT LEAVING WOULD COST, once there is something to lose. A dialog whose only exit is
     // labelled "Close" discards an edit without ever having said so. A note being written for
@@ -636,6 +662,10 @@ export function openNoteDialog(note:Note,context:NoteContext,esc:Escape){
     };
     if(section)section.onchange=touched;
     if(workFn)workFn.onchange=()=>{sayGloss(workFn.value);touched();};
+    if(workForm)workForm.onchange=()=>{
+      const said=dialog.querySelector('#note-form-gloss');
+      if(said)said.textContent=formGloss(workForm.value);
+      touched();};
     relabel();
     save.onclick=()=>{
       const written=area.value.trim();
@@ -652,7 +682,7 @@ export function openNoteDialog(note:Note,context:NoteContext,esc:Escape){
       if(unchanged()){dialog.close();return;}
       if(context.write!(note,{text:written,
         section:(section?section.value:note.section) as WriteUpPart,
-        fn:workFn?workFn.value:fn,works}))dialog.close();
+        fn:workFn?workFn.value:fn,works,form:workForm?workForm.value:form}))dialog.close();
       else{
         status.textContent='That note could not be kept on this device.';
         status.classList.add('is-failure');

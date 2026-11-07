@@ -6521,8 +6521,9 @@ function writeInNoteDialog(note:Note){
         // THE FUNCTION IS DROPPED WHEN IT IS CLEARED, not stored empty: `readNotes` keeps `fn`
         // only when it has a value, so an empty string here would be written and then read back
         // as absent -- two states that look the same and are not.
-        const {fn:_was,works:_cited,...rest}=held[at] as Note&{fn?:string;works?:unknown};
-        held[at]={...rest,text,section,...(fn?{fn}:{}),...(draft.works?.length?{works:draft.works}:{})} as Note;
+        const {fn:_was,works:_cited,form:_form,...rest}=held[at] as Note&{fn?:string;works?:unknown;form?:string};
+        held[at]={...rest,text,section,...(fn?{fn}:{}),...(draft.works?.length?{works:draft.works}:{}),
+          ...(draft.form?{form:draft.form}:{})} as Note;
         if(!writeNotes(held))return false;
         renderNotesView();
         toast('Your note was kept.');

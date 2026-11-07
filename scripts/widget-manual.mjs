@@ -122,8 +122,19 @@ function forReader(markdown){            // a declaration: the CLI block above c
     .replace(/\n{3,}/g,'\n\n');
 }
 
+/** PAGES FOR THE APPLICATION'S OWN SURFACES, which are not widgets: the Notes tab is the first. Compiled beside the
+ *  widget pages under `surface:<name>`, so the same dialog opens them and the same drift check covers them. No
+ *  ontology entry, because fw:userManual is a statement about a widget. */
+export function surfacePages(){          // a declaration, for the reason forReader is one
+  const dir=join(root,'docs/surfaces');
+  return existsSync(dir)?readdirSync(dir).filter(f=>f.endsWith('.md')).map(f=>f.replace(/\.md$/,'')).sort():[];
+}
+
 export function compiledPages(){
   const {documented}=coverage();
-  return Object.fromEntries(documented.map(nodeType=>
-    [nodeType,toHTML(forReader(readFileSync(join(root,`docs/widgets/${nodeType}.md`),'utf8')))]));
+  return Object.fromEntries([
+    ...documented.map(nodeType=>
+      [nodeType,toHTML(forReader(readFileSync(join(root,`docs/widgets/${nodeType}.md`),'utf8')))]),
+    ...surfacePages().map(name=>
+      [`surface:${name}`,toHTML(forReader(readFileSync(join(root,`docs/surfaces/${name}.md`),'utf8')))])]);
 }

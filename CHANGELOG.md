@@ -3,6 +3,20 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.42.0 — 2026-11-07
+
+- **A note that cites literature can say its form: précis, paraphrase or summary.** Chosen in the Add note dialog,
+  which says what each means, with an **Examples** button opening a new Notes page of the manual: a few examples of
+  each, drawn from the works the Brazil notes cite and from Snow. The form shows as a label on the note. A note without
+  one is kept, and a form outside the three is kept as written.
+- **The manual has its first page for part of the application rather than a widget**: the Notes tab.
+- **The Brazil example's write-up carries what the mosquito meets.** Twelve notes on the Notes tab, seven of them
+  citing thirteen open works, set the lag models' exposure — MODIS daytime land-surface temperature — against what
+  *Aedes aegypti* meets: air at indoor resting sites, water in containers, and stored water in droughts. A review
+  of the literature behind them is in the example repository. Nothing in the models changed. Experiment 182.
+- **The Brazil example's provenance names where `tempmed` comes from**: InfoDengue's alertcity API, from airport
+  stations in its Rio pilot and ERA5 reanalysis now. When that changed is not stated.
+
 ## 0.41.0 — 2026-11-07
 
 - **The Brazil example widens to sixteen years.** A fifth workflow sets weekly cases 2010–2025 beside Terra's land

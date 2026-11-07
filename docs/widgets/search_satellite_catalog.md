@@ -1,6 +1,6 @@
 # Search a satellite catalog
 
-_Created 2026-11-05 · Updated 2026-11-05_
+_Created 2026-11-05 · Updated 2026-11-07_
 
 _Created 2026-11-05 · Updated 2026-11-05 (0.2.0)_
 

@@ -2,8 +2,9 @@
 
 _Created 2026-11-07 · Updated 2026-11-07_
 
-**Status:** asked. Three forms are built (0.42.0, recorded in [182](182-brazil-across-years.md)); the five-form design
-below is not, and nothing has measured whether any of it improves writing.
+**Status:** asked. The evidence search that was to close it ran on 2026-11-07 and cannot validate or retire it: it
+finds the design's premise sound and its shape wrong, and leaves a choice open below. Three forms are built (0.42.0,
+recorded in [182](182-brazil-across-years.md)); the five-form design is not.
 
 ## The question
 
@@ -99,6 +100,41 @@ summarising and their own argument improves what they write. What the search fin
 
 The three measurements above and the field question stay open beside it: the search says whether the idea is sound,
 not whether this application's version of it works for the people using it.
+
+## The evidence search, 2026-11-07
+
+Three searches of open sources, written up in
+[teaching writing from sources](../research/teaching-writing-from-sources-2026-11-07.md), each work marked by how far
+it was read. Against the closing condition:
+
+| Criterion | Result |
+| --- | --- |
+| Teaching these distinctions improves writing | **Partly.** Summary instruction improves summaries (effect size 0.82, four school studies); synthesis instruction helps undergraduates integrate sources, by a small margin over an active comparison, almost all from one research group. Neither shows better writing at large |
+| It guards against plagiarism | **Instruction, modestly; labelling, untested.** A course-randomised citation tutorial lowered plagiarism; an hour of paraphrase training improved paraphrasing and patchwriting avoidance on a test task, with half the sample lost. Copied sentences barely moved in another study. No study measured patchwriting in real work |
+| The forms match what was taught | **No.** Studies code two axes separately: how much is borrowed (quotation, patchwriting, paraphrase, summary) and whether the writer reports sources or takes a position. *Own words* is on the second axis; the other four on the first. No study separates précis from summary |
+| Labelling the form of one's own text helps | **Not studied.** No controlled study found |
+| Anything for public health trainees | **Not studied.** Their writing training is judged by publication counts; the documented failure is overclaiming (recommendations outrunning the result in 44.5% of observational-study articles), and no trial of training authors against it was found |
+
+The practitioner, before the result: *"I think at least the forms will help guard against plagiarism."* Recorded as
+said. The evidence supports something close to it for instruction and is silent on a writer labelling their own text.
+One limit is plain without a study: a writer who patchwrites usually believes they paraphrased, so the label records
+what they believe, and Fieldwork, which seldom holds the source text, cannot check it.
+
+**So the status stays `asked`, with the gap stated,** as the closing condition provides. The search did not find the
+idea wrong; it found it drawn on one axis where the evidence uses two. The options it sets out, none chosen:
+
+- **Two coordinates** instead of one list: how much is borrowed, and reporting or own argument. Fieldwork's kind
+  (quoted or authored) and function already carry part of each.
+- **Précis merged into summary**, which every taxonomy found does; or kept, with no evidence either way.
+- **Patchwriting named**, neutrally, as a form or a state a reviewer can set: the commonest borrowing problem in the
+  descriptive data (about 16% of citations, half of first-year papers), and the one a writer seldom sees in their own
+  text.
+- **Prompt a judgement rather than a tag** (*is this closer to the source's wording or to yours?*), and **fade the
+  prompt** as a writer gains skill: prompts that ask for a judgement beat filling in a label, and faded scaffolds beat
+  permanent ones, on school-level evidence.
+
+**What would close it now** is the practitioner's choice among these, built and then measured as the three
+measurements above describe. The field question stands unchanged.
 
 ## What this does not establish
 

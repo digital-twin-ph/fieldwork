@@ -61,7 +61,7 @@ import {appendTables,appendSentence,appendPort,appendTableCount} from './append-
 import {fitRegression,specFrom,rowsOf,regressionTable,regressionSentence,regressionReceipt} from './regression.js';
 import {metadataFindings} from './column-metadata.js';
 import widgetRegistry from '../widgets/registry.json';
-import {relateTable,relateOutcome,machinedNotes,relateReceiptFacts,type RelateOutcome} from './relate-table.js';
+import {relateTable,relateOutcome,machinedNotes,relateReceiptFacts,relateAtShifts,relateShiftsReceiptFacts,type RelateOutcome,type ShiftColumn} from './relate-table.js';
 // THE EQUATIONS THE COMPUTATIONS USED, machined as Methods notes. The second, third and fourth
 // producers of a machined note, which is the state `relate-table.ts` wrote its type for.
 import {tablePoints,tablePointsSentence,tablePointsFacts} from './table-points.js';
@@ -1081,6 +1081,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
   // produced, so a step that silently halved a stratification looks exactly like one that did
   // not. See `relateOutcome` in src/relate-table.ts.
   const relations:Record<string,RelateOutcome>={};
+  const relateShifts:Record<string,ShiftColumn[]>={};
   // NOTES THE WIDGETS MACHINED, for the write-up rather than for a panel. Four producers:
   // `relate_table` reports what the join did, and `rate`, `rate_ratio` and `two_by_two` state
   // the equation they computed with this run's numbers substituted into it.
@@ -1447,6 +1448,18 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         if(table?.kind!=='data-table')throw new Error('Connect a table: this step adds a column to one.');
         if(other?.kind!=='data-table')throw new Error('Connect a second table on the "related" port: '
           +'this step brings a column across from it.');
+        // SEVERAL SHIFTS (experiment 185): one column each, every row kept, the empties counted per shift.
+        if((node.params.shifts?.length??0)>1){
+          const {table:shifted,columns}=relateAtShifts(table,other,node.params,node.params.shifts!);
+          value=shifted as unknown as DisplayValue;
+          relateShifts[node.id]=columns;
+          const facts=relateShiftsReceiptFacts(node.params,table.rows.length,columns,{runId,nodeId:node.id});
+          receipts.push({nodeId:node.id,kind:'computation',facts,rules:'',input:facts,conclusions:[],
+            method:`${node.params.bring} brought across at ${columns.length} shifts (${columns.map(c=>`${c.shiftDays} d`).join(', ')}), `
+              +`every row kept; empty where unmatched: ${columns.map(c=>`${c.shiftDays} d ${c.empty}`).join(', ')}. `
+              +'A model on a column leaves out the rows empty in it, and no others.'});
+          break;
+        }
         const result=relateTable(table,other,node.params);
         value=result.table as unknown as DisplayValue;
         const outcome=relateOutcome(table,node.params,result);
@@ -2451,6 +2464,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
     ...(unfinished.length?{unfinished}:{}),
     ...(Object.keys(linkages).length?{linkages}:{}),
     ...(Object.keys(relations).length?{relations}:{}),
+    ...(Object.keys(relateShifts).length?{relateShifts}:{}),
     ...(Object.keys(machined).length?{machined:signedByWidget(machined,workflow)}:{}),
     // THE SOURCES THIS WORKFLOW CITES, read back from what its inputs declare rather than asked
     // for again. Experiment 141, trying the design on a real write-up: "References are the one

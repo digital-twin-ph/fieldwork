@@ -192,6 +192,8 @@ export interface WorkflowRun {alerts:RunAlert[]; evidence:NodeEvidence[]; proven
    *  interface has to show, and for a sharper reason than the first: the rows a relate drops are
    *  absent from the table it hands on, so the outcome cannot be read off the data. */
   relations?:Record<string,import('./relate-table.js').RelateOutcome>;
+  /** Per Relate over several shifts (experiment 185): each column, its shift, and its matched and empty counts. */
+  relateShifts?:Record<string,import('./relate-table.js').ShiftColumn[]>;
   /** NOTES THE WIDGETS MACHINED, by the node that machined them: the application's own account of
    *  what it did, written for a part of a write-up rather than for a panel. IMRAD is the body;
    *  a title and an abstract are front matter and are assembled from the whole workflow rather

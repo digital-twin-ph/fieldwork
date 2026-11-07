@@ -52,6 +52,9 @@ export interface DataTable {
   /** KEY COLUMNS DECLARED TO HOLD NUMBERS, with each one's unit (experiment 181). A key column is text unless a
    *  person said otherwise; this is where they said it. */
   numericKeys?:Record<string,string>;
+  /** COLUMNS BROUGHT AT A SHIFT, and the shift in days (experiment 185): `LST_Day_1km_-14d` → −14. Written by Relate
+   *  over several shifts, read by Regression to state each model's shift as a number the lag chart can place. */
+  columnShifts?:Record<string,number>;
   rows:{key:Record<string,string>; value:number|null}[];
   rowCount:number; missingValueCount:number; source?:DataTableSource;
 }

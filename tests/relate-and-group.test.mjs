@@ -515,3 +515,33 @@ test('a join decision is signed with a short digest, and one saved in the old wr
   assert.throws(()=>drop('gap:1:0000000000000000'),/no longer describes this gap/);
   assert.throws(()=>drop('something else entirely'),/no longer describes this gap/);
 });
+
+/** ONE RELATE, SEVERAL SHIFTS (experiment 185): one column per shift, every row kept, a shift with no value left
+ *  EMPTY and counted. The same fixture as the shifted self-relate above, so each column can be held against it. */
+test('several shifts bring one column each, keep every row, and count what is empty at each shift',async()=>{
+  const {relateAtShifts,relateTable,shiftColumnName,MAX_SHIFTS}=await import('../build/relate-table.js');
+  const cases={kind:'data-table',keys:['municipio','data_iniSE'],valueField:'casos',rowCount:3,missingValueCount:0,
+    rows:[['Rio','2024-02-18',100],['Rio','2024-02-25',120],['Rio','2024-03-03',90]].map(([m,d,v])=>({key:{municipio:m,data_iniSE:d},value:v}))};
+  const rain={kind:'data-table',keys:['municipio','data_iniSE'],valueField:'precip_total_semana',rowCount:4,missingValueCount:0,
+    rows:[['Rio','2024-02-04',10],['Rio','2024-02-11',20],['Rio','2024-02-18',30],['Rio','2024-02-25',40]]
+      .map(([m,d,v])=>({key:{municipio:m,data_iniSE:d},value:v}))};
+  const request={on:'municipio',bring:'precip_total_semana',within:{date:'data_iniSE',start:'data_iniSE',end:'data_iniSE'}};
+  const {table,columns}=relateAtShifts(cases,rain,request,[0,-7,-14]);
+  assert.deepEqual(table.keys,['municipio','data_iniSE','precip_total_semana_0d','precip_total_semana_-7d','precip_total_semana_-14d'],
+    'one column per shift, and none of the single shift’s helper columns');
+  assert.equal(table.rows.length,3,'every row kept');
+  assert.deepEqual(table.rows.map(r=>[r.key['precip_total_semana_0d'],r.key['precip_total_semana_-7d'],r.key['precip_total_semana_-14d']]),
+    [['30','20','10'],['40','30','20'],['','40','30']]);
+  assert.deepEqual(columns.map(c=>[c.shiftDays,c.matched,c.empty]),[[0,2,1],[-7,3,0],[-14,3,0]]);
+  assert.deepEqual(table.columnShifts,{'precip_total_semana_0d':0,'precip_total_semana_-7d':-7,'precip_total_semana_-14d':-14});
+  // EACH COLUMN IS WHAT ONE SHIFTED RELATE GIVES, on the rows that one keeps.
+  const one=relateTable(cases,rain,{...request,shiftDays:-14});
+  assert.deepEqual(one.table.rows.map(r=>r.key.precip_total_semana),table.rows.map(r=>r.key['precip_total_semana_-14d']));
+  assert.equal(shiftColumnName('LST_Day_1km',14),'LST_Day_1km_+14d');
+  // BOUNDED, checked whole before anything is matched.
+  assert.throws(()=>relateAtShifts(cases,rain,request,[]),/at least one shift/);
+  assert.throws(()=>relateAtShifts(cases,rain,request,[-7,-7]),/listed twice/);
+  assert.throws(()=>relateAtShifts(cases,rain,request,[-3.5]),/whole number of days/);
+  assert.throws(()=>relateAtShifts(cases,rain,request,Array.from({length:MAX_SHIFTS+1},(_,i)=>-i)),/At most/);
+  assert.throws(()=>relateAtShifts(cases,rain,{on:'municipio',bring:'precip_total_semana'},[0,-7]),/matched to a period/);
+});

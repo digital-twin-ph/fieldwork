@@ -446,6 +446,47 @@ function labelRefusalFor(plan:RelatePlan,label:string|undefined):string|null {
   return null;
 }
 
+/** ONE RELATE, SEVERAL SHIFTS (experiment 185). The Brazil lag workflows copied one Relate per lag and lead; this
+ *  brings the second table's column once per shift, as one column each, onto the first table's rows.
+ *
+ *  **Every row is kept.** A row with no value at a shift keeps that shift's column EMPTY, and the empty count is
+ *  stated per shift. Dropping instead would make each shift drop the others' rows, and the models fitted downstream
+ *  would no longer each rest on their own weeks -- which is what the separate Relates gave, and what Regression keeps
+ *  by leaving out, per model, the rows whose exposure is empty. So the unmatched decision a single shift asks for is
+ *  not asked here: nothing is dropped, and what is empty is counted rather than filled.
+ *
+ *  Bounded, as experiment 185 requires: the list is checked whole before anything is matched -- whole days, none
+ *  repeated, at most MAX_SHIFTS, and a period to match against. */
+export const MAX_SHIFTS=24;
+export interface ShiftColumn {column:string; shiftDays:number; matched:number; empty:number}
+export const shiftColumnName=(bring:string,shiftDays:number)=>`${bring}_${shiftDays>0?'+':''}${shiftDays}d`;
+export function relateAtShifts(left:DataTable,right:DataTable,request:RelateRequest,shifts:readonly number[]):
+  {table:DataTable;columns:ShiftColumn[]}{
+  if(!request.within)throw new Error('Several shifts need a date matched to a period: choose the date and the period first.');
+  if(!shifts.length)throw new Error('Give at least one shift.');
+  if(shifts.length>MAX_SHIFTS)throw new Error(`At most ${MAX_SHIFTS} shifts in one step; this has ${shifts.length}.`);
+  for(const d of shifts)if(!Number.isInteger(d)||Math.abs(d)>3660)
+    throw new Error(`Each shift is a whole number of days, at most ten years either way; ${d} is not.`);
+  const twice=shifts.find((d,i)=>shifts.indexOf(d)!==i);
+  if(twice!==undefined)throw new Error(`The shift ${twice} days is listed twice.`);
+  const bring=request.bring.trim();
+  const columns:ShiftColumn[]=[];
+  const values=shifts.map(d=>{
+    const name=shiftColumnName(bring,d);
+    if(left.keys.includes(name))throw new Error(`The first table already has a "${name}" column.`);
+    const aligned=alignToPeriods(left,right,{...request,shiftDays:d});
+    const plan=planRelate(aligned.left,aligned.right,aligned.request);
+    const out=aligned.left.rows.map(row=>plan.lookup.get(plan.keyOf(row))??'');
+    const matched=out.filter(v=>v!=='').length;
+    columns.push({column:name,shiftDays:d,matched,empty:out.length-matched});
+    return out;
+  });
+  const keys=[...left.keys,...columns.map(c=>c.column)];
+  const rows=left.rows.map((row,i)=>({...row,key:{...row.key,...Object.fromEntries(columns.map((c,j)=>[c.column,values[j]![i]!]))}}));
+  return {table:{...left,keys,rows,rowCount:rows.length,
+    columnShifts:Object.fromEntries(columns.map(c=>[c.column,c.shiftDays]))},columns};
+}
+
 export function relateShape(left:DataTable,right:DataTable,request:RelateRequest):RelateShape {
   ({left,right,request}=alignToPeriods(left,right,request));
   const plan=planRelate(left,right,request);
@@ -663,6 +704,26 @@ export function machinedNotes(view:MachinedNoteInput,tables:{left:string;right:s
  *  variable over another by exactly the ratio of their retained shares, and that identity runs
  *  backwards: somebody holding a figure they did not expect can divide and name the join that
  *  produced it, outside this application, later, from the receipt alone. */
+/** THE RECEIPT FOR SEVERAL SHIFTS: what was matched on, what was brought, and per shift its column, its shift and its
+ *  matched and empty counts -- enough to recompute every column. */
+export function relateShiftsReceiptFacts(request:RelateRequest,offered:number,columns:readonly ShiftColumn[],
+  context:{runId:string; nodeId:string}):string{
+  const quote=(value:string)=>JSON.stringify(value);
+  const entity=`<urn:fieldwork:run:${context.runId}:output:${context.nodeId}>`;
+  const keys=[request.on,...(request.alsoOn??[])].filter(Boolean);
+  return `@prefix fw: <urn:fieldwork:>.\n@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.\n`
+    +`${entity} a fw:TableRelate;\n`
+    +keys.map(k=>`  fw:matchedOn ${quote(k)};\n`).join('')
+    +`  fw:broughtColumn ${quote(request.bring)};\n`
+    +(request.within?`  fw:matchedWithinPeriod ${quote(`${request.within.date} between ${request.within.start} and ${request.within.end}`)};\n`:'')
+    +`  fw:keyComparison ${quote((request.normalisation??DEFAULT_NORMALISATION)==='fuzzy'?'punctuation-folded':'exact')};\n`
+    +`  fw:offeredRowCount "${offered}"^^xsd:integer`
+    +columns.map(c=>`;\n  fw:shiftedColumn [ a fw:ShiftedColumn; fw:columnName ${quote(c.column)}; `
+      +`fw:dateShiftDays "${c.shiftDays}"^^xsd:integer; fw:relatedRowCount "${c.matched}"^^xsd:integer; `
+      +`fw:emptyRowCount "${c.empty}"^^xsd:integer ]`).join('')
+    +'.\n';
+}
+
 export function relateReceiptFacts(
   outcome:RelateOutcome,
   notes:MachinedNote[],

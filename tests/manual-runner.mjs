@@ -73,11 +73,13 @@ export async function performManual(page,workflow,{timeout=120000,runTimeout=tim
       await view(page,'workflow');
       await page.locator('#tidy-button').click();await page.waitForTimeout(400);
       const from=nodes[step.connect.from],to=nodes[step.connect.to];
-      const source=page.locator(`.react-flow__node[data-id="${from}"] [data-handleid="out"]`);
-      const target=page.locator(`.react-flow__node[data-id="${to}"] [data-handleid="${step.connect.port}"]`);
-      const a=await source.boundingBox(),b=await target.boundingBox();
-      await page.mouse.move(a.x+a.width/2,a.y+a.height/2);await page.mouse.down();
-      await page.mouse.move(b.x+b.width/2,b.y+b.height/2,{steps:20});await page.mouse.up();
+      // THROUGH THE INSPECTOR, as a person who cannot hit a small port would: select the step, choose the source in its
+      // input's list. Dragging between ports stopped working once readable nodes made a large workflow taller than the
+      // canvas at its smallest zoom (2026-11-07): the target port was off the canvas, and 3px wide when it was not.
+      await page.locator(`.react-flow__node[data-id="${to}"]`).dispatchEvent('click');
+      const list=page.locator(`#connect-${step.connect.port}`);
+      await expect(list,{message:where}).toBeVisible();
+      await list.selectOption(from);
       await expect.poll(async()=>(await saved(page)).edges.some(e=>e.from===from&&e.to===to&&e.port===step.connect.port),
         {message:where}).toBe(true);
       continue;

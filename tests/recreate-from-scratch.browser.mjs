@@ -58,13 +58,13 @@ const add=async(page,type)=>{
 /** Drag from one node's output to another's input, as the canvas asks. A map offers one
  *  configurable port, so an unbound layer is dropped on `layer` and bound by what it emits. */
 const connect=async(page,from,to,port)=>{
-  const declared=await page.locator(`.react-flow__node[data-id="${to}"] [data-handleid="${port}"]`).count();
-  const source=page.locator(`.react-flow__node[data-id="${from}"] [data-handleid="out"]`);
-  const target=page.locator(`.react-flow__node[data-id="${to}"] [data-handleid="${declared?port:'layer'}"]`);
-  await expect(source).toBeVisible();await expect(target).toBeVisible();
-  const a=await source.boundingBox(),b=await target.boundingBox();
-  await page.mouse.move(a.x+a.width/2,a.y+a.height/2);await page.mouse.down();
-  await page.mouse.move(b.x+b.width/2,b.y+b.height/2,{steps:20});await page.mouse.up();
+  // THROUGH THE INSPECTOR (2026-11-07): readable nodes overlap on a crowded canvas, so a drag can land on the wrong one.
+  // The step's own list for the port where it has one (data-map-port), the generic Connections list where it does not.
+  await page.locator(`.react-flow__node[data-id="${to}"]`).dispatchEvent('click');
+  const own=page.locator(`[data-map-port="${port}"]`),generic=page.locator(`#connect-${port}`);
+  const list=await own.count()?own.first():generic;
+  await expect(list).toBeVisible();
+  await list.selectOption(from);
 };
 /** The id the application gave a node it just created. A node added from the palette gets a
  *  generated id, so it is read back from the saved workflow rather than guessed -- which also

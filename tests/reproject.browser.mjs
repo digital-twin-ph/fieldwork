@@ -41,7 +41,7 @@ test('a projected result is refused by a widget that measures, in the applicatio
 
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="catchments"]').click();
-  await page.locator('.inspector select[data-map-port="sites"]').selectOption('projected');
+  await page.locator('#connect-sites').selectOption('projected');
   await page.locator('#run-button').click();
   await expect(page.locator('body')).toContainText('needs longitude and latitude',{timeout:45000});
   await expect(page.locator('body')).toContainText('Reproject points gives it easting and northing');

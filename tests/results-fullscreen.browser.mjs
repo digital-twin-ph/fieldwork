@@ -26,7 +26,10 @@ test('full screen renders the map at viewport height',async({page})=>{
     // the remaining 312px being the panel's own content -- heading, tabs, metrics, the figure
     // title and key, the map toolbar, the method line and the source note.
     expect(box.height).toBeGreaterThan(before+120);
-    expect(box.height).toBeGreaterThan(viewport*0.55);
+    // LOWERED FROM 0.55 ON 2026-11-07, when every word was raised to a readable 14 px (TODO item 0): the map measured
+    // 593px of 1100, about 100px less than in October, and the difference is the panel's own text at a size people can
+    // read. Streamlining that text (TODO item 1) is what should give the map its room back, and this bar with it.
+    expect(box.height).toBeGreaterThan(viewport*0.5);
     // And no empty band below it, which is what the report was: the panel's last content reaches
     // the bottom of the screen instead of stopping where the authored height ran out.
     const bottom=await page.locator('.results-panel').evaluate(panel=>{

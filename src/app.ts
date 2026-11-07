@@ -1976,17 +1976,15 @@ function renderInspector(){
         +`<p class="muted">Exploding replaces this node with its primitives so each can be inspected and changed. It cannot be reassembled; Undo is the way back, because once a member's parameter changes the nodes are no longer this composition at this version.</p>`:'');
   }
   if(n.type==='mean_center'){
-    content+=`<div class="notice">${n.params.weightField?.trim()?`Weighted by <strong>${esc(n.params.weightField.trim())}</strong>: each point counts in proportion to that attribute, and the receipt asserts the field and the weight total beside the point count.`:'Unweighted mean of projected point locations. Name an attribute below to weight each point by it \u2014 250 addresses carrying 489 deaths have two different centres.'} The computation uses UTM internally and emits one CRS84 center; it does not create a projected point dataset. Keep source and result private when locations are sensitive.</div><div class="field"><label class="field-label" for="mean-center-weight">Weight each point by this attribute (optional)</label><input id="mean-center-weight" data-slr="weightField" maxlength="60" value="${esc(n.params.weightField||'')}" placeholder="DEATHS"><p class="description">Leave empty for one point, one vote. A missing, non-numeric or negative weight is refused and counted; zero is kept, because a house where nobody died contributes no deaths.</p></div><label class="field-label" for="mean-center-zone">WGS84 UTM zone</label><input id="mean-center-zone" type="number" min="1" max="60" value="${n.params.zone}"><label class="field-label" for="mean-center-hemisphere">Hemisphere</label><select id="mean-center-hemisphere"><option value="north" ${n.params.hemisphere==='north'?'selected':''}>North</option><option value="south" ${n.params.hemisphere==='south'?'selected':''}>South</option></select><label class="field-label" for="mean-center-points">Point input</label><select id="mean-center-points" data-map-port="points"><option value="">Select input</option>${workflow.nodes.filter(x=>x.id!==n.id&&outputOf(x)==='points').map(x=>`<option value="${esc(x.id)}" ${workflow.edges.some(e=>e.to===n.id&&e.port==='points'&&e.from===x.id)?'selected':''}>${esc(x.params.label||x.id)}</option>`).join('')}</select>`;
+    content+=`<div class="notice">${n.params.weightField?.trim()?`Weighted by <strong>${esc(n.params.weightField.trim())}</strong>: each point counts in proportion to that attribute, and the receipt asserts the field and the weight total beside the point count.`:'Unweighted mean of projected point locations. Name an attribute below to weight each point by it \u2014 250 addresses carrying 489 deaths have two different centres.'} The computation uses UTM internally and emits one CRS84 center; it does not create a projected point dataset. Keep source and result private when locations are sensitive.</div><div class="field"><label class="field-label" for="mean-center-weight">Weight each point by this attribute (optional)</label><input id="mean-center-weight" data-slr="weightField" maxlength="60" value="${esc(n.params.weightField||'')}" placeholder="DEATHS"><p class="description">Leave empty for one point, one vote. A missing, non-numeric or negative weight is refused and counted; zero is kept, because a house where nobody died contributes no deaths.</p></div><label class="field-label" for="mean-center-zone">WGS84 UTM zone</label><input id="mean-center-zone" type="number" min="1" max="60" value="${n.params.zone}"><label class="field-label" for="mean-center-hemisphere">Hemisphere</label><select id="mean-center-hemisphere"><option value="north" ${n.params.hemisphere==='north'?'selected':''}>North</option><option value="south" ${n.params.hemisphere==='south'?'selected':''}>South</option></select>`;
   }else if(n.type==='compare_point_sets'||n.type==='comparison_map'){
     if(n.type==='compare_point_sets')content+=`<div class="notice">Connect a Mean center widget to each branch. Both centers must use this UTM CRS and have matching source counts. Original and moved locations stay private.</div><label class="field-label" for="comparison-zone">WGS84 UTM zone</label><input id="comparison-zone" type="number" min="1" max="60" value="${n.params.zone}"><label class="field-label" for="comparison-hemisphere">Hemisphere</label><select id="comparison-hemisphere"><option value="north" ${n.params.hemisphere==='north'?'selected':''}>North</option><option value="south" ${n.params.hemisphere==='south'?'selected':''}>South</option></select><p class="description">Distances to the nearest pump and between centers are measured in metres. Pump locations are geographic context.</p>`;
     else content+='<div class="notice">Private evaluation map: both panels share one extent and scale. This view displays existing comparison results and includes original coordinates.</div>';
-    content+=nodeInputs(n).map(([port,type])=>`<label class="field-label" for="comparison-port-${port}">${({original:'Original points',moved:'Moved points',pumps:'Reference pumps',originalCenter:'Original mean center',movedCenter:'Moved mean center',comparison:'Comparison result'} as Record<string,string>)[port]}</label><select id="comparison-port-${port}" data-map-port="${port}"><option value="">Select input</option>${workflow.nodes.filter(x=>x.id!==n.id&&outputOf(x)===type).map(x=>`<option value="${esc(x.id)}" ${workflow.edges.some(e=>e.to===n.id&&e.port===port&&e.from===x.id)?'selected':''}>${esc(x.params.label||x.id)}</option>`).join('')}</select>`).join('');
   }else if(n.type==='donut_geomask'||n.type==='aggregate_points_to_h3_cell'){
     content+=`<div class="notice">Educational transformation only. The private source remains in the project and run evidence. No anonymity claim.</div>`;
     content+='<details><summary>How does this geoprivacy method work? (?)</summary><p>Map encryption and its calibration are planned, not executable here. See the <a href="https://git.cdc.gov/jupyterlite/2026-Map-Encryption-Library" target="_blank" rel="noopener noreferrer">geoprivacy notebooks</a>.</p></details>';
     if(n.type==='donut_geomask')content+=`<label class="field-label" for="privacy-innerM">Inner radius (m)</label><input id="privacy-innerM" type="number" min="0" max="5000" value="${n.params.innerM}"><label class="field-label" for="privacy-outerM">Outer radius (m)</label><input id="privacy-outerM" type="number" min="1" max="5000" value="${n.params.outerM}"><label class="field-label" for="privacy-seed">Demonstration seed</label><input id="privacy-seed" type="number" min="0" max="4294967295" value="${n.params.seed}"><p class="description">Output names and IDs are generated afresh; original attributes are not copied. The seeded generator is predictable and unsuitable as a production privacy control.</p>`;
     else content+=`<label class="field-label" for="privacy-resolution">H3 resolution</label><input id="privacy-resolution" type="number" min="0" max="15" value="${n.params.resolution}"><label class="field-label" for="privacy-minOccupancy">Minimum locations per released cell</label><input id="privacy-minOccupancy" type="number" min="2" max="100" value="${n.params.minOccupancy}"><p class="description">Counts locations, not deaths. Sparse cells are omitted; occupancy alone does not establish anonymity.</p>`;
-    content+=`<label class="field-label" for="privacy-point-source">Point input</label><select id="privacy-point-source" data-map-port="points"><option value="">Select input</option>${workflow.nodes.filter(x=>x.id!==n.id&&outputOf(x)==='points').map(x=>`<option value="${esc(x.id)}" ${workflow.edges.some(e=>e.to===n.id&&e.port==='points'&&e.from===x.id)?'selected':''}>${esc(x.params.label||x.id)}</option>`).join('')}</select>`;
   }else if(Object.hasOwn(CATCHMENT_TYPES,n.type)||n.type==='buffer_area'||n.type==='reachable_nodes'){
     if(n.type==='buffer_area')content+='<label class="field-label" for="catchment-distanceM">Buffer distance (metres)</label><input type="number" id="catchment-distanceM" data-catchment-param="distanceM" min="0" max="5000" value="'+n.params.distanceM+'"><p class="notice">Connect this expanded boundary to Street network. Keep the original Study area for reporting and polygon clipping. A buffer reduces edge effects but does not guarantee complete access coverage.</p>';
     // The study area is handed to the Inspector so a downloaded network can be seen against the
@@ -1999,7 +1997,7 @@ function renderInspector(){
       // The LEVEL of the connected area, which is what decides the travel mode a province needs.
       previewBoundaryID=area?.node.params.source==='drawn'?area.node.params.boundary?.boundaryID:undefined;
     }catch{previewBoundary=undefined;previewBoundaryID=undefined;}
-    content+=catchmentInspector(n,esc,previewBoundary,previewBoundaryID)+nodeInputs(n).map(([port,type])=>`<div class="field"><label class="field-label" for="catchment-port-${port}">${esc(port)}</label><select id="catchment-port-${port}" data-map-port="${port}"><option value="">Select input</option>${workflow.nodes.filter(x=>x.id!==n.id&&outputOf(x)===type).map(x=>`<option value="${esc(x.id)}" ${workflow.edges.some(e=>e.to===n.id&&e.port===port&&e.from===x.id)?'selected':''}>${esc(x.params.label||TYPES[x.type].title)}</option>`).join('')}</select></div>`).join('');
+    content+=catchmentInspector(n,esc,previewBoundary,previewBoundaryID);
   }else if(n.type==='map_output'){
     // No Input mode. A map draws the layers it is given, and the practitioner wires what they
     // have: one source picker per layer port, every port always present. The selector this
@@ -2019,7 +2017,7 @@ function renderInspector(){
         if(!workflow.edges.some(e=>e.to===n.id&&e.port===port))return '';
         const sources=workflow.nodes.filter(x=>x.id!==n.id&&outputOf(x)===type);
         return `<div class="field"><label class="field-label" for="map-${port}">${esc(port)}</label>`
-          +`<select id="map-${port}" data-map-port="${port}"><option value="">Remove this layer</option>`
+          +`<select id="map-${port}" data-map-port="${port}"><option value="">Not connected</option>`
           +sources.map(x=>`<option value="${esc(x.id)}" ${workflow.edges.some(e=>e.to===n.id&&e.port===port&&e.from===x.id)?'selected':''}>${esc(x.params.label||TYPES[x.type].title)}</option>`).join('')
           +`</select></div>`;
       }).join('')
@@ -3548,7 +3546,23 @@ function renderInspector(){
   if(exampleKey(workflow)==='raster'&&(n.type==='raster_input'||n.type==='clip_raster'))content+='<div class="source-card"><span class="inspector-section">Raster workflow steps</span><p>Prepare your GeoTIFF and citation, preview the clip, then Run workflow to populate the map.</p><div class="inspector-actions">'+(['raster_input','clip_raster','map_output'] as NodeType[]).map((type,i)=>{const target=workflow.nodes.find(x=>x.type===type);return '<button class="button small" data-raster-step="'+esc(target?.id||'')+'" '+(!target?'disabled':'')+'>'+[ '1. Raster input','2. Clip parameters','3. Map'][i]+'</button>';}).join('')+'</div></div>';
   content+=evidenceInspector(n);
   content+=identityMarkup(n.type,esc);
-  const incoming=workflow.edges.filter(e=>e.to===n.id);content+=`<div class="inspector-divider"></div><span class="inspector-section">Connections</span>${incoming.map(e=>`<div class="detail-row"><span>${esc(e.port)}</span><strong>${esc(workflow.nodes.find(x=>x.id===e.from)?.params.label||TYPES[workflow.nodes.find(x=>x.id===e.from)!.type].title)}</strong></div>`).join('')||'<p class="muted">Source node · no incoming connections</p>'}<div class="inspector-actions"><button id="duplicate-node" class="button small">Duplicate</button><button id="delete-node" class="button small danger">Remove node</button></div>`;
+  // INPUTS: ONE WORDING AND ONE BEHAVIOUR FOR EVERY STEP THAT TAKES THEM. The practitioner, 2026-11-07: *"We need to have
+  // consistent language and behavior for Inspector based port actions."* Each input is a list named in plain words:
+  // "Not connected" first, which disconnects, then every step that can feed it -- the test the canvas applies to a drop
+  // -- and choosing one connects it. Also how a person who cannot hit an 11px port connects at all. A source step has
+  // no inputs and shows no section. The Map's layer manager keeps its own lists, which also order and name layers.
+  const incoming=workflow.edges.filter(e=>e.to===n.id);
+  const nameOf=(id:string)=>{const x=workflow.nodes.find(y=>y.id===id);return x?(x.params.label||TYPES[x.type].title):id;};
+  const ports=nodeInputs(n).filter(([port])=>!content.includes(`data-map-port="${port}"`));
+  if(ports.length)content+=`<div class="inspector-divider"></div><span class="inspector-section">Inputs</span>`
+    +ports.map(([port])=>{
+      const now=incoming.find(e=>e.port===port)?.from||'';
+      const offers=workflow.nodes.filter(x=>x.id===now||validConnection({source:x.id,target:n.id,sourceHandle:'out',targetHandle:port} as Connection));
+      return `<label class="field-label" for="connect-${esc(port)}">${esc(portLabel(port))}</label>`
+        +`<select id="connect-${esc(port)}" class="connect-port" data-connect-port="${esc(port)}"><option value="">${offers.length?'Not connected':'Nothing in this workflow can feed this yet'}</option>`
+        +offers.map(x=>`<option value="${esc(x.id)}"${x.id===now?' selected':''}>${esc(nameOf(x.id))}</option>`).join('')+`</select>`;
+    }).join('');
+  content+=``+`<div class="inspector-actions"><button id="duplicate-node" class="button small">Duplicate</button><button id="delete-node" class="button small danger">Remove node</button></div>`;
   // One note for all nine zone-taking widgets, appended here rather than written into each of
   // the five places a zone field is rendered. It reports; it does not refuse. `metric()` already
   // refuses a coordinate more than 6 degrees from the central meridian -- which is a zone too
@@ -4645,6 +4659,7 @@ function renderInspector(){
   optionalElement('#catchment-label')?.addEventListener('input',e=>control(e).setCustomValidity(''));
   optionalElement('#edit-input-data')?.addEventListener('click',()=>openInputDataEditor(getNode(workflow,n.id,'point_input'),workflow.nodes.filter((x):x is WorkflowNode<'study_area'>=>x.type==='study_area'&&(!!x.params.geometry||x.params.source!=='drawn')).map(x=>({id:x.id,label:x.params.label||'Old Naledi',geometry:x.params.geometry||oldNalediBoundary as Boundary})),data=>validateGeoJSON(data,{attributes:true}),params=>{const persisted=change(w=>getNode(w,n.id,'point_input').params=params,{requirePersistence:true});if(persisted)toast('Input edits saved on this device. Rerun the workflow to update results.');return persisted;}));
   document.querySelectorAll<HTMLSelectElement>('[data-coverage-port]').forEach(el=>el.onchange=()=>{const from=el.value,port=el.dataset.coveragePort!;change(w=>{w.edges=w.edges.filter(e=>!(e.to===n.id&&e.port===port));if(from)w.edges.push({id:`e-${Date.now()}`,from,to:n.id,port});});});
+  document.querySelectorAll<HTMLSelectElement>('[data-connect-port]').forEach(el=>el.onchange=()=>{const port=el.dataset.connectPort!;change(w=>setConnection(w,el.value||null,n.id,port));});
   optionalElement('#measure-area-source')?.addEventListener('change',e=>{const from=control(e).value;change(w=>{w.edges=w.edges.filter(x=>!(x.to===n.id&&x.port==='area'));if(from)w.edges.push({id:`e-${Date.now()}`,from,to:n.id,port:'area'});});});
   // A committed geometry is stamped, so the receipt can say WHEN the area was revised. Only a
   // changed shape counts: renaming the area or switching its selection mode is not a revision of
@@ -5867,6 +5882,17 @@ function switchView(view:string){
   if(view==='results')renderMap();
   if(view==='workflow')requestAnimationFrame(()=>flow?.fit());
 }
+/** An input's name in plain words, for the Inspector: never an internal id like `polygons_2` or `originalCenter`. */
+const PORT_LABELS:Record<string,string>={area:'Study area',points:'Points',polygons:'Polygons',records:'Records',table:'Table',
+  raster:'Raster',network:'Street network',decisions:'Decisions',design:'Study design',cases:'Cases',series:'Series',
+  original:'Original points',moved:'Moved points',pumps:'Reference points',originalCenter:'Original mean center',
+  movedCenter:'Moved mean center',comparison:'Comparison',ground:'Ground',context:'Context points',centers:'Centers',
+  catalog:'Catalog search',product:'Satellite product',files:'Satellite files'};
+function portLabel(port:string):string{
+  const [base,n]=port.split(/_(\d+)$/);
+  const name=PORT_LABELS[base!]||base!.replace(/([a-z])([A-Z])/g,'$1 $2').replace(/_/g,' ').replace(/^./,c=>c.toUpperCase());
+  return n?`${name} ${n}`:name;
+}
 function validConnection(c:Connection|Edge){const a=workflow.nodes.find(n=>n.id===c.source),b=workflow.nodes.find(n=>n.id===c.target);if(!a||!b||a.id===b.id||!outputOf(a))return false;
   // The map's one configurable port accepts anything the map can draw; which declared port it
   // becomes is decided on connection, by what the source emits. Without this the drop is refused
@@ -5889,8 +5915,13 @@ $('#run-button').onclick=run;onRunDetail(detail=>{runProgress=detail;drawRunProg
 // arranged is theirs, and exploding a micro-workflow is the moment it stops being readable.
 $('#tidy-button').onclick=()=>{
   if(busy)return;
-  if(alreadyTidy(workflow)){toast('Already laid out in order.');return;}
-  const moved=change(w=>{const at=tidyLayout(w);for(const node of w.nodes){
+  // Heights as drawn, in canvas units: the rendered box divided by the canvas zoom.
+  const zoom=Number(document.querySelector('.react-flow__viewport')?.getAttribute('style')?.match(/scale\(([\d.]+)\)/)?.[1])||1;
+  const heights=new Map(workflow.nodes.map(n=>[n.id,
+    (document.querySelector(`.react-flow__node[data-id="${CSS.escape(n.id)}"]`)?.getBoundingClientRect().height||0)/zoom] as const)
+    .filter(([,h])=>h>0));
+  if(alreadyTidy(workflow,heights)){toast('Already laid out in order.');return;}
+  const moved=change(w=>{const at=tidyLayout(w,heights);for(const node of w.nodes){
     const position=at.get(node.id);if(position){node.x=position.x;node.y=position.y;}}},{spatial:false});
   if(moved===false)return;
   flow?.fit();

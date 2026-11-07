@@ -1,6 +1,6 @@
 # Append rows
 
-_Created 2026-11-03 · Updated 2026-11-03_
+_Created 2026-11-03 · Updated 2026-11-06_
 
 **A summary step.** It stacks the rows of two or more tables, one after another, as pandas `concat` does.
 

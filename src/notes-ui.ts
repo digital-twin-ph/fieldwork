@@ -95,7 +95,7 @@ const FORM_GLOSS:Record<string,string>={
 const formGloss=(which:string)=>which&&FORM_GLOSS[which]?`${which} — ${FORM_GLOSS[which]}.`
   :which?`${which} — a form this application does not name, kept as its author wrote it.`
   :'How this note stands to the works it cites. '+KNOWN_NOTE_FORMS.map(f=>`${f[0]!.toUpperCase()+f.slice(1)}: ${FORM_GLOSS[f]}.`).join(' ')
-    +' Unstated is allowed.';
+    +' Leave it unstated for a note that draws on no literature.';
 
 const bodyOf=(note:Note)=>note.kind==='quoted'?note.quote:note.text;
 const words=(text:string)=>text.split(/\s+/).filter(Boolean).length;

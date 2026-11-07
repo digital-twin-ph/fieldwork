@@ -34,7 +34,25 @@ A note that draws on published work stands to it in one of three ways. Say which
 | **paraphrase** | A particular passage restated in your own words | About as long as the passage | That passage |
 | **summary** | The main points drawn together, often from several works | Short; selective | Each work it cites |
 
-A note can be left without a form. A form other than these three is kept as you wrote it.
+### What each form commits you to
+
+| Form | Read the source | Watch for |
+| --- | --- | --- |
+| **précis** | The whole work, in full. An abstract is not enough to keep its order and emphasis. | Leaving out the limits the authors themselves stated. |
+| **paraphrase** | The passage itself, in full. | Staying so close to the wording that it reads as copied. If the exact words matter, quote them instead. |
+| **summary** | Enough of each work to state its main point. Abstracts can serve, if the note says so. | Making the works agree more than they do, or letting one strong work stand for several weak ones. |
+
+All three put another author's finding in your words. The finding stays theirs, which is why the note cites the work. The wording is yours, which is why it is an authored note and not a quoted one.
+
+### A note that is none of the three
+
+Most notes are none of the three, and leave the form unstated:
+
+- **A note that draws on no literature**: what your data are, how a step was set up, what the run found. Cite the data source if there is one; it needs no form.
+- **A sentence carried word for word**: that is a quotation, and belongs in a quoted note.
+- **A note that adds your own reading to the literature**, such as a comparison, a criticism, or what the works imply for this study. Write the summary or précis first and then your reading, and make the turn visible (*"which suggests"*, *"for this study, that means"*), so a reader can check the first part against the works and judge the second as yours. Choose the form that describes the cited part.
+
+If none of these fits, write your own word for the form. It is kept as you wrote it.
 
 ### Précis: examples
 

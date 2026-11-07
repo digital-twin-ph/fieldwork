@@ -221,6 +221,15 @@ notes"*, and *"give a few examples of each in the manual"*. Built: authored note
 the Add note dialog with a line saying what each means and an Examples button opening a new Notes page of the manual
 (`docs/surfaces/notes.md`, the first manual page for a surface rather than a widget).
 
+Asked whether literature belongs in notes in these forms at all, the answer given was yes, with limits: each form holds
+only as far as the source was read (a précis needs the whole work; the Brazil précis are of works read in full, its
+summaries partly of abstracts), a paraphrase sits closest to copying, and a note earns its place by saying something
+about this study rather than reviewing the field. The practitioner: *"Include the implications of precis, summary and
+paraphrase in the notes manual. I think those are good points. And what about if notes do not belong to any of the
+three"*. The manual page now says what each form commits the writer to, and that most notes are none of the three: a
+note on the data or a step leaves the form unstated, a word-for-word sentence is a quoted note, and a note adding the
+author's own reading writes the cited part first and makes the turn visible.
+
 ## What would close it
 
 **It closes as validated when** the widened workflow runs from the manual, live, over 2010–2025. Its lag and lead

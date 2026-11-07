@@ -989,6 +989,21 @@ workflow (experiment 180):
   which is not the temperature product's. Then a route, a reader entry and a rule, with the rule the practitioner's
   choice where the product recommends none.
 
+### Plain checks on a note, before any model (agreed 2026-11-07)
+
+Asked whether a small language model could improve notes, the answer was: as a reader that asks questions at most,
+never as a writer, and most of what it would catch needs no model. The practitioner: *"Agree with skills aspect and
+reliability and hallucination re LLM use."* So no model now. The checks, each a finding on the note (flagged, never
+refused), deterministic and offline:
+
+- a note citing works with no form, or a précis citing more than one work;
+- causal wording (*caused*, *proves*, *effect of*) in a note about an association;
+- a summary or précis that goes on to the writer's own reading with no visible turn;
+- a précis of a work the note says was read only in abstract, once a note can say how far a work was read.
+
+A small model stays an idea: worth an experiment only if a question it asks leads a trainee to fix something these
+checks miss, measured. Experiment 182 records how this arose; the manual page is `docs/surfaces/notes.md`.
+
 ### Next after Brazil: `example-2019-sierra-leone-measles` (asked 2026-11-06)
 
 The practitioner, 2026-11-06: *"After Brazil I'd like you to take a look at a new example repo

@@ -91,11 +91,12 @@ const FORM_GLOSS:Record<string,string>={
   'précis':'one work’s argument condensed, keeping its order and emphasis',
   paraphrase:'a particular passage restated in your own words, about as long as the original',
   summary:'the main points drawn together, often from several works',
+  'not sure':'you looked and could not tell which form this is; a reviewer can help decide',
 };
 const formGloss=(which:string)=>which&&FORM_GLOSS[which]?`${which} — ${FORM_GLOSS[which]}.`
   :which?`${which} — a form this application does not name, kept as its author wrote it.`
-  :'How this note stands to the works it cites. '+KNOWN_NOTE_FORMS.map(f=>`${f[0]!.toUpperCase()+f.slice(1)}: ${FORM_GLOSS[f]}.`).join(' ')
-    +' Optional: unknown is kept until you choose.';
+  :'How this note stands to the works it cites. '+KNOWN_NOTE_FORMS.filter(f=>f!=='not sure').map(f=>`${f[0]!.toUpperCase()+f.slice(1)}: ${FORM_GLOSS[f]}.`).join(' ')
+    +' Optional: leave it unstated, or choose not sure if you cannot tell.';
 
 const bodyOf=(note:Note)=>note.kind==='quoted'?note.quote:note.text;
 const words=(text:string)=>text.split(/\s+/).filter(Boolean).length;
@@ -458,7 +459,7 @@ export function openNoteDialog(note:Note,context:NoteContext,esc:Escape){
     // THE FORM, on an authored note only: a quotation is verbatim by its kind, and the other two are this
     // application's wording. Read-only where it was set and the note cannot be edited here.
     +(choose?`<span class="field"><label>Form</label><select id="note-form">${options(
-        KNOWN_NOTE_FORMS.includes(form)||!form?KNOWN_NOTE_FORMS:[...KNOWN_NOTE_FORMS,form],form,'unknown')}</select></span>`
+        KNOWN_NOTE_FORMS.includes(form)||!form?KNOWN_NOTE_FORMS:[...KNOWN_NOTE_FORMS,form],form,'unstated')}</select></span>`
         +`<p id="note-form-gloss" class="gloss">${esc(formGloss(form))}`
         +(hasManual('surface:notes')?` <button class="chip" id="note-form-examples">Examples</button>`:'')+`</p>`
       :form?`<span class="field"><label>Form</label><span class="fixed">${esc(form)}</span></span>`

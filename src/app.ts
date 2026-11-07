@@ -3,6 +3,7 @@ import {recordRun,runsFor} from './widget-usage.js';
 import {buildOrder,revealedTypes,revealReason} from './reveal-playback.js';
 import {manualButton,openManual,hasManual} from './manual.js';
 ﻿import widgetRegistry from '../widgets/registry.json';
+import {setupLabEvaluation} from './lab-evaluation-ui.js';
 import {canvasN3} from './canvas-semantics.js';
 import appPackage from '../package.json';
 import {networkDownloadStatus} from './network-throttle.js';
@@ -8286,6 +8287,16 @@ document.addEventListener('drop',event=>{
   if(writeNotes(next))renderNotesView();
 });
 $('#help-button').onclick=()=>$('#help-dialog').showModal();$('#close-help').onclick=()=>$('#help-dialog').close();
+/** LAB EVALUATION (experiment 184): the screen being evaluated is the open tab, and the selected step's widget where
+ *  the Workflow tab is open, at the version this build carries. */
+setupLabEvaluation(()=>{
+  const tab=document.querySelector<HTMLElement>(`.tabs [data-view="${currentView}"]`);
+  const screen=(tab?.firstChild?.textContent||currentView).trim()+' tab';
+  const node=currentView==='workflow'&&selected?workflow.nodes.find(n=>n.id===selected):undefined;
+  const entry=node?(widgetRegistry as {widgets:{nodeType:string;currentVersion:string}[]}).widgets.find(w=>w.nodeType===node.type):undefined;
+  return {screen:node?`${screen} › ${node.params?.label||node.type}`:screen,
+    ...(entry?{widget:{type:entry.nodeType,version:entry.currentVersion}}:{})};
+});
 document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'&&!['INPUT','TEXTAREA','SELECT'].includes((e.target as Element).tagName)){e.preventDefault();$(e.shiftKey?'#redo-button':'#undo-button').click();}});
 const requestedExample=new URLSearchParams(location.search).get('example');
 if(requestedExample&&hasExampleTemplate(requestedExample)&&requestedExample!==exampleKey(workflow)){save();let openedSaved=false;try{const saved=JSON.parse(localStorage.getItem(WORKSPACES)||'{}')[requestedExample];openedSaved=!!saved;workflow=saved?validateWorkflow(saved):template(requestedExample);}catch{workflow=template(requestedExample);}

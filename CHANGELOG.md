@@ -3,6 +3,13 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.44.0 — 2026-11-07
+
+- **A lab evaluation form, against Nielsen's ten usability heuristics.** Switch on **Lab evaluation** in Help; an
+  **Evaluate** button then appears in the header and in the note dialog. Record what happens and what it costs under
+  each heuristic, and **Save to laptop** as Markdown to read and JSON to merge. Hidden unless switched on, so nobody
+  using Fieldwork for analysis meets it. Experiment 184.
+
 ## 0.43.0 — 2026-11-07
 
 - **A note answers two questions about its sources instead of naming one form: whose words, and whose argument.**

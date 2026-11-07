@@ -1093,3 +1093,16 @@ i.bar-zero{position:absolute;top:0;bottom:0;width:1px;background:var(--ink,#2b2b
 .run-spin{display:inline-block;animation:run-spin 1.2s linear infinite}
 @keyframes run-spin{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){.run-progress-spinner,.run-spin{animation:none}.run-progress-bar>div{transition:none}}
+
+/* Lab evaluation (experiment 184): hidden unless switched on in Help. */
+body:not(.lab-evaluation) .lab-only{display:none!important}
+#lab-evaluation-dialog{max-width:46rem;width:94vw}
+#lab-evaluation-dialog .lab-meta{display:flex;flex-wrap:wrap;gap:.6rem 1rem;align-items:end;margin:.4rem 0 .8rem}
+#lab-evaluation-dialog label{display:flex;flex-direction:column;gap:.15rem;font-size:.8rem}
+#lab-evaluation-dialog .lab-heuristic{border-top:1px solid var(--rule,#2a3a36);padding:.35rem 0}
+#lab-evaluation-dialog .lab-heuristic summary{cursor:pointer}
+#lab-evaluation-dialog .lab-finding{display:grid;grid-template-columns:1fr 1fr auto auto;gap:.4rem;align-items:end;margin:.3rem 0}
+#lab-evaluation-dialog textarea{width:100%}
+#lab-evaluation-dialog .lab-works{margin-top:.6rem}
+#lab-evaluation-dialog .lab-actions{display:flex;justify-content:space-between;align-items:center;margin-top:.6rem;gap:1rem}
+@media (max-width:640px){#lab-evaluation-dialog .lab-finding{grid-template-columns:1fr}}

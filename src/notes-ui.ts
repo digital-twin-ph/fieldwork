@@ -377,7 +377,7 @@ export function noteKey(note:Note):string{
 }
 
 const DIALOG=`<dialog id="note-dialog" aria-labelledby="note-dialog-title">
-<div class="dlg"><div class="dlg-head"><h3 id="note-dialog-title">Note</h3>
+<div class="dlg"><div class="dlg-head"><h3 id="note-dialog-title">Note</h3><button type="button" class="chip lab-only" id="note-evaluate">Evaluate</button>
 <div id="note-coords" class="coords"></div><p id="note-gloss" class="gloss"></p></div>
 <div class="dlg-body"><div id="note-body" class="readonly"></div>
 <div id="note-toolbar" class="note-toolbar" role="toolbar" aria-label="Formatting" hidden>

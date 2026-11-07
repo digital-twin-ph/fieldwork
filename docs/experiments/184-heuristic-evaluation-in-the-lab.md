@@ -17,6 +17,38 @@ which stays a [field question](../field-questions.md).
 
 **Searched `docs/` first** for *Nielsen* and *heuristic evaluation*: nothing prior.
 
+**The practitioner's overall sense, 2026-11-07, before either pass was merged:** *"My overall sense is FW suffers
+from AI documentation seeping into the UI reducing comprehensibility."* Recorded as said, as the lens this evaluation
+looks through first. It names H2 (the system's words, not the writer's) and H8 (explanation competing with the task).
+Instances in the captured screens: the Notes tab explaining which kinds of note come from where; the header subtitle
+"Developmental evaluation · … semantic representation"; the Inspector's "inspect the N3 facts, then run the readiness
+rule"; this project's own terms as labels (*machined*, *derived*, *authored*, *N3 & evidence*). The likely mechanism:
+text written to record a design decision is the same string that reaches the screen.
+
+**So each screen's visible text is also sorted** into **instruction** (what to do), **status** (what happened) and
+**design explanation** (why it was built this way). The third kind belongs in the manual or the experiment record.
+`validate-inspector-prose` already counts the Inspector's prose; extending that count, by kind, to every surface is
+how a cut would be seen to happen rather than claimed.
+
+**A second overall sense, the same day:** *"Also overall the buttons are hard to find and not keyed and placed
+consistently enough to establish a pattern."* H4 and H6: a control should look like what it is and sit where the last
+one like it sat. Instances in the screens: the button that opens a note drawn as a chip beside labels; a note's
+primary action at the foot of the dialog while a widget's sits in the Inspector's body. **So each screen's controls
+are also inventoried**: every button with its label, its style and where it sits, so an inconsistency is a row in a
+table rather than an impression.
+
+**A third, the same day:** *"The widget configuration dialog approach is not consistently applied some widgets have
+overly complicated inspector panels, with stale non working or unused elements."* H4, H8 and H5: one way to configure
+a widget, nothing on the panel that the task does not need, and nothing that looks like it works and does not. **So
+each widget's Inspector is also inventoried**: whether it configures through a dialog or in the panel, every control on
+the panel, and for each control whether changing it changes the step's settings or its result. A control that changes
+neither is stale, and is a row in the table rather than an impression.
+
+**And the evaluation is done inside Fieldwork.** The practitioner: *"Perhaps we can make a pop up form for this JK
+evaluation for test sections e.g. widgets so it is in the workflow and can be saved to laptop so it can be reviewed."*
+Decided the same day: shown only when lab evaluation is switched on, in Help; saved as Markdown to read and JSON to
+merge.
+
 ## The instrument
 
 **The heuristics**: Jakob Nielsen's ten usability heuristics, 1994, last reviewed 2024
@@ -68,6 +100,16 @@ helped build the dialog, so the ratings here are a starting order, not a measure
 
 Claude's pass is in [heuristic pass, Claude](../research/heuristic-pass-notes-dialog-claude-2026-11-07.md), written
 before any rating and not to be read before the practitioner's own pass.
+
+## The form, built (0.44.0)
+
+**Help → Lab evaluation** switches it on for this device; an **Evaluate** button then appears in the header and in
+the note dialog. The form names the screen (the open tab, and the selected step's widget and version where there is
+one) and the Fieldwork version, then lists H1–H10, each with one question, where a problem is added with *what
+happens*, *what it costs* and, for the first lens, whether the text at fault is instruction, status or design
+explanation. **Save to laptop** writes `fieldwork-evaluation-<screen>-<evaluator>-<time>.md` to read and `.json` to
+merge; a name is required first. What is typed is kept as a draft on that device until saved. It holds no severity:
+rating is a later step on the merged list, and merging two passes in the app is not built.
 
 ## The practitioner's pass
 

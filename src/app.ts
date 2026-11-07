@@ -5915,10 +5915,9 @@ $('#run-button').onclick=run;onRunDetail(detail=>{runProgress=detail;drawRunProg
 // arranged is theirs, and exploding a micro-workflow is the moment it stops being readable.
 $('#tidy-button').onclick=()=>{
   if(busy)return;
-  // Heights as drawn, in canvas units: the rendered box divided by the canvas zoom.
-  const zoom=Number(document.querySelector('.react-flow__viewport')?.getAttribute('style')?.match(/scale\(([\d.]+)\)/)?.[1])||1;
+  // Heights in canvas units: an element's own layout height, which the canvas zoom does not change.
   const heights=new Map(workflow.nodes.map(n=>[n.id,
-    (document.querySelector(`.react-flow__node[data-id="${CSS.escape(n.id)}"]`)?.getBoundingClientRect().height||0)/zoom] as const)
+    document.querySelector<HTMLElement>(`.react-flow__node[data-id="${CSS.escape(n.id)}"]`)?.offsetHeight||0] as const)
     .filter(([,h])=>h>0));
   if(alreadyTidy(workflow,heights)){toast('Already laid out in order.');return;}
   const moved=change(w=>{const at=tidyLayout(w,heights);for(const node of w.nodes){

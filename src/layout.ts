@@ -74,6 +74,8 @@ export const alreadyTidy=(workflow:Workflow,heights?:ReadonlyMap<string,number>)
   const positions=tidyLayout(workflow,heights);
   return workflow.nodes.every(node=>{
     const at=positions.get(node.id);
-    return !!at&&at.x===node.x&&at.y===node.y;
+    // WITHIN A FEW PIXELS: heights are measured on screen, and a browser re-measuring at another zoom can differ by one
+    // rounding step (WebKit, 2026-11-07). A canvas that close to its tidy layout is laid out.
+    return !!at&&at.x===node.x&&Math.abs(at.y-node.y)<=12;
   });
 };

@@ -9,7 +9,10 @@ shown in a local build is not a claim that it has been published.
   which says what each means, with an **Examples** button opening a new Notes page of the manual: a few examples of
   each, drawn from the works the Brazil notes cite and from Snow, what each form commits the writer to (how much of the
   source to have read, what to watch for), and what to do with a note that is none of the three. The form shows as a
-  label on the note. A note without one is kept, and a form outside the three is kept as written.
+  label on the note. The form is optional: it opens on unstated, and **not sure** says the writer looked and could not
+  tell. A form outside these is kept as written.
+- **Experiment 183** asks whether the forms help people write better, and closes on an evidence search about improving
+  academic writing.
 - **The manual has its first page for part of the application rather than a widget**: the Notes tab.
 - **The Brazil example's write-up carries what the mosquito meets.** Twelve notes on the Notes tab, seven of them
   citing thirteen open works, set the lag models' exposure — MODIS daytime land-surface temperature — against what

@@ -151,7 +151,9 @@ export const KNOWN_NOTE_FUNCTIONS=['context','rationale','source','method','veri
  *
  *  Free text, read as the function is: the three are offered first and anything else is kept as written. A note
  *  without one is not refused. */
-export const KNOWN_NOTE_FORMS=['précis','paraphrase','summary'];
+/*  `not sure` is the writer saying they looked and could not tell, which is a question for a reviewer rather than a
+ *  gap: the practitioner, 2026-11-07, *"Not sure is ok"*. Nothing chosen stays absent and reads as unstated. */
+export const KNOWN_NOTE_FORMS=['précis','paraphrase','summary','not sure'];
 
 export type NoteId=string;
 

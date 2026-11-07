@@ -212,8 +212,9 @@ test('adding a note says what précis, paraphrase and summary mean, and keeps th
   await page.locator(RESULTS).locator('[data-add-note]').first().click();
   await expect(page.locator('#note-dialog')).toBeVisible();
   // ALL THREE, described before one is chosen: the dialog is where a note citing literature is written.
-  // OPTIONAL, AND SAID SO: the form opens on unknown, which stores nothing.
-  await expect(page.locator('#note-form option:checked')).toHaveText('unknown');
+  // OPTIONAL, AND SAID SO: the form opens on unstated, which stores nothing; not sure is a choice of its own.
+  await expect(page.locator('#note-form option:checked')).toHaveText('unstated');
+  await expect(page.locator('#note-form option',{hasText:'not sure'})).toHaveCount(1);
   const gloss=page.locator('#note-form-gloss');
   for(const form of ['Précis','Paraphrase','Summary'])await expect(gloss).toContainText(form);
   // AND EXAMPLES OF EACH, a click away, in the Notes page of the manual.

@@ -50,10 +50,12 @@ Decisions taken with the design, each open to moving:
   note and an own-words note that relates to it, using the links notes already have. Each half is then checked on its
   own terms.
 
-**For now, the form is optional and defaults to unknown.** The practitioner, 2026-11-07: *"We can for now make the
-note type optional by adding unknown."* Built: the dialog's form list opens on **unknown**, which stores nothing, so
-no writer is made to pick a form to keep a note. Unknown is what the plain checks would flag on a note that cites
-works, and what measurement 1 below counts.
+**For now, the form is optional, and a writer can say they are not sure.** The practitioner, 2026-11-07: *"We can
+for now make the note type optional by adding unknown."* Asked which reads better, unstated or unknown: unstated is
+what the application knows when nothing was chosen, and is the word the function and the licence already use, while
+*not sure* fits a writer who looked and could not tell. The practitioner: *"Not sure is ok."* Built: the form opens on
+**unstated**, which stores nothing, and **not sure** is a choice of its own, stored, so a reviewer can see the
+question. Unstated on a note that cites works is what the plain checks would flag, and what measurement 1 below counts.
 
 ## Why it might help, and why it might not
 

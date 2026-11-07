@@ -134,5 +134,5 @@ test('an authored note keeps the form it stands to its works in, and a form outs
   ]);
   assert.deepEqual(notes.map(n=>n.form),['paraphrase','synthesis',undefined],
     'précis, paraphrase and summary are offered first; anything else is kept; blank is absent, not empty');
-  assert.deepEqual(KNOWN_NOTE_FORMS,['précis','paraphrase','summary']);
+  assert.deepEqual(KNOWN_NOTE_FORMS,['précis','paraphrase','summary','not sure']);
 });

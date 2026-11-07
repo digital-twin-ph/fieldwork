@@ -185,6 +185,9 @@ export function dataIssuesOf(value:unknown,nodeId:string):import('./authored-app
  *  rather than in whichever result tab happens to be open. */
 export interface WorkflowRun {alerts:RunAlert[]; evidence:NodeEvidence[]; provenanceN3:string; outputs:Output[]; trace:{nodeId:string; type:string; milliseconds:number}[]; receipts:Receipt[]; runId:string; engine:string; runAt:string;
   linkages?:Record<string,import('./deduplicate-points.js').DeduplicateResult>;
+  /** STEPS UNDER CONSTRUCTION THAT COULD NOT BE COMPUTED: leading to no output, so they did not stop the run, and named
+   *  here with why (experiment 182). */
+  unfinished?:{nodeId:string; message:string}[];
   /** What each relate step did, keyed by the node that did it. The second intermediate result the
    *  interface has to show, and for a sharper reason than the first: the rows a relate drops are
    *  absent from the table it hands on, so the outcome cannot be read off the data. */

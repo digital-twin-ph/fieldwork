@@ -122,6 +122,16 @@ The result keeps the shifted date and the matched period's start on every row, s
 date that falls inside two periods of the second table, such as two satellites' rows for one period, is refused
 by name: keep one row per period first. A date in no period is a row with no match, decided as any other.
 
+**A table can be related to itself, shifted.** Rainfall two weeks before each case week is the weekly table's own
+rainfall, 14 days earlier: choose the week's start as the date, the period's start and its end. The first table
+already has that column, so the matched week is written as `data_iniSE_matched` and the first table's own date is
+kept. A second shift on a table that already holds one is written as `data_iniSE_shifted_2`, beside the first.
+
+**A decision about unmatched rows is kept as a short digest** of the rows it was made about, so it lapses when they
+change. Sixteen years of weekly cases left 58,401 rows unmatched in one join; the decision used to be stored with all of
+them written out, and seven such joins filled the browser's storage. A decision saved that way before 0.41.0 still
+holds.
+
 ## Reading what you get
 
 The same table with one more column — and, on the step itself after a run, **what the join did**:

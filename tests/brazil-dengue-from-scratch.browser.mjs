@@ -17,7 +17,8 @@ const MANUAL=new URL('manual.json',REPO);
 const skip=existsSync(MANUAL)?false:'example-2024-brazil-dengue is not checked out beside this repository.';
 
 test('dengue in Rio de Janeiro state, 2024, built by following the manual',async({page})=>{test.skip(!!skip,skip);
-  test.setTimeout(process.env.BRAZIL_SATELLITE_LIVE?3600_000:600_000);
+  // Sixteen years in the fifth workflow (experiment 182): about 2,900 satellite files and seven models of 77,000 rows.
+  test.setTimeout(process.env.BRAZIL_SATELLITE_LIVE?7200_000:1800_000);
   await page.route(/raw\.githubusercontent\.com\/digital-twin-ph\/example-2024-brazil-dengue\//,route=>{
     const path=new URL(route.request().url()).pathname.split('/').slice(4).join('/');
     route.fulfill({status:200,body:readFileSync(new URL(path,REPO)),headers:{'access-control-allow-origin':'*','content-type':'text/plain'}});
@@ -33,24 +34,32 @@ test('dengue in Rio de Janeiro state, 2024, built by following the manual',async
       {width:W,height:H,BitsPerSample:[bits],SampleFormat:[1],SamplesPerPixel:[1],PhotometricInterpretation:1,
         ModelPixelScale:[1000,1000,0],ModelTiepoint:[0,0,0,X0,Y0,0],GTModelTypeGeoKey:1,GTRasterTypeGeoKey:1,ProjectedCSTypeGeoKey:32767}));
     const fixed={QC_Day:tif(0,8),Clear_sky_days:tif(255,8),QC_Night:tif(0,8),Clear_sky_nights:tif(255,8)};
-    const DAY=86400000,starts=Array.from({length:46},(_,i)=>new Date(Date.UTC(2024,0,1)+i*8*DAY).toISOString().slice(0,10));
+    // Every 8-day period MODIS makes, 2010 to 2025: it starts again on 1 January each year (experiment 182).
+    const DAY=86400000,starts=Array.from({length:16},(_,y)=>Array.from({length:46},(_,i)=>
+      new Date(Date.UTC(2010+y,0,1)+i*8*DAY).toISOString().slice(0,10))).flat();
     const lst=new Map();
     await page.route(/modiseuwest\.blob\.core\.windows\.net/,route=>{
       const url=route.request().url(),key=Object.keys({...fixed,LST_Day_1km:0,LST_Night_1km:0}).find(k=>url.includes(`_${k}.tif`));
       if(fixed[key])return serveRange(route,fixed[key]);
       const index=Number(/\.p(\d+)\./.exec(url)[1]);
-      if(!lst.has(index))lst.set(index,tif(14500+40*index,16));
+      // The temperature differs from period to period, and within a month, so the models have something to estimate.
+      if(!lst.has(index))lst.set(index,tif(14500+(index*37)%400,16));
       return serveRange(route,lst.get(index));});
     await page.route(/planetarycomputer\.microsoft\.com\/api\/sas\/v1\/token\/modiseuwest/,route=>route.fulfill({status:200,
       contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({token:'st=fixture&sig=none','msft:expiry':'2099-01-01T00:00:00Z'})}));
-    const item=(platform,index)=>{const start=starts[index],end=new Date(Date.parse(start)+7*DAY).toISOString().slice(0,10);
+    // A year's last period ends on 31 December, as MODIS's does, not seven days on (experiment 182).
+    const item=(platform,index)=>{const start=starts[index],seven=new Date(Date.parse(start)+7*DAY).toISOString().slice(0,10),
+      end=seven.slice(0,4)===start.slice(0,4)?seven:`${start.slice(0,4)}-12-31`;
       const id=`${platform==='terra'?'MOD':'MYD'}11A2.p${index}.fixture`;
       return {type:'Feature',id,bbox:[-45,-24,-40,-20],geometry:null,properties:{datetime:null,start_datetime:`${start}T00:00:00Z`,end_datetime:`${end}T23:59:59Z`,platform},
         assets:Object.fromEntries(['LST_Day_1km','QC_Day','Clear_sky_days','LST_Night_1km','QC_Night','Clear_sky_nights'].map(k=>[k,{href:`https://modiseuwest.blob.core.windows.net/modis-061-cogs/fixture/${id}_${k}.tif`,
           type:'image/tiff; application=geotiff; profile=cloud-optimized',roles:['data']}]))};};
-    await page.route(/planetarycomputer\.microsoft\.com\/api\/stac\/v1\/collections\/modis-11A2-061\/items/,route=>route.fulfill({status:200,
-      contentType:'application/geo+json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({type:'FeatureCollection',links:[],
-        features:starts.flatMap((_,i)=>[item('terra',i),item('aqua',i)])})}));
+    // The search's own dates decide which periods it is given, as the catalog's would.
+    await page.route(/planetarycomputer\.microsoft\.com\/api\/stac\/v1\/collections\/modis-11A2-061\/items/,route=>{
+      const [from,until]=(new URL(route.request().url()).searchParams.get('datetime')??'').split('/').map(x=>x.slice(0,10));
+      route.fulfill({status:200,contentType:'application/geo+json',headers:{'access-control-allow-origin':'*'},
+        body:JSON.stringify({type:'FeatureCollection',links:[],
+          features:starts.flatMap((start,i)=>start>=from&&start<=until?[item('terra',i),item('aqua',i)]:[])})});});
   }
   const manual=JSON.parse(readFileSync(MANUAL,'utf8'));
   await page.goto('/');await page.evaluate(()=>localStorage.clear());

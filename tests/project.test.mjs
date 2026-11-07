@@ -207,3 +207,17 @@ test('a study area\'s outline and history leave the saved workflow under areaRef
   assert.deepEqual(back.nodes[0].params.geometry,geometry);assert.deepEqual(back.nodes[0].params.revisions,revisions);
   assert.throws(()=>hydrateWorkflow(stored,{}),/Shared input data is missing for a/);
 });
+
+test('a catalog search\'s items leave the saved workflow under searchRef, and come back',async()=>{
+  // Sixteen years of MODIS over Rio de Janeiro is 2,891 items and 5.9 MB, more than localStorage holds (experiment 182).
+  const {searchPayloadKey,payloadsOf}=await import('../build/project.js');
+  const search={catalog:'https://pc',collection:'modis-11A2-061',items:[{id:'a',files:[]},{id:'b',files:[]}],returned:2};
+  const key=searchPayloadKey(search);
+  assert.match(key,/^search-2-[0-9a-f]{16}$/);
+  const workflow={nodes:[{id:'s',type:'search_satellite_catalog',params:{label:'Search',from:'2010-01-01',until:'2025-12-31',search,searchRef:key}}]};
+  assert.deepEqual(payloadsOf(workflow.nodes[0].params).map(([k])=>k),[key]);
+  const stored=dehydrateWorkflow(workflow,digest=>digest===key);
+  assert.equal(stored.nodes[0].params.search,undefined);assert.equal(stored.nodes[0].params.from,'2010-01-01');
+  assert.deepEqual(hydrateWorkflow(stored,{[key]:search}).nodes[0].params.search,search);
+  assert.throws(()=>hydrateWorkflow(stored,{}),/Shared input data is missing for s/);
+});

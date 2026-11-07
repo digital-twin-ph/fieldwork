@@ -21,8 +21,9 @@ export interface RegressionSpec {
   cases?:string[]; controls?:string[];
   exposure:Term;
   adjust?:Term[];
-  /** Poisson: fixed effects for this column's values, absorbed rather than added as columns. */
-  strata?:string;
+  /** Poisson: fixed effects for each combination of these columns' values, absorbed rather than added as columns.
+   *  One column, or several: municipality, year and month together compare weeks within each (experiment 182). */
+  strata?:string|string[];
   /** Poisson: a column holding the log of person-time or population. */
   offset?:string;
   /** Standard errors: from the model, scaled by the Pearson dispersion, or HAC (Newey-West) with this many lags. */
@@ -30,6 +31,9 @@ export interface RegressionSpec {
   level?:number;
 }
 export type Row=Record<string,string|number|null|undefined>;
+/** The strata columns as a list: none, one, or several, as saved. */
+export const strataOf=(strata:string|string[]|undefined):string[]=>
+  (Array.isArray(strata)?strata:strata?[strata]:[]).map(c=>c.trim()).filter(Boolean);
 
 export interface Estimate {term:string; column:string; level?:string; ratio:number; lower:number; upper:number;
   coefficient:number; se:number; p:number}
@@ -97,7 +101,11 @@ export function fitRegression(input:Row[],spec:RegressionSpec):RegressionResult{
   const seen=new Set<string>();
   for(const term of terms){if(seen.has(term.column))throw new Error(`"${term.column}" is in the model twice.`);seen.add(term.column);}
   if(seen.has(spec.outcome))throw new Error(`"${spec.outcome}" cannot be both the outcome and a variable.`);
-  if(spec.family==='logistic'&&(spec.strata||spec.offset))throw new Error('Strata and an offset are for Poisson models.');
+  const strataColumns=strataOf(spec.strata);
+  if(spec.family==='logistic'&&(strataColumns.length||spec.offset))throw new Error('Strata and an offset are for Poisson models.');
+  for(const c of strataColumns){if(seen.has(c))throw new Error(`"${c}" is both a variable and a strata column.`);
+    if(c===spec.outcome)throw new Error(`"${c}" cannot be both the outcome and a strata column.`);}
+  if(new Set(strataColumns).size!==strataColumns.length)throw new Error('A strata column is named twice.');
   if(spec.family==='logistic'&&!(spec.cases?.length&&spec.controls?.length))
     throw new Error('Say which outcome values are cases and which are controls.');
 
@@ -117,16 +125,17 @@ export function fitRegression(input:Row[],spec:RegressionSpec):RegressionResult{
     const missing=terms.find(term=>term.as==='categorical'?asText(row[term.column])===''||asText(row[term.column]).toUpperCase()==='NA'
       :!Number.isFinite(asNumber(row[term.column])));
     if(missing){leave(`${missing.column} missing`);continue;}
-    if(spec.strata&&asText(row[spec.strata])===''){leave(`${spec.strata} missing`);continue;}
+    const noStratum=strataColumns.find(c=>asText(row[c])==='');
+    if(noStratum){leave(`${noStratum} missing`);continue;}
     if(spec.offset&&!Number.isFinite(asNumber(row[spec.offset]))){leave(`${spec.offset} missing`);continue;}
     used.push(row);outcome.push(y);
   }
   if(!used.length)throw new Error('No row has every variable the model uses.');
 
   // COLUMNS, named as R names them.
-  const columns:string[]=spec.strata?[]:['(Intercept)'];
+  const columns:string[]=strataColumns.length?[]:['(Intercept)'];
   const makers:((row:Row)=>number[])[]=[];
-  const owner:{column:string;level?:string;report:boolean}[]=spec.strata?[]:[{column:'(Intercept)',report:false}];
+  const owner:{column:string;level?:string;report:boolean}[]=strataColumns.length?[]:[{column:'(Intercept)',report:false}];
   for(const [index,term] of terms.entries()){
     const report=index===0||term.as!=='spline';
     if(term.as==='numeric'){
@@ -150,9 +159,9 @@ export function fitRegression(input:Row[],spec:RegressionSpec):RegressionResult{
   if(columns.length>32)throw new Error(`The model has ${columns.length} columns; the kernel fits at most 32.`);
   // THE DESIGN, built once: a refit for a profile interval reloads it without one column.
   const strataIndex=new Map<string,number>();
-  const design=used.map(row=>[...(spec.strata?[]:[1]),...makers.flatMap(make=>make(row))]);
+  const design=used.map(row=>[...(strataColumns.length?[]:[1]),...makers.flatMap(make=>make(row))]);
   const offsets=used.map(row=>spec.offset?asNumber(row[spec.offset]):0);
-  const strata=used.map(row=>{if(!spec.strata)return 0xFFFFFFFF;const key=asText(row[spec.strata]);
+  const strata=used.map(row=>{if(!strataColumns.length)return 0xFFFFFFFF;const key=strataColumns.map(c=>asText(row[c])).join('\u001f');
     if(!strataIndex.has(key))strataIndex.set(key,strataIndex.size);return strataIndex.get(key)!;});
   /** Loads the design, optionally with column `held` removed and its coefficient fixed at `at`, and fits it. */
   const fit=(held?:number,at=0):number=>{
@@ -163,16 +172,16 @@ export function fitRegression(input:Row[],spec:RegressionSpec):RegressionResult{
       values.forEach((v,j)=>{if(j!==held)kernel.glm_set_x(i,c++,v);});
       kernel.glm_set_row(i,outcome[i]!,offsets[i]!+(held===undefined?0:at*values[held]!),strata[i]!);
     });
-    return kernel.glm_fit(spec.family==='logistic'?0:1,spec.strata?1:0,100,1e-10);
+    return kernel.glm_fit(spec.family==='logistic'?0:1,strataColumns.length?1:0,100,1e-10);
   };
   const status=fit();
   if(status!==0)throw new Error(KERNEL_ERRORS[status]??`The kernel refused the model (${status}).`);
 
-  const parameters=columns.length+(spec.strata?kernel.glm_used_strata():0);
+  const parameters=columns.length+(strataColumns.length?kernel.glm_used_strata():0);
   const residualDf=kernel.glm_used_rows()-parameters;
   const dispersion=residualDf>0?kernel.glm_pearson()/residualDf:NaN;
   const errors=spec.errors??{kind:'model'};
-  const variance=(j:number)=>errors.kind==='hac'?kernel.glm_hac_covariance(j,j,errors.lag,spec.strata?1:0)
+  const variance=(j:number)=>errors.kind==='hac'?kernel.glm_hac_covariance(j,j,errors.lag,strataColumns.length?1:0)
     :errors.kind==='overdispersed'?kernel.glm_covariance(j,j)*Math.max(1,dispersion):kernel.glm_covariance(j,j);
   const estimates:Estimate[]=[];
   owner.forEach((o,j)=>{
@@ -209,9 +218,9 @@ export function fitRegression(input:Row[],spec:RegressionSpec):RegressionResult{
     }
   }
   return {family:spec.family,measure:spec.family==='logistic'?'odds ratio':'rate ratio',estimates,
-    adjustedFor:(spec.adjust??[]).map(t=>t.column).concat(spec.strata?[`${spec.strata} (strata)`]:[]),
+    adjustedFor:(spec.adjust??[]).map(t=>t.column).concat(strataColumns.length?[`${strataColumns.join(' × ')} (strata)`]:[]),
     rows:{used:used.length,leftOut:input.length-used.length,reasons},
-    ...(spec.strata?{strata:{used:fitted.strataUsed,dropped:fitted.strataDropped}}:{}),
+    ...(strataColumns.length?{strata:{used:fitted.strataUsed,dropped:fitted.strataDropped}}:{}),
     iterations:fitted.iterations,loglik:fitted.loglik,dispersion,residualDf,
     errors:errors.kind==='hac'?`HAC (Newey-West, Bartlett, ${errors.lag} lags)`:errors.kind==='overdispersed'
       ?`model-based, scaled by the Pearson dispersion (${dispersion.toFixed(3)})`
@@ -233,12 +242,12 @@ function normalUpper(x:number):number{
 
 /** The widget's parameters as a fit specification. */
 export interface RegressionParams {family:Family;outcome:string;cases?:string[];controls?:string[];exposure:Term;adjust:Term[];
-  strata?:string;offset?:string;errors:'wald'|'profile'|'overdispersed'|'hac';hacLag?:number;order?:string;level?:number}
+  strata?:string|string[];offset?:string;errors:'wald'|'profile'|'overdispersed'|'hac';hacLag?:number;order?:string;level?:number}
 export function specFrom(params:RegressionParams):RegressionSpec{
   if(!params.outcome?.trim())throw new Error('Choose the outcome column.');
   if(!params.exposure?.column?.trim())throw new Error('Choose the exposure column.');
   return {family:params.family,outcome:params.outcome,...(params.cases?{cases:params.cases}:{}),...(params.controls?{controls:params.controls}:{}),
-    exposure:params.exposure,adjust:params.adjust??[],...(params.strata?{strata:params.strata}:{}),...(params.offset?{offset:params.offset}:{}),
+    exposure:params.exposure,adjust:params.adjust??[],...(strataOf(params.strata).length?{strata:strataOf(params.strata)}:{}),...(params.offset?{offset:params.offset}:{}),
     errors:params.errors==='hac'?{kind:'hac',lag:params.hacLag??0}:params.errors==='profile'?{kind:'profile'}
       :params.errors==='overdispersed'?{kind:'overdispersed'}:{kind:'model'},
     level:params.level??95};
@@ -303,7 +312,7 @@ export function regressionReceipt(node:{id:string},result:RegressionResult,param
     `fw:exposureAttribute ${quote(params.exposure.column)}`,
     `fw:exposureTerm ${term(params.exposure)}`,
     ...(params.adjust??[]).map(t=>`fw:adjustmentTerm ${term(t)}`),
-    ...(params.strata?.trim()?[`fw:stratumAttribute ${quote(params.strata.trim())}`]:[]),
+    ...strataOf(params.strata).map(c=>`fw:stratumAttribute ${quote(c)}`),
     ...(params.offset?.trim()?[`fw:offsetAttribute ${quote(params.offset.trim())}`]:[]),
     `fw:errorMethod ${quote(result.errors)}`,
     `fw:usedRecordCount ${int(result.rows.used)}`,

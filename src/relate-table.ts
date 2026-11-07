@@ -90,18 +90,28 @@ const dateText=(ms:number)=>new Date(ms).toISOString().slice(0,10);
  *  row under the right table's own column name. The relate then matches on the equal keys and that start as usual, so
  *  everything after it, the gap decision, the preview and the receipt, is unchanged; and the period's start, with
  *  the shifted date, stays on every row. A date inside two periods is refused by name: relating cannot choose. */
-export function alignToPeriods(left:DataTable,right:DataTable,request:RelateRequest):{left:DataTable;request:RelateRequest}{
+/** THE COLUMN THE MATCHED PERIOD'S START IS WRITTEN UNDER: the second table's own name, or, where the first table
+ *  already has a column of that name, that name with `_matched` (experiment 182). Relating a weekly table to itself,
+ *  shifted, matches its week start to its own week start; the first table's column is kept as it was. */
+export const shiftedName=(leftKeys:readonly string[],date:string):string=>{
+  let name=`${date}_shifted`,n=1;while(leftKeys.includes(name))name=`${date}_shifted_${++n}`;return name;};
+export const matchedStart=(leftKeys:readonly string[],within:{start:string}):string=>
+  leftKeys.includes(within.start)?`${within.start}_matched`:within.start;
+
+export function alignToPeriods(left:DataTable,right:DataTable,request:RelateRequest):{left:DataTable;right:DataTable;request:RelateRequest}{
   const within=request.within;
-  if(!within)return {left,request};
-  const {date,start,end}=within,shift=request.shiftDays??0;
+  if(!within)return {left,right,request};
+  const {date,end}=within,shift=request.shiftDays??0;
+  const start=within.start,as=matchedStart(left.keys,within);
   if(!Number.isInteger(shift)||Math.abs(shift)>3660)throw new Error('Shift the date by a whole number of days, at most ten years either way.');
   if(!left.keys.includes(date))throw new Error(`The first table has no "${date}" column. Its columns are ${left.keys.join(', ')}.`);
   for(const c of [start,end])if(!right.keys.includes(c))
     throw new Error(`The second table has no "${c}" column. Its columns are ${right.keys.join(', ')}.`);
-  if(left.keys.includes(start))throw new Error(`The first table already has a "${start}" column, which the matched period's start would take.`);
+  if(as!==start&&left.keys.includes(as))throw new Error(`The first table already has a "${as}" column, which the matched period's start would take.`);
   const equal=[request.on.trim(),...(request.alsoOn??[]).map(k=>k.trim())].filter(k=>k&&k!==start);
-  const shifted=shift?`${date}_shifted`:null;
-  if(shifted&&left.keys.includes(shifted))throw new Error(`The first table already has a "${shifted}" column.`);
+  // A SECOND SHIFT ON ONE TABLE is named apart from the first, so a rainfall join after a temperature join keeps both
+  // shifted dates (experiment 182): data_iniSE_shifted, then data_iniSE_shifted_2.
+  const shifted=shift?shiftedName(left.keys,date):null;
   const group=(row:{key:Record<string,string>})=>equal.map(k=>normaliseName(row.key[k]??'',request.normalisation??DEFAULT_NORMALISATION)).join('\u001f');
   const periods=new Map<string,{from:number;to:number;start:string}[]>();
   for(const row of right.rows){
@@ -118,10 +128,13 @@ export function alignToPeriods(left:DataTable,right:DataTable,request:RelateRequ
     if(hits.length>1)throw new Error(`${dateText(when)} falls inside ${hits.length} periods of the second table for `
       +`${equal.map(k=>row.key[k]).join(' · ')||'the same keys'}: ${hits.map(h=>h.start).join(' and ')}. Relating cannot `
       +'choose between them. Keep one row per period first, for example one satellite.');
-    return {...row,key:{...row.key,...(shifted?{[shifted]:Number.isFinite(when)?dateText(when):''}:{}),[start]:hits[0]?.start??''}};
+    return {...row,key:{...row.key,...(shifted?{[shifted]:Number.isFinite(when)?dateText(when):''}:{}),[as]:hits[0]?.start??''}};
   });
-  const keys=[...left.keys,...(shifted?[shifted]:[]),start];
-  return {left:{...left,keys,rows},request:{...request,alsoOn:[...(request.alsoOn??[]).filter(k=>k!==start),start]}};
+  const keys=[...left.keys,...(shifted?[shifted]:[]),as];
+  // The second table's start column takes the same name, so the relate below matches on it.
+  const renamed=as===start?right:{...right,keys:[...right.keys,as],
+    rows:right.rows.map(row=>({...row,key:{...row.key,[as]:row.key[start]??''}}))};
+  return {left:{...left,keys,rows},right:renamed,request:{...request,alsoOn:[...(request.alsoOn??[]).filter(k=>k!==as),as]}};
 }
 /** A left key the right table had no row for. Reported, never defaulted. */
 export interface RelateGap {key:string; rows:number}
@@ -203,8 +216,24 @@ const DEFAULT_NORMALISATION='fuzzy' as const;
  *  changing it changes which rows are in the gap, and a decision made about nine missing keys is
  *  not a decision about none. The device `deduplicate_points` uses, for the same reason. */
 export function gapSignature(gaps:RelateGap[],normalisation:'exact'|'fuzzy'):string{
+  return signatureDigest(legacyGapSignature(gaps,normalisation));
+}
+/** THE GAP AS IT WAS SIGNED BEFORE 0.41.0: every unmatched key written out. Sixteen years of weekly cases left 58,401
+ *  keys unmatched, a 1.75 MB signature per join, and seven joins overflowed the workflow's storage, so the decisions
+ *  were lost on save (experiment 182). Kept only so a decision saved in that form still holds. */
+export function legacyGapSignature(gaps:RelateGap[],normalisation:'exact'|'fuzzy'):string{
   return [normalisation,...gaps.map(g=>`${g.key}\u0000${g.rows}`).sort()].join('\u001f');
 }
+/** A short digest of the written-out gap: two 32-bit FNV-1a hashes with different seeds, and the length. It lapses
+ *  whenever the gap changes, which is all a signature is for; it proves nothing about anyone's intent. */
+export function signatureDigest(text:string):string{
+  let a=0x811c9dc5,b=0x01000193^0x5bd1e995;
+  for(let i=0;i<text.length;i++){const c=text.charCodeAt(i);a=Math.imul(a^c,0x01000193)>>>0;b=Math.imul(b^c,0x5bd1e995)>>>0;b=(b^(b>>>15))>>>0;}
+  return `gap:${text.length}:${a.toString(16).padStart(8,'0')}${b.toString(16).padStart(8,'0')}`;
+}
+/** Whether a saved decision was made about this gap, in either form. */
+export const decisionMatches=(saved:string|undefined,plan:{signature:string;legacySignature?:()=>string}):boolean=>
+  !!saved&&(saved===plan.signature||(!saved.startsWith('gap:')&&!!plan.legacySignature&&saved===plan.legacySignature()));
 
 /** THE SHAPE OF A JOIN, WITHOUT COMMITTING TO ONE.
  *
@@ -223,6 +252,8 @@ export interface RelateShape {
   normalisation:'exact'|'fuzzy';
   /** What a declaration about this gap must carry to still be about it. */
   signature:string;
+  /** The same gap signed as before 0.41.0, computed only when a saved decision is in that form. */
+  legacySignature?:()=>string;
   /** Distinct values of the brought column that landed, in first-seen order. */
   values:string[];
   /** The table each decision would produce. `keep` is null until the practitioner has named the
@@ -416,19 +447,19 @@ function labelRefusalFor(plan:RelatePlan,label:string|undefined):string|null {
 }
 
 export function relateShape(left:DataTable,right:DataTable,request:RelateRequest):RelateShape {
-  ({left,request}=alignToPeriods(left,right,request));
+  ({left,right,request}=alignToPeriods(left,right,request));
   const plan=planRelate(left,right,request);
   const label=request.unmatched?.decision==='keep'?request.unmatched.label:undefined;
   const refusal=labelRefusalFor(plan,label);
   return {overlap:plan.overlap,shares:plan.shares,normalisation:plan.normalisation,
-    signature:plan.signature,values:plan.values,
+    signature:plan.signature,legacySignature:()=>legacyGapSignature(plan.gaps,plan.normalisation),values:plan.values,
     previews:{drop:buildRows(plan,undefined),
       keep:label!==undefined&&!refusal?buildRows(plan,label.trim()):null},
     labelRefusal:refusal};
 }
 
 export function relateTable(left:DataTable,right:DataTable,request:RelateRequest):RelateResult {
-  ({left,request}=alignToPeriods(left,right,request));
+  ({left,right,request}=alignToPeriods(left,right,request));
   const plan=planRelate(left,right,request);
   const {gaps,signature,bring,normalisation}=plan;
 
@@ -443,7 +474,7 @@ export function relateTable(left:DataTable,right:DataTable,request:RelateRequest
       +(gaps.length>4?`, and ${gaps.length-4} more`:'')
       +`. Open the join and say whether to drop those rows or keep them under a category you name, `
       +`because the two give different totals and the result cannot be read for which you got.`);
-  if(declared&&declared.signature!==signature)
+  if(declared&&!decisionMatches(declared.signature,{signature,legacySignature:()=>legacyGapSignature(gaps,normalisation)}))
     throw new Error('The data or the key comparison changed since you decided what to do with the '
       +'unmatched rows, so that decision no longer describes this gap. Open the join and look at '
       +'it again.');
@@ -522,9 +553,9 @@ export function rateMultiplier(shares:MeasureShare[],numerator:string,denominato
 /** The outcome of a relate, as the run records it. Separate from `relateTable` so the computation
  *  returns the table it computed and nothing about how it will be displayed. */
 export function relateOutcome(left:DataTable,request:RelateRequest,result:RelateResult):RelateOutcome{
-  const keys=[request.on.trim(),...(request.alsoOn??[]).map(k=>k.trim()).filter(Boolean),...(request.within?[request.within.start]:[])]
+  const keys=[request.on.trim(),...(request.alsoOn??[]).map(k=>k.trim()).filter(Boolean),...(request.within?[matchedStart(left.keys,request.within)]:[])]
     .filter((k,i,all)=>all.indexOf(k)===i);
-  const shifted=request.within&&request.shiftDays?[`${request.within.date}_shifted`]:[];
+  const shifted=request.within&&request.shiftDays?[shiftedName(left.keys,request.within.date)]:[];
   return {on:keys.join(' and '),keys,bring:request.bring.trim(),
     offered:left.rows.length,related:result.related,dropped:result.dropped,kept:result.kept,
     gaps:result.gaps,values:result.values,carried:[...left.keys,...shifted],

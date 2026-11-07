@@ -35,7 +35,7 @@ import {hagellochExample} from './hagelloch-example.js';
 import {openRuleEditor} from './rule-editor.js';
 import {openStepViewer,openTableViewer,shapeChange,stepLabels,tableViewOf,type TableView} from './table-viewer.js';
 import {keyNoun,openRelateJoin} from './relate-ui.js';
-import {relateShape} from './relate-table.js';
+import {relateShape,decisionMatches} from './relate-table.js';
 import {findingsSummary,wideDataTable} from './data-table.js';
 import {openSatelliteCatalogDialog} from './satellite-catalog-ui.js';
 import {bboxOf,defaultKept} from './satellite-catalog.js';
@@ -43,6 +43,8 @@ import {SAMPLE_KEYS,days as sampleDays} from './satellite-sample.js';
 import {productFor} from './satellite-products.js';
 import {onRunDetail} from './run-progress.js';
 import {appendLabel,appendPort,appendTableCount} from './append-rows.js';
+/** Regression's strata as a list, as `strataOf` in regression.ts reads them; kept here so the Inspector does not load the model's kernel. */
+const strataOf=(strata:string|string[]|undefined):string[]=>(Array.isArray(strata)?strata:strata?[strata]:[]).map(c=>c.trim()).filter(Boolean);
 import {GRID_KEYS,gridReaderFor} from './satellite-grid-sample.js';
 import {MODIS_RULES,type ModisQualityRule} from './satellite-areas.js';
 import {openProductsDialog,productCard} from './satellite-products-ui.js';
@@ -142,7 +144,7 @@ import {projectDocument,readProjectDocument,unbundledReferences,PROJECT_DOCUMENT
 import {rasterExample} from './raster-example.js';
 import {openPackageDialog} from './package-ui.js';
 import {syncProjectManifest} from './project-manifest.js';
-import {BUILT_IN_PROJECTS,WORKFLOW_LABELS,projectOfWorkflow,projectById,siblingAreas,newProject,validateProject,siblingInputs,payloadDigest,tableDataKey,areaPayloadKey,payloadsOf,heldPayloadsOf,reconcilePayloadRefs,dehydrateWorkflow,hydrateWorkflow,projectSafety,unexportedWork,exportPredatesWork,type Project,type ProjectWork} from './project.js';
+import {BUILT_IN_PROJECTS,WORKFLOW_LABELS,projectOfWorkflow,projectById,siblingAreas,newProject,validateProject,siblingInputs,payloadDigest,tableDataKey,areaPayloadKey,searchPayloadKey,payloadsOf,heldPayloadsOf,reconcilePayloadRefs,dehydrateWorkflow,hydrateWorkflow,projectSafety,unexportedWork,exportPredatesWork,type Project,type ProjectWork} from './project.js';
 import {mountPanelLayout} from './panel-layout.js';
 import {newMapOutput,mapEvidence} from './map-output.js';
 import {newTableOutput,pointTableMarkup,pointTableEvidence} from './table-output.js';
@@ -612,6 +614,14 @@ function save(){
     if(params.source==='drawn'&&params.geometry&&params.boundary){const key=areaPayloadKey(params as {geometry:unknown});if(params.areaRef!==key)params.areaRef=key;}
     else delete params.areaRef;
   }
+  // A CATALOG SEARCH'S ITEMS go the same way (experiment 182): sixteen years of MODIS is 5.9 MB, more than local
+  // storage holds, and a node that could not be saved was added on screen and lost.
+  for(const node of workflow.nodes){
+    if(node.type!=='search_satellite_catalog')continue;
+    const params=node.params as {search?:{items?:unknown[]};searchRef?:string};
+    if(params.search){const key=searchPayloadKey(params.search);if(params.searchRef!==key)params.searchRef=key;}
+    else delete params.searchRef;
+  }
   syncProjectManifest(workflow);
   const previous=new Map<string,string|null>();
   try{for(const key of [KEY,WORKSPACES])previous.set(key,localStorage.getItem(key));const workspaces=JSON.parse(previous.get(WORKSPACES)||'{}');// A payload that arrived with an imported workflow is written to the store on the way past, so
@@ -965,6 +975,8 @@ function upstreamKeyValues(node:WorkflowNode,seen=new Set<string>(),
       return order?{...below,[up.params.keyColumn]:held.filter(value=>inRange(value,order,range.from.trim(),range.to.trim()))}:below;
     }
     const kept=up.params.values.filter(value=>value.trim());
+    if(up.params.leaveOut){const out=new Set(kept),held=below[up.params.keyColumn];
+      return held?{...below,[up.params.keyColumn]:held.filter(value=>!out.has(value))}:below;}
     return kept.length?{...below,[up.params.keyColumn]:kept}:below;
   }
   if(up.type==='derive_value'){
@@ -999,7 +1011,9 @@ function upstreamKeyValues(node:WorkflowNode,seen=new Set<string>(),
     const brought=up.params.bring.trim();
     const other=upstreamKeyValues(up,new Set(seen),'related');
     // A DATE MATCHED WITHIN A PERIOD adds the shifted date and the period's start to every row (experiment 180).
-    const w=up.params.within,period=w?{...(up.params.shiftDays?{[`${w.date}_shifted`]:[]}:{}),[w.start]:other?.[w.start]??[]}:{};
+    const w=up.params.within;
+    const shiftedAs=(()=>{if(!w)return '';let name=`${w.date}_shifted`,k=1;while(name in below)name=`${w.date}_shifted_${++k}`;return name;})();
+    const period=w?{...(up.params.shiftDays?{[shiftedAs]:[]}:{}),[w.start in below?`${w.start}_matched`:w.start]:other?.[w.start]??[]}:{};
     if(!brought)return {...below,...period};
     return {...below,...period,[brought]:other?.[brought]??[]};
   }
@@ -2352,7 +2366,13 @@ function renderInspector(){
       +`<div class="field"><label class="field-label" for="reg-adjust-add">Add a variable</label><select id="reg-adjust-add">${option('','Choose a column…',true)}`
         +columns.filter(c=>c!==p.outcome&&c!==p.exposure.column&&!p.adjust.some(t=>t.column===c)).map(c=>option(c,c,false)).join('')+`</select></div>`
       +(p.family==='poisson'
-        ?columnSelect('reg-strata','Strata, as fixed effects',p.strata,'None')+columnSelect('reg-offset','Offset (log of person-time or population)',p.offset,'None'):'')
+        // SEVERAL STRATA COLUMNS TOGETHER (experiment 182): each chosen column gets its own select, and one more is
+        // offered empty, so municipality, year and month are three choices in a row. The first keeps its saved id.
+        ?(()=>{const chosen=strataOf(p.strata);
+          return [...chosen,''].map((c,i)=>columnSelect(i===0?'reg-strata':`reg-strata-${i+1}`,
+            i===0?'Strata, as fixed effects':'Together with',c||undefined,i===0?'None':'Nothing more')).join('')
+            +(chosen.length>1?`<p class="description">One stratum for each combination of ${chosen.map(esc).join(', ')}: rows are compared only within it.</p>`:'');})()
+          +columnSelect('reg-offset','Offset (log of person-time or population)',p.offset,'None'):'')
       +`<div class="field"><label class="field-label" for="reg-errors">Intervals</label><select id="reg-errors">`
         +option('profile','Likelihood-ratio (profile)',p.errors==='profile')+option('wald','Wald, from the model',p.errors==='wald')
         +(p.family==='poisson'?option('overdispersed','Wald, scaled for overdispersion',p.errors==='overdispersed')+option('hac','Wald, HAC (Newey-West) for serial correlation',p.errors==='hac'):'')
@@ -2383,11 +2403,12 @@ function renderInspector(){
       // VALUES NOT ON THIS DEVICE YET -- a fetched table opened from a catalogue keeps no rows until Fetch the table --
       // are not a reason to hide the range. Found 2026-11-04 by the practitioner following NYC's manual on the published
       // site: the saved 1 to 14 June showed as an empty text box. The range is offered, and checked when the run reads it.
-      +(order||unseen
-        ?`<div class="field"><label class="field-label" for="select-mode">Keep</label>`
-          +`<select id="select-mode"><option value="values" ${p.range?'':'selected'}>The values I tick</option>`
-          +`<option value="range" ${p.range?'selected':''}>A range of ${order==='date'?'dates':order==='number'?'numbers':'dates or numbers'}</option></select></div>`
-        :'')
+      // EVERY VALUE BUT THESE, offered for any column (experiment 182): leaving out twelve weeks of 833 is twelve ticks.
+      +`<div class="field"><label class="field-label" for="select-mode">Keep</label>`
+        +`<select id="select-mode"><option value="values" ${p.range||p.leaveOut?'':'selected'}>The values I tick</option>`
+        +`<option value="leave-out" ${p.leaveOut&&!p.range?'selected':''}>Every value except those I tick</option>`
+        +(order||unseen?`<option value="range" ${p.range?'selected':''}>A range of ${order==='date'?'dates':order==='number'?'numbers':'dates or numbers'}</option>`:'')
+        +`</select></div>`
       +(unseen&&p.range
         ?`<div class="field"><label class="field-label" for="select-from">From</label>`
           +`<input id="select-from" data-select-range="from" value="${esc(p.range.from)}" placeholder="for example 2023-06-01">`
@@ -2405,7 +2426,7 @@ function renderInspector(){
             +`<p class="description">Both ends are kept. Leave one empty to run from the start or to the end. `
             +`${esc(p.keyColumn)} runs from ${esc(sorted[0]??'')} to ${esc(sorted.at(-1)??'')}; rows keep the table's order.</p></div>`;})()
         :held.length
-        ?`<span class="inspector-section">Values to keep</span>`
+        ?`<span class="inspector-section">${p.leaveOut?'Values to leave out':'Values to keep'}</span>`
           // A LONG LIST IS SEARCHED, not scrolled. The filter only hides boxes, so nothing is
           // unticked by narrowing the list, and Ticked only shows what is already kept.
           +(held.length>12
@@ -2421,7 +2442,7 @@ function renderInspector(){
               +`checked> ${esc(value)} <span class="absent-note">not in this table</span></label>`).join('')
           +`</div>`
         :unseen&&p.range?''
-        :`<div class="field"><label class="field-label" for="select-values">Values to keep, one per line</label>`
+        :`<div class="field"><label class="field-label" for="select-values">${p.leaveOut?'Values to leave out':'Values to keep'}, one per line</label>`
           +`<textarea id="select-values" data-select-text rows="3">${esc(p.values.join('\n'))}</textarea></div>`)
       +'<div class="notice">A value this table does not hold is reported rather than ignored, because asking for a row that is not there is usually a typo or a changed table upstream. Keeping nothing the table holds is refused instead of returning an empty table.</div>';
   }else if(n.type==='relate_table'){
@@ -2429,7 +2450,11 @@ function renderInspector(){
     const shared=Object.keys(here).filter(column=>column in there);
     const keysOn=[p.on,...(p.alsoOn??[])];
     // THE VALUE COLUMN CAN BE BROUGHT too: a ground reading is a table's value (2026-11-05, experiment 179).
-    const relatedValue=tableOnPort(workflow,n.id,'related')?.valueField;
+    // Known before a run as well, from the table's own declaration: a run makes only the tables an output needs, so a
+    // table read only by this step has no run output until this step exists (experiment 182, the rainfall table).
+    const relatedValue=tableOnPort(workflow,n.id,'related')?.valueField
+      ??(()=>{const e=workflow.edges.find(x=>x.to===n.id&&x.port==='related');const up=e&&workflow.nodes.find(m=>m.id===e.from);
+        return up?.type==='table_input'?(up.params.data.valueField||up.params.valueField||undefined):up?upstreamValueField(up):undefined;})();
     const bringable=[...Object.keys(there),...(relatedValue&&!(relatedValue in there)?[relatedValue]:[])]
       .filter(column=>!keysOn.includes(column)&&!(column in here));
     const picker=(id:string,key:'on'|'bring',label:string,options:string[],empty:string)=>
@@ -2498,7 +2523,7 @@ function renderInspector(){
         const seg=(count:number,kind:string)=>count
           ?`<div class="overlap-seg overlap-${kind}" style="flex:0 0 ${Math.max(count/total*100,7)}%">`
             +`<strong>${count.toLocaleString()}</strong></div>`:'';
-        const decided=p.unmatched&&p.unmatched.signature===planned.signature?p.unmatched:undefined;
+        const decided=p.unmatched&&decisionMatches(p.unmatched.signature,planned)?p.unmatched:undefined;
         content+=`<div class="overlap-bar">${seg(leftOnly,'left')}${seg(matched,'both')}`
           +`${seg(rightOnly,'right')}</div>`
           +`<p class="muted">${matched.toLocaleString()} ${esc(keyNoun([p.on,...(p.alsoOn??[])].join(' and '),matched))} in both`
@@ -2522,9 +2547,16 @@ function renderInspector(){
           +'\u2922 Open the join</button></div>';
       }
     }else if(p.on&&p.bring){
+      // WHICH TABLE IS MISSING, named: the first, the second or both (experiment 182). A step under construction above
+      // this one that the last run could not compute says so here too.
+      const missing=[...(joinLeft?[]:['records' as const]),...(joinRight?[]:['related' as const])];
+      const said=missing.map(port=>{const e=workflow.edges.find(x=>x.to===n.id&&x.port===port);
+        const why=e&&result?.unfinished?.find(u=>u.nodeId===e.from)?.message;
+        return `${esc(portSourceName(workflow,n.id,port,port==='records'?'the first table':'the second table'))}`
+          +(why?` (the last run could not compute it: ${esc(why)})`:'');});
       content+='<div class="inspector-divider"></div><span class="inspector-section">The join</span>'
-        +'<p class="description">Run the workflow to look at the shape of this join. The tables '
-        +'above this step are computed by a run, so there is nothing to measure yet.</p>';
+        +`<p class="description">Run the workflow to look at the shape of this join: ${said.join(' and ')} `
+        +`${missing.length===1?'has':'have'} not been computed yet, so there is nothing to measure.</p>`;
     }
     // WHAT THE JOIN DID, before the table it produced.
     //
@@ -3619,9 +3651,12 @@ function renderInspector(){
         // A BUTTON, NOT A SENTENCE: after a reload the earlier run's tables are gone, and the grey line that stood here
         // read as "this widget has no table view". The practitioner, 2026-11-06, of Select rows by value and Total
         // within groups: *"does not have a before and after table view in the inspector"*. It runs, then opens it.
+        // A STEP UNDER CONSTRUCTION the last run tried and could not compute says why (experiment 182).
+        const why=result?.unfinished?.find(u=>u.nodeId===n.id)?.message;
         block.innerHTML='<div class="inspector-actions">'
           +'<button id="output-run-look" class="button">\u2922 Run and view this table</button></div>'
-          +'<p class="description">This step emits a table, made when the workflow runs.</p>';
+          +(why?`<p class="notice notice-warning">The last run could not compute this step: ${esc(why)} It leads to no output yet, so the run went on without it.</p>`
+            :'<p class="description">This step emits a table, made when the workflow runs.</p>');
       }
       // AT THE TOP, under what the widget does. Appended, it sat below "Remove node", 1,500 pixels
       // down a long panel, and a practitioner reported on 2026-11-01 that these widgets had no way
@@ -3824,7 +3859,7 @@ function renderInspector(){
         const text=(v:unknown)=>v==null?'':String(v);
         const numeric=p.range&&[p.range.from,p.range.to].every(x=>x===''||Number.isFinite(Number(x)));
         const kept=(v:unknown)=>{
-          if(!p.range)return p.values.includes(text(v));
+          if(!p.range)return p.leaveOut?!p.values.includes(text(v)):p.values.includes(text(v));
           const x=text(v),{from,to}=p.range;
           if(numeric){const n=Number(x);return Number.isFinite(n)&&(from===''||n>=Number(from))&&(to===''||n<=Number(to));}
           return (from===''||x>=from)&&(to===''||x<=to);
@@ -3832,7 +3867,7 @@ function renderInspector(){
         const dropped=new Set(before.rows.filter(row=>!kept(row[column])));
         before.excluded={rows:dropped,why:p.range
           ?`${column} outside ${p.range.from||'the start'} to ${p.range.to||'the end'}`
-          :`${column} not one of the values ticked`};
+          :p.leaveOut?`${column} one of the values left out`:`${column} not one of the values ticked`};
       }
     }
     if(n.type==='relate_table'){
@@ -4389,14 +4424,20 @@ function renderInspector(){
     p.adjust=p.adjust.map(t=>t.column===el.dataset.regAdjustKind?{column:t.column,as:el.value as 'numeric'}:t);})));
   document.querySelectorAll<HTMLButtonElement>('[data-reg-adjust-remove]').forEach(el=>el.addEventListener('click',()=>reg(p=>{
     p.adjust=p.adjust.filter(t=>t.column!==el.dataset.regAdjustRemove);})));
-  for(const [id,key] of [['#reg-strata','strata'],['#reg-offset','offset'],['#reg-order','order']] as const)
+  document.querySelectorAll<HTMLSelectElement>('[id^="reg-strata"]').forEach(el=>el.addEventListener('change',()=>reg(p=>{
+    const at=el.id==='reg-strata'?0:Number(el.id.slice('reg-strata-'.length))-1,list=strataOf(p.strata);
+    if(el.value)list[at]=el.value;else list.splice(at);
+    const clean=list.filter((c,i)=>c&&list.indexOf(c)===i);
+    if(!clean.length)delete p.strata;else p.strata=clean.length===1?clean[0]!:clean;})));
+  for(const [id,key] of [['#reg-offset','offset'],['#reg-order','order']] as const)
     optionalElement(id)?.addEventListener('change',e=>reg(p=>{const v=control(e).value;if(v)p[key]=v;else delete p[key];}));
   optionalElement('#reg-errors')?.addEventListener('change',e=>reg(p=>{p.errors=control(e).value as 'profile';}));
   optionalElement('#reg-hac-lag')?.addEventListener('change',e=>reg(p=>{p.hacLag=Math.max(0,Math.round(Number(control(e).value)||0));}));
   document.querySelector<HTMLSelectElement>('#select-mode')?.addEventListener('change',e=>change(w=>{
     const node=getNode(w,n.id,'select_rows');
-    if(control(e).value==='range')node.params.range=node.params.range??{from:'',to:''};
-    else delete node.params.range;}));
+    const mode=control(e).value;
+    if(mode==='range'){node.params.range=node.params.range??{from:'',to:''};delete node.params.leaveOut;}
+    else{delete node.params.range;if(mode==='leave-out')node.params.leaveOut=true;else delete node.params.leaveOut;}}));
   document.querySelectorAll<HTMLInputElement>('[data-select-range]').forEach(el=>
     el.addEventListener('change',()=>change(w=>{
       const node=getNode(w,n.id,'select_rows'),range=node.params.range??{from:'',to:''};

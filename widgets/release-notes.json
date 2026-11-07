@@ -712,12 +712,12 @@
    "migrationFrom": []
   },
   "relate_table": {
-   "version": "0.5.0",
+   "version": "0.6.0",
    "released": "2026-11-06",
    "changes": [
     {
      "kind": "minor",
-     "description": "Matches a date to the period that contains it, alongside equal keys, and can shift the date first by a stated number of days: a week to a satellite's 8-day period, and a lag of k weeks as a shift of 7k days fewer. The shifted date and the matched period's start stay on every row; a date inside two periods is refused by name; the receipt states the match and the shift (fw:matchedWithinPeriod, fw:dateShiftDays). Experiment 180."
+     "description": "Relates a table to itself shifted, writing the matched start as <column>_matched; a second shift is <date>_shifted_2; a join decision is signed with a short digest, and one saved in the old written-out form still holds; the second table's value can be chosen before a run."
     }
    ],
    "breaking": false,
@@ -766,12 +766,12 @@
    "migrationFrom": []
   },
   "select_rows": {
-   "version": "0.2.1",
+   "version": "0.3.0",
    "released": "2026-11-06",
    "changes": [
     {
-     "kind": "patch",
-     "description": "Its Before view greys the rows it did not keep, with a line saying how many and by what rule, so what a selection removed is read beside what it kept."
+     "kind": "minor",
+     "description": "Keeps every value except those ticked, as well as the values ticked or a range; rows keep the table's order."
     }
    ],
    "breaking": false,
@@ -1017,12 +1017,12 @@
    "replacementCandidate": "urn:fieldwork:widget:apply_ruleset"
   },
   "regression": {
-   "version": "0.2.1",
+   "version": "0.3.0",
    "released": "2026-11-06",
    "changes": [
     {
-     "kind": "patch",
-     "description": "Its table declares which statistic is the estimate and which are the interval's limits, so a chart reads the interval without guessing from names."
+     "kind": "minor",
+     "description": "Strata over several columns together, one stratum per combination, absorbed; checked against statsmodels in Validation Lab check 37."
     }
    ],
    "breaking": false,
@@ -1041,12 +1041,12 @@
    "migrationFrom": []
   },
   "search_satellite_catalog": {
-   "version": "0.3.2",
+   "version": "0.4.0",
    "released": "2026-11-06",
    "changes": [
     {
-     "kind": "patch",
-     "description": "Keeps the end of the period a composite covers, where an item states one, such as MODIS's 8-day periods."
+     "kind": "minor",
+     "description": "Reads every page of a search, with no 500-item bound, and keeps only the files the product's reader reads, saying how many each item offered."
     }
    ],
    "breaking": false,

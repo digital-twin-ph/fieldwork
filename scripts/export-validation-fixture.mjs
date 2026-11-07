@@ -1155,7 +1155,9 @@ const builders={
     // temperature and rainfall. The lab fits the same model with one indicator per combination, as statsmodels has no
     // absorbed strata, and with an overdispersion scale from the Pearson statistic.
     const csv=new URL('../../example-2024-brazil-dengue/data/dengue-rj-2010-2025.csv',import.meta.url);
-    const text=readFileSync(csv,'utf8');
+    let text;
+    try{text=readFileSync(csv,'utf8');}
+    catch{throw new Error('example-2024-brazil-dengue is not on this machine beside this repository, so this fixture cannot be rebuilt here.');}
     const t=parseCSV(text,250_000,40_000_000);const h=t.headers.map(x=>x.trim());
     // Two municipalities: one indicator per stratum makes a dense design, and six (1,104 strata) exhausted the browser
     // kernel's memory in statsmodels. Two keep three strata columns over sixteen years.
@@ -1597,6 +1599,8 @@ if(process.argv.includes('--dry-run')){
   // DATA NOBODY MAY REDISTRIBUTE: a builder that needs a local copy of a package whose terms keep it out of every
   // repository (NYC's counts) cannot build where that copy is absent. Named, per builder, rather than counted broken.
   const external=/Set NYC_PKG to a local copy/;
+  // AN EXAMPLE THIS MACHINE DOES NOT HOLD: CI checks out some examples and not others. Named, and the rest still built.
+  const elsewhere=/is not on this machine beside this repository/;
   const broken=[],notHere=[];
   let skipped=null;
   for(const [fixtureId,build] of Object.entries(builders)){
@@ -1604,11 +1608,11 @@ if(process.argv.includes('--dry-run')){
     catch(error){
       const message=error instanceof Error?error.message:String(error);
       if(missing.test(message)){skipped=message;break;}
-      if(external.test(message)){notHere.push(fixtureId);continue;}
+      if(external.test(message)||elsewhere.test(message)){notHere.push(fixtureId);continue;}
       broken.push({fixtureId,message});
     }
   }
-  if(notHere.length)console.log(`Validation fixtures: ${notHere.join(', ')} not built here: needs a local copy of data that is not redistributed.`);
+  if(notHere.length)console.log(`Validation fixtures: ${notHere.join(', ')} not built here: needs a local copy of data that is not redistributed, or an example not checked out here.`);
   if(skipped){
     console.log('Validation fixtures: not built. '+skipped);
     process.exit(0);

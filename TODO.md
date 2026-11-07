@@ -1032,9 +1032,20 @@ after, in the browser, so a cut is seen rather than claimed.
 2. **Controls without a pattern.** Inventory every button on each surface: label, style, position. One style per role
    (primary action, secondary, link-like, label), one place for a step's primary action. The note card's "open" chip is
    the first instance. Measure: buttons whose style does not match their role.
-3. **Inspector panels.** For every widget: configured through a dialog or in the panel, every control, and whether
-   changing it changes the step's settings or result. Remove stale controls; move configuration to one approach.
-   Measure: controls that change nothing, per widget.
+3. **One standard Inspector; what a widget does goes in its configuration dialog.** The practitioner, 2026-11-07:
+   *"The more predictable Inspector looks and behaves the less cognitive overload and dissonance we have."* And:
+   *"There are Inspector configuration items that should simply be standard and the function specific ones go in the
+   modal dialog."* With: *"We need to have consistent language and behavior for Inspector based port actions."* So
+   every Inspector shows the same sections, in the same order, worded the same — name, **Inputs** (one list per input:
+   "Not connected", then every step that can feed it), the manual, evidence, version, actions — and nothing else; each
+   widget's own settings move into its configuration dialog. Started 2026-11-07 (0.45.0): the shared Inputs section, on
+   every step without its own list, and Mean center, Point comparison, Privacy and Catchments moved onto it. **Nine
+   widgets still carry their own port lists** (Polygon layer, Table, Relate, Rate, Chart ×2, Reproject, Raster, the
+   reasoning chart) with four different wordings; moving them one by one broke ten tests on 2026-11-07 because several
+   do more than connect, so they move with the dialog work, designed as one piece in an experiment. Also remove stale
+   controls: for each control, does changing it change the step's settings or result? Measure: Inspectors that match
+   the standard, of 70; controls that change nothing.
+
 4. **Input ports.** Four port models today (fixed list, inferred from the wiring, switched by a setting, counted); the
    Map's eight always-drawn ports are the clutter case. Choose one model, or two with a stated rule, and draw only the
    ports a step can use. Measure: ports drawn and ports connected, per widget, in the worked examples.

@@ -3,6 +3,19 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.45.0 — 2026-11-07
+
+- **Every word is readable.** Nothing on screen is smaller than 14 px, body text is 16 px, and the faint grey text
+  passes WCAG's 4.5:1 contrast in both light and dark themes. Measured on the Workflow tab, the Notes tab and the note
+  dialog: words below 14 px went from 96–99% to none, and words below the contrast bar from a third or more to none.
+- **A step's inputs can be connected from the Inspector.** Under **Inputs**, each input, named in plain words, lists
+  "Not connected" and every step that can feed it; choosing one connects it, as dragging to the port does. Dragging to
+  a small port is hard to see and, on a large workflow zoomed out, nearly impossible. Mean center, Point comparison,
+  Privacy and Catchments now use this list instead of their own; nine widgets still have their own and move when the
+  Inspector is standardised.
+- **Tidy stacks steps by their height**, so taller steps no longer land on top of each other.
+- The tab bar scrolls sideways on a narrow screen instead of widening the page.
+
 ## 0.44.0 — 2026-11-07
 
 - **A lab evaluation form, against Nielsen's ten usability heuristics.** Switch on **Lab evaluation** in Help; an

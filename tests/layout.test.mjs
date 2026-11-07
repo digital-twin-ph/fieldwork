@@ -50,7 +50,7 @@ test('rows stack by measured height, so tall nodes do not overlap; unknown heigh
   const {tidyLayout,ROW_GAP}=await import('../build/layout.js');
   const w={nodes:[{id:'a',x:0,y:0},{id:'b',x:0,y:10},{id:'c',x:0,y:20}],edges:[]};
   const at=tidyLayout(w,new Map([['a',260],['b',120]]));
-  assert.equal(at.get('b').y-at.get('a').y,260+ROW_GAP);
+  assert.equal(at.get("b").y-at.get("a").y,260+ROW_GAP);
   assert.equal(at.get('c').y-at.get('b').y,120+ROW_GAP);
   const fixed=tidyLayout(w);
   assert.equal(fixed.get('b').y-fixed.get('a').y,ROW_HEIGHT);

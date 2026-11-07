@@ -61,7 +61,8 @@ export function tidyLayout(workflow:Workflow,heights?:ReadonlyMap<string,number>
     for(const id of ids){
       positions.set(id,{x:ORIGIN.x+column*COLUMN_WIDTH,y});
       const h=heights?.get(id);
-      y+=h?Math.ceil(h)+ROW_GAP:ROW_HEIGHT;
+      // Rounded up to 10px, so a height re-measured at another zoom gives the same layout and a second Tidy is a no-op.
+      y+=h?Math.ceil(h/10)*10+ROW_GAP:ROW_HEIGHT;
     }
   }
   return positions;

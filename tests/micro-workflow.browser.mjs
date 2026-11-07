@@ -185,7 +185,13 @@ test('a worked example can be reset, and an exploded canvas can be laid out',asy
   await page.locator('#tidy-button').click();
   await expect.poll(async()=>await page.evaluate(()=>{
     const w=JSON.parse(localStorage.getItem('fieldwork-workflow-v1')||'{}');
-    return (w.nodes||[]).every(n=>(n.x-40)%300===0&&(n.y-40)%150===0);
+    return (w.nodes||[]).every(n=>(n.x-40)%300===0);
+  })).toBe(true);
+  // ROWS STACK BY HEIGHT since 2026-11-07, not on a fixed 150px grid: a readable step is taller than 150px, and the
+  // grid laid steps on top of each other. So what is checked is that no two steps in a column overlap on screen.
+  expect(await page.evaluate(()=>{
+    const boxes=[...document.querySelectorAll('.react-flow__node')].map(e=>e.getBoundingClientRect());
+    return boxes.every((a,i)=>boxes.every((b,j)=>i===j||Math.abs(a.left-b.left)>2||a.bottom<=b.top+1||b.bottom<=a.top+1));
   })).toBe(true);
   expect(await page.locator('.react-flow__node').count()).toBe(original+4);
 

@@ -67,6 +67,12 @@ values."* A file with one row per place and week, recording cumulative cases, gi
 say whose rows these are (the place). In a file that is wide by period (`cum_w1`, `cum_w2`, …) the same sum is within
 one row, and needs nothing new.
 
+**That order is Epi Info's `SORT`, folded in.** The practitioner, the same day: *"Epi Info AI has a SORT function."*
+The [commands audit](../audits/epi-info-commands-and-our-widgets.md) records `SORT` as wanted and unbuilt: a chart has
+a bar order, a table none. A rule between rows cannot work without one, so it sorts by the order and group it names,
+under the hood, and the preview's After shows the rows in that order. No Sort widget: whether a table needs an order
+of its own, outside a rule, is a separate question, left open.
+
 What a rule between rows must keep, each said and none refused:
 
 - **The first row has no previous one.** Its value is empty, and counted, as a division by zero is.
@@ -85,6 +91,10 @@ What a rule between rows must keep, each said and none refused:
 - **Conflicts, shown.** Two rules giving one row different values is shown in the preview and reported by the run.
 
 ## What would close it
+
+**The repository** is [example-workflows-rulesets](https://github.com/digital-twin-ph/example-workflows-rulesets),
+created by the practitioner on 2026-11-07. It holds the synthetic data and the answers worked by hand; the
+cumulative file is deliberately out of date order, so a rule that does not sort gives visibly wrong answers.
 
 **`tried`** when a rule can conclude a computed value in the dialog, the dialog previews Before and After, and the
 Nigeria and South London workflows are rebuilt with Apply ruleset in place of Derive a value and their manuals play
@@ -105,6 +115,7 @@ ruleset feature on synthetic data made to reach each one:
 
 - a category concluded under a condition, and a value computed under one;
 - a value computed for every row, with no condition;
+- a computed value read by a second rule (deaths ÷ houses, then × 10,000);
 - each comparator offered, `is recorded` and `is not recorded` among them, and a condition against a step setting;
 - a computed column with its unit described, and a unit that disagrees, refused while the rule is written;
 - a division by zero, counted and named;

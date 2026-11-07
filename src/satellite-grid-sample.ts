@@ -45,7 +45,7 @@ export function areasFrom(features:readonly {id:string|number;name?:string;geome
 export interface PlaceReading {placeId:string; period:string; end:string|null; platform:string; sums:AreaSums}
 
 interface Image {getOrigin():number[]; getResolution():number[]; getWidth():number; getHeight():number;
-  readRasters(o:{window:number[]}):Promise<ArrayLike<number>[]>; getGDALMetadata?(sample?:number):Promise<Record<string,string>|null>}
+  readRasters(o:{window:number[];pool?:unknown}):Promise<ArrayLike<number>[]>; getGDALMetadata?(sample?:number):Promise<Record<string,string>|null>}
 
 /** What the files said about their own values: how many stated their unit and scale factor, and that every one that
  *  did agreed with the product's. The practitioner, 2026-11-06: *"How do we know the unit is in K if we don't have a
@@ -76,33 +76,58 @@ const gridKey=(g:Grid)=>`${g.origin.join(',')}|${g.resolution.join(',')}|${g.wid
 export const platformOf=(item:{id:string;platform:string|null})=>
   item.platform||(/^MOD/.test(item.id)?'terra':/^MYD/.test(item.id)?'aqua':'');
 
+/** HOW A RUN READS ITS FILES (experiment 182). `concurrency` files are in flight at once: the time is network waiting,
+ *  not arithmetic, so files overlap. `attempts` tries a file before the run stops, naming it. `pool` is geotiff.js's
+ *  decoder pool, which decompresses in workers so the page stays responsive. */
+export interface ReadOptions {concurrency?:number; attempts?:number; retryMs?:number; pool?:unknown}
+/** FILES IN FLIGHT AT ONCE, measured on 2026-11-06 (experiment 182): 48 MODIS files over 92 municipalities took 70 s
+ *  one at a time in Chromium and 23 s from 3 on. The files' server speaks HTTP/1.1 and Chrome opens 6 connections to
+ *  it, so more than 3 gains nothing in a browser; 6 costs nothing past that. Node, without the cap, kept gaining to 48. */
+export const GRID_CONCURRENCY=6;
+
+/** A FILE READ ONCE PER SESSION. The Brazil lag workflow ran twice, once before its joins were set and once after, and
+ *  read every file both times. Keyed by the file, the layer, the quality rule and the places, so a different study
+ *  area or rule reads again. Lives as long as the page. */
+type FileResult={stated:boolean; period:string; end:string|null; platform:string; sums:(AreaSums|null)[]};
+const fileCache=new Map<string,FileResult>();
+export const clearGridCache=()=>fileCache.clear();
+const placesKey=(places:readonly Place[])=>{
+  // A short digest of the places, so the cache key does not hold every boundary. FNV-1a over their JSON.
+  let h=0x811c9dc5;const text=JSON.stringify(places);
+  for(let i=0;i<text.length;i++){h^=text.charCodeAt(i);h=Math.imul(h,0x01000193)>>>0;}
+  return `${places.length}:${h.toString(16)}`;
+};
+
 /** Reads every file at every place. `open` is geotiff.js's `fromUrl(...).getImage()`, passed in so Node and the
  *  browser use the same code. One window per file covers all its places; the masks are made once per tile grid. */
 export async function readGridFiles(items:readonly CatalogItem[],reader:GridReader,layerKey:string,rule:ModisQualityRule,
   places:readonly Place[],open:Open,fetcher:typeof fetch=fetch,onFile:(done:number,of:number)=>void=()=>{},
-  tags:TagCheck={files:0,stated:0}):Promise<PlaceReading[]>{
+  tags:TagCheck={files:0,stated:0},options:ReadOptions={}):Promise<PlaceReading[]>{
   const layer=reader.layers[layerKey];
   if(!layer)throw new Error(`This product has no "${layerKey}" layer. It has ${Object.keys(reader.layers).join(', ')}.`);
-  const token=await tokenFor(reader.token,fetcher);
+  const concurrency=Math.max(1,Math.floor(options.concurrency??GRID_CONCURRENCY));
+  const attempts=Math.max(1,Math.floor(options.attempts??3)),retryMs=options.retryMs??1500;
+  const where=placesKey(places);
   type Projected={b:Boundary;xy?:undefined}|{b?:undefined;xy:[number,number]};
   const projected:Projected[]=places.map(p=>p.kind==='area'?{b:projectBoundary(p.boundary,(x,y)=>sinusoidal(x,y))}:{xy:sinusoidal(p.lon,p.lat)});
   const masks=new Map<string,({window:[number,number,number,number];mask:Uint8Array}|null)[]>();
-  const merged=new Map<string,PlaceReading>();
-  let done=0;
-  for(const item of items){
+  const results:FileResult[]=new Array(items.length);
+  let token:string|null=null;
+  const readOne=async(item:CatalogItem):Promise<FileResult>=>{
+    token??=await tokenFor(reader.token,fetcher);
     const href=(variable:string)=>{const f=item.files.find(x=>x.key===variable);
       if(!f)throw new Error(`Item ${item.id} has no ${variable} file.`);return `${f.href}${f.href.includes('?')?'&':'?'}${token}`;};
     const [value,qc,clear]=await Promise.all([open(href(layer.variable)),open(href(layer.quality)),open(href(layer.clear))]);
     // THE FILE'S OWN UNIT AND SCALE, read from every file. A file stating another stops the run, naming it, rather than
     // being converted on an assumption; a file stating none is counted and said.
     const md=await value.getGDALMetadata?.().catch(()=>null)??null;
-    tags.files++;
+    let stated=false;
     if(md&&(md.units!==undefined||md.scale_factor!==undefined)){
       if(md.units!==undefined&&md.units!==reader.unit)
-        throw new Error(`${item.id} states its unit as "${md.units}", not ${reader.unit}. Nothing was converted; this product's reader expects ${reader.unit}.`);
+        throw Object.assign(new Error(`${item.id} states its unit as "${md.units}", not ${reader.unit}. Nothing was converted; this product's reader expects ${reader.unit}.`),{final:true});
       if(md.scale_factor!==undefined&&Math.abs(Number(md.scale_factor)-reader.scale)>1e-9)
-        throw new Error(`${item.id} states a scale factor of ${md.scale_factor}, not ${reader.scale}. Nothing was read with the wrong one.`);
-      tags.stated++;
+        throw Object.assign(new Error(`${item.id} states a scale factor of ${md.scale_factor}, not ${reader.scale}. Nothing was read with the wrong one.`),{final:true});
+      stated=true;
     }
     const grid:Grid={origin:value.getOrigin().slice(0,2) as [number,number],resolution:value.getResolution().slice(0,2) as [number,number],
       width:value.getWidth(),height:value.getHeight()};
@@ -114,27 +139,57 @@ export async function readGridFiles(items:readonly CatalogItem[],reader:GridRead
     const cells=masks.get(key)!;
     const present=cells.filter(Boolean) as {window:[number,number,number,number];mask:Uint8Array}[];
     const period=(item.datetime??'').slice(0,10),end=item.end?.slice(0,10)??null,platform=platformOf(item);
+    const sums:(AreaSums|null)[]=cells.map(()=>null);
     if(present.length){
       const U=[Math.min(...present.map(c=>c.window[0])),Math.min(...present.map(c=>c.window[1])),
         Math.max(...present.map(c=>c.window[2])),Math.max(...present.map(c=>c.window[3]))];
-      const [[V],[Q],[C]]=await Promise.all([value.readRasters({window:U}),qc.readRasters({window:U}),clear.readRasters({window:U})]);
+      const read=(image:Awaited<ReturnType<Open>>)=>image.readRasters({window:U,...(options.pool?{pool:options.pool}:{})});
+      const [[V],[Q],[C]]=await Promise.all([read(value),read(qc),read(clear)]);
       const UW=U[2]!-U[0]!;
       cells.forEach((c,index)=>{
         if(!c)return;
         const [c0,r0,c1,r1]=c.window,w=c1-c0,n=w*(r1-r0),v=new Array<number>(n),q=new Array<number>(n),k=new Array<number>(n);
         for(let r=r0;r<r1;r++)for(let col=c0;col<c1;col++){
           const src=(r-U[1]!)*UW+(col-U[0]!),dst=(r-r0)*w+(col-c0);v[dst]=V![src]!;q[dst]=Q![src]!;k[dst]=C![src]!;}
-        const sums=sumWindow(c.mask,v,q,k,reader.fill,x=>modisPasses(x,rule));
-        const id=`${places[index]!.id}|${period}|${platform}`;
-        const held=merged.get(id);
-        merged.set(id,{placeId:places[index]!.id,period,end,platform,sums:held?addSums(held.sums,sums):sums});
+        sums[index]=sumWindow(c.mask,v,q,k,reader.fill,x=>modisPasses(x,rule));
       });
     }
-    // A place this tile does not reach still has a row for the period, so "no cell" is said, not left out.
-    for(const p of places){const id=`${p.id}|${period}|${platform}`;
-      if(!merged.has(id))merged.set(id,{placeId:p.id,period,end,platform,sums:emptySums()});}
-    onFile(++done,items.length);
-  }
+    return {stated,period,end,platform,sums};
+  };
+  // A FAILED FILE IS TRIED AGAIN, then named. One "Failed to fetch" among 180 files stopped a live run on 2026-11-06,
+  // naming nothing. A file that states the wrong unit is not retried: it would say the same again.
+  const withRetry=async(item:CatalogItem):Promise<FileResult>=>{
+    const cacheKey=`${item.id}|${layerKey}|${rule}|${where}`;
+    const cached=fileCache.get(cacheKey);
+    if(cached)return cached;
+    for(let attempt=1;;attempt++){
+      try{const result=await readOne(item);fileCache.set(cacheKey,result);return result;}
+      catch(e){
+        if((e as {final?:boolean}).final)throw e;
+        if(attempt>=attempts)throw new Error(`${item.id} could not be read after ${attempts} attempt${attempts===1?'':'s'}: `
+          +`${e instanceof Error?e.message:String(e)}. The other files were read; run again to retry.`);
+        await new Promise(resolve=>setTimeout(resolve,retryMs*attempt));
+      }
+    }
+  };
+  let next=0,done=0;
+  const lane=async()=>{
+    while(next<items.length){const index=next++;results[index]=await withRetry(items[index]!);onFile(++done,items.length);}
+  };
+  await Promise.all(Array.from({length:Math.min(concurrency,items.length)},lane));
+  // MERGED IN THE ITEMS' ORDER, whatever order the files arrived in, so the table is the same at any concurrency.
+  const merged=new Map<string,PlaceReading>();
+  results.forEach(result=>{
+    tags.files++;if(result.stated)tags.stated++;
+    result.sums.forEach((sums,index)=>{
+      const id=`${places[index]!.id}|${result.period}|${result.platform}`;
+      const held=merged.get(id);
+      if(sums)merged.set(id,{placeId:places[index]!.id,period:result.period,end:result.end,platform:result.platform,
+        sums:held?addSums(held.sums,sums):sums});
+      // A place this tile does not reach still has a row for the period, so "no cell" is said, not left out.
+      else if(!held)merged.set(id,{placeId:places[index]!.id,period:result.period,end:result.end,platform:result.platform,sums:emptySums()});
+    });
+  });
   return [...merged.values()];
 }
 

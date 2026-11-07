@@ -71,6 +71,11 @@ whether that is enough is the analyst's call, and the numbers to make it are on 
    counts the files read so far, *Reading satellite files: 40 of 92*, and the run's state beside the canvas says the
    same.
 
+**Several files are read at once**: six MODIS files, three Sentinel-5P. Three months of MODIS over Rio de Janeiro's
+92 municipalities took 70 s one file at a time in Chromium and 23 s this way. A browser opens at most six connections
+to the MODIS server, so more would not help. A file that fails is tried three times; if it still fails, the run stops
+and names it. Each file is read once per session, so running again after a change downstream does not read it twice.
+
 ## The three gaps
 
 | Gap | What happened |

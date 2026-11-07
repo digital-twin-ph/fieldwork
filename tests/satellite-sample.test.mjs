@@ -121,3 +121,26 @@ test('the id column takes the name the points\' source table gave it, so the res
   // A name that would collide with a column the sampler writes keeps point_id.
   assert.equal(sampleTable(pts,[reading({})],'2023-06-07','2023-06-07',reader,'>=',0,'date').table.keys[0],'point_id');
 });
+
+/** SENTINEL-5P FILES, SEVERAL AT ONCE (experiment 182): the same readings in the items' order, a failed file tried
+ *  again, and one that keeps failing named. The reading itself is injected, so no worker or network is needed. */
+test('Sentinel-5P files read several at once keep their order; a failure is retried, then named',async()=>{
+  const {readFiles,clearFileCache}=await import('../build/satellite-sample-reader.js');
+  const reader={variable:'no2',token:null};
+  const item=i=>({id:`S5P.${i}`,datetime:`2023-06-0${i+1}T18:00:00Z`,files:[{key:'netcdf',href:`https://x/${i}.nc`,type:'application/netcdf'}],assets:{}});
+  const items=Array.from({length:5},(_,i)=>item(i));
+  const points=[{id:'a',lon:0,lat:0}];
+  const slow=async url=>{const i=Number(/(\d)\.nc/.exec(url)[1]);await new Promise(r=>setTimeout(r,(5-i)*4));return {pixels:[{pointId:'a',value:i}]};};
+  clearFileCache();
+  let order=[];
+  const got=await readFiles(items,reader,points,(d)=>order.push(d),{concurrency:3},slow);
+  assert.deepEqual(got.map(r=>r.itemId),items.map(i=>i.id));
+  assert.deepEqual(order,[1,2,3,4,5]);
+  clearFileCache();
+  let tries=0;
+  const flaky=async url=>{if(++tries<3)throw new Error('Failed to fetch');return slow(url);};
+  assert.equal((await readFiles([item(1)],reader,points,()=>{},{retryMs:1},flaky)).length,1);
+  clearFileCache();
+  await assert.rejects(readFiles([item(2)],reader,points,()=>{},{retryMs:1},async()=>{throw new Error('Failed to fetch');}),
+    /S5P\.2: Failed to fetch \(after 3 attempts\)/);
+});

@@ -3,6 +3,19 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.40.0 — 2026-11-06
+
+- **Satellite files are read several at once**, and a run of them is about three times faster in a browser: three
+  months of MODIS over Rio de Janeiro's 92 municipalities in 23 s instead of 70, ten NYC Sentinel-5P overpasses in 22 s
+  instead of 47. The table is the same either way. Experiment 182.
+- **A file that fails is tried again**, three times; one that still fails stops the run and is named. On 2026-11-06
+  one *Failed to fetch* among 180 files stopped a live run without saying which.
+- **A MODIS file is read once per session**, as Sentinel-5P files already were, so the Brazil lag workflow no longer
+  reads every file twice.
+- Measured and not built: decoding in a worker pool. It blocked the page for a tenth of a second over a whole run
+  either way.
+- Validation: Chromium locally; WebKit in CI.
+
 ## 0.39.1 — 2026-11-06
 
 - **The Brazil lag models get a falsification test, and it fails.** Two lead models, the temperature 2 and 4 weeks

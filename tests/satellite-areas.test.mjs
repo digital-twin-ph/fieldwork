@@ -120,3 +120,59 @@ test('every file is read for its own unit and scale: one stating another unit st
   await assert.rejects(readGridFiles([item('MOD.scale')],reader,'day','produced-2k',places,async()=>image({units:'K',scale_factor:'0.1'}),fetcher),
     /MOD\.scale states a scale factor of 0\.1, not 0\.02/);
 });
+
+/** READING FASTER WITHOUT READING DIFFERENTLY (experiment 182): several files in flight, a failed file tried again and
+ *  then named, and each file read once per session. */
+test('several files at once give the same table as one at a time; a file is read once per session',async()=>{
+  const {readGridFiles,gridReaderFor,clearGridCache}=await import('../build/satellite-grid-sample.js');
+  const {productFor}=await import('../build/satellite-products.js');
+  const reader=gridReaderFor(productFor('heat','pc-modis-lst-8day'));
+  const fetcher=async()=>({ok:true,json:async()=>({token:'t','msft:expiry':'2099-01-01T00:00:00Z'})});
+  let opened=0;
+  // Each file a 2 x 2 grid whose value depends on the period, answered after a delay that reverses the order.
+  const open=async url=>{opened++;const i=Number(/p(\d+)_/.exec(url)[1]);await new Promise(r=>setTimeout(r,(10-i)*3));
+    return {getOrigin:()=>[0,0],getResolution:()=>[1,-1],getWidth:()=>2,getHeight:()=>2,getGDALMetadata:async()=>({units:'K',scale_factor:'0.02'}),
+      readRasters:async()=>[url.includes('LST')?[15000+i,15000+i,15000+i,15000+i]:url.includes('QC')?[0,0,0,0]:[255,255,255,255]]};};
+  const items=Array.from({length:10},(_,i)=>({id:`MOD.p${i}`,datetime:`2024-01-${String(i+1).padStart(2,'0')}T00:00:00Z`,platform:'terra',
+    files:['LST_Day_1km','QC_Day','Clear_sky_days'].map(key=>({key,href:`https://x/p${i}_${key}.tif`}))}));
+  const places=[{id:'p',name:'P',kind:'point',lon:0,lat:0}];
+  clearGridCache();
+  const one=await readGridFiles(items,reader,'day','produced-2k',places,open,fetcher,()=>{},{files:0,stated:0},{concurrency:1});
+  clearGridCache();
+  const progress=[];
+  const six=await readGridFiles(items,reader,'day','produced-2k',places,open,fetcher,(d,of)=>progress.push(`${d}/${of}`),{files:0,stated:0},{concurrency:6});
+  assert.deepEqual(six,one,'the same rows in the same order');
+  assert.deepEqual(progress.at(-1),'10/10');assert.equal(progress.length,10);
+  const before=opened;
+  const tags={files:0,stated:0};
+  const again=await readGridFiles(items,reader,'day','produced-2k',places,open,fetcher,()=>{},tags,{concurrency:6});
+  assert.equal(opened,before,'nothing opened the second time');
+  assert.deepEqual(again,one);assert.deepEqual(tags,{files:10,stated:10},'the unit check is still counted');
+  const other=[{id:'q',name:'Q',kind:'point',lon:1,lat:-1}];
+  await readGridFiles(items,reader,'day','produced-2k',other,open,fetcher,()=>{},undefined,{concurrency:6});
+  assert.ok(opened>before,'other places read the files again');
+});
+
+test('a failed file is tried again; one that keeps failing is named; a wrong unit is not retried',async()=>{
+  const {readGridFiles,gridReaderFor,clearGridCache}=await import('../build/satellite-grid-sample.js');
+  const {productFor}=await import('../build/satellite-products.js');
+  const reader=gridReaderFor(productFor('heat','pc-modis-lst-8day'));
+  const fetcher=async()=>({ok:true,json:async()=>({token:'t','msft:expiry':'2099-01-01T00:00:00Z'})});
+  const image=units=>({getOrigin:()=>[0,0],getResolution:()=>[1,-1],getWidth:()=>2,getHeight:()=>2,getGDALMetadata:async()=>({units,scale_factor:'0.02'}),
+    readRasters:async()=>[[15000,15000,15000,15000]]});
+  const item=id=>({id,datetime:'2024-02-18T00:00:00Z',platform:'terra',files:['LST_Day_1km','QC_Day','Clear_sky_days'].map(key=>({key,href:`https://x/${id}_${key}.tif`}))});
+  const places=[{id:'p',name:'P',kind:'point',lon:0,lat:0}];
+  clearGridCache();
+  let tries=0;
+  const flaky=async()=>{if(++tries<=3)throw new TypeError('Failed to fetch');return image('K');};
+  const read=await readGridFiles([item('MOD.flaky')],reader,'day','produced-2k',places,flaky,fetcher,()=>{},undefined,{retryMs:1});
+  assert.equal(read.length,1);
+  const down=async()=>{throw new TypeError('Failed to fetch');};
+  await assert.rejects(readGridFiles([item('MOD.ok2'),item('MOD.down')],reader,'day','produced-2k',places,
+    async url=>url.includes('down')?down():image('K'),fetcher,()=>{},undefined,{retryMs:1}),
+    /MOD\.down could not be read after 3 attempts: Failed to fetch\. The other files were read; run again to retry\./);
+  let opens=0;
+  await assert.rejects(readGridFiles([item('MOD.celsius2')],reader,'day','produced-2k',places,async()=>{opens++;return image('C');},fetcher,()=>{},undefined,{retryMs:1}),
+    /states its unit as "C"/);
+  assert.equal(opens,3,'opened once: three layers, no retry');
+});

@@ -995,7 +995,7 @@ workflow (experiment 180):
 streamlined to reduce the interface friction."* The items below are its parts. Its measure is the audit's count of
 visible controls and words per screen, which should fall as each item lands. Item 0 raised every word to a readable
 size on 2026-11-07, and that made the crowding plain: tabs and header wrap, and the note dialog's writing box falls
-below the fold.
+below the fold. And the aim, in the practitioner's words: *"A pleasing interface is enticing to use."*
 
 The practitioner's overall sense of the interface, recorded in
 [184](docs/experiments/184-heuristic-evaluation-in-the-lab.md) as its lenses, then: *"The above are already known and
@@ -1016,6 +1016,15 @@ after, in the browser, so a cut is seen rather than claimed.
    borders and focus rings strong enough to find every control, and colour never the only signal. Aim at WCAG AAA
    contrast (7:1) for text. Respect the operating system's increased-contrast setting (`prefers-contrast: more`) when
    the theme is Match device. Measure: the text audit in each theme, with AAA as the bar for this one.
+7. **Fewer worked examples, each high quality and downloadable.** The practitioner: *"We can also declutter our worked
+   examples. Better to have fewer high quality ones and make all of them downloadable."* Counted 2026-11-07: 13
+   projects, 42 workflows — 7 built into the application (Heat outreach, Old Naledi, Spatial coverage, 1854 Cholera in
+   London, Manila coastal, Rulesets, Hagelloch 1861; 12 workflows), none downloadable; and 6 in the catalog, each its
+   own repository pinned by digest (30 workflows). Two separate Snow projects. **The bar an example keeps its place by**:
+   real, openly licensed data stated in its provenance; a manual that plays back from an empty canvas; its numbers
+   checked in the Validation Lab; a written-up Notes tab; downloadable as its own repository. Each built-in example
+   earns a repository or retires — outright, under the rule that no outside user depends on it yet — at the
+   practitioner's decision, listed against the bar. Measure: examples meeting every part of the bar, of all shown.
 1. **Design explanation on screen.** Sort each surface's visible text into instruction, status and design explanation;
    move the third to the manual or the record. Start with the header subtitle, the Notes tab heading, the Inspector's
    step cards, and labels that are this project's terms (*machined*, *derived*, *authored*, *N3 & evidence*).

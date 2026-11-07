@@ -76,7 +76,24 @@ back from an empty canvas.
 - a test fails if a division by zero leaves a row with no value and no count;
 - a test fails if two rules give one row different values and neither the preview nor the run says so.
 
-Then Derive a value can be retired; whether to is the practitioner's call.
+**Then Derive a value is retired, once the new Apply ruleset works.** The practitioner, 2026-11-07: *"If the new apply
+ruleset works then we retire derive a value. "works" means we exercise the ruleset features in a worked example (repo)
+with workflows using synthetic data sets."*
+
+So "works" is not the two rebuilt workflows alone. It is a worked-example repository whose workflows exercise every
+ruleset feature on synthetic data made to reach each one:
+
+- a category concluded under a condition, and a value computed under one;
+- a value computed for every row, with no condition;
+- each comparator offered, `is recorded` and `is not recorded` among them, and a condition against a step setting;
+- a computed column with its unit described, and a unit that disagrees, refused while the rule is written;
+- a division by zero, counted and named;
+- rows no rule matches, and rows two rules give different values, said in the preview and by the run.
+
+Each workflow's manual plays back from an empty canvas, and a test rebuilds it. The data are synthetic so that every
+case is present by design rather than by luck, and so the repository can be published without a source's licence.
+Creating the repository is a human step; once it exists, it is pushed under the standing authorisation for example
+repositories.
 
 **`retired`** if either fails, recorded with what was tried:
 

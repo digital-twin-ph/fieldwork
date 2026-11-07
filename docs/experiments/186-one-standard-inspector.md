@@ -11,7 +11,8 @@ What it took, and what it changed from the table below:
 
 - **The links moved to section 5.** On 2026-10-21 the Manual and Dive deeper links were put under the title because
   they were tiny and moved with the panel's alerts. On a six-section Inspector the panel is short, so section 5 is in
-  view without scrolling, and the links keep their button size. Named *Learn and record*.
+  view without scrolling, and the links keep their button size. Named *Learn and record*. The practitioner kept them
+  there on 2026-11-07.
 - **The dialog's frame is built once.** Only the body and the message are rebuilt as settings change, because a text
   box that commits on blur rebuilt the footer between the press on Apply and the click, and the click was lost.
 - **A decision starts unchosen.** The old join dialog started on *Drop*; a dialog that writes every setting on Apply

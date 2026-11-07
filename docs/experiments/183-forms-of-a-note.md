@@ -105,15 +105,15 @@ not whether this application's version of it works for the people using it.
 
 Three searches of open sources, written up in
 [teaching writing from sources](../research/teaching-writing-from-sources-2026-11-07.md), each work marked by how far
-it was read. Against the closing condition:
+it was read; the works below are linked to the open copy that was read, with how far. Against the closing condition:
 
 | Criterion | Result |
 | --- | --- |
-| Teaching these distinctions improves writing | **Partly.** Summary instruction improves summaries (effect size 0.82, four school studies); synthesis instruction helps undergraduates integrate sources, by a small margin over an active comparison, almost all from one research group. Neither shows better writing at large |
-| It guards against plagiarism | **Instruction, modestly; labelling, untested.** A course-randomised citation tutorial lowered plagiarism; an hour of paraphrase training improved paraphrasing and patchwriting avoidance on a test task, with half the sample lost. Copied sentences barely moved in another study. No study measured patchwriting in real work |
-| The forms match what was taught | **No.** Studies code two axes separately: how much is borrowed (quotation, patchwriting, paraphrase, summary) and whether the writer reports sources or takes a position. *Own words* is on the second axis; the other four on the first. No study separates précis from summary |
+| Teaching these distinctions improves writing | **Partly.** Summary instruction improves summaries: effect size 0.82 from four school studies, measuring the summary itself ([Graham & Perin 2007](https://bridgestolearning2009.pbworks.com/f/graham&perin07.pdf), read in full). Synthesis instruction helps undergraduates integrate sources, effects from −0.86 to 1.10 across studies ([van Ockenburg et al. 2019](https://jowr.org/jowr/article/download/606/517/478), read in full), by a small margin over an active comparison ([Luna et al. 2023](https://www.ebi.ac.uk/europepmc/webservices/rest/PMC8749917/fullTextXML), read in part), almost all from one research group. Neither shows better writing at large |
+| It guards against plagiarism | **Instruction, modestly; labelling, untested.** All from one systematic review of six controlled studies, mostly at high risk of bias ([Miranda-Rodríguez et al. 2024](https://www.frontiersin.org/journals/education/articles/10.3389/feduc.2024.1357853/full), read in full); the primary studies were read only as that review extracts them: a course-randomised citation tutorial lowered plagiarism (Dee & Jacob 2012); an hour of paraphrase training improved paraphrasing and patchwriting avoidance on a test task, with about half the sample lost (Newton et al. 2014); copied sentences barely moved (Yang et al. 2019). No study measured patchwriting in real work |
+| The forms match what was taught | **No.** Studies code two axes separately: how much is borrowed, as quotation, patchwriting, paraphrase or summary ([Jamieson & Howard, the Citation Project](https://www.academia.edu/1646133/Writing_from_Sources_Writing_from_Sentences), snippet only; academia.edu may ask a reader to sign in, so no reliably open copy was found), and how far the writer integrates sources or takes a position ([van Ockenburg et al. 2019](https://jowr.org/jowr/article/download/606/517/478), read in full; [Luna et al. 2023](https://www.ebi.ac.uk/europepmc/webservices/rest/PMC8749917/fullTextXML), read in part). *Own words* is on the second axis, the other four on the first. No study found separates précis from summary |
 | Labelling the form of one's own text helps | **Not studied.** No controlled study found |
-| Anything for public health trainees | **Not studied.** Their writing training is judged by publication counts; the documented failure is overclaiming (recommendations outrunning the result in 44.5% of observational-study articles), and no trial of training authors against it was found |
+| Anything for public health trainees | **Not studied.** Their writing training is judged by publication counts; the documented failure is overclaiming: in 44.5% of observational-study articles the recommendation implies more causation than the result ([Haber et al. 2022, open preprint, doi:10.1101/2021.08.25.21262631](https://doi.org/10.1101/2021.08.25.21262631), read in full). No trial of training authors against it was found |
 
 The practitioner, before the result: *"I think at least the forms will help guard against plagiarism."* Recorded as
 said. The evidence supports something close to it for instruction and is silent on a writer labelling their own text.
@@ -127,11 +127,11 @@ idea wrong; it found it drawn on one axis where the evidence uses two. The optio
   (quoted or authored) and function already carry part of each.
 - **Précis merged into summary**, which every taxonomy found does; or kept, with no evidence either way.
 - **Patchwriting named**, neutrally, as a form or a state a reviewer can set: the commonest borrowing problem in the
-  descriptive data (about 16% of citations, half of first-year papers), and the one a writer seldom sees in their own
-  text.
+  descriptive data, about 16% of citations and half of first-year papers ([Jamieson & Howard, the Citation Project](https://www.academia.edu/1646133/Writing_from_Sources_Writing_from_Sentences), snippet only; academia.edu may ask a reader to sign in, so no reliably open copy was found), and the one a writer seldom sees in
+  their own text.
 - **Prompt a judgement rather than a tag** (*is this closer to the source's wording or to yours?*), and **fade the
-  prompt** as a writer gains skill: prompts that ask for a judgement beat filling in a label, and faded scaffolds beat
-  permanent ones, on school-level evidence.
+  prompt** as a writer gains skill: prompts that ask for a judgement beat purely metacognitive ones ([Berthold et al. 2007](https://pub.uni-bielefeld.de/record/1989095), abstract only), and
+  faded prompts beat permanent ones ([Nückles et al. 2010](https://link.springer.com/doi/10.1007/s11251-009-9106-9), abstract only), on school and journal-writing evidence.
 
 **What would close it now** is the practitioner's choice among these, built and then measured as the three
 measurements above describe. The field question stands unchanged.

@@ -140,6 +140,19 @@ export const KNOWN_NOTE_FUNCTIONS=['context','rationale','source','method','veri
  *  the South London example has a node called `table-viii` in THREE of its six workflows, and
  *  `table-xii` in two. Measured, not supposed. A project-wide graph keyed on those would have
  *  joined three different citations into one node. */
+/** HOW A NOTE THAT CITES LITERATURE STANDS TO IT. The practitioner, 2026-11-07, as the Brazil example's notes on
+ *  what a mosquito meets were being written: *"Our notes that cite literature can take the form of a precis,
+ *  paraphrase or summary."*
+ *
+ *  A quoted note already says this of itself -- verbatim -- so the form is the authored note's counterpart: whether
+ *  its sentence condenses one work's argument (précis), restates a passage in other words (paraphrase), or draws
+ *  several works together (summary). A reader checking a claim needs to know which, because a paraphrase can be
+ *  held against a page and a summary only against the works together.
+ *
+ *  Free text, read as the function is: the three are offered first and anything else is kept as written. A note
+ *  without one is not refused. */
+export const KNOWN_NOTE_FORMS=['précis','paraphrase','summary'];
+
 export type NoteId=string;
 
 export interface QuotedNote {
@@ -279,6 +292,8 @@ export interface AuthoredNote {
   relatesTo?:NoteId[];
   /** The works this note cites. Marked where the note renders and listed in References. */
   works?:CitedWork[];
+  /** Précis, paraphrase or summary of the works it cites: see KNOWN_NOTE_FORMS. */
+  form?:string;
 }
 
 /** WHAT AN INPUT DECLARES ABOUT ITSELF, as a note.
@@ -423,7 +438,8 @@ export function readNotes(raw:unknown):{notes:Note[]; unreadable:number}{
           ...(widgetOf(from!.widget)?{widget:widgetOf(from!.widget)!}:{}),
           ...(text(from!.at)?{at:text(from!.at)}:{})}}:{}),
         ...(edges(entry.relatesTo).length?{relatesTo:edges(entry.relatesTo)}:{}),
-        ...(worksOf(entry.works).length?{works:worksOf(entry.works)}:{})});
+        ...(worksOf(entry.works).length?{works:worksOf(entry.works)}:{}),
+        ...(text(entry.form)?{form:text(entry.form)}:{})});
       continue;
     }
     if(entry.kind==='machined'){

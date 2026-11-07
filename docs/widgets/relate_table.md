@@ -1,6 +1,6 @@
 # Relate a column from another table
 
-_Created 2026-10-26 · Updated 2026-11-06_
+_Created 2026-10-26 · Updated 2026-11-07_
 
 _Created 2026-10-26 · Updated 2026-11-05 (0.4.0)_
 

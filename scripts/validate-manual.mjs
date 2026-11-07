@@ -7,7 +7,7 @@
 import {readFileSync,existsSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {join} from 'node:path';
-import {coverage,turtle,compiledPages} from './widget-manual.mjs';
+import {coverage,turtle,compiledPages,surfacePages} from './widget-manual.mjs';
 
 const root=fileURLToPath(new URL('../',import.meta.url));
 const ledgerPath=join(root,'widgets/manual-coverage.json');
@@ -67,6 +67,16 @@ for(const nodeType of documented){
       problems.push(`docs/widgets/${nodeType}.md contains ${what}. A manual is for the person using `
         +`the widget: no history, no audit trail, no revision notes. That belongs in `
         +`docs/widget-specs/${nodeType}.md, which the manual links to at the end.`);
+}
+
+// THE APPLICATION'S OWN SURFACES are held to the same two rules: say what it does and how to use it, and carry no
+// history. Their pages are in docs/surfaces/ and compile beside the widget pages.
+for(const name of surfacePages()){
+  const text=readFileSync(join(root,`docs/surfaces/${name}.md`),'utf8');
+  for(const heading of MANUAL_SECTIONS)
+    if(!text.includes(heading))problems.push(`docs/surfaces/${name}.md has no "${heading}" section.`);
+  for(const [pattern,what] of RECORD_MARKERS)
+    if(pattern.test(text))problems.push(`docs/surfaces/${name}.md contains ${what}. A manual page carries no history.`);
 }
 
 // A page must say something. An empty page satisfies a count and helps nobody.

@@ -784,7 +784,8 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 .notes-note{border-left:2px solid var(--rule,#2a3a36);padding:.1rem 0 .1rem .75rem;margin:.6rem 0}
 .notes-note blockquote{margin:.2rem 0;font-style:italic}
 .notes-labels{display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;font-size:.75rem}
-.notes-kind,.notes-fn{border-radius:999px;padding:.05rem .45rem;border:1px solid var(--rule,#2a3a36)}
+.notes-kind,.notes-fn,.notes-form{border-radius:999px;padding:.05rem .45rem;border:1px solid var(--rule,#2a3a36)}
+.notes-form{font-style:italic}
 .notes-kind-quoted{background:rgba(0,114,178,.18)}
 .notes-kind-machined{background:rgba(213,94,0,.18)}
 .notes-source{opacity:.7}
@@ -885,6 +886,7 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 .chip.flowlink::before{content:"\2197\00a0";opacity:.6}
 #note-dialog{max-width:44rem;width:92vw}
 #note-dialog .coords{display:flex;gap:1rem;flex-wrap:wrap;margin:.4rem 0}
+#note-dialog .coords #note-form-gloss{flex-basis:100%;margin:0}
 #note-dialog .field{display:flex;flex-direction:column;gap:.15rem}
 #note-dialog .field label{font-size:.66rem;letter-spacing:.04em;text-transform:uppercase;opacity:.7}
 #note-dialog .readonly{border:1px solid var(--rule,#2a3a36);border-radius:.3rem;padding:.7rem .8rem;background:rgba(255,255,255,.03)}

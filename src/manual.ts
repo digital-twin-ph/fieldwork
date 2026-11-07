@@ -9,8 +9,11 @@ import pages from '../widgets/manual-pages.json';
 
 export const MANUAL_PAGES=pages as Record<string,string>;
 export const hasManual=(nodeType:string):boolean=>Object.hasOwn(MANUAL_PAGES,nodeType);
+/** A page for one of the application's own surfaces rather than a widget, keyed `surface:<name>`. */
+const surfaceOf=(key:string):string|undefined=>key.startsWith('surface:')?key.slice('surface:'.length):undefined;
+const sourcePath=(key:string):string=>surfaceOf(key)?`docs/surfaces/${surfaceOf(key)}.md`:`docs/widgets/${key}.md`;
 export const manualSource=(nodeType:string):string=>
-  `https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/${nodeType}.md`;
+  `https://github.com/digital-twin-ph/fieldwork/blob/main/${sourcePath(nodeType)}`;
 
 /** The Inspector's entry point. Absent for a widget with no page, rather than opening an empty
  *  dialog: 50 of 53 widgets have none, and offering a link to nothing is worse than offering none. */
@@ -29,8 +32,8 @@ export function openManual(nodeType:string,title:string,esc:(v:string)=>string):
     +`<button class="button" id="manual-close">Close</button></div>`
     +`<article class="manual-body">${page}</article>`
     +`<p class="muted">This page is part of the manual carried in this build. Its source is `
-    +`<a href="${manualSource(nodeType)}" target="_blank" rel="noopener noreferrer">docs/widgets/${esc(nodeType)}.md</a>, `
-    +`and the widget's ontology entry points at it with <code>fw:userManual</code>.</p>`;
+    +`<a href="${manualSource(nodeType)}" target="_blank" rel="noopener noreferrer">${esc(sourcePath(nodeType))}</a>`
+    +(surfaceOf(nodeType)?'.</p>':`, and the widget's ontology entry points at it with <code>fw:userManual</code>.</p>`);
   document.body.append(dialog);
   const close=()=>{dialog.close();dialog.remove();};
   dialog.querySelector<HTMLButtonElement>('#manual-close')!.onclick=close;

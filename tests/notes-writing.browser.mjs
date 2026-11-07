@@ -206,3 +206,31 @@ test('editing a machined note forks it, and leaves the machined note alone',asyn
   await expect(fork).toHaveCount(1);
   await expect(fork.locator('.notes-fork')).toContainText('edited from a machined note');
 });
+
+test('adding a note says what précis, paraphrase and summary mean, and keeps the one chosen',async({page})=>{test.skip(!!skip,skip);
+  await southLondon(page);
+  await page.locator(RESULTS).locator('[data-add-note]').first().click();
+  await expect(page.locator('#note-dialog')).toBeVisible();
+  // ALL THREE, described before one is chosen: the dialog is where a note citing literature is written.
+  const gloss=page.locator('#note-form-gloss');
+  for(const form of ['Précis','Paraphrase','Summary'])await expect(gloss).toContainText(form);
+  // AND EXAMPLES OF EACH, a click away, in the Notes page of the manual.
+  await page.locator('#note-form-examples').click();
+  const manual=page.locator('#manual-dialog');
+  for(const heading of ['Précis: examples','Paraphrase: examples','Summary: examples'])
+    await expect(manual.locator('h4',{hasText:heading})).toBeVisible();
+  await expect(manual).toContainText('docs/surfaces/notes.md');
+  await manual.locator('#manual-close').click();
+  await expect(page.locator('#note-dialog')).toBeVisible();
+  await page.locator('#note-form').selectOption('summary');
+  await expect(gloss).toContainText('summary — the main points drawn together');
+  await page.locator('#note-text').fill('Station temperature differs from the air at resting sites.');
+  await page.locator('#note-save').click();
+  await expect(page.locator('#note-dialog')).not.toBeVisible();
+  const card=page.locator(RESULTS).locator('.notes-note',{hasText:'Station temperature differs'});
+  await expect(card.locator('.notes-form')).toHaveText('summary');
+  await page.reload();
+  await page.locator('[data-view="notes"]').click();
+  await page.locator('.notes-part').first().waitFor();
+  await expect(page.locator(RESULTS).locator('.notes-note',{hasText:'Station temperature differs'}).locator('.notes-form')).toHaveText('summary');
+});

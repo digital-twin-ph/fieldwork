@@ -8,7 +8,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,existsSync} from 'node:fs';
-import {readNotes,groupNotes,noteExtent,WRITE_UP_PARTS,MAX_NOTES} from '../build/notes.js';
+import {readNotes,groupNotes,noteExtent,WRITE_UP_PARTS,MAX_NOTES,KNOWN_NOTE_FORMS} from '../build/notes.js';
 
 const QUOTED='../example-1855-cholera-south-london/notes/snow-quotations.json';
 const snowNotes=()=>JSON.parse(readFileSync(QUOTED,'utf8')).notes;
@@ -124,4 +124,15 @@ test('a machined limitation is a function of Discussion, and a Limitations secti
   assert.equal(discussion.count,1);
   assert.deepEqual(discussion.groups.map(g=>g.fn),['limitation'],
     'grouped by the function, which needed no change to the closed set of body parts');
+});
+
+test('an authored note keeps the form it stands to its works in, and a form outside the three as written',()=>{
+  const {notes}=readNotes([
+    {kind:'authored',id:'p',section:'Discussion',fn:'limitation',text:'Restated.',form:'paraphrase'},
+    {kind:'authored',id:'q',section:'Discussion',text:'Drawn together.',form:'synthesis'},
+    {kind:'authored',id:'r',section:'Discussion',text:'No form.',form:'  '},
+  ]);
+  assert.deepEqual(notes.map(n=>n.form),['paraphrase','synthesis',undefined],
+    'précis, paraphrase and summary are offered first; anything else is kept; blank is absent, not empty');
+  assert.deepEqual(KNOWN_NOTE_FORMS,['précis','paraphrase','summary']);
 });

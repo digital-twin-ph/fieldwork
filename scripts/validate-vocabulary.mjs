@@ -19,7 +19,7 @@ import {fileURLToPath} from 'node:url';
 
 const root=fileURLToPath(new URL('../',import.meta.url));
 const LEDGER='docs/withdrawn-vocabulary.json';
-const SEARCHED=['docs','src','widgets','ontology','rulesets','compositions','tests','scripts'];
+const SEARCHED=['docs','src','widgets','ontology','rulesets','tests','scripts'];
 const EXTENSIONS=/\.(md|ts|tsx|json|ttl|mjs)$/;
 // The glossary states the withdrawal, this file enforces it, and the ledger lists the debt. All
 // three have to name the term to do their job.

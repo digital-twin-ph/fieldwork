@@ -33,7 +33,7 @@ export async function palette(){
 export function rows({definitions,classification,palette:p}){
   const byType=Object.fromEntries(classification.widgets.map(w=>[w.nodeType,w]));
   const inputStage=new Set(p.INPUT_STAGE);
-  const viaComposition=new Set([...p.ADDABLE_VIA_COMPOSITION,...p.ADDABLE_VIA_RULESET]);
+  const viaComposition=new Set([...p.ADDABLE_VIA_RULESET]);
   const order=p.PALETTE_GROUPS;
   return Object.entries(definitions)
     .filter(([type])=>!byType[type]?.retired)

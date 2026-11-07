@@ -708,7 +708,7 @@
     {
       "id": "urn:fieldwork:widget:micro_workflow",
       "nodeType": "micro_workflow",
-      "currentVersion": "0.2.0",
+      "currentVersion": "1.0.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -719,6 +719,11 @@
           "version": "0.2.0",
           "path": "widgets/releases/micro_workflow/0.2.0.json",
           "sha256": "9bd40c164c6010294e45dcbbebba91d1b5e9fdd52cd47d7058cd981a4a4a8046"
+        },
+        {
+          "version": "1.0.0",
+          "path": "widgets/releases/micro_workflow/1.0.0.json",
+          "sha256": "9056932c3f4af7d643e6e83e5c71fdaf5bd906b5d2580ea370c6cc29b2104d94"
         }
       ]
     },
@@ -1100,7 +1105,7 @@
     {
       "id": "urn:fieldwork:widget:relate_table",
       "nodeType": "relate_table",
-      "currentVersion": "0.6.0",
+      "currentVersion": "0.7.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -1136,6 +1141,11 @@
           "version": "0.6.0",
           "path": "widgets/releases/relate_table/0.6.0.json",
           "sha256": "9df0014c9e6325f5dd4e59b542c0d798fa3675fde5fab273b989471af362c3e4"
+        },
+        {
+          "version": "0.7.0",
+          "path": "widgets/releases/relate_table/0.7.0.json",
+          "sha256": "a1833471ee4b0bee25ab5663d8f05f1220cf3c1a46ad882d77b9e891755faae0"
         }
       ]
     },

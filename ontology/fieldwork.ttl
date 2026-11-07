@@ -61,10 +61,16 @@ fw:circleAreaFraction a owl:DatatypeProperty; rdfs:domain fw:PointBuffer; rdfs:r
   rdfs:label "Fraction of the true circle's area the polygon covers";
   rdfs:comment "A buffer is a polygon approximating a circle, so it is smaller than the circle it stands for. Emitted so the approximation is a number rather than a footnote.".
 fw:MicroWorkflow a owl:Class;
-  rdfs:label "Micro-workflow"; fw:implementationStatus "implemented"; rdfs:subClassOf prov:Plan;
+  rdfs:label "Micro-workflow"; fw:implementationStatus "retired"; rdfs:subClassOf prov:Plan;
+  owl:deprecated true;
+  dcterms:isReplacedBy fw:WorkflowStep;
+  skos:changeNote "Retired 2026-11-07 with Micro-workflow: no worked example used one. The steps a composition arranged run as ordinary workflow steps. Receipts made before that date carry this class.";
   rdfs:comment "A composition of registry widgets used as one step. A plan rather than an operation: it computes nothing itself, and the members it arranges report their own work. Pinned by version, because what it arranged is only reproducible against the versions it named.".
 fw:MicroWorkflowExpansion a owl:Class;
-  rdfs:label "Micro-workflow expansion"; fw:implementationStatus "implemented"; rdfs:subClassOf prov:Activity;
+  rdfs:label "Micro-workflow expansion"; fw:implementationStatus "retired"; rdfs:subClassOf prov:Activity;
+  owl:deprecated true;
+  dcterms:isReplacedBy fw:WorkflowStep;
+  skos:changeNote "Retired 2026-11-07 with Micro-workflow: no worked example used one. The steps a composition arranged run as ordinary workflow steps. Receipts made before that date carry this class.";
   rdfs:comment "The act of replacing one composition node with its members before a run. It states the association between the members and the plan and asserts fw:claimsNoComputation, because a composition must not take credit for what its members did. Without it a run's receipts read as unrelated primitives, which is true but incomplete.".
 fw:compositionId a owl:DatatypeProperty; rdfs:domain fw:MicroWorkflow; rdfs:range xsd:string;
   rdfs:label "Identifier of the composition".

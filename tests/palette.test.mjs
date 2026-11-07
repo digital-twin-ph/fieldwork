@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {addableTypes,PALETTE_GROUPS,RETIRED_FROM_PALETTE,ADDABLE_VIA_COMPOSITION,INPUT_STAGE} from '../build/palette.js';
+import {addableTypes,PALETTE_GROUPS,RETIRED_FROM_PALETTE,INPUT_STAGE} from '../build/palette.js';
 import {TYPES,exampleWorkflow} from '../build/core.js';
 import {oldNalediWorkflow} from '../build/old-naledi.js';
 import {johnSnowExample} from '../build/john-snow.js';
@@ -32,7 +32,7 @@ test('every node type is addable from some example, or deliberately is not',()=>
   // generic output. Each stays executable so saved work still runs; none is offered again.
   // micro_workflow is reachable, but through a composition entry rather than its own: the
   // palette lists one per bundled composition and each adds the node already configured.
-  const deliberate=new Set([...RETIRED_FROM_PALETTE,'places','centers',...ADDABLE_VIA_COMPOSITION]);
+  const deliberate=new Set([...RETIRED_FROM_PALETTE,'places','centers']);
   const unreachable=Object.keys(TYPES).filter(type=>!reachable().has(type)&&!deliberate.has(type));
   assert.deepEqual(unreachable,[],
     `these node types are registered but cannot be added from any example: ${unreachable.join(', ')}`);
@@ -63,7 +63,7 @@ test('an empty canvas offers the input stage only, and the retired output is nev
 // open evaluation obligation: four of seven pending audits, three of thirteen awaiting a lab
 // check, eight of forty-four awaiting a name review.
 test('every live widget is addable from EVERY example that holds an input',()=>{
-  const deliberate=new Set([...RETIRED_FROM_PALETTE,'places','centers',...ADDABLE_VIA_COMPOSITION,'output']);
+  const deliberate=new Set([...RETIRED_FROM_PALETTE,'places','centers','output']);
   const live=Object.keys(TYPES).filter(type=>!deliberate.has(type));
   // A blank canvas holds no input, so the input-stage gate applies to it and it is covered above.
   const withInput=EXAMPLES.filter(([,w])=>w.nodes.some(n=>INPUT_STAGE.has(n.type)));

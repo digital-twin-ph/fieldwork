@@ -1,10 +1,15 @@
 # 92 · A micro-workflow on the canvas
 
-_Created 2026-10-10 · Updated 2026-10-14_
+_Created 2026-10-10 · Updated 2026-11-07_
 
-**Status:** validated — the composition can be added, inspected, run and exploded, so
-the claim [89](89-the-first-composition.md) could not test is now testable by a
-person.
+**Status:** retired 2026-11-07. Validated on 2026-10-14 — the composition could be added, inspected, run and
+exploded — and then not pursued: no worked example used one, and the practitioner judged it not worth the time.
+
+**Retired.** The palette group, the step, its Inspector, Explode and the composition files are removed; a saved
+workflow holding one is refused by name, as for every retired widget. The steps it arranged stay on the palette.
+The lesson kept, the practitioner's, 2026-11-07: *"The lesson in microworkflows is that we have functions that can
+potentially be reused under the hood by other widgets, without necessarily making visible things more
+complicated."* [185](185-one-step-for-every-lag.md)'s list of shifts inside one Relate step follows it.
 
 ## What a practitioner can now do
 

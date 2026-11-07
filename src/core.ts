@@ -9,8 +9,6 @@ import {reachableCorridor,validateCorridorNode} from './reachable-corridor.js';
 import {travelTimeBand,validateBandNode} from './travel-time-band.js';
 import {stackPolygons,validateStackNode,isPolygonPort,polygonPort,MAX_POLYGON_LAYERS} from './stack-polygons.js';
 import {fillInteriorGaps,validateFillNode} from './fill-interior-gaps.js';
-import {expandMicroWorkflows} from './compositions.js';
-import {resolveComposition} from './composition-registry.js';
 /** Resolves a named credential to its secret. No current widget needs one; the credential
  *  manager stands on its own (experiment 30) and executeWorkflow still accepts a resolver so a
  *  future authenticated source does not change this signature. */
@@ -204,12 +202,14 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
     inputs:[['distances','distances']],output:'distances'},
   // One entry for every declared ruleset, replacing policy, access_policy and xpert, which
   // differed only in which rules they ran. Ports are the ruleset's and are pinned per node, so
-  // inputs is empty and output is null here, exactly as micro_workflow declares them.
+  // inputs is empty and output is null here.
   apply_ruleset:{title:'Apply ruleset',group:'Semantic reasoning',icon:'⋈',color:'purple',
     description:'Apply a declared, versioned ruleset to classify an input',
     inputs:[],output:null},
+  // RETIRED 2026-11-07: kept so a saved workflow holding one is refused by name. Its members' functions stay, as
+  // the widgets they always were.
   micro_workflow:{title:'Micro-workflow',group:'Micro-workflows',icon:'⧈',color:'indigo',
-    description:'A saved composition used as one step, which can be exploded into its primitives',
+    description:'Retired — build the steps it held from the palette',
     inputs:[],output:null},
   fill_interior_gaps:{title:'Fill interior gaps',group:'Spatial operations',icon:'◍',color:'teal',description:'Make each polygon solid by dropping its interior gaps, which enlarges it',inputs:[['polygons','polygons']],output:'polygons'},
   stack_polygons:{title:'Collect polygon layers',group:'Spatial operations',icon:'▤',color:'teal',description:'Gather several polygon layers into one without merging them, largest first',inputs:[['polygons','polygons'],['polygons_2','polygons'],['polygons_3','polygons'],['polygons_4','polygons'],['polygons_5','polygons'],['polygons_6','polygons']],output:'polygons'},
@@ -269,7 +269,6 @@ export function outputOf(node:WorkflowNode):PortType|null{
   // area, which the street network, the facilities and the clip all accept.
   if(node.type==='summarize_combined_area')return node.params.yields==='area'?'area':'polygons';
   if(node.type==='apply_ruleset')return node.params.ruleset?.output??null;
-  if(node.type==='micro_workflow')return node.params.composition?.output??null;
   if(node.type==='deduplicate_points'&&node.params.format==='table')return 'table';
   return TYPES[node.type].output;
 }
@@ -416,12 +415,9 @@ export function shownMode(node:WorkflowNode<'table_output'>,edges:{to:string;por
 }
 
 export function nodeInputs(node:WorkflowNode):[string,PortType][]{
-  // One node type serves every composition, so the ports are the composition's, pinned in
-  // the node rather than looked up: a saved workflow validates without the file present.
-  // An unconfigured one has no ports, which is the honest answer for a node on a canvas
-  // whose composition has not been chosen yet.
+  // A ruleset's ports are pinned in the node rather than looked up: a saved workflow validates without the file
+  // present. An unconfigured one has no ports, which is the honest answer for a step whose ruleset is not chosen.
   if(node.type==='apply_ruleset')return structuredClone(node.params.ruleset?.inputs??[]);
-  if(node.type==='micro_workflow')return structuredClone(node.params.composition?.inputs??[]);
   if(node.type==='compare_point_sets'&&node.params.centers)return [...TYPES.compare_point_sets.inputs,['originalCenter','mean-center'],['movedCenter','mean-center']];
   // EVERY PORT A CHART CAN DRAW, ALWAYS -- the change `map_output` and `table_output` already
   // took, and the one the blocker `output-mode-set-before-the-shape-arrives` prescribes for this
@@ -721,21 +717,6 @@ export function validateWorkflow(raw:unknown):Workflow {
         if((parameter.min!==undefined&&value<parameter.min)||(parameter.max!==undefined&&value>parameter.max))
           throw new Error(`${parameter.name} must be between ${parameter.min} and ${parameter.max}.`);
       }
-    }
-    if(n.type==='micro_workflow'){
-      const c=n.params.composition;
-      if(!c||typeof c.id!=='string'||!/^urn:fieldwork:composition:[a-z][a-z_]*$/.test(c.id)
-        ||!/^\d+\.\d+\.\d+$/.test(c.version||'')||typeof c.nodeType!=='string'||typeof c.title!=='string')
-        throw new Error('A micro-workflow names a composition by id and version.');
-      if(!Array.isArray(c.inputs)||!c.inputs.length||!c.output)
-        throw new Error(`${c.title||c.nodeType} pins no ports, so nothing could connect to it.`);
-      if(new Set(c.inputs.map(([port])=>port)).size!==c.inputs.length)
-        throw new Error(`${c.title} pins the same port twice.`);
-      if(!n.params.parameters||typeof n.params.parameters!=='object')
-        throw new Error(`${c.title} needs its parameter values.`);
-      for(const [key,value] of Object.entries(n.params.parameters))
-        if(!['string','number','boolean'].includes(typeof value))
-          throw new Error(`${c.title}: ${key} must be a single value.`);
     }
     if(n.type==='find_health_facilities')validateFindHealthFacilitiesNode(n);
     if(n.type==='buffer_point')validateBufferPointNode(n);
@@ -1071,9 +1052,6 @@ function signedByWidget(machined:Record<string,MachinedNote[]>,workflow:Workflow
 
 export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProgress:(id:string,status:'running'|'done'|'failed')=>void=()=>{},resolveCredential?:CredentialResolver):Promise<WorkflowRun> {
   workflow=validateWorkflow(workflow);
-  // A composition runs by becoming its members, after the authored graph has been validated
-  // as authored. The executor below has no composition branch: one receipt per member falls
-  // out of running ordinary nodes, which is what experiment 75 requires of it.
   const runId=crypto.randomUUID(), receipts:Receipt[]=[];
   // What each deduplication found, so the node can show the band it is waiting on.
   const linkages:Record<string,DeduplicateResult>={};
@@ -1107,8 +1085,6 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
     if(receipt.input)receipt.input+=facts;
   };
   const sources=derivedNotes(workflow.nodes,workflow.workflowKey);
-  const expansion=expandMicroWorkflows(workflow,resolveComposition,runId);
-  workflow=expansion.workflow;receipts.push(...expansion.receipts);
   const planned=executionPlan(workflow), values=new Map<string,unknown>(), trace:WorkflowRun['trace']=[];
   const optional=new Set(openEnds(workflow,planned).map(n=>n.id));
   const plan=[...planned,...workflow.nodes.filter(n=>optional.has(n.id))];

@@ -14,11 +14,11 @@ asset shows up.
 
 ## 1 · Widget utilization
 
-58 live widgets across 11 shipped examples and 6 pinned in its own repository.
+57 live widgets across 11 shipped examples and 6 pinned in its own repository.
 
 | Reach | Widgets |
 | --- | --- |
-| Used by no workflow | **12** |
+| Used by no workflow | **11** |
 | Used by exactly one | 20 |
 | Used by two or more | **26** |
 
@@ -33,7 +33,6 @@ fixed — see experiment 64.
 - `deduplicate_points`
 - `fill_interior_gaps`
 - `measure_area`
-- `micro_workflow`
 - `reachable_corridor`
 - `reachable_nodes`
 - `sample_raster`

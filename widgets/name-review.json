@@ -248,15 +248,6 @@
       "reviewedBy": null
     },
     {
-      "nodeType": "micro_workflow",
-      "title": "Micro-workflow",
-      "group": "Micro-workflows",
-      "fingerprint": "102c1f1a5f37",
-      "verdict": "pending",
-      "reviewed": null,
-      "reviewedBy": null
-    },
-    {
       "nodeType": "network_input",
       "title": "Street network",
       "group": "Sources",

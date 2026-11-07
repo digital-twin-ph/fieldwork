@@ -182,6 +182,12 @@ choose **events and units at risk** under *The outcome column holds*, and name t
 workflow holding one **refuses to open**, naming it; rebuild that step as a two-by-two connected to the
 table the Rate read. South London's 8.40 is unchanged to the last digit.
 
+**Micro-workflow** (`micro_workflow`) was retired on 2026-11-07. It held a saved group of steps as one step that
+could be exploded into them; no worked example used one. A saved workflow holding one **refuses to open**, naming it;
+rebuild the steps it held from the palette. Its two groups were *Walking catchment* (Snap sites to the network,
+Reachable junctions, Travel time band, Reachable corridor) and *Extent review* (Convex hull, then Apply ruleset with
+*Extent review*); every one of those steps is still on the palette.
+
 ## References and provenance
 
 **08 · Manila coastal exposure** is the worked example for sea-level projections. It holds 60 OpenStreetMap health facilities in a Manila bounding box, the eight published AR6 tide gauges for the Philippines, and the 288-value projection extract, and it assigns each facility its nearest gauge with the distance. It runs offline; everything is bundled. Two licences apply and both travel with anything you derive: the projections are CC BY 4.0 and oblige three citations, the facilities are ODbL and share-alike.

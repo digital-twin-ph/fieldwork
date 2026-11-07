@@ -474,19 +474,16 @@
    "migrationFrom": []
   },
   "micro_workflow": {
-   "version": "0.2.0",
-   "released": "2026-10-10",
+   "version": "1.0.0",
+   "released": "2026-11-07",
    "changes": [
     {
-     "kind": "initial",
-     "description": "A composition used as one step. One node type serves every composition: the node pins the composition's id, version, title, stage, ports and output type, so nodeInputs and outputOf read the contract from the node rather than the type table, and a saved workflow validates and reports drift without the composition file being present. Runs by expansion after the authored workflow is validated, so the executor has no composition branch and one receipt per member falls out of running ordinary nodes. Not addable from the palette yet: the palette offers admitted compositions, and none is admitted. Its params are the first thing in a saved workflow to record a version, against the not-yet-persisted claim every other release makes -- which is deliberate, because without a version there is nothing for drift detection to check when the file is reopened."
-    },
-    {
-     "kind": "added",
-     "description": "Records the arrangement. 0.1.0 declared an ontology gap: the node expanded before execution and emitted nothing, so a run showed four member activities with nothing saying they came from one composition at one version. Now the expansion emits a PROV association rather than invented vocabulary -- the composition is a prov:Plan and each member is associated with it -- and the members' receipts are unchanged, which is the other half of the requirement: a run of a composition must read as a run of the primitives. Also makes the node addable: the palette offers one entry per bundled composition with its governance status on the entry, replacing the reading that only an admitted composition may be added at all. That reading gated trying on review, and so gated the learning the review exists to protect."
+     "kind": "major",
+     "description": "Retired. Not worth pursuing, in the practitioner's judgement of 2026-11-07, and no worked example used one. The lesson kept, in the practitioner's words: \"we have functions that can potentially be reused under the hood by other widgets, without necessarily making visible things more complicated.\" The palette group, the step, its Inspector and Explode are gone; the functions its two compositions arranged stay, as the widgets they always were. A workflow saved with one is refused on loading, naming it, as for every retired widget; nobody outside the project builds on it.",
+     "breaking": true
     }
    ],
-   "breaking": false,
+   "breaking": true,
    "migrationFrom": []
   },
   "network_input": {
@@ -712,12 +709,12 @@
    "migrationFrom": []
   },
   "relate_table": {
-   "version": "0.6.0",
-   "released": "2026-11-06",
+   "version": "0.7.0",
+   "released": "2026-11-07",
    "changes": [
     {
      "kind": "minor",
-     "description": "Relates a table to itself shifted, writing the matched start as <column>_matched; a second shift is <date>_shifted_2; a join decision is signed with a short digest, and one saved in the old written-out form still holds; the second table's value can be chosen before a run."
+     "description": "Brings one column per shift when given a list of shifts (185): each named for its shift, as <column>_<n>d with a + sign for a lead, every row kept and the empty rows counted for each shift. The list is checked whole before the run: at least one shift, whole days, no repeats, at most 24, and a period to match within. One shift behaves exactly as before. The Inspector does not offer the list yet."
     }
    ],
    "breaking": false,

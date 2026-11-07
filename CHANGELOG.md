@@ -3,6 +3,17 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.46.0 — 2026-11-07
+
+- **Micro-workflows are retired.** No worked example used one. A workflow saved with one refuses to open and names
+  it; rebuild the steps it held from the palette, where every one of them still is. Nobody outside the project builds
+  on it.
+- **Tidy works the same at any zoom.** Pressing it twice now says "Already laid out in order" instead of moving the
+  steps again, because it measures each step's own height, which zoom does not change.
+- **Relate can bring one column per shift** when a saved workflow lists several shifts: the first step of
+  [185](docs/experiments/185-one-step-for-every-lag.md). Every row is kept, and the empty rows are counted for each
+  shift. The Inspector does not offer the list yet; it comes with Relate's standard dialog.
+
 ## 0.45.0 — 2026-11-07
 
 - **Every word is readable.** Nothing on screen is smaller than 14 px, body text is 16 px, and the faint grey text

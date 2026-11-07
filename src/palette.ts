@@ -31,7 +31,7 @@ import portContracts from '../widgets/port-contracts.json';
  *  reveal measurement in experiment 112 cannot disagree about what an input is -- the same
  *  arrangement the playback uses, and for the same reason.
  *
- *  A widget whose ports come from a pin (`apply_ruleset`, `micro_workflow`) is not an input: it
+ *  A widget whose ports come from a pin (`apply_ruleset`) is not an input: it
  *  has no ports at all until it is configured, which is a different thing from needing nothing. */
 interface DeclaredContract {output?:string|null; lateBoundTo?:string; contracts?:{required:unknown[]}[]}
 export const INPUT_STAGE:ReadonlySet<string>=new Set(
@@ -52,12 +52,6 @@ export const INPUT_STAGE:ReadonlySet<string>=new Set(
  *  A retired widget never runs, so this list is also what the workflow loader refuses on. */
 export const RETIRED_FROM_PALETTE:readonly string[]=
   (classification.widgets as {nodeType:string; retired?:boolean}[]).filter(w=>w.retired).map(w=>w.nodeType);
-
-/** Addable, but not by choosing the type: the palette shows one entry per bundled
- *  composition and each adds a `micro_workflow` node already carrying that composition's
- *  pinned contract and defaults. A generic entry would add a node with no composition, which
- *  has no ports and cannot run, so the type is kept out of `ALWAYS_ADDABLE` on purpose. */
-export const ADDABLE_VIA_COMPOSITION=['micro_workflow'] as const;
 
 /** Nothing. The palette offers ONE generic rule-application widget and the ruleset is chosen on
  *  the node.

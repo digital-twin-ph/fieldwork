@@ -23,12 +23,10 @@ import {SERIES_TABLE_KEYS} from './case-series.js';
 import {SITE_ASSIGNMENT_TABLE_KEYS} from './sea-level.js';
 import {installCredentials} from './credentials-ui.js';
 import type {CredentialAccess} from './credentials-ui.js';
-import {addableTypes,PALETTE_GROUPS,ADDABLE_VIA_COMPOSITION,ADDABLE_VIA_RULESET} from './palette.js';
+import {addableTypes,PALETTE_GROUPS,ADDABLE_VIA_RULESET} from './palette.js';
 import {MARK_RADIUS_MIN,MARK_RADIUS_MAX} from './presentation.js';
-import {compositionEntry,explodeMicroWorkflow,detectDrift} from './compositions.js';
 import {tidyLayout,alreadyTidy} from './layout.js';
 import {TILE_DEFAULT_MAX_ZOOM,TILE_MAX_ZOOMS,TILE_SOURCE,drawnBounds,importTiles,type TileExtractSpec} from './tile-extract.js';
-import {bundledCompositions,resolveComposition} from './composition-registry.js';
 import {OVERTURE_DEFAULT_CONFIDENCE} from './overture-places.js';
 import {seaLevelExample} from './sea-level-example.js';
 import {rulesetExample} from './ruleset-example.js';
@@ -1699,23 +1697,7 @@ function renderLibrary(search=''){
   // What progressive reveal would offer at this step. Dimmed rather than removed: a hidden
   // widget can make a practitioner conclude the application cannot do something it can.
   const revealed=playbackStep===null?null:revealedTypes(playbackPlaced());
-  let group='';const entries=Object.entries(TYPES).filter(([k,t])=>allowed.has(k)&&!ADDABLE_VIA_COMPOSITION.includes(k as typeof ADDABLE_VIA_COMPOSITION[number])&&!ADDABLE_VIA_RULESET.includes(k as typeof ADDABLE_VIA_RULESET[number])&&(t.title+' '+t.description).toLowerCase().includes(search.toLowerCase())).sort((a,b)=>PALETTE_GROUPS.indexOf(a[1].group as typeof PALETTE_GROUPS[number])-PALETTE_GROUPS.indexOf(b[1].group as typeof PALETTE_GROUPS[number]));$('#library-count').textContent=revealed?`${entries.filter(([k])=>revealed.has(k as NodeType)).length} of ${allowed.size}`:String(allowed.size);$('#node-library').innerHTML=entries.map(([k,t])=>{const heading=t.group!==group?`<div class="library-group">${t.group}</div>`:'';group=t.group;return `${heading}<button class="palette-node ${t.color} ${workflow.nodes.find(n=>n.id===selected)?.type===k?'primitive-selected':''} ${revealed&&!revealed.has(k as NodeType)?'unrevealed':''}" ${revealed&&!revealed.has(k as NodeType)?'title="Nothing on the canvas emits what this takes, at this step"':''} aria-current="${workflow.nodes.find(n=>n.id===selected)?.type===k?'true':'false'}" data-add="${k}"><span class="palette-icon">${t.icon}</span><strong>${t.title}</strong><span>+</span></button>`;}).join('');
-  // One entry per bundled composition, under Micro-workflows, with its governance status
-  // where a practitioner sees it. An unreviewed composition is offered and says so, because
-  // a rule that stops one being tried stops the learning it was written to protect.
-  const compositions=bundledCompositions()
-    .filter(c=>(c.title+' '+c.description).toLowerCase().includes(search.toLowerCase()));
-  if(compositions.length){
-    $('#node-library').insertAdjacentHTML('beforeend',`<div class="library-group">Micro-workflows</div>`
-      +compositions.map(c=>{const entry=compositionEntry(c);
-        const mark=entry.status==='admitted'?'':`<span class="pill warn">${esc(entry.status)}, unreviewed</span>`;
-        return `<button class="palette-node indigo" data-composition="${esc(entry.key)}" `
-          +`title="${esc(c.mustNotBeReadAs)}"><span class="palette-icon">⧈</span>`
-          +`<span class="palette-label">${esc(entry.title)} ${mark}</span>`
-          +`<span class="palette-note">${esc(c.members.length+' steps · '+entry.stage)}</span></button>`;
-      }).join(''));
-    if(!revealed)$('#library-count').textContent=String(allowed.size+compositions.length);
-  }
+  let group='';const entries=Object.entries(TYPES).filter(([k,t])=>allowed.has(k)&&!ADDABLE_VIA_RULESET.includes(k as typeof ADDABLE_VIA_RULESET[number])&&(t.title+' '+t.description).toLowerCase().includes(search.toLowerCase())).sort((a,b)=>PALETTE_GROUPS.indexOf(a[1].group as typeof PALETTE_GROUPS[number])-PALETTE_GROUPS.indexOf(b[1].group as typeof PALETTE_GROUPS[number]));$('#library-count').textContent=revealed?`${entries.filter(([k])=>revealed.has(k as NodeType)).length} of ${allowed.size}`:String(allowed.size);$('#node-library').innerHTML=entries.map(([k,t])=>{const heading=t.group!==group?`<div class="library-group">${t.group}</div>`:'';group=t.group;return `${heading}<button class="palette-node ${t.color} ${workflow.nodes.find(n=>n.id===selected)?.type===k?'primitive-selected':''} ${revealed&&!revealed.has(k as NodeType)?'unrevealed':''}" ${revealed&&!revealed.has(k as NodeType)?'title="Nothing on the canvas emits what this takes, at this step"':''} aria-current="${workflow.nodes.find(n=>n.id===selected)?.type===k?'true':'false'}" data-add="${k}"><span class="palette-icon">${t.icon}</span><strong>${t.title}</strong><span>+</span></button>`;}).join('');
   // One entry per bundled ruleset, each adding a node with that ruleset already pinned. The
   // generic "Apply ruleset" entry that stood here until 2026-10-14 added a node with no ruleset,
   // which has no ports and cannot run -- exactly what src/palette.ts said must not happen, while
@@ -1723,7 +1705,7 @@ function renderLibrary(search=''){
   // "a widget nobody can add is invisible", one layer down.
   //
   // The basis status is shown where a practitioner decides, not buried in the Inspector. An
-  // illustrative ruleset is offered and says so, for the same reason an unreviewed composition is.
+  // illustrative ruleset is offered and says so, because a rule that stops one being tried stops the learning it was written to protect.
   // Input widgets already in the OTHER workflows of this project. The practitioner, 2026-10-19:
   // *"I create a second workflow and I should then be able to see input widget from other
   // workflows IN the same project."* And, sharpening it: *"if there are no other workflows there
@@ -1777,18 +1759,6 @@ function renderLibrary(search=''){
         ?'The project holds one copy of its data; rename this node freely.'
         :`This node holds a reference to the data and "${input.workflowName}" still holds its own `
           +'copy, so the project holds two until that one is read in again. Rename this node freely.'));
-  });
-  $('#node-library').querySelectorAll<HTMLButtonElement>('[data-composition]').forEach(b=>b.onclick=()=>{
-    const found=bundledCompositions().find(c=>`${c.id}@${c.version}`===b.dataset.composition);
-    if(!found)return;
-    let entry;try{entry=compositionEntry(found);}catch(error){alert((error as Error).message);return;}
-    const id=`${found.nodeType}-${Date.now()}`;
-    const didAdd=change(w=>{w.nodes.push({id,type:'micro_workflow',
-      x:180+(w.nodes.length%4)*80,y:90+(w.nodes.length%3)*80,params:entry!.params} as WorkflowNode);
-      selected=id;});
-    if(didAdd===false)return;
-    flow?.fit();
-    toast(`${entry.title} added as one step. Connect its ports; it expands into ${found.members.length} primitives when it runs.`);
   });
   $('#node-library').querySelectorAll<HTMLButtonElement>('[data-add]').forEach(b=>b.onclick=()=>{
     // Four widgets reached the palette on 2026-10-19 when `addableTypes` stopped consulting a
@@ -1951,30 +1921,6 @@ function renderInspector(){
     &&!alert.unconnected.length&&!alert.offNetwork.length;
   if(alert)content+=`<div class="inspector-alert" role="alert"><strong>${issuesOnly?'Read as not recorded':gapsOnly?'Not declared':'Out of bounds'} · ${esc(alertHeadline(alert))}</strong><p>${esc(alertText(alert))}</p><table><thead><tr><th>${gapsOnly?'Field':'Site'}</th><th>What happened</th><th>${gapsOnly?'What is missing':'Distance'}</th></tr></thead><tbody>${alertRows(alert).map(r=>`<tr><td>${esc(r.name)}</td><td>${esc(r.outcome)}</td><td>${esc(r.detail)}</td></tr>`).join('')}</tbody></table>${dirty?'<p class="muted">From the previous run — rerun after changes.</p>':''}</div>`;
   content+=diveDeeperPanel(n.type,esc);
-  if(n.type==='micro_workflow'){
-    const pin=n.params.composition;
-    const found=bundledCompositions().find(c=>c.id===pin.id&&c.version===pin.version);
-    const drift=found?detectDrift(found,widgetRegistry).filter(d=>d.state!=='unchanged'):[];
-    content+=`<div class="notice">${esc(found?found.description:'')}</div>`
-      +`<dl class="facts"><dt>Composition</dt><dd><code>${esc(pin.nodeType)}</code> ${esc(pin.version)}</dd>`
-      +`<dt>Stage</dt><dd>${esc(pin.stage)}</dd>`
-      +`<dt>Governance</dt><dd>${esc(found?found.governance.status:'unknown')}`
-      +`${found&&found.governance.status!=='admitted'?' · not reviewed by a human':''}</dd>`
-      +`<dt>Steps</dt><dd>${found?found.members.map(m=>esc(m.type)).join(' → '):'unavailable in this build'}</dd></dl>`
-      +(found?'':`<div class="notice warn">This build does not carry ${esc(pin.id)} ${esc(pin.version)}, so this step cannot run or be exploded.</div>`)
-      +(drift.length?`<div class="notice warn">${drift.map(d=>esc(d.detail)).join(' ')}</div>`:'')
-      +(found?found.parameters.map(parameter=>{
-        const value=n.params.parameters[parameter.name];
-        const member=parameter.members.map(m=>m.node).join(', ');
-        return `<label class="field-label" for="micro-${esc(parameter.name)}">${esc(parameter.title)}`
-          +`<small> · ${esc(member)}</small></label>`
-          +(typeof parameter.default==='number'
-            ?`<input id="micro-${esc(parameter.name)}" type="number" data-micro-param="${esc(parameter.name)}" value="${esc(String(value))}">`
-            :`<input id="micro-${esc(parameter.name)}" data-micro-param="${esc(parameter.name)}" value="${esc(String(value))}">`);
-      }).join(''):'')
-      +(found?`<button class="button" id="micro-explode">Explode into ${found.members.length} steps</button>`
-        +`<p class="muted">Exploding replaces this node with its primitives so each can be inspected and changed. It cannot be reassembled; Undo is the way back, because once a member's parameter changes the nodes are no longer this composition at this version.</p>`:'');
-  }
   if(n.type==='mean_center'){
     content+=`<div class="notice">${n.params.weightField?.trim()?`Weighted by <strong>${esc(n.params.weightField.trim())}</strong>: each point counts in proportion to that attribute, and the receipt asserts the field and the weight total beside the point count.`:'Unweighted mean of projected point locations. Name an attribute below to weight each point by it \u2014 250 addresses carrying 489 deaths have two different centres.'} The computation uses UTM internally and emits one CRS84 center; it does not create a projected point dataset. Keep source and result private when locations are sensitive.</div><div class="field"><label class="field-label" for="mean-center-weight">Weight each point by this attribute (optional)</label><input id="mean-center-weight" data-slr="weightField" maxlength="60" value="${esc(n.params.weightField||'')}" placeholder="DEATHS"><p class="description">Leave empty for one point, one vote. A missing, non-numeric or negative weight is refused and counted; zero is kept, because a house where nobody died contributes no deaths.</p></div><label class="field-label" for="mean-center-zone">WGS84 UTM zone</label><input id="mean-center-zone" type="number" min="1" max="60" value="${n.params.zone}"><label class="field-label" for="mean-center-hemisphere">Hemisphere</label><select id="mean-center-hemisphere"><option value="north" ${n.params.hemisphere==='north'?'selected':''}>North</option><option value="south" ${n.params.hemisphere==='south'?'selected':''}>South</option></select>`;
   }else if(n.type==='compare_point_sets'||n.type==='comparison_map'){
@@ -3965,24 +3911,6 @@ function renderInspector(){
   for(const key of ['innerM','outerM','seed','resolution','minOccupancy'])optionalElement(`#privacy-${key}`)?.addEventListener('change',e=>change(w=>{(required(w.nodes.find(x=>x.id===n.id)).params as unknown as Record<string,unknown>)[key]=control(e).value===''?NaN:Number(control(e).value);}));
   optionalElement('#comparison-zone')?.addEventListener('change',e=>change(w=>getNode(w,n.id,'compare_point_sets').params.zone=control(e).value===''?NaN:Number(control(e).value)));
   optionalElement('#comparison-hemisphere')?.addEventListener('change',e=>change(w=>getNode(w,n.id,'compare_point_sets').params.hemisphere=control(e).value as 'north'|'south'));
-  document.querySelectorAll<HTMLInputElement>('[data-micro-param]').forEach(el=>el.onchange=()=>change(w=>{
-    const target=getNode(w,n.id,'micro_workflow');
-    const name=required(el.dataset.microParam);
-    const found=bundledCompositions().find(c=>c.id===target.params.composition.id
-      &&c.version===target.params.composition.version);
-    const declared=found?.parameters.find(p=>p.name===name);
-    target.params.parameters[name]=typeof declared?.default==='number'
-      ?(el.value===''?NaN:Number(el.value)):el.value;
-  }));
-  optionalElement('#micro-explode')?.addEventListener('click',()=>{
-    const exploded=change(w=>{
-      const next=explodeMicroWorkflow(w,n.id,resolveComposition);
-      w.nodes=next.nodes;w.edges=next.edges;selected=next.nodes.find(x=>x.id.startsWith(`${n.id}-`))?.id??selected;
-    });
-    if(exploded===false)return;
-    flow?.fit();
-    toast('Exploded into its primitives. Undo to put it back as one step.');
-  });
   optionalElement('#chart-panels-by')?.addEventListener('change',e=>change(w=>{
     const target=getNode(w,n.id,'chart_output'),raw=control(e).value.trim();
     if(raw===''){delete target.params.panelsBy;delete target.params.panelMarks;delete target.params.shade;}
@@ -5912,7 +5840,7 @@ $('#canvas').addEventListener('click',event=>{
 });
 $('#run-button').onclick=run;onRunDetail(detail=>{runProgress=detail;drawRunProgress();});$('#node-search').oninput=e=>renderLibrary(control(e).value);$('#zoom-in').onclick=()=>flow?.zoomIn();$('#zoom-out').onclick=()=>flow?.zoomOut();$('#fit-button').onclick=()=>flow?.fit();
 // Columns in the order the work happens. Offered rather than applied: a canvas somebody has
-// arranged is theirs, and exploding a micro-workflow is the moment it stops being readable.
+// arranged is theirs, and a canvas grown step by step is the moment it stops being readable.
 $('#tidy-button').onclick=()=>{
   if(busy)return;
   // Heights in canvas units: an element's own layout height, which the canvas zoom does not change.

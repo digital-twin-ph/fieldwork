@@ -125,14 +125,15 @@ test('the shipped ledger passes and covers every live widget', ()=>{
   // 59 the same day, with sample_satellite_files_at_points: "Sample satellite files seems to be more straightforward".
   // 58 on 2026-11-06, buffer_area retired: a source's own margin fetches beyond an area, and a cross-border study is a
   // study area that straddles the border.
-  assert.equal(review.reviews.length,58);
+  // 57 on 2026-11-07, micro_workflow retired: no worked example used one.
+  assert.equal(review.reviews.length,57);
 });
 
 test('the generated table shows the palette words beside the identifier', ()=>{
   const definitions={clip_raster:{title:'Clip raster',group:'Spatial operations',icon:'x',color:'t',
     description:'d',inputs:[['raster','raster']],output:'raster'}};
   const palette={PALETTE_GROUPS:['Spatial operations'],INPUT_STAGE:new Set(['point_input']),
-    ADDABLE_VIA_COMPOSITION:[],ADDABLE_VIA_RULESET:[]};
+    ADDABLE_VIA_RULESET:[]};
   const list=rows({definitions,classification:{widgets:[{nodeType:'clip_raster',classification:'standard'}]},palette});
   assert.equal(list[0].offered,'once the canvas holds an input');
   const text=markdown({rows:list,review:{reviews:[]},stampedAt:'2026-10-13'});

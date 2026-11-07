@@ -1,0 +1,66 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:micro_workflow",
+ "version": "1.0.0",
+ "nodeType": "micro_workflow",
+ "title": "Micro-workflow",
+ "released": "2026-11-07",
+ "implementationStatus": "retired",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['micro_workflow']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "shaclShapes": [],
+  "validationStatus": "application-only"
+ },
+ "ports": {
+  "inputs": [],
+  "output": null
+ },
+ "ontology": {
+  "status": "partial",
+  "mappings": [
+   {
+    "role": "activity",
+    "iri": "urn:fieldwork:MicroWorkflowExpansion",
+    "file": "ontology/fieldwork.ttl"
+   },
+   {
+    "role": "configuration",
+    "iri": "urn:fieldwork:MicroWorkflow",
+    "file": "ontology/fieldwork.ttl"
+   }
+  ],
+  "emits": {
+   "classes": [],
+   "properties": []
+  },
+  "note": "Emits an fw:MicroWorkflowExpansion activity recording the association between the members and the composition, which is declared an fw:MicroWorkflow and a prov:Plan. It asserts fw:claimsNoComputation so a reader counting activities does not credit the arrangement with the work, and carries fw:compositionVersion and fw:governanceStatus so a result produced with an unreviewed composition says so. Each member node is associated with the plan through prov:qualifiedAssociation and fw:memberOf, and the public parameter values are recorded as names and text. The members report their own work untouched, so a run of a composition reads as a run of the primitives, with one additional record of what arranged them."
+ },
+ "implementation": {
+  "files": [
+   "src/types.ts",
+   "src/core.ts",
+   "src/palette.ts"
+  ],
+  "definition": "src/palette.ts"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": null
+ },
+ "changes": [
+  {
+   "kind": "major",
+   "description": "Retired. Not worth pursuing, in the practitioner's judgement of 2026-11-07, and no worked example used one. The lesson kept, in the practitioner's words: \"we have functions that can potentially be reused under the hood by other widgets, without necessarily making visible things more complicated.\" The palette group, the step, its Inspector and Explode are gone; the functions its two compositions arranged stay, as the widgets they always were. A workflow saved with one is refused on loading, naming it, as for every retired widget; nobody outside the project builds on it.",
+   "breaking": true
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Covered by tests/compositions.test.mjs, which runs the shipped composition as one node and checks four member receipts with the numbers the Validation Lab checked against NetworkX and GEOS. Not established: that a practitioner finds one node easier to follow than four, which is the claim compositions exist for and still needs a person. Not implemented: exploding the node on the canvas, and the expansion provenance named above."
+ }
+}

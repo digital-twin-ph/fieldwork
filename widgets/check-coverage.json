@@ -8,10 +8,10 @@
   },
   "measuredAt": "2026-10-27",
   "counts": {
-    "widgets": 58,
+    "widgets": 57,
     "covered": 28,
     "awaiting": 14,
-    "none": 15,
+    "none": 14,
     "blocked": 1
   },
   "widgets": [
@@ -152,11 +152,6 @@
       "expectation": "parity",
       "check": null,
       "computes": "Computes the distance from each point to the nearest centre."
-    },
-    {
-      "nodeType": "micro_workflow",
-      "expectation": "none",
-      "reason": "Expands to its members and asserts fw:claimsNoComputation. The members carry the checks."
     },
     {
       "nodeType": "network_input",

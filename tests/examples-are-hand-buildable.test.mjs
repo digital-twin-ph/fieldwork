@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {EXAMPLE_TEMPLATES,WORKED_EXAMPLE_KEYS} from '../build/example-templates.js';
-import {addableTypes,RETIRED_FROM_PALETTE,ADDABLE_VIA_COMPOSITION,ADDABLE_VIA_RULESET} from '../build/palette.js';
+import {addableTypes,RETIRED_FROM_PALETTE,ADDABLE_VIA_RULESET} from '../build/palette.js';
 import {bundledRulesets} from '../build/rulesets.js';
 
 /** NO WORKED EXAMPLE MAY USE A WIDGET SOMEBODY ELSE COULD NOT HAVE CONFIGURED BY HAND.
@@ -29,7 +29,6 @@ test('every node a worked example places is one the palette offers',()=>{
   for(const key of WORKED_EXAMPLE_KEYS)
     for(const node of nodesOf(EXAMPLE_TEMPLATES[key]))
       if(!offered.has(node.type)
-        &&!ADDABLE_VIA_COMPOSITION.includes(node.type)
         &&!ADDABLE_VIA_RULESET.includes(node.type))
         unreachable.push(`${key}:${node.type}`);
   assert.deepEqual([...new Set(unreachable)],[],

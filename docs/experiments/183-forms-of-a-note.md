@@ -83,15 +83,20 @@ review than notes written without them.
 
 ## What would close it
 
-**It moves to `tried`** when the five forms are built — own words and the direct-quote route in the Add note
-dialog, the manual page revised — and measurements 1 and 2 above are recorded with their counts.
+The practitioner, 2026-11-07: *"For 183 we can close it by an evidence search about improving academic writing."*
 
-**It moves to `validated`** when the plain checks run over every example's notes and the share of their findings
-judged right is recorded, with the checks that fell below it removed. That validates the checks, not the claim that
-the forms help people write: that one stays a field question, and this document stays open to it.
+**It closes on that search**: open evidence on whether teaching writers to distinguish quoting, paraphrasing,
+summarising and their own argument improves what they write. What the search finds decides the status:
 
-**It closes as `retired`** if measurement 1 finds the forms do not fit the notes that exist, recorded with the notes
-that broke it.
+- **`validated`** if open studies show that teaching or prompting these distinctions improves source use or
+  argument in writing, and the forms here match what was taught. The design is then kept, and revised where the
+  evidence names a better set.
+- **`retired`** if the evidence finds no such effect, or finds that labelling a text's relation to its sources does
+  not change it. The forms then go, or stay only as a reader's label, recorded with the studies.
+- **Still `asked`**, with the gap stated, if the open evidence cannot say either way.
+
+The three measurements above and the field question stay open beside it: the search says whether the idea is sound,
+not whether this application's version of it works for the people using it.
 
 ## What this does not establish
 

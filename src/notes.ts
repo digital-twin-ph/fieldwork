@@ -140,20 +140,42 @@ export const KNOWN_NOTE_FUNCTIONS=['context','rationale','source','method','veri
  *  the South London example has a node called `table-viii` in THREE of its six workflows, and
  *  `table-xii` in two. Measured, not supposed. A project-wide graph keyed on those would have
  *  joined three different citations into one node. */
-/** HOW A NOTE THAT CITES LITERATURE STANDS TO IT. The practitioner, 2026-11-07, as the Brazil example's notes on
- *  what a mosquito meets were being written: *"Our notes that cite literature can take the form of a precis,
- *  paraphrase or summary."*
+/** TWO QUESTIONS A NOTE ANSWERS ABOUT ITS SOURCES: whose words, and whose argument.
  *
- *  A quoted note already says this of itself -- verbatim -- so the form is the authored note's counterpart: whether
- *  its sentence condenses one work's argument (précis), restates a passage in other words (paraphrase), or draws
- *  several works together (summary). A reader checking a claim needs to know which, because a paraphrase can be
- *  held against a page and a summary only against the works together.
+ *  First built as one list -- précis, paraphrase, summary -- when the practitioner set out, 2026-11-07, as the Brazil
+ *  notes were written: *"Our notes that cite literature can take the form of a precis, paraphrase or summary."* An
+ *  evidence search the same day (docs/research/teaching-writing-from-sources-2026-11-07.md, experiment 183) found
+ *  that studies of source use code two things separately: how much of a source's wording is borrowed, and whether the
+ *  writer reports the sources or argues from them. None separates précis from summary, and the most common borrowing
+ *  problem, patchwriting, has a name of its own. So the list became two questions, at the practitioner's word: *"Let's
+ *  do the redesign."*
  *
- *  Free text, read as the function is: the three are offered first and anything else is kept as written. A note
- *  without one is not refused. */
-/*  `not sure` is the writer saying they looked and could not tell, which is a question for a reviewer rather than a
- *  gap: the practitioner, 2026-11-07, *"Not sure is ok"*. Nothing chosen stays absent and reads as unstated. */
-export const KNOWN_NOTE_FORMS=['précis','paraphrase','summary','not sure'];
+ *  Both are optional and both are free text, read as the function is: the known answers are offered first and anything
+ *  else is kept as written. Nothing chosen stays absent and reads as unstated. `not sure` is the writer saying they
+ *  looked and could not tell -- *"Not sure is ok"* -- a question for a reviewer rather than a gap. */
+export interface NoteAnswer {value:string; label:string; gloss:string}
+export const NOTE_WORDS:NoteAnswer[]=[
+  {value:'exact',label:'the source’s exact words',
+    gloss:'a quotation: put it in quotation marks and cite the page'},
+  {value:'close',label:'close to the source’s wording',
+    gloss:'often a stage in learning to paraphrase; revise it into your own words, or quote it'},
+  {value:'passage',label:'my words: one passage',
+    gloss:'a paraphrase, checked against that passage'},
+  {value:'points',label:'my words: the main points',
+    gloss:'a summary of one work or several, checked against each work'},
+  {value:'not sure',label:'not sure',
+    gloss:'you looked and could not tell; a reviewer can help decide'},
+];
+export const NOTE_ARGUMENT:NoteAnswer[]=[
+  {value:'reports',label:'what the works say',
+    gloss:'reporting: a reader checks it against the works'},
+  {value:'own',label:'what I make of them',
+    gloss:'your analysis, reasoning or synthesis: a reader judges the reasoning, and whether the works cited support it'},
+  {value:'not sure',label:'not sure',
+    gloss:'you looked and could not tell; a reviewer can help decide'},
+];
+/** A note saved before 0.43.0 carried one `form`. Read into `words`, so nothing written then is lost. */
+const LEGACY_FORM:Record<string,string>={'précis':'points',summary:'points',paraphrase:'passage','not sure':'not sure'};
 
 export type NoteId=string;
 
@@ -294,8 +316,10 @@ export interface AuthoredNote {
   relatesTo?:NoteId[];
   /** The works this note cites. Marked where the note renders and listed in References. */
   works?:CitedWork[];
-  /** Précis, paraphrase or summary of the works it cites: see KNOWN_NOTE_FORMS. */
-  form?:string;
+  /** Whose words: how much of a cited source's wording this note carries. See NOTE_WORDS. */
+  words?:string;
+  /** Whose argument: whether it reports the works or argues from them. See NOTE_ARGUMENT. */
+  argument?:string;
 }
 
 /** WHAT AN INPUT DECLARES ABOUT ITSELF, as a note.
@@ -441,7 +465,9 @@ export function readNotes(raw:unknown):{notes:Note[]; unreadable:number}{
           ...(text(from!.at)?{at:text(from!.at)}:{})}}:{}),
         ...(edges(entry.relatesTo).length?{relatesTo:edges(entry.relatesTo)}:{}),
         ...(worksOf(entry.works).length?{works:worksOf(entry.works)}:{}),
-        ...(text(entry.form)?{form:text(entry.form)}:{})});
+        ...((text(entry.words)||LEGACY_FORM[text(entry.form)]||text(entry.form))
+          ?{words:text(entry.words)||LEGACY_FORM[text(entry.form)]||text(entry.form)}:{}),
+        ...(text(entry.argument)?{argument:text(entry.argument)}:{})});
       continue;
     }
     if(entry.kind==='machined'){

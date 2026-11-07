@@ -996,10 +996,10 @@ never as a writer, and most of what it would catch needs no model. The practitio
 reliability and hallucination re LLM use."* So no model now. The checks, each a finding on the note (flagged, never
 refused), deterministic and offline:
 
-- a note citing works with no form, or a précis citing more than one work;
-- causal wording (*caused*, *proves*, *effect of*) in a note about an association;
-- a summary or précis that goes on to the writer's own reading with no visible turn;
-- a précis of a work the note says was read only in abstract, once a note can say how far a work was read.
+- a note citing works with *whose words* unanswered;
+- causal wording (*caused*, *proves*, *effect of*) in a note answering *what I make of them*, where overclaiming happens;
+- a note answering *what the works say* that cites no work;
+- *my words: one passage* citing more than one work.
 
 A small model stays an idea: worth an experiment only if a question it asks leads a trainee to fix something these
 checks miss, measured. Experiment 182 records how this arose, [183](docs/experiments/183-forms-of-a-note.md) the

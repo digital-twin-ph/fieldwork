@@ -13,65 +13,107 @@ A note is one of four kinds:
 - **machined**: written by a widget about what it did; the next run rewrites it.
 - **authored**: written by you.
 
-Each note also has a **function**, which says what it does for a reader (context, rationale, source, method, verification, finding, limitation). An authored note that cites literature can also say its **form**.
+Each note has a **function**, which says what it does for a reader (context, rationale, source, method, verification, finding, limitation). An authored note can also answer two questions about its sources: **whose words** and **whose argument**.
 
 ## How to use it
 
 1. Choose **Add note** under the part of the write-up where the note belongs.
-2. Write the note. Choose its function, and, if it cites literature, its form.
-3. Add the works it cites under **Citations**. They are marked on the note and listed in References.
-4. Choose **Add note** (or **Save** when editing) to keep it on the project.
+2. Write the note. The dialog shows questions to ask of that part; hide them once they are habit.
+3. Choose its function. If it draws on literature, answer whose words and whose argument.
+4. Add the works it cites under **Citations**. They are marked on the note and listed in References.
+5. Choose **Add note** (or **Save** when editing) to keep it on the project.
 
 A note can be moved to another part by dragging its card. Editing a machined note does not change it: the edit becomes an authored note that keeps the wording it was taken from.
 
-## The form of a note that cites literature
+## The parts of the write-up
 
-A note that draws on published work stands to it in one of three ways. Say which, because a reader checks each differently: a paraphrase can be held against the passage it restates, a précis against the whole of one work, and a summary only against the works together.
+Each part has a job, and the questions under it are for checking a draft, not for structuring one. They are the same questions the Add note dialog shows for that part.
 
-| Form | What it is | Length | Checked against |
-| --- | --- | --- | --- |
-| **précis** | One work's argument condensed, keeping its order and emphasis | Much shorter than the work | That work, whole |
-| **paraphrase** | A particular passage restated in your own words | About as long as the passage | That passage |
-| **summary** | The main points drawn together, often from several works | Short; selective | Each work it cites |
+### Introduction
 
-### What each form commits you to
+Shows the gap in knowledge, why filling it matters, and what this study adds. Build it in two moves: the problem (background to the gap, why it matters, what earlier studies left open), then the purpose (the approach, what is new in it). Funnel from broad to narrow and end on the objective. About three paragraphs. It is not a history of the issue or a full literature review, and it holds no results.
 
-| Form | Read the source | Watch for |
+- What is the gap in knowledge, and why does filling it matter?
+- What did earlier studies leave open that this study addresses?
+- Does the last sentence state the objective?
+- Is anything here background a reader does not need, or a result?
+
+### Methods
+
+Says exactly how the study was done, so someone could repeat it and judge it. Use subheadings, define every variable and how it was measured, describe original methods in detail and cite standard ones. A flow diagram can show how the rows or people studied were reached. Describe what was done, not what was found: a result belongs here only where it explains a choice of method, with the reason first.
+
+- Could someone repeat the study from what is written here?
+- Is every variable defined, with how it was measured?
+- Does every method have a result that answers it?
+- Is anything here a finding rather than what was done?
+
+### Results
+
+States the findings that bear on the objective, without interpreting them. Mirror the Methods: every measurement described there has a finding here, in the same order. Let the tables and figures carry the numbers, and say in a sentence or two what each shows. Use the past tense.
+
+- Does each result answer a method, in the same order?
+- Is any sentence interpreting rather than reporting?
+- Does the text say in a sentence or two what each table or figure shows, without restating it?
+- Do the numbers add up, and agree with the tables?
+
+### Discussion
+
+Interprets the results and justifies the interpretation, against what other studies found and the gap the study set out to fill. One plan is four paragraphs: the key result and the main conclusion; the results beside comparable studies; the major limitations, stated plainly; and recommendations for practice and for further study. It holds no new results.
+
+- Is each conclusion beside the result that supports it?
+- Does any conclusion or recommendation go further than the results support?
+- How do these results compare with similar studies?
+- Are the major limitations stated plainly, with what was done about them?
+
+### References
+
+Assembled from what the notes cite: a source an input declares, a method a computation uses, and a work a note cites from its Citations tab. Cite a work from the note that relies on it.
+
+These parts and their questions follow the CDC/TEPHINET scientific writing course for Field Epidemiology Training Program residents, in this application's own words.
+
+## Whose words, and whose argument
+
+A note that draws on published work answers two questions. They are separate: a note can use a source's exact words and still be your argument, or be in your own words and only report.
+
+**Whose words?** How much of the source's wording the note carries.
+
+| Answer | What it means | A reader checks it against |
 | --- | --- | --- |
-| **précis** | The whole work, in full. An abstract is not enough to keep its order and emphasis. | Leaving out the limits the authors themselves stated. |
-| **paraphrase** | The passage itself, in full. | Staying so close to the wording that it reads as copied. If the exact words matter, quote them instead. |
-| **summary** | Enough of each work to state its main point. Abstracts can serve, if the note says so. | Making the works agree more than they do, or letting one strong work stand for several weak ones. |
+| **the source's exact words** | A quotation. Put it in quotation marks and cite the page | The source, word for word |
+| **close to the source's wording** | Your sentence still follows the source's words and order. Common while learning to paraphrase; revise it into your own words, or quote it | The passage, which it may copy more than it should |
+| **my words: one passage** | A paraphrase of one passage | That passage |
+| **my words: the main points** | A summary of one work or several | Each work it cites |
+| **not sure** | You looked and could not tell | A reviewer can help decide |
 
-All three put another author's finding in your words. The finding stays theirs, which is why the note cites the work. The wording is yours, which is why it is an authored note and not a quoted one.
+**Whose argument?** Whether the note reports the works or argues from them.
 
-### A note that is none of the three
+| Answer | What it means | A reader judges it by |
+| --- | --- | --- |
+| **what the works say** | Reporting what others found | Whether the works say it |
+| **what I make of them** | Your analysis, reasoning or synthesis, which may cite works in support | Whether the reasoning holds, and whether the works support it |
+| **not sure** | You looked and could not tell | A reviewer can help decide |
 
-The form is optional. Until you choose one it reads **unstated**, and the note is kept as it is. If you looked and cannot tell which form a note is, choose **not sure**: that is a question for whoever reviews it, and says so.
+Both are optional and read **unstated** until answered. A note on your own data, a step or a result draws on no literature and needs neither. When a note both reports and argues, consider writing two notes, one reporting and one with your reading, and linking them, so each can be checked on its own terms.
 
-Most notes are none of the three, and leave the form unstated:
+### What each answer commits you to
 
-- **A note that draws on no literature**: what your data are, how a step was set up, what the run found. Cite the data source if there is one; it needs no form.
-- **A sentence carried word for word**: that is a quotation, and belongs in a quoted note.
-- **A note that adds your own reading to the literature**, such as a comparison, a criticism, or what the works imply for this study. Write the summary or précis first and then your reading, and make the turn visible (*"which suggests"*, *"for this study, that means"*), so a reader can check the first part against the works and judge the second as yours. Choose the form that describes the cited part.
+- **Exact words**: the passage itself, copied exactly. If the exact words do not matter, put it in your own.
+- **One passage**: read the passage in full. Watch for staying so close to its wording that it becomes "close to the source's wording".
+- **The main points**: read enough of each work to state its main point; an abstract can serve if the note says so. Watch for making works agree more than they do.
+- **What I make of them**: make the turn from the works to your reading visible (*which suggests*, *for this study, that means*). Watch for claiming more than the evidence allows, most of all causation from an association.
 
-If none of these fits, write your own word for the form. It is kept as you wrote it.
+### Examples
 
-### Précis: examples
-
-- *Of Mordecai and colleagues, 2017, PLoS Neglected Tropical Diseases.* Building transmission models from laboratory measurements of each mosquito and virus trait, the authors find that transmission by *Aedes aegypti* peaks near 29 °C and stops below about 18 °C and above about 35 °C, with adult survival setting the upper limit. Adding this temperature curve to a country-level model improved prediction of where transmission occurred, but not of how much.
-- *Of Lowe and colleagues, 2021, Lancet Planetary Health.* Across 558 microregions of Brazil over 2001–2019, extremely wet conditions raised dengue risk within the next three months, and extreme drought raised it three to five months later, more so in highly urbanised areas. The authors attribute the drought effect to water stored at home; storage itself was not measured.
-
-### Paraphrase: examples
-
-- *Of Snow, 1855, on the South London water companies.* Because the houses, the people and their surroundings did not differ between customers of the two companies, no deliberately designed experiment could have tested the effect of the water supply more thoroughly than the arrangement that circumstances had already produced.
-- *Of Murdock and colleagues, 2017, PLoS Neglected Tropical Diseases, on their summer measurements.* In summer, the city's weather station read warmer than loggers in the vegetation where mosquitoes rest, by 3.0 to 4.2 °C in daily maximum, and drier by 6.8 to 13.3 points of relative humidity.
-
-### Summary: examples
-
-- *Of Murdock 2017 and Wimberly 2020.* Where temperature was logged at the places mosquitoes rest, it differed from the weather station's by enough to change modelled transmission, and the size of the difference varied with season and land cover. Neither study was made in Brazil.
-- *Of Lambrechts 2011, Carrington 2013 and Mordecai 2017.* The daily range of temperature matters as well as its mean: wide swings lower transmission when the mean is warm and raise it when the mean is cool, so a weekly mean alone cannot say how suitable a week was.
+- **The source's exact words**, from Snow, 1855: "no experiment could have been devised which would more thoroughly test the effect of water supply on the progress of cholera than this".
+- **Close to the source's wording**, the same passage: *No experiment could have been devised which would test the effect of the water supply on cholera more thoroughly than this one.* The wording and order are still Snow's.
+- **My words: one passage**, the same passage: *Because the two companies' customers did not differ in their houses or their surroundings, the arrangement circumstances had produced tested the water supply more thoroughly than any designed experiment could have.*
+- **My words: one passage**, from Murdock and colleagues, 2017, on their summer measurements: *In summer, the city's weather station read warmer than loggers in the vegetation where mosquitoes rest, by 3.0 to 4.2 °C in daily maximum.*
+- **My words: the main points**, of Mordecai and colleagues, 2017: *Transmission by* Aedes aegypti *peaks near 29 °C and stops below about 18 °C and above about 35 °C, with adult survival setting the upper limit.*
+- **My words: the main points**, of Murdock 2017 and Wimberly 2020: *Where temperature was logged at the places mosquitoes rest, it differed from the weather station's by enough to change modelled transmission, and the difference varied with season and land cover.*
+- **What I make of them**, from the Brazil example: *The leads match lag 0, so an association of that size arises without temperature causing cases, and lag 0 cannot be read as transmission.* It reports nothing a work says; it is a reading of this study's own results.
 
 ## What it will not do
 
-- It does not check that a précis, paraphrase or summary is faithful to the works it cites. That is for the author and the reader.
-- It does not quote for you. A sentence carried word for word is a quoted note, and belongs with the source it was taken from.
+- It does not check that a note is faithful to the works it cites, or that "my words" are. That is for the author and the reader; it seldom holds the source's text.
+- It does not quote for you. A sentence carried word for word from a source belongs in quotation marks, with its page.
+- The questions do not grade a note. A note that answers all of them can still be wrong.

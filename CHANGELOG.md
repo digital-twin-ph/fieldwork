@@ -3,6 +3,22 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.43.0 — 2026-11-07
+
+- **A note answers two questions about its sources instead of naming one form: whose words, and whose argument.**
+  *Whose words*: the source's exact words, close to the source's wording, my words: one passage, my words: the main
+  points, or not sure. *Whose argument*: what the works say, or what I make of them. Both optional. A note saved with
+  0.42.0's form keeps it, read into *whose words*. Studies of source use keep these two apart, and none separates a
+  précis from a summary (experiment 183).
+- **The Add note dialog shows questions to ask of the part being written** — four each for Introduction, Methods,
+  Results and Discussion — and follows the note if it moves. Hide them once they are habit; this device remembers.
+- **The Notes page of the manual has an entry for each part of the write-up**: what it is for, how to build it, and
+  its questions, from the CDC/TEPHINET scientific writing course built for FETP residents, in our own words. The
+  examples now show each answer, including a sentence close to its source's wording beside a true paraphrase.
+- **The Brazil notes answer both questions**, and the four that reported and argued at once are now two linked notes
+  each: fifteen notes.
+- Experiment 183 closes: the questions are in each part's manual entry, and a test holds them to the dialog's wording.
+
 ## 0.42.0 — 2026-11-07
 
 - **A note that cites literature can say its form: précis, paraphrase or summary.** Chosen in the Add note dialog,

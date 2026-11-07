@@ -439,7 +439,7 @@
       "id": "urn:fieldwork:example:brazil-dengue-rj-2024",
       "title": "Dengue in Rio de Janeiro state, Brazil, 2024",
       "repository": "https://github.com/digital-twin-ph/example-2024-brazil-dengue",
-      "commit": "d518a30bc76ff7245cafa7ef87253e0ef449eb4c",
+      "commit": "2178a4bc077e89c0d6ca453a23feb67d6350d4cd",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2024-brazil-dengue",
       "licence": {
         "data": "CC-BY-4.0",
@@ -473,8 +473,8 @@
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "4546ca5c99e5171cc80721e4f99ab09fbcec538bf0fc238a2a7eb6f2ddbf5c60",
-          "bytes": 1817611
+          "sha256": "20bbdc9bbdae3f42f5a09d24ae6d2ed0de6b76155395f0170eb0f85aaec9011e",
+          "bytes": 1817837
         },
         {
           "path": "data/dengue-rj-2010-2025.csv",
@@ -498,8 +498,8 @@
         },
         {
           "path": "README.md",
-          "sha256": "1fce1cf7bc3037cd94e38b44299788ac2a2f0e8f3e275c7ebaabf778272a245e",
-          "bytes": 6946
+          "sha256": "4759ff9187b7858052915a823e557399b14e6f4dcbc201f11b75d055669da990",
+          "bytes": 6961
         },
         {
           "path": "NOTICE.txt",

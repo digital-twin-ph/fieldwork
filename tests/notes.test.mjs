@@ -8,7 +8,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,existsSync} from 'node:fs';
-import {readNotes,groupNotes,noteExtent,WRITE_UP_PARTS,MAX_NOTES,KNOWN_NOTE_FORMS} from '../build/notes.js';
+import {readNotes,groupNotes,noteExtent,WRITE_UP_PARTS,MAX_NOTES,NOTE_WORDS,NOTE_ARGUMENT} from '../build/notes.js';
 
 const QUOTED='../example-1855-cholera-south-london/notes/snow-quotations.json';
 const snowNotes=()=>JSON.parse(readFileSync(QUOTED,'utf8')).notes;
@@ -126,13 +126,17 @@ test('a machined limitation is a function of Discussion, and a Limitations secti
     'grouped by the function, which needed no change to the closed set of body parts');
 });
 
-test('an authored note keeps the form it stands to its works in, and a form outside the three as written',()=>{
+test('an authored note keeps whose words and whose argument, and reads an older form into words',()=>{
   const {notes}=readNotes([
-    {kind:'authored',id:'p',section:'Discussion',fn:'limitation',text:'Restated.',form:'paraphrase'},
-    {kind:'authored',id:'q',section:'Discussion',text:'Drawn together.',form:'synthesis'},
-    {kind:'authored',id:'r',section:'Discussion',text:'No form.',form:'  '},
+    {kind:'authored',id:'p',section:'Discussion',fn:'limitation',text:'Restated.',words:'passage',argument:'reports'},
+    {kind:'authored',id:'q',section:'Discussion',text:'Drawn together.',words:'synthesis-ish'},
+    {kind:'authored',id:'r',section:'Discussion',text:'No answer.',words:'  ',argument:''},
+    {kind:'authored',id:'s',section:'Discussion',text:'Saved by 0.42.',form:'précis'},
+    {kind:'authored',id:'t',section:'Discussion',text:'Saved by 0.42.',form:'paraphrase'},
   ]);
-  assert.deepEqual(notes.map(n=>n.form),['paraphrase','synthesis',undefined],
-    'précis, paraphrase and summary are offered first; anything else is kept; blank is absent, not empty');
-  assert.deepEqual(KNOWN_NOTE_FORMS,['précis','paraphrase','summary','not sure']);
+  assert.deepEqual(notes.map(n=>n.words),['passage','synthesis-ish',undefined,'points','passage'],
+    'known answers kept, an unknown one kept as written, blank absent, and a 0.42 form read into words');
+  assert.deepEqual(notes.map(n=>n.argument),['reports',undefined,undefined,undefined,undefined]);
+  assert.deepEqual(NOTE_WORDS.map(a=>a.value),['exact','close','passage','points','not sure']);
+  assert.deepEqual(NOTE_ARGUMENT.map(a=>a.value),['reports','own','not sure']);
 });

@@ -2,7 +2,10 @@
 
 _Created 2026-11-07 · Updated 2026-11-07_
 
-**Status:** asked. The evidence search that was to close it ran on 2026-11-07 and cannot validate or retire it: it
+**Status:** validated, closed on the practitioner's terms on 2026-11-07: the two questions that replace the forms,
+and guide questions for each part of the write-up, are built, and each part's questions are in its manual entry, held
+to the dialog's wording by `tests/imrad-guide.test.mjs`. Whether any of it helps people write better was not closed
+and cannot be by this document: it stays a [field question](../field-questions.md#do-the-forms-of-a-note-help-people-write-better).
 finds the design's premise sound and its shape wrong, and leaves a choice open below. Three forms are built (0.42.0,
 recorded in [182](182-brazil-across-years.md)); the five-form design is not.
 
@@ -86,6 +89,9 @@ review than notes written without them.
 
 ## What would close it
 
+**Superseded 2026-11-07** by the practitioner's closing condition, recorded under *The redesign, built*: 183 closes
+on the guide questions being in each part's manual entry. The conditions below stand as what was first set.
+
 The practitioner, 2026-11-07: *"For 183 we can close it by an evidence search about improving academic writing."*
 
 **It closes on that search**: open evidence on whether teaching writers to distinguish quoting, paraphrasing,
@@ -135,6 +141,44 @@ idea wrong; it found it drawn on one axis where the evidence uses two. The optio
 
 **What would close it now** is the practitioner's choice among these, built and then measured as the three
 measurements above describe. The field question stands unchanged.
+
+## The redesign, built, 2026-11-07 (0.43.0)
+
+The practitioner, on the options the search left: *"Let's do the redesign and draft the guide questions and include in
+183. We close 183 by including the questions in the IMRAD manual entry for each section."*
+
+**Two questions replace the forms**, as the evidence codes source use:
+
+| Question | Answers | Stored as |
+| --- | --- | --- |
+| **Whose words?** | the source's exact words · close to the source's wording · my words: one passage · my words: the main points · not sure | `words`: `exact`, `close`, `passage`, `points`, `not sure` |
+| **Whose argument?** | what the works say · what I make of them · not sure | `argument`: `reports`, `own`, `not sure` |
+
+Each decision against the options above:
+
+- **Two coordinates, not one list.** Both optional, both opening on unstated, both free text kept as written.
+- **Précis merged into the main points**, as every taxonomy found does. A note saved by 0.42.0 with a `form` is read
+  into `words` (précis and summary to `points`, paraphrase to `passage`), so nothing written then is lost.
+- **Patchwriting named, neutrally**, as *close to the source's wording*, with the manual calling it a common stage in
+  learning to paraphrase. Chosen by the writer only: Fieldwork has no reviewer role.
+- **Own words is the argument axis**, *what I make of them*: the writer's analysis, reasoning or synthesis, which may
+  cite works in support.
+- **A direct quote stays on the words axis**, *the source's exact words*, on an authored note. Turning it into a quoted
+  note in the dialog was proposed and is not built: quoted notes are harvested against a source's digest, and the
+  dialog has nothing to check a quotation against.
+- **Prompts ask for a judgement**, phrased as questions; **fading** is a writer hiding the guide questions, remembered
+  on that device. Nothing fades them on its own.
+
+**Guide questions for each part of the write-up**, four each for Introduction, Methods, Results and Discussion, drawn
+in this project's words from the CDC/TEPHINET scientific writing course built for FETP residents
+([research note](../research/fetp-imrad-tephinet-2026-11-07.md), read in Chrome at the practitioner's request after
+automated reads were refused). They live in one place, `src/imrad-guide.ts`; the Add note dialog shows those for the
+note's part and follows it if the part changes; the Notes page of the manual prints them under each part's entry, with
+what the part is for. `tests/imrad-guide.test.mjs` fails if the two differ by a word or a question.
+
+**The Brazil notes, relabelled.** Every note citing works answers both questions. The four that both reported and
+argued are now two linked notes each — resting sites, larval habitats, drought, and the reading each gives this
+study — so 12 notes became 15. The note on one slope per degree is *what I make of them*: an argument that cites works.
 
 ## What this does not establish
 

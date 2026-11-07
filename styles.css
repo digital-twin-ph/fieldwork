@@ -887,6 +887,8 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 #note-dialog{max-width:44rem;width:92vw}
 #note-dialog .coords{display:flex;gap:1rem;flex-wrap:wrap;margin:.4rem 0}
 #note-dialog .coords #note-form-gloss{flex-basis:100%;margin:0}
+#note-dialog .coords .note-guide{flex-basis:100%}
+#note-dialog .note-guide-list{margin:.15rem 0 .3rem 1.1rem;padding:0;font-size:.85rem;line-height:1.4}
 #note-dialog .field{display:flex;flex-direction:column;gap:.15rem}
 #note-dialog .field label{font-size:.66rem;letter-spacing:.04em;text-transform:uppercase;opacity:.7}
 #note-dialog .readonly{border:1px solid var(--rule,#2a3a36);border-radius:.3rem;padding:.7rem .8rem;background:rgba(255,255,255,.03)}

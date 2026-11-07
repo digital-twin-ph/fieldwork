@@ -46,8 +46,7 @@ neither is stale, and is a row in the table rather than an impression.
 
 **A fourth, the same day:** *"Also the widget ports do not have a consistent way of working. Some input ports are
 like auto detect what's coming in and label the port type after success connection while the others are
-predetermined ports and form a clutter on the left side."* Then: *"The Map widget is an example of"* (unfinished when
-recorded). H4 and H8. **Measured the same day** from `nodeInputs` in `src/core.ts` and `widgets/port-contracts.json`:
+predetermined ports and form a clutter on the left side."* Then: *"Map widget is an example of cluttering of inputs."* H4 and H8. **Measured the same day** from `nodeInputs` in `src/core.ts` and `widgets/port-contracts.json`:
 four models of input port, not one.
 
 | Model | How the ports appear | Widgets |
@@ -59,6 +58,14 @@ four models of input port, not one.
 
 Of 70 widgets, 28 take one input port, 23 two, 10 none, and 9 three or more. The clutter the practitioner names is in
 those nine. `map_output` carries two of the four models at once.
+
+**A fifth, the same day:** *"The table processing widgets have useful visualizations of table changes before and
+after while the spatial operations widgets are black boxes. It could show at a high level visually and even animated
+what clip polygons look like."* H1: a step should show what it did. A table step shows the rows before and after; a
+clip, buffer or join to an area shows only its result. A small before-and-after map (the inputs, the operation's
+outline, what was kept or cut), animated or not, would make a spatial step as legible as a table step, and would show
+a trainee what the operation means. **So each widget is also listed by whether it shows what it changed**, before and
+after, or only its output.
 
 **And the evaluation is done inside Fieldwork.** The practitioner: *"Perhaps we can make a pop up form for this JK
 evaluation for test sections e.g. widgets so it is in the workflow and can be saved to laptop so it can be reviewed."*

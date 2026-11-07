@@ -105,6 +105,23 @@ names.
 
 ---
 
+## Do the forms of a note help people write better?
+
+From [183](experiments/183-forms-of-a-note.md).
+
+**Ask:** given notes with their forms hidden, can trainees tell a summary of the literature from their own argument?
+And is a set of notes written with the forms easier for a reviewer to check, and less given to causal claims the
+evidence does not support, than a set written without them?
+
+**Built to ask it with:** the forms in the Add note dialog with examples in the Notes page of the manual, and the
+Brazil example's notes on what a mosquito meets, each labelled with its form.
+
+**An answer would change:** whether the forms stay in the dialog, and whether they are offered to every note or only
+to notes that cite works. A finding that trainees already tell report from argument without them is an argument for
+fewer.
+
+---
+
 ## What this does not establish
 
 That any of these questions is well posed. A question written by the people who built the thing

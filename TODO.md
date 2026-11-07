@@ -1002,7 +1002,8 @@ refused), deterministic and offline:
 - a précis of a work the note says was read only in abstract, once a note can say how far a work was read.
 
 A small model stays an idea: worth an experiment only if a question it asks leads a trainee to fix something these
-checks miss, measured. Experiment 182 records how this arose; the manual page is `docs/surfaces/notes.md`.
+checks miss, measured. Experiment 182 records how this arose, [183](docs/experiments/183-forms-of-a-note.md) the
+five-form design these checks belong to; the manual page is `docs/surfaces/notes.md`.
 
 ### Next after Brazil: `example-2019-sierra-leone-measles` (asked 2026-11-06)
 

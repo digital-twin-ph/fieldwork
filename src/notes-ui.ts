@@ -1,8 +1,9 @@
 import {hasManual,openManual} from './manual.js';
+import {GUIDE_QUESTIONS} from './imrad-guide.js';
 import type {Escape} from './types.js';
 import {element} from './dom.js';
 import {toHTML,typeset,hasMarkup} from './prose.js';
-import {groupNotes,notesOfPart,noteExtent,forkHasDrifted,KNOWN_NOTE_FUNCTIONS,KNOWN_NOTE_FORMS,UNWRITTEN,
+import {groupNotes,notesOfPart,noteExtent,forkHasDrifted,KNOWN_NOTE_FUNCTIONS,NOTE_WORDS,NOTE_ARGUMENT,UNWRITTEN,
   WRITE_UP_PARTS,type Note,type MachinedNote,type WriteUpPart} from './notes.js';
 import {referenceCount,workKey,type ReferenceEntry} from './references.js';
 import {CITATION_TYPES,citationGaps,renderCitation,type CitationType} from './input-provenance.js';
@@ -31,7 +32,7 @@ import type {CitedWork} from './notes.js';
  *  authored note is rewritten in place, and a machined one is forked, leaving the machined note
  *  for the next run to rewrite. The dialog's part is to say which of the two is about to happen
  *  before the button is pressed. */
-export interface NoteDraft {text:string; section:WriteUpPart; fn:string; works?:CitedWork[]; form?:string}
+export interface NoteDraft {text:string; section:WriteUpPart; fn:string; works?:CitedWork[]; words?:string; argument?:string}
 export type NoteWrite=(note:Note,draft:NoteDraft)=>boolean;
 
 export interface NoteContext {
@@ -84,19 +85,31 @@ const FUNCTION_GLOSS:Record<string,string>={
   limitation:'states what it cannot show',
 };
 
-/** What each form means, said where a note is written. A note that cites literature stands to it in one of three ways,
- *  and a reader checking it needs to know which: a paraphrase can be held against a page, a summary only against the
- *  works together. */
-const FORM_GLOSS:Record<string,string>={
-  'précis':'one work’s argument condensed, keeping its order and emphasis',
-  paraphrase:'a particular passage restated in your own words, about as long as the original',
-  summary:'the main points drawn together, often from several works',
-  'not sure':'you looked and could not tell which form this is; a reviewer can help decide',
+/** What each answer to the two source questions means, said where a note is written. */
+const answerOf=(list:typeof NOTE_WORDS,value:string)=>list.find(a=>a.value===value);
+const answerLabel=(list:typeof NOTE_WORDS,value:string)=>answerOf(list,value)?.label||value;
+const sourceGloss=(words:string,argument:string)=>{
+  const said=[['Words',NOTE_WORDS,words],['Argument',NOTE_ARGUMENT,argument]] as const;
+  const chosen=said.filter(([,,v])=>v).map(([name,list,v])=>{
+    const a=answerOf(list,v);
+    return `${name}: ${a?`${a.label} — ${a.gloss}`:`${v} — an answer this application does not name, kept as written`}.`;});
+  return chosen.length?chosen.join(' ')
+    :'If this note draws on literature: whose words are these, and whose argument? Both are optional.';
 };
-const formGloss=(which:string)=>which&&FORM_GLOSS[which]?`${which} — ${FORM_GLOSS[which]}.`
-  :which?`${which} — a form this application does not name, kept as its author wrote it.`
-  :'How this note stands to the works it cites. '+KNOWN_NOTE_FORMS.filter(f=>f!=='not sure').map(f=>`${f[0]!.toUpperCase()+f.slice(1)}: ${FORM_GLOSS[f]}.`).join(' ')
-    +' Optional: leave it unstated, or choose not sure if you cannot tell.';
+
+/** WHETHER THE GUIDE QUESTIONS ARE SHOWN, remembered on this device only. A writer who has made them habit can hide
+ *  them; prompts that never go away can hold back a writer who no longer needs them (experiment 183). */
+const GUIDE_KEY='fieldwork.notes.guideHidden';
+const guideHidden=():boolean=>{try{return localStorage.getItem(GUIDE_KEY)==='1';}catch{return false;}};
+const setGuideHidden=(hidden:boolean)=>{try{if(hidden)localStorage.setItem(GUIDE_KEY,'1');else localStorage.removeItem(GUIDE_KEY);}catch{/* kept for this view only */}};
+const guideHTML=(section:string,esc:Escape)=>{
+  const questions=GUIDE_QUESTIONS[section as WriteUpPart];
+  if(!questions?.length)return '';
+  if(guideHidden())return `<button type="button" class="chip" id="note-guide-toggle">Show questions for ${esc(section)}</button>`;
+  return `<p class="gloss"><strong>Questions to ask of ${esc(section)}</strong> `
+    +`<button type="button" class="chip" id="note-guide-toggle">Hide</button></p>`
+    +`<ul class="note-guide-list">${questions.map(q=>`<li>${esc(q)}</li>`).join('')}</ul>`;
+};
 
 const bodyOf=(note:Note)=>note.kind==='quoted'?note.quote:note.text;
 const words=(text:string)=>text.split(/\s+/).filter(Boolean).length;
@@ -313,7 +326,8 @@ export function notesPanel(notes:readonly Note[],
           +`<span class="ord">${ordinal}.</span>`
           +`<span class="notes-kind notes-kind-${note.kind}">${note.kind}</span>`
           +(('fn' in note&&note.fn)?`<span class="notes-fn">${esc(note.fn)}</span>`:'')
-          +(note.kind==='authored'&&note.form?`<span class="notes-form" title="How this note stands to the works it cites">${esc(note.form)}</span>`:'')
+          +(note.kind==='authored'&&note.words?`<span class="notes-form" title="Whose words">${esc(answerLabel(NOTE_WORDS,note.words))}</span>`:'')
+          +(note.kind==='authored'&&note.argument?`<span class="notes-form" title="Whose argument">${esc(answerLabel(NOTE_ARGUMENT,note.argument))}</span>`:'')
           +(from?`<button class="chip flowlink" data-open-node="${esc(from)}"`
             +`${'workflowKey' in note&&note.workflowKey
               ?` data-open-workflow="${esc(note.workflowKey)}"`:''}>`
@@ -416,7 +430,8 @@ export function openNoteDialog(note:Note,context:NoteContext,esc:Escape){
   const $=<S extends string>(s:S)=>element(s,dialog);
   const text=bodyOf(note);
   const fn=('fn' in note&&note.fn)||'';
-  const form=(note.kind==='authored'&&note.form)||'';
+  const wordsWas=(note.kind==='authored'&&note.words)||'';
+  const argumentWas=(note.kind==='authored'&&note.argument)||'';
   const from=('nodeId' in note&&note.nodeId)||undefined;
   const widget=note.kind==='machined'?note.widget:note.kind==='authored'?note.forkedFrom?.widget:undefined;
   const writing=!!EDITABLE[note.kind]&&!!context.write;
@@ -456,14 +471,20 @@ export function openNoteDialog(note:Note,context:NoteContext,esc:Escape){
       ?`<select id="note-function">${options(functions,fn,'unstated')}</select>`
       :`<span class="fixed">${esc(fn||'unstated')}${fn?' — fixed':''}</span>`)
     +`</span>`
-    // THE FORM, on an authored note only: a quotation is verbatim by its kind, and the other two are this
-    // application's wording. Read-only where it was set and the note cannot be edited here.
-    +(choose?`<span class="field"><label>Form</label><select id="note-form">${options(
-        KNOWN_NOTE_FORMS.includes(form)||!form?KNOWN_NOTE_FORMS:[...KNOWN_NOTE_FORMS,form],form,'unstated')}</select></span>`
-        +`<p id="note-form-gloss" class="gloss">${esc(formGloss(form))}`
-        +(hasManual('surface:notes')?` <button class="chip" id="note-form-examples">Examples</button>`:'')+`</p>`
-      :form?`<span class="field"><label>Form</label><span class="fixed">${esc(form)}</span></span>`
-        +`<p id="note-form-gloss" class="gloss">${esc(formGloss(form))}</p>`:'')
+    // WHOSE WORDS, AND WHOSE ARGUMENT, on an authored note only: a quotation is verbatim by its kind, and the other
+    // two are this application's wording. Read-only where set and the note cannot be edited here.
+    +(choose?['words','argument'].map(which=>{
+        const list=which==='words'?NOTE_WORDS:NOTE_ARGUMENT,was=which==='words'?wordsWas:argumentWas;
+        const values=list.map(a=>a.value),known=!was||values.includes(was);
+        return `<span class="field"><label>${which==='words'?'Whose words?':'Whose argument?'}</label>`
+          +`<select id="note-${which}"><option value="">unstated</option>`
+          +[...list,...(known?[]:[{value:was,label:was}])].map(a=>`<option value="${esc(a.value)}"`
+            +`${a.value===was?' selected':''}>${esc(a.label)}</option>`).join('')+`</select></span>`;}).join('')
+      :[['Whose words?',NOTE_WORDS,wordsWas],['Whose argument?',NOTE_ARGUMENT,argumentWas]].filter(([,,v])=>v)
+        .map(([name,list,v])=>`<span class="field"><label>${name}</label><span class="fixed">${esc(answerLabel(list as typeof NOTE_WORDS,v as string))}</span></span>`).join(''))
+    +((choose||wordsWas||argumentWas)?`<p id="note-form-gloss" class="gloss">${esc(sourceGloss(wordsWas,argumentWas))}`
+      +(hasManual('surface:notes')?` <button class="chip" id="note-form-examples">Examples</button>`:'')+`</p>`:'')
+    +(choose?`<div id="note-guide" class="note-guide">${guideHTML(note.section,esc)}</div>`:'')
     +`<span class="field"><label>Produced by</label>`
     // SAID RATHER THAN LEFT BLANK. A note with no workflow behind it is a fact about the note --
     // it is the author's own, and nothing will rewrite it on the next run.
@@ -509,7 +530,8 @@ export function openNoteDialog(note:Note,context:NoteContext,esc:Escape){
   }else{
     const section=choose?$('#note-section') as HTMLSelectElement:null;
     const workFn=choose?$('#note-function') as HTMLSelectElement:null;
-    const workForm=choose?$('#note-form') as HTMLSelectElement:null;
+    const workWords=choose?$('#note-words') as HTMLSelectElement:null;
+    const workArgument=choose?$('#note-argument') as HTMLSelectElement:null;
     // AN UNWRITTEN NOTE OPENS EMPTY. Its marker exists because `readNotes` drops a note with no
     // words, not because anybody wrote it, so presenting it as prose to delete first would make
     // the application's bookkeeping the practitioner's problem.
@@ -518,7 +540,7 @@ export function openNoteDialog(note:Note,context:NoteContext,esc:Escape){
     tell(area.value);
     save.textContent=fresh?'Add note':'Save';
     const unchanged=()=>area.value.trim()===was
-      &&(!section||section.value===note.section)&&(!workFn||workFn.value===fn)&&(!workForm||workForm.value===form)
+      &&(!section||section.value===note.section)&&(!workFn||workFn.value===fn)&&(!workWords||workWords.value===wordsWas)&&(!workArgument||workArgument.value===argumentWas)
       &&JSON.stringify(works)===startedWith;
     // SAY WHAT LEAVING WOULD COST, once there is something to lose. A dialog whose only exit is
     // labelled "Close" discards an edit without ever having said so. A note being written for
@@ -661,12 +683,22 @@ export function openNoteDialog(note:Note,context:NoteContext,esc:Escape){
       area.focus();
       touched();
     };
-    if(section)section.onchange=touched;
+    if(section)section.onchange=()=>{drawGuide();touched();};
     if(workFn)workFn.onchange=()=>{sayGloss(workFn.value);touched();};
-    if(workForm)workForm.onchange=()=>{
+    const saySource=()=>{
       const said=dialog.querySelector('#note-form-gloss');
-      if(said)said.textContent=formGloss(workForm.value);
-      touched();};
+      if(said&&said.firstChild)said.firstChild.textContent=sourceGloss(workWords?.value||'',workArgument?.value||'')+' ';};
+    if(workWords)workWords.onchange=()=>{saySource();touched();};
+    if(workArgument)workArgument.onchange=()=>{saySource();touched();};
+    // THE GUIDE FOLLOWS THE PART THE NOTE IS IN, and can be hidden or shown again.
+    const guide=dialog.querySelector<HTMLElement>('#note-guide');
+    const drawGuide=()=>{
+      if(!guide)return;
+      guide.innerHTML=guideHTML(section?section.value:note.section,esc);
+      const toggle=guide.querySelector<HTMLButtonElement>('#note-guide-toggle');
+      if(toggle)toggle.onclick=()=>{setGuideHidden(!guideHidden());drawGuide();};
+    };
+    drawGuide();
     relabel();
     save.onclick=()=>{
       const written=area.value.trim();
@@ -683,7 +715,8 @@ export function openNoteDialog(note:Note,context:NoteContext,esc:Escape){
       if(unchanged()){dialog.close();return;}
       if(context.write!(note,{text:written,
         section:(section?section.value:note.section) as WriteUpPart,
-        fn:workFn?workFn.value:fn,works,form:workForm?workForm.value:form}))dialog.close();
+        fn:workFn?workFn.value:fn,works,
+        words:workWords?workWords.value:wordsWas,argument:workArgument?workArgument.value:argumentWas}))dialog.close();
       else{
         status.textContent='That note could not be kept on this device.';
         status.classList.add('is-failure');

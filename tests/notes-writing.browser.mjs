@@ -207,33 +207,44 @@ test('editing a machined note forks it, and leaves the machined note alone',asyn
   await expect(fork.locator('.notes-fork')).toContainText('edited from a machined note');
 });
 
-test('adding a note says what précis, paraphrase and summary mean, and keeps the one chosen',async({page})=>{test.skip(!!skip,skip);
+test('adding a note asks whose words and whose argument, shows the questions for its part, and keeps the answers',async({page})=>{test.skip(!!skip,skip);
   await southLondon(page);
   await page.locator(RESULTS).locator('[data-add-note]').first().click();
   await expect(page.locator('#note-dialog')).toBeVisible();
-  // ALL THREE, described before one is chosen: the dialog is where a note citing literature is written.
-  // OPTIONAL, AND SAID SO: the form opens on unstated, which stores nothing; not sure is a choice of its own.
-  await expect(page.locator('#note-form option:checked')).toHaveText('unstated');
-  await expect(page.locator('#note-form option',{hasText:'not sure'})).toHaveCount(1);
-  const gloss=page.locator('#note-form-gloss');
-  for(const form of ['Précis','Paraphrase','Summary'])await expect(gloss).toContainText(form);
-  // AND EXAMPLES OF EACH, a click away, in the Notes page of the manual.
+  // BOTH OPTIONAL: each opens on unstated, which stores nothing.
+  await expect(page.locator('#note-words option:checked')).toHaveText('unstated');
+  await expect(page.locator('#note-argument option:checked')).toHaveText('unstated');
+  await expect(page.locator('#note-words option',{hasText:'close to the source’s wording'})).toHaveCount(1);
+  // THE QUESTIONS FOR THE PART THE NOTE IS IN, and they follow it if it moves.
+  const guide=page.locator('#note-guide');
+  await expect(guide).toContainText('Is any sentence interpreting rather than reporting?');
+  await page.locator('#note-section').selectOption('Discussion');
+  await expect(guide).toContainText('Is each conclusion beside the result that supports it?');
+  await page.locator('#note-section').selectOption('Results');
+  // HIDDEN ONCE THEY ARE HABIT, and remembered.
+  await guide.locator('#note-guide-toggle').click();
+  await expect(guide).not.toContainText('Is any sentence interpreting');
+  await expect(guide.locator('#note-guide-toggle')).toHaveText('Show questions for Results');
+  // AND EXAMPLES, a click away, in the Notes page of the manual, with each part's questions.
   await page.locator('#note-form-examples').click();
   const manual=page.locator('#manual-dialog');
-  for(const heading of ['Précis: examples','Paraphrase: examples','Summary: examples'])
-    await expect(manual.locator('h4',{hasText:heading})).toBeVisible();
-  await expect(manual).toContainText('docs/surfaces/notes.md');
+  await expect(manual.locator('h4',{hasText:'Results'})).toBeVisible();
+  await expect(manual).toContainText('Does each result answer a method, in the same order?');
+  await expect(manual.locator('h4',{hasText:'Examples'})).toBeVisible();
   await manual.locator('#manual-close').click();
-  await expect(page.locator('#note-dialog')).toBeVisible();
-  await page.locator('#note-form').selectOption('summary');
-  await expect(gloss).toContainText('summary — the main points drawn together');
+  await page.locator('#note-words').selectOption('points');
+  await page.locator('#note-argument').selectOption('own');
+  await expect(page.locator('#note-form-gloss')).toContainText('my words: the main points');
   await page.locator('#note-text').fill('Station temperature differs from the air at resting sites.');
   await page.locator('#note-save').click();
   await expect(page.locator('#note-dialog')).not.toBeVisible();
-  const card=page.locator(RESULTS).locator('.notes-note',{hasText:'Station temperature differs'});
-  await expect(card.locator('.notes-form')).toHaveText('summary');
+  const card=()=>page.locator(RESULTS).locator('.notes-note',{hasText:'Station temperature differs'});
+  await expect(card().locator('.notes-form')).toHaveText(['my words: the main points','what I make of them']);
   await page.reload();
   await page.locator('[data-view="notes"]').click();
   await page.locator('.notes-part').first().waitFor();
-  await expect(page.locator(RESULTS).locator('.notes-note',{hasText:'Station temperature differs'}).locator('.notes-form')).toHaveText('summary');
+  await expect(card().locator('.notes-form')).toHaveText(['my words: the main points','what I make of them']);
+  // The questions stay hidden on this device.
+  await page.locator(RESULTS).locator('[data-add-note]').first().click();
+  await expect(page.locator('#note-guide-toggle')).toHaveText('Show questions for Results');
 });

@@ -989,6 +989,30 @@ workflow (experiment 180):
   which is not the temperature product's. Then a route, a reader entry and a rule, with the rule the practitioner's
   choice where the product recommends none.
 
+### Comprehensibility: five known problems, actionable now (2026-11-07)
+
+The practitioner's overall sense of the interface, recorded in
+[184](docs/experiments/184-heuristic-evaluation-in-the-lab.md) as its lenses, then: *"The above are already known and
+actionable."* So these are work, not candidates waiting on the rating. Each closes on a measurement taken before and
+after, in the browser, so a cut is seen rather than claimed.
+
+1. **Design explanation on screen.** Sort each surface's visible text into instruction, status and design explanation;
+   move the third to the manual or the record. Start with the header subtitle, the Notes tab heading, the Inspector's
+   step cards, and labels that are this project's terms (*machined*, *derived*, *authored*, *N3 & evidence*).
+   Measure: words of design explanation per surface, before and after, extending `validate-inspector-prose`.
+2. **Controls without a pattern.** Inventory every button on each surface: label, style, position. One style per role
+   (primary action, secondary, link-like, label), one place for a step's primary action. The note card's "open" chip is
+   the first instance. Measure: buttons whose style does not match their role.
+3. **Inspector panels.** For every widget: configured through a dialog or in the panel, every control, and whether
+   changing it changes the step's settings or result. Remove stale controls; move configuration to one approach.
+   Measure: controls that change nothing, per widget.
+4. **Input ports.** Four port models today (fixed list, inferred from the wiring, switched by a setting, counted); the
+   Map's eight always-drawn ports are the clutter case. Choose one model, or two with a stated rule, and draw only the
+   ports a step can use. Measure: ports drawn and ports connected, per widget, in the worked examples.
+5. **Spatial steps as black boxes.** A spatial operation shows what it changed, before and after, as table steps do:
+   inputs, the operation's outline, what was kept or cut, animated where it helps. Start with Clip polygons. Measure:
+   widgets that show what they changed, of those that change something.
+
 ### Plain checks on a note, before any model (agreed 2026-11-07)
 
 Asked whether a small language model could improve notes, the answer was: as a reader that asks questions at most,

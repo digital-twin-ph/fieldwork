@@ -50,6 +50,11 @@ Decisions taken with the design, each open to moving:
   note and an own-words note that relates to it, using the links notes already have. Each half is then checked on its
   own terms.
 
+**For now, the form is optional and defaults to unknown.** The practitioner, 2026-11-07: *"We can for now make the
+note type optional by adding unknown."* Built: the dialog's form list opens on **unknown**, which stores nothing, so
+no writer is made to pick a form to keep a note. Unknown is what the plain checks would flag on a note that cites
+works, and what measurement 1 below counts.
+
 ## Why it might help, and why it might not
 
 | Might help | Might not |

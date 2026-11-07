@@ -52,6 +52,7 @@ downstream reads the new column.
 **4. The dialog previews, live, as rules are edited:**
 
 - **Before:** the wide table as imported, with the columns the rules read.
+- **Sorted**, only when the step sorts: the same rows in the named order (see 5).
 - **After:** the same rows, with each new column, and a **Rule** column naming the rule that matched.
 - Rows no rule matched, and rows two rules gave different values, are said in words as well as marked, so nothing
   rests on colour alone.
@@ -76,9 +77,11 @@ records `SORT` as wanted and unbuilt: a chart has a bar order, a table none.
   step says why. The order is never taken from the file, because a file's row order is not a declaration.
 - **Date and time columns are offered as the candidates**, first, because a cumulative count accumulates over time.
   Any other column can still be chosen.
-- **The preview's After shows the rows in that order**, grouped by the columns that say whose rows these are.
-- **Where the sort lives is open:** a setting on Apply ruleset, or a Sort step before it. A setting keeps the canvas
-  as it is; a step would also give a table an order outside any rule, which nothing has needed yet.
+- **The sort is inside Apply ruleset**, as the step that prepares its input table for the rules. The practitioner,
+  2026-11-07: *"Sort can be inside ruleset as a way to prepare the input table for rule application. The preview
+  then can show before, sorted, after. If no sort then it's just before and after."* No Sort step on the canvas.
+- **The preview has three tables when there is a sort:** Before (as it arrived), Sorted (in the named order, grouped
+  by whose rows these are), and After (with the new columns). Without a sort, it has Before and After.
 
 What a rule between rows must keep, each said and none refused:
 

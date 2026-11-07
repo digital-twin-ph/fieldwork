@@ -57,6 +57,26 @@ downstream reads the new column.
   rests on colour alone.
 - Each rule shows how many rows it matched: "Rule 2 · 14 rows".
 
+**5. A rule can read the previous row.** The practitioner, 2026-11-07: *"We can test the rules that act between
+subsequent rows also with a synthetic data set. One example is where rows have a column that records cumulative
+values."* A file with one row per place and week, recording cumulative cases, gives new cases as
+
+> then **new cases** is **cumulative cases** minus **cumulative cases** in the **previous week**
+
+"Previous" needs an order and a group, so the rule names both: the date column it is ordered by, and the columns that
+say whose rows these are (the place). In a file that is wide by period (`cum_w1`, `cum_w2`, …) the same sum is within
+one row, and needs nothing new.
+
+What a rule between rows must keep, each said and none refused:
+
+- **The first row has no previous one.** Its value is empty, and counted, as a division by zero is.
+- **A missing period.** Whether "previous" means the previous period or the previous row recorded is the
+  practitioner's choice, stated on the step; the preview shows which rows it changed.
+- **A cumulative value that falls**, from a correction in reporting, gives a negative count. It is flagged on the row
+  and in the run, and kept as computed.
+- **Two rows for one place and period** have no single previous row. They are named, and the rows after them get no
+  value rather than a guessed one.
+
 **What the computed column must keep:**
 
 - **A unit.** Describing the new column is the practitioner's step; the unit check that runs on every edit covers it.
@@ -88,6 +108,8 @@ ruleset feature on synthetic data made to reach each one:
 - each comparator offered, `is recorded` and `is not recorded` among them, and a condition against a step setting;
 - a computed column with its unit described, and a unit that disagrees, refused while the rule is written;
 - a division by zero, counted and named;
+- new cases from a cumulative column, by place and week, with a first week, a missing week, a fall from a correction,
+  and a repeated week among the rows;
 - rows no rule matches, and rows two rules give different values, said in the preview and by the run.
 
 Each workflow's manual plays back from an empty canvas, and a test rebuilds it. The data are synthetic so that every
@@ -103,8 +125,8 @@ repositories.
 ## What this does not establish
 
 - That EYE's arithmetic matches JavaScript's to the last digit. Not checked.
-- Arithmetic **between rows**: "this week minus last week" in Brazil's file, which is one row per municipality and
-  week. A wide surface cannot say it, and nothing needs it yet. Recorded as a limit, not designed around.
+- How a rule between rows compiles. Every rule today is about one record (`?s`); a rule that reads the previous row
+  joins two, and that is a change to the compiler, not yet designed in N3.
 - How a table that arrived long, with no wide import recorded, is shown. The design assumes each row is a record, as
   the file gives it; that is not tested.
 - That a preview makes the dialog less dry. That is the expectation, not a finding.

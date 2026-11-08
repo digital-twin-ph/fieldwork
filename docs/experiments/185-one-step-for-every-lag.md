@@ -131,7 +131,13 @@ can be less than Node's.
 
 **Found while measuring:** a shift at which no row matches stops the step ("nothing could be related") instead of
 giving an empty column. With every other shift a row without a value is kept and counted; at a shift where all rows
-are without one, it stops. Not changed here; recorded for a decision.
+are without one, it stops. The practitioner, 2026-11-07: *"That's OK for now"*. Kept as it is; to be revisited if a
+workflow meets it, for example a lead past the end of the satellite search.
+
+**What a shift is**, as explained to the practitioner the same day: the number of days each row's date is moved before
+Relate looks in the other table. A Brazil case week starts on a Sunday; +3 days is its Wednesday (0 weeks before),
+−11 the Wednesday 2 weeks earlier, +17 the Wednesday 2 weeks later (a lead). Each shift brings one column, named for it,
+`LST_Day_1km_-11d`, and Regression fits one model per column. Lag 0 is +3 so a week is matched by its middle day.
 
 **Open for stage 3:** the lag chart today reads Append rows' `lag` column, in weeks before (0, 2, 4…). The models'
 `shift_days` is the shift as Relate recorded it (3, −11, −25… in W4), in days and with the opposite sign. Whether the

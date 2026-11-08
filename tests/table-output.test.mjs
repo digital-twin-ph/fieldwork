@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {clipExercise} from '../build/clip-points.js';
+import {clipExercise} from './fixtures/workflows.mjs';
 import {newTableOutput,tableOutput,pointTableMarkup} from '../build/table-output.js';
 import {executeWorkflow,executionPlan,validateWorkflow,nodeInputs,shownMode} from '../build/core.js';
 

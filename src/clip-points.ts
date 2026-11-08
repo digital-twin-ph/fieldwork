@@ -83,27 +83,3 @@ export function clipPointsReceipt(node:WorkflowNode<'clip_points_to_area'>,resul
       +`The test is the same one the map uses, so a point counted inside here is inside there.`};
 }
 
-/** The worked example this widget inherited when `coverage_check` was retired on 2026-10-21.
- *
- *  Four records, one of each kind the spatial relation can take -- inside, exactly on the
- *  boundary, outside, and one with no location at all -- so the exercise shows what a clip keeps,
- *  what it sets aside and what it cannot judge. It kept the same four records and the same box the
- *  coverage exercise used, because the point of the exercise is the four cases and not the widget
- *  that reported them. The map draws what was excluded, which is what made the check redundant. */
-export function clipExercise():Workflow{
-  const feature=(id:string,name:string,coordinates:Position|null):PointFeature=>
-    ({type:'Feature',id,properties:{name},geometry:coordinates?{type:'Point',coordinates}:null});
-  return {schema:'fieldwork/workflow/1',exampleId:'coverage',name:'Points inside an area · synthetic exercise',nodes:[
-    {id:'scope',type:'study_area',x:40,y:40,params:{source:'drawn',label:'Illustrative Old Naledi study box',selectionMode:'bbox',geometry:bboxPolygon(25.89,-24.7,25.91,-24.68)}},
-    {id:'observations',type:'point_input',x:40,y:230,params:{label:'Synthetic coverage records',data:{type:'FeatureCollection' as const,features:[
-      feature('inside','Inside example',[25.9,-24.69]),feature('edge','Boundary example',[25.91,-24.69]),
-      feature('outside','Outside example',[25.92,-24.69]),feature('missing','Missing-location example',null)]}}},
-    {id:'clip',type:'clip_points_to_area',x:380,y:120,params:{label:'Keep points inside the area',keepBoundary:true,showExcluded:true}},
-    {id:'map',type:'map_output',x:720,y:120,params:{label:'Map of the points kept'}},
-  ],edges:[
-    {id:'scope-link',from:'scope',to:'clip',port:'area'},
-    {id:'points-link',from:'observations',to:'clip',port:'points'},
-    {id:'map-area',from:'scope',to:'map',port:'area'},
-    {id:'map-points',from:'clip',to:'map',port:'points'},
-  ]};
-}

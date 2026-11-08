@@ -58,7 +58,7 @@ not a practitioner in the field.
 
 1. **Table input on the standard Inspector and dialog** ([186](docs/experiments/186-one-standard-inspector.md)). With
    it, *Fetch the table*: in the dark theme it sits inline in the orange notice and does not read as a button.
-2. **The built-in rulesets example moves to example-workflows-rulesets**, then is removed: rules all of one category
+2. **Done 2026-11-08 (0.59.0).** ~~The built-in rulesets example moves to example-workflows-rulesets~~, then is removed: rules all of one category
    (run by the reasoner), rules over points with a map, and counts written as text repaired in Data quality. The seven
    tests that open it move with it. **The built-in coverage exercise is removed**; its four points stay as a test
    fixture, and Keep points inside the area is recorded as having no worked example.
@@ -72,6 +72,10 @@ not a practitioner in the field.
    example.
 6. **Old Naledi**: `facilities` and `facility_audit` replaced by standard widgets (Keep points inside the area; Apply
    ruleset and Table output), checked to give the same results, then moved to a repository.
+
+7. **188 validated** (the practitioner, 2026-11-08: *"Let's validate 188 after #5"*, Old Naledi then numbered 5): South
+   London's workflows built from an empty canvas through the rules dialog, so its rebuilt Apply ruleset steps play back
+   as Nigeria's do.
 
 The high-contrast theme comes after Sierra Leone, as set on 2026-11-07; where it falls among 4 to 6 is not set.
 

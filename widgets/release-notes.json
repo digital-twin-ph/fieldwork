@@ -75,12 +75,12 @@
    ]
   },
   "apply_ruleset": {
-   "version": "0.6.0",
+   "version": "0.7.0",
    "released": "2026-11-08",
    "changes": [
     {
      "kind": "minor",
-     "description": "A computed column states its unit and what it measures, beside the rule that makes it, and the output table carries both in its column descriptions. A new column left without a unit is said in the dialog and the run's method, not refused (experiment 188). The run's notice counts values that could not be read apart from values that are empty."
+     "description": "A column's kind is declared in the Inspector, number, category or true or false, and no longer only read off its values: counts a file stores as text (\"34\") were offered as a category, and only the practitioner can say they are a number, after which the text is reported unreadable and Data quality can read it as numbers. Found building the rules worked example's clinic points."
     }
    ],
    "breaking": false,
@@ -420,12 +420,12 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.20.0",
-   "released": "2026-11-05",
+   "version": "0.20.1",
+   "released": "2026-11-08",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Chooses where its figure goes in the Notes write-up: Introduction, Methods, Results or Discussion, under 'In the write-up, under'. Results is the default, declared per widget as fw:defaultFigureSection in ontology/widgets.ttl from the constant the application applies. The receipt states fw:figureSection and fw:figureSectionDeclared on the step, and fw:FigureFiledWhereDeclaredShape holds the step's machined note to the same section. The practitioner, 2026-11-05: 'all output widgets may have default IMRAD sections but it should be flexible.'"
+     "kind": "patch",
+     "description": "A layer from an Apply ruleset step can be coloured by what its rules concluded: the class list offers the rules' categories and the columns of the points they read. It offered nothing, because a rules step stores no points of its own."
     }
    ],
    "breaking": false,

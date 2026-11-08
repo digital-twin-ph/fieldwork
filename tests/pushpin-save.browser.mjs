@@ -2,7 +2,7 @@ import {test,expect} from '@playwright/test';
 import {downloadText} from './read-download.mjs';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-import {clipExercise} from '../build/clip-points.js';
+import {clipExercise} from './fixtures/workflows.mjs';
 
 const saved=page=>page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));
 const source=w=>w.nodes.find(n=>n.id==='observations').params;

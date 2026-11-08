@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {clipExercise} from '../build/clip-points.js';
+import {clipExercise} from './fixtures/workflows.mjs';
 import {newMapOutput,mapOutput} from '../build/map-output.js';
 import {executeWorkflow,executionPlan,validateWorkflow,nodeInputs} from '../build/core.js';
 import {pointLayers} from '../build/point-layers.js';

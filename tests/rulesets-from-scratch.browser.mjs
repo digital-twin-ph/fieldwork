@@ -24,7 +24,7 @@ test('rules on synthetic data, built by following the manual',async({page})=>{te
   await page.goto('/');await page.evaluate(()=>localStorage.clear());
   await page.goto('/?example=blank');
   for(const [index,workflow] of manual.workflows.entries()){
-    await performManual(page,workflow);
+    await performManual(page,workflow,{repo:REPO});
     await page.screenshot({path:`test-results/rulesets-${index+1}.png`});
   }
   await page.locator('[data-view="project"]').click();

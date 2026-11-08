@@ -37,6 +37,10 @@ The table the step gives out carries both. A new column without a unit is said i
 degrees Celsius: a name, a value and a unit. A condition then reads *temperature_c is more than fever*, and the
 threshold can be changed without rewriting a rule.
 
+**Kinds.** Each column is read as a number, a category, or true or false, offered from its values and changed in the
+Inspector beside it. A file that stores counts as text, "34", offers them as a category: say they are a number, and
+the text is reported unreadable at the run, where **Data quality** can read it as numbers.
+
 **Units.** Each column the rules read states its unit, in the Inspector beside the column. A setting compared with a
 column must be in the column's unit, and a sum or difference must be of two columns in the same unit; either is refused
 while the rule is written. Columns the rules do not read need no unit.

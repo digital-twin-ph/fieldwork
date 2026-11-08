@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {openFixture} from './open-fixture.mjs';
 import {collectPageErrors} from './page-errors.mjs';
 
 // "I cannot make sense of the green error dialog because I cannot see the columns against which
@@ -8,7 +9,7 @@ test('an input shows its records as columns and rows, and as the JSON they are',
   const errors=collectPageErrors(page);
   await page.goto('/');
   await page.evaluate(()=>localStorage.clear());
-  await page.goto('/?example=rulesets');
+  await openFixture(page,'rulesets-workflow.json');
   await expect(page.locator('body')).toContainText('Complete in',{timeout:45000});
 
   await page.locator('[data-view="workflow"]').click();
@@ -42,7 +43,7 @@ test('a stopped run is reported as a failure, and stays until it is closed',asyn
   const errors=collectPageErrors(page);
   await page.goto('/');
   await page.evaluate(()=>localStorage.clear());
-  await page.goto('/?example=rulesets');
+  await openFixture(page,'rulesets-workflow.json');
   // The run state, not the toast's text: the toast says "Complete in" the moment it appears,
   // which is before the canvas has settled, and clicking a node then races the layout.
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
@@ -80,7 +81,7 @@ test('records the rules cannot read are surfaced, and the notice can be read and
   const errors=collectPageErrors(page);
   await page.goto('/');
   await page.evaluate(()=>localStorage.clear());
-  await page.goto('/?example=rulesets');
+  await openFixture(page,'rulesets-workflow.json');
 
   // The run SUCCEEDED, so this is not a failure and must not be dressed as one. It is also not
   // the success line: what matters is not that it finished.
@@ -128,7 +129,7 @@ test('a failing widget glows red, and is told apart from one that merely found s
   const errors=collectPageErrors(page);
   await page.goto('/');
   await page.evaluate(()=>localStorage.clear());
-  await page.goto('/?example=rulesets');
+  await openFixture(page,'rulesets-workflow.json');
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
   const toast=page.locator('#toast');
   if(await toast.locator('button').count())await toast.locator('button').click();

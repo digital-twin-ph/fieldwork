@@ -17,22 +17,18 @@ import {oldNalediWorkflow} from './old-naledi.js';
 import {geoprivacyExample} from './geoprivacy-example.js';
 import {seaLevelExample} from './sea-level-example.js';
 import {rasterExample} from './raster-example.js';
-import {rulesetExample} from './ruleset-example.js';
 import {hagellochExample} from './hagelloch-example.js';
-import {clipExercise} from './clip-points.js';
 
 export const EXAMPLE_TEMPLATES:Record<string,()=>Workflow>={
   blank:blankWorkflow,
   heat:exampleWorkflow,
   'old-naledi':oldNalediWorkflow,
-  coverage:clipExercise,
   raster:rasterExample,
   'snow-voronoi':()=>johnSnowExample('snow-voronoi'),
   'snow-isochrone':()=>johnSnowExample('snow-isochrone'),
   'snow-geoprivacy':geoprivacyExample,
   'sea-level':seaLevelExample,
   'snow-extent':snowExtentExample,
-  rulesets:rulesetExample,
   hagelloch:hagellochExample,
 };
 export const EXAMPLE_KEYS=Object.keys(EXAMPLE_TEMPLATES);

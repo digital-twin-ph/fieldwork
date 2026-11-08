@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {openFixture} from './open-fixture.mjs';
 import {collectPageErrors} from './page-errors.mjs';
 
 // "I see the ruleset widget but it's not editable." -- the practitioner, 2026-10-15, looking at
@@ -9,7 +10,7 @@ test('rules can be edited in a dialog, and the edit reaches the saved workflow',
   const errors=collectPageErrors(page);
   await page.goto('/');
   await page.evaluate(()=>localStorage.clear());
-  await page.goto('/?example=rulesets');
+  await openFixture(page,'rulesets-workflow.json');
   await expect(page.locator('body')).toContainText('Complete in',{timeout:40000});
 
   await page.locator('[data-view="workflow"]').click();
@@ -69,7 +70,7 @@ test('a setting is chosen by name, and the template syntax never reaches the sur
   const errors=collectPageErrors(page);
   await page.goto('/');
   await page.evaluate(()=>localStorage.clear());
-  await page.goto('/?example=rulesets');
+  await openFixture(page,'rulesets-workflow.json');
   await expect(page.locator('body')).toContainText('Complete in',{timeout:40000});
 
   // Step 1 bands a number against the `threshold` setting, so it is the step that used to show

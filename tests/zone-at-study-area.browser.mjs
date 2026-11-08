@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {openFixture} from './open-fixture.mjs';
 import {collectPageErrors} from './page-errors.mjs';
 
 // "I like #4 because selecting the study area should automatically suggest the UTM zone and the
@@ -12,7 +13,7 @@ test('a study area suggests the zone before any widget carries one',async({page}
   const errors=collectPageErrors(page);
   await page.goto('/');
   await page.evaluate(()=>localStorage.clear());
-  await page.goto('/?example=coverage');
+  await openFixture(page,'coverage-workflow.json');
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="scope"]').click();
   const advice=page.locator('[data-zone-advice]');

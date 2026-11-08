@@ -28,7 +28,7 @@ async function view(page,name){
   if(name)await page.locator(`[data-view="${name}"]`).click();
 }
 
-export async function performManual(page,workflow,{timeout=120000,runTimeout=timeout}={}){
+export async function performManual(page,workflow,{timeout=120000,runTimeout=timeout,repo}={}){
   const nodes={};
   for(const [index,step] of workflow.steps.entries()){
     const where=`"${workflow.name}" step ${index+1}`;
@@ -106,6 +106,14 @@ export async function performManual(page,workflow,{timeout=120000,runTimeout=tim
       if(step.click==='#table-save')await expect(page.locator('#table-save')).toBeHidden({timeout});
       continue;
     }
+    // A FILE OF THE REPOSITORY, as a person would choose it after downloading it: from the checkout beside this one.
+    if('file' in step){
+      if(!repo)throw new Error(`${where} chooses a file of the repository; give performManual the checkout.`);
+      const field=page.locator(selectorOf(step.file)).first();
+      await sameLabel(page,step.file,step.label,where);
+      await field.setInputFiles(new URL(step.path,repo).pathname);
+      continue;
+    }
     if('fill' in step){
       await view(page,step.view);
       const field=page.locator(selectorOf(step.fill)).first();
@@ -163,7 +171,9 @@ export async function performManual(page,workflow,{timeout=120000,runTimeout=tim
       // A FAILED RUN ENDS THE WAIT: only the run gets the long timeout, and a run that stops on an error says so
       // at once instead of waiting it out (a live satellite run sat silent for hours, 2026-11-05).
       await expect(page.locator('#workflow-state')).toContainText(/Run complete|failed|stopped|not ready/i,{timeout:runTimeout});
-      await expect(page.locator('#workflow-state'),`${where}: the run`).toContainText('Run complete');
+      // A FAILED RUN SAYS WHY in the test's message: the notice it raised, which the page snapshot does not keep.
+      const said=(await page.locator('#toast').textContent().catch(()=>''))?.replace(/\s+/g,' ').trim();
+      await expect(page.locator('#workflow-state'),`${where}: the run${said?` -- the notice said: ${said}`:''}`).toContainText('Run complete');
       await view(page,'results');
       continue;
     }

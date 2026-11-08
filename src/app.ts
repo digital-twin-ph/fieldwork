@@ -29,7 +29,6 @@ import {tidyLayout,alreadyTidy} from './layout.js';
 import {TILE_DEFAULT_MAX_ZOOM,TILE_MAX_ZOOMS,TILE_SOURCE,drawnBounds,importTiles,type TileExtractSpec} from './tile-extract.js';
 import {OVERTURE_DEFAULT_CONFIDENCE} from './overture-places.js';
 import {seaLevelExample} from './sea-level-example.js';
-import {rulesetExample} from './ruleset-example.js';
 import {hagellochExample} from './hagelloch-example.js';
 import {openRuleEditor} from './rule-editor.js';
 import {openStepViewer,openTableViewer,shapeChange,stepLabels,tableViewOf,type TableView} from './table-viewer.js';
@@ -399,7 +398,7 @@ function writeProjects(projects:Project[]):boolean{
 // example has an area node and was silently labelled, described and noted as Old Naledi until
 // it was added. This is the "examples are the default world" problem in TODO.md, in the one
 // place it is least visible.
-const NAMED_WORKSPACES=['blank','coverage','raster','sea-level','rulesets','hagelloch'];
+const NAMED_WORKSPACES=['blank','raster','sea-level','hagelloch'];
 // A workflow a practitioner created is NOT an example, and the study-area fallback below would
 // label it Old Naledi -- the "examples are the default world" problem, reached at last by a real
 // workflow rather than by a new example. `projectId` is the discriminator: it is set only on a
@@ -1309,8 +1308,6 @@ function render(){
   // the published example. The project description and the footer stay: they describe the kind of
   // work, not the steps, and remain true of a canvas built on top of one.
   if(exampleKey(workflow)==='blank'){$('#project-description').textContent='Developmental evaluation · define a study area and inspect its semantic representation.';$('#example-note').textContent='Experiment 01 · draw → inspect facts → run the rule';$('#canvas-example').textContent='STUDY AREA · EXPERIMENT 01';$('#footer-context').textContent='User-defined study area · CRS84 · local reasoning';}
-  if(exampleKey(workflow)==='coverage'){$('#project-description').textContent='Developmental evaluation · inspect spatial exceptions, exclude with a reason, or revise the boundary.';$('#example-note').textContent='Synthetic points and illustrative boundary · no patient data';$('#canvas-example').textContent='SPATIAL COVERAGE · EXPERIMENT';$('#footer-context').textContent='Synthetic coverage exercise · CRS84 · boundary included';}
-  if(exampleKey(workflow)==='rulesets'){$('#project-description').textContent='How a rule is put together, four times over: two workflows band Snow\u2019s data as he recorded it \u2014 Table 1 by the deaths on each date, the mapped locations by the deaths at each address \u2014 and two run the identical rules over damaged copies of the same data.';$('#example-note').textContent='Four workflows on one canvas. A and B use Snow\u2019s data as recorded; C and D are SIMULATED damage, and say so on the input: three dates with no count, and a quarter of the counts written as text. C and D apply the same rules as A and B, so everything that differs is the data \u2014 and the step says what it could not read rather than banding those records Unrecorded in silence.';$('#canvas-example').textContent='RULESETS \u00b7 HOW A RULE IS PUT TOGETHER';$('#footer-context').textContent='Authored rules \u00b7 compiled to N3 \u00b7 declared field bindings';}
   if(exampleKey(workflow)==='raster'){$('#project-description').textContent='Prepare a local raster, preview and adjust the clipping boundary, then run and inspect the clipped result.';$('#example-note').textContent='1 Prepare raster / 2 Preview and adjust / 3 Run workflow';$('#canvas-example').textContent='OLD NALEDI / RASTER CLIPPING';$('#footer-context').textContent='Native raster cells / adjustable polygon mask / local file and source citation';}
   if(exampleKey(workflow)==='sea-level'){$('#project-description').textContent='Published AR6 sea-level projections against real Manila health facilities: which gauge, how far away.';$('#example-note').textContent='Projections are IPCC AR6, CC BY 4.0, in millimetres against the 1995\u20132014 baseline. Facilities are OpenStreetMap, ODbL. No elevation is supplied, so nothing here is compared against one \u2014 and none of it is an inundation model.';}
   if(exampleKey(workflow).startsWith('snow-')){$('#project-description').textContent='Historical pump and death-location tables; explicit metric catchment computations and source evidence.';$('#example-note').textContent='250 locations / 489 deaths; network is a modern OSM snapshot, not 1854 streets';$('#canvas-example').textContent='JOHN SNOW / CATCHMENT WORKED EXAMPLE';$('#footer-context').textContent='CRS84 inputs and outputs / UTM computation / method parameters in evidence';}
@@ -2090,9 +2087,13 @@ function renderInspector(){
         // nominated, never guessed from a property name -- the same rule the polygon layer's
         // naming property follows -- so the offer is the keys the records actually carry.
         const classPicker=sources.map(source=>{
-          const records=(source.params as {data?:{features?:{properties?:Record<string,unknown>}[]}})
-            .data?.features??[];
-          const keys=[...new Set(records.flatMap(f=>Object.keys(f.properties??{})))]
+          // A RULES STEP stores no points: it hands on the points it read, with what its rules concluded. Both are offered,
+          // so a map can be coloured by a rule's category (2026-11-08, the rules worked example's clinics).
+          const read=source.type==='apply_ruleset'
+            ?workflow.nodes.find(m=>m.id===workflow.edges.find(e=>e.to===source.id)?.from):source;
+          const records=(read?.params as {data?:{features?:{properties?:Record<string,unknown>}[]}}|undefined)
+            ?.data?.features??[];
+          const keys=[...new Set([...records.flatMap(f=>Object.keys(f.properties??{})),...rulesAdd(source).categories])]
             .filter(key=>!['name','capturedAt'].includes(key)).sort();
           if(!keys.length)return '';
           const chosen=n.params.pinClassField?.[source.id]||'';
@@ -3122,7 +3123,13 @@ function renderInspector(){
         +`<span class="inspector-section">Which column means what</span>`;
       if(authored.fields.length){
         content+=`<table class="inspector-table"><thead><tr><th>Column</th><th>Read as</th><th>Kind</th><th>Unit</th></tr></thead><tbody>`
-          +authored.fields.map((field,index)=>`<tr><td>${esc(field.attribute)}</td><td>${esc(field.label||field.attribute)}</td><td>${esc(field.kind)}</td>`
+          // THE KIND IS DECLARED, not only read off the values (2026-11-08): counts a file stores as text ("34") are offered
+          // as a category, and only the practitioner can say they are a number -- after which the text is reported as
+          // unreadable, and Data quality can read it as numbers.
+          +authored.fields.map((field,index)=>`<tr><td>${esc(field.attribute)}</td><td>${esc(field.label||field.attribute)}</td>`
+            +`<td><select data-field-kind="${index}" aria-label="Kind of ${esc(field.attribute)}">`
+            +([['number','number'],['term','category'],['boolean','true or false']] as const)
+              .map(([k,w])=>`<option value="${k}"${field.kind===k?' selected':''}>${w}</option>`).join('')+`</select></td>`
             +`<td>${field.kind==='number'
               ?`<input data-field-unit="${index}" value="${esc(field.unitLabel??'')}" placeholder="minutes" aria-label="Unit for ${esc(field.attribute)}">`
               :'—'}</td></tr>`).join('')
@@ -3166,6 +3173,12 @@ function renderInspector(){
       // IRI is what the unit check compares, and a word this does not recognise gets the label
       // and no IRI -- so the check then refuses the rules for want of a unit, which is the
       // honest outcome rather than a guess at what they meant.
+      document.querySelectorAll<HTMLSelectElement>('[data-field-kind]').forEach(el=>
+        el.addEventListener('change',()=>change(w=>{
+          const field=getNode(w,n.id,'apply_ruleset').params.authored!.fields[Number(el.dataset.fieldKind)];
+          field.kind=el.value as 'number'|'term'|'boolean';
+          if(field.kind!=='number'){delete field.unit;delete field.unitLabel;}
+        })));
       document.querySelectorAll<HTMLInputElement>('[data-field-unit]').forEach(el=>
         el.addEventListener('change',()=>change(w=>{
           const field=getNode(w,n.id,'apply_ruleset').params.authored!.fields[Number(el.dataset.fieldUnit)];

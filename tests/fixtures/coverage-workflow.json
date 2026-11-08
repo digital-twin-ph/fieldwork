@@ -1,0 +1,155 @@
+{
+ "schema": "fieldwork/workflow/1",
+ "exampleId": "blank",
+ "name": "Points inside an area · synthetic exercise",
+ "nodes": [
+  {
+   "id": "scope",
+   "type": "study_area",
+   "x": 40,
+   "y": 40,
+   "params": {
+    "source": "drawn",
+    "label": "Illustrative Old Naledi study box",
+    "selectionMode": "bbox",
+    "geometry": {
+     "type": "Polygon",
+     "coordinates": [
+      [
+       [
+        25.89,
+        -24.7
+       ],
+       [
+        25.91,
+        -24.7
+       ],
+       [
+        25.91,
+        -24.68
+       ],
+       [
+        25.89,
+        -24.68
+       ],
+       [
+        25.89,
+        -24.7
+       ]
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "id": "observations",
+   "type": "point_input",
+   "x": 40,
+   "y": 230,
+   "params": {
+    "label": "Synthetic coverage records",
+    "data": {
+     "type": "FeatureCollection",
+     "features": [
+      {
+       "type": "Feature",
+       "id": "inside",
+       "properties": {
+        "name": "Inside example"
+       },
+       "geometry": {
+        "type": "Point",
+        "coordinates": [
+         25.9,
+         -24.69
+        ]
+       }
+      },
+      {
+       "type": "Feature",
+       "id": "edge",
+       "properties": {
+        "name": "Boundary example"
+       },
+       "geometry": {
+        "type": "Point",
+        "coordinates": [
+         25.91,
+         -24.69
+        ]
+       }
+      },
+      {
+       "type": "Feature",
+       "id": "outside",
+       "properties": {
+        "name": "Outside example"
+       },
+       "geometry": {
+        "type": "Point",
+        "coordinates": [
+         25.92,
+         -24.69
+        ]
+       }
+      },
+      {
+       "type": "Feature",
+       "id": "missing",
+       "properties": {
+        "name": "Missing-location example"
+       },
+       "geometry": null
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "clip",
+   "type": "clip_points_to_area",
+   "x": 380,
+   "y": 120,
+   "params": {
+    "label": "Keep points inside the area",
+    "keepBoundary": true,
+    "showExcluded": true
+   }
+  },
+  {
+   "id": "map",
+   "type": "map_output",
+   "x": 720,
+   "y": 120,
+   "params": {
+    "label": "Map of the points kept"
+   }
+  }
+ ],
+ "edges": [
+  {
+   "id": "scope-link",
+   "from": "scope",
+   "to": "clip",
+   "port": "area"
+  },
+  {
+   "id": "points-link",
+   "from": "observations",
+   "to": "clip",
+   "port": "points"
+  },
+  {
+   "id": "map-area",
+   "from": "scope",
+   "to": "map",
+   "port": "area"
+  },
+  {
+   "id": "map-points",
+   "from": "clip",
+   "to": "map",
+   "port": "points"
+  }
+ ]
+}

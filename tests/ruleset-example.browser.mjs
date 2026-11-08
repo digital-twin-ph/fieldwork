@@ -1,16 +1,15 @@
 import {test,expect} from '@playwright/test';
+import {openFixture} from './open-fixture.mjs';
 import {collectPageErrors} from './page-errors.mjs';
 
-// The worked example whose subject is the ruleset widget. A practitioner opens it to see how a
-// rule is put together, so what matters here is that it is REACHABLE and that it RUNS -- the
-// conclusions themselves are checked in tests/ruleset-example.test.mjs against the real engine.
-test('the ruleset example is offered, runs, and shows each condition kind',async({page})=>{
+// The workflow the built-in rulesets example built, on Snow's data: it RUNS, and shows each condition kind. The example
+// was removed from the app on 2026-11-08; what it taught is in example-workflows-rulesets, and this workflow is kept as a
+// fixture. The conclusions themselves are checked in tests/ruleset-example.test.mjs against the real engine.
+test('the Snow rules workflow runs, and shows each condition kind',async({page})=>{
   const errors=collectPageErrors(page);
   await page.goto('/');
   await page.evaluate(()=>localStorage.clear());
-  await page.goto('/?example=rulesets');
-  await expect(page.locator('#workflow-select')).toHaveValue('rulesets');
-  await expect(page.locator('#project-select')).toHaveValue('rulesets');
+  await openFixture(page,'rulesets-workflow.json');
   await expect(page.locator('body')).toContainText('Complete in',{timeout:40000});
 
   // Two workflows on one canvas: one over a table, one over a point layer. Neither reads the

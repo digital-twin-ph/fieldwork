@@ -79,7 +79,7 @@ test('the selected choice is marked, and an absent one falls back to none',()=>{
 // with the words "This figure drew no basemap, so no tile provider has to be credited".
 import {mapPresentation} from '../build/map-communication.js';
 import {mapOutput} from '../build/map-output.js';
-import {clipExercise} from '../build/clip-points.js';
+import {clipExercise} from './fixtures/workflows.mjs';
 
 const figure=(params)=>{
   const workflow=clipExercise();workflow.nodes=workflow.nodes.slice(0,2);

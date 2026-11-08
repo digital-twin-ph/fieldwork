@@ -528,14 +528,14 @@
       "id": "urn:fieldwork:example:workflows-rulesets",
       "title": "Rules on synthetic data",
       "repository": "https://github.com/digital-twin-ph/example-workflows-rulesets",
-      "commit": "c32e8b8439be53cdceb643c5ea28f764ef54a6ef",
+      "commit": "b86187af1407a5c216b71b679a17f76adfa09ed1",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-workflows-rulesets",
       "licence": {
         "data": "CC0-1.0",
         "source": "Made up for this example; no person, place or count is real.",
         "note": "Stated in the repository’s LICENSE. Every value is written in scripts/make-data.mjs."
       },
-      "description": "Four questions on made-up data that exercise every feature of Apply ruleset: categories and values computed under conditions, a value read by a second rule, a setting with its unit, a division by zero, disagreeing rules, and new cases from the previous row after a sort.",
+      "description": "Six questions on made-up data that exercise every feature of Apply ruleset: categories and values computed under conditions, a value read by a second rule, a setting with its unit, a division by zero, disagreeing rules, new cases from the previous row after a sort, rules the reasoner runs, and rules over points on a map with counts stored as text.",
       "carries": {
         "workflow": true,
         "data": true,
@@ -543,19 +543,22 @@
       },
       "uses": [
         "apply_ruleset",
+        "map_output",
+        "point_input",
+        "study_area",
         "table_input",
         "table_output"
       ],
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "b93bc22e3a6e506158de59f87cf31405c6ea95ba2c06f3cd96fc357be67985ec",
-          "bytes": 2870
+          "sha256": "816bd2e81888831befd91881825812ca750a75e1c5090e5402f28e3f7c9e20d6",
+          "bytes": 3988
         },
         {
           "path": "manual.json",
-          "sha256": "f1f1f1e4a505e7bf98408e5772e8ecb221baea99a5f5e113b478c0e7e177691b",
-          "bytes": 31107
+          "sha256": "7d384d35857c61b4c894cbcc0f69caa04cc6779734d2dc49bddd6661b186d1d4",
+          "bytes": 46325
         },
         {
           "path": "data/clinic-visits.csv",
@@ -589,16 +592,21 @@
         },
         {
           "path": "README.md",
-          "sha256": "a70b78a15ce0ce32855b1911649a959da15c428bacf57b2ed15ecdd4cbabcbcf",
-          "bytes": 4924
+          "sha256": "7362d7088392588769a416a2ffa2b70c650e4c72e75a2930d3f7578a32e80257",
+          "bytes": 5738
         },
         {
           "path": "LICENSE",
           "sha256": "1910c70049a50dc2f2aed5a49f6b4315518f32351877362c663bff8f8df448a1",
           "bytes": 235
+        },
+        {
+          "path": "data/clinic-locations.geojson",
+          "sha256": "c552b505711a3fb8cba90e0bde654f28a0cd7c9309436ec1ee252c956d789f2f",
+          "bytes": 1411
         }
       ],
-      "workflowCount": 4,
+      "workflowCount": 6,
       "notYet": "Nothing on the list of Apply ruleset features is left unreached."
     }
   ]

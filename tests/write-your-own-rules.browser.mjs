@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {openFixture} from './open-fixture.mjs';
 import {collectPageErrors} from './page-errors.mjs';
 
 // "#2 there is no editor" -- the practitioner, 2026-10-15, looking at a ruleset step. The editor
@@ -9,7 +10,7 @@ test('a ruleset step can be given rules written here, from a standing start',asy
   const errors=collectPageErrors(page);
   await page.goto('/');
   await page.evaluate(()=>localStorage.clear());
-  await page.goto('/?example=rulesets');
+  await openFixture(page,'rulesets-workflow.json');
   await expect(page.locator('body')).toContainText('Complete in',{timeout:40000});
 
   // Add a ruleset step to a canvas that already has records on it.

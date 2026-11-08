@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import {calculateArea,AREA_UNITS} from '../build/area-computation.js';
 import {bboxPolygon,newStudyArea,blankWorkflow,studyAreaN3} from '../build/study-area.js';
 import {newAreaMeasurement,measureArea} from '../build/area-measurement.js';
-import {clipExercise,clipPointsToArea,clipPointsReceipt} from '../build/clip-points.js';
+import {clipPointsToArea,clipPointsReceipt} from '../build/clip-points.js';
+import {clipExercise} from './fixtures/workflows.mjs';
 import {executeWorkflow,executionPlan,validateWorkflow} from '../build/core.js';
 const close=(actual,expected)=>assert.ok(Math.abs(actual-expected)<=Math.max(1,Math.abs(expected))*1e-10,`${actual} differs from ${expected}`);
 test('spherical area agrees with analytic latitude-longitude rectangle and respects polygon shape',()=>{

@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {openFixture} from './open-fixture.mjs';
 import {collectPageErrors} from './page-errors.mjs';
 
 // "For tabular data, I should have a quick look button to browse the table as a modal. The
@@ -10,7 +11,7 @@ test('a tabular input opens its rows in a dialog, and changes nothing',async({pa
   const errors=collectPageErrors(page);
   await page.goto('/');
   await page.evaluate(()=>localStorage.clear());
-  await page.goto('/?example=rulesets');
+  await openFixture(page,'rulesets-workflow.json');
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
   const saved=()=>page.evaluate(()=>localStorage.getItem('fieldwork-workflow-v1'));
   const before=await saved();
@@ -50,7 +51,7 @@ test('a point input opens its records in the same dialog',async({page})=>{
   const errors=collectPageErrors(page);
   await page.goto('/');
   await page.evaluate(()=>localStorage.clear());
-  await page.goto('/?example=rulesets');
+  await openFixture(page,'rulesets-workflow.json');
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
 
   await page.locator('[data-view="workflow"]').click();

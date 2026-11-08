@@ -9,8 +9,8 @@ import {collectPageErrors} from './page-errors.mjs';
 // example, which is the one thing a reader has no reason to try.
 const stale=()=>{
   localStorage.clear();
-  localStorage.setItem('fieldwork-examples-v1',JSON.stringify({rulesets:{
-    schema:'fieldwork/workflow/1',exampleId:'rulesets',name:'Rulesets · how a rule is put together',
+  localStorage.setItem('fieldwork-examples-v1',JSON.stringify({'snow-voronoi':{
+    schema:'fieldwork/workflow/1',exampleId:'snow-voronoi',name:'John Snow · Voronoi catchments',
     nodes:[{id:'sites',type:'point_input',x:40,y:200,params:{label:'Twelve service points (synthetic)',
       data:{type:'FeatureCollection',features:[{type:'Feature',id:'s1',properties:{name:'Riverside clinic'},
         geometry:{type:'Point',coordinates:[25.902,-24.683]}}]},sourceInfo:{format:'manual'}}}],edges:[]}}));
@@ -20,7 +20,7 @@ test('a republished worked example says so, and nothing is replaced without aski
   const errors=collectPageErrors(page);
   await page.goto('/');
   await page.evaluate(stale);
-  await page.goto('/?example=rulesets');
+  await page.goto('/?example=snow-voronoi');
 
   const toast=page.locator('#toast');
   await expect(toast).toContainText('has been republished since you last opened it',{timeout:25000});
@@ -33,13 +33,13 @@ test('a republished worked example says so, and nothing is replaced without aski
 
   await toast.getByText('Load the published version').click();
   await page.locator('[data-view="workflow"]').click();
-  await expect(page.locator('.react-flow__node')).toHaveCount(14,{timeout:20000});
+  await expect(page.locator('.react-flow__node')).toHaveCount(15,{timeout:20000});
   await page.locator('[data-view="workflow"]').click();
   await expect(page.locator('.react-flow__node').filter({hasText:'Snow 1855 Table 1'}).first()).toBeVisible();
 
   // And it does not nag afterwards: the workspace now records which published version it came
   // from, so the next visit is quiet.
-  await page.goto('/?example=rulesets');
+  await page.goto('/?example=snow-voronoi');
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
   await expect(toast).not.toContainText('has been republished');
   expect(errors).toEqual([]);

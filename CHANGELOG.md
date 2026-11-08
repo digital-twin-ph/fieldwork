@@ -3,6 +3,16 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.59.0 — 2026-11-08
+
+- **The built-in rulesets and spatial coverage examples are removed.** What the rulesets example taught is in the
+  *Rules on synthetic data* worked example, which gains two workflows: rules the N3 reasoner runs, and rules over
+  points coloured on a map, with counts stored as text read as numbers in Data quality. Its six workflows build from an
+  empty canvas by its manual. Keep points inside the area now has no worked example, and says so.
+- **A column's kind is declared** in Apply ruleset's Inspector: number, category, or true or false. Apply ruleset 0.7.0.
+- **A map can be coloured by what rules concluded.** Map patch release.
+- **A manual can ask for a file of its repository** to be downloaded and chosen, where a widget takes a file, not a URL.
+
 ## 0.58.0 — 2026-11-08
 
 - **Tabular data reads Excel workbooks** (`.xlsx`): choose the sheet, and it is set up as a CSV is. The step says which

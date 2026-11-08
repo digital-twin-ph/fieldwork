@@ -14,12 +14,12 @@ asset shows up.
 
 ## 1 · Widget utilization
 
-56 live widgets across 11 shipped examples and 7 pinned in its own repository.
+56 live widgets across 9 shipped examples and 7 pinned in its own repository.
 
 | Reach | Widgets |
 | --- | --- |
-| Used by no workflow | **11** |
-| Used by exactly one | 20 |
+| Used by no workflow | **12** |
+| Used by exactly one | 19 |
 | Used by two or more | **25** |
 
 `isochrone` and `compute_walking_catchment` are a special case the practitioner ruled on
@@ -30,6 +30,7 @@ fixed — see experiment 64.
 ### Used by no workflow
 
 - `buffer_point`
+- `clip_points_to_area`
 - `deduplicate_points`
 - `fill_interior_gaps`
 - `measure_area`
@@ -47,7 +48,6 @@ Each of these has one workflow's worth of evidence. If that example changes, it 
 
 | Widget | Its only example |
 | --- | --- |
-| `clip_points_to_area` | coverage |
 | `facilities` | old-naledi |
 | `facility_audit` | old-naledi |
 | `point_grid` | old-naledi |
@@ -76,13 +76,13 @@ evidence about that example.
 
 | Widget | Examples | Which |
 | --- | ---: | --- |
-| `map_output` | 16 | brazil-dengue-rj-2024, coverage, hagelloch, heat, nigeria-immunization-2024, nyc-asthma-ozone-2016-2025, old-naledi, oswego-1940, raster, rulesets, sea-level, snow-extent, snow-geoprivacy, snow-isochrone, snow-voronoi, south-london-1854 |
-| `table_output` | 15 | brazil-dengue-rj-2024, hagelloch, heat, nyc-asthma-ozone-2016-2025, old-naledi, oswego-1940, rulesets, salmonella-germany-2021, sea-level, snow-extent, snow-geoprivacy, snow-isochrone, snow-voronoi, south-london-1854, workflows-rulesets |
-| `point_input` | 13 | coverage, hagelloch, heat, nyc-asthma-ozone-2016-2025, old-naledi, oswego-1940, rulesets, sea-level, snow-extent, snow-geoprivacy, snow-isochrone, snow-voronoi, south-london-1854 |
-| `study_area` | 13 | brazil-dengue-rj-2024, coverage, hagelloch, nyc-asthma-ozone-2016-2025, old-naledi, oswego-1940, raster, rulesets, sea-level, snow-geoprivacy, snow-isochrone, snow-voronoi, south-london-1854 |
-| `table_input` | 12 | brazil-dengue-rj-2024, nigeria-immunization-2024, nyc-asthma-ozone-2016-2025, oswego-1940, rulesets, salmonella-germany-2021, sea-level, snow-extent, snow-isochrone, snow-voronoi, south-london-1854, workflows-rulesets |
-| `apply_ruleset` | 8 | heat, nigeria-immunization-2024, old-naledi, rulesets, sea-level, snow-extent, south-london-1854, workflows-rulesets |
+| `map_output` | 15 | brazil-dengue-rj-2024, hagelloch, heat, nigeria-immunization-2024, nyc-asthma-ozone-2016-2025, old-naledi, oswego-1940, raster, sea-level, snow-extent, snow-geoprivacy, snow-isochrone, snow-voronoi, south-london-1854, workflows-rulesets |
+| `table_output` | 14 | brazil-dengue-rj-2024, hagelloch, heat, nyc-asthma-ozone-2016-2025, old-naledi, oswego-1940, salmonella-germany-2021, sea-level, snow-extent, snow-geoprivacy, snow-isochrone, snow-voronoi, south-london-1854, workflows-rulesets |
+| `point_input` | 12 | hagelloch, heat, nyc-asthma-ozone-2016-2025, old-naledi, oswego-1940, sea-level, snow-extent, snow-geoprivacy, snow-isochrone, snow-voronoi, south-london-1854, workflows-rulesets |
+| `study_area` | 12 | brazil-dengue-rj-2024, hagelloch, nyc-asthma-ozone-2016-2025, old-naledi, oswego-1940, raster, sea-level, snow-geoprivacy, snow-isochrone, snow-voronoi, south-london-1854, workflows-rulesets |
+| `table_input` | 11 | brazil-dengue-rj-2024, nigeria-immunization-2024, nyc-asthma-ozone-2016-2025, oswego-1940, salmonella-germany-2021, sea-level, snow-extent, snow-isochrone, snow-voronoi, south-london-1854, workflows-rulesets |
 | `chart_output` | 8 | brazil-dengue-rj-2024, hagelloch, nyc-asthma-ozone-2016-2025, old-naledi, snow-extent, snow-isochrone, snow-voronoi, south-london-1854 |
+| `apply_ruleset` | 7 | heat, nigeria-immunization-2024, old-naledi, sea-level, snow-extent, south-london-1854, workflows-rulesets |
 | `case_series` | 5 | brazil-dengue-rj-2024, hagelloch, snow-extent, snow-isochrone, snow-voronoi |
 | `select_rows` | 5 | brazil-dengue-rj-2024, nigeria-immunization-2024, nyc-asthma-ozone-2016-2025, salmonella-germany-2021, south-london-1854 |
 | `group_table` | 3 | brazil-dengue-rj-2024, nyc-asthma-ozone-2016-2025, south-london-1854 |
@@ -118,7 +118,6 @@ rows above `case_series` are the ones that have genuinely done both.
 | sea-level | **2** — `find_health_facilities`, `slr_site_assignment` |
 | snow-isochrone | **2** — `isochrone`, `network_input` |
 | south-london-1854 | **2** — `map_image_input`, `stack_polygons` |
-| coverage | **1** — `clip_points_to_area` |
 | snow-extent | **1** — `summarize_hull` |
 | snow-voronoi | **1** — `voronoi` |
 
@@ -141,17 +140,15 @@ that does not can be rebuilt only by copying this file.
 | --- | ---: | ---: | ---: | --- | ---: | --- |
 | `heat` | 6 | 2 | 0 | **2** — neighborhoods (point_input), centers (point_input) | — | — |
 | `old-naledi` | 13 | 1 | 1 | — | — | `facilities`, `facility_audit` |
-| `coverage` | 4 | 2 | 0 | **1** — observations (point_input) | 1 | — |
 | `raster` | 4 | 0 | 0 | — | — | — |
 | `snow-voronoi` | 15 | 4 | 2 | **1** — dates (table_input) | 1 | — |
 | `snow-isochrone` | 17 | 6 | 3 | **2** — dates (table_input), context-pumps (point_input) | 1 | — |
 | `snow-geoprivacy` | 15 | 3 | 2 | — | 1 | `comparison_map` |
 | `sea-level` | 8 | 4 | 1 | **2** — facilities (find_health_facilities), projections (table_input) | 1 | `slr_site_assignment` |
 | `snow-extent` | 9 | 3 | 2 | **1** — dates (table_input) | — | — |
-| `rulesets` | 14 | 5 | 2 | **2** — dates (table_input), gapped (table_input) | 1 | — |
 | `hagelloch` | 6 | 2 | 1 | — | 1 | — |
 
-Across the shipped examples, **11 nodes carry data and declare no source**. That is the list a from-scratch rebuild would have to copy rather than fetch. A further 7 study areas carry a drawn geometry with no declared source; those are redrawn rather than fetched, which the sized-box control makes an entry rather than a tracing.
+Across the shipped examples, **8 nodes carry data and declare no source**. That is the list a from-scratch rebuild would have to copy rather than fetch. A further 5 study areas carry a drawn geometry with no declared source; those are redrawn rather than fetched, which the sized-box control makes an entry rather than a tracing.
 
 ### What this cannot establish
 
@@ -161,7 +158,7 @@ Across the shipped examples, **11 nodes carry data and declare no source**. That
 - **That every parameter is reachable from its panel.** Only a rebuild can show that, and only
   one exists: `tests/recreate-from-scratch.browser.mjs` builds `south-london/ground` from an
   empty canvas and the published files. The other five South London workflows and all
-  11 shipped examples are unproven on this point.
+  9 shipped examples are unproven on this point.
 - **That a published input could be DERIVED in the application.** See the two claims below,
   which is where this belongs rather than in a list of caveats.
 - **That an unused widget should be retired.** D11 asks whether a residual function remains
@@ -183,11 +180,9 @@ different things: an example can be four nodes and complete, or eighteen and not
 | `snow-isochrone` | 17 | 1 / 4 | sources, published files, rebuilt from scratch |
 | `snow-voronoi` | 15 | 1 / 4 | sources, published files, rebuilt from scratch |
 | `snow-geoprivacy` | 15 | 1 / 4 | unattached, published files, rebuilt from scratch |
-| `rulesets` | 14 | 1 / 4 | sources, published files, rebuilt from scratch |
 | `old-naledi` | 13 | 1 / 4 | unattached, published files, rebuilt from scratch |
 | `snow-extent` | 9 | 1 / 4 | sources, published files, rebuilt from scratch |
 | `heat` | 6 | 1 / 4 | sources, published files, rebuilt from scratch |
-| `coverage` | 4 | 1 / 4 | sources, published files, rebuilt from scratch |
 | `sea-level` | 8 | 0 / 4 | sources, unattached, published files, rebuilt from scratch |
 | `south-london-1854` (pinned) | — | **3 / 4** | rebuilt from scratch: 1 of its 6 workflows |
 
@@ -271,7 +266,7 @@ be read, selected and named inside the application, and claim B would hold for t
 - `urn:fieldwork:example:salmonella-germany-2021` declares 7 node types. Its inputs are files in its own repository, and `geo/water-intakes.geojson` was written on 2026-10-29 because those four features existed only inside the bundle until then — the one input a reader could not download.
 - `urn:fieldwork:example:nyc-asthma-ozone-2016-2025` declares 13 node types. Its inputs are files in its own repository, and `geo/water-intakes.geojson` was written on 2026-10-29 because those four features existed only inside the bundle until then — the one input a reader could not download.
 - `urn:fieldwork:example:brazil-dengue-rj-2024` declares 16 node types. Its inputs are files in its own repository, and `geo/water-intakes.geojson` was written on 2026-10-29 because those four features existed only inside the bundle until then — the one input a reader could not download.
-- `urn:fieldwork:example:workflows-rulesets` declares 3 node types. Its inputs are files in its own repository, and `geo/water-intakes.geojson` was written on 2026-10-29 because those four features existed only inside the bundle until then — the one input a reader could not download.
+- `urn:fieldwork:example:workflows-rulesets` declares 6 node types. Its inputs are files in its own repository, and `geo/water-intakes.geojson` was written on 2026-10-29 because those four features existed only inside the bundle until then — the one input a reader could not download.
 
 ## 3 · Recommendations
 
@@ -279,15 +274,15 @@ Generated from the numbers above, so a recommendation cannot outlive the gap tha
 Each says what was measured and what closing it would mean. None says whether it is worth
 doing: that is a decision with a cost, and this file measures.
 
-**R1. Give the 11 data-carrying nodes a declared source.** 7 shipped examples hold 11 nodes that carry data and name no origin: `heat` (2), `coverage` (1), `snow-voronoi` (1), `snow-isochrone` (2), `sea-level` (2), `snow-extent` (1), `rulesets` (2). Closing it means either a `sourceInfo`/`provenance` block naming where the data came from, or a published file beside the example the way `geo/water-intakes.geojson` was written on 2026-10-29. Until then each is a payload a rebuild must copy rather than fetch.
+**R1. Give the 8 data-carrying nodes a declared source.** 5 shipped examples hold 8 nodes that carry data and name no origin: `heat` (2), `snow-voronoi` (1), `snow-isochrone` (2), `sea-level` (2), `snow-extent` (1). Closing it means either a `sourceInfo`/`provenance` block naming where the data came from, or a published file beside the example the way `geo/water-intakes.geojson` was written on 2026-10-29. Until then each is a payload a rebuild must copy rather than fetch.
 
-**R2. Ask D11 of the 7 widgets no workflow reaches.** `buffer_point`, `deduplicate_points`, `fill_interior_gaps`, `measure_area`, `sample_raster`, `slr_threshold_comparison`, `summarize_combined_area`. Not a retirement list: D11 asks whether a residual function remains that nothing else performs, and a widget may be unreached because no example poses its problem. The answer is per widget and this audit does not have it.
+**R2. Ask D11 of the 8 widgets no workflow reaches.** `buffer_point`, `clip_points_to_area`, `deduplicate_points`, `fill_interior_gaps`, `measure_area`, `sample_raster`, `slr_threshold_comparison`, `summarize_combined_area`. Not a retirement list: D11 asks whether a residual function remains that nothing else performs, and a widget may be unreached because no example poses its problem. The answer is per widget and this audit does not have it.
 
 **R3. Settle what a monolith and its decomposition owe each other.** Use propagates from a composition to its members and not from an equivalent monolith, so 4 widgets read as unreached while a workflow performs their work. It is a question about the admission criteria rather than about those widgets, and the count is deliberately left as it is until it is answered.
 
 **R4. Give a second workflow to the widgets one example carries alone.** `snow-geoprivacy` is the sole evidence for 5 widgets. Restructuring an example can take that evidence with it and nothing reports the loss. Closing it means a second workflow reaching those widgets, or recording the fragility as accepted.
 
-**R5. Extend the from-scratch rebuild past one workflow.** `tests/recreate-from-scratch.browser.mjs` proves `south-london/ground` can be built from an empty canvas and published files. The other five South London workflows and all 11 shipped examples are unproven, and it is the only test that can show a parameter is reachable from its own panel.
+**R5. Extend the from-scratch rebuild past one workflow.** `tests/recreate-from-scratch.browser.mjs` proves `south-london/ground` can be built from an empty canvas and published files. The other five South London workflows and all 9 shipped examples are unproven, and it is the only test that can show a parameter is reachable from its own panel.
 
 **R6. Check that a declared source resolves, not only that it exists.** This audit reads whether `sourceInfo` or `provenance` is present. `validate:examples` verifies the pinned bundle's per-file digests; nothing verifies a shipped example's declared source, so a dead URL or a moved file reads as declared.
 

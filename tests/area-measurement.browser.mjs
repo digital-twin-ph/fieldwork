@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFile,mkdir} from 'node:fs/promises';
 import {blankWorkflow,newStudyArea,bboxPolygon} from '../build/study-area.js';
 import {calculateArea,formatArea,AREA_UNITS} from '../build/area-computation.js';
-import {clipExercise} from '../build/clip-points.js';
+import {clipExercise} from './fixtures/workflows.mjs';
 import {collectPageErrors} from './page-errors.mjs';
 test("Area enrichment, units, evidence and offline recomputation",async({page,context})=>{
 const errors=collectPageErrors(page);

@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {openFixture} from './open-fixture.mjs';
 import {collectPageErrors} from './page-errors.mjs';
 
 // Experiment 117 — data quality. The practitioner, 2026-10-16: "If we have situation (c) how
@@ -9,7 +10,7 @@ test('a column profile names the problem, and the repair is offered where the va
   const errors=collectPageErrors(page);
   await page.goto('/');
   await page.evaluate(()=>localStorage.clear());
-  await page.goto('/?example=rulesets');
+  await openFixture(page,'rulesets-workflow.json');
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
 
   // The run reports 66 records it could not read, across C and D.
@@ -68,7 +69,7 @@ test('a repair is stated in the run evidence',async({page})=>{
   const errors=collectPageErrors(page);
   await page.goto('/');
   await page.evaluate(()=>localStorage.clear());
-  await page.goto('/?example=rulesets');
+  await openFixture(page,'rulesets-workflow.json');
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
   await page.locator('#toast button').last().click();
   await page.locator('[data-view="workflow"]').click();
@@ -100,7 +101,7 @@ test('a repair never overwrites what the input holds',async({page})=>{
   const errors=collectPageErrors(page);
   await page.goto('/');
   await page.evaluate(()=>localStorage.clear());
-  await page.goto('/?example=rulesets');
+  await openFixture(page,'rulesets-workflow.json');
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
   await page.locator('#toast button').last().click();
 
@@ -150,7 +151,7 @@ test('the quality dialog inspects a column, repairs it, and takes the repair bac
   const errors=collectPageErrors(page);
   await page.goto('/');
   await page.evaluate(()=>localStorage.clear());
-  await page.goto('/?example=rulesets');
+  await openFixture(page,'rulesets-workflow.json');
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
   await page.locator('#toast button').last().click();
 
@@ -218,7 +219,7 @@ test('a tabular input is profiled too',async({page})=>{
   const errors=collectPageErrors(page);
   await page.goto('/');
   await page.evaluate(()=>localStorage.clear());
-  await page.goto('/?example=rulesets');
+  await openFixture(page,'rulesets-workflow.json');
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
   await page.locator('#toast button').last().click();
 
@@ -243,7 +244,7 @@ test('the shapes tab shows where values are missing, not just how many',async({p
   const errors=collectPageErrors(page);
   await page.goto('/');
   await page.evaluate(()=>localStorage.clear());
-  await page.goto('/?example=rulesets');
+  await openFixture(page,'rulesets-workflow.json');
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
   await page.locator('#toast button').last().click();
 
@@ -296,7 +297,7 @@ test('a clean input says there is no pattern to show',async({page})=>{
   const errors=collectPageErrors(page);
   await page.goto('/');
   await page.evaluate(()=>localStorage.clear());
-  await page.goto('/?example=rulesets');
+  await openFixture(page,'rulesets-workflow.json');
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
   await page.locator('#toast button').last().click();
 

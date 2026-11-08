@@ -24,6 +24,9 @@ export type ManualStep=
   | {fill:string; label:string; value:string; in?:string; view?:ManualView; dialog?:string}
   | {choose:string; label:string; value:string; shown?:string; in?:string; view?:ManualView; dialog?:string}
   | {tick:string; label:string; values:string[]; dialog?:string}
+  /** A FILE OF THE EXAMPLE'S REPOSITORY, downloaded and chosen where a widget takes a file and not a URL (2026-11-08):
+   *  the path is the repository's, at the commit the example is pinned to. */
+  | {file:string; label:string; path:string; dialog?:string}
   /** Several options of one list, named as the reader sees them: the boroughs among a level's units. */
   | {pick:string; label:string; values:string[]; dialog?:string}
   | {keyRole:string; value:'primary'|'secondary'|''; shown:string; dialog?:string}
@@ -38,7 +41,7 @@ const VIEW_NAMES:Record<ManualView,string>={project:'Project',workflow:'Workflow
 export interface ManualWorkflow {name:string; question?:string; steps:ManualStep[]}
 export interface WorkedExampleManual {schema:string; example:string; intro?:string; workflows:ManualWorkflow[]}
 
-const KINDS=['add','reuse','select','connect','click','fill','choose','tick','pick','keyRole','run','see','note'] as const;
+const KINDS=['add','reuse','select','connect','click','file','fill','choose','tick','pick','keyRole','run','see','note'] as const;
 const kindOf=(step:ManualStep):string=>KINDS.find(kind=>kind in step)??'';
 
 /** Refuses a manual that could not be followed: an unknown step, a node named before it is added, a handle used
@@ -89,6 +92,8 @@ export function stepSentence(step:ManualStep,types:Record<string,string>,title:(
   // instead of typing we should offer it for labels, titles, subjects, URLs like the Zenodo one."*
   if('fill' in step)return sentence(`Set ${bold(step.label,esc)}${where(step.in)} to <code>${esc(step.value)}</code>`
     +`<button type="button" class="manual-copy" data-copy="${esc(step.value)}" aria-label="Copy ${esc(step.label)}">Copy</button>.`);
+  if('file' in step)return sentence(`Download <code>${esc(step.path)}</code> from this example\u2019s repository, then choose it `
+    +`under ${bold(step.label,esc)}.`);
   if('choose' in step)return sentence(`For ${bold(step.label,esc)}${where(step.in)}, choose ${bold(step.shown??step.value,esc)}.`);
   if('tick' in step)return sentence(`Under ${bold(step.label,esc)}, keep only ${step.values.map(v=>`<code>${esc(v)}</code>`).join(', ')}.`);
   if('pick' in step)return sentence(`Under ${bold(step.label,esc)}, choose ${step.values.map(v=>bold(v,esc)).join(', ')}. `

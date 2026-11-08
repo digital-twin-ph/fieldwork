@@ -48,6 +48,21 @@ From prior knowledge; not searched on this date.
 So a place can only be said to sit below a projected sea level once the terrain model's datum **and** that offset are
 both sourced and stated.
 
+## The geoid-to-sea-level offset: open sources, read 2026-11-08
+
+Searched and read on 2026-11-08, from the pages linked. Nothing was downloaded.
+
+| Source | What it gives | Period | Access |
+| --- | --- | --- | --- |
+| **PGM2018**, NAMRIA's Philippine geoid, hybrid grid ([ISG repository](https://isgeoid.polimi.it/Geoid/Asia/Philippines/philippines18_g.html)) | A geoid "fitted to ITRF2005 GNSS/levelling benchmarks"; NAMRIA says the earlier PGM2016 was fitted "so that the existing vertical datum of the country, i.e., MSL is preserved". Its difference from EGM2008 would be the offset at Manila | The Philippine datum's own MSL epoch, not 1995–2014 | Served openly, "Status: PUBLIC", no sign-in; **no licence stated**. 0.025°, stated accuracy 1.2 cm |
+| **DTU22MDT**, DTU Space mean dynamic topography (DOI 10.11583/DTU.26947894) | Mean sea surface above the XGM2019e geoid, global | 1993–2012 | The record refused an automated read (403); **licence and sign-in not confirmed** |
+| **CNES-CLS22**, AVISO+ | Mean sea surface above the geoid, global | 1993–2012 | Needs an AVISO+ account and a licence agreement: not open |
+
+**Not established:** PGM2018's licence (to ask NAMRIA); whether its hybrid fit keeps the MSL datum as PGM2016's did (the
+2021 paper, TAO 32(5), DOI 10.3319/TAO.2021.11.15.01, was not read); the correction between the Philippine datum's epoch
+and 1995–2014; DTU22MDT's licence; whether a levelled tide gauge at Manila (PSMSL, SONEL) gives the offset directly,
+which was not searched. Both global models are over the open ocean, so their value at the coast is the least certain.
+
 ## What this suggests, not yet decided
 
 - **Candidate:** DeltaDTM, the only one that is bare ground, made for coasts, and openly licensed.
@@ -63,5 +78,5 @@ both sourced and stated.
 - Whether the Copernicus DEM on AWS can be read without an account.
 - FABDEM's datum from its own documentation.
 - That no other open bare-ground coastal model exists: only these four were compared.
-- Any open source for the geoid-to-sea-level offset.
+- A licensed open source for the geoid-to-sea-level offset: PGM2018 is served openly with no licence stated.
 - No file was downloaded.

@@ -3,7 +3,7 @@ import {downloadText} from './read-download.mjs';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {readFile} from 'node:fs/promises';
-import {clipExercise} from '../build/clip-points.js';
+import {clipExercise} from './fixtures/workflows.mjs';
 import {Parser} from 'n3';
 import {loadGraph,ontologyFiles,validateGraph,summarize} from '../scripts/validate-ontology.mjs';
 import {quadToN3} from '../build/study-area.js';

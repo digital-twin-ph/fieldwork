@@ -20,7 +20,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {runInThisContext} from 'node:vm';
-import {rulesetExample} from '../build/ruleset-example.js';
+import {rulesetExample} from './fixtures/workflows.mjs';
 import {executeWorkflow,validateWorkflow} from '../build/core.js';
 import {syncProjectManifest} from '../build/project-manifest.js';
 

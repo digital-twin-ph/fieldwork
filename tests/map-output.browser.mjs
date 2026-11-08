@@ -1,7 +1,7 @@
 import {test,expect} from '@playwright/test';
 import assert from 'node:assert/strict';
 import {readFile,mkdir} from 'node:fs/promises';
-import {clipExercise} from '../build/clip-points.js';
+import {clipExercise} from './fixtures/workflows.mjs';
 import {collectPageErrors} from './page-errors.mjs';
 test("Map connectors, layer identity, review and persistence",async({page,context})=>{
 const errors=collectPageErrors(page);

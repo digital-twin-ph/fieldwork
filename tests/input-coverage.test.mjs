@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {parseCSV,csvPoints,syntheticPoints,geoPackageLayers,geoPackagePoints,decodeGeoPackagePoint,geoJSONDeclaredCRS} from '../build/input-data.js';
 import {pointRelation} from '../build/spatial-coverage.js';
-import {clipExercise} from '../build/clip-points.js';
+import {clipExercise} from './fixtures/workflows.mjs';
 import {bboxPolygon} from '../build/study-area.js';
 import {validateGeoJSON,validateWorkflow} from '../build/core.js';
 import {pointGeoPackage} from './input-fixtures.mjs';

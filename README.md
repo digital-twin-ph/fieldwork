@@ -18,8 +18,9 @@ or privacy control.
 | [Ontology viewer](https://digital-twin-ph.github.io/fieldwork-ontology/) | A reading view of this project's vocabulary, its shapes and its competency questions, with the schema-level questions as a build gate |
 
 Worked examples: [blank canvas](https://digital-twin-ph.github.io/fieldwork/?example=blank),
-[Old Naledi diagnostic access](https://digital-twin-ph.github.io/fieldwork/?example=old-naledi),
-[spatial coverage review](https://digital-twin-ph.github.io/fieldwork/?example=coverage).
+[Old Naledi diagnostic access](https://digital-twin-ph.github.io/fieldwork/?example=old-naledi). Worked examples kept in
+their own repositories, such as [rules on synthetic data](https://github.com/digital-twin-ph/example-workflows-rulesets),
+open from the Catalog.
 The version beside the header mark is the released application version; see the
 [release notes](CHANGELOG.md).
 
@@ -47,8 +48,7 @@ The version beside the header mark is the released application version; see the
 | Supporting references | Attach PDFs or URLs to nodes, describe supporting passages, and preserve citations and file identity with run provenance. |
 
 Worked examples cover heat outreach, Old Naledi diagnostic access and raster
-clipping, John Snow Voronoi and network catchments, geoprivacy transformations,
-and a synthetic coverage exercise. Heat uses synthetic neighborhoods; Old Naledi
+clipping, John Snow Voronoi and network catchments, and geoprivacy transformations. Heat uses synthetic neighborhoods; Old Naledi
 combines a real boundary and historical facility registry with generated
 demonstration locations.
 

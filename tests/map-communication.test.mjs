@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {Parser,Store,DataFactory} from 'n3';
 import {mapPresentation,standaloneMapSvg,mapSpecificationFacts} from '../build/map-communication.js';
 import {mapOutput} from '../build/map-output.js';
-import {clipExercise} from '../build/clip-points.js';
+import {clipExercise} from './fixtures/workflows.mjs';
 import {validateGraph} from '../scripts/validate-ontology.mjs';
 
 test('Map presentation is independent of geometry and emits a validated, source-linked plan',async()=>{

@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {openFixture} from './open-fixture.mjs';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {collectPageErrors} from './page-errors.mjs';
@@ -18,7 +19,7 @@ const EXPECTED=[[-0.1365,51.5131],[-0.1340,51.5145]];
 
 test('a CSV of UTM easting and northing imports as CRS84 without a second widget',async({page})=>{
   const errors=collectPageErrors(page);
-  await page.goto('/?example=coverage');
+  await openFixture(page,'coverage-workflow.json');
   await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="observations"]').click();
@@ -90,7 +91,7 @@ test('a wrong zone cannot be caught from the numbers, and the import does not pr
   // the same as an enforced distinction. Nothing in a file of bare easting and northing can
   // establish its zone. Only context can -- which is what suggestUTM compares against, and what
   // the projection explainer exists to tell the practitioner before they choose.
-  await page.goto('/?example=coverage');
+  await openFixture(page,'coverage-workflow.json');
   await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="observations"]').click();

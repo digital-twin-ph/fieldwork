@@ -6,7 +6,7 @@ import {oldNalediWorkflow} from '../build/old-naledi.js';
 import {johnSnowExample} from '../build/john-snow.js';
 import {geoprivacyExample} from '../build/geoprivacy-example.js';
 import {blankWorkflow} from '../build/study-area.js';
-import {clipExercise} from '../build/clip-points.js';
+import {clipExercise} from './fixtures/workflows.mjs';
 
 const EXAMPLES=[
   ['heat',exampleWorkflow()],['old-naledi',oldNalediWorkflow()],['blank',blankWorkflow()],

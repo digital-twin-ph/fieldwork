@@ -2,19 +2,20 @@
 
 _Created 2026-11-07 · Updated 2026-11-07_
 
-**Status:** tried. Relate takes a list of shifts, Regression fits one model per column, and the fourth and fifth
-Brazil workflows are rebuilt with them; their manual plays back from an empty canvas (2026-11-07, Fieldwork 0.49.0,
-Chromium), and the live run reproduces 182's 2010–2025 figures (below). Not `validated`: no Validation Lab check covers
-the several-model table, and check 36, named in the close criteria, tests the Append rows chain these workflows no
-longer use.
+**Status:** validated, 2026-11-07. Relate takes a list of shifts, Regression fits one model per column with an
+adjustment that can follow the shift, and the fourth and fifth Brazil workflows are rebuilt with them. Checks that
+passed: the unit tests, which fail if a lag is fitted on another lag's rows; Validation Lab **check 38**, against pandas
+lags and statsmodels, in CPython 3.13.3 and in Pyodide; the old manual against the new on synthetic satellite files;
+and the live MODIS run, which reproduces 182's figures. All in Chromium for the browser parts. Check 36, named in the
+close criteria below, tests the Append rows chain these workflows no longer use; it still holds for Append rows.
 
 | Stage | What | State, 2026-11-07 |
 | --- | --- | --- |
-| 1 | Relate takes a list of shifts, one column each, every row kept (`relateAtShifts`, at most 24) | Built (45f4f42), and settable in Relate's dialog since 0.47.0 |
+| 1 | Relate takes a list of shifts, one column each, every row kept (`relateAtShifts`) | Built (45f4f42), and settable in Relate's dialog since 0.47.0 |
 | 2 | Regression fits one model per exposure column, each on its own rows, in one table | Built, 0.48.0 (Regression 0.4.0) |
 | 3 | Brazil W4 and W5 rebuilt; an adjustment that follows the shift for W5 | Built, 0.49.0 (Regression 0.5.0, Relate 0.8.2); example commit 2540889 |
 | — | Live MODIS figures of 182 | Reproduced, 2026-11-07 |
-| — | A Validation Lab check of the several-model table; strata counts back in its sentence; a measured shift limit | Not done |
+| — | A Validation Lab check of the several-model table; strata counts back in its sentence; a measured shift limit | Done, 0.50.0: check 38; each model's strata and dispersion; no cap (below) |
 
 ## Stage 2, as built
 
@@ -99,6 +100,38 @@ back, and the reason the strata counts were not compared.
 
 Check 36 tests the Append rows chain the workflows no longer
 use; check 37 tests the stratified fit and is unaffected. No Validation Lab check covers the several-model table.
+
+## Closing, 2026-11-07
+
+**Each model's own counts.** The several-model sentence gave no strata, and gave the first model's dispersion as if it
+were every model's. Each model's line now has its rows, strata used and dropped, and dispersion; the heading names the
+method, "scaled by each model's Pearson dispersion".
+
+**Validation Lab check 38** (`validation-lab` a565590). Check 37's two municipalities and weeks; the dataset's weekly
+temperature and rainfall each brought at 0, −14, −28 and +14 days by Relate; one Regression, each model adjusted for the
+rain at its own shift. pandas builds the lags with a merge on the shifted date and statsmodels fits each lag on its own
+complete rows. Every row count, strata count, coefficient (1e-6) and standard error (1e-5) agrees, in CPython 3.13.3 and
+in Pyodide (CPython 3.14.2 on wasm32, statsmodels 0.14.6). Each model uses 1,581 to 1,613 rows; 1,499 are complete at
+every lag, so no model rests on the others' rows. The shift-0 model is check 37's case, and gives its numbers.
+
+**The limit, measured.** `MAX_SHIFTS = 24` was a chosen number. At the sixteen-year size, 92 municipalities × 845 weeks
+(77,740 rows) against MODIS 8-day periods, in Node (the V8 engine Chromium runs), Relate then Regression:
+
+| Shifts | Relate | Regression, all models | Per model |
+| --- | --- | --- | --- |
+| 1 | 0.8 s | 0.1 s | 0.09 s |
+| 7 | 3.6 s | 0.5 s | 0.07 s |
+| 24 | 11.7 s | 1.6 s | 0.07 s |
+| 96 | 46 s | 7.3 s | 0.08 s |
+| 384 | 185 s | 27.3 s | 0.07 s |
+
+Linear, and nothing failed or ran out of memory within 4 GB at 384. No limit was found, so the cap is removed: a list
+is bounded by its days, whole, distinct and within ten years either way. Not measured in a browser tab, whose memory
+can be less than Node's.
+
+**Found while measuring:** a shift at which no row matches stops the step ("nothing could be related") instead of
+giving an empty column. With every other shift a row without a value is kept and counted; at a shift where all rows
+are without one, it stops. Not changed here; recorded for a decision.
 
 **Open for stage 3:** the lag chart today reads Append rows' `lag` column, in weeks before (0, 2, 4…). The models'
 `shift_days` is the shift as Relate recorded it (3, −11, −25… in W4), in days and with the opposite sign. Whether the

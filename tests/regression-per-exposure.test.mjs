@@ -65,6 +65,10 @@ test('a column that cannot be fitted is a row saying so; the step stops only whe
   const sentence=regressionsSentence(models,withBroken);
   assert.match(sentence,/^3 Poisson regressions of casos, one per exposure column and each on its own rows, each adjusted for /);
   assert.match(sentence,/2 95% intervals, none adjusted for the number of comparisons\./);
+  // EACH MODEL'S OWN STRATA AND DISPERSION, and none stated once for all.
+  for(const m of models.filter(m=>m.result))assert.ok(sentence.includes(
+    `${m.result.strata.used} strata`)&&sentence.includes(`dispersion ${m.result.dispersion.toFixed(3)}`),m.column);
+  assert.match(sentence,/model-based, scaled by each model's Pearson dispersion intervals\. /);
   assert.match(sentence,/Not fitted: no_such_column \(/);
   assert.throws(()=>fitEachExposure(rows,{...params,exposureColumns:['nothing','nor_this']}),/No exposure column could be fitted/);
   assert.throws(()=>fitEachExposure(rows,{...params,exposureColumns:[columns[0],columns[0]]}),/listed twice/);

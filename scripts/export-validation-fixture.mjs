@@ -11,6 +11,7 @@
 //                   | select-range-london-001
 //                   | regression-salmonella-001 | regression-nyc-001 (needs NYC_PKG)
 //                   | sample-satellite-s5p-001 | lag-response-brazil-001 | regression-strata-brazil-001
+//                   | lag-models-brazil-001
 import {createHash} from 'node:crypto';
 import {readFile,writeFile} from 'node:fs/promises';
 import {reprojectToCRS84,projectFromCRS84} from '../build/reproject.js';
@@ -37,7 +38,8 @@ import {selectRange,selectRows} from '../build/derive-value.js';
 import {appendTables} from '../build/append-rows.js';
 import {tableChart} from '../build/chart-output.js';
 import {chartVegaSpec} from '../build/chart-vega.js';
-import {fitRegression,specFrom,rowsOf,regressionTable} from '../build/regression.js';
+import {fitRegression,specFrom,rowsOf,regressionTable,fitEachExposure,regressionsTable} from '../build/regression.js';
+import {relateAtShifts} from '../build/relate-table.js';
 import {computeRateTwoByTwo} from '../build/two-by-two-rates.js';
 import {tablePoints} from '../build/table-points.js';
 import {groupTable as totalWithin} from '../build/group-table.js';
@@ -1181,6 +1183,51 @@ const builders={
       input:{csvSha256:sha256(readFileSync(csv)),columns:COLUMNS,rowCount:rows.length,rows},
       output:{cases:[{note:'Three strata columns together',strataColumns:['municipio','anio','mes'],...fitted(['municipio','anio','mes'])}]},
       note:'Recompute from input.rows: drop rows missing any model column, drop strata with no cases, fit with one indicator per stratum, scale by the Pearson statistic.'
+    },files:{}};
+  },
+  'lag-models-brazil-001'(){
+    // ONE REGRESSION, ONE MODEL PER LAG (experiment 185). check 37's two municipalities and weeks, the temperature and the
+    // rain each brought at four shifts by one Relate, and one Regression fitting a model per temperature column, each
+    // adjusted for the rain at its own shift and fitted on its own rows. The lab builds the lagged columns itself with a
+    // pandas merge on the shifted date, and fits each lag with statsmodels on that lag's complete rows.
+    const csv=new URL('../../example-2024-brazil-dengue/data/dengue-rj-2010-2025.csv',import.meta.url);
+    let text;
+    try{text=readFileSync(csv,'utf8');}
+    catch{throw new Error('example-2024-brazil-dengue is not on this machine beside this repository, so this fixture cannot be rebuilt here.');}
+    const t=parseCSV(text,250_000,40_000_000);const h=t.headers.map(x=>x.trim());
+    const PLACES=['Angra dos Reis','Petrópolis'];
+    const EDGES=['2010-12-26','2011-12-25','2012-12-30','2013-12-29','2015-01-04','2016-12-25','2018-12-30','2019-12-29','2020-12-27','2021-12-26','2022-12-25','2024-12-29'];
+    const COLUMNS=['municipio','anio','mes','data_iniSE','casos','tempmed','precip_total_semana'];
+    const rows=t.rows.map(v=>Object.fromEntries(h.map((x,i)=>[x,v[i]??''])))
+      .filter(r=>PLACES.includes(r.municipio)&&!EDGES.includes(r.data_iniSE))
+      .map(r=>Object.fromEntries(COLUMNS.map(c=>[c,r[c]])));
+    const SHIFTS=[0,-14,-28,14];
+    const table=(keys,value)=>({kind:'data-table',keys,valueField:value,rowCount:rows.length,missingValueCount:0,
+      rows:rows.map(r=>({key:Object.fromEntries(keys.map(k=>[k,r[k]])),value:r[value]===''?null:Number(r[value])}))});
+    const cases=table(['municipio','anio','mes','data_iniSE'],'casos');
+    const within={date:'data_iniSE',start:'data_iniSE',end:'data_iniSE'};
+    const temps=relateAtShifts(cases,table(['municipio','data_iniSE'],'tempmed'),{on:'municipio',bring:'tempmed',within},SHIFTS);
+    const both=relateAtShifts(temps.table,table(['municipio','data_iniSE'],'precip_total_semana'),
+      {on:'municipio',bring:'precip_total_semana',within},SHIFTS);
+    const exposures=temps.columns.map(c=>c.column),rains=both.columns.map(c=>c.column);
+    const params={family:'poisson',outcome:'casos',exposure:{column:exposures[0],as:'numeric'},exposureColumns:exposures,
+      adjust:[{column:rains[0],as:'numeric',perModel:rains}],strata:['municipio','anio','mes'],errors:'overdispersed'};
+    const models=fitEachExposure(rowsOf(both.table),params,both.table.columnShifts);
+    const out=regressionsTable(models);
+    return {fixture:{
+      ...base('lag-models-brazil-001','regression','Regression','src/regression.ts#fitEachExposure'),
+      alsoExercises:[{widget:'urn:fieldwork:widget:relate_table',release:widgetOf('relate_table').currentVersion,
+        implementation:'src/relate-table.ts#relateAtShifts'}],
+      source:'Sánchez-Marqués and Sánchez, DATASET_MULTIMODAL_V8, Zenodo doi:10.5281/zenodo.22029053, CC BY 4.0, as extracted to example-2024-brazil-dengue/data/dengue-rj-2010-2025.csv. tempmed is InfoDengue\'s weekly mean air temperature; precip_total_semana is CHIRPS at one grid cell.',
+      declaredParameters:{shifts:SHIFTS,relate:{on:'municipio',within,bring:['tempmed','precip_total_semana']},params,
+        places:PLACES,leftOutWeeks:EDGES,
+        semantics:'For each shift d in days, each week takes the tempmed and the precip_total_semana of the same municipality\'s week whose data_iniSE is its own data_iniSE plus d, or nothing when there is none. One Poisson model per shift: casos on tempmed at d, adjusted for precip_total_semana at the same d, one stratum per municipio x anio x mes, a stratum with no events dropped, fitted on the rows with every one of that model\'s columns present. Overdispersed: the Pearson chi-square over the residual degrees of freedom.',
+        equivalentTo:"pandas: left.merge(right with data_iniSE moved back by d days, on municipio and data_iniSE, how='left'); statsmodels: sm.GLM(casos, [tempmed_d, precip_d, stratum indicators], family=Poisson()).fit(scale='X2') per d, over that d's complete rows."},
+      input:{csvSha256:sha256(readFileSync(csv)),columns:COLUMNS,rowCount:rows.length,rows},
+      output:{tableKeys:out.keys,
+        models:models.map((m,k)=>({column:m.column,shiftDays:m.shiftDays,rain:rains[k],rows:m.result.rows,strata:m.result.strata,
+          dispersion:m.result.dispersion,estimates:m.result.estimates.map(e=>({term:e.term,column:e.column,coefficient:e.coefficient,se:e.se}))}))},
+      note:'Recompute from input.rows: the lagged columns by a merge on the shifted date, then each shift\'s model on its own complete rows. A model fitted on the rows complete for every shift would be a different analysis.'
     },files:{}};
   },
   'lag-response-brazil-001'(){

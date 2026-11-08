@@ -1,5 +1,5 @@
 import type {RelateShape,MeasureShare,RelateRequest,ShiftColumn} from './relate-table.js';
-import {rateMultiplier,machinedNotes,MAX_SHIFTS} from './relate-table.js';
+import {rateMultiplier,machinedNotes} from './relate-table.js';
 import type {DataTable} from './data-table.js';
 import type {ParamsByType} from './types.js';
 import {openConfigDialog} from './config-dialog.js';
@@ -101,7 +101,6 @@ export function draftShifts(draft:RelateDraft):{shifts:number[];problem?:string}
   if(bad!==undefined)return {shifts:[],problem:`A shift is a whole number of days; "${bad}" is not.`};
   const twice=shifts.find((d,i)=>shifts.indexOf(d)!==i);
   if(twice!==undefined)return {shifts,problem:`The shift ${twice} days is listed twice.`};
-  if(shifts.length>MAX_SHIFTS)return {shifts,problem:`At most ${MAX_SHIFTS} shifts in one step; this has ${shifts.length}.`};
   if(shifts.length>1&&!(draft.within.date&&draft.within.start&&draft.within.end))
     return {shifts,problem:'Several shifts need a date matched to a period: choose the date and the period first.'};
   return {shifts};
@@ -214,7 +213,7 @@ export function openRelateConfig(view:RelateConfigView,esc:Escape):void{
         +draft.shifts.map((s,i)=>`<div class="config-list-row"><label class="field-label" for="relate-shift-${i}">Shift ${i+1}</label>`
           +`<input id="relate-shift-${i}" data-shift="${i}" inputmode="numeric" value="${esc(s)}">`
           +`<button class="button small" data-drop-shift="${i}" aria-label="Remove shift ${i+1}">Remove</button></div>`).join('')
-        +`<button class="button small" id="relate-shift-add"${draft.shifts.length>=MAX_SHIFTS?' disabled':''}>+ Add a shift</button></div>`;
+        +`<button class="button small" id="relate-shift-add">+ Add a shift</button></div>`;
 
       if(!draft.on||!draft.bring)
         return {settings,preview:'<p class="muted">Choose what to match on and what to bring across to see the join.</p>'};

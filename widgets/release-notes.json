@@ -709,12 +709,12 @@
    "migrationFrom": []
   },
   "relate_table": {
-   "version": "0.8.2",
+   "version": "0.9.0",
    "released": "2026-11-07",
    "changes": [
     {
-     "kind": "patch",
-     "description": "A Relate with several shifts after another keeps the first one's recorded shifts beside its own, so the models downstream still know each temperature column's shift. Found 2026-11-07, rebuilding the Brazil 2010-2025 workflow."
+     "kind": "minor",
+     "description": "No limit on how many shifts one step brings. 24 was chosen, not measured; measured on 2026-11-07 at 77,740 rows, about 0.5 s per shift, linear to 384 with nothing failing. Experiment 185."
     }
    ],
    "breaking": false,
@@ -1014,12 +1014,12 @@
    "replacementCandidate": "urn:fieldwork:widget:apply_ruleset"
   },
   "regression": {
-   "version": "0.5.0",
+   "version": "0.5.1",
    "released": "2026-11-07",
    "changes": [
     {
-     "kind": "minor",
-     "description": "An adjusted variable can follow the shift: with several models, model k is adjusted for its own column, such as the rainfall at its own lag beside the temperature at that lag. One column per model, chosen in view and filled in Relate's order. Experiment 185, stage 3. Also: a following step is offered the several-model table's columns, shift_days among them, before a run."
+     "kind": "patch",
+     "description": "With several models, each model's line in the result gives its own strata used and dropped and its own dispersion; the heading no longer states the first model's dispersion as if it were every model's. Checked against statsmodels in Validation Lab check 38."
     }
    ],
    "breaking": false,

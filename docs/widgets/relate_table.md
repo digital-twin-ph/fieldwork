@@ -137,8 +137,8 @@ by name: keep one row per period first. A date in no period is a row with no mat
 **Several shifts in one step.** Add two or more shifts and the column is brought once per shift, each as a column of
 its own named by the shift: `LST_Day_1km_-11d`, `LST_Day_1km_-25d`. Every row is kept. A row with no value at a shift
 has that column left empty, and the preview and the run count the empties per shift. So there is no decision about
-unmatched rows to make: nothing is dropped. Several shifts need a date within a period; at most 24 in one step, whole
-days, none listed twice.
+unmatched rows to make: nothing is dropped. Several shifts need a date within a period, each a whole number of days,
+none listed twice. There is no limit on how many: each shift takes about half a second on 77,740 rows.
 
 **A table can be related to itself, shifted.** Rainfall two weeks before each case week is the weekly table's own
 rainfall, 14 days earlier: choose the week's start as the date, the period's start and its end. The first table

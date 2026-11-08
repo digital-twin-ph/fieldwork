@@ -3,6 +3,19 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.50.0 — 2026-11-07
+
+- **Experiment 185 is validated** ([185](docs/experiments/185-one-step-for-every-lag.md)). Validation Lab check 38
+  compares one Regression fitting a model per lag with pandas lags and statsmodels, in CPython and in Pyodide, and
+  agrees. The live MODIS run of the rebuilt 2010–2025 workflow reproduces experiment 182's figures.
+- **Each model states its own counts.** With several models, each model's line gives its rows, its strata used and
+  dropped, and its own dispersion. The heading gave the first model's dispersion as if it were every model's.
+  Regression 0.5.1.
+- **No limit on how many shifts Relate brings.** The limit of 24 was chosen, not measured. Measured on 77,740 rows:
+  about half a second per shift, linear to 384 with nothing failing. Relate 0.9.0.
+- **Not changed:** a shift at which no row matches still stops the step, instead of giving an empty column. Recorded
+  in 185 for a decision.
+
 ## 0.49.0 — 2026-11-07
 
 - **The Brazil lag workflows use one Relate and one Regression** ([185](docs/experiments/185-one-step-for-every-lag.md),

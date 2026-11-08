@@ -434,12 +434,16 @@ export function regressionsSentence(models:ModelRow[],params:RegressionParams):s
   const followed=new Map((params.adjust??[]).filter(t=>t.perModel).map(t=>[t.perModel![firstFitted]!,t]));
   const named=first.adjustedFor.map(c=>followed.has(c)?`${unshifted(c)} at its own shift`:c);
   const adjusted=named.length?`, each adjusted for ${named.join(', ')}`:', each unadjusted';
+  // EACH MODEL'S OWN COUNTS: rows, strata and dispersion differ from model to model, so none is stated once for all.
+  const dispersed=/\(\d+(\.\d+)?\)$/.test(first.errors);
   const fitted=models.filter(m=>m.result).map(m=>{const r=m.result!,e=r.estimates[0]!;
     return `${m.column}: ${round(e.ratio)} (${round(e.lower)} to ${round(e.upper)}) for ${e.term}, `
-      +`${r.rows.used.toLocaleString('en')} rows${r.rows.leftOut?`, ${r.rows.leftOut.toLocaleString('en')} left out`:''}`;});
+      +`${r.rows.used.toLocaleString('en')} rows${r.rows.leftOut?`, ${r.rows.leftOut.toLocaleString('en')} left out`:''}`
+      +(r.strata?`, ${r.strata.used.toLocaleString('en')} strata${r.strata.dropped?`, ${r.strata.dropped.toLocaleString('en')} without events dropped`:''}`:'')
+      +(dispersed?`, dispersion ${r.dispersion.toFixed(3)}`:'');});
   const failed=models.filter(m=>!m.result);
   return `${models.length} ${model} of ${params.outcome}, one per exposure column and each on its own rows${adjusted}; `
-    +`${first.measure}, ${first.errors} intervals. ${fitted.join('. ')}. `
+    +`${first.measure}, ${dispersed?first.errors.replace(/the Pearson dispersion \(\d+(\.\d+)?\)$/,"each model's Pearson dispersion"):first.errors} intervals. ${fitted.join('. ')}. `
     +`${fitted.length} ${first.level}% intervals, none adjusted for the number of comparisons.`
     +(failed.length?` Not fitted: ${failed.map(m=>`${m.column} (${m.reason})`).join('; ')}`:'');
 }

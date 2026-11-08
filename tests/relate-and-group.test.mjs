@@ -519,7 +519,7 @@ test('a join decision is signed with a short digest, and one saved in the old wr
 /** ONE RELATE, SEVERAL SHIFTS (experiment 185): one column per shift, every row kept, a shift with no value left
  *  EMPTY and counted. The same fixture as the shifted self-relate above, so each column can be held against it. */
 test('several shifts bring one column each, keep every row, and count what is empty at each shift',async()=>{
-  const {relateAtShifts,relateTable,shiftColumnName,MAX_SHIFTS}=await import('../build/relate-table.js');
+  const {relateAtShifts,relateTable,shiftColumnName}=await import('../build/relate-table.js');
   const cases={kind:'data-table',keys:['municipio','data_iniSE'],valueField:'casos',rowCount:3,missingValueCount:0,
     rows:[['Rio','2024-02-18',100],['Rio','2024-02-25',120],['Rio','2024-03-03',90]].map(([m,d,v])=>({key:{municipio:m,data_iniSE:d},value:v}))};
   const rain={kind:'data-table',keys:['municipio','data_iniSE'],valueField:'precip_total_semana',rowCount:4,missingValueCount:0,
@@ -542,7 +542,10 @@ test('several shifts bring one column each, keep every row, and count what is em
   assert.throws(()=>relateAtShifts(cases,rain,request,[]),/at least one shift/);
   assert.throws(()=>relateAtShifts(cases,rain,request,[-7,-7]),/listed twice/);
   assert.throws(()=>relateAtShifts(cases,rain,request,[-3.5]),/whole number of days/);
-  assert.throws(()=>relateAtShifts(cases,rain,request,Array.from({length:MAX_SHIFTS+1},(_,i)=>-i)),/At most/);
+  // NO CAP ON HOW MANY (removed 2026-11-07, measured linear to 384): a long list of distinct whole days runs.
+  const lag=await import('./fixtures/lag-weeks.mjs');
+  assert.equal(relateAtShifts(lag.cases,lag.satellite,{on:'municipio',bring:'LST_Day_1km',
+    within:{date:'data_iniSE',start:'period_start',end:'period_end'}},Array.from({length:30},(_,i)=>-i)).columns.length,30);
   assert.throws(()=>relateAtShifts(cases,rain,{on:'municipio',bring:'precip_total_semana'},[0,-7]),/matched to a period/);
   // A SECOND RELATE ON THE FIRST'S TABLE keeps the first's shifts beside its own.
   const again=relateAtShifts(table,{...rain,valueField:'rain2'},{...request,bring:'rain2'},[0,-7]);

@@ -456,15 +456,16 @@ function labelRefusalFor(plan:RelatePlan,label:string|undefined):string|null {
  *  not asked here: nothing is dropped, and what is empty is counted rather than filled.
  *
  *  Bounded, as experiment 185 requires: the list is checked whole before anything is matched -- whole days, none
- *  repeated, at most MAX_SHIFTS, and a period to match against. */
-export const MAX_SHIFTS=24;
+ *  repeated, and a period to match against. No cap on how many: 24 was chosen, not measured, and on 2026-11-07 the
+ *  sixteen-year Brazil size (77,740 rows) took about 0.5 s per shift here and 0.07 s per model in Regression, linear to
+ *  384 shifts (3.5 minutes, in Node), with nothing failing. A list is bounded by its days: whole, distinct, within ten
+ *  years either way. Experiment 185. */
 export interface ShiftColumn {column:string; shiftDays:number; matched:number; empty:number}
 export const shiftColumnName=(bring:string,shiftDays:number)=>`${bring}_${shiftDays>0?'+':''}${shiftDays}d`;
 export function relateAtShifts(left:DataTable,right:DataTable,request:RelateRequest,shifts:readonly number[]):
   {table:DataTable;columns:ShiftColumn[]}{
   if(!request.within)throw new Error('Several shifts need a date matched to a period: choose the date and the period first.');
   if(!shifts.length)throw new Error('Give at least one shift.');
-  if(shifts.length>MAX_SHIFTS)throw new Error(`At most ${MAX_SHIFTS} shifts in one step; this has ${shifts.length}.`);
   for(const d of shifts)if(!Number.isInteger(d)||Math.abs(d)>3660)
     throw new Error(`Each shift is a whole number of days, at most ten years either way; ${d} is not.`);
   const twice=shifts.find((d,i)=>shifts.indexOf(d)!==i);

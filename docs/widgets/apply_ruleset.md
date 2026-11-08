@@ -36,13 +36,20 @@ arrive, each column's kind and its unit. Then the settings, the rules, and the o
 | **otherwise** (amber) | A column's value for a record no rule gave one: *class* is *Cannot be classified* |
 
 Each block also has its own edge, solid, dotted, double or dashed, so the blocks are told apart without colour.
+**The comparison in a condition is keyed by its family** the same way: comparisons of numbers (*is more than*, *is at
+most*, *is less than*, *is at least*) teal; *is* and *is not* slate; *is recorded* and *is not recorded* rose, with a
+dotted edge.
+
+**A rule can read a category another rule gave.** Once a rule concludes *lab* is *positive*, *lab* is offered as a
+column a condition can read, by that name. A category reads in the table as it was typed: *Cannot be classified*.
 
 **Is not** matches a recorded value that differs: *rash is not No* matches *Yes* and *Unknown*. A value not recorded
 never matches *is not*; ask *is not recorded* for that.
 
 **Otherwise**, one per column, gives the column a value where no rule did. It waits for the columns its rules read: a
 *class* read from *lab result* takes its otherwise only after *lab result* has had its own. So an ordered
-classification, such as WHO's for measles, is written as columns in stages, each a few rules and an otherwise. An
+classification, such as WHO's for measles, is written as columns in stages, each a few rules and an otherwise. The
+rulesets worked example builds one, *Which suspected cases meet the case definition?* An
 otherwise never settles two rules that disagree: that record stays without a value, and is named.
 
 **+ Add a value computed for every record** writes a rule with no condition: every record gets the value.

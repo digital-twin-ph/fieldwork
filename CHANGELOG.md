@@ -3,6 +3,16 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.64.0 — 2026-11-08
+
+- **A case definition in the rulesets worked example**: sixteen made-up suspected cases classified in four stages, with
+  *is not* and *otherwise*, then counted with each class's share. Its seventh workflow.
+- **A rule can read a category another rule gave**, by its name, so a classification is written in stages. A category
+  reads in the table as it was typed: *Cannot be classified*, not *Cannot_be_classified*. Apply ruleset 0.9.0.
+- **Comparisons are colour-keyed by family**: comparisons of numbers, *is* and *is not*, and *is recorded*, each with
+  its own edge.
+- Validation: Chromium locally; WebKit in CI.
+
 ## 0.63.0 — 2026-11-08
 
 - **Apply ruleset has "is not" and "otherwise"** ([192](docs/experiments/192-is-not-and-otherwise.md)). *Rash is not

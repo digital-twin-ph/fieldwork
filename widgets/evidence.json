@@ -258,9 +258,10 @@
    "exampleUses": [
     "brazil-dengue-rj-2024",
     "nyc-asthma-ozone-2016-2025",
-    "south-london-1854"
+    "south-london-1854",
+    "workflows-rulesets"
    ],
-   "exampleUseCount": 3,
+   "exampleUseCount": 4,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],

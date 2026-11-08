@@ -528,14 +528,14 @@
       "id": "urn:fieldwork:example:workflows-rulesets",
       "title": "Rules on synthetic data",
       "repository": "https://github.com/digital-twin-ph/example-workflows-rulesets",
-      "commit": "de2ad9cf3a3f291cf4bb9485b173efcb915d17e3",
+      "commit": "7cff0a7449fbd84bb30c34b1312191ef789e0085",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-workflows-rulesets",
       "licence": {
         "data": "CC0-1.0",
         "source": "Made up for this example; no person, place or count is real.",
         "note": "Stated in the repository’s LICENSE. Every value is written in scripts/make-data.mjs."
       },
-      "description": "Six questions on made-up data that exercise every feature of Apply ruleset: categories and values computed under conditions, a value read by a second rule, a setting with its unit, a division by zero, disagreeing rules, new cases from the previous row after a sort, rules the reasoner runs, and rules over points on a map with counts stored as text.",
+      "description": "Seven questions on made-up data that exercise every feature of Apply ruleset: categories and values computed under conditions, a value read by a second rule, a setting with its unit, a division by zero, disagreeing rules, new cases from the previous row after a sort, rules the reasoner runs, rules over points on a map with counts stored as text, and a case definition in stages with is not and otherwise.",
       "carries": {
         "workflow": true,
         "data": true,
@@ -543,6 +543,7 @@
       },
       "uses": [
         "apply_ruleset",
+        "group_table",
         "map_output",
         "point_input",
         "study_area",
@@ -552,13 +553,13 @@
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "816bd2e81888831befd91881825812ca750a75e1c5090e5402f28e3f7c9e20d6",
-          "bytes": 3988
+          "sha256": "9b837208de4f735cc958ea0f5f499492fad2c62485a5ecd8ee3bdca4ec8b1058",
+          "bytes": 4891
         },
         {
           "path": "manual.json",
-          "sha256": "c1170d2c06984ac3d369de1ef987cd677a6cccea9d61979979a3d2d638a390ee",
-          "bytes": 48622
+          "sha256": "03f7a525161f620e4843ed4a874a7691a5f86c22d48b12fc15dea4dd635e6463",
+          "bytes": 80337
         },
         {
           "path": "data/clinic-visits.csv",
@@ -592,8 +593,8 @@
         },
         {
           "path": "README.md",
-          "sha256": "7362d7088392588769a416a2ffa2b70c650e4c72e75a2930d3f7578a32e80257",
-          "bytes": 5738
+          "sha256": "2bca16d98f41f72f1b862650ad25b6ebcb8e4b2e4f781efd01ef046e71e78709",
+          "bytes": 6916
         },
         {
           "path": "LICENSE",
@@ -604,9 +605,19 @@
           "path": "data/clinic-locations.geojson",
           "sha256": "c552b505711a3fb8cba90e0bde654f28a0cd7c9309436ec1ee252c956d789f2f",
           "bytes": 1411
+        },
+        {
+          "path": "data/suspected-cases.csv",
+          "sha256": "2707e2c302f4811ee591f5dd157268a60fab88dcc37d98be5ddee109aaef092a",
+          "bytes": 534
+        },
+        {
+          "path": "expected/case-classes.csv",
+          "sha256": "4cc3f608ed802ee72e03bc699f8cf725e306ebb211dea436eaed8f1487a37f8a",
+          "bytes": 918
         }
       ],
-      "workflowCount": 6,
+      "workflowCount": 7,
       "notYet": "Nothing on the list of Apply ruleset features is left unreached."
     }
   ]

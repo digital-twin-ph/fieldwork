@@ -206,7 +206,9 @@ export function authoredConclusions(conclusions:ReasonerQuad[]):Map<string,Recor
     const local=(iri:string)=>iri.startsWith(AUTHORED_NS)?iri.slice(AUTHORED_NS.length)
       :iri.startsWith(NS)?iri.slice(NS.length):iri;
     const predicate=curieLocal(local(quad.predicate));
-    const value=local(quad.object);
+    // A CATEGORY READS AS IT WAS TYPED (experiment 192): "Cannot be classified", which the term spells with underscores,
+    // as the rules dialog already shows it.
+    const value=local(quad.object).replace(/_/g,' ');
     const held=bySubject.get(id)??{};
     if(held[predicate]!==undefined&&held[predicate]!==value)
       throw new Error(`The rules reached two different ${predicate} conclusions for one record. `

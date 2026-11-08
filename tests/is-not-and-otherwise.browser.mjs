@@ -60,6 +60,13 @@ test(`rules are blocks with their words, legible in ${theme}; is not and an othe
   await card.locator('[data-part="predicate"]').fill('class');await card.locator('[data-part="predicate"]').press('Tab');
   await card.locator('[data-part="conclusion"]').fill('Linked');await card.locator('[data-part="conclusion"]').press('Tab');
   await expect(dialog.locator('.rule-card').last().locator('h3')).toHaveText('Rule 3 · 1 record');
+  // A COMPARATOR IS KEYED BY ITS FAMILY: equality here, its word at AA against its own tint.
+  const op=dialog.locator('.rule-card').last().locator('select.rule-op-equal').last();
+  await expect(op).toHaveValue('notEquals');
+  const [opInk,opFill]=await op.evaluate(e=>[getComputedStyle(e).color,getComputedStyle(e).backgroundColor]);
+  expect(contrast(opInk,opFill),`is not against its tint, ${theme}`).toBeGreaterThanOrEqual(4.5);
+  // A CATEGORY ANOTHER RULE CONCLUDED is offered as a column a condition can read: rules in stages.
+  await expect(card.locator('[data-part="field"]').first().locator('option[value="fwa:class"]')).toHaveCount(1);
   // OTHERWISE: the class of what no rule classifies.
   await dialog.locator('#rule-editor-add-otherwise').click();
   const otherwise=dialog.locator('.rule-block-otherwise').first();

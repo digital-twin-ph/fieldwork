@@ -1404,6 +1404,10 @@ function renderN3(){
  *  Every bundled ruleset already carries its rules in this shape -- the `authored` form they were
  *  built from, which is what makes them reproducible by hand -- so showing them needs no new data,
  *  only this renderer reached from both branches. */
+/** A COMPARATOR'S FAMILY, keyed by colour and edge (experiment 192): a comparison of numbers, an equality, or whether a
+ *  value was recorded. */
+export const comparatorFamily=(c:string):'compare'|'equal'|'presence'=>
+  c==='equals'||c==='notEquals'?'equal':c==='__recorded'||c==='__notRecorded'?'presence':'compare';
 type ShownRule={any:{all:{field:string;comparator:string;
   value:import('./authored-rules.js').AuthoredValue}[]}[];
   then:import('./authored-rules.js').AuthoredConclusion[]};
@@ -1435,8 +1439,8 @@ function rulesList(rules:ShownRule[],
           // to compare against: "DEATHS is not recorded", not "whether DEATHS is recorded
           // is false", which is a double negative wrapped around a question.
           +(presenceOf(condition.field)
-      ?`<span class="rule-op">${condition.value===true?'is recorded':'is not recorded'}</span><span class="rule-value"></span>`
-      :`<span class="rule-op">${esc(comparator(condition.comparator))}</span>`
+      ?`<span class="rule-op rule-op-presence">${condition.value===true?'is recorded':'is not recorded'}</span><span class="rule-value"></span>`
+      :`<span class="rule-op rule-op-${comparatorFamily(condition.comparator)}">${esc(comparator(condition.comparator))}</span>`
        +`<span class="rule-value">${esc(readable(condition.value))}</span>`)
           +`</div>`).join('')
         +`</div></div>`).join('')

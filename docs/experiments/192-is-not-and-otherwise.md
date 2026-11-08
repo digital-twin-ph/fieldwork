@@ -93,6 +93,22 @@ its blocks are dragged, and these are filled in.
 
 WebKit runs in CI.
 
+## A case definition in the rulesets example, 0.64.0
+
+The practitioner, 2026-11-08: *"Let's also add a case definition example in the rules set worked example."* Its seventh
+workflow classifies sixteen made-up suspected cases in four stages, 13 rules and 4 otherwise, then counts the classes
+with each one's share. Built from an empty canvas by its manual, in Chromium; every class matches
+expected/case-classes.csv, worked independently of Fieldwork.
+
+**Found while building it:** the stages could not be written in the dialog. A condition was offered only the records'
+own columns, never a category another rule concluded, though direct evaluation read one. Now a concluded category is
+offered by its name, with *is* and *is not* only. And a category reached the table spelt as its term, "Cannot_be_classified";
+it reads as typed now, in the reasoner's output too.
+
+**And comparators keyed by family** (the practitioner, 2026-11-08: *"color key the conditions … so they are also
+recognizable as stable parts of rule structure"*): comparisons of numbers teal, equality slate, recorded or not rose
+with a dotted edge, their words AA against their tints, checked in light and dark.
+
 ## What this does not establish
 
 That WHO's classification is the one Sierra Leone used: its national guidelines were not read. That an otherwise is

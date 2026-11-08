@@ -248,7 +248,8 @@ export function evaluateAuthored(records:SubjectRecord[],bindings:FieldBinding[]
             else facts.set(conclusion.predicate,{text:String(value),number:value});
           }else{
             const term=valueTerm(conclusion.value,settings);
-            value=localName(conclusion.value??'');
+            // A CATEGORY READS AS IT WAS TYPED (experiment 192): the term's underscores are the spaces the person wrote.
+            value=localName(conclusion.value??'').replace(/_/g,' ');
             if(term)facts.set(conclusion.predicate,term);
           }
           given.set(column,[...(given.get(column)??[]),{value,rule:index+1}]);
@@ -266,7 +267,7 @@ export function evaluateAuthored(records:SubjectRecord[],bindings:FieldBinding[]
       if(given.has(column))continue;
       const term=valueTerm(o.value,settings);
       if(term)facts.set(o.predicate,term);
-      given.set(column,[{value:localName(o.value),rule:0}]);
+      given.set(column,[{value:localName(o.value).replace(/_/g,' '),rule:0}]);
       outcome.defaulted.push(column);
       defaultedByColumn[column]=(defaultedByColumn[column]??0)+1;
     }

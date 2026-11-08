@@ -1,6 +1,6 @@
 # 175 · How large a table: finding the limit rather than choosing it
 
-_Created 2026-11-04 · Updated 2026-11-04_
+_Created 2026-11-04 · Updated 2026-11-08_
 
 **Status:** tried — tables moved to the dataset store (0.22.0); measured to 1,000,000 rows; caps set from the measurement (0.23.0).
 

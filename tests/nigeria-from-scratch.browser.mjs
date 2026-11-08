@@ -300,7 +300,7 @@ test('five questions about 774 LGAs, each its own short workflow',async({page})=
     expect(Object.values(fills),JSON.stringify(fills)).toContain(127);
     // THE KEY NAMES WHAT THE SHADE MEANS. It carried zero-dose ranges here until 2026-11-02.
     const key=page.locator('#map-communication-header-key');
-    await expect(key).toContainText('Priority_for_data_review');
+    await expect(key).toContainText('Priority for data review');
     await expect(key).toContainText('No class');
     await expect(key).not.toContainText(' to ');
     // EVERY SHADE DRAWN IS A SHADE THE KEY NAMES. Asserted as agreement, so a palette change moves both.

@@ -68,11 +68,9 @@ not a practitioner in the field.
    (0.62.0, [191](docs/experiments/191-shares-within-groups.md)); *is not* and *otherwise* in Apply ruleset, which the
    WHO classification needs ([192](docs/experiments/192-is-not-and-otherwise.md)). **Next:** the example's workflows and
    manual: case classification with the analysis table, epidemic curve, cases by facility, cases by district.
-   **A case definition in the rulesets worked example** (the practitioner, 2026-11-08: *"Let's also add a case
-   definition example in the rules set worked example"*): a seventh workflow in example-workflows-rulesets, on made-up
-   cases, classified in stages (laboratory result, link, how the definition was met, then the class), each column with
-   its *otherwise*, and *is not* where a value must differ; its data reaching every class, a conflict and a default,
-   built from an empty canvas by its manual. Taught there on synthetic data, so Sierra Leone's workflow can apply it.
+   **Done 2026-11-08 (0.64.0): a case definition in the rulesets worked example** (the practitioner: *"Let's also add a
+   case definition example in the rules set worked example"*), its seventh workflow, on sixteen made-up cases in four
+   stages, every class reached. No conflict is reached, because staged rules cannot give one case two classes.
 4. **Table output on the standard** (186).
 5. **Manila coastal exposure moves to example-2026-sea-level-rise-philippines**, then the built-in one is removed. The
    terrain and datum note is its reading: docs/research/terrain-models-vertical-datum-2026-11-07.md.

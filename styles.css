@@ -1173,3 +1173,18 @@ body:not(.lab-evaluation) .lab-only{display:none!important}
 .rule-editor-adds{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
 .rule-otherwise-list{margin:10px 0}
 .standard-rules summary{font-size:14px;cursor:pointer;margin:6px 0}
+/* COMPARATORS KEYED BY FAMILY (experiment 192), so a condition's middle part is a stable piece of a rule: comparisons
+   of numbers teal, equality slate, whether a value was recorded rose. The word stays in the body text colour, AA
+   against every tint; the border repeats the family, solid or dotted, for a reader who does not tell the colours apart. */
+.rule-op-compare{--op-tone:#388a7b;--op-tint:#eaf5ef;--op-edge:solid}
+.rule-op-equal{--op-tone:#5f6b7a;--op-tint:#eef0f3;--op-edge:solid}
+.rule-op-presence{--op-tone:#a8577a;--op-tint:#f8edf2;--op-edge:dotted}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]):not([data-theme="dark"]) .rule-op-compare{--op-tone:#6fc3ae;--op-tint:#16302a}
+  :root:not([data-theme="light"]):not([data-theme="dark"]) .rule-op-equal{--op-tone:#a3adbb;--op-tint:#22262c}
+  :root:not([data-theme="light"]):not([data-theme="dark"]) .rule-op-presence{--op-tone:#e09ab8;--op-tint:#2e1c24}}
+:root[data-theme="dark"] .rule-op-compare{--op-tone:#6fc3ae;--op-tint:#16302a}
+:root[data-theme="dark"] .rule-op-equal{--op-tone:#a3adbb;--op-tint:#22262c}
+:root[data-theme="dark"] .rule-op-presence{--op-tone:#e09ab8;--op-tint:#2e1c24}
+.rule-op.rule-op-compare,.rule-op.rule-op-equal,.rule-op.rule-op-presence{background:var(--op-tint);color:var(--text-1);
+  border:2px var(--op-edge) var(--op-tone);border-radius:999px;padding:1px 10px;font-size:14px;font-weight:600}
+select.rule-op.rule-op-compare,select.rule-op.rule-op-equal,select.rule-op.rule-op-presence{border-radius:8px;padding:4px 8px}

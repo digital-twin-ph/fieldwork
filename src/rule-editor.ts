@@ -169,6 +169,13 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
     let order:AuthoredOrder|undefined=authored.order?structuredClone(authored.order):undefined;
     // THE COLUMNS, THEIR KINDS AND UNITS, AND HOW THE RECORDS ARRIVE, edited here with the rules (experiment 186).
     let fields:Field[]=structuredClone(authored.fields),choices=readable(fields);
+    // A CATEGORY ANOTHER RULE CONCLUDED is a column a condition can read (experiment 192): rules in stages, a laboratory
+    // result first, then the class read from it. Offered after the records' own columns, by the name the rule gave it.
+    const concludedChoices=()=>{const own=new Set(fields.map(f=>f.predicate));
+      return [...new Set(rules.flatMap(r=>r.then.filter(c=>!isComputed(c)).map(c=>c.predicate)))].filter(p=>!own.has(p))
+        .map(p=>({predicate:p,label:localName(p),kind:'term' as Field['kind']}));};
+    const isConcluded=(predicate:string)=>!fields.some(f=>f.predicate===predicate);
+    const withConcluded=()=>[...readable(fields),...concludedChoices()];
     let recordsKind=options?.recordsKind;
     // EACH COLUMN'S DEFAULT, where no rule gave it a value (experiment 192).
     let otherwise:AuthoredOtherwise[]=structuredClone(authored.otherwise??[]);
@@ -247,8 +254,10 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
         +`<select ${where} data-part="field" aria-label="Field">`
         +choices.map(choice=>`<option value="${esc(choice.predicate)}" ${choice.predicate===base?'selected':''}>${esc(choice.label)}</option>`).join('')
         +`</select>`
-        +`<select ${where} data-part="comparator" aria-label="Comparator">`
-        +[...COMPARATORS[kind],...RECORDED_COMPARATORS].map(c=>{
+        +`<select ${where} data-part="comparator" aria-label="Comparator" class="rule-op rule-op-${presence?'presence'
+          :condition.comparator==='equals'||condition.comparator==='notEquals'?'equal':'compare'}">`
+        // A concluded column has no "is recorded" fact to ask about: a rule gave it a value or it has none.
+        +[...COMPARATORS[kind],...(isConcluded(base)?[]:RECORDED_COMPARATORS)].map(c=>{
           const chosen=presence?(condition.value===true?RECORDED:NOT_RECORDED):condition.comparator;
           return `<option value="${c.value}" ${c.value===chosen?'selected':''}>${esc(c.label)}</option>`;
         }).join('')
@@ -468,7 +477,7 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
       +`</section>`;
 
     const sectionsOf=():ConfigSections=>{
-      choices=readable(fields);
+      choices=withConcluded();
       const count=compiledRuleCount({subject:'?s',rules:rules as never});
       let problem='';
       // RULES EVALUATED DIRECTLY, because a value is computed or a column has an otherwise (experiments 188 and 192), are

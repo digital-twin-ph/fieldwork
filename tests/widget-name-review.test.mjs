@@ -126,7 +126,9 @@ test('the shipped ledger passes and covers every live widget', ()=>{
   // 58 on 2026-11-06, buffer_area retired: a source's own margin fetches beyond an area, and a cross-border study is a
   // study area that straddles the border.
   // 57 on 2026-11-07, micro_workflow retired: no worked example used one.
-  assert.equal(review.reviews.length,57);
+  // 56 on 2026-11-08, derive_value retired into apply_ruleset, whose rules compute a value for every record.
+  // Experiment 188, stage 5.
+  assert.equal(review.reviews.length,56);
 });
 
 test('the generated table shows the palette words beside the identifier', ()=>{

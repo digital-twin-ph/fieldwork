@@ -243,14 +243,22 @@ export interface UnitProblem {field:string; says:string}
 export function authoredUnitProblems(authored:{
   fields:{attribute?:string;predicate:string;kind:string;label?:string;unit?:string;unitLabel?:string}[];
   parameters?:{name:string;unit?:string;unitLabel?:string}[];
-  rules:{any:{all:{field:string;comparator:string;value:AuthoredValue}[]}[]}[];
+  rules:{any:{all:{field:string;comparator:string;value:AuthoredValue}[]}[]; then?:AuthoredConclusion[]}[];
 }):UnitProblem[]{
   const problems:UnitProblem[]=[];
   const named=(predicate:string)=>authored.fields.find(f=>f.predicate===predicate);
   const shown=(unit?:string,label?:string)=>label||unit?.split('/').pop()||'no unit';
+  // ONLY WHAT THE RULES READ must state a unit (2026-11-08). A wide table offers every column as a field, twenty years
+  // of coverage for Nigeria, and a rule reading two of them was refused until all twenty stated one. A column no rule
+  // reads cannot make a rule wrong.
+  const operandsOf=(c:AuthoredConclusion)=>c.compute?[c.compute.left,c.compute.right]
+    .flatMap(o=>typeof o==='object'&&'field' in o?[o.field]:[]):[];
+  const read=new Set(authored.rules.flatMap(rule=>[
+    ...rule.any.flatMap(group=>group.all.map(condition=>condition.field.replace(/Known$/,''))),
+    ...(rule.then??[]).flatMap(operandsOf)]));
 
   for(const field of authored.fields)
-    if(field.kind==='number'&&!field.unit?.trim())
+    if(field.kind==='number'&&read.has(field.predicate)&&!field.unit?.trim())
       problems.push({field:field.predicate,
         says:`${field.attribute||field.label||field.predicate} is a number and states no unit. A number without a unit is `
           +`not a measurement, and a rule comparing it to anything is comparing two numbers and hoping.`});
@@ -287,5 +295,16 @@ export function authoredUnitProblems(authored:{
               +`${shown(parameter.unit,parameter.unitLabel)}.`});
         }
       }
+  // A SUM OR A DIFFERENCE OF TWO DIFFERENT UNITS is refused while the rule is written: houses minus people is not a
+  // number of anything. A product or a quotient makes a new unit, which is the practitioner's to describe.
+  for(const [r,rule] of authored.rules.entries())
+    for(const c of rule.then??[]){
+      if(!c.compute||(c.compute.operator!=='minus'&&c.compute.operator!=='plus'))continue;
+      const [a,b]=[c.compute.left,c.compute.right].map(o=>typeof o==='object'&&'field' in o?named(o.field):undefined);
+      if(a?.unit&&b?.unit&&a.unit!==b.unit)
+        problems.push({field:c.predicate,says:`Rule ${r+1}: ${a.attribute||a.label||a.predicate} is in ${shown(a.unit,a.unitLabel)} and `
+          +`${b.attribute||b.label||b.predicate} is in ${shown(b.unit,b.unitLabel)}. A ${c.compute.operator==='minus'?'difference':'sum'} of two `
+          +`different units is not a number of anything. Compute from two columns in the same unit.`});
+    }
   return problems;
 }

@@ -36,13 +36,13 @@
   },
   "implementation": {
     "files": [
-      "src/derive-value.ts",
+      "src/select-rows.ts",
       "src/core.ts",
       "src/app.ts",
       "src/select-ui.ts",
       "src/config-dialog.ts"
     ],
-    "definition": "src/derive-value.ts"
+    "definition": "src/select-rows.ts"
   },
   "compatibility": {
     "workflowSchema": "fieldwork/workflow/1",

@@ -182,6 +182,12 @@ choose **events and units at risk** under *The outcome column holds*, and name t
 workflow holding one **refuses to open**, naming it; rebuild that step as a two-by-two connected to the
 table the Rate read. South London's 8.40 is unchanged to the last digit.
 
+**Derive a value** (`derive_value`) was retired on 2026-11-08. It computed one value from two others, such as houses
+minus deaths. **Apply ruleset** now does it: in its rules dialog, **+ Add a value computed for every record**, then the
+new column, the two values and the operation. A saved workflow holding one **opens with it changed** into an Apply
+ruleset step with the same rule, stamped as migrated. It asks for the unit of each value before it runs, because Derive
+a value never recorded them. The South London and Nigeria examples give the same tables as before.
+
 **Micro-workflow** (`micro_workflow`) was retired on 2026-11-07. It held a saved group of steps as one step that
 could be exploded into them; no worked example used one. A saved workflow holding one **refuses to open**, naming it;
 rebuild the steps it held from the palette. Its two groups were *Walking catchment* (Snap sites to the network,

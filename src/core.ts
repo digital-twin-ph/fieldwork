@@ -54,7 +54,7 @@ interface ExecutionInputs extends OldInputs {area2:AreaValue;polygons:Polygons;s
 import classification from '../widgets/classification.json' with {type:'json'};
 import {OLD_TYPES,validateOldNode,executeOldNode,migrateFacilitySources,applyAccessReview,applyFacilityGrading,gradedPointLayer,distancesAsAccess} from './old-naledi.js';
 import {resolveRuleset,bindParameters,tableContractFailures,rulesetCitation} from './rulesets.js';
-import {deriveValue,selectRows,selectRange,rangeSentence,OPERATORS} from './derive-value.js';
+import {selectRows,selectRange,rangeSentence} from './select-rows.js';
 import {appendTables,appendSentence,appendPort,appendTableCount} from './append-rows.js';
 import {fitRegression,specFrom,rowsOf,regressionTable,regressionSentence,regressionReceipt,exposureColumnsOf,fitEachExposure,
   regressionsTable,regressionsSentence,regressionsReceipt} from './regression.js';
@@ -130,8 +130,10 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   rate_ratio:{title:'Rate ratio with an interval',group:'Epidemiology',icon:'⚖',color:'teal',
     description:'Retired — use Two-by-two table, reading events and units at risk',
     inputs:[['rates','table'],['design','design']],output:'table'},
+  // RETIRED 2026-11-08 into Apply ruleset, whose rules compute a value for every record (experiment 188). Kept so a
+  // saved workflow naming it is migrated, and says so.
   derive_value:{title:'Derive a value',group:'Summaries',icon:'∓',color:'teal',
-    description:'Compute a new value in a key column from two of its existing values, group by group',
+    description:'Retired — use Apply ruleset, with a value computed for every record',
     inputs:[['records','table']],output:'table'},
   // Experiment 167. `design` is optional, as on the two-by-two; a declared case-control design allows odds ratios only.
   regression:{title:'Regression',group:'Epidemiology',icon:'∿',color:'teal',
@@ -656,6 +658,7 @@ export function validateWorkflow(raw:unknown):Workflow {
     const renamed=n&&RENAMED_NODE_TYPES[n.type as RenamedNodeType];
     return renamed?{...n,type:renamed,sourceMigration:{fromType:n.type as RenamedNodeType,version:'1' as const}}:n;
   }) as typeof w.nodes;
+  migrateDeriveValue(w);
   migrateHealthsitesNodes(w);
   migrateFacilitySources(w);
   migrateOutputNodes(w);
@@ -1315,20 +1318,6 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
               +(r.unreadable.length?`, ${r.unreadable.length} left unreadable`:'')+'.').join(' ')
               +' The source file is unchanged; these records are not the records it held.'});
         }
-        break;}
-      case 'derive_value':{
-        // ASSIGN, over the long table this application holds. Epi Info separates DEFINE and
-        // ASSIGN from IF, and only the IF was here: rules conclude a TERM about a record and
-        // never a number computed from other numbers. A DataTable is long, so there are never
-        // two numeric columns to combine -- there are two ROWS agreeing on every key but one,
-        // which is the same pivot `rate` already names with `measureKey`.
-        const table=inputs.records as unknown as import('./data-table.js').DataTable;
-        if(table?.kind!=='data-table')throw new Error('Connect a table: this step derives a value from one.');
-        const result=deriveValue(table,node.params);
-        value=result.table as unknown as DisplayValue;
-        receipts.push({nodeId:node.id,kind:'computation',
-          method:`${node.params.left} ${OPERATORS[node.params.operator].label} ${node.params.right}`,
-          derived:result.derived,gaps:result.gaps} as unknown as Receipt);
         break;}
       case 'polygon_input':{
         // READ AS PUBLISHED. The features were parsed and refused at import; this emits them as the
@@ -2479,4 +2468,27 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
     // for again. Experiment 141, trying the design on a real write-up: "References are the one
     // section a workflow can write by itself."
     ...(sources.length?{derived:sources}:{})};
+}
+
+/** DERIVE A VALUE, RETIRED INTO APPLY RULESET (experiment 188, 2026-11-08). One rule for every record: the same two
+ *  values, operation and new name, read from a wide table's subjects, which is the table Derive a value read. Every
+ *  published use gave identical rows both ways (tests/rules-replace-derive.test.mjs). The step did not state the units
+ *  of what it combined, so the migrated rule states none, and does not run until they are described: stating a unit is
+ *  the practitioner's step, not a guess made on opening a file. Stamped, as every migration is. */
+function migrateDeriveValue(w:Workflow):void{
+  const slug=(s:string)=>s.replace(/[^A-Za-z0-9]+/g,'_').replace(/^_|_$/g,'')||'value';
+  const derived=new Set<string>();
+  w.nodes=w.nodes.map(n=>{
+    if(n?.type!=='derive_value')return n;
+    derived.add(n.id);
+    const {label,left,operator,right,name}=n.params as ParamsByType['derive_value'];
+    const pin=pinnedRuleset('urn:fieldwork:ruleset:extract-contract','1.0.0');
+    return {...n,type:'apply_ruleset',sourceMigration:{fromType:'derive_value',version:'1'},
+      params:{label:label||'Apply ruleset',ruleset:pin,parameters:{},
+        authored:{title:label||'Computed for every record',mustNotBeReadAs:'',parameters:[],
+          fields:[...new Set([left,right])].filter(Boolean).map(m=>({attribute:m,predicate:`fwa:${slug(m)}`,kind:'number' as const,label:m})),
+          rules:[{any:[{all:[]}],then:[{predicate:`fwa:c_${slug(name)}`,column:name,
+            compute:{left:{field:`fwa:${slug(left)}`},operator,right:{field:`fwa:${slug(right)}`}}}]}]}}};
+  }) as typeof w.nodes;
+  for(const edge of w.edges)if(edge&&derived.has(edge.to)&&edge.port==='records')edge.port='projections';
 }

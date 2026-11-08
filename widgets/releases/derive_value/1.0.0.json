@@ -1,0 +1,61 @@
+{
+  "schema": "fieldwork/widget-release/1",
+  "id": "urn:fieldwork:widget:derive_value",
+  "nodeType": "derive_value",
+  "version": "1.0.0",
+  "title": "Derive a value",
+  "released": "2026-11-08",
+  "implementationStatus": "retired",
+  "standardization": "shared",
+  "configuration": {
+    "typescriptFile": "src/types.ts",
+    "typescriptType": "ParamsByType['derive_value']",
+    "planClass": "http://www.w3.org/ns/prov#Plan",
+    "validationStatus": "application-only",
+    "shaclShapes": []
+  },
+  "ports": {
+    "inputs": [
+      {
+        "name": "records",
+        "type": "table"
+      }
+    ],
+    "output": "table",
+    "optionalInputs": [],
+    "note": "Takes the table whose values it reads and gives back that table with the derived rows added. The rows it computed from are left in place: removing them is a selection, which `select_rows` does."
+  },
+  "ontology": {
+    "status": "gap",
+    "mappings": [],
+    "note": "No ontology mapping yet. The receipt names the operation, the two operands, how many rows were derived and which groups were skipped for want of an operand.",
+    "emits": {
+      "classes": [],
+      "properties": []
+    }
+  },
+  "implementation": {
+    "files": [
+      "src/core.ts"
+    ],
+    "definition": "src/core.ts#TYPES"
+  },
+  "compatibility": {
+    "workflowSchema": "fieldwork/workflow/1",
+    "versionPersistence": "not-yet-persisted",
+    "migrationFrom": [],
+    "replacementCandidate": [
+      "urn:fieldwork:widget:apply_ruleset"
+    ]
+  },
+  "changes": [
+    {
+      "kind": "major",
+      "description": "Retired into Apply ruleset, whose rules can compute a value for every record (experiment 188). The practitioner, 2026-11-07: 'If the new apply ruleset works then we retire derive a value.' All four published uses, three in South London and one in Nigeria, were rebuilt as Apply ruleset steps with one rule for every record, and every output of the four workflows they are in gave the same rows, checked by digest before and after (tests/rules-replace-derive.test.mjs). Retired outright, with no deprecation period, because nobody outside this project uses it (AGENTS.md). A workflow saved with one is migrated on opening to an Apply ruleset step with the same rule, stamped as migrated; the columns it combines state no unit, so the step asks for them before it runs."
+    }
+  ],
+  "evidence": {
+    "status": "not-individually-certified",
+    "note": "Superseded. Its outputs on the published examples are held as digests in tests/fixtures/derive-retired.json, which the rebuilt Apply ruleset steps must reproduce."
+  }
+}

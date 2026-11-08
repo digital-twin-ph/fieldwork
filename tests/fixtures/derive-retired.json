@@ -1,0 +1,66 @@
+{
+ "note": "Every output of the four published workflows that used Derive a value, as Derive a value computed them, before it was retired (experiment 188, stage 5). The rebuilt Apply ruleset steps must give the same rows: digests of the rows, in order.",
+ "computedWith": "Fieldwork 0.54.0",
+ "workflows": [
+  {
+   "repo": "example-1855-cholera-south-london",
+   "workflow": "Cholera in 1849 compared with 1854",
+   "outputs": {
+    "both-years": {
+     "rows": 64,
+     "sha256": "fe0e8a0e2c65b83901218bb784005982949ac7ddc682d669e392c2f45e7421f1"
+    },
+    "chart_output-1793490594441": {
+     "rows": 0,
+     "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    }
+   }
+  },
+  {
+   "repo": "example-1855-cholera-south-london",
+   "workflow": "Deaths per house, by water company",
+   "outputs": {
+    "two-by-two": {
+     "rows": 4,
+     "sha256": "d680cb4367b2b1b3bd29a8557193702687ce820fab4b44d1382230920e57241e"
+    },
+    "houses-2x2": {
+     "rows": 6,
+     "sha256": "b906b8212a418364412edf755923d6a1ebed086bf3426c421159db38a98f0800"
+    },
+    "per-house-table": {
+     "rows": 3,
+     "sha256": "2670ec1668e31cd25b673a957d6d9ff0708f8b6f160f58e889f771f9dea4262c"
+    }
+   }
+  },
+  {
+   "repo": "example-1855-cholera-south-london",
+   "workflow": "Died or survived, by water supply",
+   "outputs": {
+    "contingency": {
+     "rows": 6,
+     "sha256": "a1fb55c099eb8ca5eb6028b2882834d72e30406186a0fcf81940a8640eb846eb"
+    },
+    "estimates-table": {
+     "rows": 4,
+     "sha256": "dc86cc402d0cc84c2e2a840e870269bcd3fa45e1a43c8f5933aff44e5f48b088"
+    }
+   }
+  },
+  {
+   "repo": "example-2024-nigeria-immunization",
+   "workflow": "What changed from 2005 to 2024?",
+   "outputs": {
+    "map_output-1793748712970": {
+     "rows": 774,
+     "sha256": "40e047bef7c33bf19ccbae71698319003af7d83c6cefd3eb646b175d6bf7b296"
+    },
+    "map_output-1793748730354": {
+     "rows": 774,
+     "sha256": "40e047bef7c33bf19ccbae71698319003af7d83c6cefd3eb646b175d6bf7b296"
+    }
+   }
+  }
+ ]
+}

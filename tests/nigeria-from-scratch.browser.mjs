@@ -129,14 +129,31 @@ test('five questions about 774 LGAs, each its own short workflow',async({page})=
   {
     const table=await importTable(page,'data/nga-lga-dtp1-by-year.csv','wide',
       Array.from({length:20},(_,i)=>`dtp1_${2005+i}`),['ID']);
-    await add(page,'derive_value');
-    const derive=await idOf(page,'derive_value');
-    await tidy(page);await wire(page,table,derive,'records');
+    // THE CHANGE, as a value computed for every LGA by Apply ruleset (experiment 188): dtp1_2024 minus dtp1_2005.
+    await add(page,'apply_ruleset');
+    const derive=await idOf(page,'apply_ruleset');
     await page.locator(`.react-flow__node[data-id="${derive}"]`).click();
-    const pick=async(key,value)=>{await page.locator(`[data-slr="${key}"]`).selectOption(value);};
-    await pick('keyColumn','measure');await pick('left','dtp1_2024');await pick('right','dtp1_2005');
-    await page.locator('[data-slr="name"]').fill('change 2005 to 2024');
-    await page.locator('[data-slr="name"]').press('Tab');
+    await page.locator('#author-rules').click();
+    await page.locator('#rule-editor-cancel').click();
+    await page.locator('#ruleset-records').selectOption('table');
+    await tidy(page);await wire(page,table,derive,'subjects');
+    await page.locator(`.react-flow__node[data-id="${derive}"]`).click();
+    // Each column read states its unit: the coverage is a proportion, as the source gives it.
+    await page.locator('#edit-rules').click();
+    await page.locator('#rule-editor-cancel').click();
+    for(const year of ['dtp1_2024','dtp1_2005']){
+      const box=page.locator(`[aria-label="Unit for ${year}"]`);await box.fill('proportion');await box.press('Tab');}
+    await page.locator('#edit-rules').click();
+    const rules=page.locator('#rule-editor');
+    await rules.locator('#rule-editor-add-every').click();
+    const part=name=>rules.locator(`[data-rule="0"][data-part="${name}"]`);
+    await part('column').fill('change 2005 to 2024');await part('column').press('Tab');
+    await part('left-source').selectOption({label:'dtp1_2024'});
+    await part('operator').selectOption('minus');
+    await part('right-source').selectOption({label:'dtp1_2005'});
+    await expect(rules.locator('.rule-card h3').first()).toHaveText('Rule 1 · 774 records');
+    await rules.locator('#rule-editor-keep').click();
+    await expect(rules).toBeHidden();
     await add(page,'select_rows');
     const select=await idOf(page,'select_rows');
     await tidy(page);await wire(page,derive,select,'records');

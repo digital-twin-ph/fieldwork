@@ -3,6 +3,25 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.55.0 — 2026-11-08
+
+- **Derive a value is retired into Apply ruleset**
+  ([188](docs/experiments/188-rules-that-compute-and-show-their-table.md)). Its four uses in the South London and
+  Nigeria examples are Apply ruleset steps now, with one rule for every record; every output of the four workflows
+  gives the same rows as before, checked by digest. A saved workflow with a Derive a value step opens with it changed
+  into an Apply ruleset step, stamped, and asks for the units of what it combines. Apply ruleset 0.5.0; Derive a value
+  1.0.0, retired.
+- **A worked example of every rule feature**, on made-up data: *Rules on synthetic data*, four workflows with a manual
+  that builds them from an empty canvas.
+- **Settings are declared in the rules dialog**: a name, a value and a unit, for a threshold changed without rewriting
+  a rule.
+- **Only the columns the rules read need a unit.** A sum or difference of two different units is refused while the
+  rule is written.
+- **Fixed: a condition on a category never held.** A value typed for a category column, such as *clinic is Hillside*,
+  was stored as text no record could equal. It is now the category, as the record's value is.
+- **An Apply ruleset step lists its input in the Inspector**, as every step does, and the step after it is offered
+  the columns and values its rules add.
+
 ## 0.54.0 — 2026-11-08
 
 - **A rule can read the previous row** ([188](docs/experiments/188-rules-that-compute-and-show-their-table.md)).

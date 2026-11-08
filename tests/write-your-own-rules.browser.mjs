@@ -50,7 +50,7 @@ test('a ruleset step can be given rules written here, from a standing start',asy
 
   // Declared, and a numeric column is asked for its unit, because a number without one is not a
   // measurement and the rules will not run until it has one.
-  await expect(inspector).toContainText('A numeric column needs its unit');
+  await expect(inspector).toContainText('A numeric column the rules read needs its unit');
   const unit=page.locator('[data-field-unit]').first();
   await expect(unit).toBeVisible();
   await unit.fill('m');

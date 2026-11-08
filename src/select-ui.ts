@@ -7,7 +7,7 @@ import type {DataTable} from './data-table.js';
 import type {ParamsByType,Escape} from './types.js';
 import {openConfigDialog} from './config-dialog.js';
 import {dataTableMarkup} from './data-table-ui.js';
-import {selectRows,selectRange,orderOf,rangeSentence,type SelectResult} from './derive-value.js';
+import {selectRows,selectRange,orderOf,rangeSentence,type SelectResult} from './select-rows.js';
 
 type SelectParams=ParamsByType['select_rows'];
 export interface SelectDraft {keyColumn:string; values:string[]; mode:'values'|'leave-out'|'range'; range:{from:string;to:string}}

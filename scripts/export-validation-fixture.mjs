@@ -34,7 +34,7 @@ import {aggregateHex} from '../build/geoprivacy.js';
 import {caseSeriesFromTable} from '../build/case-series.js';
 import {relateTable,relateShape,gapSignature} from '../build/relate-table.js';
 import {groupTable} from '../build/group-table.js';
-import {selectRange,selectRows} from '../build/derive-value.js';
+import {selectRange,selectRows} from '../build/select-rows.js';
 import {appendTables} from '../build/append-rows.js';
 import {tableChart} from '../build/chart-output.js';
 import {chartVegaSpec} from '../build/chart-vega.js';

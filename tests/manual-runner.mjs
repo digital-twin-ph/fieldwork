@@ -8,17 +8,21 @@ import {expect} from '@playwright/test';
  *  waiting for what a step starts (a fetch, a save, a run) to finish. Neither changes what is built. */
 const saved=page=>page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));
 
-async function labelOf(page,id){
-  return page.evaluate(id=>{
-    const el=document.getElementById(id);
-    const label=document.querySelector(`label[for="${CSS.escape(id)}"]`)?.textContent
+/** A CONTROL BY ID, or by selector where a dialog names its controls by role, as the rules dialog does
+ *  (`[data-rule="0"][data-part="column"]`). Its label is its <label>, or else its aria-label. */
+const selectorOf=target=>/^[\[.#]/.test(target)?target:`#${target}`;
+async function labelOf(page,target){
+  return page.evaluate(selector=>{
+    const el=document.querySelector(selector);
+    const label=(el?.id?document.querySelector(`label[for="${CSS.escape(el.id)}"]`)?.textContent:undefined)
       ??el?.closest('label')?.textContent
-      ??el?.querySelector?.('legend')?.textContent;
+      ??el?.querySelector?.('legend')?.textContent
+      ??el?.getAttribute('aria-label');
     return (label??'').replace(/\s+/g,' ').trim();
-  },id);
+  },selectorOf(target));
 }
-const sameLabel=async(page,id,label,where)=>
-  expect(await labelOf(page,id),`${where}: the manual's label for #${id}`).toBe(label);
+const sameLabel=async(page,target,label,where)=>
+  expect(await labelOf(page,target),`${where}: the manual's label for ${selectorOf(target)}`).toBe(label);
 
 async function view(page,name){
   if(name)await page.locator(`[data-view="${name}"]`).click();
@@ -104,7 +108,7 @@ export async function performManual(page,workflow,{timeout=120000,runTimeout=tim
     }
     if('fill' in step){
       await view(page,step.view);
-      const field=page.locator(`#${step.fill}`);
+      const field=page.locator(selectorOf(step.fill)).first();
       await expect(field,where).toBeVisible({timeout});
       await sameLabel(page,step.fill,step.label,where);
       await field.fill(step.value);
@@ -114,7 +118,7 @@ export async function performManual(page,workflow,{timeout=120000,runTimeout=tim
     }
     if('choose' in step){
       await view(page,step.view);
-      const field=page.locator(`#${step.choose}`);
+      const field=page.locator(selectorOf(step.choose)).first();
       await expect(field,where).toBeVisible({timeout});
       await sameLabel(page,step.choose,step.label,where);
       if(step.shown){
@@ -122,6 +126,7 @@ export async function performManual(page,workflow,{timeout=120000,runTimeout=tim
         expect(shown.trim(),`${where}: the option the manual names`).toContain(step.shown);
       }
       await field.selectOption(step.value);
+      if(step.view)await view(page,'workflow');
       continue;
     }
     if('tick' in step){
@@ -163,7 +168,8 @@ export async function performManual(page,workflow,{timeout=120000,runTimeout=tim
       continue;
     }
     if('see' in step){
-      if(step.check)await expect(page.locator('main').first(),where).toContainText(step.check);
+      // What a dialog says, such as a refusal, is checked where it is said.
+      if(step.check)await expect(page.locator(step.within??'main').first(),where).toContainText(step.check);
       continue;
     }
     throw new Error(`${where} is not a step this runner knows.`);

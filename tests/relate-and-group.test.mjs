@@ -12,7 +12,9 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {relateTable,relateOutcome,relateShape,gapSignature,rateMultiplier,machinedNotes} from '../build/relate-table.js';
 import {groupTable} from '../build/group-table.js';
-import {deriveValue,selectRows} from '../build/derive-value.js';
+import {selectRows} from '../build/select-rows.js';
+import {evaluateAuthored,evaluatedTable} from '../build/rule-evaluation.js';
+import {authoredSubjects} from '../build/authored-application.js';
 
 const DATA='../example-1855-cholera-south-london/data/';
 const readCsv=name=>{
@@ -147,8 +149,13 @@ test('the hand-computed contingency table is reproduced exactly',()=>{
   assert.equal(collapsedFrom,64);
   assert.deepEqual(dropped,['sub_district']);
 
-  const {table:derived}=deriveValue(grouped,{keyColumn:'measure',left:'population_1851',
-    operator:'minus',right:'deaths_seven_weeks',name:'survived'});
+  // SURVIVED = population minus deaths, for every supply, by Apply ruleset's rule (experiment 188), which reads the
+  // grouped table as one record per supply with a number per measure.
+  const wide={...grouped,wide:{measureKey:'measure',subjectKeys:['water_supply']}};
+  const fields=['population_1851','deaths_seven_weeks'].map(m=>({attribute:m,predicate:`fwa:${m}`,kind:'number',unit:'unit:NUM'}));
+  const rules=[{any:[{all:[]}],then:[{predicate:'fwa:survived',column:'survived',
+    compute:{left:{field:'fwa:population_1851'},operator:'minus',right:{field:'fwa:deaths_seven_weeks'}}}]}];
+  const derived=evaluatedTable(wide,evaluateAuthored(authoredSubjects(wide),fields,rules));
   const {table}=selectRows(derived,'measure',['deaths_seven_weeks','survived']);
 
   const cell=(supply,measure)=>table.rows.find(r=>r.key.water_supply===supply

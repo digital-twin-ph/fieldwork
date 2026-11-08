@@ -2,8 +2,9 @@
 
 _Created 2026-11-07 · Updated 2026-11-08_
 
-**Status:** asked, four of five stages built (stage 4 in Fieldwork 0.54.0, 2026-11-08). Not `tried` until the Nigeria and South
-London workflows are rebuilt with Apply ruleset and their manuals play back.
+**Status:** tried (Fieldwork 0.55.0, 2026-11-08). All five stages built; Derive a value retired. Not `validated`: the
+three checks below pass in Chromium, WebKit runs in CI, and South London has no build from an empty canvas to play
+back.
 
 | Stage | What | State |
 | --- | --- | --- |
@@ -11,7 +12,7 @@ London workflows are rebuilt with Apply ruleset and their manuals play back.
 | 2 | A wide table read as one record per subject; computed values folded back as Derive a value adds them | Built |
 | 3 | The dialog: computed conclusions, a rule for every record, a live Before and After | Built |
 | 4 | Sort, and rules between rows | Built |
-| 5 | Rebuild Nigeria and South London; the synthetic repository's workflows; retire Derive a value | Not started |
+| 5 | Rebuild Nigeria and South London; the synthetic repository's workflows; retire Derive a value | Built |
 
 ## The question
 
@@ -193,6 +194,52 @@ built and read in Chromium (`tests/rules-previous-row.browser.mjs`); WebKit runs
    sort applies to a long table's rows and to points.
 3. **Within each offers every other column**, the count column among them. Ticking a number would group by it, which
    no one is likely to want; it is offered rather than hidden, and not ticked.
+
+## Stage 5, as built, 2026-11-08
+
+**Nigeria and South London, rebuilt.** Each of the four Derive a value steps is an Apply ruleset step with one rule for
+every record, the same two columns, operation and new column, each column's unit stated: proportion for DTP1 coverage,
+as Nigeria's other rule already states it; a count for houses, deaths and people. Every output of the four workflows,
+nine in all, gave the same rows before and after, by digest. Those digests are kept in
+`tests/fixtures/derive-retired.json`, and `tests/rules-replace-derive.test.mjs` holds the published projects to them
+now that Derive a value is gone. Nigeria's change in coverage is built through the rules dialog from an empty canvas
+(`tests/nigeria-from-scratch.browser.mjs`). South London has no such build: it was checked by its outputs only.
+
+**Derive a value is retired** (1.0.0), outright: nobody outside this project uses it. A saved workflow holding one
+opens with it migrated to an Apply ruleset step with the same rule, stamped. It never recorded units, so the migrated
+step asks for them before it runs, rather than guessing.
+
+**The synthetic repository's workflows.** [example-workflows-rulesets](https://github.com/digital-twin-ph/example-workflows-rulesets)
+holds four, built by its `manual.json` from an empty canvas (`tests/rulesets-from-scratch.browser.mjs`, Chromium), one
+per data set. Each feature on the list under *What would close it* is reached, except one:
+
+| Feature | Where | Reached |
+| --- | --- | --- |
+| A category under a condition; a value computed under one | Clinic visits: band, fever; a dose under 5 with a weight | Yes |
+| A value for every row | Districts: houses without a death | Yes |
+| A computed value read by a second rule | Districts: deaths per house, then × 10,000 | Yes |
+| Every comparator, *is recorded*, *is not recorded*, a setting | Clinic visits | Yes |
+| A unit that disagrees, refused while the rule is written | Clinic visits: a fever setting in °F against °C | Yes |
+| A computed column with its unit described | — | **No**: a computed column's unit cannot be recorded |
+| A division by zero, counted and named | Districts: Harbour | Yes |
+| New cases from a cumulative column, with a first week, a missing week, a fall and a repeated week | Cumulative cases, long | Yes |
+| Rows no rule matches; rows two rules give different values | Districts: level | Yes |
+
+**Found while building it:**
+
+1. **A condition on a category never held.** A value typed for a category column, *clinic is Hillside*, was stored as
+   the text "Hillside", which the compiler quoted; a record's category is the term `fwa:Hillside`. Neither the
+   reasoner nor direct evaluation could ever match it. No test wrote such a condition through the dialog; the
+   published rulesets write their terms by hand. Fixed: the value typed becomes the term.
+2. **Every number column needed a unit**, not only those the rules read: Nigeria's wide table offers twenty years, and
+   a rule on two was refused until all twenty had one. Now only what the rules read.
+3. **No setting could be declared in the dialog**, so the feature *a condition against a step setting* could not be
+   reached from an empty canvas. Added: name, value and unit.
+4. **The Inspector of a step whose rules are written here had no Inputs list**, so it could be connected only by
+   dragging to its port ([186](186-one-standard-inspector.md)).
+5. **Unit words.** *years*, *kilograms*, *degrees Celsius*, *houses* and *deaths* were not recognised, so a unit typed
+   as any of them counted as none.
+6. **The run's notice says "could not be read as declared"** for values that are simply empty. Not changed.
 
 ## A use on real data, from 185
 

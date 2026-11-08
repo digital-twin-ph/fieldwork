@@ -12,7 +12,8 @@ rule matched keeps no conclusion, and the run says how many.
 
 ## What you connect
 
-**Records**: a table, points or polygons. A table imported **wide**, one row per subject and a column per variable,
+**Records**: a table, points or polygons. Choose which under *Records arrive as*, then the step that feeds it under
+*Inputs*. A table imported **wide**, one row per subject and a column per variable,
 is read that way: one record per subject, its columns as the file named them. It gives back the same records with the
 new columns.
 
@@ -28,6 +29,14 @@ new columns.
 | **then** a computed value | A new column and a sum: *houses without a death* is *houses* minus *deaths*. Plus, minus, times or divided by; each side a column, a value another rule computed, or a typed number |
 
 **+ Add a value computed for every record** writes a rule with no condition: every record gets the value.
+
+**Settings.** *+ Add a setting* gives the step a number the rules compare against, such as a fever threshold of 38
+degrees Celsius: a name, a value and a unit. A condition then reads *temperature_c is more than fever*, and the
+threshold can be changed without rewriting a rule.
+
+**Units.** Each column the rules read states its unit, in the Inspector beside the column. A setting compared with a
+column must be in the column's unit, and a sum or difference must be of two columns in the same unit; either is refused
+while the rule is written. Columns the rules do not read need no unit.
 
 **One rule can read what another computed.** *deaths per house* is deaths divided by houses; *deaths per 10,000
 houses* is deaths per house times 10,000. The order the rules are listed in does not matter.
@@ -67,7 +76,7 @@ named for the new column, as **Derive a value** adds it.
 ## What it will not do
 
 
-**It will not describe the new column for you.** What it measures, and its unit, are yours to state.
+**It will not describe the new column.** What a computed value measures, and its unit, cannot be recorded on the step yet.
 
 ## What this does not establish
 

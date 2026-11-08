@@ -631,7 +631,8 @@ rather than a finding:
 | --- | --- |
 | `SELECT` | `select_rows`, built 2026-10-26 |
 | `IF`/`THEN` | `apply_ruleset` authored rules |
-| `DEFINE`/`ASSIGN` | `derive_value`, partial — no computed column across tables |
+| `SORT` | inside `apply_ruleset`, for a rule reading the previous row (188) |
+| `DEFINE`/`ASSIGN` | `apply_ruleset` computed values, since 2026-11-08 (188); `derive_value` retired into it |
 | `GRAPH` | `chart_output` |
 | `RELATE` | `relate_table`, built 2026-10-26 — a CATEGORY across a shared key |
 | **`MERGE`, `MATCH`** | **nothing**. Named in `src/relate-table.ts` so neither is reached by widening it: `MERGE` brings measures across and adds ROWS, `MATCH` is approximate linkage |

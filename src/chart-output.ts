@@ -2,7 +2,7 @@ import type {WorkflowNode} from './types.js';
 import type {BarOrder,ChartSummary,DisplayValue,Receipt} from './results.js';
 import type {DataTable} from './data-table.js';
 import {chartSpecificationFacts} from './chart-vega.js';
-import {orderOf} from './derive-value.js';
+import {orderOf} from './select-rows.js';
 
 /** A BAR'S NUMBER, written for a reader.
  *

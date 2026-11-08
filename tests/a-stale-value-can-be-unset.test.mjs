@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {migrateGroupTableNulls} from '../build/group-table.js';
-import {selectRows} from '../build/derive-value.js';
+import {selectRows} from '../build/select-rows.js';
 
 /** TWO PARAMETERS THAT OUTLIVED WHAT THEY MEANT, found on 2026-10-31 in the one workflow the
  *  South London example had not re-exported -- "Cholera in 1849 compared with 1854".

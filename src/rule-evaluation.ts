@@ -17,7 +17,7 @@
 import {knownPredicate,readValue,termFor,type FieldBinding,type SubjectRecord} from './authored-application.js';
 import {isComputed,isSettingReference,settingNamed,readsPrevious,readsPreviousRows,type AuthoredRule,type ComputeOperator,
   type Operand,type AuthoredOrder} from './authored-rules.js';
-import {orderOf} from './derive-value.js';
+import {orderOf} from './select-rows.js';
 import type {Scalar} from './types.js';
 import type {DataTable} from './data-table.js';
 import {isWide,wideSubjects} from './authored-application.js';

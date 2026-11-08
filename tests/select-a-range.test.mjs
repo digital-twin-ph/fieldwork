@@ -6,7 +6,7 @@
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {selectRange,orderOf,inRange,rangeSentence} from '../build/derive-value.js';
+import {selectRange,orderOf,inRange,rangeSentence} from '../build/select-rows.js';
 
 const daily=(days,start='2023-05-30')=>{
   const first=Date.parse(`${start}T00:00:00Z`);
@@ -67,7 +67,7 @@ test('an empty cell is outside every range',()=>{
 
 /** EVERY VALUE BUT THESE (experiment 182): twelve doubled weeks left out of Brazil's 833, in the table's order. */
 test('leaving out values keeps every other row in order, counts what went, and names a value not present',async()=>{
-  const {selectRows}=await import('../build/derive-value.js');
+  const {selectRows}=await import('../build/select-rows.js');
   const table={kind:'data-table',keys:['week','place'],valueField:'cases',rowCount:5,missingValueCount:0,
     rows:[['2010-12-19','a',1],['2010-12-26','a',2],['2010-12-26','a',3],['2011-01-02','a',4],['2011-01-09','b',5]]
       .map(([week,place,value])=>({key:{week,place},value}))};

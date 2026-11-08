@@ -73,7 +73,7 @@ import {element as $,optionalElement,control} from './dom.js';
 import {errorMessage,isRecord,required} from './guards.js';
 import {resolveRuleset,bundledRulesets,supersession} from './rulesets.js';
 import type {Ruleset} from './rulesets.js';
-import {OPERATORS,orderOf,inRange} from './derive-value.js';
+import {orderOf,inRange} from './select-rows.js';
 import {pinnedRuleset} from './rule-application.js';
 function getNode<K extends NodeType>(w:Workflow,id:string,type:K):WorkflowNode<K>{const node=required(w.nodes.find(n=>n.id===id));if(node.type!==type)throw new Error('Node type changed while editing');return node as WorkflowNode<K>;}
 function updateParam(w:Workflow,id:string,key:string,value:unknown){Object.assign(required(w.nodes.find(n=>n.id===id)).params,{[key]:value});}
@@ -846,13 +846,26 @@ const dropFocus=()=>{(document.activeElement as HTMLElement|null)?.blur();};
 // the run. Offering only a table_input's keys is what left the area join's column control saying
 // "Connect a table first" with a table plainly connected (South London choropleth, 2026-10-25).
 /** The value field of the table a node reads, through the steps that pass a table on unchanged in shape. */
+/** THE PORT A STEP READS ITS TABLE ON: `records`, except Apply ruleset, whose ports are its ruleset's. */
+const tablePortOf=(node:WorkflowNode)=>node.type==='apply_ruleset'
+  ?workflow.edges.find(e=>e.to===node.id)?.port??'records':'records';
+/** WHAT RULES ADD TO A TABLE, knowable without a run (experiment 188): each computed column's name, and each
+ *  category's column. On a wide table a computed value is one more value of its measure column; on a long one, a column. */
+function rulesAdd(node:WorkflowNode):{computed:string[]; categories:string[]; wideMeasure?:string}{
+  if(node.type!=='apply_ruleset'||!node.params.authored)return {computed:[],categories:[]};
+  const then=node.params.authored.rules.flatMap(r=>r.then);
+  const computed=[...new Set(then.filter(c=>c.compute).map(c=>c.column?.trim()||c.predicate.slice(c.predicate.indexOf(':')+1)))];
+  const categories=[...new Set(then.filter(c=>!c.compute).map(c=>c.predicate.slice(c.predicate.indexOf(':')+1)))];
+  const input=tableOnPort(workflow,node.id,tablePortOf(node));
+  return {computed,categories,...(input?.wide?{wideMeasure:input.wide.measureKey}:{})};
+}
 function upstreamValueField(node:WorkflowNode,seen=new Set<string>()):string|undefined{
-  const edge=workflow.edges.find(e=>e.to===node.id&&e.port==='records');
+  const edge=workflow.edges.find(e=>e.to===node.id&&e.port===tablePortOf(node));
   const up=edge?workflow.nodes.find(m=>m.id===edge.from):undefined;
   if(!up||seen.has(up.id))return undefined;
   seen.add(up.id);
   if(up.type==='table_input')return up.params.data.valueField||up.params.valueField||undefined;
-  if(['select_rows','derive_value','relate_table','append_rows'].includes(up.type))return upstreamValueField(up,seen);
+  if(['select_rows','relate_table','append_rows','apply_ruleset'].includes(up.type))return upstreamValueField(up,seen);
   return undefined;
 }
 function tableKeyColumns(node:WorkflowNode|undefined,seen=new Set<string>()):readonly string[]{
@@ -870,9 +883,16 @@ function tableKeyColumns(node:WorkflowNode|undefined,seen=new Set<string>()):rea
       return tableKeyColumns(up?workflow.nodes.find(m=>m.id===up.from):undefined,seen);}
     // PASS-THROUGHS, which keep the columns of the table they read. Found 2026-11-02 joining Nigeria's
     // change in coverage: the same "Connect a table first", past a select, over a connected table.
-    case 'select_rows':case 'derive_value':{
+    case 'select_rows':{
       const up=workflow.edges.find(e=>e.to===node.id&&e.port==='records');
       return tableKeyColumns(up?workflow.nodes.find(m=>m.id===up.from):undefined,seen);}
+    // RULES ADD COLUMNS: each category, and on a long table each computed value (experiment 188).
+    case 'apply_ruleset':{
+      const up=workflow.edges.find(e=>e.to===node.id);
+      const below=tableKeyColumns(up?workflow.nodes.find(m=>m.id===up.from):undefined,seen);
+      if(!below.length)return below;
+      const added=rulesAdd(node);
+      return [...new Set([...below,...added.categories,...(added.wideMeasure?[]:added.computed)])];}
     // APPENDING KEEPS EVERY COLUMN EITHER TABLE HAS, and the source column if one is named.
     case 'append_rows':{
       const of=(port:string)=>{const up=workflow.edges.find(e=>e.to===node.id&&e.port===port);
@@ -921,8 +941,9 @@ function tableUnitFor(output:WorkflowNode):string|undefined{
     if(up.type==='table_input')return up.params.data.unit?.trim()||undefined;
     // relate_table and group_table pass the unit through too: relating adds a key column and
     // totalling adds up values already in the unit, so neither changes what the numbers count.
-    if(up.type==='select_rows'||up.type==='derive_value'||up.type==='relate_table'||up.type==='append_rows'
+    if(up.type==='select_rows'||up.type==='relate_table'||up.type==='append_rows'
       ||up.type==='group_table'||up.type==='two_by_two')return walk(up,'records',seen);
+    if(up.type==='apply_ruleset')return walk(up,tablePortOf(up),seen);
     return undefined;
   };
   return walk(output,'table',new Set());
@@ -992,11 +1013,16 @@ function upstreamKeyValues(node:WorkflowNode,seen=new Set<string>(),
       return held?{...below,[up.params.keyColumn]:held.filter(value=>!out.has(value))}:below;}
     return kept.length?{...below,[up.params.keyColumn]:kept}:below;
   }
-  if(up.type==='derive_value'){
-    const below=upstreamKeyValues(up,seen);
+  // A COMPUTED VALUE ON A WIDE TABLE is one more value of its measure column, which the step after it can choose, as
+  // Derive a value's was (experiment 188). On a long table it is a column, whose values only a run knows.
+  if(up.type==='apply_ruleset'){
+    const below=upstreamKeyValues(up,seen,tablePortOf(up));
     if(!below)return undefined;
-    const name=up.params.name.trim();
-    return name?{...below,[up.params.keyColumn]:[...(below[up.params.keyColumn]??[]),name]}:below;
+    const added=rulesAdd(up);
+    const measure=added.wideMeasure;
+    return {...below,...(measure?{[measure]:[...new Set([...(below[measure]??[]),...added.computed])]}
+      :Object.fromEntries(added.computed.map(c=>[c,[]]))),
+      ...Object.fromEntries(added.categories.map(c=>[c,[]]))};
   }
   if(up.type==='append_rows'){
     const count=appendTableCount(up.params);
@@ -1511,7 +1537,12 @@ function candidateFields(workflow:Workflow,nodeId:string){
  *  rules for want of a unit, which is the honest outcome rather than a guess at what they meant.
  *  Millimetres were added 2026-10-26 when a seeded binding declared `mm` and nothing could
  *  resolve it. */
-const UNIT_IRIS:Record<string,string>={proportion:'FRAC',fraction:'FRAC',count:'NUM',children:'NUM',people:'NUM',cases:'NUM',minutes:'MIN',minute:'MIN',min:'MIN',hours:'HR',hour:'HR',hr:'HR',seconds:'SEC',second:'SEC',days:'DAY',day:'DAY',metres:'M',meters:'M',m:'M',kilometres:'KiloM',kilometers:'KiloM',km:'KiloM',millimetres:'MilliM',millimeters:'MilliM',millimetre:'MilliM',millimeter:'MilliM',mm:'MilliM',percent:'PERCENT'};
+const UNIT_IRIS:Record<string,string>={
+  // Counts, by what they count (2026-11-08, for the rules worked example): each is a number of something.
+  houses:'NUM',deaths:'NUM',visits:'NUM',records:'NUM',doses:'NUM',
+  years:'YR',year:'YR',kilograms:'KiloGM',kilogram:'KiloGM',kg:'KiloGM',milligrams:'MilliGM',milligram:'MilliGM',mg:'MilliGM',
+  'degrees celsius':'DEG_C','°c':'DEG_C','degrees fahrenheit':'DEG_F','°f':'DEG_F',
+  proportion:'FRAC',fraction:'FRAC',count:'NUM',children:'NUM',people:'NUM',cases:'NUM',minutes:'MIN',minute:'MIN',min:'MIN',hours:'HR',hour:'HR',hr:'HR',seconds:'SEC',second:'SEC',days:'DAY',day:'DAY',metres:'M',meters:'M',m:'M',kilometres:'KiloM',kilometers:'KiloM',km:'KiloM',millimetres:'MilliM',millimeters:'MilliM',millimetre:'MilliM',millimeter:'MilliM',mm:'MilliM',percent:'PERCENT'};
 const unitIriFor=(label?:string)=>{
   const code=UNIT_IRIS[(label??'').trim().toLowerCase()];
   return code?`http://qudt.org/vocab/unit/${code}`:undefined;
@@ -1710,9 +1741,10 @@ function wireAuthorRules(node:WorkflowNode){
     authorRulesOn(node.id,node.params.label??'');
     const authored=getNode(workflow,node.id,'apply_ruleset').params.authored;
     if(!authored)return;
-    const edited=await openRuleEditor(authored,esc,{settingValues:getNode(workflow,node.id,'apply_ruleset').params.parameters,preview:rulePreview(node.id)});
-    if(edited)change(w=>{const held=getNode(w,node.id,'apply_ruleset').params.authored!;held.rules=edited.rules as never;
-      if(edited.order)held.order=edited.order;else delete held.order;});
+    const edited=await openRuleEditor(authored,esc,{settingValues:getNode(workflow,node.id,'apply_ruleset').params.parameters,preview:rulePreview(node.id),unitIri:unitIriFor});
+    if(edited)change(w=>{const step=getNode(w,node.id,'apply_ruleset'),held=step.params.authored!;held.rules=edited.rules as never;
+      if(edited.order)held.order=edited.order;else delete held.order;
+      held.parameters=edited.parameters as never;step.params.parameters=edited.values;});
   });
 }
 
@@ -1827,7 +1859,7 @@ function renderLibrary(search=''){
       :type==='facilities'?{type:'facilities' as const,params:{dataset:DATASET,radiusKm:5,sourceMode:'connected' as const}}
       :type==='facility_audit'?{type:'facility_audit' as const,params:{} as Record<string,never>}
       :type==='apply_ruleset'?{type:'apply_ruleset' as const,params:{label:'Apply ruleset',parameters:{}}}
-      :type==='travel_time'?{type:'travel_time' as const,params:{label:'Travel time from distance',speedMPerMin:70}}:type==='point_grid'?{type:'point_grid' as const,params:{spacingM:250}}:type==='mean_center'?{type:'mean_center' as const,params:{label:'Mean center',zone:30,hemisphere:'north' as const}}:type==='compare_point_sets'?{type:'compare_point_sets' as const,params:{label:'Compare point sets',zone:30,hemisphere:'north' as const}}:type==='comparison_map'?{type:'comparison_map' as const,params:{label:'Point comparison map'}}:type==='donut_geomask'?{type:'donut_geomask' as const,params:{label:'Donut geomasking',innerM:50,outerM:125,seed:42}}:type==='aggregate_points_to_h3_cell'?{type:'aggregate_points_to_h3_cell' as const,params:{label:'H3 cell aggregation',resolution:9,minOccupancy:2}}:type==='buffer_area'?{type:'buffer_area' as const,params:{label:'Buffered study area',distanceM:500}}:type==='network_input'?{type:'network_input' as const,params:{label:'Street network',data:{nodes:[],edges:[],source:'Not prepared'},inputMethod:'file' as const,marginM:250}}:Object.hasOwn(CATCHMENT_TYPES,type)?[...johnSnowExample('snow-voronoi').nodes,...johnSnowExample('snow-isochrone').nodes].find(n=>n.type===type):type==='join_table_to_area'?{type:'join_table_to_area' as const,params:{label:'Values on the study area',keyField:'',normalisation:'fuzzy' as const}}:type==='derive_value'?{type:'derive_value' as const,params:{label:'Derive a value',keyColumn:'measure',left:'',operator:'minus' as const,right:'',name:''}}:type==='regression'?{type:'regression' as const,params:{label:'Regression',family:'logistic' as const,outcome:'',exposure:{column:'',as:'categorical' as const},adjust:[],errors:'profile' as const}}:type==='append_rows'?{type:'append_rows' as const,params:{label:'Append rows'}}:type==='select_rows'?{type:'select_rows' as const,params:{label:'Select rows by value',keyColumn:'measure',values:[]}}:type==='relate_table'?{type:'relate_table' as const,params:{label:'Relate a column from another table',on:'',bring:''}}:type==='group_table'?{type:'group_table' as const,params:{label:'Total within groups',by:[]}}:type==='find_satellite_products'?{type:'find_satellite_products' as const,params:{label:'Find satellite products'}}:type==='search_satellite_catalog'?{type:'search_satellite_catalog' as const,params:{label:'Search a satellite catalog',from:'',until:''}}:type==='sample_satellite_files_at_points'?{type:'sample_satellite_files_at_points' as const,params:{label:'Sample satellite files at points or over areas'}}:type==='study_design'?{type:'study_design' as const,params:{label:'Study design',design:'cohort' as const,period:'',unitOfAnalysis:'',note:''}}:type==='two_by_two'?{type:'two_by_two' as const,params:{label:'Two-by-two table',exposureColumn:'',exposed:'',unexposed:'',outcomeColumn:'',caseValue:'',nonCaseValue:'',level:95 as const}}:type==='rate'?{type:'rate' as const,params:{label:'Rate with a denominator',numeratorField:'',denominatorField:'',denominatorUnit:'people' as const,rateKind:'proportion' as const,multiplier:100,minimumDenominator:20,numeratorPeriod:'',denominatorVintage:''}}:type==='case_series'?{type:'case_series' as const,params:{label:'Cases by period',dateField:'',dateKind:'onset' as const,period:'week' as const}}:type==='slr_extract_import'?{type:'slr_extract_import' as const,params:{label:'Sea-level projection extract',datasetIRI:'',datasetVersion:'',baselinePeriod:'',citations:['','',''],basisKind:'' as const,familyValues:{withVerticalLandMotion:'',withoutVerticalLandMotion:''}}}:type==='slr_site_assignment'?{type:'slr_site_assignment' as const,params:{label:'Assign projection site'}}:type==='slr_threshold_comparison'?{type:'slr_threshold_comparison' as const,params:{label:'Compare level to elevation',scenario:'',basis:'',family:'',year:'',quantile:'',elevationField:'',verticalDatum:'',elevationReference:'' as const}}:type==='polygon_input'?{type:'polygon_input' as const,params:{label:'Polygon layer',data:{features:[]}}}:type==='map_image_input'?{type:'map_image_input' as const,params:{label:'Georeferenced map image',image:{width:0,height:0,bytes:0,sha256:''},bounds:[0,0,0,0] as [number,number,number,number],opacity:0.85}}:type==='table_input'?{type:'table_input' as const,params:{label:'Tabular data',keys:[],valueField:'',data:{kind:'data-table' as const,keys:[],valueField:'',rows:[],rowCount:0,missingValueCount:0}}}:type==='deduplicate_points'?{type:'deduplicate_points' as const,params:{label:'Deduplicated records',pointInputCount:2,nameField:'name',nameMatch:'fuzzy' as const,fuzzyThreshold:0.88,blockDistanceM:500,nearDistanceM:50,matchThreshold:2,reviewThreshold:1,decisions:[]}}:type==='clip_points_to_area'?{type:'clip_points_to_area' as const,params:{label:'Points inside the area',keepBoundary:true,showExcluded:true}}:type==='reproject'?{type:'reproject' as const,params:{label:'Reproject points',zone:35,hemisphere:'south' as const}}:type==='raster_input'?{type:'raster_input' as const,params:{label:'Raster input'}}:type==='fill_interior_gaps'?{type:'fill_interior_gaps' as const,params:{label:'Filled gaps'}}:type==='stack_polygons'?{type:'stack_polygons' as const,params:{label:'Collected polygon layers'}}:type==='travel_time_band'?{type:'travel_time_band' as const,params:{label:'Travel time band',minutes:5}}:type==='reachable_corridor'?{type:'reachable_corridor' as const,params:{label:'Reachable corridor',bufferM:25,zone:30,hemisphere:'north' as const}}:type==='reachable_nodes'?{type:'reachable_nodes' as const,params:{label:'Reachable junctions',minutes:10,speedMPerMin:80,direction:'outbound' as const,travelMode:'walking' as const}}:type==='snap_to_network'?{type:'snap_to_network' as const,params:{label:'Snap sites to the network',zone:30,hemisphere:'north' as const,maxSnapM:150}}:type==='summarize_combined_area'?{type:'summarize_combined_area' as const,params:{label:'Combined area',zone:30,hemisphere:'north' as const}}:type==='summarize_hull'?{type:'summarize_hull' as const,params:{label:'Convex hull',zone:30,hemisphere:'north' as const}}:type==='find_health_facilities'?{type:'find_health_facilities' as const,params:{label:'Find health facilities',source:'openstreetmap-live' as const,kinds:['hospital','clinic'],requireName:true,country:'PHL',minConfidence:0.7,data:null,retrieved:null}}:type==='buffer_point'?{type:'buffer_point' as const,params:{label:'Area around a point',pointId:'',distanceM:5000}}:type==='sample_raster'?{type:'sample_raster' as const,params:{label:'Sample raster at points',attribute:'',valueUnit:''}}:type==='clip_raster'?{type:'clip_raster' as const,params:{label:'Clipped raster',method:'all-touched' as const,marginPixels:0}}:type==='chart_output'?{type:'chart_output' as const,params:{label:'Chart'}}:type==='table_output'?newTableOutput():type==='map_output'?newMapOutput():type==='point_input'?newObservations():type==='measure_area'?newAreaMeasurement():['blank','coverage'].includes(exampleKey(workflow))&&type==='study_area'?newStudyArea():template(exampleKey(workflow)).nodes.find(n=>n.type===type));
+      :type==='travel_time'?{type:'travel_time' as const,params:{label:'Travel time from distance',speedMPerMin:70}}:type==='point_grid'?{type:'point_grid' as const,params:{spacingM:250}}:type==='mean_center'?{type:'mean_center' as const,params:{label:'Mean center',zone:30,hemisphere:'north' as const}}:type==='compare_point_sets'?{type:'compare_point_sets' as const,params:{label:'Compare point sets',zone:30,hemisphere:'north' as const}}:type==='comparison_map'?{type:'comparison_map' as const,params:{label:'Point comparison map'}}:type==='donut_geomask'?{type:'donut_geomask' as const,params:{label:'Donut geomasking',innerM:50,outerM:125,seed:42}}:type==='aggregate_points_to_h3_cell'?{type:'aggregate_points_to_h3_cell' as const,params:{label:'H3 cell aggregation',resolution:9,minOccupancy:2}}:type==='buffer_area'?{type:'buffer_area' as const,params:{label:'Buffered study area',distanceM:500}}:type==='network_input'?{type:'network_input' as const,params:{label:'Street network',data:{nodes:[],edges:[],source:'Not prepared'},inputMethod:'file' as const,marginM:250}}:Object.hasOwn(CATCHMENT_TYPES,type)?[...johnSnowExample('snow-voronoi').nodes,...johnSnowExample('snow-isochrone').nodes].find(n=>n.type===type):type==='join_table_to_area'?{type:'join_table_to_area' as const,params:{label:'Values on the study area',keyField:'',normalisation:'fuzzy' as const}}:type==='regression'?{type:'regression' as const,params:{label:'Regression',family:'logistic' as const,outcome:'',exposure:{column:'',as:'categorical' as const},adjust:[],errors:'profile' as const}}:type==='append_rows'?{type:'append_rows' as const,params:{label:'Append rows'}}:type==='select_rows'?{type:'select_rows' as const,params:{label:'Select rows by value',keyColumn:'measure',values:[]}}:type==='relate_table'?{type:'relate_table' as const,params:{label:'Relate a column from another table',on:'',bring:''}}:type==='group_table'?{type:'group_table' as const,params:{label:'Total within groups',by:[]}}:type==='find_satellite_products'?{type:'find_satellite_products' as const,params:{label:'Find satellite products'}}:type==='search_satellite_catalog'?{type:'search_satellite_catalog' as const,params:{label:'Search a satellite catalog',from:'',until:''}}:type==='sample_satellite_files_at_points'?{type:'sample_satellite_files_at_points' as const,params:{label:'Sample satellite files at points or over areas'}}:type==='study_design'?{type:'study_design' as const,params:{label:'Study design',design:'cohort' as const,period:'',unitOfAnalysis:'',note:''}}:type==='two_by_two'?{type:'two_by_two' as const,params:{label:'Two-by-two table',exposureColumn:'',exposed:'',unexposed:'',outcomeColumn:'',caseValue:'',nonCaseValue:'',level:95 as const}}:type==='rate'?{type:'rate' as const,params:{label:'Rate with a denominator',numeratorField:'',denominatorField:'',denominatorUnit:'people' as const,rateKind:'proportion' as const,multiplier:100,minimumDenominator:20,numeratorPeriod:'',denominatorVintage:''}}:type==='case_series'?{type:'case_series' as const,params:{label:'Cases by period',dateField:'',dateKind:'onset' as const,period:'week' as const}}:type==='slr_extract_import'?{type:'slr_extract_import' as const,params:{label:'Sea-level projection extract',datasetIRI:'',datasetVersion:'',baselinePeriod:'',citations:['','',''],basisKind:'' as const,familyValues:{withVerticalLandMotion:'',withoutVerticalLandMotion:''}}}:type==='slr_site_assignment'?{type:'slr_site_assignment' as const,params:{label:'Assign projection site'}}:type==='slr_threshold_comparison'?{type:'slr_threshold_comparison' as const,params:{label:'Compare level to elevation',scenario:'',basis:'',family:'',year:'',quantile:'',elevationField:'',verticalDatum:'',elevationReference:'' as const}}:type==='polygon_input'?{type:'polygon_input' as const,params:{label:'Polygon layer',data:{features:[]}}}:type==='map_image_input'?{type:'map_image_input' as const,params:{label:'Georeferenced map image',image:{width:0,height:0,bytes:0,sha256:''},bounds:[0,0,0,0] as [number,number,number,number],opacity:0.85}}:type==='table_input'?{type:'table_input' as const,params:{label:'Tabular data',keys:[],valueField:'',data:{kind:'data-table' as const,keys:[],valueField:'',rows:[],rowCount:0,missingValueCount:0}}}:type==='deduplicate_points'?{type:'deduplicate_points' as const,params:{label:'Deduplicated records',pointInputCount:2,nameField:'name',nameMatch:'fuzzy' as const,fuzzyThreshold:0.88,blockDistanceM:500,nearDistanceM:50,matchThreshold:2,reviewThreshold:1,decisions:[]}}:type==='clip_points_to_area'?{type:'clip_points_to_area' as const,params:{label:'Points inside the area',keepBoundary:true,showExcluded:true}}:type==='reproject'?{type:'reproject' as const,params:{label:'Reproject points',zone:35,hemisphere:'south' as const}}:type==='raster_input'?{type:'raster_input' as const,params:{label:'Raster input'}}:type==='fill_interior_gaps'?{type:'fill_interior_gaps' as const,params:{label:'Filled gaps'}}:type==='stack_polygons'?{type:'stack_polygons' as const,params:{label:'Collected polygon layers'}}:type==='travel_time_band'?{type:'travel_time_band' as const,params:{label:'Travel time band',minutes:5}}:type==='reachable_corridor'?{type:'reachable_corridor' as const,params:{label:'Reachable corridor',bufferM:25,zone:30,hemisphere:'north' as const}}:type==='reachable_nodes'?{type:'reachable_nodes' as const,params:{label:'Reachable junctions',minutes:10,speedMPerMin:80,direction:'outbound' as const,travelMode:'walking' as const}}:type==='snap_to_network'?{type:'snap_to_network' as const,params:{label:'Snap sites to the network',zone:30,hemisphere:'north' as const,maxSnapM:150}}:type==='summarize_combined_area'?{type:'summarize_combined_area' as const,params:{label:'Combined area',zone:30,hemisphere:'north' as const}}:type==='summarize_hull'?{type:'summarize_hull' as const,params:{label:'Convex hull',zone:30,hemisphere:'north' as const}}:type==='find_health_facilities'?{type:'find_health_facilities' as const,params:{label:'Find health facilities',source:'openstreetmap-live' as const,kinds:['hospital','clinic'],requireName:true,country:'PHL',minConfidence:0.7,data:null,retrieved:null}}:type==='buffer_point'?{type:'buffer_point' as const,params:{label:'Area around a point',pointId:'',distanceM:5000}}:type==='sample_raster'?{type:'sample_raster' as const,params:{label:'Sample raster at points',attribute:'',valueUnit:''}}:type==='clip_raster'?{type:'clip_raster' as const,params:{label:'Clipped raster',method:'all-touched' as const,marginPixels:0}}:type==='chart_output'?{type:'chart_output' as const,params:{label:'Chart'}}:type==='table_output'?newTableOutput():type==='map_output'?newMapOutput():type==='point_input'?newObservations():type==='measure_area'?newAreaMeasurement():['blank','coverage'].includes(exampleKey(workflow))&&type==='study_area'?newStudyArea():template(exampleKey(workflow)).nodes.find(n=>n.type===type));
     // Every zone-taking widget was defaulted to Soho's 30/north in the branches above, which is
     // wrong anywhere else and said nothing about it. Suggest the zone the workflow's own data is
     // in, from the mean longitude of every coordinate already configured. The parameter stays: a
@@ -2271,33 +2303,6 @@ function renderInspector(){
       // recorded where the decision is, in `categoricalSteps`, with the practitioner's own words
       // for it. A control says what the setting does; it is not where an argument is kept.
       +`<p class="description">A class is a kind, not an amount: which company supplied a sub-district, which zone a ward is in. One colour per class, named in the key, and a part the table gives no class is drawn in the neutral rather than in the first class.</p>`;
-  }else if(n.type==='derive_value'){
-    const p=n.params,shape=upstreamKeyValues(n),columns=Object.keys(shape??{});
-    const held=shape?.[p.keyColumn]??[];
-    const picker=(id:string,key:'left'|'right',label:string)=>
-      `<div class="field"><label class="field-label" for="${id}">${label}</label>`
-      +(held.length
-        ?`<select id="${id}" data-slr="${key}"><option value="">Choose a value…</option>`
-          +held.map(value=>`<option value="${esc(value)}" ${p[key]===value?'selected':''}>${esc(value)}</option>`).join('')
-          +`</select>`
-        :`<input id="${id}" data-slr="${key}" maxlength="80" value="${esc(p[key])}" placeholder="houses">`)
-      +`</div>`;
-    content+='<p class="description">Computes a new value from two values already in the table, once for each group of rows that share the other key columns. A table here is long — one value per row — so the two numbers it combines are two rows, not two columns.</p>'
-      +labelForm('derive-label','Node label',p.label||'Derive a value')
-      +`<div class="field"><label class="field-label" for="derive-key">Key column holding the values</label>`
-      +`<select id="derive-key" data-slr="keyColumn"${columns.length?'':' disabled'}>`
-      +(columns.length?'':`<option value="${esc(p.keyColumn)}">Connect a table first</option>`)
-      +columns.map(column=>`<option value="${esc(column)}" ${p.keyColumn===column?'selected':''}>${esc(column)}</option>`).join('')
-      +`</select></div>`
-      +picker('derive-left','left','First value')
-      +`<div class="field"><label class="field-label" for="derive-operator">Operation</label>`
-      +`<select id="derive-operator" data-slr="operator">`
-      +Object.entries(OPERATORS).map(([key,op])=>`<option value="${key}" ${p.operator===key?'selected':''}>${esc(op.label)}</option>`).join('')
-      +`</select></div>`
-      +picker('derive-right','right','Second value')
-      +`<div class="field"><label class="field-label" for="derive-name">Name for the derived value</label>`
-      +`<input id="derive-name" data-slr="name" maxlength="80" value="${esc(p.name)}" placeholder="houses without a death"></div>`
-      +'<div class="notice">A group missing either value gets no derived row and is named in the evidence, because a group whose first value nobody recorded has an unknown result, not a zero. A name the column already uses is refused, since two rows would then share a key. Dividing by zero is unknown rather than infinite.</div>';
   }else if(n.type==='append_rows'){
     const p=n.params,count=appendTableCount(p);
     content+='<p class="description">Stacks the tables\' rows in order, as pandas <code>concat</code> does, '
@@ -3129,7 +3134,7 @@ function renderInspector(){
               ?`<input data-field-unit="${index}" value="${esc(field.unitLabel??'')}" placeholder="minutes" aria-label="Unit for ${esc(field.attribute)}">`
               :'—'}</td></tr>`).join('')
           +`</tbody></table>`
-          +`<p class="description">Nothing is guessed from a column name. <strong>A numeric column needs its unit</strong>: the rules will not run until every one has it.</p>`;
+          +`<p class="description">Nothing is guessed from a column name. <strong>A numeric column the rules read needs its unit</strong>: the rules will not run until each one has it.</p>`;
       }else{
         // Where a practitioner writing their first ruleset gets stuck: the rules cannot read
         // anything until the columns are declared, and the columns can only be offered once
@@ -3149,9 +3154,16 @@ function renderInspector(){
           +`<input id="ruleset-${esc(parameter.name)}" type="number" data-ruleset-parameter="${esc(parameter.name)}" `
           +`value="${esc(String(n.params.parameters?.[parameter.name]??''))}" ${parameter.min!==undefined?`min="${parameter.min}"`:''} ${parameter.max!==undefined?`max="${parameter.max}"`:''}>`
           +`${parameter.unitLabel?`<small>${esc(parameter.unitLabel)}</small>`:''}</div>`;
+      // INPUTS, as every step lists them (experiment 186): this branch returns before the shared list, so a step whose
+      // rules are written here could be connected only by dragging to its port. Found 2026-11-08, building the rules
+      // worked example's manual, which connects through the Inspector as a person who cannot hit a port would.
+      const inputs=standardInputs(n);
+      if(inputs)content+=`<div class="inspector-divider"></div><span class="inspector-section">Inputs</span>${inputs}`;
       content+=`<div class="inspector-actions"><button id="edit-rules" class="button">Edit these rules</button></div>`
         +manualButton(n.type,esc)+identityMarkup(n.type,esc);
       $('#inspector-content').innerHTML=`<div class="inspector-body">${content}</div>`;
+      document.querySelectorAll<HTMLSelectElement>('[data-connect-port]').forEach(el=>el.onchange=()=>{
+        const port=el.dataset.connectPort!;change(w=>setConnection(w,el.value||null,n.id,port));});
       // In a dialog, because the conditions nest and this panel is 320 px wide. The
       // practitioner's call, 2026-10-15: "Perhaps the rule editor should be a modal dialog so
       // there is enough space."
@@ -3176,9 +3188,10 @@ function renderInspector(){
         // Rules that have columns keep exactly those: an added number with no unit would stop them.
         if(!authored.fields.length)change(w=>{const held=getNode(w,n.id,'apply_ruleset').params.authored;
           if(held)held.fields=candidateFields(w,n.id) as never;},{spatial:false});
-        const edited=await openRuleEditor(getNode(workflow,n.id,'apply_ruleset').params.authored!,esc,{settingValues:n.params.parameters,preview:rulePreview(n.id)});
-        if(edited)change(w=>{const held=getNode(w,n.id,'apply_ruleset').params.authored!;held.rules=edited.rules as never;
-      if(edited.order)held.order=edited.order;else delete held.order;});
+        const edited=await openRuleEditor(getNode(workflow,n.id,'apply_ruleset').params.authored!,esc,{settingValues:n.params.parameters,preview:rulePreview(n.id),unitIri:unitIriFor});
+        if(edited)change(w=>{const step=getNode(w,n.id,'apply_ruleset'),held=step.params.authored!;held.rules=edited.rules as never;
+      if(edited.order)held.order=edited.order;else delete held.order;
+      held.parameters=edited.parameters as never;step.params.parameters=edited.values;});
       });
       // An EMPTY box is an unset setting, not zero. `Number('')` is 0, so clearing this field
       // used to band the rules against zero: `busy` declares min 1 and the run refuses it, which

@@ -91,7 +91,7 @@
     {
       "id": "urn:fieldwork:widget:apply_ruleset",
       "nodeType": "apply_ruleset",
-      "currentVersion": "0.4.0",
+      "currentVersion": "0.5.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -112,6 +112,11 @@
           "version": "0.4.0",
           "path": "widgets/releases/apply_ruleset/0.4.0.json",
           "sha256": "01b4bc3c666330037fb64a38e61ee331d2c9cebcc90f817a672d3939158147d6"
+        },
+        {
+          "version": "0.5.0",
+          "path": "widgets/releases/apply_ruleset/0.5.0.json",
+          "sha256": "70cda3bc472af0f8d50416d92a0e9da5bd3f8fedf493a2001912a20b5cefdce1"
         }
       ]
     },
@@ -387,12 +392,17 @@
     {
       "id": "urn:fieldwork:widget:derive_value",
       "nodeType": "derive_value",
-      "currentVersion": "0.1.0",
+      "currentVersion": "1.0.0",
       "releases": [
         {
           "version": "0.1.0",
           "path": "widgets/releases/derive_value/0.1.0.json",
           "sha256": "e6894d3e9e2c9691010e9ac74a5e097839c6b85132d2da9c1ef372475e53eeb4"
+        },
+        {
+          "version": "1.0.0",
+          "path": "widgets/releases/derive_value/1.0.0.json",
+          "sha256": "93c7522fa85e276819fdcdee0351ac3f1e377f5ca4db2d569f60a7e4d7cf00db"
         }
       ]
     },
@@ -1268,7 +1278,7 @@
         {
           "version": "0.4.0",
           "path": "widgets/releases/select_rows/0.4.0.json",
-          "sha256": "7a0572107b9fb10569cd03b1d5b2d39f9e8a0919935ed68a2f19331a78f41fae"
+          "sha256": "9138015022853642a6c90b0701ba89051021eb4292554f5e4faabaae4f0fa254"
         }
       ]
     },

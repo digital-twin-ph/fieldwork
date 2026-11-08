@@ -75,12 +75,12 @@
    ]
   },
   "apply_ruleset": {
-   "version": "0.4.0",
+   "version": "0.5.0",
    "released": "2026-11-08",
    "changes": [
     {
      "kind": "minor",
-     "description": "A rule can read the previous row (experiment 188, stage 4): either side of a computed value can be a column in the previous row, such as new cases from a cumulative count. The rows are sorted inside the step, above the rules: by a column (dates offered first), within the columns that say whose rows these are, with the previous row meaning the row recorded before or the day, week or month before. A rule reading the previous row does not run until the sort is set. The preview is Before, Sorted and After, and the table comes out sorted. The first row of a group, a missing period and two rows for one period give no value and are named; a value that fell below the previous row's is kept and named. Saved steps are unchanged."
+     "description": "Replaces Derive a value, which is retired (experiment 188, stage 5). Settings are declared in the rules dialog: a name, a value and a unit, so a condition can compare against a threshold that is changed without rewriting a rule. Only the columns the rules read must state a unit; a sum or difference of two columns in different units is refused while the rule is written. A category typed in a condition is now the term the record's value becomes: before, it was a quoted string no record could equal, so a condition on a category never held. The Inspector of a step whose rules are written here lists its input, as every step does. A step after it is offered the columns and values the rules add. A saved Derive a value step opens as an Apply ruleset step with the same rule, stamped as migrated."
     }
    ],
    "breaking": false,
@@ -262,16 +262,20 @@
    "migrationFrom": []
   },
   "derive_value": {
-   "version": "0.1.0",
-   "released": "2026-10-26",
+   "version": "1.0.0",
+   "released": "2026-11-08",
    "changes": [
     {
-     "kind": "initial",
-     "description": "Computes a new value in a key column from two of its existing values, once per group of rows sharing the other key columns. This is Epi Info's ASSIGN over the long table this application holds: a DataTable carries one value per row, so the two numbers combined are two ROWS, not two columns, and the operands are values of a key column -- the same pivot `rate` names with `measureKey`. A group missing either operand yields no row and is named, because a group whose operand nobody recorded has an unknown result and not a zero. A name the column already holds is refused, since two rows would share a key. Division by zero is unknown rather than infinite. See docs/experiments/65-ruleset-as-data.md."
+     "kind": "major",
+     "description": "Retired into Apply ruleset, whose rules can compute a value for every record (experiment 188). The practitioner, 2026-11-07: 'If the new apply ruleset works then we retire derive a value.' All four published uses, three in South London and one in Nigeria, were rebuilt as Apply ruleset steps with one rule for every record, and every output of the four workflows they are in gave the same rows, checked by digest before and after (tests/rules-replace-derive.test.mjs). Retired outright, with no deprecation period, because nobody outside this project uses it (AGENTS.md). A workflow saved with one is migrated on opening to an Apply ruleset step with the same rule, stamped as migrated; the columns it combines state no unit, so the step asks for them before it runs.",
+     "breaking": true
     }
    ],
-   "breaking": false,
-   "migrationFrom": []
+   "breaking": true,
+   "migrationFrom": [],
+   "replacementCandidate": [
+    "urn:fieldwork:widget:apply_ruleset"
+   ]
   },
   "donut_geomask": {
    "version": "0.1.0",

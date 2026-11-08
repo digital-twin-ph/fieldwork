@@ -100,7 +100,9 @@ const asksPresence=(predicate:string,fields:Field[])=>
 const blankCondition=(fields:Field[]):Authored['rules'][number]['any'][number]['all'][number]=>
   ({field:readable(fields)[0]?.predicate??'fwa:field',comparator:'equals',value:''});
 
-export interface RuleEditorResult {rules:Authored['rules']; order?:AuthoredOrder}
+export interface RuleEditorResult {rules:Authored['rules']; order?:AuthoredOrder;
+  /** The settings declared, and what each is set to on this step. */
+  parameters:NonNullable<Authored['parameters']>; values:Record<string,number>}
 const PREVIOUS_WORDS:Record<AuthoredOrder['previous'],string>={row:'the row recorded before',day:'the day before',
   week:'the week before',month:'the month before'};
 const NO_PREVIOUS_WORDS:Record<NoPrevious,string>={'first':'first of its group','period-missing':'no row for the period before',
@@ -135,6 +137,8 @@ export interface EditorOptions extends Partial<ReviewOptions> {
   /** THE RECORDS THE STEP READS, for the live preview (experiment 188): Before, as they arrive, and After, as these
    *  rules would leave them. Absent when nothing is connected or nothing has run. */
   preview?:{records:SubjectRecord[]; columns:string[]};
+  /** A unit as typed, such as "degrees Celsius", to its QUDT IRI; undefined where the word is not known. */
+  unitIri?:(label:string)=>string|undefined;
 }
 
 /** Rows a preview draws. The counts are of every record; this is how many are drawn, a display choice, not a cap on
@@ -153,7 +157,10 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
     let order:AuthoredOrder|undefined=authored.order?structuredClone(authored.order):undefined;
     const fields=authored.fields,choices=readable(fields);
     const kindOf=(predicate:string)=>choices.find(c=>c.predicate===predicate)?.kind??'term';
-    const settings=authored.parameters??[];
+    // SETTINGS, declared here (experiment 188): a number the rules compare against, with its unit, set on this step.
+    let settings:NonNullable<Authored['parameters']>=structuredClone(authored.parameters??[]);
+    const values:Record<string,number>=Object.fromEntries(Object.entries(options?.settingValues??{})
+      .filter(([,v])=>v!==null&&v!==undefined&&v!==''&&Number.isFinite(Number(v))).map(([k,v])=>[k,Number(v)]));
     const unitOf=(predicate:string)=>{
       const field=fields.find(f=>f.predicate===predicate);
       return field?.unitLabel||field?.unit?.split('/').pop();
@@ -179,8 +186,10 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
       // defence there is: the practitioner typing 10 can see whether 10 means minutes.
       const unit=kind==='number'&&unitOf(condition.field)
         ?`<span class="rule-unit">${esc(unitOf(condition.field)!)}</span>`:'';
+      // A term is shown as it was typed, without the namespace the rules write it in.
+      const shown=kind==='term'&&typeof condition.value==='string'?condition.value.replace(/^fwa:/,'').replace(/_/g,' '):String(condition.value??'');
       if(kind!=='number'||!settings.length)
-        return `<input ${where} data-part="value" aria-label="Value" value="${esc(String(condition.value??''))}" `
+        return `<input ${where} data-part="value" aria-label="Value" value="${esc(shown)}" `
           +`placeholder="${kind==='number'?'a number':'a value, such as clinic'}">`+unit;
       const setting=settingNamed(condition.value);
       return `<select ${where} data-part="value-source" aria-label="Compared against">`
@@ -193,8 +202,8 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
           // setting has no finite value, so an edit that empties one is rolled back before it is
           // stored. It is written out rather than left blank so that a step reaching the dialog
           // without its values says so instead of showing a name that reads like a figure.
-          const held=options?.settingValues?.[s.name];
-          const shown=held===undefined||held===null||held===''
+          const held=values[s.name];
+          const shown=held===undefined
             ?'not set'
             :`${held}${s.unitLabel?' '+s.unitLabel:''}`;
           return `<option value="${esc(s.name)}" ${s.name===setting?'selected':''}>${esc(s.name)} · ${esc(shown)}</option>`;
@@ -241,9 +250,7 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
 
     // THE LIVE PREVIEW, evaluated on every edit, so a rule is seen doing what it does while it is written.
     let evaluation:Evaluation|null=null;
-    const numericSettings=Object.fromEntries(Object.entries(options?.settingValues??{})
-      .filter(([,v])=>typeof v==='number'||(typeof v==='string'&&v.trim()!==''&&Number.isFinite(Number(v))))
-      .map(([k,v])=>[k,Number(v)]));
+    const numericSettings=values;
     const evaluate=():Evaluation|null=>{
       if(!options?.preview?.records.length)return null;
       try{return evaluateAuthored(options.preview.records,fields as never,rules as never,numericSettings,order);}catch{return null;}
@@ -263,6 +270,16 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
         +numbers.map(c=>`<option value="previous:${esc(c.predicate)}" ${`previous:${c.predicate}`===chosen?'selected':''}>${esc(c.label)} in the previous row</option>`).join('')
         +`</select>`
         +(chosen?'':`<input data-rule="${r}" data-then="${t}" data-part="${side}-number" aria-label="${side==='left'?'First':'Second'} number" value="${esc(typeof operand==='number'?String(operand):'')}" placeholder="a number">`);
+    };
+    const settingProblem=():string=>{
+      const names=new Set<string>();
+      for(const s of settings){
+        if(!/^[A-Za-z][A-Za-z0-9_]*$/.test(s.name))return `A setting's name is one word of letters, digits or _, starting with a letter: "${s.name}" is not.`;
+        if(names.has(s.name))return `Two settings are named "${s.name}".`;
+        names.add(s.name);
+        if(values[s.name]===undefined)return `Set ${s.name} to a number.`;
+      }
+      return '';
     };
     const computedProblem=():string=>{
       if(readsPreviousRows({rules:rules as never})&&!order?.by)
@@ -290,6 +307,15 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
       const dated=(c:string)=>records.length>0&&records.every(r=>{const v=r.properties[c];return v===null||v===''||/^\d{4}-\d{2}-\d{2}$/.test(String(v));});
       return [...columns.filter(dated),...columns.filter(c=>!dated(c))].map(c=>({column:c,date:dated(c)}));
     };
+    const settingsMarkup=()=>`<section class="rule-order"><h3>Settings</h3>`
+      +`<p class="description">A number the rules compare against, such as a fever threshold, set on this step so it can be changed without rewriting a rule. It states its unit, which must be the unit of what it is compared with.</p>`
+      +settings.map((setting,i)=>`<div class="rule-condition">`
+        +`<input data-setting="${i}" data-setting-part="name" aria-label="Setting name" value="${esc(setting.name)}" placeholder="fever">`
+        +`<span class="rule-is">is</span>`
+        +`<input data-setting="${i}" data-setting-part="value" aria-label="Setting value" inputmode="decimal" value="${esc(values[setting.name]===undefined?'':String(values[setting.name]))}" placeholder="38">`
+        +`<input data-setting="${i}" data-setting-part="unit" aria-label="Setting unit" value="${esc(setting.unitLabel??'')}" placeholder="degrees Celsius">`
+        +`<button class="button small" data-setting="${i}" data-setting-part="drop" aria-label="Remove setting ${esc(setting.name)}">Remove</button></div>`).join('')
+      +`<button class="button small" id="rule-editor-add-setting">+ Add a setting</button></section>`;
     const orderMarkup=()=>{
       const columns=sortColumns();
       return `<section class="rule-order"><h3>Before the rules: sort the records</h3>`
@@ -360,7 +386,9 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
       let problem='';
       // RULES THAT COMPUTE are evaluated directly, not compiled (experiment 188), so they are checked for what direct
       // evaluation needs: a name for each new column, and both sides of each operation.
-      if(computesValues({rules:rules as never}))problem=computedProblem();
+      problem=settingProblem();
+      if(problem){/* said first: a rule cannot be checked against a setting with no value */}
+      else if(computesValues({rules:rules as never}))problem=computedProblem();
       else{
         try{compileAuthoredRuleset({subject:'?s',rules:rules as never});}
         catch(error){problem=error instanceof Error?error.message:String(error);}
@@ -378,7 +406,7 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
         // before they shipped, and the field units reconstructed for the display are a
         // convenience rather than a declaration -- reporting them as a defect in somebody
         // else's published work would be telling the practitioner something untrue.
-        const units=review?[]:authoredUnitProblems({...authored,rules:rules as never});
+        const units=review?[]:authoredUnitProblems({...authored,parameters:settings,rules:rules as never});
         if(units.length)problem=units[0].says;
       }
       dialog.innerHTML=`<div class="manual-head"><h2 id="rule-editor-title">${esc(authored.title)}</h2>`
@@ -390,6 +418,7 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
         +(review?`<div class="notice">${esc(review.note)}</div>`:'')
         +`<p class="description">Every rule is checked against every record. A record that matches more than one rule takes all of their conclusions, so rules that disagree must not both match; a record that matches none keeps no conclusion, and the run says how many.</p>`
         +(problem?`<div class="inspector-alert" role="alert"><strong>These rules cannot be compiled</strong><p>${esc(problem)}</p></div>`:'')
+        +(review&&!settings.length?'':settingsMarkup())
         +(review&&!order?'':orderMarkup())
         +rules.map((rule,r)=>`<section class="rule-card"><header><h3>Rule ${r+1}${evaluation?` · ${evaluation.matchedByRule[r]!.toLocaleString('en')} record${evaluation.matchedByRule[r]===1?'':'s'}`:''}</h3>`
           +`<button class="button small" data-rule="${r}" data-part="drop-rule">Remove rule</button></header>`
@@ -440,7 +469,28 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
         dialog.querySelectorAll<HTMLButtonElement>('.rule-editor-body button[data-part]').forEach(el=>el.remove());
         return;
       }
-      dialog.querySelector<HTMLButtonElement>('#rule-editor-keep')!.onclick=()=>close({rules,...(order?.by?{order}:{})});
+      dialog.querySelector<HTMLButtonElement>('#rule-editor-keep')!.onclick=()=>close({rules,...(order?.by?{order}:{}),parameters:settings,values});
+      dialog.querySelector<HTMLButtonElement>('#rule-editor-add-setting')!.onclick=()=>{
+        let k=settings.length+1;while(settings.some(s=>s.name===`setting${k}`))k++;
+        settings=[...settings,{name:`setting${k}`,meaning:''}];render();};
+      dialog.querySelectorAll<HTMLInputElement|HTMLButtonElement>('[data-setting]').forEach(el=>{
+        const i=Number(el.dataset.setting),part=el.dataset.settingPart,setting=settings[i]!;
+        if(part==='drop'){(el as HTMLButtonElement).onclick=()=>{settings=settings.filter((_,j)=>j!==i);delete values[setting.name];render();};return;}
+        el.addEventListener('change',()=>{
+          const typed=(el as HTMLInputElement).value.trim();
+          if(part==='name'&&typed!==setting.name){
+            // Every rule comparing against the old name compares against the new one.
+            const was=setting.name;
+            for(const rule of rules)for(const g of rule.any)for(const c of g.all)
+              if(typeof c.value==='object'&&c.value&&'setting' in c.value&&c.value.setting===was)c.value={setting:typed};
+            if(was in values){values[typed]=values[was]!;delete values[was];}
+            setting.name=typed;
+          }
+          if(part==='value'){if(typed===''||!Number.isFinite(Number(typed)))delete values[setting.name];else values[setting.name]=Number(typed);}
+          if(part==='unit'){setting.unitLabel=typed||undefined;const iri=typed?options?.unitIri?.(typed):undefined;
+            if(iri)setting.unit=iri;else delete setting.unit;}
+          render();});
+      });
       dialog.querySelectorAll<HTMLSelectElement>('[data-order]').forEach(el=>el.addEventListener('change',()=>{
         if(el.dataset.order==='by'){
           if(!el.value)order=undefined;
@@ -520,9 +570,14 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
               if(wasPresence)condition.value=kindOf(base)==='boolean'?true:kindOf(base)==='number'?0:'';
             }
           }
+          // A CATEGORY IS A TERM, as the record's value becomes one (`termFor`): "Hillside" is fwa:Hillside. Stored as
+          // typed, it was a quoted string no record's term could equal, so a condition on a category never held, for the
+          // reasoner or for direct evaluation. Found 2026-11-08, building the rules worked example.
           if(part==='value'&&condition)
             condition.value=kindOf(condition.field)==='boolean'?value==='true'
               :kindOf(condition.field)==='number'&&value.trim()&&!value.includes('{{')?Number(value)
+              :kindOf(condition.field)==='term'&&value.trim()&&!value.includes('{{')
+                ?`fwa:${value.trim().replace(/[^a-zA-Z0-9]+/g,'_').replace(/^_+|_+$/g,'')||'None'}`
               :value;
           // Switching between a typed number and a setting. Leaving a setting leaves a number
           // behind rather than an empty box, so the rule the dialog holds stays one the compiler

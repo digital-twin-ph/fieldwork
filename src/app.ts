@@ -59,7 +59,7 @@ import {openColumnsDialog} from './columns-dialog.js';
 import {castColumn,applyRepairs} from './column-profile.js';
 import {openDataQuality} from './data-quality-ui.js';
 import {settingNamed} from './authored-rules.js';
-import {FACILITY_SOURCES,FACILITY_SOURCE_KEYS,FACILITY_KINDS,downloadFacilities,requireRunnableFindHealthFacilities} from './health-facilities.js';
+import {FACILITY_SOURCES,FACILITY_SOURCE_KEYS,FACILITY_KINDS,downloadFacilities,fetchHotExport,requireRunnableFindHealthFacilities} from './health-facilities.js';
 
 import {evidenceInspector,openEvidenceEditor} from './evidence-ui.js';
 import {workflowDocument,importWorkflowDocument,exportEvidenceFiles,keepBytes,readPDF} from './evidence-storage.js';
@@ -2811,14 +2811,16 @@ function renderInspector(){
     content+=standardSection('Name',labelForm('hf-label','Name',p.label||'Find health facilities'));
     content+=standardSection('Inputs',standardInputs(n,{list:'The list',area:'Study area'}));
     const fetched=list?p.registerRetrieved:p.retrieved;
-    const stale=list&&!!p.registerRetrieved&&!!p.list&&p.list.registers.join()!==p.registerRetrieved.registers.map(r=>r.id).join();
+    // STALE when the registers chosen, or the country read for one covering every country, are not what was fetched.
+    const stale=list&&!!p.registerRetrieved&&!!p.list&&(p.list.registers.join()!==p.registerRetrieved.registers.map(r=>r.id).join()
+      ||p.registerRetrieved.registers.some(r=>r.country&&r.country!==p.list?.country));
     content+=standardSection('Settings',`<p class="standard-sentence">${esc(facilitiesSentence(p,FACILITY_REGISTERS))}</p>`
       +`<div class="inspector-actions">${list
         ?`<button id="hf-fetch-registers" class="button${!fetched||stale?' primary':''}"${p.list?.registers.length?'':' disabled'}>${fetched?'Fetch the registers again':'Fetch the registers'}</button>`
         :`<button id="hf-retrieve" class="button${fetched?'':' primary'}">Retrieve facilities</button>`}`
       +`<button id="configure-step" class="button${fetched&&!stale?' primary':''}">Configure\u2026</button></div>`
       +`<p id="hf-status" role="status" class="description"></p>`
-      +(stale?'<p class="notice notice-warning">The registers chosen are not the ones fetched. Fetch them again.</p>':'')
+      +(stale?'<p class="notice notice-warning">The registers or the country chosen are not the ones fetched. Fetch them again.</p>':'')
       +(list?'':`<ul class="licence-links">${descriptor.links.map(l=>`<li><a href="${esc(l.href)}" target="_blank" rel="noopener noreferrer">${esc(l.label)} \u2197</a></li>`).join('')}</ul>`));
     const why=result?.unfinished?.find(u=>u.nodeId===n.id)?.message;
     const ran=result?.receipts.find(r=>r.nodeId===n.id)?.method;
@@ -2833,6 +2835,7 @@ function renderInspector(){
       +(ran&&!why?`<p class="standard-state">${esc(ran.split('. ').slice(0,2).join('. '))}.</p>`:'')
       // THE ATTRIBUTION THE LICENCE REQUIRES, where the facilities are: ODbL asks that it stay with the data.
       +(!list&&p.retrieved?`<p class="description">${esc(p.retrieved.attribution)}</p>`:'')
+      +(list&&p.registerRetrieved?.registers.some(r=>r.licence.includes('odbl'))?`<p class="description">${esc(FACILITY_SOURCES['hdx-hot-export'].attribution)}</p>`:'')
       +(list&&p.registerRetrieved?`<p class="description">${esc(p.registerRetrieved.registers.map(r=>`${r.title}, ${r.licence.includes('by/4.0')?'CC BY 4.0':r.licence}`).join('; '))}</p>`:'')
       +'<p class="description">These are the facilities a source records, not the facilities that exist: an absence is not evidence of absence.</p>'
       +'<div data-standard-result></div>');
@@ -3778,7 +3781,9 @@ function renderInspector(){
           const register=FACILITY_REGISTERS.find(r=>r.id===id);
           if(!register)throw new Error(`${id} is not in the register catalogue.`);
           if(status)status.textContent=`Fetching ${register.title}\u2026`;
-          loaded.push({register,facilities:await fetchRegister(register)});
+          const country=register.anyCountry?node.params.list?.country:undefined;
+          loaded.push({register:country?{...register,title:`${register.title}, ${country}`}:register,
+            facilities:await fetchRegister(register,fetch,{...(country?{country}:{}),readExport:(iso,f)=>fetchHotExport(iso,f).then(got=>got.payload)})});
         }
         const layer=registerLayer(loaded),digest=await payloadDigest(layer);
         if(!await keepDataset(digest,layer))throw new Error('The registers could not be kept on this device, so they were not saved.');
@@ -3786,7 +3791,7 @@ function renderInspector(){
         if(change(w=>{const target=getNode(w,n.id,'find_health_facilities');target.params.data=layer;
           (target.params as {dataRef?:string}).dataRef=digest;
           target.params.registerRetrieved={registers:loaded.map(({register,facilities})=>({id:register.id,title:register.title,
-            licence:register.licence,records:facilities.length})),at};},{requirePersistence:true}))
+            licence:register.licence,records:facilities.length,...(register.anyCountry&&node.params.list?.country?{country:node.params.list.country}:{})})),at};},{requirePersistence:true}))
           toast(`${loaded.map(l=>`${l.facilities.length.toLocaleString('en-US')} facilities from ${l.register.title}`).join('; ')}. Run the workflow to match the list.`);
       }catch(error){const message=errorMessage(error);if(status)status.textContent=message;toast(message,{tone:'failure'});}
       finally{button.disabled=false;}

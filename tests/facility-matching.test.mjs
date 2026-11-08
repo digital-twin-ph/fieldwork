@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,existsSync} from 'node:fs';
-import {facilitiesFrom,matchFacilityNames,matchCounts,nameParts,OUTCOME_IRI,MATCH_OUTCOMES} from '../build/facility-matching.js';
+import {facilitiesFrom,facilitiesFromExport,fetchRegister,matchFacilityNames,matchCounts,nameParts,OUTCOME_IRI,MATCH_OUTCOMES} from '../build/facility-matching.js';
 
 /** FACILITIES FOUND FROM A LIST (experiment 190). The catalogue is generated from the ontology; the matcher reads only
  *  a register's own field map and type words, so nothing in it is one country's. Held here two ways: on a register
@@ -32,6 +32,52 @@ test('the catalogue names Sierra Leone, Nigeria and Congo as readable, each with
   assert.equal(by.ZMB.readable,false);
   assert.equal(by.COD.fields.name,'essnom1');
   assert.notEqual(by.SLE.fields.name,by.NGA.fields.name);
+});
+
+test('the catalogue names OpenStreetMap\'s country export as a register for any country, matched by name only, under ODbL',()=>{
+  const osm=catalogue.registers.find(r=>r.servedAs==='hot-country-export');
+  assert.ok(osm,'declared in the ontology');
+  assert.deepEqual([osm.anyCountry,osm.nameOnly,osm.country,osm.fields.type],[true,true,null,null]);
+  assert.match(osm.licence,/odbl\/1-0/);
+  for(const r of catalogue.registers.filter(r=>r.readable&&r.servedAs==='arcgis-feature-layer'))assert.equal(r.nameOnly,false);
+});
+
+// A REGISTER WITH NO TYPES, made up beside the French one: read through a country export's geometry.
+const nameOnly={id:'urn:fieldwork:test-name-only',title:'A made-up name-only register',country:null,anyCountry:true,nameOnly:true,
+  servedAs:'hot-country-export',licence:'',url:'',readable:true,
+  fields:{name:'name',alternateName:null,type:null,area:null,identifier:'osm_id',latitude:null,longitude:null}};
+const exportPayload={type:'FeatureCollection',features:[
+  {type:'Feature',properties:{osm_id:11,name:'Zinder Dispensaire'},geometry:{type:'Point',coordinates:[9,10]}},
+  {type:'Feature',properties:{osm_id:12,name:'Wenduuma Dispensaire'},geometry:{type:'Point',coordinates:[11,12]}},
+  {type:'Feature',properties:{osm_id:13},geometry:{type:'Point',coordinates:[0,0]}},
+]};
+
+test('a country export is read through its geometry, and a record with no name is not a facility',()=>{
+  const f=facilitiesFromExport(nameOnly,exportPayload);
+  assert.deepEqual(f.map(x=>[x.id,x.name,x.longitude,x.latitude]),[['11','Zinder Dispensaire',9,10],['12','Wenduuma Dispensaire',11,12]]);
+});
+
+test('a register matched by name only hands on an exact name, holds a spelling for review, and a choice releases it',()=>{
+  const regs=[{register:madeUp,facilities:facilitiesFrom(madeUp,records)},{register:nameOnly,facilities:facilitiesFromExport(nameOnly,exportPayload)}];
+  const list=[{name:'Moraga Hôpital'},{name:'Zinder Dispensaire'},{name:'Wenduma Dispensaire'}];
+  const r=matchFacilityNames(list,regs,{threshold:0.88,areaMarkers:[]});
+  assert.equal(r.get('Moraga Hôpital').register,madeUp.id,'the first register is matched first');
+  assert.equal(r.get('Zinder Dispensaire').outcome,'exact');
+  assert.equal(r.get('Zinder Dispensaire').facility.id,'11');
+  assert.equal(r.get('Wenduma Dispensaire').outcome,'spelling');
+  assert.equal(r.get('Wenduma Dispensaire').held,true);
+  assert.equal(r.get('Wenduma Dispensaire').facility,undefined,'held, not handed on');
+  const chosen=matchFacilityNames(list,regs,{threshold:0.88,areaMarkers:[],decisions:{'Wenduma Dispensaire':'12'}});
+  assert.equal(chosen.get('Wenduma Dispensaire').facility.id,'12');
+  assert.equal(chosen.get('Wenduma Dispensaire').decided,true);
+});
+
+test('a register for every country is fetched for the country chosen, through the download handed in',async()=>{
+  const asked=[];
+  const f=await fetchRegister(nameOnly,fetch,{country:'XXX',readExport:async iso=>{asked.push(iso);return exportPayload;}});
+  assert.deepEqual(asked,['XXX']);
+  assert.equal(f.length,2);
+  await assert.rejects(fetchRegister(nameOnly,fetch,{readExport:async()=>exportPayload}),/choose the country/);
 });
 
 test('a name is read into its bare part, its type and its bracket, by the register\'s own type words',()=>{
@@ -102,4 +148,35 @@ test('Sierra Leone\'s 333 facility names against GRID3: every row has one outcom
   assert.equal(result.get('Makeni Government Hospital').facility.name,'Makeni Govt. Hospital');
   assert.equal(result.get('Sanya MCHP').outcome,'type-differs');
   assert.equal(result.get('Yoni Mabanta Communities').outcome,'area');
+});
+
+// OPENSTREETMAP AFTER GRID3, on the same names (an ODbL fixture: Sierra Leone's export of 2026-05-06, measured 2026-11-08).
+test('Sierra Leone against GRID3 then OpenStreetMap: OpenStreetMap adds one right name and no false one',{skip:existsSync(LIST)?false:'example-2019-sierra-leone-measles is not checked out beside this repository.'},()=>{
+  const sle=catalogue.registers.find(r=>r.country==='SLE');
+  const osm=catalogue.registers.find(r=>r.servedAs==='hot-country-export');
+  const grid=facilitiesFrom(sle,JSON.parse(readFileSync(new URL('fixtures/grid3-sle-facilities.json',import.meta.url),'utf8')).records);
+  const fromOsm=facilitiesFromExport(osm,JSON.parse(readFileSync(new URL('fixtures/osm-sle-health-facilities.json',import.meta.url),'utf8')));
+  assert.equal(fromOsm.length,375,'399 points, 375 named');
+  const lines=readFileSync(LIST,'utf8').trim().split('\n');
+  const split=line=>{const out=[];let cur='',q=false;for(const ch of line){if(ch==='"'){q=!q;continue;}if(ch===','&&!q){out.push(cur);cur='';continue;}cur+=ch;}out.push(cur);return out;};
+  const head=split(lines[0]),ni=head.indexOf('Organisation unit name'),di=head.indexOf('Residential District');
+  const list=lines.slice(1).map(l=>{const c=split(l);return {name:c[ni],area:c[di]};});
+  const both=matchFacilityNames(list,[{register:sle,facilities:grid},{register:osm,facilities:fromOsm}],{threshold:0.88,areaMarkers:['Communities']});
+  // Read without type words, OpenStreetMap gave "Makump CHP" as a spelling of "Makondu MCHP" and "Connaught Chest
+  // Clinic" of "Connaught Hospital". By GRID3's type words it gives neither.
+  assert.equal(both.get('Makump CHP').outcome,'not-found');
+  assert.equal(both.get('Connaught Chest Clinic').outcome,'not-found');
+  // AN EXACT NAME IN ANY REGISTER before a spelling in an earlier one: GRID3 offered only "Sengbeh Community MCHP",
+  // about 97 km away, for "Magbenteh Community Hospital", which OpenStreetMap has by that name. One name, 7 rows, moves.
+  assert.equal(both.get('Magbenteh Community Hospital').outcome,'exact');
+  assert.equal(both.get('Magbenteh Community Hospital').register,osm.id);
+  const counts=Object.fromEntries(matchCounts(list.map(r=>r.name),both).map(c=>[c.outcome,[c.names,c.rows]]));
+  assert.deepEqual(counts,{exact:[248,2195],spelling:[15,66],'type-differs':[33,237],ambiguous:[5,10],area:[14,38],'not-found':[18,60]});
+  // ALONE, read by the list's own type words: its spelling matches are held, its exact ones handed on.
+  const alone=matchFacilityNames(list,[{register:osm,facilities:fromOsm}],{threshold:0.88,areaMarkers:['Communities']});
+  assert.deepEqual(Object.fromEntries(matchCounts(list.map(r=>r.name),alone).map(c=>[c.outcome,[c.names,c.rows]])),
+    {exact:[4,11],spelling:[10,40],'type-differs':[7,18],ambiguous:[4,25],area:[14,38],'not-found':[294,2474]});
+  const spelt=[...alone.values()].filter(m=>m.outcome==='spelling');
+  assert.ok(spelt.length>0&&spelt.every(m=>m.held&&!m.facility));
+  assert.ok([...alone.values()].filter(m=>m.outcome==='exact').every(m=>m.facility));
 });

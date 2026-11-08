@@ -24,11 +24,19 @@ export const OUTCOME_COUNT_PROPERTY:Record<MatchOutcome,string>={exact:'fw:match
 
 /** A step's settings for matching a list (experiment 190). */
 export interface FacilityListSettings {nameColumn:string; areaColumn?:string; registers:string[]; threshold:number;
-  areaMarkers:string[]; decisions:Record<string,string>}
+  areaMarkers:string[]; decisions:Record<string,string>;
+  /** The country read from a register published for every country alike, as an ISO 3166-1 alpha-3 code. */
+  country?:string}
 export const DEFAULT_LIST_SETTINGS=(registers:string[]):FacilityListSettings=>
   ({nameColumn:'',registers,threshold:0.88,areaMarkers:['Communities'],decisions:{}});
 
-export interface RegisterEntry {id:string; title:string; country:string; licence:string; url:string; readable:boolean;
+export interface RegisterEntry {id:string; title:string; country:string|null; licence:string; url:string; readable:boolean;
+  /** Published for every country alike: the step chooses the country (fw:registerAnyCountry). */
+  anyCountry?:boolean;
+  /** How it is read (fw:registerServedAs): an ArcGIS feature layer, or a country export whose positions are geometry. */
+  servedAs?:'arcgis-feature-layer'|'hot-country-export';
+  /** No type to compare (fw:matchedByNameOnly): a spelling it allows is held for review. */
+  nameOnly?:boolean;
   fields:{name:string|null; alternateName:string|null; type:string|null; area:string|null; identifier:string|null;
     latitude:string|null; longitude:string|null}}
 export interface RegisterFacility {id:string; name:string; alternateName?:string; type:string; area:string;
@@ -38,14 +46,23 @@ export interface LoadedRegister {register:RegisterEntry; facilities:RegisterFaci
 /** A register's records, read through its own field map. */
 export function facilitiesFrom(register:RegisterEntry,records:readonly Record<string,unknown>[]):RegisterFacility[]{
   const f=register.fields;
-  if(!register.readable||!f.name||!f.type)throw new Error(`${register.title} cannot be read: its fields are not all known.`);
+  if(!register.readable||!f.name||!f.type&&!register.nameOnly)throw new Error(`${register.title} cannot be read: its fields are not all known.`);
   const text=(v:unknown)=>v===null||v===undefined?'':String(v).trim();
   const number=(v:unknown)=>{const n=Number(v);return v===null||v===undefined||v===''||!Number.isFinite(n)?null:n;};
   return records.map((r,i)=>({id:text(f.identifier?r[f.identifier]:'')||`row-${i+1}`,name:text(r[f.name!]),
     ...(f.alternateName&&text(r[f.alternateName])?{alternateName:text(r[f.alternateName])}:{}),
-    type:text(r[f.type!]),area:text(f.area?r[f.area]:''),
+    type:text(f.type?r[f.type]:''),area:text(f.area?r[f.area]:''),
     longitude:f.longitude?number(r[f.longitude]):null,latitude:f.latitude?number(r[f.latitude]):null}))
     .filter(x=>x.name);
+}
+
+/** A country export's records: each feature's properties, with its point's position under the fields facilitiesFrom reads. */
+export function facilitiesFromExport(register:RegisterEntry,payload:unknown):RegisterFacility[]{
+  const features=(payload as {features?:{properties?:Record<string,unknown>;geometry?:{type?:string;coordinates?:unknown[]}|null}[]})?.features;
+  if(!Array.isArray(features))throw new Error(`${register.title}: the export holds no features.`);
+  const records=features.map(x=>{const c=x.geometry?.type==='Point'?x.geometry.coordinates:undefined;
+    return {...x.properties,'\u0000lon':c?.[0]??null,'\u0000lat':c?.[1]??null};});
+  return facilitiesFrom({...register,fields:{...register.fields,longitude:'\u0000lon',latitude:'\u0000lat'}},records);
 }
 
 const fold=(s:string)=>s.toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
@@ -79,6 +96,8 @@ export interface RowMatch {
   candidates:Candidate[];
   /** A choice the practitioner made, which is why an ambiguous or type-differs row has a facility. */
   decided?:boolean;
+  /** A spelling allowed by a register matched by name only: weighed, not handed on until the practitioner chooses. */
+  held?:boolean;
 }
 
 /** Every distinct name, matched once: a list names the same facility on many rows. */
@@ -86,8 +105,17 @@ export function matchFacilityNames(names:readonly {name:string; area?:string}[],
   settings:MatchSettings):Map<string,RowMatch>{
   const margin=settings.margin??0.02;
   const markers=settings.areaMarkers.map(fold).filter(Boolean);
+  // A REGISTER WITH NO TYPES (matched by name only) reads names by the type words of the other registers chosen, and with
+  // none to borrow, by the list's own: the last words at least five of its names share. Without them "Makump CHP" is
+  // a spelling of "Makondu MCHP" because both end in the same letters (2026-11-08, Sierra Leone against OpenStreetMap).
+  const borrowed=new Set(registers.flatMap(r=>r.facilities.map(f=>fold(f.type)).filter(Boolean)));
+  const ends=new Map<string,number>();
+  for(const n of new Set(names.map(x=>x.name))){const w=fold(n.replace(/\([^)]*\)/g,' ')).split(' ').filter(Boolean);
+    if(w.length>1)ends.set(w.at(-1)!,(ends.get(w.at(-1)!)??0)+1);}
+  const listed=new Set([...ends].filter(([,count])=>count>=5).map(([w])=>w));
   const indexed=registers.map(({register,facilities})=>{
-    const typeWords=new Set(facilities.map(f=>fold(f.type)).filter(Boolean));
+    const own=new Set(facilities.map(f=>fold(f.type)).filter(Boolean));
+    const typeWords=own.size?own:borrowed.size?borrowed:listed;
     const parts=facilities.map(f=>{const p=nameParts(f.name,typeWords);
       // A register that writes its names bare (a type field beside them) gives its type from the field.
       return {facility:f,bare:p.bare,type:fold(f.type)||p.type,
@@ -95,7 +123,7 @@ export function matchFacilityNames(names:readonly {name:string; area?:string}[],
     const byBare=new Map<string,typeof parts>();
     for(const p of parts)for(const key of new Set([p.bare,p.alternate].filter(Boolean)))
       byBare.set(key,[...(byBare.get(key)??[]),p]);
-    return {register:register.id,typeWords,parts,byBare};
+    return {register:register.id,nameOnly:!!register.nameOnly,typeWords,parts,byBare};
   });
   const areaOf=(area?:string)=>fold((area??'').replace(/\b(district|region|province|state|county)\b/gi,' '));
   const out=new Map<string,RowMatch>();
@@ -103,7 +131,10 @@ export function matchFacilityNames(names:readonly {name:string; area?:string}[],
     if(out.has(name))continue;
     const folded=` ${fold(name)} `;
     if(markers.some(m=>folded.includes(` ${m} `))){out.set(name,{outcome:'area',candidates:[]});continue;}
-    let found:RowMatch|undefined;
+    // AN EXACT NAME IN ANY REGISTER before a spelling in an earlier one: the registers are searched in order for the bare
+    // name itself, and only then for a spelling. Searched once in order, GRID3's "Aseeha MCHP" stood for "Asheeha
+    // Clinic" where OpenStreetMap has "Asheeha clinic" (2026-11-08, Sierra Leone).
+    let found:RowMatch|undefined,loose:RowMatch|undefined;
     for(const reg of indexed){
       const row=nameParts(name,reg.typeWords);
       if(!row.bare)continue;
@@ -137,15 +168,17 @@ export function matchFacilityNames(names:readonly {name:string; area?:string}[],
       const one=narrowed.length===1?narrowed[0]!:undefined;
       found=!one?{outcome:'ambiguous',candidates}
         :!sameType(one)?{outcome:'type-differs',candidates,register:reg.register,score:one.score}
+        :one.score<1&&reg.nameOnly?{outcome:'spelling',held:true,register:reg.register,score:one.score,candidates}
         :{outcome:one.score===1?'exact':'spelling',facility:one.facility,register:reg.register,score:one.score,candidates};
       if(found.outcome==='type-differs')found.candidates=[{facility:one!.facility,register:reg.register,score:one!.score},
         ...candidates.filter(c=>c.facility!==one!.facility)];
-      break;
+      if(exact.length)break;
+      loose??=found;found=undefined;
     }
-    found??={outcome:'not-found',candidates:[]};
+    found??=loose??{outcome:'not-found',candidates:[]};
     // THE PRACTITIONER'S CHOICE, where there was one to make. "none" leaves the row without a facility, said.
     const chosen=settings.decisions?.[name];
-    if(chosen&&(found.outcome==='ambiguous'||found.outcome==='type-differs')){
+    if(chosen&&(found.outcome==='ambiguous'||found.outcome==='type-differs'||found.held)){
       const pick=found.candidates.find(c=>c.facility.id===chosen);
       if(pick)found={...found,facility:pick.facility,register:pick.register,score:pick.score,decided:true};
       else if(chosen==='none')found={...found,decided:true};
@@ -153,6 +186,13 @@ export function matchFacilityNames(names:readonly {name:string; area?:string}[],
     out.set(name,found);
   }
   return out;
+}
+
+/** A licence as a sentence names it, with what it asks of the points matched from it. */
+export function licenceWords(licence:string):string{
+  if(licence.includes('by/4.0'))return 'CC BY 4.0';
+  if(licence.includes('odbl'))return 'the Open Database License 1.0, © OpenStreetMap contributors: share-alike, so the points matched from it are under it too';
+  return licence;
 }
 
 /** The counts by outcome, rows and names, in the outcomes' own order. */
@@ -165,8 +205,16 @@ export function matchCounts(rows:readonly string[],matches:ReadonlyMap<string,Ro
 
 /** A REGISTER'S FACILITIES, fetched from where its catalogue entry says it is served, through its own field map: an
  *  ArcGIS feature layer, read a page at a time. Facilities with no position are kept, and counted by the caller. */
-export async function fetchRegister(register:RegisterEntry,fetcher:typeof fetch=fetch):Promise<RegisterFacility[]>{
+export async function fetchRegister(register:RegisterEntry,fetcher:typeof fetch=fetch,
+  options:{country?:string; readExport?:(iso3:string,fetcher:typeof fetch)=>Promise<unknown>}={}):Promise<RegisterFacility[]>{
   if(!register.readable)throw new Error(`${register.title} cannot be read: its service gave no layer when it was catalogued.`);
+  // A COUNTRY EXPORT is one file per country, read by the download "inside the study area" already uses (handed in, so
+  // the executor never holds a way to reach the network).
+  if(register.servedAs==='hot-country-export'){
+    if(!options.country)throw new Error(`${register.title} covers every country: choose the country in Configure…`);
+    if(!options.readExport)throw new Error(`${register.title} cannot be read here: no way to download a country export was given.`);
+    return facilitiesFromExport(register,await options.readExport(options.country,fetcher));
+  }
   const fields=[...new Set(Object.values(register.fields).filter((f):f is string=>!!f))];
   const records:Record<string,unknown>[]=[];
   for(let offset=0;;){
@@ -229,6 +277,7 @@ export function listFacilitiesValue(node:{id:string;params:{list?:FacilityListSe
   });
   const counts=matchCounts(list.map(r=>r.name),matches);
   const noName=list.filter(r=>!r.name).length;
+  const held=list.filter(r=>{const m=matches.get(r.name);return m?.held&&!m.decided;}).length;
   const noPosition=table.rows.filter((_,i)=>{const m=matches.get(list[i]!.name);return m?.facility&&(m.facility.longitude===null||m.facility.latitude===null);}).length;
   const registers=node.params.registerRetrieved.registers.filter(r=>settings.registers.includes(r.id));
   const entity=`<urn:fieldwork:run:${runId}:${node.id}:facilities>`,activity=`<urn:fieldwork:run:${runId}:${node.id}:matching>`;
@@ -236,7 +285,7 @@ export function listFacilitiesValue(node:{id:string;params:{list?:FacilityListSe
     +`${activity} a fw:FacilityListMatching, prov:Activity; fw:nameField ${JSON.stringify(settings.nameColumn)}; `
     +`fw:fuzzyThreshold ${settings.threshold}; fw:areaNameMarkers ${JSON.stringify(settings.areaMarkers.join(', '))}; `
     +registers.map(r=>`prov:used <${r.id}>`).join('; ')+(registers.length?'; ':'')
-    +counts.map(c=>`${OUTCOME_COUNT_PROPERTY[c.outcome]} ${c.rows}`).join('; ')+'.\n'
+    +counts.map(c=>`${OUTCOME_COUNT_PROPERTY[c.outcome]} ${c.rows}`).join('; ')+`; fw:heldForReviewRowCount ${held}.\n`
     +`${entity} a fw:PointDataset, prov:Entity; fw:recordCount ${features.length}; fw:positionIsRegisters true; prov:wasGeneratedBy ${activity}.\n`
     +registers.map(r=>`<${r.id}> a fw:FacilityRegister; dcterms:title ${JSON.stringify(r.title)}; dcterms:license <${r.licence}>.\n`).join('');
   const said=counts.filter(c=>c.rows).map(c=>`${c.rows.toLocaleString('en-US')} ${OUTCOME_WORDS[c.outcome]} (${c.names} name${c.names===1?'':'s'})`).join(', ');
@@ -245,8 +294,9 @@ export function listFacilitiesValue(node:{id:string;params:{list?:FacilityListSe
     +`${features.length.toLocaleString('en-US')} point${features.length===1?'':'s'}, each at the register's position for the facility, not where anyone on the list lived. `
     +(noName?`${noName} row${noName===1?' names':'s name'} no facility. `:'')
     +(noPosition?`${noPosition} matched row${noPosition===1?' has':'s have'} no position in the register. `:'')
+    +(held?`${held} row${held===1?' was':'s were'} matched allowing for spelling by a register with no facility types, and ${held===1?'has':'have'} no point until reviewed. `:'')
     +'A type that differs, an ambiguous name, an area and a name not found have no point until reviewed. '
-    +registers.map(r=>`${r.title} is under ${r.licence.includes('by/4.0')?'CC BY 4.0':r.licence}.`).join(' ');
+    +registers.map(r=>`${r.title} is under ${licenceWords(r.licence)}.`).join(' ');
   return {value:{type:'FeatureCollection' as const,features,sourceNodeId:node.id,matchCounts:counts},
     receipt:{nodeId:node.id,kind:'computation' as const,facts,input:facts,rules:'',conclusions:[],method},counts};
 }

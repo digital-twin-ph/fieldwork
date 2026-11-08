@@ -165,7 +165,41 @@ every row once. **Hand-checked:** of the 15 spelling matches, 13 are plainly the
 standard dialog had no style for its checkbox lists, which moved there from the Inspector for Select rows and Relate:
 each box floated away from its words. Fixed for all of them.
 
-**Not yet:** OpenStreetMap as a second source for what the registers lack; a minimum count per point on a Map.
+**Not yet:** a minimum count per point on a Map.
+
+## OpenStreetMap as a second register, 0.61.0
+
+**The question:** does OpenStreetMap find what GRID3 lacks? It is read from the Humanitarian OpenStreetMap Team's
+country export, the same download *inside the study area* uses. It is declared in the ontology as a register for any
+country, served as that export, matched by name only (fw:OpenStreetMapHealthFacilitiesCountryExport). Sierra Leone's
+export of 2026-05-06 holds 399 points: 375 named, none with a district, 165 with a city.
+
+**Measured, 2026-11-08, on the same 333 names:**
+
+| Read as | Adds after GRID3 | Alone: exact | Alone: allowing for spelling |
+| --- | --- | --- | --- |
+| With no type words | 2 names, both wrong | 4 | 32, mostly wrong |
+| By the other registers' type words, or the list's | none | 4 | 10 |
+| The same, and an exact name in any register first | 1 name, 7 rows, right | 4 | 10 |
+
+The two wrong additions were "Makump CHP" to "Makondu MCHP" (0.892) and "Connaught Chest Clinic" to "Connaught
+Hospital" (0.883). With no type field, OpenStreetMap's names keep their type words, and the shared endings raise the
+score. The ten spellings found alone were checked against GRID3's position for the same list name, where it had
+one. Three stood at GRID3's position, 0.0 km away. Four stood 26 to 274 km away. Three could not be checked.
+
+**What changed:** a register with no types reads names by the type words of the other registers chosen. With none
+to borrow, it uses the list's own: the last words at least five of its names share. A spelling it allows is held for
+review: counted with the spellings, no point until chosen, and counted in the receipt as fw:heldForReviewRowCount.
+Its exact matches are handed on. Points matched from it carry ODbL's share-alike in the method sentence, and its
+attribution in the Inspector.
+
+**Found while measuring it:** the registers were searched once, in order, so GRID3's loose candidate stopped the
+search before OpenStreetMap's exact name was looked at. "Magbenteh Community Hospital" was a type that differs from
+GRID3's "Sengbeh Community MCHP", about 97 km away, when OpenStreetMap has it by that name. Now an exact name in any
+register is taken first, and a spelling only after. Against GRID3 alone nothing changes.
+
+**For Sierra Leone,** OpenStreetMap after GRID3 adds that one hospital (7 rows) and nothing wrong. The 18 names not
+found in GRID3 are not in OpenStreetMap either. It is there mostly for a country with no GRID3 register.
 
 ## What it will not do
 
@@ -175,7 +209,10 @@ each box floated away from its words. Fixed for all of them.
 
 ## What this does not establish
 
-- That OpenStreetMap finds the hospitals GRID3 does not have: not yet queried.
+- How much OpenStreetMap adds elsewhere: one name of 333 on Sierra Leone's, one country's export.
+- That OpenStreetMap alone is a usable register for a country: on Sierra Leone it held 375 named points against
+  GRID3's 1,616, and 4 of 7 checkable spellings were wrong. That is why they are held.
+- That five names sharing a last word make it a type word: chosen, not measured; one country's list was read.
 - That 0.88 suits facility names: it is Deduplicate's default, chosen for other names; the hand-checked sample will say.
 - That GRID3 covers other countries in the same form: only Sierra Leone's list was read.
 - How a "Communities" unit is told from a facility other than by its name; a list of such patterns is a guess until

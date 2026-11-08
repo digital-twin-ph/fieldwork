@@ -471,7 +471,7 @@ export interface ParamsByType {
   /** FROM A LIST (experiment 190): `mode` 'list' matches a table's facility names to registers, and `data` then holds
    *  the registers' facilities as points, kept on the device by digest. Absent: inside the study area, as before. */
   find_health_facilities:{mode?:'area'|'list';list?:import('./facility-matching.js').FacilityListSettings;
-    registerRetrieved?:{registers:{id:string;title:string;licence:string;records:number}[];at:string};
+    registerRetrieved?:{registers:{id:string;title:string;licence:string;records:number;country?:string}[];at:string};
     label:string;source:'openstreetmap-live'|'hdx-hot-export'|'overture-places';kinds:string[];requireName:boolean;country:string;minConfidence:number;data:PointCollection|null;retrieved:{source:'openstreetmap-live'|'hdx-hot-export'|'overture-places';sourceLabel:string;licence:string;licenceIRI:string;sourceIRI:string;attribution:string;origin:string;kept:number;dropped:{kind:number;coordinates:number;name:number;outside?:number};at:string;scope:string;filename?:string;sha256?:string;bytes?:number;release?:string;belowConfidence?:number;unmappedCategory?:number;minConfidence?:number}|null};
   buffer_point:{label:string;pointId:string;distanceM:number};
   sample_raster:{label:string;attribute:string;valueUnit:string};

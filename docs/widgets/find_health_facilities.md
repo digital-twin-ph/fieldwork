@@ -32,34 +32,41 @@ then:
 | --- | --- |
 | **Column naming the facility** | The list's column holding each row's facility name |
 | **Column naming its area** | Optional: a district or similar, to tell apart two facilities of one name |
-| **Registers, matched in this order** | National facility lists, from the registers declared in the ontology: GRID3 for Sierra Leone, Nigeria and DR Congo. A register that cannot be read is shown and cannot be chosen |
+| **Registers, matched in this order** | Facility lists from the registers declared in the ontology: GRID3 for Sierra Leone, Nigeria and DR Congo, and OpenStreetMap for any country. A name is looked for in the first register, then the next. A register that cannot be read is shown and cannot be chosen |
+| **Country to read OpenStreetMap for** | Shown when OpenStreetMap is chosen. It starts as the other registers' country |
 | **Spelling allowed** | How similar a name must be to count as a spelling of another, 0.88 to start |
 | **Words that mark a name as an area** | Such as *Communities*: a reporting unit for an area, which has no point |
 
 Then **Fetch the registers**: a register is fetched once and kept on this device.
+
+**OpenStreetMap is matched by name only.** It has no facility types, so a name it matches allowing for spelling is held
+for your review under Decisions. It has no point until you choose. A name it matches exactly is handed on. Put it after
+a national register, for what that register does not have. Its points are under the Open Database License, which is
+share-alike: anything made from them is under it too.
 
 **Every row gets one outcome, and none is dropped:**
 
 | Outcome | What it means |
 | --- | --- |
 | matched exactly | The name and its type are one facility's |
-| matched allowing for spelling | One facility's name within the tolerance, the same type |
+| matched allowing for spelling | One facility's name within the tolerance, the same type. From OpenStreetMap, held for your review |
 | type differs | The name matches and the type does not, as MCHP against CHP: for your review |
 | ambiguous | Several facilities could be the one named: choose, under Decisions |
 | an area, not a facility | No point, said |
 | not found | In no register chosen |
 
-The dialog's **Preview** counts them, by name and by row, before you apply. **Decisions** lists each ambiguous name and
-each type that differs, with its candidates, so you choose the facility it means, or none. Rows with a facility become
+The dialog's **Preview** counts them, by name and by row, before you apply. **Decisions** lists each ambiguous name,
+each type that differs and each spelling held, with its candidates, so you choose the facility it means, or none. Rows with a facility become
 points carrying the outcome, the register's name and identifier, and the score.
 
 ## What it will not do
 
 - Place anyone at home. A point is where the register places the facility.
-- Guess. A type that differs, an ambiguous name, an area and a name not found have no point until you decide.
+- Guess. A type that differs, an ambiguous name, a spelling held, an area and a name not found have no point until you decide.
 - Geocode an address or a place that is not a facility.
 
 ## What this does not establish
 
 That a source records every facility that exists: an absence is not evidence of absence. That 0.88 suits every
-country's names: it was checked by hand on Sierra Leone's.
+country's names: it was checked by hand on Sierra Leone's. That OpenStreetMap's spellings can be trusted anywhere: on
+Sierra Leone's names, 4 of 7 that could be checked against GRID3 were the wrong facility.

@@ -334,12 +334,12 @@
    "migrationFrom": []
   },
   "find_health_facilities": {
-   "version": "0.3.0",
+   "version": "0.4.0",
    "released": "2026-11-08",
    "changes": [
     {
      "kind": "minor",
-     "description": "Finds facilities from a list as well as inside a study area (experiment 190): each row's facility name is matched to the national registers of a catalogue generated from the ontology (GRID3 for Sierra Leone, Nigeria and DR Congo), compared by bare name and type apart, and every row is marked matched exactly, allowing for spelling, type differs, ambiguous, an area not a facility, or not found; none is dropped, and the ambiguous names and types that differ wait for the practitioner's choice. One point per row with a facility, at the register's position. On the standard Inspector and dialog (experiment 186); the licence is shown in the dialog before anything is fetched, and the attribution with what is held."
+     "description": "OpenStreetMap is a register for lists (experiment 190): the Humanitarian OpenStreetMap Team's country export, declared in the ontology as a register for any country, matched by name only, under ODbL. Its country is chosen in the dialog and starts as the other registers'. A register with no types reads names by the other registers' type words, or the list's own; a spelling it allows is held for review and has no point until chosen. An exact name in any register is now taken before a spelling in an earlier one. On Sierra Leone's names, OpenStreetMap after GRID3 adds one hospital (7 rows) and nothing wrong."
     }
    ],
    "breaking": false,

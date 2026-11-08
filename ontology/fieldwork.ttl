@@ -1440,7 +1440,7 @@ fw:longitudeField a owl:DatatypeProperty; rdfs:domain fw:FacilityRegister; rdfs:
 fw:alternateNameField a owl:DatatypeProperty; rdfs:domain fw:FacilityRegister; rdfs:range xsd:string;
   rdfs:comment "A second name field the register carries, matched as well as the first.".
 
-fw:Grid3SierraLeoneHealthFacilitiesV1 a fw:FacilityRegister;
+fw:Grid3SierraLeoneHealthFacilitiesV1 a fw:FacilityRegister; fw:registerServedAs "arcgis-feature-layer";
   dcterms:title "GRID3 SLE - Health Facilities v1.0"; owl:versionInfo "1.0";
   dcterms:publisher "GRID3, with the Sierra Leone Ministry of Health and Sanitation";
   dcterms:license <https://creativecommons.org/licenses/by/4.0/>; fw:countryCode "SLE";
@@ -1449,7 +1449,7 @@ fw:Grid3SierraLeoneHealthFacilitiesV1 a fw:FacilityRegister;
   fw:nameField "facility"; fw:alternateNameField "fac_name"; fw:typeField "type"; fw:areaField "district";
   fw:identifierField "dhis2_id"; fw:latitudeField "lat"; fw:longitudeField "long";
   rdfs:comment "Every facility carries a DHIS2 identifier; 1,561 of 1,616 have coordinates. Its spatial data were matched to the ministry's 2020 master facility list.".
-fw:Grid3NigeriaHealthFacilitiesV4 a fw:FacilityRegister;
+fw:Grid3NigeriaHealthFacilitiesV4 a fw:FacilityRegister; fw:registerServedAs "arcgis-feature-layer";
   dcterms:title "GRID3 NGA - Health Facilities v4.0"; owl:versionInfo "4.0"; dcterms:publisher "GRID3";
   dcterms:license <https://creativecommons.org/licenses/by/4.0/>; fw:countryCode "NGA";
   dcat:accessURL <https://services3.arcgis.com/BU6Aadhn6tbBEdyk/arcgis/rest/services/GRID3_NGA_Health_Facilities_v4_0/FeatureServer/0>;
@@ -1457,7 +1457,7 @@ fw:Grid3NigeriaHealthFacilitiesV4 a fw:FacilityRegister;
   fw:nameField "facility_name"; fw:alternateNameField "alt_name"; fw:typeField "facility_type"; fw:areaField "lga_standard";
   fw:identifierField "nhfr_facility_code"; fw:latitudeField "latitude"; fw:longitudeField "longitude";
   rdfs:comment "The identifier is the National Health Facility Registry code. Its areas are local government areas; states are in state_standard.".
-fw:Grid3CongoHealthFacilitiesV9 a fw:FacilityRegister;
+fw:Grid3CongoHealthFacilitiesV9 a fw:FacilityRegister; fw:registerServedAs "arcgis-feature-layer";
   dcterms:title "GRID3 COD - Health Facilities v9.0"; owl:versionInfo "9.0"; dcterms:publisher "GRID3";
   dcterms:license <https://creativecommons.org/licenses/by/4.0/>; fw:countryCode "COD";
   dcat:accessURL <https://services3.arcgis.com/BU6Aadhn6tbBEdyk/arcgis/rest/services/GRID3_COD_health_facilities_v9_0/FeatureServer/0>;
@@ -1465,12 +1465,36 @@ fw:Grid3CongoHealthFacilitiesV9 a fw:FacilityRegister;
   fw:nameField "essnom1"; fw:alternateNameField "essnom2"; fw:typeField "esstype"; fw:areaField "zonesante";
   fw:identifierField "dhis2"; fw:latitudeField "lat"; fw:longitudeField "lon";
   rdfs:comment "Field names are in French: essnom is the facility's name, esstype its type, zonesante its health zone.".
-fw:Grid3ZambiaHealthFacilitiesV01Beta a fw:FacilityRegister;
+fw:Grid3ZambiaHealthFacilitiesV01Beta a fw:FacilityRegister; fw:registerServedAs "arcgis-feature-layer";
   dcterms:title "GRID3 ZMB Health Facilities v01 Beta"; owl:versionInfo "0.1 beta";
   dcterms:license <https://creativecommons.org/licenses/by/4.0/>; fw:countryCode "ZMB";
   dcat:accessURL <https://services9.arcgis.com/ZNWWwa7zEkUIYLEA/arcgis/rest/services/GRID3_ZMB_HealthFac_v01beta/FeatureServer>;
   fw:registerReadOn "2026-11-08"^^xsd:date; fw:registerReadable false;
   rdfs:comment "Listed in GRID3's catalogue under CC BY 4.0, published from an account other than GRID3's own, and its service gave no layer when read on 2026-11-08. Unusable until it is read; its publisher is not stated here for that reason.".
+
+# A REGISTER FOR ANY COUNTRY, matched by name only (experiment 190, 0.61.0): OpenStreetMap's health facilities as the
+# Humanitarian OpenStreetMap Team exports them per country, the same extract "inside the study area" downloads. It has
+# no type and no area field a list states -- OpenStreetMap's kinds are not a ministry's types -- so its names are read
+# by the type words of the other registers chosen, or of the list, and a spelling it allows is held for review. On
+# Sierra Leone's names (2026-11-08), 3 of the 7 spelling matches that GRID3 also places stood at GRID3's position and 4
+# stood 26 to 274 km away.
+fw:registerAnyCountry a owl:DatatypeProperty; rdfs:domain fw:FacilityRegister; rdfs:range xsd:boolean;
+  rdfs:comment "True where the register is published for every country alike and the step chooses the country; fw:countryCode is then absent.".
+fw:registerServedAs a owl:DatatypeProperty; rdfs:domain fw:FacilityRegister; rdfs:range xsd:string;
+  rdfs:comment "How the register is read: \"arcgis-feature-layer\", queried a page at a time, or \"hot-country-export\", one GeoJSON file per country whose positions are its geometry.".
+fw:matchedByNameOnly a owl:DatatypeProperty; rdfs:domain fw:FacilityRegister; rdfs:range xsd:boolean;
+  rdfs:comment "True where the register carries no facility type to compare: a name it matches allowing for spelling is held for the practitioner to review, not handed on.".
+fw:heldForReviewRowCount a owl:DatatypeProperty; rdfs:domain fw:FacilityListMatching; rdfs:range xsd:nonNegativeInteger;
+  rdfs:comment "Rows matched allowing for spelling by a register matched by name only, and so given no point until reviewed. Counted within fw:matchedAllowingForSpellingRowCount, not beside it.".
+fw:OpenStreetMapHealthFacilitiesCountryExport a fw:FacilityRegister;
+  dcterms:title "OpenStreetMap health facilities (HDX country export)";
+  dcterms:publisher "OpenStreetMap contributors, exported by the Humanitarian OpenStreetMap Team";
+  dcterms:license <https://opendatacommons.org/licenses/odbl/1-0/>; fw:registerAnyCountry true;
+  fw:registerServedAs "hot-country-export"; fw:matchedByNameOnly true;
+  dcat:accessURL <https://s3.dualstack.us-east-1.amazonaws.com/production-raw-data-api/ISO3/>;
+  fw:registerReadOn "2026-11-08"^^xsd:date; fw:registerReadable true;
+  fw:nameField "name"; fw:alternateNameField "name:en"; fw:identifierField "osm_id";
+  rdfs:comment "Rebuilt periodically from OpenStreetMap; Sierra Leone's export of 2026-05-06 held 399 points, 375 named, none with a district. Under the Open Database License, share-alike: points matched from it carry that licence.".
 
 # ---------------------------------------------------------------------------
 # CAPS. Every magnitude in this application that can refuse a practitioner's work, as a term

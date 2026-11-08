@@ -3,6 +3,15 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.61.0 — 2026-11-08
+
+- **OpenStreetMap is a register for lists** ([190](docs/experiments/190-find-health-facilities-from-a-list.md)):
+  the country export Find health facilities already downloads, for any country, under ODbL. It has no facility types,
+  so a name it matches allowing for spelling is held for your review and has no point until you choose. On Sierra
+  Leone's names it adds one hospital after GRID3 and nothing wrong. Find health facilities 0.4.0.
+- **An exact name in any register is taken before a spelling in an earlier one.**
+- Validation: Chromium locally; WebKit in CI.
+
 ## 0.60.0 — 2026-11-08
 
 - **Find health facilities finds facilities from a list** ([190](docs/experiments/190-find-health-facilities-from-a-list.md)).

@@ -63,8 +63,9 @@ not a practitioner in the field.
    tests that open it move with it. **The built-in coverage exercise is removed**; its four points stay as a test
    fixture, and Keep points inside the area is recorded as having no worked example.
 3. **Sierra Leone** (below; [189](docs/experiments/189-a-measles-line-list-made-safe-to-teach-with.md)): reviewed,
-   de-identified and made semi-synthetic 2026-11-08; facility matching measured; the Find health facilities change
-   awaits its admission review.
+   de-identified and made semi-synthetic 2026-11-08; Find health facilities from a list built (0.60.0, GRID3) and
+   OpenStreetMap added as a register (0.61.0, measured: one hospital more, nothing wrong). **Next:** the example's
+   workflows and manual, with maps of counts by district.
 4. **Table output on the standard** (186).
 5. **Manila coastal exposure moves to example-2026-sea-level-rise-philippines**, then the built-in one is removed. The
    terrain and datum note is its reading: docs/research/terrain-models-vertical-datum-2026-11-07.md.
@@ -1144,6 +1145,8 @@ contrast after Sierra Leone"*. The first pass is a review, not a build:
   practitioner to choose) or not found, with the counts on the result, and no row dropped or silently guessed; and
   each point carrying its source and how it was matched, since OpenStreetMap and healthsites positions are
   volunteered.
+- **Measured 2026-11-08** ([190](docs/experiments/190-find-health-facilities-from-a-list.md)): GRID3 places 247 of
+  333 names exactly; OpenStreetMap after it adds one. healthsites not measured.
 - **Test GeoNames as a source too.** The practitioner, the same day: *"We can also test if we can find the
   facilities in geonames.org"*. To check, not assumed: whether the Sierra Leone country file can be fetched without
   an account and from a browser (its search service needs a username), its terms as stated at source, and which of

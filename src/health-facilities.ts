@@ -159,7 +159,7 @@ async function fetchOverpass(bounds:readonly [number,number,number,number],kinds
   });
 }
 
-async function fetchHotExport(iso3:string,fetcher:typeof fetch):Promise<{payload:unknown;filename:string;bytes:number}>{
+export async function fetchHotExport(iso3:string,fetcher:typeof fetch):Promise<{payload:unknown;filename:string;bytes:number}>{
   const url=hotExportURL(iso3);
   const response=await fetcher(url);
   if(response.status===404)throw new Error(

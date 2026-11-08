@@ -15,7 +15,7 @@ export interface FacilitiesDraft {mode:'area'|'list'; source:Params['source']; c
 /** `stated` is the country the study area says, filled in where the step names none. */
 export function facilitiesDraftOf(p:Params,stated=''):FacilitiesDraft{
   return {mode:p.mode??'area',source:p.source,country:p.country||stated,kinds:(p.kinds??[]).join(', '),requireName:p.requireName,
-    minConfidence:p.minConfidence,list:structuredClone(p.list??DEFAULT_LIST_SETTINGS([]))};
+    minConfidence:p.minConfidence,list:{...structuredClone(p.list??DEFAULT_LIST_SETTINGS([])),...(!p.list?.country&&stated?{country:stated}:{})}};
 }
 export function applyFacilitiesDraft(p:Params,draft:FacilitiesDraft):void{
   p.mode=draft.mode;
@@ -30,7 +30,7 @@ export function facilitiesSentence(p:Params,catalogue:readonly RegisterEntry[]):
   if(p.mode==='list'){
     const l=p.list;
     if(!l?.nameColumn||!l.registers.length)return 'Finds each facility a list names: choose the name column and a register in Configure…';
-    const titles=l.registers.map(id=>catalogue.find(r=>r.id===id)?.title??id).join(', then ');
+    const titles=l.registers.map(id=>{const r=catalogue.find(x=>x.id===id);return !r?id:r.anyCountry?`${r.title} for ${l.country||'a country not chosen'}`:r.title;}).join(', then ');
     return `Finds the facility each row of the list names, by ${l.nameColumn}${l.areaColumn?` and ${l.areaColumn}`:''}, in ${titles}; `
       +`spelling allowed to ${l.threshold}${l.areaMarkers.length?`, and names with ${l.areaMarkers.join(' or ')} read as areas`:''}.`;
   }
@@ -56,6 +56,9 @@ export function openFacilitiesConfig(view:FacilitiesConfigView,esc:Escape):void{
     `<div class="field"><label class="field-label" for="${id}">${esc(label)}</label><select id="${id}">`
     +(empty!==undefined?`<option value="">${esc(empty)}</option>`:'')
     +options.map(([v,w])=>`<option value="${esc(v)}"${v===current?' selected':''}>${esc(w)}</option>`).join('')+'</select></div>';
+  // The country for a register that covers every country: by default the one the other registers chosen name.
+  const countryOfOthers=(ids:readonly string[])=>view.catalogue.find(r=>ids.includes(r.id)&&r.country)?.country??undefined;
+  if(!view.initial.list.country){const c=countryOfOthers(view.initial.list.registers);if(c)view.initial.list.country=c;}
   openConfigDialog<FacilitiesDraft>({
     id:'facilities-config',widget:'Find health facilities',step:view.step,draft:view.initial,
     sections:draft=>{
@@ -80,8 +83,12 @@ export function openFacilitiesConfig(view:FacilitiesConfigView,esc:Escape):void{
         +select('hf-area-column','Column naming its area (optional)',cols,l.areaColumn??'','Not used')
         +`<fieldset class="field"><legend class="field-label">Registers, matched in this order</legend>`
         +view.catalogue.map(r=>`<label class="check"><input type="checkbox" data-hf-register="${esc(r.id)}"${l.registers.includes(r.id)?' checked':''}${r.readable?'':' disabled'}> `
-          +`${esc(r.title)} · ${esc(r.country)}${r.readable?'':' · not readable'}</label>`).join('')
+          +`${esc(r.title)} · ${esc(r.anyCountry?'any country':r.country??'')}${r.nameOnly?' · matched by name only':''}${r.readable?'':' · not readable'}</label>`).join('')
         +'<p class="muted">From the facility registers declared in the ontology. A register is fetched once, under Settings.</p></fieldset>'
+        // A REGISTER FOR EVERY COUNTRY needs the one to read: offered first is the country of the other registers chosen.
+        +((any=>any?select('hf-list-country',`Country to read ${any.title} for`,view.countries.map(c=>[c.iso,`${c.name} (${c.iso})`]),l.country??'','Choose a country…')
+          +'<p class="muted">A register matched by name only has no facility types: a name it matches allowing for spelling is held for you to review.</p>':'')
+          (view.catalogue.find(r=>l.registers.includes(r.id)&&r.anyCountry)))
         +`<div class="field"><label class="field-label" for="hf-threshold">Spelling allowed: similarity at least (0 to 1)</label>`
         +`<input id="hf-threshold" type="number" min="0.5" max="1" step="0.01" value="${l.threshold}"></div>`
         +`<div class="field"><label class="field-label" for="hf-area-words">Words that mark a name as an area, not a facility</label>`
@@ -96,11 +103,14 @@ export function openFacilitiesConfig(view:FacilitiesConfigView,esc:Escape):void{
       const counts=matchCounts(list.map(r=>r.name),matches);
       const preview='<table class="relate-shares"><thead><tr><th>Outcome</th><th>Names</th><th>Rows</th></tr></thead><tbody>'
         +counts.map(c=>`<tr><th scope="row">${esc(OUTCOME_WORDS[c.outcome])}</th><td>${c.names}</td><td>${c.rows.toLocaleString('en-US')}</td></tr>`).join('')
-        +'</tbody></table><p class="muted">Rows with a facility become points at the register’s position, not where anyone on the list lived.</p>';
-      const open=[...matches].filter(([,m])=>m.outcome==='ambiguous'||m.outcome==='type-differs');
+        +'</tbody></table>'
+        +((h=>h?`<p>${h} name${h===1?' was':'s were'} matched allowing for spelling by a register with no facility types, and ${h===1?'is':'are'} held for review below.</p>`:'')
+          ([...matches.values()].filter(m=>m.held).length))
+        +'<p class="muted">Rows with a facility become points at the register’s position, not where anyone on the list lived.</p>';
+      const open=[...matches].filter(([,m])=>m.outcome==='ambiguous'||m.outcome==='type-differs'||m.held);
       const decisions=open.length
         ?`<p>${open.length} name${open.length===1?'':'s'} matching could not settle. Choose the facility each means, or none.</p>`
-          +open.map(([name,m],i)=>`<div class="field"><label class="field-label" for="hf-decide-${i}">${esc(name)} · ${esc(OUTCOME_WORDS[m.outcome])}</label>`
+          +open.map(([name,m],i)=>`<div class="field"><label class="field-label" for="hf-decide-${i}">${esc(name)} · ${esc(m.held?`${OUTCOME_WORDS[m.outcome]}, by name only`:OUTCOME_WORDS[m.outcome])}</label>`
             +`<select id="hf-decide-${i}" data-hf-decide="${esc(name)}"><option value="">Not decided</option><option value="none"${l.decisions[name]==='none'?' selected':''}>None of these</option>`
             +m.candidates.map(c=>`<option value="${esc(c.facility.id)}"${l.decisions[name]===c.facility.id?' selected':''}>`
               +`${esc(c.facility.name)} · ${esc(c.facility.type)} · ${esc(c.facility.area)} · ${c.score.toFixed(2)}</option>`).join('')
@@ -118,12 +128,15 @@ export function openFacilitiesConfig(view:FacilitiesConfigView,esc:Escape):void{
       on('hf-kinds',el=>{draft.kinds=el.value;});
       on('hf-require-name',el=>{draft.requireName=el.checked;});
       on('hf-name-column',el=>{draft.list.nameColumn=el.value;});
+      on('hf-list-country',el=>{if(el.value)draft.list.country=el.value;else delete draft.list.country;});
       on('hf-area-column',el=>{if(el.value)draft.list.areaColumn=el.value;else delete draft.list.areaColumn;});
       on('hf-threshold',el=>{const n=Number(el.value);if(Number.isFinite(n)&&n>=0.5&&n<=1)draft.list.threshold=n;});
       on('hf-area-words',el=>{draft.list.areaMarkers=el.value.split(',').map(w=>w.trim()).filter(Boolean);});
       root.querySelectorAll<HTMLInputElement>('[data-hf-register]').forEach(el=>el.onchange=()=>{
         const id=el.dataset.hfRegister!;
-        draft.list.registers=el.checked?[...draft.list.registers.filter(r=>r!==id),id]:draft.list.registers.filter(r=>r!==id);redraw();});
+        draft.list.registers=el.checked?[...draft.list.registers.filter(r=>r!==id),id]:draft.list.registers.filter(r=>r!==id);
+        if(!draft.list.country){const c=countryOfOthers(draft.list.registers);if(c)draft.list.country=c;}
+        redraw();});
       root.querySelectorAll<HTMLSelectElement>('[data-hf-decide]').forEach(el=>el.onchange=()=>{
         const name=el.dataset.hfDecide!;if(el.value)draft.list.decisions[name]=el.value;else delete draft.list.decisions[name];redraw();});
     },

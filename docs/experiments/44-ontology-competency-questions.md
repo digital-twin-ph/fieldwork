@@ -1,6 +1,6 @@
 # Experiment 44: ontology competency questions
 
-_Created 2026-10-08 · Updated 2026-11-05_
+_Created 2026-10-08 · Updated 2026-11-08_
 
 Date: October 8, 2026. Status: question list with measured statuses, thirteen of
 them executable. No vocabulary term is changed by this document; it records what
@@ -59,6 +59,7 @@ a design decision with its own migration, not a bug fix.
 | P14 | Which part of the write-up does this figure go in, and did somebody choose it? | An author assembling the paper | `fw:figureSection` and `fw:figureSectionDeclared` on the publishing step; the output widget's `fw:defaultFigureSection`; the note's section held equal by `fw:FigureFiledWhereDeclaredShape` | Answerable since Map 0.20.0, Table 0.7.0 and Chart 0.10.0. **Not why it was put there** |
 | P15 | Which columns were read as longitude and latitude, and how many rows could not be placed? | A reviewer checking a map | `fw:xAttribute`, `fw:yAttribute`, `fw:placedRecordCount`, `fw:unplacedRecordCount`, `fw:distinctPositionCount` on `fw:PointsFromTable`, held by `fw:PointsFromTableShape` | Answerable since Point data 0.4.0, for points read from a table. **Not which rows**: the receipt counts them; the run's result names them |
 | P16 | Which registers were a list's facility names matched against, and how many rows were found, misspelt, of another type, ambiguous, areas or not found? | A reviewer of a facility map from a line list | `prov:used` an `fw:FacilityRegister` (licence, country, field map) by an `fw:FacilityListMatching`, with `fw:matchedExactlyRowCount` and the five other outcome counts; `fw:positionIsRegisters` on the points | Answerable since Find health facilities 0.3.0, from a list ([190](190-find-health-facilities-from-a-list.md)). **Not which rows**: the receipt counts them; each point carries its own outcome |
+| P17 | Which of a list's matches came from a register with no facility types, and were they reviewed? | A reviewer of a facility map from a line list | `fw:matchedByNameOnly` on the `fw:FacilityRegister`; `fw:heldForReviewRowCount` on the `fw:FacilityListMatching`; the register's `dcterms:license`, for share-alike | Answerable since Find health facilities 0.4.0 ([190](190-find-health-facilities-from-a-list.md)). **Not who reviewed**: a choice is recorded on the step, not attributed |
 
 ## Spatial scope and coordinate reference
 
@@ -205,6 +206,7 @@ changed this file; a date stamp sweep is not an update._
 | 2026-10-08 | Date every documentation file from git history, and check it in the gate |
 | 2026-10-10 | Treat the project as developmental evaluation, and move the audits into docs/audits |
 | 2026-11-08 | P16 added for [190](190-find-health-facilities-from-a-list.md), when Find health facilities took a list |
+| 2026-11-08 | P17 added for [190](190-find-health-facilities-from-a-list.md), when OpenStreetMap became a register |
 | 2026-11-05 | P15 added for [178](178-points-from-xy.md), when Point data took a table as a source |
 | 2026-11-05 | P14 added for [177](177-where-a-figure-goes-in-the-write-up.md), when output widgets took a write-up section |
 | 2026-11-05 | P13 added for [161](161-the-epi-kernel-one-table-many-exposures.md) step 6, when the Rate ratio widget was retired into the two-by-two's rate layout. `fw:RateRatio` and `fw:RateRatioComputation` are deprecated; receipts from before carry them |

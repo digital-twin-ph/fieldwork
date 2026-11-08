@@ -763,12 +763,12 @@
    "migrationFrom": []
   },
   "select_rows": {
-   "version": "0.3.0",
-   "released": "2026-11-06",
+   "version": "0.4.0",
+   "released": "2026-11-08",
    "changes": [
     {
      "kind": "minor",
-     "description": "Keeps every value except those ticked, as well as the values ticked or a range; rows keep the table's order."
+     "description": "On the standard Inspector and configuration dialog (experiment 186). The panel holds the step's name, its input, one sentence saying what it keeps, Configure…, a one-line result after a run (rows kept and left out, and any value named that the table does not hold), the Manual, Evidence and Version links, and Duplicate and Remove. The column, the values or the range are in the dialog, which shows how many rows they keep, and the table, before they are applied; a selection that keeps nothing is refused there. Nothing is written until Apply. What the step stores is unchanged, so saved workflows open as they were."
     }
    ],
    "breaking": false,

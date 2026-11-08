@@ -34,6 +34,7 @@ import {hagellochExample} from './hagelloch-example.js';
 import {openRuleEditor} from './rule-editor.js';
 import {openStepViewer,openTableViewer,shapeChange,stepLabels,tableViewOf,type TableView} from './table-viewer.js';
 import {keyNoun,openRelateConfig,relateDraftOf,applyRelateDraft,relateSentence} from './relate-ui.js';
+import {openSelectConfig,selectDraftOf,applySelectDraft,selectSentence} from './select-ui.js';
 import {relateShape,decisionMatches,relateAtShifts,shiftColumnName} from './relate-table.js';
 import {findingsSummary,wideDataTable,declaredWide} from './data-table.js';
 import {authoredSubjects} from './authored-application.js';
@@ -244,7 +245,6 @@ function tileImportControls(p:WorkflowNode<'map_output'>['params']):string{
 }
 /** What a select's value list was narrowed to, kept across the re-render a tick causes, so finding
  *  the next value does not mean typing the search again. */
-let selectNarrowing={node:'',text:'',ticked:false};
 function mapControls(n:WorkflowNode<'map_output'>){
   const p=n.params;
   return `<div class="source-card" data-map-communication><span class="inspector-section">Standalone map</span>
@@ -961,7 +961,7 @@ function drawRunProgress(){
 /** THE WIDGETS WHOSE INSPECTOR FOLLOWS THE STANDARD (experiment 186): Name, Inputs, Settings, Result, the links,
  *  Actions, in that order and nothing else, with every setting in the widget's configuration dialog. One at a time,
  *  Relate first; the set grows as each widget is moved, and a check holds them to it. */
-export const STANDARD_INSPECTOR=new Set<NodeType>(['relate_table']);
+export const STANDARD_INSPECTOR=new Set<NodeType>(['relate_table','select_rows']);
 function samplerProduct(node:WorkflowNode){
   const up=(id:string,port:string)=>{const e=workflow.edges.find(x=>x.to===id&&x.port===port);return e?workflow.nodes.find(m=>m.id===e.from):undefined;};
   const search=up(node.id,'files'),find=search?up(search.id,'product'):undefined;
@@ -2400,69 +2400,24 @@ function renderInspector(){
           +columnSelect('reg-order','Rows in the order of',p.order,'The table\'s order'):'')
       +'<div class="notice">An adjusted ratio is not a crude one: the result names every variable it is adjusted for. A model that does not converge reports no estimate.</div>';
   }else if(n.type==='select_rows'){
-    const p=n.params,shape=upstreamKeyValues(n),columns=Object.keys(shape??{});
-    const held=shape?.[p.keyColumn]??[],order=orderOf(held);
-    // The column is known but its values are not: a table whose rows are not on this device.
-    const unseen=!held.length&&!!p.keyColumn&&!!shape&&p.keyColumn in shape;
-    content+='<p class="description">Keeps only the rows whose chosen column holds one of the values you name, in the order you name them. What a figure should show is often less than what a table carries.</p>'
-      +labelForm('select-label','Node label',p.label||'Select rows by value')
-      +`<div class="field"><label class="field-label" for="select-key">Key column to choose by</label>`
-      +`<select id="select-key" data-slr="keyColumn"${columns.length?'':' disabled'}>`
-      +(columns.length?'':`<option value="${esc(p.keyColumn)}">Connect a table first</option>`)
-      +columns.map(column=>`<option value="${esc(column)}" ${p.keyColumn===column?'selected':''}>${esc(column)}</option>`).join('')
-      +`</select></div>`
-      // A VALUE THE PARAMS HOLD AND THE TABLE DOES NOT still gets a checkbox, marked as absent.
-      // Offering only the upstream values left a stale one -- saved, reported `absent` on every
-      // run, and with nothing in the Inspector that could show or remove it. The box is the only
-      // way to unset it by hand, so it is rendered last and says why it is there.
-      // A RANGE, WHERE THE COLUMN HAS AN ORDER. Fourteen days out of 3,653 were fourteen ticks in a
-      // list nobody could search; from and to are two fields. Offered only for a column that is all
-      // dates or all numbers, because `orderOf` will not invent an order for anything else.
-      // VALUES NOT ON THIS DEVICE YET -- a fetched table opened from a catalogue keeps no rows until Fetch the table --
-      // are not a reason to hide the range. Found 2026-11-04 by the practitioner following NYC's manual on the published
-      // site: the saved 1 to 14 June showed as an empty text box. The range is offered, and checked when the run reads it.
-      // EVERY VALUE BUT THESE, offered for any column (experiment 182): leaving out twelve weeks of 833 is twelve ticks.
-      +`<div class="field"><label class="field-label" for="select-mode">Keep</label>`
-        +`<select id="select-mode"><option value="values" ${p.range||p.leaveOut?'':'selected'}>The values I tick</option>`
-        +`<option value="leave-out" ${p.leaveOut&&!p.range?'selected':''}>Every value except those I tick</option>`
-        +(order||unseen?`<option value="range" ${p.range?'selected':''}>A range of ${order==='date'?'dates':order==='number'?'numbers':'dates or numbers'}</option>`:'')
-        +`</select></div>`
-      +(unseen&&p.range
-        ?`<div class="field"><label class="field-label" for="select-from">From</label>`
-          +`<input id="select-from" data-select-range="from" value="${esc(p.range.from)}" placeholder="for example 2023-06-01">`
-          +`<label class="field-label" for="select-to">To</label>`
-          +`<input id="select-to" data-select-range="to" value="${esc(p.range.to)}" placeholder="for example 2023-06-14">`
-          +`<p class="description">This table's values are not on this device yet, so the range is checked when the workflow runs. Both ends are kept; dates are written year-month-day.</p></div>`
-        :'')
-      +(order&&p.range
-        ?(()=>{const sorted=held.filter(Boolean).sort(order==='number'?(a,b)=>Number(a)-Number(b):undefined);
-          const kind=order==='number'?'number':sorted.every(value=>value.length===10)?'date':'text';
-          const end=(id:string,key:'from'|'to',label:string)=>`<label class="field-label" for="${id}">${label}</label>`
-            +`<input id="${id}" type="${kind}" data-select-range="${key}" value="${esc(p.range![key])}" `
-            +`min="${esc(sorted[0]??'')}" max="${esc(sorted.at(-1)??'')}" placeholder="${esc(key==='from'?sorted[0]??'':sorted.at(-1)??'')}">`;
-          return `<div class="field">${end('select-from','from','From')}${end('select-to','to','To')}`
-            +`<p class="description">Both ends are kept. Leave one empty to run from the start or to the end. `
-            +`${esc(p.keyColumn)} runs from ${esc(sorted[0]??'')} to ${esc(sorted.at(-1)??'')}; rows keep the table's order.</p></div>`;})()
-        :held.length
-        ?`<span class="inspector-section">${p.leaveOut?'Values to leave out':'Values to keep'}</span>`
-          // A LONG LIST IS SEARCHED, not scrolled. The filter only hides boxes, so nothing is
-          // unticked by narrowing the list, and Ticked only shows what is already kept.
-          +(held.length>12
-            ?`<div class="field select-filter"><input id="select-filter" type="search" placeholder="Find a value…" aria-label="Find a value" value="${esc(selectNarrowing.node===n.id?selectNarrowing.text:'')}">`
-              +`<label class="check"><input type="checkbox" id="select-ticked-only" ${selectNarrowing.node===n.id&&selectNarrowing.ticked?'checked':''}> Ticked only</label>`
-              +`<p class="description" id="select-count">${p.values.length} of ${held.length} ticked</p></div>`
-            :'')
-          +`<div class="select-values">`
-          +held.map(value=>`<label class="check"><input type="checkbox" data-select-value="${esc(value)}" `
-            +`${p.values.includes(value)?'checked':''}> ${esc(value)}</label>`).join('')
-          +p.values.filter(value=>!held.includes(value))
-            .map(value=>`<label class="check absent"><input type="checkbox" data-select-value="${esc(value)}" `
-              +`checked> ${esc(value)} <span class="absent-note">not in this table</span></label>`).join('')
-          +`</div>`
-        :unseen&&p.range?''
-        :`<div class="field"><label class="field-label" for="select-values">${p.leaveOut?'Values to leave out':'Values to keep'}, one per line</label>`
-          +`<textarea id="select-values" data-select-text rows="3">${esc(p.values.join('\n'))}</textarea></div>`)
-      +'<div class="notice">A value this table does not hold is reported rather than ignored, because asking for a row that is not there is usually a typo or a changed table upstream. Keeping nothing the table holds is refused instead of returning an empty table.</div>';
+    // THE STANDARD INSPECTOR (experiment 186): the column, the values or the range, and the preview of what they keep
+    // are in the configuration dialog; here, one sentence of what the step keeps and what the last run kept.
+    const p=n.params;
+    content+=standardSection('Name',labelForm('select-label','Name',p.label||'Select rows by value'));
+    content+=standardSection('Inputs',standardInputs(n,{records:'Table to choose rows from'}));
+    content+=standardSection('Settings',`<p class="standard-sentence">${esc(selectSentence(p))}</p>`
+      +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button></div>');
+    const receipt=result?.receipts.find(r=>r.nodeId===n.id) as unknown as {kept?:number;dropped?:number;absent?:string[]}|undefined;
+    const why=result?.unfinished?.find(u=>u.nodeId===n.id)?.message;
+    const absent=receipt?.absent??[];
+    const line=receipt&&typeof receipt.kept==='number'
+      ?`${receipt.kept.toLocaleString()} of ${(receipt.kept+(receipt.dropped??0)).toLocaleString()} rows kept; `
+        +`${(receipt.dropped??0).toLocaleString()} left out.`
+        +(absent.length?` Not in the table: ${absent.join(', ')}.`:'')
+      :why?`The last run could not compute this step: ${why}`
+      :'Not run yet.';
+    content+=standardSection('Result',`<p class="standard-result${absent.length||why?' standard-result-warning':''}">${esc(line)}</p>`
+      +'<div data-standard-result></div>');
   }else if(n.type==='relate_table'){
     // THE STANDARD INSPECTOR (experiment 186): what the step is called, what feeds it, one sentence of what it will
     // do, what the last run gave. Every setting, the preview of the join and the decision about unmatched rows are in
@@ -3787,6 +3742,21 @@ function renderInspector(){
     openStepViewer([...befores,view],
       stepLabels(inputs.map(({port})=>portSourceName(workflow,n.id,port,port))),esc);
   });
+  // SELECT ROWS' CONFIGURATION DIALOG (experiment 186): given each key column's values, and the table where it resolves
+  // without a run, so the preview is the rows this draft keeps. Only Apply writes.
+  if(n.type==='select_rows')optionalElement('#configure-step')?.addEventListener('click',()=>{
+    const node=workflow.nodes.find(x=>x.id===n.id);
+    if(node?.type!=='select_rows')return;
+    const table=tableOnPort(workflow,n.id,'records');
+    openSelectConfig({
+      step:node.params.label||TYPES[n.type].title,
+      sourceLabel:portSourceName(workflow,n.id,'records','the table'),
+      shape:upstreamKeyValues(node)??{},
+      ...(table?{table}:{}),
+      initial:selectDraftOf(node.params),
+      apply:draft=>{change(w=>{applySelectDraft(getNode(w,n.id,'select_rows').params,draft);},{requirePersistence:true});},
+    },esc);
+  });
   // RELATE'S CONFIGURATION DIALOG (experiment 186). Given the columns each table declares and, where they resolve, the
   // tables themselves, so the preview is the join this draft would make. Only Apply writes.
   if(n.type==='relate_table')optionalElement('#configure-step')?.addEventListener('click',()=>{
@@ -4279,12 +4249,6 @@ function renderInspector(){
   document.querySelectorAll<HTMLInputElement>('#output-totals').forEach(el=>
     el.addEventListener('change',()=>change(w=>{
       getNode(w,n.id,'table_output').params.totalsAsserted=el.checked||undefined;})));
-  document.querySelectorAll<HTMLInputElement>('[data-select-value]').forEach(el=>
-    el.addEventListener('change',()=>change(w=>{
-      const node=getNode(w,n.id,'select_rows'),value=required(el.dataset.selectValue);
-      node.params.values=el.checked
-        ?[...node.params.values.filter(held=>held!==value),value]
-        :node.params.values.filter(held=>held!==value);})));
   // REGRESSION's controls.
   const reg=(edit:(params:WorkflowNode<'regression'>['params'])=>void)=>change(w=>edit(getNode(w,n.id,'regression').params));
   optionalElement('#reg-family')?.addEventListener('change',e=>reg(p=>{p.family=control(e).value as 'logistic'|'poisson';
@@ -4343,32 +4307,6 @@ function renderInspector(){
     optionalElement(id)?.addEventListener('change',e=>reg(p=>{const v=control(e).value;if(v)p[key]=v;else delete p[key];}));
   optionalElement('#reg-errors')?.addEventListener('change',e=>reg(p=>{p.errors=control(e).value as 'profile';}));
   optionalElement('#reg-hac-lag')?.addEventListener('change',e=>reg(p=>{p.hacLag=Math.max(0,Math.round(Number(control(e).value)||0));}));
-  document.querySelector<HTMLSelectElement>('#select-mode')?.addEventListener('change',e=>change(w=>{
-    const node=getNode(w,n.id,'select_rows');
-    const mode=control(e).value;
-    if(mode==='range'){node.params.range=node.params.range??{from:'',to:''};delete node.params.leaveOut;}
-    else{delete node.params.range;if(mode==='leave-out')node.params.leaveOut=true;else delete node.params.leaveOut;}}));
-  document.querySelectorAll<HTMLInputElement>('[data-select-range]').forEach(el=>
-    el.addEventListener('change',()=>change(w=>{
-      const node=getNode(w,n.id,'select_rows'),range=node.params.range??{from:'',to:''};
-      range[el.dataset.selectRange as 'from'|'to']=el.value.trim();node.params.range=range;})));
-  {
-    const filter=document.querySelector<HTMLInputElement>('#select-filter'),
-      tickedOnly=document.querySelector<HTMLInputElement>('#select-ticked-only');
-    const narrow=()=>{
-      const wanted=(filter?.value??'').trim().toLowerCase();
-      document.querySelectorAll<HTMLInputElement>('[data-select-value]').forEach(box=>{
-        const shown=(!wanted||required(box.dataset.selectValue).toLowerCase().includes(wanted))&&(!tickedOnly?.checked||box.checked);
-        (box.closest('label') as HTMLElement).hidden=!shown;});
-    };
-    const keep=()=>{selectNarrowing={node:n.id,text:filter?.value??'',ticked:!!tickedOnly?.checked};narrow();};
-    filter?.addEventListener('input',keep);tickedOnly?.addEventListener('change',keep);
-    if(filter)narrow();
-  }
-  document.querySelectorAll<HTMLTextAreaElement>('[data-select-text]').forEach(el=>
-    el.addEventListener('change',()=>change(w=>{
-      getNode(w,n.id,'select_rows').params.values=el.value.split('\n')
-        .map(line=>line.trim()).filter(Boolean);})));
   // EVERY BOX IS READ ON ANY CHANGE, so several ticked at once -- as a manual's step does -- are all kept. The order
   // is the order already kept, then any newly ticked in the order shown.
   document.querySelectorAll<HTMLInputElement>('[data-group-by]').forEach(el=>

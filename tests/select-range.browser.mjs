@@ -47,30 +47,44 @@ test('a range of dates is two fields, and a long list of values can be searched'
   await page.waitForTimeout(250);
   await wire(page,table,days,'records');
   await select(page,days);
-  await page.locator('#select-key').selectOption('date');
+  // THE SETTINGS ARE IN THE STANDARD DIALOG (experiment 186): nothing reaches the step until Apply.
+  await page.locator('#configure-step').click();
+  const dialog=page.locator('#select-config');
+  await expect(dialog).toBeVisible();
+  await dialog.locator('#select-key').selectOption('date');
 
   // THE LIST, searched. Sixty boxes, narrowed to June's first ten by typing.
-  await expect(page.locator('[data-select-value]')).toHaveCount(60);
-  await page.locator('#select-filter').fill('2023-06-0');
-  await expect(page.locator('label.check:visible [data-select-value]')).toHaveCount(9);
-  await page.locator('[data-select-value="2023-06-03"]').check();
+  await expect(dialog.locator('[data-select-value]')).toHaveCount(60);
+  await dialog.locator('#select-filter').fill('2023-06-0');
+  await expect(dialog.locator('label.check:visible [data-select-value]')).toHaveCount(9);
+  await dialog.locator('[data-select-value="2023-06-03"]').check();
+  // The tick rebuilt the dialog's body; the search is still what was typed, and still applied.
+  await expect(dialog.locator('#select-filter')).toHaveValue('2023-06-0');
+  await expect(dialog.locator('label.check:visible [data-select-value]')).toHaveCount(9);
+  await expect(dialog.locator('.select-preview-count')).toContainText('Keeps 1 of 60 rows; 59 left out.');
+  await dialog.locator('#select-filter').fill('');
+  await dialog.locator('#select-ticked-only').check();
+  await expect(dialog.locator('label.check:visible [data-select-value]')).toHaveCount(1);
+  // Nothing is written before Apply.
+  expect((await node(page,days)).params.values).toEqual([]);
+  await dialog.locator('#config-apply').click();
+  await expect(dialog).toBeHidden();
   await expect.poll(async()=>(await node(page,days)).params.values).toEqual(['2023-06-03']);
-  // The tick re-rendered the Inspector; the search is still what was typed, and still applied.
-  await expect(page.locator('#select-filter')).toHaveValue('2023-06-0');
-  await expect(page.locator('label.check:visible [data-select-value]')).toHaveCount(9);
-  await page.locator('#select-filter').fill('');
-  await page.locator('#select-ticked-only').check();
-  await expect(page.locator('label.check:visible [data-select-value]')).toHaveCount(1);
+  await expect(page.locator('#inspector-content .standard-sentence')).toHaveText('Keeps the rows whose date is 2023-06-03.');
 
   // THE RANGE. Offered because every value is a date, and two fields replace fourteen ticks.
-  await page.locator('#select-mode').selectOption('range');
-  await expect(page.locator('#select-from')).toHaveAttribute('type','date');
-  await expect(page.locator('#select-from')).toHaveAttribute('min','2023-05-01');
-  await page.locator('#select-from').fill('2023-06-01');await page.locator('#select-from').press('Tab');
-  await page.locator('#select-to').fill('2023-06-14');await page.locator('#select-to').press('Tab');
+  await page.locator('#configure-step').click();
+  await dialog.locator('#select-mode').selectOption('range');
+  await expect(dialog.locator('#select-from')).toHaveAttribute('type','date');
+  await expect(dialog.locator('#select-from')).toHaveAttribute('min','2023-05-01');
+  await dialog.locator('#select-from').fill('2023-06-01');await dialog.locator('#select-from').press('Tab');
+  await dialog.locator('#select-to').fill('2023-06-14');await dialog.locator('#select-to').press('Tab');
+  await expect(dialog.locator('.select-preview-count')).toContainText('Keeps 14 of 60 rows');
+  await dialog.locator('#config-apply').click();
   await expect.poll(async()=>(await node(page,days)).params.range).toEqual({from:'2023-06-01',to:'2023-06-14'});
   // The ticked values are kept, so going back loses nothing.
   expect((await node(page,days)).params.values).toEqual(['2023-06-03']);
+  await expect(page.locator('#inspector-content .standard-sentence')).toHaveText('Keeps the rows with date from 2023-06-01 to 2023-06-14, both ends included.');
 
   await add(page,'table_output');const shown=await newest(page,'table_output');
   await select(page,shown);
@@ -89,5 +103,9 @@ test('a range of dates is two fields, and a long list of values can be searched'
   const receipt=evidence.receipts.find(r=>r.nodeId===days);
   expect(receipt.method).toBe('kept date from 2023-06-01 to 2023-06-14, both ends included');
   expect([receipt.kept,receipt.dropped]).toEqual([14,46]);
+  // The Inspector's Result says the same, in one line.
+  await page.locator('[data-view="workflow"]').click();
+  await select(page,days);
+  await expect(page.locator('[data-standard-section="result"] .standard-result')).toHaveText('14 of 60 rows kept; 46 left out.');
 
 });

@@ -3,6 +3,17 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.53.0 — 2026-11-08
+
+- **Select rows by value is on the standard Inspector and configuration dialog**
+  ([186](docs/experiments/186-one-standard-inspector.md)). The Inspector says in one sentence what the step keeps, and
+  after a run how many rows it kept and left out. The column, the values or the range are set in **Configure…**,
+  which shows how many rows they keep, and the table, before **Apply**. Select rows 0.4.0. Saved workflows open as
+  they were.
+- **186 has its counts:** of the 24 widgets the published examples use, Relate and now Select rows meet the standard.
+  Moving the rest, in order of use, is what closes it.
+- The NYC and Brazil manuals are rewritten for the dialog.
+
 ## 0.52.0 — 2026-11-08
 
 - **A rule can compute a new column** ([188](docs/experiments/188-rules-that-compute-and-show-their-table.md)). In

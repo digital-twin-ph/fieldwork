@@ -19,9 +19,12 @@ the houses supplied.
 
 ## Seeing what this step did
 
-After a run, **View this table** at the top of the Inspector opens the output. **Before** and
-**After** switch between the table that came in and the one that went out, and After says how many
-rows and columns there were before.
+The Inspector says in one sentence what the step keeps, such as *Keeps the rows with date from 2023-06-01 to
+2023-06-14, both ends included*, and after a run, in one line, how many rows it kept and left out, and any value named
+that the table does not hold.
+
+**View this table** at the top of the Inspector opens the output. **Before** and **After** switch between the table
+that came in and the one that went out, and After says how many rows and columns there were before.
 
 ## What you connect
 
@@ -29,6 +32,10 @@ rows and columns there were before.
 unit are unchanged, because selecting rows does not change what a table measures.
 
 ## How to use it
+
+**Configure…** in the Inspector opens the step's settings. They show what they keep as you change them: how many rows
+of how many, and the table. Nothing changes until **Apply**; **Cancel**, **×** or Escape leave the step as it was,
+and ask first if you changed something.
 
 | Setting | What it decides |
 | --- | --- |
@@ -56,7 +63,7 @@ again moves it to the end, which is how you reorder without a second control.
 usually a typo, or a table upstream that changed. Quietly returning fewer rows than you asked for
 is how a figure loses a category nobody noticed.
 
-**Keeping nothing the table holds is refused** rather than handing back an empty table. So is a range that keeps
+**Keeping nothing the table holds is refused** in the settings, where **Apply** waits until it is changed, rather than handing back an empty table. So is a range that keeps
 nothing, which says where the column runs from and to; a range written backwards; and an end that is not a date, or
 not a number, when the column holds those.
 

@@ -58,10 +58,13 @@ test('a worked example with a manual has a Manual tab, and a workflow without on
   await page.locator('[data-view="workflow"]').click();
   const days=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')).nodes.find(n=>n.type==='select_rows').id);
   await page.locator(`.react-flow__node[data-id="${days}"]`).click();
-  await expect(page.locator('#select-mode')).toHaveValue('range');
-  await expect(page.locator('#select-from')).toHaveValue('2023-06-01');
-  await expect(page.locator('#select-to')).toHaveValue('2023-06-14');
-  await expect(page.locator('#select-values')).toHaveCount(0);
+  await expect(page.locator('#inspector-content .standard-sentence')).toHaveText('Keeps the rows with date from 2023-06-01 to 2023-06-14, both ends included.');
+  await page.locator('#configure-step').click();
+  await expect(page.locator('#select-config #select-mode')).toHaveValue('range');
+  await expect(page.locator('#select-config #select-from')).toHaveValue('2023-06-01');
+  await expect(page.locator('#select-config #select-to')).toHaveValue('2023-06-14');
+  await expect(page.locator('#select-config #select-values')).toHaveCount(0);
+  await page.locator('#select-config #config-cancel').click();
   await page.locator('[data-view="manual"]').click();
 
   // Switching workflow moves the mark.

@@ -122,8 +122,11 @@ test(`measure a table of ${N} rows`,async({page,browserName})=>{
     await page.locator('[data-view="workflow"]').click({timeout:LIMIT});
     await timed('Inspector: the value list for date',async()=>{
       await page.locator('.react-flow__node[data-id="sel2"]').click();
-      await expect(page.locator('[data-select-value]').first()).toBeAttached({timeout:LIMIT});
-      return `${await page.locator('[data-select-value]').count()} values listed`;});
+      await page.locator('#configure-step').click();
+      await expect(page.locator('#select-config [data-select-value]').first()).toBeAttached({timeout:LIMIT});
+      const listed=await page.locator('#select-config [data-select-value]').count();
+      await page.locator('#select-config #config-cancel').click();
+      return `${listed} values listed`;});
   }
   if(wideId)await runStep('run: Poisson regression, strata, HAC',[at('regression','reg',{family:'poisson',outcome:'count',
     exposure:{column:'o3',as:'numeric'},adjust:[{column:'tmean',as:'spline'},{column:'holiday',as:'numeric'}],errors:'hac',strata:'stratum',

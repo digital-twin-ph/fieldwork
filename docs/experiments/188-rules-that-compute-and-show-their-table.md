@@ -1,6 +1,6 @@
 # 188 · Rules that compute a column, and show it on the table
 
-_Created 2026-11-07 · Updated 2026-11-07_
+_Created 2026-11-07 · Updated 2026-11-08_
 
 **Status:** asked, three of five stages built (Fieldwork 0.52.0, 2026-11-08). Not `tried` until the Nigeria and South
 London workflows are rebuilt with Apply ruleset and their manuals play back.

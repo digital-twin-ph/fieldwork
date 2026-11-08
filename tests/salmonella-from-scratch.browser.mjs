@@ -135,8 +135,10 @@ test('four questions about a Salmonella outbreak, each its own short workflow',a
     await add(page,'select_rows');const select=await idOf(page,'select_rows');
     await tidy(page);await wire(page,list,select,'records');
     await page.locator(`.react-flow__node[data-id="${select}"]`).click();
-    await page.locator('#select-key').selectOption('fall');
-    await page.locator('[data-select-value="1"]').check();
+    await page.locator('#configure-step').click();
+    await page.locator('#select-config #select-key').selectOption('fall');
+    await page.locator('#select-config [data-select-value="1"]').check();
+    await page.locator('#select-config #config-apply').click();
     const panel=await importList(page,MATCHED,APRIL);
     await add(page,'append_rows');const append=await idOf(page,'append_rows');
     await tidy(page);await wire(page,select,append,'records');

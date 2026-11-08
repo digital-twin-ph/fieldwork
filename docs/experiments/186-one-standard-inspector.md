@@ -2,7 +2,8 @@
 
 _Created 2026-11-07 · Updated 2026-11-07_
 
-**Status:** tried, for Relate. Relate 0.8.0 (Fieldwork 0.47.0, 2026-11-07) has the six-section Inspector and its
+**Status:** tried, for Relate and Select rows. Select rows 0.4.0 (Fieldwork 0.53.0, 2026-11-08) followed Relate.
+Relate 0.8.0 (Fieldwork 0.47.0, 2026-11-07) has the six-section Inspector and its
 settings in the standard configuration dialog, `src/config-dialog.ts`. Its five browser checks pass in Chromium, and
 the NYC and Brazil manuals, rewritten for the dialog, play back from an empty canvas. Not yet `validated`: no check
 holds other Inspectors or dialogs to the standard, and the counts have not been recorded.
@@ -79,14 +80,47 @@ standard:
 - **Dialog** (the join dialog, extended): what to match on, what to bring, the period, **the list of shifts**
   ([185](185-one-step-for-every-lag.md)), what happens to unmatched rows, and the preview it already shows.
 
+## The counts, 2026-11-08
+
+Read from the code (`STANDARD_INSPECTOR` in `src/app.ts`, and which widgets call `openConfigDialog`), and weighed by
+use: how many of the **30 workflows** in the published example projects use each widget. **24** of the widgets
+appear in them.
+
+| Widget | Workflows using it | Input lists | Six-section Inspector and standard dialog |
+| --- | --- | --- | --- |
+| table_input | 25 | no inputs | no |
+| table_output | 16 | standard, except its point layers in spatial mode | no |
+| map_output | 12 | its own, in the layer manager | no |
+| select_rows | 11 | standard | **yes**, 0.4.0 (2026-11-08) |
+| study_area | 10 | no inputs | no |
+| chart_output | 7 | standard, except its reasoning input | no |
+| polygon_input | 7 | standard | no |
+| join_table_to_area | 7 | standard | no |
+| two_by_two, study_design | 6 each | standard | no |
+| point_input, group_table | 5 each | standard | no |
+| relate_table | 5 | standard | **yes** |
+| rate, derive_value, regression, find_satellite_products, search_satellite_catalog, sample_satellite_files_at_points | 4 each | standard | no |
+| stack_polygons, map_image_input, append_rows | 2 each | standard | no |
+| case_series, apply_ruleset | 1 each | standard | no |
+
+**1 of 24** widgets in use met the standard on 2026-11-08, Relate; of the 13 used in five or more workflows, 1. Select rows followed the same day, so **2 of 24**. The standard input lists
+are one function every step shares, so they reach every step with inputs except where a widget draws its own.
+
 ## What would close it
 
-**`tried`** when Relate's Inspector and dialog meet both standards and its tests and the Brazil manuals pass against
-them.
+The practitioner, 2026-11-08: *"moving them to the standard is how we close 186."* So 186 closes when **every widget
+in use** has the six-section Inspector and, where it has settings, the standard dialog, taken in order of use. A
+widget derive_value's retirement in [188](188-rules-that-compute-and-show-their-table.md) retires, is not moved.
 
-**`validated`** when a check fails for any Inspector that adds a section outside the six, or orders them differently,
-or any configuration dialog that departs from its shape; and the counts meeting each standard are recorded: Inspectors
-of 70, dialogs of 24.
+**`tried`** was reached with Relate: its Inspector and dialog meet both standards and its tests and the Brazil
+manuals pass against them.
+
+**`validated`** when every widget in use is moved, the table above is recounted with every row *yes*, and a check
+fails for any Inspector that adds a section outside the six, or orders them differently, or any configuration dialog
+that departs from its shape.
+
+**The order:** Select rows (11), Join to area (7), Chart (7), then the rest by use. Table input, Study area and
+Polygon layer are sources, with no Inputs section; Map output keeps its layer manager as its Inputs.
 
 ## What this does not establish
 

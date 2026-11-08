@@ -141,7 +141,9 @@ test('five questions about 774 LGAs, each its own short workflow',async({page})=
     const select=await idOf(page,'select_rows');
     await tidy(page);await wire(page,derive,select,'records');
     await page.locator(`.react-flow__node[data-id="${select}"]`).click();
-    await page.locator('[data-select-value="change 2005 to 2024"]').check();
+    await page.locator('#configure-step').click();
+    await page.locator('#select-config [data-select-value="change 2005 to 2024"]').check();
+    await page.locator('#select-config #config-apply').click();
     area=await importLgas(page);
     await joinAndMap(page,select,area,'Change in DTP1 coverage, 2005 to 2024');
     await page.waitForTimeout(800);

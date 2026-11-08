@@ -464,6 +464,8 @@ export interface ParamsByType {
         then:import('./authored-rules.js').AuthoredConclusion[]}[];
       /** THE ORDER THE RULES READ THE RECORDS IN, where a rule reads the previous row (experiment 188, stage 4). */
       order?:import('./authored-rules.js').AuthoredOrder;
+      /** A COLUMN'S DEFAULT where no rule gave it a value (experiment 192). One per column. */
+      otherwise?:import('./authored-rules.js').AuthoredOtherwise[];
     }};
   micro_workflow:{label:string;
     composition:{id:string;nodeType:string;version:string;title:string;stage:string;

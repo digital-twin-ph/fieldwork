@@ -62,10 +62,15 @@ const number=async(id,value)=>{await page.locator(id).fill(String(value));await 
   await expect(page.locator('#result-metrics .unknown b')).toHaveText('21');
   // Switching examples preserves their independent local edits.
   await openWorkflow(page,'heat');await done();
-  await number('#ruleset-threshold',7);await run();
+  await page.locator(`.react-flow__node[data-id="${await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')).nodes.find(n=>n.type==='apply_ruleset').id)}"]`).click();
+  await page.locator('#configure-step').click();await page.locator('#ruleset-threshold').fill('7');await page.locator('#ruleset-threshold').press('Tab');
+  await page.locator('#ruleset-config #config-apply').click();await run();
   await openWorkflow(page,'old-naledi');await done();
   await select('facilities');await expect(page.locator('#param-radiusKm')).toHaveValue('1');
-  await openWorkflow(page,'heat');await done();await expect(page.locator('#ruleset-threshold')).toHaveValue('7');
+  await openWorkflow(page,'heat');await done();
+  await page.locator(`.react-flow__node[data-id="${await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')).nodes.find(n=>n.type==='apply_ruleset').id)}"]`).click();
+  await page.locator('#configure-step').click();await expect(page.locator('#ruleset-threshold')).toHaveValue('7');
+  await page.locator('#ruleset-config #config-cancel').click();
   await openWorkflow(page,'old-naledi');await done();
   await page.locator('#reset-button').click();await run();
   await page.locator('[data-view="rules"]').click();await expect(page.locator('#n3-preview')).toContainText('fw:evidenceLevel');

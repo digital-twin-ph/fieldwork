@@ -92,3 +92,13 @@ the message they get says which.
 - A wide file with many columns: the wide table here had seven. NYC's 92-column read is a different shape.
 - Whether 30 seconds for a chart is acceptable. That is the practitioner observation above, not something a timing
   can answer.
+
+## A table saved before its rows were kept, found 2026-11-08
+
+`table-in-dataset-store.browser.mjs` failed on CI's Chromium in two of three runs on main (0.60.0 and 0.62.0) and
+passed in every local gate. A reload straight after *Save* found no table step. The cause was in the application,
+not the test: *Save* put the rows in the in-memory cache and started their write to IndexedDB without waiting, so the
+saved workflow already held only a reference to them. A reload, or a closed tab, before the write committed left that
+reference pointing at nothing. Every other input waited for its data to be kept (`keepDataset`) before the step
+pointed at it; Tabular data did not. It does now (0.63.0): *Save* closes once the rows are written. Found by reading
+the CI failure rather than re-running it.

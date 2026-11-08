@@ -15,8 +15,8 @@
  *  it none, and the conflict is reported, never settled by whichever rule came first.
  */
 import {knownPredicate,readValue,termFor,type FieldBinding,type SubjectRecord} from './authored-application.js';
-import {isComputed,isSettingReference,settingNamed,readsPrevious,readsPreviousRows,type AuthoredRule,type ComputeOperator,
-  type Operand,type AuthoredOrder} from './authored-rules.js';
+import {isComputed,isSettingReference,settingNamed,readsPrevious,readsPreviousRows,columnReads,otherwiseProblems,
+  type AuthoredRule,type ComputeOperator,type Operand,type AuthoredOrder,type AuthoredOtherwise} from './authored-rules.js';
 import {orderOf} from './select-rows.js';
 import type {Scalar} from './types.js';
 import type {DataTable} from './data-table.js';
@@ -42,6 +42,8 @@ export interface RecordOutcome {
   noPrevious:{column:string; why:NoPrevious}[];
   /** A column whose value read below the previous row's: a cumulative count that fell. Kept as computed, and said. */
   fell:string[];
+  /** COLUMNS THAT TOOK THEIR OTHERWISE (experiment 192): no rule gave them a value. */
+  defaulted:string[];
 }
 /** WHY A ROW HAS NO PREVIOUS ONE. The first of its group; no row for the period before; one of two rows for one period;
  *  after such a pair, where every later row's previous one is uncertain; or no value to order it by. */
@@ -50,6 +52,8 @@ export interface Evaluation {
   records:RecordOutcome[];
   /** Records each rule fired for, by rule number. */
   matchedByRule:number[];
+  /** Records that took each column's otherwise, by column (experiment 192). */
+  defaultedByColumn?:Record<string,number>;
   unmatched:number;
   /** The columns that hold computed numbers, as against categories. */
   computedColumns:string[];
@@ -145,6 +149,8 @@ function holds(condition:AuthoredRule['any'][number]['all'][number],facts:Map<st
   const against=valueTerm(condition.value,settings);
   if(!fact||!against)return false;
   if(condition.comparator==='equals')return fact.text===against.text;
+  // IS NOT (experiment 192): a recorded value that differs. A value not recorded has no fact here, and returned above.
+  if(condition.comparator==='notEquals')return fact.text!==against.text;
   if(fact.number===undefined||against.number===undefined)return false;
   switch(condition.comparator){
     case 'greaterThan':return fact.number>against.number;
@@ -168,7 +174,15 @@ const operandLabel=(operand:Operand,labelOf:(predicate:string)=>string)=>
 
 /** Every record's outcome under these rules. Settings are the step's bound numbers, by name. */
 export function evaluateAuthored(records:SubjectRecord[],bindings:FieldBinding[],rules:AuthoredRule[],
-  settings:Record<string,number>={},order?:AuthoredOrder):Evaluation{
+  settings:Record<string,number>={},order?:AuthoredOrder,otherwise:AuthoredOtherwise[]=[]):Evaluation{
+  const problems=otherwiseProblems({rules,otherwise});
+  if(problems.length)throw new Error(problems[0]);
+  // WHAT EACH OTHERWISE WAITS FOR: every defaulted column its column's rules read, directly or through other columns.
+  const reads=columnReads(rules),defaulted=new Set(otherwise.map(o=>o.predicate));
+  const waitsFor=new Map(otherwise.map(o=>{const seen=new Set<string>(),stack=[...(reads.get(o.predicate)??[])];
+    while(stack.length){const c=stack.pop()!;if(seen.has(c))continue;seen.add(c);stack.push(...(reads.get(c)??[]));}
+    return [o.predicate,[...seen].filter(c=>defaulted.has(c))];}));
+  const defaultedByColumn:Record<string,number>={};
   // A RULE BETWEEN ROWS NEEDS AN ORDER, named on the step. A file's row order is not a declaration.
   if(readsPreviousRows({rules})&&!order?.by)
     throw new Error('A rule reads the previous row, so the records need an order: choose the column to sort them by.');
@@ -189,7 +203,7 @@ export function evaluateAuthored(records:SubjectRecord[],bindings:FieldBinding[]
     finalFacts[recordIndex]=facts;
     const before=sorted?.previous[recordIndex];
     const previousFacts=before?.index!=null?finalFacts[before.index]:undefined;
-    const outcome:RecordOutcome={values:{},rules:[],divisionsByZero:[],missing:[],conflicts:[],noPrevious:[],fell:[]};
+    const outcome:RecordOutcome={values:{},rules:[],divisionsByZero:[],missing:[],conflicts:[],noPrevious:[],fell:[],defaulted:[]};
     // What each rule concluded for each predicate, so a conflict names both rules.
     const given=new Map<string,{value:string|number|null; rule:number}[]>();
     const fired=new Set<number>();
@@ -197,6 +211,8 @@ export function evaluateAuthored(records:SubjectRecord[],bindings:FieldBinding[]
     // that changes anything fires at least one rule that had not fired.
     // A rule whose computed operand another rule concludes waits for it. When a pass changes nothing and a rule is still
     // waiting, one last pass runs it, so an operand that never came (a division by zero upstream) is named, not lost.
+    const applied=new Set<string>();
+    for(let stage=0;stage<=otherwise.length;stage++){
     let last=false;
     for(let pass=0;pass<=rules.length+1;pass++){
       let changed=false,waiting=false;
@@ -240,6 +256,21 @@ export function evaluateAuthored(records:SubjectRecord[],bindings:FieldBinding[]
       });
       if(!changed){if(waiting&&!last){last=true;continue;}break;}
     }
+    // OTHERWISE, once the rules have run: each column no rule gave a value, whose waited-for columns are settled.
+    const settled=(p:string)=>applied.has(p)||given.has(localName(p));
+    const ready=otherwise.filter(o=>!applied.has(o.predicate)&&(waitsFor.get(o.predicate)??[]).every(settled));
+    if(!ready.length)break;
+    for(const o of ready){
+      applied.add(o.predicate);
+      const column=localName(o.predicate);
+      if(given.has(column))continue;
+      const term=valueTerm(o.value,settings);
+      if(term)facts.set(o.predicate,term);
+      given.set(column,[{value:localName(o.value),rule:0}]);
+      outcome.defaulted.push(column);
+      defaultedByColumn[column]=(defaultedByColumn[column]??0)+1;
+    }
+    }
     for(const [column,list] of given){
       const distinct=[...new Set(list.map(g=>g.value))];
       if(distinct.length>1){outcome.conflicts.push({column,values:distinct,rules:list.map(g=>g.rule)});continue;}
@@ -252,7 +283,8 @@ export function evaluateAuthored(records:SubjectRecord[],bindings:FieldBinding[]
   }
   const computedMeta=Object.fromEntries(rules.flatMap(r=>r.then.filter(isComputed)).map(c=>[c.column?.trim()||localName(c.predicate),
     {...(c.meaning?.trim()?{meaning:c.meaning.trim()}:{}),...(c.unit?.trim()?{unit:c.unit.trim()}:{})}]));
-  return {records:outcomes,matchedByRule,unmatched,computedColumns,computedMeta,sequence,...(order?.by?{order}:{})};
+  return {records:outcomes,matchedByRule,unmatched,computedColumns,computedMeta,sequence,...(order?.by?{order}:{}),
+    ...(otherwise.length?{defaultedByColumn}:{})};
 }
 
 /** The records with what was concluded: new key columns on a table's rows, new properties on points. A computed number
@@ -285,10 +317,12 @@ export function evaluationSentence(evaluation:Evaluation,labels:string[]):string
   const zero=where(r=>r.divisionsByZero.length>0),missing=where(r=>r.missing.length>0),conflict=where(r=>r.conflicts.length>0);
   const unmatched=where(r=>!r.rules.length);
   const records=(k:number)=>`${k.toLocaleString('en')} record${k===1?'':'s'}`,has=(k:number)=>k===1?'has':'have';
-  return `Rules evaluated directly over ${n.toLocaleString('en')} record${n===1?'':'s'}, because a rule computes a value. `
+  return `Rules evaluated directly over ${n.toLocaleString('en')} record${n===1?'':'s'}, because ${evaluation.computedColumns.length?'a rule computes a value':'a column has an otherwise'}. `
     +(evaluation.order?orderSentence(evaluation.order)+' '+previousSentence(evaluation,labels)+' ':'')
     +evaluation.matchedByRule.map((c,i)=>`Rule ${i+1}: ${c.toLocaleString('en')}`).join('; ')+'. '
     +(unmatched.length?`${records(unmatched.length)} matched no rule: ${named(unmatched)}. `:'Every record matched a rule. ')
+    // A DEFAULT IS SAID AS ONE, by column, so "cannot be classified" is never read as a rule's conclusion.
+    +Object.entries(evaluation.defaultedByColumn??{}).map(([c,k])=>`${records(k)} took ${c}'s otherwise, because no rule gave ${c} a value. `).join('')
     +(zero.length?`${records(zero.length)} ${has(zero.length)} an empty value, from a division by zero: ${named(zero)}. `:'')
     +(missing.length?`${records(missing.length)} ${has(missing.length)} no value, because a value to compute from is missing: ${named(missing)}. `:'')
     +(conflict.length?`${records(conflict.length)} ${has(conflict.length)} no value, because two rules gave different values: ${named(conflict)}. `:'')

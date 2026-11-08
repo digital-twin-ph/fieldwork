@@ -19,8 +19,10 @@
 import type {ParamsByType} from './types.js';
 import type {Escape} from './types.js';
 import {compileAuthoredRuleset,compiledRuleCount,RULE_CEILING,authoredUnitProblems,settingNamed,isComputed,computesValues,
-  COMPUTE_OPERATORS,readsPrevious,readsPreviousRows,type Operand,type AuthoredOrder} from './authored-rules.js';
+  COMPUTE_OPERATORS,readsPrevious,readsPreviousRows,evaluatedDirectly,otherwiseProblems,type Operand,type AuthoredOrder,
+  type AuthoredOtherwise} from './authored-rules.js';
 import {evaluateAuthored,OPERATOR_WORDS,localName,undescribedSentence,type Evaluation,type NoPrevious} from './rule-evaluation.js';
+import {openConfigDialog,type ConfigSections} from './config-dialog.js';
 import type {SubjectRecord} from './authored-application.js';
 
 type Authored=NonNullable<ParamsByType['apply_ruleset']['authored']>;
@@ -32,10 +34,10 @@ type Field=Authored['fields'][number];
  *  category would compile to a math builtin that silently matches nothing, which is the failure
  *  the compiler refuses and this list prevents a practitioner from reaching. */
 const COMPARATORS:Record<Field['kind'],{value:string;label:string}[]>={
-  number:[{value:'equals',label:'is'},{value:'greaterThan',label:'is more than'},
+  number:[{value:'equals',label:'is'},{value:'notEquals',label:'is not'},{value:'greaterThan',label:'is more than'},
     {value:'notGreaterThan',label:'is at most'},{value:'lessThan',label:'is less than'},
     {value:'notLessThan',label:'is at least'}],
-  term:[{value:'equals',label:'is'}],
+  term:[{value:'equals',label:'is'},{value:'notEquals',label:'is not'}],
   boolean:[{value:'equals',label:'is'}],
 };
 
@@ -102,7 +104,11 @@ const blankCondition=(fields:Field[]):Authored['rules'][number]['any'][number]['
 
 export interface RuleEditorResult {rules:Authored['rules']; order?:AuthoredOrder;
   /** The settings declared, and what each is set to on this step. */
-  parameters:NonNullable<Authored['parameters']>; values:Record<string,number>}
+  parameters:NonNullable<Authored['parameters']>; values:Record<string,number>;
+  /** Each column's default where no rule gave it one (experiment 192). */
+  otherwise:AuthoredOtherwise[];
+  /** The columns the rules read, with each one's kind and unit, and how the records arrive (experiment 186). */
+  fields:Field[]; recordsKind?:'points'|'table'|'polygons'}
 const PREVIOUS_WORDS:Record<AuthoredOrder['previous'],string>={row:'the row recorded before',day:'the day before',
   week:'the week before',month:'the month before'};
 const NO_PREVIOUS_WORDS:Record<NoPrevious,string>={'first':'first of its group','period-missing':'no row for the period before',
@@ -139,6 +145,12 @@ export interface EditorOptions extends Partial<ReviewOptions> {
   preview?:{records:SubjectRecord[]; columns:string[]};
   /** A unit as typed, such as "degrees Celsius", to its QUDT IRI; undefined where the word is not known. */
   unitIri?:(label:string)=>string|undefined;
+  /** THE STEP'S OWN SETTINGS, moved here from the Inspector (experiment 186): how the records arrive, and the columns
+   *  the connected records carry, offered where none is declared yet. */
+  recordsKind?:'points'|'table'|'polygons';
+  candidates?:Field[];
+  /** The step's name, for the dialog's heading. */
+  step?:string;
 }
 
 /** Rows a preview draws. The counts are of every record; this is how many are drawn, a display choice, not a cap on
@@ -155,7 +167,11 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
     let rules:Authored['rules']=JSON.parse(JSON.stringify(authored.rules));
     // THE SORT, inside the step that needs it (experiment 188, stage 4): no Sort step on the canvas.
     let order:AuthoredOrder|undefined=authored.order?structuredClone(authored.order):undefined;
-    const fields=authored.fields,choices=readable(fields);
+    // THE COLUMNS, THEIR KINDS AND UNITS, AND HOW THE RECORDS ARRIVE, edited here with the rules (experiment 186).
+    let fields:Field[]=structuredClone(authored.fields),choices=readable(fields);
+    let recordsKind=options?.recordsKind;
+    // EACH COLUMN'S DEFAULT, where no rule gave it a value (experiment 192).
+    let otherwise:AuthoredOtherwise[]=structuredClone(authored.otherwise??[]);
     const kindOf=(predicate:string)=>choices.find(c=>c.predicate===predicate)?.kind??'term';
     // SETTINGS, declared here (experiment 188): a number the rules compare against, with its unit, set on this step.
     let settings:NonNullable<Authored['parameters']>=structuredClone(authored.parameters??[]);
@@ -216,11 +232,6 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
           :`<input ${where} data-part="value" aria-label="Value" value="${esc(String(condition.value??''))}" placeholder="a number">`+unit);
     };
 
-    const dialog=document.createElement('dialog');
-    dialog.id='rule-editor';
-    dialog.setAttribute('aria-labelledby','rule-editor-title');
-
-    const close=(result?:RuleEditorResult)=>{dialog.close();dialog.remove();resolve(result);};
 
     const conditionRow=(rule:number,group:number,index:number,
       condition:Authored['rules'][number]['any'][number]['all'][number])=>{
@@ -253,7 +264,7 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
     const numericSettings=values;
     const evaluate=():Evaluation|null=>{
       if(!options?.preview?.records.length)return null;
-      try{return evaluateAuthored(options.preview.records,fields as never,rules as never,numericSettings,order);}catch{return null;}
+      try{return evaluateAuthored(options.preview.records,fields as never,rules as never,numericSettings,order,otherwise);}catch{return null;}
     };
     const computedColumns=()=>rules.flatMap(rule=>rule.then.filter(isComputed)
       .map(c=>({predicate:c.predicate,label:c.column?.trim()||localName(c.predicate)})));
@@ -373,6 +384,8 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
         split?`${records(split)} ${has(split)} no value, because two rules gave different values.`:'',
         orphan?`${records(orphan)} ${has(orphan)} no value, because there is no single previous row.`:'',
         fell?`${records(fell)} fell below the previous row, kept as computed.`:'',
+        // A DEFAULT IS SAID AS ONE (experiment 192), beside the records no rule matched.
+        ...Object.entries(evaluation.defaultedByColumn??{}).map(([c,k])=>`${records(k)} took ${c}'s otherwise.`),
         undescribedSentence(evaluation)].filter(Boolean);
       return `<section class="rule-live" aria-live="polite"><h3>${sortedOrder?'Before, sorted and after':'Before and after'}</h3>`
         +`<p class="rule-live-summary">${esc(`${n.toLocaleString('en')} record${n===1?'':'s'}. `+words.join(' '))}</p>`
@@ -382,103 +395,160 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
         +`<h4>After</h4><div class="rule-live-scroll">${after}</div></section>`;
     };
 
-    const render=()=>{
+    // THE COLUMNS THE RULES READ, their kind and unit, as the Inspector listed them before (experiment 186).
+    const fieldsMarkup=()=>`<section class="rule-order"><h3>Records and columns</h3>`
+      +`<div class="rule-condition"><label class="field-label" for="ruleset-records">Records arrive as</label>`
+      +`<select id="ruleset-records">`+([['points','Points'],['table','A table'],['polygons','Polygons']] as const)
+        .map(([v,w])=>`<option value="${v}" ${recordsKind===v?'selected':''}>${w}</option>`).join('')+`</select></div>`
+      +(fields.length
+        ?`<table class="inspector-table"><thead><tr><th>Column</th><th>Kind</th><th>Unit</th></tr></thead><tbody>`
+          +fields.map((f,i)=>`<tr><td>${esc(f.attribute)}</td><td><select data-field-kind="${i}" aria-label="Kind of ${esc(f.attribute)}">`
+            +([['number','number'],['term','category'],['boolean','true or false']] as const)
+              .map(([k,w])=>`<option value="${k}"${f.kind===k?' selected':''}>${w}</option>`).join('')+`</select></td>`
+            +`<td>${f.kind==='number'?`<input data-field-unit="${i}" value="${esc(f.unitLabel??'')}" placeholder="minutes" aria-label="Unit for ${esc(f.attribute)}">`:'—'}</td></tr>`).join('')
+          +`</tbody></table><p class="description">Nothing is guessed from a column name. A numeric column the rules read needs its unit.</p>`
+        :options?.candidates?.length
+          ?`<p class="description">The connected records carry ${options.candidates.length} column${options.candidates.length===1?'':'s'}: ${esc(options.candidates.map(c=>c.attribute).join(', '))}.</p>`
+            +`<button class="button" id="use-columns" data-editor-add>Use these ${options.candidates.length} column${options.candidates.length===1?'':'s'}</button>`
+          :`<div class="notice">Connect the records these rules read, and their columns are offered here.</div>`)
+      +`</section>`;
+
+    // A RULE AS BLOCKS (experiment 192): each part its own kind of block, with its word, so the structure reads at a glance
+    // and in greyscale. The word is the cue; the colour and the edge repeat it.
+    const conclusionRow=(r:number,t:number,conclusion:Authored['rules'][number]['then'][number],rule:Authored['rules'][number])=>
+      `<div class="rule-condition">`
+      +`<select data-rule="${r}" data-then="${t}" data-part="then-kind" aria-label="Kind of conclusion">`
+        +`<option value="category" ${isComputed(conclusion)?'':'selected'}>a category</option>`
+        +`<option value="computed" ${isComputed(conclusion)?'selected':''}>a computed value</option></select>`
+      +(isComputed(conclusion)
+        ?`<input data-rule="${r}" data-then="${t}" data-part="column" aria-label="New column" value="${esc(conclusion.column??localName(conclusion.predicate))}" placeholder="new column">`
+          +`<span class="rule-is">is</span>`
+          +operandControl(r,t,'left',conclusion.compute.left)
+          +`<select data-rule="${r}" data-then="${t}" data-part="operator" aria-label="Operation">`
+          +COMPUTE_OPERATORS.map(o=>`<option value="${o}" ${o===conclusion.compute.operator?'selected':''}>${OPERATOR_WORDS[o]}</option>`).join('')+`</select>`
+          +operandControl(r,t,'right',conclusion.compute.right)
+          +`<span class="rule-is">measured in</span>`
+          +`<input data-rule="${r}" data-then="${t}" data-part="unit" aria-label="Unit of the new column" value="${esc(conclusion.unit??'')}" placeholder="deaths per house">`
+          +`<input data-rule="${r}" data-then="${t}" data-part="meaning" aria-label="What the new column measures" value="${esc(conclusion.meaning??'')}" placeholder="what it measures">`
+        :`<input data-rule="${r}" data-then="${t}" data-part="predicate" aria-label="Conclusion name" value="${esc(conclusion.predicate.replace(/^fwa:/,''))}" placeholder="band">`
+          +`<span class="rule-is">is</span>`
+          +`<input data-rule="${r}" data-then="${t}" data-part="conclusion" aria-label="Conclusion value" value="${esc((conclusion.value??'').replace(/^fwa:/,''))}" placeholder="Short">`)
+      +(rule.then.length>1?`<button class="button small" data-rule="${r}" data-then="${t}" data-part="drop-then">Remove</button>`:'')
+      +`</div>`;
+    const ruleCard=(rule:Authored['rules'][number],r:number)=>`<section class="rule-card"><header><h3>Rule ${r+1}`
+      +`${evaluation?` · ${evaluation.matchedByRule[r]!.toLocaleString('en')} record${evaluation.matchedByRule[r]===1?'':'s'}`:''}</h3>`
+      +`<button class="button small" data-rule="${r}" data-part="drop-rule">Remove rule</button></header>`
+      +rule.any.map((group,g)=>(g?`<div class="rule-block rule-block-or"><span class="rule-word rule-word-or">or</span></div>`:'')
+        +`<div class="rule-block rule-block-if">`
+        +`<span class="rule-word rule-word-if">${group.all.length?'if':'for every record'}</span>`
+        +group.all.map((condition,c)=>conditionRow(r,g,c,condition)).join('')
+        +`<button class="button small" data-rule="${r}" data-group="${g}" data-part="add-condition">+ and</button>`
+        +(rule.any.length>1?`<button class="button small" data-rule="${r}" data-group="${g}" data-part="drop-group">Remove alternative</button>`:'')
+        +`</div>`).join('')
+      +`<button class="button small" data-rule="${r}" data-part="add-group">+ or</button>`
+      +`<div class="rule-block rule-block-then"><span class="rule-word rule-word-then">then</span>`
+      +rule.then.map((conclusion,t)=>conclusionRow(r,t,conclusion,rule)).join('')
+      +`<button class="button small" data-rule="${r}" data-part="add-then">+ and conclude</button></div>`
+      +`</section>`;
+
+    // OTHERWISE, one per column (experiment 192): the value a record takes where no rule gave the column one.
+    const concludedColumns=()=>[...new Set(rules.flatMap(r=>r.then.filter(c=>!isComputed(c)).map(c=>c.predicate)))];
+    const otherwiseMarkup=()=>`<section class="rule-otherwise-list">`
+      +otherwise.map((o,i)=>`<div class="rule-block rule-block-otherwise" data-otherwise-block="${i}">`
+        +`<span class="rule-word rule-word-otherwise">otherwise</span>`
+        +`<div class="rule-condition"><select data-otherwise="${i}" data-otherwise-part="column" aria-label="Column the otherwise gives a value to">`
+        +[...new Set([...concludedColumns(),o.predicate].filter(Boolean))].map(c=>`<option value="${esc(c)}" ${c===o.predicate?'selected':''}>${esc(localName(c))}</option>`).join('')
+        +`</select><span class="rule-is">is</span>`
+        +`<input data-otherwise="${i}" data-otherwise-part="value" aria-label="Value where no rule gave one" value="${esc(localName(o.value).replace(/_/g,' '))}" placeholder="Cannot be classified">`
+        +`<button class="button small" data-otherwise="${i}" data-part="drop-otherwise" aria-label="Remove this otherwise">Remove</button>`
+        +(evaluation?.defaultedByColumn?.[localName(o.predicate)]!==undefined
+          ?`<span class="rule-block-count">${evaluation.defaultedByColumn[localName(o.predicate)]!.toLocaleString('en')} record${evaluation.defaultedByColumn[localName(o.predicate)]===1?'':'s'}</span>`:'')
+        +`</div></div>`).join('')
+      +(review?'':`<button class="button" id="rule-editor-add-otherwise" data-editor-add ${concludedColumns().length>otherwise.length?'':'disabled'}>+ Add an otherwise</button>`)
+      +`</section>`;
+
+    const sectionsOf=():ConfigSections=>{
+      choices=readable(fields);
       const count=compiledRuleCount({subject:'?s',rules:rules as never});
       let problem='';
-      // RULES THAT COMPUTE are evaluated directly, not compiled (experiment 188), so they are checked for what direct
-      // evaluation needs: a name for each new column, and both sides of each operation.
+      // RULES EVALUATED DIRECTLY, because a value is computed or a column has an otherwise (experiments 188 and 192), are
+      // checked for what direct evaluation needs; the rest are compiled, as the reasoner reads them.
+      const defaults=otherwiseProblems({rules:rules as never,otherwise},localName);
       problem=settingProblem();
       if(problem){/* said first: a rule cannot be checked against a setting with no value */}
+      else if(defaults.length)problem=defaults[0]!;
       else if(computesValues({rules:rules as never}))problem=computedProblem();
-      else{
+      else if(!otherwise.length){
         try{compileAuthoredRuleset({subject:'?s',rules:rules as never});}
         catch(error){problem=error instanceof Error?error.message:String(error);}
       }
       evaluation=evaluate();
-      if(!problem&&options?.preview?.records.length&&!evaluation&&computesValues({rules:rules as never})){
-        try{evaluateAuthored(options.preview.records,fields as never,rules as never,numericSettings,order);}
+      if(!problem&&options?.preview?.records.length&&!evaluation&&evaluatedDirectly({rules:rules as never,otherwise})){
+        try{evaluateAuthored(options.preview.records,fields as never,rules as never,numericSettings,order,otherwise);}
         catch(error){problem=error instanceof Error?error.message:String(error);}
       }
-      // Units are checked while the rule is being written, which is the whole point: the same
-      // check at run time tells a practitioner their rules are wrong after they have written
-      // them, kept them, and run the workflow.
       if(!problem){
-        // Not while reviewing a published ruleset. Its rules passed the build's own check
-        // before they shipped, and the field units reconstructed for the display are a
-        // convenience rather than a declaration -- reporting them as a defect in somebody
-        // else's published work would be telling the practitioner something untrue.
-        const units=review?[]:authoredUnitProblems({...authored,parameters:settings,rules:rules as never});
+        // Not while reviewing a published ruleset: its rules passed the build's own check before they shipped.
+        const units=review?[]:authoredUnitProblems({...authored,fields,parameters:settings,rules:rules as never});
         if(units.length)problem=units[0].says;
       }
-      dialog.innerHTML=`<div class="manual-head"><h2 id="rule-editor-title">${esc(authored.title)}</h2>`
-        +(review
-          ?`<div><button class="button primary" id="rule-editor-cancel">Close</button></div></div>`
-          :`<div><button class="button" id="rule-editor-cancel">Close without keeping</button>`
-            +`<button class="button primary" id="rule-editor-keep" ${problem?'disabled':''}>Keep these rules</button></div></div>`)
-        +`<div class="rule-editor-body">`
+      const settingsHtml=`<p class="rule-title"><strong>${esc(authored.title)}</strong></p>`
         +(review?`<div class="notice">${esc(review.note)}</div>`:'')
-        +`<p class="description">Every rule is checked against every record. A record that matches more than one rule takes all of their conclusions, so rules that disagree must not both match; a record that matches none keeps no conclusion, and the run says how many.</p>`
-        +(problem?`<div class="inspector-alert" role="alert"><strong>These rules cannot be compiled</strong><p>${esc(problem)}</p></div>`:'')
+        +(review?'':fieldsMarkup())
         +(review&&!settings.length?'':settingsMarkup())
         +(review&&!order?'':orderMarkup())
-        +rules.map((rule,r)=>`<section class="rule-card"><header><h3>Rule ${r+1}${evaluation?` · ${evaluation.matchedByRule[r]!.toLocaleString('en')} record${evaluation.matchedByRule[r]===1?'':'s'}`:''}</h3>`
-          +`<button class="button small" data-rule="${r}" data-part="drop-rule">Remove rule</button></header>`
-          +rule.any.map((group,g)=>`<div class="rule-group">`
-            +(group.all.length?(g?`<p class="rule-or">or if</p>`:`<p class="rule-or">if</p>`):`<p class="rule-or">for every record</p>`)
-            +group.all.map((condition,c)=>conditionRow(r,g,c,condition)).join('')
-            +`<button class="button small" data-rule="${r}" data-group="${g}" data-part="add-condition">+ and</button>`
-            +(rule.any.length>1?`<button class="button small" data-rule="${r}" data-group="${g}" data-part="drop-group">Remove alternative</button>`:'')
-            +`</div>`).join('')
-          +`<button class="button small" data-rule="${r}" data-part="add-group">+ or</button>`
-          +`<p class="rule-or">then</p>`
-          +rule.then.map((conclusion,t)=>`<div class="rule-condition">`
-            // A CATEGORY OR A COMPUTED VALUE (experiment 188): "band is Short", or "change is dtp1_2024 minus dtp1_2005".
-            +`<select data-rule="${r}" data-then="${t}" data-part="then-kind" aria-label="Kind of conclusion">`
-              +`<option value="category" ${isComputed(conclusion)?'':'selected'}>a category</option>`
-              +`<option value="computed" ${isComputed(conclusion)?'selected':''}>a computed value</option></select>`
-            +(isComputed(conclusion)
-              ?`<input data-rule="${r}" data-then="${t}" data-part="column" aria-label="New column" value="${esc(conclusion.column??localName(conclusion.predicate))}" placeholder="new column">`
-                +`<span class="rule-is">is</span>`
-                +operandControl(r,t,'left',conclusion.compute.left)
-                +`<select data-rule="${r}" data-then="${t}" data-part="operator" aria-label="Operation">`
-                +COMPUTE_OPERATORS.map(o=>`<option value="${o}" ${o===conclusion.compute.operator?'selected':''}>${OPERATOR_WORDS[o]}</option>`).join('')+`</select>`
-                +operandControl(r,t,'right',conclusion.compute.right)
-                // WHAT IT MEASURES AND ITS UNIT, stated here, where the column is made.
-                +`<span class="rule-is">measured in</span>`
-                +`<input data-rule="${r}" data-then="${t}" data-part="unit" aria-label="Unit of the new column" value="${esc(conclusion.unit??'')}" placeholder="deaths per house">`
-                +`<input data-rule="${r}" data-then="${t}" data-part="meaning" aria-label="What the new column measures" value="${esc(conclusion.meaning??'')}" placeholder="what it measures">`
-              :`<input data-rule="${r}" data-then="${t}" data-part="predicate" aria-label="Conclusion name" value="${esc(conclusion.predicate.replace(/^fwa:/,''))}" placeholder="band">`
-                +`<span class="rule-is">is</span>`
-                +`<input data-rule="${r}" data-then="${t}" data-part="conclusion" aria-label="Conclusion value" value="${esc((conclusion.value??'').replace(/^fwa:/,''))}" placeholder="Short">`)
-            +(rule.then.length>1?`<button class="button small" data-rule="${r}" data-then="${t}" data-part="drop-then">Remove</button>`:'')
-            +`</div>`).join('')
-          +`<button class="button small" data-rule="${r}" data-part="add-then">+ and conclude</button>`
-          +`</section>`).join('')
-        +(review?'':`<button class="button" id="rule-editor-add">+ Add a rule</button>`
-          +`<button class="button" id="rule-editor-add-every">+ Add a value computed for every record</button>`)
-        +previewMarkup()
-        +`<p class="muted">${count} of ${RULE_CEILING} rules once compiled. Every alternative becomes a rule of its own, so alternatives multiply where conditions add.</p>`
-        +`</div>`;
-      wire();
+        +`<p class="description">Every rule is checked against every record. Rules that disagree must not both match a record. A column no rule reached for a record is left empty, or takes its otherwise.</p>`
+        +rules.map((rule,r)=>ruleCard(rule,r)).join('')
+        +(review?'':`<div class="rule-editor-adds"><button class="button" id="rule-editor-add" data-editor-add>+ Add a rule</button>`
+          +`<button class="button" id="rule-editor-add-every" data-editor-add>+ Add a value computed for every record</button></div>`)
+        +otherwiseMarkup()
+        +(evaluatedDirectly({rules:rules as never,otherwise})
+          ?`<p class="muted">${rules.length} rule${rules.length===1?'':'s'}, evaluated directly rather than compiled to N3, because ${otherwise.length?'a column has an otherwise':'a rule computes a value'}.</p>`
+          :`<p class="muted">${count} of ${RULE_CEILING} rules once compiled. Every alternative becomes a rule of its own, so alternatives multiply where conditions add.</p>`);
+      // DECISIONS: what the rules left for the person, named, not settled by the order of the rules.
+      const conflicts=evaluation?evaluation.records.flatMap((o,i)=>o.conflicts.length?[i]:[]):[];
+      const labelOf=(i:number)=>options?.preview?.records[i]?.label??`Record ${i+1}`;
+      const decisions=conflicts.length
+        ?`<p>${conflicts.length.toLocaleString('en')} record${conflicts.length===1?' has':'s have'} no value where two rules disagree: `
+          +conflicts.slice(0,8).map(i=>`<strong>${esc(labelOf(i))}</strong>`).join(', ')+(conflicts.length>8?` and ${conflicts.length-8} more`:'')
+          +'. Change a rule so only one matches them.</p>':undefined;
+      return {settings:settingsHtml,preview:previewMarkup(),...(decisions?{decisions}:{}),
+        ...(problem?{message:{tone:'refusal' as const,text:problem},blocked:true}:{})};
     };
 
     const number=(el:HTMLElement,name:string)=>Number(el.dataset[name]);
-    const wire=()=>{
-      dialog.querySelector<HTMLButtonElement>('#rule-editor-cancel')!.onclick=()=>close();
-      if(review){
-        // Every control disabled rather than re-rendered as text: the rule reads identically to
-        // one being written, which is the point -- a practitioner learning the form from a
-        // published ruleset is looking at the same thing they will later edit.
-        dialog.querySelectorAll<HTMLInputElement|HTMLSelectElement>('.rule-editor-body input,.rule-editor-body select')
-          .forEach(el=>{el.disabled=true;});
-        dialog.querySelectorAll<HTMLButtonElement>('.rule-editor-body button[data-part]').forEach(el=>el.remove());
-        return;
-      }
-      dialog.querySelector<HTMLButtonElement>('#rule-editor-keep')!.onclick=()=>close({rules,...(order?.by?{order}:{}),parameters:settings,values});
-      dialog.querySelector<HTMLButtonElement>('#rule-editor-add-setting')!.onclick=()=>{
+    // Redraws the frame from the state above; set once the frame is open.
+    let render=()=>{};
+    const wire=(root:HTMLElement)=>{
+      // A PUBLISHED RULESET is read, not written: the frame disables every control (readOnly).
+      if(review)return;
+      root.querySelector<HTMLSelectElement>('#ruleset-records')?.addEventListener('change',e=>{
+        recordsKind=(e.target as HTMLSelectElement).value as typeof recordsKind;render();});
+      root.querySelector<HTMLButtonElement>('#use-columns')?.addEventListener('click',()=>{
+        fields=structuredClone(options?.candidates??[]);render();});
+      root.querySelectorAll<HTMLSelectElement>('[data-field-kind]').forEach(el=>el.addEventListener('change',()=>{
+        const field=fields[Number(el.dataset.fieldKind)]!;field.kind=el.value as Field['kind'];
+        if(field.kind!=='number'){delete field.unit;delete field.unitLabel;}render();}));
+      root.querySelectorAll<HTMLInputElement>('[data-field-unit]').forEach(el=>el.addEventListener('change',()=>{
+        const field=fields[Number(el.dataset.fieldUnit)]!,typed=el.value.trim();
+        if(typed)field.unitLabel=typed;else delete field.unitLabel;
+        const iri=typed?options?.unitIri?.(typed):undefined;if(iri)field.unit=iri;else delete field.unit;render();}));
+      // OTHERWISE (experiment 192): a column and its default; the first column no otherwise covers is offered.
+      root.querySelector<HTMLButtonElement>('#rule-editor-add-otherwise')?.addEventListener('click',()=>{
+        const free=concludedColumns().find(c=>!otherwise.some(o=>o.predicate===c));
+        if(free){otherwise=[...otherwise,{predicate:free,value:'fwa:None'}];render();}});
+      root.querySelectorAll<HTMLElement>('[data-otherwise]').forEach(el=>{
+        const i=Number(el.dataset.otherwise),o=otherwise[i]!;
+        if(el.dataset.part==='drop-otherwise'){(el as HTMLButtonElement).onclick=()=>{otherwise=otherwise.filter((_,j)=>j!==i);render();};return;}
+        el.addEventListener('change',()=>{const value=(el as HTMLInputElement).value;
+          if(el.dataset.otherwisePart==='column')o.predicate=value;
+          if(el.dataset.otherwisePart==='value')o.value=`fwa:${value.trim().replace(/[^a-zA-Z0-9]+/g,'_').replace(/^_+|_+$/g,'')||'None'}`;
+          render();});
+      });
+      root.querySelector<HTMLButtonElement>('#rule-editor-add-setting')!.onclick=()=>{
         let k=settings.length+1;while(settings.some(s=>s.name===`setting${k}`))k++;
         settings=[...settings,{name:`setting${k}`,meaning:''}];render();};
-      dialog.querySelectorAll<HTMLInputElement|HTMLButtonElement>('[data-setting]').forEach(el=>{
+      root.querySelectorAll<HTMLInputElement|HTMLButtonElement>('[data-setting]').forEach(el=>{
         const i=Number(el.dataset.setting),part=el.dataset.settingPart,setting=settings[i]!;
         if(part==='drop'){(el as HTMLButtonElement).onclick=()=>{settings=settings.filter((_,j)=>j!==i);delete values[setting.name];render();};return;}
         el.addEventListener('change',()=>{
@@ -496,7 +566,7 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
             if(iri)setting.unit=iri;else delete setting.unit;}
           render();});
       });
-      dialog.querySelectorAll<HTMLSelectElement>('[data-order]').forEach(el=>el.addEventListener('change',()=>{
+      root.querySelectorAll<HTMLSelectElement>('[data-order]').forEach(el=>el.addEventListener('change',()=>{
         if(el.dataset.order==='by'){
           if(!el.value)order=undefined;
           else{
@@ -509,20 +579,20 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
           }
         }else if(order)order.previous=el.value as AuthoredOrder['previous'];
         render();}));
-      dialog.querySelectorAll<HTMLInputElement>('[data-order-within]').forEach(el=>el.addEventListener('change',()=>{
+      root.querySelectorAll<HTMLInputElement>('[data-order-within]').forEach(el=>el.addEventListener('change',()=>{
         if(!order)return;const column=el.dataset.orderWithin!;
         order.within=el.checked?[...order.within.filter(c=>c!==column),column]:order.within.filter(c=>c!==column);render();}));
-      dialog.querySelector<HTMLButtonElement>('#rule-editor-add-every')!.onclick=()=>{
+      root.querySelector<HTMLButtonElement>('#rule-editor-add-every')!.onclick=()=>{
         const first=choices.find(c=>c.kind==='number')?.predicate;
         rules=[...rules,{any:[{all:[]}],then:[{predicate:`fwa:computed_${rules.length+1}`,column:'',
           compute:{left:first?{field:first}:0,operator:'minus',right:first?{field:first}:0}}]} as never];
         render();
       };
-      dialog.querySelector<HTMLButtonElement>('#rule-editor-add')!.onclick=()=>{
+      root.querySelector<HTMLButtonElement>('#rule-editor-add')!.onclick=()=>{
         rules=[...rules,{any:[{all:[blankCondition(fields)]}],then:[{predicate:'fwa:decision',value:'fwa:Review'}]}];
         render();
       };
-      dialog.querySelectorAll<HTMLElement>('[data-part]').forEach(el=>{
+      root.querySelectorAll<HTMLElement>('[data-part]:not([data-otherwise])').forEach(el=>{
         const part=el.dataset.part!,r=number(el,'rule');
         if(el instanceof HTMLButtonElement){
           el.onclick=()=>{
@@ -623,9 +693,19 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
       });
     };
 
-    render();
-    document.body.append(dialog);
-    dialog.addEventListener('cancel',event=>{event.preventDefault();close();});
-    dialog.showModal();
+    // THE STANDARD FRAME (experiment 186): heading, ×, the message slot, Cancel and Apply. The state above is the draft,
+    // so Cancel leaves the step as it was and asks first when anything changed.
+    let redrawFrame=()=>{};
+    const state=()=>({rules,order,settings,values,otherwise,fields,recordsKind});
+    let draftRef:ReturnType<typeof state>|undefined;
+    render=()=>{if(draftRef)Object.assign(draftRef,structuredClone(state()));redrawFrame();};
+    openConfigDialog({
+      id:'rule-editor',widget:'Apply ruleset',step:options?.step??authored.title,draft:state(),readOnly:!!review,wide:true,
+      sections:draft=>{draftRef=draft;return sectionsOf();},
+      wire:(root,draft,redraw)=>{draftRef=draft;redrawFrame=redraw;wire(root);},
+      apply:()=>resolve({rules,...(order?.by?{order}:{}),parameters:settings,values,otherwise,fields,
+        ...(recordsKind?{recordsKind}:{})}),
+      onClose:()=>resolve(undefined),
+    },esc);
   });
 }

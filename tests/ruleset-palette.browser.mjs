@@ -46,7 +46,7 @@ test('adding one gives a node that says it has nothing to apply yet',async({page
   assert.ok(node,'the widget adds a node with nothing pinned');
 
   // It is allowed to sit there, and the run refuses it by name rather than silently.
-  await expect(page.locator('.inspector')).toContainText('nothing to apply yet');
+  await expect(page.locator('.inspector')).toContainText('Nothing to apply yet');
   await page.locator('#run-button').click();
   await expect(page.locator('.toast')).toContainText('Choose a ruleset',{timeout:45000});
 });
@@ -56,6 +56,7 @@ test('choosing a ruleset pins it, takes its defaults, and names the step',async(
   await expect(page.locator('#node-library')).toBeVisible({timeout:45000});
   await page.locator('[data-view="workflow"]').click();
   await page.locator('#node-library [data-add="apply_ruleset"]').click();
+  await page.locator('#configure-step').click();
 
   // Only current versions are offered: a superseded rule is resolvable for a saved pin and is
   // not somewhere to start new work.
@@ -70,6 +71,7 @@ test('choosing a ruleset pins it, takes its defaults, and names the step',async(
 
   await page.locator('#ruleset-choice').selectOption(
     offered.find(v=>v.includes('extent-review')));
+  await page.locator('#ruleset-config #config-apply').click();
   const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));
   const node=saved.nodes.filter(n=>n.type==='apply_ruleset').at(-1);
   assert.equal(node.params.ruleset.id,'urn:fieldwork:ruleset:extent-review');
@@ -80,5 +82,5 @@ test('choosing a ruleset pins it, takes its defaults, and names the step',async(
   assert.equal(node.params.label,'Extent review','and the step is named after what it does');
 
   await expect(page.locator('.inspector')).toContainText('Extent review');
-  await expect(page.locator('.inspector')).toContainText('Illustrative');
+  await expect(page.locator('.inspector')).toContainText('Basis: illustrative, no source');
 });

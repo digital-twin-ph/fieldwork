@@ -123,7 +123,7 @@ function columnTools(box:HTMLFieldSetElement,prefix:string,title:string,changed:
   count();
 }
 
-export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:TableReopen,frame:TableFrame={}):void{
+export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boolean>,existing?:TableReopen,frame:TableFrame={}):void{
   const dialog=document.createElement('dialog');dialog.id='table-dialog';dialog.className='config-dialog';dialog.setAttribute('aria-labelledby','table-title');
   const named=(text:string)=>text.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]!));
   dialog.innerHTML='<header class="config-head"><h2 id="table-title">Tabular data'
@@ -618,7 +618,9 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:T
       const saved:TableImport={...result,data:{...result.data,source},source,
         ...(remote?{remote}:{}),...(Object.keys(proposed).length?{proposed}:{}),
         ...(result.source_table&&convert.checked?{convertOnRun:true}:{})};
-      if(!onSave(saved))throw new Error('The table could not be saved. Your previous project is unchanged; retry Save.');
+      // AWAITED: the rows are kept on this device before the dialog says they are (found 2026-11-08, a reload right after
+      // Save could find the workflow pointing at rows not yet written).
+      if(!await onSave(saved))throw new Error('The table could not be saved. Your previous project is unchanged; retry Save.');
       dialog.close();
     }catch(e){fail(e);status.textContent='This table has not been added to the project.';}
     finally{busy=false;save.disabled=!result;cancel.disabled=false;fileInput.disabled=false;}

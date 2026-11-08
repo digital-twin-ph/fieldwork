@@ -32,7 +32,7 @@ test('a rule reading the previous row waits for a sort, then is previewed before
   await expect(page.locator('#node-library')).toBeVisible({timeout:45000});
   await page.locator('#workflow-file').setInputFiles({name:'c.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(workflow))});
   await page.locator('.react-flow__node[data-id="r"]').click();
-  await page.locator('#edit-rules').click();
+  await page.locator('#configure-step').click();
   const dialog=page.locator('#rule-editor');
   await expect(dialog).toBeVisible();
 
@@ -46,7 +46,7 @@ test('a rule reading the previous row waits for a sort, then is previewed before
   await set('right-source','previous:fwa:cumulative_cases');
   // NOT UNTIL THE RECORDS HAVE AN ORDER: the file's own order is not a declaration.
   await expect(dialog.locator('[role="alert"]')).toContainText('A rule reads the previous row, so the records need an order');
-  await expect(dialog.locator('#rule-editor-keep')).toBeDisabled();
+  await expect(dialog.locator('#config-apply')).toBeDisabled();
 
   // Sort by the dates, offered first, within each place, ticked for it.
   await expect(dialog.locator('#rule-order-by option').nth(1)).toHaveText('week_start (dates)');
@@ -71,7 +71,7 @@ test('a rule reading the previous row waits for a sort, then is previewed before
   await expect(tables.nth(2)).toContainText('new cases: no previous row, no row for the period before');
 
   await dialog.screenshot({path:'test-results/rules-previous-row.png'});
-  await dialog.locator('#rule-editor-keep').click();
+  await dialog.locator('#config-apply').click();
   await expect(dialog).toBeHidden();
   await expect(page.locator('#inspector-content [data-rule-order]')).toHaveText(
     "Sorted by week_start within each place; the previous row is the previous week's.");

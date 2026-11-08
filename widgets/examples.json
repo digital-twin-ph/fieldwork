@@ -528,7 +528,7 @@
       "id": "urn:fieldwork:example:workflows-rulesets",
       "title": "Rules on synthetic data",
       "repository": "https://github.com/digital-twin-ph/example-workflows-rulesets",
-      "commit": "b86187af1407a5c216b71b679a17f76adfa09ed1",
+      "commit": "de2ad9cf3a3f291cf4bb9485b173efcb915d17e3",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-workflows-rulesets",
       "licence": {
         "data": "CC0-1.0",
@@ -557,8 +557,8 @@
         },
         {
           "path": "manual.json",
-          "sha256": "7d384d35857c61b4c894cbcc0f69caa04cc6779734d2dc49bddd6661b186d1d4",
-          "bytes": 46325
+          "sha256": "c1170d2c06984ac3d369de1ef987cd677a6cccea9d61979979a3d2d638a390ee",
+          "bytes": 48622
         },
         {
           "path": "data/clinic-visits.csv",

@@ -29,7 +29,7 @@ test('a value computed for every record is previewed before and after, and a div
   await expect(page.locator('#node-library')).toBeVisible({timeout:45000});
   await page.locator('#workflow-file').setInputFiles({name:'d.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(workflow))});
   await page.locator('.react-flow__node[data-id="r"]').click();
-  await page.locator('#edit-rules').click();
+  await page.locator('#configure-step').click();
   const dialog=page.locator('#rule-editor');
   await expect(dialog).toBeVisible();
   // BEFORE IS THE WIDE TABLE: one row per district, houses and deaths as columns, and no "measure".
@@ -66,7 +66,7 @@ test('a value computed for every record is previewed before and after, and a div
   await expect(after.locator('tbody tr').last()).toContainText('deaths per house: divided by zero');
 
   await dialog.screenshot({path:'test-results/rules-compute-preview.png'});
-  await dialog.locator('#rule-editor-keep').click();
+  await dialog.locator('#config-apply').click();
   await expect(dialog).toBeHidden();
   // The Inspector reads the rule as its sum.
   await expect(page.locator('#inspector-content')).toContainText('houses without a death');

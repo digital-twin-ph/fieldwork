@@ -15,7 +15,7 @@ test('rules can be edited in a dialog, and the edit reaches the saved workflow',
 
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="building"]').click();
-  await page.locator('#edit-rules').click();
+  await page.locator('#configure-step').click();
   const dialog=page.locator('#rule-editor');
   await expect(dialog).toBeVisible();
   await expect(dialog).toContainText('A building, banded by how many died in it');
@@ -41,7 +41,7 @@ test('rules can be edited in a dialog, and the edit reaches the saved workflow',
     return w.nodes.find(n=>n.id==='building').params.authored.rules.length;
   })).toBe(before);
 
-  await dialog.locator('#rule-editor-keep').click();
+  await dialog.locator('#config-apply').click();
   await expect(dialog).toBeHidden();
   const after=await page.evaluate(()=>{
     const w=JSON.parse(localStorage.getItem('fieldwork-workflow-v1')||'{}');
@@ -83,7 +83,7 @@ test('a setting is chosen by name, and the template syntax never reaches the sur
   await expect(page.locator('#inspector-content')).toContainText('busy · 20 deaths');
   expect(await page.locator('#inspector-content').innerText()).not.toContain('{{');
 
-  await page.locator('#edit-rules').click();
+  await page.locator('#configure-step').click();
   const dialog=page.locator('#rule-editor');
   await expect(dialog).toBeVisible();
   expect(await dialog.innerText()).not.toContain('{{');
@@ -93,26 +93,21 @@ test('a setting is chosen by name, and the template syntax never reaches the sur
   await expect(source).toHaveValue('busy');
   await expect(source.locator('option')).toHaveText(['a number','busy · 20 deaths']);
 
-  // CLEARING the box is refused, and the refusal now names what is missing. `Number('')` is 0,
-  // so an emptied setting used to be stored as zero and bounce off `busy`'s declared minimum --
-  // "busy must be between 1 and 20", which is about a figure the practitioner never typed. A
-  // setting declaring no minimum would have run on that zero in silence.
-  await dialog.locator('#rule-editor-cancel').click();
-  await expect(dialog).toBeHidden();
-  await page.locator('[data-ruleset-parameter="busy"]').fill('');
-  await page.locator('[data-ruleset-parameter="busy"]').dispatchEvent('change');
-  await expect(page.locator('#toast')).toContainText('needs a value for busy');
-  expect(await page.evaluate(()=>
-    JSON.parse(localStorage.getItem('fieldwork-workflow-v1')).nodes.find(n=>n.id==='day').params.parameters.busy,
-  )).toBe(20,'the refused edit is rolled back, not stored as zero');
-  await page.locator('#edit-rules').click();
+  // CLEARING a setting's value is refused, and the refusal names what is missing. `Number('')` is 0, so an emptied
+  // setting was once stored as zero; it is set in this dialog now (experiment 186), and Apply waits for a number.
+  const busy=dialog.locator('[data-setting-part="value"]').first();
+  await busy.fill('');await busy.press('Tab');
+  await expect(dialog.locator('.config-message')).toContainText('Set busy to a number');
+  await expect(dialog.locator('#config-apply')).toBeDisabled();
+  await dialog.locator('[data-setting-part="value"]').first().fill('20');await dialog.locator('[data-setting-part="value"]').first().press('Tab');
+  await expect(dialog.locator('#config-apply')).toBeEnabled();
   await expect(dialog.locator('[data-part="value-source"]').last()).toHaveValue('busy');
 
   // Switching to a typed number, and back, leaves the stored form intact.
-  await source.selectOption('');
+  await dialog.locator('[data-part="value-source"]').last().selectOption('');
   await expect(dialog.locator('[data-part="value"]').last()).toBeVisible();
   await dialog.locator('[data-part="value-source"]').last().selectOption('busy');
-  await dialog.locator('#rule-editor-keep').click();
+  await dialog.locator('#config-apply').click();
   await expect(dialog).toBeHidden();
   expect(await page.evaluate(()=>{
     const w=JSON.parse(localStorage.getItem('fieldwork-workflow-v1')||'{}');
@@ -138,7 +133,11 @@ test('a published ruleset is read in the editor, and is not editable there',asyn
   const before=await edges();
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="review"]').click();
-  await page.locator('#review-rules').click();
+  // Configure… opens the published ruleset's own dialog, whose preview is its rules; the editor reads them too.
+  await page.locator('#configure-step').click();
+  const chooser=page.locator('#ruleset-config');
+  await expect(chooser.locator('[data-config-section="preview"] .authored-rule')).toHaveCount(3);
+  await chooser.locator('#review-rules').click();
   const dialog=page.locator('#rule-editor');
   await expect(dialog).toBeVisible();
   await expect(dialog).toContainText('Extent review 1.1.0');
@@ -150,13 +149,16 @@ test('a published ruleset is read in the editor, and is not editable there',asyn
   expect(await dialog.innerText()).not.toContain('{{');
 
   // Published and pinned: every control is disabled and nothing can be added or removed.
-  for(const control of await dialog.locator('.rule-editor-body input,.rule-editor-body select').all())
+  for(const control of await dialog.locator('.config-body input,.config-body select').all())
     await expect(control).toBeDisabled();
   await expect(dialog.locator('#rule-editor-add')).toHaveCount(0);
-  await expect(dialog.locator('.rule-editor-body button[data-part]')).toHaveCount(0);
+  await expect(dialog.locator('.config-body button[data-part]')).toHaveCount(0);
+  await expect(dialog.locator('#config-apply')).toBeHidden();
 
-  await dialog.locator('#rule-editor-cancel').click();
+  await dialog.locator('#config-cancel').click();
   await expect(dialog).toBeHidden();
+  await chooser.locator('#config-cancel').click();
+  await expect(chooser).toBeHidden();
   expect(await edges(),'reading rules rewires nothing').toBe(before);
   expect(errors).toEqual([]);
 });
@@ -174,9 +176,11 @@ test('writing rules for a pinned step keeps what is wired to it',async({page})=>
   const before=await page.locator('.react-flow__edge').count();
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="review"]').click();
-  await page.locator('#author-rules').click();
+  await page.locator('#configure-step').click();
+  await page.locator('#ruleset-choice').selectOption('authored');
+  await page.locator('#ruleset-config #config-apply').click();
   await expect(page.locator('#rule-editor')).toBeVisible();
-  await page.locator('#rule-editor-cancel').click();
+  await page.locator('#config-cancel').click();
   expect(await page.locator('.react-flow__edge').count()).toBe(before);
   expect(errors).toEqual([]);
 });

@@ -3,6 +3,20 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.63.0 — 2026-11-08
+
+- **Apply ruleset has "is not" and "otherwise"** ([192](docs/experiments/192-is-not-and-otherwise.md)). *Rash is not
+  No* matches a recorded value that differs. An otherwise gives a column a value where no rule did, once the columns its
+  rules read are settled, so an ordered classification is written as columns in stages. The records that took it are
+  counted. Rules with an otherwise run directly; rules with only *is not* still run in the reasoner.
+- **A table's rows are kept before Save closes.** A reload straight after saving a table could lose it: the rows were
+  still being written ([175](docs/experiments/175-how-large-a-table.md)).
+- **Rules are drawn as coloured blocks**: if, or, then and otherwise, each with its word and its own edge.
+- **Apply ruleset is on the standard Inspector and dialog**: one sentence and **Configure…**. The records, columns,
+  units, settings and rules are set in the rules dialog; a published ruleset is chosen in its own dialog. Apply
+  ruleset 0.8.0. The rulesets example's manual opens the dialogs.
+- Validation: Chromium locally; WebKit in CI.
+
 ## 0.62.0 — 2026-11-08
 
 - **Total within groups gives each group's share, %** ([191](docs/experiments/191-shares-within-groups.md)), beside its

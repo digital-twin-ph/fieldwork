@@ -115,7 +115,7 @@ export type RuleApplicationResult={value:DisplayValue; receipt:Receipt};
 export function extentN3(polygons:{features:{id:string;name:string;areaSquareMetres?:number}[]},threshold:number,version='1.0.0'){
   if(!Number.isFinite(threshold)||threshold<0)throw new Error('State a review threshold in square metres, zero or greater.');
   if(!polygons?.features?.length)throw new Error('Connect polygons to review. There is nothing to classify.');
-  const prefix='@prefix fw: <urn:fieldwork:>.\n@prefix math: <http://www.w3.org/2000/10/swap/math#>.\n';
+  const prefix='@prefix fw: <urn:fieldwork:>.\n@prefix math: <http://www.w3.org/2000/10/swap/math#>.\n@prefix log: <http://www.w3.org/2000/10/swap/log#>.\n';
   const facts=polygons.features.map(f=>{
     const known=typeof f.areaSquareMetres==='number'&&Number.isFinite(f.areaSquareMetres);
     return `<urn:fieldwork:polygon:${encodeURIComponent(f.id)}> fw:areaKnown ${known}.`

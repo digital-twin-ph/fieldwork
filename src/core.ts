@@ -91,7 +91,7 @@ import type {DeclaredDesign} from './study-design.js';
 import {outreachProjection,extentN3,extentProjection,projectionOf,RULESET_FOR_NODE_TYPE,pinnedRuleset,parametersFor} from './rule-application.js';
 import {authoredConclusions,authoredFacts,authoredProjection,authoredReceipt,authoredDataIssues,authoredSubjects} from './authored-application.js';
 import {applyRepairs} from './column-profile.js';
-import {compileAuthoredRuleset,authoredUnitProblems,computesValues} from './authored-rules.js';
+import {compileAuthoredRuleset,authoredUnitProblems,evaluatedDirectly} from './authored-rules.js';
 import {evaluateAuthored,evaluatedTable,evaluationSentence} from './rule-evaluation.js';
 import {travelTime,travelTimeReceipt,validateTravelTime,TRAVEL_TIME_METHOD} from './travel-time.js';
 import {studyAreaN3,geometryBounds,validateDrawnGeometry} from './study-area.js';
@@ -1944,10 +1944,10 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
               +(unitProblems.length>1?` (${unitProblems.length-1} more like it.)`:''));
           // A RULE THAT COMPUTES A VALUE (experiment 188) is evaluated directly, over the same records the reasoner
           // would read: the authored tree is what runs, and N3 is the back end only where every rule fits it.
-          if(computesValues(authored)){
+          if(evaluatedDirectly(authored as never)){
             const records=authoredSubjects(subjects);
             if(!records.length)throw new Error('Connect records to apply rules to. There is nothing to apply them to.');
-            const evaluation=evaluateAuthored(records,authored.fields,authored.rules as never,bound,authored.order);
+            const evaluation=evaluateAuthored(records,authored.fields,authored.rules as never,bound,authored.order,authored.otherwise??[]);
             const dataIssues=authoredDataIssues(subjects,authored.fields);
             const method=evaluationSentence(evaluation,records.map(r=>r.label));
             const table=(subjects as unknown as import('./data-table.js').DataTable).kind==='data-table'
@@ -1958,7 +1958,8 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
             receipts.push({nodeId:node.id,kind:'computation',method,
               matchedByRule:evaluation.matchedByRule,unmatched:evaluation.unmatched,
               divisionsByZero:evaluation.records.flatMap((r,i)=>r.divisionsByZero.length?[records[i]!.label]:[]),
-              conflicts:evaluation.records.flatMap((r,i)=>r.conflicts.map(c=>({record:records[i]!.label,...c})))} as unknown as Receipt);
+              conflicts:evaluation.records.flatMap((r,i)=>r.conflicts.map(c=>({record:records[i]!.label,...c}))),
+              ...(evaluation.defaultedByColumn?{defaultedByColumn:evaluation.defaultedByColumn}:{})} as unknown as Receipt);
             break;
           }
           const facts=authoredFacts(subjects,authored.fields);

@@ -32,6 +32,12 @@ export interface ConfigDialog<D> {
   /** Connects the controls inside the sections. `redraw` rebuilds them from the draft. */
   wire:(root:HTMLElement,draft:D,redraw:()=>void)=>void;
   apply:(draft:D)=>void;
+  /** Called when the dialog closes without Apply: Cancel, ×, Escape or Discard. */
+  onClose?:()=>void;
+  /** A PUBLISHED THING SHOWN, NOT EDITED (experiment 192): every control disabled, and the footer is one Close. */
+  readOnly?:boolean;
+  /** Wider than a setting needs, for a body that is itself a form: the rules dialog. */
+  wide?:boolean;
 }
 
 export const CONFIG_APPLY='config-apply', CONFIG_CANCEL='config-cancel', CONFIG_CLOSE='config-close';
@@ -40,13 +46,14 @@ export function openConfigDialog<D>(spec:ConfigDialog<D>,esc:Escape):void{
   document.getElementById(spec.id)?.remove();
   const dialog=document.createElement('dialog');
   dialog.id=spec.id;
-  dialog.className='config-dialog';
+  dialog.className=`config-dialog${spec.wide?' config-dialog-wide':''}`;
   dialog.setAttribute('aria-labelledby',`${spec.id}-title`);
   const draft:D=structuredClone(spec.draft);
   const held=JSON.stringify(spec.draft);
   let confirming=false;
   const changed=()=>JSON.stringify(draft)!==held;
-  const close=()=>{dialog.close();dialog.remove();};
+  let applied=false;
+  const close=()=>{dialog.close();dialog.remove();if(!applied)spec.onClose?.();};
   const requestClose=()=>{if(changed()&&!confirming){confirming=true;draw();return;}close();};
 
   const section=(name:string,body?:string)=>body
@@ -58,14 +65,17 @@ export function openConfigDialog<D>(spec:ConfigDialog<D>,esc:Escape):void{
     +`<span class="config-step"> · ${esc(spec.step)}</span></h2>`
     +`<button class="config-close" id="${CONFIG_CLOSE}" aria-label="Close">×</button></header>`
     +'<div class="config-body"></div><div class="config-message-slot"></div>'
-    +`<footer class="config-foot"><button class="button" id="${CONFIG_CANCEL}">Cancel</button>`
-    +`<button class="button primary" id="${CONFIG_APPLY}">Apply</button></footer>`;
+    +(spec.readOnly
+      ?`<footer class="config-foot"><button class="button primary" id="${CONFIG_CANCEL}">Close</button>`
+        +`<button class="button primary" id="${CONFIG_APPLY}" hidden>Apply</button></footer>`
+      :`<footer class="config-foot"><button class="button" id="${CONFIG_CANCEL}">Cancel</button>`
+        +`<button class="button primary" id="${CONFIG_APPLY}">Apply</button></footer>`);
   const body=dialog.querySelector<HTMLElement>('.config-body')!;
   const slot=dialog.querySelector<HTMLElement>('.config-message-slot')!;
   const applyButton=dialog.querySelector<HTMLButtonElement>(`#${CONFIG_APPLY}`)!;
   dialog.querySelector<HTMLButtonElement>(`#${CONFIG_CLOSE}`)!.onclick=requestClose;
   dialog.querySelector<HTMLButtonElement>(`#${CONFIG_CANCEL}`)!.onclick=requestClose;
-  applyButton.onclick=()=>{if(!applyButton.disabled){spec.apply(draft);close();}};
+  applyButton.onclick=()=>{if(!applyButton.disabled&&!spec.readOnly){applied=true;spec.apply(draft);close();}};
 
   function draw(){
     // WHERE THE PERSON WAS, kept across the rebuild: the element with focus by id, and the caret in a text box.
@@ -89,6 +99,9 @@ export function openConfigDialog<D>(spec:ConfigDialog<D>,esc:Escape):void{
     const discard=slot.querySelector<HTMLButtonElement>('#config-discard');
     if(discard)discard.onclick=close;
     spec.wire(body,draft,()=>{confirming=false;draw();});
+    // READ ONLY: shown exactly as it would be edited, every control disabled and nothing to add or remove.
+    if(spec.readOnly){body.querySelectorAll<HTMLInputElement|HTMLSelectElement|HTMLTextAreaElement>('input,select,textarea')
+      .forEach(el=>{el.disabled=true;});body.querySelectorAll('button[data-part],button[data-editor-add]').forEach(el=>el.remove());}
 
     body.scrollTop=scroll;
     if(focusId&&!confirming){

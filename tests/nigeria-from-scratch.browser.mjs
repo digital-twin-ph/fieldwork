@@ -4,6 +4,18 @@ import {serveArchive,smallArchive} from './small-pmtiles.mjs';
 import {existsSync,readFileSync,writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 
+/** RULES WRITTEN ON A STEP (experiment 192): Configure… offers them beside the published rulesets; the rules dialog
+ *  then sets how the records arrive, and Apply keeps it. */
+async function writeRules(page,records){
+  await page.locator('#configure-step').click();
+  await page.locator('#ruleset-choice').selectOption('authored');
+  await page.locator('#ruleset-config #config-apply').click();
+  const editor=page.locator('#rule-editor');
+  await editor.locator('#ruleset-records').selectOption(records);
+  await editor.locator('#config-apply').click();
+  await expect(editor).toBeHidden();
+}
+
 /** NIGERIA FROM AN EMPTY CANVAS, one question to a workflow. South London's rule again, on a third
  *  shape: 774 parts, modelled estimates, no comparison between groups. */
 test.use({serviceWorkers:'block'});
@@ -133,18 +145,14 @@ test('five questions about 774 LGAs, each its own short workflow',async({page})=
     await add(page,'apply_ruleset');
     const derive=await idOf(page,'apply_ruleset');
     await page.locator(`.react-flow__node[data-id="${derive}"]`).click();
-    await page.locator('#author-rules').click();
-    await page.locator('#rule-editor-cancel').click();
-    await page.locator('#ruleset-records').selectOption('table');
+    await writeRules(page,'table');
     await tidy(page);await wire(page,table,derive,'subjects');
     await page.locator(`.react-flow__node[data-id="${derive}"]`).click();
-    // Each column read states its unit: the coverage is a proportion, as the source gives it.
-    await page.locator('#edit-rules').click();
-    await page.locator('#rule-editor-cancel').click();
-    for(const year of ['dtp1_2024','dtp1_2005']){
-      const box=page.locator(`[aria-label="Unit for ${year}"]`);await box.fill('proportion');await box.press('Tab');}
-    await page.locator('#edit-rules').click();
+    // Each column read states its unit: the coverage is a proportion, as the source gives it. Set in the rules dialog.
+    await page.locator('#configure-step').click();
     const rules=page.locator('#rule-editor');
+    for(const year of ['dtp1_2024','dtp1_2005']){
+      const box=rules.locator(`[aria-label="Unit for ${year}"]`);await box.fill('proportion');await box.press('Tab');}
     await rules.locator('#rule-editor-add-every').click();
     const part=name=>rules.locator(`[data-rule="0"][data-part="${name}"]`);
     await part('column').fill('change 2005 to 2024');await part('column').press('Tab');
@@ -152,7 +160,7 @@ test('five questions about 774 LGAs, each its own short workflow',async({page})=
     await part('operator').selectOption('minus');
     await part('right-source').selectOption({label:'dtp1_2005'});
     await expect(rules.locator('.rule-card h3').first()).toHaveText('Rule 1 · 774 records');
-    await rules.locator('#rule-editor-keep').click();
+    await rules.locator('#config-apply').click();
     await expect(rules).toBeHidden();
     await add(page,'select_rows');
     const select=await idOf(page,'select_rows');
@@ -244,22 +252,17 @@ test('five questions about 774 LGAs, each its own short workflow',async({page})=
     await add(page,'apply_ruleset');
     const rules=await idOf(page,'apply_ruleset');
     await page.locator(`.react-flow__node[data-id="${rules}"]`).click();
-    await page.locator('#author-rules').click();
-    await page.locator('#rule-editor-cancel').click();
-    await page.locator('#ruleset-records').selectOption('polygons');
+    await writeRules(page,'polygons');
     await tidy(page);await wire(page,second,rules,'subjects');
     await page.locator(`.react-flow__node[data-id="${rules}"]`).click();
-    await page.locator('#edit-rules').click();
+    await page.locator('#configure-step').click();
     const dialog=page.locator('#rule-editor');
     await expect(dialog).toBeVisible();
-    // A NUMBER STATES ITS UNIT before a rule may compare it. Declared in the panel, as a person would.
-    await dialog.locator('#rule-editor-cancel').click();
+    // A NUMBER STATES ITS UNIT before a rule may compare it. Declared in the rules dialog, as a person would.
     for(const [index,unit] of [[0,'proportion'],[1,'children']]){
-      const box=page.locator(`[data-field-unit="${index}"]`);
+      const box=dialog.locator(`[data-field-unit="${index}"]`);
       await box.fill(unit);await box.press('Tab');
     }
-    await page.locator('#edit-rules').click();
-    await expect(dialog).toBeVisible();
     await dialog.locator('#rule-editor-add').click();
     const card=()=>dialog.locator('.rule-card').last();
     const setValue=async(n,value)=>{const box=card().locator('[data-part="value"]').nth(n);await box.fill(value);await box.press('Tab');};
@@ -275,7 +278,7 @@ test('five questions about 774 LGAs, each its own short workflow',async({page})=
     await card().locator('[data-part="conclusion"]').fill('Priority for data review');
     await card().locator('[data-part="conclusion"]').press('Tab');
     await page.screenshot({path:'test-results/nga-rule-editor.png'});
-    await dialog.locator('#rule-editor-keep').click();
+    await dialog.locator('#config-apply').click();
     await expect(dialog).toBeHidden();
     await add(page,'map_output');
     const map=await idOf(page,'map_output');

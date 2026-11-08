@@ -12,21 +12,38 @@ rule matched keeps no conclusion, and the run says how many.
 
 ## What you connect
 
-**Records**: a table, points or polygons. Choose which under *Records arrive as*, then the step that feeds it under
-*Inputs*. A table imported **wide**, one row per subject and a column per variable,
+**Records**: a table, points or polygons. Choose which under *Records arrive as*, in **Configure…**, then the step that
+feeds it under *Inputs*. A table imported **wide**, one row per subject and a column per variable,
 is read that way: one record per subject, its columns as the file named them. It gives back the same records with the
 new columns.
 
 ## How to use it
 
-**Edit these rules** opens the dialog. Each rule has conditions and conclusions.
+**Configure…** opens the step's dialog. On a new step, choose a published ruleset, or *Write rules for this step*, and
+**Apply**: rules of your own open in the rules dialog. There, **Records and columns** comes first: how the records
+arrive, each column's kind and its unit. Then the settings, the rules, and the otherwise. Nothing changes until
+**Apply**.
 
-| Part | What it decides |
+**Each part of a rule is a block**, with its word and its colour, so a rule's shape reads at a glance:
+
+| Block | What it decides |
 | --- | --- |
-| **if** | A column, a comparison (*is*, *is more than*, *is at most*, *is less than*, *is at least*, *is recorded*, *is not recorded*) and a value: a typed number or one of the step's settings |
-| **+ and**, **+ or** | Conditions that must all hold; alternatives, any of which will do |
-| **then** a category | A new column and the value a matching record gets: *band* is *Short* |
-| **then** a computed value | A new column and a sum: *houses without a death* is *houses* minus *deaths*. Plus, minus, times or divided by; each side a column, a value another rule computed, or a typed number |
+| **if** (blue) | A column, a comparison (*is*, *is not*, *is more than*, *is at most*, *is less than*, *is at least*, *is recorded*, *is not recorded*) and a value: a typed number or one of the step's settings |
+| **+ and** | Conditions in one *if* block, which must all hold |
+| **or** (purple) | An alternative *if* block, any of which will do |
+| **then** (green), a category | A new column and the value a matching record gets: *band* is *Short* |
+| **then**, a computed value | A new column and a sum: *houses without a death* is *houses* minus *deaths*. Plus, minus, times or divided by; each side a column, a value another rule computed, or a typed number |
+| **otherwise** (amber) | A column's value for a record no rule gave one: *class* is *Cannot be classified* |
+
+Each block also has its own edge, solid, dotted, double or dashed, so the blocks are told apart without colour.
+
+**Is not** matches a recorded value that differs: *rash is not No* matches *Yes* and *Unknown*. A value not recorded
+never matches *is not*; ask *is not recorded* for that.
+
+**Otherwise**, one per column, gives the column a value where no rule did. It waits for the columns its rules read: a
+*class* read from *lab result* takes its otherwise only after *lab result* has had its own. So an ordered
+classification, such as WHO's for measles, is written as columns in stages, each a few rules and an otherwise. An
+otherwise never settles two rules that disagree: that record stays without a value, and is named.
 
 **+ Add a value computed for every record** writes a rule with no condition: every record gets the value.
 
@@ -37,11 +54,11 @@ The table the step gives out carries both. A new column without a unit is said i
 degrees Celsius: a name, a value and a unit. A condition then reads *temperature_c is more than fever*, and the
 threshold can be changed without rewriting a rule.
 
-**Kinds.** Each column is read as a number, a category, or true or false, offered from its values and changed in the
-Inspector beside it. A file that stores counts as text, "34", offers them as a category: say they are a number, and
+**Kinds.** Each column is read as a number, a category, or true or false, offered from its values and changed under
+*Records and columns*. A file that stores counts as text, "34", offers them as a category: say they are a number, and
 the text is reported unreadable at the run, where **Data quality** can read it as numbers.
 
-**Units.** Each column the rules read states its unit, in the Inspector beside the column. A setting compared with a
+**Units.** Each column the rules read states its unit, under *Records and columns*. A setting compared with a
 column must be in the column's unit, and a sum or difference must be of two columns in the same unit; either is refused
 while the rule is written. Columns the rules do not read need no unit.
 
@@ -57,9 +74,9 @@ row*. Such a rule needs the records sorted, which is set above the rules:
 | **Within each** | The columns that say whose rows these are, such as the place: each place's rows are sorted, and a row's previous one is its own place's |
 | **The previous row is** | *The row recorded before*, or *the day*, *the week* or *the month before*. Where that period has no row, the value is empty, and counted |
 
-The table comes out in this order. Under the rules, the preview is then **Before**, **Sorted** and **After**.
+The table comes out in this order. The preview is then **Before**, **Sorted** and **After**.
 
-**Before and after.** Under the rules, the dialog shows the records as they arrive and as these rules would leave
+**Before and after.** The dialog's Preview shows the records as they arrive and as these rules would leave
 them, on every edit: each new column, and which rule each record matched. Each rule's heading says how many records it
 matched. The first 50 records are drawn; the counts are of all of them.
 
@@ -76,13 +93,22 @@ matched. The first 50 records are drawn; the counts are of all of them.
   named.
 - **A number without a unit** stops the rules from running until its unit is stated, and a rule comparing two
   different units is refused while it is being written.
+- **A record that took an otherwise** is counted by column, so a default is never read as a rule's conclusion: *2
+  records took class's otherwise, because no rule gave class a value.*
 
 On a wide table, a computed value is a new variable of each subject: in the table it is one more row per subject,
 named for the new column, as **Derive a value** adds it.
 
+**A published ruleset** opens in its own dialog: the ruleset, its settings, and as the preview what it decides, its
+basis and what it obliges. *Read them in the rule editor* shows its rules there, every control disabled. A newer
+version is under **Decisions**: the step stays on the version it was built on until you choose.
+
 ## What it will not do
 
-
+- Order the rules. Every rule is checked against every record; an otherwise is a default, not a last rule.
+- Settle two rules that disagree. The record gets no value, and both rules are named.
+- Guess a unit, a kind or a column from its name.
+- Change a published ruleset in place. A copy can be edited on the step.
 
 
 ## What this does not establish

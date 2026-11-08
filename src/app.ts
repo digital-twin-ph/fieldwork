@@ -36,6 +36,7 @@ import {orderSentence} from './rule-evaluation.js';
 import {keyNoun,openRelateConfig,relateDraftOf,applyRelateDraft,relateSentence} from './relate-ui.js';
 import {openSelectConfig,selectDraftOf,applySelectDraft,selectSentence} from './select-ui.js';
 import {openGroupConfig,groupDraftOf,applyGroupDraft,groupSentence} from './group-ui.js';
+import {openConfigDialog} from './config-dialog.js';
 import {openFacilitiesConfig,facilitiesDraftOf,applyFacilitiesDraft,facilitiesSentence} from './facilities-ui.js';
 import {fetchRegister,registerLayer,type RegisterEntry} from './facility-matching.js';
 import facilityRegistersJson from '../widgets/facility-registers.json';
@@ -987,7 +988,7 @@ function drawRunProgress(){
 /** THE WIDGETS WHOSE INSPECTOR FOLLOWS THE STANDARD (experiment 186): Name, Inputs, Settings, Result, the links,
  *  Actions, in that order and nothing else, with every setting in the widget's configuration dialog. One at a time,
  *  Relate first; the set grows as each widget is moved, and a check holds them to it. */
-export const STANDARD_INSPECTOR=new Set<NodeType>(['relate_table','select_rows','table_input','find_health_facilities','group_table']);
+export const STANDARD_INSPECTOR=new Set<NodeType>(['relate_table','select_rows','table_input','find_health_facilities','group_table','apply_ruleset']);
 function samplerProduct(node:WorkflowNode){
   const up=(id:string,port:string)=>{const e=workflow.edges.find(x=>x.to===id&&x.port===port);return e?workflow.nodes.find(m=>m.id===e.from):undefined;};
   const search=up(node.id,'files'),find=search?up(search.id,'product'):undefined;
@@ -1409,8 +1410,9 @@ type ShownRule={any:{all:{field:string;comparator:string;
 function rulesList(rules:ShownRule[],
   fields:{attribute?:string;predicate:string}[],
   readable:(value:import('./authored-rules.js').AuthoredValue)=>string,
-  esc:(text:string)=>string):string{
-  const comparator=(c:string)=>({equals:'is',greaterThan:'is more than',notGreaterThan:'is at most',
+  esc:(text:string)=>string,
+  otherwise:import('./authored-rules.js').AuthoredOtherwise[]=[]):string{
+  const comparator=(c:string)=>({equals:'is',notEquals:'is not',greaterThan:'is more than',notGreaterThan:'is at most',
     lessThan:'is less than',notLessThan:'is at least'}[c]??c);
   // The column, as the file spells it. Not a label somebody wrote over it: a reader checking
   // this rule against their data is looking for the column, and a rule that names something
@@ -1424,7 +1426,7 @@ function rulesList(rules:ShownRule[],
     +`<div class="authored-rules">`
     +rules.map((rule,index)=>`<div class="authored-rule">`
       +`<span class="rule-number">${index+1}</span>`
-      +rule.any.map((group,g)=>`<div class="rule-when">`
+      +rule.any.map((group,g)=>`<div class="rule-when rule-block ${g&&group.all.length?'rule-block-or':'rule-block-if'}">`
         +`<span class="rule-keyword">${group.all.length?(g?'OR':'IF'):'FOR EVERY RECORD'}</span><div class="rule-conditions">`
         +group.all.map((condition,c)=>`<div class="rule-row">`
           +(c?`<span class="rule-and">and</span>`:`<span class="rule-and"></span>`)
@@ -1438,7 +1440,7 @@ function rulesList(rules:ShownRule[],
        +`<span class="rule-value">${esc(readable(condition.value))}</span>`)
           +`</div>`).join('')
         +`</div></div>`).join('')
-      +`<div class="rule-then"><span class="rule-keyword">THEN</span><div class="rule-conditions">`
+      +`<div class="rule-then rule-block rule-block-then"><span class="rule-keyword">THEN</span><div class="rule-conditions">`
       +rule.then.map((conclusion,t)=>`<div class="rule-row">`
         +(t?`<span class="rule-and">and</span>`:`<span class="rule-and"></span>`)
         // A COMPUTED VALUE reads as its sum (experiment 188): "change 2005 to 2024 is dtp1_2024 minus dtp1_2005".
@@ -1453,6 +1455,11 @@ function rulesList(rules:ShownRule[],
             +`<span class="rule-value">${esc(readable(conclusion.value??''))}</span>`)
         +`</div>`).join('')
       +`</div></div></div>`).join('')
+    // OTHERWISE (experiment 192): a column's default, its own block after the rules.
+    +otherwise.map(o=>`<div class="authored-rule"><span class="rule-number"></span><div class="rule-then rule-block rule-block-otherwise">`
+      +`<span class="rule-keyword">OTHERWISE</span><div class="rule-conditions"><div class="rule-row"><span class="rule-and"></span>`
+      +`<span class="rule-field">${esc(o.predicate.slice(o.predicate.indexOf(':')+1))}</span><span class="rule-op">is</span>`
+      +`<span class="rule-value">${esc(readable(o.value))}</span></div></div></div></div>`).join('')
     +`</div>`;
 }
 
@@ -1726,59 +1733,159 @@ function reviewAuthored(ruleset:Ruleset):NonNullable<import('./types.js').Params
     rules:(ruleset.authored?.rules??[]) as never} as never;
 }
 
-function wireAuthorRules(node:WorkflowNode){
-  optionalElement('#review-rules')?.addEventListener('click',async()=>{
-    const pinned=getNode(workflow,node.id,'apply_ruleset').params.ruleset;
-    if(!pinned)return;
-    const ruleset=resolveRuleset(pinned.id,pinned.version);
-    await openRuleEditor(reviewAuthored(ruleset),esc,{
-      settingValues:getNode(workflow,node.id,'apply_ruleset').params.parameters,
-      note:`These are the rules ${ruleset.title} ${ruleset.version} applies, laid out the way rules you write are laid out. `
-        +`Nothing here can be changed: this ruleset is published and pinned, and the run evidence names it by version.`});
-  });
-  optionalElement('#ruleset-records')?.addEventListener('change',event=>{
-    const kind=(event.target as HTMLSelectElement).value as import('./types.js').PortType;
-    change(w=>{
-      const target=getNode(w,node.id,'apply_ruleset');
-      if(!target.params.ruleset)return;
-      target.params.ruleset={...target.params.ruleset,inputs:[['subjects',kind]],output:kind};
-      w.edges=w.edges.filter(e=>e.to!==node.id&&e.from!==node.id);
-    });
-  });
-  optionalElement('#author-rules')?.addEventListener('click',async()=>{
-    authorRulesOn(node.id,node.params.label??'');
-    const authored=getNode(workflow,node.id,'apply_ruleset').params.authored;
-    if(!authored)return;
-    const edited=await openRuleEditor(authored,esc,{settingValues:getNode(workflow,node.id,'apply_ruleset').params.parameters,preview:rulePreview(node.id),unitIri:unitIriFor});
-    if(edited)change(w=>{const step=getNode(w,node.id,'apply_ruleset'),held=step.params.authored!;held.rules=edited.rules as never;
-      if(edited.order)held.order=edited.order;else delete held.order;
-      held.parameters=edited.parameters as never;step.params.parameters=edited.values;});
+/** WHAT A PUBLISHED RULESET ASKS OF THE PERSON, met in the Inspector and not only behind Configure (experiment 186):
+ *  a newer version, which may not be a drop-in, and what applying it obliges them to do (experiment 140). A notice is
+ *  where a reader meets a consequence; a dialog is where they change something. */
+function pinnedNotices(ruleset:Ruleset,pinnedVersion:string):string{
+  let html='';
+  const newer=supersession(ruleset.id,pinnedVersion);
+  if(newer){
+    const said=newer.changes.map(c=>`<p>${esc(c.description)}</p>`
+      +(c.incompatibility?`<p><strong>Incompatible:</strong> ${esc(c.incompatibility)}</p>`:'')
+      +(c.deprecates?`<p><strong>No longer supported:</strong> ${esc(c.deprecates)}</p>`:'')).join('');
+    html+=newer.incompatible
+      ?`<div class="inspector-alert" role="alert"><strong>Pinned to ${esc(pinnedVersion)} · ${esc(newer.version)} is available and is not a drop-in</strong>`
+        +`${said}<p>This step keeps running on ${esc(pinnedVersion)}, which is what reproduces the results it was built on. Choose the newer version in Configure only when you are ready to re-wire; Undo restores what this disconnects.</p></div>`
+      :`<div class="notice"><strong>${esc(newer.version)} is available.</strong> This step is pinned to ${esc(pinnedVersion)} and keeps running on it, because a rule change changes results.${said}</div>`;
+  }
+  const obligation=(ruleset as unknown as {obligation?:{summary:string;whatYouTakeOn:string;howToAcknowledge:string;ifYouDoNot:string}}).obligation;
+  if(obligation)html+=`<div class="inspector-alert" role="note"><strong>What this obliges you to: ${esc(obligation.summary)}</strong>`
+    +`<p>${esc(obligation.whatYouTakeOn)}</p><p><strong>How to acknowledge it.</strong> ${esc(obligation.howToAcknowledge)}</p>`
+    +`<p><strong>If you do not.</strong> ${esc(obligation.ifYouDoNot)}</p></div>`;
+  return html;
+}
+
+/** THE INSPECTOR'S ONE SENTENCE for Apply ruleset (experiment 186). */
+function rulesetSentence(p:import('./types.js').ParamsByType['apply_ruleset'],pinned?:Ruleset):string{
+  const authored=p.authored;
+  if(authored){
+    const n=authored.rules.length,o=authored.otherwise?.length??0;
+    const columns=[...new Set(authored.rules.flatMap(r=>r.then.map(c=>c.column?.trim()||c.predicate.slice(c.predicate.indexOf(':')+1))))];
+    if(!n)return 'Rules written on this step: none yet. Write them in Configure…';
+    return `${authored.title}: ${n} rule${n===1?'':'s'} written on this step${o?`, with ${o} otherwise`:''}, giving ${columns.join(', ')}, `
+      +`from ${authored.fields.length} column${authored.fields.length===1?'':'s'} of the records.`;
+  }
+  if(pinned){
+    const newer=supersession(pinned.id,pinned.version);
+    const basis={published:'published',"practitioner-agreed":'agreed with the practitioner',illustrative:'illustrative, no source',
+      proxy:'a proxy, no source'}[pinned.basis.status]??pinned.basis.status;
+    return `Applies ${pinned.title} ${pinned.version}, published and pinned${newer?`; ${newer.version} is available`:''}. Basis: ${basis}.`;
+  }
+  return 'Nothing to apply yet: choose a published ruleset, or write rules for this step, in Configure…';
+}
+
+/** RULES WRITTEN ON THIS STEP, in the rule editor (experiment 192). What it returns replaces the step's rules, columns,
+ *  settings and defaults; a change in how the records arrive changes the ports, and disconnects what was wired. */
+async function openAuthoredRules(nodeId:string){
+  const node=getNode(workflow,nodeId,'apply_ruleset');
+  const authored=node.params.authored;
+  if(!authored)return;
+  const was=node.params.ruleset?.output;
+  // THE COLUMNS OF WHAT IS CONNECTED NOW, where the rules declare none: rules started before the records were wired had
+  // no column to choose. Rules that have columns keep exactly those: an added number with no unit would stop them.
+  const candidates=candidateFields(workflow,nodeId);
+  const edited=await openRuleEditor(authored.fields.length?authored:{...authored,fields:candidates as never},esc,{settingValues:node.params.parameters,preview:rulePreview(nodeId),
+    unitIri:unitIriFor,candidates:candidates as never,step:node.params.label||TYPES.apply_ruleset.title,
+    ...(was==='points'||was==='table'||was==='polygons'?{recordsKind:was}:{})});
+  if(!edited)return;
+  change(w=>{
+    const step=getNode(w,nodeId,'apply_ruleset'),held=step.params.authored!;
+    held.rules=edited.rules as never;held.fields=edited.fields as never;
+    if(edited.order)held.order=edited.order;else delete held.order;
+    if(edited.otherwise.length)held.otherwise=edited.otherwise;else delete held.otherwise;
+    held.parameters=edited.parameters as never;step.params.parameters=edited.values;
+    // HOW THE RECORDS ARRIVE decides the ports, so a change disconnects what was wired to the old ones; Undo restores it.
+    if(edited.recordsKind&&step.params.ruleset&&edited.recordsKind!==was){
+      step.params.ruleset={...step.params.ruleset,inputs:[['subjects',edited.recordsKind]],output:edited.recordsKind};
+      w.edges=w.edges.filter(e=>e.to!==nodeId&&e.from!==nodeId);
+    }
   });
 }
 
-function wireRulesetChoice(node:WorkflowNode){
-  optionalElement('#ruleset-choice')?.addEventListener('change',event=>{
-    const value=control(event).value;
-    // Writing rules, rather than choosing somebody else's. Until 2026-10-15 the only way to
-    // reach the editor was to open a workflow that already carried authored rules, which meant
-    // the one worked example they were written for: an editor with no entry point.
-    if(value==='authored'){authorRulesOn(node.id,node.params.label??'');return;}
-    const [id,version]=value.split('@');
-    const chosen=id?bundledRulesets().find((r:Ruleset)=>r.id===id&&r.version===version):undefined;
-    change(w=>{
-      const target=getNode(w,node.id,'apply_ruleset');
-      const generic=!target.params.label||target.params.label===TYPES.apply_ruleset.title
-        ||currentRulesets().some(r=>r.title===target.params.label);
-      if(!chosen){delete (target.params as {ruleset?:unknown}).ruleset;target.params.parameters={};}
-      else{
-        target.params.ruleset=pinnedRuleset(chosen.id,chosen.version);
-        target.params.parameters=Object.fromEntries(chosen.parameters
-          .filter(p=>p.default!==undefined).map(p=>[p.name,p.default as number]));
-        if(generic)target.params.label=chosen.title;
-      }
-      w.edges=w.edges.filter(edge=>edge.to!==node.id&&edge.from!==node.id);
-    });
-  });
+/** A PUBLISHED RULESET, chosen in the standard dialog (experiments 186 and 192): the choice and its settings, and as the
+ *  preview, what the chosen ruleset decides, its basis and what it obliges. A newer version is a decision. */
+function openRulesetConfig(nodeId:string){
+  const node=getNode(workflow,nodeId,'apply_ruleset');
+  const held=node.params.ruleset;
+  type Draft={choice:string; parameters:Record<string,number>};
+  const heldRuleset=held?resolveRuleset(held.id,held.version):undefined;
+  openConfigDialog<Draft>({
+    id:'ruleset-config',widget:'Apply ruleset',step:node.params.label||TYPES.apply_ruleset.title,
+    draft:{choice:held?`${held.id}@${held.version}`:'',parameters:{...(node.params.parameters as Record<string,number>)}},
+    sections:draft=>{
+      const [id,version]=draft.choice.split('@');
+      const chosen=id&&version?bundledRulesets().find((r:Ruleset)=>r.id===id&&r.version===version) as Ruleset|undefined:undefined;
+      const copyable=!!heldRuleset?.authored&&!!heldRuleset.inputContract.fieldFrom?.length;
+      let settings=`<div class="field"><label class="field-label" for="ruleset-choice">Ruleset</label><select id="ruleset-choice">`
+        +`<option value="" ${draft.choice?'':'selected'}>Choose a ruleset…</option>`
+        +`<option value="authored" ${draft.choice==='authored'?'selected':''}>${copyable?'Edit a copy of these rules on this step':'Write rules for this step'}</option>`
+        +[...new Map([...currentRulesets(),...(heldRuleset?[heldRuleset]:[])].map(r=>[`${r.id}@${r.version}`,r])).values()]
+          .map(r=>`<option value="${esc(r.id+'@'+r.version)}" ${draft.choice===`${r.id}@${r.version}`?'selected':''}>`
+          +`${esc(r.title)} ${esc(r.version)} · ${esc(r.inputContract.ports.inputs.map(([,t])=>t).join(', '))} → ${esc(r.inputContract.ports.output)}</option>`).join('')
+        +'</select><p class="muted">The ruleset decides what this step classifies, its inputs and what it gives back. Changing it disconnects what is wired here; Undo restores it.</p></div>';
+      if(chosen?.parameters.length)settings+=chosen.parameters.map(q=>`<div class="field"><label class="field-label" for="ruleset-${esc(q.name)}">${esc(q.meaning.split('.')[0])}</label>`
+        +`<div class="input-unit"><input id="ruleset-${esc(q.name)}" data-ruleset-parameter="${esc(q.name)}" type="number" min="${q.min}" max="${q.max}" step="0.5" value="${draft.parameters[q.name]??q.default??''}">`
+        +`<span>${esc(q.unitLabel||'')}</span></div><p class="muted">${esc(q.meaning)}</p></div>`).join('');
+      if(draft.choice==='authored')return {settings,preview:`<p class="muted">${copyable?'Apply copies these rules onto this step, where they can be edited, and opens them.'
+        :'Apply starts rules of your own on this step, and opens them.'}</p>`};
+      if(!chosen)return {settings,preview:'<p class="muted">Choose a ruleset to see what it decides.</p>'};
+      const basis={published:'Published basis','practitioner-agreed':'Practitioner-agreed basis',illustrative:'Illustrative, no source',proxy:'Proxy, no source'}[chosen.basis.status]||chosen.basis.status;
+      const obligation=(chosen as unknown as {obligation?:{summary:string;whatYouTakeOn:string;howToAcknowledge:string;ifYouDoNot:string}}).obligation;
+      const preview=`<p class="description">${esc(chosen.description)}</p>`
+        +(chosen.authored?`<div class="inspector-actions"><button class="button" id="review-rules">Read them in the rule editor</button></div>`
+          +rulesList(chosen.authored.rules as ShownRule[],chosen.inputContract.fieldFrom??[],
+          v=>{const s=settingNamed(v);return s?`${s} · ${draft.parameters[s]??'not set'}`:typeof v==='string'&&v.includes(':')?v.slice(v.indexOf(':')+1):String(v);},esc)
+          :'<p class="muted">This build carries no structured form of these rules.</p>')
+        +`<div class="notice">${esc(chosen.mustNotBeReadAs)}</div>`
+        +`<p class="description"><strong>${esc(basis)}</strong>, ${chosen.basis.evidence.length} reference${chosen.basis.evidence.length===1?'':'s'}. Run by EYE-JS, Notation3.</p>`
+        +(obligation?`<div class="inspector-alert" role="note"><strong>${esc(obligation.summary)}</strong><p>${esc(obligation.whatYouTakeOn)}</p>`
+          +`<p><strong>How to acknowledge it.</strong> ${esc(obligation.howToAcknowledge)}</p><p><strong>If you do not.</strong> ${esc(obligation.ifYouDoNot)}</p></div>`:'');
+      const newer=supersession(chosen.id,chosen.version);
+      const decisions=newer?`<p><strong>${esc(newer.version)} is available.</strong> This step stays on ${esc(chosen.version)}, because a rule change changes results. `
+        +`${newer.incompatible?'It is not a drop-in: choosing it means re-wiring. ':''}Choose it above when ready.</p>`
+        +newer.changes.map(c=>`<p>${esc(c.description)}</p>`+(c.incompatibility?`<p><strong>Incompatible:</strong> ${esc(c.incompatibility)}</p>`:'')
+          +(c.deprecates?`<p><strong>No longer supported:</strong> ${esc(c.deprecates)}</p>`:'')).join(''):undefined;
+      const unset=chosen.parameters.filter(q=>!Number.isFinite(draft.parameters[q.name]));
+      return {settings,preview,...(decisions?{decisions}:{}),
+        ...(unset.length?{message:{tone:'refusal' as const,text:`Set ${unset.map(q=>q.name).join(' and ')} to a number.`},blocked:true}:{})};
+    },
+    wire:(root,draft,redraw)=>{
+      root.querySelector<HTMLSelectElement>('#ruleset-choice')?.addEventListener('change',e=>{
+        draft.choice=(e.target as HTMLSelectElement).value;
+        const [id,version]=draft.choice.split('@');
+        const chosen=id&&version?bundledRulesets().find((r:Ruleset)=>r.id===id&&r.version===version) as Ruleset|undefined:undefined;
+        if(chosen&&!(held&&`${held.id}@${held.version}`===draft.choice))draft.parameters=Object.fromEntries(chosen.parameters
+          .filter(q=>q.default!==undefined).map(q=>[q.name,q.default as number]));
+        redraw();});
+      // READ IN THE RULE EDITOR, every control disabled (the practitioner, 2026-10-15: "reviewable in the editor").
+      root.querySelector<HTMLButtonElement>('#review-rules')?.addEventListener('click',()=>{
+        const [id,version]=draft.choice.split('@');
+        const chosen=id&&version?bundledRulesets().find((r:Ruleset)=>r.id===id&&r.version===version) as Ruleset|undefined:undefined;
+        if(chosen)void openRuleEditor(reviewAuthored(chosen),esc,{settingValues:draft.parameters,step:chosen.title,
+          note:`These are the rules ${chosen.title} ${chosen.version} applies, laid out the way rules you write are laid out. `
+            +'Nothing here can be changed: this ruleset is published and pinned, and the run evidence names it by version.'});});
+      root.querySelectorAll<HTMLInputElement>('[data-ruleset-parameter]').forEach(el=>el.addEventListener('change',()=>{
+        const name=el.dataset.rulesetParameter!;
+        // AN EMPTY BOX IS AN UNSET SETTING, not zero: Number('') is 0, and a band against zero nobody typed is no setting.
+        if(el.value.trim()==='')delete draft.parameters[name];else draft.parameters[name]=Number(el.value);redraw();}));
+    },
+    apply:draft=>{
+      if(draft.choice==='authored'){authorRulesOn(nodeId,node.params.label??'');void openAuthoredRules(nodeId);return;}
+      const [id,version]=draft.choice.split('@');
+      const chosen=id&&version?bundledRulesets().find((r:Ruleset)=>r.id===id&&r.version===version):undefined;
+      change(w=>{
+        const target=getNode(w,nodeId,'apply_ruleset');
+        const same=held&&`${held.id}@${held.version}`===draft.choice;
+        if(!chosen){delete (target.params as {ruleset?:unknown}).ruleset;target.params.parameters={};}
+        else{
+          const generic=!target.params.label||target.params.label===TYPES.apply_ruleset.title||currentRulesets().some(r=>r.title===target.params.label);
+          if(!same){target.params.ruleset=pinnedRuleset(chosen.id,chosen.version);if(generic)target.params.label=chosen.title;}
+          target.params.parameters={...draft.parameters};
+        }
+        if(!same)w.edges=w.edges.filter(edge=>edge.to!==nodeId&&edge.from!==nodeId);
+      });
+    },
+  },esc);
 }
 function currentRulesets():Ruleset[]{
   const current=new Map<string,Ruleset>();
@@ -3014,257 +3121,33 @@ function renderInspector(){
     content+=`<div class="field"><label class="field-label" for="measure-area-source">Boundary input</label><select id="measure-area-source"><option value="">Select a Study area</option>${workflow.nodes.filter(x=>x.id!==n.id&&outputOf(x)==='area').map(x=>`<option value="${esc(x.id)}" ${input?.from===x.id?'selected':''}>${esc(x.params.label||TYPES[x.type].title)} · ${esc(x.id)}</option>`).join('')}</select><small>Selecting an area adds its connector to the canvas.</small><label class="field-label" for="area-unit">Area unit</label><select id="area-unit" data-param="unit">${areaUnitOptions(n.params.unit)}</select></div><div class="source-card"><span class="inspector-section">${dirty?'Run to calculate or update':'Calculated area'}</span><h3>${!dirty&&output?.measurement?esc(formatArea(output.measurement)):'—'}</h3><p>Approximate surface area on a sphere.</p></div><p class="description">Outputs the same study area with its calculated area attached. Connect it to a Study area input, such as Check spatial coverage. Square metres are retained as the canonical value; the selected unit controls display.</p><div class="notice">This calculation uses the polygon itself, including its shape, rather than its bounding box. It does not measure terrain surface area.</div>`;
   }else if(Object.hasOwn(OLD_TYPES,n.type)){content+=oldInspector(n);
   }else if(n.type==='apply_ruleset'){
-    // Generated from the ruleset's declaration rather than hardcoded, which is what the declared
-    // parameters are for: each one carries its unit, its range and what it means, so the control,
-    // the label and the hint all come from the ruleset instead of being written per widget. This
-    // is the UI that three widgets used to have three copies of.
-    // The ruleset is chosen HERE rather than in the palette. One widget is offered and the
-    // practitioner says what it should do, because a palette entry per ruleset grew with every
-    // ruleset and again with every version of one. Their decision, 2026-10-14.
-    // Rules written in this workflow. The Inspector described the PINNED artefact here until
-    // 2026-10-15, so a step applying authored rules showed somebody else's title, description,
-    // threshold and basis -- found by the ruleset worked example, which is what a worked example
-    // about a widget is for. The pin gives such a node its ports and nothing else.
-    const authored=n.params.authored;
-    if(authored){
-      // WHAT KIND OF RECORD THE RULES READ. A row, a point and a polygon are all a record with
-      // columns, so the rules are the same and only the ports differ.
-      const reads=n.params.ruleset?.output??'points';
-      content+=`<div class="field"><label class="field-label" for="ruleset-records">Records arrive as</label>`
-        +`<select id="ruleset-records">`+([['points','Points'],['table','A table'],['polygons','Polygons']] as const)
-          .map(([value,label])=>`<option value="${value}" ${reads===value?'selected':''}>${label}</option>`).join('')
-        +`</select></div>`;
-      const comparator=(c:string)=>({equals:'is',greaterThan:'is more than',notGreaterThan:'is at most',
-        lessThan:'is less than',notLessThan:'is at least'}[c]??c);
-      const readable=(value:import('./authored-rules.js').AuthoredValue)=>{
-        const setting=settingNamed(value);
-        if(setting){
-          const held=n.params.parameters?.[setting],declared=(authored.parameters??[]).find(p=>p.name===setting);
-          return held===undefined||held===null
-            ?`${setting} · not set`
-            :`${setting} · ${held}${declared?.unitLabel?' '+declared.unitLabel:''}`;
-        }
-        return typeof value==='string'&&value.includes(':')?value.slice(value.indexOf(':')+1):String(value);
-      };
-      // The column, as the file spells it. Not a label somebody wrote over it: a reader checking
-      // this rule against their data is looking for the column, and a rule that names something
-      // the file does not contain makes them translate. 2026-10-16.
-      const named=(predicate:string)=>{
-        const field=authored.fields.find(f=>f.predicate===predicate||`${f.predicate}Known`===predicate);
-        return field?field.attribute:predicate.slice(predicate.indexOf(':')+1);
-      };
-      const presenceOf=(predicate:string)=>
-        authored.fields.some(f=>`${f.predicate}Known`===predicate);
-      content+=`<span class="inspector-section">What this step applies</span>`
-        +`<div class="detail-row"><span>${esc(authored.title)}</span><strong>written here</strong></div>`
-        +`<p class="description">These rules are part of this workflow rather than a published ruleset chosen from a list. They travel with the file, and the run evidence carries them in full.</p>`
-        +`<div class="notice">${esc(authored.mustNotBeReadAs)}</div>`
-        +`<span class="inspector-section">The rules, in order</span>`
-        // Laid out as rules rather than written as sentences about rules. The practitioner read
-        // the first version -- "If whether Wait is recorded is false, then band is Unrecorded" --
-        // and called it a description of rules, which it was: prose reads as something somebody
-        // wrote ABOUT the rules, and a rule should look like a thing with parts. So each
-        // condition is a row of three cells, the connectives are labels in the margin, and the
-        // conclusion is separated by a line.
-        +(authored.order?`<p class="description" data-rule-order>${esc(orderSentence(authored.order))}</p>`:'')
-        +rulesList(authored.rules,authored.fields,readable,esc)
-        +`<p class="description">Every rule is checked against every record, so rules must not disagree: no record may match two rules reaching different conclusions. A record matching none keeps no conclusion; the evidence counts those.</p>`
-        +`<span class="inspector-section">Which column means what</span>`;
-      if(authored.fields.length){
-        content+=`<table class="inspector-table"><thead><tr><th>Column</th><th>Read as</th><th>Kind</th><th>Unit</th></tr></thead><tbody>`
-          // THE KIND IS DECLARED, not only read off the values (2026-11-08): counts a file stores as text ("34") are offered
-          // as a category, and only the practitioner can say they are a number -- after which the text is reported as
-          // unreadable, and Data quality can read it as numbers.
-          +authored.fields.map((field,index)=>`<tr><td>${esc(field.attribute)}</td><td>${esc(field.label||field.attribute)}</td>`
-            +`<td><select data-field-kind="${index}" aria-label="Kind of ${esc(field.attribute)}">`
-            +([['number','number'],['term','category'],['boolean','true or false']] as const)
-              .map(([k,w])=>`<option value="${k}"${field.kind===k?' selected':''}>${w}</option>`).join('')+`</select></td>`
-            +`<td>${field.kind==='number'
-              ?`<input data-field-unit="${index}" value="${esc(field.unitLabel??'')}" placeholder="minutes" aria-label="Unit for ${esc(field.attribute)}">`
-              :'—'}</td></tr>`).join('')
-          +`</tbody></table>`
-          +`<p class="description">Nothing is guessed from a column name. <strong>A numeric column the rules read needs its unit</strong>: the rules will not run until each one has it.</p>`;
-      }else{
-        // Where a practitioner writing their first ruleset gets stuck: the rules cannot read
-        // anything until the columns are declared, and the columns can only be offered once
-        // something is connected. Both states are said plainly rather than left as an empty
-        // section.
-        const candidates=candidateFields(workflow,n.id);
-        content+=candidates.length
-          ?`<p class="description">These are the columns the connected records carry.</p>`
-            +`<table class="inspector-table"><thead><tr><th>Column</th><th>Reads as</th></tr></thead><tbody>`
-            +candidates.map(field=>`<tr><td>${esc(field.attribute)}</td><td>${esc(field.kind)}</td></tr>`).join('')
-            +`</tbody></table>`
-            +`<div class="inspector-actions"><button id="use-columns" class="button">Use these ${candidates.length} column${candidates.length===1?'':'s'}</button></div>`
-          :`<div class="notice">Connect the records this step should classify, and the columns they carry will be offered here. Rules read columns, and nothing is guessed from a name.</div>`;
-      }
-      for(const parameter of authored.parameters??[])
-        content+=`<div class="field"><label class="field-label" for="ruleset-${esc(parameter.name)}">${esc(parameter.meaning)}</label>`
-          +`<input id="ruleset-${esc(parameter.name)}" type="number" data-ruleset-parameter="${esc(parameter.name)}" `
-          +`value="${esc(String(n.params.parameters?.[parameter.name]??''))}" ${parameter.min!==undefined?`min="${parameter.min}"`:''} ${parameter.max!==undefined?`max="${parameter.max}"`:''}>`
-          +`${parameter.unitLabel?`<small>${esc(parameter.unitLabel)}</small>`:''}</div>`;
-      // INPUTS, as every step lists them (experiment 186): this branch returns before the shared list, so a step whose
-      // rules are written here could be connected only by dragging to its port. Found 2026-11-08, building the rules
-      // worked example's manual, which connects through the Inspector as a person who cannot hit a port would.
-      const inputs=standardInputs(n);
-      if(inputs)content+=`<div class="inspector-divider"></div><span class="inspector-section">Inputs</span>${inputs}`;
-      content+=`<div class="inspector-actions"><button id="edit-rules" class="button">Edit these rules</button></div>`
-        +manualButton(n.type,esc)+identityMarkup(n.type,esc);
-      $('#inspector-content').innerHTML=`<div class="inspector-body">${content}</div>`;
-      document.querySelectorAll<HTMLSelectElement>('[data-connect-port]').forEach(el=>el.onchange=()=>{
-        const port=el.dataset.connectPort!;change(w=>setConnection(w,el.value||null,n.id,port));});
-      // In a dialog, because the conditions nest and this panel is 320 px wide. The
-      // practitioner's call, 2026-10-15: "Perhaps the rule editor should be a modal dialog so
-      // there is enough space."
-      optionalElement('#use-columns')?.addEventListener('click',()=>change(w=>{
-        getNode(w,n.id,'apply_ruleset').params.authored!.fields=candidateFields(workflow,n.id) as never;}));
-      // A unit the practitioner types. The label is what the editor shows beside a value box; the
-      // IRI is what the unit check compares, and a word this does not recognise gets the label
-      // and no IRI -- so the check then refuses the rules for want of a unit, which is the
-      // honest outcome rather than a guess at what they meant.
-      document.querySelectorAll<HTMLSelectElement>('[data-field-kind]').forEach(el=>
-        el.addEventListener('change',()=>change(w=>{
-          const field=getNode(w,n.id,'apply_ruleset').params.authored!.fields[Number(el.dataset.fieldKind)];
-          field.kind=el.value as 'number'|'term'|'boolean';
-          if(field.kind!=='number'){delete field.unit;delete field.unitLabel;}
-        })));
-      document.querySelectorAll<HTMLInputElement>('[data-field-unit]').forEach(el=>
-        el.addEventListener('change',()=>change(w=>{
-          const field=getNode(w,n.id,'apply_ruleset').params.authored!.fields[Number(el.dataset.fieldUnit)];
-          const typed=el.value.trim();
-          field.unitLabel=typed||undefined;
-          const code=UNIT_IRIS[typed.toLowerCase()];
-          field.unit=code?`http://qudt.org/vocab/unit/${code}`:undefined;
-        })));
-      wireAuthorRules(n);
-      optionalElement('#edit-rules')?.addEventListener('click',async()=>{
-        // THE COLUMNS OF WHAT IS CONNECTED NOW, where there are none. They were read once, when the
-        // rules were started, so rules started before the records were wired had no column to choose.
-        // Rules that have columns keep exactly those: an added number with no unit would stop them.
-        if(!authored.fields.length)change(w=>{const held=getNode(w,n.id,'apply_ruleset').params.authored;
-          if(held)held.fields=candidateFields(w,n.id) as never;},{spatial:false});
-        const edited=await openRuleEditor(getNode(workflow,n.id,'apply_ruleset').params.authored!,esc,{settingValues:n.params.parameters,preview:rulePreview(n.id),unitIri:unitIriFor});
-        if(edited)change(w=>{const step=getNode(w,n.id,'apply_ruleset'),held=step.params.authored!;held.rules=edited.rules as never;
-      if(edited.order)held.order=edited.order;else delete held.order;
-      held.parameters=edited.parameters as never;step.params.parameters=edited.values;});
-      });
-      // An EMPTY box is an unset setting, not zero. `Number('')` is 0, so clearing this field
-      // used to band the rules against zero: `busy` declares min 1 and the run refuses it, which
-      // is why it was never seen, but a setting declaring no minimum would have run on a figure
-      // nobody typed. Clearing it now removes it, and the run says it needs a value.
-      document.querySelectorAll<HTMLInputElement>('[data-ruleset-parameter]').forEach(el=>
-        el.addEventListener('change',()=>change(w=>{
-          const held=getNode(w,n.id,'apply_ruleset').params.parameters,name=required(el.dataset.rulesetParameter);
-          if(el.value.trim()==='')delete held[name];else held[name]=Number(el.value);})));
-      return;
-    }
-    content+=`<span class="inspector-section">What this step applies</span>`
-      +`<div class="field"><label class="field-label" for="ruleset-choice">Ruleset</label>`
-      +`<select id="ruleset-choice"><option value="">Choose a ruleset…</option>`
-      +`<option value="authored">Write rules for this step…</option>`
-      +currentRulesets().map(r=>`<option value="${esc(r.id+'@'+r.version)}" ${n.params.ruleset?.id===r.id?'selected':''}>`
-        +`${esc(r.title)} ${esc(r.version)} · ${esc(r.inputContract.ports.inputs.map(([,t])=>t).join(', '))} → ${esc(r.inputContract.ports.output)}</option>`).join('')
-      +`</select><small>The ruleset decides what this step classifies, which inputs it takes and what it gives back. Changing it disconnects what is wired here, because the ports change with it; Undo restores them.</small></div>`;
-    if(!n.params.ruleset){
-      content+=`<div class="notice">This step has nothing to apply yet. It can sit on the canvas unconfigured — the run refuses it by name until a ruleset is chosen.</div>`
-        +`<div class="inspector-actions"><button id="author-rules" class="button">Write rules for this step</button></div>`;
-      $('#inspector-content').innerHTML=`<div class="inspector-body">${content}</div>`;
-      wireRulesetChoice(n);
-      wireAuthorRules(n);
-      return;
-    }
-    const pinned=n.params.ruleset,ruleset=resolveRuleset(pinned.id,pinned.version);
-    const basis={published:'Published basis',"practitioner-agreed":'Practitioner-agreed basis',
-      illustrative:'Illustrative — no source',proxy:'Proxy — no source'}[ruleset.basis.status]||ruleset.basis.status;
-    content+=`<span class="inspector-section">Ruleset</span><div class="detail-row"><span>${esc(ruleset.title)}</span><strong>${esc(ruleset.version)}</strong></div>`
-      +`<p class="description">${esc(ruleset.description)}</p>`;
-    // A pinned version keeps running, deliberately -- a rule change changes results, so a saved
-    // workflow replays the rules it was built on. What was missing until 2026-10-15 is that
-    // nobody was told a newer one exists. The practitioner's instruction: alert on the newer
-    // version, explain what changed, warn of deprecated or incompatible functionality.
-    //
-    // Styled as a danger when a change declares an incompatibility, because then the choice is
-    // not "update when convenient" but "rewire or stay", and the two read differently.
-    const newer=supersession(pinned.id,pinned.version);
-    if(newer){
-      const said=newer.changes.map(c=>`<p>${esc(c.description)}</p>`
-        +(c.incompatibility?`<p><strong>Incompatible:</strong> ${esc(c.incompatibility)}</p>`:'')
-        +(c.deprecates?`<p><strong>No longer supported:</strong> ${esc(c.deprecates)}</p>`:'')).join('');
-      content+=newer.incompatible
-        ?`<div class="inspector-alert" role="alert"><strong>Pinned to ${esc(pinned.version)} · ${esc(newer.version)} is available and is not a drop-in</strong>`
-          +`${said}<p>This step keeps running on ${esc(pinned.version)}, which is what reproduces the results it was built on. Choose the newer version above only when you are ready to re-wire; Undo restores what this disconnects.</p></div>`
-        :`<div class="notice"><strong>${esc(newer.version)} is available.</strong> This step is pinned to ${esc(pinned.version)} and keeps running on it, because a rule change changes results.${said}</div>`;
-    }
-    if(ruleset.parameters.length){
-      content+='<span class="inspector-section">Rule settings</span>';
-      for(const parameter of ruleset.parameters)
-        content+=`<div class="field"><label class="field-label" for="ruleset-${esc(parameter.name)}">${esc(parameter.meaning.split('.')[0])}</label>`
-          +`<div class="input-unit"><input id="ruleset-${esc(parameter.name)}" type="number" min="${parameter.min}" max="${parameter.max}" step="0.5" value="${n.params.parameters[parameter.name]}">`
-          +`<span>${esc(parameter.unitLabel||'')}</span></div><small>${esc(parameter.meaning)}</small></div>`;
-    }
-    // WHAT APPLYING THIS COMMITS YOU TO, where a practitioner meets it rather than where they
-    // meet the error. Experiment 140: whoever shares a ruleset that requires provenance
-    // transmission owes its users the instructions for fulfilling it. This is the middle link of
-    // a chain nothing enforced -- the dataset's authors oblige the user, and until now nothing
-    // told the user how to meet that obligation in this application.
-    const obligation=(ruleset as unknown as {obligation?:{summary:string;whatYouTakeOn:string;
-      howToAcknowledge:string;ifYouDoNot:string}}).obligation;
-    if(obligation)
-      content+=`<div class="inspector-divider"></div>`
-        +`<span class="inspector-section">What this obliges you to</span>`
-        +`<div class="inspector-alert" role="note"><strong>${esc(obligation.summary)}</strong></div>`
-        +`<p class="description">${esc(obligation.whatYouTakeOn)}</p>`
-        +`<p class="description"><strong>How to acknowledge it.</strong> ${esc(obligation.howToAcknowledge)}</p>`
-        +`<p class="description"><strong>If you do not.</strong> ${esc(obligation.ifYouDoNot)}</p>`;
-    content+=`<div class="inspector-divider"></div><span class="inspector-section">Basis</span>`
-      +`<div class="detail-row"><span>${esc(basis)}</span><strong>${ruleset.basis.evidence.length} reference${ruleset.basis.evidence.length===1?'':'s'}</strong></div>`;
-    if(ruleset.basis.unresolvedCitations.length)
-      content+=`<p class="description">Cites ${ruleset.basis.unresolvedCitations.map(c=>esc(c.citation)).join(', ')}, which this build cannot resolve to anything you can open.</p>`;
-    content+=`<span class="inspector-section">Execution engine</span><div class="engine-card"><span class="engine-mark">⋈</span><div><strong>EYE-JS · Notation3</strong><small>WebAssembly · runs on this device</small></div></div>`
-      +`<div class="notice">${esc(ruleset.mustNotBeReadAs)}</div>`
-      // "Why can't I just get a ruleset editor?" -- the practitioner, 2026-10-15, on example 09.
-      // Because the only way to one was an option inside the dropdown above, and nothing said it
-      // was there. A published ruleset is not edited in place: it is pinned and versioned, and a
-      // reader of this workflow has to be able to tell which rules ran. So this FORKS -- the step
-      // stops applying the published ruleset and starts applying rules of your own, keeping what
-      // is wired to it, and this says so before you press it rather than after.
-      +`<span class="inspector-section">The rules</span>`
-      // SHOWN, not only offered behind a button. A worked example teaches the step it is built
-      // around, and a reader who has to press something to find out what a step decides has
-      // already been told it is somebody else's business. Drawn by the renderer the authored
-      // branch uses, from the `authored` form every bundled ruleset carries. 2026-10-26.
-      +(ruleset.authored
-        ?rulesList(ruleset.authored.rules,ruleset.inputContract.fieldFrom??[],
-          value=>{
-            const setting=settingNamed(value);
-            if(!setting)return typeof value==='string'&&value.includes(':')?value.slice(value.indexOf(':')+1):String(value);
-            const held=n.params.parameters?.[setting],declared=ruleset.parameters.find(q=>q.name===setting);
-            return held===undefined||held===null?`${setting} · not set`
-              :`${setting} · ${held}${declared?.unitLabel?' '+declared.unitLabel:''}`;
-          },esc)
-        :'')
-      +(ruleset.authored&&ruleset.inputContract.fieldFrom?.length
-        // Copyable, because this ruleset reads columns off the records exactly as rules written
-        // here do -- it names `authoredFacts` as its generator, which is that same function. The
-        // notice below is true of the bespoke four and false of this one.
-        ?`<p class="description">${esc(ruleset.title)} ${esc(ruleset.version)} is published and pinned, so these rules are not edited in place. A <strong>copy</strong> can be, on this step.</p>`
-          +`<div class="notice">A copy is fed exactly what these rules are fed: ${esc(ruleset.title)} reads the columns you connect, through the same bindings, so rules copied onto this step compare the same values. The step stops applying the published ruleset and starts applying your copy, keeping what is wired to it. Resetting the example puts it back.</div>`
-          +`<div class="inspector-actions"><button id="review-rules" class="button">Review these rules</button>`
-          +`<button id="author-rules" class="button">Edit a copy on this step</button></div>`
-        :ruleset.authored
-        ?`<p class="description">${esc(ruleset.title)} ${esc(ruleset.version)} is published and pinned, so its rules are not edited here. They can be <strong>read</strong> in the same editor.</p>`
-          // Read, not copied. Each published ruleset computes its own facts -- this one from
-          // ${esc(ruleset.inputContract.factGenerator)} -- and a step applying rules written
-          // here reads columns off records instead. The rules would look the same and be fed
-          // something different, which is the one outcome worth preventing outright.
-          +`<div class="notice">These rules can be read, not copied. ${esc(ruleset.title)} works out what it is classifying for itself — ${esc(ruleset.inputContract.factGenerator.split('#').pop()||'its own fact generator')} derives the values the rules compare — while rules written for a step read columns off the records you connect. A copy would read the same and be fed something different.</div>`
-          +`<div class="inspector-actions"><button id="review-rules" class="button">Review these rules</button>`
-          +`<button id="author-rules" class="button">Write rules for this step instead</button></div>`
-        // A ruleset shipped without a structured source. None do today, and the gate says so on
-        // every build; this is what the Inspector says honestly if one ever does, rather than
-        // offering a button that would open an empty editor.
-        :`<p class="description">${esc(ruleset.title)} ${esc(ruleset.version)} is published and pinned, and this build carries no structured form of its rules. This step can apply rules you write instead; Undo puts it back.</p>`
-          +`<div class="inspector-actions"><button id="author-rules" class="button">Write rules for this step instead</button></div>`);
+    // THE STANDARD INSPECTOR (experiments 186 and 192): name, inputs, one sentence of what the step applies, Configure…,
+    // and what the last run did. The rules, their columns and settings are in the dialog; here they are shown as blocks,
+    // folded, because a worked example teaches the step it is built around (2026-10-26).
+    const p=n.params,authored=p.authored;
+    content+=standardSection('Name',labelForm('ruleset-label','Name',p.label||'Apply ruleset'));
+    content+=standardSection('Inputs',standardInputs(n));
+    const pinned=!authored&&p.ruleset?resolveRuleset(p.ruleset.id,p.ruleset.version):undefined;
+    const shown=authored?{rules:authored.rules as ShownRule[],fields:authored.fields as {attribute?:string;predicate:string}[],otherwise:authored.otherwise??[]}
+      :pinned?.authored?{rules:pinned.authored.rules as ShownRule[],fields:pinned.inputContract.fieldFrom??[],otherwise:[]}:undefined;
+    const readableValue=(value:import('./authored-rules.js').AuthoredValue)=>{
+      const setting=settingNamed(value);
+      if(!setting)return typeof value==='string'&&value.includes(':')?value.slice(value.indexOf(':')+1).replace(/_/g,' '):String(value);
+      const held=p.parameters?.[setting];
+      const declared=authored?(authored.parameters??[]).find(q=>q.name===setting):pinned?.parameters.find(q=>q.name===setting);
+      return held===undefined||held===null?`${setting} · not set`:`${setting} · ${held}${declared?.unitLabel?' '+declared.unitLabel:''}`;
+    };
+    content+=standardSection('Settings',`<p class="standard-sentence">${esc(rulesetSentence(p,pinned))}</p>`
+      +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure…</button></div>'
+      +(pinned?pinnedNotices(pinned,p.ruleset!.version):'')
+      +(shown&&shown.rules.length?`<details class="standard-rules"><summary>The rules (${shown.rules.length}${shown.otherwise.length?`, ${shown.otherwise.length} otherwise`:''})</summary>`
+        +(authored?.order?`<p class="description" data-rule-order>${esc(orderSentence(authored.order))}</p>`:'')
+        +rulesList(shown.rules,shown.fields,readableValue,esc,shown.otherwise)+'</details>':''));
+    const receipt=result?.receipts.find(r=>r.nodeId===n.id) as unknown as {method?:string}|undefined;
+    const why=result?.unfinished?.find(u=>u.nodeId===n.id)?.message;
+    content+=standardSection('Result',`<p class="standard-result${why?' standard-result-warning':''}">`
+      +`${esc(why?`The last run could not compute this step: ${why}`:receipt?.method?receipt.method.split('. ').slice(0,3).join('. ')+'.':'Not run yet.')}</p>`
+      +'<div data-standard-result></div>');
   }else if(n.type==='policy'){
     content+=`<span class="inspector-section">Rule settings</span><div class="field"><label class="field-label" for="threshold">Distance threshold</label><div class="input-unit"><input id="threshold" type="number" min="0" max="1000" step="0.5" value="${n.params.thresholdKm}"><span>km</span></div><small>Flag distances strictly greater than this value.</small></div><div class="rule-preview">When the heat alert is <b>active</b><br>and the nearest center is <b>more than ${n.params.thresholdKm} km away</b>,<br>flag the neighborhood for review.</div><span class="inspector-section">Missing evidence</span><p class="description">Missing coordinates, missing centers, or an unknown alert produce “Insufficient data”.</p><div class="inspector-divider"></div><span class="inspector-section">Execution engine</span><div class="engine-card"><span class="engine-mark">⋈</span><div><strong>EYE-JS · Notation3</strong><small>WebAssembly · runs on this device</small></div></div><div class="notice">Illustrative screening criteria. A flag is a reason to review evidence, not a risk estimate or an intervention order.</div>`;
   }else if(n.type==='alert'){
@@ -4407,8 +4290,13 @@ function renderInspector(){
   optionalElement('#add-table-view')?.addEventListener('click',()=>change(w=>{const id=`table-view-${Date.now()}`;w.nodes.push({id,type:'table_output',x:n.x+270,y:n.y,params:{label:'Imported table'}});w.edges.push({id:`e-${Date.now()}`,from:n.id,to:id,port:'table'});selected=id;}));
   optionalElement('#open-table')?.addEventListener('click',()=>{
     const baseline=JSON.stringify(workflow),current=getNode(workflow,n.id,'table_input').params;
-    openTableEditor(result=>{
+    openTableEditor(async result=>{
       if(JSON.stringify(workflow)!==baseline)throw new Error('The workflow changed. Close this and choose Configure\u2026 again.');
+      // THE ROWS ARE KEPT FIRST, as every other input keeps its data before the step points at it. The save then stores a
+      // reference to rows already written: found 2026-11-08, when a reload straight after Save found a reference to rows
+      // whose write had not committed, and the table was gone (CI, two runs of three).
+      if(result.data.rows.length&&!await keepDataset(tableDataKey(result.data),result.data))
+        throw new Error('This table could not be kept on this device, so it was not added. Export the project to keep it.');
       return change(w=>{const node=getNode(w,n.id,'table_input');node.params.data=result.data;node.params.keys=result.keys;node.params.valueField=result.valueField;node.params.unit=result.unit;node.params.source=result.source;
         // The shape the FILE was in, so the editor reopens in it and the receipt can cite the
         // columns taken. Deleted rather than set undefined when a table is re-read as long: a
@@ -4647,15 +4535,13 @@ function renderInspector(){
       dataViews.set(n.id,{...held,rows:Number(el.value)});
       renderInspector();
     }));
-  if(n.type==='apply_ruleset'){
-    wireRulesetChoice(n);
-    wireAuthorRules(n);
-    for(const parameter of (n.params.ruleset?resolveRuleset(n.params.ruleset.id,n.params.ruleset.version).parameters:[]))
-      optionalElement(`#ruleset-${parameter.name}`)?.addEventListener('change',e=>{
-        const value=control(e).value===''?NaN:Number(control(e).value);
-        change(w=>{getNode(w,n.id,'apply_ruleset').params.parameters[parameter.name]=value;});
-      });
-  }
+  // APPLY RULESET'S CONFIGURATION (experiments 186 and 192). Rules written on this step open in the rule editor, in the
+  // standard frame, with the records, their columns and the settings; a published ruleset is chosen in a dialog of its
+  // own, whose preview is its rules, basis and obligations. Only Apply writes.
+  if(n.type==='apply_ruleset')optionalElement('#configure-step')?.addEventListener('click',()=>{
+    const node=getNode(workflow,n.id,'apply_ruleset');
+    if(node.params.authored)openAuthoredRules(n.id);else openRulesetConfig(n.id);
+  });
   if(n.type==='measure_distance'){
     const current=()=>structuredClone(getNode(workflow,n.id,'measure_distance').params.candidateFilter??[]);
     optionalElement('#filter-add')?.addEventListener('click',()=>change(w=>{

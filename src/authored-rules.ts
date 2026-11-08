@@ -26,11 +26,14 @@
  *  `...Known false` fact instead, which is what all three shipped rulesets do.
  */
 
-export type Comparator='equals'|'greaterThan'|'notGreaterThan'|'lessThan'|'notLessThan';
+/** `notEquals`, IS NOT (experiment 192): a recorded value other than this one. A value not recorded is not "not this":
+ *  it has no value to differ, and matches only "is not recorded". N3's `log:notEqualTo` over a bound value says exactly
+ *  that, so the reasoner and direct evaluation agree. */
+export type Comparator='equals'|'notEquals'|'greaterThan'|'notGreaterThan'|'lessThan'|'notLessThan';
 
 /** The N3 builtin each comparator compiles to. `equals` has none: it is a term match in the
  *  subject clause, which is why it is the only comparator that works on a non-numeric value. */
-const BUILTIN:Record<Exclude<Comparator,'equals'>,string>={
+const BUILTIN:Record<Exclude<Comparator,'equals'|'notEquals'>,string>={
   greaterThan:'math:greaterThan',
   notGreaterThan:'math:notGreaterThan',
   lessThan:'math:lessThan',
@@ -99,11 +102,51 @@ export interface AuthoredRule {
    *  one. 106's first draft had one conclusion and these are what corrected it. */
   then:AuthoredConclusion[];
 }
+/** OTHERWISE (experiment 192): a column's value for a record that no rule gave one. One per column, with no
+ *  conditions: a condition belongs in a rule. Applied after every rule that could give the column a value has run,
+ *  and after the columns those rules read have had their own otherwise. Never over a conflict, which stays reported. */
+export interface AuthoredOtherwise {predicate:string; value:string}
 export interface AuthoredRuleset {
   /** The variable the rules are about: `?p` for a place, `?f` for a facility. */
   subject:string;
   comment?:string;
   rules:AuthoredRule[];
+  otherwise?:AuthoredOtherwise[];
+}
+/** Whether the rules are run directly, not by the reasoner: a value is computed, or a column has an otherwise, which N3
+ *  cannot express because it concludes from absence. */
+export const evaluatedDirectly=(ruleset:{rules:{then:AuthoredConclusion[]}[]; otherwise?:AuthoredOtherwise[]}):boolean=>
+  computesValues(ruleset)||!!ruleset.otherwise?.length;
+
+/** THE CONCLUDED COLUMNS EACH COLUMN'S RULES READ: what an otherwise waits for. */
+export function columnReads(rules:AuthoredRule[]):Map<string,Set<string>>{
+  const concluded=new Set(rules.flatMap(r=>r.then.map(c=>c.predicate)));
+  const reads=new Map<string,Set<string>>();
+  for(const rule of rules)for(const c of rule.then){
+    const set=reads.get(c.predicate)??new Set<string>();
+    for(const g of rule.any)for(const cond of g.all)if(concluded.has(cond.field)&&cond.field!==c.predicate)set.add(cond.field);
+    reads.set(c.predicate,set);
+  }
+  return reads;
+}
+/** WHAT IS WRONG WITH THE OTHERWISES, said while they are written: one per column, a value, and no two columns whose
+ *  defaults wait on each other. */
+export function otherwiseProblems(ruleset:{rules:AuthoredRule[]; otherwise?:AuthoredOtherwise[]},labelOf:(p:string)=>string=p=>p):string[]{
+  const list=ruleset.otherwise??[],problems:string[]=[];
+  const seen=new Set<string>();
+  for(const o of list){
+    if(!o.predicate)problems.push('An otherwise needs the column it gives a value to.');
+    else if(seen.has(o.predicate))problems.push(`${labelOf(o.predicate)} has two otherwises. A column has one default.`);
+    if(!o.value)problems.push(`The otherwise for ${labelOf(o.predicate)||'a column'} needs a value.`);
+    seen.add(o.predicate);
+  }
+  const reads=columnReads(ruleset.rules),defaulted=new Set(list.map(o=>o.predicate));
+  const visiting=new Set<string>(),done=new Set<string>();
+  const cycle=(c:string):string|undefined=>{if(done.has(c))return;if(visiting.has(c))return c;visiting.add(c);
+    for(const r of reads.get(c)??[])if(defaulted.has(r)){const hit=cycle(r);if(hit)return hit;}
+    visiting.delete(c);done.add(c);return;};
+  for(const c of defaulted){const hit=cycle(c);if(hit){problems.push(`${labelOf(hit)} waits for its own default through the rules that read it, so no otherwise can come first. Break the circle in the rules.`);break;}}
+  return problems;
 }
 
 /** The most N3 rules one authored ruleset may compile to.
@@ -175,6 +218,8 @@ export function compileAuthoredRuleset(ruleset:AuthoredRuleset):string{
     throw new AuthoredRulesetError(`These rules compile to ${count} N3 rules, over the ceiling of ${RULE_CEILING}. `
       +`Every group of conditions becomes a rule of its own, so adding one alternative to each of several `
       +`rules multiplies rather than adds. Split this into more than one step, or state fewer alternatives.`);
+  if(ruleset.otherwise?.length)throw new AuthoredRulesetError('Rules with an otherwise are evaluated directly, not compiled '
+    +'to N3, which cannot conclude from absence: run them with evaluateAuthored instead.');
   const lines=ruleset.comment?[`# ${ruleset.comment}`]:[];
   for(const rule of ruleset.rules){
     if(!rule.any.length)throw new AuthoredRulesetError('A rule needs at least one group of conditions.');
@@ -195,7 +240,15 @@ export function compileAuthoredRuleset(ruleset:AuthoredRuleset):string{
           subjectParts.push(`${condition.field} ${term(condition.value)}`);
           continue;
         }
-        const builtin=BUILTIN[condition.comparator];
+        // IS NOT: the value bound, then differing. Bound first, so a value not recorded never matches.
+        if(condition.comparator==='notEquals'){
+          let variable=bound.get(condition.field);
+          if(!variable){variable=variableFor(condition.field,taken);bound.set(condition.field,variable);
+            subjectParts.push(`${condition.field} ${variable}`);builtins.set(variable,[]);}
+          builtins.get(variable)!.push(`log:notEqualTo ${term(condition.value)}`);
+          continue;
+        }
+        const builtin=BUILTIN[condition.comparator as Exclude<Comparator,'equals'|'notEquals'>];
         if(!builtin)throw new AuthoredRulesetError(`Unknown comparator ${JSON.stringify(condition.comparator)}.`);
         if(typeof condition.value!=='number'&&!isPlaceholder(condition.value)&&!isSettingReference(condition.value))
           throw new AuthoredRulesetError(`${condition.comparator} compares numbers, so its value must be a number `

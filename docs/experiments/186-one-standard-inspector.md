@@ -103,9 +103,10 @@ appear in them.
 | relate_table | 5 | standard | **yes** |
 | rate, derive_value, regression, find_satellite_products, search_satellite_catalog, sample_satellite_files_at_points | 4 each | standard | no |
 | stack_polygons, map_image_input, append_rows | 2 each | standard | no |
-| case_series, apply_ruleset | 1 each | standard | no |
+| case_series | 1 | standard | no |
+| apply_ruleset | 1 | standard | **yes**, 0.8.0 (2026-11-08) |
 
-**1 of 24** widgets in use met the standard on 2026-11-08, Relate; of the 13 used in five or more workflows, 1. Select rows followed the same day, so **2 of 24**; Table input, the most used, made **3 of 24**; Total within groups, touched for [191](191-shares-within-groups.md)'s shares, **4 of 24**. The standard input lists
+**1 of 24** widgets in use met the standard on 2026-11-08, Relate; of the 13 used in five or more workflows, 1. Select rows followed the same day, so **2 of 24**; Table input, the most used, made **3 of 24**; Total within groups, touched for [191](191-shares-within-groups.md)'s shares, **4 of 24**; Apply ruleset, touched for [192](192-is-not-and-otherwise.md), **5 of 24**. The standard input lists
 are one function every step shares, so they reach every step with inputs except where a widget draws its own.
 
 ## What would close it

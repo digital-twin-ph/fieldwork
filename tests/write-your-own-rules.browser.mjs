@@ -16,14 +16,19 @@ test('a ruleset step can be given rules written here, from a standing start',asy
   // Add a ruleset step to a canvas that already has records on it.
   await page.locator('[data-view="workflow"]').click();
   await page.locator('#node-library [data-add="apply_ruleset"]').click();
+  // ONE SENTENCE, then Configure… (experiment 186), where writing rules is offered beside the published rulesets.
+  await expect(page.locator('.inspector .standard-sentence')).toContainText('Nothing to apply yet');
+  await page.locator('#configure-step').click();
   const chooser=page.locator('#ruleset-choice');
   await expect(chooser).toBeVisible();
-  await expect(chooser.locator('option[value="authored"]')).toHaveText('Write rules for this step…');
-
+  await expect(chooser.locator('option[value="authored"]')).toHaveText('Write rules for this step');
   await chooser.selectOption('authored');
-  // The step now takes records, and says what it needs before it can read them.
-  await expect(page.locator('#inspector-content')).toContainText('Connect the records this step should classify');
-  await expect(page.locator('#edit-rules')).toBeVisible();
+  await page.locator('#ruleset-config #config-apply').click();
+  // The rules dialog opens, and says what it needs before it can read anything.
+  const editor=page.locator('#rule-editor');
+  await expect(editor).toContainText('Connect the records these rules read');
+  await editor.locator('#config-cancel').click();
+  await expect(editor).toBeHidden();
 
   // Wire the records, and the columns they carry are offered.
   const added=await page.evaluate(()=>{
@@ -44,18 +49,18 @@ test('a ruleset step can be given rules written here, from a standing start',asy
   await page.locator('[data-view="workflow"]').click();
   await page.locator(`.react-flow__node[data-id="${added}"]`).click();
 
-  const inspector=page.locator('#inspector-content');
-  await expect(inspector).toContainText('These are the columns the connected records carry');
-  await expect(inspector).toContainText('DEATHS');
-  await page.locator('#use-columns').click();
+  // The columns the connected records carry are the rules' columns, in the dialog.
+  await page.locator('#configure-step').click();
+  await expect(editor.locator('.inspector-table')).toContainText('DEATHS');
 
   // Declared, and a numeric column is asked for its unit, because a number without one is not a
   // measurement and the rules will not run until it has one.
-  await expect(inspector).toContainText('A numeric column the rules read needs its unit');
-  const unit=page.locator('[data-field-unit]').first();
+  await expect(editor).toContainText('A numeric column the rules read needs its unit');
+  const unit=editor.locator('[data-field-unit]').first();
   await expect(unit).toBeVisible();
   await unit.fill('m');
   await unit.press('Tab');
+  await editor.locator('#config-apply').click();
   await expect.poll(async()=>await page.evaluate(id=>{
     const w=JSON.parse(localStorage.getItem('fieldwork-workflow-v1')||'{}');
     const f=w.nodes.find(n=>n.id===id).params.authored.fields.find(x=>x.kind==='number');
@@ -63,8 +68,8 @@ test('a ruleset step can be given rules written here, from a standing start',asy
   },added)).toBe('http://qudt.org/vocab/unit/M');
 
   // And the editor opens on a step that had no rules at all a moment ago.
-  await page.locator('#edit-rules').click();
-  await expect(page.locator('#rule-editor')).toBeVisible();
+  await page.locator('#configure-step').click();
+  await expect(editor).toBeVisible();
   await page.locator('#rule-editor-add').click();
   await expect(page.locator('#rule-editor .rule-card')).toHaveCount(1);
   expect(errors).toEqual([]);
@@ -102,10 +107,9 @@ test('a step fed by a table is offered that table\'s columns',async({page})=>{
     JSON.parse(localStorage.getItem('fieldwork-workflow-v1')).nodes.find(n=>n.type==='apply_ruleset').id);
   await page.locator(`.react-flow__node[data-id="${id}"]`).click();
 
-  const inspector=page.locator('#inspector-content');
-  await expect(inspector).toContainText('These are the columns the connected records carry');
-  // The declared value field, which is the column any rule about this table would read.
-  await expect(inspector).toContainText(/value_mm/i);
+  // The declared value field, which is the column any rule about this table would read, offered in the rules dialog.
+  await page.locator('#configure-step').click();
+  await expect(page.locator('#rule-editor .inspector-table')).toContainText(/value_mm/i);
   expect(errors).toEqual([]);
 });
 
@@ -132,15 +136,16 @@ test('the worked example\'s ruleset step shows its rules, and a copy starts from
   // Named as the file spells the column, which is what a reader checks against their data.
   await expect(inspector.locator('.authored-rules')).toContainText('value_mm');
 
-  // This ruleset reads columns through declared bindings, so a copy is fed identically and the
-  // panel offers one. The four with bespoke fact generators still refuse, and say why.
-  await expect(inspector).toContainText('A copy is fed exactly what these rules are fed');
-  await page.locator('#author-rules').click();
+  // This ruleset reads columns through declared bindings, so a copy is fed identically and Configure… offers one.
+  await page.locator('#configure-step').click();
+  await expect(page.locator('#ruleset-choice option[value="authored"]')).toHaveText('Edit a copy of these rules on this step');
+  await page.locator('#ruleset-choice').selectOption('authored');
+  await page.locator('#ruleset-config #config-apply').click();
 
   // The copy opens on the published rules rather than on nothing.
   await expect(page.locator('#rule-editor')).toBeVisible();
   await expect(page.locator('#rule-editor .rule-card')).toHaveCount(2);
-  await page.locator('#rule-editor-keep').click();
+  await page.locator('#rule-editor #config-apply').click();
 
   const seeded=await page.evaluate(nodeId=>{
     const node=JSON.parse(localStorage.getItem('fieldwork-workflow-v1')).nodes.find(n=>n.id===nodeId);

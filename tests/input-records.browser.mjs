@@ -57,9 +57,15 @@ test('a stopped run is reported as a failure, and stays until it is closed',asyn
 
   // Take the unit off a field the rules compare, which the run refuses by name.
   await page.locator('[data-view="workflow"]').click();
-  await page.locator('.react-flow__node[data-id="gap-day"]').click();
-  await page.locator('[data-field-unit]').first().fill('');
-  await page.locator('[data-field-unit]').first().press('Tab');
+  // The rules dialog refuses to apply a number without its unit (experiment 186), so the unit is taken off the saved
+  // workflow, as an older file or another tool could leave it, and the run must refuse it by name.
+  await page.evaluate(()=>{const key='fieldwork-workflow-v1',w=JSON.parse(localStorage.getItem(key));
+    const f=w.nodes.find(n=>n.id==='gap-day').params.authored.fields.find(x=>x.kind==='number');delete f.unit;delete f.unitLabel;
+    delete w.manifest;localStorage.setItem(key,JSON.stringify(w));});
+  await page.reload();
+  await expect(page.locator('#workflow-state')).toContainText(/Run (complete|failed)/,{timeout:45000});
+  if(await toast.locator('button').count())await toast.locator('button').click();
+  await page.locator('[data-view="workflow"]').click();
   await page.locator('#run-button').click();
   await expect(toast).toHaveClass(/failure/,{timeout:20000});
   await expect(toast).toContainText('states no unit');
@@ -140,12 +146,19 @@ test('a failing widget glows red, and is told apart from one that merely found s
   await expect(node('text-building')).toHaveClass(/alerting/);
   await expect(node('text-building')).not.toHaveClass(/failed/);
 
-  // Break one step: take the unit off the field its rules compare.
+  // WHILE ITS PULSE RUNS, an alerting step is amber, not red: the keyframes once carried one colour for both states, so
+  // an alerting node rendered red for four seconds. Measured now, on the run that completed, while it pulses.
+  const ring=id=>node(id).evaluate(e=>getComputedStyle(e).boxShadow);
+  expect(await ring('text-building')).toMatch(/rgb\(177, 118, 55\)/);
+  const amber=await node('text-building').evaluate(e=>getComputedStyle(e).borderColor);
+
+  // Break one step: take the unit off the field its rules compare. The rules dialog refuses to apply that (experiment
+  // 186), so it is taken off the saved workflow, as an older file could leave it, and the run must refuse it by name.
+  await page.evaluate(()=>{const key='fieldwork-workflow-v1',w=JSON.parse(localStorage.getItem(key));
+    const f=w.nodes.find(n=>n.id==='gap-day').params.authored.fields.find(x=>x.kind==='number');delete f.unit;delete f.unitLabel;
+    delete w.manifest;localStorage.setItem(key,JSON.stringify(w));});
+  await page.reload();
   await page.locator('[data-view="workflow"]').click();
-  await page.locator('.react-flow__node[data-id="gap-day"]').click();
-  await page.locator('[data-field-unit]').first().fill('');
-  await page.locator('[data-field-unit]').first().press('Tab');
-  await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toHaveText('Run failed',{timeout:30000});
 
   // Red, and NOT still running.
@@ -157,12 +170,8 @@ test('a failing widget glows red, and is told apart from one that merely found s
   // The two states are different colours, not one colour for "something is up": "your answer
   // has a caveat" must not look like "you have no answer".
   const border=id=>node(id).evaluate(e=>getComputedStyle(e).borderColor);
-  expect(await border('gap-day')).not.toBe(await border('text-building'));
-  // Including WHILE the pulse runs. The keyframes carried the colour and both states shared one
-  // pair, so an alerting node rendered red for four seconds and turned amber only once the
-  // animation finished -- which no screenshot taken in that window would have shown.
-  const ring=id=>node(id).evaluate(e=>getComputedStyle(e).boxShadow);
+  expect(await border('gap-day')).not.toBe(amber);
+  // And the failed step's pulse is red while it runs.
   expect(await ring('gap-day')).toMatch(/rgb\(165, 43, 35\)/);
-  expect(await ring('text-building')).toMatch(/rgb\(177, 118, 55\)/);
   expect(errors).toEqual([]);
 });

@@ -1148,3 +1148,28 @@ body:not(.lab-evaluation) .lab-only{display:none!important}
 #lab-evaluation-dialog .lab-works{margin-top:.6rem}
 #lab-evaluation-dialog .lab-actions{display:flex;justify-content:space-between;align-items:center;margin-top:.6rem;gap:1rem}
 @media (max-width:640px){#lab-evaluation-dialog .lab-finding{grid-template-columns:1fr}}
+/* RULES AS BLOCKS (experiment 192): each part of a rule its own block. The WORD is the cue (if, or, then, otherwise),
+   drawn in the body text colour, which is AA against every tint; the colour and the EDGE repeat it, so the blocks read
+   in greyscale too. Tones from the palette above: if blue, or purple, then green, otherwise amber. */
+.rule-block-if{--block-tone:#5c8398;--block-tint:#edf3f7;--block-edge:solid}
+.rule-block-or{--block-tone:#8a6aab;--block-tint:#f2edf7;--block-edge:dotted}
+.rule-block-then{--block-tone:#648f55;--block-tint:#edf4e8;--block-edge:double}
+.rule-block-otherwise{--block-tone:#b68c48;--block-tint:#fbf5e8;--block-edge:dashed}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]):not([data-theme="dark"]) .rule-block-if{--block-tone:#8fb8cc;--block-tint:#1b2a31}
+  :root:not([data-theme="light"]):not([data-theme="dark"]) .rule-block-or{--block-tone:#b49ad0;--block-tint:#241d2e}
+  :root:not([data-theme="light"]):not([data-theme="dark"]) .rule-block-then{--block-tone:#9ec98c;--block-tint:#1e2a1a}
+  :root:not([data-theme="light"]):not([data-theme="dark"]) .rule-block-otherwise{--block-tone:#e0a970;--block-tint:#2e2418}}
+:root[data-theme="dark"] .rule-block-if{--block-tone:#8fb8cc;--block-tint:#1b2a31}
+:root[data-theme="dark"] .rule-block-or{--block-tone:#b49ad0;--block-tint:#241d2e}
+:root[data-theme="dark"] .rule-block-then{--block-tone:#9ec98c;--block-tint:#1e2a1a}
+:root[data-theme="dark"] .rule-block-otherwise{--block-tone:#e0a970;--block-tint:#2e2418}
+.rule-block{background:var(--block-tint);border-left:6px var(--block-edge) var(--block-tone);border-radius:6px;
+  padding:8px 10px;margin:6px 0;color:var(--text-1);font-size:14px}
+.rule-block-or{padding:2px 10px;background:transparent;border-left-width:6px}
+.rule-word{display:inline-block;font-size:14px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;
+  color:var(--text-1);border-bottom:2px var(--block-edge) var(--block-tone);margin:0 0 6px;padding:0 2px}
+.rule-block .rule-keyword{color:var(--text-1)}
+.rule-block-count{font-size:14px;color:var(--text-1);margin-left:8px}
+.rule-editor-adds{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.rule-otherwise-list{margin:10px 0}
+.standard-rules summary{font-size:14px;cursor:pointer;margin:6px 0}

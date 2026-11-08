@@ -98,7 +98,7 @@ const NS='urn:fieldwork:';
  *  minted thirty terms in one afternoon. */
 export const AUTHORED_NS='urn:fieldwork:authored:';
 export const AUTHORED_PREFIX=`@prefix fw: <${NS}>.\n@prefix fwa: <${AUTHORED_NS}>.\n`
-  +'@prefix math: <http://www.w3.org/2000/10/swap/math#>.\n';
+  +'@prefix math: <http://www.w3.org/2000/10/swap/math#>.\n@prefix log: <http://www.w3.org/2000/10/swap/log#>.\n';
 
 /** What one attribute of a record means, in the vocabulary the rules are written in. */
 export interface FieldBinding {

@@ -709,12 +709,12 @@
    "migrationFrom": []
   },
   "relate_table": {
-   "version": "0.8.0",
+   "version": "0.8.1",
    "released": "2026-11-07",
    "changes": [
     {
-     "kind": "minor",
-     "description": "The first widget on the standard Inspector and configuration dialog (experiment 186). The panel holds the step's name, its two inputs, one sentence saying what it will do, Configure…, a one-line result after a run, the Manual, Evidence and Version links, and Duplicate and Remove. Every setting is in the dialog: what to match on, what to bring, how keys are compared, a date within a period, and the list of shifts, which the panel could not offer. The dialog shows the join before it is applied, and the decision about unmatched rows, which starts unchosen. Nothing is written until Apply; Cancel, × and Escape ask before discarding a change. What the step stores is unchanged, so saved workflows open as they were."
+     "kind": "patch",
+     "description": "With several shifts, the columns a following step is offered are the ones the run makes, one per shift, and no longer the single shift's brought column and period helpers. Found 2026-11-07 by the Regression beside it."
     }
    ],
    "breaking": false,
@@ -1014,12 +1014,12 @@
    "replacementCandidate": "urn:fieldwork:widget:apply_ruleset"
   },
   "regression": {
-   "version": "0.3.0",
-   "released": "2026-11-06",
+   "version": "0.4.0",
+   "released": "2026-11-07",
    "changes": [
     {
      "kind": "minor",
-     "description": "Strata over several columns together, one stratum per combination, absorbed; checked against statsmodels in Validation Lab check 37."
+     "description": "One model per exposure column: two or more exposure columns, such as Relate's shift columns, each fitted as the single model with the exposure swapped and on its own rows, in one table keyed by exposure, the shift in days where Relate recorded one, and whether a term is the exposure or adjusted for. A column that cannot be fitted is a row saying why. Experiment 185, stage 2."
     }
    ],
    "breaking": false,

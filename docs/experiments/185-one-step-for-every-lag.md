@@ -2,7 +2,40 @@
 
 _Created 2026-11-07 · Updated 2026-11-07_
 
-**Status:** asked. Nothing is built; this is the design, written before the code.
+**Status:** asked, two of three stages built. Corrected 2026-11-07: this line said nothing was built after stage 1
+had landed. Not `tried` until the Brazil workflows are rebuilt and their manuals play back.
+
+| Stage | What | State, 2026-11-07 |
+| --- | --- | --- |
+| 1 | Relate takes a list of shifts, one column each, every row kept (`relateAtShifts`, at most 24) | Built (45f4f42), and settable in Relate's dialog since 0.47.0 |
+| 2 | Regression fits one model per exposure column, each on its own rows, in one table | Built, 0.48.0 (Regression 0.4.0) |
+| 3 | Brazil W4 and W5 rebuilt with one Relate and one Regression; manuals; checks 36 and 37; the 182 figures; a measured limit | Not started |
+
+## Stage 2, as built
+
+- **One setting**, `exposureColumns`, as the two-by-two's several exposures have: the first is the exposure, and each
+  further one gets the same model with only the exposure swapped. One column, or none listed, is the single model,
+  unchanged, so no saved workflow changes.
+- **Each model on its own rows** is `fitRegression` run once per column, which already leaves out per model the rows
+  its own variables are missing on. A test holds each model's estimates equal to that column's Regression alone and its
+  rows equal to the rows its column has a value on, more than the rows common to every column
+  (`tests/regression-per-exposure.test.mjs`, synthetic data in `tests/fixtures/lag-weeks.mjs`).
+- **One table**, keyed by exposure, `shift_days` (from the shifts Relate records on its table, declared a number in
+  days), role (exposure or adjusted for), term and statistic. Append rows is no longer needed to stack the models.
+  Select rows by value on role still is, to chart one point per lag.
+- **No limit on the number of columns** is set in Regression: the list is bounded by the table's columns, and the
+  measured limit is stage 3's.
+- **A column that cannot be fitted is a row saying why**; the step stops only when none can be. The receipt holds one
+  `fw:RegressionModel` per fitted model, and conforms to the shapes.
+
+**Found while building it, 2026-11-07:** with several shifts, Relate told the next step's Inspector that its output had
+the single shift's columns (the brought column and the period helpers), which the run does not make, and not the
+shift columns it does. So no Inspector downstream of a several-shift Relate could offer a shift column. Stage 1's tests
+checked the run and not what the next step is offered. Fixed in Relate 0.8.1; found by the stage 2 browser check.
+
+**Open for stage 3:** the lag chart today reads Append rows' `lag` column, in weeks before (0, 2, 4…). The models'
+`shift_days` is the shift as Relate recorded it (3, −11, −25… in W4), in days and with the opposite sign. Whether the
+chart shows days shifted, or a column in weeks is derived for it, is not decided.
 
 ## The question
 

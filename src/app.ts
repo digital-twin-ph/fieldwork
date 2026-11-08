@@ -34,7 +34,7 @@ import {hagellochExample} from './hagelloch-example.js';
 import {openRuleEditor} from './rule-editor.js';
 import {openStepViewer,openTableViewer,shapeChange,stepLabels,tableViewOf,type TableView} from './table-viewer.js';
 import {keyNoun,openRelateConfig,relateDraftOf,applyRelateDraft,relateSentence} from './relate-ui.js';
-import {relateShape,decisionMatches,relateAtShifts} from './relate-table.js';
+import {relateShape,decisionMatches,relateAtShifts,shiftColumnName} from './relate-table.js';
 import {findingsSummary,wideDataTable} from './data-table.js';
 import {openSatelliteCatalogDialog} from './satellite-catalog-ui.js';
 import {bboxOf,defaultKept} from './satellite-catalog.js';
@@ -1000,8 +1000,16 @@ function upstreamKeyValues(node:WorkflowNode,seen=new Set<string>(),
   // column; a categorical one's levels are known only from the data, so they are not offered here (experiment 181).
   if(up.type==='regression'){
     const p=up.params,level=p.level??95;
-    const terms=[p.exposure,...p.adjust].filter(v=>v.column&&v.as==='numeric').map(v=>v.column);
-    return {term:terms,statistic:[p.family==='logistic'?'odds ratio':'rate ratio',`lower ${level}%`,`upper ${level}%`,'p']};
+    const several=(p.exposureColumns?.length??0)>1?p.exposureColumns!:null;
+    const terms=[...(several??[p.exposure.column]).map(column=>({...p.exposure,column})),...p.adjust]
+      .filter(v=>v.column&&v.as==='numeric').map(v=>v.column);
+    const statistic=[p.family==='logistic'?'odds ratio':'rate ratio',`lower ${level}%`,`upper ${level}%`,'p'];
+    if(!several)return {term:terms,statistic};
+    // ONE MODEL PER COLUMN (experiment 185): the exposure is a key, and the shift where Relate named one.
+    const shift=(c:string)=>c.match(/_([+-]?\d+)d$/)?.[1]?.replace(/^\+/,'');
+    const shifted=several.some(c=>shift(c)!==undefined);
+    return {exposure:several,...(shifted?{shift_days:several.map(c=>shift(c)??'')}:{}),
+      role:['exposure','adjusted for'],term:terms,statistic};
   }
   // RELATING ADDS A COLUMN, and the values it will hold are the ones the second table holds --
   // read from THAT table rather than guessed, which is the same discipline as reading the
@@ -1011,6 +1019,10 @@ function upstreamKeyValues(node:WorkflowNode,seen=new Set<string>(),
     if(!below)return undefined;
     const brought=up.params.bring.trim();
     const other=upstreamKeyValues(up,new Set(seen),'related');
+    // SEVERAL SHIFTS (experiment 185) bring one column per shift and none of a single shift's helper columns, as
+    // `relateAtShifts` does. Found 2026-11-07 by the Regression beside it: these were read as the single-shift columns.
+    if(brought&&(up.params.shifts?.length??0)>1)
+      return {...below,...Object.fromEntries(up.params.shifts!.map(d=>[shiftColumnName(brought,d),other?.[brought]??[]]))};
     // A DATE MATCHED WITHIN A PERIOD adds the shifted date and the period's start to every row (experiment 180).
     const w=up.params.within;
     const shiftedAs=(()=>{if(!w)return '';let name=`${w.date}_shifted`,k=1;while(name in below)name=`${w.date}_shifted_${++k}`;return name;})();
@@ -2305,6 +2317,16 @@ function renderInspector(){
           +(p.exposure.as==='categorical'&&values(p.exposure.column).length
             ?`<div class="field"><label class="field-label" for="reg-exposure-reference">Reference value</label><select id="reg-exposure-reference">`
               +values(p.exposure.column).map(v=>option(v,v,(p.exposure.reference??[...values(p.exposure.column)].sort()[0])===v)).join('')+`</select></div>`:'')
+          +(()=>{
+            // ONE MODEL PER COLUMN (experiment 185): Relate's shift columns, or any others, each fitted on its own rows.
+            const several=p.exposureColumns??[],taken=new Set([p.outcome,p.exposure.column,...p.adjust.map(t=>t.column),
+              ...strataOf(p.strata),...(p.offset?[p.offset]:[])]);
+            const offered=columns.filter(c=>!taken.has(c)||(several.includes(c)&&c!==p.exposure.column));
+            if(!offered.length)return '';
+            return `<fieldset class="field" id="reg-exposures"><legend class="field-label">Also fit, one model each, with</legend>`
+              +`<p class="description">Each is the same model with the exposure swapped, fitted on its own rows: a row missing one column is left out of that model only. The models come out as one table, one row per model and term.</p>`
+              +offered.map(c=>`<label class="check"><input type="checkbox" value="${esc(c)}" data-reg-also="${esc(c)}" ${several.includes(c)?'checked':''}> ${esc(c)}</label>`).join('')
+              +`</fieldset>`;})()
         :'')
       +`<span class="inspector-section">Adjusted for</span>`
       +(p.adjust.length?p.adjust.map(term=>`<div class="reg-term"><label class="field-label" for="reg-kind-${esc(term.column)}">${esc(term.column)} as</label>`
@@ -4215,7 +4237,13 @@ function renderInspector(){
     if(list.length)p[key]=list;else delete p[key];})));
   optionalElement('#reg-exposure')?.addEventListener('change',e=>reg(p=>{const column=control(e).value,held=upstreamKeyValues(n)?.[column];
     p.exposure={column,as:held&&orderOf(held)==='number'&&held.length>2?'numeric':held?'categorical':'numeric'};
-    p.adjust=p.adjust.filter(t=>t.column!==p.exposure.column);}));
+    p.adjust=p.adjust.filter(t=>t.column!==p.exposure.column);
+    if(p.exposureColumns){const also=p.exposureColumns.slice(1).filter(c=>c!==column);
+      if(also.length)p.exposureColumns=[column,...also];else delete p.exposureColumns;}}));
+  document.querySelectorAll<HTMLInputElement>('[data-reg-also]').forEach(el=>el.addEventListener('change',()=>reg(p=>{
+    const also=[...document.querySelectorAll<HTMLInputElement>('[data-reg-also]:checked')].map(b=>b.value)
+      .filter(c=>c!==p.exposure.column);
+    if(also.length)p.exposureColumns=[p.exposure.column,...also];else delete p.exposureColumns;})));
   optionalElement('#reg-exposure-as')?.addEventListener('change',e=>reg(p=>{p.exposure={column:p.exposure.column,as:control(e).value as 'numeric'};}));
   optionalElement('#reg-exposure-reference')?.addEventListener('change',e=>reg(p=>{p.exposure={...p.exposure,reference:control(e).value};}));
   // A COLUMN OF NUMBERS IS ADDED AS NUMERIC, as R treats a numeric column; anything else as categorical. Changed by a

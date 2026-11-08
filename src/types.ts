@@ -250,6 +250,9 @@ export interface ParamsByType {
    *  key columns and its value field alike. `order` is the column rows are sorted by for HAC errors. */
   regression:{label:string;family:'logistic'|'poisson';outcome:string;cases?:string[];controls?:string[];
     exposure:{column:string;as:'numeric'|'categorical'|'spline';reference?:string;df?:number};
+    /** ONE MODEL PER COLUMN (experiment 185): two or more exposure columns, the first being `exposure.column`, each
+     *  entered as `exposure` says and fitted on its own rows. Absent or one column: the single model. */
+    exposureColumns?:string[];
     adjust:{column:string;as:'numeric'|'categorical'|'spline';reference?:string;df?:number}[];
     /** One strata column, or several taken together (experiment 182). */
     strata?:string|string[];offset?:string;errors:'wald'|'profile'|'overdispersed'|'hac';hacLag?:number;order?:string;level?:number};

@@ -3,6 +3,22 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.48.0 — 2026-11-07
+
+- **Regression fits one model per exposure column** ([185](docs/experiments/185-one-step-for-every-lag.md), stage 2).
+  Under Exposure, **Also fit, one model each, with** offers the table's other columns, such as Relate's shift columns.
+  Each ticked column gets the same model with only the exposure swapped, fitted on its own rows: a week with no value
+  at one shift is left out of that model only. The models come out as one table with the columns exposure,
+  shift_days (where Relate recorded the shift), role, term and statistic. A column that cannot be fitted is a row
+  saying why. Regression 0.4.0.
+- **Relate with several shifts offers the right columns to the next step.** A following step was offered the single
+  shift's column and period helpers, which a several-shift run does not make, and not the shift columns it does.
+  Relate 0.8.1.
+- **Not yet done:** the Brazil lag workflows still use one Relate and one Regression per lag. Rebuilding them, and
+  comparing every model with Validation Lab checks 36 and 37 and the 2010–2025 figures, is stage 3.
+- **Checked:** the unit suite, and the new browser check and the Relate panel checks in Chromium and WebKit; the full
+  gate in Chromium.
+
 ## 0.47.0 — 2026-11-07
 
 - **Relate is the first step with the standard panel and dialog** ([186](docs/experiments/186-one-standard-inspector.md)).

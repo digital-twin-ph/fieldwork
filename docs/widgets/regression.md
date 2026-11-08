@@ -17,7 +17,8 @@ builds the model's columns as R does, so the same model here and in R has the sa
 **records** — a table. The outcome and every variable are its columns: its key columns and its value column alike.
 **design** — optional, the study design. A declared design decides what the result may be called, and which model it allows.
 
-It gives back a table: one row per reported term, with the ratio, the interval limits and p. The table says which
+It gives back a table: one row per reported term, with the ratio, the interval limits and p (with several exposure
+columns, one row per model and term; see below). The table says which
 statistic is the ratio and which are its limits, so **Chart** draws each ratio with its interval without guessing
 from the names.
 
@@ -34,6 +35,24 @@ from the names.
 | **Intervals** | **Likelihood-ratio** (the default; R's `confint()`), **Wald**, Wald **scaled for overdispersion**, or Wald with **HAC** standard errors for counts that are correlated from day to day, with the number of lags and the column giving the rows' order |
 
 **A row missing any variable the model uses is left out**, as R does by default, and the result says how many and why.
+
+### One model per exposure column
+
+Under **Exposure**, **Also fit, one model each, with** lists the table's other columns. Tick one or more, and the step
+fits one model per column: the same model each time, with only the exposure swapped. This is for a lag-response
+question, where **Relate a column from another table** has brought the temperature at several shifts, one column each.
+
+- **Each model is fitted on its own rows.** A week with no value at one shift is left out of that shift's model only.
+  Fitting every model on the weeks that have a value at every shift would be a different analysis, and is not done.
+- **The models come out as one table**, one row per model, term and statistic. Its columns are **exposure** (the
+  column the model is for), **shift_days** (the shift Relate recorded, as a number of days; only when there is one),
+  **role** (*exposure* or *adjusted for*), **term** and **statistic**. To chart one point per lag, keep the rows whose
+  role is *exposure* with **Select rows by value**, and choose **shift_days** as the chart's category column.
+- **A column that cannot be fitted is a row saying so**, with empty values, and the result says why. The step stops
+  only when no column can be fitted.
+- **The result says how many intervals there are**, and that none is adjusted for the number of comparisons.
+
+Untick every column to go back to one model.
 
 ## What it will not do
 

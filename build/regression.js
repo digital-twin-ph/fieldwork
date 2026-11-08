@@ -1,2 +1,2 @@
-import{a,b,c,d,e,f,g,h,i}from"./chunks/chunk-YCHPQ3PP.js";import"./chunks/chunk-DAFC5SU5.js";import"./chunks/chunk-KVMUXFPB.js";export{c as bsBasis,d as fitRegression,b as quantile7,i as regressionReceipt,h as regressionSentence,g as regressionTable,f as rowsOf,e as specFrom,a as strataOf};
+import{a,b,c,d,e,f,g,h,i,j,k,l,m,n}from"./chunks/chunk-34PU7GUO.js";import"./chunks/chunk-DAFC5SU5.js";import"./chunks/chunk-KVMUXFPB.js";export{c as bsBasis,j as exposureColumnsOf,k as fitEachExposure,d as fitRegression,b as quantile7,i as regressionReceipt,h as regressionSentence,g as regressionTable,n as regressionsReceipt,m as regressionsSentence,l as regressionsTable,f as rowsOf,e as specFrom,a as strataOf};
 //# sourceMappingURL=regression.js.map

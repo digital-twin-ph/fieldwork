@@ -1105,7 +1105,7 @@
     {
       "id": "urn:fieldwork:widget:relate_table",
       "nodeType": "relate_table",
-      "currentVersion": "0.8.0",
+      "currentVersion": "0.8.1",
       "releases": [
         {
           "version": "0.1.0",
@@ -1151,6 +1151,11 @@
           "version": "0.8.0",
           "path": "widgets/releases/relate_table/0.8.0.json",
           "sha256": "b44257f0525f69233032d66264e2e7183d891e38e1756356844aeedc380a8430"
+        },
+        {
+          "version": "0.8.1",
+          "path": "widgets/releases/relate_table/0.8.1.json",
+          "sha256": "0fbd233744325c2e1056a9fd28aa70a6632f5be1f3d1273aae317d486c35407e"
         }
       ]
     },
@@ -1645,7 +1650,7 @@
     {
       "id": "urn:fieldwork:widget:regression",
       "nodeType": "regression",
-      "currentVersion": "0.3.0",
+      "currentVersion": "0.4.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -1666,6 +1671,11 @@
           "version": "0.3.0",
           "path": "widgets/releases/regression/0.3.0.json",
           "sha256": "f1b4142030b24cb7a024fbe53aceb6f68f3713c13a62977a9c8b2db6983a20df"
+        },
+        {
+          "version": "0.4.0",
+          "path": "widgets/releases/regression/0.4.0.json",
+          "sha256": "58715db6d102f4874befecccc88a597285955a675b57fd38203bf7b3a00deccf"
         }
       ]
     },

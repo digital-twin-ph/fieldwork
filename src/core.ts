@@ -56,7 +56,8 @@ import {OLD_TYPES,validateOldNode,executeOldNode,migrateFacilitySources,applyAcc
 import {resolveRuleset,bindParameters,tableContractFailures,rulesetCitation} from './rulesets.js';
 import {deriveValue,selectRows,selectRange,rangeSentence,OPERATORS} from './derive-value.js';
 import {appendTables,appendSentence,appendPort,appendTableCount} from './append-rows.js';
-import {fitRegression,specFrom,rowsOf,regressionTable,regressionSentence,regressionReceipt} from './regression.js';
+import {fitRegression,specFrom,rowsOf,regressionTable,regressionSentence,regressionReceipt,exposureColumnsOf,fitEachExposure,
+  regressionsTable,regressionsSentence,regressionsReceipt} from './regression.js';
 import {metadataFindings} from './column-metadata.js';
 import widgetRegistry from '../widgets/registry.json';
 import {relateTable,relateOutcome,machinedNotes,relateReceiptFacts,relateAtShifts,relateShiftsReceiptFacts,type RelateOutcome,type ShiftColumn} from './relate-table.js';
@@ -1728,6 +1729,16 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         // before the fit, so a measure the design cannot support is never computed and then hidden.
         const declared=inputs.design as unknown as DeclaredDesign|undefined;
         const licensed=regressionMeasure(declared,node.params.family);
+        const source=workflow.edges.find(e=>e.to===node.id&&e.port==='records')!.from;
+        const designed=!!declared&&!declared.stopped;
+        // ONE MODEL PER EXPOSURE COLUMN (experiment 185), each on its own rows, in one table.
+        if(exposureColumnsOf(node.params).length>1){
+          const models=fitEachExposure(rowsOf(table,node.params.order),node.params,table.columnShifts,licensed);
+          const sentence=regressionsSentence(models,node.params)+(designed?` ${declared!.sentence}`:'');
+          value={...regressionsTable(models,table.columns),sentence} as unknown as DisplayValue;
+          receipts.push(regressionsReceipt(node,models,node.params,runId,source,designed,sentence) as unknown as Receipt);
+          break;
+        }
         const fitted=fitRegression(rowsOf(table,node.params.order),specFrom(node.params));
         const result=licensed?{...fitted,measure:licensed}:fitted;
         const sentence=regressionSentence(result,node.params)

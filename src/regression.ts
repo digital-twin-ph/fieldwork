@@ -241,7 +241,8 @@ function normalUpper(x:number):number{
 }
 
 /** The widget's parameters as a fit specification. */
-export interface RegressionParams {family:Family;outcome:string;cases?:string[];controls?:string[];exposure:Term;adjust:Term[];
+export interface RegressionParams {family:Family;outcome:string;cases?:string[];controls?:string[];exposure:Term;
+  exposureColumns?:string[];adjust:Term[];
   strata?:string|string[];offset?:string;errors:'wald'|'profile'|'overdispersed'|'hac';hacLag?:number;order?:string;level?:number}
 export function specFrom(params:RegressionParams):RegressionSpec{
   if(!params.outcome?.trim())throw new Error('Choose the outcome column.');
@@ -295,9 +296,9 @@ export function regressionSentence(result:RegressionResult,params:RegressionPara
 /** THE FIT AS RDF, so the N3 & evidence view shows a regression the way it shows a two-by-two. Experiment 176.
  *  `fw:RegressionModel` states what was fitted and how; each coefficient is an `fw:EpiEstimate` that names its term,
  *  its interval method and its level. `ontology/shapes/quality-and-design.ttl` holds the receipt to that. */
-export function regressionReceipt(node:{id:string},result:RegressionResult,params:RegressionParams,runId:string,
-  sourceNodeId:string,designDeclared:boolean){
-  const entity=`<urn:fieldwork:run:${runId}:output:${node.id}>`;
+/** One fitted model as RDF statements about `entity`: the model's lines, then one estimate per term. */
+function modelFacts(entity:string,result:RegressionResult,params:RegressionParams,runId:string,sourceNodeId:string,
+  designDeclared:boolean):{lines:string[];estimates:string}{
   const quote=(v:string)=>JSON.stringify(v);
   // xsd:double's own spellings for an unbounded profile interval; JavaScript's "Infinity" is not one.
   const num=(v:number)=>`"${v===Infinity?'INF':v===-Infinity?'-INF':Number.isNaN(v)?'NaN':v}"^^xsd:double`;
@@ -325,10 +326,119 @@ export function regressionReceipt(node:{id:string},result:RegressionResult,param
     +`fw:estimateName ${quote(result.measure)}; fw:modelTerm ${quote(e.term)}; `
     +`fw:estimateValue ${num(e.ratio)}; fw:intervalLower ${num(e.lower)}; fw:intervalUpper ${num(e.upper)}; `
     +`fw:intervalMethod ${quote(result.errors)}; fw:intervalLevel ${int(result.level)} ].`).join('\n');
-  const facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n`
-    +`@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.\n`+lines.join(';\n  ')+'.\n'+estimates+'\n';
+  return {lines,estimates};
+}
+const PREFIXES=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n`
+  +`@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.\n`;
+
+export function regressionReceipt(node:{id:string},result:RegressionResult,params:RegressionParams,runId:string,
+  sourceNodeId:string,designDeclared:boolean){
+  const entity=`<urn:fieldwork:run:${runId}:output:${node.id}>`;
+  const {lines,estimates}=modelFacts(entity,result,params,runId,sourceNodeId,designDeclared);
+  const facts=PREFIXES+lines.join(';\n  ')+'.\n'+estimates+'\n';
   return {nodeId:node.id,kind:'computation' as const,facts,rules:'',input:facts,conclusions:[],
     method:regressionSentence(result,params),
     estimates:result.estimates,columns:result.columns,rows:result.rows,errors:result.errors,
     iterations:result.iterations,dispersion:result.dispersion,...(result.strata?{strata:result.strata}:{})};
+}
+
+/** THE EXPOSURE COLUMNS, ONE MODEL EACH (experiment 185). Two or more listed fit one model per column; one, or none
+ *  listed, is the single model this widget has always fitted. */
+export const exposureColumnsOf=(params:{exposure:Term;exposureColumns?:string[]}):string[]=>
+  (params.exposureColumns?.length??0)>1?params.exposureColumns!.map(c=>c.trim()):[params.exposure.column];
+
+export interface ModelRow {
+  column:string;
+  /** Null when this column's model could not be fitted; `reason` then says why. */
+  result:RegressionResult|null; reason:string|null;
+  /** The shift Relate brought this column at, in days, where it recorded one. */
+  shiftDays?:number;
+}
+
+/** ONE MODEL PER EXPOSURE COLUMN, EACH ON ITS OWN ROWS (experiment 185). Every model is `fitRegression` with the
+ *  exposure column swapped and nothing else changed, so each leaves out only the rows its own variables are missing
+ *  on: a week with no value at one shift is still in the models of the shifts that have one. Fitting all of them on
+ *  the rows common to every column would be a different analysis, and is not done.
+ *
+ *  ONE COLUMN CANNOT SINK THE OTHERS, as with the two-by-two's several exposures: a model that cannot be fitted is a
+ *  row saying why. Only when none can is the step stopped. */
+export function fitEachExposure(rows:Row[],params:RegressionParams,shifts?:Record<string,number>,
+  measure?:string|null):ModelRow[]{
+  const columns=exposureColumnsOf(params);
+  const empty=columns.findIndex(c=>!c);
+  if(empty>=0)throw new Error(`Exposure column ${empty+1} is not chosen.`);
+  const twice=columns.find((c,i)=>columns.indexOf(c)!==i);
+  if(twice)throw new Error(`"${twice}" is listed twice as an exposure.`);
+  const models=columns.map((column):ModelRow=>{
+    const shiftDays=shifts?.[column];
+    const at=shiftDays===undefined?{}:{shiftDays};
+    try{
+      const fitted=fitRegression(rows,specFrom({...params,exposure:{...params.exposure,column},exposureColumns:[column]}));
+      return {column,result:measure?{...fitted,measure}:fitted,reason:null,...at};
+    }catch(error){return {column,result:null,reason:error instanceof Error?error.message:String(error),...at};}
+  });
+  if(!models.some(m=>m.result))throw new Error(`No exposure column could be fitted: `
+    +models.map(m=>`${m.column} (${m.reason})`).join('; '));
+  return models;
+}
+
+/** THE MODELS AS ONE LONG TABLE: a row per model, term and statistic, with the exposure column as a key, the shift as
+ *  a number where Relate recorded one, and whether the term is the model's exposure or something it is adjusted for.
+ *  The shape the lag chart reads, so no Append rows is needed to stack the models. */
+export function regressionsTable(models:ModelRow[],columns?:Record<string,{label?:string;unit?:string;description?:string;confirmed:boolean}>){
+  const first=models.find(m=>m.result)!.result!;
+  const name=first.measure,level=first.level;
+  const shifted=models.some(m=>m.shiftDays!==undefined);
+  const statistics:[string,(e:Estimate)=>number][]=[[name,e=>e.ratio],[`lower ${level}%`,e=>e.lower],
+    [`upper ${level}%`,e=>e.upper],['p',e=>e.p]];
+  const rows:DataTableRow[]=[];
+  for(const m of models){
+    const keyOf=(term:string,role:string,statistic:string)=>({exposure:m.column,
+      ...(shifted?{shift_days:m.shiftDays===undefined?'':String(m.shiftDays)}:{}),role,term,statistic});
+    if(!m.result){for(const [statistic] of statistics)rows.push({key:keyOf(m.column,'exposure',statistic),value:null});continue;}
+    for(const e of m.result.estimates)for(const [statistic,read] of statistics)
+      rows.push({key:keyOf(e.term,e.column===m.column?'exposure':'adjusted for',statistic),value:read(e)});
+  }
+  const single=regressionTable(first,columns);
+  const meanings=Object.assign({},...models.filter(m=>m.result).map(m=>(regressionTable(m.result!,columns) as {meanings?:Record<string,string>}).meanings??{}));
+  return {kind:'data-table' as const,keys:['exposure',...(shifted?['shift_days']:[]),'role','term','statistic'],
+    valueField:'value',rows,rowCount:rows.length,missingValueCount:rows.filter(r=>r.value===null).length,
+    interval:single.interval,
+    ...(shifted?{numericKeys:{shift_days:'days'}}:{}),
+    ...(Object.keys(meanings).length?{meanings}:{})};
+}
+type DataTableRow={key:Record<string,string>;value:number|null};
+
+/** What was fitted, model by model, with the number of intervals said and that none is adjusted for it. */
+export function regressionsSentence(models:ModelRow[],params:RegressionParams):string{
+  const round=(v:number)=>v>=100?v.toFixed(0):v>=10?v.toFixed(1):v.toFixed(3);
+  const first=models.find(m=>m.result)!.result!;
+  const model=params.family==='logistic'?'logistic regressions':'Poisson regressions';
+  const adjusted=first.adjustedFor.length?`, each adjusted for ${first.adjustedFor.join(', ')}`:', each unadjusted';
+  const fitted=models.filter(m=>m.result).map(m=>{const r=m.result!,e=r.estimates[0]!;
+    return `${m.column}: ${round(e.ratio)} (${round(e.lower)} to ${round(e.upper)}) for ${e.term}, `
+      +`${r.rows.used.toLocaleString('en')} rows${r.rows.leftOut?`, ${r.rows.leftOut.toLocaleString('en')} left out`:''}`;});
+  const failed=models.filter(m=>!m.result);
+  return `${models.length} ${model} of ${params.outcome}, one per exposure column and each on its own rows${adjusted}; `
+    +`${first.measure}, ${first.errors} intervals. ${fitted.join('. ')}. `
+    +`${fitted.length} ${first.level}% intervals, none adjusted for the number of comparisons.`
+    +(failed.length?` Not fitted: ${failed.map(m=>`${m.column} (${m.reason})`).join('; ')}`:'');
+}
+
+/** EVERY MODEL IN ONE RECEIPT, each its own `fw:RegressionModel` with its own exposure, so the shapes hold each as
+ *  they hold one. A model that could not be fitted has no statement: it has nothing the shapes could check. */
+export function regressionsReceipt(node:{id:string},models:ModelRow[],params:RegressionParams,runId:string,
+  sourceNodeId:string,designDeclared:boolean,method:string){
+  const blocks=models.flatMap((m,i)=>{
+    if(!m.result)return [];
+    const entity=`<urn:fieldwork:run:${runId}:output:${node.id}:model:${i+1}>`;
+    const {lines,estimates}=modelFacts(entity,m.result,{...params,exposure:{...params.exposure,column:m.column}},
+      runId,sourceNodeId,designDeclared);
+    return [lines.join(';\n  ')+'.\n'+estimates];
+  });
+  const facts=PREFIXES+blocks.join('\n')+'\n';
+  return {nodeId:node.id,kind:'computation' as const,facts,rules:'',input:facts,conclusions:[],method,
+    models:models.map(m=>({column:m.column,...(m.shiftDays!==undefined?{shiftDays:m.shiftDays}:{}),
+      ...(m.result?{estimates:m.result.estimates,rows:m.result.rows,errors:m.result.errors,iterations:m.result.iterations,
+        dispersion:m.result.dispersion,...(m.result.strata?{strata:m.result.strata}:{})}:{reason:m.reason})}))};
 }

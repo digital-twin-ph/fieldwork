@@ -12,7 +12,8 @@
 <urn:fieldwork:widget:access_policy> a fw:WidgetDefinition; fw:nodeType "access_policy"; rdfs:label "Access review".
 <urn:fieldwork:widget:aggregate_points_to_h3_cell> a fw:WidgetDefinition; fw:nodeType "aggregate_points_to_h3_cell"; rdfs:label "Aggregate points to H3 cells".
 <urn:fieldwork:widget:alert> a fw:WidgetDefinition; fw:nodeType "alert"; rdfs:label "Heat alert".
-<urn:fieldwork:widget:apply_ruleset> a fw:WidgetDefinition; fw:nodeType "apply_ruleset"; rdfs:label "Apply ruleset".
+<urn:fieldwork:widget:apply_ruleset> a fw:WidgetDefinition; fw:nodeType "apply_ruleset"; rdfs:label "Apply ruleset";
+  fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/apply_ruleset.md>.
 <urn:fieldwork:widget:buffer_area> a fw:WidgetDefinition; fw:nodeType "buffer_area"; rdfs:label "Buffer study area".
 <urn:fieldwork:widget:buffer_point> a fw:WidgetDefinition; fw:nodeType "buffer_point"; rdfs:label "Area around a point".
 <urn:fieldwork:widget:case_series> a fw:WidgetDefinition; fw:nodeType "case_series"; rdfs:label "Cases by period";

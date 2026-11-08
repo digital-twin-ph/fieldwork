@@ -2,8 +2,16 @@
 
 _Created 2026-11-07 · Updated 2026-11-07_
 
-**Status:** asked. Nothing is built; this is the design, read from the code. It comes after Relate's standard dialog
-([186](186-one-standard-inspector.md)), so the preview reuses that dialog's Preview section.
+**Status:** asked, three of five stages built (Fieldwork 0.52.0, 2026-11-08). Not `tried` until the Nigeria and South
+London workflows are rebuilt with Apply ruleset and their manuals play back.
+
+| Stage | What | State |
+| --- | --- | --- |
+| 1 | The authored tree evaluated directly; a conclusion can be a computed value | Built |
+| 2 | A wide table read as one record per subject; computed values folded back as Derive a value adds them | Built |
+| 3 | The dialog: computed conclusions, a rule for every record, a live Before and After | Built |
+| 4 | Sort, and rules between rows | Not started |
+| 5 | Rebuild Nigeria and South London; the synthetic repository's workflows; retire Derive a value | Not started |
 
 ## The question
 
@@ -113,6 +121,42 @@ What a rule between rows must keep, each said and none refused:
 - **Division by zero, counted.** Derive a value gives an empty value. In N3 the rule would not fire and the row would
   silently get nothing, so the run and the preview count these rows and name them.
 - **Conflicts, shown.** Two rules giving one row different values is shown in the preview and reported by the run.
+
+## Stages 1 to 3, as built, 2026-11-08
+
+**Evaluated directly, and held to the reasoner.** `src/rule-evaluation.ts` reads a record as `authoredFacts` writes it
+and applies rules until nothing new is concluded, so one rule reads another's value whatever their order. A ruleset
+with any computed conclusion runs this way; a ruleset of categories only still compiles to N3, as before. On the
+synthetic clinic visits, every comparator and a setting among them, the two give the same conclusions for every record
+(`tests/rule-evaluation.test.mjs`). Arithmetic is not compiled to N3: whether EYE's arithmetic matches JavaScript's to
+the last digit stays unchecked, and with direct evaluation it no longer decides anything.
+
+**Derive a value's table, exactly.** All four published Derive a value steps, three in South London and one in
+Nigeria, were run beside an Apply ruleset step with one rule for every record, the same operands, operator and name.
+The two tables are the same rows, keys and values, in the same order (`tests/rules-replace-derive.test.mjs`). The
+rule names no `measure`: a wide import now marks its table with its measure and subject columns, and rules read one
+record per subject. Two of the four reach the rule through Total within groups, which keeps the mark when the measure
+is among its groups.
+
+**What the table cannot show is said.** A division by zero is an empty value, as Derive a value writes it, and is
+counted and named; a missing operand, no value; two rules disagreeing, no value, both rules named. The run's method and
+the dialog say each in words. A conflict between categories in a ruleset that compiles to N3 still stops the run, as
+before.
+
+**The dialog.** A conclusion is *a category* or *a computed value*; *+ Add a value computed for every record* writes a
+rule with no condition; a rule's heading says how many records it matched. Before and After are drawn under the rules
+for the first 50 records, the counts of all of them. Read on the synthetic districts in Chromium and WebKit
+(`tests/rules-compute-preview.browser.mjs`).
+
+**Found while building it:**
+
+1. **A table's numeric key columns cannot be read as numbers by a rule.** A row's key columns are text, so a rule
+   bound to one as a number read every value as unreadable. A wide import is now read as numbers per subject, which
+   is the case 188 needed; a long table whose numbers sit in key columns is not.
+2. **Apply ruleset had no manual page.** Written.
+3. **The preview sits under the rules**, so with several rules it is out of view while a rule is edited. Not changed;
+   whether it belongs beside the rules is open.
+4. **50 rows drawn is a chosen number**, not measured.
 
 ## A use on real data, from 185
 

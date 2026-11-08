@@ -3,6 +3,22 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.52.0 — 2026-11-08
+
+- **A rule can compute a new column** ([188](docs/experiments/188-rules-that-compute-and-show-their-table.md)). In
+  Apply ruleset's dialog, a conclusion can be *a computed value*: *houses without a death* is *houses* minus *deaths*.
+  Plus, minus, times or divided by; each side a column, a value another rule computed, or a number. A rule can apply to
+  every record. Apply ruleset 0.3.0.
+- **The rules dialog shows Before and After**, updated as you edit: the records as they arrive, and with the new
+  columns and the rule each matched. Each rule says how many records it matched.
+- **Divisions by zero, missing values and disagreeing rules are said in words**, in the dialog and in the run, and
+  the record is named. Nothing is filled in.
+- **A wide table is read as the file had it:** one record per subject, its columns by their own names. All four
+  Derive a value steps in the South London and Nigeria examples give the same table through Apply ruleset.
+- **Apply ruleset has a manual page.**
+- **Not yet:** rules that read the previous row (new cases from a cumulative count), the sort they need, and
+  retiring Derive a value. The worked examples still use Derive a value.
+
 ## 0.51.0 — 2026-11-07
 
 - **Cases by period counts weeks starting Sunday** ([187](docs/experiments/187-two-ways-to-an-epidemic-curve.md)).

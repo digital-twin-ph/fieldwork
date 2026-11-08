@@ -136,5 +136,5 @@ test('a step whose rule computes a value runs it directly, and its method counts
   const receipt=run.receipts.find(r=>r.nodeId==='r');
   assert.equal(receipt.kind,'computation');
   assert.match(receipt.method,/evaluated directly over 5 records, because a rule computes a value/);
-  assert.match(receipt.method,/1 divided by zero and have an empty value: Harbour/);
+  assert.match(receipt.method,/1 record has an empty value, from a division by zero: Harbour/);
 });

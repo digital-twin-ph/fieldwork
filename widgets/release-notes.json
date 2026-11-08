@@ -75,12 +75,12 @@
    ]
   },
   "apply_ruleset": {
-   "version": "0.2.0",
-   "released": "2026-11-02",
+   "version": "0.3.0",
+   "released": "2026-11-08",
    "changes": [
     {
      "kind": "minor",
-     "description": "Rules written on a step can read polygons, as well as points and tables: a polygon is a record with columns. Conclusions come back on each polygon and as its class on a map. Columns are read again when the editor opens, so rules begun before records were connected are not left with none. Proportion, percent and counts are accepted as units."
+     "description": "A rule can conclude a computed value, Derive a value's four operators between two columns, a value another rule computed, or a number, under a condition or for every record. Such rules are evaluated directly over the same records the reasoner reads; a division by zero, a missing operand and a conflict are each counted and named. A table imported wide is read as one record per subject, and a computed value folds back as one row per subject, as Derive a value adds it: all four published Derive a value steps give the same table. The rules dialog previews Before and After on every edit. Experiment 188."
     }
    ],
    "breaking": false,
@@ -352,12 +352,12 @@
    ]
   },
   "group_table": {
-   "version": "0.2.1",
-   "released": "2026-11-05",
+   "version": "0.2.2",
+   "released": "2026-11-08",
    "changes": [
     {
      "kind": "patch",
-     "description": "Ticking several key columns at once keeps all of them: every box is read on any change. Found when a worked example's manual ticked three in one step and only the first was kept. The boxes are a named group, Key columns to keep."
+     "description": "Totals by subject and measure stay marked as wide, so rules after them read one record per subject. Experiment 188."
     }
    ],
    "breaking": false,
@@ -903,12 +903,12 @@
    "migrationFrom": []
   },
   "table_input": {
-   "version": "0.6.1",
-   "released": "2026-11-06",
+   "version": "0.6.2",
+   "released": "2026-11-08",
    "changes": [
     {
      "kind": "patch",
-     "description": "Read as wide, a file whose key columns repeat a subject is imported, with each repeat reported in Data quality as a duplicate record, rather than blocked. The dialog still suggests reading it as long. Found on a source with one week doubled for every municipality, experiment 180."
+     "description": "A table imported wide says so on the table it makes: its measure column and its subject columns, so rules after it read one record per subject. Experiment 188."
     }
    ],
    "breaking": false,

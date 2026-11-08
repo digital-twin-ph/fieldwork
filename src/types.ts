@@ -458,7 +458,7 @@ export interface ParamsByType {
        *  form a practitioner edits. A `'{{threshold}}'` string is still read, because rules
        *  authored before 2026-10-15 hold one. */
       rules:{any:{all:{field:string;comparator:string;value:string|number|boolean|{setting:string}}[]}[];
-        then:{predicate:string;value:string}[]}[];
+        then:import('./authored-rules.js').AuthoredConclusion[]}[];
     }};
   micro_workflow:{label:string;
     composition:{id:string;nodeType:string;version:string;title:string;stage:string;

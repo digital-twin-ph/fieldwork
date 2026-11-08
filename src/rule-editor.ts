@@ -18,7 +18,10 @@
  */
 import type {ParamsByType} from './types.js';
 import type {Escape} from './types.js';
-import {compileAuthoredRuleset,compiledRuleCount,RULE_CEILING,authoredUnitProblems,settingNamed} from './authored-rules.js';
+import {compileAuthoredRuleset,compiledRuleCount,RULE_CEILING,authoredUnitProblems,settingNamed,isComputed,computesValues,
+  COMPUTE_OPERATORS,type Operand} from './authored-rules.js';
+import {evaluateAuthored,OPERATOR_WORDS,localName,type Evaluation} from './rule-evaluation.js';
+import type {SubjectRecord} from './authored-application.js';
 
 type Authored=NonNullable<ParamsByType['apply_ruleset']['authored']>;
 type Field=Authored['fields'][number];
@@ -125,7 +128,14 @@ export interface ReviewOptions {note:string}
  *  what is there. */
 export interface EditorOptions extends Partial<ReviewOptions> {
   settingValues?:Record<string,number|string|null|undefined>;
+  /** THE RECORDS THE STEP READS, for the live preview (experiment 188): Before, as they arrive, and After, as these
+   *  rules would leave them. Absent when nothing is connected or nothing has run. */
+  preview?:{records:SubjectRecord[]; columns:string[]};
 }
+
+/** Rows a preview draws. The counts are of every record; this is how many are drawn, a display choice, not a cap on
+ *  the data. Not measured: the number of rows a person can read in a dialog, or draw on every keystroke, is open. */
+export const PREVIEW_ROWS=50;
 
 /** Opens the dialog. Resolves with the edited rules, or with nothing if the practitioner closes
  *  it without keeping them -- the node is not touched until they do. */
@@ -223,11 +233,91 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
         +`</div>`;
     };
 
+    // THE LIVE PREVIEW, evaluated on every edit, so a rule is seen doing what it does while it is written.
+    let evaluation:Evaluation|null=null;
+    const numericSettings=Object.fromEntries(Object.entries(options?.settingValues??{})
+      .filter(([,v])=>typeof v==='number'||(typeof v==='string'&&v.trim()!==''&&Number.isFinite(Number(v))))
+      .map(([k,v])=>[k,Number(v)]));
+    const evaluate=():Evaluation|null=>{
+      if(!options?.preview?.records.length)return null;
+      try{return evaluateAuthored(options.preview.records,fields as never,rules as never,numericSettings);}catch{return null;}
+    };
+    const computedColumns=()=>rules.flatMap(rule=>rule.then.filter(isComputed)
+      .map(c=>({predicate:c.predicate,label:c.column?.trim()||localName(c.predicate)})));
+    const operandControl=(r:number,t:number,side:'left'|'right',operand:Operand)=>{
+      const numbers=choices.filter(c=>c.kind==='number');
+      const own=rules[r]!.then[t]!.predicate;
+      const others=computedColumns().filter(c=>c.predicate!==own);
+      const chosen=typeof operand==='object'&&'field' in operand?operand.field:'';
+      return `<select data-rule="${r}" data-then="${t}" data-part="${side}-source" aria-label="${side==='left'?'First':'Second'} value">`
+        +`<option value="" ${chosen?'':'selected'}>a number</option>`
+        +numbers.map(c=>`<option value="${esc(c.predicate)}" ${c.predicate===chosen?'selected':''}>${esc(c.label)}</option>`).join('')
+        +others.map(c=>`<option value="${esc(c.predicate)}" ${c.predicate===chosen?'selected':''}>${esc(c.label)}</option>`).join('')
+        +`</select>`
+        +(chosen?'':`<input data-rule="${r}" data-then="${t}" data-part="${side}-number" aria-label="${side==='left'?'First':'Second'} number" value="${esc(typeof operand==='number'?String(operand):'')}" placeholder="a number">`);
+    };
+    const computedProblem=():string=>{
+      const attributes=new Set(fields.map(f=>f.attribute));
+      const names=new Set<string>();
+      for(const [r,rule] of rules.entries())for(const c of rule.then){
+        if(!isComputed(c))continue;
+        const name=c.column?.trim()||'';
+        if(!name)return `Rule ${r+1}: name the new column.`;
+        if(attributes.has(name))return `Rule ${r+1}: "${name}" is already a column of these records. A new column needs a name of its own.`;
+        if(names.has(name)&&!rules.some((other,o)=>o!==r&&other.then.some(x=>x.predicate===c.predicate)))
+          return `Rule ${r+1}: "${name}" is already the name of another new column.`;
+        names.add(name);
+        for(const side of [c.compute.left,c.compute.right])
+          if(typeof side==='number'&&!Number.isFinite(side))return `Rule ${r+1}: type a number, or choose a column.`;
+      }
+      return '';
+    };
+    const cell=(v:unknown)=>v===null||v===undefined?'':typeof v==='number'?String(v):String(v);
+    const previewMarkup=()=>{
+      const p=options?.preview;
+      if(!p?.records.length)return `<section class="rule-live"><h3>Before and after</h3>`
+        +`<p class="description">Connect the records this step reads, or run the workflow once, to see what these rules do to them.</p></section>`;
+      const shown=p.records.slice(0,PREVIEW_ROWS);
+      const head=(cols:string[])=>`<tr>${cols.map(c=>`<th scope="col">${esc(c)}</th>`).join('')}</tr>`;
+      const before=`<table class="rule-live-table"><thead>${head(p.columns)}</thead><tbody>`
+        +shown.map(r=>`<tr>${p.columns.map(c=>`<td>${esc(cell(r.properties[c]))}</td>`).join('')}</tr>`).join('')+`</tbody></table>`;
+      if(!evaluation)return `<section class="rule-live"><h3>Before</h3>${before}</section>`;
+      const added=[...new Set([...computedColumns().map(c=>c.label),...evaluation.records.flatMap(r=>Object.keys(r.values))])];
+      const after=`<table class="rule-live-table"><thead>${head([...p.columns,...added,'Rule'])}</thead><tbody>`
+        +shown.map((r,i)=>{const o=evaluation!.records[i]!;
+          const marks=[...o.divisionsByZero.map(c=>`${c}: divided by zero`),...o.missing.map(m=>`${m.column}: no ${m.operands.join(' or ')}`),
+            ...o.conflicts.map(c=>`${c.column}: rules ${c.rules.join(' and ')} disagree`)];
+          return `<tr${o.rules.length?'':' data-unmatched'}>${p.columns.map(c=>`<td>${esc(cell(r.properties[c]))}</td>`).join('')}`
+            +added.map(c=>`<td class="rule-new">${esc(cell(o.values[c]))}</td>`).join('')
+            +`<td>${o.rules.length?esc(o.rules.map(n=>`Rule ${n}`).join(', ')):'No rule'}${marks.length?`<br><strong>${esc(marks.join('; '))}</strong>`:''}</td></tr>`;}).join('')
+        +`</tbody></table>`;
+      const n=p.records.length;
+      const count=(test:(o:Evaluation['records'][number])=>boolean)=>evaluation!.records.filter(test).length;
+      const records=(k:number)=>`${k.toLocaleString('en')} record${k===1?'':'s'}`,has=(k:number)=>k===1?'has':'have';
+      const none=count(o=>!o.rules.length),zero=count(o=>o.divisionsByZero.length>0),
+        lacking=count(o=>o.missing.length>0),split=count(o=>o.conflicts.length>0);
+      const words=[none?`${records(none)} matched no rule.`:'Every record matched a rule.',
+        zero?`${records(zero)} ${has(zero)} an empty value, from a division by zero.`:'',
+        lacking?`${records(lacking)} ${has(lacking)} no value, because a value to compute from is missing.`:'',
+        split?`${records(split)} ${has(split)} no value, because two rules gave different values.`:''].filter(Boolean);
+      return `<section class="rule-live" aria-live="polite"><h3>Before and after</h3>`
+        +`<p class="rule-live-summary">${esc(`${n.toLocaleString('en')} record${n===1?'':'s'}. `+words.join(' '))}</p>`
+        +(n>shown.length?`<p class="description">Showing the first ${shown.length} of ${n.toLocaleString('en')}. The counts are of all of them.</p>`:'')
+        +`<h4>Before</h4><div class="rule-live-scroll">${before}</div>`
+        +`<h4>After</h4><div class="rule-live-scroll">${after}</div></section>`;
+    };
+
     const render=()=>{
       const count=compiledRuleCount({subject:'?s',rules:rules as never});
       let problem='';
-      try{compileAuthoredRuleset({subject:'?s',rules:rules as never});}
-      catch(error){problem=error instanceof Error?error.message:String(error);}
+      // RULES THAT COMPUTE are evaluated directly, not compiled (experiment 188), so they are checked for what direct
+      // evaluation needs: a name for each new column, and both sides of each operation.
+      if(computesValues({rules:rules as never}))problem=computedProblem();
+      else{
+        try{compileAuthoredRuleset({subject:'?s',rules:rules as never});}
+        catch(error){problem=error instanceof Error?error.message:String(error);}
+      }
+      evaluation=evaluate();
       // Units are checked while the rule is being written, which is the whole point: the same
       // check at run time tells a practitioner their rules are wrong after they have written
       // them, kept them, and run the workflow.
@@ -248,10 +338,10 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
         +(review?`<div class="notice">${esc(review.note)}</div>`:'')
         +`<p class="description">Every rule is checked against every record. A record that matches more than one rule takes all of their conclusions, so rules that disagree must not both match; a record that matches none keeps no conclusion, and the run says how many.</p>`
         +(problem?`<div class="inspector-alert" role="alert"><strong>These rules cannot be compiled</strong><p>${esc(problem)}</p></div>`:'')
-        +rules.map((rule,r)=>`<section class="rule-card"><header><h3>Rule ${r+1}</h3>`
+        +rules.map((rule,r)=>`<section class="rule-card"><header><h3>Rule ${r+1}${evaluation?` · ${evaluation.matchedByRule[r]!.toLocaleString('en')} record${evaluation.matchedByRule[r]===1?'':'s'}`:''}</h3>`
           +`<button class="button small" data-rule="${r}" data-part="drop-rule">Remove rule</button></header>`
           +rule.any.map((group,g)=>`<div class="rule-group">`
-            +(g?`<p class="rule-or">or if</p>`:`<p class="rule-or">if</p>`)
+            +(group.all.length?(g?`<p class="rule-or">or if</p>`:`<p class="rule-or">if</p>`):`<p class="rule-or">for every record</p>`)
             +group.all.map((condition,c)=>conditionRow(r,g,c,condition)).join('')
             +`<button class="button small" data-rule="${r}" data-group="${g}" data-part="add-condition">+ and</button>`
             +(rule.any.length>1?`<button class="button small" data-rule="${r}" data-group="${g}" data-part="drop-group">Remove alternative</button>`:'')
@@ -259,14 +349,27 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
           +`<button class="button small" data-rule="${r}" data-part="add-group">+ or</button>`
           +`<p class="rule-or">then</p>`
           +rule.then.map((conclusion,t)=>`<div class="rule-condition">`
-            +`<input data-rule="${r}" data-then="${t}" data-part="predicate" aria-label="Conclusion name" value="${esc(conclusion.predicate.replace(/^fwa:/,''))}" placeholder="band">`
-            +`<span class="rule-is">is</span>`
-            +`<input data-rule="${r}" data-then="${t}" data-part="conclusion" aria-label="Conclusion value" value="${esc(conclusion.value.replace(/^fwa:/,''))}" placeholder="Short">`
+            // A CATEGORY OR A COMPUTED VALUE (experiment 188): "band is Short", or "change is dtp1_2024 minus dtp1_2005".
+            +`<select data-rule="${r}" data-then="${t}" data-part="then-kind" aria-label="Kind of conclusion">`
+              +`<option value="category" ${isComputed(conclusion)?'':'selected'}>a category</option>`
+              +`<option value="computed" ${isComputed(conclusion)?'selected':''}>a computed value</option></select>`
+            +(isComputed(conclusion)
+              ?`<input data-rule="${r}" data-then="${t}" data-part="column" aria-label="New column" value="${esc(conclusion.column??localName(conclusion.predicate))}" placeholder="new column">`
+                +`<span class="rule-is">is</span>`
+                +operandControl(r,t,'left',conclusion.compute.left)
+                +`<select data-rule="${r}" data-then="${t}" data-part="operator" aria-label="Operation">`
+                +COMPUTE_OPERATORS.map(o=>`<option value="${o}" ${o===conclusion.compute.operator?'selected':''}>${OPERATOR_WORDS[o]}</option>`).join('')+`</select>`
+                +operandControl(r,t,'right',conclusion.compute.right)
+              :`<input data-rule="${r}" data-then="${t}" data-part="predicate" aria-label="Conclusion name" value="${esc(conclusion.predicate.replace(/^fwa:/,''))}" placeholder="band">`
+                +`<span class="rule-is">is</span>`
+                +`<input data-rule="${r}" data-then="${t}" data-part="conclusion" aria-label="Conclusion value" value="${esc((conclusion.value??'').replace(/^fwa:/,''))}" placeholder="Short">`)
             +(rule.then.length>1?`<button class="button small" data-rule="${r}" data-then="${t}" data-part="drop-then">Remove</button>`:'')
             +`</div>`).join('')
           +`<button class="button small" data-rule="${r}" data-part="add-then">+ and conclude</button>`
           +`</section>`).join('')
-        +(review?'':`<button class="button" id="rule-editor-add">+ Add a rule</button>`)
+        +(review?'':`<button class="button" id="rule-editor-add">+ Add a rule</button>`
+          +`<button class="button" id="rule-editor-add-every">+ Add a value computed for every record</button>`)
+        +previewMarkup()
         +`<p class="muted">${count} of ${RULE_CEILING} rules once compiled. Every alternative becomes a rule of its own, so alternatives multiply where conditions add.</p>`
         +`</div>`;
       wire();
@@ -285,6 +388,12 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
         return;
       }
       dialog.querySelector<HTMLButtonElement>('#rule-editor-keep')!.onclick=()=>close({rules});
+      dialog.querySelector<HTMLButtonElement>('#rule-editor-add-every')!.onclick=()=>{
+        const first=choices.find(c=>c.kind==='number')?.predicate;
+        rules=[...rules,{any:[{all:[]}],then:[{predicate:`fwa:computed_${rules.length+1}`,column:'',
+          compute:{left:first?{field:first}:0,operator:'minus',right:first?{field:first}:0}}]} as never];
+        render();
+      };
       dialog.querySelector<HTMLButtonElement>('#rule-editor-add')!.onclick=()=>{
         rules=[...rules,{any:[{all:[blankCondition(fields)]}],then:[{predicate:'fwa:decision',value:'fwa:Review'}]}];
         render();
@@ -302,7 +411,8 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
               rules[r].any[g].all=rules[r].any[g].all.filter((_,i)=>i!==c);
               // A group with no conditions would match everything, which is never what the person
               // deleting the last one meant. The alternative goes with it.
-              if(!rules[r].any[g].all.length)rules[r].any=rules[r].any.filter((_,i)=>i!==g);
+              // A rule that computes a value can apply to every record, so its last condition leaves it doing that.
+              if(!rules[r].any[g].all.length&&!rules[r].then.some(isComputed))rules[r].any=rules[r].any.filter((_,i)=>i!==g);
               if(!rules[r].any.length)rules=rules.filter((_,i)=>i!==r);
             }
             if(part==='add-then')rules[r].then=[...rules[r].then,{predicate:'fwa:reason',value:'fwa:Stated'}];
@@ -352,6 +462,28 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
           // A practitioner writes `band`, not `fwa:band`: the namespace is the application's
           // business and is added here rather than asked for.
           const prefixed=(raw:string)=>raw.trim().startsWith('fwa:')?raw.trim():`fwa:${raw.trim().replace(/[^A-Za-z0-9_]+/g,'_')}`;
+          const conclusion=rules[r]?.then?.[t];
+          if(part==='then-kind'&&conclusion){
+            if(value==='computed'){
+              const first=choices.find(c=>c.kind==='number')?.predicate;
+              rules[r].then[t]={predicate:conclusion.predicate,column:localName(conclusion.predicate),
+                compute:{left:first?{field:first}:0,operator:'minus',right:first?{field:first}:0}} as never;
+            }else rules[r].then[t]={predicate:conclusion.predicate,value:'fwa:Stated'};
+          }
+          if(conclusion&&isComputed(conclusion)){
+            if(part==='column'){
+              // The predicate follows the name, and every rule reading the old one reads the new.
+              const was=conclusion.predicate,now=`fwa:c_${value.trim().replace(/[^A-Za-z0-9]+/g,'_')||'value'}`;
+              conclusion.column=value.trim();conclusion.predicate=now;
+              for(const rule of rules)for(const c of rule.then)if(isComputed(c))for(const side of ['left','right'] as const){
+                const o=c.compute[side];if(typeof o==='object'&&'field' in o&&o.field===was)c.compute[side]={field:now};}
+            }
+            if(part==='operator')conclusion.compute.operator=value as never;
+            for(const side of ['left','right'] as const){
+              if(part===`${side}-source`)conclusion.compute[side]=value?{field:value}:0;
+              if(part===`${side}-number`)conclusion.compute[side]=value.trim()===''?0:Number(value);
+            }
+          }
           if(part==='predicate'&&rules[r]?.then?.[t])rules[r].then[t].predicate=prefixed(value);
           if(part==='conclusion'&&rules[r]?.then?.[t])rules[r].then[t].value=prefixed(value);
           render();

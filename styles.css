@@ -464,6 +464,17 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 #rule-editor::backdrop{background:rgba(0,0,0,.45)}
 .rule-editor-body{padding:18px 22px 22px;overflow:auto;max-height:calc(88vh - 64px)}
 .rule-card{border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin:0 0 14px;background:var(--surface)}
+/* THE LIVE PREVIEW (experiment 188): Before and After, read at the dialog's size, the counts in words above them. */
+.rule-live{border-top:1px solid var(--line);margin:18px 0 0;padding:14px 0 0}
+.rule-live h3{font-size:15px;margin:0 0 6px}
+.rule-live h4{font-size:15px;margin:14px 0 6px}
+.rule-live-summary{font-size:15px;color:var(--ink);margin:0 0 6px}
+.rule-live-scroll{overflow:auto;max-height:280px;border:1px solid var(--line);border-radius:6px}
+.rule-live-table{font-size:15px}
+.rule-live-table td{color:var(--ink)}
+.rule-live-table tbody tr{cursor:default}
+.rule-live-table td.rule-new{font-weight:600}
+.rule-live-table tr[data-unmatched] td:last-child{color:var(--warning-5)}
 .rule-card header{display:flex;align-items:center;justify-content:space-between;margin:0 0 8px}
 .rule-card h3{font-size:14px;margin:0}
 .rule-group{border-left:2px solid var(--line-soft-2);padding:0 0 4px 12px;margin:0 0 8px}

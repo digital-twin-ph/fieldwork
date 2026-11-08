@@ -35,7 +35,8 @@ import {openRuleEditor} from './rule-editor.js';
 import {openStepViewer,openTableViewer,shapeChange,stepLabels,tableViewOf,type TableView} from './table-viewer.js';
 import {keyNoun,openRelateConfig,relateDraftOf,applyRelateDraft,relateSentence} from './relate-ui.js';
 import {relateShape,decisionMatches,relateAtShifts,shiftColumnName} from './relate-table.js';
-import {findingsSummary,wideDataTable} from './data-table.js';
+import {findingsSummary,wideDataTable,declaredWide} from './data-table.js';
+import {authoredSubjects} from './authored-application.js';
 import {openSatelliteCatalogDialog} from './satellite-catalog-ui.js';
 import {bboxOf,defaultKept} from './satellite-catalog.js';
 import {SAMPLE_KEYS,days as sampleDays} from './satellite-sample.js';
@@ -1369,7 +1370,7 @@ function renderN3(){
  *  only this renderer reached from both branches. */
 type ShownRule={any:{all:{field:string;comparator:string;
   value:import('./authored-rules.js').AuthoredValue}[]}[];
-  then:{predicate:string;value:import('./authored-rules.js').AuthoredValue}[]};
+  then:import('./authored-rules.js').AuthoredConclusion[]};
 function rulesList(rules:ShownRule[],
   fields:{attribute?:string;predicate:string}[],
   readable:(value:import('./authored-rules.js').AuthoredValue)=>string,
@@ -1389,7 +1390,7 @@ function rulesList(rules:ShownRule[],
     +rules.map((rule,index)=>`<div class="authored-rule">`
       +`<span class="rule-number">${index+1}</span>`
       +rule.any.map((group,g)=>`<div class="rule-when">`
-        +`<span class="rule-keyword">${g?'OR':'IF'}</span><div class="rule-conditions">`
+        +`<span class="rule-keyword">${group.all.length?(g?'OR':'IF'):'FOR EVERY RECORD'}</span><div class="rule-conditions">`
         +group.all.map((condition,c)=>`<div class="rule-row">`
           +(c?`<span class="rule-and">and</span>`:`<span class="rule-and"></span>`)
           +`<span class="rule-field">${esc(named(condition.field))}</span>`
@@ -1405,9 +1406,16 @@ function rulesList(rules:ShownRule[],
       +`<div class="rule-then"><span class="rule-keyword">THEN</span><div class="rule-conditions">`
       +rule.then.map((conclusion,t)=>`<div class="rule-row">`
         +(t?`<span class="rule-and">and</span>`:`<span class="rule-and"></span>`)
-        +`<span class="rule-field">${esc(conclusion.predicate.slice(conclusion.predicate.indexOf(':')+1))}</span>`
-        +`<span class="rule-op">is</span>`
-        +`<span class="rule-value">${esc(readable(conclusion.value))}</span>`
+        // A COMPUTED VALUE reads as its sum (experiment 188): "change 2005 to 2024 is dtp1_2024 minus dtp1_2005".
+        +(conclusion.compute
+          ?`<span class="rule-field">${esc(conclusion.column?.trim()||conclusion.predicate.slice(conclusion.predicate.indexOf(':')+1))}</span>`
+            +`<span class="rule-op">is</span>`
+            +`<span class="rule-value">${esc([conclusion.compute.left,conclusion.compute.right].map(o=>typeof o==='object'&&'field' in o
+              ?(rules.flatMap(r=>r.then).find(t=>t.predicate===o.field)?.column?.trim()||named(o.field)):readable(o as never))
+              .join(` ${({minus:'minus',plus:'plus',times:'times',dividedBy:'divided by'} as Record<string,string>)[conclusion.compute.operator]} `))}</span>`
+          :`<span class="rule-field">${esc(conclusion.predicate.slice(conclusion.predicate.indexOf(':')+1))}</span>`
+            +`<span class="rule-op">is</span>`
+            +`<span class="rule-value">${esc(readable(conclusion.value??''))}</span>`)
         +`</div>`).join('')
       +`</div></div></div>`).join('')
     +`</div>`;
@@ -1424,6 +1432,17 @@ function recordColumns(node:WorkflowNode|undefined,seen=new Set<string>()):strin
   const value=table?.type==='table_input'?table.params.valueField:'';
   return [...new Set([...(recordColumns(from('polygons'),seen)??[]),...(value?[value]:[])])];
 }
+/** THE RECORDS A RULES STEP READS, for the dialog's live preview (experiment 188): the table on its input, from the
+ *  input step or the last run, as the rules will read it, and the columns in the order a reader meets them. */
+function rulePreview(nodeId:string):{records:import('./authored-application.js').SubjectRecord[];columns:string[]}|undefined{
+  const edge=workflow.edges.find(e=>e.to===nodeId);
+  const table=edge?tableOnPort(workflow,nodeId,edge.port):null;
+  if(!table?.rows.length)return undefined;
+  const records=authoredSubjects(table);
+  const columns=[...new Set(records.flatMap(r=>Object.keys(r.properties)))];
+  return {records,columns};
+}
+
 function candidateFields(workflow:Workflow,nodeId:string){
   // Any incoming edge, not only one on a port called `subjects`. A step converted from a
   // declared ruleset keeps that ruleset's port names -- `polygons` for extent-review -- and
@@ -1439,6 +1458,18 @@ function candidateFields(workflow:Workflow,nodeId:string){
   // written on it at all. The attributes of a row are its key columns plus the declared value
   // field, which is `authoredSubjects` read the same way round. Found 2026-10-26 on the Manila
   // extract step.
+  // A WIDE TABLE's columns are its subjects' (experiment 188): the subject columns and one number per measure, read
+  // from the records the rules will read, so the long shape inside never reaches the list.
+  const table=edge?tableOnPort(workflow,nodeId,edge.port):null;
+  if(table?.wide){
+    const subjects=authoredSubjects(table).slice(0,200);
+    const kinds=new Map<string,Set<string>>();
+    for(const s of subjects)for(const [k,v] of Object.entries(s.properties))
+      if(v!==null&&v!==undefined&&v!=='')(kinds.get(k)??kinds.set(k,new Set()).get(k)!).add(typeof v);
+    return [...kinds].map(([attribute,types])=>({attribute,label:attribute,
+      predicate:`fwa:${attribute.replace(/[^A-Za-z0-9]+(.)/g,(_,c:string)=>c.toUpperCase()).replace(/[^A-Za-z0-9]/g,'')}`,
+      kind:types.has('number')&&types.size===1?'number' as const:'term' as const}));
+  }
   const carried=recordColumns(source);
   if(carried)return carried.map(attribute=>({attribute,kind:'number' as const,label:attribute,
     predicate:`fwa:${attribute.replace(/[^A-Za-z0-9]+(.)/g,(_,c:string)=>c.toUpperCase()).replace(/[^A-Za-z0-9]/g,'')}`}));
@@ -1678,7 +1709,7 @@ function wireAuthorRules(node:WorkflowNode){
     authorRulesOn(node.id,node.params.label??'');
     const authored=getNode(workflow,node.id,'apply_ruleset').params.authored;
     if(!authored)return;
-    const edited=await openRuleEditor(authored,esc,{settingValues:getNode(workflow,node.id,'apply_ruleset').params.parameters});
+    const edited=await openRuleEditor(authored,esc,{settingValues:getNode(workflow,node.id,'apply_ruleset').params.parameters,preview:rulePreview(node.id)});
     if(edited)change(w=>{getNode(w,node.id,'apply_ruleset').params.authored!.rules=edited.rules as never;});
   });
 }
@@ -1890,9 +1921,9 @@ function tableOnPort(w:Workflow,nodeId:string,port:string):import('./data-table.
   if(from.type==='table_input'){
     const p=from.params;
     if(p.convertOnRun&&p.sourceTable&&p.wide)
-      return wideDataTable(p.sourceTable,
-        {...p.wide,valueField:p.valueField,...(p.unit?{unit:p.unit}:{})});
-    return p.data.rows.length?p.data:null;
+      return declaredWide(wideDataTable(p.sourceTable,
+        {...p.wide,valueField:p.valueField,...(p.unit?{unit:p.unit}:{})}),p.wide);
+    return p.data.rows.length?declaredWide(p.data,p.wide):null;
   }
   return result?.tables?.[from.id]??null;
 }
@@ -3187,7 +3218,7 @@ function renderInspector(){
         // Rules that have columns keep exactly those: an added number with no unit would stop them.
         if(!authored.fields.length)change(w=>{const held=getNode(w,n.id,'apply_ruleset').params.authored;
           if(held)held.fields=candidateFields(w,n.id) as never;},{spatial:false});
-        const edited=await openRuleEditor(getNode(workflow,n.id,'apply_ruleset').params.authored!,esc,{settingValues:n.params.parameters});
+        const edited=await openRuleEditor(getNode(workflow,n.id,'apply_ruleset').params.authored!,esc,{settingValues:n.params.parameters,preview:rulePreview(n.id)});
         if(edited)change(w=>{getNode(w,n.id,'apply_ruleset').params.authored!.rules=edited.rules as never;});
       });
       // An EMPTY box is an unset setting, not zero. `Number('')` is 0, so clearing this field

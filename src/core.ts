@@ -100,7 +100,7 @@ import {MAX_POINT_LAYERS,pointPort,isPointPort} from './point-layers.js';
 import {validateAttributeSchema} from './attribute-schema.js';
 import {defaultSpatialReference,validateSpatialReference} from './spatial-reference.js';
 import {utmDefinition,projectFromCRS84} from './reproject.js';
-import {findingsSummary,dataTable,wideDataTable,tableReceipt,MAX_TABLE_ROWS} from './data-table.js';
+import {findingsSummary,dataTable,wideDataTable,declaredWide,tableReceipt,MAX_TABLE_ROWS} from './data-table.js';
 import {mapImage,mapImageReceipt} from './map-image.js';
 import type {DataTable} from './data-table.js';
 import {computeRate,fromPoints,fromTable,rateTable,rateChart,rateReceipt,validateRateNode} from './rate.js';
@@ -1831,8 +1831,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         // WHAT THE COLUMNS MEAN TRAVELS WITH THE TABLE, so every step after it can say it; and the receipt records the
         // declarations this run used (experiment 172).
         // A WIDE IMPORT SAYS SO on the table it makes, so rules can read its subjects as the file had them (188).
-        const declared=p.wide&&table.keys.includes(p.wide.measureKey||'measure')
-          ?{...table,wide:{measureKey:p.wide.measureKey||'measure',subjectKeys:p.wide.keys.filter(k=>table.keys.includes(k))}}:table;
+        const declared=declaredWide(table,p.wide);
         const described=p.columns&&Object.keys(p.columns).length?{...declared,columns:p.columns}:declared;
         const imported=tableReceipt(node,described,runId);
         value={...imported.value,...(described.columns?{columns:described.columns}:{})} as unknown as DisplayValue;

@@ -330,3 +330,11 @@ export function tableReceipt(node:{id:string;params:{label:string;unit?:string;d
     receipt:{nodeId:node.id,kind:'computation' as const,facts:facts+distinctFacts,rules:'',
       input:facts+distinctFacts,conclusions:[]}};
 }
+
+/** THE WIDE MARK, as the Tabular data step that melted the table states it (experiment 188): one function, so the run
+ *  and the Inspector's previews read the same subjects. */
+export function declaredWide(table:DataTable,wide?:{keys:string[];measureKey?:string}):DataTable{
+  const measureKey=wide?.measureKey||'measure';
+  return wide&&table.keys.includes(measureKey)
+    ?{...table,wide:{measureKey,subjectKeys:wide.keys.filter(k=>table.keys.includes(k))}}:table;
+}

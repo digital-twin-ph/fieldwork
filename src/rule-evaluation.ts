@@ -183,12 +183,13 @@ export function evaluationSentence(evaluation:Evaluation,labels:string[]):string
   const where=(test:(r:RecordOutcome)=>boolean)=>evaluation.records.flatMap((r,i)=>test(r)?[i]:[]);
   const zero=where(r=>r.divisionsByZero.length>0),missing=where(r=>r.missing.length>0),conflict=where(r=>r.conflicts.length>0);
   const unmatched=where(r=>!r.rules.length);
+  const records=(k:number)=>`${k.toLocaleString('en')} record${k===1?'':'s'}`,has=(k:number)=>k===1?'has':'have';
   return `Rules evaluated directly over ${n.toLocaleString('en')} record${n===1?'':'s'}, because a rule computes a value. `
     +evaluation.matchedByRule.map((c,i)=>`Rule ${i+1}: ${c.toLocaleString('en')}`).join('; ')+'. '
-    +(unmatched.length?`${unmatched.length} matched no rule: ${named(unmatched)}. `:'Every record matched a rule. ')
-    +(zero.length?`${zero.length} divided by zero and have an empty value: ${named(zero)}. `:'')
-    +(missing.length?`${missing.length} lacked a value to compute from: ${named(missing)}. `:'')
-    +(conflict.length?`${conflict.length} were given different values by two rules and have none: ${named(conflict)}.`:'');
+    +(unmatched.length?`${records(unmatched.length)} matched no rule: ${named(unmatched)}. `:'Every record matched a rule. ')
+    +(zero.length?`${records(zero.length)} ${has(zero.length)} an empty value, from a division by zero: ${named(zero)}. `:'')
+    +(missing.length?`${records(missing.length)} ${has(missing.length)} no value, because a value to compute from is missing: ${named(missing)}. `:'')
+    +(conflict.length?`${records(conflict.length)} ${has(conflict.length)} no value, because two rules gave different values: ${named(conflict)}.`:'');
 }
 
 /** A WIDE TABLE, FOLDED BACK (experiment 188). A category is a key column on every row of its subject. A computed value

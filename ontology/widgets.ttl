@@ -37,7 +37,8 @@
 <urn:fieldwork:widget:facilities> a fw:WidgetDefinition; fw:nodeType "facilities"; rdfs:label "Select nearby facilities".
 <urn:fieldwork:widget:facility_audit> a fw:WidgetDefinition; fw:nodeType "facility_audit"; rdfs:label "Evidence register".
 <urn:fieldwork:widget:fill_interior_gaps> a fw:WidgetDefinition; fw:nodeType "fill_interior_gaps"; rdfs:label "Fill interior gaps".
-<urn:fieldwork:widget:find_health_facilities> a fw:WidgetDefinition; fw:nodeType "find_health_facilities"; rdfs:label "Find health facilities".
+<urn:fieldwork:widget:find_health_facilities> a fw:WidgetDefinition; fw:nodeType "find_health_facilities"; rdfs:label "Find health facilities";
+  fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/find_health_facilities.md>.
 <urn:fieldwork:widget:group_table> a fw:WidgetDefinition; fw:nodeType "group_table"; rdfs:label "Total within groups";
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/group_table.md>.
 <urn:fieldwork:widget:isochrone> a fw:WidgetDefinition; fw:nodeType "isochrone"; rdfs:label "Network isochrone";

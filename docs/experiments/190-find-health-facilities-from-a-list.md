@@ -2,8 +2,8 @@
 
 _Created 2026-11-08 · Updated 2026-11-08_
 
-**Status:** proposed. The admission review, written before any build as AGENTS.md asks of a change to a widget's
-contract. Nothing is built. The measurements it rests on are [189](189-a-measles-line-list-made-safe-to-teach-with.md)'s.
+**Status:** tried (Fieldwork 0.60.0, 2026-11-08). Built as proposed, on the standard Inspector and dialog: Find health
+facilities 0.3.0. The Sierra Leone example's workflows are not yet built. The measurements it rests on are [189](189-a-measles-line-list-made-safe-to-teach-with.md)'s.
 
 ## The question
 
@@ -152,6 +152,20 @@ the run, naming the setting.
 it. It adds no palette entry.
 
 **D10, a worked example.** The Sierra Leone example, built with it.
+
+## As built, 2026-11-08
+
+On Sierra Leone's 333 names against GRID3 (tests/facility-matching.test.mjs), by name and rows: matched exactly 247
+(2,188), allowing for spelling 15 (66), type differs 34 (244), ambiguous 5 (10), an area 14 (38), not found 18 (60);
+every row once. **Hand-checked:** of the 15 spelling matches, 13 are plainly the same facility; two are uncertain
+("United Methodist Church Jaiama Clinic" to "… Nimikoro Clinic"; "Kabiyama MCHP" to "Kagbiama MCHP").
+
+**Found while building it:** Jaro-Winkler rewards a shared beginning, so a name that is another's words and more
+("Makump" and "Makump Bana") scored as a spelling. A spelling is now a word misspelt, never a word missing. And the
+standard dialog had no style for its checkbox lists, which moved there from the Inspector for Select rows and Relate:
+each box floated away from its words. Fixed for all of them.
+
+**Not yet:** OpenStreetMap as a second source for what the registers lack; a minimum count per point on a Map.
 
 ## What it will not do
 

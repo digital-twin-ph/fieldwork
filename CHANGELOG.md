@@ -3,6 +3,18 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.60.0 — 2026-11-08
+
+- **Find health facilities finds facilities from a list** ([190](docs/experiments/190-find-health-facilities-from-a-list.md)).
+  Each row's facility name is matched to national registers (GRID3 for Sierra Leone, Nigeria and DR Congo, declared in
+  the ontology), and every row is marked: matched exactly, allowing for spelling, type differs, ambiguous, an area not a
+  facility, or not found. None is dropped; you decide the ambiguous ones. Find health facilities 0.3.0, on the standard
+  Inspector and dialog.
+- **Facility registers and match outcomes are in the ontology**, and the register catalogue is generated from it.
+- **Measles in Sierra Leone** ([189](docs/experiments/189-a-measles-line-list-made-safe-to-teach-with.md)): a
+  semi-synthetic, de-identified teaching file in its own public repository, compared with the original.
+- Checkbox lists in configuration dialogs sit beside their words.
+
 ## 0.59.0 — 2026-11-08
 
 - **The built-in rulesets and spatial coverage examples are removed.** What the rulesets example taught is in the

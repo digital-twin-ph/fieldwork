@@ -334,16 +334,12 @@
    "migrationFrom": []
   },
   "find_health_facilities": {
-   "version": "0.2.0",
-   "released": "2026-10-09",
+   "version": "0.3.0",
+   "released": "2026-11-08",
    "changes": [
     {
-     "kind": "initial",
-     "description": "One operation, two sources, both reachable from a browser with no account. Measured 2026-10-09: Overpass answers with access-control-allow-origin: * and the Humanitarian OpenStreetMap Team country export on HDX is served from S3 with the same header, 452 KB compressed for 12,776 Philippine facilities of which 11,877 are named. The study area bounds the query rather than filtering it afterwards, so the area is the scope of the question; the country export is clipped to that area because it is not bounded at source, while the live query is not clipped again because doing so would only mask a bounding-box error. Both sources are OpenStreetMap-derived and both are ODbL. Retrieval happens in the interface and never in the executor, so a workflow runs from stored data with the network off; core.ts imports the value and validation functions from this module and deliberately not the download function. Supersedes healthsites_discovery, which was excluded because healthsites.io sends no cross-origin header and could not be fetched at all; see docs/experiments/69-healthsites-acquisition.md and 71-health-facility-sources.md."
-    },
-    {
-     "kind": "feature",
-     "description": "0.2.0 adds Overture Maps Places as a third source, read directly from GeoParquet on S3. It is the first source here that is not OpenStreetMap-derived, so it can corroborate rather than echo; it is CDLA Permissive 2.0 rather than share-alike; and it states a confidence for each place, which is the only numeric quality signal any of these sources offer. Measured 2026-10-10 against release 2026-09-23.1: 16 parts, 4,864 row groups, 81,455,423 rows, 11.0 GB, of which a Manila study area selected 3 row groups in 1 part, 55,649 rows, read in about 1.5 seconds; the 16 footers are read concurrently because sequentially they took 22 seconds. The release is discovered rather than pinned and recorded in the receipt, so a default that moves does not make a past run unreadable. A truncated bucket listing is refused rather than silently dropping files, because a missing file looks like an empty study area and an empty study area looks like a true absence. Overture's bbox columns are 32-bit and bracket the coordinate rather than equal it (measured: only 0.12% degenerate), so they select row groups and the geometry supplies the coordinates. Overture's categories are mapped onto this application's facility kinds as a declared equivalence, deliberately conservative: the generic buckets health_care, medical_service and specialized_health_care are not mapped at all, because measured in a Manila study area they carried a wellness spa, individually named doctors and a training course, and Overture reported 207 places under hospital where a live OpenStreetMap query returned 47 hospitals and clinics together. Counts from this source are not comparable with the OpenStreetMap sources and the receipt says so. See docs/experiments/71-health-facility-sources.md."
+     "kind": "minor",
+     "description": "Finds facilities from a list as well as inside a study area (experiment 190): each row's facility name is matched to the national registers of a catalogue generated from the ontology (GRID3 for Sierra Leone, Nigeria and DR Congo), compared by bare name and type apart, and every row is marked matched exactly, allowing for spelling, type differs, ambiguous, an area not a facility, or not found; none is dropped, and the ambiguous names and types that differ wait for the practitioner's choice. One point per row with a facility, at the register's position. On the standard Inspector and dialog (experiment 186); the licence is shown in the dialog before anything is fetched, and the attribution with what is held."
     }
    ],
    "breaking": false,

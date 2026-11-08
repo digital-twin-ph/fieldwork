@@ -1,0 +1,97 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:find_health_facilities",
+ "version": "0.3.0",
+ "nodeType": "find_health_facilities",
+ "title": "Find health facilities",
+ "released": "2026-11-08",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['find_health_facilities']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "shaclShapes": [],
+  "validationStatus": "application-only"
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "area",
+    "type": "area"
+   }
+  ],
+  "output": "points",
+  "note": "Inside the study area, the input is area. From a list, the step's input is list, a table, instead: the port follows the setting, as a ruleset's ports follow its ruleset. The output is points either way."
+ },
+ "ontology": {
+  "status": "partial",
+  "mappings": [
+   {
+    "role": "entity",
+    "iri": "urn:fieldwork:PointDataset",
+    "file": "ontology/runtime.ttl"
+   },
+   {
+    "role": "activity",
+    "iri": "urn:fieldwork:FacilityListMatching",
+    "file": "ontology/fieldwork.ttl"
+   },
+   {
+    "role": "entity",
+    "iri": "urn:fieldwork:FacilityRegister",
+    "file": "ontology/fieldwork.ttl"
+   }
+  ],
+  "note": "Emits an fw:PointDataset carrying fw:recordCount, fw:requestOrigin and, where the source is file-backed, fw:filename and fw:byteSize, or dcterms:hasVersion for a released dataset, together with dcterms:license, dcterms:source and the attribution as dcterms:rights, and prov:wasDerivedFrom a dcat:Dataset for the source. The licence is read from what the retrieval recorded and never assumed: two sources are ODbL and share-alike, Overture Places is CDLA Permissive 2.0 and is not, so a receipt asserting one licence for every source would be wrong for whichever it was not describing. It is emitted as an IRI rather than a label so it resolves and can be compared. Reuses the host's existing file-metadata properties rather than minting source-specific ones. From a list (experiment 190): an fw:FacilityListMatching activity, prov:used each fw:FacilityRegister matched against, with the row count of each of the six fw:FacilityMatchOutcome values; the point dataset carries fw:positionIsRegisters true, because a matched position is where the register places the facility. The emits list is the definition module's, health-facilities.ts, inside the study area; from a list the terms are asserted by src/facility-matching.ts (fw:FacilityListMatching, fw:FacilityRegister, the six outcome row counts, fw:positionIsRegisters), each declared in ontology/fieldwork.ttl and held there by the ontology-coupling check.",
+  "emits": {
+   "classes": [
+    "PointDataset"
+   ],
+   "properties": [
+    "byteSize",
+    "filename",
+    "outsideStudyAreaCount",
+    "recordCount",
+    "requestOrigin",
+    "sha256"
+   ]
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/health-facilities.ts",
+   "src/overture-places.ts",
+   "src/facility-records.ts",
+   "src/core.ts",
+   "src/app.ts",
+   "src/palette.ts",
+   "src/facility-matching.ts",
+   "src/facilities-ui.ts",
+   "widgets/facility-registers.json"
+  ],
+  "definition": "src/health-facilities.ts"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [
+   {
+    "nodeType": "healthsites_discovery",
+    "adapterVersion": "1",
+    "implementation": "src/health-facilities.ts#migrateHealthsitesNodes"
+   }
+  ],
+  "replacementCandidate": null
+ },
+ "changes": [
+  {
+   "kind": "minor",
+   "description": "Finds facilities from a list as well as inside a study area (experiment 190): each row's facility name is matched to the national registers of a catalogue generated from the ontology (GRID3 for Sierra Leone, Nigeria and DR Congo), compared by bare name and type apart, and every row is marked matched exactly, allowing for spelling, type differs, ambiguous, an area not a facility, or not found; none is dropped, and the ambiguous names and types that differ wait for the practitioner's choice. One point per row with a facility, at the register's position. On the standard Inspector and dialog (experiment 186); the licence is shown in the dialog before anything is fetched, and the attribution with what is held."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Unit checks cover the Overpass bounding-box order, which is south-west-north-east and not the order used elsewhere; the query built from requested kinds and that nothing typed into the kinds field can alter the statement sent; parsing of the Overpass element shape, a GeoJSON FeatureCollection and an adapter-resolved kind; the clip of a country export to the study area; the drop counts by reason; refusal of a non-ISO country code, an empty kind list, an area with no width and a confidence threshold outside 0 to 1; Overture release discovery and the refusal of a truncated listing; that every mapped Overture category lands on an offered facility kind and that the three generic categories stay unmapped; that the receipt carries the licence as a resolvable IRI and distinguishes share-alike from not; and that a run with stored facilities issues no network request. The live Overture read is covered by a recorded measurement rather than an automated test, because its input is 11 GB of GeoParquet that cannot honestly be mocked: measured 2026-10-10 in a browser, 488 facilities kept from release 2026-09-23.1 with 400 below the confidence threshold and 220 of an unmapped health category. Not established: completeness. No source here states it, coverage is uneven, and no parity check against an official register has been run, so an absence in the output is not evidence of absence on the ground."
+ }
+}

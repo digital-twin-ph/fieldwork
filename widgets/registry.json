@@ -477,7 +477,7 @@
     {
       "id": "urn:fieldwork:widget:find_health_facilities",
       "nodeType": "find_health_facilities",
-      "currentVersion": "0.2.0",
+      "currentVersion": "0.3.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -488,6 +488,11 @@
           "version": "0.2.0",
           "path": "widgets/releases/find_health_facilities/0.2.0.json",
           "sha256": "0bc5775b98b5d7f5be444e9cbf657ea738761cbf24dc2fe4eeae96a395b2dd41"
+        },
+        {
+          "version": "0.3.0",
+          "path": "widgets/releases/find_health_facilities/0.3.0.json",
+          "sha256": "6a07a04b6f6f8645915f66378e593b01118801d423fd712d1c792094d8609fdb"
         }
       ]
     },

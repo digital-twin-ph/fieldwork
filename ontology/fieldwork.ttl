@@ -1409,6 +1409,13 @@ fw:nameMatchScore a owl:DatatypeProperty; rdfs:range xsd:decimal;
   rdfs:comment "The Jaro-Winkler similarity of the two folded names, 1 for an exact match.".
 fw:areaNameMarkers a owl:DatatypeProperty; rdfs:range xsd:string;
   rdfs:comment "The words a step was given that mark a name as an area, not a facility. A setting, pre-filled from a register's catalogue entry; never fixed in code.".
+fw:matchedExactlyRowCount a owl:DatatypeProperty; rdfs:domain fw:FacilityListMatching; rdfs:range xsd:nonNegativeInteger.
+fw:matchedAllowingForSpellingRowCount a owl:DatatypeProperty; rdfs:domain fw:FacilityListMatching; rdfs:range xsd:nonNegativeInteger.
+fw:typeDiffersRowCount a owl:DatatypeProperty; rdfs:domain fw:FacilityListMatching; rdfs:range xsd:nonNegativeInteger.
+fw:ambiguousMatchRowCount a owl:DatatypeProperty; rdfs:domain fw:FacilityListMatching; rdfs:range xsd:nonNegativeInteger.
+fw:areaNotFacilityRowCount a owl:DatatypeProperty; rdfs:domain fw:FacilityListMatching; rdfs:range xsd:nonNegativeInteger.
+fw:notFoundInRegisterRowCount a owl:DatatypeProperty; rdfs:domain fw:FacilityListMatching; rdfs:range xsd:nonNegativeInteger;
+  rdfs:comment "With the five counts beside it, every row of the list once: no row is dropped.".
 fw:positionIsRegisters a owl:DatatypeProperty; rdfs:range xsd:boolean;
   rdfs:comment "True on every point matching gives: the position is where the register places the facility, not where a person on the list lived or was found.".
 

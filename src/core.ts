@@ -50,8 +50,10 @@ import type {AreaValue,CoverageValue,DisplayValue,WorkflowRun,Output,Receipt,Nea
 import {declarationGaps,dataIssuesOf} from './results.js';
 import type {OldInputs} from './old-naledi.js';
 import {isRecord,required} from './guards.js';
-interface ExecutionInputs extends OldInputs {area2:AreaValue;polygons:Polygons;subjects:PointCollection;network:Network;sites:PointCollection;reached:PointCollection;points:PointCollection&{spatialReference?:import('./types.js').AnySpatialReference};original:PointCollection;moved:PointCollection;pumps:PointCollection;originalCenter:MeanCenter;movedCenter:MeanCenter;comparison:PointComparison;raster:RasterGrid;table:import('./data-table.js').DataTable;projections:import('./sea-level.js').ProjectionTable;series:import('./case-series.js').SeriesTable;records:PointCollection;cases:import('./data-table.js').DataTable;related:import('./data-table.js').DataTable;rates:import('./data-table.js').DataTable&{rate?:import('./rate.js').RateResult};assignments:import('./sea-level.js').AssignmentTable;coverage?:CoverageValue;candidates:PointCollection;distances:{rows:NearestRow[];centers:PointFeature[];method:string};alert:ParamsByType['alert'];decisions:DisplayValue;design:import('./study-design.js').DeclaredDesign}
+interface ExecutionInputs extends OldInputs {area2:AreaValue;polygons:Polygons;subjects:PointCollection;network:Network;sites:PointCollection;reached:PointCollection;points:PointCollection&{spatialReference?:import('./types.js').AnySpatialReference};original:PointCollection;moved:PointCollection;pumps:PointCollection;originalCenter:MeanCenter;movedCenter:MeanCenter;comparison:PointComparison;raster:RasterGrid;table:import('./data-table.js').DataTable;projections:import('./sea-level.js').ProjectionTable;series:import('./case-series.js').SeriesTable;records:PointCollection;cases:import('./data-table.js').DataTable;related:import('./data-table.js').DataTable;list:import('./data-table.js').DataTable;rates:import('./data-table.js').DataTable&{rate?:import('./rate.js').RateResult};assignments:import('./sea-level.js').AssignmentTable;coverage?:CoverageValue;candidates:PointCollection;distances:{rows:NearestRow[];centers:PointFeature[];method:string};alert:ParamsByType['alert'];decisions:DisplayValue;design:import('./study-design.js').DeclaredDesign}
 import classification from '../widgets/classification.json' with {type:'json'};
+import facilityRegisters from '../widgets/facility-registers.json' with {type:'json'};
+import {listFacilitiesValue,type RegisterEntry} from './facility-matching.js';
 import {OLD_TYPES,validateOldNode,executeOldNode,migrateFacilitySources,applyAccessReview,applyFacilityGrading,gradedPointLayer,distancesAsAccess} from './old-naledi.js';
 import {resolveRuleset,bindParameters,tableContractFailures,rulesetCitation} from './rulesets.js';
 import {selectRows,selectRange,rangeSentence} from './select-rows.js';
@@ -422,6 +424,8 @@ export function nodeInputs(node:WorkflowNode):[string,PortType][]{
   // A ruleset's ports are pinned in the node rather than looked up: a saved workflow validates without the file
   // present. An unconfigured one has no ports, which is the honest answer for a step whose ruleset is not chosen.
   if(node.type==='apply_ruleset')return structuredClone(node.params.ruleset?.inputs??[]);
+  // FROM A LIST, the list is the input and there is no area (experiment 190).
+  if(node.type==='find_health_facilities'&&node.params.mode==='list')return [['list','table']];
   if(node.type==='compare_point_sets'&&node.params.centers)return [...TYPES.compare_point_sets.inputs,['originalCenter','mean-center'],['movedCenter','mean-center']];
   // EVERY PORT A CHART CAN DRAW, ALWAYS -- the change `map_output` and `table_output` already
   // took, and the one the blocker `output-mode-set-before-the-shape-arrives` prescribes for this
@@ -1209,6 +1213,9 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         value=made.value;receipts.push(made.receipt);break;
       }
       case 'find_health_facilities':{
+        // FROM A LIST (experiment 190): the table's names matched to registers; otherwise the facilities inside the area.
+        if(node.params.mode==='list'){const got=listFacilitiesValue(node,inputs.list,
+          facilityRegisters.registers as RegisterEntry[],runId);value=got.value as unknown as DisplayValue;receipts.push(got.receipt as unknown as Receipt);break;}
         const got=facilitiesValue(node,runId);value=got.value;receipts.push(got.receipt);break;
       }
       case 'buffer_point':{const made=bufferPoint(inputs.points,node,runId);value=made.value;receipts.push(made.receipt);break;}

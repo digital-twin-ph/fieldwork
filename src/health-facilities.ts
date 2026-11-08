@@ -254,12 +254,15 @@ export function validateFindHealthFacilitiesNode(node:WorkflowNode<'find_health_
   if(!Array.isArray(p.kinds))throw new Error('Facility kinds must be a list.');
   for(const kind of p.kinds)if(!/^[a-z_]+$/.test(kind))
     throw new Error(`"${kind}" is not an OpenStreetMap facility kind. Use lower-case words such as hospital or health_post.`);
+  // FROM A LIST, the data is the registers' facilities, recorded by `registerRetrieved` (experiment 190).
+  if(p.mode==='list'){if(p.data&&!p.registerRetrieved)throw new Error('Find health facilities holds a register with no record of where it came from.');return;}
   if(p.data&&!p.retrieved)throw new Error('Find health facilities holds facilities with no record of where they came from.');
 }
 
 export function requireRunnableFindHealthFacilities(node:WorkflowNode<'find_health_facilities'>):void{
   validateFindHealthFacilitiesNode(node);
   const p=node.params, descriptor=FACILITY_SOURCES[p.source];
+  if(p.mode==='list')return;
   if(!p.kinds.length)throw new Error('Choose at least one facility kind to look for.');
   if(descriptor.needsCountry)normalizeCountryCode(p.country);
   if(descriptor.confidence)confidenceOf(p.minConfidence);

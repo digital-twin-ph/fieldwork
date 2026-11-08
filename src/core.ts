@@ -1830,7 +1830,10 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           :'Import a table before running.');
         // WHAT THE COLUMNS MEAN TRAVELS WITH THE TABLE, so every step after it can say it; and the receipt records the
         // declarations this run used (experiment 172).
-        const described=p.columns&&Object.keys(p.columns).length?{...table,columns:p.columns}:table;
+        // A WIDE IMPORT SAYS SO on the table it makes, so rules can read its subjects as the file had them (188).
+        const declared=p.wide&&table.keys.includes(p.wide.measureKey||'measure')
+          ?{...table,wide:{measureKey:p.wide.measureKey||'measure',subjectKeys:p.wide.keys.filter(k=>table.keys.includes(k))}}:table;
+        const described=p.columns&&Object.keys(p.columns).length?{...declared,columns:p.columns}:declared;
         const imported=tableReceipt(node,described,runId);
         value={...imported.value,...(described.columns?{columns:described.columns}:{})} as unknown as DisplayValue;
         receipts.push({...imported.receipt,...(described.columns?{columns:described.columns}:{})} as Receipt);break;}

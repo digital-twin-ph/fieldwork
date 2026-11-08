@@ -70,7 +70,10 @@ export type ComputeOperator=typeof COMPUTE_OPERATORS[number];
 /** A CATEGORY (`value`) or a COMPUTED VALUE (`compute`), never both. A computed value is Derive a value's arithmetic
  *  inside a rule: one of four operators between two operands (experiment 188). */
 export interface AuthoredConclusion {predicate:string; value?:string;
-  compute?:{left:Operand; operator:ComputeOperator; right:Operand}}
+  compute?:{left:Operand; operator:ComputeOperator; right:Operand};
+  /** THE NEW COLUMN AS ITS AUTHOR NAMED IT, for a computed value: "1854 deaths per 1849 death". The predicate is the
+   *  rules' own word for it; this is the table's. Absent: the predicate's local name. */
+  column?:string}
 export const isComputed=(c:AuthoredConclusion):c is AuthoredConclusion&{compute:NonNullable<AuthoredConclusion['compute']>}=>
   !!c.compute;
 /** Whether any rule computes a value. Such a ruleset is evaluated directly, not by the reasoner (experiment 188). */

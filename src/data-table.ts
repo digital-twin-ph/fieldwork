@@ -55,6 +55,10 @@ export interface DataTable {
   /** COLUMNS BROUGHT AT A SHIFT, and the shift in days (experiment 185): `LST_Day_1km_-14d` → −14. Written by Relate
    *  over several shifts, read by Regression to state each model's shift as a number the lag chart can place. */
   columnShifts?:Record<string,number>;
+  /** A TABLE THAT ARRIVED WIDE (experiment 188): which key column holds the variable names, and which columns say
+   *  whose row it is. Stated by the Tabular data step that melted it, so a step after it can rebuild one record per
+   *  subject, as the file had it, without asking anyone about the long shape inside. */
+  wide?:{measureKey:string; subjectKeys:string[]};
   rows:{key:Record<string,string>; value:number|null}[];
   rowCount:number; missingValueCount:number; source?:DataTableSource;
 }

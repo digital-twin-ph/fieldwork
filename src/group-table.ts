@@ -171,7 +171,11 @@ export function groupTable(table:DataTable,request:GroupRequest):GroupResult {
         .map(g=>({group:g.label,rowsSummed:g.summed,rowsEmpty:g.empty}))}
     :undefined;
   return {aggregate,...(overridden?{excluded:overridden}:{}),
-    table:{...table,keys:by,rows,rowCount:rows.length,
+    // STILL WIDE when the measure is among the groups (experiment 188): totals by company and measure are one record per
+    // company, each measure a number. Otherwise the subjects are gone, and so is the claim.
+    table:{...(({wide:_,...rest})=>rest)(table),keys:by,rows,rowCount:rows.length,
+    ...(table.wide&&by.includes(table.wide.measureKey)&&by.length>1
+      ?{wide:{measureKey:table.wide.measureKey,subjectKeys:by.filter(k=>k!==table.wide!.measureKey)}}:{}),
     missingValueCount:rows.filter(row=>row.value===null).length},
     groups:rows.length,collapsedFrom:table.rows.length,dropped,gaps};
 }

@@ -18,6 +18,8 @@ import {knownPredicate,readValue,termFor,type FieldBinding,type SubjectRecord} f
 import {isComputed,isSettingReference,settingNamed,type AuthoredRule,type ComputeOperator,type Operand}
   from './authored-rules.js';
 import type {Scalar} from './types.js';
+import type {DataTable} from './data-table.js';
+import {isWide,wideSubjects} from './authored-application.js';
 
 export const OPERATOR_WORDS:Record<ComputeOperator,string>={minus:'minus',plus:'plus',times:'times',dividedBy:'divided by'};
 const apply:Record<ComputeOperator,(a:number,b:number)=>number|null>={
@@ -41,6 +43,8 @@ export interface Evaluation {
   /** Records each rule fired for, by rule number. */
   matchedByRule:number[];
   unmatched:number;
+  /** The columns that hold computed numbers, as against categories. */
+  computedColumns:string[];
 }
 
 /** A fact as N3 would write it, so equality is the reasoner's term equality. */
@@ -98,6 +102,7 @@ export function evaluateAuthored(records:SubjectRecord[],bindings:FieldBinding[]
   settings:Record<string,number>={}):Evaluation{
   const labelOf=(predicate:string)=>{const b=bindings.find(x=>x.predicate===predicate);return b?.attribute??localName(predicate);};
   const matchedByRule=rules.map(()=>0);
+  const computedColumns=[...new Set(rules.flatMap(r=>r.then.filter(isComputed).map(c=>c.column?.trim()||localName(c.predicate))))];
   let unmatched=0;
   const outcomes=records.map(record=>{
     const facts=factsOf(record,bindings);
@@ -122,7 +127,7 @@ export function evaluateAuthored(records:SubjectRecord[],bindings:FieldBinding[]
         if(pending&&!last){waiting=true;return;}
         fired.add(index);changed=true;
         for(const conclusion of rule.then){
-          const column=localName(conclusion.predicate);
+          const column=conclusion.column?.trim()||localName(conclusion.predicate);
           let value:string|number|null;
           if(isComputed(conclusion)){
             const {left,operator,right}=conclusion.compute;
@@ -155,12 +160,13 @@ export function evaluateAuthored(records:SubjectRecord[],bindings:FieldBinding[]
     if(!fired.size)unmatched++;
     return outcome;
   });
-  return {records:outcomes,matchedByRule,unmatched};
+  return {records:outcomes,matchedByRule,unmatched,computedColumns};
 }
 
 /** The records with what was concluded: new key columns on a table's rows, new properties on points. A computed number
  *  is written as its digits, an empty value as nothing, as a key column holds text. */
-export function evaluatedTable<T extends {rows:{key:Record<string,string>}[];keys:string[]}>(table:T,evaluation:Evaluation):T{
+export function evaluatedTable(table:DataTable,evaluation:Evaluation):DataTable{
+  if(isWide(table))return evaluatedWideTable(table,evaluation);
   const rows=table.rows.map((row,i)=>({...row,key:{...row.key,...Object.fromEntries(
     Object.entries(evaluation.records[i]?.values??{}).map(([k,v])=>[k,v===null?'':String(v)]))}}));
   const added=[...new Set(rows.flatMap(r=>Object.keys(r.key)))].filter(k=>!table.keys.includes(k));
@@ -183,4 +189,28 @@ export function evaluationSentence(evaluation:Evaluation,labels:string[]):string
     +(zero.length?`${zero.length} divided by zero and have an empty value: ${named(zero)}. `:'')
     +(missing.length?`${missing.length} lacked a value to compute from: ${named(missing)}. `:'')
     +(conflict.length?`${conflict.length} were given different values by two rules and have none: ${named(conflict)}.`:'');
+}
+
+/** A WIDE TABLE, FOLDED BACK (experiment 188). A category is a key column on every row of its subject. A computed value
+ *  is a new measure: one row per subject, named for the column, after the table's own rows and in subject order, which
+ *  is the row Derive a value adds. A division by zero is a row with an empty value, as Derive a value writes it; a value
+ *  that could not be computed, or that two rules disagree on, is no row, and is in the run's method. */
+function evaluatedWideTable(table:DataTable&{wide:NonNullable<DataTable['wide']>},evaluation:Evaluation):DataTable{
+  const {rowSubject,subjectKey}=wideSubjects(table);
+  const computed=new Set(evaluation.computedColumns);
+  const categoriesOf=(s:number)=>Object.fromEntries(Object.entries(evaluation.records[s]?.values??{})
+    .filter(([k])=>!computed.has(k)).map(([k,v])=>[k,v===null?'':String(v)]));
+  const categoryColumns=[...new Set(evaluation.records.flatMap(r=>Object.keys(r.values).filter(k=>!computed.has(k))))];
+  const withCategories=(key:Record<string,string>,s:number)=>{const c=categoriesOf(s);
+    return {...key,...Object.fromEntries(categoryColumns.map(k=>[k,c[k]??'']))};};
+  const rows=table.rows.map((row,i)=>({...row,key:withCategories(row.key,rowSubject[i]!)}));
+  for(const column of evaluation.computedColumns)
+    subjectKey.forEach((key,s)=>{
+      const values=evaluation.records[s]?.values??{};
+      if(!(column in values))return;
+      const v=values[column];
+      rows.push({key:withCategories({...key,[table.wide.measureKey]:column},s),value:typeof v==='number'?v:null});
+    });
+  return {...table,rows,rowCount:rows.length,keys:[...table.keys,...categoryColumns.filter(k=>!table.keys.includes(k))],
+    missingValueCount:rows.filter(r=>r.value===null).length};
 }

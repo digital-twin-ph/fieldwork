@@ -43,6 +43,7 @@ const isTable=(input:unknown):input is DataTable=>
  *  attributes a rule can read are exactly the key columns plus the value field -- which is the
  *  same contract the table widget already states, read the other way round. */
 export function authoredSubjects(input:PointCollection|DataTable):SubjectRecord[]{
+  if(isTable(input)&&isWide(input))return wideSubjects(input).records;
   if(isTable(input))
     return input.rows.map((row,index)=>({
       // Positional. A key can repeat across rows in a long-format table, so a key-derived id
@@ -55,6 +56,33 @@ export function authoredSubjects(input:PointCollection|DataTable):SubjectRecord[
     id:String(feature.id),
     label:String(feature.properties?.name??feature.id),
     properties:feature.properties as Record<string,Scalar|null>}));
+}
+
+/** Whether a table arrived wide and still holds its measure column, so its subjects can be rebuilt. */
+export const isWide=(table:DataTable):table is DataTable&{wide:NonNullable<DataTable['wide']>}=>
+  !!table.wide&&table.keys.includes(table.wide.measureKey)&&table.wide.subjectKeys.every(k=>table.keys.includes(k));
+
+/** ONE RECORD PER SUBJECT, as the wide file had it (experiment 188): the subject columns, and one number per measure,
+ *  rebuilt as `rate.fromTable` rebuilds them. `rowSubject[i]` is the record row i belongs to, so a conclusion about a
+ *  subject reaches every one of its rows. A measure with no value is left absent, never written as zero. */
+export function wideSubjects(table:DataTable&{wide:NonNullable<DataTable['wide']>}):
+  {records:SubjectRecord[];rowSubject:number[];subjectKey:Record<string,string>[]}{
+  const {measureKey,subjectKeys}=table.wide;
+  const index=new Map<string,number>(),records:SubjectRecord[]=[],subjectKey:Record<string,string>[]=[],rowSubject:number[]=[];
+  for(const row of table.rows){
+    const id=subjectKeys.map(k=>row.key[k]??'').join('\u001f');
+    let at=index.get(id);
+    if(at===undefined){
+      at=records.length;index.set(id,at);
+      const key=Object.fromEntries(Object.entries(row.key).filter(([k])=>k!==measureKey));
+      subjectKey.push(key);
+      records.push({id:`subject-${at}`,label:subjectKeys.map(k=>row.key[k]).join(' · ')||`Subject ${at+1}`,
+        properties:{...key}});
+    }
+    rowSubject.push(at);
+    if(row.value!==null)records[at]!.properties[row.key[measureKey]!]=row.value;
+  }
+  return {records,rowSubject,subjectKey};
 }
 
 export const AUTHORED_SUBJECT='subject';
@@ -209,8 +237,12 @@ export function authoredProjection(
     // The conclusions become key columns. A long-format table's row is a key and one value, and
     // a key column is exactly what a concluded term is: a label this row now carries. The value
     // field is untouched, so what the table MEASURES is still the thing it measured.
-    const rows=input.rows.map((row,index)=>({...row,
-      key:{...row.key,...concludedFor(subjects[index])}}));
+    // A WIDE TABLE's conclusions are about its subjects, so each reaches every row of its subject (188).
+    const rowSubject=isWide(input)?wideSubjects(input).rowSubject:input.rows.map((_,i)=>i);
+    const seen=new Map<number,Record<string,string>>();
+    const rows=input.rows.map((row,index)=>{const s=rowSubject[index]!;
+      if(!seen.has(s))seen.set(s,concludedFor(subjects[s]!));
+      return {...row,key:{...row.key,...seen.get(s)}};});
     const table:DataTable={...input,rows,
       keys:[...input.keys,...[...new Set(rows.flatMap(r=>Object.keys(r.key)))].filter(k=>!input.keys.includes(k))]};
     return {features:[],

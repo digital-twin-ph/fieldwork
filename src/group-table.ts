@@ -101,7 +101,15 @@ export interface GroupRequest {
    *  Either way it is DECLARED: the result counts what it excluded, the receipt records it, and
    *  the write-up carries the caveat automatically. */
   excludeMissing?:boolean;
+  /** EACH GROUP'S SHARE OF A TOTAL, % (experiment 191). `within`: the kept columns whose groups each total 100; none,
+   *  the whole table. Offered with a sum and a count, which add up to a total; never with a minimum or a maximum. */
+  share?:{within:string[]};
 }
+/** THE KEY THAT TELLS A COUNT FROM ITS SHARE, in a table that carries both (experiment 191). */
+export const SHARE_MEASURE='statistic';
+/** The share's name in that key, which says what it is a share of. */
+export const shareName=(within:readonly string[])=>within.length?`% within ${within.join(' and ')}`:'% of all';
+
 /** A group that held an empty cell, so its total is unknown rather than smaller. */
 export interface GroupGap {group:string; rowsSummed:number; rowsEmpty:number}
 export interface GroupResult {
@@ -112,9 +120,41 @@ export interface GroupResult {
    *  for each of those groups how many rows did contribute. Absent when the override is off,
    *  which is how a reader tells "nothing was excluded" from "the field did not exist". */
   excluded?:{cells:number; groups:number; of:GroupGap[]};
+  /** Present when shares were asked for: what they are shares of, and how many strata had no share to give. */
+  shares?:{within:string[]; name:string; unknownStrata:number; zeroStrata:number};
 }
 
 export function groupTable(table:DataTable,request:GroupRequest):GroupResult {
+  const result=groupTotals(table,request);
+  return request.share?withShares(result,request.by.map(n=>n.trim()).filter(Boolean),request.share.within):result;
+}
+
+/** THE SHARES, beside the totals they are shares of: the result gains a `measure` key whose rows are the total and
+ *  the share, declared wide so the view shows them as two columns. Held to one decimal place, so a stratum can sum to
+ *  99.9 or 100.1. A stratum whose total is unknown, because a group in it summed over an empty cell, has every share
+ *  unknown: a share of an unknown total is not a smaller share. */
+export function withShares(result:GroupResult,by:readonly string[],within:readonly string[]):GroupResult{
+  if(result.aggregate==='minimum'||result.aggregate==='maximum')
+    throw new Error('A share needs a total, and a minimum or a maximum does not add up to one. Choose Sum or Count rows.');
+  for(const w of within)if(!by.includes(w))throw new Error(`"${w}" is not a kept column, so there are no groups within it to total 100.`);
+  if(within.length&&within.length===by.length)throw new Error('Every kept column is a "within" column, so each group would be 100% of itself. '
+    +'Leave at least one kept column out of "within".');
+  if(by.includes(SHARE_MEASURE))throw new Error(`A kept column is already called "${SHARE_MEASURE}", which the shares need for their own column.`);
+  const t=result.table,stratum=(row:{key:Record<string,string>})=>within.map(w=>row.key[w]).join('\u0000');
+  const totals=new Map<string,number|null>();
+  for(const row of t.rows){const id=stratum(row),held=totals.get(id);
+    totals.set(id,held===null||row.value===null?null:(held??0)+row.value);}
+  const name=shareName(within),value=t.valueField;
+  const rows=t.rows.flatMap(row=>{const total=totals.get(stratum(row));
+    const share=total===null||total===undefined||row.value===null?null:total===0?null:Math.round(row.value/total*1000)/10;
+    return [{key:{...row.key,[SHARE_MEASURE]:value},value:row.value},{key:{...row.key,[SHARE_MEASURE]:name},value:share}];});
+  const {wide:_wide,...rest}=t;
+  return {...result,table:{...rest,keys:[...t.keys,SHARE_MEASURE],rows,rowCount:rows.length,
+    missingValueCount:rows.filter(r=>r.value===null).length,wide:{measureKey:SHARE_MEASURE,subjectKeys:[...t.keys],asDeclared:true}},
+    shares:{within:[...within],name,unknownStrata:[...totals].filter(([,v])=>v===null).length,zeroStrata:[...totals].filter(([,v])=>v===0).length}};
+}
+
+function groupTotals(table:DataTable,request:GroupRequest):GroupResult {
   const by=request.by.map(name=>name.trim()).filter(Boolean);
   if(!by.length)throw new Error('Name at least one key column to total within. '
     +'Grouping by nothing would give one number, which a table cannot hold a key for.');

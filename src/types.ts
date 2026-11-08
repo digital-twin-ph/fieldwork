@@ -353,7 +353,9 @@ export interface ParamsByType {
     /** Total what is present, excluding empty cells. Declared, never assumed: the default is
      *  that a group holding an empty cell totals to nothing known. It EXCLUDES rather than
      *  zeroing — see `GroupRequest` for why those are different claims. */
-    excludeMissing?:boolean};
+    excludeMissing?:boolean;
+    /** Each group's share of a total, %, within the kept columns named (experiment 191). */
+    share?:{within:string[]}};
   two_by_two:{label:string;exposureColumn:string;exposed:string;unexposed:string;outcomeColumn:string;caseValue:string;nonCaseValue:string;level:90|95|99;
     /** Each row is one subject, so a cell is how many rows agree. See `TwoByTwoRequest`. */
     rowsAreSubjects?:boolean;

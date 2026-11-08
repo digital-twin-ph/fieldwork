@@ -691,6 +691,9 @@ export interface WideFrame {
 export function wideFrame(table:DataTable):WideFrame|null{
   const keys=table.keys;
   if(keys.length<2)return null;
+  // A DECLARED READING ORDER decides (experiment 191): totals and their shares by two columns have two keys that vary
+  // within a subject, and the person who kept them put them in order.
+  if(table.wide?.asDeclared&&keys.includes(table.wide.measureKey))return declaredFrame(table,table.wide.measureKey,table.wide.subjectKeys);
   const distinct=(k:string)=>new Set(table.rows.map(r=>String(r.key[k]))).size;
   // The subject identifies a row most finely.
   const subject=[...keys].sort((a,b)=>distinct(b)-distinct(a))[0];
@@ -743,6 +746,20 @@ export function wideFrame(table:DataTable):WideFrame|null{
     byRow.get(id)!.cells[columns.indexOf(String(r.key[columnAxis]))]=r.value;
   }
   return {subject,attributes,columns,rows:order.map(id=>byRow.get(id)!)};
+}
+
+/** One row per subject, its keys all shown, one column per value of the declared measure key. */
+function declaredFrame(table:DataTable,measureKey:string,subjectKeys:string[]):WideFrame|null{
+  const columns=[...new Set(table.rows.map(r=>String(r.key[measureKey])))];
+  if(!columns.length||columns.length>CROSSTAB_MAX_COLUMNS)return null;
+  const order:string[]=[],byRow=new Map<string,WideFrame['rows'][number]>();
+  for(const r of table.rows){
+    const id=subjectKeys.map(k=>String(r.key[k])).join('\u0000');
+    if(!byRow.has(id)){byRow.set(id,{label:String(r.key[subjectKeys[0]!]),attributes:subjectKeys.slice(1).map(k=>String(r.key[k])),
+      cells:columns.map(()=>undefined)});order.push(id);}
+    byRow.get(id)!.cells[columns.indexOf(String(r.key[measureKey]))]=r.value;
+  }
+  return {subject:subjectKeys[0]!,attributes:subjectKeys.slice(1),columns,rows:order.map(id=>byRow.get(id)!)};
 }
 
 export function crossTab(table:DataTable,{assertCommensurable=false}={}):{rowKey:string;colKey:string;columns:string[];

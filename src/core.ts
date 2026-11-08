@@ -1514,7 +1514,12 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
                 +`${result.excluded.groups} group`
                 +`${result.excluded.groups===1?'':'s'}, as declared`
               :result.gaps.length?`; ${result.gaps.length} group`
-              +`${result.gaps.length===1?'' :'s'} held an empty cell and total to nothing known`:''),
+              +`${result.gaps.length===1?'' :'s'} held an empty cell and total to nothing known`:'')
+            // THE SHARES, AND OF WHAT (experiment 191), in the same sentence as the totals they are shares of.
+            +(result.shares?`; each group's share, ${result.shares.within.length?`of the total within ${result.shares.within.join(' and ')}`
+              :'of the whole table'}, as a percentage to one decimal place`
+              +(result.shares.unknownStrata?`, unknown in ${result.shares.unknownStrata} stratum${result.shares.unknownStrata===1?'':'s'} whose total is unknown`:'')
+              +(result.shares.zeroStrata?`, none in ${result.shares.zeroStrata} stratum${result.shares.zeroStrata===1?'':'s'} totalling zero`:''):''),
           groups:result.groups,collapsedFrom:result.collapsedFrom,
           dropped:result.dropped,gaps:result.gaps} as unknown as Receipt);
         break;}

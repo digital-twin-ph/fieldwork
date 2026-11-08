@@ -35,6 +35,7 @@ import {openStepViewer,openTableViewer,shapeChange,stepLabels,tableViewOf,type T
 import {orderSentence} from './rule-evaluation.js';
 import {keyNoun,openRelateConfig,relateDraftOf,applyRelateDraft,relateSentence} from './relate-ui.js';
 import {openSelectConfig,selectDraftOf,applySelectDraft,selectSentence} from './select-ui.js';
+import {openGroupConfig,groupDraftOf,applyGroupDraft,groupSentence} from './group-ui.js';
 import {openFacilitiesConfig,facilitiesDraftOf,applyFacilitiesDraft,facilitiesSentence} from './facilities-ui.js';
 import {fetchRegister,registerLayer,type RegisterEntry} from './facility-matching.js';
 import facilityRegistersJson from '../widgets/facility-registers.json';
@@ -986,7 +987,7 @@ function drawRunProgress(){
 /** THE WIDGETS WHOSE INSPECTOR FOLLOWS THE STANDARD (experiment 186): Name, Inputs, Settings, Result, the links,
  *  Actions, in that order and nothing else, with every setting in the widget's configuration dialog. One at a time,
  *  Relate first; the set grows as each widget is moved, and a check holds them to it. */
-export const STANDARD_INSPECTOR=new Set<NodeType>(['relate_table','select_rows','table_input','find_health_facilities']);
+export const STANDARD_INSPECTOR=new Set<NodeType>(['relate_table','select_rows','table_input','find_health_facilities','group_table']);
 function samplerProduct(node:WorkflowNode){
   const up=(id:string,port:string)=>{const e=workflow.edges.find(x=>x.to===id&&x.port===port);return e?workflow.nodes.find(m=>m.id===e.from):undefined;};
   const search=up(node.id,'files'),find=search?up(search.id,'product'):undefined;
@@ -2468,53 +2469,18 @@ function renderInspector(){
     content+=standardSection('Result',`<p class="standard-result${relation?.dropped||why?' standard-result-warning':''}">${esc(line)}</p>`
       +'<div data-standard-result></div>');
   }else if(n.type==='group_table'){
-    const p=n.params,shape=upstreamKeyValues(n),columns=Object.keys(shape??{});
-    content+='<p class="description">Adds up the values of the rows that agree on the key columns you keep. The columns you do not keep are gone from the result.</p>'
-      +labelForm('group-label','Node label',p.label||'Total within groups')
-      +(columns.length
-        ?`<fieldset id="group-keep" class="field"><legend class="inspector-section">Key columns to keep</legend>`
-          +columns.map(column=>`<label class="check"><input type="checkbox" value="${esc(column)}" data-group-by="${esc(column)}" `
-            +`${p.by.includes(column)?'checked':''}> ${esc(column)}</label>`).join('')+`</fieldset>`
-          +(p.by.length&&p.by.length===columns.length
-            ?'<div class="notice notice-warning">Keeping every column means every row is already its own group, so nothing would be totalled. Leave out the column whose rows should be added up.</div>'
-            :p.by.length?`<div class="notice">Dropping ${esc(columns.filter(c=>!p.by.includes(c)).join(', '))}.</div>`:'')
-        :`<div class="field"><label class="field-label" for="group-by">Key columns to keep, one per line</label>`
-          +`<textarea id="group-by" data-group-text rows="3">${esc(p.by.join('\n'))}</textarea></div>`)
-      // Why KEPT and not dropped, said where the choice is made rather than only in the manual.
-      +'<div class="notice">You name what is kept, not what is dropped, because files change: a column added later is simply dropped and you keep the same groups, where naming the dropped columns would let a new one silently become a grouping key. A group holding any empty value totals to nothing known and is named in the evidence, because an unrecorded population should come out unknown rather than small.</div>'
-      // WHICH AGGREGATE. Four, not Epi Info AI's eleven: the absent ones are absent because
-      // this step cannot tell a count from a rate, which is the same argument that kept it
-      // sum-only until 2026-10-31. Said here rather than only in the source, because a
-      // practitioner looking for AVG should learn why it is missing where they look for it.
-      +`<label class="field-label" for="group-aggregate">Aggregate</label>`
-      +`<select id="group-aggregate">`
-      +AGGREGATES.map(value=>`<option value="${esc(value)}" `
-        +`${(p.aggregate||'sum')===value?'selected':''}>`
-        +`${esc(value==='sum'?'Sum':value==='minimum'?'Minimum':value==='maximum'?'Maximum':'Count rows')}</option>`).join('')
-      +`</select>`
-      +(p.aggregate==='count'
-        ?'<p class="description">Counts rows, not people. Import one value column from a line '
-          +'list, or each person counts once per column.</p>'
-        :p.aggregate&&p.aggregate!=='sum'
-        ?'<p class="description">A group whose cells were all excluded has no minimum or maximum '
-          +'at all, and is reported as unknown rather than as zero.</p>'
-        :'<p class="description">Mean is not offered: summing or averaging rates gives a number '
-          +'with no referent, and this step cannot tell a count from a rate.</p>')
-      // EXCLUDING AN EMPTY CELL, offered where it could act and explained where it bites.
-      // The default is the refusal, and the refusal is right: a value nobody recorded is not a
-      // zero. The override EXCLUDES rather than zeroing, which is the practitioner's correction
-      // of 2026-10-31 and is the more prudent of the two -- for a sum they give the same number,
-      // and they make different claims. Zeroing asserts there were none; excluding asserts only
-      // that what was totalled is what was recorded.
-      +(p.aggregate==='count'?'':`<label class="check"><input type="checkbox" id="group-exclude-missing" `
-      +`${p.excludeMissing?'checked':''}> Total what is present, excluding empty cells</label>`
-      +(p.excludeMissing
-        ?'<div class="notice notice-warning">Totals will cover fewer rows than the group holds. '
-          +'The write-up gets a Methods note saying which groups and how many, and the receipt '
-          +'records it. An excluded cell is not a zero: nothing claims there were none.</div>'
-        :'<p class="description">Off, a group holding an empty cell totals to nothing known, '
-          +'because a value nobody recorded is not a zero. Turn this on to total what was '
-          +'recorded and say so.</p>'));
+    // THE STANDARD INSPECTOR (experiments 186 and 191): what is kept, the aggregate, empty cells and shares are in the
+    // configuration dialog; here, one sentence of what the step totals and what the last run made.
+    const p=n.params;
+    content+=standardSection('Name',labelForm('group-label','Name',p.label||'Total within groups'));
+    content+=standardSection('Inputs',standardInputs(n,{records:'Table to total'}));
+    content+=standardSection('Settings',`<p class="standard-sentence">${esc(groupSentence(p))}</p>`
+      +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button></div>');
+    const receipt=result?.receipts.find(r=>r.nodeId===n.id) as unknown as {method?:string;gaps?:unknown[]}|undefined;
+    const why=result?.unfinished?.find(u=>u.nodeId===n.id)?.message;
+    content+=standardSection('Result',`<p class="standard-result${why||receipt?.gaps?.length?' standard-result-warning':''}">`
+      +`${esc(why?`The last run could not compute this step: ${why}`:receipt?.method?`${receipt.method}.`:'Not run yet.')}</p>`
+      +'<div data-standard-result></div>');
   }else if(n.type==='study_design'){
     // WHAT KIND OF STUDY, AND WHEN. Experiment 154. The design is a closed vocabulary of the five
     // this application can actually serve, because offering a sixth that licenses no
@@ -3551,18 +3517,6 @@ function renderInspector(){
       if(slot)slot.append(block);else if(first)first.after(block);else anchor.prepend(block);
     }
   }
-  optionalElement('#group-aggregate')?.addEventListener('change',event=>{
-    const value=(event.target as HTMLSelectElement).value as Aggregate;
-    const id=selected;
-    if(!id)return;
-    change(w=>{getNode(w,id,'group_table').params.aggregate=value;},{spatial:false});
-  });
-  optionalElement('#group-exclude-missing')?.addEventListener('change',event=>{
-    const on=(event.target as HTMLInputElement).checked;
-    const id=selected;
-    if(!id)return;
-    change(w=>{getNode(w,id,'group_table').params.excludeMissing=on;},{spatial:false});
-  });
   optionalElement('#chart-log-scale')?.addEventListener('change',event=>{
     const on=(event.target as HTMLInputElement).checked,id=selected;if(!id)return;
     change(w=>{const node=getNode(w,id,'chart_output');if(on)delete node.params.ratioScale;else node.params.ratioScale='linear';},{spatial:false});
@@ -3799,6 +3753,21 @@ function renderInspector(){
   }
   // SELECT ROWS' CONFIGURATION DIALOG (experiment 186): given each key column's values, and the table where it resolves
   // without a run, so the preview is the rows this draft keeps. Only Apply writes.
+  // TOTAL WITHIN GROUPS' CONFIGURATION DIALOG (experiments 186 and 191): given the columns coming in and, where it
+  // resolves without a run, the table, so the preview is the table the draft would make. Only Apply writes.
+  if(n.type==='group_table')optionalElement('#configure-step')?.addEventListener('click',()=>{
+    const node=workflow.nodes.find(x=>x.id===n.id);
+    if(node?.type!=='group_table')return;
+    const table=tableOnPort(workflow,n.id,'records');
+    openGroupConfig({
+      step:node.params.label||TYPES[n.type].title,
+      sourceLabel:portSourceName(workflow,n.id,'records','the table'),
+      columns:table?.keys??Object.keys(upstreamKeyValues(node)??{}),
+      ...(table?{table}:{}),
+      initial:groupDraftOf(node.params),
+      apply:draft=>{change(w=>{applyGroupDraft(getNode(w,n.id,'group_table').params,draft);},{requirePersistence:true});},
+    },esc);
+  });
   if(n.type==='select_rows')optionalElement('#configure-step')?.addEventListener('click',()=>{
     const node=workflow.nodes.find(x=>x.id===n.id);
     if(node?.type!=='select_rows')return;
@@ -4362,18 +4331,6 @@ function renderInspector(){
     optionalElement(id)?.addEventListener('change',e=>reg(p=>{const v=control(e).value;if(v)p[key]=v;else delete p[key];}));
   optionalElement('#reg-errors')?.addEventListener('change',e=>reg(p=>{p.errors=control(e).value as 'profile';}));
   optionalElement('#reg-hac-lag')?.addEventListener('change',e=>reg(p=>{p.hacLag=Math.max(0,Math.round(Number(control(e).value)||0));}));
-  // EVERY BOX IS READ ON ANY CHANGE, so several ticked at once -- as a manual's step does -- are all kept. The order
-  // is the order already kept, then any newly ticked in the order shown.
-  document.querySelectorAll<HTMLInputElement>('[data-group-by]').forEach(el=>
-    el.addEventListener('change',()=>change(w=>{
-      const node=getNode(w,n.id,'group_table');
-      const ticked=[...document.querySelectorAll<HTMLInputElement>('[data-group-by]')]
-        .filter(box=>box.checked).map(box=>required(box.dataset.groupBy));
-      node.params.by=[...node.params.by.filter(held=>ticked.includes(held)),...ticked.filter(c=>!node.params.by.includes(c))];})));
-  document.querySelectorAll<HTMLTextAreaElement>('[data-group-text]').forEach(el=>
-    el.addEventListener('change',()=>change(w=>{
-      getNode(w,n.id,'group_table').params.by=el.value.split('\n')
-        .map(line=>line.trim()).filter(Boolean);})));
   // A number, and `data-slr` writes strings, which would reach the module as a key not in its table.
   optionalElement('#twobytwo-level')?.addEventListener('change',e=>change(w=>{
     getNode(w,n.id,'two_by_two').params.level=

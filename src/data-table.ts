@@ -59,7 +59,10 @@ export interface DataTable {
   /** A TABLE THAT ARRIVED WIDE (experiment 188): which key column holds the variable names, and which columns say
    *  whose row it is. Stated by the Tabular data step that melted it, so a step after it can rebuild one record per
    *  subject, as the file had it, without asking anyone about the long shape inside. */
-  wide?:{measureKey:string; subjectKeys:string[]};
+  wide?:{measureKey:string; subjectKeys:string[];
+    /** THE KEYS IN THE ORDER TO READ THEM (experiment 191): set by a step whose kept columns were put in order by a
+     *  person, so the view shows them so rather than by which has most values. */
+    asDeclared?:true};
   rows:{key:Record<string,string>; value:number|null}[];
   rowCount:number; missingValueCount:number; source?:DataTableSource;
 }

@@ -504,7 +504,7 @@
     {
       "id": "urn:fieldwork:widget:group_table",
       "nodeType": "group_table",
-      "currentVersion": "0.2.2",
+      "currentVersion": "0.3.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -525,6 +525,11 @@
           "version": "0.2.2",
           "path": "widgets/releases/group_table/0.2.2.json",
           "sha256": "2ea925dc26e613125fdac35b4711c4cecf0f615212ebff996d7d258c4ec5df12"
+        },
+        {
+          "version": "0.3.0",
+          "path": "widgets/releases/group_table/0.3.0.json",
+          "sha256": "b30675b24f651ff20c84b726ce6713bb4428b7c30145931842e9a2bc454115e4"
         }
       ]
     },

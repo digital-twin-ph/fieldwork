@@ -7,7 +7,7 @@
 //                   | deduplicate-facilities-001
 //                   | measure-area-001 | mean-center-001
 //                   | reachability-soho-001 | corridor-soho-001
-//                   | relate-snow-001 | group-snow-001 | area-join-snow-001
+//                   | relate-snow-001 | group-snow-001 | group-shares-snow-001 | area-join-snow-001
 //                   | select-range-london-001
 //                   | regression-salmonella-001 | regression-nyc-001 (needs NYC_PKG)
 //                   | sample-satellite-s5p-001 | lag-response-brazil-001 | regression-strata-brazil-001
@@ -1093,6 +1093,37 @@ const builders={
           related:boundaryFolded.related,dropped:boundaryFolded.dropped,kept:boundaryFolded.kept,
           gaps:boundaryFolded.gaps,values:boundaryFolded.values,...shapeOf(boundaryFolded),refused:null}]},
       note:'Recompute each case from `input`, `declaredParameters` and the case\'s own `request` with an independent merge, applying the declared folding yourself. Three cases have no table: two expect a refusal, and what a merge does there instead is the finding. The last two cases share their input and differ only in the comparison.'
+    },files:{}};
+  },
+
+  'group-shares-snow-001'(){
+    // SHARES WITHIN GROUPS (experiment 191): each company's share of the population and of the deaths, within each
+    // measure; a count's share of the whole table; and one cell emptied, whose stratum's shares are then unknown.
+    const {left,right}=southLondonTables();
+    const related=relateTable(left,right,{on:'sub_district',bring:'water_supply'}).table;
+    const requests=[
+      {note:'Each company\'s share of the population and of the deaths: sum by water supply and measure, share within measure',
+        request:{by:['water_supply','measure'],share:{within:['measure']}},emptied:null},
+      {note:'Rows counted by water supply, each a share of the whole table',
+        request:{by:['water_supply'],aggregate:'count',share:{within:[]}},emptied:null},
+    ];
+    const target=related.rows.find(row=>row.key.water_supply==='Southwark and Vauxhall Company only'&&row.key.measure==='population_1851');
+    const holed={...related,rows:related.rows.map(row=>row===target?{...row,value:null}:row),missingValueCount:related.missingValueCount+1};
+    const rowsOf=table=>table.rows.map(row=>({key:row.key,value:row.value}));
+    const cases=[...requests.map(({note,request,emptied})=>({note,request,emptied,table:groupTable(related,request).table})),
+      {note:'One population cell emptied: its group sums to nothing known, so every population share is unknown; the death shares are unchanged',
+        request:requests[0].request,emptied:{key:target.key,wasValue:target.value},table:groupTable(holed,requests[0].request).table}];
+    return {fixture:{
+      ...base('group-shares-snow-001','group_table','Total within groups, with each group\'s share','src/group-table.ts#withShares'),
+      source:"John Snow, On the Mode of Communication of Cholera, 2nd ed., 1855: Table VIII related to Table XII's declared water supply, as in group-snow-001.",
+      declaredParameters:{statisticKey:'statistic',
+        semantics:'Rows agreeing on every column in `by` become one group, totalled (sum) or counted (count). With `share`, each group also gets its share of the total of the groups agreeing on the `within` columns, as a percentage; with no `within` column, of every group. A sum over any empty cell is null; a share whose group or stratum total is null is null; a stratum totalling zero has null shares. The result gains a key column `statistic` naming each number: the value field\'s name for the total, `% within <columns joined by " and ">` or `% of all` for the share. The input\'s own `measure` column (population or deaths) is a kept column like any other.',
+        rounding:'The share is value / stratum total * 1000, rounded half up to an integer (JavaScript Math.round: halves go toward positive infinity), then divided by 10: a percentage to one decimal place.'},
+      input:{table:{keys:related.keys,valueField:related.valueField,rowCount:related.rows.length,
+        missingValueCount:related.missingValueCount,rows:rowsOf(related)}},
+      output:{cases:cases.map(c=>({note:c.note,request:c.request,emptied:c.emptied,
+        table:{keys:c.table.keys,valueField:c.table.valueField,rowCount:c.table.rowCount,missingValueCount:c.table.missingValueCount,rows:rowsOf(c.table)}}))},
+      note:'Recompute each case from `input`, `declaredParameters` and the case\'s `request`. Case 3 empties the row named in `emptied`.'
     },files:{}};
   },
 

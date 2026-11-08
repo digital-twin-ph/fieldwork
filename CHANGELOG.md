@@ -3,6 +3,14 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.62.0 — 2026-11-08
+
+- **Total within groups gives each group's share, %** ([191](docs/experiments/191-shares-within-groups.md)), beside its
+  count or sum: within the columns you tick, or of the whole table. Shown as two columns. A share of an unknown total
+  is unknown. Total within groups 0.3.0, on the standard Inspector and dialog: its settings are in **Configure…**,
+  with the table they make as the preview. The Brazil and NYC manuals open the dialog.
+- Validation: Chromium locally; WebKit in CI.
+
 ## 0.61.0 — 2026-11-08
 
 - **OpenStreetMap is a register for lists** ([190](docs/experiments/190-find-health-facilities-from-a-list.md)):

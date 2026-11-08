@@ -3,7 +3,7 @@
   "description": "Independent recomputation of implemented widgets by an external process, recorded after release. Release files are immutable once committed, so evidence about a release lives here and accrues as checks run. A fixture digest recorded in a result is over canonical JSON content rather than the file’s bytes, revised 2026-10-11 because byte identity is unsatisfiable in the browser the lab publishes to. A parity result establishes numerical agreement with a named external implementation under a stated criterion. It is not scientific certification, and it says nothing about whether a method is appropriate for a question.",
   "lab": {
     "repository": "https://github.com/digital-twin-ph/validation-lab",
-    "commit": "73c4c14f7297ab0fa23ac04380f4921916d39073",
+    "commit": "664350b686272466ff729d8f1f2ca1b77bdde523",
     "pinNote": "The commit CI checks the lab out at: .github/workflows/pages.yml reads it with `jq -r .lab.commit widgets/parity.json`. So this pin, not the clone beside this repository, is what `validate:dive-deeper` verifies against on a clean runner -- and it must be advanced whenever a check lands in the lab, in the same push-then-pin order the worked examples use."
   },
   "outcomes": {
@@ -590,6 +590,26 @@
       "measured": "Six totals exact: 167,654 and 844 for Southwark and Vauxhall only, 300,149 and 652 for both companies, 19,133 and 18 for Lambeth only. With St. Saviour's population emptied, that group returns nothing known, matching a per-group sum(skipna=False); a default sum returns 147,945, short by 19,709 people. The gap is reported as 11 rows summed and 1 empty against the group's 12 rows.",
       "note": "PANDAS HAS NO OPTION FOR THIS RULE, which the check found by reaching for the obvious one and watching it not work. `min_count=1` reads as \"at least one value required\" and is the first thing anyone writes here; it bounds how many values must be PRESENT rather than noticing any that are ABSENT, so on eleven numbers and one empty cell it returns 147,945 -- the default's answer, from the option named for missing data. `min_count=12` does return nothing known and only because this group has twelve rows: it would null every smaller group. The comparison is a per-group `sum(skipna=False)`, which is the rule itself and does not depend on the group size. Recorded because the next author will reach for min_count too, and because a check written against it would have reported a disagreement and called it a defect. What no check can verify is the protection that matters most here: sum is the only operation offered, because this step cannot tell a count from a rate and summing rates gives a number with no referent.",
       "notebook": "29-group-table-vs-pandas.ipynb"
+    },
+    {
+      "widget": "urn:fieldwork:widget:group_table",
+      "coversRelease": "0.3.0",
+      "check": "39-group-shares",
+      "notebook": "39-group-shares-vs-pandas.ipynb",
+      "result": "content/results/check-39-group-shares.json",
+      "sha256": "8289330d82b92986f6f7ae8ddd6a0a0e2d600e0046618b379246792419b08e3d",
+      "external": [
+        "pandas 2.3.3"
+      ],
+      "criterion": "every total and count exactly equal to pandas'; every share exactly equal to value / stratum total, the stratum computed by pandas groupby(within).transform, under the declared half-up rounding to one decimal place, and each stratum within 0.1 x its groups of 100; with one population cell emptied, that group and every population share null and the death shares unchanged; each number named in the statistic column.",
+      "outcome": "agrees",
+      "notEstablished": [
+        "That a share is the measure a reader needs: a share of rows is not a rate, and a share of deaths by company says nothing of risk without the population beside it.",
+        "That one decimal place is enough: a stratum can total 99.9 or 100.1, which the check allows and does not judge."
+      ],
+      "ranAt": "2026-11-08T20:36:48.592125+00:00",
+      "measured": "Three cases on check 29's South London table, every cell exact: each company's share of the 486,936 people (34.4, 61.6, 3.9: 99.9 by the rounding) and of the 1,514 deaths (55.7, 43.1, 1.2); rows counted by company as a share of all 64 (37.5, 50.0, 12.5); with St. Saviour's population emptied, every population share unknown and the deaths' unchanged. Also agrees in Pyodide (CPython 3.14.2, pandas 3.0.2). Python's round() would have put no share elsewhere on this data.",
+      "note": "Covers the share only, which 0.3.0 adds. Sum is check 29's (0.1.0); count, minimum and maximum have no check."
     },
     {
       "widget": "urn:fieldwork:widget:two_by_two",

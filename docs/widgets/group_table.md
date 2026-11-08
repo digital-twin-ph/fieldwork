@@ -13,6 +13,19 @@ the people and the deaths in each category. That six-row table is a contingency 
 what the next steps turn into a two-by-two.
 
 
+## Shares within groups
+
+Tick **Add each group's share, %** and every group gets its share beside its count or total. Under
+**Share within**, tick the columns whose groups each make 100%: a line list counted by classification
+and by what was recorded, with the share within classification, shows how a classification's cases
+divide. Tick none and each share is of the whole table.
+
+The result has a column `statistic` naming each number, the count and the share, and the table view
+shows them side by side. A share is held to one decimal place, so a classification can total 99.9 or
+100.1. A share is offered with **Sum** and **Count rows**, which add up to a total, and not with a
+minimum or a maximum. A share of a total that is unknown, because a group summed over an empty cell,
+is unknown too.
+
 ## Seeing what this step did
 
 After a run, **View this table** at the top of the Inspector opens the output. **Before** and
@@ -25,9 +38,16 @@ rows and columns there were before.
 
 ## How to use it
 
+Connect a table, then open **Configure…**. The **Preview** shows the table your settings make, and
+nothing changes until **Apply**.
+
 | Setting | What it decides |
 | --- | --- |
-| **Keep** | the key columns that survive. Rows agreeing on all of them become one row. |
+| **Key columns to keep** | The key columns that survive. Rows agreeing on all of them become one row. |
+| **Aggregate** | Sum, Minimum, Maximum or Count rows |
+| **Total what is present, excluding empty cells** | Off: a group holding an empty cell totals to nothing known. On: what was recorded is totalled, and the receipt and the write-up say so |
+| **Add each group's share, %** | A share beside each count or total |
+| **Share within** | The columns whose groups each make 100%. None ticked: the whole table |
 
 ### Why you name what is kept rather than what is dropped
 
@@ -73,6 +93,11 @@ rows collapsed into how many groups, and every group that held an empty cell.
 
 The South London example: *Died or survived, by water supply*.
 
+## What this does not establish
+
+That a share is the measure you need. A share of rows is not a rate: it has no denominator of
+people unless each row is one person.
+
 ## How it was checked
 
 Validation Lab check **29**, `29-group-table-vs-pandas.ipynb`, against a pandas groupby. All six
@@ -84,6 +109,10 @@ states**. `min_count=1` reads like it and is the first thing anyone writes: it b
 values must be *present*, not whether any are *absent*, so on eleven numbers and one empty cell it
 returns the eleven. On this data that is 147,945 people instead of nothing known — short by the one
 sub-district nobody recorded. The comparison that does hold is a per-group `sum(skipna=False)`.
+
+Validation Lab check **39**, `39-group-shares-vs-pandas.ipynb`, recomputes the shares with pandas on
+the same table: each company's share of the people and of the deaths, a count's share of all, and one
+emptied cell. Every number agrees exactly, in CPython and in the browser kernel.
 
 What no check can verify is the protection that matters most here: summing is the only operation
 offered, because this step cannot tell a count from a rate.

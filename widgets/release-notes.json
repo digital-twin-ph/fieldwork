@@ -352,12 +352,12 @@
    ]
   },
   "group_table": {
-   "version": "0.2.2",
+   "version": "0.3.0",
    "released": "2026-11-08",
    "changes": [
     {
-     "kind": "patch",
-     "description": "Totals by subject and measure stay marked as wide, so rules after them read one record per subject. Experiment 188."
+     "kind": "minor",
+     "description": "Each group's share of a total, %, beside its count or sum, within the kept columns ticked or of the whole table (experiment 191); a stratum whose total is unknown has unknown shares. Held to one decimal place. On the standard Inspector and dialog (experiment 186): keep, aggregate, empty cells and shares are set in Configure…, with the table they make as the preview."
     }
    ],
    "breaking": false,

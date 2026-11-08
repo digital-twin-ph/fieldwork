@@ -1,2 +1,2 @@
-import{a,b,c,d,e}from"./chunks/chunk-KGRZPXNO.js";import"./chunks/chunk-I3OXQBE3.js";import"./chunks/chunk-43HFGMR3.js";import"./chunks/chunk-KVMUXFPB.js";export{c as diveDeeperFor,d as diveDeeperPanel,e as learnBlock,b as lessonURL,a as notebookURL};
+import{a,b,c,d,e}from"./chunks/chunk-QZ3757X2.js";import"./chunks/chunk-GOJMRINN.js";import"./chunks/chunk-43HFGMR3.js";import"./chunks/chunk-KVMUXFPB.js";export{c as diveDeeperFor,d as diveDeeperPanel,e as learnBlock,b as lessonURL,a as notebookURL};
 //# sourceMappingURL=dive-deeper.js.map

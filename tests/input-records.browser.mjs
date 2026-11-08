@@ -87,7 +87,7 @@ test('records the rules cannot read are surfaced, and the notice can be read and
   const toast=page.locator('#toast');
   await expect(toast).toHaveClass(/warning/,{timeout:45000});
   await expect(toast).not.toHaveClass(/failure/);
-  await expect(toast).toContainText('66 records could not be read as declared');
+  await expect(toast).toContainText('63 records could not be read as declared, and 3 records have no value');
   // It names the steps, because opening one is the next thing to do.
   await expect(toast).toContainText('over a table with gaps');
   await expect(toast).toContainText('over counts it cannot read');

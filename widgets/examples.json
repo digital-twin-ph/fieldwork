@@ -528,7 +528,7 @@
       "id": "urn:fieldwork:example:workflows-rulesets",
       "title": "Rules on synthetic data",
       "repository": "https://github.com/digital-twin-ph/example-workflows-rulesets",
-      "commit": "44fc1636f72a2931a69a2a5aad6ae228bcb14614",
+      "commit": "959d1e0e1f3553961b9f8ad503752c61d987ea67",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-workflows-rulesets",
       "licence": {
         "data": "CC0-1.0",
@@ -541,7 +541,6 @@
         "data": true,
         "geography": false
       },
-      "notYet": "A new column’s unit is not described by the rule that computes it.",
       "uses": [
         "apply_ruleset",
         "table_input",
@@ -550,13 +549,13 @@
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "cfadc7156c24c9112d5adfc7bf96618c2acd1bb62e167895521a20e931a16d99",
-          "bytes": 2841
+          "sha256": "b93bc22e3a6e506158de59f87cf31405c6ea95ba2c06f3cd96fc357be67985ec",
+          "bytes": 2870
         },
         {
           "path": "manual.json",
-          "sha256": "08e615a10a3bff58d364f57e6fba4ee1f948a0aebb1e262ffacc03802ecbb7cc",
-          "bytes": 30453
+          "sha256": "bc9e66f185189a2103d1db8a68bbf3a82647656f8290a043332fc26038b58f32",
+          "bytes": 31365
         },
         {
           "path": "data/clinic-visits.csv",
@@ -590,8 +589,8 @@
         },
         {
           "path": "README.md",
-          "sha256": "93b615afada308bc03e26dbe5db2794a76bd2277e6bf63b806ccc62f8536ec48",
-          "bytes": 5010
+          "sha256": "a70b78a15ce0ce32855b1911649a959da15c428bacf57b2ed15ecdd4cbabcbcf",
+          "bytes": 4924
         },
         {
           "path": "LICENSE",
@@ -599,7 +598,8 @@
           "bytes": 235
         }
       ],
-      "workflowCount": 4
+      "workflowCount": 4,
+      "notYet": "Nothing on the list of Apply ruleset features is left unreached."
     }
   ]
 }

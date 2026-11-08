@@ -83,7 +83,10 @@ export interface AuthoredConclusion {predicate:string; value?:string;
   compute?:{left:Operand; operator:ComputeOperator; right:Operand};
   /** THE NEW COLUMN AS ITS AUTHOR NAMED IT, for a computed value: "1854 deaths per 1849 death". The predicate is the
    *  rules' own word for it; this is the table's. Absent: the predicate's local name. */
-  column?:string}
+  column?:string;
+  /** WHAT THE NEW COLUMN MEASURES, and its unit, as its author states them (experiment 188): "deaths per 10,000
+   *  houses". Carried on the output table's column descriptions. Absent: said, never guessed. */
+  meaning?:string; unit?:string}
 export const isComputed=(c:AuthoredConclusion):c is AuthoredConclusion&{compute:NonNullable<AuthoredConclusion['compute']>}=>
   !!c.compute;
 /** Whether any rule computes a value. Such a ruleset is evaluated directly, not by the reasoner (experiment 188). */

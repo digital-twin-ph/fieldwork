@@ -211,7 +211,7 @@ step asks for them before it runs, rather than guessing.
 
 **The synthetic repository's workflows.** [example-workflows-rulesets](https://github.com/digital-twin-ph/example-workflows-rulesets)
 holds four, built by its `manual.json` from an empty canvas (`tests/rulesets-from-scratch.browser.mjs`, Chromium), one
-per data set. Each feature on the list under *What would close it* is reached, except one:
+per data set. Each feature on the list under *What would close it* is reached; the last, a computed column's unit, from 0.56.0:
 
 | Feature | Where | Reached |
 | --- | --- | --- |
@@ -220,7 +220,7 @@ per data set. Each feature on the list under *What would close it* is reached, e
 | A computed value read by a second rule | Districts: deaths per house, then × 10,000 | Yes |
 | Every comparator, *is recorded*, *is not recorded*, a setting | Clinic visits | Yes |
 | A unit that disagrees, refused while the rule is written | Clinic visits: a fever setting in °F against °C | Yes |
-| A computed column with its unit described | — | **No**: a computed column's unit cannot be recorded |
+| A computed column with its unit described | Every workflow: each new column's unit, stated beside its rule (0.56.0) | Yes |
 | A division by zero, counted and named | Districts: Harbour | Yes |
 | New cases from a cumulative column, with a first week, a missing week, a fall and a repeated week | Cumulative cases, long | Yes |
 | Rows no rule matches; rows two rules give different values | Districts: level | Yes |
@@ -239,7 +239,7 @@ per data set. Each feature on the list under *What would close it* is reached, e
    dragging to its port ([186](186-one-standard-inspector.md)).
 5. **Unit words.** *years*, *kilograms*, *degrees Celsius*, *houses* and *deaths* were not recognised, so a unit typed
    as any of them counted as none.
-6. **The run's notice says "could not be read as declared"** for values that are simply empty. Not changed.
+6. **The run's notice said "could not be read as declared"** for values that are simply empty. From 0.56.0 it counts the two apart.
 
 ## A use on real data, from 185
 

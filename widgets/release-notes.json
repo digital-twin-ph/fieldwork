@@ -75,12 +75,12 @@
    ]
   },
   "apply_ruleset": {
-   "version": "0.5.0",
+   "version": "0.6.0",
    "released": "2026-11-08",
    "changes": [
     {
      "kind": "minor",
-     "description": "Replaces Derive a value, which is retired (experiment 188, stage 5). Settings are declared in the rules dialog: a name, a value and a unit, so a condition can compare against a threshold that is changed without rewriting a rule. Only the columns the rules read must state a unit; a sum or difference of two columns in different units is refused while the rule is written. A category typed in a condition is now the term the record's value becomes: before, it was a quoted string no record could equal, so a condition on a category never held. The Inspector of a step whose rules are written here lists its input, as every step does. A step after it is offered the columns and values the rules add. A saved Derive a value step opens as an Apply ruleset step with the same rule, stamped as migrated."
+     "description": "A computed column states its unit and what it measures, beside the rule that makes it, and the output table carries both in its column descriptions. A new column left without a unit is said in the dialog and the run's method, not refused (experiment 188). The run's notice counts values that could not be read apart from values that are empty."
     }
    ],
    "breaking": false,

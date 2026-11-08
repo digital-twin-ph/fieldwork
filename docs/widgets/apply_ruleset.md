@@ -30,6 +30,9 @@ new columns.
 
 **+ Add a value computed for every record** writes a rule with no condition: every record gets the value.
 
+**A new column states its unit**, and what it measures, in the two boxes after the sum: *deaths per 10,000 houses*.
+The table the step gives out carries both. A new column without a unit is said in the dialog and the run.
+
 **Settings.** *+ Add a setting* gives the step a number the rules compare against, such as a fever threshold of 38
 degrees Celsius: a name, a value and a unit. A condition then reads *temperature_c is more than fever*, and the
 threshold can be changed without rewriting a rule.
@@ -76,7 +79,7 @@ named for the new column, as **Derive a value** adds it.
 ## What it will not do
 
 
-**It will not describe the new column.** What a computed value measures, and its unit, cannot be recorded on the step yet.
+
 
 ## What this does not establish
 

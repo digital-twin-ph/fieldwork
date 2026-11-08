@@ -84,15 +84,22 @@ self.addEventListener('fetch',event=>{
       if(response.ok){const copy=response.clone();caches.open(CACHE).then(cache=>cache.put(event.request,copy));}
       return response;
     });
+    // THE SAME TWO LESSONS AS THE BRANCH ABOVE, applied here too (2026-11-08). A fetch left to finish in the background
+    // after the cache answered had no handler: when it failed -- WebKit cancels it when the page navigates away, as
+    // every test does on its way in -- the rejection was unhandled, and surfaced on the page as "…/sw.js due to access
+    // control checks", failing ten to fifteen WebKit tests a run in CI, never the same ten. And with nothing cached, a
+    // failed fetch was still handed to `respondWith` as a rejection; it is a 504 here as it is above.
+    network.catch(()=>{/* handled where it is awaited; this only marks it as seen */});
+    const offline=()=>new Response('',{status:504,statusText:'Offline, and not in the cache'});
     try{
       const slow=new Promise<undefined>(resolve=>setTimeout(()=>resolve(undefined),2000));
       const first=await Promise.race([network,slow]);
       if(first)return first;
       // The network is being slow. Serve what is cached if anything is, and let the fetch finish
       // in the background so the next load has it.
-      return (await fromCache())??await network;
+      return (await fromCache())??await network.catch(offline);
     }catch{
-      return (await fromCache())??await network;
+      return (await fromCache())??offline();
     }
   })());
 });

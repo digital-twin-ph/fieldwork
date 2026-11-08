@@ -3,6 +3,18 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.56.0 — 2026-11-08
+
+- **A computed column states its unit and what it measures**, beside the rule that makes it
+  ([188](docs/experiments/188-rules-that-compute-and-show-their-table.md)). The output table carries both. A new column
+  without a unit is said, not refused. Apply ruleset 0.6.0. The rules worked example now states every one.
+- **The run's notice counts unreadable values apart from empty ones.** "66 records could not be read" is now "63
+  records could not be read as declared, and 3 records have no value".
+- **Fixed: the offline worker left a failed background fetch unhandled.** In WebKit it surfaced as a page error naming
+  `sw.js`, and failed ten to fifteen tests in each CI run. Whether this clears them is known when CI has run.
+- **Lab parity records corrected:** every claim now matches the result it names (`validate:parity` passes). The
+  corridor's claim is to release 0.2.0, which is the one the lab checked.
+
 ## 0.55.0 — 2026-11-08
 
 - **Derive a value is retired into Apply ruleset**

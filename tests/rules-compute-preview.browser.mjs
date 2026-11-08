@@ -58,6 +58,10 @@ test('a value computed for every record is previewed before and after, and a div
   await set('left-source','fwa:deaths',1);
   await set('operator','dividedBy',1);
   await set('right-source','fwa:houses',1);
+  // A NEW COLUMN WITH NO UNIT is said, not refused: describing it is the practitioner's step.
+  await expect(dialog.locator('.rule-live-summary')).toHaveText('5 records. Every record matched a rule. 1 record has an empty value, from a division by zero. The new columns houses without a death, deaths per house state no unit.');
+  await set('unit','houses');
+  await set('unit','deaths per house',1);
   await expect(dialog.locator('.rule-live-summary')).toHaveText('5 records. Every record matched a rule. 1 record has an empty value, from a division by zero.');
   await expect(after.locator('tbody tr').last()).toContainText('deaths per house: divided by zero');
 

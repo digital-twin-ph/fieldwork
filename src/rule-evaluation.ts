@@ -53,6 +53,8 @@ export interface Evaluation {
   unmatched:number;
   /** The columns that hold computed numbers, as against categories. */
   computedColumns:string[];
+  /** What each computed column measures and its unit, where stated. */
+  computedMeta?:Record<string,{meaning?:string; unit?:string}>;
   /** The records in the order the rules read them: the step's sort, or as they arrived. Indices into `records`. */
   sequence:number[];
   order?:AuthoredOrder;
@@ -248,7 +250,9 @@ export function evaluateAuthored(records:SubjectRecord[],bindings:FieldBinding[]
     if(!fired.size)unmatched++;
     outcomes[recordIndex]=outcome;
   }
-  return {records:outcomes,matchedByRule,unmatched,computedColumns,sequence,...(order?.by?{order}:{})};
+  const computedMeta=Object.fromEntries(rules.flatMap(r=>r.then.filter(isComputed)).map(c=>[c.column?.trim()||localName(c.predicate),
+    {...(c.meaning?.trim()?{meaning:c.meaning.trim()}:{}),...(c.unit?.trim()?{unit:c.unit.trim()}:{})}]));
+  return {records:outcomes,matchedByRule,unmatched,computedColumns,computedMeta,sequence,...(order?.by?{order}:{})};
 }
 
 /** The records with what was concluded: new key columns on a table's rows, new properties on points. A computed number
@@ -261,7 +265,15 @@ export function evaluatedTable(table:DataTable,evaluation:Evaluation):DataTable{
   const added=[...new Set(rows.flatMap(r=>Object.keys(r.key)))].filter(k=>!table.keys.includes(k));
   // Every row carries every new column, empty where nothing was concluded, so a column is never missing from a row.
   for(const row of rows)for(const k of added)if(!(k in row.key))row.key[k]='';
-  return {...table,rows,keys:[...table.keys,...added]};
+  return {...table,rows,keys:[...table.keys,...added],...described(table,evaluation)};
+}
+
+/** THE NEW COLUMNS' DESCRIPTIONS, where their author stated them, beside the table's own. */
+function described(table:DataTable,evaluation:Evaluation):Pick<DataTable,'columns'>|object{
+  const stated=Object.entries(evaluation.computedMeta??{}).filter(([,m])=>m.meaning||m.unit);
+  if(!stated.length)return {};
+  return {columns:{...(table.columns??{}),...Object.fromEntries(stated.map(([column,m])=>[column,
+    {...(m.meaning?{label:m.meaning}:{label:column}),...(m.unit?{unit:m.unit}:{}),origin:'practitioner' as const,confirmed:true}]))}};
 }
 
 /** WHAT THE RULES DID, in words, for the run's method and the receipt. Divisions by zero, missing operands and
@@ -279,7 +291,8 @@ export function evaluationSentence(evaluation:Evaluation,labels:string[]):string
     +(unmatched.length?`${records(unmatched.length)} matched no rule: ${named(unmatched)}. `:'Every record matched a rule. ')
     +(zero.length?`${records(zero.length)} ${has(zero.length)} an empty value, from a division by zero: ${named(zero)}. `:'')
     +(missing.length?`${records(missing.length)} ${has(missing.length)} no value, because a value to compute from is missing: ${named(missing)}. `:'')
-    +(conflict.length?`${records(conflict.length)} ${has(conflict.length)} no value, because two rules gave different values: ${named(conflict)}.`:'');
+    +(conflict.length?`${records(conflict.length)} ${has(conflict.length)} no value, because two rules gave different values: ${named(conflict)}. `:'')
+    +undescribedSentence(evaluation);
 }
 
 /** A WIDE TABLE, FOLDED BACK (experiment 188). A category is a key column on every row of its subject. A computed value
@@ -303,7 +316,7 @@ function evaluatedWideTable(table:DataTable&{wide:NonNullable<DataTable['wide']>
       rows.push({key:withCategories({...key,[table.wide.measureKey]:column},s),value:typeof v==='number'?v:null});
     });
   return {...table,rows,rowCount:rows.length,keys:[...table.keys,...categoryColumns.filter(k=>!table.keys.includes(k))],
-    missingValueCount:rows.filter(r=>r.value===null).length};
+    missingValueCount:rows.filter(r=>r.value===null).length,...described(table,evaluation)};
 }
 
 /** The step's sort, in words: "Sorted by week_start within place; the previous row is the previous week's." */
@@ -333,4 +346,10 @@ export function previousSentence(evaluation:Evaluation,labels:string[]):string{
   const fell=evaluation.records.flatMap((r,i)=>r.fell.length?[i]:[]);
   return (total?`${total.toLocaleString('en')} record${total===1?' has':'s have'} no value from the previous row, because there is no single previous row (${parts.join('; ')}).`:'Every record had a previous row.')
     +(fell.length?` ${fell.length.toLocaleString('en')} record${fell.length===1?'':'s'} fell below the previous row, and ${fell.length===1?'is':'are'} kept as computed: ${named(fell)}.`:'');
+}
+
+/** NEW COLUMNS NOBODY DESCRIBED, named: a finding, as an undescribed column of an imported table is. */
+export function undescribedSentence(evaluation:Evaluation):string{
+  const none=evaluation.computedColumns.filter(c=>!evaluation.computedMeta?.[c]?.unit);
+  return none.length?`The new column${none.length===1?'':'s'} ${none.join(', ')} ${none.length===1?'states':'state'} no unit.`:'';
 }

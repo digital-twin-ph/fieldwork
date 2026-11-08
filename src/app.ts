@@ -1192,14 +1192,20 @@ const badgeFor=(id:string)=>dismissedAlerts.has(alertKey(id))?undefined:nodeAler
 function dataIssueNotice(run:WorkflowRun){
   const found=run.alerts.filter(a=>a.dataIssues?.length);
   if(!found.length)return '';
-  const records=found.reduce((n,a)=>n+(a.dataIssues??[]).reduce((m,i)=>m+i.count,0),0);
+  // TWO DIFFERENT FINDINGS, counted apart (2026-11-08): a value the column could not be read as, and a cell that is
+  // empty. "Could not be read" said of an empty cell overstated it: the three genuine gaps left after a repair were
+  // still reported as unreadable.
+  const count=(why:'missing'|'unreadable')=>found.reduce((n,a)=>n+(a.dataIssues??[]).filter(i=>i.why===why).reduce((m,i)=>m+i.count,0),0);
+  const unreadable=count('unreadable'),missing=count('missing');
+  const records=(n:number)=>`${n} record${n===1?'':'s'}`;
   const named=found.map(a=>{
     const node=run.outputs.find(o=>o.nodeId===a.nodeId);
     return node?.label||workflow.nodes.find(n=>n.id===a.nodeId)?.params.label||a.nodeId;
   });
-  return `${records} record${records===1?'':'s'} could not be read as declared: `
-    +`${named.join(', ')}. Those records were classified as if the value were not recorded. `
-    +`Open the step to see which column, and how many.`;
+  const said=[unreadable?`${records(unreadable)} could not be read as declared`:'',
+    missing?`${records(missing)} ${missing===1?'has':'have'} no value`:''].filter(Boolean).join(', and ');
+  return `${said.charAt(0).toUpperCase()+said.slice(1)}, in a column the rules read: ${named.join(', ')}. `
+    +`The rules treated each as not recorded. Open the step to see which column, and how many.`;
 }
 
 function alertText(alert:NonNullable<ReturnType<typeof nodeAlert>>){

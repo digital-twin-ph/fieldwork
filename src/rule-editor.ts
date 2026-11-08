@@ -20,7 +20,7 @@ import type {ParamsByType} from './types.js';
 import type {Escape} from './types.js';
 import {compileAuthoredRuleset,compiledRuleCount,RULE_CEILING,authoredUnitProblems,settingNamed,isComputed,computesValues,
   COMPUTE_OPERATORS,readsPrevious,readsPreviousRows,type Operand,type AuthoredOrder} from './authored-rules.js';
-import {evaluateAuthored,OPERATOR_WORDS,localName,type Evaluation,type NoPrevious} from './rule-evaluation.js';
+import {evaluateAuthored,OPERATOR_WORDS,localName,undescribedSentence,type Evaluation,type NoPrevious} from './rule-evaluation.js';
 import type {SubjectRecord} from './authored-application.js';
 
 type Authored=NonNullable<ParamsByType['apply_ruleset']['authored']>;
@@ -372,7 +372,8 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
         lacking?`${records(lacking)} ${has(lacking)} no value, because a value to compute from is missing.`:'',
         split?`${records(split)} ${has(split)} no value, because two rules gave different values.`:'',
         orphan?`${records(orphan)} ${has(orphan)} no value, because there is no single previous row.`:'',
-        fell?`${records(fell)} fell below the previous row, kept as computed.`:''].filter(Boolean);
+        fell?`${records(fell)} fell below the previous row, kept as computed.`:'',
+        undescribedSentence(evaluation)].filter(Boolean);
       return `<section class="rule-live" aria-live="polite"><h3>${sortedOrder?'Before, sorted and after':'Before and after'}</h3>`
         +`<p class="rule-live-summary">${esc(`${n.toLocaleString('en')} record${n===1?'':'s'}. `+words.join(' '))}</p>`
         +(n>shown.length?`<p class="description">Showing the first ${shown.length} of ${n.toLocaleString('en')}. The counts are of all of them.</p>`:'')
@@ -442,6 +443,10 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
                 +`<select data-rule="${r}" data-then="${t}" data-part="operator" aria-label="Operation">`
                 +COMPUTE_OPERATORS.map(o=>`<option value="${o}" ${o===conclusion.compute.operator?'selected':''}>${OPERATOR_WORDS[o]}</option>`).join('')+`</select>`
                 +operandControl(r,t,'right',conclusion.compute.right)
+                // WHAT IT MEASURES AND ITS UNIT, stated here, where the column is made.
+                +`<span class="rule-is">measured in</span>`
+                +`<input data-rule="${r}" data-then="${t}" data-part="unit" aria-label="Unit of the new column" value="${esc(conclusion.unit??'')}" placeholder="deaths per house">`
+                +`<input data-rule="${r}" data-then="${t}" data-part="meaning" aria-label="What the new column measures" value="${esc(conclusion.meaning??'')}" placeholder="what it measures">`
               :`<input data-rule="${r}" data-then="${t}" data-part="predicate" aria-label="Conclusion name" value="${esc(conclusion.predicate.replace(/^fwa:/,''))}" placeholder="band">`
                 +`<span class="rule-is">is</span>`
                 +`<input data-rule="${r}" data-then="${t}" data-part="conclusion" aria-label="Conclusion value" value="${esc((conclusion.value??'').replace(/^fwa:/,''))}" placeholder="Short">`)
@@ -603,6 +608,8 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
                 const o=c.compute[side];if(typeof o==='object'&&'field' in o&&o.field===was)c.compute[side]=readsPrevious(o)?{field:now,previous:true}:{field:now};}
             }
             if(part==='operator')conclusion.compute.operator=value as never;
+            if(part==='unit'){if(value.trim())conclusion.unit=value.trim();else delete conclusion.unit;}
+            if(part==='meaning'){if(value.trim())conclusion.meaning=value.trim();else delete conclusion.meaning;}
             for(const side of ['left','right'] as const){
               if(part===`${side}-source`)conclusion.compute[side]=!value?0
                 :value.startsWith('previous:')?{field:value.slice('previous:'.length),previous:true}:{field:value};

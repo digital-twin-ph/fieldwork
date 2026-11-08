@@ -102,7 +102,7 @@
     },
     {
       "widget": "urn:fieldwork:widget:reachable_corridor",
-      "coversRelease": "0.3.0",
+      "coversRelease": "0.2.0",
       "check": "08-corridor",
       "result": "content/results/check-08-corridor.json",
       "sha256": "94f3772d4e3237f2aa2910bf3542c0cbca91fbba55e452478aba8a9e348674b1",
@@ -374,7 +374,8 @@
       "ranAt": "2026-10-12T15:44:44.436232+00:00",
       "note": "The exemption this replaces said the decision is the reasoner's, which was a claim that no independent check was possible. Each ruleset's input space is finite, so the lab enumerates it completely. Two claims are recorded separately because they fail differently: a right answer nobody can audit, against a well-formed receipt for the wrong conclusion. Neither claim says any threshold is right; one ruleset claims a published basis and none of the three carries evidence a reader can open.",
       "notebook": "23-rulesets-vs-decision-table.ipynb",
-      "diveDeeper": "Dive deeper · the subset is the safety argument"
+      "diveDeeper": "Dive deeper · the subset is the safety argument",
+      "checks": "rulesets"
     },
     {
       "widget": "urn:fieldwork:widget:access_policy",
@@ -391,7 +392,8 @@
       "ranAt": "2026-10-12T15:44:44.436232+00:00",
       "note": "The exemption this replaces said the decision is the reasoner's, which was a claim that no independent check was possible. Each ruleset's input space is finite, so the lab enumerates it completely. Two claims are recorded separately because they fail differently: a right answer nobody can audit, against a well-formed receipt for the wrong conclusion. Neither claim says any threshold is right; one ruleset claims a published basis and none of the three carries evidence a reader can open.",
       "notebook": "23-rulesets-vs-decision-table.ipynb",
-      "diveDeeper": "Dive deeper · the subset is the safety argument"
+      "diveDeeper": "Dive deeper · the subset is the safety argument",
+      "checks": "rulesets"
     },
     {
       "widget": "urn:fieldwork:widget:xpert",
@@ -408,7 +410,8 @@
       "ranAt": "2026-10-12T15:44:44.436232+00:00",
       "note": "The exemption this replaces said the decision is the reasoner's, which was a claim that no independent check was possible. Each ruleset's input space is finite, so the lab enumerates it completely. Two claims are recorded separately because they fail differently: a right answer nobody can audit, against a well-formed receipt for the wrong conclusion. Neither claim says any threshold is right; one ruleset claims a published basis and none of the three carries evidence a reader can open.",
       "notebook": "23-rulesets-vs-decision-table.ipynb",
-      "diveDeeper": "Dive deeper · the subset is the safety argument"
+      "diveDeeper": "Dive deeper · the subset is the safety argument",
+      "checks": "rulesets"
     },
     {
       "widget": "urn:fieldwork:widget:apply_ruleset",
@@ -425,7 +428,8 @@
       "ranAt": "2026-10-12T15:44:44.436232+00:00",
       "note": "The widget that now hosts all three rulesets. The three entries beside this one cover policy, access_policy and xpert at the releases they were retired at, which is why they remain: parity covers a release, and those releases ran. This entry covers the host, and the check is the same check because the rulesets are the same rulesets -- the assembled rule text was proved byte-identical when they became data.",
       "notebook": "23-rulesets-vs-decision-table.ipynb",
-      "diveDeeper": "Dive deeper · the subset is the safety argument"
+      "diveDeeper": "Dive deeper · the subset is the safety argument",
+      "checks": "rulesets"
     },
     {
       "widget": "urn:fieldwork:widget:reproject",
@@ -480,7 +484,8 @@
       "ranAt": "2026-10-14T22:14:51.637692+00:00",
       "note": "The same check, listed here because the first of its three leaps is this widget's: the area a hull derives has to be a FIELD on the polygon rather than a line in the run receipt, or no rule downstream can read it. Until 2026-10-14 it was computed, published as fw:hullAreaSquareMetres, and dropped. The hull geometry itself is checked by 10-hull.",
       "notebook": "25-extent-vs-shapely.ipynb",
-      "diveDeeper": "Dive deeper · three leaps this makes"
+      "diveDeeper": "Dive deeper · three leaps this makes",
+      "checkedThrough": "urn:fieldwork:widget:apply_ruleset"
     },
     {
       "widget": "urn:fieldwork:widget:deduplicate_points",
@@ -505,7 +510,7 @@
       "coversRelease": "0.1.0",
       "check": "27-rate-ratio",
       "result": "content/results/check-27-rate-ratio.json",
-      "sha256": "b1b58e61d5d37418040764c2ca62abc98e28554cfc21e5fd8fc34f22f7589345",
+      "sha256": "fd6716cf4358d7fe2f121e60425083354133faedda80545cd81318de96444933",
       "external": [
         "statsmodels 0.15.0",
         "scipy 1.18.1"

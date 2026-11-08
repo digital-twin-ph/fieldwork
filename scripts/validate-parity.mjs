@@ -29,9 +29,21 @@ for(const entry of parity.entries){
   }catch(error){problems.push(`result file unreadable: ${error.message}`);}
   if(result){
     if(result.check!==entry.check)problems.push(`the Lab calls this check ${result.check}`);
-    const operation=result.fixture?.operation;
-    if(operation?.widget!==entry.widget)problems.push(`the Lab checked ${operation?.widget}`);
-    if(operation?.release!==entry.coversRelease)problems.push(`the Lab checked release ${operation?.release}, not ${entry.coversRelease}`);
+    // ONE FIXTURE OR SEVERAL: a check over two examples records a list (33). The operation that names this widget is
+    // the one that must say which release was checked.
+    const fixtures=result.fixture?[result.fixture]:result.fixtures??[];
+    const through=entry.checkedThrough??entry.widget;
+    if(entry.checks==='rulesets'){
+      // A CHECK OF RULESETS (23), not of one widget's release: its fixtures name the rulesets each widget ran. Held to
+      // naming at least one, which is what it can say.
+      if(!fixtures.some(f=>f.ruleset))problems.push('the Lab result names no ruleset');
+    }else{
+      const operation=fixtures.map(f=>f.operation).find(o=>o?.widget===through)??fixtures[0]?.operation;
+      // A widget checked through the step that holds its output (the hull, through the extent rule, 25) says so.
+      if(operation?.widget!==through)problems.push(`the Lab checked ${operation?.widget}`);
+      if(operation?.release!==(entry.checkedThrough?operation?.release:entry.coversRelease))
+        problems.push(`the Lab checked release ${operation?.release}, not ${entry.coversRelease}`);
+    }
     // The one substantive cross-check: a recorded "agrees" must not sit on a failing result.
     if(result.agrees===true&&entry.outcome!=='agrees')problems.push(`the Lab reports agreement; the registry records "${entry.outcome}"`);
     if(result.agrees===false&&entry.outcome==='agrees')problems.push('the registry records agreement; the Lab does not');

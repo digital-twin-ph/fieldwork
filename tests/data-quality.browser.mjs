@@ -13,7 +13,7 @@ test('a column profile names the problem, and the repair is offered where the va
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
 
   // The run reports 66 records it could not read, across C and D.
-  await expect(page.locator('#toast')).toContainText('66 records could not be read as declared');
+  await expect(page.locator('#toast')).toContainText('63 records could not be read as declared, and 3 records have no value');
   await page.locator('#toast button').last().click();
 
   // D · the damaged copy. Open the rows, where the offending values are.
@@ -55,7 +55,7 @@ test('a column profile names the problem, and the repair is offered where the va
   // modelling decision and not a widget's to make.
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
-  await expect(toast).toContainText('3 records could not be read as declared');
+  await expect(toast).toContainText('3 records have no value');
   await expect(toast).not.toContainText('counts it cannot read');
   await page.locator('[data-view="workflow"]').click();
   await expect(page.locator('.react-flow__node[data-id="text-building"] .node')).not.toHaveClass(/alerting/);
@@ -126,7 +126,7 @@ test('a repair never overwrites what the input holds',async({page})=>{
   // And yet the run sees numbers: the declaration is applied to a copy on the way out.
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
-  await expect(page.locator('#toast')).toContainText('3 records could not be read as declared');
+  await expect(page.locator('#toast')).toContainText('3 records have no value');
 
   // Reopening shows what downstream reads, says a repair is in force, and does not offer it
   // again -- there is nothing left to repair.
@@ -208,7 +208,7 @@ test('the quality dialog inspects a column, repairs it, and takes the repair bac
   // The run is back where it started, which is the proof the removal was real.
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
-  await expect(page.locator('#toast')).toContainText('66 records could not be read as declared');
+  await expect(page.locator('#toast')).toContainText('63 records could not be read as declared, and 3 records have no value');
   expect(errors).toEqual([]);
 });
 

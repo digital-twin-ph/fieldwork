@@ -32,9 +32,12 @@ test('the node is a source of points and admits it holds none',async({page})=>{
   const node=page.locator('.react-flow__node[data-id="hf"]');
   await expect(node.locator('[data-handleid="out"]')).toHaveCount(1);
   await node.click();
-  await expect(page.locator('#inspector-content')).toContainText(/Holds no facilities until you retrieve/);
-  // Both sources must be offered, and the licence must be reachable before anything is downloaded.
-  await expect(page.locator('#hf-source option')).toHaveCount(3);
+  await expect(page.locator('#inspector-content')).toContainText(/No facilities retrieved yet/);
+  // Every source is offered, in the standard dialog (experiment 186), and the licence is reachable before anything is
+  // downloaded, in the Inspector and in the dialog.
+  await page.locator('#configure-step').click();
+  await expect(page.locator('#facilities-config #hf-source option')).toHaveCount(3);
+  await page.locator('#facilities-config #config-cancel').click();
   await expect(page.locator('#inspector-content a[href="https://opendatacommons.org/licenses/odbl/1-0/"]')).toHaveCount(1);
   await expect(page.locator('#inspector-content')).toContainText(/not the facilities that exist/);
 });
@@ -42,26 +45,33 @@ test('the node is a source of points and admits it holds none',async({page})=>{
 test('the country code field appears only for the source that needs one',async({page})=>{
   await load(page);
   await page.locator('.react-flow__node[data-id="hf"]').click();
-  await expect(page.locator('#hf-country')).toHaveCount(0);
-  await page.locator('#hf-source').selectOption('hdx-hot-export');
-  await expect(page.locator('#hf-country')).toHaveValue('PHL');
-  await expect(page.locator('#inspector-content')).toContainText(/Humanitarian Data Exchange/);
+  await page.locator('#configure-step').click();
+  const dialog=page.locator('#facilities-config');
+  await expect(dialog.locator('#hf-country')).toHaveCount(0);
+  await dialog.locator('#hf-source').selectOption('hdx-hot-export');
+  await expect(dialog.locator('#hf-country')).toHaveValue('PHL');
+  await expect(dialog).toContainText(/Humanitarian Data Exchange/);
 });
 
 test('Overture offers a confidence threshold and states its own, different licence',async({page})=>{
   await load(page);
   await page.locator('.react-flow__node[data-id="hf"]').click();
-  await expect(page.locator('#hf-source option')).toHaveCount(3);
-  await expect(page.locator('#hf-confidence')).toHaveCount(0,
+  await page.locator('#configure-step').click();
+  const dialog=page.locator('#facilities-config');
+  await expect(dialog.locator('#hf-source option')).toHaveCount(3);
+  await expect(dialog.locator('#hf-confidence')).toHaveCount(0,
     {message:'the threshold belongs to the one source that states a confidence'});
 
-  await page.locator('#hf-source').selectOption('overture-places');
-  await expect(page.locator('#hf-confidence')).toHaveValue('0.7');
-  await expect(page.locator('#hf-country')).toHaveCount(0,'no country is needed, the area is the scope');
+  await dialog.locator('#hf-source').selectOption('overture-places');
+  await expect(dialog.locator('#hf-confidence')).toHaveValue('0.7');
+  await expect(dialog.locator('#hf-country')).toHaveCount(0,'no country is needed, the area is the scope');
   // A different licence, and not share-alike: the interface must not imply ODbL here.
+  await expect(dialog.locator('a[href="https://cdla.dev/permissive-2-0/"]')).toHaveCount(1);
+  await expect(dialog.locator('a[href="https://opendatacommons.org/licenses/odbl/1-0/"]')).toHaveCount(0);
+  await expect(dialog).toContainText(/broader than a facility register/);
+  // Applied, the Inspector carries the same licence.
+  await dialog.locator('#config-apply').click();
   await expect(page.locator('#inspector-content a[href="https://cdla.dev/permissive-2-0/"]')).toHaveCount(1);
-  await expect(page.locator('#inspector-content a[href="https://opendatacommons.org/licenses/odbl/1-0/"]')).toHaveCount(0);
-  await expect(page.locator('#inspector-content')).toContainText(/broader than a facility register/);
 
   const saved=JSON.parse(await page.evaluate(()=>localStorage.getItem('fieldwork-workflow-v1')));
   assert.equal(saved.nodes.find(n=>n.id==='hf').params.source,'overture-places');
@@ -113,7 +123,7 @@ test.describe('retrieval',()=>{
     await page.locator('.react-flow__node[data-id="hf"]').click();
     await page.locator('#hf-retrieve').click();
     await expect(page.locator('#hf-status')).toContainText(/busy \(HTTP 429\)/,{timeout:20000});
-    await expect(page.locator('#inspector-content')).toContainText(/Holds no facilities until you retrieve/);
+    await expect(page.locator('#inspector-content')).toContainText(/No facilities retrieved yet/);
     await expect(page.locator('#hf-retrieve')).toBeEnabled();
   });
 });

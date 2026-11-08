@@ -35,6 +35,10 @@ import {openStepViewer,openTableViewer,shapeChange,stepLabels,tableViewOf,type T
 import {orderSentence} from './rule-evaluation.js';
 import {keyNoun,openRelateConfig,relateDraftOf,applyRelateDraft,relateSentence} from './relate-ui.js';
 import {openSelectConfig,selectDraftOf,applySelectDraft,selectSentence} from './select-ui.js';
+import {openFacilitiesConfig,facilitiesDraftOf,applyFacilitiesDraft,facilitiesSentence} from './facilities-ui.js';
+import {fetchRegister,registerLayer,type RegisterEntry} from './facility-matching.js';
+import facilityRegistersJson from '../widgets/facility-registers.json';
+const FACILITY_REGISTERS=facilityRegistersJson.registers as RegisterEntry[];
 import {relateShape,decisionMatches,relateAtShifts,shiftColumnName} from './relate-table.js';
 import {findingsSummary,wideDataTable,declaredWide} from './data-table.js';
 import {authoredSubjects} from './authored-application.js';
@@ -982,7 +986,7 @@ function drawRunProgress(){
 /** THE WIDGETS WHOSE INSPECTOR FOLLOWS THE STANDARD (experiment 186): Name, Inputs, Settings, Result, the links,
  *  Actions, in that order and nothing else, with every setting in the widget's configuration dialog. One at a time,
  *  Relate first; the set grows as each widget is moved, and a check holds them to it. */
-export const STANDARD_INSPECTOR=new Set<NodeType>(['relate_table','select_rows','table_input']);
+export const STANDARD_INSPECTOR=new Set<NodeType>(['relate_table','select_rows','table_input','find_health_facilities']);
 function samplerProduct(node:WorkflowNode){
   const up=(id:string,port:string)=>{const e=workflow.edges.find(x=>x.to===id&&x.port===port);return e?workflow.nodes.find(m=>m.id===e.from):undefined;};
   const search=up(node.id,'files'),find=search?up(search.id,'product'):undefined;
@@ -2801,61 +2805,37 @@ function renderInspector(){
       if(p.decisions.length)content+=`<p class="muted">${p.decisions.length} ${p.decisions.length===1?'decision':'decisions'} recorded. Editing either record lapses the one made about it.</p>`;
     }
     }else if(n.type==='find_health_facilities'){
-    const p=n.params,descriptor=FACILITY_SOURCES[p.source];
-    // THIS WIDGET HAD NO LABEL CONTROL AT ALL, which is how the practitioner found the
-    // inconsistency: "The Find Health Facilities widget label cannot be changed like Study Area,
-    // Street Network and Map."
-    content+=labelForm('hf-label','Node label',p.label||'Find health facilities')
-      +'<p class="description">Health facilities inside the study area, from a source this application can actually reach. Both sources are OpenStreetMap-derived and both are under the Open Database License.</p>'
-      +`<div class="field"><label class="field-label" for="hf-source">Source</label><select id="hf-source" data-hf="source">`
-      +FACILITY_SOURCE_KEYS.map(key=>`<option value="${key}"${p.source===key?' selected':''}>${esc(FACILITY_SOURCES[key].label)}</option>`).join('')
-      +'</select></div>'
-      +`<div class="notice">${esc(descriptor.detail)}</div>`
-      +(descriptor.needsCountry
-        ?(()=>{
-          // THE STUDY AREA ALREADY SAYS WHICH COUNTRY, and a person should not retype what the
-          // application knows. The practitioner, 2026-10-23: *"In find health facilities, I
-          // should not have to type 3 letter ISO code because the study area should already pass
-          // on that information. And we should not make the user type 3 letter ISO codes, this
-          // should be a drop down."* A boundary acquired from geoBoundaries carries BWA-ADM1-...;
-          // a polygon drawn by hand carries nothing, and then the list is simply unset.
-          const areaNode=workflow.nodes.find(x=>x.id===workflow.edges.find(e=>e.to===n.id&&e.port==='area')?.from);
-          const stated=countryOfArea(areaNode?.params as {country?:string;boundary?:{provenance?:{boundaryID?:string}}});
-          const chosen=p.country||stated||'';
-          return `<div class="field"><label class="field-label" for="hf-country">Country</label>`
-            +`<select id="hf-country" data-hf="country">`
-            +`<option value="" ${chosen?'':'selected'}>Choose a country…</option>`
-            +COUNTRIES.map(c=>`<option value="${c.iso}" ${c.iso===chosen?'selected':''}>${esc(c.name)} (${c.iso})</option>`).join('')
-            +`</select>`
-            +(stated&&!p.country
-              ?`<small>From the study area.</small>`
-              :stated&&p.country&&p.country!==stated
-                ?`<p class="notice">Study area is ${esc(stated)}; this asks ${esc(p.country)}. The export follows this choice.</p>`
-                :'')
-            +`</div>`;
-        })()
-        :'')
-      +(descriptor.confidence
-        ?`<div class="field"><label class="field-label" for="hf-confidence">Least confidence to accept (0 to 1)</label><input id="hf-confidence" data-hf-number="minConfidence" type="number" min="0" max="1" step="0.05" value="${p.minConfidence??OVERTURE_DEFAULT_CONFIDENCE}"></div>`
-          +`<p class="muted">Overture states a confidence for each place. Measured in a Manila study area: 1,120 health places unfiltered, 572 at 0.70. Below about 0.70 the list fills with individual practitioners and wellness businesses.</p>`
-        :'')
-      +`<div class="field"><label class="field-label" for="hf-kinds">Facility kinds</label><input id="hf-kinds" data-hf-list="kinds" maxlength="200" value="${esc((p.kinds||[]).join(', '))}" placeholder="hospital, clinic"></div>`
-      +`<p class="muted">Known kinds: ${FACILITY_KINDS.join(', ')}. Others can be typed in; OpenStreetMap tagging is open.</p>`
-      +`<label class="field-option"><input type="checkbox" data-hf-flag="requireName"${p.requireName?' checked':''}> Keep only facilities that carry a name</label>`
-      +`<button id="hf-retrieve" class="button primary">Retrieve facilities</button>`
-      +`<p id="hf-status" role="status" class="muted"></p>`
-      +(p.retrieved
-        ?`<div class="notice"><strong>${p.retrieved.kept} facilities</strong> from ${esc(p.retrieved.sourceLabel)}, retrieved ${esc(p.retrieved.at.slice(0,10))}.`
-          +`<br>Scope: ${esc(p.retrieved.scope)}.`
-          +(p.retrieved.belowConfidence!==undefined
-            ?`<br>${p.retrieved.belowConfidence} below the confidence threshold; ${p.retrieved.unmappedCategory??0} of a health category not mapped to a facility kind.`
-            :'')
-          +((d=>d.kind+d.coordinates+d.name?`<br>Dropped ${d.kind} of an unrequested kind, ${d.coordinates} outside the area or without coordinates, ${d.name} without a name.`:'<br>No records dropped.')(p.retrieved.dropped))
-          +`<br><small>${esc(p.retrieved.attribution)}</small>`
-          +` Retrieving again replaces this layer.</div>`
-        :'<div class="notice">Holds no facilities until you retrieve them. Connect a study area first: the area is the scope of the query, not a filter applied afterwards.</div>')
-      +`<ul class="licence-links">${descriptor.links.map(l=>`<li><a href="${esc(l.href)}" target="_blank" rel="noopener noreferrer">${esc(l.label)} \u2197</a></li>`).join('')}</ul>`
-      +'<div class="notice">These are the facilities the source records, not the facilities that exist. OpenStreetMap coverage is uneven and states no completeness, so an absence here is not evidence of absence on the ground.</div>';
+    // THE STANDARD INSPECTOR (experiments 186 and 190): name, inputs, one sentence of what it finds and from where, the
+    // fetch that acquisition needs, Configure…, and what it holds. Every setting is in the dialog.
+    const p=n.params,descriptor=FACILITY_SOURCES[p.source],list=p.mode==='list';
+    content+=standardSection('Name',labelForm('hf-label','Name',p.label||'Find health facilities'));
+    content+=standardSection('Inputs',standardInputs(n,{list:'The list',area:'Study area'}));
+    const fetched=list?p.registerRetrieved:p.retrieved;
+    const stale=list&&!!p.registerRetrieved&&!!p.list&&p.list.registers.join()!==p.registerRetrieved.registers.map(r=>r.id).join();
+    content+=standardSection('Settings',`<p class="standard-sentence">${esc(facilitiesSentence(p,FACILITY_REGISTERS))}</p>`
+      +`<div class="inspector-actions">${list
+        ?`<button id="hf-fetch-registers" class="button${!fetched||stale?' primary':''}"${p.list?.registers.length?'':' disabled'}>${fetched?'Fetch the registers again':'Fetch the registers'}</button>`
+        :`<button id="hf-retrieve" class="button${fetched?'':' primary'}">Retrieve facilities</button>`}`
+      +`<button id="configure-step" class="button${fetched&&!stale?' primary':''}">Configure\u2026</button></div>`
+      +`<p id="hf-status" role="status" class="description"></p>`
+      +(stale?'<p class="notice notice-warning">The registers chosen are not the ones fetched. Fetch them again.</p>':'')
+      +(list?'':`<ul class="licence-links">${descriptor.links.map(l=>`<li><a href="${esc(l.href)}" target="_blank" rel="noopener noreferrer">${esc(l.label)} \u2197</a></li>`).join('')}</ul>`));
+    const why=result?.unfinished?.find(u=>u.nodeId===n.id)?.message;
+    const ran=result?.receipts.find(r=>r.nodeId===n.id)?.method;
+    const held=list
+      ?(p.registerRetrieved?`Holds ${p.registerRetrieved.registers.map(r=>`${r.title}: ${r.records.toLocaleString('en-US')} facilities`).join('; ')}, fetched ${p.registerRetrieved.at.slice(0,10)}.`:'No register fetched yet.')
+      :(p.retrieved?`${p.retrieved.kept} facilities from ${p.retrieved.sourceLabel}, retrieved ${p.retrieved.at.slice(0,10)}. Scope: ${p.retrieved.scope}. `
+        // WHAT WAS LEFT OUT, COUNTED, as the standard Result says (experiment 186).
+        +((d=>d.kind+d.coordinates+d.name?`Dropped ${d.kind} of an unrequested kind, ${d.coordinates} outside the area or without coordinates, ${d.name} without a name.`:'No records dropped.')(p.retrieved.dropped))
+        +(p.retrieved.belowConfidence!==undefined?` ${p.retrieved.belowConfidence} below the confidence threshold; ${p.retrieved.unmappedCategory??0} of a health category not mapped to a facility kind.`:'')
+        :'No facilities retrieved yet. Connect a study area: it is the scope of the query.');
+    content+=standardSection('Result',`<p class="standard-result${why?' standard-result-warning':''}">${esc(why?`The last run could not compute this step: ${why}`:held)}</p>`
+      +(ran&&!why?`<p class="standard-state">${esc(ran.split('. ').slice(0,2).join('. '))}.</p>`:'')
+      // THE ATTRIBUTION THE LICENCE REQUIRES, where the facilities are: ODbL asks that it stay with the data.
+      +(!list&&p.retrieved?`<p class="description">${esc(p.retrieved.attribution)}</p>`:'')
+      +(list&&p.registerRetrieved?`<p class="description">${esc(p.registerRetrieved.registers.map(r=>`${r.title}, ${r.licence.includes('by/4.0')?'CC BY 4.0':r.licence}`).join('; '))}</p>`:'')
+      +'<p class="description">These are the facilities a source records, not the facilities that exist: an absence is not evidence of absence.</p>'
+      +'<div data-standard-result></div>');
   }else if(n.type==='buffer_point'){
     const p=n.params;
     content+='<p class="description">Everything within a stated distance of one named point.</p>'
@@ -3765,6 +3745,53 @@ function renderInspector(){
     openStepViewer([...befores,view],
       stepLabels(inputs.map(({port})=>portSourceName(workflow,n.id,port,port))),esc);
   });
+  // FIND HEALTH FACILITIES' DIALOG (experiments 186 and 190), and the registers' fetch.
+  if(n.type==='find_health_facilities'){
+    optionalElement('#configure-step')?.addEventListener('click',()=>{
+      const node=getNode(workflow,n.id,'find_health_facilities');
+      const table=tableOnPort(workflow,n.id,'list');
+      const up=workflow.nodes.find(x=>x.id===workflow.edges.find(e=>e.to===n.id&&e.port==='list')?.from);
+      const columns=table?[...table.keys,...(table.valueField&&!table.keys.includes(table.valueField)?[table.valueField]:[])]
+        :[...tableKeyColumns(up)];
+      openFacilitiesConfig({step:node.params.label||TYPES[n.type].title,catalogue:FACILITY_REGISTERS,listColumns:columns,
+        ...(table?{listRows:table.rows.map(r=>({key:{...Object.fromEntries(Object.entries(r.key).map(([k,v])=>[k,String(v??'')])),
+          ...(table.valueField?{[table.valueField]:String(r.value??'')}:{})}}))}:{}),
+        layer:node.params.mode==='list'?node.params.data:null,countries:COUNTRIES.map(c=>({iso:c.iso,name:c.name})),
+        // THE STUDY AREA ALREADY SAYS WHICH COUNTRY: filled in, never retyped (the practitioner, 2026-10-23).
+        initial:facilitiesDraftOf(node.params,countryOfArea(workflow.nodes.find(x=>x.id===workflow.edges.find(e=>e.to===n.id&&e.port==='area')?.from)
+          ?.params as {country?:string;boundary?:{provenance?:{boundaryID?:string}}})||''),
+        apply:draft=>{change(w=>{const target=getNode(w,n.id,'find_health_facilities');const was=target.params.mode??'area';
+          applyFacilitiesDraft(target.params,draft);
+          // A CHANGE OF WAY IN changes the input: what was connected to the other one is disconnected, and what was
+          // fetched for the other one is not this one's.
+          if(was!==(draft.mode??'area')){w.edges=w.edges.filter(e=>e.to!==n.id);target.params.data=null;target.params.retrieved=null;
+            delete target.params.registerRetrieved;delete (target.params as {dataRef?:string}).dataRef;}},{requirePersistence:true});},
+      },esc);
+    });
+    optionalElement('#hf-fetch-registers')?.addEventListener('click',async e=>{
+      const button=e.currentTarget as HTMLButtonElement,status=optionalElement('#hf-status');
+      const node=getNode(workflow,n.id,'find_health_facilities'),ids=node.params.list?.registers??[];
+      button.disabled=true;
+      try{
+        const loaded:import("./facility-matching.js").LoadedRegister[]=[];
+        for(const id of ids){
+          const register=FACILITY_REGISTERS.find(r=>r.id===id);
+          if(!register)throw new Error(`${id} is not in the register catalogue.`);
+          if(status)status.textContent=`Fetching ${register.title}\u2026`;
+          loaded.push({register,facilities:await fetchRegister(register)});
+        }
+        const layer=registerLayer(loaded),digest=await payloadDigest(layer);
+        if(!await keepDataset(digest,layer))throw new Error('The registers could not be kept on this device, so they were not saved.');
+        const at=new Date().toISOString();
+        if(change(w=>{const target=getNode(w,n.id,'find_health_facilities');target.params.data=layer;
+          (target.params as {dataRef?:string}).dataRef=digest;
+          target.params.registerRetrieved={registers:loaded.map(({register,facilities})=>({id:register.id,title:register.title,
+            licence:register.licence,records:facilities.length})),at};},{requirePersistence:true}))
+          toast(`${loaded.map(l=>`${l.facilities.length.toLocaleString('en-US')} facilities from ${l.register.title}`).join('; ')}. Run the workflow to match the list.`);
+      }catch(error){const message=errorMessage(error);if(status)status.textContent=message;toast(message,{tone:'failure'});}
+      finally{button.disabled=false;}
+    });
+  }
   // SELECT ROWS' CONFIGURATION DIALOG (experiment 186): given each key column's values, and the table where it resolves
   // without a run, so the preview is the rows this draft keeps. Only Apply writes.
   if(n.type==='select_rows')optionalElement('#configure-step')?.addEventListener('click',()=>{

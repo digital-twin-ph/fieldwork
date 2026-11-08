@@ -29,11 +29,13 @@ test('a study area that states its country hands it to both widgets',async({page
   await open(page,'BWA');
 
   await page.locator('.react-flow__node[data-id="hf"]').click({timeout:45000});
-  const facilities=page.locator('#hf-country');
+  await page.locator('#configure-step').click();
+  const facilities=page.locator('#facilities-config #hf-country');
   expect(await facilities.evaluate(el=>el.tagName)).toBe('SELECT','a list, not a three-letter box');
   await expect(facilities).toHaveValue('BWA');
   await expect(facilities.locator('option[value="BWA"]')).toContainText('Botswana');
 
+  await page.locator('#facilities-config #config-cancel').click();
   // And the raster widget reads the same thing, which is what "autopopulate" asked for.
   await page.locator('.react-flow__node[data-id="raster"]').click();
   await expect(page.locator('#population-country')).toHaveValue('BWA');

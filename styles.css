@@ -1117,6 +1117,11 @@ i.bar-zero{position:absolute;top:0;bottom:0;width:1px;background:var(--ink,#2b2b
    two-by-two had fixed this one list at a time. */
 #inspector-content label.check{display:flex;align-items:flex-start;justify-content:flex-start;gap:6px;margin:2px 0;text-align:left}
 #inspector-content label.check input[type=checkbox]{flex:none;width:auto;margin:2px 0 0}
+/* THE SAME IN THE STANDARD DIALOG (experiment 186): checkbox lists moved there from the Inspector -- Select rows' values,
+   Relate's "and also matched on", Find health facilities' registers -- and kept none of this, so each box floated away
+   from its words (2026-11-08). */
+.config-dialog label.check{display:flex;align-items:flex-start;justify-content:flex-start;gap:8px;margin:4px 0;text-align:left;font-size:1rem}
+.config-dialog label.check input[type=checkbox]{flex:none;width:auto;margin:4px 0 0}
 #inspector-content fieldset#group-keep{border:0;padding:0;margin:14px 0 0}
 
 /* A STEP IN PROGRESS: the panel a long read shows, with a spinner and a bar (2026-11-06). Still for reduced motion. */

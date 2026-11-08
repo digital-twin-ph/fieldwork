@@ -95,12 +95,13 @@
   {
    "nodeType": "case_series",
    "exampleUses": [
+    "brazil-dengue-rj-2024",
     "hagelloch",
     "snow-extent",
     "snow-isochrone",
     "snow-voronoi"
    ],
-   "exampleUseCount": 4,
+   "exampleUseCount": 5,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],

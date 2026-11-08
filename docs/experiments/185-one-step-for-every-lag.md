@@ -4,15 +4,17 @@ _Created 2026-11-07 · Updated 2026-11-07_
 
 **Status:** tried. Relate takes a list of shifts, Regression fits one model per column, and the fourth and fifth
 Brazil workflows are rebuilt with them; their manual plays back from an empty canvas (2026-11-07, Fieldwork 0.49.0,
-Chromium). Not `validated`: every model equals the separate models' on the playback's synthetic satellite files, not
-yet on the live MODIS files or against a Validation Lab check of the new table (below).
+Chromium), and the live run reproduces 182's 2010–2025 figures (below). Not `validated`: no Validation Lab check covers
+the several-model table, and check 36, named in the close criteria, tests the Append rows chain these workflows no
+longer use.
 
 | Stage | What | State, 2026-11-07 |
 | --- | --- | --- |
 | 1 | Relate takes a list of shifts, one column each, every row kept (`relateAtShifts`, at most 24) | Built (45f4f42), and settable in Relate's dialog since 0.47.0 |
 | 2 | Regression fits one model per exposure column, each on its own rows, in one table | Built, 0.48.0 (Regression 0.4.0) |
 | 3 | Brazil W4 and W5 rebuilt; an adjustment that follows the shift for W5 | Built, 0.49.0 (Regression 0.5.0, Relate 0.8.2); example commit 2540889 |
-| — | Live MODIS figures of 182; a Validation Lab check of the several-model table; a measured shift limit | Not done |
+| — | Live MODIS figures of 182 | Reproduced, 2026-11-07 |
+| — | A Validation Lab check of the several-model table; strata counts back in its sentence; a measured shift limit | Not done |
 
 ## Stage 2, as built
 
@@ -76,8 +78,26 @@ synthetic satellite files the playback serves (`tests/brazil-dengue-from-scratch
    temperature's shifts with its own, so the run had no `shift_days` while the Inspector, reading the columns' names,
    offered it. The run failed, naming the column. Relate 0.8.2 keeps both; a test chains two.
 
-**Not checked:** the live MODIS run of 182 (`BRAZIL_SATELLITE_LIVE`, about two hours), so 182's recorded 2010–2025
-figures are not yet reproduced by the rebuilt workflow. Check 36 tests the Append rows chain the workflows no longer
+**Played back live, 2026-11-07**, at the practitioner's *"MODIS first"*: all five workflows from an empty canvas in
+Chromium, MODIS read from Planetary Computer, **35.4 minutes** (182's: 44.2). The rebuilt fifth workflow's seven models
+equal [182](182-brazil-across-years.md)'s recorded live figures in every rate ratio, both limits and rows used, to the
+three decimals 182 records:
+
+| Weeks | Rate ratio per 1 °C (95%), 182 | Rebuilt | Rows, both |
+| --- | --- | --- | --- |
+| 4 after | 1.005 (1.003–1.007) | 1.005 (1.003–1.007) | 69,816 |
+| 2 after | 1.005 (1.003–1.007) | 1.005 (1.003–1.007) | 69,988 |
+| 0 | 1.004 (1.002–1.006) | 1.004 (1.002–1.006) | 71,338 |
+| 2 before | 1.003 (1.001–1.005) | 1.003 (1.001–1.005) | 70,110 |
+| 4 before | 0.989 (0.987–0.991) | 0.989 (0.987–0.991) | 69,810 |
+| 6 before | 1.021 (1.019–1.023) | 1.021 (1.019–1.023) | 69,725 |
+| 8 before | 1.020 (1.018–1.021) | 1.020 (1.018–1.021) | 69,718 |
+
+The first model's dispersion is 5.003, against 182's 5.00; the others are not in the several-model sentence. Nor are
+the strata used and dropped, which a single model's sentence gives: a loss of information in the result, to be put
+back, and the reason the strata counts were not compared.
+
+Check 36 tests the Append rows chain the workflows no longer
 use; check 37 tests the stratified fit and is unaffected. No Validation Lab check covers the several-model table.
 
 **Open for stage 3:** the lag chart today reads Append rows' `lag` column, in weeks before (0, 2, 4…). The models'

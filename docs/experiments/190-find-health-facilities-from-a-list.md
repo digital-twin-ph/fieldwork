@@ -79,6 +79,20 @@ exactly, allowing for spelling, type differs, ambiguous, an area not a facility,
 `fw:nameMatchScore` and `fw:positionIsRegisters`; on the step, `fw:areaNameMarkers`. The shapes conform. When the
 widget is built, its release declares these as the terms it asserts, and the coupling check holds the two together.
 
+**The registers are in the ontology too** (the practitioner, 2026-11-08: *"Info about GRID3 countries should be in the
+ontology"*): four `fw:FacilityRegister` individuals, each with its country code, publisher, version, licence, service,
+record count, the date read, and its own field map.
+
+| Register | Facilities | Name | Type | Area | Identifier |
+| --- | --- | --- | --- | --- | --- |
+| GRID3 Sierra Leone v1.0 | 1,616 | `fac_name` | `type` | `district` | `dhis2_id` |
+| GRID3 Nigeria v4.0 | 70,235 | `facility_name` | `facility_type` | `lga_standard` | `nhfr_facility_code` |
+| GRID3 DR Congo v9.0 | 38,957 | `essnom1` | `esstype` | `zonesante` | `dhis2` |
+| GRID3 Zambia v01 beta | — | not readable: the service gave no layer | | | |
+
+Congo's fields are in French, which is the case the catalogue exists for. **The widget's catalogue is generated from
+these individuals and checked against them**, so the code and the ontology cannot say different things about a register.
+
 **Found while declaring them:** `fw:matchedName`, a deduplication property, is declared with a decimal range though its
 name says a name. Not changed here; the new property is `fw:registerFacilityName` so as not to inherit it.
 

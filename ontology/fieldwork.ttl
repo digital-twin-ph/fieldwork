@@ -1412,6 +1412,59 @@ fw:areaNameMarkers a owl:DatatypeProperty; rdfs:range xsd:string;
 fw:positionIsRegisters a owl:DatatypeProperty; rdfs:range xsd:boolean;
   rdfs:comment "True on every point matching gives: the position is where the register places the facility, not where a person on the list lived or was found.".
 
+# THE REGISTERS, as found (the practitioner, 2026-11-08: "Info about GRID3 countries should be in the ontology"). Each
+# is a catalogue entry in the shared vocabulary: country, publisher, version, licence, where it is served, how many
+# facilities it held when read, and which of ITS fields hold the name, type, area, identifier and coordinates -- the
+# field names differ by country, Congo's in French, which is why none is fixed in code. Read from GRID3's ArcGIS
+# catalogue and each service's own field list on 2026-11-08; a register is used only after its fields are read.
+fw:countryCode a owl:DatatypeProperty; rdfs:domain fw:FacilityRegister; rdfs:range xsd:string;
+  rdfs:comment "The country the register covers, as an ISO 3166-1 alpha-3 code.".
+fw:registerRecordCount a owl:DatatypeProperty; rdfs:domain fw:FacilityRegister; rdfs:range xsd:nonNegativeInteger;
+  rdfs:comment "Facilities the register held when it was read, with fw:registerReadOn.".
+fw:registerReadOn a owl:DatatypeProperty; rdfs:domain fw:FacilityRegister; rdfs:range xsd:date.
+fw:registerReadable a owl:DatatypeProperty; rdfs:domain fw:FacilityRegister; rdfs:range xsd:boolean;
+  rdfs:comment "False where the register is listed but its service gave no layer to read: listed so it is known, unusable until it is read.".
+fw:typeField a owl:DatatypeProperty; rdfs:domain fw:FacilityRegister; rdfs:range xsd:string.
+fw:areaField a owl:DatatypeProperty; rdfs:domain fw:FacilityRegister; rdfs:range xsd:string;
+  rdfs:comment "The register's field naming the area a facility is in, at the level a list is most likely to state: a district, a local government area, a health zone.".
+fw:identifierField a owl:DatatypeProperty; rdfs:domain fw:FacilityRegister; rdfs:range xsd:string.
+fw:latitudeField a owl:DatatypeProperty; rdfs:domain fw:FacilityRegister; rdfs:range xsd:string.
+fw:longitudeField a owl:DatatypeProperty; rdfs:domain fw:FacilityRegister; rdfs:range xsd:string.
+fw:alternateNameField a owl:DatatypeProperty; rdfs:domain fw:FacilityRegister; rdfs:range xsd:string;
+  rdfs:comment "A second name field the register carries, matched as well as the first.".
+
+fw:Grid3SierraLeoneHealthFacilitiesV1 a fw:FacilityRegister;
+  dcterms:title "GRID3 SLE - Health Facilities v1.0"; owl:versionInfo "1.0";
+  dcterms:publisher "GRID3, with the Sierra Leone Ministry of Health and Sanitation";
+  dcterms:license <https://creativecommons.org/licenses/by/4.0/>; fw:countryCode "SLE";
+  dcat:accessURL <https://services3.arcgis.com/BU6Aadhn6tbBEdyk/arcgis/rest/services/sle_htlfac_grid3_v01/FeatureServer/0>;
+  fw:registerRecordCount 1616; fw:registerReadOn "2026-11-08"^^xsd:date; fw:registerReadable true;
+  fw:nameField "fac_name"; fw:alternateNameField "facility"; fw:typeField "type"; fw:areaField "district";
+  fw:identifierField "dhis2_id"; fw:latitudeField "lat"; fw:longitudeField "long";
+  rdfs:comment "Every facility carries a DHIS2 identifier; 1,561 of 1,616 have coordinates. Its spatial data were matched to the ministry's 2020 master facility list.".
+fw:Grid3NigeriaHealthFacilitiesV4 a fw:FacilityRegister;
+  dcterms:title "GRID3 NGA - Health Facilities v4.0"; owl:versionInfo "4.0"; dcterms:publisher "GRID3";
+  dcterms:license <https://creativecommons.org/licenses/by/4.0/>; fw:countryCode "NGA";
+  dcat:accessURL <https://services3.arcgis.com/BU6Aadhn6tbBEdyk/arcgis/rest/services/GRID3_NGA_Health_Facilities_v4_0/FeatureServer/0>;
+  fw:registerRecordCount 70235; fw:registerReadOn "2026-11-08"^^xsd:date; fw:registerReadable true;
+  fw:nameField "facility_name"; fw:alternateNameField "alt_name"; fw:typeField "facility_type"; fw:areaField "lga_standard";
+  fw:identifierField "nhfr_facility_code"; fw:latitudeField "latitude"; fw:longitudeField "longitude";
+  rdfs:comment "The identifier is the National Health Facility Registry code. Its areas are local government areas; states are in state_standard.".
+fw:Grid3CongoHealthFacilitiesV9 a fw:FacilityRegister;
+  dcterms:title "GRID3 COD - Health Facilities v9.0"; owl:versionInfo "9.0"; dcterms:publisher "GRID3";
+  dcterms:license <https://creativecommons.org/licenses/by/4.0/>; fw:countryCode "COD";
+  dcat:accessURL <https://services3.arcgis.com/BU6Aadhn6tbBEdyk/arcgis/rest/services/GRID3_COD_health_facilities_v9_0/FeatureServer/0>;
+  fw:registerRecordCount 38957; fw:registerReadOn "2026-11-08"^^xsd:date; fw:registerReadable true;
+  fw:nameField "essnom1"; fw:alternateNameField "essnom2"; fw:typeField "esstype"; fw:areaField "zonesante";
+  fw:identifierField "dhis2"; fw:latitudeField "lat"; fw:longitudeField "lon";
+  rdfs:comment "Field names are in French: essnom is the facility's name, esstype its type, zonesante its health zone.".
+fw:Grid3ZambiaHealthFacilitiesV01Beta a fw:FacilityRegister;
+  dcterms:title "GRID3 ZMB Health Facilities v01 Beta"; owl:versionInfo "0.1 beta";
+  dcterms:license <https://creativecommons.org/licenses/by/4.0/>; fw:countryCode "ZMB";
+  dcat:accessURL <https://services9.arcgis.com/ZNWWwa7zEkUIYLEA/arcgis/rest/services/GRID3_ZMB_HealthFac_v01beta/FeatureServer>;
+  fw:registerReadOn "2026-11-08"^^xsd:date; fw:registerReadable false;
+  rdfs:comment "Listed in GRID3's catalogue under CC BY 4.0, published from an account other than GRID3's own, and its service gave no layer when read on 2026-11-08. Unusable until it is read; its publisher is not stated here for that reason.".
+
 # ---------------------------------------------------------------------------
 # CAPS. Every magnitude in this application that can refuse a practitioner's work, as a term
 # rather than as a constant with a comment. The practitioner, 2026-10-22, having met six of them

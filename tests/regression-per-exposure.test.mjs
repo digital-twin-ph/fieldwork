@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {Parser,Store} from 'n3';
 import {validateGraph} from '../scripts/validate-ontology.mjs';
-import {fitRegression,specFrom,rowsOf,exposureColumnsOf,fitEachExposure,regressionsTable,regressionsSentence,
+import {fitRegression,specFrom,rowsOf,exposureColumnsOf,fitEachExposure,regressionsTable,regressionsSentence,modelParams,
   regressionsReceipt} from '../build/regression.js';
 import {relateAtShifts} from '../build/relate-table.js';
 
@@ -82,4 +82,29 @@ test('every fitted model is its own fw:RegressionModel in one receipt, and the r
   assert.equal(report.conforms,true,report.results.map(r=>`${r.path?.value} ${r.message}`).join('\n'));
   assert.deepEqual(receipt.models.map(m=>m.shiftDays),[...shifts,undefined]);
   assert.match(receipt.models.at(-1).reason,/No row has every variable/);
+});
+
+/** AN ADJUSTMENT THAT FOLLOWS THE SHIFT: Brazil's 2010-2025 models adjust the temperature at each lag for the rain at
+ *  the same lag (experiment 182). Model k is adjusted for the k-th rain column; nothing else changes between models. */
+test('an adjustment that follows the shift adjusts each model for its own column',()=>{
+  const rainShifts=[0,-7,-14,-21,7];
+  const rainColumn=d=>`rain_${d>0?'+':''}${d}d`;
+  // Rain at each shift, empty now and then, and on other weeks than the temperature's gaps.
+  const withRain=rows.map((r,i)=>({...r,...Object.fromEntries(rainShifts.map((d,k)=>
+    [rainColumn(d),(i*7+k*13)%23===0?'':String(20+((i*31+k*17)%40))]))}));
+  const followed={...params,adjust:[{column:'mes',as:'categorical'},
+    {column:rainColumn(0),as:'numeric',perModel:rainShifts.map(rainColumn)}]};
+  const models=fitEachExposure(withRain,followed,related.table.columnShifts);
+  models.forEach((m,k)=>{
+    const alone=fitRegression(withRain,specFrom({...params,exposure:{column:columns[k],as:'numeric'},exposureColumns:undefined,
+      adjust:[{column:'mes',as:'categorical'},{column:rainColumn(rainShifts[k]),as:'numeric'}]}));
+    assert.deepEqual(m.result.estimates,alone.estimates,`model ${k+1} is adjusted for ${rainColumn(rainShifts[k])}`);
+    assert.deepEqual(m.result.rows,alone.rows,'and left out the rows its own rain column is empty on');
+  });
+  assert.deepEqual(modelParams(followed,2).adjust.map(t=>t.column),['mes','rain_-14d']);
+  assert.match(regressionsSentence(models,followed),/each adjusted for mes, rain at its own shift, municipio \(strata\)/);
+  const receipt=regressionsReceipt({id:'m'},models,followed,'r1','related',false,'');
+  for(const d of rainShifts)assert.ok(receipt.facts.includes(`fw:termAttribute "${rainColumn(d)}"`));
+  assert.throws(()=>fitEachExposure(withRain,{...followed,adjust:[{column:'rain_0d',as:'numeric',perModel:['rain_0d']}]}),
+    /needs one column for each of the 5 models; it has 1/);
 });

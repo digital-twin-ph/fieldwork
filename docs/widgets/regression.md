@@ -52,6 +52,12 @@ question, where **Relate a column from another table** has brought the temperatu
   only when no column can be fitted.
 - **The result says how many intervals there are**, and that none is adjusted for the number of comparisons.
 
+**An adjusted variable can follow the shift.** With several models, each adjusted variable has a box, *follows the
+shift: each model is adjusted for its own column*. Tick it, and a column is chosen for each model, filled in Relate's
+order and each one changeable. The 2010–2025 Brazil workflow uses it: the model of the temperature 2 weeks before is
+adjusted for the rainfall 2 weeks before, from a second Relate that brings the rain at the same lags. The result says
+*each adjusted for precip_total_semana at its own shift*.
+
 Untick every column to go back to one model.
 
 ## What it will not do

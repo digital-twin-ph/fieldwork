@@ -879,9 +879,19 @@ function tableKeyColumns(node:WorkflowNode|undefined,seen=new Set<string>()):rea
       return [...new Set([...(key?[key]:[]),...Array.from({length:appendTableCount(node.params)},(_,i)=>of(appendPort(i))).flat(),...(source?[source]:[])])];}
     case 'group_table':return node.params.by;
     // A REGRESSION'S TABLE is always its terms by its statistics (experiment 181).
-    case 'regression':return ['term','statistic'];
+    // With several exposure columns (experiment 185), one table of every model: the keys `regressionsTable` writes.
+    case 'regression':return severalModelKeys(node.params)??['term','statistic'];
     default:return [];
   }
+}
+
+/** THE SHIFT IN A COLUMN'S NAME, as Relate's `shiftColumnName` writes it: `LST_Day_1km_+3d` is 3. Read off the name
+ *  because an Inspector has no run to read `columnShifts` from. */
+const columnShiftOf=(column:string)=>column.match(/_([+-]?\d+)d$/)?.[1]?.replace(/^\+/,'');
+/** The key columns of a Regression fitting one model per column, or null when it fits one model. */
+function severalModelKeys(p:{exposureColumns?:string[]}):string[]|null{
+  if((p.exposureColumns?.length??0)<2)return null;
+  return ['exposure',...(p.exposureColumns!.some(c=>columnShiftOf(c)!==undefined)?['shift_days']:[]),'role','term','statistic'];
 }
 
 /** The distinct values of each key column of the table reaching this node, where they are
@@ -1006,9 +1016,8 @@ function upstreamKeyValues(node:WorkflowNode,seen=new Set<string>(),
     const statistic=[p.family==='logistic'?'odds ratio':'rate ratio',`lower ${level}%`,`upper ${level}%`,'p'];
     if(!several)return {term:terms,statistic};
     // ONE MODEL PER COLUMN (experiment 185): the exposure is a key, and the shift where Relate named one.
-    const shift=(c:string)=>c.match(/_([+-]?\d+)d$/)?.[1]?.replace(/^\+/,'');
-    const shifted=several.some(c=>shift(c)!==undefined);
-    return {exposure:several,...(shifted?{shift_days:several.map(c=>shift(c)??'')}:{}),
+    const shifted=severalModelKeys(p)!.includes('shift_days');
+    return {exposure:several,...(shifted?{shift_days:several.map(c=>columnShiftOf(c)??'')}:{}),
       role:['exposure','adjusted for'],term:terms,statistic};
   }
   // RELATING ADDS A COLUMN, and the values it will hold are the ones the second table holds --
@@ -2319,7 +2328,7 @@ function renderInspector(){
               +values(p.exposure.column).map(v=>option(v,v,(p.exposure.reference??[...values(p.exposure.column)].sort()[0])===v)).join('')+`</select></div>`:'')
           +(()=>{
             // ONE MODEL PER COLUMN (experiment 185): Relate's shift columns, or any others, each fitted on its own rows.
-            const several=p.exposureColumns??[],taken=new Set([p.outcome,p.exposure.column,...p.adjust.map(t=>t.column),
+            const several=p.exposureColumns??[],taken=new Set([p.outcome,p.exposure.column,...p.adjust.flatMap(t=>[t.column,...(t.perModel??[])]),
               ...strataOf(p.strata),...(p.offset?[p.offset]:[])]);
             const offered=columns.filter(c=>!taken.has(c)||(several.includes(c)&&c!==p.exposure.column));
             if(!offered.length)return '';
@@ -2331,7 +2340,15 @@ function renderInspector(){
       +`<span class="inspector-section">Adjusted for</span>`
       +(p.adjust.length?p.adjust.map(term=>`<div class="reg-term"><label class="field-label" for="reg-kind-${esc(term.column)}">${esc(term.column)} as</label>`
           +`<select id="reg-kind-${esc(term.column)}" data-reg-adjust-kind="${esc(term.column)}">${kinds(term.as)}</select>`
-          +`<button type="button" class="button small" data-reg-adjust-remove="${esc(term.column)}">Remove</button></div>`).join('')
+          +`<button type="button" class="button small" data-reg-adjust-remove="${esc(term.column)}">Remove</button></div>`
+          // AN ADJUSTMENT THAT FOLLOWS THE SHIFT (experiment 185): with several models, model k may be adjusted for its
+          // own column, the rain at its own lag beside the temperature at that lag. One choice per model, in view.
+          +((p.exposureColumns?.length??0)>1
+            ?`<label class="check"><input type="checkbox" data-reg-follow="${esc(term.column)}" ${term.perModel?'checked':''}> ${esc(term.column)} follows the shift: each model is adjusted for its own column</label>`
+              +(term.perModel?p.exposureColumns!.map((exposure,k)=>`<div class="field"><label class="field-label" for="reg-follow-${esc(term.column)}-${k}">For the model of ${esc(exposure)}</label>`
+                +`<select id="reg-follow-${esc(term.column)}-${k}" data-reg-follow-column="${esc(term.column)}" data-reg-follow-model="${k}">`
+                +columns.map(c=>option(c,c,term.perModel![k]===c)).join('')+`</select></div>`).join(''):'')
+            :'')).join('')
         :'<p class="muted">Nothing: the estimate is unadjusted.</p>')
       +`<div class="field"><label class="field-label" for="reg-adjust-add">Add a variable</label><select id="reg-adjust-add">${option('','Choose a column…',true)}`
         +columns.filter(c=>c!==p.outcome&&c!==p.exposure.column&&!p.adjust.some(t=>t.column===c)).map(c=>option(c,c,false)).join('')+`</select></div>`
@@ -4243,7 +4260,14 @@ function renderInspector(){
   document.querySelectorAll<HTMLInputElement>('[data-reg-also]').forEach(el=>el.addEventListener('change',()=>reg(p=>{
     const also=[...document.querySelectorAll<HTMLInputElement>('[data-reg-also]:checked')].map(b=>b.value)
       .filter(c=>c!==p.exposure.column);
-    if(also.length)p.exposureColumns=[p.exposure.column,...also];else delete p.exposureColumns;})));
+    if(also.length)p.exposureColumns=[p.exposure.column,...also];else delete p.exposureColumns;
+    // An adjustment that follows the shift keeps one column per model: refilled in Relate's order, or dropped with the
+    // list.
+    const held=Object.keys(upstreamKeyValues(n)??{}),shiftless=(c:string)=>c.replace(/_[+-]?\d+d$/,'');
+    p.adjust=p.adjust.map(t=>{if(!t.perModel)return t;const {perModel,...rest}=t;
+      if(!p.exposureColumns)return {...rest,column:perModel[0]!};
+      const family=held.filter(c=>shiftless(c)===shiftless(t.column)&&/_[+-]?\d+d$/.test(c));
+      return {...rest,perModel:p.exposureColumns.map((_c,k)=>perModel[k]??family[k]??t.column)};});})));
   optionalElement('#reg-exposure-as')?.addEventListener('change',e=>reg(p=>{p.exposure={column:p.exposure.column,as:control(e).value as 'numeric'};}));
   optionalElement('#reg-exposure-reference')?.addEventListener('change',e=>reg(p=>{p.exposure={...p.exposure,reference:control(e).value};}));
   // A COLUMN OF NUMBERS IS ADDED AS NUMERIC, as R treats a numeric column; anything else as categorical. Changed by a
@@ -4254,6 +4278,18 @@ function renderInspector(){
     reg(p=>{if(column&&!p.adjust.some(t=>t.column===column))p.adjust=[...p.adjust,{column,as}];});});
   document.querySelectorAll<HTMLSelectElement>('[data-reg-adjust-kind]').forEach(el=>el.addEventListener('change',()=>reg(p=>{
     p.adjust=p.adjust.map(t=>t.column===el.dataset.regAdjustKind?{column:t.column,as:el.value as 'numeric'}:t);})));
+  // FOLLOWING THE SHIFT, pre-filled in Relate's order: the columns that share this one's name without its shift, the
+  // k-th for model k. Each is a choice in view, and can be changed.
+  document.querySelectorAll<HTMLInputElement>('[data-reg-follow]').forEach(el=>el.addEventListener('change',()=>reg(p=>{
+    const column=required(el.dataset.regFollow),models=p.exposureColumns??[];
+    const held=Object.keys(upstreamKeyValues(n)??{}),base=column.replace(/_[+-]?\d+d$/,'');
+    const family=held.filter(c=>c.replace(/_[+-]?\d+d$/,'')===base&&/_[+-]?\d+d$/.test(c));
+    p.adjust=p.adjust.map(t=>{if(t.column!==column)return t;const {perModel:_,...rest}=t;
+      return el.checked?{...rest,perModel:models.map((_m,k)=>family[k]??column)}:rest;});})));
+  document.querySelectorAll<HTMLSelectElement>('[data-reg-follow-column]').forEach(el=>el.addEventListener('change',()=>reg(p=>{
+    const k=Number(el.dataset.regFollowModel);
+    p.adjust=p.adjust.map(t=>{if(t.column!==el.dataset.regFollowColumn||!t.perModel)return t;
+      const perModel=[...t.perModel];perModel[k]=el.value;return {...t,column:perModel[0]!,perModel};});})));
   document.querySelectorAll<HTMLButtonElement>('[data-reg-adjust-remove]').forEach(el=>el.addEventListener('click',()=>reg(p=>{
     p.adjust=p.adjust.filter(t=>t.column!==el.dataset.regAdjustRemove);})));
   document.querySelectorAll<HTMLSelectElement>('[id^="reg-strata"]').forEach(el=>el.addEventListener('change',()=>reg(p=>{

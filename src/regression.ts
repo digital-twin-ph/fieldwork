@@ -13,7 +13,9 @@ import {kernel} from './kernel.js';
 
 export type Family='logistic'|'poisson';
 export type TermKind='numeric'|'categorical'|'spline';
-export interface Term {column:string; as:TermKind; reference?:string; df?:number}
+export interface Term {column:string; as:TermKind; reference?:string; df?:number;
+  /** One column per model when this adjustment follows the shift (experiment 185); see `modelParams`. */
+  perModel?:string[]}
 export interface RegressionSpec {
   family:Family;
   outcome:string;
@@ -369,11 +371,14 @@ export function fitEachExposure(rows:Row[],params:RegressionParams,shifts?:Recor
   if(empty>=0)throw new Error(`Exposure column ${empty+1} is not chosen.`);
   const twice=columns.find((c,i)=>columns.indexOf(c)!==i);
   if(twice)throw new Error(`"${twice}" is listed twice as an exposure.`);
-  const models=columns.map((column):ModelRow=>{
+  const following=(params.adjust??[]).find(t=>t.perModel&&t.perModel.length!==columns.length);
+  if(following)throw new Error(`"${following.column}" follows the shift, so it needs one column for each of the `
+    +`${columns.length} models; it has ${following.perModel!.length}.`);
+  const models=columns.map((column,k):ModelRow=>{
     const shiftDays=shifts?.[column];
     const at=shiftDays===undefined?{}:{shiftDays};
     try{
-      const fitted=fitRegression(rows,specFrom({...params,exposure:{...params.exposure,column},exposureColumns:[column]}));
+      const fitted=fitRegression(rows,specFrom(modelParams(params,k)));
       return {column,result:measure?{...fitted,measure}:fitted,reason:null,...at};
     }catch(error){return {column,result:null,reason:error instanceof Error?error.message:String(error),...at};}
   });
@@ -381,6 +386,16 @@ export function fitEachExposure(rows:Row[],params:RegressionParams,shifts?:Recor
     +models.map(m=>`${m.column} (${m.reason})`).join('; '));
   return models;
 }
+
+/** MODEL k's OWN SETTINGS: the k-th exposure column, and the k-th column of every adjustment that follows the shift.
+ *  Everything else is the same in every model. */
+export function modelParams(params:RegressionParams,k:number):RegressionParams{
+  const column=exposureColumnsOf(params)[k]!;
+  return {...params,exposure:{...params.exposure,column},exposureColumns:[column],
+    adjust:(params.adjust??[]).map(({perModel,...t})=>perModel?{...t,column:perModel[k]!}:t)};
+}
+/** A shift column's name without its shift: `precip_total_semana_-14d` is `precip_total_semana`. */
+const unshifted=(column:string)=>column.replace(/_[+-]?\d+d$/,'');
 
 /** THE MODELS AS ONE LONG TABLE: a row per model, term and statistic, with the exposure column as a key, the shift as
  *  a number where Relate recorded one, and whether the term is the model's exposure or something it is adjusted for.
@@ -414,7 +429,11 @@ export function regressionsSentence(models:ModelRow[],params:RegressionParams):s
   const round=(v:number)=>v>=100?v.toFixed(0):v>=10?v.toFixed(1):v.toFixed(3);
   const first=models.find(m=>m.result)!.result!;
   const model=params.family==='logistic'?'logistic regressions':'Poisson regressions';
-  const adjusted=first.adjustedFor.length?`, each adjusted for ${first.adjustedFor.join(', ')}`:', each unadjusted';
+  // AN ADJUSTMENT THAT FOLLOWS THE SHIFT is named once, as the column without its shift, "at its own shift".
+  const firstFitted=models.findIndex(m=>m.result);
+  const followed=new Map((params.adjust??[]).filter(t=>t.perModel).map(t=>[t.perModel![firstFitted]!,t]));
+  const named=first.adjustedFor.map(c=>followed.has(c)?`${unshifted(c)} at its own shift`:c);
+  const adjusted=named.length?`, each adjusted for ${named.join(', ')}`:', each unadjusted';
   const fitted=models.filter(m=>m.result).map(m=>{const r=m.result!,e=r.estimates[0]!;
     return `${m.column}: ${round(e.ratio)} (${round(e.lower)} to ${round(e.upper)}) for ${e.term}, `
       +`${r.rows.used.toLocaleString('en')} rows${r.rows.leftOut?`, ${r.rows.leftOut.toLocaleString('en')} left out`:''}`;});
@@ -432,8 +451,7 @@ export function regressionsReceipt(node:{id:string},models:ModelRow[],params:Reg
   const blocks=models.flatMap((m,i)=>{
     if(!m.result)return [];
     const entity=`<urn:fieldwork:run:${runId}:output:${node.id}:model:${i+1}>`;
-    const {lines,estimates}=modelFacts(entity,m.result,{...params,exposure:{...params.exposure,column:m.column}},
-      runId,sourceNodeId,designDeclared);
+    const {lines,estimates}=modelFacts(entity,m.result,modelParams(params,i),runId,sourceNodeId,designDeclared);
     return [lines.join(';\n  ')+'.\n'+estimates];
   });
   const facts=PREFIXES+blocks.join('\n')+'\n';

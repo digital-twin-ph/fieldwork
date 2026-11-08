@@ -3,6 +3,20 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.49.0 — 2026-11-07
+
+- **The Brazil lag workflows use one Relate and one Regression** ([185](docs/experiments/185-one-step-for-every-lag.md),
+  stage 3). The 2024 workflow has 14 steps instead of 31, and 2010–2025 has 18 instead of 43. Every model gives the
+  same estimates as the separate models it replaced. The lag chart's horizontal axis is now the shift in days.
+- **An adjusted variable can follow the shift.** With several models, tick *follows the shift* under an adjusted
+  variable, and each model is adjusted for its own column: the rain at its own lag beside the temperature at that lag.
+  One column per model, filled in Relate's order and each changeable. Regression 0.5.0.
+- **A chart after a several-model Regression is offered its columns**, shift_days among them, before a run.
+- **A second Relate with several shifts keeps the first one's shifts.** It replaced them, so the models lost their
+  shift_days and the run failed. Relate 0.8.2.
+- **Not yet checked:** the live MODIS run, so the 2010–2025 figures recorded in experiment 182 are not yet reproduced
+  by the rebuilt workflow; and no Validation Lab check covers the several-model table.
+
 ## 0.48.0 — 2026-11-07
 
 - **Regression fits one model per exposure column** ([185](docs/experiments/185-one-step-for-every-lag.md), stage 2).

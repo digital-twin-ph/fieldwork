@@ -544,4 +544,7 @@ test('several shifts bring one column each, keep every row, and count what is em
   assert.throws(()=>relateAtShifts(cases,rain,request,[-3.5]),/whole number of days/);
   assert.throws(()=>relateAtShifts(cases,rain,request,Array.from({length:MAX_SHIFTS+1},(_,i)=>-i)),/At most/);
   assert.throws(()=>relateAtShifts(cases,rain,{on:'municipio',bring:'precip_total_semana'},[0,-7]),/matched to a period/);
+  // A SECOND RELATE ON THE FIRST'S TABLE keeps the first's shifts beside its own.
+  const again=relateAtShifts(table,{...rain,valueField:'rain2'},{...request,bring:'rain2'},[0,-7]);
+  assert.deepEqual(again.table.columnShifts,{...table.columnShifts,'rain2_0d':0,'rain2_-7d':-7});
 });

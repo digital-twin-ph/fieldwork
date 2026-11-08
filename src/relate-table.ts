@@ -484,7 +484,9 @@ export function relateAtShifts(left:DataTable,right:DataTable,request:RelateRequ
   const keys=[...left.keys,...columns.map(c=>c.column)];
   const rows=left.rows.map((row,i)=>({...row,key:{...row.key,...Object.fromEntries(columns.map((c,j)=>[c.column,values[j]![i]!]))}}));
   return {table:{...left,keys,rows,rowCount:rows.length,
-    columnShifts:Object.fromEntries(columns.map(c=>[c.column,c.shiftDays]))},columns};
+    // A RELATE AFTER A RELATE keeps the first one's shifts: the rain's beside the temperature's (found 2026-11-07,
+    // when the second replaced the first's and the models lost their shift).
+    columnShifts:{...left.columnShifts,...Object.fromEntries(columns.map(c=>[c.column,c.shiftDays]))}},columns};
 }
 
 export function relateShape(left:DataTable,right:DataTable,request:RelateRequest):RelateShape {

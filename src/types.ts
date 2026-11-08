@@ -253,7 +253,9 @@ export interface ParamsByType {
     /** ONE MODEL PER COLUMN (experiment 185): two or more exposure columns, the first being `exposure.column`, each
      *  entered as `exposure` says and fitted on its own rows. Absent or one column: the single model. */
     exposureColumns?:string[];
-    adjust:{column:string;as:'numeric'|'categorical'|'spline';reference?:string;df?:number}[];
+    /** `perModel` (experiment 185): with several exposure columns, this variable FOLLOWS THE SHIFT, and model k is
+     *  adjusted for `perModel[k]` in its place; `column` is then `perModel[0]`. */
+    adjust:{column:string;as:'numeric'|'categorical'|'spline';reference?:string;df?:number;perModel?:string[]}[];
     /** One strata column, or several taken together (experiment 182). */
     strata?:string|string[];offset?:string;errors:'wald'|'profile'|'overdispersed'|'hac';hacLag?:number;order?:string;level?:number};
   append_rows:{label:string;nameSource?:boolean;sourceColumn?:string;firstLabel?:string;secondLabel?:string;newKey?:string;

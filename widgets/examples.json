@@ -439,7 +439,7 @@
       "id": "urn:fieldwork:example:brazil-dengue-rj-2024",
       "title": "Dengue in Rio de Janeiro state, Brazil, 2024",
       "repository": "https://github.com/digital-twin-ph/example-2024-brazil-dengue",
-      "commit": "ef5731218f9bc81f04b918fe69e57fdf2fb5c3a4",
+      "commit": "2540889a61c59e933c573dc848ebb182fa0b7185",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2024-brazil-dengue",
       "licence": {
         "data": "CC-BY-4.0",
@@ -473,8 +473,8 @@
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "20bbdc9bbdae3f42f5a09d24ae6d2ed0de6b76155395f0170eb0f85aaec9011e",
-          "bytes": 1817837
+          "sha256": "852df653ee136b12e011bf93a84d86cbeb5bb0d2321648e760717cd7eceffede",
+          "bytes": 1683799
         },
         {
           "path": "data/dengue-rj-2010-2025.csv",
@@ -513,8 +513,8 @@
         },
         {
           "path": "manual.json",
-          "sha256": "a77a89f7e08aa8aed37125a9d51ef2794a669b3cb6ebae49d5ef8567314455a7",
-          "bytes": 123192
+          "sha256": "0be86dfac72b63a1835ba3d30e2ee52c002eca93773262ea75caff44ef2432db",
+          "bytes": 65667
         },
         {
           "path": "notes/what-aedes-mosquitoes-meet.md",

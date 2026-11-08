@@ -2,14 +2,17 @@
 
 _Created 2026-11-07 · Updated 2026-11-07_
 
-**Status:** asked, two of three stages built. Corrected 2026-11-07: this line said nothing was built after stage 1
-had landed. Not `tried` until the Brazil workflows are rebuilt and their manuals play back.
+**Status:** tried. Relate takes a list of shifts, Regression fits one model per column, and the fourth and fifth
+Brazil workflows are rebuilt with them; their manual plays back from an empty canvas (2026-11-07, Fieldwork 0.49.0,
+Chromium). Not `validated`: every model equals the separate models' on the playback's synthetic satellite files, not
+yet on the live MODIS files or against a Validation Lab check of the new table (below).
 
 | Stage | What | State, 2026-11-07 |
 | --- | --- | --- |
 | 1 | Relate takes a list of shifts, one column each, every row kept (`relateAtShifts`, at most 24) | Built (45f4f42), and settable in Relate's dialog since 0.47.0 |
 | 2 | Regression fits one model per exposure column, each on its own rows, in one table | Built, 0.48.0 (Regression 0.4.0) |
-| 3 | Brazil W4 and W5 rebuilt with one Relate and one Regression; manuals; checks 36 and 37; the 182 figures; a measured limit | Not started |
+| 3 | Brazil W4 and W5 rebuilt; an adjustment that follows the shift for W5 | Built, 0.49.0 (Regression 0.5.0, Relate 0.8.2); example commit 2540889 |
+| — | Live MODIS figures of 182; a Validation Lab check of the several-model table; a measured shift limit | Not done |
 
 ## Stage 2, as built
 
@@ -32,6 +35,50 @@ had landed. Not `tried` until the Brazil workflows are rebuilt and their manuals
 the single shift's columns (the brought column and the period helpers), which the run does not make, and not the
 shift columns it does. So no Inspector downstream of a several-shift Relate could offer a shift column. Stage 1's tests
 checked the run and not what the next step is offered. Fixed in Relate 0.8.1; found by the stage 2 browser check.
+
+**Found at the start of stage 3, 2026-11-07: the design does not fit the fifth workflow.** Each of its seven models
+is adjusted for **rainfall at the same lag**: the model of the temperature 2 weeks before is adjusted for the rain 2
+weeks before (`precip_total_semana` brought by its own Relate at −14 days), and so on. Stage 2 swaps only the
+exposure; every model keeps the same adjustment. So W4 can be rebuilt as designed and W5 cannot, without fitting a
+different model from the one 182 recorded. Not noticed when 185 was written: the step count was read off the canvas,
+not the models' settings.
+
+Proposed the same day, and built after the practitioner's *"Let's do as you recommend"*: an adjustment variable may
+**follow the shift**, given as a list beside the exposure columns, so
+model *k* is adjusted for the *k*-th rain column. A second Relate with the rain shifts brings that list. Whether this
+is explainable in one Inspector sentence (*"each model is adjusted for the rain at its own lag"*) is the test 185's
+`retired` clause sets.
+
+## Stage 3, as built and measured, 2026-11-07
+
+| Workflow | Nodes before | Nodes after | Manual steps before | after |
+| --- | --- | --- | --- | --- |
+| 4, 2024 | 31 | 14 | 343 | 136 |
+| 5, 2010–2025 | 43 | 18 | 502 | 216 |
+
+Both 185's estimates, about 8 and about 10 nodes, were low: inputs, sources, satellite steps and the table output were
+not counted. W5 has two Relates, temperature and rain, each with seven shifts.
+
+**Every model equals the separate models' it replaced**, played back from an empty canvas in Chromium with the
+synthetic satellite files the playback serves (`tests/brazil-dengue-from-scratch.browser.mjs`), old manual against new:
+
+- W5: all 28 exposure values (rate ratio, both limits and p for each of seven models) equal as printed to full
+  precision; rows used and dispersions equal.
+- W4: the seven rate ratios, limits, rows used and dispersions equal to the digits printed; the first model's 40
+  values, every term, equal to full precision. The table view shows 40 rows, so the other six models' adjustment
+  terms were not read.
+
+**Two defects found by rebuilding**, both fixed, neither caught by stage 1 or 2's tests:
+
+1. **The chart was not offered `shift_days`.** A second place in the Inspector code declares each widget's output
+   columns, and still said Regression's were term and statistic. Both now read one function.
+2. **A second several-shift Relate dropped the first's shifts**: the rain Relate replaced the table's record of the
+   temperature's shifts with its own, so the run had no `shift_days` while the Inspector, reading the columns' names,
+   offered it. The run failed, naming the column. Relate 0.8.2 keeps both; a test chains two.
+
+**Not checked:** the live MODIS run of 182 (`BRAZIL_SATELLITE_LIVE`, about two hours), so 182's recorded 2010–2025
+figures are not yet reproduced by the rebuilt workflow. Check 36 tests the Append rows chain the workflows no longer
+use; check 37 tests the stratified fit and is unaffected. No Validation Lab check covers the several-model table.
 
 **Open for stage 3:** the lag chart today reads Append rows' `lag` column, in weeks before (0, 2, 4…). The models'
 `shift_days` is the shift as Relate recorded it (3, −11, −25… in W4), in days and with the opposite sign. Whether the

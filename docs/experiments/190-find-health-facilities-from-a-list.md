@@ -70,6 +70,18 @@ v1.0, Nigeria v4.0, DR Congo v9.0, Zambia v01 (beta). Only Sierra Leone's fields
 and recorded when it is added. **The test that holds this:** the matcher runs against a second, made-up catalogue entry
 whose fields and type words differ from Sierra Leone's, and gives the same marks it would from the real one.
 
+**In the ontology before it is built.** The practitioner, 2026-11-08: *"We should record this in our underlying ontology
+so it becomes system knowledge."* Declared in `ontology/fieldwork.ttl`, 2026-11-08: `fw:FacilityRegister` (a
+`dcat:Dataset`, its type words its own), `fw:FacilityListMatching` (a `prov:Activity`, and said in its definition not
+to be deduplication or a key join), the closed vocabulary `fw:FacilityMatchOutcome` of six (`owl:oneOf`: matched
+exactly, allowing for spelling, type differs, ambiguous, an area not a facility, not found), and on each point
+`fw:matchOutcome` (functional: one per row), `fw:matchedRegister`, `fw:registerFacilityName`, `fw:registerFacilityId`,
+`fw:nameMatchScore` and `fw:positionIsRegisters`; on the step, `fw:areaNameMarkers`. The shapes conform. When the
+widget is built, its release declares these as the terms it asserts, and the coupling check holds the two together.
+
+**Found while declaring them:** `fw:matchedName`, a deduplication property, is declared with a decimal range though its
+name says a name. Not changed here; the new property is `fw:registerFacilityName` so as not to inherit it.
+
 ## The design audit
 
 **D1, what it is.** Decomposed: fetch a facility list (exists: this widget's three sources), match names (exists once:

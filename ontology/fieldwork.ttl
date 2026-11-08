@@ -1370,6 +1370,49 @@ fw:nameComparable a owl:DatatypeProperty; rdfs:range xsd:boolean;
 fw:decisionReason a owl:DatatypeProperty; rdfs:range xsd:string.
 
 # ---------------------------------------------------------------------------
+# FACILITIES FOUND FROM A LIST (experiment 190). A list of facility names, such as a line list's organisation units,
+# matched to a national facility register to give each row the register's position. Declared before the build so the
+# distinctions are system knowledge, not only code: the practitioner, 2026-11-08, "We should record this in our
+# underlying ontology so it becomes system knowledge." Nothing here is one country's: a register is a catalogue entry.
+# ---------------------------------------------------------------------------
+fw:FacilityRegister a owl:Class; rdfs:subClassOf dcat:Dataset;
+  rdfs:label "Facility register";
+  rdfs:comment "A national list of health facilities with positions, such as GRID3's Sierra Leone Health Facilities v1.0. Read from a catalogue entry that states where it is served, which of its fields hold the name, type, district, identifier and coordinates, and its licence and citation. Its type words are its own: a name's type is read against the register's types, never against a fixed list.".
+fw:FacilityListMatching a owl:Class; rdfs:subClassOf prov:Activity;
+  rdfs:label "Facility list matching";
+  rdfs:comment "Matching each row of a list to one facility of a register by its name, a register at a time, in a stated order. Not deduplication, which asks whether two records in two layers are one thing, and not a key join, which compares keys exactly or folded: a name and a facility type are compared apart, a bracketed qualifier is kept to tell two names apart, and a name can be an area. No row is dropped.".
+fw:FacilityMatchOutcome a owl:Class;
+  rdfs:label "Facility match outcome";
+  rdfs:comment "What matching said of one row. Closed: one of six, so no other outcome can be asserted.";
+  owl:oneOf (fw:MatchedExactly fw:MatchedAllowingForSpelling fw:TypeDiffers fw:AmbiguousMatch fw:AreaNotFacility fw:NotFoundInRegister).
+fw:MatchedExactly a fw:FacilityMatchOutcome; rdfs:label "matched exactly";
+  rdfs:comment "The name, folded for case and punctuation, is one facility's.".
+fw:MatchedAllowingForSpelling a fw:FacilityMatchOutcome; rdfs:label "matched allowing for spelling";
+  rdfs:comment "One facility's name within the stated tolerance, and of the same type. A candidate, scored, not a fact.".
+fw:TypeDiffers a fw:FacilityMatchOutcome; rdfs:label "type differs";
+  rdfs:comment "The name matches and the facility type does not, as MCHP against CHP: an upgraded facility, or another one. Not a match: held for review and given no position.".
+fw:AmbiguousMatch a fw:FacilityMatchOutcome; rdfs:label "ambiguous";
+  rdfs:comment "Several facilities could be the one named. The candidates are listed and the practitioner's choice is recorded; until then the row has no position.".
+fw:AreaNotFacility a fw:FacilityMatchOutcome; rdfs:label "an area, not a facility";
+  rdfs:comment "The name is a reporting unit for an area, as a chiefdom's community reporting, by the words the step was given. It has no point, and is said rather than dropped.".
+fw:NotFoundInRegister a fw:FacilityMatchOutcome; rdfs:label "not found";
+  rdfs:comment "In none of the registers matched against.".
+fw:matchOutcome a owl:ObjectProperty, owl:FunctionalProperty; rdfs:range fw:FacilityMatchOutcome;
+  rdfs:comment "The one outcome of matching a row.".
+fw:matchedRegister a owl:ObjectProperty; rdfs:range fw:FacilityRegister;
+  rdfs:comment "The register whose facility the row matched.".
+fw:registerFacilityName a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:comment "The facility's name as the register writes it, beside the name the list wrote.".
+fw:registerFacilityId a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:comment "The facility's identifier in the register, such as its DHIS2 identifier where the register carries one.".
+fw:nameMatchScore a owl:DatatypeProperty; rdfs:range xsd:decimal;
+  rdfs:comment "The Jaro-Winkler similarity of the two folded names, 1 for an exact match.".
+fw:areaNameMarkers a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:comment "The words a step was given that mark a name as an area, not a facility. A setting, pre-filled from a register's catalogue entry; never fixed in code.".
+fw:positionIsRegisters a owl:DatatypeProperty; rdfs:range xsd:boolean;
+  rdfs:comment "True on every point matching gives: the position is where the register places the facility, not where a person on the list lived or was found.".
+
+# ---------------------------------------------------------------------------
 # CAPS. Every magnitude in this application that can refuse a practitioner's work, as a term
 # rather than as a constant with a comment. The practitioner, 2026-10-22, having met six of them
 # one at a time over two days: "Caps should also be queryable in the ontology and receipts."

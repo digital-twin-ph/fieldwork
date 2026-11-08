@@ -1439,7 +1439,7 @@ fw:Grid3SierraLeoneHealthFacilitiesV1 a fw:FacilityRegister;
   dcterms:license <https://creativecommons.org/licenses/by/4.0/>; fw:countryCode "SLE";
   dcat:accessURL <https://services3.arcgis.com/BU6Aadhn6tbBEdyk/arcgis/rest/services/sle_htlfac_grid3_v01/FeatureServer/0>;
   fw:registerRecordCount 1616; fw:registerReadOn "2026-11-08"^^xsd:date; fw:registerReadable true;
-  fw:nameField "fac_name"; fw:alternateNameField "facility"; fw:typeField "type"; fw:areaField "district";
+  fw:nameField "facility"; fw:alternateNameField "fac_name"; fw:typeField "type"; fw:areaField "district";
   fw:identifierField "dhis2_id"; fw:latitudeField "lat"; fw:longitudeField "long";
   rdfs:comment "Every facility carries a DHIS2 identifier; 1,561 of 1,616 have coordinates. Its spatial data were matched to the ministry's 2020 master facility list.".
 fw:Grid3NigeriaHealthFacilitiesV4 a fw:FacilityRegister;

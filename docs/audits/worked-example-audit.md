@@ -83,8 +83,8 @@ evidence about that example.
 | `table_input` | 11 | brazil-dengue-rj-2024, nigeria-immunization-2024, nyc-asthma-ozone-2016-2025, oswego-1940, rulesets, salmonella-germany-2021, sea-level, snow-extent, snow-isochrone, snow-voronoi, south-london-1854 |
 | `chart_output` | 8 | brazil-dengue-rj-2024, hagelloch, nyc-asthma-ozone-2016-2025, old-naledi, snow-extent, snow-isochrone, snow-voronoi, south-london-1854 |
 | `apply_ruleset` | 6 | heat, nigeria-immunization-2024, old-naledi, rulesets, sea-level, snow-extent |
+| `case_series` | 5 | brazil-dengue-rj-2024, hagelloch, snow-extent, snow-isochrone, snow-voronoi |
 | `select_rows` | 5 | brazil-dengue-rj-2024, nigeria-immunization-2024, nyc-asthma-ozone-2016-2025, salmonella-germany-2021, south-london-1854 |
-| `case_series` | 4 | hagelloch, snow-extent, snow-isochrone, snow-voronoi |
 | `group_table` | 3 | brazil-dengue-rj-2024, nyc-asthma-ozone-2016-2025, south-london-1854 |
 | `join_table_to_area` | 3 | brazil-dengue-rj-2024, nigeria-immunization-2024, south-london-1854 |
 | `regression` | 3 | brazil-dengue-rj-2024, nyc-asthma-ozone-2016-2025, salmonella-germany-2021 |

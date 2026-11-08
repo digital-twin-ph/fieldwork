@@ -2,7 +2,7 @@
 
 _Created 2026-11-07 · Updated 2026-11-08_
 
-**Status:** asked, three of five stages built (Fieldwork 0.52.0, 2026-11-08). Not `tried` until the Nigeria and South
+**Status:** asked, four of five stages built (stage 4 in Fieldwork 0.54.0, 2026-11-08). Not `tried` until the Nigeria and South
 London workflows are rebuilt with Apply ruleset and their manuals play back.
 
 | Stage | What | State |
@@ -10,7 +10,7 @@ London workflows are rebuilt with Apply ruleset and their manuals play back.
 | 1 | The authored tree evaluated directly; a conclusion can be a computed value | Built |
 | 2 | A wide table read as one record per subject; computed values folded back as Derive a value adds them | Built |
 | 3 | The dialog: computed conclusions, a rule for every record, a live Before and After | Built |
-| 4 | Sort, and rules between rows | Not started |
+| 4 | Sort, and rules between rows | Built |
 | 5 | Rebuild Nigeria and South London; the synthetic repository's workflows; retire Derive a value | Not started |
 
 ## The question
@@ -154,9 +154,45 @@ for the first 50 records, the counts of all of them. Read on the synthetic distr
    bound to one as a number read every value as unreadable. A wide import is now read as numbers per subject, which
    is the case 188 needed; a long table whose numbers sit in key columns is not.
 2. **Apply ruleset had no manual page.** Written.
-3. **The preview sits under the rules**, so with several rules it is out of view while a rule is edited. Not changed;
-   whether it belongs beside the rules is open.
+3. **The preview sits under the rules**, so with several rules it is out of view while a rule is edited. The
+   practitioner, 2026-11-08, asked whether it should stay under the rules or sit beside them: *"Under rules"*.
 4. **50 rows drawn is a chosen number**, not measured.
+
+## Stage 4, as built, 2026-11-08
+
+**A rule can read the previous row.** Either side of a computed value can be a column *in the previous row*: *new
+cases* is *cumulative_cases* minus *cumulative_cases in the previous row*. Evaluated directly, in the step's order, so
+the previous row's computed values can be read too.
+
+**The sort is inside the step**, above the rules: *Sort by* a column, dates offered first; *Within each*, the columns
+that say whose rows these are, ticked for every column that is not a date or a number the rules read; and *The
+previous row is* the row recorded before, or the day, week or month before. A rule reading the previous row does not
+run until a column is chosen, and the dialog says why. The preview is then Before, Sorted and After, and the table
+comes out sorted.
+
+**Every case in the synthetic file, under both meanings, as worked by hand.** `data/cumulative-cases-by-week.csv`,
+40 rows out of date order, against `expected/new-cases.csv` (`tests/rules-previous-row.test.mjs`): the sorted rows,
+new cases for every row under *the row recorded before* and under *the week before*, and the reason for every row
+that is not plain.
+
+| Case | What the step does | Rows |
+| --- | --- | --- |
+| The first week of a place | No value: *the first of their place* | 4 |
+| East has no row for 3 February | Under *the week before*, 10 February has no value: *no row for the previous week*. Under *the row recorded before*, it reads 27 January | 1 |
+| South's count falls at week 7 | −2, kept as computed, and named: *fell below the previous row* | 1 |
+| West has 27 January twice | Both rows, and every later West row, have no value: no single previous row | 2 + 6 |
+
+The run's method names each, by place and week. The month before 31 March is 28 February, not 3 March. The dialog was
+built and read in Chromium (`tests/rules-previous-row.browser.mjs`); WebKit runs in CI.
+
+**Found while building it:**
+
+1. **"Previous week" needs a date column.** On any other column it is refused with what to choose instead; the
+   previous row recorded works on any column.
+2. **A wide table is not sorted.** Its records are subjects, and a rule between them has not been asked for; the
+   sort applies to a long table's rows and to points.
+3. **Within each offers every other column**, the count column among them. Ticking a number would group by it, which
+   no one is likely to want; it is offered rather than hidden, and not ticked.
 
 ## A use on real data, from 185
 

@@ -3,6 +3,19 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.54.0 — 2026-11-08
+
+- **A rule can read the previous row** ([188](docs/experiments/188-rules-that-compute-and-show-their-table.md)).
+  In Apply ruleset's dialog, either side of a computed value can be a column *in the previous row*: new cases are a
+  cumulative count minus the count in the previous row. Apply ruleset 0.4.0.
+- **The rows are sorted inside the step**, above the rules: by a column, dates first, within each place or group, and
+  the previous row is the row recorded before, or the day, week or month before. The file's own order is never used.
+  The preview shows Before, Sorted and After.
+- **What has no single previous row is said:** the first row of a place, a missing week, and a week recorded twice
+  give no value and are named. A count that falls is kept and named.
+- **Not yet:** rebuilding the Nigeria and South London workflows with Apply ruleset, the synthetic repository's
+  workflows, and retiring Derive a value.
+
 ## 0.53.0 — 2026-11-08
 
 - **Select rows by value is on the standard Inspector and configuration dialog**

@@ -19,8 +19,8 @@
 import type {ParamsByType} from './types.js';
 import type {Escape} from './types.js';
 import {compileAuthoredRuleset,compiledRuleCount,RULE_CEILING,authoredUnitProblems,settingNamed,isComputed,computesValues,
-  COMPUTE_OPERATORS,type Operand} from './authored-rules.js';
-import {evaluateAuthored,OPERATOR_WORDS,localName,type Evaluation} from './rule-evaluation.js';
+  COMPUTE_OPERATORS,readsPrevious,readsPreviousRows,type Operand,type AuthoredOrder} from './authored-rules.js';
+import {evaluateAuthored,OPERATOR_WORDS,localName,type Evaluation,type NoPrevious} from './rule-evaluation.js';
 import type {SubjectRecord} from './authored-application.js';
 
 type Authored=NonNullable<ParamsByType['apply_ruleset']['authored']>;
@@ -100,7 +100,11 @@ const asksPresence=(predicate:string,fields:Field[])=>
 const blankCondition=(fields:Field[]):Authored['rules'][number]['any'][number]['all'][number]=>
   ({field:readable(fields)[0]?.predicate??'fwa:field',comparator:'equals',value:''});
 
-export interface RuleEditorResult {rules:Authored['rules']}
+export interface RuleEditorResult {rules:Authored['rules']; order?:AuthoredOrder}
+const PREVIOUS_WORDS:Record<AuthoredOrder['previous'],string>={row:'the row recorded before',day:'the day before',
+  week:'the week before',month:'the month before'};
+const NO_PREVIOUS_WORDS:Record<NoPrevious,string>={'first':'first of its group','period-missing':'no row for the period before',
+  'repeated':'recorded twice','after-repeated':'after a value recorded twice','unordered':'nothing to sort it by'};
 
 /** Opening a PUBLISHED ruleset, to read rather than to change.
  *
@@ -145,6 +149,8 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
     // Edited on a copy. A practitioner who closes without keeping leaves the step as it was, and
     // one who keeps gets a single change that Undo reverses in one step.
     let rules:Authored['rules']=JSON.parse(JSON.stringify(authored.rules));
+    // THE SORT, inside the step that needs it (experiment 188, stage 4): no Sort step on the canvas.
+    let order:AuthoredOrder|undefined=authored.order?structuredClone(authored.order):undefined;
     const fields=authored.fields,choices=readable(fields);
     const kindOf=(predicate:string)=>choices.find(c=>c.predicate===predicate)?.kind??'term';
     const settings=authored.parameters??[];
@@ -240,7 +246,7 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
       .map(([k,v])=>[k,Number(v)]));
     const evaluate=():Evaluation|null=>{
       if(!options?.preview?.records.length)return null;
-      try{return evaluateAuthored(options.preview.records,fields as never,rules as never,numericSettings);}catch{return null;}
+      try{return evaluateAuthored(options.preview.records,fields as never,rules as never,numericSettings,order);}catch{return null;}
     };
     const computedColumns=()=>rules.flatMap(rule=>rule.then.filter(isComputed)
       .map(c=>({predicate:c.predicate,label:c.column?.trim()||localName(c.predicate)})));
@@ -248,15 +254,19 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
       const numbers=choices.filter(c=>c.kind==='number');
       const own=rules[r]!.then[t]!.predicate;
       const others=computedColumns().filter(c=>c.predicate!==own);
-      const chosen=typeof operand==='object'&&'field' in operand?operand.field:'';
+      const chosen=typeof operand==='object'&&'field' in operand?(readsPrevious(operand)?`previous:${operand.field}`:operand.field):'';
       return `<select data-rule="${r}" data-then="${t}" data-part="${side}-source" aria-label="${side==='left'?'First':'Second'} value">`
         +`<option value="" ${chosen?'':'selected'}>a number</option>`
         +numbers.map(c=>`<option value="${esc(c.predicate)}" ${c.predicate===chosen?'selected':''}>${esc(c.label)}</option>`).join('')
         +others.map(c=>`<option value="${esc(c.predicate)}" ${c.predicate===chosen?'selected':''}>${esc(c.label)}</option>`).join('')
+        // A COLUMN IN THE PREVIOUS ROW, for a value between rows: new cases from a cumulative count.
+        +numbers.map(c=>`<option value="previous:${esc(c.predicate)}" ${`previous:${c.predicate}`===chosen?'selected':''}>${esc(c.label)} in the previous row</option>`).join('')
         +`</select>`
         +(chosen?'':`<input data-rule="${r}" data-then="${t}" data-part="${side}-number" aria-label="${side==='left'?'First':'Second'} number" value="${esc(typeof operand==='number'?String(operand):'')}" placeholder="a number">`);
     };
     const computedProblem=():string=>{
+      if(readsPreviousRows({rules:rules as never})&&!order?.by)
+        return 'A rule reads the previous row, so the records need an order: choose the column to sort them by, above the rules.';
       const attributes=new Set(fields.map(f=>f.attribute));
       const names=new Set<string>();
       for(const [r,rule] of rules.entries())for(const c of rule.then){
@@ -273,6 +283,33 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
       return '';
     };
     const cell=(v:unknown)=>v===null||v===undefined?'':typeof v==='number'?String(v):String(v);
+    // THE COLUMNS THAT CAN ORDER THE RECORDS, dates first, because a cumulative count accumulates over time.
+    const sortColumns=()=>{
+      const columns=options?.preview?.columns??fields.map(f=>f.attribute);
+      const records=options?.preview?.records??[];
+      const dated=(c:string)=>records.length>0&&records.every(r=>{const v=r.properties[c];return v===null||v===''||/^\d{4}-\d{2}-\d{2}$/.test(String(v));});
+      return [...columns.filter(dated),...columns.filter(c=>!dated(c))].map(c=>({column:c,date:dated(c)}));
+    };
+    const orderMarkup=()=>{
+      const columns=sortColumns();
+      return `<section class="rule-order"><h3>Before the rules: sort the records</h3>`
+        +`<p class="description">Needed by a rule that reads the previous row. The file's own order is not used.</p>`
+        +`<div class="rule-condition"><label class="field-label" for="rule-order-by">Sort by</label>`
+        +`<select id="rule-order-by" data-order="by"><option value="" ${order?.by?'':'selected'}>Not sorted</option>`
+        +columns.map(c=>`<option value="${esc(c.column)}" ${order?.by===c.column?'selected':''}>${esc(c.column)}${c.date?' (dates)':''}</option>`).join('')
+        +`</select></div>`
+        +(order?.by
+          ?`<fieldset class="rule-order-within"><legend class="field-label">Within each</legend>`
+            +columns.filter(c=>c.column!==order!.by).map(c=>`<label class="check"><input type="checkbox" data-order-within="${esc(c.column)}" ${order!.within.includes(c.column)?'checked':''}> ${esc(c.column)}</label>`).join('')
+            +`</fieldset>`
+            +`<div class="rule-condition"><label class="field-label" for="rule-order-previous">The previous row is</label>`
+            +`<select id="rule-order-previous" data-order="previous">`
+            +(Object.keys(PREVIOUS_WORDS) as AuthoredOrder['previous'][]).map(k=>`<option value="${k}" ${order!.previous===k?'selected':''}>${esc(PREVIOUS_WORDS[k])}</option>`).join('')
+            +`</select></div>`
+            +(order.previous!=='row'?`<p class="description">Where that ${order.previous} has no row, the value is empty, and counted.</p>`:'')
+          :'')
+        +`</section>`;
+    };
     const previewMarkup=()=>{
       const p=options?.preview;
       if(!p?.records.length)return `<section class="rule-live"><h3>Before and after</h3>`
@@ -282,11 +319,18 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
       const before=`<table class="rule-live-table"><thead>${head(p.columns)}</thead><tbody>`
         +shown.map(r=>`<tr>${p.columns.map(c=>`<td>${esc(cell(r.properties[c]))}</td>`).join('')}</tr>`).join('')+`</tbody></table>`;
       if(!evaluation)return `<section class="rule-live"><h3>Before</h3>${before}</section>`;
+      // SORTED, where the step sorts: the same rows in the order the rules read them, and After in that order too.
+      const sortedOrder=evaluation.order?evaluation.sequence.slice(0,PREVIEW_ROWS):null;
+      const sortedTable=sortedOrder?`<table class="rule-live-table"><thead>${head(p.columns)}</thead><tbody>`
+        +sortedOrder.map(i=>`<tr>${p.columns.map(c=>`<td>${esc(cell(p.records[i]!.properties[c]))}</td>`).join('')}</tr>`).join('')+`</tbody></table>`:'';
+      const afterRows=sortedOrder??shown.map((_,i)=>i);
       const added=[...new Set([...computedColumns().map(c=>c.label),...evaluation.records.flatMap(r=>Object.keys(r.values))])];
       const after=`<table class="rule-live-table"><thead>${head([...p.columns,...added,'Rule'])}</thead><tbody>`
-        +shown.map((r,i)=>{const o=evaluation!.records[i]!;
+        +afterRows.map(i=>{const r=p.records[i]!,o=evaluation!.records[i]!;
           const marks=[...o.divisionsByZero.map(c=>`${c}: divided by zero`),...o.missing.map(m=>`${m.column}: no ${m.operands.join(' or ')}`),
-            ...o.conflicts.map(c=>`${c.column}: rules ${c.rules.join(' and ')} disagree`)];
+            ...o.conflicts.map(c=>`${c.column}: rules ${c.rules.join(' and ')} disagree`),
+            ...o.noPrevious.map(x=>`${x.column}: no previous row, ${NO_PREVIOUS_WORDS[x.why]}`),
+            ...o.fell.map(c=>`${c}: fell below the previous row`)];
           return `<tr${o.rules.length?'':' data-unmatched'}>${p.columns.map(c=>`<td>${esc(cell(r.properties[c]))}</td>`).join('')}`
             +added.map(c=>`<td class="rule-new">${esc(cell(o.values[c]))}</td>`).join('')
             +`<td>${o.rules.length?esc(o.rules.map(n=>`Rule ${n}`).join(', ')):'No rule'}${marks.length?`<br><strong>${esc(marks.join('; '))}</strong>`:''}</td></tr>`;}).join('')
@@ -295,15 +339,19 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
       const count=(test:(o:Evaluation['records'][number])=>boolean)=>evaluation!.records.filter(test).length;
       const records=(k:number)=>`${k.toLocaleString('en')} record${k===1?'':'s'}`,has=(k:number)=>k===1?'has':'have';
       const none=count(o=>!o.rules.length),zero=count(o=>o.divisionsByZero.length>0),
-        lacking=count(o=>o.missing.length>0),split=count(o=>o.conflicts.length>0);
+        lacking=count(o=>o.missing.length>0),split=count(o=>o.conflicts.length>0),
+        orphan=count(o=>o.noPrevious.length>0),fell=count(o=>o.fell.length>0);
       const words=[none?`${records(none)} matched no rule.`:'Every record matched a rule.',
         zero?`${records(zero)} ${has(zero)} an empty value, from a division by zero.`:'',
         lacking?`${records(lacking)} ${has(lacking)} no value, because a value to compute from is missing.`:'',
-        split?`${records(split)} ${has(split)} no value, because two rules gave different values.`:''].filter(Boolean);
-      return `<section class="rule-live" aria-live="polite"><h3>Before and after</h3>`
+        split?`${records(split)} ${has(split)} no value, because two rules gave different values.`:'',
+        orphan?`${records(orphan)} ${has(orphan)} no value, because there is no single previous row.`:'',
+        fell?`${records(fell)} fell below the previous row, kept as computed.`:''].filter(Boolean);
+      return `<section class="rule-live" aria-live="polite"><h3>${sortedOrder?'Before, sorted and after':'Before and after'}</h3>`
         +`<p class="rule-live-summary">${esc(`${n.toLocaleString('en')} record${n===1?'':'s'}. `+words.join(' '))}</p>`
         +(n>shown.length?`<p class="description">Showing the first ${shown.length} of ${n.toLocaleString('en')}. The counts are of all of them.</p>`:'')
         +`<h4>Before</h4><div class="rule-live-scroll">${before}</div>`
+        +(sortedOrder?`<h4>Sorted</h4><p class="description">${esc(`By ${evaluation.order!.by}${evaluation.order!.within.length?`, within each ${evaluation.order!.within.join(' and ')}`:''}. The previous row is ${PREVIOUS_WORDS[evaluation.order!.previous]}.`)}</p><div class="rule-live-scroll">${sortedTable}</div>`:'')
         +`<h4>After</h4><div class="rule-live-scroll">${after}</div></section>`;
     };
 
@@ -318,6 +366,10 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
         catch(error){problem=error instanceof Error?error.message:String(error);}
       }
       evaluation=evaluate();
+      if(!problem&&options?.preview?.records.length&&!evaluation&&computesValues({rules:rules as never})){
+        try{evaluateAuthored(options.preview.records,fields as never,rules as never,numericSettings,order);}
+        catch(error){problem=error instanceof Error?error.message:String(error);}
+      }
       // Units are checked while the rule is being written, which is the whole point: the same
       // check at run time tells a practitioner their rules are wrong after they have written
       // them, kept them, and run the workflow.
@@ -338,6 +390,7 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
         +(review?`<div class="notice">${esc(review.note)}</div>`:'')
         +`<p class="description">Every rule is checked against every record. A record that matches more than one rule takes all of their conclusions, so rules that disagree must not both match; a record that matches none keeps no conclusion, and the run says how many.</p>`
         +(problem?`<div class="inspector-alert" role="alert"><strong>These rules cannot be compiled</strong><p>${esc(problem)}</p></div>`:'')
+        +(review&&!order?'':orderMarkup())
         +rules.map((rule,r)=>`<section class="rule-card"><header><h3>Rule ${r+1}${evaluation?` · ${evaluation.matchedByRule[r]!.toLocaleString('en')} record${evaluation.matchedByRule[r]===1?'':'s'}`:''}</h3>`
           +`<button class="button small" data-rule="${r}" data-part="drop-rule">Remove rule</button></header>`
           +rule.any.map((group,g)=>`<div class="rule-group">`
@@ -387,7 +440,23 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
         dialog.querySelectorAll<HTMLButtonElement>('.rule-editor-body button[data-part]').forEach(el=>el.remove());
         return;
       }
-      dialog.querySelector<HTMLButtonElement>('#rule-editor-keep')!.onclick=()=>close({rules});
+      dialog.querySelector<HTMLButtonElement>('#rule-editor-keep')!.onclick=()=>close({rules,...(order?.by?{order}:{})});
+      dialog.querySelectorAll<HTMLSelectElement>('[data-order]').forEach(el=>el.addEventListener('change',()=>{
+        if(el.dataset.order==='by'){
+          if(!el.value)order=undefined;
+          else{
+            // A DATE COLUMN, sorted within the columns that say whose rows these are: every other term column, offered
+            // ticked, so a long table by place and week sorts by week within place. Each can be unticked.
+            const terms=fields.filter(f=>f.kind==='term').map(f=>f.attribute);
+            order={by:el.value,within:order?.within.filter(c=>c!==el.value)
+              ??sortColumns().map(c=>c.column).filter(c=>c!==el.value&&(terms.includes(c)||!fields.some(f=>f.attribute===c))&&!sortColumns().find(x=>x.column===c)?.date),
+              previous:order?.previous??'row'};
+          }
+        }else if(order)order.previous=el.value as AuthoredOrder['previous'];
+        render();}));
+      dialog.querySelectorAll<HTMLInputElement>('[data-order-within]').forEach(el=>el.addEventListener('change',()=>{
+        if(!order)return;const column=el.dataset.orderWithin!;
+        order.within=el.checked?[...order.within.filter(c=>c!==column),column]:order.within.filter(c=>c!==column);render();}));
       dialog.querySelector<HTMLButtonElement>('#rule-editor-add-every')!.onclick=()=>{
         const first=choices.find(c=>c.kind==='number')?.predicate;
         rules=[...rules,{any:[{all:[]}],then:[{predicate:`fwa:computed_${rules.length+1}`,column:'',
@@ -476,11 +545,12 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
               const was=conclusion.predicate,now=`fwa:c_${value.trim().replace(/[^A-Za-z0-9]+/g,'_')||'value'}`;
               conclusion.column=value.trim();conclusion.predicate=now;
               for(const rule of rules)for(const c of rule.then)if(isComputed(c))for(const side of ['left','right'] as const){
-                const o=c.compute[side];if(typeof o==='object'&&'field' in o&&o.field===was)c.compute[side]={field:now};}
+                const o=c.compute[side];if(typeof o==='object'&&'field' in o&&o.field===was)c.compute[side]=readsPrevious(o)?{field:now,previous:true}:{field:now};}
             }
             if(part==='operator')conclusion.compute.operator=value as never;
             for(const side of ['left','right'] as const){
-              if(part===`${side}-source`)conclusion.compute[side]=value?{field:value}:0;
+              if(part===`${side}-source`)conclusion.compute[side]=!value?0
+                :value.startsWith('previous:')?{field:value.slice('previous:'.length),previous:true}:{field:value};
               if(part===`${side}-number`)conclusion.compute[side]=value.trim()===''?0:Number(value);
             }
           }

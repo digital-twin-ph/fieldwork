@@ -1,6 +1,6 @@
 # 186 · One standard Inspector, and each widget's settings in its dialog
 
-_Created 2026-11-07 · Updated 2026-11-07_
+_Created 2026-11-07 · Updated 2026-11-08_
 
 **Status:** tried, for Relate and Select rows. Select rows 0.4.0 (Fieldwork 0.53.0, 2026-11-08) followed Relate.
 Relate 0.8.0 (Fieldwork 0.47.0, 2026-11-07) has the six-section Inspector and its

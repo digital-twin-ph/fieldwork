@@ -1946,7 +1946,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           if(computesValues(authored)){
             const records=authoredSubjects(subjects);
             if(!records.length)throw new Error('Connect records to apply rules to. There is nothing to apply them to.');
-            const evaluation=evaluateAuthored(records,authored.fields,authored.rules as never,bound);
+            const evaluation=evaluateAuthored(records,authored.fields,authored.rules as never,bound,authored.order);
             const dataIssues=authoredDataIssues(subjects,authored.fields);
             const method=evaluationSentence(evaluation,records.map(r=>r.label));
             const table=(subjects as unknown as import('./data-table.js').DataTable).kind==='data-table'

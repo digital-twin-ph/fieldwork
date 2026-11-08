@@ -1,2 +1,2 @@
-import{a,b,c,d,e,f,g,h,i,j}from"./chunks/chunk-NMDCLEF7.js";import"./chunks/chunk-KVMUXFPB.js";export{h as AuthoredRulesetError,b as COMPUTE_OPERATORS,e as RULE_CEILING,j as authoredUnitProblems,i as compileAuthoredRuleset,f as compiledRuleCount,d as computesValues,c as isComputed,a as isSettingReference,g as settingNamed};
+import{a,b,c,d,e,f,g,h,i,j,k,l}from"./chunks/chunk-BEOIIJWT.js";import"./chunks/chunk-KVMUXFPB.js";export{j as AuthoredRulesetError,d as COMPUTE_OPERATORS,g as RULE_CEILING,l as authoredUnitProblems,k as compileAuthoredRuleset,h as compiledRuleCount,f as computesValues,e as isComputed,a as isSettingReference,b as readsPrevious,c as readsPreviousRows,i as settingNamed};
 //# sourceMappingURL=authored-rules.js.map

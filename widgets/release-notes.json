@@ -75,12 +75,12 @@
    ]
   },
   "apply_ruleset": {
-   "version": "0.3.0",
+   "version": "0.4.0",
    "released": "2026-11-08",
    "changes": [
     {
      "kind": "minor",
-     "description": "A rule can conclude a computed value, Derive a value's four operators between two columns, a value another rule computed, or a number, under a condition or for every record. Such rules are evaluated directly over the same records the reasoner reads; a division by zero, a missing operand and a conflict are each counted and named. A table imported wide is read as one record per subject, and a computed value folds back as one row per subject, as Derive a value adds it: all four published Derive a value steps give the same table. The rules dialog previews Before and After on every edit. Experiment 188."
+     "description": "A rule can read the previous row (experiment 188, stage 4): either side of a computed value can be a column in the previous row, such as new cases from a cumulative count. The rows are sorted inside the step, above the rules: by a column (dates offered first), within the columns that say whose rows these are, with the previous row meaning the row recorded before or the day, week or month before. A rule reading the previous row does not run until the sort is set. The preview is Before, Sorted and After, and the table comes out sorted. The first row of a group, a missing period and two rows for one period give no value and are named; a value that fell below the previous row's is kept and named. Saved steps are unchanged."
     }
    ],
    "breaking": false,

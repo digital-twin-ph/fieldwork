@@ -33,6 +33,7 @@ import {rulesetExample} from './ruleset-example.js';
 import {hagellochExample} from './hagelloch-example.js';
 import {openRuleEditor} from './rule-editor.js';
 import {openStepViewer,openTableViewer,shapeChange,stepLabels,tableViewOf,type TableView} from './table-viewer.js';
+import {orderSentence} from './rule-evaluation.js';
 import {keyNoun,openRelateConfig,relateDraftOf,applyRelateDraft,relateSentence} from './relate-ui.js';
 import {openSelectConfig,selectDraftOf,applySelectDraft,selectSentence} from './select-ui.js';
 import {relateShape,decisionMatches,relateAtShifts,shiftColumnName} from './relate-table.js';
@@ -1411,7 +1412,7 @@ function rulesList(rules:ShownRule[],
           ?`<span class="rule-field">${esc(conclusion.column?.trim()||conclusion.predicate.slice(conclusion.predicate.indexOf(':')+1))}</span>`
             +`<span class="rule-op">is</span>`
             +`<span class="rule-value">${esc([conclusion.compute.left,conclusion.compute.right].map(o=>typeof o==='object'&&'field' in o
-              ?(rules.flatMap(r=>r.then).find(t=>t.predicate===o.field)?.column?.trim()||named(o.field)):readable(o as never))
+              ?(rules.flatMap(r=>r.then).find(t=>t.predicate===o.field)?.column?.trim()||named(o.field))+((o as {previous?:true}).previous?' in the previous row':''):readable(o as never))
               .join(` ${({minus:'minus',plus:'plus',times:'times',dividedBy:'divided by'} as Record<string,string>)[conclusion.compute.operator]} `))}</span>`
           :`<span class="rule-field">${esc(conclusion.predicate.slice(conclusion.predicate.indexOf(':')+1))}</span>`
             +`<span class="rule-op">is</span>`
@@ -1710,7 +1711,8 @@ function wireAuthorRules(node:WorkflowNode){
     const authored=getNode(workflow,node.id,'apply_ruleset').params.authored;
     if(!authored)return;
     const edited=await openRuleEditor(authored,esc,{settingValues:getNode(workflow,node.id,'apply_ruleset').params.parameters,preview:rulePreview(node.id)});
-    if(edited)change(w=>{getNode(w,node.id,'apply_ruleset').params.authored!.rules=edited.rules as never;});
+    if(edited)change(w=>{const held=getNode(w,node.id,'apply_ruleset').params.authored!;held.rules=edited.rules as never;
+      if(edited.order)held.order=edited.order;else delete held.order;});
   });
 }
 
@@ -3116,6 +3118,7 @@ function renderInspector(){
         // wrote ABOUT the rules, and a rule should look like a thing with parts. So each
         // condition is a row of three cells, the connectives are labels in the margin, and the
         // conclusion is separated by a line.
+        +(authored.order?`<p class="description" data-rule-order>${esc(orderSentence(authored.order))}</p>`:'')
         +rulesList(authored.rules,authored.fields,readable,esc)
         +`<p class="description">Every rule is checked against every record, so rules must not disagree: no record may match two rules reaching different conclusions. A record matching none keeps no conclusion; the evidence counts those.</p>`
         +`<span class="inspector-section">Which column means what</span>`;
@@ -3174,7 +3177,8 @@ function renderInspector(){
         if(!authored.fields.length)change(w=>{const held=getNode(w,n.id,'apply_ruleset').params.authored;
           if(held)held.fields=candidateFields(w,n.id) as never;},{spatial:false});
         const edited=await openRuleEditor(getNode(workflow,n.id,'apply_ruleset').params.authored!,esc,{settingValues:n.params.parameters,preview:rulePreview(n.id)});
-        if(edited)change(w=>{getNode(w,n.id,'apply_ruleset').params.authored!.rules=edited.rules as never;});
+        if(edited)change(w=>{const held=getNode(w,n.id,'apply_ruleset').params.authored!;held.rules=edited.rules as never;
+      if(edited.order)held.order=edited.order;else delete held.order;});
       });
       // An EMPTY box is an unset setting, not zero. `Number('')` is 0, so clearing this field
       // used to band the rules against zero: `busy` declares min 1 and the run refuses it, which

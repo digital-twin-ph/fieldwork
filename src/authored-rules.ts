@@ -63,8 +63,18 @@ export interface AuthoredCondition {
   value:string|number|boolean|SettingReference;
 }
 export interface AuthoredGroup {all:AuthoredCondition[]}
-/** One side of a computed value: a field the rules read or concluded, a typed number, or a step setting. */
-export type Operand={field:string}|number|SettingReference;
+/** One side of a computed value: a field the rules read or concluded, a typed number, or a step setting. With
+ *  `previous`, the field's value in the previous row of the same group, in the step's order (experiment 188, stage 4). */
+export type Operand={field:string; previous?:true}|number|SettingReference;
+export const readsPrevious=(o:Operand):o is {field:string;previous:true}=>typeof o==='object'&&'field' in o&&o.previous===true;
+/** WHAT "PREVIOUS" MEANS, and the order it is read in. Epi Info's SORT, inside the step that needs it: the rows are
+ *  sorted by `by` within each group of `within`, and a rule reading the previous row reads the row before it there.
+ *  `previous` says which row that is: the row recorded just before, or the row a day, a week or a month earlier,
+ *  which is absent where that period has no row. The order is never taken from the file. */
+export interface AuthoredOrder {by:string; within:string[]; previous:'row'|'day'|'week'|'month'}
+/** Whether any rule reads a previous row, and so needs an order. */
+export const readsPreviousRows=(ruleset:{rules:{then:AuthoredConclusion[]}[]}):boolean=>
+  ruleset.rules.some(rule=>rule.then.some(c=>!!c.compute&&(readsPrevious(c.compute.left)||readsPrevious(c.compute.right))));
 export const COMPUTE_OPERATORS=['minus','plus','times','dividedBy'] as const;
 export type ComputeOperator=typeof COMPUTE_OPERATORS[number];
 /** A CATEGORY (`value`) or a COMPUTED VALUE (`compute`), never both. A computed value is Derive a value's arithmetic

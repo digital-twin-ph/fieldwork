@@ -459,6 +459,8 @@ export interface ParamsByType {
        *  authored before 2026-10-15 hold one. */
       rules:{any:{all:{field:string;comparator:string;value:string|number|boolean|{setting:string}}[]}[];
         then:import('./authored-rules.js').AuthoredConclusion[]}[];
+      /** THE ORDER THE RULES READ THE RECORDS IN, where a rule reads the previous row (experiment 188, stage 4). */
+      order?:import('./authored-rules.js').AuthoredOrder;
     }};
   micro_workflow:{label:string;
     composition:{id:string;nodeType:string;version:string;title:string;stage:string;

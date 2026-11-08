@@ -2,7 +2,8 @@
 
 _Created 2026-11-07 · Updated 2026-11-08_
 
-**Status:** tried, for Relate and Select rows. Select rows 0.4.0 (Fieldwork 0.53.0, 2026-11-08) followed Relate.
+**Status:** tried, for Relate, Select rows and Table input. Select rows 0.4.0 (Fieldwork 0.53.0) and Table input 0.7.0
+(Fieldwork 0.57.0), both 2026-11-08, followed Relate.
 Relate 0.8.0 (Fieldwork 0.47.0, 2026-11-07) has the six-section Inspector and its
 settings in the standard configuration dialog, `src/config-dialog.ts`. Its five browser checks pass in Chromium, and
 the NYC and Brazil manuals, rewritten for the dialog, play back from an empty canvas. Not yet `validated`: no check
@@ -88,7 +89,7 @@ appear in them.
 
 | Widget | Workflows using it | Input lists | Six-section Inspector and standard dialog |
 | --- | --- | --- | --- |
-| table_input | 25 | no inputs | no |
+| table_input | 25 | no inputs | **yes**, 0.7.0 (2026-11-08) |
 | table_output | 16 | standard, except its point layers in spatial mode | no |
 | map_output | 12 | its own, in the layer manager | no |
 | select_rows | 11 | standard | **yes**, 0.4.0 (2026-11-08) |
@@ -103,7 +104,7 @@ appear in them.
 | stack_polygons, map_image_input, append_rows | 2 each | standard | no |
 | case_series, apply_ruleset | 1 each | standard | no |
 
-**1 of 24** widgets in use met the standard on 2026-11-08, Relate; of the 13 used in five or more workflows, 1. Select rows followed the same day, so **2 of 24**. The standard input lists
+**1 of 24** widgets in use met the standard on 2026-11-08, Relate; of the 13 used in five or more workflows, 1. Select rows followed the same day, so **2 of 24**; Table input, the most used, made **3 of 24**. The standard input lists
 are one function every step shares, so they reach every step with inputs except where a widget draws its own.
 
 ## What would close it
@@ -119,7 +120,14 @@ manuals pass against them.
 fails for any Inspector that adds a section outside the six, or orders them differently, or any configuration dialog
 that departs from its shape.
 
-**The order:** Select rows (11), Join to area (7), Chart (7), then the rest by use. Table input, Study area and
+**Table input, a source and a dialog that is a workflow of its own.** Its import dialog kept its steps (file, shape,
+keys, values, unit, Before and After) and took the standard frame around them: heading, ×, the message slot, Cancel
+and Apply. Rewriting its body as Settings, Preview and Decisions was not attempted. *Fetch the table* moved out of a
+notice into Settings: in the dark theme, inline in orange text, it did not read as a button (the practitioner,
+2026-11-08).
+
+**The order:** Select rows (11), Join to area (7), Chart (7), then the rest by use; Table output after Sierra Leone, as
+the practitioner set it. Table input, Study area and
 Polygon layer are sources, with no Inputs section; Map output keeps its layer manager as its Inputs.
 
 ## What this does not establish

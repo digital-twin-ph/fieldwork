@@ -1469,7 +1469,7 @@
     {
       "id": "urn:fieldwork:widget:table_input",
       "nodeType": "table_input",
-      "currentVersion": "0.6.2",
+      "currentVersion": "0.7.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -1510,6 +1510,11 @@
           "version": "0.6.2",
           "path": "widgets/releases/table_input/0.6.2.json",
           "sha256": "d786dbae10f6875cc4e7d112cd62c982342581a3b946b1f7546fd37fd0763e62"
+        },
+        {
+          "version": "0.7.0",
+          "path": "widgets/releases/table_input/0.7.0.json",
+          "sha256": "482323a9189bc6a6b2cb64499befcb09a6b61c4e9f6e20eae778fd59194d132d"
         }
       ]
     },

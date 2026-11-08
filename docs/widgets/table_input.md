@@ -11,10 +11,20 @@ unknown, never read as zero.
 
 ## How to use it
 
+The Inspector says in one sentence what the step reads: the file, its shape, its value columns and its unit. **Configure…**
+opens the import.
+
 1. Choose the file, and say whether it is wide or long.
 2. Tick the key columns and choose the value column or columns.
 3. Under **What identifies a row?**, mark any primary and secondary keys.
-4. Save. If the node says **Check Data quality**, open it before relying on the table.
+4. **Apply.** Nothing changes until you do; **Cancel** or **×** leaves the step as it was.
+
+After it, the Inspector's **Result** says how many rows were read and how many values are absent, what Data quality
+found, and how many columns are described, with **Quick look at the table**, **Data quality** and **Describe
+columns…**. If it names a Data quality finding, open it before relying on the table.
+
+**Convert the source table on each run**, in the dialog, keeps the file as published and melts it when the workflow
+runs, so the run's receipt names the columns it took. It can be changed without reading the file again.
 
 ## Stata files
 
@@ -29,8 +39,8 @@ The table is then set up as any other.
 
 The project keeps where the table came from, the URL, the file inside and the digests, in place of its rows. An
 exported project carries no rows, so sharing it does not republish data whose terms do not allow that. On another
-device the node says its rows are not kept, and **Fetch the table** reads the same file again with the same
-settings. A file whose digest has changed is refused, and nothing is read.
+device the step says its rows are not fetched yet, and **Fetch the table**, under Settings, reads the same file again
+with the same settings. A file whose digest has changed is refused, and nothing is read.
 
 **Downloaded once per device.** What is fetched is kept on the device by its digest. Any table, in any project on the
 device, that names the same file reads it from there, checked again, instead of downloading it. Typed again in the
@@ -73,7 +83,7 @@ A Stata file's own variable labels are proposed the same way when it is imported
 
 ## Data quality
 
-A file is not refused for a quality problem. Every row is kept, the node says **Check Data quality**, and the
+A file is not refused for a quality problem. Every row is kept, the step's Result names what Data quality found, and the
 **Findings** tab of Data quality lists:
 
 - rows repeating a key value

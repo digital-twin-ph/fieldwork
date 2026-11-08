@@ -983,7 +983,7 @@ function drawRunProgress(){
 /** THE WIDGETS WHOSE INSPECTOR FOLLOWS THE STANDARD (experiment 186): Name, Inputs, Settings, Result, the links,
  *  Actions, in that order and nothing else, with every setting in the widget's configuration dialog. One at a time,
  *  Relate first; the set grows as each widget is moved, and a check holds them to it. */
-export const STANDARD_INSPECTOR=new Set<NodeType>(['relate_table','select_rows']);
+export const STANDARD_INSPECTOR=new Set<NodeType>(['relate_table','select_rows','table_input']);
 function samplerProduct(node:WorkflowNode){
   const up=(id:string,port:string)=>{const e=workflow.edges.find(x=>x.to===id&&x.port===port);return e?workflow.nodes.find(m=>m.id===e.from):undefined;};
   const search=up(node.id,'files'),find=search?up(search.id,'product'):undefined;
@@ -2216,58 +2216,45 @@ function renderInspector(){
   }else if(n.type==='map_image_input'){
     content+=mapImageInspector(n,esc);
   }else if(n.type==='table_input'){
+    // THE STANDARD INSPECTOR (experiment 186): what the step is called, one sentence of what it reads, Configure… for
+    // the import, and what it holds. A source step has no inputs. Fetch the table is a button of its own, not a word in
+    // a notice: inline in the orange text, the practitioner could not see it as a button (2026-11-08).
     const p=n.params;
-    content+='<section class="source-card"><span class="inspector-section">Table contract</span>'
-      +`<div class="detail-row"><span>Key columns</span><strong>${p.keys.length?esc(p.keys.join(', ')):'none chosen'}</strong></div>`
-      +`<div class="detail-row"><span>Value column</span><strong>${p.valueField?esc(p.valueField):'none chosen'}</strong></div>`
-      +`<div class="detail-row"><span>Unit</span><strong>${p.unit?esc(p.unit):'unstated'}</strong></div>`
-      +'<div class="detail-row"><span>Geometry</span><strong>None; a table is not a point set</strong></div>'
-      +'</section><button id="open-table" class="button primary">Import tabular data</button>'
-      +(p.data.rows.length&&!workflow.edges.some(e=>e.from===n.id)?'<div class="inspector-actions"><button id="add-table-view" class="button small">＋ Display as table</button></div>':'')
-      // CONVERT ON RUN, offered only where there is a source and a selection to convert with.
-      //
-      // The practitioner, 2026-10-27, on the worked examples: can the conversion be "a check box
-      // and wide table conversion happens during the workflow run". It can, and the reason to
-      // want it is not the checkbox -- it is that a melt done once in a dialog leaves nothing
-      // behind, while a melt done by the run is a step with a receipt naming every column taken.
-      // The example that prompted it ships 52,619 bytes of melted tables whose source CSVs are
-      // 3,972, and could not say which columns made them.
-      +(p.sourceTable?`<label class="field"><input id="table-convert-on-run" type="checkbox" `
-        +`${p.convertOnRun?'checked':''}> Convert the source table on each run</label>`
-        +`<p class="description">The file is kept as published -- ${p.sourceTable.rows.length} `
-        +`row${p.sourceTable.rows.length===1?'':'s'} of ${p.sourceTable.headers.length} columns -- `
-        +`and melted when the workflow runs, so the run's receipt names the columns it took. `
-        +`Unchecked, the table stored at import is used and the source is kept only as provenance.</p>`:'')
-      +'<p class="description">Reads a long-format CSV: one row per observation, with the key columns you choose and one value column. If rows repeat a key, every row is kept and Data quality names them. Declare which columns identify a row.</p>';
-    // The table itself, at a width it can be read at. The Inspector is 292px wide and this
-    // offered a description of the table's shape inside it -- everything about the table except
-    // the table. The practitioner's call, 2026-10-16.
-    // A TABLE FETCHED FROM WHERE IT IS PUBLISHED says so, and one that arrived without its rows offers to fetch them.
-    if(p.remote)content+=`<div class="notice" data-table-remote>Fetched from <a href="${esc(p.remote.url)}" rel="noopener" target="_blank">`
-      +`${esc(new URL(p.remote.url).hostname)}</a>${p.remote.entry?`, ${esc(p.remote.entry.split('/').at(-1))}`:''}. `
-      +(p.data.rows.length?'The project keeps where it came from, not the rows.'
-          // WHERE THESE ROWS CAME FROM THIS TIME, said where it stays: a line written beside the button was erased by the
-          // redraw that showed the rows, so a read from the device looked like another download (2026-11-04).
-          +(rowsReadFrom.get(n.id)==='device'?' These rows were read from the copy on this device, checked by its digest: nothing was downloaded.'
-            :rowsReadFrom.get(n.id)==='source'?` These rows were downloaded from ${esc(new URL(p.remote.url).hostname)}, and the file is now kept on this device.`:'')
-        :'Its rows are not kept in the project. <button id="table-fetch-remote" class="button small">Fetch the table</button>'
-          +' A file already on this device is read from there, without downloading it.')
-      +`<span id="table-fetch-status" class="muted"></span></div>`;
-    if(p.data.rows.length)content+=`<div class="inspector-actions"><button id="quick-look" class="button">Quick look at the table</button>`
-      +`<button id="table-quality" class="button">Data quality</button></div>`
-      +(p.data.findings?.length?`<div class="notice" data-table-findings><strong>Check Data quality.</strong> `
-        +`${esc(findingsSummary(p.data))}. The rows are kept as they stand.</div>`:'')
-      // WHAT THE COLUMNS MEAN, said apart from the rows' quality: every table starts undescribed, and that is a
-      // different fact from a repeated key (experiment 172).
-      +(()=>{const columns=describableColumns(p.data,p.wide),described=columns.filter(c=>isDescribed(p.columns?.[c])).length;
-        const proposed=columns.filter(c=>p.columns?.[c]&&!p.columns[c]!.confirmed).length;
-        return `<div class="notice" data-table-meaning><strong>What the columns mean.</strong> ${described} of ${columns.length} described`
+    content+=standardSection('Name',labelForm('table-label','Name',p.label||'Tabular data'));
+    const host=p.remote?new URL(p.remote.url).hostname:'';
+    const waiting=!!p.remote&&!p.data.rows.length;
+    content+=standardSection('Settings',`<p class="standard-sentence">${esc(tableSentence(p))}</p>`
+      // WHILE THE ROWS ARE NOT HERE, fetching them is the thing to do, so it is the primary button and Configure… is not.
+      +(waiting
+        ?'<div class="inspector-actions"><button id="table-fetch-remote" class="button primary">Fetch the table</button></div>'
+          +`<p class="description">A file already on this device is read from there, without downloading it.</p>`
+        :'')
+      +`<div class="inspector-actions"><button id="open-table" class="button${waiting?'':' primary'}">Configure\u2026</button></div>`
+      +(p.remote?`<p class="description" data-table-remote>From <a href="${esc(p.remote.url)}" rel="noopener" target="_blank">${esc(host)}</a>`
+        +`${p.remote.entry?`, ${esc(p.remote.entry.split('/').at(-1))}`:''}. The project keeps where it came from, not the rows.`
+        // WHERE THESE ROWS CAME FROM THIS TIME, said where it stays: a line written beside the button was erased by the
+        // redraw that showed the rows, so a read from the device looked like another download (2026-11-04).
+        +(rowsReadFrom.get(n.id)==='device'?' These rows were read from the copy on this device, checked by its digest: nothing was downloaded.'
+          :rowsReadFrom.get(n.id)==='source'?` These rows were downloaded from ${esc(host)}, and the file is now kept on this device.`:'')
+        +'</p>':'')
+      +'<p id="table-fetch-status" class="description" role="status"></p>');
+    // RESULT: what the step holds, counted, and where to look closer.
+    if(p.data.rows.length){
+      const columns=describableColumns(p.data,p.wide),described=columns.filter(c=>isDescribed(p.columns?.[c])).length;
+      const proposed=columns.filter(c=>p.columns?.[c]&&!p.columns[c]!.confirmed).length;
+      const findings=p.data.findings?.filter(f=>f.kind!=='undescribed-column'&&f.kind!=='unconfirmed-description')??[];
+      content+=standardSection('Result',`<p class="standard-result${findings.length?' standard-result-warning':''}">`
+        +`${esc(`${p.data.rowCount.toLocaleString('en-US')} rows, ${p.data.missingValueCount.toLocaleString('en-US')} values absent and kept as unknown.`)}</p>`
+        +(findings.length?`<p class="standard-state" data-table-findings>Data quality: ${esc(findingsSummary(p.data))}. The rows are kept as they stand.</p>`:'')
+        +`<p class="standard-state" data-table-meaning>What the columns mean: ${described} of ${columns.length} described`
           +(proposed?`, ${proposed} proposed and not yet accepted`:'')+'.'
-          +(described<columns.length?' A column nobody has described is a data quality finding.':'')
-          +` <button id="describe-columns" class="button small">Describe columns…</button></div>`;})()
-      +`<p>${esc(p.source?.filename||'Imported file')}<br>${p.data.rowCount} rows, ${p.data.missingValueCount} values absent and kept as unknown.</p><details><summary>Table shape</summary><pre>${esc(JSON.stringify({keys:p.data.keys,valueField:p.data.valueField,unit:p.data.unit||'(unstated)',rows:p.data.rowCount,source:p.source},null,2))}</pre></details>`;
-    else content+='<p class="description">No table imported yet. This node cannot run until a table is imported.</p>';
-    content+='<div class="notice">A unit is recorded as you state it and never inferred. An absent value is kept as unknown, never read as zero. Connect a Table output to display it.</div>';
+          +(described<columns.length?' A column nobody has described is a data quality finding.':'')+'</p>'
+        +'<div class="inspector-actions"><button id="quick-look" class="button">Quick look at the table</button>'
+        +'<button id="table-quality" class="button">Data quality</button>'
+        +'<button id="describe-columns" class="button">Describe columns\u2026</button></div>'
+        +(!workflow.edges.some(e=>e.from===n.id)?'<div class="inspector-actions"><button id="add-table-view" class="button small">\uff0b Display as table</button></div>':'')
+        +'<div data-standard-result></div>');
+    }else content+=standardSection('Result',`<p class="standard-result">${waiting?'Not fetched yet.':'No table imported yet. This step cannot run until a table is imported.'}</p>`);
   }else if(n.type==='join_table_to_area'){
     // THE KEY COLUMN IS OFFERED, NOT TYPED. The columns are on the connected table, so a
     // practitioner picks one rather than spelling it and discovering the mismatch at the run.
@@ -4419,7 +4406,7 @@ function renderInspector(){
   optionalElement('#open-table')?.addEventListener('click',()=>{
     const baseline=JSON.stringify(workflow),current=getNode(workflow,n.id,'table_input').params;
     openTableEditor(result=>{
-      if(JSON.stringify(workflow)!==baseline)throw new Error('The workflow changed. Reopen Import tabular data.');
+      if(JSON.stringify(workflow)!==baseline)throw new Error('The workflow changed. Close this and choose Configure\u2026 again.');
       return change(w=>{const node=getNode(w,n.id,'table_input');node.params.data=result.data;node.params.keys=result.keys;node.params.valueField=result.valueField;node.params.unit=result.unit;node.params.source=result.source;
         // The shape the FILE was in, so the editor reopens in it and the receipt can cite the
         // columns taken. Deleted rather than set undefined when a table is re-read as long: a
@@ -4434,9 +4421,13 @@ function renderInspector(){
         // something to convert and the node can say what it was made from either way.
         if(result.source_table){node.params.sourceTable=result.source_table;
           if(result.source?.sha256)node.params.sourceRef=`source:${result.source.sha256}`;else delete node.params.sourceRef;}
-        else{delete node.params.sourceTable;delete node.params.sourceRef;delete node.params.convertOnRun;}},{requirePersistence:true});
+        else{delete node.params.sourceTable;delete node.params.sourceRef;delete node.params.convertOnRun;}
+        if(result.source_table){if(result.convertOnRun)node.params.convertOnRun=true;else delete node.params.convertOnRun;}},{requirePersistence:true});
     },current.keys.length?{keys:current.keys,valueField:current.valueField,unit:current.unit,primaryKey:current.data.primaryKey,secondaryKeys:current.data.secondaryKeys,
-      ...(current.wide?{wide:current.wide}:{})}:undefined);
+      ...(current.wide?{wide:current.wide}:{})}:undefined,
+    // THE STANDARD FRAME: the step's own name, and the one setting that can be applied without reading the file again.
+    {step:current.label||'Tabular data',convertOnRun:!!current.convertOnRun,hasSource:!!current.sourceTable,
+      onConvertOnRun:on=>change(w=>{const node=getNode(w,n.id,'table_input');if(on)node.params.convertOnRun=true;else delete node.params.convertOnRun;})});
   });
   optionalElement('#open-manual')?.addEventListener('click',()=>openManual(n.type,TYPES[n.type].title,esc));
   // The year chooses which link the button carries, so the panel redraws to carry it.
@@ -8297,3 +8288,16 @@ if(canAutoRun(workflow))setTimeout(run,350);
 renderManualFloat(true);
 
 setInterval(()=>{const button=document.querySelector<HTMLButtonElement>('#download-network'),message=document.querySelector<HTMLElement>('#network-download-status');if(!button||!message)return;const state=networkDownloadStatus();button.disabled=busy||state.inFlight||state.waitSeconds>0;message.textContent=state.inFlight?(networkDownloadPhase??'One OSM request is in progress.'):networkDownloadError?networkDownloadError+(state.waitSeconds?' Next attempt available in '+state.waitSeconds+' seconds.':''):state.waitSeconds?'Next OSM download available in '+state.waitSeconds+' seconds. Saved graphs are available offline.':'Ready for one bounded OSM request; no automatic refresh.';},1000);
+
+/** TABLE INPUT'S ONE SENTENCE: what it reads, in what shape, and in what unit (experiment 186). */
+function tableSentence(p:WorkflowNode<'table_input'>['params']):string{
+  const from=p.remote?new URL(p.remote.url).hostname:'';
+  const file=p.remote?.entry?.split('/').at(-1)||p.source?.filename||(p.remote?p.remote.url.split('/').at(-1):'');
+  if(!p.keys.length&&!p.remote)return 'No table yet: import one in Configure\u2026';
+  const what=`Reads ${file||'a table'}${from?` from ${from}`:''}`;
+  const shape=p.wide
+    ?`wide: one row per ${p.wide.keys.join(' and ')}, ${p.wide.valueFields.length} variable${p.wide.valueFields.length===1?'':'s'}`
+    :`long: one row per ${p.keys.join(', ')}, values in ${p.valueField}`;
+  const unit=p.unit?.trim()?`, in ${p.unit.trim()}`:', unit unstated';
+  return `${what}, ${shape}${unit}${p.convertOnRun&&p.sourceTable?', converted on each run':''}.`;
+}

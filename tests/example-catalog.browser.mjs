@@ -212,7 +212,7 @@ test('the NYC example opens without its counts, fetches them by digest, and runs
     await page.locator('[data-view="workflow"]').click();
     const table=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')).nodes.find(n=>n.type==='table_input').id);
     await page.locator(`.react-flow__node[data-id="${table}"]`).click();
-    await expect(page.locator('[data-table-remote]')).toContainText('Its rows are not kept in the project');
+    await expect(page.locator('[data-table-remote]')).toContainText('The project keeps where it came from, not the rows');
     await page.locator('#table-fetch-remote').click();
     await expect(page.locator('[data-table-remote]')).toContainText('not the rows',{timeout:60000});
     await page.locator('#run-button').click();

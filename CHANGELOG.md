@@ -3,6 +3,17 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.57.0 — 2026-11-08
+
+- **Tabular data is on the standard Inspector and dialog** ([186](docs/experiments/186-one-standard-inspector.md)).
+  The Inspector says in one sentence what the step reads, and **Configure…** opens the import, now headed with the
+  step's name and closed by **Cancel** or **Apply**. *Convert the source table on each run* is in the dialog and can be
+  changed without reading the file again. Tabular data 0.7.0.
+- **Fetch the table is a button of its own**, under Settings, no longer a word inside a notice.
+- **The datum diagram** in the terrain models note shows how the heights a terrain model gives relate to the geoid,
+  the ellipsoid and local sea level.
+- The NYC, Brazil and rules manuals say **Configure…** and **Apply**.
+
 ## 0.56.0 — 2026-11-08
 
 - **A computed column states its unit and what it measures**, beside the rule that makes it

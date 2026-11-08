@@ -15,7 +15,12 @@ export interface TableImport {data:DataTable; source:DataTableSource; keys:strin
   /** What the file itself says its columns mean (Stata's variable labels), as unconfirmed proposals. */
   proposed?:import('./column-metadata.js').ColumnDeclarations;
   /** The parsed file, carried only for a wide read, so the node can melt it again on each run. */
-  source_table?:{headers:string[];rows:string[][]}}
+  source_table?:{headers:string[];rows:string[][]};
+  /** Melt the source table on each run, rather than use the table stored at import. */
+  convertOnRun?:boolean}
+/** THE STANDARD FRAME (experiment 186): the step's name in the heading, and the one setting that lives on the node rather
+ *  than in the file -- whether the source is converted on each run -- which can be applied without reading a file again. */
+export interface TableFrame {step?:string; convertOnRun?:boolean; hasSource?:boolean; onConvertOnRun?:(on:boolean)=>boolean}
 /** What the editor reopens with. `wide` present means the file was read as wide. */
 export interface TableReopen extends TableSelection {wide?:WideChoice}
 
@@ -117,9 +122,12 @@ function columnTools(box:HTMLFieldSetElement,prefix:string,title:string,changed:
   count();
 }
 
-export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:TableReopen):void{
-  const dialog=document.createElement('dialog');dialog.id='table-dialog';dialog.setAttribute('aria-labelledby','table-title');
-  dialog.innerHTML='<h2 id="table-title">Import tabular data</h2>'
+export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:TableReopen,frame:TableFrame={}):void{
+  const dialog=document.createElement('dialog');dialog.id='table-dialog';dialog.className='config-dialog';dialog.setAttribute('aria-labelledby','table-title');
+  const named=(text:string)=>text.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]!));
+  dialog.innerHTML='<header class="config-head"><h2 id="table-title">Tabular data'
+    +(frame.step?`<span class="config-step"> \u00b7 ${named(frame.step)}</span>`:'')+'</h2>'
+    +'<button class="config-close" id="table-close" aria-label="Close">\u00d7</button></header><div class="config-body">'
     +'<p>A <strong>wide</strong> CSV is assumed: one row per subject and a column per variable, which is what a line list, a surveillance export and a published table look like. Name the columns that identify the subject and the columns holding values; the rest of the application reads one long table, and this converts. A table has no geometry; latitude and longitude columns, if present, are ordinary columns.</p>'
     +'<label class="field-label" for="table-file">CSV or Stata file (up to '+FILE_BYTES/1e6+' MB, '+MAX_TABLE_ROWS.toLocaleString()+' rows)</label><input id="table-file" type="file" accept=".csv,text/csv,.dta">'
     // OR FROM WHERE IT IS PUBLISHED. The project then keeps the URL and the file's digest, and an export carries no
@@ -147,6 +155,11 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:T
     +'<p class="muted">Both are your words, because every downstream step names them: a Rate takes its measure key, and a derived value names two of its values.</p></div>'
     +'<label class="field-label" for="table-unit">Unit of the value (entered by you)</label><input id="table-unit" maxlength="40" placeholder="for example metre; leave empty if unstated">'
     +'<p class="muted">A unit is recorded as you state it and is never inferred from the file. An empty value cell is kept as unknown and counted, never read as zero.</p>'
+    // CONVERT ON RUN, a setting of the step: a melt done once here leaves nothing behind, a melt done by the run is a
+    // step with a receipt naming every column taken (the practitioner, 2026-10-27).
+    +`<label class="check" id="table-convert-row"${frame.hasSource?'':' hidden'}><input id="table-convert-on-run" type="checkbox"${frame.convertOnRun?' checked':''}> `
+    +'Convert the source table on each run</label>'
+    +'<p class="muted" id="table-convert-says"'+(frame.hasSource?'':' hidden')+'>The file is kept as published and melted when the workflow runs, so the run\u2019s receipt names the columns it took. Unchecked, the table stored at import is used.</p>'
     +'<p id="table-status" role="status"></p>'
     // SHOWN, NOT FOLDED AWAY, AND NOT A SERIALISATION. This was a collapsed <details> holding
     // `JSON.stringify({sourceFile, readAs, subjectKeys, ...})`. The practitioner, 2026-10-27:
@@ -161,7 +174,8 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:T
     +'<div id="table-after"></div>'
     +'<ul id="table-reconcile" class="muted"></ul>'
     +'</div>'
-    +'<p id="table-error" role="alert" hidden></p><div class="package-actions"><button id="table-cancel" class="button">Cancel</button><button id="table-save" class="button primary" disabled>Save table</button></div>';
+    +'</div><div class="config-message-slot"><p id="table-error" class="config-message config-message-refusal" role="alert" hidden></p></div>'
+    +'<footer class="config-foot"><button id="table-cancel" class="button">Cancel</button><button id="table-save" class="button primary" disabled>Apply</button></footer>';
   document.body.append(dialog);
   const q=<T extends HTMLElement>(id:string)=>dialog.querySelector<T>(id)!;
   const fileInput=q<HTMLInputElement>('#table-file'),keysBox=q<HTMLFieldSetElement>('#table-keys'),valueSelect=q<HTMLSelectElement>('#table-value');
@@ -380,6 +394,10 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:T
       }
       result=imported;
       save.disabled=false;
+      // A wide read keeps the file as published, so it can be converted on each run.
+      const melts=!!imported.source_table;
+      q<HTMLElement>('#table-convert-row').hidden=!melts&&!frame.hasSource;
+      q<HTMLElement>('#table-convert-says').hidden=!melts&&!frame.hasSource;
     }catch(e){status.textContent='This table has not been imported.';fail(e);}
   }
 
@@ -556,8 +574,14 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:T
   valueSelect.onchange=build;unitInput.onchange=build;
   measureKeyInput.onchange=build;valueNameInput.onchange=build;
   cancel.onclick=()=>dialog.close();dialog.oncancel=e=>{if(busy)e.preventDefault();};
+  q<HTMLButtonElement>('#table-close').onclick=()=>{if(!busy)dialog.close();};
+  // THE SETTING ALONE can be applied without reading the file again.
+  const convert=q<HTMLInputElement>('#table-convert-on-run');
+  convert.onchange=()=>{if(!result)save.disabled=convert.checked===!!frame.convertOnRun;};
   dialog.onclose=()=>{serial++;file=undefined;result=undefined;dialog.remove();};
   save.onclick=async()=>{
+    if(!result&&frame.onConvertOnRun&&convert.checked!==!!frame.convertOnRun){
+      if(frame.onConvertOnRun(convert.checked))dialog.close();return;}
     if(!result||!file||busy)return;busy=true;save.disabled=true;cancel.disabled=true;fileInput.disabled=true;error.hidden=true;
     try{
       const sha256=await contentHash(stata?new Uint8Array(await file!.arrayBuffer()) as Uint8Array<ArrayBuffer>:new TextEncoder().encode(text) as Uint8Array<ArrayBuffer>);
@@ -567,7 +591,8 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:T
       const proposed=stata?Object.fromEntries(kept.map(c=>[c,stata!.labels[stata!.headers.indexOf(c)]?.trim()??''])
         .filter(([,label])=>label).map(([c,label])=>[c,{label,origin:'file' as const,confirmed:false,from:result!.source.filename}])):{};
       const saved:TableImport={...result,data:{...result.data,source:{...result.source,sha256}},source:{...result.source,sha256},
-        ...(remote?{remote}:{}),...(Object.keys(proposed).length?{proposed}:{})};
+        ...(remote?{remote}:{}),...(Object.keys(proposed).length?{proposed}:{}),
+        ...(result.source_table&&convert.checked?{convertOnRun:true}:{})};
       if(!onSave(saved))throw new Error('The table could not be saved. Your previous project is unchanged; retry Save.');
       dialog.close();
     }catch(e){fail(e);status.textContent='This table has not been added to the project.';}

@@ -377,7 +377,7 @@
       "id": "urn:fieldwork:example:nyc-asthma-ozone-2016-2025",
       "title": "Ozone and child asthma emergency visits, New York City, 2016–2025",
       "repository": "https://github.com/digital-twin-ph/example-2025-nyc-ozone",
-      "commit": "c10175571a2994c2c387577d77ec770c299d4039",
+      "commit": "b5cb6e6459fd497a74d803eaa1931ad75a2f3255",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2025-nyc-ozone",
       "licence": {
         "data": "Not redistributed",
@@ -428,8 +428,8 @@
         },
         {
           "path": "manual.json",
-          "sha256": "0930a5696963455d816fb8a5fcebb910b49d3ee348454dd49d850f3ab8c013df",
-          "bytes": 41559
+          "sha256": "e7d0c03b77f2cc3154da6f7b608b873de2932ec4398bee5acf1b9f82bac9b880",
+          "bytes": 41135
         }
       ],
       "workflowCount": 6
@@ -438,7 +438,7 @@
       "id": "urn:fieldwork:example:brazil-dengue-rj-2024",
       "title": "Dengue in Rio de Janeiro state, Brazil, 2024",
       "repository": "https://github.com/digital-twin-ph/example-2024-brazil-dengue",
-      "commit": "cd40bb7cb2cc789329c35c00f0e696ca2ee04acc",
+      "commit": "aae565c77776d64db2889735cd7b547cbcd56df1",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2024-brazil-dengue",
       "licence": {
         "data": "CC-BY-4.0",
@@ -513,8 +513,8 @@
         },
         {
           "path": "manual.json",
-          "sha256": "239b990ffacddc2541e1b3bbae91822cc665ba9d43d60e22d1ce1bfe9e738c65",
-          "bytes": 68647
+          "sha256": "7bbc830ea0a6281d784c3300d5d82299bafef797429a4d95fff78e7593dcfa91",
+          "bytes": 68272
         },
         {
           "path": "notes/what-aedes-mosquitoes-meet.md",
@@ -528,7 +528,7 @@
       "id": "urn:fieldwork:example:workflows-rulesets",
       "title": "Rules on synthetic data",
       "repository": "https://github.com/digital-twin-ph/example-workflows-rulesets",
-      "commit": "959d1e0e1f3553961b9f8ad503752c61d987ea67",
+      "commit": "c32e8b8439be53cdceb643c5ea28f764ef54a6ef",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-workflows-rulesets",
       "licence": {
         "data": "CC0-1.0",
@@ -554,8 +554,8 @@
         },
         {
           "path": "manual.json",
-          "sha256": "bc9e66f185189a2103d1db8a68bbf3a82647656f8290a043332fc26038b58f32",
-          "bytes": 31365
+          "sha256": "f1f1f1e4a505e7bf98408e5772e8ecb221baea99a5f5e113b478c0e7e177691b",
+          "bytes": 31107
         },
         {
           "path": "data/clinic-visits.csv",

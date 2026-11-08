@@ -63,7 +63,10 @@ test('fetched from a zip, kept as a spec, fetched again by digest, and refused w
   await page.locator('[data-view="workflow"]').click();
   const tableId=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')).nodes.find(n=>n.type==='table_input').id);
   await page.locator(`.react-flow__node[data-id="${tableId}"]`).click();
-  await expect(page.locator('[data-table-remote]')).toContainText('Its rows are not kept in the project');
+  await expect(page.locator('[data-table-remote]')).toContainText('The project keeps where it came from, not the rows');
+  // A BUTTON OF ITS OWN, not a word inside a notice: the practitioner could not see it as one (2026-11-08).
+  await expect(page.locator('[data-standard-section="settings"] > .inspector-actions #table-fetch-remote')).toBeVisible();
+  await expect(page.locator('[data-table-remote] #table-fetch-remote')).toHaveCount(0);
 
   // A CHANGED FILE IS REFUSED, and nothing is read.
   served=archive(csv.replace('31','99'));

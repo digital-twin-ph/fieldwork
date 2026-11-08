@@ -54,6 +54,23 @@ an internal instrument, and [96](experiments/96-the-experiment-document.md) says
 so in its own closing section: its beneficiaries are us and future contributors,
 not a practitioner in the field.
 
+## The order of work, as the practitioner set it (2026-11-08)
+
+1. **Table input on the standard Inspector and dialog** ([186](docs/experiments/186-one-standard-inspector.md)). With
+   it, *Fetch the table*: in the dark theme it sits inline in the orange notice and does not read as a button.
+2. **The built-in rulesets example moves to example-workflows-rulesets**, then is removed: rules all of one category
+   (run by the reasoner), rules over points with a map, and counts written as text repaired in Data quality. The seven
+   tests that open it move with it. **The built-in coverage exercise is removed**; its four points stay as a test
+   fixture, and Keep points inside the area is recorded as having no worked example.
+3. **Sierra Leone** (below).
+4. **Table output on the standard** (186).
+5. **Manila coastal exposure moves to example-2026-sea-level-rise-philippines**, then the built-in one is removed. The
+   terrain and datum note is its reading: docs/research/terrain-models-vertical-datum-2026-11-07.md.
+6. **Old Naledi**: `facilities` and `facility_audit` replaced by standard widgets (Keep points inside the area; Apply
+   ruleset and Table output), checked to give the same results, then moved to a repository.
+
+The high-contrast theme comes after Sierra Leone, as set on 2026-11-07; where it falls among 4 to 6 is not set.
+
 ## Urgent
 
 **Three assertions outlived what they asserted, in two days, and the fast gate cannot see any of

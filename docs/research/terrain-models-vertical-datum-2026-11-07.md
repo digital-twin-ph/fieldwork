@@ -35,6 +35,10 @@ worked around.
 
 From prior knowledge; not searched on this date.
 
+![A cross-section of a low coast, not to scale. From the bottom: the WGS84 ellipsoid; the geoid (EGM2008, EGM96); local mean sea level over 1995–2014, the AR6 baseline, above the geoid by an offset a levelled tide gauge gives; and a projected sea level, the baseline plus the AR6 rise. On land, bare ground (DeltaDTM, FABDEM) and the surface with roofs and trees (Copernicus DEM GLO-30, NASADEM). At one place, h is its height above the ellipsoid, N the geoid's, H its height above the geoid, which the terrain models give: h = H + N, and its height above local sea is H minus the offset.](../images/vertical-datums.svg)
+
+*Drawn 2026-11-08 from the relations in this note, not to scale. h = H + N; height above local sea = H − offset.*
+
 - A height above a geoid (EGM2008, EGM96) is not a height above the local sea.
 - The IPCC AR6 projections Fieldwork already uses are rises relative to mean sea level over 1995–2014.
 - Putting the two together needs the offset between the geoid and local mean sea level, which can be tens of

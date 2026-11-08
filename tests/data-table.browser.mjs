@@ -16,8 +16,8 @@ test('Tabular data imports a long-format extract, displays it and replays offlin
 
   await page.locator('[data-view="workflow"]').click();
   await page.locator('[data-add="table_input"]').click();
-  await expect(page.locator('.inspector')).toContainText('none chosen');
-  await expect(page.locator('.inspector')).toContainText('None; a table is not a point set');
+  // THE STANDARD INSPECTOR (experiment 186): one sentence of what the step reads, and Configure… for the import.
+  await expect(page.locator('.inspector .standard-sentence')).toHaveText('No table yet: import one in Configure\u2026');
   await expect(page.locator('.inspector')).toContainText('cannot run until a table is imported');
 
   await page.locator('#open-table').click();
@@ -76,9 +76,8 @@ test('Tabular data imports a long-format extract, displays it and replays offlin
   await expect(page.locator('#table-dialog')).toBeHidden();
   await expect(page.locator('.inspector')).toContainText('ph-slr-psgc.csv');
   await expect(page.locator('.inspector')).toContainText('6 rows, 1 values absent and kept as unknown');
-  const shape=await page.locator('.inspector pre').first().textContent();
-  expect(shape).toContain('"valueField": "value_m"');
-  expect(shape).toContain('"unit": "metre"');
+  // THE SENTENCE says the value column and the unit, where a JSON block used to (experiment 186).
+  await expect(page.locator('.inspector .standard-sentence')).toContainText('values in value_m, in metre');
 
   await page.locator('#add-table-view').click();
   await page.locator('#run-button').click();
@@ -165,7 +164,7 @@ test('a wide table imports, and the refusals each shape can state still hold',as
   await expect(page.locator('#table-keys')).toBeVisible();
   await expect(page.locator('#table-error')).toBeHidden();
   await page.locator('#table-save').click();
-  await expect(page.locator('[data-table-findings]')).toContainText('Check Data quality');
+  await expect(page.locator('[data-table-findings]')).toContainText('Data quality:');
   await expect(page.locator('[data-table-findings]')).toContainText('1 value that is not a number');
   await page.locator('#table-quality').click();
   await expect(page.locator('[data-quality-findings]')).toContainText('nonnumeric value "high"');

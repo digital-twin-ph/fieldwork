@@ -34,7 +34,7 @@ test('a table is saved by reference, comes back whole after a reload, and runs',
   await page.reload();
   await page.locator('[data-view="workflow"]').click();
   await page.locator(`.react-flow__node[data-id="${id}"]`).click();
-  await expect(page.locator('.inspector')).toContainText(`${ROWS} rows`);
+  await expect(page.locator('.inspector')).toContainText(`${ROWS.toLocaleString('en-US')} rows`);
   await page.locator('#node-library [data-add="table_output"]').click();
   const shown=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')).nodes.find(n=>n.type==='table_output').id);
   await page.locator(`.react-flow__node[data-id="${shown}"]`).click();

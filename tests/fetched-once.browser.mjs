@@ -13,7 +13,7 @@ const PKG=process.env.NYC_PKG;
 const skip=!existsSync(new URL('manual.json',REPO))?'example-2025-nyc-ozone is not checked out beside this repository.'
   :!(PKG&&existsSync(PKG))?'Set NYC_PKG to a local copy of the authors\' Zenodo package.':false;
 
-test('NYC from its pin: one download, the rest read from the device, and Notes runs all four',async({page})=>{test.skip(!!skip,skip);
+test('NYC from its pin: one download, the rest read from the device, and Notes runs all six',async({page})=>{test.skip(!!skip,skip);
   test.setTimeout(300_000);
   let downloads=0;
   await page.route(ZENODO,route=>{downloads++;route.fulfill({status:200,body:readFileSync(PKG),headers:{'access-control-allow-origin':'*'}});});
@@ -52,11 +52,12 @@ test('NYC from its pin: one download, the rest read from the device, and Notes r
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
   expect(downloads).toBe(1);
 
-  // Notes runs all four, and says so only because all four ran.
+  // Notes runs every workflow, and says so only because all six ran. Four when this was written; the satellite
+  // and lag workflows made six, and this test, skipped without the NYC package, went on saying four (2026-11-08).
   await page.locator('[data-view="notes"]').click();
   await page.locator('[data-run-pending]').click();
-  // Two had already run on opening, so Notes runs the other two; then all four are in the write-up.
+  // Those not yet run are run by Notes; then all six are in the write-up.
   await expect(page.locator('#toast')).toContainText('The write-up now holds the whole project',{timeout:120000});
-  await expect(page.locator('#notes-view')).toContainText("All 4 of this project's workflows have run in this session");
+  await expect(page.locator('#notes-view')).toContainText("All 6 of this project's workflows have run in this session");
   expect(downloads).toBe(1);
 });

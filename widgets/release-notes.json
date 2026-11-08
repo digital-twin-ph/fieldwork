@@ -907,12 +907,12 @@
    "migrationFrom": []
   },
   "table_input": {
-   "version": "0.6.2",
+   "version": "0.7.0",
    "released": "2026-11-08",
    "changes": [
     {
-     "kind": "patch",
-     "description": "A table imported wide says so on the table it makes: its measure column and its subject columns, so rules after it read one record per subject. Experiment 188."
+     "kind": "minor",
+     "description": "On the standard Inspector and configuration dialog (experiment 186). The panel holds the step's name, one sentence saying what it reads (file, shape, value columns, unit), Configure…, a Result of rows and absent values, Data quality findings and how many columns are described, with Quick look, Data quality and Describe columns…, then the Manual, Evidence and Version links, and Duplicate and Remove. A source has no Inputs. The import dialog takes the standard frame: the widget and step named in its heading, × to close, Cancel and Apply. Convert the source table on each run moves into it and can be applied without reading the file again. Fetch the table is a button of its own under Settings; inline in a notice it could not be seen as one in the dark theme. What the step stores is unchanged."
     }
    ],
    "breaking": false,

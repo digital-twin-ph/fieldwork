@@ -63,7 +63,19 @@ export interface AuthoredCondition {
   value:string|number|boolean|SettingReference;
 }
 export interface AuthoredGroup {all:AuthoredCondition[]}
-export interface AuthoredConclusion {predicate:string; value:string}
+/** One side of a computed value: a field the rules read or concluded, a typed number, or a step setting. */
+export type Operand={field:string}|number|SettingReference;
+export const COMPUTE_OPERATORS=['minus','plus','times','dividedBy'] as const;
+export type ComputeOperator=typeof COMPUTE_OPERATORS[number];
+/** A CATEGORY (`value`) or a COMPUTED VALUE (`compute`), never both. A computed value is Derive a value's arithmetic
+ *  inside a rule: one of four operators between two operands (experiment 188). */
+export interface AuthoredConclusion {predicate:string; value?:string;
+  compute?:{left:Operand; operator:ComputeOperator; right:Operand}}
+export const isComputed=(c:AuthoredConclusion):c is AuthoredConclusion&{compute:NonNullable<AuthoredConclusion['compute']>}=>
+  !!c.compute;
+/** Whether any rule computes a value. Such a ruleset is evaluated directly, not by the reasoner (experiment 188). */
+export const computesValues=(ruleset:{rules:{then:AuthoredConclusion[]}[]}):boolean=>
+  ruleset.rules.some(rule=>rule.then.some(isComputed));
 export interface AuthoredRule {
   any:AuthoredGroup[];
   /** A LIST, because the rulesets that exist refute a single conclusion: access-review concludes a
@@ -183,7 +195,9 @@ export function compileAuthoredRuleset(ruleset:AuthoredRuleset):string{
       }
       const premise=[`${subject} ${subjectParts.join('; ')}.`,
         ...[...builtins].map(([variable,tests])=>`${variable} ${tests.join('; ')}.`)].join(' ');
-      const conclusion=rule.then.map(c=>`${c.predicate} ${term(c.value)}`).join('; ');
+      if(rule.then.some(isComputed))throw new AuthoredRulesetError('A rule that computes a value is evaluated directly, '
+        +'not compiled to N3: compile it with evaluateAuthored instead.');
+      const conclusion=rule.then.map(c=>`${c.predicate} ${term(c.value!)}`).join('; ');
       lines.push(`{ ${premise} } => { ${subject} ${conclusion}. }.`);
     }
   }

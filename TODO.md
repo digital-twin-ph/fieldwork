@@ -62,7 +62,9 @@ not a practitioner in the field.
    (run by the reasoner), rules over points with a map, and counts written as text repaired in Data quality. The seven
    tests that open it move with it. **The built-in coverage exercise is removed**; its four points stay as a test
    fixture, and Keep points inside the area is recorded as having no worked example.
-3. **Sierra Leone** (below).
+3. **Sierra Leone** (below; [189](docs/experiments/189-a-measles-line-list-made-safe-to-teach-with.md)): reviewed,
+   de-identified and made semi-synthetic 2026-11-08; facility matching measured; the Find health facilities change
+   awaits its admission review.
 4. **Table output on the standard** (186).
 5. **Manila coastal exposure moves to example-2026-sea-level-rise-philippines**, then the built-in one is removed. The
    terrain and datum note is its reading: docs/research/terrain-models-vertical-datum-2026-11-07.md.
@@ -72,6 +74,9 @@ not a practitioner in the field.
    example.
 6. **Old Naledi**: `facilities` and `facility_audit` replaced by standard widgets (Keep points inside the area; Apply
    ruleset and Table output), checked to give the same results, then moved to a repository.
+   **Keep points inside the area is decided here** (the practitioner, 2026-11-08, asking whether it can be retired): if
+   neither this nor Sierra Leone uses it, it is retired, and the Check spatial coverage migration that leads to it
+   becomes a refusal by name.
 
 7. **188 validated** (the practitioner, 2026-11-08: *"Let's validate 188 after #5"*, Old Naledi then numbered 5): South
    London's workflows built from an empty canvas through the rules dialog, so its rebuilt Apply ruleset steps play back

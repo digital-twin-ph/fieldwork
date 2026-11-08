@@ -1,6 +1,6 @@
 # Fieldwork
 
-_Created 2026-10-05 · Updated 2026-11-04_
+_Created 2026-10-05 · Updated 2026-11-08_
 
 A browser prototype for semantic visual GIS workflows in public health. Build a
 workflow from typed widgets, compute spatial facts locally, and evaluate

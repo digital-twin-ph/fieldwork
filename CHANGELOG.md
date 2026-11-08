@@ -3,6 +3,15 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.58.0 — 2026-11-08
+
+- **Tabular data reads Excel workbooks** (`.xlsx`): choose the sheet, and it is set up as a CSV is. The step says which
+  sheet it read. Tabular data 0.8.0.
+- **Fixed: Next rows did nothing** in the import dialog's After table, Relate's preview and Select rows' preview. Only
+  the Results view listened for it. Relate 0.9.1, Select rows 0.4.1.
+- Two browser tests that need the NYC package, and so were skipped in every gate, had gone stale: one expected four
+  workflows where the example has six. Both now pass, and the gate is run with the package.
+
 ## 0.57.0 — 2026-11-08
 
 - **Tabular data is on the standard Inspector and dialog** ([186](docs/experiments/186-one-standard-inspector.md)).

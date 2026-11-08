@@ -3,7 +3,7 @@ import {rateMultiplier,machinedNotes} from './relate-table.js';
 import type {DataTable} from './data-table.js';
 import type {ParamsByType} from './types.js';
 import {openConfigDialog} from './config-dialog.js';
-import {dataTableMarkup,wideFrame,type ColumnRoles} from './data-table-ui.js';
+import {dataTableMarkup,wideFrame,wireTablePages,type ColumnRoles} from './data-table-ui.js';
 import type {Escape} from './types.js';
 
 /** DECIDING A JOIN, with the consequence in front of you.
@@ -170,6 +170,8 @@ export interface RelateConfigView {
 export function openRelateConfig(view:RelateConfigView,esc:Escape):void{
   // Which pair the multiplier is stated for: a reading aid, not a setting, so it is not in the draft.
   let numerator='',denominator='';
+  // The table the preview last drew, so its pages can turn.
+  let shown:{table:DataTable;options:{pageSize:number;roles?:ColumnRoles}}|undefined;
   const select=(id:string,label:string,options:string[],current:string,empty:string,{optional=false}={})=>
     `<div class="field"><label class="field-label" for="${id}">${esc(label)}</label>`
     +`<select id="${id}"${options.length?'':' disabled'}>`
@@ -233,8 +235,9 @@ export function openRelateConfig(view:RelateConfigView,esc:Escape):void{
             +`<td>${count(c.matched)}</td><td${c.empty?' class="profile-flag"':''}>${count(c.empty)}</td></tr>`).join('')
           +'</tbody></table>'
           +`<p class="muted">${count(planned.table.rowCount)} rows, every one kept. This is the table the next step reads.</p>`
-          +`<div class="relate-preview">${dataTableMarkup(planned.table,esc,{pageSize:12,
-            roles:Object.fromEntries([...keysOn.filter(Boolean).map(k=>[k,'key'] as const),...planned.columns.map(c=>[c.column,'brought'] as const)])})}</div>`;
+          +`<div class="relate-preview">${(()=>{shown={table:planned.table,options:{pageSize:12,
+            roles:Object.fromEntries([...keysOn.filter(Boolean).map(k=>[k,'key'] as const),...planned.columns.map(c=>[c.column,'brought'] as const)])}};
+            return dataTableMarkup(shown.table,esc,shown.options);})()}</div>`;
         return {settings,preview,decisions:'<p>Every row is kept. A row with no value at a shift has that column '
           +'left empty, and the empties are counted above; a model on a column leaves out only the rows empty in it.</p>'};
       }
@@ -275,8 +278,8 @@ export function openRelateConfig(view:RelateConfigView,esc:Escape):void{
         +`<h4>${keeping?'The table \u00b7 every row kept':'The table \u00b7 matched rows only'}</h4>`
         +`<p class="muted">${count(table.rowCount)} row${table.rowCount===1?'':'s'}. This is the table the next step reads.</p>`
         +(wideFrame(table)?'':`<p class="muted">This table has ${table.keys.length} key columns, so it is shown as stored, one value per row.</p>`)
-        +`<div class="relate-preview">${dataTableMarkup(table,esc,{pageSize:12,
-          roles:{...Object.fromEntries(keysOn.filter(Boolean).map(k=>[k,'key'])),[draft.bring]:'brought'} as ColumnRoles})}</div>`;
+        +`<div class="relate-preview">${(()=>{shown={table,options:{pageSize:12,
+          roles:{...Object.fromEntries(keysOn.filter(Boolean).map(k=>[k,'key'])),[draft.bring]:'brought'} as ColumnRoles}};return dataTableMarkup(table,esc,shown.options);})()}</div>`;
 
       // DECISIONS: what happens to the rows that did not match, which the step will not decide.
       const decisions=gaps.length
@@ -298,6 +301,7 @@ export function openRelateConfig(view:RelateConfigView,esc:Escape):void{
       return {settings,preview,decisions,...(blocked?{message:{tone:'refusal' as const,text:shape.labelRefusal!},blocked}:{})};
     },
     wire:(root,draft,redraw)=>{
+      if(shown)wireTablePages(root.querySelector<HTMLElement>('.relate-preview'),shown.table,esc,shown.options);
       const on=(id:string,fn:(el:HTMLSelectElement)=>void)=>{const el=root.querySelector<HTMLSelectElement>(`#${id}`);if(el)el.onchange=()=>{fn(el);redraw();};};
       on('relate-on',el=>{draft.on=el.value;draft.alsoOn=draft.alsoOn.filter(c=>c!==el.value);});
       on('relate-bring',el=>{draft.bring=el.value;});

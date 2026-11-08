@@ -6,7 +6,7 @@
 import type {DataTable} from './data-table.js';
 import type {ParamsByType,Escape} from './types.js';
 import {openConfigDialog} from './config-dialog.js';
-import {dataTableMarkup} from './data-table-ui.js';
+import {dataTableMarkup,wireTablePages} from './data-table-ui.js';
 import {selectRows,selectRange,orderOf,rangeSentence,type SelectResult} from './select-rows.js';
 
 type SelectParams=ParamsByType['select_rows'];
@@ -62,6 +62,7 @@ export function openSelectConfig(view:SelectConfigView,esc:Escape):void{
   // A LONG LIST IS SEARCHED, not scrolled. The search only hides boxes, so narrowing unticks nothing; it is a reading
   // aid, not a setting, so it is kept here and survives the rebuild a tick causes.
   let filterText='',tickedOnly=false;
+  let shown:{table:DataTable;options:{pageSize:number;roles:Record<string,'key'>}}|undefined;
   const columns=Object.keys(view.shape);
 
   openConfigDialog<SelectDraft>({
@@ -127,6 +128,7 @@ export function openSelectConfig(view:SelectConfigView,esc:Escape):void{
       const preview=`<p class="select-preview-count">Keeps <strong>${count(picked.kept)}</strong> of `
         +`${count(picked.kept+picked.dropped)} rows; ${count(picked.dropped)} left out.</p>`
         +`<div class="relate-preview">${dataTableMarkup(picked.table,esc,{pageSize:12,roles:{[draft.keyColumn]:'key'}})}</div>`;
+      shown={table:picked.table,options:{pageSize:12,roles:{[draft.keyColumn]:'key'}}};
       const decisions=picked.absent.length
         ?`<p>${picked.absent.length===1?'This value is':'These values are'} named and not in the table: `
           +picked.absent.map(v=>`<strong>${esc(v)}</strong>`).join(', ')
@@ -136,6 +138,7 @@ export function openSelectConfig(view:SelectConfigView,esc:Escape):void{
       return {settings,preview,...(decisions?{decisions}:{})};
     },
     wire:(root,draft,redraw)=>{
+      if(shown)wireTablePages(root.querySelector<HTMLElement>('.relate-preview'),shown.table,esc,shown.options);
       root.querySelector<HTMLSelectElement>('#select-key')?.addEventListener('change',e=>{
         const column=(e.target as HTMLSelectElement).value;
         if(column!==draft.keyColumn){draft.keyColumn=column;draft.values=[];draft.range={from:'',to:''};

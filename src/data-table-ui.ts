@@ -3,6 +3,7 @@ import type {DataTable,DataTableSource,TableSelection} from './data-table.js';
 import {dataTable,wideDataTable,keyDomains,MAX_TABLE_ROWS,MAX_TABLE_FILE_BYTES,type TableRows} from './data-table.js';
 import {parseCSV} from './input-data.js';
 import {readStata,type StataTable} from './stata.js';
+import {readXlsx,type Sheet} from './xlsx.js';
 import {fetchOrDeviceCopy,tablesInArchive,archiveEntry,asFile,type RemoteTableSource,progressText} from './remote-table.js';
 import {contentHash} from './project-files.js';
 
@@ -129,7 +130,10 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:T
     +(frame.step?`<span class="config-step"> \u00b7 ${named(frame.step)}</span>`:'')+'</h2>'
     +'<button class="config-close" id="table-close" aria-label="Close">\u00d7</button></header><div class="config-body">'
     +'<p>A <strong>wide</strong> CSV is assumed: one row per subject and a column per variable, which is what a line list, a surveillance export and a published table look like. Name the columns that identify the subject and the columns holding values; the rest of the application reads one long table, and this converts. A table has no geometry; latitude and longitude columns, if present, are ordinary columns.</p>'
-    +'<label class="field-label" for="table-file">CSV or Stata file (up to '+FILE_BYTES/1e6+' MB, '+MAX_TABLE_ROWS.toLocaleString()+' rows)</label><input id="table-file" type="file" accept=".csv,text/csv,.dta">'
+    +'<label class="field-label" for="table-file">CSV, Excel or Stata file (up to '+FILE_BYTES/1e6+' MB, '+MAX_TABLE_ROWS.toLocaleString()+' rows)</label><input id="table-file" type="file" accept=".csv,text/csv,.xlsx,.dta">'
+    // AN EXCEL WORKBOOK'S SHEET (the practitioner, 2026-11-08: "Yes add Excel"). Shown only for a workbook of several.
+    +'<div id="table-sheet-row" hidden><label class="field-label" for="table-sheet">Sheet</label><select id="table-sheet"></select></div>'
+    +'<p id="table-workbook" class="muted" hidden></p>'
     // OR FROM WHERE IT IS PUBLISHED. The project then keeps the URL and the file's digest, and an export carries no
     // rows: another device fetches the same file when it opens. Experiment 170.
     +'<details id="table-remote"><summary>Or fetch from a URL</summary>'
@@ -186,6 +190,7 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:T
   const shapeAlert=q<HTMLElement>('#table-shape-alert'),shapeSays=q<HTMLElement>('#table-shape-says');
   const shapeAccept=q<HTMLButtonElement>('#table-shape-accept');
   const unitInput=q<HTMLInputElement>('#table-unit'),status=q<HTMLElement>('#table-status');
+  const sheetRow=q<HTMLElement>('#table-sheet-row'),sheetSelect=q<HTMLSelectElement>('#table-sheet'),workbookSays=q<HTMLElement>('#table-workbook');
   const check=q<HTMLElement>('#table-check'),beforePane=q<HTMLElement>('#table-before');
   const afterPane=q<HTMLElement>('#table-after'),reconcile=q<HTMLElement>('#table-reconcile');
   const error=q<HTMLElement>('#table-error'),save=q<HTMLButtonElement>('#table-save'),cancel=q<HTMLButtonElement>('#table-cancel');
@@ -196,6 +201,7 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:T
   shapeSelect.value=existing?(existing.wide?'wide':'long'):'wide';
   if(existing?.wide){measureKeyInput.value=existing.wide.measureKey;valueNameInput.value=existing.valueField;}
   let stata:StataTable|undefined;
+  let sheets:Sheet[]|undefined,sheet:Sheet|undefined;
   let file:File|undefined,text='',parsed:ReturnType<typeof parseCSV>|undefined,result:TableImport|undefined,busy=false,serial=0;
   const shape=()=>shapeSelect.value==='wide'?'wide':'long';
   const fail=(e:unknown)=>{error.textContent=e instanceof Error?e.message:String(e);error.hidden=false;save.disabled=true;result=undefined;error.scrollIntoView({block:'nearest'});};
@@ -349,7 +355,7 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:T
           keys:table.keys,valueField,...(unit?{unit}:{}),wide:{keys,valueFields,measureKey},
           source_table:{headers:parsed.headers.map(h=>h.trim()),rows:parsed.rows}};
         const untaken=renderBefore(keys,valueFields);
-        afterPane.innerHTML=dataTableMarkup(table,esc);
+        afterPane.innerHTML=dataTableMarkup(table,esc);wireTablePages(afterPane,table,esc);
         renderReconcile([
           `<strong>${parsed.rows.length.toLocaleString()} subjects \u00d7 ${valueFields.length} `
             +`variable${valueFields.length===1?'':'s'} = `
@@ -375,7 +381,7 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:T
         imported={data:table,source:{filename:file.name,bytes:file.size,sha256:'',rows:table.rowCount},
           keys,valueField,...(unit?{unit}:{})};
         const untaken=renderBefore(keys,[valueField]);
-        afterPane.innerHTML=dataTableMarkup(table,esc);
+        afterPane.innerHTML=dataTableMarkup(table,esc);wireTablePages(afterPane,table,esc);
         const domains=keyDomains(table);
         renderReconcile([
           `<strong>${table.rowCount.toLocaleString()} rows</strong> read as they stand: this file `
@@ -520,7 +526,9 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:T
     try{await readFetched(archiveEntry(archive,entrySelect.value),entrySelect.value);}
     catch(e){fail(e);}
   };
-  fileInput.onchange=()=>{remote=undefined;void load(fileInput.files?.[0],false);};
+  fileInput.onchange=()=>{remote=undefined;sheet=undefined;void load(fileInput.files?.[0],false);};
+  // ANOTHER SHEET of the same workbook is read as a fresh file would be, keys and all.
+  sheetSelect.onchange=()=>{sheet=sheets?.find(s=>s.name===sheetSelect.value);if(file)void load(file,!!remote);};
   const load=async(chosen:File|undefined,fetched:boolean)=>{
     if(!fetched)remote=undefined;
     const request=++serial;file=chosen;parsed=undefined;keysBox.hidden=true;valueSelect.disabled=true;
@@ -535,9 +543,25 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:T
     try{
       // A STATA FILE IS READ AS STATA WROTE IT, then meets the same dialog a CSV does. Experiment 169.
       stata=/\.dta$/i.test(file.name)?readStata(new Uint8Array(await file.arrayBuffer())):undefined;
+      // AN EXCEL WORKBOOK is read as its cells are written, one sheet at a time, then meets the same dialog a CSV does.
+      const workbook=/\.xlsx$/i.test(file.name);
+      if(workbook){
+        const read=readXlsx(new Uint8Array(await file.arrayBuffer())).filter(s=>s.headers.length);
+        if(!read.length)throw new Error('This workbook has no sheet with a header row.');
+        // A sheet already chosen is kept when the same workbook is read again; otherwise the first.
+        const wanted=sheet?.name;
+        sheets=read;sheet=read.find(s=>s.name===wanted)??read[0]!;
+        sheetSelect.innerHTML=read.map(s=>`<option value="${named(s.name)}"${s===sheet?' selected':''}>${named(s.name)} \u00b7 ${s.rows.length.toLocaleString()} rows</option>`).join('');
+        sheetRow.hidden=read.length<2;
+        if(sheet.rows.length>MAX_TABLE_ROWS)throw new Error(`Sheet "${sheet.name}" has ${sheet.rows.length.toLocaleString()} rows; at most ${MAX_TABLE_ROWS.toLocaleString()} can be imported.`);
+        // SAID WHERE IT STAYS, not in the status line the table's own count replaces.
+        workbookSays.textContent=`Excel workbook, sheet "${sheet.name}": ${sheet.rows.length.toLocaleString()} rows of ${sheet.headers.length} columns. `
+          +'Cells are read as written; a formula gives its saved result; a date Excel stores as a number stays that number.';
+        workbookSays.hidden=false;
+      }else{sheets=undefined;sheet=undefined;sheetRow.hidden=true;workbookSays.hidden=true;}
       if(request!==serial)return;
-      text=stata?'':await file.text();if(request!==serial)return;
-      parsed=stata??parseCSV(text,MAX_TABLE_ROWS,FILE_BYTES);
+      text=stata||workbook?'':await file.text();if(request!==serial)return;
+      parsed=stata??(sheet?{headers:sheet.headers,rows:sheet.rows}:undefined)??parseCSV(text,MAX_TABLE_ROWS,FILE_BYTES);
       status.textContent=stata?`Stata format ${stata.format}: ${stata.rows.length.toLocaleString()} rows of ${stata.headers.length} variables.`
         +(stata.notes.length?` ${stata.notes.join(' ')}`:''):'';
       const guessValue=parsed.headers.findIndex(h=>/^(value|value_m|amount|measure|level)$/i.test(h.trim()));
@@ -584,13 +608,14 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean,existing?:T
       if(frame.onConvertOnRun(convert.checked))dialog.close();return;}
     if(!result||!file||busy)return;busy=true;save.disabled=true;cancel.disabled=true;fileInput.disabled=true;error.hidden=true;
     try{
-      const sha256=await contentHash(stata?new Uint8Array(await file!.arrayBuffer()) as Uint8Array<ArrayBuffer>:new TextEncoder().encode(text) as Uint8Array<ArrayBuffer>);
+      const sha256=await contentHash(stata||sheet?new Uint8Array(await file!.arrayBuffer()) as Uint8Array<ArrayBuffer>:new TextEncoder().encode(text) as Uint8Array<ArrayBuffer>);
       // A STATA FILE'S OWN VARIABLE LABELS, proposed for what its kept columns mean and not yet accepted
       // (experiment 172). A label the file does not have is no proposal.
       const kept=result.wide?[...result.wide.keys,...result.wide.valueFields]:[...result.keys,result.valueField];
       const proposed=stata?Object.fromEntries(kept.map(c=>[c,stata!.labels[stata!.headers.indexOf(c)]?.trim()??''])
         .filter(([,label])=>label).map(([c,label])=>[c,{label,origin:'file' as const,confirmed:false,from:result!.source.filename}])):{};
-      const saved:TableImport={...result,data:{...result.data,source:{...result.source,sha256}},source:{...result.source,sha256},
+      const source={...result.source,sha256,...(sheet?{sheet:sheet.name}:{})};
+      const saved:TableImport={...result,data:{...result.data,source},source,
         ...(remote?{remote}:{}),...(Object.keys(proposed).length?{proposed}:{}),
         ...(result.source_table&&convert.checked?{convertOnRun:true}:{})};
       if(!onSave(saved))throw new Error('The table could not be saved. Your previous project is unchanged; retry Save.');
@@ -782,6 +807,21 @@ const roleHead=(roles:ColumnRoles|undefined,column:string,esc:Escape,also='')=>{
   return `<th scope="col"${roleAttr(roles,column,also)}>${esc(column)}`
     +(r?`<span class="column-role">${r==='key'?'matched on':'brought across'}</span>`:'')+'</th>';};
 
+/** PAGES THAT TURN. `dataTableMarkup` writes Previous rows and Next rows, and until 2026-11-08 only the Results view
+ *  listened for them: in the import dialog's After table, Relate's preview and Select rows' preview they did nothing
+ *  (the practitioner, importing South London's table). One listener on the container, so it survives the redraw it
+ *  makes, and draws the table again at the page asked for. */
+export function wireTablePages(container:HTMLElement|null|undefined,table:DataTable,esc:Escape,
+    options:Omit<Parameters<typeof dataTableMarkup>[2]&object,'page'>={}):void{
+  if(!container)return;
+  container.onclick=event=>{
+    const button=(event.target as HTMLElement).closest<HTMLButtonElement>('[data-table-page]');
+    if(!button||button.disabled||!container.contains(button))return;
+    event.preventDefault();
+    container.innerHTML=dataTableMarkup(table,esc,{...options,page:Number(button.dataset.tablePage)});
+  };
+}
+
 export function dataTableMarkup(table:DataTable,esc:Escape,{query='',page=0,pageSize=40,assertTotals=false,roles}:
   {query?:string;page?:number;pageSize?:number;assertTotals?:boolean;roles?:ColumnRoles}={}){
   const matching=query?table.rows.filter(row=>Object.values(row.key).some(v=>String(v).toLowerCase().includes(query.toLowerCase()))):table.rows;
@@ -846,9 +886,15 @@ export function dataTableMarkup(table:DataTable,esc:Escape,{query='',page=0,page
 
 /** THE TABLE A REMOTE SPEC DESCRIBES, re-read from its fetched file with the settings it was first read with: the
  *  same shape, keys, value column and key roles, so a second device gets the same table. Experiment 170. */
-export async function tableFromFetched(file:File,settings:{keys:string[];valueField:string;unit?:string;
+export async function tableFromFetched(file:File,settings:{keys:string[];valueField:string;unit?:string;sheet?:string;
   wide?:WideChoice;primaryKey?:string[];secondaryKeys?:string[]}):Promise<{data:DataTable;sourceTable?:TableRows}>{
-  const parsed:TableRows=/\.dta$/i.test(file.name)?readStata(new Uint8Array(await file.arrayBuffer())):parseCSV(await file.text(),MAX_TABLE_ROWS,FILE_BYTES);
+  // The same sheet of a workbook as was first read, or the first that has a header row.
+  const workbook=/\.xlsx$/i.test(file.name)?readXlsx(new Uint8Array(await file.arrayBuffer())).filter(s=>s.headers.length):undefined;
+  const sheet=workbook?(workbook.find(s=>s.name===settings.sheet)??workbook[0]):undefined;
+  if(workbook&&!sheet)throw new Error('This workbook has no sheet with a header row.');
+  if(workbook&&settings.sheet&&sheet!.name!==settings.sheet)throw new Error(`This workbook has no sheet "${settings.sheet}".`);
+  const parsed:TableRows=/\.dta$/i.test(file.name)?readStata(new Uint8Array(await file.arrayBuffer()))
+    :sheet?{headers:sheet.headers,rows:sheet.rows}:parseCSV(await file.text(),MAX_TABLE_ROWS,FILE_BYTES);
   const roles={...(settings.primaryKey?.length?{primaryKey:settings.primaryKey}:{}),...(settings.secondaryKeys?.length?{secondaryKeys:settings.secondaryKeys}:{})};
   if(settings.wide){
     const data=wideDataTable(parsed,{keys:settings.wide.keys,valueFields:settings.wide.valueFields,measureKey:settings.wide.measureKey,

@@ -5544,6 +5544,7 @@ async function readFetchedInto(id:string,file:File&{from?:'device'|'source'}):Pr
   if(file.from)rowsReadFrom.set(id,file.from);
   const params=getNode(workflow,id,'table_input').params;
   const read=await tableFromFetched(file,{keys:params.keys,valueField:params.valueField,unit:params.unit,
+    ...((params.source?.sheet??params.data.source?.sheet)?{sheet:params.source?.sheet??params.data.source?.sheet}:{}),
     ...(params.wide?{wide:params.wide}:{}),primaryKey:params.data.primaryKey,secondaryKeys:params.data.secondaryKeys});
   change(w=>{const node=getNode(w,id,'table_input');node.params.data={...read.data,...(node.params.data.source?{source:node.params.data.source}:{})};
     // KEPT BY THE FILE'S DIGEST, so every workflow on the same file shares one copy and none overflows the save.
@@ -8294,7 +8295,7 @@ function tableSentence(p:WorkflowNode<'table_input'>['params']):string{
   const from=p.remote?new URL(p.remote.url).hostname:'';
   const file=p.remote?.entry?.split('/').at(-1)||p.source?.filename||(p.remote?p.remote.url.split('/').at(-1):'');
   if(!p.keys.length&&!p.remote)return 'No table yet: import one in Configure\u2026';
-  const what=`Reads ${file||'a table'}${from?` from ${from}`:''}`;
+  const what=`Reads ${file||'a table'}${(p.source?.sheet??p.data.source?.sheet)?`, sheet ${p.source?.sheet??p.data.source?.sheet}`:''}${from?` from ${from}`:''}`;
   const shape=p.wide
     ?`wide: one row per ${p.wide.keys.join(' and ')}, ${p.wide.valueFields.length} variable${p.wide.valueFields.length===1?'':'s'}`
     :`long: one row per ${p.keys.join(', ')}, values in ${p.valueField}`;

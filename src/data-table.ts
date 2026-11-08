@@ -16,7 +16,8 @@ export interface TableRows {headers:string[]; rows:string[][]}
 export const MAX_TABLE_ROWS=250_000;
 /** The file a table is read from. Rows are the measured limit; a 1,000,000-row, 42 MB file was read in 10 s. */
 export const MAX_TABLE_FILE_BYTES=40_000_000;
-export interface DataTableSource {filename:string; bytes:number; sha256:string; rows:number}
+export interface DataTableSource {filename:string; bytes:number; sha256:string; rows:number;
+  /** The sheet read, for an Excel workbook (2026-11-08). */ sheet?:string}
 /** WHAT IS WRONG WITH A TABLE, FOUND ON READING IT. The practitioner, 2026-11-02: *"We cannot refuse an
  *  upload because of a quality problem."* A refused file cannot be looked at, so the table loads and
  *  these say what to look at. Row numbers are the file's, from 1. Experiment 164. */

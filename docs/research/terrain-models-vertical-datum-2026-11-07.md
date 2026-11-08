@@ -1,6 +1,6 @@
 # Open terrain models and the height they are measured from
 
-_Created 2026-11-07 · Updated 2026-11-07_
+_Created 2026-11-07 · Updated 2026-11-08_
 
 **Standing of this note.** A survey to decide whether a sea-level-rise question can be asked honestly in Fieldwork:
 which open terrain models state the surface their heights are measured from, under what licence, and how they are

@@ -66,6 +66,10 @@ not a practitioner in the field.
 4. **Table output on the standard** (186).
 5. **Manila coastal exposure moves to example-2026-sea-level-rise-philippines**, then the built-in one is removed. The
    terrain and datum note is its reading: docs/research/terrain-models-vertical-datum-2026-11-07.md.
+   **Images in Notes are built with it** (the practitioner, 2026-11-08): an authored note can carry an image, kept by
+   its digest, with required alt text and a caption, shown on the Notes board and in the write-up; an SVG is shown as
+   an image, never inlined. Its first use is the datum diagram, docs/images/vertical-datums.svg, as a note of the
+   example.
 6. **Old Naledi**: `facilities` and `facility_audit` replaced by standard widgets (Keep points inside the area; Apply
    ruleset and Table output), checked to give the same results, then moved to a repository.
 

@@ -1,12 +1,12 @@
 # Tabular data
 
-_Created 2026-11-02 · Updated 2026-11-06_
+_Created 2026-11-02 · Updated 2026-11-08_
 
-**A source.** It reads a CSV or Stata file into a table.
+**A source.** It reads a CSV, Excel or Stata file into a table.
 
 ## What it does
 
-It reads a CSV or Stata (`.dta`) file in wide or long shape and hands a table to the next step. An absent value is kept as
+It reads a CSV, Excel (`.xlsx`) or Stata (`.dta`) file in wide or long shape and hands a table to the next step. An absent value is kept as
 unknown, never read as zero.
 
 ## How to use it
@@ -25,6 +25,13 @@ columns…**. If it names a Data quality finding, open it before relying on the 
 
 **Convert the source table on each run**, in the dialog, keeps the file as published and melts it when the workflow
 runs, so the run's receipt names the columns it took. It can be changed without reading the file again.
+
+## Excel workbooks
+
+A workbook of several sheets offers **Sheet**: choose the one holding the table, and it is set up as a CSV is. The
+dialog says which sheet it read, and the step keeps it, so a table fetched again reads the same sheet. Cells are read
+as written: a formula gives its saved result, and formatting is ignored, so a date Excel stores as a number stays that
+number. An older `.xls` file needs saving as `.xlsx` or CSV first.
 
 ## Stata files
 

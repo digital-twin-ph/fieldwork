@@ -713,12 +713,12 @@
    "migrationFrom": []
   },
   "relate_table": {
-   "version": "0.9.0",
-   "released": "2026-11-07",
+   "version": "0.9.1",
+   "released": "2026-11-08",
    "changes": [
     {
-     "kind": "minor",
-     "description": "No limit on how many shifts one step brings. 24 was chosen, not measured; measured on 2026-11-07 at 77,740 rows, about 0.5 s per shift, linear to 384 with nothing failing. Experiment 185."
+     "kind": "patch",
+     "description": "The join's preview turns its pages: Next rows did nothing in the configuration dialog."
     }
    ],
    "breaking": false,
@@ -767,12 +767,12 @@
    "migrationFrom": []
   },
   "select_rows": {
-   "version": "0.4.0",
+   "version": "0.4.1",
    "released": "2026-11-08",
    "changes": [
     {
-     "kind": "minor",
-     "description": "On the standard Inspector and configuration dialog (experiment 186). The panel holds the step's name, its input, one sentence saying what it keeps, Configure…, a one-line result after a run (rows kept and left out, and any value named that the table does not hold), the Manual, Evidence and Version links, and Duplicate and Remove. The column, the values or the range are in the dialog, which shows how many rows they keep, and the table, before they are applied; a selection that keeps nothing is refused there. Nothing is written until Apply. What the step stores is unchanged, so saved workflows open as they were."
+     "kind": "patch",
+     "description": "The preview of the rows kept turns its pages: Next rows did nothing in the configuration dialog."
     }
    ],
    "breaking": false,
@@ -907,12 +907,12 @@
    "migrationFrom": []
   },
   "table_input": {
-   "version": "0.7.0",
+   "version": "0.8.0",
    "released": "2026-11-08",
    "changes": [
     {
      "kind": "minor",
-     "description": "On the standard Inspector and configuration dialog (experiment 186). The panel holds the step's name, one sentence saying what it reads (file, shape, value columns, unit), Configure…, a Result of rows and absent values, Data quality findings and how many columns are described, with Quick look, Data quality and Describe columns…, then the Manual, Evidence and Version links, and Duplicate and Remove. A source has no Inputs. The import dialog takes the standard frame: the widget and step named in its heading, × to close, Cancel and Apply. Convert the source table on each run moves into it and can be applied without reading the file again. Fetch the table is a button of its own under Settings; inline in a notice it could not be seen as one in the dark theme. What the step stores is unchanged."
+     "description": "Reads an Excel workbook (.xlsx) as well as CSV and Stata files (the practitioner, 2026-11-08: 'Yes add Excel'). A workbook of several sheets offers the sheet to read; the sheet is kept with the table's source, so a table fetched again reads the same one. Cells are read as written: a formula gives its saved result, and a date Excel stores as a number stays that number. The import dialog's After table turns its pages: Next rows did nothing."
     }
    ],
    "breaking": false,

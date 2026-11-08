@@ -1,0 +1,142 @@
+# 190 · Find health facilities from a list
+
+_Created 2026-11-08 · Updated 2026-11-08_
+
+**Status:** proposed. The admission review, written before any build as AGENTS.md asks of a change to a widget's
+contract. Nothing is built. The measurements it rests on are [189](189-a-measles-line-list-made-safe-to-teach-with.md)'s.
+
+## The question
+
+The practitioner, 2026-11-06, of the Sierra Leone line list: *"It has an organizational unit column which are facility
+names and I am wondering if those could be geocoded."* And: *"What if Find health facilities is a list and the widget
+can geocode?"* On 2026-11-08: *"We planned for find health facilities to take a list and either geocode it or match it
+with OSM's."*
+
+## What the measurement showed
+
+The 333 facility names of the line list against GRID3's Sierra Leone facility list (CC BY 4.0, 1,616 facilities, each
+with a DHIS2 identifier): 219 exact, 62 allowing for spelling, 14 ambiguous, 38 not found. Leaving DHIS2's bracketed
+place out finds 9 more. Some spelling matches differ in **type** (MCHP against CHP or CHC). Of those not found, several
+are **"… Communities" units**, community reporting for a chiefdom, with no point; several are hospitals run by NGOs or a
+university, for which OpenStreetMap is the second source.
+
+## The proposal
+
+**Find health facilities gains a second way in: from a list.** Today it fetches every facility inside a study area. From
+a list, it reads a table, and for each row finds the facility its name column names:
+
+| Setting | What it decides |
+| --- | --- |
+| **The list** | A table, on a new input `list` |
+| **Name column** | Which column names the facility |
+| **District column** | Optional: narrows the candidates for a name found in more than one district |
+| **Sources, in order** | A national list first (GRID3 for Sierra Leone), OpenStreetMap for what is left |
+| **Spelling tolerance** | Jaro-Winkler, 0.88 as Deduplicate records' default; a review band below it |
+
+**Each row is marked, and none is dropped or guessed:**
+
+| Mark | Meaning |
+| --- | --- |
+| exact | The name, folded for case and punctuation, is one facility's |
+| allowing for spelling | One facility's name within the tolerance, the same type |
+| type differs | The name matches but the type does not (MCHP and CHP): for review |
+| ambiguous | Several candidates: listed, for the practitioner to choose, and the choice recorded |
+| an area, not a facility | "… Communities" and the like: no point, said |
+| not found | In no source |
+
+**It hands on one point per matched row**, with the row's columns, and on each point: the source, the matched name and
+identifier (the DHIS2 identifier where GRID3 gives one), the mark, and the score. The counts of each mark are on the
+result, in the receipt and in a machined note.
+
+**On the standard Inspector and dialog, in the same pass.** The practitioner, 2026-11-08: *"As we touch widgets let's be
+opportunistic and standardize them"* ([186](186-one-standard-inspector.md)). The Inspector says in one sentence what the
+step finds and from where; *Inside the study area* or *From a list*, the sources, the name and district columns and the
+tolerance are set in its Configure… dialog, whose preview is the marks and their counts before Apply, and whose
+decisions are the ambiguous rows.
+
+**Nothing is Sierra Leone's in the code.** The practitioner, 2026-11-08: *"Let's just make sure these steps are not hard
+coded for Sierra Leone."* So:
+
+| What could be fixed in code | Where it lives instead |
+| --- | --- |
+| The national list | **A catalogue of national facility lists**, as data, as the extract catalogue is: per entry, the country, where the list is served, which fields hold the name, type, district, identifier and coordinates, the licence and the citation |
+| The facility types (CHC, MCHP, CHP) | Each list's own type field: a name's type is read against what that country's list calls its types |
+| Names that are areas ("… Communities") | A setting of the step, the words that mark an area, pre-filled from the catalogue entry where a country is known to use them |
+
+A bracketed place is DHIS2's way of writing a name in any country, and OpenStreetMap is worldwide.
+
+**GRID3 publishes such lists for other countries**, read from its catalogue on 2026-11-08, each CC BY 4.0: Sierra Leone
+v1.0, Nigeria v4.0, DR Congo v9.0, Zambia v01 (beta). Only Sierra Leone's fields were read; each entry's fields are read
+and recorded when it is added. **The test that holds this:** the matcher runs against a second, made-up catalogue entry
+whose fields and type words differ from Sierra Leone's, and gives the same marks it would from the real one.
+
+## The design audit
+
+**D1, what it is.** Decomposed: fetch a facility list (exists: this widget's three sources), match names (exists once:
+Deduplicate records' `jaroWinkler` and `normaliseName`), make points from coordinates (exists: Point data from a table).
+**Residual distinction:** matching a *name in a list* to a *facility in a register* is not deduplication, which asks
+whether two records are the same thing in two layers, and it is not a key join, which compares keys exactly or folded.
+It must compare a name and a facility type apart, keep a bracketed qualifier to tell two names apart, and know that some
+names are areas. **Kind:** a composite over shared primitives, with the matcher a primitive shared with Deduplicate
+records. **Placement:** on the palette, as a way into Find health facilities, because a practitioner asks for it by
+name: *"geocode my facility list"*.
+
+**D2, does it exist already.** Searched: Relate a column from another table (joins on a key, exactly or folded; no
+spelling tolerance, no type, no review of candidates); Deduplicate records (matches records across point layers by name
+and distance; needs points on both sides, and a list has none); Point data from a table (needs coordinates the list does
+not have); Join a table to the study area (names to boundary parts, not to points). None performs it. **The alternative
+weighed:** fetch the facilities as points, then Relate their coordinates onto the list by name, then Point data from a
+table: three nodes, and Relate would need spelling tolerance, type and review added, which changes what a key join
+means for every other use. Rejected for that reason, and on D9.
+
+**D3, distinctions and how each is enforced.**
+
+| Distinction | Enforcement |
+| --- | --- |
+| A matched point is the register's position, not where the case was | Limitation, said on the result and in the receipt |
+| A type that differs is not a match | Run-time check: marked for review, never handed on as matched |
+| A spelling match is a candidate, not a fact | Run-time check: marked and scored on each point |
+| An area unit has no point | Run-time check: marked, kept, no point |
+| No row is dropped | Run-time check: counts on the result sum to the list's rows |
+| A source's licence travels with its points | Run-time check: the receipt names source, licence and when it was read |
+
+**D4, ports.** A new input `list`, type `table`: a table is the wrong kind for `area`, so the canvas refuses the edge
+there. Whether `area` or `list` is used is a setting of the step; a step set to *from a list* with no list connected is
+a validation rule at the run, as an unconfigured step stays a valid draft. Output: `points`, unchanged.
+
+**D5, qualifiers on the input.** The name column and the district column are declared on the step from the table's own
+columns, never guessed from a column's name.
+
+**D6, the practitioner's workflow, end to end:** a line list (Tabular data, present) → facility points from it (this
+proposal) → cases counted by facility or by district (Total within groups, present) → a map of counts by district
+(Join a table to the study area and Map, present), or by facility above a minimum count (**missing**: a Map has no
+minimum count per point; [189](189-a-measles-line-list-made-safe-to-teach-with.md) asks for one).
+
+**D7, the name.** *Find health facilities* still says what it does; the way in is named on the step: *Inside the study
+area* or *From a list*. The new input is `list`, not `records`, because it holds names, not located records.
+
+**D8, the evidence.** Real data on both sides: the semi-synthetic line list's 333 names against GRID3's list, with the
+counts above as the expected result, and a hand-checked sample of the spelling and type matches. Negative cases: a type
+that differs, an ambiguous name, an area unit and a name in no source, each marked and none handed on as matched.
+
+**D8a, port cases.** The table refused on `area`; points refused on `list`; a list with no name column chosen refused at
+the run, naming the setting.
+
+**D9, effort.** One node from a list to facility points, where the alternative is three, and where today nothing does
+it. It adds no palette entry.
+
+**D10, a worked example.** The Sierra Leone example, built with it.
+
+## What it will not do
+
+- Geocode an address or a place that is not a facility. It matches a name to a facility register, nothing else.
+- Choose between candidates. Ambiguous rows wait for the practitioner, and their choice is recorded.
+- Place a case at its home. A facility point is where the case was seen.
+
+## What this does not establish
+
+- That OpenStreetMap finds the hospitals GRID3 does not have: not yet queried.
+- That 0.88 suits facility names: it is Deduplicate's default, chosen for other names; the hand-checked sample will say.
+- That GRID3 covers other countries in the same form: only Sierra Leone's list was read.
+- How a "Communities" unit is told from a facility other than by its name; a list of such patterns is a guess until
+  another country's names are read.

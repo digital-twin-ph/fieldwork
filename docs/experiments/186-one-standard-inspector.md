@@ -127,7 +127,11 @@ notice into Settings: in the dark theme, inline in orange text, it did not read 
 2026-11-08).
 
 **The order:** Select rows (11), Join to area (7), Chart (7), then the rest by use; Table output after Sierra Leone, as
-the practitioner set it. Table input, Study area and
+the practitioner set it.
+
+**And whenever a widget is touched.** The practitioner, 2026-11-08: *"As we touch widgets let's be opportunistic and
+standardize them."* A widget changed for any reason moves to the standard in the same pass, whatever its place in the
+order above; Find health facilities ([190](190-find-health-facilities-from-a-list.md)) is the first. Table input, Study area and
 Polygon layer are sources, with no Inputs section; Map output keeps its layer manager as its Inputs.
 
 ## What this does not establish

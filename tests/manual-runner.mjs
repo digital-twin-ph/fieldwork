@@ -92,7 +92,13 @@ export async function performManual(page,workflow,{timeout=120000,runTimeout=tim
       await expect(target,where).toBeVisible({timeout});
       const text=await target.evaluate(el=>[el.textContent,el.getAttribute('aria-label'),el.getAttribute('title')].join(' '));
       expect(text.replace(/\s+/g,' '),`${where}: the manual's label for ${step.click}`).toContain(step.label);
+      // A BUTTON THAT ADDS A STEP, such as Cases by period's "Add epidemic curve": `as` names the node it adds.
+      const before=step.as?new Set((await saved(page)).nodes.map(n=>n.id)):null;
       await target.click();
+      if(before){
+        await expect.poll(async()=>(await saved(page)).nodes.filter(n=>!before.has(n.id)).length,{message:where}).toBe(1);
+        nodes[step.as]=(await saved(page)).nodes.find(n=>!before.has(n.id)).id;
+      }
       if(step.click==='#table-save')await expect(page.locator('#table-save')).toBeHidden({timeout});
       continue;
     }

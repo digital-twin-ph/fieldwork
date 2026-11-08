@@ -128,12 +128,12 @@
    "migrationFrom": []
   },
   "case_series": {
-   "version": "0.1.1",
-   "released": "2026-11-06",
+   "version": "0.2.0",
+   "released": "2026-11-07",
    "changes": [
     {
-     "kind": "patch",
-     "description": "Can be added from the library: an empty date field is no longer refused on save, only at the run. Found with Rate, experiment 180."
+     "kind": "minor",
+     "description": "A week starting Sunday, the epidemiological week of Brazil's notification system and of the United States, beside the Monday week. The Inspector chooses whether records arrive as points or as a table, which the run read since Snow's daily deaths and nothing could choose. A series read from a table keeps the table's unit. Experiment 187."
     }
    ],
    "breaking": false,
@@ -153,12 +153,12 @@
    "replacementCandidate": "urn:fieldwork:widget:observations"
   },
   "chart_output": {
-   "version": "0.11.0",
-   "released": "2026-11-06",
+   "version": "0.11.1",
+   "released": "2026-11-07",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Draws an estimate with its interval at each category, from a table that declares one: a point and a whisker, and for a ratio a log scale and a dashed line at 1, on by default and said on the figure. A category declared numeric is placed as a number."
+     "kind": "patch",
+     "description": "The line under a weighted case series says how many cases from how many records: Snow's curve said 616 records for 616 deaths in 43 rows. Totals have thousands separators."
     }
    ],
    "breaking": false,

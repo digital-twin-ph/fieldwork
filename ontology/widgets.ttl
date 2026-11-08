@@ -15,7 +15,8 @@
 <urn:fieldwork:widget:apply_ruleset> a fw:WidgetDefinition; fw:nodeType "apply_ruleset"; rdfs:label "Apply ruleset".
 <urn:fieldwork:widget:buffer_area> a fw:WidgetDefinition; fw:nodeType "buffer_area"; rdfs:label "Buffer study area".
 <urn:fieldwork:widget:buffer_point> a fw:WidgetDefinition; fw:nodeType "buffer_point"; rdfs:label "Area around a point".
-<urn:fieldwork:widget:case_series> a fw:WidgetDefinition; fw:nodeType "case_series"; rdfs:label "Cases by period".
+<urn:fieldwork:widget:case_series> a fw:WidgetDefinition; fw:nodeType "case_series"; rdfs:label "Cases by period";
+  fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/case_series.md>.
 <urn:fieldwork:widget:centers> a fw:WidgetDefinition; fw:nodeType "centers"; rdfs:label "Cooling centers".
 <urn:fieldwork:widget:chart_output> a fw:WidgetDefinition; fw:nodeType "chart_output"; rdfs:label "Chart";
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/chart_output.md>;

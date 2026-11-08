@@ -262,7 +262,7 @@ export function chartMarkup(chart:ChartSummary,esc:(text:string)=>string,
   // read it from the same place, so the figure in the write-up and the figure on the screen
   // cannot be sorted differently.
   const bins=orderBins(chart.bins,chart.barOrder);
-  const caption=`<p class="muted">${esc(chart.caption)} · ${chart.total} records · grouping: ${esc(chart.field)}`
+  const caption=`<p class="muted">${esc(chart.caption)} · ${chart.records!==undefined?`${chart.total.toLocaleString('en')} cases from ${chart.records.toLocaleString('en')} records`:`${chart.total.toLocaleString('en')} records`} · grouping: ${esc(chart.field)}`
     +`${chart.unit?' · '+esc(chart.unit):''}</p>`;
   if(orientation==='vertical')
     return caption+`<div class="bar-columns" role="img" aria-label="${esc(chart.caption)}">`

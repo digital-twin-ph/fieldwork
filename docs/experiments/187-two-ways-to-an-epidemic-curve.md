@@ -2,7 +2,10 @@
 
 _Created 2026-11-07 · Updated 2026-11-07_
 
-**Status:** asked. Nothing is built; this is the comparison, read from the workflows and the code, and a design.
+**Status:** validated, 2026-11-07 (Fieldwork 0.51.0). Cases by period has a week starting Sunday, the Brazil curve is
+rebuilt with it (example commit 51902ca), and its manual plays back from an empty canvas in Chromium. Checks that
+passed: the rebuilt curve's **51** weekly totals equal the old route's exactly, from the same 4,692 rows; and
+`tests/case-series.test.mjs` fails if a Sunday date lands in a week labelled with any other day.
 
 ## The question
 
@@ -63,6 +66,35 @@ date lands in a week labelled with any other day.
 
 **`retired`** if a Sunday week cannot be added without the Inspector needing more than one plain choice to explain
 it, recorded with what was tried.
+
+## Built and measured, 2026-11-07
+
+| | Before | After |
+| --- | --- | --- |
+| Route | Select rows → Total within groups → Chart | Select rows → Cases by period → Chart |
+| Nodes in the workflow | 4 | 4 |
+| Weeks, first and last | 51, 2024-01-07 to 2024-12-22 | the same |
+| Total | 423,795 notified cases | the same; every week equal |
+| Kind of date | in the subtitle only | declared: *a date of unstated kind* |
+| Unit | notified cases/week | the same, kept (it was lost at first; fixed) |
+
+**Two of the design's expectations were wrong.** The route is **not one step fewer**: Cases by period replaces Total
+within groups one for one, so the workflow keeps 4 nodes. And the check was to be **52** weekly totals; the source has
+51, because week 1 is not in it.
+
+**Found while building it:**
+
+1. **Nothing could choose a table as Cases by period's input.** The run has read a table since Snow's daily deaths, and
+   Snow's workflow is built from a fixture that sets it; the Inspector had no control. So this route could not be built
+   from an empty canvas until the Inspector gained *Records arrive as*, as Rate has.
+2. **The count line was wrong for a weighted series.** It said *616 records* for Snow's 616 deaths in 43 rows, and
+   would have said *423795 input records* for Brazil's 4,692 rows. It now says *616 cases from 43 records*.
+3. **A series read from a table lost the table's unit.** It now keeps it.
+4. **The kind of date had to be chosen, and the source does not say it.** The counts are notified cases by
+   epidemiological week; whether a week is of onset or of notification is not stated. The step's *other* reads *a date
+   of unstated kind*, which is what the source supports. The old route never had to say.
+
+**Cases by period had no manual page.** Written: `docs/widgets/case_series.md`.
 
 ## What this does not establish
 

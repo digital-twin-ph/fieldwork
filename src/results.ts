@@ -95,6 +95,9 @@ export interface DisplayRow {
 export type BarOrder='category'|'largest'|'smallest';
 export interface ChartSummary {field:'status'|'zone'|'tier'|'count'|'total'|'period'|'value'; caption:string; categoryTitle?:string; total:number;
   measure?:'record-count'|'numeric-total'|'value'; unit?:string;
+  /** RECORDS READ, where they differ from the total: a weighted case series counts cases, and 616 deaths came from 43
+   *  rows of Snow's table. Absent: the total is the number of records. Experiment 187. */
+  records?:number;
   /** How the bars are ordered, where the practitioner chose. Carried on the summary rather than
    *  passed to each renderer so the screen and the write-up cannot disagree. Experiment 156's
    *  first assertion is that a stated order matches the drawn one.

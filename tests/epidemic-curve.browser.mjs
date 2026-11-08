@@ -20,7 +20,7 @@ test('Snow’s 1855 table draws an epidemic curve that states which date it is o
   // 43 daily bins between 19 August and 30 September 1854, totalling 616 deaths.
   await expect(page.locator('#bars-panel')).toContainText('Cases by day of date of death');
   await page.locator('[data-view="results"]').click();
-  await expect(page.locator('#bars-panel')).toContainText('616 records');
+  await expect(page.locator('#bars-panel')).toContainText('616 cases from 43 records');
   // Columns, not rows: an epidemic curve runs vertically by default, with the periods along
   // the bottom, because that is how an outbreak report draws one. The Inspector offers
   // horizontal for anyone who wants it, exercised at the end of this file.
@@ -69,7 +69,7 @@ test('Snow’s 1855 table draws an epidemic curve that states which date it is o
   await context.setOffline(true);
   await page.reload();
   await page.locator('[data-view="results"]').click();
-  await expect(page.locator('#bars-panel')).toContainText('616 records',{timeout:45000});
+  await expect(page.locator('#bars-panel')).toContainText('616 cases from 43 records',{timeout:45000});
   await page.screenshot({path:'test-results/snow-epidemic-curve.png',fullPage:true});
   assert.deepEqual(errors,[]);
 });
@@ -89,7 +89,7 @@ test('the John Snow workspace shows place and time together, and refuses to join
   await page.locator('[data-view="results"]').click();
   await expect(page.locator('#bars-panel')).toContainText('Cases by day of date of death');
   await page.locator('[data-view="results"]').click();
-  await expect(page.locator('#bars-panel')).toContainText('616 records');
+  await expect(page.locator('#bars-panel')).toContainText('616 cases from 43 records');
   await page.locator('[data-view="results"]').click();
   await expect(page.locator('#bars-panel .bar-column')).toHaveCount(43);
 
@@ -133,5 +133,5 @@ test('the epidemic curve can be turned on its side, and reports the same counts'
   await page.locator('[data-view="results"]').click();
   await expect(page.locator('#bars-panel .bar-column')).toHaveCount(0);
   await page.locator('[data-view="results"]').click();
-  await expect(page.locator('#bars-panel')).toContainText('616 records');
+  await expect(page.locator('#bars-panel')).toContainText('616 cases from 43 records');
 });

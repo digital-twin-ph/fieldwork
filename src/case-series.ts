@@ -10,14 +10,20 @@ import type {ChartSummary,Receipt} from './results.js';
  *  carry 489 deaths. See docs/experiments/61-input-dimensions.md. */
 export const DATE_KINDS=['onset','report','death','specimen-collection','other'] as const;
 export type DateKind=typeof DATE_KINDS[number];
-export const PERIODS=['day','week','month'] as const;
+/** `week` begins on a Monday (ISO 8601). `week-sunday` begins on a Sunday: the epidemiological week of Brazil's
+ *  notification system and of the United States, as Brazil's `data_iniSE` records it (experiment 187). */
+export const PERIODS=['day','week','week-sunday','month'] as const;
 export type Period=typeof PERIODS[number];
+/** Each period in words, for the axis, the caption and the method. */
+export const PERIOD_WORDS:Record<Period,string>={day:'day',week:'week','week-sunday':'week starting Sunday',month:'month'};
 
 export interface SeriesBin {key:string; label:string; count:number}
 export interface CaseSeries {
   kind:'case-series'; bins:SeriesBin[]; total:number; period:Period; dateKind:DateKind;
   dateField:string; weightField:string|null; datedRecords:number; undatedRecords:number;
   undated:{id:string; name:string; value:string}[]; firstPeriod:string|null; lastPeriod:string|null;
+  /** The unit of each count, where the table read declares one: Brazil's "notified cases/week". */
+  unit?:string;
 }
 export type SeriesTable=DataTable&{series:CaseSeries};
 
@@ -40,18 +46,18 @@ const utc=(d:{year:number;month:number;day:number})=>Date.UTC(d.year,d.month-1,d
 function periodKey(parts:{year:number;month:number;day:number},period:Period):string{
   if(period==='month')return `${parts.year}-${pad(parts.month)}`;
   if(period==='day')return `${parts.year}-${pad(parts.month)}-${pad(parts.day)}`;
-  // Week beginning Monday, ISO 8601, keyed by that Monday so order is the key's order.
+  // A week keyed by its first day, so order is the key's order: the Monday before (ISO 8601), or the Sunday before.
   const date=new Date(utc(parts));
-  date.setUTCDate(date.getUTCDate()-((date.getUTCDay()+6)%7));
+  date.setUTCDate(date.getUTCDate()-(period==='week-sunday'?date.getUTCDay():(date.getUTCDay()+6)%7));
   return date.toISOString().slice(0,10);
 }
 const nextKey=(key:string,period:Period):string=>{
   if(period==='month'){const [y,m]=key.split('-').map(Number);return m===12?`${y+1}-01`:`${y}-${pad(m+1)}`;}
   const date=new Date(key+'T00:00:00Z');
-  date.setUTCDate(date.getUTCDate()+(period==='week'?7:1));
+  date.setUTCDate(date.getUTCDate()+(period==='day'?1:7));
   return date.toISOString().slice(0,10);
 };
-const label=(key:string,period:Period)=>period==='week'?`Week beginning ${key}`:key;
+const label=(key:string,period:Period)=>period==='week'||period==='week-sunday'?`Week beginning ${key}`:key;
 
 export interface SeriesOptions {dateField:string; dateKind:DateKind; period:Period; weightField?:string|null}
 
@@ -66,15 +72,17 @@ export function caseSeriesFromTable(table:DataTable,options:Omit<SeriesOptions,'
   const features=table.rows.map((row,index)=>({type:'Feature' as const,id:`row-${index+1}`,
     properties:{name:`Row ${index+1}`,[dateField]:row.key[dateField],
       [table.valueField]:row.value===null?'':row.value} as Record<string,unknown>,geometry:null}));
-  return caseSeries({type:'FeatureCollection',features} as unknown as PointCollection,
+  const series=caseSeries({type:'FeatureCollection',features} as unknown as PointCollection,
     {dateField,dateKind,period,weightField:table.valueField});
+  // THE COUNTS KEEP THEIR UNIT: each row's value is summed as it is, so the table's unit is the series'.
+  return table.unit?.trim()?{...series,unit:table.unit.trim()}:series;
 }
 
 export function caseSeries(points:PointCollection,options:SeriesOptions):CaseSeries{
   const {dateField,dateKind,period}=options,weightField=options.weightField?.trim()||null;
   if(!dateField?.trim())throw new Error('Name the attribute holding the event date. This widget reads no date it was not told about.');
   if(!DATE_KINDS.includes(dateKind))throw new Error(`State which kind of date this is: ${DATE_KINDS.join(', ')}. A curve by date of death is not a curve by date of onset.`);
-  if(!PERIODS.includes(period))throw new Error(`Choose a period: ${PERIODS.join(', ')}.`);
+  if(!PERIODS.includes(period))throw new Error(`Choose a period: ${PERIODS.map(x=>PERIOD_WORDS[x]).join(', ')}.`);
   if(!points?.features?.length)throw new Error('Cases by period needs at least one record.');
 
   const counts=new Map<string,number>(),undated:CaseSeries['undated']=[];
@@ -117,19 +125,21 @@ export const SERIES_TABLE_KEYS=['period'] as const;
 export function seriesTable(series:CaseSeries):SeriesTable{
   return {kind:'data-table',keys:[...SERIES_TABLE_KEYS],valueField:'cases',
     rows:series.bins.map(bin=>({key:{period:bin.key},value:bin.count})),
-    rowCount:series.bins.length,missingValueCount:0,series};
+    rowCount:series.bins.length,missingValueCount:0,...(series.unit?{unit:series.unit}:{}),series};
 }
 
 /** The chart a Chart output renders: ordered period bins, which is what an epidemic curve is. */
 export function seriesChart(series:CaseSeries):ChartSummary{
   const kinds:Record<DateKind,string>={onset:'date of onset',report:'date of report',death:'date of death',
     'specimen-collection':'date of specimen collection',other:'a date of unstated kind'};
-  return {field:'period',total:series.total,bins:series.bins,
+  const records=series.datedRecords+series.undatedRecords;
+  return {field:'period',total:series.total,bins:series.bins,...(series.weightField?{records}:{}),
+    ...(series.unit?{unit:series.unit}:{}),
     // The axis says WHICH date, not merely that there are dates. "Date of onset, by day" rather
     // than "Category", and the declared kind travels with it so a chart cannot quietly relabel
     // the series it was built from.
-    categoryTitle:`${kinds[series.dateKind].replace(/^a? ?date/,'Date')}, by ${series.period}`,
-    caption:`Cases by ${series.period} of ${kinds[series.dateKind]}`+(series.weightField?`, weighted by ${series.weightField}`:'')
+    categoryTitle:`${kinds[series.dateKind].replace(/^a? ?date/,'Date')}, by ${PERIOD_WORDS[series.period]}`,
+    caption:`Cases by ${PERIOD_WORDS[series.period]} of ${kinds[series.dateKind]}`+(series.weightField?`, weighted by ${series.weightField}`:'')
       +(series.undatedRecords?` · ${series.undatedRecords} record(s) without a usable date are excluded and listed`:'')};
 }
 
@@ -146,7 +156,7 @@ export function seriesReceipt(node:{id:string},series:CaseSeries,runId:string,so
   for(const [index,bin] of series.bins.entries())
     facts+=`${entity} fw:seriesBin <${base}output:${node.id}:period:${index}>.\n<${base}output:${node.id}:period:${index}> a fw:SeriesBin; fw:periodKey ${quote(bin.key)}; fw:caseCount "${bin.count}"^^xsd:decimal.\n`;
   return {nodeId:node.id,kind:'computation',facts,input:facts,rules:'',conclusions:[],
-    method:`Cases per ${series.period} by ${series.dateKind} date${series.weightField?`, weighted by ${series.weightField}`:', one case per record'}. Zero-count periods are retained; records without an ISO 8601 date are excluded and counted, never redistributed.`};
+    method:`Cases per ${PERIOD_WORDS[series.period]} by ${series.dateKind} date${series.weightField?`, weighted by ${series.weightField}`:', one case per record'}. Zero-count periods are retained; records without an ISO 8601 date are excluded and counted, never redistributed.`};
 }
 
 export function validateCaseSeriesNode(node:WorkflowNode):void{
@@ -155,5 +165,5 @@ export function validateCaseSeriesNode(node:WorkflowNode):void{
   // An empty date field is not refused on save: a node added from the library starts empty, and refusing it meant
   // Cases by period could not be added (2026-11-06). The run refuses it.
   if(!DATE_KINDS.includes(p.dateKind))throw new Error('State which kind of date Cases by period uses.');
-  if(!PERIODS.includes(p.period))throw new Error('Choose day, week or month for Cases by period.');
+  if(!PERIODS.includes(p.period))throw new Error('Choose day, week, week starting Sunday or month for Cases by period.');
 }

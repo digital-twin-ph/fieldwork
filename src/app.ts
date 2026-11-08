@@ -2658,11 +2658,16 @@ function renderInspector(){
       +(p.source==='table'?' A table is read as one row per measure per subject: the key column named above holds the measure names, and the other key columns name the subject. Changing the kind of input disconnects what was wired, because points and a table are not the same shape.':'')+'</div>';
   }else if(n.type==='case_series'){
     const p=n.params;
+    // A TABLE OR POINTS (experiment 187): a weekly table of counts, Brazil's, is read as rows whose value is the count.
+    // The run read a table since Snow's daily deaths; nothing in the Inspector could choose it until 2026-11-07.
+    const fromTable=p.source==='table';
     content+='<p class="description">Counts cases per period from a declared date attribute. The kind of date travels with the series.</p>'
+      +`<div class="field"><label class="field-label" for="series-input">Records arrive as</label><select id="series-input" data-series-input>${[['points','points, one per record'],['table','a table, each row a count']].map(([value,text])=>`<option value="${value}" ${(p.source||'points')===value?'selected':''}>${text}</option>`).join('')}</select></div>`
       +`<div class="field"><label class="field-label" for="series-date">Event date attribute</label><input id="series-date" data-slr="dateField" maxlength="60" value="${esc(p.dateField)}" placeholder="onset_date"></div>`
       +`<div class="field"><label class="field-label" for="series-kind">Which date is it?</label><select id="series-kind" data-slr="dateKind">${['onset','report','death','specimen-collection','other'].map(kind=>`<option value="${kind}" ${p.dateKind===kind?'selected':''}>${kind}</option>`).join('')}</select></div>`
-      +`<div class="field"><label class="field-label" for="series-period">Period</label><select id="series-period" data-slr="period">${['day','week','month'].map(period=>`<option value="${period}" ${p.period===period?'selected':''}>${period}</option>`).join('')}</select></div>`
-      +`<div class="field"><label class="field-label" for="series-weight">Cases per record (attribute, optional)</label><input id="series-weight" data-slr="weightField" maxlength="60" value="${esc(p.weightField||'')}" placeholder="leave empty when one row is one case"></div>`
+      +`<div class="field"><label class="field-label" for="series-period">Period</label><select id="series-period" data-slr="period">${([['day','day'],['week','week, starting Monday (ISO 8601)'],['week-sunday','week, starting Sunday (epidemiological week)'],['month','month']] as const).map(([period,words])=>`<option value="${period}" ${p.period===period?'selected':''}>${words}</option>`).join('')}</select></div>`
+      +(fromTable?`<p class="description">Each row counts as its value column${upstreamValueField(n)?`, ${esc(upstreamValueField(n)!)}`:''}: the cases that row records.</p>`
+        :`<div class="field"><label class="field-label" for="series-weight">Cases per record (attribute, optional)</label><input id="series-weight" data-slr="weightField" maxlength="60" value="${esc(p.weightField||'')}" placeholder="leave empty when one row is one case"></div>`)
       +(workflow.edges.some(e=>e.from===n.id)?'':'<div class="inspector-actions"><button id="add-series-chart" class="button small">＋ Add epidemic curve</button></div>')
       +'<div class="notice">A curve by date of death is not a curve by date of onset, so the kind is required and is stated on the chart. Periods with no cases are kept, because a gap is a fact about the outbreak. Records whose date is not an ISO 8601 date are excluded and counted, never guessed at: this widget does not choose between day-first and month-first ordering. Leaving the weight empty asserts that one row is one case.</div>';
   }else if(n.type==='chart_output'&&n.params.inputMode==='series'){
@@ -4179,6 +4184,12 @@ function renderInspector(){
   });
   // Switching the kind of input changes what the records port accepts, so anything wired into it
   // is disconnected rather than left in place carrying the wrong shape.
+  // Points and a table are not the same shape, so changing which one disconnects what was wired, as Rate does.
+  const seriesInput=document.querySelector<HTMLSelectElement>('[data-series-input]');
+  if(seriesInput)seriesInput.addEventListener('change',()=>change(w=>{
+    const node=getNode(w,n.id,'case_series');
+    if(seriesInput.value==='table'){node.params.source='table';delete node.params.weightField;}else delete node.params.source;
+    w.edges=w.edges.filter(e=>e.to!==node.id);}));
   const rateSource=document.querySelector<HTMLSelectElement>('[data-rate-source]');
   if(rateSource)rateSource.addEventListener('change',()=>change(w=>{
     const node=getNode(w,n.id,'rate');node.params.source=rateSource.value as 'points'|'table';
@@ -4962,7 +4973,7 @@ function renderResults(){
     const chartContext={sourceId:chartSourceId,runId:result?.runId,
       sourceLabel:runWorkflow?.nodes.find(n=>n.id===chartSourceId)?.params.label};
     const spec=chartVegaSpec(output.chart,chartNode.params,chartContext);
-    $('#bars-panel').innerHTML=`<p class="muted">${esc(output.chart.caption)} · ${output.chart.total} input records · grouping: ${esc(output.chart.field)}</p>${output.chart.field==='total'?'<p class="notice">The chart source does not declare a physical unit for this numeric total. Check the source and method before interpreting it.</p>':''}<div id="vega-chart" role="img" aria-label="${esc(output.chart.caption)}"></div><details><summary>Underlying chart values</summary><table><thead><tr><th>Category</th><th>Value</th></tr></thead><tbody>${output.chart.bins.map(b=>`<tr><td>${esc(b.label)}</td><td>${b.count}</td></tr>`).join('')}</tbody></table></details><details><summary>Vega-Lite specification</summary><pre>${esc(JSON.stringify(spec,null,2))}</pre></details>`;
+    $('#bars-panel').innerHTML=`<p class="muted">${esc(output.chart.caption)} · ${output.chart.records!==undefined?`${output.chart.total.toLocaleString('en')} cases from ${output.chart.records.toLocaleString('en')} records`:`${output.chart.total.toLocaleString('en')} records`} · grouping: ${esc(output.chart.field)}</p>${output.chart.field==='total'?'<p class="notice">The chart source does not declare a physical unit for this numeric total. Check the source and method before interpreting it.</p>':''}<div id="vega-chart" role="img" aria-label="${esc(output.chart.caption)}"></div><details><summary>Underlying chart values</summary><table><thead><tr><th>Category</th><th>Value</th></tr></thead><tbody>${output.chart.bins.map(b=>`<tr><td>${esc(b.label)}</td><td>${b.count}</td></tr>`).join('')}</tbody></table></details><details><summary>Vega-Lite specification</summary><pre>${esc(JSON.stringify(spec,null,2))}</pre></details>`;
     const host=$('#vega-chart');void renderVegaChart(host,output.chart,chartNode.params,chartContext).catch(e=>{if(host.isConnected)host.textContent=`Chart could not render: ${errorMessage(e)}. Underlying values remain available below.`;});
   }else $('#bars-panel').innerHTML=output?.chart?chartMarkup(output.chart,esc,chartOrientation(chartNode?.params??{})):'';
   // The figure is drawn from the bins, not scraped from the panel, so it is the same file whichever

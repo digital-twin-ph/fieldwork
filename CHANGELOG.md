@@ -3,6 +3,19 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.51.0 — 2026-11-07
+
+- **Cases by period counts weeks starting Sunday** ([187](docs/experiments/187-two-ways-to-an-epidemic-curve.md)).
+  Choose *week, starting Sunday (epidemiological week)* for data like Brazil's, whose weeks start on a Sunday. The
+  Monday week (ISO 8601) is unchanged. Cases by period 0.2.0.
+- **Cases by period can take a table.** *Records arrive as: points, or a table, each row a count.* The run could
+  already read a table, but nothing in the Inspector could choose one. A series read from a table keeps its unit.
+- **The Brazil epidemic curve uses Cases by period.** The same 51 weekly totals, with the kind of date stated: the
+  source does not say whether a week is of onset or notification, so it is *a date of unstated kind*.
+- **A weighted curve says what it counted.** Snow's curve said *616 records*; it is 616 deaths from 43 records, and now
+  says *616 cases from 43 records*. Chart 0.11.1.
+- **Cases by period has a manual page.**
+
 ## 0.50.0 — 2026-11-07
 
 - **Experiment 185 is validated** ([185](docs/experiments/185-one-step-for-every-lag.md)). Validation Lab check 38

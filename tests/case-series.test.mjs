@@ -38,6 +38,28 @@ test('weeks begin on Monday and months group, with keys that sort into order', (
   assert.deepEqual(monthly.bins.map(b=>[b.key,b.count]),[['1854-08',1],['1854-09',2]]);
 });
 
+/** THE EPIDEMIOLOGICAL WEEK BEGINS ON A SUNDAY (experiment 187), as Brazil's data_iniSE records it. Every day of a
+ *  year lands in the week of the Sunday on or before it, and a Sunday is the first day of its own week, never the last
+ *  of the Monday week before. */
+test('a week starting Sunday keys every day by the Sunday on or before it, and a Sunday by itself', () => {
+  const DAY=86400000,day=t=>new Date(t).toISOString().slice(0,10);
+  const year=Array.from({length:366},(_,i)=>day(Date.UTC(2024,0,1)+i*DAY));
+  const series=caseSeries(points(...year.map((d,i)=>feature(`d${i}`,1,d))),{...options,period:'week-sunday'});
+  for(const bin of series.bins)assert.equal(new Date(bin.key+'T00:00:00Z').getUTCDay(),0,`${bin.key} is a Sunday`);
+  // Each Sunday in its own week: 2024-01-07 is a Sunday, and opens the week it keys.
+  const sundays=caseSeries(points(feature('s',1,'2024-01-07'),feature('m',1,'2024-01-08'),feature('sat',1,'2024-01-13')),
+    {...options,period:'week-sunday'});
+  assert.deepEqual(sundays.bins.map(b=>[b.key,b.count]),[['2024-01-07',3]]);
+  assert.match(sundays.bins[0].label,/^Week beginning 2024-01-07$/);
+  // The Monday week puts the same Sunday in the week before.
+  assert.deepEqual(caseSeries(points(feature('s',1,'2024-01-07')),{...options,period:'week'}).bins.map(b=>b.key),['2024-01-01']);
+  // Every day counted once, in a week of seven days: 2024 starts on a Monday, so 53 weeks from 2023-12-31.
+  assert.equal(series.total,366);
+  assert.equal(series.bins[0].key,'2023-12-31');
+  assert.ok(series.bins.slice(1,-1).every(b=>b.count===7));
+  assert.match(seriesChart(sundays).caption,/^Cases by week starting Sunday of date of death/);
+});
+
 test('the kind of date is required and travels into the caption', () => {
   assert.throws(()=>caseSeries(snow,{...options,dateKind:'guess'}),/State which kind of date/);
   assert.throws(()=>caseSeries(snow,{...options,dateField:' '}),/reads no date it was not told about/);
@@ -78,6 +100,10 @@ test('the series is also a table, and its receipt conforms to the runtime shapes
   assert.match(facts,/fw:undatedRecordCount "0"\^\^xsd:integer/);
   // A series that does not say which kind of date it used must not conform.
   assert.equal((await validateGraph(new Store(new Parser().parse(facts.replace(/fw:eventDateKind "death"; /g,''))))).conforms,false);
+  // A Sunday week is a period the shapes know (experiment 187).
+  const sunday=seriesReceipt({id:'series'},caseSeries(snow,{...options,period:'week-sunday'}),'r1','points').facts;
+  assert.match(sunday,/fw:seriesPeriod "week-sunday"/);
+  assert.equal((await validateGraph(new Store(new Parser().parse(sunday)))).conforms,true);
 });
 
 // --- Snow's own daily table, bundled in examples/john-snow -----------------------------------

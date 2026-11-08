@@ -439,7 +439,7 @@
       "id": "urn:fieldwork:example:brazil-dengue-rj-2024",
       "title": "Dengue in Rio de Janeiro state, Brazil, 2024",
       "repository": "https://github.com/digital-twin-ph/example-2024-brazil-dengue",
-      "commit": "2540889a61c59e933c573dc848ebb182fa0b7185",
+      "commit": "51902ca3fb811ae1a2f0d81e09f63e0f70c668a2",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2024-brazil-dengue",
       "licence": {
         "data": "CC-BY-4.0",
@@ -455,6 +455,7 @@
       "notYet": "Vegetation (NDVI, EVI), a map of temperature by period, rainfall and humidity in the models, and errors allowing for week-to-week correlation.",
       "uses": [
         "append_rows",
+        "case_series",
         "chart_output",
         "find_satellite_products",
         "group_table",
@@ -473,8 +474,8 @@
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "852df653ee136b12e011bf93a84d86cbeb5bb0d2321648e760717cd7eceffede",
-          "bytes": 1683799
+          "sha256": "e21abfd8a1fc487921a3ce9a634e726d530a5d2aa79923bd3c71436790e8088b",
+          "bytes": 1683852
         },
         {
           "path": "data/dengue-rj-2010-2025.csv",
@@ -498,7 +499,7 @@
         },
         {
           "path": "README.md",
-          "sha256": "4759ff9187b7858052915a823e557399b14e6f4dcbc201f11b75d055669da990",
+          "sha256": "ebacde5bf300b53b526cb4b4c4b4bead5a0ffaaccd2c1702c78d1b060c6707ef",
           "bytes": 6961
         },
         {
@@ -513,8 +514,8 @@
         },
         {
           "path": "manual.json",
-          "sha256": "0be86dfac72b63a1835ba3d30e2ee52c002eca93773262ea75caff44ef2432db",
-          "bytes": 65667
+          "sha256": "3c26ce653f62573510b7de27472788c1348e63221799bb9ea0964972a324b736",
+          "bytes": 66249
         },
         {
           "path": "notes/what-aedes-mosquitoes-meet.md",

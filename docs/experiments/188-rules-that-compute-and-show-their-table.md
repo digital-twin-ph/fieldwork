@@ -114,6 +114,12 @@ What a rule between rows must keep, each said and none refused:
   silently get nothing, so the run and the preview count these rows and name them.
 - **Conflicts, shown.** Two rules giving one row different values is shown in the preview and reported by the run.
 
+## A use on real data, from 185
+
+Experiment [185](185-one-step-for-every-lag.md)'s lag chart is to be tried two ways (2026-11-07). The second needs a
+column computed from a key column of Regression's table: *then weeks_before is (3 − shift_days) ÷ 7*. That is item 2's
+computed conclusion on the Brazil models, beside the synthetic repo.
+
 ## What would close it
 
 **The repository** is [example-workflows-rulesets](https://github.com/digital-twin-ph/example-workflows-rulesets),

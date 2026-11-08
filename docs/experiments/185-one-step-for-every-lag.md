@@ -35,7 +35,12 @@ checked the run and not what the next step is offered. Fixed in Relate 0.8.1; fo
 
 **Open for stage 3:** the lag chart today reads Append rows' `lag` column, in weeks before (0, 2, 4…). The models'
 `shift_days` is the shift as Relate recorded it (3, −11, −25… in W4), in days and with the opposite sign. Whether the
-chart shows days shifted, or a column in weeks is derived for it, is not decided.
+chart shows days shifted, or a column in weeks is derived for it, is not decided. The practitioner, 2026-11-07: *"why not try both?"* So
+both are built and looked at side by side: **days**, the rebuilt W4 charting `shift_days` as Relate recorded it, in
+stage 3; and **weeks before**, a column `weeks_before = (3 − shift_days) ÷ 7` computed by Apply ruleset once
+[188](188-rules-that-compute-and-show-their-table.md)'s computed conclusion is built. Derive a value cannot make it: it
+computes between values, not from a key column. Which one reads better is the practitioner's observation, written here
+when made.
 
 ## The question
 

@@ -85,6 +85,24 @@ countries) is out of reach; its timing, measured from dates, is in.
 - So no event-level 7-1-7 data set has been found open. To try: the appendix, opened by hand; outbreaks whose own
   open reports give their milestone dates, assembled with each date cited; or made-up events, said so.
 
+### Similar data: open line lists with the dates 7-1-7 measures between
+
+The practitioner, 2026-11-09: *"If data are not available we can look for similar data."* Not 7-1-7 reviews, but
+outbreaks recorded case by case with an onset and a later milestone, so an interval can be computed, counted against
+a target and explained. Read 2026-11-09; "to check" marks what the pages read did not settle.
+
+| Data | Cases | The dates per case | Who infected whom | Terms, as stated |
+| --- | --- | --- | --- | --- |
+| **MERS-CoV, South Korea, 2015** (`mers_korea_2015`, R package [outbreaks](https://cran.r-project.org/package=outbreaks) 1.9.0; from ECDC epidemic intelligence) | 162, to check | onset, report, diagnosis, exposure start and end, death | Yes: a contacts table, from, to and exposure | Package GPL (≥ 2). Its page: for teaching, not the final investigation |
+| **Ebola, Sierra Leone, 2014–15** (`ebola_sierraleone_2014`; Fang et al. 2016, PNAS) | 11,903 | onset, sample | No | Package GPL (≥ 2); the paper's own terms, to check |
+| **Mpox, 2022** ([Global.health line list](https://github.com/globaldothealth/monkeypox)) | many countries, to count | onset, confirmation | No | CC BY 4.0 for the repository's exports; frozen 2022-09-22 |
+| **Influenza A H7N9, China, 2013** (`fluH7N9_china_2013`; Kucharski et al., [Dryad](https://datadryad.org/stash/dataset/doi:10.5061/dryad.2g43n)) | 136 | onset and hospitalisation, to check | No | To check on Dryad |
+| **Measles, Hagelloch, 1861** (built in) | 188 | prodrome, rash, death | Yes: `infector` | Already shipped with its provenance |
+
+No package page restricts use beyond the MERS and simulated-Ebola pages' "for teaching". A file inside a GPL package
+carries the source's terms too; each source is checked before anything is shipped. Onset to report (MERS) and onset to
+sample (Sierra Leone) are the nearest to 7-1-7's detect and notify; MERS also serves contact tracing.
+
 ## What that makes operational epidemiology here
 
 Two kinds of work, both timed by 7-1-7:

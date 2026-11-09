@@ -1,6 +1,6 @@
 # 193 · Relate allows for spelling
 
-_Created 2026-11-08 · Updated 2026-11-08_
+_Created 2026-11-08 · Updated 2026-11-09_
 
 **Status:** tried. Relate a column from another table gains two settings: the second table's key column, where
 it is named differently, and **allowing for spelling**, which folds names, drops words named as whole words, and

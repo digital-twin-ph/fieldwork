@@ -1,6 +1,6 @@
 # TODO
 
-_Created 2026-10-10 · Updated 2026-11-08_
+_Created 2026-10-10 · Updated 2026-11-09_
 
 The project's one list of open work. **Merged 2026-10-26 from two**: a root `TODO.md` of
 deferred work created 2026-10-10 and a `docs/todo.md` of committed work created 2026-10-11, one
@@ -2927,10 +2927,7 @@ Remaining here:
 
 ## Known and recorded, not yet scheduled
 
-- **Check 41: the boundary repair against shapely** ([194](docs/experiments/194-the-boundary-repair.md)):
-  `remove_repeated_points` for the repeats on OCHA's Sierra Leone districts, the spike rule written out, and how
-  often the repair runs on a geoBoundaries level.
-- **Check 40 in the lab's browser kernel.** Run in CPython only on 2026-11-09.
+- **Checks 40 and 41 in the lab's browser kernel.** Run in CPython only on 2026-11-09.
 
 **A computations audit: does the code state the equation the source paper states?** Named by the
 practitioner on 2026-10-30, while refusing an argument made in

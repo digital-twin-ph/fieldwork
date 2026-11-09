@@ -3,8 +3,8 @@
 _Created 2026-11-08 · Updated 2026-11-08_
 
 **Status:** tried. Study area removes two faults from a published boundary as it is read, a point written twice in
-a row and the tip of a zero-width spike, and records every vertex it removes. Built and unit tested; the Validation
-Lab check is still to do.
+a row and the tip of a zero-width spike, and records every vertex it removes. Validation Lab check 41 agrees with
+shapely on 108 units of two sources.
 
 ## The question
 
@@ -53,12 +53,22 @@ fails.
 - Browser, Chromium: Sierra Leone from an empty canvas applies all 16 OCHA districts, and the dialog reported
   "84 repeated vertexes removed" on the first run; the study area, boundary picker, boundary file and extent history
   tests pass.
-- Still to do: a Validation Lab check against shapely (`remove_repeated_points`) for the repeats, with the spike rule
-  written out; and a geoBoundaries level, to see how often the repair runs on boundaries that loaded before.
+- Validation Lab check 41, CPython 3.13.3, shapely 2.2.0 on GEOS 3.14.1: on OCHA's 16 districts and geoBoundaries'
+  92 municipalities of Rio de Janeiro state, the repeated vertices shapely's `remove_repeated_points` drops equal
+  Fieldwork's, position by position and in order (84, in 14 districts); the spike rule written out in Python removes
+  the same tip (Bonthe's one); every vertex count is equal; and GEOS's area of every unit is unchanged within 1e-12.
+  Exact rational arithmetic decides every spike the same as the declared 1e-12 tolerance. Both a dropped spike and a
+  dropped repeat were checked to make it disagree.
+- GEOS, recorded and not asserted: it accepts a repeated vertex and calls Bonthe's spike a self-intersection, so
+  before the repair it refuses one unit where Fieldwork's own check refused 14; after it, all 108 are valid.
+- How often it runs on a source that did not need it: on Rio de Janeiro's geoBoundaries municipalities, never; on
+  Nigeria's 774 LGAs as the example carries them, never, run on the Fieldwork side only (left out of the fixture at
+  29 MB).
 
 ## What would close it
 
-The lab check agreeing, and the repair met on a second source.
+The lab check agrees. Still open: the repair met on a second source where it runs, and check 41 in the lab's browser
+kernel.
 
 ## What this does not establish
 

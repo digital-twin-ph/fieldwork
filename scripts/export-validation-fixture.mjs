@@ -7,7 +7,7 @@
 //                   | deduplicate-facilities-001
 //                   | measure-area-001 | mean-center-001
 //                   | reachability-soho-001 | corridor-soho-001
-//                   | relate-snow-001 | relate-spelling-sl-001 | group-snow-001 | group-shares-snow-001 | area-join-snow-001
+//                   | relate-snow-001 | relate-spelling-sl-001 | boundary-repair-001 | group-snow-001 | group-shares-snow-001 | area-join-snow-001
 //                   | select-range-london-001
 //                   | regression-salmonella-001 | regression-nyc-001 (needs NYC_PKG)
 //                   | sample-satellite-s5p-001 | lag-response-brazil-001 | regression-strata-brazil-001
@@ -45,6 +45,8 @@ import {tablePoints} from '../build/table-points.js';
 import {groupTable as totalWithin} from '../build/group-table.js';
 import {rateTwoByTwoSentence} from '../build/two-by-two.js';
 import {executeWorkflow} from '../build/core.js';
+import {repairBoundary,REPAIR_RULE} from '../build/boundary-repair.js';
+import {validateDrawnGeometry} from '../build/study-area.js';
 import {parseCSV} from '../build/input-data.js';
 import {unzipSync} from 'fflate';
 import {readStata} from '../build/stata.js';
@@ -1178,6 +1180,45 @@ const builders={
     },files:{}};
   },
 
+  'boundary-repair-001'(){
+    // THE BOUNDARY REPAIR (experiment 194), on every unit of three published levels: OCHA COD-AB's 16 districts of
+    // Sierra Leone, where it was found, and a geoBoundaries level that loaded before it existed, Rio de Janeiro's 92
+    // municipalities, to see whether it runs on a source that did not need it. Nigeria's 774 LGAs were left out: 29 MB.
+    const read=(repo,file)=>{try{return JSON.parse(readFileSync(new URL(`../../${repo}/${file}`,import.meta.url),'utf8'));}
+      catch{throw new Error(`${repo}/${file} is not on this machine beside this repository.`);}};
+    const sources=[
+      {id:'sl-cod-ab',repo:'example-2019-sierra-leone-measles',file:'data/districts-cod-ab.geojson',name:'adm2_name',
+        source:'OCHA COD-AB, Sierra Leone admin 2, via the Fieldwork example (CC BY-IGO)'},
+      {id:'rj-geoboundaries',repo:'example-2024-brazil-dengue',file:'geo/rj-municipalities.geojson',name:'shapeName',
+        source:'geoBoundaries, Brazil admin 2 for Rio de Janeiro state, from IBGE, via the Fieldwork example (CC BY 3.0 IGO)'},
+    ];
+    const count=g=>(g.type==='Polygon'?g.coordinates:g.coordinates.flat()).reduce((n,r)=>n+r.length,0);
+    const levels=sources.map(src=>{
+      const fc=read(src.repo,src.file);
+      const units=fc.features.map((f,index)=>{
+        let before=null,after=null;
+        try{validateDrawnGeometry(f.geometry);before='passes';}catch(e){before=String(e.message||e);}
+        const {geometry,repairs}=repairBoundary(f.geometry);
+        try{validateDrawnGeometry(geometry);after='passes';}catch(e){after=String(e.message||e);}
+        return {index,name:String(f.properties?.[src.name]??''),publishedVertices:count(f.geometry),
+          repairedVertices:count(geometry),repairs,checkBefore:before,checkAfter:after};
+      });
+      return {id:src.id,source:src.source,features:fc.features.map(f=>({name:String(f.properties?.[src.name]??''),geometry:f.geometry})),units};
+    });
+    return {fixture:{
+      ...base('boundary-repair-001','study_area','Study area: the boundary repair','src/boundary-repair.ts#repairBoundary'),
+      source:sources.map(s=>s.source).join('; '),
+      declaredParameters:{
+        rule:REPAIR_RULE,
+        order:'Ring by ring, in the order published. First every vertex equal in both coordinates to the vertex before it in the published ring is removed. Then, on the ring without its closing vertex, read cyclically: the first i where c lies on segment ab or a lies on segment bc, for a, b, c the vertices at i, i+1, i+2, removes b; repeated from the start until none is found or 3 vertices are left. The ring is closed again with its first vertex.',
+        onSegment:'p lies on segment ab where |(b-a) x (p-a)| < 1e-12 and each coordinate of p is within the bounding box of a and b widened by 1e-12, in degrees.',
+        recorded:'Each removal as {kind: repeated|spike, at: [x, y]}, in the order made.'},
+      input:{levels:levels.map(({id,source,features})=>({id,source,features}))},
+      output:{levels:levels.map(({id,units})=>({id,units}))},
+      note:'Recompute each unit\'s removals from `input` and `declaredParameters`. checkBefore and checkAfter are Fieldwork\'s own study area check, recorded and not for the lab to reproduce.'
+    },files:{}};
+  },
+
   'group-snow-001'(){
     // GROUP sums, and the sum is checkable by anyone. The case worth an independent eye is the
     // one where the two implementations are MEANT to differ: pandas sums over a missing value as
@@ -1772,7 +1813,11 @@ for(const [name,bytes] of Object.entries(files))await writeFile(`${outputDir}/${
 fixture.integrity={algorithm:'sha256-canonical-json',
   note:'SHA-256 of this fixture with the integrity field removed, serialised with object keys sorted, no whitespace and UTF-8. Not the file\'s bytes: the lab reads fixtures through a transport that re-serialises JSON.',
   value:canonicalDigest(fixture)};
-const json=JSON.stringify(fixture,null,2)+'\n';
+// A POSITION ON ONE LINE. Indented, every coordinate of a boundary took four lines, and two published levels came to
+// 5.4 MB; a ring of them on one line, 1.1 MB. The integrity is over the canonical form, so the layout is free to change.
+const json=JSON.stringify(fixture,null,2).replace(/\[\s+(-?[\d.eE+-]+),\s+(-?[\d.eE+-]+)\s+\]/g,'[$1,$2]')
+  // and a ring of them on one line too
+  .replace(/\[\s+(\[-?[\d.eE+-]+,-?[\d.eE+-]+\](?:,\s+\[-?[\d.eE+-]+,-?[\d.eE+-]+\])*)\s+\]/g,(_m,ring)=>`[${ring.replace(/,\s+/g,',')}]`)+'\n';
 await writeFile(`${outputDir}/${id}.json`,json);
 console.log(`Wrote ${id}.json${Object.keys(files).length?' and '+Object.keys(files).join(', '):''} to ${outputDir}`);
 console.log(`  integrity ${fixture.integrity.value.slice(0,16)} over canonical JSON; no sidecar`);

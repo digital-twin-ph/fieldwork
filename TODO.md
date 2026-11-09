@@ -103,6 +103,21 @@ not a practitioner in the field.
    London's workflows built from an empty canvas through the rules dialog, so its rebuilt Apply ruleset steps play back
    as Nigeria's do.
 
+8. **Operational epidemiology's first slice: a 7-1-7 review on MERS-CoV, South Korea, 2015**
+   ([200](docs/experiments/200-operational-epidemiology.md); the practitioner, 2026-11-09: *"Yes"*, then *"But add that
+   to TODO"*). Onset to report and onset to diagnosis per case, counted against the targets; a contacts table for
+   contact tracing. Needs **days between two dates** in Apply ruleset's computed columns, the one extension.
+   **Found 2026-11-09, before building:** `mers_korea_2015` in the R package `outbreaks` (reconverse/outbreaks): a line
+   list of 15 columns (onset, report, diagnosis, exposure start and end, death) and a contacts table (from, to,
+   exposure). Compiled by ECDC's Epidemic Intelligence from public information in the outbreak's first weeks; "for
+   teaching", and not the final investigation or a complete chain. **Terms unresolved**: no licence for the data is
+   stated; the package code is MIT on GitHub (GPL ≥ 2 on CRAN 1.9.0). **No CSV**: only `data/mers_korea_2015.RData`, so
+   a script in the example repository would convert it, and the row count is not yet known. Ask ECDC or the package
+   authors about the data's terms before shipping it.
+   **Alongside:** the 7-1-7 Alliance's terms for its bottleneck taxonomy (none stated; the practitioner to ask); the
+   appendix of the 41-event Lancet Global Health paper (`mmc1.pdf`, 229.5 KB, PMC), not yet read; the Sierra Leone
+   Ebola 2014 line list's own terms (Fang et al. 2016).
+
 The high-contrast theme comes after Sierra Leone, as set on 2026-11-07; where it falls among 4 to 6 is not set.
 
 ## Urgent

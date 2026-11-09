@@ -1,6 +1,6 @@
 # 194 · The boundary repair
 
-_Created 2026-11-09 · Updated 2026-11-09_
+_Created 2026-11-08 · Updated 2026-11-08_
 
 **Status:** tried. Study area removes two faults from a published boundary as it is read, a point written twice in
 a row and the tip of a zero-width spike, and records every vertex it removes. Built and unit tested; the Validation

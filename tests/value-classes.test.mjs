@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {classifyValues,ORDERED_PALETTE} from '../build/presentation.js';
+import {classifyValues,ORDERED_PALETTE,polygonShading,shadedValues} from '../build/presentation.js';
 
 /** THE CLASS METHOD CHANGES WHAT A READER CONCLUDES, so it is chosen and stated, never implied.
  *
@@ -63,4 +63,27 @@ test('every value lands in a class, including the extremes',()=>{
     }
     assert.equal(classed.counts.reduce((a,b)=>a+b,0),values.length,`${method} lost a value`);
   }
+});
+
+test('a unit drawn in many parts is classed once, as Bonthe is in Sierra Leone',()=>{
+  // Sixteen districts, one of them 83 islands and coast, each part carrying the district's id and rate.
+  // Classed by part, Bonthe's 6.72 filled half the values, two breaks fell on it, and the key read
+  // "6.72 to 6.72" over an empty class (2026-11-09).
+  const rates=[1.86,2.72,3,4.49,6.2,6.72,10.09,10.17,12.13,12.2,12.89,23.08,45.16,66.66,84.31,115.73];
+  const features=rates.flatMap((value,i)=>Array.from({length:value===6.72?83:1},()=>({id:`SL${i}`,value})));
+  assert.equal(features.length,98);
+  assert.deepEqual(shadedValues(features),rates);
+  const {classed}=polygonShading(features);
+  assert.equal(new Set(classed.breaks).size,classed.breaks.length,'no two breaks equal');
+  assert.ok(classed.counts.every(n=>n>0),'no empty class');
+  assert.deepEqual(classed.breaks,classifyValues(rates).breaks);
+  // Every part is still coloured, by its unit's class.
+  assert.equal(features.filter(f=>classed.classOf(f.value)===null).length,0);
+});
+
+test('two units sharing a name are two units, and a part with no id is its own',()=>{
+  // Streatham is two parishes' worth of polygon under one name, two ids, and the join gives both the rate.
+  assert.deepEqual(shadedValues([{id:'a',value:5},{id:'a',value:5},{id:'b',value:5},{value:7},{value:7}]),[5,5,7,7]);
+  // Frames are taken once per unit too.
+  assert.deepEqual(shadedValues([{id:'a',frames:{y1:1,y2:2}},{id:'a',frames:{y1:1,y2:2}}]),[1,2]);
 });

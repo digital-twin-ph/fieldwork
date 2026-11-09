@@ -470,17 +470,26 @@ export function classifyCategories(values:(string|null|undefined)[]):CategoryCla
  *  A category outranks a value: a joined layer a ruleset then classified carries both. Each surface
  *  deciding this for itself is how Nigeria's priority map came to be keyed by zero-dose ranges over
  *  polygons shaded by rule class, 2026-11-02. */
-/** The values a polygon layer is classed over: every frame's where it has frames, else each part's one. */
-export const shadedValues=(features:readonly {value?:number|null;frames?:Record<string,number|null>}[]):number[]=>
-  (features.some(f=>f.frames)?features.flatMap(f=>Object.values(f.frames??{})):features.map(f=>f.value))
+/** The values a polygon layer is classed over: every frame's where it has frames, else each unit's one.
+ *
+ *  ONE VALUE PER UNIT, NOT PER PART. A joined layer draws every part of a unit and each part carries
+ *  the unit's id and value, so classing parts weighted a unit by how many pieces its outline is in.
+ *  Bonthe is 83 of the 162 parts of Sierra Leone's 16 districts: its rate filled half the values the
+ *  quantiles were cut from, two breaks fell on it, and the key printed "6.72 to 6.72" over an empty
+ *  class (2026-11-09). Parts sharing an id count once; a part with no id counts as its own unit, and
+ *  two units sharing a name, Streatham's two, are two ids and count twice, as the join reports them. */
+export const shadedValues=(features:readonly {id?:string;value?:number|null;frames?:Record<string,number|null>}[]):number[]=>{
+  const seen=new Set<string>();
+  const units=features.filter(f=>{const id=typeof f.id==='string'?f.id:'';
+    if(!id)return true;if(seen.has(id))return false;seen.add(id);return true;});
+  return (units.some(f=>f.frames)?units.flatMap(f=>Object.values(f.frames??{})):units.map(f=>f.value))
     .filter((v):v is number=>typeof v==='number'&&Number.isFinite(v));
+};
 
-export function polygonShading(features:readonly {value?:number|null;category?:string|null;
+export function polygonShading(features:readonly {id?:string;value?:number|null;category?:string|null;
   frames?:Record<string,number|null>}[]){
   const grouped=classifyCategories(features.map(f=>f.category));
   // A LAYER WITH FRAMES IS CLASSED OVER EVERY FRAME, so the figure, its key and every frame of the
-  // interactive map share one set of breaks. Experiment 168.
-  const values=features.some(f=>f.frames)
-    ?features.flatMap(f=>Object.values(f.frames??{})):features.map(f=>f.value);
-  return {grouped,classed:grouped?null:classifyValues(values)};
+  // interactive map share one set of breaks (experiment 168), and over each unit once, not each part.
+  return {grouped,classed:grouped?null:classifyValues(shadedValues(features))};
 }

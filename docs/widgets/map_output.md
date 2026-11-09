@@ -142,6 +142,13 @@ being rewritten by every run.
 *How this widget is built, what it assumes, and what has been measured about it:
 [docs/widget-specs/map_output.md](../widget-specs/map_output.md).*
 
+## Shading by value
+
+A polygon layer carrying a value, such as a rate joined to districts, is shaded in five classes, and the key prints
+the value at each class edge. The classes are quantiles: each holds about the same number of places, so the shade
+shows rank. Each place counts once, however many parts its outline has; a district of 83 islands is one district,
+and every one of its parts is drawn in its class.
+
 ## Playing through frames
 
 Where the layer carries frames, from a join given **Frames from**, the interactive map shows a frame control: a

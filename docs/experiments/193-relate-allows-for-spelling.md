@@ -1,6 +1,6 @@
 # 193 · Relate allows for spelling
 
-_Created 2026-11-09 · Updated 2026-11-09_
+_Created 2026-11-08 · Updated 2026-11-08_
 
 **Status:** tried. Relate a column from another table gains two settings: the second table's key column, where
 it is named differently, and **allowing for spelling**, which folds names, drops words named as whole words, and
@@ -82,7 +82,7 @@ The workflow, from an empty canvas, Chromium: cases → Relate allowing for spel
 cases with no district dropped and the reason recorded) → count by district → Relate (the census, as a number) →
 Rate (per 100,000 people) → joined to OCHA's 16 districts → map. Rates run from 1.86 to 116 per 100,000.
 
-Found and not fixed: the map's key printed a class **"6.72 to 6.72"**, two quantile breaks equal. Recorded in TODO.
+Found: the map's key printed a class **"6.72 to 6.72"**. Not two equal rates: the classes were cut from every polygon part, and Bonthe is 83 of the 162 parts, so its rate filled half the values. Fixed in 0.67.1: each district counts once.
 
 ## Validation
 

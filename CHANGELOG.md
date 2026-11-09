@@ -3,6 +3,14 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.67.1 — 2026-11-09
+
+- **A map's value classes count each place once.** A place drawn in many parts was counted once per part: Bonthe,
+  83 of the 162 parts of Sierra Leone's 16 districts, filled half the values the classes were cut from, so the key
+  printed an empty class, "6.72 to 6.72", and moved every other edge. Every part is still drawn in its place's
+  class. Map 0.21.1.
+- Validation: Chromium locally; WebKit in CI.
+
 ## 0.67.0 — 2026-11-09
 
 - **Relate allows for spelling** ([193](docs/experiments/193-relate-allows-for-spelling.md)). Under **Compare keys**,

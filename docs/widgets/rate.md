@@ -1,6 +1,6 @@
 # Rate with a denominator
 
-_Created 2026-11-09 · Updated 2026-11-09_
+_Created 2026-11-08 · Updated 2026-11-08_
 
 **Counts divided by a population at risk, with what the population counts said.** Cases per 100,000 people,
 deaths per 1,000 houses.

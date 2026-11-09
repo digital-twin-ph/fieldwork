@@ -31,8 +31,10 @@ export function johnSnowExample(kind:'snow-voronoi'|'snow-isochrone'):Workflow{
         :'Each cell is the ground closer to its own pump than to any other, by straight-line distance. A catchment is a statement about geometry, not about which pump anybody drank from.',
       mapSourceNote:'Deaths and pump locations: John Snow, On the Mode of Communication of Cholera, 2nd ed., 1855, as digitised by Robin Wilson (blog.rtwilson.com/john-snows-cholera-data-in-more-formats). Recomputed in Fieldwork; see the run receipt for method and versions.',
       showLegend:true}},
-    {id:'table',type:'table_output',x:1210,y:170,params:{label:'Catchment counts and deaths',inputMode:'polygons'}},
-    {id:'chart',type:'chart_output',x:1210,y:340,params:{label:'Deaths by catchment',inputMode:'polygons',
+    // SPACED BY HEIGHT (2026-11-09): at 170 apart, Table, 317 px tall with its six inputs, lay under Chart, and a click on
+    // Table's middle selected Chart (WebKit on Linux, every main run since 0.70). Each output now starts below the last.
+    {id:'table',type:'table_output',x:1210,y:250,params:{label:'Catchment counts and deaths',inputMode:'polygons'}},
+    {id:'chart',type:'chart_output',x:1210,y:590,params:{label:'Deaths by catchment',inputMode:'polygons',
       chartTitle:iso?'Deaths within each walking-time band':'Deaths in each nearest-pump catchment',
       subtitle:iso
         ?'Counted once per band, cumulatively: a death one minute from the pump is inside all four.'
@@ -93,7 +95,7 @@ export function johnSnowExample(kind:'snow-voronoi'|'snow-isochrone'):Workflow{
   // One dot per address, not per death. The 250 addresses carry 489 deaths between them, so a
   // reader counting marks counts addresses -- which is what Snow's own plate does, and is why the
   // subtitle says so rather than leaving the figure to be miscounted.
-  if(!iso)nodes.push({id:'spot-map',type:'map_output',x:1210,y:680,params:{
+  if(!iso)nodes.push({id:'spot-map',type:'map_output',x:1210,y:870,params:{
     // TWO POINT LAYERS, not a context layer. `contextPoints` is drawn by the polygon renderer and
     // this map has no polygons, so wiring the pumps there drew the deaths alone -- Snow's map
     // without its pumps, which is the one thing it must not be. A second point layer takes a port
@@ -120,7 +122,7 @@ export function johnSnowExample(kind:'snow-voronoi'|'snow-isochrone'):Workflow{
   if(iso){
     const study=nodes.find(n=>n.id==='study')!;if(study.type==='study_area')study.params={source:'drawn',label:'Soho isochrone reporting extent (illustrative)',selectionMode:'bbox',geometry:{type:'Polygon',coordinates:[[[-.155,51.502],[-.119,51.502],[-.119,51.525],[-.155,51.525],[-.155,51.502]]]}};
     nodes.push({id:'context-pumps',type:'point_input',x:910,y:450,params:{label:'All eight pumps (map context)',data:{type:'FeatureCollection',features:pumps}},references:structuredClone(nodes.find(n=>n.id==='pumps')!.references)});
-    nodes.push({id:'interactive',type:'map_output',x:1210,y:510,params:{label:'Interactive isochrone map',inputMode:'polygons',presentation:'interactive',contextPoints:true}});
+    nodes.push({id:'interactive',type:'map_output',x:1210,y:870,params:{label:'Interactive isochrone map',inputMode:'polygons',presentation:'interactive',contextPoints:true}});
     nodes.find(n=>n.id==='catchments')!.references!.push(reference('nb04-visual','NB04 Cell 15 plot and Folium map','https://github.com/PHI-Case-Studies/1854-Cholera-Outbreak-London-Advanced-1/blob/97a1d13dfb23032387ed23804e3d6f4dbc99aec7/NB04-Cholera-Case-Study-Isochrone-Map.ipynb','method','Visual target: executed Cell 15 and Cell 18. Fieldwork retains its independent computational method; cumulative counts are not notebook band counts.'));
   }
   const edges=[{id:'sites-catchments',from:'pumps',to:'catchments',port:'sites'},{id:'pumps-projected',from:'pumps',to:'projected',port:'points'},{id:'projected-projected-table',from:'projected',to:'projected-table',port:'points'},{id:'area-clip',from:'study',to:'clip',port:'area'},{id:'catchments-clip',from:'catchments',to:'clip',port:'polygons'},{id:'clip-summary',from:'clip',to:'summary',port:'polygons'},{id:'points-summary',from:'locations',to:'summary',port:'points'},...['map','table','chart'].map(id=>({id:'summary-'+id,from:'summary',to:id,port:'polygons'})),{id:'dates-curve',from:'dates',to:'curve',port:'cases'},{id:'curve-epidemic',from:'curve',to:'epidemic',port:'series'},iso?{id:'network-catchments',from:'network',to:'catchments',port:'network'}:{id:'area-catchments',from:'study',to:'catchments',port:'area'}];

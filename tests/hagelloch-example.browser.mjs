@@ -7,8 +7,9 @@ import {collectPageErrors} from './page-errors.mjs';
 // example 10 is shaped by it. This one joins them.
 test('Hagelloch runs offline, and its awkward columns are not cleaned up',async({page,context})=>{
   const errors=collectPageErrors(page);
-  await page.goto('/');
-  await page.evaluate(()=>localStorage.clear());
+  // ONE VISIT. Opening "/" first, to clear storage a new context never holds, cancelled that page's registration of the
+  // offline worker; on Linux WebKit in CI the second page's then never became ready, and "Available offline" never came
+  // (every main run from 0.70 to 0.73).
   await page.goto('/?example=hagelloch');
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});

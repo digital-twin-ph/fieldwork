@@ -67,13 +67,21 @@ test('three areas, one per outcome, read by range: the mean rests on the cells t
   // Celsius by default, the file's kelvin offered (the practitioner, 2026-11-06).
   await expect(page.locator('#satellite-unit')).toHaveValue('°C');
   await expect(page.locator('#satellite-unit option')).toHaveText(['degrees Celsius (K − 273.15)','degrees Fahrenheit (K × 9/5 − 459.67)','kelvin, as the file states it']);
-  await page.locator('#run-button').click();
   // WHILE IT READS, the run says so: a panel with the step, the count of files and a bar, and the state line counts too.
-  await expect(page.locator('#run-progress')).toContainText('Reading satellite files:',{timeout:30000});
-  await expect(page.locator('#run-progress')).toContainText('Sampled');
-  await page.screenshot({path:'test-results/run-progress.png'});
-  await expect(page.locator('#workflow-state')).toContainText('Running ·');
+  // Recorded as it happens rather than caught on screen: on a fast runner the read finishes before a poll sees the
+  // panel (CI, 2026-11-09, Chromium and WebKit), and a test that races the thing it checks fails for no fault.
+  await page.evaluate(()=>{
+    const seen=window.__progressSeen={panel:[],state:[]};
+    new MutationObserver(()=>{
+      const panel=document.getElementById('run-progress');if(panel)seen.panel.push(panel.textContent);
+      const state=document.getElementById('workflow-state');if(state)seen.state.push(state.textContent);
+    }).observe(document.body,{subtree:true,childList:true,characterData:true});
+  });
+  await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:90000});
+  const seen=await page.evaluate(()=>window.__progressSeen);
+  expect(seen.panel.some(t=>t.includes('Reading satellite files:')&&t.includes('Sampled'))).toBe(true);
+  expect(seen.state.some(t=>t.includes('Running ·'))).toBe(true);
   await expect(page.locator('#run-progress')).toHaveCount(0);
   await page.locator('[data-view="results"]').click();
   const main=page.locator('main').first();

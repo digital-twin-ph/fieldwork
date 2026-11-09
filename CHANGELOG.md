@@ -3,6 +3,15 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.73.1 — 2026-11-09
+
+- **John Snow's outputs no longer overlap on the canvas**: Table, 317 px tall, lay under Chart, so a click on Table
+  could select Chart. Each output now starts below the one above it.
+- Tests: a run's progress is recorded as it happens rather than caught on screen; a request WebKit reports when a
+  test's navigation cancels it is no longer counted as an application error; Hagelloch's offline test visits once.
+  These failed WebKit, and once Chromium, on every main run since 0.70.
+- Validation: Chromium and WebKit locally on macOS; Linux in CI.
+
 ## 0.73.0 — 2026-11-09
 
 - **Who infected whom in Hagelloch, 1861, by hand** (200, steps 1 to 3): the serial interval, 184 values with a median

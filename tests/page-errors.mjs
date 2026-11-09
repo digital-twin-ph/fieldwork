@@ -27,6 +27,11 @@
  *  thrash; if a resize loop ever fails to terminate, the symptom is a hung or visibly janky
  *  page, which a console string was never going to be the thing that caught.
  */
+/** **A same-origin request the navigation cancelled** (WebKit, 2026-11-09). A test that opens one page and then another
+ *  79 ms later cancels the first page's fetch of `sw.js` or `build/asset-manifest.json`, and WebKit reports it as a page
+ *  error, "/127.0.0.1:4174/sw.js due to access control checks." (as received in CI), though the application catches both. Only those two files, only that
+ *  wording: a real failure to register the worker still shows as "Offline cache unavailable", which tests read. */
+const CANCELLED_BY_NAVIGATION=/^(?:Fetch API cannot load https?:\/)?\/(?:127\.0\.0\.1|localhost):\d+\/(?:sw\.js|build\/asset-manifest\.json) due to access control checks\.$/;
 const BROWSER_OWN=[
   'Context is stopped',
   'ResizeObserver loop completed with undelivered notifications.',
@@ -35,6 +40,6 @@ const BROWSER_OWN=[
 
 export function collectPageErrors(page){
   const errors=[];
-  page.on('pageerror',e=>{if(!BROWSER_OWN.includes(e.message))errors.push(e.message);});
+  page.on('pageerror',e=>{if(!BROWSER_OWN.includes(e.message)&&!CANCELLED_BY_NAVIGATION.test(e.message))errors.push(e.message);});
   return errors;
 }

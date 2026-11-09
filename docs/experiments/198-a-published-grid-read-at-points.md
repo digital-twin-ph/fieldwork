@@ -102,7 +102,12 @@ deflate.
 - **Validation Lab check 42**: the third workflow's chain, composed from Fieldwork's own functions, against rasterio,
   SciPy and NumPy. EGM2008 and DTU25MSS at the sites within 1e-9 m, every ground height exactly rasterio's cell,
   every height within 1e-9 m, **16 of 194** Reaches on both sides; no facility within 1 mm of the line.
-- Not run: DTU25MSS's own 2.9 GB file read in parts on this laptop. It has not been downloaded.
+- **DTU25MSS's own file, 2,947,503,242 bytes, read in parts on this laptop**, Chromium, 2026-11-09
+  (`tests/netcdf-large-local.browser.mjs`, run where `DTU25MSS` names a local copy): header and variables in 0.3 s, the
+  13 × 17 window around Manila read and kept in 0.4 s; all 221 nodes **identical** to the example's subset cut by h5py.
+  The first run reported 4.4 cm: the test took the subset's tie point, a node, for a cell corner, and compared
+  neighbouring nodes. The test was wrong, not the reader. Bytes read were not measured: a file read through WORKERFS
+  makes no requests to count.
 - WebKit runs in CI, not here.
 
 ## Validation it commits to

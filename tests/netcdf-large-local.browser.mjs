@@ -45,12 +45,16 @@ test('DTU25MSS, 2.9 GB on this laptop, is read in parts and agrees with the subs
   const theirs=await (await fromArrayBuffer(bytesOf(EXAMPLE))).getImage();
   const [a]=await mine.readRasters(),[b]=await theirs.readRasters();
   const [ax,ay]=mine.getOrigin(),[bx,by]=theirs.getOrigin(),[dx,dy]=mine.getResolution();
-  // The example's subset is written point-registered; its first node is its tie point. Ours are cells around nodes.
+  // THE TWO FILES ARE REGISTERED DIFFERENTLY, and each says so. Ours is written as cells around the nodes, so a node is a
+  // cell's centre. The example's subset is written point-registered (GTRasterTypeGeoKey 2), so its tie point IS its
+  // first node. Treating that tie point as a corner put this comparison half a node out, and rounding then read the
+  // neighbouring node: 4.4 cm, on the first run, 2026-11-09, which was this test's error and not the reader's.
   const nodeOf=(x0,y0,c,r,half)=>[x0+(c+half)*dx,y0+(r+half)*dy];
+  const theirsHalf=theirs.getGeoKeys().GTRasterTypeGeoKey===2?0:0.5;
   let compared=0,worst=0;
   for(let r=0;r<mine.getHeight();r++)for(let c=0;c<mine.getWidth();c++){
     const [lon,lat]=nodeOf(ax,ay,c,r,0.5);
-    const bc=Math.round((lon-bx)/dx-0.5),br=Math.round((lat-by)/dy-0.5);
+    const bc=Math.round((lon-bx)/dx-theirsHalf),br=Math.round((lat-by)/dy-theirsHalf);
     const there=b[br*theirs.getWidth()+bc];
     worst=Math.max(worst,Math.abs(a[r*mine.getWidth()+c]-there));compared++;
   }

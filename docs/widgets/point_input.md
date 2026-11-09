@@ -1,6 +1,6 @@
 # Point data
 
-_Created 2026-10-19 · Updated 2026-10-19_
+_Created 2026-10-19 · Updated 2026-11-09_
 
 **An input widget.** It brings located records into a workflow — one row per thing, each with a
 position and whatever attributes came with it.

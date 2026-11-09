@@ -3,7 +3,7 @@
   "description": "Independent recomputation of implemented widgets by an external process, recorded after release. Release files are immutable once committed, so evidence about a release lives here and accrues as checks run. A fixture digest recorded in a result is over canonical JSON content rather than the file’s bytes, revised 2026-10-11 because byte identity is unsatisfiable in the browser the lab publishes to. A parity result establishes numerical agreement with a named external implementation under a stated criterion. It is not scientific certification, and it says nothing about whether a method is appropriate for a question.",
   "lab": {
     "repository": "https://github.com/digital-twin-ph/validation-lab",
-    "commit": "d43dab50005ad407f9a7971f5047db26d191bf44",
+    "commit": "7e442ff21a6d0e59583d0c402fdba8ae1a67ee86",
     "pinNote": "The commit CI checks the lab out at: .github/workflows/pages.yml reads it with `jq -r .lab.commit widgets/parity.json`. So this pin, not the clone beside this repository, is what `validate:dive-deeper` verifies against on a clean runner -- and it must be advanced whenever a check lands in the lab, in the same push-then-pin order the worked examples use."
   },
   "outcomes": {
@@ -771,6 +771,26 @@
       ],
       "note": "The fixture composes Fieldwork's own functions in Node (scripts/export-validation-fixture.mjs, sea-level-heights-manila-001): Find health facilities, Raster input's window, Sample raster, Measure distance, the workflow's rules, Relate and the published ruleset compare-level-to-elevation 1.0.0. The canvas run by hand gives the same 16 (tests/sea-level-from-scratch.browser.mjs). Experiment 198.",
       "notebook": "42-sea-level-heights-vs-rasterio.ipynb"
+    },
+    {
+      "widget": "urn:fieldwork:widget:relate_table",
+      "coversRelease": "0.11.0",
+      "check": "43-hagelloch-chains",
+      "result": "content/results/check-43-hagelloch-chains.json",
+      "sha256": "2b90f8416c59135053bb2d9d738d70a128f6efb9314828d8bd5c1a0d11a2cfe7",
+      "external": [
+        "pandas 2.3.3"
+      ],
+      "criterion": "Every serial interval equal in whole days, none where no infector is recorded; every count of secondary cases equal, a case nobody names 0",
+      "outcome": "agrees",
+      "measured": "Hagelloch, 1861, 188 cases: 184 serial intervals, median 10 days, 7 to 16, each equal to a pandas self-merge's difference of dates; 184 secondary cases, 126 children nobody names at 0, the most 30 (case 45), each equal to value_counts over every case. Agrees in CPython and in the browser kernel.",
+      "ranAt": "2026-11-09T21:29:43+00:00",
+      "notEstablished": [
+        "Who infected whom: the infector column is a reconstruction from the 1861 record, read alike by both sides.",
+        "That the mean of the secondary cases estimates R."
+      ],
+      "note": "The fixture composes Fieldwork's own functions in Node (scripts/export-validation-fixture.mjs, chains-hagelloch-001): a point layer read as a table, Relate to itself with Bring it in as, the rules' date kind, Total within groups' count, and Relate keeping the unmatched as 0. The canvas run by hand gives the same (tests/hagelloch-who-infected-whom.browser.mjs, tests/hagelloch-secondary-cases.browser.mjs). Experiment 200.",
+      "notebook": "43-hagelloch-chains-vs-pandas.ipynb"
     }
   ],
   "notebookNote": "`notebook` names the lab notebook that carries the check, and `diveDeeper` the heading of its Dive Deeper section where it has one -- the part written for a practitioner who wants to understand the widget rather than for a reviewer checking it (experiment 94). Both are recorded rather than derived from the check id: `24-project-forward` lives in `24-project-vs-pyproj.ipynb`, so matching on the leading number works by luck and would break the first time a check and its notebook are named differently. The application reads `diveDeeper` to decide which widgets offer the link, and scripts/validate-dive-deeper.mjs refuses a heading the notebook does not actually carry."

@@ -180,6 +180,9 @@ async function openProjectionContract(page){
     localStorage.setItem('fieldwork-workflow-v1',JSON.stringify(w));
   });
   await page.reload();
+  // RUN IS DISABLED WHILE THE APPLICATION IS BUSY, as it is when a reloaded workflow runs on opening; WebKit on Linux is
+  // slow enough to meet it (CI, 2026-11-09). Wait for it, then run.
+  await expect(page.locator('#run-button')).toBeEnabled({timeout:60000});
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
 }

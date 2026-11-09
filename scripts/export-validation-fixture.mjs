@@ -11,7 +11,7 @@
 //                   | select-range-london-001
 //                   | regression-salmonella-001 | regression-nyc-001 (needs NYC_PKG)
 //                   | sample-satellite-s5p-001 | lag-response-brazil-001 | regression-strata-brazil-001
-//                   | lag-models-brazil-001 | sea-level-heights-manila-001
+//                   | lag-models-brazil-001 | sea-level-heights-manila-001 | chains-hagelloch-001
 import {createHash} from 'node:crypto';
 import {readFile,writeFile} from 'node:fs/promises';
 import {reprojectToCRS84,projectFromCRS84} from '../build/reproject.js';
@@ -47,7 +47,7 @@ import {rateTwoByTwoSentence} from '../build/two-by-two.js';
 import {executeWorkflow} from '../build/core.js';
 import {inspectRaster,readRasterWindow,rasterWindow} from '../build/raster.js';
 import {sampleRaster} from '../build/sample-raster.js';
-import {nearestPlaces,distancesAsTable} from '../build/core.js';
+import {nearestPlaces,distancesAsTable,pointsAsTable} from '../build/core.js';
 import {downloadFacilities} from '../build/health-facilities.js';
 import {authoredSubjects} from '../build/authored-application.js';
 import {evaluateAuthored,evaluatedTable} from '../build/rule-evaluation.js';
@@ -1395,6 +1395,35 @@ const builders={
       input:{facilityCount:facilities.features.length,sites:siteRows},
       output:{facilities:out,reaches:out.filter(r=>r.level==='Reaches').length},
     },files:{'egm2008-window.tif':encodeGrid(egm),'dtu25mss-window.tif':encodeGrid(dtu),'deltadtm-window.tif':encodeGrid(dtm)}};
+  },
+  async 'chains-hagelloch-001'(){
+    // WHO INFECTED WHOM, HAGELLOCH 1861 (experiment 200, steps 1 to 3), through Fieldwork's own functions as the canvas
+    // runs them: the cases related to themselves on infector for the infector's prodrome date, the serial interval as one
+    // date minus the other, and the cases counted by infector and related back on case_ID, the unmatched kept as 0.
+    const cases=JSON.parse(await readFile(new URL('../examples/hagelloch-1861/cases.json',import.meta.url),'utf8'));
+    const t=pointsAsTable(cases);
+    const selfRequest={on:'infector',rightOn:'case_ID',bring:'date_of_prodrome',bringAs:'infector_prodrome',normalisation:'exact'};
+    const rel=relateTable(t,t,{...selfRequest,unmatched:{decision:'keep',label:'no infector recorded',signature:relateShape(t,t,selfRequest).signature}}).table;
+    const fields=[{attribute:'date_of_prodrome',predicate:'fwa:prodrome',kind:'date'},{attribute:'infector_prodrome',predicate:'fwa:infectorProdrome',kind:'date'}];
+    const rules=[{any:[{all:[]}],then:[{predicate:'fwa:serial',column:'serial_interval_days',
+      compute:{left:{field:'fwa:prodrome'},operator:'minus',right:{field:'fwa:infectorProdrome'}}}]}];
+    const serial=evaluatedTable(rel,evaluateAuthored(authoredSubjects(rel),fields,rules));
+    const counts=groupTable(t,{by:['infector'],aggregate:'count'}).table;
+    const countRequest={on:'case_ID',rightOn:'infector',bring:'rows',bringAs:'secondary_cases',normalisation:'exact'};
+    const secondary=relateTable(t,counts,{...countRequest,unmatched:{decision:'keep',label:'0',signature:relateShape(t,counts,countRequest).signature}}).table;
+    const secondaryOf=new Map(secondary.rows.map(r=>[r.key.case_ID,Number(r.key.secondary_cases)]));
+    const out=serial.rows.map(r=>({case_ID:r.key.case_ID,
+      serialIntervalDays:r.key.serial_interval_days===''||r.key.serial_interval_days===undefined?null:Number(r.key.serial_interval_days),
+      secondaryCases:secondaryOf.get(r.key.case_ID)??null}));
+    return {fixture:{
+      ...base('chains-hagelloch-001','relate_table','Relate, rules and a count: serial intervals and secondary cases, Hagelloch 1861','src/relate-table.ts#relateTable; src/rule-evaluation.ts#evaluateAuthored; src/group-table.ts#groupTable'),
+      source:'Measles in Hagelloch, 1861 (Pfeilsticker 1863; Oesterle 1992), as measles_hagelloch_1861 in the R package outbreaks 1.9.0; the copy built into Fieldwork as examples/hagelloch-1861',
+      declaredParameters:{
+        serialInterval:'For each case whose infector is a case_ID: date_of_prodrome minus the infector\'s date_of_prodrome, in whole days. A case with no infector recorded has none.',
+        secondaryCases:'For each case: the number of cases whose infector is its case_ID. A case nobody names is 0, declared by the practitioner.'},
+      input:{cases:t.rows.map(r=>({case_ID:r.key.case_ID,infector:r.key.infector??'',date_of_prodrome:r.key.date_of_prodrome??''}))},
+      output:{cases:out},
+    },files:{}};
   },
   'lag-models-brazil-001'(){
     // ONE REGRESSION, ONE MODEL PER LAG (experiment 185). check 37's two municipalities and weeks, the temperature and the

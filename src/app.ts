@@ -1,3 +1,4 @@
+import {noteImageDigest,noteImageFigure,noteImageKey,readNoteImagePayload,type NoteImage} from './note-image.js';
 import {diveDeeperPanel,learnBlock} from './dive-deeper.js';
 import {recordRun,runsFor} from './widget-usage.js';
 import {buildOrder,revealedTypes,revealReason} from './reveal-playback.js';
@@ -6498,6 +6499,9 @@ function renderNotesView(){
   // checking a published analysis against its source needs the source. `run.tables` already holds
   // every table a run passed between steps, inputs included, so the table is there to draw.
   const figureOf=(note:Note)=>{
+    // A PICTURE SOMEBODY PUT IN THEIR NOTE (experiment 196), shown from the bytes kept by its digest.
+    if(note.kind==='authored'&&note.image)
+      return noteImageFigure(note.image,readNoteImagePayload(cachedPayload(noteImageKey(note.image.sha256))),esc);
     const id='nodeId' in note&&note.nodeId?note.nodeId:undefined;
     if(!id)return undefined;
     if(note.kind==='machined'&&!describedNode(note.id))return undefined;
@@ -6575,6 +6579,8 @@ function writeInNoteDialog(note:Note){
   // buttons, one dialog further in.
   const keeps=!keptHere(projectNow());
   openNoteDialog(note,{
+    imageOf:sha=>readNoteImagePayload(cachedPayload(noteImageKey(sha))),
+    keepImage:(sha,payload)=>keepDataset(noteImageKey(sha),payload),
     labelOf:id=>workflow.nodes.find(n=>n.id===id)?.params.label,
     machined:Object.values(result?.machined||{}).flat(),
     write:keeps?(which,draft)=>{
@@ -6588,9 +6594,12 @@ function writeInNoteDialog(note:Note){
         // THE FUNCTION IS DROPPED WHEN IT IS CLEARED, not stored empty: `readNotes` keeps `fn`
         // only when it has a value, so an empty string here would be written and then read back
         // as absent -- two states that look the same and are not.
-        const {fn:_was,works:_cited,form:_form,words:_words,argument:_argument,...rest}=held[at] as Note&{fn?:string;works?:unknown;form?:string;words?:string;argument?:string};
+        const {fn:_was,works:_cited,form:_form,words:_words,argument:_argument,image:pictured,...rest}=held[at] as Note&{fn?:string;works?:unknown;form?:string;words?:string;argument?:string;image?:NoteImage};
+        // THE PICTURE: unchanged where the draft does not mention it, removed where it says null.
+        const image=draft.image===undefined?pictured:draft.image??undefined;
         held[at]={...rest,text,section,...(fn?{fn}:{}),...(draft.works?.length?{works:draft.works}:{}),
-          ...(draft.words?{words:draft.words}:{}),...(draft.argument?{argument:draft.argument}:{})} as Note;
+          ...(draft.words?{words:draft.words}:{}),...(draft.argument?{argument:draft.argument}:{}),
+          ...(image?{image}:{})} as Note;
         if(!writeNotes(held))return false;
         renderNotesView();
         toast('Your note was kept.');
@@ -7756,7 +7765,10 @@ async function exportProject(id:string){
       validated.push(source);
       workflows.push({key,document:await workflowDocument(source)});
     }
-    const document=projectDocument({...project,workflows:held},workflows);
+    // THE PICTURES IN ITS NOTES go in the file with it, by digest; one this device does not hold is left out and said.
+    const pictured=readNotes((project as {notes?:unknown}).notes).notes.flatMap(n=>n.kind==='authored'&&n.image?[n.image.sha256]:[]);
+    const images=Object.fromEntries(pictured.flatMap(sha=>{const p=readNoteImagePayload(cachedPayload(noteImageKey(sha)));return p?[[sha,p]]:[];}));
+    const document=projectDocument({...project,workflows:held},workflows,images);
     const loose=unbundledReferences(validated);
     // WRITTEN COMPACT, because indentation is paid in the one resource that binds. Measured
     // 2026-10-23 on a million-junction document: 194 MB compact, 517 MB at indent 2 -- 2.66
@@ -7804,6 +7816,11 @@ async function importProjectDocument(raw:unknown):Promise<string[]>{
   // rather than coerced under a heading its author did not choose.
   const carried=readNotes((document.project as {notes?:unknown}).notes).notes;
   if(carried.length)project.notes=carried;
+  // THEIR PICTURES, kept before the notes that point at them, and only where the bytes are the digest they claim.
+  for(const [sha,raw] of Object.entries(document.images??{})){
+    const payload=readNoteImagePayload(raw);
+    if(payload&&await noteImageDigest(payload)===sha)await keepDataset(noteImageKey(sha),payload);
+  }
   // AND THE AUTHORS COME WITH IT, for the same reason and by the same omission. `newProject` mints
   // from the name and the subject, so a downloaded investigation arrived crediting nobody -- and a
   // project whose notes name an author it does not list is a publication with an unlisted author.

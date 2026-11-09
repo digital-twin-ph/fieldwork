@@ -21,7 +21,13 @@ Each note has a **function**, which says what it does for a reader (context, rat
 2. Write the note. The dialog shows questions to ask of that part; hide them once they are habit.
 3. Choose its function. If it draws on literature, answer whose words and whose argument.
 4. Add the works it cites under **Citations**. They are marked on the note and listed in References.
-5. Choose **Add note** (or **Save** when editing) to keep it on the project.
+5. To show a picture with the note, open **Image** and choose a PNG, JPEG, WebP or SVG file. Write its **alt text**,
+   what the picture shows for someone who cannot see it, and its **caption**, what a reader is to take from it. Both
+   are required.
+6. Choose **Add note** (or **Save** when editing) to keep it on the project.
+
+A picture goes above the note's words, on the board and in the write-up. It is kept on this device by its digest, and
+an exported project carries it. A note whose picture is not on this device says so, with its caption.
 
 A note can be moved to another part by dragging its card. Editing a machined note does not change it: the edit becomes an authored note that keeps the wording it was taken from.
 
@@ -117,3 +123,5 @@ Both are optional and read **unstated** until answered. A note on your own data,
 - It does not check that a note is faithful to the works it cites, or that "my words" are. That is for the author and the reader; it seldom holds the source's text.
 - It does not quote for you. A sentence carried word for word from a source belongs in quotation marks, with its page.
 - The questions do not grade a note. A note that answers all of them can still be wrong.
+- It does not check that alt text describes the picture, or that you may publish it. The picture's source and terms
+  belong in the note or its citations.

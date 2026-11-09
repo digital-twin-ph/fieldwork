@@ -3,6 +3,15 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.69.0 — 2026-11-09
+
+- **A note can carry a picture** ([196](docs/experiments/196-a-picture-in-a-note.md)). Under **Image** in a note you
+  write, choose a PNG, JPEG, WebP or SVG file and write its alt text and caption; both are required. It is shown above
+  the note's words on the board and in the write-up, as an image: an SVG is never put into the page. It is kept on
+  this device by its digest, and an exported project carries it.
+- **The sea-level example's write-up opens with the vertical-datum diagram**, as a note of its Introduction.
+- Validation: Chromium locally; WebKit in CI.
+
 ## 0.68.0 — 2026-11-09
 
 - **The sea-level example moves to its own repository, and reports a sea level**

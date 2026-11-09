@@ -89,7 +89,7 @@ not a practitioner in the field.
 5. **Done 2026-11-09 (0.68.0): Manila coastal exposure moved to example-2026-sea-level-rise-philippines**, the built-in
    one removed, and the example now reports the rise at each facility's gauge
    ([195](docs/experiments/195-the-sea-level-example-reports-a-sea-level.md)). The terrain note is in its README.
-   **Still open: images in Notes** (the practitioner, 2026-11-08): an authored note can carry an image, kept by
+   **Images in Notes: done 2026-11-09 (0.69.0, [196](docs/experiments/196-a-picture-in-a-note.md)).** As asked: (the practitioner, 2026-11-08): an authored note can carry an image, kept by
    its digest, with required alt text and a caption, shown on the Notes board and in the write-up; an SVG is shown as
    an image, never inlined. Its first use is the datum diagram, docs/images/vertical-datums.svg, as a note of the
    example.

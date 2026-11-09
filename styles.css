@@ -1191,3 +1191,13 @@ select.rule-op.rule-op-compare,select.rule-op.rule-op-equal,select.rule-op.rule-
 
 /* Two actions side by side wrap in a narrow Inspector rather than clip (2026-11-09, Find health facilities from a list). */
 .inspector-actions{flex-wrap:wrap}
+
+/* A PICTURE IN A NOTE (experiment 196): within the column, its caption at reading size, and a picture this device
+   does not hold said rather than left blank. A white ground, because a diagram drawn on white must stay legible in
+   the dark theme. */
+.notes-image{margin:.5rem 0;padding:0}
+.notes-image img{display:block;max-width:100%;height:auto;background:#fff;border:1px solid var(--rule,#2a3a36);border-radius:4px}
+.notes-image figcaption{font-size:15px;line-height:1.45;margin-top:.35rem}
+.notes-image.is-missing .notes-image-missing{font-size:15px;border:1px dashed currentColor;padding:.5rem;border-radius:4px}
+#note-image-panel .field-label{margin-top:.6rem}
+#note-image-panel textarea{width:100%;font-size:15px}

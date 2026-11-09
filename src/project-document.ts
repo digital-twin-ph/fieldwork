@@ -22,13 +22,18 @@ export interface ProjectDocument {
   exportedAt:string;
   project:Project;
   workflows:{key:string;document:unknown}[];
+  /** THE PICTURES THE PROJECT'S NOTES CARRY, by digest (experiment 196). A note holds a picture's description and
+   *  digest; its bytes live in the payload store, so they travel here or the note opens without its picture. */
+  images?:Record<string,import('./note-image.js').NoteImagePayload>;
 }
 export const PROJECT_DOCUMENT_SCHEMA='fieldwork/project-document/1';
 
-export function projectDocument(project:Project,workflows:{key:string;document:unknown}[]):ProjectDocument{
+export function projectDocument(project:Project,workflows:{key:string;document:unknown}[],
+  images:Record<string,import('./note-image.js').NoteImagePayload>={}):ProjectDocument{
   if(!workflows.length)throw new Error('A project with no saved workflow has nothing to export.');
   return {schema:PROJECT_DOCUMENT_SCHEMA,exportedAt:new Date().toISOString(),
-    project:structuredClone(project),workflows:structuredClone(workflows)};
+    project:structuredClone(project),workflows:structuredClone(workflows),
+    ...(Object.keys(images).length?{images:structuredClone(images)}:{})};
 }
 
 /** Read one back, structurally. The workflows inside are NOT validated here: each is handed to the

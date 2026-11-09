@@ -65,4 +65,5 @@ The second and third were also in the way of anyone joining a value onto an assi
   are stated choices; the file holds 35 others per gauge.
 - **That a facility's rise is its gauge's.** The 194 are 0.9 to 13.4 km from gauge 145, great-circle distances computed for this
   record; the projection is for the gauge.
-- The datum diagram is in the README, not yet an image in Notes. That is still TODO.
+- The datum diagram was in the README only until 0.69.0, when it became a note of the write-up's Introduction
+  ([196](196-a-picture-in-a-note.md)).

@@ -25,6 +25,7 @@
  *  schema had a spelling before the machined one existed, and two kinds of note that cannot be
  *  grouped together cannot be read in one place.
  */
+import {readNoteImage} from './note-image.js';
 import {isRecord} from './guards.js';
 import {validLogin} from './identity.js';
 
@@ -320,6 +321,8 @@ export interface AuthoredNote {
   words?:string;
   /** Whose argument: whether it reports the works or argues from them. See NOTE_ARGUMENT. */
   argument?:string;
+  /** A picture the note carries, kept by its digest, with alt text and a caption (experiment 196). */
+  image?:import('./note-image.js').NoteImage;
 }
 
 /** WHAT AN INPUT DECLARES ABOUT ITSELF, as a note.
@@ -467,7 +470,8 @@ export function readNotes(raw:unknown):{notes:Note[]; unreadable:number}{
         ...(worksOf(entry.works).length?{works:worksOf(entry.works)}:{}),
         ...((text(entry.words)||LEGACY_FORM[text(entry.form)]||text(entry.form))
           ?{words:text(entry.words)||LEGACY_FORM[text(entry.form)]||text(entry.form)}:{}),
-        ...(text(entry.argument)?{argument:text(entry.argument)}:{})});
+        ...(text(entry.argument)?{argument:text(entry.argument)}:{}),
+        ...(readNoteImage(entry.image)?{image:readNoteImage(entry.image)!}:{})});
       continue;
     }
     if(entry.kind==='machined'){

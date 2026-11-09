@@ -9,6 +9,7 @@ import {referenceCount,workKey,type ReferenceEntry} from './references.js';
 import {CITATION_TYPES,citationGaps,renderCitation,type CitationType} from './input-provenance.js';
 import {METHOD_CITATION_STYLE} from './equations.js';
 import type {CitedWork} from './notes.js';
+import {noteImageFigure,noteImageFromFile,noteImageGaps,type NoteImage,type NoteImagePayload} from './note-image.js';
 
 /** THE NOTES SURFACE, reaching for the Notes Board prototype.
  *
@@ -32,7 +33,9 @@ import type {CitedWork} from './notes.js';
  *  authored note is rewritten in place, and a machined one is forked, leaving the machined note
  *  for the next run to rewrite. The dialog's part is to say which of the two is about to happen
  *  before the button is pressed. */
-export interface NoteDraft {text:string; section:WriteUpPart; fn:string; works?:CitedWork[]; words?:string; argument?:string}
+export interface NoteDraft {text:string; section:WriteUpPart; fn:string; works?:CitedWork[]; words?:string; argument?:string;
+  /** The note's picture; absent leaves it as it was, null removes it. */
+  image?:NoteImage|null}
 export type NoteWrite=(note:Note,draft:NoteDraft)=>boolean;
 
 export interface NoteContext {
@@ -41,6 +44,10 @@ export interface NoteContext {
   machined:readonly MachinedNote[];
   /** Absent means the dialog is read-only for every kind. */
   write?:NoteWrite;
+  /** The kept bytes of a note's picture, by digest. */
+  imageOf?:(sha256:string)=>NoteImagePayload|undefined;
+  /** Keep a picture's bytes before the note points at them; false where they could not be kept. */
+  keepImage?:(sha256:string,payload:NoteImagePayload)=>Promise<boolean>;
 }
 
 /** THE TWO KINDS SOMEBODY MAY WRITE, and the reason is the warrant each carries.
@@ -391,8 +398,10 @@ const DIALOG=`<dialog id="note-dialog" aria-labelledby="note-dialog-title">
 </div>
 <div id="note-tabs" class="result-switch" role="tablist" hidden>
 <button type="button" role="tab" data-note-tab="write" class="active">Write</button>
-<button type="button" role="tab" data-note-tab="cite">Citations</button></div>
+<button type="button" role="tab" data-note-tab="cite">Citations</button>
+<button type="button" role="tab" data-note-tab="image">Image</button></div>
 <div id="note-cite-panel" hidden></div>
+<div id="note-image-panel" hidden></div>
 <textarea id="note-text" class="note-text" rows="9" hidden
   aria-label="The note" spellcheck="true"></textarea>
 <div id="note-preview" class="prose note-preview" hidden aria-live="polite"></div>
@@ -541,7 +550,7 @@ export function openNoteDialog(note:Note,context:NoteContext,esc:Escape){
     save.textContent=fresh?'Add note':'Save';
     const unchanged=()=>area.value.trim()===was
       &&(!section||section.value===note.section)&&(!workFn||workFn.value===fn)&&(!workWords||workWords.value===wordsWas)&&(!workArgument||workArgument.value===argumentWas)
-      &&JSON.stringify(works)===startedWith;
+      &&JSON.stringify(works)===startedWith&&JSON.stringify(image)===imageStartedWith;
     // SAY WHAT LEAVING WOULD COST, once there is something to lose. A dialog whose only exit is
     // labelled "Close" discards an edit without ever having said so. A note being written for
     // the first time has nothing to go back to, so its exit is "Discard" throughout.
@@ -573,16 +582,58 @@ export function openNoteDialog(note:Note,context:NoteContext,esc:Escape){
     const works:CitedWork[]=note.kind==='authored'?structuredClone(note.works??[]):[];
     const startedWith=JSON.stringify(works);
     let editing:number|null=null;
-    const tabs=$('#note-tabs'),panel=$('#note-cite-panel');
+    const tabs=$('#note-tabs'),panel=$('#note-cite-panel'),imagePanel=$('#note-image-panel');
     tabs.hidden=note.kind!=='authored';
-    const tab=(which:'write'|'cite')=>{
+    const tab=(which:'write'|'cite'|'image')=>{
       tabs.querySelectorAll<HTMLButtonElement>('[data-note-tab]').forEach(b=>b.classList.toggle('active',b.dataset.noteTab===which));
-      panel.hidden=which!=='cite';area.hidden=which==='cite';toolbar.hidden=which==='cite';
-      if(which==='cite')drawCitations();else show();
+      panel.hidden=which!=='cite';imagePanel.hidden=which!=='image';area.hidden=which!=='write';toolbar.hidden=which!=='write';
+      if(which==='cite')drawCitations();else if(which==='image')drawImage();else show();
+      if(which!=='write')preview.hidden=true;
       const label=tabs.querySelector<HTMLButtonElement>('[data-note-tab="cite"]');
       if(label)label.textContent=works.length?`Citations (${works.length})`:'Citations';
+      const pictured=tabs.querySelector<HTMLButtonElement>('[data-note-tab="image"]');
+      if(pictured)pictured.textContent=image?'Image (1)':'Image';
     };
-    tabs.querySelectorAll<HTMLButtonElement>('[data-note-tab]').forEach(b=>b.onclick=()=>tab(b.dataset.noteTab as 'write'|'cite'));
+    tabs.querySelectorAll<HTMLButtonElement>('[data-note-tab]').forEach(b=>b.onclick=()=>tab(b.dataset.noteTab as 'write'|'cite'|'image'));
+    // THE PICTURE, a tab of the note (experiment 196). The bytes are kept as soon as a file is chosen, so the note
+    // never points at a picture this device does not hold; alt text and a caption are required before it can be saved.
+    const imageWas=note.kind==='authored'&&note.image?note.image:null;
+    let image:NoteImage|null=imageWas?structuredClone(imageWas):null;
+    let chosen:Omit<NoteImage,'alt'|'caption'>|null=imageWas;
+    let held:NoteImagePayload|undefined=imageWas?context.imageOf?.(imageWas.sha256):undefined;
+    const imageStartedWith=JSON.stringify(imageWas);
+    const imageAlt=()=>(imagePanel.querySelector<HTMLTextAreaElement>('#note-image-alt')?.value??image?.alt??'').trim();
+    const imageCaption=()=>(imagePanel.querySelector<HTMLTextAreaElement>('#note-image-caption')?.value??image?.caption??'').trim();
+    const settleImage=()=>{image=chosen?{...chosen,alt:imageAlt(),caption:imageCaption()}:null;};
+    const imageGaps=()=>chosen?noteImageGaps({alt:imageAlt(),caption:imageCaption()}):[];
+    function drawImage(){
+      imagePanel.innerHTML=`<label class="field-label" for="note-image-file">Picture: PNG, JPEG, WebP or SVG</label>`
+        +`<input id="note-image-file" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml,.svg">`
+        +(chosen?`<div id="note-image-preview">${noteImageFigure({...chosen,alt:imageAlt()||'(alt text not written yet)',caption:imageCaption()||'(caption not written yet)'},held,esc)}</div>`
+          +`<p class="muted">${esc(chosen.filename||'Picture')} · ${(chosen.bytes/1024).toFixed(1)} KB · sha256 ${esc(chosen.sha256.slice(0,12))}…</p>`
+          +`<label class="field-label" for="note-image-alt">Alt text: what the picture shows</label>`
+          +`<textarea id="note-image-alt" rows="3">${esc(image?.alt??'')}</textarea>`
+          +`<label class="field-label" for="note-image-caption">Caption: what a reader is to take from it</label>`
+          +`<textarea id="note-image-caption" rows="2">${esc(image?.caption??'')}</textarea>`
+          +`<ul id="note-image-gaps" class="quality-problems"></ul>`
+          +`<button type="button" id="note-image-remove" class="button">Remove the picture</button>`
+          :`<p class="muted">No picture. One shown here goes above the note's words, on the board and in the write-up.</p>`);
+      const gapList=imagePanel.querySelector('#note-image-gaps');
+      const sayGaps=()=>{if(gapList)gapList.innerHTML=imageGaps().map(g=>`<li class="quality-problem">${esc(g)}</li>`).join('');};
+      sayGaps();
+      imagePanel.querySelectorAll('#note-image-alt,#note-image-caption').forEach(el=>el.addEventListener('input',()=>{settleImage();sayGaps();relabel();}));
+      imagePanel.querySelector<HTMLButtonElement>('#note-image-remove')?.addEventListener('click',()=>{chosen=null;held=undefined;image=null;relabel();tab('image');});
+      imagePanel.querySelector<HTMLInputElement>('#note-image-file')!.addEventListener('change',async e=>{
+        const file=(e.target as HTMLInputElement).files?.[0];if(!file)return;
+        status.textContent='';status.classList.remove('is-failure');
+        try{
+          const read=await noteImageFromFile(file);
+          if(!context.keepImage||!await context.keepImage(read.image.sha256,read.payload))
+            throw new Error('The picture could not be kept on this device, so it was not added.');
+          chosen=read.image;held=read.payload;settleImage();relabel();tab('image');
+        }catch(error){status.textContent=error instanceof Error?error.message:String(error);status.classList.add('is-failure');}
+      });
+    }
     const field=(id:string,label:string,value='',hint='')=>`<label class="field-label" for="${id}">${label}</label>`
       +`<input id="${id}" value="${esc(value)}"${hint?` placeholder="${esc(hint)}"`:''}>`;
     const read=(id:string)=>(panel.querySelector<HTMLInputElement|HTMLTextAreaElement|HTMLSelectElement>(`#${id}`)?.value??'').trim();
@@ -712,11 +763,15 @@ export function openNoteDialog(note:Note,context:NoteContext,esc:Escape){
         area.focus();
         return;
       }
+      settleImage();
+      if(imageGaps().length){
+        status.textContent=imageGaps().join(' ');status.classList.add('is-failure');tab('image');return;}
       if(unchanged()){dialog.close();return;}
       if(context.write!(note,{text:written,
         section:(section?section.value:note.section) as WriteUpPart,
         fn:workFn?workFn.value:fn,works,
-        words:workWords?workWords.value:wordsWas,argument:workArgument?workArgument.value:argumentWas}))dialog.close();
+        words:workWords?workWords.value:wordsWas,argument:workArgument?workArgument.value:argumentWas,
+        ...(JSON.stringify(image)!==imageStartedWith?{image}:{})}))dialog.close();
       else{
         status.textContent='That note could not be kept on this device.';
         status.classList.add('is-failure');

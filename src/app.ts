@@ -993,7 +993,7 @@ function drawRunProgress(){
 /** THE WIDGETS WHOSE INSPECTOR FOLLOWS THE STANDARD (experiment 186): Name, Inputs, Settings, Result, the links,
  *  Actions, in that order and nothing else, with every setting in the widget's configuration dialog. One at a time,
  *  Relate first; the set grows as each widget is moved, and a check holds them to it. */
-export const STANDARD_INSPECTOR=new Set<NodeType>(['raster_input','sample_raster','measure_distance','table_output','relate_table','select_rows','table_input','find_health_facilities','group_table','apply_ruleset','map_output','deduplicate_points','rate','study_area']);
+export const STANDARD_INSPECTOR=new Set<NodeType>(['point_input','raster_input','sample_raster','measure_distance','table_output','relate_table','select_rows','table_input','find_health_facilities','group_table','apply_ruleset','map_output','deduplicate_points','rate','study_area']);
 function samplerProduct(node:WorkflowNode){
   const up=(id:string,port:string)=>{const e=workflow.edges.find(x=>x.to===id&&x.port===port);return e?workflow.nodes.find(m=>m.id===e.from):undefined;};
   const search=up(node.id,'files'),find=search?up(search.id,'product'):undefined;
@@ -1866,6 +1866,51 @@ function openDistanceConfig(nodeId:string){
         list()[Number(el.dataset.filterValues)]!.values=el.value.split(',').map(v=>v.trim()).filter(Boolean);redraw();}));
     },
     apply:draft=>{change(w=>{getNode(w,nodeId,'measure_distance').params=draft;});},
+  },esc);
+}
+
+/** WHAT POINT DATA HOLDS, in one sentence. */
+function pointSentence(n:WorkflowNode<'point_input'>):string{
+  const edge=workflow.edges.find(e=>e.to===n.id&&e.port==='records');
+  if(edge){const m=n.params.fromTable;
+    return m?.x&&m?.y?`One point per row of ${portSourceName(workflow,n.id,'records','the table')}, at ${m.x} (longitude) and ${m.y} (latitude), in WGS 84 degrees.`
+      :`Reads points from ${portSourceName(workflow,n.id,'records','the table')}. Name its longitude and latitude columns in Configure\u2026`;}
+  const count=n.params.data.features.length;
+  return count?`${count} points, ${n.params.sourceInfo?.format||'entered here'}.`
+    :'No points yet. Generate, import or place them in Configure\u2026';
+}
+
+/** POINTS FROM A TABLE, CONFIGURED (experiments 178, 186, 200): x (longitude) and y (latitude), named and never guessed,
+ *  as geopandas' points_from_xy reads them; an id and a label, optional. The columns are the table's as last run, or as
+ *  declared upstream. */
+function openPointsFromTableConfig(nodeId:string){
+  const node=getNode(workflow,nodeId,'point_input');
+  const edge=workflow.edges.find(e=>e.to===nodeId&&e.port==='records');
+  const ran=edge?result?.tables?.[edge.from] as import('./data-table.js').DataTable|undefined:undefined;
+  const declared=Object.keys(upstreamKeyValues(node)??{});
+  const columns=[...new Set([...(ran?.keys??[]),...(ran?.valueField?[ran.valueField]:[]),...declared])];
+  type Draft={x:string;y:string;id?:string;name?:string};
+  openConfigDialog<Draft>({
+    id:'points-config',widget:'Point data',step:node.params.label||TYPES.point_input.title,
+    draft:{x:'',y:'',...(node.params.fromTable??{})},
+    sections:draft=>{
+      const pick=(id:string,key:keyof Draft,label:string,optional:boolean)=>
+        `<div class="field"><label class="field-label" for="${id}">${label}</label>`
+        +`<select id="${id}" data-from-table="${key}"><option value="">${optional?'Generate automatically':'Choose a column\u2026'}</option>`
+        +columns.map(c=>`<option value="${esc(c)}" ${draft[key]===c?'selected':''}>${esc(c)}</option>`).join('')+`</select></div>`;
+      const settings=(columns.length?'':'<p class="notice">Run the workflow once to list the table\u2019s columns.</p>')
+        +pick('from-table-x','x','x (longitude)',false)+pick('from-table-y','y','y (latitude)',false)
+        +pick('from-table-id','id','Record ID',true)+pick('from-table-name','name','Label',true);
+      return {settings,preview:'<p class="muted">One point per row, in WGS 84 degrees, every column with it. A row without a usable '
+        +'position is kept and counted, never dropped.</p>'};
+    },
+    wire:(root,draft,redraw)=>{
+      root.querySelectorAll<HTMLSelectElement>('[data-from-table]').forEach(el=>el.addEventListener('change',()=>{
+        const key=el.dataset.fromTable as keyof Draft;
+        if(el.value)draft[key]=el.value;else if(key==='id'||key==='name')delete draft[key];else draft[key]='';
+        redraw();}));
+    },
+    apply:draft=>{change(w=>{getNode(w,nodeId,'point_input').params.fromTable={...draft};});},
   },esc);
 }
 
@@ -3539,29 +3584,23 @@ function renderInspector(){
       +(chosen?productCard(chosen,true,esc).replace(/<div class="inspector-actions">[\s\S]*?<\/div><\/article>$/,'</article>')
         :'<p class="notice">No product chosen yet.</p>')
       +(chosen?.topic.caution?`<p class="notice notice-warning">${esc(chosen.topic.caution)}</p>`:'');
-  }else if(n.type==='point_input'&&workflow.edges.some(e=>e.to===n.id&&e.port==='records')){
-    // FROM A TABLE IN THIS WORKFLOW: x (longitude) and y (latitude), named and never guessed, as geopandas'
-    // points_from_xy reads them. The columns are the table's as last run, or as declared upstream. Experiment 178.
-    const edge=workflow.edges.find(e=>e.to===n.id&&e.port==='records')!;
-    const ran=result?.tables?.[edge.from] as import('./data-table.js').DataTable|undefined;
-    const declared=Object.keys(upstreamKeyValues(n)??{});
-    const columns=[...new Set([...(ran?.keys??[]),...(ran?.valueField?[ran.valueField]:[]),...declared])];
-    const m=n.params.fromTable;
-    const pick=(id:string,key:'x'|'y'|'id'|'name',label:string,optional:boolean)=>
-      `<div class="field"><label class="field-label" for="${id}">${label}</label>`
-      +`<select id="${id}" data-from-table="${key}"><option value="">${optional?'Generate automatically':'Choose a column…'}</option>`
-      +columns.map(c=>`<option value="${esc(c)}" ${m?.[key]===c?'selected':''}>${esc(c)}</option>`).join('')+`</select></div>`;
-    content+=labelForm('source-label','Source label',n.params.label||'Point data')
-      +'<p class="description">One point per row of the connected table, from its longitude and latitude columns, read as CRS84 (WGS 84 degrees). Every column travels with the point.</p>'
-      +(columns.length?'':'<p class="notice">Run the workflow once to list the table\'s columns.</p>')
-      +pick('from-table-x','x','x (longitude)',false)+pick('from-table-y','y','y (latitude)',false)
-      +pick('from-table-id','id','Record ID',true)+pick('from-table-name','name','Label',true)
-      +'<div class="notice">A row whose longitude or latitude is empty, not a number, or out of range is kept with no position and counted on the result; the table is not refused. Rows at the same position stay separate points, and the result says how many share one: total the table within the columns that name a place first if one point per place is meant. UTM metres are read by the CSV import, not here.</div>';
   }else if(n.type==='point_input'){
+    // POINT DATA ON THE STANDARD INSPECTOR (experiments 186, 200): name, inputs, one sentence and Configure…, and the
+    // records it holds. Configure… opens the Input data editor for points held here, or, for points read from a table,
+    // the dialog where the longitude and latitude columns are named. The ids of the controls are kept, so a manual
+    // that named them still finds them.
     if(n.sourceMigration)content+=`<p class="notice">${n.sourceMigration.fromType==='output'
       ?`Replaced the retired <strong>Visual output</strong> widget; name and connections retained.`
       :`Now uses the shared Input data editor; label, records and connections retained.`}</p>`;
-    content+=labelForm('source-label','Source label',n.params.label||'Input data')+`<div class="source-card"><h3>${n.params.data.features.length} point records</h3><p>${esc(n.params.sourceInfo?.format||'Local input')} · ${n.params.data.features.filter(f=>!f.geometry).length} missing locations</p></div><button id="edit-input-data" class="button primary">Prepare input data</button>${recordsPanel(n.id,n.params.data)}<p class="description">Generate synthetic points, import CSV / GeoPackage / GeoJSON, or place pushpins with forms. Connect to Check spatial coverage before deciding how to handle outside records.</p>`;
+    content+=standardSection('Name',labelForm('source-label','Name',n.params.label||'Point data'));
+    content+=standardSection('Inputs',standardInputs(n,{records:'A table with longitude and latitude columns, optional'}));
+    content+=standardSection('Settings',`<p class="standard-sentence">${esc(pointSentence(n))}</p>`
+      +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button></div>');
+    const fromTable=workflow.edges.some(e=>e.to===n.id&&e.port==='records');
+    content+=standardSection('Result',fromTable
+      ?'<p class="standard-result">Run the workflow to place the table\u2019s rows. A row with no usable position is kept and counted, never dropped.</p>'
+      :`<p class="standard-result">${n.params.data.features.length} point records · ${n.params.data.features.filter(f=>!f.geometry).length} without a location</p>`
+        +recordsPanel(n.id,n.params.data));
   }else if(n.type==='measure_area'){
     const input=workflow.edges.find(e=>e.to===n.id&&e.port==='area'),output=result?.outputs.find(o=>o.nodeId===n.id);
     content+=`<div class="field"><label class="field-label" for="measure-area-source">Boundary input</label><select id="measure-area-source"><option value="">Select a Study area</option>${workflow.nodes.filter(x=>x.id!==n.id&&outputOf(x)==='area').map(x=>`<option value="${esc(x.id)}" ${input?.from===x.id?'selected':''}>${esc(x.params.label||TYPES[x.type].title)} · ${esc(x.id)}</option>`).join('')}</select><small>Selecting an area adds its connector to the canvas.</small><label class="field-label" for="area-unit">Area unit</label><select id="area-unit" data-param="unit">${areaUnitOptions(n.params.unit)}</select></div><div class="source-card"><span class="inspector-section">${dirty?'Run to calculate or update':'Calculated area'}</span><h3>${!dirty&&output?.measurement?esc(formatArea(output.measurement)):'—'}</h3><p>Approximate surface area on a sphere.</p></div><p class="description">Outputs the same study area with its calculated area attached. Connect it to a Study area input, such as Check spatial coverage. Square metres are retained as the canonical value; the selected unit controls display.</p><div class="notice">This calculation uses the polygon itself, including its shape, rather than its bounding box. It does not measure terrain surface area.</div>`;
@@ -3854,12 +3893,6 @@ function renderInspector(){
       change(w=>{getNode(w,n.id,'study_design').params=next;});
     },()=>designChecklist(workflow,n.id));
   });
-  document.querySelectorAll<HTMLSelectElement>('[data-from-table]').forEach(el=>el.addEventListener('change',()=>change(w=>{
-    const node=getNode(w,n.id,'point_input');
-    const next={x:'',y:'',...(node.params.fromTable??{})} as import('./table-points.js').TableMapping;
-    const key=required(el.dataset.fromTable) as keyof import('./table-points.js').TableMapping;
-    if(el.value)next[key]=el.value;else if(key==='id'||key==='name')delete next[key];else next[key]='';
-    node.params.fromTable=next;})));
   optionalElement('#satellite-layer')?.addEventListener('change',event=>{
     const value=(event.currentTarget as HTMLSelectElement).value;
     change(w=>{getNode(w,n.id,'sample_satellite_files_at_points').params.layer=value;});
@@ -4828,7 +4861,8 @@ function renderInspector(){
     change(w=>{(required(w.nodes.find(x=>x.id===n.id)).params as unknown as Record<string,unknown>).label=label;});
   });
   optionalElement('#catchment-label')?.addEventListener('input',e=>control(e).setCustomValidity(''));
-  optionalElement('#edit-input-data')?.addEventListener('click',()=>openInputDataEditor(getNode(workflow,n.id,'point_input'),workflow.nodes.filter((x):x is WorkflowNode<'study_area'>=>x.type==='study_area'&&(!!x.params.geometry||x.params.source!=='drawn')).map(x=>({id:x.id,label:x.params.label||'Old Naledi',geometry:x.params.geometry||oldNalediBoundary as Boundary})),data=>validateGeoJSON(data,{attributes:true}),params=>{const persisted=change(w=>getNode(w,n.id,'point_input').params=params,{requirePersistence:true});if(persisted)toast('Input edits saved on this device. Rerun the workflow to update results.');return persisted;}));
+  if(n.type==='point_input'&&workflow.edges.some(e=>e.to===n.id&&e.port==='records'))optionalElement('#configure-step')?.addEventListener('click',()=>openPointsFromTableConfig(n.id));
+  else if(n.type==='point_input')optionalElement('#configure-step')?.addEventListener('click',()=>openInputDataEditor(getNode(workflow,n.id,'point_input'),workflow.nodes.filter((x):x is WorkflowNode<'study_area'>=>x.type==='study_area'&&(!!x.params.geometry||x.params.source!=='drawn')).map(x=>({id:x.id,label:x.params.label||'Old Naledi',geometry:x.params.geometry||oldNalediBoundary as Boundary})),data=>validateGeoJSON(data,{attributes:true}),params=>{const persisted=change(w=>getNode(w,n.id,'point_input').params=params,{requirePersistence:true});if(persisted)toast('Input edits saved on this device. Rerun the workflow to update results.');return persisted;}));
   document.querySelectorAll<HTMLSelectElement>('[data-coverage-port]').forEach(el=>el.onchange=()=>{const from=el.value,port=el.dataset.coveragePort!;change(w=>{w.edges=w.edges.filter(e=>!(e.to===n.id&&e.port===port));if(from)w.edges.push({id:`e-${Date.now()}`,from,to:n.id,port});});});
   document.querySelectorAll<HTMLSelectElement>('[data-connect-port]').forEach(el=>el.onchange=()=>{const port=el.dataset.connectPort!;change(w=>setConnection(w,el.value||null,n.id,port));});
   optionalElement('#measure-area-source')?.addEventListener('change',e=>{const from=control(e).value;change(w=>{w.edges=w.edges.filter(x=>!(x.to===n.id&&x.port==='area'));if(from)w.edges.push({id:`e-${Date.now()}`,from,to:n.id,port:'area'});});});

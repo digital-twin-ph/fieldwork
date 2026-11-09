@@ -19,7 +19,7 @@ test('legacy heat inputs use shared editors, preserve labels and save attributes
   for(const [id,record] of [['neighborhoods','oakwood'],['centers','library']]){
   await page.locator('[data-view="workflow"]').click();
     await page.locator(`.react-flow__node[data-id="${id}"]`).click();
-    await page.locator('#edit-input-data').click();
+    await page.locator('#configure-step').click();
     await expect(page.locator('#input-mode option')).toHaveCount(5);
     await page.locator('#input-mode').selectOption('pins');
     await page.locator('#pins-online').uncheck();

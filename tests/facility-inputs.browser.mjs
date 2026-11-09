@@ -18,7 +18,7 @@ test('Old Naledi migration exposes editable source and selection consumes saved 
   const marina=source.params.data.features.find(f=>f.properties.name==='Princess Marina Hospital');
   assert.equal(source.params.data.features.length,214);
   await page.locator('[data-view="workflow"]').click();
-  await page.locator(`.react-flow__node[data-id="${source.id}"]`).click();await page.locator('#edit-input-data').click();
+  await page.locator(`.react-flow__node[data-id="${source.id}"]`).click();await page.locator('#configure-step').click();
   await page.locator('#input-mode').selectOption('pins');await page.locator('#pins-online').uncheck();
   await page.locator('#pin-record').selectOption(marina.id);await page.locator('#pin-delete').click();await page.locator('#input-apply').click();
   await expect(page.locator('#input-dialog')).not.toBeVisible();

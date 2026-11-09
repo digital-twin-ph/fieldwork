@@ -25,17 +25,25 @@ overwrites what the file held.
 
 ## What you connect
 
-It has no input unless you connect a source. Its output is `points`, which nearly everything
-accepts: maps, tables, distance measurement, catchments, summaries, rates, case series and the
-geoprivacy steps.
+| Port | What goes there |
+| --- | --- |
+| **records** | optional: a table with longitude and latitude columns, read as one point per row |
+
+Its output is `points`, which nearly everything accepts: maps, tables, distance measurement, catchments, summaries,
+rates, case series and the geoprivacy steps. A step that takes a table reads it as one too: each point a row of its
+attributes, without its location.
 
 ## How to use it
 
-1. Add the node and open it in the Inspector.
-2. Import a file, or switch to pins and click the map.
-3. Check the column kinds. A column read as text when it holds numbers will not band or sum.
-4. Open **Data quality** to see what is missing or malformed before you build on it.
-5. Give the node a label that says what the records are, not where they came from.
+The step's panel holds its **Name**, its input, one sentence saying what it holds, **Configure…**, and the records.
+
+| In Configure… | What it does |
+| --- | --- |
+| **Points held here** | the Input data editor: import a CSV, GeoPackage or GeoJSON file, generate synthetic points, or place pins on the map |
+| **Points from a table** | when a table is connected: the columns holding **x (longitude)** and **y (latitude)**, named, never guessed; a **Record ID** and a **Label**, optional |
+
+Then check the column kinds, open **Data quality** to see what is missing or malformed, and name the step for what
+the records are, not where they came from.
 
 ## What it will not do
 

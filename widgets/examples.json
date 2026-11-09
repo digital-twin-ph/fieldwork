@@ -377,7 +377,7 @@
       "id": "urn:fieldwork:example:nyc-asthma-ozone-2016-2025",
       "title": "Ozone and child asthma emergency visits, New York City, 2016–2025",
       "repository": "https://github.com/digital-twin-ph/example-2025-nyc-ozone",
-      "commit": "c0215ab3fea89409cc0c6d49de0910517467d364",
+      "commit": "232147d75de452aa4593ad8a97a380cdc46c73a5",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2025-nyc-ozone",
       "licence": {
         "data": "Not redistributed",
@@ -428,8 +428,8 @@
         },
         {
           "path": "manual.json",
-          "sha256": "c87cdabef8dc7efe59dfb9931da2e8f9992058edcf5a26ad4ecde2326441cbf8",
-          "bytes": 42034
+          "sha256": "e79fc21fc86f42059f4e22e7b33046bc9377b749cef016e7f886956d6eb9b376",
+          "bytes": 42778
         }
       ],
       "workflowCount": 6
@@ -528,7 +528,7 @@
       "id": "urn:fieldwork:example:workflows-rulesets",
       "title": "Rules on synthetic data",
       "repository": "https://github.com/digital-twin-ph/example-workflows-rulesets",
-      "commit": "f1241383cbe97937fb0cf1d4393fdcb0bf1a356f",
+      "commit": "474185b843ad426e0707e08c9f4b0e0abe16f5dd",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-workflows-rulesets",
       "licence": {
         "data": "CC0-1.0",
@@ -558,8 +558,8 @@
         },
         {
           "path": "manual.json",
-          "sha256": "3ce60629f8fb7060a6b36017043c700010e03a70fed75f9bd33ec479443688f0",
-          "bytes": 80555
+          "sha256": "99efa85312e3b9b0822f5b2242637ab9d9ab04c45675d8a723e09fea86d1ace7",
+          "bytes": 80548
         },
         {
           "path": "data/clinic-visits.csv",
@@ -706,7 +706,7 @@
       "id": "urn:fieldwork:example:sea-level-rise-philippines",
       "title": "Sea-level rise at Manila’s health facilities",
       "repository": "https://github.com/digital-twin-ph/example-2026-sea-level-rise-philippines",
-      "commit": "68678d0aa0c810ebac6e7329f98e55df04f4937f",
+      "commit": "225bb33d78302ff80104b906cad9565f175854b7",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2026-sea-level-rise-philippines",
       "licence": {
         "data": "Projections and sites CC BY 4.0, with three required citations; DeltaDTM v1.1 and DTU25MSS subsets CC BY 4.0; facilities retrieved from OpenStreetMap (ODbL 1.0) by the workflows; the study area, diagram, manual and scripts CC0 1.0",
@@ -741,8 +741,8 @@
         },
         {
           "path": "manual.json",
-          "sha256": "ad46bde16fd543d12c35ebd81dc6862cf0f225597ef5ef2f4902cb16e611d05d",
-          "bytes": 58590
+          "sha256": "5058a9ff185a46e079e994b583d199b8a49231e8d47eb79b55c3c227ae6215c7",
+          "bytes": 58545
         },
         {
           "path": "README.md",
@@ -791,8 +791,8 @@
         },
         {
           "path": "scripts/make-manual.mjs",
-          "sha256": "47873ed01a0d43c06bf661acda11de3eb8cb7cacb782052cd3c07caf15086f0a",
-          "bytes": 31359
+          "sha256": "9e040292773915e49d07093d17e92e080a095e680ef0f75a7c5d63246a365c78",
+          "bytes": 31344
         },
         {
           "path": "scripts/make_grid_subsets.py",

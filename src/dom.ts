@@ -64,7 +64,6 @@ export interface SelectorElements {
   '#close-help':HTMLButtonElement;
   '#edit-study-area':HTMLButtonElement;
   '#area-view-n3':HTMLButtonElement;
-  '#edit-input-data':HTMLButtonElement;
   '#replace-data':HTMLButtonElement;
   '#add-point-input':HTMLButtonElement;
   '#remove-point-input':HTMLButtonElement;

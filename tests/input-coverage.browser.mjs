@@ -11,7 +11,7 @@ const run=async()=>{await page.locator('#run-button').click();await done();await
 const saved=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));
 const row=id=>page.locator(`#result-rows [data-place="${id}"]`);
 const select=async id=>{await page.locator('[data-view="workflow"]').click();await page.locator(`.react-flow__node[data-id="${id}"]`).click();};
-const input=async mode=>{await select('observations');await page.locator('#edit-input-data').click();await page.locator('#input-mode').selectOption(mode);};
+const input=async mode=>{await select('observations');await page.locator('#configure-step').click();await page.locator('#input-mode').selectOption(mode);};
   await mkdir('test-results',{recursive:true});await openFixture(page,'coverage-workflow.json');await done();
   // The spatial-review half of this test -- coverage alerts, excluding a record with a reason,
   // restoring it, and opening the study area from a record to widen it -- went with

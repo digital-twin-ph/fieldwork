@@ -569,12 +569,12 @@
    "migrationFrom": []
   },
   "point_input": {
-   "version": "0.5.0",
-   "released": "2026-11-05",
+   "version": "0.6.0",
+   "released": "2026-11-09",
    "changes": [
     {
      "kind": "minor",
-     "description": "Points read from a table say which column their ids came from (idColumn), for a step that writes a table of them to name its id column the same way. Experiment 179."
+     "description": "On the standard Inspector and dialog (experiments 186, 200): Name, input, one sentence and Configure…, which opens the Input data editor for points held here, or, for points read from a table, a dialog naming the longitude, latitude, record ID and label columns, applied together. The table's columns are no longer set one by one on the panel. Its points can also be read by a step that takes a table, as rows of their attributes."
     }
    ],
    "breaking": false,

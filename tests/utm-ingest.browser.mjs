@@ -23,7 +23,7 @@ test('a CSV of UTM easting and northing imports as CRS84 without a second widget
   await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="observations"]').click();
-  await page.locator('#edit-input-data').click();
+  await page.locator('#configure-step').click();
   await page.locator('#input-mode').selectOption('csv');
   await page.locator('#input-file').setInputFiles({name:'utm.csv',mimeType:'text/csv',buffer:Buffer.from(UTM)});
 
@@ -95,7 +95,7 @@ test('a wrong zone cannot be caught from the numbers, and the import does not pr
   await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="observations"]').click();
-  await page.locator('#edit-input-data').click();
+  await page.locator('#configure-step').click();
   await page.locator('#input-mode').selectOption('csv');
   await page.locator('#input-file').setInputFiles({name:'utm.csv',mimeType:'text/csv',buffer:Buffer.from(UTM)});
   await page.locator('#csv-frame').selectOption('metre');

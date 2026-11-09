@@ -133,7 +133,7 @@ test('the worked example is rebuilt from an empty canvas and the published input
   const intakes=await idOf(page,'point_input');
   await page.locator(`.react-flow__node[data-id="${intakes}"]`).click();
   // Point data is prepared in its own dialog, which is where the import lives.
-  await page.locator('#edit-input-data').click();
+  await page.locator('#configure-step').click();
   await page.locator('#input-mode').selectOption('geojson');
   await page.locator('#input-file').setInputFiles(file('geo/water-intakes.geojson'));
   await page.locator('#input-apply').click();
@@ -210,7 +210,7 @@ test('the water intakes can be made with pushpins and a form, from Snow’s text
   await add(page,'point_input');
   const intakes=await idOf(page,'point_input');
   await page.locator(`.react-flow__node[data-id="${intakes}"]`).click();
-  await page.locator('#edit-input-data').click();
+  await page.locator('#configure-step').click();
   await page.locator('#input-mode').selectOption('pins');
   await page.locator('#pins-online').uncheck();
 

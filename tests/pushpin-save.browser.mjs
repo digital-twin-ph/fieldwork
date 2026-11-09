@@ -7,7 +7,7 @@ import {clipExercise} from './fixtures/workflows.mjs';
 const saved=page=>page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));
 const source=w=>w.nodes.find(n=>n.id==='observations').params;
 const open=async page=>{
-  await page.locator('[data-view="workflow"]').click();await page.locator('.react-flow__node[data-id="observations"]').click();await page.locator('#edit-input-data').click();
+  await page.locator('[data-view="workflow"]').click();await page.locator('.react-flow__node[data-id="observations"]').click();await page.locator('#configure-step').click();
   await page.locator('#input-mode').selectOption('pins');await page.locator('#pins-online').uncheck();await page.locator('#pin-record').selectOption('inside');
 };
 test.beforeEach(async({page})=>{

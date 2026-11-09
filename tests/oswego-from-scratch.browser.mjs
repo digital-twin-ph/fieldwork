@@ -119,7 +119,7 @@ test('Oswego is two short workflows: which food, and where',async({page})=>{test
   await add(page,'point_input');
   const church=await idOf(page,'point_input');
   await page.locator(`.react-flow__node[data-id="${church}"]`).click();
-  await page.locator('#edit-input-data').click();
+  await page.locator('#configure-step').click();
   await page.locator('#input-mode').selectOption('geojson');
   await page.locator('#input-file').setInputFiles(CHURCH);
   await page.locator('#input-apply').click();

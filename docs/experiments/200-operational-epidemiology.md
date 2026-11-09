@@ -253,6 +253,10 @@ by hand: the counts run first, then Relate connected in its Inspector and set in
 **Found doing it by hand:** Relate's dialog, before Relate had run, offered nothing to bring from a count. Its
 fallback read the value column of the step *above* the count. Fixed: it reads the count's own, `rows`.
 
+**Checked by somebody else's code** (lab check 43, 2026-11-09): the chain through Fieldwork's own functions against a
+pandas self-merge, a difference of dates, and `value_counts` over every case with 0 for a case nobody names. All 188
+cases agree on both, in CPython and in the browser kernel.
+
 ## What would close this
 
 The practitioner choosing the first slice and its data, and its being built and run by hand on an empty canvas.

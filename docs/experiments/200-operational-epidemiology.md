@@ -103,6 +103,27 @@ No package page restricts use beyond the MERS and simulated-Ebola pages' "for te
 carries the source's terms too; each source is checked before anything is shipped. Onset to report (MERS) and onset to
 sample (Sierra Leone) are the nearest to 7-1-7's detect and notify; MERS also serves contact tracing.
 
+## Ontologies to reuse, looked for 2026-11-09
+
+The practitioner: *"I need to know if there is an ontology for outbreak response and investigations that we can
+reuse"*, *"Or if 717 taxonomy maps to any existing onto."*
+
+| Ontology | Covers | Fit here | Licence, as found |
+| --- | --- | --- | --- |
+| [Apollo-SV](https://ontobee.org/ontology/APOLLO_SV) (OBO) | Infectious disease epidemiology and population biology for epidemic simulation: populations, contacts, interventions | 199's model, and the interventions 7-1-7 times | CC BY 4.0 (OBO registry) |
+| [GenEpiO](https://ontobee.org/ontology/GENEPIO) (OBO) | The laboratory, clinical and epidemiological context of (foodborne) outbreak investigations | An investigation's records | To check |
+| [Health Surveillance Ontology](https://obofoundry.org/ontology/hso) (OBO) | One Health surveillance across animal, human and food | Surveillance systems, detection | To check |
+| IDO (OBO) | Infectious disease, the core others extend | Underneath all of these | To check |
+| [Epidemiology Ontology](https://www.obofoundry.org/ontology/epo) | Metrics and parameters | **Not to use**: deprecated by the OBO Foundry, unmaintained | — |
+
+**Nothing found models 7-1-7**: its milestones, early response actions or bottlenecks. Its nearest relative is a
+framework, not an ontology: the IHR **Joint External Evaluation** indicators, to which the 41-event study mapped its
+bottlenecks. No ontology of the JEE or of IHR core capacities was found either.
+
+So, a proposal: the milestones as dated activities in PROV-O, which Fieldwork already uses; the bottleneck taxonomy as
+a SKOS concept scheme of Fieldwork's own, citing the Alliance, once its terms allow, each category linked to a JEE
+indicator only where a source states it; Apollo-SV and GenEpiO terms reused by IRI where a column means one.
+
 ## What that makes operational epidemiology here
 
 Two kinds of work, both timed by 7-1-7:

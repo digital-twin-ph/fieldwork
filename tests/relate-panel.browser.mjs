@@ -148,9 +148,9 @@ const buildTwoTables=async page=>{
   await page.locator('#config-apply').click();
   await expect(page.locator('#relate-config')).toBeHidden();
   await page.locator('[data-add="table_output"]').click();
-  const relateId=await page.locator('#table-table option')
+  const relateId=await page.locator('#table-add-input option')
     .filter({hasText:'Relate a column'}).first().getAttribute('value');
-  await page.locator('#table-table').selectOption(relateId);
+  await page.locator('#table-add-input').selectOption(relateId);
 };
 const selectRelate=page=>
   page.locator('.react-flow__node[data-id^="relate_table-"]').dispatchEvent('click');

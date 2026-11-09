@@ -18,7 +18,9 @@ const newest=async(page,type)=>(await saved(page)).nodes.filter(n=>n.type===type
 const select=async(page,node)=>page.locator(`.react-flow__node[data-id="${node}"]`).click();
 const wire=async(page,from,to,port)=>{
   const source=page.locator(`.react-flow__node[data-id="${from}"] [data-handleid="out"]`);
-  const target=page.locator(`.react-flow__node[data-id="${to}"] [data-handleid="${port}"]`);
+  // A port a Map or Table does not draw is reached through its one "add" port, as a practitioner would.
+  const declared=await page.locator(`.react-flow__node[data-id="${to}"] [data-handleid="${port}"]`).count();
+  const target=page.locator(`.react-flow__node[data-id="${to}"] [data-handleid="${declared?port:'layer'}"]`);
   const a=await source.boundingBox(),b=await target.boundingBox();
   await page.mouse.move(a.x+a.width/2,a.y+a.height/2);await page.mouse.down();
   await page.mouse.move(b.x+b.width/2,b.y+b.height/2,{steps:20});await page.mouse.up();
@@ -88,7 +90,7 @@ test('a range of dates is two fields, and a long list of values can be searched'
 
   await add(page,'table_output');const shown=await newest(page,'table_output');
   await select(page,shown);
-  await page.locator('#table-table').selectOption(days);
+  await page.locator('#table-add-input').selectOption(days);
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
   await page.locator('[data-view="results"]').click();

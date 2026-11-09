@@ -1180,7 +1180,7 @@ function change(fn:(w:Workflow)=>void,{spatial=true,requirePersistence=false}={}
  *  reads what that result EMITS to choose the port. Point layers take the first free slot, so a
  *  second point source lands on points_2 rather than replacing the first -- which is what
  *  pointInputCount has always created and what nothing let a practitioner reach by dragging. */
-function layerPortFor(w:Workflow,source:WorkflowNode,target:WorkflowNode<'map_output'>):string|undefined{
+function layerPortFor(w:Workflow,source:WorkflowNode,target:WorkflowNode<'map_output'|'table_output'>):string|undefined{
   const type=outputOf(source);
   if(!type)return undefined;
   const taken=(port:string)=>w.edges.some(e=>e.to===target.id&&e.port===port);
@@ -1191,6 +1191,8 @@ function layerPortFor(w:Workflow,source:WorkflowNode,target:WorkflowNode<'map_ou
   const declared=nodeInputs(target).filter(([port,portType])=>portType===type&&port!=='context').map(([port])=>port);
   const free=declared.find(port=>!taken(port));
   if(free)return free;
+  // A table shows anything a table port reads (distances, a point layer's attributes) through that port.
+  if(!declared.length&&target.type==='table_output'&&portAccepts('table',type))return 'table';
   // Every slot of that type is in use. Point layers can grow: pointInputCount creates them.
   if(type==='points'){
     const next=(target.params.pointInputCount??1)+1;
@@ -1201,10 +1203,10 @@ function layerPortFor(w:Workflow,source:WorkflowNode,target:WorkflowNode<'map_ou
 
 function setConnection(w:Workflow,from:string|null,to:string,port:string){
   const target=w.nodes.find(n=>n.id===to),map=['map_output','table_output'].includes(target?.type||'');
-  // The map's single "add a layer" port binds to a declared one by what the source emits.
-  if(from&&port==='layer'&&target?.type==='map_output'){
+  // The map's and the table's single "add" port binds to a declared one by what the source emits (Table, 2026-11-09).
+  if(from&&port==='layer'&&(target?.type==='map_output'||target?.type==='table_output')){
     const source=w.nodes.find(n=>n.id===from);
-    const bound=source&&layerPortFor(w,source,target as WorkflowNode<'map_output'>);
+    const bound=source&&layerPortFor(w,source,target as WorkflowNode<'map_output'|'table_output'>);
     if(!bound)return;
     port=bound;
   }
@@ -2807,10 +2809,22 @@ function renderInspector(){
       +`<select id="output-section">${FIGURE_SECTIONS.map(s=>`<option value="${s}" ${s===at?'selected':''}>${s}${s===fallback?' (default)':''}</option>`).join('')}</select></div>`);
     const portName=(port:string)=>({area:'Study area',coverage:'Or: spatial coverage check',decisions:'Reasoning result',table:'Tabular data',raster:'Or: Raster',network:'Street network',polygons:'Polygons'} as Record<string,string>)[port]
       ||'Point data '+(port==='points'?1:port.split('_')[1]);
+    // WHAT IS CONNECTED, and one picker to connect more (2026-11-09, the practitioner: *"streamline its input ports like
+    // map output"*). A select for each of five ports, most never used, was the Inspector's half of the clutter.
     let inputs=`<p class="description">What you connect decides how it is shown.</p>`
       +nodeInputs(n).map(([port,type])=>{const edge=workflow.edges.find(e=>e.to===n.id&&e.port===port);
+        if(!edge)return '';
         return `<div class="field"><label class="field-label" for="table-${port}">${esc(portName(port))}</label><select id="table-${port}" data-map-port="${port}"><option value="">Not connected</option>`
           +workflow.nodes.filter(x=>x.id!==n.id&&portAccepts(type,outputOf(x))).map(x=>`<option value="${esc(x.id)}" ${edge?.from===x.id?'selected':''}>${esc(x.params.label||TYPES[x.type].title)}</option>`).join('')+'</select></div>';}).join('');
+    {
+      const showable=new Set(nodeInputs(n).map(([,type])=>type));
+      const candidates=workflow.nodes.filter(x=>x.id!==n.id&&(showable.has(outputOf(x) as never)||portAccepts('table',outputOf(x)))
+        &&!workflow.edges.some(e=>e.to===n.id&&e.from===x.id));
+      if(candidates.length)inputs+=`<div class="field"><label class="field-label" for="table-add-input">Add an input</label>`
+        +`<select id="table-add-input"><option value="">Choose a result to show…</option>`
+        +candidates.map(x=>`<option value="${esc(x.id)}">${esc(x.params.label||TYPES[x.type].title)}</option>`).join('')
+        +`</select></div>`;
+    }
     if(!n.params.inputMode||n.params.inputMode==='spatial')
       inputs+=`<div class="inspector-actions"><button id="add-point-input" class="button small" ${(n.params.pointInputCount??1)>=MAX_POINT_LAYERS?'disabled':''}>＋ Add point input</button><button id="remove-point-input" class="button small" ${(n.params.pointInputCount??1)<=1?'disabled':''}>Remove last input</button></div>`;
     content+=standardSection('Inputs',inputs);
@@ -5062,6 +5076,10 @@ function renderInspector(){
   // basemap was two steps behind a combination nothing announced -- and the practitioner reported,
   // 2026-10-15, looking at a shipped map and finding no basemap at all. Five of the ten maps in
   // the worked examples were two clicks away; the clicks were the defect.
+  optionalElement('#table-add-input')?.addEventListener('change',e=>{
+    const chosen=control(e).value;
+    if(chosen)change(w=>setConnection(w,chosen,n.id,'layer'));
+  });
   optionalElement('#map-add-layer')?.addEventListener('change',e=>{
     const chosen=control(e).value;
     if(chosen)change(w=>setConnection(w,chosen,n.id,'layer'));
@@ -6104,8 +6122,8 @@ function validConnection(c:Connection|Edge){const a=workflow.nodes.find(n=>n.id=
   // The map's one configurable port accepts anything the map can draw; which declared port it
   // becomes is decided on connection, by what the source emits. Without this the drop is refused
   // before setConnection ever sees it, because `layer` is not a declared port.
-  if(c.targetHandle==='layer'&&b.type==='map_output')
-    return nodeInputs(b).some(([,type])=>type===outputOf(a));
+  if(c.targetHandle==='layer'&&(b.type==='map_output'||b.type==='table_output'))
+    return nodeInputs(b).some(([,type])=>type===outputOf(a))||(b.type==='table_output'&&portAccepts('table',outputOf(a)));
   return portAccepts(nodeInputs(b).find(([p])=>p===c.targetHandle)?.[1],outputOf(a));}
 mountCanvas($('#canvas'),{describe:describeNode,ready(api){flow=api;render();setTimeout(()=>flow!.fit(),80);},select(id){selected=id;$('#node-search').value='';if(revealResultFor(id))renderResults();markLinkedTabs();render();$('#node-library [aria-current="true"]')?.scrollIntoView({block:'nearest',behavior:'smooth'});},clear(){selected=null;markLinkedTabs();render();},move(id,p){change(w=>Object.assign(required(w.nodes.find(n=>n.id===id)),{x:p.x,y:p.y}),{spatial:false});},connect(c){change(w=>setConnection(w,c.source,c.target,required(c.targetHandle)));},valid:validConnection,remove:removeNodes,removeEdges(ids){change(w=>w.edges=w.edges.filter(e=>!ids.includes(e.id)));},zoom(z){$('#zoom-value').textContent=`${Math.round(z*100)}%`;}});
 // Delegated, because the canvas redraws its nodes whenever anything changes and a listener bound

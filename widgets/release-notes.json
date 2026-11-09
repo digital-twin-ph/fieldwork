@@ -913,16 +913,12 @@
    "migrationFrom": []
   },
   "table_output": {
-   "version": "0.8.0",
+   "version": "0.9.0",
    "released": "2026-11-09",
    "changes": [
     {
      "kind": "minor",
-     "description": "On the standard Inspector and dialog (experiment 186): the name, which is the Results tab's, and where it goes in the write-up; its inputs, every port a table can show; one sentence and Configure…, which holds Show totals and, for a reasoning result, Display as; and what the last run showed."
-    },
-    {
-     "kind": "patch",
-     "description": "A number is a value, never the headings. A column a table marks as numeric, such as the rise Relate brings beside each facility, was promoted to the axis when it held one value, and headed the distances \"1124\". It is now drawn as a column with its own heading."
+     "description": "Its inputs streamlined as Map's are (the practitioner, 2026-11-09): the node draws what is connected and one port, + Add an input, that takes any result a table can show and binds it to the port its type belongs to; the Inspector lists what is connected and one Add an input picker, rather than a picker for each of five ports. The table port is labelled Tabular data on the canvas; it read Points undefined."
     }
    ],
    "breaking": false,

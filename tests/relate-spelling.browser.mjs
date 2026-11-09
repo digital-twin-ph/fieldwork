@@ -70,8 +70,8 @@ test('names spelled differently are matched, shown, decided, and the threshold i
   await expect(inspector.locator('.standard-sentence')).toContainText('matched on Residential District to district');
   await expect(inspector.locator('.standard-sentence')).toContainText('allowing for spelling to 0.88 with “District” dropped');
   await page.locator('[data-add="table_output"]').click();
-  const relateId=await page.locator('#table-table option').filter({hasText:'Relate a column'}).first().getAttribute('value');
-  await page.locator('#table-table').selectOption(relateId);
+  const relateId=await page.locator('#table-add-input option').filter({hasText:'Relate a column'}).first().getAttribute('value');
+  await page.locator('#table-add-input').selectOption(relateId);
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
 

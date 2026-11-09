@@ -38,7 +38,7 @@ test('a table is saved by reference, comes back whole after a reload, and runs',
   await page.locator('#node-library [data-add="table_output"]').click();
   const shown=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')).nodes.find(n=>n.type==='table_output').id);
   await page.locator(`.react-flow__node[data-id="${shown}"]`).click();
-  await page.locator('#table-table').selectOption(id);
+  await page.locator('#table-add-input').selectOption(id);
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
 });

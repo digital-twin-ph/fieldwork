@@ -16,16 +16,18 @@ It takes four different things, and it works out which it is showing from what y
 
 ## What you connect
 
-Every port is on the node from the moment you add it. There is nothing to choose first.
+The node shows what is connected to it and one port, **+ Add an input**, as Map does. Drop any result a table can
+show on it, or choose one under **Inputs › Add an input**, and it is connected to the port its kind belongs to. There
+is nothing to choose first.
 
-Connect a step's output to the matching port and the table shows it. If you wire more than one,
+Connect a step's output and the table shows it. If you wire more than one,
 the more specific wins: a keyed table before polygons, polygons before decisions, and the point
 path is the general one.
 
 ## How to use it
 
 1. Add it, or use **Quick Look** on a step and open its table from there.
-2. Drag from the step's output to the port that matches what it produces, or choose it under **Inputs**.
+2. Drag from the step's output to **+ Add an input**, or choose it under **Inputs › Add an input**.
 3. Name the Results tab.
 
 The step's panel holds its **Name** and where it goes in the write-up, its **Inputs**, one sentence saying what it

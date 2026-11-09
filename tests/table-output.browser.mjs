@@ -11,7 +11,8 @@ const select=async(page,id)=>{await page.locator('[data-view="workflow"]').click
 const drag=async(page,from,to,port)=>{
   await page.locator('[data-view="workflow"]').click();
   await page.locator('#fit-button').click();await page.waitForTimeout(300);
-  const a=await page.locator(`.react-flow__node[data-id="${from}"] [data-handleid="out"]`).boundingBox(),b=await page.locator(`.react-flow__node[data-id="${to}"] [data-handleid="${port}"]`).boundingBox();
+  const a=await page.locator(`.react-flow__node[data-id="${from}"] [data-handleid="out"]`).boundingBox(),declared=await page.locator(`.react-flow__node[data-id="${to}"] [data-handleid="${port}"]`).count(),
+    b=await page.locator(`.react-flow__node[data-id="${to}"] [data-handleid="${declared?port:'layer'}"]`).boundingBox();
   await page.mouse.move(a.x+a.width/2,a.y+a.height/2);await page.mouse.down();await page.mouse.move(b.x+b.width/2,b.y+b.height/2,{steps:20});await page.mouse.up();
 };
 const receipt=async page=>{await page.locator('[data-view="rules"]').click();const next=page.waitForEvent('download');await page.locator('#download-evidence').click();return JSON.parse(await readFile(await (await next).path(),'utf8'));};
@@ -27,7 +28,7 @@ test('Table displays point attributes without a boundary, pages, searches, and r
   const tableId=(await saved(page)).nodes.find(n=>n.type==='table_output').id;
   await page.locator('#table-label').fill('Field visits table');await page.locator('#table-label').press('Tab');
   await expect(page.locator('#table-area')).toHaveCount(0);await drag(page,'observations',tableId,'points');await expect(page.locator('#table-points')).toHaveValue('observations');
-  await page.locator('#add-point-input').click();await page.locator('#table-points_2').selectOption('second');await run(page);
+  await page.locator('#table-add-input').selectOption('second');await expect(page.locator('#table-points_2')).toHaveValue('second');await run(page);
   await page.locator('[data-view="results"]').click();
   await page.getByRole('tab',{name:'Field visits table'}).click();
   await page.locator('[data-view="results"]').click();
@@ -72,7 +73,7 @@ test('a table takes point layers directly, searches them and survives a round tr
   delete w.nodes.find(n=>n.id==='coverage').params.pointInputCount;
   await page.goto('/?example=blank');await upload(page,w);await page.locator('[data-add="table_output"]').click();
   const tableId=(await saved(page)).nodes.find(n=>n.type==='table_output').id;
-  await page.locator('#table-points').selectOption('observations');
+  await page.locator('#table-add-input').selectOption('observations');
   assert.deepEqual((await saved(page)).edges.filter(e=>e.to===tableId).map(e=>e.port),['points']);
   await run(page);
   await page.locator('[data-view="results"]').click();

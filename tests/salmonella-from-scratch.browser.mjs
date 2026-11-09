@@ -26,7 +26,9 @@ const tidy=async page=>{await page.locator('#tidy-button').click();await page.wa
 const wire=async(page,from,to,port)=>{
   await expect(page.locator(`.react-flow__node[data-id="${to}"] [data-handleid]`).first()).toBeAttached();
   const source=page.locator(`.react-flow__node[data-id="${from}"] [data-handleid="out"]`);
-  const target=page.locator(`.react-flow__node[data-id="${to}"] [data-handleid="${port}"]`);
+  // A port a Map or Table does not draw is reached through its one "add" port, as a practitioner would.
+  const declared=await page.locator(`.react-flow__node[data-id="${to}"] [data-handleid="${port}"]`).count();
+  const target=page.locator(`.react-flow__node[data-id="${to}"] [data-handleid="${declared?port:'layer'}"]`);
   const a=await source.boundingBox(),b=await target.boundingBox();
   await page.mouse.move(a.x+a.width/2,a.y+a.height/2);await page.mouse.down();
   await page.mouse.move(b.x+b.width/2,b.y+b.height/2,{steps:20});await page.mouse.up();

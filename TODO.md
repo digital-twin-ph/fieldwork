@@ -130,6 +130,12 @@ not a practitioner in the field.
    joined to its infector). No chart or map draws a network today. Each by hand on an empty canvas, each widget to
    the standard Inspector, with its manual page and lab notebook.
 
+10. **Open data and studies for each 7-1-7 bottleneck theme** ([200](docs/experiments/200-operational-epidemiology.md);
+   the practitioner, 2026-11-09: *"If we can find open data sets and studies for the bottleneck themes, those will be
+   very helpful for demonstrating 717 support"*). One worked example per theme where open data allow: reporting
+   completeness, laboratory turnaround, care-seeking delay, travel time to care, cross-sector linkage, and supplies,
+   logistics and staffing (in reach, corrected by the practitioner the same day). Open evidence only; licences as stated.
+
 The high-contrast theme comes after Sierra Leone, as set on 2026-11-07; where it falls among 4 to 6 is not set.
 
 ## Urgent

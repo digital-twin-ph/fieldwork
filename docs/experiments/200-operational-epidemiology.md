@@ -78,11 +78,22 @@ removes it.
 | Patient and community | Delay in care-seeking, measured; sensitivity of community detection | How long from onset to first contact with care, and who was detected by whom? |
 | Event characteristics | Access | Who is far from care, in travel time? |
 | Planning and procedures | Risk assessment | What are the burden, severity and risk factors? (early response action 2) |
-| Coordination | Sharing information across sectors | Can two sectors' tables be related on a shared key? |
-| Resources and procurement | **Not within reach** | Financing, supplies, staffing and approvals are not analysis |
+| Coordination | Sharing information across sectors; coordinating a multi-site investigation remotely | Can two sectors' tables be related on a shared key? Can a multi-site outbreak investigation project be securely coordinated remotely? |
+| Resources and procurement | Financing, supplies and logistics, staffing: their data, collected and analysed | Where did funds, supplies and staff fall short of the response, and when did each arrive? Approvals stay out of reach |
 
 Within every theme, capacity itself (laboratory capacity, case management, response teams, coordination across
 countries) is out of reach; its timing, measured from dates, is in.
+
+**Corrected by the practitioner, 2026-11-09**, on resources and procurement, first sorted as out of reach because
+*"financing, supplies, staffing and approvals are not analysis"*: *"financing, supplies/logistics and staffing data
+can be collected and analyzed."* Stock on hand against need, days from request to delivery, staff deployed against
+posts: tables with dates and counts, which Fieldwork reads. Approvals were left out of the correction and stay out.
+
+**Added by the practitioner, 2026-11-09**, to coordination: *"can a multi-site outbreak investigation project be
+securely coordinated remotely?"* Open, and not answered by anything built. What exists: Fieldwork keeps everything on
+the device, with no server; a project travels as an exported bundle, and the worked examples as repositories pinned by
+commit. What it would need to be asked: who holds which site's data, what may leave a site (person-level records may
+not), how a change made at one site reaches the others and is seen to, and how a bundle is known to be the one sent.
 
 ## Open data for the 148 outbreaks, looked for 2026-11-09
 

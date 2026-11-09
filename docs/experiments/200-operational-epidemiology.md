@@ -159,8 +159,24 @@ category.
 
 **The data:** none found open at event level (above).
 
-Then contact tracing on Hagelloch, as a second slice: each case related to its infector, the serial interval in days,
-secondary cases per case.
+**Who infected whom, on Hagelloch, comes first** (the practitioner, 2026-11-09: *"Should we proceed first with
+contact tracing in Hagelloch"*, after the DTU25MSS check). It holds who infected whom among the 188 cases, not a
+contact list or follow-up, so it teaches chain analysis; contact listing and follow-up wait for MERS.
+
+1. **Relate a column from another table**, the cases to themselves on `infector` = `case_ID`: each case gains its
+   infector's prodrome date. To check first: whether a table may be related to itself.
+2. **Apply ruleset**, **days between two dates**: a `date` kind for a column the rules read, and `minus` between two
+   date columns giving days. Not a new rule type: an extension of the computed columns (188). The serial interval.
+   Later, `plus` of a date and days, giving a date, for the end of a contact's follow-up.
+3. **Total within groups** by `infector`: secondary cases per case.
+4. **Map, a links layer** (the practitioner, 2026-11-09, asking whether a chart draws a contact tracing network: none
+   does): a point layer and a column naming another point's id, drawn as a line from each case to its source.
+5. **Chart, a transmission tree over time**: each case at its onset, joined to its infector, so chains read as
+   generations and each link's length is its serial interval. Ordered by time rather than a free network layout,
+   which places nodes arbitrarily and is hard to read.
+
+Each widget touched moves to the standard Inspector, with its manual page and a lab notebook (serial intervals and
+secondary cases recomputed in pandas).
 
 ## What would close this
 

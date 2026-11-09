@@ -118,6 +118,15 @@ not a practitioner in the field.
    appendix of the 41-event Lancet Global Health paper (`mmc1.pdf`, 229.5 KB, PMC), not yet read; the Sierra Leone
    Ebola 2014 line list's own terms (Fang et al. 2016).
 
+9. **Who infected whom, on Hagelloch: operational epidemiology's first slice to build** ([200](docs/experiments/200-operational-epidemiology.md);
+   the practitioner, 2026-11-09: *"Should we proceed first with contact tracing in Hagelloch"*, and *"After DTU"*).
+   Before MERS (8), whose data terms are open. In order: Relate the cases to themselves on `infector` (check a table
+   may be related to itself); **days between two dates** in Apply ruleset (a `date` kind; `minus` of two dates gives
+   days) for the serial interval; Total within groups for secondary cases per case; **a links layer on Map** (a line
+   from each point to the point a column names); **a transmission tree over time in Chart** (each case at its onset,
+   joined to its infector). No chart or map draws a network today. Each by hand on an empty canvas, each widget to
+   the standard Inspector, with its manual page and lab notebook.
+
 The high-contrast theme comes after Sierra Leone, as set on 2026-11-07; where it falls among 4 to 6 is not set.
 
 ## Urgent

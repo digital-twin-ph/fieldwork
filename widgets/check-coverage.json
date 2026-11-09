@@ -6,11 +6,11 @@
     "none": "Nothing to recompute: an input, a presentation, or a rule node whose conclusions are the reasoner's. `reason` says which.",
     "blocked": "Would owe a check, and cannot have a meaningful one yet. `reason` names the obstacle."
   },
-  "measuredAt": "2026-10-27",
+  "measuredAt": "2026-11-09",
   "counts": {
     "widgets": 54,
-    "covered": 28,
-    "awaiting": 11,
+    "covered": 29,
+    "awaiting": 10,
     "none": 14,
     "blocked": 1
   },
@@ -207,7 +207,7 @@
     {
       "nodeType": "sample_raster",
       "expectation": "parity",
-      "check": null,
+      "check": "42-sea-level-heights",
       "computes": "Reads a raster value at each point's position."
     },
     {

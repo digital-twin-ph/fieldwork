@@ -2,9 +2,10 @@
 
 _Created 2026-11-09 · Updated 2026-11-09_
 
-**Status:** tried. Step 1 built in 0.71.0 and run by hand on an empty canvas in Chromium: 16 of 194 facilities, as
-Python gives. Step 2, NetCDF from this device, built in 0.72.0 and run in Chromium on a grid made for it. Manila only: the practitioner, 2026-11-09, *"For now let's stick to
-Manila"*; the other seven gauges, with Find health facilities near each, are a later workflow.
+**Status:** validated. Step 1 (0.71.0) and step 2, NetCDF from this device (0.72.0), built and run in Chromium; the
+third sea-level workflow's heights and its 16 of 194 recomputed independently by Validation Lab check 42, in CPython
+and in the browser kernel. Manila only: the practitioner, 2026-11-09, *"For now let's stick to Manila"*; the other
+seven gauges, with Find health facilities near each, are a later workflow.
 
 ## The question
 

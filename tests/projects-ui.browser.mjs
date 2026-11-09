@@ -10,9 +10,9 @@ test('a project can be chosen, read and renamed, and its workflows are its own s
   // Two selects: the investigation, then the question.
   await expect(page.locator('#project-select')).toHaveValue('cholera-london-1854');
   await expect(page.locator('#workflow-select')).toHaveValue('snow-voronoi');
-  // The worked examples are listed as the built-in projects they already were. Five since 2026-11-08, when the rulesets
+  // The worked examples are listed as the built-in projects they already were. Four since 2026-11-09, five since 2026-11-08, when the rulesets
   // and spatial coverage examples were removed.
-  await expect(page.locator('#project-select optgroup[label="Built in"] option')).toHaveCount(5);
+  await expect(page.locator('#project-select optgroup[label="Built in"] option')).toHaveCount(4); // Manila moved to its own repository, 2026-11-09 (195).
   const workflows=await page.locator('#workflow-select option').evaluateAll(o=>o.map(x=>x.value));
   expect(workflows).toEqual(['snow-voronoi','snow-isochrone','snow-geoprivacy','snow-extent']);
 

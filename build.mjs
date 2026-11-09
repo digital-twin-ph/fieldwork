@@ -20,7 +20,7 @@ const entries=['wkb','stata','remote-table','exposure-table','append-rows','colu
 // rename hit twenty dead chunks. Cleared first, because every chunk this build needs is re-emitted.
 await rm('build/chunks',{recursive:true,force:true});
 const application=await build({entryPoints:entries.map(name=>'src/'+name+(name==='canvas'?'.tsx':'.ts')),bundle:true,splitting:true,format:'esm',outdir:'build',entryNames:'[name]',chunkNames:'chunks/[name]-[hash]',minify:true,sourcemap:true,metafile:true,loader:{'.png':'dataurl'},define:{'process.env.NODE_ENV':'"production"'},legalComments:'linked'});
-const worker=await build({entryPoints:['src/reasoning-worker.ts','src/catchment-worker.ts','src/street-engine-worker.ts','src/osm-areas-worker.ts','src/satellite-sample-worker.ts'],bundle:true,format:'iife',outdir:'build',minify:true,sourcemap:true,metafile:true});
+const worker=await build({entryPoints:['src/reasoning-worker.ts','src/catchment-worker.ts','src/street-engine-worker.ts','src/osm-areas-worker.ts','src/satellite-sample-worker.ts','src/netcdf-worker.ts'],bundle:true,format:'iife',outdir:'build',minify:true,sourcemap:true,metafile:true});
 // A removed entry's output is not cleaned either: `build/healthsites.js` outlived the widget's
 // exclusion, and because it still imported a chunk it kept that chunk reachable but unprecached.
 // Only .js and .map are swept, so the licence and notice copies below survive.
@@ -57,7 +57,7 @@ await copyFile('node_modules/h5wasm/LICENSE.txt','vendor/h5wasm-0.10.3-LICENSE.t
 
 await copyFile('examples/john-snow/NOTICE.txt','build/john-snow-NOTICE.txt');
 for(const [source,name] of [['vendor/licenses/jsts-LICENSE_EDLv1.txt','jsts-EDL-LICENSE.txt'],['vendor/licenses/jsts-LICENSE_EPLv1.txt','jsts-EPL-LICENSE.txt'],['vendor/licenses/jsts-license.txt','jsts-NOTICE.txt'],['node_modules/d3-geo/LICENSE','d3-geo-LICENSE.txt'],['node_modules/d3-array/LICENSE','d3-array-LICENSE.txt'],['node_modules/wkt-parser/LICENSE.md','wkt-parser-LICENSE.txt'],['node_modules/bignumber.js/LICENCE.md','bignumber-LICENSE.txt'],['node_modules/splaytree-ts/LICENSE','splaytree-ts-LICENSE.txt'],['node_modules/temml/LICENSE','temml-LICENSE.txt']])await copyFile(source,'build/'+name);
-const staticAssets=['./','./index.html','./styles.css','./study-area.css','./icon.svg','./manifest.webmanifest','./examples/old-naledi/data.js','./examples/old-naledi/provenance.json','./vendor/eye-21.1.24.js','./vendor/sql-wasm.js','./vendor/sql-wasm.wasm','./vendor/street-engine.wasm'];
+const staticAssets=['./','./index.html','./styles.css','./study-area.css','./icon.svg','./manifest.webmanifest','./examples/old-naledi/data.js','./examples/old-naledi/provenance.json','./vendor/eye-21.1.24.js','./vendor/sql-wasm.js','./vendor/sql-wasm.wasm','./vendor/street-engine.wasm','./vendor/h5wasm-0.10.3.js'];
 staticAssets.push(...['NOTICE.txt','upstream-LICENSE','provenance.json','network.json','soho.graphml','pumps.csv','cholera_deaths.csv'].map(name=>'./examples/john-snow/'+name));
 const generated=Object.keys({...application.metafile.outputs,...worker.metafile.outputs}).filter(path=>!path.endsWith('.map')).map(path=>'./'+path.replaceAll('\\','/'));
 // ONLINE-ONLY CHUNKS ARE NOT PRECACHED. The MapLibre renderer behind the OpenFreeMap vector
@@ -66,13 +66,16 @@ const generated=Object.keys({...application.metafile.outputs,...worker.metafile.
 // a renderer that is useless in the one situation the precache exists for. It is a dynamic
 // import, so it is fetched when a vector basemap is first chosen and the application works
 // offline without it. Measured 2026-10-17: 1,035,119 bytes, against an app.js of 293,019.
-const ONLINE_ONLY=/leaflet-maplibre-gl|maplibre|h5wasm/;  // renderer, worker and their chunks; the satellite file reader
+// H5WASM IS PRECACHED from 0.72.0 (5.7 MB): a NetCDF file chosen from this device is read with it, and that must work
+// offline, which is the point of keeping a large file on the laptop. The satellite reader's own worker stays online-only:
+// it reads remote files and is useless without the network.
+const ONLINE_ONLY=/leaflet-maplibre-gl|maplibre|satellite-sample-worker/;  // renderer, worker and their chunks; the satellite file reader
 const assets=[...new Set([...staticAssets,...generated])].filter(a=>!ONLINE_ONLY.test(a)).sort();
 // ONLINE-ONLY IS STILL PUBLISHED. Leaving these out of the precache also left them out of Pages, because the staging
 // script publishes what this manifest lists: found 2026-11-05 when the satellite reader answered 404 on Pages, and the
 // MapLibre worker with it, so the vector basemaps' renderer had never been served there. Listed apart, published, not
 // precached.
-const online=[...new Set([...generated.filter(a=>ONLINE_ONLY.test(a)),'./build/maplibre-gl-worker.mjs','./vendor/h5wasm-0.10.3.js'])].sort();
+const online=[...new Set([...generated.filter(a=>ONLINE_ONLY.test(a)),'./build/maplibre-gl-worker.mjs'])].sort();
 const hash=createHash('sha256');
 for(const asset of assets){hash.update(asset);hash.update(await readFile(asset==='./'?'index.html':asset));}
 hash.update(await readFile('src/sw.ts'));

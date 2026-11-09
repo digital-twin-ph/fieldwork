@@ -47,3 +47,16 @@ test('bilinear reads between the four nearest centres; a missing one gives no va
   assert.equal(out.value.features[0].properties.v,7);
   assert.deepEqual(out.counts,{sampled:1,noData:0,outside:1,unlocated:0});
 });
+
+// EXPERIMENT 198'S COMMITMENT: the canvas reads EGM2008 at the Manila gauge as pyproj did by hand, 43.009 m (the
+// terrain research note, 2026-11-09). tests/fixtures/egm08-manila-cut.tif is a 24 x 24 node cut of PROJ's
+// us_nga_egm08_25.tif, point-registered as the source is; read with the bilinear option Sample raster offers.
+test('EGM2008 at the Manila gauge, read bilinearly, is the value pyproj gives',async()=>{
+  const {readFileSync}=await import('node:fs');
+  const blob=new Blob([readFileSync(new URL('./fixtures/egm08-manila-cut.tif',import.meta.url))]);
+  const metadata=await inspectRaster(blob);
+  assert.equal(metadata.sourceRegistration,'PixelIsPoint');
+  const grid=await readRasterWindow(blob,metadata,[0,0,metadata.width,metadata.height]);
+  const gauge=bilinearAt(grid,[120+58/60,14+35/60],v=>v===null||!Number.isFinite(v));
+  assert.ok(Math.abs(gauge-43.009)<0.001,`EGM2008 at 14°35′ N, 120°58′ E: ${gauge}`);
+});

@@ -617,12 +617,12 @@
    "migrationFrom": []
   },
   "raster_input": {
-   "version": "0.6.0",
+   "version": "0.7.0",
    "released": "2026-11-09",
    "changes": [
     {
      "kind": "minor",
-     "description": "Reads a GeoTIFF at a URL, fetching only its header and the window around the study area by HTTP range, and offers the whole file as a download with its name, source and size, to keep on the laptop and choose as a local file, which is read in parts too. A grid whose values sit at nodes (PixelIsPoint), as EGM2008 is published, is read as the cells around them, half a cell out, and says so. On the standard Inspector (experiments 186, 198)."
+     "description": "Reads a NetCDF-4 grid chosen from this device, in parts, in a worker: a regular latitude-longitude grid, one variable chosen where the file holds several, its fill value, scale factor and offset applied as CF says. Its coordinates are where its values sit, so it is read as the cells around them and recorded as point-registered. The window around the study area is kept as a GeoTIFF window is, and the file's chunks meet the same 64 MB decoding budget as a GeoTIFF's tiles. A classic NetCDF-3 file is refused by name. The reader, h5wasm, is now saved for offline use (experiment 198, step 2)."
     }
    ],
    "breaking": false,

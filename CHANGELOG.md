@@ -3,6 +3,18 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.72.0 — 2026-11-09
+
+- **Raster input reads a NetCDF-4 grid from this device, in parts** (198, step 2): a regular latitude–longitude grid,
+  one variable chosen where the file holds several, its fill value, scale factor and offset applied, kept as the
+  window around the study area as a GeoTIFF is. DTU25MSS's 2.9 GB file is the case it is for. Raster input 0.7.0.
+- **The NetCDF reader is saved for offline use**, so a large file kept on the laptop can be read without the
+  connection. It adds 5.7 MB to what Fieldwork stores on first visit.
+- **EGM2008 at Manila's gauge, read by Fieldwork, is pyproj's**: 43.0092 m against 43.009 m, now a unit test.
+- **Validation Lab check 42** recomputes the sea-level example's third workflow with rasterio, SciPy and NumPy: the
+  same heights within 1e-9 m and the same 16 of 194 facilities.
+- Validation: Chromium locally; WebKit in CI.
+
 ## 0.71.0 — 2026-11-09
 
 - **Which of Manila's health facilities stand on ground below the sea level projected for 2100, by hand** (198): the

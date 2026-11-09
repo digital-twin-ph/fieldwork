@@ -11,7 +11,7 @@
 //                   | select-range-london-001
 //                   | regression-salmonella-001 | regression-nyc-001 (needs NYC_PKG)
 //                   | sample-satellite-s5p-001 | lag-response-brazil-001 | regression-strata-brazil-001
-//                   | lag-models-brazil-001
+//                   | lag-models-brazil-001 | sea-level-heights-manila-001
 import {createHash} from 'node:crypto';
 import {readFile,writeFile} from 'node:fs/promises';
 import {reprojectToCRS84,projectFromCRS84} from '../build/reproject.js';
@@ -45,6 +45,12 @@ import {tablePoints} from '../build/table-points.js';
 import {groupTable as totalWithin} from '../build/group-table.js';
 import {rateTwoByTwoSentence} from '../build/two-by-two.js';
 import {executeWorkflow} from '../build/core.js';
+import {inspectRaster,readRasterWindow,rasterWindow} from '../build/raster.js';
+import {sampleRaster} from '../build/sample-raster.js';
+import {nearestPlaces,distancesAsTable} from '../build/core.js';
+import {downloadFacilities} from '../build/health-facilities.js';
+import {authoredSubjects} from '../build/authored-application.js';
+import {evaluateAuthored,evaluatedTable} from '../build/rule-evaluation.js';
 import {repairBoundary,REPAIR_RULE} from '../build/boundary-repair.js';
 import {validateDrawnGeometry} from '../build/study-area.js';
 import {parseCSV} from '../build/input-data.js';
@@ -237,6 +243,11 @@ const southLondonBoundaryTable=()=>{
     rows,rowCount:rows.length,missingValueCount:0};
 };
 
+
+// GeoTIFF.js reads a Blob through the browser's FileReader; emulate only that, as tests/raster.test.mjs does.
+globalThis.FileReader??=class {readAsArrayBuffer(blob){blob.arrayBuffer().then(result=>{this.result=result;this.onload({target:this});},error=>{this.error=error;this.onerror(error);});}};
+const numberOr=v=>v===undefined||v===null||v===''?null:Number(v);
+const encodeGrid=grid=>Buffer.from(encodeRaster(grid));
 const builders={
   'hex-soho-001'(){
     // The 250 death locations grouped into H3 cells, which is what the geoprivacy example does.
@@ -1307,6 +1318,83 @@ const builders={
       output:{cases:[{note:'Three strata columns together',strataColumns:['municipio','anio','mes'],...fitted(['municipio','anio','mes'])}]},
       note:'Recompute from input.rows: drop rows missing any model column, drop strata with no cases, fit with one indicator per stratum, scale by the Pearson statistic.'
     },files:{}};
+  },
+  async 'sea-level-heights-manila-001'(){
+    // THE SEA-LEVEL EXAMPLE'S THIRD WORKFLOW (experiment 198), step by step through the functions the canvas runs: Find
+    // health facilities on the HOT export, the window Raster input keeps of each grid, Sample raster (bilinear for the
+    // two smooth surfaces, the containing cell for the ground), Measure distance to the nearest AR6 site, the workflow's
+    // own rules, Relate to the selected projection, and the published ruleset compare-level-to-elevation 1.0.0. The three
+    // windows travel as assets, so the lab samples the same bytes the canvas sampled. EGM2008 is a 24 x 24 node cut of
+    // PROJ's grid (tests/fixtures/egm08-manila-cut.tif); the canvas reads the same nodes from cdn.proj.org.
+    const repo='../example-2026-sea-level-rise-philippines';
+    const at=file=>new URL(`../${repo}/${file}`,import.meta.url);
+    let project;
+    try{project=JSON.parse(gunzipSync(readFileSync(at('fieldwork-project.json.gz'))).toString());}
+    catch{throw new Error('example-2026-sea-level-rise-philippines is not on this machine beside this repository.');}
+    const flow=project.workflows[2].document.workflow;
+    const node=type=>flow.nodes.find(n=>n.type===type);
+    const area=node('study_area').params.geometry;
+    // FACILITIES, as Find health facilities retrieves them, from the export the browser test answers with (ODbL).
+    const zip=readFileSync(new URL('../tests/fixtures/hotosm_phl_health_facilities_points_geojson.zip',import.meta.url));
+    const finder=node('find_health_facilities');
+    const {parsed}=await downloadFacilities(finder,area,async()=>new Response(zip,{status:200,headers:{'content-length':String(zip.length)}}));
+    const facilities=parsed.collection;
+    const sites=node('point_input').params.data;
+    // WHAT RASTER INPUT KEEPS: the window around the study area, no padding.
+    const kept=async bytes=>{const blob=new Blob([bytes]),m=await inspectRaster(blob);return readRasterWindow(blob,m,rasterWindow(m,area,0));};
+    const egmBytes=readFileSync(new URL('../tests/fixtures/egm08-manila-cut.tif',import.meta.url));
+    const dtuBytes=readFileSync(at('data/dtu25mss-manila.tif')),dtmBytes=readFileSync(at('data/deltadtm-manila.tif'));
+    const [egm,dtu,dtm]=[await kept(egmBytes),await kept(dtuBytes),await kept(dtmBytes)];
+    const sample=(points,grid,type)=>{const n=flow.nodes.filter(x=>x.type==='sample_raster').find(x=>x.params.attribute===type);
+      return sampleRaster(points,{...grid},n.params).value;};
+    const sitesSampled=sample(sample(sites,egm,'egm2008_m'),dtu,'mss_m');
+    const facilitiesSampled=sample(facilities,dtm,'ground_m');
+    const nearest=nearestPlaces(facilitiesSampled,sitesSampled,node('measure_distance').params.unit,node('measure_distance').params.candidateFilter);
+    const table=distancesAsTable(nearest);
+    // THE WORKFLOW'S OWN RULES: the sea above the geoid at the site, the ground above that sea, less the 1993-2012 to
+    // 1995-2014 shift.
+    const mine=flow.nodes.find(n=>n.type==='apply_ruleset'&&n.params.authored);
+    const heights=evaluatedTable(table,evaluateAuthored(authoredSubjects(table),mine.params.authored.fields,mine.params.authored.rules,{},mine.params.authored.order,mine.params.authored.otherwise??[]));
+    // THE PROJECTION SELECTED by the four Select rows steps, from the published CSV: one row per site.
+    const [header,...lines]=readFileSync(at('data/ar6-projections-philippine-gauges.csv'),'utf8').trim().split(/\r?\n/).map(l=>l.split(','));
+    const col=name=>header.indexOf(name);
+    const chosen=Object.fromEntries(flow.nodes.filter(n=>n.type==='select_rows').map(n=>[n.params.keyColumn,n.params.values[0]]));
+    const keys=['site_id','scenario','basis','family','year','quantile'];
+    const rows=lines.filter(l=>Object.entries(chosen).every(([k,v])=>l[col(k)]===v)).map(l=>({key:Object.fromEntries(keys.map(k=>[k,l[col(k)]])),value:Number(l[col('value_mm')])}));
+    const projections={kind:'data-table',keys,valueField:'value_mm',unit:'millimetre',rows,rowCount:rows.length,missingValueCount:0};
+    const relate=flow.nodes.find(n=>n.type==='relate_table').params;
+    const related=relateTable(heights,projections,relate).table;
+    // THE PUBLISHED COMPARISON, evaluated directly as the canvas does it.
+    const published=resolveRuleset('urn:fieldwork:ruleset:compare-level-to-elevation','1.0.0');
+    const fields=published.inputContract.fieldFrom.map(b=>({...b,unit:published.inputContract.expects.find(e=>e.predicate===b.predicate)?.unit}));
+    const compared=evaluatedTable(related,evaluateAuthored(authoredSubjects(related),fields,published.authored.rules,{},undefined,published.authored.otherwise??[]));
+    const index=Object.fromEntries(compared.keys.map((k,i)=>[k,i]));
+    const pick=(row,k)=>row.key[k];
+    const out=compared.rows.map(row=>{
+      const f=facilities.features.find(x=>String(x.id??x.properties?.id)===pick(row,'point_id'))??facilitiesSampled.features.find(x=>String(x.id)===pick(row,'point_id'));
+      return {id:pick(row,'point_id'),position:f?.geometry?.coordinates??null,nearestSite:pick(row,'nearest_site_id'),
+        groundM:numberOr(pick(row,'point_ground_m')),siteEgm2008M:numberOr(pick(row,'nearest_egm2008_m')),siteMssM:numberOr(pick(row,'nearest_mss_m')),
+        seaAboveGeoidM:numberOr(pick(row,'sea_above_geoid_m')),elevationM:numberOr(pick(row,'elevation_m')),
+        valueMm:numberOr(pick(row,'value_mm')),marginMm:numberOr(pick(row,'margin_mm')),level:pick(row,'level')??null};
+    });
+    void index;
+    const siteRows=sitesSampled.features.map(f=>({id:String(f.id??f.properties?.site_id),site_id:f.properties?.site_id,position:f.geometry.coordinates,
+      egm2008M:f.properties?.egm2008_m??null,mssM:f.properties?.mss_m??null}));
+    return {fixture:{
+      ...base('sea-level-heights-manila-001','sample_raster','Sample raster, rules and the published comparison: Manila facilities against projected sea level','src/sample-raster.ts#sampleRaster; src/rule-evaluation.ts#evaluateAuthored'),
+      source:'HOT export of OpenStreetMap health facilities, Philippines (ODbL 1.0); DeltaDTM v1.1 (doi:10.4121/21997565, CC BY 4.0); DTU25MSS (doi:10.11583/DTU.29412275, CC BY 4.0); EGM2008 from PROJ (cdn.proj.org, public domain); IPCC AR6 projections (doi:10.5281/zenodo.5914709, CC BY 4.0); via the example example-2026-sea-level-rise-philippines',
+      declaredParameters:{
+        studyArea:area,
+        windows:'Each grid kept as Raster input keeps it: the cells meeting the study area\'s bounding box, no padding. A grid published at nodes (EGM2008, DTU25MSS) is read as the cells around its nodes, half a cell out.',
+        sampling:{egm2008_m:'bilinear between the four nearest node values, at the AR6 sites',mss_m:'bilinear between the four nearest node values, at the AR6 sites',
+          ground_m:'the value of the DeltaDTM cell containing the facility; 30 is DeltaDTM\'s ceiling, kept as a value'},
+        nearest:'Each facility\'s nearest AR6 site by great-circle distance.',
+        heights:{sea_above_geoid_m:'mss_m - egm2008_m at the nearest site',above_1993_2012_m:'ground_m - sea_above_geoid_m',elevation_m:'above_1993_2012_m - 0.037'},
+        projection:{select:chosen,column:'value_mm'},
+        comparison:{elevation_mm:'elevation_m * 1000',margin_mm:'elevation_mm - value_mm',level:'Reaches where margin_mm <= 0, StaysBelow where margin_mm > 0, Unknown otherwise'}},
+      input:{facilityCount:facilities.features.length,sites:siteRows},
+      output:{facilities:out,reaches:out.filter(r=>r.level==='Reaches').length},
+    },files:{'egm2008-window.tif':encodeGrid(egm),'dtu25mss-window.tif':encodeGrid(dtu),'deltadtm-window.tif':encodeGrid(dtm)}};
   },
   'lag-models-brazil-001'(){
     // ONE REGRESSION, ONE MODEL PER LAG (experiment 185). check 37's two municipalities and weeks, the temperature and the

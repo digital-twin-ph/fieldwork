@@ -3,7 +3,7 @@
 _Created 2026-11-09 · Updated 2026-11-09_
 
 **Status:** tried. Step 1 built in 0.71.0 and run by hand on an empty canvas in Chromium: 16 of 194 facilities, as
-Python gives. Step 2, NetCDF, is not built. Manila only: the practitioner, 2026-11-09, *"For now let's stick to
+Python gives. Step 2, NetCDF from this device, built in 0.72.0 and run in Chromium on a grid made for it. Manila only: the practitioner, 2026-11-09, *"For now let's stick to
 Manila"*; the other seven gauges, with Find health facilities near each, are a later workflow.
 
 ## The question
@@ -75,6 +75,16 @@ deflate.
   subsets the example publishes, cut on the sources' own cells by `scripts/make_grid_subsets.py`, because neither
   publisher's server allows a browser to read by range.
 
+## What was built, 0.72.0
+
+- **Raster input reads a NetCDF-4 grid from this device**, in parts: the file is mounted in a worker (WORKERFS) and
+  h5wasm decompresses only the chunks the window touches. One variable, chosen where there are several; the fill value,
+  scale factor and offset applied; read as point-registered; a file stored south first, as DTU25MSS is, turned over.
+  The file's chunks are its blocks, so the 64 MB decoding budget a GeoTIFF's tiles meet applies to it too.
+- **h5wasm is saved for offline use** (5.7 MB), at the practitioner's word, 2026-11-09: *"Pre cache h5wasm"*. A file
+  kept on the laptop is the case offline reading is for.
+- Not built: a NetCDF at a URL. DTU's host forbids a browser's range reads anyway.
+
 ## What was run, 2026-11-09
 
 - The manual's third workflow, by hand in Chromium on an empty canvas (`tests/sea-level-from-scratch.browser.mjs`):
@@ -82,6 +92,16 @@ deflate.
   heights differ.
 - Found on the way: a first subset cut at bounds between DeltaDTM's cells was resampled, and one facility read its
   neighbour's height (17, not 16). The script now cuts on the source grid and asserts it.
+- NetCDF, in Chromium (`tests/netcdf-raster.browser.mjs`): a 121 × 101 grid shaped like DTU25MSS (south first, gzip
+  chunks, packed integers, a fill value, a second variable), made by `tests/fixtures/make-netcdf-grid.py`. Both
+  variables offered; every cell kept within 0.6 mm of the value the grid was made from, the fill value
+  kept as missing, the window starting on the right node.
+- **EGM2008 at the Manila gauge**, 14°35′ N 120°58′ E, read bilinearly by Fieldwork's own code from a cut of PROJ's
+  grid: **43.0092 m**, against pyproj's 43.009 m. A unit test now holds it.
+- **Validation Lab check 42**: the third workflow's chain, composed from Fieldwork's own functions, against rasterio,
+  SciPy and NumPy. EGM2008 and DTU25MSS at the sites within 1e-9 m, every ground height exactly rasterio's cell,
+  every height within 1e-9 m, **16 of 194** Reaches on both sides; no facility within 1 mm of the line.
+- Not run: DTU25MSS's own 2.9 GB file read in parts on this laptop. It has not been downloaded.
 - WebKit runs in CI, not here.
 
 ## Validation it commits to

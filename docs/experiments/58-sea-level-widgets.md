@@ -1,6 +1,6 @@
 # 58 · Implementing the sea-level pack in the host
 
-_Created 2026-10-08 · Updated 2026-10-14_
+_Created 2026-10-08 · Updated 2026-11-09_
 
 **Status:** retired by [115](115-decomposing-the-projection-extract.md) and
 [197](197-the-sea-level-widgets-retire.md). The three widgets it implemented were all retired, and each was replaced

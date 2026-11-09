@@ -114,7 +114,9 @@ not a practitioner in the field.
    stated; the package code is MIT on GitHub (GPL ≥ 2 on CRAN 1.9.0). **No CSV**: only `data/mers_korea_2015.RData`, so
    a script in the example repository would convert it, and the row count is not yet known. Ask ECDC or the package
    authors about the data's terms before shipping it.
-   **Alongside:** the 7-1-7 Alliance's terms for its bottleneck taxonomy (none stated; the practitioner to ask); the
+   **Alongside:** the 7-1-7 taxonomy's terms: CC BY-NC-SA 4.0 for RTSL-owned materials, per the Alliance's chat
+   assistant (2026-11-09); to confirm for the categories PDF at contact@717alliance.org. Non-commercial, so it ships in an
+   example repository under its own licence, never in the Apache-2.0 application; the
    appendix of the 41-event Lancet Global Health paper (`mmc1.pdf`, 229.5 KB, PMC), not yet read; the Sierra Leone
    Ebola 2014 line list's own terms (Fang et al. 2016).
 

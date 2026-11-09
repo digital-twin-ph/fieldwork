@@ -41,8 +41,19 @@ systems; event characteristics; patient and community; planning and procedures; 
 (30% of outbreaks), low awareness or clinical suspicion (28%), laboratory confirmation (27%). Cholera (21%),
 vaccine-preventable (18%) and vector-borne diseases (18%) met it least often.
 
-**Terms of use: not stated** on the pages read or in the categories PDF. So Fieldwork cites and links the taxonomy and
-does not ship its list until the Alliance's terms are known; asking them is the practitioner's to do.
+**Terms of use: CC BY-NC-SA 4.0, as the Alliance's assistant states them.** Not stated on the pages or in the PDF;
+the practitioner asked the site's chat assistant, 2026-11-09, which answered that the 7-1-7 Alliance is a project of
+Resolve to Save Lives, and all RTSL-owned materials in its Resource Library are under Creative Commons BY-NC-SA 4.0:
+use, adapt and share, non-commercially, with attribution; anything adapted from them under the same licence. It added
+that it had no details on items with different terms, such as partners' materials, and named contact@717alliance.org.
+A chat assistant's answer is not the licence text, so the bottleneck categories' own terms are to be confirmed there.
+
+**What that means for Fieldwork**, by the rule this project already holds for non-commercial data
+([STAC survey](../research/stac-catalog-survey-2026-10-10.md), [data sources](../research/data-sources.md)): Fieldwork
+is Apache 2.0, which anyone may use for any purpose, so a non-commercial taxonomy is **not built into the application**.
+It travels with the data: in a worked example's repository, under its own licence, attributed, and anything made from
+it (a SKOS rendering, a translation) shared under BY-NC-SA too. The application reads it as it reads any declared
+vocabulary a project brings.
 
 ## The questions, and which bottlenecks Fieldwork can serve
 

@@ -37,6 +37,17 @@ test('a pair that agrees twice merges, and a pair that agrees once waits for a p
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="dedup"]').click();
   const inspector=page.locator('#inspector-content');
+  // THE STANDARD INSPECTOR (experiment 186): the sections in order, one sentence, every setting in Configure….
+  expect(await inspector.locator('[data-standard-section]').evaluateAll(els=>els.map(e=>e.dataset.standardSection)))
+    .toEqual(['name','inputs','settings','result','learn and record']);
+  await expect(inspector.locator('.standard-sentence')).toContainText('Finds records in two or more point layers that are the same place');
+  await inspector.locator('#configure-step').click();
+  const settings=page.locator('#dedup-config');
+  await expect(settings).toBeVisible();
+  await expect(settings.locator('#dedup-format')).toHaveValue('points');
+  await expect(settings.locator('#dedup-near')).toBeVisible();
+  await settings.locator('#config-cancel').click();
+  await expect(settings).toBeHidden();
   // EVERY OUTCOME IN THE SUMMARY, including the pairs waiting: they were reported outside it, and
   // a run summary that leaves out the thing asking for your attention is not a summary of the run.
   // Each count against two denominators, because 1 matched reads differently as half of what was

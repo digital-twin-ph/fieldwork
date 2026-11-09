@@ -400,7 +400,7 @@
     {
       "id": "urn:fieldwork:widget:deduplicate_points",
       "nodeType": "deduplicate_points",
-      "currentVersion": "0.2.0",
+      "currentVersion": "0.3.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -411,6 +411,11 @@
           "version": "0.2.0",
           "path": "widgets/releases/deduplicate_points/0.2.0.json",
           "sha256": "46bec9637d0e9e71e448608176701343ae13484a63f9418fc6cd4c89df1de85b"
+        },
+        {
+          "version": "0.3.0",
+          "path": "widgets/releases/deduplicate_points/0.3.0.json",
+          "sha256": "9bc9780b5879392a9c296f196b0ca1dc7ea23f4e9ea89375ff84d5040b936bf2"
         }
       ]
     },
@@ -1092,7 +1097,7 @@
     {
       "id": "urn:fieldwork:widget:rate",
       "nodeType": "rate",
-      "currentVersion": "0.3.1",
+      "currentVersion": "0.4.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -1113,6 +1118,11 @@
           "version": "0.3.1",
           "path": "widgets/releases/rate/0.3.1.json",
           "sha256": "3cd3003458f1177a5502cae9da51959dc8544fa688f5fd97b11f8c140db4a240"
+        },
+        {
+          "version": "0.4.0",
+          "path": "widgets/releases/rate/0.4.0.json",
+          "sha256": "cd947e132071c13a6fcbfd64675aae9614e77e048bdb3ec3f4bf4e020a1c2dd9"
         }
       ]
     },
@@ -1200,7 +1210,7 @@
     {
       "id": "urn:fieldwork:widget:relate_table",
       "nodeType": "relate_table",
-      "currentVersion": "0.9.1",
+      "currentVersion": "0.10.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -1266,6 +1276,11 @@
           "version": "0.9.1",
           "path": "widgets/releases/relate_table/0.9.1.json",
           "sha256": "ab2c555095f9db53f39aeb7da78104ad6c1974dfff41fe83f8e0024ed58f9eac"
+        },
+        {
+          "version": "0.10.0",
+          "path": "widgets/releases/relate_table/0.10.0.json",
+          "sha256": "0212331886a9fdd5d0c15b5d580c63caa0eac651145c47844df5e52a2c03734b"
         }
       ]
     },
@@ -1430,7 +1445,7 @@
     {
       "id": "urn:fieldwork:widget:study_area",
       "nodeType": "study_area",
-      "currentVersion": "0.6.2",
+      "currentVersion": "0.7.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -1476,6 +1491,11 @@
           "version": "0.6.2",
           "path": "widgets/releases/study_area/0.6.2.json",
           "sha256": "f8de178f7d05c9686415546a5e235d72fe8b2612640e13c115064aeff244b4e1"
+        },
+        {
+          "version": "0.7.0",
+          "path": "widgets/releases/study_area/0.7.0.json",
+          "sha256": "407ec97fb2d33bbe7768bf7ca2674f613ddafa0fff2f2a8a98cc66287604819d"
         }
       ],
       "previousNodeTypes": [

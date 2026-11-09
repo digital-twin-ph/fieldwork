@@ -2,7 +2,7 @@
 
 _Created 2026-10-26 · Updated 2026-11-07_
 
-**A join, narrowly.** It takes two tables that share a column, and brings a *category* from the
+**A join, narrowly.** It takes two tables that name the same subjects, and brings a *category* from the
 second one onto the rows of the first.
 
 ## What it does
@@ -44,10 +44,11 @@ have changed something, the dialog asks before discarding it.
 
 | Setting | What it decides |
 | --- | --- |
-| **Matched on** | the column both tables carry, such as `sub_district` |
+| **Matched on, in the first table** | the column holding the names or codes, such as `sub_district` |
+| **The same, in the second table** | the second table's column for them; the column of the same name where there is one. A line list's `Residential District` against a population's `district` |
 | **And also matched on** | more shared columns, where one column does not identify a subject: a monitor's reading is one row per `site` **and** `date`. A row relates only where every chosen column agrees |
-| **Bring across** | the second table's column to add, such as `water_supply`, or its **value column**, such as a monitor's reading in ppb, which arrives as written |
-| **Compare keys** | folding punctuation and case, or exactly after trimming |
+| **Bring across** | the second table's column to add, such as `water_supply`, or its **value column**, such as a monitor's reading in ppb or a district's census population, which arrives as written and **as a number**, with its unit, so **Rate with a denominator** can divide by it |
+| **Compare keys** | folding punctuation and case; exactly after trimming; or allowing for spelling, and dropping words |
 | **A date within a period** | optional; see below |
 | **Shifts, in days** | optional; see below |
 
@@ -60,6 +61,25 @@ is a single comma. So folding is the default, and the choice is recorded in the 
 
 Tighten it to **exactly** when a punctuation difference means two different subjects. Loosen it
 when it means one subject written twice.
+
+**Allowing for spelling, and dropping words.** Sources also differ by more than punctuation. A line list writes
+"Bo District" where the boundaries write "Bo", and "Falaba District" where they write "Fabala". With this chosen:
+
+- **Words to drop** are taken out of both columns before comparing, as whole words: `District` takes "Bo District"
+  to "bo", and leaves "Districtville" alone. Separate several with commas.
+- **Spelling allowed** is the similarity a name must reach to match one spelled differently: 0.88 to start, from
+  0.5 to 1. Higher allows fewer differences; 1 allows none. It is Jaro-Winkler, as Deduplicate records uses.
+
+Each name is matched once. The preview lists every name, how it was compared, what it matched and how: **matched
+exactly**, **matched allowing for spelling** with its score, **ambiguous** where two names are as close, or **not
+found**. An ambiguous name is listed under **Decisions** with its candidates: choose one, or none. A name not found,
+or left undecided, is an unmatched row, decided as any is.
+
+The result gains a column saying how each row matched, such as `Residential District match`. You can bring the second
+table's own column across, such as `district`, to have its spelling on every row.
+
+Check the spelling matches in the preview. A close spelling is not always the same place: "Fabala" is Falaba because
+the boundaries hold no other district like it, which you can see and the step cannot.
 
 ### The preview
 
@@ -187,9 +207,10 @@ applying it. The run records it in the evidence.
 - **It will not invent a category.** A key the second table has no row for is **reported by name**
   and those rows are dropped. Filling in "unknown" would put a stratum in your table that nobody
   measured.
-- **It will not match approximately.** Keys are compared exactly after trimming, or with
-  punctuation and case folded (see **Compare keys**), never by similarity. This is Epi Info's
-  `RELATE` rather than its `MATCH`, which is a different problem.
+- **It will not match approximately unless you ask.** Keys are compared exactly after trimming, or with
+  punctuation and case folded, unless you choose **allowing for spelling** (see **Compare keys**). Even then it
+  will not choose between two names equally close: you do.
+- **It will not allow for spelling on a date within a period.** Choose one or the other.
 - **It will not tell you the two tables describe the same subjects.** That is your judgement. The
   widget checks that the keys line up, not that they mean the same thing.
 

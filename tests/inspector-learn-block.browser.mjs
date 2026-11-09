@@ -6,7 +6,9 @@ import {test,expect} from '@playwright/test';
 test('every panel opens with the same block, and its links are controls rather than small print',async({page})=>{
   await page.goto('/?example=blank');
   await page.locator('[data-view="workflow"]').click();
-  await page.locator('#node-library [data-add="study_area"]').click();
+  // A PANEL NOT YET ON THE STANDARD (experiment 186). Study area stood here until it moved to the standard on 2026-11-09,
+  // where the block is in Learn and record, after the settings; Polygon layer still has the older layout and a page.
+  await page.locator('#node-library [data-add="polygon_input"]').click();
   const block=page.locator('#inspector-content .learn-block');
   await expect(block).toBeVisible();
   // Directly under the title and its one line, before any control.

@@ -1,5 +1,6 @@
 import type {RelateShape,MeasureShare,RelateRequest,ShiftColumn} from './relate-table.js';
-import {rateMultiplier,machinedNotes} from './relate-table.js';
+import {rateMultiplier,machinedNotes,matchWords} from './relate-table.js';
+import {DEFAULT_SPELLING_THRESHOLD,type SpellingSettings} from './spelling-match.js';
 import type {DataTable} from './data-table.js';
 import type {ParamsByType} from './types.js';
 import {openConfigDialog} from './config-dialog.js';
@@ -78,6 +79,10 @@ type RelateParams=ParamsByType['relate_table'];
  *  holds one: the step stores one shift as `shiftDays` and several as `shifts`, and that is the store's business. */
 export interface RelateDraft {
   on:string; alsoOn:string[]; bring:string; normalisation:'exact'|'fuzzy';
+  /** The second table's key column, empty where it is named as the first's. */
+  rightOn:string;
+  /** ALLOWING FOR SPELLING (experiment 193): the words to drop and the threshold as typed, and the names decided. */
+  spelling:boolean; dropWords:string; threshold:string; spellingDecisions:Record<string,string>;
   within:{date:string;start:string;end:string};
   /** As typed, so a half-written number is not lost on a redraw. */
   shifts:string[];
@@ -88,6 +93,8 @@ export interface RelateDraft {
 export function relateDraftOf(p:RelateParams):RelateDraft{
   const shifts=(p.shifts?.length??0)>1?p.shifts!:p.shiftDays?[p.shiftDays]:[];
   return {on:p.on??'',alsoOn:[...(p.alsoOn??[])],bring:p.bring??'',normalisation:p.normalisation??'fuzzy',
+    rightOn:p.rightOn??'',spelling:!!p.spelling,dropWords:(p.spelling?.dropWords??[]).join(', '),
+    threshold:String(p.spelling?.threshold??DEFAULT_SPELLING_THRESHOLD),spellingDecisions:{...(p.spelling?.decisions??{})},
     within:{date:p.within?.date??'',start:p.within?.start??'',end:p.within?.end??''},
     shifts:shifts.map(String),
     decision:p.unmatched?.decision??'',label:p.unmatched?.label??'',reason:p.unmatched?.reason??''};
@@ -106,12 +113,23 @@ export function draftShifts(draft:RelateDraft):{shifts:number[];problem?:string}
   return {shifts};
 }
 
+/** THE SPELLING SETTINGS a draft holds, or why its threshold is not one. Words are split at commas. */
+export function draftSpelling(draft:RelateDraft):{spelling?:SpellingSettings;problem?:string}{
+  if(!draft.spelling)return {};
+  const threshold=Number(draft.threshold.trim());
+  if(!draft.threshold.trim()||!Number.isFinite(threshold)||threshold<0.5||threshold>1)
+    return {problem:`The spelling allowed is a similarity from 0.5 to 1; "${draft.threshold}" is not. ${DEFAULT_SPELLING_THRESHOLD} is the default.`};
+  return {spelling:{dropWords:draft.dropWords.split(',').map(w=>w.trim()).filter(Boolean),threshold,decisions:{...draft.spellingDecisions}}};
+}
+
 /** The request the planner reads, from a draft. */
 export function requestOf(draft:RelateDraft,{measureKey}:{measureKey?:string}={}):RelateRequest{
   const within=draft.within.date&&draft.within.start&&draft.within.end?{within:{...draft.within}}:{};
   const {shifts}=draftShifts(draft);
   return {on:draft.on,...(draft.alsoOn.length?{alsoOn:draft.alsoOn}:{}),...within,
     ...(shifts.length===1&&shifts[0]!==0?{shiftDays:shifts[0]}:{}),bring:draft.bring,normalisation:draft.normalisation,
+    ...(draft.rightOn&&draft.rightOn!==draft.on?{rightOn:draft.rightOn}:{}),
+    ...(()=>{const {spelling}=draftSpelling(draft);return spelling?{spelling}:{};})(),
     ...(measureKey?{measureKey}:{}),
     ...(draft.decision==='keep'?{unmatched:{decision:'keep' as const,label:draft.label,signature:''}}:{})};
 }
@@ -120,6 +138,9 @@ export function requestOf(draft:RelateDraft,{measureKey}:{measureKey?:string}={}
  *  the decision already stored stays, because nothing here could see what it was about. */
 export function applyRelateDraft(p:RelateParams,draft:RelateDraft,plan?:{signature:string;gaps:number}):void{
   p.on=draft.on; p.bring=draft.bring; p.normalisation=draft.normalisation;
+  if(draft.rightOn&&draft.rightOn!==draft.on)p.rightOn=draft.rightOn;else delete p.rightOn;
+  const {spelling}=draftSpelling(draft);
+  if(spelling)p.spelling=spelling;else delete p.spelling;
   if(draft.alsoOn.length)p.alsoOn=[...draft.alsoOn];else delete p.alsoOn;
   if(draft.within.date&&draft.within.start&&draft.within.end)p.within={...draft.within};else delete p.within;
   const {shifts}=draftShifts(draft);
@@ -137,9 +158,11 @@ const signed=(d:number)=>`${d>0?'+':d<0?'\u2212':''}${Math.abs(d)}`;
 /** THE INSPECTOR'S ONE SENTENCE: what the step will do with the settings it holds. */
 export function relateSentence(p:RelateParams,right:string):string{
   if(!p.on||!p.bring)return 'Not set up yet: choose what to match on and what to bring across.';
-  const keys=[p.on,...(p.alsoOn??[])].join(' and ');
+  const keys=[p.on+(p.rightOn?` to ${p.rightOn}`:''),...(p.alsoOn??[])].join(' and ');
   const shifts=(p.shifts?.length??0)>1?p.shifts!:p.shiftDays?[p.shiftDays]:[];
   return `Brings ${p.bring} from ${right}, matched on ${keys}`
+    +(p.spelling?`, allowing for spelling to ${p.spelling.threshold}`
+      +(p.spelling.dropWords.length?` with ${p.spelling.dropWords.map(w=>`\u201c${w}\u201d`).join(', ')} dropped`:''):'')
     +(p.within?`, with ${p.within.date} inside ${p.within.start} to ${p.within.end}`:'')
     +(shifts.length>1?`, at ${shifts.length} shifts (${shifts.map(signed).join(', ')} days)`
       :shifts.length?`, shifted ${signed(shifts[0]!)} days`:'')
@@ -185,14 +208,18 @@ export function openRelateConfig(view:RelateConfigView,esc:Escape):void{
       const here=view.hereColumns,there=view.thereColumns;
       const shared=here.filter(c=>there.includes(c));
       const keysOn=[draft.on,...draft.alsoOn];
+      // THE SECOND TABLE'S KEY: the one chosen, or the column named as the first's where there is one.
+      const rightOn=draft.rightOn||(there.includes(draft.on)?draft.on:'');
       const bringable=[...there,...(view.relatedValue&&!there.includes(view.relatedValue)?[view.relatedValue]:[])]
-        .filter(c=>!keysOn.includes(c)&&!here.includes(c));
+        .filter(c=>!keysOn.includes(c)&&!here.includes(c)&&(draft.spelling||c!==rightOn));
       const {shifts,problem:shiftProblem}=draftShifts(draft);
+      const {problem:spellingProblem}=draftSpelling(draft);
 
       // SETTINGS.
       const settings=`<p class="description">Brings a column from <strong>${esc(view.rightLabel)}</strong> onto the rows of `
-        +`<strong>${esc(view.leftLabel)}</strong>, matched on columns both tables carry.</p>`
-        +select('relate-on','Matched on',shared,draft.on,there.length?'These tables share no column':'Connect both tables first')
+        +`<strong>${esc(view.leftLabel)}</strong>, matching a column of each.</p>`
+        +select('relate-on','Matched on, in the first table',here,draft.on,'Connect both tables first')
+        +select('relate-right-on','The same, in the second table',there,rightOn,'Connect both tables first')
         +(draft.on&&shared.length>1
           ?`<fieldset class="field" id="relate-also"><legend class="field-label">And also matched on</legend>`
             +shared.filter(c=>c!==draft.on).map(c=>`<label class="check"><input type="checkbox" value="${esc(c)}"`
@@ -202,7 +229,17 @@ export function openRelateConfig(view:RelateConfigView,esc:Escape):void{
         +select('relate-bring','Bring across',bringable,draft.bring,'Connect both tables first')
         +'<div class="field"><label class="field-label" for="relate-compare">Compare keys</label><select id="relate-compare">'
         +`<option value="fuzzy"${draft.normalisation==='fuzzy'?' selected':''}>Folding punctuation and case</option>`
-        +`<option value="exact"${draft.normalisation==='exact'?' selected':''}>Exactly, after trimming</option></select></div>`
+        +`<option value="exact"${!draft.spelling&&draft.normalisation==='exact'?' selected':''}>Exactly, after trimming</option>`
+        +`<option value="spelling"${draft.spelling?' selected':''}>Allowing for spelling, and dropping words</option></select></div>`
+        +(draft.spelling
+          ?'<p class="muted">Each name is folded for case and punctuation, the words below are taken out as whole words, and a name '
+            +'that is not equal is matched to the one spelled closest, if it is close enough and no other is as close.</p>'
+            +`<div class="field"><label class="field-label" for="relate-drop-words">Words to drop, separated by commas</label>`
+            +`<input id="relate-drop-words" value="${esc(draft.dropWords)}" placeholder="for example District"></div>`
+            +`<div class="field"><label class="field-label" for="relate-threshold">Spelling allowed: similarity at least (0.5 to 1)</label>`
+            +`<input id="relate-threshold" inputmode="decimal" value="${esc(draft.threshold)}"></div>`
+            +`<p class="muted">${DEFAULT_SPELLING_THRESHOLD} to start. Higher allows fewer differences; 1 allows none.</p>`
+          :'')
         +'<h4>A date within a period <span class="muted">· optional</span></h4>'
         +'<p class="muted">A row relates to the period whose start and end hold its date.</p>'
         +select('relate-within-date','Date, in the first table',here,draft.within.date,'Connect the first table',{optional:true})
@@ -220,6 +257,8 @@ export function openRelateConfig(view:RelateConfigView,esc:Escape):void{
       if(!draft.on||!draft.bring)
         return {settings,preview:'<p class="muted">Choose what to match on and what to bring across to see the join.</p>'};
       if(shiftProblem)return {settings,message:{tone:'refusal',text:shiftProblem},blocked:true};
+      if(spellingProblem)return {settings,message:{tone:'refusal',text:spellingProblem},blocked:true};
+      if(!rightOn)return {settings,preview:'<p class="muted">Choose the column of the second table that holds the same names.</p>'};
       if(!view.left||!view.right)
         return {settings,preview:'<p class="muted">Run the workflow once both tables are connected, and the join is shown here before it is applied.</p>',
           decisions:'<p class="muted">Whether any rows go unmatched is known once both tables are there.</p>'};
@@ -253,7 +292,15 @@ export function openRelateConfig(view:RelateConfigView,esc:Escape):void{
       const table=keeping&&shape.previews.keep?shape.previews.keep:shape.previews.drop;
 
       // PREVIEW: the shape, its effect on the numbers, the Methods note it would machine, and the table.
-      const preview=overlapBar(shape,esc,view.leftLabel,view.rightLabel)
+      const names_=shape.matches??[];
+      const spelled=names_.length
+        ?`<h4>Each name, and how it matched</h4><table class="relate-shares" id="relate-spellings"><thead><tr><th>${esc(draft.on)}</th>`
+          +`<th>Compared as</th><th>${esc(rightOn)}</th><th>How</th></tr></thead><tbody>`
+          +names_.map(({name,compared,match})=>`<tr><th scope="row">${esc(name)}</th><td>${esc(compared)}</td><td>${esc(match.value??'')}</td>`
+            +`<td${match.outcome==='spelling'||match.outcome==='ambiguous'||match.outcome==='none'?' class="profile-flag"':''}>${esc(matchWords(match))}</td></tr>`).join('')
+          +'</tbody></table>'
+        :'';
+      const preview=overlapBar(shape,esc,view.leftLabel,view.rightLabel)+spelled
         +(gaps.length
           ?`<p>Not in ${esc(view.rightLabel)}: `+gaps.slice(0,12).map(g=>`<strong>${esc(g.key)}</strong> (${g.rows} row${g.rows===1?'':'s'})`).join(', ')
             +(gaps.length>12?`, and ${gaps.length-12} more`:'')+'.</p>'
@@ -282,7 +329,17 @@ export function openRelateConfig(view:RelateConfigView,esc:Escape):void{
           roles:{...Object.fromEntries(keysOn.filter(Boolean).map(k=>[k,'key'])),[draft.bring]:'brought'} as ColumnRoles}};return dataTableMarkup(table,esc,shown.options);})()}</div>`;
 
       // DECISIONS: what happens to the rows that did not match, which the step will not decide.
-      const decisions=gaps.length
+      const undecided=names_.filter(({name,match})=>match.outcome==='ambiguous'||draft.spellingDecisions[name]);
+      const choose=undecided.length
+        ?`<h4>Names matching could not settle</h4><p>Two or more names of ${esc(view.rightLabel)} are as close; choose one, or none. `
+          +'A name left undecided is unmatched.</p>'
+          +undecided.map(({name,match},i)=>`<div class="field"><label class="field-label" for="relate-decide-${i}">${esc(name)}</label>`
+            +`<select id="relate-decide-${i}" data-spelling-decide="${esc(name)}"><option value="">Not decided</option>`
+            +`<option value="none"${draft.spellingDecisions[name]==='none'?' selected':''}>None of these</option>`
+            +match.candidates.map(c=>`<option value="${esc(c.value)}"${draft.spellingDecisions[name]===c.value?' selected':''}>`
+              +`${esc(c.value)} \u00b7 ${c.score.toFixed(2)}</option>`).join('')+'</select></div>').join('')
+        :'';
+      const decisions=choose+(gaps.length
         ?`<p>${count(gaps.length)} ${esc(keyNoun(on,gaps.length))} in ${esc(view.leftLabel)} ${gaps.length===1?'has':'have'} no row in `
           +`${esc(view.rightLabel)}. Dropping them and keeping them give different totals, so this step does not choose.</p>`
           +`<label class="check"><input type="radio" name="relate-decision" value="drop"${draft.decision==='drop'?' checked':''}> `
@@ -296,7 +353,7 @@ export function openRelateConfig(view:RelateConfigView,esc:Escape):void{
           +(draft.decision?'':'<p class="standard-state"><strong>Not decided yet.</strong> The run refuses this join until you choose.</p>')
           +'<div class="field"><label class="field-label" for="relate-join-reason">Why (recorded in the evidence)</label>'
           +`<input id="relate-join-reason" maxlength="200" value="${esc(draft.reason)}"></div>`
-        :'<p>Nothing to decide: no row is left out.</p>';
+        :'<p>Nothing to decide: no row is left out.</p>');
       const blocked=keeping&&!!shape.labelRefusal;
       return {settings,preview,decisions,...(blocked?{message:{tone:'refusal' as const,text:shape.labelRefusal!},blocked}:{})};
     },
@@ -304,8 +361,16 @@ export function openRelateConfig(view:RelateConfigView,esc:Escape):void{
       if(shown)wireTablePages(root.querySelector<HTMLElement>('.relate-preview'),shown.table,esc,shown.options);
       const on=(id:string,fn:(el:HTMLSelectElement)=>void)=>{const el=root.querySelector<HTMLSelectElement>(`#${id}`);if(el)el.onchange=()=>{fn(el);redraw();};};
       on('relate-on',el=>{draft.on=el.value;draft.alsoOn=draft.alsoOn.filter(c=>c!==el.value);});
+      on('relate-right-on',el=>{draft.rightOn=el.value===draft.on?'':el.value;});
       on('relate-bring',el=>{draft.bring=el.value;});
-      on('relate-compare',el=>{draft.normalisation=el.value==='exact'?'exact':'fuzzy';});
+      on('relate-compare',el=>{draft.spelling=el.value==='spelling';draft.normalisation=el.value==='exact'?'exact':'fuzzy';});
+      const typed=(id:string,fn:(v:string)=>void)=>{const el=root.querySelector<HTMLInputElement>(`#${id}`);
+        if(el){el.oninput=()=>fn(el.value);el.onchange=()=>{fn(el.value);redraw();};}};
+      typed('relate-drop-words',v=>{draft.dropWords=v;});
+      typed('relate-threshold',v=>{draft.threshold=v;});
+      root.querySelectorAll<HTMLSelectElement>('[data-spelling-decide]').forEach(el=>el.onchange=()=>{
+        const name=el.dataset.spellingDecide!;
+        if(el.value)draft.spellingDecisions[name]=el.value;else delete draft.spellingDecisions[name];redraw();});
       on('relate-within-date',el=>{draft.within.date=el.value;});
       on('relate-within-start',el=>{draft.within.start=el.value;});
       on('relate-within-end',el=>{draft.within.end=el.value;});

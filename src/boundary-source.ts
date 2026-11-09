@@ -1,4 +1,6 @@
 import type {Polygon,Boundary} from './types.js';
+import {repairBoundary,type VertexRepair} from './boundary-repair.js';
+export {REPAIR_RULE,repairBoundary,type VertexRepair} from './boundary-repair.js';
 
 /** Administrative boundaries from geoBoundaries, chosen by name rather than drawn.
  *
@@ -197,7 +199,10 @@ export function browserFetchableUrl(url:string):string{
  *  A54: members are NOT dissolved into one MultiPolygon. "Appending polygons into a MultiPolygon"
  *  loses which unit is which, and a joint investigation across a border is exactly the case where
  *  that matters. */
-export interface BoundaryUnit {id:string; name:string; geometry:Polygon|Boundary}
+export interface BoundaryUnit {id:string; name:string; geometry:Polygon|Boundary;
+  /** What the boundary repair removed from this unit as published, each vertex by kind and position. */
+  repairs?:VertexRepair[]}
+
 
 /** HOW A UNIT IS OFFERED IN THE PICKER: by its name, and, where that name repeats in the level, by where it is.
  *
@@ -234,7 +239,8 @@ export function readUnits(level:BoundaryLevel,geojson:unknown):BoundaryUnit[]{
     // shapeName and shapeID are geoBoundaries' own fields. Falling back to a positional id keeps
     // a unit addressable when a file omits them rather than dropping it silently.
     const name=text(p.shapeName)||text(p.shapeGroup)||`${level.level} ${index+1}`;
-    return [{id:text(p.shapeID)||`${level.boundaryID}-${index}`,name,geometry:feature.geometry}];
+    const {geometry,repairs}=repairBoundary(feature.geometry);
+    return [{id:text(p.shapeID)||`${level.boundaryID}-${index}`,name,geometry,...(repairs.length?{repairs}:{})}];
   });
 }
 
@@ -278,8 +284,8 @@ export function unitsFromFile(geojson:unknown,nameProperty:string,boundaryID:str
     if(!g||(g.type!=='Polygon'&&g.type!=='MultiPolygon'))return [];
     const p=feature.properties??{};
     const name=text(p[nameProperty])||text(p.name)||text(p.shapeName)||`feature ${index+1}`;
-    return [{id:text(feature.id)||text(p[nameProperty])||`${boundaryID}-${index}`,name,
-      geometry:feature.geometry as Boundary}];
+    const {geometry,repairs}=repairBoundary(feature.geometry as Boundary);
+    return [{id:text(feature.id)||text(p[nameProperty])||`${boundaryID}-${index}`,name,geometry,...(repairs.length?{repairs}:{})}];
   });
   if(!units.length)
     throw new Error('That file has no Polygon or MultiPolygon features, so there is no boundary in it to use.');

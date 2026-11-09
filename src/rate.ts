@@ -149,6 +149,20 @@ export function fromTable(table:DataTable,measureKey:string):{id:string;properti
   return [...subjects.values()];
 }
 
+/** A WIDE TABLE, ONE ROW PER SUBJECT (2026-11-09): the numerator and the denominator are columns of the same row, a
+ *  count as the table's value and a population brought beside it by Relate. Sierra Leone's cases by district and the
+ *  2021 census by district were two tables; stacking them would put cases and people in one column, which Append
+ *  rows refuses. Each row is a record whose properties are its key columns and its value under the value column's
+ *  name, so `numeratorField` and `denominatorField` name columns, as they do for points. */
+export function fromWideTable(table:DataTable,fields:readonly string[]):{id:string;properties:Record<string,Scalar>}[]{
+  if(table?.kind!=='data-table')
+    throw new Error('Connect a table of counts: this Rate is set to read one.');
+  const columns=[...table.keys,table.valueField];
+  for(const field of fields)if(field&&!columns.includes(field))
+    throw new Error(`The table has no "${field}" column. Its columns are: ${columns.join(', ')}.`);
+  return table.rows.map((row,i)=>({id:`row ${i+1}`,properties:{...row.key,[table.valueField]:row.value}}));
+}
+
 /** The key column a rate table carries. Named so an Inspector can offer it without a run. */
 export const RATE_TABLE_KEYS=['group'] as const;
 

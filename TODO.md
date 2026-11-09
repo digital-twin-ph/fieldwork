@@ -2927,6 +2927,14 @@ Remaining here:
 
 ## Known and recorded, not yet scheduled
 
+- **A quantile key printed a class "6.72 to 6.72".** Found 2026-11-09 on Sierra Leone's cases per 100,000 by district
+  (16 districts, five quantile classes): two breaks were equal, and the key showed an empty-width class. A key should
+  not print a class no value can fall in; merging equal breaks would give four classes and say so. Not fixed.
+- **Check 41: the boundary repair against shapely** ([194](docs/experiments/194-the-boundary-repair.md)):
+  `remove_repeated_points` for the repeats on OCHA's Sierra Leone districts, the spike rule written out, and how
+  often the repair runs on a geoBoundaries level.
+- **Check 40 in the lab's browser kernel.** Run in CPython only on 2026-11-09.
+
 **A computations audit: does the code state the equation the source paper states?** Named by the
 practitioner on 2026-10-30, while refusing an argument made in
 [151](docs/experiments/151-typesetting-an-equation-a-practitioner-wrote.md): *"How can a formula be

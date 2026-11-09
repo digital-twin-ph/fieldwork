@@ -41,6 +41,16 @@ so two is the floor rather than the shape; use **Add point input** for a third a
 
 ## How to use it
 
+The step's panel holds its **Name**, its **Inputs**, one sentence saying what it compares, and **Configure…**. After a
+run, **Result** says what it found: the pairs counted, the records merged away, and **Review pairs** where some wait
+for you. Under that, **Manual**, **Evidence** and **Version**, then **Duplicate** and **Remove**.
+
+**Configure…** opens the step's dialog, where every setting is. **The records are** chooses *Points, in two or more
+sources* or *Rows of one table*; the settings below follow it. Nothing changes the workflow until **Apply**.
+
+To match the names of one table to another's, such as a line list's districts to the boundaries', use **Relate a
+column from another table** and allow for spelling there.
+
 | Setting | What it decides |
 | --- | --- |
 | **Name attribute** | Which attribute carries the name. `name` for most sources. |

@@ -105,7 +105,7 @@ import {utmDefinition,projectFromCRS84} from './reproject.js';
 import {findingsSummary,dataTable,wideDataTable,declaredWide,tableReceipt,MAX_TABLE_ROWS} from './data-table.js';
 import {mapImage,mapImageReceipt} from './map-image.js';
 import type {DataTable} from './data-table.js';
-import {computeRate,fromPoints,fromTable,rateTable,rateChart,rateReceipt,validateRateNode} from './rate.js';
+import {computeRate,fromPoints,fromTable,fromWideTable,rateTable,rateChart,rateReceipt,validateRateNode} from './rate.js';
 import {computeRateTwoByTwo,readRatesUnderDesign,readRatesUndeclared} from './two-by-two-rates.js';
 import {caseSeries,caseSeriesFromTable,seriesTable,seriesChart,seriesReceipt,validateCaseSeriesNode} from './case-series.js';
 import {joinTableToAreas,joinedPolygons,areaJoinReceipt} from './area-join.js';
@@ -1777,7 +1777,9 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           kept:result.kept,dropped:result.dropped,absent:result.absent} as unknown as Receipt);
         break;}
       case 'rate':{const records=node.params.source==='table'
-        ?fromTable(inputs.records as unknown as import('./data-table.js').DataTable,node.params.measureKey||'measure')
+        ?node.params.tableForm==='wide'
+          ?fromWideTable(inputs.records as unknown as import('./data-table.js').DataTable,[node.params.numeratorField,node.params.denominatorField,node.params.groupBy??''])
+          :fromTable(inputs.records as unknown as import('./data-table.js').DataTable,node.params.measureKey||'measure')
         :fromPoints(inputs.records);
         const result=computeRate(records,node.params);value={...rateTable(result),chart:rateChart(result)} as unknown as DisplayValue;receipts.push(rateReceipt(node,result,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='records')!.from));
         const rateNote=rateEquationNote(result,node.id);

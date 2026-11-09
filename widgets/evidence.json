@@ -289,9 +289,10 @@
    "exampleUses": [
     "brazil-dengue-rj-2024",
     "nigeria-immunization-2024",
+    "sierra-leone-measles",
     "south-london-1854"
    ],
-   "exampleUseCount": 3,
+   "exampleUseCount": 4,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],
@@ -437,9 +438,10 @@
    "nodeType": "rate",
    "exampleUses": [
     "brazil-dengue-rj-2024",
+    "sierra-leone-measles",
     "south-london-1854"
    ],
-   "exampleUseCount": 2,
+   "exampleUseCount": 3,
    "lab": "awaiting",
    "labOwed": true,
    "fieldUse": [],
@@ -481,9 +483,10 @@
    "exampleUses": [
     "brazil-dengue-rj-2024",
     "nyc-asthma-ozone-2016-2025",
+    "sierra-leone-measles",
     "south-london-1854"
    ],
-   "exampleUseCount": 3,
+   "exampleUseCount": 4,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],

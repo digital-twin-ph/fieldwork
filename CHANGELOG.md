@@ -3,6 +3,27 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.67.0 — 2026-11-09
+
+- **Relate allows for spelling** ([193](docs/experiments/193-relate-allows-for-spelling.md)). Under **Compare keys**,
+  *allowing for spelling, and dropping words* folds the names, takes out words you name, such as *District*, as whole
+  words, and matches a name to the one spelled closest, at a similarity of 0.88 to start and adjustable. The preview
+  lists every name and how it matched; two names equally close wait under **Decisions**; a name not found is an
+  unmatched row, decided as any is. The second table's key column can be named differently from the first's, and a
+  new column says how each row matched. Relate 0.10.0.
+- **Rate can read both numbers from one row**: a count, and a population brought beside it by Relate, which now
+  brings a value column as a number with its unit. On the standard Inspector and dialog, whose preview shows each
+  group's rate before Apply. Rate 0.4.0.
+- **Study area repairs a published boundary, and says so** ([194](docs/experiments/194-the-boundary-repair.md)). A
+  point written twice in a row, and the tip of a zero-width spike, are removed as a boundary is read; neither changes
+  any outline's area. The dialog says what was removed, and the evidence lists each vertex, as CC BY requires of a
+  change. A refused boundary names the unit at fault. On the standard Inspector. Study area 0.7.0.
+- **Measles in Sierra Leone gains its third workflow**: cases per 100,000 people by district, over the 2021 census,
+  on OCHA's districts.
+- **Deduplicate records is on the standard Inspector and dialog** (186). Deduplicate records 0.3.0.
+- The file input of a boundary file has an accessible name.
+- Validation: Chromium locally; WebKit in CI.
+
 ## 0.66.0 — 2026-11-09
 
 - **Map is on the standard Inspector and dialog** ([186](docs/experiments/186-one-standard-inspector.md)). Its name

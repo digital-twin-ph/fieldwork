@@ -1,3 +1,4 @@
+import {REPAIR_RULE} from './boundary-repair.js';
 import type {AreaParams,Boundary,Bounds,Escape,NodeSpec,Polygon,Position,Workflow,WorkflowNode} from './types.js';
 import type {ReasonerQuad} from './worker-types.js';
 import {isRecord} from './guards.js';
@@ -337,8 +338,15 @@ export function studyAreaN3(node:Pick<WorkflowNode<'study_area'>,'id'|'params'>)
     const now=boundaryFingerprint(p.geometry);
     unchanged=now===acquired.publishedHash;
     const vertices=p.geometry.coordinates.reduce((n,r)=>n+r.length-1,0);
+    const repairs=acquired.repairs??[];
     const state=unchanged
-      ?`Admitted as published from ${acquired.source}; the geometry was not simplified, generalised or edited.`
+      ?(repairs.length
+        // REPAIRED, AND SAID SO (2026-11-09): a change from the source, indicated as CC BY requires, with the rule and
+        // every vertex, so it can be redone by hand.
+        ?`Admitted from ${acquired.source} with ${repairs.length} of its ${acquired.vertices} vertices removed by the boundary repair: `
+          +`${REPAIR_RULE} Removed: ${repairs.map(r=>`${r.unit}, ${r.kind==='repeated'?'repeated':'spike tip'} at ${r.at[0]} ${r.at[1]}`).join('; ')}. `
+          +'The geometry was otherwise not simplified, generalised or edited.'
+        :`Admitted as published from ${acquired.source}; the geometry was not simplified, generalised or edited.`)
       :`MODIFIED IN THIS WORKFLOW -- this is no longer ${acquired.source}'s boundary. `
         +(acquired.publishedHash==='bounding-box'
           ?'It is a bounding box around the chosen units, which includes ground in none of them.'

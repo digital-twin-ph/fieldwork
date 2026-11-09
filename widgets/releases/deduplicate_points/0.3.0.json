@@ -1,0 +1,111 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:deduplicate_points",
+ "version": "0.3.0",
+ "nodeType": "deduplicate_points",
+ "title": "Deduplicate records",
+ "released": "2026-11-09",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['deduplicate_points']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "validationStatus": "application-only",
+  "shaclShapes": []
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "points",
+    "type": "points"
+   },
+   {
+    "name": "points_2",
+    "type": "points"
+   },
+   {
+    "name": "records",
+    "type": "table"
+   }
+  ],
+  "output": "points",
+  "dynamicInputs": {
+   "kind": "point-layers",
+   "minimum": 2,
+   "maximum": 8,
+   "implementation": "src/core.ts#nodeInputs"
+  },
+  "note": "Two layers is the floor, not the shape: comparison is across sources, so one layer has nothing to compare with. With The records are set to Rows of one table, the only input is records and the output is a table."
+ },
+ "ontology": {
+  "status": "partial",
+  "mappings": [
+   {
+    "role": "activity",
+    "iri": "urn:fieldwork:RecordDeduplication",
+    "file": "ontology/fieldwork.ttl"
+   },
+   {
+    "role": "entity",
+    "iri": "urn:fieldwork:LinkageCandidate",
+    "file": "ontology/fieldwork.ttl"
+   }
+  ],
+  "note": "The vocabulary follows EPIAI RECORDLINK in the epi-info-ai repository rather than inventing a second set of words: candidate, class, thresholds, decision. Every threshold the run used is asserted, and every pair that was not a non-match is named with its score, its distance and its name similarity.",
+  "emits": {
+   "classes": [
+    "DataTable",
+    "LinkageCandidate",
+    "PointDataset",
+    "RecordDeduplication"
+   ],
+   "properties": [
+    "awaitingDecisionCount",
+    "blockColumns",
+    "blockDistanceM",
+    "blockedPairCount",
+    "candidateClass",
+    "candidateScore",
+    "comparedPairCount",
+    "decisionReason",
+    "fuzzyThreshold",
+    "linkageCandidate",
+    "matchThreshold",
+    "matchedDistanceM",
+    "matchedName",
+    "matchedPairCount",
+    "mergedRecordCount",
+    "nameComparable",
+    "nameField",
+    "nameMatchMethod",
+    "nearDistanceM",
+    "recordCount",
+    "reviewThreshold"
+   ]
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/deduplicate-points.ts",
+   "src/deduplicate-ui.ts"
+  ],
+  "definition": "src/deduplicate-points.ts"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": null
+ },
+ "changes": [
+  {
+   "kind": "minor",
+   "description": "On the standard Inspector and dialog: its name, inputs, one sentence of what it compares, and Configure…, which holds every setting on a draft; what the last run found, and Review pairs, are in its Result."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Jaro-Winkler is checked against the textbook values for martha/marhta and dwayne/duane, and the blocking, the three classes, the one-record-per-source rule and the lapsing of a decision are each pinned by a test. What is NOT established is the thresholds: the ones that ship are proposals, and what they should be is a measurement on the practitioner's own sources rather than a default worth trusting."
+ }
+}

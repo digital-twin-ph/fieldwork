@@ -117,6 +117,9 @@ export interface BoundaryProvenance {
    *  indicating that changes were made, so this is a licence obligation as much as an honesty
    *  one. Comparing the current geometry against this is how the receipt knows which it is. */
   publishedHash:string;
+  /** WHAT THE BOUNDARY REPAIR REMOVED (2026-11-09), by unit, kind and position, under `REPAIR_RULE`. `publishedHash` is
+   *  taken after it, so an edit made later is still told apart; this is the change from the source as published. */
+  repairs?:{unit:string; kind:'repeated'|'spike'; at:Position}[];
 }
 
 export interface AreaRevision {at:string; geometry:Boundary; selectionMode:'bbox'|'polygon'|'circle'; restoredFrom?:number}
@@ -240,7 +243,9 @@ export interface ParamsByType {
     source?:{title?:string;url?:string;licence?:string;note?:string}};
   /** Retired 2026-11-05; the params a saved one held, so it can be named when refused. */
   rate_ratio:{label:string;compared:string;reference:string;level:90|95|99;method:'log-normal'};
-  rate:{label:string;source?:'points'|'table';measureKey?:string;numeratorField:string;denominatorField:string;groupBy?:string;bandWidth?:number;denominatorUnit:import('./rate.js').DenominatorUnit;rateKind:import('./rate.js').RateKind;multiplier:number;minimumDenominator:number;numeratorPeriod:string;denominatorVintage:string};
+  rate:{label:string;source?:'points'|'table';
+    /** How a table holds the two numbers: one row per measure (`long`, the default), or both on one row (`wide`). */
+    tableForm?:'long'|'wide';measureKey?:string;numeratorField:string;denominatorField:string;groupBy?:string;bandWidth?:number;denominatorUnit:import('./rate.js').DenominatorUnit;rateKind:import('./rate.js').RateKind;multiplier:number;minimumDenominator:number;numeratorPeriod:string;denominatorVintage:string};
   /** RETIRED 2026-11-08 into Apply ruleset (experiment 188). Kept so a saved workflow holding one can be migrated. */
   derive_value:{label:string;keyColumn:string;left:string;operator:'minus'|'plus'|'times'|'dividedBy';right:string;name:string};
   /** `range`, when present, keeps the rows between two values instead of the ones named, both
@@ -328,6 +333,8 @@ export interface ParamsByType {
     /** What was read and on what terms, kept beside the features it produced. */
     retrieval?:import('./osm-areas.js').AreaRetrieval};
   relate_table:{label:string;on:string;bring:string;
+    /** The second table's key column where it is named differently, and names matched allowing for spelling (experiment 193). */
+    rightOn?:string; spelling?:import('./spelling-match.js').SpellingSettings;
     /** A date matched to the period containing it, and the days it is shifted first (2026-11-06, experiment 180). */
     within?:{date:string;start:string;end:string}; shiftDays?:number;
     /** SEVERAL SHIFTS IN ONE STEP (experiment 185): one column per shift, every row kept, a shift with no value left

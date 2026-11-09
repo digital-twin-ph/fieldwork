@@ -250,12 +250,12 @@
    "replacementCandidate": "urn:fieldwork:widget:clip_points_to_area"
   },
   "deduplicate_points": {
-   "version": "0.2.0",
-   "released": "2026-11-02",
+   "version": "0.3.0",
+   "released": "2026-11-09",
    "changes": [
     {
      "kind": "minor",
-     "description": "Rows of one table can be deduplicated. Rows sharing the blocking columns, by default the declared primary key, are compared; rows identical on every compared column merge, and a pair that disagrees waits for a person who says which row to keep. Removed rows are named in the receipt and the input table is unchanged."
+     "description": "On the standard Inspector and dialog: its name, inputs, one sentence of what it compares, and Configure…, which holds every setting on a draft; what the last run found, and Review pairs, are in its Result."
     }
    ],
    "breaking": false,
@@ -633,12 +633,12 @@
    "migrationFrom": []
   },
   "rate": {
-   "version": "0.3.1",
-   "released": "2026-11-06",
+   "version": "0.4.0",
+   "released": "2026-11-09",
    "changes": [
     {
-     "kind": "patch",
-     "description": "Can be added from the library. A new node starts with its fields empty, and the save refused that, so the node was never created; a wrong kind, unit or number is still refused on save, and an empty field at the run. Found building the Brazil dengue example, experiment 180."
+     "kind": "minor",
+     "description": "A table can hold both numbers on each row, as columns: a count, and a population brought beside it by Relate. On the standard Inspector and dialog: its name, its input, one sentence of what it divides by what, and Configure…, which holds every setting and previews each group's rate before Apply."
     }
    ],
    "breaking": false,
@@ -709,12 +709,12 @@
    "migrationFrom": []
   },
   "relate_table": {
-   "version": "0.9.1",
-   "released": "2026-11-08",
+   "version": "0.10.0",
+   "released": "2026-11-09",
    "changes": [
     {
-     "kind": "patch",
-     "description": "The join's preview turns its pages: Next rows did nothing in the configuration dialog."
+     "kind": "minor",
+     "description": "Relate allows for spelling: names are folded, words named are dropped as whole words, and a name is matched to the one spelled closest at a similarity of 0.88 by default, adjustable from 0.5 to 1. Two names as close wait for a person; a name not found is unmatched and decided as any is. The second table's key column can be named differently from the first's, and a column says how each row matched. The second table's value column, brought across, is declared a number with its unit, so Rate with a denominator can divide by it."
     }
    ],
    "breaking": false,
@@ -847,12 +847,12 @@
    "migrationFrom": []
   },
   "study_area": {
-   "version": "0.6.2",
-   "released": "2026-11-06",
+   "version": "0.7.0",
+   "released": "2026-11-09",
    "changes": [
     {
-     "kind": "patch",
-     "description": "Every source in the dialog starts closed when it opens. A section opened last time stayed open, so the click that opens it closed it instead."
+     "kind": "minor",
+     "description": "The boundary repair: a vertex that is the same point as the one before it, or the tip of a zero-width spike, is removed from a boundary as it is read, a downloaded level or a file. Neither changes the area any outline encloses. The dialog says what was removed; the evidence lists each vertex by unit, kind and position. A refusal names the unit at fault. On the standard Inspector."
     }
    ],
    "breaking": false,

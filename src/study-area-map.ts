@@ -651,6 +651,12 @@ async function fetchWithProgress(url:string,estimate:number,onProgress:(read:num
    *  No size limit beyond what the existing budget already imposes further down: a file is
    *  already on the device, so there is no download to spare and no reason to refuse by bytes
    *  what the vertex path will refuse by vertices with a better message. */
+  /** WHAT THE BOUNDARY REPAIR REMOVED, said where the units are offered. */
+  const repairSaid=(units:readonly import('./boundary-source.js').BoundaryUnit[])=>{
+    const all=units.flatMap(u=>(u.repairs??[]).map(r=>({...r,unit:u.name})));
+    const repeated=all.filter(r=>r.kind==='repeated').length,spikes=all.filter(r=>r.kind==='spike');
+    return (repeated?` \u00b7 ${repeated} repeated ${repeated===1?'vertex':'vertices'} removed, each the same point as the one before it`:'')
+      +(spikes.length?` \u00b7 ${spikes.length} zero-width spike${spikes.length===1?'':'s'} removed, in ${[...new Set(spikes.map(r=>r.unit))].join(', ')}, enclosing no area`:'');};
   $('#area-file-pick').onclick=()=>$('#area-file-input').click();
   $('#area-file-input').onchange=async e=>{
     const input=e.currentTarget as HTMLInputElement;
@@ -673,6 +679,7 @@ async function fetchWithProgress(url:string,estimate:number,onProgress:(read:num
       const skipped=(parsed.features?.length??0)-pickedUnits.length;
       status.textContent=`${pickedUnits.length} boundaries read from ${file.name}`
         +(skipped>0?` \u00b7 ${skipped} feature${skipped===1?'':'s'} skipped, not a polygon`:'')
+        +repairSaid(pickedUnits)
         +` \u00b7 named by "${key}" \u00b7 select the ones your study covers`;
     }catch(error){
       // The file stays chosen-but-unused rather than half-applied: nothing has touched the
@@ -743,7 +750,10 @@ async function fetchWithProgress(url:string,estimate:number,onProgress:(read:num
       }
       if(!parts.length){refuse('Those units carry no usable outline.');return;}
       try{geometry=validateDrawnGeometry({type:'MultiPolygon',coordinates:parts});}
-      catch(e){refuse(`${kept.map(u=>u.name).join(', ')}: ${errorMessage(e)}`);return;}
+      catch(e){
+        // THE UNIT AT FAULT, named alone: one spike in Bonthe was reported against all sixteen districts (2026-11-09).
+        const faulty=kept.filter(u=>{try{validateDrawnGeometry({type:'MultiPolygon',coordinates:parts.filter((_,i)=>owners[i]===u)});return false;}catch{return true;}});
+        refuse(`${(faulty.length?faulty:kept).map(u=>u.name).join(', ')}: ${errorMessage(e)}`);return;}
       selectionMode='polygon';
       acquired={boundaryID:pickedLevel!.boundaryID,unitID:kept.map(u=>u.id).join(' '),
         unitName:kept.map(u=>u.name).join(', '),source:pickedLevel!.source,licence:pickedLevel!.licence,
@@ -755,12 +765,14 @@ async function fetchWithProgress(url:string,estimate:number,onProgress:(read:num
         // in step. Without this the only record of which ring is which was the comma-joined
         // unitName, and a figure could not be joined to a boundary.
         units:owners.map(u=>({id:u.id,name:u.name})),
-        vertices:parts.reduce((n,rings)=>n+rings.reduce((m,r)=>m+r.length-1,0),0),
+        // VERTICES AS PUBLISHED: those kept and those the repair removed, which are listed by unit and position.
+        vertices:parts.reduce((n,rings)=>n+rings.reduce((m,r)=>m+r.length-1,0),0)+kept.reduce((n,u)=>n+(u.repairs?.length??0),0),
+        ...(kept.some(u=>u.repairs?.length)?{repairs:kept.flatMap(u=>(u.repairs??[]).map(r=>({unit:u.name,kind:r.kind,at:r.at})))}:{}),
         publishedHash:boundaryFingerprint(geometry)};
       setTool('pan');refresh();fit();
       const dropped=chosen.length-kept.length;
       $('#area-boundary-terms').textContent=
-        `${kept.map(u=>u.name).join(', ')} \u00b7 ${kept.length} outlines as published, `
+        `${kept.map(u=>u.name).join(', ')} \u00b7 ${kept.length} outlines as published${repairSaid(kept)?`, repaired${repairSaid(kept)}`:''}, `
         +`${parts.reduce((n,rings)=>n+rings.reduce((m,r)=>m+r.length-1,0),0)} vertices`
         +`${dropped?`, ${dropped} unit${dropped===1?'':'s'} carried no usable outline`:''} \u00b7 `
         +`${pickedLevel!.source} \u00b7 ${pickedLevel!.boundaryID} \u00b7 ${pickedLevel!.licence}`;

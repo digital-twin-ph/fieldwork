@@ -18,7 +18,7 @@ import {mountCatchmentMap,basemapOptions,BASEMAP_OPTIONS} from './catchment-map.
 import {catchmentPlot,polygonSvg,catchmentFrame,polygonFrame} from './catchment-output.js';
 import {mapPresentation,standaloneMapSvg} from './map-communication.js';
 import {metresPerPixel} from './presentation.js';
-import {RATE_TABLE_KEYS} from './rate.js';
+import {RATE_TABLE_KEYS,computeRate,fromTable,fromWideTable} from './rate.js';
 import {SERIES_TABLE_KEYS} from './case-series.js';
 import {SITE_ASSIGNMENT_TABLE_KEYS} from './sea-level.js';
 import {installCredentials} from './credentials-ui.js';
@@ -871,6 +871,9 @@ function upstreamValueField(node:WorkflowNode,seen=new Set<string>()):string|und
   seen.add(up.id);
   if(up.type==='table_input')return up.params.data.valueField||up.params.valueField||undefined;
   if(['select_rows','relate_table','append_rows','apply_ruleset'].includes(up.type))return upstreamValueField(up,seen);
+  // A COUNT IS NAMED "rows"; a sum, a mean or an extremum keeps the name of what it summarised (group-table.ts). Found
+  // 2026-11-09: a Rate after Relate after a count was offered every column but the count.
+  if(up.type==='group_table')return up.params.aggregate==='count'?'rows':upstreamValueField(up,seen);
   return undefined;
 }
 function tableKeyColumns(node:WorkflowNode|undefined,seen=new Set<string>()):readonly string[]{
@@ -988,7 +991,7 @@ function drawRunProgress(){
 /** THE WIDGETS WHOSE INSPECTOR FOLLOWS THE STANDARD (experiment 186): Name, Inputs, Settings, Result, the links,
  *  Actions, in that order and nothing else, with every setting in the widget's configuration dialog. One at a time,
  *  Relate first; the set grows as each widget is moved, and a check holds them to it. */
-export const STANDARD_INSPECTOR=new Set<NodeType>(['relate_table','select_rows','table_input','find_health_facilities','group_table','apply_ruleset','map_output']);
+export const STANDARD_INSPECTOR=new Set<NodeType>(['relate_table','select_rows','table_input','find_health_facilities','group_table','apply_ruleset','map_output','deduplicate_points','rate','study_area']);
 function samplerProduct(node:WorkflowNode){
   const up=(id:string,port:string)=>{const e=workflow.edges.find(x=>x.to===id&&x.port===port);return e?workflow.nodes.find(m=>m.id===e.from):undefined;};
   const search=up(node.id,'files'),find=search?up(search.id,'product'):undefined;
@@ -1930,6 +1933,181 @@ function mapSettings(n:WorkflowNode<'map_output'>):string{
       })()
     +mapControls(n,false);
 }
+/** RATE'S ONE SENTENCE (experiment 186). */
+function rateSentence(p:import('./types.js').ParamsByType['rate']):string{
+  if(!p.numeratorField||!p.denominatorField)return 'Not set up yet: choose what is counted and the population at risk, in Configure…';
+  return `Divides ${p.numeratorField} by ${p.denominatorField} (${p.denominatorUnit}), per ${p.multiplier.toLocaleString()}`
+    +`${p.groupBy?`, by ${p.groupBy}`:''}, as a ${p.rateKind}`
+    +`${p.source==='table'?`, from a table with ${p.tableForm==='wide'?'both numbers on each row':'one row per measure'}`:''}.`;
+}
+
+/** RATE'S DIALOG (experiment 186): every setting on a draft, and the rates this draft gives, before Apply. */
+function openRateConfig(nodeId:string){
+  const node=getNode(workflow,nodeId,'rate');
+  type Draft=import('./types.js').ParamsByType['rate'];
+  openConfigDialog<Draft>({
+    id:'rate-config',widget:'Rate with a denominator',step:node.params.label||TYPES.rate.title,draft:structuredClone(node.params),
+    sections:draft=>{
+      const table=draft.source==='table'?tableOnPort(workflow,nodeId,'records'):null;
+      const up=workflow.nodes.find(m=>m.id===workflow.edges.find(e=>e.to===nodeId&&e.port==='records')?.from);
+      const columns=table?[...table.keys,table.valueField]
+        :draft.source==='table'&&up?[...Object.keys(upstreamKeyValues(node)??{}),...(upstreamValueField(up)?[upstreamValueField(up)!]:[])]:[];
+      const wide=draft.source==='table'&&draft.tableForm==='wide';
+      const measures=draft.source==='table'&&!wide&&table?[...new Set(table.rows.map(r=>r.key[draft.measureKey||'measure']??''))].filter(Boolean):[];
+      // A column chosen from a list where the columns are known; typed where they are not, as a point's attribute is.
+      const pick=(id:string,label:string,key:keyof Draft,offered:string[],placeholder:string,optional=false)=>{
+        const held=String(draft[key]??'');
+        return `<div class="field"><label class="field-label" for="${id}">${label}</label>`+(offered.length
+          ?`<select id="${id}" data-rate="${String(key)}"><option value="">${optional?'Not used':'Choose…'}</option>`
+            +offered.map(c=>`<option value="${esc(c)}" ${c===held?'selected':''}>${esc(c)}</option>`).join('')+'</select>'
+          :`<input id="${id}" data-rate="${String(key)}" maxlength="80" value="${esc(held)}" placeholder="${esc(placeholder)}">`)+'</div>';};
+      const text=(id:string,label:string,key:keyof Draft,placeholder:string)=>`<div class="field"><label class="field-label" for="${id}">${label}</label>`
+        +`<input id="${id}" data-rate="${String(key)}" maxlength="80" value="${esc(String(draft[key]??''))}" placeholder="${esc(placeholder)}"></div>`;
+      const fields=wide?columns:measures;
+      const settings='<p class="description">Divides counted events by a declared population at risk. What the denominator counts is part of the result.</p>'
+        +`<div class="field"><label class="field-label" for="rate-source">Records arrive as</label><select id="rate-source">`
+        +[['points','points, one per subject'],['table','a table']].map(([v,t])=>`<option value="${v}" ${(draft.source||'points')===v?'selected':''}>${t}</option>`).join('')+'</select></div>'
+        +(draft.source==='table'
+          ?`<div class="field"><label class="field-label" for="rate-form">The table holds</label><select id="rate-form">`
+            +`<option value="long" ${!wide?'selected':''}>one row per measure, named in a key column</option>`
+            +`<option value="wide" ${wide?'selected':''}>both numbers on each row, as columns</option></select></div>`
+            +(wide?'':pick('rate-measure','Key column holding the measure names','measureKey',columns,'measure'))
+          :'')
+        +pick('rate-numerator',wide?'Numerator column (what is counted)':'Numerator (what is counted)','numeratorField',fields,'deaths')
+        +pick('rate-denominator',wide?'Denominator column (units at risk)':'Denominator (units at risk)','denominatorField',fields,'population')
+        +`<div class="field"><label class="field-label" for="rate-unit">The denominator counts</label><select id="rate-unit" data-rate="denominatorUnit">`
+        +['people','houses','households','person-time','other'].map(u=>`<option value="${u}" ${draft.denominatorUnit===u?'selected':''}>${u}</option>`).join('')+'</select></div>'
+        +`<div class="field"><label class="field-label" for="rate-kind">Kind</label><select id="rate-kind" data-rate="rateKind">`
+        +['proportion','ratio'].map(k=>`<option value="${k}" ${draft.rateKind===k?'selected':''}>${k==='proportion'?'proportion — numerator is part of the denominator':'ratio — events per unit, may exceed one'}</option>`).join('')+'</select></div>'
+        +`<div class="field"><label class="field-label" for="rate-multiplier">Per</label><select id="rate-multiplier" data-rate-number="multiplier">`
+        +[1,100,1000,10000,100000].map(m=>`<option value="${m}" ${draft.multiplier===m?'selected':''}>${m.toLocaleString()}</option>`).join('')+'</select></div>'
+        +pick('rate-group','Group by (optional)','groupBy',draft.source==='table'?columns:[],'distance_m',true)
+        +`<div class="field"><label class="field-label" for="rate-band">Band width for a numeric grouping (optional)</label><input id="rate-band" type="number" min="0" data-rate-number="bandWidth" value="${draft.bandWidth??''}"></div>`
+        +`<div class="field"><label class="field-label" for="rate-minimum">Smallest denominator that gets a rate</label><input id="rate-minimum" type="number" min="0" data-rate-number="minimumDenominator" value="${draft.minimumDenominator}"></div>`
+        +text('rate-period','Period the numerator covers','numeratorPeriod','1854 outbreak')
+        +text('rate-vintage','Vintage of the denominator','denominatorVintage','1855 map')
+        +'<p class="muted">A proportion above one is refused; a ratio can exceed one. A group below the smallest denominator gets its counts and no rate.</p>';
+      if(!draft.numeratorField||!draft.denominatorField)return {settings,preview:'<p class="muted">Choose the numerator and the denominator to see the rates.</p>'};
+      if(!table)return {settings,preview:'<p class="muted">The rates are computed when the workflow runs'
+        +(draft.source==='table'?', and shown here once the table can be read without a run.':'.')+'</p>'};
+      try{
+        const records=wide?fromWideTable(table,[draft.numeratorField,draft.denominatorField,draft.groupBy??'']):fromTable(table,draft.measureKey||'measure');
+        const rates=computeRate(records,draft);
+        const preview='<table class="relate-shares"><thead><tr><th>Group</th><th>Numerator</th><th>Denominator</th>'
+          +`<th>Per ${draft.multiplier.toLocaleString()}</th></tr></thead><tbody>`
+          +rates.rows.map(r=>`<tr><th scope="row">${esc(r.label)}</th><td>${r.numerator.toLocaleString()}</td><td>${r.denominator.toLocaleString()}</td>`
+            +`<td${r.rate===null?' class="profile-flag"':''}>${r.rate===null?esc(r.reason??'no rate'):r.rate.toLocaleString(undefined,{maximumFractionDigits:2})}</td></tr>`).join('')
+          +'</tbody></table>';
+        return {settings,preview};
+      }catch(error){return {settings,message:{tone:'refusal' as const,text:errorMessage(error)},blocked:true};}
+    },
+    wire:(root,draft,redraw)=>{
+      const on=(selector:string,fn:(el:HTMLInputElement&HTMLSelectElement)=>void)=>
+        root.querySelectorAll<HTMLInputElement&HTMLSelectElement>(selector).forEach(el=>el.addEventListener('change',()=>{fn(el);redraw();}));
+      on('#rate-source',el=>{draft.source=el.value==='table'?'table':'points';if(draft.source==='points')delete draft.tableForm;});
+      on('#rate-form',el=>{draft.tableForm=el.value==='wide'?'wide':'long';});
+      on('[data-rate]',el=>{const key=el.dataset.rate!;const v=el.value.trim();
+        if(key==='groupBy'||key==='measureKey'){if(v)(draft as unknown as Record<string,string>)[key]=v;else delete (draft as unknown as Record<string,unknown>)[key];}
+        else (draft as unknown as Record<string,string>)[key]=v;});
+      on('[data-rate-number]',el=>{(draft as unknown as Record<string,number|undefined>)[el.dataset.rateNumber!]=el.value===''?undefined:Number(el.value);});
+    },
+    apply:draft=>{
+      change(w=>{const target=getNode(w,nodeId,'rate');const was=target.params.source??'points';target.params=draft;
+        // Points and a table are not the same shape, so changing which one disconnects what was wired.
+        if((draft.source??'points')!==was)w.edges=w.edges.filter(e=>e.to!==nodeId);});
+    },
+  },esc);
+}
+
+/** DEDUPLICATE RECORDS' ONE SENTENCE (experiment 186). */
+function dedupSentence(p:import('./types.js').ParamsByType['deduplicate_points']):string{
+  if(p.format==='table')return `Finds rows of one table that are one record entered twice, by ${(p.blockColumns?.length?p.blockColumns:['its primary key']).join(', ')}.`;
+  return `Finds records in two or more point layers that are the same place: names ${p.nameMatch==='fuzzy'?`within ${p.fuzzyThreshold}`:'equal'} and within ${p.nearDistanceM} m.`;
+}
+
+/** DEDUPLICATE RECORDS' SETTINGS, for its dialog: the way in, and what that way compares. Built from a draft. */
+function dedupSettings(n:WorkflowNode<'deduplicate_points'>,p:import('./types.js').ParamsByType['deduplicate_points']):string{
+  const tabular=p.format==='table';
+  let html=`<div class="field"><label class="field-label" for="dedup-format">The records are</label>`
+    +`<select id="dedup-format"><option value="points" ${!tabular?'selected':''}>Points, in two or more sources</option>`
+    +`<option value="table" ${tabular?'selected':''}>Rows of one table</option></select></div>`;
+    const offered=tabular?Object.keys(upstreamKeyValues(n)??{}):[];
+    const upTable=(()=>{const edge=workflow.edges.find(e=>e.to===n.id&&e.port==='records');
+      const up=edge?workflow.nodes.find(m=>m.id===edge.from):undefined;
+      return up?.type==='table_input'?up.params.data:undefined;})();
+    const tableColumns=upTable?[...upTable.keys,upTable.valueField]:offered;
+    const pick=(key:'blockColumns'|'compareColumns',legend:string,fallback:string[])=>
+      `<fieldset class="field exposure-list"><legend class="field-label">${legend}</legend>`
+      +tableColumns.map(name=>`<label class="check"><input type="checkbox" data-dedup-columns="${key}" value="${esc(name)}" `
+        +`${(p[key]?.length?p[key]:fallback).includes(name)?'checked':''}> ${esc(name)}</label>`).join('')+`</fieldset>`;
+    if(tabular){
+      const block=p.blockColumns?.length?p.blockColumns:upTable?.primaryKey??[];
+      html+=`<p class="description">Compares rows that share the columns identifying a row, by default the table's primary key. `
+        +`Rows identical on every compared column are one record entered twice and merge on their own. Any disagreement comes to you, and you choose which row to keep.</p>`
+        +(tableColumns.length?pick('blockColumns','Rows are the same record only if they share',upTable?.primaryKey??[])
+          +pick('compareColumns','Compare these columns',tableColumns.filter(c=>!block.includes(c)))
+          :'<p class="description">Connect a table to choose its columns.</p>')
+        +`<label class="field-label" for="dedup-name-match">Text comparison</label>`
+        +`<select id="dedup-name-match" data-dedup="nameMatch">`
+        +`<option value="exact" ${p.nameMatch==='exact'?'selected':''}>Exact, after normalising</option>`
+        +`<option value="fuzzy" ${p.nameMatch==='fuzzy'?'selected':''}>Jaro-Winkler similarity</option></select>`
+        +(p.nameMatch==='fuzzy'?`<label class="field-label" for="dedup-fuzzy">Similarity at or above</label>`
+          +`<input id="dedup-fuzzy" data-dedup="fuzzyThreshold" type="number" min="0.5" max="1" step="0.01" value="${p.fuzzyThreshold}">`:'');
+    }else html+=`<p class="description">Finds records in two or more sources that are the same place. A pair must pass BOTH tests to merge on its own; passing one asks you.</p>`
+    if(!tabular)html+=`<label class="field-label" for="dedup-name-field">Name attribute</label>`
+      +`<input id="dedup-name-field" data-dedup="nameField" maxlength="60" value="${esc(p.nameField)}">`
+      +`<label class="field-label" for="dedup-name-match">Name comparison</label>`
+      +`<select id="dedup-name-match" data-dedup="nameMatch">`
+      +`<option value="fuzzy" ${p.nameMatch==='fuzzy'?'selected':''}>Jaro-Winkler similarity</option>`
+      +`<option value="exact" ${p.nameMatch==='exact'?'selected':''}>Exact, after normalising</option>`
+      +`</select>`
+      +(p.nameMatch==='fuzzy'?`<label class="field-label" for="dedup-fuzzy">Similarity at or above</label>`
+        +`<input id="dedup-fuzzy" data-dedup="fuzzyThreshold" type="number" min="0.5" max="1" step="0.01" value="${p.fuzzyThreshold}">`:'')
+      +`<label class="field-label" for="dedup-block">Compare pairs within (m)</label>`
+      +`<input id="dedup-block" data-dedup="blockDistanceM" type="number" min="1" max="50000" step="10" value="${p.blockDistanceM}">`
+      +`<p class="muted">Pairs further apart than this are never compared. It is the blocking rule, and the receipt says how many pairs it withheld.</p>`
+      +`<label class="field-label" for="dedup-near">Count as the same place within (m)</label>`
+      +`<input id="dedup-near" data-dedup="nearDistanceM" type="number" min="1" max="50000" step="5" value="${p.nearDistanceM}">`
+      +`<p class="muted">Two sources digitise a building, a compound and a signpost differently, so this is a measurement on your data rather than a default worth trusting.</p>`
+      +`<label class="field-label" for="dedup-match">Merge automatically at a score of</label>`
+      +`<input id="dedup-match" data-dedup="matchThreshold" type="number" min="1" max="2" step="1" value="${p.matchThreshold}">`
+      +`<label class="field-label" for="dedup-review">Ask me at a score of</label>`
+      +`<input id="dedup-review" data-dedup="reviewThreshold" type="number" min="0" max="2" step="1" value="${p.reviewThreshold}">`
+      +`<p class="muted">A pair scores one point for the name and one for the distance. Two means both agreed; one means they disagree about something and the answer is yours.</p>`;
+  return html;
+}
+
+/** DEDUPLICATE RECORDS' DIALOG (experiment 186): every setting on a draft. What a run found, and the pairs that wait
+ *  for a person, stay in the Inspector's Result and the review dialog. */
+function openDedupConfig(nodeId:string){
+  const node=getNode(workflow,nodeId,'deduplicate_points');
+  type Draft=import('./types.js').ParamsByType['deduplicate_points'];
+  openConfigDialog<Draft>({
+    id:'dedup-config',widget:'Deduplicate records',step:node.params.label||TYPES.deduplicate_points.title,draft:structuredClone(node.params),
+    sections:draft=>{
+      const settings=dedupSettings(node,draft);
+      return {settings,preview:'<p class="muted">The pairs are compared when the workflow runs; what it found, and the pairs that wait for you, are in the Inspector\u2019s Result.</p>'};
+    },
+    wire:(root,draft,redraw)=>{
+      const on=(selector:string,fn:(el:HTMLInputElement&HTMLSelectElement)=>void)=>
+        root.querySelectorAll<HTMLInputElement&HTMLSelectElement>(selector).forEach(el=>el.addEventListener('change',()=>{fn(el);redraw();}));
+      on('#dedup-format',el=>{const f=el.value as Draft['format'];draft.format=f;
+        // Text in a table is compared exactly unless somebody asks otherwise; names across sources are not.
+        draft.nameMatch=f==='points'?'fuzzy':'exact';});
+      on('[data-dedup]',el=>{(draft as unknown as Record<string,unknown>)[el.dataset.dedup!]=(el as HTMLElement as HTMLInputElement).type==='number'?Number(el.value):el.value;});
+      on('[data-dedup-columns]',el=>{const key=el.dataset.dedupColumns as 'blockColumns'|'compareColumns';
+        draft[key]=[...root.querySelectorAll<HTMLInputElement>(`[data-dedup-columns="${key}"]:checked`)].map(b=>b.value);});
+    },
+    apply:draft=>{
+      change(w=>{const target=getNode(w,nodeId,'deduplicate_points');const was=target.params.format??'points';
+        target.params=draft;
+        // WHAT THE RECORDS ARE decides the ports, so the edges that no longer fit are removed with it.
+        if((draft.format??'points')!==was){const ports=new Set(nodeInputs(target).map(([port])=>port));
+          w.edges=w.edges.filter(edge=>edge.to!==nodeId||ports.has(edge.port));}});
+    },
+  },esc);
+}
+
 /** THE INSPECTOR'S ONE SENTENCE for Map (experiment 186). */
 function mapSentence(n:WorkflowNode<'map_output'>):string{
   const layers=workflow.edges.filter(e=>e.to===n.id).map(e=>workflow.nodes.find(x=>x.id===e.from)).filter(Boolean)
@@ -2642,7 +2820,8 @@ function renderInspector(){
       try{
         const planned=relateShape(joinLeft,joinRight,{on:p.on,...(p.alsoOn?.length?{alsoOn:p.alsoOn}:{}),
           ...(p.within?{within:p.within}:{}),...(p.shiftDays?{shiftDays:p.shiftDays}:{}),bring:p.bring,
-          ...(p.normalisation?{normalisation:p.normalisation}:{}),...(p.measureKey?{measureKey:p.measureKey}:{})});
+          ...(p.normalisation?{normalisation:p.normalisation}:{}),...(p.measureKey?{measureKey:p.measureKey}:{}),
+          ...(p.rightOn?{rightOn:p.rightOn}:{}),...(p.spelling?{spelling:p.spelling}:{})});
         const gaps=planned.overlap.gaps.length;
         const decided=p.unmatched&&decisionMatches(p.unmatched.signature,planned)?p.unmatched:undefined;
         state=!gaps?''
@@ -2793,27 +2972,15 @@ function renderInspector(){
       +(rates?'<div class="notice">The rate ratio\'s interval is a log-normal approximation and is not a p-value. It treats the events as independent, which a transmitted disease is not, so it is narrower than clustered events warrant. A group with no events has no ratio, and adding half an event to make one is an assumption rather than a measurement, so the estimate reports why it has no value. A declared study design decides whether a rate ratio may be reported: a cohort or an ecological study, as for a Poisson regression.</div>':'')
       +(rates?'':'<div class="notice">Each estimate names its interval method — Katz log for the risk ratio, Wald log for the odds ratio, unpooled Wald for the risk difference — and none claims agreement with Epi Info, whose displayed labels for these quantities nobody here has verified. An empty cell is unknown rather than zero and is refused. A group with no cases has no risk ratio, and adding half a case to make one is an assumption rather than a measurement, so the estimate reports why it has no value while the ones that are still defined stand. The tests — chi-square, Mantel-Haenszel, Yates, Fisher, mid-P — are not built.</div>');
   }else if(n.type==='rate'){
-    const p=n.params;
-    const field=(id:string,label:string,key:string,value:string,placeholder='')=>`<div class="field"><label class="field-label" for="${id}">${label}</label><input id="${id}" data-slr="${key}" maxlength="80" value="${esc(value)}" placeholder="${esc(placeholder)}"></div>`;
-    content+='<p class="description">Divides counted events by a declared population at risk. What the denominator counts is part of the result.</p>'
-      // A denominator usually arrives as a table, not as points: Snow's two water companies are
-      // rows, not places. The kind of input is stated here because it decides what the records
-      // port will accept. Experiment 134.
-      +`<div class="field"><label class="field-label" for="rate-source">Records arrive as</label><select id="rate-source" data-rate-source>${[['points','points, one per subject'],['table','a table, one row per measure']].map(([value,text])=>`<option value="${value}" ${(p.source||'points')===value?'selected':''}>${text}</option>`).join('')}</select></div>`
-      +(p.source==='table'?field('rate-measure','Key column holding the measure names','measureKey',p.measureKey||'','measure'):'')
-      +nodeInputs(n).map(([port,type])=>`<div class="field"><label class="field-label" for="rate-${port}">Records input</label><select id="rate-${port}" data-map-port="${port}"><option value="">Select input</option>${workflow.nodes.filter(x=>x.id!==n.id&&outputOf(x)===type).map(x=>`<option value="${esc(x.id)}" ${workflow.edges.some(e=>e.to===n.id&&e.port===port&&e.from===x.id)?'selected':''}>${esc(x.params.label||TYPES[x.type].title)}</option>`).join('')}</select></div>`).join('')
-      +field('rate-numerator','Numerator attribute (what is counted)','numeratorField',p.numeratorField,'deaths')
-      +field('rate-denominator','Denominator attribute (units at risk)','denominatorField',p.denominatorField,'population')
-      +`<div class="field"><label class="field-label" for="rate-unit">The denominator counts</label><select id="rate-unit" data-slr="denominatorUnit">${['people','houses','households','person-time','other'].map(u=>`<option value="${u}" ${p.denominatorUnit===u?'selected':''}>${u}</option>`).join('')}</select></div>`
-      +`<div class="field"><label class="field-label" for="rate-kind">Kind</label><select id="rate-kind" data-slr="rateKind">${['proportion','ratio'].map(k=>`<option value="${k}" ${p.rateKind===k?'selected':''}>${k==='proportion'?'proportion — numerator is part of the denominator':'ratio — events per unit, may exceed one'}</option>`).join('')}</select></div>`
-      +`<div class="field"><label class="field-label" for="rate-multiplier">Per</label><select id="rate-multiplier" data-rate-number="multiplier">${[1,100,1000,10000,100000].map(m=>`<option value="${m}" ${p.multiplier===m?'selected':''}>${m.toLocaleString()}</option>`).join('')}</select></div>`
-      +field('rate-group','Group by attribute (optional)','groupBy',p.groupBy||'','distance_m')
-      +`<div class="field"><label class="field-label" for="rate-band">Band width for a numeric grouping (optional)</label><input id="rate-band" type="number" min="0" data-rate-number="bandWidth" value="${p.bandWidth??''}"></div>`
-      +`<div class="field"><label class="field-label" for="rate-minimum">Smallest denominator that gets a rate</label><input id="rate-minimum" type="number" min="0" data-rate-number="minimumDenominator" value="${p.minimumDenominator}"></div>`
-      +field('rate-period','Period the numerator covers','numeratorPeriod',p.numeratorPeriod,'1854 outbreak')
-      +field('rate-vintage','Vintage of the denominator','denominatorVintage',p.denominatorVintage,'1855 map')
-      +'<div class="notice">A rate whose denominator is unstated cannot be compared with any other rate: deaths per house is not a mortality rate. A proportion cannot exceed one and is refused if it does; a ratio of events per unit can. Groups below the stated minimum report their counts and no rate, because a rate from a handful of units is unstable rather than precise. The two vintages are recorded and compared, since a numerator and a denominator measured at different times describe different populations.'
-      +(p.source==='table'?' A table is read as one row per measure per subject: the key column named above holds the measure names, and the other key columns name the subject. Changing the kind of input disconnects what was wired, because points and a table are not the same shape.':'')+'</div>';
+    // THE STANDARD INSPECTOR (experiment 186): the name, the input, one sentence, Configure…, and what the run gave.
+    const p=n.params,ran=result?.receipts.some(r=>r.nodeId===n.id);
+    const why=result?.unfinished?.find(u=>u.nodeId===n.id)?.message;
+    content+=standardSection('Name',labelForm('rate-label','Name',p.label||TYPES.rate.title));
+    content+=standardSection('Inputs',standardInputs(n));
+    content+=standardSection('Settings',`<p class="standard-sentence">${esc(rateSentence(p))}</p>`
+      +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button></div>');
+    content+=standardSection('Result',`<p class="standard-result${why?' standard-result-warning':''}">${esc(why?`The last run could not compute this step: ${why}`
+      :ran?'Computed in the last run: the rates are in its table.':'Not run yet.')}</p>`);
   }else if(n.type==='case_series'){
     const p=n.params;
     // A TABLE OR POINTS (experiment 187): a weekly table of counts, Brazil's, is read as rows whose value is the count.
@@ -2888,54 +3055,15 @@ function renderInspector(){
       +`<label class="field-option"><input type="checkbox" data-param="showExcluded"${n.params.showExcluded!==false?' checked':''}> Show the excluded points on a connected map</label>`
       +`<p class="muted">They are drawn in the colour the map already uses for outside, and are not passed to anything downstream. A count tells you how many were set aside; seeing them tells you whether setting them aside was right.</p>`;
   }else if(n.type==='deduplicate_points'){
-    const p=n.params,linkage=result?.linkages?.[n.id],tabular=p.format==='table';
-    const offered=tabular?Object.keys(upstreamKeyValues(n)??{}):[];
-    const upTable=(()=>{const edge=workflow.edges.find(e=>e.to===n.id&&e.port==='records');
-      const up=edge?workflow.nodes.find(m=>m.id===edge.from):undefined;
-      return up?.type==='table_input'?up.params.data:undefined;})();
-    const tableColumns=upTable?[...upTable.keys,upTable.valueField]:offered;
-    const pick=(key:'blockColumns'|'compareColumns',legend:string,fallback:string[])=>
-      `<fieldset class="field exposure-list"><legend class="field-label">${legend}</legend>`
-      +tableColumns.map(name=>`<label class="check"><input type="checkbox" data-dedup-columns="${key}" value="${esc(name)}" `
-        +`${(p[key]?.length?p[key]:fallback).includes(name)?'checked':''}> ${esc(name)}</label>`).join('')+`</fieldset>`;
-    content+=labelForm('dedup-label','Node label',p.label||'Deduplicated records')
-      +`<label class="field-label" for="dedup-format">The records are</label>`
-      +`<select id="dedup-format"><option value="points" ${tabular?'':'selected'}>Points, in two or more sources</option>`
-      +`<option value="table" ${tabular?'selected':''}>Rows of one table</option></select>`;
-    if(tabular){
-      const block=p.blockColumns?.length?p.blockColumns:upTable?.primaryKey??[];
-      content+=`<p class="description">Compares rows that share the columns identifying a row, by default the table's primary key. `
-        +`Rows identical on every compared column are one record entered twice and merge on their own. Any disagreement comes to you, and you choose which row to keep.</p>`
-        +(tableColumns.length?pick('blockColumns','Rows are the same record only if they share',upTable?.primaryKey??[])
-          +pick('compareColumns','Compare these columns',tableColumns.filter(c=>!block.includes(c)))
-          :'<p class="description">Connect a table to choose its columns.</p>')
-        +`<label class="field-label" for="dedup-name-match">Text comparison</label>`
-        +`<select id="dedup-name-match" data-dedup="nameMatch">`
-        +`<option value="exact" ${p.nameMatch==='exact'?'selected':''}>Exact, after normalising</option>`
-        +`<option value="fuzzy" ${p.nameMatch==='fuzzy'?'selected':''}>Jaro-Winkler similarity</option></select>`
-        +(p.nameMatch==='fuzzy'?`<label class="field-label" for="dedup-fuzzy">Similarity at or above</label>`
-          +`<input id="dedup-fuzzy" data-dedup="fuzzyThreshold" type="number" min="0.5" max="1" step="0.01" value="${p.fuzzyThreshold}">`:'');
-    }else content+=`<p class="description">Finds records in two or more sources that are the same place. A pair must pass BOTH tests to merge on its own; passing one asks you.</p>`
-    if(!tabular)content+=`<label class="field-label" for="dedup-name-field">Name attribute</label>`
-      +`<input id="dedup-name-field" data-dedup="nameField" maxlength="60" value="${esc(p.nameField)}">`
-      +`<label class="field-label" for="dedup-name-match">Name comparison</label>`
-      +`<select id="dedup-name-match" data-dedup="nameMatch">`
-      +`<option value="fuzzy" ${p.nameMatch==='fuzzy'?'selected':''}>Jaro-Winkler similarity</option>`
-      +`<option value="exact" ${p.nameMatch==='exact'?'selected':''}>Exact, after normalising</option>`
-      +`</select>`
-      +(p.nameMatch==='fuzzy'?`<label class="field-label" for="dedup-fuzzy">Similarity at or above</label>`
-        +`<input id="dedup-fuzzy" data-dedup="fuzzyThreshold" type="number" min="0.5" max="1" step="0.01" value="${p.fuzzyThreshold}">`:'')
-      +`<label class="field-label" for="dedup-block">Compare pairs within (m)</label>`
-      +`<input id="dedup-block" data-dedup="blockDistanceM" type="number" min="1" max="50000" step="10" value="${p.blockDistanceM}">`
-      +`<p class="muted">Pairs further apart than this are never compared. It is the blocking rule, and the receipt says how many pairs it withheld.</p>`
-      +`<label class="field-label" for="dedup-near">Count as the same place within (m)</label>`
-      +`<input id="dedup-near" data-dedup="nearDistanceM" type="number" min="1" max="50000" step="5" value="${p.nearDistanceM}">`
-      +`<p class="muted">Two sources digitise a building, a compound and a signpost differently, so this is a measurement on your data rather than a default worth trusting.</p>`
-      +`<label class="field-label" for="dedup-match">Merge automatically at a score of</label>`
-      +`<input id="dedup-match" data-dedup="matchThreshold" type="number" min="1" max="2" step="1" value="${p.matchThreshold}">`
-      +`<label class="field-label" for="dedup-review">Ask me at a score of</label>`
-      +`<input id="dedup-review" data-dedup="reviewThreshold" type="number" min="0" max="2" step="1" value="${p.reviewThreshold}">`
-      +`<p class="muted">A pair scores one point for the name and one for the distance. Two means both agreed; one means they disagree about something and the answer is yours.</p>`;
+    // THE STANDARD INSPECTOR (experiments 186 and 193): the name, the inputs, one sentence of what it compares or links,
+    // Configure…, and what the last run did -- the pairs counted, and the review, one button away.
+    const p=n.params,linkage=result?.linkages?.[n.id];
+    content+=standardSection('Name',labelForm('dedup-label','Name',p.label||'Deduplicated records'));
+    content+=standardSection('Inputs',standardInputs(n));
+    content+=standardSection('Settings',`<p class="standard-sentence">${esc(dedupSentence(p))}</p>`
+      +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button></div>');
+    const why=result?.unfinished?.find(u=>u.nodeId===n.id)?.message;
+    let summary='';
     if(linkage){
       const waiting=linkage.candidates.filter(c=>c.classification==='review'&&!c.decided);
       const review=linkage.candidates.filter(c=>c.classification==='review').length;
@@ -2952,7 +3080,7 @@ function renderInspector(){
       const row=(label:string,count:number,{compared=true,emphasis=false}={})=>
         `<tr${emphasis?' class="emphasis"':''}><th scope="row">${label}</th><td>${count.toLocaleString()}</td>`
         +`<td>${share(count,considered)}</td><td>${compared?share(count,linkage.compared):'—'}</td></tr>`;
-      content+=`<div class="inspector-divider"></div><span class="inspector-section">This run</span>`
+      summary+=`<span class="inspector-section">This run</span>`
         +`<table class="dedup-summary"><thead><tr><th>Pairs</th><th>Count</th><th title="Of every pair considered">% all</th><th title="Of the pairs actually compared">% compared</th></tr></thead><tbody>`
         +row('Considered',considered,{compared:false})
         +row('Never compared',linkage.blocked,{compared:false})
@@ -2967,10 +3095,12 @@ function renderInspector(){
         +`<tr class="emphasis"><th scope="row">Merged away</th><td>${linkage.merged.toLocaleString()}</td><td>${share(linkage.merged,linkage.inputCount)}</td><td></td></tr>`
         +`<tr><th scope="row">Came out</th><td>${(linkage.inputCount-linkage.merged).toLocaleString()}</td><td>${share(linkage.inputCount-linkage.merged,linkage.inputCount)}</td><td></td></tr>`
         +`</tbody></table>`;
-      if(waiting.length)content+=`<button id="dedup-review-open" class="button primary">Review ${waiting.length} ${waiting.length===1?'pair':'pairs'}</button>`
+      if(waiting.length)summary+=`<button id="dedup-review-open" class="button primary">Review ${waiting.length} ${waiting.length===1?'pair':'pairs'}</button>`
         +`<p class="muted">Each stays two records until it is decided. The dialog shows both records side by side with every attribute each one carries, which is what the decision actually rests on.</p>`;
-      if(p.decisions.length)content+=`<p class="muted">${p.decisions.length} ${p.decisions.length===1?'decision':'decisions'} recorded. Editing either record lapses the one made about it.</p>`;
+      if(p.decisions.length)summary+=`<p class="muted">${p.decisions.length} ${p.decisions.length===1?'decision':'decisions'} recorded. Editing either record lapses the one made about it.</p>`;
     }
+    content+=standardSection('Result',(why||!linkage?`<p class="standard-result${why?' standard-result-warning':''}">`
+      +`${esc(why?`The last run could not compute this step: ${why}`:'Not run yet.')}</p>`:'')+summary);
     }else if(n.type==='find_health_facilities'){
     // THE STANDARD INSPECTOR (experiments 186 and 190): name, inputs, one sentence of what it finds and from where, the
     // fetch that acquisition needs, Configure…, and what it holds. Every setting is in the dialog.
@@ -3087,10 +3217,14 @@ function renderInspector(){
       content+='<button id="prepare-raster" class="button primary">Prepare GeoTIFF input</button><p class="description">Acquire a rectangular window and enter source metadata/citation. Reopen to edit metadata without re-uploading. Use Clip raster to apply the polygon mask.</p>';if(n.params.asset)content+=`<p>${esc(n.params.asset.source.filename)}<br>${n.params.asset.source.metadata.width} x ${n.params.asset.source.metadata.height} source cells; retained ${n.params.asset.metadata.width} x ${n.params.asset.metadata.height}.</p><details><summary>GeoTIFF metadata and source</summary><pre>${esc(JSON.stringify(n.params.asset,null,2))}</pre></details>`;content+='<button id="download-node-raster" class="button">Download GeoTIFF</button><p class="description">The retained window at native resolution, with its georeferencing and source metadata.</p>';}else content+='<section class="source-card" data-clip-parameters><span class="inspector-section">Processing parameters</span><div class="detail-row"><span>Cutline</span><strong>Separate clip boundary</strong></div><div class="detail-row"><span>Inclusion rule</span><strong>Configured below</strong></div><div class="detail-row"><span>Resolution</span><strong>Native pixels</strong></div><div class="detail-row"><span>Outside polygon</span><strong>NoData</strong></div><p>Start with a copy of Study area, then save adjustments on this operation. Study area remains unchanged. Map displays the result.</p></section><button id="preview-raster-clip" class="button primary">Preview and adjust</button><button id="add-raster-map" class="button">Add raster map</button>';
     if(n.type==='clip_raster'){content+='<div class="field"><label class="field-label" for="clip-method">Pixel inclusion</label><select id="clip-method"><option value="all-touched" '+(n.params.method==='all-touched'?'selected':'')+'>All touched</option><option value="cell-center" '+(n.params.method==='cell-center'?'selected':'')+'>Cell center inside</option></select><label class="field-label" for="clip-margin">Outer margin (native pixels, 0-1)</label><input id="clip-margin" type="number" min="0" max="1" step="0.25" value="'+(n.params.marginPixels||0)+'"><small>All touched includes a cell when the boundary covers part of its area or crosses it, so a boundary running exactly along a cell border does not pull in the cell outside it. This matches GDAL except where a boundary vertex lies exactly on a cell border. For an outward margin, prepare the GeoTIFF with one pixel of extra source coverage; a margin is a grid distance with no GDAL equivalent. NoData is never filled.</small></div>';content+='<p class="description">'+(n.params.cutline?'Saved clip boundary; independent of Study area edits.':'Boundary will be initialized from the connected Study area.')+'</p><button id="reset-clip-boundary" class="button small" '+(!n.params.cutline?'disabled':'')+'>Use Study area boundary</button>';if(n.params.cutline)content+='<div class="source-card"><span class="inspector-section">Clip extent (degrees)</span>'+geometryBounds(n.params.cutline.geometry).map((value,i)=>'<div class="detail-row"><span>'+['West','South','East','North'][i]+'</span><strong>'+value.toFixed(6)+'</strong></div>').join('')+'</div>';content+='<button id="download-node-raster" class="button">Download GeoTIFF</button><p class="description">The masked grid at native resolution. Cells outside the boundary are NoData, not absent.</p>';}
   }else if(n.type==='study_area'){
-    // THE COUNTRY, SAID ONCE, HERE. Every widget that needs one -- the population raster, the
-    // facilities export -- reads it from the area rather than asking again. An acquired boundary
-    // states it in its own identifier, so this shows that and need not be touched; a polygon
-    // somebody drew states nothing, and this is where it is said.
+    // THE STANDARD INSPECTOR (experiment 186): the name; no inputs; one sentence, the country and the map, which is this
+    // step's dialog; and what it holds -- the shape, what the boundary repair removed, and every extent it has had.
+    const p=n.params;
+    content+=standardSection('Name',`<form id="study-area-label-form" class="field"><label class="field-label" for="study-area-label">Study area label</label><input id="study-area-label" maxlength="100" required value="${esc(p.label||'My study area')}"><button type="submit" class="button small">Apply label</button></form>`);
+    content+=standardSection('Inputs',standardInputs(n));
+    // THE COUNTRY, SAID ONCE, HERE. Every widget that needs one -- the population raster, the facilities export -- reads it
+    // from the area rather than asking again.
+    let countryField='';
     {
       // PICKED ONCE, AND ONLY WHERE IT WAS NEVER PICKED. The practitioner, 2026-10-23: *"State
       // it once is best for manually derived study areas like bounding box, circle, hand drawn
@@ -3103,7 +3237,7 @@ function renderInspector(){
       // So it is stated, not asked. A bounding box, a circle or a drawn polygon was never picked
       // by country and has none to derive, and that is where the list belongs.
       const acquired=iso3Of((n.params as {boundary?:{provenance?:BoundaryProvenance}}).boundary?.provenance);
-      content+=acquired
+      countryField=acquired
         ?`<div class="field"><span class="field-label">Country</span>`
           +`<p class="muted">${esc(countryName(acquired))} (${esc(acquired)}), from the boundary this area was acquired as.</p></div>`
         :`<div class="field"><label class="field-label" for="area-country">Country</label>`
@@ -3112,28 +3246,38 @@ function renderInspector(){
           +COUNTRIES.map(c=>`<option value="${c.iso}" ${c.iso===n.params.country?'selected':''}>${esc(c.name)} (${c.iso})</option>`).join('')
           +`</select><small>Read by the widgets that need a country.</small></div>`;
     }
-    content+=`<form id="study-area-label-form" class="field"><label class="field-label" for="study-area-label">Study area label</label><input id="study-area-label" maxlength="100" required value="${esc(n.params.label||'My study area')}"><button type="submit" class="button small">Apply label</button></form>`;
-    content+=n.params.source==='drawn'?`<div class="source-card"><span class="inspector-section">${n.params.geometry?'Selected geometry':'No geometry yet'}</span><h3>${esc(n.params.label)}</h3><p>${n.params.geometry?`${n.params.selectionMode==='bbox'?'Bounding box':'Polygon'} · ${geometryVertices(n.params.geometry)} vertices`:'Draw a bounding box or polygon on the online map.'}</p></div><p class="description">The shape is stored in longitude, latitude order. Applying it generates N3 facts; Run workflow evaluates the readiness rule.</p>`:oldInspector(n);
-    // Every extent this area has had, newest first, each restorable. The practitioner,
-    // 2026-10-17: *"so investigators can go back to previous assumptions"*. An outbreak that
-    // crossed a border widens the area; finding it did not after all should be able to narrow it
-    // back WITHOUT losing the record that it was once wider -- which is why restoring appends
-    // rather than truncates.
-    if(n.params.source==='drawn'&&(n.params.revisions?.length??0)>1){
-      const history=n.params.revisions!;
-      content+=`<div class="inspector-divider"></div><span class="inspector-section">Extent history</span>`
-        +`<p class="muted">${history.length} extents kept. Restoring one records a new extent carrying the old shape; nothing is removed.</p>`
-        +`<ul class="record-list">`+history.map((r,i)=>{
-          const current=i===history.length-1;
-          const vertices=r.geometry?.coordinates?.[0]?.length;
-          return `<li><span>v${i+1} · ${esc(new Date(r.at).toLocaleString())}`
-            +`${r.restoredFrom?` · restored v${r.restoredFrom}`:''}`
-            +`${vertices?` · ${vertices-1} vertices`:''}</span>`
-            +(current?'<strong>current</strong>'
-              :`<button class="text-button" data-restore-extent="${i}">Restore this extent</button>`)+`</li>`;
-        }).join('')+`</ul>`;
-    }
-    content+=`<button id="edit-study-area" class="button primary">${n.params.geometry?'Edit area on map':'Select area on map'}</button>${n.params.geometry?'<button id="area-view-n3" class="text-button">Inspect N3 facts and rule ↗</button>':''}<div class="notice">Evaluation prompt: what should the next workflow node receive from this selection?</div>`;
+    const geometry=p.source==='drawn'?p.geometry:undefined;
+    content+=standardSection('Settings',`<p class="standard-sentence">${esc(p.source!=='drawn'?`From ${p.dataset||'a source dataset'}.`
+      :geometry?`${p.selectionMode==='bbox'?'A bounding box':p.selectionMode==='circle'?'A circle':'A polygon'} of ${geometryVertices(geometry)} vertices, in longitude, latitude order.`
+      :'No area yet: select one on the map.')}</p>`+countryField
+      +`<div class="inspector-actions"><button id="edit-study-area" class="button primary">${geometry?'Edit area on map':'Select area on map'}</button></div>`);
+    let held='';
+    if(p.source==='drawn'){
+      const boundary=p.boundary;
+      const repairs=boundary?.repairs??[];
+      held+=`<p class="standard-result">${geometry?`${esc(p.label)}: ${p.selectionMode==='bbox'?'bounding box':'polygon'} · ${geometryVertices(geometry)} vertices`
+        +(boundary?` · from ${esc(boundary.source)}`:''):'Not selected yet.'}</p>`
+        +(repairs.length?`<p>The boundary repair removed ${repairs.length} of ${boundary!.vertices} published vertices: `
+          +`${repairs.filter(r=>r.kind==='repeated').length} repeated straight after themselves, ${repairs.filter(r=>r.kind==='spike').length} at the tip of a zero-width spike`
+          +`${(()=>{const spiked=[...new Set(repairs.filter(r=>r.kind==='spike').map(r=>r.unit))];return spiked.length?` (${spiked.map(esc).join(', ')})`:'';})()}. `
+          +'No outline encloses a different area; each vertex is listed in the evidence.</p>':'')
+        +(geometry?'<button id="area-view-n3" class="text-button">Inspect N3 facts and rule \u2197</button>':'');
+        if(n.params.source==='drawn'&&(n.params.revisions?.length??0)>1){
+          const history=n.params.revisions!;
+          held+=`<span class="inspector-section">Extent history</span>`
+            +`<p class="muted">${history.length} extents kept. Restoring one records a new extent carrying the old shape; nothing is removed.</p>`
+            +`<ul class="record-list">`+history.map((r,i)=>{
+              const current=i===history.length-1;
+              const vertices=r.geometry?.coordinates?.[0]?.length;
+              return `<li><span>v${i+1} · ${esc(new Date(r.at).toLocaleString())}`
+                +`${r.restoredFrom?` · restored v${r.restoredFrom}`:''}`
+                +`${vertices?` · ${vertices-1} vertices`:''}</span>`
+                +(current?'<strong>current</strong>'
+                  :`<button class="text-button" data-restore-extent="${i}">Restore this extent</button>`)+`</li>`;
+            }).join('')+`</ul>`;
+        }
+    }else held+=oldInspector(n);
+    content+=standardSection('Result',held);
   }else if(n.type==='sample_satellite_files_at_points'){
     // AT POINTS OR OVER AREAS. Reading happens when the workflow runs, by range. Experiments 179 and 180.
     const p=n.params,operator=p.qaOperator??'>=',product=samplerProduct(n),grid=product?gridReaderFor(product):null;
@@ -4193,13 +4337,10 @@ function renderInspector(){
     const node=getNode(w,n.id,'case_series');
     if(seriesInput.value==='table'){node.params.source='table';delete node.params.weightField;}else delete node.params.source;
     w.edges=w.edges.filter(e=>e.to!==node.id);}));
-  const rateSource=document.querySelector<HTMLSelectElement>('[data-rate-source]');
-  if(rateSource)rateSource.addEventListener('change',()=>change(w=>{
-    const node=getNode(w,n.id,'rate');node.params.source=rateSource.value as 'points'|'table';
-    w.edges=w.edges.filter(e=>e.to!==node.id);}));
-  document.querySelectorAll<HTMLInputElement|HTMLSelectElement>('[data-rate-number]').forEach(el=>el.addEventListener('change',()=>change(w=>{
-    const node=required(w.nodes.find(x=>x.id===n.id));const key=required(el.dataset.rateNumber);
-    (node.params as unknown as Record<string,number|undefined>)[key]=el.value===''?undefined:Number(el.value);})));
+  if(n.type==='rate'){
+    optionalElement('#configure-step')?.addEventListener('click',()=>openRateConfig(n.id));
+    optionalElement('#rate-label')?.addEventListener('change',e=>change(w=>{getNode(w,n.id,'rate').params.label=control(e).value.trim()||TYPES.rate.title;}));
+  }
   const retrieve=document.querySelector<HTMLButtonElement>('#hf-retrieve');
   if(retrieve)retrieve.onclick=async e=>{
     const button=e.currentTarget as HTMLButtonElement;
@@ -4569,6 +4710,7 @@ function renderInspector(){
       const key=el.dataset.dedupColumns as 'blockColumns'|'compareColumns';
       node.params[key]=[...document.querySelectorAll<HTMLInputElement>(`[data-dedup-columns="${key}"]:checked`)].map(box=>box.value);
     })));
+  if(n.type==='deduplicate_points')optionalElement('#configure-step')?.addEventListener('click',()=>openDedupConfig(n.id));
   optionalElement('#dedup-review-open')?.addEventListener('click',()=>{
     const linkage=result?.linkages?.[n.id];
     if(!linkage)return;

@@ -7,7 +7,7 @@
 //                   | deduplicate-facilities-001
 //                   | measure-area-001 | mean-center-001
 //                   | reachability-soho-001 | corridor-soho-001
-//                   | relate-snow-001 | group-snow-001 | group-shares-snow-001 | area-join-snow-001
+//                   | relate-snow-001 | relate-spelling-sl-001 | group-snow-001 | group-shares-snow-001 | area-join-snow-001
 //                   | select-range-london-001
 //                   | regression-salmonella-001 | regression-nyc-001 (needs NYC_PKG)
 //                   | sample-satellite-s5p-001 | lag-response-brazil-001 | regression-strata-brazil-001
@@ -1124,6 +1124,57 @@ const builders={
       output:{cases:cases.map(c=>({note:c.note,request:c.request,emptied:c.emptied,
         table:{keys:c.table.keys,valueField:c.table.valueField,rowCount:c.table.rowCount,missingValueCount:c.table.missingValueCount,rows:rowsOf(c.table)}}))},
       note:'Recompute each case from `input`, `declaredParameters` and the case\'s `request`. Case 3 empties the row named in `emptied`.'
+    },files:{}};
+  },
+
+  'relate-spelling-sl-001'(){
+    // RELATE ALLOWING FOR SPELLING (experiment 193): Sierra Leone's cases by residential district, as the line list
+    // writes them ("Bo District"), related to OCHA COD-AB's districts as the population table writes them ("Bo",
+    // "Fabala" for Falaba). The teaching file's district column and the derived population table, both in the example.
+    const dir=new URL('../../example-2019-sierra-leone-measles/data/',import.meta.url);
+    let casesText,popText;
+    try{casesText=readFileSync(new URL('measles-sierra-leone-semisynthetic.csv',dir),'utf8');popText=readFileSync(new URL('district-population.csv',dir),'utf8');}
+    catch{throw new Error('example-2019-sierra-leone-measles, with data/district-population.csv, is not on this machine beside this repository.');}
+    const cases=parseCSV(casesText,250_000,40_000_000),pop=parseCSV(popText,1000,1_000_000);
+    const at=(t,name)=>{const i=t.headers.map(h=>h.trim()).indexOf(name);if(i<0)throw new Error(`No "${name}" column.`);return i;};
+    const d=at(cases,'Residential District'),counts=new Map();
+    for(const r of cases.rows){const v=(r[d]??'').trim();counts.set(v,(counts.get(v)??0)+1);}
+    const left={kind:'data-table',keys:['Residential District'],valueField:'cases',
+      rows:[...counts].map(([k,n])=>({key:{'Residential District':k},value:n})),rowCount:counts.size,missingValueCount:0};
+    const pd=at(pop,'district'),pc=at(pop,'adm2_pcode'),pw=at(pop,'worldpop_2021');
+    const right={kind:'data-table',keys:['district','adm2_pcode'],valueField:'worldpop_2021',
+      rows:pop.rows.filter(r=>(r[pd]??'').trim()).map(r=>({key:{district:r[pd].trim(),adm2_pcode:r[pc].trim()},value:Number(r[pw])})),
+      rowCount:0,missingValueCount:0};
+    right.rowCount=right.rows.length;
+    const requests=[
+      {note:'District dropped, spelling allowed to 0.88 (the default): the boundary\'s district brought across, the blank kept under a named category',
+        request:{on:'Residential District',rightOn:'district',bring:'district',spelling:{dropWords:['District'],threshold:0.88,decisions:{}}}},
+      {note:'The same at 0.96: Falaba\'s spelling, 0.956, is below it and not found',
+        request:{on:'Residential District',rightOn:'district',bring:'district',spelling:{dropWords:['District'],threshold:0.96,decisions:{}}}},
+      {note:'The same at 0.88 without dropping District: names that matched exactly after dropping it are compared with it',
+        request:{on:'Residential District',rightOn:'district',bring:'district',spelling:{dropWords:[],threshold:0.88,decisions:{}}}},
+    ];
+    const rowsOf=table=>table.rows.map(row=>({key:row.key,value:row.value}));
+    const out=requests.map(({note,request})=>{
+      const shape=relateShape(left,right,request);
+      const decided={...request,unmatched:{decision:'keep',label:'Not matched',signature:shape.signature}};
+      const table=relateTable(left,right,shape.overlap.gaps.length?decided:request).table;
+      return {note,request,unmatchedLabel:shape.overlap.gaps.length?'Not matched':null,
+        matches:shape.matches.map(({name,compared,match})=>({name,compared,outcome:match.outcome,value:match.value??null,
+          score:match.score??null,candidates:match.candidates})),
+        table:{keys:table.keys,valueField:table.valueField,rowCount:table.rowCount,rows:rowsOf(table)}};
+    });
+    return {fixture:{
+      ...base('relate-spelling-sl-001','relate_table','Relate a column from another table, allowing for spelling','src/spelling-match.ts#linkNames'),
+      source:'Fieldwork example 2019 Sierra Leone measles: the semisynthetic teaching file\'s Residential District, counted; and data/district-population.csv, OCHA COD-AB admin-2 district names (CC BY-IGO) with WorldPop 2021 totals (CC BY 4.0).',
+      declaredParameters:{
+        folding:'A name is NFKC-normalised, trimmed and lower-cased; every run of characters that are not a Unicode letter or number becomes one space; the ends are trimmed. Words named in dropWords, folded the same way, are then removed where a whole space-separated word equals one.',
+        matching:'Each distinct non-blank name of the first table\'s column is matched once against the distinct non-blank names of the second table\'s column. Equal folded names: exact, unless two or more second-table names fold equal (ambiguous). Otherwise every second-table name is scored by Jaro-Winkler on the folded forms; those at or above the threshold are candidates; candidates within 0.02 of the best are close; one close is a spelling match, two or more ambiguous, none none.',
+        jaroWinkler:'Jaro with a match window of floor(max(len)/2)-1, transpositions counted as mismatched matched pairs and halved; the Winkler boost of a common prefix up to 4 characters, scaling 0.1, applied only when Jaro exceeds 0.7.',
+        relate:'Each first-table row is related to the second-table row whose district equals its match, bringing that district. A row with no match (blank, none or ambiguous) is unmatched; where any is, the case keeps them under unmatchedLabel. The result gains "Residential District match" saying how each row matched.'},
+      input:{left:{keys:left.keys,valueField:left.valueField,rows:rowsOf(left)},right:{keys:right.keys,valueField:right.valueField,rows:rowsOf(right)}},
+      output:{cases:out},
+      note:'Recompute each case from `input`, `declaredParameters` and the case\'s `request`.'
     },files:{}};
   },
 

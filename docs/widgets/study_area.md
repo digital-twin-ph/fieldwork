@@ -37,11 +37,17 @@ facility search, the point grid, the coverage check and the area measurement all
 
 ## How to use it
 
+The step's panel holds its **Name**, one sentence saying what shape it holds, the **Country** where it was not taken
+from a boundary, and **Select area on map**, which opens the map where the area is chosen. **Result** says what it
+holds, what the boundary repair removed, and every extent it has had. Under that, **Manual**, **Evidence** and
+**Version**.
+
 1. Add the node and open it in the Inspector.
-2. Press **Choose study area**. Pan to where you are working.
+2. Press **Select area on map**. Pan to where you are working.
 3. Either draw — **Bounding box**, **Polygon** or **Point and radius** — or open **Use an
    administrative boundary**, enter a country, pick a level, press **Check this level**, and choose
-   the units you need.
+   the units you need. Or open **Use a boundary file you already have**, name the property holding each boundary's
+   name, and choose a GeoJSON file.
 4. Press **Apply study area**.
 5. Give it a label that says what it is. The label travels into the receipts.
 
@@ -49,10 +55,29 @@ Changing the shape later keeps the old one: the Inspector lists every extent you
 restores any of them, which records a new extent carrying the old shape rather than overwriting
 anything.
 
+### The boundary repair
+
+Published boundaries sometimes carry two faults that change no outline, and that this step would otherwise refuse:
+
+| Fault | What is removed |
+| --- | --- |
+| A point written twice in a row | The second copy |
+| A zero-width spike: the outline goes out along a line and comes straight back along it | The vertex at the tip |
+
+Neither changes the area any outline encloses. Every other vertex is kept as published. The repair runs on every
+boundary as it is read, a downloaded level or a file, and the dialog says what it removed, by district for a spike.
+
+**It is recorded, so it can be redone.** The evidence says how many of the published vertices were removed, by this
+rule, and lists each one by unit, kind and position. OCHA's districts of Sierra Leone are the case it was found on:
+84 repeated vertices across 14 districts, and one spike about a metre long in Bonthe.
+
+A ring that touches itself anywhere else is not repaired, and is still refused, because that is a different shape.
+
 ## What it will not do
 
 It does not simplify a boundary you took from a source. A published polygon is a claim about where
-a jurisdiction is, and thinning it would quietly change that claim.
+a jurisdiction is, and thinning it would quietly change that claim. The boundary repair above removes only what
+encloses no area, and says so.
 
 It does not fetch data by itself. It says *where*; a source widget says *what*.
 

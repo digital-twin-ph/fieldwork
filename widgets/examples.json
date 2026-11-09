@@ -377,7 +377,7 @@
       "id": "urn:fieldwork:example:nyc-asthma-ozone-2016-2025",
       "title": "Ozone and child asthma emergency visits, New York City, 2016–2025",
       "repository": "https://github.com/digital-twin-ph/example-2025-nyc-ozone",
-      "commit": "7d689b10da94fd2c4e078df9195a0d5de727e24d",
+      "commit": "c0215ab3fea89409cc0c6d49de0910517467d364",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2025-nyc-ozone",
       "licence": {
         "data": "Not redistributed",
@@ -428,8 +428,8 @@
         },
         {
           "path": "manual.json",
-          "sha256": "a36c247936b7f8f8b55728d5fe7a4401a33b466377166ccf78185710eed18f6f",
-          "bytes": 42014
+          "sha256": "c87cdabef8dc7efe59dfb9931da2e8f9992058edcf5a26ad4ecde2326441cbf8",
+          "bytes": 42034
         }
       ],
       "workflowCount": 6
@@ -438,7 +438,7 @@
       "id": "urn:fieldwork:example:brazil-dengue-rj-2024",
       "title": "Dengue in Rio de Janeiro state, Brazil, 2024",
       "repository": "https://github.com/digital-twin-ph/example-2024-brazil-dengue",
-      "commit": "b96cea69880c17e219678864c3d7c3299a60826d",
+      "commit": "527a8222e3e514f07dec60d1dfeb439308a6dc6b",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2024-brazil-dengue",
       "licence": {
         "data": "CC-BY-4.0",
@@ -513,8 +513,8 @@
         },
         {
           "path": "manual.json",
-          "sha256": "49b221b4e678c044f39a4a765125e887d6d790691bbdc0fe7dc65af3a669cf0f",
-          "bytes": 68818
+          "sha256": "384335de7511fb0f08961839096d68c4ce727ffee804f4d8b8391cc08ffa6913",
+          "bytes": 69739
         },
         {
           "path": "notes/what-aedes-mosquitoes-meet.md",
@@ -624,14 +624,14 @@
       "id": "urn:fieldwork:example:sierra-leone-measles",
       "title": "Measles in Sierra Leone, 2019 to 2023",
       "repository": "https://github.com/digital-twin-ph/example-2019-sierra-leone-measles",
-      "commit": "12a0ac98ee77848c2ca289fe0e2b1689ce8e133d",
+      "commit": "070906b4e0baa1694039a0ac1602d36ff870a7a6",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2019-sierra-leone-measles",
       "licence": {
         "data": "Used with the Sierra Leone FETP’s agreement for distributable training materials; modified for a public teaching repository",
         "source": "Sierra Leone Field Epidemiology Training Program, measles line list; de-identified and made semi-synthetic by the Fieldwork project",
         "note": "Stated in the repository’s README and CITATION.cff, which credit both contributions. No row is a person; the file is not surveillance data."
       },
-      "description": "A semi-synthetic measles line list of 2,606 suspected cases: the epidemic curve by month of onset, and the facilities that saw ten cases or more, found by name in GRID3’s register and mapped by band.",
+      "description": "A semi-synthetic measles line list of 2,606 suspected cases: the epidemic curve by month of onset, the facilities that saw ten cases or more, found by name in GRID3’s register and mapped by band, and cases per 100,000 people by district over the 2021 census, on OCHA’s districts.",
       "carries": {
         "workflow": true,
         "data": true,
@@ -643,7 +643,10 @@
         "chart_output",
         "find_health_facilities",
         "group_table",
+        "join_table_to_area",
         "map_output",
+        "rate",
+        "relate_table",
         "select_rows",
         "study_area",
         "table_input",
@@ -652,13 +655,13 @@
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "e5b73429823d3a4e1993d635e5df37e96ce9f73c1c7ccac386b02706028b5ba5",
-          "bytes": 364389
+          "sha256": "e2ea00285be5a4bd5f89651bf481d0cdefabbd99c4cbc32ec981633f1dce0646",
+          "bytes": 825374
         },
         {
           "path": "manual.json",
-          "sha256": "5c4ff1b90d3f8804aa67972bbd7bdc907687e6e62c4b1ce1d5d914fae802dce0",
-          "bytes": 21996
+          "sha256": "343333ea77ca1767a430578e07f752483a418df0d6507fc3e79904c009128685",
+          "bytes": 35240
         },
         {
           "path": "data/measles-sierra-leone-semisynthetic.csv",
@@ -667,8 +670,8 @@
         },
         {
           "path": "README.md",
-          "sha256": "767338e0a57da4e5dca9cfb4e9b5d87eeaa3e5403c4a77d78d5cffc9e4472dcb",
-          "bytes": 6862
+          "sha256": "129aaad7a2a1993b619f412bcc193f734b372468a3ff06b70a5652efbb819737",
+          "bytes": 8749
         },
         {
           "path": "CITATION.cff",
@@ -684,10 +687,20 @@
           "path": "docs/epicurve-compare.svg",
           "sha256": "e59f395c744a2161c80caeb2750dec756227e3fd3da786b26b577066ecfc4cdd",
           "bytes": 8812
+        },
+        {
+          "path": "data/district-population.csv",
+          "sha256": "3a3b0b83ec2067a3f5c29f2e1915069aed431082f5ff42ad19722897e3507606",
+          "bytes": 1030
+        },
+        {
+          "path": "data/districts-cod-ab.geojson",
+          "sha256": "f1dec9a51d5ed6a9d25a41e06c6b40c0ecb4f08835b713f6611d14f5564f3d1f",
+          "bytes": 787745
         }
       ],
-      "workflowCount": 2,
-      "notYet": "Cases by district on a map; the case classification by WHO’s definition, waiting on the FETP’s data dictionary."
+      "workflowCount": 3,
+      "notYet": "The case classification by WHO’s definition, waiting on the FETP’s data dictionary."
     }
   ]
 }

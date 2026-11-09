@@ -31,6 +31,7 @@
  *  inventing "unknown" for it would put a stratum in the table that the data never measured.
  */
 import {normaliseName} from './deduplicate-points.js';
+import {linkNames,linkKey,LINK_WORDS,type LinkMatch,type SpellingSettings} from './spelling-match.js';
 // MachinedNote moved to notes.ts on 2026-10-28, beside the quoted note it is the sibling of.
 // This file's own comment said the move would happen when a second PRODUCER appeared; a second
 // READER arrived first -- the notes surface, which has to group the two kinds together -- and
@@ -79,6 +80,14 @@ export interface RelateRequest {
   /** Days added to the left date before it is matched: +3 takes a week's Sunday to its Wednesday, and −7k more is a
    *  lag of k weeks. Stated on the result, and the shifted date kept on the row. */
   shiftDays?:number;
+  /** THE SECOND TABLE'S KEY COLUMN, where it is named differently from the first's: the line list's "Residential
+   *  District" against the population's "district" (experiment 193). Absent means the second table names it `on`. */
+  rightOn?:string;
+  /** ALLOWING FOR SPELLING (experiment 193): the first key column's names matched to the second's after folding, with
+   *  the words named dropped and spelling allowed to a threshold, 0.88 unless changed. A row is then related on the
+   *  second table's own spelling; a name with no match, or two equally close, is unmatched and decided as any is.
+   *  The other key columns are compared as `normalisation` says. */
+  spelling?:SpellingSettings;
 }
 
 const DAY=86_400_000;
@@ -101,6 +110,9 @@ export const matchedStart=(leftKeys:readonly string[],within:{start:string}):str
 export function alignToPeriods(left:DataTable,right:DataTable,request:RelateRequest):{left:DataTable;right:DataTable;request:RelateRequest}{
   const within=request.within;
   if(!within)return {left,right,request};
+  if(request.spelling||(request.rightOn&&request.rightOn!==request.on))
+    throw new Error('A date matched to a period is related on columns both tables name alike, compared as written: '
+      +'turn off allowing for spelling, and name the second table\'s key column as the first\'s, to match a date to a period.');
   const {date,end}=within,shift=request.shiftDays??0;
   const start=within.start,as=matchedStart(left.keys,within);
   if(!Number.isInteger(shift)||Math.abs(shift)>3660)throw new Error('Shift the date by a whole number of days, at most ten years either way.');
@@ -261,12 +273,19 @@ export interface RelateShape {
   previews:{drop:DataTable; keep:DataTable|null};
   /** Why the named category cannot be used, where it cannot. */
   labelRefusal:string|null;
+  /** ALLOWING FOR SPELLING: each distinct name of the first key column, as compared, and how it matched. */
+  matches?:{name:string; compared:string; match:LinkMatch}[];
 }
 
 interface RelatePlan {
   /** The key columns' names joined for a sentence, "site and date"; `keys` is each of them. */
   on:string; keys:string[]; bring:string; normalisation:'exact'|'fuzzy';
+  /** The key of a row of the FIRST table: with spelling allowed, its name stands for the second table's match. */
   keyOf:(row:{key:Record<string,string>})=>string;
+  /** Each distinct name of the first key column and how it matched, with spelling allowed; and the column saying so. */
+  matches?:Map<string,LinkMatch>; matchColumn?:string;
+  /** Whether the column brought is the second table's value, and its unit. */
+  bringsValue:boolean; bringsUnit?:string;
   lookup:Map<string,string>;
   fold:(value:string)=>string;
   gaps:RelateGap[];
@@ -292,16 +311,21 @@ function planRelate(left:DataTable,right:DataTable,request:RelateRequest):Relate
     ||(left.keys.includes('measure')?'measure':undefined);
   if(!keys[0])throw new Error('Name the column both tables share.');
   if(!bring)throw new Error('Name the column to bring across.');
-  for(const key of keys){
-    if(!left.keys.includes(key))
-      throw new Error(`The first table has no "${key}" column. Its columns are ${left.keys.join(', ')}.`);
-    if(!right.keys.includes(key))
-      throw new Error(`The second table has no "${key}" column. Its columns are ${right.keys.join(', ')}.`);
-  }
+  // THE SECOND TABLE'S NAMES FOR THE SAME KEYS: its own first column where it names it differently, the rest alike.
+  const rightKeys=[request.rightOn?.trim()||keys[0]!,...keys.slice(1)];
+  for(const key of keys)if(!left.keys.includes(key))
+    throw new Error(`The first table has no "${key}" column. Its columns are ${left.keys.join(', ')}.`);
+  for(const key of rightKeys)if(!right.keys.includes(key))
+    throw new Error(`The second table has no "${key}" column. Its columns are ${right.keys.join(', ')}.`);
+  const spelling=request.spelling;
+  const matchColumn=spelling?`${keys[0]} match`:undefined;
+  if(matchColumn&&left.keys.includes(matchColumn))
+    throw new Error(`The first table already has a "${matchColumn}" column, which would say how each name matched. Rename it first.`);
   const bringsValue=!right.keys.includes(bring)&&bring===right.valueField;
   if(!right.keys.includes(bring)&&!bringsValue)
     throw new Error(`The second table has no "${bring}" column. Its columns are ${[...right.keys,right.valueField].join(', ')}.`);
-  if(keys.includes(bring))
+  // The second table's spelling of a key IS something to bring where spelling was allowed: Fabala beside Falaba.
+  if(keys.includes(bring)||(!spelling&&rightKeys.includes(bring)))
     throw new Error(`"${bring}" is a column being matched on, so bringing it across would add nothing.`);
   if(left.keys.includes(bring))
     throw new Error(`The first table already has a "${bring}" column. Relating would give its rows two `
@@ -315,9 +339,16 @@ function planRelate(left:DataTable,right:DataTable,request:RelateRequest):Relate
   const fold=(value:string)=>normaliseName(value,normalisation);
   // ONE KEY FROM SEVERAL COLUMNS: each folded, joined by a separator no folded cell contains. Empty where any part is,
   // because a row missing its date names no observation even if it names the monitor.
-  const keyOf=(row:{key:Record<string,string>})=>{const parts=keys.map(k=>fold(row.key[k]??''));
+  // ALLOWING FOR SPELLING: each distinct name of the first table's key matched once to the second's spellings, and
+  // the row then keyed by the match, so it meets that spelling exactly. No match is an empty key: an unmatched row.
+  const matches=spelling?linkNames(left.rows.map(r=>r.key[keys[0]!]??''),right.rows.map(r=>r.key[rightKeys[0]!]??''),spelling):undefined;
+  const keyFrom=(row:{key:Record<string,string>},names:string[],first?:(raw:string)=>string)=>{
+    const parts=names.map((k,i)=>fold(i===0&&first?first(row.key[k]??''):row.key[k]??''));
     return parts.some(p=>!p)?'':parts.join('\u001f');};
+  const keyOf=(row:{key:Record<string,string>})=>keyFrom(row,keys,matches&&(raw=>matches.get(raw)?.value??''));
+  const rightKeyOf=(row:{key:Record<string,string>})=>keyFrom(row,rightKeys);
   const rawOf=(row:{key:Record<string,string>})=>keys.map(k=>row.key[k]??'').join(' · ');
+  const rightRawOf=(row:{key:Record<string,string>})=>rightKeys.map(k=>row.key[k]??'').join(' · ');
   const broughtOf=(row:{key:Record<string,string>;value:number|null})=>
     bringsValue?(row.value===null?undefined:String(row.value)):row.key[bring];
 
@@ -332,9 +363,9 @@ function planRelate(left:DataTable,right:DataTable,request:RelateRequest):Relate
   const spellings=new Map<string,Set<string>>();
   const ambiguous=new Map<string,Set<string>>();
   for(const row of right.rows){
-    const raw=rawOf(row),value=broughtOf(row);
+    const raw=rightRawOf(row),value=broughtOf(row);
     if(value===undefined)continue;
-    const key=keyOf(row);
+    const key=rightKeyOf(row);
     // A row whose key cell is empty names no subject. Skipped rather than matched against every
     // other empty cell, which would relate unrelated rows to one another.
     if(!key)continue;
@@ -409,25 +440,37 @@ function planRelate(left:DataTable,right:DataTable,request:RelateRequest):Relate
     gaps,
     rightOnlyKeys:rightOnly.map(key=>[...(spellings.get(key)??new Set([key]))][0]),
   };
-  return {on,keys,bring,normalisation,keyOf,lookup,fold,gaps,overlap,shares,
+  return {on,keys,bring,normalisation,keyOf,lookup,fold,gaps,overlap,shares,...(matches?{matches,matchColumn}:{}),
+    bringsValue,...(right.unit?{bringsUnit:right.unit}:{}),
     signature:gapSignature(gaps,normalisation),values,matched,left};
+}
+
+/** HOW A NAME MATCHED, as the match column says it: a blank name has none to match. */
+export function matchWords(m:LinkMatch|undefined):string{
+  if(!m)return 'no name';
+  if(m.decided)return m.value?'decided':'decided none';
+  return m.outcome==='spelling'&&m.score!==undefined?`${LINK_WORDS.spelling} (${m.score.toFixed(2)})`:LINK_WORDS[m.outcome];
 }
 
 /** The rows a decision produces, in the left table's own order. `label` undefined is the inner
  *  join; a label keeps the unmatched rows under it. */
 function buildRows(plan:RelatePlan,label:string|undefined):DataTable {
-  const {left,bring,lookup,keyOf}=plan;
+  const {left,bring,lookup,keyOf,matches,matchColumn,keys}=plan;
+  const how=(row:{key:Record<string,string>}):Record<string,string>=>matchColumn?{[matchColumn]:matchWords(matches!.get(row.key[keys[0]!]??''))}:{};
   const rows:DataTable['rows']=[];
   for(const row of left.rows){
     const value=lookup.get(keyOf(row));
     if(value===undefined){
       if(label===undefined)continue;
-      rows.push({key:{...row.key,[bring]:label},value:row.value});
+      rows.push({key:{...row.key,[bring]:label,...how(row)},value:row.value});
       continue;
     }
-    rows.push({key:{...row.key,[bring]:value},value:row.value});
+    rows.push({key:{...row.key,[bring]:value,...how(row)},value:row.value});
   }
-  return {...left,keys:[...left.keys,bring],rows,rowCount:rows.length,
+  // THE SECOND TABLE'S VALUE, BROUGHT AS A NUMBER (2026-11-09): declared numeric with its unit, so a rate can divide by
+  // it. A category is still text. A kept-unmatched label is not a number, so a value brought with one stays text.
+  const numeric=plan.bringsValue&&label===undefined?{numericKeys:{...left.numericKeys,[bring]:plan.bringsUnit??''}}:{};
+  return {...left,...numeric,keys:[...left.keys,bring,...(matchColumn?[matchColumn]:[])],rows,rowCount:rows.length,
     missingValueCount:rows.filter(row=>row.value===null).length};
 }
 
@@ -499,7 +542,8 @@ export function relateShape(left:DataTable,right:DataTable,request:RelateRequest
     signature:plan.signature,legacySignature:()=>legacyGapSignature(plan.gaps,plan.normalisation),values:plan.values,
     previews:{drop:buildRows(plan,undefined),
       keep:label!==undefined&&!refusal?buildRows(plan,label.trim()):null},
-    labelRefusal:refusal};
+    labelRefusal:refusal,
+    ...(plan.matches?{matches:[...plan.matches].map(([name,match])=>({name,compared:linkKey(name,request.spelling!.dropWords),match}))}:{})};
 }
 
 export function relateTable(left:DataTable,right:DataTable,request:RelateRequest):RelateResult {

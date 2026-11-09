@@ -16,7 +16,10 @@ shown in a local build is not a claim that it has been published.
 - **A column a table declares numeric reaches rules as a number.** A value Relate brought across was read as text, and
   rules over it concluded nothing.
 - **The sea-level example is built from standard steps only**, and its README says its eight gauges match PSMSL's
-  stations.
+  stations. **Its write-up is drafted as if for submission**: twelve notes across the four parts, with functions, whose
+  words and argument, and five works cited through the citation builder.
+- **The note dialog's section, function and source questions are named for a screen reader**: each label is tied to
+  its control.
 - Validation: Chromium locally; WebKit in CI.
 
 ## 0.69.0 — 2026-11-09

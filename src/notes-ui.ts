@@ -469,13 +469,14 @@ export function openNoteDialog(note:Note,context:NoteContext,esc:Escape){
   // the seven, rather than silently dropped by a drop-down that cannot represent it.
   const functions=KNOWN_NOTE_FUNCTIONS.includes(fn)||!fn
     ?KNOWN_NOTE_FUNCTIONS:[...KNOWN_NOTE_FUNCTIONS,fn];
-  $('#note-coords').innerHTML=`<span class="field"><label>IMRaD section</label>`
+  // EACH LABEL NAMES ITS CONTROL (2026-11-09): a label beside a select, not tied to it, names nothing to a screen reader.
+  $('#note-coords').innerHTML=`<span class="field"><label${choose?' for="note-section"':''}>IMRaD section</label>`
     +(choose
       ?`<select id="note-section">${WRITE_UP_PARTS.filter(value=>value!=='References'||note.section==='References').map(value=>`<option value="${esc(value)}"`
         +`${value===note.section?' selected':''}>${esc(value)}</option>`).join('')}</select>`
       :`<span class="fixed">${esc(note.section)} — fixed</span>`)
     +`</span>`
-    +`<span class="field"><label>Function</label>`
+    +`<span class="field"><label${choose?' for="note-function"':''}>Function</label>`
     +(choose
       ?`<select id="note-function">${options(functions,fn,'unstated')}</select>`
       :`<span class="fixed">${esc(fn||'unstated')}${fn?' — fixed':''}</span>`)
@@ -485,7 +486,7 @@ export function openNoteDialog(note:Note,context:NoteContext,esc:Escape){
     +(choose?['words','argument'].map(which=>{
         const list=which==='words'?NOTE_WORDS:NOTE_ARGUMENT,was=which==='words'?wordsWas:argumentWas;
         const values=list.map(a=>a.value),known=!was||values.includes(was);
-        return `<span class="field"><label>${which==='words'?'Whose words?':'Whose argument?'}</label>`
+        return `<span class="field"><label for="note-${which}">${which==='words'?'Whose words?':'Whose argument?'}</label>`
           +`<select id="note-${which}"><option value="">unstated</option>`
           +[...list,...(known?[]:[{value:was,label:was}])].map(a=>`<option value="${esc(a.value)}"`
             +`${a.value===was?' selected':''}>${esc(a.label)}</option>`).join('')+`</select></span>`;}).join('')

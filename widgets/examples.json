@@ -706,14 +706,14 @@
       "id": "urn:fieldwork:example:sea-level-rise-philippines",
       "title": "Sea-level rise at Manila’s health facilities",
       "repository": "https://github.com/digital-twin-ph/example-2026-sea-level-rise-philippines",
-      "commit": "c172f4b2c988df238d3342a5b72f83cc0368bb77",
+      "commit": "f8cc1752d35641add41cc050b64e570a92ec267e",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2026-sea-level-rise-philippines",
       "licence": {
         "data": "Projections and sites CC BY 4.0, with three required citations; facilities ODbL 1.0; the study area, diagram, manual and scripts CC0 1.0",
         "source": "IPCC AR6 Sea Level Projections v20210809 (doi:10.5281/zenodo.5914709); OpenStreetMap via the Humanitarian OpenStreetMap Team export",
         "note": "Stated in the repository’s README and CITATION.cff. The facilities file is a database derived from OpenStreetMap and offered under the ODbL."
       },
-      "description": "Published IPCC AR6 projections for eight Philippine tide gauges and 194 health facilities in coastal Manila: which gauge’s projection applies to each facility and how far it is, and the rise there by 2100 under SSP2-4.5 with vertical land motion, 1,124 mm. Not a flood model: a note in the write-up carries the vertical-datum diagram, and the README says what the ground’s height and the local sea’s would need.",
+      "description": "Published IPCC AR6 projections for eight Philippine tide gauges and 194 health facilities in coastal Manila: which gauge’s projection applies to each facility and how far it is, and the rise there by 2100 under SSP2-4.5 with vertical land motion, 1,124 mm. Not a flood model: its twelve-note write-up opens with the vertical-datum diagram, and the README says what the ground’s height and the local sea’s would need.",
       "carries": {
         "workflow": true,
         "data": true,
@@ -733,18 +733,18 @@
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "95c6ddca5d56d7cbf37afbf17c5f47309695c5b133d0d98da02e39c4bdf5c263",
-          "bytes": 22901
+          "sha256": "4801a413beb0c5052d8b479dd175ea5ae12b659ee3be5e9b13f560f5d2e25751",
+          "bytes": 25442
         },
         {
           "path": "manual.json",
-          "sha256": "c8ecee5798b52c24c3c04157fdd496d3040ab51914fc5f7ad248feaf0a3b5d36",
-          "bytes": 18109
+          "sha256": "ad4aeab93f4ee4063157f859320a9b25ae676bf9101ca0b1130f458384281fbb",
+          "bytes": 32226
         },
         {
           "path": "README.md",
-          "sha256": "4c87789b610778e332fcacf8e0507fe26dcb5ef81933e159d2952e1513dd9820",
-          "bytes": 8161
+          "sha256": "46e36c0425739f11d5cf0889388a12f9ea9a73d8c83f4fd8750360465214b3af",
+          "bytes": 8372
         },
         {
           "path": "CITATION.cff",
@@ -778,8 +778,8 @@
         },
         {
           "path": "scripts/make-manual.mjs",
-          "sha256": "51ff3cfc8ea51baaae81d79e798ff1820535917b414d6981e994448ea75d3089",
-          "bytes": 11426
+          "sha256": "a31663d70c3d75df83aa7f2bd521b4c133d37197f0fd80230bbdb928b6cfc0c8",
+          "bytes": 20080
         }
       ],
       "workflowCount": 2,

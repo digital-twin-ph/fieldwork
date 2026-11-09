@@ -1,6 +1,6 @@
 # Open terrain models and the height they are measured from
 
-_Created 2026-11-07 · Updated 2026-11-08_
+_Created 2026-11-07 · Updated 2026-11-09_
 
 **Standing of this note.** A survey to decide whether a sea-level-rise question can be asked honestly in Fieldwork:
 which open terrain models state the surface their heights are measured from, under what licence, and how they are
@@ -106,8 +106,21 @@ The nearest GNSS station listed, PIMO, is not at the gauge. A note of 1987 suspe
 pages ([README](https://github.com/Rutgers-ESSP/IPCC-AR6-Sea-Level-Projections), Zenodo record) do not say their
 location IDs are PSMSL's; the file that would, `location_list.lst` (2.7 MB), was not read.
 
-**Still missing for the offset to EGM2008:** EGM2008's height at Manila, which the terrain models measure from; and
-Manila's mean sea level over 1995–2014 in the Philippine datum.
+**EGM2008 at Manila, 2026-11-09, fetched with the practitioner's approval:** read through pyproj 3.8.0 from PROJ's
+`us_nga_egm08_25.tif` on cdn.proj.org, network access reading only the tile needed: **N = 43.009 m**. It agrees with
+NAMRIA's gravimetric PGM2018 (43.011 m) within 2 mm there, and NAMRIA's MSL-fitted surface (ITRF) is **0.85 m above
+both**. So a height above EGM2008 at the gauge is about 0.85 m more than the same point's height above NAMRIA's MSL.
+The `wgsfit` grid differs from `itrffit` by 1.38 m at the same point, which neither the page nor the Word note explains;
+ITRF is used here because EGM2008's ellipsoid heights are WGS84 (G-series), which agrees with ITRF at the centimetre
+level.
+
+**PSMSL 145, yearly means, fetched with the practitioner's approval** (`145.rlrdata`, 2,299 bytes): 16 of the 20 years
+1995–2014 hold a value, 1999 flagged; their mean is **7,472 mm above the gauge's RLR datum**, and their trend is about
+**15 mm a year**. The gauge moved about 1 km in 2002, within the period.
+
+**Still missing:** which years NAMRIA's MSL stands for. The 2021 TAO paper should say; its page refused an automated
+read (HTTP 403) and was not worked around. With the epoch, PSMSL's series gives the change in sea level between it and
+1995–2014 at the same gauge, and the gauge's own datum drops out of the difference.
 
 ## What this suggests, not yet decided
 

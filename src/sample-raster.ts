@@ -2,7 +2,12 @@
  *
  *  A sampled value is the value of the cell containing the point under PixelIsArea, at the
  *  raster's resolution. It is not a measurement at the point, no interpolation is performed and
- *  none is claimed, and sampling creates no data the source lacks. No-data cells and points
+ *  none is claimed, and sampling creates no data the source lacks.
+ *
+ *  OR, CHOSEN AND STATED, BETWEEN THE FOUR NEAREST CELL CENTRES (experiment 198). A geoid or a mean sea surface is a
+ *  smooth field, and its published value at a point is interpolated: PROJ reads EGM2008 bilinearly. Taken from the
+ *  containing cell of its 2.5' grid, EGM2008 at the Manila gauge was 8 cm from PROJ's value. A missing value among the
+ *  four gives no value, never a guess, and a point without four cells around it is outside. No-data cells and points
  *  outside the raster are counted separately and carry no value: a point outside is a question
  *  about coverage, a no-data cell is a statement by the source.
  *  See docs/experiments/67-sample-raster-at-points.md. */
@@ -41,6 +46,19 @@ export function requireRunnableSample(node:WorkflowNode<'sample_raster'>):void{
   if(!text(node.params.attribute))throw new Error('Name the attribute to write for Sample raster.');
 }
 
+/** Between the four cell centres around a coordinate: the value, null where one of them has none, or 'outside' where the
+ *  point has not four cells around it. */
+export function bilinearAt(grid:Pick<RasterGrid,'metadata'|'values'>,coordinates:[number,number],isNoData:(v:number|null)=>boolean):number|null|'outside'{
+  const m=grid.metadata,[x,y]=coordinates,[rx,ry]=m.resolution;
+  const fx=(x-m.origin[0])/rx-0.5,fy=(y-m.origin[1])/ry-0.5,c0=Math.floor(fx),r0=Math.floor(fy);
+  if(!Number.isFinite(fx)||!Number.isFinite(fy)||c0<0||r0<0||c0+1>=m.width||r0+1>=m.height)return 'outside';
+  const at=(c:number,r:number)=>grid.values[r*m.width+c] as number|null;
+  const v=[at(c0,r0),at(c0+1,r0),at(c0,r0+1),at(c0+1,r0+1)];
+  if(v.some(isNoData))return null;
+  const tx=fx-c0,ty=fy-r0,[a,b,c,d]=v as number[];
+  return a*(1-tx)*(1-ty)+b*tx*(1-ty)+c*(1-tx)*ty+d*tx*ty;
+}
+
 export function sampleRaster(points:PointCollection,grid:RasterGrid,params:WorkflowNode<'sample_raster'>['params']):SampleResult{
   requireRunnableSample({id:'check',type:'sample_raster',x:0,y:0,params});
   const name=text(params.attribute);
@@ -53,12 +71,20 @@ export function sampleRaster(points:PointCollection,grid:RasterGrid,params:Workf
   const features=points.features.map((f):PointFeature=>{
     const coordinates=f.geometry?.coordinates as [number,number]|undefined;
     if(!coordinates){counts.unlocated++;return structuredClone(f);}
-    const cell=cellAt(grid.metadata,coordinates);
-    if(!cell){counts.outside++;return structuredClone(f);}
-    const raw=grid.values[cell[1]*grid.metadata.width+cell[0]];
     // null already marks a masked or absent cell; a declared no-data value and a non-finite
     // sample are the same answer. None of them is zero.
-    if(raw===null||!Number.isFinite(raw)||(typeof noData==='number'&&raw===noData)){counts.noData++;return structuredClone(f);}
+    const isNoData=(v:number|null)=>v===null||!Number.isFinite(v)||(typeof noData==='number'&&v===noData);
+    let raw:number|null;
+    if(params.method==='bilinear'){
+      const read=bilinearAt(grid,coordinates,isNoData);
+      if(read==='outside'){counts.outside++;return structuredClone(f);}
+      raw=read;
+    }else{
+      const cell=cellAt(grid.metadata,coordinates);
+      if(!cell){counts.outside++;return structuredClone(f);}
+      raw=grid.values[cell[1]*grid.metadata.width+cell[0]] as number|null;
+    }
+    if(isNoData(raw)){counts.noData++;return structuredClone(f);}
     counts.sampled++;
     return {...structuredClone(f),properties:{...f.properties,[name]:raw}};
   });
@@ -75,9 +101,9 @@ export function sampleReceipt(node:WorkflowNode<'sample_raster'>,grid:RasterGrid
     +`fw:valueUnitStatus ${JSON.stringify(unit?'stated':'unstated')}; `
     +(unit?`fw:sampledValueUnit ${JSON.stringify(unit)}; `:'')
     +`fw:cellSizeX "${Math.abs(rx)}"^^xsd:decimal; fw:cellSizeY "${Math.abs(ry)}"^^xsd:decimal; `
-    +`fw:sampleConvention "containing cell, PixelIsArea; no interpolation"; `
+    +`fw:sampleConvention ${JSON.stringify(node.params.method==='bilinear'?'bilinear between the four nearest cell centres':'containing cell, PixelIsArea; no interpolation')}; `
     +`fw:sampledCount "${counts.sampled}"^^xsd:integer; fw:noDataCount "${counts.noData}"^^xsd:integer; `
     +`fw:outsideRasterCount "${counts.outside}"^^xsd:integer; fw:unlocatedCount "${counts.unlocated}"^^xsd:integer.\n`;
   return {nodeId:node.id,kind:'computation',facts,input:facts,rules:'',conclusions:[],
-    method:`Value of the raster cell containing each point, at ${Math.abs(rx)} x ${Math.abs(ry)} degrees, under PixelIsArea. No interpolation is performed. A cell value is not a measurement at the point, and sampling creates no data missing from the source. No-data cells (${counts.noData}), points outside the raster (${counts.outside}) and points without coordinates (${counts.unlocated}) carry no value and are never zero-filled.`};
+    method:`${node.params.method==='bilinear'?`Value interpolated bilinearly between the four cell centres nearest each point, at ${Math.abs(rx)} x ${Math.abs(ry)} degrees; a missing value among the four gives none. An interpolated value`:`Value of the raster cell containing each point, at ${Math.abs(rx)} x ${Math.abs(ry)} degrees, under PixelIsArea. No interpolation is performed. A cell value`} is not a measurement at the point, and sampling creates no data missing from the source. No-data cells (${counts.noData}), points outside the raster (${counts.outside}) and points without coordinates (${counts.unlocated}) carry no value and are never zero-filled.`};
 }

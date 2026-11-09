@@ -76,7 +76,10 @@ const release=async nodeType=>JSON.parse(await readFile(new URL(
   '../'+registry.widgets.find(w=>w.nodeType===nodeType).releases.slice(-1)[0].path,import.meta.url),'utf8'));
 
 test('a widget is standard or domain by its vocabulary, not by a label someone remembered to set', async () => {
-  const releases={table_input:await release('table_input'),slr_site_assignment:await release('slr_site_assignment')};
+  // Assign projection site's LAST LIVE release, 0.1.0: its current one retires it (experiment 197), and a retired widget
+  // is counted as neither standard nor domain. The classification by vocabulary is what this test is about.
+  const live=JSON.parse(await readFile(new URL('../widgets/releases/slr_site_assignment/0.1.0.json',import.meta.url),'utf8'));
+  const releases={table_input:await release('table_input'),slr_site_assignment:live};
   const {problems,widgets,standardCount,domainCount}=classifyWidgets(releases,catalog);
   assert.deepEqual(problems,[]);
   assert.equal(standardCount,1);assert.equal(domainCount,1);

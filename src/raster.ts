@@ -1,4 +1,8 @@
-import {fromBlob,writeArrayBuffer} from 'geotiff';
+import {fromBlob,fromUrl,writeArrayBuffer} from 'geotiff';
+/** A GEOTIFF FROM THIS DEVICE OR AT A URL (experiment 198). A URL is read by HTTP range: only the header and the window's
+ *  blocks are fetched, so a published grid of tens of megabytes yields a window of a few kilobytes. */
+export type RasterSource=Blob|string;
+const openTiff=(source:RasterSource)=>typeof source==='string'?fromUrl(source):fromBlob(source);
 import type {Boundary,Bounds} from './types.js';
 import {geometryBounds} from './study-area.js';
 import {rasterCellPredicate,validateClipOptions} from './raster-mask.js';
@@ -24,19 +28,31 @@ export {validateClipOptions};
  *  store, carrying it through an export, drawing it -- are not yet measured. That measurement is
  *  this cap's lift test, not a reason to leave a province refused in the meantime. */
 export const MAX_RASTER_CELLS=16_777_216;
-export interface RasterMetadata {width:number;height:number;bands:number;bounds:Bounds;origin:[number,number];resolution:[number,number];crs:'EPSG:4326';rasterType:'PixelIsArea';noData:number|string|null;bits:number;sampleFormat:number;compression:number;blockWidth:number;blockHeight:number;bytesPerPixel:number;geoKeys:Record<string,unknown>;gdal:Record<string,unknown>|null;band:Record<string,unknown>|null;description:string}
-export interface RasterAsset {sha256:string;bytes:number;mediaType:'image/tiff';filename:string;provenance?:import('./raster-provenance.js').RasterProvenance;metadata:RasterMetadata;source:{filename:string;bytes:number;lastModified:number;metadata:RasterMetadata};window:[number,number,number,number]}
+export interface RasterMetadata {width:number;height:number;bands:number;bounds:Bounds;origin:[number,number];resolution:[number,number];crs:'EPSG:4326';rasterType:'PixelIsArea';
+  /** The source's registration where its values sit at grid nodes, as a geoid grid's do. `origin` and `bounds` are
+   *  then the cell corners around those nodes, half a cell out, and the window kept is written as area cells. */
+  sourceRegistration?:'PixelIsPoint';noData:number|string|null;bits:number;sampleFormat:number;compression:number;blockWidth:number;blockHeight:number;bytesPerPixel:number;geoKeys:Record<string,unknown>;gdal:Record<string,unknown>|null;band:Record<string,unknown>|null;description:string}
+export interface RasterAsset {sha256:string;bytes:number;mediaType:'image/tiff';filename:string;provenance?:import('./raster-provenance.js').RasterProvenance;metadata:RasterMetadata;source:{filename:string;bytes:number;lastModified:number;metadata:RasterMetadata;
+  /** Where it was read from, when it was read at a URL rather than chosen from this device. */
+  url?:string};window:[number,number,number,number]}
 export interface RasterGrid {metadata:RasterMetadata;values:(number|null)[];asset:RasterAsset;boundary?:Boundary;mask?:{method:RasterMaskMethod;marginPixels?:number;inside:number;valid:number;outside:number}}
 function check(value:unknown,message:string):asserts value{if(!value)throw new Error(message);}
-export async function inspectRaster(blob:Blob):Promise<RasterMetadata>{
-  const tiff=await fromBlob(blob);try{const image=await tiff.getImage(),keys=image.getGeoKeys()||{},dir=image.getFileDirectory();
+export async function inspectRaster(blob:RasterSource):Promise<RasterMetadata>{
+  const tiff=await openTiff(blob);try{const image=await tiff.getImage(),keys=image.getGeoKeys()||{},dir=image.getFileDirectory();
     check(image.getSamplesPerPixel()===1,'Choose a single-band GeoTIFF. Multi-band selection is not implemented yet.');
     check(keys.GeographicTypeGeoKey===4326&&keys.GTModelTypeGeoKey===2,'This raster needs reprojection: the prototype requires explicit WGS84 / EPSG:4326.');
-    check(keys.GTRasterTypeGeoKey===1&&!dir.hasTag('ModelTransformation'),'Use a north-up PixelIsArea GeoTIFF without a rotated transform.');
-    const origin=await image.getOrigin(),resolution=await image.getResolution(),bounds=await image.getBoundingBox(),nodata=await image.getGDALNoData();
-    check(origin.slice(0,2).every(Number.isFinite)&&resolution[0]>0&&resolution[1]<0&&bounds.every(Number.isFinite)&&bounds[0]>=-180&&bounds[2]<=180&&bounds[1]>=-90&&bounds[3]<=90,'Unsupported raster coordinates or resolution.');
+    check((keys.GTRasterTypeGeoKey===1||keys.GTRasterTypeGeoKey===2)&&!dir.hasTag('ModelTransformation'),'Use a north-up GeoTIFF without a rotated transform.');
+    // A POINT-REGISTERED GRID's tie point is its first node; the cell around that node starts half a cell out. Read as
+    // cells, its corners are shifted by half a cell, and that is recorded, not hidden (experiment 198).
+    const point=keys.GTRasterTypeGeoKey===2;
+    const tie=await image.getOrigin(),resolution=await image.getResolution(),nodata=await image.getGDALNoData();
+    const origin=point?[tie[0]-resolution[0]/2,tie[1]-resolution[1]/2]:tie;
+    const bounds=[origin[0],origin[1]+image.getHeight()*resolution[1],origin[0]+image.getWidth()*resolution[0],origin[1]];
+    // Half a cell beyond the world's edge is a point grid's outer cells, not an error.
+    const slack=point?Math.max(resolution[0],-resolution[1])/2+1e-9:0;
+    check(origin.slice(0,2).every(Number.isFinite)&&resolution[0]>0&&resolution[1]<0&&bounds.every(Number.isFinite)&&bounds[0]>=-180-slack&&bounds[2]<=180+slack&&bounds[1]>=-90-slack&&bounds[3]<=90+slack,'Unsupported raster coordinates or resolution.');
     check([1,2,3].includes(image.getSampleFormat())&&[8,16,32,64].includes(image.getBitsPerSample())&&(image.getBitsPerSample()!==64||image.getSampleFormat()===3),'Unsupported raster sample type.');
-    const result:RasterMetadata={width:image.getWidth(),height:image.getHeight(),bands:1,bounds:bounds as Bounds,origin:[origin[0],origin[1]],resolution:[resolution[0],resolution[1]],crs:'EPSG:4326',rasterType:'PixelIsArea',noData:nodata===null?null:Number.isFinite(nodata)?nodata:'NaN',bits:image.getBitsPerSample(),sampleFormat:image.getSampleFormat(),compression:Number(dir.getValue('Compression')||1),blockWidth:image.getTileWidth(),blockHeight:image.getTileHeight(),bytesPerPixel:image.getBytesPerPixel(),geoKeys:JSON.parse(JSON.stringify(keys)),gdal:await image.getGDALMetadata(),band:await image.getGDALMetadata(0),description:String(await dir.loadValue('ImageDescription')||'')};
+    const result:RasterMetadata={width:image.getWidth(),height:image.getHeight(),bands:1,bounds:bounds as Bounds,origin:[origin[0],origin[1]],resolution:[resolution[0],resolution[1]],crs:'EPSG:4326',rasterType:'PixelIsArea',...(point?{sourceRegistration:'PixelIsPoint' as const}:{}),noData:nodata===null?null:Number.isFinite(nodata)?nodata:'NaN',bits:image.getBitsPerSample(),sampleFormat:image.getSampleFormat(),compression:Number(dir.getValue('Compression')||1),blockWidth:image.getTileWidth(),blockHeight:image.getTileHeight(),bytesPerPixel:image.getBytesPerPixel(),geoKeys:JSON.parse(JSON.stringify(keys)),gdal:await image.getGDALMetadata(),band:await image.getGDALMetadata(0),description:String(await dir.loadValue('ImageDescription')||'')};
     check(JSON.stringify(result).length<=65536,'Raster metadata exceeds the 64 KB prototype limit.');return result;
   }finally{await tiff.close();}
 }
@@ -51,8 +67,8 @@ export function rasterWindow(metadata:RasterMetadata,boundary:Boundary,paddingPi
   const blocksX=Math.floor((window[2]-1)/metadata.blockWidth)-Math.floor(window[0]/metadata.blockWidth)+1,blocksY=Math.floor((window[3]-1)/metadata.blockHeight)-Math.floor(window[1]/metadata.blockHeight)+1;
   check(blocksX*blocksY*metadata.blockWidth*metadata.blockHeight*metadata.bytesPerPixel<=64_000_000,'Intersecting TIFF blocks exceed the 64 MB decoding budget. Retile this raster before importing.');return window;
 }
-export async function readRasterWindow(blob:Blob,metadata:RasterMetadata,window:[number,number,number,number]):Promise<{metadata:RasterMetadata;values:(number|null)[]}>{
-  const tiff=await fromBlob(blob);try{const image=await tiff.getImage(),raw=await image.readRasters({window,samples:[0],interleave:true}),width=window[2]-window[0],height=window[3]-window[1],origin:[number,number]=[metadata.origin[0]+window[0]*metadata.resolution[0],metadata.origin[1]+window[1]*metadata.resolution[1]];
+export async function readRasterWindow(blob:RasterSource,metadata:RasterMetadata,window:[number,number,number,number]):Promise<{metadata:RasterMetadata;values:(number|null)[]}>{
+  const tiff=await openTiff(blob);try{const image=await tiff.getImage(),raw=await image.readRasters({window,samples:[0],interleave:true}),width=window[2]-window[0],height=window[3]-window[1],origin:[number,number]=[metadata.origin[0]+window[0]*metadata.resolution[0],metadata.origin[1]+window[1]*metadata.resolution[1]];
     const values=Array.from(raw as ArrayLike<number>,v=>Number.isFinite(v)&&v!==metadata.noData?v:null);
     check(values.length===width*height,'Raster window size mismatch.');return {metadata:{...metadata,width,height,origin,bounds:[origin[0],origin[1]+height*metadata.resolution[1],origin[0]+width*metadata.resolution[0],origin[1]]},values};
   }finally{await tiff.close();}

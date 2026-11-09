@@ -14,13 +14,13 @@ asset shows up.
 
 ## 1 · Widget utilization
 
-56 live widgets across 8 shipped examples and 9 pinned in its own repository.
+54 live widgets across 8 shipped examples and 9 pinned in its own repository.
 
 | Reach | Widgets |
 | --- | --- |
-| Used by no workflow | **13** |
+| Used by no workflow | **10** |
 | Used by exactly one | 17 |
-| Used by two or more | **26** |
+| Used by two or more | **27** |
 
 `isochrone` and `compute_walking_catchment` are a special case the practitioner ruled on
 2026-10-29: use of the monolith is use of its components. Four of the unused names below are
@@ -36,9 +36,6 @@ fixed — see experiment 64.
 - `measure_area`
 - `reachable_corridor`
 - `reachable_nodes`
-- `sample_raster`
-- `slr_site_assignment`
-- `slr_threshold_comparison`
 - `snap_to_network`
 - `summarize_combined_area`
 - `travel_time_band`
@@ -54,7 +51,7 @@ Each of these has one workflow's worth of evidence. If that example changes, it 
 | `point_grid` | old-naledi |
 | `travel_time` | old-naledi |
 | `clip_raster` | raster |
-| `raster_input` | raster |
+| `sample_raster` | sea-level-rise-philippines |
 | `summarize_hull` | snow-extent |
 | `aggregate_points_to_h3_cell` | snow-geoprivacy |
 | `compare_point_sets` | snow-geoprivacy |
@@ -96,6 +93,7 @@ evidence about that example.
 | `find_health_facilities` | 2 | sea-level-rise-philippines, sierra-leone-measles |
 | `find_satellite_products` | 2 | brazil-dengue-rj-2024, nyc-asthma-ozone-2016-2025 |
 | `polygon_input` | 2 | nigeria-immunization-2024, south-london-1854 |
+| `raster_input` | 2 | raster, sea-level-rise-philippines |
 | `reproject` | 2 | snow-isochrone, snow-voronoi |
 | `sample_satellite_files_at_points` | 2 | brazil-dengue-rj-2024, nyc-asthma-ozone-2016-2025 |
 | `search_satellite_catalog` | 2 | brazil-dengue-rj-2024, nyc-asthma-ozone-2016-2025 |
@@ -114,9 +112,10 @@ rows above `case_series` are the ones that have genuinely done both.
 | --- | --- |
 | snow-geoprivacy | **5** — `aggregate_points_to_h3_cell`, `compare_point_sets`, `comparison_map`, `donut_geomask`, `mean_center` |
 | old-naledi | **4** — `facilities`, `facility_audit`, `point_grid`, `travel_time` |
-| raster | **2** — `clip_raster`, `raster_input` |
 | snow-isochrone | **2** — `isochrone`, `network_input` |
 | south-london-1854 | **2** — `map_image_input`, `stack_polygons` |
+| raster | **1** — `clip_raster` |
+| sea-level-rise-philippines | **1** — `sample_raster` |
 | snow-extent | **1** — `summarize_hull` |
 | snow-voronoi | **1** — `voronoi` |
 
@@ -265,7 +264,7 @@ be read, selected and named inside the application, and claim B would hold for t
 - `urn:fieldwork:example:brazil-dengue-rj-2024` declares 16 node types. Its inputs are files in its own repository, and `geo/water-intakes.geojson` was written on 2026-10-29 because those four features existed only inside the bundle until then — the one input a reader could not download.
 - `urn:fieldwork:example:workflows-rulesets` declares 7 node types. Its inputs are files in its own repository, and `geo/water-intakes.geojson` was written on 2026-10-29 because those four features existed only inside the bundle until then — the one input a reader could not download.
 - `urn:fieldwork:example:sierra-leone-measles` declares 13 node types. Its inputs are files in its own repository, and `geo/water-intakes.geojson` was written on 2026-10-29 because those four features existed only inside the bundle until then — the one input a reader could not download.
-- `urn:fieldwork:example:sea-level-rise-philippines` declares 10 node types. Its inputs are files in its own repository, and `geo/water-intakes.geojson` was written on 2026-10-29 because those four features existed only inside the bundle until then — the one input a reader could not download.
+- `urn:fieldwork:example:sea-level-rise-philippines` declares 12 node types. Its inputs are files in its own repository, and `geo/water-intakes.geojson` was written on 2026-10-29 because those four features existed only inside the bundle until then — the one input a reader could not download.
 
 ## 3 · Recommendations
 
@@ -275,7 +274,7 @@ doing: that is a decision with a cost, and this file measures.
 
 **R1. Give the 6 data-carrying nodes a declared source.** 4 shipped examples hold 6 nodes that carry data and name no origin: `heat` (2), `snow-voronoi` (1), `snow-isochrone` (2), `snow-extent` (1). Closing it means either a `sourceInfo`/`provenance` block naming where the data came from, or a published file beside the example the way `geo/water-intakes.geojson` was written on 2026-10-29. Until then each is a payload a rebuild must copy rather than fetch.
 
-**R2. Ask D11 of the 9 widgets no workflow reaches.** `buffer_point`, `clip_points_to_area`, `deduplicate_points`, `fill_interior_gaps`, `measure_area`, `sample_raster`, `slr_site_assignment`, `slr_threshold_comparison`, `summarize_combined_area`. Not a retirement list: D11 asks whether a residual function remains that nothing else performs, and a widget may be unreached because no example poses its problem. The answer is per widget and this audit does not have it.
+**R2. Ask D11 of the 6 widgets no workflow reaches.** `buffer_point`, `clip_points_to_area`, `deduplicate_points`, `fill_interior_gaps`, `measure_area`, `summarize_combined_area`. Not a retirement list: D11 asks whether a residual function remains that nothing else performs, and a widget may be unreached because no example poses its problem. The answer is per widget and this audit does not have it.
 
 **R3. Settle what a monolith and its decomposition owe each other.** Use propagates from a composition to its members and not from an equivalent monolith, so 4 widgets read as unreached while a workflow performs their work. It is a question about the admission criteria rather than about those widgets, and the count is deliberately left as it is until it is answered.
 

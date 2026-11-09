@@ -128,7 +128,9 @@ test('the shipped ledger passes and covers every live widget', ()=>{
   // 57 on 2026-11-07, micro_workflow retired: no worked example used one.
   // 56 on 2026-11-08, derive_value retired into apply_ruleset, whose rules compute a value for every record.
   // Experiment 188, stage 5.
-  assert.equal(review.reviews.length,56);
+  // 54 on 2026-11-09: slr_site_assignment and slr_threshold_comparison retired, into Measure distance and Relate and into
+  // a published ruleset (experiment 197).
+  assert.equal(review.reviews.length,54);
 });
 
 test('the generated table shows the palette words beside the identifier', ()=>{

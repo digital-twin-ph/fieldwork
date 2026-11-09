@@ -65,7 +65,8 @@
 <urn:fieldwork:widget:policy> a fw:WidgetDefinition; fw:nodeType "policy"; rdfs:label "Outreach criteria".
 <urn:fieldwork:widget:polygon_input> a fw:WidgetDefinition; fw:nodeType "polygon_input"; rdfs:label "Polygon layer";
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/polygon_input.md>.
-<urn:fieldwork:widget:raster_input> a fw:WidgetDefinition; fw:nodeType "raster_input"; rdfs:label "Raster input".
+<urn:fieldwork:widget:raster_input> a fw:WidgetDefinition; fw:nodeType "raster_input"; rdfs:label "Raster input";
+  fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/raster_input.md>.
 <urn:fieldwork:widget:rate> a fw:WidgetDefinition; fw:nodeType "rate"; rdfs:label "Rate with a denominator";
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/rate.md>.
 <urn:fieldwork:widget:rate_ratio> a fw:WidgetDefinition; fw:nodeType "rate_ratio"; rdfs:label "Rate ratio with an interval".
@@ -74,7 +75,8 @@
 <urn:fieldwork:widget:relate_table> a fw:WidgetDefinition; fw:nodeType "relate_table"; rdfs:label "Relate a column from another table";
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/relate_table.md>.
 <urn:fieldwork:widget:reproject> a fw:WidgetDefinition; fw:nodeType "reproject"; rdfs:label "Reproject points".
-<urn:fieldwork:widget:sample_raster> a fw:WidgetDefinition; fw:nodeType "sample_raster"; rdfs:label "Sample raster at points".
+<urn:fieldwork:widget:sample_raster> a fw:WidgetDefinition; fw:nodeType "sample_raster"; rdfs:label "Sample raster at points";
+  fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/sample_raster.md>.
 <urn:fieldwork:widget:append_rows> a fw:WidgetDefinition; fw:nodeType "append_rows"; rdfs:label "Append rows";
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/append_rows.md>.
 <urn:fieldwork:widget:select_rows> a fw:WidgetDefinition; fw:nodeType "select_rows"; rdfs:label "Select rows by value";

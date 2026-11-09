@@ -298,7 +298,11 @@ export function evaluatedTable(table:DataTable,evaluation:Evaluation):DataTable{
   const added=[...new Set(rows.flatMap(r=>Object.keys(r.key)))].filter(k=>!table.keys.includes(k));
   // Every row carries every new column, empty where nothing was concluded, so a column is never missing from a row.
   for(const row of rows)for(const k of added)if(!(k in row.key))row.key[k]='';
-  return {...table,rows,keys:[...table.keys,...added],...described(table,evaluation)};
+  // A COMPUTED COLUMN IS A NUMBER, declared so, with the unit its author stated: a ruleset after this one reads it as a
+  // number, not as text it cannot read (experiment 198).
+  const computed=evaluation.computedColumns.filter(k=>added.includes(k));
+  const numericKeys=computed.length?{...(table.numericKeys??{}),...Object.fromEntries(computed.map(k=>[k,evaluation.computedMeta?.[k]?.unit??'']))}:table.numericKeys;
+  return {...table,rows,keys:[...table.keys,...added],...(numericKeys?{numericKeys}:{}),...described(table,evaluation)};
 }
 
 /** THE NEW COLUMNS' DESCRIPTIONS, where their author stated them, beside the table's own. */

@@ -416,12 +416,12 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.21.0",
+   "version": "0.21.1",
    "released": "2026-11-09",
    "changes": [
     {
-     "kind": "minor",
-     "description": "On the standard Inspector and dialog (experiment 186): the name, which is the Results tab's; the layers it is given as its inputs; one sentence and Configure…, where the presentation, the write-up section, each point layer's class, mark name and symbol, and the standalone figure are set; Manage layers…; and what the last run drew, with the tile import. Apply redraws the map without running the workflow again."
+     "kind": "patch",
+     "description": "Value classes count each unit once, not each of its parts. A district drawn in 83 parts, Bonthe in Sierra Leone, filled half the values the quantiles were cut from, so two breaks fell on its rate and the key printed an empty class, \"6.72 to 6.72\". Every part is still drawn and coloured by its unit's class."
     }
    ],
    "breaking": false,
@@ -458,16 +458,12 @@
    "migrationFrom": []
   },
   "measure_distance": {
-   "version": "0.5.0",
-   "released": "2026-10-13",
+   "version": "0.6.0",
+   "released": "2026-11-09",
    "changes": [
     {
      "kind": "minor",
-     "description": "Renamed from `nearest` to `measure_distance`. The old identifier keeps resolving: a saved workflow naming `nearest` is rewritten on open and stamped with sourceMigration, because the operation is unchanged and a rename must not refuse work the way a retirement does. `nearest` is a bare adjective, which the naming convention refuses: it names a property of the answer rather than the operation, and the operation is measuring the distance to the closest candidate. No contract change: ports, output, parameters and behaviour are identical."
-    },
-    {
-     "kind": "minor",
-     "description": "A candidate filter, which is what `access` added over this widget. Held as a KNOB rather than built as a widget, by the test experiment 107 derived the same day: a knob is honest when the contract does not move with it. This leaves both ports and the output carrier untouched and changes only which candidates are eligible, which is what a threshold does too. Its language is experiment 106's authored condition -- a field, a comparator, a value -- so the rule builder's form now serves a third caller, after classification and the role binding experiment 61 proposes.\n\nThe comparators are `in` and `notIn` over a declared set, deliberately, and not an ordinal `>=`. Old Naledi asks for 'evidence at least Contextual', an ordinal comparison on a categorical, and over a finite declared vocabulary that compiles to the set {Direct, Contextual} -- the same move by which OR compiles to one rule per disjunct. An authoring surface may offer 'at least Contextual'; what is stored and executed is the set.\n\nA candidate missing the attribute a condition names FAILS the condition rather than passing it: an unrecorded evidence level has not met a minimum evidence level, and the looser reading would quietly widen the search.\n\nThe filter's two counts -- how many candidates were located and how many survived narrowing -- are reported in this widget's own receipt and method string, so the exclusion and the search cannot disagree about what was considered. That is what holding the filter here buys over a separate node, and the note on when a node would earn its place instead is in docs/experiments/103-duplicates-should-merge.md.\n\nVerified against the real Old Naledi data: the knob's conditions select the identical eligible set to `access`'s own predicate, 1 of 122 graded facilities. This does not yet retire `access`, which also derives proxy minutes and receives its candidates on the gradedFacilities carrier."
+     "description": "On the standard Inspector and dialog (experiment 186): its name, its two inputs, one sentence and Configure…, which holds the unit and the conditions a candidate must meet, and what the last run measured. And its result is a table where a table is wanted (experiment 197): Relate, Select rows and Table read it keyed by point_id, nearest_id and the nearest candidate's own attributes as nearest_<attribute>, the distance as the value. It replaces Assign projection site in the sea-level example."
     }
    ],
    "breaking": false,
@@ -621,12 +617,12 @@
    "migrationFrom": []
   },
   "raster_input": {
-   "version": "0.5.0",
-   "released": "2026-10-23",
+   "version": "0.6.0",
+   "released": "2026-11-09",
    "changes": [
     {
-     "kind": "changed",
-     "description": "A custom node label, so two raster inputs on one canvas can be told apart by something other than their ports -- \"Note that raster widget still does not have custom node label field.\" The country for the population raster is read from the study area where the area states one and asked once where it does not, so a three-letter code is never typed twice. And the WorldPop download now states the wait it commits to: the catalogue holds each file's size, so a 293 MB Botswana raster reads as about an hour and the Democratic Republic of the Congo's 1.18 GB as about four, from one measured rate held as one observation. It also states that the host advertises Accept-Ranges and ignores a Range request, so an interrupted download cannot be resumed and begins again at zero."
+     "kind": "minor",
+     "description": "Reads a GeoTIFF at a URL, fetching only its header and the window around the study area by HTTP range, and offers the whole file as a download with its name, source and size, to keep on the laptop and choose as a local file, which is read in parts too. A grid whose values sit at nodes (PixelIsPoint), as EGM2008 is published, is read as the cells around them, half a cell out, and says so. On the standard Inspector (experiments 186, 198)."
     }
    ],
    "breaking": false,
@@ -709,12 +705,12 @@
    "migrationFrom": []
   },
   "relate_table": {
-   "version": "0.10.0",
+   "version": "0.10.1",
    "released": "2026-11-09",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Relate allows for spelling: names are folded, words named are dropped as whole words, and a name is matched to the one spelled closest at a similarity of 0.88 by default, adjustable from 0.5 to 1. Two names as close wait for a person; a name not found is unmatched and decided as any is. The second table's key column can be named differently from the first's, and a column says how each row matched. The second table's value column, brought across, is declared a number with its unit, so Rate with a denominator can divide by it."
+     "kind": "patch",
+     "description": "After Assign projection site, the first table's columns, point_id and projection_site, are offered before a run. None were, so a projection could not be brought beside each point."
     }
    ],
    "breaking": false,
@@ -739,12 +735,12 @@
    "migrationFrom": []
   },
   "sample_raster": {
-   "version": "0.1.0",
-   "released": "2026-10-09",
+   "version": "0.2.0",
+   "released": "2026-11-09",
    "changes": [
     {
-     "kind": "initial",
-     "description": "Writes the value of the raster cell containing each point onto that point, under PixelIsArea with no interpolation. Closes the gap experiment 62 found: the elevation attribute Compare level to elevation requires could not be produced in the application at all. No-data cells, points outside the raster and points without coordinates carry no value and are counted separately; none is zero-filled. An attribute already present on the layer is refused rather than overwritten, and a raster on another CRS is refused because no datum shift exists."
+     "kind": "minor",
+     "description": "Reads each value as the cell containing the point, or between the four nearest cells (bilinear), chosen and stated in its receipt. A missing value among the four gives none; a point without four cells around it is outside. On the standard Inspector and dialog (experiments 186, 198)."
     }
    ],
    "breaking": false,
@@ -791,27 +787,29 @@
    ]
   },
   "slr_site_assignment": {
-   "version": "0.1.0",
-   "released": "2026-10-09",
+   "version": "1.0.0",
+   "released": "2026-11-09",
    "changes": [
     {
-     "kind": "initial",
-     "description": "Nearest published site per point by straight-line distance, with the distance retained as part of the result and points without coordinates kept and reported as unassigned."
+     "kind": "major",
+     "description": "Retired into Measure distance and Relate (experiment 197). Read operation by operation, it held none about sea level: the nearest site and its distance is Measure distance, through the same shared search; keeping only sites the projections file holds is Measure distance's candidate condition or Relate's unmatched rows; the projection at the site is Relate after Select rows. A table port now accepts a distances result, read as a table keyed by point_id, nearest_id and the nearest candidate's own attributes. Retired outright: no outside user.",
+     "breaking": true
     }
    ],
-   "breaking": false,
+   "breaking": true,
    "migrationFrom": []
   },
   "slr_threshold_comparison": {
-   "version": "0.1.0",
-   "released": "2026-10-09",
+   "version": "1.0.0",
+   "released": "2026-11-09",
    "changes": [
     {
-     "kind": "initial",
-     "description": "Compares one fully keyed projected change against a practitioner-supplied elevation on a stated vertical datum, classifying each point as reaching, staying below, or unknown. Refuses to run without a datum, without a named elevation attribute, or with a partial key."
+     "kind": "major",
+     "description": "Retired into the published ruleset compare-level-to-elevation 1.0.0, applied by Apply ruleset (experiment 197). Narrowing to one scenario, family, year and quantile is Select rows; the comparison is two computed values and a margin; what it must not be read as, an inundation model, and the reference surface the elevation must be measured from are the ruleset's declarations. Retired outright: no outside user.",
+     "breaking": true
     }
    ],
-   "breaking": false,
+   "breaking": true,
    "migrationFrom": []
   },
   "snap_to_network": {
@@ -903,24 +901,28 @@
    "migrationFrom": []
   },
   "table_input": {
-   "version": "0.8.0",
-   "released": "2026-11-08",
+   "version": "0.9.0",
+   "released": "2026-11-09",
    "changes": [
     {
      "kind": "minor",
-     "description": "Reads an Excel workbook (.xlsx) as well as CSV and Stata files (the practitioner, 2026-11-08: 'Yes add Excel'). A workbook of several sheets offers the sheet to read; the sheet is kept with the table's source, so a table fetched again reads the same one. Cells are read as written: a formula gives its saved result, and a date Excel stores as a number stays that number. The import dialog's After table turns its pages: Next rows did nothing."
+     "description": "List the distinct values of: key columns ticked in the dialog are listed by the table, for a step that needs a column's values as a list. Assign projection site reads its sites from site_id there. Only code could set it before, so a workflow built in the application refused to run with a message pointing at a setting nobody could reach."
     }
    ],
    "breaking": false,
    "migrationFrom": []
   },
   "table_output": {
-   "version": "0.7.0",
-   "released": "2026-11-05",
+   "version": "0.8.0",
+   "released": "2026-11-09",
    "changes": [
     {
      "kind": "minor",
-     "description": "Chooses where its figure goes in the Notes write-up: Introduction, Methods, Results or Discussion, under 'In the write-up, under'. Results is the default, declared per widget as fw:defaultFigureSection in ontology/widgets.ttl from the constant the application applies. The receipt states fw:figureSection and fw:figureSectionDeclared on the step, and fw:FigureFiledWhereDeclaredShape holds the step's machined note to the same section. The practitioner, 2026-11-05: 'all output widgets may have default IMRAD sections but it should be flexible.'"
+     "description": "On the standard Inspector and dialog (experiment 186): the name, which is the Results tab's, and where it goes in the write-up; its inputs, every port a table can show; one sentence and Configure…, which holds Show totals and, for a reasoning result, Display as; and what the last run showed."
+    },
+    {
+     "kind": "patch",
+     "description": "A number is a value, never the headings. A column a table marks as numeric, such as the rise Relate brings beside each facility, was promoted to the axis when it held one value, and headed the distances \"1124\". It is now drawn as a column with its own heading."
     }
    ],
    "breaking": false,

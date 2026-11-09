@@ -273,22 +273,31 @@ export function portAccepts(wanted:PortType|undefined,given:PortType|null):boole
   return !!wanted&&!!given&&(wanted===given||(wanted==='table'&&given==='distances'));
 }
 
-/** A DISTANCES RESULT AS A TABLE: keyed by `point_id`, `nearest_id` and the nearest candidate's own attributes as
- *  `nearest_<attribute>`, the distance as the value in its stated unit. A point with no candidate keeps its row, with
- *  the nearest columns empty and no value, so it is counted rather than lost. */
+/** A DISTANCES RESULT AS A TABLE: keyed by `point_id`, the point's own attributes as `point_<attribute>`, `nearest_id`
+ *  and the nearest candidate's own attributes as `nearest_<attribute>`, the distance as the value in its stated unit. A
+ *  point with no candidate keeps its row, with the nearest columns empty and no value, so it is counted rather than
+ *  lost. A column whose values are all numbers is declared numeric, so a rule reads it as one (experiment 198). */
 export function distancesAsTable(value:{rows?:NearestRow[]}|undefined):DataTable{
   const rows=value?.rows??[];
-  const attributes:string[]=[];
-  for(const row of rows)for(const k of Object.keys(row.center?.attributes??{}))if(!attributes.includes(k))attributes.push(k);
-  const column=(k:string)=>`nearest_${k}`;
-  const keys=['point_id','nearest_id',...attributes.map(column)];
+  const own:string[]=[],theirs:string[]=[];
+  for(const row of rows){
+    for(const k of Object.keys(row.attributes??{}))if(!own.includes(k))own.push(k);
+    for(const k of Object.keys(row.center?.attributes??{}))if(!theirs.includes(k))theirs.push(k);
+  }
   const said=(v:unknown)=>v===null||v===undefined?'':String(v);
-  const out=rows.map(row=>({key:Object.fromEntries([['point_id',said(row.id)],['nearest_id',said(row.center?.id)],
-    ...attributes.map(k=>[column(k),said((row.center?.attributes as Record<string,unknown>|undefined)?.[k])])]) as Record<string,string>,
+  const columns:[string,(row:NearestRow)=>unknown][]=[['point_id',r=>r.id],
+    ...own.map(k=>[`point_${k}`,(r:NearestRow)=>(r.attributes as Record<string,unknown>|undefined)?.[k]] as [string,(row:NearestRow)=>unknown]),
+    ['nearest_id',r=>r.center?.id],
+    ...theirs.map(k=>[`nearest_${k}`,(r:NearestRow)=>(r.center?.attributes as Record<string,unknown>|undefined)?.[k]] as [string,(row:NearestRow)=>unknown])];
+  const out=rows.map(row=>({key:Object.fromEntries(columns.map(([name,read])=>[name,said(read(row))])) as Record<string,string>,
     value:typeof row.distance==='number'&&Number.isFinite(row.distance)?row.distance:null}));
+  // NUMERIC WHERE THE ATTRIBUTE WAS A NUMBER on every row that has it: a sampled height, a population. Not guessed from text.
+  const numeric=columns.filter(([name,read])=>name!=='point_id'&&name!=='nearest_id'&&rows.some(r=>typeof read(r)==='number')
+    &&rows.every(r=>{const v=read(r);return v===undefined||v===null||typeof v==='number';})).map(([name])=>name);
   const unit=rows[0]?.unit;
-  return {kind:'data-table',keys,valueField:'distance',...(unit?{unit}:{}),rows:out as DataTable['rows'],
-    rowCount:out.length,missingValueCount:out.filter(r=>r.value===null).length};
+  return {kind:'data-table',keys:columns.map(([name])=>name),valueField:'distance',...(unit?{unit}:{}),rows:out as DataTable['rows'],
+    rowCount:out.length,missingValueCount:out.filter(r=>r.value===null).length,
+    ...(numeric.length?{numericKeys:Object.fromEntries(numeric.map(n=>[n,'']))}:{})};
 }
 
 export function outputOf(node:WorkflowNode):PortType|null{

@@ -2,9 +2,9 @@
 
 _Created 2026-11-09 · Updated 2026-11-09_
 
-**Status:** asked. Designed, not built; the grids' values at the gauges and a first facility count were made in
-Python (the research note), for the canvas to reproduce. Manila only for now: the practitioner, 2026-11-09, *"For now
-let's stick to Manila"*; the other seven gauges, with Find health facilities near each, are a later workflow.
+**Status:** tried. Step 1 built in 0.71.0 and run by hand on an empty canvas in Chromium: 16 of 194 facilities, as
+Python gives. Step 2, NetCDF, is not built. Manila only: the practitioner, 2026-11-09, *"For now let's stick to
+Manila"*; the other seven gauges, with Find health facilities near each, are a later workflow.
 
 ## The question
 
@@ -35,24 +35,54 @@ The machinery for reading in parts exists; it is tied to the satellite catalogue
 DTU25MSS is NetCDF-4: `mss` and `sigma`, 18,001 × 36,000 float64, gzip, in blocks of 1001 × 2000. The Philippines,
 4–22° N and 116–128° E, spans 6 blocks: 30.0 MB compressed for `mss`, 32.7 MB for `sigma`.
 
-## Proposed
+## Proposed, revised 2026-11-09 after reading the code
 
-**Extend Raster input and Sample raster at points; add no widget.**
+Raster input already imports a **window around the study area** from a GeoTIFF and keeps it in the project, and
+geotiff.js reads a local file in slices, so a large GeoTIFF on the laptop is already read in parts. Sample raster
+samples the kept window. So, in two steps, adding no widget:
 
-1. **Raster input takes a file at a URL** (GeoTIFF, or a NetCDF latitude–longitude grid with a variable named), kept
-   as a reference with its size, and not loaded whole.
-2. **Or a file on this device, read in parts**: a large file chosen from the laptop is read by slices of the file, not
-   held whole.
-3. **"Download the whole file"**, offered wherever a file is read from a URL, with its name, source and size: a plain
-   link the person saves to their laptop and can then choose as in 2. A link needs no cross-origin permission, so it is
-   also the way to a file a browser cannot read in parts, such as DTU25MSS.
-4. **Sample raster at points reads only the cells at the points** where the raster is a reference, and says how many
-   requests and bytes it read.
-5. Both widgets move to the standard Inspector, as touched widgets do.
+**Step 1, GeoTIFF:**
 
-**The sea-level example then needs no script:** the gauges, EGM2008 from the PROJ CDN, DTU25MSS from the laptop (or a
-Philippine subset published in the example repository with credit), each sampled at the gauges, and the offset as a
-computed value.
+1. **A GeoTIFF at a URL**: Raster input reads only the window around the study area, by HTTP range, and keeps it as a
+   local import is kept.
+2. **Point-registered grids**: a grid whose values sit at nodes (`PixelIsPoint`), as EGM2008 is published, is read
+   with its window shifted half a cell, and the registration is recorded.
+3. **"Download the whole file"**, offered with a URL source, with its name, source and size: a plain link, so the
+   person keeps the file on the laptop and can choose it as a local file.
+4. Raster input and Sample raster move to the standard Inspector.
+
+**Step 2, NetCDF** (the practitioner, 2026-11-09: *"Can NetCDF be an input for raster input?"*): a latitude–longitude
+NetCDF grid as a local file, read in parts by h5wasm, which Fieldwork already ships for Sentinel-5P: the variable
+named, the grid checked to be regular, and the window around the study area kept as a GeoTIFF window is. A NetCDF at a
+URL works only where its host allows cross-origin reads, which DTU's does not.
+
+**Measured for step 1:** EGM2008 on cdn.proj.org states `GeographicTypeGeoKey` 4326, `GTRasterTypeGeoKey` 2
+(`PixelIsPoint`) and a vertical key 4979, origin −180, 90 at 2.5′: Raster input refused it. DeltaDTM's tiles are
+EPSG:4326, area cells, zstd-compressed. The subsets published in the example are written EPSG:4326, area cells,
+deflate.
+
+## What was built, 0.71.0
+
+- **Raster input reads a GeoTIFF at a URL** (Or a GeoTIFF at a URL, Read): only the window around the study area, by
+  HTTP range, kept in the project as a local import is. Beside it, **Download the whole file**, with its size from
+  the server, so the person can keep it on the laptop and choose it as a local file later.
+- **Point-registered grids** (`PixelIsPoint`) are read with the origin shifted half a cell, and
+  `sourceRegistration: PixelIsPoint` is recorded.
+- **Sample raster** offers **bilinear between the four nearest cell centres** beside the containing cell, chosen in
+  Configure… and stated in the receipt. A missing value among the four gives no value.
+- Raster input and Sample raster are on the standard Inspector and dialog (186).
+- The worked example's third workflow, built from its manual: EGM2008 read from cdn.proj.org; DeltaDTM and DTU25MSS as
+  subsets the example publishes, cut on the sources' own cells by `scripts/make_grid_subsets.py`, because neither
+  publisher's server allows a browser to read by range.
+
+## What was run, 2026-11-09
+
+- The manual's third workflow, by hand in Chromium on an empty canvas (`tests/sea-level-from-scratch.browser.mjs`):
+  **16 of 194** facilities read Reaches. Python on the source tiles (rasterio, pyproj) gives the same 16; 0 of 194
+  heights differ.
+- Found on the way: a first subset cut at bounds between DeltaDTM's cells was resampled, and one facility read its
+  neighbour's height (17, not 16). The script now cuts on the source grid and asserts it.
+- WebKit runs in CI, not here.
 
 ## Validation it commits to
 

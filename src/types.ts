@@ -485,7 +485,10 @@ export interface ParamsByType {
     registerRetrieved?:{registers:{id:string;title:string;licence:string;records:number;country?:string}[];at:string};
     label:string;source:'openstreetmap-live'|'hdx-hot-export'|'overture-places';kinds:string[];requireName:boolean;country:string;minConfidence:number;data:PointCollection|null;retrieved:{source:'openstreetmap-live'|'hdx-hot-export'|'overture-places';sourceLabel:string;licence:string;licenceIRI:string;sourceIRI:string;attribution:string;origin:string;kept:number;dropped:{kind:number;coordinates:number;name:number;outside?:number};at:string;scope:string;filename?:string;sha256?:string;bytes?:number;release?:string;belowConfidence?:number;unmappedCategory?:number;minConfidence?:number}|null};
   buffer_point:{label:string;pointId:string;distanceM:number};
-  sample_raster:{label:string;attribute:string;valueUnit:string};
+  sample_raster:{label:string;attribute:string;valueUnit:string;
+    /** How a value is read at a point: the cell containing it (the default), or between the four nearest cell centres,
+     *  for a smooth field such as a geoid (experiment 198). */
+    method?:'cell'|'bilinear'};
   slr_extract_import:{label:string;datasetIRI:string;datasetVersion:string;baselinePeriod:string;citations:string[];basisKind:''|'workflow'|'confidence-pbox';familyValues:{withVerticalLandMotion:string;withoutVerticalLandMotion:string};sourceNote?:string};
   slr_site_assignment:{label:string};
   slr_threshold_comparison:{label:string;scenario:string;basis:string;family:string;year:string;quantile:string;elevationField:string;verticalDatum:string;elevationReference:''|'baseline-sea-surface'|'other-datum'};

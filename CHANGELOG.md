@@ -3,6 +3,24 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.71.0 — 2026-11-09
+
+- **Which of Manila's health facilities stand on ground below the sea level projected for 2100, by hand** (198): the
+  sea-level example's third workflow reads DeltaDTM, EGM2008 and DTU25MSS, with no national datum, and finds 16 of 194,
+  as Python on the source tiles does. Not a flood map: no tide, surge, defences or drainage, and the terrain model is
+  least certain at the coast. Its write-up has fourteen notes and cites eight works.
+- **Raster input reads a GeoTIFF at a URL**, keeping only the window around the study area, and offers **Download the
+  whole file** with its size, to keep on the laptop. Grids published at nodes (`PixelIsPoint`), as EGM2008 is, are
+  read half a cell over, and that is recorded. Raster input 0.6.0.
+- **Sample raster can read bilinearly** between the four nearest cell centres, chosen and stated in the receipt.
+  Sample raster 0.2.0.
+- **Raster input and Sample raster are on the standard Inspector and dialog** (186).
+- **A published ruleset that computes values runs on a table directly**, and its computed columns are numbers.
+- **Correction: the two sea-level widgets retire only now.** 0.70.0 to 0.70.2 announced it, but their releases were
+  not registered, so the build kept them in the catalogue. They are registered as retired, with the ledgers updated.
+- Tests seed a workflow before the page loads instead of writing storage and reloading, which raced in WebKit in CI.
+- Validation: Chromium locally; WebKit in CI.
+
 ## 0.70.2 — 2026-11-09
 
 - **The sea-level example finds its facilities by hand**, with Find health facilities from the Humanitarian

@@ -1,2 +1,2 @@
-import{a,b,c,d,e}from"./chunks/chunk-CEG2F55G.js";import"./chunks/chunk-6EGW5NQH.js";import"./chunks/chunk-KVMUXFPB.js";export{a as cellAt,c as requireRunnableSample,d as sampleRaster,e as sampleReceipt,b as validateSampleNode};
+import{a,b,c,d,e,f}from"./chunks/chunk-WI4RP2W5.js";import"./chunks/chunk-6EGW5NQH.js";import"./chunks/chunk-KVMUXFPB.js";export{d as bilinearAt,a as cellAt,c as requireRunnableSample,e as sampleRaster,f as sampleReceipt,b as validateSampleNode};
 //# sourceMappingURL=sample-raster.js.map

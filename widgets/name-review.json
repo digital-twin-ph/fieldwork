@@ -350,24 +350,6 @@
       "note": "Renamed from `keep_rows` on 2026-10-26 at the practitioner's verdict -- \"keep_rows is not intuitive\". SELECT is the command epidemiologists already know for choosing a subset before analysis, so the name needs no translation; `keep_rows` named the mechanics, and `rows` is the kind of category noun this ledger's rule rejects. Renamed before release, so no saved workflow carried the old identifier."
     },
     {
-      "nodeType": "slr_site_assignment",
-      "title": "Assign projection site",
-      "group": "Spatial operations",
-      "fingerprint": "ecb55da38088",
-      "verdict": "pending",
-      "reviewed": null,
-      "reviewedBy": null
-    },
-    {
-      "nodeType": "slr_threshold_comparison",
-      "title": "Compare level to elevation",
-      "group": "Comparisons and checks",
-      "fingerprint": "4c389a09b00e",
-      "verdict": "pending",
-      "reviewed": null,
-      "reviewedBy": null
-    },
-    {
       "nodeType": "snap_to_network",
       "title": "Snap to street network",
       "group": "Spatial operations",

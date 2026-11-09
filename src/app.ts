@@ -993,7 +993,7 @@ function drawRunProgress(){
 /** THE WIDGETS WHOSE INSPECTOR FOLLOWS THE STANDARD (experiment 186): Name, Inputs, Settings, Result, the links,
  *  Actions, in that order and nothing else, with every setting in the widget's configuration dialog. One at a time,
  *  Relate first; the set grows as each widget is moved, and a check holds them to it. */
-export const STANDARD_INSPECTOR=new Set<NodeType>(['measure_distance','table_output','relate_table','select_rows','table_input','find_health_facilities','group_table','apply_ruleset','map_output','deduplicate_points','rate','study_area']);
+export const STANDARD_INSPECTOR=new Set<NodeType>(['raster_input','sample_raster','measure_distance','table_output','relate_table','select_rows','table_input','find_health_facilities','group_table','apply_ruleset','map_output','deduplicate_points','rate','study_area']);
 function samplerProduct(node:WorkflowNode){
   const up=(id:string,port:string)=>{const e=workflow.edges.find(x=>x.to===id&&x.port===port);return e?workflow.nodes.find(m=>m.id===e.from):undefined;};
   const search=up(node.id,'files'),find=search?up(search.id,'product'):undefined;
@@ -1002,13 +1002,38 @@ function samplerProduct(node:WorkflowNode){
 /** A DISTANCES RESULT READ AS A TABLE (experiment 197): its columns, known before a run from the candidates the search
  *  chooses among, so Relate can match `nearest_site_id` to a projection's `site_id` straight away. */
 function distancesColumns(up:WorkflowNode):Record<string,string[]>{
-  const edge=workflow.edges.find(e=>e.to===up.id&&e.port==='candidates');
-  const from=edge&&workflow.nodes.find(m=>m.id===edge.from);
-  const features=from?.type==='point_input'?from.params.data.features:[];
-  const held:Record<string,string[]>={point_id:[],nearest_id:[...new Set(features.map(f=>String(f.id??'')))]};
-  for(const f of features)for(const [k,v] of Object.entries(f.properties??{})){
-    const col=`nearest_${k}`;held[col]=[...new Set([...(held[col]??[]),String(v??'')])];}
+  const layer=(port:string)=>{const e=workflow.edges.find(x=>x.to===up.id&&x.port===port);return e&&workflow.nodes.find(m=>m.id===e.from);};
+  const held:Record<string,string[]>={point_id:[]};
+  for(const [k,values] of Object.entries(pointLayerColumns(layer('points'))))held[`point_${k}`]=values;
+  held.nearest_id=pointLayerIds(layer('candidates'));
+  for(const [k,values] of Object.entries(pointLayerColumns(layer('candidates'))))held[`nearest_${k}`]=values;
   return held;
+}
+/** THE ATTRIBUTES A POINT LAYER CARRIES, known before a run: a point layer's own, a retrieval's, and each attribute a
+ *  Sample raster after them writes, followed back through the chain. Values where the layer holds them. */
+function pointLayerColumns(node:WorkflowNode|undefined,seen=new Set<string>()):Record<string,string[]>{
+  if(!node||seen.has(node.id))return {};
+  seen.add(node.id);
+  const of=(features:readonly {properties?:Record<string,unknown>|null}[])=>{const out:Record<string,string[]>={};
+    for(const f of features)for(const [k,v] of Object.entries(f.properties??{}))out[k]=[...new Set([...(out[k]??[]),String(v??'')])].slice(0,200);
+    return out;};
+  if(node.type==='point_input')return of(node.params.data.features);
+  if(node.type==='find_health_facilities')return of(node.params.data?.features??[]);
+  if(node.type==='sample_raster'){
+    const e=workflow.edges.find(x=>x.to===node.id&&x.port==='points');
+    const below=pointLayerColumns(e&&workflow.nodes.find(m=>m.id===e.from),seen);
+    const name=node.params.attribute?.trim();
+    return name?{...below,[name]:[]}:below;
+  }
+  return {};
+}
+function pointLayerIds(node:WorkflowNode|undefined,seen=new Set<string>()):string[]{
+  if(!node||seen.has(node.id))return [];
+  seen.add(node.id);
+  if(node.type==='point_input')return node.params.data.features.map(f=>String(f.id??''));
+  if(node.type==='find_health_facilities')return (node.params.data?.features??[]).map(f=>String(f.id??''));
+  if(node.type==='sample_raster'){const e=workflow.edges.find(x=>x.to===node.id&&x.port==='points');return pointLayerIds(e&&workflow.nodes.find(m=>m.id===e.from),seen);}
+  return [];
 }
 function upstreamKeyValues(node:WorkflowNode,seen=new Set<string>(),
   port='records'):Record<string,string[]>|undefined{
@@ -1545,8 +1570,10 @@ function candidateFields(workflow:Workflow,nodeId:string){
     predicate:`fwa:${attribute.replace(/[^A-Za-z0-9]+(.)/g,(_,c:string)=>c.toUpperCase()).replace(/[^A-Za-z0-9]/g,'')}`}));
   // A TABLE A STEP COMPUTED, such as Total within groups' counts, is read from the last run, as its preview is.
   const rowsFrom=data?.kind==='data-table'?data:table??undefined;
+  // READ AS THE RULES WILL READ THEM: a column the table declares numeric is a number, so it is offered with its unit
+  // (experiment 198). Read from the keys as text, a sampled height was offered as a category.
   const records=rowsFrom
-    ?(rowsFrom.rows??[]).slice(0,200).map(row=>({...row.key,...(rowsFrom.valueField?{[rowsFrom.valueField]:row.value}:{})}))
+    ?authoredSubjects({...rowsFrom,rows:(rowsFrom.rows??[]).slice(0,200)} as never).map(s=>s.properties)
     :(data?.features??[]).slice(0,200).map(feature=>feature.properties??{});
   const seen=new Map<string,Set<string>>();
   for(const properties of records)
@@ -1831,6 +1858,46 @@ function openDistanceConfig(nodeId:string){
     },
     apply:draft=>{change(w=>{getNode(w,nodeId,'measure_distance').params=draft;});},
   },esc);
+}
+
+/** WHAT SAMPLE RASTER WRITES, in one sentence. */
+function sampleSentence(n:WorkflowNode<'sample_raster'>):string{
+  const p=n.params,name=p.attribute?.trim();
+  if(!name)return 'Writes a raster\u2019s value onto each point. Name the attribute in Configure\u2026';
+  return `Writes ${name}${p.valueUnit?.trim()?`, ${p.valueUnit.trim()},`:''} onto each point: `
+    +(p.method==='bilinear'?'interpolated between the four nearest cells.':'the value of the cell containing it.');
+}
+
+/** SAMPLE RASTER'S CONFIGURATION DIALOG (experiment 186): the attribute, what it measures, and how a value is read. */
+function openSampleConfig(nodeId:string){
+  const node=getNode(workflow,nodeId,'sample_raster');
+  type Draft=WorkflowNode<'sample_raster'>['params'];
+  openConfigDialog<Draft>({
+    id:'sample-config',widget:'Sample raster at points',step:node.params.label||TYPES.sample_raster.title,draft:structuredClone(node.params),
+    sections:draft=>({settings:`<div class="field"><label class="field-label" for="sample-attribute">Attribute to write</label><input id="sample-attribute" maxlength="60" value="${esc(draft.attribute)}" placeholder="elevation_m"></div>`
+      +`<div class="field"><label class="field-label" for="sample-unit">What those values measure</label><input id="sample-unit" maxlength="60" value="${esc(draft.valueUnit)}" placeholder="metres above the stated datum"></div>`
+      +`<div class="field"><label class="field-label" for="sample-method">Read each value as</label><select id="sample-method">`
+      +`<option value="cell"${draft.method!=='bilinear'?' selected':''}>the cell containing the point</option>`
+      +`<option value="bilinear"${draft.method==='bilinear'?' selected':''}>between the four nearest cells (bilinear)</option></select></div>`
+      +'<p class="description">Bilinear suits a smooth field such as a geoid; keep a margin of one cell in the raster\u2019s window so points near its edge have four.</p>',
+      preview:`<p class="muted">${esc(sampleSentence({...node,params:draft}))} No value is set to zero.</p>`}),
+    wire:(root,draft,redraw)=>{
+      root.querySelector<HTMLInputElement>('#sample-attribute')?.addEventListener('change',e=>{draft.attribute=(e.target as HTMLInputElement).value.trim();redraw();});
+      root.querySelector<HTMLInputElement>('#sample-unit')?.addEventListener('change',e=>{draft.valueUnit=(e.target as HTMLInputElement).value.trim();redraw();});
+      root.querySelector<HTMLSelectElement>('#sample-method')?.addEventListener('change',e=>{const v=(e.target as HTMLSelectElement).value;
+        if(v==='bilinear')draft.method='bilinear';else delete draft.method;redraw();});
+    },
+    apply:draft=>{change(w=>{getNode(w,nodeId,'sample_raster').params=draft;});},
+  },esc);
+}
+
+/** WHAT A RASTER INPUT HOLDS, in one sentence: the file, where from, the window and the cells' registration. */
+function rasterSentence(n:WorkflowNode<'raster_input'>):string{
+  const a=n.params.asset;
+  if(!a)return 'Keeps the window of a GeoTIFF around the study area, from a file on this device or at a URL. Nothing is kept yet.';
+  const from=a.source.url?`read in parts from ${(()=>{try{return new URL(a.source.url).hostname;}catch{return a.source.url;}})()}`:'from a file on this device';
+  return `Keeps ${a.metadata.width} × ${a.metadata.height} cells of ${a.source.filename}, ${from}, around the study area`
+    +`${a.source.metadata.sourceRegistration?'; its values sit at grid nodes and are read as the cells around them':''}.`;
 }
 
 /** WHAT A TABLE OUTPUT SHOWS, in one sentence, from what is wired. */
@@ -3250,11 +3317,21 @@ function renderInspector(){
       +`<div class="field"><label class="field-label" for="bp-distance">Radius in metres</label><input id="bp-distance" data-bp-number="distanceM" type="number" min="0" max="5000" step="100" value="${p.distanceM}"></div>`
       +'<div class="notice">A derived scope, not a surveyed boundary: its edge is a decision and its radius an assumption of the question, so state why you chose it. One named point only \u2014 several distant points would make a raster window too coarse to sample. Local areas up to 5,000 m.</div>';
   }else if(n.type==='sample_raster'){
+    // THE STANDARD INSPECTOR (experiments 186, 198): touched to read between the four nearest cells, as a geoid is read.
     const p=n.params;
-    content+='<p class="description">Writes the value of the raster cell containing each point onto that point.</p>'
-      +`<div class="field"><label class="field-label" for="sample-attribute">Attribute to write</label><input id="sample-attribute" data-sample="attribute" maxlength="60" value="${esc(p.attribute)}" placeholder="elevation_m"></div>`
-      +`<div class="field"><label class="field-label" for="sample-unit">What those values measure</label><input id="sample-unit" data-sample="valueUnit" maxlength="60" value="${esc(p.valueUnit)}" placeholder="metres above the stated datum"></div>`
-      +'<div class="notice">A cell value is not a measurement at the point: it is the value of the containing cell, at the raster\u2019s resolution, with no interpolation. No-data cells, points outside the raster and points without coordinates carry no value and are counted; none is treated as zero. An attribute already on the layer is never overwritten.</div>';
+    content+=standardSection('Name',`<div class="field"><label class="field-label" for="sample-label">Name</label><input id="sample-label" data-sample="label" maxlength="60" value="${esc(p.label||TYPES.sample_raster.title)}"></div>`);
+    content+=standardSection('Inputs',standardInputs(n,{points:'Points to read at',raster:'Raster to read'}));
+    content+=standardSection('Settings',`<p class="standard-sentence">${esc(sampleSentence(n))}</p>`
+      +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button></div>');
+    const why=result?.unfinished?.find(u=>u.nodeId===n.id)?.message;
+    // THE COUNTS AS THE RECEIPT STATES THEM: the run keeps the receipt, not the point layer.
+    const facts=result?.receipts?.find(r=>r.nodeId===n.id)?.facts??'';
+    const count=(p:string)=>{const m=new RegExp(`fw:${p} "(\\d+)"`).exec(facts);return m?Number(m[1]):undefined;};
+    const counts=count('sampledCount')===undefined?undefined
+      :{sampled:count('sampledCount')!,noData:count('noDataCount')!,outside:count('outsideRasterCount')!,unlocated:count('unlocatedCount')!};
+    content+=standardSection('Result',`<p class="standard-result${why?' standard-result-warning':''}">${esc(why?`The last run could not compute this step: ${why}`
+      :counts?`${counts.sampled} point${counts.sampled===1?'':'s'} given a value; ${counts.noData} on no data, ${counts.outside} outside the raster, ${counts.unlocated} without a location. None is set to zero.`
+      :result?'Run to read the raster at the points.':'Not run yet.')}</p>`);
     // THE ARTEFACT IS DOWNLOADED WHERE IT IS MADE, not where it happens to be displayed.
     // `#raster-download` sits in the Results heading and offers whatever raster the output tab
     // on screen carries, so with a prepared window and a clipped grid in one workflow the full
@@ -3270,9 +3347,14 @@ function renderInspector(){
     // the gesture is learned once -- its own comment records a fourth widget that had none at
     // all when it was written -- and these two were not given it. Two nodes of the same kind on
     // one canvas could not be told apart except by their ports.
-    content+=labelForm(n.type==='raster_input'?'raster-label':'clip-raster-label','Node label',
-      n.params.label||(n.type==='raster_input'?'Raster input':'Clip raster'));
-    content+=nodeInputs(n).map(([port,type])=>`<div class="field"><label class="field-label" for="raster-${port}">${port==='area'?'Study area':'Raster input'}</label><select id="raster-${port}" data-map-port="${port}"><option value="">Select input</option>${workflow.nodes.filter(x=>x.id!==n.id&&outputOf(x)===type).map(x=>`<option value="${esc(x.id)}" ${workflow.edges.some(e=>e.to===n.id&&e.port===port&&e.from===x.id)?'selected':''}>${esc(x.params.label||TYPES[x.type].title)}</option>`).join('')}</select></div>`).join('');
+    // RASTER INPUT ON THE STANDARD INSPECTOR (experiments 186, 198): name, inputs, one sentence with Configure… and the
+    // population links, and what it holds. Touched to read a GeoTIFF at a URL. Clip raster keeps its own panel.
+    const standardRaster=n.type==='raster_input';
+    if(standardRaster){
+      content+=standardSection('Name',labelForm('raster-label','Name',n.params.label||'Raster input'));
+      content+=standardSection('Inputs',standardInputs(n,{area:'Study area, around which a window is kept'}));
+    }else content+=labelForm('clip-raster-label','Node label',n.params.label||'Clip raster');
+    if(!standardRaster)content+=nodeInputs(n).map(([port,type])=>`<div class="field"><label class="field-label" for="raster-${port}">${port==='area'?'Study area':'Raster input'}</label><select id="raster-${port}" data-map-port="${port}"><option value="">Select input</option>${workflow.nodes.filter(x=>x.id!==n.id&&outputOf(x)===type).map(x=>`<option value="${esc(x.id)}" ${workflow.edges.some(e=>e.to===n.id&&e.port===port&&e.from===x.id)?'selected':''}>${esc(x.params.label||TYPES[x.type].title)}</option>`).join('')}</select></div>`).join('');
     // WHICH POPULATION RASTER COVERS THIS STUDY AREA, before asking for a file nobody has yet.
     // The same shape as the street network widget's published extracts: this application works
     // out the file and the browser fetches it, because data.worldpop.org sends no CORS header
@@ -3281,6 +3363,7 @@ function renderInspector(){
     // denominator attributed to the wrong country is worse than no denominator, and a province
     // on a border is exactly where a guess from coordinates would be wrong and invisible.
     if(n.type==='raster_input'){
+      const settingsFrom=content.length;
       const area=workflow.nodes.find(x=>x.id===workflow.edges.find(e=>e.to===n.id&&e.port==='area')?.from);
       const stated=countryOfArea(area?.params as {country?:string;boundary?:{provenance?:{boundaryID?:string}}});
       // A STUDY AREA SOMEBODY DREW STATES NO COUNTRY, and WorldPop is keyed by country. Offering
@@ -3321,7 +3404,14 @@ function renderInspector(){
           +`${chosen.bytes?'':' Size unread at snapshot time, so unstated rather than guessed.'}`
           +`</small>`;
       }
-      content+='<button id="prepare-raster" class="button primary">Prepare GeoTIFF input</button><p class="description">Acquire a rectangular window and enter source metadata/citation. Reopen to edit metadata without re-uploading. Use Clip raster to apply the polygon mask.</p>';if(n.params.asset)content+=`<p>${esc(n.params.asset.source.filename)}<br>${n.params.asset.source.metadata.width} x ${n.params.asset.source.metadata.height} source cells; retained ${n.params.asset.metadata.width} x ${n.params.asset.metadata.height}.</p><details><summary>GeoTIFF metadata and source</summary><pre>${esc(JSON.stringify(n.params.asset,null,2))}</pre></details>`;content+='<button id="download-node-raster" class="button">Download GeoTIFF</button><p class="description">The retained window at native resolution, with its georeferencing and source metadata.</p>';}else content+='<section class="source-card" data-clip-parameters><span class="inspector-section">Processing parameters</span><div class="detail-row"><span>Cutline</span><strong>Separate clip boundary</strong></div><div class="detail-row"><span>Inclusion rule</span><strong>Configured below</strong></div><div class="detail-row"><span>Resolution</span><strong>Native pixels</strong></div><div class="detail-row"><span>Outside polygon</span><strong>NoData</strong></div><p>Start with a copy of Study area, then save adjustments on this operation. Study area remains unchanged. Map displays the result.</p></section><button id="preview-raster-clip" class="button primary">Preview and adjust</button><button id="add-raster-map" class="button">Add raster map</button>';
+      content+='<div class="inspector-actions"><button id="prepare-raster" class="button primary">Configure\u2026</button></div>';
+      {const asset=n.params.asset,settings=content.slice(settingsFrom);
+       content=content.slice(0,settingsFrom)+standardSection('Settings',`<p class="standard-sentence">${esc(rasterSentence(n))}</p>`+settings);
+       const why=result?.unfinished?.find(u=>u.nodeId===n.id)?.message;
+       content+=standardSection('Result',`<p class="standard-result${why?' standard-result-warning':''}">${esc(why?`The last run could not compute this step: ${why}`
+         :asset?`Holds ${asset.metadata.width} × ${asset.metadata.height} cells of ${asset.source.filename}.`:'Nothing kept yet: choose a GeoTIFF in Configure\u2026')}</p>`
+         +(asset?`<details><summary>GeoTIFF metadata and source</summary><pre>${esc(JSON.stringify(asset,null,2))}</pre></details>`:''));}
+      content+='<button id="download-node-raster" class="button">Download GeoTIFF</button><p class="description">The retained window at native resolution, with its georeferencing and source metadata.</p>';}else content+='<section class="source-card" data-clip-parameters><span class="inspector-section">Processing parameters</span><div class="detail-row"><span>Cutline</span><strong>Separate clip boundary</strong></div><div class="detail-row"><span>Inclusion rule</span><strong>Configured below</strong></div><div class="detail-row"><span>Resolution</span><strong>Native pixels</strong></div><div class="detail-row"><span>Outside polygon</span><strong>NoData</strong></div><p>Start with a copy of Study area, then save adjustments on this operation. Study area remains unchanged. Map displays the result.</p></section><button id="preview-raster-clip" class="button primary">Preview and adjust</button><button id="add-raster-map" class="button">Add raster map</button>';
     if(n.type==='clip_raster'){content+='<div class="field"><label class="field-label" for="clip-method">Pixel inclusion</label><select id="clip-method"><option value="all-touched" '+(n.params.method==='all-touched'?'selected':'')+'>All touched</option><option value="cell-center" '+(n.params.method==='cell-center'?'selected':'')+'>Cell center inside</option></select><label class="field-label" for="clip-margin">Outer margin (native pixels, 0-1)</label><input id="clip-margin" type="number" min="0" max="1" step="0.25" value="'+(n.params.marginPixels||0)+'"><small>All touched includes a cell when the boundary covers part of its area or crosses it, so a boundary running exactly along a cell border does not pull in the cell outside it. This matches GDAL except where a boundary vertex lies exactly on a cell border. For an outward margin, prepare the GeoTIFF with one pixel of extra source coverage; a margin is a grid distance with no GDAL equivalent. NoData is never filled.</small></div>';content+='<p class="description">'+(n.params.cutline?'Saved clip boundary; independent of Study area edits.':'Boundary will be initialized from the connected Study area.')+'</p><button id="reset-clip-boundary" class="button small" '+(!n.params.cutline?'disabled':'')+'>Use Study area boundary</button>';if(n.params.cutline)content+='<div class="source-card"><span class="inspector-section">Clip extent (degrees)</span>'+geometryBounds(n.params.cutline.geometry).map((value,i)=>'<div class="detail-row"><span>'+['West','South','East','North'][i]+'</span><strong>'+value.toFixed(6)+'</strong></div>').join('')+'</div>';content+='<button id="download-node-raster" class="button">Download GeoTIFF</button><p class="description">The masked grid at native resolution. Cells outside the boundary are NoData, not absent.</p>';}
   }else if(n.type==='study_area'){
     // THE STANDARD INSPECTOR (experiment 186): the name; no inputs; one sentence, the country and the map, which is this
@@ -3972,6 +4062,7 @@ function renderInspector(){
   // resolves without a run, the table, so the preview is the table the draft would make. Only Apply writes.
   if(n.type==='map_output')optionalElement('#configure-step')?.addEventListener('click',()=>openMapConfig(n.id));
   if(n.type==='table_output')optionalElement('#configure-step')?.addEventListener('click',()=>openTableConfig(n.id));
+  if(n.type==='sample_raster')optionalElement('#configure-step')?.addEventListener('click',()=>openSampleConfig(n.id));
   if(n.type==='group_table')optionalElement('#configure-step')?.addEventListener('click',()=>{
     const node=workflow.nodes.find(x=>x.id===n.id);
     if(node?.type!=='group_table')return;

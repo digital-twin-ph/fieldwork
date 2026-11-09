@@ -22,7 +22,7 @@ for(const example of examples){
   const skip=!pinned?'carries no project bundle':!existsSync(path)?`${name} is not checked out beside this repository`:false;
   test(`${name}: every chart has its own title`,{skip},()=>{
     const project=JSON.parse(gunzipSync(readFileSync(path)).toString('utf8'));
-    const untitled=project.workflows.flatMap(({document})=>document.nodes
+    const untitled=project.workflows.map(({document})=>document.workflow??document).flatMap(document=>document.nodes
       .filter(node=>node.type==='chart_output'&&!node.params.chartTitle?.trim())
       .map(node=>`${document.name} · ${node.params.label||node.id}`));
     assert.deepEqual(untitled,[],`Charts with no title of their own: ${untitled.join('; ')}`);

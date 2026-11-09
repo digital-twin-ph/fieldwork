@@ -706,14 +706,14 @@
       "id": "urn:fieldwork:example:sea-level-rise-philippines",
       "title": "Sea-level rise at Manila’s health facilities",
       "repository": "https://github.com/digital-twin-ph/example-2026-sea-level-rise-philippines",
-      "commit": "cfc95454bf4a8d04f58b3d9f49743a3ed20d9759",
+      "commit": "fbdbcbb4c74c3fb5de7c497279aebbd1968d98fb",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2026-sea-level-rise-philippines",
       "licence": {
-        "data": "Projections and sites CC BY 4.0, with three required citations; facilities retrieved from OpenStreetMap (ODbL 1.0) by the workflows; the study area, diagram, manual and scripts CC0 1.0",
-        "source": "IPCC AR6 Sea Level Projections v20210809 (doi:10.5281/zenodo.5914709); OpenStreetMap via the Humanitarian OpenStreetMap Team export",
+        "data": "Projections and sites CC BY 4.0, with three required citations; DeltaDTM v1.1 and DTU25MSS subsets CC BY 4.0; facilities retrieved from OpenStreetMap (ODbL 1.0) by the workflows; the study area, diagram, manual and scripts CC0 1.0",
+        "source": "IPCC AR6 Sea Level Projections v20210809 (doi:10.5281/zenodo.5914709); DeltaDTM v1.1 (doi:10.4121/21997565); DTU25MSS (doi:10.11583/DTU.29412275); EGM2008 read from cdn.proj.org; OpenStreetMap via the Humanitarian OpenStreetMap Team export",
         "note": "Stated in the repository’s README and CITATION.cff. The facilities file is a database derived from OpenStreetMap and offered under the ODbL."
       },
-      "description": "Published IPCC AR6 projections for eight Philippine tide gauges and 194 health facilities in coastal Manila: which gauge’s projection applies to each facility and how far it is, and the rise there by 2100 under SSP2-4.5 with vertical land motion, 1,124 mm. Not a flood model: its twelve-note write-up opens with the vertical-datum diagram, and the README says what the ground’s height and the local sea’s would need.",
+      "description": "Published IPCC AR6 projections for eight Philippine tide gauges and 194 health facilities in coastal Manila: which gauge’s projection applies to each facility and how far it is, the rise there by 2100 under SSP2-4.5 with vertical land motion, 1,124 mm, and which facilities stand on ground below that projected level: 16 of 194, from DeltaDTM, EGM2008 and DTU25MSS, with no national datum. Not a flood model: its fourteen-note write-up opens with the vertical-datum diagram and says what the comparison leaves out.",
       "carries": {
         "workflow": true,
         "data": true,
@@ -725,7 +725,9 @@
         "map_output",
         "measure_distance",
         "point_input",
+        "raster_input",
         "relate_table",
+        "sample_raster",
         "select_rows",
         "study_area",
         "table_input",
@@ -734,18 +736,18 @@
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "a7d17f3eebba0ae393141b686cb6ad94dfaa221a2cddbde4cba52ccdcf070e0c",
-          "bytes": 26431
+          "sha256": "911630bf483f30bd9ecc97a8ed03df5d5367a9e1e8142e4a793f76c66f03dfc7",
+          "bytes": 794040
         },
         {
           "path": "manual.json",
-          "sha256": "8efd9ea7ff89eeafba72ee1007a5415f425ee04d8b925ad9b7267fc9ac29dc2f",
-          "bytes": 33162
+          "sha256": "961c6f91af2be90934276ec8d8fb8fd8381b2186ebe5b2e445a67ad288359899",
+          "bytes": 58570
         },
         {
           "path": "README.md",
-          "sha256": "49ce596b225b754ddb51ca58336cc570abe8703d948bc7b563c51b582fbc1c73",
-          "bytes": 9199
+          "sha256": "f040226e29315c7df97ab384cae18791ab0ad8536a529ce9cf7ab54c7efe4209",
+          "bytes": 12023
         },
         {
           "path": "CITATION.cff",
@@ -768,18 +770,38 @@
           "bytes": 456
         },
         {
+          "path": "data/deltadtm-manila.tif",
+          "sha256": "c5a0535e59837779d204d02fa09abd0b3f0772738e39a840962342d2e5637cfd",
+          "bytes": 967742
+        },
+        {
+          "path": "data/dtu25mss-manila.tif",
+          "sha256": "0884d711b01f551fe52ef2c06e95977ae0fe646a5ce69a2292ba78837e34d66f",
+          "bytes": 2388
+        },
+        {
           "path": "docs/vertical-datums.svg",
           "sha256": "155855dcbe128ffdba05c67e340135334e573205af6563002924f99e08fb4497",
           "bytes": 7503
         },
         {
+          "path": "docs/41597_2024_Article_3091.pdf",
+          "sha256": "3395e74824a559b305cdf9e991aa19d61f2f3682ddb2edf9869762aefed1ce92",
+          "bytes": 7279034
+        },
+        {
           "path": "scripts/make-manual.mjs",
-          "sha256": "8722eef3092d3832c1cad42509edd8a03af3c008a667c3d5666e5f7089516566",
-          "bytes": 21056
+          "sha256": "76c48410b951071f4c544cd16f3401b404537831c72c09c704b9d24d70780118",
+          "bytes": 31349
+        },
+        {
+          "path": "scripts/make_grid_subsets.py",
+          "sha256": "e48c59ffaca98210e64bca3559b9eaf1b6afeb8f3365eb5a1955ed2b3e858662",
+          "bytes": 6238
         }
       ],
-      "workflowCount": 2,
-      "notYet": "No flood question yet: which years NAMRIA's mean sea level at Manila stands for is not stated, and the step from it to AR6's 1995-2014 baseline lies between about 0.1 and 0.76 m depending on them."
+      "workflowCount": 3,
+      "notYet": "Not a flood model: no tide, surge, defences or drainage, and the open terrain model is least certain at the coast (about 0.45 m). NAMRIA’s mean sea level period remains unstated; the third workflow does without it."
     }
   ]
 }

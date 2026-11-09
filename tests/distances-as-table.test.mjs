@@ -10,14 +10,14 @@ const facilities={type:'FeatureCollection',features:[point('a',121.03,14.60,{nam
 
 test('each point keeps its row, keyed by its nearest candidate\'s own attributes, the distance as the value',()=>{
   const table=distancesAsTable(nearestPlaces(facilities,gauges,'metres'));
-  assert.deepEqual(table.keys,['point_id','nearest_id','nearest_name','nearest_site_id']);
+  assert.deepEqual(table.keys,['point_id','point_name','nearest_id','nearest_name','nearest_site_id']);
   assert.equal(table.valueField,'distance');assert.equal(table.unit,'metres');
   assert.equal(table.rowCount,3);
-  assert.deepEqual(table.rows[0].key,{point_id:'a',nearest_id:'site-145',nearest_name:'Manila',nearest_site_id:'145'});
+  assert.deepEqual(table.rows[0].key,{point_id:'a',point_name:'A clinic',nearest_id:'site-145',nearest_name:'Manila',nearest_site_id:'145'});
   assert.equal(table.rows[1].key.nearest_site_id,'394');
   assert.ok(table.rows[0].value>6000&&table.rows[0].value<8000);
   // A point with no location is counted, not lost.
-  assert.deepEqual(table.rows[2].key,{point_id:'c',nearest_id:'',nearest_name:'',nearest_site_id:''});
+  assert.deepEqual(table.rows[2].key,{point_id:'c',point_name:'Unplaced',nearest_id:'',nearest_name:'',nearest_site_id:''});
   assert.equal(table.rows[2].value,null);assert.equal(table.missingValueCount,1);
 });
 
@@ -34,4 +34,13 @@ test('a table port takes a distances result; nothing else changes',()=>{
     {id:'t',type:'table_output',x:0,y:0,params:{label:'t',inputMode:'table'}}],
     edges:[{id:'e1',from:'f',to:'d',port:'points'},{id:'e2',from:'g',to:'d',port:'candidates'},{id:'e3',from:'d',to:'t',port:'table'}]};
   assert.doesNotThrow(()=>validateWorkflow(w));
+});
+
+test('a number on the points or the candidates is a numeric column, so a rule reads it as one',()=>{
+  const sampled={...facilities,features:facilities.features.map((f,i)=>({...f,properties:{...f.properties,ground_m:[2.5,3.1,null][i]}}))};
+  const gauges2={...gauges,features:gauges.features.map(f=>({...f,properties:{...f.properties,mss_m:43.937}}))};
+  const table=distancesAsTable(nearestPlaces(sampled,gauges2,'metres'));
+  assert.deepEqual(Object.keys(table.numericKeys).sort(),['nearest_mss_m','point_ground_m']);
+  assert.equal(table.rows[0].key.point_ground_m,'2.5');
+  assert.equal(table.rows[2].key.point_ground_m,'','no value stays empty, never zero');
 });

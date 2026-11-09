@@ -110,7 +110,7 @@ for(const example of pinned(catalog)){
         +`document (${error.message}), so the declared node types could not be checked.`);bundle=null;}
       if(bundle){
         const found=[...new Set((bundle.workflows??[]).flatMap(w=>
-          (w.document?.nodes??[]).map(n=>n.type)))].sort();
+          ((w.document?.workflow??w.document)?.nodes??[]).map(n=>n.type)))].sort();
         const declared=[...example.uses].sort();
         const missing=found.filter(t=>!declared.includes(t));
         const phantom=declared.filter(t=>!found.includes(t));

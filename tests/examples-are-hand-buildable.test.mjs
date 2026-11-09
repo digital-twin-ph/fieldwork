@@ -18,7 +18,7 @@ import {bundledRulesets} from '../build/rulesets.js';
 
 const nodesOf=template=>{
   const w=typeof template==='function'?template():template;
-  const flows=w?.workflows?.map(x=>x.document)??[w];
+  const flows=w?.workflows?.map(x=>x.document?.workflow??x.document)??[w];
   return flows.filter(Boolean).flatMap(f=>f.nodes??[]);
 };
 

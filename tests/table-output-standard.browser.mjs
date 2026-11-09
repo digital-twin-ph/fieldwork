@@ -1,5 +1,6 @@
 import {test,expect} from '@playwright/test';
 import {inTableSettings} from './map-settings.mjs';
+import {seedWorkflow} from './seed-workflow.mjs';
 import {collectPageErrors} from './page-errors.mjs';
 
 /** TABLE ON THE STANDARD INSPECTOR (experiment 186, 2026-11-09). Touched for the sea-level example, when a number stopped
@@ -7,18 +8,11 @@ import {collectPageErrors} from './page-errors.mjs';
  *  showed. The totals claim moved into Configure…, and is applied there. */
 test('Table is on the standard Inspector, and its totals claim is set in Configure…',async({page})=>{
   const errors=collectPageErrors(page);
-  await page.goto('/');await page.evaluate(()=>localStorage.clear());
-  await page.goto('/?example=blank');
-  await page.evaluate(()=>{
-    const rows=[['water','Southwark',286],['water','Lambeth',14]].map(([measure,company,value])=>({key:{measure,company},value}));
-    const data={kind:'data-table',keys:['measure','company'],valueField:'deaths',rows,rowCount:2,missingValueCount:0};
-    const w=JSON.parse(localStorage.getItem('fieldwork-workflow-v1'));
-    w.nodes=[{id:'deaths',type:'table_input',x:20,y:40,params:{label:'Deaths by company',keys:data.keys,valueField:'deaths',data}},
-      {id:'table',type:'table_output',x:400,y:40,params:{label:'Deaths',inputMode:'table'}}];
-    w.edges=[{id:'e-table',from:'deaths',to:'table',port:'table'}];delete w.manifest;
-    localStorage.setItem('fieldwork-workflow-v1',JSON.stringify(w));
-  });
-  await page.reload();
+  const rows=[['water','Southwark',286],['water','Lambeth',14]].map(([measure,company,value])=>({key:{measure,company},value}));
+  const data={kind:'data-table',keys:['measure','company'],valueField:'deaths',rows,rowCount:2,missingValueCount:0};
+  await seedWorkflow(page,{nodes:[{id:'deaths',type:'table_input',x:20,y:40,params:{label:'Deaths by company',keys:data.keys,valueField:'deaths',data}},
+    {id:'table',type:'table_output',x:400,y:40,params:{label:'Deaths',inputMode:'table'}}],
+    edges:[{id:'e-table',from:'deaths',to:'table',port:'table'}]});
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="table"]').click();
   const inspector=page.locator('#inspector-content');

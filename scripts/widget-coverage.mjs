@@ -63,7 +63,7 @@ for(const example of catalog.examples??[]){
     const {gunzipSync}=await import('node:zlib');
     const doc=JSON.parse(gunzipSync(raw).toString());
     for(const w of doc.workflows??[])
-      if(w.document?.nodes)examples.push([`${folder}/${w.key.split('/').pop()}`,w.document]);
+      {const d=w.document?.workflow??w.document;if(d?.nodes)examples.push([`${folder}/${w.key.split("/").pop()}`,d]);}
   }catch(error){skipped.push(`${example.id} (${error.message})`);}
 }
 

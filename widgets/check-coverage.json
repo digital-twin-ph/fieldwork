@@ -8,9 +8,9 @@
   },
   "measuredAt": "2026-10-27",
   "counts": {
-    "widgets": 56,
+    "widgets": 54,
     "covered": 28,
-    "awaiting": 13,
+    "awaiting": 11,
     "none": 14,
     "blocked": 1
   },
@@ -220,18 +220,6 @@
       "expectation": "parity",
       "computes": "Which rows lie in a range: from and to, both kept, comparing dates as dates and numbers as numbers. An independent implementation recomputes the kept rows, in order, for a date range, a number range, an open end and an emptied cell. Listed values compute nothing and are asserted by unit tests.",
       "check": "32-select-range"
-    },
-    {
-      "nodeType": "slr_site_assignment",
-      "expectation": "parity",
-      "check": null,
-      "computes": "Assigns each record to the nearest projection site and reports the distance."
-    },
-    {
-      "nodeType": "slr_threshold_comparison",
-      "expectation": "parity",
-      "check": null,
-      "computes": "Compares a projected change with a supplied elevation."
     },
     {
       "nodeType": "snap_to_network",

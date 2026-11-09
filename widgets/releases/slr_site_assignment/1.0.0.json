@@ -47,7 +47,11 @@
     "file": "ontology/packs/sea-level.ttl"
    }
   ],
-  "note": "Maps to the sea-level pack's vocabulary, vendored into ontology/packs/sea-level.ttl at the digest widgets/packs.json pins. This widget mints no host term: the pack's namespace stays authoritative for the meaning. See docs/experiments/58-sea-level-widgets.md. The receipt is constrained by slr:ProjectionValueShape, slr:SiteAssignmentShape and slr:ThresholdComparisonShape in ontology/shapes/pack-sea-level.ttl, verified in tests; this registry version records application validation only, so the shapes are not referenced in a field."
+  "note": "Maps to the sea-level pack's vocabulary, vendored into ontology/packs/sea-level.ttl at the digest widgets/packs.json pins. This widget mints no host term: the pack's namespace stays authoritative for the meaning. See docs/experiments/58-sea-level-widgets.md. The receipt is constrained by slr:ProjectionValueShape, slr:SiteAssignmentShape and slr:ThresholdComparisonShape in ontology/shapes/pack-sea-level.ttl, verified in tests; this registry version records application validation only, so the shapes are not referenced in a field.",
+  "emits": {
+   "classes": [],
+   "properties": []
+  }
  },
  "implementation": {
   "files": [

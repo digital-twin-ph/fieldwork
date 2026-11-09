@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {seedWorkflow} from './seed-workflow.mjs';
 import {openFixture} from './open-fixture.mjs';
 import {collectPageErrors} from './page-errors.mjs';
 
@@ -83,20 +84,9 @@ test('a ruleset step can be given rules written here, from a standing start',asy
 // since 2026-10-16: "points or a table, the rules do not know the difference."
 test('a step fed by a table is offered that table\'s columns',async({page})=>{
   const errors=collectPageErrors(page);
-  await openProjectionContract(page);
-
-  // Fork the extract step onto its own rules, which is what the Inspector's own button does.
-  // Its ports are kept, so it still takes the projections table it always took.
-  await page.evaluate(()=>{
-    const key='fieldwork-workflow-v1';
-    const w=JSON.parse(localStorage.getItem(key));
-    const step=w.nodes.find(n=>n.type==='apply_ruleset');
-    step.params.authored={title:'Rules for this step',mustNotBeReadAs:'',
-      fields:[],parameters:[],rules:[]};
-    delete w.manifest;
-    localStorage.setItem(key,JSON.stringify(w));
-  });
-  await page.reload();
+  // The extract step forked onto its own rules, which is what the Inspector's own button does: its ports are kept, so it
+  // still takes the projections table it always took. Seeded so, rather than edited in storage and reloaded.
+  await openProjectionContract(page,{authored:true});
   await page.locator('[data-view="workflow"]').click();
   const id=await page.evaluate(()=>
     JSON.parse(localStorage.getItem('fieldwork-workflow-v1')).nodes.find(n=>n.type==='apply_ruleset').id);
@@ -160,28 +150,21 @@ function assertSeeded(seeded){
 /** A TABLE AND THE PUBLISHED RULESET THAT CONTRACTS FOR IT: four AR6 projections at Manila's gauge, and extract-contract
  *  1.0.0. These tests read the sea-level worked example until 2026-11-09, when it moved to its own repository
  *  (example-2026-sea-level-rise-philippines); they used only this pair of its steps. */
-async function openProjectionContract(page){
-  await page.goto('/');
-  await page.evaluate(()=>localStorage.clear());
-  await page.goto('/?example=blank');
-  await page.evaluate(()=>{
-    const keys=['site_id','scenario','basis','family','year','quantile'];
-    const rows=[['ssp245','with_vlm','0.5',1124],['ssp245','without_vlm','0.5',602],['ssp585','with_vlm','0.5',1329],['ssp585','without_vlm','0.5',806]]
-      .map(([scenario,family,quantile,value])=>({key:{site_id:'145',scenario,basis:'medium',family,year:'2100',quantile},value}));
-    const data={kind:'data-table',keys,valueField:'value_mm',unit:'millimetre',rows,rowCount:rows.length,missingValueCount:0};
-    const w=JSON.parse(localStorage.getItem('fieldwork-workflow-v1'));
-    w.nodes=[
-      {id:'projections',type:'table_input',x:20,y:40,params:{label:'AR6 projections at Manila',keys,valueField:'value_mm',unit:'millimetre',data,distinctValuesFor:['site_id']}},
-      {id:'extract',type:'apply_ruleset',x:420,y:40,params:{label:'Published projection extract',
-        ruleset:{id:'urn:fieldwork:ruleset:extract-contract',version:'1.0.0',title:'Published projection extract',inputs:[['projections','table']],output:'table'},parameters:{}}},
-      {id:'table',type:'table_output',x:760,y:40,params:{label:'Projections',inputMode:'table'}}];
-    w.edges=[{id:'e-projections',from:'projections',to:'extract',port:'projections'},{id:'e-table',from:'extract',to:'table',port:'table'}];
-    delete w.manifest;
-    localStorage.setItem('fieldwork-workflow-v1',JSON.stringify(w));
-  });
-  await page.reload();
-  // RUN IS DISABLED WHILE THE APPLICATION IS BUSY, as it is when a reloaded workflow runs on opening; WebKit on Linux is
-  // slow enough to meet it (CI, 2026-11-09). Wait for it, then run.
+async function openProjectionContract(page,{authored=false}={}){
+  const keys=['site_id','scenario','basis','family','year','quantile'];
+  const rows=[['ssp245','with_vlm','0.5',1124],['ssp245','without_vlm','0.5',602],['ssp585','with_vlm','0.5',1329],['ssp585','without_vlm','0.5',806]]
+    .map(([scenario,family,quantile,value])=>({key:{site_id:'145',scenario,basis:'medium',family,year:'2100',quantile},value}));
+  const data={kind:'data-table',keys,valueField:'value_mm',unit:'millimetre',rows,rowCount:rows.length,missingValueCount:0};
+  await seedWorkflow(page,{nodes:[
+    {id:'projections',type:'table_input',x:20,y:40,params:{label:'AR6 projections at Manila',keys,valueField:'value_mm',unit:'millimetre',data,distinctValuesFor:['site_id']}},
+    {id:'extract',type:'apply_ruleset',x:420,y:40,params:{label:'Published projection extract',
+      ruleset:{id:'urn:fieldwork:ruleset:extract-contract',version:'1.0.0',title:'Published projection extract',inputs:[['projections','table']],output:'table'},parameters:{},
+      ...(authored?{authored:{title:'Rules for this step',mustNotBeReadAs:'',fields:[],parameters:[],rules:[]}}:{})}},
+    {id:'table',type:'table_output',x:760,y:40,params:{label:'Projections',inputMode:'table'}}],
+    edges:[{id:'e-projections',from:'projections',to:'extract',port:'projections'},{id:'e-table',from:'extract',to:'table',port:'table'}]});
+  // Rules not yet written are not run: the columns they are offered come from the table, without a run.
+  if(authored)return;
+  // RUN IS DISABLED WHILE THE APPLICATION IS BUSY, as it is when a loaded workflow runs on opening. Wait for it, then run.
   await expect(page.locator('#run-button')).toBeEnabled({timeout:60000});
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});

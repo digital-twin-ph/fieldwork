@@ -2,10 +2,20 @@
 
 _Created 2026-10-08 · Updated 2026-10-14_
 
-**Status:** admission review. Written before the code, as
-[experiment 48](48-tabular-input.md) was, so that the decisions are reviewable separately from the
-implementation. Three of them change the pack's contract and are argued here rather than discovered
-in a diff.
+**Status:** retired by [115](115-decomposing-the-projection-extract.md) and
+[197](197-the-sea-level-widgets-retire.md). The three widgets it implemented were all retired, and each was replaced
+by standard widgets, because none of them did anything specific to sea level:
+
+- `slr_extract_import`, 2026-10-26: Apply ruleset with the published ruleset *extract-contract*.
+- `slr_site_assignment`, announced in 0.70.0 and in effect from 0.71.0: Measure distance, then Relate.
+- `slr_threshold_comparison`, the same release: Apply ruleset with the published ruleset
+  *compare-level-to-elevation* 1.0.0.
+
+A workflow holding a retired widget is refused by name, with a pointer to what replaced it, and is not
+migrated automatically. What this document decided still holds where it was about meaning: a projection is a
+change against a stated baseline, the distance to its site is part of the result, and a comparison is not a flood
+map. Those now live in the rulesets and the worked example's write-up, not in widgets. Kept as written below,
+because a path not taken is part of the record.
 
 The sea-level pack is **declaration-only**: vocabulary, SHACL shapes, three widget contracts, a
 worked example, and `implementation: {files: [], definition: "not implemented"}` for every widget.
@@ -119,3 +129,4 @@ changed this file; a date stamp sweep is not an update._
 | 2026-10-08 | Implement the sea-level pack's three contracts in the host |
 | 2026-10-08 | Record what the exercise taught, and correct the claim that installation was impossible |
 | 2026-10-10 | Treat the project as developmental evaluation, and move the audits into docs/audits |
+| 2026-11-09 | Closed: all three widgets retired into standard widgets and published rulesets (115, 197) |

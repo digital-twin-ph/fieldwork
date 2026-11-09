@@ -27,7 +27,7 @@ test('a map draws a raster under a street network, not instead of it',async({pag
   const metadata={width:160,height:120,origin:[-0.18,51.55],resolution:[0.0005,-0.0005]};
   const values=Array.from({length:19200},(_,i)=>i%13===0?null:i);
   await page.locator('[data-add="raster_input"]').click();
-  await page.locator('#raster-area').selectOption('study');
+  await page.locator('#connect-area').selectOption('study');
   await page.locator('#prepare-raster').click();
   await page.locator('#raster-file').setInputFiles({name:'soho.tif',mimeType:'image/tiff',
     buffer:Buffer.from(encodeRaster({metadata,values}))});
@@ -83,7 +83,7 @@ test('a map draws a raster with an area, points and a network all wired',async({
   const metadata={width:160,height:120,origin:[-0.18,51.55],resolution:[0.0005,-0.0005]};
   const values=Array.from({length:19200},(_,i)=>i%11===0?null:i);
   await page.locator('[data-add="raster_input"]').click();
-  await page.locator('#raster-area').selectOption('study');
+  await page.locator('#connect-area').selectOption('study');
   await page.locator('#prepare-raster').click();
   await page.locator('#raster-file').setInputFiles({name:'soho.tif',mimeType:'image/tiff',
     buffer:Buffer.from(encodeRaster({metadata,values}))});
@@ -146,7 +146,7 @@ test('the static plot draws points on the raster, and the key names them',async(
   const metadata={width:160,height:120,origin:[-0.18,51.55],resolution:[0.0005,-0.0005]};
   const values=Array.from({length:19200},(_,i)=>i%7===0?null:i);
   await page.locator('[data-add="raster_input"]').click();
-  await page.locator('#raster-area').selectOption('study');
+  await page.locator('#connect-area').selectOption('study');
   await page.locator('#prepare-raster').click();
   await page.locator('#raster-file').setInputFiles({name:'soho.tif',mimeType:'image/tiff',
     buffer:Buffer.from(encodeRaster({metadata,values}))});
@@ -223,7 +223,7 @@ test('each raster node offers its own GeoTIFF, without running the workflow',asy
   const metadata={width:160,height:120,origin:[-0.18,51.55],resolution:[0.0005,-0.0005]};
   const values=Array.from({length:19200},(_,i)=>i%5===0?null:i);
   await page.locator('[data-add="raster_input"]').click();
-  await page.locator('#raster-area').selectOption('study');
+  await page.locator('#connect-area').selectOption('study');
   await page.locator('#prepare-raster').click();
   await page.locator('#raster-file').setInputFiles({name:'soho.tif',mimeType:'image/tiff',
     buffer:Buffer.from(encodeRaster({metadata,values}))});

@@ -8166,9 +8166,8 @@ credentials=installCredentials(document.querySelector<HTMLButtonElement>('#crede
         +'so projects you create will not carry the name.');
     return authorLabel(who);
   });
-const showCatalog=()=>{try{openCatalogDialog(esc,servingBuild);}catch(error){toast(errorMessage(error),{tone:'failure'});}};
+const showCatalog=()=>{try{openCatalogDialog(esc);}catch(error){toast(errorMessage(error),{tone:'failure'});}};
 $('#open-catalog').onclick=showCatalog;
-$('#header-catalog').onclick=showCatalog;
 // Deep link, so the catalog can be pointed at rather than described: ?catalog=1 or #catalog.
 if(new URLSearchParams(location.search).get('catalog')==='1'||location.hash==='#catalog')showCatalog();
 /** ONE BACK UP, with the scope chosen inside it. Experiment 131's last control row: the header
@@ -8548,13 +8547,6 @@ if('serviceWorker' in navigator){
           {action:{label:'Update now',run:()=>navigator.serviceWorker.getRegistration()
             .then(r=>r?.update()).then(()=>location.reload())}});
       }
-      // The catalog renders its markup once, from the value held when it was opened. The
-      // handshake with the controlling worker can land after that -- on a first visit the
-      // worker claims the page only after it activates -- so the already-rendered row is
-      // updated here. Without this the dialog says "unknown" for the rest of the tab's life,
-      // which is the opposite of what the row is for: it exists to be trusted when a stale
-      // cache is the thing under suspicion.
-      const shown=document.getElementById('catalog-build');if(shown)shown.textContent=data.build;
     }
   });
   const askBuild=()=>navigator.serviceWorker.controller?.postMessage({type:'fieldwork-build'});

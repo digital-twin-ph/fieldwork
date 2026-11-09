@@ -18,6 +18,10 @@ shown in a local build is not a claim that it has been published.
 - **A published ruleset that computes values runs on a table directly**, and its computed columns are numbers.
 - **Correction: the two sea-level widgets retire only now.** 0.70.0 to 0.70.2 announced it, but their releases were
   not registered, so the build kept them in the catalogue. They are registered as retired, with the ledgers updated.
+- **The widget catalog lists the widgets you can use, and the worked examples that use each one.** It has one way
+  in, Widget catalog › beside the node library; the header button is gone. Retired widgets, versions, digests, checks
+  and packs are no longer in it; a step's version, digest and check are in its Inspector.
+- Experiment 58 closes: the three sea-level widgets it built have all retired into standard widgets and rulesets.
 - Tests seed a workflow before the page loads instead of writing storage and reloading, which raced in WebKit in CI.
 - Validation: Chromium locally; WebKit in CI.
 

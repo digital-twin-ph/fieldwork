@@ -1,150 +1,71 @@
 import {test,expect} from '@playwright/test';
-import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 
 const registry=JSON.parse(readFileSync(new URL('../widgets/registry.json',import.meta.url),'utf8'));
 const parity=JSON.parse(readFileSync(new URL('../widgets/parity.json',import.meta.url),'utf8'));
-const identity=JSON.parse(readFileSync(new URL('../widgets/pack-catalog.json',import.meta.url),'utf8'));
-const packs=JSON.parse(readFileSync(new URL('../widgets/packs.json',import.meta.url),'utf8'));
 const kinds=JSON.parse(readFileSync(new URL('../widgets/classification.json',import.meta.url),'utf8'));
+const examples=JSON.parse(readFileSync(new URL('../widgets/examples.json',import.meta.url),'utf8')).examples;
 
-test('the widget catalog shows identities, digests and independent checks, and works offline',async({page,context})=>{
+// "The widget catalog is linked in two places. It only needs to show active widgets and the worked example
+// utilization." -- the practitioner, 2026-11-09. One way in, beside the node library; a row per widget that can be used;
+// for each, the worked examples that use it, read from widgets/examples.json.
+const retired=new Set(kinds.widgets.filter(w=>w.retired).map(w=>w.nodeType));
+const active=kinds.widgets.filter(w=>!w.retired).map(w=>w.nodeType);
+const usedBy=type=>examples.filter(e=>e.uses.includes(type));
+
+test('the widget catalog lists the widgets that can be used and the worked examples that use them',async({page,context})=>{
   await page.goto('/?example=blank');
   await expect(page.locator('#node-library')).toBeVisible({timeout:45000});
 
-  // Two entry points on a desktop width: the header control and the node library link.
-  await expect(page.locator('#header-catalog')).toBeVisible();
-  await page.locator('#header-catalog').click();
+  // One entry point.
+  await expect(page.locator('#header-catalog')).toHaveCount(0);
+  await page.locator('#open-catalog').click();
   const dialog=page.locator('#catalog-dialog');
   await expect(dialog).toBeVisible();
-  await dialog.locator('#catalog-close').click();
-  await page.locator('#open-catalog').click();
-  await expect(dialog).toBeVisible();
 
-  // Every compiled definition appears, not only the ones this workspace offers in the palette.
-  await expect(dialog.locator('tr[data-widget]')).toHaveCount(registry.widgets.length);
-  await expect(dialog).toContainText(`${registry.widgets.length} definitions`);
-  await expect(dialog).toContainText(`${identity.catalogVersion} ·`);
-  await expect(dialog).toContainText(`${identity.catalogDigest.slice(0,12)}`);
+  // Active widgets only: no retired one is listed.
+  const rows=dialog.locator('tr[data-widget]');
+  await expect(rows).toHaveCount(active.length);
+  for(const type of retired)await expect(dialog.locator(`tr[data-widget="${type}"]`)).toHaveCount(0);
+  const used=active.filter(type=>usedBy(type).length).length;
+  await expect(dialog).toContainText(`${active.length} widgets you can use. ${used} of them are used in at least one of the ${examples.length} worked examples.`);
 
-  // A row carries the version and the first 12 characters of the release digest it was built from.
-  const reproject=registry.widgets.find(w=>w.nodeType==='reproject');
-  const row=dialog.locator('tr[data-widget="reproject"]');
-  await expect(row).toContainText(reproject.currentVersion);
-  await expect(row).toContainText(reproject.releases.find(r=>r.version===reproject.currentVersion).sha256.slice(0,12));
-  // Plain "agrees" means the evidence covers the release that ships. On 2026-10-13 this read
-  // "agrees · earlier release" for a day: reproject 0.2.0 projects forward and the lab's check 01
-  // recomputes the inverse that 0.1.0 did, so the widget's only evidence described a contract it
-  // no longer had. The suffix is how the catalog reports a release outrunning its check, and it
-  // was what first said so. Closed by lab check 24; if it comes back, the check has fallen behind.
-  await expect(row.locator('[data-parity]')).toHaveText('agrees');
-
-  // A partial result is shown as partial rather than rounded up to a pass.
-  // "partial · earlier release" since 2026-10-23, and the suffix is the ledger working rather than
-  // a stale expectation. clip_raster's parity covers 1.0.0; bumping it to 1.1.0 for a node label
-  // field made that evidence older than the release it describes, and the catalog says so.
-  //
-  // Worth seeing for what it costs: the bump could not have changed the clipping the parity run
-  // measured, and parity is keyed to a version string, so a cosmetic release invalidates
-  // substantive evidence. Re-establishing it needs a run in the validation lab, not an edit here.
-  // validate:widgets lists it beside access_policy and xpert, which are stale for the same reason.
-  await expect(dialog.locator('tr[data-widget="clip_raster"] [data-parity]')).toHaveText('partial · earlier release');
-  // An unchecked widget says so plainly. The widget is chosen from parity.json at run time
-  // rather than named here: this assertion was written against `voronoi` and went stale the day
-  // voronoi gained a check, failing on a coverage increase rather than on a defect.
-  const unchecked=registry.widgets.map(w=>w.nodeType)
-    .find(nodeType=>!parity.entries.some(e=>e.widget.endsWith(`:${nodeType}`)));
-  assert.ok(unchecked,'every widget now has parity evidence; this assertion has nothing left to test');
-  await expect(dialog.locator(`tr[data-widget="${unchecked}"] [data-parity]`)).toHaveText('not checked');
-  const checked=new Set(parity.entries.map(e=>e.widget)).size;
-  await expect(dialog).toContainText(`${checked} of ${registry.widgets.length} widgets`);
-  // The catalog must not imply anything is installable or certified.
-  // The build actually serving the page, reported by the service worker rather than by the page,
-  // so a stale cache can be told apart from a missing feature.
-  const build=readFileSync(new URL('../sw.js',import.meta.url),'utf8').match(/"(fieldwork-ts-[0-9a-f]+)"/)[1];
-  await expect(dialog.locator('#catalog-build')).toHaveText(build,{timeout:45000});
-  await expect(dialog).toContainText('running an older build');
-  await expect(dialog).toContainText('nothing is installable');
-  await expect(dialog).toContainText('no widget here is individually certified');
-
-  // Standard components are distinguished from widgets that belong to a pack's domain.
-  await expect(dialog).toContainText(`${kinds.standardCount} standard`);
-  await expect(dialog).toContainText(`${kinds.domainCount} belonging to a pack's domain`);
-  await expect(dialog.locator('tr[data-widget="table_input"] .tag').first()).toHaveText('standard');
-  const domainRow=dialog.locator(`tr[data-widget="${kinds.widgets.find(w=>w.classification==='domain').nodeType}"]`);
-  await expect(domainRow).toContainText('domain');
-  await expect(domainRow).toContainText('Sea-level rise');
-  await expect(dialog).toContainText('derived from those mappings, not declared');
-
-  // Packs are listed with their recorded admission state and why they are not admitted, and the
-  // view says plainly that nothing here can be added, with the reason.
-  const pack=packs.packs[0];
-  await expect(dialog.locator('#pack-table')).toContainText(pack.name);
-  await expect(dialog.locator('#pack-table')).toContainText(pack.commit.slice(0,12));
-  await expect(dialog.locator('#pack-table')).toContainText('not-admitted');
-  await expect(dialog.locator('#pack-table')).toContainText('declaration-only');
-  for(const review of Object.keys(pack.admission.reviews))await expect(dialog.locator('#pack-table')).toContainText(review);
-  await expect(dialog).toContainText('A pack cannot be added here');
-  await expect(dialog).toContainText('there is nothing in it to run');
-
+  // A widget used by examples names each of them, linked to its repository.
+  const row=dialog.locator('tr[data-widget="raster_input"]');
+  for(const example of usedBy('raster_input')){
+    await expect(row.locator(`a[href="${example.repository}"]`)).toHaveText(example.title);
+  }
+  // One no example uses says so, rather than leaving the cell empty.
+  const unused=active.find(type=>!usedBy(type).length);
+  if(unused)await expect(dialog.locator(`tr[data-widget="${unused}"]`)).toContainText('Not in a worked example yet');
   await dialog.locator('#catalog-close').click();
   await expect(dialog).toBeHidden();
 
-  // The same identity is available where a practitioner is working: on the selected node.
-  // A process widget is offered once the canvas holds an input, from 2026-10-15, so place one
-  // first -- which is what the rule asks of a practitioner too.
+  // The step's identity stays where the step is: on the selected node.
+  const reproject=registry.widgets.find(w=>w.nodeType==='reproject');
+  await page.locator('[data-view="workflow"]').click();
   if(!await page.locator('[data-add="reproject"]').count()){
-  await page.locator('[data-view="workflow"]').click();
     await page.locator('[data-add="point_input"]').click();
-  await page.locator('[data-view="workflow"]').click();
-    await expect(page.locator('[data-add="reproject"]')).toHaveCount(1);
+    await page.locator('[data-view="workflow"]').click();
   }
-  await page.locator('[data-view="workflow"]').click();
   await page.locator('[data-add="reproject"]').click();
-  await expect(page.locator('.inspector')).toContainText('Definition');
   await expect(page.locator('.inspector')).toContainText(`reproject ${reproject.currentVersion}`);
   await expect(page.locator('.inspector')).toContainText('Compiled into this build');
-  await expect(page.locator('.inspector')).toContainText('Standard widget · any domain');
-  await page.locator('.inspector details', {hasText:'What was checked'}).first().click();
-  await expect(page.locator('.inspector')).toContainText('maximum separation');
+  if(parity.entries.some(e=>e.widget.endsWith(':reproject'))){
+    await page.locator('.inspector details',{hasText:'What was checked'}).first().click();
+    await expect(page.locator('.inspector')).toContainText('maximum separation');
+  }
 
-  // A domain widget says which pack's domain it belongs to, in the same place.
-  await page.locator('[data-view="workflow"]').click();
-  await page.locator('[data-add="slr_site_assignment"]').click();
-  await expect(page.locator('.inspector')).toContainText('Domain widget · Sea-level rise');
-
-  // A link can open it directly, so it can be pointed at rather than described.
+  // A link opens it directly; at phone width it fits, and it opens offline.
   await page.goto('/?example=blank&catalog=1');
-  await expect(page.locator('#catalog-dialog')).toBeVisible({timeout:45000});
-  await expect(page.locator('#catalog-dialog tr[data-widget]')).toHaveCount(registry.widgets.length);
-  await page.locator('#catalog-close').click();
-
-  // At phone width the header cannot take another control, so the library link is the way in.
+  await expect(page.locator('#catalog-dialog tr[data-widget]')).toHaveCount(active.length,{timeout:45000});
   await page.setViewportSize({width:390,height:844});
-  await expect(page.locator('#header-catalog')).toBeHidden();
   await expect(page.locator('#open-catalog')).toBeVisible();
   expect(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth)).toBe(false);
   await page.setViewportSize({width:1600,height:1100});
-
   await expect(page.locator('#offline-status')).toContainText('Available offline',{timeout:45000});
   await context.setOffline(true);
   await page.reload();
-  // The deep link is still in the URL, so an offline reload reopens the catalog by itself.
-  await expect(page.locator('#catalog-dialog')).toContainText(`${registry.widgets.length} definitions`);
-  await expect(page.locator('#catalog-dialog tr[data-widget]')).toHaveCount(registry.widgets.length);
+  await expect(page.locator('#catalog-dialog tr[data-widget]')).toHaveCount(active.length,{timeout:45000});
   await page.screenshot({path:'test-results/widget-catalog.png',fullPage:true});
-});
-
-// A first visit that opens the catalog immediately. The dialog renders its markup once, and on a
-// first visit no worker is controlling the page yet, so the build row is rendered "unknown" and
-// the handshake lands afterwards. This passed for four days in a form that could not fail: the
-// shipped test opened the dialog after several round trips, by which time the worker had usually
-// claimed the page -- usually on a warm laptop, never on a cold CI runner. The deep link removes
-// the waiting, so the row must be updated in place rather than rendered once and left.
-test('the serving build is reported even when the catalog opens before the worker claims the page',async({page})=>{
-  const build=readFileSync(new URL('../sw.js',import.meta.url),'utf8').match(/"(fieldwork-ts-[0-9a-f]+)"/)[1];
-  await page.goto('/?example=blank&catalog=1');
-  const dialog=page.locator('#catalog-dialog');
-  await expect(dialog).toBeVisible({timeout:45000});
-  await expect(dialog.locator('#catalog-build')).toHaveText(build,{timeout:45000});
 });

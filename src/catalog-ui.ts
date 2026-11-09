@@ -1,12 +1,10 @@
 import {PALETTE_GROUPS} from './palette.js';
-import {runsFor} from './widget-usage.js';
 import registry from '../widgets/registry.json';
 import parityRecord from '../widgets/parity.json';
 import packCatalog from '../widgets/packs.json';
 import classification from '../widgets/classification.json';
 import releaseNotes from '../widgets/release-notes.json';
-import appPackage from '../package.json';
-import {PACK_CATALOG} from './pack-catalog.js';
+import examplesCatalog from '../widgets/examples.json';
 import {TYPES} from './core.js';
 import type {Escape,NodeType} from './types.js';
 
@@ -67,68 +65,32 @@ export function identityMarkup(nodeType:string,esc:Escape):string{
 }
 
 
-/** This browser's run count for one widget, and nothing implied beyond it. */
-const runsMarkup=(nodeType:string):string=>{
-  const seen=runsFor(nodeType);
-  if(!seen?.runs)return '<span class="tag parity-unchecked" title="Never run in this browser">—</span>';
-  const when=seen.lastRunAt?seen.lastRunAt.slice(0,10):'';
-  return `<span title="Last run ${when||'at an unrecorded time'}">${seen.runs}</span>`;
-};
+/** THE CATALOG IS WHAT CAN BE USED, AND WHERE IT HAS BEEN. The practitioner, 2026-11-09: "The widget catalog is linked
+ *  in two places. It only needs to show active widgets and the worked example utilization." It had listed every
+ *  definition, retired ones too, with versions, digests, ports, checks, this browser's run counts and the packs: a
+ *  provenance table no one opened it for. A step's version, digest and independent check stay in its Inspector, where
+ *  the step is. Worked-example use is read from widgets/examples.json, the same list widgets/evidence.json counts. */
+type Example={title:string;repository:string;uses:string[]};
+const EXAMPLES=(examplesCatalog.examples as Example[]);
+export const activeWidgetTypes=():NodeType[]=>(Object.keys(TYPES) as NodeType[]).filter(type=>!(kindOf(type) as {retired?:boolean}|undefined)?.retired);
 
-export function openCatalogDialog(esc:Escape,servingBuild='unknown'):void{
+export function openCatalogDialog(esc:Escape):void{
   document.getElementById('catalog-dialog')?.remove();
   const dialog=document.createElement('dialog');dialog.id='catalog-dialog';dialog.setAttribute('aria-labelledby','catalog-title');
-  // The palette's ordering, not a second copy of it. This line held its own list until
-  // adding a group left one widget out of the catalogue entirely and a browser check caught
-  // it: two lists that must agree will not.
-  const groups=PALETTE_GROUPS;
-  const rows=(group:string)=>Object.keys(TYPES).filter(type=>TYPES[type as NodeType].group===group).map(type=>{
-    const definition=TYPES[type as NodeType],identity=widgetIdentity(type);
-    const ports=definition.inputs.map(([port])=>port).join(', ')||'none';
-    const parity=identity?.parity??identity?.stale;
-    return `<tr data-widget="${esc(type)}"><th scope="row">${definition.icon} ${esc(definition.title)}</th>`
-      +`<td><code>${esc(type)}</code></td>`
-      +`<td>${identity?esc(identity.version):'—'}</td>`
-      +`<td><code>${identity?esc(identity.digest.slice(0,12)):'—'}</code></td>`
-      +`<td>${esc(ports)} → ${esc(definition.output??'none')}</td>`
-      +`<td>${identity?.classification==='domain'?`<span class="tag parity-partial">domain</span> ${esc(String(packName(identity.pack)))}`:'<span class="tag parity-unchecked">standard</span>'}</td>`
-      +`<td>${badge(parity?.outcome,!!identity?.stale&&!identity?.parity)}</td>`
-      // A USE IS A RUN. Counted when a widget executes, connected, in a workflow -- a shipped
-      // example that nobody runs is not a use, and a widget placed on a canvas and left there is
-      // not either. "Here" is load-bearing: this is one browser's tally, not this person's and
-      // not the field's.
-      +`<td>${runsMarkup(type)}</td></tr>`;
+  const active=activeWidgetTypes(),usedBy=(type:string)=>EXAMPLES.filter(example=>example.uses.includes(type));
+  const used=active.filter(type=>usedBy(type).length).length;
+  // The palette's ordering, not a second copy of it: two lists that must agree will not.
+  const rows=(group:string)=>active.filter(type=>TYPES[type].group===group).map(type=>{
+    const examples=usedBy(type);
+    return `<tr data-widget="${esc(type)}"><th scope="row">${TYPES[type].icon} ${esc(TYPES[type].title)}</th>`
+      +`<td data-examples="${examples.length}">${examples.length
+        ?examples.map(example=>`<a href="${esc(example.repository)}" target="_blank" rel="noopener">${esc(example.title)}</a>`).join('<br>')
+        :'<span class="muted">Not in a worked example yet</span>'}</td></tr>`;
   }).join('');
-  const checked=new Set((parityRecord.entries as ParityEntry[]).map(e=>e.widget)).size;
-  type Pack={id:string;name:string;version:string;commit:string;kind:string;repository:string;
-    admission:{status:string;reason:string;reviews:Record<string,{state:string}>};
-    stages:Record<string,string>;files:Record<string,string>;requiredHostCapabilities?:string[]};
-  const packs=(packCatalog.packs as unknown as Pack[]).map(pack=>{
-    const reviews=Object.entries(pack.admission.reviews).map(([name,review])=>`${esc(name)}: ${esc(review.state)}`).join(' · ');
-    const outstanding=pack.requiredHostCapabilities?.length?`Outstanding host capability: ${pack.requiredHostCapabilities.map(esc).join(', ')}.`:'No outstanding host capability.';
-    return `<tr><th scope="row">${esc(pack.name)}</th><td>${esc(pack.version)}</td>`
-      +`<td><code>${esc(pack.commit.slice(0,12))}</code></td><td>${esc(pack.kind)}</td>`
-      +`<td><span class="tag parity-${pack.admission.status==='admitted'?'agrees':'unchecked'}">${esc(pack.admission.status)}</span></td>`
-      +`<td>${reviews}</td></tr>`
-      +`<tr class="pack-detail"><td colspan="6"><p class="muted">${esc(pack.admission.reason)}</p>`
-      +`<p class="muted">${outstanding} ${esc(String(Object.keys(pack.files).length))} files pinned at that commit. Repository: ${esc(pack.repository)}</p></td></tr>`;
-  }).join('');
+  const groups=PALETTE_GROUPS.filter(group=>active.some(type=>TYPES[type].group===group));
   dialog.innerHTML=`<h2 id="catalog-title">Widget catalog</h2>
-    <p>Every definition in this build, with the version and release digest a run receipt cites. Nothing here is fetched and nothing is installable: these widgets are compiled in.</p>
-    <p class="description"><strong>Runs here</strong> counts the times a widget has run, connected, in a workflow on this browser — a shipped example nobody runs is not a use, and neither is a node placed on a canvas and left there. It is <strong>this browser's</strong> tally and no one else's: your own second browser keeps a separate count, clearing site data starts it at zero, and nothing is sent anywhere. It answers whether <em>you</em> use a widget here, which is not evidence about anybody else.</p>
-    <div class="detail-row"><span>Application</span><strong>${esc(appPackage.version)}</strong></div>
-    <div class="detail-row"><span>Serving this page</span><strong id="catalog-build">${esc(servingBuild)}</strong></div>
-    <div class="detail-row"><span>Widgets</span><strong>${registry.widgets.length} definitions · ${registry.widgets.reduce((n,w)=>n+w.releases.length,0)} releases</strong></div>
-    <div class="detail-row"><span>Standard and domain</span><strong>${classification.standardCount} standard, applying to any domain · ${classification.domainCount} belonging to a pack's domain</strong></div>
-    <div class="detail-row"><span>Pack catalog</span><strong>${esc(PACK_CATALOG.version)} · <code>${esc(PACK_CATALOG.digest.slice(0,12))}</code></strong></div>
-    <div class="detail-row"><span>Independently checked</span><strong>${checked} of ${registry.widgets.length} widgets</strong></div>
-    <p class="muted">"Serving this page" is the build the offline cache is answering from, reported by the service worker itself rather than by this page. If it differs from a freshly loaded copy, this tab is running an older build and a reload will replace it.</p>
-    <p class="muted">Standard widgets are the components that ship with the application and apply to any domain. A domain widget belongs to a pack's domain and maps to that pack's vocabulary; the distinction is derived from those mappings, not declared, so one cannot be filed as the other by accident.</p>
-    <p class="muted">A release digest identifies the description of a widget, not a certificate: no widget here is individually certified. An independent check means an external implementation recomputed the same result under a stated criterion, recorded in widgets/parity.json.</p>
-    ${groups.map(group=>`<h3>${esc(group)}</h3><table class="catalog-table"><thead><tr><th scope="col">Widget</th><th scope="col">Node type</th><th scope="col">Version</th><th scope="col">Digest</th><th scope="col">Ports</th><th scope="col">Kind</th><th scope="col">Independent check</th><th scope="col">Runs here</th></tr></thead><tbody>${rows(group)}</tbody></table>`).join('')}
-    <h3>Widget packs</h3>
-    <table class="catalog-table" id="pack-table"><thead><tr><th scope="col">Pack</th><th scope="col">Version</th><th scope="col">Commit</th><th scope="col">Kind</th><th scope="col">Admission</th><th scope="col">Reviews</th></tr></thead><tbody>${packs}</tbody></table>
-    <div class="notice">A pack cannot be added here, and not because this view lacks a button. The application fetches and executes no pack: every widget above is compiled in, which is an admission rule rather than an omission. The sea-level pack is <strong>declaration-only</strong> — it carries vocabulary, shapes, widget contracts and a worked example, and no widget code, so there is nothing in it to run. Making its workflow runnable means implementing those three contracts in the application, as Tabular data was. Admission states shown here are read from this build's catalog; they are recorded decisions, not checks performed by this page.</div>
+    <p>${active.length} widgets you can use. ${used} of them are used in at least one of the ${EXAMPLES.length} worked examples.</p>
+    ${groups.map(group=>`<h3>${esc(group)}</h3><table class="catalog-table"><thead><tr><th scope="col">Widget</th><th scope="col">Used in worked examples</th></tr></thead><tbody>${rows(group)}</tbody></table>`).join('')}
     <div class="package-actions"><button id="catalog-close" class="button primary">Close</button></div>`;
   document.body.append(dialog);
   dialog.querySelector<HTMLButtonElement>('#catalog-close')!.onclick=()=>dialog.close();

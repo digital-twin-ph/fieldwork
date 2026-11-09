@@ -334,3 +334,4 @@ changed this file; a date stamp sweep is not an update._
 | 2026-10-08 | Show pack governance in the catalog, and say why nothing can be added |
 | 2026-10-08 | Report which build is serving the page, and announce installed updates |
 | 2026-10-10 | Treat the project as developmental evaluation, and move the audits into docs/audits |
+| 2026-11-09 | One way in, beside the node library; active widgets only, each with the worked examples that use it. Versions, digests and checks stay in the Inspector. The practitioner: *"It only needs to show active widgets and the worked example utilization."* |

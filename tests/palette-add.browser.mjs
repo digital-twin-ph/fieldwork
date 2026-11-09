@@ -64,7 +64,9 @@ test('every palette entry can be added to a blank canvas as a draft',async({page
   // ONE SINCE 2026-11-06: rate and case_series fixed, their save checks no longer requiring what only a run needs,
   // when the Brazil dengue example had to add Rate by hand (experiment 180). The first time this list shrank because
   // a widget was fixed.
-  const known=['slr_threshold_comparison'];
+  // NONE SINCE 0.71.0: slr_threshold_comparison retired (experiment 197) and the palette stopped offering it. Every
+  // palette entry can now be added as a draft; a new entry that cannot breaks this test.
+  const known=[];
   expect(refused.filter(t=>!known.includes(t)),
     'these palette entries could not be added as drafts').toEqual([]);
   expect(refused.sort(),'the known-unaddable set must shrink, never grow').toEqual([...known].sort());

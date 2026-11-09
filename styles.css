@@ -96,16 +96,12 @@ html{scroll-padding-top:var(--project-bar-height,160px)}
 :root[data-theme="dark"] .eyebrow .crumb{color:var(--text-faint)}
 
 
-/* Measured at 390px: the header is 395px wide with this control and 390px without it, even
-   reduced to its icon, so below 850px it goes entirely. The node library keeps the labelled
-   entry point, and ?catalog=1 opens the dialog directly. */
-@media (max-width:850px){#header-catalog{display:none}}
 
 /* Widget catalog: a reference table, readable at phone width by scrolling the table alone. */
 #catalog-dialog{max-width:min(72rem,94vw)}
-#catalog-dialog h3{margin:1.25rem 0 .35rem;font-size:0.95rem;color:var(--text-muted)}
-.catalog-table{width:100%;border-collapse:collapse;font-size:0.875rem;display:block;overflow-x:auto}
-.catalog-table th,.catalog-table td{text-align:left;padding:.3rem .5rem;border-bottom:1px solid var(--border-subtle);white-space:nowrap}
+#catalog-dialog h3{margin:1.25rem 0 .35rem;font-size:1rem;color:var(--text-muted)}
+.catalog-table{width:100%;border-collapse:collapse;font-size:1rem}
+.catalog-table th,.catalog-table td{text-align:left;vertical-align:top;padding:.4rem .5rem;border-bottom:1px solid var(--border-subtle)}
 .catalog-table thead th{color:var(--text-muted);font-weight:600}
 .catalog-table tbody th{font-weight:600}
 .catalog-table code{font-size:0.875rem}

@@ -132,7 +132,7 @@ framework, not an ontology: the IHR **Joint External Evaluation** indicators, to
 bottlenecks. No ontology of the JEE or of IHR core capacities was found either.
 
 So, a proposal: the milestones as dated activities in PROV-O, which Fieldwork already uses; the bottleneck taxonomy as
-a SKOS concept scheme of Fieldwork's own, citing the Alliance, once its terms allow, each category linked to a JEE
+a SKOS concept scheme carried in an example repository under BY-NC-SA, citing the Alliance, each category linked to a JEE
 indicator only where a source states it; Apollo-SV and GenEpiO terms reused by IRI where a column means one.
 
 ## What that makes operational epidemiology here

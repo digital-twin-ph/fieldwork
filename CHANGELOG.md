@@ -3,6 +3,16 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.70.2 — 2026-11-09
+
+- **The sea-level example finds its facilities by hand**, with Find health facilities from the Humanitarian
+  OpenStreetMap Team's Philippines export, rather than shipping them as a file: the same 194, with a true retrieval
+  record. The test answers the export's address with the real file (ODbL), rebuilt 2026-05-05.
+- The research note records the open estimate of local mean sea level at the eight gauges (DTU25MSS above EGM2008, no
+  national datum needed) and a first count of facilities below projected sea level, in Python, for the canvas to
+  reproduce.
+- Validation: Chromium locally; WebKit in CI.
+
 ## 0.70.1 — 2026-11-09
 
 - **The sea-level example's write-up states the Manila datum figures**: EGM2008 and NAMRIA's gravimetric geoid agree

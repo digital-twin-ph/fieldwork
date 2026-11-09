@@ -237,9 +237,10 @@
   {
    "nodeType": "find_health_facilities",
    "exampleUses": [
+    "sea-level-rise-philippines",
     "sierra-leone-measles"
    ],
-   "exampleUseCount": 1,
+   "exampleUseCount": 2,
    "lab": "blocked",
    "labOwed": true,
    "fieldUse": [],

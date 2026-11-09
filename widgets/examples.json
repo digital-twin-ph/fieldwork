@@ -706,10 +706,10 @@
       "id": "urn:fieldwork:example:sea-level-rise-philippines",
       "title": "Sea-level rise at Manila’s health facilities",
       "repository": "https://github.com/digital-twin-ph/example-2026-sea-level-rise-philippines",
-      "commit": "4fe22ccb28b9f905773b4280482086f9ff1b0b81",
+      "commit": "cfc95454bf4a8d04f58b3d9f49743a3ed20d9759",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2026-sea-level-rise-philippines",
       "licence": {
-        "data": "Projections and sites CC BY 4.0, with three required citations; facilities ODbL 1.0; the study area, diagram, manual and scripts CC0 1.0",
+        "data": "Projections and sites CC BY 4.0, with three required citations; facilities retrieved from OpenStreetMap (ODbL 1.0) by the workflows; the study area, diagram, manual and scripts CC0 1.0",
         "source": "IPCC AR6 Sea Level Projections v20210809 (doi:10.5281/zenodo.5914709); OpenStreetMap via the Humanitarian OpenStreetMap Team export",
         "note": "Stated in the repository’s README and CITATION.cff. The facilities file is a database derived from OpenStreetMap and offered under the ODbL."
       },
@@ -721,6 +721,7 @@
       },
       "uses": [
         "apply_ruleset",
+        "find_health_facilities",
         "map_output",
         "measure_distance",
         "point_input",
@@ -733,18 +734,18 @@
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "7a5240203af651790181cf5721f661e600752777ea3c557f95c29b691a54f657",
-          "bytes": 25576
+          "sha256": "a7d17f3eebba0ae393141b686cb6ad94dfaa221a2cddbde4cba52ccdcf070e0c",
+          "bytes": 26431
         },
         {
           "path": "manual.json",
-          "sha256": "e7a7d8ea2065bcf2532bc5bffddb86effdabeb2daf1579cadc394d4bde70b502",
-          "bytes": 33166
+          "sha256": "8efd9ea7ff89eeafba72ee1007a5415f425ee04d8b925ad9b7267fc9ac29dc2f",
+          "bytes": 33162
         },
         {
           "path": "README.md",
-          "sha256": "b25058bf7c3f0e0f05c83b03fbbac605a066a31c36fabd3a5896ab4d5f59eb53",
-          "bytes": 9217
+          "sha256": "49ce596b225b754ddb51ca58336cc570abe8703d948bc7b563c51b582fbc1c73",
+          "bytes": 9199
         },
         {
           "path": "CITATION.cff",
@@ -762,11 +763,6 @@
           "bytes": 1760
         },
         {
-          "path": "data/manila-health-facilities.geojson",
-          "sha256": "7af9636457d07d90509fe91eaca30accb271e92f29e48fcbd5f52cc0379938be",
-          "bytes": 51323
-        },
-        {
           "path": "data/manila-study-area.geojson",
           "sha256": "65747c44cb823aab15d14e68494bbe6a94563297a1fd3222d37b7df75f7b37ba",
           "bytes": 456
@@ -778,8 +774,8 @@
         },
         {
           "path": "scripts/make-manual.mjs",
-          "sha256": "3afddc4684a542aeb13aa8747d6b286dfcdc53e78e5bc19f10930f68c508702e",
-          "bytes": 20358
+          "sha256": "8722eef3092d3832c1cad42509edd8a03af3c008a667c3d5666e5f7089516566",
+          "bytes": 21056
         }
       ],
       "workflowCount": 2,

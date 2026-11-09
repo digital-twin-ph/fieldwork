@@ -18,6 +18,12 @@ test('sea-level rise at Manila’s health facilities, built by following the man
     const path=new URL(route.request().url()).pathname.split('/').slice(4).join('/');
     route.fulfill({status:200,body:readFileSync(new URL(path,REPO)),headers:{'access-control-allow-origin':'*','content-type':'text/plain'}});
   });
+  // THE FACILITIES, FROM THE REAL EXPORT: the Humanitarian OpenStreetMap Team's Philippines health facilities, as Find
+  // health facilities downloads it (452,007 bytes, rebuilt 2026-05-05), so the stored retrieval record is a true one.
+  // © OpenStreetMap contributors, prepared by HOT, Open Database License 1.0.
+  const hot=readFileSync(new URL('fixtures/hotosm_phl_health_facilities_points_geojson.zip',import.meta.url));
+  await page.route(/production-raw-data-api\/ISO3\/PHL\/health_facilities\/points\/hotosm_phl_health_facilities_points_geojson\.zip/,route=>
+    route.fulfill({status:200,body:hot,headers:{'access-control-allow-origin':'*','content-type':'application/zip'}}));
   const manual=JSON.parse(readFileSync(MANUAL,'utf8'));
   await page.goto('/');await page.evaluate(()=>localStorage.clear());
   await page.goto('/?example=blank');

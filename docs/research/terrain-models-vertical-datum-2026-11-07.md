@@ -173,6 +173,66 @@ figures do not resolve.
 that BM-66 (and ML-3) refers to, and has it been re-determined since? With the epoch, PSMSL's series gives the change in sea level between it and
 1995–2014 at the same gauge, and the gauge's own datum drops out of the difference.
 
+## The open estimate: DTU25MSS, with no national datum, 2026-11-09
+
+The practitioner chose an open estimate that needs no NAMRIA period. **DTU25MSS** (Andersen and Nilsson, DTU Space,
+[doi:10.11583/DTU.29412275](https://doi.org/10.11583/DTU.29412275), CC BY 4.0) is the mean sea surface of 1993–2012
+("center time 2003.01.0") as heights above the WGS84 ellipsoid, on a 0.01° grid, from nadir and SWOT altimetry. Its
+Philippine blocks, 4–22° N and 116–128° E (1801 × 1201 cells, `mss` and `sigma`), were read by HTTP range through h5py
+with the practitioner's approval: **117.4 MB transferred**, against 63 MB estimated, because the reader fetched in 4 MB
+pieces. A browser cannot read the file where it is published: DTU's storage server sends no
+`Access-Control-Allow-Origin` and refuses the preflight ([198](../experiments/198-a-published-grid-read-at-points.md)).
+
+At each gauge, bilinear on DTU's grid at PSMSL's positions, EGM2008 by pyproj as before:
+
+| Gauge (PSMSL) | Mean sea surface, 1993–2012 | DTU sigma | EGM2008 N | Sea surface above EGM2008 |
+| --- | --- | --- | --- | --- |
+| Manila (145) | 43.937 m | 0.008 | 43.009 m | **+0.928 m** |
+| Jolo (260) | 66.983 m | 0.008 | 66.032 m | +0.950 m |
+| Cebu (394) | 64.098 m | 0.010 | 63.048 m | +1.050 m |
+| Legaspi (522) | 53.880 m | 0.010 | 53.269 m | +0.611 m |
+| Davao (537) | 68.340 m | 0.010 | 67.717 m | +0.623 m |
+| Tacloban (664) | 64.888 m | 0.010 | 63.780 m | +1.108 m |
+| Surigao (1708) | 68.112 m | 0.010 | 66.967 m | +1.145 m |
+| San Jose (1711) | 51.079 m | 0.010 | 50.258 m | +0.821 m |
+
+**Cross-check at Manila:** NAMRIA's MSL-fitted surface is 0.853 m above EGM2008, DTU's 1993–2012 sea surface 0.928 m;
+the 7.5 cm between them is inside NAMRIA's stated 10 cm.
+
+**To AR6's baseline:** PSMSL 145's 1995–2014 mean is 37 mm above its 1993–2012 mean (16 years each; 2001–2004 missing,
+around the gauge's 2002 move). So at the Manila gauge, **the 1995–2014 mean sea level stands about 0.965 m above
+EGM2008**, the surface DeltaDTM and Copernicus DEM measure from: ground they give as H stands about H − 0.965 m above
+AR6's baseline there.
+
+**Not established:** the sea surface's accuracy at the coast, where altimetry is least certain (`sigma` is DTU's model
+estimate, not a coastal validation); the 37 mm, from incomplete years; anything away from the gauges, where the offset
+differs by half a metre between them.
+
+## Which facilities: a first count, in Python, 2026-11-09
+
+DeltaDTM's two Manila tiles, `DeltaDTM_v1_1_N14E120.tif` and `N14E121.tif` (15.7 MB, stored uncompressed inside the
+17.3 GB `Asia.zip`), read out of the zip by range with the practitioner's approval: 24.1 MB transferred. 1 arcsecond,
+EPSG:4326, nodata −9999; its paper gives a mean absolute error of **0.45 m**. A value of exactly 30.0 m is a ceiling
+(63–83% of the tiles' cells), meaning above DeltaDTM's range, not a height. Like DTU, 4TU's server serves ranges and
+sends no `Access-Control-Allow-Origin`, so a browser cannot read it where it is published.
+
+At each of the 194 facilities, the cell containing it, its height above EGM2008 less the Manila gauge's 0.965 m, against
+the rise at the gauge, 1.124 m (SSP2-4.5, median, with vertical land motion, 2100):
+
+| Ground stands | Facilities |
+| --- | --- |
+| Below today's mean sea level (1995–2014) | 0 |
+| Below projected mean sea level | 16 |
+| Below projected high water (plus half Manila's 0.758 m mean tide range, GLOSS 2006) | 37 |
+| Within 0.45 m of the mean-sea-level threshold, either side | 32 |
+
+Ground under them runs from 1.29 m to the 30 m ceiling above EGM2008, median 4.96 m.
+
+**Not established:** a flood. This is a bathtub comparison: no seawall, drainage, pump or connection to the sea is in
+it, so it is an upper estimate of exposure. 32 facilities are too close to call. One gauge's offset is applied to
+facilities up to 13 km away, and a 30 m ground cell is not a building's floor. This count is what the canvas run must
+reproduce.
+
 ## What this suggests, not yet decided
 
 - **Candidate:** DeltaDTM, the only one that is bare ground, made for coasts, and openly licensed.

@@ -91,7 +91,7 @@
     {
       "id": "urn:fieldwork:widget:apply_ruleset",
       "nodeType": "apply_ruleset",
-      "currentVersion": "0.9.0",
+      "currentVersion": "0.9.1",
       "releases": [
         {
           "version": "0.1.0",
@@ -137,6 +137,11 @@
           "version": "0.9.0",
           "path": "widgets/releases/apply_ruleset/0.9.0.json",
           "sha256": "bd12b126fb36dfa73d18958748563d5bb083b08d025a3abdf8d38e29f135f181"
+        },
+        {
+          "version": "0.9.1",
+          "path": "widgets/releases/apply_ruleset/0.9.1.json",
+          "sha256": "3d69d7a468d0be554f2260a2bbdd0afb82918a32e27c483bea44db46ca1ca671"
         }
       ]
     },
@@ -487,7 +492,7 @@
     {
       "id": "urn:fieldwork:widget:find_health_facilities",
       "nodeType": "find_health_facilities",
-      "currentVersion": "0.4.0",
+      "currentVersion": "0.4.1",
       "releases": [
         {
           "version": "0.1.0",
@@ -508,6 +513,11 @@
           "version": "0.4.0",
           "path": "widgets/releases/find_health_facilities/0.4.0.json",
           "sha256": "e70f0736a38a6c6e5bc8ca13205ff2c9a5e14609e4149fbfdd1ac716ee7f18f1"
+        },
+        {
+          "version": "0.4.1",
+          "path": "widgets/releases/find_health_facilities/0.4.1.json",
+          "sha256": "fcb331a1f94884094e76408d8e69ca31bd9649ca845e3e8b34d9c3e0619a5a29"
         }
       ]
     },
@@ -612,7 +622,7 @@
     {
       "id": "urn:fieldwork:widget:map_output",
       "nodeType": "map_output",
-      "currentVersion": "0.20.1",
+      "currentVersion": "0.20.2",
       "releases": [
         {
           "version": "0.1.0",
@@ -718,6 +728,11 @@
           "version": "0.20.1",
           "path": "widgets/releases/map_output/0.20.1.json",
           "sha256": "19ba33bee16ccc0e538eac50c1c13472cf143745fabee26e16ca526dc42e9406"
+        },
+        {
+          "version": "0.20.2",
+          "path": "widgets/releases/map_output/0.20.2.json",
+          "sha256": "1d7537948c5b07de78924adee918ece9ec9cf6dd5f2c11b2a4d963812a4d1a12"
         }
       ]
     },

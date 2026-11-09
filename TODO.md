@@ -67,7 +67,15 @@ not a practitioner in the field.
    OpenStreetMap added as a register (0.61.0, measured: one hospital more, nothing wrong). Shares in Total within groups
    (0.62.0, [191](docs/experiments/191-shares-within-groups.md)); *is not* and *otherwise* in Apply ruleset, which the
    WHO classification needs ([192](docs/experiments/192-is-not-and-otherwise.md)). **Next:** the example's workflows and
-   manual: case classification with the analysis table, epidemic curve, cases by facility, cases by district.
+   manual: epidemic curve and cases by facility **built (0.65.0)**; cases by district next.
+   **Map was touched** (its pin class reads the run's columns) and is not on the standard: the practitioner decides
+   whether it moves now (186's rule) or after Sierra Leone.
+   **Case classification postponed** (the practitioner, 2026-11-08: *"Let's postpone the case definition work"*). Decided
+   so far: WHO 2018's classification; *Runny nose* counts as coryza; the clinician's *meets the definition* stands in
+   where symptoms were not recorded, shown in an analysis table. **Open:** whether *Contact with confirmed measles
+   (7-18d) or rubella (12-23d) case* is a measles link. It decides 21 of 2,606 rows, 19 of which stay clinically
+   compatible without it. Needs the FETP's data dictionary (the columns read as DHIS2 tracker fields), which would also
+   say which test the laboratory result records.
    **Done 2026-11-08 (0.64.0): a case definition in the rulesets worked example** (the practitioner: *"Let's also add a
    case definition example in the rules set worked example"*), its seventh workflow, on sixteen made-up cases in four
    stages, every class reached. No conflict is reached, because staged rules cannot give one case two classes.

@@ -15,7 +15,9 @@ async function labelOf(page,target){
   return page.evaluate(selector=>{
     const el=document.querySelector(selector);
     const label=(el?.id?document.querySelector(`label[for="${CSS.escape(el.id)}"]`)?.textContent:undefined)
-      ??el?.closest('label')?.textContent
+      // A LABEL WRAPPING ITS CONTROL names it by its own words, not the control's: a select's options are not its label.
+      ??(()=>{const wrap=el?.closest('label');if(!wrap)return undefined;const copy=wrap.cloneNode(true);
+        copy.querySelectorAll('select,option,datalist,textarea').forEach(x=>x.remove());return copy.textContent;})()
       ??el?.querySelector?.('legend')?.textContent
       ??el?.getAttribute('aria-label');
     return (label??'').replace(/\s+/g,' ').trim();

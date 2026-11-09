@@ -1188,3 +1188,6 @@ body:not(.lab-evaluation) .lab-only{display:none!important}
 .rule-op.rule-op-compare,.rule-op.rule-op-equal,.rule-op.rule-op-presence{background:var(--op-tint);color:var(--text-1);
   border:2px var(--op-edge) var(--op-tone);border-radius:999px;padding:1px 10px;font-size:14px;font-weight:600}
 select.rule-op.rule-op-compare,select.rule-op.rule-op-equal,select.rule-op.rule-op-presence{border-radius:8px;padding:4px 8px}
+
+/* Two actions side by side wrap in a narrow Inspector rather than clip (2026-11-09, Find health facilities from a list). */
+.inspector-actions{flex-wrap:wrap}

@@ -91,7 +91,7 @@ import type {DeclaredDesign} from './study-design.js';
 import {outreachProjection,extentN3,extentProjection,projectionOf,RULESET_FOR_NODE_TYPE,pinnedRuleset,parametersFor} from './rule-application.js';
 import {authoredConclusions,authoredFacts,authoredProjection,authoredReceipt,authoredDataIssues,authoredSubjects} from './authored-application.js';
 import {applyRepairs} from './column-profile.js';
-import {compileAuthoredRuleset,authoredUnitProblems,evaluatedDirectly} from './authored-rules.js';
+import {compileAuthoredRuleset,authoredUnitProblems,evaluatedDirectly,fieldsRead} from './authored-rules.js';
 import {evaluateAuthored,evaluatedTable,evaluationSentence} from './rule-evaluation.js';
 import {travelTime,travelTimeReceipt,validateTravelTime,TRAVEL_TIME_METHOD} from './travel-time.js';
 import {studyAreaN3,geometryBounds,validateDrawnGeometry} from './study-area.js';
@@ -225,7 +225,7 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   snap_to_network:{title:'Snap to street network',group:'Spatial operations',icon:'⇥',color:'teal',description:'Attach each site to its nearest network node, carrying how far it moved',inputs:[['sites','points'],['network','network']],output:'points'},
   summarize_combined_area:{title:'Combined area',group:'Summaries',icon:'∪',color:'teal',description:'Areas become one area; overlapping and touching polygons become one polygon',inputs:[['polygons','polygons'],['area','area'],['area2','area']],output:'polygons'},
   summarize_hull:{title:'Convex hull',group:'Summaries',icon:'⬟',color:'teal',description:'The smallest convex outline containing a set of points, computed in metres',inputs:[['points','points']],output:'polygons'},
-  find_health_facilities:{title:'Find health facilities',group:'Sources',icon:'⌖',color:'blue',description:'Retrieve health facilities inside the study area from OpenStreetMap, an HDX country export, or a healthsites.io download',inputs:[['area','area']],output:'points'},
+  find_health_facilities:{title:'Find health facilities',group:'Sources',icon:'⌖',color:'blue',description:'Find the health facilities inside a study area, or the facilities a list names, in national registers and OpenStreetMap',inputs:[['area','area']],output:'points'},
   buffer_point:{title:'Area around a point',group:'Spatial operations',icon:'◍',color:'teal',description:'Define a study area as everything within a stated distance of one named point',inputs:[['points','points']],output:'area'},
   sample_raster:{title:'Sample raster at points',group:'Spatial operations',icon:'◴',color:'teal',description:'Write the value of the raster cell containing each point onto that point',inputs:[['points','points'],['raster','raster']],output:'points'},
   clip_raster:{title:'Clip raster',group:'Spatial operations',icon:'✂',color:'teal',description:'Mask raster cells with a clipping boundary',inputs:[['area','area'],['raster','raster']],output:'raster'},
@@ -1948,7 +1948,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
             const records=authoredSubjects(subjects);
             if(!records.length)throw new Error('Connect records to apply rules to. There is nothing to apply them to.');
             const evaluation=evaluateAuthored(records,authored.fields,authored.rules as never,bound,authored.order,authored.otherwise??[]);
-            const dataIssues=authoredDataIssues(subjects,authored.fields);
+            const dataIssues=authoredDataIssues(subjects,authored.fields.filter(f=>fieldsRead(authored.rules as never).has(f.predicate)));
             const method=evaluationSentence(evaluation,records.map(r=>r.label));
             const table=(subjects as unknown as import('./data-table.js').DataTable).kind==='data-table'
               ?evaluatedTable(subjects as unknown as import('./data-table.js').DataTable,evaluation):null;
@@ -1975,7 +1975,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
             title:authored.title,parameters:declared as never,rules:compiled},bound);
           const conclusions=await reasoner(facts+'\n'+rules);
           // What the records could not say, counted before anything is concluded from them.
-          const dataIssues=authoredDataIssues(subjects,authored.fields);
+          const dataIssues=authoredDataIssues(subjects,authored.fields.filter(f=>fieldsRead(authored.rules as never).has(f.predicate)));
           const judged=authoredProjection(subjects,authored.fields,conclusions);
           // POLYGONS IN, POLYGONS OUT, each a row with a geometry: the conclusion is a property of
           // the record and its class on the map. A part no rule reached has no class, and is drawn
@@ -2470,8 +2470,21 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
   const tables:Record<string,DataTable>={};
   for(const [nodeId,value] of values)
     if((value as {kind?:string})?.kind==='data-table')tables[nodeId]=value as DataTable;
+  // A POINT LAYER'S COLUMNS, not the layer (experiment 192): a rules step after a computed one, such as Find health
+  // facilities from a list, is offered the columns that step gave out. Bounded: names and kinds from 200 points.
+  const pointColumns:Record<string,{attribute:string;kind:'number'|'term'}[]>={};
+  for(const [nodeId,value] of values){
+    const features=(value as {type?:string;features?:{properties?:Record<string,unknown>|null}[]})?.type==='FeatureCollection'
+      ?(value as {features:{properties?:Record<string,unknown>|null}[]}).features:null;
+    if(!features?.length)continue;
+    const kinds=new Map<string,Set<string>>();
+    for(const f of features.slice(0,200))for(const [k,v] of Object.entries(f.properties??{}))
+      if(v!==null&&v!==undefined&&v!=='')(kinds.get(k)??kinds.set(k,new Set()).get(k)!).add(typeof v);
+    if(kinds.size)pointColumns[nodeId]=[...kinds].map(([attribute,t])=>({attribute,kind:t.size===1&&t.has('number')?'number' as const:'term' as const}));
+  }
   return {...provenance,alerts,outputs,trace,receipts,runId,engine:'EYE-JS 21.1.24 (WASM)',runAt:new Date().toISOString(),
     ...(Object.keys(tables).length?{tables}:{}),
+    ...(Object.keys(pointColumns).length?{pointColumns}:{}),
     ...(unfinished.length?{unfinished}:{}),
     ...(Object.keys(linkages).length?{linkages}:{}),
     ...(Object.keys(relations).length?{relations}:{}),

@@ -216,4 +216,7 @@ export interface WorkflowRun {alerts:RunAlert[]; evidence:NodeEvidence[]; proven
    *  a chain has nowhere to be seen. Tables only -- they are bounded at MAX_TABLE_ROWS, and the
    *  other intermediate values are not. In memory for the open run; stripped from an exported
    *  receipt, which carries the facts rather than the data. */
-  tables?:Record<string,import('./data-table.js').DataTable>}
+  tables?:Record<string,import('./data-table.js').DataTable>;
+  /** EACH POINT LAYER'S COLUMNS AND THEIR KINDS, by step (experiment 192): what a rules step downstream can read, kept
+   *  without the layer itself. Read from its first 200 points. */
+  pointColumns?:Record<string,{attribute:string;kind:'number'|'term'}[]>}

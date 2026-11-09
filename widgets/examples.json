@@ -619,6 +619,75 @@
       ],
       "workflowCount": 7,
       "notYet": "Nothing on the list of Apply ruleset features is left unreached."
+    },
+    {
+      "id": "urn:fieldwork:example:sierra-leone-measles",
+      "title": "Measles in Sierra Leone, 2019 to 2023",
+      "repository": "https://github.com/digital-twin-ph/example-2019-sierra-leone-measles",
+      "commit": "dc77bf64c34e884e78de662178caa65c9ffdd2c3",
+      "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2019-sierra-leone-measles",
+      "licence": {
+        "data": "Used with the Sierra Leone FETP’s agreement for distributable training materials; modified for a public teaching repository",
+        "source": "Sierra Leone Field Epidemiology Training Program, measles line list; de-identified and made semi-synthetic by the Fieldwork project",
+        "note": "Stated in the repository’s README and CITATION.cff, which credit both contributions. No row is a person; the file is not surveillance data."
+      },
+      "description": "A semi-synthetic measles line list of 2,606 suspected cases: the epidemic curve by month of onset, and the facilities that saw ten cases or more, found by name in GRID3’s register and mapped by band.",
+      "carries": {
+        "workflow": true,
+        "data": true,
+        "geography": false
+      },
+      "uses": [
+        "apply_ruleset",
+        "case_series",
+        "chart_output",
+        "find_health_facilities",
+        "group_table",
+        "map_output",
+        "select_rows",
+        "study_area",
+        "table_input",
+        "table_output"
+      ],
+      "files": [
+        {
+          "path": "fieldwork-project.json.gz",
+          "sha256": "e5b73429823d3a4e1993d635e5df37e96ce9f73c1c7ccac386b02706028b5ba5",
+          "bytes": 364389
+        },
+        {
+          "path": "manual.json",
+          "sha256": "84b78f39892aa83dc994385f9077676bfa883d387b7c34af22dfab2a73042f1a",
+          "bytes": 21778
+        },
+        {
+          "path": "data/measles-sierra-leone-semisynthetic.csv",
+          "sha256": "5e4a5285dc5c3d010a457cfdea93347a56bc53405c9af46f82f0dfd06af338b7",
+          "bytes": 345020
+        },
+        {
+          "path": "README.md",
+          "sha256": "767338e0a57da4e5dca9cfb4e9b5d87eeaa3e5403c4a77d78d5cffc9e4472dcb",
+          "bytes": 6862
+        },
+        {
+          "path": "CITATION.cff",
+          "sha256": "5da7d0b555e708f896139d8f162470d15f856b740fb2e52ff79b740ba69f3b16",
+          "bytes": 1058
+        },
+        {
+          "path": "scripts/make_semisynthetic.py",
+          "sha256": "174092c9f60b5217b46613b6426a97cca3911360f0b216498aa6525bd922a8ef",
+          "bytes": 6991
+        },
+        {
+          "path": "docs/epicurve-compare.svg",
+          "sha256": "e59f395c744a2161c80caeb2750dec756227e3fd3da786b26b577066ecfc4cdd",
+          "bytes": 8812
+        }
+      ],
+      "workflowCount": 2,
+      "notYet": "Cases by district on a map; the case classification by WHO’s definition, waiting on the FETP’s data dictionary."
     }
   ]
 }

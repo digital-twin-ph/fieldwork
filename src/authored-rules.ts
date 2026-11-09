@@ -113,6 +113,17 @@ export interface AuthoredRuleset {
   rules:AuthoredRule[];
   otherwise?:AuthoredOtherwise[];
 }
+/** THE COLUMNS THE RULES READ: every condition's field, a presence question read as its column, and every operand
+ *  of a computed value. What a check of the records' values is about; a column declared and never read is not. */
+export function fieldsRead(rules:AuthoredRule[]):Set<string>{
+  const read=new Set<string>();
+  for(const rule of rules){
+    for(const g of rule.any)for(const c of g.all)read.add(c.field.replace(/Known$/,''));
+    for(const t of rule.then)if(t.compute)for(const o of [t.compute.left,t.compute.right])
+      if(typeof o==='object'&&o&&'field' in o)read.add(o.field);
+  }
+  return read;
+}
 /** Whether the rules are run directly, not by the reasoner: a value is computed, or a column has an otherwise, which N3
  *  cannot express because it concludes from absence. */
 export const evaluatedDirectly=(ruleset:{rules:{then:AuthoredConclusion[]}[]; otherwise?:AuthoredOtherwise[]}):boolean=>

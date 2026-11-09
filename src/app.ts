@@ -1516,11 +1516,18 @@ function candidateFields(workflow:Workflow,nodeId:string){
       predicate:`fwa:${attribute.replace(/[^A-Za-z0-9]+(.)/g,(_,c:string)=>c.toUpperCase()).replace(/[^A-Za-z0-9]/g,'')}`,
       kind:types.has('number')&&types.size===1?'number' as const:'term' as const}));
   }
+  // WHAT THE STEP GAVE OUT AT THE LAST RUN, where it computes its points (experiment 192): Find health facilities from
+  // a list keeps a register in its params, not the facilities it matched, so its params are not its output.
+  const ran=source&&result?.pointColumns?.[source.id];
+  if(ran&&!['point_input','places','centers'].includes(source.type))return ran.map(({attribute,kind})=>({attribute,kind,label:attribute,
+    predicate:`fwa:${attribute.replace(/[^A-Za-z0-9]+(.)/g,(_,c:string)=>c.toUpperCase()).replace(/[^A-Za-z0-9]/g,'')}`}));
   const carried=recordColumns(source);
   if(carried)return carried.map(attribute=>({attribute,kind:'number' as const,label:attribute,
     predicate:`fwa:${attribute.replace(/[^A-Za-z0-9]+(.)/g,(_,c:string)=>c.toUpperCase()).replace(/[^A-Za-z0-9]/g,'')}`}));
-  const records=data?.kind==='data-table'
-    ?(data.rows??[]).slice(0,200).map(row=>({...row.key,...(data.valueField?{[data.valueField]:row.value}:{})}))
+  // A TABLE A STEP COMPUTED, such as Total within groups' counts, is read from the last run, as its preview is.
+  const rowsFrom=data?.kind==='data-table'?data:table??undefined;
+  const records=rowsFrom
+    ?(rowsFrom.rows??[]).slice(0,200).map(row=>({...row.key,...(rowsFrom.valueField?{[rowsFrom.valueField]:row.value}:{})}))
     :(data?.features??[]).slice(0,200).map(feature=>feature.properties??{});
   const seen=new Map<string,Set<string>>();
   for(const properties of records)
@@ -2209,7 +2216,11 @@ function renderInspector(){
             ?workflow.nodes.find(m=>m.id===workflow.edges.find(e=>e.to===source.id)?.from):source;
           const records=(read?.params as {data?:{features?:{properties?:Record<string,unknown>}[]}}|undefined)
             ?.data?.features??[];
-          const keys=[...new Set([...records.flatMap(f=>Object.keys(f.properties??{})),...rulesAdd(source).categories])]
+          // WHAT THE STEP GAVE OUT AT THE LAST RUN, where it computes its points (experiment 192): Find health facilities
+          // from a list keeps a register in its params, and the facilities it matched carry other columns.
+          const ran=result?.pointColumns?.[source.id]?.map(c=>c.attribute)??[];
+          const kept=ran.length&&!['point_input','places','centers'].includes(source.type)?[]:records.flatMap(f=>Object.keys(f.properties??{}));
+          const keys=[...new Set([...kept,...ran,...rulesAdd(source).categories])]
             .filter(key=>!['name','capturedAt'].includes(key)).sort();
           if(!keys.length)return '';
           const chosen=n.params.pinClassField?.[source.id]||'';

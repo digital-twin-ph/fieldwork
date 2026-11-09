@@ -75,12 +75,12 @@
    ]
   },
   "apply_ruleset": {
-   "version": "0.9.0",
-   "released": "2026-11-08",
+   "version": "0.9.1",
+   "released": "2026-11-09",
    "changes": [
     {
-     "kind": "minor",
-     "description": "A condition can read a category another rule concluded, offered by its name with is and is not, so a classification is written in stages (experiment 192). A category reads in the output as it was typed, not as its term. Comparators keyed by family, by colour and edge: comparisons of numbers, equality, and whether a value was recorded."
+     "kind": "patch",
+     "description": "The columns offered to the rules are the ones the step upstream gave out at the last run, for a table or points it computed: Total within groups' counts, the facilities Find health facilities matched from a list. A record's missing or unreadable value is reported only for a column the rules read."
     }
    ],
    "breaking": false,
@@ -334,12 +334,12 @@
    "migrationFrom": []
   },
   "find_health_facilities": {
-   "version": "0.4.0",
-   "released": "2026-11-08",
+   "version": "0.4.1",
+   "released": "2026-11-09",
    "changes": [
     {
-     "kind": "minor",
-     "description": "OpenStreetMap is a register for lists (experiment 190): the Humanitarian OpenStreetMap Team's country export, declared in the ontology as a register for any country, matched by name only, under ODbL. Its country is chosen in the dialog and starts as the other registers'. A register with no types reads names by the other registers' type words, or the list's own; a spelling it allows is held for review and has no point until chosen. An exact name in any register is now taken before a spelling in an earlier one. On Sierra Leone's names, OpenStreetMap after GRID3 adds one hospital (7 rows) and nothing wrong."
+     "kind": "patch",
+     "description": "Its description names both ways in, inside a study area or from a list."
     }
    ],
    "breaking": false,
@@ -416,12 +416,12 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.20.1",
-   "released": "2026-11-08",
+   "version": "0.20.2",
+   "released": "2026-11-09",
    "changes": [
     {
      "kind": "patch",
-     "description": "A layer from an Apply ruleset step can be coloured by what its rules concluded: the class list offers the rules' categories and the columns of the points they read. It offered nothing, because a rules step stores no points of its own."
+     "description": "A pin class is offered from the columns the points carried at the last run, where the step upstream computes them: Find health facilities from a list keeps a register, not its matches."
     }
    ],
    "breaking": false,

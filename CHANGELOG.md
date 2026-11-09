@@ -3,6 +3,19 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.65.0 — 2026-11-09
+
+- **Measles in Sierra Leone has its first two workflows**: an epidemic curve by month of onset, and the facilities
+  that saw ten cases or more, found by name in GRID3's register and coloured by band on a map. Small counts are left
+  off the map, as the file's terms ask. Each record of the teaching file carries a case number.
+- **A rules step, a map's pin class and Find health facilities read what the step before them gave out**, for a table
+  or points it computed: the columns offered were the stored inputs', so a register's columns stood in for the
+  facilities matched from it. Apply ruleset 0.9.1, Map patch.
+- **A missing value is reported only for a column the rules read.** A district nobody recorded was counted against
+  rules that never read it.
+- Two actions in a narrow Inspector wrap instead of clipping.
+- Validation: Chromium locally; WebKit in CI.
+
 ## 0.64.0 — 2026-11-08
 
 - **A case definition in the rulesets worked example**: sixteen made-up suspected cases classified in four stages, with

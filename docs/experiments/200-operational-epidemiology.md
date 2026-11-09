@@ -44,6 +44,47 @@ vaccine-preventable (18%) and vector-borne diseases (18%) met it least often.
 **Terms of use: not stated** on the pages read or in the categories PDF. So Fieldwork cites and links the taxonomy and
 does not ship its list until the Alliance's terms are known; asking them is the practitioner's to do.
 
+## The questions, and which bottlenecks Fieldwork can serve
+
+The practitioner, 2026-11-09: *"The bottlenecks are associated with key questions those are the ones that we will
+focus on. Not all of the bottlenecks are within the purview or FW to support."*
+
+**The key questions, as the Alliance asks them.** Its guide to after-action reviews
+([Leveraging 7-1-7 in After-Action Reviews](https://717alliance.org/resources/leveraging-7-1-7-for-aars/)) frames a
+review by four questions, after WHO's: what was in place before the response; what happened during it; what went well
+and less well, and why; what to do better next time. Bottlenecks and enablers answer the first and the third; the
+timeliness metrics, the second. No per-category question was found in the Alliance's documents read.
+
+**Which bottleneck themes Fieldwork can serve**, a first sort, mine, to be corrected. "Serve" means Fieldwork can
+measure the bottleneck from data, or let a responder practise the skill whose absence it names; never that Fieldwork
+removes it.
+
+| Theme | Within reach | The question Fieldwork can help answer |
+| --- | --- | --- |
+| Data systems | Timely or complete surveillance data; working where the network is poor | How complete and timely are the data, and where are the gaps? Fieldwork works offline |
+| Clinical or health care worker | Training in surveillance and response; clinical suspicion | Could the event have been seen sooner in the data? Practising case definitions and curves, by hand |
+| Laboratory | Delays in specimen collection, transport, turnaround and reporting, measured | Between which dates did the time go? |
+| Patient and community | Delay in care-seeking, measured; sensitivity of community detection | How long from onset to first contact with care, and who was detected by whom? |
+| Event characteristics | Access | Who is far from care, in travel time? |
+| Planning and procedures | Risk assessment | What are the burden, severity and risk factors? (early response action 2) |
+| Coordination | Sharing information across sectors | Can two sectors' tables be related on a shared key? |
+| Resources and procurement | **Not within reach** | Financing, supplies, staffing and approvals are not analysis |
+
+Within every theme, capacity itself (laboratory capacity, case management, response teams, coordination across
+countries) is out of reach; its timing, measured from dates, is in.
+
+## Open data for the 148 outbreaks, looked for 2026-11-09
+
+- **The Alliance's dataset is not open.** Its [global data dashboard](https://717alliance.org/7-1-7-global-data-dashboard/)
+  shows country data only with the owning country's permission.
+- **The first multi-country study** ([Bochner et al., Lancet Global Health 2023, CC BY 4.0](https://pmc.ncbi.nlm.nih.gov/articles/PMC10156425/)):
+  41 events in Brazil, Ethiopia, Liberia, Nigeria and Uganda, 2018–2022; 27% met the whole target. Its text gives
+  aggregates only (by event type; bottlenecks by category, not by event), its ethics approvals were for aggregate
+  data, and requests go to each country through the corresponding author. Its appendix sits behind a CAPTCHA and was
+  not read; whether it lists events is unknown.
+- So no event-level 7-1-7 data set has been found open. To try: the appendix, opened by hand; outbreaks whose own
+  open reports give their milestone dates, assembled with each date cited; or made-up events, said so.
+
 ## What that makes operational epidemiology here
 
 Two kinds of work, both timed by 7-1-7:
@@ -77,9 +118,7 @@ category.
    met 7-1-7 or not. Published as a ruleset, so a review is the same everywhere.
 3. **Total within groups** and **Chart**: the share meeting each target; bottlenecks by theme.
 
-**The data, still to find:** open event-level 7-1-7 data, real and citable. To check: the Alliance's
-[global data dashboard](https://717alliance.org/7-1-7-global-data-dashboard/), and open-access papers reporting events
-with their milestone dates. Made-up events are the fallback, said so.
+**The data:** none found open at event level (above).
 
 Then contact tracing on Hagelloch, as a second slice: each case related to its infector, the serial interval in days,
 secondary cases per case.

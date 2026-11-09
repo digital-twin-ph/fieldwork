@@ -18,8 +18,8 @@ asset shows up.
 
 | Reach | Widgets |
 | --- | --- |
-| Used by no workflow | **12** |
-| Used by exactly one | 19 |
+| Used by no workflow | **13** |
+| Used by exactly one | 18 |
 | Used by two or more | **25** |
 
 `isochrone` and `compute_walking_catchment` are a special case the practitioner ruled on
@@ -37,6 +37,7 @@ fixed — see experiment 64.
 - `reachable_corridor`
 - `reachable_nodes`
 - `sample_raster`
+- `slr_site_assignment`
 - `slr_threshold_comparison`
 - `snap_to_network`
 - `summarize_combined_area`
@@ -54,7 +55,6 @@ Each of these has one workflow's worth of evidence. If that example changes, it 
 | `travel_time` | old-naledi |
 | `clip_raster` | raster |
 | `raster_input` | raster |
-| `slr_site_assignment` | sea-level-rise-philippines |
 | `find_health_facilities` | sierra-leone-measles |
 | `summarize_hull` | snow-extent |
 | `aggregate_points_to_h3_cell` | snow-geoprivacy |
@@ -88,13 +88,13 @@ evidence about that example.
 | `group_table` | 5 | brazil-dengue-rj-2024, nyc-asthma-ozone-2016-2025, sierra-leone-measles, south-london-1854, workflows-rulesets |
 | `relate_table` | 5 | brazil-dengue-rj-2024, nyc-asthma-ozone-2016-2025, sea-level-rise-philippines, sierra-leone-measles, south-london-1854 |
 | `join_table_to_area` | 4 | brazil-dengue-rj-2024, nigeria-immunization-2024, sierra-leone-measles, south-london-1854 |
+| `measure_distance` | 3 | heat, old-naledi, sea-level-rise-philippines |
 | `rate` | 3 | brazil-dengue-rj-2024, sierra-leone-measles, south-london-1854 |
 | `regression` | 3 | brazil-dengue-rj-2024, nyc-asthma-ozone-2016-2025, salmonella-germany-2021 |
 | `two_by_two` | 3 | oswego-1940, salmonella-germany-2021, south-london-1854 |
 | `append_rows` | 2 | brazil-dengue-rj-2024, salmonella-germany-2021 |
 | `clip_polygons` | 2 | snow-isochrone, snow-voronoi |
 | `find_satellite_products` | 2 | brazil-dengue-rj-2024, nyc-asthma-ozone-2016-2025 |
-| `measure_distance` | 2 | heat, old-naledi |
 | `polygon_input` | 2 | nigeria-immunization-2024, south-london-1854 |
 | `reproject` | 2 | snow-isochrone, snow-voronoi |
 | `sample_satellite_files_at_points` | 2 | brazil-dengue-rj-2024, nyc-asthma-ozone-2016-2025 |
@@ -118,7 +118,6 @@ rows above `case_series` are the ones that have genuinely done both.
 | snow-isochrone | **2** — `isochrone`, `network_input` |
 | south-london-1854 | **2** — `map_image_input`, `stack_polygons` |
 | sierra-leone-measles | **1** — `find_health_facilities` |
-| sea-level-rise-philippines | **1** — `slr_site_assignment` |
 | snow-extent | **1** — `summarize_hull` |
 | snow-voronoi | **1** — `voronoi` |
 
@@ -277,7 +276,7 @@ doing: that is a decision with a cost, and this file measures.
 
 **R1. Give the 6 data-carrying nodes a declared source.** 4 shipped examples hold 6 nodes that carry data and name no origin: `heat` (2), `snow-voronoi` (1), `snow-isochrone` (2), `snow-extent` (1). Closing it means either a `sourceInfo`/`provenance` block naming where the data came from, or a published file beside the example the way `geo/water-intakes.geojson` was written on 2026-10-29. Until then each is a payload a rebuild must copy rather than fetch.
 
-**R2. Ask D11 of the 8 widgets no workflow reaches.** `buffer_point`, `clip_points_to_area`, `deduplicate_points`, `fill_interior_gaps`, `measure_area`, `sample_raster`, `slr_threshold_comparison`, `summarize_combined_area`. Not a retirement list: D11 asks whether a residual function remains that nothing else performs, and a widget may be unreached because no example poses its problem. The answer is per widget and this audit does not have it.
+**R2. Ask D11 of the 9 widgets no workflow reaches.** `buffer_point`, `clip_points_to_area`, `deduplicate_points`, `fill_interior_gaps`, `measure_area`, `sample_raster`, `slr_site_assignment`, `slr_threshold_comparison`, `summarize_combined_area`. Not a retirement list: D11 asks whether a residual function remains that nothing else performs, and a widget may be unreached because no example poses its problem. The answer is per widget and this audit does not have it.
 
 **R3. Settle what a monolith and its decomposition owe each other.** Use propagates from a composition to its members and not from an equivalent monolith, so 4 widgets read as unreached while a workflow performs their work. It is a question about the admission criteria rather than about those widgets, and the count is deliberately left as it is until it is answered.
 

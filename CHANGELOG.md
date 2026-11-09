@@ -3,6 +3,22 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.70.0 — 2026-11-09
+
+- **The two sea-level widgets retire** ([197](docs/experiments/197-the-sea-level-widgets-retire.md)). **Assign
+  projection site** is **Measure distance** and **Relate**; **Compare level to elevation** is the published ruleset
+  *Compare a projected rise with an elevation* 1.0.0, applied by **Apply ruleset**. Neither held anything about sea
+  level. A workflow holding either is refused, by name. Removed outright: nobody outside the project uses them.
+- **A step that reads a table reads Measure distance's result**: one row per point, its nearest candidate by the
+  candidate's own attributes (`nearest_site_id`), and the distance.
+- **Measure distance is on the standard Inspector and dialog** (186): the unit and the conditions a candidate must
+  meet are in Configure…. Measure distance 0.6.0.
+- **A column a table declares numeric reaches rules as a number.** A value Relate brought across was read as text, and
+  rules over it concluded nothing.
+- **The sea-level example is built from standard steps only**, and its README says its eight gauges match PSMSL's
+  stations.
+- Validation: Chromium locally; WebKit in CI.
+
 ## 0.69.0 — 2026-11-09
 
 - **A note can carry a picture** ([196](docs/experiments/196-a-picture-in-a-note.md)). Under **Image** in a note you

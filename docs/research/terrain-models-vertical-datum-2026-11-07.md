@@ -58,10 +58,56 @@ Searched and read on 2026-11-08, from the pages linked. Nothing was downloaded.
 | **DTU22MDT**, DTU Space mean dynamic topography (DOI 10.11583/DTU.26947894) | Mean sea surface above the XGM2019e geoid, global | 1993–2012 | The record refused an automated read (403); **licence and sign-in not confirmed** |
 | **CNES-CLS22**, AVISO+ | Mean sea surface above the geoid, global | 1993–2012 | Needs an AVISO+ account and a licence agreement: not open |
 
-**Not established:** PGM2018's licence (to ask NAMRIA); whether its hybrid fit keeps the MSL datum as PGM2016's did (the
+**NAMRIA's own page, read 2026-11-09** ([projects](https://www.namria.gov.ph/projects.aspx)). It lists PGM2018 in two
+kinds: a gravimetric geoid, `gravi-geoid2018.gri`, "for estimating elevation above the geoid surface", and a geoid
+fitted to mean sea level, `geoid2018.98_wgs84fit.gri` and `geoid2018.98_itrffit.gri`, for "estimating elevations above
+the MSL"; stated accuracy 1.2 cm. It links one download, `PhilGeoidApp2019.zip` (5,901,043 bytes, last modified
+2024-07-09), an application that gives a point's geoid height N in H = h − N; the grids are named and not linked. The
+page states no licence. It names no tide gauge or MSL epoch for the fitted geoid; for PGM2014 it says a constant of
++80 cm was added "to approximate the average geoid offset relative to GPS and levelling in the Manila areas".
+
+**The practitioner, 2026-11-09:** NAMRIA says the files are for public use, and the model year is 2019. Recorded as
+said; the page names the model PGM2018 and the application 2019.
+
+**Not established:** whether its hybrid fit keeps the MSL datum as PGM2016's did (the
 2021 paper, TAO 32(5), DOI 10.3319/TAO.2021.11.15.01, was not read); the correction between the Philippine datum's epoch
 and 1995–2014; DTU22MDT's licence; whether a levelled tide gauge at Manila (PSMSL, SONEL) gives the offset directly,
 which was not searched. Both global models are over the open ocean, so their value at the coast is the least certain.
+
+## NAMRIA's geoid at Manila, and what PSMSL and AR6 say about the gauge, 2026-11-09
+
+**Downloaded with the practitioner's approval:** `PhilGeoidApp2019.zip` from namria.gov.ph, 5,901,043 bytes, sha256
+`24bd8817…981a`. It holds the three PGM2018 grids, two `.ggf` copies, a Word note, sample point files and a Windows
+program, which was not run. The grids are GRAVSOFT text: 4–22° N, 0.025°. Read in Python, interpolated bilinearly.
+
+Checked against NAMRIA's own sample output: the `wgsfit` grid comes closest, within 0.28 m everywhere and 0.02 m at
+the sample point nearest Manila. The differences vary smoothly, and the sample file is dated September 2018 against
+grids of December 2018, so the sample was likely made from an earlier grid. That is an inference.
+
+At Manila's gauge, 14°35′ N, 120°58′ E:
+
+| Grid | N |
+| --- | --- |
+| `geoid2018.98_itrffit.gri`, fitted to MSL, ITRF | 43.862 m |
+| `geoid2018.98_wgsfit.gri`, fitted to MSL, WGS84 | 45.239 m |
+| `gravi-geoid2018.gri`, gravimetric | 43.011 m |
+
+The MSL-fitted ITRF grid is 0.85 m above the gravimetric geoid there. NAMRIA's note says PGM2014 was shifted
+"+80 cm to approximate the average geoid offset relative to GPS and levelling in the Manila areas". NAMRIA's note also
+says the model will be refitted "to an adjusted level network for a new version until 2035". It names no MSL epoch.
+
+**PSMSL, Manila South Harbor (145)** ([station](https://psmsl.org/data/obtaining/stations/145.php),
+[datum](https://psmsl.org/data/obtaining/rlr.diagrams/145.php)): 1901–2024, 85% complete, a quality flag set. The
+gauge moved about 1 km NNW in 2002. Its datum is TSO 1901; nothing on either page ties it to the Philippine MSL datum.
+The nearest GNSS station listed, PIMO, is not at the gauge. A note of 1987 suspects the rising trend is partly
+"deposition ... and excessive reclamation although subsidence not totally discarded".
+
+**All eight AR6 sites are PSMSL tide gauges by ID, name and position** (each station page read 2026-11-09). AR6's own
+pages ([README](https://github.com/Rutgers-ESSP/IPCC-AR6-Sea-Level-Projections), Zenodo record) do not say their
+location IDs are PSMSL's; the file that would, `location_list.lst` (2.7 MB), was not read.
+
+**Still missing for the offset to EGM2008:** EGM2008's height at Manila, which the terrain models measure from; and
+Manila's mean sea level over 1995–2014 in the Philippine datum.
 
 ## What this suggests, not yet decided
 
@@ -78,5 +124,6 @@ which was not searched. Both global models are over the open ocean, so their val
 - Whether the Copernicus DEM on AWS can be read without an account.
 - FABDEM's datum from its own documentation.
 - That no other open bare-ground coastal model exists: only these four were compared.
-- A licensed open source for the geoid-to-sea-level offset: PGM2018 is served openly with no licence stated.
+- A licensed open source for the geoid-to-sea-level offset. NAMRIA's page states no licence; the practitioner reports
+  NAMRIA says the files are for public use (2026-11-09). Whether that permits republishing the grids is not written.
 - No file was downloaded.

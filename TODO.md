@@ -400,7 +400,7 @@ What is retirable without contradicting D1:
 
 | | |
 | --- | --- |
-| **Duplicates** | `nearest`, `access`, `slr_site_assignment` are three implementations of nearest-neighbour-with-distance. **`nearest` is the general one and the other two merge into it** ([103](experiments/103-duplicates-should-merge.md)), but it must be made general first — its ports are named `places` and `centers` after the heat demo, and the three emit three different port types, so this is port work ([66](experiments/66-ports-as-schema-binding.md)) and not a rename. `output` is a generic display against three typed ones. `summarize_points_to_polygon`, `aggregate_points_to_h3_cell`, `case_series` are one group-and-aggregate over three keys, but each is asked for by name, so that is code factoring and not a palette retirement |
+| **Duplicates** | `nearest`, `access`, `slr_site_assignment` are three implementations of nearest-neighbour-with-distance. **2026-11-09: `slr_site_assignment` retired into Measure distance (`nearest`) and Relate, after a table port learned to read a distances result ([197](experiments/197-the-sea-level-widgets-retire.md)).** **`nearest` is the general one and the other two merge into it** ([103](experiments/103-duplicates-should-merge.md)), but it must be made general first — its ports are named `places` and `centers` after the heat demo, and the three emit three different port types, so this is port work ([66](experiments/66-ports-as-schema-binding.md)) and not a rename. `output` is a generic display against three typed ones. `summarize_points_to_polygon`, `aggregate_points_to_h3_cell`, `case_series` are one group-and-aggregate over three keys, but each is asked for by name, so that is code factoring and not a palette retirement |
 | **Example-bound** | `places`, `centers`, `alert`, `facilities`, `samples`, `xpert`, `policy`, `access_policy`, `comparison_map`. `places` and `centers` already migrate into `observations`, so seven remain |
 
 Roughly ten palette retirements, taking 51 to about 41, plus code-level factoring that changes
@@ -940,6 +940,8 @@ example stops exactly where the application stops.
 Until it reports a value, the note should say the projections are validated but not reported —
 today it says what it will not claim and is silent about what it never computed.
 
+**Done 2026-11-09 (0.70.0, [197](docs/experiments/197-the-sea-level-widgets-retire.md)): both retired**, Assign
+projection site into Measure distance and Relate, Compare level to elevation into a published ruleset. As raised:
 **Check the two remaining sea-level widgets in the same pass**, which the practitioner has
 flagged to review: `slr_site_assignment` is listed in the Duplicates row as a one-off of
 nearest-neighbour-with-distance, and `slr_threshold_comparison` this file has called *"genuinely

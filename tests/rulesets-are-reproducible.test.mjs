@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,readdirSync} from 'node:fs';
-import {compileAuthoredRuleset} from '../build/authored-rules.js';
+import {compileAuthoredRuleset,evaluatedDirectly} from '../build/authored-rules.js';
 
 /** NO SHIPPED RULESET MAY BE ONE A PRACTITIONER COULD NOT HAVE BUILT.
  *
@@ -53,6 +53,8 @@ const HAND_WRITTEN_BEFORE_THE_BUILDER=[
 test('the authored form recompiles to the rules that ship, byte for byte',()=>{
   const broken=[];
   for(const [path,ruleset] of files){
+    // Rules that compute run directly, from the authored form the builder makes (experiment 197): nothing to recompile.
+    if(evaluatedDirectly(ruleset.authored))continue;
     const rebuilt=compileAuthoredRuleset(ruleset.authored);
     if(rebuilt!==ruleset.rules)broken.push(path);
   }

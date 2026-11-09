@@ -26,7 +26,10 @@ test('Old Naledi migration exposes editable source and selection consumes saved 
   // the nearest search now, authored as a value set over the candidates' own attributes.
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="access"]').click();
-  await page.locator('#filter-values-0').fill('Direct');await page.locator('#filter-values-0').press('Tab');
+  // In Measure distance's Configure… since it moved to the standard Inspector (experiment 197).
+  await page.locator('#configure-step').click();
+  await page.locator('#distance-config #filter-values-0').fill('Direct');await page.locator('#distance-config #filter-values-0').press('Tab');
+  await page.locator('#distance-config #config-apply').click();
   await page.locator('[data-view="results"]').click();
   await run();await expect(page.locator('#result-metrics .unknown b')).toHaveText('21');
   await expect(page.locator('#offline-status')).toContainText('Available offline');await context.setOffline(true);await page.reload();

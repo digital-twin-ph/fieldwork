@@ -29,7 +29,7 @@ test('declared rulesets assemble byte-identical rule text',()=>{
   assert.equal(facilityN3([{id:'f1',name:'X',serviceType:'Clinic',owner:'GOVERNMENT'}]).rules,golden.facility);
 });
 
-test('a ruleset declares its basis, and one of five carries resolvable evidence',()=>{
+test('a ruleset declares its basis, and two of six carry resolvable evidence',()=>{
   const sets=bundledRulesets();
   // Seven version files until 2026-10-25, now eight: outreach-criteria published a 1.1.0 that
   // drops its `alert` input port, with the rules byte-identical to 1.0.0. The third version file
@@ -48,10 +48,12 @@ test('a ruleset declares its basis, and one of five carries resolvable evidence'
   // declared output port changed from `decisions` to `polygons` so the judgement travels on the
   // shape it is about. A port type is part of the contract, so it is a version rather than an
   // edit, and both are bundled because a saved workflow may pin either. Experiment 113.
-  assert.equal(new Set(sets.map(s=>s.id)).size,5);
+  // Six on 2026-11-09, with compare-level-to-elevation: the comparison Compare level to elevation held as a widget
+  // (experiment 197), published cited, so the uncited count and its ceiling are unchanged.
+  assert.equal(new Set(sets.map(s=>s.id)).size,6);
   // Nine version files on 2026-10-26, with extract-contract: the AR6 contract that
   // slr_extract_import held in TypeScript, declared as data so the ledger can count its debt.
-  assert.equal(sets.length,9);
+  assert.equal(sets.length,10);
   for(const set of sets){
     assert.ok(set.basis.status&&set.basis.statedBy,`${set.id} must say what its basis is and who says so`);
     assert.ok(set.mustNotBeReadAs?.trim(),`${set.id} must say what it is not`);
@@ -77,9 +79,9 @@ test('a ruleset declares its basis, and one of five carries resolvable evidence'
   // audience, without trusting this application or the person presenting. uncitedCeiling went
   // back to 4 in the same commit, with one more ruleset than before.
   const resolvable=sets.filter(s=>s.basis.evidence.length>0);
-  assert.deepEqual([...new Set(resolvable.map(s=>s.id))],['urn:fieldwork:ruleset:extract-contract'],
-    'If another now carries a URL or a digested PDF, lower uncitedCeiling in rulesets/ledger.json.');
-  const dois=resolvable[0].basis.evidence.map(e=>e.locator);
+  assert.deepEqual([...new Set(resolvable.map(s=>s.id))].sort(),['urn:fieldwork:ruleset:compare-level-to-elevation','urn:fieldwork:ruleset:extract-contract'],
+    'If one of the uncited four now carries a URL or a digested PDF, lower uncitedCeiling in rulesets/ledger.json.');
+  const dois=resolvable.find(s=>s.id==='urn:fieldwork:ruleset:extract-contract').basis.evidence.map(e=>e.locator);
   assert.deepEqual(dois,['10.1017/9781009157896.011','10.5194/gmd-16-7461-2023','10.5281/zenodo.5914709'],
     'the chapter, the FACTS paper and the dataset version: the three the licence obliges');
   const nb06=sets.find(s=>s.id==='urn:fieldwork:ruleset:nb06-evidence');

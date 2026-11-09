@@ -559,7 +559,7 @@ export interface ParamsByType {
    *  categorical, and over a finite declared vocabulary that compiles to a set — `{Direct,
    *  Contextual}` — the same move by which OR compiles to one rule per disjunct. The authoring
    *  surface may offer "at least Contextual"; what is stored and executed is the set. */
-  measure_distance:{unit:DistanceUnit; candidateFilter?:CandidateCondition[]};
+  measure_distance:{unit:DistanceUnit; candidateFilter?:CandidateCondition[]; label?:string};
   travel_time:{label:string; speedMPerMin:number};
   policy:{thresholdKm:number};
   measure_area:{unit:AreaUnit};

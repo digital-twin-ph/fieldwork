@@ -18,18 +18,28 @@
  */
 import {readFileSync,readdirSync} from 'node:fs';
 import {compileAuthoredRuleset} from '../build/rulesets.js';
+import {evaluatedDirectly,otherwiseProblems} from '../build/authored-rules.js';
 
 const alpha=n3=>{const seen=new Map();
   return n3.trim().replace(/\?[A-Za-z][A-Za-z0-9_]*/g,v=>{
     if(!seen.has(v))seen.set(v,`?v${seen.size}`);return seen.get(v);});};
 
-let checked=0,withoutSource=[],failed=[];
+let checked=0,direct=0,withoutSource=[],failed=[];
 for(const id of readdirSync('rulesets',{withFileTypes:true}).filter(d=>d.isDirectory()).map(d=>d.name))
   for(const file of readdirSync(`rulesets/${id}`).filter(f=>f.endsWith('.json'))){
     const key=`${id}/${file.replace(/\.json$/,'')}`;
     const doc=JSON.parse(readFileSync(`rulesets/${id}/${file}`,'utf8'));
     if(!doc.authored){withoutSource.push(key);continue;}
     checked++;
+    // RULES THAT COMPUTE OR HAVE AN OTHERWISE run directly, as the rule builder runs them (experiments 188, 197): the
+    // authored form is what runs, so it must be well formed, and the shipped text must say it is not N3 to reason over.
+    if(evaluatedDirectly(doc.authored)){
+      const problems=otherwiseProblems(doc.authored);
+      if(problems.length)failed.push(`${key}: its source is not well formed — ${problems[0]}`);
+      else if(!/Evaluated directly/.test(doc.rules))failed.push(`${key}: it is evaluated directly, and its rules text must say so.`);
+      else direct++;
+      continue;
+    }
     let compiled;
     try{compiled=compileAuthoredRuleset(doc.authored);}
     catch(error){failed.push(`${key}: its source does not compile — ${error.message}`);continue;}
@@ -41,5 +51,6 @@ for(const id of readdirSync('rulesets',{withFileTypes:true}).filter(d=>d.isDirec
 if(failed.length){for(const line of failed)console.error(`  ${line}`);
   console.error(`Ruleset sources: ${failed.length} of ${checked+failed.length} do not match their N3.`);
   process.exit(1);}
-console.log(`Ruleset sources: ${checked} published rulesets compile to exactly the N3 they ship`
+console.log(`Ruleset sources: ${checked-direct} published rulesets compile to exactly the N3 they ship`
+  +`${direct?`, ${direct} evaluated directly from a well-formed source`:''}`
   +`${withoutSource.length?`, ${withoutSource.length} without a source (${withoutSource.join(', ')})`:''}.`);

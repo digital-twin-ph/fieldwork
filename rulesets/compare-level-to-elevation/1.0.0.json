@@ -1,0 +1,249 @@
+{
+  "schema": "fieldwork/ruleset/1",
+  "id": "urn:fieldwork:ruleset:compare-level-to-elevation",
+  "version": "1.0.0",
+  "title": "Compare a projected rise with an elevation",
+  "released": "2026-11-09",
+  "description": "For each row, sets a projected rise in sea level against an elevation: the elevation is converted to millimetres, the rise subtracted from it, and the row concludes Reaches where the rise is at least the elevation and StaysBelow where it is not. A row missing either is Unknown. It replaces the Compare level to elevation widget (experiment 197): nothing about sea level is compiled into a widget.",
+  "mustNotBeReadAs": "An inundation or flood model. It compares two numbers at a point and accounts for no tide, surge, wave, drainage, defence or connection to the sea. And it is meaningful only where the elevation is measured from the surface the rise is measured from, the 1995-2014 local mean sea level: an elevation above a geoid or a national datum is not, until the offset between them is applied and stated.",
+  "rules": "# Compare a projected rise with an elevation; not an inundation model.\n# Evaluated directly: the rules compute values, which the reasoner does not.\n",
+  "parameters": [],
+  "inputContract": {
+    "factGenerator": "src/authored-application.ts#authoredFacts",
+    "subjectKind": "places with a projected rise and an elevation",
+    "expects": [
+      {
+        "predicate": "fw:projectedRiseKnown",
+        "type": "boolean"
+      },
+      {
+        "predicate": "fw:projectedRise",
+        "type": "number",
+        "unit": "http://qudt.org/vocab/unit/MilliM"
+      },
+      {
+        "predicate": "fw:elevationKnown",
+        "type": "boolean"
+      },
+      {
+        "predicate": "fw:elevation",
+        "type": "number",
+        "unit": "http://qudt.org/vocab/unit/M"
+      }
+    ],
+    "tableContract": {
+      "requiredKeys": [],
+      "allowedUnits": [],
+      "closedVocabulary": [],
+      "declares": [
+        {
+          "name": "baselinePeriod",
+          "value": "1995-2014",
+          "meaning": "The rise is a change from the mean sea level of this period. The elevation must be measured from that same surface."
+        },
+        {
+          "name": "equality",
+          "value": "reaches",
+          "meaning": "A rise equal to the elevation counts as reaching it, stated rather than left to rounding."
+        }
+      ]
+    },
+    "fieldFrom": [
+      {
+        "attribute": "value_mm",
+        "predicate": "fw:projectedRise",
+        "kind": "number",
+        "label": "Projected rise",
+        "unitLabel": "mm"
+      },
+      {
+        "attribute": "elevation_m",
+        "predicate": "fw:elevation",
+        "kind": "number",
+        "label": "Elevation above the 1995-2014 mean sea level",
+        "unitLabel": "m"
+      }
+    ],
+    "ports": {
+      "inputs": [
+        [
+          "records",
+          "table"
+        ]
+      ],
+      "output": "table"
+    },
+    "projection": "declared",
+    "parameterFrom": {},
+    "portsNote": "A table in and a table out: each row gains its margin and its conclusion. The columns are `value_mm`, as AR6 extracts name the rise and Relate brings it, and `elevation_m`, which whoever supplies the elevation names. Edit a copy to read other names.",
+    "note": "The two columns are bound by name, so nothing is guessed from a spelling."
+  },
+  "outputVocabulary": {
+    "predicates": [
+      {
+        "predicate": "fw:level",
+        "values": [
+          "Reaches",
+          "StaysBelow",
+          "Unknown"
+        ],
+        "unknownValue": "Unknown"
+      }
+    ],
+    "unmatchedSubjectsExpected": false,
+    "note": "Every row reaches one conclusion: Reaches or StaysBelow from its margin, and Unknown otherwise."
+  },
+  "basis": {
+    "status": "published",
+    "statedBy": "What a projected value is, from the dataset's own documentation; the comparison itself is arithmetic, and its one convention, equality as reaching, is declared.",
+    "evidence": [
+      {
+        "id": "ar6-chapter9",
+        "kind": "url",
+        "url": "https://doi.org/10.1017/9781009157896.011",
+        "title": "Ocean, Cryosphere and Sea Level Change (IPCC AR6 WG1, Chapter 9)",
+        "role": "source",
+        "authors": "Fox-Kemper, B., et al.",
+        "published": "2021",
+        "locator": "10.1017/9781009157896.011",
+        "notes": "Resolves as a book-chapter. Supports that a projected value is a change from the 1995-2014 baseline, so it can be set against a height only where that height is measured from the same surface.",
+        "addedAt": "2026-11-09",
+        "modifiedAt": "2026-11-09"
+      },
+      {
+        "id": "ar6-dataset",
+        "kind": "url",
+        "url": "https://doi.org/10.5281/zenodo.5914709",
+        "title": "IPCC AR6 Sea Level Projections",
+        "role": "data",
+        "authors": "Garner, G. G., et al.",
+        "published": "2021",
+        "locator": "10.5281/zenodo.5914709",
+        "notes": "Resolves as a dataset and returns version 20210809, which is the dataset version these values are comparable within. The version can therefore be CHECKED rather than trusted: a typo in it would otherwise be invisible and propagate into every receipt.",
+        "addedAt": "2026-11-09",
+        "modifiedAt": "2026-11-09"
+      }
+    ],
+    "unresolvedCitations": [],
+    "note": "Carried over from the widget it replaces, whose refusals were a stated datum and a declared reference surface. A ruleset cannot ask a question at run time, so they are what it must not be read as, and the elevation column's own label says which surface."
+  },
+  "authored": {
+    "subject": "?p",
+    "comment": "Compare a projected rise with an elevation; not an inundation model.",
+    "rules": [
+      {
+        "any": [
+          {
+            "all": [
+              {
+                "field": "fw:elevationKnown",
+                "comparator": "equals",
+                "value": true
+              }
+            ]
+          }
+        ],
+        "then": [
+          {
+            "predicate": "fw:elevationMm",
+            "compute": {
+              "left": {
+                "field": "fw:elevation"
+              },
+              "operator": "times",
+              "right": 1000
+            },
+            "column": "elevation_mm",
+            "meaning": "The elevation, in millimetres",
+            "unit": "mm"
+          }
+        ]
+      },
+      {
+        "any": [
+          {
+            "all": [
+              {
+                "field": "fw:elevationKnown",
+                "comparator": "equals",
+                "value": true
+              },
+              {
+                "field": "fw:projectedRiseKnown",
+                "comparator": "equals",
+                "value": true
+              }
+            ]
+          }
+        ],
+        "then": [
+          {
+            "predicate": "fw:margin",
+            "compute": {
+              "left": {
+                "field": "fw:elevationMm"
+              },
+              "operator": "minus",
+              "right": {
+                "field": "fw:projectedRise"
+              }
+            },
+            "column": "margin_mm",
+            "meaning": "How far the elevation stands above the projected sea level",
+            "unit": "mm"
+          }
+        ]
+      },
+      {
+        "any": [
+          {
+            "all": [
+              {
+                "field": "fw:margin",
+                "comparator": "notGreaterThan",
+                "value": 0
+              }
+            ]
+          }
+        ],
+        "then": [
+          {
+            "predicate": "fw:level",
+            "value": "fw:Reaches"
+          }
+        ]
+      },
+      {
+        "any": [
+          {
+            "all": [
+              {
+                "field": "fw:margin",
+                "comparator": "greaterThan",
+                "value": 0
+              }
+            ]
+          }
+        ],
+        "then": [
+          {
+            "predicate": "fw:level",
+            "value": "fw:StaysBelow"
+          }
+        ]
+      }
+    ],
+    "otherwise": [
+      {
+        "predicate": "fw:level",
+        "value": "fw:Unknown"
+      }
+    ]
+  },
+  "changes": [
+    {
+      "kind": "major",
+      "description": "First version. Replaces the Compare level to elevation widget (experiment 197)."
+    }
+  ]
+}

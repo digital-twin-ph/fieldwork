@@ -706,7 +706,7 @@
       "id": "urn:fieldwork:example:sea-level-rise-philippines",
       "title": "Sea-level rise at Manila’s health facilities",
       "repository": "https://github.com/digital-twin-ph/example-2026-sea-level-rise-philippines",
-      "commit": "04ad8dda45487159679393f4f455662171122e5a",
+      "commit": "c172f4b2c988df238d3342a5b72f83cc0368bb77",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2026-sea-level-rise-philippines",
       "licence": {
         "data": "Projections and sites CC BY 4.0, with three required citations; facilities ODbL 1.0; the study area, diagram, manual and scripts CC0 1.0",
@@ -722,10 +722,10 @@
       "uses": [
         "apply_ruleset",
         "map_output",
+        "measure_distance",
         "point_input",
         "relate_table",
         "select_rows",
-        "slr_site_assignment",
         "study_area",
         "table_input",
         "table_output"
@@ -733,18 +733,18 @@
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "6dfa9d4abd1e549753faf09e207c09cd7cfe5a7846ca261fe8e0191f91a4dd37",
-          "bytes": 23449
+          "sha256": "95c6ddca5d56d7cbf37afbf17c5f47309695c5b133d0d98da02e39c4bdf5c263",
+          "bytes": 22901
         },
         {
           "path": "manual.json",
-          "sha256": "a5bd3af059023d3ff1fc256f8fe9a26d689fdf4f46900e17a1aae55855225729",
-          "bytes": 20923
+          "sha256": "c8ecee5798b52c24c3c04157fdd496d3040ab51914fc5f7ad248feaf0a3b5d36",
+          "bytes": 18109
         },
         {
           "path": "README.md",
-          "sha256": "7d6805940594534f7a76364294f4f889d95535ed605573e1cd2d6fe3264db3e6",
-          "bytes": 7879
+          "sha256": "4c87789b610778e332fcacf8e0507fe26dcb5ef81933e159d2952e1513dd9820",
+          "bytes": 8161
         },
         {
           "path": "CITATION.cff",
@@ -778,8 +778,8 @@
         },
         {
           "path": "scripts/make-manual.mjs",
-          "sha256": "349ca80510deaac20bf2c71c9694d5e53e8d4e01f729ee5ebed1e3e1a6eeac79",
-          "bytes": 11687
+          "sha256": "51ff3cfc8ea51baaae81d79e798ff1820535917b414d6981e994448ea75d3089",
+          "bytes": 11426
         }
       ],
       "workflowCount": 2,

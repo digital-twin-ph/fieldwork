@@ -83,7 +83,7 @@ import {pinnedRuleset} from './rule-application.js';
 function getNode<K extends NodeType>(w:Workflow,id:string,type:K):WorkflowNode<K>{const node=required(w.nodes.find(n=>n.id===id));if(node.type!==type)throw new Error('Node type changed while editing');return node as WorkflowNode<K>;}
 function updateParam(w:Workflow,id:string,key:string,value:unknown){Object.assign(required(w.nodes.find(n=>n.id===id)).params,{[key]:value});}
 function replaceWorkflow(w:Workflow,next:Workflow){for(const key of Object.keys(w))Reflect.deleteProperty(w,key);Object.assign(w,next);}
-import {TYPES,exampleWorkflow,validateWorkflow,validateGeoJSON,executionPlan,executeWorkflow,nodeInputs,outputOf,shownMode,portSourceName,IncompleteWorkflow} from './core.js';
+import {TYPES,exampleWorkflow,validateWorkflow,validateGeoJSON,executionPlan,executeWorkflow,nodeInputs,outputOf,portAccepts,shownMode,portSourceName,IncompleteWorkflow} from './core.js';
 import {suggestUTM,utmScaleFactor,workflowPositions} from './utm.js';
 import {mountCanvas} from './canvas.js';
 import {DATASET,OLD_TYPES,oldNalediWorkflow,tierLabel} from './old-naledi.js';
@@ -870,6 +870,7 @@ function upstreamValueField(node:WorkflowNode,seen=new Set<string>()):string|und
   if(!up||seen.has(up.id))return undefined;
   seen.add(up.id);
   if(up.type==='table_input')return up.params.data.valueField||up.params.valueField||undefined;
+  if(up.type==='measure_distance')return 'distance';
   if(['select_rows','relate_table','append_rows','apply_ruleset'].includes(up.type))return upstreamValueField(up,seen);
   // A COUNT IS NAMED "rows"; a sum, a mean or an extremum keeps the name of what it summarised (group-table.ts). Found
   // 2026-11-09: a Rate after Relate after a count was offered every column but the count.
@@ -884,6 +885,7 @@ function tableKeyColumns(node:WorkflowNode|undefined,seen=new Set<string>()):rea
     case 'rate':return RATE_TABLE_KEYS;
     case 'case_series':return SERIES_TABLE_KEYS;
     case 'slr_site_assignment':return SITE_ASSIGNMENT_TABLE_KEYS;
+    case 'measure_distance':return Object.keys(distancesColumns(node));
     // A pass-through: the extract hands on the table it was given, keys and all, so the columns
     // are the ones further up and not something this node names.
     case 'slr_extract_import':{
@@ -991,11 +993,22 @@ function drawRunProgress(){
 /** THE WIDGETS WHOSE INSPECTOR FOLLOWS THE STANDARD (experiment 186): Name, Inputs, Settings, Result, the links,
  *  Actions, in that order and nothing else, with every setting in the widget's configuration dialog. One at a time,
  *  Relate first; the set grows as each widget is moved, and a check holds them to it. */
-export const STANDARD_INSPECTOR=new Set<NodeType>(['table_output','relate_table','select_rows','table_input','find_health_facilities','group_table','apply_ruleset','map_output','deduplicate_points','rate','study_area']);
+export const STANDARD_INSPECTOR=new Set<NodeType>(['measure_distance','table_output','relate_table','select_rows','table_input','find_health_facilities','group_table','apply_ruleset','map_output','deduplicate_points','rate','study_area']);
 function samplerProduct(node:WorkflowNode){
   const up=(id:string,port:string)=>{const e=workflow.edges.find(x=>x.to===id&&x.port===port);return e?workflow.nodes.find(m=>m.id===e.from):undefined;};
   const search=up(node.id,'files'),find=search?up(search.id,'product'):undefined;
   return find?.type==='find_satellite_products'&&find.params.topic&&find.params.route?productFor(find.params.topic,find.params.route):null;
+}
+/** A DISTANCES RESULT READ AS A TABLE (experiment 197): its columns, known before a run from the candidates the search
+ *  chooses among, so Relate can match `nearest_site_id` to a projection's `site_id` straight away. */
+function distancesColumns(up:WorkflowNode):Record<string,string[]>{
+  const edge=workflow.edges.find(e=>e.to===up.id&&e.port==='candidates');
+  const from=edge&&workflow.nodes.find(m=>m.id===edge.from);
+  const features=from?.type==='point_input'?from.params.data.features:[];
+  const held:Record<string,string[]>={point_id:[],nearest_id:[...new Set(features.map(f=>String(f.id??'')))]};
+  for(const f of features)for(const [k,v] of Object.entries(f.properties??{})){
+    const col=`nearest_${k}`;held[col]=[...new Set([...(held[col]??[]),String(v??'')])];}
+  return held;
 }
 function upstreamKeyValues(node:WorkflowNode,seen=new Set<string>(),
   port='records'):Record<string,string[]>|undefined{
@@ -1099,6 +1112,7 @@ function upstreamKeyValues(node:WorkflowNode,seen=new Set<string>(),
   // AN ASSIGNMENT'S COLUMNS ARE KNOWN BEFORE IT RUNS: the point and the site it was given. Relate after it, bringing a
   // projection onto each point, offered no column at all (found 2026-11-09 building the sea-level example's manual).
   if(up.type==='slr_site_assignment')return Object.fromEntries(SITE_ASSIGNMENT_TABLE_KEYS.map(k=>[k,[]]));
+  if(up.type==='measure_distance')return distancesColumns(up);
   // Totalling DROPS the columns not kept, so offering them downstream would offer a column that
   // is no longer there.
   if(up.type==='group_table'){
@@ -1293,7 +1307,7 @@ function geometryVertices(geometry:{type:string;coordinates:unknown}|undefined):
 }
 function describe(n:WorkflowNode,status?:string):NodeDescription{let subtitle=TYPES[n.type].description,detail='Ready';if((n.type==='places'||n.type==='centers')){subtitle=`${n.params.data.features.length} local locations`;detail='GeoJSON · CRS84';}if(n.type==='raster_input'){detail=n.params.asset?`${n.params.asset.metadata.width} x ${n.params.asset.metadata.height} retained cells`:'Prepare a local GeoTIFF';}if(n.type==='clip_raster'){subtitle='Raster + polygon -> masked raster';detail=n.params.method+' / margin '+(n.params.marginPixels||0)+' px';}if(n.type==='policy'){subtitle=`Heat alert + distance > ${n.params.thresholdKm} km`;detail='Evidence → decision';}if(n.type==='alert'){subtitle=n.params.active===null?'Alert status unknown':n.params.active?'Heat alert is active':'No active heat alert';detail=n.params.date;}if(n.type==='measure_distance'){detail='Kilometers · straight-line';}if(n.type==='output'){subtitle={table:'Table with supporting evidence',bars:'Grouped result counts',map:'Map of results and locations'}[n.params.view];detail='Creates a Results tab';}if(n.type==='study_area'){const p=n.params;subtitle=p.source==='drawn'?(p.geometry?`Drawn ${p.selectionMode==='bbox'?'box':'polygon'}`:'No boundary selected yet'):(p.dataset||'Source dataset');detail=p.source==='drawn'&&!p.geometry?'Select it on the map':'CRS84';}if(n.type==='point_grid'){subtitle=`Regular grid · ${n.params.spacingM} m`;detail='Demonstration points';}if(n.type==='facilities'){subtitle=`Search within ${n.params.radiusKm} km`;detail='Historical registry · 214 points';}if(n.type==='xpert'){subtitle='Named evidence → facility type';detail='NB06 hierarchy · N3';}if(n.type==='access'){subtitle=`${n.params.minimumEvidence} evidence · ${n.params.service==='onsite'?'onsite':'incl. referral'}`;detail=`Straight-line proxy · ${n.params.speedMPerMin} m/min`;}if(n.type==='access_policy'){subtitle=`Review proxy time > ${n.params.thresholdMin} min`;detail='N3 · missing stays unknown';}if(n.type==='facility_audit'){subtitle='Service, evidence, and references';detail='All candidate facilities';}const alert=badgeFor(n.id);return {flagged:!!nodeAlert(n.id),definition:{...TYPES[n.type],inputs:nodeInputs(n),output:outputOf(n)},
     connectedPorts:workflow.edges.filter(e=>e.to===n.id).map(e=>e.port),
-    availablePorts:nodeInputs(n).filter(([,type])=>workflow.nodes.some(x=>x.id!==n.id&&outputOf(x)===type)).map(([port])=>port),
+    availablePorts:nodeInputs(n).filter(([,type])=>workflow.nodes.some(x=>x.id!==n.id&&portAccepts(type,outputOf(x)))).map(([port])=>port),
     type:n.type,label:n.params.label||TYPES[n.type].title,subtitle,detail,status,glow:justFinished.has(n.id),alert:alert?alertHeadline(alert):undefined};}
 function render(){
   // ONLY WHEN IT CHANGES. This runs on every edit, and Safari refuses a hundred calls in ten seconds
@@ -1769,6 +1783,54 @@ function pinnedNotices(ruleset:Ruleset,pinnedVersion:string):string{
     +`<p>${esc(obligation.whatYouTakeOn)}</p><p><strong>How to acknowledge it.</strong> ${esc(obligation.howToAcknowledge)}</p>`
     +`<p><strong>If you do not.</strong> ${esc(obligation.ifYouDoNot)}</p></div>`;
   return html;
+}
+
+/** WHAT MEASURE DISTANCE MEASURES, in one sentence. */
+function distanceSentence(n:WorkflowNode<'measure_distance'>):string{
+  const from=(port:string)=>{const e=workflow.edges.find(x=>x.to===n.id&&x.port===port);const up=e&&workflow.nodes.find(m=>m.id===e.from);
+    return up?(up.params.label||TYPES[up.type].title):'';};
+  const narrowed=(n.params.candidateFilter??[]).filter(c=>c.field.trim())
+    .map(c=>`whose ${c.field} is ${c.comparator==='in'?'':'not '}one of ${c.values.join(', ')||'nothing yet'}`).join(' and ');
+  return `For each point of ${from('points')||'the points connected'}, the straight-line distance to the nearest of `
+    +`${from('candidates')||'the candidates connected'}${narrowed?`, among those ${narrowed}`:''}, in ${n.params.unit}.`;
+}
+
+/** MEASURE DISTANCE'S CONFIGURATION DIALOG (experiment 186): the unit, and the conditions a candidate must meet, on a
+ *  draft written by Apply. A condition names the candidate's own attribute and the values to match. */
+function openDistanceConfig(nodeId:string){
+  const node=getNode(workflow,nodeId,'measure_distance');
+  type Draft=WorkflowNode<'measure_distance'>['params'];
+  openConfigDialog<Draft>({
+    id:'distance-config',widget:'Measure distance',step:node.params.label||TYPES.measure_distance.title,draft:structuredClone(node.params),
+    sections:draft=>{
+      const conditions=draft.candidateFilter??[];
+      const settings=`<div class="field"><label class="field-label" for="distance-unit">Distances in</label><select id="distance-unit">`
+        +(['kilometres','metres'] as const).map(u=>`<option value="${u}"${draft.unit===u?' selected':''}>${u}</option>`).join('')+'</select></div>'
+        +'<h4 class="field-label">Eligible candidates</h4>'
+        +(conditions.length?'<p class="description">An attribute of the candidates, then the values to match, separated by commas. A candidate without that attribute does not match.</p>'
+          :'<p class="description">Every candidate is eligible. Add a condition to narrow the search by the candidates\u2019 own attributes.</p>')
+        +conditions.map((c,i)=>`<div class="field"><label class="field-label" for="filter-field-${i}">Condition ${i+1}: attribute</label>`
+          +`<input id="filter-field-${i}" data-filter-field="${i}" value="${esc(c.field)}">`
+          +`<label class="field-label" for="filter-comparator-${i}">Keep candidates whose value</label><select id="filter-comparator-${i}" data-filter-comparator="${i}">`
+          +`<option value="in"${c.comparator==='in'?' selected':''}>is one of</option><option value="notIn"${c.comparator==='notIn'?' selected':''}>is not one of</option></select>`
+          +`<label class="field-label" for="filter-values-${i}">Values, separated by commas</label><input id="filter-values-${i}" data-filter-values="${i}" value="${esc(c.values.map(String).join(', '))}">`
+          +`<button type="button" class="button small" data-filter-remove="${i}">Remove condition</button></div>`).join('')
+        +'<button type="button" id="filter-add" class="button small">Add a condition</button>';
+      return {settings,preview:`<p class="muted">${esc(distanceSentence({...node,params:draft}))} Haversine, on a sphere of 6,371.0088 km.</p>`};
+    },
+    wire:(root,draft,redraw)=>{
+      const list=()=>draft.candidateFilter??(draft.candidateFilter=[]);
+      root.querySelector<HTMLSelectElement>('#distance-unit')?.addEventListener('change',e=>{draft.unit=(e.target as HTMLSelectElement).value as Draft['unit'];redraw();});
+      root.querySelector('#filter-add')?.addEventListener('click',()=>{list().push({field:'',comparator:'in',values:[]});redraw();});
+      root.querySelectorAll<HTMLButtonElement>('[data-filter-remove]').forEach(b=>b.addEventListener('click',()=>{
+        list().splice(Number(b.dataset.filterRemove),1);if(!list().length)delete draft.candidateFilter;redraw();}));
+      root.querySelectorAll<HTMLInputElement>('[data-filter-field]').forEach(el=>el.addEventListener('change',()=>{list()[Number(el.dataset.filterField)]!.field=el.value.trim();redraw();}));
+      root.querySelectorAll<HTMLSelectElement>('[data-filter-comparator]').forEach(el=>el.addEventListener('change',()=>{list()[Number(el.dataset.filterComparator)]!.comparator=el.value as 'in'|'notIn';redraw();}));
+      root.querySelectorAll<HTMLInputElement>('[data-filter-values]').forEach(el=>el.addEventListener('change',()=>{
+        list()[Number(el.dataset.filterValues)]!.values=el.value.split(',').map(v=>v.trim()).filter(Boolean);redraw();}));
+    },
+    apply:draft=>{change(w=>{getNode(w,nodeId,'measure_distance').params=draft;});},
+  },esc);
 }
 
 /** WHAT A TABLE OUTPUT SHOWS, in one sentence, from what is wired. */
@@ -2622,7 +2684,7 @@ function renderInspector(){
     let inputs=`<p class="description">What you connect decides how it is shown.</p>`
       +nodeInputs(n).map(([port,type])=>{const edge=workflow.edges.find(e=>e.to===n.id&&e.port===port);
         return `<div class="field"><label class="field-label" for="table-${port}">${esc(portName(port))}</label><select id="table-${port}" data-map-port="${port}"><option value="">Not connected</option>`
-          +workflow.nodes.filter(x=>x.id!==n.id&&outputOf(x)===type).map(x=>`<option value="${esc(x.id)}" ${edge?.from===x.id?'selected':''}>${esc(x.params.label||TYPES[x.type].title)}</option>`).join('')+'</select></div>';}).join('');
+          +workflow.nodes.filter(x=>x.id!==n.id&&portAccepts(type,outputOf(x))).map(x=>`<option value="${esc(x.id)}" ${edge?.from===x.id?'selected':''}>${esc(x.params.label||TYPES[x.type].title)}</option>`).join('')+'</select></div>';}).join('');
     if(!n.params.inputMode||n.params.inputMode==='spatial')
       inputs+=`<div class="inspector-actions"><button id="add-point-input" class="button small" ${(n.params.pointInputCount??1)>=MAX_POINT_LAYERS?'disabled':''}>＋ Add point input</button><button id="remove-point-input" class="button small" ${(n.params.pointInputCount??1)<=1?'disabled':''}>Remove last input</button></div>`;
     content+=standardSection('Inputs',inputs);
@@ -3438,28 +3500,16 @@ function renderInspector(){
   }else if((n.type==='places'||n.type==='centers')){
     content+=labelForm('source-label','Source label',n.params.label)+`<div class="detail-row"><span>Records</span><strong>${n.params.data.features.length}</strong></div><div class="detail-row"><span>Coordinates</span><strong>Longitude, latitude · CRS84</strong></div><button id="replace-data" class="button small">↑ Replace with local GeoJSON</button>${recordsPanel(n.id,n.params.data)}<small class="muted">Point FeatureCollections only, up to 2,000 records. Files stay in this browser.</small>`;
   }else if(n.type==='measure_distance'){
-    // A structured editor for the candidate filter, which is what `access`'s two selects became.
-    // The comparator is a select. The FIELD and the VALUES are typed, and that is a limitation
-    // stated rather than hidden: a candidate layer computed upstream -- the graded facilities,
-    // here -- publishes no vocabulary a UI can read, and intermediate node values are not in the
-    // run's outputs. Offering a value list would mean inventing one. Experiment 61's declared
-    // field schema is what would turn these into selects; until then the practitioner states the
-    // set, and the receipt records exactly what was matched against what.
-    const conditions=n.params.candidateFilter??[];
-    content+='<span class="inspector-section">Eligible candidates</span>';
-    content+=conditions.length
-      ?'<p class="description">An attribute name, then the values to match, separated by commas. Matched exactly against the candidate\u2019s own attribute; a candidate without that attribute does not match.</p>'
-      :'<p class="description">Every candidate is eligible. Add a condition to narrow the search by the candidates\u2019 own attributes.</p>';
-    conditions.forEach((condition,index)=>{
-      content+=`<div class="field"><label class="field-label" for="filter-field-${index}">Condition ${index+1}</label>`
-        +`<input id="filter-field-${index}" type="text" value="${esc(condition.field)}">`
-        +`<select id="filter-comparator-${index}"><option value="in"${condition.comparator==='in'?' selected':''}>is one of</option>`
-        +`<option value="notIn"${condition.comparator==='notIn'?' selected':''}>is not one of</option></select>`
-        +`<input id="filter-values-${index}" type="text" value="${esc(condition.values.map(String).join(', '))}">`
-        +`<button id="filter-remove-${index}" class="button small">Remove condition</button></div>`;
-    });
-    content+='<button id="filter-add" class="button small">Add a condition</button>';
-    content+=`<span class="inspector-section">Spatial operation</span><div class="detail-row"><span>Method</span><strong>Haversine</strong></div><div class="detail-row"><span>Earth model</span><strong>Sphere · 6,371.0088 km</strong></div><div class="detail-row"><span>Units</span><strong>Kilometers</strong></div><div class="rule-preview">For each neighborhood, find the cooling center with the <b>shortest great-circle distance</b>.</div><p class="description">Computed in JavaScript before N3 inference. Source coordinates are longitude and latitude. Full precision is used for classification; the map and table round for display.</p><div class="notice">This is not road distance, travel time, facility availability, or evidence of service access.</div>`;
+    // THE STANDARD INSPECTOR (experiment 186). Touched when it replaced Assign projection site (experiment 197): its
+    // result is now read as a table by Relate, Select rows and Table. Touched widgets move to the standard, always.
+    content+=standardSection('Name',`<div class="field"><label class="field-label" for="distance-label">Name</label><input id="distance-label" maxlength="60" value="${esc(n.params.label||TYPES.measure_distance.title)}"></div>`);
+    content+=standardSection('Inputs',standardInputs(n,{points:'Points to measure from',candidates:'Candidates, the nearest of which is found'}));
+    content+=standardSection('Settings',`<p class="standard-sentence">${esc(distanceSentence(n))}</p>`
+      +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button></div>');
+    const measured=result?.tables?.[n.id];
+    const why=result?.unfinished?.find(u=>u.nodeId===n.id)?.message;
+    content+=standardSection('Result',`<p class="standard-result${why?' standard-result-warning':''}">${esc(why?`The last run could not compute this step: ${why}`
+      :measured?`${measured.rowCount.toLocaleString()} point${measured.rowCount===1?'':'s'} measured; ${measured.missingValueCount.toLocaleString()} with no nearest candidate. A table step after it reads point_id, nearest_id and each candidate's attributes as nearest_<attribute>.`:'Not run yet.')}</p>`);
   }else if(n.type==='chart_output'||n.type==='output'){
     // ONE PICKER PER PORT, no mode. The question "what shape is this?" was asked before the
     // practitioner had the shape, and it decided which ports existed -- so a table of rates met a
@@ -4826,29 +4876,9 @@ function renderInspector(){
     if(node.params.authored)openAuthoredRules(n.id);else openRulesetConfig(n.id);
   });
   if(n.type==='measure_distance'){
-    const current=()=>structuredClone(getNode(workflow,n.id,'measure_distance').params.candidateFilter??[]);
-    optionalElement('#filter-add')?.addEventListener('click',()=>change(w=>{
-      const node=getNode(w,n.id,'measure_distance');
-      node.params.candidateFilter=[...(node.params.candidateFilter??[]),{field:'',comparator:'in',values:[]}];
-    }));
-    current().forEach((_condition,index)=>{
-      optionalElement(`#filter-remove-${index}`)?.addEventListener('click',()=>change(w=>{
-        const node=getNode(w,n.id,'measure_distance');
-        node.params.candidateFilter=(node.params.candidateFilter??[]).filter((__,i)=>i!==index);
-      }));
-      optionalElement(`#filter-field-${index}`)?.addEventListener('change',e=>{
-        const field=control(e).value.trim();
-        change(w=>{const list=getNode(w,n.id,'measure_distance').params.candidateFilter!;list[index]={...list[index],field};});
-      });
-      optionalElement(`#filter-comparator-${index}`)?.addEventListener('change',e=>{
-        const comparator=control(e).value as 'in'|'notIn';
-        change(w=>{const list=getNode(w,n.id,'measure_distance').params.candidateFilter!;list[index]={...list[index],comparator};});
-      });
-      optionalElement(`#filter-values-${index}`)?.addEventListener('change',e=>{
-        const values=control(e).value.split(',').map(v=>v.trim()).filter(Boolean);
-        change(w=>{const list=getNode(w,n.id,'measure_distance').params.candidateFilter!;list[index]={...list[index],values};});
-      });
-    });
+    optionalElement('#configure-step')?.addEventListener('click',()=>openDistanceConfig(n.id));
+    optionalElement('#distance-label')?.addEventListener('change',e=>change(w=>{const v=control(e).value.trim();
+      const p=getNode(w,n.id,'measure_distance').params;if(v&&v!==TYPES.measure_distance.title)p.label=v;else delete p.label;}));
   }
   optionalElement('#threshold')?.addEventListener('change',e=>{const value=control(e).value===''?NaN:Number(control(e).value);change(w=>getNode(w,n.id,'policy').params.thresholdKm=value);});
   optionalElement('#alert-state')?.addEventListener('change',e=>change(w=>getNode(w,n.id,'alert').params.active=JSON.parse(control(e).value)));
@@ -5936,7 +5966,7 @@ function validConnection(c:Connection|Edge){const a=workflow.nodes.find(n=>n.id=
   // before setConnection ever sees it, because `layer` is not a declared port.
   if(c.targetHandle==='layer'&&b.type==='map_output')
     return nodeInputs(b).some(([,type])=>type===outputOf(a));
-  return nodeInputs(b).find(([p])=>p===c.targetHandle)?.[1]===outputOf(a);}
+  return portAccepts(nodeInputs(b).find(([p])=>p===c.targetHandle)?.[1],outputOf(a));}
 mountCanvas($('#canvas'),{describe:describeNode,ready(api){flow=api;render();setTimeout(()=>flow!.fit(),80);},select(id){selected=id;$('#node-search').value='';if(revealResultFor(id))renderResults();markLinkedTabs();render();$('#node-library [aria-current="true"]')?.scrollIntoView({block:'nearest',behavior:'smooth'});},clear(){selected=null;markLinkedTabs();render();},move(id,p){change(w=>Object.assign(required(w.nodes.find(n=>n.id===id)),{x:p.x,y:p.y}),{spatial:false});},connect(c){change(w=>setConnection(w,c.source,c.target,required(c.targetHandle)));},valid:validConnection,remove:removeNodes,removeEdges(ids){change(w=>w.edges=w.edges.filter(e=>!ids.includes(e.id)));},zoom(z){$('#zoom-value').textContent=`${Math.round(z*100)}%`;}});
 // Delegated, because the canvas redraws its nodes whenever anything changes and a listener bound
 // to a button would go with them.

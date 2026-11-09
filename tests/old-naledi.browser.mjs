@@ -38,13 +38,15 @@ const number=async(id,value)=>{await page.locator(id).fill(String(value));await 
   // Widening eligibility, through the candidate-filter editor that replaced `access`'s two
   // selects. The widget was decomposed on 2026-10-12: the narrowing is now a knob on nearest,
   // authored as conditions over the candidate layer's own attribute values.
-  await select('access');
-  // Each edit re-renders the Inspector, so the node is re-selected between steps.
-  await page.locator('#filter-values-0').fill('Direct, Contextual, Inferential');
-  await page.locator('#filter-values-0').press('Tab');
-  await select('access');await page.locator('#filter-comparator-1').selectOption('notIn');
-  await select('access');await page.locator('#filter-values-1').fill('Unknown');
-  await page.locator('#filter-values-1').press('Tab');
+  // In Measure distance's Configure… since it moved to the standard Inspector (experiment 197).
+  const dlg='#distance-config';
+  await select('access');await page.locator('#configure-step').click();
+  await page.locator(`${dlg} #filter-values-0`).fill('Direct, Contextual, Inferential');
+  await page.locator(`${dlg} #filter-values-0`).press('Tab');
+  await page.locator(`${dlg} #filter-comparator-1`).selectOption('notIn');
+  await page.locator(`${dlg} #filter-values-1`).fill('Unknown');
+  await page.locator(`${dlg} #filter-values-1`).press('Tab');
+  await page.locator(`${dlg} #config-apply`).click();
   await run();
   await page.locator('[data-view="results"]').click();
   await page.getByRole('tab',{name:'Access map'}).click();await expect(page.locator('#result-metrics .review b')).toHaveText('0');
@@ -55,8 +57,9 @@ const number=async(id,value)=>{await page.locator(id).fill(String(value));await 
   await page.locator('[data-view="results"]').click();await expect(page.locator('#workflow-view')).toBeHidden();
   await page.locator('[data-view="workflow"]').click();await expect(page.locator('#workflow-view')).toBeVisible();
   // Narrowing back to Direct-only evidence, through the filter editor.
-  await select('access');await page.locator('#filter-values-0').fill('Direct');
-  await page.locator('#filter-values-0').press('Tab');
+  await select('access');await page.locator('#configure-step').click();
+  await page.locator(`${dlg} #filter-values-0`).fill('Direct');await page.locator(`${dlg} #filter-values-0`).press('Tab');
+  await page.locator(`${dlg} #config-apply`).click();
   await select('facilities');await number('#param-radiusKm',1);await run();
   await page.locator('[data-view="results"]').click();
   await expect(page.locator('#result-metrics .unknown b')).toHaveText('21');

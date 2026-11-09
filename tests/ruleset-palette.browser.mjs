@@ -30,8 +30,9 @@ test('the palette offers one rule-application widget, not one per ruleset',async
   const expected=await identities();
   // Five identities across nine documents since 2026-10-26, when extract-contract was written:
   // the AR6 contract that slr_extract_import held in TypeScript, declared as data. The count is
-  // asserted rather than read from the build so that bundling a ruleset is a visible decision.
-  expect(expected.size,'five identities, nine documents').toBe(5);
+  // asserted rather than read from the build so that bundling a ruleset is a visible decision. Six across ten since
+  // 2026-11-09, with compare-level-to-elevation, the comparison Compare level to elevation held (experiment 197).
+  expect(expected.size,'six identities, ten documents').toBe(6);
 });
 
 test('adding one gives a node that says it has nothing to apply yet',async({page})=>{
@@ -62,7 +63,7 @@ test('choosing a ruleset pins it, takes its defaults, and names the step',async(
   // not somewhere to start new work.
   const offered=await page.locator('#ruleset-choice option').evaluateAll(els=>
     els.map(e=>e.value).filter(v=>v&&v!=='authored'));
-  expect(offered.length,'one per identity, not one per document').toBe(5);
+  expect(offered.length,'one per identity, not one per document').toBe(6);
   // And one more entry that is not a ruleset at all: writing rules here rather than choosing
   // somebody else's. Added 2026-10-15, when the editor turned out to have no entry point.
   expect(await page.locator('#ruleset-choice option[value="authored"]').count()).toBe(1);

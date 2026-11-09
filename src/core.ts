@@ -267,6 +267,30 @@ const point = (id:string,name:string,coordinates:Position|null|undefined):PointF
  *  The counterpart of `nodeInputs`, which has been node-dependent since `map_output` gained
  *  input modes. Inside a composition the static lookup is still correct: members are
  *  registry widgets, never compositions, so nothing nests. */
+/** WHETHER A PORT TAKES A RESULT. The same type, or a distances result on a table port (experiment 197): one row per point,
+ *  its nearest candidate and the distance, which is a table, and which Relate and Select rows can then read. */
+export function portAccepts(wanted:PortType|undefined,given:PortType|null):boolean{
+  return !!wanted&&!!given&&(wanted===given||(wanted==='table'&&given==='distances'));
+}
+
+/** A DISTANCES RESULT AS A TABLE: keyed by `point_id`, `nearest_id` and the nearest candidate's own attributes as
+ *  `nearest_<attribute>`, the distance as the value in its stated unit. A point with no candidate keeps its row, with
+ *  the nearest columns empty and no value, so it is counted rather than lost. */
+export function distancesAsTable(value:{rows?:NearestRow[]}|undefined):DataTable{
+  const rows=value?.rows??[];
+  const attributes:string[]=[];
+  for(const row of rows)for(const k of Object.keys(row.center?.attributes??{}))if(!attributes.includes(k))attributes.push(k);
+  const column=(k:string)=>`nearest_${k}`;
+  const keys=['point_id','nearest_id',...attributes.map(column)];
+  const said=(v:unknown)=>v===null||v===undefined?'':String(v);
+  const out=rows.map(row=>({key:Object.fromEntries([['point_id',said(row.id)],['nearest_id',said(row.center?.id)],
+    ...attributes.map(k=>[column(k),said((row.center?.attributes as Record<string,unknown>|undefined)?.[k])])]) as Record<string,string>,
+    value:typeof row.distance==='number'&&Number.isFinite(row.distance)?row.distance:null}));
+  const unit=rows[0]?.unit;
+  return {kind:'data-table',keys,valueField:'distance',...(unit?{unit}:{}),rows:out as DataTable['rows'],
+    rowCount:out.length,missingValueCount:out.filter(r=>r.value===null).length};
+}
+
 export function outputOf(node:WorkflowNode):PortType|null{
   // A STUDY AREA AND A STUDY AREA ARE A STUDY AREA. The practitioner, 2026-10-22: "But a study
   // area is a polygon", and "two study area polygons combined should still be a study area". The
@@ -868,7 +892,7 @@ export function validateWorkflow(raw:unknown):Workflow {
     if (typeof e.id!=='string' || !/^[a-zA-Z0-9_-]{1,80}$/.test(e.id) || edgeIds.has(e.id)) throw new Error('Invalid or duplicate connector ID.');
     edgeIds.add(e.id);
     const a=w.nodes.find(n=>n.id===e.from),b=w.nodes.find(n=>n.id===e.to);
-    if (!a || !b || a.id===b.id || !outputOf(a) || nodeInputs(b).find(([p])=>p===e.port)?.[1] !== outputOf(a)) throw new Error('Incompatible node connection.');
+    if (!a || !b || a.id===b.id || !outputOf(a) || !portAccepts(nodeInputs(b).find(([p])=>p===e.port)?.[1],outputOf(a))) throw new Error('Incompatible node connection.');
     const key=`${e.to}:${e.port}`;
     if (ports.has(key)) throw new Error('Each input port accepts one connection.');
     ports.add(key);
@@ -1124,7 +1148,12 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
   }
   async function runNode(node:typeof plan[number]){
     onProgress(node.id,'running');const begin=performance.now();const beganAt=new Date().toISOString();
-    const inputs=Object.fromEntries(workflow.edges.filter(e=>e.to===node.id).map(e=>[e.port,values.get(e.from)])) as unknown as ExecutionInputs;
+    // A DISTANCES RESULT ON A TABLE PORT IS READ AS ITS TABLE (experiment 197), here, where every step's inputs are read.
+    const inputs=Object.fromEntries(workflow.edges.filter(e=>e.to===node.id).map(e=>{
+      const from=workflow.nodes.find(n=>n.id===e.from),value=values.get(e.from);
+      const wanted=nodeInputs(node).find(([p])=>p===e.port)?.[1];
+      return [e.port,wanted==='table'&&from&&outputOf(from)==='distances'?distancesAsTable(value as never):value];
+    })) as unknown as ExecutionInputs;
     // A DECLARED PORT IS NOT A CONNECTED ONE. map_output declares `points` and `context` beside
     // `area`, so a study area shown on its own -- the whole of experiment 01, and every area a
     // practitioner inspects before adding data -- has point ports with no edge behind them. This
@@ -1921,7 +1950,17 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         // bindings, the authored form compiled to N3, conclusions carried back onto the records
         // that were judged -- where a bundled ruleset has a generator and a projection written
         // for the shape it expects. Experiment 106.
-        const authored=node.params.authored;
+        // A PUBLISHED RULESET THAT COMPUTES VALUES (experiment 197) runs the way rules written on a step do: its fields
+        // are its declared bindings, each with the unit its contract expects. The reasoner cannot compute a value, so
+        // a published ruleset that does could otherwise conclude nothing.
+        const published=node.params.authored?undefined:resolveRuleset(pinned.id,pinned.version);
+        const directly=published?.authored&&published.inputContract.fieldFrom?.length&&evaluatedDirectly(published.authored as never)
+          ?{title:published.title,mustNotBeReadAs:published.mustNotBeReadAs,
+            fields:published.inputContract.fieldFrom.map(b=>({...b,
+              unit:(published.inputContract.expects as {predicate:string;unit?:string}[]|undefined)?.find(e=>e.predicate===b.predicate)?.unit})),
+            parameters:[],rules:published.authored.rules,
+            ...((published.authored as {otherwise?:unknown}).otherwise?{otherwise:(published.authored as {otherwise?:unknown}).otherwise}:{})}:undefined;
+        const authored=node.params.authored??directly as typeof node.params.authored;
         if(authored){
           // Points or a table. The rules do not know the difference: a rule reads a predicate,
           // and a predicate is bound to an attribute of a record. 2026-10-16.
@@ -2472,6 +2511,8 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
   const tables:Record<string,DataTable>={};
   for(const [nodeId,value] of values)
     if((value as {kind?:string})?.kind==='data-table')tables[nodeId]=value as DataTable;
+    // A distances result is a table too, so a step reading it can preview it (experiment 197).
+    else{const n=workflow.nodes.find(x=>x.id===nodeId);if(n&&outputOf(n)==='distances')tables[nodeId]=distancesAsTable(value as never);}
   // A POINT LAYER'S COLUMNS, not the layer (experiment 192): a rules step after a computed one, such as Find health
   // facilities from a list, is offered the columns that step gave out. Bounded: names and kinds from 200 points.
   const pointColumns:Record<string,{attribute:string;kind:'number'|'term'}[]>={};

@@ -52,7 +52,8 @@
   fw:defaultFigureSection "Results".
 <urn:fieldwork:widget:mean_center> a fw:WidgetDefinition; fw:nodeType "mean_center"; rdfs:label "Mean center".
 <urn:fieldwork:widget:measure_area> a fw:WidgetDefinition; fw:nodeType "measure_area"; rdfs:label "Calculate area".
-<urn:fieldwork:widget:measure_distance> a fw:WidgetDefinition; fw:nodeType "measure_distance"; rdfs:label "Measure distance".
+<urn:fieldwork:widget:measure_distance> a fw:WidgetDefinition; fw:nodeType "measure_distance"; rdfs:label "Measure distance";
+  fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/measure_distance.md>.
 <urn:fieldwork:widget:micro_workflow> a fw:WidgetDefinition; fw:nodeType "micro_workflow"; rdfs:label "Micro-workflow".
 <urn:fieldwork:widget:network_input> a fw:WidgetDefinition; fw:nodeType "network_input"; rdfs:label "Street network";
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/network_input.md>.

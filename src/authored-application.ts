@@ -51,11 +51,25 @@ export function authoredSubjects(input:PointCollection|DataTable):SubjectRecord[
       // whichever won.
       id:`row-${index}`,
       label:Object.values(row.key).join(' · ')||`Row ${index+1}`,
-      properties:{...row.key,[input.valueField]:row.value}}));
+      properties:{...row.key,...numbersOf(row.key,input.numericKeys),[input.valueField]:row.value}}));
   return (input?.features??[]).map(feature=>({
     id:String(feature.id),
     label:String(feature.properties?.name??feature.id),
     properties:feature.properties as Record<string,Scalar|null>}));
+}
+
+/** A COLUMN THE TABLE DECLARES NUMERIC IS READ AS A NUMBER (experiment 197). Relate brings a value column across as a
+ *  key with its unit in `numericKeys`; held as text, the rules read "1124" as unreadable and concluded nothing. An empty
+ *  cell stays absent; text that is not a number stays text, and is reported as unreadable as before. */
+function numbersOf(key:Record<string,string>,numeric:Record<string,string>|undefined):Record<string,Scalar|null>{
+  const out:Record<string,Scalar|null>={};
+  for(const column of Object.keys(numeric??{})){
+    const raw=key[column];
+    if(raw===undefined)continue;
+    if(String(raw).trim()==='')out[column]=null;
+    else if(Number.isFinite(Number(raw)))out[column]=Number(raw);
+  }
+  return out;
 }
 
 /** Whether a table arrived wide and still holds its measure column, so its subjects can be rebuilt. */

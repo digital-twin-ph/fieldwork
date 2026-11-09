@@ -1,0 +1,175 @@
+@prefix fw: <urn:fieldwork:>.
+@prefix fwb: <urn:fieldwork:bottleneck:>.
+@prefix fwe: <urn:fieldwork:enabler:>.
+@prefix fwg: <urn:fieldwork:event-group:>.
+@prefix owl: <http://www.w3.org/2002/07/owl#>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix prov: <http://www.w3.org/ns/prov#>.
+@prefix skos: <http://www.w3.org/2004/02/skos/core#>.
+@prefix dcterms: <http://purl.org/dc/terms/>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+
+# THE TIMELINESS OF DETECTION, NOTIFICATION AND EARLY RESPONSE, as the first multi-country study of the 7-1-7 target
+# measured it: Bochner AF et al., Lancet Global Health 2023;11:e871-79, doi:10.1016/S2214-109X(23)00133-X, CC BY 4.0.
+# Experiment 200. The practitioner, 2026-11-09: "We can build a similar taxonomy then but make it an ontology." The 7-1-7
+# Alliance's own bottleneck categories are CC BY-NC-SA 4.0, which an Apache-2.0 application does not carry; the study's
+# code bank, made by grounded theory from 129 bottlenecks and 162 enablers, is CC BY 4.0, and is what this records,
+# attributed. Every term says where it comes from. Standards searched 2026-11-09 for these concepts: IDO, Apollo-SV,
+# GenEpiO, HSO and the JEE tool; none names a timeliness milestone, an early response action, a bottleneck or an
+# enabler. The study mapped each bottleneck and enabler, item by item, to JEE (second edition) indicators; no mapping
+# of a CATEGORY to an indicator is stated, so none is made here.
+
+<urn:fieldwork:ontology:response-timeliness> a owl:Ontology;
+  owl:versionInfo "0.1 experimental, 2026-11-09";
+  dcterms:source <https://doi.org/10.1016/S2214-109X(23)00133-X>;
+  rdfs:comment "The timeliness of detecting, notifying and beginning to respond to a public health event, and the conditions that delayed or sped it. Declarations only: nothing here computes an interval.".
+
+fw:PublicHealthEvent a owl:Class; rdfs:label "Public health event"; rdfs:subClassOf prov:Entity;
+  rdfs:comment "An event reviewed for its timeliness: an outbreak, or another event meeting the IHR's criteria for a serious public health event (IHR 2005, Annex 2), as the study selected them.";
+  dcterms:source <https://doi.org/10.1016/S2214-109X(23)00133-X>.
+
+fw:TimelinessMilestone a owl:Class; rdfs:label "Timeliness milestone"; rdfs:subClassOf prov:InstantaneousEvent;
+  rdfs:comment "A dated point in an event's detection and response, recorded by those responsible for it. A date given, not a date observed by this application.";
+  dcterms:source <https://doi.org/10.1016/S2214-109X(23)00133-X>.
+fw:milestoneOf a owl:ObjectProperty; rdfs:domain fw:TimelinessMilestone; rdfs:range fw:PublicHealthEvent.
+fw:milestoneDate a owl:DatatypeProperty; rdfs:domain fw:TimelinessMilestone; rdfs:range xsd:date.
+fw:Emergence a owl:Class; rdfs:label "Emergence"; rdfs:subClassOf fw:TimelinessMilestone;
+  rdfs:comment "For an endemic disease, the date a predetermined increase in incidence over baseline occurred; for a non-endemic disease, the date the index case, or the first epidemiologically linked case, first had symptoms; for another event, the date it first met the country's criteria for a reportable event.";
+  dcterms:source <https://doi.org/10.1016/S2214-109X(23)00133-X>.
+fw:Detection a owl:Class; rdfs:label "Detection"; rdfs:subClassOf fw:TimelinessMilestone;
+  rdfs:comment "The date the event is first recorded by any source or in any system."; dcterms:source <https://doi.org/10.1016/S2214-109X(23)00133-X>.
+fw:Notification a owl:Class; rdfs:label "Notification"; rdfs:subClassOf fw:TimelinessMilestone;
+  rdfs:comment "The date the event is first reported to a public health authority responsible for action."; dcterms:source <https://doi.org/10.1016/S2214-109X(23)00133-X>.
+fw:EarlyResponseActionCompleted a owl:Class; rdfs:label "Early response action completed"; rdfs:subClassOf fw:TimelinessMilestone;
+  rdfs:comment "The date one early response action was completed. The earliest begins the response; the latest completes it. Where an action's date is missing, the study used the latest date available.";
+  dcterms:source <https://doi.org/10.1016/S2214-109X(23)00133-X>.
+fw:completesAction a owl:ObjectProperty; rdfs:domain fw:EarlyResponseActionCompleted; rdfs:range fw:EarlyResponseAction.
+
+fw:EarlyResponseAction a owl:Class; rdfs:label "Early response action"; rdfs:subClassOf prov:Plan;
+  rdfs:comment "One of seven actions whose completion within seven days of notification marks a response begun effectively. A kind of action, not an action taken: what was done, and when, is the milestone.";
+  dcterms:source <https://doi.org/10.1016/S2214-109X(23)00133-X>.
+fw:InitiateInvestigation a fw:EarlyResponseAction, owl:NamedIndividual; rdfs:label "Initiate an investigation or deploy an investigation or response team"; skos:notation "1"; dcterms:source <https://doi.org/10.1016/S2214-109X(23)00133-X>.
+fw:EpidemiologicalAnalysisAndRiskAssessment a fw:EarlyResponseAction, owl:NamedIndividual; rdfs:label "Conduct epidemiological analysis of burden, severity and risk factors, and perform an initial risk assessment"; skos:notation "2"; dcterms:source <https://doi.org/10.1016/S2214-109X(23)00133-X>.
+fw:LaboratoryConfirmation a fw:EarlyResponseAction, owl:NamedIndividual; rdfs:label "Obtain laboratory confirmation of the outbreak's aetiology"; skos:notation "3"; dcterms:source <https://doi.org/10.1016/S2214-109X(23)00133-X>.
+fw:CaseManagementAndInfectionControl a fw:EarlyResponseAction, owl:NamedIndividual; rdfs:label "Initiate case management and infection prevention and control measures in health facilities"; skos:notation "4"; dcterms:source <https://doi.org/10.1016/S2214-109X(23)00133-X>.
+fw:CommunityCountermeasures a fw:EarlyResponseAction, owl:NamedIndividual; rdfs:label "Initiate public health countermeasures in affected communities"; skos:notation "5"; dcterms:source <https://doi.org/10.1016/S2214-109X(23)00133-X>.
+fw:RiskCommunicationAndCommunityEngagement a fw:EarlyResponseAction, owl:NamedIndividual; rdfs:label "Initiate risk communication and community engagement activities"; skos:notation "6"; dcterms:source <https://doi.org/10.1016/S2214-109X(23)00133-X>.
+fw:CoordinationMechanism a fw:EarlyResponseAction, owl:NamedIndividual; rdfs:label "Establish a coordination mechanism"; skos:notation "7"; dcterms:source <https://doi.org/10.1016/S2214-109X(23)00133-X>.
+
+fw:TimelinessInterval a owl:Class; rdfs:label "Timeliness interval"; rdfs:subClassOf prov:Entity;
+  rdfs:comment "Whole days from one milestone to a later one, for one event, measured against a target.";
+  dcterms:source <https://doi.org/10.1016/S2214-109X(23)00133-X>.
+fw:intervalKind a owl:ObjectProperty; rdfs:domain fw:TimelinessInterval; rdfs:range fw:TimelinessTarget.
+fw:intervalOf a owl:ObjectProperty; rdfs:domain fw:TimelinessInterval; rdfs:range fw:PublicHealthEvent.
+fw:intervalDays a owl:DatatypeProperty; rdfs:domain fw:TimelinessInterval; rdfs:range xsd:integer.
+fw:metTarget a owl:DatatypeProperty; rdfs:domain fw:TimelinessInterval; rdfs:range xsd:boolean;
+  rdfs:comment "True where the interval is at most the target's days. Equality meets it.".
+fw:TimelinessTarget a owl:Class; rdfs:label "Timeliness target"; rdfs:subClassOf prov:Plan;
+  rdfs:comment "An interval's definition and the most days it may take.".
+fw:fromMilestone a owl:ObjectProperty; rdfs:domain fw:TimelinessTarget.
+fw:toMilestone a owl:ObjectProperty; rdfs:domain fw:TimelinessTarget.
+fw:targetDays a owl:DatatypeProperty; rdfs:domain fw:TimelinessTarget; rdfs:range xsd:integer.
+fw:DetectionTarget a fw:TimelinessTarget, owl:NamedIndividual; rdfs:label "Days to detect"; fw:fromMilestone fw:Emergence; fw:toMilestone fw:Detection; fw:targetDays 7;
+  rdfs:comment "Detection minus emergence, at most 7 days."; dcterms:source <https://doi.org/10.1016/S2214-109X(23)00133-X>.
+fw:NotificationTarget a fw:TimelinessTarget, owl:NamedIndividual; rdfs:label "Days to notify"; fw:fromMilestone fw:Detection; fw:toMilestone fw:Notification; fw:targetDays 1;
+  rdfs:comment "Notification minus detection, at most 1 day."; dcterms:source <https://doi.org/10.1016/S2214-109X(23)00133-X>.
+fw:ResponseInitiationTarget a fw:TimelinessTarget, owl:NamedIndividual; rdfs:label "Days to begin responding"; fw:fromMilestone fw:Notification; fw:toMilestone fw:EarlyResponseActionCompleted; fw:targetDays 1;
+  rdfs:comment "The earliest early response action completed, minus notification, at most 1 day. The study's measure of a response begun; not one of the three 7-1-7 targets."; dcterms:source <https://doi.org/10.1016/S2214-109X(23)00133-X>.
+fw:EarlyResponseTarget a fw:TimelinessTarget, owl:NamedIndividual; rdfs:label "Days to complete early response"; fw:fromMilestone fw:Notification; fw:toMilestone fw:EarlyResponseActionCompleted; fw:targetDays 7;
+  rdfs:comment "The latest early response action completed, minus notification, at most 7 days. An event meets the whole 7-1-7 target where detection, notification and this are all met."; dcterms:source <https://doi.org/10.1016/S2214-109X(23)00133-X>.
+
+fw:SystemCondition a owl:Class; rdfs:label "System condition"; rdfs:subClassOf prov:Entity;
+  rdfs:comment "A condition, named by those who responded, that delayed or sped one stage of an event's detection and response. A statement by a responder, recorded, not a cause established.";
+  dcterms:source <https://doi.org/10.1016/S2214-109X(23)00133-X>.
+fw:Bottleneck a owl:Class; rdfs:label "Bottleneck"; rdfs:subClassOf fw:SystemCondition; owl:disjointWith fw:Enabler;
+  rdfs:comment "A condition that delayed an action."; dcterms:source <https://doi.org/10.1016/S2214-109X(23)00133-X>.
+fw:Enabler a owl:Class; rdfs:label "Enabler"; rdfs:subClassOf fw:SystemCondition;
+  rdfs:comment "A condition that sped an action."; dcterms:source <https://doi.org/10.1016/S2214-109X(23)00133-X>.
+fw:conditionOf a owl:ObjectProperty; rdfs:domain fw:SystemCondition; rdfs:range fw:PublicHealthEvent.
+fw:atStage a owl:ObjectProperty; rdfs:domain fw:SystemCondition; rdfs:range fw:TimelinessStage.
+fw:atSystemLevel a owl:ObjectProperty; rdfs:domain fw:SystemCondition; rdfs:range fw:SystemLevel.
+fw:inCategory a owl:ObjectProperty; rdfs:domain fw:SystemCondition; rdfs:range skos:Concept.
+fw:responderStatement a owl:DatatypeProperty; rdfs:domain fw:SystemCondition; rdfs:range xsd:string;
+  rdfs:comment "The condition as the responder wrote it, before it was categorised. Kept: a category is a reading of it.".
+
+fw:TimelinessStage a owl:Class; rdfs:label "Timeliness stage"; rdfs:comment "Detection, notification or response."; dcterms:source <https://doi.org/10.1016/S2214-109X(23)00133-X>.
+fw:DetectionStage a fw:TimelinessStage, owl:NamedIndividual; rdfs:label "Detection".
+fw:NotificationStage a fw:TimelinessStage, owl:NamedIndividual; rdfs:label "Notification".
+fw:ResponseStage a fw:TimelinessStage, owl:NamedIndividual; rdfs:label "Response".
+
+fw:SystemLevel a owl:Class; rdfs:label "Level of the public health system"; dcterms:source <https://doi.org/10.1016/S2214-109X(23)00133-X>.
+fw:HealthFacilityOrCommunityLevel a fw:SystemLevel, owl:NamedIndividual; rdfs:label "Health facility or community".
+fw:IntermediateLevel a fw:SystemLevel, owl:NamedIndividual; rdfs:label "Intermediate"; rdfs:comment "Municipal, district, county, state or province.".
+fw:NationalLevel a fw:SystemLevel, owl:NamedIndividual; rdfs:label "National".
+fw:MultipleLevels a fw:SystemLevel, owl:NamedIndividual; rdfs:label "Multiple levels".
+fw:LevelUnknown a fw:SystemLevel, owl:NamedIndividual; rdfs:label "Unknown".
+
+fw:BottleneckCategories a skos:ConceptScheme; skos:prefLabel "Bottleneck categories"; rdfs:comment "The 26 categories of the study's code bank, collapsed from 34 codes by grounded theory. A category is a reading of a responder's statement."; dcterms:source <https://doi.org/10.1016/S2214-109X(23)00133-X>.
+fwb:laboratory-confirmation a skos:Concept; skos:inScheme fw:BottleneckCategories; skos:prefLabel "Laboratory confirmation".
+fwb:low-awareness-or-clinical-suspicion-by-health-workers a skos:Concept; skos:inScheme fw:BottleneckCategories; skos:prefLabel "Low awareness or clinical suspicion by health workers".
+fwb:availability-of-resources-for-response-initiation-or-rapid-resource-mobilisation a skos:Concept; skos:inScheme fw:BottleneckCategories; skos:prefLabel "Availability of resources for response initiation or rapid resource mobilisation".
+fwb:reporting-failure a skos:Concept; skos:inScheme fw:BottleneckCategories; skos:prefLabel "Reporting failure".
+fwb:access-issues a skos:Concept; skos:inScheme fw:BottleneckCategories; skos:prefLabel "Access issues (event occurred in remote, fragile, or conflict settings)".
+fwb:competing-priorities a skos:Concept; skos:inScheme fw:BottleneckCategories; skos:prefLabel "Competing priorities (including COVID-19)".
+fwb:human-resources-gaps-for-public-health a skos:Concept; skos:inScheme fw:BottleneckCategories; skos:prefLabel "Human resources gaps for public health".
+fwb:limited-availability-of-countermeasures-or-personal-protective-equipment a skos:Concept; skos:inScheme fw:BottleneckCategories; skos:prefLabel "Limited availability of countermeasures or personal protective equipment".
+fwb:multi-agency-coordination a skos:Concept; skos:inScheme fw:BottleneckCategories; skos:prefLabel "Multi-agency coordination".
+fwb:technological-challenge-for-electronic-surveillance-or-reporting-systems a skos:Concept; skos:inScheme fw:BottleneckCategories; skos:prefLabel "Technological challenge for electronic surveillance or reporting systems (eg, network coverage)".
+fwb:clinical-surveillance-focal-point-or-capacity a skos:Concept; skos:inScheme fw:BottleneckCategories; skos:prefLabel "Clinical surveillance focal point or capacity".
+fwb:delayed-specimen-collection a skos:Concept; skos:inScheme fw:BottleneckCategories; skos:prefLabel "Delayed specimen collection".
+fwb:low-community-knowledge-or-trust a skos:Concept; skos:inScheme fw:BottleneckCategories; skos:prefLabel "Low community knowledge or trust".
+fwb:one-health-information-sharing-or-collaboration a skos:Concept; skos:inScheme fw:BottleneckCategories; skos:prefLabel "One health information sharing or collaboration (eg, between human health and animal health)".
+fwb:specimen-transportation a skos:Concept; skos:inScheme fw:BottleneckCategories; skos:prefLabel "Specimen transportation".
+fwb:weak-response-coordination-including-incident-management-and-rapid-response-team-capacity a skos:Concept; skos:inScheme fw:BottleneckCategories; skos:prefLabel "Weak response coordination, including incident management and rapid response team capacity".
+fwb:data-entry-delay a skos:Concept; skos:inScheme fw:BottleneckCategories; skos:prefLabel "Data entry delay".
+fwb:failure-to-conduct-early-risk-assessment-or-event-verification a skos:Concept; skos:inScheme fw:BottleneckCategories; skos:prefLabel "Failure to conduct early risk assessment or event verification".
+fwb:new-or-unexpected-pathogen a skos:Concept; skos:inScheme fw:BottleneckCategories; skos:prefLabel "New or unexpected pathogen".
+fwb:sensitivity-of-community-detection a skos:Concept; skos:inScheme fw:BottleneckCategories; skos:prefLabel "Sensitivity of community detection".
+fwb:delay-in-care-seeking-by-patients a skos:Concept; skos:inScheme fw:BottleneckCategories; skos:prefLabel "Delay in care seeking by patients".
+fwb:insufficient-clinical-case-management-capacity a skos:Concept; skos:inScheme fw:BottleneckCategories; skos:prefLabel "Insufficient clinical case management capacity".
+fwb:inadequate-risk-assessments-or-preparedness-plans a skos:Concept; skos:inScheme fw:BottleneckCategories; skos:prefLabel "Inadequate risk assessments or preparedness plans".
+fwb:scarcity-of-diagnostic-commodities a skos:Concept; skos:inScheme fw:BottleneckCategories; skos:prefLabel "Scarcity of diagnostic commodities (laboratory reagents, rapid diagnostic tests, or specimen collection kits)".
+fwb:logistics-and-shipment-delays a skos:Concept; skos:inScheme fw:BottleneckCategories; skos:prefLabel "Logistics and shipment delays".
+fwb:risk-communications-or-community-engagement a skos:Concept; skos:inScheme fw:BottleneckCategories; skos:prefLabel "Risk communications or community engagement".
+
+fw:EnablerCategories a skos:ConceptScheme; skos:prefLabel "Enabler categories"; rdfs:comment "The 30 categories of the study's code bank, collapsed from 32 codes."; dcterms:source <https://doi.org/10.1016/S2214-109X(23)00133-X>.
+fwe:clinical-surveillance-focal-point-or-capacity a skos:Concept; skos:inScheme fw:EnablerCategories; skos:prefLabel "Clinical surveillance focal point or capacity".
+fwe:adequate-and-trained-public-health-workforce a skos:Concept; skos:inScheme fw:EnablerCategories; skos:prefLabel "Adequate and trained public health workforce".
+fwe:strong-clinical-suspicion-or-awareness-of-case-definition-by-health-workers a skos:Concept; skos:inScheme fw:EnablerCategories; skos:prefLabel "Strong clinical suspicion or awareness of case definition by health workers".
+fwe:strong-reporting-lines-for-public-health-surveillance a skos:Concept; skos:inScheme fw:EnablerCategories; skos:prefLabel "Strong reporting lines for public health surveillance".
+fwe:rapid-coordinated-response-mechanism-in-place a skos:Concept; skos:inScheme fw:EnablerCategories; skos:prefLabel "Rapid coordinated response mechanism in place".
+fwe:specimen-transportation a skos:Concept; skos:inScheme fw:EnablerCategories; skos:prefLabel "Specimen transportation".
+fwe:multi-sector-and-multi-stakeholder-collaboration a skos:Concept; skos:inScheme fw:EnablerCategories; skos:prefLabel "Multi-sector and multi-stakeholder collaboration (including partners)".
+fwe:feedback-systems-for-laboratory-results-in-place a skos:Concept; skos:inScheme fw:EnablerCategories; skos:prefLabel "Feedback systems for laboratory results in place".
+fwe:availability-of-resources-for-response-initiation-or-rapid-resource-mobilisation a skos:Concept; skos:inScheme fw:EnablerCategories; skos:prefLabel "Availability of resources for response initiation or rapid resource mobilisation".
+fwe:emergency-operations-centre-or-incident-management-capacity-for-preparedness-and-response a skos:Concept; skos:inScheme fw:EnablerCategories; skos:prefLabel "Emergency operations centre or incident management capacity for preparedness and response".
+fwe:laboratory-diagnostic-capability a skos:Concept; skos:inScheme fw:EnablerCategories; skos:prefLabel "Laboratory diagnostic capability".
+fwe:availability-of-medical-countermeasures a skos:Concept; skos:inScheme fw:EnablerCategories; skos:prefLabel "Availability of medical countermeasures".
+fwe:prompt-specimen-collection a skos:Concept; skos:inScheme fw:EnablerCategories; skos:prefLabel "Prompt specimen collection".
+fwe:multi-sector-or-multidisciplinary-response-team-mechanisms-in-place a skos:Concept; skos:inScheme fw:EnablerCategories; skos:prefLabel "Multi-sector or multidisciplinary response team mechanisms in place".
+fwe:community-engagement-and-trust-of-public-health-system a skos:Concept; skos:inScheme fw:EnablerCategories; skos:prefLabel "Community engagement and trust of public health system".
+fwe:coordination-and-communication-between-clinical-and-public-health-systems a skos:Concept; skos:inScheme fw:EnablerCategories; skos:prefLabel "Coordination and communication between clinical and public health systems".
+fwe:mobile-internet-network-coverage a skos:Concept; skos:inScheme fw:EnablerCategories; skos:prefLabel "Mobile internet network coverage".
+fwe:operational-readiness-plans-implemented a skos:Concept; skos:inScheme fw:EnablerCategories; skos:prefLabel "Operational readiness plans implemented".
+fwe:synthesis-integration-and-use-of-data-for-action a skos:Concept; skos:inScheme fw:EnablerCategories; skos:prefLabel "Synthesis, integration, and use of data for action".
+fwe:availability-of-diagnostic-commodities a skos:Concept; skos:inScheme fw:EnablerCategories; skos:prefLabel "Availability of diagnostic commodities (laboratory reagents, rapid diagnostic tests, or specimen collection kits)".
+fwe:availability-of-event-based-surveillance-system a skos:Concept; skos:inScheme fw:EnablerCategories; skos:prefLabel "Availability of event-based surveillance system".
+fwe:case-management-capacity a skos:Concept; skos:inScheme fw:EnablerCategories; skos:prefLabel "Case management capacity".
+fwe:cross-border-or-points-of-entry-public-health-capacity a skos:Concept; skos:inScheme fw:EnablerCategories; skos:prefLabel "Cross-border or points of entry public health capacity".
+fwe:existing-animal-health-surveillance-system a skos:Concept; skos:inScheme fw:EnablerCategories; skos:prefLabel "Existing animal health surveillance system".
+fwe:functional-indicator-based-surveillance-in-place a skos:Concept; skos:inScheme fw:EnablerCategories; skos:prefLabel "Functional indicator-based surveillance in place".
+fwe:rapid-response-team-deployment-mechanism-in-place a skos:Concept; skos:inScheme fw:EnablerCategories; skos:prefLabel "Rapid response team deployment mechanism in place".
+fwe:active-or-sentinel-surveillance a skos:Concept; skos:inScheme fw:EnablerCategories; skos:prefLabel "Active or sentinel surveillance".
+fwe:electronic-surveillance-or-reporting-system a skos:Concept; skos:inScheme fw:EnablerCategories; skos:prefLabel "Electronic surveillance or reporting system".
+fwe:resources-in-animal-health-sector a skos:Concept; skos:inScheme fw:EnablerCategories; skos:prefLabel "Resources in animal health sector".
+fwe:environmental-surveillance-system a skos:Concept; skos:inScheme fw:EnablerCategories; skos:prefLabel "Environmental surveillance system".
+
+fw:eventGroup a owl:ObjectProperty; rdfs:domain fw:PublicHealthEvent; rdfs:range skos:Concept.
+fw:EventGroups a skos:ConceptScheme; skos:prefLabel "Event groups"; rdfs:comment "The six groups the study sorted events into. Other events included disease among animals and chemical poisoning in humans."; dcterms:source <https://doi.org/10.1016/S2214-109X(23)00133-X>.
+fwg:foodborne-or-waterborne-pathogen-diseases a skos:Concept; skos:inScheme fw:EventGroups; skos:prefLabel "Foodborne or waterborne pathogen diseases".
+fwg:vaccine-preventable-diseases a skos:Concept; skos:inScheme fw:EventGroups; skos:prefLabel "Vaccine-preventable diseases".
+fwg:vector-borne-diseases a skos:Concept; skos:inScheme fw:EventGroups; skos:prefLabel "Vector-borne diseases".
+fwg:viral-haemorrhagic-fevers a skos:Concept; skos:inScheme fw:EventGroups; skos:prefLabel "Viral haemorrhagic fevers".
+fwg:respiratory-diseases a skos:Concept; skos:inScheme fw:EventGroups; skos:prefLabel "Respiratory diseases".
+fwg:other-events a skos:Concept; skos:inScheme fw:EventGroups; skos:prefLabel "Other events".
+

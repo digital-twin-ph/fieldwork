@@ -135,6 +135,29 @@ So, a proposal: the milestones as dated activities in PROV-O, which Fieldwork al
 a SKOS concept scheme carried in an example repository under BY-NC-SA, citing the Alliance, each category linked to a JEE
 indicator only where a source states it; Apollo-SV and GenEpiO terms reused by IRI where a column means one.
 
+## Our own ontology, made from an open source, 2026-11-09
+
+The practitioner: *"We can build a similar taxonomy then but make it an ontology."* Built from the first multi-country
+study, [Bochner et al. 2023](https://pmc.ncbi.nlm.nih.gov/articles/PMC10156425/), which is **CC BY 4.0**: read in full
+in the practitioner's browser after PMC's bot check refused the fetch. Not from the Alliance's BY-NC-SA list, so the
+Apache-2.0 application can carry it, attributed.
+
+[`ontology/response-timeliness.ttl`](../../ontology/response-timeliness.ttl), validated with the rest:
+
+- **An event and its milestones**: emergence (three definitions, by kind of event), detection, notification and each
+  early response action completed, each a dated `prov:InstantaneousEvent`.
+- **The seven early response actions**, as kinds of action (`prov:Plan`), numbered.
+- **Four targets**, each from one milestone to another with its days: detect 7, notify 1, begin responding 1 (the
+  study's own measure) and complete early response 7. An interval meets its target at equality.
+- **Bottlenecks and enablers**, disjoint, each tied to an event, a stage, a level of the public health system (health
+  facility or community; intermediate; national; multiple; unknown) and a category, keeping the responder's own words.
+- **The study's code bank as SKOS**: 26 bottleneck categories, 30 enabler categories, 6 event groups.
+- **Not made**: a mapping from a category to a JEE indicator. The study mapped items, not categories, and says so.
+
+Standards searched for these concepts first (IDO, Apollo-SV, GenEpiO, HSO, the JEE tool): none names them, so they are
+minted under `fw:`, each citing the study. Declarations only: nothing computes an interval yet; that is the "days
+between two dates" extension.
+
 ## What that makes operational epidemiology here
 
 Two kinds of work, both timed by 7-1-7:

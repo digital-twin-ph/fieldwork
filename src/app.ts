@@ -83,7 +83,7 @@ import {pinnedRuleset} from './rule-application.js';
 function getNode<K extends NodeType>(w:Workflow,id:string,type:K):WorkflowNode<K>{const node=required(w.nodes.find(n=>n.id===id));if(node.type!==type)throw new Error('Node type changed while editing');return node as WorkflowNode<K>;}
 function updateParam(w:Workflow,id:string,key:string,value:unknown){Object.assign(required(w.nodes.find(n=>n.id===id)).params,{[key]:value});}
 function replaceWorkflow(w:Workflow,next:Workflow){for(const key of Object.keys(w))Reflect.deleteProperty(w,key);Object.assign(w,next);}
-import {TYPES,exampleWorkflow,validateWorkflow,validateGeoJSON,executionPlan,executeWorkflow,nodeInputs,outputOf,portAccepts,shownMode,portSourceName,IncompleteWorkflow} from './core.js';
+import {TYPES,exampleWorkflow,validateWorkflow,validateGeoJSON,executionPlan,executeWorkflow,nodeInputs,outputOf,portAccepts,pointsAsTable,shownMode,portSourceName,IncompleteWorkflow} from './core.js';
 import {suggestUTM,utmScaleFactor,workflowPositions} from './utm.js';
 import {mountCanvas} from './canvas.js';
 import {DATASET,OLD_TYPES,oldNalediWorkflow,tierLabel} from './old-naledi.js';
@@ -1041,6 +1041,14 @@ function upstreamKeyValues(node:WorkflowNode,seen=new Set<string>(),
   const up=edge?workflow.nodes.find(m=>m.id===edge.from):undefined;
   if(!up||seen.has(up.id))return undefined;
   seen.add(up.id);
+  // A POINT LAYER ON A TABLE PORT is its attributes as columns, with its ids (experiment 200): known before a run for a
+  // layer that holds its points, from the last run for one that computes them.
+  if(outputOf(up)==='points'){
+    const columns=pointLayerColumns(up);
+    if(Object.keys(columns).length)return {id:pointLayerIds(up),...columns};
+    const ran=result?.tables?.[up.id];
+    return ran?Object.fromEntries(ran.keys.map(key=>[key,[...new Set(ran.rows.map(row=>String(row.key[key]??'')))].slice(0,200)])):undefined;
+  }
   if(up.type==='table_input'){
     const table=up.params.data;
     return Object.fromEntries(table.keys.map(key=>
@@ -1685,7 +1693,8 @@ function declaredKinds(workflow:Workflow,inputId:string):Record<string,'number'|
   for(const node of workflow.nodes){
     if(node.type!=='apply_ruleset'||!reachable.has(node.id))continue;
     for(const field of node.params.authored?.fields??[])
-      if(!(field.attribute in kinds))kinds[field.attribute]=field.kind;
+      // A date is a category to the column profile, which has no date kind of its own.
+      if(!(field.attribute in kinds))kinds[field.attribute]=field.kind==='date'?'term':field.kind;
   }
   return kinds;
 }
@@ -2617,6 +2626,8 @@ function tableOnPort(w:Workflow,nodeId:string,port:string):import('./data-table.
         {...p.wide,valueField:p.valueField,...(p.unit?{unit:p.unit}:{})}),p.wide);
     return p.data.rows.length?declaredWide(p.data,p.wide):null;
   }
+  // A point layer that holds its points is a table already, before a run (experiment 200).
+  if(from.type==='point_input')return pointsAsTable(from.params.data);
   return result?.tables?.[from.id]??null;
 }
 function labelForm(id:string,caption:string,value:string,maxLength=60):string{

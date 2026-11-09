@@ -61,8 +61,10 @@ The table the step gives out carries both. A new column without a unit is said i
 degrees Celsius: a name, a value and a unit. A condition then reads *temperature_c is more than fever*, and the
 threshold can be changed without rewriting a rule.
 
-**Kinds.** Each column is read as a number, a category, or true or false, offered from its values and changed under
-*Records and columns*. A file that stores counts as text, "34", offers them as a category: say they are a number, and
+**Kinds.** Each column is read as a number, a date, a category, or true or false, offered from its values and changed
+under *Records and columns*. **A date** is written year-month-day; one date minus another gives **days**, said as the new
+column's unit: a serial interval, or the days from onset to report. A date is not added to, multiplied, or compared with
+a number, and a day that does not exist, such as 1861-02-30, is reported unreadable rather than moved into March. A file that stores counts as text, "34", offers them as a category: say they are a number, and
 the text is reported unreadable at the run, where **Data quality** can read it as numbers.
 
 **Units.** Each column the rules read states its unit, under *Records and columns*. A setting compared with a

@@ -51,6 +51,11 @@ export interface RelateRequest {
    *  travel as written. The value column since 2026-11-05: a ground reading is a table's value, and bringing it beside
    *  a satellite reading is the comparison. */
   bring:string;
+  /** THE NAME THE BROUGHT COLUMN IS WRITTEN UNDER, where it is not `bring` (experiment 200). Relating a table to itself
+   *  brings a column the first table already has: Hagelloch's cases, each related to its infector's row, bring the
+   *  infector's `date_of_prodrome`. Named by the person, never made up: a column renamed silently would not say what
+   *  it holds. */
+  bringAs?:string;
   /** HOW KEY CELLS ARE COMPARED, in the vocabulary `join_table_to_area` already uses and through
    *  the same `normaliseName`: `fuzzy` folds every run of non-alphanumerics to one space, `exact`
    *  only trims and lowercases. Defaults to `fuzzy`.
@@ -280,6 +285,8 @@ export interface RelateShape {
 interface RelatePlan {
   /** The key columns' names joined for a sentence, "site and date"; `keys` is each of them. */
   on:string; keys:string[]; bring:string; normalisation:'exact'|'fuzzy';
+  /** The name the brought column is written under: `bring`, or the request's `bringAs`. */
+  as:string;
   /** The key of a row of the FIRST table: with spelling allowed, its name stands for the second table's match. */
   keyOf:(row:{key:Record<string,string>})=>string;
   /** Each distinct name of the first key column and how it matched, with spelling allowed; and the column saying so. */
@@ -327,9 +334,11 @@ function planRelate(left:DataTable,right:DataTable,request:RelateRequest):Relate
   // The second table's spelling of a key IS something to bring where spelling was allowed: Fabala beside Falaba.
   if(keys.includes(bring)||(!spelling&&rightKeys.includes(bring)))
     throw new Error(`"${bring}" is a column being matched on, so bringing it across would add nothing.`);
-  if(left.keys.includes(bring))
-    throw new Error(`The first table already has a "${bring}" column. Relating would give its rows two `
-      +'values for one key, which is a table nobody can read.');
+  const as=request.bringAs?.trim()||bring;
+  if(left.keys.includes(as))
+    throw new Error(`The first table already has a "${as}" column. Relating would give its rows two `
+      +'values for one key, which is a table nobody can read.'
+      +(as===bring?` Name what it is brought in as, such as "${bring}_related".`:''));
   if(measureKey&&!left.keys.includes(measureKey))
     throw new Error(`The first table has no "${measureKey}" column to read variable names from. `
       +`Its columns are ${left.keys.join(', ')}.`);
@@ -440,7 +449,7 @@ function planRelate(left:DataTable,right:DataTable,request:RelateRequest):Relate
     gaps,
     rightOnlyKeys:rightOnly.map(key=>[...(spellings.get(key)??new Set([key]))][0]),
   };
-  return {on,keys,bring,normalisation,keyOf,lookup,fold,gaps,overlap,shares,...(matches?{matches,matchColumn}:{}),
+  return {on,keys,bring,as,normalisation,keyOf,lookup,fold,gaps,overlap,shares,...(matches?{matches,matchColumn}:{}),
     bringsValue,...(right.unit?{bringsUnit:right.unit}:{}),
     signature:gapSignature(gaps,normalisation),values,matched,left};
 }
@@ -455,22 +464,22 @@ export function matchWords(m:LinkMatch|undefined):string{
 /** The rows a decision produces, in the left table's own order. `label` undefined is the inner
  *  join; a label keeps the unmatched rows under it. */
 function buildRows(plan:RelatePlan,label:string|undefined):DataTable {
-  const {left,bring,lookup,keyOf,matches,matchColumn,keys}=plan;
+  const {left,as,lookup,keyOf,matches,matchColumn,keys}=plan;
   const how=(row:{key:Record<string,string>}):Record<string,string>=>matchColumn?{[matchColumn]:matchWords(matches!.get(row.key[keys[0]!]??''))}:{};
   const rows:DataTable['rows']=[];
   for(const row of left.rows){
     const value=lookup.get(keyOf(row));
     if(value===undefined){
       if(label===undefined)continue;
-      rows.push({key:{...row.key,[bring]:label,...how(row)},value:row.value});
+      rows.push({key:{...row.key,[as]:label,...how(row)},value:row.value});
       continue;
     }
-    rows.push({key:{...row.key,[bring]:value,...how(row)},value:row.value});
+    rows.push({key:{...row.key,[as]:value,...how(row)},value:row.value});
   }
   // THE SECOND TABLE'S VALUE, BROUGHT AS A NUMBER (2026-11-09): declared numeric with its unit, so a rate can divide by
   // it. A category is still text. A kept-unmatched label is not a number, so a value brought with one stays text.
-  const numeric=plan.bringsValue&&label===undefined?{numericKeys:{...left.numericKeys,[bring]:plan.bringsUnit??''}}:{};
-  return {...left,...numeric,keys:[...left.keys,bring,...(matchColumn?[matchColumn]:[])],rows,rowCount:rows.length,
+  const numeric=plan.bringsValue&&label===undefined?{numericKeys:{...left.numericKeys,[as]:plan.bringsUnit??''}}:{};
+  return {...left,...numeric,keys:[...left.keys,as,...(matchColumn?[matchColumn]:[])],rows,rowCount:rows.length,
     missingValueCount:rows.filter(row=>row.value===null).length};
 }
 
@@ -762,6 +771,7 @@ export function relateShiftsReceiptFacts(request:RelateRequest,offered:number,co
     +`${entity} a fw:TableRelate;\n`
     +keys.map(k=>`  fw:matchedOn ${quote(k)};\n`).join('')
     +`  fw:broughtColumn ${quote(request.bring)};\n`
+    +(request.bringAs?.trim()&&request.bringAs.trim()!==request.bring.trim()?`  fw:broughtAs ${quote(request.bringAs.trim())};\n`:'')
     +(request.within?`  fw:matchedWithinPeriod ${quote(`${request.within.date} between ${request.within.start} and ${request.within.end}`)};\n`:'')
     +`  fw:keyComparison ${quote((request.normalisation??DEFAULT_NORMALISATION)==='fuzzy'?'punctuation-folded':'exact')};\n`
     +`  fw:offeredRowCount "${offered}"^^xsd:integer`

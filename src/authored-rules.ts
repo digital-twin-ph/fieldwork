@@ -362,6 +362,22 @@ export function authoredUnitProblems(authored:{
               +`${shown(parameter.unit,parameter.unitLabel)}.`});
         }
       }
+  // A DATE IN ARITHMETIC (experiment 200): one date taken from another gives days; nothing else a date can do here
+  // means anything. A date plus a number of days is a date, which is a later extension, not a number.
+  const isDate=(o:unknown)=>typeof o==='object'&&o!==null&&'field' in o&&named((o as {field:string}).field)?.kind==='date';
+  for(const [r,rule] of authored.rules.entries())
+    for(const c of rule.then??[]){
+      if(!c.compute)continue;
+      const [a,b]=[isDate(c.compute.left),isDate(c.compute.right)];
+      if((a||b)&&!(a&&b&&c.compute.operator==='minus'))
+        problems.push({field:c.predicate,says:`Rule ${r+1}: a date can only be taken from another date, which gives days. `
+          +`Choose a date for both values, and minus.`});
+    }
+  for(const [r,rule] of authored.rules.entries())
+    for(const group of rule.any??[])for(const condition of group.all??[])
+      if(named(condition.field)?.kind==='date'&&!['equals','notEquals'].includes(condition.comparator))
+        problems.push({field:condition.field,says:`Rule ${r+1}: ${named(condition.field)?.attribute||condition.field} is a date, `
+          +`so it cannot be more or less than a number. Compute the days between two dates, and compare those.`});
   // A SUM OR A DIFFERENCE OF TWO DIFFERENT UNITS is refused while the rule is written: houses minus people is not a
   // number of anything. A product or a quotient makes a new unit, which is the practitioner's to describe.
   for(const [r,rule] of authored.rules.entries())

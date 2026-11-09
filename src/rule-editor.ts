@@ -39,6 +39,8 @@ const COMPARATORS:Record<Field['kind'],{value:string;label:string}[]>={
     {value:'notLessThan',label:'is at least'}],
   term:[{value:'equals',label:'is'},{value:'notEquals',label:'is not'}],
   boolean:[{value:'equals',label:'is'}],
+  // A DATE is a day, matched or not; it is compared through the days between two dates (experiment 200).
+  date:[{value:'equals',label:'is'},{value:'notEquals',label:'is not'}],
 };
 
 /** Whether a value was there to read is a COMPARATOR, not a field of its own.
@@ -278,7 +280,8 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
     const computedColumns=()=>rules.flatMap(rule=>rule.then.filter(isComputed)
       .map(c=>({predicate:c.predicate,label:c.column?.trim()||localName(c.predicate)})));
     const operandControl=(r:number,t:number,side:'left'|'right',operand:Operand)=>{
-      const numbers=choices.filter(c=>c.kind==='number');
+      // A DATE is offered too: one date minus another gives days (experiment 200); anything else with one is refused.
+      const numbers=choices.filter(c=>c.kind==='number'||c.kind==='date');
       const own=rules[r]!.then[t]!.predicate;
       const others=computedColumns().filter(c=>c.predicate!==own);
       const chosen=typeof operand==='object'&&'field' in operand?(readsPrevious(operand)?`previous:${operand.field}`:operand.field):'';
@@ -412,7 +415,7 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
       +(fields.length
         ?`<table class="inspector-table"><thead><tr><th>Column</th><th>Kind</th><th>Unit</th></tr></thead><tbody>`
           +fields.map((f,i)=>`<tr><td>${esc(f.attribute)}</td><td><select data-field-kind="${i}" aria-label="Kind of ${esc(f.attribute)}">`
-            +([['number','number'],['term','category'],['boolean','true or false']] as const)
+            +([['number','number'],['date','date, year-month-day'],['term','category'],['boolean','true or false']] as const)
               .map(([k,w])=>`<option value="${k}"${f.kind===k?' selected':''}>${w}</option>`).join('')+`</select></td>`
             +`<td>${f.kind==='number'?`<input data-field-unit="${i}" value="${esc(f.unitLabel??'')}" placeholder="minutes" aria-label="Unit for ${esc(f.attribute)}">`:'—'}</td></tr>`).join('')
           +`</tbody></table><p class="description">Nothing is guessed from a column name. A numeric column the rules read needs its unit.</p>`

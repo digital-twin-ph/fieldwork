@@ -120,7 +120,8 @@ export interface FieldBinding {
   attribute:string;
   /** The predicate the rules use, in CURIE form: `fwa:waitMinutes`. */
   predicate:string;
-  kind:'number'|'boolean'|'term';
+  /** `date`: a day written year-month-day (experiment 200), so one date can be taken from another, giving days. */
+  kind:'number'|'boolean'|'term'|'date';
   /** Shown to a reader, and carried into the explanation. */
   label?:string;
   unitLabel?:string;
@@ -146,11 +147,21 @@ export const termFor=(value:Scalar):string=>
  *  output they are the same word. They are not the same problem: one is data nobody collected,
  *  the other is data somebody collected and this step could not read. 2026-10-16.
  */
+/** A DATE AS A DAY NUMBER, for taking one from another: days since 1970-01-01, in UTC so no clock change moves a day.
+ *  Only year-month-day, and only a day that exists: 1861-02-30 is not read as March. */
+export function dayNumber(raw:unknown):number|undefined{
+  const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(raw??'').trim());
+  if(!m)return undefined;
+  const t=Date.UTC(Number(m[1]),Number(m[2])-1,Number(m[3])),d=new Date(t);
+  if(d.getUTCFullYear()!==Number(m[1])||d.getUTCMonth()!==Number(m[2])-1||d.getUTCDate()!==Number(m[3]))return undefined;
+  return Math.round(t/86_400_000);
+}
 export type ValueReading={known:true}|{known:false;why:'missing'|'unreadable';saw:string};
 export function readValue(raw:Scalar|null|undefined,kind:FieldBinding['kind']):ValueReading{
   if(raw===undefined||raw===null||raw==='')return {known:false,why:'missing',saw:''};
   if(kind==='number'&&!(typeof raw==='number'&&Number.isFinite(raw)))
     return {known:false,why:'unreadable',saw:String(raw)};
+  if(kind==='date'&&dayNumber(raw)===undefined)return {known:false,why:'unreadable',saw:String(raw)};
   return {known:true};
 }
 

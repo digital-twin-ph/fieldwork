@@ -1,0 +1,101 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "released": "2026-11-09",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "validationStatus": "application-only",
+  "shaclShapes": [],
+  "typescriptType": "ParamsByType['relate_table']"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": null
+ },
+ "id": "urn:fieldwork:widget:relate_table",
+ "nodeType": "relate_table",
+ "version": "0.11.0",
+ "title": "Relate a column from another table",
+ "ports": {
+  "inputs": [
+   {
+    "name": "records",
+    "type": "table"
+   },
+   {
+    "name": "related",
+    "type": "table"
+   }
+  ],
+  "output": "table",
+  "optionalInputs": [],
+  "note": "Takes the table being added to on `records` and the table being read from on `related`, and gives back the first with one more key column. The row count does not change: a category brought across lands on every row that matched."
+ },
+ "ontology": {
+  "status": "gap",
+  "mappings": [],
+  "note": "No mapping to an external vocabulary yet, which is what `status` records. The fw: terms themselves ARE declared from 2026-10-28 and are listed under `emits`: fw:TableRelate with fw:keyComparison, the four row counts, fw:unmatchedKey, fw:unmatchedDecision with fw:declaredCategory and fw:decisionReason, fw:retainedShare over fw:VariableShare, and fw:machinedNote over fw:MachinedNote. fw:decisionReason is reused from the declaration `deduplicate_points` already made, rather than declared twice for one meaning. Until this release the receipt carried only a `method` string, and `receiptText` prints a computation receipt's `input` -- so the counts this widget had computed since 0.1.0 reached the panel and never reached the evidence at all.",
+  "emits": {
+   "classes": [
+    "MachinedNote",
+    "ShiftedColumn",
+    "TableRelate",
+    "VariableShare"
+   ],
+   "properties": [
+    "broughtAs",
+    "broughtColumn",
+    "columnName",
+    "dateShiftDays",
+    "decisionReason",
+    "declaredCategory",
+    "droppedRowCount",
+    "emptyRowCount",
+    "keptRowCount",
+    "keyComparison",
+    "machinedNote",
+    "matchedOn",
+    "matchedWithinPeriod",
+    "noteSection",
+    "noteText",
+    "ofVariable",
+    "offeredRowCount",
+    "offeredTotal",
+    "relatedRowCount",
+    "relatedTotal",
+    "retainedFraction",
+    "retainedShare",
+    "shiftedColumn",
+    "unmatchedDecision",
+    "unmatchedKey"
+   ]
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/relate-table.ts",
+   "src/relate-ui.ts",
+   "src/config-dialog.ts",
+   "src/core.ts",
+   "src/app.ts",
+   "src/results.ts",
+   "src/table-viewer.ts",
+   "src/spelling-match.ts"
+  ],
+  "definition": "src/relate-table.ts"
+ },
+ "changes": [
+  {
+   "kind": "minor",
+   "description": "Brings a column under a name you give it (Bring it in as), so a table can be related to itself: Hagelloch's cases each gain their infector's prodrome date as infector_prodrome. Where the first table already has the column and no name is given, the refusal says to name one. Recorded as fw:broughtAs. And a point layer connects as a table: its attributes as columns, without its geometry (experiment 200)."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Unit tested against the two tables the South London repository already ships, plus the published sub-district boundaries as a second source -- which is the case the panel exists for: 23 of 32 keys match exactly, 32 of 32 folded, and the retained shares of population and deaths differ (68.2% against 61.2%), so the mortality rate moves 3.109 to 2.787 per 1000 while the result still looks like a complete table of 23 sub-districts. The multiplier identity is asserted exactly, against the published figures rather than against this application's output: 0.8963, and 3.109 x 0.8963 = 2.787 to within 1e-9. Also covered: the refusal when no decision exists, the decision lapsing when the data changes and when the key comparison changes the gap, a stale decision being ignored where nothing is unmatched, a label that is required and a label that collides with a measured category, and the machined note's section, its quoting of keys that contain commas, and its statement of both rate directions. Five browser checks cover the panel's six sections, the dialog's shape (× at the top, Settings, Preview and Decisions in that order, Cancel left of Apply, focus on the first setting, Escape asking before a change is discarded), the decision, and the receipt; the NYC and Brazil manuals play back through the dialog. What none of this establishes: that the shares read as intended to an epidemiologist, and that two tables keyed on the same column describe the same subjects -- the match is on the string, and lab check 28 compares the relate itself against pandas. 0.10.1: tests/sea-level-from-scratch.browser.mjs relates the assignment to the projections on projection_site and site_id (Chromium)."
+ }
+}

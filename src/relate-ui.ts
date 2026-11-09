@@ -79,6 +79,8 @@ type RelateParams=ParamsByType['relate_table'];
  *  holds one: the step stores one shift as `shiftDays` and several as `shifts`, and that is the store's business. */
 export interface RelateDraft {
   on:string; alsoOn:string[]; bring:string; normalisation:'exact'|'fuzzy';
+  /** As typed: the name the brought column is written under, empty for its own name (experiment 200). */
+  bringAs:string;
   /** The second table's key column, empty where it is named as the first's. */
   rightOn:string;
   /** ALLOWING FOR SPELLING (experiment 193): the words to drop and the threshold as typed, and the names decided. */
@@ -92,7 +94,7 @@ export interface RelateDraft {
 
 export function relateDraftOf(p:RelateParams):RelateDraft{
   const shifts=(p.shifts?.length??0)>1?p.shifts!:p.shiftDays?[p.shiftDays]:[];
-  return {on:p.on??'',alsoOn:[...(p.alsoOn??[])],bring:p.bring??'',normalisation:p.normalisation??'fuzzy',
+  return {on:p.on??'',alsoOn:[...(p.alsoOn??[])],bring:p.bring??'',bringAs:p.bringAs??'',normalisation:p.normalisation??'fuzzy',
     rightOn:p.rightOn??'',spelling:!!p.spelling,dropWords:(p.spelling?.dropWords??[]).join(', '),
     threshold:String(p.spelling?.threshold??DEFAULT_SPELLING_THRESHOLD),spellingDecisions:{...(p.spelling?.decisions??{})},
     within:{date:p.within?.date??'',start:p.within?.start??'',end:p.within?.end??''},
@@ -127,7 +129,7 @@ export function requestOf(draft:RelateDraft,{measureKey}:{measureKey?:string}={}
   const within=draft.within.date&&draft.within.start&&draft.within.end?{within:{...draft.within}}:{};
   const {shifts}=draftShifts(draft);
   return {on:draft.on,...(draft.alsoOn.length?{alsoOn:draft.alsoOn}:{}),...within,
-    ...(shifts.length===1&&shifts[0]!==0?{shiftDays:shifts[0]}:{}),bring:draft.bring,normalisation:draft.normalisation,
+    ...(shifts.length===1&&shifts[0]!==0?{shiftDays:shifts[0]}:{}),bring:draft.bring,...(draft.bringAs.trim()&&draft.bringAs.trim()!==draft.bring?{bringAs:draft.bringAs.trim()}:{}),normalisation:draft.normalisation,
     ...(draft.rightOn&&draft.rightOn!==draft.on?{rightOn:draft.rightOn}:{}),
     ...(()=>{const {spelling}=draftSpelling(draft);return spelling?{spelling}:{};})(),
     ...(measureKey?{measureKey}:{}),
@@ -138,6 +140,7 @@ export function requestOf(draft:RelateDraft,{measureKey}:{measureKey?:string}={}
  *  the decision already stored stays, because nothing here could see what it was about. */
 export function applyRelateDraft(p:RelateParams,draft:RelateDraft,plan?:{signature:string;gaps:number}):void{
   p.on=draft.on; p.bring=draft.bring; p.normalisation=draft.normalisation;
+  if(draft.bringAs.trim()&&draft.bringAs.trim()!==draft.bring)p.bringAs=draft.bringAs.trim();else delete p.bringAs;
   if(draft.rightOn&&draft.rightOn!==draft.on)p.rightOn=draft.rightOn;else delete p.rightOn;
   const {spelling}=draftSpelling(draft);
   if(spelling)p.spelling=spelling;else delete p.spelling;
@@ -211,7 +214,9 @@ export function openRelateConfig(view:RelateConfigView,esc:Escape):void{
       // THE SECOND TABLE'S KEY: the one chosen, or the column named as the first's where there is one.
       const rightOn=draft.rightOn||(there.includes(draft.on)?draft.on:'');
       const bringable=[...there,...(view.relatedValue&&!there.includes(view.relatedValue)?[view.relatedValue]:[])]
-        .filter(c=>!keysOn.includes(c)&&!here.includes(c)&&(draft.spelling||c!==rightOn));
+        // A column the first table has too is offered (experiment 200): brought under the name given in Bring it in as,
+        // and refused, saying so, without one. Relating a table to itself brings nothing else.
+        .filter(c=>!keysOn.includes(c)&&(draft.spelling||c!==rightOn));
       const {shifts,problem:shiftProblem}=draftShifts(draft);
       const {problem:spellingProblem}=draftSpelling(draft);
 
@@ -227,6 +232,9 @@ export function openRelateConfig(view:RelateConfigView,esc:Escape):void{
             +'<p class="muted">Rows relate only where every chosen column agrees.</p></fieldset>'
           :'')
         +select('relate-bring','Bring across',bringable,draft.bring,'Connect both tables first')
+        +`<div class="field"><label class="field-label" for="relate-bring-as">Bring it in as</label>`
+          +`<input id="relate-bring-as" value="${esc(draft.bringAs)}" placeholder="${esc(draft.bring||'its own name')}">`
+          +'<p class="muted">Needed where the first table already has a column of that name, as when a table is related to itself.</p></div>'
         +'<div class="field"><label class="field-label" for="relate-compare">Compare keys</label><select id="relate-compare">'
         +`<option value="fuzzy"${draft.normalisation==='fuzzy'?' selected':''}>Folding punctuation and case</option>`
         +`<option value="exact"${!draft.spelling&&draft.normalisation==='exact'?' selected':''}>Exactly, after trimming</option>`
@@ -326,7 +334,7 @@ export function openRelateConfig(view:RelateConfigView,esc:Escape):void{
         +`<p class="muted">${count(table.rowCount)} row${table.rowCount===1?'':'s'}. This is the table the next step reads.</p>`
         +(wideFrame(table)?'':`<p class="muted">This table has ${table.keys.length} key columns, so it is shown as stored, one value per row.</p>`)
         +`<div class="relate-preview">${(()=>{shown={table,options:{pageSize:12,
-          roles:{...Object.fromEntries(keysOn.filter(Boolean).map(k=>[k,'key'])),[draft.bring]:'brought'} as ColumnRoles}};return dataTableMarkup(table,esc,shown.options);})()}</div>`;
+          roles:{...Object.fromEntries(keysOn.filter(Boolean).map(k=>[k,'key'])),[draft.bringAs.trim()||draft.bring]:'brought'} as ColumnRoles}};return dataTableMarkup(table,esc,shown.options);})()}</div>`;
 
       // DECISIONS: what happens to the rows that did not match, which the step will not decide.
       const undecided=names_.filter(({name,match})=>match.outcome==='ambiguous'||draft.spellingDecisions[name]);
@@ -366,6 +374,7 @@ export function openRelateConfig(view:RelateConfigView,esc:Escape):void{
       on('relate-compare',el=>{draft.spelling=el.value==='spelling';draft.normalisation=el.value==='exact'?'exact':'fuzzy';});
       const typed=(id:string,fn:(v:string)=>void)=>{const el=root.querySelector<HTMLInputElement>(`#${id}`);
         if(el){el.oninput=()=>fn(el.value);el.onchange=()=>{fn(el.value);redraw();};}};
+      typed('relate-bring-as',v=>{draft.bringAs=v;});
       typed('relate-drop-words',v=>{draft.dropWords=v;});
       typed('relate-threshold',v=>{draft.threshold=v;});
       root.querySelectorAll<HTMLSelectElement>('[data-spelling-decide]').forEach(el=>el.onchange=()=>{

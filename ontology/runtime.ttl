@@ -175,6 +175,8 @@ fw:matchedOn a owl:DatatypeProperty; rdfs:range xsd:string;
   rdfs:comment "A key column both tables carry, as the tables spell it. Stated once per key column: since 2026-11-05 a relate may match on several together, a row relating only where all of them agree.".
 fw:broughtColumn a owl:DatatypeProperty; rdfs:range xsd:string;
   rdfs:comment "The second table's column added to the first table's rows.".
+fw:broughtAs a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:comment "The name the brought column was written under, where it differs from the column read: relating a table to itself brings a column it already has (experiment 200).".
 fw:keyComparison a owl:DatatypeProperty; rdfs:range xsd:string;
   rdfs:comment "How key cells were compared: \"exact\" after trimming, or \"punctuation-folded\". Stated because it decides WHICH rows matched -- 23 of Snow's 32 sub-districts match the published boundaries exactly and 32 of 32 once punctuation is folded, every difference a single comma.".
 fw:offeredRowCount a owl:DatatypeProperty; rdfs:range xsd:integer;

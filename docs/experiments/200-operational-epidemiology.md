@@ -212,6 +212,22 @@ contact list or follow-up, so it teaches chain analysis; contact listing and fol
 Each widget touched moves to the standard Inspector, with its manual page and a lab notebook (serial intervals and
 secondary cases recomputed in pandas).
 
+## What was built, 2026-11-09: steps 1 and 2
+
+- **A table port reads a point layer as a table**: each point a row of its id and attributes, no geometry, numeric
+  columns declared so. As experiment 197 did for distances. Relate's dialog offers a point layer's columns.
+- **Relate, Bring it in as** (Relate 0.11.0): the brought column written under a declared name, recorded as
+  `fw:broughtAs`. Without one, a column the first table already has is refused, and the message says to name it.
+- **Apply ruleset, the date kind** (0.10.0): year-month-day only, and only a real day; one date minus another gives
+  days, stated as the column's unit. Any other arithmetic with a date, or a date compared with a number, is refused
+  while the rule is written.
+
+**Run, in Chromium and in Node, on Hagelloch's 188 cases:** related to themselves on `infector`, 184 gain their
+infector's prodrome date and 4 with no infector are kept under "no infector recorded", decided. The serial interval,
+prodrome minus infector's prodrome: 184 values, median 10 days, from 7 to 16; case 1, 21 Nov against case 45's 11 Nov,
+is 10. `tests/hagelloch-serial-interval.test.mjs` (5), `tests/hagelloch-who-infected-whom.browser.mjs` (1); the
+Relate and rules browser tests, 23, still pass. Not yet: steps 3 to 5, the lab notebook, and WebKit.
+
 ## What would close this
 
 The practitioner choosing the first slice and its data, and its being built and run by hand on an empty canvas.

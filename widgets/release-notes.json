@@ -75,12 +75,12 @@
    ]
   },
   "apply_ruleset": {
-   "version": "0.9.1",
+   "version": "0.10.0",
    "released": "2026-11-09",
    "changes": [
     {
-     "kind": "patch",
-     "description": "The columns offered to the rules are the ones the step upstream gave out at the last run, for a table or points it computed: Total within groups' counts, the facilities Find health facilities matched from a list. A record's missing or unreadable value is reported only for a column the rules read."
+     "kind": "minor",
+     "description": "A column the rules read can be a date, written year-month-day. One date minus another gives days, stated as the new column's unit: a serial interval, or a 7-1-7 interval. Any other arithmetic with a date, or a date compared with a number, is refused while the rule is written; a date that is not a real day is unreadable, never moved to the next month (experiment 200)."
     }
    ],
    "breaking": false,
@@ -705,12 +705,12 @@
    "migrationFrom": []
   },
   "relate_table": {
-   "version": "0.10.1",
+   "version": "0.11.0",
    "released": "2026-11-09",
    "changes": [
     {
-     "kind": "patch",
-     "description": "After Assign projection site, the first table's columns, point_id and projection_site, are offered before a run. None were, so a projection could not be brought beside each point."
+     "kind": "minor",
+     "description": "Brings a column under a name you give it (Bring it in as), so a table can be related to itself: Hagelloch's cases each gain their infector's prodrome date as infector_prodrome. Where the first table already has the column and no name is given, the refusal says to name one. Recorded as fw:broughtAs. And a point layer connects as a table: its attributes as columns, without its geometry (experiment 200)."
     }
    ],
    "breaking": false,

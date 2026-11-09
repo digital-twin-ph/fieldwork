@@ -333,6 +333,8 @@ export interface ParamsByType {
     /** What was read and on what terms, kept beside the features it produced. */
     retrieval?:import('./osm-areas.js').AreaRetrieval};
   relate_table:{label:string;on:string;bring:string;
+    /** The name the brought column is written under, where the first table has one called `bring` (experiment 200). */
+    bringAs?:string;
     /** The second table's key column where it is named differently, and names matched allowing for spelling (experiment 193). */
     rightOn?:string; spelling?:import('./spelling-match.js').SpellingSettings;
     /** A date matched to the period containing it, and the days it is shifted first (2026-11-06, experiment 180). */
@@ -455,7 +457,7 @@ export interface ParamsByType {
       /** A numeric field must declare the unit it is measured in, as a QUDT IRI -- the same
        *  vocabulary the published rulesets use. Not optional: a number without a unit is not a
        *  measurement, and a rule comparing one to another is comparing two numbers and hoping. */
-      fields:{attribute:string;predicate:string;kind:'number'|'boolean'|'term';label?:string;
+      fields:{attribute:string;predicate:string;kind:'number'|'boolean'|'term'|'date';label?:string;
         unit?:string;unitLabel?:string}[];
       /** The numbers a practitioner can change without rewriting a rule. Declared by the authored
        *  ruleset itself rather than borrowed from a bundled one: a step whose rules use no

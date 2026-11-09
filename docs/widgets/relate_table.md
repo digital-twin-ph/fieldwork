@@ -24,8 +24,9 @@ added up yet; that is the next step.
 | **records** | the table being added to |
 | **related** | the table being read from |
 
-Both are tables. The order matters: the first keeps its rows and gains a column, the second is
-only read.
+Both are tables, or point layers read as tables: each point a row of its attributes, without its location. The order
+matters: the first keeps its rows and gains a column, the second is only read. **One table can go into both**, to relate
+its rows to each other: Hagelloch's cases, each matched on `infector` to its infector's `case_ID`.
 
 ## How to use it
 
@@ -48,6 +49,7 @@ have changed something, the dialog asks before discarding it.
 | **The same, in the second table** | the second table's column for them; the column of the same name where there is one. A line list's `Residential District` against a population's `district` |
 | **And also matched on** | more shared columns, where one column does not identify a subject: a monitor's reading is one row per `site` **and** `date`. A row relates only where every chosen column agrees |
 | **Bring across** | the second table's column to add, such as `water_supply`, or its **value column**, such as a monitor's reading in ppb or a district's census population, which arrives as written and **as a number**, with its unit, so **Rate with a denominator** can divide by it |
+| **Bring it in as** | the name the brought column is written under. Needed where the first table already has a column of that name, as when a table is related to itself: `date_of_prodrome` brought in as `infector_prodrome`. Left empty, the column keeps its own name |
 | **Compare keys** | folding punctuation and case; exactly after trimming; or allowing for spelling, and dropping words |
 | **A date within a period** | optional; see below |
 | **Shifts, in days** | optional; see below |

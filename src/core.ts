@@ -270,7 +270,28 @@ const point = (id:string,name:string,coordinates:Position|null|undefined):PointF
 /** WHETHER A PORT TAKES A RESULT. The same type, or a distances result on a table port (experiment 197): one row per point,
  *  its nearest candidate and the distance, which is a table, and which Relate and Select rows can then read. */
 export function portAccepts(wanted:PortType|undefined,given:PortType|null):boolean{
-  return !!wanted&&!!given&&(wanted===given||(wanted==='table'&&given==='distances'));
+  return !!wanted&&!!given&&(wanted===given||(wanted==='table'&&(given==='distances'||given==='points')));
+}
+
+/** A POINT LAYER AS A TABLE (experiment 200): one row per point, its id and its attributes as columns, and no geometry,
+ *  since a table has none (48). No value column: a point has no one number that is the record's. Hagelloch's cases
+ *  are a point layer, and relating them to themselves on `infector` needs them as a table. A column whose values are
+ *  all numbers is declared numeric, as a distances table's are. */
+export function pointsAsTable(value:{features?:{id?:unknown;properties?:Record<string,unknown>|null}[]}|undefined):DataTable{
+  const features=value?.features??[];
+  const own:string[]=[];
+  for(const f of features)for(const k of Object.keys(f.properties??{}))if(!own.includes(k)&&k!=='id')own.push(k);
+  const said=(v:unknown)=>v===null||v===undefined?'':typeof v==='object'?JSON.stringify(v):String(v);
+  const rows=features.map((f,i)=>({key:{id:said(f.id??i+1),...Object.fromEntries(own.map(k=>[k,said(f.properties?.[k])]))} as Record<string,string>,value:null}));
+  const numeric=own.filter(k=>features.some(f=>typeof f.properties?.[k]==='number')
+    &&features.every(f=>{const v=f.properties?.[k];return v===undefined||v===null||typeof v==='number';}));
+  return {kind:'data-table',keys:['id',...own],valueField:'',rows:rows as DataTable['rows'],rowCount:rows.length,missingValueCount:0,
+    ...(numeric.length?{numericKeys:Object.fromEntries(numeric.map(n=>[n,'']))}:{})};
+}
+/** What a table port reads from a step: its table, its distances as a table, or its points as a table. */
+export function asTableInput(from:WorkflowNode|undefined,value:unknown):unknown{
+  const out=from?outputOf(from):null;
+  return out==='distances'?distancesAsTable(value as never):out==='points'?pointsAsTable(value as never):value;
 }
 
 /** A DISTANCES RESULT AS A TABLE: keyed by `point_id`, the point's own attributes as `point_<attribute>`, `nearest_id`
@@ -1157,11 +1178,12 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
   }
   async function runNode(node:typeof plan[number]){
     onProgress(node.id,'running');const begin=performance.now();const beganAt=new Date().toISOString();
-    // A DISTANCES RESULT ON A TABLE PORT IS READ AS ITS TABLE (experiment 197), here, where every step's inputs are read.
+    // A DISTANCES RESULT OR A POINT LAYER ON A TABLE PORT IS READ AS ITS TABLE (experiments 197, 200), here, where every
+    // step's inputs are read.
     const inputs=Object.fromEntries(workflow.edges.filter(e=>e.to===node.id).map(e=>{
       const from=workflow.nodes.find(n=>n.id===e.from),value=values.get(e.from);
       const wanted=nodeInputs(node).find(([p])=>p===e.port)?.[1];
-      return [e.port,wanted==='table'&&from&&outputOf(from)==='distances'?distancesAsTable(value as never):value];
+      return [e.port,wanted==='table'?asTableInput(from,value):value];
     })) as unknown as ExecutionInputs;
     // A DECLARED PORT IS NOT A CONNECTED ONE. map_output declares `points` and `context` beside
     // `area`, so a study area shown on its own -- the whole of experiment 01, and every area a
@@ -2521,7 +2543,11 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
   for(const [nodeId,value] of values)
     if((value as {kind?:string})?.kind==='data-table')tables[nodeId]=value as DataTable;
     // A distances result is a table too, so a step reading it can preview it (experiment 197).
-    else{const n=workflow.nodes.find(x=>x.id===nodeId);if(n&&outputOf(n)==='distances')tables[nodeId]=distancesAsTable(value as never);}
+    else{const n=workflow.nodes.find(x=>x.id===nodeId);if(n&&outputOf(n)==='distances')tables[nodeId]=distancesAsTable(value as never);
+      // A POINT LAYER WIRED TO A TABLE PORT is a table too (experiment 200): only where it is wired so, since every
+      // point layer as a table would hold a second copy of each.
+      else if(n&&outputOf(n)==='points'&&workflow.edges.some(e=>{if(e.from!==n.id)return false;const to=workflow.nodes.find(x=>x.id===e.to);
+        return !!to&&nodeInputs(to).find(([p])=>p===e.port)?.[1]==='table';}))tables[nodeId]=pointsAsTable(value as never);}
   // A POINT LAYER'S COLUMNS, not the layer (experiment 192): a rules step after a computed one, such as Find health
   // facilities from a list, is offered the columns that step gave out. Bounded: names and kinds from 200 points.
   const pointColumns:Record<string,{attribute:string;kind:'number'|'term'}[]>={};

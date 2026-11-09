@@ -14,7 +14,7 @@
  *  counted. An operand with no value gives no value, and is named. Two rules giving one record different values give
  *  it none, and the conflict is reported, never settled by whichever rule came first.
  */
-import {knownPredicate,readValue,termFor,type FieldBinding,type SubjectRecord} from './authored-application.js';
+import {dayNumber,knownPredicate,readValue,termFor,type FieldBinding,type SubjectRecord} from './authored-application.js';
 import {isComputed,isSettingReference,settingNamed,readsPrevious,readsPreviousRows,columnReads,otherwiseProblems,
   type AuthoredRule,type ComputeOperator,type Operand,type AuthoredOrder,type AuthoredOtherwise} from './authored-rules.js';
 import {orderOf} from './select-rows.js';
@@ -118,7 +118,8 @@ export function orderRecords(records:SubjectRecord[],order:AuthoredOrder):{seque
 }
 
 /** A fact as N3 would write it, so equality is the reasoner's term equality. */
-type Fact={text:string; number?:number};
+/** `day`: a date's day number, kept apart from `number` so a date is never compared with a number (experiment 200). */
+type Fact={text:string; number?:number; day?:number};
 
 function factsOf(record:SubjectRecord,bindings:FieldBinding[]):Map<string,Fact>{
   const facts=new Map<string,Fact>();
@@ -129,6 +130,7 @@ function factsOf(record:SubjectRecord,bindings:FieldBinding[]):Map<string,Fact>{
     if(!known)continue;
     if(binding.kind==='number'){const n=Number(raw);facts.set(binding.predicate,{text:String(n),number:n});}
     else if(binding.kind==='boolean')facts.set(binding.predicate,{text:String(raw===true||raw==='true')});
+    else if(binding.kind==='date')facts.set(binding.predicate,{text:JSON.stringify(String(raw).trim()),day:dayNumber(raw)});
     else facts.set(binding.predicate,{text:termFor(raw as Scalar)});
   }
   return facts;
@@ -165,8 +167,9 @@ function operandValue(operand:Operand,facts:Map<string,Fact>,settings:Record<str
   previousFacts?:Map<string,Fact>):number|undefined{
   if(typeof operand==='number')return operand;
   if(isSettingReference(operand))return settings[operand.setting];
-  if(readsPrevious(operand))return previousFacts?.get(operand.field)?.number;
-  return facts.get(operand.field)?.number;
+  // A DATE GIVES ITS DAY NUMBER here only: the static check allows a date only in a difference of two dates.
+  const fact=readsPrevious(operand)?previousFacts?.get(operand.field):facts.get(operand.field);
+  return fact?.number??fact?.day;
 }
 const operandLabel=(operand:Operand,labelOf:(predicate:string)=>string)=>
   typeof operand==='number'?String(operand):isSettingReference(operand)?operand.setting
@@ -282,8 +285,11 @@ export function evaluateAuthored(records:SubjectRecord[],bindings:FieldBinding[]
     if(!fired.size)unmatched++;
     outcomes[recordIndex]=outcome;
   }
+  // ONE DATE TAKEN FROM ANOTHER IS IN DAYS: not a guess, what the difference is. Stated where its author stated none.
+  const isDate=(o:Operand)=>typeof o==='object'&&'field' in o&&bindings.some(b=>b.predicate===o.field&&b.kind==='date');
   const computedMeta=Object.fromEntries(rules.flatMap(r=>r.then.filter(isComputed)).map(c=>[c.column?.trim()||localName(c.predicate),
-    {...(c.meaning?.trim()?{meaning:c.meaning.trim()}:{}),...(c.unit?.trim()?{unit:c.unit.trim()}:{})}]));
+    {...(c.meaning?.trim()?{meaning:c.meaning.trim()}:{}),
+      ...(c.unit?.trim()?{unit:c.unit.trim()}:isDate(c.compute.left)&&isDate(c.compute.right)?{unit:'days'}:{})}]));
   return {records:outcomes,matchedByRule,unmatched,computedColumns,computedMeta,sequence,...(order?.by?{order}:{}),
     ...(otherwise.length?{defaultedByColumn}:{})};
 }

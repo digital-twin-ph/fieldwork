@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {inMapSettings} from './map-settings.mjs';
 
 /** A FIGURE FOR THE PLACES THAT WILL NOT TAKE AN SVG.
  *
@@ -38,7 +39,7 @@ test('a map exports as a PNG, at a stated size, carrying its baked ground',async
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="access-map"]').click();
-  await page.locator('#map-basemap').selectOption('osm');
+  await inMapSettings(page,d=>d.locator('#map-basemap').selectOption('osm'));
   await page.locator('[data-view="results"]').click();
   await expect(page.locator('#map [data-basemap="osm"] image').first()).toBeAttached({timeout:20000});
 

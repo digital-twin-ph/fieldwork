@@ -416,12 +416,12 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.20.2",
+   "version": "0.21.0",
    "released": "2026-11-09",
    "changes": [
     {
-     "kind": "patch",
-     "description": "A pin class is offered from the columns the points carried at the last run, where the step upstream computes them: Find health facilities from a list keeps a register, not its matches."
+     "kind": "minor",
+     "description": "On the standard Inspector and dialog (experiment 186): the name, which is the Results tab's; the layers it is given as its inputs; one sentence and Configure…, where the presentation, the write-up section, each point layer's class, mark name and symbol, and the standalone figure are set; Manage layers…; and what the last run drew, with the tile import. Apply redraws the map without running the workflow again."
     }
    ],
    "breaking": false,

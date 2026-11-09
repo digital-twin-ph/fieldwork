@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {inMapSettings} from './map-settings.mjs';
 
 /** GROUND UNDER A STATIC FIGURE. Experiment 137.
  *
@@ -31,7 +32,7 @@ test('a static map bakes raster tiles in, and credits them in the figure',async(
 
   const mapNode=page.locator('.react-flow__node[data-id="access-map"]');
   await mapNode.click();
-  await page.locator('#map-basemap').selectOption('osm');
+  await inMapSettings(page,d=>d.locator('#map-basemap').selectOption('osm'));
   await page.locator('[data-view="results"]').click();
 
   // The tiles are IN the figure, as data URIs, so the exported SVG carries its own ground.
@@ -70,7 +71,7 @@ test('a vector style says why it cannot be baked, rather than drawing nothing',a
   // it is reached by a SAVED WORKFLOW that carries the pair, which is exactly what a workflow
   // written before that change does. Set directly for that reason, and the test is kept rather
   // than retired because the figure still has to explain itself when it meets one.
-  await expect(page.locator('#map-basemap option[value="ofm-positron"]')).toHaveCount(0);
+  await inMapSettings(page,d=>expect(d.locator('#map-basemap option[value="ofm-positron"]')).toHaveCount(0),{apply:false});
   await page.evaluate(()=>{
     const stored=JSON.parse(localStorage.getItem('fieldwork-workflow-v1'));
     const map=stored.nodes.find(n=>n.id==='access-map');
@@ -116,10 +117,10 @@ test('choosing a basemap redraws the figure on screen, with one output and no ta
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="access-map"]').click();
   await page.locator('[data-view="results"]').click();
-  await expect(page.locator('#map-basemap')).toBeVisible();
+  await inMapSettings(page,d=>expect(d.locator('#map-basemap')).toBeVisible(),{apply:false});
   expect(requests).toBe(0);
 
-  await page.locator('#map-basemap').selectOption('osm');
+  await inMapSettings(page,d=>d.locator('#map-basemap').selectOption('osm'));
 
   // No tab click, no view switch: the figure updates where it stands.
   await expect(page.locator('#map [data-basemap="osm"] image').first()).toBeAttached({timeout:20000});
@@ -149,7 +150,7 @@ test(`ground is drawn under ${label}`,async({page})=>{
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="map"]').click();
-  await page.locator('#map-basemap').selectOption('osm');
+  await inMapSettings(page,d=>d.locator('#map-basemap').selectOption('osm'));
   await page.locator('[data-view="results"]').click();
   await page.locator('#result-tabs [data-output="map"]').click();
 
@@ -192,7 +193,7 @@ test('a boundary shows only its border once there is ground beneath it',async({p
 
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="access-map"]').click();
-  await page.locator('#map-basemap').selectOption('osm');
+  await inMapSettings(page,d=>d.locator('#map-basemap').selectOption('osm'));
   await page.locator('[data-view="results"]').click();
   await expect(page.locator('#map [data-basemap="osm"] image').first()).toBeAttached({timeout:20000});
 
@@ -220,7 +221,7 @@ test('a figure whose tiles cannot be fetched says so, and keeps its plot',async(
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="access-map"]').click();
-  await page.locator('#map-basemap').selectOption('osm');
+  await inMapSettings(page,d=>d.locator('#map-basemap').selectOption('osm'));
   await page.locator('[data-view="results"]').click();
 
   // Said by name, on the figure, rather than thrown.

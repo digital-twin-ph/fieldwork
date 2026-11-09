@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {inMapSettings} from './map-settings.mjs';
 
 // The mark was NAMED and not DRAWN. After one overlay per source arrived, the layer control said
 // "Find health facilities (square)", the receipt asserted fw:mark "square", and every point on the
@@ -13,7 +14,7 @@ test('a chosen mark is drawn on the map and shown in the legend',async({page})=>
   await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="map"]').click();
-  await page.locator('#polygon-presentation').selectOption('interactive');
+  await inMapSettings(page,d=>d.locator('#polygon-presentation').selectOption('interactive'));
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
 
@@ -48,7 +49,7 @@ test('a chosen mark is drawn on the map and shown in the legend',async({page})=>
   // And it can be switched off, for a pale ground or a printed figure.
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="map"]').click();
-  await page.locator('#map-halo-toggle').uncheck();
+  await inMapSettings(page,d=>d.locator('#map-halo-toggle').uncheck());
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
   await page.locator('[data-view="results"]').click();
@@ -58,13 +59,15 @@ test('a chosen mark is drawn on the map and shown in the legend',async({page})=>
   expect(await page.locator('.catchment-point-mark').first().locator('path').count()).toBe(1);
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="map"]').click();
-  await page.locator('#map-halo-toggle').check();
+  await inMapSettings(page,d=>d.locator('#map-halo-toggle').check());
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
 
-  const mark=page.locator('[data-layer-mark]').first();
-  await expect(mark).toHaveCount(1);
-  await mark.selectOption('star');
+  await inMapSettings(page,async d=>{
+    const mark=d.locator('[data-layer-mark]').first();
+    await expect(mark).toHaveCount(1);
+    await mark.selectOption('star');
+  });
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
 

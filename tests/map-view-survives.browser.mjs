@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {inMapSettings} from './map-settings.mjs';
 
 /** The practitioner, 2026-10-26: *"On the interactive map, the radius adjustment still rezooms out
  *  the map canvas."*
@@ -19,7 +20,7 @@ const mountInteractive=async page=>{
   await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="map"]').click();
-  await page.locator('#polygon-presentation').selectOption('interactive');
+  await inMapSettings(page,d=>d.locator('#polygon-presentation').selectOption('interactive'));
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
   await page.locator('[data-view="results"]').click();
@@ -45,9 +46,11 @@ test('the map keeps its view when a presentation setting changes',async({page})=
   // workflow view and the map is remounted when Results is reopened.
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="map"]').click();
-  const slider=page.locator('[data-layer-size]').first();
-  await slider.fill('7');
-  await slider.dispatchEvent('change');
+  await inMapSettings(page,async d=>{
+    const slider=d.locator('[data-layer-size]').first();
+    await slider.fill('7');
+    await slider.dispatchEvent('change');
+  });
   await page.locator('[data-view="results"]').click();
   await expect(page.locator('.catchment-leaflet')).toBeVisible();
 
@@ -79,7 +82,7 @@ test('a different map does not inherit this one\'s view',async({page})=>{
   await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="map"]').click();
-  await page.locator('#polygon-presentation').selectOption('interactive');
+  await inMapSettings(page,d=>d.locator('#polygon-presentation').selectOption('interactive'));
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
   await page.locator('[data-view="results"]').click();

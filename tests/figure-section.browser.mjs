@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {inMapSettings} from './map-settings.mjs';
 import {readFileSync,existsSync} from 'node:fs';
 
 /** AN OUTPUT'S FIGURE GOES WHERE THE PRACTITIONER PUTS IT. The practitioner, 2026-11-05: *"all output widgets may have
@@ -24,15 +25,14 @@ test('a map moved to the Introduction is filed there, and Results is the default
   const ground=page.locator('#workflow-select option',{hasText:'The ground'});
   await page.locator('#workflow-select').selectOption(await ground.getAttribute('value'));
   await page.locator('.react-flow__node[data-id="where"]').click();
-  const section=page.locator('#output-section');
-  await expect(section).toHaveValue('Results');
-  await expect(section.locator('option[value="Results"]')).toHaveText('Results (default)');
-  await expect(section.locator('option')).toHaveCount(4);
-  // Where it can be found: right after the Results tab name, not at the foot of the Inspector.
-  const next=await page.evaluate(()=>{const labels=[...document.querySelectorAll('#inspector-content label.field-label')]
-    .map(l=>l.textContent.trim());return labels[labels.indexOf('Results tab name')+1];});
-  expect(next).toBe("In the write-up, under");
-  await section.selectOption('Introduction');
+  // Where it can be found: in the map's Configure… (experiment 186), not at the foot of the Inspector.
+  await inMapSettings(page,async d=>{
+    const section=d.locator('#output-section');
+    await expect(section).toHaveValue('Results');
+    await expect(section.locator('option[value="Results"]')).toHaveText('Results (default)');
+    await expect(section.locator('option')).toHaveCount(4);
+    await section.selectOption('Introduction');
+  });
   const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));
   expect(saved.nodes.find(n=>n.id==='where').params.section).toBe('Introduction');
 
@@ -45,7 +45,7 @@ test('a map moved to the Introduction is filed there, and Results is the default
   // Back to the default: the choice is removed rather than stored as Results, so the receipt says it was not chosen.
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="where"]').click();
-  await page.locator('#output-section').selectOption('Results');
+  await inMapSettings(page,d=>d.locator('#output-section').selectOption('Results'));
   const after=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));
   expect(after.nodes.find(n=>n.id==='where').params.section).toBeUndefined();
 });

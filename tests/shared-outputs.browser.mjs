@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {inMapSettings} from './map-settings.mjs';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {exampleWorkflow} from '../build/core.js';
@@ -16,7 +17,7 @@ test('shared output modes migrate legacy views, recover with Undo and preserve e
   await expect(page.locator('#output-input-mode')).toHaveCount(0);
   await expect(page.locator('#map-decisions')).toHaveValue('criteria');
   await expect(page.locator('#add-point-input')).toBeVisible();
-  await page.locator('#output-view').selectOption('table');await expect(page.locator('#table-decisions')).toHaveValue('criteria');
+  await inMapSettings(page,d=>d.locator('#output-view').selectOption('table'));await expect(page.locator('#table-decisions')).toHaveValue('criteria');
   await page.locator('#output-view').selectOption('map');await expect(page.locator('#map-decisions')).toHaveValue('criteria');await run();
   await page.locator('[data-view="rules"]').click();const pending=page.waitForEvent('download');await page.locator('#download-evidence').click();const receipt=JSON.parse(await readFile(await (await pending).path(),'utf8'));
   assert.equal(receipt.workflow.nodes.find(n=>n.id==='map').type,'map_output');assert.equal(receipt.workflow.nodes.find(n=>n.id==='table').type,'table_output');

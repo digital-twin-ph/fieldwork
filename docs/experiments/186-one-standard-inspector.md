@@ -91,7 +91,7 @@ appear in them.
 | --- | --- | --- | --- |
 | table_input | 25 | no inputs | **yes**, 0.7.0 (2026-11-08) |
 | table_output | 16 | standard, except its point layers in spatial mode | no |
-| map_output | 12 | its own, in the layer manager | no |
+| map_output | 12 | its own, in the layer manager | **yes**, 0.21.0 (2026-11-09) |
 | select_rows | 11 | standard | **yes**, 0.4.0 (2026-11-08) |
 | study_area | 10 | no inputs | no |
 | chart_output | 7 | standard, except its reasoning input | no |
@@ -106,7 +106,7 @@ appear in them.
 | case_series | 1 | standard | no |
 | apply_ruleset | 1 | standard | **yes**, 0.8.0 (2026-11-08) |
 
-**1 of 24** widgets in use met the standard on 2026-11-08, Relate; of the 13 used in five or more workflows, 1. Select rows followed the same day, so **2 of 24**; Table input, the most used, made **3 of 24**; Total within groups, touched for [191](191-shares-within-groups.md)'s shares, **4 of 24**; Apply ruleset, touched for [192](192-is-not-and-otherwise.md), **5 of 24**. The standard input lists
+**1 of 24** widgets in use met the standard on 2026-11-08, Relate; of the 13 used in five or more workflows, 1. Select rows followed the same day, so **2 of 24**; Table input, the most used, made **3 of 24**; Total within groups, touched for [191](191-shares-within-groups.md)'s shares, **4 of 24**; Apply ruleset, touched for [192](192-is-not-and-otherwise.md), **5 of 24**; Map, touched for Sierra Leone, **6 of 24** (the practitioner, 2026-11-09: *"Standardization for widgets when we touch them, always"*). The standard input lists
 are one function every step shares, so they reach every step with inputs except where a widget draws its own.
 
 ## What would close it

@@ -3,6 +3,15 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.66.0 — 2026-11-09
+
+- **Map is on the standard Inspector and dialog** ([186](docs/experiments/186-one-standard-inspector.md)). Its name
+  is the Results tab's, its layers are its inputs, and one sentence says what it draws. **Configure…** holds the
+  presentation, the write-up section, each layer's class, mark name and symbol, and the standalone figure; Apply
+  redraws the map without running again. **Manage layers…** is beside it. Map 0.21.0. The rulesets, NYC and Sierra
+  Leone manuals open the dialog.
+- Validation: Chromium locally; WebKit in CI.
+
 ## 0.65.0 — 2026-11-09
 
 - **Measles in Sierra Leone has its first two workflows**: an epidemic curve by month of onset, and the facilities

@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {inMapSettings} from './map-settings.mjs';
 import {collectPageErrors} from './page-errors.mjs';
 
 // "It seems the Interactive Map option does not work" -- the practitioner, 2026-10-17, the
@@ -23,7 +24,7 @@ test('a points-only map can be interactive, and draw tiles',async({page})=>{
 
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="map"]').click();
-  await page.locator('#polygon-presentation').selectOption('interactive');
+  await inMapSettings(page,d=>d.locator('#polygon-presentation').selectOption('interactive'));
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
 

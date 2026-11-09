@@ -34,17 +34,20 @@ You connect what you want drawn. There is no setting that says what kind of map 
 
 1. **Add the Map** from the palette, under Outputs.
 2. **Connect your first layer.** Drag from any step that produced something drawable onto the
-   map's **+ Add a layer** port, or pick it from **Add a layer** in the Inspector. The map
-   works out which port it belongs to.
+   map's **+ Add a layer** port, or pick it from **Add a layer** under *Inputs* in the Inspector. The
+   map works out which port it belongs to.
 3. **Add more layers** the same way. A second point source gets a layer of its own rather than
    replacing the first.
-4. **Choose how it is drawn.** *Static plot* exports as an SVG with a scale bar and a north
+4. **Open Configure…** for everything about how it is drawn. Nothing changes until **Apply**, and
+   Apply redraws the map without running the workflow again.
+5. **Choose how it is drawn.** *Static plot* exports as an SVG with a scale bar and a north
    arrow. *Interactive map* can be panned and zoomed, and is the only one that can show a
    basemap.
-5. **Choose a basemap** if the geography matters — streets or terrain under your results.
+6. **Choose a basemap** if the geography matters — streets or terrain under your results.
    Leaving it at *None* keeps the map working with no connection at all.
-6. **Title it**, and write the source note. Both appear on the map and in its export.
-7. **Run the workflow.** The map appears as a Results tab.
+7. **Title it**, and write the source note. Both appear on the map and in its export.
+8. **Run the workflow.** The map appears as a Results tab. **Manage layers…** orders, names and groups the
+   layers it draws.
 
 ### Reading what you get
 
@@ -80,7 +83,7 @@ derived it — so a figure in a publication can be attributed.
 
 ### Where it goes in the write-up
 
-**In the write-up, under**, just below **Results tab name** in the Inspector, chooses the part of the Notes write-up this output's figure and its note go in:
+**In the write-up, under**, in **Configure…**, chooses the part of the Notes write-up this output's figure and its note go in:
 Introduction, Methods, Results or Discussion. **Results** is the default. A map of the study area belongs in the
 Introduction; a figure that shows how the analysis was done can go in Methods. References is not offered, because it
 holds works and not figures. The run's receipt states the section and whether you chose it, and a validation rule

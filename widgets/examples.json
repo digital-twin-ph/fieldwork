@@ -377,7 +377,7 @@
       "id": "urn:fieldwork:example:nyc-asthma-ozone-2016-2025",
       "title": "Ozone and child asthma emergency visits, New York City, 2016–2025",
       "repository": "https://github.com/digital-twin-ph/example-2025-nyc-ozone",
-      "commit": "470c5aea17e3dd2f4c1554701ae854a79ab8a21c",
+      "commit": "7d689b10da94fd2c4e078df9195a0d5de727e24d",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2025-nyc-ozone",
       "licence": {
         "data": "Not redistributed",
@@ -428,8 +428,8 @@
         },
         {
           "path": "manual.json",
-          "sha256": "5f86ecf32a6b9b6a61336c135392849f83e41d620085471840484720271841cd",
-          "bytes": 41745
+          "sha256": "a36c247936b7f8f8b55728d5fe7a4401a33b466377166ccf78185710eed18f6f",
+          "bytes": 42014
         }
       ],
       "workflowCount": 6
@@ -528,7 +528,7 @@
       "id": "urn:fieldwork:example:workflows-rulesets",
       "title": "Rules on synthetic data",
       "repository": "https://github.com/digital-twin-ph/example-workflows-rulesets",
-      "commit": "7cff0a7449fbd84bb30c34b1312191ef789e0085",
+      "commit": "f1241383cbe97937fb0cf1d4393fdcb0bf1a356f",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-workflows-rulesets",
       "licence": {
         "data": "CC0-1.0",
@@ -558,8 +558,8 @@
         },
         {
           "path": "manual.json",
-          "sha256": "03f7a525161f620e4843ed4a874a7691a5f86c22d48b12fc15dea4dd635e6463",
-          "bytes": 80337
+          "sha256": "3ce60629f8fb7060a6b36017043c700010e03a70fed75f9bd33ec479443688f0",
+          "bytes": 80555
         },
         {
           "path": "data/clinic-visits.csv",
@@ -624,7 +624,7 @@
       "id": "urn:fieldwork:example:sierra-leone-measles",
       "title": "Measles in Sierra Leone, 2019 to 2023",
       "repository": "https://github.com/digital-twin-ph/example-2019-sierra-leone-measles",
-      "commit": "dc77bf64c34e884e78de662178caa65c9ffdd2c3",
+      "commit": "12a0ac98ee77848c2ca289fe0e2b1689ce8e133d",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2019-sierra-leone-measles",
       "licence": {
         "data": "Used with the Sierra Leone FETP’s agreement for distributable training materials; modified for a public teaching repository",
@@ -657,8 +657,8 @@
         },
         {
           "path": "manual.json",
-          "sha256": "84b78f39892aa83dc994385f9077676bfa883d387b7c34af22dfab2a73042f1a",
-          "bytes": 21778
+          "sha256": "5c4ff1b90d3f8804aa67972bbd7bdc907687e6e62c4b1ce1d5d914fae802dce0",
+          "bytes": 21996
         },
         {
           "path": "data/measles-sierra-leone-semisynthetic.csv",

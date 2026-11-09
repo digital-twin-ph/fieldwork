@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {inMapSettings} from './map-settings.mjs';
 import {existsSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 
@@ -166,7 +167,7 @@ test('the worked example is rebuilt from an empty canvas and the published input
   // named polygon layers collected into one port.
   await page.locator('[data-view="workflow"]').click();
   await page.locator(`.react-flow__node[data-id="${where}"]`).click();
-  await page.locator('#polygon-presentation').selectOption('interactive');
+  await inMapSettings(page,d=>d.locator('#polygon-presentation').selectOption('interactive'));
   await page.locator('[data-view="results"]').click();
   const boxes=page.locator('.leaflet-control-layers-overlays input[type="checkbox"]');
   await expect(boxes.first()).toBeVisible({timeout:20000});

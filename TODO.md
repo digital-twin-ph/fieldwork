@@ -68,8 +68,14 @@ not a practitioner in the field.
    (0.62.0, [191](docs/experiments/191-shares-within-groups.md)); *is not* and *otherwise* in Apply ruleset, which the
    WHO classification needs ([192](docs/experiments/192-is-not-and-otherwise.md)). **Next:** the example's workflows and
    manual: epidemic curve and cases by facility **built (0.65.0)**; cases by district next.
-   **Map was touched** (its pin class reads the run's columns) and is not on the standard: the practitioner decides
-   whether it moves now (186's rule) or after Sierra Leone.
+   **Map on the standard, 0.66.0.** **Cases by district next**, as rates per 100,000 over WorldPop's 2021 district
+   sums on OCHA COD-AB's 16 districts (data/district-population.csv and data/districts-cod-ab.geojson, uncommitted in
+   the example until the workflow is built; WorldPop is 5.8% above the 2021 census). Names differ ("Bo District",
+   "Bo"; COD-AB spells Falaba "Fabala"): **Deduplicate records gains a mode linking two tables** (experiment 193, the
+   practitioner: *"extend the deduplication widget to also do matching of columns between two tables"*), and moves
+   to the standard in the same pass.
+   **Found 2026-11-09:** the pre-push fast gate validates the pinned examples against the sibling WORKING copies, so an
+   uncommitted edit in an example repository blocks a Fieldwork push whose pins are right. Commit or set aside first.
    **Case classification postponed** (the practitioner, 2026-11-08: *"Let's postpone the case definition work"*). Decided
    so far: WHO 2018's classification; *Runny nose* counts as coryza; the clinician's *meets the definition* stands in
    where symptoms were not recorded, shown in an analysis table. **Open:** whether *Contact with confirmed measles

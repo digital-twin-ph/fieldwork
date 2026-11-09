@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {inMapSettings} from './map-settings.mjs';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {collectPageErrors} from './page-errors.mjs';
@@ -10,10 +11,12 @@ test('Map presentation travels with interactive view, SVG and N3 evidence',async
   await page.goto('/?example=snow-isochrone');await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="interactive"]').click();
-  await page.locator('#map-title').fill('Cholera travel-time coverage');await page.locator('#map-title').blur();
-  await page.locator('#map-subtitle').fill('Illustrative walking network');await page.locator('#map-subtitle').blur();
-  await page.locator('#map-source-note').fill('John Snow teaching data; modeled modern OSM streets');await page.locator('#map-source-note').blur();
-  await expect(page.locator('#map-basemap')).toHaveValue('none');
+  await inMapSettings(page,async d=>{
+    await d.locator('#map-title').fill('Cholera travel-time coverage');await d.locator('#map-title').blur();
+    await d.locator('#map-subtitle').fill('Illustrative walking network');await d.locator('#map-subtitle').blur();
+    await d.locator('#map-source-note').fill('John Snow teaching data; modeled modern OSM streets');await d.locator('#map-source-note').blur();
+    await expect(d.locator('#map-basemap')).toHaveValue('none');
+  });
   await page.locator('#run-button').click();await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
   await page.locator('[data-view="results"]').click();
   await page.locator('#result-tab-interactive').click();await expect(page.locator('#map-communication-title')).toHaveText('Cholera travel-time coverage');

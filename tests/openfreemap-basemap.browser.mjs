@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {inMapSettings} from './map-settings.mjs';
 import {collectPageErrors} from './page-errors.mjs';
 
 // "it should have included OpenFreeMap tiles and themes as well ... OpenFreeMap has more to
@@ -19,7 +20,7 @@ test('an OpenFreeMap vector style draws under the workflow layers, and is credit
   await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="map"]').click();
-  await page.locator('#polygon-presentation').selectOption('interactive');
+  await inMapSettings(page,d=>d.locator('#polygon-presentation').selectOption('interactive'));
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
 

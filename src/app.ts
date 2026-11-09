@@ -251,7 +251,7 @@ function tileImportControls(p:WorkflowNode<'map_output'>['params']):string{
 }
 /** What a select's value list was narrowed to, kept across the re-render a tick causes, so finding
  *  the next value does not mean typing the search again. */
-function mapControls(n:WorkflowNode<'map_output'>){
+function mapControls(n:WorkflowNode<'map_output'>,withTiles=true){
   const p=n.params;
   return `<div class="source-card" data-map-communication><span class="inspector-section">Standalone map</span>
     <label class="field-label" for="map-title">Map title</label><input id="map-title" maxlength="120" value="${esc(p.mapTitle||'')}" placeholder="Default: results tab name">
@@ -262,7 +262,7 @@ function mapControls(n:WorkflowNode<'map_output'>){
     <label class="field-label" for="map-basemap">Basemap</label><select id="map-basemap">${basemapOptions(p.basemap,p.presentation==='interactive'?'interactive':'plot',workflowSpanKm())}</select>
     ${partLabelControl(n)}
     ${frameCaptionControl(n)}
-    ${tileImportControls(p)}
+    ${withTiles?tileImportControls(p):''}
     <p class="description">A basemap is layer 0, under everything the workflow produced.${p.presentation==='interactive'?'':' OpenStreetMap and OpenTopoMap are drawn into the figure itself. The OpenFreeMap styles are vector, so they move this map to the interactive presentation.'}</p>
     <p class="description">Title, key and note appear with the map and in its local SVG export. Interactive maps export connected data as a static plot; online basemap tiles are excluded. Selecting an online basemap sends the viewed area to its provider.</p></div>`;
 }
@@ -988,7 +988,7 @@ function drawRunProgress(){
 /** THE WIDGETS WHOSE INSPECTOR FOLLOWS THE STANDARD (experiment 186): Name, Inputs, Settings, Result, the links,
  *  Actions, in that order and nothing else, with every setting in the widget's configuration dialog. One at a time,
  *  Relate first; the set grows as each widget is moved, and a check holds them to it. */
-export const STANDARD_INSPECTOR=new Set<NodeType>(['relate_table','select_rows','table_input','find_health_facilities','group_table','apply_ruleset']);
+export const STANDARD_INSPECTOR=new Set<NodeType>(['relate_table','select_rows','table_input','find_health_facilities','group_table','apply_ruleset','map_output']);
 function samplerProduct(node:WorkflowNode){
   const up=(id:string,port:string)=>{const e=workflow.edges.find(x=>x.to===id&&x.port===port);return e?workflow.nodes.find(m=>m.id===e.from):undefined;};
   const search=up(node.id,'files'),find=search?up(search.id,'product'):undefined;
@@ -1766,6 +1766,182 @@ function pinnedNotices(ruleset:Ruleset,pinnedVersion:string):string{
   return html;
 }
 
+/** MAP'S CONFIGURATION DIALOG (experiment 186): every setting of the figure on a draft, written by Apply. All of them are
+ *  presentation, so Apply leaves the run current and redraws the figure; turning a reasoning map into a table or a chart
+ *  changes the step itself, and is applied as an ordinary change. */
+function openMapConfig(nodeId:string){
+  const node=getNode(workflow,nodeId,'map_output');
+  type Draft=WorkflowNode<'map_output'>['params']&{view?:'map'|'table'|'bars'};
+  let note='';
+  openConfigDialog<Draft>({
+    id:'map-config',widget:'Map',step:node.params.label||TYPES.map_output.title,draft:structuredClone(node.params),
+    sections:draft=>({settings:mapSettings({...node,params:draft}),
+      preview:'<p class="muted">The map is drawn in Results when the workflow runs, with these settings; a change here redraws it without running again.</p>',
+      ...(note?{message:{tone:'warning' as const,text:note}}:{})}),
+    wire:(root,draft,redraw)=>{
+      const on=(selector:string,fn:(el:HTMLInputElement&HTMLSelectElement&HTMLTextAreaElement)=>void)=>
+        root.querySelectorAll<HTMLInputElement&HTMLSelectElement&HTMLTextAreaElement>(selector).forEach(el=>el.addEventListener('change',()=>{note='';fn(el);redraw();}));
+      on('#polygon-presentation',el=>{
+        draft.presentation=el.value==='interactive'?'interactive':'plot';
+        // A BASEMAP THE NEW PRESENTATION CANNOT DRAW is set to none, and the person told, as the Inspector did.
+        const held=draft.basemap;
+        if(held&&held!=='none'&&!basemapAvailable(held,draft.presentation)){
+          const name=BASEMAP_OPTIONS.find(o=>o.value===held)?.label||held;draft.basemap='none';
+          note=`${name} is drawn from vector tiles, which a static figure cannot bake in, so this map now has no basemap. `
+            +'OpenStreetMap and OpenTopoMap are fetched once and drawn into the figure, and are offered here; the vector styles are offered on the interactive map.';}});
+      on('#output-section',el=>{const chosen=el.value as FigureSection;
+        if(chosen===DEFAULT_FIGURE_SECTIONS.map_output)delete draft.section;else draft.section=chosen;});
+      on('#output-view',el=>{draft.view=el.value as Draft['view'];});
+      const perSource=(key:'pinClassField'|'labelField',source:string,value:string)=>{
+        const held={...(draft[key]||{})};if(value)held[source]=value;else delete held[source];
+        if(Object.keys(held).length)draft[key]=held;else delete draft[key];};
+      on('[data-pin-class]',el=>perSource('pinClassField',el.dataset.pinClass!,el.value));
+      on('[data-mark-label]',el=>perSource('labelField',el.dataset.markLabel!,el.value));
+      on('[data-layer-mark]',el=>{const source=el.dataset.layerMark!,mark=el.value as LayerShape|'';
+        const held={...(draft.layerSymbols||{})};
+        // An empty choice REMOVES the entry: a mark somebody chose and one the layer's position gave it differ.
+        if(mark)held[source]={...held[source],mark};else delete held[source];draft.layerSymbols=held;});
+      on('[data-layer-size]',el=>{const source=el.dataset.layerSize!;
+        draft.layerSymbols={...(draft.layerSymbols||{}),[source]:{...draft.layerSymbols?.[source],size:Number(el.value)}};});
+      for(const [selector,key] of [['#map-title','mapTitle'],['#map-subtitle','mapSubtitle'],['#map-source-note','mapSourceNote']] as const)
+        on(selector,el=>{draft[key]=el.value.trim();});
+      on('#map-legend-toggle',el=>{draft.showLegend=el.checked;});
+      on('#map-halo-toggle',el=>{draft.markHalo=el.checked;});
+      on('#map-basemap',el=>{draft.basemap=el.value as BasemapChoice;});
+      on('#map-frame-caption',el=>{const v=el.value.trim();if(v)draft.frameCaption=v;else delete draft.frameCaption;});
+      on('#map-part-label',el=>{if(el.value)draft.partLabel=el.value;else delete draft.partLabel;});
+    },
+    apply:draft=>{
+      const {view,...params}=draft;
+      if(view&&view!=='map'){change(w=>{const index=w.nodes.findIndex(x=>x.id===nodeId);
+        w.nodes[index]={...w.nodes[index]!,type:'output',params:{label:params.label,view}} as never;});return;}
+      change(w=>{getNode(w,nodeId,'map_output').params=params;},{spatial:false});
+      renderResults();
+    },
+  },esc);
+}
+
+/** MAP'S SETTINGS, for its configuration dialog (experiments 186): the presentation, where its figure goes in the
+ *  write-up, each point layer's class, mark name and symbol, and the standalone figure. Built from a draft, so the same
+ *  markup serves the dialog's every redraw and nothing reaches the step before Apply. */
+function mapSettings(n:WorkflowNode<'map_output'>):string{
+  const at=figureSection(n.params,n.type),fallback=DEFAULT_FIGURE_SECTIONS[n.type];
+  return ''
+    +`<div class="field"><label class="field-label" for="polygon-presentation">Presentation</label><select id="polygon-presentation" data-catchment-param="presentation"><option value="plot" ${n.params.presentation!=='interactive'?'selected':''}>Static plot (SVG)</option><option value="interactive" ${n.params.presentation==='interactive'?'selected':''}>Interactive map</option></select></div>`
+    +`<div class="field"><label class="field-label" for="output-section">In the write-up, under</label>`
+      +`<select id="output-section">${FIGURE_SECTIONS.map(s=>`<option value="${s}" ${s===at?'selected':''}>${s}${s===fallback?' (default)':''}</option>`).join('')}</select></div>`
+    // Shown when decisions are wired, as before: a reasoning result reads as a map, a table or
+      // a chart, and this switches which. It used to be gated on the map being in decisions MODE.
+      +(workflow.edges.some(e=>e.to===n.id&&e.port==='decisions')
+        ?`<div class="field"><label class="field-label" for="output-view">Display as</label><select id="output-view"><option value="map" selected>Map</option><option value="table">Table</option><option value="bars">Chart</option></select></div>`
+        :'')
+      // A SYMBOL PER LAYER, chosen or left to the default. The practitioner, 2026-10-20: "So each
+      // potential point layer in the map gets a configurable/selectable symbol." Only the point
+      // layers actually wired are offered, because a control for a layer that does not exist is
+      // a setting nobody can check against the picture.
+      +`<p class="muted">Ports receive; layers are displayed. Order them, name them as a reader should see them, and group the ones that belong together.</p>`
+      +`<button class="button" data-manage-layers="${esc(n.id)}">Manage layers</button>`
+      +(()=>{
+        const sources=workflow.edges.filter(edge=>edge.to===n.id&&isPointPort(edge.port))
+          .map(edge=>workflow.nodes.find(node=>node.id===edge.from)).filter(Boolean) as WorkflowNode[];
+        if(!sources.length)return '';
+        // THE PIN CLASS, per layer. The practitioner, 2026-10-29: *"I should be able to name pins
+        // to classes ... So the pins get classified when they get onto the map."* The attribute is
+        // nominated, never guessed from a property name -- the same rule the polygon layer's
+        // naming property follows -- so the offer is the keys the records actually carry.
+        const classPicker=sources.map(source=>{
+          // A RULES STEP stores no points: it hands on the points it read, with what its rules concluded. Both are offered,
+          // so a map can be coloured by a rule's category (2026-11-08, the rules worked example's clinics).
+          const read=source.type==='apply_ruleset'
+            ?workflow.nodes.find(m=>m.id===workflow.edges.find(e=>e.to===source.id)?.from):source;
+          const records=(read?.params as {data?:{features?:{properties?:Record<string,unknown>}[]}}|undefined)
+            ?.data?.features??[];
+          // WHAT THE STEP GAVE OUT AT THE LAST RUN, where it computes its points (experiment 192): Find health facilities
+          // from a list keeps a register in its params, and the facilities it matched carry other columns.
+          const ran=result?.pointColumns?.[source.id]?.map(c=>c.attribute)??[];
+          const kept=ran.length&&!['point_input','places','centers'].includes(source.type)?[]:records.flatMap(f=>Object.keys(f.properties??{}));
+          const keys=[...new Set([...kept,...ran,...rulesAdd(source).categories])]
+            .filter(key=>!['name','capturedAt'].includes(key)).sort();
+          if(!keys.length)return '';
+          const chosen=n.params.pinClassField?.[source.id]||'';
+          return `<div class="field"><label class="field-label" for="pin-class-${esc(source.id)}">`
+            +`Pin class for ${esc(source.params.label||TYPES[source.type].title)}</label>`
+            +`<select id="pin-class-${esc(source.id)}" data-pin-class="${esc(source.id)}">`
+            +`<option value="">Not classed \u00b7 one mark for the layer</option>`
+            +keys.map(key=>`<option value="${esc(key)}" ${chosen===key?'selected':''}>`
+              +`${esc(key)}</option>`).join('')
+            +`</select></div>`;
+        }).join('');
+        // WHICH PROPERTY NAMES EACH MARK. Offered per layer beside the pin class, because it is
+        // the same kind of decision: a property the practitioner nominates, never one inferred
+        // from being called `name`. A layer with more drawn marks than the ceiling says so here
+        // rather than being silently left unnamed on the figure.
+        const labelPicker=sources.map(source=>{
+          const records=(source.params as {data?:{features?:{properties?:Record<string,unknown>}[]}}).data?.features||[];
+          const keys=[...new Set(records.flatMap(f=>Object.keys(f.properties??{})))].sort();
+          if(!keys.length)return '';
+          const chosen=n.params.labelField?.[source.id]||'';
+          const over=records.length>LABEL_CEILING;
+          return `<div class="field"><label class="field-label" for="mark-label-${esc(source.id)}">`
+            +`Name each mark of ${esc((source.params as {label?:string}).label||TYPES[source.type].title)}</label>`
+            +`<select id="mark-label-${esc(source.id)}" data-mark-label="${esc(source.id)}">`
+            +`<option value="">Not named \u00b7 the key says which layer</option>`
+            +keys.map(key=>`<option value="${esc(key)}" ${chosen===key?'selected':''}>`
+              +`${esc(key)}</option>`).join('')
+            +`</select>`
+            +(over?`<p class="muted">${records.length.toLocaleString()} records, over the `
+              +`${LABEL_CEILING} a figure can name legibly \u2014 this layer is drawn unnamed `
+              +`whatever is chosen here.</p>`:'')
+            +`</div>`;
+        }).join('');
+        const named=labelPicker
+          ?`<span class="inspector-section">Mark names</span>`
+            +`<p class="muted">The property that prints beside each mark on the figure. Nominated `
+            +`rather than guessed, and left off by default: a key naming the layer is enough for `
+            +`most maps, and a handful of named marks is what a publication figure wants.</p>`
+            +labelPicker
+          :'';
+        const classed=classPicker
+          ?`<span class="inspector-section">Pin class</span>`
+            +`<p class="muted">What each record IS, drawn with a mark of its own and named in the `
+            +`key. A layer is where records came from; a class is what they are.</p>`+classPicker
+          :'';
+
+        const chosen=n.params.layerSymbols||{};
+        return classed+named+`<span class="inspector-section">Layer symbols</span>`
+          +`<p class="muted">Hue and mark say which source a point came from; whether it is filled says whether it is inside the study area. Marks are named as OGC Symbology Encoding names them.</p>`
+          +sources.map((source,index)=>{
+            const held=chosen[source.id],resolved=resolveLayerSymbol(index,held);
+            return `<div class="field"><label class="field-label" for="layer-mark-${esc(source.id)}">${esc(source.params.label||TYPES[source.type].title)}</label>`
+              +`<select id="layer-mark-${esc(source.id)}" data-layer-mark="${esc(source.id)}">`
+              +`<option value="">Default \u00b7 ${esc(resolved.shape)}</option>`
+              +LAYER_SHAPES.map(shape=>`<option value="${shape}" ${held?.mark===shape?'selected':''}>${shape}</option>`).join('')
+              +`</select>`
+              // SIZE BESIDE THE MARK IT SIZES. Density is a property of the data: eight pumps
+              // across a borough want a mark a reader can find, and 250 addresses in four streets
+              // want one small enough to leave gaps between them. One default cannot serve both,
+              // and this figure holds both.
+              +`<label class="field-label" for="layer-size-${esc(source.id)}">Mark radius</label>`
+              +`<input id="layer-size-${esc(source.id)}" data-layer-size="${esc(source.id)}" type="range"`
+              +` min="${MARK_RADIUS_MIN}" max="${MARK_RADIUS_MAX}" step="0.5" value="${resolved.size}">`
+              +`<small>${resolved.size} units${held?.size===undefined?' (default)':''}. Smaller separates dense points; larger finds sparse ones.</small>`
+              +`</div>`;
+          }).join('');
+      })()
+    +mapControls(n,false);
+}
+/** THE INSPECTOR'S ONE SENTENCE for Map (experiment 186). */
+function mapSentence(n:WorkflowNode<'map_output'>):string{
+  const layers=workflow.edges.filter(e=>e.to===n.id).map(e=>workflow.nodes.find(x=>x.id===e.from)).filter(Boolean)
+    .map(x=>x!.params.label||TYPES[x!.type].title);
+  const classed=Object.keys(n.params.pinClassField??{}).length;
+  return layers.length
+    ?`Draws ${layers.join(', ')} as ${n.params.presentation==='interactive'?'an interactive map':'a static figure'}`
+      +`${n.params.basemap&&n.params.basemap!=='none'?`, over ${BASEMAP_OPTIONS.find(o=>o.value===n.params.basemap)?.label??n.params.basemap}`:''}`
+      +`${classed?`, ${classed} layer${classed===1?'':'s'} classed`:''}; in the write-up under ${figureSection(n.params,n.type)}.`
+    :'Draws what it is given: connect a layer under Inputs.';
+}
+
 /** THE INSPECTOR'S ONE SENTENCE for Apply ruleset (experiment 186). */
 function rulesetSentence(p:import('./types.js').ParamsByType['apply_ruleset'],pinned?:Ruleset):string{
   const authored=p.authored;
@@ -2160,17 +2336,11 @@ function renderInspector(){
     }catch{previewBoundary=undefined;previewBoundaryID=undefined;}
     content+=catchmentInspector(n,esc,previewBoundary,previewBoundaryID);
   }else if(n.type==='map_output'){
-    // No Input mode. A map draws the layers it is given, and the practitioner wires what they
-    // have: one source picker per layer port, every port always present. The selector this
-    // replaces asked a question about shape before the practitioner had the shape, and it decided
-    // which ports existed, whether a presentation could be chosen, and whether a basemap was on
-    // offer -- which is why removing it answers four separate reports at once.
-    //
-    // The practitioner's direction, 2026-10-14: "there is no such thing as mode, only layers."
-    // Written into docs/widget-specs/map_output.md that day and into the code on 2026-10-15, after
-    // "I thought we got rid of mode!"
+    // THE STANDARD INSPECTOR (experiment 186): the name, which is the Results tab's; the layers it is given, as its own
+    // input lists; one sentence and Configure…, where its symbols, classes, presentation and figure are set; and what the
+    // last run drew. A map was touched for Sierra Leone (0.65.0): touched widgets move to the standard, always.
     const wiredPorts=nodeInputs(n).filter(([port])=>workflow.edges.some(e=>e.to===n.id&&e.port===port));
-    content+=`<span class="inspector-section">Layers</span>`
+    let inputs=`<span class="inspector-section">Layers</span>`
       +`<p class="description">Connect what you want drawn. ${wiredPorts.length?`${wiredPorts.length} layer source${wiredPorts.length===1?'':'s'} connected; the map draws what it is given, ground first.`:'Nothing is connected yet, so this map has nothing to draw.'}</p>`
       // One picker per layer the map draws, and one more to add another -- rather than a control
       // for every port the contract declares. The practitioner's direction, 2026-10-15.
@@ -2193,109 +2363,18 @@ function renderInspector(){
           +`<select id="map-add-layer"><option value="">Choose a result to draw…</option>`
           +candidates.map(x=>`<option value="${esc(x.id)}">${esc(x.params.label||TYPES[x.type].title)} · ${esc(String(outputOf(x)))}</option>`).join('')
           +`</select><small>Any result this map can draw. The layer is connected to the port its type belongs to; a second point layer gets a slot of its own.</small></div>`;
-      })()
-      // A SYMBOL PER LAYER, chosen or left to the default. The practitioner, 2026-10-20: "So each
-      // potential point layer in the map gets a configurable/selectable symbol." Only the point
-      // layers actually wired are offered, because a control for a layer that does not exist is
-      // a setting nobody can check against the picture.
-      +`<span class="inspector-section">Layers</span>`
-      +`<p class="muted">Ports receive; layers are displayed. Order them, name them as a reader should see them, and group the ones that belong together.</p>`
-      +`<button class="button" data-manage-layers="${esc(n.id)}">Manage layers</button>`
-      +(()=>{
-        const sources=workflow.edges.filter(edge=>edge.to===n.id&&isPointPort(edge.port))
-          .map(edge=>workflow.nodes.find(node=>node.id===edge.from)).filter(Boolean) as WorkflowNode[];
-        if(!sources.length)return '';
-        // THE PIN CLASS, per layer. The practitioner, 2026-10-29: *"I should be able to name pins
-        // to classes ... So the pins get classified when they get onto the map."* The attribute is
-        // nominated, never guessed from a property name -- the same rule the polygon layer's
-        // naming property follows -- so the offer is the keys the records actually carry.
-        const classPicker=sources.map(source=>{
-          // A RULES STEP stores no points: it hands on the points it read, with what its rules concluded. Both are offered,
-          // so a map can be coloured by a rule's category (2026-11-08, the rules worked example's clinics).
-          const read=source.type==='apply_ruleset'
-            ?workflow.nodes.find(m=>m.id===workflow.edges.find(e=>e.to===source.id)?.from):source;
-          const records=(read?.params as {data?:{features?:{properties?:Record<string,unknown>}[]}}|undefined)
-            ?.data?.features??[];
-          // WHAT THE STEP GAVE OUT AT THE LAST RUN, where it computes its points (experiment 192): Find health facilities
-          // from a list keeps a register in its params, and the facilities it matched carry other columns.
-          const ran=result?.pointColumns?.[source.id]?.map(c=>c.attribute)??[];
-          const kept=ran.length&&!['point_input','places','centers'].includes(source.type)?[]:records.flatMap(f=>Object.keys(f.properties??{}));
-          const keys=[...new Set([...kept,...ran,...rulesAdd(source).categories])]
-            .filter(key=>!['name','capturedAt'].includes(key)).sort();
-          if(!keys.length)return '';
-          const chosen=n.params.pinClassField?.[source.id]||'';
-          return `<div class="field"><label class="field-label" for="pin-class-${esc(source.id)}">`
-            +`Pin class for ${esc(source.params.label||TYPES[source.type].title)}</label>`
-            +`<select id="pin-class-${esc(source.id)}" data-pin-class="${esc(source.id)}">`
-            +`<option value="">Not classed \u00b7 one mark for the layer</option>`
-            +keys.map(key=>`<option value="${esc(key)}" ${chosen===key?'selected':''}>`
-              +`${esc(key)}</option>`).join('')
-            +`</select></div>`;
-        }).join('');
-        // WHICH PROPERTY NAMES EACH MARK. Offered per layer beside the pin class, because it is
-        // the same kind of decision: a property the practitioner nominates, never one inferred
-        // from being called `name`. A layer with more drawn marks than the ceiling says so here
-        // rather than being silently left unnamed on the figure.
-        const labelPicker=sources.map(source=>{
-          const records=(source.params as {data?:{features?:{properties?:Record<string,unknown>}[]}}).data?.features||[];
-          const keys=[...new Set(records.flatMap(f=>Object.keys(f.properties??{})))].sort();
-          if(!keys.length)return '';
-          const chosen=n.params.labelField?.[source.id]||'';
-          const over=records.length>LABEL_CEILING;
-          return `<div class="field"><label class="field-label" for="mark-label-${esc(source.id)}">`
-            +`Name each mark of ${esc((source.params as {label?:string}).label||TYPES[source.type].title)}</label>`
-            +`<select id="mark-label-${esc(source.id)}" data-mark-label="${esc(source.id)}">`
-            +`<option value="">Not named \u00b7 the key says which layer</option>`
-            +keys.map(key=>`<option value="${esc(key)}" ${chosen===key?'selected':''}>`
-              +`${esc(key)}</option>`).join('')
-            +`</select>`
-            +(over?`<p class="muted">${records.length.toLocaleString()} records, over the `
-              +`${LABEL_CEILING} a figure can name legibly \u2014 this layer is drawn unnamed `
-              +`whatever is chosen here.</p>`:'')
-            +`</div>`;
-        }).join('');
-        const named=labelPicker
-          ?`<span class="inspector-section">Mark names</span>`
-            +`<p class="muted">The property that prints beside each mark on the figure. Nominated `
-            +`rather than guessed, and left off by default: a key naming the layer is enough for `
-            +`most maps, and a handful of named marks is what a publication figure wants.</p>`
-            +labelPicker
-          :'';
-        const classed=classPicker
-          ?`<span class="inspector-section">Pin class</span>`
-            +`<p class="muted">What each record IS, drawn with a mark of its own and named in the `
-            +`key. A layer is where records came from; a class is what they are.</p>`+classPicker
-          :'';
-
-        const chosen=n.params.layerSymbols||{};
-        return classed+named+`<span class="inspector-section">Layer symbols</span>`
-          +`<p class="muted">Hue and mark say which source a point came from; whether it is filled says whether it is inside the study area. Marks are named as OGC Symbology Encoding names them.</p>`
-          +sources.map((source,index)=>{
-            const held=chosen[source.id],resolved=resolveLayerSymbol(index,held);
-            return `<div class="field"><label class="field-label" for="layer-mark-${esc(source.id)}">${esc(source.params.label||TYPES[source.type].title)}</label>`
-              +`<select id="layer-mark-${esc(source.id)}" data-layer-mark="${esc(source.id)}">`
-              +`<option value="">Default \u00b7 ${esc(resolved.shape)}</option>`
-              +LAYER_SHAPES.map(shape=>`<option value="${shape}" ${held?.mark===shape?'selected':''}>${shape}</option>`).join('')
-              +`</select>`
-              // SIZE BESIDE THE MARK IT SIZES. Density is a property of the data: eight pumps
-              // across a borough want a mark a reader can find, and 250 addresses in four streets
-              // want one small enough to leave gaps between them. One default cannot serve both,
-              // and this figure holds both.
-              +`<label class="field-label" for="layer-size-${esc(source.id)}">Mark radius</label>`
-              +`<input id="layer-size-${esc(source.id)}" data-layer-size="${esc(source.id)}" type="range"`
-              +` min="${MARK_RADIUS_MIN}" max="${MARK_RADIUS_MAX}" step="0.5" value="${resolved.size}">`
-              +`<small>${resolved.size} units${held?.size===undefined?' (default)':''}. Smaller separates dense points; larger finds sparse ones.</small>`
-              +`</div>`;
-          }).join('');
-      })()
-      +`<div class="field"><label class="field-label" for="polygon-presentation">Presentation</label><select id="polygon-presentation" data-catchment-param="presentation"><option value="plot" ${n.params.presentation!=='interactive'?'selected':''}>Static plot (SVG)</option><option value="interactive" ${n.params.presentation==='interactive'?'selected':''}>Interactive map</option></select></div>`
-      +`<div class="field"><label class="field-label" for="map-label">Results tab name</label><input id="map-label" maxlength="60" value="${esc(n.params.label)}"></div>`
-      // Shown when decisions are wired, as before: a reasoning result reads as a map, a table or
-      // a chart, and this switches which. It used to be gated on the map being in decisions MODE.
-      +(workflow.edges.some(e=>e.to===n.id&&e.port==='decisions')
-        ?`<div class="field"><label class="field-label" for="output-view">Display as</label><select id="output-view"><option value="map" selected>Map</option><option value="table">Table</option><option value="bars">Chart</option></select></div>`
-        :'');
-    content+=mapControls(n);
+      })();
+    inputs+=`<div class="inspector-actions"><button id="add-point-input" class="button small" ${(n.params.pointInputCount??1)>=MAX_POINT_LAYERS?'disabled':''}>＋ Add point input</button><button id="remove-point-input" class="button small" ${(n.params.pointInputCount??1)<=1?'disabled':''}>Remove last input</button></div><p class="muted">One study boundary · up to 8 point layers and 2,000 records combined. Each added port needs a source.</p>`;
+    content+=standardSection('Name',`<div class="field"><label class="field-label" for="map-label">Results tab name</label><input id="map-label" maxlength="60" value="${esc(n.params.label)}"></div>`);
+    content+=standardSection('Inputs',inputs);
+    content+=standardSection('Settings',`<p class="standard-sentence">${esc(mapSentence(n))}</p>`
+      +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button>'
+      +`<button class="button" data-manage-layers="${esc(n.id)}">Manage layers\u2026</button></div>`);
+    const drawn=result?.outputs.find(o=>o.nodeId===n.id);
+    const why=result?.unfinished?.find(u=>u.nodeId===n.id)?.message;
+    content+=standardSection('Result',`<p class="standard-result${why?' standard-result-warning':''}">${esc(why?`The last run could not compute this step: ${why}`
+      :drawn?`Drawn in Results, under "${n.params.label||'Map'}".`:'Not run yet.')}</p>`
+      +`<div class="source-card">${tileImportControls(n.params)}</div>`);
   }else if(['table_output','chart_output'].includes(n.type)&&'inputMode' in n.params&&n.params.inputMode==='polygons'){
     content+=`<label class="field-label" for="catchment-output-mode">Input mode</label><select id="catchment-output-mode"><option value="polygons">Catchment polygons / summaries</option><option value="${n.type==='chart_output'?'decisions':'spatial'}">${n.type==='chart_output'?'Reasoning results':'Point layers'}</option></select><label class="field-label" for="polygon-source">Polygon input</label><select id="polygon-source" data-map-port="polygons"><option value="">Select input</option>${workflow.nodes.filter(x=>outputOf(x)==='polygons').map(x=>`<option value="${esc(x.id)}" ${workflow.edges.some(e=>e.to===n.id&&e.from===x.id)?'selected':''}>${esc(x.params.label||TYPES[x.type].title)}</option>`).join('')}</select><label class="field-label" for="polygon-output-label">Results tab name</label><input id="polygon-output-label" maxlength="60" value="${esc(n.params.label||'')}"><p class="notice">Connect a polygon operation. Charts require Summarize points in polygons. Display only; processing parameters belong to upstream nodes.</p>`;
     // map_output has its own branch above and is no longer reached here.
@@ -3268,7 +3347,7 @@ function renderInspector(){
   }
   if(['study_area','point_input','places','centers','measure_area','coverage_check','map_output','table_output'].includes(n.type))content+='<div class="source-card" data-spatial-reference><span class="inspector-section">Coordinate reference system</span><h3>WGS84 · EPSG:4326</h3><p>Stored coordinates: longitude, latitude in degrees (OGC:CRS84). A source reads degrees or a UTM zone and converts on import; Reproject points projects mid-workflow.</p></div>';
   // A map can always take another point layer: there is no mode in which it cannot draw points.
-  if(n.type==='map_output'||(n.type==='table_output'&&(!n.params.inputMode||n.params.inputMode==='spatial')))content+=`<div class="inspector-actions"><button id="add-point-input" class="button small" ${(n.params.pointInputCount??1)>=MAX_POINT_LAYERS?'disabled':''}>＋ Add point input</button><button id="remove-point-input" class="button small" ${(n.params.pointInputCount??1)<=1?'disabled':''}>Remove last input</button></div><p class="muted">${n.type==='table_output'?'No boundary required for point inputs':'One study boundary'} · up to 8 point layers and 2,000 records combined. Each added port needs a source.</p>`;
+  if(n.type==='table_output'&&(!n.params.inputMode||n.params.inputMode==='spatial'))content+=`<div class="inspector-actions"><button id="add-point-input" class="button small" ${(n.params.pointInputCount??1)>=MAX_POINT_LAYERS?'disabled':''}>＋ Add point input</button><button id="remove-point-input" class="button small" ${(n.params.pointInputCount??1)<=1?'disabled':''}>Remove last input</button></div><p class="muted">${n.type==='table_output'?'No boundary required for point inputs':'One study boundary'} · up to 8 point layers and 2,000 records combined. Each added port needs a source.</p>`;
   if(exampleKey(workflow)==='raster'&&(n.type==='raster_input'||n.type==='clip_raster'))content+='<div class="source-card"><span class="inspector-section">Raster workflow steps</span><p>Prepare your GeoTIFF and citation, preview the clip, then Run workflow to populate the map.</p><div class="inspector-actions">'+(['raster_input','clip_raster','map_output'] as NodeType[]).map((type,i)=>{const target=workflow.nodes.find(x=>x.type===type);return '<button class="button small" data-raster-step="'+esc(target?.id||'')+'" '+(!target?'disabled':'')+'>'+[ '1. Raster input','2. Clip parameters','3. Map'][i]+'</button>';}).join('')+'</div></div>';
   if(standard){
     // MANUAL · EVIDENCE · VERSION, the same three on every standard step, then the actions.
@@ -3357,7 +3436,7 @@ function renderInspector(){
   }
   // WHERE THIS FIGURE GOES IN THE WRITE-UP, for every output widget: Results unless chosen otherwise. The practitioner,
   // 2026-11-05: "all output widgets may have default IMRAD sections but it should be flexible."
-  if(n.type==='map_output'||n.type==='table_output'||n.type==='chart_output'){
+  if(n.type==='table_output'||n.type==='chart_output'){
     const at=figureSection(n.params,n.type),fallback=DEFAULT_FIGURE_SECTIONS[n.type];
     const field=`<div class="field"><label class="field-label" for="output-section">In the write-up, under</label>`
       +`<select id="output-section">${FIGURE_SECTIONS.map(s=>`<option value="${s}" ${s===at?'selected':''}>${s}${s===fallback?' (default)':''}</option>`).join('')}</select></div>`;
@@ -3653,6 +3732,7 @@ function renderInspector(){
   // without a run, so the preview is the rows this draft keeps. Only Apply writes.
   // TOTAL WITHIN GROUPS' CONFIGURATION DIALOG (experiments 186 and 191): given the columns coming in and, where it
   // resolves without a run, the table, so the preview is the table the draft would make. Only Apply writes.
+  if(n.type==='map_output')optionalElement('#configure-step')?.addEventListener('click',()=>openMapConfig(n.id));
   if(n.type==='group_table')optionalElement('#configure-step')?.addEventListener('click',()=>{
     const node=workflow.nodes.find(x=>x.id===n.id);
     if(node?.type!=='group_table')return;

@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {inMapSettings} from './map-settings.mjs';
 import {collectPageErrors} from './page-errors.mjs';
 
 // "Map still does not have a basemap also." -- the practitioner on the shipped build,
@@ -24,12 +25,14 @@ test('a raster basemap is drawn into the static plot, and a vector one is not of
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="map"]').click();
 
-  // Offered on a static plot, which is how every shipped map starts.
-  const basemap=page.locator('#map-basemap');
+  // Offered on a static plot, which is how every shipped map starts. In Configure… (experiment 186).
+  await page.locator('#configure-step').click();
+  const dialog=page.locator('#map-config');
+  const basemap=dialog.locator('#map-basemap');
   await expect(basemap).toBeVisible();
   await expect(basemap).toHaveValue('none');
-  await expect(page.locator('#inspector-content')).toContainText('drawn into the figure itself');
-  await expect(page.locator('#polygon-presentation')).toHaveValue('plot');
+  await expect(dialog).toContainText('drawn into the figure itself');
+  await expect(dialog.locator('#polygon-presentation')).toHaveValue('plot');
 
   const recorded=async()=>await page.evaluate(()=>{
     const w=JSON.parse(localStorage.getItem('fieldwork-workflow-v1')||'{}');
@@ -41,8 +44,7 @@ test('a raster basemap is drawn into the static plot, and a vector one is not of
   // Moving the map here is what made the control look broken: the practitioner chose a basemap
   // and the figure they were looking at was replaced by a different renderer.
   await basemap.selectOption('osm');
-  await expect.poll(recorded).toBe('osm/plot');
-  await expect(page.locator('#polygon-presentation')).toHaveValue('plot');
+  await expect(dialog.locator('#polygon-presentation')).toHaveValue('plot');
 
   // A VECTOR STYLE IS NOT OFFERED HERE AT ALL, from 2026-10-27. It used to be, and choosing one
   // moved the map to the interactive presentation so it could be drawn. The practitioner's rule
@@ -51,16 +53,20 @@ test('a raster basemap is drawn into the static plot, and a vector one is not of
   // basemap that silently changed the map type would invert the rule.
   await expect(basemap.locator('option[value="ofm-positron"]')).toHaveCount(0);
   await expect(basemap.locator('option[value="ofm-liberty"]')).toHaveCount(0);
+  await dialog.locator('#config-apply').click();
+  await expect.poll(recorded).toBe('osm/plot');
 
-  // Changing the map type is what reaches them, and the list follows immediately.
-  await page.locator('#polygon-presentation').selectOption('interactive');
-  await expect(basemap.locator('option[value="ofm-positron"]')).toHaveCount(1);
-  await basemap.selectOption('ofm-positron');
+  // Changing the map type is what reaches them, and the list follows immediately, in the same dialog.
+  await inMapSettings(page,async d=>{
+    await d.locator('#polygon-presentation').selectOption('interactive');
+    await expect(d.locator('#map-basemap option[value="ofm-positron"]')).toHaveCount(1);
+    await d.locator('#map-basemap').selectOption('ofm-positron');
+  });
   await expect.poll(recorded).toBe('ofm-positron/interactive');
 
   // And back to none leaves the presentation where the practitioner put it, rather than
   // undoing a change they may now want.
-  await page.locator('#map-basemap').selectOption('none');
+  await inMapSettings(page,d=>d.locator('#map-basemap').selectOption('none'));
   await expect.poll(recorded).toBe('none/interactive');
   expect(errors).toEqual([]);
 });
@@ -82,9 +88,11 @@ test('a map with no polygons can still take a basemap',async({page})=>{
   await page.locator('.react-flow__node[data-id="access-map"]').click();
 
   // Offered. It was absent entirely on this map before: decisions, not polygons.
-  await expect(page.locator('#map-basemap')).toBeVisible();
-  await expect(page.locator('#inspector-content')).toContainText('A basemap is layer 0');
-  await page.locator('#map-basemap').selectOption('osm');
+  await inMapSettings(page,async d=>{
+    await expect(d.locator('#map-basemap')).toBeVisible();
+    await expect(d).toContainText('A basemap is layer 0');
+    await d.locator('#map-basemap').selectOption('osm');
+  });
   // Recorded, and the map stays the static plot it was: the tiles come to the figure.
   await expect.poll(async()=>await page.evaluate(()=>{
     const w=JSON.parse(localStorage.getItem('fieldwork-workflow-v1')||'{}');

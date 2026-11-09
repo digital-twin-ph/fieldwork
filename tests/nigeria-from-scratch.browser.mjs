@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {inMapSettings} from './map-settings.mjs';
 import {keepColumns,columnsOffered} from './keep-columns.mjs';
 import {serveArchive,smallArchive} from './small-pmtiles.mjs';
 import {existsSync,readFileSync,writeFileSync} from 'node:fs';
@@ -190,14 +191,16 @@ test('five questions about 774 LGAs, each its own short workflow',async({page})=
     await page.locator(`.react-flow__node[data-id="${played}"]`).click();
     await page.locator('#map-label').fill('DTP1 coverage by birth cohort, 2005 to 2024');
     await page.locator('#map-label').press('Tab');
-    await page.locator('#polygon-presentation').selectOption('interactive');
+    await inMapSettings(page,d=>d.locator('#polygon-presentation').selectOption('interactive'));
     await page.locator('#run-button').click();
     await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:120000});
     await page.locator('[data-view="workflow"]').click();
     await page.locator(`.react-flow__node[data-id="${played}"]`).click();
-    await page.locator('#map-frame-caption').fill('Birth cohort');
-    await page.locator('#map-frame-caption').press('Tab');
-    await page.locator('#map-part-label').selectOption('shapeName');
+    await inMapSettings(page,async d=>{
+      await d.locator('#map-frame-caption').fill('Birth cohort');
+      await d.locator('#map-frame-caption').press('Tab');
+      await d.locator('#map-part-label').selectOption('shapeName');
+    });
     await page.locator('#run-button').click();
     await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:120000});
     await page.locator('[data-view="results"]').click();
@@ -322,7 +325,7 @@ test('five questions about 774 LGAs, each its own short workflow',async({page})=
     await joinAndMap(page,table,lgas,'DTP1 coverage on OpenStreetMap, 2024');
     const map=await idOf(page,'map_output');
     await page.locator(`.react-flow__node[data-id="${map}"]`).click();
-    await page.locator('#polygon-presentation').selectOption('interactive');
+    await inMapSettings(page,d=>d.locator('#polygon-presentation').selectOption('interactive'));
     await page.locator('#run-button').click();
     await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:120000});
     await page.locator('#map-import-tiles').click();
@@ -336,7 +339,7 @@ test('five questions about 774 LGAs, each its own short workflow',async({page})=
     // EACH LGA BY ITS NAME, with the ID it is joined on beneath.
     await page.locator('[data-view="workflow"]').click();
     await page.locator(`.react-flow__node[data-id="${map}"]`).click();
-    await page.locator('#map-part-label').selectOption('shapeName');
+    await inMapSettings(page,d=>d.locator('#map-part-label').selectOption('shapeName'));
     await page.locator('#run-button').click();
     await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:120000});
     await page.locator('[data-view="results"]').click();

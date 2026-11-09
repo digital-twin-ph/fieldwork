@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {inMapSettings} from './map-settings.mjs';
 
 test('a downloaded network can be seen in the Inspector and sent to the Map',async({page})=>{
   await page.goto('/?example=snow-isochrone');
@@ -61,7 +62,7 @@ test('a downloaded network can be seen in the Inspector and sent to the Map',asy
   // could be set to Interactive and stayed an SVG, with the basemap control unreachable.
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="map"]').click();
-  await page.locator('#polygon-presentation').selectOption('interactive');
+  await inMapSettings(page,d=>d.locator('#polygon-presentation').selectOption('interactive'));
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
   await page.locator('[data-view="results"]').click();
@@ -84,7 +85,7 @@ test('a downloaded network can be seen in the Inspector and sent to the Map',asy
   // Static is still static.
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="map"]').click();
-  await page.locator('#polygon-presentation').selectOption('plot');
+  await inMapSettings(page,d=>d.locator('#polygon-presentation').selectOption('plot'));
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
   await page.locator('[data-view="results"]').click();
@@ -105,7 +106,7 @@ test('the layer control lists only layers that hold something',async({page})=>{
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="map"]').click();
   await page.locator('#map-add-layer').selectOption('network');
-  await page.locator('#polygon-presentation').selectOption('interactive');
+  await inMapSettings(page,d=>d.locator('#polygon-presentation').selectOption('interactive'));
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
   await page.locator('[data-view="results"]').click();

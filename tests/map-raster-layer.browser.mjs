@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {inMapSettings} from './map-settings.mjs';
 import {encodeRaster} from '../build/raster.js';
 
 // A RASTER IS A LAYER, NOT A MODE.
@@ -43,7 +44,7 @@ test('a map draws a raster under a street network, not instead of it',async({pag
   await page.locator('#map-add-layer').selectOption(source.id);
   await page.locator('.react-flow__node[data-id="map"]').click();
   await page.locator('#map-add-layer').selectOption('network');
-  await page.locator('#polygon-presentation').selectOption('interactive');
+  await inMapSettings(page,d=>d.locator('#polygon-presentation').selectOption('interactive'));
 
   // Both are wired, so the map is being asked for both.
   const edges=JSON.parse(await page.evaluate(()=>localStorage.getItem('fieldwork-workflow-v1')))
@@ -104,7 +105,7 @@ test('a map draws a raster with an area, points and a network all wired',async({
     await page.locator('#map-add-layer').selectOption(layer);
   }
   await page.locator(`.react-flow__node[data-id="${map.id}"]`).click();
-  await page.locator('#polygon-presentation').selectOption('interactive');
+  await inMapSettings(page,d=>d.locator('#polygon-presentation').selectOption('interactive'));
   const ports=JSON.parse(await page.evaluate(()=>localStorage.getItem('fieldwork-workflow-v1')))
     .edges.filter(e=>e.to===map.id).map(e=>e.port);
   expect(ports).toContain('area');

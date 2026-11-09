@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {inMapSettings} from './map-settings.mjs';
 
 /** SNOW'S OWN MAP, and the encoding its key promises.
  *
@@ -68,12 +69,14 @@ test('a layer mark can be resized, and the figure redraws where it stands',async
   const deathsBefore=await spanOf(death);
   const pumpsBefore=await spanOf(pump);
 
-  // Shrink the dense layer only. No tab click and no view switch: the figure redraws in place.
-  const slider=page.locator('[data-layer-size="locations"]');
-  await expect(slider).toBeVisible();
-  // Driven as a range input is driven: `fill` does not move a slider, so the value is set and
-  // the change announced the way the browser would.
-  await slider.evaluate(el=>{el.value='2';el.dispatchEvent(new Event('change',{bubbles:true}));});
+  // Shrink the dense layer only, in Configure… (experiment 186). No tab click and no view switch: Apply redraws in place.
+  await inMapSettings(page,async d=>{
+    const slider=d.locator('[data-layer-size="locations"]');
+    await expect(slider).toBeVisible();
+    // Driven as a range input is driven: `fill` does not move a slider, so the value is set and
+    // the change announced the way the browser would.
+    await slider.evaluate(el=>{el.value='2';el.dispatchEvent(new Event('change',{bubbles:true}));});
+  });
 
   await expect.poll(async()=>await spanOf(death)).toBeLessThan(deathsBefore);
   // The OTHER layer is untouched, which is the whole point of it being per layer.

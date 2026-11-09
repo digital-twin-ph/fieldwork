@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {inMapSettings} from './map-settings.mjs';
 
 // The practitioner, 2026-10-20: "I also still do not see why we do not yet have OpenFreeMap as a
 // Basemap option in the Map widget." It was there since 2026-10-17 -- in the MAP'S OWN TOOLBAR.
@@ -10,14 +11,17 @@ test('the Inspector offers every basemap the map itself can draw',async({page})=
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="interactive"]').click();
 
-  const inspector=page.locator('#map-basemap option');
-  await expect(inspector).toHaveCount(7);
-  for(const style of ['ofm-liberty','ofm-positron','ofm-bright'])
-    await expect(page.locator(`#map-basemap option[value="${style}"]`)).toHaveCount(1);
-
-  // Same values AND same labels as the toolbar inside the map, because both read one list.
-  const fromInspector=await inspector.evaluateAll(o=>o.map(x=>`${x.value}=${x.textContent.trim()}`));
-  await page.locator('#map-basemap').selectOption('ofm-positron');
+  // The settings are in Configure… (experiment 186); what it offers is what the map's toolbar offers.
+  const fromInspector=await inMapSettings(page,async dialog=>{
+    const options=dialog.locator('#map-basemap option');
+    await expect(options).toHaveCount(7);
+    for(const style of ['ofm-liberty','ofm-positron','ofm-bright'])
+      await expect(dialog.locator(`#map-basemap option[value="${style}"]`)).toHaveCount(1);
+    // Same values AND same labels as the toolbar inside the map, because both read one list.
+    const offered=await options.evaluateAll(o=>o.map(x=>`${x.value}=${x.textContent.trim()}`));
+    await dialog.locator('#map-basemap').selectOption('ofm-positron');
+    return offered;
+  });
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
   await page.locator('[data-view="results"]').click();

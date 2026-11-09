@@ -1,6 +1,8 @@
 import {test,expect} from '@playwright/test';
 import {readFileSync,statSync} from 'node:fs';
 import {fromArrayBuffer} from 'geotiff';
+// The bytes of a file, alone: a Node Buffer can be a view on a shared pool, and its .buffer then holds other bytes too.
+const bytesOf=path=>{const b=readFileSync(path);return b.buffer.slice(b.byteOffset,b.byteOffset+b.byteLength);};
 import {seedWorkflow} from './seed-workflow.mjs';
 import {collectPageErrors} from './page-errors.mjs';
 
@@ -39,8 +41,8 @@ test('DTU25MSS, 2.9 GB on this laptop, is read in parts and agrees with the subs
   await page.locator('.react-flow__node[data-id="mss"]').click();
   const wait=page.waitForEvent('download');
   await page.locator('#download-node-raster').click();
-  const mine=await (await fromArrayBuffer(readFileSync(await (await wait).path()).buffer)).getImage();
-  const theirs=await (await fromArrayBuffer(readFileSync(EXAMPLE).buffer)).getImage();
+  const mine=await (await fromArrayBuffer(bytesOf(await (await wait).path()))).getImage();
+  const theirs=await (await fromArrayBuffer(bytesOf(EXAMPLE))).getImage();
   const [a]=await mine.readRasters(),[b]=await theirs.readRasters();
   const [ax,ay]=mine.getOrigin(),[bx,by]=theirs.getOrigin(),[dx,dy]=mine.getResolution();
   // The example's subset is written point-registered; its first node is its tie point. Ours are cells around nodes.

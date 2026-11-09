@@ -1,6 +1,8 @@
 import {test,expect} from '@playwright/test';
 import {readFileSync} from 'node:fs';
 import {fromArrayBuffer} from 'geotiff';
+// The bytes of a file, alone: a Node Buffer can be a view on a shared pool, and its .buffer then holds other bytes too.
+const bytesOf=path=>{const b=readFileSync(path);return b.buffer.slice(b.byteOffset,b.byteOffset+b.byteLength);};
 import {seedWorkflow} from './seed-workflow.mjs';
 import {collectPageErrors} from './page-errors.mjs';
 
@@ -44,7 +46,7 @@ test('a NetCDF grid on this device is read in parts and kept as the window aroun
   await page.locator('.react-flow__node[data-id="grid"]').click();
   const wait=page.waitForEvent('download');
   await page.locator('#download-node-raster').click();
-  const tiff=await fromArrayBuffer(readFileSync(await (await wait).path()).buffer);
+  const tiff=await fromArrayBuffer(bytesOf(await (await wait).path()));
   const image=await tiff.getImage(),[values]=await image.readRasters(),[x0,y0]=image.getOrigin(),[dx,dy]=image.getResolution();
   const width=image.getWidth(),height=image.getHeight();
   let checked=0,missing=[],worst=0;

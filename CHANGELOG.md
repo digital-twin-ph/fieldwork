@@ -3,6 +3,14 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.70.1 — 2026-11-09
+
+- **The sea-level example's write-up states the Manila datum figures**: EGM2008 and NAMRIA's gravimetric geoid agree
+  within 2 mm at the gauge, NAMRIA's mean-sea-level surface is 0.85 m above both, and which years that mean sea level
+  stands for is not stated, a gap of 0.1 to 0.76 m by the gauge's record. Six works cited; the TAO paper by its DOI.
+- The rules tests wait for Run to be enabled after a reload, which Linux WebKit in CI did not.
+- Validation: Chromium locally; WebKit in CI.
+
 ## 0.70.0 — 2026-11-09
 
 - **The two sea-level widgets retire** ([197](docs/experiments/197-the-sea-level-widgets-retire.md)). **Assign

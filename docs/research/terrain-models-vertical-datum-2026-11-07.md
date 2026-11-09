@@ -15,7 +15,7 @@ worked around.
 
 | Terrain model | Heights measured from | Licence | How it is reached | What the surface is |
 | --- | --- | --- | --- | --- |
-| **DeltaDTM** v1.1 (2024) | **Not stated in its data record** | CC BY 4.0 | Direct download, no sign-in seen: Cloud-Optimised GeoTIFF tiles zipped per continent (Asia ≈ 17.3 GB, all ≈ 36 GB) | Bare ground, made for low coasts; stated error ≈ 0.43 m |
+| **DeltaDTM** v1.1 (2024) | **EGM2008**: not in its data record; stated in its paper, read 2026-11-09 (below) | CC BY 4.0 | Direct download, no sign-in seen: Cloud-Optimised GeoTIFF tiles zipped per continent (Asia ≈ 17.3 GB, all ≈ 36 GB) | Bare ground, made for low coasts; stated error ≈ 0.43 m |
 | **Copernicus DEM GLO-30** | EGM2008 geoid (EPSG:3855) | Free worldwide, credited "© DLR e.V." | Several hosts; whether the AWS copy needs an account was not checked | Surface: roofs and trees included |
 | **NASADEM** | EGM96 geoid (EPSG:5773) | NASA data, any use | NASA's archive asks for a login | Surface, from 2000 radar |
 | **FABDEM** | EGM2008, according to one secondary source | CC BY-NC-SA 4.0: non-commercial, share-alike | Free download | Bare ground, but the licence limits reuse |
@@ -118,8 +118,59 @@ level.
 1995–2014 hold a value, 1999 flagged; their mean is **7,472 mm above the gauge's RLR datum**, and their trend is about
 **15 mm a year**. The gauge moved about 1 km in 2002, within the period.
 
-**Still missing:** which years NAMRIA's MSL stands for. The 2021 TAO paper should say; its page refused an automated
-read (HTTP 403) and was not worked around. With the epoch, PSMSL's series gives the change in sea level between it and
+**The 2021 TAO paper's abstract, supplied by the practitioner on 2026-11-09** (its page refused an automated read, HTTP
+403, which was not worked around). It says the hybrid model was fitted to GNSS/levelling "taking into account the
+different vertical datum used in the islands", fits it to 2 cm, and puts the hybrid geoid's formal error at "around
+10 cm rms", limited by "island height system and geodynamics effects". So the 0.85 m at Manila is Luzon's datum and does
+not carry to the other gauges, and about 10 cm is its stated uncertainty. **The abstract does not say which years or
+which tide gauge the MSL refers to.**
+
+**Both papers read in full on 2026-11-09**, from PDFs the practitioner added to example-2026-sea-level-rise-philippines
+(`docs/`):
+
+- **DeltaDTM** (Pronk et al. 2024, *Scientific Data*, CC BY 4.0): ICESat-2 and GEDI heights were transformed "to the
+  Earth Gravitational Model (EGM2008) geoid (assumed to approximate global MSL in this study)", and the product is
+  published in "the vertical CRS EGM2008 (EPSG:3855)". **Its datum is EGM2008**, as was inferred.
+- **The TAO paper** (Gatchalian, Forsberg and Olesen 2021): the MSL-fitted geoid was "reduced to the benchmark ML-3
+  reference level surface to roughly fit the geoid in Metro Manila area", then fitted to tidal and other benchmarks of
+  each island; the Manila gauge is "the Primary MSL fundamental tide gauge"; ellipsoidal heights should be of about the
+  same epoch as the GNSS/levelling, "2010 or later". **It does not say which years the Manila MSL refers to.**
+
+**So, at the Manila gauge:** a DeltaDTM height, above EGM2008, is about **0.85 m more** than the same ground's height
+above NAMRIA's MSL (43.862 − 43.009 m), within about 10 cm, the hybrid geoid's stated formal error. A pixel DeltaDTM
+gives as 0.5 m stands about 0.35 m below NAMRIA's MSL there. This holds at Manila only: each island has its own MSL
+datum.
+
+**The period, searched for online on 2026-11-09.** Three documents read in full, fetched with the practitioner's
+approval: NAMRIA's *Modernization of the Philippine Geodetic Reference System* (2016), NAMRIA's *Info Mapper* of July
+2005, and the Philippines' 2006 national report to GLOSS.
+
+- The vertical network "is referred to the mean sea level", started by the US Coast and Geodetic Survey "in the early
+  1900s", with "most of the bench marks ... originally reckoned from the primary tide gauge bench mark located in Manila
+  Harbor (i.e. BM-66)" (NAMRIA 2016).
+- MSL is determined from long observation; "a period of 19 years is generally considered as constituting a full cycle"
+  (NAMRIA 2005). That is the method, not the years.
+- Each station's datum is a tide-staff zero "initially determined when the station was first established": Manila 1901;
+  the GLOSS table lists South Harbor, Manila, as 1947 (GLOSS 2006).
+- A paper on Manila and Legazpi bays used a 1990–2008 Manila MSL; that is its choice, not necessarily the datum's. The
+  2026 MDPI paper on Manila subsidence and the ResearchGate copy refused automated reads (HTTP 403).
+
+**None names the years.** How much they matter, from PSMSL 145's yearly means (relative sea level, so land motion at the
+gauge is included):
+
+| If NAMRIA's MSL is the mean of | 1995–2014 stands above it by |
+| --- | --- |
+| 1902–1920 | 757 mm (16 of 19 years held) |
+| 1947–1965 | 686 mm (18 of 19) |
+| 1960–1978 | 549 mm (18 of 19) |
+| 1990–2008 | 104 mm (14 of 19) |
+
+So the step from NAMRIA's MSL to AR6's baseline lies somewhere between about 0.1 and 0.76 m, as large as the geoid
+offset and comparable to the projected rise. Benchmarks levelled long ago have moved with the land since, which these
+figures do not resolve.
+
+**Still missing, and only NAMRIA can answer it:** which years of tide observations at Manila define the mean sea level
+that BM-66 (and ML-3) refers to, and has it been re-determined since? With the epoch, PSMSL's series gives the change in sea level between it and
 1995–2014 at the same gauge, and the gauge's own datum drops out of the difference.
 
 ## What this suggests, not yet decided

@@ -706,7 +706,7 @@
       "id": "urn:fieldwork:example:sea-level-rise-philippines",
       "title": "Sea-level rise at Manila’s health facilities",
       "repository": "https://github.com/digital-twin-ph/example-2026-sea-level-rise-philippines",
-      "commit": "f8cc1752d35641add41cc050b64e570a92ec267e",
+      "commit": "4fe22ccb28b9f905773b4280482086f9ff1b0b81",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2026-sea-level-rise-philippines",
       "licence": {
         "data": "Projections and sites CC BY 4.0, with three required citations; facilities ODbL 1.0; the study area, diagram, manual and scripts CC0 1.0",
@@ -733,18 +733,18 @@
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "4801a413beb0c5052d8b479dd175ea5ae12b659ee3be5e9b13f560f5d2e25751",
-          "bytes": 25442
+          "sha256": "7a5240203af651790181cf5721f661e600752777ea3c557f95c29b691a54f657",
+          "bytes": 25576
         },
         {
           "path": "manual.json",
-          "sha256": "ad4aeab93f4ee4063157f859320a9b25ae676bf9101ca0b1130f458384281fbb",
-          "bytes": 32226
+          "sha256": "e7a7d8ea2065bcf2532bc5bffddb86effdabeb2daf1579cadc394d4bde70b502",
+          "bytes": 33166
         },
         {
           "path": "README.md",
-          "sha256": "46e36c0425739f11d5cf0889388a12f9ea9a73d8c83f4fd8750360465214b3af",
-          "bytes": 8372
+          "sha256": "b25058bf7c3f0e0f05c83b03fbbac605a066a31c36fabd3a5896ab4d5f59eb53",
+          "bytes": 9217
         },
         {
           "path": "CITATION.cff",
@@ -778,12 +778,12 @@
         },
         {
           "path": "scripts/make-manual.mjs",
-          "sha256": "a31663d70c3d75df83aa7f2bd521b4c133d37197f0fd80230bbdb928b6cfc0c8",
-          "bytes": 20080
+          "sha256": "3afddc4684a542aeb13aa8747d6b286dfcdc53e78e5bc19f10930f68c508702e",
+          "bytes": 20358
         }
       ],
       "workflowCount": 2,
-      "notYet": "No flood question: the terrain model’s datum and the geoid-to-sea-level offset at Manila are not sourced."
+      "notYet": "No flood question yet: which years NAMRIA's mean sea level at Manila stands for is not stated, and the step from it to AR6's 1995-2014 baseline lies between about 0.1 and 0.76 m depending on them."
     }
   ]
 }

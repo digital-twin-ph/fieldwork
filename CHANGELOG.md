@@ -3,6 +3,26 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.73.0 — 2026-11-09
+
+- **Who infected whom in Hagelloch, 1861, by hand** (200, steps 1 to 3): the serial interval, 184 values with a median
+  of 10 days, and each child's secondary cases, 126 of whom infected no one recorded. Validation Lab check 43 agrees
+  with pandas on all 188 cases.
+- **A table port reads a point layer** as a table: each point a row of its attributes, without its geometry.
+- **Relate, Bring it in as**: the brought column is written under a name you give it, so a table can be related to
+  itself. **A category you type as a number is written as that number**, and the column stays a number; the dialog
+  says to use one only where no match means none. Relate 0.11.0.
+- **Apply ruleset reads dates**: year-month-day, and one date minus another gives days. Any other arithmetic with a
+  date is refused while the rule is written. Apply ruleset 0.10.0.
+- **Point data is on the standard Inspector**, with its table settings in Configure…. Point data 0.6.0.
+- **An ontology of response timeliness** (7-1-7): milestones, targets, and the bottleneck and enabler categories of an
+  open-access study of five countries, with its source on every term.
+- **The blank canvas no longer says "Developmental evaluation"**, which is how Fieldwork is built, not a step for
+  you. It says Step 1 of 2.
+- Relate's dialog, before a run, now offers a count's column to bring.
+- DTU25MSS's 2.9 GB file read in parts in 0.7 s, identical to h5py at all 221 nodes (198).
+- Validation: Chromium locally; WebKit in CI, where earlier main runs failed and fixes are pending.
+
 ## 0.72.0 — 2026-11-09
 
 - **Raster input reads a NetCDF-4 grid from this device, in parts** (198, step 2): a regular latitude–longitude grid,

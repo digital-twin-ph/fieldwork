@@ -72,6 +72,10 @@ Key columns are read as labels. Among them you decide what identifies a row:
 
 With no primary key declared, the check is on all the key columns together.
 
+**List the distinct values of** ticks key columns whose values the table lists, for a step that needs them as a list.
+**Assign projection site** reads the sites it assigns against from `site_id` here, so tick it on the projections
+table. Nothing else changes: the rows are the same.
+
 ## What the columns mean
 
 **Describe columns…** on the node opens a dialog for every column the table keeps: a **label**, a **unit** and a

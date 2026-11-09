@@ -3,6 +3,23 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.68.0 — 2026-11-09
+
+- **The sea-level example moves to its own repository, and reports a sea level**
+  ([195](docs/experiments/195-the-sea-level-example-reports-a-sea-level.md)).
+  [example-2026-sea-level-rise-philippines](https://github.com/digital-twin-ph/example-2026-sea-level-rise-philippines)
+  holds the AR6 projections, the gauges and Manila's facilities, with two workflows: which gauge applies to each
+  facility and how far, and the rise there by 2100, 1,124 mm under SSP2-4.5 with vertical land motion. Its README
+  says what a flood question would need: the terrain models, their datums, and the offset to local sea level. The
+  built-in Manila example is removed.
+- **Tabular data can list a column's distinct values**, under **List the distinct values of**. Assign projection
+  site reads its sites there; before, only code could set it. Tabular data 0.9.0.
+- **Relate offers an assignment's columns before a run**, so a projection can be brought beside each point.
+  Relate 0.10.1.
+- **Table is on the standard Inspector and dialog** (186): Show totals and Display as are in Configure…. A number
+  brought beside each row is drawn as a column, never as the headings. Table 0.8.0.
+- Validation: Chromium locally; WebKit in CI.
+
 ## 0.67.1 — 2026-11-09
 
 - **A map's value classes count each place once.** A place drawn in many parts was counted once per part: Bonthe,

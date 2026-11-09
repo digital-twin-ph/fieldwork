@@ -220,3 +220,12 @@ test('one column WITH something describing the subject is a table',()=>{
   assert.deepEqual(frame.attributes,['water_supply']);
   assert.deepEqual(frame.columns,['deaths 1854']);
 });
+
+test('a number brought beside each row is a value, never the headings',()=>{
+  // The sea-level example's second workflow: 194 facilities, each nearest gauge 145, each with the rise there, 1,124 mm.
+  // The rise was promoted to the axis and headed the distances "1124" (2026-11-09).
+  const table={kind:'data-table',keys:['point_id','projection_site','value_mm'],valueField:'distance_m',unit:'metre',
+    numericKeys:{value_mm:'millimetre'},rowCount:3,missingValueCount:0,
+    rows:[['a',7292],['b',1500],['c',12926]].map(([id,d])=>({key:{point_id:id,projection_site:'145',value_mm:'1124'},value:d}))};
+  assert.equal(wideFrame(table),null,'drawn as rows, every column with its own heading');
+});

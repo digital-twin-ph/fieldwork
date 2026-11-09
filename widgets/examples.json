@@ -701,6 +701,89 @@
       ],
       "workflowCount": 3,
       "notYet": "The case classification by WHO’s definition, waiting on the FETP’s data dictionary."
+    },
+    {
+      "id": "urn:fieldwork:example:sea-level-rise-philippines",
+      "title": "Sea-level rise at Manila’s health facilities",
+      "repository": "https://github.com/digital-twin-ph/example-2026-sea-level-rise-philippines",
+      "commit": "29cc1830b8579d2943007e65cef92fe1e0996304",
+      "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2026-sea-level-rise-philippines",
+      "licence": {
+        "data": "Projections and sites CC BY 4.0, with three required citations; facilities ODbL 1.0; the study area, diagram, manual and scripts CC0 1.0",
+        "source": "IPCC AR6 Sea Level Projections v20210809 (doi:10.5281/zenodo.5914709); OpenStreetMap via the Humanitarian OpenStreetMap Team export",
+        "note": "Stated in the repository’s README and CITATION.cff. The facilities file is a database derived from OpenStreetMap and offered under the ODbL."
+      },
+      "description": "Published IPCC AR6 projections for eight Philippine tide gauges and 194 health facilities in coastal Manila: which gauge’s projection applies to each facility and how far it is, and the rise there by 2100 under SSP2-4.5 with vertical land motion, 1,124 mm. Not a flood model: the README says what the ground’s height and the local sea’s would need.",
+      "carries": {
+        "workflow": true,
+        "data": true,
+        "geography": true
+      },
+      "uses": [
+        "apply_ruleset",
+        "map_output",
+        "point_input",
+        "relate_table",
+        "select_rows",
+        "slr_site_assignment",
+        "study_area",
+        "table_input",
+        "table_output"
+      ],
+      "files": [
+        {
+          "path": "fieldwork-project.json.gz",
+          "sha256": "824dbb8617fc861a5ba50ba368e23eb71315dd39e9745fb1172672c404718736",
+          "bytes": 18759
+        },
+        {
+          "path": "manual.json",
+          "sha256": "2969a221e0a049c09bb8e15c0a0709426cf10f0df9beb606715dd6873c86fd00",
+          "bytes": 19086
+        },
+        {
+          "path": "README.md",
+          "sha256": "75d36a87db2d9d95a7113a8c78f0cc65cfe20ca028c95b460a9d29574299881c",
+          "bytes": 7809
+        },
+        {
+          "path": "CITATION.cff",
+          "sha256": "207f4056747e2f9afca174103facb9af9f0ea4365aa01c82afd2d85143885af6",
+          "bytes": 1393
+        },
+        {
+          "path": "data/ar6-projections-philippine-gauges.csv",
+          "sha256": "1d624f1b81337db4ccc0ee7ead4af9167c3782c5f7e47bfcb503639a6f440489",
+          "bytes": 12293
+        },
+        {
+          "path": "data/ar6-projection-sites.geojson",
+          "sha256": "4bd216a97030804b880877247d81316e1433570e2ba82945f9d1595f3cc0cd3a",
+          "bytes": 1760
+        },
+        {
+          "path": "data/manila-health-facilities.geojson",
+          "sha256": "7af9636457d07d90509fe91eaca30accb271e92f29e48fcbd5f52cc0379938be",
+          "bytes": 51323
+        },
+        {
+          "path": "data/manila-study-area.geojson",
+          "sha256": "65747c44cb823aab15d14e68494bbe6a94563297a1fd3222d37b7df75f7b37ba",
+          "bytes": 456
+        },
+        {
+          "path": "docs/vertical-datums.svg",
+          "sha256": "155855dcbe128ffdba05c67e340135334e573205af6563002924f99e08fb4497",
+          "bytes": 7503
+        },
+        {
+          "path": "scripts/make-manual.mjs",
+          "sha256": "9cdbe400ad302afade6c59ae1c077c57fa403787f17da544f9c1cac2d9c54443",
+          "bytes": 10003
+        }
+      ],
+      "workflowCount": 2,
+      "notYet": "No flood question: the terrain model’s datum and the geoid-to-sea-level offset at Manila are not sourced. The datum diagram is in the README, not yet a note in Notes."
     }
   ]
 }

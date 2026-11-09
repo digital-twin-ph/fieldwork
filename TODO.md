@@ -86,9 +86,10 @@ not a practitioner in the field.
    case definition example in the rules set worked example"*), its seventh workflow, on sixteen made-up cases in four
    stages, every class reached. No conflict is reached, because staged rules cannot give one case two classes.
 4. **Table output on the standard** (186).
-5. **Manila coastal exposure moves to example-2026-sea-level-rise-philippines**, then the built-in one is removed. The
-   terrain and datum note is its reading: docs/research/terrain-models-vertical-datum-2026-11-07.md.
-   **Images in Notes are built with it** (the practitioner, 2026-11-08): an authored note can carry an image, kept by
+5. **Done 2026-11-09 (0.68.0): Manila coastal exposure moved to example-2026-sea-level-rise-philippines**, the built-in
+   one removed, and the example now reports the rise at each facility's gauge
+   ([195](docs/experiments/195-the-sea-level-example-reports-a-sea-level.md)). The terrain note is in its README.
+   **Still open: images in Notes** (the practitioner, 2026-11-08): an authored note can carry an image, kept by
    its digest, with required alt text and a caption, shown on the Notes board and in the write-up; an SVG is shown as
    an image, never inlined. Its first use is the datum diagram, docs/images/vertical-datums.svg, as a note of the
    example.
@@ -910,7 +911,9 @@ consumer; or letting the output state its own margins where a reader has asserte
 commensurable. The first is smallest and the second is the one that is actually true of long
 tables, where each measure may count something different.
 
-**Revisit the Manila sea-level example, which reports no sea level.**
+**Revisit the Manila sea-level example, which reports no sea level.** **Done 2026-11-09:** its second workflow
+reports 1,124 mm at gauge 145 by 2100 (SSP2-4.5, with vertical land motion, middle quantile), in its own repository
+([195](docs/experiments/195-the-sea-level-example-reports-a-sea-level.md)). As raised:
 _Raised 2026-10-26 by the practitioner: **"that is a useless worked example if titled sea level
 rise."** Checked, and the criticism holds._ `assignSites` reads the AR6 extract **only to narrow
 which gauges are usable** — `usable` is the set of sites whose `site_id` appears in the extract —
@@ -2927,7 +2930,9 @@ Remaining here:
 
 ## Known and recorded, not yet scheduled
 
-- **Checks 40 and 41 in the lab's browser kernel.** Run in CPython only on 2026-11-09.
+- **Checks 26 and 40 cannot run in the lab's browser kernel**: neither rapidfuzz nor jellyfish is in Pyodide v314.0.6.
+  Both pass in CPython only. Check 41 passed in the browser kernel on 2026-11-09. A Jaro-Winkler written in the lab
+  would run there, but would not be by other authors.
 
 **A computations audit: does the code state the equation the source paper states?** Named by the
 practitioner on 2026-10-30, while refusing an argument made in

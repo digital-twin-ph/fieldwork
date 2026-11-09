@@ -15,7 +15,6 @@ import {blankWorkflow} from './study-area.js';
 import {johnSnowExample,snowExtentExample} from './john-snow.js';
 import {oldNalediWorkflow} from './old-naledi.js';
 import {geoprivacyExample} from './geoprivacy-example.js';
-import {seaLevelExample} from './sea-level-example.js';
 import {rasterExample} from './raster-example.js';
 import {hagellochExample} from './hagelloch-example.js';
 
@@ -27,7 +26,6 @@ export const EXAMPLE_TEMPLATES:Record<string,()=>Workflow>={
   'snow-voronoi':()=>johnSnowExample('snow-voronoi'),
   'snow-isochrone':()=>johnSnowExample('snow-isochrone'),
   'snow-geoprivacy':geoprivacyExample,
-  'sea-level':seaLevelExample,
   'snow-extent':snowExtentExample,
   hagelloch:hagellochExample,
 };

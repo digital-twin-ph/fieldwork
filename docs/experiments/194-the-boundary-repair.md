@@ -1,6 +1,6 @@
 # 194 · The boundary repair
 
-_Created 2026-11-08 · Updated 2026-11-08_
+_Created 2026-11-08 · Updated 2026-11-09_
 
 **Status:** tried. Study area removes two faults from a published boundary as it is read, a point written twice in
 a row and the tip of a zero-width spike, and records every vertex it removes. Validation Lab check 41 agrees with
@@ -67,8 +67,8 @@ fails.
 
 ## What would close it
 
-The lab check agrees. Still open: the repair met on a second source where it runs, and check 41 in the lab's browser
-kernel.
+The lab check agrees, in CPython and, on 2026-11-09, in the lab's browser kernel (shapely 2.1.2, GEOS 3.12.1). Still
+open: the repair met on a second source where it runs.
 
 ## What this does not establish
 

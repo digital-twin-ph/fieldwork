@@ -102,7 +102,8 @@ Found: the map's key printed a class **"6.72 to 6.72"**. Not two equal rates: th
 
 ## What would close it
 
-WebKit passing in CI, and check 40 run in the lab's browser kernel.
+WebKit passing in CI, and check 40 run in the lab's browser kernel. On 2026-11-09 it could not run there: neither
+rapidfuzz nor jellyfish is in Pyodide v314.0.6, the same as for check 26.
 
 ## What this does not establish
 

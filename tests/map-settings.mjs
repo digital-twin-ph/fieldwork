@@ -12,3 +12,15 @@ export async function inMapSettings(page,act,{apply=true}={}){
   await expect(dialog).toBeHidden();
   return out;
 }
+
+/** TABLE'S SETTINGS ARE IN ITS DIALOG too (experiment 186, 2026-11-09): how a reasoning result is shown, and the totals. */
+export async function inTableSettings(page,act,{apply=true}={}){
+  await page.locator('#configure-step').click();
+  const dialog=page.locator('#table-config');
+  await expect(dialog).toBeVisible();
+  const out=await act(dialog);
+  await dialog.locator(apply?'#config-apply':'#config-cancel').click();
+  if(!apply&&await page.locator('#config-discard').count())await page.locator('#config-discard').click();
+  await expect(dialog).toBeHidden();
+  return out;
+}

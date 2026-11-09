@@ -6,7 +6,6 @@
   "heat",
   "old-naledi",
   "raster",
-  "sea-level",
   "snow-extent",
   "snow-geoprivacy",
   "snow-isochrone",
@@ -18,6 +17,7 @@
   "nyc-asthma-ozone-2016-2025",
   "oswego-1940",
   "salmonella-germany-2021",
+  "sea-level-rise-philippines",
   "sierra-leone-measles",
   "south-london-1854",
   "workflows-rulesets"
@@ -73,7 +73,7 @@
     "heat",
     "nigeria-immunization-2024",
     "old-naledi",
-    "sea-level",
+    "sea-level-rise-philippines",
     "sierra-leone-measles",
     "snow-extent",
     "south-london-1854",
@@ -237,10 +237,9 @@
   {
    "nodeType": "find_health_facilities",
    "exampleUses": [
-    "sea-level",
     "sierra-leone-measles"
    ],
-   "exampleUseCount": 2,
+   "exampleUseCount": 1,
    "lab": "blocked",
    "labOwed": true,
    "fieldUse": [],
@@ -320,7 +319,7 @@
     "old-naledi",
     "oswego-1940",
     "raster",
-    "sea-level",
+    "sea-level-rise-philippines",
     "sierra-leone-measles",
     "snow-extent",
     "snow-geoprivacy",
@@ -397,7 +396,7 @@
     "nyc-asthma-ozone-2016-2025",
     "old-naledi",
     "oswego-1940",
-    "sea-level",
+    "sea-level-rise-philippines",
     "snow-extent",
     "snow-geoprivacy",
     "snow-isochrone",
@@ -483,10 +482,11 @@
    "exampleUses": [
     "brazil-dengue-rj-2024",
     "nyc-asthma-ozone-2016-2025",
+    "sea-level-rise-philippines",
     "sierra-leone-measles",
     "south-london-1854"
    ],
-   "exampleUseCount": 4,
+   "exampleUseCount": 5,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],
@@ -544,10 +544,11 @@
     "nigeria-immunization-2024",
     "nyc-asthma-ozone-2016-2025",
     "salmonella-germany-2021",
+    "sea-level-rise-philippines",
     "sierra-leone-measles",
     "south-london-1854"
    ],
-   "exampleUseCount": 6,
+   "exampleUseCount": 7,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],
@@ -556,7 +557,7 @@
   {
    "nodeType": "slr_site_assignment",
    "exampleUses": [
-    "sea-level"
+    "sea-level-rise-philippines"
    ],
    "exampleUseCount": 1,
    "lab": "awaiting",
@@ -602,7 +603,7 @@
     "old-naledi",
     "oswego-1940",
     "raster",
-    "sea-level",
+    "sea-level-rise-philippines",
     "sierra-leone-measles",
     "snow-geoprivacy",
     "snow-isochrone",
@@ -668,7 +669,7 @@
     "nyc-asthma-ozone-2016-2025",
     "oswego-1940",
     "salmonella-germany-2021",
-    "sea-level",
+    "sea-level-rise-philippines",
     "sierra-leone-measles",
     "snow-extent",
     "snow-isochrone",
@@ -692,7 +693,7 @@
     "old-naledi",
     "oswego-1940",
     "salmonella-germany-2021",
-    "sea-level",
+    "sea-level-rise-philippines",
     "sierra-leone-measles",
     "snow-extent",
     "snow-geoprivacy",

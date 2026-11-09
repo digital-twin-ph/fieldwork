@@ -98,7 +98,7 @@ checks that the note describing the figure is filed in that same section.
 | **John Snow · walking catchments** | travel-time bands, as a plot and as an interactive map |
 | **Old Naledi · diagnostic access** | facilities coloured by the decision a ruleset reached |
 | **Old Naledi · raster clipping** | a clipped raster inside its boundary |
-| **Manila · coastal exposure** | facilities with their assigned projection site |
+| **Sea-level rise at Manila’s health facilities** (its own repository) | the study area, 194 facilities and the eight AR6 tide gauges |
 | **Geoprivacy** | the same records before and after being moved |
 
 ### It states its own shape in the write-up

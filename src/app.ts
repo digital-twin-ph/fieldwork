@@ -28,7 +28,6 @@ import {MARK_RADIUS_MIN,MARK_RADIUS_MAX} from './presentation.js';
 import {tidyLayout,alreadyTidy} from './layout.js';
 import {TILE_DEFAULT_MAX_ZOOM,TILE_MAX_ZOOMS,TILE_SOURCE,drawnBounds,importTiles,type TileExtractSpec} from './tile-extract.js';
 import {OVERTURE_DEFAULT_CONFIDENCE} from './overture-places.js';
-import {seaLevelExample} from './sea-level-example.js';
 import {hagellochExample} from './hagelloch-example.js';
 import {openRuleEditor} from './rule-editor.js';
 import {openStepViewer,openTableViewer,shapeChange,stepLabels,tableViewOf,type TableView} from './table-viewer.js';
@@ -404,7 +403,7 @@ function writeProjects(projects:Project[]):boolean{
 // example has an area node and was silently labelled, described and noted as Old Naledi until
 // it was added. This is the "examples are the default world" problem in TODO.md, in the one
 // place it is least visible.
-const NAMED_WORKSPACES=['blank','raster','sea-level','hagelloch'];
+const NAMED_WORKSPACES=['blank','raster','hagelloch'];
 // A workflow a practitioner created is NOT an example, and the study-area fallback below would
 // label it Old Naledi -- the "examples are the default world" problem, reached at last by a real
 // workflow rather than by a new example. `projectId` is the discriminator: it is set only on a
@@ -991,7 +990,7 @@ function drawRunProgress(){
 /** THE WIDGETS WHOSE INSPECTOR FOLLOWS THE STANDARD (experiment 186): Name, Inputs, Settings, Result, the links,
  *  Actions, in that order and nothing else, with every setting in the widget's configuration dialog. One at a time,
  *  Relate first; the set grows as each widget is moved, and a check holds them to it. */
-export const STANDARD_INSPECTOR=new Set<NodeType>(['relate_table','select_rows','table_input','find_health_facilities','group_table','apply_ruleset','map_output','deduplicate_points','rate','study_area']);
+export const STANDARD_INSPECTOR=new Set<NodeType>(['table_output','relate_table','select_rows','table_input','find_health_facilities','group_table','apply_ruleset','map_output','deduplicate_points','rate','study_area']);
 function samplerProduct(node:WorkflowNode){
   const up=(id:string,port:string)=>{const e=workflow.edges.find(x=>x.to===id&&x.port===port);return e?workflow.nodes.find(m=>m.id===e.from):undefined;};
   const search=up(node.id,'files'),find=search?up(search.id,'product'):undefined;
@@ -1096,6 +1095,9 @@ function upstreamKeyValues(node:WorkflowNode,seen=new Set<string>(),
     const span=search?.type==='search_satellite_catalog'&&search.params.from?sampleDays(search.params.from,search.params.until||search.params.from):[];
     return Object.fromEntries(SAMPLE_KEYS.map(k=>k==='point_id'?[idColumn,ids]:[k,k==='date'?span:[]]));
   }
+  // AN ASSIGNMENT'S COLUMNS ARE KNOWN BEFORE IT RUNS: the point and the site it was given. Relate after it, bringing a
+  // projection onto each point, offered no column at all (found 2026-11-09 building the sea-level example's manual).
+  if(up.type==='slr_site_assignment')return Object.fromEntries(SITE_ASSIGNMENT_TABLE_KEYS.map(k=>[k,[]]));
   // Totalling DROPS the columns not kept, so offering them downstream would offer a column that
   // is no longer there.
   if(up.type==='group_table'){
@@ -1318,7 +1320,6 @@ function render(){
   // work, not the steps, and remain true of a canvas built on top of one.
   if(exampleKey(workflow)==='blank'){$('#project-description').textContent='Developmental evaluation · define a study area and inspect its semantic representation.';$('#example-note').textContent='Experiment 01 · draw → inspect facts → run the rule';$('#canvas-example').textContent='STUDY AREA · EXPERIMENT 01';$('#footer-context').textContent='User-defined study area · CRS84 · local reasoning';}
   if(exampleKey(workflow)==='raster'){$('#project-description').textContent='Prepare a local raster, preview and adjust the clipping boundary, then run and inspect the clipped result.';$('#example-note').textContent='1 Prepare raster / 2 Preview and adjust / 3 Run workflow';$('#canvas-example').textContent='OLD NALEDI / RASTER CLIPPING';$('#footer-context').textContent='Native raster cells / adjustable polygon mask / local file and source citation';}
-  if(exampleKey(workflow)==='sea-level'){$('#project-description').textContent='Published AR6 sea-level projections against real Manila health facilities: which gauge, how far away.';$('#example-note').textContent='Projections are IPCC AR6, CC BY 4.0, in millimetres against the 1995\u20132014 baseline. Facilities are OpenStreetMap, ODbL. No elevation is supplied, so nothing here is compared against one \u2014 and none of it is an inundation model.';}
   if(exampleKey(workflow).startsWith('snow-')){$('#project-description').textContent='Historical pump and death-location tables; explicit metric catchment computations and source evidence.';$('#example-note').textContent='250 locations / 489 deaths; network is a modern OSM snapshot, not 1854 streets';$('#canvas-example').textContent='JOHN SNOW / CATCHMENT WORKED EXAMPLE';$('#footer-context').textContent='CRS84 inputs and outputs / UTM computation / method parameters in evidence';}
   if(exampleKey(workflow)==='snow-geoprivacy'){$('#project-description').textContent='Compare private source points with moved points and H3 cell aggregates.';$('#example-note').textContent='Before views and workflow exports contain source coordinates; after views are educational transformations, not privacy guarantees';$('#canvas-example').textContent='JOHN SNOW / GEOPRIVACY EXPERIMENT';$('#footer-context').textContent='CRS84 · seeded donut · H3 aggregation · hide and map encryption remain TODO';}
   // The practitioner met this twice before it was fixed, which is why it is withdrawn here rather
@@ -1767,6 +1768,53 @@ function pinnedNotices(ruleset:Ruleset,pinnedVersion:string):string{
     +`<p>${esc(obligation.whatYouTakeOn)}</p><p><strong>How to acknowledge it.</strong> ${esc(obligation.howToAcknowledge)}</p>`
     +`<p><strong>If you do not.</strong> ${esc(obligation.ifYouDoNot)}</p></div>`;
   return html;
+}
+
+/** WHAT A TABLE OUTPUT SHOWS, in one sentence, from what is wired. */
+function tableOutputSentence(n:WorkflowNode<'table_output'>,mode:ReturnType<typeof shownMode>):string{
+  const from=(port:string)=>{const e=workflow.edges.find(x=>x.to===n.id&&x.port===port);const up=e&&workflow.nodes.find(m=>m.id===e.from);
+    return up?(up.params.label||TYPES[up.type].title):'';};
+  if(mode==='table')return `Shows the rows of ${from('table')||'the table connected'} as they stand${n.params.totalsAsserted?', with totals you asserted':''}.`;
+  if(mode==='decisions')return `Shows the conclusions of ${from('decisions')||'the reasoning result connected'}.`;
+  if(mode==='polygons')return 'Shows the polygon layers connected and their summaries.';
+  return workflow.edges.some(e=>e.to===n.id)?'Shows the point records connected, with their coordinates and every attribute.'
+    :'Nothing is connected yet, so this table has nothing to show.';
+}
+
+/** TABLE'S CONFIGURATION DIALOG (experiment 186): how a reasoning result is shown, and the totals claim. Both on a draft,
+ *  written by Apply. Turning a reasoning table into a map or a chart changes the step itself. */
+function openTableConfig(nodeId:string){
+  const node=getNode(workflow,nodeId,'table_output');
+  type Draft=WorkflowNode<'table_output'>['params']&{view?:'map'|'table'|'bars'};
+  const mode=shownMode(node,workflow.edges);
+  openConfigDialog<Draft>({
+    id:'table-config',widget:'Table',step:node.params.label||TYPES.table_output.title,draft:structuredClone(node.params),
+    sections:draft=>{
+      let settings='';
+      if(mode==='decisions')settings+=`<div class="field"><label class="field-label" for="output-view">Display as</label><select id="output-view">`
+        +`<option value="table" ${draft.view&&draft.view!=='table'?'':'selected'}>Table</option><option value="map" ${draft.view==='map'?'selected':''}>Map</option><option value="bars" ${draft.view==='bars'?'selected':''}>Chart</option></select></div>`;
+      // THE MARGINS AN EPIDEMIOLOGIST READS FIRST, and the claim that earns them (2026-10-26). Offered only for a table,
+      // and only where the table does not already state its unit.
+      if(mode==='table'&&!tableUnitFor(node))settings+=`<label class="check"><input type="checkbox" id="output-totals" ${draft.totalsAsserted?'checked':''}> Show totals: these values count the same thing</label>`
+        +'<p class="description">Tick it only where every cell counts the same thing. The figure says you asserted it, because nothing here can check it.</p>';
+      if(!settings)settings='<p class="muted">Nothing to set: what you connect decides how it is shown.</p>';
+      const shows={table:'Rows are shown as imported, an absent value as unknown.',decisions:'Existing results, with nothing inferred or left out.',
+        other:'Every point with its coordinates and attributes, missing ones included.'};
+      return {settings,preview:`<p class="muted">${mode==='table'?shows.table:mode==='decisions'?shows.decisions:shows.other}</p>`};
+    },
+    wire:(root,draft,redraw)=>{
+      root.querySelector<HTMLSelectElement>('#output-view')?.addEventListener('change',e=>{draft.view=(e.target as HTMLSelectElement).value as Draft['view'];redraw();});
+      root.querySelector<HTMLInputElement>('#output-totals')?.addEventListener('change',e=>{
+        if((e.target as HTMLInputElement).checked)draft.totalsAsserted=true;else delete draft.totalsAsserted;redraw();});
+    },
+    apply:draft=>{
+      const {view,...params}=draft;
+      if(view&&view!=='table'){change(w=>{const index=w.nodes.findIndex(x=>x.id===nodeId);
+        w.nodes[index]={...w.nodes[index]!,type:'output',params:{label:params.label,view}} as never;});return;}
+      change(w=>{getNode(w,nodeId,'table_output').params=params;},{spatial:false});
+      renderResults();
+    },
+  },esc);
 }
 
 /** MAP'S CONFIGURATION DIALOG (experiment 186): every setting of the figure on a draft, written by Apply. All of them are
@@ -2559,34 +2607,30 @@ function renderInspector(){
     if(n.type==='chart_output')content+=chartControls(n);
     // nor here: a map's communication controls are in its own branch.
   }else if(n.type==='table_output'){
-
-    // WHAT IS WIRED, NOT WHAT IT WAS TOLD. The selector that used to sit here asked the
-    // practitioner the shape of a thing before they had it, and cleared their connections when
-    // they answered. `a-map-has-layers-not-modes` removed it from the map on 2026-10-15 and left
-    // it here, where it refused a Relate-a-column connection on 2026-10-27.
+    // THE STANDARD INSPECTOR (experiment 186): the name, which is the Results tab's, and where the figure goes in the
+    // write-up; the inputs, every port a table can show; one sentence and Configure…; and what the last run showed.
+    // Touched for the sea-level example (0.68.0), when a number stopped becoming its headings: touched widgets move to
+    // the standard, always. WHAT IS WIRED decides how it is shown, never a mode chosen first.
     const mode=shownMode(n,workflow.edges);
-    const outputType='table',reasoning=mode==='decisions',raster=false,tabular=mode==='table';
-    content+=`<p class="description">Every port a table can show is offered. What you connect `
-      +`decides how it is shown: a keyed table, catchment polygons, reasoning results, or point `
-      +`layers. Nothing to set first, and connecting removes nothing.</p>`;
-    if(reasoning)content+=`<div class="field"><label class="field-label" for="output-view">Display as</label><select id="output-view"><option value="map">Map</option><option value="table" selected>Table</option><option value="bars">Chart</option></select></div>`;
-    content+=`<div class="field"><label class="field-label" for="${outputType}-label">Results tab name</label><input id="${outputType}-label" maxlength="60" value="${esc(n.params.label)}"></div><p class="description">${tabular?'Showing a keyed table.':reasoning?'Showing reasoning results.':mode==='polygons'?'Showing polygon layers and their summaries.':'Nothing connected yet \u2014 connect whatever you have.'}</p>`;
-    content+=nodeInputs(n).map(([port,type])=>{const edge=workflow.edges.find(e=>e.to===n.id&&e.port===port);return `<div class="field"><label class="field-label" for="${outputType}-${port}">${({area:'Study area',coverage:'Or: spatial coverage check',decisions:'Reasoning result',table:'Tabular data',raster:raster?'Raster':'Or: Raster',network:'Street network'}[port]||'Point data '+(port==='points'?1:port.split('_')[1]))}</label><select id="${outputType}-${port}" data-map-port="${port}"><option value="">Select input</option>${workflow.nodes.filter(x=>outputOf(x)===type).map(x=>`<option value="${esc(x.id)}" ${edge?.from===x.id?'selected':''}>${esc(x.params.label||TYPES[x.type].title)} · ${esc(x.id)}</option>`).join('')}</select></div>`;}).join('');
-    // THE MARGINS AN EPIDEMIOLOGIST READS FIRST, and the claim that earns them. A grid totals
-    // where the table states a unit, which Snow's Table IX correctly does not: as imported it
-    // holds houses beside deaths. Selecting two measures that both count houses makes the cells
-    // addable and nothing in the table records it, so the claim is made here, by the person
-    // composing the figure. Offered only for a tabular output, and only where the table does not
-    // already say it. 2026-10-26.
-    if(tabular&&!tableUnitFor(n))
-      content+=`<label class="check"><input type="checkbox" id="output-totals" `
-        +`${n.params.totalsAsserted?'checked':''}> Show totals: these values count the same thing</label>`
-        +`<p class="description">A 2&times;2 is read with its margins. Tick this only where every `
-        +`cell counts the same thing — deaths beside houses without a death both count houses, `
-        +`deaths beside population do not. The figure says that you asserted it, because nothing `
-        +`here can check it.</p>`;
-    content+=tabular?'<div class="notice">Rows are shown as imported, with absent values displayed as unknown and an unstated unit named as unstated. Search covers every key column and the value. Works offline.</div>':raster?'<div class="notice">Colors show relative cell values; gray cells are NoData. Download GeoTIFF preserves native values and georeferencing.</div>':reasoning?'<div class="notice">This is a presentation of existing results, with no new inference or exclusion.</div>':outputType==='table'?'<div class="notice">Rows include coordinates and all point attributes. Missing coordinates and excluded records remain visible. Search covers all rows and attributes; large tables use row and attribute pages. Works offline.</div>':'<div class="notice">The map fits the polygon and every located point, including outside records. Missing coordinates appear in a selectable list. This local map works offline.</div>';
-    // map_output has its own branch above; this one is table_output alone.
+    const at=figureSection(n.params,n.type),fallback=DEFAULT_FIGURE_SECTIONS[n.type];
+    content+=standardSection('Name',`<div class="field"><label class="field-label" for="table-label">Results tab name</label><input id="table-label" maxlength="60" value="${esc(n.params.label)}"></div>`
+      +`<div class="field"><label class="field-label" for="output-section">In the write-up, under</label>`
+      +`<select id="output-section">${FIGURE_SECTIONS.map(s=>`<option value="${s}" ${s===at?'selected':''}>${s}${s===fallback?' (default)':''}</option>`).join('')}</select></div>`);
+    const portName=(port:string)=>({area:'Study area',coverage:'Or: spatial coverage check',decisions:'Reasoning result',table:'Tabular data',raster:'Or: Raster',network:'Street network',polygons:'Polygons'} as Record<string,string>)[port]
+      ||'Point data '+(port==='points'?1:port.split('_')[1]);
+    let inputs=`<p class="description">What you connect decides how it is shown.</p>`
+      +nodeInputs(n).map(([port,type])=>{const edge=workflow.edges.find(e=>e.to===n.id&&e.port===port);
+        return `<div class="field"><label class="field-label" for="table-${port}">${esc(portName(port))}</label><select id="table-${port}" data-map-port="${port}"><option value="">Not connected</option>`
+          +workflow.nodes.filter(x=>x.id!==n.id&&outputOf(x)===type).map(x=>`<option value="${esc(x.id)}" ${edge?.from===x.id?'selected':''}>${esc(x.params.label||TYPES[x.type].title)}</option>`).join('')+'</select></div>';}).join('');
+    if(!n.params.inputMode||n.params.inputMode==='spatial')
+      inputs+=`<div class="inspector-actions"><button id="add-point-input" class="button small" ${(n.params.pointInputCount??1)>=MAX_POINT_LAYERS?'disabled':''}>＋ Add point input</button><button id="remove-point-input" class="button small" ${(n.params.pointInputCount??1)<=1?'disabled':''}>Remove last input</button></div>`;
+    content+=standardSection('Inputs',inputs);
+    content+=standardSection('Settings',`<p class="standard-sentence">${esc(tableOutputSentence(n,mode))}</p>`
+      +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button></div>');
+    const shown=result?.outputs.find(o=>o.nodeId===n.id);
+    const why=result?.unfinished?.find(u=>u.nodeId===n.id)?.message;
+    content+=standardSection('Result',`<p class="standard-result${why?' standard-result-warning':''}">${esc(why?`The last run could not compute this step: ${why}`
+      :shown?`Shown in Results, under "${n.params.label||'Table'}".`:'Not run yet.')}</p>`);
   }else if(n.type==='polygon_input'){
     // The connected study area, which scopes an acquisition. `previewArea` throws when nothing is
     // connected, and that is a legitimate state: a layer read from a file needs no area at all,
@@ -3491,7 +3535,6 @@ function renderInspector(){
   }
   if(['study_area','point_input','places','centers','measure_area','coverage_check','map_output','table_output'].includes(n.type))content+='<div class="source-card" data-spatial-reference><span class="inspector-section">Coordinate reference system</span><h3>WGS84 · EPSG:4326</h3><p>Stored coordinates: longitude, latitude in degrees (OGC:CRS84). A source reads degrees or a UTM zone and converts on import; Reproject points projects mid-workflow.</p></div>';
   // A map can always take another point layer: there is no mode in which it cannot draw points.
-  if(n.type==='table_output'&&(!n.params.inputMode||n.params.inputMode==='spatial'))content+=`<div class="inspector-actions"><button id="add-point-input" class="button small" ${(n.params.pointInputCount??1)>=MAX_POINT_LAYERS?'disabled':''}>＋ Add point input</button><button id="remove-point-input" class="button small" ${(n.params.pointInputCount??1)<=1?'disabled':''}>Remove last input</button></div><p class="muted">${n.type==='table_output'?'No boundary required for point inputs':'One study boundary'} · up to 8 point layers and 2,000 records combined. Each added port needs a source.</p>`;
   if(exampleKey(workflow)==='raster'&&(n.type==='raster_input'||n.type==='clip_raster'))content+='<div class="source-card"><span class="inspector-section">Raster workflow steps</span><p>Prepare your GeoTIFF and citation, preview the clip, then Run workflow to populate the map.</p><div class="inspector-actions">'+(['raster_input','clip_raster','map_output'] as NodeType[]).map((type,i)=>{const target=workflow.nodes.find(x=>x.type===type);return '<button class="button small" data-raster-step="'+esc(target?.id||'')+'" '+(!target?'disabled':'')+'>'+[ '1. Raster input','2. Clip parameters','3. Map'][i]+'</button>';}).join('')+'</div></div>';
   if(standard){
     // MANUAL · EVIDENCE · VERSION, the same three on every standard step, then the actions.
@@ -3580,7 +3623,7 @@ function renderInspector(){
   }
   // WHERE THIS FIGURE GOES IN THE WRITE-UP, for every output widget: Results unless chosen otherwise. The practitioner,
   // 2026-11-05: "all output widgets may have default IMRAD sections but it should be flexible."
-  if(n.type==='table_output'||n.type==='chart_output'){
+  if(n.type==='chart_output'){
     const at=figureSection(n.params,n.type),fallback=DEFAULT_FIGURE_SECTIONS[n.type];
     const field=`<div class="field"><label class="field-label" for="output-section">In the write-up, under</label>`
       +`<select id="output-section">${FIGURE_SECTIONS.map(s=>`<option value="${s}" ${s===at?'selected':''}>${s}${s===fallback?' (default)':''}</option>`).join('')}</select></div>`;
@@ -3877,6 +3920,7 @@ function renderInspector(){
   // TOTAL WITHIN GROUPS' CONFIGURATION DIALOG (experiments 186 and 191): given the columns coming in and, where it
   // resolves without a run, the table, so the preview is the table the draft would make. Only Apply writes.
   if(n.type==='map_output')optionalElement('#configure-step')?.addEventListener('click',()=>openMapConfig(n.id));
+  if(n.type==='table_output')optionalElement('#configure-step')?.addEventListener('click',()=>openTableConfig(n.id));
   if(n.type==='group_table')optionalElement('#configure-step')?.addEventListener('click',()=>{
     const node=workflow.nodes.find(x=>x.id===n.id);
     if(node?.type!=='group_table')return;
@@ -4540,6 +4584,7 @@ function renderInspector(){
         // one that disagrees with the keys.
         if(result.wide)node.params.wide=result.wide;else delete node.params.wide;
         if(result.remote)node.params.remote=result.remote;else delete node.params.remote;
+        if(result.distinctValuesFor?.length)node.params.distinctValuesFor=result.distinctValuesFor;else delete node.params.distinctValuesFor;
         // The file's own labels as proposals; what the practitioner has accepted is never replaced by them.
         if(result.proposed){const held=node.params.columns??{};
           node.params.columns={...result.proposed,...Object.fromEntries(Object.entries(held).filter(([,m])=>m.confirmed))};}
@@ -4550,7 +4595,7 @@ function renderInspector(){
         else{delete node.params.sourceTable;delete node.params.sourceRef;delete node.params.convertOnRun;}
         if(result.source_table){if(result.convertOnRun)node.params.convertOnRun=true;else delete node.params.convertOnRun;}},{requirePersistence:true});
     },current.keys.length?{keys:current.keys,valueField:current.valueField,unit:current.unit,primaryKey:current.data.primaryKey,secondaryKeys:current.data.secondaryKeys,
-      ...(current.wide?{wide:current.wide}:{})}:undefined,
+      ...(current.wide?{wide:current.wide}:{}),...(current.distinctValuesFor?.length?{distinctValuesFor:current.distinctValuesFor}:{})}:undefined,
     // THE STANDARD FRAME: the step's own name, and the one setting that can be applied without reading the file again.
     {step:current.label||'Tabular data',convertOnRun:!!current.convertOnRun,hasSource:!!current.sourceTable,
       onConvertOnRun:on=>change(w=>{const node=getNode(w,n.id,'table_input');if(on)node.params.convertOnRun=true;else delete node.params.convertOnRun;})});

@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {inTableSettings} from './map-settings.mjs';
 import {useClassicBars} from './classic-bars.mjs';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
@@ -27,7 +28,7 @@ test('shared Chart supports migration, source selection, view switching, evidenc
   await page.locator('#chart-decisions').selectOption('');await page.locator('#chart-decisions').selectOption('criteria');
   await page.locator('#output-view').selectOption('table');await expect(page.locator('#table-decisions')).toHaveValue('criteria');
   await page.locator('[data-view="results"]').click();
-  await page.locator('#output-view').selectOption('bars');await expect(page.locator('#chart-decisions')).toHaveValue('criteria');await run();
+  await inTableSettings(page,d=>d.locator('#output-view').selectOption('bars'));await expect(page.locator('#chart-decisions')).toHaveValue('criteria');await run();
   // The view switches above re-save the node, so the classic bars are selected again before the
   // caption they produce is read: the Vega caption says "8 input records" instead.
   await useClassicBars(page,'chart');

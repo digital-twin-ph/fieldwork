@@ -25,10 +25,21 @@ path is the general one.
 ## How to use it
 
 1. Add it, or use **Quick Look** on a step and open its table from there.
-2. Drag from the step's output to the port that matches what it produces.
+2. Drag from the step's output to the port that matches what it produces, or choose it under **Inputs**.
 3. Name the Results tab.
 
+The step's panel holds its **Name** and where it goes in the write-up, its **Inputs**, one sentence saying what it
+shows, **Configure…**, and what the last run showed.
+
+| In Configure… | When it is offered |
+| --- | --- |
+| **Show totals: these values count the same thing** | A keyed table that states no unit. Tick it only where every cell counts the same thing; the figure says you asserted it |
+| **Display as**: Table, Map or Chart | A reasoning result. Map or Chart changes the step into that output |
+
 Nothing is required. A table with nothing connected is **unfinished**, not broken, and says so.
+
+A column that holds a number, such as a projection Relate brought beside each row, is always drawn as a column with
+its own heading, even where every row holds the same number.
 
 ### It states its own shape in the write-up
 
@@ -50,7 +61,7 @@ being rewritten by every run.
 
 ### Where it goes in the write-up
 
-**In the write-up, under**, just below **Results tab name** in the Inspector, chooses the part of the Notes write-up this output's figure and its note go in:
+**In the write-up, under**, just below **Results tab name** in the panel, chooses the part of the Notes write-up this output's figure and its note go in:
 Introduction, Methods, Results or Discussion. **Results** is the default. A map of the study area belongs in the
 Introduction; a figure that shows how the analysis was done can go in Methods. References is not offered, because it
 holds works and not figures. The run's receipt states the section and whether you chose it, and a validation rule
@@ -62,7 +73,8 @@ checks that the note describing the figure is filed in that same section.
   something never removes a connection you already made. **Map** works the same way.
 - **It will not chart the table.** Charting one means choosing which key varies and whether to
   aggregate, which is a decision rather than a port. Use **Chart**.
-- **It will not total anything.** It shows the rows it is given. Use **Total within groups**.
+- **It will not total anything you have not said can be added.** Margins appear only with **Show totals**. To total
+  rows into groups, use **Total within groups**.
 
 ## Where it is used
 

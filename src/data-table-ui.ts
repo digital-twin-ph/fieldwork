@@ -18,12 +18,14 @@ export interface TableImport {data:DataTable; source:DataTableSource; keys:strin
   /** The parsed file, carried only for a wide read, so the node can melt it again on each run. */
   source_table?:{headers:string[];rows:string[][]};
   /** Melt the source table on each run, rather than use the table stored at import. */
-  convertOnRun?:boolean}
+  convertOnRun?:boolean;
+  /** Key columns whose distinct values the table lists, for a step that needs them as a list. */
+  distinctValuesFor?:string[]}
 /** THE STANDARD FRAME (experiment 186): the step's name in the heading, and the one setting that lives on the node rather
  *  than in the file -- whether the source is converted on each run -- which can be applied without reading a file again. */
 export interface TableFrame {step?:string; convertOnRun?:boolean; hasSource?:boolean; onConvertOnRun?:(on:boolean)=>boolean}
 /** What the editor reopens with. `wide` present means the file was read as wide. */
-export interface TableReopen extends TableSelection {wide?:WideChoice}
+export interface TableReopen extends TableSelection {wide?:WideChoice; distinctValuesFor?:string[]}
 
 /** Reads a CSV in either shape, and ASSUMES WIDE on a fresh import.
  *
@@ -152,6 +154,11 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
     +'<button id="table-shape-accept" class="button" type="button"></button></div>'
     +'<fieldset id="table-keys" hidden><legend>Key columns</legend><p class="muted" id="table-keys-says"></p></fieldset>'
     +'<fieldset id="table-key-roles" hidden></fieldset>'
+    // A COLUMN'S VALUES AS A LIST, asked for where the file enters (experiment 115, P3). Assign projection site reads its
+    // sites from here, and until 2026-11-09 only code could ask: a workflow built in the application refused to run.
+    +'<fieldset id="table-distinct" hidden><legend>List the distinct values of</legend><p class="muted">For a step that '
+    +'needs a column\u2019s values as a list, such as the sites Assign projection site assigns against.</p>'
+    +'<div id="table-distinct-boxes"></div></fieldset>'
     +'<fieldset id="table-values" hidden><legend>Value columns</legend><p class="muted">The variables to take. Named rather than inferred, so a column the file gains later is absent from this analysis by decision rather than by accident.</p></fieldset>'
     +'<div id="table-long-value"><label class="field-label" for="table-value">Value column</label><select id="table-value" disabled></select></div>'
     +'<div id="table-wide-names" hidden><label class="field-label" for="table-measure-key">Name for the column holding the variable names</label><input id="table-measure-key" maxlength="40" value="measure">'
@@ -195,6 +202,17 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
   const afterPane=q<HTMLElement>('#table-after'),reconcile=q<HTMLElement>('#table-reconcile');
   const error=q<HTMLElement>('#table-error'),save=q<HTMLButtonElement>('#table-save'),cancel=q<HTMLButtonElement>('#table-cancel');
   if(existing?.unit)unitInput.value=existing.unit;
+  const distinctBox=q<HTMLFieldSetElement>('#table-distinct'),distinctBoxes=q<HTMLElement>('#table-distinct-boxes');
+  let distinctChosen=new Set(existing?.distinctValuesFor??[]);
+  const renderDistinct=(keys:string[])=>{
+    distinctBox.hidden=!keys.length;
+    distinctBoxes.innerHTML=keys.map(k=>`<label class="check"><input type="checkbox" value="${esc(k)}"${distinctChosen.has(k)?' checked':''}> ${esc(k)}</label>`).join('');
+  };
+  distinctBoxes.onchange=()=>{
+    distinctChosen=new Set([...distinctBoxes.querySelectorAll<HTMLInputElement>('input:checked')].map(b=>b.value));
+    if(result){const keys=result.keys.filter(k=>distinctChosen.has(k));
+      if(keys.length)result.distinctValuesFor=keys;else delete result.distinctValuesFor;}
+  };
   // AN EXISTING TABLE REOPENS IN ITS OWN SHAPE. A workflow saved before this control came in has
   // no `wide` block and was read long; re-reading it as wide would change the table under
   // whatever was built on it.
@@ -399,6 +417,8 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
         status.textContent=`${table.rowCount} rows, ${Object.keys(table.rows[0]?.key??{}).length} key columns, ${table.missingValueCount} values absent.`;
       }
       result=imported;
+      renderDistinct(imported.keys);
+      {const keys=imported.keys.filter(k=>distinctChosen.has(k));if(keys.length)result.distinctValuesFor=keys;}
       save.disabled=false;
       // A wide read keeps the file as published, so it can be converted on each run.
       const melts=!!imported.source_table;
@@ -714,13 +734,16 @@ export function wideFrame(table:DataTable):WideFrame|null{
     return [...perSubject.values()].every(set=>set.size===1);
   };
   const others=keys.filter(k=>k!==subject);
-  let axes=others.filter(k=>!describesSubject(k));
-  let attributes=others.filter(describesSubject);
+  // A NUMBER IS A VALUE, NEVER AN AXIS. A projection Relate brought beside each facility is one number for all 194, and
+  // promoted to the axis it headed the distances "1124" (found 2026-11-09, the sea-level example's second workflow).
+  const numeric=(k:string)=>Object.hasOwn(table.numericKeys??{},k);
+  let axes=others.filter(k=>!numeric(k)&&!describesSubject(k));
+  let attributes=others.filter(k=>numeric(k)||describesSubject(k));
   // A MELT OF ONE COLUMN leaves a measure key carrying a single name, which is one per subject
   // like any description. The melt puts that key last, so where nothing else can be the axis the
   // last key is promoted back to it.
-  if(!axes.length&&attributes.length){
-    const last=attributes[attributes.length-1];
+  if(!axes.length&&attributes.some(k=>!numeric(k))){
+    const last=attributes.filter(k=>!numeric(k)).at(-1)!;
     axes=[last];attributes=attributes.filter(k=>k!==last);
   }
   if(axes.length!==1)return null;
@@ -736,7 +759,7 @@ export function wideFrame(table:DataTable):WideFrame|null{
    *
    * With something describing the subject it is a table rather than a list: South London's
    * contingency Table XII melts one column and reads sub-district, water supply, deaths 1854. */
-  if(columns.length<2&&!attributes.length)return null;
+  if(columns.length<2&&!attributes.some(k=>!numeric(k)))return null;
   const order:string[]=[],byRow=new Map<string,WideFrame['rows'][number]>();
   for(const r of table.rows){
     const id=String(r.key[subject]);

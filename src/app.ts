@@ -866,7 +866,10 @@ function rulesAdd(node:WorkflowNode):{computed:string[]; categories:string[]; wi
 }
 function upstreamValueField(node:WorkflowNode,seen=new Set<string>()):string|undefined{
   const edge=workflow.edges.find(e=>e.to===node.id&&e.port===tablePortOf(node));
-  const up=edge?workflow.nodes.find(m=>m.id===edge.from):undefined;
+  return valueFieldOf(edge?workflow.nodes.find(m=>m.id===edge.from):undefined,seen);
+}
+/** The value column a step's own output carries, as far as its settings say, before any run. */
+function valueFieldOf(up:WorkflowNode|undefined,seen=new Set<string>()):string|undefined{
   if(!up||seen.has(up.id))return undefined;
   seen.add(up.id);
   if(up.type==='table_input')return up.params.data.valueField||up.params.valueField||undefined;
@@ -4141,8 +4144,9 @@ function renderInspector(){
     const p=node.params,here=upstreamKeyValues(node)??{},there=upstreamKeyValues(node,new Set(),'related')??{};
     const left=tableOnPort(workflow,n.id,'records'),right=tableOnPort(workflow,n.id,'related');
     const relatedValue=right?.valueField
-      ??(()=>{const e=workflow.edges.find(x=>x.to===n.id&&x.port==='related');const up=e&&workflow.nodes.find(m=>m.id===e.from);
-        return up?.type==='table_input'?(up.params.data.valueField||up.params.valueField||undefined):up?upstreamValueField(up):undefined;})();
+      // Before a run, from the second table's own settings: a count's column is "rows" (found 2026-11-09, Hagelloch's
+      // secondary cases, where the fallback read the step above the count and offered nothing to bring).
+      ??(()=>{const e=workflow.edges.find(x=>x.to===n.id&&x.port==='related');return valueFieldOf(e&&workflow.nodes.find(m=>m.id===e.from));})();
     openRelateConfig({
       step:p.label||TYPES[n.type].title,
       leftLabel:portSourceName(workflow,n.id,'records','the first table'),

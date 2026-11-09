@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {relateTable,relateShape} from '../build/relate-table.js';
 import {pointsAsTable,portAccepts} from '../build/core.js';
+import {groupTable} from '../build/group-table.js';
 import {authoredSubjects,dayNumber,readValue} from '../build/authored-application.js';
 import {evaluateAuthored,evaluatedTable} from '../build/rule-evaluation.js';
 import {authoredUnitProblems} from '../build/authored-rules.js';
@@ -72,4 +73,23 @@ test('a date anywhere else in arithmetic, or compared with a number, is refused 
   assert.match(authoredUnitProblems({fields,rules:plus,parameters:[]})[0].says,/a date can only be taken from another date/);
   const compared=[{any:[{all:[{field:'fwa:prodrome',comparator:'greaterThan',value:5}]}],then:[{predicate:'fwa:y',value:'fwa:late'}]}];
   assert.match(authoredUnitProblems({fields,rules:compared,parameters:[]})[0].says,/is a date, so it cannot be more or less than a number/);
+});
+
+test('secondary cases per child: counts by infector, related back, and a child nobody names is 0 and counted',()=>{
+  const t=pointsAsTable(cases);
+  const counts=groupTable(t,{by:['infector'],aggregate:'count'}).table;
+  const request={on:'case_ID',rightOn:'infector',bring:'rows',bringAs:'secondary_cases',normalisation:'exact'};
+  const shape=relateShape(t,counts,request);
+  assert.equal(shape.overlap.matched,62,'62 children are named as someone\'s infector');
+  assert.equal(shape.overlap.leftOnly,126,'and 126 are named by no one');
+  const words=relateTable(t,counts,{...request,unmatched:{decision:'keep',label:'none recorded',signature:shape.signature}}).table;
+  assert.equal(words.numericKeys.secondary_cases,undefined,'kept under a word, the column is a category');
+  const out=relateTable(t,counts,{...request,unmatched:{decision:'keep',label:'0',signature:shape.signature}}).table;
+  assert.equal(out.rows.length,188);
+  assert.equal(out.numericKeys.secondary_cases,'','kept as a number the practitioner names, it stays a number');
+  const n=out.rows.map(r=>Number(r.key.secondary_cases));
+  assert.equal(n.filter(v=>v===0).length,126);
+  assert.equal(n.reduce((a,b)=>a+b,0),184,'every case with an infector is counted once, as someone\'s');
+  assert.equal(Math.max(...n),30);
+  assert.equal(out.rows.find(r=>r.key.case_ID==='45').key.secondary_cases,'30');
 });

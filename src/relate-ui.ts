@@ -1,5 +1,5 @@
 import type {RelateShape,MeasureShare,RelateRequest,ShiftColumn} from './relate-table.js';
-import {rateMultiplier,machinedNotes,matchWords} from './relate-table.js';
+import {rateMultiplier,machinedNotes,matchWords,isNumberLabel} from './relate-table.js';
 import {DEFAULT_SPELLING_THRESHOLD,type SpellingSettings} from './spelling-match.js';
 import type {DataTable} from './data-table.js';
 import type {ParamsByType} from './types.js';
@@ -357,6 +357,8 @@ export function openRelateConfig(view:RelateConfigView,esc:Escape):void{
           +(draft.decision==='keep'
             ?'<div class="field"><label class="field-label" for="relate-join-label">Name for the category</label>'
               +`<input id="relate-join-label" maxlength="60" value="${esc(draft.label)}" placeholder="for example Supply not recorded"></div>`
+              +(isNumberLabel(draft.label)?'<p>A number is written as that number, and counted. Use one only where no match '
+                +'means none, as for a child nobody names as infector.</p>':'')
             :'')
           +(draft.decision?'':'<p class="standard-state"><strong>Not decided yet.</strong> The run refuses this join until you choose.</p>')
           +'<div class="field"><label class="field-label" for="relate-join-reason">Why (recorded in the evidence)</label>'

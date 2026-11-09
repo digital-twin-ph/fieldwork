@@ -202,7 +202,8 @@ contact list or follow-up, so it teaches chain analysis; contact listing and fol
 2. **Apply ruleset**, **days between two dates**: a `date` kind for a column the rules read, and `minus` between two
    date columns giving days. Not a new rule type: an extension of the computed columns (188). The serial interval.
    Later, `plus` of a date and days, giving a date, for the end of a contact's follow-up.
-3. **Total within groups** by `infector`: secondary cases per case.
+3. **Total within groups** by `infector`, counted, and related back to the cases on `case_ID`: secondary cases per
+   case, with the children nobody names as infector at 0 (built; below).
 4. **Map, a links layer** (the practitioner, 2026-11-09, asking whether a chart draws a contact tracing network: none
    does): a point layer and a column naming another point's id, drawn as a line from each case to its source.
 5. **Chart, a transmission tree over time**: each case at its onset, joined to its infector, so chains read as
@@ -227,6 +228,30 @@ infector's prodrome date and 4 with no infector are kept under "no infector reco
 prodrome minus infector's prodrome: 184 values, median 10 days, from 7 to 16; case 1, 21 Nov against case 45's 11 Nov,
 is 10. `tests/hagelloch-serial-interval.test.mjs` (5), `tests/hagelloch-who-infected-whom.browser.mjs` (1); the
 Relate and rules browser tests, 23, still pass. Not yet: steps 3 to 5, the lab notebook, and WebKit.
+
+## Step 3, built 2026-11-09: secondary cases per child, with the zeros
+
+**Total within groups**, a count by `infector`, gives 63 groups: 62 children named as someone's infector and one
+group of the 4 with none. Grouping alone loses the children who infected no one, because a child nobody names has
+no row to count. So the counts are related back to the cases, `case_ID` against `infector`: 62 match, **126 do not**.
+
+**Those 126 are a zero, not a gap**, and that is the practitioner's to declare. A child nobody names as infector
+infected no one *recorded*; that is what the record says, not a blank filled in. This is not the zeroing withdrawn
+from Total within groups on 2026-10-31 (*"opt to exclude them, not assign a zero value"*): there the cell was empty
+and a zero would claim a measurement; here every case is present and the count of those naming it is none. Relate
+already keeps unmatched rows under a category the practitioner types. **New: a category typed as a number is
+written as that number**, and the brought column stays a number, so the count can be added up, charted or divided.
+The dialog says *"A number is written as that number, and counted"*, and to use one only where no match means none.
+A word, such as "none recorded", keeps the column a category, as before.
+
+**Run, in Chromium and in Node:** 188 children; 126 infected no one recorded, 21 one, 16 two, 12 three, 6 four,
+2 six, 3 seven, 1 eight, and case 45, **30**. The counts add up to 184, every case with an infector counted once.
+Mean secondary cases 184/188 = 0.98, a figure from the record's reconstruction of who infected whom, not an
+estimate of R. `tests/hagelloch-serial-interval.test.mjs` (6), `tests/hagelloch-secondary-cases.browser.mjs` (1),
+by hand: the counts run first, then Relate connected in its Inspector and set in its dialog.
+
+**Found doing it by hand:** Relate's dialog, before Relate had run, offered nothing to bring from a count. Its
+fallback read the value column of the step *above* the count. Fixed: it reads the count's own, `rows`.
 
 ## What would close this
 

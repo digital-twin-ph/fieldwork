@@ -91,7 +91,7 @@
  "changes": [
   {
    "kind": "minor",
-   "description": "Brings a column under a name you give it (Bring it in as), so a table can be related to itself: Hagelloch's cases each gain their infector's prodrome date as infector_prodrome. Where the first table already has the column and no name is given, the refusal says to name one. Recorded as fw:broughtAs. And a point layer connects as a table: its attributes as columns, without its geometry (experiment 200)."
+   "description": "Brings a column under a name you give it (Bring it in as), so a table can be related to itself: Hagelloch's cases each gain their infector's prodrome date as infector_prodrome. Where the first table already has the column and no name is given, the refusal says to name one. Recorded as fw:broughtAs. And a point layer connects as a table: its attributes as columns, without its geometry (experiment 200). A kept category that is itself a number, typed, is written as that number and the brought column stays a number: Hagelloch's 126 children nobody names as infector have 0 secondary cases, and 188 rows add up to 184. The dialog says a number is counted, so use one only where no match means none."
   }
  ],
  "evidence": {

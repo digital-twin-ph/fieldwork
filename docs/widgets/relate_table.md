@@ -128,6 +128,11 @@ Keeping needs a name, and it has to be yours — nothing here will invent a stra
 measured, and a name already used by the second table is refused so that unmeasured rows cannot
 join a measured group.
 
+**A name that is a number is written as that number**, and the column stays a number, so it can be added up. Use one
+only where no match means none. Hagelloch's cases, counted by `infector` and related back on `case_ID`: the 126
+children nobody names as infector infected no one recorded, so they are kept as `0`, and 188 rows add up to 184. A
+word, such as `none recorded`, keeps the column a category.
+
 Your decision is stored with a signature of the gap it was made about. Edit either table, or change
 how keys are compared, and the decision lapses rather than riding on data it was not made about.
 

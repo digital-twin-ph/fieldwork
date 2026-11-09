@@ -477,11 +477,17 @@ function buildRows(plan:RelatePlan,label:string|undefined):DataTable {
     rows.push({key:{...row.key,[as]:value,...how(row)},value:row.value});
   }
   // THE SECOND TABLE'S VALUE, BROUGHT AS A NUMBER (2026-11-09): declared numeric with its unit, so a rate can divide by
-  // it. A category is still text. A kept-unmatched label is not a number, so a value brought with one stays text.
-  const numeric=plan.bringsValue&&label===undefined?{numericKeys:{...left.numericKeys,[as]:plan.bringsUnit??''}}:{};
+  // it. A category is still text, and so is a value kept with a word for the unmatched. A NUMBER THE PRACTITIONER NAMES
+  // (Hagelloch, experiment 200): a child nobody names as infector infected no one recorded, so a count brought from a
+  // grouping by infector is 0 for them, not unknown. Typed and recorded as theirs, and the column stays a number.
+  const numeric=plan.bringsValue&&(label===undefined||isNumberLabel(label))
+    ?{numericKeys:{...left.numericKeys,[as]:plan.bringsUnit??''}}:{};
   return {...left,...numeric,keys:[...left.keys,as,...(matchColumn?[matchColumn]:[])],rows,rowCount:rows.length,
     missingValueCount:rows.filter(row=>row.value===null).length};
 }
+
+/** Whether a kept label is itself a number, written as one: then the unmatched rows carry that number. */
+export const isNumberLabel=(label:string):boolean=>/^-?\d+(\.\d+)?$/.test(label.trim());
 
 /** Why a named category cannot be used, or null. Shared so the dialog refuses before Finalize
  *  rather than after, and a run refuses the same way for the same reason. */

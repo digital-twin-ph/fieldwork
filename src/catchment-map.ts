@@ -706,7 +706,8 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
   const markFullscreen=()=>{const on=fullscreenNow()===panel();
     fullscreenButton.textContent=on?'Exit full screen':'Full screen';
     fullscreenButton.setAttribute('aria-pressed',String(on));
-    requestAnimationFrame(()=>map.invalidateSize());};
+    // Not on a map already removed: Configure…'s preview can be mounted and released within one frame (2026-11-10).
+    requestAnimationFrame(()=>{if(!disposed)map.invalidateSize();});};
   markFullscreen();
   for(const event of ['fullscreenchange','webkitfullscreenchange'])document.addEventListener(event,markFullscreen);
   fullscreenButton.onclick=async()=>{

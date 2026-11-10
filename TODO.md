@@ -181,6 +181,16 @@ not a practitioner in the field.
    fieldwork-ontology, about 1,190 commits. Mirror backups first; the lab and the siblings before Fieldwork, with a map
    of old to new commit ids applied to Fieldwork's pins and messages; every branch force-pushed. Nothing under
    digitaltwin-aas. New commits already carry no such line.
+19. **A Manual for Hagelloch** (the practitioner, 2026-11-10: *"Can we add a Manual to Hagelloch?"*), built in: a
+   `manual.json` beside its data, the files a reader downloads served from Fieldwork's own site, the Manual tab shown
+   for its three workflows, and a from-scratch browser test that performs every step. **The alternative, not chosen
+   for now** (*"Let's add alternative to TODO"*): Hagelloch in its own example repository, like the other worked
+   examples, so every manual and its data are published and pinned one way; against it, Hagelloch would leave the
+   built-ins that work offline from the first open.
+20. **One record, several products: the Notes tab** ([202](docs/experiments/202-one-record-several-products.md)): the
+   paper, a field report, a story map, a poster and a dashboard configured from one record of notes and views; notes
+   included or excluded per product, with versions flagged when their original changes; evidence before the story.
+   First: the story map on Hagelloch's six scenes.
 12. **Edit a table's values inline, in the data quality check** (the practitioner, 2026-11-10: *"One thing I have been
    meaning to add to data quality checks is the ability to edit tables inline. Can be added as a widget playback
    exercise."*). To shape: per [117](docs/experiments/117-data-quality.md), a change to an input is a declared repair

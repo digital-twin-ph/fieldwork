@@ -34,6 +34,9 @@ export interface ConfigDialog<D> {
   apply:(draft:D)=>void;
   /** Called when the dialog closes without Apply: Cancel, ×, Escape or Discard. */
   onClose?:()=>void;
+  /** Called before every rebuild of the sections, and before the dialog closes either way: release what `wire` mounted
+   *  (Map's preview, a Leaflet map) while its box is still in the page. */
+  beforeRedraw?:()=>void;
   /** A PUBLISHED THING SHOWN, NOT EDITED (experiment 192): every control disabled, and the footer is one Close. */
   readOnly?:boolean;
   /** Wider than a setting needs, for a body that is itself a form: the rules dialog. */
@@ -53,7 +56,7 @@ export function openConfigDialog<D>(spec:ConfigDialog<D>,esc:Escape):void{
   let confirming=false;
   const changed=()=>JSON.stringify(draft)!==held;
   let applied=false;
-  const close=()=>{dialog.close();dialog.remove();if(!applied)spec.onClose?.();};
+  const close=()=>{spec.beforeRedraw?.();dialog.close();dialog.remove();if(!applied)spec.onClose?.();};
   const requestClose=()=>{if(changed()&&!confirming){confirming=true;draw();return;}close();};
 
   const section=(name:string,body?:string)=>body
@@ -84,6 +87,7 @@ export function openConfigDialog<D>(spec:ConfigDialog<D>,esc:Escape):void{
     const caret=focusId&&typeof active?.selectionStart==='number'?active.selectionStart:null;
     const scroll=body.scrollTop;
 
+    spec.beforeRedraw?.();
     const parts=spec.sections(draft);
     body.innerHTML=section('Settings',parts.settings)+section('Preview',parts.preview)+section('Decisions',parts.decisions);
     slot.innerHTML=confirming

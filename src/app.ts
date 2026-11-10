@@ -2371,9 +2371,8 @@ function openMapConfig(nodeId:string){
         }catch(error){button.disabled=false;say.textContent=`The tiles could not be imported: ${error instanceof Error?error.message:'unknown error'}.`;}
       });
     },
-    onClose:()=>{disposePreview?.();disposePreview=undefined;},
+    beforeRedraw:()=>{disposePreview?.();disposePreview=undefined;},
     apply:draft=>{
-      disposePreview?.();disposePreview=undefined;
       const {view,...params}=draft;
       if(view&&view!=='map'){change(w=>{const index=w.nodes.findIndex(x=>x.id===nodeId);
         w.nodes[index]={...w.nodes[index]!,type:'output',params:{label:params.label,view}} as never;});return;}

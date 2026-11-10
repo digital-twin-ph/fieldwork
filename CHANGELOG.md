@@ -9,6 +9,9 @@ shown in a local build is not a claim that it has been published.
   to find and why. A slow pulse marks the area on the image and on today's map, and the dialog says whether your click
   landed on it. Nothing is filled in for you. **Show where to look** turns the pulse off; reduced motion keeps it still.
   Georeferenced map image 0.3.0.
+- **Hagelloch's 1824 sheet, placed by hand.** A fourth Hagelloch workflow offers the village's cadastral sheet of 1824
+  and four street junctions to find. Placed north up from them, the village sits within 4 m of where the sheet's own
+  frame puts it.
 
 ## 0.81.2 — 2026-11-10
 

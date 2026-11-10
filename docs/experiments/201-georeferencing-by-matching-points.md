@@ -3,8 +3,8 @@
 _Created 2026-11-10 · Updated 2026-11-10_
 
 **Status:** tried. The fit, the dialog and turned drawing are built (0.81.0); South London's four points refitted; lab
-check 48 agrees with GDAL; the cue for a worked example is built (0.82.0). Hagelloch's 1824 sheet, in a worked example
-and placed by hand, is next.
+check 48 agrees with GDAL; the cue for a worked example is built, and Hagelloch's 1824 sheet is placed by hand in worked
+example 14 (0.82.0). A learner using the cue is not yet observed.
 
 ## The question
 
@@ -150,5 +150,39 @@ in Chromium (`tests/georeference-dialog.browser.mjs`, `tests/georeference.test.m
 feature, or clicks the centre of the ring without looking at the map. The second would mean the ring is doing the
 learning; a smaller radius, or the ring shown only after a first wrong click, are the alternatives.
 
-**Not yet**: a worked example that uses the cue; Hagelloch's 1824 sheet, placed from its frame's known corners and
-again by hand, the two compared.
+## Hagelloch's 1824 sheet, placed by hand, 2026-11-10
+
+Worked example 14 (`?example=hagelloch-sheet`) offers Flurkarte NW III 3 (1824) and four junctions to find with the cue.
+
+**Methods**
+
+1. **The reference placement**: the sheet's frame, placed from its Gauss-Krüger corners (residuals 0.06 m, 0.68 m a
+   pixel). It agrees with today's buildings to about 3 m (experiment 200).
+2. **Features to find**: today's street junctions, read from Geofabrik's Tübingen extract (2026-11-08, ODbL) by
+   Fieldwork's street engine, 226 where three or more streets meet. Each was carried onto the sheet through the frame
+   placement and kept only where the drawn streets visibly meet there, checked on 4× enlargements: four of the fifteen
+   looked at. **Not used**: buildings, because overlap does not establish identity (the best overlap was 0.45, and a
+   town hall built in 1956 scored 0.34 on an old plot); the church, whose footprint today only partly covers a building
+   drawn in a walled yard.
+3. **The cue**: a 14-pixel ring on the sheet and a 10 m ring on the map, centred on the carried junction. It is not
+   independent of the frame placement, so a placement that follows it cannot disagree with that placement by more than
+   about the ring.
+4. **The hand placement**: where the drawn streets meet, read by eye on 4× enlargements to within a few pixels (2–4 m),
+   paired with today's junction. Fitted with Fieldwork's own `fitPlacement`, north up and affine, and compared with the
+   frame placement at the village centre and at the sheet's corners.
+
+**Results**
+
+| Fit, from 4 junctions | Errors at the points | Off the frame placement: village centre | NW corner | SE corner |
+| --- | --- | --- | --- | --- |
+| North up | 3.1 m RMS, largest 5.0 m (South lane) | 3.5 m | 11 m | 7 m |
+| Affine | 2.7 m RMS, largest 4.6 m | 3.6 m | 58 m | 32 m |
+
+Four points in a village 400 m across place the village to a few metres either way. They do not hold the sheet's far
+corners: affine, with six numbers to fix from eight coordinates, turns and stretches to fit the reading errors, and
+the corners 1.2 km away move by tens of metres. North up, with four numbers, does not. **The example sets north up.**
+The dialog's advice to spread points across the image is the remedy; on this sheet the outer area offers field
+boundaries, not features that have lasted. Checked in Chromium (`tests/hagelloch-sheet-example.browser.mjs`).
+
+**Not established**: whether a learner finds the drawn junctions; a second reader's readings; that the drawn streets
+of 1824 lie exactly where the streets of today do.

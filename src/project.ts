@@ -123,14 +123,14 @@ export const BUILT_IN_PROJECTS:readonly Project[]=[
   {schema:'fieldwork/project/2',id:'heat-outreach',name:'Heat outreach screening',subject:'Connecting geography to evidence, as the first worked example',workflows:['heat']},
   {schema:'fieldwork/project/2',id:'old-naledi',name:'Old Naledi, Gaborone',subject:'One informal settlement. Diagnostic access, and the population raster under it',workflows:['old-naledi','raster']},
   {schema:'fieldwork/project/2',id:'cholera-london-1854',name:'1854 Cholera Outbreak in London',subject:'One cholera outbreak. Catchments, network reach, extent, and what the source coordinates disclose',workflows:['snow-voronoi','snow-isochrone','snow-geoprivacy','snow-extent']},
-  {schema:'fieldwork/project/2',id:'hagelloch-1861',name:'Measles in Hagelloch, 1861',subject:'A closed outbreak with a complete line list',workflows:['hagelloch','hagelloch-chains','hagelloch-cluster']},
+  {schema:'fieldwork/project/2',id:'hagelloch-1861',name:'Measles in Hagelloch, 1861',subject:'A closed outbreak with a complete line list',workflows:['hagelloch','hagelloch-chains','hagelloch-cluster','hagelloch-sheet']},
 ];
 /** Labels for the picker, kept beside the grouping so a workflow is named in one place. */
 export const WORKFLOW_LABELS:Readonly<Record<string,string>>={
   blank:'Blank · study area experiment',heat:'01 · Heat outreach','old-naledi':'02 · Old Naledi diagnostic access',
   raster:'04 · Old Naledi raster clipping','snow-voronoi':'05 · John Snow Voronoi catchments',
   'snow-isochrone':'06 · John Snow network isochrones','snow-geoprivacy':'07 · John Snow geoprivacy',
-  'snow-extent':'09 · John Snow outbreak extent',hagelloch:'11 · Measles in Hagelloch, 1861','hagelloch-chains':'12 · Hagelloch: who infected whom','hagelloch-cluster':'13 · Hagelloch: was there a cluster?',
+  'snow-extent':'09 · John Snow outbreak extent',hagelloch:'11 · Measles in Hagelloch, 1861','hagelloch-chains':'12 · Hagelloch: who infected whom','hagelloch-cluster':'13 · Hagelloch: was there a cluster?','hagelloch-sheet':'14 · Hagelloch: the 1824 sheet, placed by hand',
 };
 /** Which investigation a workflow belongs to, or `undefined` for one that belongs to none. */
 export const projectOfWorkflow=(key:string,projects:readonly Project[]=BUILT_IN_PROJECTS):Project|undefined=>projects.find(p=>p.workflows.includes(key));

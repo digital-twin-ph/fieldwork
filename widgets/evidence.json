@@ -5,6 +5,7 @@
   "hagelloch",
   "hagelloch-chains",
   "hagelloch-cluster",
+  "hagelloch-sheet",
   "heat",
   "old-naledi",
   "raster",
@@ -306,9 +307,10 @@
   {
    "nodeType": "map_image_input",
    "exampleUses": [
+    "hagelloch-sheet",
     "south-london-1854"
    ],
-   "exampleUseCount": 1,
+   "exampleUseCount": 2,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],
@@ -321,6 +323,7 @@
     "hagelloch",
     "hagelloch-chains",
     "hagelloch-cluster",
+    "hagelloch-sheet",
     "heat",
     "nigeria-immunization-2024",
     "nyc-asthma-ozone-2016-2025",
@@ -336,7 +339,7 @@
     "south-london-1854",
     "workflows-rulesets"
    ],
-   "exampleUseCount": 18,
+   "exampleUseCount": 19,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],
@@ -403,6 +406,7 @@
     "hagelloch",
     "hagelloch-chains",
     "hagelloch-cluster",
+    "hagelloch-sheet",
     "heat",
     "nyc-asthma-ozone-2016-2025",
     "old-naledi",
@@ -415,7 +419,7 @@
     "south-london-1854",
     "workflows-rulesets"
    ],
-   "exampleUseCount": 14,
+   "exampleUseCount": 15,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],
@@ -607,6 +611,7 @@
     "hagelloch",
     "hagelloch-chains",
     "hagelloch-cluster",
+    "hagelloch-sheet",
     "nyc-asthma-ozone-2016-2025",
     "old-naledi",
     "oswego-1940",
@@ -619,7 +624,7 @@
     "south-london-1854",
     "workflows-rulesets"
    ],
-   "exampleUseCount": 15,
+   "exampleUseCount": 16,
    "lab": "none",
    "labOwed": false,
    "fieldUse": [],

@@ -9,7 +9,7 @@ test('Hagelloch: the space-time scan runs with a progress bar, and its clusters 
   test.setTimeout(420_000);
   const errors=collectPageErrors(page);
   await page.goto('/?example=hagelloch-cluster');
-  await expect(page.locator('#project-select option:checked')).toHaveText('Measles in Hagelloch, 1861 · 3 workflows');
+  await expect(page.locator('#project-select option:checked')).toHaveText('Measles in Hagelloch, 1861 · 4 workflows');
   await page.locator('[data-view="workflow"]').click();
   await expect(page.locator('#run-button')).toBeEnabled({timeout:240_000});
   // Recorded as it happens, so the check cannot race the panel it checks.

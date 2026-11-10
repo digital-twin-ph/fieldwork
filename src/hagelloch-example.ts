@@ -180,3 +180,36 @@ export function hagellochClusterExample():Workflow{
   return {schema:'fieldwork/workflow/1',name:'Was there a cluster? Hagelloch, 1861',
     exampleId:'hagelloch-cluster',nodes,edges} as unknown as Workflow;
 }
+
+/** THE 1824 SHEET, PLACED BY HAND (experiment 201). The cadastral sheet the village was drawn on 37 years before the
+ *  outbreak, placed by matching four street junctions on the sheet to the same junctions on today's map, with a cue for
+ *  each. The cue's centre on the sheet is today's junction carried onto the sheet by its frame's placement; the learner
+ *  clicks where the drawn streets meet, which is theirs to find. The image is the example's own file, offered in
+ *  Configure… and chosen only when the learner asks for it. */
+export function hagellochSheetExample():Workflow{
+  const base=hagellochExample();
+  const junction=(id:string,why:string,pixel:[number,number],lonlat:[number,number])=>({id,why,pixel,radiusPx:14,lonlat,radiusM:10});
+  const nodes=[
+    {...base.nodes.find(n=>n.id==='cases')!,x:20,y:60},
+    {...base.nodes.find(n=>n.id==='village')!,x:20,y:320},
+    {id:'sheet',type:'map_image_input',x:20,y:580,params:{label:'The 1824 cadastral sheet',
+      image:{width:0,height:0,bytes:0,sha256:''},bounds:[0,0,0,0],placement:'points' as const,placementModel:'north-up' as const,opacity:0.85,
+      offered:{url:'./examples/hagelloch-1861/flurkarte-nw-iii-3-1824.jpg',filename:'flurkarte-nw-iii-3-1824.jpg',
+        credit:'Flurkarte NW III 3, 1824. Landesarchiv Baden-Württemberg, Staatsarchiv Ludwigsburg EL 68 VI Nr 7243, Public Domain Mark.'},
+      guide:[
+        junction('North road, above the stream','The road north out of the village, just above the stream (the thick wavy line on the sheet), where a field path meets it.',[1171.6,1553.3],[9.0125918,48.542892]),
+        junction('West entry','Where the road from the west reaches the first houses and meets the lane along the gardens.',[951.4,1853.6],[9.01056,48.5410433]),
+        junction('North fork','Where the street from the north meets the main street through the village. Both are drawn in 1824 and still meet here.',[1192.1,1667.3],[9.0127814,48.5421903]),
+        junction('South lane','Where a lane leaves the main street southward between the houses.',[1120.8,1709.3],[9.0121234,48.5419319]),
+      ]}},
+    {id:'sheet-map',type:'map_output',x:430,y:60,params:{label:'The cases on the 1824 sheet',presentation:'plot' as const,
+      mapTitle:'Measles cases, 1861, on the cadastral sheet of 1824',layerSymbols:{cases:{colour:'#261156',size:3}}}},
+  ];
+  const edges=[
+    {id:'cases-sheet-map',from:'cases',to:'sheet-map',port:'points'},
+    {id:'village-sheet-map',from:'village',to:'sheet-map',port:'area'},
+    {id:'sheet-ground',from:'sheet',to:'sheet-map',port:'ground'},
+  ];
+  return {schema:'fieldwork/workflow/1',name:'The 1824 sheet, placed by hand. Hagelloch',
+    exampleId:'hagelloch-sheet',nodes,edges} as unknown as Workflow;
+}

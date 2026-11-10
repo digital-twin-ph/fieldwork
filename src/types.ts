@@ -247,7 +247,9 @@ export interface ParamsByType {
     placement?:'world-file'|'points';world?:import('./map-image.js').WorldFile;
     controlPoints?:import('./georeference.js').ControlPoint[];placementModel?:import('./georeference.js').PlacementModel;
     /** A worked example's features to find, in order (experiment 201). Written by the example, never by a click. */
-    guide?:import('./georeference.js').GuidePoint[]};
+    guide?:import('./georeference.js').GuidePoint[];
+    /** The image a worked example offers, served beside the application; chosen only when the learner asks. */
+    offered?:{url:string;filename:string;credit:string}};
   /** Retired 2026-11-05; the params a saved one held, so it can be named when refused. */
   rate_ratio:{label:string;compared:string;reference:string;level:90|95|99;method:'log-normal'};
   rate:{label:string;source?:'points'|'table';

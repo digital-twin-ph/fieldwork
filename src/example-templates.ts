@@ -16,7 +16,7 @@ import {johnSnowExample,snowExtentExample} from './john-snow.js';
 import {oldNalediWorkflow} from './old-naledi.js';
 import {geoprivacyExample} from './geoprivacy-example.js';
 import {rasterExample} from './raster-example.js';
-import {hagellochExample,hagellochChainsExample,hagellochClusterExample} from './hagelloch-example.js';
+import {hagellochExample,hagellochChainsExample,hagellochClusterExample,hagellochSheetExample} from './hagelloch-example.js';
 
 export const EXAMPLE_TEMPLATES:Record<string,()=>Workflow>={
   blank:blankWorkflow,
@@ -30,6 +30,7 @@ export const EXAMPLE_TEMPLATES:Record<string,()=>Workflow>={
   hagelloch:hagellochExample,
   'hagelloch-chains':hagellochChainsExample,
   'hagelloch-cluster':hagellochClusterExample,
+  'hagelloch-sheet':hagellochSheetExample,
 };
 export const EXAMPLE_KEYS=Object.keys(EXAMPLE_TEMPLATES);
 /** Named for what it asks -- does a TEMPLATE exist under this key. `app.ts` has its own

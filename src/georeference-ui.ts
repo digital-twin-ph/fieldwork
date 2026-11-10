@@ -38,7 +38,10 @@ export interface MapImageDraft {
   opacity:number;
   /** The worked example's features to find, read only. */
   guide?:GuidePoint[];
+  /** The image a worked example offers, served beside the application. */
+  offered?:OfferedImage;
 }
+export interface OfferedImage {url:string; filename:string; credit:string}
 
 /** The cue, on or off, for this visit: a viewer's choice, not the workflow's. */
 let cuesOn=true;
@@ -77,6 +80,8 @@ export function openMapImageConfig(o:{step:string;initial:MapImageDraft;esc:Esca
       const settings=''
         +`<div class="field"><label class="field-label" for="map-image-file">The map image</label>`
           +`<input id="map-image-file" type="file" accept="image/png,image/jpeg,.png,.jpg,.jpeg">`
+          +(d.offered&&!image?`<p><button type="button" class="button" id="map-image-offered">Use this example's image: ${esc(d.offered.filename)}</button></p>`
+            +`<p class="muted">${esc(d.offered.credit)}</p>`:'')
           +`<p class="muted">${image?`${esc(image.filename||'The image')}: ${image.width.toLocaleString('en-US')} × ${image.height.toLocaleString('en-US')} pixels.`
             :'A scan or export of a published map, drawn as ground under everything the workflow produces.'}</p></div>`
         +`<div class="field"><label class="field-label" for="map-image-placement">How to place it</label><select id="map-image-placement">`
@@ -98,13 +103,27 @@ export function openMapImageConfig(o:{step:string;initial:MapImageDraft;esc:Esca
     },
     beforeRedraw:()=>{dispose?.();dispose=undefined;},
     wire:(root,d,redraw)=>{
-      root.querySelector<HTMLInputElement>('#map-image-file')?.addEventListener('change',async e=>{
-        const file=(e.target as HTMLInputElement).files?.[0];if(!file)return;
+      const useFile=async(file:File)=>{
         const bitmap=await createImageBitmap(file);
         const data=await new Promise<string>((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(String(r.result));
           r.onerror=()=>reject(new Error('That image could not be read.'));r.readAsDataURL(file);});
         d.image={data,width:bitmap.width,height:bitmap.height,bytes:file.size,sha256:'',filename:file.name};bitmap.close();
-        d.file=file;d.points=[];redraw();
+        d.file=file;d.points=[];active=0;
+        if(d.guide?.length)d.points.push({id:d.guide[0]!.id,pixel:[NaN,NaN],lonlat:[NaN,NaN]});
+        redraw();
+      };
+      root.querySelector<HTMLInputElement>('#map-image-file')?.addEventListener('change',e=>{
+        const file=(e.target as HTMLInputElement).files?.[0];if(file)void useFile(file);});
+      // THE EXAMPLE'S OWN IMAGE, fetched from beside the application: the same bytes a person would download and choose.
+      root.querySelector<HTMLButtonElement>('#map-image-offered')?.addEventListener('click',async e=>{
+        const button=e.target as HTMLButtonElement,offered=d.offered!;button.disabled=true;button.textContent='Fetching the image…';
+        try{
+          const response=await fetch(offered.url);
+          if(!response.ok)throw new Error(`The example's image could not be fetched (${response.status}).`);
+          const blob=await response.blob();
+          await useFile(new File([blob],offered.filename,{type:blob.type||'image/jpeg'}));
+        }catch(error){button.disabled=false;button.textContent=`Use this example's image: ${offered.filename}`;
+          root.querySelector('.muted')?.insertAdjacentText('afterend',error instanceof Error?` ${error.message}`:'');}
       });
       root.querySelector<HTMLSelectElement>('#map-image-placement')?.addEventListener('change',e=>{
         d.placement=(e.target as HTMLSelectElement).value==='points'?'points':'world-file';redraw();});

@@ -23,6 +23,11 @@ LICENCE
   Cite the chain if you use this: Pfeilsticker 1863, Oesterle 1992, and the
   package the bytes came from.
 
+THE 1824 CADASTRAL SHEET
+  flurkarte-nw-iii-3-1824.jpg is Flurkarte NW III 3 (1824), Landesarchiv Baden-Wurttemberg,
+  Staatsarchiv Ludwigsburg EL 68 VI Nr 7243, http://www.landesarchiv-bw.de/plink/?f=2-5311730,
+  published under the Public Domain Mark. Unaltered: the file as the archive serves it.
+
 WHAT THIS PROJECT ADDED
   A georeference. x_loc and y_loc are metres from an arbitrary local origin, so
   nothing could be mapped without anchoring them. They are anchored at Hagelloch,

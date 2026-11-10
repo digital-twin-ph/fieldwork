@@ -32,5 +32,17 @@
     "complications": "A single value, 'yes', on all 188 records. Constant, and therefore carries no information.",
     "class": "0, 1, 2 are pre-school, first class and second class. Ordinal, profiled as a quantity with a median.",
     "case_ID, family_ID, infector": "Identifiers, profiled as quantities. infector is a foreign key into case_ID."
+  },
+  "sheet": {
+    "file": "flurkarte-nw-iii-3-1824.jpg",
+    "title": "Flurkarte NW III 3, 1824",
+    "holder": "Landesarchiv Baden-Wurttemberg, Staatsarchiv Ludwigsburg, EL 68 VI Nr 7243",
+    "permalink": "http://www.landesarchiv-bw.de/plink/?f=2-5311730",
+    "licence": "Public Domain Mark",
+    "retrieved": "2026-11-10",
+    "pixels": "2200 x 2489",
+    "altered": "No: the file as the archive serves it.",
+    "usedFor": "Worked example 14: placed by hand from four street junctions (experiment 201); and the anchor fit (georeference.fitted).",
+    "sha256": "e0519ff3e2cdb3141d79b3325a417ae35085f370e0e178fb9c1a02cea426419e"
   }
 }

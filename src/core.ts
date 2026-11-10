@@ -811,6 +811,10 @@ export function validateWorkflow(raw:unknown):Workflow {
         ||!Array.isArray(g.pixel)||!Array.isArray(g.lonlat)||![...g.pixel,...g.lonlat,g.radiusPx,g.radiusM].every(Number.isFinite)
         ||!(g.radiusPx>0)||!(g.radiusM>0)||Math.abs(g.lonlat[0])>180||Math.abs(g.lonlat[1])>90)))
         throw new Error('A guide point is a feature, why it was chosen, and where it is on the image and the map, each with a radius.');
+      // Served beside the application, never fetched from elsewhere: a worked example's file, not a link.
+      if(p.offered!==undefined&&(typeof p.offered?.url!=='string'||!/^\.\/examples\/[a-z0-9-]+\/[a-z0-9._-]+\.(jpg|png)$/.test(p.offered.url)
+        ||typeof p.offered.filename!=='string'||p.offered.filename.length>200||typeof p.offered.credit!=='string'||p.offered.credit.length>600))
+        throw new Error('An offered image is a file served with this application, under examples/, with its credit.');
       // AN UNCONFIGURED PLATE IS A DRAFT, NOT A BAD ONE. A node added from the palette carries
       // `[0,0,0,0]` because nobody has chosen an image yet, and until 2026-10-27 that tripped the
       // crossed-corners check: the widget could be offered and could not be added, which is what

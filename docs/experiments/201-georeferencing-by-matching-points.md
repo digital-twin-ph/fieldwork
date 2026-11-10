@@ -53,6 +53,27 @@ enough.
 **GDAL in the lab** is the independent check: the same pairs given to GDAL's own fit (through rasterio, which the lab
 already runs in CPython and the browser kernel), comparing the six numbers and every residual.
 
+## A house-level plan of Hagelloch, found 2026-11-10
+
+The first Württemberg survey, at 1:2500, scanned by the Landesarchiv Baden-Württemberg: sheet **NW III 3**, surveyed
+1824 by Jakob Rieth (Staatsarchiv Ludwigsburg EL 68 VI Nr 7243), shows the village house by house along its lower
+edge; **NW II 3**, 1819 (Nr 7189), south of it, shows fields and forest. Each online scan is 2,200 × 2,489 pixels,
+about 0.5 m on the ground per pixel, and carries the archive's own notice: Public Domain Mark 1.0. Downloaded with the
+practitioner's yes to `~/Downloads/hagelloch-flurkarten/`, outside every repository. Later corrected editions closer to
+1861 (NW II 3 corrected in 1888, for one) are in the Stadtarchiv Tübingen, not scanned.
+
+**Two placements to compare.** Each sheet's frame is a square whose north-west corner is given in the old Gauß-Krüger
+grid (NW III 3: 3500389, 5379222), about 1,146 m a side; proj4 turns those into today's coordinates. So the sheet can be
+placed from its four corners, exact by construction, and again from features matched by hand against today's map. The
+difference measures matching by hand on a sheet where the answer is known.
+
+**And the houses.** With the sheet placed, Hagelloch's 188 cases can be laid over the 1824 buildings: whether the
+table's houses fall on buildings would say something about where Oesterle's coordinates came from, which no source read
+states. Pfeilsticker's 1863 thesis has no plan: its five fold-outs are tables (Wellcome Collection copy, complete).
+
+A railway map of Germany, 1861 (Wikimedia Commons, public domain, 4,878 × 3,792), also downloaded, to
+`~/Downloads/bahnkarte-1861/`: about 200 m a pixel, too coarse for houses, a country-scale case for the same widget.
+
 ## The plan
 
 1. **South London**, against its known placement: the four pairs of `map2-georeference.json` entered in the widget

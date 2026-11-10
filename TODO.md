@@ -169,6 +169,17 @@ not a practitioner in the field.
    one, kept with its strokes so it can be edited again, and placed in the write-up like any figure. To settle: pen,
    eraser and a few colours at sizes the practitioner can see; drawing over a map as a backdrop, or blank; a sketch map
    is not a georeferenced one and says so.
+17. **Faster space-time scans** (the practitioner, 2026-11-10: *"How can we speed up the browser"*, then *"Let's add all
+   3 to TODO"*). In Fieldwork's replay, in order: stop shuffling once the answer is clear, after 50 shuffles score
+   higher (Besag and Clifford 1991), and say when it stopped; run the days in parallel across the device's cores; move
+   the scan's inner loop to the Rust kernel compiled to WebAssembly. In lab check 46: score every run length at once
+   rather than one at a time, and, if still slow, fewer shuffles with the tolerance widened to match.
+18. **Remove the Claude co-author line from the workspace's history, the weekend of 2026-11-14/15, with the
+   practitioner** (2026-11-10: *"For repositories related to CDC work we cannot have agents as coauthors"*). Every repo
+   in the digitaltwin-ph workspace: fieldwork, validation-lab, the ten example repos, widget-pack-sea-level-rise and
+   fieldwork-ontology, about 1,190 commits. Mirror backups first; the lab and the siblings before Fieldwork, with a map
+   of old to new commit ids applied to Fieldwork's pins and messages; every branch force-pushed. Nothing under
+   digitaltwin-aas. New commits already carry no such line.
 12. **Edit a table's values inline, in the data quality check** (the practitioner, 2026-11-10: *"One thing I have been
    meaning to add to data quality checks is the ability to edit tables inline. Can be added as a widget playback
    exercise."*). To shape: per [117](docs/experiments/117-data-quality.md), a change to an input is a declared repair

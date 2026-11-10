@@ -8,7 +8,7 @@ test('Hagelloch: who infected whom opens, runs, and shows the intervals, the sec
   const errors=collectPageErrors(page);
   await page.goto('/?example=hagelloch-chains');
   // Filed under its project, beside the curve and the map, not under the first example.
-  await expect(page.locator('#project-select option:checked')).toHaveText('Measles in Hagelloch, 1861 · 2 workflows');
+  await expect(page.locator('#project-select option:checked')).toHaveText('Measles in Hagelloch, 1861 · 3 workflows');
   await page.locator('[data-view="workflow"]').click();
   await expect(page.locator('#run-button')).toBeEnabled({timeout:60_000});
   await page.locator('#run-button').click();

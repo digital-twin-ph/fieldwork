@@ -152,6 +152,18 @@ not a practitioner in the field.
    To settle: which boundary (Hagelloch is a district of Tübingen; its OSM or official boundary, and its licence), that
    it is the present-day boundary and not 1861's, and whether any case falls outside it, which the map would then
    show. Asks before downloading. With 13, the colour key.
+15. **Georeference an 1861 map of Hagelloch in the widget itself** ([201](docs/experiments/201-georeferencing-by-matching-points.md): pairs of
+   points matched between the scan and a map of the place, South London first) (the practitioner, 2026-11-10: *"If we can get hold
+   of an old map of Hagelloch in 1861 we can also exercise georeferencing in the georeferenced image input widget. You
+   did it before for South London so I think it could be done this time in the widget itself."*). South London's plate
+   was placed outside the app, from four control points (`map2-georeference.json`) written into a world file; the
+   widget reads a north-up world file and refuses a rotated one ([143](docs/experiments/143-a-georeferenced-plate-as-ground.md)).
+   New: choose control points on the image and on the map, fit the transform, report each point's residual. Then the
+   houses: today one anchor places them right to the village, not to the building; a georeferenced plan would place
+   x_loc, y_loc properly. To find, open evidence only and asking before any download: whether Pfeilsticker's 1863
+   scan on archive.org carries the village plan (Google scans often leave out fold-outs); the Württemberg cadastral
+   maps of the 1820s to 1840s (Landesarchiv Baden-Württemberg), and their licence. With 14: the boundary is today's,
+   the plan 1861's.
 12. **Edit a table's values inline, in the data quality check** (the practitioner, 2026-11-10: *"One thing I have been
    meaning to add to data quality checks is the ability to edit tables inline. Can be added as a widget playback
    exercise."*). To shape: per [117](docs/experiments/117-data-quality.md), a change to an input is a declared repair

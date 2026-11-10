@@ -39,8 +39,10 @@
     },
     {
       "nodeType": "chart_output",
-      "expectation": "none",
-      "reason": "Draws what it is given and derives no value; its receipt is a presentation receipt."
+      "expectation": "parity",
+      "computes": "The transmission tree (from 0.12.0): each case's chain and generation from the infector column, and the rows that place every case below its infector. networkx recomputes the chains as the cases reachable from each root and the generations as shortest path lengths. Bars draw what they are given and derive no value, so they are not checked.",
+      "reason": "Until 0.12.0 a Chart derived nothing. A tree derives chains and generations, and a wrong one would misplace a case in the outbreak's history while looking right.",
+      "check": "44-transmission-tree"
     },
     {
       "nodeType": "clip_points_to_area",

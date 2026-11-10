@@ -174,7 +174,10 @@ a closed list; the new key was added to it. The rules warn that 4 records could 
 under "no infector recorded" carry a word, not a date, in `infector_prodrome`, and are treated as not recorded. That is
 what they are, and the warning says so.
 
-**Not yet:** the Map links layer (step 4), a lab check of the tree's chains and generations against networkx, and WebKit.
+**Checked by somebody else's code** (lab check 44): every case's chain and generation equal networkx's component and
+shortest path length from its root, in CPython and in the browser kernel.
+
+**Not yet:** the Map links layer (step 4), and WebKit.
 
 ## Detect: finding clusters, 2026-11-09
 

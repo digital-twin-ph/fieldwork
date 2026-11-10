@@ -11,7 +11,7 @@
 //                   | select-range-london-001
 //                   | regression-salmonella-001 | regression-nyc-001 (needs NYC_PKG)
 //                   | sample-satellite-s5p-001 | lag-response-brazil-001 | regression-strata-brazil-001
-//                   | lag-models-brazil-001 | sea-level-heights-manila-001 | chains-hagelloch-001
+//                   | lag-models-brazil-001 | sea-level-heights-manila-001 | chains-hagelloch-001 | tree-hagelloch-001
 import {createHash} from 'node:crypto';
 import {readFile,writeFile} from 'node:fs/promises';
 import {reprojectToCRS84,projectFromCRS84} from '../build/reproject.js';
@@ -48,6 +48,7 @@ import {executeWorkflow} from '../build/core.js';
 import {inspectRaster,readRasterWindow,rasterWindow} from '../build/raster.js';
 import {sampleRaster} from '../build/sample-raster.js';
 import {nearestPlaces,distancesAsTable,pointsAsTable} from '../build/core.js';
+import {transmissionTree} from '../build/transmission-tree.js';
 import {downloadFacilities} from '../build/health-facilities.js';
 import {authoredSubjects} from '../build/authored-application.js';
 import {evaluateAuthored,evaluatedTable} from '../build/rule-evaluation.js';
@@ -1395,6 +1396,24 @@ const builders={
       input:{facilityCount:facilities.features.length,sites:siteRows},
       output:{facilities:out,reaches:out.filter(r=>r.level==='Reaches').length},
     },files:{'egm2008-window.tif':encodeGrid(egm),'dtu25mss-window.tif':encodeGrid(dtu),'deltadtm-window.tif':encodeGrid(dtm)}};
+  },
+  async 'tree-hagelloch-001'(){
+    // THE TRANSMISSION TREE (experiment 200, step 5), as Chart computes it: each case's chain, generation and row.
+    const cases=JSON.parse(await readFile(new URL('../examples/hagelloch-1861/cases.json',import.meta.url),'utf8'));
+    const t=pointsAsTable(cases);
+    const columns={id:'case_ID',parent:'infector',date:'date_of_prodrome'};
+    const tree=transmissionTree(t,columns);
+    return {fixture:{
+      ...base('tree-hagelloch-001','chart_output','Chart, transmission tree: who infected whom, Hagelloch 1861','src/transmission-tree.ts#transmissionTree'),
+      source:'Measles in Hagelloch, 1861 (Pfeilsticker 1863; Oesterle 1992), as measles_hagelloch_1861 in the R package outbreaks 1.9.0; the copy built into Fieldwork as examples/hagelloch-1861',
+      declaredParameters:{columns,
+        chain:'A case naming no infector, or one the table does not hold, starts a chain; every other case belongs to its infector\'s chain.',
+        generation:'1 for a case that starts a chain; one more than its infector\'s otherwise.',
+        order:'Rows follow the chains: chains by their first case\'s date, then row order; within a chain depth first, each case\'s children by date, then row order.'},
+      input:{cases:t.rows.map(r=>({case_ID:r.key.case_ID,infector:r.key.infector??'',date_of_prodrome:r.key.date_of_prodrome??''}))},
+      output:{counts:tree.counts,chains:tree.chains,
+        cases:tree.cases.map(c=>({case_ID:c.id,chain:c.chain,generation:c.generation+1,row:c.row}))},
+    },files:{}};
   },
   async 'chains-hagelloch-001'(){
     // WHO INFECTED WHOM, HAGELLOCH 1861 (experiment 200, steps 1 to 3), through Fieldwork's own functions as the canvas

@@ -3,7 +3,7 @@
   "description": "Independent recomputation of implemented widgets by an external process, recorded after release. Release files are immutable once committed, so evidence about a release lives here and accrues as checks run. A fixture digest recorded in a result is over canonical JSON content rather than the file’s bytes, revised 2026-10-11 because byte identity is unsatisfiable in the browser the lab publishes to. A parity result establishes numerical agreement with a named external implementation under a stated criterion. It is not scientific certification, and it says nothing about whether a method is appropriate for a question.",
   "lab": {
     "repository": "https://github.com/digital-twin-ph/validation-lab",
-    "commit": "7e442ff21a6d0e59583d0c402fdba8ae1a67ee86",
+    "commit": "df2a432988cee774f6ca26db2d7503c3a3d1328f",
     "pinNote": "The commit CI checks the lab out at: .github/workflows/pages.yml reads it with `jq -r .lab.commit widgets/parity.json`. So this pin, not the clone beside this repository, is what `validate:dive-deeper` verifies against on a clean runner -- and it must be advanced whenever a check lands in the lab, in the same push-then-pin order the worked examples use."
   },
   "outcomes": {
@@ -791,6 +791,26 @@
       ],
       "note": "The fixture composes Fieldwork's own functions in Node (scripts/export-validation-fixture.mjs, chains-hagelloch-001): a point layer read as a table, Relate to itself with Bring it in as, the rules' date kind, Total within groups' count, and Relate keeping the unmatched as 0. The canvas run by hand gives the same (tests/hagelloch-who-infected-whom.browser.mjs, tests/hagelloch-secondary-cases.browser.mjs). Experiment 200.",
       "notebook": "43-hagelloch-chains-vs-pandas.ipynb"
+    },
+    {
+      "widget": "urn:fieldwork:widget:chart_output",
+      "coversRelease": "0.12.0",
+      "check": "44-transmission-tree",
+      "result": "content/results/check-44-transmission-tree.json",
+      "sha256": "17a5c44f788626465b8febeef09239e7532a00be9014e36f93cc626674af78bb",
+      "external": [
+        "networkx 3.6"
+      ],
+      "criterion": "The same chain and generation for every case, against networkx components and shortest path lengths from each root; every case below its infector and each chain on consecutive rows; the same counts",
+      "outcome": "agrees",
+      "measured": "Hagelloch, 1861: 188 cases in 4 chains (173, 9, 5, 1), 184 links, 4 naming no infector; every case's chain and generation equal to networkx's component and shortest path length from its root; the largest from case 184 over 6 generations; every case below its infector and each chain on consecutive rows. Agrees in CPython and in the browser kernel.",
+      "ranAt": "2026-11-10T03:34:39+00:00",
+      "notEstablished": [
+        "Who infected whom: both sides read the 1861 reconstruction in the infector column.",
+        "That the figure is drawn as computed: this checks the computation the figure is drawn from."
+      ],
+      "note": "Covers the transmission tree's computation (src/transmission-tree.ts), from which Chart's Vega-Lite figure is drawn; not the bars. The fixture is Fieldwork's own code in Node (scripts/export-validation-fixture.mjs, tree-hagelloch-001). Experiment 200.",
+      "notebook": "44-transmission-tree-vs-networkx.ipynb"
     }
   ],
   "notebookNote": "`notebook` names the lab notebook that carries the check, and `diveDeeper` the heading of its Dive Deeper section where it has one -- the part written for a practitioner who wants to understand the widget rather than for a reviewer checking it (experiment 94). Both are recorded rather than derived from the check id: `24-project-forward` lives in `24-project-vs-pyproj.ipynb`, so matching on the leading number works by luck and would break the first time a check and its notebook are named differently. The application reads `diveDeeper` to decide which widgets offer the link, and scripts/validate-dive-deeper.mjs refuses a heading the notebook does not actually carry."

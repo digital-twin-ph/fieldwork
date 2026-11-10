@@ -3,6 +3,21 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.74.0 — 2026-11-09
+
+- **Satellite readings are kept on this device.** Sample satellite files keeps what each file gave at your places, a
+  few numbers per place, so a file read before the same way is not read again after a reload or on another day. The
+  result says how many files came from the device, and the receipt records it. Configure… can read every file again,
+  or forget the saved readings. Sample satellite 0.7.0.
+- **Sample satellite is on the standard Inspector**: name, inputs, one sentence, Configure… and the last result.
+- **Table's inputs are streamlined like Map's**: the node shows what is connected and one + Add an input; the
+  Inspector has one Add an input picker. The table port no longer reads "Points undefined". Table 0.9.0.
+- **The line under a workflow's title** no longer describes the example it started from once it has changed.
+- Experiment 200: resources and procurement are in reach; remote coordination of a multi-site investigation added as
+  an open question; open data and studies listed for each 7-1-7 bottleneck theme.
+- The Brazil dengue example's manual sets the place column in Configure…; re-pinned.
+- Validation: Chromium locally; WebKit in CI.
+
 ## 0.73.1 — 2026-11-09
 
 - **John Snow's outputs no longer overlap on the canvas**: Table, 317 px tall, lay under Chart, so a click on Table

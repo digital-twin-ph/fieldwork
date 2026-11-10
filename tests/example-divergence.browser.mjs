@@ -15,4 +15,6 @@ test('a canvas built on an example stops being described as that example',async(
   await expect(page.locator('#example-note')).not.toContainText('Experiment 01');
   await expect(page.locator('#example-note')).toContainText('changed since');
   await expect(page.locator('#canvas-example')).not.toContainText('EXPERIMENT 01');
+  // Nor does the line under the title describe the blank canvas's first exercise (2026-11-09).
+  await expect(page.locator('#project-description')).toHaveText('');
 });

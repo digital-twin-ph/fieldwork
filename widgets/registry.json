@@ -1976,7 +1976,7 @@
     {
       "id": "urn:fieldwork:widget:sample_satellite_files_at_points",
       "nodeType": "sample_satellite_files_at_points",
-      "currentVersion": "0.6.0",
+      "currentVersion": "0.7.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -2017,6 +2017,11 @@
           "version": "0.6.0",
           "path": "widgets/releases/sample_satellite_files_at_points/0.6.0.json",
           "sha256": "2bd01c1b703bc6ed6c49847442d45a19df29b2a338efe5b8a2d4e4c37887aa3d"
+        },
+        {
+          "version": "0.7.0",
+          "path": "widgets/releases/sample_satellite_files_at_points/0.7.0.json",
+          "sha256": "66c5f832ab9aa6764ced346d4b25025d32473d5cd4f9cf71b3690bcfa2e2cae5"
         }
       ]
     }

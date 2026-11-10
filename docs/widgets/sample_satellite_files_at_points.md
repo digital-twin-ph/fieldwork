@@ -65,16 +65,25 @@ whether that is enough is the analyst's call, and the numbers to make it are on 
    **Search a satellite catalog** over your area and dates, and press **Search**.
 2. Add **Sample satellite files at points**. Connect your point layer, for example the monitors from **Point data**,
    to **points**, and the search to **files**.
-3. In the Inspector, check the **Quality rule**. It is set to the product manual's: `qa_value` at or above 0.75.
-4. Connect a **Table output**, and run the workflow. The files are read during the run, and each file is read once per
-   session. A year of files takes minutes: while they are read, a panel at the foot of the page names the step and
+3. Select the step and press **Configure…**. Check the **Quality rule**: for Sentinel-5P it is set to the product
+   manual's, `qa_value` at or above 0.75; for MODIS, choose the **Layer**, the **Quality rule**, **Report temperature
+   in** and the **Name of the place column**. Press **Apply**.
+4. Connect a **Table output**, and run the workflow. The files are read during the run. A year of files takes minutes: while they are read, a panel at the foot of the page names the step and
    counts the files read so far, *Reading satellite files: 40 of 92*, and the run's state beside the canvas says the
    same.
 
 **Several files are read at once**: six MODIS files, three Sentinel-5P. Three months of MODIS over Rio de Janeiro's
 92 municipalities took 70 s one file at a time in Chromium and 23 s this way. A browser opens at most six connections
 to the MODIS server, so more would not help. A file that fails is tried three times; if it still fails, the run stops
-and names it. Each file is read once per session, so running again after a change downstream does not read it twice.
+and names it.
+
+**What a file gave is kept on this device.** A file read before, the same way at the same places, is not read again:
+not after a change downstream, not after a reload, not the next day. What is kept is the reading, a few numbers per
+place, not the file: 180 MODIS files over 92 municipalities come to about a megabyte. The result says how many files
+were taken from the device, *Every file was taken from readings saved on this device from an earlier run*, and the
+receipt records it as `fw:filesFromDevice`. Change the layer, the quality rule or the places, and those files are read
+again. **Configure…** shows how many readings are kept, and offers **Read every file again on the next run** and
+**Forget every saved reading on this device**.
 
 ## The three gaps
 
@@ -106,7 +115,6 @@ or above 0.75".
 - **It will not read other products yet.** Sentinel-5P NO₂ (at points) and MODIS land surface temperature (at points
   or over areas), both on Planetary Computer, have readers. Ozone and aerosols say so when connected.
 - **It will not weight by population or by how much of a cell lies in an area.** A cell counts whole, or not.
-- **It will not keep readings between sessions.** A reload reads the files again.
 
 ## What it costs
 

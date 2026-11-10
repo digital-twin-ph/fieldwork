@@ -50,7 +50,8 @@ interface Image {getOrigin():number[]; getResolution():number[]; getWidth():numb
 /** What the files said about their own values: how many stated their unit and scale factor, and that every one that
  *  did agreed with the product's. The practitioner, 2026-11-06: *"How do we know the unit is in K if we don't have a
  *  data dictionary?"* The file is the dictionary: each one is read for it, not only the first. */
-export interface TagCheck {files:number; stated:number}
+/** `saved`: how many files' readings came from this device rather than the network (2026-11-09). */
+export interface TagCheck {files:number; stated:number; saved?:number}
 type Open=(url:string)=>Promise<Image>;
 
 const tokens=new Map<string,{token:string;expires:number}>();
@@ -79,7 +80,10 @@ export const platformOf=(item:{id:string;platform:string|null})=>
 /** HOW A RUN READS ITS FILES (experiment 182). `concurrency` files are in flight at once: the time is network waiting,
  *  not arithmetic, so files overlap. `attempts` tries a file before the run stops, naming it. `pool` is geotiff.js's
  *  decoder pool, which decompresses in workers so the page stays responsive. */
-export interface ReadOptions {concurrency?:number; attempts?:number; retryMs?:number; pool?:unknown}
+export interface ReadOptions {concurrency?:number; attempts?:number; retryMs?:number; pool?:unknown;
+  /** Readings kept on this device across sessions (satellite-reading-store.ts). `reread` reads every file anyway, and
+   *  keeps what it reads. */
+  saved?:import('./satellite-reading-store.js').ReadingStore; reread?:boolean}
 /** FILES IN FLIGHT AT ONCE, measured on 2026-11-06 (experiment 182): 48 MODIS files over 92 municipalities took 70 s
  *  one at a time in Chromium and 23 s from 3 on. The files' server speaks HTTP/1.1 and Chrome opens 6 connections to
  *  it, so more than 3 gains nothing in a browser; 6 costs nothing past that. Node, without the cap, kept gaining to 48. */
@@ -90,7 +94,9 @@ export const GRID_CONCURRENCY=6;
  *  area or rule reads again. Lives as long as the page. */
 type FileResult={stated:boolean; period:string; end:string|null; platform:string; sums:(AreaSums|null)[]};
 const fileCache=new Map<string,FileResult>();
-export const clearGridCache=()=>fileCache.clear();
+/** Which of the files held in this page came from the device's saved readings, so a run says so even the second time. */
+const savedKeys=new Set<string>();
+export const clearGridCache=()=>{fileCache.clear();savedKeys.clear();};
 const placesKey=(places:readonly Place[])=>{
   // A short digest of the places, so the cache key does not hold every boundary. FNV-1a over their JSON.
   let h=0x811c9dc5;const text=JSON.stringify(places);
@@ -160,10 +166,15 @@ export async function readGridFiles(items:readonly CatalogItem[],reader:GridRead
   // naming nothing. A file that states the wrong unit is not retried: it would say the same again.
   const withRetry=async(item:CatalogItem):Promise<FileResult>=>{
     const cacheKey=`${item.id}|${layerKey}|${rule}|${where}`;
-    const cached=fileCache.get(cacheKey);
+    const cached=options.reread?undefined:fileCache.get(cacheKey);
     if(cached)return cached;
+    // KEPT ON THIS DEVICE from an earlier session: the same file, read the same way at the same places.
+    const kept=options.saved&&!options.reread?await options.saved.get(`grid|${cacheKey}`) as FileResult|undefined:undefined;
+    if(kept&&Array.isArray(kept.sums)&&kept.sums.length===places.length){
+      fileCache.set(cacheKey,kept);savedKeys.add(cacheKey);return kept;}
     for(let attempt=1;;attempt++){
-      try{const result=await readOne(item);fileCache.set(cacheKey,result);return result;}
+      try{const result=await readOne(item);fileCache.set(cacheKey,result);savedKeys.delete(cacheKey);
+        await options.saved?.put(`grid|${cacheKey}`,result);return result;}
       catch(e){
         if((e as {final?:boolean}).final)throw e;
         if(attempt>=attempts)throw new Error(`${item.id} could not be read after ${attempts} attempt${attempts===1?'':'s'}: `
@@ -179,6 +190,7 @@ export async function readGridFiles(items:readonly CatalogItem[],reader:GridRead
   await Promise.all(Array.from({length:Math.min(concurrency,items.length)},lane));
   // MERGED IN THE ITEMS' ORDER, whatever order the files arrived in, so the table is the same at any concurrency.
   const merged=new Map<string,PlaceReading>();
+  if(options.saved)tags.saved=(tags.saved??0)+items.filter(item=>savedKeys.has(`${item.id}|${layerKey}|${rule}|${where}`)).length;
   results.forEach(result=>{
     tags.files++;if(result.stated)tags.stated++;
     result.sums.forEach((sums,index)=>{
@@ -261,14 +273,15 @@ export function gridSentence(c:GridCounts,reader:GridReader,layerKey:string,rule
     +`${kind==='area'?'over the cells whose centre is in the area':'in the cell containing the point'}, quality rule: ${MODIS_RULES[rule]}. `
     +`Land surface temperature is the ground's, not the air's. Nothing was filled.`
     +(tags?(tags.stated===tags.files?` Every file stated its unit as ${reader.unit} and its scale factor as ${reader.scale}, and was read by them.`
-      :` ${tags.files-tags.stated} of ${tags.files} files stated no unit or scale factor; the product's, ${reader.unit} and ${reader.scale}, were used for them.`):'');
+      :` ${tags.files-tags.stated} of ${tags.files} files stated no unit or scale factor; the product's, ${reader.unit} and ${reader.scale}, were used for them.`):'')
+    +(tags?.saved?` ${tags.saved===tags.files?'Every file was':`${tags.saved} of ${tags.files} files were`} taken from readings saved on this device from an earlier run, the same file read the same way at the same places${tags.saved===tags.files?'':'; the rest were read now'}.`:'');
 }
 
 export const CELL_CONVENTIONS={area:'cells whose centre is inside or on the area; the mean of those that passed; not area-weighted',
   point:'the cell containing the point'} as const;
 
 export function gridFacts(entity:string,c:GridCounts,reader:GridReader,layerKey:string,rule:ModisQualityRule,
-  product:SatelliteProduct,kind:'area'|'point',asked?:ReportUnit):string{
+  product:SatelliteProduct,kind:'area'|'point',asked?:ReportUnit,saved=0):string{
   const q=(v:string)=>JSON.stringify(v),layer=reader.layers[layerKey]!,n=(v:number)=>`"${v}"^^xsd:integer`,unit=reportUnit(reader,asked);
   return `@prefix fw: <urn:fieldwork:>.\n@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.\n`
     +`${entity} a fw:SatelliteAreaSample;\n`
@@ -277,7 +290,7 @@ export function gridFacts(entity:string,c:GridCounts,reader:GridReader,layerKey:
     +(conversionSays(reader,unit)?`  fw:unitAsStated ${q(reader.unit)};\n  fw:unitConversion ${q(conversionSays(reader,unit)!)};\n`:'')
     +`  fw:cellConvention ${q(CELL_CONVENTIONS[kind])};\n`
     +`  fw:qualityVariable ${q(layer.quality)};\n  fw:qualityRule ${q(MODIS_RULES[rule])};\n`
-    +`  fw:filesRead ${n(c.files)};\n  fw:placesSampled ${n(c.places)};\n  fw:rowsWritten ${n(c.rows)};\n`
+    +`  fw:filesRead ${n(c.files)};\n  fw:filesFromDevice ${n(saved)};\n  fw:placesSampled ${n(c.places)};\n  fw:rowsWritten ${n(c.rows)};\n`
     +`  fw:rowsPassing ${n(c.passing)};\n  fw:rowsBelowQuality ${n(c.belowQuality)};\n  fw:rowsNoRetrieval ${n(c.noRetrieval)};\n`
     +`  fw:rowsNoCell ${n(c.noCell)};\n  fw:completenessRead true;\n  fw:imputed false.\n`;
 }

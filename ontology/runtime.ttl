@@ -421,6 +421,7 @@ fw:qualityThreshold a owl:DatatypeProperty; rdfs:domain fw:SatellitePointSample;
 fw:qualityOperator a owl:DatatypeProperty; rdfs:domain fw:SatellitePointSample; rdfs:range xsd:string; rdfs:label "quality operator";
   rdfs:comment "\">=\" or \">\": the product's documents differ, and only at exactly the threshold, so which was applied is stated.".
 fw:filesRead a owl:DatatypeProperty; rdfs:range xsd:integer; rdfs:label "files read".
+fw:filesFromDevice a owl:DatatypeProperty; rdfs:range xsd:integer; rdfs:label "files from this device"; rdfs:comment "Of the files read, how many were taken from readings saved on this device by an earlier run: the same file, read the same way, at the same places. Zero when every file was read over the network." .
 fw:pointsSampled a owl:DatatypeProperty; rdfs:domain fw:SatellitePointSample; rdfs:range xsd:integer; rdfs:label "points sampled".
 fw:rowsWritten a owl:DatatypeProperty; rdfs:range xsd:integer; rdfs:label "rows written".
 fw:rowsPassing a owl:DatatypeProperty; rdfs:range xsd:integer; rdfs:label "rows passing".

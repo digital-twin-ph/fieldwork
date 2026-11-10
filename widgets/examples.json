@@ -438,7 +438,7 @@
       "id": "urn:fieldwork:example:brazil-dengue-rj-2024",
       "title": "Dengue in Rio de Janeiro state, Brazil, 2024",
       "repository": "https://github.com/digital-twin-ph/example-2024-brazil-dengue",
-      "commit": "527a8222e3e514f07dec60d1dfeb439308a6dc6b",
+      "commit": "45387b74fd4ef0ab9b1a7e2b4bee498c3c0a4c0a",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2024-brazil-dengue",
       "licence": {
         "data": "CC-BY-4.0",
@@ -513,8 +513,8 @@
         },
         {
           "path": "manual.json",
-          "sha256": "384335de7511fb0f08961839096d68c4ce727ffee804f4d8b8391cc08ffa6913",
-          "bytes": 69739
+          "sha256": "53152792cf9059b44a9a5ffd4614f5edeb0abd0b21344e6c14c1a1f68e56341b",
+          "bytes": 70549
         },
         {
           "path": "notes/what-aedes-mosquitoes-meet.md",

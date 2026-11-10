@@ -52,7 +52,9 @@ import {onRunDetail} from './run-progress.js';
 import {appendLabel,appendPort,appendTableCount} from './append-rows.js';
 /** Regression's strata as a list, as `strataOf` in regression.ts reads them; kept here so the Inspector does not load the model's kernel. */
 const strataOf=(strata:string|string[]|undefined):string[]=>(Array.isArray(strata)?strata:strata?[strata]:[]).map(c=>c.trim()).filter(Boolean);
-import {GRID_KEYS,gridReaderFor} from './satellite-grid-sample.js';
+import {GRID_KEYS,gridReaderFor,clearGridCache} from './satellite-grid-sample.js';
+import {clearFileCache} from './satellite-sample-reader.js';
+import {savedReadingsSummary,forgetSavedReadings} from './satellite-reading-store.js';
 import {MODIS_RULES,type ModisQualityRule} from './satellite-areas.js';
 import {openProductsDialog,productCard} from './satellite-products-ui.js';
 import {fetchRemoteTable,useDeviceCopies,archiveOnDevice,progressText} from './remote-table.js';
@@ -83,7 +85,7 @@ import {pinnedRuleset} from './rule-application.js';
 function getNode<K extends NodeType>(w:Workflow,id:string,type:K):WorkflowNode<K>{const node=required(w.nodes.find(n=>n.id===id));if(node.type!==type)throw new Error('Node type changed while editing');return node as WorkflowNode<K>;}
 function updateParam(w:Workflow,id:string,key:string,value:unknown){Object.assign(required(w.nodes.find(n=>n.id===id)).params,{[key]:value});}
 function replaceWorkflow(w:Workflow,next:Workflow){for(const key of Object.keys(w))Reflect.deleteProperty(w,key);Object.assign(w,next);}
-import {TYPES,exampleWorkflow,validateWorkflow,validateGeoJSON,executionPlan,executeWorkflow,nodeInputs,outputOf,portAccepts,pointsAsTable,shownMode,portSourceName,IncompleteWorkflow} from './core.js';
+import {TYPES,exampleWorkflow,validateWorkflow,validateGeoJSON,executionPlan,executeWorkflow,nodeInputs,outputOf,portAccepts,pointsAsTable,shownMode,portSourceName,IncompleteWorkflow,rereadOnce} from './core.js';
 import {suggestUTM,utmScaleFactor,workflowPositions} from './utm.js';
 import {mountCanvas} from './canvas.js';
 import {DATASET,OLD_TYPES,oldNalediWorkflow,tierLabel} from './old-naledi.js';
@@ -996,7 +998,7 @@ function drawRunProgress(){
 /** THE WIDGETS WHOSE INSPECTOR FOLLOWS THE STANDARD (experiment 186): Name, Inputs, Settings, Result, the links,
  *  Actions, in that order and nothing else, with every setting in the widget's configuration dialog. One at a time,
  *  Relate first; the set grows as each widget is moved, and a check holds them to it. */
-export const STANDARD_INSPECTOR=new Set<NodeType>(['point_input','raster_input','sample_raster','measure_distance','table_output','relate_table','select_rows','table_input','find_health_facilities','group_table','apply_ruleset','map_output','deduplicate_points','rate','study_area']);
+export const STANDARD_INSPECTOR=new Set<NodeType>(['point_input','sample_satellite_files_at_points','raster_input','sample_raster','measure_distance','table_output','relate_table','select_rows','table_input','find_health_facilities','group_table','apply_ruleset','map_output','deduplicate_points','rate','study_area']);
 function samplerProduct(node:WorkflowNode){
   const up=(id:string,port:string)=>{const e=workflow.edges.find(x=>x.to===id&&x.port===port);return e?workflow.nodes.find(m=>m.id===e.from):undefined;};
   const search=up(node.id,'files'),find=search?up(search.id,'product'):undefined;
@@ -1380,6 +1382,10 @@ function render(){
   if(divergedFromExample(exampleKey(workflow))){
     $('#example-note').textContent=`Built on ${workflowTitle(exampleKey(workflow))} and changed since.`;
     $('#canvas-example').textContent=(workflow.name||'This workflow').toUpperCase();
+    // AND THE LINE UNDER THE TITLE, which described the example it started from: a dengue workflow built on a blank
+    // canvas said "Define a study area and inspect its semantic representation" (the practitioner's screenshot,
+    // 2026-11-09). A workflow has no description of its own, so the line says nothing rather than something untrue.
+    $('#project-description').textContent='';
   }
   $('#blank-canvas').hidden=workflow.nodes.length!==0||exampleKey(workflow)!=='blank';
   // The bar is refreshed here rather than only when a control is used, because the workflow can
@@ -1916,6 +1922,86 @@ function openPointsFromTableConfig(nodeId:string){
         redraw();}));
     },
     apply:draft=>{change(w=>{getNode(w,nodeId,'point_input').params.fromTable={...draft};});},
+  },esc);
+}
+
+/** WHAT SAMPLE SATELLITE READS, in one sentence (experiment 186). */
+function satelliteSampleSentence(n:WorkflowNode<'sample_satellite_files_at_points'>):string{
+  const p=n.params,product=samplerProduct(n),grid=product?gridReaderFor(product):null;
+  if(!product)return 'Reads each satellite file the search kept, at points or over areas. Connect the files first.';
+  if(grid){
+    const layer=grid.layers[p.layer??'day'],rule=(p.qualityRule??grid.quality.default) as ModisQualityRule;
+    const areas=workflow.edges.some(e=>e.to===n.id&&(e.port==='areas'||e.port==='area'));
+    return `Reads ${layer?.label??'the'} land surface temperature ${areas?'over each area':'at each point'}, in ${grid.unit==='K'?(p.unit??'°C'):grid.unit}, `
+      +`keeping cells that pass: ${MODIS_RULES[rule]}. The place column is ${p.placeColumn?.trim()||(areas?'area':'point_id')}.`;
+  }
+  return `Reads ${product.route.label} at the pixel nearest each point, keeping values with qa_value ${p.qaOperator??'>='} the product's threshold.`;
+}
+
+/** SAMPLE SATELLITE'S CONFIGURATION DIALOG (experiment 186, 2026-11-09). Only Apply writes; reading every file again
+ *  and forgetting the saved readings are choices applied with it. */
+function openSatelliteSampleConfig(nodeId:string){
+  const node=getNode(workflow,nodeId,'sample_satellite_files_at_points'),p=node.params;
+  const product=samplerProduct(node),grid=product?gridReaderFor(product):null;
+  const areas=workflow.edges.some(e=>e.to===nodeId&&(e.port==='areas'||e.port==='area'));
+  type Draft={layer:string;qualityRule:ModisQualityRule|'';unit:'K'|'°C'|'°F';placeColumn:string;qaOperator:'>='|'>';reread:boolean;forget:boolean};
+  const draft:Draft={layer:p.layer??'day',qualityRule:(p.qualityRule??grid?.quality.default??'') as ModisQualityRule|'',
+    unit:p.unit??'°C',placeColumn:p.placeColumn??'',qaOperator:p.qaOperator??'>=',reread:false,forget:false};
+  let saved:{count:number;bytes:number}|null=null;
+  openConfigDialog<Draft>({
+    id:'satellite-config',widget:'Sample satellite files at points or over areas',step:p.label||TYPES.sample_satellite_files_at_points.title,draft,
+    sections:d=>{
+      const settings=grid
+        ?`<div class="field"><label class="field-label" for="satellite-layer">Layer</label><select id="satellite-layer">`
+          +Object.entries(grid.layers).map(([k,l])=>`<option value="${esc(k)}"${k===d.layer?' selected':''}>${esc(l.label)}</option>`).join('')+'</select></div>'
+          +`<div class="field"><label class="field-label" for="satellite-quality-rule">Quality rule</label><select id="satellite-quality-rule">`
+          +(Object.entries(MODIS_RULES) as [ModisQualityRule,string][]).map(([k,text])=>`<option value="${k}"${k===d.qualityRule?' selected':''}>${esc(text)}</option>`).join('')
+          +'</select><small>The product documents its quality bits and recommends no rule. The rule is stated on every row.</small></div>'
+          +(grid.unit==='K'?`<div class="field"><label class="field-label" for="satellite-unit">Report temperature in</label><select id="satellite-unit">`
+            +`<option value="°C"${d.unit==='°C'?' selected':''}>degrees Celsius (K − 273.15)</option>`
+            +`<option value="°F"${d.unit==='°F'?' selected':''}>degrees Fahrenheit (K × 9/5 − 459.67)</option>`
+            +`<option value="K"${d.unit==='K'?' selected':''}>kelvin, as the file states it</option></select></div>`:'')
+          +`<div class="field"><label class="field-label" for="satellite-place-column">Name of the place column</label>`
+          +`<input id="satellite-place-column" maxlength="60" value="${esc(d.placeColumn)}" placeholder="${areas?'area':'point_id'}">`
+          +'<small>Name it as the table you will relate it to does, such as municipio.</small></div>'
+        :product
+          ?`<div class="field"><label class="field-label" for="satellite-qa-operator">Quality rule</label>`
+            +`<select id="satellite-qa-operator"><option value=">="${d.qaOperator==='>='?' selected':''}>qa_value at or above the threshold (the product manual's table)</option>`
+            +`<option value=">"${d.qaOperator==='>'?' selected':''}>qa_value above the threshold (the product readme)</option></select>`
+            +'<small>The product\'s documents differ, and only at exactly the threshold. The choice is stated on the result.</small></div>'
+          :'<p class="notice">Connect the files from Search a satellite catalog first: the settings are the product\u2019s.</p>';
+      const preview=grid
+        ?'<p class="muted">Land surface temperature is the ground\'s, where the sky was clear, not the air\'s. Terra and Aqua are kept apart. Each row says how many cells its mean rests on. Nothing is filled.</p>'
+        :'<p class="muted">The value of the pixel nearest each point, in every file the search kept. Each row says whether it passed the quality rule, or which gap it is. Nothing is filled.</p>';
+      const decisions='<h4>Readings saved on this device</h4>'
+        +'<p>A file read before, the same way at the same places, is taken from this device instead of being read again, and the result says how many were.</p>'
+        +`<p id="satellite-saved">${saved?`${saved.count.toLocaleString('en-US')} saved, about ${(saved.bytes/1e6).toFixed(1)} MB.`:'Counting\u2026'}</p>`
+        +`<label class="check"><input type="checkbox" id="satellite-reread"${d.reread?' checked':''}> Read every file again on the next run</label>`
+        +`<label class="check"><input type="checkbox" id="satellite-forget"${d.forget?' checked':''}> Forget every saved reading on this device, for every workflow</label>`;
+      return {settings,preview,decisions};
+    },
+    wire:(root,d,redraw)=>{
+      if(!saved)void savedReadingsSummary().then(s=>{saved=s;const el=root.querySelector('#satellite-saved');
+        if(el)el.textContent=`${s.count.toLocaleString('en-US')} saved, about ${(s.bytes/1e6).toFixed(1)} MB.`;});
+      const on=(id:string,act:(el:HTMLInputElement&HTMLSelectElement)=>void)=>
+        root.querySelector<HTMLInputElement&HTMLSelectElement>('#'+id)?.addEventListener('change',e=>{act(e.currentTarget as HTMLInputElement&HTMLSelectElement);redraw();});
+      on('satellite-layer',el=>{d.layer=el.value;});
+      on('satellite-quality-rule',el=>{d.qualityRule=el.value as ModisQualityRule;});
+      on('satellite-unit',el=>{d.unit=el.value as 'K'|'°C'|'°F';});
+      on('satellite-place-column',el=>{d.placeColumn=el.value.trim();});
+      on('satellite-qa-operator',el=>{d.qaOperator=el.value as '>='|'>';});
+      on('satellite-reread',el=>{d.reread=el.checked;});
+      on('satellite-forget',el=>{d.forget=el.checked;});
+    },
+    apply:d=>{
+      change(w=>{const params=getNode(w,nodeId,'sample_satellite_files_at_points').params;
+        if(grid){params.layer=d.layer;if(d.qualityRule)params.qualityRule=d.qualityRule;params.unit=d.unit;
+          if(d.placeColumn)params.placeColumn=d.placeColumn;else delete params.placeColumn;}
+        else if(product)params.qaOperator=d.qaOperator;});
+      if(d.reread)rereadOnce.add(nodeId);
+      if(d.forget)void forgetSavedReadings().then(()=>{clearGridCache();clearFileCache();
+        toast('Every saved satellite reading on this device was forgotten. The next run reads every file again.',{tone:'notice'});});
+    },
   },esc);
 }
 
@@ -3549,36 +3635,17 @@ function renderInspector(){
     }else held+=oldInspector(n);
     content+=standardSection('Result',held);
   }else if(n.type==='sample_satellite_files_at_points'){
-    // AT POINTS OR OVER AREAS. Reading happens when the workflow runs, by range. Experiments 179 and 180.
-    const p=n.params,operator=p.qaOperator??'>=',product=samplerProduct(n),grid=product?gridReaderFor(product):null;
-    content+=labelForm('satellite-sample-label','Node label',p.label||'Sample satellite files at points or over areas');
-    if(grid){
-      const rule=(p.qualityRule??grid.quality.default) as ModisQualityRule,layer=p.layer??'day';
-      const areas=workflow.edges.some(e=>e.to===n.id&&(e.port==='areas'||e.port==='area'));
-      content+='<p class="description">Reads each file over each area, by the cells whose centre is inside it, or at each point. '
-        +'Each row says how many cells the mean rests on. Nothing is filled.</p>'
-        +`<div class="field"><label class="field-label" for="satellite-layer">Layer</label><select id="satellite-layer">`
-        +Object.entries(grid.layers).map(([k,l])=>`<option value="${esc(k)}"${k===layer?' selected':''}>${esc(l.label)}</option>`).join('')+'</select></div>'
-        +`<div class="field"><label class="field-label" for="satellite-quality-rule">Quality rule</label><select id="satellite-quality-rule">`
-        +(Object.entries(MODIS_RULES) as [ModisQualityRule,string][]).map(([k,text])=>`<option value="${k}"${k===rule?' selected':''}>${esc(text)}</option>`).join('')
-        +'</select><small>The product documents its quality bits and recommends no rule. The rule is stated on every row.</small></div>'
-        +(grid.unit==='K'?`<div class="field"><label class="field-label" for="satellite-unit">Report temperature in</label><select id="satellite-unit">`
-          +`<option value="°C"${(p.unit??'°C')==='°C'?' selected':''}>degrees Celsius (K − 273.15)</option>`
-          +`<option value="°F"${p.unit==='°F'?' selected':''}>degrees Fahrenheit (K × 9/5 − 459.67)</option>`
-          +`<option value="K"${p.unit==='K'?' selected':''}>kelvin, as the file states it</option></select></div>`:'')
-        +`<div class="field"><label class="field-label" for="satellite-place-column">Name of the place column</label>`
-        +`<input id="satellite-place-column" maxlength="60" value="${esc(p.placeColumn??'')}" placeholder="${areas?'area':'point_id'}">`
-        +'<small>Name it as the table you will relate it to does, such as municipio.</small></div>'
-        +'<p class="notice">Land surface temperature is the ground\'s, where the sky was clear, not the air\'s. Terra and Aqua are kept apart.</p>';
-    }else{
-      content+='<p class="description">Reads the value of the pixel nearest each point, in every file the search kept, '
-        +'fetching only the parts it needs. Each row says whether the value passed the quality rule, or which gap it is. Nothing is filled.</p>'
-        +`<div class="field"><label class="field-label" for="satellite-qa-operator">Quality rule</label>`
-        +`<select id="satellite-qa-operator"><option value=">="${operator==='>='?' selected':''}>qa_value at or above the threshold (the product manual's table)</option>`
-        +`<option value=">"${operator==='>'?' selected':''}>qa_value above the threshold (the product readme)</option></select>`
-        +'<small>The product\'s documents differ, and only at exactly the threshold. The choice is stated on the result.</small></div>';
-    }
-    content+='<p class="notice">Run the workflow to read the files. Sentinel-5P NO₂ is read at points; MODIS land surface temperature at points or over areas.</p>';
+    // THE STANDARD INSPECTOR (experiment 186), touched 2026-11-09 when it learned to keep what it reads on this device:
+    // the name; its inputs; one sentence and Configure…, where the layer, quality rule, unit and place column are set and
+    // saved readings are read again or forgotten; and what the last run read. The controls' ids are kept, in the dialog.
+    content+=standardSection('Name',labelForm('satellite-sample-label','Name',n.params.label||'Sample satellite files at points or over areas'));
+    content+=standardSection('Inputs',standardInputs(n,{files:'Satellite files',points:'Points',areas:'Areas, a polygon layer',area:'Or: a study area\u2019s named parts'}));
+    content+=standardSection('Settings',`<p class="standard-sentence">${esc(satelliteSampleSentence(n))}</p>`
+      +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button></div>');
+    const why=result?.unfinished?.find(u=>u.nodeId===n.id)?.message;
+    const said=(result?.tables?.[n.id] as {sentence?:string}|undefined)?.sentence;
+    content+=standardSection('Result',`<p class="standard-result${why?' standard-result-warning':''}">${esc(why?`The last run could not compute this step: ${why}`
+      :said??'Run the workflow to read the files. A file read before on this device, the same way at the same places, is not read again.')}</p>`);
   }else if(n.type==='search_satellite_catalog'){
     // WHERE THE FILES ARE: searched in a dialog adapted from JLT's STAC Browser. Experiment 179.
     const p=n.params,search=p.search,kept=p.kept??(search?defaultKept(search.items):[]);
@@ -3910,26 +3977,6 @@ function renderInspector(){
       change(w=>{getNode(w,n.id,'study_design').params=next;});
     },()=>designChecklist(workflow,n.id));
   });
-  optionalElement('#satellite-layer')?.addEventListener('change',event=>{
-    const value=(event.currentTarget as HTMLSelectElement).value;
-    change(w=>{getNode(w,n.id,'sample_satellite_files_at_points').params.layer=value;});
-  });
-  optionalElement('#satellite-quality-rule')?.addEventListener('change',event=>{
-    const value=(event.currentTarget as HTMLSelectElement).value as ModisQualityRule;
-    change(w=>{getNode(w,n.id,'sample_satellite_files_at_points').params.qualityRule=value;});
-  });
-  optionalElement('#satellite-unit')?.addEventListener('change',event=>{
-    const value=(event.currentTarget as HTMLSelectElement).value as 'K'|'°C'|'°F';
-    change(w=>{getNode(w,n.id,'sample_satellite_files_at_points').params.unit=value;});
-  });
-  optionalElement('#satellite-place-column')?.addEventListener('change',event=>{
-    const value=(event.currentTarget as HTMLInputElement).value.trim();
-    change(w=>{const node=getNode(w,n.id,'sample_satellite_files_at_points');if(value)node.params.placeColumn=value;else delete node.params.placeColumn;});
-  });
-  optionalElement('#satellite-qa-operator')?.addEventListener('change',event=>{
-    const value=(event.currentTarget as HTMLSelectElement).value as '>='|'>';
-    change(w=>{getNode(w,n.id,'sample_satellite_files_at_points').params.qaOperator=value;});
-  });
   optionalElement('#catalog-search-open')?.addEventListener('click',()=>{
     const node=getNode(workflow,n.id,'search_satellite_catalog');
     const upstream=(port:string)=>{const e=workflow.edges.find(x=>x.to===n.id&&x.port===port);return e?workflow.nodes.find(m=>m.id===e.from):undefined;};
@@ -4124,6 +4171,7 @@ function renderInspector(){
   if(n.type==='map_output')optionalElement('#configure-step')?.addEventListener('click',()=>openMapConfig(n.id));
   if(n.type==='table_output')optionalElement('#configure-step')?.addEventListener('click',()=>openTableConfig(n.id));
   if(n.type==='sample_raster')optionalElement('#configure-step')?.addEventListener('click',()=>openSampleConfig(n.id));
+  if(n.type==='sample_satellite_files_at_points')optionalElement('#configure-step')?.addEventListener('click',()=>openSatelliteSampleConfig(n.id));
   if(n.type==='group_table')optionalElement('#configure-step')?.addEventListener('click',()=>{
     const node=workflow.nodes.find(x=>x.id===n.id);
     if(node?.type!=='group_table')return;

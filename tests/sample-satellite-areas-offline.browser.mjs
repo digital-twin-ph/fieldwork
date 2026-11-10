@@ -61,12 +61,15 @@ test('three areas, one per outcome, read by range: the mean rests on the cells t
   // The Inspector offers MODIS's controls, the default rule chosen, and not Sentinel-5P's operator.
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="sample"]').click();
+  await expect(page.locator('#inspector-content .standard-sentence')).toContainText('Reads Daytime land surface temperature over each area, in °C');
+  await page.locator('#configure-step').click();
   await expect(page.locator('#satellite-quality-rule')).toHaveValue('produced-2k');
   await expect(page.locator('#satellite-layer')).toHaveValue('day');
   await expect(page.locator('#satellite-qa-operator')).toHaveCount(0);
   // Celsius by default, the file's kelvin offered (the practitioner, 2026-11-06).
   await expect(page.locator('#satellite-unit')).toHaveValue('°C');
   await expect(page.locator('#satellite-unit option')).toHaveText(['degrees Celsius (K − 273.15)','degrees Fahrenheit (K × 9/5 − 459.67)','kelvin, as the file states it']);
+  await page.locator('#config-cancel').click();
   // WHILE IT READS, the run says so: a panel with the step, the count of files and a bar, and the state line counts too.
   // Recorded as it happens rather than caught on screen: on a fast runner the read finishes before a poll sees the
   // panel (CI, 2026-11-09, Chromium and WebKit), and a test that races the thing it checks fails for no fault.
@@ -103,8 +106,29 @@ test('three areas, one per outcome, read by range: the mean rests on the cells t
   // Kelvin, chosen, is saved on the node.
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="sample"]').click();
+  await page.locator('#configure-step').click();
   await page.locator('#satellite-unit').selectOption('K');
-  const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')).nodes.find(n=>n.id==='sample').params);
-  expect(saved.unit).toBe('K');
+  await page.locator('#config-apply').click();
+  await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')).nodes.find(n=>n.id==='sample').params.unit)).toBe('K');
+
+  // KEPT ON THIS DEVICE (2026-11-09): after a reload, the same file read the same way at the same places is not read
+  // again, and the result says so.
+  await page.reload();
+  await page.locator('[data-view="workflow"]').click();
+  await page.locator('#run-button').click();
+  await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:90000});
+  await page.locator('[data-view="results"]').click();
+  await expect(page.locator('main').first()).toContainText('Every file was taken from readings saved on this device from an earlier run');
+  // Read again, asked for in the dialog: the next run reads the file, and says nothing about saved readings.
+  await page.locator('[data-view="workflow"]').click();
+  await page.locator('.react-flow__node[data-id="sample"]').click();
+  await page.locator('#configure-step').click();
+  await expect(page.locator('#satellite-saved')).toContainText('1 saved');
+  await page.locator('#satellite-reread').check();
+  await page.locator('#config-apply').click();
+  await page.locator('#run-button').click();
+  await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:90000});
+  await page.locator('[data-view="results"]').click();
+  await expect(page.locator('main').first()).not.toContainText('taken from readings saved on this device');
   expect(errors).toEqual([]);
 });

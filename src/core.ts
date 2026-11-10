@@ -530,6 +530,9 @@ export function nodeInputs(node:WorkflowNode):[string,PortType][]{
     ['coverage','coverage-check'],['table','table'],['polygons','polygons'],['decisions','decisions']];
   return TYPES[node.type].inputs;
 }
+/** STEPS WHOSE NEXT RUN READS EVERY SATELLITE FILE AGAIN, asked for in Sample satellite's dialog. Once: the run that
+ *  reads them takes the request, and what it reads is saved as usual. */
+export const rereadOnce=new Set<string>();
 export function exampleWorkflow():Workflow {
   return {schema:'fieldwork/workflow/1',name:'Heat outreach screening',nodes:[
     {id:'neighborhoods',type:'point_input',x:35,y:52,params:{label:'Neighborhoods',data:{type:'FeatureCollection',features:[point('oakwood','Oakwood',[-84.455,33.873]),point('northgate','Northgate',[-84.337,33.875]),point('riverside','Riverside',[-84.438,33.812]),point('midtown','Midtown',[-84.37,33.79]),point('eastfield','Eastfield',[-84.277,33.795]),point('brookside','Brookside',[-84.421,33.734]),point('southpark','South Park',[-84.34,33.72]),point('cedar','Cedar Heights',null)]}}},
@@ -1639,11 +1642,13 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           const kind=polygons?'area' as const:'point' as const;
           const layer=node.params.layer??'day',rule=node.params.qualityRule??gridReader.quality.default;
           const {fromUrl}=await import('geotiff');
-          const tags={files:0,stated:0};
+          const tags={files:0,stated:0,saved:0};
+          const {deviceReadings}=await import('./satellite-reading-store.js');
           const {runDetail}=await import('./run-progress.js');
           const report=(done:number,of:number)=>runDetail({nodeId:node.id,label:node.params.label||'Sample satellite files',done,of,what:'satellite files'});
           report(0,files.search.items.length);
-          const readings=await grids.readGridFiles(files.search.items,gridReader,layer,rule,places,async url=>(await fromUrl(url)).getImage() as never,fetch,report,tags)
+          const readings=await grids.readGridFiles(files.search.items,gridReader,layer,rule,places,async url=>(await fromUrl(url)).getImage() as never,fetch,report,tags,
+            {saved:deviceReadings,...(rereadOnce.delete(node.id)?{reread:true}:{})})
             .finally(()=>runDetail(null));
           const column=node.params.placeColumn?.trim()||(kind==='area'?'area':'point_id');
           const unit=node.params.unit;
@@ -1651,7 +1656,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           counts.files=files.search.items.length;
           const sentence=grids.gridSentence(counts,gridReader,layer,rule,files.product,kind,unit,tags);
           value={...table,sentence} as unknown as DisplayValue;
-          const facts=grids.gridFacts(`<urn:fieldwork:run:${runId}:output:${node.id}>`,counts,gridReader,layer,rule,files.product,kind,unit);
+          const facts=grids.gridFacts(`<urn:fieldwork:run:${runId}:output:${node.id}>`,counts,gridReader,layer,rule,files.product,kind,unit,tags.saved);
           receipts.push({nodeId:node.id,kind:'computation',facts,rules:'',input:facts,conclusions:[],method:sentence} as unknown as Receipt);
           break;
         }
@@ -1668,13 +1673,16 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         const {runDetail}=await import('./run-progress.js');
         const report=(done:number,of:number)=>runDetail({nodeId:node.id,label:node.params.label||'Sample satellite files',done,of,what:'satellite files'});
         report(0,files.search.items.length);
-        const readings=await readFiles(files.search.items,reader,placed,report).finally(()=>runDetail(null));
+        const {deviceReadings}=await import('./satellite-reading-store.js');
+        const stats={saved:0};
+        const readings=await readFiles(files.search.items,reader,placed,report,
+          {saved:deviceReadings,stats,...(rereadOnce.delete(node.id)?{reread:true}:{})}).finally(()=>runDetail(null));
         const idColumn=!raw||'layers' in raw?undefined:raw.idColumn;
         const {table,counts}=sampling.sampleTable(placed,readings,files.search.from,files.search.until||files.search.from,reader,operator,features.length-placed.length,idColumn);
         const units=readings.find(r=>r.units)?.units??null;
-        const sentence=sampling.sampleSentence(counts,reader,operator,files.product);
+        const sentence=sampling.sampleSentence(counts,reader,operator,files.product,stats.saved);
         value={...table,sentence} as unknown as DisplayValue;
-        const facts=sampling.sampleFacts(`<urn:fieldwork:run:${runId}:output:${node.id}>`,counts,reader,operator,files.product,units);
+        const facts=sampling.sampleFacts(`<urn:fieldwork:run:${runId}:output:${node.id}>`,counts,reader,operator,files.product,units,stats.saved);
         receipts.push({nodeId:node.id,kind:'computation',facts,rules:'',input:facts,conclusions:[],method:sentence} as unknown as Receipt);
         break;}
       case 'study_design':{

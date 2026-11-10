@@ -38,7 +38,9 @@ test('one point per outcome, read by range in the worker, and the table says whi
   // The Inspector: the quality rule, both operators offered, the manual's chosen by default.
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="sample"]').click();
+  await page.locator('#configure-step').click();
   await expect(page.locator('#satellite-qa-operator')).toHaveValue('>=');
+  await page.locator('#config-cancel').click();
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:90000});
   await page.locator('[data-view="results"]').click();
@@ -49,8 +51,10 @@ test('one point per outcome, read by range in the worker, and the table says whi
   // The operator, saved, changes the rule stated on the result.
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="sample"]').click();
+  await page.locator('#configure-step').click();
   await page.locator('#satellite-qa-operator').selectOption('>');
-  const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));
-  expect(saved.nodes.find(n=>n.id==='sample').params.qaOperator).toBe('>');
+  await page.locator('#config-apply').click();
+  await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1'))
+    .nodes.find(n=>n.id==='sample').params.qaOperator)).toBe('>');
   expect(errors).toEqual([]);
 });

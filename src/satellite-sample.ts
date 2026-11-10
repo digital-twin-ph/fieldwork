@@ -131,7 +131,7 @@ export function sampleTable(points:readonly SamplePoint[],readings:readonly File
 
 const plural=(n:number,one:string,many=one+'s')=>`${n.toLocaleString('en-US')} ${n===1?one:many}`;
 
-export function sampleSentence(c:SampleCounts,reader:SatelliteReader,operator:QualityOperator,product:SatelliteProduct):string{
+export function sampleSentence(c:SampleCounts,reader:SatelliteReader,operator:QualityOperator,product:SatelliteProduct,saved=0):string{
   return `Read ${plural(c.files,'file')} of ${product.route.label} at ${plural(c.points,'point')} over ${plural(c.days,'day')}: `
     +`${plural(c.rows,'row')}, one per point per overpass and one per point per day without one. `
     +`${plural(c.passing,'row')} hold a value passing qa_value ${operator} ${reader.quality.threshold}; `
@@ -141,10 +141,11 @@ export function sampleSentence(c:SampleCounts,reader:SatelliteReader,operator:Qu
     +` The value is that of the pixel whose centre is nearest the point, not an interpolation, and a column amount, not a surface `
     +`concentration. Nothing was filled.`
     +(c.bytes!=null?` ${(c.bytes/1e6).toFixed(1)} MB in ${plural(c.requests??0,'request')}.`
-      :c.requests!=null?` ${plural(c.requests,'request')}; the storage does not let the browser see their size.`:'');
+      :c.requests!=null?` ${plural(c.requests,'request')}; the storage does not let the browser see their size.`:'')
+    +(saved?` ${saved===c.files?'Every file was':`${saved} of ${c.files} files were`} taken from readings saved on this device from an earlier run, the same file read at the same points${saved===c.files?'':'; the rest were read now'}.`:'');
 }
 
-export function sampleFacts(entity:string,c:SampleCounts,reader:SatelliteReader,operator:QualityOperator,product:SatelliteProduct,units:string|null):string{
+export function sampleFacts(entity:string,c:SampleCounts,reader:SatelliteReader,operator:QualityOperator,product:SatelliteProduct,units:string|null,saved=0):string{
   const q=(v:string)=>JSON.stringify(v);
   return `@prefix fw: <urn:fieldwork:>.\n@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.\n`
     +`${entity} a fw:SatellitePointSample;\n`
@@ -153,7 +154,7 @@ export function sampleFacts(entity:string,c:SampleCounts,reader:SatelliteReader,
     +`  fw:pixelConvention "pixel whose centre is nearest; no interpolation";\n`
     +`  fw:qualityVariable ${q(reader.quality.variable)};\n  fw:qualityThreshold "${reader.quality.threshold}"^^xsd:decimal;\n`
     +`  fw:qualityOperator ${q(operator)};\n`
-    +`  fw:filesRead "${c.files}"^^xsd:integer;\n  fw:pointsSampled "${c.points}"^^xsd:integer;\n`
+    +`  fw:filesRead "${c.files}"^^xsd:integer;\n  fw:filesFromDevice "${saved}"^^xsd:integer;\n  fw:pointsSampled "${c.points}"^^xsd:integer;\n`
     +`  fw:rowsWritten "${c.rows}"^^xsd:integer;\n  fw:rowsPassing "${c.passing}"^^xsd:integer;\n`
     +`  fw:rowsBelowQuality "${c.belowQuality}"^^xsd:integer;\n  fw:rowsNoRetrieval "${c.noRetrieval}"^^xsd:integer;\n`
     +`  fw:rowsNoOverpass "${c.noOverpass}"^^xsd:integer;\n`

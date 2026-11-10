@@ -176,3 +176,32 @@ test('a failed file is tried again; one that keeps failing is named; a wrong uni
     /states its unit as "C"/);
   assert.equal(opens,3,'opened once: three layers, no retry');
 });
+
+/** KEPT ON THIS DEVICE (2026-11-09): a reading saved by an earlier session is used without opening the file, counted,
+ *  and read again when asked. Keyed by the file, layer, rule and places, so another rule reads the file. */
+test('a reading saved on this device is used, counted, and read again when asked',async()=>{
+  const {readGridFiles,gridReaderFor,clearGridCache}=await import('../build/satellite-grid-sample.js');
+  const {productFor}=await import('../build/satellite-products.js');
+  const reader=gridReaderFor(productFor('heat','pc-modis-lst-8day'));
+  const fetcher=async()=>({ok:true,json:async()=>({token:'t','msft:expiry':'2099-01-01T00:00:00Z'})});
+  let opened=0;
+  const open=async()=>{opened++;return {getOrigin:()=>[0,0],getResolution:()=>[1,-1],getWidth:()=>2,getHeight:()=>2,
+    getGDALMetadata:async()=>({units:'K',scale_factor:'0.02'}),readRasters:async()=>[[15000,15000,15000,15000]]};};
+  const items=[{id:'MOD.a',datetime:'2024-01-01T00:00:00Z',platform:'terra',
+    files:['LST_Day_1km','QC_Day','Clear_sky_days'].map(key=>({key,href:`https://x/a_${key}.tif`}))}];
+  const places=[{id:'p',name:'P',kind:'point',lon:0.5,lat:-0.5}];
+  const kept=new Map(),saved={get:async k=>kept.get(k),put:async(k,v)=>{kept.set(k,structuredClone(v));}};
+  clearGridCache();
+  const first={files:0,stated:0};
+  const read=await readGridFiles(items,reader,'day','produced-2k',places,open,fetcher,()=>{},first,{saved});
+  assert.equal(opened,3);assert.equal(first.saved,0);assert.equal(kept.size,1);
+  clearGridCache();// a new session: nothing in the page, the device's readings still there
+  const second={files:0,stated:0};
+  assert.deepEqual(await readGridFiles(items,reader,'day','produced-2k',places,open,fetcher,()=>{},second,{saved}),read);
+  assert.equal(opened,3,'nothing opened');assert.equal(second.saved,1);
+  await readGridFiles(items,reader,'day','good',places,open,fetcher,()=>{},{files:0,stated:0},{saved});
+  assert.equal(opened,6,'another quality rule reads the file');
+  const third={files:0,stated:0};
+  await readGridFiles(items,reader,'day','produced-2k',places,open,fetcher,()=>{},third,{saved,reread:true});
+  assert.equal(opened,9,'read again when asked');assert.equal(third.saved,0);
+});

@@ -797,6 +797,15 @@ export function validateWorkflow(raw:unknown):Workflow {
     if(n.type==='map_image_input'){
       const p=n.params;
       if(p.data!==undefined&&typeof p.data!=='string')throw new Error('A map image is carried as a data URI.');
+      // HOW IT WAS PLACED (experiment 201): a world file of six finite numbers, and the matched points behind it.
+      if(p.placement!==undefined&&p.placement!=='world-file'&&p.placement!=='points')throw new Error('Invalid map image placement.');
+      if(p.world!==undefined&&!(['xScale','ySkew','xSkew','yScale','xOrigin','yOrigin'] as const).every(k=>Number.isFinite(p.world![k])))
+        throw new Error('A map image\'s placement is six numbers.');
+      if(p.placementModel!==undefined&&p.placementModel!=='north-up'&&p.placementModel!=='affine')throw new Error('Invalid placement model.');
+      if(p.controlPoints!==undefined&&(!Array.isArray(p.controlPoints)||p.controlPoints.length>100||p.controlPoints.some(c=>
+        typeof c?.id!=='string'||c.id.length>120||!Array.isArray(c.pixel)||!Array.isArray(c.lonlat)
+        ||![...c.pixel,...c.lonlat].every(Number.isFinite)||Math.abs(c.lonlat[0])>180||Math.abs(c.lonlat[1])>90)))
+        throw new Error('A matched point is a name, a pixel position and a longitude and latitude.');
       // AN UNCONFIGURED PLATE IS A DRAFT, NOT A BAD ONE. A node added from the palette carries
       // `[0,0,0,0]` because nobody has chosen an image yet, and until 2026-10-27 that tripped the
       // crossed-corners check: the widget could be offered and could not be added, which is what

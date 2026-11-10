@@ -45,7 +45,7 @@ export function mapImageInspector(n:WorkflowNode<'map_image_input'>,esc:Escape):
 }
 
 /** What was placed, in the facts a figure can state without decoding the image again. */
-function placedCard(n:WorkflowNode<'map_image_input'>,esc:Escape):string{
+export function placedCard(n:WorkflowNode<'map_image_input'>,esc:Escape):string{
   const p=n.params;
   if(typeof p.data!=='string'||!p.data.startsWith('data:'))return '';
   const [west,south,east,north]=p.bounds??[0,0,0,0];
@@ -58,5 +58,7 @@ function placedCard(n:WorkflowNode<'map_image_input'>,esc:Escape):string{
     +(p.image.filename?`<p class="muted">From ${esc(p.image.filename)}`
       +`${p.image.sha256?` · sha256 ${esc(p.image.sha256.slice(0,12))}…`:''}`
       +` · ${(p.image.bytes/1e6).toFixed(1)} MB</p>`:'')
-    +`<p class="muted">Drawn north-up, as published. Nothing is rotated or reprojected.</p></div>`;
+    +`<p class="muted">${p.placement==='points'
+      ?`Placed by ${p.controlPoints?.length??0} matched points, ${p.placementModel==='north-up'?'north up':'turned and stretched as the points need'}.`
+      :p.world&&(p.world.xSkew||p.world.ySkew)?'Placed by its world file, turned as it says.':'Drawn north-up, as its world file places it.'} Nothing is reprojected.</p></div>`;
 }

@@ -1224,3 +1224,24 @@ select.rule-op.rule-op-compare,select.rule-op.rule-op-equal,select.rule-op.rule-
 .example-qr-pair{display:flex;flex-wrap:wrap;gap:24px;margin:6px 0 14px}
 .example-qr{margin:0;max-width:260px}.example-qr svg{display:block;background:#fff}
 .example-qr figcaption{font-size:14px;line-height:1.45;overflow-wrap:anywhere;margin-top:6px}
+
+/* Placing a map image by matched points (experiment 201): two panes side by side, the points as rows of fields. Sizes
+   at 14 px and over, the marks large enough to find. */
+.geo-guide p{font-size:14px;line-height:1.5;margin:0 0 10px}
+.geo-panes{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;margin:8px 0}
+.geo-pane{height:380px;border:1px solid var(--line);border-radius:6px;overflow:auto;background:#fff}
+.geo-pane-title{font-size:14px;font-weight:600;margin:0 0 6px}
+.geo-cursor{font-size:16px;font-weight:700;margin-left:8px;font-variant-numeric:tabular-nums}
+.geo-image-tools{display:flex;gap:6px;margin-bottom:6px}
+.geo-image-frame{position:relative;cursor:crosshair}
+.geo-image-frame img{display:block;width:100%;height:auto;user-select:none}
+#geo-image-marks{position:absolute;inset:0;pointer-events:none}
+.geo-mark{position:absolute;transform:translate(-50%,-50%);display:grid;place-items:center;width:24px;height:24px;border-radius:50%;
+  background:#261156;color:#fff;font-size:14px;font-weight:700;border:2px solid #fff;box-shadow:0 0 0 1px #261156}
+.leaflet-marker-icon.geo-mark{position:absolute;transform:none}
+.geo-mark.is-active{background:#b6377a;box-shadow:0 0 0 1px #b6377a}
+.geo-points{width:100%;border-collapse:collapse;margin:10px 0;font-size:14px}
+.geo-points th,.geo-points td{padding:4px 6px;border-bottom:1px solid var(--line);text-align:left}
+.geo-points input:not([type=radio]){width:100%;font-size:14px;padding:4px}
+.geo-points tr.geo-doubt td{background:#fff4e5}
+@media (max-width:900px){.geo-panes{grid-template-columns:1fr}}

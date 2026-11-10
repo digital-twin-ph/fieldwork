@@ -26,6 +26,9 @@ export interface MapImage {
   source?:{title?:string;url?:string;licence?:string;note?:string};
   /** Metres per pixel at the middle of the extent: what the plate can and cannot show. */
   groundResolutionM:number;
+  /** THE FOUR CORNERS, where the placement turns the image (experiment 201): top-left, top-right, bottom-right,
+   *  bottom-left, in CRS84. Absent for a north-up placement, which `bounds` says exactly. */
+  corners?:[number,number][];
 }
 
 export const DEFAULT_OPACITY=0.85;
@@ -55,10 +58,12 @@ export function readWorldFile(text:string):WorldFile{
  *  further out on each side. Half a pixel is 20 metres on Snow's small plate; small enough to
  *  ignore and wrong enough to be worth not ignoring. */
 export function boundsFromWorldFile(world:WorldFile,width:number,height:number):[number,number,number,number]{
-  if(world.xSkew!==0||world.ySkew!==0)
-    throw new Error('This world file places the image at an angle, and a rotated plate cannot be '
-      +'drawn as an upright rectangle: it would sit in the wrong place while looking correct. '
-      +'Georeference it north-up, or supply the corners directly.');
+  // A TURNED IMAGE IS PLACED BY ITS CORNERS since 2026-11-10 (experiment 201), and drawn turned; its bounds are their
+  // envelope. Refused until then, because drawing it as an upright box would have put it in the wrong place.
+  if(world.xSkew!==0||world.ySkew!==0){
+    const corners=turnedCorners(world,width,height),lons=corners.map(c=>c[0]),lats=corners.map(c=>c[1]);
+    return [Math.min(...lons),Math.min(...lats),Math.max(...lons),Math.max(...lats)];
+  }
   if(!(width>0)||!(height>0))throw new Error('An image needs a width and a height in pixels.');
   if(world.xScale<=0)throw new Error('A world file\'s x pixel size is the width of one pixel and must be positive.');
   if(world.yScale>=0)throw new Error('A world file\'s y pixel size is negative for a north-up image, '
@@ -67,6 +72,14 @@ export function boundsFromWorldFile(world:WorldFile,width:number,height:number):
   const north=world.yOrigin-world.yScale/2;
   return [west,north+world.yScale*height,west+world.xScale*width,north];
 }
+
+/** A world file's four corners of a `width` by `height` image: top-left, top-right, bottom-right, bottom-left. */
+export function turnedCorners(world:WorldFile,width:number,height:number):[number,number][]{
+  const at=(x:number,y:number):[number,number]=>[world.xScale*(x-0.5)+world.xSkew*(y-0.5)+world.xOrigin,
+    world.ySkew*(x-0.5)+world.yScale*(y-0.5)+world.yOrigin];
+  return [at(0,0),at(width,0),at(width,height),at(0,height)];
+}
+export const isTurned=(world:WorldFile|undefined)=>!!world&&(world.xSkew!==0||world.ySkew!==0);
 
 /** Metres on the ground for one pixel, at the middle of the extent. Longitude shrinks with the
  *  cosine of latitude; this is the larger of the two axes, which is what a reader meets. */
@@ -96,7 +109,8 @@ export function mapImage(node:WorkflowNode<'map_image_input'>):MapImage{
     ...(p.image.filename?{filename:p.image.filename}:{}),
     bounds:[west,south,east,north],opacity,
     ...(p.source?{source:p.source}:{}),
-    groundResolutionM:groundResolution([west,south,east,north],p.image.width,p.image.height)};
+    groundResolutionM:groundResolution([west,south,east,north],p.image.width,p.image.height),
+    ...(isTurned(p.world)?{corners:turnedCorners(p.world!,p.image.width,p.image.height)}:{})};
 }
 
 /** The SVG for a static figure: one placed image, in the caller's projection.
@@ -106,6 +120,14 @@ export function mapImage(node:WorkflowNode<'map_image_input'>):MapImage{
  *  ground rather than a broken one. */
 export function mapImageMarkup(image:MapImage,
   project:(c:[number,number])=>[number,number]):string{
+  if(image.corners){
+    const [tl,tr,,bl]=image.corners.map(c=>project(c as [number,number]));
+    if(![...tl!,...tr!,...bl!].every(Number.isFinite))return '';
+    const w=image.width,h=image.height;
+    const m=[(tr![0]-tl![0])/w,(tr![1]-tl![1])/w,(bl![0]-tl![0])/h,(bl![1]-tl![1])/h,tl![0],tl![1]].map(v=>v.toFixed(6)).join(' ');
+    return `<image data-map-image="${image.sha256.slice(0,12)}" width="${w}" height="${h}" opacity="${image.opacity}" `
+      +`preserveAspectRatio="none" transform="matrix(${m})" href="${image.data}"/>`;
+  }
   const [west,south,east,north]=image.bounds;
   const [x0,y0]=project([west,north]),[x1,y1]=project([east,south]);
   if(![x0,y0,x1,y1].every(Number.isFinite))return '';

@@ -2,7 +2,8 @@
 
 _Created 2026-11-10 · Updated 2026-11-10_
 
-**Status:** asked. A design, made to be built and tried on South London first and Hagelloch second. Nothing is built.
+**Status:** tried. The fit, the dialog and turned drawing are built (0.81.0); South London's four points refitted.
+The guidance ring for a worked example's manual, the lab check against GDAL and Hagelloch's 1824 sheet are next.
 
 ## The question
 
@@ -11,6 +12,14 @@ georeferencing in the georeferenced image input widget. You did it before for So
 this time in the widget itself."* Then: *"We can have an interface that pairs control points between the image and a
 map of the place"*, and *"we can then exercise the same step for South London if it works. We can make this experiment
 201."*
+
+## More of the question, the same day
+
+- *"Let's pull up georeferencing to the top"*
+- *"Remember we should be able to do the georeferencing by hand so this will be the challenge if we show this in a
+  manual."*
+- *"How do we point the user to the right pairs of points is the question."*
+- *"For the worked example we can give them cues like a blinking point to click on"*
 
 ## What exists
 
@@ -91,3 +100,38 @@ A railway map of Germany, 1861 (Wikimedia Commons, public domain, 4,878 × 3,792
 - That today's features are where 1861's were. A church or a junction chosen as a pair is assumed not to have moved.
 - That the houses in Hagelloch's table are the houses on a plan. The table's `x_loc` and `y_loc` come from Oesterle's
   1992 reanalysis; which plan they were read from is not recorded.
+
+## Built, 2026-11-10
+
+**The fit** (`src/georeference.ts`): least squares from matched points, **north up** (a scale and an offset per axis,
+two points at least) or **affine** (turned and sheared as the points need, three at least), into a world file in CRS84
+with the origin at the top-left pixel's centre. Residuals on the ground, metres east and north: where the fit puts the
+point minus where it is. Points on one line, or too few, are refused with what to do.
+
+**The dialog**: Georeferenced map image moves to the standard Inspector (Name, Inputs, one sentence and Configure…,
+what is placed). Configure… holds the image, *How to place it* (a world file, or matched points) and the opacity. By
+matched points: what makes a good pair, said before the first; the image pane, zoomed, with the pixel under the cursor
+shown large; today's map, with OpenStreetMap's tiles and a sentence saying the area viewed is sent to them; and a row of
+fields per point -- a name, its x and y on the image, its longitude and latitude -- that a click fills and a person can
+type. Each row shows its error and, with more points than the fit needs, its error with that point left out; a pair
+whose left-out error is more than twice the root mean square is marked *check this pair*. Once a fit exists, a point
+clicked on the image is shown on the map as a ring where the fit expects it: the person still finds and clicks it.
+Apply waits for a placement and says what it waits for.
+
+**Turned images drawn turned**: a world file with rotation is placed by its four corners, no longer refused. The static
+figure draws it through an SVG matrix from three of them; the interactive map through a layer of its own, a CSS matrix
+recomputed as the view changes. North-up images are drawn as before.
+
+**South London, refitted** (`tests/georeference.test.mjs`): its four recorded points, north up, give the hand fit's
+north-south scale to 0.002% and its top edge to about a metre; east-west the scale differs by 0.1% and the left edge by
+about 10 m, with the same residuals (Kennington Oval 144 m). The difference is the direction of the fit: the hand fit
+predicted pixels from coordinates, this one coordinates from pixels, as GDAL's fit from control points does. Where the
+residuals are small the two agree; where they are large, they part.
+
+**For a manual** (not built yet): the points typed, so a learner gets the manual's fit and errors exactly and the test
+can check them; each point with the reason it was chosen; and, in a worked example, a slow pulse -- not a blink, which
+WCAG 2.3.1 limits to three a second -- on the feature to find, still for anyone who has asked their system for reduced
+motion, sized to the feature so the exact click is the learner's, and a setting to turn it off.
+
+**Not yet**: the cue; the lab check against GDAL's fit from the same points; Hagelloch's 1824 sheet, placed from its
+frame's known corners and again by hand, the two compared.

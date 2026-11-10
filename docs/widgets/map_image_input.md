@@ -67,3 +67,24 @@ What no test establishes is whether the georeference is **correct**. See
 [experiment 143](../experiments/143-a-georeferenced-plate-as-ground.md), which records that
 measuring the residual at the plate's four control points against modern boundaries is what would
 close it, and that it has not been done.
+
+## Placing an image by matching points
+
+Where there is no world file, an image can be placed by features found twice: on the image, and on today's map.
+
+1. Select the step and press **Configure…**. Choose the image.
+2. Under **How to place it**, choose **By matching points on the image and today's map**.
+3. Choose **Turned and stretched as needed** (three points or more) or **North up, no turning** (two or more).
+4. Press **+ Add a point**. Click the feature on the image, then the same feature on the map. Or type its position:
+   x and y on the image, longitude and latitude on the map. Name it.
+5. Add more points, spread across the image. Each shows its error in metres; with more points than the fit needs, a pair
+   whose error is much larger with that pair left out is marked **check this pair**.
+6. Press **Apply**, then **Run**.
+
+**Good pairs** are things that have not moved: a church, a bridge, an old road junction, the corner of a building still
+standing. Where a sheet prints its own grid or frame with known coordinates, use those first. Once three points are
+matched, clicking a feature on the image shows a ring on the map where the fit expects it.
+
+The map pane fetches OpenStreetMap's tiles, which sends the area you view to its servers.
+
+A world file that turns the image is drawn turned.

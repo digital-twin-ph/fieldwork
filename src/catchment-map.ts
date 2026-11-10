@@ -108,7 +108,9 @@ export interface MapLayers {
    *  can show and hide it."* That is the point of it for a learner -- flipping 1855 on and off
    *  under a modern result is the comparison, and a backdrop nobody can remove is a picture
    *  rather than evidence. */
-  plate?:{data:string; bounds:[number,number,number,number]; opacity:number; label:string};
+  plate?:{data:string; bounds:[number,number,number,number]; opacity:number; label:string;
+    /** A turned plate's corners and pixel size (experiment 201): drawn by `TurnedImage`, not an upright overlay. */
+    corners?:[number,number][]; width?:number; height?:number};
   /** A street graph, drawn as itself. Added 2026-10-20: a Map showing a network could not be made
    *  interactive and could carry no basemap, because the static branch returned before the
    *  interactive one was reached. */
@@ -122,6 +124,31 @@ export interface MapLayers {
   pinClasses?:Record<string,{value:string;colour:string;shape?:LayerShape}[]>;
   /** Lines from a record to the record it names, by row id (experiment 200, step 4). */
   links?:import('./map-links.js').MapLink[];
+}
+
+/** A TURNED IMAGE ON THE MAP (experiment 201). Leaflet draws an image overlay upright, between two corners; a plan placed
+ *  by matched points may be turned and sheared. So the image is placed in the overlay pane through a CSS matrix made
+ *  from three of its corners in the map's own pixels, and placed again whenever the view changes. */
+class TurnedImage extends L.Layer{
+  private img?:HTMLImageElement;
+  constructor(private data:string,private corners:[number,number][],private width:number,private height:number,private opacity:number){super();}
+  onAdd(map:L.Map){
+    const img=this.img=document.createElement('img');
+    img.src=this.data;img.className='map-plate-image leaflet-zoom-hide';img.alt='';
+    Object.assign(img.style,{position:'absolute',left:'0',top:'0',width:`${this.width}px`,height:`${this.height}px`,
+      transformOrigin:'0 0',opacity:String(this.opacity),pointerEvents:'none',maxWidth:'none'});
+    map.getPanes().overlayPane.prepend(img);
+    map.on('zoomend viewreset moveend',this.place,this);this.place();return this;
+  }
+  onRemove(map:L.Map){map.off('zoomend viewreset moveend',this.place,this);this.img?.remove();this.img=undefined;return this;}
+  bringToBack(){const img=this.img;img?.parentElement?.prepend(img);return this;}
+  private place(){
+    const map=(this as unknown as {_map?:L.Map})._map;
+    if(!map||!this.img)return;
+    const [tl,tr,,bl]=this.corners.map(([lon,lat])=>map.latLngToLayerPoint([lat,lon]));
+    const w=this.width,h=this.height;
+    this.img.style.transform=`matrix(${(tr!.x-tl!.x)/w},${(tr!.y-tl!.y)/w},${(bl!.x-tl!.x)/h},${(bl!.y-tl!.y)/h},${tl!.x},${tl!.y})`;
+  }
 }
 
 /** Presentation only: never changes polygons, memberships, or source points. */
@@ -192,9 +219,12 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
   // later layer is added to the map before this one has painted.
   if(layers.plate){
     const [west,south,east,north]=layers.plate.bounds;
-    const plate=L.imageOverlay(layers.plate.data,[[south,west],[north,east]],
-      {opacity:layers.plate.opacity,interactive:false,className:'map-plate-image'});
-    if(!hiddenPort('plate')){plate.addTo(map);plate.bringToBack();all.addLayer(plate);}
+    const turned=layers.plate.corners&&layers.plate.width&&layers.plate.height;
+    const plate:L.Layer=turned
+      ?new TurnedImage(layers.plate.data,layers.plate.corners!,layers.plate.width!,layers.plate.height!,layers.plate.opacity)
+      :L.imageOverlay(layers.plate.data,[[south,west],[north,east]],
+        {opacity:layers.plate.opacity,interactive:false,className:'map-plate-image'});
+    if(!hiddenPort('plate')){plate.addTo(map);(plate as L.ImageOverlay).bringToBack?.();all.addLayer(plate);}
     place('plate',layers.plate.label,plate);
   }
   if(layers.raster?.metadata){

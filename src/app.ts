@@ -1,4 +1,7 @@
 import {noteImageDigest,noteImageFigure,noteImageKey,readNoteImagePayload,type NoteImage} from './note-image.js';
+import {boundsOf} from './health-facilities.js';
+import {openMapImageConfig} from './georeference-ui.js';
+import {placedCard} from './map-image-ui.js';
 import {catalogLinks,builtInLinks,exampleLinksBlock,exampleSlug,type ExampleLinks} from './example-links.js';
 import {SCAN_DEFAULTS,newScanSeed} from './space-time-scan.js';
 import {linkLinesSvg} from './map-links.js';
@@ -1002,7 +1005,7 @@ function drawRunProgress(){
 /** THE WIDGETS WHOSE INSPECTOR FOLLOWS THE STANDARD (experiment 186): Name, Inputs, Settings, Result, the links,
  *  Actions, in that order and nothing else, with every setting in the widget's configuration dialog. One at a time,
  *  Relate first; the set grows as each widget is moved, and a check holds them to it. */
-export const STANDARD_INSPECTOR=new Set<NodeType>(['point_input','chart_output','sample_satellite_files_at_points','raster_input','sample_raster','measure_distance','table_output','relate_table','select_rows','table_input','find_health_facilities','group_table','apply_ruleset','map_output','deduplicate_points','rate','study_area','space_time_scan']);
+export const STANDARD_INSPECTOR=new Set<NodeType>(['point_input','chart_output','sample_satellite_files_at_points','raster_input','sample_raster','measure_distance','table_output','relate_table','select_rows','table_input','find_health_facilities','group_table','apply_ruleset','map_output','deduplicate_points','rate','study_area','space_time_scan','map_image_input']);
 function samplerProduct(node:WorkflowNode){
   const up=(id:string,port:string)=>{const e=workflow.edges.find(x=>x.to===id&&x.port===port);return e?workflow.nodes.find(m=>m.id===e.from):undefined;};
   const search=up(node.id,'files'),find=search?up(search.id,'product'):undefined;
@@ -3203,7 +3206,16 @@ function renderInspector(){
         .map(x=>({id:x.id,label:x.params.label||TYPES[x.type].title})),
       workflow.edges.find(e=>e.to===n.id&&e.port==='area')?.from);
   }else if(n.type==='map_image_input'){
-    content+=mapImageInspector(n,esc);
+    // THE STANDARD INSPECTOR (experiments 186 and 201), touched to place an image by matched points: the name; no inputs;
+    // one sentence and Configure…, which holds the image, its placement and its opacity; and what is placed.
+    const p=n.params,placed=typeof p.data==='string'&&p.data.startsWith('data:');
+    content+=standardSection('Name',labelForm('map-image-label','Name',p.label||'Georeferenced map image'));
+    content+=standardSection('Inputs',standardInputs(n));
+    content+=standardSection('Settings',`<p class="standard-sentence">${esc(placed
+      ?`Draws ${p.image.filename||'the image'} as ground, ${p.placement==='points'?`placed by ${p.controlPoints?.length??0} matched points`:'placed by its world file'}, ${Math.round((p.opacity??0.85)*100)}% opaque.`
+      :'Choose a map image and how to place it, in Configure\u2026')}</p>`
+      +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button></div>');
+    content+=standardSection('Result',placed?placedCard(n,esc):'<p class="standard-result">Nothing placed yet.</p>');
   }else if(n.type==='table_input'){
     // THE STANDARD INSPECTOR (experiment 186): what the step is called, one sentence of what it reads, Configure… for
     // the import, and what it holds. A source step has no inputs. Fetch the table is a button of its own, not a word in
@@ -4338,6 +4350,35 @@ content+=`<div class="field"><label class="field-label" for="chart-decisions">Re
   if(n.type==='sample_satellite_files_at_points')optionalElement('#configure-step')?.addEventListener('click',()=>openSatelliteSampleConfig(n.id));
   if(n.type==='chart_output')optionalElement('#configure-step')?.addEventListener('click',()=>openChartConfig(n.id));
   if(n.type==='space_time_scan')optionalElement('#configure-step')?.addEventListener('click',()=>openScanConfig(n.id));
+  if(n.type==='map_image_input')optionalElement('#configure-step')?.addEventListener('click',()=>{
+    const p=getNode(workflow,n.id,'map_image_input').params,placed=typeof p.data==='string'&&p.data.startsWith('data:');
+    const area=workflow.nodes.find(x=>x.type==='study_area');
+    let near:[number,number,number,number]|undefined;
+    try{if(area){const b=previewArea(workflow,area.id).boundary;near=[...boundsOf(b)] as [number,number,number,number];}}catch{near=undefined;}
+    openMapImageConfig({step:p.label||'Georeferenced map image',esc,near,
+      initial:{label:p.label,...(placed?{image:{data:p.data!,...p.image}}:{}),placement:p.placement??'world-file',
+        model:p.placementModel??'affine',points:structuredClone(p.controlPoints??[]),opacity:p.opacity??0.85},
+      apply:(d,{world,fit})=>void (async()=>{
+        try{
+          let image=d.image!,digest=p.dataRef,data=d.image!.data;
+          if(d.file){
+            const bytes=new Uint8Array(await d.file.arrayBuffer());
+            image={...image,sha256:await contentHash(bytes),bytes:bytes.length};
+            digest=await payloadDigest(data);
+            if(!await keepDataset(digest,data))throw new Error('This image could not be kept on this device, so it was not placed. A smaller export of the same plate will fit.');
+          }
+          const bounds=boundsFromWorldFile(world,image.width,image.height);
+          change(w=>{const t=getNode(w,n.id,'map_image_input');
+            t.params.data=data;if(digest)t.params.dataRef=digest;
+            t.params.image={width:image.width,height:image.height,bytes:image.bytes,sha256:image.sha256,...(image.filename?{filename:image.filename}:{})};
+            t.params.bounds=bounds;t.params.world=world;t.params.placement=d.placement;t.params.opacity=d.opacity;
+            if(d.placement==='points'){t.params.controlPoints=d.points.filter(c=>[...c.pixel,...c.lonlat].every(Number.isFinite));t.params.placementModel=d.model;}
+            else{delete t.params.controlPoints;delete t.params.placementModel;}
+          },{requirePersistence:true});
+          if(fit)toast(`Placed from ${fit.points} points: errors ${Math.round(fit.rmsM)} m root mean square. Run the workflow to draw it.`);
+        }catch(error){toast(errorMessage(error),{tone:'failure'});}
+      })()});
+  });
   if(n.type==='group_table')optionalElement('#configure-step')?.addEventListener('click',()=>{
     const node=workflow.nodes.find(x=>x.id===n.id);
     if(node?.type!=='group_table')return;
@@ -5945,7 +5986,8 @@ function renderMap(){
     const livePlate=groundImageFor(mapNode?.id);
     const withPlate=livePlate
       ?{...result,plate:{data:livePlate.data,bounds:livePlate.bounds,opacity:livePlate.opacity,
-          label:mapImageCredit(livePlate)}}
+          label:mapImageCredit(livePlate),
+          ...(livePlate.corners?{corners:livePlate.corners,width:livePlate.width,height:livePlate.height}:{})}}
       :result;
     disposeCatchmentMap=mountCatchmentMap(host,withPlate.polygons?{...withPlate,polygons:withPlate.polygons}:withPlate,
       result.contextPoints,esc,mapNode?.params.basemap||'none',

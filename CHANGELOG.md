@@ -3,6 +3,15 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.81.0 — 2026-11-10
+
+- **Place a scanned map by matching points.** Georeferenced map image's Configure… offers *By matching points on the
+  image and today's map*: click a feature on the image, then the same feature on the map, or type the numbers. Each
+  point shows its error in metres, and a doubtful pair is marked. Fitted north up, or turned and stretched. Georeferenced
+  map image 0.2.0.
+- **A turned map image is drawn turned**, on the static figure and the interactive map; a world file that turns the
+  image is placed, no longer refused.
+
 ## 0.80.2 — 2026-11-10
 
 - **Raster input no longer asks for the country again.** It is read from the study area, and WorldPop's population

@@ -39,3 +39,18 @@ test('South London Map 2: the four points placed by hand, refitted north-up',{sk
   // The same residuals, on the ground: Kennington Oval 144 m east, as recorded by hand (whose sign is in pixels).
   near(p.residuals[0].eastM,-g.controlPoints[0].residual_m.dx,2,'Kennington Oval');
 });
+
+test('a turned world file is placed by its corners and drawn through a matrix, not refused',async()=>{
+  const {boundsFromWorldFile,turnedCorners,mapImageMarkup}=await import('../build/map-image.js');
+  const s=1e-5,t=Math.PI/6;
+  const world={xScale:s*Math.cos(t),ySkew:-s*Math.sin(t),xSkew:s*Math.sin(t),yScale:-s*Math.cos(t),xOrigin:9.06,yOrigin:48.543};
+  const corners=turnedCorners(world,1000,800);
+  const bounds=boundsFromWorldFile(world,1000,800);
+  assert.deepEqual(bounds,[Math.min(...corners.map(c=>c[0])),Math.min(...corners.map(c=>c[1])),Math.max(...corners.map(c=>c[0])),Math.max(...corners.map(c=>c[1]))]);
+  const svg=mapImageMarkup({data:'data:image/png;base64,AA',width:1000,height:800,sha256:'abcdef0123456789',opacity:0.8,corners,bounds},c=>[c[0]*1e4,-c[1]*1e4]);
+  assert.match(svg,/transform="matrix\(/);
+  assert.match(svg,/width="1000" height="800"/);
+  // An upright one is still drawn as a box between two corners.
+  const upright=mapImageMarkup({data:'data:image/png;base64,AA',width:10,height:10,sha256:'abcdef0123456789',opacity:1,bounds:[0,0,1,1]},c=>[c[0]*100,100-c[1]*100]);
+  assert.doesNotMatch(upright,/matrix/);
+});

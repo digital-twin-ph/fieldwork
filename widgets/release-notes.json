@@ -408,20 +408,12 @@
    "migrationFrom": []
   },
   "map_image_input": {
-   "version": "0.1.0",
-   "released": "2026-10-27",
+   "version": "0.2.0",
+   "released": "2026-11-10",
    "changes": [
     {
-     "kind": "initial",
-     "description": "Draws a scanned or published map under a workflow, in the workflow's own projection, as ground. Built for Snow's 1855 Map 2, whose georeference the South London example has carried since 2026-10-24 with nothing able to read it. See docs/experiments/143-a-georeferenced-plate-as-ground.md."
-    },
-    {
-     "kind": "added",
-     "description": "Refuses a rotated world file by name. Drawing a rotated plate as an upright rectangle would put the map in the wrong place while looking correct, which is a hard stop rather than a limitation. A world file whose origin is the centre of the top-left pixel is read as such, so the extent runs half a pixel further out on each side."
-    },
-    {
-     "kind": "added",
-     "description": "Refuses corners outside CRS84 degrees, which usually means a projected georeference. Reading one datum's coordinates as another's moves a map by hundreds of metres and looks like a correct map."
+     "kind": "minor",
+     "description": "Placed by matching points (experiment 201): in Configure…, How to place it offers a world file or points matched between the image and today's map, typed or clicked, each with its error on the ground and, with more points than the fit needs, its error left out, marked when doubtful. North up or turned and stretched, by least squares into a world file. A turned image is placed by its corners and drawn turned, on the static figure and the interactive map, where a turned world file was refused. On the standard Inspector: Name, one sentence and Configure…, and what is placed."
     }
    ],
    "breaking": false,

@@ -240,7 +240,12 @@ export interface ParamsByType {
     /** 0 to 1. Ground is under everything, and a plate a practitioner wants to read through is
      *  the ordinary case rather than an edge one. */
     opacity?:number;
-    source?:{title?:string;url?:string;licence?:string;note?:string}};
+    source?:{title?:string;url?:string;licence?:string;note?:string};
+    /** HOW IT WAS PLACED (experiment 201): from a world file, or by points matched between the image and today's map,
+     *  kept so the placement can be read, repeated and corrected. `world` is the placement either way, in CRS84 with
+     *  the origin at the top-left pixel's centre; where it carries rotation, `bounds` is the envelope of its corners. */
+    placement?:'world-file'|'points';world?:import('./map-image.js').WorldFile;
+    controlPoints?:import('./georeference.js').ControlPoint[];placementModel?:import('./georeference.js').PlacementModel};
   /** Retired 2026-11-05; the params a saved one held, so it can be named when refused. */
   rate_ratio:{label:string;compared:string;reference:string;level:90|95|99;method:'log-normal'};
   rate:{label:string;source?:'points'|'table';

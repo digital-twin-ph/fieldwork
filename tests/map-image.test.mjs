@@ -37,12 +37,13 @@ test('the extent runs half a pixel beyond the origin, which is a pixel CENTRE',(
   assert.ok(east<0.1&&west>-0.3&&south>51.4&&north<51.6,`${[west,south,east,north]}`);
 });
 
-test('a rotated world file is refused rather than drawn as an upright box',()=>{
-  // The failure this prevents is a map in the wrong place that looks entirely correct.
-  assert.throws(()=>boundsFromWorldFile({...readWorldFile(JGW),xSkew:0.0001},1002,788),
-    /at an angle|wrong place/);
-  assert.throws(()=>boundsFromWorldFile({...readWorldFile(JGW),ySkew:0.0001},1002,788),
-    /at an angle|wrong place/);
+test('a rotated world file is placed by its corners, never drawn as an upright box between two of them',()=>{
+  // Refused until 2026-11-10, because an upright box would have put it in the wrong place while looking correct. Since
+  // experiment 201 a turned image is drawn turned, and its bounds are the envelope of its four corners.
+  const world={...readWorldFile(JGW),xSkew:0.0001};
+  const [west,south,east,north]=boundsFromWorldFile(world,1002,788);
+  const upright=boundsFromWorldFile(readWorldFile(JGW),1002,788);
+  assert.ok(east-west>upright[2]-upright[0]||north-south>upright[3]-upright[1],'the envelope of a turned image is larger');
 });
 
 test('a flipped or degenerate image is refused by name',()=>{

@@ -629,12 +629,12 @@
    "migrationFrom": []
   },
   "raster_input": {
-   "version": "0.7.0",
-   "released": "2026-11-09",
+   "version": "0.7.1",
+   "released": "2026-11-10",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Reads a NetCDF-4 grid chosen from this device, in parts, in a worker: a regular latitude-longitude grid, one variable chosen where the file holds several, its fill value, scale factor and offset applied as CF says. Its coordinates are where its values sit, so it is read as the cells around them and recorded as point-registered. The window around the study area is kept as a GeoTIFF window is, and the file's chunks meet the same 64 MB decoding budget as a GeoTIFF's tiles. A classic NetCDF-3 file is refused by name. The reader, h5wasm, is now saved for offline use (experiment 198, step 2)."
+     "kind": "patch",
+     "description": "The country is not asked for again. The Inspector kept a \"Country for population data\" list, after the study area that already states the country (the practitioner, 2026-11-10, with a screenshot). It is gone; Configure… offers the WorldPop population raster for the study area's country, its year and its download, and asks for the country to be set on the study area where none is stated. The Inspector keeps Name, Inputs, Settings and Result."
     }
    ],
    "breaking": false,

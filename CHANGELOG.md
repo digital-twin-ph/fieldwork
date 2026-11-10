@@ -3,6 +3,11 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.80.2 — 2026-11-10
+
+- **Raster input no longer asks for the country again.** It is read from the study area, and WorldPop's population
+  raster, its year and its download are in Configure…. Raster input 0.7.1.
+
 ## 0.80.1 — 2026-11-10
 
 - **Map's preview in Configure… no longer raises errors.** It mounted and removed a map on every change, and a canvas

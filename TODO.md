@@ -205,6 +205,12 @@ not a practitioner in the field.
    watermarks for FieldWork outputs, I think it's time to toot our horn"*; *"Yes agree with branding settings"*): small,
    with the logo, in the footer beside the source note and never over the data; at least 14 px and AA contrast; on by
    default and removable per export, the choice recorded; Fieldwork's own name only.
+24. **More population rasters beside WorldPop: GRID3 and the Global Human Settlement Layer** (the practitioner, 2026-11-10:
+   *"We can also add GRID3 and GLobal Health Settlements layer where we can get population rasters?"*; GHSL read as the
+   JRC's Global Human Settlement Layer, to be confirmed). In Raster input's Configure…, where WorldPop now is. First, read
+   only: each source's licence as stated, its countries and years, its files and sizes, and whether a browser can fetch
+   it or must download it, as WorldPop must. GHS-POP is global and tiled; GRID3 is per country, mostly sub-Saharan
+   Africa.
 12. **Edit a table's values inline, in the data quality check** (the practitioner, 2026-11-10: *"One thing I have been
    meaning to add to data quality checks is the ability to edit tables inline. Can be added as a widget playback
    exercise."*). To shape: per [117](docs/experiments/117-data-quality.md), a change to an input is a declared repair

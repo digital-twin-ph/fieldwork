@@ -16,6 +16,10 @@ project, so a run needs neither the file nor the connection again.
 
 ## How to use it
 
+**Population from WorldPop, for the study area's country.** Configure… offers the WorldPop population raster of the
+country the study area states, a year to choose, and a download link with its size and the time it takes. The country is
+set once, on the study area; where the area states none, Configure… says to set it there.
+
 The step's panel holds its **Name**, its study area, one sentence saying what it keeps, and **Configure…**:
 
 | In Configure… | What it does |

@@ -38,8 +38,11 @@ test('a study area that states its country hands it to both widgets',async({page
   await page.locator('#facilities-config #config-cancel').click();
   // And the raster widget reads the same thing, which is what "autopopulate" asked for.
   await page.locator('.react-flow__node[data-id="raster"]').click();
-  await expect(page.locator('#population-country')).toHaveValue('BWA');
-  await expect(page.locator('.inspector')).toContainText('WorldPop');
+  // Not asked again in the Inspector (the practitioner, 2026-11-10): Configure… offers WorldPop for the area's country.
+  await expect(page.locator('#population-country')).toHaveCount(0);
+  await page.locator('#prepare-raster').click();
+  await expect(page.locator('#raster-dialog #raster-population')).toContainText('Population (WorldPop) for Botswana');
+  await expect(page.locator('#raster-dialog #population-download')).toContainText('BWA');
   expect(errors).toEqual([]);
 });
 
@@ -49,7 +52,9 @@ test('a study area that states no country leaves both unset, rather than guessin
   // A drawn polygon states nothing, and a country inferred from coordinates is wrong exactly on
   // a border, and wrong invisibly. So it asks.
   await page.locator('.react-flow__node[data-id="raster"]').click({timeout:45000});
-  await expect(page.locator('#population-country')).toHaveValue('');
+  await page.locator('#prepare-raster').click();
+  await expect(page.locator('#raster-dialog #raster-population')).toContainText('Set the country on the study area');
+  await expect(page.locator('#raster-dialog #population-download')).toHaveCount(0);
   expect(errors).toEqual([]);
 });
 

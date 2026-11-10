@@ -7,7 +7,9 @@ shown in a local build is not a claim that it has been published.
 
 - **A study area acquired as administrative units hands its country to every step that needs one.** The country was
   read from the wrong place, so an area picked as Botswana's districts stated none: Raster input asked again, and so
-  could Find health facilities. Fixed for every saved project.
+  could Find health facilities. Fixed for every saved project, and the country is now found
+  upstream, through any step between the study area and the step that needs it; two countries upstream are named and
+  one is chosen.
 - **WorldPop is reachable from Raster input's Configure… whatever the study area.** Where the area states no country,
   the dialog asks for it, keeps it on the area, and offers the year and the download at once. Raster input 0.7.2.
 - **A map image's port is named on the canvas**: *Map image (ground)*, where it read "Points undefined". Any port the

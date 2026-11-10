@@ -78,6 +78,23 @@ test('an area acquired as administrative units hands its country on, and the ras
   expect(errors).toEqual([]);
 });
 
+test('the country is found upstream, through a step between the study area and the raster',async({page})=>{
+  // The practitioner, 2026-11-10: "The raster input should be able to query upstream for the country."
+  const errors=collectPageErrors(page);
+  const w=workflowWith(null);
+  w.nodes[0].params.boundary={boundaryID:'BWA-ADM1-15938201',unitID:'BW-SE',unitName:'South-East',source:'geoBoundaries',licence:'CC BY 4.0'};
+  w.nodes.push({id:'wider',type:'measure_area',x:200,y:200,params:{label:'Area, measured',unit:'km2'}});
+  w.edges=w.edges.filter(e=>e.to!=='raster').concat([{id:'e3',from:'area',to:'wider',port:'area'},{id:'e4',from:'wider',to:'raster',port:'area'}]);
+  await page.goto('/?example=blank');
+  await page.locator('#workflow-file').setInputFiles({name:'upstream.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(w))});
+  await page.locator('[data-view="workflow"]').click();
+  await page.locator('.react-flow__node[data-id="raster"]').click({timeout:45000});
+  await page.locator('#prepare-raster').click();
+  await expect(page.locator('#raster-dialog #raster-population')).toContainText('Population (WorldPop) for Botswana');
+  await expect(page.locator('#raster-dialog #population-country')).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
+
 test('the raster widgets carry a node label, as every other widget does',async({page})=>{
   const errors=collectPageErrors(page);
   await open(page,'BWA');

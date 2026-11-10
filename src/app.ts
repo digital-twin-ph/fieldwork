@@ -3812,7 +3812,7 @@ function renderInspector(){
     if(n.type==='raster_input'){
       const settingsFrom=content.length;
       const area=workflow.nodes.find(x=>x.id===workflow.edges.find(e=>e.to===n.id&&e.port==='area')?.from);
-      const stated=countryOfArea(area?.params as {country?:string;boundary?:{boundaryID?:string;provenance?:{boundaryID?:string}}});
+      const stated=upstreamCountry(workflow,n.id);void area;
       // A STUDY AREA SOMEBODY DREW STATES NO COUNTRY, and WorldPop is keyed by country. Offering
       // nothing in that case was correct and useless: the practitioner, 2026-10-23, looking at a
       // drawn Gaborone area, *"Can we make raster input read from Worldpop?"* It already did, for
@@ -4304,8 +4304,7 @@ content+=`<div class="field"><label class="field-label" for="chart-decisions">Re
           ...(table.valueField?{[table.valueField]:String(r.value??'')}:{})}}))}:{}),
         layer:node.params.mode==='list'?node.params.data:null,countries:COUNTRIES.map(c=>({iso:c.iso,name:c.name})),
         // THE STUDY AREA ALREADY SAYS WHICH COUNTRY: filled in, never retyped (the practitioner, 2026-10-23).
-        initial:facilitiesDraftOf(node.params,countryOfArea(workflow.nodes.find(x=>x.id===workflow.edges.find(e=>e.to===n.id&&e.port==='area')?.from)
-          ?.params as {country?:string;boundary?:{boundaryID?:string;provenance?:{boundaryID?:string}}})||''),
+        initial:facilitiesDraftOf(node.params,upstreamCountry(workflow,n.id)||''),
         apply:draft=>{change(w=>{const target=getNode(w,n.id,'find_health_facilities');const was=target.params.mode??'area';
           applyFacilitiesDraft(target.params,draft);
           // A CHANGE OF WAY IN changes the input: what was connected to the other one is disconnected, and what was
@@ -4857,8 +4856,7 @@ content+=`<div class="field"><label class="field-label" for="chart-decisions">Re
       // node before the request, so the receipt says what was asked for rather than leaving it to
       // be inferred from an area the workflow may later be rewired away from.
       if(!node.params.country){
-        const areaNode=workflow.nodes.find(x=>x.id===workflow.edges.find(e=>e.to===n.id&&e.port==='area')?.from);
-        const stated=countryOfArea(areaNode?.params as {country?:string;boundary?:{boundaryID?:string;provenance?:{boundaryID?:string}}});
+        const stated=upstreamCountry(workflow,n.id);
         if(stated)change(w=>{const target=getNode(w,n.id,'find_health_facilities');target.params.country=stated;});
       }
       requireRunnableFindHealthFacilities(node);
@@ -5085,7 +5083,7 @@ content+=`<div class="field"><label class="field-label" for="chart-decisions">Re
     // WORLDPOP FOR THE STUDY AREA'S COUNTRY, in Configure… (the practitioner, 2026-11-10: the country was asked for again
     // in the Inspector, after the study area). The study area states the country, once; this reads it.
     const node=getNode(workflow,n.id,'raster_input');
-    const stated=countryOfArea(source?.params as {country?:string;boundary?:{boundaryID?:string;provenance?:{boundaryID?:string}}});
+    const upstream=upstreamCountries(workflow,n.id),stated=upstream.length===1?upstream[0]!:null;
     // WHERE THE AREA STATES NO COUNTRY, IT IS ASKED HERE, and kept on the study area (the practitioner, 2026-11-10: "This
     // raster dialog still has Worldpop only with nowhere to actually access Worldpop"). Still said once, in the area; the
     // dialog no longer sends the person away to say it.
@@ -5099,7 +5097,8 @@ content+=`<div class="field"><label class="field-label" for="chart-decisions">Re
         +`population, 100 m. ${esc(WORLDPOP_LICENCE)} Catalogue of ${esc(WORLDPOP_TAKEN)}.</p>`;};
     const populationHtml=()=>{
       const rasters=populationRastersForCountry(country||null);
-      const ask=stated?'':`<label class="field-label" for="population-country">The study area’s country</label>`
+      const ask=stated?'':(upstream.length>1?`<p class="muted">The study areas upstream are in ${upstream.map(c=>esc(countryName(c))).join(' and ')}. WorldPop is published by country: choose one.</p>`:'')
+        +`<label class="field-label" for="population-country">The study area’s country</label>`
         +`<select id="population-country"><option value="" ${country?'':'selected'}>Choose a country…</option>`
         +COUNTRIES.map(c=>`<option value="${c.iso}" ${c.iso===country?'selected':''}>${esc(c.name)} (${c.iso})</option>`).join('')
         +`</select><p class="muted">Kept on the study area, which states it once for every step that needs it.</p>`;
@@ -5117,8 +5116,10 @@ content+=`<div class="field"><label class="field-label" for="chart-decisions">Re
       const pick=block.querySelector<HTMLSelectElement>('#population-country');
       if(pick)pick.onchange=()=>{
         country=pick.value;
-        if(country&&source?.type==='study_area'){
-          change(w=>{(getNode(w,source!.id,'study_area').params as {country?:string}).country=country;});
+        const origin=(()=>{const seen=new Set<string>(),queue=[n.id];while(queue.length){const id=queue.shift()!;if(seen.has(id))continue;seen.add(id);
+          const node=workflow.nodes.find(x=>x.id===id);if(node?.type==='study_area')return node;for(const e of workflow.edges)if(e.to===id)queue.push(e.from);}return undefined;})();
+        if(country&&origin){
+          change(w=>{(getNode(w,origin.id,'study_area').params as {country?:string}).country=country;});
           // The area changed on purpose; a raster saved after it is still this dialog's to save.
           baseline=JSON.stringify(workflow);
         }
@@ -7717,6 +7718,28 @@ function onlineLinks(project:Project|undefined):ExampleLinks[]{
   const links=builtIn?builtInLinks(builtIn,storageKey(workflow)):null;
   return links?[links]:[];
 }
+/** THE COUNTRY UPSTREAM OF A STEP (the practitioner, 2026-11-10: "The raster input should be able to query upstream for
+ *  the country"). Every step the area passes through on its way here is walked back to the study areas that started it --
+ *  through a buffer, a combined area, a clip or a measurement -- and their countries collected: one is the answer, two
+ *  is a choice for the person, none is a question. A study area's own statement is the only source; nothing is inferred
+ *  from coordinates. */
+function upstreamCountries(source:Workflow,nodeId:string):string[]{
+  const found=new Set<string>(),seen=new Set<string>(),queue=[nodeId];
+  while(queue.length){
+    const id=queue.shift()!;
+    if(seen.has(id))continue;seen.add(id);
+    const node=source.nodes.find(x=>x.id===id);
+    if(node&&node.id!==nodeId){
+      const stated=countryOfArea(node.params as {country?:string;boundary?:{boundaryID?:string;provenance?:{boundaryID?:string}}});
+      if(node.type==='study_area'){if(stated)found.add(stated);continue;}
+      if(stated)found.add(stated);
+    }
+    for(const e of source.edges)if(e.to===id)queue.push(e.from);
+  }
+  return [...found].sort();
+}
+const upstreamCountry=(source:Workflow,nodeId:string):string|null=>{const all=upstreamCountries(source,nodeId);return all.length===1?all[0]!:null;};
+
 /** The manual of the worked example this workflow was opened from, if it published one. */
 const exampleManualDigest=():string|undefined=>originOf(storageKey(workflow))?.manual;
 const manualByDigest=(digest:string|undefined):WorkedExampleManual|undefined=>{

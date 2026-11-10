@@ -55,7 +55,7 @@ test('the lines are drawn under the marks, stopped short of the case, and hidden
 });
 
 test('Map carries the links, the counts and the receipt facts',()=>{
-  const area={boundary:{type:'Polygon',coordinates:[[[9.0603,48.5406],[9.0647,48.5406],[9.0647,48.5433],[9.0603,48.5433],[9.0603,48.5406]]]},
+  const area={boundary:{type:'Polygon',coordinates:[[[9.0117,48.5406],[9.0161,48.5406],[9.0161,48.5433],[9.0117,48.5433],[9.0117,48.5406]]]},
     areaId:'urn:fieldwork:area:v',geometryId:'urn:fieldwork:area:v:g',label:'Hagelloch'};
   const node={id:'m',type:'map_output',params:{label:'Map',linkField:{cases:{column:'infector',matches:'case_ID'},gone:{column:'a',matches:'b'}}}};
   const points={sourceNodeId:'cases',label:'Cases',...cases};

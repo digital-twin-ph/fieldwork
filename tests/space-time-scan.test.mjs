@@ -90,3 +90,15 @@ test('both modes write a Methods note citing Kulldorff and others 2005, verified
   assert.equal(METHOD_REFERENCES['space-time permutation'].citation.doi,'10.1371/journal.pmed.0020059');
   assert.match(renderMethodCitation('space-time permutation'),/Kulldorff M.*PLoS Medicine\. 2005;2\(3\):e59/);
 });
+
+test('the circles do not depend on where the village sits: every longitude shifted, the same scan',()=>{
+  const cases=JSON.parse(readFileSync(new URL('../examples/hagelloch-1861/cases.json',import.meta.url),'utf8'));
+  const s={...SCAN_DEFAULTS,dateField:'date_of_prodrome',unit:'week',seed:3,replications:99};
+  const here=spaceTimeScan(cases,s);
+  for(const shift of [0.0486156,-0.3,1.7]){
+    const moved=structuredClone(cases);for(const f of moved.features)f.geometry.coordinates[0]+=shift;
+    const there=spaceTimeScan(moved,s);
+    assert.equal(there.totals.circles,here.totals.circles,`shifted ${shift}`);
+    assert.deepEqual(there.clusters.map(c=>c.pValue),here.clusters.map(c=>c.pValue));
+  }
+});

@@ -26,7 +26,8 @@ LICENCE
 WHAT THIS PROJECT ADDED
   A georeference. x_loc and y_loc are metres from an arbitrary local origin, so
   nothing could be mapped without anchoring them. They are anchored at Hagelloch,
-  a district of Tubingen, 48.54083 N 9.06056 E.
+  a district of Tubingen, 48.54083 N 9.01194 E (corrected 2026-11-10 from 9.06056 E, the
+  English Wikipedia's coordinate, which is 3.7 km east of the village).
 
   THAT ANCHOR IS OURS, NOT THE SOURCE'S. The relative positions of the houses are
   Pfeilsticker's; where the village sits on the earth is this project's addition,

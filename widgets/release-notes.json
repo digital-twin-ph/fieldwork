@@ -352,12 +352,12 @@
    ]
   },
   "space_time_scan": {
-   "version": "0.3.0",
+   "version": "0.3.1",
    "released": "2026-11-10",
    "changes": [
     {
-     "kind": "minor",
-     "description": "The replay plays on the map (the practitioner, 2026-11-10: \"Where do I see the day by day play\"): its layer carries a timeline of days, and an interactive Map plays through them, drawing each day's most likely cluster and the cases with a date up to that day, with what the scan said that day in words. Hagelloch's cluster workflow has the map."
+     "kind": "patch",
+     "description": "Places within 10 cm of the same distance from a centre join a circle together, and distances are measured from each place's recorded coordinates, not from their 6-decimal rounding. Ties were exact to a millionth of a millimetre, so rounding noise decided which equidistant houses tied: moving Hagelloch 3.7 km west (its anchor corrected, 2026-11-10), which changes no distance, changed one circle and one p-value. Now the circles are the same wherever the village sits (1,307 for Hagelloch at every position tried). Hagelloch's clusters and its first day flagged, 21 November 1861, are unchanged; the 21 November p-value is 0.039, was 0.041."
     }
    ],
    "breaking": false,

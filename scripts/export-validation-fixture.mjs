@@ -1472,6 +1472,7 @@ const builders={
       declaredParameters:{...settings,
         model:'Retrospective space-time permutation (Kulldorff and others, 2005), scanning for high.',
         circles:'Around each place, places joined in order of distance, places at the same distance together, while the circle holds at most maxCaseShare of all cases. Each distinct set of places once.',
+        tieKm:1e-4,
         runs:'Consecutive days, at most floor(maxTimeShare x days in the study period) long.',
         expected:'The circle\'s cases over the period times the run\'s cases everywhere, over all cases.',
         score:'c ln(c/e) + (n-c) ln((n-c)/(n-e)) where c > e, else 0.',
@@ -1491,7 +1492,7 @@ const builders={
     // LINES BETWEEN RECORDS ON MAP (experiment 200, step 4), as Map computes them: a line to the record named in
     // infector, found by case_ID, and every record counted under one outcome.
     const cases=JSON.parse(await readFile(new URL('../examples/hagelloch-1861/cases.json',import.meta.url),'utf8'));
-    const area={boundary:{type:'Polygon',coordinates:[[[9.0603,48.5406],[9.0647,48.5406],[9.0647,48.5433],[9.0603,48.5433],[9.0603,48.5406]]]},
+    const area={boundary:{type:'Polygon',coordinates:[[[9.0117,48.5406],[9.0161,48.5406],[9.0161,48.5433],[9.0117,48.5433],[9.0117,48.5406]]]},
       areaId:'urn:fieldwork:area:hagelloch',geometryId:'urn:fieldwork:area:hagelloch:geometry',label:'Hagelloch, 1861'};
     const setting={column:'infector',matches:'case_ID'};
     const {value}=mapOutput({id:'links-map',type:'map_output',params:{label:'Who infected whom, on the map',linkField:{cases:setting}}},

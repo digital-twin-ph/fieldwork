@@ -5,6 +5,13 @@ shown in a local build is not a claim that it has been published.
 
 ## 0.81.1 — 2026-11-10
 
+- **Hagelloch is where Hagelloch is.** Its cases were placed 3.7 km east, in Tübingen's Waldhäuser-Ost, from a wrong
+  coordinate; the 1824 cadastral sheet, OpenStreetMap and the German Wikipedia agree on the village 3.7 km west. Every
+  case moved together, so no distance between cases changed.
+- **The space-time scan's circles no longer depend on where a place sits.** Houses within 10 cm of the same distance
+  join a circle together. Hagelloch's clusters and first day flagged are unchanged. Space-time scan 0.3.1; lab check 46
+  re-run.
+
 - **A study area acquired as administrative units hands its country to every step that needs one.** The country was
   read from the wrong place, so an area picked as Botswana's districts stated none: Raster input asked again, and so
   could Find health facilities. Fixed for every saved project, and the country is now found

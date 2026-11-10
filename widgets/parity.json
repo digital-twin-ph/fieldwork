@@ -3,7 +3,7 @@
   "description": "Independent recomputation of implemented widgets by an external process, recorded after release. Release files are immutable once committed, so evidence about a release lives here and accrues as checks run. A fixture digest recorded in a result is over canonical JSON content rather than the file’s bytes, revised 2026-10-11 because byte identity is unsatisfiable in the browser the lab publishes to. A parity result establishes numerical agreement with a named external implementation under a stated criterion. It is not scientific certification, and it says nothing about whether a method is appropriate for a question.",
   "lab": {
     "repository": "https://github.com/digital-twin-ph/validation-lab",
-    "commit": "b20e53c065c99f54375120708e70eee9b07cba5c",
+    "commit": "039a48e7bac4dfd1eb2ffd186d156e97d215ddd4",
     "pinNote": "The commit CI checks the lab out at: .github/workflows/pages.yml reads it with `jq -r .lab.commit widgets/parity.json`. So this pin, not the clone beside this repository, is what `validate:dive-deeper` verifies against on a clean runner -- and it must be advanced whenever a check lands in the lab, in the same push-then-pin order the worked examples use."
   },
   "outcomes": {
@@ -836,17 +836,17 @@
     },
     {
       "widget": "urn:fieldwork:widget:space_time_scan",
-      "coversRelease": "0.2.0",
+      "coversRelease": "0.3.1",
       "check": "46-space-time-scan",
       "result": "content/results/check-46-space-time-scan.json",
-      "sha256": "ca7a6baae38113edd21ab3fe8662143d7c20a1c0f81923338d8ba6dd1a25eb36",
+      "sha256": "d4bf2e994764709b949b01fed683239c3ed0f6a5da9c231af6097a6896b8d01e",
       "external": [
         "numpy 2.5.3"
       ],
       "criterion": "The same circles, runs and windows; for every cluster the same places, days, observed and expected cases and score to 1e-9; p-values within three standard errors of the difference plus the 1/(R+1) step; the replay's every day alike, and its p-value within that error wherever Fieldwork's is at or under 0.1",
       "outcome": "agrees",
-      "measured": "Hagelloch, 1861, by day of prodrome: 188 cases at 56 places, 1,347 circles and 2,838 runs. The same ten clusters, each with the same places, days, counts and score; the most likely one house, 8 cases where 0.5532 were expected, 1861-10-30 to 1861-11-18, p = 0.001 both ways. Cluster 2: p 0.072 in Fieldwork, 0.064 from numpy's own shuffles. Agrees in CPython and in the browser kernel. Replayed day by day: all 87 days scanned or skipped alike, every day's most likely cluster the same; first at or under 0.05 on 1861-11-21 both ways (p 0.041 in Fieldwork, 0.042 from numpy).",
-      "ranAt": "2026-11-10T13:33:06+00:00",
+      "measured": "Hagelloch, 1861, by day of prodrome, at its corrected place (3.7 km west of the old anchor): 188 cases at 56 places, 1,307 circles (ties within 10 cm) and 2,838 runs. The same ten clusters, each with the same places, days, counts and score; the most likely one house, 8 cases where 0.5532 were expected, 1861-10-30 to 1861-11-18, p = 0.001 both ways. Replayed day by day: all 87 days alike, first at or under 0.05 on 1861-11-21 both ways. Agrees in CPython and the browser kernel.",
+      "ranAt": "2026-11-10T19:03:19+00:00",
       "notEstablished": [
         "That a cluster is an outbreak: both sides compute the same statistic; neither says what it means.",
         "That the space-time permutation model suits measles in a village: it compares timing across places and cannot see where people live.",

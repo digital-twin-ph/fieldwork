@@ -15,10 +15,15 @@
   "georeference": {
     "addedBy": "This project, 2026-10-17. NOT PART OF THE SOURCE.",
     "why": "x_loc and y_loc are metres from an arbitrary local origin, not a geographic CRS. Nothing can be mapped without an anchor.",
-    "anchor": {"latitude": 48.54083, "longitude": 9.06056, "place": "Hagelloch, a district of Tubingen, Baden-Wurttemberg"},
+    "anchor": {
+      "latitude": 48.54083,
+      "longitude": 9.0119444,
+      "place": "Hagelloch, a district of Tubingen, Baden-Wurttemberg"
+    },
     "method": "Local metres treated as offsets from the anchor, converted at that latitude. Metres per degree from the standard WGS84 series at 48.54083 N.",
     "reversible": "x_loc and y_loc travel unchanged on every record, so the original frame is recoverable and the anchor can be replaced.",
-    "doesNotEstablish": "That any house is where this places it. The source gives RELATIVE positions only; the absolute siting is this project's and is accurate to the village, not to the building. Distances and patterns within the village are the source's; the position on the earth is not."
+    "doesNotEstablish": "That any house is where this places it. The source gives RELATIVE positions only; the absolute siting is this project's and is accurate to the village, not to the building (and, until 2026-11-10, not even to the village: see corrected). Distances and patterns within the village are the source's; the position on the earth is not.",
+    "corrected": "2026-11-10. The anchor until then, 48.54083 N 9.06056 E, was the English Wikipedia coordinate, which places the village 3.7 km east of where it is, in Tubingen's Waldhauser-Ost (OpenStreetMap places the Berliner Ring there). The German Wikipedia (48 32 27 N, 9 0 43 E), OpenStreetMap (48.5408, 9.0118) and the 1824 Flurkarte NW III 3, placed from its frame, agree on about 9.012 E. The latitude was right and is unchanged; every longitude moved by -0.0486156 degrees, so every distance between cases is as it was. Next: the cases fitted to the houses the 1824 sheet draws (experiment 201)."
   },
   "columnsThatBreakAssumptions": {
     "date_of_death": "Empty for 176 of 188 because those patients RECOVERED. An absence that is an outcome, which this application's quality model reads as a missing value. See experiment 117.",

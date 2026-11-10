@@ -237,7 +237,7 @@ space time"*), on the standard Inspector and dialog. Ported from Epi Info AI's c
   every window, so its top twenty were mostly one cluster seen twenty ways.
 
 **On Hagelloch**, by day of prodrome, seed 20261110 (*Was there a cluster?*, the project's third workflow): 188 cases
-at 56 places, 3,822,786 circles and runs. The most likely cluster is **one house, 8 cases where 0.55 were expected,
+at 56 places, 3,709,266 circles and runs (from 2026-11-10, ties within 10 cm; see below). The most likely cluster is **one house, 8 cases where 0.55 were expected,
 30 October to 18 November 1861, p = 0.001**: the start of the outbreak. Nine secondary clusters, none below p = 0.07.
 By week the second cluster has p = 0.01: the unit changes the answer, so it is chosen before looking.
 
@@ -260,7 +260,7 @@ day replay"*): the prospective scan, run each day on the cases with a date up to
 that day. 87 days, 999 shuffles each, in a worker with a progress bar: 29 s.
 
 **On Hagelloch**, by day of prodrome: the first day the most likely cluster had p at or under 0.05 was **21 November
-1861**: 4 houses, 6 cases where 2.6 were expected, p = 0.041, on the day the cases known rose from 18 to 32. No day
+1861**: 4 houses, 6 cases where 2.6 were expected, p = 0.039 (0.041 before the 10 cm tie), on the day the cases known rose from 18 to 32. No day
 reached 0.01. The retrospective scan's most likely cluster, one house from 30 October to 18 November, **was not
 flagged as it happened**: no day before 21 November had a p-value at or under 0.05. Looking back, the scan finds it;
 looking forward, day by day, it did not.
@@ -279,6 +279,21 @@ the same first day flagged (p 0.041 here, 0.042 there). The p-values were re-shu
 
 **Not yet:** SaTScan on the 30-case benchmark (SaTScan is a download behind a registration form: the practitioner's
 to run), and WebKit.
+
+## Hagelloch was 3.7 km east of itself, found 2026-11-10
+
+Placing the 1824 Flurkarte NW III 3 from its frame ([201](201-georeferencing-by-matching-points.md)) put the sheet, and
+the village drawn on it, at about 9.012 E. The example's anchor was 9.06056 E: the English Wikipedia's coordinate, which
+is in Tübingen's Waldhäuser-Ost. The German Wikipedia (9° 0′ 43″ E) and OpenStreetMap (9.0118 E) agree with the sheet.
+Every case's longitude moved by −0.0486156°; the latitude was right. No distance between cases changed.
+
+**Found with it:** the scan's circles depended on where the village sat. Ties were exact to a millionth of a millimetre,
+so rounding decided which equidistant houses joined a circle, and the move changed one circle and one p-value. Space-time
+scan 0.3.1 ties distances within 10 cm, measured from each place's recorded coordinates: 1,307 circles wherever the
+village is placed. The clusters and the first day flagged are unchanged; cluster 2's p is 0.071, 21 November's 0.039.
+Lab check 46 re-run on the declared tie: agrees.
+
+**Next:** the cases fitted to the houses the 1824 sheet draws, replacing the single anchor.
 
 ## Ontologies to reuse, looked for 2026-11-09
 

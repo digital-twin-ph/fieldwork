@@ -53,6 +53,12 @@ export interface ScanResult {
 }
 
 const DAY=86_400_000, EARTH_KM=6371.0088;
+/** PLACES WITHIN 10 CM OF THE SAME DISTANCE ARE AT THE SAME DISTANCE (2026-11-10). Ties were exact to a millionth of a
+ *  millimetre, so rounding noise of a few centimetres decided which equidistant houses joined a circle together:
+ *  Hagelloch's houses lie on a 2.5 m grid and many are truly equidistant, and moving the whole village 3.7 km west, which
+ *  changes no distance, changed one circle (1,347 to 1,346) and one p-value (0.041 to 0.040). Ten centimetres is far
+ *  below the data's resolution and far above any rounding, so the circles no longer depend on where the village is. */
+export const TIE_KM=1e-4;
 const rad=(d:number)=>d*Math.PI/180;
 export function haversineKm(a:Position,b:Position):number{
   const dLat=rad(b[1]-a[1]),dLon=rad(b[0]-a[0]);
@@ -104,10 +110,11 @@ export function spaceTimeScan(points:PointCollection,s:ScanSettings,onProgress?:
   read.forEach((r,i)=>{
     const key=`${r.at[0].toFixed(6)},${r.at[1].toFixed(6)}`;
     let p=placeIndex.get(key);
-    // THE PLACE IS ITS KEY, rounded to 6 decimals (about 0.1 m), and distances are measured from it. Measured from each
-    // first record's raw coordinates instead, two houses equidistant from a centre after rounding differed by a hair
-    // before it, so one circle was split and a set of houses never scanned: 1,346 circles where 1,347 (lab check 46).
-    if(p===undefined){p=places.length;placeIndex.set(key,p);places.push([Number(r.at[0].toFixed(6)),Number(r.at[1].toFixed(6))]);}
+    // RECORDS SHARE A PLACE BY THEIR COORDINATES TO 6 DECIMALS; distances are measured from the place's own recorded
+    // coordinates. Measured from the rounded key instead (0.1.1 to 0.3.0), rounding moved each place by up to 4 cm, so
+    // which equidistant houses tied depended on where the village sat (2026-11-10, Hagelloch moved 3.7 km west). With
+    // distances from the record and ties within `TIE_KM`, it does not.
+    if(p===undefined){p=places.length;placeIndex.set(key,p);places.push(r.at);}
     casePlace[i]=p;caseBin[i]=Math.floor((r.ms-first)/width);
   });
   const P=places.length;
@@ -126,7 +133,7 @@ export function spaceTimeScan(points:PointCollection,s:ScanSettings,onProgress?:
     let k=0,cases=0;
     while(k<P){
       const d=order[k]!.d;if(d>maxKm+1e-9)break;
-      let j=k,add=0;while(j<P&&Math.abs(order[j]!.d-d)<1e-9){add+=placeCases[order[j]!.p]!;j++;}
+      let j=k,add=0;while(j<P&&Math.abs(order[j]!.d-d)<=TIE_KM){add+=placeCases[order[j]!.p]!;j++;}
       if(cases+add>cap+1e-9)break;
       cases+=add;k=j;
       const key=order.slice(0,k).map(o=>o.p).sort((a,b)=>a-b).join(',');

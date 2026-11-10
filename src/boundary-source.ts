@@ -102,8 +102,12 @@ export function iso3Of(provenance?:{boundaryID?:string}|null):string|null{
  *  identifier; a polygon somebody drew states nothing, and then the country is a thing they can
  *  say once, on the area, rather than again in every widget that needs it. Said explicitly it
  *  wins, because a practitioner correcting the application is not a conflict to resolve. */
-export const countryOfArea=(params?:{country?:string;boundary?:{provenance?:{boundaryID?:string}}}|null):string|null=>
-  (params?.country&&/^[A-Z]{3}$/.test(params.country)?params.country:null)??iso3Of(params?.boundary?.provenance);
+// THE IDENTIFIER IS ON THE BOUNDARY ITSELF. A study area stores its acquired boundary as `boundary: BoundaryProvenance`,
+// `boundaryID` directly on it; this read `boundary.provenance.boundaryID`, which no study area has ever had, so an area
+// acquired as Botswana's districts stated no country to any widget (the practitioner, 2026-11-10: "The study area actually
+// used adm1 from BWA so I definitely picked a country already in study area"). The nested shape is still read, in case.
+export const countryOfArea=(params?:{country?:string;boundary?:{boundaryID?:string;provenance?:{boundaryID?:string}}}|null):string|null=>
+  (params?.country&&/^[A-Z]{3}$/.test(params.country)?params.country:null)??iso3Of(params?.boundary)??iso3Of(params?.boundary?.provenance);
 
 /** Other countries whose name contains what was typed. Empty when the choice is unmistakable.
  *

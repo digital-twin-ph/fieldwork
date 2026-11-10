@@ -3812,7 +3812,7 @@ function renderInspector(){
     if(n.type==='raster_input'){
       const settingsFrom=content.length;
       const area=workflow.nodes.find(x=>x.id===workflow.edges.find(e=>e.to===n.id&&e.port==='area')?.from);
-      const stated=countryOfArea(area?.params as {country?:string;boundary?:{provenance?:{boundaryID?:string}}});
+      const stated=countryOfArea(area?.params as {country?:string;boundary?:{boundaryID?:string;provenance?:{boundaryID?:string}}});
       // A STUDY AREA SOMEBODY DREW STATES NO COUNTRY, and WorldPop is keyed by country. Offering
       // nothing in that case was correct and useless: the practitioner, 2026-10-23, looking at a
       // drawn Gaborone area, *"Can we make raster input read from Worldpop?"* It already did, for
@@ -3849,7 +3849,7 @@ function renderInspector(){
       // list there asks a question already answered, and a list implies the answer is in doubt.
       // So it is stated, not asked. A bounding box, a circle or a drawn polygon was never picked
       // by country and has none to derive, and that is where the list belongs.
-      const acquired=iso3Of((n.params as {boundary?:{provenance?:BoundaryProvenance}}).boundary?.provenance);
+      const acquired=countryOfArea({boundary:(n.params as {boundary?:{boundaryID?:string;provenance?:{boundaryID?:string}}}).boundary});
       countryField=acquired
         ?`<div class="field"><span class="field-label">Country</span>`
           +`<p class="muted">${esc(countryName(acquired))} (${esc(acquired)}), from the boundary this area was acquired as.</p></div>`
@@ -4305,7 +4305,7 @@ content+=`<div class="field"><label class="field-label" for="chart-decisions">Re
         layer:node.params.mode==='list'?node.params.data:null,countries:COUNTRIES.map(c=>({iso:c.iso,name:c.name})),
         // THE STUDY AREA ALREADY SAYS WHICH COUNTRY: filled in, never retyped (the practitioner, 2026-10-23).
         initial:facilitiesDraftOf(node.params,countryOfArea(workflow.nodes.find(x=>x.id===workflow.edges.find(e=>e.to===n.id&&e.port==='area')?.from)
-          ?.params as {country?:string;boundary?:{provenance?:{boundaryID?:string}}})||''),
+          ?.params as {country?:string;boundary?:{boundaryID?:string;provenance?:{boundaryID?:string}}})||''),
         apply:draft=>{change(w=>{const target=getNode(w,n.id,'find_health_facilities');const was=target.params.mode??'area';
           applyFacilitiesDraft(target.params,draft);
           // A CHANGE OF WAY IN changes the input: what was connected to the other one is disconnected, and what was
@@ -4858,7 +4858,7 @@ content+=`<div class="field"><label class="field-label" for="chart-decisions">Re
       // be inferred from an area the workflow may later be rewired away from.
       if(!node.params.country){
         const areaNode=workflow.nodes.find(x=>x.id===workflow.edges.find(e=>e.to===n.id&&e.port==='area')?.from);
-        const stated=countryOfArea(areaNode?.params as {country?:string;boundary?:{provenance?:{boundaryID?:string}}});
+        const stated=countryOfArea(areaNode?.params as {country?:string;boundary?:{boundaryID?:string;provenance?:{boundaryID?:string}}});
         if(stated)change(w=>{const target=getNode(w,n.id,'find_health_facilities');target.params.country=stated;});
       }
       requireRunnableFindHealthFacilities(node);
@@ -5085,7 +5085,7 @@ content+=`<div class="field"><label class="field-label" for="chart-decisions">Re
     // WORLDPOP FOR THE STUDY AREA'S COUNTRY, in Configure… (the practitioner, 2026-11-10: the country was asked for again
     // in the Inspector, after the study area). The study area states the country, once; this reads it.
     const node=getNode(workflow,n.id,'raster_input');
-    const stated=countryOfArea(source?.params as {country?:string;boundary?:{provenance?:{boundaryID?:string}}});
+    const stated=countryOfArea(source?.params as {country?:string;boundary?:{boundaryID?:string;provenance?:{boundaryID?:string}}});
     // WHERE THE AREA STATES NO COUNTRY, IT IS ASKED HERE, and kept on the study area (the practitioner, 2026-11-10: "This
     // raster dialog still has Worldpop only with nowhere to actually access Worldpop"). Still said once, in the area; the
     // dialog no longer sends the person away to say it.

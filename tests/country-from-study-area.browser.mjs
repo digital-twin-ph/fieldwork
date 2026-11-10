@@ -62,6 +62,22 @@ test('a study area that states no country leaves both unset, rather than guessin
   expect(errors).toEqual([]);
 });
 
+test('an area acquired as administrative units hands its country on, and the raster dialog asks nothing',async({page})=>{
+  // The practitioner, 2026-11-10: "The study area actually used adm1 from BWA so I definitely picked a country already".
+  const errors=collectPageErrors(page);
+  const w=workflowWith(null);
+  w.nodes[0].params.boundary={boundaryID:'BWA-ADM1-15938201',unitID:'BW-SE',unitName:'South-East',source:'geoBoundaries',licence:'CC BY 4.0'};
+  await page.goto('/?example=blank');
+  await page.locator('#workflow-file').setInputFiles({name:'acquired.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(w))});
+  await page.locator('[data-view="workflow"]').click();
+  await page.locator('.react-flow__node[data-id="raster"]').click({timeout:45000});
+  await page.locator('#prepare-raster').click();
+  await expect(page.locator('#raster-dialog #raster-population')).toContainText('Population (WorldPop) for Botswana');
+  await expect(page.locator('#raster-dialog #population-country')).toHaveCount(0);
+  await expect(page.locator('#raster-dialog #population-download')).toContainText('BWA');
+  expect(errors).toEqual([]);
+});
+
 test('the raster widgets carry a node label, as every other widget does',async({page})=>{
   const errors=collectPageErrors(page);
   await open(page,'BWA');

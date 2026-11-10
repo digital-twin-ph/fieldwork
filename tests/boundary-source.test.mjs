@@ -247,3 +247,14 @@ test('geometry that is not a polygon yields nothing rather than a guess',()=>{
   assert.equal(publishedRings({type:'Polygon',coordinates:[[[0,0],[1,1]]]}),null,'too few points is no ring');
 });
 
+
+test('a study area acquired as administrative units states its country, read from the boundary it stores',async()=>{
+  const {countryOfArea}=await import('../build/boundary-source.js');
+  // The shape every saved study area has: the identifier directly on `boundary` (Sierra Leone, Brazil, NYC examples).
+  assert.equal(countryOfArea({boundary:{boundaryID:'BWA-ADM1-15938201',unitID:'a b c'}}),'BWA');
+  assert.equal(countryOfArea({boundary:{boundaryID:'SLE-ADM0-89611731'}}),'SLE');
+  // Said explicitly, it wins; drawn, it states nothing; a local file names no country.
+  assert.equal(countryOfArea({country:'ZAF',boundary:{boundaryID:'BWA-ADM1-1'}}),'ZAF');
+  assert.equal(countryOfArea({}),null);
+  assert.equal(countryOfArea({boundary:{boundaryID:'local:plan.geojson'}}),null);
+});

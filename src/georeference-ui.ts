@@ -14,11 +14,17 @@
  *  GUIDED, NOT DONE FOR THEM. The dialog says what makes a good pair. Once a fit exists, a point clicked on the image is
  *  shown where the fit expects it on the map, as a ring to search near; the person still finds and clicks it.
  *
+ *  WHERE TO LOOK, IN A WORKED EXAMPLE (experiment 201: *"How do we point the user to the right pairs of points is the
+ *  question"*). The example names each feature to find and why; a slow pulse, about 0.4 a second and far below the three
+ *  flashes a second WCAG 2.3.1 allows, marks the area on both panes, sized to the feature, so the exact click is still
+ *  the learner's. It holds still for anyone whose system asks for reduced motion, and a setting turns it off. It says
+ *  whether a click landed on the feature; it never fills a field.
+ *
  *  The map pane fetches OpenStreetMap's tiles, which sends the area viewed to its servers, and says so. */
 import L from 'leaflet';
 import type {Escape} from './types.js';
 import {openConfigDialog} from './config-dialog.js';
-import {fitPlacement,MIN_POINTS,type ControlPoint,type Placement,type PlacementModel} from './georeference.js';
+import {fitPlacement,MIN_POINTS,onGuide,type ControlPoint,type GuidePoint,type Placement,type PlacementModel} from './georeference.js';
 import {readWorldFile,type WorldFile} from './map-image.js';
 
 export interface MapImageDraft {
@@ -30,7 +36,12 @@ export interface MapImageDraft {
   worldText?:string; worldName?:string;
   model:PlacementModel; points:ControlPoint[];
   opacity:number;
+  /** The worked example's features to find, read only. */
+  guide?:GuidePoint[];
 }
+
+/** The cue, on or off, for this visit: a viewer's choice, not the workflow's. */
+let cuesOn=true;
 
 const round=(v:number,d:number)=>Number.isFinite(v)?v.toFixed(d):'';
 
@@ -53,6 +64,7 @@ export function openMapImageConfig(o:{step:string;initial:MapImageDraft;esc:Esca
   let dispose:(()=>void)|undefined;
   let view:{center:L.LatLngExpression;zoom:number}|undefined;
   let active=0,imageZoom=1;
+  if(o.initial.guide?.length&&!o.initial.points.length)o.initial.points.push({id:o.initial.guide[0]!.id,pixel:[NaN,NaN],lonlat:[NaN,NaN]});
   const fitOf=(d:MapImageDraft):Placement|undefined=>{
     const ok=d.points.filter(p=>[...p.pixel,...p.lonlat].every(Number.isFinite));
     if(ok.length<MIN_POINTS[d.model])return undefined;
@@ -117,7 +129,15 @@ export function openMapImageConfig(o:{step:string;initial:MapImageDraft;esc:Esca
     if(!d.image)return '<p class="muted">Choose the map image first.</p>';
     const fit=fitOf(d),out=leftOut(d.points.filter(p=>[...p.pixel,...p.lonlat].every(Number.isFinite)),d.model);
     let k=0;
-    return `<div class="geo-guide"><p><strong>Good pairs</strong> are things that have not moved: a church, a bridge, an old `
+    const target=d.guide?.[active],status=(v:boolean|null)=>v===null?'not clicked yet':v?'on the feature':'not on it yet: look inside the ring';
+    const found=target&&d.points[active]?onGuide(d.points[active]!,target):null;
+    const worked=!d.guide?.length?'':`<div class="geo-worked" id="geo-worked">`
+      +(target
+        ?`<p><strong>Worked example, point ${active+1} of ${d.guide.length}: ${esc(target.id)}.</strong> ${esc(target.why)}</p>`
+          +`<p id="geo-found">On the image: ${status(found!.image)}. On today's map: ${status(found!.map)}.</p>`
+        :`<p><strong>Worked example:</strong> each of its ${d.guide.length} features has a row above. This point is yours to choose.</p>`)
+      +`<label class="geo-cue-toggle"><input type="checkbox" id="geo-cues" ${cuesOn?'checked':''}> Show where to look (a slow pulse)</label></div>`;
+    return worked+`<div class="geo-guide"><p><strong>Good pairs</strong> are things that have not moved: a church, a bridge, an old `
         +`road junction, the corner of a building still standing. Spread them across the image, corners as well as the middle. `
         +`Three fix a placement; a fourth and fifth measure it. Where the sheet prints its own grid or frame with known `
         +`coordinates, use those first.</p></div>`
@@ -160,8 +180,11 @@ export function openMapImageConfig(o:{step:string;initial:MapImageDraft;esc:Esca
     root.querySelector('#geo-model')?.remove();
     root.querySelector<HTMLSelectElement>('#map-image-model')?.addEventListener('change',e=>{
       d.model=(e.target as HTMLSelectElement).value==='north-up'?'north-up':'affine';redraw();});
-    root.querySelector('#geo-add-point')?.addEventListener('click',()=>{d.points.push(blank());active=d.points.length-1;redraw();});
-    root.querySelectorAll<HTMLInputElement>('input[name="geo-active"]').forEach(el=>el.addEventListener('change',()=>{active=Number(el.value);}));
+    root.querySelector('#geo-add-point')?.addEventListener('click',()=>{
+      const p=blank();p.id=d.guide?.[d.points.length]?.id??'';d.points.push(p);active=d.points.length-1;redraw();});
+    root.querySelectorAll<HTMLInputElement>('input[name="geo-active"]').forEach(el=>el.addEventListener('change',()=>{active=Number(el.value);if(d.guide?.length)redraw();}));
+    root.querySelector<HTMLInputElement>('#geo-cues')?.addEventListener('change',e=>{cuesOn=(e.target as HTMLInputElement).checked;redraw();});
+    const target=cuesOn?d.guide?.[active]:undefined;
     root.querySelectorAll<HTMLButtonElement>('[data-geo-remove]').forEach(el=>el.addEventListener('click',()=>{
       d.points.splice(Number(el.dataset.geoRemove),1);active=Math.max(0,Math.min(active,d.points.length-1));redraw();}));
     root.querySelectorAll<HTMLInputElement>('[data-geo-field]').forEach(el=>el.addEventListener('change',()=>{
@@ -194,7 +217,9 @@ export function openMapImageConfig(o:{step:string;initial:MapImageDraft;esc:Esca
     const marks=()=>{
       const box=root.querySelector<HTMLElement>('#geo-image-marks')!,scale=img.getBoundingClientRect().width/d.image!.width||baseScale()*imageZoom;
       box.innerHTML=d.points.map((p,i)=>Number.isFinite(p.pixel[0])&&Number.isFinite(p.pixel[1])
-        ?`<span class="geo-mark${i===active?' is-active':''}" style="left:${p.pixel[0]*scale}px;top:${p.pixel[1]*scale}px">${i+1}</span>`:'').join('');
+        ?`<span class="geo-mark${i===active?' is-active':''}" style="left:${p.pixel[0]*scale}px;top:${p.pixel[1]*scale}px">${i+1}</span>`:'').join('')
+        +(target?`<span class="geo-cue" data-geo-cue="image" style="left:${target.pixel[0]*scale}px;top:${target.pixel[1]*scale}px;`
+          +`width:${2*target.radiusPx*scale}px;height:${2*target.radiusPx*scale}px"></span>`:'');
     };
     size();img.complete?marks():img.addEventListener('load',marks,{once:true});
 
@@ -212,6 +237,8 @@ export function openMapImageConfig(o:{step:string;initial:MapImageDraft;esc:Esca
     else map.setView([20,0],2);
     d.points.forEach((p,i)=>{if(onMap(p))L.marker([p.lonlat[1],p.lonlat[0]],{interactive:false,
       icon:L.divIcon({className:`geo-mark${i===active?' is-active':''}`,html:String(i+1),iconSize:[24,24],iconAnchor:[12,12]})}).addTo(map);});
+    if(target)L.circle([target.lonlat[1],target.lonlat[0]],{radius:target.radiusM,color:'#b6377a',weight:3,fill:false,
+      interactive:false,className:'geo-cue-map'}).addTo(map);
     if(expect)L.circleMarker([expect[1],expect[0]],{radius:18,color:'#b6377a',weight:3,fill:false,interactive:false})
       .bindTooltip('Where the fit expects this point: find it near here').addTo(map);
     map.on('click',e=>{

@@ -85,6 +85,11 @@ Where there is no world file, an image can be placed by features found twice: on
 standing. Where a sheet prints its own grid or frame with known coordinates, use those first. Once three points are
 matched, clicking a feature on the image shows a ring on the map where the fit expects it.
 
+**In a worked example**, the example names the features to find, in order, and why each was chosen. A slow pulse marks
+where to look, on the image and on the map, sized to the feature: the exact click is yours. Under each name the dialog
+says whether your click landed on the feature. It fills nothing in. **Show where to look** turns the pulse off; with
+reduced motion set on your device, the ring stays still.
+
 The map pane fetches OpenStreetMap's tiles, which sends the area you view to its servers.
 
 A world file that turns the image is drawn turned.

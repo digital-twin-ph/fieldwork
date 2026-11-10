@@ -3,7 +3,7 @@
   "description": "Independent recomputation of implemented widgets by an external process, recorded after release. Release files are immutable once committed, so evidence about a release lives here and accrues as checks run. A fixture digest recorded in a result is over canonical JSON content rather than the file’s bytes, revised 2026-10-11 because byte identity is unsatisfiable in the browser the lab publishes to. A parity result establishes numerical agreement with a named external implementation under a stated criterion. It is not scientific certification, and it says nothing about whether a method is appropriate for a question.",
   "lab": {
     "repository": "https://github.com/digital-twin-ph/validation-lab",
-    "commit": "eadac93d254294f460cac11c162ebbdd8dae539d",
+    "commit": "16d52226aceef5b32530232b9f0d52740e48be99",
     "pinNote": "The commit CI checks the lab out at: .github/workflows/pages.yml reads it with `jq -r .lab.commit widgets/parity.json`. So this pin, not the clone beside this repository, is what `validate:dive-deeper` verifies against on a clean runner -- and it must be advanced whenever a check lands in the lab, in the same push-then-pin order the worked examples use."
   },
   "outcomes": {
@@ -858,17 +858,17 @@
     },
     {
       "widget": "urn:fieldwork:widget:map_image_input",
-      "coversRelease": "0.2.0",
+      "coversRelease": "0.3.0",
       "check": "48-georeference",
       "result": "content/results/check-48-georeference.json",
-      "sha256": "aeb2f38a0c9c152c6936f73e3b467eaaf64ccbe4a310ffc060ddcffe24c793c7",
+      "sha256": "692e2c92a7814464b76a02158df08acbeb344fefa7a6994b30ca838883226390",
       "external": [
         "GDAL 3.12.2 via rasterio 1.5.2"
       ],
       "criterion": "The same six affine numbers as GDAL's fit from the same ground control points (1e-10 degree a pixel, 1e-7 degree at the origin), and the same residuals to 0.01 m",
       "outcome": "agrees",
       "measured": "South London's four recorded control points (Snow's Map 2) and a turned set of five with one pair 60 m off: the same six numbers as GDALGCPsToGeoTransform to about 1e-17, and the same errors to 4e-10 m (South London 129, 79, 35 and 85 m; the bad pair 47 m against 12 for the rest). Agrees in CPython and the browser kernel.",
-      "ranAt": "2026-11-10T18:10:32+00:00",
+      "ranAt": "2026-11-10T21:47:25+00:00",
       "notEstablished": [
         "That the points are the right features: both sides fit the same pairs.",
         "That a plan is accurate: the residuals measure agreement with one placement, not the survey.",

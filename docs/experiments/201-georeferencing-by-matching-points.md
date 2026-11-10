@@ -2,8 +2,9 @@
 
 _Created 2026-11-10 · Updated 2026-11-10_
 
-**Status:** tried. The fit, the dialog and turned drawing are built (0.81.0); South London's four points refitted.
-The guidance ring for a worked example's manual, the lab check against GDAL and Hagelloch's 1824 sheet are next.
+**Status:** tried. The fit, the dialog and turned drawing are built (0.81.0); South London's four points refitted; lab
+check 48 agrees with GDAL; the cue for a worked example is built (0.82.0). Hagelloch's 1824 sheet, in a worked example
+and placed by hand, is next.
 
 ## The question
 
@@ -138,5 +139,16 @@ motion, sized to the feature so the exact click is the learner's, and a setting 
 South London's four points and on a turned set with one bad pair. So the east-west difference from the hand placement is
 the hand fit's direction, not Fieldwork's: Fieldwork's fit is GDAL's.
 
-**Not yet**: the cue; Hagelloch's 1824 sheet, placed from its frame's known corners and again by hand, the two
-compared.
+**The cue, built 2026-11-10** (map image 0.3.0). An example stores its features to find (`guide`): each a name, why it
+was chosen, and where it is on the image and the map, with a radius the size of the feature. Configure… names the next
+feature and its reason, pulses a ring on both panes (2.4 s a cycle: 0.4 a second against WCAG 2.3.1's three), and says
+under the name whether each half of the learner's click is on the feature. Nothing is filled; the first row and each
+added row carry only the feature's name. **Show where to look** turns the pulse off; reduced motion stills it. Checked
+in Chromium (`tests/georeference-dialog.browser.mjs`, `tests/georeference.test.mjs`).
+
+**Practitioner observation, written before it is known:** whether a learner given the pulse and the reason finds the
+feature, or clicks the centre of the ring without looking at the map. The second would mean the ring is doing the
+learning; a smaller radius, or the ring shown only after a first wrong click, are the alternatives.
+
+**Not yet**: a worked example that uses the cue; Hagelloch's 1824 sheet, placed from its frame's known corners and
+again by hand, the two compared.

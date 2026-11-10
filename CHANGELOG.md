@@ -3,6 +3,13 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.82.0 — 2026-11-10
+
+- **Where to look, in a worked example.** Placing a map image by matching points, an example can now name each feature
+  to find and why. A slow pulse marks the area on the image and on today's map, and the dialog says whether your click
+  landed on it. Nothing is filled in for you. **Show where to look** turns the pulse off; reduced motion keeps it still.
+  Georeferenced map image 0.3.0.
+
 ## 0.81.2 — 2026-11-10
 
 - **Hagelloch's houses sit on the houses of the 1824 map.** The cases were fitted to the buildings drawn on the

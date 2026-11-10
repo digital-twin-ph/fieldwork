@@ -33,6 +33,22 @@ export interface Placement {
 }
 
 export const MIN_POINTS:Record<PlacementModel,number>={'north-up':2,'affine':3};
+
+/** A FEATURE A WORKED EXAMPLE ASKS THE LEARNER TO FIND (experiment 201). The practitioner, 2026-11-10: *"For the worked
+ *  example we can give them cues like a blinking point to click on"*. Where it is, on the image and on the map, each
+ *  with a radius the size of the feature: the cue marks the area to look in, and the exact click stays the learner's.
+ *  Nothing here is ever written into a matched point. */
+export interface GuidePoint {id:string; why:string; pixel:[number,number]; radiusPx:number; lonlat:[number,number]; radiusM:number}
+
+/** Whether a matched point's two halves fall on the feature a guide point names. */
+export function onGuide(point:ControlPoint,guide:GuidePoint):{image:boolean|null;map:boolean|null}{
+  const image=point.pixel.every(Number.isFinite)
+    ?Math.hypot(point.pixel[0]-guide.pixel[0],point.pixel[1]-guide.pixel[1])<=guide.radiusPx:null;
+  const map=point.lonlat.every(Number.isFinite)
+    ?Math.hypot((point.lonlat[0]-guide.lonlat[0])*111_320*Math.cos(guide.lonlat[1]*Math.PI/180),
+      (point.lonlat[1]-guide.lonlat[1])*110_570)<=guide.radiusM:null;
+  return {image,map};
+}
 const M_PER_DEG_LAT=110_570,M_PER_DEG_LON_EQ=111_320;
 
 /** Least squares for v ≈ X·beta, by the normal equations, solved by Gaussian elimination with pivoting. */

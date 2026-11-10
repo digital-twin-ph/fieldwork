@@ -1245,3 +1245,12 @@ select.rule-op.rule-op-compare,select.rule-op.rule-op-equal,select.rule-op.rule-
 .geo-points input:not([type=radio]){width:100%;font-size:14px;padding:4px}
 .geo-points tr.geo-doubt td{background:#fff4e5}
 @media (max-width:900px){.geo-panes{grid-template-columns:1fr}}
+/* WHERE TO LOOK (experiment 201): a slow pulse, 2.4 s a cycle, still under reduced motion. */
+.geo-worked{border:2px solid #b6377a;border-radius:6px;padding:10px 12px;margin:0 0 10px}
+.geo-worked p{font-size:14px;line-height:1.5;margin:0 0 6px}
+.geo-cue-toggle{font-size:14px}
+.geo-cue{position:absolute;transform:translate(-50%,-50%);box-sizing:border-box;min-width:14px;min-height:14px;
+  border:3px solid #b6377a;border-radius:50%;animation:geo-pulse 2.4s ease-in-out infinite}
+.geo-cue-map{animation:geo-pulse 2.4s ease-in-out infinite}
+@keyframes geo-pulse{0%,100%{opacity:.3}50%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.geo-cue,.geo-cue-map{animation:none;opacity:1}}

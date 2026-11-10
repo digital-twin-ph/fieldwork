@@ -67,3 +67,57 @@ test('a plan is placed by typed points: each error shown, a doubtful pair marked
   await expect(page.locator('#map image[data-map-image]')).toHaveAttribute('transform',/matrix\(/,{timeout:20_000});
   expect(errors).toEqual([]);
 });
+
+// WHERE TO LOOK (experiment 201): a worked example names each feature and why; a slow pulse marks it on both panes; the
+// learner's click is told whether it landed on the feature, and nothing is filled for them. Still under reduced motion.
+test('a worked example points to each feature with a slow pulse, says when a click is on it, and fills nothing',async({page})=>{
+  test.setTimeout(180_000);
+  const errors=collectPageErrors(page);
+  await page.route(/tile\.openstreetmap\.org/,route=>route.abort('failed'));
+  const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mN8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==','base64');
+  const guided=structuredClone(workflow);
+  const plan=guided.nodes.find(n=>n.id==='plan');
+  const [lon,lat]=at(40,30);
+  Object.assign(plan.params,{data:`data:image/png;base64,${png.toString('base64')}`,image:{width:400,height:300,bytes:png.length,sha256:'0'.repeat(64)},
+    placement:'points',bounds:[9.06,48.540,9.065,48.543],
+    guide:[{id:'Church',why:'Its tower is on both maps.',pixel:[40,30],radiusPx:10,lonlat:[lon,lat],radiusM:12},
+      {id:'Mill',why:'Where the stream meets the road.',pixel:[360,40],radiusPx:10,lonlat:at(360,40),radiusM:12}]});
+  await page.goto('/?example=blank');
+  await page.locator('#workflow-file').setInputFiles({name:'guided.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(guided))});
+  await page.locator('[data-view="workflow"]').click();
+  await page.locator('.react-flow__node[data-id="plan"]').click();
+  await expect(page.locator('#inspector-content')).toContainText('A worked example names 2 features to find');
+  await page.locator('#configure-step').click();
+  const dialog=page.locator('#map-image-config');
+  await expect(dialog.locator('#geo-worked')).toContainText('point 1 of 2: Church');
+  await expect(dialog.locator('#geo-worked')).toContainText('Its tower is on both maps.');
+  // The first row is named for the feature, and nothing else is filled.
+  await expect(dialog.locator('tr[data-geo-row="0"] [data-geo-field="id"]')).toHaveValue('Church');
+  await expect(dialog.locator('tr[data-geo-row="0"] [data-geo-field="x"]')).toHaveValue('');
+  // The pulse, on both panes, slow.
+  const cue=dialog.locator('[data-geo-cue="image"]');
+  await expect(cue).toHaveCount(1);
+  await expect(dialog.locator('#geo-map-pane path.geo-cue-map')).toHaveCount(1);
+  expect(await cue.evaluate(el=>getComputedStyle(el).animationDuration)).toBe('2.4s');
+  // A click typed near the church is on it; the map half is not clicked yet.
+  await dialog.locator('tr[data-geo-row="0"] [data-geo-field="x"]').fill('43');
+  await dialog.locator('tr[data-geo-row="0"] [data-geo-field="x"]').dispatchEvent('change');
+  await dialog.locator('tr[data-geo-row="0"] [data-geo-field="y"]').fill('31');
+  await dialog.locator('tr[data-geo-row="0"] [data-geo-field="y"]').dispatchEvent('change');
+  await expect(dialog.locator('#geo-found')).toContainText('On the image: on the feature. On today\'s map: not clicked yet.');
+  // The next point is named for the next feature.
+  await dialog.locator('#geo-add-point').click();
+  await expect(dialog.locator('#geo-worked')).toContainText('point 2 of 2: Mill');
+  await expect(dialog.locator('tr[data-geo-row="1"] [data-geo-field="id"]')).toHaveValue('Mill');
+  // Turned off, the pulse goes; the words stay.
+  await dialog.locator('#geo-cues').uncheck();
+  await expect(dialog.locator('[data-geo-cue="image"]')).toHaveCount(0);
+  await expect(dialog.locator('#geo-map-pane path.geo-cue-map')).toHaveCount(0);
+  await expect(dialog.locator('#geo-worked')).toContainText('Mill');
+  await dialog.locator('#geo-cues').check();
+  // Reduced motion: the ring is there and still.
+  await page.emulateMedia({reducedMotion:'reduce'});
+  await expect(dialog.locator('[data-geo-cue="image"]')).toHaveCount(1);
+  expect(await dialog.locator('[data-geo-cue="image"]').evaluate(el=>getComputedStyle(el).animationName)).toBe('none');
+  expect(errors).toEqual([]);
+});

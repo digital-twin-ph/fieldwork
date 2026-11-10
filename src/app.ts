@@ -3213,7 +3213,8 @@ function renderInspector(){
     content+=standardSection('Inputs',standardInputs(n));
     content+=standardSection('Settings',`<p class="standard-sentence">${esc(placed
       ?`Draws ${p.image.filename||'the image'} as ground, ${p.placement==='points'?`placed by ${p.controlPoints?.length??0} matched points`:'placed by its world file'}, ${Math.round((p.opacity??0.85)*100)}% opaque.`
-      :'Choose a map image and how to place it, in Configure\u2026')}</p>`
+      :'Choose a map image and how to place it, in Configure\u2026')
+      +(p.guide?.length?` A worked example names ${p.guide.length} features to find, in Configure\u2026`:'')}</p>`
       +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button></div>');
     content+=standardSection('Result',placed?placedCard(n,esc):'<p class="standard-result">Nothing placed yet.</p>');
   }else if(n.type==='table_input'){
@@ -4356,7 +4357,8 @@ content+=`<div class="field"><label class="field-label" for="chart-decisions">Re
     try{if(area){const b=previewArea(workflow,area.id).boundary;near=[...boundsOf(b)] as [number,number,number,number];}}catch{near=undefined;}
     openMapImageConfig({step:p.label||'Georeferenced map image',esc,near,
       initial:{label:p.label,...(placed?{image:{data:p.data!,...p.image}}:{}),placement:p.placement??'world-file',
-        model:p.placementModel??'affine',points:structuredClone(p.controlPoints??[]),opacity:p.opacity??0.85},
+        model:p.placementModel??'affine',points:structuredClone(p.controlPoints??[]),opacity:p.opacity??0.85,
+        ...(p.guide?.length?{guide:p.guide}:{})},
       apply:(d,{world,fit})=>void (async()=>{
         try{
           let image=d.image!,digest=p.dataRef,data=d.image!.data;

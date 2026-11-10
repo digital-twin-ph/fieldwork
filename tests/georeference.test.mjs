@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {existsSync,readFileSync} from 'node:fs';
-import {fitPlacement,lonLatOf,cornersOf,MIN_POINTS} from '../build/georeference.js';
+import {fitPlacement,lonLatOf,cornersOf,MIN_POINTS,onGuide} from '../build/georeference.js';
 
 // PLACING A MAP IMAGE FROM MATCHED POINTS (experiment 201).
 const near=(a,b,tol,what)=>assert.ok(Math.abs(a-b)<=tol,`${what}: ${a} against ${b}`);
@@ -53,4 +53,16 @@ test('a turned world file is placed by its corners and drawn through a matrix, n
   // An upright one is still drawn as a box between two corners.
   const upright=mapImageMarkup({data:'data:image/png;base64,AA',width:10,height:10,sha256:'abcdef0123456789',opacity:1,bounds:[0,0,1,1]},c=>[c[0]*100,100-c[1]*100]);
   assert.doesNotMatch(upright,/matrix/);
+});
+
+test('a click is on a guide feature within its radius, on each pane separately, and an empty half says nothing',()=>{
+  const guide={id:'Church',why:'Standing since 1500.',pixel:[100,200],radiusPx:12,lonlat:[9.01,48.54],radiusM:15};
+  const blank=[NaN,NaN];
+  assert.deepEqual(onGuide({id:'',pixel:blank,lonlat:blank},guide),{image:null,map:null});
+  assert.deepEqual(onGuide({id:'',pixel:[110,200],lonlat:blank},guide),{image:true,map:null});
+  assert.deepEqual(onGuide({id:'',pixel:[113,200],lonlat:blank},guide),{image:false,map:null});
+  // 10 m east is inside 15 m; 20 m north is not.
+  const east=10/(111_320*Math.cos(48.54*Math.PI/180)),north=20/110_570;
+  assert.equal(onGuide({id:'',pixel:blank,lonlat:[9.01+east,48.54]},guide).map,true);
+  assert.equal(onGuide({id:'',pixel:blank,lonlat:[9.01,48.54+north]},guide).map,false);
 });

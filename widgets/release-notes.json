@@ -408,12 +408,12 @@
    "migrationFrom": []
   },
   "map_image_input": {
-   "version": "0.2.0",
+   "version": "0.3.0",
    "released": "2026-11-10",
    "changes": [
     {
      "kind": "minor",
-     "description": "Placed by matching points (experiment 201): in Configure…, How to place it offers a world file or points matched between the image and today's map, typed or clicked, each with its error on the ground and, with more points than the fit needs, its error left out, marked when doubtful. North up or turned and stretched, by least squares into a world file. A turned image is placed by its corners and drawn turned, on the static figure and the interactive map, where a turned world file was refused. On the standard Inspector: Name, one sentence and Configure…, and what is placed."
+     "description": "Where to look, in a worked example (experiment 201): an example can name the features to find, in order, each with why it was chosen and where it is on the image and on the map, sized to the feature. In Configure…, the feature to find next and its reason are said, a slow pulse (2.4 s a cycle, still under reduced motion) marks the area on both panes, and each click is told whether it landed on the feature. Nothing is filled for the learner; a setting turns the pulse off. The Inspector says how many features the example names."
     }
    ],
    "breaking": false,

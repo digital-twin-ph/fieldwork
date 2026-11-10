@@ -806,6 +806,11 @@ export function validateWorkflow(raw:unknown):Workflow {
         typeof c?.id!=='string'||c.id.length>120||!Array.isArray(c.pixel)||!Array.isArray(c.lonlat)
         ||![...c.pixel,...c.lonlat].every(Number.isFinite)||Math.abs(c.lonlat[0])>180||Math.abs(c.lonlat[1])>90)))
         throw new Error('A matched point is a name, a pixel position and a longitude and latitude.');
+      if(p.guide!==undefined&&(!Array.isArray(p.guide)||p.guide.length>20||p.guide.some(g=>
+        typeof g?.id!=='string'||g.id.length>120||typeof g.why!=='string'||g.why.length>600
+        ||!Array.isArray(g.pixel)||!Array.isArray(g.lonlat)||![...g.pixel,...g.lonlat,g.radiusPx,g.radiusM].every(Number.isFinite)
+        ||!(g.radiusPx>0)||!(g.radiusM>0)||Math.abs(g.lonlat[0])>180||Math.abs(g.lonlat[1])>90)))
+        throw new Error('A guide point is a feature, why it was chosen, and where it is on the image and the map, each with a radius.');
       // AN UNCONFIGURED PLATE IS A DRAFT, NOT A BAD ONE. A node added from the palette carries
       // `[0,0,0,0]` because nobody has chosen an image yet, and until 2026-10-27 that tripped the
       // crossed-corners check: the widget could be offered and could not be added, which is what

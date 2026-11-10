@@ -289,8 +289,8 @@ Every case's longitude moved by −0.0486156°; the latitude was right. No dista
 
 **Found with it:** the scan's circles depended on where the village sat. Ties were exact to a millionth of a millimetre,
 so rounding decided which equidistant houses joined a circle, and the move changed one circle and one p-value. Space-time
-scan 0.3.1 ties distances within 10 cm, measured from each place's recorded coordinates: 1,307 circles wherever the
-village is placed. The clusters and the first day flagged are unchanged; cluster 2's p is 0.071, 21 November's 0.039.
+scan 0.3.1 ties distances within 10 cm, measured from each place's recorded coordinates: 1,307 circles under any shift east or
+west (a unit test). *Corrected the same day:* not wherever the village is placed; see the fit below. The clusters and the first day flagged are unchanged; cluster 2's p is 0.071, 21 November's 0.039.
 Lab check 46 re-run on the declared tie: agrees.
 
 **Then fitted to the sheet's houses, the same day.** The 56 distinct houses were searched over rotation, scale, mirroring
@@ -308,6 +308,11 @@ apart agree on the anchor to about the width of a house.
 **Not established:** that any one house is the building it falls on. The sheet is 37 years older than the outbreak, nine
 houses fall off a building, and twelve random sets are a small null: it says the fit beats chance by a wide margin, not by
 how much.
+
+**The scan, re-run on the fitted places.** 1,305 circles, not 1,307: moving the village 51 m south as well as west changed
+two of them, so "wherever the village is placed" above was wrong. Which distances crossed the 10 cm tie is not yet
+traced. Every cluster is unchanged: the same places, observed counts and p-values. Lab checks 45 and 46 re-run on the
+fitted coordinates: both agree.
 
 ## Ontologies to reuse, looked for 2026-11-09
 

@@ -10,6 +10,8 @@ shown in a local build is not a claim that it has been published.
   random points. Every case moved together, 151 m west and 51 m south; no distance between cases changed.
 - **Today's buildings agree.** Fitted to today's OpenStreetMap footprints instead, the houses land within 3 m of the
   1824 placement, north up and at the same scale.
+- **Correction to 0.81.1.** The scan's circle count does still depend a little on where the village sits: moved to the
+  1824 fit, Hagelloch has 1,305 circles, not 1,307. Every cluster and p-value is unchanged; lab checks 45 and 46 agree.
 
 ## 0.81.1 — 2026-11-10
 

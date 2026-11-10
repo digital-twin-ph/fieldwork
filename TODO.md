@@ -141,6 +141,15 @@ not a practitioner in the field.
    Info AI's candidate; the **Poisson spatial scan**, on the same machinery; then **Describe where points are dense**
    (HDBSCAN, kernel density, and kernel density as a ratio of two layers), labelled exploratory, never under Detect.
    Each on the standard Inspector, with a lab check, and SaTScan run by hand on its benchmark sets.
+12. **Edit a table's values inline, in the data quality check** (the practitioner, 2026-11-10: *"One thing I have been
+   meaning to add to data quality checks is the ability to edit tables inline. Can be added as a widget playback
+   exercise."*). To shape: per [117](docs/experiments/117-data-quality.md), a change to an input is a declared repair
+   on the node, never a write to the file, and every repair can be taken back. So an edited cell would be one more
+   repair: the record, the column, the value read, the value written, who and when, listed as an edit log and each
+   removable. Open: whether typing a value into an empty cell is allowed, since 117 holds that filling a missing value
+   is imputation, not a clerical fix; and what "widget playback exercise" means here, the manual playback dialog of
+   [173](docs/experiments/173-a-manual-for-each-worked-example.md) (designed, not built) or an exercise in a worked
+   example's manual.
 
 The high-contrast theme comes after Sierra Leone, as set on 2026-11-07; where it falls among 4 to 6 is not set.
 

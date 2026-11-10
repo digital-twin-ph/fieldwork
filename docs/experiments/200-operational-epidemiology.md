@@ -150,6 +150,24 @@ Bochner et al. 2023 and the Liberia, Zambia, Cambodia and Thailand 7-1-7 studies
 **First to try: South Sudan's key dates**, the 7-1-7 review itself on open data, after its licence and columns are read
 in the file.
 
+## Detect: finding clusters, 2026-11-09
+
+Asked for by the practitioner: *"Under detect can we add a cluster detection widget like SatScan?"*
+
+- **Space-time permutation scan**, for a line list with dates and places and no population: the first to build,
+  reusing Epi Info AI's candidate (circles over places and windows over time; dates shuffled across fixed places for
+  the p-value, with a recorded seed). There, SaTScan 10.1.3 chose the same leading window on a 30-case synthetic set;
+  the counts differ because SaTScan loaded 28 cases, and the 30-case re-run is pending. A candidate until Fieldwork's
+  own lab check passes. First use: Hagelloch replayed day by day, to find the first day a cluster would have been
+  flagged, against emergence: a detection-timeliness finding.
+- **Poisson spatial scan**, for areas with populations (the practitioner: *"I do like your suggestion also about
+  Poisson spatial scan"*): written new, on the same machinery. Relative risk is the right word only here. Data at hand:
+  Brazil's 92 municipalities, South London's 32 sub-districts.
+- **Describing where points are dense** (HDBSCAN, kernel density, raised by the practitioner): exploratory, and never
+  under Detect. Neither tests whether a group or a peak is unusual, and both mostly map where people live. Kernel
+  density's epidemiological form is a ratio of case density to population or control density; its bandwidth is
+  stated, never hidden.
+
 ## Ontologies to reuse, looked for 2026-11-09
 
 The practitioner: *"I need to know if there is an ontology for outbreak response and investigations that we can
@@ -299,7 +317,7 @@ The practitioner choosing the first slice and its data, and its being built and 
 
 ## Related
 
-- **199, to come: porting the Gaborone TB agent-based model, one step at a time.** The two are related: a model of the outbreak is what a response is timed against, and its contact structure is what contact tracing reads.
+- **199, to come: porting the Gaborone TB agent-based model, one step at a time.** The relation, as the practitioner put it on 2026-11-09: *"we can also simulate 717 activities."* A model of the outbreak is what a response is timed against, and its contact structure is what contact tracing reads. Simulating a response means running each milestone in the model: detection, notification, and the seven early response actions, each with its own delay. Then the 7-1-7 targets can be tested before an event. For example: how many cases a two-day notification delay adds, or what reaching the 7-day response target would avert. The response-timeliness ontology already names those milestones and targets, so a simulated response and a real one can be recorded in the same terms.
 - [117](117-data-quality.md): an absence that is an outcome.
 
 ## What this does not establish

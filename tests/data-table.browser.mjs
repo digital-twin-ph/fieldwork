@@ -118,7 +118,7 @@ test('Tabular data imports a long-format extract, displays it and replays offlin
   await context.setOffline(true);
   await page.reload();
   await page.locator('[data-view="workflow"]').click();
-  await expect(page.locator('.react-flow__node').filter({hasText:'Tabular data'})).toContainText('6 rows');
+  await expect(page.locator('.react-flow__node[data-id^="table_input"]')).toContainText('6 rows');
   await page.screenshot({path:'test-results/table-input.png',fullPage:true});
 });
 

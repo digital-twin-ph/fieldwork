@@ -136,6 +136,12 @@ not a practitioner in the field.
    completeness, laboratory turnaround, care-seeking delay, travel time to care, cross-sector linkage, and supplies,
    logistics and staffing (in reach, corrected by the practitioner the same day). Open evidence only; licences as stated.
 
+11. **Cluster detection under Detect** ([200](docs/experiments/200-operational-epidemiology.md); the practitioner,
+   2026-11-09). In order, after the Hagelloch transmission tree: the **space-time permutation scan**, ported from Epi
+   Info AI's candidate; the **Poisson spatial scan**, on the same machinery; then **Describe where points are dense**
+   (HDBSCAN, kernel density, and kernel density as a ratio of two layers), labelled exploratory, never under Detect.
+   Each on the standard Inspector, with a lab check, and SaTScan run by hand on its benchmark sets.
+
 The high-contrast theme comes after Sierra Leone, as set on 2026-11-07; where it falls among 4 to 6 is not set.
 
 ## Urgent

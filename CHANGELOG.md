@@ -8,6 +8,8 @@ shown in a local build is not a claim that it has been published.
 - **Hagelloch's houses sit on the houses of the 1824 map.** The cases were fitted to the buildings drawn on the
   cadastral sheet NW III 3: 47 of 56 houses fall on one, north up and at the source's own scale, against 63–68% for
   random points. Every case moved together, 151 m west and 51 m south; no distance between cases changed.
+- **Today's buildings agree.** Fitted to today's OpenStreetMap footprints instead, the houses land within 3 m of the
+  1824 placement, north up and at the same scale.
 
 ## 0.81.1 — 2026-11-10
 

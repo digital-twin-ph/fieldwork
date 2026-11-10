@@ -300,6 +300,11 @@ in the search asked for north up or for the source's scale; both came out. The s
 reached 63–68% (the houses 80% at the same coarse step). The source's metres are kept; the anchor moved 151 m west and
 51 m south, from the village to the local origin, which is its south-west corner: 48.5403704 N, 9.0098931 E.
 
+**Corroborated by today's buildings.** The same search against 674 OpenStreetMap footprints, read through the polygon
+layer's own extract reader from Geofabrik's Tübingen extract, found north up (−0.5°), scale 0.99, and the houses' centre
+within 3 m of where the 1824 sheet put it: 89% on a building, against 63–70% for 12 random sets. Two maps two centuries
+apart agree on the anchor to about the width of a house.
+
 **Not established:** that any one house is the building it falls on. The sheet is 37 years older than the outbreak, nine
 houses fall off a building, and twelve random sets are a small null: it says the fit beats chance by a wide margin, not by
 how much.

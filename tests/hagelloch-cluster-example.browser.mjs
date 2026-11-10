@@ -11,7 +11,11 @@ test('Hagelloch: the space-time scan runs with a progress bar, and its clusters 
   await page.goto('/?example=hagelloch-cluster');
   await expect(page.locator('#project-select option:checked')).toHaveText('Measles in Hagelloch, 1861 · 4 workflows');
   await page.locator('[data-view="workflow"]').click();
-  await expect(page.locator('#run-button')).toBeEnabled({timeout:240_000});
+  // WAIT FOR THE OPENING RUN TO FINISH, not only for Run to be enabled: on CI the button was enabled for a moment before
+  // that run started and took it for minutes, so the click below timed out (three main runs, both engines, 0.81.2 to
+  // 0.82.0). The map-links test met the same race at 0.79.0.
+  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:300_000});
+  await expect(page.locator('#run-button')).toBeEnabled({timeout:60_000});
   // Recorded as it happens, so the check cannot race the panel it checks.
   await page.evaluate(()=>{
     const seen=window.__progressSeen=[];
@@ -19,6 +23,8 @@ test('Hagelloch: the space-time scan runs with a progress bar, and its clusters 
       .observe(document.body,{subtree:true,childList:true,characterData:true});
   });
   await page.locator('#run-button').click();
+  // The state still reads complete from the opening run, so wait for THIS run's last phase before reading it.
+  await expect.poll(()=>page.evaluate(()=>window.__progressSeen.some(t=>t.includes('Scanning the days:'))),{timeout:240_000}).toBe(true);
   await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:240_000});
   const seen=await page.evaluate(()=>window.__progressSeen);
   expect(seen.some(t=>t.includes('Shuffling the dates:')&&t.includes('of 999'))).toBe(true);

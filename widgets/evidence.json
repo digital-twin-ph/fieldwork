@@ -37,8 +37,8 @@
   "declared only": 1,
   "example only": 10,
   "parity only": 9,
-  "example, lab not applicable": 14,
-  "example+parity": 20,
+  "example, lab not applicable": 13,
+  "example+parity": 21,
   "neither applies": 0
  },
  "compositionsUsedByNoExample": [
@@ -127,10 +127,10 @@
     "south-london-1854"
    ],
    "exampleUseCount": 10,
-   "lab": "none",
+   "lab": "parity",
    "labOwed": false,
    "fieldUse": [],
-   "rung": "example, lab not applicable"
+   "rung": "example+parity"
   },
   {
    "nodeType": "clip_points_to_area",
@@ -318,6 +318,7 @@
    "exampleUses": [
     "brazil-dengue-rj-2024",
     "hagelloch",
+    "hagelloch-chains",
     "heat",
     "nigeria-immunization-2024",
     "nyc-asthma-ozone-2016-2025",
@@ -333,7 +334,7 @@
     "south-london-1854",
     "workflows-rulesets"
    ],
-   "exampleUseCount": 16,
+   "exampleUseCount": 17,
    "lab": "none",
    "labOwed": false,
    "fieldUse": [],
@@ -590,6 +591,7 @@
    "exampleUses": [
     "brazil-dengue-rj-2024",
     "hagelloch",
+    "hagelloch-chains",
     "nyc-asthma-ozone-2016-2025",
     "old-naledi",
     "oswego-1940",
@@ -602,7 +604,7 @@
     "south-london-1854",
     "workflows-rulesets"
    ],
-   "exampleUseCount": 13,
+   "exampleUseCount": 14,
    "lab": "none",
    "labOwed": false,
    "fieldUse": [],

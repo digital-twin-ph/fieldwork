@@ -598,6 +598,10 @@ export interface ParamsByType {
      *  column could be read for meaning. And capped: `LABEL_CEILING` leaves a large layer
      *  unnamed, because a figure that printed 250 names is a figure nobody can read. */
     labelField?:Record<string,string>;
+    /** A LINE FROM EACH POINT TO THE POINT IT NAMES, per layer, keyed by source node the way `pinClassField` is
+     *  (experiment 200, step 4): `column` holds the named record's id and `matches` is the column it is found by.
+     *  Hagelloch's cases: `infector`, found by `case_ID`. Both nominated, never guessed. */
+    linkField?:Record<string,import('./map-links.js').LinkSetting>;
     /** Whether every point mark is drawn over a dark halo. On by default, because the reason it
      *  exists is a terrain basemap: a mark in the palette's own values over OpenTopoMap was hard
      *  to pick out. It is a checkbox rather than a rule because a map on a pale ground, or one

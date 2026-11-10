@@ -664,3 +664,16 @@ fw:casesNoInfector a owl:DatatypeProperty; rdfs:domain fw:TransmissionTree; rdfs
 fw:casesInfectorNotFound a owl:DatatypeProperty; rdfs:domain fw:TransmissionTree; rdfs:range xsd:integer; rdfs:label "cases naming an infector the table does not hold" .
 fw:casesUndated a owl:DatatypeProperty; rdfs:domain fw:TransmissionTree; rdfs:range xsd:integer; rdfs:label "cases without a readable date" .
 fw:casesInLoop a owl:DatatypeProperty; rdfs:domain fw:TransmissionTree; rdfs:range xsd:integer; rdfs:label "cases in a loop"; rdfs:comment "Cases whose infectors lead back to themselves, which no transmission chain can do." .
+fw:MapLinks a owl:Class; rdfs:label "map links"; rdfs:comment "Lines on a map from each record to the record it names in one column, found by another column. Every record of the layer is counted, drawn or not." .
+fw:drawsLinks a owl:ObjectProperty; rdfs:domain fw:MapView; rdfs:range fw:MapLinks; rdfs:label "draws links" .
+fw:linkSource a owl:ObjectProperty; rdfs:domain fw:MapLinks; rdfs:label "link source"; rdfs:comment "The point layer whose records are linked." .
+fw:linkColumn a owl:DatatypeProperty; rdfs:domain fw:MapLinks; rdfs:label "link column"; rdfs:comment "The column holding the id of the record each record names." .
+fw:linkMatchesColumn a owl:DatatypeProperty; rdfs:domain fw:MapLinks; rdfs:label "link matches column"; rdfs:comment "The column the named ids are found in." .
+fw:linksDrawn a owl:DatatypeProperty; rdfs:domain fw:MapLinks; rdfs:label "links drawn" .
+fw:linksAtSameLocation a owl:DatatypeProperty; rdfs:domain fw:MapLinks; rdfs:label "links at the same location"; rdfs:comment "Links found whose two records are at one point: counted, not drawn, because a line there has no length." .
+fw:recordsNamingNothing a owl:DatatypeProperty; rdfs:domain fw:MapLinks; rdfs:label "records naming nothing" .
+fw:recordsNamingUnknown a owl:DatatypeProperty; rdfs:domain fw:MapLinks; rdfs:label "records naming an unknown record" .
+fw:recordsNamingSelf a owl:DatatypeProperty; rdfs:domain fw:MapLinks; rdfs:label "records naming themselves" .
+fw:recordsNamingAmbiguous a owl:DatatypeProperty; rdfs:domain fw:MapLinks; rdfs:label "records naming an ambiguous id"; rdfs:comment "The named id is held by more than one record, so which is meant cannot be read." .
+fw:linksUnlocated a owl:DatatypeProperty; rdfs:domain fw:MapLinks; rdfs:label "links with an unlocated end" .
+fw:recordsRead a owl:DatatypeProperty; rdfs:domain fw:MapLinks; rdfs:label "records read"; rdfs:comment "Records of the layer, every one of which is counted under one outcome." .

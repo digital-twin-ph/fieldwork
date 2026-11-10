@@ -1,3 +1,4 @@
+import {linkLinesSvg} from './map-links.js';
 import type {WorkflowNode,Escape,Position,DistanceUnit} from './types.js';
 import type {DisplayValue,DisplayRow} from './results.js';
 import {SOURCE,tierLabel,serviceLabel,zoneLabel} from './old-naledi.js';
@@ -103,6 +104,9 @@ export function oldMap(output:DisplayValue,selected:string|null|undefined,esc:Es
   const classes=(output as {pinClasses?:Record<string,{value:string;colour:string}[]>}).pinClasses;
   const classColour=(source?:string,pinClass?:string):string|undefined=>
     pinClass?classes?.[source||'']?.find(entry=>entry.value===pinClass)?.colour:undefined;
+  // THE LINES FROM EACH RECORD TO THE ONE IT NAMES, under the marks so a mark is never hidden by a line.
+  const links=(output as {links?:import('./map-links.js').MapLink[]}).links;
+  if(links?.length)svg+=linkLinesSvg(links,output.rows,project as never,undefined,symbols?.[links[0]!.sourceNodeId]?.size??4);
   for(const r of output.rows){if(!r.coordinates!)continue;const [x,y]=project(r.coordinates!),label=['spatial-coverage','spatial-map'].includes(output.kind||'')?(r.excluded?'Excluded':r.relation):output.kind==='facility-evidence'?tierLabel(r.tier||'Unknown'):statusLabel(r.status);
     const symbol=symbols?.[r.sourceNodeId||''];
     // The layer's own radius, or the default where none was chosen. A focused mark is drawn

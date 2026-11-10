@@ -100,6 +100,7 @@ checks that the note describing the figure is filed in that same section.
 | **Old Naledi · raster clipping** | a clipped raster inside its boundary |
 | **Sea-level rise at Manila’s health facilities** (its own repository) | the study area, 194 facilities and the eight AR6 tide gauges |
 | **Geoprivacy** | the same records before and after being moved |
+| **Hagelloch · who infected whom** | a line from each infector's house to the case's |
 
 ### It states its own shape in the write-up
 
@@ -162,6 +163,32 @@ moves out. The static figure draws the last frame.
 On an interactive map, **Label parts with** chooses which attribute names a polygon part when it is clicked.
 The key it was joined on is shown beneath, so a layer keyed by `ID` can still be read by name. Nigeria's LGAs
 are joined on `ID`, because 769 names cover 774 places, and labelled with `shapeName`.
+
+## Lines between records
+
+A map can draw a line from each point to another point it names. Use it for who infected whom, or who was traced
+from whom.
+
+1. Select the map and press **Configure…**.
+2. Under **Lines between records**, choose **Line to the record named in**, such as `infector`.
+3. Choose **Found by**: the column holding each record's own id, such as `case_ID`.
+4. Press **Apply**, then **Run**.
+
+Each line runs from the named record to the one naming it, and an arrowhead shows the direction. The lines are
+drawn under the marks. On the interactive map they are a layer of their own, and they can be turned off.
+
+Every record is counted under one outcome. The counts are shown above the map and written in the receipt:
+
+- **drawn**;
+- **at one place**: both records are at the same point, so the line has no length. In Hagelloch, 90 of the 184
+  links join two children of one house. They are counted, not drawn;
+- **names nothing** in the column;
+- **names a record the layer does not hold**;
+- **names itself**;
+- **names an id that more than one record holds**, so which one is meant cannot be read;
+- **has an end with no location**.
+
+A line joins two records of the same layer. It does not join records of two different layers.
 
 ## Tiles imported for this map
 

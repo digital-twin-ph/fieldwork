@@ -119,6 +119,8 @@ export interface MapLayers {
   /** A SYMBOL PER PIN CLASS, per source, resolved by the map so every renderer reads one answer.
    *  Absent where a layer is not classed, which is the ordinary case. */
   pinClasses?:Record<string,{value:string;colour:string;shape?:LayerShape}[]>;
+  /** Lines from a record to the record it names, by row id (experiment 200, step 4). */
+  links?:import('./map-links.js').MapLink[];
 }
 
 /** Presentation only: never changes polygons, memberships, or source points. */
@@ -474,6 +476,31 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
         if(!hiddenPort(id||'')){group.addTo(map);all.addLayer(group);}
       }
       index++;
+    }
+    // THE LINES, one layer per point layer that has them, under the marks: Leaflet draws a polyline in the overlay
+    // pane, below the marker pane the marks are in. An arrowhead three quarters along says which way each runs.
+    const at=new Map((layers.rows||[]).map(r=>[r.id,r.coordinates])),nameOf=new Map((layers.rows||[]).map(r=>[r.id,r.name]));
+    const bySourceLinks=new Map<string,import('./map-links.js').MapLink[]>();
+    for(const link of layers.links||[])(bySourceLinks.get(link.sourceNodeId)??bySourceLinks.set(link.sourceNodeId,[]).get(link.sourceNodeId)!).push(link);
+    for(const [source,links] of bySourceLinks){
+      const group=L.featureGroup();
+      for(const link of links){
+        const a=at.get(link.from),b=at.get(link.to);
+        if(!a||!b)continue;
+        const from=named[source]||source;
+        L.polyline([[a[1],a[0]],[b[1],b[0]]],{color:'#3d4a45',weight:2,opacity:0.8,interactive:true})
+          .bindTooltip(`${esc(nameOf.get(link.from)||'')} to ${esc(nameOf.get(link.to)||'')} \u00b7 ${esc(from)}`).addTo(group);
+        const lat=a[1]+(b[1]-a[1])*0.75,lon=a[0]+(b[0]-a[0])*0.75;
+        const angle=Math.atan2(-(b[1]-a[1]),(b[0]-a[0])*Math.cos(lat*Math.PI/180))*180/Math.PI;
+        L.marker([lat,lon],{interactive:false,keyboard:false,icon:L.divIcon({className:'map-link-arrow',iconSize:[12,12],iconAnchor:[6,6],
+          html:`<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" style="transform:rotate(${angle.toFixed(1)}deg)"><path d="M1 1L11 6L1 11z" fill="#3d4a45"/></svg>`})}).addTo(group);
+      }
+      if(!group.getLayers().length)continue;
+      const port=layers.mapLayers?.find(entry=>entry.sourceNodeId===source)?.port;
+      const label=`Lines \u00b7 ${named[source]||source}`;
+      if(port)place(`${port}/links`,label,group);
+      else overlays[label]=group;
+      if(!hiddenPort(port?`${port}/links`:'')){group.addTo(map);all.addLayer(group);}
     }
   }
   if(layers.centers?.length){

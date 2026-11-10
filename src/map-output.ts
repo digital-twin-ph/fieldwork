@@ -6,6 +6,7 @@ export type MapInputs={area:AreaValue;points:PointInput};
 import {pointRelation,relationLabel} from './spatial-coverage.js';
 import {CRS84,geometryWKT} from './study-area.js';
 import {pointLayers,layerRecords,layerSummary} from './point-layers.js';
+import {mapLinks,linkSentence} from './map-links.js';
 
 export const newMapOutput=():NodeSpec<'map_output'>=>({type:'map_output',params:{label:'Map'}});
 export function mapOutput(node:WorkflowNode<'map_output'>,inputs:MapInputs,runId:string):{value:MapValue;receipt?:Receipt}{
@@ -75,7 +76,26 @@ export function mapOutput(node:WorkflowNode<'map_output'>,inputs:MapInputs,runId
     return [[layer.sourceNodeId,seen.map((value,index)=>
       ({value,colour:hues[index],shape}))] as const];
   }));
+  // THE LINES, per layer that names a column for them. Only layers wired to this map; a setting kept for a layer since
+  // disconnected draws nothing and counts nothing.
+  for(const [source,l] of Object.entries(node.params.linkField??{})){
+    const layer=layers.find(x=>x.sourceNodeId===source);
+    if(layer&&l.column&&!l.matches)
+      throw new Error(`"${node.params.label}" draws a line to the record named in ${l.column} of ${layer.label||source}: choose, in Configure…, the column those ids are found in.`);
+  }
+  const linkSettings=Object.fromEntries(Object.entries(node.params.linkField??{}).filter(([source])=>layers.some(l=>l.sourceNodeId===source)));
+  const {links,counts:linkCounts}=mapLinks(rows,linkSettings);
+  let method='Turf point-in-polygon for display; no acceptance or exclusion decision';
+  for(const [source,c] of Object.entries(linkCounts)){
+    const view=`<urn:fieldwork:run:${runId}:map:${node.id}:links:${source}>`;
+    facts+=`${activity} fw:drawsLinks ${view}.\n${view} a fw:MapLinks; fw:linkSource <urn:fieldwork:source:${source}>; `
+      +`fw:linkColumn ${JSON.stringify(c.column)}; fw:linkMatchesColumn ${JSON.stringify(c.matches)}; fw:recordsRead ${c.records}; `
+      +`fw:linksDrawn ${c.drawn}; fw:linksAtSameLocation ${c.sameLocation}; fw:recordsNamingNothing ${c.noValue}; `
+      +`fw:recordsNamingUnknown ${c.notFound}; fw:recordsNamingSelf ${c.self}; fw:recordsNamingAmbiguous ${c.ambiguous}; fw:linksUnlocated ${c.unlocated}.\n`;
+    method+=`. ${linkSentence(c,layerNames[source]||source)}`;
+  }
   return {value:{...structuredClone(area),kind:'spatial-map',rows,centers:[],pointLayers:layerSummary(layers),layerSymbols,layerNames,
-    ...(Object.keys(pinClasses).length?{pinClasses}:{}),markHalo:node.params.markHalo!==false,fillEncoding:SPATIAL_RELATION_FILL,sourceNodeId:layers.length===1?layers[0].sourceNodeId:null},receipt:{nodeId:node.id,kind:'computation',input:facts,facts,rules:'',conclusions:[],method:'Turf point-in-polygon for display; no acceptance or exclusion decision'}};
+    ...(Object.keys(linkCounts).length?{links,linkCounts}:{}),
+    ...(Object.keys(pinClasses).length?{pinClasses}:{}),markHalo:node.params.markHalo!==false,fillEncoding:SPATIAL_RELATION_FILL,sourceNodeId:layers.length===1?layers[0].sourceNodeId:null},receipt:{nodeId:node.id,kind:'computation',input:facts,facts,rules:'',conclusions:[],method}};
 }
 export function mapEvidence(row:MapRow,dirty:boolean,esc:Escape){return `<div class="inspector-body"><span class="inspector-section">Map record ${dirty?'· previous run':''}</span><h2>${esc(row.name)}</h2><p class="muted">${esc(row.layerLabel)} · record ${esc(row.recordId)}</p><div class="source-card"><h3>${esc(relationLabel(row.relation))}</h3><p>${row.coordinates?row.coordinates.map(v=>v.toFixed(6)).join(', '):'No coordinates supplied; this record cannot be plotted.'}</p></div><p class="description">Outside the boundary is a spatial mismatch, not proof of a data-quality problem. Connect Check spatial coverage to this Map for exclusion and boundary-review actions.</p>${Object.entries(row.attributes).map(([key,value])=>`<div class="detail-row"><span>${esc(key)}</span><strong>${esc(value===null?'Not supplied':value)}</strong></div>`).join('')}</div>`;}

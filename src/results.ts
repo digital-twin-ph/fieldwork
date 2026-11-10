@@ -55,7 +55,9 @@ export interface MapValue extends Omit<AreaValue,'kind'|'rows'> {kind:'spatial-m
   fillEncoding?:FillEncoding;
   /** Whether point marks are drawn over a dark halo, so they read on any basemap. */
   markHalo?:boolean;
-  layerNames?:Record<string,string>; pointLayers:LayerSummary[]; sourceNodeId:string|null}
+  layerNames?:Record<string,string>; pointLayers:LayerSummary[]; sourceNodeId:string|null;
+  /** The lines from each record to the record it names, and what each linked layer counted (see `map-links.ts`). */
+  links?:import('./map-links.js').MapLink[]; linkCounts?:Record<string,import('./map-links.js').LinkCounts>}
 export interface TableValue {kind:'point-table'; rows:PointRow[]; centers:never[]; spatialReference:AnySpatialReference; pointLayers:LayerSummary[]; pointTable?:boolean}
 export interface Receipt {nodeId:string; references?:EvidenceReference[]; ruleset?:import('./rulesets.js').RulesetCitation; kind?:'computation'|'presentation'|'declaration'; facts:string; rules:string; input:string; conclusions:ReasonerQuad[]; source?:string; method?:string; measurement?:Measurement; areaId?:string; geometryId?:string; exclusions?:Exclusion[]}
 export interface RegistryValue {boundary:Boundary; facilities:Facility[]; radiusKm:number; facilitySource?:{nodeId?:string; sourceInfo?:import('./types.js').SourceInfo; inputCount:number; missingLocationCount:number}}

@@ -7,7 +7,7 @@ import type {LayerShape} from './presentation.js';
 import {polygonShading,shadedValues,markPath,resolveLayerSymbol,SPATIAL_RELATION_FILL,FIGURE_PALETTE_NAME,FIGURE_PALETTE_AUTHORITY,MARK_VOCABULARY,FIGURE_ROLE,FIGURE_TYPE,FIGURE_PALETTE,scaleBarSvg,northArrowSvg,metresPerPixel,classifyValues,categoricalSteps} from './presentation.js';
 import {applyDesignRules,figureDesign,designRuleFacts,designRuleDeclarations,designChoiceFacts} from './map-conformance.js';
 
-export interface MapPresentation {title:string; subtitle:string; sourceNote:string; legend:boolean; items:{label:string;color:string;shape?:LayerShape;hollow?:boolean}[]; presentation:'plot'|'interactive'; basemap:import('./types.js').BasemapChoice;
+export interface MapPresentation {title:string; subtitle:string; sourceNote:string; legend:boolean; items:{label:string;color:string;shape?:LayerShape;hollow?:boolean;line?:boolean}[]; presentation:'plot'|'interactive'; basemap:import('./types.js').BasemapChoice;
   /** Licence and attribution for the data shown. Separate from the source note because a note is
    *  editorial and this is an obligation: an OSM-derived layer must say ODbL and credit
    *  contributors wherever the figure ends up, and a figure that travels without it is not
@@ -146,6 +146,9 @@ export function mapPresentation(node:WorkflowNode<'map_output'>,output:Output,wo
       items.push({label:category.label,color:category.fill==='absent'?R.unknown:R.ink,hollow:category.fill==='hollow'});
   }
   else items=[{label:'Review',color:R.attention},{label:'No flag',color:R.agreement},{label:'Unknown',color:R.unknown},{label:'Facility',color:R.site,shape:'square'}];
+  // THE LINES ARE KEYED like any mark: what they join and how many were drawn (experiment 200, step 4).
+  for(const c of Object.values((output as {linkCounts?:Record<string,import('./map-links.js').LinkCounts>}).linkCounts||{}))
+    items.push({label:`Line: from the record named in ${c.column} (${c.drawn})`,color:'#3d4a45',line:true});
   const interactive=node.params.presentation==='interactive'&&!!output.polygons;
   // THE BASEMAP A STATIC FIGURE ACTUALLY BAKES, which this reported as `none` until 2026-10-27.
   //
@@ -230,7 +233,8 @@ export function standaloneMapSvg(content:string,viewBox:string,spec:MapPresentat
   const creditLines=spec.attribution?lines(spec.attribution,110):[];
   const footer=38+legendRows*22+(noteLines.length+creditLines.length)*16,total=base+height+footer;
   const legend=spec.legend?spec.items.map((item,i)=>{const x=28+(i%2)*402,y=base+height+24+Math.floor(i/2)*22;
-    return `<path d="${markPath(item.shape||'circle',x+5,y-4,5)}" fill="${item.hollow?'none':item.color}" stroke="${item.hollow?item.color:FIGURE_ROLE.quietInk}" stroke-width="1.4"/>`
+    return (item.line?`<path d="M${x-2} ${y-4}H${x+8}" stroke="${item.color}" stroke-width="1.6"/><path d="M${x+7} ${y-8}L${x+13} ${y-4}L${x+7} ${y}z" fill="${item.color}"/>`
+      :`<path d="${markPath(item.shape||'circle',x+5,y-4,5)}" fill="${item.hollow?'none':item.color}" stroke="${item.hollow?item.color:FIGURE_ROLE.quietInk}" stroke-width="1.4"/>`)
       +`<text x="${x+17}" y="${y}" font-size="${t.legend}" fill="${FIGURE_ROLE.ink}">${escape(item.label)}</text>`;}).join(''):'';
   const noteY=base+height+30+legendRows*22;
   // Placed over the plot's lower-left, inside the mapped frame rather than in the footer, which is

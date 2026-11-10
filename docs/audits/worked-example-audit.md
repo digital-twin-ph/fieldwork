@@ -72,10 +72,10 @@ evidence about that example.
 
 | Widget | Examples | Which |
 | --- | ---: | --- |
-| `map_output` | 16 | brazil-dengue-rj-2024, hagelloch, heat, nigeria-immunization-2024, nyc-asthma-ozone-2016-2025, old-naledi, oswego-1940, raster, sea-level-rise-philippines, sierra-leone-measles, snow-extent, snow-geoprivacy, snow-isochrone, snow-voronoi, south-london-1854, workflows-rulesets |
+| `map_output` | 17 | brazil-dengue-rj-2024, hagelloch, hagelloch-chains, heat, nigeria-immunization-2024, nyc-asthma-ozone-2016-2025, old-naledi, oswego-1940, raster, sea-level-rise-philippines, sierra-leone-measles, snow-extent, snow-geoprivacy, snow-isochrone, snow-voronoi, south-london-1854, workflows-rulesets |
 | `table_output` | 16 | brazil-dengue-rj-2024, hagelloch, hagelloch-chains, heat, nyc-asthma-ozone-2016-2025, old-naledi, oswego-1940, salmonella-germany-2021, sea-level-rise-philippines, sierra-leone-measles, snow-extent, snow-geoprivacy, snow-isochrone, snow-voronoi, south-london-1854, workflows-rulesets |
+| `study_area` | 14 | brazil-dengue-rj-2024, hagelloch, hagelloch-chains, nyc-asthma-ozone-2016-2025, old-naledi, oswego-1940, raster, sea-level-rise-philippines, sierra-leone-measles, snow-geoprivacy, snow-isochrone, snow-voronoi, south-london-1854, workflows-rulesets |
 | `point_input` | 13 | hagelloch, hagelloch-chains, heat, nyc-asthma-ozone-2016-2025, old-naledi, oswego-1940, sea-level-rise-philippines, snow-extent, snow-geoprivacy, snow-isochrone, snow-voronoi, south-london-1854, workflows-rulesets |
-| `study_area` | 13 | brazil-dengue-rj-2024, hagelloch, nyc-asthma-ozone-2016-2025, old-naledi, oswego-1940, raster, sea-level-rise-philippines, sierra-leone-measles, snow-geoprivacy, snow-isochrone, snow-voronoi, south-london-1854, workflows-rulesets |
 | `table_input` | 12 | brazil-dengue-rj-2024, nigeria-immunization-2024, nyc-asthma-ozone-2016-2025, oswego-1940, salmonella-germany-2021, sea-level-rise-philippines, sierra-leone-measles, snow-extent, snow-isochrone, snow-voronoi, south-london-1854, workflows-rulesets |
 | `chart_output` | 10 | brazil-dengue-rj-2024, hagelloch, hagelloch-chains, nyc-asthma-ozone-2016-2025, old-naledi, sierra-leone-measles, snow-extent, snow-isochrone, snow-voronoi, south-london-1854 |
 | `apply_ruleset` | 9 | hagelloch-chains, heat, nigeria-immunization-2024, old-naledi, sea-level-rise-philippines, sierra-leone-measles, snow-extent, south-london-1854, workflows-rulesets |
@@ -144,9 +144,9 @@ that does not can be rebuilt only by copying this file.
 | `snow-geoprivacy` | 15 | 3 | 2 | — | 1 | `comparison_map` |
 | `snow-extent` | 9 | 3 | 2 | **1** — dates (table_input) | — | — |
 | `hagelloch` | 6 | 2 | 1 | — | 1 | — |
-| `hagelloch-chains` | 8 | 1 | 1 | — | — | — |
+| `hagelloch-chains` | 10 | 2 | 1 | — | 1 | — |
 
-Across the shipped examples, **6 nodes carry data and declare no source**. That is the list a from-scratch rebuild would have to copy rather than fetch. A further 4 study areas carry a drawn geometry with no declared source; those are redrawn rather than fetched, which the sized-box control makes an entry rather than a tracing.
+Across the shipped examples, **6 nodes carry data and declare no source**. That is the list a from-scratch rebuild would have to copy rather than fetch. A further 5 study areas carry a drawn geometry with no declared source; those are redrawn rather than fetched, which the sized-box control makes an entry rather than a tracing.
 
 ### What this cannot establish
 
@@ -173,7 +173,7 @@ different things: an example can be four nodes and complete, or eighteen and not
 
 | Example | Nodes | Conditions met | Missing |
 | --- | ---: | ---: | --- |
-| `hagelloch-chains` | 8 | 2 / 4 | published files, rebuilt from scratch |
+| `hagelloch-chains` | 10 | 2 / 4 | published files, rebuilt from scratch |
 | `hagelloch` | 6 | 2 / 4 | published files, rebuilt from scratch |
 | `raster` | 4 | 2 / 4 | published files, rebuilt from scratch |
 | `snow-isochrone` | 17 | 1 / 4 | sources, published files, rebuilt from scratch |

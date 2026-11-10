@@ -177,7 +177,27 @@ what they are, and the warning says so.
 **Checked by somebody else's code** (lab check 44): every case's chain and generation equal networkx's component and
 shortest path length from its root, in CPython and in the browser kernel.
 
-**Not yet:** the Map links layer (step 4), and WebKit.
+## Step 4: who infected whom, on the map, 2026-11-10
+
+**Built** in Map 0.22.0, the closest widget: Map already draws point layers with a per-layer class and name, and a
+line between two records of a layer is one more per-layer setting, not a new widget. In Configure…, under **Lines
+between records**: *Line to the record named in* `infector`, *Found by* `case_ID`. A line with an arrowhead runs
+from the infector's point to the case's, under the marks, on the static figure and the interactive map, where it is
+a layer of its own. The key names it.
+
+**On Hagelloch** (chosen in Configure… on the first workflow's map by `tests/map-links.browser.mjs`, and shipped on
+the second workflow as *Who infected whom, on the map*): 188 records; **94 lines drawn**; **90 links at one place**,
+two children of one house, counted and not drawn, because a line there has no length; 4 cases naming no infector.
+184 links in all, the tree's number.
+
+**Found doing it:** nearly half the links are inside a house. A map of lines alone would have shown half the
+transmission and said nothing of the rest; the counts above the map, the key and the receipt say it. The check that a
+"found by" column is chosen first ran when Apply wrote the setting, which threw the choice away; it now runs at Run,
+which says what to choose.
+
+**Run:** `tests/map-links.test.mjs` (4) and both browser tests on Chromium.
+
+**Not yet:** a lab check of the link counts, and WebKit.
 
 ## Detect: finding clusters, 2026-11-09
 

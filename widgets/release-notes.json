@@ -416,12 +416,12 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.21.1",
-   "released": "2026-11-09",
+   "version": "0.22.0",
+   "released": "2026-11-10",
    "changes": [
     {
-     "kind": "patch",
-     "description": "Value classes count each unit once, not each of its parts. A district drawn in 83 parts, Bonthe in Sierra Leone, filled half the values the quantiles were cut from, so two breaks fell on its rate and the key printed an empty class, \"6.72 to 6.72\". Every part is still drawn and coloured by its unit's class."
+     "kind": "minor",
+     "description": "Lines between records (experiment 200, step 4). Per point layer, in Configure…, a column naming another record and the column it is found by: Hagelloch's infector, found by case_ID. A line runs from the named record to the one naming it, with an arrowhead, under the marks, on the static figure and the interactive map, where it is a layer of its own; the key names it. Every record is counted under one outcome: drawn; at the same place, so the line has no length (90 of Hagelloch's 184 links, two children of one house); naming nothing; naming a record the layer does not hold; naming itself; naming an id held twice; or with an end that has no location. The counts are in the result, the receipt and the method sentence. A column chosen without the column it is found by is kept, and Run says what to choose."
     }
    ],
    "breaking": false,

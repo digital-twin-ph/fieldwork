@@ -3,6 +3,17 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.76.0 — 2026-11-10
+
+- **Lines between records on Map.** In Configure…, choose a column that names another record, such as `infector`,
+  and the column it is found by, such as `case_ID`. A line with an arrowhead runs from the named record to the one
+  naming it, on the static figure and the interactive map, and the key names it. Every record is counted: drawn, at
+  the same place (90 of Hagelloch's 184 links join two children of one house), naming nothing, or naming a record
+  that cannot be found or placed. Map 0.22.0.
+- **Hagelloch's *Who infected whom* has a map of the links.**
+- **Chart's transmission tree is checked by somebody else's code**: lab check 44 recomputes every case's chain and
+  generation with networkx, and they agree.
+
 ## 0.75.0 — 2026-11-09
 
 - **Who infected whom, drawn: a transmission tree in Chart.** Set **Draw** to *Transmission tree* in Configure… and

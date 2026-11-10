@@ -125,8 +125,8 @@ not a practitioner in the field.
    Before MERS (8), whose data terms are open. In order: Relate the cases to themselves on `infector` (check a table
    may be related to itself); **days between two dates** in Apply ruleset (a `date` kind; `minus` of two dates gives
    days) for the serial interval; Total within groups for secondary cases per case (built 2026-11-09: counted, related
-   back, and the 126 children nobody names kept as 0, a number the practitioner types); **a links layer on Map** (a line
-   from each point to the point a column names); **a transmission tree over time in Chart** (each case at its onset,
+   back, and the 126 children nobody names kept as 0, a number the practitioner types); **a links layer on Map** (built
+   2026-11-10 in Map 0.22.0: 94 lines drawn, 90 links inside one house counted, not drawn); **a transmission tree over time in Chart** (each case at its onset,
    joined to its infector). No chart or map draws a network today. Each by hand on an empty canvas, each widget to
    the standard Inspector, with its manual page and lab notebook.
 

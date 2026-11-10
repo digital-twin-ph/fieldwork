@@ -1,4 +1,5 @@
 import {noteImageDigest,noteImageFigure,noteImageKey,readNoteImagePayload,type NoteImage} from './note-image.js';
+import {linkLinesSvg} from './map-links.js';
 import {diveDeeperPanel,learnBlock} from './dive-deeper.js';
 import {recordRun,runsFor} from './widget-usage.js';
 import {buildOrder,revealedTypes,revealReason} from './reveal-playback.js';
@@ -2249,6 +2250,13 @@ function openMapConfig(nodeId:string){
         if(Object.keys(held).length)draft[key]=held;else delete draft[key];};
       on('[data-pin-class]',el=>perSource('pinClassField',el.dataset.pinClass!,el.value));
       on('[data-mark-label]',el=>perSource('labelField',el.dataset.markLabel!,el.value));
+      const perLink=(source:string,key:'column'|'matches',value:string)=>{
+        const held={...(draft.linkField||{})},entry={column:held[source]?.column??'',matches:held[source]?.matches??'',[key]:value};
+        // No column, no lines: the entry goes, whatever "found by" held.
+        if(entry.column)held[source]=entry;else delete held[source];
+        if(Object.keys(held).length)draft.linkField=held;else delete draft.linkField;};
+      on('[data-link-column]',el=>perLink(el.dataset.linkColumn!,'column',el.value));
+      on('[data-link-matches]',el=>perLink(el.dataset.linkMatches!,'matches',el.value));
       on('[data-layer-mark]',el=>{const source=el.dataset.layerMark!,mark=el.value as LayerShape|'';
         const held={...(draft.layerSymbols||{})};
         // An empty choice REMOVES the entry: a mark somebody chose and one the layer's position gave it differ.
@@ -2359,8 +2367,29 @@ function mapSettings(n:WorkflowNode<'map_output'>):string{
             +`key. A layer is where records came from; a class is what they are.</p>`+classPicker
           :'';
 
+        // A LINE TO THE RECORD EACH ONE NAMES (experiment 200, step 4): two columns per layer, both nominated. The
+        // first holds the named record's id; the second is the column that id is found in. Neither is guessed.
+        const linkPicker=sources.map(source=>{
+          const records=(source.params as {data?:{features?:{properties?:Record<string,unknown>}[]}}).data?.features||[];
+          const ran=result?.pointColumns?.[source.id]?.map(c=>c.attribute)??[];
+          const keys=[...new Set([...records.flatMap(f=>Object.keys(f.properties??{})),...ran])].sort();
+          if(!keys.length)return '';
+          const held=n.params.linkField?.[source.id],name=esc(source.params.label||TYPES[source.type].title);
+          const select=(id:string,data:string,value:string,none:string)=>`<select id="${id}-${esc(source.id)}" ${data}="${esc(source.id)}">`
+            +`<option value="">${none}</option>`+keys.map(key=>`<option value="${esc(key)}" ${value===key?'selected':''}>${esc(key)}</option>`).join('')+`</select>`;
+          return `<div class="field"><label class="field-label" for="link-column-${esc(source.id)}">Line to the record named in, for ${name}</label>`
+            +select('link-column','data-link-column',held?.column||'','No lines')
+            +`<label class="field-label" for="link-matches-${esc(source.id)}">Found by</label>`
+            +select('link-matches','data-link-matches',held?.matches||'','Choose the column holding each record’s id')
+            +(held?.column&&!held.matches?`<p class="muted">Choose the column the ids in ${esc(held.column)} are found in. Until then, Run says so.</p>`:'')
+            +`</div>`;
+        }).join('');
+        const linked=linkPicker
+          ?`<span class="inspector-section">Lines between records</span>`
+            +`<p class="muted">A line from the record a column names to the record naming it: an infector to a case, a contact to the person they were traced from. Each record is counted, drawn or not.</p>`+linkPicker
+          :'';
         const chosen=n.params.layerSymbols||{};
-        return classed+named+`<span class="inspector-section">Layer symbols</span>`
+        return classed+named+linked+`<span class="inspector-section">Layer symbols</span>`
           +`<p class="muted">Hue and mark say which source a point came from; whether it is filled says whether it is inside the study area. Marks are named as OGC Symbology Encoding names them.</p>`
           +sources.map((source,index)=>{
             const held=chosen[source.id],resolved=resolveLayerSymbol(index,held);
@@ -2565,7 +2594,8 @@ function mapSentence(n:WorkflowNode<'map_output'>):string{
   return layers.length
     ?`Draws ${layers.join(', ')} as ${n.params.presentation==='interactive'?'an interactive map':'a static figure'}`
       +`${n.params.basemap&&n.params.basemap!=='none'?`, over ${BASEMAP_OPTIONS.find(o=>o.value===n.params.basemap)?.label??n.params.basemap}`:''}`
-      +`${classed?`, ${classed} layer${classed===1?'':'s'} classed`:''}; in the write-up under ${figureSection(n.params,n.type)}.`
+      +`${classed?`, ${classed} layer${classed===1?'':'s'} classed`:''}`
+      +`${Object.entries(n.params.linkField??{}).map(([,l])=>`, with a line to each record named in ${l.column}`).join('')}; in the write-up under ${figureSection(n.params,n.type)}.`
     :'Draws what it is given: connect a layer under Inputs.';
 }
 
@@ -5456,6 +5486,13 @@ function renderResults(){
   if(output?.kind==='spatial-map'){
     $('#result-metrics').innerHTML=['Inside','Boundary','Outside','MissingLocation'].map(relation=>`<span class="metric"><b>${rows.filter(r=>r.relation===relation).length}</b> ${esc(relationLabel(relation as SpatialRelation))}</span>`).join('');
     $('#review-legend').textContent='Outside boundary';$('#clear-legend').textContent='Inside / on boundary';$('#unknown-legend').textContent='Missing coordinates (not plotted)';$('#facility-legend').parentElement!.hidden=true;$('#map-note').textContent='Local map · all located points remain visible';
+    // WHAT THE LINES SHOW AND WHAT THEY LEAVE OUT, where the figure is read, not only in the receipt.
+    const linkCounts=(output as {linkCounts?:Record<string,import('./map-links.js').LinkCounts>}).linkCounts||{};
+    // As counts beside the relations', each with its words; the full sentence is in the receipt and the Inspector.
+    for(const c of Object.values(linkCounts))
+      $('#result-metrics').insertAdjacentHTML('beforeend',[[c.drawn,'lines drawn'],[c.sameLocation,'links at one place, not drawn'],
+        [c.noValue,`name nothing in ${c.column}`],[c.notFound+c.self+c.ambiguous+c.unlocated,'links that could not be drawn']]
+        .filter(([v],i)=>i<2||Number(v)>0).map(([v,words])=>`<span class="metric"><b>${Number(v).toLocaleString('en-US')}</b> ${esc(String(words))}</span>`).join(''));
   }
   const spatial=['spatial-map','spatial-coverage'].includes(output?.kind||''),missing=spatial?rows.filter(r=>!r.coordinates):[],outside=output?.kind==='spatial-map'?rows.filter(r=>r.relation==='Outside').length:0;
   // The amber sentence went on 2026-10-21. It named a colour the map stopped using when hue was
@@ -5736,7 +5773,8 @@ function renderMap(){
     // The key draws the same mark the map draws. A coloured <i> could only ever be a circle or a
     // square, so a triangle or a star on the map had no legend entry that matched it.
     const key=spec.legend?spec.items.map(item=>`<span><svg class="map-key-mark" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">`
-      +`<path d="${markPath(item.shape||'circle',7,7,5)}" fill="${item.hollow?'none':item.color}" stroke="${item.color}" stroke-width="1.5"/></svg>${esc(item.label)}</span>`).join(''):'';
+      +(item.line?`<path d="M1 7H9" stroke="${item.color}" stroke-width="1.6"/><path d="M8 3L14 7L8 11z" fill="${item.color}"/>`
+        :`<path d="${markPath(item.shape||'circle',7,7,5)}" fill="${item.hollow?'none':item.color}" stroke="${item.color}" stroke-width="1.5"/>`)+`</svg>${esc(item.label)}</span>`).join(''):'';
     $('#map-communication-key').innerHTML=key;$('#map-communication-header-key').innerHTML=key;
     $('#map-download-svg').onclick=()=>{const content=result?.polygons&&result.polygonPresentation==='interactive'?(result.polygons.features.some(f=>f.minutes!==undefined)?catchmentPlot(result.polygons,esc,result.contextPoints):polygonSvg(result.polygons,esc)):svg.innerHTML;
       const viewBox=result?.polygons&&result.polygons.features.some(f=>f.minutes!==undefined)?'0 0 850 650':svg.getAttribute('viewBox')||'0 0 850 295';
@@ -5876,6 +5914,9 @@ function renderMap(){
     // `markedPoints`: the value has carried them since 2026-10-29 and this renderer did not read
     // them, so a map with a river, 32 sub-districts and four intakes drew no intakes while the
     // layer control offered a checkbox for them.
+    const drawnLinks=(result as {links?:import('./map-links.js').MapLink[]}).links;
+    if(polygonGround&&drawnLinks?.length)
+      svg.insertAdjacentHTML('beforeend',linkLinesSvg(drawnLinks,rows,c=>polygonGround.project(c) as [number,number],hiddenMapLayers.get(result.nodeId)));
     if(polygonGround&&rows.length)
       svg.insertAdjacentHTML('beforeend',markedPoints(rows,
         c=>polygonGround.project(c) as [number,number],
@@ -5920,7 +5961,8 @@ function renderMap(){
         +`<title>${esc(r.name)} · ${esc(label)}${r.layerLabel?' · '+esc(r.layerLabel):''}</title>`
         +`<path d="${markPath(symbol.shape||'circle',x,y,radius)}" fill="${symbol.colour}" stroke="white" stroke-width="1.2"/></g>`;
     }).join('');
-    svg.innerHTML=rasterSvg(result.raster,marks);
+    const rasterLinks=(result as {links?:import('./map-links.js').MapLink[]}).links;
+    svg.innerHTML=rasterSvg(result.raster,(rasterLinks?.length?linkLinesSvg(rasterLinks,rows,c=>frame.project(c) as [number,number],hidden):'')+marks);
     svg.querySelectorAll<HTMLElement & SVGElement>('[data-place]').forEach(el=>{
       el.onclick=()=>selectResult(el.dataset.place!);
       el.onkeydown=e=>{if(e.key==='Enter')selectResult(el.dataset.place!);};
@@ -5940,7 +5982,9 @@ function renderMap(){
     // Drawn after the fact and inserted underneath, because fetching is asynchronous and the map
     // must appear immediately. If the view has moved on by the time the tiles arrive they are
     // dropped: a late basemap under the wrong figure is worse than none.
-    void drawStaticBasemap(result,svg,mapFrame(result));svg.querySelectorAll<HTMLElement & SVGElement>('[data-place]').forEach(el=>{el.style.display=hiddenMapLayers.get(result.nodeId)?.has(el.dataset.layer!)?'none':'';el.onclick=()=>selectResult(el.dataset.place!);el.onkeydown=e=>{if(e.key==='Enter')selectResult(el.dataset.place!);};});return;}
+    void drawStaticBasemap(result,svg,mapFrame(result));
+    svg.querySelectorAll<SVGElement>('[data-layer-link]').forEach(el=>{el.style.display=hiddenMapLayers.get(result.nodeId)?.has(el.dataset.layerLink!)?'none':'';});
+    svg.querySelectorAll<HTMLElement & SVGElement>('[data-place]').forEach(el=>{el.style.display=hiddenMapLayers.get(result.nodeId)?.has(el.dataset.layer!)?'none':'';el.onclick=()=>selectResult(el.dataset.place!);el.onkeydown=e=>{if(e.key==='Enter')selectResult(el.dataset.place!);};});return;}
   if(!points.length){svg.innerHTML='<text x="425" y="140" text-anchor="middle">Run the workflow to map its local results.</text>';return;}
   let minX=Math.min(...points.map(p=>p[0])),maxX=Math.max(...points.map(p=>p[0])),minY=Math.min(...points.map(p=>p[1])),maxY=Math.max(...points.map(p=>p[1]));
   const midY=(minY+maxY)/2,cos=Math.max(.05,Math.cos(midY*Math.PI/180)),width=Math.max((maxX-minX)*cos,.01),height=Math.max(maxY-minY,.01),scale=Math.min(660/width,210/height);

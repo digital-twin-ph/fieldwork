@@ -918,6 +918,14 @@ export function validateWorkflow(raw:unknown):Workflow {
     if(n.type==='measure_area')validateAreaUnit(n.params.unit);
     if(n.type==='append_rows'&&n.params.tableCount!==undefined&&(!Number.isInteger(n.params.tableCount)||n.params.tableCount<2))throw new Error('Append rows stacks two tables or more.');
     if((n.type==='map_output'||n.type==='table_output'||n.type==='deduplicate_points')&&n.params.pointInputCount!==undefined&&(!Number.isInteger(n.params.pointInputCount)||n.params.pointInputCount<1||n.params.pointInputCount>MAX_POINT_LAYERS))throw new Error('Use 1–8 point input ports.');
+    if(n.type==='map_output'&&n.params.linkField!==undefined){
+      if(typeof n.params.linkField!=='object'||n.params.linkField===null)throw new Error('Invalid map line settings.');
+      for(const [source,l] of Object.entries(n.params.linkField)){
+        // "Found by" may be blank while it is being chosen: Run says what is missing, so the choice is never lost.
+        if(!source||typeof l?.column!=='string'||!l.column.trim()||l.column.length>200||typeof l.matches!=='string'||l.matches.length>200)
+          throw new Error('Invalid map line settings.');
+      }
+    }
     if((n.type==='map_output'||n.type==='table_output'||n.type==='chart_output')&&(typeof n.params.label!=='string'||!n.params.label.trim()||n.params.label.length>60))throw new Error(`${TYPES[n.type].title} names must be text of 1–60 characters.`);
   }
   const edgeIds=new Set(), ports=new Set();

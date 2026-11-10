@@ -126,6 +126,11 @@ export function hagellochChainsExample():Workflow{
     {id:'secondary-table',type:'table_output',x:1120,y:300,params:{label:'Secondary cases per child',inputMode:'table'}},
     {id:'tree',type:'chart_output',x:400,y:560,params:{label:'Who infected whom',figure:'tree',
       tree:{id:'case_ID',parent:'infector',date:'date_of_prodrome'},chartTitle:'Who infected whom, Hagelloch, 1861'}},
+    // THE SAME LINKS ON THE MAP (step 4): a line from each infector's house to the case's. 90 of the 184 join two
+    // children of one house and have no length; the map counts them and says so.
+    {...base.nodes.find(n=>n.id==='village')!,x:20,y:560},
+    {id:'links-map',type:'map_output',x:760,y:560,params:{label:'Who infected whom, on the map',presentation:'plot' as const,
+      linkField:{cases:{column:'infector',matches:'case_ID'}},mapTitle:'Who infected whom, Hagelloch, 1861'}},
   ];
   const edges=[
     {id:'c-inf-1',from:'cases',to:'infector',port:'records'},{id:'c-inf-2',from:'cases',to:'infector',port:'related'},
@@ -134,6 +139,7 @@ export function hagellochChainsExample():Workflow{
     {id:'c-sec',from:'cases',to:'secondary',port:'records'},{id:'count-sec',from:'count',to:'secondary',port:'related'},
     {id:'sec-out',from:'secondary',to:'secondary-table',port:'table'},
     {id:'c-tree',from:'cases',to:'tree',port:'records'},
+    {id:'c-links-map',from:'cases',to:'links-map',port:'points'},{id:'village-links-map',from:'village',to:'links-map',port:'area'},
   ];
   return {schema:'fieldwork/workflow/1',name:'Who infected whom, Hagelloch, 1861',
     exampleId:'hagelloch-chains',nodes,edges} as unknown as Workflow;

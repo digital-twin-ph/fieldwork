@@ -351,6 +351,18 @@
     }
    ]
   },
+  "space_time_scan": {
+   "version": "0.1.0",
+   "released": "2026-11-10",
+   "changes": [
+    {
+     "kind": "minor",
+     "description": "New (experiment 200, Detect). A retrospective space-time permutation scan for a line list with dates and places and no population: circles over places, runs of days or weeks, scored by the likelihood ratio and tested by shuffling the dates across fixed places with a recorded seed. Secondary clusters share no place with one before them. Runs in a worker with a progress bar. Ported from a candidate, made exact and faster: a run is tried only from and to a day with a case in the circle, and places at the same distance join a circle together."
+    }
+   ],
+   "breaking": false,
+   "migrationFrom": []
+  },
   "group_table": {
    "version": "0.3.0",
    "released": "2026-11-08",

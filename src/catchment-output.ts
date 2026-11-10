@@ -24,7 +24,11 @@ export function polygonDisplay(p:Polygons,view:'map'|'table'|'chart'):DisplayVal
     //
     // `polygon_id` identifies the polygon, which every producer has. `site_id` is emitted only
     // where the layer actually carries that site, which is what the field always meant.
-    rows:p.features.map(f=>({id:f.id,recordId:f.id,name:f.name,coordinates:p.sites.find(s=>s.id===f.siteId)?.geometry?.coordinates||null,sourceNodeId:'catchments',layerLabel:p.sites.length?'Polygons (coordinates locate the site each was derived from)':'Polygons',attributeTypes:{},attributes:{polygon_id:f.id,...(p.sites.some(s=>s.id===f.siteId)?{site_id:f.siteId}:{}),...(f.minutes!==undefined?{minutes:f.minutes}:{}),
+    rows:p.features.map(f=>({id:f.id,recordId:f.id,name:f.name,coordinates:p.sites.find(s=>s.id===f.siteId)?.geometry?.coordinates||null,sourceNodeId:'catchments',layerLabel:p.sites.length?'Polygons (coordinates locate the site each was derived from)':'Polygons',attributeTypes:{},attributes:{polygon_id:f.id,...(p.sites.some(s=>s.id===f.siteId)?{site_id:f.siteId}:{}),
+      // WHAT THE POLYGON CARRIES, as it carries it (2026-11-10): a space-time scan's clusters hold their days, counts and
+      // p-value as properties, and the table showed none of them. Every polygon layer's own properties now show in Table;
+      // a map's rows are unchanged.
+      ...(view==='table'?f.properties??{}:{}),...(f.minutes!==undefined?{minutes:f.minutes}:{}),
       // A rule's conclusion about this polygon, and what it enclosed, shown where the polygon is
       // shown. Added 2026-10-14 with the port change that made a ruleset hand back the shapes it
       // judged: a judgement that travels with the record has to be visible on the record, or the

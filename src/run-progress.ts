@@ -3,7 +3,9 @@
  *  *"For long running jobs with sample satellite files over point or area we need an animation on screen to indicate
  *  to the user that processing is ongoing."* The run reports here; the page draws it. No imports, so a step can report
  *  without knowing how it is shown. */
-export interface RunDetail {nodeId:string; label:string; done:number; of:number; what:string}
+export interface RunDetail {nodeId:string; label:string; done:number; of:number; what:string;
+  /** What is being done to them, "Reading" where not said: the space-time scan is shuffling dates, not reading files. */
+  verb?:string}
 type Listener=(detail:RunDetail|null)=>void;
 const listeners=new Set<Listener>();
 export function onRunDetail(listener:Listener):()=>void{listeners.add(listener);return ()=>{listeners.delete(listener);};}

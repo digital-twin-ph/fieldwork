@@ -1,4 +1,5 @@
 ﻿import {sampleRaster,sampleReceipt,validateSampleNode} from './sample-raster.js';
+import {computeSpaceTimeScan,scanValue,validateScanParams} from './space-time-scan.js';
 import {bufferPoint,validateBufferPointNode} from './buffer-point.js';
 import {facilitiesValue,migrateHealthsitesNodes,validateFindHealthFacilitiesNode} from './health-facilities.js';
 import {convexHull,validateHullNode} from './convex-hull.js';
@@ -155,6 +156,9 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   relate_table:{title:'Relate a column from another table',group:'Summaries',icon:'⋈',color:'teal',
     description:'Bring a category from a second table onto these rows, matched on a column both carry',
     inputs:[['records','table'],['related','table']],output:'table'},
+  space_time_scan:{title:'Space-time scan',group:'Detect',icon:'◎',color:'amber',
+    description:'Look for places where cases came closer together in time than the rest of the line list would lead one to expect',
+    inputs:[['points','points']],output:'polygons'},
   group_table:{title:'Total within groups',group:'Summaries',icon:'Σ',color:'teal',
     description:'Add up the values of the rows that agree on the key columns you keep',
     inputs:[['records','table']],output:'table'},
@@ -918,6 +922,7 @@ export function validateWorkflow(raw:unknown):Workflow {
     if(n.type==='measure_area')validateAreaUnit(n.params.unit);
     if(n.type==='append_rows'&&n.params.tableCount!==undefined&&(!Number.isInteger(n.params.tableCount)||n.params.tableCount<2))throw new Error('Append rows stacks two tables or more.');
     if((n.type==='map_output'||n.type==='table_output'||n.type==='deduplicate_points')&&n.params.pointInputCount!==undefined&&(!Number.isInteger(n.params.pointInputCount)||n.params.pointInputCount<1||n.params.pointInputCount>MAX_POINT_LAYERS))throw new Error('Use 1–8 point input ports.');
+    if(n.type==='space_time_scan')validateScanParams(n.params as never);
     if(n.type==='map_output'&&n.params.linkField!==undefined){
       if(typeof n.params.linkField!=='object'||n.params.linkField===null)throw new Error('Invalid map line settings.');
       for(const [source,l] of Object.entries(n.params.linkField)){
@@ -1290,6 +1295,17 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         const got=facilitiesValue(node,runId);value=got.value;receipts.push(got.receipt);break;
       }
       case 'buffer_point':{const made=bufferPoint(inputs.points,node,runId);value=made.value;receipts.push(made.receipt);break;}
+      case 'space_time_scan':{
+        // DETECT (experiment 200): the scan runs in a worker; a date column is named, never guessed.
+        if(!node.params.dateField)throw new Error(`Choose, in Configure…, the column holding each case's date for "${node.params.label}".`);
+        const {runDetail}=await import('./run-progress.js');
+        // THE PROGRESS PANEL (the practitioner, 2026-11-10: "That may need a progress bar"): 999 shuffles by day take seconds.
+        const scanned=await computeSpaceTimeScan({type:'FeatureCollection',features:inputs.points.features} as never,node.params,
+          (done,of)=>runDetail({nodeId:node.id,label:node.params.label||'Space-time scan',done,of,what:'the dates',verb:'Shuffling'}))
+          .finally(()=>runDetail(null));
+        const made=scanValue(scanned,node,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='points')!.from);
+        value=made.value as never;receipts.push(made.receipt as never);break;
+      }
       case 'sample_raster':{
         if(!inputs.raster)throw new Error('Connect a prepared Raster input or Clip raster to Sample raster.');
         const sampled=sampleRaster(inputs.points,inputs.raster,node.params);value=sampled.value;

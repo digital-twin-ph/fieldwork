@@ -517,6 +517,16 @@
       "reviewed": "2026-11-06",
       "reviewedBy": "the practitioner, choosing among three titles once the sampler read areas as well as points (experiment 180)",
       "note": "\"Sample satellite files at points or over areas\", chosen over \"over geometry\" and \"Sample satellite files\". The node type is kept, since workflows already hold it. Earlier: \"Sample satellite files seems to be more straightforward and less confusing.\""
+    },
+    {
+      "nodeType": "space_time_scan",
+      "title": "Space-time scan",
+      "group": "Detect",
+      "fingerprint": "44f55b42ca0c",
+      "verdict": "pending",
+      "reviewed": null,
+      "reviewedBy": null,
+      "note": "SaTScan calls the method a scan; \"space-time\" says what is scanned. For review: whether a practitioner would look under \"cluster\", \"scan\" or \"SaTScan\"."
     }
   ],
   "rule": "After a transform verb the slot names what the verb acts ON. A second operand is stated with a preposition -- summarize_points_to_polygon, aggregate_points_to_h3_cell, snap_to_network -- never left to the reader and never put in the object slot. A method name stands in for the operation only where the method name IS the practitioner's term, which is the existing exemption that keeps `voronoi`, `isochrone` and `summarize_hull`. Recorded 2026-10-19 with the first two reviews; see docs/audits/ontology-audit.md for the convention it corrects.",

@@ -222,6 +222,34 @@ Asked for by the practitioner: *"Under detect can we add a cluster detection wid
   density's epidemiological form is a ratio of case density to population or control density; its bandwidth is
   stated, never hidden.
 
+## The space-time scan, built 2026-11-10
+
+**Built** as Space-time scan 0.1.0, the first widget under **Detect** (the practitioner, 2026-11-10: *"Let's do
+space time"*), on the standard Inspector and dialog. Ported from Epi Info AI's candidate, with three changes:
+
+- **Circles are circles.** Places at the same distance from the centre join together; the candidate added them one at
+  a time, so a window could hold one of two houses at the same distance.
+- **Faster, exactly.** A run is tried only from and to a day with a case in the circle: trimming an empty day off
+  either end lowers what is expected and leaves what is observed. Hagelloch by day, 999 shuffles: 18 s before, 3.5 s
+  after, with the same windows and scores. It runs in a worker with a progress bar (the practitioner: *"That may need a
+  progress bar"*).
+- **Secondary clusters share no place** with one before them, as SaTScan reports by default. The candidate ranked
+  every window, so its top twenty were mostly one cluster seen twenty ways.
+
+**On Hagelloch**, by day of prodrome, seed 20261110 (*Was there a cluster?*, the project's third workflow): 188 cases
+at 56 places, 3,819,948 circles and runs. The most likely cluster is **one house, 8 cases where 0.55 were expected,
+30 October to 18 November 1861, p = 0.001**: the start of the outbreak. Nine secondary clusters, none below p = 0.07.
+By week the second cluster has p = 0.01: the unit changes the answer, so it is chosen before looking.
+
+**Found doing it:** Table drew a polygon layer without its properties, so the clusters' counts and p-values were not
+in the table. Every polygon layer's properties now show. And Map keyed the clusters but not the cases beside them, and
+drew no village outline once polygons were connected: both older than this, and still open.
+
+**Run:** `tests/space-time-scan.test.mjs` (5) and `tests/hagelloch-cluster-example.browser.mjs` on Chromium.
+
+**Not yet:** a lab check (owed: the space-time scan is now awaiting one), SaTScan on the 30-case benchmark, the
+day-by-day replay for detection timeliness, and WebKit.
+
 ## Ontologies to reuse, looked for 2026-11-09
 
 The practitioner: *"I need to know if there is an ontology for outbreak response and investigations that we can

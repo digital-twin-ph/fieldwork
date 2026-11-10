@@ -537,6 +537,18 @@
       ]
     },
     {
+      "id": "urn:fieldwork:widget:space_time_scan",
+      "nodeType": "space_time_scan",
+      "currentVersion": "0.1.0",
+      "releases": [
+        {
+          "version": "0.1.0",
+          "path": "widgets/releases/space_time_scan/0.1.0.json",
+          "sha256": "e0e7c81c31398a70496799da4a04b2ecbdc932c3959c58d305d4a8c2e844063f"
+        }
+      ]
+    },
+    {
       "id": "urn:fieldwork:widget:group_table",
       "nodeType": "group_table",
       "currentVersion": "0.3.0",

@@ -3,6 +3,17 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.77.0 — 2026-11-10
+
+- **Space-time scan, the first step under Detect.** For a line list of cases with dates and places: the space-time
+  permutation scan SaTScan runs, looking for places where cases came closer together in time than the rest of the list
+  would lead you to expect. Circles over places, runs of days or weeks, a p-value from shuffling the dates with a
+  recorded seed, secondary clusters that share no place. Runs with a progress bar. Space-time scan 0.1.0.
+- **Hagelloch has a third workflow, *Was there a cluster?***: one house, 8 cases where 0.55 were expected, at the start
+  of the outbreak.
+- **Table shows a polygon layer's own properties**, which it used to leave out.
+- **Map's lines between records are checked by somebody else's code**: lab check 45, against pandas.
+
 ## 0.76.0 — 2026-11-10
 
 - **Lines between records on Map.** In Configure…, choose a column that names another record, such as `infector`,

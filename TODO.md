@@ -137,10 +137,21 @@ not a practitioner in the field.
    logistics and staffing (in reach, corrected by the practitioner the same day). Open evidence only; licences as stated.
 
 11. **Cluster detection under Detect** ([200](docs/experiments/200-operational-epidemiology.md); the practitioner,
-   2026-11-09). In order, after the Hagelloch transmission tree: the **space-time permutation scan**, ported from Epi
-   Info AI's candidate; the **Poisson spatial scan**, on the same machinery; then **Describe where points are dense**
+   2026-11-09). In order, after the Hagelloch transmission tree: the **space-time permutation scan** (built 2026-11-10
+   as Space-time scan 0.1.0; owes a lab check, SaTScan on its benchmark and the day-by-day replay); the **Poisson spatial scan**, on the same machinery; then **Describe where points are dense**
    (HDBSCAN, kernel density, and kernel density as a ratio of two layers), labelled exploratory, never under Detect.
    Each on the standard Inspector, with a lab check, and SaTScan run by hand on its benchmark sets.
+13. **Colour by generation, in the transmission tree and on the map's lines** (the practitioner, 2026-11-10: *"One
+   thing we can do for the transmission chain is to color key the generation both in the tree and the map links."*).
+   One ordered ramp, one key, shared by Chart's tree and Map's lines between records, so generation 3 is the same colour
+   in both; an ordered ramp because generations have an order. To settle: the generation of a line is its case's; a
+   case whose chain has no root drawn keeps the tree's own marking; how many steps before the ramp stops being
+   readable (Hagelloch runs to 6).
+14. **Hagelloch's study area: the administrative area, not a box** (the practitioner, 2026-11-10: *"We should change
+   the study area for Hagelloch from box to administrative area"*). Today it is a box drawn round the anchored houses.
+   To settle: which boundary (Hagelloch is a district of Tübingen; its OSM or official boundary, and its licence), that
+   it is the present-day boundary and not 1861's, and whether any case falls outside it, which the map would then
+   show. Asks before downloading. With 13, the colour key.
 12. **Edit a table's values inline, in the data quality check** (the practitioner, 2026-11-10: *"One thing I have been
    meaning to add to data quality checks is the ability to edit tables inline. Can be added as a widget playback
    exercise."*). To shape: per [117](docs/experiments/117-data-quality.md), a change to an input is a declared repair

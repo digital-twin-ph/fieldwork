@@ -21,7 +21,7 @@ import classification from '../widgets/classification.json' with {type:'json'};
 // because a rate with a declared denominator is not an epidemiological quantity, it is an
 // ordinary one that epidemiology leans on. Where a practitioner looks for it is a different
 // question from whose vocabulary it belongs to.
-export const PALETTE_GROUPS=['Sources','Spatial operations','Comparisons and checks','Semantic reasoning','Epidemiology','Summaries','Micro-workflows','Outputs'] as const;
+export const PALETTE_GROUPS=['Sources','Spatial operations','Comparisons and checks','Semantic reasoning','Epidemiology','Detect','Summaries','Micro-workflows','Outputs'] as const;
 
 import portContracts from '../widgets/port-contracts.json';
 

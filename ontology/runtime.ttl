@@ -677,3 +677,30 @@ fw:recordsNamingSelf a owl:DatatypeProperty; rdfs:domain fw:MapLinks; rdfs:label
 fw:recordsNamingAmbiguous a owl:DatatypeProperty; rdfs:domain fw:MapLinks; rdfs:label "records naming an ambiguous id"; rdfs:comment "The named id is held by more than one record, so which is meant cannot be read." .
 fw:linksUnlocated a owl:DatatypeProperty; rdfs:domain fw:MapLinks; rdfs:label "links with an unlocated end" .
 fw:recordsRead a owl:DatatypeProperty; rdfs:domain fw:MapLinks; rdfs:label "records read"; rdfs:comment "Records of the layer, every one of which is counted under one outcome." .
+fw:SpaceTimeScan a owl:Class; rdfs:label "space-time scan"; rdfs:comment "A retrospective space-time permutation scan: circles over places and runs over time, scored by the likelihood ratio and tested by shuffling the dates across fixed places." .
+fw:ScanCluster a owl:Class; rdfs:label "scan cluster"; rdfs:comment "A circle and run a space-time scan reports, with its observed and expected cases and its p-value as computed. A candidate for investigation, not a finding of an outbreak." .
+fw:reportsCluster a owl:ObjectProperty; rdfs:domain fw:SpaceTimeScan; rdfs:range fw:ScanCluster; rdfs:label "reports cluster" .
+fw:scanModel a owl:DatatypeProperty; rdfs:domain fw:SpaceTimeScan; rdfs:label "scan model" .
+fw:dateColumn a owl:DatatypeProperty; rdfs:label "date column" .
+fw:timeUnit a owl:DatatypeProperty; rdfs:domain fw:SpaceTimeScan; rdfs:label "time unit" .
+fw:studyStart a owl:DatatypeProperty; rdfs:domain fw:SpaceTimeScan; rdfs:label "study start" .
+fw:studyEnd a owl:DatatypeProperty; rdfs:domain fw:SpaceTimeScan; rdfs:label "study end" .
+fw:casesScanned a owl:DatatypeProperty; rdfs:domain fw:SpaceTimeScan; rdfs:label "cases scanned" .
+fw:placesScanned a owl:DatatypeProperty; rdfs:domain fw:SpaceTimeScan; rdfs:label "places scanned" .
+fw:windowsScanned a owl:DatatypeProperty; rdfs:domain fw:SpaceTimeScan; rdfs:label "windows scanned"; rdfs:comment "Circles times runs of time." .
+fw:longestRunUnits a owl:DatatypeProperty; rdfs:domain fw:SpaceTimeScan; rdfs:label "longest run, in units" .
+fw:replications a owl:DatatypeProperty; rdfs:domain fw:SpaceTimeScan; rdfs:label "replications" .
+fw:randomStream a owl:DatatypeProperty; rdfs:label "random stream" .
+fw:recordsWithoutDate a owl:DatatypeProperty; rdfs:label "records without a date" .
+fw:recordsWithoutLocation a owl:DatatypeProperty; rdfs:label "records without a location" .
+fw:recordsOutsidePeriod a owl:DatatypeProperty; rdfs:label "records outside the study period" .
+fw:clusterRank a owl:DatatypeProperty; rdfs:domain fw:ScanCluster; rdfs:label "cluster rank" .
+fw:firstDay a owl:DatatypeProperty; rdfs:domain fw:ScanCluster; rdfs:label "first day" .
+fw:lastDay a owl:DatatypeProperty; rdfs:domain fw:ScanCluster; rdfs:label "last day" .
+fw:placesInCluster a owl:DatatypeProperty; rdfs:domain fw:ScanCluster; rdfs:label "places in cluster" .
+fw:radiusMetres a owl:DatatypeProperty; rdfs:domain fw:ScanCluster; rdfs:label "radius in metres" .
+fw:observedCases a owl:DatatypeProperty; rdfs:domain fw:ScanCluster; rdfs:label "observed cases" .
+fw:expectedCases a owl:DatatypeProperty; rdfs:domain fw:ScanCluster; rdfs:label "expected cases" .
+fw:logLikelihoodRatio a owl:DatatypeProperty; rdfs:domain fw:ScanCluster; rdfs:label "log likelihood ratio" .
+fw:pValue a owl:DatatypeProperty; rdfs:domain fw:ScanCluster; rdfs:label "p-value" .
+fw:monteCarloExceedances a owl:DatatypeProperty; rdfs:domain fw:ScanCluster; rdfs:label "Monte Carlo exceedances"; rdfs:comment "Shuffles whose highest score anywhere was at least this cluster's." .

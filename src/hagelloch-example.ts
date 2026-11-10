@@ -144,3 +144,29 @@ export function hagellochChainsExample():Workflow{
   return {schema:'fieldwork/workflow/1',name:'Who infected whom, Hagelloch, 1861',
     exampleId:'hagelloch-chains',nodes,edges} as unknown as Workflow;
 }
+
+/** WAS THERE A CLUSTER IN HAGELLOCH? (experiment 200, Detect): the third workflow of the project. The cases, scanned by
+ *  day of prodrome for circles of houses and runs of days with more cases than the rest of the outbreak would lead one
+ *  to expect; the clusters drawn over the village and listed. The seed is fixed, so the p-values reproduce. */
+export function hagellochClusterExample():Workflow{
+  const base=hagellochExample();
+  const nodes=[
+    {...base.nodes.find(n=>n.id==='cases')!,x:20,y:60},
+    {...base.nodes.find(n=>n.id==='village')!,x:20,y:320},
+    {id:'scan',type:'space_time_scan',x:430,y:60,params:{label:'Was there a cluster?',dateField:'date_of_prodrome',unit:'day' as const,
+      maxCaseShare:0.5,maxTimeShare:0.5,replications:999,seed:20261110,report:10}},
+    {id:'cluster-map',type:'map_output',x:840,y:60,params:{label:'Clusters over the village',presentation:'plot' as const,
+      mapTitle:'Space-time clusters of measles, Hagelloch, 1861',
+      // The cases small and dark, so the clusters' two hues are the only colour on the figure.
+      layerSymbols:{cases:{colour:'#3d4a45',size:3}}}},
+    {id:'cluster-table',type:'table_output',x:840,y:320,params:{label:'Every cluster reported',inputMode:'polygons' as const}},
+  ];
+  const edges=[
+    {id:'cases-scan',from:'cases',to:'scan',port:'points'},
+    {id:'scan-map',from:'scan',to:'cluster-map',port:'polygons'},{id:'cases-cluster-map',from:'cases',to:'cluster-map',port:'points'},
+    {id:'village-cluster-map',from:'village',to:'cluster-map',port:'area'},
+    {id:'scan-table',from:'scan',to:'cluster-table',port:'polygons'},
+  ];
+  return {schema:'fieldwork/workflow/1',name:'Was there a cluster? Hagelloch, 1861',
+    exampleId:'hagelloch-cluster',nodes,edges} as unknown as Workflow;
+}

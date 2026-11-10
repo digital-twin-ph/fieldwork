@@ -1,0 +1,93 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "released": "2026-11-10",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "validationStatus": "application-only",
+  "shaclShapes": [],
+  "typescriptType": "ParamsByType['space_time_scan']"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": null
+ },
+ "id": "urn:fieldwork:widget:space_time_scan",
+ "nodeType": "space_time_scan",
+ "version": "0.1.0",
+ "title": "Space-time scan",
+ "ports": {
+  "inputs": [
+   {
+    "name": "points",
+    "type": "points"
+   }
+  ],
+  "output": "polygons",
+  "optionalInputs": [],
+  "note": "Takes a point layer of cases, each with a date, and gives back the clusters it reports as circles: one polygon per cluster, carrying its days, places, observed and expected cases, likelihood ratio and p-value."
+ },
+ "ontology": {
+  "status": "gap",
+  "mappings": [],
+  "note": "GAP, meaning no mapping to an external vocabulary. fw:SpaceTimeScan and fw:ScanCluster are declared in ontology/runtime.ttl with their properties. The receipt names the date column, the unit, the study period, every record not scanned and why, the limits, the replications, the seed and the random stream, and every cluster reported with its counts and p-value.",
+  "emits": {
+   "classes": [
+    "ScanCluster",
+    "SpaceTimeScan"
+   ],
+   "properties": [
+    "casesScanned",
+    "clusterRank",
+    "dateColumn",
+    "expectedCases",
+    "firstDay",
+    "lastDay",
+    "logLikelihoodRatio",
+    "longestRunUnits",
+    "monteCarloExceedances",
+    "observedCases",
+    "pValue",
+    "placesInCluster",
+    "placesScanned",
+    "radiusMetres",
+    "randomSeed",
+    "randomStream",
+    "recordsOutsidePeriod",
+    "recordsWithoutDate",
+    "recordsWithoutLocation",
+    "replications",
+    "reportsCluster",
+    "scanModel",
+    "studyEnd",
+    "studyStart",
+    "timeUnit",
+    "windowsScanned"
+   ]
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/space-time-scan.ts",
+   "src/space-time-scan-worker.ts",
+   "src/core.ts",
+   "src/app.ts",
+   "src/run-progress.ts"
+  ],
+  "definition": "src/space-time-scan.ts"
+ },
+ "changes": [
+  {
+   "kind": "minor",
+   "description": "New (experiment 200, Detect). A retrospective space-time permutation scan for a line list with dates and places and no population: circles over places, runs of days or weeks, scored by the likelihood ratio and tested by shuffling the dates across fixed places with a recorded seed. Secondary clusters share no place with one before them. Runs in a worker with a progress bar. Ported from a candidate, made exact and faster: a run is tried only from and to a day with a case in the circle, and places at the same distance join a circle together."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "tests/space-time-scan.test.mjs (5 unit checks: the likelihood ratio; a burst found with its expected count worked by hand; records without a date or place counted; the seed reproducing p-values and secondary clusters sharing no place; settings refused outside SaTScan's ranges) and tests/hagelloch-cluster-example.browser.mjs on Chromium. A candidate until a lab check recomputes it independently."
+ }
+}

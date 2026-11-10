@@ -130,7 +130,9 @@ test('the shipped ledger passes and covers every live widget', ()=>{
   // Experiment 188, stage 5.
   // 54 on 2026-11-09: slr_site_assignment and slr_threshold_comparison retired, into Measure distance and Relate and into
   // a published ruleset (experiment 197).
-  assert.equal(review.reviews.length,54);
+  // 55 on 2026-11-10: space_time_scan, the first step under Detect: nothing tested whether cases came closer together in
+  // place and time than expected (experiment 200).
+  assert.equal(review.reviews.length,55);
 });
 
 test('the generated table shows the palette words beside the identifier', ()=>{

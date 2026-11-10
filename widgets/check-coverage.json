@@ -8,9 +8,9 @@
   },
   "measuredAt": "2026-11-10",
   "counts": {
-    "widgets": 54,
+    "widgets": 55,
     "covered": 31,
-    "awaiting": 10,
+    "awaiting": 11,
     "none": 12,
     "blocked": 1
   },
@@ -313,6 +313,13 @@
       "expectation": "parity",
       "computes": "The value of the swath pixel whose centre is nearest each point, per file, with qa_value compared on the stored integer and each gap named: no overpass, no retrieval, below the quality threshold.",
       "check": "35-sample-satellite"
+    },
+    {
+      "nodeType": "space_time_scan",
+      "expectation": "parity",
+      "computes": "Every circle over places and run over time, its observed and expected cases and likelihood ratio, the clusters reported without sharing a place, and Monte Carlo p-values from shuffled dates.",
+      "reason": "A scan derives which places and days are unusual, and a wrong one would send an investigation to the wrong houses or tell it nothing was there. An independent implementation can recompute every window's score exactly and the p-values within Monte Carlo error.",
+      "awaiting": true
     }
   ]
 }

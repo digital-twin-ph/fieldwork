@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../src/run-progress.ts"],
-  "sourcesContent": ["/** PROGRESS WITHIN A STEP, for steps that take minutes: Sample satellite files at points or over areas reads a file at\n *  a time, and a year of MODIS over Rio de Janeiro state is 180 files and four minutes. The practitioner, 2026-11-06:\n *  *\"For long running jobs with sample satellite files over point or area we need an animation on screen to indicate\n *  to the user that processing is ongoing.\"* The run reports here; the page draws it. No imports, so a step can report\n *  without knowing how it is shown. */\nexport interface RunDetail {nodeId:string; label:string; done:number; of:number; what:string}\ntype Listener=(detail:RunDetail|null)=>void;\nconst listeners=new Set<Listener>();\nexport function onRunDetail(listener:Listener):()=>void{listeners.add(listener);return ()=>{listeners.delete(listener);};}\nexport function runDetail(detail:RunDetail|null):void{for(const l of listeners)l(detail);}\n"],
-  "mappings": "AAOA,IAAMA,EAAU,IAAI,IACb,SAASC,EAAYC,EAA2B,CAAC,OAAAF,EAAU,IAAIE,CAAQ,EAAS,IAAI,CAACF,EAAU,OAAOE,CAAQ,CAAE,CAAE,CAClH,SAASC,EAAUC,EAA2B,CAAC,QAAUC,KAAKL,EAAUK,EAAED,CAAM,CAAE",
-  "names": ["listeners", "onRunDetail", "listener", "runDetail", "detail", "l"]
-}

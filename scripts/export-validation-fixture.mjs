@@ -11,7 +11,7 @@
 //                   | select-range-london-001
 //                   | regression-salmonella-001 | regression-nyc-001 (needs NYC_PKG)
 //                   | sample-satellite-s5p-001 | lag-response-brazil-001 | regression-strata-brazil-001
-//                   | lag-models-brazil-001 | sea-level-heights-manila-001 | chains-hagelloch-001 | tree-hagelloch-001
+//                   | lag-models-brazil-001 | sea-level-heights-manila-001 | chains-hagelloch-001 | tree-hagelloch-001 | links-hagelloch-001
 import {createHash} from 'node:crypto';
 import {readFile,writeFile} from 'node:fs/promises';
 import {reprojectToCRS84,projectFromCRS84} from '../build/reproject.js';
@@ -49,6 +49,7 @@ import {inspectRaster,readRasterWindow,rasterWindow} from '../build/raster.js';
 import {sampleRaster} from '../build/sample-raster.js';
 import {nearestPlaces,distancesAsTable,pointsAsTable} from '../build/core.js';
 import {transmissionTree} from '../build/transmission-tree.js';
+import {mapOutput} from '../build/map-output.js';
 import {downloadFacilities} from '../build/health-facilities.js';
 import {authoredSubjects} from '../build/authored-application.js';
 import {evaluateAuthored,evaluatedTable} from '../build/rule-evaluation.js';
@@ -1413,6 +1414,28 @@ const builders={
       input:{cases:t.rows.map(r=>({case_ID:r.key.case_ID,infector:r.key.infector??'',date_of_prodrome:r.key.date_of_prodrome??''}))},
       output:{counts:tree.counts,chains:tree.chains,
         cases:tree.cases.map(c=>({case_ID:c.id,chain:c.chain,generation:c.generation+1,row:c.row}))},
+    },files:{}};
+  },
+  async 'links-hagelloch-001'(){
+    // LINES BETWEEN RECORDS ON MAP (experiment 200, step 4), as Map computes them: a line to the record named in
+    // infector, found by case_ID, and every record counted under one outcome.
+    const cases=JSON.parse(await readFile(new URL('../examples/hagelloch-1861/cases.json',import.meta.url),'utf8'));
+    const area={boundary:{type:'Polygon',coordinates:[[[9.0603,48.5406],[9.0647,48.5406],[9.0647,48.5433],[9.0603,48.5433],[9.0603,48.5406]]]},
+      areaId:'urn:fieldwork:area:hagelloch',geometryId:'urn:fieldwork:area:hagelloch:geometry',label:'Hagelloch, 1861'};
+    const setting={column:'infector',matches:'case_ID'};
+    const {value}=mapOutput({id:'links-map',type:'map_output',params:{label:'Who infected whom, on the map',linkField:{cases:setting}}},
+      {area,points:{sourceNodeId:'cases',label:'Cases',...cases}},'fixture');
+    const idOf=new Map(value.rows.map(r=>[r.id,String(r.attributes.case_ID)]));
+    const {column,matches,...counts}=value.linkCounts.cases;
+    return {fixture:{
+      ...base('links-hagelloch-001','map_output','Map, lines between records: who infected whom, Hagelloch 1861','src/map-links.ts#mapLinks'),
+      source:'Measles in Hagelloch, 1861 (Pfeilsticker 1863; Oesterle 1992), as measles_hagelloch_1861 in the R package outbreaks 1.9.0; the copy built into Fieldwork as examples/hagelloch-1861, with this project\'s georeference',
+      declaredParameters:{setting,
+        line:'From the record whose case_ID the infector column names, to the record naming it.',
+        outcomes:'Each record is one of: drawn; at the same place as the record it names; naming nothing; naming a case_ID the layer does not hold; naming itself; naming a case_ID more than one record holds; with an end that has no location.'},
+      input:{cases:cases.features.map(f=>({case_ID:f.properties.case_ID,infector:f.properties.infector??'',
+        lon:f.geometry?.coordinates?.[0]??null,lat:f.geometry?.coordinates?.[1]??null}))},
+      output:{counts,links:value.links.map(l=>({from:idOf.get(l.from),to:idOf.get(l.to)}))},
     },files:{}};
   },
   async 'chains-hagelloch-001'(){

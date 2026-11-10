@@ -1,6 +1,6 @@
 # 200 · Operational epidemiology, anchored on 7-1-7
 
-_Created 2026-11-09 · Updated 2026-11-09_
+_Created 2026-11-09 · Updated 2026-11-10_
 
 **Status:** asked. A map of a body of work and what Fieldwork already holds of it, anchored on the 7-1-7 target and
 its bottleneck taxonomy, made to choose a first slice from. Nothing is built.
@@ -197,7 +197,12 @@ which says what to choose.
 
 **Run:** `tests/map-links.test.mjs` (4) and both browser tests on Chromium.
 
-**Not yet:** a lab check of the link counts, and WebKit.
+**Checked by somebody else's code** (lab check 45): the same 94 lines and the same count for every outcome as a
+pandas self-merge on `infector` and `case_ID`, in CPython and in the browser kernel. Hagelloch holds no case naming an
+unknown case, itself, a duplicated id or an unplaced house, so those four counts agree at zero only; the unit test
+exercises them.
+
+**Not yet:** WebKit.
 
 ## Detect: finding clusters, 2026-11-09
 

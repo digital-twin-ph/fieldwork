@@ -37,8 +37,8 @@
   "declared only": 1,
   "example only": 10,
   "parity only": 9,
-  "example, lab not applicable": 13,
-  "example+parity": 21,
+  "example, lab not applicable": 12,
+  "example+parity": 22,
   "neither applies": 0
  },
  "compositionsUsedByNoExample": [
@@ -335,10 +335,10 @@
     "workflows-rulesets"
    ],
    "exampleUseCount": 17,
-   "lab": "none",
+   "lab": "parity",
    "labOwed": false,
    "fieldUse": [],
-   "rung": "example, lab not applicable"
+   "rung": "example+parity"
   },
   {
    "nodeType": "mean_center",

@@ -6,12 +6,12 @@
     "none": "Nothing to recompute: an input, a presentation, or a rule node whose conclusions are the reasoner's. `reason` says which.",
     "blocked": "Would owe a check, and cannot have a meaningful one yet. `reason` names the obstacle."
   },
-  "measuredAt": "2026-11-09",
+  "measuredAt": "2026-11-10",
   "counts": {
     "widgets": 54,
-    "covered": 30,
+    "covered": 31,
     "awaiting": 10,
-    "none": 13,
+    "none": 12,
     "blocked": 1
   },
   "widgets": [
@@ -131,8 +131,10 @@
     },
     {
       "nodeType": "map_output",
-      "expectation": "none",
-      "reason": "Draws what it is given and derives no value."
+      "expectation": "parity",
+      "computes": "Lines between records (from 0.22.0): which record each record names, whether both are placed and apart, and a count for every outcome. pandas recomputes them as a self-merge on the two columns. The rest of the map draws what it is given and derives no value, so it is not checked.",
+      "reason": "Until 0.22.0 a Map derived nothing. Lines derive who is joined to whom and what is left out, and a wrong one would draw a link that is not in the data, or hide one that is.",
+      "check": "45-map-links"
     },
     {
       "nodeType": "mean_center",

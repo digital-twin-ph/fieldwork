@@ -150,6 +150,32 @@ Bochner et al. 2023 and the Liberia, Zambia, Cambodia and Thailand 7-1-7 studies
 **First to try: South Sudan's key dates**, the 7-1-7 review itself on open data, after its licence and columns are read
 in the file.
 
+## Step 5, built 2026-11-09: the transmission tree, and Hagelloch's second workflow
+
+The practitioner: *"I still don't see the transmission chain chart for hagelloch"*, then *"Vega lite for tree chart."*
+
+- **Chart draws a transmission tree** (Chart 0.12.0). In Configure…, **Draw** offers *Transmission tree*, with the
+  columns naming each case, its infector and its date. Each case is a point at its date on a row of its own; a line
+  runs down from its infector's date and across to its own, so the length across is the serial interval. Drawn by
+  Vega-Lite, as every other chart, so it exports and carries its title and source note.
+- **Nothing is dropped.** A case naming no infector starts a chain; one naming an infector the table does not hold,
+  one in a loop, and one without a readable date are each counted and coloured apart.
+- **Chart moved to the standard Inspector** in the same pass: its three old panels' settings are all in Configure…,
+  under the same ids. Nine tests and twenty steps in three example manuals were moved into the dialog.
+- **Hagelloch has a second workflow**, *12 · Hagelloch: who infected whom*: the serial interval, the secondary cases
+  and the tree, configured as built by hand, so it runs when opened.
+
+**Run, in Chromium and in Node:** 188 cases in 4 chains, 184 links; the largest starts with case 184 and holds 173 cases
+over 6 generations; 4 cases name no infector. `tests/transmission-tree.test.mjs` (3),
+`tests/hagelloch-transmission-tree.browser.mjs` and `tests/hagelloch-chains-example.browser.mjs` (1 each).
+
+**Found doing it:** the workflow opened under *Heat outreach screening*, because the app recognised example keys from
+a closed list; the new key was added to it. The rules warn that 4 records could not be read as dates: the 4 cases kept
+under "no infector recorded" carry a word, not a date, in `infector_prodrome`, and are treated as not recorded. That is
+what they are, and the warning says so.
+
+**Not yet:** the Map links layer (step 4), a lab check of the tree's chains and generations against networkx, and WebKit.
+
 ## Detect: finding clusters, 2026-11-09
 
 Asked for by the practitioner: *"Under detect can we add a cluster detection widget like SatScan?"*

@@ -1197,3 +1197,12 @@ select.rule-op.rule-op-compare,select.rule-op.rule-op-equal,select.rule-op.rule-
 .notes-image.is-missing .notes-image-missing{font-size:15px;border:1px dashed currentColor;padding:.5rem;border-radius:4px}
 #note-image-panel .field-label{margin-top:.6rem}
 #note-image-panel textarea{width:100%;font-size:15px}
+/* WHO INFECTED WHOM (experiment 200): chains over time. Text at 14 px and over; colours from the theme's tokens. */
+.transmission-tree{width:100%;max-width:960px;height:auto;display:block}
+.transmission-tree .tree-link{fill:none;stroke:var(--muted);stroke-width:1}
+.transmission-tree .tree-case{fill:var(--green)}
+.transmission-tree .tree-start{fill:var(--text);stroke:var(--green);stroke-width:1.5}
+.transmission-tree .tree-undated{fill:none;stroke:var(--green);stroke-width:1.5;stroke-dasharray:2 2}
+.transmission-tree .tree-axis{font-size:14px;fill:var(--muted)}
+.transmission-tree .tree-title{font-size:18px;font-weight:600;fill:var(--text)}
+.transmission-tree .tree-grid{stroke:var(--line);stroke-width:1}

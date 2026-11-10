@@ -3,6 +3,7 @@
  "measuredAt": "2026-10-27",
  "examplesShipped": [
   "hagelloch",
+  "hagelloch-chains",
   "heat",
   "old-naledi",
   "raster",
@@ -70,6 +71,7 @@
   {
    "nodeType": "apply_ruleset",
    "exampleUses": [
+    "hagelloch-chains",
     "heat",
     "nigeria-immunization-2024",
     "old-naledi",
@@ -79,7 +81,7 @@
     "south-london-1854",
     "workflows-rulesets"
    ],
-   "exampleUseCount": 8,
+   "exampleUseCount": 9,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],
@@ -115,6 +117,7 @@
    "exampleUses": [
     "brazil-dengue-rj-2024",
     "hagelloch",
+    "hagelloch-chains",
     "nyc-asthma-ozone-2016-2025",
     "old-naledi",
     "sierra-leone-measles",
@@ -123,7 +126,7 @@
     "snow-voronoi",
     "south-london-1854"
    ],
-   "exampleUseCount": 9,
+   "exampleUseCount": 10,
    "lab": "none",
    "labOwed": false,
    "fieldUse": [],
@@ -262,12 +265,13 @@
    "nodeType": "group_table",
    "exampleUses": [
     "brazil-dengue-rj-2024",
+    "hagelloch-chains",
     "nyc-asthma-ozone-2016-2025",
     "sierra-leone-measles",
     "south-london-1854",
     "workflows-rulesets"
    ],
-   "exampleUseCount": 5,
+   "exampleUseCount": 6,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],
@@ -394,6 +398,7 @@
    "nodeType": "point_input",
    "exampleUses": [
     "hagelloch",
+    "hagelloch-chains",
     "heat",
     "nyc-asthma-ozone-2016-2025",
     "old-naledi",
@@ -406,7 +411,7 @@
     "south-london-1854",
     "workflows-rulesets"
    ],
-   "exampleUseCount": 12,
+   "exampleUseCount": 13,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],
@@ -484,12 +489,13 @@
    "nodeType": "relate_table",
    "exampleUses": [
     "brazil-dengue-rj-2024",
+    "hagelloch-chains",
     "nyc-asthma-ozone-2016-2025",
     "sea-level-rise-philippines",
     "sierra-leone-measles",
     "south-london-1854"
    ],
-   "exampleUseCount": 5,
+   "exampleUseCount": 6,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],
@@ -673,6 +679,7 @@
    "exampleUses": [
     "brazil-dengue-rj-2024",
     "hagelloch",
+    "hagelloch-chains",
     "heat",
     "nyc-asthma-ozone-2016-2025",
     "old-naledi",
@@ -687,7 +694,7 @@
     "south-london-1854",
     "workflows-rulesets"
    ],
-   "exampleUseCount": 15,
+   "exampleUseCount": 16,
    "lab": "none",
    "labOwed": false,
    "fieldUse": [],

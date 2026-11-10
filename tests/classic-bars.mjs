@@ -9,8 +9,11 @@ import {expect} from '@playwright/test';
 export async function useClassicBars(page,nodeId){
   await page.locator('[data-view="workflow"]').click();
   await page.locator(`.react-flow__node[data-id="${nodeId}"]`).click();
+  // In Chart's Configure… since 2026-11-09 (experiment 186).
+  await page.locator('#configure-step').click();
   await expect(page.locator('#chart-renderer')).toBeVisible();
   await page.locator('#chart-renderer').selectOption('html');
+  await page.locator('#config-apply').click();
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
 }

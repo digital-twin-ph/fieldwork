@@ -2203,6 +2203,25 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           const arrived=inputs.records as unknown as (DisplayValue&{series?:unknown;
             kind?:string;keys?:string[];valueField?:string;chart?:ChartSummary})|undefined;
           if(!arrived)throw new Error('Connect a table to this Chart.');
+          // WHO INFECTED WHOM, as chains over time (experiment 200, step 5): drawn from the table's own rows.
+          if(node.params.figure==='tree'){
+            const t=node.params.tree;
+            if(!t?.id||!t.parent||!t.date)throw new Error('Name the case id, infected-by and date columns in this Chart\u2019s Configure\u2026');
+            const {transmissionTree,treeSentence}=await import('./transmission-tree.js');
+            const tree=transmissionTree(arrived as unknown as import('./data-table.js').DataTable,t);
+            const sentence=treeSentence(tree);
+            const q=(v:string)=>JSON.stringify(v),n=(v:number)=>`"${v}"^^xsd:integer`;
+            const facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.\n`
+              +`<urn:fieldwork:run:${runId}:view:${node.id}> a fw:TransmissionTree, prov:Activity; `
+              +`prov:used <urn:fieldwork:run:${runId}:output:${recordsEdge.from}>;\n`
+              +`  fw:caseIdColumn ${q(t.id)}; fw:infectorColumn ${q(t.parent)}; fw:caseDateColumn ${q(t.date)};\n`
+              +`  fw:casesDrawn ${n(tree.counts.cases)}; fw:chainsDrawn ${n(tree.counts.chains)}; fw:linksDrawn ${n(tree.counts.links)};\n`
+              +`  fw:casesNoInfector ${n(tree.counts.noInfector)}; fw:casesInfectorNotFound ${n(tree.counts.unknownInfector)};\n`
+              +`  fw:casesUndated ${n(tree.counts.undated)}; fw:casesInLoop ${n(tree.counts.inLoop)}.\n`;
+            value={kind:'transmission-tree',tree,sentence,rows:[],centers:[]} as unknown as DisplayValue;
+            receipts.push({nodeId:node.id,kind:'presentation',facts,rules:'',input:facts,conclusions:[],method:sentence});
+            break;
+          }
           // A CASE SERIES IS STILL A TABLE, and it carries its periods with it: the curve is
           // drawn from the shape that arrived rather than from a mode somebody selected.
           const chart=arrived.series

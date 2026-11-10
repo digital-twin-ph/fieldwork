@@ -1,5 +1,5 @@
 import {test,expect} from '@playwright/test';
-import {inTableSettings} from './map-settings.mjs';
+import {inTableSettings,inChartSettings} from './map-settings.mjs';
 import {useClassicBars} from './classic-bars.mjs';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
@@ -22,13 +22,13 @@ test('shared Chart supports migration, source selection, view switching, evidenc
   await page.getByRole('tab',{name:'Legacy counts'}).click();await expect(page.locator('#bars-panel .bar-column').filter({hasText:'Review'}).locator('b')).toHaveText('5');
   await page.locator('[data-view="results"]').click();
   await page.locator('[data-view="workflow"]').click();
-  await page.locator('.react-flow__node[data-id="chart"]').click();await expect(page.locator('#chart-decisions')).toHaveValue('criteria');
-  await page.locator('#output-label').fill('Decision counts');await page.locator('#output-label').press('Tab');
+  await page.locator('.react-flow__node[data-id="chart"]').click();await expect(page.locator('#connect-decisions')).toHaveValue('criteria');
+  await page.locator('#chart-label').fill('Decision counts');await page.locator('#chart-label').press('Tab');
   await page.locator('[data-view="results"]').click();
-  await page.locator('#chart-decisions').selectOption('');await page.locator('#chart-decisions').selectOption('criteria');
-  await page.locator('#output-view').selectOption('table');await expect(page.locator('#table-decisions')).toHaveValue('criteria');
+  await page.locator('#connect-decisions').selectOption('');await page.locator('#connect-decisions').selectOption('criteria');
+  await inChartSettings(page,d=>d.locator('#output-view').selectOption('table'));await expect(page.locator('#table-decisions')).toHaveValue('criteria');
   await page.locator('[data-view="results"]').click();
-  await inTableSettings(page,d=>d.locator('#output-view').selectOption('bars'));await expect(page.locator('#chart-decisions')).toHaveValue('criteria');await run();
+  await inTableSettings(page,d=>d.locator('#output-view').selectOption('bars'));await expect(page.locator('#connect-decisions')).toHaveValue('criteria');await run();
   // The view switches above re-save the node, so the classic bars are selected again before the
   // caption they produce is read: the Vega caption says "8 input records" instead.
   await useClassicBars(page,'chart');
@@ -57,19 +57,15 @@ test('Vega-Lite Chart enhancement renders from local count bins and reopens offl
   await expect(page.locator('#bars-panel')).toContainText('Underlying chart values');
   await page.locator('[data-view="results"]').click();
   await page.locator('[data-view="workflow"]').click();
-  await page.locator('.react-flow__node[data-id="enhanced"]').click();await expect(page.locator('#chart-renderer')).toHaveValue('vega-lite');await expect(page.locator('#chart-mark')).toHaveValue('point');
-  await page.locator('[data-view="results"]').click();
-  await page.locator('#chart-title').fill('Heat screening decisions');await page.locator('#chart-title').press('Tab');
-  await page.locator('[data-view="results"]').click();
-  await page.locator('#chart-subtitle').fill('Demonstration records');await page.locator('#chart-subtitle').press('Tab');
-  await page.locator('[data-view="results"]').click();
-  await page.locator('#chart-x-axis').fill('Number of records');await page.locator('#chart-x-axis').press('Tab');
-  await page.locator('[data-view="results"]').click();
-  await page.locator('#chart-y-axis').fill('Decision');await page.locator('#chart-y-axis').press('Tab');
-  await page.locator('[data-view="results"]').click();
-  await page.locator('#chart-legend').check();
-  await page.locator('[data-view="results"]').click();
-  await page.locator('#chart-source-note').fill('Source: synthetic heat fixture');await page.locator('#chart-source-note').press('Tab');
+  await page.locator('.react-flow__node[data-id="enhanced"]').click();
+  // The figure's words are set in Chart's Configure…, and Apply writes them (experiment 186, 2026-11-09).
+  await inChartSettings(page,async d=>{
+    await expect(d.locator('#chart-renderer')).toHaveValue('vega-lite');await expect(d.locator('#chart-mark')).toHaveValue('point');
+    for(const [id,text] of [['#chart-title','Heat screening decisions'],['#chart-subtitle','Demonstration records'],
+      ['#chart-x-axis','Number of records'],['#chart-y-axis','Decision'],['#chart-source-note','Source: synthetic heat fixture']]){
+      await d.locator(id).fill(text);await d.locator(id).press('Tab');}
+    await d.locator('#chart-legend').check();
+  });
   await page.locator('#run-button').click();await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
   await page.locator('[data-view="results"]').click();
   await page.getByRole('tab',{name:'Enhanced counts'}).click();await expect(page.locator('#vega-chart svg.marks')).toContainText('Heat screening decisions');

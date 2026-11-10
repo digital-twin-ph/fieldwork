@@ -54,6 +54,7 @@ import {appendLabel,appendPort,appendTableCount} from './append-rows.js';
 const strataOf=(strata:string|string[]|undefined):string[]=>(Array.isArray(strata)?strata:strata?[strata]:[]).map(c=>c.trim()).filter(Boolean);
 import {GRID_KEYS,gridReaderFor,clearGridCache} from './satellite-grid-sample.js';
 import {clearFileCache} from './satellite-sample-reader.js';
+import {treeSvg} from './transmission-tree.js';
 import {savedReadingsSummary,forgetSavedReadings} from './satellite-reading-store.js';
 import {MODIS_RULES,type ModisQualityRule} from './satellite-areas.js';
 import {openProductsDialog,productCard} from './satellite-products-ui.js';
@@ -124,7 +125,7 @@ import {chartMarkup} from './chart-output.js';
 import {chartOrientation,chartRenderer} from './chart-vega.js';
 import {standaloneChartSvg} from './chart-figure.js';
 import {networkPreviewSvg,networkCoverage,networkPreviewCaption} from './network-preview.js';
-import {chartVegaSpec,renderVegaChart,disposeVegaChart} from './chart-vega.js';
+import {chartVegaSpec,renderVegaChart,renderVegaTree,disposeVegaChart} from './chart-vega.js';
 import {openRasterEditor,rasterSvg,rasterFrame,downloadRaster} from './raster-ui.js';
 import {TILE_PROVIDERS,basemapImages,fetchTileAsDataURI,useTileStore} from './basemap-tiles.js';
 import {rasteriseFigure,FIGURE_PIXEL_SCALE} from './figure-export.js';
@@ -406,7 +407,7 @@ function writeProjects(projects:Project[]):boolean{
 // example has an area node and was silently labelled, described and noted as Old Naledi until
 // it was added. This is the "examples are the default world" problem in TODO.md, in the one
 // place it is least visible.
-const NAMED_WORKSPACES=['blank','raster','hagelloch'];
+const NAMED_WORKSPACES=['blank','raster','hagelloch','hagelloch-chains'];
 // A workflow a practitioner created is NOT an example, and the study-area fallback below would
 // label it Old Naledi -- the "examples are the default world" problem, reached at last by a real
 // workflow rather than by a new example. `projectId` is the discriminator: it is set only on a
@@ -998,7 +999,7 @@ function drawRunProgress(){
 /** THE WIDGETS WHOSE INSPECTOR FOLLOWS THE STANDARD (experiment 186): Name, Inputs, Settings, Result, the links,
  *  Actions, in that order and nothing else, with every setting in the widget's configuration dialog. One at a time,
  *  Relate first; the set grows as each widget is moved, and a check holds them to it. */
-export const STANDARD_INSPECTOR=new Set<NodeType>(['point_input','sample_satellite_files_at_points','raster_input','sample_raster','measure_distance','table_output','relate_table','select_rows','table_input','find_health_facilities','group_table','apply_ruleset','map_output','deduplicate_points','rate','study_area']);
+export const STANDARD_INSPECTOR=new Set<NodeType>(['point_input','chart_output','sample_satellite_files_at_points','raster_input','sample_raster','measure_distance','table_output','relate_table','select_rows','table_input','find_health_facilities','group_table','apply_ruleset','map_output','deduplicate_points','rate','study_area']);
 function samplerProduct(node:WorkflowNode){
   const up=(id:string,port:string)=>{const e=workflow.edges.find(x=>x.to===id&&x.port===port);return e?workflow.nodes.find(m=>m.id===e.from):undefined;};
   const search=up(node.id,'files'),find=search?up(search.id,'product'):undefined;
@@ -2005,6 +2006,131 @@ function openSatelliteSampleConfig(nodeId:string){
   },esc);
 }
 
+/** CHART'S TABLE CONTROLS: which key column the bars run along, and panels with their marks and a shaded period
+ *  (experiment 174). Moved into Configure… on 2026-11-09 with the same ids. */
+function chartTableControls(n:WorkflowNode<'chart_output'>):string{
+  let out='';
+      // WHICH COLUMN, only where there is a choice to make. A rate keys on `group` alone, so
+      // asking would be asking a question with one answer.
+      const table=workflow.edges.find(e=>e.to===n.id&&e.port==='records');
+      const columns=table?tableKeyColumns(workflow.nodes.find(x=>x.id===table.from)):[];
+      if(columns.length>1)
+        out+=`<div class="field"><label class="field-label" for="chart-key-column">Category column</label>`
+          +`<select id="chart-key-column"><option value="">First column \u00b7 ${esc(columns[0])}</option>`
+          +columns.map(name=>`<option value="${esc(name)}" ${n.params.keyColumn===name?'selected':''}>${esc(name)}</option>`).join('')
+          +`</select><small>This table keys on ${esc(columns.join(', '))}. One bar per row either way; the column chosen is the one the bars are labelled by.</small></div>`;
+      // PANELS, for variables moving together through time (experiment 174): one per value of another key column,
+      // stacked on the shared axis, each on its own scale. A mark per panel, and a period shaded across them all.
+      if(columns.length>1){
+        const p=n.params,held=upstreamKeyValues(n)??{};
+        const axis=p.keyColumn||columns[0]!;
+        const panels=p.panelsBy?held[p.panelsBy]??[]:[];
+        const dates=held[axis]??[],temporal=orderOf(dates)==='date'&&dates.every(d=>d.length===10);
+        const sorted=[...dates].sort();
+        out+=`<div class="field"><label class="field-label" for="chart-panels-by">One panel per</label>`
+          +`<select id="chart-panels-by"><option value="">No panels \u00b7 one chart</option>`
+          +columns.filter(name=>name!==axis).map(name=>`<option value="${esc(name)}" ${p.panelsBy===name?'selected':''}>${esc(name)}</option>`).join('')
+          +`</select><small>Each value of the column gets its own panel and scale, on one shared ${esc(axis)} axis, so a count and a concentration are never drawn on one scale.</small></div>`
+          +(panels.length
+            ?panels.map(panel=>`<div class="field"><label class="field-label" for="chart-panel-mark-${esc(panel)}">Mark for ${esc(panel)}</label>`
+              +`<select id="chart-panel-mark-${esc(panel)}" data-panel-mark="${esc(panel)}"><option value="">Automatic</option>`
+              +`<option value="bar" ${p.panelMarks?.[panel]==='bar'?'selected':''}>Bars</option>`
+              +`<option value="line" ${p.panelMarks?.[panel]==='line'?'selected':''}>Line</option></select></div>`).join('')
+              +(temporal
+                ?`<div class="field"><span class="inspector-section">Shade a period</span>`
+                  +`<label class="field-label" for="chart-shade-from">From</label><input id="chart-shade-from" type="date" data-chart-shade="from" min="${esc(sorted[0]??'')}" max="${esc(sorted.at(-1)??'')}" value="${esc(p.shade?.from??'')}">`
+                  +`<label class="field-label" for="chart-shade-to">To</label><input id="chart-shade-to" type="date" data-chart-shade="to" min="${esc(sorted[0]??'')}" max="${esc(sorted.at(-1)??'')}" value="${esc(p.shade?.to??'')}">`
+                  +`<small>Shaded behind every panel, both days included. Leave both empty for none.</small></div>`
+                :'')
+            :'');
+      }
+  return out;
+}
+
+/** WHAT THIS CHART DRAWS, in one sentence (experiment 186). */
+function chartSentence(n:WorkflowNode<'chart_output'>):string{
+  const p=n.params,from=(port:string)=>{const e=workflow.edges.find(x=>x.to===n.id&&x.port===port);const up=e&&workflow.nodes.find(m=>m.id===e.from);
+    return up?(up.params.label||TYPES[up.type].title):'';};
+  const source=from('records')||from('series')||from('decisions')||from('polygons');
+  if(!source)return 'Nothing is connected yet, so this chart has nothing to draw.';
+  if(p.figure==='tree')return p.tree?.id&&p.tree.parent&&p.tree.date
+    ?`Draws who infected whom in ${source} as chains over time: each case at its ${p.tree.date}, joined to the case named in ${p.tree.parent}.`
+    :`Draws who infected whom in ${source} as chains over time. Name the case, infector and date columns in Configure\u2026`;
+  return `Draws ${source} as ${chartRenderer(p)==='vega-lite'&&p.mark==='point'?'dots':'bars'}${p.panelsBy?`, one panel per ${p.panelsBy}`:''}${p.chartTitle?`, titled \u201c${p.chartTitle}\u201d`:''}.`;
+}
+
+/** CHART'S CONFIGURATION DIALOG (experiment 186, 2026-11-09): what is drawn (bars, or a transmission tree), and every
+ *  setting the old panels held, with their ids, on a draft written by Apply. */
+function openChartConfig(nodeId:string){
+  const node=getNode(workflow,nodeId,'chart_output');
+  type Draft=WorkflowNode<'chart_output'>['params']&{view?:'map'|'table'|'bars'};
+  const records=workflow.edges.find(e=>e.to===nodeId&&e.port==='records');
+  const columns=records?[...new Set([...tableKeyColumns(workflow.nodes.find(x=>x.id===records.from)),
+    ...((result?.tables?.[records.from] as import('./data-table.js').DataTable|undefined)?.keys??[]),
+    ...Object.keys(upstreamKeyValues(node,new Set(),'records')??{})])]:[];
+  openConfigDialog<Draft>({
+    id:'chart-config',widget:'Chart',step:node.params.label||TYPES.chart_output.title,draft:structuredClone(node.params),
+    sections:draft=>{
+      const shown={...node,params:draft} as WorkflowNode<'chart_output'>;
+      const tree=draft.figure==='tree';
+      const pick=(id:string,key:'id'|'parent'|'date',label:string,hint:string)=>
+        `<div class="field"><label class="field-label" for="${id}">${label}</label><select id="${id}" data-tree="${key}">`
+        +`<option value="">Choose a column\u2026</option>`
+        +columns.map(c=>`<option value="${esc(c)}" ${draft.tree?.[key]===c?'selected':''}>${esc(c)}</option>`).join('')
+        +`</select><small>${hint}</small></div>`;
+      const settings=(records?`<div class="field"><label class="field-label" for="chart-figure">Draw</label><select id="chart-figure">`
+          +`<option value="bars" ${tree?'':'selected'}>Bars, a category against a number</option>`
+          +`<option value="tree" ${tree?'selected':''}>Transmission tree, who infected whom over time</option></select></div>`:'')
+        +(tree
+          ?(columns.length?'':'<p class="notice">Run the workflow once to list the table\u2019s columns.</p>')
+            +pick('chart-tree-id','id','Case id','One row per case.')
+            +pick('chart-tree-parent','parent','Infected by','The case id of the infector; empty where none is recorded.')
+            +pick('chart-tree-date','date','Date','Year-month-day, such as the date of onset.')
+          :chartTableControls(shown)+chartControls(shown,{omitOrientation:draft.inputMode==='series'})
+            +(draft.inputMode==='series'?`<div class="field"><label class="field-label" for="series-orientation">Bars</label>`
+              +`<select id="series-orientation"><option value="vertical" ${chartOrientation(draft)==='vertical'?'selected':''}>Vertical \u00b7 periods along the bottom</option>`
+              +`<option value="horizontal" ${chartOrientation(draft)==='horizontal'?'selected':''}>Horizontal \u00b7 periods down the side</option></select></div>`:''))
+        +(workflow.edges.some(e=>e.to===nodeId&&e.port==='decisions')
+          ?`<div class="field"><label class="field-label" for="output-view">Display as</label><select id="output-view">`
+            +`<option value="bars" ${!draft.view||draft.view==='bars'?'selected':''}>Chart</option><option value="map" ${draft.view==='map'?'selected':''}>Map</option>`
+            +`<option value="table" ${draft.view==='table'?'selected':''}>Table</option></select></div>`:'');
+      const preview=tree
+        ?'<p class="muted">Each case is a dot at its date, on a row of its own; a line runs from its infector to it, so its length across is the serial interval. Cases with no infector start a chain, and are counted.</p>'
+        :'<p class="muted">The chart is drawn in Results when the workflow runs, with these settings.</p>';
+      return {settings,preview};
+    },
+    wire:(root,draft,redraw)=>{
+      const on=(selector:string,fn:(el:HTMLInputElement&HTMLSelectElement&HTMLTextAreaElement)=>void)=>
+        root.querySelectorAll<HTMLInputElement&HTMLSelectElement&HTMLTextAreaElement>(selector).forEach(el=>el.addEventListener('change',()=>{fn(el);redraw();}));
+      on('#chart-figure',el=>{if(el.value==='tree')draft.figure='tree';else delete draft.figure;});
+      on('[data-tree]',el=>{draft.tree={id:'',parent:'',date:'',...draft.tree,[el.dataset.tree!]:el.value};});
+      on('#chart-renderer',el=>{draft.renderer=el.value as 'html'|'vega-lite';if(draft.renderer==='html')draft.mark='bar';});
+      on('#chart-mark',el=>{draft.mark=el.value as 'bar'|'point';});
+      on('#chart-orientation',el=>{draft.orientation=el.value as 'horizontal'|'vertical';});
+      on('#series-orientation',el=>{draft.orientation=el.value as 'horizontal'|'vertical';});
+      on('#chart-key-column',el=>{if(el.value)draft.keyColumn=el.value;else delete draft.keyColumn;});
+      on('#chart-panels-by',el=>{if(el.value)draft.panelsBy=el.value;else{delete draft.panelsBy;delete draft.panelMarks;delete draft.shade;}});
+      on('[data-panel-mark]',el=>{const marks={...(draft.panelMarks||{})};if(el.value)marks[el.dataset.panelMark!]=el.value as 'bar'|'line';else delete marks[el.dataset.panelMark!];
+        if(Object.keys(marks).length)draft.panelMarks=marks;else delete draft.panelMarks;});
+      on('[data-chart-shade]',el=>{const shade={from:'',to:'',...draft.shade,[el.dataset.chartShade!]:el.value};
+        if(shade.from||shade.to)draft.shade=shade;else delete draft.shade;});
+      on('#chart-log-scale',el=>{if(el.checked)delete draft.ratioScale;else draft.ratioScale='linear';});
+      on('#chart-reference-line',el=>{if(el.checked)delete draft.referenceLine;else draft.referenceLine=false;});
+      on('#chart-bar-order',el=>{draft.barOrder=el.value as BarOrder;});
+      for(const [selector,key] of [['#chart-title','chartTitle'],['#chart-subtitle','subtitle'],['#chart-x-axis','xAxisTitle'],['#chart-y-axis','yAxisTitle'],['#chart-source-note','sourceNote']] as const)
+        on(selector,el=>{draft[key]=el.value.trim();});
+      on('#chart-legend',el=>{draft.colorByCategory=el.checked;});
+      on('#output-view',el=>{draft.view=el.value as Draft['view'];});
+    },
+    apply:draft=>{
+      const {view,...params}=draft;
+      if(view&&view!=='bars'){change(w=>{const index=w.nodes.findIndex(x=>x.id===nodeId);
+        w.nodes[index]={...w.nodes[index]!,type:'output',params:{label:params.label,view}} as never;});return;}
+      change(w=>{getNode(w,nodeId,'chart_output').params=params;});
+    },
+  },esc);
+}
+
 /** WHAT SAMPLE RASTER WRITES, in one sentence. */
 function sampleSentence(n:WorkflowNode<'sample_raster'>):string{
   const p=n.params,name=p.attribute?.trim();
@@ -2878,10 +3004,23 @@ function renderInspector(){
     content+=standardSection('Result',`<p class="standard-result${why?' standard-result-warning':''}">${esc(why?`The last run could not compute this step: ${why}`
       :drawn?`Drawn in Results, under "${n.params.label||'Map'}".`:'Not run yet.')}</p>`
       +`<div class="source-card">${tileImportControls(n.params)}</div>`);
-  }else if(['table_output','chart_output'].includes(n.type)&&'inputMode' in n.params&&n.params.inputMode==='polygons'){
-    content+=`<label class="field-label" for="catchment-output-mode">Input mode</label><select id="catchment-output-mode"><option value="polygons">Catchment polygons / summaries</option><option value="${n.type==='chart_output'?'decisions':'spatial'}">${n.type==='chart_output'?'Reasoning results':'Point layers'}</option></select><label class="field-label" for="polygon-source">Polygon input</label><select id="polygon-source" data-map-port="polygons"><option value="">Select input</option>${workflow.nodes.filter(x=>outputOf(x)==='polygons').map(x=>`<option value="${esc(x.id)}" ${workflow.edges.some(e=>e.to===n.id&&e.from===x.id)?'selected':''}>${esc(x.params.label||TYPES[x.type].title)}</option>`).join('')}</select><label class="field-label" for="polygon-output-label">Results tab name</label><input id="polygon-output-label" maxlength="60" value="${esc(n.params.label||'')}"><p class="notice">Connect a polygon operation. Charts require Summarize points in polygons. Display only; processing parameters belong to upstream nodes.</p>`;
+  }else if(n.type==='chart_output'){
+    // THE STANDARD INSPECTOR (experiment 186), touched 2026-11-09 for the transmission tree: the name, which is the
+    // Results tab's, and its place in the write-up; its inputs; one sentence and Configure…, which holds every setting
+    // the three old panels held, under the same ids; and what the last run drew.
+    content+=standardSection('Name',labelForm('chart-label','Results tab name',n.params.label||'Chart')
+      +`<div class="field"><label class="field-label" for="output-section">In the write-up, under</label>`
+      +`<select id="output-section">${FIGURE_SECTIONS.map(s=>`<option value="${s}" ${s===figureSection(n.params,n.type)?'selected':''}>${s}${s===DEFAULT_FIGURE_SECTIONS[n.type]?' (default)':''}</option>`).join('')}</select></div>`);
+    content+=standardSection('Inputs',standardInputs(n,{records:'Table',decisions:'Reasoning result',polygons:'Polygon summaries',series:'Case series'}));
+    content+=standardSection('Settings',`<p class="standard-sentence">${esc(chartSentence(n))}</p>`
+      +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button></div>');
+    const drawn=result?.outputs.find(o=>o.nodeId===n.id);
+    const why=result?.unfinished?.find(u=>u.nodeId===n.id)?.message;
+    content+=standardSection('Result',`<p class="standard-result${why?' standard-result-warning':''}">${esc(why?`The last run could not compute this step: ${why}`
+      :drawn?`Shown in Results, under "${n.params.label||'Chart'}".`:'Not run yet.')}</p>`);
+  }else if(n.type==='table_output'&&n.params.inputMode==='polygons'){
+    content+=`<label class="field-label" for="catchment-output-mode">Input mode</label><select id="catchment-output-mode"><option value="polygons">Catchment polygons / summaries</option><option value="spatial">Point layers</option></select><label class="field-label" for="polygon-source">Polygon input</label><select id="polygon-source" data-map-port="polygons"><option value="">Select input</option>${workflow.nodes.filter(x=>outputOf(x)==='polygons').map(x=>`<option value="${esc(x.id)}" ${workflow.edges.some(e=>e.to===n.id&&e.from===x.id)?'selected':''}>${esc(x.params.label||TYPES[x.type].title)}</option>`).join('')}</select><label class="field-label" for="polygon-output-label">Results tab name</label><input id="polygon-output-label" maxlength="60" value="${esc(n.params.label||'')}"><p class="notice">Connect a polygon operation. Charts require Summarize points in polygons. Display only; processing parameters belong to upstream nodes.</p>`;
     // map_output has its own branch above and is no longer reached here.
-    if(n.type==='chart_output')content+=chartControls(n);
     // nor here: a map's communication controls are in its own branch.
   }else if(n.type==='table_output'){
     // THE STANDARD INSPECTOR (experiment 186): the name, which is the Results tab's, and where the figure goes in the
@@ -3328,14 +3467,6 @@ function renderInspector(){
         :`<div class="field"><label class="field-label" for="series-weight">Cases per record (attribute, optional)</label><input id="series-weight" data-slr="weightField" maxlength="60" value="${esc(p.weightField||'')}" placeholder="leave empty when one row is one case"></div>`)
       +(workflow.edges.some(e=>e.from===n.id)?'':'<div class="inspector-actions"><button id="add-series-chart" class="button small">＋ Add epidemic curve</button></div>')
       +'<div class="notice">A curve by date of death is not a curve by date of onset, so the kind is required and is stated on the chart. Periods with no cases are kept, because a gap is a fact about the outbreak. Records whose date is not an ISO 8601 date are excluded and counted, never guessed at: this widget does not choose between day-first and month-first ordering. Leaving the weight empty asserts that one row is one case.</div>';
-  }else if(n.type==='chart_output'&&n.params.inputMode==='series'){
-    content+=`<div class="field"><label class="field-label" for="series-source">Case series</label><select id="series-source" data-map-port="series"><option value="">Select input</option>${workflow.nodes.filter(x=>x.type==='case_series').map(x=>`<option value="${esc(x.id)}" ${workflow.edges.some(e=>e.to===n.id&&e.from===x.id)?'selected':''}>${esc(x.params.label||'Cases by period')}</option>`).join('')}</select></div>`
-      +`<div class="field"><label class="field-label" for="chart-label">Results tab name</label><input id="chart-label" maxlength="60" value="${esc(n.params.label)}"></div>`
-      +`<div class="field"><label class="field-label" for="series-orientation">Bars</label>`
-      +`<select id="series-orientation"><option value="vertical" ${chartOrientation(n.params)==='vertical'?'selected':''}>Vertical · periods along the bottom</option>`
-      +`<option value="horizontal" ${chartOrientation(n.params)==='horizontal'?'selected':''}>Horizontal · periods down the side</option></select></div>`
-      +'<div class="notice">An epidemic curve: cases per period, in order, labelled with the kind of date the series was built from. A presentation of the series, with no smoothing, no interpolation and no new inference. Vertical by default, because that is how an outbreak report draws one.</div>';
-    content+=chartControls(n,{omitOrientation:true});
   }else if(n.type==='slr_extract_import'){
     const p=n.params;
     content+='<p class="description">Declares an imported long-format table as a bounded extract of published AR6 projections. It imports and declares; it acquires nothing and produces no projection.</p>'
@@ -3734,79 +3865,8 @@ function renderInspector(){
     const why=result?.unfinished?.find(u=>u.nodeId===n.id)?.message;
     content+=standardSection('Result',`<p class="standard-result${why?' standard-result-warning':''}">${esc(why?`The last run could not compute this step: ${why}`
       :measured?`${measured.rowCount.toLocaleString()} point${measured.rowCount===1?'':'s'} measured; ${measured.missingValueCount.toLocaleString()} with no nearest candidate. A table step after it reads point_id, nearest_id and each candidate's attributes as nearest_<attribute>.`:'Not run yet.')}</p>`);
-  }else if(n.type==='chart_output'||n.type==='output'){
-    // ONE PICKER PER PORT, no mode. The question "what shape is this?" was asked before the
-    // practitioner had the shape, and it decided which ports existed -- so a table of rates met a
-    // node with a single "Reasoning result" port and nothing to aim at. The practitioner,
-    // 2026-10-28: *"If the table's role is to represent decisions, it's still a table and if it
-    // has categories with numeric values, it can be presented as a chart."* So the chart draws
-    // what it is given, and what is connected decides.
-    if(n.type==='chart_output'){
-      const port=(id:string,label:string,type:string,hint:string)=>{
-        const sources=workflow.nodes.filter(x=>x.id!==n.id&&outputOf(x)===type);
-        if(!sources.length)return '';
-        return `<div class="field"><label class="field-label" for="chart-${id}">${label}</label>`
-          +`<select id="chart-${id}" data-map-port="${id}"><option value="">Not connected</option>`
-          +sources.map(x=>`<option value="${esc(x.id)}" ${workflow.edges.some(e=>e.to===n.id&&e.port===id&&e.from===x.id)?'selected':''}>${esc(x.params.label||TYPES[x.type].title)}</option>`).join('')
-          +`</select><small>${hint}</small></div>`;
-      };
-      content+=port('records','Table','table',
-        'A bar per row: the category column against the number. A rate, a total within groups, a '
-        +'derived value or a case series \u2014 whatever the table was made for.')
-        +port('decisions','Reasoning result','decisions',
-          'Counts every input record once by decision, access zone or evidence tier.')
-        +port('polygons','Polygon summaries','polygons',
-          'Counts or totals by polygon, from a summarised layer.');
-      // WHICH COLUMN, only where there is a choice to make. A rate keys on `group` alone, so
-      // asking would be asking a question with one answer.
-      const table=workflow.edges.find(e=>e.to===n.id&&e.port==='records');
-      const columns=table?tableKeyColumns(workflow.nodes.find(x=>x.id===table.from)):[];
-      if(columns.length>1)
-        content+=`<div class="field"><label class="field-label" for="chart-key-column">Category column</label>`
-          +`<select id="chart-key-column"><option value="">First column \u00b7 ${esc(columns[0])}</option>`
-          +columns.map(name=>`<option value="${esc(name)}" ${n.params.keyColumn===name?'selected':''}>${esc(name)}</option>`).join('')
-          +`</select><small>This table keys on ${esc(columns.join(', '))}. One bar per row either way; the column chosen is the one the bars are labelled by.</small></div>`;
-      // PANELS, for variables moving together through time (experiment 174): one per value of another key column,
-      // stacked on the shared axis, each on its own scale. A mark per panel, and a period shaded across them all.
-      if(columns.length>1){
-        const p=n.params,held=upstreamKeyValues(n)??{};
-        const axis=p.keyColumn||columns[0]!;
-        const panels=p.panelsBy?held[p.panelsBy]??[]:[];
-        const dates=held[axis]??[],temporal=orderOf(dates)==='date'&&dates.every(d=>d.length===10);
-        const sorted=[...dates].sort();
-        content+=`<div class="field"><label class="field-label" for="chart-panels-by">One panel per</label>`
-          +`<select id="chart-panels-by"><option value="">No panels \u00b7 one chart</option>`
-          +columns.filter(name=>name!==axis).map(name=>`<option value="${esc(name)}" ${p.panelsBy===name?'selected':''}>${esc(name)}</option>`).join('')
-          +`</select><small>Each value of the column gets its own panel and scale, on one shared ${esc(axis)} axis, so a count and a concentration are never drawn on one scale.</small></div>`
-          +(panels.length
-            ?panels.map(panel=>`<div class="field"><label class="field-label" for="chart-panel-mark-${esc(panel)}">Mark for ${esc(panel)}</label>`
-              +`<select id="chart-panel-mark-${esc(panel)}" data-panel-mark="${esc(panel)}"><option value="">Automatic</option>`
-              +`<option value="bar" ${p.panelMarks?.[panel]==='bar'?'selected':''}>Bars</option>`
-              +`<option value="line" ${p.panelMarks?.[panel]==='line'?'selected':''}>Line</option></select></div>`).join('')
-              +(temporal
-                ?`<div class="field"><span class="inspector-section">Shade a period</span>`
-                  +`<label class="field-label" for="chart-shade-from">From</label><input id="chart-shade-from" type="date" data-chart-shade="from" min="${esc(sorted[0]??'')}" max="${esc(sorted.at(-1)??'')}" value="${esc(p.shade?.from??'')}">`
-                  +`<label class="field-label" for="chart-shade-to">To</label><input id="chart-shade-to" type="date" data-chart-shade="to" min="${esc(sorted[0]??'')}" max="${esc(sorted.at(-1)??'')}" value="${esc(p.shade?.to??'')}">`
-                  +`<small>Shaded behind every panel, both days included. Leave both empty for none.</small></div>`
-                :'')
-            :'');
-      }
-      // WHAT THE READER CALLS IT, and how it is shown. Both were in the markup this branch
-      // replaced and both are still the practitioner's to set; only the question about shape is
-      // gone.
-      content+=`<div class="field"><label class="field-label" for="output-label">Results tab name</label>`
-        +`<input id="output-label" maxlength="60" value="${esc(n.params.label||'')}"></div>`
-        // DISPLAY AS is not the mode that was removed. It chooses which OUTPUT WIDGET this is --
-        // a map, a table or a chart -- and the node becomes that widget. The question that went
-        // was the one asked INSIDE a chart about the shape of its own input.
-        +`<div class="field"><label class="field-label" for="output-view">Display as</label>`
-        +`<select id="output-view"><option value="map">Map</option>`
-        +`<option value="table">Table</option><option value="bars" selected>Bar chart</option>`
-        +`</select></div>`
-        +`<div class="rule-preview">Each output node creates a named tab in Results. Connect it `
-        +`to the results you want to display, then run the workflow.</div>`;
-    }else content+=`<div class="field"><label class="field-label" for="chart-decisions">Reasoning result</label><select id="chart-decisions" data-map-port="decisions"><option value="">Select input</option>${workflow.nodes.filter(x=>outputOf(x)==='decisions').map(x=>`<option value="${esc(x.id)}" ${workflow.edges.some(e=>e.to===n.id&&e.port==='decisions'&&e.from===x.id)?'selected':''}>${esc(x.params.label||TYPES[x.type].title)} · ${esc(x.id)}</option>`).join('')}</select></div>`;
-    if(n.type==='chart_output')content+=chartControls(n);
+  }else if(n.type==='output'){
+content+=`<div class="field"><label class="field-label" for="chart-decisions">Reasoning result</label><select id="chart-decisions" data-map-port="decisions"><option value="">Select input</option>${workflow.nodes.filter(x=>outputOf(x)==='decisions').map(x=>`<option value="${esc(x.id)}" ${workflow.edges.some(e=>e.to===n.id&&e.port==='decisions'&&e.from===x.id)?'selected':''}>${esc(x.params.label||TYPES[x.type].title)} · ${esc(x.id)}</option>`).join('')}</select></div>`;
   }
   if(['study_area','point_input','places','centers','measure_area','coverage_check','map_output','table_output'].includes(n.type))content+='<div class="source-card" data-spatial-reference><span class="inspector-section">Coordinate reference system</span><h3>WGS84 · EPSG:4326</h3><p>Stored coordinates: longitude, latitude in degrees (OGC:CRS84). A source reads degrees or a UTM zone and converts on import; Reproject points projects mid-workflow.</p></div>';
   // A map can always take another point layer: there is no mode in which it cannot draw points.
@@ -3898,16 +3958,6 @@ function renderInspector(){
   }
   // WHERE THIS FIGURE GOES IN THE WRITE-UP, for every output widget: Results unless chosen otherwise. The practitioner,
   // 2026-11-05: "all output widgets may have default IMRAD sections but it should be flexible."
-  if(n.type==='chart_output'){
-    const at=figureSection(n.params,n.type),fallback=DEFAULT_FIGURE_SECTIONS[n.type];
-    const field=`<div class="field"><label class="field-label" for="output-section">In the write-up, under</label>`
-      +`<select id="output-section">${FIGURE_SECTIONS.map(s=>`<option value="${s}" ${s===at?'selected':''}>${s}${s===fallback?' (default)':''}</option>`).join('')}</select></div>`;
-    // BESIDE THE RESULTS TAB NAME, the other setting about how this output is presented. It was appended at the end
-    // until 2026-11-05, below Definition and Connections -- 3,200 px down a Map's Inspector, where the practitioner,
-    // looking for it on 0.26.0, did not find it.
-    const named=/Results tab name<\/label><input [^>]*>(<\/div>)?/;
-    content=named.test(content)?content.replace(named,match=>match+field):content+field;
-  }
   $('#inspector-content').innerHTML=`<div class="inspector-body">${content}</div>`;
   // QUICK LOOK AT WHAT THIS STEP PRODUCED, for every widget that emits a table.
   //
@@ -4172,6 +4222,7 @@ function renderInspector(){
   if(n.type==='table_output')optionalElement('#configure-step')?.addEventListener('click',()=>openTableConfig(n.id));
   if(n.type==='sample_raster')optionalElement('#configure-step')?.addEventListener('click',()=>openSampleConfig(n.id));
   if(n.type==='sample_satellite_files_at_points')optionalElement('#configure-step')?.addEventListener('click',()=>openSatelliteSampleConfig(n.id));
+  if(n.type==='chart_output')optionalElement('#configure-step')?.addEventListener('click',()=>openChartConfig(n.id));
   if(n.type==='group_table')optionalElement('#configure-step')?.addEventListener('click',()=>{
     const node=workflow.nodes.find(x=>x.id===n.id);
     if(node?.type!=='group_table')return;
@@ -4757,7 +4808,7 @@ function renderInspector(){
   document.querySelectorAll<HTMLTextAreaElement>('[data-slr-citation]').forEach(el=>el.addEventListener('change',()=>change(w=>{
     const node=getNode(w,n.id,'slr_extract_import');const citations=[...node.params.citations];citations[Number(el.dataset.slrCitation)]=el.value.trim();node.params.citations=citations;})));
   optionalElement('#add-series-chart')?.addEventListener('click',()=>change(w=>{const id=`curve-${Date.now()}`;w.nodes.push({id,type:'chart_output',x:n.x+270,y:n.y,params:{label:'Epidemic curve',inputMode:'series'}});w.edges.push({id:`e-${Date.now()}`,from:n.id,to:id,port:'series'});selected=id;}));
-  document.querySelectorAll<HTMLInputElement>('#chart-label').forEach(el=>el.addEventListener('change',()=>change(w=>{required(w.nodes.find(x=>x.id===n.id)).params.label=el.value.trim()||'Epidemic curve';})));
+  document.querySelectorAll<HTMLInputElement>('#chart-label').forEach(el=>el.addEventListener('change',()=>change(w=>{required(w.nodes.find(x=>x.id===n.id)).params.label=el.value.trim()||'Chart';})));
   // Reading, not editing: it opens a dialog and touches nothing that is saved.
   optionalElement('#table-convert-on-run')?.addEventListener('change',e=>{
     const on=(e.currentTarget as HTMLInputElement).checked;
@@ -5365,6 +5416,21 @@ function renderResults(){
     const spec=chartVegaSpec(output.chart,chartNode.params,chartContext);
     $('#bars-panel').innerHTML=`<p class="muted">${esc(output.chart.caption)} · ${output.chart.records!==undefined?`${output.chart.total.toLocaleString('en')} cases from ${output.chart.records.toLocaleString('en')} records`:`${output.chart.total.toLocaleString('en')} records`} · grouping: ${esc(output.chart.field)}</p>${output.chart.field==='total'?'<p class="notice">The chart source does not declare a physical unit for this numeric total. Check the source and method before interpreting it.</p>':''}<div id="vega-chart" role="img" aria-label="${esc(output.chart.caption)}"></div><details><summary>Underlying chart values</summary><table><thead><tr><th>Category</th><th>Value</th></tr></thead><tbody>${output.chart.bins.map(b=>`<tr><td>${esc(b.label)}</td><td>${b.count}</td></tr>`).join('')}</tbody></table></details><details><summary>Vega-Lite specification</summary><pre>${esc(JSON.stringify(spec,null,2))}</pre></details>`;
     const host=$('#vega-chart');void renderVegaChart(host,output.chart,chartNode.params,chartContext).catch(e=>{if(host.isConnected)host.textContent=`Chart could not render: ${errorMessage(e)}. Underlying values remain available below.`;});
+  }else if((output as {tree?:unknown}|undefined)?.tree){
+    // WHO INFECTED WHOM (experiment 200): the tree, its sentence above it.
+    const carried=output as unknown as {tree:import('./transmission-tree.js').TransmissionTree;sentence:string};
+    // The sentence is already above, in the result statement; the metrics say what the tree holds.
+    const c=carried.tree.counts;
+    $('#result-metrics').innerHTML=`<span class="metric"><b>${c.cases}</b> cases</span><span class="metric"><b>${c.chains}</b> chains</span>`
+      +`<span class="metric"><b>${c.links}</b> links</span><span class="metric unknown"><b>${c.noInfector}</b> no infector recorded</span>`;
+    // VEGA-LITE, as every other chart (the practitioner, 2026-11-09: "Vega lite for tree chart"); the classic renderer
+    // keeps the plain SVG.
+    if(chartNode&&chartRenderer(chartNode.params)==='vega-lite'){
+      const sourceId=runWorkflow?.edges.find(e=>e.to===output!.nodeId)?.from;
+      $('#bars-panel').innerHTML='<div id="vega-chart" class="vega-chart"></div>';
+      const host=$('#vega-chart');void renderVegaTree(host,carried.tree,chartNode.params,{sourceId,runId:result?.runId,
+        sourceLabel:runWorkflow?.nodes.find(n=>n.id===sourceId)?.params.label}).catch(e=>{if(host.isConnected)host.textContent=`Chart could not render: ${errorMessage(e)}.`;});
+    }else $('#bars-panel').innerHTML=treeSvg(carried.tree,esc,chartNode?.params.chartTitle||'');
   }else $('#bars-panel').innerHTML=output?.chart?chartMarkup(output.chart,esc,chartOrientation(chartNode?.params??{})):'';
   // The figure is drawn from the bins, not scraped from the panel, so it is the same file whichever
   // renderer is on screen -- and it exists at all for the classic bars, which are divs and have no

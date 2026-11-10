@@ -33,7 +33,7 @@ test('package dialog validates confirmation, supports cancel, reports corruption
 
 test('saved manifest updates with edits and survives export while incomplete inventories are rejected',async({page})=>{
   await source(page);const initial=JSON.parse(await saved(page));assert.equal(initial.manifest.inventory.assets.length,1);assert.equal(initial.manifest.inventory.assets[0].sha256,hash);
-  await page.locator('[data-add="chart_output"]').click();await page.locator('#chart-decisions').selectOption('criteria');
+  await page.locator('[data-add="chart_output"]').click();await page.locator('#connect-decisions').selectOption('criteria');
   const updated=JSON.parse(await saved(page));assert.ok(updated.manifest.revision>initial.manifest.revision);assert.equal(updated.manifest.inventory.nodes.length,initial.nodes.length+1);assert.equal(updated.manifest.inventory.connections.length,initial.edges.length+1);
   const pending=page.waitForEvent('download');await page.locator('#backup-button').click();await page.locator('#export-button').click();const bundle=JSON.parse(await downloadText(await pending));assert.deepEqual(bundle.workflow.manifest,updated.manifest);
   const incomplete=structuredClone(bundle);incomplete.workflow.manifest.inventory.assets=[];const before=await saved(page);

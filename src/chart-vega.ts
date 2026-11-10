@@ -372,3 +372,63 @@ export async function renderVegaChart(host:HTMLElement,chart:ChartSummary,params
   if(ticket!==generation||!host.isConnected){result.finalize();return;}
   current=result;
 }
+
+/** WHO INFECTED WHOM, IN VEGA-LITE (experiment 200, step 5; the practitioner, 2026-11-09: "Vega lite for tree chart").
+ *  The same figure the tree module computes, drawn by the renderer every other chart uses, so it exports, carries its
+ *  title and source note, and enters the write-up the same way. Each link is two rules: down from the infector at its
+ *  date to the case's row, then across to the case's date, so the length across is the serial interval. Text at 14 px. */
+export function treeVegaSpec(tree:import('./transmission-tree.js').TransmissionTree,params:ChartParams,
+  context:{sourceId?:string;runId?:string;sourceLabel?:string}={}){
+  const at=new Map(tree.cases.map(c=>[c.id,c]));
+  const dayOf=(c:import('./transmission-tree.js').TreeCase):number|null=>c.day??(c.parent&&at.get(c.parent)?dayOf(at.get(c.parent)!):null);
+  const iso=(day:number|null)=>day===null?null:new Date(day*86_400_000).toISOString().slice(0,10);
+  const cases=tree.cases.map(c=>({id:c.id,row:c.row,date:iso(dayOf(c)),recorded:c.date||'no date',
+    generation:c.generation+1,infector:c.generation?c.parent:'',
+    kind:c.generation===0?(c.starts==='no infector recorded'?'No infector recorded':c.starts==='in a loop'?'In a loop':'Infector not in the table')
+      :c.day===null?'No readable date':'Infected by a listed case'}));
+  const links=tree.cases.filter(c=>c.generation>0&&c.parent&&at.has(c.parent)).map(c=>{const p=at.get(c.parent!)!;
+    return {from:iso(dayOf(p)),to:iso(dayOf(c)),fromRow:p.row,toRow:c.row,interval:(dayOf(c)??0)-(dayOf(p)??0)};});
+  const width=860,height=Math.max(160,tree.cases.length*7);
+  const sourceNote=chartSourceNote(params,context.sourceId,context.runId,context.sourceLabel);
+  const x={field:'date',type:'temporal' as const,title:params.xAxisTitle?.trim()||tree.columns.date,
+    axis:{format:'%Y-%m-%d',labelFontSize:14,titleFontSize:14,tickCount:6,grid:true,gridColor:FIGURE_GRID}};
+  const y={field:'row',type:'quantitative' as const,scale:{reverse:true,domain:[-1,tree.cases.length]},axis:null};
+  // Short enough to be read whole: Vega cuts a legend label at 160 px unless told otherwise, and here it is told.
+  const kinds=['Infected by a listed case','No infector recorded','Infector not in the table','In a loop','No readable date'];
+  return {
+    $schema:'https://vega.github.io/schema/vega-lite/v6.json',
+    background:FIGURE_ROLE.background,
+    description:`Transmission tree: ${tree.counts.cases} cases in ${tree.counts.chains} chains, ${tree.counts.links} links.`,
+    title:{text:params.chartTitle?.trim()||'Who infected whom',
+      subtitle:[params.subtitle?.trim()||`One row per case, chains top to bottom; ${tree.columns.date} left to right. A line's length across is the serial interval.`,sourceNote]
+        .filter((part):part is string=>!!part).flatMap(part=>wrapToWidth(part,width)),anchor:'start' as const},
+    width,height,
+    layer:[
+      {data:{values:links},mark:{type:'rule' as const,color:FIGURE_ROLE.quietInk,strokeWidth:1},
+        encoding:{x:{...x,field:'from'},y:{...y,field:'fromRow'},y2:{field:'toRow'}}},
+      {data:{values:links},mark:{type:'rule' as const,color:FIGURE_ROLE.quietInk,strokeWidth:1},
+        encoding:{x:{...x,field:'from'},x2:{field:'to'},y:{...y,field:'toRow'},
+          tooltip:[{field:'interval',type:'quantitative' as const,title:'serial interval, days'}]}},
+      {data:{values:cases},mark:{type:'point' as const,filled:true,size:36,opacity:1},
+        encoding:{x,y,
+          color:{field:'kind',type:'nominal' as const,title:null,scale:{domain:kinds,range:[FIGURE_ROLE.primary,FIGURE_ROLE.attention,FIGURE_PALETTE[3],FIGURE_PALETTE[4]??FIGURE_ROLE.ink,FIGURE_ROLE.quietInk]},
+            legend:{orient:'top' as const,direction:'horizontal' as const,labelFontSize:14,labelLimit:0,symbolSize:80,values:kinds.filter(k=>cases.some(c=>c.kind===k))}},
+          tooltip:[{field:'id',type:'nominal' as const,title:'case'},{field:'recorded',type:'nominal' as const,title:tree.columns.date},
+            {field:'infector',type:'nominal' as const,title:'infected by'},{field:'generation',type:'quantitative' as const,title:'generation'}]}},
+    ],
+    config:{view:{stroke:null},font:FIGURE_TYPE.family,
+      title:{fontSize:FIGURE_TYPE.title,subtitleFontSize:14,color:FIGURE_ROLE.ink,subtitleColor:FIGURE_ROLE.quietInk,subtitlePadding:8,offset:12}},
+  };
+}
+
+export async function renderVegaTree(host:HTMLElement,tree:import('./transmission-tree.js').TransmissionTree,params:ChartParams,
+  context:{sourceId?:string;runId?:string;sourceLabel?:string}={}):Promise<void>{
+  disposeVegaChart();
+  const ticket=generation;
+  const spec=treeVegaSpec(tree,params,context);
+  const {default:embed}=await import('vega-embed');
+  if(ticket!==generation||!host.isConnected)return;
+  const result=await embed(host,spec as never,{mode:'vega-lite',renderer:'svg',actions:{export:{svg:true,png:false},source:false,compiled:false,editor:false},tooltip:true});
+  if(ticket!==generation||!host.isConnected){result.finalize();return;}
+  current=result;
+}

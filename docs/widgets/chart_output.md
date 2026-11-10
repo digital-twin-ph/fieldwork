@@ -39,18 +39,40 @@ than the table beside it.
 
 ## How to use it
 
-1. Add **Chart** and select it.
-2. Pick what it should draw on one of the source lists — *Table*, *Reasoning result*, or *Polygon
-   summaries*. Only the lists with something to offer are shown.
-3. If the table keys on more than one column, choose which one labels the bars. With a single key
-   column there is nothing to choose and nothing is asked.
-4. Set the mark and the orientation. Bars read best horizontally when the labels are long or there
-   are many of them; 32 sub-districts is many.
-5. Name the Results tab, give the chart a title, a subtitle and axis titles if you want them in the
-   figure, then run the workflow.
-6. Optionally turn on the category legend, which colours each bar. It holds at most six categories,
-   because the validated palette is six hues; past that, group the tail upstream rather than ask
-   for a seventh colour.
+1. Add **Chart** and select it. Name the Results tab under **Name**, and choose where it goes in the write-up.
+2. Under **Inputs**, pick what it should draw: *Table*, *Reasoning result*, or *Polygon summaries*.
+3. Press **Configure…**. Everything else is set there, and **Apply** writes it:
+   - **Draw**: bars, or a **transmission tree** (below).
+   - If the table keys on more than one column, which one labels the bars.
+   - The mark and the orientation. Bars read best horizontally when the labels are long or there are many of them;
+     32 sub-districts is many.
+   - A title, a subtitle, axis titles and a source note, if you want them in the figure.
+   - Optionally the category legend, which colours each bar. It holds at most six categories, because the validated
+     palette is six hues; past that, group the tail upstream rather than ask for a seventh colour.
+4. Run the workflow.
+
+### Who infected whom: a transmission tree
+
+Connect a table, or a point layer, with one row per case: a column naming the case, one naming its infector, and a
+date. In **Configure…**, set **Draw** to **Transmission tree** and name the three columns.
+
+Each case is a dot at its date, on a row of its own. A line runs from its infector's date down to its row and across
+to its own date, so the length across is the **serial interval**. A case naming no infector starts a chain; its
+children are drawn beneath it, earliest first, so generations read left to right and chains top to bottom.
+Drawn by Vega-Lite, as other charts are, so it exports as SVG with its title and source note; hover a point for the
+case, its date, its infector and its generation, and a line for its serial interval.
+
+Nothing is dropped, and each is counted and said:
+
+| A case that | is drawn |
+| --- | --- |
+| names no infector | starting a chain |
+| names an infector the table does not hold | starting a chain, counted apart |
+| sits in a loop (A infected by B, B by A) | starting a chain, counted as in a loop, which no chain can be |
+| has no readable date | at its infector's date, outlined |
+
+Hagelloch, 1861: 188 cases in 4 chains, 184 links; the largest chain starts with case 184 and holds 173 cases over 6
+generations. The tree draws the reconstruction of who infected whom that the table holds; it does not estimate one.
 
 ### Variables moving together through time: one panel each
 

@@ -377,7 +377,7 @@
       "id": "urn:fieldwork:example:nyc-asthma-ozone-2016-2025",
       "title": "Ozone and child asthma emergency visits, New York City, 2016–2025",
       "repository": "https://github.com/digital-twin-ph/example-2025-nyc-ozone",
-      "commit": "232147d75de452aa4593ad8a97a380cdc46c73a5",
+      "commit": "d8b488d3e400565ef24c2ae2955e45d012ef416e",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2025-nyc-ozone",
       "licence": {
         "data": "Not redistributed",
@@ -428,8 +428,8 @@
         },
         {
           "path": "manual.json",
-          "sha256": "e79fc21fc86f42059f4e22e7b33046bc9377b749cef016e7f886956d6eb9b376",
-          "bytes": 42778
+          "sha256": "258889450148b5e9eb002333d69d686a83b18df71e10b9563c48d613559de309",
+          "bytes": 43244
         }
       ],
       "workflowCount": 6
@@ -438,7 +438,7 @@
       "id": "urn:fieldwork:example:brazil-dengue-rj-2024",
       "title": "Dengue in Rio de Janeiro state, Brazil, 2024",
       "repository": "https://github.com/digital-twin-ph/example-2024-brazil-dengue",
-      "commit": "45387b74fd4ef0ab9b1a7e2b4bee498c3c0a4c0a",
+      "commit": "bef77336119614536fd217311ce8f73e73c983f9",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2024-brazil-dengue",
       "licence": {
         "data": "CC-BY-4.0",
@@ -513,8 +513,8 @@
         },
         {
           "path": "manual.json",
-          "sha256": "53152792cf9059b44a9a5ffd4614f5edeb0abd0b21344e6c14c1a1f68e56341b",
-          "bytes": 70549
+          "sha256": "355ac12fea24ef8dfbecb55a250fe0294613221362e8f54ae760807eb957ec67",
+          "bytes": 71487
         },
         {
           "path": "notes/what-aedes-mosquitoes-meet.md",
@@ -624,7 +624,7 @@
       "id": "urn:fieldwork:example:sierra-leone-measles",
       "title": "Measles in Sierra Leone, 2019 to 2023",
       "repository": "https://github.com/digital-twin-ph/example-2019-sierra-leone-measles",
-      "commit": "070906b4e0baa1694039a0ac1602d36ff870a7a6",
+      "commit": "9fd39c61cfa05b9bf3b8ae74e11dc4d364594c11",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2019-sierra-leone-measles",
       "licence": {
         "data": "Used with the Sierra Leone FETP’s agreement for distributable training materials; modified for a public teaching repository",
@@ -660,8 +660,8 @@
         },
         {
           "path": "manual.json",
-          "sha256": "343333ea77ca1767a430578e07f752483a418df0d6507fc3e79904c009128685",
-          "bytes": 35240
+          "sha256": "6929631953a0693f0650f2f841660ba501b027edb34054cc90e05029412983cc",
+          "bytes": 35428
         },
         {
           "path": "data/measles-sierra-leone-semisynthetic.csv",

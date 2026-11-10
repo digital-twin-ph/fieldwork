@@ -44,7 +44,9 @@ test('the shift columns are offered as more exposures, and each ticked one is it
   await page.locator('[data-reg-adjust-remove="mes"]').click();
   // The chart is offered the models' keys, the shift among them, before any run.
   await page.locator('.react-flow__node[data-id="plot"]').click();
+  await page.locator('#configure-step').click();
   await expect(page.locator('#chart-key-column option[value="shift_days"]')).toHaveCount(1);
+  await page.locator('#config-cancel').click();
   await run(page);
   await page.locator('[data-view="results"]').click();
   const results=page.locator('#results, main').first();

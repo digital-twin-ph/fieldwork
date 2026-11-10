@@ -36,17 +36,17 @@ const withTable=async page=>{
 test('a chart offers a table port, and connecting one makes the edge',async({page})=>{
   await withTable(page);
   // The port that did not exist. No mode is set first, and none is offered.
-  await expect(page.locator('#chart-records')).toBeVisible();
+  await expect(page.locator('#connect-records')).toBeVisible();
   await expect(page.locator('#catchment-output-mode')).toHaveCount(0);
   await expect(page.locator('.react-flow__edge')).toHaveCount(0);
-  await page.locator('#chart-records').selectOption('rates');
+  await page.locator('#connect-records').selectOption('rates');
   await page.locator('[data-view="workflow"]').click();
   await expect(page.locator('.react-flow__edge')).toHaveCount(1);
 });
 
 test('the bars are the rates themselves, and the unit is on the figure',async({page})=>{
   await withTable(page);
-  await page.locator('#chart-records').selectOption('rates');
+  await page.locator('#connect-records').selectOption('rates');
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
   await page.locator('[data-view="results"]').click();

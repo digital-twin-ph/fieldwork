@@ -651,3 +651,16 @@ fw:epiInfoLabelStatus a owl:DatatypeProperty; rdfs:label "Epi Info label status"
   rdfs:domain fw:EpiEstimate; rdfs:comment "\"deduced\" when the label was read from a rendering of Epi Info rather than from Epi Info, \"verified\" when read from Epi Info itself, and \"unread\" when no source has been read at all. Written rather than omitted, so a receipt states which of the three it is instead of being silent about a field this project requires.".
 fw:epiInfoLabelSource a owl:DatatypeProperty; rdfs:label "Epi Info label source";
   rdfs:domain fw:EpiEstimate; rdfs:comment "Where the label was read. \"epi-info-ai-results-panel\" is the classic TABLES estimate table in epi-info-ai/wasm/demo/app.ts, a sibling project whose epi kernel was synthesized from Epi Info -- a good deduction and not a verification. Carried BESIDE the label because a deduced label and a verified one are different claims, and conflating them is the same class of error as the Breslow-Day mislabelling that fw:epiInfoLabel exists to survive.".
+
+# WHO INFECTED WHOM, DRAWN AS CHAINS OVER TIME (experiment 200, step 5): a Chart's transmission tree.
+fw:TransmissionTree a owl:Class; rdfs:label "transmission tree"; rdfs:comment "A figure of who infected whom: each case at its date, joined to its infector. A presentation of the table's own rows; nothing inferred." .
+fw:caseIdColumn a owl:DatatypeProperty; rdfs:domain fw:TransmissionTree; rdfs:label "case id column" .
+fw:infectorColumn a owl:DatatypeProperty; rdfs:domain fw:TransmissionTree; rdfs:label "infector column"; rdfs:comment "The column naming, for each case, the case id of its infector." .
+fw:caseDateColumn a owl:DatatypeProperty; rdfs:domain fw:TransmissionTree; rdfs:label "case date column" .
+fw:casesDrawn a owl:DatatypeProperty; rdfs:domain fw:TransmissionTree; rdfs:range xsd:integer; rdfs:label "cases drawn" .
+fw:chainsDrawn a owl:DatatypeProperty; rdfs:domain fw:TransmissionTree; rdfs:range xsd:integer; rdfs:label "chains drawn" .
+fw:linksDrawn a owl:DatatypeProperty; rdfs:domain fw:TransmissionTree; rdfs:range xsd:integer; rdfs:label "links drawn"; rdfs:comment "Links from an infector to a case, both in the table." .
+fw:casesNoInfector a owl:DatatypeProperty; rdfs:domain fw:TransmissionTree; rdfs:range xsd:integer; rdfs:label "cases naming no infector" .
+fw:casesInfectorNotFound a owl:DatatypeProperty; rdfs:domain fw:TransmissionTree; rdfs:range xsd:integer; rdfs:label "cases naming an infector the table does not hold" .
+fw:casesUndated a owl:DatatypeProperty; rdfs:domain fw:TransmissionTree; rdfs:range xsd:integer; rdfs:label "cases without a readable date" .
+fw:casesInLoop a owl:DatatypeProperty; rdfs:domain fw:TransmissionTree; rdfs:range xsd:integer; rdfs:label "cases in a loop"; rdfs:comment "Cases whose infectors lead back to themselves, which no transmission chain can do." .

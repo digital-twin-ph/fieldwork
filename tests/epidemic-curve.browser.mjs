@@ -121,8 +121,10 @@ test('the epidemic curve can be turned on its side, and reports the same counts'
 
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="epidemic"]').click();
+  await page.locator('#configure-step').click();
   await expect(page.locator('#series-orientation')).toHaveValue('vertical');
   await page.locator('#series-orientation').selectOption('horizontal');
+  await page.locator('#config-apply').click();
   await page.locator('#run-button').click();
   await page.locator('[data-view="results"]').click();
   await expect(page.locator('#result-tabs [data-output="epidemic"]')).toBeVisible({timeout:30000});

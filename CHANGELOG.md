@@ -3,6 +3,19 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.75.0 — 2026-11-09
+
+- **Who infected whom, drawn: a transmission tree in Chart.** Set **Draw** to *Transmission tree* in Configure… and
+  name the case, infector and date columns. Each case is a point at its date; a line runs from its infector, so its
+  length across is the serial interval. Drawn by Vega-Lite and exportable. Cases with no infector, an infector not in
+  the table, a loop or no date are counted and coloured apart, never dropped. Chart 0.12.0.
+- **Hagelloch has a second workflow, *Who infected whom***: the serial interval, secondary cases per child and the
+  tree, ready to run.
+- **Chart is on the standard Inspector**: name and write-up section, inputs, one sentence and Configure…, which holds
+  every setting it had.
+- The Sierra Leone, NYC and Brazil examples' manuals set Chart in Configure…; re-pinned.
+- Validation: Chromium locally; WebKit in CI.
+
 ## 0.74.0 — 2026-11-09
 
 - **Satellite readings are kept on this device.** Sample satellite files keeps what each file gave at your places, a

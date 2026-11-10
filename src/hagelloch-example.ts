@@ -2,6 +2,9 @@ import type {Workflow,WorkflowNode} from './types.js';
 import type {EvidenceReference} from './evidence.js';
 import cases from '../examples/hagelloch-1861/cases.json';
 import provenance from '../examples/hagelloch-1861/provenance.json';
+import {pointsAsTable} from './core.js';
+import {groupTable} from './group-table.js';
+import {relateShape} from './relate-table.js';
 
 /** Measles in Hagelloch, 1861 — the first worked example built on a file this project did not
  *  author, and the first where place, time and person meet on one record.
@@ -82,4 +85,56 @@ export function hagellochExample():Workflow{
   ];
   return {schema:'fieldwork/workflow/1',name:'Measles in Hagelloch, 1861',
     exampleId:'hagelloch',nodes,edges} as unknown as Workflow;
+}
+
+/** WHO INFECTED WHOM, IN HAGELLOCH (experiment 200, steps 1 to 3 and 5): the second workflow of the project, so that
+ *  opening Hagelloch shows it. The practitioner, 2026-11-09: *"I still don't see the transmission chain chart for
+ *  hagelloch."* Each step is what was built by hand on an empty canvas and checked by lab check 43:
+ *
+ *  - the cases related to themselves on `infector`, bringing the infector's prodrome date; the 4 with no infector kept
+ *    under "no infector recorded", decided;
+ *  - the serial interval, one prodrome date taken from the other, in days;
+ *  - the cases counted by `infector` and related back on `case_ID`, the 126 nobody names kept as 0, typed;
+ *  - the transmission tree, drawn by Chart.
+ *
+ *  The unmatched decisions carry the signature of the gap they were made about, computed here from the same file, so
+ *  they hold exactly as the practitioner's would. */
+export function hagellochChainsExample():Workflow{
+  const base=hagellochExample();
+  const casesNode=base.nodes.find(n=>n.id==='cases')!;
+  const table=pointsAsTable(cases as never);
+  const selfRequest={on:'infector',rightOn:'case_ID',bring:'date_of_prodrome',bringAs:'infector_prodrome',normalisation:'exact' as const};
+  const counts=groupTable(table,{by:['infector'],aggregate:'count'}).table;
+  const countRequest={on:'case_ID',rightOn:'infector',bring:'rows',bringAs:'secondary_cases',normalisation:'exact' as const};
+  const nodes=[
+    {...casesNode,x:20,y:200},
+    {id:'infector',type:'relate_table',x:400,y:40,params:{label:'Each case’s infector',...selfRequest,
+      unmatched:{decision:'keep',label:'no infector recorded',reason:'Four cases name no infector: kept, because dropping them would change the counts.',
+        signature:relateShape(table,table,selfRequest).signature}}},
+    {id:'serial',type:'apply_ruleset',x:760,y:40,params:{label:'Serial interval',parameters:{},
+      ruleset:{id:'urn:fieldwork:ruleset:outreach-criteria',version:'1.0.0',title:'Rules written in this workflow',inputs:[['subjects','table']],output:'table'},
+      authored:{title:'Serial interval',mustNotBeReadAs:'',parameters:[],
+        fields:[{attribute:'date_of_prodrome',predicate:'fwa:prodrome',kind:'date',label:'date_of_prodrome'},
+          {attribute:'infector_prodrome',predicate:'fwa:infectorProdrome',kind:'date',label:'infector_prodrome'}],
+        rules:[{any:[{all:[]}],then:[{predicate:'fwa:serial',column:'serial_interval_days',
+          compute:{left:{field:'fwa:prodrome'},operator:'minus',right:{field:'fwa:infectorProdrome'}}}]}]}}},
+    {id:'serial-table',type:'table_output',x:1120,y:40,params:{label:'Serial intervals',inputMode:'table'}},
+    {id:'count',type:'group_table',x:400,y:300,params:{label:'Cases each child infected',by:['infector'],aggregate:'count'}},
+    {id:'secondary',type:'relate_table',x:760,y:300,params:{label:'Secondary cases',...countRequest,
+      unmatched:{decision:'keep',label:'0',reason:'A child nobody names as infector infected no one recorded.',
+        signature:relateShape(table,counts,countRequest).signature}}},
+    {id:'secondary-table',type:'table_output',x:1120,y:300,params:{label:'Secondary cases per child',inputMode:'table'}},
+    {id:'tree',type:'chart_output',x:400,y:560,params:{label:'Who infected whom',figure:'tree',
+      tree:{id:'case_ID',parent:'infector',date:'date_of_prodrome'},chartTitle:'Who infected whom, Hagelloch, 1861'}},
+  ];
+  const edges=[
+    {id:'c-inf-1',from:'cases',to:'infector',port:'records'},{id:'c-inf-2',from:'cases',to:'infector',port:'related'},
+    {id:'inf-serial',from:'infector',to:'serial',port:'subjects'},{id:'serial-out',from:'serial',to:'serial-table',port:'table'},
+    {id:'c-count',from:'cases',to:'count',port:'records'},
+    {id:'c-sec',from:'cases',to:'secondary',port:'records'},{id:'count-sec',from:'count',to:'secondary',port:'related'},
+    {id:'sec-out',from:'secondary',to:'secondary-table',port:'table'},
+    {id:'c-tree',from:'cases',to:'tree',port:'records'},
+  ];
+  return {schema:'fieldwork/workflow/1',name:'Who infected whom, Hagelloch, 1861',
+    exampleId:'hagelloch-chains',nodes,edges} as unknown as Workflow;
 }

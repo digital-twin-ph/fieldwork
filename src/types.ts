@@ -611,6 +611,9 @@ export interface ParamsByType {
     frameCaption?:string;
     inputMode?:'spatial'|'decisions'|'raster'|'polygons'|'network';presentation?:'plot'|'interactive';contextPoints?:boolean;mapTitle?:string;mapSubtitle?:string;mapSourceNote?:string;showLegend?:boolean;basemap?:BasemapChoice}; table_output:{label:string; section?:import('./notes.js').FigureSection; pointInputCount?:number; inputMode?:'spatial'|'decisions'|'polygons'|'table'; totalsAsserted?:boolean};
   chart_output:{label:string; section?:import('./notes.js').FigureSection;
+    /** WHAT IS DRAWN: bars (the default), or who infected whom as chains over time (experiment 200, step 5), with the
+     *  columns naming each case, its infector and its date. */
+    figure?:'bars'|'tree'; tree?:{id:string;parent:string;date:string};
     /** ONE PANEL PER VALUE of this key column, stacked on a shared x axis, each with its own y scale (experiment 174).
      *  `panelMarks` names a mark per panel; `shade` marks a period across every panel. */
     panelsBy?:string;panelMarks?:Record<string,'bar'|'line'>;shade?:{from:string;to:string};

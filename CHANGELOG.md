@@ -3,6 +3,11 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.80.1 — 2026-11-10
+
+- **Map's preview in Configure… no longer raises errors.** It mounted and removed a map on every change, and a canvas
+  layer could redraw after its map was gone; the page reported an error, seen first in Safari. Fixed. Map 0.23.1.
+
 ## 0.80.0 — 2026-11-10
 
 - **A worked example's write-up says where it lives online.** At the foot of References, two QR codes with their

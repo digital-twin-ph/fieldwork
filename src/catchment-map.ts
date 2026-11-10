@@ -139,7 +139,12 @@ export interface MapLayers {
  *  practitioner their new result rather than stranding them over the old extent. */
 let rememberedView:{key:string;lat:number;lng:number;zoom:number}|undefined;
 
-export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,context:PointCollection|undefined,esc:Escape,basemap:BasemapChoice='none',onBasemapChange?:(choice:BasemapChoice)=>void,viewKey?:string,tileExtract?:TileExtractSpec,partLabel?:string,frameCaption?:string){
+export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,context:PointCollection|undefined,esc:Escape,basemap:BasemapChoice='none',onBasemapChange?:(choice:BasemapChoice)=>void,viewKey?:string,tileExtract?:TileExtractSpec,partLabel?:string,frameCaption?:string,
+  /** SVG ONLY, for Configure…'s preview (2026-11-10): a canvas renderer created and removed within milliseconds, as the
+   *  preview is on every change, can redraw on a canvas already gone ("reading 'clearRect'"). The Results map keeps
+   *  the canvas, which a boundary of tens of thousands of vertices needs. */
+  options:{svgOnly?:boolean}={}){
+  const canvasRenderer=()=>options.svgOnly?undefined:L.canvas();
   // A Polygons value passed directly is the old call, kept working: it is one layer set with no
   // boundary and no rows.
   const layers:MapLayers=(source as Polygons)?.features!==undefined&&!(source as MapLayers).polygons
@@ -202,7 +207,7 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
   if(layers.boundary){
     // Canvas for the same reason the streets use it: a published boundary can be tens of
     // thousands of vertices, and an SVG path that long is seconds of paint on every redraw.
-    const area=L.geoJSON(layers.boundary as never,{renderer:L.canvas(),interactive:false,style:{color:'#176b59',weight:2,fillColor:'#dbe8d6',fillOpacity:.25}} as L.GeoJSONOptions);
+    const area=L.geoJSON(layers.boundary as never,{renderer:canvasRenderer(),interactive:false,style:{color:'#176b59',weight:2,fillColor:'#dbe8d6',fillOpacity:.25}} as L.GeoJSONOptions);
     if(!hiddenPort('area')){area.addTo(map);all.addLayer(area);}
     place('area','Study area',area);
   }
@@ -345,7 +350,7 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
         :[[a[1],a[0]],[b[1],b[0]]]);
     }
     if(lines.length){
-      const streets=L.polyline(lines,{color:'#55706a',weight:1,opacity:.9,interactive:false,renderer:L.canvas()});
+      const streets=L.polyline(lines,{color:'#55706a',weight:1,opacity:.9,interactive:false,renderer:canvasRenderer()});
       streets.addTo(map);all.addLayer(streets);
       // Named for what it is, so a sampled picture is never read as the whole network.
       overlays[step>1
@@ -828,5 +833,10 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
   let disposed=false;const observer=new ResizeObserver(()=>{if(!disposed)map.invalidateSize();});observer.observe(canvas);observer.observe(panel());
   return ()=>{disposed=true;stopFrames();observer.disconnect();
     for(const event of ['fullscreenchange','webkitfullscreenchange'])document.removeEventListener(event,markFullscreen);
-    map.stop();map.remove();host.replaceChildren();};
+    // SHAPES FIRST, RENDERERS LAST (2026-11-10, CI WebKit: "undefined is not an object (evaluating 'this._ctx.save')").
+    // map.remove() takes layers in no set order; a canvas renderer removed before its shapes is asked by each later one to
+    // redraw, and draws on a canvas already gone. Removed after them, its own teardown cancels the redraw they asked for.
+    map.stop();
+    map.eachLayer(layer=>{if(!(layer instanceof L.Renderer))map.removeLayer(layer);});
+    map.remove();host.replaceChildren();};
 }

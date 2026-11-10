@@ -2312,7 +2312,7 @@ function openMapConfig(nodeId:string){
         let cancelled=false;
         const frame=requestAnimationFrame(()=>{if(cancelled||!previewHost.isConnected)return;
           try{const dispose=mountCatchmentMap(previewHost,shown.polygons?{...shown,polygons:shown.polygons}:shown,shown.contextPoints,esc,
-            draft.basemap||'none',undefined,`preview-${nodeId}`,draft.tileExtract,draft.partLabel,draft.frameCaption);
+            draft.basemap||'none',undefined,`preview-${nodeId}`,draft.tileExtract,draft.partLabel,draft.frameCaption,{svgOnly:true});
             disposePreview=()=>{cancelled=true;dispose();};}
           catch(error){previewHost.textContent=`The preview could not be drawn: ${errorMessage(error)}`;}});
         disposePreview=()=>{cancelled=true;cancelAnimationFrame(frame);};

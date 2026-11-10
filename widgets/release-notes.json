@@ -428,12 +428,12 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.23.0",
+   "version": "0.23.1",
    "released": "2026-11-10",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Configure… draws the map it configures: the last run, with the dialog's settings, beside them, before Apply, so a mark's size or a basemap is seen as it is chosen (the practitioner, 2026-11-10). PMTiles are imported in Configure…, not the Inspector, which keeps only Name, Inputs, Settings and Result. Lines between records are coloured by the generation of the record they run into, counted as the transmission tree counts it, on one ramp with Chart's tree (magma 0.15 to 0.65, each step at least 3:1), and keyed by generation. A layer carrying a timeline of days plays through them on the interactive map: each day's polygons and the points dated up to that day, with that day's caption. The note under an interactive map no longer describes travel times on a map that has none."
+     "kind": "patch",
+     "description": "Configure…'s preview draws with Leaflet's SVG renderer only. A canvas renderer created and removed within milliseconds, as the preview is on every change, could redraw on a canvas already gone (\"Cannot read properties of undefined (reading 'save')\" and \"'clearRect'\"), seen in CI WebKit on 0.79.0 and in the local gate. The Results map keeps the canvas, which large boundaries need. And every map now removes its shapes before its renderers, so a renderer's own teardown cancels a redraw they ask for."
     }
    ],
    "breaking": false,

@@ -1,0 +1,7 @@
+import{a as c,b as f}from"./chunk-DL3DUSHY.js";function m(i,o,n){let e=[],r=[],a=0,s=0,u=0,p=0;for(let t of i.features||[]){let d=c(t.geometry?.coordinates,o);if(d==="Inside"){a++,e.push(t);continue}if(d==="Boundary"){s++,n?e.push(t):r.push(t);continue}d==="MissingLocation"?p++:u++,r.push(t)}return{collection:{...i,features:e},inside:a,boundary:s,outside:u,missing:p,excluded:r}}function P(i,o,n,e,r,a){let s=`urn:fieldwork:run:${n}:output:${i.id}`,u=`${s}:activity`,p=o.inside+(i.params.keepBoundary?o.boundary:0),t=(a||"")+`@prefix fw: <urn:fieldwork:>.
+@prefix geo: <http://www.opengis.net/ont/geosparql#>.
+@prefix prov: <http://www.w3.org/ns/prov#>.
+<${u}> a fw:PointInPolygonClip, prov:Activity; prov:used <urn:fieldwork:run:${n}:output:${e}>, <urn:fieldwork:run:${n}:output:${r}>; fw:spatialPredicate ${JSON.stringify(f.Inside)}; fw:boundaryPointsKept ${i.params.keepBoundary}; fw:insideCount ${o.inside}; fw:boundaryCount ${o.boundary}; fw:outsideCount ${o.outside}; fw:missingLocationCount ${o.missing}.
+<${s}> a fw:PointDataset, prov:Entity; fw:recordCount ${p}; prov:wasGeneratedBy <${u}>.
+`;return{nodeId:i.id,kind:"presentation",facts:t,input:t,rules:"",conclusions:[],method:`Point-in-polygon against the study area: ${o.inside} inside, ${o.boundary} on the boundary (${i.params.keepBoundary?"kept":"dropped"}), ${o.outside} outside and ${o.missing} without a usable location. The test is the same one the map uses, so a point counted inside here is inside there.`}}export{m as a,P as b};
+//# sourceMappingURL=chunk-2F2CCJSZ.js.map

@@ -11,7 +11,7 @@
 //                   | select-range-london-001
 //                   | regression-salmonella-001 | regression-nyc-001 (needs NYC_PKG)
 //                   | sample-satellite-s5p-001 | lag-response-brazil-001 | regression-strata-brazil-001
-//                   | lag-models-brazil-001 | sea-level-heights-manila-001 | chains-hagelloch-001 | tree-hagelloch-001 | links-hagelloch-001 | scan-hagelloch-001
+//                   | lag-models-brazil-001 | sea-level-heights-manila-001 | chains-hagelloch-001 | tree-hagelloch-001 | links-hagelloch-001 | scan-hagelloch-001 | qr-links-001
 import {createHash} from 'node:crypto';
 import {readFile,writeFile} from 'node:fs/promises';
 import {reprojectToCRS84,projectFromCRS84} from '../build/reproject.js';
@@ -51,6 +51,8 @@ import {nearestPlaces,distancesAsTable,pointsAsTable} from '../build/core.js';
 import {transmissionTree} from '../build/transmission-tree.js';
 import {mapOutput} from '../build/map-output.js';
 import {spaceTimeScan,spaceTimeReplay} from '../build/space-time-scan.js';
+import {qrMatrix} from '../build/qr.js';
+import {catalogLinks,builtInLinks} from '../build/example-links.js';
 import {downloadFacilities} from '../build/health-facilities.js';
 import {authoredSubjects} from '../build/authored-application.js';
 import {evaluateAuthored,evaluatedTable} from '../build/rule-evaluation.js';
@@ -1415,6 +1417,26 @@ const builders={
       input:{cases:t.rows.map(r=>({case_ID:r.key.case_ID,infector:r.key.infector??'',date_of_prodrome:r.key.date_of_prodrome??''}))},
       output:{counts:tree.counts,chains:tree.chains,
         cases:tree.cases.map(c=>({case_ID:c.id,chain:c.chain,generation:c.generation+1,row:c.row}))},
+    },files:{}};
+  },
+  async 'qr-links-001'(){
+    // THE QR CODES IN A WORKED EXAMPLE'S WRITE-UP (experiment 203): every address Fieldwork would print for the catalog's
+    // examples and its built-in ones, and the code it draws for each, as rows of 1 (dark) and 0.
+    const catalog=JSON.parse(await readFile(new URL('../widgets/examples.json',import.meta.url),'utf8')).examples;
+    const builtIn=[{id:'hagelloch-1861',name:'Measles in Hagelloch, 1861',workflows:['hagelloch']},
+      {id:'cholera-london-1854',name:'1854 Cholera Outbreak in London',workflows:['snow-voronoi']},
+      {id:'old-naledi',name:'Old Naledi, Gaborone',workflows:['old-naledi']}];
+    const links=[...catalog.map(catalogLinks),...builtIn.map(p=>builtInLinks(p,p.workflows[0])).filter(Boolean)];
+    const addresses=[...new Set(links.flatMap(l=>[l.app,l.files]))];
+    return {fixture:{
+      // NOT A WIDGET: the write-up's own block. The operation names the module and the application's version.
+      schema:'fieldwork/validation-fixture/1',fixtureId:'qr-links-001',exportedAt:new Date().toISOString(),
+      application:{name:'Fieldwork',version},
+      operation:{component:'example-links',release:version,label:'The QR codes a worked example\'s write-up prints',implementation:'src/qr.ts#qrMatrix'},
+      source:'widgets/examples.json, the catalog of worked examples, and the built-in examples of src/project.ts',
+      declaredParameters:{encoder:'qrcode-generator 2.0.4 (MIT)',errorCorrection:'M',mode:'Byte',version:'the smallest that holds the address',quietZone:4},
+      input:{addresses},
+      output:{codes:addresses.map(text=>({text,rows:qrMatrix(text).map(r=>r.map(d=>d?'1':'0').join(''))}))},
     },files:{}};
   },
   async 'scan-hagelloch-001'(){

@@ -1,6 +1,6 @@
 # 150 — Can several authors collaborate on a publication in a project repository?
 
-_Created 2026-10-29 · Updated 2026-10-31_
+_Created 2026-10-29 · Updated 2026-11-10_
 
 **Status:** tried — the layout is published as `digital-twin-ph/fieldwork-project-template`,
 competency question 1 was decided by measurement, and **from 2026-10-31 the application WRITES the

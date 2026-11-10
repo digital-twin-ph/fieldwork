@@ -2,7 +2,8 @@
 
 _Created 2026-11-10 · Updated 2026-11-10_
 
-**Status:** asked. A design; nothing is built.
+**Status:** tried. The first use is built (0.80.0): two QR codes at the foot of a worked example's References, and
+`?example=` opening a catalog example. Checked by lab check 47 in CPython.
 
 ## The question
 
@@ -58,8 +59,27 @@ as data, checked on import as any import is, and labelled in the application.
 
 ## The encoder
 
-A small library (`qrcode-generator`, MIT, no dependencies) or one written here; the practitioner is asked before
-anything is installed. Either way the lab decodes the code from the exported image and confirms the address.
+`qrcode-generator` 2.0.4 (Kazuhiko Arase, MIT, no dependencies), installed with the practitioner's yes on 2026-11-10,
+in `src/qr.ts`: error correction M, byte mode, the smallest version; one https address in plain ASCII, or refused.
+Black on white whatever the theme, with the four-module quiet zone.
+
+## Built, 2026-11-10 (the practitioner: *"QR code first then manual"*)
+
+- **Where**: at the foot of References, under *This worked example, online*, assembled from the catalog and the project
+  on every render like the references above it, never stored. References, not an Appendix, because the write-up's
+  parts end there today; the glossary's Appendix is still to come.
+- **A catalog example**: Fieldwork with it opened (`…/fieldwork/?example=oswego-1940`), and its repository at the
+  pinned commit. **A built-in example**: Fieldwork with it opened, and its files on `main` in Fieldwork's repository,
+  labelled *the latest version, not pinned*, because Fieldwork's releases name no commit.
+- **`?example=<slug>`** now opens a catalog example: downloaded and checked against its pinned digests, as its button
+  does. Tried by hand in Chromium on Oswego; not in the gate, which does not reach GitHub.
+
+**Lab check 47**: OpenCV (Apache 2.0) reads every one of the 24 codes back to its address exactly; segno (BSD) makes a
+code of the same version for each, and its own reads back too. segno chooses a different mask for all 24, which is
+reported and not required: both are valid codes. CPython only.
+
+**Not yet**: the address checked before printing (the export's rule above; the write-up on screen does not print);
+codes on exported figures and products ([202](202-one-record-several-products.md)).
 
 ## What this does not establish
 

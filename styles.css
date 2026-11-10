@@ -1218,3 +1218,9 @@ select.rule-op.rule-op-compare,select.rule-op.rule-op-equal,select.rule-op.rule-
 @media (min-width:1000px){#map-config .config-body{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:start}
 #map-config [data-config-section="preview"]{position:sticky;top:0;grid-column:2;grid-row:1/span 2}
 #map-config [data-config-section="settings"],#map-config [data-config-section="decisions"]{grid-column:1}}
+
+/* Where a worked example lives online: two QR codes at the foot of References (experiment 203). */
+.example-links{margin-top:18px}.example-links h4{font-size:15px;margin:0 0 6px}
+.example-qr-pair{display:flex;flex-wrap:wrap;gap:24px;margin:6px 0 14px}
+.example-qr{margin:0;max-width:260px}.example-qr svg{display:block;background:#fff}
+.example-qr figcaption{font-size:14px;line-height:1.45;overflow-wrap:anywhere;margin-top:6px}

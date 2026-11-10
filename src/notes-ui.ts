@@ -247,7 +247,10 @@ export function notesPanel(notes:readonly Note[],
    *  part above whatever the author has written there. Not notes, and deliberately not editable:
    *  what a workflow cites is a fact about the investigation, and the author's own references
    *  are the notes beside it. */
-  references:readonly ReferenceEntry[]=[]):string{
+  references:readonly ReferenceEntry[]=[],
+  /** WHERE A WORKED EXAMPLE LIVES ONLINE, as two QR codes at the foot of References (experiment 203). Markup, assembled
+   *  by the application from the catalog and the project; empty for a project that is not a worked example. */
+  online=''):string{
   const fromRun:Note[]=[...(machined||[])];
   const all=[...notes,...derived,...fromRun];
   const extent=noteExtent(all);
@@ -298,7 +301,7 @@ export function notesPanel(notes:readonly Note[],
     const assembled=part.section==='References';
     const add=assembled?'':`<button class="button small" data-add-note="${esc(part.section)}"${blocked}>`
       +`+ note</button>`;
-    const cited=part.section==='References'?referenceBlock(references,esc):'';
+    const cited=part.section==='References'?referenceBlock(references,esc)+online:'';
     if(!part.count&&!cited)return `<section class="notes-part is-empty" data-section="${esc(part.section)}">`
       +`<h3>${esc(part.section)} <span class="muted">nothing yet</span>${add}</h3>`
       +`<div class="notes-empty"><p class="muted">${esc(EMPTINESS[part.section]||'')}</p>`

@@ -197,7 +197,7 @@ not a practitioner in the field.
    repository back into a project; a second author on a real project; push from Fieldwork with the scoped token;
    Discussions ([155](docs/experiments/155-discussions-as-the-governance-surface.md)); products on the repository's
    Pages. Trust without a catalog: a commit pin, who and what before opening, data never instructions, a label.
-22. **QR codes from a product to its digital form** ([203](docs/experiments/203-qr-codes-from-a-product-to-its-digital-form.md)):
+22. **QR codes from a product to its digital form** (first use built 2026-11-10, 0.80.0; lab check 47) ([203](docs/experiments/203-qr-codes-from-a-product-to-its-digital-form.md)):
    first, a note for a worked example with two codes, Fieldwork with the example opened and the example's repository at
    its pinned commit; needs `?example=` to open a repository example through the catalog. Ask before installing an
    encoder.

@@ -1,4 +1,5 @@
 import {noteImageDigest,noteImageFigure,noteImageKey,readNoteImagePayload,type NoteImage} from './note-image.js';
+import {catalogLinks,builtInLinks,exampleLinksBlock,exampleSlug,type ExampleLinks} from './example-links.js';
 import {SCAN_DEFAULTS,newScanSeed} from './space-time-scan.js';
 import {linkLinesSvg} from './map-links.js';
 import {diveDeeperPanel,learnBlock} from './dive-deeper.js';
@@ -6959,7 +6960,7 @@ function renderNotesView(){
     // AND HOW MANY THERE ARE AT ALL, so the control can tell a project whose workflows have all
     // run from a workflow that is in no project. 0 is the second of those, not the first.
     {pending,total:(project?.workflows||[]).length,readOnly:keptHere(project)},
-    figureOf,references);
+    figureOf,references,exampleLinksBlock(onlineLinks(project),esc));
   // THE FORMULAE, ONCE THE PANEL IS IN THE DOCUMENT. `notesPanel` returns the LaTeX on the
   // element that will hold it, so a note reads correctly before the converter has loaded and on
   // any machine where it never does. See `src/prose.ts`.
@@ -7593,7 +7594,7 @@ function renderExampleCatalog():void{
  *  `verifiedFile` does the refusing: a path the catalog does not pin is never requested, a size
  *  that disagrees is refused before hashing, and a digest mismatch discards the bytes. Nothing
  *  here softens any of that into a warning. */
-async function openCuratedExample(id:string,button:HTMLButtonElement):Promise<void>{
+async function openCuratedExample(id:string,button:HTMLButtonElement=document.createElement('button')):Promise<void>{
   const example=curatedExamples().find(e=>e.id===id);
   if(!example)return;
   // RE-QUERIED EVERY TIME, never held. Importing a workflow re-renders the project view, which
@@ -7658,6 +7659,17 @@ async function openCuratedExample(id:string,button:HTMLButtonElement):Promise<vo
     say(errorMessage(error));
     toast(errorMessage(error),{tone:'failure'});
   }finally{button.disabled=false;button.textContent=label;}
+}
+/** WHERE THIS PROJECT'S WORKED EXAMPLE LIVES ONLINE (experiment 203): a catalog example its workflows were opened from,
+ *  or a built-in example's own project. None for a project of the practitioner's own. */
+function onlineLinks(project:Project|undefined):ExampleLinks[]{
+  if(!project)return [];
+  const ids=[...new Set(project.workflows.map(key=>originOf(key)?.exampleId).filter((id):id is string=>!!id))];
+  const fromCatalog=ids.map(id=>curatedExamples().find(e=>e.id===id)).filter((e):e is NonNullable<typeof e>=>!!e).map(catalogLinks);
+  if(fromCatalog.length)return fromCatalog;
+  const builtIn=BUILT_IN_PROJECTS.find(p=>p.id===project.id);
+  const links=builtIn?builtInLinks(builtIn,storageKey(workflow)):null;
+  return links?[links]:[];
 }
 /** The manual of the worked example this workflow was opened from, if it published one. */
 const exampleManualDigest=():string|undefined=>originOf(storageKey(workflow))?.manual;
@@ -8822,6 +8834,11 @@ setupLabEvaluation(()=>{
 });
 document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'&&!['INPUT','TEXTAREA','SELECT'].includes((e.target as Element).tagName)){e.preventDefault();$(e.shiftKey?'#redo-button':'#undo-button').click();}});
 const requestedExample=new URLSearchParams(location.search).get('example');
+// A CATALOG EXAMPLE FROM A LINK (experiment 203): `?example=<slug>` opens a repository example the way its button does,
+// downloaded and checked against its pinned digests, so a QR code in a write-up can open it.
+const requestedCatalog=requestedExample&&!hasExampleTemplate(requestedExample)
+  ?curatedExamples().find(e=>exampleSlug(e.id)===requestedExample):undefined;
+if(requestedCatalog)setTimeout(()=>void openCuratedExample(requestedCatalog.id),0);
 if(requestedExample&&hasExampleTemplate(requestedExample)&&requestedExample!==exampleKey(workflow)){save();let openedSaved=false;try{const saved=JSON.parse(localStorage.getItem(WORKSPACES)||'{}')[requestedExample];openedSaved=!!saved;workflow=saved?validateWorkflow(saved):template(requestedExample);}catch{workflow=template(requestedExample);}
   // ?example= is how a worked example is usually reached -- from a link, from the manual -- so
   // the notice has to live here as well as on the picker, or the practitioner who follows a

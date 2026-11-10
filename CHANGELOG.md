@@ -3,6 +3,15 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.80.0 — 2026-11-10
+
+- **A worked example's write-up says where it lives online.** At the foot of References, two QR codes with their
+  addresses printed beneath: Fieldwork with the example opened, and the example's own files at the version it was made
+  from. Codes are drawn on your device.
+- **A link opens any worked example.** `?example=oswego-1940` (or any catalog example's name) downloads it, checks it
+  against its pinned digests, and opens it, as its button does.
+- **Checked by somebody else's code**: lab check 47 reads every code back with OpenCV.
+
 ## 0.79.0 — 2026-11-10
 
 - **Watch the space-time replay day by day on the map.** On an interactive Map, **Play** or drag the slider: each day

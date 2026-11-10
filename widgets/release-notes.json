@@ -621,12 +621,12 @@
    "migrationFrom": []
   },
   "raster_input": {
-   "version": "0.7.1",
+   "version": "0.7.2",
    "released": "2026-11-10",
    "changes": [
     {
      "kind": "patch",
-     "description": "The country is not asked for again. The Inspector kept a \"Country for population data\" list, after the study area that already states the country (the practitioner, 2026-11-10, with a screenshot). It is gone; Configure… offers the WorldPop population raster for the study area's country, its year and its download, and asks for the country to be set on the study area where none is stated. The Inspector keeps Name, Inputs, Settings and Result."
+     "description": "Where the study area states no country, Configure… asks for it, keeps it on the study area, and offers WorldPop's year and download at once. It used to say to set the country on the study area and offer nothing: the practitioner, 2026-11-10, \"nowhere to actually access Worldpop\"."
     }
    ],
    "breaking": false,

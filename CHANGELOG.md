@@ -5,6 +5,8 @@ shown in a local build is not a claim that it has been published.
 
 ## 0.81.1 — 2026-11-10
 
+- **WorldPop is reachable from Raster input's Configure… whatever the study area.** Where the area states no country,
+  the dialog asks for it, keeps it on the area, and offers the year and the download at once. Raster input 0.7.2.
 - **A map image's port is named on the canvas**: *Map image (ground)*, where it read "Points undefined". Any port the
   canvas does not know is shown by its own name.
 - **Checked by somebody else's code**: lab check 48 places South London's Map 2 from its four points with GDAL's own fit

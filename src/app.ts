@@ -5086,27 +5086,47 @@ content+=`<div class="field"><label class="field-label" for="chart-decisions">Re
     // in the Inspector, after the study area). The study area states the country, once; this reads it.
     const node=getNode(workflow,n.id,'raster_input');
     const stated=countryOfArea(source?.params as {country?:string;boundary?:{provenance?:{boundaryID?:string}}});
-    const country=stated||node.params.populationCountry||'';
-    const rasters=populationRastersForCountry(country||null);
-    const linkFor=(year:string)=>{const r=rasters.find(x=>x.year===year)??rasters[0]!;
+    // WHERE THE AREA STATES NO COUNTRY, IT IS ASKED HERE, and kept on the study area (the practitioner, 2026-11-10: "This
+    // raster dialog still has Worldpop only with nowhere to actually access Worldpop"). Still said once, in the area; the
+    // dialog no longer sends the person away to say it.
+    let country=stated||node.params.populationCountry||'';
+    const linkFor=(year:string)=>{const rasters=populationRastersForCountry(country||null),r=rasters.find(x=>x.year===year)??rasters[0]!;
       return `<a class="button" id="population-download" href="${esc(r.url)}" download target="_blank" rel="noopener noreferrer">`
-        +`\u2193 ${esc(r.iso3)} \u00b7 ${esc(r.year)}${r.bytes?` \u00b7 ${(r.bytes/1e6).toFixed(0)} MB`:''}</a>`
+        +`↓ ${esc(r.iso3)} · ${esc(r.year)}${r.bytes?` · ${(r.bytes/1e6).toFixed(0)} MB`:''}</a>`
         +`<p class="muted">${r.bytes?`About ${esc(downloadWait(r.bytes))} at the one speed measured here, ${(WORLDPOP_BYTES_PER_SECOND/1e3).toFixed(0)} kB/s. `:''}`
         +`Keep the laptop awake: the host ignores resume requests, so an interrupted download starts again from zero. Your browser `
-        +`downloads it from data.worldpop.org, which sends no CORS header. Unconstrained population, 100 m. ${esc(WORLDPOP_LICENCE)} `
-        +`Catalogue of ${esc(WORLDPOP_TAKEN)}.</p>`;};
-    const population=!country
-      ?'<h3>Population (WorldPop)</h3><p class="muted">WorldPop is published by country. Set the country on the study area, once, and it is offered here.</p>'
-      :rasters.length
-        ?`<h3>Population (WorldPop) for ${esc(countryName(country))}</h3><p class="muted">The country is the study area\u2019s.</p>`
-          +`<label class="field-label" for="population-year">Year</label><select id="population-year">`
-          +rasters.map(r=>`<option value="${r.year}" ${r.year===(node.params.populationYear??rasters[0]!.year)?'selected':''}>${r.year}</option>`).join('')
-          +`</select><div class="extract-links" id="population-link">${linkFor(node.params.populationYear??rasters[0]!.year)}</div>`
-        :`<h3>Population (WorldPop)</h3><p class="muted">No WorldPop raster is listed for ${esc(countryName(country))}.</p>`;
-    const baseline=JSON.stringify(workflow);openRasterEditor(boundary,asset=>{if(JSON.stringify(workflow)!==baseline)throw new Error('The workflow changed. Reopen Prepare GeoTIFF input.');return change(w=>{getNode(w,n.id,'raster_input').params.asset=asset;},{requirePersistence:true});},getNode(workflow,n.id,'raster_input').params.asset,
-      // The year only chooses which file the link offers; it is not a setting of the step, so it is not saved.
-      {html:population,wire:root=>{const year=root.querySelector<HTMLSelectElement>('#population-year');
-        if(year)year.onchange=()=>{root.querySelector('#population-link')!.innerHTML=linkFor(year.value);};}});
+        +`downloads it from data.worldpop.org, which sends no CORS header. Then choose the downloaded file below. Unconstrained `
+        +`population, 100 m. ${esc(WORLDPOP_LICENCE)} Catalogue of ${esc(WORLDPOP_TAKEN)}.</p>`;};
+    const populationHtml=()=>{
+      const rasters=populationRastersForCountry(country||null);
+      const ask=stated?'':`<label class="field-label" for="population-country">The study area’s country</label>`
+        +`<select id="population-country"><option value="" ${country?'':'selected'}>Choose a country…</option>`
+        +COUNTRIES.map(c=>`<option value="${c.iso}" ${c.iso===country?'selected':''}>${esc(c.name)} (${c.iso})</option>`).join('')
+        +`</select><p class="muted">Kept on the study area, which states it once for every step that needs it.</p>`;
+      return `<h3>Population (WorldPop)${country?` for ${esc(countryName(country))}`:''}</h3>`
+        +(stated?`<p class="muted">The country is the study area’s.</p>`:ask)
+        +(!country?'':rasters.length
+          ?`<label class="field-label" for="population-year">Year</label><select id="population-year">`
+            +rasters.map(r=>`<option value="${r.year}" ${r.year===(node.params.populationYear??rasters[0]!.year)?'selected':''}>${r.year}</option>`).join('')
+            +`</select><div class="extract-links" id="population-link">${linkFor(node.params.populationYear??rasters[0]!.year)}</div>`
+          :`<p class="muted">No WorldPop raster is listed for ${esc(countryName(country))}.</p>`);
+    };
+    const wirePopulation=(block:HTMLElement)=>{
+      const year=block.querySelector<HTMLSelectElement>('#population-year');
+      if(year)year.onchange=()=>{block.querySelector('#population-link')!.innerHTML=linkFor(year.value);};
+      const pick=block.querySelector<HTMLSelectElement>('#population-country');
+      if(pick)pick.onchange=()=>{
+        country=pick.value;
+        if(country&&source?.type==='study_area'){
+          change(w=>{(getNode(w,source!.id,'study_area').params as {country?:string}).country=country;});
+          // The area changed on purpose; a raster saved after it is still this dialog's to save.
+          baseline=JSON.stringify(workflow);
+        }
+        block.innerHTML=populationHtml();wirePopulation(block);
+      };
+    };
+    let baseline=JSON.stringify(workflow);openRasterEditor(boundary,asset=>{if(JSON.stringify(workflow)!==baseline)throw new Error('The workflow changed. Reopen Prepare GeoTIFF input.');return change(w=>{getNode(w,n.id,'raster_input').params.asset=asset;},{requirePersistence:true});},getNode(workflow,n.id,'raster_input').params.asset,
+      {html:populationHtml(),wire:wirePopulation});
   });
   optionalElement('#add-raster-map')?.addEventListener('click',()=>change(w=>{const id=`map-${Date.now()}`;w.nodes.push({id,type:'map_output',x:n.x+270,y:n.y,params:{label:'Clipped raster',inputMode:'raster',pointInputCount:1}});w.edges.push({id:`e-${Date.now()}`,from:n.id,to:id,port:'raster'});selected=id;}));
   optionalElement('#download-node-raster')?.addEventListener('click',async e=>{

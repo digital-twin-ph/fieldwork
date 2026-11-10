@@ -53,8 +53,12 @@ test('a study area that states no country leaves both unset, rather than guessin
   // a border, and wrong invisibly. So it asks.
   await page.locator('.react-flow__node[data-id="raster"]').click({timeout:45000});
   await page.locator('#prepare-raster').click();
-  await expect(page.locator('#raster-dialog #raster-population')).toContainText('Set the country on the study area');
+  // Asked here, never a dead end (the practitioner, 2026-11-10), and kept on the study area.
   await expect(page.locator('#raster-dialog #population-download')).toHaveCount(0);
+  await page.locator('#raster-dialog #population-country').selectOption('BWA');
+  await expect(page.locator('#raster-dialog #raster-population')).toContainText('Population (WorldPop) for Botswana');
+  await expect(page.locator('#raster-dialog #population-download')).toContainText('BWA');
+  await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')).nodes.find(n=>n.id==='area').params.country)).toBe('BWA');
   expect(errors).toEqual([]);
 });
 

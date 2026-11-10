@@ -3,6 +3,12 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.81.2 — 2026-11-10
+
+- **Hagelloch's houses sit on the houses of the 1824 map.** The cases were fitted to the buildings drawn on the
+  cadastral sheet NW III 3: 47 of 56 houses fall on one, north up and at the source's own scale, against 63–68% for
+  random points. Every case moved together, 151 m west and 51 m south; no distance between cases changed.
+
 ## 0.81.1 — 2026-11-10
 
 - **Hagelloch is where Hagelloch is.** Its cases were placed 3.7 km east, in Tübingen's Waldhäuser-Ost, from a wrong

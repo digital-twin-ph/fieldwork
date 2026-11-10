@@ -1492,7 +1492,7 @@ const builders={
     // LINES BETWEEN RECORDS ON MAP (experiment 200, step 4), as Map computes them: a line to the record named in
     // infector, found by case_ID, and every record counted under one outcome.
     const cases=JSON.parse(await readFile(new URL('../examples/hagelloch-1861/cases.json',import.meta.url),'utf8'));
-    const area={boundary:{type:'Polygon',coordinates:[[[9.0117,48.5406],[9.0161,48.5406],[9.0161,48.5433],[9.0117,48.5433],[9.0117,48.5406]]]},
+    const area={boundary:{type:'Polygon',coordinates:[[[9.0097,48.5401],[9.0140,48.5401],[9.0140,48.5429],[9.0097,48.5429],[9.0097,48.5401]]]},
       areaId:'urn:fieldwork:area:hagelloch',geometryId:'urn:fieldwork:area:hagelloch:geometry',label:'Hagelloch, 1861'};
     const setting={column:'infector',matches:'case_ID'};
     const {value}=mapOutput({id:'links-map',type:'map_output',params:{label:'Who infected whom, on the map',linkField:{cases:setting}}},

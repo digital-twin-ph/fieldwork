@@ -43,7 +43,7 @@ export function hagellochExample():Workflow{
     {id:'village',type:'study_area',x:20,y:300,
       params:{source:'drawn' as const,label:'Hagelloch, 1861',selectionMode:'bbox' as const,
         geometry:{type:'Polygon' as const,coordinates:[[
-          [9.0117,48.5406],[9.0161,48.5406],[9.0161,48.5433],[9.0117,48.5433],[9.0117,48.5406]]]}}},
+          [9.0097,48.5401],[9.0140,48.5401],[9.0140,48.5429],[9.0097,48.5429],[9.0097,48.5401]]]}}},
 
     {id:'cases',type:'point_input',x:20,y:60,
       params:{label:`${cases.features.length} measles cases, one per child`,

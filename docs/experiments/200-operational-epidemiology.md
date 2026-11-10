@@ -293,7 +293,16 @@ scan 0.3.1 ties distances within 10 cm, measured from each place's recorded coor
 village is placed. The clusters and the first day flagged are unchanged; cluster 2's p is 0.071, 21 November's 0.039.
 Lab check 46 re-run on the declared tie: agrees.
 
-**Next:** the cases fitted to the houses the 1824 sheet draws, replacing the single anchor.
+**Then fitted to the sheet's houses, the same day.** The 56 distinct houses were searched over rotation, scale, mirroring
+and position for the placement that puts most of them on buildings drawn on NW III 3, the buildings found as dense ink on
+the scan. Best: north up, rotation 0.0°, scale 1.01, local y to the north, 47 of 56 houses (84%) on a building. Nothing
+in the search asked for north up or for the source's scale; both came out. The same search on 12 random sets of 56 points
+reached 63–68% (the houses 80% at the same coarse step). The source's metres are kept; the anchor moved 151 m west and
+51 m south, from the village to the local origin, which is its south-west corner: 48.5403704 N, 9.0098931 E.
+
+**Not established:** that any one house is the building it falls on. The sheet is 37 years older than the outbreak, nine
+houses fall off a building, and twelve random sets are a small null: it says the fit beats chance by a wide margin, not by
+how much.
 
 ## Ontologies to reuse, looked for 2026-11-09
 

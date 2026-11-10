@@ -352,12 +352,12 @@
    ]
   },
   "space_time_scan": {
-   "version": "0.1.0",
+   "version": "0.1.1",
    "released": "2026-11-10",
    "changes": [
     {
-     "kind": "minor",
-     "description": "New (experiment 200, Detect). A retrospective space-time permutation scan for a line list with dates and places and no population: circles over places, runs of days or weeks, scored by the likelihood ratio and tested by shuffling the dates across fixed places with a recorded seed. Secondary clusters share no place with one before them. Runs in a worker with a progress bar. Ported from a candidate, made exact and faster: a run is tried only from and to a day with a case in the circle, and places at the same distance join a circle together."
+     "kind": "patch",
+     "description": "Distances are measured from the place as it is identified, its coordinates to 6 decimals. Measured from the first record's raw coordinates, two houses equidistant after rounding differed by a hair before it, so one of Hagelloch's circles was split and 1,346 circles were scanned where there are 1,347. Found by lab check 46; every cluster reported is unchanged."
     }
    ],
    "breaking": false,

@@ -11,7 +11,7 @@
 //                   | select-range-london-001
 //                   | regression-salmonella-001 | regression-nyc-001 (needs NYC_PKG)
 //                   | sample-satellite-s5p-001 | lag-response-brazil-001 | regression-strata-brazil-001
-//                   | lag-models-brazil-001 | sea-level-heights-manila-001 | chains-hagelloch-001 | tree-hagelloch-001 | links-hagelloch-001
+//                   | lag-models-brazil-001 | sea-level-heights-manila-001 | chains-hagelloch-001 | tree-hagelloch-001 | links-hagelloch-001 | scan-hagelloch-001
 import {createHash} from 'node:crypto';
 import {readFile,writeFile} from 'node:fs/promises';
 import {reprojectToCRS84,projectFromCRS84} from '../build/reproject.js';
@@ -50,6 +50,7 @@ import {sampleRaster} from '../build/sample-raster.js';
 import {nearestPlaces,distancesAsTable,pointsAsTable} from '../build/core.js';
 import {transmissionTree} from '../build/transmission-tree.js';
 import {mapOutput} from '../build/map-output.js';
+import {spaceTimeScan} from '../build/space-time-scan.js';
 import {downloadFacilities} from '../build/health-facilities.js';
 import {authoredSubjects} from '../build/authored-application.js';
 import {evaluateAuthored,evaluatedTable} from '../build/rule-evaluation.js';
@@ -1414,6 +1415,30 @@ const builders={
       input:{cases:t.rows.map(r=>({case_ID:r.key.case_ID,infector:r.key.infector??'',date_of_prodrome:r.key.date_of_prodrome??''}))},
       output:{counts:tree.counts,chains:tree.chains,
         cases:tree.cases.map(c=>({case_ID:c.id,chain:c.chain,generation:c.generation+1,row:c.row}))},
+    },files:{}};
+  },
+  async 'scan-hagelloch-001'(){
+    // THE SPACE-TIME SCAN (experiment 200, Detect), as Fieldwork computes it on Hagelloch's shipped workflow: by day of
+    // prodrome, SaTScan's default limits, 999 shuffles, seed 20261110.
+    const cases=JSON.parse(await readFile(new URL('../examples/hagelloch-1861/cases.json',import.meta.url),'utf8'));
+    const settings={dateField:'date_of_prodrome',unit:'day',maxCaseShare:0.5,maxTimeShare:0.5,replications:999,seed:20261110,report:10};
+    const r=spaceTimeScan(cases,settings);
+    return {fixture:{
+      ...base('scan-hagelloch-001','space_time_scan','Space-time scan: Hagelloch 1861 by day of prodrome','src/space-time-scan.ts#spaceTimeScan'),
+      source:'Measles in Hagelloch, 1861 (Pfeilsticker 1863; Oesterle 1992), as measles_hagelloch_1861 in the R package outbreaks 1.9.0; the copy built into Fieldwork as examples/hagelloch-1861, with this project\'s georeference',
+      declaredParameters:{...settings,
+        model:'Retrospective space-time permutation (Kulldorff and others, 2005), scanning for high.',
+        circles:'Around each place, places joined in order of distance, places at the same distance together, while the circle holds at most maxCaseShare of all cases. Each distinct set of places once.',
+        runs:'Consecutive days, at most floor(maxTimeShare x days in the study period) long.',
+        expected:'The circle\'s cases over the period times the run\'s cases everywhere, over all cases.',
+        score:'c ln(c/e) + (n-c) ln((n-c)/(n-e)) where c > e, else 0.',
+        secondary:'In order of score, each circle\'s best run, kept only where it shares no place with one kept before.',
+        pValue:'(1 + shuffles whose highest score anywhere is at least this one) / (1 + shuffles); dates shuffled across the fixed cases.'},
+      input:{cases:cases.features.map(f=>({id:String(f.id),date:f.properties.date_of_prodrome??'',
+        lon:f.geometry?.coordinates?.[0]??null,lat:f.geometry?.coordinates?.[1]??null}))},
+      output:{totals:r.totals,excluded:r.excluded,period:r.period,longestRunUnits:r.longestRunUnits,
+        clusters:r.clusters.map(c=>({rank:c.rank,start:c.start,end:c.end,places:c.places,radiusKm:c.radiusKm,caseIds:c.caseIds,
+          observed:c.observed,expected:c.expected,llr:c.llr,pValue:c.pValue,exceedances:c.exceedances}))},
     },files:{}};
   },
   async 'links-hagelloch-001'(){

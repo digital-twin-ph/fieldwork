@@ -3,7 +3,7 @@
   "description": "Independent recomputation of implemented widgets by an external process, recorded after release. Release files are immutable once committed, so evidence about a release lives here and accrues as checks run. A fixture digest recorded in a result is over canonical JSON content rather than the file’s bytes, revised 2026-10-11 because byte identity is unsatisfiable in the browser the lab publishes to. A parity result establishes numerical agreement with a named external implementation under a stated criterion. It is not scientific certification, and it says nothing about whether a method is appropriate for a question.",
   "lab": {
     "repository": "https://github.com/digital-twin-ph/validation-lab",
-    "commit": "4d9f53aca264d7d11784d59cc192d9d9f734421d",
+    "commit": "02ab1fb2f61f7f32628bed0c3c6b93342222c5e3",
     "pinNote": "The commit CI checks the lab out at: .github/workflows/pages.yml reads it with `jq -r .lab.commit widgets/parity.json`. So this pin, not the clone beside this repository, is what `validate:dive-deeper` verifies against on a clean runner -- and it must be advanced whenever a check lands in the lab, in the same push-then-pin order the worked examples use."
   },
   "outcomes": {
@@ -833,6 +833,27 @@
       ],
       "note": "Covers Map's lines between records (src/map-links.ts), not the rest of the map, which derives no value. The fixture is Fieldwork's own code in Node (scripts/export-validation-fixture.mjs, links-hagelloch-001). The four outcomes Hagelloch lacks are exercised by tests/map-links.test.mjs. Experiment 200.",
       "notebook": "45-map-links-vs-pandas.ipynb"
+    },
+    {
+      "widget": "urn:fieldwork:widget:space_time_scan",
+      "coversRelease": "0.1.1",
+      "check": "46-space-time-scan",
+      "result": "content/results/check-46-space-time-scan.json",
+      "sha256": "418236378570fd4e6fad21e63633366b61f78877586824a5be22716cc487b792",
+      "external": [
+        "numpy 2.5.3"
+      ],
+      "criterion": "The same circles, runs and windows; for every cluster the same places, days, observed and expected cases and score to 1e-9; p-values within three standard errors of the difference plus the 1/(R+1) step",
+      "outcome": "agrees",
+      "measured": "Hagelloch, 1861, by day of prodrome: 188 cases at 56 places, 1,347 circles and 2,838 runs. The same ten clusters, each with the same places, days, counts and score; the most likely one house, 8 cases where 0.5532 were expected, 1861-10-30 to 1861-11-18, p = 0.001 both ways. Cluster 2: p 0.072 in Fieldwork, 0.064 from numpy's own shuffles. Agrees in CPython and in the browser kernel.",
+      "ranAt": "2026-11-10T13:14:06+00:00",
+      "notEstablished": [
+        "That a cluster is an outbreak: both sides compute the same statistic; neither says what it means.",
+        "That the space-time permutation model suits measles in a village: it compares timing across places and cannot see where people live.",
+        "That the p-values are the same to the digit: they come from different random numbers, so they agree only within Monte Carlo error."
+      ],
+      "note": "Found a defect before agreeing: Fieldwork scanned 1,346 circles, measuring distances from raw coordinates while identifying places rounded; fixed in 0.1.1. numpy scores every run, so Fieldwork's shortcut, trying only runs that start and end on a day with a case, is tested too. The fixture is Fieldwork's own code in Node (scripts/export-validation-fixture.mjs, scan-hagelloch-001). Experiment 200.",
+      "notebook": "46-space-time-scan-vs-numpy.ipynb"
     }
   ],
   "notebookNote": "`notebook` names the lab notebook that carries the check, and `diveDeeper` the heading of its Dive Deeper section where it has one -- the part written for a practitioner who wants to understand the widget rather than for a reviewer checking it (experiment 94). Both are recorded rather than derived from the check id: `24-project-forward` lives in `24-project-vs-pyproj.ipynb`, so matching on the leading number works by luck and would break the first time a check and its notebook are named differently. The application reads `diveDeeper` to decide which widgets offer the link, and scripts/validate-dive-deeper.mjs refuses a heading the notebook does not actually carry."

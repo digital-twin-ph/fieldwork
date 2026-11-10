@@ -1,0 +1,93 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "released": "2026-11-10",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "validationStatus": "application-only",
+  "shaclShapes": [],
+  "typescriptType": "ParamsByType['space_time_scan']"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": null
+ },
+ "id": "urn:fieldwork:widget:space_time_scan",
+ "nodeType": "space_time_scan",
+ "version": "0.1.1",
+ "title": "Space-time scan",
+ "ports": {
+  "inputs": [
+   {
+    "name": "points",
+    "type": "points"
+   }
+  ],
+  "output": "polygons",
+  "optionalInputs": [],
+  "note": "Takes a point layer of cases, each with a date, and gives back the clusters it reports as circles: one polygon per cluster, carrying its days, places, observed and expected cases, likelihood ratio and p-value."
+ },
+ "ontology": {
+  "status": "gap",
+  "mappings": [],
+  "note": "GAP, meaning no mapping to an external vocabulary. fw:SpaceTimeScan and fw:ScanCluster are declared in ontology/runtime.ttl with their properties. The receipt names the date column, the unit, the study period, every record not scanned and why, the limits, the replications, the seed and the random stream, and every cluster reported with its counts and p-value.",
+  "emits": {
+   "classes": [
+    "ScanCluster",
+    "SpaceTimeScan"
+   ],
+   "properties": [
+    "casesScanned",
+    "clusterRank",
+    "dateColumn",
+    "expectedCases",
+    "firstDay",
+    "lastDay",
+    "logLikelihoodRatio",
+    "longestRunUnits",
+    "monteCarloExceedances",
+    "observedCases",
+    "pValue",
+    "placesInCluster",
+    "placesScanned",
+    "radiusMetres",
+    "randomSeed",
+    "randomStream",
+    "recordsOutsidePeriod",
+    "recordsWithoutDate",
+    "recordsWithoutLocation",
+    "replications",
+    "reportsCluster",
+    "scanModel",
+    "studyEnd",
+    "studyStart",
+    "timeUnit",
+    "windowsScanned"
+   ]
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/space-time-scan.ts",
+   "src/space-time-scan-worker.ts",
+   "src/core.ts",
+   "src/app.ts",
+   "src/run-progress.ts"
+  ],
+  "definition": "src/space-time-scan.ts"
+ },
+ "changes": [
+  {
+   "kind": "patch",
+   "description": "Distances are measured from the place as it is identified, its coordinates to 6 decimals. Measured from the first record's raw coordinates, two houses equidistant after rounding differed by a hair before it, so one of Hagelloch's circles was split and 1,346 circles were scanned where there are 1,347. Found by lab check 46; every cluster reported is unchanged."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "tests/space-time-scan.test.mjs (5 unit checks) and tests/hagelloch-cluster-example.browser.mjs on Chromium. Lab check 46: an independent scan in numpy, scoring every run of days, finds the same 1,347 circles and the same ten clusters with the same places, days, counts and score, and p-values within Monte Carlo error of its own shuffles, in CPython and the browser kernel."
+ }
+}

@@ -101,7 +101,10 @@ export function spaceTimeScan(points:PointCollection,s:ScanSettings,onProgress?:
   read.forEach((r,i)=>{
     const key=`${r.at[0].toFixed(6)},${r.at[1].toFixed(6)}`;
     let p=placeIndex.get(key);
-    if(p===undefined){p=places.length;placeIndex.set(key,p);places.push(r.at);}
+    // THE PLACE IS ITS KEY, rounded to 6 decimals (about 0.1 m), and distances are measured from it. Measured from each
+    // first record's raw coordinates instead, two houses equidistant from a centre after rounding differed by a hair
+    // before it, so one circle was split and a set of houses never scanned: 1,346 circles where 1,347 (lab check 46).
+    if(p===undefined){p=places.length;placeIndex.set(key,p);places.push([Number(r.at[0].toFixed(6)),Number(r.at[1].toFixed(6))]);}
     casePlace[i]=p;caseBin[i]=Math.floor((r.ms-first)/width);
   });
   const P=places.length;

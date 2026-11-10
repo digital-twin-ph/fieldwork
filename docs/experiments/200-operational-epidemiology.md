@@ -237,7 +237,7 @@ space time"*), on the standard Inspector and dialog. Ported from Epi Info AI's c
   every window, so its top twenty were mostly one cluster seen twenty ways.
 
 **On Hagelloch**, by day of prodrome, seed 20261110 (*Was there a cluster?*, the project's third workflow): 188 cases
-at 56 places, 3,819,948 circles and runs. The most likely cluster is **one house, 8 cases where 0.55 were expected,
+at 56 places, 3,822,786 circles and runs. The most likely cluster is **one house, 8 cases where 0.55 were expected,
 30 October to 18 November 1861, p = 0.001**: the start of the outbreak. Nine secondary clusters, none below p = 0.07.
 By week the second cluster has p = 0.01: the unit changes the answer, so it is chosen before looking.
 
@@ -247,8 +247,13 @@ drew no village outline once polygons were connected: both older than this, and 
 
 **Run:** `tests/space-time-scan.test.mjs` (5) and `tests/hagelloch-cluster-example.browser.mjs` on Chromium.
 
-**Not yet:** a lab check (owed: the space-time scan is now awaiting one), SaTScan on the 30-case benchmark, the
-day-by-day replay for detection timeliness, and WebKit.
+**Checked by somebody else's code** (lab check 46): numpy, scoring every run of days, finds the same ten clusters with
+the same places, days, counts and score, and p-values within Monte Carlo error of its own shuffles (cluster 2: 0.072
+here, 0.064 there), in CPython and the browser kernel. It first found Fieldwork scanning 1,346 circles where there are
+1,347: distances were measured from raw coordinates while places were identified rounded, so two houses equidistant
+after rounding were not. Fixed in 0.1.1; no cluster changed.
+
+**Not yet:** SaTScan on the 30-case benchmark, the day-by-day replay for detection timeliness, and WebKit.
 
 ## Ontologies to reuse, looked for 2026-11-09
 

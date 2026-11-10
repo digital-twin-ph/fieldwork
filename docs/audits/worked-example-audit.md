@@ -147,7 +147,7 @@ that does not can be rebuilt only by copying this file.
 | `snow-extent` | 9 | 3 | 2 | **1** — dates (table_input) | — | — |
 | `hagelloch` | 6 | 2 | 1 | — | 1 | — |
 | `hagelloch-chains` | 10 | 2 | 1 | — | 1 | — |
-| `hagelloch-cluster` | 5 | 2 | 1 | — | 1 | — |
+| `hagelloch-cluster` | 7 | 2 | 1 | — | 1 | — |
 
 Across the shipped examples, **6 nodes carry data and declare no source**. That is the list a from-scratch rebuild would have to copy rather than fetch. A further 6 study areas carry a drawn geometry with no declared source; those are redrawn rather than fetched, which the sized-box control makes an entry rather than a tracing.
 
@@ -177,8 +177,8 @@ different things: an example can be four nodes and complete, or eighteen and not
 | Example | Nodes | Conditions met | Missing |
 | --- | ---: | ---: | --- |
 | `hagelloch-chains` | 10 | 2 / 4 | published files, rebuilt from scratch |
+| `hagelloch-cluster` | 7 | 2 / 4 | published files, rebuilt from scratch |
 | `hagelloch` | 6 | 2 / 4 | published files, rebuilt from scratch |
-| `hagelloch-cluster` | 5 | 2 / 4 | published files, rebuilt from scratch |
 | `raster` | 4 | 2 / 4 | published files, rebuilt from scratch |
 | `snow-isochrone` | 17 | 1 / 4 | sources, published files, rebuilt from scratch |
 | `snow-voronoi` | 15 | 1 / 4 | sources, published files, rebuilt from scratch |

@@ -18,9 +18,10 @@ test('Hagelloch: the space-time scan runs with a progress bar, and its clusters 
       .observe(document.body,{subtree:true,childList:true,characterData:true});
   });
   await page.locator('#run-button').click();
-  await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:120_000});
+  await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:150_000});
   const seen=await page.evaluate(()=>window.__progressSeen);
   expect(seen.some(t=>t.includes('Shuffling the dates:')&&t.includes('of 999'))).toBe(true);
+  expect(seen.some(t=>t.includes('Scanning the days:')&&t.includes('of 87'))).toBe(true);
   await expect(page.locator('#run-progress')).toHaveCount(0);
 
   // The Inspector says what was found, with the seed.
@@ -33,6 +34,16 @@ test('Hagelloch: the space-time scan runs with a progress bar, and its clusters 
   await expect(page.locator('main').first()).toContainText('observed_over_expected');
   await page.getByRole('tab',{name:'Clusters over the village'}).click();
   await expect(page.locator('#map')).toBeVisible();
+  // The replay: one row per day with a cluster, and the Inspector names the first day flagged.
+  await page.getByRole('tab',{name:'Each day’s most likely cluster'}).click();
+  await expect(page.locator('main').first()).toContainText('analysis_day');
+  await page.locator('[data-view="workflow"]').click();
+  await page.locator('.react-flow__node[data-id="replay"]').click();
+  await expect(page.locator('#inspector-content')).toContainText('The first day the most likely cluster had p at or under 0.05 was 1861-11-21');
+  // Both write a Methods note, and the method's reference reaches References.
+  await page.locator('[data-view="notes"]').click();
+  await expect(page.locator('.notes-part[data-section="Methods"]')).toContainText('space-time permutation scan statistic');
+  await expect(page.locator('.notes-part[data-section="References"]')).toContainText('Kulldorff M, Heffernan R, Hartman J');
   await page.screenshot({path:'test-results/hagelloch-cluster-example.png',fullPage:true});
   expect(errors).toEqual([]);
 });

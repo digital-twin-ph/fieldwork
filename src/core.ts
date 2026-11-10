@@ -1,5 +1,5 @@
 ﻿import {sampleRaster,sampleReceipt,validateSampleNode} from './sample-raster.js';
-import {computeSpaceTimeScan,scanValue,validateScanParams} from './space-time-scan.js';
+import {computeSpaceTimeScan,computeSpaceTimeReplay,scanValue,replayValue,validateScanParams} from './space-time-scan.js';
 import {bufferPoint,validateBufferPointNode} from './buffer-point.js';
 import {facilitiesValue,migrateHealthsitesNodes,validateFindHealthFacilitiesNode} from './health-facilities.js';
 import {convexHull,validateHullNode} from './convex-hull.js';
@@ -71,7 +71,7 @@ import {defaultKept,searchFacts,searchSentence} from './satellite-catalog.js';
 import type {SatelliteProduct} from './satellite-products.js';
 import {productFor,productFacts,productSentence} from './satellite-products.js';
 import {figureSection,figureSectionDeclared} from './notes.js';
-import {rateEquationNote,rateTwoByTwoEquationNote,twoByTwoEquationNote,machinedNoteFacts}
+import {rateEquationNote,rateTwoByTwoEquationNote,twoByTwoEquationNote,scanEquationNote,replayEquationNote,machinedNoteFacts}
   from './equations.js';
 // WHAT AN ARTIFACT DECLARES ABOUT ITSELF. A table, a map and a chart are what a Results
 // section is mostly made of, and until now not one of them put a word into the write-up. NOT a
@@ -1300,11 +1300,22 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         if(!node.params.dateField)throw new Error(`Choose, in Configure…, the column holding each case's date for "${node.params.label}".`);
         const {runDetail}=await import('./run-progress.js');
         // THE PROGRESS PANEL (the practitioner, 2026-11-10: "That may need a progress bar"): 999 shuffles by day take seconds.
-        const scanned=await computeSpaceTimeScan({type:'FeatureCollection',features:inputs.points.features} as never,node.params,
+        const cases={type:'FeatureCollection',features:inputs.points.features} as never;
+        const source=workflow.edges.find(e=>e.to===node.id&&e.port==='points')!.from;
+        if(node.params.replay){
+          const replay=await computeSpaceTimeReplay(cases,node.params,
+            (done,of)=>runDetail({nodeId:node.id,label:node.params.label||'Space-time scan',done,of,what:'the days',verb:'Scanning'}))
+            .finally(()=>runDetail(null));
+          const made=replayValue(replay,node,runId,source);value=made.value as never;receipts.push(made.receipt as never);
+          const note=replayEquationNote(replay,node.id,node.params.dateField);machined[node.id]=[note];withNote(receipts,runId,node.id,[note]);break;
+        }
+        const scanned=await computeSpaceTimeScan(cases,node.params,
           (done,of)=>runDetail({nodeId:node.id,label:node.params.label||'Space-time scan',done,of,what:'the dates',verb:'Shuffling'}))
           .finally(()=>runDetail(null));
         const made=scanValue(scanned,node,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='points')!.from);
-        value=made.value as never;receipts.push(made.receipt as never);break;
+        value=made.value as never;receipts.push(made.receipt as never);const scanNote=scanEquationNote(scanned,node.id,node.params.dateField,node.params);
+        if(scanNote){machined[node.id]=[scanNote];withNote(receipts,runId,node.id,[scanNote]);}
+        break;
       }
       case 'sample_raster':{
         if(!inputs.raster)throw new Error('Connect a prepared Raster input or Clip raster to Sample raster.');

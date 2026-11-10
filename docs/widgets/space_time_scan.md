@@ -39,6 +39,26 @@ against the same shuffles, which is conservative.
 
 Connect the scan to **Map** to draw the clusters as circles, and to **Table** to list them.
 
+### Day by day, as the outbreak unfolded
+
+Under **How to scan**, choose **Day by day**. Each day, the scan looks only at the cases known by then, and only at
+runs that end that day: is something happening now? This is SaTScan's prospective scan, run once a day.
+
+The result is one row per day: that day's most likely cluster, its counts and its p-value. The step says the first day
+the p-value was at or under 0.05, and at or under 0.01.
+
+- **Each day's p-value is that day's alone.** Looking every day raises the chance of a false alarm, and this does not
+  correct for it.
+- A day with fewer than 4 cases, 2 places or 2 days is too early to scan, and is listed as skipped.
+- Cases count on the day of their date, which is not the day they were reported.
+
+### In the write-up
+
+Both ways write a note under Methods: the expected count and the score, worked on the most likely cluster, and how the
+p-value was found. The method's paper reaches References: Kulldorff M, Heffernan R, Hartman J, Assunção R, Mostashari
+F. A space-time permutation scan statistic for disease outbreak detection. PLoS Medicine. 2005;2(3):e59. It is open
+access.
+
 ### Reading what you get
 
 Each cluster carries its first and last day, its places, its radius, the cases observed and expected, their ratio, the
@@ -52,7 +72,7 @@ log likelihood ratio and the p-value. The case ids inside it are listed.
 
 | Example | What it shows |
 | --- | --- |
-| **Hagelloch · was there a cluster?** | 188 measles cases by day of prodrome; the most likely cluster is one house, 8 cases where 0.55 were expected, 30 October to 18 November 1861, p = 0.001 |
+| **Hagelloch · was there a cluster?** | 188 measles cases by day of prodrome; the most likely cluster is one house, 8 cases where 0.55 were expected, 30 October to 18 November 1861, p = 0.001. Replayed day by day, first flagged at p ≤ 0.05 on 21 November |
 
 ## What it will not do
 

@@ -253,7 +253,32 @@ here, 0.064 there), in CPython and the browser kernel. It first found Fieldwork 
 1,347: distances were measured from raw coordinates while places were identified rounded, so two houses equidistant
 after rounding were not. Fixed in 0.1.1; no cluster changed.
 
-**Not yet:** SaTScan on the 30-case benchmark, the day-by-day replay for detection timeliness, and WebKit.
+## The day-by-day replay, 2026-11-10
+
+**Built** in Space-time scan 0.2.0, as a second way to scan (the practitioner: *"Then work on the rest including day by
+day replay"*): the prospective scan, run each day on the cases with a date up to that day, scoring only runs ending
+that day. 87 days, 999 shuffles each, in a worker with a progress bar: 29 s.
+
+**On Hagelloch**, by day of prodrome: the first day the most likely cluster had p at or under 0.05 was **21 November
+1861**: 4 houses, 6 cases where 2.6 were expected, p = 0.041, on the day the cases known rose from 18 to 32. No day
+reached 0.01. The retrospective scan's most likely cluster, one house from 30 October to 18 November, **was not
+flagged as it happened**: no day before 21 November had a p-value at or under 0.05. Looking back, the scan finds it;
+looking forward, day by day, it did not.
+
+**What it does not say:** that 21 November was a detection, in 7-1-7's sense, or that the flag was right. Each day's
+p-value is that day's alone; looking every day raises the chance of a false alarm, uncorrected here. And a case counts
+on the day of its prodrome, not the day it was known.
+
+**Cited**: both modes write a Methods note (the expected count and the score, worked on the most likely cluster)
+citing Kulldorff and others 2005, verified against the article page on 2026-11-10, which reaches References. The
+practitioner asked whether the scan emitted provenance and citation for notes: the receipt was complete; the citation
+was missing.
+
+**Checked by somebody else's code** (lab check 46, extended): every day's most likely cluster the same in numpy, and
+the same first day flagged (p 0.041 here, 0.042 there). The p-values were re-shuffled only on days at or under 0.1.
+
+**Not yet:** SaTScan on the 30-case benchmark (SaTScan is a download behind a registration form: the practitioner's
+to run), and WebKit.
 
 ## Ontologies to reuse, looked for 2026-11-09
 

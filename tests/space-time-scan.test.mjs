@@ -63,3 +63,30 @@ test('settings outside SaTScan’s ranges are refused with what to change',()=>{
   assert.throws(()=>validateScanParams({...ok,replications:10}),/99 to 99,999/);
   assert.throws(()=>validateScanParams({...ok,start:'2026-02-01',end:'2026-01-01'}),/starts on or before/);
 });
+
+test('the day-by-day replay: prospective, only runs ending each day, first flagged on 21 November in Hagelloch',async()=>{
+  const {spaceTimeReplay,replayValue}=await import('../build/space-time-scan.js');
+  const cases=JSON.parse(readFileSync(new URL('../examples/hagelloch-1861/cases.json',import.meta.url),'utf8'));
+  const r=spaceTimeReplay(cases,{...SCAN_DEFAULTS,dateField:'date_of_prodrome',seed:20261110,replications:999});
+  assert.equal(r.days.length,87);
+  assert.equal(r.days.filter(d=>d.skipped).length,8,'too early to scan until the fourth case');
+  for(const d of r.days)if(d.cluster)assert.equal(d.cluster.end,d.day,'every cluster runs to its own day');
+  assert.equal(r.firstAt['0.05'],'1861-11-21');
+  const flagged=r.days.find(d=>d.day==='1861-11-21').cluster;
+  assert.deepEqual([flagged.places.length,flagged.observed,flagged.start],[4,6,'1861-11-21']);
+  const {receipt}=replayValue(r,{id:'replay',params:{label:'Replay',dateField:'date_of_prodrome'}},'r','cases');
+  assert.match(receipt.method,/first day the most likely cluster had p at or under 0\.05 was 1861-11-21/);
+  assert.match(receipt.method,/looking every day raises the chance of a false alarm/);
+});
+
+test('both modes write a Methods note citing Kulldorff and others 2005, verified',async()=>{
+  const {scanEquationNote,METHOD_REFERENCES,renderMethodCitation}=await import('../build/equations.js');
+  const cases=JSON.parse(readFileSync(new URL('../examples/hagelloch-1861/cases.json',import.meta.url),'utf8'));
+  const r=spaceTimeScan(cases,{...SCAN_DEFAULTS,dateField:'date_of_prodrome',unit:'week',seed:1,replications:99});
+  const note=scanEquationNote(r,'scan','date_of_prodrome',{maxCaseShare:0.5,maxTimeShare:0.5});
+  assert.match(note.text,/\$\$8 \\ln\\frac\{8\}/);
+  assert.deepEqual(note.cites,['space-time permutation']);
+  assert.match(note.text,/\\mu = \\frac\{C_\{Z\}\\,C_\{T\}\}\{N\}/);
+  assert.equal(METHOD_REFERENCES['space-time permutation'].citation.doi,'10.1371/journal.pmed.0020059');
+  assert.match(renderMethodCitation('space-time permutation'),/Kulldorff M.*PLoS Medicine\. 2005;2\(3\):e59/);
+});

@@ -704,3 +704,9 @@ fw:expectedCases a owl:DatatypeProperty; rdfs:domain fw:ScanCluster; rdfs:label 
 fw:logLikelihoodRatio a owl:DatatypeProperty; rdfs:domain fw:ScanCluster; rdfs:label "log likelihood ratio" .
 fw:pValue a owl:DatatypeProperty; rdfs:domain fw:ScanCluster; rdfs:label "p-value" .
 fw:monteCarloExceedances a owl:DatatypeProperty; rdfs:domain fw:ScanCluster; rdfs:label "Monte Carlo exceedances"; rdfs:comment "Shuffles whose highest score anywhere was at least this cluster's." .
+fw:SpaceTimeReplay a owl:Class; rdfs:label "space-time replay"; rdfs:comment "A prospective space-time permutation scan run each day of an outbreak on the cases known by then, scoring only runs ending that day. Each day's p-value is that day's alone; repeated looks are not corrected for." .
+fw:daysScanned a owl:DatatypeProperty; rdfs:domain fw:SpaceTimeReplay; rdfs:label "days scanned" .
+fw:daysTooEarly a owl:DatatypeProperty; rdfs:domain fw:SpaceTimeReplay; rdfs:label "days too early to scan" .
+fw:firstDayAtOrUnder05 a owl:DatatypeProperty; rdfs:domain fw:SpaceTimeReplay; rdfs:label "first day at or under 0.05"; rdfs:comment "The first day the most likely cluster's p-value was at or under 0.05: a conventional level, stated, not a rule applied." .
+fw:firstDayAtOrUnder01 a owl:DatatypeProperty; rdfs:domain fw:SpaceTimeReplay; rdfs:label "first day at or under 0.01" .
+fw:analysisDay a owl:DatatypeProperty; rdfs:domain fw:ScanCluster; rdfs:label "analysis day"; rdfs:comment "The day a prospective scan was run, on the cases known by then." .

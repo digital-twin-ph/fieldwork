@@ -34,6 +34,9 @@ export interface ScanSettings {
   start?:string; end?:string;
   /** How many clusters to report at most, the most likely first. */
   report?:number;
+  /** PROSPECTIVE: only runs ending on the last day of the study period, as SaTScan's prospective scan: is something
+   *  happening now, rather than was there ever a cluster. The day-by-day replay runs this once a day. */
+  prospective?:boolean;
 }
 export interface ScanCluster {
   rank:number; start:string; end:string; units:number;
@@ -155,10 +158,13 @@ export function spaceTimeScan(points:PointCollection,s:ScanSettings,onProgress?:
         // Exact, not an approximation, and it is what makes the shuffles fast enough to run in a browser.
         let k=0;for(let t=0;t<bins;t++)if(acc[t]!>0)occupied[k++]=t;
         const share=circle.cases/n;let own=0,ownA=0,ownB=0,ownC=0,ownE=0;
+        // Prospective: the run must end on the last day, empty or not; only its start is trimmed to a day with a case.
+        const lastBin=bins-1;
         for(let i=0;i<k;i++){
           const a=occupied[i]!;
-          for(let j=i;j<k;j++){
-            const b=occupied[j]!;if(b-a>=longest)break;
+          if(s.prospective&&lastBin-a>=longest)continue;
+          for(let j=s.prospective?k-1:i;j<k;j++){
+            const b=s.prospective?lastBin:occupied[j]!;if(b-a>=longest)break;
             const c=prefix[b+1]!-prefix[a]!,e=share*(timeTotals[b+1]!-timeTotals[a]!);
             if(c<=e)continue;
             const l=llrOf(c,e,n);
@@ -207,18 +213,24 @@ export function spaceTimeScan(points:PointCollection,s:ScanSettings,onProgress?:
 
 /** The scan in a Worker where there is one, and inline where there is not (Node, the tests). */
 export function computeSpaceTimeScan(points:PointCollection,settings:ScanSettings,onProgress?:(done:number,of:number)=>void):Promise<ScanResult>{
-  if(typeof Worker==='undefined')return Promise.resolve(spaceTimeScan(points,settings,onProgress));
+  return inWorker(points,settings,false,onProgress) as Promise<ScanResult>;
+}
+export function computeSpaceTimeReplay(points:PointCollection,settings:ScanSettings,onProgress?:(done:number,of:number)=>void):Promise<ScanReplay>{
+  return inWorker(points,settings,true,onProgress) as Promise<ScanReplay>;
+}
+function inWorker(points:PointCollection,settings:ScanSettings,replay:boolean,onProgress?:(done:number,of:number)=>void):Promise<ScanResult|ScanReplay>{
+  if(typeof Worker==='undefined')return Promise.resolve(replay?spaceTimeReplay(points,settings,onProgress):spaceTimeScan(points,settings,onProgress));
   return new Promise((resolve,reject)=>{
     const worker=new Worker('./build/space-time-scan-worker.js');
     const boot=setTimeout(()=>{worker.terminate();reject(new Error('The space-time scan did not start, so nothing was computed. Reload the page; if it persists, the offline cache may be incomplete.'));},4000);
-    worker.onmessage=({data}:MessageEvent<{alive?:boolean;progress?:[number,number];result?:ScanResult;error?:string}>)=>{
+    worker.onmessage=({data}:MessageEvent<{alive?:boolean;progress?:[number,number];result?:ScanResult|ScanReplay;error?:string}>)=>{
       if(data.alive){clearTimeout(boot);return;}
       if(data.progress){onProgress?.(...data.progress);return;}
       worker.terminate();
       if(data.result)resolve(data.result);else reject(new Error(data.error??'The space-time scan failed.'));
     };
     worker.onerror=event=>{clearTimeout(boot);worker.terminate();reject(new Error(event.message||'The space-time scan failed to start.'));};
-    worker.postMessage({points,settings});
+    worker.postMessage({points,settings,replay});
   });
 }
 
@@ -301,5 +313,74 @@ export function validateScanParams(p:Record<string,unknown>):void{
   if(!Number.isInteger(p.seed)||(p.seed as number)<0||(p.seed as number)>0xffffffff)throw new Error('The seed is a whole number from 0 to 4,294,967,295.');
   if(!isDate(p.start)||!isDate(p.end))throw new Error('Write the study period as YYYY-MM-DD.');
   if(p.start&&p.end&&String(p.start)>String(p.end))throw new Error('The study period starts on or before it ends.');
+  if(p.replay!==undefined&&typeof p.replay!=='boolean')throw new Error('Invalid space-time scan settings.');
   if(p.report!==undefined&&(!Number.isInteger(p.report)||(p.report as number)<1||(p.report as number)>50))throw new Error('Report from 1 to 50 clusters.');
+}
+
+/** ONE DAY OF THE REPLAY: what a prospective scan would have said that evening, from the cases known by then. */
+export interface ReplayDay {day:string; cases:number; cluster:ScanCluster|null; skipped?:string}
+export interface ScanReplay {days:ReplayDay[]; replications:number; seed:number;
+  /** The first day the most likely cluster's p-value was at or under each level, where it was. */
+  firstAt:Record<string,string|null>}
+export const REPLAY_LEVELS=[0.05,0.01] as const;
+
+/** THE DAY-BY-DAY REPLAY (experiment 200, Detect): the prospective scan run each day of the outbreak on the cases with a
+ *  date up to that day, the study period always starting on the first case. Each day's p-value is that day's alone:
+ *  looking every day and stopping at the first small p-value raises the chance of a false alarm, which SaTScan can
+ *  correct for over a run of analyses and this does not. So the replay says when a scan would first have flagged
+ *  something; it does not say that flag was right. Cases are placed on the day of their date, which was not the day
+ *  they were reported. */
+export function spaceTimeReplay(points:PointCollection,s:ScanSettings,onProgress?:(done:number,of:number)=>void):ScanReplay{
+  const days=points.features.map(f=>dayOf(f.properties?.[s.dateField])).filter((d):d is number=>d!==null);
+  if(!days.length)throw new Error(`No case has a readable date in ${s.dateField}.`);
+  const first=s.start?dayOf(s.start)!:Math.min(...days),last=s.end?dayOf(s.end)!:Math.max(...days);
+  const out:ReplayDay[]=[],step=(s.unit==='week'?7:1)*DAY;
+  const total=Math.floor((last-first)/step)+1;
+  for(let i=0,at=first;at<=last;i++,at+=step){
+    const day=iso(at);
+    const known=points.features.filter(f=>{const d=dayOf(f.properties?.[s.dateField]);return d!==null&&d<=at;}).length;
+    try{
+      const r=spaceTimeScan(points,{...s,start:iso(first),end:day,prospective:true,report:1});
+      out.push({day,cases:r.totals.cases,cluster:r.clusters[0]??null});
+    }catch(error){out.push({day,cases:known,cluster:null,skipped:error instanceof Error?error.message:String(error)});}
+    onProgress?.(i+1,total);
+  }
+  const firstAt=Object.fromEntries(REPLAY_LEVELS.map(level=>[String(level),out.find(d=>d.cluster&&d.cluster.pValue<=level)?.day??null]));
+  return {days:out,replications:s.replications,seed:s.seed,firstAt};
+}
+
+/** What the replay found, in one sentence. Each level is the conventional one, stated; none is applied as a rule. */
+export function replaySentence(r:ScanReplay,dateField:string):string{
+  const scanned=r.days.filter(d=>!d.skipped),skipped=r.days.length-scanned.length;
+  const at=(level:string)=>r.firstAt[level];
+  const flagged=r.days.find(d=>d.day===at('0.05'))?.cluster;
+  return `A prospective scan each day by ${dateField}, ${r.days[0]?.day} to ${r.days.at(-1)?.day}: ${plural(scanned.length,'day')} scanned`
+    +(skipped?`, ${skipped} too early to scan (fewer than 4 cases, 2 places or 2 days)`:'')+'. '
+    +(flagged?`The first day the most likely cluster had p at or under 0.05 was ${at('0.05')}: ${plural(flagged.observed,'case')} where ${round(flagged.expected)} were expected, at ${plural(flagged.places.length,'place')}, from ${flagged.start}`
+      +` (p = ${round(flagged.pValue,3)}).`:'On no day did the most likely cluster have p at or under 0.05.')
+    +(at('0.01')?` At or under 0.01: first on ${at('0.01')}.`:' On no day at or under 0.01.')
+    +` Each day's p-value is that day's alone, from ${r.replications.toLocaleString('en-US')} shuffles (seed ${r.seed}); looking every day raises the chance of a false alarm, which this does not correct.`;
+}
+
+/** The replay as a layer: one feature per day with a cluster, at that day's most likely circle, carrying the day. */
+export function replayValue(r:ScanReplay,node:{id:string;params:{label:string;dateField:string}},runId:string,sourceId:string){
+  const withCluster=r.days.filter(d=>d.cluster);
+  const features=withCluster.map(d=>{const c=d.cluster!;return {
+    id:`day-${d.day}`,name:d.day,geometry:{type:'Polygon' as const,coordinates:[circle(c.center,c.radiusKm)]},
+    properties:{analysis_day:d.day,cases_known:d.cases,first_day:c.start,places:c.places.length,radius_m:round(c.radiusKm*1000,0),
+      observed:c.observed,expected:round(c.expected),observed_over_expected:round(c.ratio),log_likelihood_ratio:round(c.llr,3),
+      p_value:round(c.pValue,4),cases:c.caseIds.join(', ')}};});
+  const sentence=replaySentence(r,node.params.dateField);
+  const activity=`<urn:fieldwork:run:${runId}:replay:${node.id}>`;
+  let facts='@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n'
+    +`${activity} a fw:SpaceTimeReplay, prov:Activity; prov:used <urn:fieldwork:source:${sourceId}>; fw:dateColumn ${JSON.stringify(node.params.dateField)}; `
+    +`fw:daysScanned ${r.days.filter(d=>!d.skipped).length}; fw:daysTooEarly ${r.days.filter(d=>d.skipped).length}; fw:replications ${r.replications}; fw:randomSeed ${r.seed}`
+    +(r.firstAt['0.05']?`; fw:firstDayAtOrUnder05 "${r.firstAt['0.05']}"`:'')+(r.firstAt['0.01']?`; fw:firstDayAtOrUnder01 "${r.firstAt['0.01']}"`:'')+'.\n';
+  for(const d of withCluster){const c=d.cluster!,id=`<urn:fieldwork:run:${runId}:replay:${node.id}:${d.day}>`;
+    facts+=`${activity} fw:reportsCluster ${id}.\n${id} a fw:ScanCluster; fw:analysisDay "${d.day}"; fw:firstDay "${c.start}"; fw:lastDay "${c.end}"; `
+      +`fw:placesInCluster ${c.places.length}; fw:observedCases ${c.observed}; fw:expectedCases ${round(c.expected,4)}; fw:logLikelihoodRatio ${round(c.llr,6)}; fw:pValue ${round(c.pValue,6)}.\n`;}
+  const value={features,sites:[],crs:'EPSG:4326',layerName:node.params.label,featuresNamed:false,
+    method:'Prospective space-time permutation scan, run each day on the cases known by then: only runs ending that day.',
+    notes:[sentence]};
+  return {value,sentence,receipt:{nodeId:node.id,kind:'computation' as const,input:facts,facts,rules:'',conclusions:[],method:sentence}};
 }

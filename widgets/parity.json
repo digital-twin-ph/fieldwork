@@ -3,7 +3,7 @@
   "description": "Independent recomputation of implemented widgets by an external process, recorded after release. Release files are immutable once committed, so evidence about a release lives here and accrues as checks run. A fixture digest recorded in a result is over canonical JSON content rather than the file’s bytes, revised 2026-10-11 because byte identity is unsatisfiable in the browser the lab publishes to. A parity result establishes numerical agreement with a named external implementation under a stated criterion. It is not scientific certification, and it says nothing about whether a method is appropriate for a question.",
   "lab": {
     "repository": "https://github.com/digital-twin-ph/validation-lab",
-    "commit": "02ab1fb2f61f7f32628bed0c3c6b93342222c5e3",
+    "commit": "fab0f9db30a9c76009a88f5fade542d9b87315b6",
     "pinNote": "The commit CI checks the lab out at: .github/workflows/pages.yml reads it with `jq -r .lab.commit widgets/parity.json`. So this pin, not the clone beside this repository, is what `validate:dive-deeper` verifies against on a clean runner -- and it must be advanced whenever a check lands in the lab, in the same push-then-pin order the worked examples use."
   },
   "outcomes": {
@@ -836,21 +836,22 @@
     },
     {
       "widget": "urn:fieldwork:widget:space_time_scan",
-      "coversRelease": "0.1.1",
+      "coversRelease": "0.2.0",
       "check": "46-space-time-scan",
       "result": "content/results/check-46-space-time-scan.json",
-      "sha256": "418236378570fd4e6fad21e63633366b61f78877586824a5be22716cc487b792",
+      "sha256": "ca7a6baae38113edd21ab3fe8662143d7c20a1c0f81923338d8ba6dd1a25eb36",
       "external": [
         "numpy 2.5.3"
       ],
-      "criterion": "The same circles, runs and windows; for every cluster the same places, days, observed and expected cases and score to 1e-9; p-values within three standard errors of the difference plus the 1/(R+1) step",
+      "criterion": "The same circles, runs and windows; for every cluster the same places, days, observed and expected cases and score to 1e-9; p-values within three standard errors of the difference plus the 1/(R+1) step; the replay's every day alike, and its p-value within that error wherever Fieldwork's is at or under 0.1",
       "outcome": "agrees",
-      "measured": "Hagelloch, 1861, by day of prodrome: 188 cases at 56 places, 1,347 circles and 2,838 runs. The same ten clusters, each with the same places, days, counts and score; the most likely one house, 8 cases where 0.5532 were expected, 1861-10-30 to 1861-11-18, p = 0.001 both ways. Cluster 2: p 0.072 in Fieldwork, 0.064 from numpy's own shuffles. Agrees in CPython and in the browser kernel.",
-      "ranAt": "2026-11-10T13:14:06+00:00",
+      "measured": "Hagelloch, 1861, by day of prodrome: 188 cases at 56 places, 1,347 circles and 2,838 runs. The same ten clusters, each with the same places, days, counts and score; the most likely one house, 8 cases where 0.5532 were expected, 1861-10-30 to 1861-11-18, p = 0.001 both ways. Cluster 2: p 0.072 in Fieldwork, 0.064 from numpy's own shuffles. Agrees in CPython and in the browser kernel. Replayed day by day: all 87 days scanned or skipped alike, every day's most likely cluster the same; first at or under 0.05 on 1861-11-21 both ways (p 0.041 in Fieldwork, 0.042 from numpy).",
+      "ranAt": "2026-11-10T13:33:06+00:00",
       "notEstablished": [
         "That a cluster is an outbreak: both sides compute the same statistic; neither says what it means.",
         "That the space-time permutation model suits measles in a village: it compares timing across places and cannot see where people live.",
-        "That the p-values are the same to the digit: they come from different random numbers, so they agree only within Monte Carlo error."
+        "That the p-values are the same to the digit: they come from different random numbers, so they agree only within Monte Carlo error.",
+        "The replay's p-values where Fieldwork's exceed 0.1: not reshuffled, to keep the check to minutes in a browser; its clusters and scores are checked on every day."
       ],
       "note": "Found a defect before agreeing: Fieldwork scanned 1,346 circles, measuring distances from raw coordinates while identifying places rounded; fixed in 0.1.1. numpy scores every run, so Fieldwork's shortcut, trying only runs that start and end on a day with a case, is tested too. The fixture is Fieldwork's own code in Node (scripts/export-validation-fixture.mjs, scan-hagelloch-001). Experiment 200.",
       "notebook": "46-space-time-scan-vs-numpy.ipynb"

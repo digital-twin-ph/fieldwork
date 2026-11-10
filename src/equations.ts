@@ -94,6 +94,16 @@ export const METHOD_REFERENCES:Record<string,MethodReference>={
     title:'On estimating the relation between blood group and disease',
     container:'Annals of Human Genetics',volume:'19',issue:'4',pages:'251-253',
     doi:'10.1111/j.1469-1809.1955.tb01348.x'}},
+  // Verified 2026-11-10 against the article page, journals.plos.org, doi 10.1371/journal.pmed.0020059: PLoS Medicine
+  // 2(3):e59, 2005, open access under the Creative Commons Attribution License. The expected count it defines -- the
+  // area's share of all cases times the day's cases -- and its Poisson likelihood ratio, tested by shuffling the dates
+  // across the case locations, are what `space-time-scan.ts` computes.
+  'space-time permutation':{published:'2005',citation:{type:'article',
+    authors:[{family:'Kulldorff',given:'M'},{family:'Heffernan',given:'R'},{family:'Hartman',given:'J'},
+      {family:'Assunção',given:'R'},{family:'Mostashari',given:'F'}],
+    title:'A space-time permutation scan statistic for disease outbreak detection',
+    container:'PLoS Medicine',volume:'2',issue:'3',pages:'e59',
+    doi:'10.1371/journal.pmed.0020059'}},
   // NO PRIMARY SOURCE READ. A Wald interval on a difference of two binomial proportions is
   // textbook arithmetic that several implementations state identically and none attributes.
   'Wald unpooled':{citation:null,
@@ -464,4 +474,41 @@ export function machinedNoteFacts(subject:string,notes:readonly MachinedNote[]):
     +(note.fn?`fw:noteFunction ${quote(note.fn)}; `:'')
     +[...new Set(note.cites||[])].map(method=>`${citation(method)}; `).join('')
     +`fw:noteText ${quote(note.text)} ].\n`).join('');
+}
+
+/** THE NOTE THE SPACE-TIME SCAN MACHINES (experiment 200, Detect): the expected count and the score as Kulldorff and
+ *  others define them, instantiated on the most likely cluster, and how its p-value was found. */
+export function scanEquationNote(r:import('./space-time-scan.js').ScanResult,nodeId:string,dateField:string,
+  limits:{maxCaseShare:number;maxTimeShare:number;maxRadiusKm?:number}):MachinedNote|null{
+  const top=r.clusters[0];
+  if(!top)return null;
+  const n=r.totals.cases;
+  const text=`Cases were scanned for clusters in place and time with the space-time permutation scan statistic, by ${r.period.unit} `
+    +`of ${dateField}, ${r.period.start} to ${r.period.end}: ${said(n)} cases at ${said(r.totals.places)} places. For a circle of places $Z$ `
+    +`and a run of ${r.period.unit}s $T$, the cases expected if place and time were unrelated are the circle's cases over the whole `
+    +`period times the run's cases everywhere, over all cases:`
+    +`\n\n$$\\mu = \\frac{C_{Z}\\,C_{T}}{N}$$\n\n`
+    +`and the circle and run are scored by the log likelihood ratio, where $c$ cases are observed, $c > \\mu$:`
+    +`\n\n$$\\log \\mathrm{LR} = c \\ln\\frac{c}{\\mu} + (N - c) \\ln\\frac{N - c}{N - \\mu}$$\n\n`
+    +`The most likely cluster, ${top.start} to ${top.end} at ${said(top.places.length)} ${top.places.length===1?'place':'places'}, held `
+    +`${said(top.observed)} cases where ${round(top.expected,2)} were expected:`
+    +`\n\n$$${figure(top.observed)} \\ln\\frac{${figure(top.observed)}}{${round(top.expected,4)}} + ${figure(n-top.observed)} \\ln\\frac{${figure(n-top.observed)}}{${round(n-top.expected,4)}} = ${round(top.llr,3)}$$\n\n`
+    +`Its p-value, ${round(top.pValue,3)}, is the share of ${said(r.replications)} shuffles of the dates across the cases, plus one, `
+    +`whose highest score anywhere was at least as high (random stream ${r.randomStream}, seed ${r.seed}). Circles held at most `
+    +`${Math.round(limits.maxCaseShare*100)}% of the cases${limits.maxRadiusKm?` within ${limits.maxRadiusKm} km`:''} and runs were at most `
+    +`${r.longestRunUnits} ${r.period.unit}s long${limits.maxCaseShare===0.5&&limits.maxTimeShare===0.5&&!limits.maxRadiusKm?', SaTScan\u2019s defaults':''}.`;
+  return {kind:'machined',id:`${nodeId}:equation`,section:'Methods',fn:'method',text,nodeId,cites:['space-time permutation']};
+}
+
+/** THE REPLAY'S NOTE: the same statistic, prospectively, once a day; and what a daily look does to the p-value. */
+export function replayEquationNote(r:import('./space-time-scan.js').ScanReplay,nodeId:string,dateField:string):MachinedNote{
+  const at=r.firstAt['0.05'];
+  const text=`The outbreak was replayed day by day with the prospective space-time permutation scan statistic: each day, on the `
+    +`cases with a ${dateField} up to that day, only runs ending that day were scored, with the expected count and log likelihood `
+    +`ratio of the retrospective scan. `
+    +(at?`The most likely cluster first had a p-value at or under 0.05 on ${at}.`:`On no day did the most likely cluster have a p-value at or under 0.05.`)
+    +` Each day's p-value is from ${said(r.replications)} shuffles of the dates (seed ${r.seed}) and is that day's alone: `
+    +`looking every day raises the chance of a false alarm, which was not corrected for. Cases are counted on the day of their `
+    +`${dateField}, not the day they were reported.`;
+  return {kind:'machined',id:`${nodeId}:equation`,section:'Methods',fn:'method',text,nodeId,cites:['space-time permutation']};
 }

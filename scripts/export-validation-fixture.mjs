@@ -50,7 +50,7 @@ import {sampleRaster} from '../build/sample-raster.js';
 import {nearestPlaces,distancesAsTable,pointsAsTable} from '../build/core.js';
 import {transmissionTree} from '../build/transmission-tree.js';
 import {mapOutput} from '../build/map-output.js';
-import {spaceTimeScan} from '../build/space-time-scan.js';
+import {spaceTimeScan,spaceTimeReplay} from '../build/space-time-scan.js';
 import {downloadFacilities} from '../build/health-facilities.js';
 import {authoredSubjects} from '../build/authored-application.js';
 import {evaluateAuthored,evaluatedTable} from '../build/rule-evaluation.js';
@@ -1436,7 +1436,10 @@ const builders={
         pValue:'(1 + shuffles whose highest score anywhere is at least this one) / (1 + shuffles); dates shuffled across the fixed cases.'},
       input:{cases:cases.features.map(f=>({id:String(f.id),date:f.properties.date_of_prodrome??'',
         lon:f.geometry?.coordinates?.[0]??null,lat:f.geometry?.coordinates?.[1]??null}))},
-      output:{totals:r.totals,excluded:r.excluded,period:r.period,longestRunUnits:r.longestRunUnits,
+      replay:{model:'Prospective: each day, the scan on the cases with a date up to that day, the study period from the first case, scoring only runs ending that day; at least 4 cases at 2 places over 2 days, or the day is skipped.'},
+      output:{replay:(()=>{const p=spaceTimeReplay(cases,settings);return {firstAt:p.firstAt,days:p.days.map(d=>({day:d.day,cases:d.cases,skipped:!!d.skipped,
+          ...(d.cluster?{cluster:{start:d.cluster.start,end:d.cluster.end,places:d.cluster.places,observed:d.cluster.observed,expected:d.cluster.expected,llr:d.cluster.llr,pValue:d.cluster.pValue}}:{})}))};})(),
+        totals:r.totals,excluded:r.excluded,period:r.period,longestRunUnits:r.longestRunUnits,
         clusters:r.clusters.map(c=>({rank:c.rank,start:c.start,end:c.end,places:c.places,radiusKm:c.radiusKm,caseIds:c.caseIds,
           observed:c.observed,expected:c.expected,llr:c.llr,pValue:c.pValue,exceedances:c.exceedances}))},
     },files:{}};

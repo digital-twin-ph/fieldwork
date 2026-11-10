@@ -2066,7 +2066,7 @@ function chartSentence(n:WorkflowNode<'chart_output'>):string{
 /** THE SPACE-TIME SCAN'S SETTINGS IN ONE SENTENCE (experiment 186). */
 function scanSettingsSentence(p:import('./types.js').ParamsByType['space_time_scan']):string{
   if(!p.dateField)return 'Choose the column holding each case\u2019s date in Configure\u2026';
-  return `Scans circles over places and runs of ${p.unit}s of ${p.dateField}: circles up to ${Math.round(p.maxCaseShare*100)}% of the cases`
+  return `${p.replay?`Replays the outbreak ${p.unit} by ${p.unit}, scanning each ${p.unit} for clusters still going on;`:'Scans'} circles over places and runs of ${p.unit}s of ${p.dateField}: circles up to ${Math.round(p.maxCaseShare*100)}% of the cases`
     +`${p.maxRadiusKm?` and ${p.maxRadiusKm} km across`:''}, runs up to ${Math.round(p.maxTimeShare*100)}% of the study period`
     +`${p.start||p.end?`, ${p.start??'the first date'} to ${p.end??'the last'}`:''}; tested by shuffling the dates ${p.replications.toLocaleString('en-US')} times, seed ${p.seed}.`;
 }
@@ -2086,6 +2086,10 @@ function openScanConfig(nodeId:string){
       +`<div class="field"><label class="field-label" for="scan-date">Each case\u2019s date</label><select id="scan-date">`
         +`<option value="">Choose a column</option>`+columns.map(c=>`<option value="${esc(c)}" ${draft.dateField===c?'selected':''}>${esc(c)}</option>`).join('')+`</select>`
         +(columns.length?'':'<p class="muted">Connect a point layer of cases first.</p>')+`</div>`
+      +`<div class="field"><label class="field-label" for="scan-mode">How to scan</label><select id="scan-mode">`
+        +`<option value="once" ${draft.replay?'':'selected'}>Once, over the whole period (retrospective)</option>`
+        +`<option value="replay" ${draft.replay?'selected':''}>Day by day, as the outbreak unfolded (prospective)</option></select>`
+        +`<p class="muted">Day by day asks, each day, whether something is happening now, from the cases known by then.</p></div>`
       +`<div class="field"><label class="field-label" for="scan-unit">Count by</label><select id="scan-unit">`
         +`<option value="day" ${draft.unit==='day'?'selected':''}>Day</option><option value="week" ${draft.unit==='week'?'selected':''}>Week</option></select></div>`
       +`<div class="field"><label class="field-label" for="scan-case-share">Largest circle, as a share of all cases</label>`
@@ -2106,6 +2110,7 @@ function openScanConfig(nodeId:string){
       const on=(id:string,fn:(el:HTMLInputElement&HTMLSelectElement)=>void)=>root.querySelector<HTMLInputElement&HTMLSelectElement>(id)?.addEventListener('change',e=>{fn(e.target as never);redraw();});
       on('#scan-date',el=>{draft.dateField=el.value;});
       on('#scan-unit',el=>{draft.unit=el.value==='week'?'week':'day';});
+      on('#scan-mode',el=>{if(el.value==='replay')draft.replay=true;else delete draft.replay;});
       on('#scan-case-share',el=>{draft.maxCaseShare=Number(el.value);});
       on('#scan-time-share',el=>{draft.maxTimeShare=Number(el.value);});
       on('#scan-radius',el=>{if(el.value)draft.maxRadiusKm=Number(el.value);else delete draft.maxRadiusKm;});

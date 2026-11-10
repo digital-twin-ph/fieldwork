@@ -3,6 +3,15 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.78.0 — 2026-11-10
+
+- **The space-time scan replays an outbreak day by day.** Under **How to scan**, choose **Day by day**: each day, the
+  cases known by then, and only clusters still going on. It says the first day the p-value was at or under 0.05. On
+  Hagelloch: 21 November 1861. Each day's p-value is that day's alone, and the step says so. Space-time scan 0.2.0.
+- **The scan writes a Methods note and cites its method**, Kulldorff and others 2005, which reaches References.
+- **Checked by somebody else's code**: lab check 46 recomputes the scan and the replay in numpy, and agrees. It found
+  the scan missing one circle of houses, now fixed (0.1.1); no cluster changed.
+
 ## 0.77.0 — 2026-11-10
 
 - **Space-time scan, the first step under Detect.** For a line list of cases with dates and places: the space-time

@@ -356,7 +356,9 @@ export interface ParamsByType {
     unmatched?:import('./relate-table.js').UnmatchedDeclaration};
   /** A SPACE-TIME PERMUTATION SCAN (experiment 200, Detect). See `space-time-scan.ts`. */
   space_time_scan:{label:string;dateField:string;unit:'day'|'week';maxCaseShare:number;maxTimeShare:number;
-    maxRadiusKm?:number;replications:number;seed:number;start?:string;end?:string;report?:number};
+    maxRadiusKm?:number;replications:number;seed:number;start?:string;end?:string;report?:number;
+    /** Day by day, as the outbreak unfolded: a prospective scan each day on the cases known by then. */
+    replay?:boolean};
   group_table:{label:string;by:string[];
     /** Which aggregate: the sum this step has always computed, a minimum or maximum, or a count
      *  of rows. See

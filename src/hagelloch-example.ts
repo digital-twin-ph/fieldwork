@@ -160,12 +160,17 @@ export function hagellochClusterExample():Workflow{
       // The cases small and dark, so the clusters' two hues are the only colour on the figure.
       layerSymbols:{cases:{colour:'#3d4a45',size:3}}}},
     {id:'cluster-table',type:'table_output',x:840,y:320,params:{label:'Every cluster reported',inputMode:'polygons' as const}},
+    // THE DAY-BY-DAY REPLAY: when would a scan run each evening first have flagged something?
+    {id:'replay',type:'space_time_scan',x:430,y:580,params:{label:'When would it have been flagged?',dateField:'date_of_prodrome',
+      unit:'day' as const,maxCaseShare:0.5,maxTimeShare:0.5,replications:999,seed:20261110,replay:true}},
+    {id:'replay-table',type:'table_output',x:840,y:580,params:{label:'Each day’s most likely cluster',inputMode:'polygons' as const}},
   ];
   const edges=[
     {id:'cases-scan',from:'cases',to:'scan',port:'points'},
     {id:'scan-map',from:'scan',to:'cluster-map',port:'polygons'},{id:'cases-cluster-map',from:'cases',to:'cluster-map',port:'points'},
     {id:'village-cluster-map',from:'village',to:'cluster-map',port:'area'},
     {id:'scan-table',from:'scan',to:'cluster-table',port:'polygons'},
+    {id:'cases-replay',from:'cases',to:'replay',port:'points'},{id:'replay-out',from:'replay',to:'replay-table',port:'polygons'},
   ];
   return {schema:'fieldwork/workflow/1',name:'Was there a cluster? Hagelloch, 1861',
     exampleId:'hagelloch-cluster',nodes,edges} as unknown as Workflow;

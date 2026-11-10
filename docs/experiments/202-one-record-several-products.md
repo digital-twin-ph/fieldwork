@@ -17,6 +17,10 @@ The practitioner, 2026-11-10, in order:
   paper, story"*
 - *"The notes can have versions for different renders and they can be excluded or included in a selected render."*
 - *"It can even have a format for a poster presentation"*
+- *"Remember with notes we want the humans to write as much as they can, that is a skill we don't want the learners
+  and practitioners to lose. We can guide them how to do it but we should not do it for them."*
+- *"Well there's machined notes which widgets emit. Those could be formatted for different renders. Even hidden, when
+  space is an issue such as posters."*
 
 These are recorded as said. They are the starting point of a design, not rules.
 
@@ -52,12 +56,21 @@ report, a story map, an infographic and a dashboard are kinds. It is provisional
 those anchored to a view), and each product shows what it left out. **A note may have a version per product**: the
 full paragraph for the Paper, one plain sentence for the story map, a line for the poster. Each version is linked to
 the note it came from and is flagged when the original changes, until it is revised or confirmed, so versions cannot
-quietly say different things. A widget's own note is recomputed on every run, so a version of it must not freeze its
-numbers: a widget can machine a short form as it machines the long one.
+quietly say different things.
+
+**People write; Fieldwork guides.** Every authored note, and every version of one for a product, is written by the
+person: Fieldwork offers a prompt (what this panel or scene should say), a length guide, plain checks and the flag,
+and never drafts the sentences. **A widget's own note is formatted, not rewritten**: the same facts shown in full for
+the paper (formula, worked numbers, how the p-value was found), compressed to the formula and result, cut to one line,
+or hidden where space is short, as on a poster, while its reference still reaches References. Every format is made
+from the same computation, so its numbers follow the run.
 
 **Evidence first, guided rather than refused.** A scene or panel anchors to a result that exists. One written before
 the run is marked a prediction; the run bears it out, or it is flagged to change or to say why not. A result that
 changes flags what was built on it.
+
+**A code to the digital form.** A printed product can carry QR codes to its digital form: see
+[203](203-qr-codes-from-a-product-to-its-digital-form.md).
 
 **On screen**: a product selector at the top of Notes, the Paper by default so nothing moves; *New product…* opens the
 standard configuration dialog (kind, audience, which notes, order, preview).

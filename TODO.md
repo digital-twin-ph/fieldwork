@@ -191,6 +191,20 @@ not a practitioner in the field.
    paper, a field report, a story map, a poster and a dashboard configured from one record of notes and views; notes
    included or excluded per product, with versions flagged when their original changes; evidence before the story.
    First: the story map on Hagelloch's six scenes.
+21. **Collaboration through GitHub** ([150](docs/experiments/150-can-several-authors-collaborate-in-a-project-repository.md);
+   the practitioner, 2026-11-10: *"We have not worked on the collaborative project yet which intends to use GitHub as
+   the shared space for collaboration."*). Written half exists (a project exports as a repository). In order: read a
+   repository back into a project; a second author on a real project; push from Fieldwork with the scoped token;
+   Discussions ([155](docs/experiments/155-discussions-as-the-governance-surface.md)); products on the repository's
+   Pages. Trust without a catalog: a commit pin, who and what before opening, data never instructions, a label.
+22. **QR codes from a product to its digital form** ([203](docs/experiments/203-qr-codes-from-a-product-to-its-digital-form.md)):
+   first, a note for a worked example with two codes, Fieldwork with the example opened and the example's repository at
+   its pinned commit; needs `?example=` to open a repository example through the catalog. Ask before installing an
+   encoder.
+23. **"Made with Fieldwork <version>" on everything exported** (the practitioner, 2026-11-10: *"can we add small
+   watermarks for FieldWork outputs, I think it's time to toot our horn"*; *"Yes agree with branding settings"*): small,
+   with the logo, in the footer beside the source note and never over the data; at least 14 px and AA contrast; on by
+   default and removable per export, the choice recorded; Fieldwork's own name only.
 12. **Edit a table's values inline, in the data quality check** (the practitioner, 2026-11-10: *"One thing I have been
    meaning to add to data quality checks is the ability to edit tables inline. Can be added as a widget playback
    exercise."*). To shape: per [117](docs/experiments/117-data-quality.md), a change to an input is a declared repair

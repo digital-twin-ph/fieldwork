@@ -1040,3 +1040,23 @@ all eight graphs — because `AreaParams` alone declares no payload reference. T
 finding of 2026-10-29 was right about the bundle and stops being the interesting number the moment
 the bundle is taken apart.
 
+## Trust, without a catalog — 2026-11-10
+
+The practitioner: *"We have to remember a collaborative project will not be in a manifest so we will have trust
+challenge."* A worked example is vouched for by Fieldwork's catalog, which pins its repository, commit and file
+digests. A project repository is not, so opening one is opening content nobody has vetted. What can still be made
+trustworthy:
+
+- **A commit, not a branch**: what is opened is exactly that version.
+- **Who and what, before opening**: *not vouched for by Fieldwork*, the repository, the commit, its author, and whether
+  GitHub shows the commit as signed. The person decides.
+- **Data, never instructions**: Fieldwork reads workflows, tables and notes and runs its own widgets; a project's
+  rulesets run in the reasoner's worker and need a time limit; sizes are held to the measured limits.
+- **Checked on import** as any import is, findings reported rather than the data refused, and **labelled** in the
+  application as not vouched for.
+- **Later, if needed**: signed projects, or a list of repositories a team trusts.
+
+**The order of work, proposed the same day**: reading a repository back into a project (the round trip); a second
+author on a real project, with conflicts shown in the application; pushing from Fieldwork with the scoped token; the
+Discussions of [155](155-discussions-as-the-governance-surface.md); products published to the repository's Pages
+([202](202-one-record-several-products.md)).

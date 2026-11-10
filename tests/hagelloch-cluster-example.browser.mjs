@@ -5,12 +5,13 @@ import {collectPageErrors} from './page-errors.mjs';
 // with a progress panel (the practitioner, 2026-11-10: "That may need a progress bar"), and its clusters are drawn over
 // the village and listed.
 test('Hagelloch: the space-time scan runs with a progress bar, and its clusters are mapped and listed',async({page})=>{
-  test.setTimeout(180_000);
+  // The example runs itself on open: the scan and the 87-day replay. WebKit on CI is slower than that by minutes.
+  test.setTimeout(420_000);
   const errors=collectPageErrors(page);
   await page.goto('/?example=hagelloch-cluster');
   await expect(page.locator('#project-select option:checked')).toHaveText('Measles in Hagelloch, 1861 · 3 workflows');
   await page.locator('[data-view="workflow"]').click();
-  await expect(page.locator('#run-button')).toBeEnabled({timeout:60_000});
+  await expect(page.locator('#run-button')).toBeEnabled({timeout:240_000});
   // Recorded as it happens, so the check cannot race the panel it checks.
   await page.evaluate(()=>{
     const seen=window.__progressSeen=[];
@@ -18,7 +19,7 @@ test('Hagelloch: the space-time scan runs with a progress bar, and its clusters 
       .observe(document.body,{subtree:true,childList:true,characterData:true});
   });
   await page.locator('#run-button').click();
-  await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:150_000});
+  await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:240_000});
   const seen=await page.evaluate(()=>window.__progressSeen);
   expect(seen.some(t=>t.includes('Shuffling the dates:')&&t.includes('of 999'))).toBe(true);
   expect(seen.some(t=>t.includes('Scanning the days:')&&t.includes('of 87'))).toBe(true);

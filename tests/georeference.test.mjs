@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {existsSync,readFileSync} from 'node:fs';
-import {fitPlacement,lonLatOf,cornersOf,MIN_POINTS,onGuide} from '../build/georeference.js';
+import {fitPlacement,lonLatOf,cornersOf,MIN_POINTS,onGuide,fitShape,errorHistory,expectedFromOthers,groundMetres} from '../build/georeference.js';
 
 // PLACING A MAP IMAGE FROM MATCHED POINTS (experiment 201).
 const near=(a,b,tol,what)=>assert.ok(Math.abs(a-b)<=tol,`${what}: ${a} against ${b}`);
@@ -65,4 +65,22 @@ test('a click is on a guide feature within its radius, on each pane separately, 
   const east=10/(111_320*Math.cos(48.54*Math.PI/180)),north=20/110_570;
   assert.equal(onGuide({id:'',pixel:blank,lonlat:[9.01+east,48.54]},guide).map,true);
   assert.equal(onGuide({id:'',pixel:blank,lonlat:[9.01,48.54+north]},guide).map,false);
+});
+
+test('the live check: a fit\'s scale and turn, the error as pairs are added, and where the others expect a pixel',()=>{
+  // A plan 0.5 m a pixel, turned 20 degrees anticlockwise, at 48.54 N.
+  const lat=48.54,t=20*Math.PI/180,mx=0.5/(111_320*Math.cos(lat*Math.PI/180)),my=0.5/110_570;
+  const at=(x,y)=>[9.01+mx*(Math.cos(t)*x+Math.sin(t)*y),lat+my*(Math.sin(t)*x-Math.cos(t)*y)];
+  const pts=[[10,10],[400,20],[390,300],[20,290],[200,150]].map(([x,y],i)=>({id:`P${i}`,pixel:[x,y],lonlat:at(x,y)}));
+  const shape=fitShape(fitPlacement(pts,'affine'),lat);
+  near(shape.acrossM,0.5,1e-6,'across');near(shape.downM,0.5,1e-6,'down');near(shape.turnDeg,20,1e-6,'turn');
+  // Exact points: no error at any count, from the first pair that can be checked.
+  assert.deepEqual(errorHistory(pts,'affine').map(h=>h.pairs),[4,5]);
+  assert.ok(errorHistory(pts,'affine').every(h=>h.rmsM<1e-6));
+  // A fifth pair 30 m off shows in the history and against the others.
+  const off=[...pts.slice(0,4),{...pts[4],lonlat:[pts[4].lonlat[0]+30/(111_320*Math.cos(lat*Math.PI/180)),pts[4].lonlat[1]]}];
+  assert.ok(errorHistory(off,'affine')[1].rmsM>5);
+  near(groundMetres(off[4].lonlat,expectedFromOthers(off,4,'affine',off[4].pixel)),30,0.01,'the off pair against the others');
+  // Too few others: nothing to expect.
+  assert.equal(expectedFromOthers(pts.slice(0,3),2,'affine',[5,5]),null);
 });

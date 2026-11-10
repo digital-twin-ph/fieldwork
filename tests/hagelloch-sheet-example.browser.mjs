@@ -44,6 +44,27 @@ test('Hagelloch: the 1824 sheet is offered, placed by four guided junctions nort
   }
   // North up, as the example sets it: four points, errors of a few metres, the largest at the south lane.
   await expect(dialog.locator('#geo-fit')).toContainText('Placed from 4 points: errors 3 m root mean square, largest 5 m at South lane.');
+  // THE LIVE CHECK: the last pair against the other three, what the fit implies, and the error as pairs were added.
+  await expect(dialog.locator('#geo-live-pair')).toContainText(/“South lane” is \d+ m from where your other 3 pairs put it\./);
+  await expect(dialog.locator('#geo-live-shape')).toContainText(/0\.\d\d m a pixel across, 0\.\d\d m down, not turned/);
+  await expect(dialog.locator('#geo-live-history')).toContainText(/3 pairs \d+ m · 4 pairs 3 m/);
+  await expect(dialog.locator('.geo-look-first')).toContainText('Find the feature on the map by looking first.');
+  // And over the map, the cursor's distance from where the other pairs expect the feature.
+  const pane=dialog.locator('#geo-map-pane');const box=await pane.boundingBox();
+  await page.mouse.move(box.x+box.width/2,box.y+box.height/2);await page.mouse.move(box.x+box.width/2+5,box.y+box.height/2+5);
+  await expect(dialog.locator('#geo-hover')).toContainText(/The cursor is \d+ m from where your other pairs expect “South lane”\./);
+  // THE PREVIEW: the sheet through the placement, over today's map, see-through on request, each pair drawn twice.
+  await dialog.locator('#geo-preview-toggle').click();
+  const plate=dialog.locator('#geo-preview img.map-plate-image');
+  await expect(plate).toHaveCount(1);
+  await expect(plate).toHaveAttribute('style',/matrix\(/);
+  await expect(plate).toHaveCSS('opacity','0.6');
+  for(const kind of ['error','placed','clicked'])await expect(dialog.locator(`#geo-preview path.geo-preview-${kind}`)).toHaveCount(4);
+  await dialog.locator('#geo-preview-opacity').fill('0.3');
+  await expect(plate).toHaveCSS('opacity','0.3');
+  await expect(dialog.locator('#geo-preview-opacity-value')).toHaveText('30% opaque');
+  await dialog.locator('#geo-preview-toggle').click();
+  await expect(dialog.locator('#geo-preview')).toHaveCount(0);
   await dialog.locator('#config-apply').click();
   await expect(dialog).toBeHidden();
   await expect(page.locator('#inspector-content')).toContainText('placed by 4 matched points');

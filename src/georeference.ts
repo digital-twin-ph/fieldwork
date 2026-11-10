@@ -51,6 +51,40 @@ export function onGuide(point:ControlPoint,guide:GuidePoint):{image:boolean|null
 }
 const M_PER_DEG_LAT=110_570,M_PER_DEG_LON_EQ=111_320;
 
+/** WHAT A FIT IMPLIES, in terms a person can check against the sheet (experiment 201, the practitioner 2026-11-10: *"If
+ *  it's a human doing it the user would need more feedback"*): metres a pixel across and down, read against the sheet's
+ *  scale bar, and how far the image is turned, which a sheet drawn north up should not be. */
+export function fitShape(p:Placement,latitude:number):{acrossM:number;downM:number;turnDeg:number}{
+  const {a,b,d,e}=p.coefficients,k=M_PER_DEG_LON_EQ*Math.cos(latitude*Math.PI/180);
+  const across=[a*k,d*M_PER_DEG_LAT],down=[b*k,e*M_PER_DEG_LAT];
+  return {acrossM:Math.hypot(across[0]!,across[1]!),downM:Math.hypot(down[0]!,down[1]!),
+    turnDeg:Math.atan2(across[1]!,across[0]!)*180/Math.PI};
+}
+
+/** The overall error each time a pair was added, from the first pair that can be checked: when it stops changing, more
+ *  pairs are adding little. */
+export function errorHistory(points:readonly ControlPoint[],model:PlacementModel):{pairs:number;rmsM:number}[]{
+  const out:{pairs:number;rmsM:number}[]=[];
+  for(let n=MIN_POINTS[model]+1;n<=points.length;n++){
+    try{out.push({pairs:n,rmsM:fitPlacement(points.slice(0,n),model).rmsM});}catch{/* collinear so far */}
+  }
+  return out;
+}
+
+/** Where the OTHER points expect a pixel to be on the ground, or null while they cannot place it. */
+export function expectedFromOthers(points:readonly ControlPoint[],leave:number,model:PlacementModel,
+  pixel:readonly [number,number]):[number,number]|null{
+  const others=points.filter((p,i)=>i!==leave&&[...p.pixel,...p.lonlat].every(Number.isFinite));
+  if(others.length<MIN_POINTS[model]||!pixel.every(Number.isFinite))return null;
+  try{const {a,b,c,d,e,f}=fitPlacement(others,model).coefficients;return [a*pixel[0]+b*pixel[1]+c,d*pixel[0]+e*pixel[1]+f];}
+  catch{return null;}
+}
+
+/** Metres between two longitude-latitude positions, on the local plane the residuals use. */
+export function groundMetres(a:readonly [number,number],b:readonly [number,number]):number{
+  return Math.hypot((a[0]-b[0])*M_PER_DEG_LON_EQ*Math.cos(b[1]*Math.PI/180),(a[1]-b[1])*M_PER_DEG_LAT);
+}
+
 /** Least squares for v ≈ X·beta, by the normal equations, solved by Gaussian elimination with pivoting. */
 function leastSquares(rows:number[][],values:number[]):number[]{
   const k=rows[0]!.length;

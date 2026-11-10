@@ -90,6 +90,21 @@ where to look, on the image and on the map, sized to the feature: the exact clic
 says whether your click landed on the feature. It fills nothing in. **Show where to look** turns the pulse off; with
 reduced motion set on your device, the ring stays still.
 
+**While you match pairs**, a box under the table says:
+
+- how far the pair you just made is from where your other pairs put it;
+- what the placement implies: metres a pixel across and down, and how far the image is turned. Check these against
+  the sheet's scale bar; a sheet drawn north up should be turned little;
+- the overall error each time a pair was added. When it stops changing, more pairs add little.
+
+Over today's map it also shows how far your cursor is from where the other pairs expect the feature. **Find the feature
+by looking first**: the distance checks a click; it does not show where the feature is, and it is only as good as the
+pairs behind it.
+
+**Preview on today's map** draws the image as placed over today's map. Slide **See through the image** to compare the
+streets and buildings underneath. Each pair is drawn twice, where the placement puts it and where you clicked, joined by
+its error.
+
 The map pane fetches OpenStreetMap's tiles, which sends the area you view to its servers.
 
 A world file that turns the image is drawn turned.

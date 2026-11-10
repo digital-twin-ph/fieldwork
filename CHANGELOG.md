@@ -3,15 +3,24 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.83.0 — 2026-11-10
+
+- **Feedback while you match pairs.** Placing a map image by points, a box under the table now says how far the pair
+  you just made is from where your other pairs put it, the scale and turn the placement implies, and the overall error
+  as pairs were added. Over today's map it shows how far your cursor is from where the other pairs expect the feature,
+  with a reminder to find the feature by looking first.
+- **Preview on today's map**, with a see-through slider: the image as placed over today's map, each pair drawn twice.
+  Georeferenced map image 0.4.0.
+- **Hagelloch's 1824 sheet, placed by hand.** A fourth Hagelloch workflow offers the village's cadastral sheet of 1824
+  and four street junctions to find. Placed north up from them, the village sits within 4 m of where the sheet's own
+  frame puts it.
+
 ## 0.82.0 — 2026-11-10
 
 - **Where to look, in a worked example.** Placing a map image by matching points, an example can now name each feature
   to find and why. A slow pulse marks the area on the image and on today's map, and the dialog says whether your click
   landed on it. Nothing is filled in for you. **Show where to look** turns the pulse off; reduced motion keeps it still.
   Georeferenced map image 0.3.0.
-- **Hagelloch's 1824 sheet, placed by hand.** A fourth Hagelloch workflow offers the village's cadastral sheet of 1824
-  and four street junctions to find. Placed north up from them, the village sits within 4 m of where the sheet's own
-  frame puts it.
 
 ## 0.81.2 — 2026-11-10
 

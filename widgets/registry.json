@@ -662,7 +662,7 @@
     {
       "id": "urn:fieldwork:widget:map_image_input",
       "nodeType": "map_image_input",
-      "currentVersion": "0.3.0",
+      "currentVersion": "0.4.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -678,6 +678,11 @@
           "version": "0.3.0",
           "path": "widgets/releases/map_image_input/0.3.0.json",
           "sha256": "a525ffaf0edc9d9c0fcc73b09622600ef49ee9fbc987a48625cd61205f4676f1"
+        },
+        {
+          "version": "0.4.0",
+          "path": "widgets/releases/map_image_input/0.4.0.json",
+          "sha256": "42e94b134279a271c8581dcb5eac3e7b5c2536a6155f7435664b35256ff7d9ef"
         }
       ]
     },

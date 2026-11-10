@@ -24,8 +24,9 @@
 import L from 'leaflet';
 import type {Escape} from './types.js';
 import {openConfigDialog} from './config-dialog.js';
-import {fitPlacement,MIN_POINTS,onGuide,type ControlPoint,type GuidePoint,type Placement,type PlacementModel} from './georeference.js';
-import {readWorldFile,type WorldFile} from './map-image.js';
+import {errorHistory,expectedFromOthers,fitPlacement,fitShape,groundMetres,MIN_POINTS,onGuide,type ControlPoint,type GuidePoint,type Placement,type PlacementModel} from './georeference.js';
+import {readWorldFile,turnedCorners,type WorldFile} from './map-image.js';
+import {TurnedImage} from './turned-image.js';
 
 export interface MapImageDraft {
   label:string;
@@ -66,7 +67,7 @@ export function openMapImageConfig(o:{step:string;initial:MapImageDraft;esc:Esca
   const {esc}=o;
   let dispose:(()=>void)|undefined;
   let view:{center:L.LatLngExpression;zoom:number}|undefined;
-  let active=0,imageZoom=1;
+  let active=0,imageZoom=1,previewing=false,previewOpacity=0.6;
   if(o.initial.guide?.length&&!o.initial.points.length)o.initial.points.push({id:o.initial.guide[0]!.id,pixel:[NaN,NaN],lonlat:[NaN,NaN]});
   const fitOf=(d:MapImageDraft):Placement|undefined=>{
     const ok=d.points.filter(p=>[...p.pixel,...p.lonlat].every(Number.isFinite));
@@ -184,7 +185,54 @@ export function openMapImageConfig(o:{step:string;initial:MapImageDraft;esc:Esca
           +`<td><button type="button" class="button small" data-geo-remove="${i}" aria-label="Remove point ${i+1}">Remove</button></td></tr>`;
       }).join('')+`</tbody></table>`
       +`<button type="button" class="button" id="geo-add-point">+ Add a point</button>`
-      +`<p class="standard-sentence" id="geo-fit">${fit?esc(fitText(fit)):`Match ${MIN_POINTS[d.model]} points or more to place the image.`}</p>`;
+      +`<p class="standard-sentence" id="geo-fit">${fit?esc(fitText(fit)):`Match ${MIN_POINTS[d.model]} points or more to place the image.`}</p>`
+      +liveCheck(d,fit,out)
+      +`<p><button type="button" class="button" id="geo-preview-toggle" ${fit?'':'disabled'} aria-expanded="${previewing&&!!fit}">`
+        +`${previewing&&fit?'Close the preview':'Preview on today’s map'}</button>`
+        +(fit?'':` <span class="muted">Once ${MIN_POINTS[d.model]} pairs place it.</span>`)+`</p>`
+      +(previewing&&fit?`<div class="geo-preview-block"><p class="geo-pane-title">The image as placed, over today's map</p>`
+        +`<div class="field"><label class="field-label" for="geo-preview-opacity">See through the image</label>`
+        +`<input id="geo-preview-opacity" type="range" min="0" max="1" step="0.05" value="${previewOpacity}"> `
+        +`<span class="muted" id="geo-preview-opacity-value">${Math.round(previewOpacity*100)}% opaque</span></div>`
+        +`<div class="geo-pane geo-preview" id="geo-preview"></div>`
+        +`<p class="muted">Each pair is drawn twice: a ring where the placement puts your click on the image, a dot where you clicked `
+        +`today's map, joined by its error. Streets and buildings that line up across the image are the check that matters. `
+        +`Tiles from OpenStreetMap: the area you view is sent to its servers.</p></div>`:'');
+  }
+
+  /** THE LIVE CHECK (experiment 201): the pair just made against the others, what the fit implies, the error as pairs
+   *  were added, and, as the cursor moves over the map, how far it is from where the other pairs expect the feature --
+   *  with the instruction to find the feature first, so the number checks a click and does not replace looking. */
+  function liveCheck(d:MapImageDraft,fit:Placement|undefined,out:(number|null)[]):string{
+    const done=(p:ControlPoint)=>[...p.pixel,...p.lonlat].every(Number.isFinite);
+    const complete=d.points.filter(done),min=MIN_POINTS[d.model],p=d.points[active];
+    const name=p?.id?`“${esc(p.id)}”`:`pair ${active+1}`;
+    let pair:string;
+    if(!p)pair='Add a pair to begin.';
+    else if(!p.pixel.every(Number.isFinite))pair=`For ${name}: click the feature on the image, then the same feature on the map.`;
+    else if(!p.lonlat.every(Number.isFinite))pair=`For ${name}: now find the same feature on the map and click it.`;
+    else if(complete.length<=min)pair=`${name[0]!.toUpperCase()+name.slice(1)} is pair ${complete.indexOf(p)+1} of the ${min} the fit needs. `
+      +`It can be checked against the others from pair ${min+1}.`;
+    else{
+      const lo=out[complete.indexOf(p)],typical=fit?Math.max(1,fit.rmsM):1;
+      pair=lo===null||lo===undefined?`${name} cannot be checked yet.`
+        :`${name[0]!.toUpperCase()+name.slice(1)} is ${Math.round(lo)} m from where your other ${complete.length-1} pairs put it.`
+          +(lo>2*typical?' That is more than twice their typical error: look again at both halves.':'');
+    }
+    const lat=complete.length?complete.reduce((s,c)=>s+c.lonlat[1],0)/complete.length:0;
+    const shape=fit?fitShape(fit,lat):undefined;
+    const turn=shape?Math.abs(shape.turnDeg)<0.05?'not turned':`turned ${Math.abs(shape.turnDeg).toFixed(1)}° ${shape.turnDeg>0?'anticlockwise':'clockwise'}`:'';
+    const history=errorHistory(complete,d.model);
+    return `<div class="geo-live" id="geo-live" aria-live="polite">`
+      +`<p id="geo-live-pair"><strong>This pair:</strong> ${pair}</p>`
+      +(shape?`<p id="geo-live-shape"><strong>What the fit implies:</strong> ${shape.acrossM.toFixed(2)} m a pixel across, `
+        +`${shape.downM.toFixed(2)} m down, ${turn}. Check it against the sheet’s scale bar; a sheet drawn north up should be turned little.</p>`:'')
+      +(history.length?`<p id="geo-live-history"><strong>Overall error as pairs were added:</strong> `
+        +history.map(h=>`${h.pairs} pairs ${Math.round(h.rmsM)} m`).join(' · ')+`. When it stops changing, more pairs add little.</p>`:'')
+      +`<p class="geo-look-first"><strong>Find the feature on the map by looking first.</strong> The distance below checks where `
+        +`your cursor is against your other pairs; it does not show where the feature is, and it is only as good as they are.</p>`
+      +`<p id="geo-hover" class="muted">${fit&&p?.pixel.every(Number.isFinite)?'Move over the map to see the distance.':'Shown once the image half is clicked and other pairs can place it.'}</p>`
+      +`</div>`;
   }
 
   function fitText(fit:Placement):string{
@@ -265,7 +313,38 @@ export function openMapImageConfig(o:{step:string;initial:MapImageDraft;esc:Esca
       const p=d.points[active]!;p.lonlat=[e.latlng.lng,e.latlng.lat];expect=undefined;
       view={center:map.getCenter(),zoom:map.getZoom()};redraw();});
     map.on('moveend',()=>{view={center:map.getCenter(),zoom:map.getZoom()};});
-    dispose=()=>{map.off();map.eachLayer(l=>{if(!(l instanceof L.Renderer))map.removeLayer(l);});map.remove();};
+    const hover=root.querySelector<HTMLElement>('#geo-hover');
+    const current=d.points[active],wanted=current?expectedFromOthers(d.points,active,d.model,current.pixel):null;
+    if(hover&&wanted)map.on('mousemove',e=>{
+      hover.textContent=`The cursor is ${Math.round(groundMetres([e.latlng.lng,e.latlng.lat],wanted))} m from where your other pairs `
+        +`expect ${current!.id?`“${current!.id}”`:'this point'}.`;});
+    // THE PREVIEW: the image through the current placement, over today's map, so it can be compared by eye.
+    root.querySelector('#geo-preview-toggle')?.addEventListener('click',()=>{previewing=!previewing;redraw();});
+    let preview:L.Map|undefined;
+    const previewHost=root.querySelector<HTMLElement>('#geo-preview'),fitNow=fitOf(d);
+    if(previewHost&&fitNow&&d.image){
+      preview=L.map(previewHost,{zoomAnimation:false,fadeAnimation:false,markerZoomAnimation:false});
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,
+        attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'}).addTo(preview);
+      const corners=turnedCorners(fitNow.world,d.image.width,d.image.height);
+      const sheet=new TurnedImage(d.image.data,corners,d.image.width,d.image.height,previewOpacity).addTo(preview);
+      const {a,b,c,d:dd,e,f}=fitNow.coefficients;
+      d.points.filter(p=>[...p.pixel,...p.lonlat].every(Number.isFinite)).forEach(p=>{
+        const placed:[number,number]=[dd*p.pixel[0]+e*p.pixel[1]+f,a*p.pixel[0]+b*p.pixel[1]+c],clicked:[number,number]=[p.lonlat[1],p.lonlat[0]];
+        L.polyline([placed,clicked],{color:'#b6377a',weight:3,interactive:false,className:'geo-preview-error'}).addTo(preview!);
+        L.circleMarker(placed,{radius:7,color:'#261156',weight:3,fill:false,interactive:false,className:'geo-preview-placed'}).addTo(preview!);
+        L.circleMarker(clicked,{radius:4,color:'#b6377a',weight:2,fillColor:'#b6377a',fillOpacity:1,interactive:false,className:'geo-preview-clicked'})
+          .bindTooltip(p.id||'A pair').addTo(preview!);
+      });
+      const lats=corners.map(x=>x[1]),lons=corners.map(x=>x[0]);
+      preview.fitBounds([[Math.min(...lats),Math.min(...lons)],[Math.max(...lats),Math.max(...lons)]]);
+      root.querySelector<HTMLInputElement>('#geo-preview-opacity')?.addEventListener('input',ev=>{
+        previewOpacity=Number((ev.target as HTMLInputElement).value);sheet.setOpacity(previewOpacity);
+        root.querySelector('#geo-preview-opacity-value')!.textContent=`${Math.round(previewOpacity*100)}% opaque`;});
+    }
+    dispose=()=>{
+      if(preview){preview.off();preview.eachLayer(l=>{if(!(l instanceof L.Renderer))preview!.removeLayer(l);});preview.remove();}
+      map.off();map.eachLayer(l=>{if(!(l instanceof L.Renderer))map.removeLayer(l);});map.remove();};
   }
 }
 let expect:[number,number]|undefined;

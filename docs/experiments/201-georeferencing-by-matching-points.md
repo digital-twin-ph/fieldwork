@@ -184,5 +184,14 @@ the corners 1.2 km away move by tens of metres. North up, with four numbers, doe
 The dialog's advice to spread points across the image is the remedy; on this sheet the outer area offers field
 boundaries, not features that have lasted. Checked in Chromium (`tests/hagelloch-sheet-example.browser.mjs`).
 
+**Feedback for a person doing it, built the same day** (map image 0.4.0). The practitioner: *"If it's a human doing it
+the user would need more feedback"*, then, of the cursor's distance from where the other pairs expect the feature,
+*"include that but we instruct the user to look for features so user is not merely relying on the realtime feedback"*,
+and *"a preview window … where the sheet is overlaid on the real map for comparison"*. Built: the pair just made against
+the others; the scale and turn the fit implies; the error as pairs were added; the cursor's distance, under *Find the
+feature on the map by looking first*; and the preview, with a see-through slider and each pair drawn twice. Checked in
+Chromium. **Practitioner observation, before it is known:** whether a learner moves the cursor until the distance is
+small instead of looking for the feature. If so, the distance should appear only after a click.
+
 **Not established**: whether a learner finds the drawn junctions; a second reader's readings; that the drawn streets
 of 1824 lie exactly where the streets of today do.

@@ -3,7 +3,7 @@
   "description": "Independent recomputation of implemented widgets by an external process, recorded after release. Release files are immutable once committed, so evidence about a release lives here and accrues as checks run. A fixture digest recorded in a result is over canonical JSON content rather than the file’s bytes, revised 2026-10-11 because byte identity is unsatisfiable in the browser the lab publishes to. A parity result establishes numerical agreement with a named external implementation under a stated criterion. It is not scientific certification, and it says nothing about whether a method is appropriate for a question.",
   "lab": {
     "repository": "https://github.com/digital-twin-ph/validation-lab",
-    "commit": "fab0f9db30a9c76009a88f5fade542d9b87315b6",
+    "commit": "b20e53c065c99f54375120708e70eee9b07cba5c",
     "pinNote": "The commit CI checks the lab out at: .github/workflows/pages.yml reads it with `jq -r .lab.commit widgets/parity.json`. So this pin, not the clone beside this repository, is what `validate:dive-deeper` verifies against on a clean runner -- and it must be advanced whenever a check lands in the lab, in the same push-then-pin order the worked examples use."
   },
   "outcomes": {
@@ -855,6 +855,27 @@
       ],
       "note": "Found a defect before agreeing: Fieldwork scanned 1,346 circles, measuring distances from raw coordinates while identifying places rounded; fixed in 0.1.1. numpy scores every run, so Fieldwork's shortcut, trying only runs that start and end on a day with a case, is tested too. The fixture is Fieldwork's own code in Node (scripts/export-validation-fixture.mjs, scan-hagelloch-001). Experiment 200.",
       "notebook": "46-space-time-scan-vs-numpy.ipynb"
+    },
+    {
+      "widget": "urn:fieldwork:widget:map_image_input",
+      "coversRelease": "0.2.0",
+      "check": "48-georeference",
+      "result": "content/results/check-48-georeference.json",
+      "sha256": "aeb2f38a0c9c152c6936f73e3b467eaaf64ccbe4a310ffc060ddcffe24c793c7",
+      "external": [
+        "GDAL 3.12.2 via rasterio 1.5.2"
+      ],
+      "criterion": "The same six affine numbers as GDAL's fit from the same ground control points (1e-10 degree a pixel, 1e-7 degree at the origin), and the same residuals to 0.01 m",
+      "outcome": "agrees",
+      "measured": "South London's four recorded control points (Snow's Map 2) and a turned set of five with one pair 60 m off: the same six numbers as GDALGCPsToGeoTransform to about 1e-17, and the same errors to 4e-10 m (South London 129, 79, 35 and 85 m; the bad pair 47 m against 12 for the rest). Agrees in CPython and the browser kernel.",
+      "ranAt": "2026-11-10T18:10:32+00:00",
+      "notEstablished": [
+        "That the points are the right features: both sides fit the same pairs.",
+        "That a plan is accurate: the residuals measure agreement with one placement, not the survey.",
+        "The north-up model: GDAL's fit is affine; Fieldwork's north-up fit is checked against the hand fit in its unit tests."
+      ],
+      "note": "Covers the placement by matched points (src/georeference.ts), not the drawing. Settles experiment 201's question: Fieldwork's fit is GDAL's, coordinates from pixels; South London's hand fit predicted pixels from coordinates, which is why the two differ east-west. The fixture is Fieldwork's own code in Node (scripts/export-validation-fixture.mjs, georef-001).",
+      "notebook": "48-georeference-vs-gdal.ipynb"
     }
   ],
   "notebookNote": "`notebook` names the lab notebook that carries the check, and `diveDeeper` the heading of its Dive Deeper section where it has one -- the part written for a practitioner who wants to understand the widget rather than for a reviewer checking it (experiment 94). Both are recorded rather than derived from the check id: `24-project-forward` lives in `24-project-vs-pyproj.ipynb`, so matching on the leading number works by luck and would break the first time a check and its notebook are named differently. The application reads `diveDeeper` to decide which widgets offer the link, and scripts/validate-dive-deeper.mjs refuses a heading the notebook does not actually carry."

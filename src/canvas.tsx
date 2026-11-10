@@ -23,7 +23,10 @@ function OperationNode({id,data,selected}:NodeProps<OperationFlowNode>) {
   const t=data.definition;
   const role=t.group==='Sources'?'input':t.group==='Outputs'?'output':'processing';
   const spatialPorts=['map_output','table_output','chart_output','coverage_check','raster_input','clip_raster'].includes(data.type);
-  const portLabel=(port:string)=>port==='context'?'Context points':port==='polygons'?'Catchment polygons':port==='network'?'Street network':port==='sites'?'Sites':port==='raster'?(data.type==='map_output'&&t.inputs.length>1?'Or: Raster':'Raster'):port==='decisions'?'Reasoning result':port==='area'?'Study area':port==='coverage'?'Or: Coverage result':port==='table'?'Tabular data':`Points ${port==='points'?'1':port.split('_')[1]}`;
+  const portLabel=(port:string)=>port==='context'?'Context points':port==='polygons'?'Catchment polygons':port==='network'?'Street network':port==='sites'?'Sites':port==='raster'?(data.type==='map_output'&&t.inputs.length>1?'Or: Raster':'Raster'):port==='decisions'?'Reasoning result':port==='area'?'Study area':port==='coverage'?'Or: Coverage result':port==='table'?'Tabular data':port==='ground'?'Map image (ground)'
+    // NAMED, NEVER "Points undefined" (2026-11-10, a georeferenced map image on the ground port): a port this list does not
+    // know is shown by its own name, and only a numbered point port is called Points.
+    :/^points(_\d+)?$/.test(port)?`Points ${port==='points'?'1':port.split('_')[1]}`:port.charAt(0).toUpperCase()+port.slice(1).replace(/[-_]/g,' ');
   // A map shows the layers it draws. Everything else keeps showing every port, because for those
   // widgets the ports ARE the thing: a coverage check with a hidden area port tells a practitioner
   // nothing about what it needs.

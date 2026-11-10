@@ -11,7 +11,7 @@
 //                   | select-range-london-001
 //                   | regression-salmonella-001 | regression-nyc-001 (needs NYC_PKG)
 //                   | sample-satellite-s5p-001 | lag-response-brazil-001 | regression-strata-brazil-001
-//                   | lag-models-brazil-001 | sea-level-heights-manila-001 | chains-hagelloch-001 | tree-hagelloch-001 | links-hagelloch-001 | scan-hagelloch-001 | qr-links-001
+//                   | lag-models-brazil-001 | sea-level-heights-manila-001 | chains-hagelloch-001 | tree-hagelloch-001 | links-hagelloch-001 | scan-hagelloch-001 | qr-links-001 | georef-001
 import {createHash} from 'node:crypto';
 import {readFile,writeFile} from 'node:fs/promises';
 import {reprojectToCRS84,projectFromCRS84} from '../build/reproject.js';
@@ -52,6 +52,7 @@ import {transmissionTree} from '../build/transmission-tree.js';
 import {mapOutput} from '../build/map-output.js';
 import {spaceTimeScan,spaceTimeReplay} from '../build/space-time-scan.js';
 import {qrMatrix} from '../build/qr.js';
+import {fitPlacement} from '../build/georeference.js';
 import {catalogLinks,builtInLinks} from '../build/example-links.js';
 import {downloadFacilities} from '../build/health-facilities.js';
 import {authoredSubjects} from '../build/authored-application.js';
@@ -1417,6 +1418,26 @@ const builders={
       input:{cases:t.rows.map(r=>({case_ID:r.key.case_ID,infector:r.key.infector??'',date_of_prodrome:r.key.date_of_prodrome??''}))},
       output:{counts:tree.counts,chains:tree.chains,
         cases:tree.cases.map(c=>({case_ID:c.id,chain:c.chain,generation:c.generation+1,row:c.row}))},
+    },files:{}};
+  },
+  async 'georef-001'(){
+    // PLACING A MAP IMAGE FROM MATCHED POINTS (experiment 201): South London's four recorded points, and a turned set,
+    // each fitted affine through Fieldwork's own code, with the coefficients and the residuals it reports.
+    const g=JSON.parse(await readFile(new URL('../../example-1855-cholera-south-london/geo/map2-georeference.json',import.meta.url),'utf8'));
+    const london=g.controlPoints.map(c=>({id:c.feature,pixel:[c.pixel.x,c.pixel.y],lonlat:[c.wgs84.lon,c.wgs84.lat]}));
+    const t=20*Math.PI/180,k=1e-5,at=(x,y)=>[9.0605+k*(Math.cos(t)*x+Math.sin(t)*y),48.5431+k*0.66*(Math.sin(t)*x-Math.cos(t)*y)];
+    const turned=[['Church',40,30],['Mill',360,40],['Bridge',350,270],['Well',60,260],['Crossroads',200,150]]
+      .map(([id,x,y],i)=>{const [lon,lat]=at(x,y);return {id,pixel:[x,y],lonlat:[lon+(i===4?0.0008:0),lat]};});
+    const sets=[['south-london-map2',london],['turned-with-one-bad-pair',turned]];
+    return {fixture:{
+      ...base('georef-001','map_image_input','Map image placed by matched points, affine, least squares','src/georeference.ts#fitPlacement'),
+      source:'South London: example-1855-cholera-south-london geo/map2-georeference.json, four control points recorded by hand. Turned: a synthetic set, 20 degrees, one pair 60 m off on purpose.',
+      declaredParameters:{model:'affine',pixel:'continuous, (0,0) at the top-left corner of the image',
+        coefficients:'lon = a x + b y + c, lat = d x + e y + f, least squares in degrees',
+        residuals:'metres east and north, where the fit puts the point minus where it is, 111320 cos(lat) and 110570 m a degree'},
+      input:{sets:sets.map(([name,points])=>({name,points}))},
+      output:{sets:sets.map(([name,points])=>{const f=fitPlacement(points,'affine');return {name,coefficients:f.coefficients,
+        residuals:f.residuals,rmsM:f.rmsM};})},
     },files:{}};
   },
   async 'qr-links-001'(){

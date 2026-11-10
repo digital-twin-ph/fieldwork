@@ -133,5 +133,10 @@ can check them; each point with the reason it was chosen; and, in a worked examp
 WCAG 2.3.1 limits to three a second -- on the feature to find, still for anyone who has asked their system for reduced
 motion, sized to the feature so the exact click is the learner's, and a setting to turn it off.
 
-**Not yet**: the cue; the lab check against GDAL's fit from the same points; Hagelloch's 1824 sheet, placed from its
-frame's known corners and again by hand, the two compared.
+**Checked by somebody else's code** (lab check 48): GDAL's fit from ground control points (`GDALGCPsToGeoTransform`,
+3.12.2, through rasterio) gives the same six numbers as Fieldwork to about 1e-17 and the same errors to 4e-10 m, on
+South London's four points and on a turned set with one bad pair. So the east-west difference from the hand placement is
+the hand fit's direction, not Fieldwork's: Fieldwork's fit is GDAL's.
+
+**Not yet**: the cue; Hagelloch's 1824 sheet, placed from its frame's known corners and again by hand, the two
+compared.

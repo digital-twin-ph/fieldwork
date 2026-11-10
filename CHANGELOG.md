@@ -3,6 +3,13 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.81.1 — 2026-11-10
+
+- **A map image's port is named on the canvas**: *Map image (ground)*, where it read "Points undefined". Any port the
+  canvas does not know is shown by its own name.
+- **Checked by somebody else's code**: lab check 48 places South London's Map 2 from its four points with GDAL's own fit
+  and gets the same placement as Fieldwork, to the last digit.
+
 ## 0.81.0 — 2026-11-10
 
 - **Place a scanned map by matching points.** Georeferenced map image's Configure… offers *By matching points on the

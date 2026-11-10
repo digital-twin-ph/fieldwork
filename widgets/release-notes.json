@@ -153,12 +153,12 @@
    "replacementCandidate": "urn:fieldwork:widget:observations"
   },
   "chart_output": {
-   "version": "0.12.0",
-   "released": "2026-11-09",
+   "version": "0.13.0",
+   "released": "2026-11-10",
    "changes": [
     {
      "kind": "minor",
-     "description": "Draws a transmission tree (experiment 200; the practitioner, 2026-11-09: \"I still don't see the transmission chain chart for hagelloch\"): Draw, in Configure…, offers Transmission tree, with the columns naming each case, its infector and its date. Each case is a dot at its date on a row of its own, joined from its infector, so the length across is the serial interval; a case naming no infector starts a chain. Cases naming an infector the table does not hold, cases in a loop and cases without a date are each counted, never dropped. Receipt: fw:TransmissionTree with its columns and counts. On the standard Inspector and dialog (experiment 186): the name and its place in the write-up, the inputs, one sentence and Configure…, which holds every setting the three old panels held under the same ids, and what the last run drew."
+     "description": "The transmission tree is coloured by generation, its dots and both lines into each case, on the ramp Map's lines use, so a generation is one colour in both (the practitioner, 2026-11-10: \"color key the generation both in the tree and the map links\"). What a case is -- infected by a listed case, no infector recorded, infector not in the table, in a loop, no readable date -- moves to the dot's shape, keyed beside the generations."
     }
    ],
    "breaking": false,
@@ -352,12 +352,12 @@
    ]
   },
   "space_time_scan": {
-   "version": "0.2.0",
+   "version": "0.3.0",
    "released": "2026-11-10",
    "changes": [
     {
      "kind": "minor",
-     "description": "Day by day, as the outbreak unfolded: a prospective scan each day on the cases known by then, scoring only runs ending that day, with the first day the most likely cluster's p-value was at or under 0.05 and 0.01. Each day's p-value is that day's alone; repeated looks are not corrected for, and the sentence says so. Both modes write a Methods note with the expected count and the log likelihood ratio, instantiated, citing Kulldorff and others 2005 (PLoS Medicine 2(3):e59, verified), which reaches References."
+     "description": "The replay plays on the map (the practitioner, 2026-11-10: \"Where do I see the day by day play\"): its layer carries a timeline of days, and an interactive Map plays through them, drawing each day's most likely cluster and the cases with a date up to that day, with what the scan said that day in words. Hagelloch's cluster workflow has the map."
     }
    ],
    "breaking": false,
@@ -428,12 +428,12 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.22.0",
+   "version": "0.23.0",
    "released": "2026-11-10",
    "changes": [
     {
      "kind": "minor",
-     "description": "Lines between records (experiment 200, step 4). Per point layer, in Configure…, a column naming another record and the column it is found by: Hagelloch's infector, found by case_ID. A line runs from the named record to the one naming it, with an arrowhead, under the marks, on the static figure and the interactive map, where it is a layer of its own; the key names it. Every record is counted under one outcome: drawn; at the same place, so the line has no length (90 of Hagelloch's 184 links, two children of one house); naming nothing; naming a record the layer does not hold; naming itself; naming an id held twice; or with an end that has no location. The counts are in the result, the receipt and the method sentence. A column chosen without the column it is found by is kept, and Run says what to choose."
+     "description": "Configure… draws the map it configures: the last run, with the dialog's settings, beside them, before Apply, so a mark's size or a basemap is seen as it is chosen (the practitioner, 2026-11-10). PMTiles are imported in Configure…, not the Inspector, which keeps only Name, Inputs, Settings and Result. Lines between records are coloured by the generation of the record they run into, counted as the transmission tree counts it, on one ramp with Chart's tree (magma 0.15 to 0.65, each step at least 3:1), and keyed by generation. A layer carrying a timeline of days plays through them on the interactive map: each day's polygons and the points dated up to that day, with that day's caption. The note under an interactive map no longer describes travel times on a map that has none."
     }
    ],
    "breaking": false,

@@ -3,6 +3,17 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.79.0 — 2026-11-10
+
+- **Watch the space-time replay day by day on the map.** On an interactive Map, **Play** or drag the slider: each day
+  shows that day's most likely cluster, the cases known by then, and what the scan said. Hagelloch's *Was there a
+  cluster?* has it. Space-time scan 0.3.0.
+- **Generations in colour, in the tree and on the map.** Chart's transmission tree and Map's lines between records share
+  one colour key, darkest for a chain's first case. In the tree, a case's shape now says what it is. Chart 0.13.0.
+- **Map's Configure… draws the map**, beside its settings, before you Apply, so a mark's size or a basemap is seen as you
+  choose it. **Import tiles** (PMTiles) moved there from the Inspector. Map 0.23.0.
+- **The note under an interactive map** no longer describes travel times on a map that has none.
+
 ## 0.78.0 — 2026-11-10
 
 - **The space-time scan replays an outbreak day by day.** Under **How to scan**, choose **Day by day**: each day, the

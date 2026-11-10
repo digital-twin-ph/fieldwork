@@ -328,8 +328,12 @@ test('five questions about 774 LGAs, each its own short workflow',async({page})=
     await inMapSettings(page,d=>d.locator('#polygon-presentation').selectOption('interactive'));
     await page.locator('#run-button').click();
     await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:120000});
-    await page.locator('#map-import-tiles').click();
-    await expect(page.locator('#map-tile-status')).toContainText('The project keeps this description',{timeout:600000});
+    await page.locator('[data-view="workflow"]').click();
+    await page.locator(`.react-flow__node[data-id="${map}"]`).click();
+    await inMapSettings(page,async d=>{
+      await d.locator('#map-import-tiles').click();
+      await expect(d).toContainText('tiles imported and kept on this device',{timeout:600000});
+    });
     const spec=(await saved(page)).nodes.find(n=>n.id===map).params;
     expect(spec.basemap).toBe('tile-extract');
     expect(spec.tileExtract.bounds[0]).toBeGreaterThan(2);

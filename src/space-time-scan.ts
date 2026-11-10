@@ -379,7 +379,11 @@ export function replayValue(r:ScanReplay,node:{id:string;params:{label:string;da
   for(const d of withCluster){const c=d.cluster!,id=`<urn:fieldwork:run:${runId}:replay:${node.id}:${d.day}>`;
     facts+=`${activity} fw:reportsCluster ${id}.\n${id} a fw:ScanCluster; fw:analysisDay "${d.day}"; fw:firstDay "${c.start}"; fw:lastDay "${c.end}"; `
       +`fw:placesInCluster ${c.places.length}; fw:observedCases ${c.observed}; fw:expectedCases ${round(c.expected,4)}; fw:logLikelihoodRatio ${round(c.llr,6)}; fw:pValue ${round(c.pValue,6)}.\n`;}
+  const captions=Object.fromEntries(r.days.map(d=>[d.day,d.skipped?`${plural(d.cases,'case')} known: too early to scan`
+    :d.cluster?`${plural(d.cases,'case')} known; most likely cluster ${plural(d.cluster.observed,'case')} where ${round(d.cluster.expected)} were expected, p = ${round(d.cluster.pValue,3)}`
+    :`${plural(d.cases,'case')} known; no circle above what was expected`]));
   const value={features,sites:[],crs:'EPSG:4326',layerName:node.params.label,featuresNamed:false,
+    timeline:{days:r.days.map(d=>d.day),dateField:node.params.dateField,captions},
     method:'Prospective space-time permutation scan, run each day on the cases known by then: only runs ending that day.',
     notes:[sentence]};
   return {value,sentence,receipt:{nodeId:node.id,kind:'computation' as const,input:facts,facts,rules:'',conclusions:[],method:sentence}};

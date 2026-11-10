@@ -59,6 +59,11 @@ date. In **Configure…**, set **Draw** to **Transmission tree** and name the th
 Each case is a dot at its date, on a row of its own. A line runs from its infector's date down to its row and across
 to its own date, so the length across is the **serial interval**. A case naming no infector starts a chain; its
 children are drawn beneath it, earliest first, so generations read left to right and chains top to bottom.
+**Colour is the generation**: the first case in a chain is darkest, and each generation after it lighter, from deep
+violet to coral. The same colours mark generations on Map's lines between records, so generation 3 is one colour in
+both. **Shape is what the case is**: a circle for a case whose infector is listed, a square for no infector recorded,
+and so on, named in the key.
+
 Drawn by Vega-Lite, as other charts are, so it exports as SVG with its title and source note; hover a point for the
 case, its date, its infector and its generation, and a line for its serial interval.
 

@@ -32,7 +32,7 @@ test('Hagelloch: who infected whom opens, runs, and shows the intervals, the sec
   await expect(page.locator('#result-metrics')).toContainText('94 lines drawn');
   await expect(page.locator('#result-metrics')).toContainText('90 links at one place, not drawn');
   await expect(page.locator('#result-metrics')).toContainText('4 name nothing in infector');
-  await expect(page.locator('#map-communication-key')).toContainText('Line: from the record named in infector (94)');
+  await expect(page.locator('#map-communication-key')).toContainText('Line into generation 3 (46)');
   await page.screenshot({path:'test-results/hagelloch-chains-example.png',fullPage:true});
   expect(errors).toEqual([]);
 });

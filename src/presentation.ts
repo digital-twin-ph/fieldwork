@@ -89,6 +89,23 @@ export function orderedSteps(n:number):string[]{
   return Array.from({length:n},(_,i)=>ORDERED_PALETTE[Math.min(i,ORDERED_PALETTE.length-1)]);
 }
 
+/** GENERATIONS, IN ONE KEY FOR THE TREE AND THE MAP (the practitioner, 2026-11-10: *"color key the generation both in
+ *  the tree and the map links"*). Generations have an order, so an ordered ramp: magma (Smith and van der Walt, as in
+ *  matplotlib and Vega), from 0.15 to 0.65 in steps of 0.05. Cut there because each step is a LINE or a DOT, not a fill:
+ *  every one holds at least 3:1 against the white figure and the map's ground (#f0f3e9), which the pale ends of magma
+ *  and of the YlGnBu ramp above do not. */
+export const GENERATION_PALETTE=['#261156','#3b0f70','#51137c','#651a80','#792282','#8c2981','#a1307f','#b6377a',
+  '#ca3f72','#de4968','#ed5a60'] as const;
+export const GENERATION_PALETTE_NAME='magma, 0.15 to 0.65 (Smith and van der Walt)';
+/** The colour of each of `n` generations, first darkest, spread across the ramp. Past its length the last repeats,
+ *  and the key says so. */
+export function generationColours(n:number):string[]{
+  if(n<=0)return [];
+  const last=GENERATION_PALETTE.length-1;
+  if(n>GENERATION_PALETTE.length)return Array.from({length:n},(_,i)=>GENERATION_PALETTE[Math.min(i,last)]!);
+  return Array.from({length:n},(_,i)=>GENERATION_PALETTE[n===1?0:Math.round(i*last/(n-1))]!);
+}
+
 /** CATEGORIES ARE NOT A SEQUENCE. Hues for polygons that carry a name and no number.
  *
  *  Two kinds of valueless polygon layer were being coloured the same wrong way. The interactive

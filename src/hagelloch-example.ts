@@ -164,6 +164,9 @@ export function hagellochClusterExample():Workflow{
     {id:'replay',type:'space_time_scan',x:430,y:580,params:{label:'When would it have been flagged?',dateField:'date_of_prodrome',
       unit:'day' as const,maxCaseShare:0.5,maxTimeShare:0.5,replications:999,seed:20261110,replay:true}},
     {id:'replay-table',type:'table_output',x:840,y:580,params:{label:'Each day’s most likely cluster',inputMode:'polygons' as const}},
+    // AND PLAYED, day by day, on the map: that day's circle and the cases known by then.
+    {id:'replay-map',type:'map_output',x:840,y:840,params:{label:'The outbreak, day by day',presentation:'interactive' as const,
+      mapTitle:'What a daily scan would have said, Hagelloch, 1861',layerSymbols:{cases:{colour:'#3d4a45',size:3}}}},
   ];
   const edges=[
     {id:'cases-scan',from:'cases',to:'scan',port:'points'},
@@ -171,6 +174,8 @@ export function hagellochClusterExample():Workflow{
     {id:'village-cluster-map',from:'village',to:'cluster-map',port:'area'},
     {id:'scan-table',from:'scan',to:'cluster-table',port:'polygons'},
     {id:'cases-replay',from:'cases',to:'replay',port:'points'},{id:'replay-out',from:'replay',to:'replay-table',port:'polygons'},
+    {id:'replay-map-in',from:'replay',to:'replay-map',port:'polygons'},{id:'cases-replay-map',from:'cases',to:'replay-map',port:'points'},
+    {id:'village-replay-map',from:'village',to:'replay-map',port:'area'},
   ];
   return {schema:'fieldwork/workflow/1',name:'Was there a cluster? Hagelloch, 1861',
     exampleId:'hagelloch-cluster',nodes,edges} as unknown as Workflow;

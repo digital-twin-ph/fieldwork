@@ -18,10 +18,13 @@
  *  - names an id that more than one record holds, so which one is meant cannot be read;
  *  - names a record that has no location, or has none itself. */
 import type {Position} from 'geojson';
+import {generationColours} from './presentation.js';
 
 export interface LinkSetting {column:string; matches:string}
 /** `from` is the named record's row id, `to` the naming one's: the line runs from → to. */
-export interface MapLink {sourceNodeId:string; from:string; to:string}
+export interface MapLink {sourceNodeId:string; from:string; to:string;
+  /** The generation of the record naming, the tree's count: 1 for a record that starts a chain. Absent in a loop. */
+  generation?:number}
 export interface LinkCounts {column:string; matches:string; records:number; drawn:number; sameLocation:number;
   noValue:number; notFound:number; self:number; ambiguous:number; unlocated:number}
 
@@ -50,6 +53,21 @@ export function mapLinks(rows:readonly LinkRow[],settings:Record<string,LinkSett
       if(target.coordinates[0]===r.coordinates[0]&&target.coordinates[1]===r.coordinates[1]){c.sameLocation++;continue;}
       c.drawn++;links.push({sourceNodeId:source,from:target.id,to:r.id});
     }
+    // THE GENERATION OF EACH RECORD, counted as the transmission tree counts it: 1 where the chain starts (a record
+    // naming nothing, itself, or one the layer cannot tell), one more than the record named otherwise. A record in a
+    // loop has none. So a line here and the tree's line into the same case are one colour.
+    const parentOf=new Map<string,string>();
+    for(const r of layer){const named=text(r.attributes[setting.column]);const found=named?byId.get(named):undefined;
+      if(found&&found.length===1&&found[0]!.id!==r.id)parentOf.set(r.id,found[0]!.id);}
+    const generation=new Map<string,number|null>();
+    const generationOf=(id:string,seen=new Set<string>()):number|null=>{
+      if(generation.has(id))return generation.get(id)!;
+      if(seen.has(id))return null;seen.add(id);
+      const parent=parentOf.get(id);
+      const g=parent===undefined?1:(()=>{const up=generationOf(parent,seen);return up===null?null:up+1;})();
+      generation.set(id,g);return g;
+    };
+    for(const link of links)if(link.sourceNodeId===source){const g=generationOf(link.to);if(g!==null)link.generation=g;}
     counts[source]=c;
   }
   return {links,counts};
@@ -78,6 +96,9 @@ export function linkLinesSvg(links:readonly MapLink[],rows:readonly {id:string;c
   project:(c:Position)=>[number,number]|number[],hidden?:ReadonlySet<string>,markRadius=4):string{
   if(!links.length)return '';
   const at=new Map(rows.map(r=>[r.id,r.coordinates]));
+  const deepest=Math.max(1,...links.map(l=>l.generation??1));
+  const colours=generationColours(deepest);
+  const colourOf=(l:MapLink)=>l.generation?colours[l.generation-1]!:'#3d4a45';
   const lines=links.map(l=>{
     const a=at.get(l.from),b=at.get(l.to);
     if(!a||!b)return '';
@@ -86,9 +107,11 @@ export function linkLinesSvg(links:readonly MapLink[],rows:readonly {id:string;c
     const length=Math.hypot(x0-x1,y0-y1),trim=length>2*(markRadius+2)?(markRadius+2)/length:0;
     const x2=x0-(x0-x1)*trim,y2=y0-(y0-y1)*trim;
     return `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" class="map-link"`
-      +` data-layer-link="${l.sourceNodeId.replace(/[^\w:.-]/g,'')}" marker-end="url(#map-link-arrow)"`
+      +` data-layer-link="${l.sourceNodeId.replace(/[^\w:.-]/g,'')}" stroke="${colourOf(l)}" marker-end="url(#map-link-arrow-${l.generation??0})"`
       +`${hidden?.has(l.sourceNodeId)?' style="display:none"':''}/>`;
   }).join('');
-  return `<defs><marker id="map-link-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">`
-    +`<path d="M0 0L10 5L0 10z" fill="#3d4a45"/></marker></defs><g class="map-links" stroke="#3d4a45" stroke-width="1.3" stroke-opacity="0.75" fill="none">${lines}</g>`;
+  // One arrowhead per colour: an SVG marker cannot take the colour of the line it ends.
+  const marker=(g:number,colour:string)=>`<marker id="map-link-arrow-${g}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">`
+    +`<path d="M0 0L10 5L0 10z" fill="${colour}"/></marker>`;
+  return `<defs>${marker(0,'#3d4a45')}${colours.map((c,i)=>marker(i+1,c)).join('')}</defs><g class="map-links" stroke-width="1.5" stroke-opacity="0.85" fill="none">${lines}</g>`;
 }

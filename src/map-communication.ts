@@ -1,4 +1,5 @@
 import type {Output,Receipt} from './results.js';
+import {generationColours} from './presentation.js';
 import {outputOf} from './core.js';
 import type {WorkflowNode,Workflow} from './types.js';
 import {basemapAvailable} from './basemaps.js';
@@ -147,8 +148,14 @@ export function mapPresentation(node:WorkflowNode<'map_output'>,output:Output,wo
   }
   else items=[{label:'Review',color:R.attention},{label:'No flag',color:R.agreement},{label:'Unknown',color:R.unknown},{label:'Facility',color:R.site,shape:'square'}];
   // THE LINES ARE KEYED like any mark: what they join and how many were drawn (experiment 200, step 4).
-  for(const c of Object.values((output as {linkCounts?:Record<string,import('./map-links.js').LinkCounts>}).linkCounts||{}))
-    items.push({label:`Line: from the record named in ${c.column} (${c.drawn})`,color:'#3d4a45',line:true});
+  // AND COLOURED BY GENERATION (2026-11-10), from the ramp Chart's tree uses: one entry per generation a line runs into.
+  const drawnLinks=(output as {links?:import('./map-links.js').MapLink[]}).links||[];
+  for(const c of Object.values((output as {linkCounts?:Record<string,import('./map-links.js').LinkCounts>}).linkCounts||{})){
+    const deepest=Math.max(1,...drawnLinks.map(l=>l.generation??1)),hues=generationColours(deepest);
+    const present=[...new Set(drawnLinks.map(l=>l.generation).filter((g):g is number=>!!g))].sort((a,b)=>a-b);
+    if(!present.length){items.push({label:`Line: from the record named in ${c.column} (${c.drawn})`,color:'#3d4a45',line:true});continue;}
+    for(const g of present)items.push({label:`Line into generation ${g} (${drawnLinks.filter(l=>l.generation===g).length})`,color:hues[g-1]!,line:true});
+  }
   const interactive=node.params.presentation==='interactive'&&!!output.polygons;
   // THE BASEMAP A STATIC FIGURE ACTUALLY BAKES, which this reported as `none` until 2026-10-27.
   //

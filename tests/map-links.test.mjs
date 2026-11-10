@@ -38,7 +38,7 @@ test('every record is counted under exactly one outcome',()=>{
   ];
   const {links,counts}=mapLinks(rows,{s:{column:'by',matches:'id'}});
   const c=counts.s;
-  assert.deepEqual(links,[{sourceNodeId:'s',from:'a',to:'b'}]);
+  assert.deepEqual(links,[{sourceNodeId:'s',from:'a',to:'b',generation:2}]);
   assert.deepEqual({drawn:c.drawn,same:c.sameLocation,none:c.noValue,notFound:c.notFound,self:c.self,ambiguous:c.ambiguous,unlocated:c.unlocated},
     {drawn:1,same:1,none:3,notFound:1,self:1,ambiguous:1,unlocated:1});
   assert.equal(c.drawn+c.sameLocation+c.noValue+c.notFound+c.self+c.ambiguous+c.unlocated,c.records);
@@ -49,7 +49,7 @@ test('the lines are drawn under the marks, stopped short of the case, and hidden
   const rows=[{id:'a',coordinates:[0,0]},{id:'b',coordinates:[100,0]}];
   const svg=linkLinesSvg([{sourceNodeId:'s',from:'a',to:'b'}],rows,c=>c);
   assert.match(svg,/<line x1="0.0" y1="0.0" x2="94.0" y2="0.0"/);
-  assert.match(svg,/marker-end="url\(#map-link-arrow\)"/);
+  assert.match(svg,/marker-end="url\(#map-link-arrow-0\)"/);
   assert.match(linkLinesSvg([{sourceNodeId:'s',from:'a',to:'b'}],rows,c=>c,new Set(['s'])),/display:none/);
   assert.equal(linkLinesSvg([],rows,c=>c),'');
 });
@@ -64,4 +64,18 @@ test('Map carries the links, the counts and the receipt facts',()=>{
   assert.deepEqual(Object.keys(value.linkCounts),['cases']);
   assert.match(receipt.facts,/a fw:MapLinks; .*fw:linksDrawn 94; fw:linksAtSameLocation 90; fw:recordsNamingNothing 4;/);
   assert.match(receipt.method,/94 lines from the record named in infector, found by case_ID/);
+});
+
+test('each line carries its case generation, counted as the transmission tree counts it, coloured from one ramp',async()=>{
+  const {generationColours}=await import('../build/presentation.js');
+  const {transmissionTree}=await import('../build/transmission-tree.js');
+  const {pointsAsTable}=await import('../build/core.js');
+  const {links}=mapLinks(rowsOf(cases.features),{cases:{column:'infector',matches:'case_ID'}});
+  const tree=transmissionTree(pointsAsTable(cases),{id:'case_ID',parent:'infector',date:'date_of_prodrome'});
+  const treeGeneration=new Map(tree.cases.map(c=>['cases_case-'+c.id,c.generation+1]));
+  for(const l of links)assert.equal(l.generation,treeGeneration.get(l.to),l.to);
+  const svg=linkLinesSvg(links,rowsOf(cases.features),c=>c);
+  const hues=generationColours(Math.max(...links.map(l=>l.generation)));
+  for(const l of links.slice(0,20))
+    assert.ok(svg.includes('stroke="'+hues[l.generation-1]+'" marker-end="url(#map-link-arrow-'+l.generation+')"'));
 });

@@ -1,6 +1,7 @@
 import L from 'leaflet';
 /** HOW MANY STREET SEGMENTS AN INTERACTIVE MAP DRAWS. See the sampling below for the measurement
  *  this comes from: past about a quarter of a million, every pan and zoom reprojects them all. */
+import {generationColours} from './presentation.js';
 import {TILE_CREDIT,tilesOnDevice,unpackTile,type TileExtractSpec} from './tile-extract.js';
 export const INTERACTIVE_SEGMENT_LIMIT=200_000;
 import type {Polygons} from './catchments.js';
@@ -220,6 +221,10 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
   const classed=shading.classed;
   let stopFrames=()=>{};
   const framedParts:{f:typeof p.features[number];layer:L.GeoJSON;title:string}[]=[];
+  // THE TIMELINE'S PARTS: each day's polygons, and every point with its date (the replay, 2026-11-10).
+  const timeline=p.timeline?.days.length?p.timeline:undefined;
+  const dayParts:{day:string;layer:L.GeoJSON;group:L.FeatureGroup|L.Map}[]=[];
+  const datedMarks:{date:string;marker:L.Marker;group:L.FeatureGroup}[]=[];
   // A NAMED LAYER IS CATEGORICAL. Every feature without a value took one hard-coded `#1f77b4`,
   // so a layer of two named reaches drew as one shape. Bands with `minutes` are a sequence and
   // keep their own treatment below; anything else is told apart by hue.
@@ -255,12 +260,14 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
     const title=said!==undefined&&said!==null&&String(said).trim()
       ?`<b>${esc(String(said))}</b> <span class="muted">${esc(f.name)}</span>`:`<b>${esc(f.name)}</b>`;
     if(frameNames.length)framedParts.push({f,layer,title});
+    const partDay=timeline?String((f as {properties?:Record<string,unknown>}).properties?.analysis_day??''):'';
     layer.bindPopup(`${title}${shade}${f.minutes===undefined?'':`<br>Within ${f.minutes} minutes (cumulative)`}${f.count===undefined?'':`<br>${f.count} locations${p.summary?.valueField?`<br>${esc(p.summary.valueField)}: ${f.total}`:''}`}`);
     // NOT ADDED TO THE MAP HERE. A feature that belongs to a group is drawn BY that group, and
     // adding it individually as well is what made the control lie: the checkbox reflects the
     // group, which was never on the map, while the features were -- so "Polygon layer" sat
     // unchecked over a river that was plainly drawn, reported 2026-10-29. Whatever ends up
     // standing alone is added below.
+    if(partDay)(layer as unknown as {_timelineId?:string})._timelineId=f.id;
     all.addLayer(layer);
     // A CHOROPLETH'S PARTS ARE ONE LAYER, NOT THIRTY-THREE. A catchment or an isochrone band is
     // a distinct thing worth toggling; a sub-district shaded by a rate is one of many parts of a
@@ -295,6 +302,10 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
       if(!hiddenPort('polygons'))layer.addTo(map);
       overlays[Object.hasOwn(overlays,label)?`${label} (${esc(f.id)})`:label]=layer;
     }
+  }
+  if(timeline)for(const f of sorted){
+    const day=String((f as {properties?:Record<string,unknown>}).properties?.analysis_day??'');
+    all.eachLayer(l=>{const g=l as L.GeoJSON&{feature?:unknown};if((g as unknown as {_timelineId?:string})._timelineId===f.id)dayParts.push({day,layer:g,group:map});});
   }
   // EACH GROUP IS DRAWN BY BEING ADDED, so the box the control draws and the shapes on the map
   // are the same fact rather than two.
@@ -459,6 +470,9 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
           .bindPopup(`<b>${esc(row.name)}</b>${state?`<br>${esc(state)}`:''}`
             +`<br>${esc(named[source]||source)}<br>Location: ${lat.toFixed(6)}, ${lon.toFixed(6)}`)
           .addTo(groupFor(row));
+        if(timeline){const marker=groupFor(row).getLayers().at(-1) as L.Marker;
+          const date=String((row as {attributes?:Record<string,unknown>}).attributes?.[timeline.dateField]??'').slice(0,10);
+          if(date)datedMarks.push({date,marker,group:groupFor(row)});}
       }
       // NAMED THROUGH THE LAYER LIST, so Manage layers governs these the way it governs the
       // rest. The port is the layer's id; a class is that port plus its own name, which is the
@@ -482,18 +496,21 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
     const at=new Map((layers.rows||[]).map(r=>[r.id,r.coordinates])),nameOf=new Map((layers.rows||[]).map(r=>[r.id,r.name]));
     const bySourceLinks=new Map<string,import('./map-links.js').MapLink[]>();
     for(const link of layers.links||[])(bySourceLinks.get(link.sourceNodeId)??bySourceLinks.set(link.sourceNodeId,[]).get(link.sourceNodeId)!).push(link);
+    const deepest=Math.max(1,...(layers.links||[]).map(l=>l.generation??1));
+    const generationHue=generationColours(deepest);
     for(const [source,links] of bySourceLinks){
       const group=L.featureGroup();
       for(const link of links){
         const a=at.get(link.from),b=at.get(link.to);
         if(!a||!b)continue;
         const from=named[source]||source;
-        L.polyline([[a[1],a[0]],[b[1],b[0]]],{color:'#3d4a45',weight:2,opacity:0.8,interactive:true})
-          .bindTooltip(`${esc(nameOf.get(link.from)||'')} to ${esc(nameOf.get(link.to)||'')} \u00b7 ${esc(from)}`).addTo(group);
+        const hue=link.generation?generationHue[link.generation-1]!:'#3d4a45';
+        L.polyline([[a[1],a[0]],[b[1],b[0]]],{color:hue,weight:2.5,opacity:0.9,interactive:true})
+          .bindTooltip(`${esc(nameOf.get(link.from)||'')} to ${esc(nameOf.get(link.to)||'')}${link.generation?`, generation ${link.generation}`:''} \u00b7 ${esc(from)}`).addTo(group);
         const lat=a[1]+(b[1]-a[1])*0.75,lon=a[0]+(b[0]-a[0])*0.75;
         const angle=Math.atan2(-(b[1]-a[1]),(b[0]-a[0])*Math.cos(lat*Math.PI/180))*180/Math.PI;
         L.marker([lat,lon],{interactive:false,keyboard:false,icon:L.divIcon({className:'map-link-arrow',iconSize:[12,12],iconAnchor:[6,6],
-          html:`<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" style="transform:rotate(${angle.toFixed(1)}deg)"><path d="M1 1L11 6L1 11z" fill="#3d4a45"/></svg>`})}).addTo(group);
+          html:`<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" style="transform:rotate(${angle.toFixed(1)}deg)"><path d="M1 1L11 6L1 11z" fill="${hue}"/></svg>`})}).addTo(group);
       }
       if(!group.getLayers().length)continue;
       const port=layers.mapLayers?.find(entry=>entry.sourceNodeId===source)?.port;
@@ -548,6 +565,43 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
       return box;
     };
     legend.addTo(map);
+  }
+  // THE DAY-BY-DAY PLAYBACK (the space-time scan's replay; the practitioner, 2026-11-10: "Where do I see the day by day
+  // play"). Each day: that day's circle, the cases with a date up to that day, and what the scan said, in words.
+  if(timeline){
+    const days=timeline.days;let at=days.length-1,timer:number|undefined;
+    const control=new L.Control({position:'topleft'});
+    const box=L.DomUtil.create('div','map-frame-control');
+    const show=(layer:L.Layer,on:boolean)=>{const holder=(dayParts.find(x=>x.layer===layer)?.group)??map;
+      if(on&&!map.hasLayer(layer))(holder as L.Map).addLayer(layer);if(!on&&map.hasLayer(layer))map.removeLayer(layer);};
+    const draw=(index:number)=>{
+      at=index;const day=days[at]!;
+      for(const part of dayParts)show(part.layer,part.day===day);
+      for(const mark of datedMarks){const on=mark.date<=day;if(on&&!mark.group.hasLayer(mark.marker))mark.group.addLayer(mark.marker);
+        if(!on&&mark.group.hasLayer(mark.marker))mark.group.removeLayer(mark.marker);}
+      (box.querySelector('[data-frame-slider]') as HTMLInputElement).value=String(at);
+      box.querySelector('[data-frame-label]')!.textContent=day;
+      box.querySelector('[data-frame-caption]')!.textContent=timeline.captions[day]??'';
+    };
+    const stop=()=>{if(timer!==undefined){clearInterval(timer);timer=undefined;}box.querySelector('[data-frame-play]')!.textContent='Play';};
+    box.innerHTML=`<p class="map-frame-label" data-frame-label aria-live="polite"></p><p class="map-frame-caption" data-frame-caption></p>`
+      +`<input type="range" min="0" max="${days.length-1}" step="1" data-frame-slider aria-label="Day">`
+      +`<div class="map-frame-buttons"><button type="button" data-frame-step="-1" aria-label="Previous day">\u25c0</button>`
+      +`<button type="button" data-frame-play>Play</button>`
+      +`<button type="button" data-frame-step="1" aria-label="Next day">\u25b6</button>`
+      +`<select data-frame-pace aria-label="Pace"><option value="1500">Slow</option><option value="700" selected>Normal</option><option value="300">Fast</option></select></div>`;
+    (box.querySelector('[data-frame-slider]') as HTMLInputElement).oninput=e=>{stop();draw(Number((e.target as HTMLInputElement).value));};
+    box.querySelectorAll<HTMLButtonElement>('[data-frame-step]').forEach(b=>b.onclick=()=>{stop();draw(Math.min(days.length-1,Math.max(0,at+Number(b.dataset.frameStep))));});
+    box.querySelector<HTMLButtonElement>('[data-frame-play]')!.onclick=()=>{
+      if(timer!==undefined){stop();return;}
+      if(at===days.length-1)draw(0);
+      box.querySelector('[data-frame-play]')!.textContent='Pause';
+      timer=window.setInterval(()=>{draw(at+1);if(at>=days.length-1)stop();},Number((box.querySelector('[data-frame-pace]') as HTMLSelectElement).value));
+    };
+    stopFrames=stop;
+    L.DomEvent.disableClickPropagation(box);
+    control.onAdd=()=>box;control.addTo(map);
+    draw(at);
   }
   // THE FRAME CONTROL. A slider, Play, Pause and a step each way; the caption is the practitioner's and
   // the frame label is the data's. It plays only while every part is in view, the practitioner's rule
@@ -759,9 +813,15 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
   // been reported: the static figure's key on 2026-10-25, the results-panel key and this one on
   // 2026-10-26.
   const note=document.createElement('p');note.className='muted';
-  note.textContent=(polygonShading(p.features).classed
+  // A FOURTH TIME, 2026-11-10, under the space-time replay: the fallback still described travel times to every map that
+  // was not shaded. The travel-time sentence is now said only where the features carry minutes.
+  note.textContent=(timeline
+    ?'Each day shows that day\u2019s most likely cluster and the cases with a date up to that day. Use the slider or Play. '
+    :polygonShading(p.features).classed
     ?'Polygon shade: the joined value, in classes shown in the key. Click a part for its number. '
-    :'Blue nested regions: cumulative travel times. Red circles: observations (DEATHS radius capped at 20 px); blue squares: sites/context. ')
+    :p.features.some(f=>f.minutes!==undefined)
+    ?'Blue nested regions: cumulative travel times. Red circles: observations (DEATHS radius capped at 20 px); blue squares: sites/context. '
+    :'')
     +'Use layer controls and click features for details.';
   host.append(note);
   let disposed=false;const observer=new ResizeObserver(()=>{if(!disposed)map.invalidateSize();});observer.observe(canvas);observer.observe(panel());

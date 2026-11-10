@@ -39,7 +39,9 @@ You connect what you want drawn. There is no setting that says what kind of map 
 3. **Add more layers** the same way. A second point source gets a layer of its own rather than
    replacing the first.
 4. **Open Configure…** for everything about how it is drawn. Nothing changes until **Apply**, and
-   Apply redraws the map without running the workflow again.
+   Apply redraws the map without running the workflow again. Once the workflow has run, the dialog draws the map
+   beside its settings, as it will look with them: change a mark's size or the basemap and see it before Apply.
+   **Import tiles** (PMTiles, for a basemap that works offline) is here too.
 5. **Choose how it is drawn.** *Static plot* exports as an SVG with a scale bar and a north
    arrow. *Interactive map* can be panned and zoomed, and is the only one that can show a
    basemap.
@@ -176,6 +178,10 @@ from whom.
 
 Each line runs from the named record to the one naming it, and an arrowhead shows the direction. The lines are
 drawn under the marks. On the interactive map they are a layer of their own, and they can be turned off.
+
+**Each line is coloured by the generation of the record it runs into**: 2 for a case infected by a chain's first
+case, 3 for the next, and so on, counted as Chart's transmission tree counts it and in the same colours. The key
+lists each generation with how many lines run into it.
 
 Every record is counted under one outcome. The counts are shown above the map and written in the receipt:
 

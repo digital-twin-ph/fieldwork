@@ -40,5 +40,21 @@ test('Map: a line from each case to its infector, chosen in Configure…, on the
   await page.getByRole('tab',{name:'Where the cases were'}).click();
   await expect(page.locator('#catchment-map-host .map-link-arrow')).toHaveCount(94,{timeout:30_000});
   await expect(page.locator('#catchment-map-host .leaflet-control-layers')).toContainText('Lines');
+  // THE PREVIEW IN CONFIGURE (2026-11-10): the last run, drawn with the dialog's own settings, before Apply.
+  await page.locator('[data-view="workflow"]').click();
+  await page.locator('.react-flow__node[data-id="map"]').click();
+  await expect(page.locator('#inspector-content #map-import-tiles')).toHaveCount(0);
+  await inMapSettings(page,async d=>{
+    await expect(d.locator('#map-config-preview .catchment-point-mark')).toHaveCount(188,{timeout:30_000});
+    await expect(d.locator('#map-import-tiles')).toBeVisible();
+    const size=d.locator('[data-layer-size="cases"]');
+    await size.fill('8');await size.dispatchEvent('change');
+    // Marks drawn larger in the preview, from the draft: radius 8 gives a 21 px box.
+    await expect(d.locator('#map-config-preview .catchment-point-mark').first()).toHaveCSS('width','21px');
+  },{apply:false});
+  // Each line coloured by its case's generation, named in the key.
+  await page.locator('[data-view="results"]').click();
+  await page.getByRole('tab',{name:'Where the cases were'}).click();
+  await expect(page.locator('#map-communication-key')).toContainText('Line into generation 3 (46)');
   expect(errors).toEqual([]);
 });

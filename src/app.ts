@@ -2290,11 +2290,32 @@ function openMapConfig(nodeId:string){
   openConfigDialog<Draft>({
     id:'map-config',widget:'Map',step:node.params.label||TYPES.map_output.title,draft:structuredClone(node.params),
     sections:draft=>({settings:mapSettings({...node,params:draft}),
-      preview:'<p class="muted">The map is drawn in Results when the workflow runs, with these settings; a change here redraws it without running again.</p>',
+      // THE MAP ITSELF, AS IT WILL LOOK (the practitioner, 2026-11-10: "the Preview is empty. I think it's helpful to be
+      // able to preview the map esp if updating mark size and viewing PM Tiles"). The last run, drawn with the draft.
+      preview:result?.outputs.some(o=>o.nodeId===nodeId)
+        ?'<div id="map-config-preview" class="map-config-preview"></div><p class="muted">The last run, drawn with the settings above. Apply keeps them; nothing is run again.</p>'
+        :'<p class="muted">Run the workflow to preview this map here. It is drawn in Results when the workflow runs.</p>',
       ...(note?{message:{tone:'warning' as const,text:note}}:{})}),
     wire:(root,draft,redraw)=>{
       const on=(selector:string,fn:(el:HTMLInputElement&HTMLSelectElement&HTMLTextAreaElement)=>void)=>
         root.querySelectorAll<HTMLInputElement&HTMLSelectElement&HTMLTextAreaElement>(selector).forEach(el=>el.addEventListener('change',()=>{note='';fn(el);redraw();}));
+      disposePreview?.();disposePreview=undefined;
+      const previewHost=root.querySelector<HTMLElement>('#map-config-preview');
+      const drawn=result?.outputs.find(o=>o.nodeId===nodeId);
+      if(previewHost&&drawn){
+        // The symbols re-resolved from the DRAFT, as renderMap re-resolves them from the live node.
+        const layerSymbols=Object.fromEntries((drawn.pointLayers||[]).map((layer,index)=>
+          [layer.sourceNodeId,resolveLayerSymbol(index,draft.layerSymbols?.[layer.sourceNodeId])]));
+        const shown={...drawn,layerSymbols,markHalo:draft.markHalo!==false} as typeof drawn;
+        // One frame later: Leaflet fits the map to its box, and the box has no size until the dialog has laid it out.
+        let cancelled=false;
+        const frame=requestAnimationFrame(()=>{if(cancelled||!previewHost.isConnected)return;
+          try{const dispose=mountCatchmentMap(previewHost,shown.polygons?{...shown,polygons:shown.polygons}:shown,shown.contextPoints,esc,
+            draft.basemap||'none',undefined,`preview-${nodeId}`,draft.tileExtract,draft.partLabel,draft.frameCaption);
+            disposePreview=()=>{cancelled=true;dispose();};}
+          catch(error){previewHost.textContent=`The preview could not be drawn: ${errorMessage(error)}`;}});
+        disposePreview=()=>{cancelled=true;cancelAnimationFrame(frame);};
+      }
       on('#polygon-presentation',el=>{
         draft.presentation=el.value==='interactive'?'interactive':'plot';
         // A BASEMAP THE NEW PRESENTATION CANNOT DRAW is set to none, and the person told, as the Inspector did.
@@ -2331,8 +2352,28 @@ function openMapConfig(nodeId:string){
       on('#map-basemap',el=>{draft.basemap=el.value as BasemapChoice;});
       on('#map-frame-caption',el=>{const v=el.value.trim();if(v)draft.frameCaption=v;else delete draft.frameCaption;});
       on('#map-part-label',el=>{if(el.value)draft.partLabel=el.value;else delete draft.partLabel;});
+      // PMTILES, IN CONFIGURE (the practitioner, 2026-11-10: "the PM tiles download is on the Inspector panel. Shouldn't
+      // this be on the Configure dialog?"). The tiles are kept on this device as they arrive; what the step holds is
+      // their description, which reaches the step on Apply, with the basemap set to them.
+      root.querySelector<HTMLButtonElement>('#map-import-tiles')?.addEventListener('click',async()=>{
+        const button=root.querySelector<HTMLButtonElement>('#map-import-tiles')!,say=root.querySelector('#map-tile-status')!;
+        const drawn=drawnBounds(result?.outputs.find(o=>o.nodeId===nodeId));
+        if(!drawn){say.textContent='Run the workflow first: the boundary is what this map draws, and nothing has been drawn yet.';return;}
+        const pad=(low:number,high:number)=>high-low<0.02?[(low+high)/2-0.01,(low+high)/2+0.01]:[low,high];
+        const [west,east]=pad(drawn[0],drawn[2]),[south,north]=pad(drawn[1],drawn[3]);
+        say.textContent='Reading the archive\u2026';button.disabled=true;
+        try{
+          const spec=await importTiles({source:TILE_SOURCE,bounds:[west!,south!,east!,north!],minZoom:0,
+            maxZoom:Number(root.querySelector<HTMLSelectElement>('#map-tile-zoom')!.value)},
+            (done,total)=>{say.textContent=`Importing tiles: ${done} of ${total}`;});
+          draft.tileExtract=spec;draft.basemap='tile-extract';
+          note=`${spec.tiles} tiles imported and kept on this device. Apply to use them as this map's basemap.`;redraw();
+        }catch(error){button.disabled=false;say.textContent=`The tiles could not be imported: ${error instanceof Error?error.message:'unknown error'}.`;}
+      });
     },
+    onClose:()=>{disposePreview?.();disposePreview=undefined;},
     apply:draft=>{
+      disposePreview?.();disposePreview=undefined;
       const {view,...params}=draft;
       if(view&&view!=='map'){change(w=>{const index=w.nodes.findIndex(x=>x.id===nodeId);
         w.nodes[index]={...w.nodes[index]!,type:'output',params:{label:params.label,view}} as never;});return;}
@@ -2345,6 +2386,7 @@ function openMapConfig(nodeId:string){
 /** MAP'S SETTINGS, for its configuration dialog (experiments 186): the presentation, where its figure goes in the
  *  write-up, each point layer's class, mark name and symbol, and the standalone figure. Built from a draft, so the same
  *  markup serves the dialog's every redraw and nothing reaches the step before Apply. */
+let disposePreview:(()=>void)|undefined;
 function mapSettings(n:WorkflowNode<'map_output'>):string{
   const at=figureSection(n.params,n.type),fallback=DEFAULT_FIGURE_SECTIONS[n.type];
   return ''
@@ -2470,7 +2512,7 @@ function mapSettings(n:WorkflowNode<'map_output'>):string{
               +`</div>`;
           }).join('');
       })()
-    +mapControls(n,false);
+    +mapControls(n,true);
 }
 /** RATE'S ONE SENTENCE (experiment 186). */
 function rateSentence(p:import('./types.js').ParamsByType['rate']):string{
@@ -3093,8 +3135,7 @@ function renderInspector(){
     const drawn=result?.outputs.find(o=>o.nodeId===n.id);
     const why=result?.unfinished?.find(u=>u.nodeId===n.id)?.message;
     content+=standardSection('Result',`<p class="standard-result${why?' standard-result-warning':''}">${esc(why?`The last run could not compute this step: ${why}`
-      :drawn?`Drawn in Results, under "${n.params.label||'Map'}".`:'Not run yet.')}</p>`
-      +`<div class="source-card">${tileImportControls(n.params)}</div>`);
+      :drawn?`Drawn in Results, under "${n.params.label||'Map'}".`:'Not run yet.')}</p>`);
   }else if(n.type==='chart_output'){
     // THE STANDARD INSPECTOR (experiment 186), touched 2026-11-09 for the transmission tree: the name, which is the
     // Results tab's, and its place in the write-up; its inputs; one sentence and Configure…, which holds every setting
@@ -5344,26 +5385,6 @@ content+=`<div class="field"><label class="field-label" for="chart-decisions">Re
     const target=getNode(w,n.id,'map_output');const value=control(e).value;
     if(value)target.params.partLabel=value;else delete target.params.partLabel;
   }));
-  optionalElement('#map-import-tiles')?.addEventListener('click',async e=>{
-    const button=e.currentTarget as HTMLButtonElement,say=$('#map-tile-status');
-    const drawn=drawnBounds(result?.outputs.find(o=>o.nodeId===n.id));
-    if(!drawn){say.textContent='Run the workflow first: the boundary is what this map draws, and nothing has been drawn yet.';return;}
-    // A POINT OR A TINY AREA STILL NEEDS GROUND AROUND IT: at least about a kilometre each way.
-    const pad=(low:number,high:number)=>high-low<0.02?[(low+high)/2-0.01,(low+high)/2+0.01]:[low,high];
-    const [west,east]=pad(drawn[0],drawn[2]),[south,north]=pad(drawn[1],drawn[3]);
-    const bounds:TileExtractSpec['bounds']=[west!,south!,east!,north!];
-    say.textContent='Reading the archive\u2026';
-    button.disabled=true;
-    try{
-      const spec=await importTiles({source:TILE_SOURCE,bounds,minZoom:0,
-        maxZoom:Number(($('#map-tile-zoom') as HTMLSelectElement).value)},
-        (done,total)=>{say.textContent=`Importing tiles: ${done} of ${total}`;});
-      change(w=>{const target=getNode(w,n.id,'map_output');target.params.tileExtract=spec;target.params.basemap='tile-extract';});
-    }catch(error){
-      button.disabled=false;
-      say.textContent=`The tiles could not be imported: ${error instanceof Error?error.message:'unknown error'}.`;
-    }
-  });
   optionalElement('#map-basemap')?.addEventListener('change',e=>{
     const choice=control(e).value as BasemapChoice;
     change(w=>{

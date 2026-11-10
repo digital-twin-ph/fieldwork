@@ -34,6 +34,16 @@ test('Hagelloch: the space-time scan runs with a progress bar, and its clusters 
   await expect(page.locator('main').first()).toContainText('observed_over_expected');
   await page.getByRole('tab',{name:'Clusters over the village'}).click();
   await expect(page.locator('#map')).toBeVisible();
+  // The replay PLAYS on the map (the practitioner, 2026-11-10: "Where do I see the day by day play"): each day its
+  // circle, the cases known by then, and what the scan said.
+  await page.getByRole('tab',{name:'The outbreak, day by day'}).click();
+  const slider=page.locator('#catchment-map-host [data-frame-slider]');
+  await expect(slider).toBeVisible({timeout:30_000});
+  await slider.fill('22');await slider.dispatchEvent('input');
+  await expect(page.locator('#catchment-map-host [data-frame-label]')).toHaveText('1861-11-21');
+  await expect(page.locator('#catchment-map-host [data-frame-caption]')).toContainText('32 cases known; most likely cluster 6 cases where 2.63 were expected, p = 0.041');
+  await expect(page.locator('#catchment-map-host .catchment-point-mark')).toHaveCount(32);
+  await expect(page.locator('#catchment-map-host')).not.toContainText('cumulative travel times');
   // The replay: one row per day with a cluster, and the Inspector names the first day flagged.
   await page.getByRole('tab',{name:'Each day’s most likely cluster'}).click();
   await expect(page.locator('main').first()).toContainText('analysis_day');

@@ -1067,6 +1067,9 @@ i.bar-zero{position:absolute;top:0;bottom:0;width:1px;background:var(--ink,#2b2b
 .map-frame-control input[type=range]{width:100%}
 .map-frame-buttons{display:flex;gap:6px;align-items:center}
 .map-frame-label{margin:0 0 4px;font-weight:600}
+/* What a daily scan said on that day, under the day: the replay (2026-11-10). 14 px and over, for the practitioner. */
+.map-frame-caption{margin:0 0 6px;font-size:14px;max-width:320px;line-height:1.4}
+.map-frame-control,.map-frame-control button,.map-frame-control select{font-size:14px}
 
 /* Find satellite products: layout only, in Fieldwork's dialog style. Experiment 179. */
 .satellite-dialog{max-width:880px}
@@ -1206,3 +1209,12 @@ select.rule-op.rule-op-compare,select.rule-op.rule-op-equal,select.rule-op.rule-
 .transmission-tree .tree-axis{font-size:14px;fill:var(--muted)}
 .transmission-tree .tree-title{font-size:18px;font-weight:600;fill:var(--text)}
 .transmission-tree .tree-grid{stroke:var(--line);stroke-width:1}
+
+/* Map's Configure dialog draws the map it is configuring (2026-11-10). */
+.map-config-preview{min-height:360px}
+.map-config-preview .catchment-map-canvas,.map-config-preview .leaflet-container{min-height:340px}
+/* Side by side, so the map stays in view while its marks and basemap change (the practitioner, 2026-11-10). On a
+   narrow screen the preview falls below, as in every other dialog. */
+@media (min-width:1000px){#map-config .config-body{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:start}
+#map-config [data-config-section="preview"]{position:sticky;top:0;grid-column:2;grid-row:1/span 2}
+#map-config [data-config-section="settings"],#map-config [data-config-section="decisions"]{grid-column:1}}

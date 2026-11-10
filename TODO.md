@@ -141,7 +141,8 @@ not a practitioner in the field.
    as Space-time scan 0.1.0; owes a lab check, SaTScan on its benchmark and the day-by-day replay); the **Poisson spatial scan**, on the same machinery; then **Describe where points are dense**
    (HDBSCAN, kernel density, and kernel density as a ratio of two layers), labelled exploratory, never under Detect.
    Each on the standard Inspector, with a lab check, and SaTScan run by hand on its benchmark sets.
-13. **Colour by generation, in the transmission tree and on the map's lines** (the practitioner, 2026-11-10: *"One
+13. **Colour by generation, in the transmission tree and on the map's lines** (built 2026-11-10, 0.79.0: one magma ramp,
+   each step at least 3:1; shape now says what a case is) (the practitioner, 2026-11-10: *"One
    thing we can do for the transmission chain is to color key the generation both in the tree and the map links."*).
    One ordered ramp, one key, shared by Chart's tree and Map's lines between records, so generation 3 is the same colour
    in both; an ordered ramp because generations have an order. To settle: the generation of a line is its case's; a

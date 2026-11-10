@@ -47,6 +47,10 @@ runs that end that day: is something happening now? This is SaTScan's prospectiv
 The result is one row per day: that day's most likely cluster, its counts and its p-value. The step says the first day
 the p-value was at or under 0.05, and at or under 0.01.
 
+**To watch it day by day**, connect it to a Map set to **Interactive map**, with the cases. Press **Play**, or drag the
+slider: each day shows that day's circle, only the cases with a date up to that day, and what the scan said in words.
+Hagelloch's *Was there a cluster?* has this map: *The outbreak, day by day*.
+
 - **Each day's p-value is that day's alone.** Looking every day raises the chance of a false alarm, and this does not
   correct for it.
 - A day with fewer than 4 cases, 2 places or 2 days is too early to scan, and is listed as skipped.

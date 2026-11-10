@@ -1,6 +1,7 @@
 import {test,expect} from '@playwright/test';
 import {collectPageErrors} from './page-errors.mjs';
 import {serveArchive,smallArchive} from './small-pmtiles.mjs';
+import {inMapSettings} from './map-settings.mjs';
 // THE ARCHIVE IS ANSWERED HERE ONLY IF THE SERVICE WORKER IS OUT OF THE WAY. In WebKit it fetched the
 // requests itself, so the test reached the real 134.8 GB archive and timed out, 2026-11-03.
 test.use({serviceWorkers:'block'});
@@ -23,14 +24,22 @@ test('a map of a study area imports the tiles under it, and draws over them',asy
     buffer:Buffer.from(JSON.stringify(workflow))});
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="map"]').click();
-  await page.locator('#map-import-tiles').click();
-  await expect(page.locator('#map-tile-status')).toContainText('Run the workflow first');
+  // In Configure… since 2026-11-10: the practitioner, "Shouldn't this be on the Configure dialog?"
+  await expect(page.locator('#inspector-content #map-import-tiles')).toHaveCount(0);
+  await inMapSettings(page,async d=>{
+    await d.locator('#map-import-tiles').click();
+    await expect(d.locator('#map-tile-status')).toContainText('Run the workflow first');
+  },{apply:false});
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:30000});
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="map"]').click();
-  await page.locator('#map-import-tiles').click();
-  await expect(page.locator('#map-tile-status')).toContainText('The project keeps this description',{timeout:60000});
+  await inMapSettings(page,async d=>{
+    await d.locator('#map-import-tiles').click();
+    await expect(d).toContainText('tiles imported and kept on this device',{timeout:60000});
+  });
+  // Apply writes the description, and the dialog says so when opened again.
+  await inMapSettings(page,d=>expect(d.locator('#map-tile-status')).toContainText('The project keeps this description'),{apply:false});
   const spec=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1'))
     .nodes.find(n=>n.id==='map').params.tileExtract);
   expect(spec.bounds).toEqual([25.8,-24.7,26,-24.5]);

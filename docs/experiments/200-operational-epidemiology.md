@@ -125,6 +125,31 @@ No package page restricts use beyond the MERS and simulated-Ebola pages' "for te
 carries the source's terms too; each source is checked before anything is shipped. Onset to report (MERS) and onset to
 sample (Sierra Leone) are the nearest to 7-1-7's detect and notify; MERS also serves contact tracing.
 
+## Open data for each bottleneck theme, searched 2026-11-09
+
+Asked for by the practitioner, to demonstrate 7-1-7 support (TODO 10). **Found by a search of landing pages and
+metadata; no file was downloaded or opened**, so columns are as each paper or repository describes them, and each must be
+checked before use. Licences as the source states them. HDX and PMC refused automated reading and were not verified.
+
+| Theme | Best candidate | Licence, as stated | What it would measure |
+| --- | --- | --- | --- |
+| All, citing 7-1-7 | South Sudan 7-1-7 key dates, bottlenecks and enablers, 18 events 2013–2025 (figshare 10.6084/m9.figshare.30288880) | CC BY 4.0 | Detect, notify and respond intervals per event; the only open event-level 7-1-7 table found |
+| Data systems | Malawi IDSR reporting rates from DHIS2, Oct 2014–Sep 2016 (PLOS ONE 2018, S5) | CC BY 4.0 | Reporting completeness by district and month |
+| Clinical | Rosello et al. 2015, DRC Ebola line lists 1976–2014 (eLife, supplementary file 1) | CC BY | Onset to hospitalisation and to notification |
+| Laboratory | Ghana yellow fever specimen timeliness, 260 districts 2018–2022, with a shapefile (figshare 29265026) | CC BY 4.0 | Onset to specimen, specimen to national laboratory, by district; aggregated |
+| Patient and community | CARAMAL treatment-seeking pathways, Uganda (Zenodo 6833713) | CC BY 4.0 | Care-seeking delay; its rows and dates unconfirmed |
+| Access | Maina et al. 2019, 98,745 public health facilities in sub-Saharan Africa (figshare 7725374); travel-time rasters, Weiss et al. 2020 | CC0; rasters' terms to confirm | Travel time to care |
+| Planning | Torres Munguía, global outbreaks by country, disease and year 1996–2026 (figshare 17207183) | CC BY 4.0 | Burden; years only, no dates |
+| Coordination | South Sudan's table (human and animal events together); Tanzania integrated bite case management 2018–2024 (Zenodo 18508654) | CC BY 4.0; GPL-3.0 | Cross-sector linkage; the Tanzania human–animal link unconfirmed |
+| Resources and procurement | **None found** with stock, request-to-delivery dates or staffing for a response | | |
+
+**Not found:** supplies, logistics or staffing data for a response; anything on coordinating a multi-site investigation
+remotely (tools only: Go.Data, SORMAS); weekly reporting completeness; specimen-level result dates. The data behind
+Bochner et al. 2023 and the Liberia, Zambia, Cambodia and Thailand 7-1-7 studies are on request only.
+
+**First to try: South Sudan's key dates**, the 7-1-7 review itself on open data, after its licence and columns are read
+in the file.
+
 ## Ontologies to reuse, looked for 2026-11-09
 
 The practitioner: *"I need to know if there is an ontology for outbreak response and investigations that we can

@@ -1,2 +1,2 @@
-import{a,b,c,d,e}from"./chunks/chunk-73KF55L7.js";import"./chunks/chunk-KVMUXFPB.js";export{a as MANUAL_PAGES,b as hasManual,d as manualButton,c as manualSource,e as openManual};
+import{a,b,c,d,e}from"./chunks/chunk-DOJK6V7J.js";import"./chunks/chunk-KVMUXFPB.js";export{a as MANUAL_PAGES,b as hasManual,d as manualButton,c as manualSource,e as openManual};
 //# sourceMappingURL=manual.js.map

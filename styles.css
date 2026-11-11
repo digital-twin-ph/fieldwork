@@ -1240,6 +1240,11 @@ select.rule-op.rule-op-compare,select.rule-op.rule-op-equal,select.rule-op.rule-
 .geo-image-frame{position:relative;cursor:crosshair}
 .geo-image-frame img{display:block;width:100%;height:auto;user-select:none}
 #geo-image-marks{position:absolute;inset:0;pointer-events:none}
+/* THE CROSSHAIR: the centre of the sheet pane, which Zoom in and Zoom out keep in place. Over the pane, not in it. */
+.geo-image-wrap{position:relative}
+.geo-crosshair{position:absolute;left:50%;top:50%;width:36px;height:36px;transform:translate(-50%,-50%);pointer-events:none;z-index:2;
+  background:linear-gradient(#261156,#261156) center/2px 100% no-repeat,linear-gradient(#261156,#261156) center/100% 2px no-repeat;
+  filter:drop-shadow(0 0 1px #fff) drop-shadow(0 0 1px #fff)}
 .geo-mark{position:absolute;transform:translate(-50%,-50%);display:grid;place-items:center;width:24px;height:24px;border-radius:50%;
   background:#261156;color:#fff;font-size:14px;font-weight:700;border:2px solid #fff;box-shadow:0 0 0 1px #261156}
 .leaflet-marker-icon.geo-mark{position:absolute;transform:none}

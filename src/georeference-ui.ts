@@ -42,7 +42,7 @@ export interface MapImageDraft {
   /** The image a worked example offers, served beside the application. */
   offered?:OfferedImage;
 }
-export interface OfferedImage {url:string; filename:string; credit:string}
+export interface OfferedImage {url:string; filename:string; credit:string; width?:number; height?:number}
 
 /** The cue, on or off, for this visit: a viewer's choice, not the workflow's. */
 let cuesOn=true;
@@ -68,6 +68,12 @@ export function openMapImageConfig(o:{step:string;initial:MapImageDraft;esc:Esca
   let dispose:(()=>void)|undefined;
   let view:{center:L.LatLngExpression;zoom:number}|undefined;
   let active=0,imageZoom=1,previewing=false,previewOpacity=0.6;
+  // WHERE THE SHEET PANE IS LOOKING, as fractions of the image, kept across zooms and redraws (the practitioner,
+  // 2026-11-10: "once zoomed in it's hard to figure out where the glowing circle is").
+  let look:{fx:number;fy:number}|undefined;
+  /** The guide's positions are pixels of the example's own image: on any other image they point at nothing. */
+  const guideFits=(d:MapImageDraft)=>!!d.guide?.length&&!!d.image
+    &&(!d.offered?.width||(d.image.width===d.offered.width&&d.image.height===d.offered.height));
   if(o.initial.guide?.length&&!o.initial.points.length)o.initial.points.push({id:o.initial.guide[0]!.id,pixel:[NaN,NaN],lonlat:[NaN,NaN]});
   const fitOf=(d:MapImageDraft):Placement|undefined=>{
     const ok=d.points.filter(p=>[...p.pixel,...p.lonlat].every(Number.isFinite));
@@ -149,9 +155,13 @@ export function openMapImageConfig(o:{step:string;initial:MapImageDraft;esc:Esca
     if(!d.image)return '<p class="muted">Choose the map image first.</p>';
     const fit=fitOf(d),out=leftOut(d.points.filter(p=>[...p.pixel,...p.lonlat].every(Number.isFinite)),d.model);
     let k=0;
-    const target=d.guide?.[active],status=(v:boolean|null)=>v===null?'not clicked yet':v?'on the feature':'not on it yet: look inside the ring';
+    const fits=guideFits(d),target=fits?d.guide?.[active]:undefined,status=(v:boolean|null)=>v===null?'not clicked yet':v?'on the feature':'not on it yet: look inside the ring';
     const found=target&&d.points[active]?onGuide(d.points[active]!,target):null;
-    const worked=!d.guide?.length?'':`<div class="geo-worked" id="geo-worked">`
+    const worked=!d.guide?.length?'':d.image&&!fits
+      ?`<div class="geo-worked" id="geo-worked"><p><strong>Worked example:</strong> its features to find are on its own image, `
+        +`${esc(d.offered?.filename??'the example\'s image')}${d.offered?.width?` (${d.offered.width.toLocaleString('en-US')} × ${d.offered.height!.toLocaleString('en-US')} pixels)`:''}. `
+        +`This image is different, so no cue is shown: find your own pairs.</p></div>`
+      :`<div class="geo-worked" id="geo-worked">`
       +(target
         ?`<p><strong>Worked example, point ${active+1} of ${d.guide.length}: ${esc(target.id)}.</strong> ${esc(target.why)}</p>`
           +`<p id="geo-found">On the image: ${status(found!.image)}. On today's map: ${status(found!.map)}.</p>`
@@ -167,8 +177,9 @@ export function openMapImageConfig(o:{step:string;initial:MapImageDraft;esc:Esca
       +`<div class="geo-panes"><div><p class="geo-pane-title">On the image <span id="geo-cursor" class="geo-cursor"></span></p>`
         +`<div class="geo-image-tools"><button type="button" class="button small" data-geo-zoom="1.5">Zoom in</button>`
         +`<button type="button" class="button small" data-geo-zoom="0.667">Zoom out</button></div>`
+        +`<div class="geo-image-wrap"><span class="geo-crosshair" aria-hidden="true"></span>`
         +`<div class="geo-pane geo-image-pane" id="geo-image-pane"><div class="geo-image-frame" id="geo-image-frame">`
-        +`<img id="geo-image" src="${d.image.data}" alt="The map image" draggable="false"><div id="geo-image-marks"></div></div></div></div>`
+        +`<img id="geo-image" src="${d.image.data}" alt="The map image" draggable="false"><div id="geo-image-marks"></div></div></div></div></div>`
         +`<div><p class="geo-pane-title">On today's map</p><div class="geo-pane" id="geo-map-pane"></div>`
         +`<p class="muted">Tiles from OpenStreetMap: the area you view is sent to its servers.</p></div></div>`
       +`<table class="geo-points"><thead><tr><th>Clicks fill</th><th>Feature</th><th>Image x</th><th>Image y</th><th>Longitude</th><th>Latitude</th>`
@@ -251,7 +262,7 @@ export function openMapImageConfig(o:{step:string;initial:MapImageDraft;esc:Esca
       const p=blank();p.id=d.guide?.[d.points.length]?.id??'';d.points.push(p);active=d.points.length-1;redraw();});
     root.querySelectorAll<HTMLInputElement>('input[name="geo-active"]').forEach(el=>el.addEventListener('change',()=>{active=Number(el.value);if(d.guide?.length)redraw();}));
     root.querySelector<HTMLInputElement>('#geo-cues')?.addEventListener('change',e=>{cuesOn=(e.target as HTMLInputElement).checked;redraw();});
-    const target=cuesOn?d.guide?.[active]:undefined;
+    const target=cuesOn&&guideFits(d)?d.guide?.[active]:undefined;
     root.querySelectorAll<HTMLButtonElement>('[data-geo-remove]').forEach(el=>el.addEventListener('click',()=>{
       d.points.splice(Number(el.dataset.geoRemove),1);active=Math.max(0,Math.min(active,d.points.length-1));redraw();}));
     root.querySelectorAll<HTMLInputElement>('[data-geo-field]').forEach(el=>el.addEventListener('change',()=>{
@@ -281,8 +292,12 @@ export function openMapImageConfig(o:{step:string;initial:MapImageDraft;esc:Esca
       if(fit)expect=[fit.coefficients.a*p.pixel[0]+fit.coefficients.b*p.pixel[1]+fit.coefficients.c,
         fit.coefficients.d*p.pixel[0]+fit.coefficients.e*p.pixel[1]+fit.coefficients.f];
       redraw();});
+    // ZOOM ABOUT THE CROSSHAIR: what is under the centre of the pane stays there.
+    const centre=()=>({fx:(pane.scrollLeft+pane.clientWidth/2)/(frame.offsetWidth||1),fy:(pane.scrollTop+pane.clientHeight/2)/(frame.offsetHeight||1)});
+    const lookAt=(at:{fx:number;fy:number})=>{pane.scrollLeft=at.fx*frame.offsetWidth-pane.clientWidth/2;pane.scrollTop=at.fy*frame.offsetHeight-pane.clientHeight/2;};
+    pane.addEventListener('scroll',()=>{look=centre();});
     root.querySelectorAll<HTMLButtonElement>('[data-geo-zoom]').forEach(b=>b.addEventListener('click',()=>{
-      imageZoom=Math.min(16,Math.max(1,imageZoom*Number(b.dataset.geoZoom)));size();marks();}));
+      const at=centre();imageZoom=Math.min(16,Math.max(1,imageZoom*Number(b.dataset.geoZoom)));size();marks();lookAt(at);look=at;}));
     const marks=()=>{
       const box=root.querySelector<HTMLElement>('#geo-image-marks')!,scale=img.getBoundingClientRect().width/d.image!.width||baseScale()*imageZoom;
       box.innerHTML=d.points.map((p,i)=>Number.isFinite(p.pixel[0])&&Number.isFinite(p.pixel[1])
@@ -290,7 +305,8 @@ export function openMapImageConfig(o:{step:string;initial:MapImageDraft;esc:Esca
         +(target?`<span class="geo-cue" data-geo-cue="image" style="left:${target.pixel[0]*scale}px;top:${target.pixel[1]*scale}px;`
           +`width:${2*target.radiusPx*scale}px;height:${2*target.radiusPx*scale}px"></span>`:'');
     };
-    size();img.complete?marks():img.addEventListener('load',marks,{once:true});
+    const settle=()=>{marks();if(look)lookAt(look);};
+    size();img.complete?settle():img.addEventListener('load',settle,{once:true});
 
     // THE MAP PANE, at the last view, or the points, or the study area.
     const host=root.querySelector<HTMLElement>('#geo-map-pane')!;

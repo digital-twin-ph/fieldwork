@@ -195,7 +195,8 @@ export function hagellochSheetExample():Workflow{
     {id:'sheet',type:'map_image_input',x:20,y:580,params:{label:'The 1824 cadastral sheet',
       image:{width:0,height:0,bytes:0,sha256:''},bounds:[0,0,0,0],placement:'points' as const,placementModel:'north-up' as const,opacity:0.85,
       offered:{url:'./examples/hagelloch-1861/flurkarte-nw-iii-3-1824.jpg',filename:'flurkarte-nw-iii-3-1824.jpg',
-        credit:'Flurkarte NW III 3, 1824. Landesarchiv Baden-Württemberg, Staatsarchiv Ludwigsburg EL 68 VI Nr 7243, Public Domain Mark.'},
+        credit:'Flurkarte NW III 3, 1824. Landesarchiv Baden-Württemberg, Staatsarchiv Ludwigsburg EL 68 VI Nr 7243, Public Domain Mark.',
+        width:2200,height:2489},
       guide:[
         junction('North road, above the stream','The road north out of the village, just above the stream (the thick wavy line on the sheet), where a field path meets it.',[1171.6,1553.3],[9.0125918,48.542892]),
         junction('West entry','Where the road from the west reaches the first houses and meets the lane along the gardens.',[951.4,1853.6],[9.01056,48.5410433]),

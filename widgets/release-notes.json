@@ -408,12 +408,12 @@
    "migrationFrom": []
   },
   "map_image_input": {
-   "version": "0.4.1",
+   "version": "0.5.0",
    "released": "2026-11-10",
    "changes": [
     {
-     "kind": "patch",
-     "description": "An empty point field is read as not entered, never as zero: a cleared or replaced field had put the point at the image's top edge or on the equator, and the cue then said the click was off the feature (WebKit CI, 0.83.0)."
+     "kind": "minor",
+     "description": "A crosshair at the centre of the image pane, and Zoom in and Zoom out keep what is under it in place; the pane keeps its place when a click redraws the dialog (the practitioner, 2026-11-10: \"once zoomed in it's hard to figure out where the glowing circle is\"). A worked example's cue is shown only on the example's own image, whose size it states; on another image the dialog says so and shows none."
     }
    ],
    "breaking": false,

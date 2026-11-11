@@ -131,3 +131,26 @@ test('a worked example points to each feature with a slow pulse, says when a cli
   expect(await dialog.locator('[data-geo-cue="image"]').evaluate(el=>getComputedStyle(el).animationName)).toBe('none');
   expect(errors).toEqual([]);
 });
+
+// THE CUE IS FOR THE EXAMPLE'S OWN IMAGE: on another image its pixels point at nothing, so none is shown and it says why.
+test('a worked example\'s cue is not shown on an image other than its own',async({page})=>{
+  const errors=collectPageErrors(page);
+  await page.route(/tile\.openstreetmap\.org/,route=>route.abort('failed'));
+  const guided=structuredClone(workflow);
+  Object.assign(guided.nodes.find(n=>n.id==='plan').params,{placement:'points',
+    offered:{url:'./examples/hagelloch-1861/flurkarte-nw-iii-3-1824.jpg',filename:'flurkarte-nw-iii-3-1824.jpg',credit:'Public Domain Mark.',width:2200,height:2489},
+    guide:[{id:'Church',why:'On both maps.',pixel:[40,30],radiusPx:10,lonlat:at(40,30),radiusM:12}]});
+  await page.goto('/?example=blank');
+  await page.locator('#workflow-file').setInputFiles({name:'other.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(guided))});
+  await page.locator('[data-view="workflow"]').click();
+  await page.locator('.react-flow__node[data-id="plan"]').click();
+  await page.locator('#configure-step').click();
+  const dialog=page.locator('#map-image-config');
+  const png=await page.evaluate(()=>{const c=document.createElement('canvas');c.width=400;c.height=300;c.getContext('2d').fillRect(0,0,400,300);
+    return c.toDataURL('image/png').split(',')[1];});
+  await dialog.locator('#map-image-file').setInputFiles({name:'railways.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')});
+  await expect(dialog.locator('#geo-worked')).toContainText('This image is different, so no cue is shown');
+  await expect(dialog.locator('[data-geo-cue="image"]')).toHaveCount(0);
+  await expect(dialog.locator('#geo-map-pane path.geo-cue-map')).toHaveCount(0);
+  expect(errors).toEqual([]);
+});

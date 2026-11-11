@@ -90,6 +90,9 @@ where to look, on the image and on the map, sized to the feature: the exact clic
 says whether your click landed on the feature. It fills nothing in. **Show where to look** turns the pulse off; with
 reduced motion set on your device, the ring stays still.
 
+**Zooming the image.** A crosshair marks the centre of the image pane. Scroll until what you want is under it, then press
+**Zoom in**: it stays under the crosshair. The pane keeps its place after each click.
+
 **While you match pairs**, a box under the table says:
 
 - how far the pair you just made is from where your other pairs put it;

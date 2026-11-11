@@ -3,6 +3,13 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.87.0 — 2026-11-10
+
+- **Zoom where you are looking.** Placing a map image by points, a crosshair marks the centre of the image pane, and Zoom
+  in keeps what is under it in place; the pane no longer jumps back to the corner after each click.
+- **A worked example's pulse only on its own image.** On a different image the example's positions point at nothing, so
+  no pulse is shown and the dialog says why. Georeferenced map image 0.5.0.
+
 ## 0.86.0 — 2026-11-10
 
 - **What changed, from the version button.** Click the version beside the Fieldwork mark to read the release notes for

@@ -369,11 +369,16 @@ export function replaySentence(r:ScanReplay,dateField:string):string{
     +` Each day's p-value is that day's alone, from ${r.replications.toLocaleString('en-US')} shuffles (seed ${r.seed}); looking every day raises the chance of a false alarm, which this does not correct.`;
 }
 
+export const REPLAY_FLAGGED='p at or under 0.05, that day alone',REPLAY_NOT_FLAGGED='p above 0.05, that day alone';
+
 /** The replay as a layer: one feature per day with a cluster, at that day's most likely circle, carrying the day. */
 export function replayValue(r:ScanReplay,node:{id:string;params:{label:string;dateField:string}},runId:string,sourceId:string){
   const withCluster=r.days.filter(d=>d.cluster);
   const features=withCluster.map(d=>{const c=d.cluster!;return {
     id:`day-${d.day}`,name:d.day,geometry:{type:'Polygon' as const,coordinates:[circle(c.center,c.radiusKm)]},
+    // COLOURED BY THAT DAY'S p, with a legend (the practitioner, 2026-11-10, of the one blue every circle had: "what does
+    // the blue circle mean?"). A day's p is that day's alone; the note says that looking every day raises false alarms.
+    category:c.pValue<=0.05?REPLAY_FLAGGED:REPLAY_NOT_FLAGGED,
     properties:{analysis_day:d.day,cases_known:d.cases,first_day:c.start,places:c.places.length,radius_m:round(c.radiusKm*1000,0),
       observed:c.observed,expected:round(c.expected),observed_over_expected:round(c.ratio),log_likelihood_ratio:round(c.llr,3),
       p_value:round(c.pValue,4),cases:c.caseIds.join(', ')}};});

@@ -666,7 +666,8 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
   // THE CLASSES, NAMED, for the same reason the static figure names them: a hue with no label says
   // nothing, and `polygonShading` is what makes this agree with the fills above.
   if(grouped){
-    const legend=new L.Control({position:'bottomleft'});
+    // Bottom right where a playback panel holds the left: on a short map the two met, and the key was hidden (2026-11-10).
+    const legend=new L.Control({position:timeline||(frameNames.length&&classed)?'bottomright':'bottomleft'});
     legend.onAdd=()=>{
       const box=L.DomUtil.create('div','map-class-legend');
       box.innerHTML=grouped.labels.map((label,i)=>`<p><i style="display:inline-block;width:12px;height:12px;`

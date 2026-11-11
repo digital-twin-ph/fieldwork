@@ -74,7 +74,11 @@ test('the day-by-day replay: prospective, only runs ending each day, first flagg
   assert.equal(r.firstAt['0.05'],'1861-11-21');
   const flagged=r.days.find(d=>d.day==='1861-11-21').cluster;
   assert.deepEqual([flagged.places.length,flagged.observed,flagged.start],[4,6,'1861-11-21']);
-  const {receipt}=replayValue(r,{id:'replay',params:{label:'Replay',dateField:'date_of_prodrome'}},'r','cases');
+  const {receipt,value}=replayValue(r,{id:'replay',params:{label:'Replay',dateField:'date_of_prodrome'}},'r','cases');
+  // Each day's circle is classed by that day's p, so the map's legend can say which flagged (2026-11-10).
+  const {REPLAY_FLAGGED,REPLAY_NOT_FLAGGED}=await import('../build/space-time-scan.js');
+  for(const f of value.features)assert.equal(f.category,f.properties.p_value<=0.05?REPLAY_FLAGGED:REPLAY_NOT_FLAGGED,f.name);
+  assert.equal(value.features.find(f=>f.name==='1861-11-21').category,REPLAY_FLAGGED);
   assert.match(receipt.method,/first day the most likely cluster had p at or under 0\.05 was 1861-11-21/);
   assert.match(receipt.method,/looking every day raises the chance of a false alarm/);
 });

@@ -352,12 +352,12 @@
    ]
   },
   "space_time_scan": {
-   "version": "0.3.1",
+   "version": "0.4.0",
    "released": "2026-11-10",
    "changes": [
     {
-     "kind": "patch",
-     "description": "Places within 10 cm of the same distance from a centre join a circle together, and distances are measured from each place's recorded coordinates, not from their 6-decimal rounding. Ties were exact to a millionth of a millimetre, so rounding noise decided which equidistant houses tied: moving Hagelloch 3.7 km west (its anchor corrected, 2026-11-10), which changes no distance, changed one circle and one p-value. Now the circles are the same wherever the village sits (1,307 for Hagelloch at every position tried). Hagelloch's clusters and its first day flagged, 21 November 1861, are unchanged; the 21 November p-value is 0.039, was 0.041."
+     "kind": "minor",
+     "description": "The day-by-day replay classes each day's circle by that day's p: at or under 0.05, or above it, each 'that day alone'. The map colours them and names both in its key (the practitioner, 2026-11-10: \"what does the blue circle mean?\"; every circle had the map's one default blue). The p-values themselves are unchanged."
     }
    ],
    "breaking": false,
@@ -420,12 +420,12 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.23.1",
+   "version": "0.23.2",
    "released": "2026-11-10",
    "changes": [
     {
      "kind": "patch",
-     "description": "Configure…'s preview draws with Leaflet's SVG renderer only. A canvas renderer created and removed within milliseconds, as the preview is on every change, could redraw on a canvas already gone (\"Cannot read properties of undefined (reading 'save')\" and \"'clearRect'\"), seen in CI WebKit on 0.79.0 and in the local gate. The Results map keeps the canvas, which large boundaries need. And every map now removes its shapes before its renderers, so a renderer's own teardown cancels a redraw they ask for."
+     "description": "A map that plays day by day or frame by frame puts its class key at the bottom right, clear of the playback panel; on a short map the two met and the key was hidden."
     }
    ],
    "breaking": false,

@@ -9,6 +9,9 @@ shown in a local build is not a claim that it has been published.
   in keeps what is under it in place; the pane no longer jumps back to the corner after each click.
 - **A worked example's pulse only on its own image.** On a different image the example's positions point at nothing, so
   no pulse is shown and the dialog says why. Georeferenced map image 0.5.0.
+- **Hagelloch's day-by-day circles say what they mean.** Each day's circle is coloured by that day's p, at or under 0.05
+  or above it, and the map's key names both. Before, every circle was the same blue. Space-time scan 0.4.0; the key no
+  longer hides under the day panel on a short map, Map 0.23.2.
 
 ## 0.86.0 — 2026-11-10
 

@@ -3,6 +3,7 @@ import {boundsOf} from './health-facilities.js';
 import {openMapImageConfig} from './georeference-ui.js';
 import {openCountriesConfig} from './area-countries-ui.js';
 import {openChangelog} from './changelog-ui.js';
+import {grid3RasterFor,GRID3_CITATION,GRID3_COUNTRIES,GRID3_LICENCE,GRID3_NOTE,GRID3_PRODUCT,GRID3_TAKEN} from './grid3-catalogue.js';
 import {countriesOfArea} from './area-countries.js';
 import {placedCard} from './map-image-ui.js';
 import {catalogLinks,builtInLinks,exampleLinksBlock,exampleSlug,type ExampleLinks} from './example-links.js';
@@ -5073,6 +5074,16 @@ content+=`<div class="field"><label class="field-label" for="chart-decisions">Re
     // raster dialog still has Worldpop only with nowhere to actually access Worldpop"). Still said once, in the area; the
     // dialog no longer sends the person away to say it.
     let country=stated||node.params.populationCountry||'';
+    // WHICH SOURCE (TODO 24, 2026-11-11): WorldPop for every country, GRID3's 2025 estimates for sub-Saharan Africa. A choice
+    // of which file to download, not a setting the step keeps: the raster read records the file it was given.
+    let popSource:'worldpop'|'grid3'=grid3RasterFor(country||null)&&!populationRastersForCountry(country||null).length?'grid3':'worldpop';
+    const grid3Link=()=>{const r=grid3RasterFor(country||null);
+      if(!r)return `<p class="muted">GRID3 publishes no estimate for ${esc(countryName(country))}: its ${GRID3_COUNTRIES} countries are in sub-Saharan Africa.</p>`;
+      return `<a class="button" id="population-download" href="${esc(r.url)}" download target="_blank" rel="noopener noreferrer">`
+        +`↓ ${esc(r.iso3)} · 2025${r.bytes?` · ${(r.bytes/1e6).toFixed(1)} MB`:''}</a>`
+        +`<p class="muted">${r.bytes?`About ${esc(downloadWait(r.bytes))} at the one speed measured here, ${(WORLDPOP_BYTES_PER_SECOND/1e3).toFixed(0)} kB/s. `:''}`
+        +`Your browser downloads it from data.worldpop.org, which sends no CORS header. Then choose the downloaded file below. `
+        +`${esc(GRID3_PRODUCT)}. ${esc(GRID3_NOTE)} ${esc(GRID3_LICENCE)} Cite: ${esc(GRID3_CITATION)}. Catalogue of ${esc(GRID3_TAKEN)}.</p>`;};
     const linkFor=(year:string)=>{const rasters=populationRastersForCountry(country||null),r=rasters.find(x=>x.year===year)??rasters[0]!;
       return `<a class="button" id="population-download" href="${esc(r.url)}" download target="_blank" rel="noopener noreferrer">`
         +`↓ ${esc(r.iso3)} · ${esc(r.year)}${r.bytes?` · ${(r.bytes/1e6).toFixed(0)} MB`:''}</a>`
@@ -5084,22 +5095,27 @@ content+=`<div class="field"><label class="field-label" for="chart-decisions">Re
       const rasters=populationRastersForCountry(country||null);
       // ACROSS A BORDER (experiment 204): the area's countries are the choice, and the limit is said. One file is read.
       const several=upstream.length>1;
-      const ask=stated?'':(several?`<p class="muted">The study area lies in ${upstream.map(c=>esc(countryName(c))).join(' and ')}. WorldPop `
+      const ask=stated?'':(several?`<p class="muted">The study area lies in ${upstream.map(c=>esc(countryName(c))).join(' and ')}. Each source `
           +`publishes one file per country, and this step reads one: the part of the area in the other ${upstream.length>2?'countries':'country'} `
           +`will have no population from it.</p>`:'')
         +`<label class="field-label" for="population-country">${several?'Whose file to download':'The study area’s country'}</label>`
         +`<select id="population-country"><option value="" ${country?'':'selected'}>Choose a country…</option>`
         +(several?COUNTRIES.filter(c=>upstream.includes(c.iso)):COUNTRIES).map(c=>`<option value="${c.iso}" ${c.iso===country?'selected':''}>${esc(c.name)} (${c.iso})</option>`).join('')
         +`</select>`+(several?'':`<p class="muted">Kept on the study area, which states it once for every step that needs it.</p>`);
-      return `<h3>Population (WorldPop)${country?` for ${esc(countryName(country))}`:''}</h3>`
-        +(stated?`<p class="muted">The country is the study area’s.</p>`:ask)
-        +(!country?'':rasters.length
+      const sourcePick=!country?'':`<label class="field-label" for="population-source">Population source</label><select id="population-source">`
+        +`<option value="worldpop" ${popSource==='worldpop'?'selected':''}>WorldPop · every country, several years</option>`
+        +`<option value="grid3" ${popSource==='grid3'?'selected':''}>GRID3 · sub-Saharan Africa, 2025</option></select>`;
+      return `<h3>Population (${popSource==='grid3'?'GRID3':'WorldPop'})${country?` for ${esc(countryName(country))}`:''}</h3>`
+        +(stated?`<p class="muted">The country is the study area’s.</p>`:ask)+sourcePick
+        +(!country?'':popSource==='grid3'?`<div class="extract-links" id="population-link">${grid3Link()}</div>`:rasters.length
           ?`<label class="field-label" for="population-year">Year</label><select id="population-year">`
             +rasters.map(r=>`<option value="${r.year}" ${r.year===(node.params.populationYear??rasters[0]!.year)?'selected':''}>${r.year}</option>`).join('')
             +`</select><div class="extract-links" id="population-link">${linkFor(node.params.populationYear??rasters[0]!.year)}</div>`
           :`<p class="muted">No WorldPop raster is listed for ${esc(countryName(country))}.</p>`);
     };
     const wirePopulation=(block:HTMLElement)=>{
+      const chosen=block.querySelector<HTMLSelectElement>('#population-source');
+      if(chosen)chosen.onchange=()=>{popSource=chosen.value==='grid3'?'grid3':'worldpop';block.innerHTML=populationHtml();wirePopulation(block);};
       const year=block.querySelector<HTMLSelectElement>('#population-year');
       if(year)year.onchange=()=>{block.querySelector('#population-link')!.innerHTML=linkFor(year.value);};
       const pick=block.querySelector<HTMLSelectElement>('#population-country');

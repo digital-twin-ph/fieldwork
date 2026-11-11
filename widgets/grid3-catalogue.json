@@ -1,0 +1,272 @@
+{
+  "schema": "fieldwork/grid3-catalogue/1",
+  "takenAt": "2026-11-11",
+  "source": "https://data.worldpop.org/repo/wopr/_MULT/population/GRID3_SSA2025/GRID3_SSA_pop_estimates_V1_0/",
+  "product": "Gridded 2025 population estimates for sub-Saharan Africa constrained to GRID3 settlement extents, version 1.0",
+  "licence": "GRID3 and WorldPop, University of Southampton. CC BY 4.0.",
+  "citation": "Gadiaga A., Krishnaveni K.S., Bonnie A., Chamberlain H., Bondarenko M., Lazar A.N., Tatem A.J. 2025. Gridded 2025 population estimates for sub-Saharan Africa constrained to GRID3 settlement extents. WorldPop, University of Southampton, UK. doi:10.5258/SOTON/WP00851",
+  "readme": "https://data.worldpop.org/repo/wopr/_MULT/population/GRID3_SSA2025/0_GRID3_SSA_population_v1_0_README.pdf",
+  "note": "Top-down: national projections spread by a random-forest model over settled cells, 3 arc-seconds (about 100 m). Not official government statistics. No uncertainty layer. Unsettled cells are empty; 0 means an area whose census total was zero. For Nigeria and the Democratic Republic of the Congo, GRID3 says its country-specific estimates suit single-country use better.",
+  "countries": [
+    {
+      "iso3": "AGO",
+      "url": "https://data.worldpop.org/repo/wopr/_MULT/population/GRID3_SSA2025/GRID3_SSA_pop_estimates_V1_0/ago_SSApopulation_%202025_v1_0_gridded.tif",
+      "bytes": 24865355
+    },
+    {
+      "iso3": "BDI",
+      "url": "https://data.worldpop.org/repo/wopr/_MULT/population/GRID3_SSA2025/GRID3_SSA_pop_estimates_V1_0/bdi_SSApopulation_%202025_v1_0_gridded.tif",
+      "bytes": 4303676
+    },
+    {
+      "iso3": "BEN",
+      "url": "https://data.worldpop.org/repo/wopr/_MULT/population/GRID3_SSA2025/GRID3_SSA_pop_estimates_V1_0/ben_SSApopulation_%202025_v1_0_gridded.tif",
+      "bytes": 6861665
+    },
+    {
+      "iso3": "BFA",
+      "url": "https://data.worldpop.org/repo/wopr/_MULT/population/GRID3_SSA2025/GRID3_SSA_pop_estimates_V1_0/bfa_SSApopulation_%202025_v1_0_gridded.tif",
+      "bytes": 14910296
+    },
+    {
+      "iso3": "BWA",
+      "url": "https://data.worldpop.org/repo/wopr/_MULT/population/GRID3_SSA2025/GRID3_SSA_pop_estimates_V1_0/bwa_SSApopulation_%202025_v1_0_gridded.tif",
+      "bytes": 11647427
+    },
+    {
+      "iso3": "CAF",
+      "url": "https://data.worldpop.org/repo/wopr/_MULT/population/GRID3_SSA2025/GRID3_SSA_pop_estimates_V1_0/caf_SSApopulation_%202025_v1_0_gridded.tif",
+      "bytes": 10492718
+    },
+    {
+      "iso3": "CIV",
+      "url": "https://data.worldpop.org/repo/wopr/_MULT/population/GRID3_SSA2025/GRID3_SSA_pop_estimates_V1_0/civ_SSApopulation_%202025_v1_0_gridded.tif",
+      "bytes": 10253194
+    },
+    {
+      "iso3": "CMR",
+      "url": "https://data.worldpop.org/repo/wopr/_MULT/population/GRID3_SSA2025/GRID3_SSA_pop_estimates_V1_0/cmr_SSApopulation_%202025_v1_0_gridded.tif",
+      "bytes": 16667491
+    },
+    {
+      "iso3": "COD",
+      "url": "https://data.worldpop.org/repo/wopr/_MULT/population/GRID3_SSA2025/GRID3_SSA_pop_estimates_V1_0/cod_SSApopulation_%202025_v1_0_gridded.tif",
+      "bytes": 50501499
+    },
+    {
+      "iso3": "COG",
+      "url": "https://data.worldpop.org/repo/wopr/_MULT/population/GRID3_SSA2025/GRID3_SSA_pop_estimates_V1_0/cog_SSApopulation_%202025_v1_0_gridded.tif",
+      "bytes": 7876769
+    },
+    {
+      "iso3": "COM",
+      "url": "https://data.worldpop.org/repo/wopr/_MULT/population/GRID3_SSA2025/GRID3_SSA_pop_estimates_V1_0/com_SSApopulation_%202025_v1_0_gridded.tif",
+      "bytes": 435110
+    },
+    {
+      "iso3": "CPV",
+      "url": "https://data.worldpop.org/repo/wopr/_MULT/population/GRID3_SSA2025/GRID3_SSA_pop_estimates_V1_0/cpv_SSApopulation_%202025_v1_0_gridded.tif",
+      "bytes": 1294998
+    },
+    {
+      "iso3": "DJI",
+      "url": "https://data.worldpop.org/repo/wopr/_MULT/population/GRID3_SSA2025/GRID3_SSA_pop_estimates_V1_0/dji_SSApopulation_%202025_v1_0_gridded.tif",
+      "bytes": 750747
+    },
+    {
+      "iso3": "ERI",
+      "url": "https://data.worldpop.org/repo/wopr/_MULT/population/GRID3_SSA2025/GRID3_SSA_pop_estimates_V1_0/eri_SSApopulation_%202025_v1_0_gridded.tif",
+      "bytes": 5631103
+    },
+    {
+      "iso3": "ETH",
+      "url": "https://data.worldpop.org/repo/wopr/_MULT/population/GRID3_SSA2025/GRID3_SSA_pop_estimates_V1_0/eth_SSApopulation_%202025_v1_0_gridded.tif",
+      "bytes": 59229880
+    },
+    {
+      "iso3": "GAB",
+      "url": "https://data.worldpop.org/repo/wopr/_MULT/population/GRID3_SSA2025/GRID3_SSA_pop_estimates_V1_0/gab_SSApopulation_%202025_v1_0_gridded.tif",
+      "bytes": 4867009
+    },
+    {
+      "iso3": "GHA",
+      "url": "https://data.worldpop.org/repo/wopr/_MULT/population/GRID3_SSA2025/GRID3_SSA_pop_estimates_V1_0/gha_SSApopulation_%202025_v1_0_gridded.tif",
+      "bytes": 12343307
+    },
+    {
+      "iso3": "GIN",
+      "url": "https://data.worldpop.org/repo/wopr/_MULT/population/GRID3_SSA2025/GRID3_SSA_pop_estimates_V1_0/gin_SSApopulation_%202025_v1_0_gridded.tif",
+      "bytes": 8516579
+    },
+    {
+      "iso3": "GMB",
+      "url": "https://data.worldpop.org/repo/wopr/_MULT/population/GRID3_SSA2025/GRID3_SSA_pop_estimates_V1_0/gmb_SSApopulation_%202025_v1_0_gridded.tif",
+      "bytes": 777206
+    },
+    {
+      "iso3": "GNB",
+      "url": "https://data.worldpop.org/repo/wopr/_MULT/population/GRID3_SSA2025/GRID3_SSA_pop_estimates_V1_0/gnb_SSApopulation_%202025_v1_0_gridded.tif",
+      "bytes": 1334054
+    },
+    {
+      "iso3": "GNQ",
+      "url": "https://data.worldpop.org/repo/wopr/_MULT/population/GRID3_SSA2025/GRID3_SSA_pop_estimates_V1_0/gnq_SSApopulation_%202025_v1_0_gridded.tif",
+      "bytes": 3808082
+    },
+    {
+      "iso3": "KEN",
+      "url": "https://data.worldpop.org/repo/wopr/_MULT/population/GRID3_SSA2025/GRID3_SSA_pop_estimates_V1_0/ken_SSApopulation_%202025_v1_0_gridded.tif",
+      "bytes": 35242164
+    },
+    {
+      "iso3": "LBR",
+      "url": "https://data.worldpop.org/repo/wopr/_MULT/population/GRID3_SSA2025/GRID3_SSA_pop_estimates_V1_0/lbr_SSApopulation_%202025_v1_0_gridded.tif",
+      "bytes": 3308507
+    },
+    {
+      "iso3": "LSO",
+      "url": "https://data.worldpop.org/repo/wopr/_MULT/population/GRID3_SSA2025/GRID3_SSA_pop_estimates_V1_0/lso_SSApopulation_%202025_v1_0_gridded.tif",
+      "bytes": 2370731
+    },
+    {
+      "iso3": "MDG",
+      "url": "https://data.worldpop.org/repo/wopr/_MULT/population/GRID3_SSA2025/GRID3_SSA_pop_estimates_V1_0/mdg_SSApopulation_%202025_v1_0_gridded.tif",
+      "bytes": 22414989
+    },
+    {
+      "iso3": "MLI",
+      "url": "https://data.worldpop.org/repo/wopr/_MULT/population/GRID3_SSA2025/GRID3_SSA_pop_estimates_V1_0/mli_SSApopulation_%202025_v1_0_gridded.tif",
+      "bytes": 25054754
+    },
+    {
+      "iso3": "MOZ",
+      "url": "https://data.worldpop.org/repo/wopr/_MULT/population/GRID3_SSA2025/GRID3_SSA_pop_estimates_V1_0/moz_SSApopulation_%202025_v1_0_gridded.tif",
+      "bytes": 35738900
+    },
+    {
+      "iso3": "MRT",
+      "url": "https://data.worldpop.org/repo/wopr/_MULT/population/GRID3_SSA2025/GRID3_SSA_pop_estimates_V1_0/mrt_SSApopulation_%202025_v1_0_gridded.tif",
+      "bytes": 14907759
+    },
+    {
+      "iso3": "MUS",
+      "url": "https://data.worldpop.org/repo/wopr/_MULT/population/GRID3_SSA2025/GRID3_SSA_pop_estimates_V1_0/mus_SSApopulation_%202025_v1_0_gridded.tif",
+      "bytes": 8003360
+    },
+    {
+      "iso3": "MWI",
+      "url": "https://data.worldpop.org/repo/wopr/_MULT/population/GRID3_SSA2025/GRID3_SSA_pop_estimates_V1_0/mwi_SSApopulation_%202025_v1_0_gridded.tif",
+      "bytes": 11758508
+    },
+    {
+      "iso3": "MYT",
+      "url": "https://data.worldpop.org/repo/wopr/_MULT/population/GRID3_SSA2025/GRID3_SSA_pop_estimates_V1_0/myt_SSApopulation_%202025_v1_0_gridded.tif",
+      "bytes": 59756
+    },
+    {
+      "iso3": "NAM",
+      "url": "https://data.worldpop.org/repo/wopr/_MULT/population/GRID3_SSA2025/GRID3_SSA_pop_estimates_V1_0/nam_SSApopulation_%202025_v1_0_gridded.tif",
+      "bytes": 16943161
+    },
+    {
+      "iso3": "NER",
+      "url": "https://data.worldpop.org/repo/wopr/_MULT/population/GRID3_SSA2025/GRID3_SSA_pop_estimates_V1_0/ner_SSApopulation_%202025_v1_0_gridded.tif",
+      "bytes": 19767646
+    },
+    {
+      "iso3": "NGA",
+      "url": "https://data.worldpop.org/repo/wopr/_MULT/population/GRID3_SSA2025/GRID3_SSA_pop_estimates_V1_0/nga_SSApopulation_%202025_v1_0_gridded.tif",
+      "bytes": 50238487
+    },
+    {
+      "iso3": "REU",
+      "url": "https://data.worldpop.org/repo/wopr/_MULT/population/GRID3_SSA2025/GRID3_SSA_pop_estimates_V1_0/reu_SSApopulation_%202025_v1_0_gridded.tif",
+      "bytes": 410366
+    },
+    {
+      "iso3": "RWA",
+      "url": "https://data.worldpop.org/repo/wopr/_MULT/population/GRID3_SSA2025/GRID3_SSA_pop_estimates_V1_0/rwa_SSApopulation_%202025_v1_0_gridded.tif",
+      "bytes": 5051620
+    },
+    {
+      "iso3": "SDN",
+      "url": "https://data.worldpop.org/repo/wopr/_MULT/population/GRID3_SSA2025/GRID3_SSA_pop_estimates_V1_0/sdn_SSApopulation_%202025_v1_0_gridded.tif",
+      "bytes": 29565645
+    },
+    {
+      "iso3": "SEN",
+      "url": "https://data.worldpop.org/repo/wopr/_MULT/population/GRID3_SSA2025/GRID3_SSA_pop_estimates_V1_0/sen_SSApopulation_%202025_v1_0_gridded.tif",
+      "bytes": 6258005
+    },
+    {
+      "iso3": "SHN",
+      "url": "https://data.worldpop.org/repo/wopr/_MULT/population/GRID3_SSA2025/GRID3_SSA_pop_estimates_V1_0/shn_SSApopulation_%202025_v1_0_gridded.tif",
+      "bytes": 27722554
+    },
+    {
+      "iso3": "SLE",
+      "url": "https://data.worldpop.org/repo/wopr/_MULT/population/GRID3_SSA2025/GRID3_SSA_pop_estimates_V1_0/sle_SSApopulation_%202025_v1_0_gridded.tif",
+      "bytes": 2470985
+    },
+    {
+      "iso3": "SOM",
+      "url": "https://data.worldpop.org/repo/wopr/_MULT/population/GRID3_SSA2025/GRID3_SSA_pop_estimates_V1_0/som_SSApopulation_%202025_v1_0_gridded.tif",
+      "bytes": 15150196
+    },
+    {
+      "iso3": "SSD",
+      "url": "https://data.worldpop.org/repo/wopr/_MULT/population/GRID3_SSA2025/GRID3_SSA_pop_estimates_V1_0/ssd_SSApopulation_%202025_v1_0_gridded.tif",
+      "bytes": 13906041
+    },
+    {
+      "iso3": "STP",
+      "url": "https://data.worldpop.org/repo/wopr/_MULT/population/GRID3_SSA2025/GRID3_SSA_pop_estimates_V1_0/stp_SSApopulation_%202025_v1_0_gridded.tif",
+      "bytes": 524034
+    },
+    {
+      "iso3": "SWZ",
+      "url": "https://data.worldpop.org/repo/wopr/_MULT/population/GRID3_SSA2025/GRID3_SSA_pop_estimates_V1_0/swz_SSApopulation_%202025_v1_0_gridded.tif",
+      "bytes": 1836007
+    },
+    {
+      "iso3": "SYC",
+      "url": "https://data.worldpop.org/repo/wopr/_MULT/population/GRID3_SSA2025/GRID3_SSA_pop_estimates_V1_0/syc_SSApopulation_%202025_v1_0_gridded.tif",
+      "bytes": 6010999
+    },
+    {
+      "iso3": "TCD",
+      "url": "https://data.worldpop.org/repo/wopr/_MULT/population/GRID3_SSA2025/GRID3_SSA_pop_estimates_V1_0/tcd_SSApopulation_%202025_v1_0_gridded.tif",
+      "bytes": 20721325
+    },
+    {
+      "iso3": "TGO",
+      "url": "https://data.worldpop.org/repo/wopr/_MULT/population/GRID3_SSA2025/GRID3_SSA_pop_estimates_V1_0/tgo_SSApopulation_%202025_v1_0_gridded.tif",
+      "bytes": 4285616
+    },
+    {
+      "iso3": "TZA",
+      "url": "https://data.worldpop.org/repo/wopr/_MULT/population/GRID3_SSA2025/GRID3_SSA_pop_estimates_V1_0/tza_SSApopulation_%202025_v1_0_gridded.tif",
+      "bytes": 34109531
+    },
+    {
+      "iso3": "UGA",
+      "url": "https://data.worldpop.org/repo/wopr/_MULT/population/GRID3_SSA2025/GRID3_SSA_pop_estimates_V1_0/uga_SSApopulation_%202025_v1_0_gridded.tif",
+      "bytes": 23556742
+    },
+    {
+      "iso3": "ZAF",
+      "url": "https://data.worldpop.org/repo/wopr/_MULT/population/GRID3_SSA2025/GRID3_SSA_pop_estimates_V1_0/zaf_SSApopulation_%202025_v1_0_gridded.tif",
+      "bytes": 69213912
+    },
+    {
+      "iso3": "ZMB",
+      "url": "https://data.worldpop.org/repo/wopr/_MULT/population/GRID3_SSA2025/GRID3_SSA_pop_estimates_V1_0/zmb_SSApopulation_%202025_v1_0_gridded.tif",
+      "bytes": 23991050
+    },
+    {
+      "iso3": "ZWE",
+      "url": "https://data.worldpop.org/repo/wopr/_MULT/population/GRID3_SSA2025/GRID3_SSA_pop_estimates_V1_0/zwe_SSApopulation_%202025_v1_0_gridded.tif",
+      "bytes": 22642432
+    }
+  ]
+}

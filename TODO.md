@@ -216,6 +216,11 @@ not a practitioner in the field.
    Africa. **Moved up 2026-11-10**, ahead of 19, by the practitioner on seeing only WorldPop in
    Configure… (*"For raster input I thought we included GRID3, GHSL, etc. for population rasters"*). Read-only research
    started the same day.
+   **GRID3 built 2026-11-11 (0.90.0)**: its sub-Saharan Africa set, 2025, 52 countries, one file each (CC BY 4.0), as a
+   *Population source* beside WorldPop. **Left:** GRID3's country-specific estimates (Nigeria v3.0, the DRC's v4.4 by
+   province with lower and upper bounds, Zambia, Mozambique and others; three are CC BY-SA); and GHS-POP, confirmed as
+   the JRC's Global Human Settlement Layer: JRC's AWS copy sends CORS and allows ranges, so a study area's window might be
+   read without a download, which one partial read of the file's header (about 16 KB) would settle. Not yet asked to do.
 25. **A study area across a border** (the practitioner, 2026-11-10: *"We discussed the cross border study area. In this
    case we need to be able to either (1) detect the countries based on geometry overlaps or (2) named explicitly"*).
    **Built 2026-11-10 (0.85.0), [204](docs/experiments/204-a-study-area-across-a-border.md)**: a list of countries,

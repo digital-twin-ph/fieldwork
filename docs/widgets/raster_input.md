@@ -22,6 +22,11 @@ set once, on the study area; where the area states none, Configure… asks for i
 border**, where the study area states several countries, Configure… offers those, one file at a time: this step reads
 one file, so the part of the area in another country has no population from it.
 
+**Or from GRID3**, under *Population source*: GRID3's 2025 estimates for the 52 countries of sub-Saharan Africa, one file
+per country (Botswana's is 11.6 MB, against WorldPop's 293 MB). They are modelled top-down, from national projections
+spread over settled areas; they are not official government statistics and carry no uncertainty layer. Where GRID3
+publishes nothing for the country, the dialog says so. The download is your browser's, as WorldPop's is.
+
 The step's panel holds its **Name**, its study area, one sentence saying what it keeps, and **Configure…**:
 
 | In Configure… | What it does |

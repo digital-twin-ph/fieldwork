@@ -3,6 +3,12 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.90.0 — 2026-11-11
+
+- **GRID3 beside WorldPop.** Raster input's Configure… offers a population source: WorldPop for every country, or GRID3's
+  2025 estimates for the 52 countries of sub-Saharan Africa, one file each, with its size, licence, citation and limits.
+  Botswana's is 11.6 MB against WorldPop's 293 MB. Raster input 0.9.0.
+
 ## 0.89.0 — 2026-11-11
 
 - **The Polygon layer on the standard panel.** Name, study area, one sentence of what it holds, and **Configure…**, which

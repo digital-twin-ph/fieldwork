@@ -621,12 +621,12 @@
    "migrationFrom": []
   },
   "raster_input": {
-   "version": "0.8.0",
-   "released": "2026-11-10",
+   "version": "0.9.0",
+   "released": "2026-11-11",
    "changes": [
     {
      "kind": "minor",
-     "description": "Across a border (experiment 204): where the study area states several countries, Configure… offers only those for the WorldPop download, says that this step reads one file so the part of the area in the other country has no population from it, and no longer writes the chosen country back over the area's list."
+     "description": "GRID3 beside WorldPop (TODO 24; the practitioner, 2026-11-10: \"For raster input I thought we included GRID3, GHSL, etc. for population rasters\"). Configure… offers a population source: WorldPop for every country, or GRID3's 2025 estimates for the 52 countries of sub-Saharan Africa, one file each, named with its size, licence, citation and limits (top-down, not official statistics, no uncertainty layer). Outside sub-Saharan Africa it says GRID3 publishes nothing. The catalogue is taken by scripts/grid3-catalogue.mjs from the listing and each file's headers."
     }
    ],
    "breaking": false,

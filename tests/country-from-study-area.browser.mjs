@@ -103,3 +103,32 @@ test('the raster widgets carry a node label, as every other widget does',async({
   await expect(page.locator('#raster-label')).toHaveValue('Raster input');
   expect(errors).toEqual([]);
 });
+
+// GRID3 BESIDE WORLDPOP (TODO 24, 2026-11-11): the source is a choice in the same place, with its file, size, licence and
+// citation; outside sub-Saharan Africa it says GRID3 publishes nothing, rather than offering a file that is not there.
+test('the raster dialog offers GRID3 beside WorldPop, for a country GRID3 covers and one it does not',async({page})=>{
+  const errors=collectPageErrors(page);
+  await open(page,'BWA');
+  await page.locator('.react-flow__node[data-id="raster"]').click({timeout:45000});
+  await page.locator('#prepare-raster').click();
+  const dialog=page.locator('#raster-dialog');
+  await expect(dialog.locator('#population-source')).toHaveValue('worldpop');
+  await dialog.locator('#population-source').selectOption('grid3');
+  await expect(dialog.locator('#raster-population')).toContainText('Population (GRID3) for Botswana');
+  await expect(dialog.locator('#population-download')).toContainText('BWA · 2025 · 11.6 MB');
+  await expect(dialog.locator('#population-download')).toHaveAttribute('href',/bwa_SSApopulation_%202025_v1_0_gridded\.tif$/);
+  await expect(dialog.locator('#raster-population')).toContainText('Not official government statistics');
+  await expect(dialog.locator('#raster-population')).toContainText('doi:10.5258/SOTON/WP00851');
+  expect(errors).toEqual([]);
+});
+test('outside sub-Saharan Africa, GRID3 says it publishes nothing for the country',async({page})=>{
+  const errors=collectPageErrors(page);
+  await open(page,'DEU');
+  await page.locator('.react-flow__node[data-id="raster"]').click({timeout:45000});
+  await page.locator('#prepare-raster').click();
+  const dialog=page.locator('#raster-dialog');
+  await dialog.locator('#population-source').selectOption('grid3');
+  await expect(dialog.locator('#raster-population')).toContainText('GRID3 publishes no estimate for Germany');
+  await expect(dialog.locator('#population-download')).toHaveCount(0);
+  expect(errors).toEqual([]);
+});

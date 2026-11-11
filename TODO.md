@@ -212,14 +212,11 @@ not a practitioner in the field.
    it or must download it, as WorldPop must. GHS-POP is global and tiled; GRID3 is per country, mostly sub-Saharan
    Africa.
 25. **A study area across a border** (the practitioner, 2026-11-10: *"We discussed the cross border study area. In this
-   case we need to be able to either (1) detect the countries based on geometry overlaps or (2) named explicitly"*). The
-   study area holds *countries*, one or more. Named: listed by the person for a drawn shape; stated by the boundary for
-   acquired units, both countries where units of two were picked. Detected: proposed, never applied in silence -- the
-   bundled Natural Earth outlines (public domain, about 10 km, labelled not for framing) only suggest candidates;
-   geoBoundaries' national outlines for those candidates measure the share of the area in each ("86% Botswana, 14% South
-   Africa"), and the person confirms. Downstream: WorldPop one download per country (Raster input reads one file today,
-   so a window across two is a stated limit until it reads two); Find health facilities queries each register; the
-   upstream walk (2026-11-10) reads the confirmed list.
+   case we need to be able to either (1) detect the countries based on geometry overlaps or (2) named explicitly"*).
+   **Built 2026-11-10 (0.85.0), [204](docs/experiments/204-a-study-area-across-a-border.md)**: a list of countries,
+   named or found with shares and confirmed; the walk upstream; Raster input offering the area's countries with its
+   one-file limit said. **Left:** Find health facilities querying each country's register; acquired units from two
+   countries in one study area; Raster input reading a window across two files.
 12. **Edit a table's values inline, in the data quality check** (the practitioner, 2026-11-10: *"One thing I have been
    meaning to add to data quality checks is the ability to edit tables inline. Can be added as a widget playback
    exercise."*). To shape: per [117](docs/experiments/117-data-quality.md), a change to an input is a declared repair

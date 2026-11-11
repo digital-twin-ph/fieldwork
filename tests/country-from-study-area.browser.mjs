@@ -58,7 +58,8 @@ test('a study area that states no country leaves both unset, rather than guessin
   await page.locator('#raster-dialog #population-country').selectOption('BWA');
   await expect(page.locator('#raster-dialog #raster-population')).toContainText('Population (WorldPop) for Botswana');
   await expect(page.locator('#raster-dialog #population-download')).toContainText('BWA');
-  await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')).nodes.find(n=>n.id==='area').params.country)).toBe('BWA');
+  // Kept as the area's list of countries, a list of one (experiment 204).
+  await expect.poll(()=>page.evaluate(()=>JSON.stringify(JSON.parse(localStorage.getItem('fieldwork-workflow-v1')).nodes.find(n=>n.id==='area').params.countries))).toBe('["BWA"]');
   expect(errors).toEqual([]);
 });
 

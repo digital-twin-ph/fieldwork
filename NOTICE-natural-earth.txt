@@ -28,3 +28,19 @@ WHAT IT IS NOT FOR
   cartographic choice rather than an adjudication. Joining data to them, computing areas
   from them, or reporting results by them produces wrong answers that look professional.
   The frame is a study area the practitioner supplies.
+
+COUNTRY OUTLINES, FOR PROPOSING ONLY (experiment 204)
+  assets/natural-earth-110m-countries.json is prepared from Natural Earth 1:110m admin-0
+  countries, version 5.1.2 (geojson/ne_110m_admin_0_countries.geojson), retrieved
+  2026-11-10, public domain.
+
+  Unlike the file above, it keeps a code and a name per country, because its one job is
+  to propose which countries a study area may touch. It never decides: the share of the
+  area in each country is measured on that country's national outline from
+  geoBoundaries, and the practitioner confirms. Generalised to about 10 km, so the area
+  is widened by 10 km before it is compared.
+
+  - Kept: an ISO3 code (ISO_A3, else ISO_A3_EH, else ADM0_A3; France, Norway, Kosovo,
+    Northern Cyprus and Somaliland carry -99 in ISO_A3), the name, and the outline
+    rounded to 0.001 degree, about 110 m.
+  - scripts/prepare-natural-earth-countries.mjs is the script.

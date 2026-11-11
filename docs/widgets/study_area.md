@@ -37,10 +37,19 @@ facility search, the point grid, the coverage check and the area measurement all
 
 ## How to use it
 
-The step's panel holds its **Name**, one sentence saying what shape it holds, the **Country** where it was not taken
-from a boundary, and **Select area on map**, which opens the map where the area is chosen. **Result** says what it
+The step's panel holds its **Name**, one sentence saying what shape it holds, its **Countries** with **Configure
+countries…** where they were not taken from a boundary, and **Select area on map**, which opens the map where the area is
+chosen. **Result** says what it
 holds, what the boundary repair removed, and every extent it has had. Under that, **Manual**, **Evidence** and
 **Version**.
+
+**Countries, one or more.** A study area can lie in several countries, at a border. In **Configure countries…**, add
+them from the list, or press **Find the countries**: it proposes the countries the area falls in, each with the share of
+the area inside it (*86% Botswana, 14% South Africa*). Tick the ones to keep, press **Use the ticked countries**, then
+**Apply**. Nothing is kept until you apply it. A share is of the area as drawn, not of the people in it. The proposal
+comes from Natural Earth's outlines, which are generalised to about 10 km, and the share from each country's national
+outline from geoBoundaries; a country without a published outline is listed but not measured. Each widget that needs a
+country reads the list.
 
 1. Add the node and open it in the Inspector.
 2. Press **Select area on map**. Pan to where you are working.

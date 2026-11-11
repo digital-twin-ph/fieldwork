@@ -3,6 +3,15 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.85.0 — 2026-11-10
+
+- **A study area across a border.** A study area now states its countries, one or more. **Configure countries…** names
+  them, or finds them from where the area falls, each with its share of the area (*86% Botswana, 14% South Africa*), for
+  you to confirm. A study area saved with one country opens with a list of one. Study area 0.8.0.
+- **WorldPop across a border.** Where the study area states several countries, Raster input offers those and says it
+  reads one file, so the rest of the area has no population from it. Raster input 0.8.0.
+- Find health facilities still queries one country's register; across a border it asks which.
+
 ## 0.84.1 — 2026-11-10
 
 - **A cleared point field is empty, not zero.** Placing a map image by points, a field emptied or replaced before it was

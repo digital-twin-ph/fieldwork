@@ -750,6 +750,9 @@ export function validateWorkflow(raw:unknown):Workflow {
     ids.add(n.id);
     if (![n.x,n.y].every(Number.isFinite) || Math.abs(n.x)>10000 || Math.abs(n.y)>10000 || !n.params) throw new Error('Invalid node position or parameters.');
     if((n.type==='study_area'||n.type==='point_input'||n.type==='places'||n.type==='centers')){n.params.spatialReference??=defaultSpatialReference();validateSpatialReference(n.params.spatialReference);}
+    if(n.type==='study_area'){const listed=(n.params as {countries?:unknown}).countries;
+      if(listed!==undefined&&(!Array.isArray(listed)||listed.length>30||listed.some(c=>typeof c!=='string'||!/^[A-Z]{3}$/.test(c))))
+        throw new Error('A study area\'s countries are ISO 3166 three-letter codes, up to 30.');}
     if ((n.type==='places'||n.type==='centers'||n.type==='point_input')) n.params.data=validateGeoJSON(n.params.data,{attributes:n.type==='point_input'});
     if(n.type==='summarize_hull')validateHullNode(n);
     if(n.type==='summarize_combined_area')validateCombinedAreaNode(n);

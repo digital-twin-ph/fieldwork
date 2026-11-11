@@ -621,12 +621,12 @@
    "migrationFrom": []
   },
   "raster_input": {
-   "version": "0.7.2",
+   "version": "0.8.0",
    "released": "2026-11-10",
    "changes": [
     {
-     "kind": "patch",
-     "description": "Where the study area states no country, Configure… asks for it, keeps it on the study area, and offers WorldPop's year and download at once. It used to say to set the country on the study area and offer nothing: the practitioner, 2026-11-10, \"nowhere to actually access Worldpop\"."
+     "kind": "minor",
+     "description": "Across a border (experiment 204): where the study area states several countries, Configure… offers only those for the WorldPop download, says that this step reads one file so the part of the area in the other country has no population from it, and no longer writes the chosen country back over the area's list."
     }
    ],
    "breaking": false,
@@ -849,12 +849,12 @@
    "migrationFrom": []
   },
   "study_area": {
-   "version": "0.7.0",
-   "released": "2026-11-09",
+   "version": "0.8.0",
+   "released": "2026-11-10",
    "changes": [
     {
      "kind": "minor",
-     "description": "The boundary repair: a vertex that is the same point as the one before it, or the tip of a zero-width spike, is removed from a boundary as it is read, a downloaded level or a file. Neither changes the area any outline encloses. The dialog says what was removed; the evidence lists each vertex by unit, kind and position. A refusal names the unit at fault. On the standard Inspector."
+     "description": "Countries, one or more (experiment 204): a study area states a list of countries, and a saved single country reads as a list of one. Configure countries… names them, or finds them from where the area falls: Natural Earth's outlines propose candidates, each candidate's national outline from geoBoundaries measures the share of the area in it, and the person ticks what to keep. Nothing is applied until Apply. The country moves off the Inspector into its own dialog; an acquired boundary still states its own."
     }
    ],
    "breaking": false,

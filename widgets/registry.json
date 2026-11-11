@@ -1157,7 +1157,7 @@
     {
       "id": "urn:fieldwork:widget:raster_input",
       "nodeType": "raster_input",
-      "currentVersion": "0.7.2",
+      "currentVersion": "0.8.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -1208,6 +1208,11 @@
           "version": "0.7.2",
           "path": "widgets/releases/raster_input/0.7.2.json",
           "sha256": "28f9ea25f66b372435a6c2f4530a2e0e8309c97342d590a8b74248d614908459"
+        },
+        {
+          "version": "0.8.0",
+          "path": "widgets/releases/raster_input/0.8.0.json",
+          "sha256": "72712cd89dcf4e5b0b07cc11bdd21d7531a64c768fa2c1d13bee60b711d4284f"
         }
       ]
     },
@@ -1587,7 +1592,7 @@
     {
       "id": "urn:fieldwork:widget:study_area",
       "nodeType": "study_area",
-      "currentVersion": "0.7.0",
+      "currentVersion": "0.8.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -1638,6 +1643,11 @@
           "version": "0.7.0",
           "path": "widgets/releases/study_area/0.7.0.json",
           "sha256": "407ec97fb2d33bbe7768bf7ca2674f613ddafa0fff2f2a8a98cc66287604819d"
+        },
+        {
+          "version": "0.8.0",
+          "path": "widgets/releases/study_area/0.8.0.json",
+          "sha256": "78049315689d062bff263b84388d9c6e12a1ec62001d442713583f5208201185"
         }
       ],
       "previousNodeTypes": [

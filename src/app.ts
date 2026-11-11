@@ -1,6 +1,8 @@
 import {noteImageDigest,noteImageFigure,noteImageKey,readNoteImagePayload,type NoteImage} from './note-image.js';
 import {boundsOf} from './health-facilities.js';
 import {openMapImageConfig} from './georeference-ui.js';
+import {openCountriesConfig} from './area-countries-ui.js';
+import {countriesOfArea} from './area-countries.js';
 import {placedCard} from './map-image-ui.js';
 import {catalogLinks,builtInLinks,exampleLinksBlock,exampleSlug,type ExampleLinks} from './example-links.js';
 import {SCAN_DEFAULTS,newScanSeed} from './space-time-scan.js';
@@ -3854,11 +3856,11 @@ function renderInspector(){
       countryField=acquired
         ?`<div class="field"><span class="field-label">Country</span>`
           +`<p class="muted">${esc(countryName(acquired))} (${esc(acquired)}), from the boundary this area was acquired as.</p></div>`
-        :`<div class="field"><label class="field-label" for="area-country">Country</label>`
-          +`<select id="area-country" data-area-country>`
-          +`<option value="" ${n.params.country?'':'selected'}>Not stated</option>`
-          +COUNTRIES.map(c=>`<option value="${c.iso}" ${c.iso===n.params.country?'selected':''}>${esc(c.name)} (${c.iso})</option>`).join('')
-          +`</select><small>Read by the widgets that need a country.</small></div>`;
+        // A LIST, CONFIGURED IN ITS OWN DIALOG (experiment 204): named, or found from where the shape falls and confirmed.
+        :(()=>{const listed=countriesOfArea(n.params as {countries?:string[];country?:string});
+          return `<div class="field"><span class="field-label">Countries</span><p class="standard-sentence" id="area-countries-sentence">`
+            +(listed.length?`${esc(listed.map(c=>`${countryName(c)} (${c})`).join(', '))}.`:'Not stated. Read by the widgets that need a country.')+`</p>`
+            +`<button type="button" class="button" id="configure-countries">Configure countries\u2026</button></div>`;})();
     }
     const geometry=p.source==='drawn'?p.geometry:undefined;
     content+=standardSection('Settings',`<p class="standard-sentence">${esc(p.source!=='drawn'?`From ${p.dataset||'a source dataset'}.`
@@ -5060,10 +5062,13 @@ content+=`<div class="field"><label class="field-label" for="chart-decisions">Re
       onConvertOnRun:on=>change(w=>{const node=getNode(w,n.id,'table_input');if(on)node.params.convertOnRun=true;else delete node.params.convertOnRun;})});
   });
   optionalElement('#open-manual')?.addEventListener('click',()=>openManual(n.type,TYPES[n.type].title,esc));
-  optionalElement('#area-country')?.addEventListener('change',event=>change(w=>{
-    const target=getNode(w,n.id,'study_area');
-    target.params.country=(event.target as HTMLSelectElement).value||undefined;
-  }));
+  optionalElement('#configure-countries')?.addEventListener('click',()=>{
+    const p=getNode(workflow,n.id,'study_area').params;
+    openCountriesConfig({step:p.label||'Study area',countries:countriesOfArea(p as {countries?:string[];country?:string}),
+      geometry:p.source==='drawn'&&p.geometry?p.geometry:null,esc,
+      apply:countries=>change(w=>{const t=getNode(w,n.id,'study_area').params as {countries?:string[];country?:string};
+        delete t.country;if(countries.length)t.countries=countries;else delete t.countries;})});
+  });
   optionalElement('#join-key')?.addEventListener('change',e=>
     change(w=>{getNode(w,n.id,'join_table_to_area').params.keyField=control(e).value;}));
   optionalElement('#join-normalisation')?.addEventListener('change',e=>
@@ -5099,11 +5104,15 @@ content+=`<div class="field"><label class="field-label" for="chart-decisions">Re
         +`population, 100 m. ${esc(WORLDPOP_LICENCE)} Catalogue of ${esc(WORLDPOP_TAKEN)}.</p>`;};
     const populationHtml=()=>{
       const rasters=populationRastersForCountry(country||null);
-      const ask=stated?'':(upstream.length>1?`<p class="muted">The study areas upstream are in ${upstream.map(c=>esc(countryName(c))).join(' and ')}. WorldPop is published by country: choose one.</p>`:'')
-        +`<label class="field-label" for="population-country">The study area’s country</label>`
+      // ACROSS A BORDER (experiment 204): the area's countries are the choice, and the limit is said. One file is read.
+      const several=upstream.length>1;
+      const ask=stated?'':(several?`<p class="muted">The study area lies in ${upstream.map(c=>esc(countryName(c))).join(' and ')}. WorldPop `
+          +`publishes one file per country, and this step reads one: the part of the area in the other ${upstream.length>2?'countries':'country'} `
+          +`will have no population from it.</p>`:'')
+        +`<label class="field-label" for="population-country">${several?'Whose file to download':'The study area’s country'}</label>`
         +`<select id="population-country"><option value="" ${country?'':'selected'}>Choose a country…</option>`
-        +COUNTRIES.map(c=>`<option value="${c.iso}" ${c.iso===country?'selected':''}>${esc(c.name)} (${c.iso})</option>`).join('')
-        +`</select><p class="muted">Kept on the study area, which states it once for every step that needs it.</p>`;
+        +(several?COUNTRIES.filter(c=>upstream.includes(c.iso)):COUNTRIES).map(c=>`<option value="${c.iso}" ${c.iso===country?'selected':''}>${esc(c.name)} (${c.iso})</option>`).join('')
+        +`</select>`+(several?'':`<p class="muted">Kept on the study area, which states it once for every step that needs it.</p>`);
       return `<h3>Population (WorldPop)${country?` for ${esc(countryName(country))}`:''}</h3>`
         +(stated?`<p class="muted">The country is the study area’s.</p>`:ask)
         +(!country?'':rasters.length
@@ -5120,8 +5129,9 @@ content+=`<div class="field"><label class="field-label" for="chart-decisions">Re
         country=pick.value;
         const origin=(()=>{const seen=new Set<string>(),queue=[n.id];while(queue.length){const id=queue.shift()!;if(seen.has(id))continue;seen.add(id);
           const node=workflow.nodes.find(x=>x.id===id);if(node?.type==='study_area')return node;for(const e of workflow.edges)if(e.to===id)queue.push(e.from);}return undefined;})();
-        if(country&&origin){
-          change(w=>{(getNode(w,origin.id,'study_area').params as {country?:string}).country=country;});
+        // Kept on the area only where it stated none: an area across a border already states its countries.
+        if(country&&origin&&!upstream.length){
+          change(w=>{const t=getNode(w,origin.id,'study_area').params as {countries?:string[];country?:string};delete t.country;t.countries=[country];});
           // The area changed on purpose; a raster saved after it is still this dialog's to save.
           baseline=JSON.stringify(workflow);
         }
@@ -7733,7 +7743,8 @@ function upstreamCountries(source:Workflow,nodeId:string):string[]{
     const node=source.nodes.find(x=>x.id===id);
     if(node&&node.id!==nodeId){
       const stated=countryOfArea(node.params as {country?:string;boundary?:{boundaryID?:string;provenance?:{boundaryID?:string}}});
-      if(node.type==='study_area'){if(stated)found.add(stated);continue;}
+      // A study area across a border states several (experiment 204): all of them.
+      if(node.type==='study_area'){for(const c of countriesOfArea(node.params as {countries?:string[];country?:string}))found.add(c);continue;}
       if(stated)found.add(stated);
     }
     for(const e of source.edges)if(e.to===id)queue.push(e.from);

@@ -210,7 +210,9 @@ not a practitioner in the field.
    JRC's Global Human Settlement Layer, to be confirmed). In Raster input's Configure…, where WorldPop now is. First, read
    only: each source's licence as stated, its countries and years, its files and sizes, and whether a browser can fetch
    it or must download it, as WorldPop must. GHS-POP is global and tiled; GRID3 is per country, mostly sub-Saharan
-   Africa.
+   Africa. **Moved up 2026-11-10**, ahead of 19, by the practitioner on seeing only WorldPop in
+   Configure… (*"For raster input I thought we included GRID3, GHSL, etc. for population rasters"*). Read-only research
+   started the same day.
 25. **A study area across a border** (the practitioner, 2026-11-10: *"We discussed the cross border study area. In this
    case we need to be able to either (1) detect the countries based on geometry overlaps or (2) named explicitly"*).
    **Built 2026-11-10 (0.85.0), [204](docs/experiments/204-a-study-area-across-a-border.md)**: a list of countries,

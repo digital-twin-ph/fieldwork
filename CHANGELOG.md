@@ -6,7 +6,7 @@ shown in a local build is not a claim that it has been published.
 ## 0.86.0 — 2026-11-10
 
 - **What changed, from the version button.** Click the version beside the Fieldwork mark to read the release notes for
-  the version you are running, step back through earlier ones, and reach the full changelog. The notes travel with the
+  its series, every 0.86.x release together, newest first. Step back through earlier series, and reach the full changelog. The notes travel with the
   application, so they open offline too. The mark itself still goes home.
 
 ## 0.85.1 — 2026-11-10

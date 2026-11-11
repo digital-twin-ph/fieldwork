@@ -8,21 +8,25 @@ test('the version opens its release notes, steps to the one before and back, and
   const errors=collectPageErrors(page);
   const pkg=JSON.parse(await readFile('package.json','utf8'));
   const log=await readFile('CHANGELOG.md','utf8');
-  const sections=[...log.matchAll(/^## (\d+\.\d+\.\d+) — /gm)].map(m=>m[1]);
-  const before=sections[sections.indexOf(pkg.version)+1];
+  const versions=[...log.matchAll(/^## (\d+\.\d+\.\d+) — /gm)].map(m=>m[1]);
+  const series=v=>v.split('.').slice(0,2).join('.');
+  const mine=series(pkg.version),inMine=versions.filter(v=>series(v)===mine);
+  const before=[...new Set(versions.map(series))].find((s,i,all)=>all[i-1]===mine);
   await page.goto('/?example=blank');
   await page.locator('#app-version').click();
   const dialog=page.locator('#changelog-dialog');
   await expect(dialog).toBeVisible();
-  await expect(dialog.locator('#changelog-title')).toHaveText(`What changed in v${pkg.version}`);
-  await expect(dialog).toContainText('the version you are running');
+  // The series, x.y, with every x.y.z in it, newest first (the practitioner, 2026-11-10).
+  await expect(dialog.locator('#changelog-title')).toHaveText(`What changed in v${mine}`);
+  await expect(dialog.locator('.changelog-release')).toHaveCount(inMine.length);
+  await expect(dialog.locator(`.changelog-release[data-version="${pkg.version}"] h3`)).toContainText('the version you are running');
   // A bullet's wrapped lines are one item, not a bullet and a paragraph.
   await expect(dialog.locator('.manual-body p')).toHaveCount(0);
   await expect(dialog.locator('.manual-body li').first()).toBeVisible();
   await dialog.locator('#changelog-older').click();
   await expect(dialog.locator('#changelog-title')).toHaveText(`What changed in v${before}`);
   await dialog.locator('#changelog-current').click();
-  await expect(dialog.locator('#changelog-title')).toHaveText(`What changed in v${pkg.version}`);
+  await expect(dialog.locator('#changelog-title')).toHaveText(`What changed in v${mine}`);
   await page.keyboard.press('Escape');
   await expect(dialog).toHaveCount(0);
   // The mark is still the way home, and the version is no longer inside it.

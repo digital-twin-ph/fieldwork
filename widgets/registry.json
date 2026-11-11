@@ -1476,7 +1476,7 @@
     {
       "id": "urn:fieldwork:widget:sample_raster",
       "nodeType": "sample_raster",
-      "currentVersion": "0.2.0",
+      "currentVersion": "0.3.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -1487,6 +1487,11 @@
           "version": "0.2.0",
           "path": "widgets/releases/sample_raster/0.2.0.json",
           "sha256": "ae3b1934fb0d46317f696f6f0b073e94c17f930d8376ba8a19f3ef6e7af1f510"
+        },
+        {
+          "version": "0.3.0",
+          "path": "widgets/releases/sample_raster/0.3.0.json",
+          "sha256": "432d25631dc5fd75e0d1872162b99d296d4bf00f2c92936630fe4f7bd5c0bdaf"
         }
       ]
     },
@@ -2113,7 +2118,7 @@
     {
       "id": "urn:fieldwork:widget:sample_satellite_files_at_points",
       "nodeType": "sample_satellite_files_at_points",
-      "currentVersion": "0.7.0",
+      "currentVersion": "1.0.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -2159,6 +2164,11 @@
           "version": "0.7.0",
           "path": "widgets/releases/sample_satellite_files_at_points/0.7.0.json",
           "sha256": "66c5f832ab9aa6764ced346d4b25025d32473d5cd4f9cf71b3690bcfa2e2cae5"
+        },
+        {
+          "version": "1.0.0",
+          "path": "widgets/releases/sample_satellite_files_at_points/1.0.0.json",
+          "sha256": "ae29f110c47bbd701ef2548b9386f96ef2676e1341e24f7731a349aaa4d5b124"
         }
       ]
     }

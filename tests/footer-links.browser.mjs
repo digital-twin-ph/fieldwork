@@ -72,7 +72,7 @@ test('the links survive an offline reload, and say they need a connection',async
   // The workspace is offline-first and these two destinations are not part of it. The links are
   // cached with the page, so they remain present and honest rather than disappearing.
   await page.goto('/?example=blank');
-  await expect(page.locator('#offline-status')).toContainText('Available offline',{timeout:45000});
+  await expect(page.locator('#offline-status')).toHaveAttribute('data-state','ready',{timeout:45000});
   await context.setOffline(true);
   await page.reload();
   await expect(page.locator('#footer-ontology')).toBeVisible();

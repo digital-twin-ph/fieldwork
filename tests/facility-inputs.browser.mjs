@@ -33,7 +33,7 @@ test('Old Naledi migration exposes editable source and selection consumes saved 
   await page.locator('#distance-config #config-apply').click();
   await page.locator('[data-view="results"]').click();
   await run();await expect(page.locator('#result-metrics .unknown b')).toHaveText('21');
-  await expect(page.locator('#offline-status')).toContainText('Available offline');await context.setOffline(true);await page.reload();
+  await expect(page.locator('#offline-status')).toHaveAttribute('data-state','ready');await context.setOffline(true);await page.reload();
   await page.locator('[data-view="results"]').click();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});await expect(page.locator('#result-metrics .unknown b')).toHaveText('21');
   const after=await savedWorkflow(page);

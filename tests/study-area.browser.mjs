@@ -62,7 +62,7 @@ const points=async(list)=>{const b=await page.locator('#area-map').boundingBox()
   await page.locator('#new-workflow').click();await expect(page.locator('.react-flow__node')).toHaveCount(0);
   await page.locator('[data-view="workflow"]').click();
   await page.locator('#workflow-file').setInputFiles({name:'study.json',mimeType:'application/json',buffer:exported});await expect(page.locator('.react-flow__node')).toHaveCount(1);assert.deepEqual((await saved()).nodes[0].params.geometry,polygon);
-  await run();await expect(page.locator('#offline-status')).toContainText('Available offline');
+  await run();await expect(page.locator('#offline-status')).toHaveAttribute('data-state','ready');
   await context.setOffline(true);await page.reload();await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
   assert.deepEqual((await saved()).nodes[0].params.geometry,polygon);await open();
   await expect(page.locator('#area-name')).toHaveValue(label);await expect(page.locator('.area-map-label')).toHaveText(label);

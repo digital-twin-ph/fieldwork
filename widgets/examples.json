@@ -377,7 +377,7 @@
       "id": "urn:fieldwork:example:nyc-asthma-ozone-2016-2025",
       "title": "Ozone and child asthma emergency visits, New York City, 2016–2025",
       "repository": "https://github.com/digital-twin-ph/example-2025-nyc-ozone",
-      "commit": "d8b488d3e400565ef24c2ae2955e45d012ef416e",
+      "commit": "e1c0aef5ab1ad351f456c8a59cacb6b9085731a8",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2025-nyc-ozone",
       "licence": {
         "data": "Not redistributed",
@@ -398,7 +398,7 @@
         "point_input",
         "regression",
         "relate_table",
-        "sample_satellite_files_at_points",
+        "sample_raster",
         "search_satellite_catalog",
         "select_rows",
         "study_area",
@@ -408,8 +408,8 @@
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "dcfd96a96df260ee6bba0623fc8da48962c49efdd3c83cf2e672ca05b55fa3fb",
-          "bytes": 11131
+          "sha256": "b6777a3bd4f54f12639e96de966dd4b8a0ef295685da692c8abc11066a3afcc6",
+          "bytes": 11154
         },
         {
           "path": "provenance.json",
@@ -428,8 +428,8 @@
         },
         {
           "path": "manual.json",
-          "sha256": "258889450148b5e9eb002333d69d686a83b18df71e10b9563c48d613559de309",
-          "bytes": 43244
+          "sha256": "64d1c2248ea146caf155d63d076208b4e7e42531cbda650705320638fb8182b5",
+          "bytes": 43225
         }
       ],
       "workflowCount": 6
@@ -438,7 +438,7 @@
       "id": "urn:fieldwork:example:brazil-dengue-rj-2024",
       "title": "Dengue in Rio de Janeiro state, Brazil, 2024",
       "repository": "https://github.com/digital-twin-ph/example-2024-brazil-dengue",
-      "commit": "bef77336119614536fd217311ce8f73e73c983f9",
+      "commit": "4df10b33dfb508d353981ed346e46fa498dacd9c",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2024-brazil-dengue",
       "licence": {
         "data": "CC-BY-4.0",
@@ -463,7 +463,7 @@
         "rate",
         "regression",
         "relate_table",
-        "sample_satellite_files_at_points",
+        "sample_raster",
         "search_satellite_catalog",
         "select_rows",
         "study_area",
@@ -473,8 +473,8 @@
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "e21abfd8a1fc487921a3ce9a634e726d530a5d2aa79923bd3c71436790e8088b",
-          "bytes": 1683852
+          "sha256": "b9128cfd58c28042306e03d84b141eb768e28c4add2c15c98d1e25b394d91c27",
+          "bytes": 1684040
         },
         {
           "path": "data/dengue-rj-2010-2025.csv",
@@ -513,8 +513,8 @@
         },
         {
           "path": "manual.json",
-          "sha256": "355ac12fea24ef8dfbecb55a250fe0294613221362e8f54ae760807eb957ec67",
-          "bytes": 71487
+          "sha256": "3f11ee8248c48ec1cbc0726df2b80b2bf8eae7dbea679fbada5110e03552c834",
+          "bytes": 71388
         },
         {
           "path": "notes/what-aedes-mosquitoes-meet.md",

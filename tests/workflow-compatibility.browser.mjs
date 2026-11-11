@@ -50,7 +50,7 @@ test('frozen workflow restores typed data, area enrichment and real EYE decision
   // them now, so the property is checked across the run rather than in one widget's facts.
   const everything=[evidence.provenanceN3,...evidence.receipts.map(r=>r.input||'')].join('\n');
   for(const token of ['XMLSchema#date','XMLSchema#integer'])assert.ok(everything.includes(token),token);
-  await expect(page.locator('#offline-status')).toContainText('Available offline');
+  await expect(page.locator('#offline-status')).toHaveAttribute('data-state','ready');
   await context.setOffline(true);await page.reload();
   await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
   assert.deepEqual(await saved(page),before);

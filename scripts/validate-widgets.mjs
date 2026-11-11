@@ -84,8 +84,12 @@ export async function validateRegistry({catalog,read=path=>readFile(localPath(pa
         // `reachable_nodes` 0.5.0 was the first to try. Nothing had noticed because no widget had
         // cut a second emits-bearing release in the three days since.
         if(ref.version===entry.currentVersion){
-          const definition=release.implementation?.definition?.replace(/^src\//,'');
-          const expected=emitsFor(await emittedTerms(),definition);
+          // A widget that reads by more than one module (Sample a raster, experiment 205: a raster at points, a raster over
+          // areas, satellite files) names each in `implementation.emitting`, and declares the union of what they assert.
+          const modules=(release.implementation?.emitting??[release.implementation?.definition]).map(m=>m?.replace(/^src\//,''));
+          const definition=modules.join(' + '),emitted=await emittedTerms();
+          const union=kind=>[...new Set(modules.flatMap(m=>emitsFor(emitted,m)[kind]))].sort();
+          const expected={classes:union('classes'),properties:union('properties')};
           for(const kind of ['classes','properties'])
             check(release.ontology.emits[kind].join(',')===expected[kind].join(','),
               `Declared ${kind} do not match what ${definition} asserts: declared `

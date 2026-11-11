@@ -13,7 +13,7 @@
 import {readFileSync,writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {join} from 'node:path';
-import {TYPES,nodeInputs,requiredInputs} from '../build/core.js';
+import {TYPES,nodeInputs,requiredInputs,outputOf} from '../build/core.js';
 
 const root=fileURLToPath(new URL('../',import.meta.url));
 
@@ -30,6 +30,7 @@ export const VARIANTS={
   rate:[{source:'table'},{source:'points'}],
   compare_point_sets:[{},{centers:true}],
   coverage_check:[{}],
+  sample_raster:[{source:'raster',over:'points'},{source:'raster',over:'areas'},{source:'satellite-files'}],
 };
 
 
@@ -54,9 +55,11 @@ export function contracts(){
       let all;try{all=nodeInputs(node);}catch{continue;}
       const req=requiredInputs(node).map(([p,t])=>[p,t]);
       const opt=all.filter(([p])=>!req.some(([r])=>r===p)).map(([p,t])=>[p,t]);
-      const signature=JSON.stringify([req,opt]);
+      const signature=JSON.stringify([req,opt,outputOf(node)]);
       if(seen.has(signature))continue;
-      seen.set(signature,{when:key(params),required:req,optional:opt});
+      // THE OUTPUT A VARIANT GIVES, where it is not the widget's default (experiment 205).
+      const given=outputOf(node);
+      seen.set(signature,{when:key(params),required:req,optional:opt,...(given!==(definition.output??null)?{output:given}:{})});
     }
     out[type]={output:definition.output??null,contracts:[...seen.values()]};
   }

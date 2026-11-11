@@ -72,7 +72,8 @@ const CUSTOM_STUDS={
   'mean-center':'The mean of point coordinates is not a polygon centroid; compare_point_sets is its consumer.',
   'point-comparison':'A two-set comparison drawn only by its own map.',
   'satellite-product':'A catalog search without a chosen product searches nothing (experiment 179, D4). One producer, find_satellite_products; one consumer, search_satellite_catalog.',
-  'satellite-files':'Remote files not yet read: nothing may take them for data already in the workflow (experiment 179, D4). No consumer yet; a reader sampling them at points is the intended one.',
+  // 'satellite-files' left this list 2026-11-11: Sample a raster reads it, and so does the archived definition of the
+  // satellite sampler retired into it (experiment 205). Counted as two ends, one of them archived; one live reader.
 };
 
 const definitions={...TYPES,...OLD_TYPES};

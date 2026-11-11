@@ -3,6 +3,18 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.94.0 — 2026-11-11
+
+- **Sample a raster at points or over areas.** One step for sampling a grid. Connect a Raster input and points, as
+  before; or a Raster input and areas (a Polygon layer, or a Study area's units) to get each area's **total**: the
+  cells whose centre is inside it, added, with how many cells that was, how many had no data and how many lay beyond
+  the raster. For a population grid that total is the grid's estimate of the people in the area. A cell counts whole,
+  not split by the edge. Sample a raster 0.3.0.
+- **Sample satellite files retired into it.** Connect Search a satellite catalog to its **files** port and it reads as
+  before. A saved workflow holding the old step opens migrated, its settings kept, and says so.
+- **"Available offline" removed from the header.** It came from one cached file and did not mean everything was ready.
+  On a phone the storage figure now shortens instead.
+
 ## 0.93.0 — 2026-11-11
 
 - **GHS-POP beside WorldPop and GRID3.** Raster input's Configure… offers the JRC's global population grid for any

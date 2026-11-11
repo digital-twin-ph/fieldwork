@@ -181,8 +181,8 @@ than failing obscurely.
 
 So **prepare online, then work offline** remains the usable summary, with the caveat
 that "prepare" now includes acquiring any remote data your workflow needs, not only
-loading the application. The header's "Available offline" is inferred from a single
-cached asset and is not a readiness check; see
+loading the application. The header no longer says "Available offline" (removed 2026-11-11 as
+misleading): it was inferred from a single cached asset and was not a readiness check; see
 [experiment 49](docs/experiments/49-catalog-in-the-interface.md).
 
 ## Design records

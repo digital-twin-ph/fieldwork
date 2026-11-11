@@ -8,8 +8,8 @@
  },
  "measuredAt": "2026-11-10",
  "counts": {
-  "widgets": 55,
-  "covered": 33,
+  "widgets": 54,
+  "covered": 32,
   "awaiting": 10,
   "none": 11,
   "blocked": 1
@@ -309,12 +309,6 @@
    "nodeType": "search_satellite_catalog",
    "expectation": "none",
    "reason": "Reads catalog records and reports them: nothing is computed that an independent implementation could recompute. The catalog is the authority for what it returns."
-  },
-  {
-   "nodeType": "sample_satellite_files_at_points",
-   "expectation": "parity",
-   "computes": "The value of the swath pixel whose centre is nearest each point, per file, with qa_value compared on the stored integer and each gap named: no overpass, no retrieval, below the quality threshold.",
-   "check": "35-sample-satellite"
   },
   {
    "nodeType": "space_time_scan",

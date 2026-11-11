@@ -44,7 +44,7 @@ const select=async id=>{await page.locator('[data-view="workflow"]').click();awa
   await mkdir('test-results',{recursive:true});await page.screenshot({path:'test-results/area-computation-desktop.png',fullPage:true});
   const exported=page.waitForEvent('download');await page.locator('#backup-button').click();await page.locator('#export-button').click();const workflowBytes=await readFile(await (await exported).path());
   await page.locator('#new-workflow').click();await page.locator('#workflow-file').setInputFiles({name:'saved-area.json',mimeType:'application/json',buffer:workflowBytes});await run();
-  await expect(page.locator('#offline-status')).toContainText('Available offline');await context.setOffline(true);await page.reload();await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
+  await expect(page.locator('#offline-status')).toHaveAttribute('data-state','ready');await context.setOffline(true);await page.reload();await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
   await page.locator('[data-view="results"]').click();
   await select(measureId);await expect(page.locator('#area-unit')).toHaveValue('acre');await expect(page.locator('#result-metrics')).toContainText(formatArea(calculateArea(smaller,'acre')));
   await page.setViewportSize({width:390,height:844});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);

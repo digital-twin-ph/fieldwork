@@ -135,6 +135,11 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
     inputs:[['rates','table'],['design','design']],output:'table'},
   // RETIRED 2026-11-08 into Apply ruleset, whose rules compute a value for every record (experiment 188). Kept so a
   // saved workflow naming it is migrated, and says so.
+  // RETIRED 2026-11-11 into Sample a raster, whose other source is satellite files (experiment 205). Kept so a saved
+  // workflow naming it is migrated, and says so.
+  sample_satellite_files_at_points:{title:'Sample satellite files at points or over areas',group:'Spatial operations',icon:'◴',color:'teal',
+    description:'Retired — use Sample a raster at points or over areas, reading satellite files',
+    inputs:[['points','points'],['areas','polygons'],['area','area'],['files','satellite-files']],output:'table'},
   derive_value:{title:'Derive a value',group:'Summaries',icon:'∓',color:'teal',
     description:'Retired — use Apply ruleset, with a value computed for every record',
     inputs:[['records','table']],output:'table'},
@@ -177,9 +182,6 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
     inputs:[['product','satellite-product'],['area','area']],output:'satellite-files'},
   // THE VALUE AT EACH POINT, PER OVERPASS, from the files a search found: read by range in a worker, with the quality
   // rule and the kind of gap where there is no usable value. Experiment 179.
-  sample_satellite_files_at_points:{title:'Sample satellite files at points or over areas',group:'Spatial operations',icon:'◴',color:'teal',
-    description:'Read the satellite value at each point, or over each area, for every overpass or period, with its quality, and say where there is no usable value and why',
-    inputs:[['points','points'],['areas','polygons'],['area','area'],['files','satellite-files']],output:'table'},
   study_design:{title:'Study design',group:'Epidemiology',icon:'◇',color:'teal',
     description:'Declare the study design and its period, so the computations downstream are the ones the design can estimate',
     inputs:[],output:'design'},
@@ -231,7 +233,9 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   summarize_hull:{title:'Convex hull',group:'Summaries',icon:'⬟',color:'teal',description:'The smallest convex outline containing a set of points, computed in metres',inputs:[['points','points']],output:'polygons'},
   find_health_facilities:{title:'Find health facilities',group:'Sources',icon:'⌖',color:'blue',description:'Find the health facilities inside a study area, or the facilities a list names, in national registers and OpenStreetMap',inputs:[['area','area']],output:'points'},
   buffer_point:{title:'Area around a point',group:'Spatial operations',icon:'◍',color:'teal',description:'Define a study area as everything within a stated distance of one named point',inputs:[['points','points']],output:'area'},
-  sample_raster:{title:'Sample raster at points',group:'Spatial operations',icon:'◴',color:'teal',description:'Write the value of the raster cell containing each point onto that point',inputs:[['points','points'],['raster','raster']],output:'points'},
+  sample_raster:{title:'Sample a raster at points or over areas',group:'Spatial operations',icon:'◴',color:'teal',
+    description:'Read a raster, or satellite files, at each point or over each area: the cell\'s value at a point, the total of the cells in an area, and say where there is no value and why',
+    inputs:[['points','points'],['areas','polygons'],['area','area'],['raster','raster'],['files','satellite-files']],output:'points'},
   clip_raster:{title:'Clip raster',group:'Spatial operations',icon:'✂',color:'teal',description:'Mask raster cells with a clipping boundary',inputs:[['area','area'],['raster','raster']],output:'raster'},
   places: {title:'Neighborhoods', group:'Sources', icon:'▦', color:'blue', description:'Local neighborhood locations', inputs:[], output:'points'},
   centers: {title:'Cooling centers', group:'Sources', icon:'⌂', color:'blue', description:'Local facility locations', inputs:[], output:'points'},
@@ -334,6 +338,9 @@ export function outputOf(node:WorkflowNode):PortType|null{
   if(node.type==='summarize_combined_area')return node.params.yields==='area'?'area':'polygons';
   if(node.type==='apply_ruleset')return node.params.ruleset?.output??null;
   if(node.type==='deduplicate_points'&&node.params.format==='table')return 'table';
+  // THE OUTPUT FOLLOWS THE INPUT (experiment 205): satellite files give a table of places by period; a raster over areas
+  // gives the areas, each with its total; a raster at points, the points with their values.
+  if(node.type==='sample_raster')return node.params.source==='satellite-files'?'table':node.params.over==='areas'?'polygons':'points';
   return TYPES[node.type].output;
 }
 
@@ -360,7 +367,7 @@ export function requiredInputs(node:WorkflowNode,options?:{coverageConnected?:bo
   if(node.type==='search_satellite_catalog')return all.filter(([port])=>port!=='area');
   // POINTS OR AREAS: the sampler reads at one or the other, so neither is required on its own; the run says which is
   // missing when neither is connected (experiment 180).
-  if(node.type==='sample_satellite_files_at_points')return all.filter(([port])=>port==='files');
+  if(node.type==='sample_raster')return all.filter(([port])=>port===(node.params.source==='satellite-files'?'files':'raster'));
   // A DESIGN IS DECLARED OR IT IS ABSENT, and absent must keep working. Requiring it would make
   // every existing workflow with a two-by-two refuse to run until somebody answered a question
   // they may not be able to answer -- and would drop the widget's own contract into one that
@@ -502,6 +509,9 @@ export function nodeInputs(node:WorkflowNode):[string,PortType][]{
   if(node.type==='append_rows')return Array.from({length:appendTableCount(node.params)},
     (_,i)=>[appendPort(i),'table'] as [string,PortType]);
   if(node.type==='case_series')return node.params.source==='table'?[['cases','table']]:[['points','points']];
+  // ONE SAMPLER, two sources (experiment 205): every port, always, as Chart's are; what is connected sets the source and
+  // whether it reads at points or over areas, so nothing has to be chosen before the shape arrives.
+  if(node.type==='sample_raster')return [...TYPES.sample_raster.inputs];
   // The same shape, for the same reason: a rate's denominator usually arrives as a table.
   // The port keeps its name either way, because what it carries is the records to divide.
   if(node.type==='rate')return node.params.source==='table'?[['records','table']]:[['records','points']];
@@ -724,6 +734,7 @@ export function validateWorkflow(raw:unknown):Workflow {
     return renamed?{...n,type:renamed,sourceMigration:{fromType:n.type as RenamedNodeType,version:'1' as const}}:n;
   }) as typeof w.nodes;
   migrateDeriveValue(w);
+  migrateSatelliteSampler(w);
   migrateHealthsitesNodes(w);
   migrateFacilitySources(w);
   migrateOutputNodes(w);
@@ -1343,7 +1354,98 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         break;
       }
       case 'sample_raster':{
-        if(!inputs.raster)throw new Error('Connect a prepared Raster input or Clip raster to Sample raster.');
+        // SATELLITE FILES (experiment 180), read as the satellite sampler read them, now this sampler's other source (205).
+        if(node.params.source==='satellite-files'){
+        const files=(inputs as unknown as {files?:{kind?:string;product?:SatelliteProduct;search?:import('./satellite-catalog.js').CatalogSearch}}).files;
+        if(files?.kind!=='satellite-files'||!files.product||!files.search)throw new Error('Connect Search a satellite catalog to files: there are no files to read yet.');
+        const raw=inputs.points as unknown as PointInput|undefined;
+        // AREAS FROM A POLYGON LAYER, OR FROM A STUDY AREA'S UNITS: the 92 municipalities picked from geoBoundaries are
+        // read as they are, one part per unit, parts of one unit sharing its id (experiment 180).
+        const study=(inputs as unknown as {area?:{units?:{id:string;name:string}[];boundary?:import('./types.js').Boundary}}).area;
+        const fromStudy=study?.units?.length&&study.boundary
+          ?{features:study.units.map((unit,index)=>({id:unit.id,name:unit.name,geometry:{type:'Polygon' as const,
+            coordinates:study.boundary!.type==='MultiPolygon'?study.boundary!.coordinates[index]!:study.boundary!.coordinates} as import('./types.js').Boundary}))}
+          :undefined;
+        if(study&&!fromStudy)throw new Error('This study area has no named parts to read over. Pick administrative units, or connect a polygon layer to areas.');
+        const polygons=(inputs as unknown as {areas?:{features?:{id:string|number;name?:string;geometry?:import('./types.js').Boundary|null}[]}}).areas??fromStudy;
+        if([raw,(inputs as {areas?:unknown}).areas,study].filter(Boolean).length>1)
+          throw new Error('Connect one kind of place: points, a polygon layer, or a study area. One table holds one kind.');
+        // A GRIDDED PRODUCT (MODIS, experiment 180) is read over areas or at points by geotiff.js; a swath (Sentinel-5P) at
+        // points by h5wasm. Which reader is the product's, not a setting.
+        const grids=await import('./satellite-grid-sample.js');
+        const gridReader=grids.gridReaderFor(files.product);
+        if(gridReader){
+          const features=!raw?[]:'layers' in raw?raw.layers.flatMap(l=>l.features):raw.features;
+          const places:import('./satellite-grid-sample.js').Place[]=polygons
+            ?grids.areasFrom(polygons.features??[])
+            :features.filter(f=>f.geometry?.coordinates).map(f=>({id:String(f.id),name:String(f.properties?.name??f.id),kind:'point' as const,
+              lon:(f.geometry!.coordinates as number[])[0]!,lat:(f.geometry!.coordinates as number[])[1]!}));
+          if(!places.length)throw new Error(polygons?'The areas connected have no polygons to read over.':'Connect a point layer to points, or polygons to areas: the values are read there.');
+          const kind=polygons?'area' as const:'point' as const;
+          const layer=node.params.layer??'day',rule=node.params.qualityRule??gridReader.quality.default;
+          const {fromUrl}=await import('geotiff');
+          const tags={files:0,stated:0,saved:0};
+          const {deviceReadings}=await import('./satellite-reading-store.js');
+          const {runDetail}=await import('./run-progress.js');
+          const report=(done:number,of:number)=>runDetail({nodeId:node.id,label:node.params.label||'Sample satellite files',done,of,what:'satellite files'});
+          report(0,files.search.items.length);
+          const readings=await grids.readGridFiles(files.search.items,gridReader,layer,rule,places,async url=>(await fromUrl(url)).getImage() as never,fetch,report,tags,
+            {saved:deviceReadings,...(rereadOnce.delete(node.id)?{reread:true}:{})})
+            .finally(()=>runDetail(null));
+          const column=node.params.placeColumn?.trim()||(kind==='area'?'area':'point_id');
+          const unit=node.params.unit;
+          const {table,counts}=grids.gridTable(places,readings,gridReader,layer,rule,column,unit);
+          counts.files=files.search.items.length;
+          const sentence=grids.gridSentence(counts,gridReader,layer,rule,files.product,kind,unit,tags);
+          value={...table,sentence} as unknown as DisplayValue;
+          const facts=grids.gridFacts(`<urn:fieldwork:run:${runId}:output:${node.id}>`,counts,gridReader,layer,rule,files.product,kind,unit,tags.saved);
+          receipts.push({nodeId:node.id,kind:'computation',facts,rules:'',input:facts,conclusions:[],method:sentence} as unknown as Receipt);
+          break;
+        }
+        const sampling=await import('./satellite-sample.js');
+        const reader=sampling.readerFor(files.product);
+        if(!reader)throw new Error(`No reader is built yet for ${files.product.route.label}. Sentinel-5P NO₂ and MODIS land surface temperature on Planetary Computer have one.`);
+        if(polygons)throw new Error(`${files.product.route.label} is read at points only: its files are swaths, and reading one over an area is not built. Connect points.`);
+        const features=!raw?[]:'layers' in raw?raw.layers.flatMap(l=>l.features):raw.features;
+        if(!features.length)throw new Error('Connect a point layer to points: the values are read at its points.');
+        const placed=features.filter(f=>f.geometry?.coordinates).map(f=>({id:String(f.id),name:String(f.properties?.name??f.id),
+          lon:(f.geometry!.coordinates as number[])[0]!,lat:(f.geometry!.coordinates as number[])[1]!}));
+        const operator=node.params.qaOperator??'>=';
+        const {readFiles}=await import('./satellite-sample-reader.js');
+        const {runDetail}=await import('./run-progress.js');
+        const report=(done:number,of:number)=>runDetail({nodeId:node.id,label:node.params.label||'Sample satellite files',done,of,what:'satellite files'});
+        report(0,files.search.items.length);
+        const {deviceReadings}=await import('./satellite-reading-store.js');
+        const stats={saved:0};
+        const readings=await readFiles(files.search.items,reader,placed,report,
+          {saved:deviceReadings,stats,...(rereadOnce.delete(node.id)?{reread:true}:{})}).finally(()=>runDetail(null));
+        const idColumn=!raw||'layers' in raw?undefined:raw.idColumn;
+        const {table,counts}=sampling.sampleTable(placed,readings,files.search.from,files.search.until||files.search.from,reader,operator,features.length-placed.length,idColumn);
+        const units=readings.find(r=>r.units)?.units??null;
+        const sentence=sampling.sampleSentence(counts,reader,operator,files.product,stats.saved);
+        value={...table,sentence} as unknown as DisplayValue;
+        const facts=sampling.sampleFacts(`<urn:fieldwork:run:${runId}:output:${node.id}>`,counts,reader,operator,files.product,units,stats.saved);
+        receipts.push({nodeId:node.id,kind:'computation',facts,rules:'',input:facts,conclusions:[],method:sentence} as unknown as Receipt);
+        break;}
+        if(!inputs.raster)throw new Error('Connect a prepared Raster input or Clip raster to Sample a raster.');
+        // OVER AREAS (experiment 205): each area's cells totalled, no data counted apart, the share outside the raster said.
+        if(node.params.over==='areas'){
+          const {areaTotals,areaTotalsReceipt}=await import('./raster-areas.js');
+          const study=(inputs as unknown as {area?:{units?:{id:string;name:string}[];boundary?:import('./types.js').Boundary}}).area;
+          const layer=(inputs as unknown as {areas?:{features?:{id:string|number;name?:string;geometry?:import('./types.js').Boundary|null}[]}}).areas;
+          if(study&&layer)throw new Error('Connect a polygon layer or a study area to areas, not both.');
+          const fromStudy=study?.units?.length&&study.boundary
+            ?study.units.map((unit,index)=>({id:unit.id,name:unit.name,geometry:{type:'Polygon' as const,
+              coordinates:study.boundary!.type==='MultiPolygon'?study.boundary!.coordinates[index]!:study.boundary!.coordinates} as import('./types.js').Boundary}))
+            :study?.boundary?[{id:'area',name:'Study area',geometry:study.boundary}]:undefined;
+          const features=layer?.features??fromStudy;
+          if(!features?.length)throw new Error('Connect a polygon layer or a study area to areas: the raster is totalled over each.');
+          const totals=areaTotals(features,inputs.raster,node.params);
+          value=totals.value as unknown as DisplayValue;
+          receipts.push(areaTotalsReceipt(node,totals.counts,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='raster')!.from));
+          break;
+        }
+        if(!inputs.points)throw new Error('Connect points or areas to Sample a raster: the raster is read at the points or totalled over the areas.');
         const sampled=sampleRaster(inputs.points,inputs.raster,node.params);value=sampled.value;
         receipts.push(sampleReceipt(node,inputs.raster,sampled.counts,runId,{
           points:workflow.edges.find(e=>e.to===node.id&&e.port==='points')!.from,
@@ -1671,78 +1773,6 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         const sentence=searchSentence(search,chosen.product)+` ${items.length} kept.`;
         value={kind:'satellite-files',product:chosen.product,search:{...search,items},sentence} as unknown as DisplayValue;
         const facts=searchFacts(`<urn:fieldwork:run:${runId}:output:${node.id}>`,search,items.length);
-        receipts.push({nodeId:node.id,kind:'computation',facts,rules:'',input:facts,conclusions:[],method:sentence} as unknown as Receipt);
-        break;}
-      case 'sample_satellite_files_at_points':{
-        const files=(inputs as unknown as {files?:{kind?:string;product?:SatelliteProduct;search?:import('./satellite-catalog.js').CatalogSearch}}).files;
-        if(files?.kind!=='satellite-files'||!files.product||!files.search)throw new Error('Connect Search a satellite catalog to files: there are no files to read yet.');
-        const raw=inputs.points as unknown as PointInput|undefined;
-        // AREAS FROM A POLYGON LAYER, OR FROM A STUDY AREA'S UNITS: the 92 municipalities picked from geoBoundaries are
-        // read as they are, one part per unit, parts of one unit sharing its id (experiment 180).
-        const study=(inputs as unknown as {area?:{units?:{id:string;name:string}[];boundary?:import('./types.js').Boundary}}).area;
-        const fromStudy=study?.units?.length&&study.boundary
-          ?{features:study.units.map((unit,index)=>({id:unit.id,name:unit.name,geometry:{type:'Polygon' as const,
-            coordinates:study.boundary!.type==='MultiPolygon'?study.boundary!.coordinates[index]!:study.boundary!.coordinates} as import('./types.js').Boundary}))}
-          :undefined;
-        if(study&&!fromStudy)throw new Error('This study area has no named parts to read over. Pick administrative units, or connect a polygon layer to areas.');
-        const polygons=(inputs as unknown as {areas?:{features?:{id:string|number;name?:string;geometry?:import('./types.js').Boundary|null}[]}}).areas??fromStudy;
-        if([raw,(inputs as {areas?:unknown}).areas,study].filter(Boolean).length>1)
-          throw new Error('Connect one kind of place: points, a polygon layer, or a study area. One table holds one kind.');
-        // A GRIDDED PRODUCT (MODIS, experiment 180) is read over areas or at points by geotiff.js; a swath (Sentinel-5P) at
-        // points by h5wasm. Which reader is the product's, not a setting.
-        const grids=await import('./satellite-grid-sample.js');
-        const gridReader=grids.gridReaderFor(files.product);
-        if(gridReader){
-          const features=!raw?[]:'layers' in raw?raw.layers.flatMap(l=>l.features):raw.features;
-          const places:import('./satellite-grid-sample.js').Place[]=polygons
-            ?grids.areasFrom(polygons.features??[])
-            :features.filter(f=>f.geometry?.coordinates).map(f=>({id:String(f.id),name:String(f.properties?.name??f.id),kind:'point' as const,
-              lon:(f.geometry!.coordinates as number[])[0]!,lat:(f.geometry!.coordinates as number[])[1]!}));
-          if(!places.length)throw new Error(polygons?'The areas connected have no polygons to read over.':'Connect a point layer to points, or polygons to areas: the values are read there.');
-          const kind=polygons?'area' as const:'point' as const;
-          const layer=node.params.layer??'day',rule=node.params.qualityRule??gridReader.quality.default;
-          const {fromUrl}=await import('geotiff');
-          const tags={files:0,stated:0,saved:0};
-          const {deviceReadings}=await import('./satellite-reading-store.js');
-          const {runDetail}=await import('./run-progress.js');
-          const report=(done:number,of:number)=>runDetail({nodeId:node.id,label:node.params.label||'Sample satellite files',done,of,what:'satellite files'});
-          report(0,files.search.items.length);
-          const readings=await grids.readGridFiles(files.search.items,gridReader,layer,rule,places,async url=>(await fromUrl(url)).getImage() as never,fetch,report,tags,
-            {saved:deviceReadings,...(rereadOnce.delete(node.id)?{reread:true}:{})})
-            .finally(()=>runDetail(null));
-          const column=node.params.placeColumn?.trim()||(kind==='area'?'area':'point_id');
-          const unit=node.params.unit;
-          const {table,counts}=grids.gridTable(places,readings,gridReader,layer,rule,column,unit);
-          counts.files=files.search.items.length;
-          const sentence=grids.gridSentence(counts,gridReader,layer,rule,files.product,kind,unit,tags);
-          value={...table,sentence} as unknown as DisplayValue;
-          const facts=grids.gridFacts(`<urn:fieldwork:run:${runId}:output:${node.id}>`,counts,gridReader,layer,rule,files.product,kind,unit,tags.saved);
-          receipts.push({nodeId:node.id,kind:'computation',facts,rules:'',input:facts,conclusions:[],method:sentence} as unknown as Receipt);
-          break;
-        }
-        const sampling=await import('./satellite-sample.js');
-        const reader=sampling.readerFor(files.product);
-        if(!reader)throw new Error(`No reader is built yet for ${files.product.route.label}. Sentinel-5P NO₂ and MODIS land surface temperature on Planetary Computer have one.`);
-        if(polygons)throw new Error(`${files.product.route.label} is read at points only: its files are swaths, and reading one over an area is not built. Connect points.`);
-        const features=!raw?[]:'layers' in raw?raw.layers.flatMap(l=>l.features):raw.features;
-        if(!features.length)throw new Error('Connect a point layer to points: the values are read at its points.');
-        const placed=features.filter(f=>f.geometry?.coordinates).map(f=>({id:String(f.id),name:String(f.properties?.name??f.id),
-          lon:(f.geometry!.coordinates as number[])[0]!,lat:(f.geometry!.coordinates as number[])[1]!}));
-        const operator=node.params.qaOperator??'>=';
-        const {readFiles}=await import('./satellite-sample-reader.js');
-        const {runDetail}=await import('./run-progress.js');
-        const report=(done:number,of:number)=>runDetail({nodeId:node.id,label:node.params.label||'Sample satellite files',done,of,what:'satellite files'});
-        report(0,files.search.items.length);
-        const {deviceReadings}=await import('./satellite-reading-store.js');
-        const stats={saved:0};
-        const readings=await readFiles(files.search.items,reader,placed,report,
-          {saved:deviceReadings,stats,...(rereadOnce.delete(node.id)?{reread:true}:{})}).finally(()=>runDetail(null));
-        const idColumn=!raw||'layers' in raw?undefined:raw.idColumn;
-        const {table,counts}=sampling.sampleTable(placed,readings,files.search.from,files.search.until||files.search.from,reader,operator,features.length-placed.length,idColumn);
-        const units=readings.find(r=>r.units)?.units??null;
-        const sentence=sampling.sampleSentence(counts,reader,operator,files.product,stats.saved);
-        value={...table,sentence} as unknown as DisplayValue;
-        const facts=sampling.sampleFacts(`<urn:fieldwork:run:${runId}:output:${node.id}>`,counts,reader,operator,files.product,units,stats.saved);
         receipts.push({nodeId:node.id,kind:'computation',facts,rules:'',input:facts,conclusions:[],method:sentence} as unknown as Receipt);
         break;}
       case 'study_design':{
@@ -2684,4 +2714,14 @@ function migrateDeriveValue(w:Workflow):void{
             compute:{left:{field:`fwa:${slug(left)}`},operator,right:{field:`fwa:${slug(right)}`}}}]}]}}};
   }) as typeof w.nodes;
   for(const edge of w.edges)if(edge&&derived.has(edge.to)&&edge.port==='records')edge.port='projections';
+}
+
+/** THE SATELLITE SAMPLER, RETIRED INTO SAMPLE A RASTER (experiment 205, 2026-11-11). The same reading, from the same
+ *  ports, with its settings kept and its source said. Stamped, as every migration is. */
+function migrateSatelliteSampler(w:Workflow):void{
+  w.nodes=w.nodes.map(n=>{
+    if(!n||(n.type as string)!=='sample_satellite_files_at_points')return n;
+    return {...n,type:'sample_raster',params:{attribute:'value',valueUnit:'',...(n.params as object),source:'satellite-files'},
+      sourceMigration:{fromType:'sample_satellite_files_at_points',version:'1'}} as WorkflowNode;
+  }) as typeof w.nodes;
 }

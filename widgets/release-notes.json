@@ -739,12 +739,12 @@
    "migrationFrom": []
   },
   "sample_raster": {
-   "version": "0.2.0",
-   "released": "2026-11-09",
+   "version": "0.3.0",
+   "released": "2026-11-11",
    "changes": [
     {
      "kind": "minor",
-     "description": "Reads each value as the cell containing the point, or between the four nearest cells (bilinear), chosen and stated in its receipt. A missing value among the four gives none; a point without four cells around it is outside. On the standard Inspector and dialog (experiments 186, 198)."
+     "description": "Titled \"Sample a raster at points or over areas\", and the one widget for sampling a grid (experiment 205). The practitioner, 2026-11-11: \"sample satellite files does not explicitly say it takes rasters that might be a problem.\" Over areas from a raster, new: each area of a polygon layer, or each unit of a study area, carries the total of the cells whose centre is inside or on it, how many cells that was, how many had no data and how many lay beyond the raster's window; a cell is counted whole, not area-weighted, and no data is not zero. From satellite files: Sample satellite files at points or over areas, retired into this widget, reading as before. The output follows the input: points from points, polygons from areas, a table from satellite files, set by the ports connected and said on the step."
     }
    ],
    "breaking": false,
@@ -1052,16 +1052,20 @@
    "migrationFrom": []
   },
   "sample_satellite_files_at_points": {
-   "version": "0.7.0",
-   "released": "2026-11-09",
+   "version": "1.0.0",
+   "released": "2026-11-11",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Keeps what it reads on this device (the practitioner, 2026-11-09: \"needs to be able to cache the satellite data read to save time\"): each file's reading at the places, a few numbers per place, in IndexedDB, keyed by the file, layer, quality rule, places and reader version. A file read before the same way is not read again, after a reload or another day; the result and the receipt (fw:filesFromDevice) say how many. Configure… reads every file again on the next run, or forgets every saved reading. On the standard Inspector and dialog (experiment 186): the name, its inputs, one sentence and Configure…, where the layer, quality rule, unit, place column or qa_value operator are set, and what the last run read."
+     "kind": "major",
+     "description": "Retired into Sample a raster at points or over areas, whose other source is satellite files (experiment 205). The practitioner, 2026-11-11: \"sample satellite files does not explicitly say it takes rasters that might be a problem\"; then the name, \"Sample a raster at points or over areas\", and the design, the output follows the input. Retired outright, with no deprecation period, because nobody outside this project uses it (AGENTS.md). A workflow saved with one is migrated on opening to a Sample a raster step reading satellite files, its settings kept, stamped as migrated. Brazil dengue and New York ozone use it this way.",
+     "breaking": true
     }
    ],
-   "breaking": false,
-   "migrationFrom": []
+   "breaking": true,
+   "migrationFrom": [],
+   "replacementCandidate": [
+    "urn:fieldwork:widget:sample_raster"
+   ]
   }
  }
 }

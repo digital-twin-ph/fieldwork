@@ -14,12 +14,12 @@ asset shows up.
 
 ## 1 · Widget utilization
 
-55 live widgets across 11 shipped examples and 9 pinned in its own repository.
+54 live widgets across 11 shipped examples and 9 pinned in its own repository.
 
 | Reach | Widgets |
 | --- | --- |
 | Used by no workflow | **10** |
-| Used by exactly one | 17 |
+| Used by exactly one | 16 |
 | Used by two or more | **28** |
 
 `isochrone` and `compute_walking_catchment` are a special case the practitioner ruled on
@@ -52,7 +52,6 @@ Each of these has one workflow's worth of evidence. If that example changes, it 
 | `point_grid` | old-naledi |
 | `travel_time` | old-naledi |
 | `clip_raster` | raster |
-| `sample_raster` | sea-level-rise-philippines |
 | `summarize_hull` | snow-extent |
 | `aggregate_points_to_h3_cell` | snow-geoprivacy |
 | `compare_point_sets` | snow-geoprivacy |
@@ -87,6 +86,7 @@ evidence about that example.
 | `measure_distance` | 3 | heat, old-naledi, sea-level-rise-philippines |
 | `rate` | 3 | brazil-dengue-rj-2024, sierra-leone-measles, south-london-1854 |
 | `regression` | 3 | brazil-dengue-rj-2024, nyc-asthma-ozone-2016-2025, salmonella-germany-2021 |
+| `sample_raster` | 3 | brazil-dengue-rj-2024, nyc-asthma-ozone-2016-2025, sea-level-rise-philippines |
 | `two_by_two` | 3 | oswego-1940, salmonella-germany-2021, south-london-1854 |
 | `append_rows` | 2 | brazil-dengue-rj-2024, salmonella-germany-2021 |
 | `clip_polygons` | 2 | snow-isochrone, snow-voronoi |
@@ -96,7 +96,6 @@ evidence about that example.
 | `polygon_input` | 2 | nigeria-immunization-2024, south-london-1854 |
 | `raster_input` | 2 | raster, sea-level-rise-philippines |
 | `reproject` | 2 | snow-isochrone, snow-voronoi |
-| `sample_satellite_files_at_points` | 2 | brazil-dengue-rj-2024, nyc-asthma-ozone-2016-2025 |
 | `search_satellite_catalog` | 2 | brazil-dengue-rj-2024, nyc-asthma-ozone-2016-2025 |
 | `study_design` | 2 | salmonella-germany-2021, south-london-1854 |
 | `summarize_points_to_polygon` | 2 | snow-isochrone, snow-voronoi |
@@ -115,7 +114,6 @@ rows above `case_series` are the ones that have genuinely done both.
 | old-naledi | **4** — `facilities`, `facility_audit`, `point_grid`, `travel_time` |
 | snow-isochrone | **2** — `isochrone`, `network_input` |
 | raster | **1** — `clip_raster` |
-| sea-level-rise-philippines | **1** — `sample_raster` |
 | hagelloch-cluster | **1** — `space_time_scan` |
 | south-london-1854 | **1** — `stack_polygons` |
 | snow-extent | **1** — `summarize_hull` |

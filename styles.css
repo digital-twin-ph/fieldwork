@@ -230,6 +230,9 @@ html{scroll-padding-top:var(--project-bar-height,160px)}
   .brand-wrap,.brand{min-width:0}
   .header-right{min-width:0;flex-shrink:1}
   .header-right .connection{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  /* The connection text is gone (2026-11-11, "Available offline" was misleading), so the storage pill gives way instead:
+     its full figures are one tap away in the storage dialog. */
+  .header-right .storage-pill{min-width:0;flex-shrink:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 }
 /* A title that can be renamed looks like one, without becoming a form. The affordance is the
    hover, the cursor and the focus ring; the input only appears once asked for. */

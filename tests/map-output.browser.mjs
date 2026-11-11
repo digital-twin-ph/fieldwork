@@ -96,7 +96,7 @@ const receipt=async()=>{await page.locator('[data-view="rules"]').click();const 
   // plotted -- which the inspection above has already checked.
   await page.locator('[data-view="results"]').click();
   await expect(page.locator('#map [data-place]')).toHaveCount(3);
-  await expect(page.locator('#offline-status')).toContainText('Available offline');await context.setOffline(true);await page.reload();await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
+  await expect(page.locator('#offline-status')).toHaveAttribute('data-state','ready');await context.setOffline(true);await page.reload();await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
   await page.locator('[data-view="results"]').click();
   await page.getByRole('tab',{name:'Boundary and observations'}).click();await expect(page.locator('#map [data-place]')).toHaveCount(3);
   await page.setViewportSize({width:390,height:844});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);await page.screenshot({path:'test-results/map-output-mobile.png',fullPage:true});
@@ -131,7 +131,7 @@ const receipt=async()=>{await page.locator('[data-view="rules"]').click();const 
   assert.deepEqual(multiView.pointLayers.map(l=>l.count),[4,4]);
   await select(multiMapId);await page.screenshot({path:'test-results/map-multiple-layers.png',fullPage:true});
   const savedMulti=await saved();await page.locator('#new-workflow').click();await page.locator('#workflow-file').setInputFiles({name:'multiple-layers.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(savedMulti))});await run();
-  await expect(page.locator('#offline-status')).toContainText('Available offline');await context.setOffline(true);await page.reload();await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
+  await expect(page.locator('#offline-status')).toHaveAttribute('data-state','ready');await context.setOffline(true);await page.reload();await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
   await page.locator('[data-view="results"]').click();
   await page.getByRole('tab',{name:'Layer comparison'}).click();await expect(page.locator('#map [data-place]')).toHaveCount(6);
   await page.setViewportSize({width:390,height:844});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);

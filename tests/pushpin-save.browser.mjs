@@ -23,7 +23,7 @@ test('Save Edits includes a pending typed key/value pair without requiring Add p
   await expect(page.locator('#input-dialog')).not.toBeVisible();await expect(page.locator('#toast')).toContainText('Input edits saved');
   await open(page);await expect(page.locator('[data-pin-key="visit_status"]')).toHaveValue('Completed');
   await page.locator('[data-pin-key="visit_status"]').selectOption('Planned');await page.getByRole('button',{name:'Save Edits',exact:true}).click();
-  await expect(page.locator('#offline-status')).toContainText('Available offline');await context.setOffline(true);await page.reload();
+  await expect(page.locator('#offline-status')).toHaveAttribute('data-state','ready');await context.setOffline(true);await page.reload();
   await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});await open(page);await expect(page.locator('[data-pin-key="visit_status"]')).toHaveValue('Planned');
 });
 
@@ -133,6 +133,6 @@ test('UUID option persists, new pin IDs stay stable, and Delete Pin is saved or 
   await open(page);await page.locator('#pin-record').selectOption(first);await page.getByRole('button',{name:'Delete Pin',exact:true}).click();await page.getByRole('button',{name:'Save Edits',exact:true}).click();assert.equal(source(await saved(page)).data.features.some(f=>f.id===first),false);
   await page.locator('#undo-button').click();assert.equal(source(await saved(page)).data.features.some(f=>f.id===first),true);
   await open(page);await page.locator('#pin-record').selectOption(second);await page.locator('#pin-name').fill('Renamed stable UUID');await page.locator('#pin-longitude').fill('25.9');await page.locator('#pin-latitude').fill('-24.69');await page.getByRole('button',{name:'Save Edits',exact:true}).click();
-  await expect(page.locator('#offline-status')).toContainText('Available offline');await context.setOffline(true);await page.reload();await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});await open(page);await page.locator('#pin-record').selectOption(second);await expect(page.locator('#pin-id')).toHaveValue(second);await expect(page.locator('#pin-name')).toHaveValue('Renamed stable UUID');await expect(page.locator('#pin-use-uuid')).toBeChecked();
+  await expect(page.locator('#offline-status')).toHaveAttribute('data-state','ready');await context.setOffline(true);await page.reload();await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});await open(page);await page.locator('#pin-record').selectOption(second);await expect(page.locator('#pin-id')).toHaveValue(second);await expect(page.locator('#pin-name')).toHaveValue('Renamed stable UUID');await expect(page.locator('#pin-use-uuid')).toBeChecked();
   await page.screenshot({path:'test-results/pin-save-delete-uuid.png',fullPage:true});
 });

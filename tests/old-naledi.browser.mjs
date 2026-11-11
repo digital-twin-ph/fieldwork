@@ -92,7 +92,7 @@ const number=async(id,value)=>{await page.locator(id).fill(String(value));await 
   const value=(i,p)=>boundaryResults.find(q=>q.subject===`urn:fieldwork:test-${i}`&&q.predicate==='urn:fieldwork:'+p)?.object.replace('urn:fieldwork:','');
   assert.deepEqual([0,1,2,3,4,5].map(i=>value(i,'zone')),['Unknown','Within5','Within5','Within15','Within30','Over30']);
   assert.deepEqual([0,1,2,3,4,5].map(i=>value(i,'decision')),['Unknown','NoFlag','NoFlag','NoFlag','NoFlag','Review']);
-  await expect(page.locator('#offline-status')).toContainText('Available offline');await context.setOffline(true);await page.reload();await done();
+  await expect(page.locator('#offline-status')).toHaveAttribute('data-state','ready');await context.setOffline(true);await page.reload();await done();
   await page.locator('[data-view="results"]').click();
   await expect(page.getByRole('tab')).toHaveCount(4);await expect(page.locator('#result-metrics .review b')).toHaveText('21');
   await context.setOffline(false);await mkdir('test-results',{recursive:true});await page.screenshot({path:'test-results/old-naledi-desktop.png',fullPage:true});

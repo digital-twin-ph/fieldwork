@@ -44,7 +44,7 @@ test('Hagelloch runs offline, and its awkward columns are not cleaned up',async(
   await expect(page.locator('#result-metrics')).toContainText('87 rows');
 
   // Offline, like every other example.
-  await expect(page.locator('#offline-status')).toContainText('Available offline',{timeout:45000});
+  await expect(page.locator('#offline-status')).toHaveAttribute('data-state','ready',{timeout:45000});
   await context.setOffline(true);
   await page.reload();
   await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});

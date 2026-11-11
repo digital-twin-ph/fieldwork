@@ -40,7 +40,7 @@
   "example only": 10,
   "parity only": 9,
   "example, lab not applicable": 11,
-  "example+parity": 24,
+  "example+parity": 23,
   "neither applies": 0
  },
  "compositionsUsedByNoExample": [
@@ -524,21 +524,11 @@
   {
    "nodeType": "sample_raster",
    "exampleUses": [
+    "brazil-dengue-rj-2024",
+    "nyc-asthma-ozone-2016-2025",
     "sea-level-rise-philippines"
    ],
-   "exampleUseCount": 1,
-   "lab": "parity",
-   "labOwed": false,
-   "fieldUse": [],
-   "rung": "example+parity"
-  },
-  {
-   "nodeType": "sample_satellite_files_at_points",
-   "exampleUses": [
-    "brazil-dengue-rj-2024",
-    "nyc-asthma-ozone-2016-2025"
-   ],
-   "exampleUseCount": 2,
+   "exampleUseCount": 3,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],

@@ -68,7 +68,7 @@ const run=async()=>{await page.locator('#run-button').click();await done();await
   await page.locator('[data-view="results"]').click();
   await expect(page.getByRole('tab',{name:'Outreach map'})).toHaveAttribute('aria-selected','true');
 
-  await expect(page.locator('#offline-status')).toContainText('Available offline');
+  await expect(page.locator('#offline-status')).toHaveAttribute('data-state','ready');
   await context.setOffline(true);await page.reload();await done();
   await page.locator('[data-view="results"]').click();
   await expect(page.getByRole('tab')).toHaveCount(1);

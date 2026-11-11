@@ -30,7 +30,7 @@
 /** **A same-origin request the navigation cancelled** (WebKit, 2026-11-09). A test that opens one page and then another
  *  79 ms later cancels the first page's fetch of `sw.js` or `build/asset-manifest.json`, and WebKit reports it as a page
  *  error, "/127.0.0.1:4174/sw.js due to access control checks." (as received in CI), though the application catches both. Only those two files, only that
- *  wording: a real failure to register the worker still shows as "Offline cache unavailable", which tests read. */
+ *  wording: a real failure to register the worker still sets `#offline-status` to `data-state="unavailable"`, which tests read. */
 const CANCELLED_BY_NAVIGATION=/^(?:Fetch API cannot load https?:\/)?\/(?:127\.0\.0\.1|localhost):\d+\/(?:sw\.js|build\/asset-manifest\.json) due to access control checks\.$/;
 const BROWSER_OWN=[
   'Context is stopped',

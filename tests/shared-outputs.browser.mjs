@@ -23,7 +23,7 @@ test('shared output modes migrate legacy views, recover with Undo and preserve e
   assert.equal(receipt.workflow.nodes.find(n=>n.id==='map').type,'map_output');assert.equal(receipt.workflow.nodes.find(n=>n.id==='table').type,'table_output');
   assert.deepEqual(receipt.outputs[0].rows,receipt.outputs[1].rows);
   assert.equal(receipt.receipts.filter(r=>r.kind==='presentation').length,2);
-  await expect(page.locator('#offline-status')).toContainText('Available offline');await context.setOffline(true);await page.reload();await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
+  await expect(page.locator('#offline-status')).toHaveAttribute('data-state','ready');await context.setOffline(true);await page.reload();await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
   await page.locator('[data-view="results"]').click();
   await expect(page.locator('#result-metrics .review b')).toHaveText('5');
 });

@@ -39,7 +39,7 @@ test('shared Chart supports migration, source selection, view switching, evidenc
   assert.equal(receipt.workflow.nodes.find(n=>n.id==='chart').type,'chart_output');
   const output=receipt.outputs.find(o=>o.nodeId==='chart');assert.equal(output.chart.bins.reduce((n,b)=>n+b.count,0),8);
   assert.match(receipt.receipts.find(r=>r.nodeId==='chart').facts,/CategoricalCount/);
-  await expect(page.locator('#offline-status')).toContainText('Available offline');await context.setOffline(true);await page.reload();
+  await expect(page.locator('#offline-status')).toHaveAttribute('data-state','ready');await context.setOffline(true);await page.reload();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
   await page.locator('[data-view="results"]').click();
   await page.getByRole('tab',{name:'Decision counts'}).click();await expect(page.locator('#bars-panel')).toContainText('8 records');

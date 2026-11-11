@@ -332,12 +332,13 @@
     },
     {
       "nodeType": "sample_raster",
-      "title": "Sample raster at points",
+      "title": "Sample a raster at points or over areas",
       "group": "Spatial operations",
-      "fingerprint": "47a5e83a0391",
-      "verdict": "pending",
-      "reviewed": null,
-      "reviewedBy": null
+      "fingerprint": "40705ace3af9",
+      "verdict": "accepted",
+      "reviewed": "2026-11-11",
+      "reviewedBy": "the practitioner, choosing among four titles when the satellite sampler was merged into this widget (experiment 205)",
+      "note": "\"Sample a raster at points or over areas\". The practitioner, 2026-11-11: \"sample satellite files does not explicitly say it takes rasters that might be a problem.\" The node type sample_raster is kept; sample_satellite_files_at_points is retired into it."
     },
     {
       "nodeType": "select_rows",
@@ -507,16 +508,6 @@
       "reviewed": "2026-11-05",
       "reviewedBy": "the practitioner, choosing among three pairs offered",
       "note": "The practitioner chose \"Find products / Search catalog\". What they had called it: \"STAC zeroes in on the source URLs\". STAC is the method, named in the description and the receipt, as the convention asks. Under Sources because it acquires, with the study area as its scope."
-    },
-    {
-      "nodeType": "sample_satellite_files_at_points",
-      "title": "Sample satellite files at points or over areas",
-      "group": "Spatial operations",
-      "fingerprint": "cfdeed72a92d",
-      "verdict": "accepted",
-      "reviewed": "2026-11-06",
-      "reviewedBy": "the practitioner, choosing among three titles once the sampler read areas as well as points (experiment 180)",
-      "note": "\"Sample satellite files at points or over areas\", chosen over \"over geometry\" and \"Sample satellite files\". The node type is kept, since workflows already hold it. Earlier: \"Sample satellite files seems to be more straightforward and less confusing.\""
     },
     {
       "nodeType": "space_time_scan",

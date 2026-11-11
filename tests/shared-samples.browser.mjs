@@ -26,7 +26,7 @@ test('generated samples feed shared outputs and the nearest search accepts ordin
   assert.equal(rows.find(r=>r.id==='custom-missing').status,'Unknown');
   assert.equal(rows.find(r=>r.id==='custom-one').attributes.visits,2);
   assert.match(receipt.receipts.find(r=>r.nodeId==='samples').facts,/fw:GridSampleGeneration/);
-  await expect(page.locator('#offline-status')).toContainText('Available offline');await context.setOffline(true);await page.reload();
+  await expect(page.locator('#offline-status')).toHaveAttribute('data-state','ready');await context.setOffline(true);await page.reload();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
   await page.locator('[data-view="results"]').click();
   await page.getByRole('tab',{name:'Generated sample table'}).click();await expect(page.locator('#table-panel')).toContainText('Sample 21');

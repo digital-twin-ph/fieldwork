@@ -281,6 +281,33 @@
         }
       ]
     },
+    "sample_satellite_files_at_points": {
+      "output": "table",
+      "contracts": [
+        {
+          "when": "default",
+          "required": [
+            [
+              "points",
+              "points"
+            ],
+            [
+              "areas",
+              "polygons"
+            ],
+            [
+              "area",
+              "area"
+            ],
+            [
+              "files",
+              "satellite-files"
+            ]
+          ],
+          "optional": []
+        }
+      ]
+    },
     "derive_value": {
       "output": "table",
       "contracts": [
@@ -436,34 +463,6 @@
             ]
           ],
           "optional": [
-            [
-              "area",
-              "area"
-            ]
-          ]
-        }
-      ]
-    },
-    "sample_satellite_files_at_points": {
-      "output": "table",
-      "contracts": [
-        {
-          "when": "default",
-          "required": [
-            [
-              "files",
-              "satellite-files"
-            ]
-          ],
-          "optional": [
-            [
-              "points",
-              "points"
-            ],
-            [
-              "areas",
-              "polygons"
-            ],
             [
               "area",
               "area"
@@ -891,18 +890,87 @@
       "output": "points",
       "contracts": [
         {
-          "when": "default",
+          "when": "over=points,source=raster",
           "required": [
+            [
+              "raster",
+              "raster"
+            ]
+          ],
+          "optional": [
             [
               "points",
               "points"
+            ],
+            [
+              "areas",
+              "polygons"
+            ],
+            [
+              "area",
+              "area"
+            ],
+            [
+              "files",
+              "satellite-files"
+            ]
+          ]
+        },
+        {
+          "when": "over=areas,source=raster",
+          "required": [
+            [
+              "raster",
+              "raster"
+            ]
+          ],
+          "optional": [
+            [
+              "points",
+              "points"
+            ],
+            [
+              "areas",
+              "polygons"
+            ],
+            [
+              "area",
+              "area"
+            ],
+            [
+              "files",
+              "satellite-files"
+            ]
+          ],
+          "output": "polygons"
+        },
+        {
+          "when": "source=satellite-files",
+          "required": [
+            [
+              "files",
+              "satellite-files"
+            ]
+          ],
+          "optional": [
+            [
+              "points",
+              "points"
+            ],
+            [
+              "areas",
+              "polygons"
+            ],
+            [
+              "area",
+              "area"
             ],
             [
               "raster",
               "raster"
             ]
           ],
-          "optional": []
+          "output": "table"
         }
       ]
     },

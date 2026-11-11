@@ -150,7 +150,7 @@ test('a stored retrieval replays with the network off, and asks no source for an
     {name:'stored.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(stored))});
   await page.locator('[data-view="workflow"]').click();
   await expect(page.locator('.react-flow__node[data-id="hf"]')).toBeVisible();
-  await expect(page.locator('#offline-status')).toContainText('Available offline',{timeout:60000});
+  await expect(page.locator('#offline-status')).toHaveAttribute('data-state','ready',{timeout:60000});
 
   const reached=[];
   page.on('request',request=>{

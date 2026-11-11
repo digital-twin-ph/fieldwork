@@ -36,7 +36,7 @@ test('an explicit choice wins over the device, persists, and survives an offline
   await expect(page.locator('#theme-select')).toHaveValue('light');
   expect((await resolved(page)).surface).toBe(LIGHT_SURFACE);
 
-  await expect(page.locator('#offline-status')).toContainText('Available offline',{timeout:45000});
+  await expect(page.locator('#offline-status')).toHaveAttribute('data-state','ready',{timeout:45000});
   await context.setOffline(true);
   await page.reload();
   await expect(page.locator('#theme-select')).toHaveValue('light');

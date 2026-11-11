@@ -256,7 +256,9 @@ not a practitioner in the field.
    areas"** (the practitioner's choice of name, 2026-11-11), taking a Raster input or satellite files, as Cases by period
    takes points or a table. Shared: the area sums (`src/satellite-areas.ts`), the cell rule, the point reading; offered
    only for satellite files: the layer and the quality rule. The other node type is retired outright, there being no
-   outside users, and saved workflows move to the merged one; its manual page, lab checks and name review follow. A comparison is then composed from what exists: three Raster
+   outside users, and saved workflows move to the merged one; its manual page, lab checks and name review follow.
+   **Built 2026-11-11 in 0.94.0** (experiment 205): Sample a raster 0.3.0; Sample satellite files 1.0.0, retired; Brazil
+   dengue and New York ozone re-pinned. **Still owed:** the lab check against an external zonal sum. A comparison is then composed from what exists: three Raster
    inputs, three area samples over the same polygons, Relate on the polygon, and Apply ruleset for the differences.
    Compare per area at a common year, never cell by cell at 100 m, never pooled; say each model's population (all
    land, settled cells, residential) beside its number. The same step gives Rate with a denominator a population per

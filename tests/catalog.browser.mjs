@@ -63,7 +63,7 @@ test('the widget catalog lists the widgets that can be used and the worked examp
   await expect(page.locator('#open-catalog')).toBeVisible();
   expect(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth)).toBe(false);
   await page.setViewportSize({width:1600,height:1100});
-  await expect(page.locator('#offline-status')).toContainText('Available offline',{timeout:45000});
+  await expect(page.locator('#offline-status')).toHaveAttribute('data-state','ready',{timeout:45000});
   await context.setOffline(true);
   await page.reload();
   await expect(page.locator('#catalog-dialog tr[data-widget]')).toHaveCount(active.length,{timeout:45000});

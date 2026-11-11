@@ -1,0 +1,89 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:sample_satellite_files_at_points",
+ "nodeType": "sample_satellite_files_at_points",
+ "version": "1.0.0",
+ "title": "Sample satellite files at points or over areas",
+ "released": "2026-11-11",
+ "implementationStatus": "retired",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['sample_satellite_files_at_points']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "validationStatus": "application-only",
+  "shaclShapes": []
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "points",
+    "type": "points"
+   },
+   {
+    "name": "areas",
+    "type": "polygons"
+   },
+   {
+    "name": "area",
+    "type": "area"
+   },
+   {
+    "name": "files",
+    "type": "satellite-files"
+   }
+  ],
+  "output": "table",
+  "optionalInputs": [
+   "points",
+   "areas",
+   "area"
+  ],
+  "note": "Takes the places to read at, one kind of the three: points, a polygon layer, or a study area's units; and the files a search kept. Emits a long table: for points, one row per point per overpass or period; for areas, one row per area per period per satellite, with the cells counted."
+ },
+ "ontology": {
+  "status": "partial",
+  "mappings": [
+   {
+    "role": "entity",
+    "iri": "urn:fieldwork:SatellitePointSample",
+    "file": "ontology/runtime.ttl"
+   },
+   {
+    "role": "entity",
+    "iri": "urn:fieldwork:SatelliteAreaSample",
+    "file": "ontology/runtime.ttl"
+   }
+  ],
+  "note": "Retired 2026-11-11. The modules that assert fw:SatellitePointSample and fw:SatelliteAreaSample are read by Sample a raster now, which declares their terms; this release emits nothing of its own.",
+  "emits": {
+   "classes": [],
+   "properties": []
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/core.ts"
+  ],
+  "definition": "src/core.ts#TYPES",
+  "note": "Retired 2026-11-11. Its reading is Sample a raster's, from satellite files; what remains here is an archived definition, so a saved workflow naming the type can be migrated rather than refused."
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": [
+   "urn:fieldwork:widget:sample_raster"
+  ]
+ },
+ "changes": [
+  {
+   "kind": "major",
+   "description": "Retired into Sample a raster at points or over areas, whose other source is satellite files (experiment 205). The practitioner, 2026-11-11: \"sample satellite files does not explicitly say it takes rasters that might be a problem\"; then the name, \"Sample a raster at points or over areas\", and the design, the output follows the input. Retired outright, with no deprecation period, because nobody outside this project uses it (AGENTS.md). A workflow saved with one is migrated on opening to a Sample a raster step reading satellite files, its settings kept, stamped as migrated. Brazil dengue and New York ozone use it this way."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Lab check 35 holds the point reading of Sentinel-5P against h5py and pyproj (0.2.1). The area reading has unit tests, an offline browser test with three areas, and a run in Node over the 92 Rio de Janeiro municipalities against real MODIS files (experiment 180, M2); no lab check yet."
+ }
+}

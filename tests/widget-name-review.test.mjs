@@ -132,7 +132,9 @@ test('the shipped ledger passes and covers every live widget', ()=>{
   // a published ruleset (experiment 197).
   // 55 on 2026-11-10: space_time_scan, the first step under Detect: nothing tested whether cases came closer together in
   // place and time than expected (experiment 200).
-  assert.equal(review.reviews.length,55);
+  // 54 on 2026-11-11: sample_satellite_files_at_points retired into sample_raster, one widget for sampling a grid
+  // (experiment 205).
+  assert.equal(review.reviews.length,54);
 });
 
 test('the generated table shows the palette words beside the identifier', ()=>{

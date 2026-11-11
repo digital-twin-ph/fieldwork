@@ -65,7 +65,7 @@ test('Snow’s 1855 table draws an epidemic curve that states which date it is o
   assert.match(n3,/fw:undatedRecordCount "0"\^\^xsd:integer/);
   await page.locator('[data-view="workflow"]').click();
 
-  await expect(page.locator('#offline-status')).toContainText('Available offline',{timeout:45000});
+  await expect(page.locator('#offline-status')).toHaveAttribute('data-state','ready',{timeout:45000});
   await context.setOffline(true);
   await page.reload();
   await page.locator('[data-view="results"]').click();

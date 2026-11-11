@@ -1061,7 +1061,7 @@ function drawRunProgress(){
 /** THE WIDGETS WHOSE INSPECTOR FOLLOWS THE STANDARD (experiment 186): Name, Inputs, Settings, Result, the links,
  *  Actions, in that order and nothing else, with every setting in the widget's configuration dialog. One at a time,
  *  Relate first; the set grows as each widget is moved, and a check holds them to it. */
-export const STANDARD_INSPECTOR=new Set<NodeType>(['point_input','chart_output','sample_satellite_files_at_points','raster_input','sample_raster','measure_distance','table_output','relate_table','select_rows','table_input','find_health_facilities','group_table','apply_ruleset','map_output','deduplicate_points','rate','study_area','space_time_scan','map_image_input']);
+export const STANDARD_INSPECTOR=new Set<NodeType>(['point_input','chart_output','raster_input','sample_raster','measure_distance','table_output','relate_table','select_rows','table_input','find_health_facilities','group_table','apply_ruleset','map_output','deduplicate_points','rate','study_area','space_time_scan','map_image_input']);
 function samplerProduct(node:WorkflowNode){
   const up=(id:string,port:string)=>{const e=workflow.edges.find(x=>x.to===id&&x.port===port);return e?workflow.nodes.find(m=>m.id===e.from):undefined;};
   const search=up(node.id,'files'),find=search?up(search.id,'product'):undefined;
@@ -1192,7 +1192,7 @@ function upstreamKeyValues(node:WorkflowNode,seen=new Set<string>(),
   // A SATELLITE SAMPLE'S COLUMNS ARE KNOWN BEFORE IT RUNS: its fixed ones, with the id column named as the points'
   // source table names it, the ids read from that table and the days from the search. So a join downstream can be set
   // up before the files are read, which takes minutes (2026-11-05, experiment 179).
-  if(up.type==='sample_satellite_files_at_points'){
+  if(up.type==='sample_raster'&&up.params.source==='satellite-files'){
     // A GRIDDED PRODUCT, or areas: the area table's fixed columns, with the place column as named (experiment 180).
     const grid=samplerProduct(up);
     const overAreas=workflow.edges.some(e=>e.to===up.id&&(e.port==='areas'||e.port==='area'));
@@ -1289,6 +1289,14 @@ function setConnection(w:Workflow,from:string|null,to:string,port:string){
       ||(!!from&&(port==='area'||port==='area2'));
     const node=target as WorkflowNode<'summarize_combined_area'>;
     if(areas)node.params.yields='area';else delete node.params.yields;
+  }
+  // THE SAMPLER'S SOURCE AND PLACES follow what is connected (experiment 205): satellite files or a raster; points or
+  // areas. Recorded on the node, so its output -- points, areas or a table -- is known before it runs.
+  if(target?.type==='sample_raster'){
+    const node=target as WorkflowNode<'sample_raster'>;
+    const has=(p:string)=>w.edges.some(e=>e.to===to&&e.port===p)||(!!from&&port===p);
+    if(has('files'))node.params.source='satellite-files';else if(has('raster'))node.params.source='raster';
+    if(has('areas')||has('area'))node.params.over='areas';else if(has('points'))node.params.over='points';
   }
   if(from)w.edges.push({id:`e-${Date.now()}`,from,to,port});
   if(from&&port==='area'&&target?.type==='clip_raster'&&!target.params.cutline){
@@ -1989,7 +1997,7 @@ function openPointsFromTableConfig(nodeId:string){
 }
 
 /** WHAT SAMPLE SATELLITE READS, in one sentence (experiment 186). */
-function satelliteSampleSentence(n:WorkflowNode<'sample_satellite_files_at_points'>):string{
+function satelliteSampleSentence(n:WorkflowNode<'sample_raster'>):string{
   const p=n.params,product=samplerProduct(n),grid=product?gridReaderFor(product):null;
   if(!product)return 'Reads each satellite file the search kept, at points or over areas. Connect the files first.';
   if(grid){
@@ -2004,7 +2012,7 @@ function satelliteSampleSentence(n:WorkflowNode<'sample_satellite_files_at_point
 /** SAMPLE SATELLITE'S CONFIGURATION DIALOG (experiment 186, 2026-11-09). Only Apply writes; reading every file again
  *  and forgetting the saved readings are choices applied with it. */
 function openSatelliteSampleConfig(nodeId:string){
-  const node=getNode(workflow,nodeId,'sample_satellite_files_at_points'),p=node.params;
+  const node=getNode(workflow,nodeId,'sample_raster'),p=node.params;
   const product=samplerProduct(node),grid=product?gridReaderFor(product):null;
   const areas=workflow.edges.some(e=>e.to===nodeId&&(e.port==='areas'||e.port==='area'));
   type Draft={layer:string;qualityRule:ModisQualityRule|'';unit:'K'|'°C'|'°F';placeColumn:string;qaOperator:'>='|'>';reread:boolean;forget:boolean};
@@ -2012,7 +2020,7 @@ function openSatelliteSampleConfig(nodeId:string){
     unit:p.unit??'°C',placeColumn:p.placeColumn??'',qaOperator:p.qaOperator??'>=',reread:false,forget:false};
   let saved:{count:number;bytes:number}|null=null;
   openConfigDialog<Draft>({
-    id:'satellite-config',widget:'Sample satellite files at points or over areas',step:p.label||TYPES.sample_satellite_files_at_points.title,draft,
+    id:'satellite-config',widget:'Sample a raster at points or over areas',step:p.label||TYPES.sample_raster.title,draft,
     sections:d=>{
       const settings=grid
         ?`<div class="field"><label class="field-label" for="satellite-layer">Layer</label><select id="satellite-layer">`
@@ -2057,7 +2065,7 @@ function openSatelliteSampleConfig(nodeId:string){
       on('satellite-forget',el=>{d.forget=el.checked;});
     },
     apply:d=>{
-      change(w=>{const params=getNode(w,nodeId,'sample_satellite_files_at_points').params;
+      change(w=>{const params=getNode(w,nodeId,'sample_raster').params;
         if(grid){params.layer=d.layer;if(d.qualityRule)params.qualityRule=d.qualityRule;params.unit=d.unit;
           if(d.placeColumn)params.placeColumn=d.placeColumn;else delete params.placeColumn;}
         else if(product)params.qaOperator=d.qaOperator;});
@@ -2330,6 +2338,9 @@ function openChartConfig(nodeId:string){
 /** WHAT SAMPLE RASTER WRITES, in one sentence. */
 function sampleSentence(n:WorkflowNode<'sample_raster'>):string{
   const p=n.params,name=p.attribute?.trim();
+  // OVER AREAS (experiment 205): each area's cells totalled.
+  if(p.over==='areas')return `Totals ${name||'total'}${p.valueUnit?.trim()?`, ${p.valueUnit.trim()},`:''} over each area: the cells whose `
+    +'centre is inside or on it, each counted whole; cells with no data add nothing and are counted apart.';
   if(!name)return 'Writes a raster\u2019s value onto each point. Name the attribute in Configure\u2026';
   return `Writes ${name}${p.valueUnit?.trim()?`, ${p.valueUnit.trim()},`:''} onto each point: `
     +(p.method==='bilinear'?'interpolated between the four nearest cells.':'the value of the cell containing it.');
@@ -2340,13 +2351,15 @@ function openSampleConfig(nodeId:string){
   const node=getNode(workflow,nodeId,'sample_raster');
   type Draft=WorkflowNode<'sample_raster'>['params'];
   openConfigDialog<Draft>({
-    id:'sample-config',widget:'Sample raster at points',step:node.params.label||TYPES.sample_raster.title,draft:structuredClone(node.params),
-    sections:draft=>({settings:`<div class="field"><label class="field-label" for="sample-attribute">Attribute to write</label><input id="sample-attribute" maxlength="60" value="${esc(draft.attribute)}" placeholder="elevation_m"></div>`
+    id:'sample-config',widget:'Sample a raster at points or over areas',step:node.params.label||TYPES.sample_raster.title,draft:structuredClone(node.params),
+    sections:draft=>({settings:`<p class="description">${draft.over==='areas'?'Reading over areas: each area\u2019s cells are totalled.':'Reading at points: each point takes its cell\u2019s value.'} `
+        +`Connect points or areas to choose; satellite files instead of a raster read by date.</p>`
+      +`<div class="field"><label class="field-label" for="sample-attribute">${draft.over==='areas'?'Name of the total':'Attribute to write'}</label><input id="sample-attribute" maxlength="60" value="${esc(draft.attribute)}" placeholder="${draft.over==='areas'?'population':'elevation_m'}"></div>`
       +`<div class="field"><label class="field-label" for="sample-unit">What those values measure</label><input id="sample-unit" maxlength="60" value="${esc(draft.valueUnit)}" placeholder="metres above the stated datum"></div>`
-      +`<div class="field"><label class="field-label" for="sample-method">Read each value as</label><select id="sample-method">`
+      +(draft.over==='areas'?'':`<div class="field"><label class="field-label" for="sample-method">Read each value as</label><select id="sample-method">`
       +`<option value="cell"${draft.method!=='bilinear'?' selected':''}>the cell containing the point</option>`
       +`<option value="bilinear"${draft.method==='bilinear'?' selected':''}>between the four nearest cells (bilinear)</option></select></div>`
-      +'<p class="description">Bilinear suits a smooth field such as a geoid; keep a margin of one cell in the raster\u2019s window so points near its edge have four.</p>',
+      +'<p class="description">Bilinear suits a smooth field such as a geoid; keep a margin of one cell in the raster\u2019s window so points near its edge have four.</p>'),
       preview:`<p class="muted">${esc(sampleSentence({...node,params:draft}))} No value is set to zero.</p>`}),
     wire:(root,draft,redraw)=>{
       root.querySelector<HTMLInputElement>('#sample-attribute')?.addEventListener('change',e=>{draft.attribute=(e.target as HTMLInputElement).value.trim();redraw();});
@@ -3056,7 +3069,7 @@ function renderLibrary(search=''){
       :type==='facilities'?{type:'facilities' as const,params:{dataset:DATASET,radiusKm:5,sourceMode:'connected' as const}}
       :type==='facility_audit'?{type:'facility_audit' as const,params:{} as Record<string,never>}
       :type==='apply_ruleset'?{type:'apply_ruleset' as const,params:{label:'Apply ruleset',parameters:{}}}
-      :type==='travel_time'?{type:'travel_time' as const,params:{label:'Travel time from distance',speedMPerMin:70}}:type==='point_grid'?{type:'point_grid' as const,params:{spacingM:250}}:type==='mean_center'?{type:'mean_center' as const,params:{label:'Mean center',zone:30,hemisphere:'north' as const}}:type==='compare_point_sets'?{type:'compare_point_sets' as const,params:{label:'Compare point sets',zone:30,hemisphere:'north' as const}}:type==='comparison_map'?{type:'comparison_map' as const,params:{label:'Point comparison map'}}:type==='donut_geomask'?{type:'donut_geomask' as const,params:{label:'Donut geomasking',innerM:50,outerM:125,seed:42}}:type==='aggregate_points_to_h3_cell'?{type:'aggregate_points_to_h3_cell' as const,params:{label:'H3 cell aggregation',resolution:9,minOccupancy:2}}:type==='buffer_area'?{type:'buffer_area' as const,params:{label:'Buffered study area',distanceM:500}}:type==='network_input'?{type:'network_input' as const,params:{label:'Street network',data:{nodes:[],edges:[],source:'Not prepared'},inputMethod:'file' as const,marginM:250}}:Object.hasOwn(CATCHMENT_TYPES,type)?[...johnSnowExample('snow-voronoi').nodes,...johnSnowExample('snow-isochrone').nodes].find(n=>n.type===type):type==='join_table_to_area'?{type:'join_table_to_area' as const,params:{label:'Values on the study area',keyField:'',normalisation:'fuzzy' as const}}:type==='regression'?{type:'regression' as const,params:{label:'Regression',family:'logistic' as const,outcome:'',exposure:{column:'',as:'categorical' as const},adjust:[],errors:'profile' as const}}:type==='append_rows'?{type:'append_rows' as const,params:{label:'Append rows'}}:type==='select_rows'?{type:'select_rows' as const,params:{label:'Select rows by value',keyColumn:'measure',values:[]}}:type==='relate_table'?{type:'relate_table' as const,params:{label:'Relate a column from another table',on:'',bring:''}}:type==='group_table'?{type:'group_table' as const,params:{label:'Total within groups',by:[]}}:type==='space_time_scan'?{type:'space_time_scan' as const,params:{label:'Space-time scan',dateField:'',...SCAN_DEFAULTS,seed:newScanSeed()}}:type==='find_satellite_products'?{type:'find_satellite_products' as const,params:{label:'Find satellite products'}}:type==='search_satellite_catalog'?{type:'search_satellite_catalog' as const,params:{label:'Search a satellite catalog',from:'',until:''}}:type==='sample_satellite_files_at_points'?{type:'sample_satellite_files_at_points' as const,params:{label:'Sample satellite files at points or over areas'}}:type==='study_design'?{type:'study_design' as const,params:{label:'Study design',design:'cohort' as const,period:'',unitOfAnalysis:'',note:''}}:type==='two_by_two'?{type:'two_by_two' as const,params:{label:'Two-by-two table',exposureColumn:'',exposed:'',unexposed:'',outcomeColumn:'',caseValue:'',nonCaseValue:'',level:95 as const}}:type==='rate'?{type:'rate' as const,params:{label:'Rate with a denominator',numeratorField:'',denominatorField:'',denominatorUnit:'people' as const,rateKind:'proportion' as const,multiplier:100,minimumDenominator:20,numeratorPeriod:'',denominatorVintage:''}}:type==='case_series'?{type:'case_series' as const,params:{label:'Cases by period',dateField:'',dateKind:'onset' as const,period:'week' as const}}:type==='slr_extract_import'?{type:'slr_extract_import' as const,params:{label:'Sea-level projection extract',datasetIRI:'',datasetVersion:'',baselinePeriod:'',citations:['','',''],basisKind:'' as const,familyValues:{withVerticalLandMotion:'',withoutVerticalLandMotion:''}}}:type==='slr_site_assignment'?{type:'slr_site_assignment' as const,params:{label:'Assign projection site'}}:type==='slr_threshold_comparison'?{type:'slr_threshold_comparison' as const,params:{label:'Compare level to elevation',scenario:'',basis:'',family:'',year:'',quantile:'',elevationField:'',verticalDatum:'',elevationReference:'' as const}}:type==='polygon_input'?{type:'polygon_input' as const,params:{label:'Polygon layer',data:{features:[]}}}:type==='map_image_input'?{type:'map_image_input' as const,params:{label:'Georeferenced map image',image:{width:0,height:0,bytes:0,sha256:''},bounds:[0,0,0,0] as [number,number,number,number],opacity:0.85}}:type==='table_input'?{type:'table_input' as const,params:{label:'Tabular data',keys:[],valueField:'',data:{kind:'data-table' as const,keys:[],valueField:'',rows:[],rowCount:0,missingValueCount:0}}}:type==='deduplicate_points'?{type:'deduplicate_points' as const,params:{label:'Deduplicated records',pointInputCount:2,nameField:'name',nameMatch:'fuzzy' as const,fuzzyThreshold:0.88,blockDistanceM:500,nearDistanceM:50,matchThreshold:2,reviewThreshold:1,decisions:[]}}:type==='clip_points_to_area'?{type:'clip_points_to_area' as const,params:{label:'Points inside the area',keepBoundary:true,showExcluded:true}}:type==='reproject'?{type:'reproject' as const,params:{label:'Reproject points',zone:35,hemisphere:'south' as const}}:type==='raster_input'?{type:'raster_input' as const,params:{label:'Raster input'}}:type==='fill_interior_gaps'?{type:'fill_interior_gaps' as const,params:{label:'Filled gaps'}}:type==='stack_polygons'?{type:'stack_polygons' as const,params:{label:'Collected polygon layers'}}:type==='travel_time_band'?{type:'travel_time_band' as const,params:{label:'Travel time band',minutes:5}}:type==='reachable_corridor'?{type:'reachable_corridor' as const,params:{label:'Reachable corridor',bufferM:25,zone:30,hemisphere:'north' as const}}:type==='reachable_nodes'?{type:'reachable_nodes' as const,params:{label:'Reachable junctions',minutes:10,speedMPerMin:80,direction:'outbound' as const,travelMode:'walking' as const}}:type==='snap_to_network'?{type:'snap_to_network' as const,params:{label:'Snap sites to the network',zone:30,hemisphere:'north' as const,maxSnapM:150}}:type==='summarize_combined_area'?{type:'summarize_combined_area' as const,params:{label:'Combined area',zone:30,hemisphere:'north' as const}}:type==='summarize_hull'?{type:'summarize_hull' as const,params:{label:'Convex hull',zone:30,hemisphere:'north' as const}}:type==='find_health_facilities'?{type:'find_health_facilities' as const,params:{label:'Find health facilities',source:'openstreetmap-live' as const,kinds:['hospital','clinic'],requireName:true,country:'PHL',minConfidence:0.7,data:null,retrieved:null}}:type==='buffer_point'?{type:'buffer_point' as const,params:{label:'Area around a point',pointId:'',distanceM:5000}}:type==='sample_raster'?{type:'sample_raster' as const,params:{label:'Sample raster at points',attribute:'',valueUnit:''}}:type==='clip_raster'?{type:'clip_raster' as const,params:{label:'Clipped raster',method:'all-touched' as const,marginPixels:0}}:type==='chart_output'?{type:'chart_output' as const,params:{label:'Chart'}}:type==='table_output'?newTableOutput():type==='map_output'?newMapOutput():type==='point_input'?newObservations():type==='measure_area'?newAreaMeasurement():['blank','coverage'].includes(exampleKey(workflow))&&type==='study_area'?newStudyArea():template(exampleKey(workflow)).nodes.find(n=>n.type===type));
+      :type==='travel_time'?{type:'travel_time' as const,params:{label:'Travel time from distance',speedMPerMin:70}}:type==='point_grid'?{type:'point_grid' as const,params:{spacingM:250}}:type==='mean_center'?{type:'mean_center' as const,params:{label:'Mean center',zone:30,hemisphere:'north' as const}}:type==='compare_point_sets'?{type:'compare_point_sets' as const,params:{label:'Compare point sets',zone:30,hemisphere:'north' as const}}:type==='comparison_map'?{type:'comparison_map' as const,params:{label:'Point comparison map'}}:type==='donut_geomask'?{type:'donut_geomask' as const,params:{label:'Donut geomasking',innerM:50,outerM:125,seed:42}}:type==='aggregate_points_to_h3_cell'?{type:'aggregate_points_to_h3_cell' as const,params:{label:'H3 cell aggregation',resolution:9,minOccupancy:2}}:type==='buffer_area'?{type:'buffer_area' as const,params:{label:'Buffered study area',distanceM:500}}:type==='network_input'?{type:'network_input' as const,params:{label:'Street network',data:{nodes:[],edges:[],source:'Not prepared'},inputMethod:'file' as const,marginM:250}}:Object.hasOwn(CATCHMENT_TYPES,type)?[...johnSnowExample('snow-voronoi').nodes,...johnSnowExample('snow-isochrone').nodes].find(n=>n.type===type):type==='join_table_to_area'?{type:'join_table_to_area' as const,params:{label:'Values on the study area',keyField:'',normalisation:'fuzzy' as const}}:type==='regression'?{type:'regression' as const,params:{label:'Regression',family:'logistic' as const,outcome:'',exposure:{column:'',as:'categorical' as const},adjust:[],errors:'profile' as const}}:type==='append_rows'?{type:'append_rows' as const,params:{label:'Append rows'}}:type==='select_rows'?{type:'select_rows' as const,params:{label:'Select rows by value',keyColumn:'measure',values:[]}}:type==='relate_table'?{type:'relate_table' as const,params:{label:'Relate a column from another table',on:'',bring:''}}:type==='group_table'?{type:'group_table' as const,params:{label:'Total within groups',by:[]}}:type==='space_time_scan'?{type:'space_time_scan' as const,params:{label:'Space-time scan',dateField:'',...SCAN_DEFAULTS,seed:newScanSeed()}}:type==='find_satellite_products'?{type:'find_satellite_products' as const,params:{label:'Find satellite products'}}:type==='search_satellite_catalog'?{type:'search_satellite_catalog' as const,params:{label:'Search a satellite catalog',from:'',until:''}}:type==='study_design'?{type:'study_design' as const,params:{label:'Study design',design:'cohort' as const,period:'',unitOfAnalysis:'',note:''}}:type==='two_by_two'?{type:'two_by_two' as const,params:{label:'Two-by-two table',exposureColumn:'',exposed:'',unexposed:'',outcomeColumn:'',caseValue:'',nonCaseValue:'',level:95 as const}}:type==='rate'?{type:'rate' as const,params:{label:'Rate with a denominator',numeratorField:'',denominatorField:'',denominatorUnit:'people' as const,rateKind:'proportion' as const,multiplier:100,minimumDenominator:20,numeratorPeriod:'',denominatorVintage:''}}:type==='case_series'?{type:'case_series' as const,params:{label:'Cases by period',dateField:'',dateKind:'onset' as const,period:'week' as const}}:type==='slr_extract_import'?{type:'slr_extract_import' as const,params:{label:'Sea-level projection extract',datasetIRI:'',datasetVersion:'',baselinePeriod:'',citations:['','',''],basisKind:'' as const,familyValues:{withVerticalLandMotion:'',withoutVerticalLandMotion:''}}}:type==='slr_site_assignment'?{type:'slr_site_assignment' as const,params:{label:'Assign projection site'}}:type==='slr_threshold_comparison'?{type:'slr_threshold_comparison' as const,params:{label:'Compare level to elevation',scenario:'',basis:'',family:'',year:'',quantile:'',elevationField:'',verticalDatum:'',elevationReference:'' as const}}:type==='polygon_input'?{type:'polygon_input' as const,params:{label:'Polygon layer',data:{features:[]}}}:type==='map_image_input'?{type:'map_image_input' as const,params:{label:'Georeferenced map image',image:{width:0,height:0,bytes:0,sha256:''},bounds:[0,0,0,0] as [number,number,number,number],opacity:0.85}}:type==='table_input'?{type:'table_input' as const,params:{label:'Tabular data',keys:[],valueField:'',data:{kind:'data-table' as const,keys:[],valueField:'',rows:[],rowCount:0,missingValueCount:0}}}:type==='deduplicate_points'?{type:'deduplicate_points' as const,params:{label:'Deduplicated records',pointInputCount:2,nameField:'name',nameMatch:'fuzzy' as const,fuzzyThreshold:0.88,blockDistanceM:500,nearDistanceM:50,matchThreshold:2,reviewThreshold:1,decisions:[]}}:type==='clip_points_to_area'?{type:'clip_points_to_area' as const,params:{label:'Points inside the area',keepBoundary:true,showExcluded:true}}:type==='reproject'?{type:'reproject' as const,params:{label:'Reproject points',zone:35,hemisphere:'south' as const}}:type==='raster_input'?{type:'raster_input' as const,params:{label:'Raster input'}}:type==='fill_interior_gaps'?{type:'fill_interior_gaps' as const,params:{label:'Filled gaps'}}:type==='stack_polygons'?{type:'stack_polygons' as const,params:{label:'Collected polygon layers'}}:type==='travel_time_band'?{type:'travel_time_band' as const,params:{label:'Travel time band',minutes:5}}:type==='reachable_corridor'?{type:'reachable_corridor' as const,params:{label:'Reachable corridor',bufferM:25,zone:30,hemisphere:'north' as const}}:type==='reachable_nodes'?{type:'reachable_nodes' as const,params:{label:'Reachable junctions',minutes:10,speedMPerMin:80,direction:'outbound' as const,travelMode:'walking' as const}}:type==='snap_to_network'?{type:'snap_to_network' as const,params:{label:'Snap sites to the network',zone:30,hemisphere:'north' as const,maxSnapM:150}}:type==='summarize_combined_area'?{type:'summarize_combined_area' as const,params:{label:'Combined area',zone:30,hemisphere:'north' as const}}:type==='summarize_hull'?{type:'summarize_hull' as const,params:{label:'Convex hull',zone:30,hemisphere:'north' as const}}:type==='find_health_facilities'?{type:'find_health_facilities' as const,params:{label:'Find health facilities',source:'openstreetmap-live' as const,kinds:['hospital','clinic'],requireName:true,country:'PHL',minConfidence:0.7,data:null,retrieved:null}}:type==='buffer_point'?{type:'buffer_point' as const,params:{label:'Area around a point',pointId:'',distanceM:5000}}:type==='sample_raster'?{type:'sample_raster' as const,params:{label:'Sample a raster',attribute:'',valueUnit:''}}:type==='clip_raster'?{type:'clip_raster' as const,params:{label:'Clipped raster',method:'all-touched' as const,marginPixels:0}}:type==='chart_output'?{type:'chart_output' as const,params:{label:'Chart'}}:type==='table_output'?newTableOutput():type==='map_output'?newMapOutput():type==='point_input'?newObservations():type==='measure_area'?newAreaMeasurement():['blank','coverage'].includes(exampleKey(workflow))&&type==='study_area'?newStudyArea():template(exampleKey(workflow)).nodes.find(n=>n.type===type));
     // Every zone-taking widget was defaulted to Soho's 30/north in the branches above, which is
     // wrong anywhere else and said nothing about it. Suggest the zone the workflow's own data is
     // in, from the mean longitude of every coordinate already configured. The parameter stays: a
@@ -3898,7 +3911,7 @@ function renderInspector(){
       +`<div class="field"><label class="field-label" for="bp-point">Point that defines the area</label><input id="bp-point" data-bp="pointId" maxlength="80" value="${esc(p.pointId)}" placeholder="MANILA"></div>`
       +`<div class="field"><label class="field-label" for="bp-distance">Radius in metres</label><input id="bp-distance" data-bp-number="distanceM" type="number" min="0" max="5000" step="100" value="${p.distanceM}"></div>`
       +'<div class="notice">A derived scope, not a surveyed boundary: its edge is a decision and its radius an assumption of the question, so state why you chose it. One named point only \u2014 several distant points would make a raster window too coarse to sample. Local areas up to 5,000 m.</div>';
-  }else if(n.type==='sample_raster'){
+  }else if(n.type==='sample_raster'&&n.params.source!=='satellite-files'){
     // THE STANDARD INSPECTOR (experiments 186, 198): touched to read between the four nearest cells, as a geoid is read.
     const p=n.params;
     content+=standardSection('Name',`<div class="field"><label class="field-label" for="sample-label">Name</label><input id="sample-label" data-sample="label" maxlength="60" value="${esc(p.label||TYPES.sample_raster.title)}"></div>`);
@@ -3911,9 +3924,12 @@ function renderInspector(){
     const count=(p:string)=>{const m=new RegExp(`fw:${p} "(\\d+)"`).exec(facts);return m?Number(m[1]):undefined;};
     const counts=count('sampledCount')===undefined?undefined
       :{sampled:count('sampledCount')!,noData:count('noDataCount')!,outside:count('outsideRasterCount')!,unlocated:count('unlocatedCount')!};
+    // Over areas (experiment 205) the receipt's method is the sentence: the areas, the cells, and what was left out.
+    const areaSentence=/fw:RasterAreaTotal/.test(facts)?result?.receipts?.find(r=>r.nodeId===n.id)?.method:undefined;
     content+=standardSection('Result',`<p class="standard-result${why?' standard-result-warning':''}">${esc(why?`The last run could not compute this step: ${why}`
+      :areaSentence?areaSentence
       :counts?`${counts.sampled} point${counts.sampled===1?'':'s'} given a value; ${counts.noData} on no data, ${counts.outside} outside the raster, ${counts.unlocated} without a location. None is set to zero.`
-      :result?'Run to read the raster at the points.':'Not run yet.')}</p>`);
+      :result?(n.params.over==='areas'?'Run to total the raster over the areas.':'Run to read the raster at the points.'):'Not run yet.')}</p>`);
     // THE ARTEFACT IS DOWNLOADED WHERE IT IS MADE, not where it happens to be displayed.
     // `#raster-download` sits in the Results heading and offers whatever raster the output tab
     // on screen carries, so with a prepared window and a clipped grid in one workflow the full
@@ -4026,11 +4042,11 @@ function renderInspector(){
         }
     }else held+=oldInspector(n);
     content+=standardSection('Result',held);
-  }else if(n.type==='sample_satellite_files_at_points'){
+  }else if(n.type==='sample_raster'){
     // THE STANDARD INSPECTOR (experiment 186), touched 2026-11-09 when it learned to keep what it reads on this device:
     // the name; its inputs; one sentence and Configure…, where the layer, quality rule, unit and place column are set and
     // saved readings are read again or forgotten; and what the last run read. The controls' ids are kept, in the dialog.
-    content+=standardSection('Name',labelForm('satellite-sample-label','Name',n.params.label||'Sample satellite files at points or over areas'));
+    content+=standardSection('Name',labelForm('satellite-sample-label','Name',n.params.label||'Sample a raster'));
     content+=standardSection('Inputs',standardInputs(n,{files:'Satellite files',points:'Points',areas:'Areas, a polygon layer',area:'Or: a study area\u2019s named parts'}));
     content+=standardSection('Settings',`<p class="standard-sentence">${esc(satelliteSampleSentence(n))}</p>`
       +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button></div>');
@@ -4480,8 +4496,8 @@ content+=`<div class="field"><label class="field-label" for="chart-decisions">Re
   // resolves without a run, the table, so the preview is the table the draft would make. Only Apply writes.
   if(n.type==='map_output')optionalElement('#configure-step')?.addEventListener('click',()=>openMapConfig(n.id));
   if(n.type==='table_output')optionalElement('#configure-step')?.addEventListener('click',()=>openTableConfig(n.id));
-  if(n.type==='sample_raster')optionalElement('#configure-step')?.addEventListener('click',()=>openSampleConfig(n.id));
-  if(n.type==='sample_satellite_files_at_points')optionalElement('#configure-step')?.addEventListener('click',()=>openSatelliteSampleConfig(n.id));
+  if(n.type==='sample_raster'&&n.params.source!=='satellite-files')optionalElement('#configure-step')?.addEventListener('click',()=>openSampleConfig(n.id));
+  if(n.type==='sample_raster'&&n.params.source==='satellite-files')optionalElement('#configure-step')?.addEventListener('click',()=>openSatelliteSampleConfig(n.id));
   if(n.type==='chart_output')optionalElement('#configure-step')?.addEventListener('click',()=>openChartConfig(n.id));
   if(n.type==='space_time_scan')optionalElement('#configure-step')?.addEventListener('click',()=>openScanConfig(n.id));
   if(n.type==='polygon_input')optionalElement('#configure-step')?.addEventListener('click',()=>openPolygonConfig(n.id));
@@ -9004,10 +9020,11 @@ if('serviceWorker' in navigator){
       });
     });
     const ok=!!(await caches.match('./vendor/eye-21.1.24.js'));
-    $('#offline-status').innerHTML=ok?'<i></i> Available offline':'<i></i> Offline setup incomplete';
-  }).catch(()=>{$('#offline-status').textContent='Offline cache unavailable';});
+    // Not shown (the practitioner, 2026-11-11: the label "Available offline" was misleading); kept as a state the tests wait on.
+    $('#offline-status').dataset.state=ok?'ready':'incomplete';
+  }).catch(()=>{$('#offline-status').dataset.state='unavailable';});
   navigator.serviceWorker.addEventListener('controllerchange',askBuild);
-}else{$('#offline-status').textContent='Offline cache unsupported';}
+}else{$('#offline-status').dataset.state='unsupported';}
 // A row for a workflow that was never saved is cleared on arrival, once, and said out loud.
 {
   const ghosts=pruneGhostWorkflows();

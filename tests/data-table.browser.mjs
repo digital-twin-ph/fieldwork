@@ -114,7 +114,7 @@ test('Tabular data imports a long-format extract, displays it and replays offlin
   await expect(page.locator('#n3-preview')).toContainText('fw:TableView');
   await page.locator('[data-view="workflow"]').click();
 
-  await expect(page.locator('#offline-status')).toContainText('Available offline',{timeout:45000});
+  await expect(page.locator('#offline-status')).toHaveAttribute('data-state','ready',{timeout:45000});
   await context.setOffline(true);
   await page.reload();
   await page.locator('[data-view="workflow"]').click();

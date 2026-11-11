@@ -32,7 +32,7 @@ test('legacy heat inputs use shared editors, preserve labels and save attributes
   const w=await saved(page);
   assert.deepEqual(w.nodes.slice(0,2).map(n=>[n.type,n.params.label,n.params.data.features[0].properties.review_note]),[['point_input','Neighborhoods','Retained'],['point_input','Cooling centers','Retained']]);
   assert.deepEqual(w.edges,legacy.edges);
-  await expect(page.locator('#offline-status')).toContainText('Available offline');
+  await expect(page.locator('#offline-status')).toHaveAttribute('data-state','ready');
   await context.setOffline(true);await page.reload();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
   await page.locator('[data-view="results"]').click();

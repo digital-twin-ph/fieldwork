@@ -53,7 +53,7 @@ test('Table displays point attributes without a boundary, pages, searches, and r
   const ontology=await readFile(new URL('../ontology/fieldwork.ttl',import.meta.url),'utf8');
   const quads=await page.evaluate(input=>new Promise((resolve,reject)=>{const worker=new Worker('./build/reasoning-worker.js');const timeout=setTimeout(()=>{worker.terminate();reject(new Error('Table RDF validation timed out'));},45000);worker.onmessage=({data})=>{clearTimeout(timeout);worker.terminate();data.error?reject(new Error(data.error)):resolve(data.quads);};worker.onerror=e=>{clearTimeout(timeout);worker.terminate();reject(new Error(e.message));};worker.postMessage({id:1,input});}),ontology+'\n'+facts+'\n{ ?v a <urn:fieldwork:TableView>. } => { ?v <urn:fieldwork:tableFactsParsed> true. }.');
   assert.ok(quads.some(q=>q.predicate==='urn:fieldwork:tableFactsParsed'));
-  await expect(page.locator('#offline-status')).toContainText('Available offline');const before=await saved(page);await context.setOffline(true);await page.reload();await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});assert.deepEqual(await saved(page),before);
+  await expect(page.locator('#offline-status')).toHaveAttribute('data-state','ready');const before=await saved(page);await context.setOffline(true);await page.reload();await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});assert.deepEqual(await saved(page),before);
   await page.locator('[data-view="results"]').click();
   await page.getByRole('tab',{name:'Field visits table'}).click();await expect(page.locator('#result-rows [data-place]')).toHaveCount(100);
   await page.screenshot({path:'test-results/point-table-desktop.png',fullPage:true});

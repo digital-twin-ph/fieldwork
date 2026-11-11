@@ -407,11 +407,10 @@ export interface ParamsByType {
   find_satellite_products:{label:string; question?:string; topic?:string; route?:string};
   /** A catalog search for the chosen product over the study area and dates, and the items kept. Experiment 179. */
   /** Experiment 179. The quality rule's operator, where the product's documents differ; absent: the reader's default. */
-  sample_satellite_files_at_points:{label:string; qaOperator?:'>='|'>';
-    /** For a gridded product (experiment 180): which layer, the quality rule, and what the place column is called. */
-    layer?:string; qualityRule?:'produced-2k'|'good'|'produced'; placeColumn?:string;
-    /** A temperature in degrees Celsius, Fahrenheit or kelvin; Celsius when unset (2026-11-06). */
-    unit?:'K'|'°C'|'°F'};
+  /** RETIRED 2026-11-11 into Sample a raster, from satellite files (experiment 205). Kept so a saved workflow holding one
+   *  can be migrated. */
+  sample_satellite_files_at_points:{label:string; qaOperator?:'>='|'>'; layer?:string;
+    qualityRule?:'produced-2k'|'good'|'produced'; placeColumn?:string; unit?:'K'|'°C'|'°F'};
   search_satellite_catalog:{label:string; from:string; until:string;
     /** Edges typed in the dialog, W/S/E/N, used when no Study area is connected. */
     box?:[number,number,number,number];
@@ -503,10 +502,19 @@ export interface ParamsByType {
     registerRetrieved?:{registers:{id:string;title:string;licence:string;records:number;country?:string}[];at:string};
     label:string;source:'openstreetmap-live'|'hdx-hot-export'|'overture-places';kinds:string[];requireName:boolean;country:string;minConfidence:number;data:PointCollection|null;retrieved:{source:'openstreetmap-live'|'hdx-hot-export'|'overture-places';sourceLabel:string;licence:string;licenceIRI:string;sourceIRI:string;attribution:string;origin:string;kept:number;dropped:{kind:number;coordinates:number;name:number;outside?:number};at:string;scope:string;filename?:string;sha256?:string;bytes?:number;release?:string;belowConfidence?:number;unmappedCategory?:number;minConfidence?:number}|null};
   buffer_point:{label:string;pointId:string;distanceM:number};
+  /** SAMPLE A RASTER AT POINTS OR OVER AREAS (experiment 205): one sampler for a Raster input or satellite files. */
   sample_raster:{label:string;attribute:string;valueUnit:string;
     /** How a value is read at a point: the cell containing it (the default), or between the four nearest cell centres,
      *  for a smooth field such as a geoid (experiment 198). */
-    method?:'cell'|'bilinear'};
+    method?:'cell'|'bilinear';
+    /** What is read: a Raster input (the default) or satellite files. Set by what is connected; the output follows. */
+    source?:'raster'|'satellite-files';
+    /** Where a raster is read: at points (the default), or over areas, each area's cells totalled. */
+    over?:'points'|'areas';
+    /** For satellite files (experiment 180): the quality rule at points, the layer, the rule over areas, the place column
+     *  and the temperature unit, as the satellite sampler held them. */
+    qaOperator?:'>='|'>'; layer?:string; qualityRule?:'produced-2k'|'good'|'produced'; placeColumn?:string;
+    unit?:'K'|'°C'|'°F'};
   slr_extract_import:{label:string;datasetIRI:string;datasetVersion:string;baselinePeriod:string;citations:string[];basisKind:''|'workflow'|'confidence-pbox';familyValues:{withVerticalLandMotion:string;withoutVerticalLandMotion:string};sourceNote?:string};
   slr_site_assignment:{label:string};
   slr_threshold_comparison:{label:string;scenario:string;basis:string;family:string;year:string;quantile:string;elevationField:string;verticalDatum:string;elevationReference:''|'baseline-sea-surface'|'other-datum'};
@@ -660,7 +668,7 @@ export type NodeType = keyof ParamsByType;
 export type NodeSpec<K extends NodeType = NodeType> = {[T in K]:{type:T; params:ParamsByType[T] & {label?:string}}}[K];
 /** The node types a saved workflow may still name and no canvas may still hold. A retired widget
  *  never runs, so loading one is a rewrite that must say so, or a refusal that names it. */
-export type RetiredNodeType='places'|'centers'|'output'|'policy'|'access_policy'|'xpert'|'coverage_check'|'rate_ratio'|'derive_value';
+export type RetiredNodeType='places'|'centers'|'output'|'policy'|'access_policy'|'xpert'|'coverage_check'|'rate_ratio'|'derive_value'|'sample_satellite_files_at_points';
 /** A node type that still exists but whose contract changed, so a node saved under the old one is
  *  migrated to a different type. `reproject` was a Source holding an imported file; from
  *  2026-10-13 it is a points-to-points transform, and the saved nodes become the `point_input`

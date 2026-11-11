@@ -607,6 +607,25 @@ fw:PointBuffer a owl:Class;
   rdfs:label "Point buffer";
   rdfs:comment "Defines a study area as everything within a stated distance of one named point. The result is a scope like any other and is typed fw:StudyArea, but it is a derived construct rather than a surveyed boundary: its edge is a decision and its radius an assumption of the question, so the source point and the distance are recorded. One point only; several distant points are never combined, because a bounding box spanning them makes a raster window too coarse to sample. The polygon approximates the circle, and the fraction of the true circle area it covers is recorded rather than implied.";
   fw:implementationStatus "implemented".
+# Declared 2026-11-11 with Sample a raster over areas (experiment 205). Its own counts, not the point sample's, whose
+# properties carry fw:RasterPointSample as their domain and would type an area total as a point sample.
+fw:RasterAreaTotal a owl:Class;
+  rdfs:subClassOf fw:SpatialOperation;
+  rdfs:label "Raster total over areas";
+  rdfs:comment "Sums the raster cells whose centre is inside or on each area, counting each cell whole: not area-weighted, so a cell split by an edge belongs wholly to one side. Cells the raster marks as no data add nothing and are counted apart, because no data is not zero. Cells of an area beyond the raster's window are counted as outside, so an area the window does not cover is not read as a small total.";
+  fw:implementationStatus "implemented".
+fw:cellRule a owl:DatatypeProperty; rdfs:domain fw:RasterAreaTotal; rdfs:range xsd:string;
+  rdfs:label "Rule by which a cell belongs to an area".
+fw:areaCount a owl:DatatypeProperty; rdfs:domain fw:RasterAreaTotal; rdfs:range xsd:nonNegativeInteger;
+  rdfs:label "Areas totalled".
+fw:totalledCellCount a owl:DatatypeProperty; rdfs:domain fw:RasterAreaTotal; rdfs:range xsd:nonNegativeInteger;
+  rdfs:label "Cells with a value added into the totals".
+fw:noDataCellCount a owl:DatatypeProperty; rdfs:domain fw:RasterAreaTotal; rdfs:range xsd:nonNegativeInteger;
+  rdfs:label "Cells inside the areas the raster marks as no data".
+fw:outsideRasterCellCount a owl:DatatypeProperty; rdfs:domain fw:RasterAreaTotal; rdfs:range xsd:nonNegativeInteger;
+  rdfs:label "Cells of the areas beyond the raster's window".
+fw:areasWithoutValueCount a owl:DatatypeProperty; rdfs:domain fw:RasterAreaTotal; rdfs:range xsd:nonNegativeInteger;
+  rdfs:label "Areas with no cell holding a value, and so no total".
 fw:RasterPointSample a owl:Class;
   rdfs:subClassOf fw:SpatialOperation;
   rdfs:label "Raster point sample";

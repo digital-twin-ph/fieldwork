@@ -9,7 +9,7 @@ import {collectPageErrors} from './page-errors.mjs';
 //
 // OpenFreeMap is VECTOR-only, so these cannot be an L.tileLayer URL. The renderer is not
 // swapped: maplibre-gl-leaflet puts a MapLibre canvas under the existing Leaflet layers.
-test('an OpenFreeMap vector style draws under the workflow layers, and is credited',async({page})=>{
+test('an OpenFreeMap vector style draws under the workflow layers, and is credited',async({page,browserName})=>{
   const errors=collectPageErrors(page);
   const requested=[];
   page.on('request',r=>{if(r.url().includes('openfreemap'))requested.push(r.url());});
@@ -38,7 +38,8 @@ test('an OpenFreeMap vector style draws under the workflow layers, and is credit
   // drew". MapLibre's canvas carries its own class.
   await page.locator('[data-view="results"]').click();
   await expect(page.locator('.maplibregl-canvas')).toHaveCount(1);
-  expect(requested.some(u=>u.includes('/styles/positron'))).toBe(true);
+  // Seen only in Chromium: in WebKit the request does not reach Playwright (0.88.1 CI). The canvas above is the engine-neutral check.
+  if(browserName==='chromium')expect(requested.some(u=>u.includes('/styles/positron'))).toBe(true);
 
   // THAT IT MOUNTED IS NOT THAT IT DREW, and the first two attempts at this assertion were both
   // wrong. Counting the canvas passed over a blank map. Reading its pixels with readPixels also

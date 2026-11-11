@@ -10,6 +10,8 @@ shown in a local build is not a claim that it has been published.
   `cell_max`, of the cells with a value. Off by default. Sample a raster 0.4.0.
 - **A point layer's colour, in the Map's Configure….** Beside each layer's mark and size: one of six colour-blind-safe
   colours, by name, or the default. The Hagelloch cases on the 1824 sheet are now vermillion, not near-black. Map 0.25.0.
+- **Fixed:** the heat example's captions ("Synthetic neighborhoods and cooling centers", and the Inspector's note about
+  them) showed on every workflow without captions of its own, Hagelloch's among them. They show on the heat example only.
 
 ## 0.94.0 — 2026-11-11
 

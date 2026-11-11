@@ -1442,7 +1442,9 @@ function render(){
   // returns early for the view you are on, so clicking the tab again does nothing. Found by a
   // test that ran the workflow with Notes open and saw none of what the run had produced.
   if(currentView==='notes')renderNotesView();
-  if(currentView==='project')renderProjectView();$('#project-title').textContent=workflow.name||'Untitled workflow';$('#project-description').textContent=old?'Explore diagnostic access, evidence strength, and the assumptions connecting them.':'Connect geography to evidence. Make every decision explainable.';$('#example-note').textContent=old?'Source boundary + historical facilities · generated sample locations · straight-line access proxy':'Synthetic neighborhoods and cooling centers · illustrative screening rule';$('#canvas-example').textContent=old?'OLD NALEDI · WORKED EXAMPLE 02':'HEAT OUTREACH · DEMO 01';$('#footer-context').textContent=old?'Source snapshot 7f183843 · synthetic sample locations':'CRS84 coordinates · geodesic approximation · synthetic data';
+  // THE HEAT EXAMPLE'S CAPTIONS WERE THE FALLBACK for every workflow with none of its own, so Hagelloch said "The heat
+  // example uses synthetic neighborhoods" (the practitioner, 2026-11-11: stale). Each caption is said only of its example.
+  if(currentView==='project')renderProjectView();$('#project-title').textContent=workflow.name||'Untitled workflow';$('#project-description').textContent=old?'Explore diagnostic access, evidence strength, and the assumptions connecting them.':exampleKey(workflow)==='heat'?'Connect geography to evidence. Make every decision explainable.':'';$('#example-note').textContent=old?'Source boundary + historical facilities · generated sample locations · straight-line access proxy':exampleKey(workflow)==='heat'?'Synthetic neighborhoods and cooling centers · illustrative screening rule':'';$('#canvas-example').textContent=old?'OLD NALEDI · WORKED EXAMPLE 02':exampleKey(workflow)==='heat'?'HEAT OUTREACH · DEMO 01':(workflow.name||'This workflow').toUpperCase();$('#footer-context').textContent=old?'Source snapshot 7f183843 · synthetic sample locations':exampleKey(workflow)==='heat'?'CRS84 coordinates · geodesic approximation · synthetic data':'';
   // SAID ONLY WHILE IT IS STILL TRUE. The four captions below are set from the example key; the
   // block after them withdraws the two that describe a RECIPE once the canvas no longer matches
   // the published example. The project description and the footer stay: they describe the kind of
@@ -2356,16 +2358,14 @@ function openSampleConfig(nodeId:string){
   type Draft=WorkflowNode<'sample_raster'>['params'];
   openConfigDialog<Draft>({
     id:'sample-config',widget:'Sample a raster at points or over areas',step:node.params.label||TYPES.sample_raster.title,draft:structuredClone(node.params),
-    sections:draft=>({settings:`<p class="description">${draft.over==='areas'?'Reading over areas: each area\u2019s cells are totalled.':'Reading at points: each point takes its cell\u2019s value.'} `
-        +`Connect points or areas to choose; satellite files instead of a raster read by date.</p>`
+    sections:draft=>({settings:`<p class="description">${draft.over==='areas'?'Reading over areas: each area\u2019s cells are totalled.':'Reading at points: each point takes its cell\u2019s value.'}</p>`
       +`<div class="field"><label class="field-label" for="sample-attribute">${draft.over==='areas'?'Name of the total':'Attribute to write'}</label><input id="sample-attribute" maxlength="60" value="${esc(draft.attribute)}" placeholder="${draft.over==='areas'?'population':'elevation_m'}"></div>`
       +`<div class="field"><label class="field-label" for="sample-unit">What those values measure</label><input id="sample-unit" maxlength="60" value="${esc(draft.valueUnit)}" placeholder="metres above the stated datum"></div>`
-      +(draft.over==='areas'?`<div class="field"><label class="check"><input type="checkbox" id="sample-cell-statistics"${draft.cellStatistics?' checked':''}> Also give each area\u2019s mean, smallest and largest cell value</label></div>`
-        +'<p class="description">Of the cells with a value. A mean of cells is per cell, not per square kilometre.</p>':'')
+      +(draft.over==='areas'?`<div class="field"><label class="check"><input type="checkbox" id="sample-cell-statistics"${draft.cellStatistics?' checked':''}> Also give each area\u2019s mean, smallest and largest cell value</label></div>`:'')
       +(draft.over==='areas'?'':`<div class="field"><label class="field-label" for="sample-method">Read each value as</label><select id="sample-method">`
       +`<option value="cell"${draft.method!=='bilinear'?' selected':''}>the cell containing the point</option>`
       +`<option value="bilinear"${draft.method==='bilinear'?' selected':''}>between the four nearest cells (bilinear)</option></select></div>`
-      +'<p class="description">Bilinear suits a smooth field such as a geoid; keep a margin of one cell in the raster\u2019s window so points near its edge have four.</p>'),
+      +''),
       preview:`<p class="muted">${esc(sampleSentence({...node,params:draft}))} No value is set to zero.</p>`}),
     wire:(root,draft,redraw)=>{
       root.querySelector<HTMLInputElement>('#sample-attribute')?.addEventListener('change',e=>{draft.attribute=(e.target as HTMLInputElement).value.trim();redraw();});
@@ -2654,7 +2654,7 @@ function mapSettingsFlat(n:WorkflowNode<'map_output'>):string{
           :'';
         const chosen=n.params.layerSymbols||{};
         return classed+named+linked+`<span class="inspector-section">Layer symbols</span>`
-          +`<p class="muted">Hue and mark say which source a point came from; whether it is filled says whether it is inside the study area. Marks are named as OGC Symbology Encoding names them.</p>`
+
           +sources.map((source,index)=>{
             const held=chosen[source.id],resolved=resolveLayerSymbol(index,held);
             // THE COLOUR (the practitioner, 2026-11-11: cases on a black-and-white sheet "should be colored differently").
@@ -3228,7 +3228,7 @@ function workflowSpanKm():number|undefined{
 function renderInspector(){
   if(selected?.startsWith('result:')){renderEvidence(selected.slice(7));return;}
   if(exampleKey(workflow)==='blank'&&!workflow.nodes.some(n=>n.id===selected)){$('#inspector-content').innerHTML='<div class="inspector-body"><span class="inspector-section">Step 1 of 2</span><h2>Define the study area</h2><p class="description">Add Study area, then select the node to draw a bounding box or polygon on an online map.</p><div class="rule-preview">Predict what the selection will produce, inspect the N3 facts, then run the readiness rule.</div><p class="muted">Your other worked examples remain saved separately.</p></div>';return;}
-  const n=workflow.nodes.find(n=>n.id===selected);if(!n){$('#inspector-content').innerHTML=`<div class="inspector-body"><h2>Your analysis, connected.</h2><p class="description">Choose a node to inspect its settings, or select a result to inspect its evidence.</p><div class="notice">${exampleKey(workflow).startsWith('snow-')?'Historical case-study locations; modeled catchments. Inspect a processing node to compare its assumptions.':exampleKey(workflow)==='old-naledi'?'Real source boundary and historical facilities; generated sample locations. Select Facility access to explore the assumptions.':'The heat example uses synthetic neighborhoods and illustrative screening criteria.'}</div></div>`;return;}
+  const n=workflow.nodes.find(n=>n.id===selected);if(!n){$('#inspector-content').innerHTML=`<div class="inspector-body"><p class="description">Choose a node to inspect its settings, or select a result to inspect its evidence.</p>${(note=>note?`<div class="notice">${note}</div>`:'')(exampleKey(workflow).startsWith('snow-')?'Historical case-study locations; modeled catchments. Inspect a processing node to compare its assumptions.':exampleKey(workflow)==='old-naledi'?'Real source boundary and historical facilities; generated sample locations. Select Facility access to explore the assumptions.':exampleKey(workflow)==='heat'?'The heat example uses synthetic neighborhoods and illustrative screening criteria.':'')}</div>`;return;}
   // ONE SHAPE FOR EVERY PANEL: title, one line of what it does, the way in for a learner, then the
   // controls. The two links used to sit after whatever alerts a run had raised, so their position
   // moved with the state of the workflow and their size said they were an afterthought.

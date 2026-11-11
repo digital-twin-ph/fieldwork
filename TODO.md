@@ -1296,6 +1296,18 @@ after, in the browser, so a cut is seen rather than claimed.
    move the third to the manual or the record. Start with the header subtitle, the Notes tab heading, the Inspector's
    step cards, and labels that are this project's terms (*machined*, *derived*, *authored*, *N3 & evidence*).
    Measure: words of design explanation per surface, before and after, extending `validate-inspector-prose`.
+   **Moved up, after 18** (the practitioner, 2026-11-11, on the heat example's caption showing in Hagelloch: *"There's
+   probably a lot of stale text lying around and I still see a lot of unnecessary commentary in the FW UI"*). Stale
+   text is a second class beside design explanation: words true of another example or an earlier version. The heat
+   captions were the fallback for every workflow with none of its own (fixed 0.95.0,
+   tests/no-borrowed-captions.browser.mjs). The sweep: every string the interface shows, inventoried by surface, each
+   marked instruction, status, design explanation or stale; the stale removed, the explanation moved to the manual.
+   The built-in example captions in `src/app.ts` (blank, raster, Snow, Old Naledi, heat) are the next to read: the
+   built-ins are themselves under item 7's bar.
+   **And opportunistically, always** (the practitioner, 2026-11-11: *"The UI should be intuitive enough that it does not
+   need commentary text. Commentary text about design belongs in design documents not the UI. Let's be opportunistic
+   with taking them out like when we standardize widgets when we touch them."*): any surface touched loses its design
+   commentary and stale text in the same pass, as a widget touched moves to 186's standard.
 2. **Controls without a pattern.** Inventory every button on each surface: label, style, position. One style per role
    (primary action, secondary, link-like, label), one place for a step's primary action. The note card's "open" chip is
    the first instance. Measure: buttons whose style does not match their role.

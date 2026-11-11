@@ -621,12 +621,12 @@
    "migrationFrom": []
   },
   "raster_input": {
-   "version": "0.9.0",
+   "version": "0.10.0",
    "released": "2026-11-11",
    "changes": [
     {
      "kind": "minor",
-     "description": "GRID3 beside WorldPop (TODO 24; the practitioner, 2026-11-10: \"For raster input I thought we included GRID3, GHSL, etc. for population rasters\"). Configure… offers a population source: WorldPop for every country, or GRID3's 2025 estimates for the 52 countries of sub-Saharan Africa, one file each, named with its size, licence, citation and limits (top-down, not official statistics, no uncertainty layer). Outside sub-Saharan Africa it says GRID3 publishes nothing. The catalogue is taken by scripts/grid3-catalogue.mjs from the listing and each file's headers."
+     "description": "GHS-POP, the JRC's global population grid (R2023A, 1975 to 2030 every five years, 2025 and 2030 projected), as a population source that needs no country: its window over the study area is read from JRC's cloud-optimized copy on AWS by HTTP range, through the GeoTIFF-at-a-URL path, with nothing downloaded first. Said with its licence, both citations and its limits: residential population, weaker where buildings are hard to see, not to be set against GHS-BUILT."
     }
    ],
    "breaking": false,

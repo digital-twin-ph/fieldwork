@@ -3,6 +3,7 @@ import {boundsOf} from './health-facilities.js';
 import {openMapImageConfig} from './georeference-ui.js';
 import {openCountriesConfig} from './area-countries-ui.js';
 import {openChangelog} from './changelog-ui.js';
+import {GHS_CITATION,GHS_EPOCHS,GHS_LICENCE,GHS_NOTE,GHS_PROJECTED,ghsUrl} from './ghs-pop.js';
 import {grid3RasterFor,GRID3_CITATION,GRID3_COUNTRIES,GRID3_LICENCE,GRID3_NOTE,GRID3_PRODUCT,GRID3_TAKEN} from './grid3-catalogue.js';
 import {countriesOfArea} from './area-countries.js';
 import {placedCard} from './map-image-ui.js';
@@ -5076,7 +5077,8 @@ content+=`<div class="field"><label class="field-label" for="chart-decisions">Re
     let country=stated||node.params.populationCountry||'';
     // WHICH SOURCE (TODO 24, 2026-11-11): WorldPop for every country, GRID3's 2025 estimates for sub-Saharan Africa. A choice
     // of which file to download, not a setting the step keeps: the raster read records the file it was given.
-    let popSource:'worldpop'|'grid3'=grid3RasterFor(country||null)&&!populationRastersForCountry(country||null).length?'grid3':'worldpop';
+    let ghsEpoch='2020';
+    let popSource:'worldpop'|'grid3'|'ghs'=grid3RasterFor(country||null)&&!populationRastersForCountry(country||null).length?'grid3':'worldpop';
     const grid3Link=()=>{const r=grid3RasterFor(country||null);
       if(!r)return `<p class="muted">GRID3 publishes no estimate for ${esc(countryName(country))}: its ${GRID3_COUNTRIES} countries are in sub-Saharan Africa.</p>`;
       return `<a class="button" id="population-download" href="${esc(r.url)}" download target="_blank" rel="noopener noreferrer">`
@@ -5102,9 +5104,17 @@ content+=`<div class="field"><label class="field-label" for="chart-decisions">Re
         +`<select id="population-country"><option value="" ${country?'':'selected'}>Choose a country…</option>`
         +(several?COUNTRIES.filter(c=>upstream.includes(c.iso)):COUNTRIES).map(c=>`<option value="${c.iso}" ${c.iso===country?'selected':''}>${esc(c.name)} (${c.iso})</option>`).join('')
         +`</select>`+(several?'':`<p class="muted">Kept on the study area, which states it once for every step that needs it.</p>`);
-      const sourcePick=!country?'':`<label class="field-label" for="population-source">Population source</label><select id="population-source">`
+      const sourcePick=`<label class="field-label" for="population-source">Population source</label><select id="population-source">`
         +`<option value="worldpop" ${popSource==='worldpop'?'selected':''}>WorldPop · every country, several years</option>`
-        +`<option value="grid3" ${popSource==='grid3'?'selected':''}>GRID3 · sub-Saharan Africa, 2025</option></select>`;
+        +`<option value="grid3" ${popSource==='grid3'?'selected':''}>GRID3 · sub-Saharan Africa, 2025</option>`
+        +`<option value="ghs" ${popSource==='ghs'?'selected':''}>GHS-POP (JRC) · every country, 1975–2030, read for the area only</option></select>`;
+      // GHS-POP NEEDS NO COUNTRY: one grid of the world, read for the study area's window by HTTP range.
+      if(popSource==='ghs')return `<h3>Population (GHS-POP)</h3>`+sourcePick
+        +`<label class="field-label" for="ghs-epoch">Year</label><select id="ghs-epoch">`
+        +GHS_EPOCHS.map(e=>`<option value="${e}" ${e===ghsEpoch?'selected':''}>${e}${GHS_PROJECTED.has(e)?' (projected)':''}</option>`).join('')+`</select>`
+        +`<p><button type="button" class="button" id="ghs-read">Read the ${ghsEpoch} window from JRC's copy</button></p>`
+        +`<p class="muted">Reads only the part of the 12 GB global grid that covers the study area, from JRC's copy on Amazon Web Services; `
+        +`nothing is downloaded first. The area read is sent to that server. ${esc(GHS_NOTE)} ${esc(GHS_LICENCE)} Cite: ${esc(GHS_CITATION)}.</p>`;
       return `<h3>Population (${popSource==='grid3'?'GRID3':'WorldPop'})${country?` for ${esc(countryName(country))}`:''}</h3>`
         +(stated?`<p class="muted">The country is the study area’s.</p>`:ask)+sourcePick
         +(!country?'':popSource==='grid3'?`<div class="extract-links" id="population-link">${grid3Link()}</div>`:rasters.length
@@ -5115,7 +5125,13 @@ content+=`<div class="field"><label class="field-label" for="chart-decisions">Re
     };
     const wirePopulation=(block:HTMLElement)=>{
       const chosen=block.querySelector<HTMLSelectElement>('#population-source');
-      if(chosen)chosen.onchange=()=>{popSource=chosen.value==='grid3'?'grid3':'worldpop';block.innerHTML=populationHtml();wirePopulation(block);};
+      if(chosen)chosen.onchange=()=>{popSource=chosen.value==='grid3'?'grid3':chosen.value==='ghs'?'ghs':'worldpop';block.innerHTML=populationHtml();wirePopulation(block);};
+      const epoch=block.querySelector<HTMLSelectElement>('#ghs-epoch');
+      if(epoch)epoch.onchange=()=>{ghsEpoch=epoch.value;block.innerHTML=populationHtml();wirePopulation(block);};
+      // The URL path does the read: the address put where a person would type it, and read as they would.
+      block.querySelector<HTMLButtonElement>('#ghs-read')?.addEventListener('click',()=>{const dialog=block.closest('dialog');
+        const field=dialog?.querySelector<HTMLInputElement>('#raster-url'),read=dialog?.querySelector<HTMLButtonElement>('#raster-url-read');
+        if(!field||!read)return;field.value=ghsUrl(ghsEpoch);field.closest('details')?.setAttribute('open','');read.click();});
       const year=block.querySelector<HTMLSelectElement>('#population-year');
       if(year)year.onchange=()=>{block.querySelector('#population-link')!.innerHTML=linkFor(year.value);};
       const pick=block.querySelector<HTMLSelectElement>('#population-country');

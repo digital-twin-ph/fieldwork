@@ -27,6 +27,12 @@ per country (Botswana's is 11.6 MB, against WorldPop's 293 MB). They are modelle
 spread over settled areas; they are not official government statistics and carry no uncertainty layer. Where GRID3
 publishes nothing for the country, the dialog says so. The download is your browser's, as WorldPop's is.
 
+**Or GHS-POP**, the JRC's global population grid, for any country and every five years from 1975 to 2030 (2025 and
+2030 are projections). Choose the year and press **Read the window from JRC's copy**: only the part of the global grid
+over your study area is read, from JRC's copy on Amazon Web Services, so nothing is downloaded first, and the area read
+is sent to that server. It counts residential population, spread over the volume of residential buildings, so it is
+weaker where buildings are hard to see, and should not be set against GHS-BUILT in the same analysis.
+
 The step's panel holds its **Name**, its study area, one sentence saying what it keeps, and **Configure…**:
 
 | In Configure… | What it does |

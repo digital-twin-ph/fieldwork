@@ -220,7 +220,10 @@ not a practitioner in the field.
    *Population source* beside WorldPop. **Left:** GRID3's country-specific estimates (Nigeria v3.0, the DRC's v4.4 by
    province with lower and upper bounds, Zambia, Mozambique and others; three are CC BY-SA); and GHS-POP, confirmed as
    the JRC's Global Human Settlement Layer: JRC's AWS copy sends CORS and allows ranges, so a study area's window might be
-   read without a download, which one partial read of the file's header (about 16 KB) would settle. Not yet asked to do.
+   read without a download, which one partial read of the file's header (about 16 KB) would settle. **Done 2026-11-11 with
+   the practitioner's yes**: a cloud-optimized GeoTIFF (512 x 512 tiles, deflate, five overviews), and **GHS-POP is built
+   (0.93.0)** as a population source read for the study area's window. **Left:** GRID3's country-specific estimates;
+   a live read of a real window, which only the tests' stand-in has done.
 25. **A study area across a border** (the practitioner, 2026-11-10: *"We discussed the cross border study area. In this
    case we need to be able to either (1) detect the countries based on geometry overlaps or (2) named explicitly"*).
    **Built 2026-11-10 (0.85.0), [204](docs/experiments/204-a-study-area-across-a-border.md)**: a list of countries,

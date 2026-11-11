@@ -3,6 +3,12 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.93.0 — 2026-11-11
+
+- **GHS-POP beside WorldPop and GRID3.** Raster input's Configure… offers the JRC's global population grid for any
+  country and any year from 1975 to 2030. Only the window over your study area is read, from JRC's copy online, so there
+  is no download first. Said with its licence, citations and limits. Raster input 0.10.0.
+
 ## 0.92.0 — 2026-11-11
 
 - **Placing a point on today's map, precisely.** The hand moves the map; **Shift + click** places the point, with a

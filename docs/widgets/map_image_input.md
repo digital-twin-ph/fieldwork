@@ -1,6 +1,6 @@
 # Georeferenced map image
 
-_Created 2026-10-27 · Updated 2026-11-10_
+_Created 2026-10-27 · Updated 2026-11-11_
 
 ## What it does
 

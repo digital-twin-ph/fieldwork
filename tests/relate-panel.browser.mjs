@@ -16,7 +16,7 @@
  *  so you know which half of the row came from which table."* So the Quick Look says, per column,
  *  which table it came from.
  */
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {existsSync} from 'node:fs';
 import {collectPageErrors} from './page-errors.mjs';
 

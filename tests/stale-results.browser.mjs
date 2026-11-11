@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 
 // "And a bug - when I deleted the Map, Street Network and Study Area, Result Map was still there."
 //

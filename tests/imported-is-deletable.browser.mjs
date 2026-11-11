@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {existsSync} from 'node:fs';
 
 /** AN IMPORTED EXAMPLE IS NOT A WORKED EXAMPLE THAT SHIPS WITH THE APPLICATION.

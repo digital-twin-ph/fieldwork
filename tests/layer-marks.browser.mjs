@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {inMapSettings} from './map-settings.mjs';
 
 // The mark was NAMED and not DRAWN. After one overlay per source arrived, the layer control said

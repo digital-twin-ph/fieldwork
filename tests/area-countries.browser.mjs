@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {collectPageErrors} from './page-errors.mjs';
 
 // A STUDY AREA ACROSS A BORDER (experiment 204): from Gaborone to the South African border. Its countries are found from

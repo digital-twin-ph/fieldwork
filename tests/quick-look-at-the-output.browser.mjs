@@ -13,7 +13,7 @@
  *  node produced. Derived from `TYPES[type].output==='table'`, so relate, group, derive and
  *  select rows are covered without being named.
  */
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {collectPageErrors} from './page-errors.mjs';
 
 const openHagelloch=async page=>{

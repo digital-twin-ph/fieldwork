@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import assert from 'node:assert/strict';
 import {Parser,Store} from 'n3';
 import {readFile} from 'node:fs/promises';

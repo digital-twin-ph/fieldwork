@@ -126,6 +126,10 @@ html{scroll-padding-top:var(--project-bar-height,160px)}
 .explainer p{margin:11px 0 0}
 /* The widget manual, opened from the Inspector. Reading width over full width: a manual page is
    prose, and prose set to the width of a dialog is harder to read than prose set to 70 characters. */
+/* CONFIGURE…'S SETTINGS IN GROUPS (2026-11-10): a border and a heading per group, so a label is read with its controls. */
+.config-group{border:1px solid var(--line);border-radius:8px;padding:10px 14px 6px;margin:0 0 14px}
+.config-group-title{font-size:16px;font-weight:650;margin:0 0 4px;color:var(--ink)}
+.config-group>label:not(.field-label){display:block;margin:8px 0}
 #changelog-dialog .changelog-release h3{font-size:16px;margin:16px 0 4px}
 #changelog-dialog{max-height:85vh;overflow:auto}
 #changelog-dialog .changelog-nav{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:14px 0 6px}
@@ -693,7 +697,10 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
    -- and the ones past the map's bottom edge were drawn outside it and clipped, with nothing to
    scroll. A choropleth of south London lists 33, so this is the first figure where the list is
    longer than the map is tall. */
+/* Themed like the scale and attribution beside it: Leaflet's own white panel under the dark theme's light text read
+   light on light (2026-11-10). tests/map-controls-contrast.browser.mjs measures every map control in both themes. */
 .leaflet-control-layers{max-height:calc(100% - 24px);overflow-y:auto;overscroll-behavior:contain}
+.leaflet-container .leaflet-control-layers,.leaflet-container .leaflet-control-layers label{background:var(--surface-raised);color:var(--ink)}
 .leaflet-control-layers-list{max-height:none}
 
 /* The interactive map's class legend, drawn to match the static figure's ramp so one figure

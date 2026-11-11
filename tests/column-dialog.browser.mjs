@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 
 /** A LONG COLUMN LIST IS CHOSEN IN ITS OWN DIALOG. The practitioner, 2026-11-04, on 92 key column checkboxes: *"This is
  *  choice overload"*, and *"I think the table column filtering should be another dialog."* */

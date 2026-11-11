@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {collectPageErrors} from './page-errors.mjs';
 
 // "On a blank canvas, all widgets are active, does not start with Study Area." -- the

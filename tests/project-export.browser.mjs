@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {downloadText} from './read-download.mjs';
 
 // "Where is the export project button?" -- 2026-10-21.

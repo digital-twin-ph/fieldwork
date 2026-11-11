@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {readFileSync,existsSync} from 'node:fs';
 
 /** WRITING A NOTE, IN THE DIALOG THAT USED TO REFUSE IT.

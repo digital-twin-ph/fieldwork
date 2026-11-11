@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {collectPageErrors} from './page-errors.mjs';
 
 // "When refreshing the browser I get this alert but the text on the dark green buttons can't be

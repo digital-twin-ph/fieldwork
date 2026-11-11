@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {readFileSync,existsSync} from 'node:fs';
 
 /** FORMATTING AND LATEX, IN THE RUNNING APPLICATION.

@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 
 // The practitioner, 2026-10-20: "Right now I have no way of editing Project Title nor viewing
 // Project metadata. I can only view the workflows through the worked example dropdown which seems

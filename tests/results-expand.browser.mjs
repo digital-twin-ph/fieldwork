@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 
 // This file tested the SPLIT: a `results-expanded` class, an Expand button that decided which
 // half won, and a comparison run that took the lower half over once. Results became a tab on

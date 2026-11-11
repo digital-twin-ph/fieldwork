@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {existsSync,readFileSync} from 'node:fs';
 import {performManual} from './manual-runner.mjs';
 

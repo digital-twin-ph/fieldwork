@@ -3,7 +3,7 @@
  *  assumes a wide table so the user (an epidemiologist) can recognize what the rule does to his wide tables."*
  *
  *  The synthetic districts of example-workflows-rulesets, imported wide: one row per district, houses and deaths. */
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {collectPageErrors} from './page-errors.mjs';
 
 const districts=[['Northgate',4200,61],['Eastmarsh',3150,12],['Southfield',5020,118],['Westbury',2875,0],['Harbour',0,0]];

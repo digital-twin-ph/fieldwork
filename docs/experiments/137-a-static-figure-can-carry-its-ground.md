@@ -2,9 +2,9 @@
 
 _Created 2026-10-25 · Updated 2026-10-25_
 
-**Status:** asked — designed here, not built. Moving to `tried` needs tiles baked into one
-worked example's static figure with its credit, and the alignment error measured rather
-than argued.
+**Status:** tried, corrected 2026-11-10. Tiles are baked into static figures with their credit (`src/basemap-tiles.ts`,
+`tests/static-basemap.browser.mjs`), and OpenStreetMap became the default basemap on 2026-11-10. The alignment error
+is still argued rather than measured. *The line this replaces said "designed here, not built" long after it was built.*
 
 The practitioner, 2026-10-25, on a Gaborone map: *"There is no default basemap (could be
 natural earth)"*. Then, on the licence and privacy question this raises: *"As long as we

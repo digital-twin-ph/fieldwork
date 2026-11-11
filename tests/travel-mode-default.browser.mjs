@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {blankWorkflow,newStudyArea} from '../build/study-area.js';
 
 // "At the province level we are not even looking at walking mode. It will be driving mode." Then:

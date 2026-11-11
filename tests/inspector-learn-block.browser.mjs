@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 
 // "In an Inspector panel, it seems we do not have a standardized, user friendly interface because
 // we crammed so many things into it. The buttons for Deeper Dive and Manual are very tiny when

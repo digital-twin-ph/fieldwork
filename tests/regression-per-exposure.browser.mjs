@@ -1,6 +1,6 @@
 /** ONE REGRESSION, ONE MODEL PER SHIFT. Experiment 185, stage 2: the Inspector offers Relate's shift columns as more
  *  exposures, each ticked column is its own model on its own rows, and the models come out as one table. */
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {collectPageErrors} from './page-errors.mjs';
 import {cases,satellite} from './fixtures/lag-weeks.mjs';
 

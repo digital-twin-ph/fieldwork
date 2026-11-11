@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 
 /** The practitioner, 2026-10-21, after a study area that could not be saved: *"I think we need a
  *  storage status indicator to also tell us to off load projects from the browser (export) if

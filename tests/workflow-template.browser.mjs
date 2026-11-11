@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 
 // "Can the workflow be imported as a template to be filled up?" -- 2026-10-21, with a North Kivu
 // workflow built and an Ituri one to build.

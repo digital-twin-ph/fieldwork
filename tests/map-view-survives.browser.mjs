@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {inMapSettings} from './map-settings.mjs';
 
 /** The practitioner, 2026-10-26: *"On the interactive map, the radius adjustment still rezooms out

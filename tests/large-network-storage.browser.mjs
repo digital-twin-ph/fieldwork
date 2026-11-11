@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import assert from 'node:assert/strict';
 import {payload} from './payload-store.mjs';
 

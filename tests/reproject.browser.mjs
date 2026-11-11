@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import assert from 'node:assert/strict';
 
 // `reproject` was a Source that imported a UTM file and converted it (0.1.0). From 0.2.0 it is a

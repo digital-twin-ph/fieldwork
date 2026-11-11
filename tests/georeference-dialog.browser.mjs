@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {collectPageErrors} from './page-errors.mjs';
 
 // PLACING A MAP IMAGE BY MATCHED POINTS (experiment 201): typed, as a manual says them, so the fit and its errors are

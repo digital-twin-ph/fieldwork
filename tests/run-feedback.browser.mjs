@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 
 // A run used to be silent until it ended. These two signals say which widget just
 // finished, and how long the whole thing took, because on a slow step a practitioner

@@ -6,7 +6,7 @@
  *  adding a link step: *"Maybe that's the one we need to extend because the output and outcome desired is the
  *  same"*; and *"We can make .88 the default but adjustable."* Made-up names here, spelled as the two sources do.
  */
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {collectPageErrors} from './page-errors.mjs';
 
 const importTable=async (page,name,csv)=>{

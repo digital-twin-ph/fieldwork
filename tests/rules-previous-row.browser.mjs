@@ -4,7 +4,7 @@
  *
  *  The synthetic file of example-workflows-rulesets, out of date order on purpose: a rule that did not sort would give
  *  visibly wrong answers. */
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {readFileSync,existsSync} from 'node:fs';
 import {collectPageErrors} from './page-errors.mjs';
 

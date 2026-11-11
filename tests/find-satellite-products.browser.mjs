@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {collectPageErrors} from './page-errors.mjs';
 
 /** FIND SATELLITE PRODUCTS, from the palette to a chosen product (experiment 179). Products needing no sign-in come

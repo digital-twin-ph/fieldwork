@@ -19,6 +19,10 @@
  */
 export const BASEMAP_CHOICES=['none','osm','topo','natural-earth-110m','ofm-liberty','ofm-positron','ofm-bright','tile-extract'] as const;
 export type BasemapChoice=typeof BASEMAP_CHOICES[number];
+/** What a map draws under its layers when nobody has chosen (2026-11-10). */
+export const DEFAULT_BASEMAP:BasemapChoice='osm';
+/** A map's basemap: its own choice, or the default. Every reader goes through this, so none of them can disagree. */
+export const basemapOf=(choice:string|undefined|null):BasemapChoice=>(choice||DEFAULT_BASEMAP) as BasemapChoice;
 
 /** The styles a static figure cannot bake. */
 export const VECTOR_BASEMAP_CHOICES=['ofm-liberty','ofm-positron','ofm-bright','tile-extract'] as const;
@@ -89,7 +93,7 @@ export const BASEMAP_OPTIONS:readonly {value:BasemapChoice;label:string}[]=
 export const basemapOptions=(selected:BasemapChoice|undefined,
   presentation?:'plot'|'interactive',spanKm?:number):string=>BASEMAP_OPTIONS
   .filter(option=>!presentation||basemapAvailable(option.value,presentation,spanKm))
-  .map(option=>`<option value="${option.value}" ${(selected||'none')===option.value?'selected':''}>${option.label}</option>`)
+  .map(option=>`<option value="${option.value}" ${basemapOf(selected)===option.value?'selected':''}>${option.label}</option>`)
   .join('');
 
 /** WHAT A READER SHOULD KNOW ABOUT THE GROUND. The practitioner, 2026-11-02: *"The reproducibility
@@ -97,7 +101,8 @@ export const basemapOptions=(selected:BasemapChoice|undefined,
  *  depends on them, and exact reproduction of them is not asked for. They can change or go, so that
  *  is said once, by the machine, and travels with the write-up. Bundled ground needs no such note. */
 export function basemapLimitation(choice:string|undefined):string|null{
-  if(!choice||choice==='none'||choice==='natural-earth-110m')return null;
+  choice=basemapOf(choice);
+  if(choice==='none'||choice==='natural-earth-110m')return null;
   if(choice==='tile-extract')return 'The basemap is an OpenStreetMap extract, imported once as PMTiles and '
     +'kept on one device as context. The project keeps its source, boundary, zoom range and build date, not '
     +'the tiles, so another machine imports what is published then and may show different ground. No '

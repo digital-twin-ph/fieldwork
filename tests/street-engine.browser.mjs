@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 
 /** The street engine, end to end, with no extract: a published .osm.pbf is
  *  hundreds of megabytes and belongs on a practitioner's computer rather than

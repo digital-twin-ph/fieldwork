@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import assert from 'node:assert/strict';
 
 // The practitioner, 2026-10-20: "Store fallback is dangerous especially when the primary mode

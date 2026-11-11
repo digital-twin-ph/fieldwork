@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 
 // A projection-shaped extract: one row per site, scenario, year and quantile, keyed on the
 // official PSGC code rather than a place name, with one value absent from the source.

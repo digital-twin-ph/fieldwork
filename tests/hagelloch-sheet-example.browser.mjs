@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {collectPageErrors} from './page-errors.mjs';
 
 // HAGELLOCH'S 1824 SHEET, PLACED BY HAND (experiment 201): the example's own image, offered in Configure…; four street

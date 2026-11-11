@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {inMapSettings} from './map-settings.mjs';
 
 test('a downloaded network can be seen in the Inspector and sent to the Map',async({page})=>{

@@ -4,7 +4,7 @@
  *  can show and hide it."* That is the point of it for a learner: flipping 1855 on and off under
  *  a modern result is the comparison. A backdrop nobody can remove is a picture, not evidence.
  */
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {collectPageErrors} from './page-errors.mjs';
 
 // A 2x2 red PNG. Small enough to inline, real enough for Leaflet to place.

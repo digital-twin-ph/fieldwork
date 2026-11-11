@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 
 // The practitioner, 2026-10-21, reading an output table of health facilities whose `tagSource`
 // and `speciality` columns said "Not supplied": *"was the data missing or field empty value and we

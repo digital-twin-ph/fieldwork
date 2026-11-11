@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {collectPageErrors} from './page-errors.mjs';
 
 // WAS THERE A CLUSTER IN HAGELLOCH? (experiment 200, Detect): the third workflow, as shipped. The scan runs in a worker

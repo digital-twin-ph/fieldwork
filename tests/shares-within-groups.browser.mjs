@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {collectPageErrors} from './page-errors.mjs';
 
 /** SHARES WITHIN GROUPS, IN THE STANDARD DIALOG (experiments 186 and 191). A line list of eight cases, counted by

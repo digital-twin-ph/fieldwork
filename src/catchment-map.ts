@@ -154,9 +154,13 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
     ?{polygons:source as Polygons}:source as MapLayers;
   const p:Polygons=layers.polygons??{features:[],sites:[],observations:undefined} as unknown as Polygons;
   const toolbar=document.createElement('div');toolbar.className='catchment-map-toolbar';
-  toolbar.innerHTML='<button class="button small" data-fit>Fit all layers</button><button class="button small" data-fullscreen>Full screen</button><label>Basemap <select data-basemap aria-label="Interactive map basemap">'
-    +basemapOptions(basemap,'interactive')
-    +'</select></label><span data-tile-status role="status">Local layers work offline</span>';
+  // IN CONFIGURE'S PREVIEW THE BASEMAP IS THE SETTING'S, not a second choice beside it (the practitioner, 2026-11-10, who
+  // picked PMTiles here for a static plot): the preview's own picker offered what the map type cannot draw.
+  toolbar.innerHTML='<button class="button small" data-fit>Fit all layers</button><button class="button small" data-fullscreen>Full screen</button>'
+    +(options.svgOnly
+      ?`<span data-basemap-said>Basemap: ${BASEMAP_LABELS[basemap]??basemap}, as set under Basemap</span><select data-basemap hidden aria-hidden="true">${basemapOptions(basemap,'interactive')}</select>`
+      :'<label>Basemap <select data-basemap aria-label="Interactive map basemap">'+basemapOptions(basemap,'interactive')+'</select></label>')
+    +'<span data-tile-status role="status">Local layers work offline</span>';
   const canvas=document.createElement('div');canvas.className='catchment-leaflet';canvas.setAttribute('aria-label','Interactive catchment map');
   host.append(toolbar,canvas);
   // Views can disappear immediately on tab/workspace changes. Avoid delayed zoom
@@ -754,7 +758,7 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
         import('@protomaps/basemaps')]).then(([packed,maplibre,,protomaps])=>{
         if(generation!==pending)return;
         if(!packed||!tileExtract?.digest){
-          status.textContent='No tiles on this device. Use Import tiles in the Inspector while connected.';return;}
+          status.textContent='No tiles on this device. Import them in Configure…, under Basemap, while connected.';return;}
         if(!workerReady){maplibre.setWorkerUrl(new URL('./maplibre-gl-worker.mjs',import.meta.url).href);workerReady=true;}
         if(!extractProtocol){extractProtocol=true;maplibre.addProtocol('fieldwork-tiles',async params=>{
           const [digest,...tile]=params.url.replace('fieldwork-tiles://','').split('/');

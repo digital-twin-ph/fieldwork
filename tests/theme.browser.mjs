@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 
 // A custom property reads back as its declared text, which for an alias is "var(--surface-1)".
 // Asserting the rendered colour tests what a reader actually sees.

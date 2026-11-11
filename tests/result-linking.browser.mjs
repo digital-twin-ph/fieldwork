@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 
 /** Reaching a node means being on the canvas: results became a tab on 2026-10-21, so selecting
  *  one is part of selecting a node rather than something every call site repeats. */

@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 
 // A study area from a point and a radius: navigate, click a centre, tune the radius, apply.
 // This is the scope a practitioner wants when the question is "around this place" and there is

@@ -118,7 +118,8 @@ test('the attribution is derived from the data, not left to be typed', ()=>{
   // version asserted the opposite, and would have credited OpenStreetMap for a figure drawn
   // entirely from straight lines.
   const voronoi=johnSnowExample('snow-voronoi');
-  const voronoiMap=voronoi.nodes.find(n=>n.id==='map');
+  // No basemap either, so that only the graph's data could put a credit here (the default draws OpenStreetMap).
+  const voronoiMap=voronoi.nodes.find(n=>n.id==='map');voronoiMap.params.basemap='none';
   assert.equal(mapPresentation(voronoiMap,method('Half-plane intersection'),voronoi).attribution,'');
   assert.equal(mapPresentation(voronoiMap,method('Dijkstra outbound'),voronoi).attribution,'',
     'a method description is not a licence');

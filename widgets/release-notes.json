@@ -420,12 +420,12 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.23.2",
+   "version": "0.24.0",
    "released": "2026-11-10",
    "changes": [
     {
-     "kind": "patch",
-     "description": "A map that plays day by day or frame by frame puts its class key at the bottom right, clear of the playback panel; on a short map the two met and the key was hidden."
+     "kind": "minor",
+     "description": "OpenStreetMap is the basemap unless one is chosen; None, chosen, is kept (the practitioner, 2026-11-10: \"The default should be OSM\"). Configure… groups its settings under headings, Basemap second, with PMTiles import there on an interactive map; the preview names the basemap the settings chose instead of offering a second picker. The basemap's credit follows the map's own note instead of replacing it, and its limitation is filed in the figure's own section, which fw:FigureFiledWhereDeclaredShape requires and which failed on every map with a basemap. The layer list reads at WCAG AA in both themes."
     }
    ],
    "breaking": false,

@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {inMapSettings} from './map-settings.mjs';
 
 /** SNOW'S OWN MAP, and the encoding its key promises.

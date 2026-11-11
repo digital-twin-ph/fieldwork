@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import assert from 'node:assert/strict';
 import {readFile,mkdir} from 'node:fs/promises';
 import {clipExercise} from './fixtures/workflows.mjs';
@@ -148,8 +148,9 @@ test('a map receipt counts the layers it draws, not the ports it has',async({pag
   await page.locator('[data-view="rules"]').click();
   const n3=await page.locator('#n3-preview').textContent();
 
-  // Two ports, four layers. Ports receive or transmit; layers are displayed.
-  expect(n3).toContain('fw:layerCount 4');
+  // Two ports, five layers: four from the ports, and the OpenStreetMap ground every map now draws unless told otherwise
+  // (2026-11-10). Ports receive or transmit; layers are displayed.
+  expect(n3).toContain('fw:layerCount 5');
   expect(n3).toContain('fw:layerKind <urn:fieldwork:AreaLayer>');
   expect(n3).toContain('fw:layerKind <urn:fieldwork:PolygonsLayer>');
   expect(n3).toContain('fw:layerKind <urn:fieldwork:PointsLayer>');

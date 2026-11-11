@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {inMapSettings} from './map-settings.mjs';
 import {collectPageErrors} from './page-errors.mjs';
 
@@ -37,7 +37,7 @@ test('a points-only map can be interactive, and draw tiles',async({page})=>{
 
   // And the basemap is reachable, which it was not before: only the interactive presentation
   // draws tiles, so a map that could not be interactive could not have one.
-  const basemap=page.locator('[data-basemap]');
+  const basemap=page.locator('select[data-basemap]');
   await expect(basemap).toHaveCount(1);
   // The offline default and at least one raster source. The full list is the OpenFreeMap test's
   // business; this one is about the interactive presentation being reachable at all.

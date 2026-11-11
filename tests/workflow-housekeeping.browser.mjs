@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 
 /** Reported 2026-10-21, with a screenshot of nine rows: *"The import workflow template does not
  *  seem to work. Now I have a bunch of workflows I do not need. We do not have a way to delete

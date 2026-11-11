@@ -15,7 +15,7 @@
  *  and an import takes milliseconds. The test imports while the first run is still going, so the
  *  assertions are about what the application does with a run it no longer has a canvas for.
  */
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {collectPageErrors} from './page-errors.mjs';
 
 /** A one-node project, small enough to write here, so the import does not depend on a sibling

@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {writeArrayBuffer} from 'geotiff';
 import {collectPageErrors} from './page-errors.mjs';
 import {serveRange} from './fixtures/s5p-fixture.mjs';

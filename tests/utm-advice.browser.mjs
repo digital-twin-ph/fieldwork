@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 
 // Nine widgets take a UTM zone by hand and every one of them defaulted to Soho's 30/north,
 // which is wrong anywhere else and said nothing about it. Experiment 100.

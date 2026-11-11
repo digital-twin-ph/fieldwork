@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {createServer} from 'node:http';
 
 /** A SLOW SOURCE IS STILL A WORKING ONE. The practitioner, 2026-11-05, reading the NYC package from Zenodo: "...did not

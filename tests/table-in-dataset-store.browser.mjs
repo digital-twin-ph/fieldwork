@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 
 /** A TABLE'S ROWS ARE KEPT IN THE DATASET STORE, not inside the saved workflow (experiment 175). The practitioner,
  *  2026-11-04: *"We need to move tables to IndexedDB"*, before raising the 20,000-row cap: inline, NYC's 92-column wide

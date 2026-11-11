@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {inTableSettings} from './map-settings.mjs';
 import {exampleWorkflow} from '../build/core.js';
 import {mkdir} from 'node:fs/promises';

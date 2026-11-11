@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import assert from 'node:assert/strict';
 
 const AREA={type:'Polygon',coordinates:[[[120.95,14.55],[121.00,14.55],[121.00,14.60],[120.95,14.60],[120.95,14.55]]]};

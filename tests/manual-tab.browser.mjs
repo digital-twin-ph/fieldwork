@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {readFileSync,existsSync} from 'node:fs';
 
 /** THE MANUAL TAB, on the NYC example opened from its pin (experiment 173). The practitioner, 2026-11-04: *"worked

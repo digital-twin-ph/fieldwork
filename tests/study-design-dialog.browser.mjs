@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {blankWorkflow} from '../build/study-area.js';
 
 /** THE DIALOG, FROM THE INSPECTOR TO THE FIGURE. Asked for on 2026-10-31 and absent until now. */

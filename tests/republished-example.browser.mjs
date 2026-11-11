@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {collectPageErrors} from './page-errors.mjs';
 
 // "I don't see the John Snow data sets in the Example 9 canvas" -- the practitioner, 2026-10-16,

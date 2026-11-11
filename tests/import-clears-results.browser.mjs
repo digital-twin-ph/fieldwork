@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {readFileSync,existsSync} from 'node:fs';
 
 /** AN IMPORT MUST NOT LEAVE THE LAST WORKFLOW'S ANSWER ON SCREEN.

@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {readFileSync,existsSync} from 'node:fs';
 import {collectPageErrors} from './page-errors.mjs';
 const catalog=JSON.parse(readFileSync(new URL('../widgets/examples.json',import.meta.url),'utf8'));

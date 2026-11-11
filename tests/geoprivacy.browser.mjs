@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {auditRuntimeRun} from '../scripts/audit-runtime-n3.mjs';

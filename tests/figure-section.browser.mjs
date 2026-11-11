@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {inMapSettings} from './map-settings.mjs';
 import {readFileSync,existsSync} from 'node:fs';
 
@@ -39,7 +39,8 @@ test('a map moved to the Introduction is filed there, and Results is the default
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
   await page.locator('[data-view="notes"]').click();
-  await expect(page.locator('.notes-part[data-section="Introduction"] .notes-note',{hasText:MAP})).toHaveCount(1,{timeout:20000});
+  // Two: the figure's note and its basemap's, which goes where the figure goes (OpenStreetMap by default, 2026-11-10).
+  await expect(page.locator('.notes-part[data-section="Introduction"] .notes-note',{hasText:MAP})).toHaveCount(2,{timeout:20000});
   await expect(page.locator('.notes-part[data-section="Results"] .notes-note',{hasText:MAP})).toHaveCount(0);
 
   // Back to the default: the choice is removed rather than stored as Results, so the receipt says it was not chosen.

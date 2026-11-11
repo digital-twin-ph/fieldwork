@@ -65,5 +65,6 @@ test('online ground is a stated limitation, and bundled ground needs none',()=>{
   assert.match(basemapLimitation('ofm-positron'),/another machine may show different ground/);
   assert.equal(basemapLimitation('natural-earth-110m'),null);
   assert.equal(basemapLimitation('none'),null);
-  assert.equal(basemapLimitation(undefined),null);
+  // Unstated is the default, OpenStreetMap, from 2026-11-10: online ground, so said.
+  assert.match(basemapLimitation(undefined),/online service as context/);
 });

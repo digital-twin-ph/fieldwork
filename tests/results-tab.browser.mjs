@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 
 // The practitioner, 2026-10-21: *"can we make the Results Panel a tab alongside Workflow, and N3
 // Evidence ... It would be easier to see the whole workflow or the whole Result panel than to see

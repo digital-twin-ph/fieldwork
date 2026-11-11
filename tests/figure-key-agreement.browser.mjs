@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {FIGURE_ROLE,FIGURE_PALETTE} from '../build/presentation.js';
 
 /** A KEY THAT DISAGREES WITH ITS PLOT IS WORSE THAN NO KEY, because the reader trusts it.

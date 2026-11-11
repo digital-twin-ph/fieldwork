@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {collectPageErrors} from './page-errors.mjs';
 
 /** IS NOT, OTHERWISE, AND RULES AS BLOCKS (experiment 192). Seven made-up cases with a laboratory result, a contact and

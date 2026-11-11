@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 
 /** A STEP UNDER CONSTRUCTION IS COMPUTED BY A RUN (experiment 182): a join that leads to no output yet has its table
  *  after a run, so the step chained after it can be set up against it. */

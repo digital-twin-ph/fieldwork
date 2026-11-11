@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {inTableSettings,inChartSettings} from './map-settings.mjs';
 import {useClassicBars} from './classic-bars.mjs';
 import assert from 'node:assert/strict';

@@ -2,7 +2,7 @@ import type {Output,Receipt} from './results.js';
 import {generationColours} from './presentation.js';
 import {outputOf} from './core.js';
 import type {WorkflowNode,Workflow} from './types.js';
-import {basemapAvailable} from './basemaps.js';
+import {basemapAvailable,basemapOf} from './basemaps.js';
 import {attributionsFor,provenanceOf} from './input-provenance.js';
 import type {LayerShape} from './presentation.js';
 import {polygonShading,shadedValues,markPath,resolveLayerSymbol,SPATIAL_RELATION_FILL,FIGURE_PALETTE_NAME,FIGURE_PALETTE_AUTHORITY,MARK_VOCABULARY,FIGURE_ROLE,FIGURE_TYPE,FIGURE_PALETTE,scaleBarSvg,northArrowSvg,metresPerPixel,classifyValues,categoricalSteps} from './presentation.js';
@@ -172,7 +172,7 @@ export function mapPresentation(node:WorkflowNode<'map_output'>,output:Output,wo
   // A vector style stays `none` for a static figure, because that one genuinely is not drawn --
   // the figure has no renderer for it, `drawStaticBasemap` says so in the note, and the
   // Inspector no longer offers it there.
-  const chosen=node.params.basemap||'none';
+  const chosen=basemapOf(node.params.basemap);
   const basemap=interactive?chosen:(basemapAvailable(chosen,'plot')?chosen:'none');
   // Derived, not authored: a basemap carries an obligation the practitioner cannot opt out of by
   // leaving a field blank, and a street network reached this figure through an ODbL download.

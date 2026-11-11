@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {readFileSync,existsSync} from 'node:fs';
 
 /** NOTES MOVE WITHIN A SECTION, DRIVEN AS A DRAG.

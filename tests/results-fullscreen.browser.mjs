@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 
 // The practitioner, 2026-10-20: *"One annoying UI quirk BTW is the Full Screen control - whether in
 // Safari or Chrome, the full screen is not a real full screen render."* Both full-screen paths sized

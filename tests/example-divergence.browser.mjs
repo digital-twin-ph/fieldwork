@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 
 // The practitioner, twice: "The text 'Experiment 01 · draw → inspect facts → run the rule' before
 // the Reset Layout button seems to be stale content." ... "And I am still seeing this text."

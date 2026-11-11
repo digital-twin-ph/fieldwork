@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 
 // A refused save used to say only "Study area could not be saved. Retry Apply." Reported
 // 2026-10-21 on an Ituri area applied into a device already holding North Kivu: retrying fails

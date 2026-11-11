@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {collectPageErrors} from './page-errors.mjs';
 
 /** NEXT ROWS TURNS THE PAGE, wherever a table is drawn in a dialog. The practitioner, 2026-11-08, importing South

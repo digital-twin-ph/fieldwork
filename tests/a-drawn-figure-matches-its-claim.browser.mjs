@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {blankWorkflow} from '../build/study-area.js';
 import {checkDrawnBars} from '../build/figure-check.js';
 

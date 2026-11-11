@@ -9,7 +9,7 @@
  *  then keep it beside `deaths` and drop `houses`, which is the total the pair partitions. The
  *  row totals are the check: they must come out as the published house counts.
  */
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {existsSync} from 'node:fs';
 import {collectPageErrors} from './page-errors.mjs';
 

@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {inMapSettings} from './map-settings.mjs';
 import {collectPageErrors} from './page-errors.mjs';
 
@@ -30,7 +30,8 @@ test('a raster basemap is drawn into the static plot, and a vector one is not of
   const dialog=page.locator('#map-config');
   const basemap=dialog.locator('#map-basemap');
   await expect(basemap).toBeVisible();
-  await expect(basemap).toHaveValue('none');
+  // OpenStreetMap unless chosen otherwise (2026-11-10).
+  await expect(basemap).toHaveValue('osm');
   await expect(dialog).toContainText('drawn into the figure itself');
   await expect(dialog.locator('#polygon-presentation')).toHaveValue('plot');
 
@@ -90,7 +91,7 @@ test('a map with no polygons can still take a basemap',async({page})=>{
   // Offered. It was absent entirely on this map before: decisions, not polygons.
   await inMapSettings(page,async d=>{
     await expect(d.locator('#map-basemap')).toBeVisible();
-    await expect(d).toContainText('A basemap is layer 0');
+    await expect(d).toContainText('Layer 0, under everything the workflow produced');
     await d.locator('#map-basemap').selectOption('osm');
   });
   // Recorded, and the map stays the static plot it was: the tiles come to the figure.

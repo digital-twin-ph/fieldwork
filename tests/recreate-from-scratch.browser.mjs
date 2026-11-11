@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {inMapSettings} from './map-settings.mjs';
 import {existsSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';

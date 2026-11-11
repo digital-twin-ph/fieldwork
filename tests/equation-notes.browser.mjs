@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {readFileSync,existsSync} from 'node:fs';
 
 /** THE EQUATIONS THE COMPUTATIONS MACHINED, ON THE NOTES TAB OF THE WORKED EXAMPLE.

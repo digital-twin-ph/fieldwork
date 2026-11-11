@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {inMapSettings} from './map-settings.mjs';
 
 /** GROUND UNDER A STATIC FIGURE. Experiment 137.
@@ -118,7 +118,10 @@ test('choosing a basemap redraws the figure on screen, with one output and no ta
   await page.locator('.react-flow__node[data-id="access-map"]').click();
   await page.locator('[data-view="results"]').click();
   await inMapSettings(page,d=>expect(d.locator('#map-basemap')).toBeVisible(),{apply:false});
-  expect(requests).toBe(0);
+  // OpenStreetMap from the start since 2026-11-10; None, chosen, draws no tiles and asks for none.
+  await inMapSettings(page,d=>d.locator('#map-basemap').selectOption('none'));
+  await expect(page.locator('#map [data-basemap]')).toHaveCount(0);
+  // Choosing OpenStreetMap again redraws it from the tiles already fetched when the example opened.
 
   await inMapSettings(page,d=>d.locator('#map-basemap').selectOption('osm'));
 

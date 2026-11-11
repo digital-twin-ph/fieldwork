@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 
 // EXPERIMENT 131: the project level is a ROUTE, not a dialog.
 //

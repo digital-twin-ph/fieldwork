@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {inMapSettings} from './map-settings.mjs';
 
 /** A FIGURE FOR THE PLACES THAT WILL NOT TAKE AN SVG.

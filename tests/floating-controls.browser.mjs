@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 
 test('project title and workflow actions remain visible when scrolling desktop and mobile',async({page})=>{
   await page.goto('/?example=blank');

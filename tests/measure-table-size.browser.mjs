@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {writeFileSync,mkdirSync,statSync} from 'node:fs';
 
 /** HOW LARGE A TABLE (experiment 175). Not a gate test: skipped unless MEASURE_ROWS is set, and meant to run against a

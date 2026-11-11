@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 
 // WCAG 2.1 contrast, measured on what is actually rendered: the effective foreground after
 // alpha compositing, over the nearest opaque ancestor background. 4.5:1 for normal text,

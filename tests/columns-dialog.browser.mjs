@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {readFileSync,existsSync} from 'node:fs';
 
 /** WHAT THE COLUMNS MEAN, declared from the authors' own data dictionary (experiment 172). The practitioner,

@@ -3,6 +3,18 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.88.0 — 2026-11-10
+
+- **OpenStreetMap under every map, unless you choose otherwise.** A static plot fetches the tiles once and draws them
+  into the figure and its SVG and PNG, with the credit. Choose *None* to keep a map offline. Where tiles cannot be
+  fetched, the figure says so and keeps its plot.
+- **The Map's Configure… in groups**: Presentation, Basemap, Layers, the marks, Lines between records, and Title, key and
+  note. On an interactive map, PMTiles import is under Basemap. The preview shows the basemap the settings chose.
+- **The layer list is readable in the dark theme.** It was light text on a white panel. A test now measures every map
+  control in both themes.
+- **Fixed:** the basemap's credit replaced a map's own note, and its limitation was filed apart from the figure, which
+  failed the write-up's own check. Map 0.24.0.
+
 ## 0.87.0 — 2026-11-10
 
 - **Zoom where you are looking.** Placing a map image by points, a crosshair marks the centre of the image pane, and Zoom

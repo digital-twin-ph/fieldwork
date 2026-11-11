@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 
 const ONTOLOGY='https://digital-twin-ph.github.io/fieldwork-ontology/';
 const LAB='https://digital-twin-ph.github.io/validation-lab/';

@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {collectPageErrors} from './page-errors.mjs';
 
 /** SAMPLE SATELLITE FILES AT POINTS, LIVE (experiment 179): two NYC ozone monitors, the NO2 product, 7 June 2023, read

@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {inMapSettings} from './map-settings.mjs';
 import {collectPageErrors} from './page-errors.mjs';
 
@@ -31,7 +31,7 @@ test('an OpenFreeMap vector style draws under the workflow layers, and is credit
     'None \u00b7 works offline','OpenStreetMap streets','OpenTopoMap terrain',
     'OpenFreeMap Liberty','OpenFreeMap Positron (muted)','OpenFreeMap Bright','OpenStreetMap extract (PMTiles) · imported to this device']);
 
-  await page.locator('[data-basemap]').selectOption('ofm-positron');
+  await page.locator('select[data-basemap]').selectOption('ofm-positron');
   await expect(page.locator('[data-tile-status]')).toContainText('OpenFreeMap Positron',{timeout:30000});
   // The VECTOR BASEMAP's own canvas, named rather than counted: since 2026-10-20 the workflow's
   // boundary is canvas-rendered too, so "one canvas in the map" stopped meaning "the basemap
@@ -75,7 +75,7 @@ test('an OpenFreeMap vector style draws under the workflow layers, and is credit
   await expect(credit).toContainText('OpenStreetMap');
 
   // And a style no longer drawn is no longer credited.
-  await page.locator('[data-basemap]').selectOption('none');
+  await page.locator('select[data-basemap]').selectOption('none');
   await expect(credit).not.toContainText('OpenFreeMap');
   expect(errors).toEqual([]);
 });

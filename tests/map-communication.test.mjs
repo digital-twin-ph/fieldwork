@@ -37,7 +37,8 @@ test('Map presentation is independent of geometry and emits a validated, source-
   const graph=new Store(new Parser().parse(mapped.receipt.facts));
   assert.equal((await validateGraph(graph)).conforms,true);
   assert.equal([...graph.match(null,DataFactory.namedNode('urn:fieldwork:mapSpecification'),null)].length,1);
-  assert.equal([...graph.match(null,DataFactory.namedNode('urn:fieldwork:mapBasemap'),null)][0].object.value,'none');
+  // A map that states none draws the default, OpenStreetMap (2026-11-10).
+  assert.equal([...graph.match(null,DataFactory.namedNode('urn:fieldwork:mapBasemap'),null)][0].object.value,'osm');
   const subject=DataFactory.namedNode('urn:fieldwork:run:run:map-specification:map'),predicate=DataFactory.namedNode('urn:fieldwork:mapSourceNote');
   graph.removeMatches(subject,predicate,null);assert.equal((await validateGraph(graph)).conforms,false);
   const bad=structuredClone(workflow);bad.nodes.at(-1).params.showLegend='sometimes';

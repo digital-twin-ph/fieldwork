@@ -141,7 +141,7 @@ import {rasteriseFigure,FIGURE_PIXEL_SCALE} from './figure-export.js';
 import {COUNTRIES,countryName,iso3Of,countryOfArea} from './boundary-source.js';
 import {populationRastersForCountry,WORLDPOP_LICENCE,WORLDPOP_TAKEN,WORLDPOP_BYTES_PER_SECOND,downloadWait} from './worldpop-catalogue.js';
 import type {BoundaryProvenance} from './types.js';
-import {basemapAvailable,extentSpanKm,NATURAL_EARTH_MIN_SPAN_KM} from './basemaps.js';
+import {basemapAvailable,basemapOf,extentSpanKm,NATURAL_EARTH_MIN_SPAN_KM} from './basemaps.js';
 import {naturalEarthMarkup,NATURAL_EARTH,NATURAL_EARTH_CREDIT} from './natural-earth.js';
 import {mapImage,mapImageMarkup,mapImageCredit,withGroundUnder,type MapImage} from './map-image.js';
 import {mapImageInspector} from './map-image-ui.js';
@@ -263,20 +263,34 @@ function tileImportControls(p:WorkflowNode<'map_output'>['params']):string{
 }
 /** What a select's value list was narrowed to, kept across the re-render a tick causes, so finding
  *  the next value does not mean typing the search again. */
-function mapControls(n:WorkflowNode<'map_output'>,withTiles=true){
+/** THE BASEMAP, its own group in Configure… (the practitioner, 2026-11-10: "This left side needs subsections"). */
+function mapBasemapControls(n:WorkflowNode<'map_output'>){
   const p=n.params;
-  return `<div class="source-card" data-map-communication><span class="inspector-section">Standalone map</span>
+  return `<span class="inspector-section">Basemap</span>
+    <label class="field-label" for="map-basemap">Basemap</label><select id="map-basemap">${basemapOptions(p.basemap,p.presentation==='interactive'?'interactive':'plot',workflowSpanKm())}</select>
+    <p class="description">Layer 0, under everything the workflow produced. ${p.presentation==='interactive'
+      ?'Choosing an online basemap sends the area viewed to its provider. An OpenStreetMap extract (PMTiles) is imported once below and kept on this device.'
+      :'OpenStreetMap and OpenTopoMap are fetched once and drawn into the figure itself, with their credit; the area viewed is sent to the provider. Vector styles and PMTiles are offered on the interactive map.'}</p>
+    ${tileImportControls(p)}`;
+}
+/** WHAT THE FIGURE SAYS: title, subtitle, key and note. */
+function mapTextControls(n:WorkflowNode<'map_output'>){
+  const p=n.params;
+  return `<span class="inspector-section">Title, key and note</span>
     <label class="field-label" for="map-title">Map title</label><input id="map-title" maxlength="120" value="${esc(p.mapTitle||'')}" placeholder="Default: results tab name">
     <label class="field-label" for="map-subtitle">Subtitle / context</label><input id="map-subtitle" maxlength="280" value="${esc(p.mapSubtitle||'')}" placeholder="Optional scope or limitation">
     <label><input id="map-legend-toggle" type="checkbox" ${p.showLegend!==false?'checked':''}> Show map key</label>
     <label><input id="map-halo-toggle" type="checkbox" ${p.markHalo!==false?'checked':''}> Dark outline on point symbols</label>
     <label class="field-label" for="map-source-note">Source / method note</label><textarea id="map-source-note" maxlength="500" rows="3" placeholder="Default: connected source labels and method">${esc(p.mapSourceNote||'')}</textarea>
-    <label class="field-label" for="map-basemap">Basemap</label><select id="map-basemap">${basemapOptions(p.basemap,p.presentation==='interactive'?'interactive':'plot',workflowSpanKm())}</select>
     ${partLabelControl(n)}
     ${frameCaptionControl(n)}
-    ${withTiles?tileImportControls(p):''}
-    <p class="description">A basemap is layer 0, under everything the workflow produced.${p.presentation==='interactive'?'':' OpenStreetMap and OpenTopoMap are drawn into the figure itself. The OpenFreeMap styles are vector, so they move this map to the interactive presentation.'}</p>
-    <p class="description">Title, key and note appear with the map and in its local SVG export. Interactive maps export connected data as a static plot; online basemap tiles are excluded. Selecting an online basemap sends the viewed area to its provider.</p></div>`;
+    <p class="description">Title, key and note appear with the map and in its local SVG export. Interactive maps export connected data as a static plot; online basemap tiles are excluded.</p>`;
+}
+/** One bordered group per heading, so each label is read with the controls it belongs to. */
+function groupSections(first:string,html:string):string{
+  const parts=html.split('<span class="inspector-section">'),head=parts.shift()!;
+  const box=(title:string,body:string)=>`<section class="config-group"><h3 class="config-group-title">${title}</h3>${body}</section>`;
+  return (head.trim()?box(first,head):'')+parts.map(part=>{const end=part.indexOf('</span>');return box(part.slice(0,end),part.slice(end+7));}).join('');
 }
 const KEY='fieldwork-workflow-v1';
 $('#app-version').textContent=`v${appPackage.version}`;
@@ -2319,7 +2333,7 @@ function openMapConfig(nodeId:string){
         let cancelled=false;
         const frame=requestAnimationFrame(()=>{if(cancelled||!previewHost.isConnected)return;
           try{const dispose=mountCatchmentMap(previewHost,shown.polygons?{...shown,polygons:shown.polygons}:shown,shown.contextPoints,esc,
-            draft.basemap||'none',undefined,`preview-${nodeId}`,draft.tileExtract,draft.partLabel,draft.frameCaption,{svgOnly:true});
+            basemapOf(draft.basemap),undefined,`preview-${nodeId}`,draft.tileExtract,draft.partLabel,draft.frameCaption,{svgOnly:true});
             disposePreview=()=>{cancelled=true;dispose();};}
           catch(error){previewHost.textContent=`The preview could not be drawn: ${errorMessage(error)}`;}});
         disposePreview=()=>{cancelled=true;cancelAnimationFrame(frame);};
@@ -2394,7 +2408,8 @@ function openMapConfig(nodeId:string){
  *  write-up, each point layer's class, mark name and symbol, and the standalone figure. Built from a draft, so the same
  *  markup serves the dialog's every redraw and nothing reaches the step before Apply. */
 let disposePreview:(()=>void)|undefined;
-function mapSettings(n:WorkflowNode<'map_output'>):string{
+function mapSettings(n:WorkflowNode<'map_output'>):string{return groupSections('Presentation',mapSettingsFlat(n));}
+function mapSettingsFlat(n:WorkflowNode<'map_output'>):string{
   const at=figureSection(n.params,n.type),fallback=DEFAULT_FIGURE_SECTIONS[n.type];
   return ''
     +`<div class="field"><label class="field-label" for="polygon-presentation">Presentation</label><select id="polygon-presentation" data-catchment-param="presentation"><option value="plot" ${n.params.presentation!=='interactive'?'selected':''}>Static plot (SVG)</option><option value="interactive" ${n.params.presentation==='interactive'?'selected':''}>Interactive map</option></select></div>`
@@ -2409,6 +2424,7 @@ function mapSettings(n:WorkflowNode<'map_output'>):string{
       // potential point layer in the map gets a configurable/selectable symbol." Only the point
       // layers actually wired are offered, because a control for a layer that does not exist is
       // a setting nobody can check against the picture.
+      +mapBasemapControls(n)+`<span class="inspector-section">Layers</span>`
       +`<p class="muted">Ports receive; layers are displayed. Order them, name them as a reader should see them, and group the ones that belong together.</p>`
       +`<button class="button" data-manage-layers="${esc(n.id)}">Manage layers</button>`
       +(()=>{
@@ -2519,7 +2535,7 @@ function mapSettings(n:WorkflowNode<'map_output'>):string{
               +`</div>`;
           }).join('');
       })()
-    +mapControls(n,true);
+    +mapTextControls(n);
 }
 /** RATE'S ONE SENTENCE (experiment 186). */
 function rateSentence(p:import('./types.js').ParamsByType['rate']):string{
@@ -2703,7 +2719,7 @@ function mapSentence(n:WorkflowNode<'map_output'>):string{
   const classed=Object.keys(n.params.pinClassField??{}).length;
   return layers.length
     ?`Draws ${layers.join(', ')} as ${n.params.presentation==='interactive'?'an interactive map':'a static figure'}`
-      +`${n.params.basemap&&n.params.basemap!=='none'?`, over ${BASEMAP_OPTIONS.find(o=>o.value===n.params.basemap)?.label??n.params.basemap}`:''}`
+      +`${basemapOf(n.params.basemap)!=='none'?`, over ${BASEMAP_OPTIONS.find(o=>o.value===basemapOf(n.params.basemap))?.label??basemapOf(n.params.basemap)}`:''}`
       +`${classed?`, ${classed} layer${classed===1?'':'s'} classed`:''}`
       +`${Object.entries(n.params.linkField??{}).map(([,l])=>`, with a line to each record named in ${l.column}`).join('')}; in the write-up under ${figureSection(n.params,n.type)}.`
     :'Draws what it is given: connect a layer under Inputs.';
@@ -5827,9 +5843,14 @@ async function drawStaticBasemap(result:Output,svg:SVGSVGElement,
     if(plateNote)plateNote.textContent=`${mapImageCredit(plate)} \u00b7 drawn as ground at about `
       +`${plate.groundResolutionM.toFixed(0)} m per pixel. Context: a plate is ink, not measurement.`;
   }
-  const choice=node?.params.basemap;
+  const choice=node?basemapOf(node.params.basemap):undefined;
   if(!node||!choice||choice==='none')return;
   const note=$('#map-panel').querySelector('#map-note');
+  // THE GROUND'S CREDIT FOLLOWS THE MAP'S OWN NOTE, never replaces it: once OpenStreetMap became the default (2026-11-10)
+  // every map lost its caption to "9 of 9 tiles ..." this way. Only what this added before is taken back out.
+  const say=(text:string)=>{if(!note)return;const el=note as HTMLElement,prev=el.dataset.ground||'';
+    let own=el.textContent||'';if(prev&&own.endsWith(prev))own=own.slice(0,own.length-prev.length).replace(/ \u00b7 $/,'');
+    el.dataset.ground=text;el.textContent=own?`${own} \u00b7 ${text}`:text;};
   // THE BUNDLED OUTLINE, which needs no network and no provider. Drawn in the figure's own
   // projection: a coastline is lon/lat points and goes through `project` like every other layer,
   // which is why it sidesteps the Mercator mismatch a raster tile forces.
@@ -5841,17 +5862,17 @@ async function drawStaticBasemap(result:Output,svg:SVGSVGElement,
       else svg.insertAdjacentHTML('afterbegin',markup);
       for(const shape of svg.querySelectorAll('[data-fill-role="context"]'))shape.setAttribute('fill','none');
     }
-    if(note)note.textContent=drawn
+    say(drawn
       ?`${NATURAL_EARTH_CREDIT} \u00b7 ${drawn} shapes drawn into this figure. Context only: these `
         +'lines are generalised to kilometres and are not a frame to measure or report by.'
       :`${NATURAL_EARTH_CREDIT} covers no land inside this extent, so this figure has no ground `
-        +'under it.';
+        +'under it.');
     return;
   }
   const provider=choice==='osm'||choice==='topo'?TILE_PROVIDERS[choice]:undefined;
   if(!provider){
-    if(note)note.textContent=`${BASEMAP_OPTIONS.find(o=>o.value===choice)?.label||choice} is drawn from vector tiles, which this `
-      +'static plot cannot bake in. Choose OpenStreetMap or OpenTopoMap here, or the interactive presentation for that style.';
+    say(`${BASEMAP_OPTIONS.find(o=>o.value===choice)?.label||choice} is drawn from vector tiles, which this `
+      +'static plot cannot bake in. Choose OpenStreetMap or OpenTopoMap here, or the interactive presentation for that style.');
     return;
   }
   const stamp=svg.dataset.renderStamp=String(Date.now());
@@ -5865,9 +5886,9 @@ async function drawStaticBasemap(result:Output,svg:SVGSVGElement,
   catch{
     if(svg.dataset.renderStamp!==stamp||!svg.isConnected)return;
     const name=BASEMAP_OPTIONS.find(o=>o.value===choice)?.label||choice;
-    if(note)note.textContent=`${name} tiles could not be fetched, so this figure is drawn `
+    say(`${name} tiles could not be fetched, so this figure is drawn `
       +'without its ground. The plot above is unaffected: a basemap is layer 0 and carries none of '
-      +'what the workflow computed.';
+      +'what the workflow computed.');
     return;
   }
   const {markup,drawn,requested,zoom}=images;
@@ -5898,9 +5919,9 @@ async function drawStaticBasemap(result:Output,svg:SVGSVGElement,
     // and are left alone, which is the other half of the same rule.
     for(const shape of svg.querySelectorAll('[data-fill-role="context"]'))shape.setAttribute('fill','none');
   }
-  if(note)note.textContent=drawn
+  say(drawn
     ?`${provider.attribution} · ${drawn} of ${requested} tiles at zoom ${zoom}, drawn into this figure.`
-    :`No basemap tiles could be fetched, so this figure has no ground under it. ${provider.attribution}`;
+    :`No basemap tiles could be fetched, so this figure has no ground under it. ${provider.attribution}`);
 }
 function renderMap(){
   if(!resultsOnScreen())return;
@@ -6025,7 +6046,7 @@ function renderMap(){
           ...(livePlate.corners?{corners:livePlate.corners,width:livePlate.width,height:livePlate.height}:{})}}
       :result;
     disposeCatchmentMap=mountCatchmentMap(host,withPlate.polygons?{...withPlate,polygons:withPlate.polygons}:withPlate,
-      result.contextPoints,esc,mapNode?.params.basemap||'none',
+      result.contextPoints,esc,mapNode?basemapOf(mapNode.params.basemap):'none',
       choice=>{if(mapNode)change(w=>getNode(w,mapNode.id,'map_output').params.basemap=choice);},
       // The node is the view's identity. Without it every presentation change -- and Mark radius
       // is one -- remounted the map and refitted it, throwing away the pan and zoom the

@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {readFile} from 'node:fs/promises';
 import assert from 'node:assert/strict';
 const secret='test-key-not-real-837492',password='synthetic long passphrase';

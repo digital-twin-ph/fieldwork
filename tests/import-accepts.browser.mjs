@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 
 // THE PICKER MUST SEE WHAT THE APPLICATION WRITES. The practitioner, 2026-10-23: "I cannot view
 // the .gz files on my computer to import a gzipped project."

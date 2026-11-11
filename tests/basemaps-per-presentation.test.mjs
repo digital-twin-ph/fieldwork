@@ -67,9 +67,10 @@ test('the options markup offers only what the presentation can draw',()=>{
   for(const choice of BASEMAP_CHOICES)assert.ok(all.includes(`value="${choice}"`));
 });
 
-test('the selected choice is marked, and an absent one falls back to none',()=>{
+test('the selected choice is marked, and an absent one falls back to OpenStreetMap, the default from 2026-11-10',()=>{
   assert.match(basemapOptions('topo','plot'),/value="topo" selected/);
-  assert.match(basemapOptions(undefined,'plot'),/value="none" selected/);
+  assert.match(basemapOptions(undefined,'plot'),/value="osm" selected/);
+  assert.match(basemapOptions('none','plot'),/value="none" selected/);
 });
 
 // THE ATTRIBUTION THE COERCION WAS COSTING. `mapPresentation` reported `none` for every static

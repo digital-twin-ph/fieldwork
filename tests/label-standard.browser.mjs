@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 
 // "The Find Health Facilities widget label cannot be changed like Study Area, Street Network and
 // Map. Let's move to standardize the labeling with 'Apply Label' button."

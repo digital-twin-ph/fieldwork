@@ -39,14 +39,15 @@ You connect what you want drawn. There is no setting that says what kind of map 
 3. **Add more layers** the same way. A second point source gets a layer of its own rather than
    replacing the first.
 4. **Open Configure…** for everything about how it is drawn. Nothing changes until **Apply**, and
-   Apply redraws the map without running the workflow again. Once the workflow has run, the dialog draws the map
-   beside its settings, as it will look with them: change a mark's size or the basemap and see it before Apply.
-   **Import tiles** (PMTiles, for a basemap that works offline) is here too.
+   Apply redraws the map without running the workflow again. The settings are in groups: Presentation, Basemap,
+   Layers, the marks, Lines between records, and Title, key and note. Once the workflow has run, the dialog draws the
+   map beside its settings, as it will look with them: change a mark's size or the basemap and see it before Apply.
+   On an interactive map, **Import tiles** (PMTiles, for a basemap that works offline) is under Basemap.
 5. **Choose how it is drawn.** *Static plot* exports as an SVG with a scale bar and a north
-   arrow. *Interactive map* can be panned and zoomed, and is the only one that can show a
-   basemap.
-6. **Choose a basemap** if the geography matters — streets or terrain under your results.
-   Leaving it at *None* keeps the map working with no connection at all.
+   arrow. *Interactive map* can be panned and zoomed.
+6. **The basemap is OpenStreetMap** unless you choose otherwise. On a static plot its tiles are fetched once and
+   drawn into the figure, with their credit, so the SVG and PNG carry them. Choose *None* to keep the map working
+   with no connection at all.
 7. **Title it**, and write the source note. Both appear on the map and in its export.
 8. **Run the workflow.** The map appears as a Results tab. **Manage layers…** orders, names and groups the
    layers it draws.
@@ -131,11 +132,11 @@ being rewritten by every run.
   streets are. Set the presentation to interactive to see all of it in one picture.
 - **It cannot reorder layers, or choose their colours.** Draw order is fixed, and a layer's hue
   comes from its position in the palette. The mark is the one part of the symbol you choose.
-- **A basemap is not included in the SVG export.** The tiles come from an outside service as
-  you look at the map, so a figure you export shows your layers on a blank ground.
-- **Choosing a basemap sends the area you are viewing to that service.** Everything else about
-  this map works offline. For maps of sensitive locations that is worth knowing before you
-  switch it on.
+- **An interactive map's basemap is not included in its export.** Its tiles come from an outside service as you
+  look at the map, so it exports as a static plot. A static plot's OpenStreetMap or OpenTopoMap tiles are drawn into
+  the figure and its SVG and PNG.
+- **A basemap sends the area you are viewing to its service**, and OpenStreetMap is the default. Everything else
+  about this map works offline. For maps of sensitive locations, choose *None* first.
 - **It cannot tell you whether a map is honest.** Emphasis, framing and colour all change how a
   map reads, and none of them changes a number. See the layers you connected, and say in the
   source note what the map is about.

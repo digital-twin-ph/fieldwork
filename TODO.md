@@ -152,7 +152,10 @@ not a practitioner in the field.
    the study area for Hagelloch from box to administrative area"*). Today it is a box drawn round the anchored houses.
    To settle: which boundary (Hagelloch is a district of Tübingen; its OSM or official boundary, and its licence), that
    it is the present-day boundary and not 1861's, and whether any case falls outside it, which the map would then
-   show. Asks before downloading. With 13, the colour key.
+   show. Asks before downloading. With 13, the colour key. **Found 2026-11-10:** geoBoundaries' levels for Germany
+   (2021, Federal Agency for Cartography and Geodesy, Data licence Germany – Attribution 2.0) are ADM1 Länder (16),
+   ADM2 government districts (38), ADM3 independent cities and districts (428), and no ADM4; Hagelloch's finest is
+   ADM3 Landkreis Tübingen, about 520 km². A boundary of Hagelloch itself needs another source.
 15. **Georeference an 1861 map of Hagelloch in the widget itself** ([201](docs/experiments/201-georeferencing-by-matching-points.md): pairs of
    points matched between the scan and a map of the place, South London first) (the practitioner, 2026-11-10: *"If we can get hold
    of an old map of Hagelloch in 1861 we can also exercise georeferencing in the georeferenced image input widget. You

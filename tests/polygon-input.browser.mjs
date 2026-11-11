@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {blankWorkflow,newStudyArea,bboxPolygon} from '../build/study-area.js';
 
 /** THE WIDGET HAD NO INSPECTOR, which is why these tests exist at all.

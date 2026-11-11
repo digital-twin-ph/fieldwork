@@ -85,7 +85,7 @@ import type {MachinedNote} from './notes.js';
 import {groupTable,migrateGroupTableNulls} from './group-table.js';
 import {computeTwoByTwo,twoByTwoReceipt,twoByTwoSentence,rateTwoByTwoReceipt,rateTwoByTwoSentence,type TwoByTwoResult} from './two-by-two.js';
 import {computeExposures} from './exposure-table.js';
-import {basemapLimitation} from './basemaps.js';
+import {basemapLimitation,DEFAULT_BASEMAP} from './basemaps.js';
 import {studyDesignSentence,studyDesignReceipt,DESIGN_LICENCES,includedMeasures,readUnderDesign,readUndeclared,migrateSurveillanceDesign,regressionMeasure,rateRatioMeasure,rateRatioDesignSentence} from './study-design.js';
 import {refinementSentences,investigatorAllocated} from './study-design-questions.js';
 import type {DeclaredDesign} from './study-design.js';
@@ -750,6 +750,9 @@ export function validateWorkflow(raw:unknown):Workflow {
     ids.add(n.id);
     if (![n.x,n.y].every(Number.isFinite) || Math.abs(n.x)>10000 || Math.abs(n.y)>10000 || !n.params) throw new Error('Invalid node position or parameters.');
     if((n.type==='study_area'||n.type==='point_input'||n.type==='places'||n.type==='centers')){n.params.spatialReference??=defaultSpatialReference();validateSpatialReference(n.params.spatialReference);}
+    // OPENSTREETMAP UNLESS SOMEBODY CHOSE OTHERWISE (the practitioner, 2026-11-10: "The default should be OSM"). Stated on
+    // the step, so every reader of it agrees; "none", chosen, is kept. Where tiles cannot be fetched the figure says so.
+    if(n.type==='map_output'&&(n.params as {basemap?:string}).basemap===undefined)(n.params as {basemap?:string}).basemap=DEFAULT_BASEMAP;
     if(n.type==='study_area'){const listed=(n.params as {countries?:unknown}).countries;
       if(listed!==undefined&&(!Array.isArray(listed)||listed.length>30||listed.some(c=>typeof c!=='string'||!/^[A-Z]{3}$/.test(c))))
         throw new Error('A study area\'s countries are ISO 3166 three-letter codes, up to 30.');}
@@ -2562,8 +2565,10 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
     if(node.type==='map_output'){
       const says=basemapLimitation(node.params.basemap);
       if(says){
-        // BESIDE any note the map already wrote, which this must not replace.
-        const note:MachinedNote={kind:'machined',id:`${node.id}:basemap`,section:'Methods',fn:'limitation',
+        // BESIDE any note the map already wrote, which this must not replace, and IN THE FIGURE'S OWN SECTION: a figure's
+        // notes go where the figure goes (fw:FigureFiledWhereDeclaredShape). Filed under Methods it failed that shape on
+        // every map with a basemap, found 2026-11-10 when OpenStreetMap became the default and every map had one.
+        const note:MachinedNote={kind:'machined',id:`${node.id}:basemap`,section:figureSection(node.params,node.type),fn:'limitation',
           nodeId:node.id,text:says};
         machined[node.id]=[...(machined[node.id]??[]),note];
         withNote(receipts,runId,node.id,[note]);

@@ -2,7 +2,7 @@
  *  TEXT_AUDIT=1 npx playwright test tests/text-audit.browser.mjs --project=chromium
  *  Counts visible controls, words, words below 14 px and words whose colour against the nearest solid background is under WCAG's 4.5:1.
  *  Approximate: transparency is ignored. */
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {readFileSync,writeFileSync} from 'node:fs';
 test.use({serviceWorkers:'block',viewport:{width:1280,height:900}});
 const bundle=readFileSync(new URL('../../example-1855-cholera-south-london/fieldwork-project.json.gz',import.meta.url));

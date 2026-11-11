@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 
 /** LAB EVALUATION, IN THE APP (experiment 184): hidden until switched on in Help; opened from the header or a note
  *  being written; saved to the laptop as Markdown and JSON. */

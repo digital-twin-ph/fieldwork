@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {collectPageErrors} from './page-errors.mjs';
 
 // HAGELLOCH'S SECOND WORKFLOW, AS SHIPPED (experiment 200): opened from the project, it runs as it stands and shows the

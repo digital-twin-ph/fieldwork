@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {collectPageErrors} from './page-errors.mjs';
 
 // A CITATION ENTERED WRONG CAN BE CORRECTED in its note, not only removed and retyped. The

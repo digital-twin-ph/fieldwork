@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {readFile} from 'node:fs/promises';
 import {DataFactory} from 'n3';
 import {ontologyFiles,exampleFiles,loadGraph,validateGraph,summarize} from '../scripts/validate-ontology.mjs';

@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {readFileSync} from 'node:fs';
 import {fromArrayBuffer} from 'geotiff';
 // The bytes of a file, alone: a Node Buffer can be a view on a shared pool, and its .buffer then holds other bytes too.

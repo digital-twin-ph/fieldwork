@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {inMapSettings} from './map-settings.mjs';
 import {keepColumns,columnsOffered} from './keep-columns.mjs';
 import {serveArchive,smallArchive} from './small-pmtiles.mjs';

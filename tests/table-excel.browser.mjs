@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {zipSync,strToU8} from 'fflate';
 import {collectPageErrors} from './page-errors.mjs';
 

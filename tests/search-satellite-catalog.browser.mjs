@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.mjs';
 import {existsSync,readFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
 import {collectPageErrors} from './page-errors.mjs';

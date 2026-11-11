@@ -255,7 +255,9 @@ export function openMapImageConfig(o:{step:string;initial:MapImageDraft;esc:Esca
     root.querySelectorAll<HTMLButtonElement>('[data-geo-remove]').forEach(el=>el.addEventListener('click',()=>{
       d.points.splice(Number(el.dataset.geoRemove),1);active=Math.max(0,Math.min(active,d.points.length-1));redraw();}));
     root.querySelectorAll<HTMLInputElement>('[data-geo-field]').forEach(el=>el.addEventListener('change',()=>{
-      const i=Number(el.closest('tr')!.dataset.geoRow),p=d.points[i]!,v=Number(el.value);
+      // An EMPTY field is not yet entered, not zero: Number('') is 0, which put a point at the image's top edge or on the
+      // equator when a field was cleared or replaced before it was read (WebKit CI, 0.83.0).
+      const i=Number(el.closest('tr')!.dataset.geoRow),p=d.points[i]!,v=el.value.trim()===''?NaN:Number(el.value);
       const f=el.dataset.geoField;
       if(f==='id')p.id=el.value.trim();else if(f==='x')p.pixel[0]=v;else if(f==='y')p.pixel[1]=v;
       else if(f==='lon')p.lonlat[0]=v;else if(f==='lat')p.lonlat[1]=v;

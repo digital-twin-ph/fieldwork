@@ -408,12 +408,12 @@
    "migrationFrom": []
   },
   "map_image_input": {
-   "version": "0.4.0",
+   "version": "0.4.1",
    "released": "2026-11-10",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Feedback while pairs are matched (experiment 201): a live check says how far the pair just made is from where the other pairs put it, what the fit implies (metres a pixel across and down, and how far the image is turned, to check against the sheet's scale bar), and the overall error each time a pair was added; over today's map, the cursor's distance from where the other pairs expect the feature, under an instruction to find the feature by looking first. Preview on today's map: the image through the current placement over today's map, with a see-through slider, each pair drawn twice and joined by its error."
+     "kind": "patch",
+     "description": "An empty point field is read as not entered, never as zero: a cleared or replaced field had put the point at the image's top edge or on the equator, and the cue then said the click was off the feature (WebKit CI, 0.83.0)."
     }
    ],
    "breaking": false,

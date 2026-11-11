@@ -49,6 +49,8 @@ test('a plan is placed by typed points: each error shown, a doubtful pair marked
     for(const [field,value] of [['id',name],['x',x],['y',y],['lon',lon+off],['lat',lat]]){
       await row.locator(`[data-geo-field="${field}"]`).fill(String(value));
       await row.locator(`[data-geo-field="${field}"]`).dispatchEvent('change');
+      // The table redraws just after a change; let it, before the next field is typed (WebKit CI, 0.83.0).
+      await page.evaluate(()=>new Promise(r=>setTimeout(r,0)));
     }
   }
   await expect(dialog.locator('#geo-fit')).toContainText('Placed from 5 points');
@@ -102,9 +104,17 @@ test('a worked example points to each feature with a slow pulse, says when a cli
   // A click typed near the church is on it; the map half is not clicked yet.
   await dialog.locator('tr[data-geo-row="0"] [data-geo-field="x"]').fill('43');
   await dialog.locator('tr[data-geo-row="0"] [data-geo-field="x"]').dispatchEvent('change');
+  await page.evaluate(()=>new Promise(r=>setTimeout(r,0)));
   await dialog.locator('tr[data-geo-row="0"] [data-geo-field="y"]').fill('31');
   await dialog.locator('tr[data-geo-row="0"] [data-geo-field="y"]').dispatchEvent('change');
   await expect(dialog.locator('#geo-found')).toContainText('On the image: on the feature. On today\'s map: not clicked yet.');
+  // A cleared field is not entered, never zero.
+  await dialog.locator('tr[data-geo-row="0"] [data-geo-field="y"]').fill('');
+  await dialog.locator('tr[data-geo-row="0"] [data-geo-field="y"]').dispatchEvent('change');
+  await expect(dialog.locator('#geo-found')).toContainText('On the image: not clicked yet.');
+  await dialog.locator('tr[data-geo-row="0"] [data-geo-field="y"]').fill('31');
+  await dialog.locator('tr[data-geo-row="0"] [data-geo-field="y"]').dispatchEvent('change');
+  await expect(dialog.locator('#geo-found')).toContainText('On the image: on the feature.');
   // The next point is named for the next feature.
   await dialog.locator('#geo-add-point').click();
   await expect(dialog.locator('#geo-worked')).toContainText('point 2 of 2: Mill');

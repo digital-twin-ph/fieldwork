@@ -38,6 +38,8 @@ test('Hagelloch: the 1824 sheet is offered, placed by four guided junctions nort
     for(const [field,value] of [['x',x],['y',y],['lon',lon],['lat',lat]]){
       await row.locator(`[data-geo-field="${field}"]`).fill(String(value));
       await row.locator(`[data-geo-field="${field}"]`).dispatchEvent('change');
+      // The table redraws just after a change; let it, before the next field is typed (WebKit CI, 0.83.0).
+      await page.evaluate(()=>new Promise(r=>setTimeout(r,0)));
     }
     // Each typed junction is inside its feature's ring, on the sheet and on the map.
     await expect(dialog.locator('#geo-found')).toContainText('On the image: on the feature. On today\'s map: on the feature.');

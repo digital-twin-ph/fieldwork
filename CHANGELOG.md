@@ -3,6 +3,11 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.84.1 — 2026-11-10
+
+- **A cleared point field is empty, not zero.** Placing a map image by points, a field emptied or replaced before it was
+  read put the point at the image's top edge or on the equator. Georeferenced map image 0.4.1.
+
 ## 0.84.0 — 2026-11-10
 
 - **Workflows are numbered within their project**, 1 to N: Hagelloch's are 1 to 4, John Snow's 1 to 4, Old Naledi's 1

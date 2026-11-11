@@ -113,8 +113,12 @@ not a practitioner in the field.
    **Decided 2026-11-11 by the practitioner:** *"Our use case for these worked examples is for teaching so that fits MERS
    Korea purpose"*: the dataset is described as compiled "for teaching", and so are these examples. Used on that basis in
    an example repository, attributed to ECDC's Epidemic Intelligence and the outbreaks package, never in the
-   application; no licence for the data itself is stated anywhere, and that stays said. Waiting on: the download of the
-   3 KB `.RData` (asked), and the example repository's creation, which is the practitioner's.
+   application; no licence for the data itself is stated anywhere, and that stays said. **Converted 2026-11-11** with R
+   (`~/Downloads/mers-korea-2015/`, `.RData` sha256 2a08976a…): a line list of **162 cases** by 15 columns (onset missing
+   for 27, exposure dates for 5) and **98 contact links** by 4 columns. Dates are per case, so it teaches case-level
+   timeliness (onset to report, onset to diagnosis, 135 cases computable) and who infected whom; a full 7-1-7 review of
+   the outbreak as one event would need the early response action dates, which it does not hold. Waiting on the example
+   repository's creation, which is the practitioner's.
    **And a 7-1-7 timeliness ruleset** (the practitioner, 2026-11-11: *"And we can build the ruleset extension as well"*):
    a bundled ruleset for Apply ruleset reading four date columns (emergence, detection, notification, early response
    complete), computing the three intervals in days, and marking each met or not against its target, 7, 1 and 7 days,

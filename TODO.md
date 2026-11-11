@@ -250,9 +250,13 @@ not a practitioner in the field.
    input and output: **Sample satellite files at points or over areas** already sums a grid within each area, by the
    cell rule Clip raster uses and lab check 02 holds against rasterio, but reads only catalog files; **Sample raster at
    points** reads a raster at points only; **Clip raster** masks one area and gives a raster; **Summarize points to
-   polygon** totals points, not cells; **Rate with a denominator** takes a stated population. So no new widget: extend
-   Sample raster to **"at points or over areas"**, as experiment 180 extended the satellite sampler, reusing its area
-   sums (`src/satellite-areas.ts`) and the cell rule. A comparison is then composed from what exists: three Raster
+   polygon** totals points, not cells; **Rate with a denominator** takes a stated population. So no new widget.
+   **And not two that sample a grid** (the practitioner, 2026-11-11: *"sample satellite files does not explicitly say it
+   takes rasters that might be a problem"*): the two samplers are **merged into one, "Sample a raster at points or over
+   areas"** (the practitioner's choice of name, 2026-11-11), taking a Raster input or satellite files, as Cases by period
+   takes points or a table. Shared: the area sums (`src/satellite-areas.ts`), the cell rule, the point reading; offered
+   only for satellite files: the layer and the quality rule. The other node type is retired outright, there being no
+   outside users, and saved workflows move to the merged one; its manual page, lab checks and name review follow. A comparison is then composed from what exists: three Raster
    inputs, three area samples over the same polygons, Relate on the polygon, and Apply ruleset for the differences.
    Compare per area at a common year, never cell by cell at 100 m, never pooled; say each model's population (all
    land, settled cells, residential) beside its number. The same step gives Rate with a denominator a population per

@@ -110,6 +110,12 @@ not a practitioner in the field.
    (Hagelloch's serial interval uses it). **Status, corrected 2026-11-11:** what is left is the data's terms, which the
    practitioner is checking at the package's pages, and converting `mers_korea_2015.RData` to CSV in the example
    repository.
+   **And a 7-1-7 timeliness ruleset** (the practitioner, 2026-11-11: *"And we can build the ruleset extension as well"*):
+   a bundled ruleset for Apply ruleset reading four date columns (emergence, detection, notification, early response
+   complete), computing the three intervals in days, and marking each met or not against its target, 7, 1 and 7 days,
+   as step settings in days. A row missing a date gets no verdict for that interval, not a guessed one. Its basis cites
+   Bochner et al. 2023 and `ontology/response-timeliness.ttl`. The machinery exists: date fields, days by minus, and
+   rules that read a computed value; the open question is binding date columns to a bundled ruleset's input roles.
    **Found 2026-11-09, before building:** `mers_korea_2015` in the R package `outbreaks` (reconverse/outbreaks): a line
    list of 15 columns (onset, report, diagnosis, exposure start and end, death) and a contacts table (from, to,
    exposure). Compiled by ECDC's Epidemic Intelligence from public information in the outbreak's first weeks; "for

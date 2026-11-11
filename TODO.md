@@ -330,6 +330,12 @@ not a practitioner in the field.
    hand with the georeferencing widget (201), as Hagelloch's sheet was; one of 26's kinds of sheet, a town plan with
    no grid. Asks before downloading, with the size. Where it lives follows item 7: the built-in Snow example earns a
    repository or retires.
+29. **An agent-based model in the browser, checked against Starsim: the spike for 199, after MERS**
+   ([199](docs/experiments/199-an-agent-based-model-in-the-browser.md); the practitioner, 2026-11-10: *"For 199 if we
+   do a spike for ABM what would that be?"*, then 2026-11-11: *"Let's do it after MERS"*). TB natural history only, at
+   the Gaborone model's rates, on Old Naledi's homes; weekly counts from a recorded seed, held against Starsim by
+   run-to-run spread; the browser's limit measured; about a day. Proposed 2026-11-10 and left unrecorded for a day,
+   found when the practitioner asked when the spike was.
 
 The high-contrast theme comes after Sierra Leone, as set on 2026-11-07; where it falls among 4 to 6 is not set.
 

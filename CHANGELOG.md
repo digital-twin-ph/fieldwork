@@ -3,6 +3,12 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.86.0 — 2026-11-10
+
+- **What changed, from the version button.** Click the version beside the Fieldwork mark to read the release notes for
+  the version you are running, step back through earlier ones, and reach the full changelog. The notes travel with the
+  application, so they open offline too. The mark itself still goes home.
+
 ## 0.85.1 — 2026-11-10
 
 - **Hagelloch's 1824 sheet is served.** *Use this example's image* answered "could not be fetched (404)" on the published

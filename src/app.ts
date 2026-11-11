@@ -2,6 +2,7 @@ import {noteImageDigest,noteImageFigure,noteImageKey,readNoteImagePayload,type N
 import {boundsOf} from './health-facilities.js';
 import {openMapImageConfig} from './georeference-ui.js';
 import {openCountriesConfig} from './area-countries-ui.js';
+import {openChangelog} from './changelog-ui.js';
 import {countriesOfArea} from './area-countries.js';
 import {placedCard} from './map-image-ui.js';
 import {catalogLinks,builtInLinks,exampleLinksBlock,exampleSlug,type ExampleLinks} from './example-links.js';
@@ -279,6 +280,7 @@ function mapControls(n:WorkflowNode<'map_output'>,withTiles=true){
 }
 const KEY='fieldwork-workflow-v1';
 $('#app-version').textContent=`v${appPackage.version}`;
+$('#app-version').addEventListener('click',()=>void openChangelog(appPackage.version,esc));
 
 /** `?reset-cache=1` — throw away every cached copy of this application and reload.
  *

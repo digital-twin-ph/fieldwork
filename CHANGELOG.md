@@ -3,6 +3,13 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.89.0 — 2026-11-11
+
+- **The Polygon layer on the standard panel.** Name, study area, one sentence of what it holds, and **Configure…**, which
+  holds where the features come from, what to read and how to name them. **Apply** is the read: the dialog says each
+  stage while it works and closes when the layer is kept; if the read fails it stays open and says why. Polygon layer
+  0.4.0.
+
 ## 0.88.1 — 2026-11-10
 
 - **More room in the workspace store.** A step's large data is now kept in the data store, by content, whatever brought

@@ -30,13 +30,15 @@ const layer=async page=>{
   await page.locator('#node-library [data-add="polygon_input"]').click();
   const id=(await saved(page)).nodes.find(n=>n.type==='polygon_input').id;
   await page.locator(`.react-flow__node[data-id="${id}"]`).click();
+  // Its settings are in Configure… since 2026-11-11 (experiment 186); Apply is the read.
+  await page.locator('#configure-step').click();
   await page.locator('#polygon-file').setInputFiles(FILE);
   await page.locator('#polygon-name-field').fill('subdist');
   await page.locator('#polygon-name-field').press('Tab');
   // NOTHING IS READ UNTIL APPLY, which is the point of it: every setting above can be changed in
   // any order first. Choosing the file used to start the read on the spot.
-  await expect(page.locator('#polygon-apply')).toBeEnabled();
-  await page.locator('#polygon-apply').click();
+  await expect(page.locator('#config-apply')).toBeEnabled();
+  await page.locator('#config-apply').click();await expect(page.locator('#polygon-config')).toHaveCount(0,{timeout:30000});
   await expect(page.locator('[data-review-polygons]')).toBeVisible();
   return id;
 };

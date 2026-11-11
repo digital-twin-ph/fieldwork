@@ -72,12 +72,14 @@ const importLgas=async page=>{
   await add(page,'polygon_input');
   const area=await idOf(page,'polygon_input');
   await page.locator(`.react-flow__node[data-id="${area}"]`).click();
+  // Its settings are in Configure… since 2026-11-11 (experiment 186); Apply is the read.
+  await page.locator('#configure-step').click();
   await page.locator('#polygon-file').setInputFiles(file('geo/nga-lgas.geojson'));
   await page.locator('#polygon-name-field').fill('ID');
   await page.locator('#polygon-name-field').press('Tab');
   await page.locator('#polygon-layer-name').fill('Local Government Areas');
   await page.locator('#polygon-layer-name').press('Tab');
-  await page.locator('#polygon-apply').click();
+  await page.locator('#config-apply').click();await expect(page.locator('#polygon-config')).toHaveCount(0,{timeout:30000});
   await expect(page.locator('[data-review-polygons]')).toBeVisible({timeout:60000});
   return area;
 };

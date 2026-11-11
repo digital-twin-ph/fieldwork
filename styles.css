@@ -305,6 +305,9 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 .config-message{margin:0 24px;padding:12px 14px;border:2px solid var(--danger-3);background:var(--danger-wash-1);border-radius:6px}
 .config-message p{color:var(--danger-4);font-weight:600;margin:0}
 .config-message-actions{display:flex;gap:10px;margin-top:10px}
+/* What an Apply that takes time is doing: news, not an error. */
+.config-message.config-message-info{border-color:var(--line);background:var(--surface-raised)}
+.config-message.config-message-info p{color:var(--ink);font-weight:500}
 .config-foot{display:flex;justify-content:space-between;gap:12px;padding:14px 24px;border-top:1px solid var(--line)}
 .config-foot .button{font-size:15px;min-height:40px;min-width:96px}
 /* THE STANDARD INSPECTOR's sections, each headed the same way. */

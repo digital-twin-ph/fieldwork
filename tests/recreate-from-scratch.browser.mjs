@@ -105,6 +105,8 @@ test('the worked example is rebuilt from an empty canvas and the published input
   await add(page,'polygon_input');
   const districts=await idOf(page,'polygon_input',0);
   await page.locator(`.react-flow__node[data-id="${districts}"]`).click();
+  // Its settings are in Configure… since 2026-11-11 (experiment 186); Apply is the read.
+  await page.locator('#configure-step').click();
   await page.locator('#polygon-file').setInputFiles(file('geo/sub-districts-csds.geojson'));
   await page.locator('#polygon-name-field').fill('subdist');
   await page.locator('#polygon-name-field').press('Tab');
@@ -113,19 +115,21 @@ test('the worked example is rebuilt from an empty canvas and the published input
   // NOTHING IS READ UNTIL APPLY, which is the point of it: every setting above can be set in any
   // order first, and changing one afterwards no longer leaves the layer holding what the old
   // settings matched.
-  await page.locator('#polygon-apply').click();
+  await page.locator('#config-apply').click();await expect(page.locator('#polygon-config')).toHaveCount(0,{timeout:30000});
   await expect(page.locator('[data-review-polygons]')).toBeVisible();
 
   // 3. THE RIVER, the same way.
   await add(page,'polygon_input');
   const thames=await idOf(page,'polygon_input',1);
   await page.locator(`.react-flow__node[data-id="${thames}"]`).click();
+  // Its settings are in Configure… since 2026-11-11 (experiment 186); Apply is the read.
+  await page.locator('#configure-step').click();
   await page.locator('#polygon-file').setInputFiles(file('geo/thames-reaches.geojson'));
   await page.locator('#polygon-name-field').fill('reach');
   await page.locator('#polygon-name-field').press('Tab');
   await page.locator('#polygon-layer-name').fill('Thames reaches');
   await page.locator('#polygon-layer-name').press('Tab');
-  await page.locator('#polygon-apply').click();
+  await page.locator('#config-apply').click();await expect(page.locator('#polygon-config')).toHaveCount(0,{timeout:30000});
   await expect(page.locator('[data-review-polygons]')).toBeVisible();
 
   // 4. THE INTAKES. The layer that existed only inside the bundle until 2026-10-29.

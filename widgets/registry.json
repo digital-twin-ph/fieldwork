@@ -1155,7 +1155,7 @@
     {
       "id": "urn:fieldwork:widget:polygon_input",
       "nodeType": "polygon_input",
-      "currentVersion": "0.3.0",
+      "currentVersion": "0.4.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -1171,6 +1171,11 @@
           "version": "0.3.0",
           "path": "widgets/releases/polygon_input/0.3.0.json",
           "sha256": "2d6687d5239d8e919f82b619b977ae550477dccad9ee06a7e29cea2e6996a352"
+        },
+        {
+          "version": "0.4.0",
+          "path": "widgets/releases/polygon_input/0.4.0.json",
+          "sha256": "3c4ba9ea7a1a55b984ee29f00796f074793b98e167e6efd4be939e0d284c07fd"
         }
       ]
     },

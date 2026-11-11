@@ -9,8 +9,8 @@ areas rather than one frame.
 
 ## Two ways in
 
-Choosing one shows that method's controls and hides the other, so the panel describes the path you
-are on.
+Both are in **Configure…**. Choosing one shows that method's steps and hides the other's, so the dialog describes the
+path you are on. Nothing is read until **Apply**, which is the read.
 
 **A published GeoJSON layer.** A `FeatureCollection` of polygons and multipolygons you already
 have. It is read exactly as published.
@@ -55,25 +55,28 @@ layer rather than remembered separately.
 
 ## How to use it
 
-**From a file.** Add the widget, leave the method on *A published GeoJSON layer*, and choose your
-file. The panel then shows how many features and vertices it read. If your features carry a name,
-type that property's name into *Which property names each feature* before you choose the file.
+The step's panel holds its **Name**, its **Study area**, one sentence saying what it holds, and **Configure…**. Under
+**Result**, the layer it read and **Choose features**.
+
+**From a file.** Add the widget and press **Configure…**. Leave the method on *A GeoJSON file*, choose your file, and if
+your features carry a name, type that property's name into *Which property names each feature*. Press **Apply**. The
+panel then shows how many features and vertices it read.
 
 **From an extract.**
 
-1. Add **Study area** and define it, then connect it on the widget's *Study area* control. The
-   panel shows the box it will read from, so you can see what the margin does before anything is
+1. Add **Study area** and define it, press **Configure…** and choose it under *Study area to read inside*. The
+   dialog shows the box it will read from, so you can see what the margin does before anything is
    read.
 2. Tick the kinds you want.
 3. Set the margin if the features you need reach outside your bounds. A river's course, a reservoir
    or a lock can sit kilometres beyond the edge of a study area and still belong to the question.
    There is no ceiling: a larger box costs you a slower read, and the read is local.
-4. If you do not have an extract, use the download button the panel offers. It names the smallest
+4. If you do not have an extract, use the download button the dialog offers. It names the smallest
    catalogued file that covers your box and your browser downloads it directly — this application
    cannot fetch it for you, because that host does not permit it. Come back to the file picker when
    it has landed.
-5. Choose the file. The read runs in the background and reports each stage; the page stays usable
-   while it works, which matters because a large extract takes several seconds at least.
+5. Choose the file, then press **Apply**. The read reports each stage in the dialog, which stays open until the
+   layer is kept; if the read fails, the dialog says why and nothing on the step changes.
 6. Read what the panel says came back: how many features, how many vertices, how many were below
    your threshold, and how many fell outside the box. If the counts surprise you, change the
    threshold and read again.

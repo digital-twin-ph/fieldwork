@@ -32,6 +32,10 @@ export interface ConfigDialog<D> {
   /** Connects the controls inside the sections. `redraw` rebuilds them from the draft. */
   wire:(root:HTMLElement,draft:D,redraw:()=>void)=>void;
   apply:(draft:D)=>void;
+  /** AN APPLY THAT TAKES TIME AND CAN FAIL: a read of a file (the Polygon layer, 2026-11-11). The dialog stays open while
+   *  it runs, saying what it is doing through `say`; it closes when this resolves true, and stays open, its controls
+   *  usable, when it resolves false or throws, with the reason as its message. Used instead of `apply` when given. */
+  applyAsync?:(draft:D,say:(text:string)=>void)=>Promise<boolean>;
   /** Called when the dialog closes without Apply: Cancel, ×, Escape or Discard. */
   onClose?:()=>void;
   /** Called before every rebuild of the sections, and before the dialog closes either way: release what `wire` mounted
@@ -78,7 +82,18 @@ export function openConfigDialog<D>(spec:ConfigDialog<D>,esc:Escape):void{
   const applyButton=dialog.querySelector<HTMLButtonElement>(`#${CONFIG_APPLY}`)!;
   dialog.querySelector<HTMLButtonElement>(`#${CONFIG_CLOSE}`)!.onclick=requestClose;
   dialog.querySelector<HTMLButtonElement>(`#${CONFIG_CANCEL}`)!.onclick=requestClose;
-  applyButton.onclick=()=>{if(!applyButton.disabled&&!spec.readOnly){applied=true;spec.apply(draft);close();}};
+  const cancelButton=dialog.querySelector<HTMLButtonElement>(`#${CONFIG_CANCEL}`)!;
+  applyButton.onclick=async()=>{
+    if(applyButton.disabled||spec.readOnly)return;
+    if(!spec.applyAsync){applied=true;spec.apply(draft);close();return;}
+    const say=(text:string,tone:'info'|'failure'='info')=>{slot.innerHTML=text
+      ?`<div class="config-message config-message-${tone}" role="${tone==='failure'?'alert':'status'}"><p>${esc(text)}</p></div>`:'';};
+    applyButton.disabled=true;cancelButton.disabled=true;const was=applyButton.textContent;applyButton.textContent='Working\u2026';
+    try{
+      if(await spec.applyAsync(draft,text=>say(text))){applied=true;close();return;}
+    }catch(error){say(error instanceof Error?error.message:String(error),'failure');}
+    applyButton.textContent=was;applyButton.disabled=false;cancelButton.disabled=false;
+  };
 
   function draw(){
     // WHERE THE PERSON WAS, kept across the rebuild: the element with focus by id, and the caret in a text box.

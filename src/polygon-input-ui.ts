@@ -35,7 +35,7 @@ const KIND_LABELS:Record<AreaKind,string>={
  *  The DROPPED counts belong here and not only in the receipt, because this is where the
  *  threshold is decided. 186 features is a number with no meaning until it sits beside the 844
  *  that were below the threshold and the ones that fell outside the box. */
-function layerCard(n:WorkflowNode<'polygon_input'>,esc:Escape):string{
+export function layerCard(n:WorkflowNode<'polygon_input'>,esc:Escape):string{
   const read=n.params.retrieval,source=n.params.source;
   const kept=n.params.data.features.length;
   if(!read&&!kept)return '';
@@ -81,111 +81,6 @@ function layerCard(n:WorkflowNode<'polygon_input'>,esc:Escape):string{
     +`</div>`;
 }
 
-/** ONE DECISION AT A TIME, AND ONLY THE PARTS THAT FOLLOW FROM IT.
- *
- *  The practitioner, 2026-10-29: *"The Inspector panel needs to have a step by step decision
- *  guided UI. Pick GeoJSON and only components that are relevant to the choice shows up. Pick PBF
- *  and the relevant components show up. There's also developer commentary on the panel, that adds
- *  clutter, epidemiologists and field practitioners will not read those."*
- *
- *  So the steps are numbered, each path shows only its own, and the prose is what a practitioner
- *  needs to make the next choice. The measurements, the dates and the reasons a rule exists have
- *  moved to `docs/widgets/polygon_input.md`, where someone who wants them can find them and
- *  everyone else is not reading past them.
- *
- *  AND NOTHING RUNS UNTIL APPLY. *"There needs to be an Apply button so the decision and choices
- *  are finalized and seen as executed."* Choosing a file used to start the read on the spot,
- *  which meant the settings above it had to be right BEFORE the file was picked -- change a kind
- *  afterwards and the layer still held what the old kinds matched, with nothing saying so. The
- *  file is now held until Apply, and Apply is the read. */
-export function polygonInputInspector(n:WorkflowNode<'polygon_input'>,esc:Escape,
-  boundary?:Boundary,areaSources:{id:string;label:string}[]=[],connectedArea?:string):string{
-  const p=n.params;
-  const method=p.inputMethod==='extract'?'extract':'file';
-  const kinds=p.kinds??[];
-  const step=(index:number,title:string,inner:string)=>
-    `<div class="field-step"><span class="inspector-section">${index} \u00b7 ${esc(title)}</span>`
-    +inner+`</div>`;
-
-  let html=labelField(p.label||'',100,esc)
-    +step(1,'Where the features come from',
-      `<select id="polygon-input-method" aria-label="Where the features come from">`
-      +`<option value="file" ${method==='file'?'selected':''}>A GeoJSON file</option>`
-      +`<option value="extract" ${method==='extract'?'selected':''}>An OpenStreetMap extract `
-      +`(.osm.pbf)</option></select>`
-      +`<small>${method==='file'
-        ?'A layer somebody published. Read as published \u2014 nothing is clipped or reprojected.'
-        :'Areas read out of a published extract on your computer, inside your study area.'
-      }</small>`);
-
-  if(method==='file'){
-    html+=step(2,'Choose the file',
-      `<input id="polygon-file" type="file" accept=".geojson,.json,application/geo+json,application/json">`
-      +`<small>Polygons and multipolygons, longitude then latitude.</small>`
-      +`<p id="polygon-pending" class="muted"></p>`);
-    html+=step(3,'Name the features',nameFields(p,esc));
-  }else{
-    const bounds=boundary?geometryBounds(boundary):undefined;
-    const margin=p.marginM??0;
-    const box=bounds?readBox([bounds[0],bounds[1],bounds[2],bounds[3]],margin):undefined;
-    html+=step(2,'Study area to read inside',
-      `<select id="polygon-area" data-map-port="area"><option value="">Not connected</option>`
-      +areaSources.map(source=>`<option value="${esc(source.id)}" `
-        +`${connectedArea===source.id?'selected':''}>${esc(source.label)}</option>`).join('')
-      +`</select>`
-      +(box
-        ?`<small>Reading ${esc(box.map(c=>c.toFixed(4)).join(', '))}.</small>`
-        :`<small>Required. The box to read comes from this area.</small>`));
-    html+=step(3,'What to read',
-      AREA_KINDS.map(kind=>`<label><input type="checkbox" data-area-kind="${kind}" `
-        +`${kinds.includes(kind)?'checked':''}> ${esc(KIND_LABELS[kind])}</label>`).join('')
-      +`<label class="field-label" for="polygon-margin">How far outside the area to look `
-      +`(metres)</label>`
-      +`<input id="polygon-margin" type="number" min="0" step="100" value="${margin}">`
-      +`<label class="field-label" for="polygon-min-vertices">Skip features smaller than `
-      +`(vertices)</label>`
-      +`<input id="polygon-min-vertices" type="number" min="0" step="1" `
-      +`value="${p.minVertices===undefined?'':p.minVertices}" placeholder="No limit">`
-      +`<small>Leave the limit empty to read everything, then choose what to keep after the `
-      +`read.</small>`);
-    html+=step(4,'Choose the extract file',
-      `<input id="polygon-extract" type="file" accept=".pbf,.osm.pbf,application/octet-stream">`
-      +`<small>It is read where it sits and never copied in.</small>`
-      +`<p id="polygon-pending" class="muted"></p>`
-      +(()=>{
-        if(!box)return '';
-        const regions=extractsFor({type:'Polygon',coordinates:[[
-          [box[0],box[1]],[box[2],box[1]],[box[2],box[3]],[box[0],box[3]],[box[0],box[1]],
-        ]] as unknown as never});
-        if(!regions.length)return `<small>No catalogued extract covers this box.</small>`;
-        return `<details><summary>Don\u2019t have one? Download an extract covering this box`
-          +`</summary><div class="extract-links">`
-          +regions.map(region=>`<a class="button" href="${esc(region.pbf)}" download `
-            +`target="_blank" rel="noopener noreferrer">\u2193 ${esc(region.name)}</a>`).join('')
-          +`</div><small>Your browser downloads it from ${esc(new URL(regions[0].pbf).host)}. `
-          +`Come back here once it has landed.</small></details>`;
-      })());
-    html+=step(5,'Name the features',nameFields(p,esc));
-  }
-
-  // APPLY, and what it is waiting for. A disabled button that does not say why is a dead end, so
-  // the line beneath it names the one thing still missing.
-  const waiting=method==='extract'
-    ?(!connectedArea?'Connect a study area in step 2.'
-      :!kinds.length?'Choose at least one kind in step 3.':'')
-    :'';
-  html+=`<div class="field-step"><button id="polygon-apply" class="button primary" disabled>`
-    +`${method==='extract'?'Read the extract':'Read the file'}</button>`
-    +`<p id="polygon-apply-note" class="muted">${esc(waiting||'Choose a file to read.')}</p>`
-    +`<p id="polygon-extract-status" class="muted" role="status"></p></div>`;
-
-  html+=layerCard(n,esc)
-    +(n.params.data.features.length
-      ?`<button class="button" data-review-polygons="${esc(n.id)}">Choose features`
-        +`${n.params.hidden?.length?` \u00b7 ${n.params.hidden.length} set aside`:''}</button>`
-      :'');
-  return html;
-}
 
 /** The two naming questions, which both paths ask in the same words. */
 function nameFields(p:WorkflowNode<'polygon_input'>['params'],esc:Escape):string{
@@ -199,4 +94,83 @@ function nameFields(p:WorkflowNode<'polygon_input'>['params'],esc:Escape):string
     +`<input id="polygon-layer-name" maxlength="100" value="${esc(p.layerName||'')}" `
     +`placeholder="${esc(p.label||'Polygon layer')}">`
     +`<small>What a reader sees beside it on a map.</small>`;
+}
+
+
+/** WHAT CONFIGURE… HOLDS (experiment 186, 2026-11-11: the practitioner, "Let's also standardize the Polygon layer input
+ *  ASAP"). Everything the panel used to carry, now a draft that nothing reads until Apply, which is the read. */
+export interface PolygonDraft {
+  inputMethod:'file'|'extract'; kinds:AreaKind[]; marginM:number; minVertices?:number;
+  nameField?:string; layerName?:string; area?:string; label:string;
+}
+export function polygonDraftOf(n:WorkflowNode<'polygon_input'>,connectedArea?:string):PolygonDraft{
+  const p=n.params;
+  return {inputMethod:p.inputMethod==='extract'?'extract':'file',kinds:[...(p.kinds??[])],marginM:p.marginM??0,
+    ...(p.minVertices!==undefined?{minVertices:p.minVertices}:{}),...(p.nameField?{nameField:p.nameField}:{}),
+    ...(p.layerName?{layerName:p.layerName}:{}),...(connectedArea?{area:connectedArea}:{}),label:p.label||''};
+}
+/** What is still missing before Apply can read, one thing at a time. */
+export function polygonMissing(d:PolygonDraft,file?:File):string{
+  return d.inputMethod==='extract'
+    ?(!d.area?'Choose the study area to read inside.':!d.kinds.length?'Choose at least one kind of area to read.'
+      :!file?'Choose an extract file.':'')
+    :(!file?'Choose a GeoJSON file.':'');
+}
+/** The settings, as the panel had them, numbered in the order a person decides them. */
+export function polygonConfigSettings(d:PolygonDraft,esc:Escape,boundary:Boundary|undefined,
+  areaSources:{id:string;label:string}[],chosen?:string):string{
+  const step=(index:number,title:string,inner:string)=>
+    `<div class="field-step"><span class="inspector-section">${index} · ${esc(title)}</span>${inner}</div>`;
+  const names=`<label class="field-label" for="polygon-name-field">Which property names each feature</label>`
+    +`<input id="polygon-name-field" maxlength="100" value="${esc(d.nameField||'')}" placeholder="Not set">`
+    +`<small>Leave it unset to number them. A property the file does not carry is refused rather than left blank.</small>`
+    +`<label class="field-label" for="polygon-layer-name">What to call the layer</label>`
+    +`<input id="polygon-layer-name" maxlength="100" value="${esc(d.layerName||'')}" placeholder="${esc(d.label||'Polygon layer')}">`
+    +`<small>What a reader sees beside it on a map.</small>`;
+  const pending=`<p id="polygon-pending" class="muted">${chosen?`Chosen: ${esc(chosen)}`:''}</p>`;
+  let html=step(1,'Where the features come from',
+    `<select id="polygon-input-method" aria-label="Where the features come from">`
+    +`<option value="file" ${d.inputMethod==='file'?'selected':''}>A GeoJSON file</option>`
+    +`<option value="extract" ${d.inputMethod==='extract'?'selected':''}>An OpenStreetMap extract (.osm.pbf)</option></select>`
+    +`<small>${d.inputMethod==='file'?'A layer somebody published. Read as published — nothing is clipped or reprojected.'
+      :'Areas read out of a published extract on your computer, inside your study area.'}</small>`);
+  if(d.inputMethod==='file'){
+    html+=step(2,'Choose the file',`<input id="polygon-file" type="file" accept=".geojson,.json,application/geo+json,application/json">`
+      +`<small>Polygons and multipolygons, longitude then latitude.</small>`+pending);
+    return html+step(3,'Name the features',names);
+  }
+  const bounds=boundary?geometryBounds(boundary):undefined;
+  const box=bounds?readBox([bounds[0],bounds[1],bounds[2],bounds[3]],d.marginM):undefined;
+  html+=step(2,'Study area to read inside',
+    `<select id="polygon-area"><option value="">Not connected</option>`
+    +areaSources.map(source=>`<option value="${esc(source.id)}" ${d.area===source.id?'selected':''}>${esc(source.label)}</option>`).join('')
+    +`</select>`+(box?`<small>Reading ${esc(box.map(c=>c.toFixed(4)).join(', '))}.</small>`:`<small>Required. The box to read comes from this area.</small>`));
+  html+=step(3,'What to read',
+    AREA_KINDS.map(kind=>`<label><input type="checkbox" data-area-kind="${kind}" ${d.kinds.includes(kind)?'checked':''}> ${esc(KIND_LABELS[kind])}</label>`).join('')
+    +`<label class="field-label" for="polygon-margin">How far outside the area to look (metres)</label>`
+    +`<input id="polygon-margin" type="number" min="0" step="100" value="${d.marginM}">`
+    +`<label class="field-label" for="polygon-min-vertices">Skip features smaller than (vertices)</label>`
+    +`<input id="polygon-min-vertices" type="number" min="0" step="1" value="${d.minVertices===undefined?'':d.minVertices}" placeholder="No limit">`
+    +`<small>Leave the limit empty to read everything, then choose what to keep after the read.</small>`);
+  html+=step(4,'Choose the extract file',
+    `<input id="polygon-extract" type="file" accept=".pbf,.osm.pbf,application/octet-stream">`
+    +`<small>It is read where it sits and never copied in.</small>`+pending
+    +(()=>{
+      if(!box)return '';
+      const regions=extractsFor({type:'Polygon',coordinates:[[[box[0],box[1]],[box[2],box[1]],[box[2],box[3]],[box[0],box[3]],[box[0],box[1]]]] as unknown as never});
+      if(!regions.length)return `<small>No catalogued extract covers this box.</small>`;
+      return `<details><summary>Don’t have one? Download an extract covering this box</summary><div class="extract-links">`
+        +regions.map(region=>`<a class="button" href="${esc(region.pbf)}" download target="_blank" rel="noopener noreferrer">↓ ${esc(region.name)}</a>`).join('')
+        +`</div><small>Your browser downloads it from ${esc(new URL(regions[0]!.pbf).host)}. Come back here once it has landed.</small></details>`;
+    })());
+  return html+step(5,'Name the features',names);
+}
+/** The Inspector's one sentence: what the layer holds and where it came from. */
+export function polygonSentence(n:WorkflowNode<'polygon_input'>):string{
+  const p=n.params,count=p.data.features.length;
+  if(!count)return 'No features yet. Choose a GeoJSON file, or read areas out of an OpenStreetMap extract, in Configure…';
+  const from=p.retrieval?`read from ${p.source?.filename??'an OpenStreetMap extract'} inside the study area (${p.retrieval.kinds.join(' and ')})`
+    :`read from ${p.source?.filename??'a GeoJSON file'}, as published`;
+  return `${count.toLocaleString('en')} polygon feature${count===1?'':'s'}, ${from}.`
+    +(p.hidden?.length?` ${p.hidden.length} set aside.`:'');
 }

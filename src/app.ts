@@ -116,7 +116,6 @@ import {readAuthors,currentIdentity,attestIdentity,setCurrentIdentity,authorLabe
 
 /** A polygon layer's chosen file, waiting for Apply. Keyed by node, outside the DOM, because the
  *  Inspector re-renders on every setting change. */
-const pendingPolygonFiles=new Map<string,File>();
 import {LAYER_SHAPES,resolveLayerSymbol,markPath,type LayerShape} from './presentation.js';
 import {isPointPort} from './point-layers.js';
 import {EXAMPLE_TEMPLATES,hasExampleTemplate,EXAMPLE_KEYS,WORKED_EXAMPLE_KEYS} from './example-templates.js';
@@ -155,7 +154,7 @@ import {openTableEditor,dataTableMarkup,tableFromFetched} from './data-table-ui.
 import {openCatalogDialog,identityMarkup,widgetIdentity} from './catalog-ui.js';
 import {initTheme,applyTheme,saveThemePreference,isThemePreference} from './theme.js';
 import {previewArea,prepareRasterPreview,rasterOfNode} from './raster-preview.js';
-import {polygonInputInspector} from './polygon-input-ui.js';
+import {layerCard as polygonLayerCard,polygonConfigSettings,polygonDraftOf,polygonMissing,polygonSentence,type PolygonDraft} from './polygon-input-ui.js';
 import {areasInWorker,retrievalProvenance,readBox,AREA_KINDS,type AreaKind} from './osm-areas.js';
 import {readPolygonFeatures} from './polygon-layer.js';
 import {contentHash} from './project-files.js';
@@ -2132,6 +2131,80 @@ function scanSettingsSentence(p:import('./types.js').ParamsByType['space_time_sc
 
 /** THE SPACE-TIME SCAN'S CONFIGURATION DIALOG (experiments 186 and 200). The date column is nominated, never guessed;
  *  the limits are SaTScan's defaults until changed; the seed is shown, so a run can be repeated exactly. */
+/** THE POLYGON LAYER, CONFIGURED (experiment 186, 2026-11-11). Where the features come from, the study area to read
+ *  inside, what to read, the file, and how to name them -- a draft until Apply, and Apply is the read. The file is held
+ *  here, outside the controls, because a redraw would empty a file input; a read that fails leaves the dialog open
+ *  with the reason, and nothing on the step changed. */
+function openPolygonConfig(nodeId:string){
+  const node=getNode(workflow,nodeId,'polygon_input');
+  const connected=workflow.edges.find(e=>e.to===nodeId&&e.port==='area')?.from;
+  const areaSources=workflow.nodes.filter(x=>x.id!==nodeId&&outputOf(x)==='area').map(x=>({id:x.id,label:x.params.label||TYPES[x.type].title}));
+  let file:File|undefined;
+  const boundaryOf=(area?:string)=>{if(!area)return undefined;try{return previewArea(workflow,area).boundary;}catch{return undefined;}};
+  openConfigDialog<PolygonDraft>({
+    id:'polygon-config',widget:'Polygon layer',step:node.params.label||TYPES.polygon_input.title,draft:polygonDraftOf(node,connected),
+    sections:d=>{const missing=polygonMissing(d,file);
+      return {settings:polygonConfigSettings(d,esc,boundaryOf(d.area),areaSources,file?.name),blocked:!!missing,
+        ...(missing?{message:{tone:'warning' as const,text:missing}}:{})};},
+    wire:(root,d,redraw)=>{
+      const on=(selector:string,fn:(el:HTMLInputElement&HTMLSelectElement)=>void)=>
+        root.querySelectorAll<HTMLInputElement&HTMLSelectElement>(selector).forEach(el=>el.addEventListener('change',()=>{fn(el);redraw();}));
+      on('#polygon-input-method',el=>{d.inputMethod=el.value==='extract'?'extract':'file';file=undefined;});
+      on('#polygon-area',el=>{if(el.value)d.area=el.value;else delete d.area;});
+      on('[data-area-kind]',el=>{const kind=el.dataset.areaKind as AreaKind,held=new Set(d.kinds);
+        if(el.checked)held.add(kind);else held.delete(kind);d.kinds=AREA_KINDS.filter(k=>held.has(k));});
+      // UNSET IS A VALUE HERE, not zero: unset reads every area of the chosen kinds.
+      on('#polygon-min-vertices',el=>{const raw=el.value.trim();if(raw==='')delete d.minVertices;else d.minVertices=Number(raw);});
+      on('#polygon-margin',el=>{const raw=el.value.trim();d.marginM=raw===''?0:Number(raw);});
+      on('#polygon-name-field',el=>{const raw=el.value.trim();if(raw)d.nameField=raw;else delete d.nameField;});
+      on('#polygon-layer-name',el=>{const raw=el.value.trim();if(raw)d.layerName=raw;else delete d.layerName;});
+      for(const id of ['#polygon-file','#polygon-extract'])on(id,el=>{file=el.files?.[0];});
+    },
+    apply:()=>{},
+    applyAsync:async(d,say)=>{
+      if(!file)return false;
+      // The settings first, then the read: the read is of these settings, and the study area it reads inside.
+      change(w=>{const t=getNode(w,nodeId,'polygon_input').params;
+        t.inputMethod=d.inputMethod;t.kinds=d.kinds;t.marginM=d.marginM;
+        if(d.minVertices===undefined)delete t.minVertices;else t.minVertices=d.minVertices;
+        if(d.nameField)t.nameField=d.nameField;else delete t.nameField;
+        if(d.layerName)t.layerName=d.layerName;else delete t.layerName;
+        if(d.inputMethod==='extract'&&d.area)setConnection(w,d.area,nodeId,'area');});
+      const bytes=new Uint8Array(await file.arrayBuffer());
+      const sha256=await contentHash(bytes);
+      const current=getNode(workflow,nodeId,'polygon_input');
+      let features,retrieval;
+      if(d.inputMethod==='extract'){
+        // THE SCOPE IS THE STUDY AREA'S, which is why the port exists: a read with no box is a read of whatever the file holds.
+        const {boundary}=previewArea(workflow,nodeId);
+        const bounds=geometryBounds(boundary);
+        const bbox=readBox([bounds[0],bounds[1],bounds[2],bounds[3]],d.marginM);
+        ({features,retrieval}=await areasInWorker(bytes,{kinds:d.kinds,bbox,nameTag:current.params.nameField,minVertices:current.params.minVertices},say));
+        say('Keeping the areas on this device…');
+      }else{
+        say(`Reading ${file.name}…`);
+        features=readPolygonFeatures(JSON.parse(new TextDecoder().decode(bytes)),{nameField:current.params.nameField,layerName:current.params.layerName});
+      }
+      const data={features};
+      const digest=await payloadDigest(data);
+      if(!await keepDataset(digest,data))
+        throw new Error(`These ${features.length.toLocaleString('en')} features could not be kept on this device, so they were not saved.`
+          +(d.inputMethod==='extract'?' A higher vertex threshold reads fewer of them.':' Export the workflow to a file to keep it.'));
+      const read=retrieval?{...retrieval,filename:file.name,sha256,bytes:bytes.length}:undefined;
+      const kept=change(w=>{const t=getNode(w,nodeId,'polygon_input');
+        t.params.data=data;t.params.dataRef=digest;
+        t.params.source={filename:file!.name,bytes:bytes.length,sha256,features:features.length};
+        if(read){t.params.retrieval=read;t.params.provenance=retrievalProvenance(read,{filename:file!.name,sha256});}
+        // A FILE LAYER HAS NO RETRIEVAL, and leaving the previous one would compare this file against a box it was never read for.
+        else delete t.params.retrieval;
+      },{requirePersistence:true});
+      if(!kept){await dropPayload(digest);throw new Error('The layer could not be saved on this device.');}
+      toast(`${features.length.toLocaleString('en')} polygon feature${features.length===1?'':'s'} read`
+        +`${d.inputMethod==='extract'?' from the extract and saved on this device':''}. Run the workflow to use them.`);
+      return true;
+    },
+  },esc);
+}
 function openScanConfig(nodeId:string){
   const node=getNode(workflow,nodeId,'space_time_scan');
   type Draft=WorkflowNode<'space_time_scan'>['params'];
@@ -3252,16 +3325,18 @@ function renderInspector(){
     content+=standardSection('Result',`<p class="standard-result${why?' standard-result-warning':''}">${esc(why?`The last run could not compute this step: ${why}`
       :shown?`Shown in Results, under "${n.params.label||'Table'}".`:'Not run yet.')}</p>`);
   }else if(n.type==='polygon_input'){
-    // The connected study area, which scopes an acquisition. `previewArea` throws when nothing is
-    // connected, and that is a legitimate state: a layer read from a file needs no area at all,
-    // which is why the port is optional. The panel then says the box cannot be worked out,
-    // instead of implying a read would cover something.
-    let areaBoundary;
-    try{areaBoundary=previewArea(workflow,n.id).boundary;}catch{areaBoundary=undefined;}
-    content+=polygonInputInspector(n,esc,areaBoundary,
-      workflow.nodes.filter(x=>x.id!==n.id&&outputOf(x)==='area')
-        .map(x=>({id:x.id,label:x.params.label||TYPES[x.type].title})),
-      workflow.edges.find(e=>e.to===n.id&&e.port==='area')?.from);
+    // THE STANDARD INSPECTOR (experiment 186; the practitioner, 2026-11-11: "Let's also standardize the Polygon layer input
+    // ASAP"): the name, its study area, one sentence and Configure…, which holds the five steps and whose Apply is the
+    // read; and what it holds, with the features to choose from.
+    const p=n.params;
+    content+=standardSection('Name',labelForm('polygon-label','Name',p.label||'Polygon layer'));
+    content+=standardSection('Inputs',standardInputs(n));
+    content+=standardSection('Settings',`<p class="standard-sentence">${esc(polygonSentence(n))}</p>`
+      +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button></div>');
+    content+=standardSection('Result',p.data.features.length
+      ?polygonLayerCard(n,esc)+`<button class="button" data-review-polygons="${esc(n.id)}">Choose features`
+        +`${p.hidden?.length?` \u00b7 ${p.hidden.length} set aside`:''}</button>`
+      :'<p class="standard-result">Nothing read yet.</p>');
   }else if(n.type==='map_image_input'){
     // THE STANDARD INSPECTOR (experiments 186 and 201), touched to place an image by matched points: the name; no inputs;
     // one sentence and Configure…, which holds the image, its placement and its opacity; and what is placed.
@@ -4407,6 +4482,7 @@ content+=`<div class="field"><label class="field-label" for="chart-decisions">Re
   if(n.type==='sample_satellite_files_at_points')optionalElement('#configure-step')?.addEventListener('click',()=>openSatelliteSampleConfig(n.id));
   if(n.type==='chart_output')optionalElement('#configure-step')?.addEventListener('click',()=>openChartConfig(n.id));
   if(n.type==='space_time_scan')optionalElement('#configure-step')?.addEventListener('click',()=>openScanConfig(n.id));
+  if(n.type==='polygon_input')optionalElement('#configure-step')?.addEventListener('click',()=>openPolygonConfig(n.id));
   if(n.type==='map_image_input')optionalElement('#configure-step')?.addEventListener('click',()=>{
     const p=getNode(workflow,n.id,'map_image_input').params,placed=typeof p.data==='string'&&p.data.startsWith('data:');
     const area=workflow.nodes.find(x=>x.type==='study_area');
@@ -4612,161 +4688,8 @@ content+=`<div class="field"><label class="field-label" for="chart-decisions">Re
     }catch(error){say('');toast(errorMessage(error),{tone:'failure'});}
     finally{input.value='';}
   });
-  // A POLYGON LAYER, read from a file or acquired from an extract.
-  //
-  // The two paths put the same thing in the same place and differ in where it came from, so they
-  // share the keeping: features go to the payload store and the workflow keeps a reference.
-  // Measured 2026-10-28, South London's water at 45 vertices minimum: 186 features, 32,999
-  // vertices, 788 kB of params against a 5,226,496-byte store written twice per save. A layer
-  // that an example SHIPS stays inline, because there the workflow file is the publication.
-  optionalElement('#polygon-input-method')?.addEventListener('change',e=>change(w=>{
-    const target=getNode(w,n.id,'polygon_input');
-    target.params.inputMethod=control(e).value==='extract'?'extract':'file';
-  }));
-  document.querySelectorAll<HTMLInputElement>('[data-area-kind]').forEach(el=>el.onchange=()=>change(w=>{
-    const target=getNode(w,n.id,'polygon_input');
-    const kind=required(el.dataset.areaKind) as AreaKind;
-    const held=new Set(target.params.kinds??[]);
-    if(el.checked)held.add(kind);else held.delete(kind);
-    target.params.kinds=AREA_KINDS.filter(k=>held.has(k));
-  }));
-  // UNSET IS A VALUE HERE, not zero: unset reads every area of the chosen kinds, and the refusal
-  // that follows names the threshold that would fit. A blank box that became 0 would read the
-  // same way and say it was asked for.
-  optionalElement('#polygon-min-vertices')?.addEventListener('change',e=>change(w=>{
-    const target=getNode(w,n.id,'polygon_input'),raw=control(e).value.trim();
-    if(raw==='')delete target.params.minVertices;else target.params.minVertices=Number(raw);
-  }));
-  optionalElement('#polygon-margin')?.addEventListener('change',e=>change(w=>{
-    const target=getNode(w,n.id,'polygon_input'),raw=control(e).value.trim();
-    target.params.marginM=raw===''?0:Number(raw);
-  }));
-  optionalElement('#polygon-name-field')?.addEventListener('change',e=>change(w=>{
-    const target=getNode(w,n.id,'polygon_input'),raw=control(e).value.trim();
-    if(raw==='')delete target.params.nameField;else target.params.nameField=raw;
-  }));
-  optionalElement('#polygon-layer-name')?.addEventListener('change',e=>change(w=>{
-    const target=getNode(w,n.id,'polygon_input'),raw=control(e).value.trim();
-    if(raw==='')delete target.params.layerName;else target.params.layerName=raw;
-  }));
-  // THE FILE IS HELD, NOT READ. Choosing one used to start the read on the spot, so every
-  // setting above it had to be right BEFORE the file was picked: change a kind afterwards and the
-  // layer still held what the old kinds matched, with nothing saying so.
-  // HELD OUTSIDE THE DOM, because the panel re-renders on every setting change and a file input
-  // cannot carry a selection across that. Choose the extract, then change a kind, and the input
-  // is new and empty -- so the file lived for exactly as long as you changed nothing, which is
-  // the opposite of what Apply is for.
-  const held=()=>pendingPolygonFiles.get(n.id);
-  const remember=(event:Event)=>{
-    const file=(event.target as HTMLInputElement).files?.[0];
-    if(file)pendingPolygonFiles.set(n.id,file);else pendingPolygonFiles.delete(n.id);
-    announce();
-  };
-  const announce=()=>{
-    const file=held();
-    const apply=optionalElement('#polygon-apply') as HTMLButtonElement|null;
-    const note=optionalElement('#polygon-apply-note'),pending=optionalElement('#polygon-pending');
-    if(pending)pending.textContent=file?`Chosen: ${file.name}`:'';
-    if(!apply||!note)return;
-    const node=getNode(workflow,n.id,'polygon_input');
-    // ONE THING AT A TIME, named. A disabled button that does not say why is a dead end.
-    const missing=node.params.inputMethod==='extract'
-      ?(!workflow.edges.some(e=>e.to===n.id&&e.port==='area')?'Connect a study area in step 2.'
-        :!(node.params.kinds??[]).length?'Choose at least one kind in step 3.'
-        :!file?'Choose an extract file in step 4.':'')
-      :(!file?'Choose a file in step 2.':'');
-    apply.disabled=!!missing;
-    note.textContent=missing||'Ready. Nothing is read until you choose this.';
-  };
-  for(const id of ['#polygon-file','#polygon-extract'] as const)
-    optionalElement(id)?.addEventListener('change',remember);
-  announce();
-
-  const readPolygonFile=async(file:File)=>{
-    const baseline=JSON.stringify(workflow);
-    try{
-      const node=getNode(workflow,n.id,'polygon_input');
-      const bytes=new Uint8Array(await file.arrayBuffer());
-      const features=readPolygonFeatures(JSON.parse(new TextDecoder().decode(bytes)),
-        {nameField:node.params.nameField,layerName:node.params.layerName});
-      if(JSON.stringify(workflow)!==baseline)
-        throw new Error('The workflow changed while the file was read. Choose it again.');
-      const data={features};
-      const digest=await payloadDigest(data);
-      if(!await keepDataset(digest,data))
-        throw new Error(`This layer could not be kept on this device, so it was not saved. Export `
-          +`the workflow to a file to keep it.`);
-      const sha256=await contentHash(bytes);
-      if(change(w=>{
-        const target=getNode(w,n.id,'polygon_input');
-        target.params.data=data;target.params.dataRef=digest;
-        target.params.source={filename:file.name,bytes:bytes.length,sha256,features:features.length};
-        // A FILE LAYER HAS NO RETRIEVAL, and leaving the previous one behind would leave the run's
-        // staleness check comparing this file against a box it was never read for.
-        delete target.params.retrieval;
-      },{requirePersistence:true}))
-        toast(`${features.length.toLocaleString('en')} polygon feature`
-          +`${features.length===1?'':'s'} read. Run the workflow to use them.`);
-      else await dropPayload(digest);
-    }catch(error){toast(errorMessage(error),{tone:'failure'});}
-  };
-  // AN EXTRACT ON THIS DEVICE, on the arrangement `#network-extract` already uses: Geofabrik
-  // sends no CORS header, so the file is the browser's own download and is read where it sits.
-  // Nothing of the 124 MB is kept -- the filename and its digest are the whole trace of which
-  // build was read, which matters because `-latest` redirects to a dated file that changes.
-  const readPolygonExtract=async(file:File)=>{
-    const status=document.querySelector<HTMLElement>('#polygon-extract-status');
-    const say=(message:string)=>{if(status)status.textContent=message;};
-    const baseline=JSON.stringify(workflow);
-    try{
-      const node=getNode(workflow,n.id,'polygon_input');
-      const kinds=node.params.kinds??[];
-      if(!kinds.length)throw new Error('Choose at least one kind of area to read.');
-      // THE SCOPE IS THE STUDY AREA'S, which is why the port exists. previewArea refuses when
-      // nothing is connected, and that refusal is the right one: a read with no box is a read of
-      // whatever the file happens to hold.
-      const {boundary}=previewArea(workflow,n.id);
-      const bounds=geometryBounds(boundary);
-      const bbox=readBox([bounds[0],bounds[1],bounds[2],bounds[3]],node.params.marginM??0);
-      const bytes=new Uint8Array(await file.arrayBuffer());
-      const {features,retrieval}=await areasInWorker(bytes,{kinds,bbox,
-        nameTag:node.params.nameField,minVertices:node.params.minVertices},say);
-      if(JSON.stringify(workflow)!==baseline)
-        throw new Error('The workflow changed while the extract was read. Choose the file again.');
-      say('Keeping the areas on this device…');
-      const sha256=await contentHash(bytes);
-      const read={...retrieval,filename:file.name,sha256,bytes:bytes.length};
-      const data={features};
-      const digest=await payloadDigest(data);
-      if(!await keepDataset(digest,data))
-        throw new Error(`These ${features.length.toLocaleString('en')} features could not be kept `
-          +`on this device, so they were not saved. A higher vertex threshold reads fewer of them.`);
-      if(change(w=>{
-        const target=getNode(w,n.id,'polygon_input');
-        target.params.data=data;target.params.dataRef=digest;target.params.retrieval=read;
-        target.params.provenance=retrievalProvenance(read,{filename:file.name,sha256});
-        target.params.source={filename:file.name,bytes:bytes.length,sha256,features:features.length};
-      },{requirePersistence:true})){
-        say('');
-        toast(`${features.length.toLocaleString('en')} ${kinds.join(' and ')} feature`
-          +`${features.length===1?'':'s'} read from the extract and saved on this device. `
-          +`Run the workflow to use them.`);
-      }else await dropPayload(digest);
-    }catch(error){say('');toast(errorMessage(error),{tone:'failure'});}
-  };
-  // APPLY IS THE READ. Nothing happens until the practitioner says so, which is what lets every
-  // setting above be changed in any order before it runs.
-  optionalElement('#polygon-apply')?.addEventListener('click',async event=>{
-    const button=event.currentTarget as HTMLButtonElement;
-    const file=held();
-    if(!file)return;
-    button.disabled=true;const was=button.textContent;button.textContent='Reading\u2026';
-    try{
-      if(getNode(workflow,n.id,'polygon_input').params.inputMethod==='extract')
-        await readPolygonExtract(file);
-      else await readPolygonFile(file);
-    }finally{button.textContent=was;pendingPolygonFiles.delete(n.id);announce();}
-  });
+  optionalElement('#polygon-label')?.addEventListener('change',event=>change(w=>{
+    getNode(w,n.id,'polygon_input').params.label=(event.target as HTMLInputElement).value;}));
   // THE GEOREFERENCED PLATE'S OWN CONTROLS, which did not exist until 2026-10-29. The widget was
   // addable, its parameters declared, the map drew what it carried, and `mapImage` refused with
   // "This step has no image yet. Choose a map image and its world file" -- naming two controls

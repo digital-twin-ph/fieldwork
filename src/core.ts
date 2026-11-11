@@ -156,7 +156,7 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   relate_table:{title:'Relate a column from another table',group:'Summaries',icon:'⋈',color:'teal',
     description:'Bring a category from a second table onto these rows, matched on a column both carry',
     inputs:[['records','table'],['related','table']],output:'table'},
-  space_time_scan:{title:'Space-time scan',group:'Detect',icon:'◎',color:'amber',
+  space_time_scan:{title:'Space-time scan',group:'Epidemiology',icon:'◎',color:'amber',
     description:'Look for places where cases came closer together in time than the rest of the line list would lead one to expect',
     inputs:[['points','points']],output:'polygons'},
   group_table:{title:'Total within groups',group:'Summaries',icon:'Σ',color:'teal',

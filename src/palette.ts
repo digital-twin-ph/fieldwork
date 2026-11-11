@@ -21,7 +21,10 @@ import classification from '../widgets/classification.json' with {type:'json'};
 // because a rate with a declared denominator is not an epidemiological quantity, it is an
 // ordinary one that epidemiology leans on. Where a practitioner looks for it is a different
 // question from whose vocabulary it belongs to.
-export const PALETTE_GROUPS=['Sources','Spatial operations','Comparisons and checks','Semantic reasoning','Epidemiology','Detect','Summaries','Micro-workflows','Outputs'] as const;
+// NO 7-1-7 CATEGORIES HERE (the practitioner, 2026-11-11: "Space time scan should be under epidemiology. No 717 categories
+// here."). Detect, notify and respond are milestones of an outbreak response, not kinds of tool; the scan was filed under
+// "Detect" when it was built and is now with the other epidemiological methods.
+export const PALETTE_GROUPS=['Sources','Spatial operations','Comparisons and checks','Semantic reasoning','Epidemiology','Summaries','Micro-workflows','Outputs'] as const;
 
 import portContracts from '../widgets/port-contracts.json';
 

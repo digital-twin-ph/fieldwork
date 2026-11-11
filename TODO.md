@@ -230,7 +230,13 @@ not a practitioner in the field.
    named or found with shares and confirmed; the walk upstream; Raster input offering the area's countries with its
    one-file limit said. **Left:** Find health facilities querying each country's register; acquired units from two
    countries in one study area; Raster input reading a window across two files.
-12. **Edit a table's values inline, in the data quality check** (the practitioner, 2026-11-10: *"One thing I have been
+26. **A repository of worked examples for georeferencing sheet maps** (the practitioner, 2026-11-11: *"We should have a
+   repo of worked examples for georeferencing different kinds of sheet maps"*). An `example-*` repository, one example
+   per kind of sheet: a cadastral sheet with a printed frame (Hagelloch's 1824 Flurkarte, placed by its corners and by
+   hand), a topographic sheet with a printed grid, a town plan with no grid (South London's Snow map), a railway or
+   small-scale map with a graticule (the 1861 Bahnkarte), and a sketch or hand-drawn map, each with its features to find,
+   their reasons, and the result against a reference. Each sheet's licence checked before it ships; experiment 201's cue,
+   live check and preview are the tools., in the data quality check** (the practitioner, 2026-11-10: *"One thing I have been
    meaning to add to data quality checks is the ability to edit tables inline. Can be added as a widget playback
    exercise."*). To shape: per [117](docs/experiments/117-data-quality.md), a change to an input is a declared repair
    on the node, never a write to the file, and every repair can be taken back. So an edited cell would be one more

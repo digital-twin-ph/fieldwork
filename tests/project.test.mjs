@@ -224,3 +224,8 @@ test('a catalog search\'s items leave the saved workflow under searchRef, and co
   assert.deepEqual(hydrateWorkflow(stored,{[key]:search}).nodes[0].params.search,search);
   assert.throws(()=>hydrateWorkflow(stored,{}),/Shared input data is missing for s/);
 });
+
+test('a workflow\'s number is its place in its project, 1 to N, not a count across projects',()=>{
+  for(const project of BUILT_IN_PROJECTS)project.workflows.forEach((key,i)=>{
+    assert.match(WORKFLOW_LABELS[key],new RegExp(`^${i+1} · `),`${key} is workflow ${i+1} of ${project.id}`);});
+});

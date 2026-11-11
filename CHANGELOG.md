@@ -3,6 +3,11 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.84.0 — 2026-11-10
+
+- **Workflows are numbered within their project**, 1 to N: Hagelloch's are 1 to 4, John Snow's 1 to 4, Old Naledi's 1
+  and 2. They had run on across projects, with gaps.
+
 ## 0.83.0 — 2026-11-10
 
 - **Feedback while you match pairs.** Placing a map image by points, a box under the table now says how far the pair

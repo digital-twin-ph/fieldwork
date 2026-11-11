@@ -3,8 +3,8 @@
 _Created 2026-11-10 · Updated 2026-11-10_
 
 **Status:** tried. The fit, the dialog and turned drawing are built (0.81.0); South London's four points refitted; lab
-check 48 agrees with GDAL; the cue for a worked example is built, and Hagelloch's 1824 sheet is placed by hand in worked
-example 14 (0.82.0). A learner using the cue is not yet observed.
+check 48 agrees with GDAL; the cue for a worked example is built, and Hagelloch's 1824 sheet is placed by hand in Hagelloch's
+fourth workflow (0.83.0). A learner using the cue is not yet observed.
 
 ## The question
 
@@ -152,7 +152,7 @@ learning; a smaller radius, or the ring shown only after a first wrong click, ar
 
 ## Hagelloch's 1824 sheet, placed by hand, 2026-11-10
 
-Worked example 14 (`?example=hagelloch-sheet`) offers Flurkarte NW III 3 (1824) and four junctions to find with the cue.
+Hagelloch's fourth workflow, *4 · Hagelloch: the 1824 sheet, placed by hand* (`?example=hagelloch-sheet`), offers Flurkarte NW III 3 (1824) and four junctions to find with the cue.
 
 **Methods**
 

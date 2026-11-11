@@ -106,7 +106,10 @@ not a practitioner in the field.
 8. **Operational epidemiology's first slice: a 7-1-7 review on MERS-CoV, South Korea, 2015**
    ([200](docs/experiments/200-operational-epidemiology.md); the practitioner, 2026-11-09: *"Yes"*, then *"But add that
    to TODO"*). Onset to report and onset to diagnosis per case, counted against the targets; a contacts table for
-   contact tracing. Needs **days between two dates** in Apply ruleset's computed columns, the one extension.
+   contact tracing. **Days between two dates** in Apply ruleset's computed columns, the one extension it needed, is built
+   (Hagelloch's serial interval uses it). **Status, corrected 2026-11-11:** what is left is the data's terms, which the
+   practitioner is checking at the package's pages, and converting `mers_korea_2015.RData` to CSV in the example
+   repository.
    **Found 2026-11-09, before building:** `mers_korea_2015` in the R package `outbreaks` (reconverse/outbreaks): a line
    list of 15 columns (onset, report, diagnosis, exposure start and end, death) and a contacts table (from, to,
    exposure). Compiled by ECDC's Epidemic Intelligence from public information in the outbreak's first weeks; "for
@@ -114,9 +117,11 @@ not a practitioner in the field.
    stated; the package code is MIT on GitHub (GPL ≥ 2 on CRAN 1.9.0). **No CSV**: only `data/mers_korea_2015.RData`, so
    a script in the example repository would convert it, and the row count is not yet known. Ask ECDC or the package
    authors about the data's terms before shipping it.
-   **Alongside:** the 7-1-7 taxonomy's terms: CC BY-NC-SA 4.0 for RTSL-owned materials, per the Alliance's chat
-   assistant (2026-11-09); to confirm for the categories PDF at contact@717alliance.org. Non-commercial, so it ships in an
-   example repository under its own licence, never in the Apache-2.0 application; the
+   **The 7-1-7 categories are ours to carry**: Fieldwork's own ontology, `ontology/response-timeliness.ttl`, built on
+   2026-11-09 from Bochner et al. 2023 (CC BY 4.0), holds the milestones, targets, early response actions and the
+   study's bottleneck and enabler categories, attributed (experiment 200). The practitioner, 2026-11-11: the categories
+   *"are also widely used in many public documents based alone on 717 published literature"*. The Alliance's own
+   BY-NC-SA list is not needed. **Alongside, still open:** the
    appendix of the 41-event Lancet Global Health paper (`mmc1.pdf`, 229.5 KB, PMC), not yet read; the Sierra Leone
    Ebola 2014 line list's own terms (Fang et al. 2016).
 

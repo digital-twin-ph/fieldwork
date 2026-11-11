@@ -117,8 +117,9 @@ not a practitioner in the field.
    (`~/Downloads/mers-korea-2015/`, `.RData` sha256 2a08976a…): a line list of **162 cases** by 15 columns (onset missing
    for 27, exposure dates for 5) and **98 contact links** by 4 columns. Dates are per case, so it teaches case-level
    timeliness (onset to report, onset to diagnosis, 135 cases computable) and who infected whom; a full 7-1-7 review of
-   the outbreak as one event would need the early response action dates, which it does not hold. Waiting on the example
-   repository's creation, which is the practitioner's.
+   the outbreak as one event would need the early response action dates, which it does not hold. **Repository created
+   2026-11-11** at the practitioner's request, public: digital-twin-ph/example-2015-mers-korea, holding the two CSVs,
+   the conversion script, NOTICE.txt and provenance.json (424ee33). Next there: the workflows, after the 7-1-7 ruleset.
    **And a 7-1-7 timeliness ruleset** (the practitioner, 2026-11-11: *"And we can build the ruleset extension as well"*):
    a bundled ruleset for Apply ruleset reading four date columns (emergence, detection, notification, early response
    complete), computing the three intervals in days, and marking each met or not against its target, 7, 1 and 7 days,

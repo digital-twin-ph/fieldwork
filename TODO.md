@@ -312,6 +312,19 @@ not a practitioner in the field.
    the Validation Lab's independent checks; open evidence only. **Open, for the practitioner:** which statement of the
    principles (for example UNESCO's 2021 Recommendation on Open Science, FAIR), and which components that means here.
    An experiment record first, with the survey of what exists, before any widget.
+28. **The 1854 map under the John Snow example** (the practitioner, 2026-11-11: *"For John Snow built in example can we
+   look for an 1854 map of Soho district?"*). After the items already ordered (the stale-text sweep, the census
+   comparison, MERS). Found by search, none opened yet and every licence to confirm on its page:
+   **Snow's own map** (December 1854, printed 1855; Wikimedia Commons, Snow-cholera-map-1.jpg, public domain), the
+   first choice: Robin Wilson's digitised deaths and pumps were taken from it, so the points should fall on their own
+   houses, the check Hagelloch's 1824 sheet passed; **Edmund Cooper's map** for the Metropolitan Commission of Sewers
+   (September 1854, the base Snow drew on, with house numbers and sewers), no open scan found yet, to look for in the
+   Snow Online Companion (MSU) and the Wellcome Collection; **Stanford's Library Map of London** (1862; David Rumsey's
+   georeferenced sheets are the 1877 edition), licence unclear and probably not open. The Ordnance Survey's 1848-50
+   large-scale London plans would be the surveyed ideal; no open scan found (NLS georeferences only 1893-96). Placed by
+   hand with the georeferencing widget (201), as Hagelloch's sheet was; one of 26's kinds of sheet, a town plan with
+   no grid. Asks before downloading, with the size. Where it lives follows item 7: the built-in Snow example earns a
+   repository or retires.
 
 The high-contrast theme comes after Sierra Leone, as set on 2026-11-07; where it falls among 4 to 6 is not set.
 

@@ -83,6 +83,12 @@ test('the figure does not push the header off a phone',async({page})=>{
   await expect(page.locator('#storage-status .storage-short')).toBeVisible();
   await expect(page.locator('#storage-status .storage-long')).toBeHidden();
   expect(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth)).toBe(false);
+  // The header holds its wrapped line: nothing under the project bar (CI on 0.95.0, Linux WebKit, where the bar took the
+  // storage button's click). Asserted on boxes, so a browser that happens to click through still fails here.
+  const header=await page.locator('.app-header').boundingBox(),pill=await page.locator('#storage-status').boundingBox();
+  const bar=await page.locator('.project-bar').boundingBox();
+  expect(pill.y+pill.height).toBeLessThanOrEqual(header.y+header.height);
+  expect(header.y+header.height).toBeLessThanOrEqual(bar.y+0.5);
   // And it still opens the list it opens at any other width.
   await page.locator('#storage-status').click();
   await expect(page.locator('#project-view')).toBeVisible();

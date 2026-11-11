@@ -237,7 +237,9 @@ html{scroll-padding-top:var(--project-bar-height,160px)}
      Linux WebKit's wider metrics put the help button 2px past a 390px screen: thirteen tests failed in CI on 0.94.0,
      while Chromium here had 4px to spare and none at 360px. Shrinking to fit depends on a font's width; wrapping does not.
      The controls take a second line under the mark, and the storage figure has room to be read. */
-  .app-header{flex-wrap:wrap;row-gap:6px}
+  /* And grows to hold both lines: at its fixed 71px the second line spilled under the project bar, which took the
+     storage button's clicks in Linux WebKit (CI on 0.95.0). */
+  .app-header{flex-wrap:wrap;row-gap:6px;height:auto;min-height:71px;padding-top:8px;padding-bottom:8px}
   .header-right{margin-left:auto;max-width:100%}
 }
 /* A title that can be renamed looks like one, without becoming a form. The affordance is the

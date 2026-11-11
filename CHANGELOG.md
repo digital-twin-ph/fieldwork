@@ -14,6 +14,8 @@ shown in a local build is not a claim that it has been published.
   them) showed on every workflow without captions of its own, Hagelloch's among them. They show on the heat example only.
 - **Fixed:** on a phone in Safari the page scrolled sideways by a few pixels (0.94.0). The header's controls now take a
   second line under the mark at phone width, where the storage figure can be read.
+- **Fixed:** on a phone in Safari the header's second line sat under the project bar, which took taps meant for the
+  storage figure (0.95.0). The header now grows to hold both lines.
 
 ## 0.94.0 — 2026-11-11
 

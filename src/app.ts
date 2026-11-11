@@ -163,7 +163,7 @@ import {projectDocument,readProjectDocument,unbundledReferences,PROJECT_DOCUMENT
 import {rasterExample} from './raster-example.js';
 import {openPackageDialog} from './package-ui.js';
 import {syncProjectManifest} from './project-manifest.js';
-import {BUILT_IN_PROJECTS,WORKFLOW_LABELS,projectOfWorkflow,projectById,siblingAreas,newProject,validateProject,siblingInputs,payloadDigest,tableDataKey,areaPayloadKey,searchPayloadKey,payloadsOf,heldPayloadsOf,reconcilePayloadRefs,dehydrateWorkflow,hydrateWorkflow,projectSafety,unexportedWork,exportPredatesWork,type Project,type ProjectWork} from './project.js';
+import {BUILT_IN_PROJECTS,WORKFLOW_LABELS,projectOfWorkflow,projectById,siblingAreas,newProject,validateProject,siblingInputs,payloadDigest,tableDataKey,dataPayloadKey,INLINE_DATA_LIMIT,areaPayloadKey,searchPayloadKey,payloadsOf,heldPayloadsOf,reconcilePayloadRefs,dehydrateWorkflow,hydrateWorkflow,projectSafety,unexportedWork,exportPredatesWork,type Project,type ProjectWork} from './project.js';
 import {mountPanelLayout} from './panel-layout.js';
 import {newMapOutput,mapEvidence} from './map-output.js';
 import {newTableOutput,pointTableMarkup,pointTableEvidence} from './table-output.js';
@@ -597,6 +597,32 @@ function toast(message:string,options?:{action?:{label:string;run:()=>void};tone
 // while the application goes on saying "Saved on this device".
 onStoreDegraded((_kind,why)=>toast(`${why} Large street networks will be refused until it is. Export anything you need to keep.`,{tone:'failure'}));
 await loadPayloads();
+// WORKFLOWS SAVED BEFORE 0.88.1 CARRY THEIR LARGE DATA INLINE, a worked example's points and networks among them. Moved
+// once into the payload store, keyed by content as a save now keys them, and stripped only where the store confirms it
+// holds the copy: a payload that could not be moved stays where it was (2026-11-10).
+await (async()=>{
+  try{
+    const compact=async(w:{nodes?:{type?:string;params?:Record<string,unknown>}[]}):Promise<boolean>=>{
+      let changed=false;
+      for(const node of w.nodes??[]){
+        const params=node.params;
+        if(!params||node.type==='table_input'||typeof params.data!=='object'||params.data===null)continue;
+        if(typeof params.dataRef==='string'&&!params.dataRef.startsWith('data-'))continue;
+        if(JSON.stringify(params.data).length<INLINE_DATA_LIMIT)continue;
+        const key=dataPayloadKey(params.data);
+        if(await putPayload(key,params.data)!=='indexeddb')continue;
+        params.dataRef=key;delete params.data;changed=true;
+      }
+      return changed;
+    };
+    const store=JSON.parse(localStorage.getItem(WORKSPACES)||'{}') as Record<string,{nodes?:{type?:string;params?:Record<string,unknown>}[]}>;
+    let any=false;
+    for(const saved of Object.values(store))if(saved&&await compact(saved))any=true;
+    if(any)localStorage.setItem(WORKSPACES,JSON.stringify(store));
+    const current=JSON.parse(localStorage.getItem(KEY)||'null') as {nodes?:{type?:string;params?:Record<string,unknown>}[]}|null;
+    if(current&&await compact(current))localStorage.setItem(KEY,JSON.stringify(current));
+  }catch{/* a store that cannot be compacted is left exactly as it was */}
+})();
 // Basemap tiles are downloaded assets like any other, so they go to the store that survives a
 // reload and is counted in the storage figures. The practitioner, 2026-10-25, on what the offline
 // promise means: *"It's a flow from online to offline. Online download the assets, offline use
@@ -646,6 +672,17 @@ function save(){
     const params=node.params as {source?:string;geometry?:unknown;revisions?:unknown;areaRef?:string;boundary?:unknown};
     if(params.source==='drawn'&&params.geometry&&params.boundary){const key=areaPayloadKey(params as {geometry:unknown});if(params.areaRef!==key)params.areaRef=key;}
     else delete params.areaRef;
+  }
+  // EVERY OTHER STEP'S LARGE DATA goes the same way, whatever brought it: a worked example's points or street network as
+  // much as a download (2026-11-10, a practitioner's store at 4.5 MB of 5.2 MB). A reference a download gave is kept; a
+  // key made here is remade when the data changes.
+  for(const node of workflow.nodes){
+    if(node.type==='table_input')continue;
+    const params=node.params as {data?:unknown;dataRef?:string};
+    if(params.data===undefined||params.data===null||typeof params.data!=='object')continue;
+    if(params.dataRef&&!params.dataRef.startsWith('data-'))continue;
+    if(JSON.stringify(params.data).length<INLINE_DATA_LIMIT){if(params.dataRef?.startsWith('data-'))delete params.dataRef;continue;}
+    const key=dataPayloadKey(params.data);if(params.dataRef!==key)params.dataRef=key;
   }
   // A CATALOG SEARCH'S ITEMS go the same way (experiment 182): sixteen years of MODIS is 5.9 MB, more than local
   // storage holds, and a node that could not be saved was added on screen and lost.

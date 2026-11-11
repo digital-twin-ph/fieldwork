@@ -435,6 +435,14 @@ export function tableDataKey(table:{rows:unknown[]}):string{return contentKey('t
 export function searchPayloadKey(search:{items?:unknown[]}):string{
   return contentKey('search',search.items?.length??0,search);
 }
+/** ANY STEP'S LARGE DATA, keyed by its content (2026-11-10): the worked examples' points and networks are built into
+ *  the application and were nonetheless saved inline in every workflow, twice, 1.6 MB of a 5 MB store for the
+ *  examples alone. Keys made here start `data-`, so a save can tell its own key from a reference a download gave. */
+export const INLINE_DATA_LIMIT=32_768;
+export function dataPayloadKey(data:unknown):string{
+  const features=(data as {features?:unknown[];nodes?:unknown[]})?.features??(data as {nodes?:unknown[]})?.nodes;
+  return contentKey('data',Array.isArray(features)?features.length:0,data);
+}
 export function areaPayloadKey(area:{geometry:unknown;revisions?:unknown}):string{
   const g=area.geometry as {type?:string;coordinates?:unknown}|null;
   const vertices=(()=>{let n=0;const walk=(v:unknown):void=>{if(Array.isArray(v)&&typeof v[0]==='number')n++;else if(Array.isArray(v))v.forEach(walk);};walk(g?.coordinates);return n;})();

@@ -3,6 +3,13 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.88.1 — 2026-11-10
+
+- **More room in the workspace store.** A step's large data is now kept in the data store, by content, whatever brought
+  it: a worked example's points and street network were saved inline in every workflow, twice. Opening every worked
+  example took 1.6 MB of the 5.2 MB store; it now takes 0.25 MB. Workflows already saved are moved on the next start, and
+  only where the data store confirms it holds the copy.
+
 ## 0.88.0 — 2026-11-10
 
 - **OpenStreetMap under every map, unless you choose otherwise.** A static plot fetches the tiles once and draws them

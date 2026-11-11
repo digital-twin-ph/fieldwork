@@ -1,6 +1,6 @@
 # 137 — A static figure can carry its ground
 
-_Created 2026-10-25 · Updated 2026-10-25_
+_Created 2026-10-25 · Updated 2026-11-10_
 
 **Status:** tried, corrected 2026-11-10. Tiles are baked into static figures with their credit (`src/basemap-tiles.ts`,
 `tests/static-basemap.browser.mjs`), and OpenStreetMap became the default basemap on 2026-11-10. The alignment error

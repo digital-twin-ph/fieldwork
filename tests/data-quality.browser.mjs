@@ -1,4 +1,5 @@
 import {test,expect} from './fixtures.mjs';
+import {savedWorkflow} from './saved-workflow.mjs';
 import {openFixture} from './open-fixture.mjs';
 import {collectPageErrors} from './page-errors.mjs';
 
@@ -106,12 +107,12 @@ test('a repair never overwrites what the input holds',async({page})=>{
   await page.locator('#toast button').last().click();
 
   // What the file held: one count in four is text.
-  const held=()=>page.evaluate(()=>{
-    const w=JSON.parse(localStorage.getItem('fieldwork-workflow-v1')||'{}');
+  const held=async()=>{
+    const w=await savedWorkflow(page);
     const n=w.nodes.find(x=>x.id==='texty');
     return {texts:n.params.data.features.filter(f=>typeof f.properties.DEATHS==='string').length,
       repairs:(n.params.repairs||[]).length};
-  });
+  };
   expect(await held()).toEqual({texts:63,repairs:0});
 
   await page.locator('[data-view="workflow"]').click();
@@ -161,12 +162,12 @@ test('the quality dialog inspects a column, repairs it, and takes the repair bac
     await page.locator('[data-records-quality]').click();
     await expect(page.locator('#data-quality')).toBeVisible();
   };
-  const strings=()=>page.evaluate(()=>{
-    const w=JSON.parse(localStorage.getItem('fieldwork-workflow-v1')||'{}');
+  const strings=async()=>{
+    const w=await savedWorkflow(page);
     const n=w.nodes.find(x=>x.id==='texty');
     return {texts:n.params.data.features.filter(f=>typeof f.properties.DEATHS==='string').length,
       repairs:(n.params.repairs||[]).length};
-  });
+  };
 
   await open();
   const dialog=page.locator('#data-quality');

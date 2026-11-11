@@ -17,20 +17,24 @@ test('Hagelloch runs offline, and its awkward columns are not cleaned up',async(
   // One point per child, and the curve and the map are drawn from the SAME records.
   const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));
   const cases=saved.nodes.find(n=>n.id==='cases');
-  expect(cases.params.data.features.length).toBe(188);
+  // Kept in the payload store by content from 0.88.1, not inline in local storage: read through the step's reference.
+  const data=cases.params.data??await page.evaluate(ref=>new Promise((resolve,reject)=>{const open=indexedDB.open('fieldwork');
+    open.onsuccess=()=>{const get=open.result.transaction('payloads').objectStore('payloads').get(ref);get.onsuccess=()=>resolve(get.result);get.onerror=()=>reject(get.error);};
+    open.onerror=()=>reject(open.error);}),cases.params.dataRef);
+  expect(data.features.length).toBe(188);
   expect(saved.edges.filter(e=>e.from==='cases').length).toBe(3);
   // The village bounds what is reasoned within, which is what a study area is for.
   expect(saved.nodes.some(n=>n.type==='study_area')).toBe(true);
 
   // The absence that is an outcome: 176 children recovered, and the file still says so.
-  const noDeath=cases.params.data.features.filter(f=>!f.properties.date_of_death).length;
+  const noDeath=data.features.filter(f=>!f.properties.date_of_death).length;
   expect(noDeath).toBe(176);
   // The constant column is still constant. A worked example that cleaned its data would teach
   // the opposite of what this one is for.
-  const complications=new Set(cases.params.data.features.map(f=>f.properties.complications));
+  const complications=new Set(data.features.map(f=>f.properties.complications));
   expect([...complications]).toEqual(['yes']);
   // And the original local frame is still on every record, so the georeference is reversible.
-  expect(cases.params.data.features.every(f=>typeof f.properties.x_loc==='number')).toBe(true);
+  expect(data.features.every(f=>typeof f.properties.x_loc==='number')).toBe(true);
 
   await page.locator('[data-view="results"]').click();
   await page.getByRole('tab',{name:'Epidemic curve · by day of prodrome'}).click();

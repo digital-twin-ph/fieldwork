@@ -1,4 +1,5 @@
 import {test,expect} from './fixtures.mjs';
+import {savedWorkflow} from './saved-workflow.mjs';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 const legacy=JSON.parse(await readFile(new URL('./fixtures/old-naledi-source-2026-10-06.json',import.meta.url),'utf8'));
@@ -13,7 +14,7 @@ test('Old Naledi migration exposes editable source and selection consumes saved 
   const run=async()=>{await page.locator('#run-button').click();await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});};
   await page.locator('[data-view="results"]').click();
   await run();await expect(page.locator('#result-metrics .review b')).toHaveText('21');
-  const w=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));
+  const w=await savedWorkflow(page);
   const source=w.nodes.find(n=>n.type==='point_input');
   const marina=source.params.data.features.find(f=>f.properties.name==='Princess Marina Hospital');
   assert.equal(source.params.data.features.length,214);
@@ -35,7 +36,7 @@ test('Old Naledi migration exposes editable source and selection consumes saved 
   await expect(page.locator('#offline-status')).toContainText('Available offline');await context.setOffline(true);await page.reload();
   await page.locator('[data-view="results"]').click();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});await expect(page.locator('#result-metrics .unknown b')).toHaveText('21');
-  const after=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));
+  const after=await savedWorkflow(page);
   assert.equal(after.nodes.find(n=>n.id===source.id).params.data.features.length,213);
   assert.equal(after.nodes.filter(n=>n.type==='point_input').length,1);
 });

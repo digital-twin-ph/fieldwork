@@ -12,6 +12,8 @@ shown in a local build is not a claim that it has been published.
   colours, by name, or the default. The Hagelloch cases on the 1824 sheet are now vermillion, not near-black. Map 0.25.0.
 - **Fixed:** the heat example's captions ("Synthetic neighborhoods and cooling centers", and the Inspector's note about
   them) showed on every workflow without captions of its own, Hagelloch's among them. They show on the heat example only.
+- **Fixed:** on a phone in Safari the page scrolled sideways by a few pixels (0.94.0). The header's controls now take a
+  second line under the mark at phone width, where the storage figure can be read.
 
 ## 0.94.0 — 2026-11-11
 

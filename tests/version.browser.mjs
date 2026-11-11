@@ -40,4 +40,12 @@ test('application version matches the package and stays visible beside the mark'
       `at ${width}px the version badge overlaps header controls by ${area(badge,controls).toFixed(1)}px²: badge ${box(badge)}, controls ${box(controls)}`);
     assert.ok(badge.x+badge.width<=width,`at ${width}px the version badge must fit the viewport: badge ${box(badge)}`);
   }
+  // SLACK, NOT A FIT (2026-11-11). Chromium had 4px to spare at 390px when 0.94.0 shipped and Linux WebKit was 2px over,
+  // failing thirteen tests in CI only. The header now wraps at phone width; held here to 8px of room in Chromium so a
+  // browser with wider metrics still fits.
+  for(const width of [390,360,320]){
+    await page.setViewportSize({width,height:812});
+    const help=await page.locator('#help-button').boundingBox();
+    assert.ok(help.x+help.width<=width-8,`at ${width}px the header leaves under 8px: help button ends at ${(help.x+help.width).toFixed(1)}`);
+  }
 });

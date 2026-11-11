@@ -233,6 +233,12 @@ html{scroll-padding-top:var(--project-bar-height,160px)}
   /* The connection text is gone (2026-11-11, "Available offline" was misleading), so the storage pill gives way instead:
      its full figures are one tap away in the storage dialog. */
   .header-right .storage-pill{min-width:0;flex-shrink:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  /* THE ROW WRAPS RATHER THAN SQUEEZES (2026-11-11). Without "Available offline" nothing in the row could give way, and
+     Linux WebKit's wider metrics put the help button 2px past a 390px screen: thirteen tests failed in CI on 0.94.0,
+     while Chromium here had 4px to spare and none at 360px. Shrinking to fit depends on a font's width; wrapping does not.
+     The controls take a second line under the mark, and the storage figure has room to be read. */
+  .app-header{flex-wrap:wrap;row-gap:6px}
+  .header-right{margin-left:auto;max-width:100%}
 }
 /* A title that can be renamed looks like one, without becoming a form. The affordance is the
    hover, the cursor and the focus ring; the input only appears once asked for. */

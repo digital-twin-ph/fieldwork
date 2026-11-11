@@ -68,8 +68,10 @@ export function openConfigDialog<D>(spec:ConfigDialog<D>,esc:Escape):void{
 
   // THE FRAME IS BUILT ONCE: heading, body, message and footer. Only the body and the message are rebuilt, so a text
   // box that commits on blur cannot replace the Apply button between the press and the click.
+  // The step's own name after the widget's, unless it is still the widget's name: "Polygon layer · Polygon layer" says it twice.
+  const named=spec.step.trim()&&spec.step.trim().toLowerCase()!==spec.widget.trim().toLowerCase();
   dialog.innerHTML=`<header class="config-head"><h2 id="${spec.id}-title">${esc(spec.widget)}`
-    +`<span class="config-step"> · ${esc(spec.step)}</span></h2>`
+    +(named?`<span class="config-step"> · ${esc(spec.step)}</span>`:'')+`</h2>`
     +`<button class="config-close" id="${CONFIG_CLOSE}" aria-label="Close">×</button></header>`
     +'<div class="config-body"></div><div class="config-message-slot"></div>'
     +(spec.readOnly

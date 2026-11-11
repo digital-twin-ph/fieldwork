@@ -142,3 +142,20 @@ Polygon layer are sources, with no Inputs section; Map output keeps its layer ma
 That six sections are the right six; that every widget's settings fit a dialog without losing something a person
 needs to see beside the canvas; that a predictable Inspector reduces overload — that is the practitioner's
 expectation, and the reason, not a finding.
+
+## One look for every Configure…, 2026-11-11
+
+The practitioner, on the Polygon layer's new dialog: *"The readability of the dialog can be improved. Let's standardize
+the look and feel of Configure dialogs. This is where the user meets the gears of the Swiss watch, the gears should be
+pretty as well."* Its five steps ran together: headings in faint capitals on the same line as their controls, help text
+beside them, text boxes of different widths, a missing file shown as a red error, and the title saying "Polygon layer"
+twice.
+
+Done in the shared frame, so every widget's dialog has it (styles.css, after `.config-foot`; `src/config-dialog.ts`):
+each control on its own line, its label above and its help below; a numbered step or a settings group is a card with a
+plain heading; text boxes and menus share one width; checkboxes one per line; type 14 px or larger; what is still
+missing in amber, what failed in red; the step's name omitted from the title while it is still the widget's. Checked
+in Chromium on the 138 browser tests that open a dialog, and by eye on the Polygon layer and space-time scan dialogs in
+the dark theme. **Not done:** grouping the settings of dialogs that have no groups of their own, such as the scan's;
+that is per widget.
+

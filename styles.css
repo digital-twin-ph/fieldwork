@@ -310,6 +310,30 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 .config-message.config-message-info p{color:var(--ink);font-weight:500}
 .config-foot{display:flex;justify-content:space-between;gap:12px;padding:14px 24px;border-top:1px solid var(--line)}
 .config-foot .button{font-size:15px;min-height:40px;min-width:96px}
+/* CONFIGURE…, ONE LOOK FOR EVERY WIDGET (the practitioner, 2026-11-11: "Let's standardize the look and feel of Configure
+   dialogs. This is where the user meets the gears of the Swiss watch, the gears should be pretty as well."). Each control
+   on its own line, its label above it and its explanation below; a step or a group is a card with a plain heading; text
+   boxes and menus share one width, so they line up. All type at 14 px or more. */
+.config-dialog .config-body{line-height:1.5}
+.config-dialog .config-body :is(select,textarea,input:not([type=radio]):not([type=checkbox]):not([type=range]):not([type=color])){
+  display:block;width:100%;max-width:34rem;box-sizing:border-box;margin:4px 0 0;padding:8px 10px;font-size:15px;
+  border:1px solid var(--line-soft-7,var(--line));border-radius:6px;background:var(--surface-raised-10,var(--surface-raised));color:var(--ink)}
+.config-dialog .config-body input[type=file]{padding:6px 8px}
+.config-dialog .config-body input[type=range]{display:block;width:100%;max-width:34rem}
+.config-dialog .config-body :is(small,.muted,.description){display:block;font-size:14px;color:var(--muted);margin:4px 0 10px;max-width:48rem}
+.config-dialog .config-body .field-label{display:block;margin:14px 0 2px;font-size:15px;font-weight:600;color:var(--ink)}
+.config-dialog .config-body label:not(.field-label):has(> input[type=checkbox],> input[type=radio]){display:flex;align-items:flex-start;gap:8px;margin:6px 0}
+.config-dialog .config-body label > :is(input[type=checkbox],input[type=radio]){flex:none;margin:4px 0 0}
+.config-dialog .config-body .field{margin:0 0 10px}
+.config-dialog .config-body :is(.field-step,.config-group){border:1px solid var(--line);border-radius:8px;padding:12px 16px 8px;margin:0 0 14px}
+.config-dialog .config-body .inspector-section{display:block;font-size:16px;font-weight:650;letter-spacing:0;text-transform:none;color:var(--ink);margin:4px 0 6px}
+.config-dialog .config-body :is(.field-step,.config-group)>.inspector-section:first-child{margin-top:0}
+.config-dialog .config-body details{margin:8px 0}
+.config-dialog .config-body summary{cursor:pointer;font-weight:600;font-size:15px}
+.config-dialog .config-body .button{font-size:14px}
+/* What is still missing is news to act on, in amber; red is kept for what failed. */
+.config-message.config-message-warning{border-color:var(--warning-3,#b26b00);background:var(--warning-wash-1,#fff4e5)}
+.config-message.config-message-warning p{color:var(--warning-4,#7a4a00)}
 /* THE STANDARD INSPECTOR's sections, each headed the same way. */
 .standard-section{margin-top:14px}
 .standard-sentence,.standard-result,.standard-state{font-size:15px;color:var(--ink);line-height:1.6}

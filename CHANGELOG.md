@@ -3,6 +3,12 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.91.0 — 2026-11-11
+
+- **Every Configure… dialog reads the same way.** Each control on its own line with its label above and its help below;
+  numbered steps and groups as cards with plain headings; boxes and menus lined up; what is still missing in amber, and
+  red kept for what failed. A step still carrying its widget's name no longer shows it twice in the title.
+
 ## 0.90.0 — 2026-11-11
 
 - **GRID3 beside WorldPop.** Raster input's Configure… offers a population source: WorldPop for every country, or GRID3's

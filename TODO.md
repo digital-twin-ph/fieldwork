@@ -336,6 +336,13 @@ not a practitioner in the field.
    the Gaborone model's rates, on Old Naledi's homes; weekly counts from a recorded seed, held against Starsim by
    run-to-run spread; the browser's limit measured; about a day. Proposed 2026-11-10 and left unrecorded for a day,
    found when the practitioner asked when the spike was.
+30. **A heat stress worked example on real data, replacing the heat example** (the practitioner, 2026-11-11: *"We will
+   replace heat stress with a worked example, with real data so this needs a TODO so we can do the research."*). The
+   synthetic heat example retires in the Old Naledi pass (docs/audits/old-naledi-audit.md). Research first, open
+   evidence only: a heat event with published health outcomes (deaths, emergency visits or calls) by place and day,
+   openly licensed; temperature or heat index for the same places and days; the population at risk; and any
+   published cooling-centre or outreach locations. Then a worked example in its own repository, its rules written
+   as declared rules in Apply ruleset, with no bespoke ruleset code.
 
 The high-contrast theme comes after Sierra Leone, as set on 2026-11-07; where it falls among 4 to 6 is not set.
 

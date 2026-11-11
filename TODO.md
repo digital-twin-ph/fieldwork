@@ -259,8 +259,11 @@ not a practitioner in the field.
    area.
    **Then a worked example of the comparison** (the practitioner, 2026-11-11: *"Once we add that capability let's create
    a worked example for it"*): one place in GRID3's coverage, so all three models apply, its administrative units as the
-   areas, one common year. Proposed, the place still the practitioner's to choose: Gaborone, beside Old Naledi, since
-   Botswana is in all three (WorldPop 293 MB, GRID3 11.6 MB, GHS-POP read for the window). The windows read for its units
+   areas, one common year. **A country with a census** (the practitioner, 2026-11-11: *"Let's use a country with a
+   census"*): the census count per unit is the independent reference that says which model fits, not only how far they
+   disagree. To choose by: counts published per unit, openly licensed, on boundaries that match the units, and a census
+   year near a year the models offer. Candidates in GRID3's coverage, none checked yet: Botswana 2022, Kenya 2019, Malawi
+   2018, Ghana 2021, Rwanda 2022, Zambia 2022, Uganda 2024. The windows read for its units
    are kept in an example repository under each source's licence (all three CC BY 4.0), with their citations.
 25. **A study area across a border** (the practitioner, 2026-11-10: *"We discussed the cross border study area. In this
    case we need to be able to either (1) detect the countries based on geometry overlaps or (2) named explicitly"*).

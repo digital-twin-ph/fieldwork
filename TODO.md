@@ -215,7 +215,12 @@ not a practitioner in the field.
    higher (Besag and Clifford 1991), and say when it stopped; run the days in parallel across the device's cores; move
    the scan's inner loop to the Rust kernel compiled to WebAssembly. In lab check 46: score every run length at once
    rather than one at a time, and, if still slow, fewer shuffles with the tolerance widened to match.
-18. **Remove the Claude co-author line from the workspace's history, with the practitioner. NEXT, before anything else**
+18. **Done 2026-11-11: the Claude co-author line removed from the workspace's history, with the practitioner.** Every
+   repository rewritten (messages only; files identical) and force-pushed at the practitioner's yes; Fieldwork re-pinned,
+   old ids mapped in docs/history-rewrite-2026-11-11.tsv; verified with no line on any branch on GitHub or locally.
+   **Left, the practitioner's call:** Fieldwork pull request #1's twelve commits stay under GitHub's read-only
+   refs/pull/1/head, which only GitHub Support can remove (its description's line was removed). Originally:
+   **Remove the Claude co-author line from the workspace's history, with the practitioner. NEXT, before anything else**
    (the practitioner, 2026-11-11: *"Let's move up 18 before anything else after this last task is done"*: after 0.94.0
    and 0.95.0 are published, ahead of the census comparison and MERS; it was set for the weekend of 2026-11-14/15)
    (2026-11-10: *"For repositories related to CDC work we cannot have agents as coauthors"*). Every repo

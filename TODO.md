@@ -245,6 +245,18 @@ not a practitioner in the field.
    the practitioner's yes**: a cloud-optimized GeoTIFF (512 x 512 tiles, deflate, five overviews), and **GHS-POP is built
    (0.93.0)** as a population source read for the study area's window. **Left:** GRID3's country-specific estimates;
    a live read of a real window, which only the tests' stand-in has done.
+   **Next: totals within areas, so the three models can be compared** (the practitioner, 2026-11-11: *"how do we compare
+   populations expressed by their models"*, then *"before we add let's survey for potential duplication"*). Surveyed by
+   input and output: **Sample satellite files at points or over areas** already sums a grid within each area, by the
+   cell rule Clip raster uses and lab check 02 holds against rasterio, but reads only catalog files; **Sample raster at
+   points** reads a raster at points only; **Clip raster** masks one area and gives a raster; **Summarize points to
+   polygon** totals points, not cells; **Rate with a denominator** takes a stated population. So no new widget: extend
+   Sample raster to **"at points or over areas"**, as experiment 180 extended the satellite sampler, reusing its area
+   sums (`src/satellite-areas.ts`) and the cell rule. A comparison is then composed from what exists: three Raster
+   inputs, three area samples over the same polygons, Relate on the polygon, and Apply ruleset for the differences.
+   Compare per area at a common year, never cell by cell at 100 m, never pooled; say each model's population (all
+   land, settled cells, residential) beside its number. The same step gives Rate with a denominator a population per
+   area.
 25. **A study area across a border** (the practitioner, 2026-11-10: *"We discussed the cross border study area. In this
    case we need to be able to either (1) detect the countries based on geometry overlaps or (2) named explicitly"*).
    **Built 2026-11-10 (0.85.0), [204](docs/experiments/204-a-study-area-across-a-border.md)**: a list of countries,

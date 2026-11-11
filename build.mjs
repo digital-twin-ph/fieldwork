@@ -75,7 +75,10 @@ const assets=[...new Set([...staticAssets,...generated])].filter(a=>!ONLINE_ONLY
 // script publishes what this manifest lists: found 2026-11-05 when the satellite reader answered 404 on Pages, and the
 // MapLibre worker with it, so the vector basemaps' renderer had never been served there. Listed apart, published, not
 // precached.
-const online=[...new Set([...generated.filter(a=>ONLINE_ONLY.test(a)),'./build/maplibre-gl-worker.mjs'])].sort();
+// A WORKED EXAMPLE'S OWN FILES, offered in a dialog and fetched only when the person asks: published, not precached.
+// Found 2026-11-10 when Hagelloch's 1824 sheet answered 404 on Pages, for the reason above.
+const OFFERED=['./examples/hagelloch-1861/flurkarte-nw-iii-3-1824.jpg'];
+const online=[...new Set([...generated.filter(a=>ONLINE_ONLY.test(a)),'./build/maplibre-gl-worker.mjs',...OFFERED])].sort();
 const hash=createHash('sha256');
 for(const asset of assets){hash.update(asset);hash.update(await readFile(asset==='./'?'index.html':asset));}
 hash.update(await readFile('src/sw.ts'));

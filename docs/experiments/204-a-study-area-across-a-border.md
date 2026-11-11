@@ -1,6 +1,6 @@
 # 204 · A study area across a border
 
-_Created 2026-11-11 · Updated 2026-11-11_
+_Created 2026-11-10 · Updated 2026-11-10_
 
 **Status:** tried. Built (0.85.0): the list, naming, finding with shares and confirming, the walk upstream, and the
 raster dialog offering the area's countries with its one-file limit said. Checked in Chromium. TODO 25.

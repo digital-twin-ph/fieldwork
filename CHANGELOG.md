@@ -3,6 +3,12 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.85.1 — 2026-11-10
+
+- **Hagelloch's 1824 sheet is served.** *Use this example's image* answered "could not be fetched (404)" on the published
+  site: the sheet was in the repository but not among the files the site publishes. A test now checks every file a
+  worked example offers.
+
 ## 0.85.0 — 2026-11-10
 
 - **A study area across a border.** A study area now states its countries, one or more. **Configure countries…** names

@@ -257,6 +257,11 @@ not a practitioner in the field.
    Compare per area at a common year, never cell by cell at 100 m, never pooled; say each model's population (all
    land, settled cells, residential) beside its number. The same step gives Rate with a denominator a population per
    area.
+   **Then a worked example of the comparison** (the practitioner, 2026-11-11: *"Once we add that capability let's create
+   a worked example for it"*): one place in GRID3's coverage, so all three models apply, its administrative units as the
+   areas, one common year. Proposed, the place still the practitioner's to choose: Gaborone, beside Old Naledi, since
+   Botswana is in all three (WorldPop 293 MB, GRID3 11.6 MB, GHS-POP read for the window). The windows read for its units
+   are kept in an example repository under each source's licence (all three CC BY 4.0), with their citations.
 25. **A study area across a border** (the practitioner, 2026-11-10: *"We discussed the cross border study area. In this
    case we need to be able to either (1) detect the countries based on geometry overlaps or (2) named explicitly"*).
    **Built 2026-11-10 (0.85.0), [204](docs/experiments/204-a-study-area-across-a-border.md)**: a list of countries,

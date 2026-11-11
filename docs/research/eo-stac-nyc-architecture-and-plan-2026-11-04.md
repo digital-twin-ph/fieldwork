@@ -36,8 +36,8 @@ The review used these revisions. The three supplied ZIPs matched their correspon
 
 | Repository | Inspected revision | Relevant capability and gap |
 | --- | --- | --- |
-| [Fieldwork][fw] | `8122ee1fc9c3500f20c3688fce2beb79f1f11fde` | Tabular input emits `table` and has no input ports. Table operations, provenance and workflow execution exist. Direct STAC acquisition and a general numeric-measure merge are not established. |
-| [NYC worked example][nyc] | `e00408f107e23f188ba6310cd1706cb9fa14c258` | Four workflows use a remotely acquired, digest-checked daily table covering 2016–2025. |
+| [Fieldwork][fw] | `ad25d50640571e94c4c301d085092a7f33dcdc04` | Tabular input emits `table` and has no input ports. Table operations, provenance and workflow execution exist. Direct STAC acquisition and a general numeric-measure merge are not established. |
+| [NYC worked example][nyc] | `0f32f9b1550ecc9e561bc6e11ec205a4f9b7fcea` | Four workflows use a remotely acquired, digest-checked daily table covering 2016–2025. |
 | [EO Satellite Guide][eo] | `684833c9013bfa003bddeb7ff20edb2d4fad3347` | Curated concepts, missions, products and collection routes. NO₂ and aerosol discovery exist; ozone needs an explicit curated route. |
 | [STAC Browser][stac] | `945d8b31c59e2cf93f9e51e855eb062fb1b4321c` | Metadata search, asset selection, a Fieldwork selection export and bounded GeoTIFF cropping. Atmospheric NetCDF/HDF extraction into daily pollutant tables remains to be built. |
 
@@ -311,16 +311,16 @@ Record dated outcomes, failed attempts, remaining gaps and any revised decisions
 
 The next experiment should settle the original daily definitions, one NYC boundary, a short NO₂ interval, the internal table representation and the access feasibility matrix for all three pollutants. It should name the PM2.5 and ozone deliverables independently so that success on the first pathway cannot close the remaining work.
 
-[fw]: https://github.com/digital-twin-ph/fieldwork/tree/8122ee1fc9c3500f20c3688fce2beb79f1f11fde
-[nyc]: https://github.com/digital-twin-ph/example-2025-nyc-ozone/tree/e00408f107e23f188ba6310cd1706cb9fa14c258
+[fw]: https://github.com/digital-twin-ph/fieldwork/tree/ad25d50640571e94c4c301d085092a7f33dcdc04
+[nyc]: https://github.com/digital-twin-ph/example-2025-nyc-ozone/tree/0f32f9b1550ecc9e561bc6e11ec205a4f9b7fcea
 [eo]: https://github.com/jltobias/JupyterLite-EO-Satellite-Guide/tree/684833c9013bfa003bddeb7ff20edb2d4fad3347
 [stac]: https://github.com/jltobias/JupyterLite-STAC-Browser/tree/945d8b31c59e2cf93f9e51e855eb062fb1b4321c
-[exp91]: https://github.com/digital-twin-ph/fieldwork/blob/8122ee1fc9c3500f20c3688fce2beb79f1f11fde/docs/experiments/91-stac-browser-integration.md
+[exp91]: https://github.com/digital-twin-ph/fieldwork/blob/ad25d50640571e94c4c301d085092a7f33dcdc04/docs/experiments/91-stac-browser-integration.md
 [handoff]: https://github.com/jltobias/JupyterLite-STAC-Browser/blob/945d8b31c59e2cf93f9e51e855eb062fb1b4321c/book/fieldwork-integration.md
-[tablemodel]: https://github.com/digital-twin-ph/fieldwork/blob/8122ee1fc9c3500f20c3688fce2beb79f1f11fde/src/data-table.ts
-[relate]: https://github.com/digital-twin-ph/fieldwork/blob/8122ee1fc9c3500f20c3688fce2beb79f1f11fde/src/relate-table.ts
-[append]: https://github.com/digital-twin-ph/fieldwork/blob/8122ee1fc9c3500f20c3688fce2beb79f1f11fde/src/append-rows.ts
+[tablemodel]: https://github.com/digital-twin-ph/fieldwork/blob/ad25d50640571e94c4c301d085092a7f33dcdc04/src/data-table.ts
+[relate]: https://github.com/digital-twin-ph/fieldwork/blob/ad25d50640571e94c4c301d085092a7f33dcdc04/src/relate-table.ts
+[append]: https://github.com/digital-twin-ph/fieldwork/blob/ad25d50640571e94c4c301d085092a7f33dcdc04/src/append-rows.ts
 [eoprofile]: https://github.com/jltobias/JupyterLite-EO-Satellite-Guide/blob/684833c9013bfa003bddeb7ff20edb2d4fad3347/data/research-ontology.ttl
-[fwstac]: https://github.com/digital-twin-ph/fieldwork/blob/8122ee1fc9c3500f20c3688fce2beb79f1f11fde/ontology/stac.ttl
-[widgetprocedure]: https://github.com/digital-twin-ph/fieldwork/blob/8122ee1fc9c3500f20c3688fce2beb79f1f11fde/widgets/README.md
-[admission]: https://github.com/digital-twin-ph/fieldwork/blob/8122ee1fc9c3500f20c3688fce2beb79f1f11fde/docs/audits/ontology-audit.md
+[fwstac]: https://github.com/digital-twin-ph/fieldwork/blob/ad25d50640571e94c4c301d085092a7f33dcdc04/ontology/stac.ttl
+[widgetprocedure]: https://github.com/digital-twin-ph/fieldwork/blob/ad25d50640571e94c4c301d085092a7f33dcdc04/widgets/README.md
+[admission]: https://github.com/digital-twin-ph/fieldwork/blob/ad25d50640571e94c4c301d085092a7f33dcdc04/docs/audits/ontology-audit.md

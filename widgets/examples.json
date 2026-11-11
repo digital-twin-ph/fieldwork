@@ -16,7 +16,7 @@
       "id": "urn:fieldwork:example:south-london-1854",
       "title": "Snow's South London water supply study, 1854",
       "repository": "https://github.com/digital-twin-ph/example-1855-cholera-south-london",
-      "commit": "ac89868c3ee37c31202ed37edfeec66744f2c2dc",
+      "commit": "ee15219e8c3c2a2b84c02a0535340f9939ead780",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-1855-cholera-south-london",
       "licence": {
         "data": "CC0-1.0, except geo/sub-districts-csds.geojson which is BSD-2-Clause and geo/thames-reaches.geojson and geo/thames-tidal-limit.geojson which are ODbL-1.0",
@@ -166,7 +166,7 @@
       "id": "urn:fieldwork:example:oswego-1940",
       "title": "The Oswego church supper, 1940",
       "repository": "https://github.com/digital-twin-ph/example-1940-oswego-church-supper",
-      "commit": "d5853debe60633e51fa0c11a129f6b585a133e03",
+      "commit": "e39be55a4938aa11ac5e9c47478cab24430fd3b1",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-1940-oswego-church-supper",
       "licence": {
         "data": "Stated as unconfirmed public domain for the line list; geo/lycoming-church.geojson is ODbL-1.0; the arrangement is CC0-1.0",
@@ -231,7 +231,7 @@
       "id": "urn:fieldwork:example:nigeria-immunization-2024",
       "title": "DTP coverage and zero-dose children in Nigeria, 2024",
       "repository": "https://github.com/digital-twin-ph/example-2024-nigeria-immunization",
-      "commit": "1798794473cdc178fe91b88e7ca76dc2b92edb9b",
+      "commit": "ba688ef87755fade63e770f63285b9f29b43400b",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2024-nigeria-immunization",
       "licence": {
         "data": "CC-BY-4.0",
@@ -306,7 +306,7 @@
       "id": "urn:fieldwork:example:salmonella-germany-2021",
       "title": "Salmonella Braenderup and melons, Germany 2021",
       "repository": "https://github.com/digital-twin-ph/example-2021-salmonella-germany",
-      "commit": "2ed5622907cf929934cbc1b51247fa99cd9486b2",
+      "commit": "ed04b111e7f894b0b1d8770e3ae0e8eb821ee900",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2021-salmonella-germany",
       "licence": {
         "data": "CC-BY-4.0",
@@ -377,7 +377,7 @@
       "id": "urn:fieldwork:example:nyc-asthma-ozone-2016-2025",
       "title": "Ozone and child asthma emergency visits, New York City, 2016–2025",
       "repository": "https://github.com/digital-twin-ph/example-2025-nyc-ozone",
-      "commit": "e1c0aef5ab1ad351f456c8a59cacb6b9085731a8",
+      "commit": "1270fddbeea3fe703be10f189ee8d9b480985e59",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2025-nyc-ozone",
       "licence": {
         "data": "Not redistributed",
@@ -438,7 +438,7 @@
       "id": "urn:fieldwork:example:brazil-dengue-rj-2024",
       "title": "Dengue in Rio de Janeiro state, Brazil, 2024",
       "repository": "https://github.com/digital-twin-ph/example-2024-brazil-dengue",
-      "commit": "4df10b33dfb508d353981ed346e46fa498dacd9c",
+      "commit": "cbb09effd5be5531227663b6e60031bf3c7e3055",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2024-brazil-dengue",
       "licence": {
         "data": "CC-BY-4.0",
@@ -528,7 +528,7 @@
       "id": "urn:fieldwork:example:workflows-rulesets",
       "title": "Rules on synthetic data",
       "repository": "https://github.com/digital-twin-ph/example-workflows-rulesets",
-      "commit": "474185b843ad426e0707e08c9f4b0e0abe16f5dd",
+      "commit": "5de6c2435f2273aa80504c6c59d46c043ad359cc",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-workflows-rulesets",
       "licence": {
         "data": "CC0-1.0",
@@ -624,7 +624,7 @@
       "id": "urn:fieldwork:example:sierra-leone-measles",
       "title": "Measles in Sierra Leone, 2019 to 2023",
       "repository": "https://github.com/digital-twin-ph/example-2019-sierra-leone-measles",
-      "commit": "9fd39c61cfa05b9bf3b8ae74e11dc4d364594c11",
+      "commit": "0dbc0b6ccceceddcb403beeb44c8d4e5ee65eade",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2019-sierra-leone-measles",
       "licence": {
         "data": "Used with the Sierra Leone FETP’s agreement for distributable training materials; modified for a public teaching repository",
@@ -706,7 +706,7 @@
       "id": "urn:fieldwork:example:sea-level-rise-philippines",
       "title": "Sea-level rise at Manila’s health facilities",
       "repository": "https://github.com/digital-twin-ph/example-2026-sea-level-rise-philippines",
-      "commit": "f6b2ec0524eeff9af79b6b8bfa0f9385e506f9e2",
+      "commit": "89f20e64ab322759ce2c07520e258f9a511bdd5a",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2026-sea-level-rise-philippines",
       "licence": {
         "data": "Projections and sites CC BY 4.0, with three required citations; DeltaDTM v1.1 and DTU25MSS subsets CC BY 4.0; facilities retrieved from OpenStreetMap (ODbL 1.0) by the workflows; the study area, diagram, manual and scripts CC0 1.0",

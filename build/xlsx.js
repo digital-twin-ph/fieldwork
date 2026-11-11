@@ -1,2 +1,2 @@
-import{a}from"./chunks/chunk-I4524YDV.js";import"./chunks/chunk-BNNROQX5.js";import"./chunks/chunk-KVMUXFPB.js";export{a as readXlsx};
+import{a}from"./chunks/chunk-PVWKTT4J.js";import"./chunks/chunk-B24XNP2G.js";import"./chunks/chunk-KVMUXFPB.js";export{a as readXlsx};
 //# sourceMappingURL=xlsx.js.map

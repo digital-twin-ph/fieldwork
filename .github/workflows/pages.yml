@@ -215,7 +215,7 @@ jobs:
       - uses: actions/checkout@v6
         with:
           repository: digital-twin-ph/example-2002-london-ozone
-          ref: b89c7e4573f2a876c0c078b22b5686f634e4f53a
+          ref: 356884ab7796e50508b4ef3ca23e38a005963db4
           fetch-depth: 0
           path: example-london-checkout
       - uses: actions/setup-node@v6

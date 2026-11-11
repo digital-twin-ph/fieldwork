@@ -624,6 +624,9 @@ fw:noDataCellCount a owl:DatatypeProperty; rdfs:domain fw:RasterAreaTotal; rdfs:
   rdfs:label "Cells inside the areas the raster marks as no data".
 fw:outsideRasterCellCount a owl:DatatypeProperty; rdfs:domain fw:RasterAreaTotal; rdfs:range xsd:nonNegativeInteger;
   rdfs:label "Cells of the areas beyond the raster's window".
+fw:cellStatisticsGiven a owl:DatatypeProperty; rdfs:domain fw:RasterAreaTotal; rdfs:range xsd:string;
+  rdfs:label "Cell statistics given beside each total, when asked";
+  rdfs:comment "Mean, minimum and maximum of the cells with a value in each area, each cell counted whole. A mean of cells is per cell, not per unit of ground area.".
 fw:areasWithoutValueCount a owl:DatatypeProperty; rdfs:domain fw:RasterAreaTotal; rdfs:range xsd:nonNegativeInteger;
   rdfs:label "Areas with no cell holding a value, and so no total".
 fw:RasterPointSample a owl:Class;

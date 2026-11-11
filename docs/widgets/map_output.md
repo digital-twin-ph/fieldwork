@@ -66,7 +66,11 @@ off the other.
 
 - **Colour says which layer the point came from.** Each point layer you connect gets its own hue
   from the categorical palette, so two searches of two different sources are told apart on the map
-  and listed separately in the layer control, where either can be switched off.
+  and listed separately in the layer control, where either can be switched off. To choose a
+  layer's colour, open **Configure…**: each point layer has a **Colour** menu beside its mark and
+  size, offering the same six colour-blind-safe colours by name (blue, vermillion, bluish green,
+  orange, reddish purple, sky blue), or **Default**. Over a black-and-white scan, such as an old
+  sheet map, pick a strong colour such as vermillion so the points stand apart from the drawing.
 - **Fill says where the point stands.** Filled inside the study area, hollow outside it, grey when
   the record has no usable location — those are not drawn on the map and are listed instead.
 - **Each layer also gets a mark**: circle, square, triangle, star, cross or X. A mark is chosen per

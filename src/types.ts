@@ -511,6 +511,8 @@ export interface ParamsByType {
     source?:'raster'|'satellite-files';
     /** Where a raster is read: at points (the default), or over areas, each area's cells totalled. */
     over?:'points'|'areas';
+    /** Over areas, also each area's mean, smallest and largest cell value (2026-11-11). Off by default. */
+    cellStatistics?:boolean;
     /** For satellite files (experiment 180): the quality rule at points, the layer, the rule over areas, the place column
      *  and the temperature unit, as the satellite sampler held them. */
     qaOperator?:'>='|'>'; layer?:string; qualityRule?:'produced-2k'|'good'|'produced'; placeColumn?:string;

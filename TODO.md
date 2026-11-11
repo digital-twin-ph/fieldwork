@@ -76,6 +76,13 @@ not a practitioner in the field.
    to the standard in the same pass.
    **Found 2026-11-09:** the pre-push fast gate validates the pinned examples against the sibling WORKING copies, so an
    uncommitted edit in an example repository blocks a Fieldwork push whose pins are right. Commit or set aside first.
+   **Boundaries that change: GeoPrism Registry, after 18** (the practitioner, 2026-11-11: *"For SL example we can take a
+   look at https://github.com/terraframe/geoprism-registry-documentation/blob/main/version/v2.0.0/introduction.md for
+   detecting changes in admin boundaries and perhaps as a source of admin boundaries as well. After history rewrite."*).
+   Not yet read. Two questions: whether it records a unit's boundary over time, so a district split or renamed between
+   the line list's years and the boundary file's can be detected rather than met as an unmatched name (Falaba is the
+   case at hand); and whether a registry instance publishes Sierra Leone's units openly, with a licence, as a source
+   beside OCHA COD-AB and geoBoundaries. Its licence and the data's checked before anything is used.
    **Case classification postponed** (the practitioner, 2026-11-08: *"Let's postpone the case definition work"*). Decided
    so far: WHO 2018's classification; *Runny nose* counts as coryza; the clinician's *meets the definition* stands in
    where symptoms were not recorded, shown in an analysis table. **Open:** whether *Contact with confirmed measles
@@ -162,6 +169,15 @@ not a practitioner in the field.
    as Space-time scan 0.1.0; owes a lab check, SaTScan on its benchmark and the day-by-day replay); the **Poisson spatial scan**, on the same machinery; then **Describe where points are dense**
    (HDBSCAN, kernel density, and kernel density as a ratio of two layers), labelled exploratory, never under Detect.
    Each on the standard Inspector, with a lab check, and SaTScan run by hand on its benchmark sets.
+12. **Edit a table's values inline, in the data quality check** (the practitioner, 2026-11-10: *"One thing I have been
+   meaning to add to data quality checks is the ability to edit tables inline. Can be added as a widget playback
+   exercise."*). To shape: per [117](docs/experiments/117-data-quality.md), a change to an input is a declared repair
+   on the node, never a write to the file, and every repair can be taken back. So an edited cell would be one more
+   repair: the record, the column, the value read, the value written, who and when, listed as an edit log and each
+   removable. Open: whether typing a value into an empty cell is allowed, since 117 holds that filling a missing value
+   is imputation, not a clerical fix; and what "widget playback exercise" means here, the manual playback dialog of
+   [173](docs/experiments/173-a-manual-for-each-worked-example.md) (designed, not built) or an exercise in a worked
+   example's manual.
 13. **Colour by generation, in the transmission tree and on the map's lines** (built 2026-11-10, 0.79.0: one magma ramp,
    each step at least 3:1; shape now says what a case is) (the practitioner, 2026-11-10: *"One
    thing we can do for the transmission chain is to color key the generation both in the tree and the map links."*).
@@ -199,8 +215,10 @@ not a practitioner in the field.
    higher (Besag and Clifford 1991), and say when it stopped; run the days in parallel across the device's cores; move
    the scan's inner loop to the Rust kernel compiled to WebAssembly. In lab check 46: score every run length at once
    rather than one at a time, and, if still slow, fewer shuffles with the tolerance widened to match.
-18. **Remove the Claude co-author line from the workspace's history, the weekend of 2026-11-14/15, with the
-   practitioner** (2026-11-10: *"For repositories related to CDC work we cannot have agents as coauthors"*). Every repo
+18. **Remove the Claude co-author line from the workspace's history, with the practitioner. NEXT, before anything else**
+   (the practitioner, 2026-11-11: *"Let's move up 18 before anything else after this last task is done"*: after 0.94.0
+   and 0.95.0 are published, ahead of the census comparison and MERS; it was set for the weekend of 2026-11-14/15)
+   (2026-11-10: *"For repositories related to CDC work we cannot have agents as coauthors"*). Every repo
    in the digitaltwin-ph workspace: fieldwork, validation-lab, the ten example repos, widget-pack-sea-level-rise and
    fieldwork-ontology, about 1,190 commits. Mirror backups first; the lab and the siblings before Fieldwork, with a map
    of old to new commit ids applied to Fieldwork's pins and messages; every branch force-pushed. Nothing under
@@ -283,15 +301,17 @@ not a practitioner in the field.
    hand), a topographic sheet with a printed grid, a town plan with no grid (South London's Snow map), a railway or
    small-scale map with a graticule (the 1861 Bahnkarte), and a sketch or hand-drawn map, each with its features to find,
    their reasons, and the result against a reference. Each sheet's licence checked before it ships; experiment 201's cue,
-   live check and preview are the tools., in the data quality check** (the practitioner, 2026-11-10: *"One thing I have been
-   meaning to add to data quality checks is the ability to edit tables inline. Can be added as a widget playback
-   exercise."*). To shape: per [117](docs/experiments/117-data-quality.md), a change to an input is a declared repair
-   on the node, never a write to the file, and every repair can be taken back. So an edited cell would be one more
-   repair: the record, the column, the value read, the value written, who and when, listed as an edit log and each
-   removable. Open: whether typing a value into an empty cell is allowed, since 117 holds that filling a missing value
-   is imputation, not a clerical fix; and what "widget playback exercise" means here, the manual playback dialog of
-   [173](docs/experiments/173-a-manual-for-each-worked-example.md) (designed, not built) or an exercise in a worked
-   example's manual.
+   live check and preview are the tools.
+27. **Open Science components in Fieldwork, with the collaborative project design layered to support their principles**
+   (the practitioner, 2026-11-11: *"Also after MERS let's build the Open Science components or FW and layer the
+   collaborative project design to support it's principles."*). **After MERS** (item 8). Builds on 21 (collaboration through
+   GitHub, [150](docs/experiments/150-can-several-authors-collaborate-in-a-project-repository.md),
+   [155](docs/experiments/155-discussions-as-the-governance-surface.md)) rather than beside it: the project design is the
+   layer, the open science principles what it is answerable to. What already exists to inventory first: a project
+   exported as a repository; provenance receipts in N3; licences, citations and pinned commits on every worked example;
+   the Validation Lab's independent checks; open evidence only. **Open, for the practitioner:** which statement of the
+   principles (for example UNESCO's 2021 Recommendation on Open Science, FAIR), and which components that means here.
+   An experiment record first, with the survey of what exists, before any widget.
 
 The high-contrast theme comes after Sierra Leone, as set on 2026-11-07; where it falls among 4 to 6 is not set.
 

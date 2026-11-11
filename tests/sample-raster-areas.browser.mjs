@@ -13,9 +13,7 @@ const grid=()=>{
     ModelTiepoint:[0,0,0,120.9,14.7,0],GeographicTypeGeoKey:4326,GTModelTypeGeoKey:2,GTRasterTypeGeoKey:1}));
 };
 
-test('a raster is totalled over a study area: the cells whose centre is inside, added, and counted',async({page})=>{
-  const errors=collectPageErrors(page);
-  await seedWorkflow(page,{nodes:[
+const seed=page=>seedWorkflow(page,{nodes:[
     {id:'area',type:'study_area',x:20,y:20,params:{label:'A square',source:'drawn',selectionMode:'polygon',
       geometry:{type:'Polygon',coordinates:[[[120.93,14.62],[120.97,14.62],[120.97,14.66],[120.93,14.66],[120.93,14.62]]]}}},
     {id:'grid',type:'raster_input',x:320,y:20,params:{label:'People per cell'}},
@@ -23,6 +21,8 @@ test('a raster is totalled over a study area: the cells whose centre is inside, 
     {id:'shown',type:'table_output',x:920,y:20,params:{label:'People by area'}}],
     edges:[{id:'e1',from:'area',to:'grid',port:'area'},{id:'e2',from:'grid',to:'sample',port:'raster'},
       {id:'e3',from:'area',to:'sample',port:'area'},{id:'e4',from:'sample',to:'shown',port:'polygons'}]});
+const prepare=async page=>{
+  await seed(page);
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="grid"]').click();
   await page.locator('#prepare-raster').click();
@@ -32,6 +32,11 @@ test('a raster is totalled over a study area: the cells whose centre is inside, 
   await page.locator('#raster-source-units').fill('people');
   await page.locator('#raster-save').click();
   await expect(page.locator('#raster-dialog')).toHaveCount(0,{timeout:30000});
+};
+
+test('a raster is totalled over a study area: the cells whose centre is inside, added, and counted',async({page})=>{
+  const errors=collectPageErrors(page);
+  await prepare(page);
 
   // The step says what it does over areas, before it runs.
   await page.locator('.react-flow__node[data-id="sample"]').click();
@@ -48,5 +53,24 @@ test('a raster is totalled over a study area: the cells whose centre is inside, 
   // Columns: layer, id, name, two location columns empty for a polygon, kind, then people, cells, no data, outside.
   const row=(await page.locator('#result-rows').innerText()).trim().split('\t').slice(-4);
   expect(row).toEqual(['968','16','0','0']);
+  expect(errors).toEqual([]);
+});
+
+test('asked for in Configure, each area also carries its mean, smallest and largest cell value',async({page})=>{
+  const errors=collectPageErrors(page);
+  await prepare(page);
+  await page.locator('.react-flow__node[data-id="sample"]').click();
+  await page.locator('#configure-step').click();
+  const box=page.locator('#sample-config #sample-cell-statistics');
+  await expect(box).not.toBeChecked();
+  await box.check();
+  await expect(page.locator('#sample-config')).toContainText('Also each area\u2019s mean, smallest and largest cell value.');
+  await page.locator('#sample-config #config-apply').click();
+  await page.locator('#run-button').click();
+  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
+  await page.locator('[data-view="results"]').click();
+  // The sixteen cells hold 44 to 77, rows 4-7 and columns 3-6 of 10r + c + 1; their mean is 968 / 16.
+  const row=(await page.locator('#result-rows').innerText()).trim().split('\t').slice(-7);
+  expect(row).toEqual(['968','16','0','0','60.5','44','77']);
   expect(errors).toEqual([]);
 });

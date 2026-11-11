@@ -118,7 +118,10 @@ import {readAuthors,currentIdentity,attestIdentity,setCurrentIdentity,authorLabe
 
 /** A polygon layer's chosen file, waiting for Apply. Keyed by node, outside the DOM, because the
  *  Inspector re-renders on every setting change. */
-import {LAYER_SHAPES,resolveLayerSymbol,markPath,type LayerShape} from './presentation.js';
+import {LAYER_SHAPES,resolveLayerSymbol,markPath,type LayerShape,FIGURE_PALETTE} from './presentation.js';
+/** A POINT LAYER'S COLOUR, chosen in the Map's Configure… (2026-11-11): the Okabe-Ito six, named, colour-blind safe. */
+const layerDefaultColour=(index:number)=>FIGURE_PALETTE[index%FIGURE_PALETTE.length]!;
+const LAYER_COLOUR_NAMES=['blue','vermillion','bluish green','orange','reddish purple','sky blue'];
 import {isPointPort} from './point-layers.js';
 import {EXAMPLE_TEMPLATES,hasExampleTemplate,EXAMPLE_KEYS,WORKED_EXAMPLE_KEYS} from './example-templates.js';
 import {templateFrom} from './workflow-template.js';
@@ -2340,7 +2343,8 @@ function sampleSentence(n:WorkflowNode<'sample_raster'>):string{
   const p=n.params,name=p.attribute?.trim();
   // OVER AREAS (experiment 205): each area's cells totalled.
   if(p.over==='areas')return `Totals ${name||'total'}${p.valueUnit?.trim()?`, ${p.valueUnit.trim()},`:''} over each area: the cells whose `
-    +'centre is inside or on it, each counted whole; cells with no data add nothing and are counted apart.';
+    +'centre is inside or on it, each counted whole; cells with no data add nothing and are counted apart.'
+    +(p.cellStatistics?' Also each area\u2019s mean, smallest and largest cell value.':'');
   if(!name)return 'Writes a raster\u2019s value onto each point. Name the attribute in Configure\u2026';
   return `Writes ${name}${p.valueUnit?.trim()?`, ${p.valueUnit.trim()},`:''} onto each point: `
     +(p.method==='bilinear'?'interpolated between the four nearest cells.':'the value of the cell containing it.');
@@ -2356,6 +2360,8 @@ function openSampleConfig(nodeId:string){
         +`Connect points or areas to choose; satellite files instead of a raster read by date.</p>`
       +`<div class="field"><label class="field-label" for="sample-attribute">${draft.over==='areas'?'Name of the total':'Attribute to write'}</label><input id="sample-attribute" maxlength="60" value="${esc(draft.attribute)}" placeholder="${draft.over==='areas'?'population':'elevation_m'}"></div>`
       +`<div class="field"><label class="field-label" for="sample-unit">What those values measure</label><input id="sample-unit" maxlength="60" value="${esc(draft.valueUnit)}" placeholder="metres above the stated datum"></div>`
+      +(draft.over==='areas'?`<div class="field"><label class="check"><input type="checkbox" id="sample-cell-statistics"${draft.cellStatistics?' checked':''}> Also give each area\u2019s mean, smallest and largest cell value</label></div>`
+        +'<p class="description">Of the cells with a value. A mean of cells is per cell, not per square kilometre.</p>':'')
       +(draft.over==='areas'?'':`<div class="field"><label class="field-label" for="sample-method">Read each value as</label><select id="sample-method">`
       +`<option value="cell"${draft.method!=='bilinear'?' selected':''}>the cell containing the point</option>`
       +`<option value="bilinear"${draft.method==='bilinear'?' selected':''}>between the four nearest cells (bilinear)</option></select></div>`
@@ -2366,6 +2372,8 @@ function openSampleConfig(nodeId:string){
       root.querySelector<HTMLInputElement>('#sample-unit')?.addEventListener('change',e=>{draft.valueUnit=(e.target as HTMLInputElement).value.trim();redraw();});
       root.querySelector<HTMLSelectElement>('#sample-method')?.addEventListener('change',e=>{const v=(e.target as HTMLSelectElement).value;
         if(v==='bilinear')draft.method='bilinear';else delete draft.method;redraw();});
+      root.querySelector<HTMLInputElement>('#sample-cell-statistics')?.addEventListener('change',e=>{
+        if((e.target as HTMLInputElement).checked)draft.cellStatistics=true;else delete draft.cellStatistics;redraw();});
     },
     apply:draft=>{change(w=>{getNode(w,nodeId,'sample_raster').params=draft;});},
   },esc);
@@ -2490,6 +2498,11 @@ function openMapConfig(nodeId:string){
         const held={...(draft.layerSymbols||{})};
         // An empty choice REMOVES the entry: a mark somebody chose and one the layer's position gave it differ.
         if(mark)held[source]={...held[source],mark};else delete held[source];draft.layerSymbols=held;});
+      on('[data-layer-colour]',el=>{const source=el.dataset.layerColour!,held={...(draft.layerSymbols||{})};
+        // Default REMOVES the choice, as for the mark: a colour chosen and one the layer's position gave differ.
+        if(el.value)held[source]={...held[source],colour:el.value};
+        else if(held[source]){const {colour:_dropped,...rest}=held[source]!;held[source]=rest;}
+        draft.layerSymbols=held;});
       on('[data-layer-size]',el=>{const source=el.dataset.layerSize!;
         draft.layerSymbols={...(draft.layerSymbols||{}),[source]:{...draft.layerSymbols?.[source],size:Number(el.value)}};});
       for(const [selector,key] of [['#map-title','mapTitle'],['#map-subtitle','mapSubtitle'],['#map-source-note','mapSourceNote']] as const)
@@ -2644,7 +2657,18 @@ function mapSettingsFlat(n:WorkflowNode<'map_output'>):string{
           +`<p class="muted">Hue and mark say which source a point came from; whether it is filled says whether it is inside the study area. Marks are named as OGC Symbology Encoding names them.</p>`
           +sources.map((source,index)=>{
             const held=chosen[source.id],resolved=resolveLayerSymbol(index,held);
-            return `<div class="field"><label class="field-label" for="layer-mark-${esc(source.id)}">${esc(source.params.label||TYPES[source.type].title)}</label>`
+            // THE COLOUR (the practitioner, 2026-11-11: cases on a black-and-white sheet "should be colored differently").
+            // A colour held that is not one of the six, set by an example, stays offered as it is rather than lost.
+            const held_colour=held?.colour,named=FIGURE_PALETTE.findIndex(c=>c.toLowerCase()===held_colour?.toLowerCase());
+            const colourName=(c:string)=>{const i=FIGURE_PALETTE.findIndex(x=>x.toLowerCase()===c.toLowerCase());return i<0?c:LAYER_COLOUR_NAMES[i]!;};
+            return `<div class="field"><span class="field-label">${esc(source.params.label||TYPES[source.type].title)}</span>`
+              +`<label class="field-label" for="layer-colour-${esc(source.id)}">Colour</label>`
+              +`<select id="layer-colour-${esc(source.id)}" data-layer-colour="${esc(source.id)}">`
+              +`<option value="">Default \u00b7 ${esc(colourName(layerDefaultColour(index)))}</option>`
+              +FIGURE_PALETTE.map((c,i)=>`<option value="${c}" ${named===i?'selected':''}>${LAYER_COLOUR_NAMES[i]}</option>`).join('')
+              +(held_colour&&named<0?`<option value="${esc(held_colour)}" selected>as set, ${esc(held_colour)}</option>`:'')
+              +`</select>`
+              +`<label class="field-label" for="layer-mark-${esc(source.id)}">Mark</label>`
               +`<select id="layer-mark-${esc(source.id)}" data-layer-mark="${esc(source.id)}">`
               +`<option value="">Default \u00b7 ${esc(resolved.shape)}</option>`
               +LAYER_SHAPES.map(shape=>`<option value="${shape}" ${held?.mark===shape?'selected':''}>${shape}</option>`).join('')

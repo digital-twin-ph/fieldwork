@@ -3,6 +3,14 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.95.0 — 2026-11-11
+
+- **Mean, smallest and largest cell over each area, if you want them.** Sample a raster's Configure… has a box, *Also
+  give each area's mean, smallest and largest cell value*. Ticked, each area also carries `cell_mean`, `cell_min` and
+  `cell_max`, of the cells with a value. Off by default. Sample a raster 0.4.0.
+- **A point layer's colour, in the Map's Configure….** Beside each layer's mark and size: one of six colour-blind-safe
+  colours, by name, or the default. The Hagelloch cases on the 1824 sheet are now vermillion, not near-black. Map 0.25.0.
+
 ## 0.94.0 — 2026-11-11
 
 - **Sample a raster at points or over areas.** One step for sampling a grid. Connect a Raster input and points, as

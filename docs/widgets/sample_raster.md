@@ -1,6 +1,6 @@
 # Sample a raster at points or over areas
 
-_Created 2026-11-09 · Updated 2026-11-09_
+_Created 2026-11-09 · Updated 2026-11-11_
 
 **A grid's value at each point, or its total over each area.** The ground's height at each clinic; the people a
 population grid places in each district; the satellite's NO₂ over each monitor, day by day.
@@ -43,6 +43,13 @@ population grid, such as WorldPop, GRID3 or GHS-POP, that total is the grid's es
 | `cells` | how many cells were added |
 | `cells_no_data` | cells inside the area the raster marks as no data: they add nothing, and are not zero |
 | `cells_outside_raster` | cells of the area beyond the raster's window: the window does not cover that part of the area |
+| `cell_mean`, `cell_min`, `cell_max` | only when asked for: the mean, smallest and largest of the cells with a value |
+
+**Also the mean, smallest and largest cell.** Tick *Also give each area's mean, smallest and largest cell value* in
+**Configure…** and each area carries three more columns, `cell_mean`, `cell_min` and `cell_max`, of the cells with a
+value. They suit a grid of heights or temperatures more than one of people. A mean of cells is per cell, not per
+square kilometre: on a latitude-longitude grid, cells shrink towards the poles. An area with no cell holding a value
+has none of the three.
 
 **Read the last two columns before the total.** An area with cells outside the raster has a total for only part of
 itself; widen the Raster input's window to cover it. Areas come from a **Polygon layer**, or from a **Study area**:

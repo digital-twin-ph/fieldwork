@@ -99,4 +99,19 @@ test('a chosen mark is drawn on the map and shown in the legend',async({page})=>
   await page.locator('[data-view="results"]').click();
   const marks=key.locator('.map-key-mark path');
   expect(await marks.count()).toBe(2); // one layer, one fill value
+
+  // THE COLOUR, chosen beside the mark (2026-11-11): vermillion, and every mark and the key's mark drawn in it.
+  await page.locator('[data-view="workflow"]').click();
+  await page.locator('.react-flow__node[data-id="map"]').click();
+  await inMapSettings(page,async d=>{
+    const colour=d.locator('[data-layer-colour]').first();
+    await expect(colour.locator('option').first()).toContainText('Default');
+    await colour.selectOption({label:'vermillion'});
+  });
+  await page.locator('#run-button').click();
+  await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
+  await page.locator('[data-view="results"]').click();
+  expect((await page.locator('.catchment-point-mark svg path').last().getAttribute('fill'))?.toUpperCase()).toBe('#D55E00');
+  await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1'))
+    .nodes.find(n=>n.id==='map').params.layerSymbols?.cases?.colour)).toBe('#D55E00');
 });

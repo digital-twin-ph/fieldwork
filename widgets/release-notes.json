@@ -420,12 +420,12 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.24.0",
-   "released": "2026-11-10",
+   "version": "0.25.0",
+   "released": "2026-11-11",
    "changes": [
     {
      "kind": "minor",
-     "description": "OpenStreetMap is the basemap unless one is chosen; None, chosen, is kept (the practitioner, 2026-11-10: \"The default should be OSM\"). Configure… groups its settings under headings, Basemap second, with PMTiles import there on an interactive map; the preview names the basemap the settings chose instead of offering a second picker. The basemap's credit follows the map's own note instead of replacing it, and its limitation is filed in the figure's own section, which fw:FigureFiledWhereDeclaredShape requires and which failed on every map with a basemap. The layer list reads at WCAG AA in both themes."
+     "description": "Each point layer's colour is chosen in Configure…, beside its mark and size: one of the six colour-blind-safe Okabe-Ito colours, named, or the default the layer's position gives it. A colour an example set that is not one of the six stays offered as it is. The practitioner, 2026-11-11, of the Hagelloch cases on the black-and-white 1824 sheet: \"The points should be colored differently compared to the black and white background but I am not sure how to do this in the Map Configuration dialog.\" That map now draws the cases in vermillion."
     }
    ],
    "breaking": false,
@@ -739,12 +739,12 @@
    "migrationFrom": []
   },
   "sample_raster": {
-   "version": "0.3.0",
+   "version": "0.4.0",
    "released": "2026-11-11",
    "changes": [
     {
      "kind": "minor",
-     "description": "Titled \"Sample a raster at points or over areas\", and the one widget for sampling a grid (experiment 205). The practitioner, 2026-11-11: \"sample satellite files does not explicitly say it takes rasters that might be a problem.\" Over areas from a raster, new: each area of a polygon layer, or each unit of a study area, carries the total of the cells whose centre is inside or on it, how many cells that was, how many had no data and how many lay beyond the raster's window; a cell is counted whole, not area-weighted, and no data is not zero. From satellite files: Sample satellite files at points or over areas, retired into this widget, reading as before. The output follows the input: points from points, polygons from areas, a table from satellite files, set by the ports connected and said on the step."
+     "description": "Over areas, a choice in Configure… to also give each area's mean, smallest and largest cell value, of the cells with a value, as the columns cell_mean, cell_min and cell_max. Off by default; the total and its counts are unchanged. The practitioner, 2026-11-11: \"Let's add it anyway and have a checkbox to display it as an option for the output.\" A mean of cells is per cell, not per square kilometre, which the manual says."
     }
    ],
    "breaking": false,

@@ -204,7 +204,9 @@ export function hagellochSheetExample():Workflow{
         junction('South lane','Where a lane leaves the main street southward between the houses.',[1120.8,1709.3],[9.0121234,48.5419319]),
       ]}},
     {id:'sheet-map',type:'map_output',x:430,y:60,params:{label:'The cases on the 1824 sheet',presentation:'plot' as const,
-      mapTitle:'Measles cases, 1861, on the cadastral sheet of 1824',layerSymbols:{cases:{colour:'#261156',size:3}}}},
+      mapTitle:'Measles cases, 1861, on the cadastral sheet of 1824',
+      // Vermillion, the one hue on a black-and-white sheet (the practitioner, 2026-11-11); it was a near-black purple.
+      layerSymbols:{cases:{colour:'#D55E00',size:3}}}},
   ];
   const edges=[
     {id:'cases-sheet-map',from:'cases',to:'sheet-map',port:'points'},

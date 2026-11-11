@@ -180,7 +180,9 @@ export function openMapImageConfig(o:{step:string;initial:MapImageDraft;esc:Esca
         +`<div class="geo-image-wrap"><span class="geo-crosshair" aria-hidden="true"></span>`
         +`<div class="geo-pane geo-image-pane" id="geo-image-pane"><div class="geo-image-frame" id="geo-image-frame">`
         +`<img id="geo-image" src="${d.image.data}" alt="The map image" draggable="false"><div id="geo-image-marks"></div></div></div></div></div>`
-        +`<div><p class="geo-pane-title">On today's map</p><div class="geo-pane" id="geo-map-pane"></div>`
+        +`<div><p class="geo-pane-title">On today's map</p>`
+        +`<p class="geo-map-how" id="geo-map-how">Drag to move the map. <strong>Shift + click</strong> to place the point. `
+        +`<strong>Press and hold</strong> a numbered point, then drag, to move it.</p><div class="geo-pane" id="geo-map-pane"></div>`
         +`<p class="muted">Tiles from OpenStreetMap: the area you view is sent to its servers.</p></div></div>`
       +`<table class="geo-points"><thead><tr><th>Clicks fill</th><th>Feature</th><th>Image x</th><th>Image y</th><th>Longitude</th><th>Latitude</th>`
         +`<th>Error, m</th><th>Left out, m</th><th></th></tr></thead><tbody>`
@@ -320,16 +322,44 @@ export function openMapImageConfig(o:{step:string;initial:MapImageDraft;esc:Esca
     else if(placed.length===1)map.setView([placed[0]!.lonlat[1],placed[0]!.lonlat[0]],16);
     else if(o.near)map.fitBounds([[o.near[1],o.near[0]],[o.near[3],o.near[2]]]);
     else map.setView([20,0],2);
-    d.points.forEach((p,i)=>{if(onMap(p))L.marker([p.lonlat[1],p.lonlat[0]],{interactive:false,
-      icon:L.divIcon({className:`geo-mark${i===active?' is-active':''}`,html:String(i+1),iconSize:[24,24],iconAnchor:[12,12]})}).addTo(map);});
+    // A POINT IS MOVED BY PRESSING AND HOLDING IT, then dragging (the practitioner, 2026-11-11): a quick drag pans the map
+    // instead, so a point cannot be nudged by moving the map across it. While it moves, its coordinates are shown.
+    const HOLD_MS=300,how=root.querySelector<HTMLElement>('#geo-map-how');
+    d.points.forEach((p,i)=>{if(!onMap(p))return;
+      const marker=L.marker([p.lonlat[1],p.lonlat[0]],{draggable:true,autoPan:true,keyboard:false,
+        icon:L.divIcon({className:`geo-mark${i===active?' is-active':''}`,html:String(i+1),iconSize:[24,24],iconAnchor:[12,12]})}).addTo(map);
+      let pressed=0,held=false,timer:number|undefined;const from=marker.getLatLng();
+      const element=marker.getElement();
+      element?.setAttribute('data-geo-point',String(i));
+      element?.addEventListener('pointerdown',()=>{pressed=Date.now();held=false;
+        timer=window.setTimeout(()=>{held=true;element.classList.add('is-lifted');},HOLD_MS);});
+      const release=()=>{window.clearTimeout(timer);element?.classList.remove('is-lifted');};
+      element?.addEventListener('pointerup',release);
+      marker.on('dragstart',()=>{held=held||Date.now()-pressed>=HOLD_MS;});
+      marker.on('drag',()=>{if(!held){marker.setLatLng(from);return;}
+        const at=marker.getLatLng();if(how)how.textContent=`Point ${i+1} at ${at.lng.toFixed(6)}, ${at.lat.toFixed(6)}. Release to place it.`;});
+      marker.on('dragend',()=>{release();
+        if(!held){marker.setLatLng(from);return;}
+        const at=marker.getLatLng();d.points[i]!.lonlat=[at.lng,at.lat];active=i;expect=undefined;
+        view={center:map.getCenter(),zoom:map.getZoom()};redraw();});
+    });
     if(target)L.circle([target.lonlat[1],target.lonlat[0]],{radius:target.radiusM,color:'#b6377a',weight:3,fill:false,
       interactive:false,className:'geo-cue-map'}).addTo(map);
     if(expect)L.circleMarker([expect[1],expect[0]],{radius:18,color:'#b6377a',weight:3,fill:false,interactive:false})
       .bindTooltip('Where the fit expects this point: find it near here').addTo(map);
+    // SHIFT + CLICK PLACES; the hand only moves the map (the practitioner, 2026-11-11: "the pointer on the right map to place
+    // the point is a hand, not a precise tool"). Holding Shift turns the pointer into a crosshair over the map.
     map.on('click',e=>{
+      if(!(e.originalEvent as MouseEvent).shiftKey){
+        if(how)how.textContent=`Hold Shift and click to place point ${active+1}. Drag to move the map.`;return;}
       if(!d.points.length)d.points.push(blank());
       const p=d.points[active]!;p.lonlat=[e.latlng.lng,e.latlng.lat];expect=undefined;
       view={center:map.getCenter(),zoom:map.getZoom()};redraw();});
+    const placing=(on:boolean)=>host.classList.toggle('geo-placing',on);
+    const keys=(e:KeyboardEvent)=>placing(e.shiftKey);
+    document.addEventListener('keydown',keys);document.addEventListener('keyup',keys);
+    map.on('mousemove',e=>placing((e.originalEvent as MouseEvent).shiftKey));
+    map.on('mouseout',()=>placing(false));
     map.on('moveend',()=>{view={center:map.getCenter(),zoom:map.getZoom()};});
     const hover=root.querySelector<HTMLElement>('#geo-hover');
     const current=d.points[active],wanted=current?expectedFromOthers(d.points,active,d.model,current.pixel):null;
@@ -361,6 +391,7 @@ export function openMapImageConfig(o:{step:string;initial:MapImageDraft;esc:Esca
         root.querySelector('#geo-preview-opacity-value')!.textContent=`${Math.round(previewOpacity*100)}% opaque`;});
     }
     dispose=()=>{
+      document.removeEventListener('keydown',keys);document.removeEventListener('keyup',keys);
       if(preview){preview.off();preview.eachLayer(l=>{if(!(l instanceof L.Renderer))preview!.removeLayer(l);});preview.remove();}
       map.off();map.eachLayer(l=>{if(!(l instanceof L.Renderer))map.removeLayer(l);});map.remove();};
   }

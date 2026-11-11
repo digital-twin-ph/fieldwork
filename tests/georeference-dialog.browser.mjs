@@ -154,3 +154,55 @@ test('a worked example\'s cue is not shown on an image other than its own',async
   await expect(dialog.locator('#geo-map-pane path.geo-cue-map')).toHaveCount(0);
   expect(errors).toEqual([]);
 });
+
+// THE MAP PANE'S POINTER (the practitioner, 2026-11-11): the hand moves the map, Shift + click places a point, and a
+// numbered point moves only after it is pressed and held. Flagged rows are readable in the dark theme.
+test('Shift + click places a point on the map; a plain click only says how; a point moves after a press and hold',async({page})=>{
+  const errors=collectPageErrors(page);
+  await page.emulateMedia({colorScheme:'dark'});
+  const placed=structuredClone(workflow);
+  Object.assign(placed.nodes.find(n=>n.id==='plan').params,{placement:'points'});
+  await page.goto('/?example=blank');
+  await page.locator('#workflow-file').setInputFiles({name:'pointer.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(placed))});
+  await page.locator('[data-view="workflow"]').click();
+  await page.locator('.react-flow__node[data-id="plan"]').click();
+  await page.locator('#configure-step').click();
+  const dialog=page.locator('#map-image-config');
+  const png=await page.evaluate(()=>{const c=document.createElement('canvas');c.width=400;c.height=300;c.getContext('2d').fillRect(0,0,400,300);
+    return c.toDataURL('image/png').split(',')[1];});
+  await dialog.locator('#map-image-file').setInputFiles({name:'plan.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')});
+  await dialog.locator('#geo-add-point').click();
+  const lon=dialog.locator('tr[data-geo-row="0"] [data-geo-field="lon"]');
+  const pane=dialog.locator('#geo-map-pane');const box=await pane.boundingBox();
+  const cx=box.x+box.width/2,cy=box.y+box.height/2;
+  // A plain click places nothing and says how.
+  await page.mouse.click(cx,cy);
+  await expect(dialog.locator('#geo-map-how')).toContainText('Hold Shift and click to place point 1');
+  await expect(lon).toHaveValue('');
+  // Shift held: the pointer is a crosshair, and a click places the point.
+  await page.keyboard.down('Shift');
+  await expect(pane).toHaveClass(/geo-placing/);
+  await page.mouse.click(cx,cy);
+  await page.keyboard.up('Shift');
+  await expect(lon).not.toHaveValue('');
+  const before=await lon.inputValue();
+  // A quick drag of the point does not move it.
+  const mark=dialog.locator('#geo-map-pane [data-geo-point="0"]');
+  let m=await mark.boundingBox();
+  await page.mouse.move(m.x+m.width/2,m.y+m.height/2);await page.mouse.down();
+  await page.mouse.move(m.x+m.width/2+40,m.y+m.height/2,{steps:4});await page.mouse.up();
+  await expect(lon).toHaveValue(before);
+  // Pressed and held, then dragged, it moves.
+  m=await mark.boundingBox();
+  await page.mouse.move(m.x+m.width/2,m.y+m.height/2);await page.mouse.down();
+  await page.waitForTimeout(450);
+  await page.mouse.move(m.x+m.width/2+40,m.y+m.height/2,{steps:6});await page.mouse.up();
+  await expect(lon).not.toHaveValue(before);
+  // The table's text reads against its rows in the dark theme.
+  const ratio=await dialog.locator('table.geo-points td').first().evaluate(el=>{
+    const rgb=s=>s.match(/[\d.]+/g).slice(0,3).map(Number),lum=([r,g,b])=>{const f=v=>{v/=255;return v<=0.03928?v/12.92:((v+0.055)/1.055)**2.4;};return 0.2126*f(r)+0.7152*f(g)+0.0722*f(b);};
+    let bg;for(let e=el;e;e=e.parentElement){const c=getComputedStyle(e).backgroundColor;const a=c.match(/[\d.]+/g);if(a&&(a.length<4||Number(a[3])>0.5)){bg=rgb(c);break;}}
+    const [x,y]=[lum(rgb(getComputedStyle(el).color)),lum(bg??[255,255,255])].sort((p,q)=>q-p);return (x+0.05)/(y+0.05);});
+  expect(ratio).toBeGreaterThan(4.5);
+  expect(errors).toEqual([]);
+});

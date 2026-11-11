@@ -3,6 +3,13 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.92.0 — 2026-11-11
+
+- **Placing a point on today's map, precisely.** The hand moves the map; **Shift + click** places the point, with a
+  crosshair while Shift is held; **press and hold** a numbered point, then drag, to move it, its coordinates shown as it
+  moves. A plain click says how. Georeferenced map image 0.6.0.
+- **Fixed:** the errors in rows marked *check this pair* were light text on a light background in the dark theme.
+
 ## 0.91.0 — 2026-11-11
 
 - **Every Configure… dialog reads the same way.** Each control on its own line with its label above and its help below;

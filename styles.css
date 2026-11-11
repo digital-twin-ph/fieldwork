@@ -1286,7 +1286,13 @@ select.rule-op.rule-op-compare,select.rule-op.rule-op-equal,select.rule-op.rule-
 .geo-points{width:100%;border-collapse:collapse;margin:10px 0;font-size:14px}
 .geo-points th,.geo-points td{padding:4px 6px;border-bottom:1px solid var(--line);text-align:left}
 .geo-points input:not([type=radio]){width:100%;font-size:14px;padding:4px}
-.geo-points tr.geo-doubt td{background:#fff4e5}
+.geo-points tr.geo-doubt td{background:var(--warning-wash-1,#fff4e5);color:var(--ink)}
+.geo-points td{color:var(--ink)}
+/* THE MAP PANE'S POINTER (2026-11-11): the hand moves the map; with Shift held it is a crosshair, for placing a point. */
+#geo-map-pane.geo-placing,#geo-map-pane.geo-placing .leaflet-grab,#geo-map-pane.geo-placing .leaflet-interactive{cursor:crosshair}
+#geo-map-pane .geo-mark{cursor:pointer}
+#geo-map-pane .geo-mark.is-lifted{box-shadow:0 0 0 3px #fff,0 0 0 7px #b6377a;cursor:grabbing}
+.geo-map-how{font-size:14px;margin:0 0 6px;color:var(--ink)}
 @media (max-width:900px){.geo-panes{grid-template-columns:1fr}}
 /* WHERE TO LOOK (experiment 201): a slow pulse, 2.4 s a cycle, still under reduced motion. */
 .geo-worked{border:2px solid #b6377a;border-radius:6px;padding:10px 12px;margin:0 0 10px}

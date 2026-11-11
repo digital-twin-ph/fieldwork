@@ -75,8 +75,10 @@ Where there is no world file, an image can be placed by features found twice: on
 1. Select the step and press **Configure…**. Choose the image.
 2. Under **How to place it**, choose **By matching points on the image and today's map**.
 3. Choose **Turned and stretched as needed** (three points or more) or **North up, no turning** (two or more).
-4. Press **+ Add a point**. Click the feature on the image, then the same feature on the map. Or type its position:
-   x and y on the image, longitude and latitude on the map. Name it.
+4. Press **+ Add a point**. Click the feature on the image, then find the same feature on the map and **Shift + click**
+   it: on the map a plain drag moves the map, and with Shift held the pointer is a crosshair. To move a point you have
+   placed on the map, **press and hold** it, then drag. Or type its position: x and y on the image, longitude and
+   latitude on the map. Name it.
 5. Add more points, spread across the image. Each shows its error in metres; with more points than the fit needs, a pair
    whose error is much larger with that pair left out is marked **check this pair**.
 6. Press **Apply**, then **Run**.

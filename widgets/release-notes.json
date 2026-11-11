@@ -408,12 +408,12 @@
    "migrationFrom": []
   },
   "map_image_input": {
-   "version": "0.5.0",
-   "released": "2026-11-10",
+   "version": "0.6.0",
+   "released": "2026-11-11",
    "changes": [
     {
      "kind": "minor",
-     "description": "A crosshair at the centre of the image pane, and Zoom in and Zoom out keep what is under it in place; the pane keeps its place when a click redraws the dialog (the practitioner, 2026-11-10: \"once zoomed in it's hard to figure out where the glowing circle is\"). A worked example's cue is shown only on the example's own image, whose size it states; on another image the dialog says so and shows none."
+     "description": "On today's map the hand moves the map, Shift + click places the point with a crosshair while Shift is held, and a numbered point moves only after it is pressed and held, showing its coordinates as it moves (the practitioner, 2026-11-11: \"the pointer on the right map to place the point is a hand, not a precise tool\"). A plain click says how to place. Rows marked check this pair are readable in the dark theme, where their errors were light text on a light wash."
     }
    ],
    "breaking": false,

@@ -110,6 +110,11 @@ not a practitioner in the field.
    (Hagelloch's serial interval uses it). **Status, corrected 2026-11-11:** what is left is the data's terms, which the
    practitioner is checking at the package's pages, and converting `mers_korea_2015.RData` to CSV in the example
    repository.
+   **Decided 2026-11-11 by the practitioner:** *"Our use case for these worked examples is for teaching so that fits MERS
+   Korea purpose"*: the dataset is described as compiled "for teaching", and so are these examples. Used on that basis in
+   an example repository, attributed to ECDC's Epidemic Intelligence and the outbreaks package, never in the
+   application; no licence for the data itself is stated anywhere, and that stays said. Waiting on: the download of the
+   3 KB `.RData` (asked), and the example repository's creation, which is the practitioner's.
    **And a 7-1-7 timeliness ruleset** (the practitioner, 2026-11-11: *"And we can build the ruleset extension as well"*):
    a bundled ruleset for Apply ruleset reading four date columns (emergence, detection, notification, early response
    complete), computing the three intervals in days, and marking each met or not against its target, 7, 1 and 7 days,

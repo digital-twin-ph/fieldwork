@@ -1,5 +1,8 @@
 import {test,expect} from './fixtures.mjs';
 import {collectPageErrors} from './page-errors.mjs';
+// geoBoundaries is answered by this test, so the service worker must not answer instead: WebKit in CI fetched the real
+// outlines through it and measured 95% Botswana (0.86.0). The routed tests elsewhere block it for the same reason.
+test.use({serviceWorkers:'block'});
 
 // A STUDY AREA ACROSS A BORDER (experiment 204): from Gaborone to the South African border. Its countries are found from
 // where it falls, each with its share of the area, and confirmed; the raster dialog then offers the area's countries

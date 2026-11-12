@@ -10,7 +10,8 @@ import {fileURLToPath} from 'node:url';
 test.use({serviceWorkers:'block'});
 
 const LIST=fileURLToPath(new URL('../../example-2015-mers-korea/data/mers_korea_2015_linelist.csv',import.meta.url));
-const skip=existsSync(LIST)?false:'example-2015-mers-korea is not checked out beside this repository.';
+const CONTACTS=fileURLToPath(new URL('../../example-2015-mers-korea/data/mers_korea_2015_contacts.csv',import.meta.url));
+const skip=existsSync(LIST)&&existsSync(CONTACTS)?false:'example-2015-mers-korea is not checked out beside this repository.';
 
 const add=async(page,type)=>{
   await page.locator('[data-view="workflow"]').click();
@@ -136,10 +137,60 @@ test('MERS-CoV, South Korea, 2015: each case’s detection and notification agai
   }
   await page.screenshot({path:'test-results/mers-from-scratch.png',fullPage:true});
 
+  // WHO INFECTED WHOM, as far as the 98 probable links say without a choice: cases per source, and where exposure
+  // happened. No tree: SK_39 has three recorded sources and SK_107 two, and picking one is not this file's to do.
+  const links=readFileSync(CONTACTS,'utf8').trim().split(/\r?\n/).slice(1).map(line=>line.split(',').map(v=>v.replace(/^"|"$/g,'')));
+  const tally=i=>links.reduce((m,l)=>{m[l[i]]=(m[l[i]]??0)+1;return m;},{});
+  expect(links.length).toBe(98);
+  await page.locator('[data-view="workflow"]').click();
+  await page.locator('#add-workflow').click();
+  await page.locator('[data-view="project"]').click();
+  await page.locator('#workflow-name-edit').fill('Who infected whom, and where?');
+  await page.locator('#workflow-name-edit').press('Enter');
+  await add(page,'table_input');
+  const contacts=await idOf(page,'table_input');
+  await page.locator('#open-table').click();
+  await page.locator('#table-file').setInputFiles(CONTACTS);
+  await columnsOffered(page);
+  await page.locator('#table-shape').selectOption('long');
+  await page.locator('#table-value').selectOption('diff_dt_onset');
+  await keepColumns(page,'table-keys',['from','to','exposure']);
+  await expect(page.locator('#table-save')).toBeEnabled();
+  await page.locator('#table-save').click();
+  await label(page,contacts,'Probable links between cases');
+  const second=[];
+  for(const [column,title,want] of [['from','Cases each source infected',tally(0)],['exposure','Where exposure happened',tally(2)]]){
+    await add(page,'group_table');
+    const group=await idOf(page,'group_table',second.length);
+    await tidy(page);await wire(page,contacts,group,'records');
+    await page.locator(`.react-flow__node[data-id="${group}"]`).click();
+    await page.locator('#configure-step').click();
+    const g=page.locator('#group-config');
+    await g.locator(`[data-group-by="${column}"]`).check();
+    await g.locator('#group-aggregate').selectOption('count');
+    await g.locator('#config-apply').click();
+    await label(page,group,title);
+    await add(page,'table_output');
+    const shown=await idOf(page,'table_output',second.length);
+    await tidy(page);await wire(page,group,shown,'table');
+    await label(page,shown,title);
+    second.push({title,want});
+  }
+  await run(page);
+  await page.locator('[data-view="results"]').click();
+  for(const {title,want} of second){
+    await page.getByRole('tab',{name:title}).click();
+    const main=page.locator('main').first();
+    const n=Object.keys(want).length;
+    await expect(main).toContainText(`${n} of ${n} rows`);
+    for(const [value,count] of Object.entries(want))
+      await expect(main.locator('tr',{has:page.locator('th,td',{hasText:new RegExp(`^${value.trim().replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}$`)})}).first()).toContainText(String(count));
+  }
+
   await page.locator('[data-view="project"]').click();
   await page.locator('#storage-status').click();
   const block=page.locator('.project-view-block').filter({hasText:'MERS-CoV, South Korea, 2015'}).first();
-  await expect(block).toContainText('1 workflow');
+  await expect(block).toContainText('2 workflows');
   if(process.env.MERS_EXPORT){
     const download=page.waitForEvent('download');
     await block.locator('button[data-export-project]').click();

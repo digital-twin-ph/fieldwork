@@ -13,6 +13,7 @@ shown in a local build is not a claim that it has been published.
   its own column. Table 0.10.1.
 - **MERS-CoV, South Korea, 2015**, a worked example in its own repository: how quickly each of 162 cases was detected
   and reported, against 7-1-7 (94 of 135 detected within 7 days of onset, 161 of 162 reported within 1 day).
+  And who infected whom, and where: the 98 probable links counted by source and by setting of exposure.
 
 ## 0.97.0 — 2026-11-12
 

@@ -43,6 +43,6 @@ test('7-1-7: the dates are read from the columns chosen in Configure…, and eac
   await expect(row('C')).toContainText('NoVerdict');
   for(const id of ['A','B','C','D'])await expect(row(id)).toContainText('NoVerdict');
   // The response verdict is a column of its own, though NoVerdict on every row: a conclusion, never a variable's name.
-  await expect(page.locator('main').first().locator('thead')).toContainText('responseWithinTarget');
+  await expect(page.locator('main').first().locator('th',{hasText:'responseWithinTarget'}).first()).toBeVisible();
   expect(errors).toEqual([]);
 });

@@ -807,20 +807,20 @@
       "id": "urn:fieldwork:example:mers-korea-2015",
       "title": "MERS-CoV, South Korea, 2015",
       "repository": "https://github.com/digital-twin-ph/example-2015-mers-korea",
-      "commit": "7f22f4e6182af1ef0d7ac8ad84d76a5be3c39702",
+      "commit": "2ff919534110446239eba6690e41eaad07f264c0",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2015-mers-korea",
       "licence": {
         "data": "No licence stated for the data; used for teaching, as the outbreaks package describes it. The repository’s own files are CC0-1.0.",
         "source": "The R package outbreaks (reconverse), mers_korea_2015, compiled by ECDC’s Epidemic Intelligence from public information in the outbreak’s first weeks.",
         "note": "Decided 2026-11-11 by the practitioner: used in an example repository for teaching, attributed, never in the application."
       },
-      "description": "A line list of 162 cases, each case’s onset, diagnosis and report set against the 7-1-7 targets by a published ruleset, and each verdict counted.",
+      "description": "A line list of 162 cases, each case’s onset, diagnosis and report set against the 7-1-7 targets by a published ruleset and each verdict counted; and the 98 probable links, counted by source and by setting of exposure.",
       "carries": {
         "workflow": true,
         "data": true,
         "geography": false
       },
-      "notYet": "No response dates, so no verdict on the third target; the 98 contacts are not yet read.",
+      "notYet": "No response dates, so no verdict on the third target. No transmission tree: two cases record more than one source.",
       "uses": [
         "apply_ruleset",
         "group_table",
@@ -830,8 +830,8 @@
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "3db3ef1c918e5623db1739443e29accdb8c9f9d04ba1a3be82a74bcd0dbd8c14",
-          "bytes": 3416
+          "sha256": "0668cc2169b70a2da71f82dd6053cf8a3c8d620203958bf8d758247eef34ecf8",
+          "bytes": 4472
         },
         {
           "path": "data/mers_korea_2015_linelist.csv",
@@ -855,8 +855,8 @@
         },
         {
           "path": "README.md",
-          "sha256": "eefcdd91e4e3285e01004e0ccc105136f36a9930105fa292af65f66c40f62480",
-          "bytes": 2042
+          "sha256": "ea837e13523a44ee4851b623a7df4d049a487244540549b38baaa308bffaadd6",
+          "bytes": 2468
         },
         {
           "path": "NOTICE.txt",
@@ -869,7 +869,7 @@
           "bytes": 7048
         }
       ],
-      "workflowCount": 1
+      "workflowCount": 2
     }
   ]
 }

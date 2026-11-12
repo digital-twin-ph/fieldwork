@@ -517,7 +517,13 @@ example-2015-mers-korea (7f22f4e) *How quickly was each case detected and report
 
 Found on the way: a verdict column holding one value on every row was shown by Table as a melted table's variable
 name, and lost its own column (Table 0.10.1). Checked: four cases by hand (`tests/seven-one-seven.browser.mjs`) and the
-162, in Chromium. **Not checked:** an independent recomputation in the lab; the contacts table, not yet read.
+162, in Chromium. **Not checked:** an independent recomputation in the lab.
+
+**The second workflow, the same day** (2ff9195): *Who infected whom, and where?*, from the 98 probable links: cases per
+source (11 sources; SK_14 38, SK_1 26, SK_16 21) and setting of exposure (hospital room 44, emergency room 33, hospital
+visit 12, contact with a health worker 8, family member 1, spelled with a trailing space in the file). **No tree**:
+SK_39 has three recorded sources and SK_107 two, so a tree of one source per case would need a choice the file does
+not make; how to show it is the practitioner's to decide.
 
 
 The practitioner choosing the first slice and its data, and its being built and run by hand on an empty canvas.

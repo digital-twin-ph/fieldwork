@@ -34,7 +34,8 @@ test('the palette offers one rule-application widget, not one per ruleset',async
   // 2026-11-09, with compare-level-to-elevation, the comparison Compare level to elevation held (experiment 197).
   // Two identities in two documents since 2026-11-11, when outreach-criteria, nb06-evidence, access-review and
   // extent-review retired with the code written for each (docs/audits/old-naledi-audit.md).
-  expect(expected.size,'two identities, two documents').toBe(2);
+  // Three on 2026-11-12, with seven-one-seven (experiment 200).
+  expect(expected.size,'three identities, three documents').toBe(3);
 });
 
 test('adding one gives a node that says it has nothing to apply yet',async({page})=>{
@@ -65,7 +66,7 @@ test('choosing a ruleset pins it, takes its defaults, and names the step',async(
   // not somewhere to start new work.
   const offered=await page.locator('#ruleset-choice option').evaluateAll(els=>
     els.map(e=>e.value).filter(v=>v&&v!=='authored'));
-  expect(offered.length,'one per identity, not one per document').toBe(2);
+  expect(offered.length,'one per identity, not one per document').toBe(3);
   // And one more entry that is not a ruleset at all: writing rules here rather than choosing
   // somebody else's. Added 2026-10-15, when the editor turned out to have no entry point.
   expect(await page.locator('#ruleset-choice option[value="authored"]').count()).toBe(1);

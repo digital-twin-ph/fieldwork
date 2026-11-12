@@ -309,14 +309,15 @@ export const MARK_RADIUS_DEFAULT=4, MARK_RADIUS_MIN=1, MARK_RADIUS_MAX=12;
 export const markRadius=(size:number|undefined):number=>
   typeof size==='number'&&Number.isFinite(size)
     ?Math.min(MARK_RADIUS_MAX,Math.max(MARK_RADIUS_MIN,size)):MARK_RADIUS_DEFAULT;
-export interface LayerSymbol {colour:string; shape:LayerShape; size:number; chosen:{colour:boolean;shape:boolean;size:boolean}}
+export interface LayerSymbol {colour:string; shape:LayerShape; size:number; sizeBy?:string; chosen:{colour:boolean;shape:boolean;size:boolean}}
 export function resolveLayerSymbol(index:number,
-  chosen?:{mark?:LayerShape;colour?:string;size?:number}):LayerSymbol{
+  chosen?:{mark?:LayerShape;colour?:string;size?:number;sizeBy?:string}):LayerSymbol{
   const derived=layerSymbol(index);
   return {
     colour:chosen?.colour||derived.colour,
     shape:chosen?.mark||derived.shape,
     size:markRadius(chosen?.size),
+    ...(chosen?.sizeBy?.trim()?{sizeBy:chosen.sizeBy.trim()}:{}),
     chosen:{colour:!!chosen?.colour,shape:!!chosen?.mark,size:typeof chosen?.size==='number'}};
 }
 /** WHAT THE FILL CHANNEL MEANS, as data rather than as code.

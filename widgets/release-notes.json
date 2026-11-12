@@ -427,12 +427,12 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.26.0",
-   "released": "2026-11-11",
+   "version": "0.27.0",
+   "released": "2026-11-12",
    "changes": [
     {
      "kind": "minor",
-     "description": "No decisions port: nothing produces decisions since 2026-11-11 (docs/audits/old-naledi-audit.md). The static map draws through its own module, with no caption or instruction printed on the figure."
+     "description": "Proportional symbols: a point layer's marks can be sized by an attribute that holds a number, each mark's area in proportion to its value, the largest drawn first and partly transparent, in the static figure and the interactive map alike; the key and the receipt say what the size shows. John Snow's deaths are drawn so, one mark per address (experiment 210)."
     }
    ],
    "breaking": false,

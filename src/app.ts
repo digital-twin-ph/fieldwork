@@ -1062,6 +1062,17 @@ function upstreamRows(node:WorkflowNode):number|undefined{
 /** THE STEP IN PROGRESS: a panel with the step, the count and a bar, for files read (2026-11-06), models fitted and a run's steps (2026-11-12). */
 let runProgress:import('./run-progress.js').RunDetail|null=null;
 let runStartedAt=0;
+/** THE FRAME A STATIC PLOT WAS DRAWN IN, read from its own background (2026-11-12): 850 wide, as tall as its area needs. */
+const frameBoxOf=(content:string):string=>`0 0 850 ${/<rect width="850" height="(\d+)"/.exec(content)?.[1]??'295'}`;
+/** AND ON SCREEN AT ITS OWN PROPORTIONS: a frame taller than the strip is drawn the full width of the panel and as tall as its
+ *  shape, the panel scrolling if need be, rather than shrunk into the strip's height, which drew a tall area smaller than
+ *  before. A frame of the strip's height keeps the panel's own sizing. */
+function applyFrame(svg:SVGSVGElement,content:string):void{
+  const box=frameBoxOf(content),height=Number(box.split(' ')[3]);
+  svg.setAttribute('viewBox',box);
+  if(height>295){svg.style.aspectRatio=`850 / ${height}`;svg.style.height='auto';svg.style.width='100%';svg.style.flex='0 0 auto';svg.style.maxHeight='none';}
+  else for(const key of ['aspectRatio','height','width','flex','maxHeight'] as const)svg.style[key]='';
+}
 function drawRunProgress(){
   let panel=document.getElementById('run-progress');
   if(!busy||!runProgress){panel?.remove();return;}
@@ -2539,6 +2550,10 @@ function openMapConfig(nodeId:string){
         if(el.value)held[source]={...held[source],colour:el.value};
         else if(held[source]){const {colour:_dropped,...rest}=held[source]!;held[source]=rest;}
         draft.layerSymbols=held;});
+      on('[data-layer-size-by]',el=>{const source=el.dataset.layerSizeBy!,held={...(draft.layerSymbols||{})};
+        if(el.value)held[source]={...held[source],sizeBy:el.value};
+        else if(held[source]){const {sizeBy:_dropped,...rest}=held[source]!;held[source]=rest;}
+        draft.layerSymbols=held;});
       on('[data-layer-size]',el=>{const source=el.dataset.layerSize!;
         draft.layerSymbols={...(draft.layerSymbols||{}),[source]:{...draft.layerSymbols?.[source],size:Number(el.value)}};});
       for(const [selector,key] of [['#map-title','mapTitle'],['#map-subtitle','mapSubtitle'],['#map-source-note','mapSourceNote']] as const)
@@ -2714,6 +2729,18 @@ function mapSettingsFlat(n:WorkflowNode<'map_output'>):string{
               +`<input id="layer-size-${esc(source.id)}" data-layer-size="${esc(source.id)}" type="range"`
               +` min="${MARK_RADIUS_MIN}" max="${MARK_RADIUS_MAX}" step="0.5" value="${resolved.size}">`
               +`<small>${resolved.size} units${held?.size===undefined?' (default)':''}. Smaller separates dense points; larger finds sparse ones.</small>`
+              // PROPORTIONAL SYMBOLS (experiment 210): an attribute that is a number on most of the layer's records may set
+              // each mark's area. Offered only where the layer's records are held here, as Point data's are.
+              +(()=>{
+                const features=(source.params as {data?:{features?:{properties?:Record<string,unknown>}[]}}).data?.features??[];
+                const keys=[...new Set(features.flatMap(f=>Object.keys(f.properties??{})))]
+                  .filter(k=>features.filter(f=>Number.isFinite(Number(f.properties?.[k]))&&f.properties?.[k]!==''&&f.properties?.[k]!==null).length>=features.length*0.9&&!/^(id|fid|lat|lon|lng|latitude|longitude|x|y)$/i.test(k));
+                if(!keys.length)return '';
+                return `<label class="field-label" for="layer-size-by-${esc(source.id)}">Size by</label>`
+                  +`<select id="layer-size-by-${esc(source.id)}" data-layer-size-by="${esc(source.id)}"><option value="">Same size for every mark</option>`
+                  +keys.map(k=>`<option value="${esc(k)}" ${held?.sizeBy===k?'selected':''}>${esc(k)}, the area of each mark in proportion</option>`).join('')
+                  +`</select><small>The largest value takes three times the radius above; a mark's area is its share of that.</small>`;
+              })()
               +`</div>`;
           }).join('');
       })()
@@ -6112,7 +6139,7 @@ function renderMap(){
         :`<path d="${markPath(item.shape||'circle',7,7,5)}" fill="${item.hollow?'none':item.color}" stroke="${item.color}" stroke-width="1.5"/>`)+`</svg>${esc(item.label)}</span>`).join(''):'';
     $('#map-communication-key').innerHTML=key;$('#map-communication-header-key').innerHTML=key;
     $('#map-download-svg').onclick=()=>{const content=result?.polygons&&result.polygonPresentation==='interactive'?(result.polygons.features.some(f=>f.minutes!==undefined)?catchmentPlot(result.polygons,esc,result.contextPoints):polygonSvg(result.polygons,esc)):svg.innerHTML;
-      const viewBox=result?.polygons&&result.polygons.features.some(f=>f.minutes!==undefined)?'0 0 850 650':svg.getAttribute('viewBox')||'0 0 850 295';
+      const viewBox=result?.polygons&&result.polygons.features.some(f=>f.minutes!==undefined)?'0 0 850 650':frameBoxOf(content);
       // The scale bar is derived from the plot's own frame, and only for the catchment plot, whose
       // vertical axis is latitude. A decision table or a basemap-backed view has no single ground
       // scale, so none is offered rather than guessed.
@@ -6132,7 +6159,7 @@ function renderMap(){
         const content=result?.polygons&&result.polygonPresentation==='interactive'
           ?(result.polygons.features.some(f=>f.minutes!==undefined)?catchmentPlot(result.polygons,esc,result.contextPoints):polygonSvg(result.polygons,esc))
           :svg.innerHTML;
-        const viewBox=result?.polygons&&result.polygons.features.some(f=>f.minutes!==undefined)?'0 0 850 650':svg.getAttribute('viewBox')||'0 0 850 295';
+        const viewBox=result?.polygons&&result.polygons.features.some(f=>f.minutes!==undefined)?'0 0 850 650':frameBoxOf(content);
         const plotted=result?.polygons&&result.polygons.features.some(f=>f.minutes!==undefined)
           ?catchmentFrame(result.polygons,result.contextPoints):null;
         const frame=plotted?{metresPerPixel:metresPerPixel(plotted.pixelsPerDegreeLatitude)}:undefined;
@@ -6168,7 +6195,7 @@ function renderMap(){
     svg.innerHTML=networkPreviewSvg(result.network,result.boundary as never).replace(/^<svg[^>]*>/,'').replace(/<\/svg>$/,'');
     return;
   }
-  svg.style.display='';svg.setAttribute('viewBox','0 0 850 295');
+  svg.style.display='';applyFrame(svg,'');
   if(result?.network&&result.pointLayers?.length)
     $('#map-panel').querySelector('#map-note')!.textContent=
       `${networkPreviewCaption(networkCoverage(result.network))} The streets are drawn with the `
@@ -6244,7 +6271,7 @@ function renderMap(){
     // basemap in the wrong place.
     const banded=result.polygons.features.some(f=>f.minutes!==undefined);
     if(banded){svg.setAttribute('viewBox','0 0 850 650');svg.innerHTML=catchmentPlot(result.polygons,esc,result.contextPoints);}
-    else svg.innerHTML=polygonSvg(result.polygons,esc);
+    else{svg.innerHTML=polygonSvg(result.polygons,esc);applyFrame(svg,svg.innerHTML);}
     const polygonGround=banded?catchmentFrame(result.polygons,result.contextPoints):polygonFrame(result.polygons);
     // AND THE POINTS THIS MAP COMPOSED, over the polygons rather than instead of them. See
     // `markedPoints`: the value has carried them since 2026-10-29 and this renderer did not read
@@ -6309,6 +6336,7 @@ function renderMap(){
   if(result?.kind==='study-area'){svg.innerHTML=areaSvg(required(result.boundary),result.label);return;}
   if(result?.boundary){svg.innerHTML=staticBoundaryMap(result,selected,esc,statusLabel,
     workflow.nodes.find((x):x is WorkflowNode<'map_output'>=>x.id===result.nodeId&&x.type==='map_output')?.params.labelField||{});
+    applyFrame(svg,svg.innerHTML);
     // GROUND UNDER A STATIC FIGURE. Experiment 137. Choosing a basemap used to switch the map to
     // the interactive presentation, "the only one that draws tiles", so the figure this project
     // most wants to publish was the one that could never have any context under it. The tiles are
@@ -7168,7 +7196,7 @@ function renderNotesView(){
            labelField:node.params.labelField||{},
            label:row=>[row.excluded?'Excluded':row.relation,row.layerLabel].filter(Boolean).join(' \u00b7 ')})
         :'';
-      return standaloneMapSvg(withGroundUnder(content,ground)+marks,banded?'0 0 850 650':'0 0 850 295',
+      return standaloneMapSvg(withGroundUnder(content,ground)+marks,banded?'0 0 850 650':frameBoxOf(content),
         mapPresentation(node,output,held.workflow),
         plotted?{metresPerPixel:metresPerPixel(plotted.pixelsPerDegreeLatitude)}:undefined);
     }catch{return null;/* A figure that cannot be drawn says so; the write-up still reads. */}

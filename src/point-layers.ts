@@ -81,7 +81,21 @@ export const markLabel=(row:MarkRow,field:string|undefined,x:number,y:number,rad
   return `<text ${at} class="mark-label" font-size="10" stroke="#ffffff" stroke-width="3" `
     +`stroke-linejoin="round" paint-order="stroke" fill="#2b2b2b">${esc(text)}</text>`;
 };
-export interface MarkStyle {colour:string; shape:LayerShape; size?:number}
+export interface MarkStyle {colour:string; shape:LayerShape; size?:number; sizeBy?:string}
+/** A MARK'S AREA IN PROPORTION TO ITS VALUE (experiment 210): the largest value takes three times the layer's radius, and
+ *  every other mark the radius whose area is its share of that, so a house with four deaths covers four times the
+ *  ground of one with one. A value that is not a positive number takes the smallest mark. */
+export const proportionalRadius=(value:unknown,largest:number,radius:number):number=>{
+  const v=Number(value),top=radius*3;
+  return Number.isFinite(v)&&v>0&&largest>0?Math.max(1.5,top*Math.sqrt(v/largest)):1.5;
+};
+/** The largest value of each sized layer, over the rows that carry it. */
+export function sizedLargest(rows:readonly MarkRow[],symbols:Record<string,MarkStyle>):Map<string,number>{
+  const out=new Map<string,number>();
+  for(const row of rows){const key=row.sourceNodeId||'',by=symbols[key]?.sizeBy;if(!by)continue;
+    const v=Number(row.attributes?.[by]);if(Number.isFinite(v)&&v>(out.get(key)??0))out.set(key,v);}
+  return out;
+}
 export function markedPoints(rows:readonly MarkRow[],
   project:(c:[number,number])=>[number,number],
   options:{
@@ -107,7 +121,11 @@ export function markedPoints(rows:readonly MarkRow[],
     drawnPerLayer.set(key,(drawnPerLayer.get(key)||0)+1);
   }
   let svg='';
-  for(const row of rows){
+  // Sized marks are drawn largest first, so a small one is never hidden under a large one.
+  const largest=sizedLargest(rows,symbols);
+  const sizeOf=(row:MarkRow)=>{const s=symbols[row.sourceNodeId||''];return s?.sizeBy?Number(row.attributes?.[s.sizeBy])||0:0;};
+  const ordered=largest.size?[...rows].sort((a,b)=>sizeOf(b)-sizeOf(a)):rows;
+  for(const row of ordered){
     if(!row.coordinates)continue;
     if(hidden?.has(row.sourceNodeId||''))continue;
     const [x,y]=project(row.coordinates as [number,number]);
@@ -116,7 +134,8 @@ export function markedPoints(rows:readonly MarkRow[],
     const classed=row.pinClass
       ?classes[row.sourceNodeId||'']?.find(entry=>entry.value===row.pinClass)?.colour:undefined;
     const ink=classed||symbol?.colour||'#699178';
-    const radius=(symbol?.size??4)+(focusId===row.id?2:0);
+    const sized=!!symbol?.sizeBy&&largest.has(row.sourceNodeId||'');
+    const radius=(sized?proportionalRadius(row.attributes?.[symbol!.sizeBy!],largest.get(row.sourceNodeId||'')!,symbol?.size??4):(symbol?.size??4))+(focusId===row.id?2:0);
     // Outside the area is drawn hollow and a record a clip set aside is drawn neutral: the same
     // two declarations `oldMap` makes, so one map does not say Outside in two ways.
     const hollow=row.relation==='Outside';
@@ -127,7 +146,7 @@ export function markedPoints(rows:readonly MarkRow[],
       +`aria-label="${esc(row.name||row.id)}${said?', '+esc(said):''}">`
       +`<title>${esc(row.name||row.id)}${said?' · '+esc(said):''}</title>`
       +`<path d="${markPath(symbol?.shape||'circle',x,y,radius)}" `
-      +`fill="${hollow?'none':aside?'#a89b87':ink}" stroke="${aside?'#a89b87':ink}" `
+      +`fill="${hollow?'none':aside?'#a89b87':ink}"${sized?' fill-opacity="0.55"':''} stroke="${aside?'#a89b87':ink}" `
       +`stroke-width="1.6"/>`
       +((drawnPerLayer.get(row.sourceNodeId||'')||0)<=LABEL_CEILING
         ?markLabel(row,labelField[row.sourceNodeId||''],x,y,radius,esc):'')

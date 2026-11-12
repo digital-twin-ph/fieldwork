@@ -37,7 +37,14 @@ and a density surface. Each would extend Chart or Map, not add a widget.
 
 1. **Population pyramid** in Chart: Hagelloch's cases by age and gender, drawn today as two panels.
 2. **Proportional symbols** in Map: deaths per house on Snow's map, the figure Snow drew as bars; cases per house in
-   Hagelloch.
+   Hagelloch. **Built 2026-11-12** for Snow (*Where were the deaths?*, 1 to 15 deaths an address). Hagelloch waits on a
+   step that counts its children per house: its records are one per child. **Found doing it:** every static map is drawn
+   in a fixed 850 by 295 frame, so a study area taller than it is wide, as Soho's and Hagelloch's are, is drawn small; a
+   frame that follows the area's shape would change every static map and its export, and is the practitioner's to decide.
+   **Decided and built the same day** (the practitioner: *"Ok"*): a static map's frame is 850 wide and as tall as its area
+   needs, from 295 to 650, in both static renderers and the exported figure; a wide area draws exactly as before. On
+   screen a tall frame is drawn the full width of the panel, which scrolls: Snow's deaths went from about 300 to 1,024
+   pixels across.
 3. **A marked date** in Chart: Snow's epidemic curve with 8 September 1854, the day the pump handle came off.
 4. **Stacked epidemic curve** in Chart: Hagelloch's by school class.
 5. **Histogram and scatter** in Chart: Hagelloch's serial intervals; Snow's deaths against walking distance to the pump.

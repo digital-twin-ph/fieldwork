@@ -1,6 +1,6 @@
 # Map
 
-_Created 2026-10-14 · Updated 2026-11-11_
+_Created 2026-10-14 · Updated 2026-11-12_
 
 **An output widget.** It draws what your workflow produced. It computes nothing, changes
 nothing and decides nothing — if a number looks wrong on the map, the step that produced it is
@@ -86,6 +86,15 @@ off the other.
 The map's receipt records all of this — which channel carries which variable, the palette and the
 authority it comes from, and each layer's mark and colour with whether you chose it or the map
 derived it — so a figure in a publication can be attributed.
+
+### Marks sized by a number: proportional symbols
+
+In **Configure…**, under a point layer's symbol, **Size by** offers each attribute that holds a number on its records.
+Choose one, such as `DEATHS`, and each mark's area is in proportion to its value: four times the value, four times the
+area, twice the radius. The largest value takes three times the layer's mark radius. Large marks are drawn first and
+are partly transparent, so a small one is never hidden under a large one. The key says what the size shows and over
+what range, such as *the area of each mark shows DEATHS, 1 to 15*. A count suits it; a rate or a share belongs on areas,
+as shading. John Snow's *Where were the deaths?* draws each address this way.
 
 ### Where it goes in the write-up
 

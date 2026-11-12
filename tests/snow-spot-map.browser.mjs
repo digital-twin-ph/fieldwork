@@ -21,6 +21,8 @@ test('the spot map draws deaths and pumps as different marks, as its key says',a
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
   await page.locator('[data-view="results"]').click();
   await page.locator('[data-output="spot-map"]').click();
+  // Each address's mark in proportion to its deaths, and the key says so (experiment 210, 2026-11-12).
+  await expect(page.locator('main').first()).toContainText('the area of each mark shows DEATHS, 1 to 15');
 
   // Both layers reached the plot. The pumps are a layer of their own, not context.
   const deaths=page.locator('#map .location[data-layer="locations"]');

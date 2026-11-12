@@ -1,3 +1,4 @@
+import {proportionalRadius} from './point-layers.js';
 import L from 'leaflet';
 import {TurnedImage} from './turned-image.js';
 /** HOW MANY STREET SEGMENTS AN INTERACTIVE MAP DRAWS. See the sampling below for the measurement
@@ -417,8 +418,11 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
     for(const [source,rows] of bySource){
       // Spread into one shape so the fallback does not narrow `size` away: `layerSymbol`
       // derives a colour and a mark from the layer's position and has no opinion on radius.
-      const symbol:{colour:string;shape:LayerShape;size?:number}=
+      const symbol:{colour:string;shape:LayerShape;size?:number;sizeBy?:string}=
         layers.layerSymbols?.[source]??{...layerSymbol(index)};
+      // PROPORTIONAL SYMBOLS, as the static figure draws them (experiment 210): largest first, so none hides another.
+      const largest=symbol.sizeBy?Math.max(0,...rows.map(row=>Number((row as {attributes?:Record<string,unknown>}).attributes?.[symbol.sizeBy!])).filter(Number.isFinite)):0;
+      if(largest>0)rows.sort((a,b)=>(Number((b as {attributes?:Record<string,unknown>}).attributes?.[symbol.sizeBy!])||0)-(Number((a as {attributes?:Record<string,unknown>}).attributes?.[symbol.sizeBy!])||0));
       // ONE GROUP PER PIN CLASS, where the layer has them. A class is what a record IS, so it
       // gets its own mark and its own row in the layer list -- not a nested checkbox under the
       // layer, and not a group, which is a bundle the practitioner declares.
@@ -473,14 +477,14 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
         // THE ICON BOX IS DERIVED, because a 16x16 box clips anything past radius 5: the halo is
         // stroked at 3.4 and the symbol at 1.5, so the drawn extent is the radius plus about 2.5.
         // A fixed box would have silently capped the slider at a third of its range.
-        const r=markRadius(symbol.size);
+        const r=largest>0?proportionalRadius((row as {attributes?:Record<string,unknown>}).attributes?.[symbol.sizeBy!],largest,markRadius(symbol.size)):markRadius(symbol.size);
         const box=Math.ceil(2*(r+2.5)),centre=box/2;
         L.marker([lat,lon],{title:row.name,icon:L.divIcon({className:'catchment-point-mark',
           iconSize:[box,box],iconAnchor:[centre,centre],
           html:`<svg width="${box}" height="${box}" viewBox="0 0 ${box} ${box}" aria-hidden="true">`
             +(layers.markHalo===false?'':`<path d="${markPath(symbol.shape,centre,centre,r)}" fill="none" `
               +`stroke="${MARK_HALO}" stroke-width="3.4" stroke-linejoin="round"/>`)
-            +`<path d="${markPath(symbol.shape,centre,centre,r)}" fill="${inside?ink:'none'}" `
+            +`<path d="${markPath(symbol.shape,centre,centre,r)}" fill="${inside?ink:'none'}"${largest>0?' fill-opacity="0.55"':''} `
             +`stroke="${ink}" stroke-width="1.5" stroke-linejoin="round"/></svg>`})})
           .bindPopup(`<b>${esc(row.name)}</b>${state?`<br>${esc(state)}`:''}`
             +`<br>${esc(named[source]||source)}<br>Location: ${lat.toFixed(6)}, ${lon.toFixed(6)}`)

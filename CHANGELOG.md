@@ -3,6 +3,17 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.103.0 — 2026-11-12
+
+- **Map sizes marks by a number: proportional symbols.** A point layer's marks can take their area from an attribute,
+  such as deaths at an address, with the key saying what the size shows and over what range. John Snow's *Where were the
+  deaths?* now draws each address in proportion to its deaths, 1 to 15, as Snow drew them in bars, inside a rectangle
+  fitted to the deaths and pumps. Map, experiment 210.
+- **A tall study area is drawn large.** A static map's frame was a fixed 850 by 295, so an area taller than wide, such as
+  Soho's deaths or Hagelloch, was drawn small in a short strip. The frame now follows the area's shape, up to 850 by 650,
+  on screen and in the downloaded figure, and the panel scrolls; a wide area draws as before.
+- **Fixed in a test only:** `example-updated` waits for the run the cluster example starts on opening.
+
 ## 0.102.0 — 2026-11-12
 
 - **John Snow asks one question in each workflow.** *Where were the deaths?*, *When did people die?*, *Which pump was

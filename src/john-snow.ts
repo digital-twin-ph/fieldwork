@@ -108,7 +108,6 @@ export function snowExtentExample():Workflow{
   ]};
 }
 
-const SOHO_RECTANGLE={type:'Polygon' as const,coordinates:[[[-.142,51.509],[-.128,51.509],[-.128,51.517],[-.142,51.517],[-.142,51.509]]]};
 const DATES_TABLE=()=>({id:'dates',type:'table_input' as const,x:20,y:20,params:{label:'Snow 1855 Table 1 · deaths by date',
   keys:['date'],valueField:'deaths',data:{kind:'data-table' as const,keys:['date'],valueField:'deaths',
     rows:dates.rows.map(row=>({key:{date:row.date},value:row.deaths})),
@@ -123,16 +122,21 @@ const DATES_TABLE=()=>({id:'dates',type:'table_input' as const,x:20,y:20,params:
 export function snowDeathsExample():Workflow{
   const pumps=structuredClone(data.pumps) as PointFeature[],deaths=structuredClone(data.deaths) as PointFeature[];
   const nodes:WorkflowNode[]=[
-    {id:'study',type:'study_area',x:20,y:20,params:{source:'drawn',label:'Soho reporting rectangle (illustrative)',selectionMode:'bbox',geometry:structuredClone(SOHO_RECTANGLE)}},
+    // FITTED TO WHAT IS DRAWN (2026-11-12): the deaths and the pumps with a margin of about 60 m, so the figure is the
+    // street, not the borough; the catchments keep their wider reporting rectangle.
+    {id:'study',type:'study_area',x:20,y:20,params:{source:'drawn',label:'Around the deaths and the pumps (illustrative)',selectionMode:'bbox',
+      geometry:{type:'Polygon',coordinates:[[[-.1407,51.5094],[-.131,51.5094],[-.131,51.5164],[-.1407,51.5164],[-.1407,51.5094]]]}}},
     {id:'locations',type:'point_input',x:20,y:200,params:{label:'250 death locations (489 deaths)',data:{type:'FeatureCollection',features:deaths},sourceInfo:{format:'CSV',url:voronoiSource+'data/cholera_deaths.csv',description:'This source subset has 250 locations; DEATHS totals 489.'}},references:[reference('deaths-source','Death location CSV',voronoiSource+'data/cholera_deaths.csv','data','Count locations and sum DEATHS separately. This is not the whole outbreak population or a mortality denominator.')]},
     {id:'pumps',type:'point_input',x:20,y:400,params:{label:'Eight pump locations',data:{type:'FeatureCollection',features:pumps},sourceInfo:{format:'CSV',url:voronoiSource+'data/pumps.csv',description:'Original FID retained in attributes; stable IDs prefixed pump-'}},references:[reference('pumps-source','Pump CSV',voronoiSource+'data/pumps.csv','data','Historical case-study point table; not a facility attendance record.')]},
-    // One mark per address, not per death: 250 addresses carry 489 deaths, so the subtitle says what a mark counts.
+    // ONE MARK PER ADDRESS, ITS AREA THE DEATHS THERE (experiment 210, 2026-11-12): 250 addresses carry 489 deaths, 1 to 15
+    // each, which Snow drew as a stack of bars at each house. Proportional symbols say it in one mark per address.
     {id:'spot-map',type:'map_output',x:400,y:20,params:{
       label:'Deaths and pumps, as Snow drew them',inputMode:'spatial',presentation:'plot',pointInputCount:2,
+      layerSymbols:{locations:{sizeBy:'DEATHS',size:3}},
       mapTitle:'Cholera deaths and public pumps, Soho, London, 1854',
-      mapSubtitle:'One mark per address where a death was recorded, with the eight public pumps. '
-        +'250 addresses carry 489 deaths, so the marks count addresses and not deaths. Nothing here '
-        +'is inferred: no catchment, no nearest-pump assignment, and no claim about which pump anyone drank from.',
+      mapSubtitle:'One mark per address, its area in proportion to the deaths there (1 to 15; 489 at 250 addresses), with the '
+        +'eight public pumps. Snow drew these counts as bars at each house. Nothing is inferred: no catchment, and no claim '
+        +'about which pump anyone drank from.',
       mapSourceNote:'Deaths and pump locations: John Snow, On the Mode of Communication of Cholera, '
         +'2nd ed., 1855, as digitised by Robin Wilson (blog.rtwilson.com/john-snows-cholera-data-in-more-formats). '
         +'Drawn in CRS84; see the run receipt for method and versions.',

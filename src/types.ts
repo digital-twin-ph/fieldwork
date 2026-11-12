@@ -615,7 +615,8 @@ export interface ParamsByType {
     /** How each point layer is drawn, keyed by the node that produced it -- a source keeps its
      *  symbol when layers are rewired or reordered. Absent means derived from the layer's
      *  position, which is what every map did before a practitioner could choose. */
-    layerSymbols?:Record<string,{mark?:import('./presentation.js').LayerShape;colour?:string;size?:number}>;
+    layerSymbols?:Record<string,{mark?:import('./presentation.js').LayerShape;colour?:string;size?:number;
+      /** PROPORTIONAL SYMBOLS (experiment 210): the attribute whose value sets each mark's area. */ sizeBy?:string}>;
     /** WHICH ATTRIBUTE HOLDS EACH LAYER'S PIN CLASS, keyed by the source node the way
      *  `layerSymbols` is. The practitioner's term, 2026-10-29: *"We can call it pin class."* A
      *  layer whose records carry "water intake" and "tidal limit" is two kinds of thing on one

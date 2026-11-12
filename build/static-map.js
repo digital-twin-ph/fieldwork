@@ -1,2 +1,2 @@
-import{a,b}from"./chunks/chunk-O7JO3R64.js";import"./chunks/chunk-OB3PGTBL.js";import"./chunks/chunk-ZYOPXE25.js";import"./chunks/chunk-HVE63AOJ.js";import"./chunks/chunk-KVMUXFPB.js";export{b as staticBoundaryMap,a as staticMapFrame};
+import{a,b}from"./chunks/chunk-EO33F5XX.js";import"./chunks/chunk-I7TFXXOX.js";import"./chunks/chunk-7PRE2SUG.js";import"./chunks/chunk-I2QCVWVJ.js";import"./chunks/chunk-2P3GRKFC.js";import"./chunks/chunk-KVMUXFPB.js";export{b as staticBoundaryMap,a as staticMapFrame};
 //# sourceMappingURL=static-map.js.map

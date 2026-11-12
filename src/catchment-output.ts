@@ -52,7 +52,18 @@ export function polygonPresentationReceipt(node:WorkflowNode,source:string,runId
  *  Same reason as `mapFrame` and `rasterFrame`: a caller that recomputes this arithmetic gets a
  *  slightly different answer, and a basemap a few pixels out is worse than none. Returns null
  *  where there is nothing to frame, which is the hexbin case with no cells. */
-export function polygonFrame(p:Polygons):{project:(c:Position)=>[number,number];bounds:[number,number,number,number]}|null{
+/** A STATIC PLOT'S FRAME, FROM ITS AREA'S SHAPE (2026-11-12, the practitioner: "Ok" to a frame that follows the area). 850
+ *  wide always; as tall as the area needs at the plot's width, from 295, every frame's height until then, to 650, the
+ *  walking-time plot's. A wide area keeps 295 and draws exactly as before; a tall one, such as Soho's deaths or Hagelloch,
+ *  is no longer drawn small in a short strip. */
+export function plotFrame(bounds:[number,number,number,number],usable:{width:number;margin:number}){
+  const [west,south,east,north]=bounds,cos=Math.cos((south+north)/2*Math.PI/180);
+  const w=Math.max((east-west)*cos,.00001),h=Math.max(north-south,.00001);
+  const height=Math.max(295,Math.min(650,Math.round(usable.width*h/w+usable.margin)));
+  const scale=Math.min(usable.width/w,(height-usable.margin)/h),middle=height/2-2.5;
+  return {height,scale,cos,project:(c:Position):[number,number]=>[425+(c[0]-(east+west)/2)*cos*scale,middle-(c[1]-(north+south)/2)*scale]};
+}
+export function polygonFrame(p:Polygons):{project:(c:Position)=>[number,number];bounds:[number,number,number,number];height:number}|null{
   const coords=p.kind==='hexbin'
     ?p.features.flatMap(f=>f.geometry.type==='Polygon'?f.geometry.coordinates.flat():f.geometry.coordinates.flat(2))
     :[...p.features.flatMap(f=>(f.geometry.type==='Polygon'?f.geometry.coordinates:f.geometry.coordinates.flat())).flat(),
@@ -63,10 +74,8 @@ export function polygonFrame(p:Polygons):{project:(c:Position)=>[number,number];
     if(c[0]<west)west=c[0];if(c[0]>east)east=c[0];
     if(c[1]<south)south=c[1];if(c[1]>north)north=c[1];
   }
-  const cos=Math.cos((south+north)/2*Math.PI/180),
-    scale=Math.min(790/Math.max((east-west)*cos,.00001),235/Math.max(north-south,.00001));
-  return {bounds:[west,south,east,north],
-    project:(c:Position):[number,number]=>[425+(c[0]-(east+west)/2)*cos*scale,145-(c[1]-(north+south)/2)*scale]};
+  const frame=plotFrame([west,south,east,north],{width:790,margin:60});
+  return {bounds:[west,south,east,north],height:frame.height,project:frame.project};
 }
 export function polygonSvg(p:Polygons,esc:Escape):string{
   if(p.kind==='hexbin'){
@@ -78,13 +87,12 @@ export function polygonSvg(p:Polygons,esc:Escape):string{
       if(c[0]<west)west=c[0];if(c[0]>east)east=c[0];
       if(c[1]<south)south=c[1];if(c[1]>north)north=c[1];
     }
-    const cos=Math.cos((south+north)/2*Math.PI/180),scale=Math.min(790/Math.max((east-west)*cos,.00001),235/Math.max(north-south,.00001));
-    const project=(c:Position)=>[425+(c[0]-(east+west)/2)*cos*scale,145-(c[1]-(north+south)/2)*scale];
-    return '<rect width="850" height="295" fill="#f7faf8"/>'+p.features.map(f=>`<path data-hex-cell="${esc(f.id)}" d="M${(f.geometry.type==='Polygon'?f.geometry.coordinates[0]:f.geometry.coordinates[0][0]).map(c=>project(c).join(',')).join('L')}Z" fill="#3686a8" fill-opacity=".25" stroke="#19617c" stroke-width="1"><title>${esc(f.id)} · ${f.count} locations</title></path>`).join('')+'<text x="20" y="282" font-size="10">H3 aggregate cells · sparse cells omitted</text>';
+    const {project,height}=plotFrame([west,south,east,north],{width:790,margin:60});
+    return `<rect width="850" height="${height}" fill="#f7faf8"/>`+p.features.map(f=>`<path data-hex-cell="${esc(f.id)}" d="M${(f.geometry.type==='Polygon'?f.geometry.coordinates[0]:f.geometry.coordinates[0][0]).map(c=>project(c).join(',')).join('L')}Z" fill="#3686a8" fill-opacity=".25" stroke="#19617c" stroke-width="1"><title>${esc(f.id)} · ${f.count} locations</title></path>`).join('')+'<text x="20" y="282" font-size="10">H3 aggregate cells · sparse cells omitted</text>';
   }
   const rings=p.features.flatMap(f=>f.geometry.type==='Polygon'?f.geometry.coordinates:f.geometry.coordinates.flat()),coords=[...rings.flat(),...p.sites.flatMap(f=>f.geometry?[f.geometry.coordinates]:[]),...(p.observations?.features||[]).flatMap(f=>f.geometry?[f.geometry.coordinates]:[])];if(!coords.length)return '<text x="30" y="40">No intersecting polygons or located points</text>';
-  const [west,south,east,north]=coords.reduce(([w,s,e,n],c)=>[Math.min(w,c[0]),Math.min(s,c[1]),Math.max(e,c[0]),Math.max(n,c[1])],[Infinity,Infinity,-Infinity,-Infinity]),cos=Math.cos((south+north)/2*Math.PI/180),scale=Math.min(790/Math.max((east-west)*cos,.00001),235/Math.max(north-south,.00001));
-  const project=(c:Position)=>[425+(c[0]-(east+west)/2)*cos*scale,145-(c[1]-(north+south)/2)*scale];
+  const [west,south,east,north]=coords.reduce(([w,s,e,n],c)=>[Math.min(w,c[0]),Math.min(s,c[1]),Math.max(e,c[0]),Math.max(n,c[1])],[Infinity,Infinity,-Infinity,-Infinity]);
+  const {project,height}=plotFrame([west,south,east,north],{width:790,margin:60});
   // COLOURED BY VALUE WHERE THERE IS ONE, by position where there is not. A catchment's colour
   // says which catchment; a choropleth's colour says how much, and reading the second as the
   // first is the misreading this whole figure exists to avoid. `classifyValues` returns null
@@ -123,7 +131,7 @@ export function polygonSvg(p:Polygons,esc:Escape):string{
   const colors=classed?classed.colours
     :grouped?grouped.colours
     :categorical??(wash?[FIGURE_ROLE.unknown]:orderedSteps(p.features.length));
-  return '<rect width="850" height="295" fill="#f7faf8"/>'+p.features.map((f,i)=>{const polys=f.geometry.type==='Polygon'?[f.geometry.coordinates]:f.geometry.coordinates;const at=classed?classed.classOf(f.value):grouped?grouped.classOf(f.category):null;
+  return `<rect width="850" height="${height}" fill="#f7faf8"/>`+p.features.map((f,i)=>{const polys=f.geometry.type==='Polygon'?[f.geometry.coordinates]:f.geometry.coordinates;const at=classed?classed.classOf(f.value):grouped?grouped.classOf(f.category):null;
     // A part with no value is drawn in a neutral, never in the lowest class: an unmatched
     // boundary would otherwise read as a finding of low incidence rather than as no data.
     // A part with no class is drawn in the neutral for the same reason a part with no value is:

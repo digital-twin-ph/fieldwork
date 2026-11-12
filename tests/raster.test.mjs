@@ -7,7 +7,9 @@ import {inspectRaster,encodeRaster,readRasterWindow,rasterWindow,clipRaster} fro
 import {rasterReceipt} from '../build/raster-workflow.js';
 import {contentHash} from '../build/project-files.js';
 import {createEncryptedPackage,readEncryptedPackage} from '../build/encrypted-package.js';
-import {oldNalediWorkflow} from '../build/old-naledi.js';
+import {blankWorkflow} from '../build/study-area.js';
+// Old Naledi's workflow was only a container to package here; it retired on 2026-11-11, and an empty one serves.
+const oldNalediWorkflow=()=>({...blankWorkflow(),nodes:[],edges:[]});
 import {validateWorkflow} from '../build/core.js';
 // GeoTIFF.js BlobSource uses the browser FileReader API; emulate only that API in Node.
 globalThis.FileReader=class {readAsArrayBuffer(blob){blob.arrayBuffer().then(result=>{this.result=result;this.onload({target:this});},error=>{this.error=error;this.onerror(error);});}};

@@ -20,7 +20,8 @@ const POINT={id:'p1',name:'Battersea intake',coordinates:[-0.18,51.47],relation:
 
 test('a map with no point on it says neither SPATIAL COVERAGE nor select a point',()=>{
   const svg=map([]);
-  assert.ok(svg.includes('STUDY AREA'),'the figure no longer says what it is');
+  // No caption on the figure at all since 2026-11-11: the map's title and key say what it is.
+  assert.ok(!svg.includes('STUDY AREA'));
   assert.ok(!svg.includes('SPATIAL COVERAGE'));
   assert.ok(!svg.includes('Select a point'));
 });
@@ -31,10 +32,12 @@ test('a record with no usable location is not a point to select either',()=>{
   assert.ok(!map([{...POINT,coordinates:null,relation:'MissingLocation'}]).includes('Select a point'));
 });
 
-test('a map that DOES carry points keeps both, because both are then true',()=>{
+test('a map that carries points prints neither the caption nor an instruction either',()=>{
+  // Until 2026-11-11 both were printed when points were present. The practitioner: commentary text about design belongs
+  // in design documents, not the UI; the overlay caption was also left over from Old Naledi.
   const svg=map([POINT]);
-  assert.match(svg,/STUDY AREA · SPATIAL COVERAGE/);
-  assert.match(svg,/Select a point to review its relation to the study boundary/);
+  assert.ok(!svg.includes('SPATIAL COVERAGE'));
+  assert.ok(!svg.includes('Select a point'));
 });
 
 test('the north arrow is drawn whatever is on the map',()=>{

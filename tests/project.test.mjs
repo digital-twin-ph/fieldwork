@@ -36,14 +36,14 @@ test('no workflow is in two projects at once',()=>{
 });
 
 // The finding behind experiment 122: the single-workflow model was already wrong twice over.
-test('three built-in projects hold more than one workflow',()=>{
+test('two built-in projects hold more than one workflow',()=>{
   const many=multiWorkflowProjects();
-  assert.deepEqual(many.map(p=>p.id).sort(),['cholera-london-1854','hagelloch-1861','old-naledi']);
+  // Two since 2026-11-11: Old Naledi retired (docs/audits/old-naledi-audit.md).
+  assert.deepEqual(many.map(p=>p.id).sort(),['cholera-london-1854','hagelloch-1861']);
   // Who infected whom, beside the curve and the map (experiment 200, 2026-11-09), was there a cluster (2026-11-10), and
   // the 1824 sheet placed by hand (experiment 201, 2026-11-10).
   assert.deepEqual(projectById('hagelloch-1861').workflows,['hagelloch','hagelloch-chains','hagelloch-cluster','hagelloch-sheet']);
   assert.equal(projectById('cholera-london-1854').workflows.length,4);
-  assert.equal(projectById('old-naledi').workflows.length,2);
   // All four Snow workflows ask about one outbreak, which is what makes them one project.
   assert.ok(projectById('cholera-london-1854').workflows.every(k=>k.startsWith('snow-')));
 });
@@ -52,8 +52,8 @@ test('a created project gets a readable id, and a colliding name is numbered rat
   const first=newProject('1854 Cholera Outbreak in London','One outbreak.');
   assert.equal(first.id,'1854-cholera-outbreak-in-london');
   assert.deepEqual(first.workflows,[]);
-  const second=newProject('Old Naledi','Same name as a built-in.',BUILT_IN_PROJECTS);
-  assert.equal(second.id,'old-naledi-2');
+  const second=newProject('Hagelloch 1861','Same name as a built-in.',BUILT_IN_PROJECTS);
+  assert.equal(second.id,'hagelloch-1861-2');
   assert.equal(newProject('   ','').id,'project');
   assert.equal(newProject('   ','').name,'Untitled project');
 });

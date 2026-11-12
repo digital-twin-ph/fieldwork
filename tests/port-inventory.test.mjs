@@ -2,7 +2,6 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {TYPES} from '../build/core.js';
-import {OLD_TYPES} from '../build/old-naledi.js';
 
 // The port-type union is a closed contract, and a closed contract with a member nothing uses
 // claims a port type the application does not have. `samples` sat in it and nowhere else until
@@ -76,7 +75,8 @@ const CUSTOM_STUDS={
   // satellite sampler retired into it (experiment 205). Counted as two ends, one of them archived; one live reader.
 };
 
-const definitions={...TYPES,...OLD_TYPES};
+// Old Naledi's archived definitions live in TYPES since it retired, 2026-11-11.
+const definitions={...TYPES};
 const union=[...new Set(readFileSync(new URL('../src/types.ts',import.meta.url),'utf8')
   .match(/export type PortType = ([^;]+);/)[1].match(/'([^']+)'/g).map(s=>s.slice(1,-1)))];
 

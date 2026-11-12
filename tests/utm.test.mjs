@@ -2,7 +2,6 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {utmZoneFor,utmScaleFactor,suggestUTM,workflowPositions} from '../build/utm.js';
 import {johnSnowExample} from '../build/john-snow.js';
-import {oldNalediWorkflow} from '../build/old-naledi.js';
 
 test('a zone is the 6 degree band the longitude falls in',()=>{
   assert.deepEqual(utmZoneFor([-0.1379,51.5]),{zone:30,hemisphere:'north'});   // Soho
@@ -49,7 +48,9 @@ test('a workflow suggests the zone its own data is in',()=>{
   const snow=suggestUTM(johnSnowExample('snow-isochrone'));
   assert.deepEqual(snow.choice,{zone:30,hemisphere:'north'});
   assert.ok(snow.positions>500,`expected the network and the deaths, got ${snow.positions}`);
-  const naledi=suggestUTM(oldNalediWorkflow());
+  // A drawn area at Gaborone, where Old Naledi was until it retired on 2026-11-11: south of the equator, zone 35.
+  const naledi=suggestUTM({schema:'fieldwork/workflow/1',name:'Gaborone',nodes:[{id:'area',type:'study_area',x:0,y:0,
+    params:{label:'Area',source:'drawn',selectionMode:'bbox',geometry:{type:'Polygon',coordinates:[[[25.90,-24.69],[25.91,-24.69],[25.91,-24.68],[25.90,-24.68],[25.90,-24.69]]]}}}],edges:[]});
   assert.equal(naledi.choice.hemisphere,'south');
   assert.equal(naledi.choice.zone,35);
 });

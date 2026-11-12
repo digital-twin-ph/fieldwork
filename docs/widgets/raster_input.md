@@ -65,6 +65,11 @@ offline once Fieldwork has been opened online, since its reader is saved with th
 it. It is checked against WorldPop's folders every week; a change comes as a pull request to the repository, and a newer
 release is reported for a person to read before it is offered.
 
+**A study area reaching past the raster** keeps the part the raster covers. The dialog says how far past which edge,
+and the run records it as a data issue, *Area beyond the raster*. Two outlines of one country rarely agree at the
+border: Botswana's provinces from geoBoundaries reach a little past WorldPop's file for Botswana. Only an area that
+does not overlap the raster at all is refused.
+
 ## What it will not do
 
 - **It will not reproject.** A GeoTIFF in another coordinate system is refused, named.

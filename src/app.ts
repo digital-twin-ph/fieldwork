@@ -1382,7 +1382,7 @@ function alertRows(alert:NonNullable<ReturnType<typeof nodeAlert>>){
   return [
     // WHAT HAPPENED, IN THE ONTOLOGY'S WORDS (experiment 207): the label each kind of data issue carries in the receipt.
     ...(alert.dataIssues??[]).map(issue=>({name:issue.field,
-      outcome:ISSUE_LABEL[issue.why==='missing'?'ValueAbsent':'ValueUnreadable'],detail:issue.says})),
+      outcome:ISSUE_LABEL[issue.why==='absent'?'FieldMissing':issue.why==='missing'?'ValueAbsent':'ValueUnreadable'],detail:issue.says})),
     ...(alert.gaps??[]).map(gap=>({name:gap.field,outcome:ISSUE_LABEL.DeclarationAbsent,detail:gap.says})),
     ...alert.unconnected.map(u=>({name:u.name,outcome:ISSUE_LABEL.SiteUnreachable,
       detail:`${Math.round(u.distanceM)} m to the nearest street, from a ${Math.round(u.budgetM)} m budget`})),
@@ -1404,10 +1404,11 @@ function openAlertDialog(n:WorkflowNode,alert:NonNullable<ReturnType<typeof node
 }
 function alertHeadline(alert:NonNullable<ReturnType<typeof nodeAlert>>){
   const parts=[];
-  // Counted in RECORDS, not in issues: "1 field had a problem" is not what a reader needs to
-  // know, and "37 records the rules could not read" is.
-  const records=(alert.dataIssues??[]).reduce((n,issue)=>n+issue.count,0);
-  if(records)parts.push(`${records} record${records===1?'':'s'} the rules could not read`);
+  // ONE COLUMN IN RECORDS, SEVERAL IN COLUMNS. Summing records across columns counted a record once per column it
+  // lacked: MERS's 162 cases were "189 records the rules could not read" (2026-11-12).
+  const issues=alert.dataIssues??[],columns=new Set(issues.map(issue=>issue.field));
+  if(columns.size===1)parts.push(`${issues.reduce((n,issue)=>n+issue.count,0)} of ${issues[0]!.of} records the rules could not read`);
+  else if(columns.size)parts.push(`${columns.size} columns the rules could not read in full`);
   if(alert.gaps?.length)parts.push(`${alert.gaps.length} undeclared`);
   if(alert.unconnected.length)parts.push(`${alert.unconnected.length} with no result`);
   if(alert.offNetwork.length)parts.push(`${alert.offNetwork.length} routed off-network`);

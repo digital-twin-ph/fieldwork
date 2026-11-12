@@ -7,6 +7,12 @@ shown in a local build is not a claim that it has been published.
 
 - **Cases by month of the year**, January to December, every year's January together, all twelve kept: a season across
   years of data. Cases by period 0.4.0.
+- **Fixed: a step's warning counted a record once per column it lacked.** MERS's 162 cases read "189 records the rules
+  could not read". One column is now counted in records, "27 of 162"; several are named as columns. A column no record
+  carries, such as 7-1-7's response date on MERS, is one finding, *Field missing*, not a missing value in every record.
+- **Table and Apply ruleset describe themselves as they are**: "Show what is connected as a table", and "Apply declared
+  rules to each record, to classify it or compute a value". Table still mentioned catchment summaries and review
+  decisions. A workflow started blank says it was built on a *Blank canvas*, not a "study area experiment".
 
 ## 0.99.0 — 2026-11-12
 

@@ -217,7 +217,7 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   // differed only in which rules they ran. Ports are the ruleset's and are pinned per node, so
   // inputs is empty and output is null here.
   apply_ruleset:{title:'Apply ruleset',group:'Semantic reasoning',icon:'⋈',color:'purple',
-    description:'Apply a declared, versioned ruleset to classify an input',
+    description:'Apply declared rules to each record, to classify it or compute a value',
     inputs:[],output:null},
   // RETIRED 2026-11-07: kept so a saved workflow holding one is refused by name. Its members' functions stay, as
   // the widgets they always were.
@@ -269,7 +269,7 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   // `clip_points_to_area` on open. It is in the retired list, so the palette never offers it.
   coverage_check:{title:'Check spatial coverage',group:'Comparisons and checks',icon:'◎',color:'purple',description:'Retired — use Keep points inside the area',inputs:[['area','area'],['points','points']],output:'coverage-check'},
   map_output:{title:'Map',group:'Outputs',icon:'◈',color:'green',description:'Display the study polygon and points, including outside records',inputs:[['area','area'],['points','points'],['polygons','polygons'],['context','points'],['raster','raster'],['ground','ground'],['network','network']],output:null},
-  table_output:{title:'Table',group:'Outputs',icon:'☷',color:'green',description:'Display a keyed table, point coordinates, catchment summaries or review decisions',inputs:[['points','points'],['coverage','coverage-check'],['table','table'],['polygons','polygons']],output:null},
+  table_output:{title:'Table',group:'Outputs',icon:'☷',color:'green',description:'Show what is connected as a table',inputs:[['points','points'],['coverage','coverage-check'],['table','table'],['polygons','polygons']],output:null},
   chart_output:{title:'Chart',group:'Outputs',icon:'▥',color:'green',description:'Draw a table\u2019s categories as bars, or count records by decision, access zone or evidence tier',inputs:[['records','table'],['polygons','polygons']],output:null},
   output: {title:'Visual output', group:'Outputs', icon:'◈', color:'green', description:'Display results as a map, table, or bar chart', inputs:[['decisions','decisions']], output:null}
 };

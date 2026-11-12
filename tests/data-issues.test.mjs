@@ -36,3 +36,13 @@ test('an issue in a receipt is about the data: computed on it, listed by it, gen
   assert.equal(about('http://www.w3.org/2000/01/rdf-schema#comment'),'27 of 162 have no onset.');
   assert.equal(issueFacts(step,data,'x',[]),'');
 });
+
+test('a column no record carries is one finding, Field missing, not a missing value in every record',async()=>{
+  const {authoredDataIssues}=await import('../build/authored-application.js');
+  const table={kind:'data-table',keys:['id','dt_onset'],valueField:'n',rowCount:3,missingValueCount:0,
+    rows:[{key:{id:'a',dt_onset:'2015-05-11'},value:1},{key:{id:'b',dt_onset:''},value:1},{key:{id:'c',dt_onset:'2015-05-20'},value:1}]};
+  const issues=authoredDataIssues(table,[{attribute:'dt_onset',predicate:'fw:emergenceDate',kind:'date',label:'Emergence'},
+    {attribute:'early_response_date',predicate:'fw:responseCompleteDate',kind:'date',label:'Early response complete'}]);
+  assert.deepEqual(issues.map(i=>[i.field,i.why,i.count,i.of]),[['dt_onset','missing',1,3],['early_response_date','absent',3,3]]);
+  assert.match(issues[1].says,/no column early_response_date/);
+});

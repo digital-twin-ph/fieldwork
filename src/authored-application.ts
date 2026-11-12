@@ -170,12 +170,19 @@ export function readValue(raw:Scalar|null|undefined,kind:FieldBinding['kind']):V
  *  The practitioner, 2026-10-16: *"we must surface the issue on the widget as a toast message
  *  that I can then read and close."* A run that quietly bands a third of its records Unrecorded
  *  has answered the question it was asked and hidden the thing worth knowing. */
-export interface DataIssue {field:string; why:'missing'|'unreadable'; count:number; of:number; says:string}
+/** `absent`: no record carries the column at all (7-1-7's response date on MERS, 2026-11-12), not a value left out. */
+export interface DataIssue {field:string; why:'missing'|'unreadable'|'absent'; count:number; of:number; says:string}
 export function authoredDataIssues(input:PointCollection|DataTable,bindings:FieldBinding[]):DataIssue[]{
   const subjects=authoredSubjects(input);
   const issues:DataIssue[]=[];
   for(const binding of bindings){
     const named=binding.label||binding.attribute;
+    // A COLUMN THE RECORDS DO NOT HAVE is one finding about the data, not a missing value in every record.
+    if(subjects.length&&!subjects.some(record=>Object.hasOwn(record.properties??{},binding.attribute))){
+      issues.push({field:binding.attribute,why:'absent',count:subjects.length,of:subjects.length,
+        says:`These records have no column ${binding.attribute}, so none has a value for ${named}.`});
+      continue;
+    }
     const readings=subjects.map(record=>readValue(record.properties?.[binding.attribute],binding.kind));
     const missing=readings.filter(r=>!r.known&&r.why==='missing').length;
     const unreadable=readings.filter(r=>!r.known&&r.why==='unreadable');
@@ -327,11 +334,11 @@ export function authoredReceipt(
     `${upstream} dqv:hasQualityMeasurement <${NS}run:${runId}:ruleset:${node.id}:issue:${i+1}>.\n`
     +`${activity} fw:readingProblem <${NS}run:${runId}:ruleset:${node.id}:issue:${i+1}>.\n`
     +`<${NS}run:${runId}:ruleset:${node.id}:issue:${i+1}> a fw:ReadingProblem, fw:DataIssue; dqv:computedOn ${upstream}; prov:wasGeneratedBy ${activity}; `
-    +`fw:issueKind ${issue.why==='missing'?'fw:ValueAbsent':'fw:ValueUnreadable'}; fw:issueColumn ${JSON.stringify(issue.field)}; `
+    +`fw:issueKind ${issue.why==='absent'?'fw:FieldMissing':issue.why==='missing'?'fw:ValueAbsent':'fw:ValueUnreadable'}; fw:issueColumn ${JSON.stringify(issue.field)}; `
     +`rdfs:comment ${JSON.stringify(issue.says)}; `
-    +`dqv:isMeasurementOf ${issue.why==='missing'?'fw:absentValues':'fw:unreadableValues'}; `
+    +`dqv:isMeasurementOf ${issue.why==='unreadable'?'fw:unreadableValues':'fw:absentValues'}; `
     +`fw:boundAttribute ${JSON.stringify(issue.field)}; `
-    +`fw:problemKind ${issue.why==='missing'?'fw:ValueAbsent':'fw:ValueUnreadable'}; `
+    +`fw:problemKind ${issue.why==='unreadable'?'fw:ValueUnreadable':'fw:ValueAbsent'}; `
     +`fw:affectedRecordCount ${issue.count}; fw:consideredRecordCount ${issue.of}.`).join('\n');
   const statement=`@prefix fw: <${NS}>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n`
     +(problems?`@prefix dqv: <http://www.w3.org/ns/dqv#>.\n@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.\n`:'')
@@ -351,7 +358,7 @@ export function authoredReceipt(
       // to parse N3 to learn that some of its conclusions are about absences.
       +(dataIssues.length
         ?dataIssues.map(issue=>`${issue.count} of ${issue.of} records had `
-          +`${issue.why==='missing'?'no value':'an unreadable value'} for ${issue.field}, and the rules were `
+          +`${issue.why==='unreadable'?'an unreadable value':issue.why==='absent'?'no column':'no value'} for ${issue.field}, and the rules were `
           +`told it was not recorded.`).join(' ')
         :'Every bound value was readable.')};
 }

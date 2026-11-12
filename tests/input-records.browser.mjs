@@ -110,7 +110,7 @@ test('records the rules cannot read are surfaced, and the notice can be read and
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="text-building"]').click();
   await expect(page.locator('.inspector-alert').first()).toContainText('Read as not recorded');
-  await expect(page.locator('.inspector-alert').first()).toContainText('63 records the rules could not read');
+  await expect(page.locator('.inspector-alert').first()).toContainText('63 of 250 records the rules could not read');
   // The whole warning, in its dialog (2026-11-12): the columns fell off the Inspector.
   await page.locator('#alert-details').click();
   const alert=page.locator('#alert-dialog');

@@ -128,7 +128,7 @@ export const BUILT_IN_PROJECTS:readonly Project[]=[
  *  x within a project, not continuous across projects"*). Until then they ran on across projects, with gaps where
  *  workflows had been retired (01, 02, 04–09, 11–14). tests/project.test.mjs holds each number to its position. */
 export const WORKFLOW_LABELS:Readonly<Record<string,string>>={
-  blank:'Blank · study area experiment','snow-voronoi':'1 · John Snow Voronoi catchments',
+  blank:'Blank canvas','snow-voronoi':'1 · John Snow Voronoi catchments',
   'snow-isochrone':'2 · John Snow network isochrones','snow-geoprivacy':'3 · John Snow geoprivacy',
   'snow-extent':'4 · John Snow outbreak extent',hagelloch:'1 · Measles in Hagelloch, 1861','hagelloch-chains':'2 · Hagelloch: who infected whom','hagelloch-cluster':'3 · Hagelloch: was there a cluster?','hagelloch-sheet':'4 · Hagelloch: the 1824 sheet, placed by hand','hagelloch-people':'5 · Hagelloch: who fell ill',
 };

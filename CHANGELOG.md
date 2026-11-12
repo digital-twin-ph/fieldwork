@@ -3,19 +3,26 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## 0.100.0 — 2026-11-12
+## 0.99.0 — 2026-11-12
 
 - **Cases by month of the year**, January to December, every year's January together, all twelve kept: a season across
   years of data. Cases by period 0.4.0.
 - **Fixed: a step's warning counted a record once per column it lacked.** MERS's 162 cases read "189 records the rules
-  could not read". One column is now counted in records, "27 of 162"; several are named as columns. A column no record
+  could not read". Records are now counted once each: "27 of 162" for one column, "162 of 162 … in 2 columns" for two. A column no record
   carries, such as 7-1-7's response date on MERS, is one finding, *Field missing*, not a missing value in every record.
 - **Table and Apply ruleset describe themselves as they are**: "Show what is connected as a table", and "Apply declared
   rules to each record, to classify it or compute a value". Table still mentioned catchment summaries and review
   decisions. A workflow started blank says it was built on a *Blank canvas*, not a "study area experiment".
-
-## 0.99.0 — 2026-11-12
-
+- **No count of records can exceed the records.** Each data issue carries the records it found, and one function counts
+  across issues by their union; the receipt shapes refuse an issue claiming more records than were considered; a test
+  runs every built-in example and MERS's project through that rule.
+- **Sierra Leone: who were the cases?**, a fourth workflow: cases by sex, and by age band (0, 1 to 4, 5 to 9, 10 to 14,
+  15 and over) with one panel per sex.
+- **Chart orders bands that begin with a number by that number**: 0, 1 to 4, 5 to 9, 10 to 14, 15 and over, not as text.
+- **Fixed: the georeferencing dialog's basemap filled only part of its pane** after the dialog was reopened, at every
+  zoom. The map now re-measures its pane whenever the pane changes size.
+- **Chart and Cases by period describe themselves as they are**; Chart still spoke of decisions, access zones and
+  evidence tiers.
 - **Cases by day of the week.** Cases by period counts by day of the week, Monday to Sunday, all seven kept. Hagelloch's
   first workflow shows it beside the epidemic curve: Thursday has most prodromes, 34, which is within chance. Its
   settings are in Configure… now, on the standard Inspector. Cases by period 0.3.0.

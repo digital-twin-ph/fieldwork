@@ -195,7 +195,7 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
     // predicted a declaration would buy. Experiment 154.
     inputs:[['records','table'],['design','design']],output:'table'},
   rate:{title:'Rate with a denominator',group:'Epidemiology',icon:'÷',color:'teal',description:'Divide counts by a declared population at risk, stating what the denominator counts',inputs:[['records','points']],output:'table'},
-  case_series:{title:'Cases by period',group:'Epidemiology',icon:'▦',color:'teal',description:'Count cases per day, week or month by a declared kind of date',inputs:[['points','points']],output:'table'},
+  case_series:{title:'Cases by period',group:'Epidemiology',icon:'▦',color:'teal',description:'Count cases by day, week, month, day of the week or month of the year, by a declared kind of date',inputs:[['points','points']],output:'table'},
   slr_extract_import:{title:'Sea-level projection extract',group:'Sources',icon:'≈',color:'blue',description:'Declare an imported long-format table as a bounded extract of published AR6 projections',inputs:[['projections','table']],output:'table'},
   slr_site_assignment:{title:'Assign projection site',group:'Spatial operations',icon:'⊕',color:'teal',description:'Assign each point its nearest published projection site and record the distance',inputs:[['points','points'],['sites','points'],['projections','table']],output:'table'},
   slr_threshold_comparison:{title:'Compare level to elevation',group:'Comparisons and checks',icon:'⋚',color:'purple',description:'Compare one projected change against a supplied elevation on a stated datum',inputs:[['assignments','table']],output:'decisions'},
@@ -270,7 +270,7 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   coverage_check:{title:'Check spatial coverage',group:'Comparisons and checks',icon:'◎',color:'purple',description:'Retired — use Keep points inside the area',inputs:[['area','area'],['points','points']],output:'coverage-check'},
   map_output:{title:'Map',group:'Outputs',icon:'◈',color:'green',description:'Display the study polygon and points, including outside records',inputs:[['area','area'],['points','points'],['polygons','polygons'],['context','points'],['raster','raster'],['ground','ground'],['network','network']],output:null},
   table_output:{title:'Table',group:'Outputs',icon:'☷',color:'green',description:'Show what is connected as a table',inputs:[['points','points'],['coverage','coverage-check'],['table','table'],['polygons','polygons']],output:null},
-  chart_output:{title:'Chart',group:'Outputs',icon:'▥',color:'green',description:'Draw a table\u2019s categories as bars, or count records by decision, access zone or evidence tier',inputs:[['records','table'],['polygons','polygons']],output:null},
+  chart_output:{title:'Chart',group:'Outputs',icon:'▥',color:'green',description:'Draw a table or a case series as bars or a curve, or who infected whom as a tree',inputs:[['records','table'],['polygons','polygons']],output:null},
   output: {title:'Visual output', group:'Outputs', icon:'◈', color:'green', description:'Display results as a map, table, or bar chart', inputs:[['decisions','decisions']], output:null}
 };
 const point = (id:string,name:string,coordinates:Position|null|undefined):PointFeature => ({type:'Feature',id,properties:{name},geometry: coordinates ? {type:'Point',coordinates} : null});

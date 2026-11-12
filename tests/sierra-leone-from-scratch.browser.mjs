@@ -32,6 +32,26 @@ test('measles in Sierra Leone, built by following the manual',async({page})=>{te
     await page.locator('[data-view="results"]').click();const map=page.locator('#result-tabs [role="tab"]').filter({hasText:'Map'});
     if(await map.count()){await map.first().click();await page.waitForTimeout(1500);await page.screenshot({path:`test-results/sierra-leone-${index+1}-map.png`});}
   }
+  // WHO WERE THE CASES (2026-11-12): the file's own counts, by sex and by age band, found in the results.
+  const rows=readFileSync(new URL('data/measles-sierra-leone-semisynthetic.csv',REPO),'utf8').trim().split(/\r?\n/);
+  const head=rows[0].split(',');const sexAt=head.indexOf('Sex'),ageAt=head.indexOf('Age (years)');
+  const cells=rows.slice(1).map(line=>line.match(/("([^"]*)"|[^,]*)(,|$)/g).slice(0,head.length).map(v=>v.replace(/,$/,'').replace(/^"|"$/g,'')));
+  const tally=f=>cells.reduce((m,c)=>{const k=f(c);m[k]=(m[k]??0)+1;return m;},{});
+  const bySex=tally(c=>c[sexAt]);
+  expect(bySex.Male+bySex.Female).toBe(2601);
+  await page.locator('[data-view="results"]').click();
+  await page.getByRole('tab',{name:'Cases by sex'}).click();
+  const main=page.locator('main').first();
+  await expect(main).toContainText('3 of 3 rows');
+  for(const sex of ['Male','Female'])
+    await expect(main.locator('tr',{has:page.locator('th,td',{hasText:new RegExp(`^${sex}$`)})}).first()).toContainText(String(bySex[sex]));
+  const band=a=>a===''?'':a<1?'0':a<5?'1 to 4':a<10?'5 to 9':a<15?'10 to 14':'15 and over';
+  const byBand=tally(c=>band(c[ageAt]===''?'':Number(c[ageAt])));
+  expect([byBand['0'],byBand['1 to 4'],byBand['5 to 9'],byBand['10 to 14'],byBand['15 and over']]).toEqual([546,1329,458,102,164]);
+  await page.getByRole('tab',{name:'Cases by age and sex'}).click();
+  await expect(page.locator('#vega-chart [aria-label^="X-axis"]').last()).toHaveAttribute('aria-label',/0, 1 to 4, 5 to 9, 10 to 14, 15 and over/);
+  await page.screenshot({path:'test-results/sierra-leone-4-profile.png'});
+
   await page.locator('[data-view="project"]').click();
   await page.locator('#storage-status').click();
   const block=page.locator('.project-view-block').filter({hasText:'Measles in Sierra Leone'}).first();

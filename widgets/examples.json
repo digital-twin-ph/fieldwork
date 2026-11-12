@@ -438,7 +438,7 @@
       "id": "urn:fieldwork:example:brazil-dengue-rj-2024",
       "title": "Dengue in Rio de Janeiro state, Brazil, 2024",
       "repository": "https://github.com/digital-twin-ph/example-2024-brazil-dengue",
-      "commit": "cbb09effd5be5531227663b6e60031bf3c7e3055",
+      "commit": "0d5919b73f033516bb1d2b8ff43fb2e63e407b04",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2024-brazil-dengue",
       "licence": {
         "data": "CC-BY-4.0",
@@ -513,8 +513,8 @@
         },
         {
           "path": "manual.json",
-          "sha256": "3f11ee8248c48ec1cbc0726df2b80b2bf8eae7dbea679fbada5110e03552c834",
-          "bytes": 71388
+          "sha256": "5d6f8a26b7b6a5793ccee75cdb4259b9e10e92c36c9beffa84b93f6ae22545de",
+          "bytes": 71931
         },
         {
           "path": "notes/what-aedes-mosquitoes-meet.md",
@@ -624,7 +624,7 @@
       "id": "urn:fieldwork:example:sierra-leone-measles",
       "title": "Measles in Sierra Leone, 2019 to 2023",
       "repository": "https://github.com/digital-twin-ph/example-2019-sierra-leone-measles",
-      "commit": "0dbc0b6ccceceddcb403beeb44c8d4e5ee65eade",
+      "commit": "ff2a21e1cb3b3216d63eecfd3f6103546bcc7b04",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2019-sierra-leone-measles",
       "licence": {
         "data": "Used with the Sierra Leone FETP’s agreement for distributable training materials; modified for a public teaching repository",
@@ -655,13 +655,13 @@
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "e2ea00285be5a4bd5f89651bf481d0cdefabbd99c4cbc32ec981633f1dce0646",
-          "bytes": 825374
+          "sha256": "79b754621a4c77b939bc5f2049ddc7c66e3cb1b7331ba1c3983f3d45a8a27098",
+          "bytes": 826672
         },
         {
           "path": "manual.json",
-          "sha256": "6929631953a0693f0650f2f841660ba501b027edb34054cc90e05029412983cc",
-          "bytes": 35428
+          "sha256": "54f81273a54c0a1eab0536ef32beeec9d6d0c02010494fa3fcee495e63f37eb2",
+          "bytes": 51460
         },
         {
           "path": "data/measles-sierra-leone-semisynthetic.csv",
@@ -670,8 +670,8 @@
         },
         {
           "path": "README.md",
-          "sha256": "129aaad7a2a1993b619f412bcc193f734b372468a3ff06b70a5652efbb819737",
-          "bytes": 8749
+          "sha256": "4b2b93c8943cf17a6877ea7a0bbf5912d5298c11efd6b62d9b8cee57e1e66908",
+          "bytes": 9089
         },
         {
           "path": "CITATION.cff",
@@ -699,7 +699,7 @@
           "bytes": 787745
         }
       ],
-      "workflowCount": 3,
+      "workflowCount": 4,
       "notYet": "The case classification by WHO’s definition, waiting on the FETP’s data dictionary."
     },
     {

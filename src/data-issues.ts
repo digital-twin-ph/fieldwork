@@ -66,3 +66,21 @@ export function tableIssues(
   }
   return [...fromFindings,...profiled];
 }
+
+/** HOW MANY RECORDS A SET OF ISSUES TOUCHES (experiment 207, 2026-11-12): the size of the union of their records, so a
+ *  record lacking two columns is counted once. Null where an issue does not say which records, rather than a guess. */
+export function recordsAffected(issues:readonly {records?:number[]}[]):number|null{
+  if(issues.some(issue=>!issue.records))return null;
+  return new Set(issues.flatMap(issue=>issue.records!)).size;
+}
+/** THE WARNING'S HEADLINE about records the rules could not read, from the one counter above. One column: its count. Several:
+ *  the records touched, counted once each, and how many columns; or the columns alone where records are not known. */
+export function unreadHeadline(issues:readonly {field:string; count:number; of:number; records?:number[]}[]):string{
+  if(!issues.length)return '';
+  const columns=new Set(issues.map(issue=>issue.field)),of=issues[0]!.of;
+  if(columns.size===1)return `${recordsAffected(issues)??issues[0]!.count} of ${of} records the rules could not read`;
+  const touched=recordsAffected(issues);
+  if(touched!==null&&touched>of)throw new Error(`${touched} records counted of ${of}: a count of records cannot exceed them.`);
+  return touched===null?`${columns.size} columns the rules could not read in full`
+    :`${touched} of ${of} records the rules could not read in full, in ${columns.size} columns`;
+}

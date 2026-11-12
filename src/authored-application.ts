@@ -171,7 +171,9 @@ export function readValue(raw:Scalar|null|undefined,kind:FieldBinding['kind']):V
  *  that I can then read and close."* A run that quietly bands a third of its records Unrecorded
  *  has answered the question it was asked and hidden the thing worth knowing. */
 /** `absent`: no record carries the column at all (7-1-7's response date on MERS, 2026-11-12), not a value left out. */
-export interface DataIssue {field:string; why:'missing'|'unreadable'|'absent'; count:number; of:number; says:string}
+export interface DataIssue {field:string; why:'missing'|'unreadable'|'absent'; count:number; of:number; says:string;
+  /** WHICH RECORDS, by position (experiment 207): a count across issues is the size of their union, never a sum. */
+  records?:number[]}
 export function authoredDataIssues(input:PointCollection|DataTable,bindings:FieldBinding[]):DataIssue[]{
   const subjects=authoredSubjects(input);
   const issues:DataIssue[]=[];
@@ -179,19 +181,20 @@ export function authoredDataIssues(input:PointCollection|DataTable,bindings:Fiel
     const named=binding.label||binding.attribute;
     // A COLUMN THE RECORDS DO NOT HAVE is one finding about the data, not a missing value in every record.
     if(subjects.length&&!subjects.some(record=>Object.hasOwn(record.properties??{},binding.attribute))){
-      issues.push({field:binding.attribute,why:'absent',count:subjects.length,of:subjects.length,
+      issues.push({field:binding.attribute,why:'absent',count:subjects.length,of:subjects.length,records:subjects.map((_,i)=>i),
         says:`These records have no column ${binding.attribute}, so none has a value for ${named}.`});
       continue;
     }
     const readings=subjects.map(record=>readValue(record.properties?.[binding.attribute],binding.kind));
-    const missing=readings.filter(r=>!r.known&&r.why==='missing').length;
+    const missingAt=readings.flatMap((r,i)=>!r.known&&r.why==='missing'?[i]:[]),missing=missingAt.length;
+    const unreadableAt=readings.flatMap((r,i)=>!r.known&&r.why==='unreadable'?[i]:[]);
     const unreadable=readings.filter(r=>!r.known&&r.why==='unreadable');
-    if(missing)issues.push({field:binding.attribute,why:'missing',count:missing,of:subjects.length,
+    if(missing)issues.push({field:binding.attribute,why:'missing',count:missing,of:subjects.length,records:missingAt,
       says:`${missing} of ${subjects.length} records have no value for ${named}. The rules were told it is `
         +`not recorded, so whatever they conclude for those records is a conclusion about an absence.`});
     if(unreadable.length){
       const examples=[...new Set(unreadable.map(r=>(r as {saw:string}).saw))].slice(0,3);
-      issues.push({field:binding.attribute,why:'unreadable',count:unreadable.length,of:subjects.length,
+      issues.push({field:binding.attribute,why:'unreadable',count:unreadable.length,of:subjects.length,records:unreadableAt,
         says:`${unreadable.length} of ${subjects.length} records carry a value for ${named} that is not a number `
           +`(${examples.map(e=>`"${e}"`).join(', ')}${examples.length<unreadable.length?', and others':''}). `
           +`They were read as not recorded, which is the same answer this step gives for a value nobody `

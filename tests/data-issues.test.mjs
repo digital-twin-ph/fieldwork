@@ -46,3 +46,55 @@ test('a column no record carries is one finding, Field missing, not a missing va
   assert.deepEqual(issues.map(i=>[i.field,i.why,i.count,i.of]),[['dt_onset','missing',1,3],['early_response_date','absent',3,3]]);
   assert.match(issues[1].says,/no column early_response_date/);
 });
+
+/** NO COUNT OF RECORDS EXCEEDS THE RECORDS (2026-11-12). MERS's warning read "189 records the rules could not read" of
+ *  162: 27 cases with no onset added to 162 with no response date. Prevented three ways, each tested here. */
+test('records touched by several issues are counted once: MERS, 27 without onset and all 162 without a response date',async()=>{
+  const {unreadHeadline,recordsAffected}=await import('../build/data-issues.js');
+  const all=Array.from({length:162},(_,i)=>i);
+  const issues=[{field:'dt_onset',count:27,of:162,records:all.slice(0,27)},{field:'early_response_date',count:162,of:162,records:all}];
+  assert.equal(recordsAffected(issues),162);
+  assert.equal(unreadHeadline(issues),'162 of 162 records the rules could not read in full, in 2 columns');
+  assert.equal(unreadHeadline(issues.slice(0,1)),'27 of 162 records the rules could not read');
+  // Two columns missing on overlapping records: 3 and 2 records, 1 in both, are 4 records.
+  assert.equal(recordsAffected([{records:[0,1,2]},{records:[2,3]}]),4);
+  assert.throws(()=>unreadHeadline([{field:'a',count:2,of:2,records:[0,1]},{field:'b',count:2,of:2,records:[2,3]}]),/cannot exceed/);
+});
+
+test('a receipt claiming more records than it considered is refused by the shapes',async()=>{
+  const {Store}=await import('n3');
+  const {validateGraph}=await import('../scripts/validate-ontology.mjs');
+  const n3=d=>new Store(new Parser().parse(issueFacts('<urn:fieldwork:run:r:ruleset:s>','<urn:fieldwork:run:r:output:list>','urn:fieldwork:run:r:ruleset:s',
+    [{kind:'ValueAbsent',column:'dt_onset',count:d,of:162,says:'x'}])));
+  assert.equal((await validateGraph(n3(27))).conforms,true);
+  assert.equal((await validateGraph(n3(189))).conforms,false,'189 of 162 is refused');
+});
+
+test('every built-in example: no data issue in any receipt claims more records than it considered',async()=>{
+  const {EXAMPLE_TEMPLATES}=await import('../build/example-templates.js');
+  const {executeWorkflow,validateWorkflow}=await import('../build/core.js');
+  const FW='urn:fieldwork:';let checked=0,issues=0;const skipped=[];
+  const {readFileSync,existsSync}=await import('node:fs');const {gunzipSync}=await import('node:zlib');
+  const workflows=Object.entries(EXAMPLE_TEMPLATES).map(([key,make])=>[key,make()]);
+  // And MERS's own project, where the count went wrong, from the example repository beside this one.
+  const mers=new URL('../../example-2015-mers-korea/fieldwork-project.json.gz',import.meta.url);
+  if(existsSync(mers))for(const w of JSON.parse(gunzipSync(readFileSync(mers)).toString()).workflows)workflows.push(['mers: '+w.document.name,w.document]);
+  for(const [key,w] of workflows){
+    // Each study area is ready, as the reasoner would say of a drawn one.
+    const ready=w.nodes.filter(n=>n.type==='study_area').map(n=>({subject:'urn:fieldwork:area:'+n.id,predicate:'urn:fieldwork:readyForSpatialAnalysis',object:'true'}));
+    let run;try{run=await executeWorkflow(validateWorkflow(w),async()=>ready);}catch(e){skipped.push(key);continue;}
+    checked++;
+    for(const r of run.receipts){
+      const q=new Parser().parse(r.facts??'');
+      for(const s of new Set(q.filter(x=>x.predicate.value===FW+'affectedRecordCount').map(x=>x.subject.value))){
+        const n=Number(q.find(x=>x.subject.value===s&&x.predicate.value===FW+'affectedRecordCount').object.value);
+        const of=q.find(x=>x.subject.value===s&&x.predicate.value===FW+'consideredRecordCount');
+        if(of){issues++;assert.ok(n<=Number(of.object.value),`${key}, ${r.nodeId}: ${n} of ${of.object.value}`);}
+      }
+    }
+  }
+  // Said, not hidden: which could not run here. On 2026-11-12, the blank canvas (empty) and the 1824 sheet (its image is
+  // chosen by the learner).
+  console.log(`checked ${checked} examples, ${issues} counted issues; could not run here: ${skipped.join(', ')||'none'}`);
+  assert.ok(checked>=8,`only ${checked} ran`);
+});

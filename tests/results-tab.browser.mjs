@@ -28,7 +28,7 @@ test('project, workflow, results, N3 and notes are five tabs, and only one is on
   // how many outputs are waiting -- read from the run rather than announced.
   await expect(page.locator('#workflow-view')).toBeVisible();
   await expect(page.locator('.results-panel')).toBeHidden();
-  await expect(page.locator('#result-count')).toHaveText('3');
+  await expect(page.locator('#result-count')).toHaveText('4');
 
   const viewport=page.viewportSize().height;
   const whole=async locator=>(await locator.boundingBox()).height;

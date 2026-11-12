@@ -48,7 +48,7 @@ import {keyNoun,openRelateConfig,relateDraftOf,applyRelateDraft,relateSentence} 
 import {openSelectConfig,selectDraftOf,applySelectDraft,selectSentence} from './select-ui.js';
 import {openGroupConfig,groupDraftOf,applyGroupDraft,groupSentence} from './group-ui.js';
 import {openConfigDialog} from './config-dialog.js';
-import {ISSUE_LABEL} from './data-issues.js';
+import {ISSUE_LABEL,unreadHeadline} from './data-issues.js';
 import {openFacilitiesConfig,facilitiesDraftOf,applyFacilitiesDraft,facilitiesSentence} from './facilities-ui.js';
 import {fetchRegister,registerLayer,type RegisterEntry} from './facility-matching.js';
 import facilityRegistersJson from '../widgets/facility-registers.json';
@@ -1406,9 +1406,8 @@ function alertHeadline(alert:NonNullable<ReturnType<typeof nodeAlert>>){
   const parts=[];
   // ONE COLUMN IN RECORDS, SEVERAL IN COLUMNS. Summing records across columns counted a record once per column it
   // lacked: MERS's 162 cases were "189 records the rules could not read" (2026-11-12).
-  const issues=alert.dataIssues??[],columns=new Set(issues.map(issue=>issue.field));
-  if(columns.size===1)parts.push(`${issues.reduce((n,issue)=>n+issue.count,0)} of ${issues[0]!.of} records the rules could not read`);
-  else if(columns.size)parts.push(`${columns.size} columns the rules could not read in full`);
+  const unread=unreadHeadline(alert.dataIssues??[]);
+  if(unread)parts.push(unread);
   if(alert.gaps?.length)parts.push(`${alert.gaps.length} undeclared`);
   if(alert.unconnected.length)parts.push(`${alert.unconnected.length} with no result`);
   if(alert.offNetwork.length)parts.push(`${alert.offNetwork.length} routed off-network`);
@@ -2722,7 +2721,9 @@ function openSeriesConfig(nodeId:string){
           .map(([v,t])=>`<option value="${v}" ${d.period===v?'selected':''}>${t}</option>`).join('')+'</select></div>'
         +(d.source==='table'?'':pick('series-weight','Cases per record (optional)','weightField','',true));
       return {settings,preview:`<p class="description">${esc(seriesSentence(d))}</p>`,
-        ...(d.dateField?{}:{blocked:true,message:{tone:'warning' as const,text:'Choose the date column.'}})};
+        // SAID, NOT BLOCKED: the input is chosen before it is connected, and the columns come with the connection; the
+        // run refuses a missing date, as it did before (the Sierra Leone manual, 2026-11-12).
+        ...(d.dateField?{}:{message:{tone:'warning' as const,text:'Choose the date column, once the records are connected.'}})};
     },
     wire:(root,d,redraw)=>{
       root.querySelector<HTMLSelectElement>('#series-input')?.addEventListener('change',e=>{

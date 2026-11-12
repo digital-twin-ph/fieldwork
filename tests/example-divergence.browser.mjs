@@ -4,8 +4,8 @@ import {test,expect} from './fixtures.mjs';
 // the Reset Layout button seems to be stale content." ... "And I am still seeing this text."
 test('a canvas built on an example stops being described as that example',async({page})=>{
   await page.goto('/?example=blank');
-  // As published, the recipe is true of it and is said.
-  await expect(page.locator('#example-note')).toContainText('Experiment 01');
+  // No recipe is printed for any example since 2026-11-11 (commentary belongs in design documents, not the UI).
+  await expect(page.locator('#example-note')).toHaveText('');
 
   // Build something that is not Experiment 01.
   await page.locator('[data-view="workflow"]').click();

@@ -1441,13 +1441,8 @@ function render(){
   // NO CAPTION BORROWED FROM ANOTHER EXAMPLE: the heat example's were every workflow's fallback until 2026-11-11, and
   // the heat and Old Naledi examples have retired (docs/audits/old-naledi-audit.md). A workflow says only its own name.
   if(currentView==='project')renderProjectView();$('#project-title').textContent=workflow.name||'Untitled workflow';$('#project-description').textContent='';$('#example-note').textContent='';$('#canvas-example').textContent=(workflow.name||'This workflow').toUpperCase();$('#footer-context').textContent='';
-  // SAID ONLY WHILE IT IS STILL TRUE. The four captions below are set from the example key; the
-  // block after them withdraws the two that describe a RECIPE once the canvas no longer matches
-  // the published example. The project description and the footer stay: they describe the kind of
-  // work, not the steps, and remain true of a canvas built on top of one.
-  if(exampleKey(workflow)==='blank'){$('#project-description').textContent='Define a study area and inspect its semantic representation.';$('#example-note').textContent='Experiment 01 · draw → inspect facts → run the rule';$('#canvas-example').textContent='STUDY AREA · EXPERIMENT 01';$('#footer-context').textContent='User-defined study area · CRS84 · local reasoning';}
-  if(exampleKey(workflow).startsWith('snow-')){$('#project-description').textContent='Historical pump and death-location tables; explicit metric catchment computations and source evidence.';$('#example-note').textContent='250 locations / 489 deaths; network is a modern OSM snapshot, not 1854 streets';$('#canvas-example').textContent='JOHN SNOW / CATCHMENT WORKED EXAMPLE';$('#footer-context').textContent='CRS84 inputs and outputs / UTM computation / method parameters in evidence';}
-  if(exampleKey(workflow)==='snow-geoprivacy'){$('#project-description').textContent='Compare private source points with moved points and H3 cell aggregates.';$('#example-note').textContent='Before views and workflow exports contain source coordinates; after views are educational transformations, not privacy guarantees';$('#canvas-example').textContent='JOHN SNOW / GEOPRIVACY EXPERIMENT';$('#footer-context').textContent='CRS84 · seeded donut · H3 aggregation · hide and map encryption remain TODO';}
+  // Captions per example were removed on 2026-11-11 (the practitioner: commentary about design belongs in design
+  // documents, not the UI). A workflow changed from its example still says so, below: that is status.
   // The practitioner met this twice before it was fixed, which is why it is withdrawn here rather
   // than corrected in eight branches: one place that can be read, instead of a rule repeated.
   if(divergedFromExample(exampleKey(workflow))){
@@ -3211,7 +3206,7 @@ function workflowSpanKm():number|undefined{
 
 function renderInspector(){
   if(selected?.startsWith('result:')){renderEvidence(selected.slice(7));return;}
-  if(exampleKey(workflow)==='blank'&&!workflow.nodes.some(n=>n.id===selected)){$('#inspector-content').innerHTML='<div class="inspector-body"><span class="inspector-section">Step 1 of 2</span><h2>Define the study area</h2><p class="description">Add Study area, then select the node to draw a bounding box or polygon on an online map.</p><div class="rule-preview">Predict what the selection will produce, inspect the N3 facts, then run the readiness rule.</div><p class="muted">Your other worked examples remain saved separately.</p></div>';return;}
+  if(exampleKey(workflow)==='blank'&&!workflow.nodes.some(n=>n.id===selected)){$('#inspector-content').innerHTML='<div class="inspector-body"><p class="description">Add a Study area, then select it to draw the area on the map.</p></div';return;}
   const n=workflow.nodes.find(n=>n.id===selected);if(!n){$('#inspector-content').innerHTML=`<div class="inspector-body"><p class="description">Choose a node to inspect its settings, or select a result to inspect its evidence.</p></div>`;return;}
   // ONE SHAPE FOR EVERY PANEL: title, one line of what it does, the way in for a learner, then the
   // controls. The two links used to sit after whatever alerts a run had raised, so their position

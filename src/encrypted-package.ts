@@ -2,7 +2,9 @@ import {ZipReader,ZipWriter,BlobReader,BlobWriter,Uint8ArrayReader} from '@zip.j
 import type {FileEntry} from '@zip.js/zip.js';
 import type {Workflow} from './types.js';
 import {referencedPDFs,pdfDigest,MAX_BUNDLE_BYTES,MAX_PDF_BYTES,MAX_WORKFLOW_PDF_BYTES} from './evidence.js';
-import {projectFiles,verifyProjectFile} from './project-files.js';
+import {rasterFileByteLimit} from './raster-limits.js';
+import {projectFiles,verifyProjectFile,fileByteLimit} from './project-files.js';
+import type {ProjectFile} from './project-files.js';
 export {contentHash} from './project-files.js';
 import {contentHash} from './project-files.js';
 import {isRecord} from './guards.js';
@@ -86,9 +88,11 @@ export async function readEncryptedPackage(blob:Blob,password:string,validate:(v
       requireValue(entries.size<102&&!entry.directory&&!entries.has(entry.filename),'Unexpected or duplicate package entry.');
       requireValue(entry.filename==='manifest.json'||entry.filename==='workflow.json'||entry.filename==='workflow.json.gz'||/^assets\/[0-9]{4}\.bin$/.test(entry.filename),'Unexpected package path.');
       requireValue(entry.encrypted&&entry.extraFieldAES?.strength===3&&entry.extraFieldAES.vendorVersion===2&&entry.compressionMethod===0,'Package requires AES-256 AE-2 encrypted, uncompressed entries.');
-      const cap=entry.filename==='manifest.json'?MANIFEST_LIMIT:entry.filename.startsWith('workflow.json')?WORKFLOW_IMPORT_LIMIT:MAX_PDF_BYTES;
+      // An asset's kind is in the manifest, read after this scan, so an asset entry is bounded here by the larger of the two
+      // kinds' limits and by its own kind's below. The total is the bundle's, which every way of reading work back in shares.
+      const cap=entry.filename==='manifest.json'?MANIFEST_LIMIT:entry.filename.startsWith('workflow.json')?WORKFLOW_IMPORT_LIMIT:Math.max(MAX_PDF_BYTES,rasterFileByteLimit());
       requireValue(Number.isSafeInteger(entry.uncompressedSize)&&entry.uncompressedSize<=cap,'Package entry exceeds its size limit.');
-      advertised+=entry.uncompressedSize;requireValue(advertised<=MANIFEST_LIMIT+WORKFLOW_IMPORT_LIMIT+MAX_WORKFLOW_PDF_BYTES,'Package contents exceed the total limit.');entries.set(entry.filename,entry);
+      advertised+=entry.uncompressedSize;requireValue(advertised<=MAX_BUNDLE_BYTES,'Package contents exceed the total limit.');entries.set(entry.filename,entry);
     }
     async function extract(path:string,limit:number):Promise<Uint8Array<ArrayBuffer>>{
       const entry=entries.get(path);requireValue(entry,'Missing package entry.');let size=0;const chunks:Uint8Array[]=[];
@@ -104,7 +108,7 @@ export async function readEncryptedPackage(blob:Blob,password:string,validate:(v
     requireValue((compressed?workflowDescriptor.mediaType==='application/gzip':workflowDescriptor.mediaType==='application/json')
       &&(workflowDescriptor.path==='workflow.json'||compressed)&&workflowDescriptor.bytes<=WORKFLOW_IMPORT_LIMIT,'Invalid workflow descriptor.');
     const paths=new Set(['manifest.json',workflowDescriptor.path]),hashes=new Set<string>();let pdfBytes=0;
-    for(const asset of assets){requireValue(/^assets\/[0-9]{4}\.bin$/.test(asset.path)&&!paths.has(asset.path)&&!hashes.has(asset.sha256)&&(asset.mediaType==='application/pdf'||manifest.schema==='fieldwork/encrypted-project/2'&&asset.mediaType==='image/tiff')&&asset.bytes<=MAX_PDF_BYTES,'Invalid PDF asset descriptor.');paths.add(asset.path);hashes.add(asset.sha256);pdfBytes+=asset.bytes;}
+    for(const asset of assets){requireValue(/^assets\/[0-9]{4}\.bin$/.test(asset.path)&&!paths.has(asset.path)&&!hashes.has(asset.sha256)&&(asset.mediaType==='application/pdf'||manifest.schema==='fieldwork/encrypted-project/2'&&asset.mediaType==='image/tiff')&&asset.bytes<=fileByteLimit(asset.mediaType as ProjectFile['mediaType']),'Invalid PDF asset descriptor.');paths.add(asset.path);hashes.add(asset.sha256);if(asset.mediaType==='application/pdf')pdfBytes+=asset.bytes;}
     requireValue(pdfBytes<=MAX_WORKFLOW_PDF_BYTES&&paths.size===entries.size&&[...paths].every(path=>entries.has(path)),'Package inventory does not match its manifest.');
     async function verified(item:Descriptor){const bytes=await extract(item.path,item.bytes);requireValue(bytes.length===item.bytes&&await contentHash(bytes)===item.sha256,'Package content digest mismatch.');return bytes;}
     // Decompressed only after its hash is verified, and bounded afterwards: a small entry that

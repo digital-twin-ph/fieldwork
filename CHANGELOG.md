@@ -15,10 +15,12 @@ shown in a local build is not a claim that it has been published.
   against WorldPop's file for Botswana, two outlines of one country that differ at the border, read "Boundary extends
   beyond available raster coverage". The step now keeps the part the raster covers and says how far past which edge the
   area reaches; the run records it as a data issue, *Area beyond the raster*. Raster input and Clip raster patched.
-- **Raster caps that were never measured are gone.** A kept raster window was limited to 5 MB, a figure from when
-  projects lived in 5 MB of local storage, which refused a province of Botswana at 100 m long before the measured cell
-  cap could. The file limit now follows the measured cell cap, windows are kept at the source's own precision (half the
-  bytes for WorldPop), and the 64 MB decoding budget is the measured 512 MB. Both are declared in the cap register.
+- **A whole country's raster fits.** Botswana at 100 m, 123.2 million cells from WorldPop, was read, kept, stored,
+  carried in an encrypted workflow, clipped and drawn in Chromium, and the cell cap is now that measurement (it was 16.8
+  million, a province). Getting there removed three limits nobody had measured, a 5 MB file, a 64 MB decoding budget and
+  10 MB of rasters and PDFs together, and two obstacles: the GeoTIFF library took 32 s to write the window, now 0.2 s,
+  and the browser stores no single value over 133 MB, so a large file is stored in parts. A workflow file carries at most
+  about 177 MB of files, measured; past that it says to use *This workflow, encrypted*.
 - **Chart draws a line**, along the categories in their order. Chart 0.15.0.
 - **Every recorded source in a transmission tree.** A case recorded with several sources sits under the first, and each
   other recorded link is drawn dashed and counted. MERS's second workflow now draws who infected whom: SK_39 records

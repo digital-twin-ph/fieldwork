@@ -1,4 +1,4 @@
-import {fromBlob,fromUrl,writeArrayBuffer} from 'geotiff';
+import {fromBlob,fromUrl} from 'geotiff';
 /** A GEOTIFF FROM THIS DEVICE OR AT A URL (experiment 198). A URL is read by HTTP range: only the header and the window's
  *  blocks are fetched, so a published grid of tens of megabytes yields a window of a few kilobytes. */
 export type RasterSource=Blob|string;
@@ -22,11 +22,9 @@ export {validateClipOptions};
  *  Nothing degraded and nothing failed at any size the file could offer. The old number was
  *  about four hundred and seventy times below what a browser does comfortably.
  *
- *  16,777,216 is 4,096 by 4,096 and 67 MB of float32. It is set here rather than higher because
- *  what was measured is the READ: Ituri at 100 m is about 3,700 by 3,900 = 14.4M cells, so this
- *  covers a province with room, and the costs beyond the read -- keeping a grid in the payload
- *  store, carrying it through an export, drawing it -- are not yet measured. That measurement is
- *  this cap's lift test, not a reason to leave a province refused in the meantime. */
+ *  16,777,216 from then until 2026-11-12, when the costs beyond the read were measured on the same file: kept, stored,
+ *  packaged, clipped and drawn whole. Two obstacles fell on the way, the GeoTIFF library's 32-second writer and IndexedDB's
+ *  133 MB value, and the cap became the country. See src/raster-limits.ts and widgets/caps.json. */
 export {MAX_RASTER_CELLS,MAX_DECODE_BYTES,rasterFileByteLimit} from './raster-limits.js';
 import {MAX_RASTER_CELLS,MAX_DECODE_BYTES} from './raster-limits.js';
 export interface RasterMetadata {width:number;height:number;bands:number;bounds:Bounds;origin:[number,number];resolution:[number,number];crs:'EPSG:4326';rasterType:'PixelIsArea';
@@ -68,7 +66,7 @@ export function rasterWindow(metadata:RasterMetadata,boundary:Boundary,paddingPi
   check(east>left&&west<right&&north>bottom&&south<top,'The study area and this raster do not overlap: check that the file covers the area.');
   const [x,y]=metadata.origin,[dx,dy]=metadata.resolution;
   const window:[number,number,number,number]=[Math.max(0,Math.floor((west-x)/dx)),Math.max(0,Math.floor((north-y)/dy)),Math.min(metadata.width,Math.ceil((east-x)/dx)),Math.min(metadata.height,Math.ceil((south-y)/dy))];
-  const width=window[2]-window[0],height=window[3]-window[1];check(width>0&&height>0,'Study area does not intersect any raster cells.');check(width*height<=MAX_RASTER_CELLS,'Raster window exceeds 262,144 cells. Use a smaller study area.');
+  const width=window[2]-window[0],height=window[3]-window[1];check(width>0&&height>0,'Study area does not intersect any raster cells.');check(width*height<=MAX_RASTER_CELLS,`This window is ${(width*height).toLocaleString('en')} cells, past the ${MAX_RASTER_CELLS.toLocaleString('en')} a step keeps. Use a smaller study area.`);
   const blocksX=Math.floor((window[2]-1)/metadata.blockWidth)-Math.floor(window[0]/metadata.blockWidth)+1,blocksY=Math.floor((window[3]-1)/metadata.blockHeight)-Math.floor(window[1]/metadata.blockHeight)+1;
   check(blocksX*blocksY*metadata.blockWidth*metadata.blockHeight*metadata.bytesPerPixel<=MAX_DECODE_BYTES,'Intersecting TIFF blocks exceed the 512 MB decoding budget. Retile this raster before importing.');return window;
 }
@@ -96,10 +94,52 @@ export function encodeRaster(grid:Pick<RasterGrid,'metadata'|'values'> & Partial
   const m=grid.metadata;check(grid.values.length===m.width*m.height&&grid.values.length<=MAX_RASTER_CELLS,'Invalid retained raster dimensions.');
   // AT THE SOURCE'S OWN PRECISION: 4 bytes a cell for a 4-byte source such as WorldPop, 8 where the source holds 8. Writing
   // every grid as 8 bytes doubled what a window cost and claimed a precision the source does not have (2026-11-12).
-  const wide=!(m.bytesPerPixel>0&&m.bytesPerPixel<=4);
-  const bytes=new Uint8Array(writeArrayBuffer(wide?new Float64Array(grid.values.map(v=>v===null?NaN:v)):new Float32Array(grid.values.map(v=>v===null?NaN:v)),{width:m.width,height:m.height,BitsPerSample:[wide?64:32],SampleFormat:[3],SamplesPerPixel:[1],PhotometricInterpretation:1,ModelPixelScale:[m.resolution[0],-m.resolution[1],0],ModelTiepoint:[0,0,0,...m.origin,0],GeographicTypeGeoKey:4326,GTModelTypeGeoKey:2,GTRasterTypeGeoKey:1,GDAL_NODATA:'nan',...{ImageDescription:'Fieldwork derived raster; source metadata and provenance are retained in the project.'}}));
-  if(!grid.asset)return bytes;
-  return appendRasterDescription(bytes,JSON.stringify({schema:'fieldwork/raster-provenance/1',embeddedBy:'Fieldwork',sourceMetadataOrigin:'Workflow-author entry, separate from original TIFF tags',originalRasterMetadata:grid.asset.source.metadata,source:grid.asset.provenance||{},originalFile:grid.asset.source.filename,retainedInputSHA256:grid.asset.sha256,operation:grid.mask?grid.mask.method+' polygon clip':'native window',boundary:grid.boundary,mask:grid.mask}));
+  const wide=!(m.bytesPerPixel>0&&m.bytesPerPixel<=4),cells=wide?new Float64Array(grid.values.length):new Float32Array(grid.values.length);
+  for(let i=0;i<cells.length;i++){const v=grid.values[i];cells[i]=v===null||v===undefined?NaN:v;}
+  const description=!grid.asset?'Fieldwork derived raster; source metadata and provenance are retained in the project.'
+    :JSON.stringify({schema:'fieldwork/raster-provenance/1',embeddedBy:'Fieldwork',sourceMetadataOrigin:'Workflow-author entry, separate from original TIFF tags',originalRasterMetadata:grid.asset.source.metadata,source:grid.asset.provenance||{},originalFile:grid.asset.source.filename,retainedInputSHA256:grid.asset.sha256,operation:grid.mask?grid.mask.method+' polygon clip':'native window',boundary:grid.boundary,mask:grid.mask});
+  return writeGeoTiff(cells,m.width,m.height,m.origin,m.resolution,description);
+}
+
+/** A SINGLE-BAND FLOAT GEOTIFF, WRITTEN DIRECTLY: classic little-endian TIFF, uncompressed strips of about 1 MiB, WGS84
+ *  (EPSG:4326) and PixelIsArea, NoData NaN, the description in place. GeoTIFF.js's writer did the same through per-value
+ *  arrays and took 2.7 s for 16.8 million cells and 32 s for Botswana's 123 million, all of it blocking the page
+ *  (measured 2026-11-12); this copies the cells once. Read back by the same reader as every other raster. */
+export function writeGeoTiff(cells:Float32Array|Float64Array,width:number,height:number,origin:readonly [number,number],resolution:readonly [number,number],description:string):Uint8Array<ArrayBuffer>{
+  check(new Uint8Array(new Uint16Array([1]).buffer)[0]===1,'Raster encoding expects a little-endian platform.');
+  check(cells.length===width*height,'Invalid retained raster dimensions.');
+  const ascii=description.replace(/[\u007f-\uffff]/g,c=>'\\u'+c.charCodeAt(0).toString(16).padStart(4,'0'))+'\0';
+  check(ascii.length<=60000,'Raster export metadata exceeds 60 KB. Shorten the source notes or export the project package.');
+  const bytesPerCell=cells.BYTES_PER_ELEMENT,rowBytes=width*bytesPerCell,rowsPerStrip=Math.max(1,Math.min(height,Math.floor((1<<20)/rowBytes))),strips=Math.ceil(height/rowsPerStrip);
+  const geoKeys=[1,1,0,3, 1024,0,1,2, 1025,0,1,1, 2048,0,1,4326],nodata='nan\0';
+  // [tag, type, count, inline value or the bytes to place after the directory]. Types: 2 ASCII, 3 SHORT, 4 LONG, 12 DOUBLE.
+  type Entry=[number,number,number,number|Uint8Array];
+  const doubles=(values:number[])=>new Uint8Array(new Float64Array(values).buffer),shorts=(values:number[])=>new Uint8Array(new Uint16Array(values).buffer);
+  const longs=(values:number[])=>new Uint8Array(new Uint32Array(values).buffer);
+  const stripCounts=Array.from({length:strips},(_,i)=>Math.min(rowsPerStrip,height-i*rowsPerStrip)*rowBytes);
+  const entries:Entry[]=[[256,4,1,width],[257,4,1,height],[258,3,1,bytesPerCell*8],[259,3,1,1],[262,3,1,1],
+    [270,2,ascii.length,new TextEncoder().encode(ascii)],[273,4,strips,0],[277,3,1,1],[278,4,1,rowsPerStrip],
+    [279,4,strips,strips===1?stripCounts[0]!:longs(stripCounts)],[284,3,1,1],[339,3,1,3],
+    [33550,12,3,doubles([resolution[0],-resolution[1],0])],[33922,12,6,doubles([0,0,0,origin[0],origin[1],0])],
+    [34735,3,geoKeys.length,shorts(geoKeys)],[42113,2,nodata.length,new TextEncoder().encode(nodata)]];
+  const directory=8,afterDirectory=directory+2+entries.length*12+4;
+  // Out-of-line values after the directory, each on an even offset; the strip offsets last, once the cells' place is known.
+  let at=afterDirectory;const placed=new Map<number,number>();
+  for(const [tag,,,value] of entries)if(value instanceof Uint8Array&&value.length>4){placed.set(tag,at);at+=value.length+(value.length%2);}
+  const offsetsAt=strips>1?at:0;if(strips>1)at+=strips*4;
+  const cellsAt=at+((8-at%8)%8),total=cellsAt+cells.byteLength,out=new Uint8Array(total),view=new DataView(out.buffer);
+  view.setUint16(0,0x4949,false);view.setUint16(2,42,true);view.setUint32(4,directory,true);view.setUint16(directory,entries.length,true);
+  const stripOffsets=Array.from({length:strips},(_,i)=>cellsAt+i*rowsPerStrip*rowBytes);
+  entries.forEach(([tag,type,count,value],i)=>{
+    const entry=directory+2+i*12;view.setUint16(entry,tag,true);view.setUint16(entry+2,type,true);view.setUint32(entry+4,count,true);
+    if(tag===273){if(strips===1)view.setUint32(entry+8,stripOffsets[0]!,true);else{view.setUint32(entry+8,offsetsAt,true);out.set(longs(stripOffsets),offsetsAt);}return;}
+    if(typeof value==='number'){if(type===3)view.setUint16(entry+8,value,true);else view.setUint32(entry+8,value,true);return;}
+    if(value.length<=4){out.set(value,entry+8);return;}
+    view.setUint32(entry+8,placed.get(tag)!,true);out.set(value,placed.get(tag)!);
+  });
+  view.setUint32(directory+2+entries.length*12,0,true);
+  out.set(new Uint8Array(cells.buffer,cells.byteOffset,cells.byteLength),cellsAt);
+  return out;
 }
 export function clipRaster(grid:RasterGrid,boundary:Boundary,options:RasterClipOptions={}):RasterGrid{
   validateClipOptions(options);const method=options.method||'cell-center',marginPixels=options.marginPixels||0;
@@ -110,11 +150,3 @@ export function clipRaster(grid:RasterGrid,boundary:Boundary,options:RasterClipO
   return {...structuredClone(grid),metadata:m,values,boundary:structuredClone(boundary),mask:{method,marginPixels,inside,valid,outside}};
 }
 
-/** GeoTIFF.js 3.0.5 reserves a fixed IFD buffer. Append large ASCII metadata without moving pixels or other tags. */
-function appendRasterDescription(bytes:Uint8Array<ArrayBuffer>,text:string):Uint8Array<ArrayBuffer>{
- const ascii=text.replace(/[\u007f-\uffff]/g,c=>'\\u'+c.charCodeAt(0).toString(16).padStart(4,'0'))+'\0';check(ascii.length<=60000,'Raster export metadata exceeds 60 KB. Shorten the source notes or export the project package.');
- const offset=bytes.length+(bytes.length%2),result=new Uint8Array(offset+ascii.length);result.set(bytes);result.set(new TextEncoder().encode(ascii),offset);
- const view=new DataView(result.buffer),little=view.getUint16(0,false)===0x4949;check(view.getUint16(2,little)===42,'Expected classic TIFF writer output.');const ifd=view.getUint32(4,little),count=view.getUint16(ifd,little);
- for(let i=0;i<count;i++){const entry=ifd+2+i*12;if(view.getUint16(entry,little)===270){check(view.getUint16(entry+2,little)===2,'Expected ASCII TIFF description.');view.setUint32(entry+4,ascii.length,little);view.setUint32(entry+8,offset,little);return result;}}
- throw new Error('TIFF description tag is missing.');
-}

@@ -1716,12 +1716,12 @@ fw:capValueInForce a owl:DatatypeProperty;
 <urn:fieldwork:cap:raster-window-cells> a fw:Cap;
   rdfs:label "raster-window-cells";
   fw:capKind "discovery";
-  fw:capValue 16777216;
+  fw:capValue 123200000;
   fw:capUnit "cells";
   fw:capBasis "measured";
-  fw:capEvidence "Measured 2026-10-22 in a Chromium tab against WorldPop Botswana 2025 at 100 m, a real 11,248 by 10,953 LZW GeoTIFF: 262,144 cells read in 77 ms, 14.4M in 1,217 ms, 36M in 2,625 ms, and the whole 123.2M-cell raster in 8,382 ms with every value touched and held live. Nothing degraded at any size. The previous value, 262,144, carried no evidence at all and was about 470 times below what a browser does comfortably; it would have refused a population denominator for Ituri, which needs about 14.4M cells.";
-  fw:capRefuses "A study area whose window on a raster is larger than about 4,096 by 4,096 cells. A province at 100 m fits; a country does not.";
-  fw:capLiftTest "The costs beyond the read: keeping a grid of this size in the payload store, carrying it through a project export, and drawing it. Only the read is measured, so only the read is claimed.".
+  fw:capEvidence "Measured 2026-11-12 in a Chromium tab at its default heap, against WorldPop Botswana 2025 at 100 m (11,248 by 10,953 cells, 16,232,187 bytes from data.worldpop.org): the whole 123,199,344-cell raster read in 5.7 s, kept as a 493 MB window in 0.2 s, stored in 0.16 s and read back in 0.43 s, carried through an encrypted workflow and back in 6.5 s, clipped in 7.5 s and drawn in 1.4 s, with the tab's heap peaking at about 3 GB. Two obstacles were removed to get there: the GeoTIFF library's writer took 32 s on the page for the same window, and IndexedDB refuses one value over 133,169,152 bytes, so a large file is stored in parts. Before that, 2026-10-22 measured the read alone and set 16,777,216; before that, 262,144 carried no evidence.";
+  fw:capRefuses "A study area whose window on a raster holds more than 123.2 million cells: Botswana whole at 100 m fits; a larger country at 100 m does not.";
+  fw:capLiftTest "Measure a larger country's window the same way, in Chromium and WebKit. The encrypted workflow's 500 MB, the bundle limit, is the next ceiling at 4 bytes a cell; clipping (7.5 s) holds the page and would be the next to move to a worker. Measured outside the application's own dialogs, which were not run at this size.".
 <urn:fieldwork:cap:interactive-segments> a fw:Cap;
   rdfs:label "interactive-segments";
   fw:capKind "artefact";
@@ -1940,3 +1940,12 @@ fw:rowsAddedForMatches a owl:DatatypeProperty; rdfs:label "rows added for furthe
   fw:capEvidence "Measured 2026-10-22: Botswana's whole WorldPop 2025 raster, 123.2M cells of 4 bytes, 493 MB of blocks, read in 8,382 ms in a Chromium tab with every value touched. It replaced a bare 64 MB with no evidence.";
   fw:capRefuses "A read whose intersecting blocks hold more than 512 MB.";
   fw:capLiftTest "Read a larger raster's window in a Chromium tab and record the time and the memory.".
+<urn:fieldwork:cap:workflow-file-attachment-chars> a fw:Cap;
+  rdfs:label "workflow-file-attachment-chars";
+  fw:capKind "artefact";
+  fw:capValue 236000000;
+  fw:capUnit "base64 characters";
+  fw:capBasis "measured";
+  fw:capEvidence "Measured 2026-11-12 in a Chromium tab at its default heap: a workflow file carrying a 134 MB raster (178.9M characters) was written in 2.1 s and one of 177 MB (236.3M) in 2.8 s; one of 220 MB crashed the tab both times it was tried, as did one of 268 MB. The text is held several times over while it is written: the file in base64, the document, and its compression.";
+  fw:capRefuses "Nothing: a workflow whose files would be larger is backed up with “This workflow, encrypted”, which carries them as they are, and the message says so.";
+  fw:capLiftTest "Write the workflow file as a stream rather than one text, then measure again past 220 MB.".

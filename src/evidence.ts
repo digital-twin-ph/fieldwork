@@ -35,6 +35,10 @@ export const MAX_WORKFLOW_PDF_BYTES=10_000_000;
  *  answer is a backup that does not carry data which can be downloaded again; that is recorded
  *  as its own direction. */
 export const MAX_BUNDLE_BYTES=500_000_000;
+/** THE FILES A WORKFLOW FILE CARRIES, in base64 characters: measured 2026-11-12 in Chromium, a 177 MB raster (236.3M
+ *  characters) was written in 2.8 s and a 220 MB one crashed the tab, which holds the file's text several times over while
+ *  writing it. The encrypted workflow carries files as they are and is not held to this. See widgets/caps.json. */
+export const MAX_WORKFLOW_FILE_ATTACHMENT_CHARS=236_000_000;
 export const REFERENCE_ROLES={data:'Data source',method:'Method or processing step',assumption:'Assumption or parameter',context:'Background context'} as const;
 export type ReferenceRole=keyof typeof REFERENCE_ROLES;
 interface ReferenceMetadata {
@@ -90,8 +94,8 @@ export async function pdfDigest(bytes:Uint8Array<ArrayBuffer>):Promise<string> {
 export function encodeFile(bytes:Uint8Array):string {
   let binary='';for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.subarray(i,i+8192));return btoa(binary);
 }
-export function decodeFile(text:unknown):Uint8Array<ArrayBuffer> {
-  if(typeof text!=='string'||text.length>Math.ceil(MAX_PDF_BYTES/3)*4||text.length%4!==0||!/^[A-Za-z0-9+/]*={0,2}$/.test(text))throw new Error('Invalid or oversized PDF encoding.');
+export function decodeFile(text:unknown,limit:number=MAX_PDF_BYTES):Uint8Array<ArrayBuffer> {
+  if(typeof text!=='string'||text.length>Math.ceil(limit/3)*4||text.length%4!==0||!/^[A-Za-z0-9+/]*={0,2}$/.test(text))throw new Error('Invalid or oversized PDF encoding.');
   const binary=atob(text);return Uint8Array.from(binary,c=>c.charCodeAt(0));
 }
 

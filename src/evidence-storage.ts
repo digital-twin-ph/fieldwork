@@ -1,8 +1,8 @@
 import {withoutRemoteRows} from './remote-table.js';
 import type {Workflow} from './types.js';
 import type {EvidenceBundle,EvidenceFile,EvidenceReference} from './evidence.js';
-import {decodeFile,encodeFile,pdfDigest,referencedPDFs,MAX_PDF_BYTES} from './evidence.js';
-import {projectFiles,verifyProjectFile} from './project-files.js';
+import {decodeFile,encodeFile,pdfDigest,referencedPDFs,MAX_PDF_BYTES,MAX_WORKFLOW_FILE_ATTACHMENT_CHARS} from './evidence.js';
+import {projectFiles,verifyProjectFile,fileByteLimit} from './project-files.js';
 import type {ProjectFile} from './project-files.js';
 import {isRecord} from './guards.js';
 import {assertProjectManifest,syncProjectManifest} from './project-manifest.js';
@@ -29,6 +29,10 @@ export async function storePDFs(files:Map<string,Uint8Array<ArrayBuffer>>,refs?:
   await keepBytes(files);
 }
 /** Bytes by digest, already checked by the caller. Imported basemap tiles are the other user. */
+/** IN PARTS PAST 64 MiB. Measured 2026-11-12 in Chromium: IndexedDB refuses one value larger than 133,169,152 bytes
+ *  ("The serialized keys and/or value are too large"), which refused a 67-million-cell window long before memory or
+ *  time did. A larger file is kept as parts under `<digest>:part:<i>` and a record naming how many, in one transaction. */
+const STORED_PART_BYTES=64*1024*1024;
 export async function keepBytes(files:Map<string,Uint8Array<ArrayBuffer>>):Promise<void> {
   const db=await openDatabase();
   try{await new Promise<void>((resolve,reject)=>{
@@ -39,7 +43,13 @@ export async function keepBytes(files:Map<string,Uint8Array<ArrayBuffer>>):Promi
     // for a quota problem for as long as it was.
     tx.onabort=()=>reject(new Error(`Could not save the file locally: ${tx.error?`${tx.error.name}: ${tx.error.message}`:'the browser aborted the transaction without stating a reason'}. Your reference remains unsaved.`));
     tx.onerror=()=>{};
-    for(const [hash,bytes] of files)tx.objectStore(STORE).put(bytes,hash);
+    for(const [hash,bytes] of files){
+      const store=tx.objectStore(STORE);
+      if(bytes.length<=STORED_PART_BYTES){store.put(bytes,hash);continue;}
+      const parts=Math.ceil(bytes.length/STORED_PART_BYTES);
+      for(let i=0;i<parts;i++)store.put(bytes.slice(i*STORED_PART_BYTES,(i+1)*STORED_PART_BYTES),`${hash}:part:${i}`);
+      store.put({parts,bytes:bytes.length},hash);
+    }
   });}finally{db.close();}
 }
 /** Reads stored bytes. Accepts a Blob as well, because a database written by a version that
@@ -48,10 +58,17 @@ export async function keepBytes(files:Map<string,Uint8Array<ArrayBuffer>>):Promi
 export async function readPDF(hash:string):Promise<Uint8Array<ArrayBuffer>|null> {
   const db=await openDatabase();
   try{return await new Promise((resolve,reject)=>{
-    const tx=db.transaction(STORE,'readonly'),request=tx.objectStore(STORE).get(hash);
+    const tx=db.transaction(STORE,'readonly'),store=tx.objectStore(STORE),request=store.get(hash);
     request.onsuccess=()=>{
       const value=request.result as unknown;
       if(value===undefined)resolve(null);
+      else if(isRecord(value)&&Number.isSafeInteger(value.parts)&&Number.isSafeInteger(value.bytes)){
+        const parts=value.parts as number,whole=new Uint8Array(value.bytes as number);let offset=0,read=0;
+        for(let i=0;i<parts;i++){const part=store.get(`${hash}:part:${i}`);part.onsuccess=()=>{
+          if(!(part.result instanceof Uint8Array)){reject(new Error('A stored file is missing a part. Reattach the original.'));return;}
+          // Parts are requested in order and IndexedDB answers in request order, so each lands after the last.
+          whole.set(part.result,offset);offset+=part.result.length;if(++read===parts)resolve(offset===whole.length?whole:null);};}
+      }
       else if(value instanceof Uint8Array)resolve(value as Uint8Array<ArrayBuffer>);
       else if(value instanceof ArrayBuffer)resolve(new Uint8Array(value));
       else if(value instanceof Blob)value.arrayBuffer().then(buffer=>resolve(new Uint8Array(buffer)),()=>reject(new Error('Could not read the locally stored file. Reattach the original.')));
@@ -75,8 +92,13 @@ export async function attachPDF(file:File):Promise<Pick<Extract<EvidenceReferenc
 }
 export async function exportEvidenceFiles(workflow:Workflow):Promise<EvidenceFile[]> {
   assertProjectManifest(workflow);
+  // A WORKFLOW FILE IS ONE JSON TEXT, its files in base64. Said before encoding, rather than the tab crashing once a
+  // country's raster has been written out (2026-11-12).
+  const refs=[...projectFiles(workflow).values()],encoded=refs.reduce((sum,ref)=>sum+Math.ceil(ref.bytes/3)*4,0);
+  if(encoded>MAX_WORKFLOW_FILE_ATTACHMENT_CHARS)throw new Error(`This workflow's files come to ${(encoded/1e6).toFixed(0)} MB in a workflow file, more than the `
+    +`${MAX_WORKFLOW_FILE_ATTACHMENT_CHARS/1e6} MB one can carry. Back it up with “This workflow, encrypted”, which carries them as they are.`);
   const result:EvidenceFile[]=[];
-  for(const ref of projectFiles(workflow).values())result.push({sha256:ref.sha256,bytes:ref.bytes,...(ref.mediaType==='image/tiff'?{mediaType:ref.mediaType}:{}),dataBase64:encodeFile(await verifiedProjectFile(ref))});
+  for(const ref of refs)result.push({sha256:ref.sha256,bytes:ref.bytes,...(ref.mediaType==='image/tiff'?{mediaType:ref.mediaType}:{}),dataBase64:encodeFile(await verifiedProjectFile(ref))});
   return result;
 }
 export async function workflowDocument(workflow:Workflow):Promise<Workflow|EvidenceBundle> {
@@ -97,7 +119,7 @@ export async function importWorkflowDocument(raw:unknown,validate:(raw:unknown)=
     if(!isRecord(item)||typeof item.sha256!=='string'||files.has(item.sha256))throw new Error('Invalid or duplicate PDF in bundle.');
     const reference=expected.get(item.sha256);
     if(!reference||item.bytes!==reference.bytes)throw new Error('Bundle PDF metadata does not match the reference.');
-    const bytes=decodeFile(item.dataBase64);
+    const bytes=decodeFile(item.dataBase64,fileByteLimit(reference.mediaType));
     if((item.mediaType||'application/pdf')!==reference.mediaType||bytes.length!==reference.bytes)throw new Error('Bundle PDF checksum or size mismatch. The workflow has not been imported.');
     await verifyProjectFile(reference,bytes);files.set(item.sha256,bytes);
   }

@@ -5,7 +5,8 @@ import {Parser} from 'n3';
 import {writeArrayBuffer} from 'geotiff';
 import {inspectRaster,encodeRaster,readRasterWindow,rasterWindow,clipRaster,rasterOverhang,overhangSentence} from '../build/raster.js';
 import {rasterReceipt} from '../build/raster-workflow.js';
-import {contentHash} from '../build/project-files.js';
+import {contentHash,projectFiles,fileByteLimit} from '../build/project-files.js';
+import {decodeFile} from '../build/evidence.js';
 import {createEncryptedPackage,readEncryptedPackage} from '../build/encrypted-package.js';
 import {blankWorkflow} from '../build/study-area.js';
 // Old Naledi's workflow was only a container to package here; it retired on 2026-11-11, and an empty one serves.
@@ -77,4 +78,19 @@ test('a cutline running exactly along a cell border does not include the cell ou
   // A cutline inset inside one cell must still include that cell, and only that cell.
   const inside={type:'Polygon',coordinates:[[edge(1.25,1.25),edge(1.75,1.25),edge(1.75,1.75),edge(1.25,1.75),edge(1.25,1.25)]]};
   assert.equal(clipRaster(grid,inside,{method:'all-touched'}).mask.inside,1);
+});
+test('a kept window past the old 5 MB and 10 MB limits validates and round trips through an encrypted package',async()=>{
+  // 2026-11-12: a window was held to 5 MB as a file and to 10 MB with the project's PDFs, numbers from before the cell cap
+  // was measured. 2,048 by 2,048 cells of 4 bytes is about 16.8 MB, past both and well inside the cap.
+  const side=2048,m={...metadata,width:side,height:side,bounds:[25,-25,26,-24],resolution:[1/side,-1/side],bits:32,bytesPerPixel:4,blockWidth:side,blockHeight:side};
+  const values=Array.from({length:side*side},(_,i)=>i%97===0?null:(i%1000)/4),bytes=encodeRaster({metadata:m,values});
+  assert.ok(bytes.length>10_000_000&&bytes.length<side*side*4+1_000_000,`${bytes.length} bytes, 4 a cell`);
+  const actual=await inspectRaster(new Blob([bytes])),asset={sha256:await contentHash(bytes),bytes:bytes.length,filename:'window.tif',mediaType:'image/tiff',metadata:actual,source:{filename:'original.tif',bytes:bytes.length,lastModified:0,metadata:actual},window:[0,0,side,side]};
+  const w=oldNalediWorkflow();w.nodes.push({id:'raster',type:'raster_input',x:0,y:0,params:{label:'Raster',asset}});
+  assert.equal(projectFiles(validateWorkflow(w)).size,1);
+  const files=new Map([[asset.sha256,bytes]]),password='large window passphrase',restored=await readEncryptedPackage(await createEncryptedPackage(w,files,password),password,validateWorkflow);
+  assert.deepEqual(restored.files.get(asset.sha256),bytes);
+  const base64=Buffer.from(bytes).toString('base64');
+  assert.throws(()=>decodeFile(base64),/oversized/);
+  assert.equal(decodeFile(base64,fileByteLimit('image/tiff')).length,bytes.length);
 });

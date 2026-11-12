@@ -202,7 +202,7 @@
     {
       "id": "urn:fieldwork:widget:case_series",
       "nodeType": "case_series",
-      "currentVersion": "0.2.0",
+      "currentVersion": "0.3.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -218,6 +218,11 @@
           "version": "0.2.0",
           "path": "widgets/releases/case_series/0.2.0.json",
           "sha256": "72f9f2027bf2e4c8621cd2928ce48f118f3ba2a69347cc5f99d4e6440e166584"
+        },
+        {
+          "version": "0.3.0",
+          "path": "widgets/releases/case_series/0.3.0.json",
+          "sha256": "5d83ecd658d1e25afd33a943bfd1836e87c9bbc4378c0f43242594340fe07662"
         }
       ]
     },

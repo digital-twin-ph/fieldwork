@@ -22,7 +22,8 @@ test('Hagelloch runs offline, and its awkward columns are not cleaned up',async(
     open.onsuccess=()=>{const get=open.result.transaction('payloads').objectStore('payloads').get(ref);get.onsuccess=()=>resolve(get.result);get.onerror=()=>reject(get.error);};
     open.onerror=()=>reject(open.error);}),cases.params.dataRef);
   expect(data.features.length).toBe(188);
-  expect(saved.edges.filter(e=>e.from==='cases').length).toBe(3);
+  // The curve, the day of the week, the map and the table: four views of the same 188 records.
+  expect(saved.edges.filter(e=>e.from==='cases').length).toBe(4);
   // The village bounds what is reasoned within, which is what a study area is for.
   expect(saved.nodes.some(n=>n.type==='study_area')).toBe(true);
 
@@ -42,6 +43,15 @@ test('Hagelloch runs offline, and its awkward columns are not cleaned up',async(
   // records the map below is drawn from, which is what this example exists to show.
   await page.locator('[data-view="results"]').click();
   await expect(page.locator('#result-metrics')).toContainText('87 rows');
+
+  // BY DAY OF THE WEEK (2026-11-12): seven bars, Monday first, the file's own counts. Thursday is highest, 34 against
+  // about 27 expected, which is within chance (chi-square 4.3 on 6 degrees of freedom).
+  await page.getByRole('tab',{name:'Cases by day of the week'}).click();
+  await expect(page.locator('#result-metrics')).toContainText('7 rows');
+  const days=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  const counts=days.map(d=>data.features.filter(f=>days[(new Date(f.properties.date_of_prodrome+'T00:00:00Z').getUTCDay()+6)%7]===d).length);
+  expect(counts).toEqual([23,21,25,34,30,27,28]);
+  await expect(page.locator('#vega-chart [aria-label^="X-axis"]').last()).toHaveAttribute('aria-label',/7 values: Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday/);
 
   // Offline, like every other example.
   await expect(page.locator('#offline-status')).toHaveAttribute('data-state','ready',{timeout:45000});

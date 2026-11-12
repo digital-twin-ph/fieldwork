@@ -67,6 +67,13 @@ export function hagellochExample():Workflow{
         dateField:'date_of_prodrome',dateKind:'onset',period:'day'}},
     {id:'epidemic',type:'chart_output',x:840,y:60,
       params:{label:'Epidemic curve · by day of prodrome',inputMode:'series'}},
+    // THE SAME DATES BY DAY OF THE WEEK (the practitioner, 2026-11-12: "is it possible that the day of the week can show a
+    // pattern?"). A cycle, not a time axis: all seven days, Monday first.
+    {id:'weekday',type:'case_series',x:430,y:-160,
+      params:{label:'Cases by day of the week of prodrome',source:'points',
+        dateField:'date_of_prodrome',dateKind:'onset',period:'weekday'}},
+    {id:'weekday-chart',type:'chart_output',x:840,y:-160,
+      params:{label:'Cases by day of the week',inputMode:'series'}},
 
     // The same 188 records, mapped. Not a second dataset: the curve above and the map below are
     // the same children, which is what this example exists to demonstrate.
@@ -80,6 +87,8 @@ export function hagellochExample():Workflow{
   const edges=[
     {id:'cases-curve',from:'cases',to:'curve',port:'points'},
     {id:'curve-chart',from:'curve',to:'epidemic',port:'series'},
+    {id:'cases-weekday',from:'cases',to:'weekday',port:'points'},
+    {id:'weekday-out',from:'weekday',to:'weekday-chart',port:'series'},
     {id:'cases-map',from:'cases',to:'map',port:'points'},
     {id:'cases-table',from:'cases',to:'table',port:'points'},
     {id:'village-map',from:'village',to:'map',port:'area'},

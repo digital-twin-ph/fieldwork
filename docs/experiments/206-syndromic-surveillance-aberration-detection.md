@@ -86,7 +86,7 @@ because nothing reached it. EARS still needs a window (F).
 | An aberration is a signal to look, not an outbreak | Limitation, said on the step and in the receipt |
 | A baseline window may not include the period it judges, nor the guard band before it | Run-time: the window is stated and checked |
 | Too few baseline periods gives no expected value, not zero | Run-time: counted and said |
-| A day-of-week pattern is a pattern, not an aberration | Limitation until a method that models it is chosen |
+| A day-of-week pattern is a pattern, not an aberration | Limitation until a method that models it is chosen; Cases by period counts by day of the week since 2026-11-12, so the pattern can be seen |
 
 ## Validation it would commit to
 

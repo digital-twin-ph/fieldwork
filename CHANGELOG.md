@@ -3,14 +3,11 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## 0.98.0 — 2026-11-12
+## 0.99.0 — 2026-11-12
 
-- **7-1-7 timeliness, a published ruleset.** Days from emergence to detection, detection to notification and
-  notification to the end of early response, each Met or NotMet against 7, 1 and 7 days (step settings), and NoVerdict
-  where a date is missing. Cited to Bochner et al. 2023. Apply ruleset 0.12.0.
-- **Choose which column a published ruleset reads**, in Apply ruleset's Configure…, under *Which column holds each*.
-- **Fixed:** a column of rule conclusions holding one value on every row was shown as a table's variable name, and lost
-  its own column. Table 0.10.1.
+- **Cases by day of the week.** Cases by period counts by day of the week, Monday to Sunday, all seven kept. Hagelloch's
+  first workflow shows it beside the epidemic curve: Thursday has most prodromes, 34, which is within chance. Its
+  settings are in Configure… now, on the standard Inspector. Cases by period 0.3.0.
 - **Data issues have their own ontology**, `ontology/data-issues.ttl`, built on W3C's Data Quality Vocabulary: one kind
   of thing and fifteen kinds, from *No value* to *Rules disagree*. The Data quality inspector, the warning on a step and
   the run's N3 receipt use the same labels, and the receipts of Table input and of Apply ruleset now state each issue.
@@ -20,6 +17,15 @@ shown in a local build is not a claim that it has been published.
 - **7-1-7's columns are in the ontology**, tied to the milestones and targets of `ontology/response-timeliness.ttl`, and
   each record's dates, days and verdicts are in the receipt.
 - **Fixed:** a step whose rules compute values wrote a receipt holding only its timing, beginning "undefined".
+
+## 0.98.0 — 2026-11-12
+
+- **7-1-7 timeliness, a published ruleset.** Days from emergence to detection, detection to notification and
+  notification to the end of early response, each Met or NotMet against 7, 1 and 7 days (step settings), and NoVerdict
+  where a date is missing. Cited to Bochner et al. 2023. Apply ruleset 0.12.0.
+- **Choose which column a published ruleset reads**, in Apply ruleset's Configure…, under *Which column holds each*.
+- **Fixed:** a column of rule conclusions holding one value on every row was shown as a table's variable name, and lost
+  its own column. Table 0.10.1.
 - **MERS-CoV, South Korea, 2015**, a worked example in its own repository: how quickly each of 162 cases was detected
   and reported, against 7-1-7 (94 of 135 detected within 7 days of onset, 161 of 162 reported within 1 day).
   And who infected whom, and where: the 98 probable links counted by source and by setting of exposure.

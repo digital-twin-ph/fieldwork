@@ -31,7 +31,7 @@ import {catchmentPlot,polygonSvg,catchmentFrame,polygonFrame} from './catchment-
 import {mapPresentation,standaloneMapSvg} from './map-communication.js';
 import {metresPerPixel} from './presentation.js';
 import {RATE_TABLE_KEYS,computeRate,fromTable,fromWideTable} from './rate.js';
-import {SERIES_TABLE_KEYS} from './case-series.js';
+import {SERIES_TABLE_KEYS,PERIOD_WORDS,DATE_KINDS} from './case-series.js';
 import {SITE_ASSIGNMENT_TABLE_KEYS} from './sea-level.js';
 import {installCredentials} from './credentials-ui.js';
 import type {CredentialAccess} from './credentials-ui.js';
@@ -1062,7 +1062,7 @@ function drawRunProgress(){
 /** THE WIDGETS WHOSE INSPECTOR FOLLOWS THE STANDARD (experiment 186): Name, Inputs, Settings, Result, the links,
  *  Actions, in that order and nothing else, with every setting in the widget's configuration dialog. One at a time,
  *  Relate first; the set grows as each widget is moved, and a check holds them to it. */
-export const STANDARD_INSPECTOR=new Set<NodeType>(['point_input','chart_output','raster_input','sample_raster','measure_distance','table_output','relate_table','select_rows','table_input','find_health_facilities','group_table','apply_ruleset','map_output','deduplicate_points','rate','study_area','space_time_scan','map_image_input']);
+export const STANDARD_INSPECTOR=new Set<NodeType>(['case_series','point_input','chart_output','raster_input','sample_raster','measure_distance','table_output','relate_table','select_rows','table_input','find_health_facilities','group_table','apply_ruleset','map_output','deduplicate_points','rate','study_area','space_time_scan','map_image_input']);
 function samplerProduct(node:WorkflowNode){
   const up=(id:string,port:string)=>{const e=workflow.edges.find(x=>x.to===id&&x.port===port);return e?workflow.nodes.find(m=>m.id===e.from):undefined;};
   const search=up(node.id,'files'),find=search?up(search.id,'product'):undefined;
@@ -2689,6 +2689,52 @@ function rateSentence(p:import('./types.js').ParamsByType['rate']):string{
 }
 
 /** RATE'S DIALOG (experiment 186): every setting on a draft, and the rates this draft gives, before Apply. */
+/** WHAT CASES BY PERIOD COUNTS, in one sentence (experiment 186). */
+function seriesSentence(p:import('./types.js').ParamsByType['case_series']):string{
+  if(!p.dateField)return 'Name the column holding each case\u2019s date in Configure\u2026';
+  return `Counts cases by ${PERIOD_WORDS[p.period]} of ${p.dateField}, a date of ${p.dateKind}`
+    +(p.source==='table'?', each row as many cases as its value.':p.weightField?`, each record as many cases as its ${p.weightField}.`:', one case per record.');
+}
+/** CASES BY PERIOD'S CONFIGURATION DIALOG (experiments 186 and 206, 2026-11-12): how the records arrive, the date column
+ *  and its kind, the period (day of the week among them), and the weight. Changing how records arrive disconnects
+ *  what was wired, as Rate does. */
+function openSeriesConfig(nodeId:string){
+  const node=getNode(workflow,nodeId,'case_series');
+  type Draft=import('./types.js').ParamsByType['case_series'];
+  const columns=[...new Set(candidateFields(workflow,nodeId).map(f=>(f as {attribute:string}).attribute))];
+  openConfigDialog<Draft>({
+    id:'series-config',widget:'Cases by period',step:node.params.label||TYPES.case_series.title,draft:structuredClone(node.params),
+    sections:d=>{
+      const pick=(id:string,label:string,key:'dateField'|'weightField',placeholder:string,optional=false)=>{
+        const held=String(d[key]??'');
+        return `<div class="field"><label class="field-label" for="${id}">${label}</label>`+(columns.length
+          ?`<select id="${id}" data-series="${key}"><option value="">${optional?'Not used: one case per record':'Choose…'}</option>`
+            +columns.map(c=>`<option value="${esc(c)}" ${c===held?'selected':''}>${esc(c)}</option>`).join('')+'</select>'
+          :`<input id="${id}" data-series="${key}" maxlength="60" value="${esc(held)}" placeholder="${esc(placeholder)}">`)+'</div>';};
+      const settings=`<div class="field"><label class="field-label" for="series-input">Records arrive as</label><select id="series-input">`
+        +[['points','points, one per record'],['table','a table, each row a count']].map(([v,t])=>`<option value="${v}" ${(d.source||'points')===v?'selected':''}>${t}</option>`).join('')+'</select></div>'
+        +pick('series-date','Date column','dateField','onset_date')
+        +`<div class="field"><label class="field-label" for="series-kind">Which date is it?</label><select id="series-kind" data-series="dateKind">`
+        +DATE_KINDS.map(k=>`<option value="${k}" ${d.dateKind===k?'selected':''}>${k}</option>`).join('')+'</select></div>'
+        +`<div class="field"><label class="field-label" for="series-period">Period</label><select id="series-period" data-series="period">`
+        +([['day','day'],['week','week, starting Monday (ISO 8601)'],['week-sunday','week, starting Sunday (epidemiological week)'],['month','month'],['weekday','day of the week']] as const)
+          .map(([v,t])=>`<option value="${v}" ${d.period===v?'selected':''}>${t}</option>`).join('')+'</select></div>'
+        +(d.source==='table'?'':pick('series-weight','Cases per record (optional)','weightField','',true));
+      return {settings,preview:`<p class="description">${esc(seriesSentence(d))}</p>`,
+        ...(d.dateField?{}:{blocked:true,message:{tone:'warning' as const,text:'Choose the date column.'}})};
+    },
+    wire:(root,d,redraw)=>{
+      root.querySelector<HTMLSelectElement>('#series-input')?.addEventListener('change',e=>{
+        if((e.target as HTMLSelectElement).value==='table'){d.source='table';delete d.weightField;}else delete d.source;redraw();});
+      root.querySelectorAll<HTMLInputElement&HTMLSelectElement>('[data-series]').forEach(el=>el.addEventListener('change',()=>{
+        const key=el.dataset.series as 'dateField'|'weightField'|'dateKind'|'period',value=el.value.trim();
+        if(key==='weightField'){if(value)d.weightField=value;else delete d.weightField;}
+        else (d as Record<string,string>)[key]=value;redraw();}));
+    },
+    apply:d=>{change(w=>{const target=getNode(w,nodeId,'case_series');const was=target.params.source;target.params=d;
+      if((was||'points')!==(d.source||'points'))w.edges=w.edges.filter(e=>e.to!==nodeId);});},
+  },esc);
+}
 function openRateConfig(nodeId:string){
   const node=getNode(workflow,nodeId,'rate');
   type Draft=import('./types.js').ParamsByType['rate'];
@@ -3793,19 +3839,16 @@ function renderInspector(){
     content+=standardSection('Result',`<p class="standard-result${why?' standard-result-warning':''}">${esc(why?`The last run could not compute this step: ${why}`
       :ran?'Computed in the last run: the rates are in its table.':'Not run yet.')}</p>`);
   }else if(n.type==='case_series'){
-    const p=n.params;
-    // A TABLE OR POINTS (experiment 187): a weekly table of counts, Brazil's, is read as rows whose value is the count.
-    // The run read a table since Snow's daily deaths; nothing in the Inspector could choose it until 2026-11-07.
-    const fromTable=p.source==='table';
-    content+='<p class="description">Counts cases per period from a declared date attribute.</p>'
-      +`<div class="field"><label class="field-label" for="series-input">Records arrive as</label><select id="series-input" data-series-input>${[['points','points, one per record'],['table','a table, each row a count']].map(([value,text])=>`<option value="${value}" ${(p.source||'points')===value?'selected':''}>${text}</option>`).join('')}</select></div>`
-      +`<div class="field"><label class="field-label" for="series-date">Event date attribute</label><input id="series-date" data-slr="dateField" maxlength="60" value="${esc(p.dateField)}" placeholder="onset_date"></div>`
-      +`<div class="field"><label class="field-label" for="series-kind">Which date is it?</label><select id="series-kind" data-slr="dateKind">${['onset','report','death','specimen-collection','other'].map(kind=>`<option value="${kind}" ${p.dateKind===kind?'selected':''}>${kind}</option>`).join('')}</select></div>`
-      +`<div class="field"><label class="field-label" for="series-period">Period</label><select id="series-period" data-slr="period">${([['day','day'],['week','week, starting Monday (ISO 8601)'],['week-sunday','week, starting Sunday (epidemiological week)'],['month','month']] as const).map(([period,words])=>`<option value="${period}" ${p.period===period?'selected':''}>${words}</option>`).join('')}</select></div>`
-      +(fromTable?`<p class="description">Each row counts as its value column${upstreamValueField(n)?`, ${esc(upstreamValueField(n)!)}`:''}: the cases that row records.</p>`
-        :`<div class="field"><label class="field-label" for="series-weight">Cases per record (attribute, optional)</label><input id="series-weight" data-slr="weightField" maxlength="60" value="${esc(p.weightField||'')}" placeholder="leave empty when one row is one case"></div>`)
-      +(workflow.edges.some(e=>e.from===n.id)?'':'<div class="inspector-actions"><button id="add-series-chart" class="button small">＋ Add epidemic curve</button></div>')
-      +'';
+    // THE STANDARD INSPECTOR (experiment 186, 2026-11-12): the name, the input, one sentence, Configure…, and the result.
+    const p=n.params,receipt=result?.receipts.find(r=>r.nodeId===n.id);
+    const why=result?.unfinished?.find(u=>u.nodeId===n.id)?.message;
+    content+=standardSection('Name',labelForm('series-label','Name',p.label||TYPES.case_series.title));
+    content+=standardSection('Inputs',standardInputs(n));
+    content+=standardSection('Settings',`<p class="standard-sentence">${esc(seriesSentence(p))}</p>`
+      +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button></div>');
+    content+=standardSection('Result',`<p class="standard-result${why?' standard-result-warning':''}">${esc(why?`The last run could not compute this step: ${why}`
+      :receipt?.method?receipt.method.split('. ')[0]+'.':'Not run yet.')}</p>`
+      +(workflow.edges.some(e=>e.from===n.id)?'':'<div class="inspector-actions"><button id="add-series-chart" class="button small">＋ Add epidemic curve</button></div>'));
   }else if(n.type==='slr_extract_import'){
     const p=n.params;
     content+=''
@@ -4865,11 +4908,10 @@ function renderInspector(){
   // Switching the kind of input changes what the records port accepts, so anything wired into it
   // is disconnected rather than left in place carrying the wrong shape.
   // Points and a table are not the same shape, so changing which one disconnects what was wired, as Rate does.
-  const seriesInput=document.querySelector<HTMLSelectElement>('[data-series-input]');
-  if(seriesInput)seriesInput.addEventListener('change',()=>change(w=>{
-    const node=getNode(w,n.id,'case_series');
-    if(seriesInput.value==='table'){node.params.source='table';delete node.params.weightField;}else delete node.params.source;
-    w.edges=w.edges.filter(e=>e.to!==node.id);}));
+  if(n.type==='case_series'){
+    optionalElement('#configure-step')?.addEventListener('click',()=>openSeriesConfig(n.id));
+    optionalElement('#series-label')?.addEventListener('change',e=>change(w=>{getNode(w,n.id,'case_series').params.label=control(e).value.trim()||TYPES.case_series.title;}));
+  }
   if(n.type==='rate'){
     optionalElement('#configure-step')?.addEventListener('click',()=>openRateConfig(n.id));
     optionalElement('#rate-label')?.addEventListener('change',e=>change(w=>{getNode(w,n.id,'rate').params.label=control(e).value.trim()||TYPES.rate.title;}));

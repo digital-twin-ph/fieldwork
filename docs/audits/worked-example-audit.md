@@ -136,7 +136,7 @@ that does not can be rebuilt only by copying this file.
 | `snow-isochrone` | 17 | 6 | 3 | **2** — dates (table_input), context-pumps (point_input) | 1 | — |
 | `snow-geoprivacy` | 15 | 3 | 2 | — | 1 | `comparison_map` |
 | `snow-extent` | 7 | 3 | 2 | **1** — dates (table_input) | — | — |
-| `hagelloch` | 6 | 2 | 1 | — | 1 | — |
+| `hagelloch` | 8 | 2 | 1 | — | 1 | — |
 | `hagelloch-chains` | 10 | 2 | 1 | — | 1 | — |
 | `hagelloch-cluster` | 8 | 2 | 1 | — | 1 | — |
 | `hagelloch-sheet` | 4 | 3 | 1 | **1** — sheet (map_image_input) | 1 | — |
@@ -170,8 +170,8 @@ different things: an example can be four nodes and complete, or eighteen and not
 | Example | Nodes | Conditions met | Missing |
 | --- | ---: | ---: | --- |
 | `hagelloch-chains` | 10 | 2 / 4 | published files, rebuilt from scratch |
+| `hagelloch` | 8 | 2 / 4 | published files, rebuilt from scratch |
 | `hagelloch-cluster` | 8 | 2 / 4 | published files, rebuilt from scratch |
-| `hagelloch` | 6 | 2 / 4 | published files, rebuilt from scratch |
 | `hagelloch-people` | 6 | 2 / 4 | published files, rebuilt from scratch |
 | `snow-isochrone` | 17 | 1 / 4 | sources, published files, rebuilt from scratch |
 | `snow-voronoi` | 15 | 1 / 4 | sources, published files, rebuilt from scratch |

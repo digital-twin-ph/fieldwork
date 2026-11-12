@@ -128,12 +128,12 @@
    "migrationFrom": []
   },
   "case_series": {
-   "version": "0.2.0",
-   "released": "2026-11-07",
+   "version": "0.3.0",
+   "released": "2026-11-12",
    "changes": [
     {
      "kind": "minor",
-     "description": "A week starting Sunday, the epidemiological week of Brazil's notification system and of the United States, beside the Monday week. The Inspector chooses whether records arrive as points or as a table, which the run read since Snow's daily deaths and nothing could choose. A series read from a table keeps the table's unit. Experiment 187."
+     "description": "Day of the week as a period: the dates counted Monday to Sunday, all seven kept (the practitioner, 2026-11-12, of Hagelloch). The standard Inspector and dialog (experiment 186): the settings move to Configure…, the panel keeps the name, the input, one sentence and the result."
     }
    ],
    "breaking": false,

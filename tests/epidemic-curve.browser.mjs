@@ -7,6 +7,9 @@ import {collectPageErrors} from './page-errors.mjs';
 const fixture=JSON.parse(await readFile(new URL('./fixtures/snow-epidemic-curve-2026-10-09.json',import.meta.url),'utf8'));
 const upload=(page,w)=>page.locator('#workflow-file').setInputFiles({name:'curve.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(w))});
 const run=async page=>{await page.locator('#run-button').click();await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});};
+/** One Cases by period setting, in its Configure… dialog (experiment 186, 2026-11-12). */
+const setSeries=async(page,id,value)=>{await page.locator('#configure-step').click();const d=page.locator('#series-config');
+  await d.locator(id).selectOption(value);await d.locator('#config-apply').click();await expect(d).toHaveCount(0);};
 
 test('Snow’s 1855 table draws an epidemic curve that states which date it is of',async({page,context})=>{
   const errors=collectPageErrors(page);
@@ -35,20 +38,21 @@ test('Snow’s 1855 table draws an epidemic curve that states which date it is o
   // Changing the declared kind of date changes what the chart says it is, not just a label.
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node').filter({hasText:'Deaths by day'}).click();
-  await expect(page.locator('#series-kind')).toHaveValue('death');
+  // The settings are in Configure… since 2026-11-12 (experiment 186); the Inspector says them in one sentence.
+  await expect(page.locator('.inspector .standard-sentence')).toContainText('a date of death');
   // The caveat left the Inspector on 2026-11-11 (design explanation belongs in documents, not the UI); the manual says it.
   await expect(page.locator('.inspector')).not.toContainText('not a curve by date of onset');
   assert.match(await readFile('docs/widgets/case_series.md','utf8'),/A curve by date of death is not a curve by date of onset/);
-  await page.locator('#series-kind').selectOption('onset');
+  await setSeries(page,'#series-kind','onset');
   await run(page);
   await page.locator('[data-view="results"]').click();
   await expect(page.locator('#bars-panel')).toContainText('Cases by day of date of onset');
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node').filter({hasText:'Deaths by day'}).click();
-  await page.locator('#series-kind').selectOption('death');
+  await setSeries(page,'#series-kind','death');
 
   // A week is a different series of the same data, and empty periods survive aggregation.
-  await page.locator('#series-period').selectOption('week');
+  await setSeries(page,'#series-period','week');
   await run(page);
   await page.locator('[data-view="results"]').click();
   await expect(page.locator('#bars-panel')).toContainText('Cases by week of date of death');
@@ -56,7 +60,9 @@ test('Snow’s 1855 table draws an epidemic curve that states which date it is o
   await expect(page.locator('#bars-panel .bar-column')).toHaveCount(7);
   await page.locator('[data-view="results"]').click();
   await expect(page.locator('#bars-panel .bar-column').filter({hasText:'1854-08-28'})).toContainText('279');
-  await page.locator('#series-period').selectOption('day');
+  await page.locator('[data-view="workflow"]').click();
+  await page.locator('.react-flow__node').filter({hasText:'Deaths by day'}).click();
+  await setSeries(page,'#series-period','day');
   await run(page);
 
   await page.locator('[data-view="rules"]').click();

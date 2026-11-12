@@ -946,6 +946,71 @@ fw:consideredRecordCount a owl:DatatypeProperty; rdfs:domain fw:ReadingProblem; 
   rdfs:comment "How many records were judged in all, so the count above can be read as a proportion rather than as a number on its own.".
 fw:problemKind a owl:ObjectProperty; rdfs:domain fw:ReadingProblem; rdfs:range fw:ValueProblemKind;
   rdfs:comment "Which of the two reasons applies. Recorded rather than inferred: the step knows which it found, and a reader cannot tell them apart from the result.".
+
+# DATA ISSUES (experiment 207, 2026-11-12). The practitioner: "There should be an ontology for data issues", then "Data
+# issues are upstream problems and should be represented in the FW ontology". One kind of thing and one closed list of
+# kinds, built on W3C's Data Quality Vocabulary (https://www.w3.org/TR/vocab-dqv/, CC BY 4.0). Each kind is a DQV metric
+# (a count of records) and a SKOS concept (its label as the screen shows it), in a dimension DQV leaves to its users.
+# ISO/IEC 25012, which names some dimensions, is not openly available and was not read.
+fw:DataIssue a owl:Class; rdfs:subClassOf dqv:QualityMeasurement;
+  rdfs:label "Data issue";
+  rdfs:comment "A problem upstream, in the data: how many records of one dataset have one kind of issue, in one column or field where there is one. Stated about the data (dqv:computedOn, and the data's dqv:hasQualityMeasurement), with the step that found it as what generated the measurement (prov:wasGeneratedBy). The kind is the metric measured (dqv:isMeasurementOf), the count its value.".
+fw:issueKind a owl:ObjectProperty; rdfs:domain fw:DataIssue; rdfs:range fw:DataIssueKind;
+  rdfs:label "kind of issue".
+fw:issueColumn a owl:DatatypeProperty; rdfs:domain fw:DataIssue; rdfs:range xsd:string;
+  rdfs:label "column, field or site";
+  rdfs:comment "As the source spells it, so a reader can find it in their own file.".
+fw:DataIssueKind a owl:Class; rdfs:subClassOf skos:Concept, dqv:Metric;
+  rdfs:label "Kind of data issue".
+fw:dataIssueKinds a skos:ConceptScheme; rdfs:label "Kinds of data issue".
+
+# The two earlier models, now kinds of this one, their IRIs unchanged.
+fw:ReadingProblem rdfs:subClassOf fw:DataIssue.
+fw:JoinFinding rdfs:subClassOf fw:DataIssue.
+fw:ValueProblemKind rdfs:subClassOf fw:DataIssueKind.
+
+# Dimensions; completeness and readability are declared above, with the reading problems.
+fw:uniqueness a dqv:Dimension; rdfs:label "Whether what should identify one record identifies only one".
+fw:documentation a dqv:Dimension; rdfs:label "Whether what the data means has been said".
+fw:consistency a dqv:Dimension; rdfs:label "Whether two statements about the same thing agree".
+fw:computability a dqv:Dimension; rdfs:label "Whether a value asked for can be computed from the values given".
+fw:coverage a dqv:Dimension; rdfs:label "Whether the place or network reached what it was asked to reach".
+
+# The kinds. Each says what it is, the dimension it measures, and its label as the screen shows it.
+fw:ValueAbsent a fw:DataIssueKind; skos:inScheme fw:dataIssueKinds; skos:prefLabel "No value"; dqv:inDimension fw:completeness.
+fw:ValueUnreadable a fw:DataIssueKind; skos:inScheme fw:dataIssueKinds; skos:prefLabel "Not the declared kind"; dqv:inDimension fw:readability.
+fw:KeyAbsent a fw:DataIssueKind; skos:inScheme fw:dataIssueKinds; skos:prefLabel "No key"; dqv:inDimension fw:completeness;
+  skos:definition "A row has no value in a column that identifies it.".
+fw:KeyRepeated a fw:DataIssueKind; skos:inScheme fw:dataIssueKinds; skos:prefLabel "Key repeated"; dqv:inDimension fw:uniqueness;
+  skos:definition "Two or more rows share the values that should identify one.".
+fw:ColumnUndescribed a fw:DataIssueKind; skos:inScheme fw:dataIssueKinds; skos:prefLabel "Column not described"; dqv:inDimension fw:documentation;
+  skos:definition "Nobody has said what a column means. Describing it is the practitioner's step.".
+fw:DescriptionUnconfirmed a fw:DataIssueKind; skos:inScheme fw:dataIssueKinds; skos:prefLabel "Description not confirmed"; dqv:inDimension fw:documentation;
+  skos:definition "A description came with the source and the practitioner has not accepted it.".
+fw:DictionaryMismatch a fw:DataIssueKind; skos:inScheme fw:dataIssueKinds; skos:prefLabel "Disagrees with the data dictionary"; dqv:inDimension fw:consistency;
+  skos:definition "The file and its data dictionary say different things about a column.".
+fw:DeclarationAbsent a fw:DataIssueKind; skos:inScheme fw:dataIssueKinds; skos:prefLabel "Not declared"; dqv:inDimension fw:documentation;
+  skos:definition "Something a ruleset asks to be stated about the data, such as a citation, has not been.".
+fw:DivisionByZero a fw:DataIssueKind; skos:inScheme fw:dataIssueKinds; skos:prefLabel "Divided by zero"; dqv:inDimension fw:computability;
+  skos:definition "A value a rule computes would divide by zero, and is left empty.".
+fw:ConclusionsConflict a fw:DataIssueKind; skos:inScheme fw:dataIssueKinds; skos:prefLabel "Rules disagree"; dqv:inDimension fw:consistency;
+  skos:definition "Two rules gave one record different values in one column.".
+fw:SiteUnreachable a fw:DataIssueKind; skos:inScheme fw:dataIssueKinds; skos:prefLabel "No result"; dqv:inDimension fw:coverage;
+  skos:definition "A site is farther from the street network than the travel budget allows.".
+fw:RoutedOffNetwork a fw:DataIssueKind; skos:inScheme fw:dataIssueKinds; skos:prefLabel "Routed off the network"; dqv:inDimension fw:coverage;
+  skos:definition "A site's leg to the network was charged as a straight line, past the limit.".
+# The Data quality inspector's finer kinds: a value absent because the record lacks the field, or because the field
+# is there and empty (kept apart at the practitioner's request, 2026-10-21), and a value beyond the quartile fence.
+fw:FieldMissing a fw:DataIssueKind; skos:inScheme fw:dataIssueKinds; skos:prefLabel "Field missing"; skos:broader fw:ValueAbsent; dqv:inDimension fw:completeness;
+  skos:definition "The record does not carry the field at all, as with a tag nobody added.".
+fw:ValueEmpty a fw:DataIssueKind; skos:inScheme fw:dataIssueKinds; skos:prefLabel "Empty"; skos:broader fw:ValueAbsent; dqv:inDimension fw:completeness;
+  skos:definition "The record carries the field and it is blank: somebody wrote the column and left it empty.".
+fw:BeyondFence a fw:DataIssueKind; skos:inScheme fw:dataIssueKinds; skos:prefLabel "Beyond 1.5×IQR"; dqv:inDimension fw:plausibility;
+  skos:definition "A number more than 1.5 times the interquartile range beyond the first or third quartile. A value to look at, not an error: no distribution is assumed.".
+fw:plausibility a dqv:Dimension; rdfs:label "Whether a value sits where most of its column does".
+fw:absentValues skos:exactMatch fw:ValueAbsent.
+fw:unreadableValues skos:exactMatch fw:ValueUnreadable.
+
 # A column read as a different kind than the file held it, because a practitioner asked for it.
 # Experiment 117. Declared because the records a workflow emits after a repair are not the
 # records the file held, and a reader has to be able to learn that from the run rather than from

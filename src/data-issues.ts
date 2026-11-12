@@ -1,4 +1,4 @@
-/** DATA ISSUES IN ONE VOCABULARY (experiment 207): the kinds `ontology/data-issues.ttl` declares, the label each shows
+/** DATA ISSUES IN ONE VOCABULARY (experiment 207): the kinds `ontology/fieldwork.ttl` declares, the label each shows
  *  on screen, and the one function that writes them into a step's receipt. A unit test reads each kind here from the
  *  ontology, label and all, so the screen and the evidence cannot say two things. */
 export type DataIssueKind='ValueAbsent'|'ValueUnreadable'|'KeyAbsent'|'KeyRepeated'|'ColumnUndescribed'|'DescriptionUnconfirmed'
@@ -15,14 +15,22 @@ export const ISSUE_LABEL:Record<DataIssueKind,string>={
 
 export interface FoundIssue {kind:DataIssueKind; column?:string; count?:number; of?:number; says?:string}
 
-/** The issues as N3, each a `fw:DataIssue` of the step. `activity` is the step's IRI in angle brackets. Empty for none. */
-export function issueFacts(activity:string,issues:readonly FoundIssue[]):string{
-  return issues.map(issue=>`${activity} <urn:fieldwork:dataIssue> [ a <urn:fieldwork:DataIssue>; `
-    +`<urn:fieldwork:issueKind> <urn:fieldwork:${issue.kind}>`
-    +(issue.column!==undefined?`; <urn:fieldwork:issueColumn> ${JSON.stringify(issue.column)}`:'')
-    +(issue.count!==undefined?`; <urn:fieldwork:affectedRecordCount> ${issue.count}`:'')
-    +(issue.of!==undefined?`; <urn:fieldwork:consideredRecordCount> ${issue.of}`:'')
-    +(issue.says?`; <http://www.w3.org/2000/01/rdf-schema#comment> ${JSON.stringify(issue.says)}`:'')+` ].`).join('\n')+(issues.length?'\n':'');
+/** THE ISSUES AS N3, ABOUT THE DATA (the practitioner, 2026-11-12: "Data issues are upstream problems"). Each issue is
+ *  its own resource, a measurement of its kind computed on the data it was found in (`about`), which lists it among its
+ *  quality measurements; the step that found it is what generated it. `activity` and `about` are IRIs in angle
+ *  brackets; `base` names the issues, unique within the run. Empty for none. */
+export function issueFacts(activity:string,about:string,base:string,issues:readonly FoundIssue[]):string{
+  const DQV='http://www.w3.org/ns/dqv#',FW='urn:fieldwork:';
+  return issues.map((issue,i)=>{
+    const node=`<${base}:issue:${i+1}>`;
+    return `${about} <${DQV}hasQualityMeasurement> ${node}.\n`
+      +`${node} a <${FW}DataIssue>; <${DQV}computedOn> ${about}; <http://www.w3.org/ns/prov#wasGeneratedBy> ${activity}; `
+      +`<${DQV}isMeasurementOf> <${FW}${issue.kind}>; <${FW}issueKind> <${FW}${issue.kind}>`
+      +(issue.column!==undefined?`; <${FW}issueColumn> ${JSON.stringify(issue.column)}`:'')
+      +(issue.count!==undefined?`; <${FW}affectedRecordCount> ${issue.count}`:'')
+      +(issue.of!==undefined?`; <${FW}consideredRecordCount> ${issue.of}`:'')
+      +(issue.says?`; <http://www.w3.org/2000/01/rdf-schema#comment> ${JSON.stringify(issue.says)}`:'')+`.`;
+  }).join('\n')+(issues.length?'\n':'');
 }
 
 /** WHAT THE DATA QUALITY INSPECTOR SHOWS FOR A TABLE, as data issues for its receipt (experiment 207): the findings

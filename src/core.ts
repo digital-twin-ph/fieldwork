@@ -1128,6 +1128,15 @@ function signedByWidget(machined:Record<string,MachinedNote[]>,workflow:Workflow
   }));
 }
 
+/** WHERE THE DATA A STEP READ CAME IN (experiment 207): back along its one input through each step that has one input,
+ *  to the step that brought the data in. A step with two inputs stops the walk, since which one a column came from is
+ *  not known here; that step's output is then what the issue is about. */
+function dataOrigin(workflow:Workflow,nodeId:string,runId:string):string{
+  let at=workflow.edges.filter(e=>e.to===nodeId);
+  let id=at.length===1?at[0]!.from:nodeId;const seen=new Set([nodeId]);
+  while(!seen.has(id)){seen.add(id);at=workflow.edges.filter(e=>e.to===id);if(at.length!==1)break;id=at[0]!.from;}
+  return `<urn:fieldwork:run:${runId}:output:${id}>`;
+}
 export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProgress:(id:string,status:'running'|'done'|'failed')=>void=()=>{},resolveCredential?:CredentialResolver):Promise<WorkflowRun> {
   workflow=validateWorkflow(workflow);
   const runId=crypto.randomUUID(), receipts:Receipt[]=[];
@@ -1965,7 +1974,10 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         const kinds=Object.fromEntries([...Object.keys(described.numericKeys??{}),described.valueField].map(c=>[c,'number' as const]));
         const issues=tableIssues([...(described.findings??[]),...metadataFindings(described,p.columns,p.dictionaryCheck,p.wide)],
           [...described.keys,described.valueField],rowsRead,(column,values)=>profileColumn(column,values,kinds[column]));
-        const found=issueFacts(`<urn:fieldwork:run:${runId}:tableinput:${node.id}>`,issues);
+        // About the table this step brought in: its output, which every step after it names, and which is its table.
+        const output=`<urn:fieldwork:run:${runId}:output:${node.id}>`;
+        const found=`${output} <http://www.w3.org/ns/prov#alternateOf> <urn:fieldwork:run:${runId}:table:${node.id}>.\n`
+          +issueFacts(`<urn:fieldwork:run:${runId}:tableinput:${node.id}>`,output,`urn:fieldwork:run:${runId}:tableinput:${node.id}`,issues);
         receipts.push({...imported.receipt,facts:imported.receipt.facts+found,input:imported.receipt.input+found,
           ...(described.columns?{columns:described.columns}:{})} as Receipt);break;}
       // The conversion ran when the file was saved; execution replays it offline without reprojecting again.
@@ -2111,10 +2123,10 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
             // reasoner path states them, each record's values, and a division by zero or a disagreement as a data issue.
             const stated=authoredReceipt(node,authored,
               evaluatedRecordFacts(records,authored.fields,evaluation.records,authored.rules as never,authored.otherwise??[]),
-              '',[],Array.from({length:evaluation.unmatched},()=>''),runId,workflow.edges,dataIssues);
+              '',[],Array.from({length:evaluation.unmatched},()=>''),runId,workflow.edges,dataIssues,dataOrigin(workflow,node.id,runId));
             const zero=evaluation.records.flatMap(r=>r.divisionsByZero),clash=evaluation.records.flatMap(r=>r.conflicts.map(c=>c.column));
             const tally=(columns:string[])=>[...columns.reduce((m,c)=>m.set(c,(m.get(c)??0)+1),new Map<string,number>())];
-            const found=issueFacts(`<urn:fieldwork:run:${runId}:ruleset:${node.id}>`,[
+            const found=issueFacts(`<urn:fieldwork:run:${runId}:ruleset:${node.id}>`,dataOrigin(workflow,node.id,runId),`urn:fieldwork:run:${runId}:ruleset:${node.id}`,[
               ...tally(zero).map(([column,count])=>({kind:'DivisionByZero' as const,column,count,of:records.length})),
               ...tally(clash).map(([column,count])=>({kind:'ConclusionsConflict' as const,column,count,of:records.length}))]);
             receipts.push({nodeId:node.id,kind:'computation',method,facts:stated.facts+found,input:stated.input+found,
@@ -2157,7 +2169,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
                 return {...feature,...judged.features[index],geometry:feature.geometry,
                   ...(category?{category}:{})};}),
               ...(dataIssues.length?{dataIssues,issuedBy:node.id}:{})}) as unknown as DisplayValue;
-            receipts.push(authoredReceipt(node,authored,facts,rules,conclusions,judged.unmatched,runId,workflow.edges,dataIssues));
+            receipts.push(authoredReceipt(node,authored,facts,rules,conclusions,judged.unmatched,runId,workflow.edges,dataIssues,dataOrigin(workflow,node.id,runId)));
             break;
           }
           // A table in, a table out -- carrying what the rules concluded as further key columns,
@@ -2166,7 +2178,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           value=({...(judged.table??{type:'FeatureCollection',features:judged.features,rows:judged.rows,
             kind:'authored-ruleset',centers:[],method:authored.title}),
             ...(dataIssues.length?{dataIssues,issuedBy:node.id}:{})}) as unknown as DisplayValue;
-          receipts.push(authoredReceipt(node,authored,facts,rules,conclusions,judged.unmatched,runId,workflow.edges,dataIssues));
+          receipts.push(authoredReceipt(node,authored,facts,rules,conclusions,judged.unmatched,runId,workflow.edges,dataIssues,dataOrigin(workflow,node.id,runId)));
           break;
         }
         // A RULESET DECLARES ITS COLUMNS. The widget is an interpreter and the ruleset is the program (experiment 65):

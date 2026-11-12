@@ -1,6 +1,6 @@
 # 186 · One standard Inspector, and each widget's settings in its dialog
 
-_Created 2026-11-07 · Updated 2026-11-11_
+_Created 2026-11-07 · Updated 2026-11-12_
 
 **Status:** tried, for Relate, Select rows and Table input. Select rows 0.4.0 (Fieldwork 0.53.0) and Table input 0.7.0
 (Fieldwork 0.57.0), both 2026-11-08, followed Relate.

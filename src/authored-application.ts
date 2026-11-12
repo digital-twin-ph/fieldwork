@@ -302,6 +302,8 @@ export function authoredReceipt(
   authored:{title:string;mustNotBeReadAs:string;fields:FieldBinding[]},
   facts:string,rules:string,conclusions:ReasonerQuad[],unmatched:string[],
   runId:string,edges:{to:string;from:string}[],dataIssues:DataIssue[]=[],
+  /** The data the issues are about (experiment 207): where what this step read came in. Its first input by default. */
+  about?:string,
 ){
   const activity=`<${NS}run:${runId}:ruleset:${node.id}>`;
   const sources=edges.filter(e=>e.to===node.id).map(e=>`<${NS}run:${runId}:output:${e.from}>`);
@@ -318,15 +320,19 @@ export function authoredReceipt(
   // Stated in DQV's terms as well as this project's: a reading problem IS a quality
   // measurement of one metric over one resource, and saying so lets a reader with DQV tooling
   // read it without knowing this ontology. Researched 2026-10-17; experiment 117.
-  const problems=dataIssues.map(issue=>
-    // A data issue too (experiment 207): its kind, its column and what it means, in the terms every step uses.
-    `${activity} fw:readingProblem [ a fw:ReadingProblem, fw:DataIssue; `
+  const upstream=about??sources[0]??activity;
+  const problems=dataIssues.map((issue,i)=>
+    // A data issue too (experiment 207), with its kind, column and meaning; and ABOUT THE DATA, an upstream problem (the practitioner, 2026-11-12): the data lists it among its quality
+    // measurements, and this step is what found it.
+    `${upstream} dqv:hasQualityMeasurement <${NS}run:${runId}:ruleset:${node.id}:issue:${i+1}>.\n`
+    +`${activity} fw:readingProblem <${NS}run:${runId}:ruleset:${node.id}:issue:${i+1}>.\n`
+    +`<${NS}run:${runId}:ruleset:${node.id}:issue:${i+1}> a fw:ReadingProblem, fw:DataIssue; dqv:computedOn ${upstream}; prov:wasGeneratedBy ${activity}; `
     +`fw:issueKind ${issue.why==='missing'?'fw:ValueAbsent':'fw:ValueUnreadable'}; fw:issueColumn ${JSON.stringify(issue.field)}; `
     +`rdfs:comment ${JSON.stringify(issue.says)}; `
     +`dqv:isMeasurementOf ${issue.why==='missing'?'fw:absentValues':'fw:unreadableValues'}; `
     +`fw:boundAttribute ${JSON.stringify(issue.field)}; `
     +`fw:problemKind ${issue.why==='missing'?'fw:ValueAbsent':'fw:ValueUnreadable'}; `
-    +`fw:affectedRecordCount ${issue.count}; fw:consideredRecordCount ${issue.of} ].`).join('\n');
+    +`fw:affectedRecordCount ${issue.count}; fw:consideredRecordCount ${issue.of}.`).join('\n');
   const statement=`@prefix fw: <${NS}>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n`
     +(problems?`@prefix dqv: <http://www.w3.org/ns/dqv#>.\n@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.\n`:'')
     +`${activity} a fw:RuleApplication, prov:Activity; fw:ruleSource "authored"; `

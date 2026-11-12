@@ -25,7 +25,7 @@ Three models of one idea, and three places with none. On screen the same issue i
 
 ## Decided
 
-**One module, `ontology/data-issues.ttl`.** `fw:DataIssue`, a `dqv:QualityMeasurement`: a count of the records one step
+**One module, `ontology/fieldwork.ttl`.** `fw:DataIssue`, a `dqv:QualityMeasurement`: a count of the records one step
 found with one kind of issue, of how many it considered. `fw:ReadingProblem` and `fw:JoinFinding` become subclasses,
 their IRIs unchanged. Each kind is a `fw:DataIssueKind`, with a label, a definition and the DQV dimension it measures.
 DQV is W3C's (open, CC BY 4.0); it names no dimensions, so these are Fieldwork's, as `fw:completeness` and
@@ -71,7 +71,7 @@ named for what they hold.
 
 ## Built 2026-11-12
 
-- `ontology/data-issues.ttl`: `fw:DataIssue` and fifteen kinds, the twelve above and the Data quality inspector's
+- `ontology/fieldwork.ttl`: `fw:DataIssue` and fifteen kinds, the twelve above and the Data quality inspector's
   three (the practitioner, the same day: *"we have data quality inspector that should be a target for knowledge
   representation"*): *Field missing* and *Empty*, each narrower than *No value*, and *Beyond 1.5×IQR*, a value to look at
   and not an error. `fw:ReadingProblem` and `fw:JoinFinding` are subclasses.
@@ -83,6 +83,21 @@ named for what they hold.
   dt_onset: 27 of 162 rows*, *Empty* in dt_onset 27 of 162, and seven columns not described.
 - **On screen:** the warning dialog's *What happened* and the inspector's problems lead with the kind's label; the
   inspector's sentence on why nothing is offered to fill a gap went, as design commentary.
+
+**Moved and restated the same day.** The practitioner, 2026-11-12: *"Data issues are upstream problems and should be
+represented in the FW ontology."* Two changes, both chosen by the practitioner from three:
+
+| Before | After |
+| --- | --- |
+| A module of its own, `data-issues.ttl` | In `ontology/fieldwork.ttl`, the FW ontology |
+| An issue hung off the step that found it (`<step> fw:dataIssue …`) | An issue is about the data: `<data> dqv:hasQualityMeasurement <issue>`, `<issue> dqv:computedOn <data>`, and the step only `prov:wasGeneratedBy` |
+| A kind was a SKOS concept with its own `fw:inDimension` | A kind is also the DQV metric measured (`dqv:isMeasurementOf`), in DQV's own `dqv:inDimension` |
+
+**The data an issue is about** is where what the step read came in: back along its one input, through each step with one
+input, to the step that brought it in. A step with two inputs stops the walk. Found while doing it: Table input names
+its table `…:table:<id>` and every step after it names the same table `…:output:<id>`, with nothing joining them; Table
+input now states `prov:alternateOf` between the two. On the MERS line list, all five issues, three from Table input and
+two from 7-1-7, are now about one IRI, the line list's.
 
 **Not yet:** Join to area's six codes as kinds (its `fw:JoinFinding` is a subclass, its codes still text); declaration
 gaps and travel-time sites in a receipt; the Data quality inspector reading its findings back from the receipt.

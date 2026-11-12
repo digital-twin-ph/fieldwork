@@ -1,6 +1,6 @@
 # 206 · Syndromic surveillance: detecting an aberration in a count over time
 
-_Created 2026-11-11 · Updated 2026-11-11_
+_Created 2026-11-11 · Updated 2026-11-12_
 
 **Status:** asked. An analysis the practitioner brought on 2026-11-11, checked here against the palette as it stands;
 nothing built, and nothing placed in the order of work yet.

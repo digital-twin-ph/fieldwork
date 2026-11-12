@@ -101,6 +101,14 @@ const baseFieldOf=(predicate:string,fields:Field[])=>
 const asksPresence=(predicate:string,fields:Field[])=>
   fields.some(f=>`${f.predicate}Known`===predicate);
 
+/** A TERM AS WORDS (the practitioner, 2026-11-12, of 7-1-7's rules showing fw:detectionWithinTarget and fw:Met: "I don't
+ *  think it efficient to make users understand the underlying ontology just to enable them to make rules"). The prefix
+ *  goes, whichever vocabulary it names, and an underscore reads as the space it stands for; what is stored is unchanged
+ *  until it is edited. */
+export const shownName=(term:string):string=>term.replace(/^[A-Za-z][\w-]*:/,'');
+/** A category as the results table shows it: its underscores read as spaces. A column's name keeps its spelling. */
+export const shownTerm=(term:string):string=>shownName(term).replace(/_/g,' ');
+
 const blankCondition=(fields:Field[]):Authored['rules'][number]['any'][number]['all'][number]=>
   ({field:readable(fields)[0]?.predicate??'fwa:field',comparator:'equals',value:''});
 
@@ -246,7 +254,9 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
           const shown=held===undefined
             ?'not set'
             :`${held}${s.unitLabel?' '+s.unitLabel:''}`;
-          return `<option value="${esc(s.name)}" ${s.name===setting?'selected':''}>${esc(s.name)} · ${esc(shown)}</option>`;
+          // NAMED BY WHAT IT MEANS where the ruleset says (7-1-7's "Days from emergence to detection"), not its key.
+          const said=(s as {meaning?:string}).meaning?.split('.')[0]?.trim()||s.name;
+          return `<option value="${esc(s.name)}" ${s.name===setting?'selected':''}>${esc(said)} · ${esc(shown)}</option>`;
         }).join('')
         +`</select>`
         +(setting
@@ -455,11 +465,11 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
           +COMPUTE_OPERATORS.map(o=>`<option value="${o}" ${o===conclusion.compute.operator?'selected':''}>${OPERATOR_WORDS[o]}</option>`).join('')+`</select>`
           +operandControl(r,t,'right',conclusion.compute.right)
           +`<span class="rule-is">measured in</span>`
-          +`<input data-rule="${r}" data-then="${t}" data-part="unit" aria-label="Unit of the new column" value="${esc(conclusion.unit??'')}" placeholder="deaths per house">`
+          +`<input data-rule="${r}" data-then="${t}" data-part="unit" aria-label="Unit of the new column" value="${esc(conclusion.unit??'')}" placeholder="unit, such as days">`
           +`<input data-rule="${r}" data-then="${t}" data-part="meaning" aria-label="What the new column measures" value="${esc(conclusion.meaning??'')}" placeholder="what it measures">`
-        :`<input data-rule="${r}" data-then="${t}" data-part="predicate" aria-label="Conclusion name" value="${esc(conclusion.predicate.replace(/^fwa:/,''))}" placeholder="band">`
+        :`<input data-rule="${r}" data-then="${t}" data-part="predicate" aria-label="Conclusion name" value="${esc(shownName(conclusion.predicate))}" placeholder="band">`
           +`<span class="rule-is">is</span>`
-          +`<input data-rule="${r}" data-then="${t}" data-part="conclusion" aria-label="Conclusion value" value="${esc((conclusion.value??'').replace(/^fwa:/,''))}" placeholder="Short">`)
+          +`<input data-rule="${r}" data-then="${t}" data-part="conclusion" aria-label="Conclusion value" value="${esc(shownTerm(conclusion.value??''))}" placeholder="Short">`)
       +(rule.then.length>1?`<button class="button small" data-rule="${r}" data-then="${t}" data-part="drop-then">Remove</button>`:'')
       +`</div>`;
     const ruleCard=(rule:Authored['rules'][number],r:number)=>`<section class="rule-card"><header><h3>Rule ${r+1}`

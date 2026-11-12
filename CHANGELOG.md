@@ -13,6 +13,9 @@ shown in a local build is not a claim that it has been published.
 - **A saved copy of an example says when the example has been updated**, in the bar under the toolbar, with *Load the
   updated example*; it said only "changed since", whether the example had moved on or you had. Hagelloch's cluster
   workflow saved before the day-by-day replay was added is the case that showed it.
+- **The rules dialog reads as words.** A published ruleset's names and values showed their vocabulary prefix
+  (`fw:detectionWithinTarget is fw:Met`); they now read as the results table shows them (*detectionWithinTarget* is
+  *Met*), and a setting is named by what it means (*Days from emergence to detection · 7 days*).
 - **Make bands…** in Apply ruleset writes the rules for age bands, or any bands of a number, from cut points, with no
   gap or overlap. Apply ruleset 0.13.0.
 

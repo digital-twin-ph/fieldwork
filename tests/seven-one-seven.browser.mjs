@@ -31,6 +31,14 @@ test('7-1-7: the dates are read from the columns chosen in Configure…, and eac
   await dialog.locator('[data-ruleset-binding="fw:detectionDate"]').selectOption('dt_diag');
   await dialog.locator('[data-ruleset-binding="fw:notificationDate"]').selectOption('dt_report');
   await expect(dialog.locator('[data-ruleset-binding="fw:responseCompleteDate"]')).toHaveValue('');
+  // THE RULES READ AS WORDS (2026-11-12): no vocabulary prefix in what the rules dialog shows, settings by their meaning.
+  await dialog.locator('#review-rules').click();
+  const editor=page.locator('#rule-editor');
+  const shown=await editor.locator('input').evaluateAll(els=>els.map(e=>e.value));
+  expect(shown.filter(v=>/^(fw|fwa):/.test(v))).toEqual([]);
+  expect(shown).toContain('Met');
+  await expect(editor.locator('option',{hasText:'Days from emergence to detection · 7 days'}).first()).toBeAttached();
+  await editor.locator('#config-cancel').click();
   await dialog.locator('#config-apply').click();
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45_000});

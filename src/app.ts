@@ -141,7 +141,7 @@ import {openRasterEditor,rasterSvg,rasterFrame,downloadRaster} from './raster-ui
 import {TILE_PROVIDERS,basemapImages,fetchTileAsDataURI,useTileStore} from './basemap-tiles.js';
 import {rasteriseFigure,FIGURE_PIXEL_SCALE} from './figure-export.js';
 import {COUNTRIES,countryName,iso3Of,countryOfArea} from './boundary-source.js';
-import {populationRastersForCountry,WORLDPOP_LICENCE,WORLDPOP_TAKEN,WORLDPOP_BYTES_PER_SECOND,downloadWait} from './worldpop-catalogue.js';
+import {worldPopRastersForCountry,GLOBAL2,WORLDPOP_LICENCE,WORLDPOP_TAKEN,WORLDPOP_BYTES_PER_SECOND,downloadWait} from './worldpop-catalogue.js';
 import type {BoundaryProvenance} from './types.js';
 import {basemapAvailable,basemapOf,extentSpanKm,NATURAL_EARTH_MIN_SPAN_KM} from './basemaps.js';
 import {naturalEarthMarkup,NATURAL_EARTH,NATURAL_EARTH_CREDIT} from './natural-earth.js';
@@ -5093,7 +5093,12 @@ function renderInspector(){
     // WHICH SOURCE (TODO 24, 2026-11-11): WorldPop for every country, GRID3's 2025 estimates for sub-Saharan Africa. A choice
     // of which file to download, not a setting the step keeps: the raster read records the file it was given.
     let ghsEpoch='2020';
-    let popSource:'worldpop'|'grid3'|'ghs'=grid3RasterFor(country||null)&&!populationRastersForCountry(country||null).length?'grid3':'worldpop';
+    let popSource:'worldpop'|'worldpop1'|'grid3'|'ghs'=grid3RasterFor(country||null)&&!worldPopRastersForCountry(country||null,'global2').length?'grid3':'worldpop';
+    const release=()=>popSource==='worldpop1'?'global1' as const:'global2' as const;
+    const rastersNow=()=>worldPopRastersForCountry(country||null,release());
+    const thisYear=String(new Date().getFullYear());
+    let popYear=node.params.populationYear;
+    const yearNow=()=>{const r=rastersNow();return r.find(x=>x.year===popYear)?.year??r.find(x=>x.year===thisYear)?.year??r[0]?.year??'';};
     const grid3Link=()=>{const r=grid3RasterFor(country||null);
       if(!r)return `<p class="muted">GRID3 publishes no estimate for ${esc(countryName(country))}: its ${GRID3_COUNTRIES} countries are in sub-Saharan Africa.</p>`;
       return `<a class="button" id="population-download" href="${esc(r.url)}" download target="_blank" rel="noopener noreferrer">`
@@ -5101,15 +5106,16 @@ function renderInspector(){
         +`<p class="muted">${r.bytes?`About ${esc(downloadWait(r.bytes))} at the one speed measured here, ${(WORLDPOP_BYTES_PER_SECOND/1e3).toFixed(0)} kB/s. `:''}`
         +`Your browser downloads it from data.worldpop.org, which sends no CORS header. Then choose the downloaded file below. `
         +`${esc(GRID3_PRODUCT)}. ${esc(GRID3_NOTE)} ${esc(GRID3_LICENCE)} Cite: ${esc(GRID3_CITATION)}. Catalogue of ${esc(GRID3_TAKEN)}.</p>`;};
-    const linkFor=(year:string)=>{const rasters=populationRastersForCountry(country||null),r=rasters.find(x=>x.year===year)??rasters[0]!;
+    const linkFor=(year:string)=>{const rasters=rastersNow(),r=rasters.find(x=>x.year===year)??rasters[0]!,g2=release()==='global2';
       return `<a class="button" id="population-download" href="${esc(r.url)}" download target="_blank" rel="noopener noreferrer">`
         +`↓ ${esc(r.iso3)} · ${esc(r.year)}${r.bytes?` · ${(r.bytes/1e6).toFixed(0)} MB`:''}</a>`
         +`<p class="muted">${r.bytes?`About ${esc(downloadWait(r.bytes))} at the one speed measured here, ${(WORLDPOP_BYTES_PER_SECOND/1e3).toFixed(0)} kB/s. `:''}`
         +`Keep the laptop awake: the host ignores resume requests, so an interrupted download starts again from zero. Your browser `
-        +`downloads it from data.worldpop.org, which sends no CORS header. Then choose the downloaded file below. Unconstrained `
-        +`population, 100 m. ${esc(WORLDPOP_LICENCE)} Catalogue of ${esc(WORLDPOP_TAKEN)}.</p>`;};
+        +`downloads it from data.worldpop.org, which sends no CORS header. Then choose the downloaded file below. `
+        +(g2?`Global2 ${esc(GLOBAL2.release)}. ${esc(GLOBAL2.note)} ${esc(GLOBAL2.licence)} Cite: ${esc(GLOBAL2.citation)}. <a href="${esc(GLOBAL2.listing)}" target="_blank" rel="noopener noreferrer">WorldPop’s listing</a>, as read on ${esc(GLOBAL2.takenAt)}.</p>`
+          :`Global1, unconstrained population, 100 m. ${esc(WORLDPOP_LICENCE)} Catalogue of ${esc(WORLDPOP_TAKEN)}.</p>`);};
     const populationHtml=()=>{
-      const rasters=populationRastersForCountry(country||null);
+      const rasters=rastersNow();
       // ACROSS A BORDER (experiment 204): the area's countries are the choice, and the limit is said. One file is read.
       const several=upstream.length>1;
       const ask=stated?'':(several?`<p class="muted">The study area lies in ${upstream.map(c=>esc(countryName(c))).join(' and ')}. Each source `
@@ -5120,7 +5126,8 @@ function renderInspector(){
         +(several?COUNTRIES.filter(c=>upstream.includes(c.iso)):COUNTRIES).map(c=>`<option value="${c.iso}" ${c.iso===country?'selected':''}>${esc(c.name)} (${c.iso})</option>`).join('')
         +`</select>`+(several?'':`<p class="muted">Kept on the study area, which states it once for every step that needs it.</p>`);
       const sourcePick=`<label class="field-label" for="population-source">Population source</label><select id="population-source">`
-        +`<option value="worldpop" ${popSource==='worldpop'?'selected':''}>WorldPop · every country, several years</option>`
+        +`<option value="worldpop" ${popSource==='worldpop'?'selected':''}>WorldPop Global2 ${esc(GLOBAL2.release)} · every country, ${GLOBAL2.first}–${GLOBAL2.last}</option>`
+        +`<option value="worldpop1" ${popSource==='worldpop1'?'selected':''}>WorldPop Global1 · every country, 2000–2020</option>`
         +`<option value="grid3" ${popSource==='grid3'?'selected':''}>GRID3 · sub-Saharan Africa, 2025</option>`
         +`<option value="ghs" ${popSource==='ghs'?'selected':''}>GHS-POP (JRC) · every country, 1975–2030, read for the area only</option></select>`;
       // GHS-POP NEEDS NO COUNTRY: one grid of the world, read for the study area's window by HTTP range.
@@ -5134,13 +5141,13 @@ function renderInspector(){
         +(stated?`<p class="muted">The country is the study area’s.</p>`:ask)+sourcePick
         +(!country?'':popSource==='grid3'?`<div class="extract-links" id="population-link">${grid3Link()}</div>`:rasters.length
           ?`<label class="field-label" for="population-year">Year</label><select id="population-year">`
-            +rasters.map(r=>`<option value="${r.year}" ${r.year===(node.params.populationYear??rasters[0]!.year)?'selected':''}>${r.year}</option>`).join('')
-            +`</select><div class="extract-links" id="population-link">${linkFor(node.params.populationYear??rasters[0]!.year)}</div>`
+            +rasters.map(r=>`<option value="${r.year}" ${r.year===yearNow()?'selected':''}>${r.year}</option>`).join('')
+            +`</select><div class="extract-links" id="population-link">${linkFor(yearNow())}</div>`
           :`<p class="muted">No WorldPop raster is listed for ${esc(countryName(country))}.</p>`);
     };
     const wirePopulation=(block:HTMLElement)=>{
       const chosen=block.querySelector<HTMLSelectElement>('#population-source');
-      if(chosen)chosen.onchange=()=>{popSource=chosen.value==='grid3'?'grid3':chosen.value==='ghs'?'ghs':'worldpop';block.innerHTML=populationHtml();wirePopulation(block);};
+      if(chosen)chosen.onchange=()=>{popSource=chosen.value==='grid3'?'grid3':chosen.value==='ghs'?'ghs':chosen.value==='worldpop1'?'worldpop1':'worldpop';block.innerHTML=populationHtml();wirePopulation(block);};
       const epoch=block.querySelector<HTMLSelectElement>('#ghs-epoch');
       if(epoch)epoch.onchange=()=>{ghsEpoch=epoch.value;block.innerHTML=populationHtml();wirePopulation(block);};
       // The URL path does the read: the address put where a person would type it, and read as they would.
@@ -5148,7 +5155,7 @@ function renderInspector(){
         const field=dialog?.querySelector<HTMLInputElement>('#raster-url'),read=dialog?.querySelector<HTMLButtonElement>('#raster-url-read');
         if(!field||!read)return;field.value=ghsUrl(ghsEpoch);field.closest('details')?.setAttribute('open','');read.click();});
       const year=block.querySelector<HTMLSelectElement>('#population-year');
-      if(year)year.onchange=()=>{block.querySelector('#population-link')!.innerHTML=linkFor(year.value);};
+      if(year)year.onchange=()=>{popYear=year.value;block.querySelector('#population-link')!.innerHTML=linkFor(year.value);};
       const pick=block.querySelector<HTMLSelectElement>('#population-country');
       if(pick)pick.onchange=()=>{
         country=pick.value;

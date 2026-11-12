@@ -20,7 +20,9 @@ export interface PopulationRaster {iso3:string; year:string; url:string; bytes?:
 interface CatalogueCountry {iso3:string; years:string[]; latest:string; bytes?:number}
 const CATALOGUE=catalogue as unknown as {
   takenAt:string; source:string; licence:string; observedBytesPerSecond:number;
-  countries:CatalogueCountry[]};
+  countries:CatalogueCountry[];
+  global2:{takenAt:string; release:string; pathPattern:string; listing:string; years:[string,string]; doi:string; citation:string; licence:string; note:string;
+    sizesFor:string; countries:{iso3:string; bytes:number}[]}};
 
 export const WORLDPOP_TAKEN=CATALOGUE.takenAt;
 export const WORLDPOP_LICENCE=CATALOGUE.licence;
@@ -63,6 +65,28 @@ export function populationRastersForCountry(iso3:string|null):PopulationRaster[]
 /** The same, for a study area that states which country it is in. */
 export const populationRastersFor=(provenance?:BoundaryProvenance|null):PopulationRaster[]=>
   populationRastersForCountry(iso3Of(provenance));
+
+/** WHICH RELEASE (the practitioner, 2026-11-11: WorldPop "not tied to specific countries and release should still be
+ *  customizable to match years required by any project"). Global1 is 2000–2020, unconstrained; Global2 R2025A is
+ *  2015–2030, constrained, for the 242 countries whose folder holds a 100 m total (listed 2026-11-11). Every year of a
+ *  release is offered; none is chosen for the project. */
+export type WorldPopRelease='global1'|'global2';
+const G2=CATALOGUE.global2;
+export const GLOBAL2={release:G2.release,first:G2.years[0],last:G2.years[1],doi:G2.doi,citation:G2.citation,
+  licence:G2.licence,note:G2.note,takenAt:G2.takenAt,listing:G2.listing,sizesFor:G2.sizesFor};
+/** Built from the catalogue's own pattern, so a later release is a change to the catalogue, not to this code. */
+export const global2FileFor=(iso3:string,year:string):string=>
+  G2.pathPattern.replaceAll('{year}',year).replaceAll('{ISO3}',iso3).replaceAll('{iso3}',iso3.toLowerCase());
+/** Every Global2 year for a country, newest first. The size is the 2025 file's, said as that year's. */
+export function global2RastersForCountry(iso3:string|null):PopulationRaster[]{
+  const country=iso3?G2.countries.find(c=>c.iso3===iso3):undefined;
+  if(!country)return [];
+  const years:string[]=[];for(let y=Number(G2.years[1]);y>=Number(G2.years[0]);y--)years.push(String(y));
+  return years.map(year=>({iso3:country.iso3,year,url:global2FileFor(country.iso3,year),
+    ...(year===G2.sizesFor?{bytes:country.bytes}:{})}));
+}
+export const worldPopRastersForCountry=(iso3:string|null,release:WorldPopRelease):PopulationRaster[]=>
+  release==='global2'?global2RastersForCountry(iso3):populationRastersForCountry(iso3);
 
 /** Unused for now, kept so the module never tempts anyone to guess a country from a polygon. */
 export const neverGuessCountryFrom=(_boundary:Boundary):null=>null;

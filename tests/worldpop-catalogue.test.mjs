@@ -44,3 +44,18 @@ test('the published path is the one measured, not one invented',()=>{
 test('an unpublished country is absent rather than linked into a 404',()=>{
   assert.deepEqual(populationRastersFor({boundaryID:'ZZZ-ADM0-1'}),[]);
 });
+
+test('Global2 R2025A offers every year from 2015 to 2030, for any country with a 100 m total',async()=>{
+  const {global2RastersForCountry,global2FileFor,worldPopRastersForCountry,GLOBAL2}=await import('../build/worldpop-catalogue.js');
+  const rwa=global2RastersForCountry('RWA');
+  assert.deepEqual(rwa.map(r=>r.year),Array.from({length:16},(_,i)=>String(2030-i)));
+  assert.equal(global2FileFor('RWA','2022'),
+    'https://data.worldpop.org/GIS/Population/Global_2015_2030/R2025A/2022/RWA/v1/100m/constrained/rwa_pop_2022_CN_100m_R2025A_v1.tif');
+  assert.equal(rwa.find(r=>r.year==='2025').bytes>1e6,true,'the size measured is the 2025 file’s');
+  assert.equal(rwa.find(r=>r.year==='2022').bytes,undefined,'and no other year is given a size it was not measured at');
+  assert.deepEqual(global2RastersForCountry('VAT'),[],'a folder with only a 1 km file is not linked into a 404');
+  assert.deepEqual(global2RastersForCountry(null),[]);
+  assert.equal(worldPopRastersForCountry('RWA','global1')[0].year,'2020');
+  assert.equal(GLOBAL2.doi,'10.5258/SOTON/WP00839');
+  assert.match(GLOBAL2.licence,/CC BY 4\.0/);
+});

@@ -14,6 +14,7 @@
     "test:report": "playwright show-report",
     "check": "npm run build && npm run validate:kernel && npm run validate:docs && npm run validate:experiments && npm run validate:check-coverage && npm run validate:evidence && npm run validate:rulesets && npm run validate:blockers && npm run validate:directions && npm run validate:facility-registers && npm run validate:standardization && npm run validate:naming && npm run validate:names && npm run validate:widget-budget && npm run validate:admission && npm run validate:ontology-coupling && npm run validate:dive-deeper && npm run validate:manual && npm run validate:inspector-prose && npm run validate:caps && npm run validate:extracts && npm run validate:fixtures && npm run validate:examples && npm run validate:example-audit && npm run validate:port-contracts && npm run validate:release-notes && npm run validate:vocabulary && npm run validate:audit-queue && npm run validate:packs && node scripts/test-unit.mjs && npm run test:browser",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.workers.json --noEmit",
+    "catalogue:worldpop": "node scripts/refresh-worldpop-catalogue.mjs",
     "validate:ontology": "node scripts/validate-ontology.mjs",
     "validate:widgets": "node scripts/validate-widgets.mjs",
     "validate:ontology-coupling": "node scripts/validate-ontology-coupling.mjs",

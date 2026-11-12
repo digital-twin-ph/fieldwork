@@ -132,3 +132,22 @@ test('outside sub-Saharan Africa, GRID3 says it publishes nothing for the countr
   await expect(dialog.locator('#population-download')).toHaveCount(0);
   expect(errors).toEqual([]);
 });
+// THE RELEASE IS THE PROJECT'S (the practitioner, 2026-11-11): Global2 for 2015 to 2030 or Global1 for 2000 to 2020, for
+// any country, and a year chosen in one release stays chosen in the other where both publish it.
+test('the raster dialog offers both WorldPop releases, and every year of each',async({page})=>{
+  const errors=collectPageErrors(page);
+  await open(page,'BWA');
+  await page.locator('.react-flow__node[data-id="raster"]').click({timeout:45000});
+  await page.locator('#prepare-raster').click();
+  const dialog=page.locator('#raster-dialog'),years=dialog.locator('#population-year option');
+  await expect(years).toHaveCount(16);
+  await expect(years.first()).toHaveText('2030');
+  await dialog.locator('#population-year').selectOption('2018');
+  await expect(dialog.locator('#population-download')).toHaveAttribute('href',/R2025A\/2018\/BWA\/v1\/100m\/constrained\/bwa_pop_2018_CN_100m_R2025A_v1\.tif$/);
+  await expect(dialog.locator('#raster-population')).toContainText('doi:10.5258/SOTON/WP00839');
+  await dialog.locator('#population-source').selectOption('worldpop1');
+  await expect(years).toHaveCount(21);
+  await expect(dialog.locator('#population-year')).toHaveValue('2018');
+  await expect(dialog.locator('#population-download')).toHaveAttribute('href',/Global_2000_2020\/2018\/BWA\/bwa_ppp_2018\.tif$/);
+  expect(errors).toEqual([]);
+});

@@ -58,8 +58,13 @@ same reading:
 | `polygon-extent` | `extent-review` 1.0.0, 1.1.0 | Snow's outbreak extent workflow | Convert to the `declared` projection with the workflow's results held identical, then delete the path |
 
 **Decided** (the practitioner, 2026-11-11, from two each): **retire the heat example in this pass**, with
-`outreach-criteria` and its `outreach` path; **convert `extent-review` in this same pass**, so Apply ruleset ends it with
-no bespoke code.
+`outreach-criteria` and its `outreach` path. For `extent-review`, first chosen to convert, then read again on the
+practitioner's question *"What is the question that that extent workflow in Snow asks?"*: its map asks how far the
+outbreak reached, which the convex hull answers alone (0.139 km², 498 m at its widest); the rule over it was written
+for experiment 113, to test whether a rule can run over a quantity derived from geometry, with a 0.25 km² threshold no
+source states (the ruleset ledger counts it uncited). **Retired** (the practitioner: *"Retire"*): the ruleset, its
+`polygon-extent` path, and the rule step and its decision table in Snow's outbreak-extent workflow, which keeps the
+hull, the map with the pumps and the epidemic curve.
 
 Also found: Hagelloch's authored rules carry `outreach-criteria`'s identifier as the pinned ruleset, titled "Rules
 written in this workflow" (`src/hagelloch-example.ts`). Rules written in a workflow should not borrow another

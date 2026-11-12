@@ -21,16 +21,8 @@
  */
 import type {EvidenceReference} from './evidence.js';
 import type {PortType} from './types.js';
-import outreachCriteria from '../rulesets/outreach-criteria/1.0.0.json' with {type:'json'};
-import outreachCriteria11 from '../rulesets/outreach-criteria/1.1.0.json' with {type:'json'};
 import extractContract from '../rulesets/extract-contract/1.0.0.json' with {type:'json'};
 import compareLevel from '../rulesets/compare-level-to-elevation/1.0.0.json' with {type:'json'};
-import accessReview2 from '../rulesets/access-review/2.0.0.json' with {type:'json'};
-import nb06Evidence2 from '../rulesets/nb06-evidence/2.0.0.json' with {type:'json'};
-import accessReview from '../rulesets/access-review/1.0.0.json' with {type:'json'};
-import nb06Evidence from '../rulesets/nb06-evidence/1.0.0.json' with {type:'json'};
-import extentReview from '../rulesets/extent-review/1.0.0.json' with {type:'json'};
-import extentReview2 from '../rulesets/extent-review/1.1.0.json' with {type:'json'};
 
 export interface RulesetParameter {
   name:string; role:string; type:string; unit?:string; min?:number; max?:number;
@@ -186,7 +178,21 @@ export const rulesetCitation=(ruleset:Ruleset):RulesetCitation=>
 
 // Both versions of each changed ruleset are carried: a saved workflow pins the version that
 // produced its results, and a port type change does not entitle this build to forget the old one.
-const BUNDLED=[outreachCriteria,outreachCriteria11,extractContract,compareLevel,accessReview,accessReview2,nb06Evidence,nb06Evidence2,extentReview,extentReview2] as unknown as Ruleset[];
+const BUNDLED=[extractContract,compareLevel] as unknown as Ruleset[];
+/** RETIRED 2026-11-11 with the examples they existed for (docs/audits/old-naledi-audit.md): each ran through code
+ *  written for it alone, and Apply ruleset carries no bespoke ruleset code now. A saved pin to one is refused by name. */
+export const RETIRED_RULESETS:Readonly<Record<string,string>>={
+  'urn:fieldwork:ruleset:outreach-criteria':'Outreach criteria, with the synthetic heat example',
+  'urn:fieldwork:ruleset:nb06-evidence':'NB06 diagnostic evidence, with Old Naledi',
+  'urn:fieldwork:ruleset:access-review':'Access review, with Old Naledi',
+  'urn:fieldwork:ruleset:extent-review':'Extent review, with the rule step of Snow\u2019s outbreak extent',
+};
+/** RULES WRITTEN IN A WORKFLOW are not a published ruleset: the pin only gives the step its ports. They borrowed a
+ *  published ruleset's identity until 2026-11-11, which tied every step that wrote its own rules to that ruleset. */
+export const WRITTEN_IN_WORKFLOW='urn:fieldwork:ruleset:written-in-this-workflow';
+/** The published ruleset a pin names, or nothing when the pin is rules written in the workflow. */
+export const publishedRuleset=(pin:{id:string;version:string}|undefined):Ruleset|undefined=>
+  !pin||pin.id===WRITTEN_IN_WORKFLOW?undefined:resolveRuleset(pin.id,pin.version);
 /** The version of this ruleset a practitioner would be offered today, if it is not the one
  *  pinned. Returns nothing when the pin is current.
  *
@@ -231,6 +237,8 @@ export const bundledRulesets=():Ruleset[]=>BUNDLED.map(r=>structuredClone(r));
 export function resolveRuleset(id:string,version:string):Ruleset{
   const found=INDEX.get(rulesetKey(id,version));
   if(found)return structuredClone(found);
+  if(RETIRED_RULESETS[id])throw new Error(`This workflow applies ${RETIRED_RULESETS[id]}, a ruleset retired on 2026-11-11. `
+    +'Write its rules in Apply ruleset, or rebuild the step, and save the workflow again.');
   const others=BUNDLED.filter(r=>r.id===id).map(r=>r.version);
   throw new Error(others.length
     ?`This build carries ${id} at ${others.join(', ')} and not ${version}. A saved workflow pins a ruleset version because a rule change changes results.`

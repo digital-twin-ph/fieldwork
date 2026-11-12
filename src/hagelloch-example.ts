@@ -5,6 +5,7 @@ import provenance from '../examples/hagelloch-1861/provenance.json';
 import {pointsAsTable} from './core.js';
 import {groupTable} from './group-table.js';
 import {relateShape} from './relate-table.js';
+import {WRITTEN_IN_WORKFLOW} from './rulesets.js';
 
 /** Measles in Hagelloch, 1861 — the first worked example built on a file this project did not
  *  author, and the first where place, time and person meet on one record.
@@ -112,7 +113,7 @@ export function hagellochChainsExample():Workflow{
       unmatched:{decision:'keep',label:'no infector recorded',reason:'Four cases name no infector: kept, because dropping them would change the counts.',
         signature:relateShape(table,table,selfRequest).signature}}},
     {id:'serial',type:'apply_ruleset',x:760,y:40,params:{label:'Serial interval',parameters:{},
-      ruleset:{id:'urn:fieldwork:ruleset:outreach-criteria',version:'1.0.0',title:'Rules written in this workflow',inputs:[['subjects','table']],output:'table'},
+      ruleset:{id:WRITTEN_IN_WORKFLOW,version:'1.0.0',title:'Rules written in this workflow',inputs:[['subjects','table']],output:'table'},
       authored:{title:'Serial interval',mustNotBeReadAs:'',parameters:[],
         fields:[{attribute:'date_of_prodrome',predicate:'fwa:prodrome',kind:'date',label:'date_of_prodrome'},
           {attribute:'infector_prodrome',predicate:'fwa:infectorProdrome',kind:'date',label:'infector_prodrome'}],

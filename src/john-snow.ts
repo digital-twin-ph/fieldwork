@@ -3,7 +3,6 @@ import dates from '../examples/john-snow/dates.json';
 import graph from '../examples/john-snow/network.json';
 import type {Workflow,WorkflowNode,PointFeature} from './types.js';
 import type {EvidenceReference} from './evidence.js';
-import {pinnedRuleset} from './rule-application.js';
 const voronoiSource='https://github.com/PHI-Case-Studies/1854-Cholera-Outbreak-London-Advanced-2/blob/d1b56c135b0fab2f470b837a51e6777dfc20b286/';
 const isoSource='https://github.com/PHI-Case-Studies/Jupyterlite-1854-Cholera-Outbreak-London-Advanced-1/blob/8bde848d13d71602b2b32c62e5d4b4957e4a45a1/content/';
 function reference(id:string,title:string,url:string,role:EvidenceReference['role'],notes:string):EvidenceReference{return {id,kind:'url',title,url,role,authors:'PHI Case Studies; source attribution in repository',published:'',locator:'Pinned source revision',notes,addedAt:'2026-10-07T00:00:00.000Z',modifiedAt:'2026-10-07T00:00:00.000Z'};}
@@ -148,16 +147,11 @@ export function johnSnowExample(kind:'snow-voronoi'|'snow-isochrone'):Workflow{
  *  licenses anyone to go: proximity is not transmission. `tests/epidemic-curve.browser.mjs` holds
  *  the same distinction for the other Snow examples by checking that no edge links the chains.
  *
- *  Nine nodes against fourteen, because it carries one new question rather than the whole case
- *  study: can a rule run over a quantity DERIVED from geometry rather than over a column somebody
- *  imported? Experiment 113.
- *
- *  The answer the historical data gives is the point. The 250 locations enclose **0.139 km2, 498 m
- *  at their widest**, so against a 0.25 km2 threshold the rule concludes **NoFlag** -- and that
- *  tightness is Snow's finding: the deaths clustered within a short walk of one pump. An example
- *  whose rule does not fire is the honest one here. NoFlag is a measured answer, not the absence
- *  of one, which is the same three-valued reading the ruleset applies when no area is attached at
- *  all and it concludes Unknown instead. */
+ *  How far the outbreak reached: the 250 locations enclose **0.139 km2, 498 m at their widest**, and that tightness is
+ *  Snow's finding: the deaths clustered within a short walk of one pump. A rule over the hull's area against a 0.25 km2
+ *  threshold no source states ran here from experiment 113 until 2026-11-11, testing whether a rule can read a
+ *  quantity derived from geometry; it retired with its ruleset (docs/audits/old-naledi-audit.md). The hull answers
+ *  the question by itself. */
 export function snowExtentExample():Workflow{
   const deaths=structuredClone(data.deaths) as PointFeature[],pumps=structuredClone(data.pumps) as PointFeature[];
   return {schema:'fieldwork/workflow/1',name:'John Snow · outbreak extent',exampleId:'snow-extent',nodes:[
@@ -167,9 +161,6 @@ export function snowExtentExample():Workflow{
       references:[reference('snow-deaths','Snow 1855, death locations','https://geodacenter.github.io/data-and-lab//snow/','data',
         'Death locations digitised from Snow\u2019s map. A location carries no date, so this dataset cannot be joined to Table 1.')]},
     {id:'extent',type:'summarize_hull',x:330,y:20,params:{label:'Observed extent of the outbreak',zone:30,hemisphere:'north'}},
-    {id:'review',type:'apply_ruleset',x:640,y:20,params:{label:'Extent review',
-      ruleset:pinnedRuleset('urn:fieldwork:ruleset:extent-review','1.1.0'),parameters:{threshold:250000}}},
-    {id:'decisions',type:'table_output',x:950,y:20,params:{label:'Extent decision',inputMode:'polygons'}},
     {id:'pumps',type:'point_input',x:330,y:230,params:{label:'Eight pump locations',
       data:{type:'FeatureCollection',features:pumps},
       sourceInfo:{format:'CSV',url:voronoiSource+'data/pumps.csv',description:'Pump locations, Soho 1854, digitised by Robin Wilson from Snow\u2019s map. Infrastructure, not cases.'}}},
@@ -192,9 +183,7 @@ export function snowExtentExample():Workflow{
       sourceNote:'Snow 1855, Table 1. Date of death, not of onset or of report.'}},
   ],edges:[
     {id:'deaths-extent',from:'deaths',to:'extent',port:'points'},
-    {id:'extent-review',from:'extent',to:'review',port:'polygons'},
-    {id:'review-decisions',from:'review',to:'decisions',port:'polygons'},
-    {id:'extent-map',from:'review',to:'map',port:'polygons'},
+    {id:'extent-map',from:'extent',to:'map',port:'polygons'},
     {id:'pumps-map',from:'pumps',to:'map',port:'context'},
     // No edge joins the two chains, and none can: a location has no date and a dated count has no
     // place. The separation is the finding, not a gap waiting to be wired.

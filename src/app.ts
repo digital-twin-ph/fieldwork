@@ -90,14 +90,14 @@ import type {Connection,Edge} from '@xyflow/react';
 import type {ReasonerQuad,ReasoningRequest,ReasoningResponse} from './worker-types.js';
 import {element as $,optionalElement,control} from './dom.js';
 import {errorMessage,isRecord,required} from './guards.js';
-import {resolveRuleset,bundledRulesets,supersession} from './rulesets.js';
+import {resolveRuleset,bundledRulesets,supersession,publishedRuleset,WRITTEN_IN_WORKFLOW} from './rulesets.js';
 import type {Ruleset} from './rulesets.js';
 import {orderOf,inRange} from './select-rows.js';
 import {pinnedRuleset} from './rule-application.js';
 function getNode<K extends NodeType>(w:Workflow,id:string,type:K):WorkflowNode<K>{const node=required(w.nodes.find(n=>n.id===id));if(node.type!==type)throw new Error('Node type changed while editing');return node as WorkflowNode<K>;}
 function updateParam(w:Workflow,id:string,key:string,value:unknown){Object.assign(required(w.nodes.find(n=>n.id===id)).params,{[key]:value});}
 function replaceWorkflow(w:Workflow,next:Workflow){for(const key of Object.keys(w))Reflect.deleteProperty(w,key);Object.assign(w,next);}
-import {TYPES,exampleWorkflow,validateWorkflow,validateGeoJSON,executionPlan,executeWorkflow,nodeInputs,outputOf,portAccepts,pointsAsTable,shownMode,portSourceName,IncompleteWorkflow,rereadOnce} from './core.js';
+import {TYPES,validateWorkflow,validateGeoJSON,executionPlan,executeWorkflow,nodeInputs,outputOf,portAccepts,pointsAsTable,shownMode,portSourceName,IncompleteWorkflow,rereadOnce} from './core.js';
 import {suggestUTM,utmScaleFactor,workflowPositions} from './utm.js';
 import {mountCanvas} from './canvas.js';
 import {DATASET,OLD_TYPES,oldNalediWorkflow,tierLabel} from './old-naledi.js';
@@ -435,17 +435,17 @@ function writeProjects(projects:Project[]):boolean{
 // example has an area node and was silently labelled, described and noted as Old Naledi until
 // it was added. This is the "examples are the default world" problem in TODO.md, in the one
 // place it is least visible.
-const NAMED_WORKSPACES=['blank','raster','hagelloch','hagelloch-chains','hagelloch-cluster','hagelloch-sheet'];
+const NAMED_WORKSPACES=['blank','hagelloch','hagelloch-chains','hagelloch-cluster','hagelloch-sheet'];
 // A workflow a practitioner created is NOT an example, and the study-area fallback below would
 // label it Old Naledi -- the "examples are the default world" problem, reached at last by a real
 // workflow rather than by a new example. `projectId` is the discriminator: it is set only on a
 // workflow that belongs to a practitioner's project, and never on a worked example.
-const exampleKey=(w:Workflow):string=>w.projectId?'blank':w.exampleId?.startsWith('snow-')?w.exampleId:NAMED_WORKSPACES.includes(w.exampleId as string)?w.exampleId as string:w.exampleId==='old-naledi'||w.nodes.some(n=>n.type==='study_area')?'old-naledi':'heat';
+const exampleKey=(w:Workflow):string=>w.projectId?'blank':w.exampleId?.startsWith('snow-')?w.exampleId:NAMED_WORKSPACES.includes(w.exampleId as string)?w.exampleId as string:'hagelloch';
 /** Where a workflow is SAVED, as against which worked example's chrome it shows. They are the
  *  same string for all twelve examples and differ for everything a practitioner makes, whose key
  *  is minted per workflow because the example vocabulary is closed and compiled in. */
 const storageKey=(w:Workflow):string=>w.workflowKey||exampleKey(w);
-const template=(key:string)=>(EXAMPLE_TEMPLATES[key]||exampleWorkflow)();
+const template=(key:string)=>(EXAMPLE_TEMPLATES[key]||EXAMPLE_TEMPLATES.hagelloch)();
 const canAutoRun=(w:Workflow)=>w.nodes.length>0&&!w.nodes.some(n=>n.type==='raster_input'&&!n.params.asset||n.type==='network_input'&&!n.params.data.nodes.length||n.type==='table_input'&&!n.params.data.rows.length);
 /** Why the last OSM download failed, kept until one succeeds.
  *
@@ -464,7 +464,7 @@ let networkDownloadPhase:string|null=null;
 let endpointStatuses:import('./street-network.js').OverpassStatus[]|null=null;
 let endpointsCheckedAt:string|null=null;
 let credentials:CredentialAccess|null=null;
-let workflow=exampleWorkflow(),selected:string|null|undefined='criteria',result:WorkflowRun|null=null,runWorkflow:Workflow|null=null,busy=false,dirty=true,runFailed=false,runIncomplete=false,statuses:Record<string,string>={},history:Workflow[]=[],future:Workflow[]=[],flow:CanvasAPI|null=null,worker:Worker|null=null,seq=0,lastNodeCount=0,importNode:string|null=null;
+let workflow=EXAMPLE_TEMPLATES.hagelloch(),selected:string|null|undefined='cases',result:WorkflowRun|null=null,runWorkflow:Workflow|null=null,busy=false,dirty=true,runFailed=false,runIncomplete=false,statuses:Record<string,string>={},history:Workflow[]=[],future:Workflow[]=[],flow:CanvasAPI|null=null,worker:Worker|null=null,seq=0,lastNodeCount=0,importNode:string|null=null;
 let toastTimer:ReturnType<typeof setTimeout>|undefined,activeOutputId:string|null=null,tablePage=0,tableAttributePage=0;
 let tableSort:import('./table-output.js').TableSort|undefined;
 /** The run whose comparison result may expand the results pane, consumed the first time it does. */
@@ -636,7 +636,7 @@ useTileStore({read:key=>cachedPayload(key),write:(key,value)=>putPayload(key,val
 // A FETCHED TABLE'S FILE, kept by digest so a second workflow on the same file reads it from the device.
 useDeviceCopies({read:readPDF,keep:(digest,bytes)=>keepBytes(new Map([[digest,bytes]]))});
 try{const saved=localStorage.getItem(KEY);if(saved)workflow=validateWorkflow(hydrateWorkflow(JSON.parse(saved),readDatasets(),true));}catch(error){toast(errorMessage(error).startsWith('Shared input data is missing')?errorMessage(error):'Saved workflow could not be loaded. The example is ready.');}
-if(!workflow.nodes.some(n=>n.id===selected))selected=exampleKey(workflow)==='raster'?'raster-input':exampleKey(workflow)==='old-naledi'?'access':workflow.nodes[0]?.id;
+if(!workflow.nodes.some(n=>n.id===selected))selected=workflow.nodes[0]?.id;
 /** What the last refused save knew, so a caller can say something a practitioner can act on. */
 let lastSaveFailure:{name:string;bytes:number}|null=null;
 /** The refusal in words, decided in `save-refusal.ts` so it can be tested without racing a
@@ -1430,7 +1430,6 @@ function render(){
   if(url.searchParams.get('example')!==exampleKey(workflow)){
     url.searchParams.set('example',exampleKey(workflow));window.history.replaceState(null,'',url);}
   renderLibrary($('#node-search').value);
-  const old=exampleKey(workflow)==='old-naledi';
   renderProjectOptions();renderProjectDetails();renderStorageStatus();renderProjectSafety();
   // THE TAB REDRAWS WITH EVERYTHING ELSE. Three bugs today were the same bug: a derived fact
   // was written and the surface showing it was not told -- the header after an export, the
@@ -1442,15 +1441,14 @@ function render(){
   // returns early for the view you are on, so clicking the tab again does nothing. Found by a
   // test that ran the workflow with Notes open and saw none of what the run had produced.
   if(currentView==='notes')renderNotesView();
-  // THE HEAT EXAMPLE'S CAPTIONS WERE THE FALLBACK for every workflow with none of its own, so Hagelloch said "The heat
-  // example uses synthetic neighborhoods" (the practitioner, 2026-11-11: stale). Each caption is said only of its example.
-  if(currentView==='project')renderProjectView();$('#project-title').textContent=workflow.name||'Untitled workflow';$('#project-description').textContent=old?'Explore diagnostic access, evidence strength, and the assumptions connecting them.':exampleKey(workflow)==='heat'?'Connect geography to evidence. Make every decision explainable.':'';$('#example-note').textContent=old?'Source boundary + historical facilities · generated sample locations · straight-line access proxy':exampleKey(workflow)==='heat'?'Synthetic neighborhoods and cooling centers · illustrative screening rule':'';$('#canvas-example').textContent=old?'OLD NALEDI · WORKED EXAMPLE 02':exampleKey(workflow)==='heat'?'HEAT OUTREACH · DEMO 01':(workflow.name||'This workflow').toUpperCase();$('#footer-context').textContent=old?'Source snapshot 7f183843 · synthetic sample locations':exampleKey(workflow)==='heat'?'CRS84 coordinates · geodesic approximation · synthetic data':'';
+  // NO CAPTION BORROWED FROM ANOTHER EXAMPLE: the heat example's were every workflow's fallback until 2026-11-11, and
+  // the heat and Old Naledi examples have retired (docs/audits/old-naledi-audit.md). A workflow says only its own name.
+  if(currentView==='project')renderProjectView();$('#project-title').textContent=workflow.name||'Untitled workflow';$('#project-description').textContent='';$('#example-note').textContent='';$('#canvas-example').textContent=(workflow.name||'This workflow').toUpperCase();$('#footer-context').textContent='';
   // SAID ONLY WHILE IT IS STILL TRUE. The four captions below are set from the example key; the
   // block after them withdraws the two that describe a RECIPE once the canvas no longer matches
   // the published example. The project description and the footer stay: they describe the kind of
   // work, not the steps, and remain true of a canvas built on top of one.
   if(exampleKey(workflow)==='blank'){$('#project-description').textContent='Define a study area and inspect its semantic representation.';$('#example-note').textContent='Experiment 01 · draw → inspect facts → run the rule';$('#canvas-example').textContent='STUDY AREA · EXPERIMENT 01';$('#footer-context').textContent='User-defined study area · CRS84 · local reasoning';}
-  if(exampleKey(workflow)==='raster'){$('#project-description').textContent='Prepare a local raster, preview and adjust the clipping boundary, then run and inspect the clipped result.';$('#example-note').textContent='1 Prepare raster / 2 Preview and adjust / 3 Run workflow';$('#canvas-example').textContent='OLD NALEDI / RASTER CLIPPING';$('#footer-context').textContent='Native raster cells / adjustable polygon mask / local file and source citation';}
   if(exampleKey(workflow).startsWith('snow-')){$('#project-description').textContent='Historical pump and death-location tables; explicit metric catchment computations and source evidence.';$('#example-note').textContent='250 locations / 489 deaths; network is a modern OSM snapshot, not 1854 streets';$('#canvas-example').textContent='JOHN SNOW / CATCHMENT WORKED EXAMPLE';$('#footer-context').textContent='CRS84 inputs and outputs / UTM computation / method parameters in evidence';}
   if(exampleKey(workflow)==='snow-geoprivacy'){$('#project-description').textContent='Compare private source points with moved points and H3 cell aggregates.';$('#example-note').textContent='Before views and workflow exports contain source coordinates; after views are educational transformations, not privacy guarantees';$('#canvas-example').textContent='JOHN SNOW / GEOPRIVACY EXPERIMENT';$('#footer-context').textContent='CRS84 · seeded donut · H3 aggregation · hide and map encryption remain TODO';}
   // The practitioner met this twice before it was fixed, which is why it is withdrawn here rather
@@ -1719,8 +1717,7 @@ function authorRulesOn(nodeId:string,label:string){
   change(w=>{
     const target=getNode(w,nodeId,'apply_ruleset');
     const held=target.params.ruleset;
-    const pin=pinnedRuleset('urn:fieldwork:ruleset:outreach-criteria','1.0.0');
-    target.params.ruleset={id:pin!.id,version:pin!.version,title:'Rules written in this workflow',
+    target.params.ruleset={id:WRITTEN_IN_WORKFLOW,version:'1.0.0',title:'Rules written in this workflow',
       inputs:held?.inputs??[['subjects','points']],output:held?.output??'points'};
     target.params.parameters={};
     // A RULESET THAT READS COLUMNS CARRIES OVER; one that works its facts out for itself does
@@ -1734,7 +1731,7 @@ function authorRulesOn(nodeId:string,label:string){
     // cannot even provide the view of how it's used? Defeats the purpose of a worked example."
     // A worked example is a teaching artifact and a regression fixture at once, and a step whose
     // rules open blank teaches nothing about the step. Resetting the example puts it back.
-    const source=held&&resolveRuleset(held.id,held.version);
+    const source=publishedRuleset(held);
     const bindings=source?.inputContract.fieldFrom;
     const seeded=bindings?.length?source:undefined;
     target.params.authored={title:label||'Rules for this step',
@@ -2927,7 +2924,7 @@ function openRulesetConfig(nodeId:string){
   const node=getNode(workflow,nodeId,'apply_ruleset');
   const held=node.params.ruleset;
   type Draft={choice:string; parameters:Record<string,number>};
-  const heldRuleset=held?resolveRuleset(held.id,held.version):undefined;
+  const heldRuleset=publishedRuleset(held);
   openConfigDialog<Draft>({
     id:'ruleset-config',widget:'Apply ruleset',step:node.params.label||TYPES.apply_ruleset.title,
     draft:{choice:held?`${held.id}@${held.version}`:'',parameters:{...(node.params.parameters as Record<string,number>)}},
@@ -3228,7 +3225,7 @@ function workflowSpanKm():number|undefined{
 function renderInspector(){
   if(selected?.startsWith('result:')){renderEvidence(selected.slice(7));return;}
   if(exampleKey(workflow)==='blank'&&!workflow.nodes.some(n=>n.id===selected)){$('#inspector-content').innerHTML='<div class="inspector-body"><span class="inspector-section">Step 1 of 2</span><h2>Define the study area</h2><p class="description">Add Study area, then select the node to draw a bounding box or polygon on an online map.</p><div class="rule-preview">Predict what the selection will produce, inspect the N3 facts, then run the readiness rule.</div><p class="muted">Your other worked examples remain saved separately.</p></div>';return;}
-  const n=workflow.nodes.find(n=>n.id===selected);if(!n){$('#inspector-content').innerHTML=`<div class="inspector-body"><p class="description">Choose a node to inspect its settings, or select a result to inspect its evidence.</p>${(note=>note?`<div class="notice">${note}</div>`:'')(exampleKey(workflow).startsWith('snow-')?'Historical case-study locations; modeled catchments. Inspect a processing node to compare its assumptions.':exampleKey(workflow)==='old-naledi'?'Real source boundary and historical facilities; generated sample locations. Select Facility access to explore the assumptions.':exampleKey(workflow)==='heat'?'The heat example uses synthetic neighborhoods and illustrative screening criteria.':'')}</div>`;return;}
+  const n=workflow.nodes.find(n=>n.id===selected);if(!n){$('#inspector-content').innerHTML=`<div class="inspector-body"><p class="description">Choose a node to inspect its settings, or select a result to inspect its evidence.</p></div>`;return;}
   // ONE SHAPE FOR EVERY PANEL: title, one line of what it does, the way in for a learner, then the
   // controls. The two links used to sit after whatever alerts a run had raised, so their position
   // moved with the state of the workflow and their size said they were an afterthought.
@@ -4171,7 +4168,6 @@ content+=`<div class="field"><label class="field-label" for="chart-decisions">Re
   }
   if(['study_area','point_input','places','centers','measure_area','coverage_check','map_output','table_output'].includes(n.type))content+='<div class="source-card" data-spatial-reference><span class="inspector-section">Coordinate reference system</span><h3>WGS84 · EPSG:4326</h3><p>Stored coordinates: longitude, latitude in degrees (OGC:CRS84). A source reads degrees or a UTM zone and converts on import; Reproject points projects mid-workflow.</p></div>';
   // A map can always take another point layer: there is no mode in which it cannot draw points.
-  if(exampleKey(workflow)==='raster'&&(n.type==='raster_input'||n.type==='clip_raster'))content+='<div class="source-card"><span class="inspector-section">Raster workflow steps</span><p>Prepare your GeoTIFF and citation, preview the clip, then Run workflow to populate the map.</p><div class="inspector-actions">'+(['raster_input','clip_raster','map_output'] as NodeType[]).map((type,i)=>{const target=workflow.nodes.find(x=>x.type===type);return '<button class="button small" data-raster-step="'+esc(target?.id||'')+'" '+(!target?'disabled':'')+'>'+[ '1. Raster input','2. Clip parameters','3. Map'][i]+'</button>';}).join('')+'</div></div>';
   if(standard){
     // MANUAL · EVIDENCE · VERSION, the same three on every standard step, then the actions.
     const identity=widgetIdentity(n.type);
@@ -6582,7 +6578,7 @@ $('#reset-example').onclick=async()=>{
 };
 $('#undo-button').onclick=()=>{if(busy||!history.length)return;future.push(structuredClone(workflow));workflow=history.pop()!;dirty=true;statuses={};save();render();};
 $('#redo-button').onclick=()=>{if(busy||!future.length)return;history.push(structuredClone(workflow));workflow=future.pop()!;dirty=true;statuses={};save();render();};
-$('#reset-button').onclick=()=>{change(w=>{const key=exampleKey(w);replaceWorkflow(w,template(key));selected=key.startsWith('snow-')?'catchments':key==='raster'?'raster-input':key==='old-naledi'?'access':'criteria';});renderLibrary();flow?.fit();};
+$('#reset-button').onclick=()=>{change(w=>{const key=exampleKey(w);replaceWorkflow(w,template(key));selected=key.startsWith('snow-')?'catchments':workflow.nodes[0]?.id;});renderLibrary();flow?.fit();};
 $('#workflow-select').onchange=e=>loadExample(control(e).value);
 /** Switching project opens one of its workflows, because a project is not a thing you can look at
  *  on the canvas -- the canvas holds a question, and a project holds the questions. The first one
@@ -8980,7 +8976,7 @@ if(requestedExample&&hasExampleTemplate(requestedExample)&&requestedExample!==ex
   // ?example= is how a worked example is usually reached -- from a link, from the manual -- so
   // the notice has to live here as well as on the picker, or the practitioner who follows a
   // link to a republished example still sees the version they already had.
-  if(openedSaved)setTimeout(()=>noticeIfRepublished(requestedExample),900);else recordRevision(requestedExample);selected=requestedExample==='snow-geoprivacy'?'move':requestedExample.startsWith('snow-')?'catchments':requestedExample==='raster'?'raster-input':requestedExample==='old-naledi'?'access':'criteria';}
+  if(openedSaved)setTimeout(()=>noticeIfRepublished(requestedExample),900);else recordRevision(requestedExample);selected=requestedExample==='snow-geoprivacy'?'move':requestedExample.startsWith('snow-')?'catchments':workflow.nodes[0]?.id;}
 wireThemeControl();renderLibrary();renderResults();save();render();mountPanelLayout();
 // Progressive reveal, played back. Behind ?playback=1 because the rule is not adopted: nothing
 // about the normal palette changes, and the control does not appear unless it is asked for.

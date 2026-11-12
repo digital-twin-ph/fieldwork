@@ -1,6 +1,6 @@
 # 200 · Operational epidemiology, anchored on 7-1-7
 
-_Created 2026-11-09 · Updated 2026-11-10_
+_Created 2026-11-09 · Updated 2026-11-11_
 
 **Status:** asked. A map of a body of work and what Fieldwork already holds of it, anchored on the 7-1-7 target and
 its bottleneck taxonomy, made to choose a first slice from. Nothing is built.

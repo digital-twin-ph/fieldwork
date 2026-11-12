@@ -56,7 +56,7 @@ import classification from '../widgets/classification.json' with {type:'json'};
 import facilityRegisters from '../widgets/facility-registers.json' with {type:'json'};
 import {listFacilitiesValue,type RegisterEntry} from './facility-matching.js';
 import {OLD_TYPES,validateOldNode,executeOldNode,migrateFacilitySources,applyAccessReview,applyFacilityGrading,gradedPointLayer,distancesAsAccess} from './old-naledi.js';
-import {resolveRuleset,bindParameters,tableContractFailures,rulesetCitation} from './rulesets.js';
+import {resolveRuleset,RETIRED_RULESETS,WRITTEN_IN_WORKFLOW,bindParameters,tableContractFailures,rulesetCitation} from './rulesets.js';
 import {selectRows,selectRange,rangeSentence} from './select-rows.js';
 import {appendTables,appendSentence,appendPort,appendTableCount} from './append-rows.js';
 import {fitRegression,specFrom,rowsOf,regressionTable,regressionSentence,regressionReceipt,exposureColumnsOf,fitEachExposure,
@@ -89,7 +89,7 @@ import {basemapLimitation,DEFAULT_BASEMAP} from './basemaps.js';
 import {studyDesignSentence,studyDesignReceipt,DESIGN_LICENCES,includedMeasures,readUnderDesign,readUndeclared,migrateSurveillanceDesign,regressionMeasure,rateRatioMeasure,rateRatioDesignSentence} from './study-design.js';
 import {refinementSentences,investigatorAllocated} from './study-design-questions.js';
 import type {DeclaredDesign} from './study-design.js';
-import {outreachProjection,extentN3,extentProjection,projectionOf,RULESET_FOR_NODE_TYPE,pinnedRuleset,parametersFor} from './rule-application.js';
+import {pinnedRuleset} from './rule-application.js';
 import {authoredConclusions,authoredFacts,authoredProjection,authoredReceipt,authoredDataIssues,authoredSubjects} from './authored-application.js';
 import {applyRepairs} from './column-profile.js';
 import {compileAuthoredRuleset,authoredUnitProblems,evaluatedDirectly,fieldsRead} from './authored-rules.js';
@@ -547,28 +547,6 @@ export function nodeInputs(node:WorkflowNode):[string,PortType][]{
 /** STEPS WHOSE NEXT RUN READS EVERY SATELLITE FILE AGAIN, asked for in Sample satellite's dialog. Once: the run that
  *  reads them takes the request, and what it reads is saved as usual. */
 export const rereadOnce=new Set<string>();
-export function exampleWorkflow():Workflow {
-  return {schema:'fieldwork/workflow/1',name:'Heat outreach screening',nodes:[
-    {id:'neighborhoods',type:'point_input',x:35,y:52,params:{label:'Neighborhoods',data:{type:'FeatureCollection',features:[point('oakwood','Oakwood',[-84.455,33.873]),point('northgate','Northgate',[-84.337,33.875]),point('riverside','Riverside',[-84.438,33.812]),point('midtown','Midtown',[-84.37,33.79]),point('eastfield','Eastfield',[-84.277,33.795]),point('brookside','Brookside',[-84.421,33.734]),point('southpark','South Park',[-84.34,33.72]),point('cedar','Cedar Heights',null)]}}},
-    {id:'centers',type:'point_input',x:35,y:229,params:{label:'Cooling centers',data:{type:'FeatureCollection',features:[point('library','Central Library',[-84.367,33.79]),point('community','West Community Hall',[-84.426,33.823])]}}},
-    {id:'nearest',type:'measure_distance',x:323,y:90,params:{unit:'kilometres'}},
-    // The template names the ruleset rather than the retired `policy` type, so the shipped example
-    // does not depend on a migration running. The threshold is the ruleset's declared parameter now,
-    // with its unit on the declaration instead of buried in a field name.
-    {id:'criteria',type:'apply_ruleset',x:605,y:151,params:{label:'Outreach criteria',
-      ruleset:pinnedRuleset('urn:fieldwork:ruleset:outreach-criteria','1.1.0'),parameters:{threshold:5},
-      // The condition the ruleset asks for, declared on the node that applies it. It was a
-      // separate `alert` widget until 2026-10-25 -- a parameter wearing a node type, titled for
-      // a domain, emitting a port type only a retired widget consumed.
-      declaredFacts:{'fw:heatAlert':'true','fw:assessmentDate':'2026-07-15'}}},
-    {id:'map',type:'map_output',x:879,y:70,params:{label:'Outreach map',inputMode:'decisions'}},
-    {id:'table',type:'table_output',x:879,y:249,params:{label:'Decision table',inputMode:'decisions'}}
-  ],edges:[
-    {id:'e1',from:'neighborhoods',to:'nearest',port:'points'}, {id:'e2',from:'centers',to:'nearest',port:'candidates'},
-    {id:'e3',from:'nearest',to:'criteria',port:'distances'},
-    {id:'e5',from:'criteria',to:'map',port:'decisions'},
-    {id:'e6',from:'criteria',to:'table',port:'decisions'}]};
-}
 export function validateGeoJSON(data:unknown,{attributes=false}={}):PointCollection {
   if (!isRecord(data) || data.type !== 'FeatureCollection' || !Array.isArray(data.features) || data.features.length > 2000) throw new Error('Use a GeoJSON FeatureCollection with at most 2,000 point features.');
   const ids = new Set();
@@ -714,18 +692,13 @@ export function validateWorkflow(raw:unknown):Workflow {
   for(const edge of w.edges)
     if(edge&&nearestNodes.has(edge.to)&&(edge.port==='places'||edge.port==='centers'))
       edge.port=edge.port==='places'?'points':'candidates';
-  // policy, access_policy and xpert differed only in which rules they ran, and the rules are
-  // declared data now, so all three become one apply_ruleset node with their ruleset pinned at the
-  // version that produced their results. Stamped, because a retirement that silently rewrites a
-  // practitioner's saved work is the thing retirement was supposed to make visible.
-  w.nodes=w.nodes.map(n=>{
-    const pin=n&&RULESET_FOR_NODE_TYPE[n.type as string];
-    if(!pin)return n;
-    return {...n,type:'apply_ruleset',sourceMigration:{fromType:n.type as RetiredNodeType,version:'1'},
-      params:{label:(n.params as {label?:string}).label||TYPES[n.type].title,
-        ruleset:pinnedRuleset(pin.id,pin.version),
-        parameters:parametersFor(pin.id,pin.version,n.params as Record<string,unknown>)}};
-  }) as typeof w.nodes;
+  // policy, access_policy and xpert migrated to Apply ruleset with their ruleset pinned until 2026-11-11, when those
+  // rulesets retired (docs/audits/old-naledi-audit.md); a saved one is now refused by name, below. Rules written in a
+  // workflow that borrowed a retired ruleset's identity as their pin are given their own: the rules are unchanged.
+  for(const n of w.nodes){
+    const pin=n?.type==='apply_ruleset'?(n.params as {ruleset?:{id:string;version:string}}).ruleset:undefined;
+    if(pin&&(n.params as {authored?:unknown}).authored&&RETIRED_RULESETS[pin.id]){pin.id=WRITTEN_IN_WORKFLOW;pin.version='1.0.0';}
+  }
   // A rename is not a retirement: the operation is unchanged, so the old identifier keeps
   // resolving and a saved workflow opens and runs rather than being refused. Stamped like every
   // other migration, so a practitioner can see that the file was rewritten on open.
@@ -790,7 +763,8 @@ export function validateWorkflow(raw:unknown):Workflow {
         throw new Error(`${r.title||r.id} pins no ports, so nothing could connect to it.`);
       // Resolving it here is what makes a workflow naming a ruleset this build does not carry
       // refuse to open, by name, rather than failing somewhere inside the executor.
-      const ruleset=resolveRuleset(r.id,r.version);
+      // Rules written in the workflow are not a published ruleset, so there is nothing to resolve (2026-11-11).
+      const ruleset=n.params.authored&&r.id===WRITTEN_IN_WORKFLOW?{parameters:[],title:''} as unknown as ReturnType<typeof resolveRuleset>:resolveRuleset(r.id,r.version);
       // A node carrying authored rules is held to ITS OWN declaration. The pin gives such a node
       // its ports and says nothing about rules the practitioner wrote, so checking their values
       // against the pinned artefact's parameters refused a step whose rules use none.
@@ -1133,27 +1107,6 @@ export function nearestPlaces(places:PointCollection,centers:PointCollection,uni
     return {id:place.id,name:place.properties.name,coordinates:place.geometry.coordinates,attributes:{...place.properties},distance:inUnit(distance),unit,center:{id:best!.id,name:best!.properties.name,coordinates:best!.geometry!.coordinates,attributes:{...best!.properties}}};
   });
   return {rows,candidateCount:located.length,eligibleCount:valid.length};
-}
-export function makeN3(rows:NearestRow[],alert:ParamsByType['alert'],threshold:number,version='1.0.0') {
-  // `nearest` states its unit, and this threshold is in kilometres, so a metres input would be
-  // compared against a kilometre number and every decision would be wrong by a factor of a
-  // thousand with nothing raised. Refused rather than converted: the threshold is a practitioner's
-  // judgement in a stated unit, and silently reinterpreting it would change what they decided.
-  const units=new Set(rows.map(row=>row.unit));
-  if(units.size>1)throw new Error('These distances carry more than one unit, so one threshold cannot apply to them.');
-  const unit=[...units][0]??'kilometres';
-  if(unit!=='kilometres')
-    throw new Error(`Outreach criteria compares a threshold in kilometres, and these distances are in ${unit}. `
-      +`Set Nearest point to kilometres, or state the threshold in ${unit}.`);
-  const prefix='@prefix fw: <urn:fieldwork:>.\n@prefix math: <http://www.w3.org/2000/10/swap/math#>.\n';
-  const facts=rows.map(r=>`<urn:fieldwork:place:${r.id}> fw:distanceKnown ${r.distance!==null}; fw:alertKnown ${alert.active!==null}.${r.distance!==null?`\n<urn:fieldwork:place:${r.id}> fw:distanceKm ${r.distance!.toFixed(9)}.`:''}${alert.active!==null?`\n<urn:fieldwork:place:${r.id}> fw:heatAlert ${alert.active}.`:''}`).join('\n');
-  const t=Number(threshold).toFixed(9);
-  // The rules are declared data now: rulesets/outreach-criteria/1.0.0.json. `t` is retained
-  // because the threshold's nine decimals are what the shipped text used, and the byte-identity
-  // test in tests/rulesets.test.mjs depends on reproducing exactly that.
-  const ruleset=resolveRuleset('urn:fieldwork:ruleset:outreach-criteria',version);
-  const rules=bindParameters(ruleset,{threshold:Number(t)});
-  return {facts:prefix+facts+'\n',rules:prefix+rules,input:prefix+facts+'\n\n'+rules,ruleset:rulesetCitation(ruleset)};
 }
 /** Every machined note says which widget wrote it, stamped here so no producer can forget. */
 function signedByWidget(machined:Record<string,MachinedNote[]>,workflow:Workflow){
@@ -2173,18 +2126,9 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           receipts.push(authoredReceipt(node,authored,facts,rules,conclusions,judged.unmatched,runId,workflow.edges,dataIssues));
           break;
         }
-        // A RULESET THAT DECLARES ITS COLUMNS NEEDS NO BRANCH HERE.
-        //
-        // The widget is an interpreter and the ruleset is the program (experiment 65), and an
-        // interpreter that must be edited to run a new program is not one. The four cases below
-        // are exactly that edit, each projecting one ruleset's conclusions in its own way, while
-        // `authoredProjection` -- which rules a practitioner writes have always gone through --
-        // is the general answer: conclusions become key columns on a table or properties on a
-        // point layer, and the value field is left alone.
-        //
-        // Declaring `inputContract.fieldFrom` is what lets a bundled ruleset use it. The four
-        // below have bespoke fact generators and keep their branches until each is converted;
-        // nothing new needs one.
+        // A RULESET DECLARES ITS COLUMNS. The widget is an interpreter and the ruleset is the program (experiment 65):
+        // conclusions become key columns on a table or properties on a point layer, by `authoredProjection`, the path
+        // rules written in a workflow have always taken.
         const bindings=resolveRuleset(pinned.id,pinned.version).inputContract.fieldFrom;
         if(bindings?.length){
           const port=node.params.ruleset?.inputs[0]?.[0];
@@ -2212,58 +2156,10 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
             conclusions,ruleset:rulesetCitation(resolveRuleset(pinned.id,pinned.version))});
           break;
         }
-        switch(projectionOf(pinned.id,pinned.version)){
-          case 'outreach':{
-            // THE CONDITION IS DECLARED HERE, not wired in from a widget of its own. `fw:heatAlert`
-            // is named by the ruleset's inputContract, so this node holds a value for it exactly
-            // as it holds one for the threshold. A saved workflow may still carry an `alert` node
-            // on the `alert` port; it is read when no declaration is present, which is the
-            // adapter rather than a second way of saying the same thing.
-            const stated=node.params.declaredFacts?.['fw:heatAlert'];
-            const condition=stated!==undefined||!inputs.alert
-              ?{active:stated==='true'?true:stated==='false'?false:null,
-                date:node.params.declaredFacts?.['fw:assessmentDate']??''}
-              :inputs.alert;
-            const n3=makeN3(inputs.distances.rows,condition,bound.threshold,pinned.version);
-            const conclusions=await reasoner(n3.input);
-            value=outreachProjection(inputs.distances,condition,bound.threshold,conclusions);
-            receipts.push({nodeId:node.id,...n3,conclusions});break;
-          }
-          case 'polygon-extent':{
-            // Experiment 113: a rule over a quantity DERIVED from geometry rather than over an
-            // imported column. The area is read from the record, where the widget that projected
-            // to get it now attaches it; this step neither projects nor measures.
-            //
-            // That this case had to be written is the experiment's own finding. A ruleset declares
-            // its `projection` as data, but the handler for a new one is a branch here, so adding
-            // a ruleset over a shape nothing had classified before is not a data change.
-            const n3=extentN3(inputs.polygons,bound.threshold,pinned.version);
-            const conclusions=await reasoner(n3.input);
-            value=extentProjection(inputs.polygons,bound.threshold,conclusions);
-            receipts.push({nodeId:node.id,...n3,conclusions});break;
-          }
-          case 'access-review':{
-            const applied=await applyAccessReview(inputs.access,bound.threshold,reasoner,pinned.version);
-            value=applied.value;receipts.push({nodeId:node.id,...applied.receipt});break;
-          }
-          case 'access-review-distances':{
-            // Same rules, same facts, read off the general value that nearest and travel_time
-            // produce instead of the one `access` emitted.
-            const applied=await applyAccessReview(distancesAsAccess(inputs.distances),bound.threshold,reasoner,pinned.version);
-            value=applied.value;receipts.push({nodeId:node.id,...applied.receipt});break;
-          }
-          case 'facility-grading-points':{
-            const applied=await applyFacilityGrading(inputs.facilities,reasoner,pinned.version);
-            value=gradedPointLayer(applied.value) as unknown as DisplayValue;
-            receipts.push({nodeId:node.id,...applied.receipt});break;
-          }
-          case 'facility-grading':{
-            const applied=await applyFacilityGrading(inputs.facilities,reasoner,pinned.version);
-            value=applied.value as unknown as DisplayValue;
-            receipts.push({nodeId:node.id,...applied.receipt});break;
-          }
-          default:throw new Error(`This build carries no projection for ${pinned.title}.`);
-        }
+        // NO BESPOKE RULESET CODE (the practitioner, 2026-11-11: "There should be no bespoke ruleset widgets"). Six
+        // projections, each written for one ruleset, were here; their rulesets retired with Old Naledi, the heat example
+        // and Snow's extent rule (docs/audits/old-naledi-audit.md). A published ruleset declares the columns it reads.
+        throw new Error(`${pinned.title} declares no columns to read its facts from, so this build cannot apply it.`);
         break;
       }
       case 'travel_time':{
@@ -2273,14 +2169,6 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           method:`${inputs.distances.method} ${TRAVEL_TIME_METHOD}`} as unknown as DisplayValue;
         receipts.push(travelTimeReceipt(node,timed,runId,source));
         break;
-      }
-      case 'policy':{
-        const {rows,centers,method}=inputs.distances,alert=inputs.alert,threshold=node.params.thresholdKm;
-        const n3=makeN3(rows,alert,threshold);const conclusions=await reasoner(n3.input);
-        const decisions=new Map<string,Status>();
-        for(const q of conclusions){if(q.predicate===NS+'decision'){const id=q.subject.slice((NS+'place:').length);const decision=q.object.slice(NS.length);if(!['Review','NoFlag','Unknown'].includes(decision))throw new Error('Reasoner returned an unknown decision.');if(decisions.has(id)&&decisions.get(id)!==decision)throw new Error('Reasoner returned conflicting decisions.');decisions.set(id,decision as Status);}}
-        value={rows:rows.map(r=>{const status=decisions.get(r.id);if(!status)throw new Error(`Reasoner did not classify ${r.name}.`);return {...r,status,explanation: status==='Unknown' ? (r.reason || 'Heat alert status is missing.') : `Nearest center: ${r.center!.name}. Distance ${r.distance!.toFixed(2)} km ${r.distance!>threshold?'>':'≤'} ${threshold} km. Heat alert ${alert.active?'active':'inactive'} on ${alert.date}.`};}),centers,method,threshold,alert};
-        receipts.push({nodeId:node.id,...n3,conclusions});break;
       }
       case 'chart_output':{
         // WHICH EDGE IS CONNECTED DECIDES, and the stored mode is read only after that, so a

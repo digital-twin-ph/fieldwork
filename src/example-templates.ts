@@ -10,19 +10,13 @@
  *  `src/project.ts` holds the TITLES, keyed by the same strings, and its own check keeps the two
  *  in step. */
 import type {Workflow} from './types.js';
-import {exampleWorkflow} from './core.js';
 import {blankWorkflow} from './study-area.js';
 import {johnSnowExample,snowExtentExample} from './john-snow.js';
-import {oldNalediWorkflow} from './old-naledi.js';
 import {geoprivacyExample} from './geoprivacy-example.js';
-import {rasterExample} from './raster-example.js';
 import {hagellochExample,hagellochChainsExample,hagellochClusterExample,hagellochSheetExample} from './hagelloch-example.js';
 
 export const EXAMPLE_TEMPLATES:Record<string,()=>Workflow>={
   blank:blankWorkflow,
-  heat:exampleWorkflow,
-  'old-naledi':oldNalediWorkflow,
-  raster:rasterExample,
   'snow-voronoi':()=>johnSnowExample('snow-voronoi'),
   'snow-isochrone':()=>johnSnowExample('snow-isochrone'),
   'snow-geoprivacy':geoprivacyExample,

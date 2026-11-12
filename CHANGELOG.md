@@ -3,7 +3,7 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## 0.97.0 — 2026-11-11
+## 0.97.0 — 2026-11-12
 
 - **WorldPop's newer release, for any year from 2015 to 2030.** Raster input's Configure… offers WorldPop Global2
   R2025A beside Global1 (2000 to 2020), for any of 242 countries; choose the year your project needs. Its citation and

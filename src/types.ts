@@ -445,6 +445,9 @@ export interface ParamsByType {
     ruleset?:{id:string;version:string;title:string;
       inputs:[string,PortType][];output:PortType};
     parameters:Record<string,number>;
+    /** WHICH COLUMN FILLS EACH INPUT a published ruleset declares (experiment 200, 2026-11-12), keyed by the ruleset's
+     *  predicate. Absent, the ruleset's own column name is read. Chosen in Configure…, and stated in the run's record. */
+    bindings?:Record<string,string>;
     /** Facts the ruleset's `inputContract.expects` names that no connected port supplies.
      *
      *  Keyed by the PREDICATE the ruleset declares, never by a name this widget invents, so the

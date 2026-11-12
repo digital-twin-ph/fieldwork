@@ -75,12 +75,12 @@
    ]
   },
   "apply_ruleset": {
-   "version": "0.11.0",
-   "released": "2026-11-11",
+   "version": "0.12.0",
+   "released": "2026-11-12",
    "changes": [
     {
      "kind": "minor",
-     "description": "No code written for one ruleset (the practitioner, 2026-11-11: \"There should be no bespoke ruleset widgets\"): its six projections went with outreach-criteria, nb06-evidence, access-review and extent-review. Rules written in a workflow carry their own identity rather than borrowing a published ruleset’s. A published ruleset is cited in the receipt wherever it runs."
+     "description": "A published ruleset's inputs are read from the columns chosen in Configure…, under Which column holds each, and the run's record states them; a chosen column the records do not carry stops the run, naming the columns they do (experiment 200). The 7-1-7 timeliness ruleset is published, cited to Bochner et al. 2023."
     }
    ],
    "breaking": false,
@@ -920,12 +920,12 @@
    "migrationFrom": []
   },
   "table_output": {
-   "version": "0.10.0",
-   "released": "2026-11-11",
+   "version": "0.10.1",
+   "released": "2026-11-12",
    "changes": [
     {
-     "kind": "minor",
-     "description": "No decisions port: nothing produces decisions since 2026-11-11 (docs/audits/old-naledi-audit.md)."
+     "kind": "patch",
+     "description": "A column the rules concluded is never read as the variable of a melted table: the 7-1-7 response verdict, NoVerdict on every row, headed the count column and lost its own."
     }
    ],
    "breaking": false,

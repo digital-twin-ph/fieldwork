@@ -2046,7 +2046,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         const published=node.params.authored?undefined:resolveRuleset(pinned.id,pinned.version);
         const directly=published?.authored&&published.inputContract.fieldFrom?.length&&evaluatedDirectly(published.authored as never)
           ?{title:published.title,mustNotBeReadAs:published.mustNotBeReadAs,
-            fields:published.inputContract.fieldFrom.map(b=>({...b,
+            fields:published.inputContract.fieldFrom.map(b=>({...b,attribute:node.params.bindings?.[b.predicate]||b.attribute,
               unit:(published.inputContract.expects as {predicate:string;unit?:string}[]|undefined)?.find(e=>e.predicate===b.predicate)?.unit})),
             parameters:[],rules:published.authored.rules,
             ...((published.authored as {otherwise?:unknown}).otherwise?{otherwise:(published.authored as {otherwise?:unknown}).otherwise}:{})}:undefined;
@@ -2064,6 +2064,17 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           // default declares for a node that was holding no pin.
           const port=node.params.ruleset?.inputs[0]?.[0]??'subjects';
           const subjects=(inputs as unknown as Record<string,unknown>)[port] as PointCollection;
+          // A COLUMN CHOSEN FOR A RULESET'S INPUT MUST BE ONE THE RECORDS CARRY: refused, naming the columns there are,
+          // rather than read as a column of empty values and reported as unknown on every row (experiment 200).
+          if(directly&&node.params.bindings){
+            const table=subjects as unknown as import('./data-table.js').DataTable;
+            const columns=table?.kind==='data-table'?[...table.keys,table.valueField]
+              :[...new Set(((subjects?.features??[]) as {properties?:Record<string,unknown>}[]).flatMap(f=>Object.keys(f.properties??{})))];
+            for(const [predicate,column] of Object.entries(node.params.bindings))
+              if(column&&!columns.includes(column))
+                throw new Error(`${node.params.label||node.id}: ${published?.inputContract.fieldFrom?.find(b=>b.predicate===predicate)?.label??predicate} `
+                  +`is read from "${column}", which these records do not carry. Their columns: ${columns.join(', ')}.`);
+          }
           // Units first. A rule comparing minutes to hours is wrong by a factor of sixty and
           // every other check in this application passes it: the parameter is in range, the
           // rules compile, the run succeeds. Refused rather than converted, which is the

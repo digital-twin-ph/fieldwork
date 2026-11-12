@@ -73,7 +73,9 @@ test('the authored form recompiles to the rules that ship, byte for byte',()=>{
 test('every declared parameter appears in the rules it is declared for',()=>{
   for(const [path,ruleset] of files)
     for(const parameter of ruleset.parameters??[])
-      assert.ok(ruleset.rules.includes(parameter.placeholder),
+      // A ruleset evaluated directly names the setting in its declared rules rather than a placeholder in N3.
+      assert.ok(ruleset.rules.includes(parameter.placeholder)
+        ||JSON.stringify(ruleset.authored?.rules??[]).includes(JSON.stringify({setting:parameter.name})),
         `${path} declares ${parameter.name} with placeholder ${parameter.placeholder}, which its `
         +'rules never use, so binding it would change nothing.');
 });

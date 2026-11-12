@@ -741,8 +741,10 @@ export function wideFrame(table:DataTable):WideFrame|null{
   // A MELT OF ONE COLUMN leaves a measure key carrying a single name, which is one per subject
   // like any description. The melt puts that key last, so where nothing else can be the axis the
   // last key is promoted back to it.
-  if(!axes.length&&attributes.some(k=>!numeric(k))){
-    const last=attributes.filter(k=>!numeric(k)).at(-1)!;
+  // Never a column the rules concluded: a verdict that is the same on every row is still a verdict.
+  const meltable=(k:string)=>!numeric(k)&&!(table.concluded??[]).includes(k);
+  if(!axes.length&&attributes.some(meltable)){
+    const last=attributes.filter(meltable).at(-1)!;
     axes=[last];attributes=attributes.filter(k=>k!==last);
   }
   if(axes.length!==1)return null;

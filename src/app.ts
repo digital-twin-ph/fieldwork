@@ -2906,11 +2906,13 @@ async function openAuthoredRules(nodeId:string){
 function openRulesetConfig(nodeId:string){
   const node=getNode(workflow,nodeId,'apply_ruleset');
   const held=node.params.ruleset;
-  type Draft={choice:string; parameters:Record<string,number>};
+  type Draft={choice:string; parameters:Record<string,number>; bindings:Record<string,string>};
   const heldRuleset=publishedRuleset(held);
+  // THE CONNECTED RECORDS' COLUMNS, for choosing which holds each of the ruleset's inputs (experiment 200).
+  const columns=[...new Set(candidateFields(workflow,nodeId).map(f=>(f as {attribute:string}).attribute))];
   openConfigDialog<Draft>({
     id:'ruleset-config',widget:'Apply ruleset',step:node.params.label||TYPES.apply_ruleset.title,
-    draft:{choice:held?`${held.id}@${held.version}`:'',parameters:{...(node.params.parameters as Record<string,number>)}},
+    draft:{choice:held?`${held.id}@${held.version}`:'',parameters:{...(node.params.parameters as Record<string,number>)},bindings:{...(node.params.bindings??{})}},
     sections:draft=>{
       const [id,version]=draft.choice.split('@');
       const chosen=id&&version?bundledRulesets().find((r:Ruleset)=>r.id===id&&r.version===version) as Ruleset|undefined:undefined;
@@ -2925,6 +2927,15 @@ function openRulesetConfig(nodeId:string){
       if(chosen?.parameters.length)settings+=chosen.parameters.map(q=>`<div class="field"><label class="field-label" for="ruleset-${esc(q.name)}">${esc(q.meaning.split('.')[0])}</label>`
         +`<div class="input-unit"><input id="ruleset-${esc(q.name)}" data-ruleset-parameter="${esc(q.name)}" type="number" min="${q.min}" max="${q.max}" step="0.5" value="${draft.parameters[q.name]??q.default??''}">`
         +`<span>${esc(q.unitLabel||'')}</span></div><p class="muted">${esc(q.meaning)}</p></div>`).join('');
+      // WHICH COLUMN HOLDS EACH INPUT: the ruleset's own name unless another column is chosen.
+      const inputs=chosen?.authored&&draft.choice!=='authored'?chosen.inputContract.fieldFrom??[]:[];
+      if(inputs.length)settings+=`<section class="config-group" id="ruleset-bindings"><h3 class="config-group-title">Which column holds each</h3>`
+        +inputs.map(b=>{const at=draft.bindings[b.predicate]??'';
+          return `<div class="field"><label class="field-label" for="ruleset-binding-${esc(b.predicate.replace(/\W/g,'-'))}">${esc(b.label??b.predicate)}</label>`
+          +`<select id="ruleset-binding-${esc(b.predicate.replace(/\W/g,'-'))}" data-ruleset-binding="${esc(b.predicate)}">`
+          +`<option value="" ${at?'':'selected'}>${esc(b.attribute)}${columns.includes(b.attribute)?'':' · not in these records'}</option>`
+          +columns.filter(c=>c!==b.attribute).map(c=>`<option value="${esc(c)}" ${c===at?'selected':''}>${esc(c)}</option>`).join('')
+          +`</select></div>`;}).join('')+`</section>`;
       if(draft.choice==='authored')return {settings,preview:`<p class="muted">${copyable?'Apply copies these rules onto this step, where they can be edited, and opens them.'
         :'Apply starts rules of your own on this step, and opens them.'}</p>`};
       if(!chosen)return {settings,preview:'<p class="muted">Choose a ruleset to see what it decides.</p>'};
@@ -2953,8 +2964,8 @@ function openRulesetConfig(nodeId:string){
         draft.choice=(e.target as HTMLSelectElement).value;
         const [id,version]=draft.choice.split('@');
         const chosen=id&&version?bundledRulesets().find((r:Ruleset)=>r.id===id&&r.version===version) as Ruleset|undefined:undefined;
-        if(chosen&&!(held&&`${held.id}@${held.version}`===draft.choice))draft.parameters=Object.fromEntries(chosen.parameters
-          .filter(q=>q.default!==undefined).map(q=>[q.name,q.default as number]));
+        if(chosen&&!(held&&`${held.id}@${held.version}`===draft.choice)){draft.parameters=Object.fromEntries(chosen.parameters
+          .filter(q=>q.default!==undefined).map(q=>[q.name,q.default as number]));draft.bindings={};}
         redraw();});
       // READ IN THE RULE EDITOR, every control disabled (the practitioner, 2026-10-15: "reviewable in the editor").
       root.querySelector<HTMLButtonElement>('#review-rules')?.addEventListener('click',()=>{
@@ -2963,6 +2974,8 @@ function openRulesetConfig(nodeId:string){
         if(chosen)void openRuleEditor(reviewAuthored(chosen),esc,{settingValues:draft.parameters,step:chosen.title,
           note:`These are the rules ${chosen.title} ${chosen.version} applies, laid out the way rules you write are laid out. `
             +'Nothing here can be changed: this ruleset is published and pinned, and the run evidence names it by version.'});});
+      root.querySelectorAll<HTMLSelectElement>('[data-ruleset-binding]').forEach(el=>el.addEventListener('change',()=>{
+        const predicate=el.dataset.rulesetBinding!;if(el.value)draft.bindings[predicate]=el.value;else delete draft.bindings[predicate];redraw();}));
       root.querySelectorAll<HTMLInputElement>('[data-ruleset-parameter]').forEach(el=>el.addEventListener('change',()=>{
         const name=el.dataset.rulesetParameter!;
         // AN EMPTY BOX IS AN UNSET SETTING, not zero: Number('') is 0, and a band against zero nobody typed is no setting.
@@ -2975,11 +2988,12 @@ function openRulesetConfig(nodeId:string){
       change(w=>{
         const target=getNode(w,nodeId,'apply_ruleset');
         const same=held&&`${held.id}@${held.version}`===draft.choice;
-        if(!chosen){delete (target.params as {ruleset?:unknown}).ruleset;target.params.parameters={};}
+        if(!chosen){delete (target.params as {ruleset?:unknown}).ruleset;target.params.parameters={};delete target.params.bindings;}
         else{
           const generic=!target.params.label||target.params.label===TYPES.apply_ruleset.title||currentRulesets().some(r=>r.title===target.params.label);
           if(!same){target.params.ruleset=pinnedRuleset(chosen.id,chosen.version);if(generic)target.params.label=chosen.title;}
           target.params.parameters={...draft.parameters};
+          if(Object.keys(draft.bindings).length)target.params.bindings={...draft.bindings};else delete target.params.bindings;
         }
         if(!same)w.edges=w.edges.filter(edge=>edge.to!==nodeId&&edge.from!==nodeId);
       });

@@ -101,7 +101,7 @@
     {
       "id": "urn:fieldwork:widget:apply_ruleset",
       "nodeType": "apply_ruleset",
-      "currentVersion": "0.11.0",
+      "currentVersion": "0.12.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -162,6 +162,11 @@
           "version": "0.11.0",
           "path": "widgets/releases/apply_ruleset/0.11.0.json",
           "sha256": "d40a0ccdc55fd52127f55afb8fef949a964e9321d389f16fa8e984b09052dc3f"
+        },
+        {
+          "version": "0.12.0",
+          "path": "widgets/releases/apply_ruleset/0.12.0.json",
+          "sha256": "2c8d51da374d31e697c388dd17d1d9cebfcb6df4a65c41870a0ce95a6772d58d"
         }
       ]
     },
@@ -1883,7 +1888,7 @@
     {
       "id": "urn:fieldwork:widget:table_output",
       "nodeType": "table_output",
-      "currentVersion": "0.10.0",
+      "currentVersion": "0.10.1",
       "releases": [
         {
           "version": "0.1.0",
@@ -1934,6 +1939,11 @@
           "version": "0.10.0",
           "path": "widgets/releases/table_output/0.10.0.json",
           "sha256": "0bc7b7d5b0ebd79a6519be9c3b40b80f213e7af91cc4b05348ac38a09dcda1d9"
+        },
+        {
+          "version": "0.10.1",
+          "path": "widgets/releases/table_output/0.10.1.json",
+          "sha256": "086715b7831a40c2604350eff36c814c1851ac3bf411c310fc0ae837e5265b56"
         }
       ]
     },

@@ -457,6 +457,53 @@ fallback read the value column of the step *above* the count. Fixed: it reads th
 pandas self-merge, a difference of dates, and `value_counts` over every case with 0 for a case nobody names. All 188
 cases agree on both, in CPython and in the browser kernel.
 
+## The 7-1-7 ruleset and MERS-CoV, South Korea, 2015: decided 2026-11-12, before building
+
+**Data.** The `outbreaks` package's line list, converted in example-2015-mers-korea: 162 cases with three dates each.
+Measured 2026-11-12:
+
+| Date | Present |
+| --- | --- |
+| `dt_onset` | 135 of 162 |
+| `dt_diag` | 162 |
+| `dt_report` | 162 |
+
+| Interval | Cases | Days: min, median, max | Within target |
+| --- | --- | --- | --- |
+| onset → diagnosis | 135 | 0, 5, 15 | 94 within 7 |
+| diagnosis → report | 162 | −1, 0, 2 | 161 within 1 |
+
+Seven cases were reported a day before their diagnosis date. No column holds a response action, so the third interval
+cannot be computed.
+
+**Which dates stand for which milestone** (the practitioner, 2026-11-12, choosing between three): emergence is
+`dt_onset`, detection is `dt_diag`, notification is `dt_report`. Per case, not per event: the file is a line list. The
+negative intervals are shown as the file has them.
+
+**Binding columns to a published ruleset** (the practitioner, 2026-11-12): chosen in Apply ruleset's Configure…, one
+column per input the ruleset declares, kept on the step and stated in the run's record. A general feature of every
+published ruleset: the sea-level ruleset names its columns (`value_mm`, `elevation_m`) and could only read a table
+spelled that way.
+
+**The ruleset**, `seven-one-seven` 1.0.0, declared rules only (no code of its own):
+
+| Reads | Computes | Concludes |
+| --- | --- | --- |
+| emergence, detection, notification and early-response-complete dates | days to detect, notify, respond | each Met or NotMet against its target; NoVerdict where a date is missing |
+
+Targets are step settings in days, 7, 1 and 7 by default. Basis: Bochner et al. 2023, Lancet Global Health
+(doi:10.1016/S2214-109X(23)00133-X, CC BY 4.0), as `ontology/response-timeliness.ttl` cites it.
+
+| Distinction | Enforced as |
+| --- | --- |
+| A case's dates are not an event's milestones | Limitation, said in the ruleset's *must not be read as* |
+| A missing date gives no verdict, not NotMet | Run-time: the otherwise of each verdict column |
+| A negative interval is the record's, not corrected | Run-time: computed and shown as it is |
+| A target is a number of days | Validation: the settings are in days, with bounds |
+
+**Practitioner observation, before it is known:** whether a learner reads "94 of 135 detected within 7 days" as the
+outbreak's detection, rather than its cases'.
+
 ## What would close this
 
 The practitioner choosing the first slice and its data, and its being built and run by hand on an empty canvas.

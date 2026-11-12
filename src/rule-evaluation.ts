@@ -308,7 +308,8 @@ export function evaluatedTable(table:DataTable,evaluation:Evaluation):DataTable{
   // number, not as text it cannot read (experiment 198).
   const computed=evaluation.computedColumns.filter(k=>added.includes(k));
   const numericKeys=computed.length?{...(table.numericKeys??{}),...Object.fromEntries(computed.map(k=>[k,evaluation.computedMeta?.[k]?.unit??'']))}:table.numericKeys;
-  return {...table,rows,keys:[...table.keys,...added],...(numericKeys?{numericKeys}:{}),...described(table,evaluation)};
+  return {...table,rows,keys:[...table.keys,...added],...(numericKeys?{numericKeys}:{}),...described(table,evaluation),
+    ...(added.length?{concluded:[...new Set([...(table.concluded??[]),...added])]}:{})};
 }
 
 /** THE NEW COLUMNS' DESCRIPTIONS, where their author stated them, beside the table's own. */

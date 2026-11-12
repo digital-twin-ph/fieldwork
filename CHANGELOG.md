@@ -13,6 +13,12 @@ shown in a local build is not a claim that it has been published.
   records them; the 11 with no gender are counted as their own group.
 - **Fixed:** a chart's panels drew numbered categories in row order (ages 7, 6, 4 …) and left a panel for a blank value
   empty and unnamed. Numbers now run in order, and the blank panel is drawn and named. Chart 0.14.1.
+- **7-1-7 timeliness, a published ruleset.** Days from emergence to detection, detection to notification and
+  notification to the end of early response, each Met or NotMet against 7, 1 and 7 days (step settings), and NoVerdict
+  where a date is missing. Cited to Bochner et al. 2023. Apply ruleset 0.12.0.
+- **Choose which column a published ruleset reads**, in Apply ruleset's Configure…, under *Which column holds each*.
+- **Fixed:** a column of rule conclusions holding one value on every row was shown as a table's variable name, and lost
+  its own column. Table 0.10.1.
 - **WorldPop's list is checked weekly** against WorldPop's site, and a change comes as a pull request.
 
 ## 0.96.0 — 2026-11-11

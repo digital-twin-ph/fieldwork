@@ -21,7 +21,7 @@ const rows=[{id:'a',name:'A',coordinates:[0,0],distance:1.5,unit:'kilometres',ce
 // Byte-identity of rule text with the code it was extracted from, 2026-10-12, held for outreach-criteria, access-review
 // and nb06-evidence, which retired on 2026-11-11 (docs/audits/old-naledi-audit.md).
 
-test('a ruleset declares its basis, and both shipped rulesets carry resolvable evidence',()=>{
+test('a ruleset declares its basis, and every shipped ruleset carries resolvable evidence',()=>{
   const sets=bundledRulesets();
   // Seven version files until 2026-10-25, now eight: outreach-criteria published a 1.1.0 that
   // drops its `alert` input port, with the rules byte-identical to 1.0.0. The third version file
@@ -44,10 +44,11 @@ test('a ruleset declares its basis, and both shipped rulesets carry resolvable e
   // (experiment 197), published cited, so the uncited count and its ceiling are unchanged.
   // Two on 2026-11-11: outreach-criteria, nb06-evidence, access-review and extent-review retired with the examples
   // they existed for, each run through code written for it alone (docs/audits/old-naledi-audit.md).
-  assert.equal(new Set(sets.map(s=>s.id)).size,2);
+  // Three on 2026-11-12, with seven-one-seven (experiment 200), cited to Bochner et al. 2023.
+  assert.equal(new Set(sets.map(s=>s.id)).size,3);
   // Nine version files on 2026-10-26, with extract-contract: the AR6 contract that
   // slr_extract_import held in TypeScript, declared as data so the ledger can count its debt.
-  assert.equal(sets.length,2);
+  assert.equal(sets.length,3);
   for(const set of sets){
     assert.ok(set.basis.status&&set.basis.statedBy,`${set.id} must say what its basis is and who says so`);
     assert.ok(set.mustNotBeReadAs?.trim(),`${set.id} must say what it is not`);
@@ -73,7 +74,7 @@ test('a ruleset declares its basis, and both shipped rulesets carry resolvable e
   // audience, without trusting this application or the person presenting. uncitedCeiling went
   // back to 4 in the same commit, with one more ruleset than before.
   const resolvable=sets.filter(s=>s.basis.evidence.length>0);
-  assert.deepEqual([...new Set(resolvable.map(s=>s.id))].sort(),['urn:fieldwork:ruleset:compare-level-to-elevation','urn:fieldwork:ruleset:extract-contract'],
+  assert.deepEqual([...new Set(resolvable.map(s=>s.id))].sort(),['urn:fieldwork:ruleset:compare-level-to-elevation','urn:fieldwork:ruleset:extract-contract','urn:fieldwork:ruleset:seven-one-seven'],
     'If one of the uncited four now carries a URL or a digested PDF, lower uncitedCeiling in rulesets/ledger.json.');
   const dois=resolvable.find(s=>s.id==='urn:fieldwork:ruleset:extract-contract').basis.evidence.map(e=>e.locator);
   assert.deepEqual(dois,['10.1017/9781009157896.011','10.5194/gmd-16-7461-2023','10.5281/zenodo.5914709'],

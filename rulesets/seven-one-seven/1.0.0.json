@@ -1,0 +1,404 @@
+{
+ "schema": "fieldwork/ruleset/1",
+ "id": "urn:fieldwork:ruleset:seven-one-seven",
+ "version": "1.0.0",
+ "title": "7-1-7 timeliness",
+ "released": "2026-11-12",
+ "description": "For each row, the days from emergence to detection, detection to notification, and notification to the completion of early response, each set against its target: 7, 1 and 7 days unless the step says otherwise. Each interval is Met, NotMet, or NoVerdict where either of its dates is missing.",
+ "mustNotBeReadAs": "A review of an event's response. 7-1-7 times an outbreak as one event, from its first case's emergence to the completion of its early response actions; read on a line list, each row is one case's dates, and the counts say how a case's dates fell, not how the response performed. A negative interval is the records', shown as they hold it.",
+ "rules": "# 7-1-7 timeliness; each row's intervals against the step's targets.\n# Evaluated directly: the rules compute values, which the reasoner does not.\n",
+ "parameters": [
+  {
+   "name": "detectionTarget",
+   "role": "target",
+   "type": "number",
+   "unit": "http://qudt.org/vocab/unit/DAY",
+   "unitLabel": "days",
+   "min": 0,
+   "max": 365,
+   "default": 7,
+   "decimals": 0,
+   "placeholder": "{{detectionTarget}}",
+   "meaning": "Days from emergence to detection"
+  },
+  {
+   "name": "notificationTarget",
+   "role": "target",
+   "type": "number",
+   "unit": "http://qudt.org/vocab/unit/DAY",
+   "unitLabel": "days",
+   "min": 0,
+   "max": 365,
+   "default": 1,
+   "decimals": 0,
+   "placeholder": "{{notificationTarget}}",
+   "meaning": "Days from detection to notification"
+  },
+  {
+   "name": "responseTarget",
+   "role": "target",
+   "type": "number",
+   "unit": "http://qudt.org/vocab/unit/DAY",
+   "unitLabel": "days",
+   "min": 0,
+   "max": 365,
+   "default": 7,
+   "decimals": 0,
+   "placeholder": "{{responseTarget}}",
+   "meaning": "Days from notification to early response complete"
+  }
+ ],
+ "inputContract": {
+  "factGenerator": "src/authored-application.ts#authoredFacts",
+  "subjectKind": "cases or events with milestone dates",
+  "expects": [
+   {
+    "predicate": "fw:emergenceDate",
+    "type": "date"
+   },
+   {
+    "predicate": "fw:detectionDate",
+    "type": "date"
+   },
+   {
+    "predicate": "fw:notificationDate",
+    "type": "date"
+   },
+   {
+    "predicate": "fw:responseCompleteDate",
+    "type": "date"
+   }
+  ],
+  "tableContract": {
+   "requiredKeys": [],
+   "allowedUnits": [],
+   "closedVocabulary": [],
+   "declares": [
+    {
+     "name": "targets",
+     "value": "7-1-7 days",
+     "meaning": "Detection within 7 days of emergence, notification within 1 day of detection, early response complete within 7 days of notification, as Bochner et al. 2023 state them. Each is a step setting."
+    },
+    {
+     "name": "equality",
+     "value": "met",
+     "meaning": "An interval equal to its target meets it."
+    }
+   ]
+  },
+  "fieldFrom": [
+   {
+    "attribute": "emergence_date",
+    "predicate": "fw:emergenceDate",
+    "kind": "date",
+    "label": "Emergence"
+   },
+   {
+    "attribute": "detection_date",
+    "predicate": "fw:detectionDate",
+    "kind": "date",
+    "label": "Detection"
+   },
+   {
+    "attribute": "notification_date",
+    "predicate": "fw:notificationDate",
+    "kind": "date",
+    "label": "Notification"
+   },
+   {
+    "attribute": "early_response_date",
+    "predicate": "fw:responseCompleteDate",
+    "kind": "date",
+    "label": "Early response complete"
+   }
+  ],
+  "ports": {
+   "inputs": [
+    [
+     "records",
+     "table"
+    ]
+   ],
+   "output": "table"
+  },
+  "projection": "declared",
+  "parameterFrom": {},
+  "portsNote": "A table in and a table out: each row gains three intervals in days and three verdicts. Which column holds each date is chosen on the step.",
+  "note": "The four dates are bound to columns on the step, so nothing is guessed from a spelling."
+ },
+ "outputVocabulary": {
+  "predicates": [
+   {
+    "predicate": "fw:detectionWithinTarget",
+    "values": [
+     "Met",
+     "NotMet",
+     "NoVerdict"
+    ],
+    "unknownValue": "NoVerdict"
+   },
+   {
+    "predicate": "fw:notificationWithinTarget",
+    "values": [
+     "Met",
+     "NotMet",
+     "NoVerdict"
+    ],
+    "unknownValue": "NoVerdict"
+   },
+   {
+    "predicate": "fw:responseWithinTarget",
+    "values": [
+     "Met",
+     "NotMet",
+     "NoVerdict"
+    ],
+    "unknownValue": "NoVerdict"
+   }
+  ],
+  "unmatchedSubjectsExpected": false,
+  "note": "Every row reaches a verdict on each interval: Met or NotMet from its days, NoVerdict where a date is missing."
+ },
+ "basis": {
+  "status": "published",
+  "statedBy": "The milestones and their targets, from the paper that proposed and measured them; the arithmetic is days between dates, and its one convention, equality as meeting, is declared.",
+  "evidence": [
+   {
+    "id": "bochner-2023",
+    "kind": "url",
+    "url": "https://doi.org/10.1016/S2214-109X(23)00133-X",
+    "title": "Accelerating outbreak detection and response through the 7-1-7 target",
+    "role": "source",
+    "authors": "Bochner, A. F., et al.",
+    "published": "2023",
+    "locator": "10.1016/S2214-109X(23)00133-X",
+    "notes": "Lancet Global Health 2023;11:e871-79, CC BY 4.0. States the three milestones and targets this ruleset computes, as ontology/response-timeliness.ttl records them.",
+    "addedAt": "2026-11-12",
+    "modifiedAt": "2026-11-12"
+   }
+  ],
+  "unresolvedCitations": [],
+  "note": "The ruleset reads dates; which date of a record stands for which milestone is the step's choice, stated in the run's record."
+ },
+ "authored": {
+  "subject": "?r",
+  "comment": "7-1-7 timeliness",
+  "rules": [
+   {
+    "any": [
+     {
+      "all": []
+     }
+    ],
+    "then": [
+     {
+      "predicate": "fw:daysToDetect",
+      "compute": {
+       "left": {
+        "field": "fw:detectionDate"
+       },
+       "operator": "minus",
+       "right": {
+        "field": "fw:emergenceDate"
+       }
+      },
+      "column": "days_to_detect",
+      "meaning": "Days from emergence to detection"
+     }
+    ]
+   },
+   {
+    "any": [
+     {
+      "all": []
+     }
+    ],
+    "then": [
+     {
+      "predicate": "fw:daysToNotify",
+      "compute": {
+       "left": {
+        "field": "fw:notificationDate"
+       },
+       "operator": "minus",
+       "right": {
+        "field": "fw:detectionDate"
+       }
+      },
+      "column": "days_to_notify",
+      "meaning": "Days from detection to notification"
+     }
+    ]
+   },
+   {
+    "any": [
+     {
+      "all": []
+     }
+    ],
+    "then": [
+     {
+      "predicate": "fw:daysToRespond",
+      "compute": {
+       "left": {
+        "field": "fw:responseCompleteDate"
+       },
+       "operator": "minus",
+       "right": {
+        "field": "fw:notificationDate"
+       }
+      },
+      "column": "days_to_respond",
+      "meaning": "Days from notification to early response complete"
+     }
+    ]
+   },
+   {
+    "any": [
+     {
+      "all": [
+       {
+        "field": "fw:daysToDetect",
+        "comparator": "notGreaterThan",
+        "value": {
+         "setting": "detectionTarget"
+        }
+       }
+      ]
+     }
+    ],
+    "then": [
+     {
+      "predicate": "fw:detectionWithinTarget",
+      "value": "fw:Met"
+     }
+    ]
+   },
+   {
+    "any": [
+     {
+      "all": [
+       {
+        "field": "fw:daysToDetect",
+        "comparator": "greaterThan",
+        "value": {
+         "setting": "detectionTarget"
+        }
+       }
+      ]
+     }
+    ],
+    "then": [
+     {
+      "predicate": "fw:detectionWithinTarget",
+      "value": "fw:NotMet"
+     }
+    ]
+   },
+   {
+    "any": [
+     {
+      "all": [
+       {
+        "field": "fw:daysToNotify",
+        "comparator": "notGreaterThan",
+        "value": {
+         "setting": "notificationTarget"
+        }
+       }
+      ]
+     }
+    ],
+    "then": [
+     {
+      "predicate": "fw:notificationWithinTarget",
+      "value": "fw:Met"
+     }
+    ]
+   },
+   {
+    "any": [
+     {
+      "all": [
+       {
+        "field": "fw:daysToNotify",
+        "comparator": "greaterThan",
+        "value": {
+         "setting": "notificationTarget"
+        }
+       }
+      ]
+     }
+    ],
+    "then": [
+     {
+      "predicate": "fw:notificationWithinTarget",
+      "value": "fw:NotMet"
+     }
+    ]
+   },
+   {
+    "any": [
+     {
+      "all": [
+       {
+        "field": "fw:daysToRespond",
+        "comparator": "notGreaterThan",
+        "value": {
+         "setting": "responseTarget"
+        }
+       }
+      ]
+     }
+    ],
+    "then": [
+     {
+      "predicate": "fw:responseWithinTarget",
+      "value": "fw:Met"
+     }
+    ]
+   },
+   {
+    "any": [
+     {
+      "all": [
+       {
+        "field": "fw:daysToRespond",
+        "comparator": "greaterThan",
+        "value": {
+         "setting": "responseTarget"
+        }
+       }
+      ]
+     }
+    ],
+    "then": [
+     {
+      "predicate": "fw:responseWithinTarget",
+      "value": "fw:NotMet"
+     }
+    ]
+   }
+  ],
+  "otherwise": [
+   {
+    "predicate": "fw:detectionWithinTarget",
+    "value": "fw:NoVerdict"
+   },
+   {
+    "predicate": "fw:notificationWithinTarget",
+    "value": "fw:NoVerdict"
+   },
+   {
+    "predicate": "fw:responseWithinTarget",
+    "value": "fw:NoVerdict"
+   }
+  ]
+ },
+ "changes": [
+  {
+   "kind": "major",
+   "description": "First version (experiment 200)."
+  }
+ ]
+}

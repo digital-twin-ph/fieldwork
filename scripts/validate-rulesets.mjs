@@ -94,7 +94,10 @@ for(const {path,doc} of sets){
       problems.push(`${at}: parameter ${parameter.name} is text and declares a numeric constraint.`);
     if(!parameter.unit&&parameter.type==='number')
       problems.push(`${at}: parameter ${parameter.name} is numeric and declares no unit. A threshold without its unit is not a threshold.`);
-    if(!(doc.rules??'').includes(parameter.placeholder))
+    // Read by a rule either as its placeholder in the N3, or, where the rules are evaluated directly, as a setting the
+    // declared rules name (experiment 200's 7-1-7 targets, 2026-11-12).
+    const named=JSON.stringify(doc.authored?.rules??[]).includes(JSON.stringify({setting:parameter.name}));
+    if(!(doc.rules??'').includes(parameter.placeholder)&&!named)
       problems.push(`${at}: parameter ${parameter.name} is declared and its placeholder appears in no rule.`);
   }
   for(const placeholder of new Set((doc.rules??'').match(/\{\{[a-zA-Z]+\}\}/g)??[]))

@@ -24,6 +24,12 @@ new columns.
 arrive, each column's kind and its unit. Then the settings, the rules, and the otherwise. Nothing changes until
 **Apply**.
 
+**A published ruleset reads named columns.** Under **Which column holds each**, each input the ruleset declares has a
+menu of your records' columns; left as it is, the ruleset's own column name is read. *7-1-7 timeliness* reads four
+dates, emergence, detection, notification and early response complete: on a line list such as MERS-CoV, South Korea,
+2015, choose `dt_onset`, `dt_diag` and `dt_report` for the first three. A chosen column the records do not carry stops
+the run, naming the columns they do. The run's record states which column was read for each input.
+
 **Each part of a rule is a block**, with its word and its colour, so a rule's shape reads at a glance:
 
 | Block | What it decides |

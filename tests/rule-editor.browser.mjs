@@ -1,4 +1,5 @@
 import {test,expect} from './fixtures.mjs';
+import {compareLevelWorkflow} from './compare-level-workflow.mjs';
 import {openFixture} from './open-fixture.mjs';
 import {collectPageErrors} from './page-errors.mjs';
 
@@ -126,8 +127,11 @@ test('a published ruleset is read in the editor, and is not editable there',asyn
   const errors=collectPageErrors(page);
   await page.goto('/');
   await page.evaluate(()=>localStorage.clear());
-  await page.goto('/?example=snow-extent');
-  await expect(page.locator('body')).toContainText('Complete in',{timeout:45000});
+  // compare-level-to-elevation on a small table since 2026-11-11, when Snow's extent rule retired (tests/compare-level-workflow.mjs).
+  await page.goto('/?example=blank');
+  await page.locator('#workflow-file').setInputFiles({name:'compare.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(compareLevelWorkflow()))});
+  await page.locator('#run-button').click();
+  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
 
   const edges=()=>page.locator('.react-flow__edge').count();
   const before=await edges();
@@ -136,16 +140,15 @@ test('a published ruleset is read in the editor, and is not editable there',asyn
   // Configure… opens the published ruleset's own dialog, whose preview is its rules; the editor reads them too.
   await page.locator('#configure-step').click();
   const chooser=page.locator('#ruleset-config');
-  await expect(chooser.locator('[data-config-section="preview"] .authored-rule')).toHaveCount(3);
+  await expect(chooser.locator('[data-config-section="preview"] .authored-rule')).toHaveCount(4);
   await chooser.locator('#review-rules').click();
   const dialog=page.locator('#rule-editor');
   await expect(dialog).toBeVisible();
-  await expect(dialog).toContainText('Extent review 1.1.0');
+  await expect(dialog).toContainText('Compare a projected rise with an elevation 1.0.0');
 
-  // Laid out as rules, with the published vocabulary intact and the setting named rather than
-  // written as a placeholder.
-  await expect(dialog.locator('.rule-card')).toHaveCount(3);
-  await expect(dialog.locator('[data-part="value-source"]').first()).toHaveValue('threshold');
+  // Laid out as rules, with the published vocabulary intact. This ruleset declares no setting, so the named-setting check
+  // that ran on extent-review's threshold has nothing to read here; no placeholder is shown either way.
+  await expect(dialog.locator('.rule-card')).toHaveCount(4);
   expect(await dialog.innerText()).not.toContain('{{');
 
   // Published and pinned: every control is disabled and nothing can be added or removed.
@@ -170,8 +173,11 @@ test('writing rules for a pinned step keeps what is wired to it',async({page})=>
   const errors=collectPageErrors(page);
   await page.goto('/');
   await page.evaluate(()=>localStorage.clear());
-  await page.goto('/?example=snow-extent');
-  await expect(page.locator('body')).toContainText('Complete in',{timeout:45000});
+  // compare-level-to-elevation on a small table since 2026-11-11, when Snow's extent rule retired (tests/compare-level-workflow.mjs).
+  await page.goto('/?example=blank');
+  await page.locator('#workflow-file').setInputFiles({name:'compare.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(compareLevelWorkflow()))});
+  await page.locator('#run-button').click();
+  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
 
   const before=await page.locator('.react-flow__edge').count();
   await page.locator('[data-view="workflow"]').click();

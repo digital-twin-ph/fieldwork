@@ -1,6 +1,6 @@
 # 134 · A rate from a table, and what Snow's own column does not say
 
-_Created 2026-10-24 · Updated 2026-10-24_
+_Created 2026-10-24 · Updated 2026-11-11_
 
 **Status:** tried — `rate` reads a long table, the Inspector states the kind of input, and the
 arithmetic is checked against Snow's Table IX. One of Snow's five printed rates does not follow

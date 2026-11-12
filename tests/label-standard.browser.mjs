@@ -1,4 +1,5 @@
 import {test,expect} from './fixtures.mjs';
+// Hagelloch since 2026-11-11, when Old Naledi retired (docs/audits/old-naledi-audit.md); an unknown example falls back to it.
 
 // "The Find Health Facilities widget label cannot be changed like Study Area, Street Network and
 // Map. Let's move to standardize the labeling with 'Apply Label' button."
@@ -7,7 +8,7 @@ import {test,expect} from './fixtures.mjs';
 // plain input on the input widgets -- and one widget had none. The gesture is learned once, so it
 // has to be the same gesture.
 test('every widget that can be labelled is labelled the same way',async({page})=>{
-  await page.goto('/?example=old-naledi');
+  await page.goto('/?example=hagelloch');
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
 
   // The widget that had no control at all.
@@ -27,7 +28,7 @@ test('every widget that can be labelled is labelled the same way',async({page})=
 });
 
 test('an empty label is refused rather than written onto the canvas',async({page})=>{
-  await page.goto('/?example=old-naledi');
+  await page.goto('/?example=hagelloch');
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
   await page.locator('[data-view="workflow"]').click();
   await page.locator('[data-add="find_health_facilities"]').click();

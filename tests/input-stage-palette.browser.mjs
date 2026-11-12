@@ -62,7 +62,8 @@ test('a canvas with no input offers the input stage, and everything after one is
   // number comfortably below it.
   await expect.poll(()=>entries.count(),{timeout:15000}).toBeGreaterThanOrEqual(45);
   for(const type of ['measure_distance','network_input','voronoi','isochrone','clip_polygons',
-    'summarize_points_to_polygon','facilities','facility_audit','map_output'])
+    // facilities and facility_audit left this list when they retired with Old Naledi, 2026-11-11.
+    'summarize_points_to_polygon','map_output'])
     await expect(page.locator(`#node-library [data-add="${type}"]`)).toHaveCount(1);
   expect(errors).toEqual([]);
 });

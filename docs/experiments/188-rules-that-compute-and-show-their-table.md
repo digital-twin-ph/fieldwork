@@ -1,6 +1,6 @@
 # 188 · Rules that compute a column, and show it on the table
 
-_Created 2026-11-07 · Updated 2026-11-08_
+_Created 2026-11-07 · Updated 2026-11-11_
 
 **Status:** tried (Fieldwork 0.55.0, 2026-11-08). All five stages built; Derive a value retired. Not `validated`: the
 three checks below pass in Chromium, WebKit runs in CI, and South London has no build from an empty canvas to play

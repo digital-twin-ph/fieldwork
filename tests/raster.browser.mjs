@@ -3,15 +3,28 @@ import assert from 'node:assert/strict';
 import {readFile,writeFile} from 'node:fs/promises';
 import {fromFile,fromArrayBuffer} from 'geotiff';
 import {encodeRaster} from '../build/raster.js';
-import {oldNalediWorkflow} from '../build/old-naledi.js';
+// OLD NALEDI RETIRED on 2026-11-11 with its raster clipping workflow (docs/audits/old-naledi-audit.md). These tests used
+// it as ground to clip; a drawn area over the same ground, inside the synthetic rasters below, stands in for both.
+const NALEDI_AREA={type:'Polygon',coordinates:[[[25.900,-24.690],[25.915,-24.690],[25.915,-24.678],[25.900,-24.678],[25.900,-24.690]]]};
+const oldNalediWorkflow=()=>({schema:'fieldwork/workflow/1',name:'Raster clipping',nodes:[
+  {id:'area',type:'study_area',x:20,y:40,params:{label:'Old Naledi',source:'drawn',selectionMode:'polygon',geometry:NALEDI_AREA}}],edges:[]});
+const rasterWorkflow=()=>({schema:'fieldwork/workflow/1',name:'Raster clipping',nodes:[
+  ...oldNalediWorkflow().nodes,
+  {id:'raster-input',type:'raster_input',x:310,y:190,params:{label:'WorldPop raster'}},
+  {id:'raster-clip',type:'clip_raster',x:610,y:40,params:{label:'Clip to Old Naledi',method:'all-touched',marginPixels:0,
+    cutline:{geometry:NALEDI_AREA,selectionMode:'polygon'}}},
+  {id:'raster-map',type:'map_output',x:920,y:40,params:{label:'Clipped population raster',inputMode:'raster'}}],
+  edges:[{id:'area-input',from:'area',to:'raster-input',port:'area'},{id:'area-clip',from:'area',to:'raster-clip',port:'area'},
+    {id:'input-clip',from:'raster-input',to:'raster-clip',port:'raster'},{id:'clip-map',from:'raster-clip',to:'raster-map',port:'raster'}]});
 import {openWorkflow} from './open-workflow.mjs';
 const real=process.env.FIELDWORK_WORLDPOP_FILE;
 test('all-touched margin is adjustable, saved on Clip raster and masked at display edges',async({page})=>{
- await page.goto('/?example=raster');
+ await page.goto('/?example=blank');await page.locator('#workflow-file').setInputFiles({name:'raster.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(rasterWorkflow()))});
+ await page.locator('[data-view="workflow"]').click();await page.locator('.react-flow__node[data-id="raster-input"]').click();
  const saved=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));
  const metadata={width:60,height:60,origin:[25.88,-24.67],resolution:[.001,-.001]},values=Array.from({length:3600},(_,i)=>i%23===0?null:i/10);
  await page.locator('#prepare-raster').click();await page.locator('#raster-padding').selectOption('1');await page.locator('#raster-file').setInputFiles({name:'padded.tif',mimeType:'image/tiff',buffer:Buffer.from(encodeRaster({metadata,values}))});await expect(page.locator('#raster-save')).toBeEnabled();await page.locator('#raster-save').click();
- await page.locator('[data-raster-step="raster-clip"]').click();await expect(page.locator('#clip-method')).toHaveValue('all-touched');const area=(await saved()).nodes.find(n=>n.type==='study_area');
+ await page.locator('[data-view="workflow"]').click();await page.locator('.react-flow__node[data-id="raster-clip"]').click();await expect(page.locator('#clip-method')).toHaveValue('all-touched');const area=(await saved()).nodes.find(n=>n.type==='study_area');
  await page.locator('#preview-raster-clip').click();await page.locator('#clip-preview-margin').fill('1.1');await expect(page.locator('#area-apply')).toBeDisabled();await expect(page.locator('#area-feedback')).toHaveAttribute('role','alert');await page.locator('#clip-preview-margin').fill('0.5');await expect(page.locator('#area-apply')).toBeEnabled();await page.locator('#area-cancel').click();assert.equal((await saved()).nodes.find(n=>n.type==='clip_raster').params.marginPixels,0);
  await page.locator('#preview-raster-clip').click();await page.locator('#clip-preview-margin').fill('0.5');const predicted=await page.locator('#raster-preview-status').textContent();await page.locator('#area-apply').click();await expect(page.locator('#area-dialog')).not.toBeVisible();assert.deepEqual((await saved()).nodes.find(n=>n.type==='study_area'),area);
   await page.locator('[data-view="results"]').click();
@@ -24,26 +37,7 @@ test('all-touched margin is adjustable, saved on Clip raster and masked at displ
  });assert.equal(sample.empty,0);assert.ok(sample.opaque>1000);assert.ok(sample.clear>1000);
  await page.locator('[data-view="workflow"]').click();await page.screenshot({path:'test-results/raster-all-touched-margin.png'});await page.reload();await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});assert.equal((await saved()).nodes.find(n=>n.type==='clip_raster').params.marginPixels,.5);
 });
-test('raster worked workspace starts connected, preserves other workspaces and runs after local preparation',async({page})=>{
- await page.goto('/?example=blank');await page.locator('[data-add="study_area"]').click();await page.locator('#study-area-label').fill('Keep my separate study');await page.locator('#study-area-label-form button').click();
-  await page.locator('[data-view="workflow"]').click();
- await openWorkflow(page,'raster');await expect(page.locator('#prepare-raster')).toBeVisible();await expect(page.locator('.react-flow__node')).toHaveCount(4);await expect(page.locator('#project-title')).toHaveText('Old Naledi · raster clipping');
- const saved=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));const initial=await saved();assert.equal(initial.exampleId,'raster');assert.equal(initial.edges.length,4);assert.equal(initial.nodes.find(n=>n.type==='raster_input').params.asset,undefined);assert.ok(initial.nodes.find(n=>n.type==='clip_raster').params.cutline);
- await expect(page.locator('#offline-status')).toHaveAttribute('data-state','ready');await page.reload();await expect(page.locator('#prepare-raster')).toBeVisible();await expect(page.locator('#workflow-select')).toHaveValue('raster');
- const metadata={width:60,height:60,origin:[25.88,-24.67],resolution:[.001,-.001]},values=Array.from({length:3600},(_,i)=>i%23===0?null:i/10);
- await page.locator('#prepare-raster').click();await page.locator('#raster-file').setInputFiles(real||{name:'worked-example.tif',mimeType:'image/tiff',buffer:Buffer.from(encodeRaster({metadata,values}))});await expect(page.locator('#raster-save')).toBeEnabled();if(real)await page.locator('#raster-worldpop').click();await page.locator('#raster-save').click();await expect(page.locator('#raster-dialog')).toHaveCount(0);
- await page.locator('[data-raster-step="raster-clip"]').click();await expect(page.locator('#raster-raster')).toHaveValue('raster-input');await page.locator('#preview-raster-clip').click();await expect(page.locator('#raster-preview-status')).toContainText('cells selected');await page.locator('#area-apply').click();await expect(page.locator('#area-dialog')).not.toBeVisible();
-  await page.locator('[data-view="results"]').click();
- await page.locator('#run-button').click();await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});await expect(page.locator('#map image')).toHaveCount(1);const prepared=await saved();
-  await page.locator('[data-view="workflow"]').click();
- await openWorkflow(page,'blank');await page.locator('.react-flow__node').click();await expect(page.locator('#study-area-label')).toHaveValue('Keep my separate study');
- await openWorkflow(page,'raster');await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});assert.deepEqual((await saved()).nodes,prepared.nodes);
-  await page.locator('[data-view="results"]').click();
- await page.context().setOffline(true);await page.reload();await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});await page.locator('[data-view="results"]').click();await expect(page.locator('#map image')).toHaveCount(1);await page.screenshot({path:'test-results/raster-worked-workspace.png'});
- await page.locator('[data-raster-step="raster-clip"]').click();await expect(page.locator('[data-clip-parameters]')).toBeVisible();await expect(page.locator('#inspector-content')).toContainText('Clip extent (degrees)');await page.screenshot({path:'test-results/raster-parameters-inspector.png'});
-  await page.locator('[data-view="results"]').click();
- await page.locator('[data-raster-step="raster-map"]').click();await expect(page.locator('[data-clip-parameters]')).toHaveCount(0);await expect(page.locator('#preview-raster-clip')).toHaveCount(0);await expect(page.locator('#map image')).toHaveCount(1);
-});
+// The raster worked workspace's own test retired with it on 2026-11-11 (docs/audits/old-naledi-audit.md).
 test('clip preview adjusts boundary parameters before running and preserves drafts, Undo and offline pixels',async({page})=>{
  const w=oldNalediWorkflow();w.nodes=w.nodes.filter(n=>n.type==='study_area');w.edges=[];delete w.outputId;
  await page.goto('/?example=blank');await page.locator('#workflow-file').setInputFiles({name:'preview.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(w))});

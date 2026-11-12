@@ -1,6 +1,6 @@
 # 185 · One step for every lag: Relate and Regression over a declared list
 
-_Created 2026-11-07 · Updated 2026-11-07_
+_Created 2026-11-07 · Updated 2026-11-11_
 
 **Status:** validated, 2026-11-07. Relate takes a list of shifts, Regression fits one model per column with an
 adjustment that can follow the shift, and the fourth and fifth Brazil workflows are rebuilt with them. Checks that

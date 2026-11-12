@@ -32,7 +32,9 @@ test('the palette offers one rule-application widget, not one per ruleset',async
   // the AR6 contract that slr_extract_import held in TypeScript, declared as data. The count is
   // asserted rather than read from the build so that bundling a ruleset is a visible decision. Six across ten since
   // 2026-11-09, with compare-level-to-elevation, the comparison Compare level to elevation held (experiment 197).
-  expect(expected.size,'six identities, ten documents').toBe(6);
+  // Two identities in two documents since 2026-11-11, when outreach-criteria, nb06-evidence, access-review and
+  // extent-review retired with the code written for each (docs/audits/old-naledi-audit.md).
+  expect(expected.size,'two identities, two documents').toBe(2);
 });
 
 test('adding one gives a node that says it has nothing to apply yet',async({page})=>{
@@ -63,25 +65,28 @@ test('choosing a ruleset pins it, takes its defaults, and names the step',async(
   // not somewhere to start new work.
   const offered=await page.locator('#ruleset-choice option').evaluateAll(els=>
     els.map(e=>e.value).filter(v=>v&&v!=='authored'));
-  expect(offered.length,'one per identity, not one per document').toBe(6);
+  expect(offered.length,'one per identity, not one per document').toBe(2);
   // And one more entry that is not a ruleset at all: writing rules here rather than choosing
   // somebody else's. Added 2026-10-15, when the editor turned out to have no entry point.
   expect(await page.locator('#ruleset-choice option[value="authored"]').count()).toBe(1);
-  expect(offered.some(v=>v.endsWith('@1.0.0')&&v.includes('extent-review')),
-    'the superseded extent review is not offered').toBe(false);
+  // The superseded-version check ran on extent-review 1.0.0; no shipped ruleset has a superseded version since
+  // 2026-11-11, so there is nothing for it to exclude here.
 
   await page.locator('#ruleset-choice').selectOption(
-    offered.find(v=>v.includes('extent-review')));
+    offered.find(v=>v.includes('compare-level-to-elevation')));
   await page.locator('#ruleset-config #config-apply').click();
   const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));
   const node=saved.nodes.filter(n=>n.type==='apply_ruleset').at(-1);
-  assert.equal(node.params.ruleset.id,'urn:fieldwork:ruleset:extent-review');
-  assert.equal(node.params.ruleset.version,'1.1.0');
-  assert.deepEqual(node.params.ruleset.inputs,[['polygons','polygons']],'the ports come from the ruleset');
-  assert.equal(node.params.ruleset.output,'polygons');
-  assert.equal(node.params.parameters.threshold,1000000,'the declared default is pinned');
-  assert.equal(node.params.label,'Extent review','and the step is named after what it does');
+  // compare-level-to-elevation since 2026-11-11 (extent-review retired). It declares no setting, so there is no default
+  // to pin; that half of the check ran on extent-review's threshold.
+  assert.equal(node.params.ruleset.id,'urn:fieldwork:ruleset:compare-level-to-elevation');
+  assert.equal(node.params.ruleset.version,'1.0.0');
+  assert.deepEqual(node.params.ruleset.inputs,[['records','table']],'the ports come from the ruleset');
+  assert.equal(node.params.ruleset.output,'table');
+  assert.deepEqual(node.params.parameters,{},'nothing declared, nothing pinned');
+  assert.equal(node.params.label,'Compare a projected rise with an elevation','and the step is named after what it does');
 
-  await expect(page.locator('.inspector')).toContainText('Extent review');
-  await expect(page.locator('.inspector')).toContainText('Basis: illustrative, no source');
+  await expect(page.locator('.inspector')).toContainText('Compare a projected rise with an elevation');
+  // Its basis is published and cited, where extent-review's was illustrative with no source.
+  await expect(page.locator('.inspector')).toContainText('Basis: published');
 });

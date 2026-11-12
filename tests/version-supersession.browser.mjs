@@ -13,6 +13,7 @@ import {collectPageErrors} from './page-errors.mjs';
 // existed and rulesets since 2026-10-12, and nothing read either one.
 
 test('a step pinned to a superseded ruleset says so, and says what moving costs',async({page})=>{
+  test.skip(true,'No shipped ruleset has a superseded version since 2026-11-11: extent-review, whose 1.0.0 these tests pinned, retired with outreach-criteria, nb06-evidence and access-review (docs/audits/old-naledi-audit.md). The notice is still in src/app.ts; it needs a ruleset published at two versions to be exercised.');
   const errors=collectPageErrors(page);
   await page.goto('/');
   await page.evaluate(()=>localStorage.clear());
@@ -60,6 +61,7 @@ test('a step pinned to a superseded ruleset says so, and says what moving costs'
 });
 
 test('the run names every superseded pin it just used',async({page})=>{
+  test.skip(true,'No shipped ruleset has a superseded version since 2026-11-11: extent-review, whose 1.0.0 these tests pinned, retired with outreach-criteria, nb06-evidence and access-review (docs/audits/old-naledi-audit.md). The notice is still in src/app.ts; it needs a ruleset published at two versions to be exercised.');
   const errors=collectPageErrors(page);
   await page.goto('/');
   await page.evaluate(()=>localStorage.clear());

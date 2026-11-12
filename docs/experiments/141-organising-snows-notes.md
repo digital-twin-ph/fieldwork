@@ -1,6 +1,6 @@
 # 141 — Notes, the story, and the report: one record
 
-_Created 2026-10-26 · Updated 2026-10-30_
+_Created 2026-10-26 · Updated 2026-11-11_
 
 **Status:** tried — the design is proposed and was tested against a publication that already
 exists, before anything was built. Nothing in `src/` carries a note today.

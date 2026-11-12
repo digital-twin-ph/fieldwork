@@ -1,4 +1,6 @@
 import {test,expect} from './fixtures.mjs';
+// Old Naledi's map until it retired on 2026-11-11; a synthetic static map stands in (tests/map-fixture.mjs).
+import {openMapFixture} from './map-fixture.mjs';
 import {inMapSettings} from './map-settings.mjs';
 import {collectPageErrors} from './page-errors.mjs';
 
@@ -83,8 +85,7 @@ test('a map with no polygons can still take a basemap',async({page})=>{
   const errors=collectPageErrors(page);
   await page.goto('/');
   await page.evaluate(()=>localStorage.clear());
-  await page.goto('/?example=old-naledi');
-  await expect(page.locator('body')).toContainText('Complete in',{timeout:40000});
+  await openMapFixture(page);
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="access-map"]').click();
 

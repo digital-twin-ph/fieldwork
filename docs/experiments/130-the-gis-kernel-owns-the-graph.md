@@ -1,6 +1,6 @@
 # 130 · The GIS kernel owns the graph
 
-_Created 2026-10-22 · Updated 2026-10-22_
+_Created 2026-10-22 · Updated 2026-11-11_
 
 **Status:** asked — the decision is taken and the evidence for it is in this repository, but the
 graph is still JavaScript objects on both paths. Nothing here has been built. What follows is the

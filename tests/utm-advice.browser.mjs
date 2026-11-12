@@ -1,5 +1,14 @@
 import {test,expect} from './fixtures.mjs';
 
+// A drawn area at Gaborone, Botswana: UTM zone 35S. Old Naledi stood here until it retired on 2026-11-11
+// (docs/audits/old-naledi-audit.md).
+const openGaborone=async page=>{
+  await page.goto('/?example=blank');
+  await page.locator('#workflow-file').setInputFiles({name:'gaborone.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(
+    {schema:'fieldwork/workflow/1',name:'Gaborone',nodes:[{id:'area',type:'study_area',x:20,y:20,params:{label:'Gaborone',source:'drawn',
+      selectionMode:'bbox',geometry:{type:'Polygon',coordinates:[[[25.90,-24.69],[25.92,-24.69],[25.92,-24.67],[25.90,-24.67],[25.90,-24.69]]]}}}],edges:[]}))});
+};
+
 // Nine widgets take a UTM zone by hand and every one of them defaulted to Soho's 30/north,
 // which is wrong anywhere else and said nothing about it. Experiment 100.
 test('a widget added to a workflow takes the zone that workflow is in',async({page})=>{
@@ -15,8 +24,8 @@ test('a widget added to a workflow takes the zone that workflow is in',async({pa
   await expect(page.locator('[data-utm-advice]')).toContainText('configured coordinate');
   await expect(page.locator('[data-utm-advice] [data-use-suggested-zone]')).toHaveCount(0);
 
-  // Old Naledi is in Botswana: zone 35S. A widget added there must not arrive as 30N.
-  await page.goto('/?example=old-naledi');
+  // Gaborone is in zone 35S. A widget added there must not arrive as 30N.
+  await openGaborone(page);
   await expect(page.locator('#node-library')).toBeVisible({timeout:45000});
   await page.locator('#node-search').fill('Convex hull');
   await page.locator('[data-view="workflow"]').click();
@@ -35,7 +44,7 @@ test('a widget added to a workflow takes the zone that workflow is in',async({pa
 });
 
 test('a zone that disagrees with the data is reported, with what it costs and a way to fix it',async({page})=>{
-  await page.goto('/?example=old-naledi');
+  await openGaborone(page);
   await expect(page.locator('#node-library')).toBeVisible({timeout:45000});
   await page.locator('#node-search').fill('Convex hull');
   await page.locator('[data-view="workflow"]').click();

@@ -1,6 +1,6 @@
 # Deduplicate records
 
-_Created 2026-10-21 · Updated 2026-11-08_
+_Created 2026-10-21 · Updated 2026-11-11_
 
 **A comparison.** It takes two or more point layers from different sources, finds the records that
 are the same place, and merges the pairs that agree. The pairs it is unsure about it gives to you.

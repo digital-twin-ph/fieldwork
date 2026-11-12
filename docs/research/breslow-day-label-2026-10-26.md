@@ -1,6 +1,6 @@
 # What a classic analysis package's "Breslow-Day test for Odds Ratio" computes
 
-_Created 2026-11-12 · Updated 2026-11-12_
+_Created 2026-10-26 · Updated 2026-11-11_
 
 Asked by the practitioner on 2026-10-26, after this project cited the discrepancy as an argument
 for building its own epi kernel rather than matching a classic analysis package bit for bit: *"I am not aware about

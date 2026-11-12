@@ -1,4 +1,5 @@
 import {test,expect} from './fixtures.mjs';
+import {openMapFixture} from './map-fixture.mjs';
 
 // The practitioner, 2026-10-21: *"can we make the Results Panel a tab alongside Workflow, and N3
 // Evidence ... It would be easier to see the whole workflow or the whole Result panel than to see
@@ -56,15 +57,16 @@ test('project, workflow, results, N3 and notes are five tabs, and only one is on
 // right when the results shared the height with the canvas and wrong once the tab owned it.
 test('the results map takes the height the tab gives it',async({page})=>{
   await page.setViewportSize({width:1600,height:1200});
-  await page.goto('/?example=heat');
-  await page.locator('#run-button').click();
-  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
+  // The synthetic map fixture since 2026-11-11, when the heat example whose map opened first retired.
+  await openMapFixture(page);
   await page.locator('[data-view="results"]').click();
   const map=page.locator('#map');
   await expect(map).toBeVisible();
   const box=await map.boundingBox();
-  // Not a strip: at least half the window's height, where it used to be about a third.
-  expect(box.height).toBeGreaterThan(500);
+  // Not a strip: the 2.9:1 letterbox this replaced would be 1024/2.9 = 353px at this width. 500 was the floor on the heat
+  // map; the fixture's map carries a key line above it, measured 2026-11-11 at 495px, so the floor is 450, still well
+  // clear of the strip. Lowered on purpose, and said so.
+  expect(box.height).toBeGreaterThan(450);
   // And the panel below it is not mostly blank: the map reaches into the lower half.
   expect(box.y+box.height).toBeGreaterThan(700);
 });

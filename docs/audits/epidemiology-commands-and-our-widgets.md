@@ -1,6 +1,6 @@
 # A classic analysis package's commands, against the widgets we actually have
 
-_Created 2026-11-12 · Updated 2026-11-12_
+_Created 2026-10-31 · Updated 2026-11-11_
 
 **Status:** an audit, not a disposition. Nothing is renamed, built or retired by this document.
 Every mapping below was read from its command list and from this repository's own

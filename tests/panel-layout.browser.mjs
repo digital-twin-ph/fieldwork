@@ -14,7 +14,8 @@ test('panel dividers resize independently, persist offline, reset and preserve w
   await expect(page.locator('#resize-results')).toHaveCount(0);
   await expect(page.locator('#expand-results')).toHaveCount(0);
   await page.locator('[data-view="results"]').click();
-  await expect(page.locator('#workflow-state')).toContainText('Run complete');await expect(page.locator('#result-metrics .review b')).toHaveText('5');
+  await expect(page.locator('#workflow-state')).toContainText('Run complete');// Hagelloch's three outputs since 2026-11-11; heat's review count retired with it.
+  await expect(page.getByRole('tab')).toHaveCount(3);
   await expect(page.locator('#offline-status')).toHaveAttribute('data-state','ready');await context.setOffline(true);await page.reload();
   expect(await size(page,'.library')).toBeCloseTo(library+60,0);expect(await size(page,'.inspector')).toBeCloseTo(inspector+70,0);
   await page.locator('#reset-layout').click();expect(await size(page,'.library')).toBeCloseTo(library,0);

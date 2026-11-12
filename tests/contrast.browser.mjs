@@ -1,4 +1,5 @@
 import {test,expect} from './fixtures.mjs';
+// Hagelloch since 2026-11-11, when Old Naledi retired (docs/audits/old-naledi-audit.md); an unknown example falls back to it.
 
 // WCAG 2.1 contrast, measured on what is actually rendered: the effective foreground after
 // alpha compositing, over the nearest opaque ancestor background. 4.5:1 for normal text,
@@ -43,7 +44,7 @@ const measure=page=>page.evaluate(()=>{
 });
 
 test('dark meets WCAG AA for every rendered text element',async({page})=>{
-  await page.goto('/?example=old-naledi');
+  await page.goto('/?example=hagelloch');
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
   await page.locator('#theme-select').selectOption('dark');
   // Every disclosure open, so what hides behind one is measured rather than skipped.
@@ -59,7 +60,7 @@ test('light does not get worse than its recorded baseline',async({page})=>{
   // green on white. It is recorded in docs/experiments/46-colour-theme.md rather than changed
   // here, because altering it is a design decision, not part of adding a theme. This is a
   // ratchet: it may improve, it must not regress.
-  await page.goto('/?example=old-naledi');
+  await page.goto('/?example=hagelloch');
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
   await page.locator('#theme-select').selectOption('light');
   await page.waitForTimeout(400);

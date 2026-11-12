@@ -348,7 +348,9 @@ not a practitioner in the field.
 31. **Syndromic surveillance: an aberration in a count over time** ([206](docs/experiments/206-syndromic-surveillance-aberration-detection.md);
    the practitioner, 2026-11-11: *"We can add 206 to our TODO list."*). Not placed in the order yet. First, the check
    that may need nothing built: whether Apply ruleset's previous-row value can read a value computed in the same step,
-   which would let EWMA and CUSUM be written as rules (option E). Then, closest step first: baseline columns on Cases
+   which would let EWMA and CUSUM be written as rules (option E). **Then, preferred (the practitioner: *"Can we modify
+   ruleset to read previous rows?"*): option F**, Apply ruleset reading a window of earlier periods (mean, sd, sum, min,
+   max over the last *k*, after a guard band), so EARS C1–C3 are rules too. Otherwise, closest step first: baseline columns on Cases
    by period for window methods (A), expected counts from Regression for Farrington-style models (C), a new step only if
    neither carries it (B), an aberration view in Chart (D). Open for the practitioner: which methods first; the New
    York daily emergency-visit series as the first test bed; whether reading a syndromic feed as published is in scope.

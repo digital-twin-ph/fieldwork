@@ -1,4 +1,6 @@
 import {test,expect} from './fixtures.mjs';
+// Old Naledi's map until it retired on 2026-11-11; a synthetic static map stands in (tests/map-fixture.mjs).
+import {openMapFixture} from './map-fixture.mjs';
 import {inMapSettings} from './map-settings.mjs';
 
 /** A FIGURE FOR THE PLACES THAT WILL NOT TAKE AN SVG.
@@ -35,8 +37,7 @@ test('a map exports as a PNG, at a stated size, carrying its baked ground',async
   await page.route(/tile\.openstreetmap\.org/,route=>
     route.fulfill({status:200,contentType:'image/png',body:PNG}));
 
-  await page.goto('/?example=old-naledi');
-  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
+  await openMapFixture(page);
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="access-map"]').click();
   await inMapSettings(page,d=>d.locator('#map-basemap').selectOption('osm'));
@@ -67,8 +68,7 @@ test('a map exports as a PNG, at a stated size, carrying its baked ground',async
 });
 
 test('the SVG download still works, and is a different file',async({page})=>{
-  await page.goto('/?example=old-naledi');
-  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
+  await openMapFixture(page);
   await page.locator('[data-view="results"]').click();
   const wait=page.waitForEvent('download');
   await page.locator('#map-download-svg').click();

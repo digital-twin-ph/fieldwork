@@ -3,51 +3,14 @@ import {inTableSettings,inChartSettings} from './map-settings.mjs';
 import {useClassicBars} from './classic-bars.mjs';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-import {exampleWorkflow} from '../build/core.js';
+import {EXAMPLE_TEMPLATES} from '../build/example-templates.js';
 
-test('shared Chart supports migration, source selection, view switching, evidence and offline reload',async({page,context})=>{
-  const w=exampleWorkflow();w.nodes.push({id:'chart',type:'output',x:850,y:420,params:{label:'Legacy counts',view:'bars'}});
-  w.edges.push({id:'chart-edge',from:'criteria',to:'chart',port:'decisions'});
-  await page.goto('/?example=blank');await page.locator('#workflow-file').setInputFiles({name:'chart.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(w))});
-  const run=async()=>{await page.locator('#run-button').click();await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});await page.locator('[data-view="results"]').click();};
-  await page.locator('[data-view="workflow"]').click();
-  await run();await expect(page.locator('[data-add="chart_output"]')).toBeVisible();await expect(page.locator('[data-add="output"]')).toHaveCount(0);
-  await page.locator('[data-view="workflow"]').click();
-  await expect(page.locator('.react-flow__node[data-id="chart"]')).toContainText('Reasoning result');
-  await page.locator('[data-view="workflow"]').click();
-  await expect(page.locator('.react-flow__node[data-id="map"]')).toContainText('Reasoning result');
-  // The assertions below read the classic bars' markup; Vega-Lite is the default renderer now.
-  await useClassicBars(page,'chart');
-  await page.locator('[data-view="results"]').click();
-  await page.getByRole('tab',{name:'Legacy counts'}).click();await expect(page.locator('#bars-panel .bar-column').filter({hasText:'Review'}).locator('b')).toHaveText('5');
-  await page.locator('[data-view="results"]').click();
-  await page.locator('[data-view="workflow"]').click();
-  await page.locator('.react-flow__node[data-id="chart"]').click();await expect(page.locator('#connect-decisions')).toHaveValue('criteria');
-  await page.locator('#chart-label').fill('Decision counts');await page.locator('#chart-label').press('Tab');
-  await page.locator('[data-view="results"]').click();
-  await page.locator('#connect-decisions').selectOption('');await page.locator('#connect-decisions').selectOption('criteria');
-  await inChartSettings(page,d=>d.locator('#output-view').selectOption('table'));await expect(page.locator('#table-decisions')).toHaveValue('criteria');
-  await page.locator('[data-view="results"]').click();
-  await inTableSettings(page,d=>d.locator('#output-view').selectOption('bars'));await expect(page.locator('#connect-decisions')).toHaveValue('criteria');await run();
-  // The view switches above re-save the node, so the classic bars are selected again before the
-  // caption they produce is read: the Vega caption says "8 input records" instead.
-  await useClassicBars(page,'chart');
-  await page.locator('[data-view="results"]').click();
-  await page.getByRole('tab',{name:'Decision counts'}).click();await expect(page.locator('#bars-panel')).toContainText('8 records');
-  await page.locator('[data-view="rules"]').click();const pending=page.waitForEvent('download');await page.locator('#download-evidence').click();
-  const receipt=JSON.parse(await readFile(await (await pending).path(),'utf8'));
-  assert.equal(receipt.workflow.nodes.find(n=>n.id==='chart').type,'chart_output');
-  const output=receipt.outputs.find(o=>o.nodeId==='chart');assert.equal(output.chart.bins.reduce((n,b)=>n+b.count,0),8);
-  assert.match(receipt.receipts.find(r=>r.nodeId==='chart').facts,/CategoricalCount/);
-  await expect(page.locator('#offline-status')).toHaveAttribute('data-state','ready');await context.setOffline(true);await page.reload();
-  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
-  await page.locator('[data-view="results"]').click();
-  await page.getByRole('tab',{name:'Decision counts'}).click();await expect(page.locator('#bars-panel')).toContainText('8 records');
-});
-
+// The legacy-bars migration test charted the heat example's decisions; it retired with decisions on 2026-11-11
+// (docs/audits/old-naledi-audit.md). The Vega-Lite test below charts Hagelloch's daily counts instead.
 test('Vega-Lite Chart enhancement renders from local count bins and reopens offline',async({page,context})=>{
-  const w=exampleWorkflow();w.nodes.push({id:'enhanced',type:'chart_output',x:850,y:420,params:{label:'Enhanced counts',renderer:'vega-lite',mark:'point',orientation:'horizontal'}});
-  w.edges.push({id:'enhanced-edge',from:'criteria',to:'enhanced',port:'decisions'});
+  const w=EXAMPLE_TEMPLATES.hagelloch();delete w.exampleId;w.name='Hagelloch, charted';
+  w.nodes.push({id:'enhanced',type:'chart_output',x:850,y:420,params:{label:'Enhanced counts',inputMode:'series',renderer:'vega-lite',mark:'point',orientation:'horizontal'}});
+  w.edges.push({id:'enhanced-edge',from:'curve',to:'enhanced',port:'series'});
   await page.goto('/?example=blank');await page.locator('#workflow-file').setInputFiles({name:'enhanced.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(w))});
   await page.locator('#run-button').click();await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
   await page.locator('[data-view="results"]').click();
@@ -61,21 +24,22 @@ test('Vega-Lite Chart enhancement renders from local count bins and reopens offl
   // The figure's words are set in Chart's Configure…, and Apply writes them (experiment 186, 2026-11-09).
   await inChartSettings(page,async d=>{
     await expect(d.locator('#chart-renderer')).toHaveValue('vega-lite');await expect(d.locator('#chart-mark')).toHaveValue('point');
-    for(const [id,text] of [['#chart-title','Heat screening decisions'],['#chart-subtitle','Demonstration records'],
-      ['#chart-x-axis','Number of records'],['#chart-y-axis','Decision'],['#chart-source-note','Source: synthetic heat fixture']]){
+    for(const [id,text] of [['#chart-title','Measles cases by day'],['#chart-subtitle','Hagelloch, 1861'],
+      ['#chart-x-axis','Cases'],['#chart-y-axis','Day'],['#chart-source-note','Source: Pfeilsticker 1863, via surveillance']]){
       await d.locator(id).fill(text);await d.locator(id).press('Tab');}
-    await d.locator('#chart-legend').check();
+    // No legend here: Hagelloch's 87 days exceed the six categories a legend allows, and the run refuses it. The legend's
+    // spec and its fw:chartLegend fact are held by tests/shared-chart.test.mjs; the six-category refusal by
+    // tests/chart-figure.test.mjs. Neither is exercised in the browser any longer, which this test did on heat.
   });
   await page.locator('#run-button').click();await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
   await page.locator('[data-view="results"]').click();
-  await page.getByRole('tab',{name:'Enhanced counts'}).click();await expect(page.locator('#vega-chart svg.marks')).toContainText('Heat screening decisions');
-  await expect(page.locator('#vega-chart svg.marks')).toContainText('Source: synthetic heat fixture');
-  await expect(page.locator('#vega-chart svg.marks')).toContainText('Decision');
+  await page.getByRole('tab',{name:'Enhanced counts'}).click();await expect(page.locator('#vega-chart svg.marks')).toContainText('Measles cases by day');
+  await expect(page.locator('#vega-chart svg.marks')).toContainText('Source: Pfeilsticker 1863, via surveillance');
+  await expect(page.locator('#vega-chart svg.marks')).toContainText('Day');
   await page.locator('#vega-chart details[title="Click to view actions"] summary').click();
   const chartDownload=page.waitForEvent('download');await page.locator('#vega-chart .vega-actions a[download$=".svg"]').click();
-  const svg=await readFile(await (await chartDownload).path(),'utf8');assert.match(svg,/Heat screening decisions/);assert.match(svg,/Source: synthetic heat fixture/);
+  const svg=await readFile(await (await chartDownload).path(),'utf8');assert.match(svg,/Measles cases by day/);assert.match(svg,/Source: Pfeilsticker 1863, via surveillance/);
   await page.locator('[data-view="rules"]').click();await expect(page.locator('#n3-preview')).toContainText('fw:ChartSpecification');
-  await expect(page.locator('#n3-preview')).toContainText('fw:chartLegend true');
   await context.setOffline(true);await page.reload();await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
   await page.locator('[data-view="results"]').click();
   await page.getByRole('tab',{name:'Enhanced counts'}).click();await expect(page.locator('#vega-chart svg.marks')).toBeVisible({timeout:30000});

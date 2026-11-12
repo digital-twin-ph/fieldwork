@@ -93,7 +93,7 @@ import {authoredConclusions,authoredFacts,authoredProjection,authoredReceipt,aut
 import {applyRepairs} from './column-profile.js';
 import {compileAuthoredRuleset,authoredUnitProblems,evaluatedDirectly,fieldsRead} from './authored-rules.js';
 import {evaluateAuthored,evaluatedTable,evaluationSentence} from './rule-evaluation.js';
-import {studyAreaN3,geometryBounds,validateDrawnGeometry} from './study-area.js';
+import {studyAreaN3,geometryBounds,validateDrawnGeometry,validateAreaParams} from './study-area.js';
 import {measureArea,validateAreaUnit} from './area-measurement.js';
 import {mapOutput} from './map-output.js';
 import {tableOutput} from './table-output.js';
@@ -729,6 +729,12 @@ export function validateWorkflow(raw:unknown):Workflow {
       +`docs/usage.md lists what replaced each retired widget.`);
   }
   for (const n of w.nodes) {
+    // STUDY AREA'S OWN CHECK, which ran through Old Naledi's module until it retired (2026-11-11) and was lost with it:
+    // a saved area is drawn or acquired, with a valid shape, or the workflow is refused when it opens.
+    if(n.type==='study_area'){
+      if((n.params as {source?:string}).source!=='drawn')throw new Error('This study area names a dataset rather than drawing or acquiring its outline. That form retired with Old Naledi on 2026-11-11; draw the area, or pick administrative units.');
+      validateAreaParams(n.params);
+    }
     validatePrivacyNode(n);
     validatePointComparisonNode(n);
     validateMeanCenterNode(n);

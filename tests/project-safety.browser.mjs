@@ -46,7 +46,8 @@ test('a stored project says whether a copy exists, and that is the way to make o
 // clear. A status that cries wolf on every demonstration canvas is one a practitioner stops
 // reading before the day they need it.
 test('a canvas with no stored project is not told it is at risk',async({page})=>{
-  for(const example of ['blank','old-naledi']){
+  // Hagelloch since 2026-11-11, when Old Naledi retired (docs/audits/old-naledi-audit.md).
+  for(const example of ['blank','hagelloch']){
     await page.goto(`/?example=${example}`);
     await expect(page.locator('#save-status')).toContainText('Saved on this device');
     await expect(page.locator('#project-safety')).toHaveCount(0);

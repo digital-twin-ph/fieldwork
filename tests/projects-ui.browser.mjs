@@ -12,7 +12,8 @@ test('a project can be chosen, read and renamed, and its workflows are its own s
   await expect(page.locator('#workflow-select')).toHaveValue('snow-voronoi');
   // The worked examples are listed as the built-in projects they already were. Four since 2026-11-09, five since 2026-11-08, when the rulesets
   // and spatial coverage examples were removed.
-  await expect(page.locator('#project-select optgroup[label="Built in"] option')).toHaveCount(4); // Manila moved to its own repository, 2026-11-09 (195).
+  // Two since 2026-11-11, when the heat example and Old Naledi retired (docs/audits/old-naledi-audit.md).
+  await expect(page.locator('#project-select optgroup[label="Built in"] option')).toHaveCount(2); // Manila moved to its own repository, 2026-11-09 (195).
   const workflows=await page.locator('#workflow-select option').evaluateAll(o=>o.map(x=>x.value));
   expect(workflows).toEqual(['snow-voronoi','snow-isochrone','snow-geoprivacy','snow-extent']);
 

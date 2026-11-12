@@ -1,6 +1,6 @@
 # 153 · A two-by-two is not a table
 
-_Created 2026-10-31 · Updated 2026-10-31_
+_Created 2026-10-31 · Updated 2026-11-11_
 
 **Status:** asked — the distinction is stated and the admission review is open. A pure structure
 for the complete table exists; nothing draws it, and which port it travels on is undecided.

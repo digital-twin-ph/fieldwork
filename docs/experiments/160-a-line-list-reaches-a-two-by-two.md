@@ -1,6 +1,6 @@
 # 160 · A line list reaches a two-by-two, at 43 nodes
 
-_Created 2026-11-02 · Updated 2026-11-02_
+_Created 2026-11-02 · Updated 2026-11-11_
 
 **Status:** tried — the Oswego church supper runs from an empty canvas on the published CSV. Whether
 a practitioner would build it by hand is not observed, and the node count suggests not.

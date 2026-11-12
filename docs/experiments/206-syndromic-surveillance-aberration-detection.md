@@ -50,13 +50,16 @@ C1–C3 or Farrington, in `src/`.
 
 | Option | What it adds | Covers |
 | --- | --- | --- |
+| F · Apply ruleset reads a window of earlier periods | a mean, standard deviation, sum, minimum or maximum of a field over the last *k* periods of its group, after a stated guard band; too few periods give no value, never zero | EARS C1–C3, and with E, CUSUM and EWMA, all as declared rules |
 | E · EWMA or CUSUM written as rules in Apply ruleset | nothing new, if "previous" reads a computed column | stateful methods, one lag deep |
 | A · Cases by period gains baseline columns | `expected`, `sd`, `z` per period, from a stated window and lag | EARS C1–C3 style |
 | B · One new step after Cases by period, *Expected count* | the same columns, from a stated method: window mean and sd, CUSUM, EWMA | window and stateful methods; the analysis' recommendation |
 | C · Regression gains expected counts per period | fitted expected count and prediction interval per row | Farrington-style |
 | D · An aberration view in Chart | the curve with the expected band and flagged periods | display only |
 
-Not decided. E is checked first, since it may need nothing built. A and B differ in whether the baseline is a setting of counting or a step of its own; examine-before-
+**Preferred (the practitioner, 2026-11-11: *"Can we modify ruleset to read previous rows?"*): F**, a general feature of
+written rules, open to any ruleset and not code for one, so it keeps to the rule of no bespoke ruleset code. E is
+checked first, since it may need nothing built; Farrington still wants C. A and B differ in whether the baseline is a setting of counting or a step of its own; examine-before-
 proposing points to A or C first, B only if neither carries it without a mode.
 
 ## Distinctions, and how each would be enforced

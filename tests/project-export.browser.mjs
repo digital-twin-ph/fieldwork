@@ -1,4 +1,5 @@
 import {test,expect} from './fixtures.mjs';
+// Hagelloch since 2026-11-11, when Old Naledi retired (docs/audits/old-naledi-audit.md); an unknown example falls back to it.
 import {downloadText} from './read-download.mjs';
 
 // "Where is the export project button?" -- 2026-10-21.
@@ -43,7 +44,7 @@ test('a project exports as one file and comes back as one project',async({page})
 // ceiling is about 5 MB. A project carrying real data could not be imported however empty the
 // store was. save() had always done it correctly; the import never did.
 test('an imported project keeps its payloads out of the workspace store',async({page})=>{
-  await page.goto('/?example=old-naledi');
+  await page.goto('/?example=hagelloch');
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
   await page.locator('#new-project').click();
   await page.locator('#project-name-input').fill('Ituri payloads');

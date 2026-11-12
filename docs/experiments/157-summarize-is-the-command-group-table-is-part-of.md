@@ -1,6 +1,6 @@
 # 157 · SUMMARIZE is the command `group_table` is one aggregate of
 
-_Created 2026-10-31 · Updated 2026-10-31_
+_Created 2026-10-31 · Updated 2026-11-11_
 
 **Status:** tried — SUMMARIZE is built, and the by-hand test that justified it was re-run on the
 same day and STILL FAILS, one step earlier, for want of a MERGE. Both results are recorded. The

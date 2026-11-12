@@ -12,8 +12,6 @@ test('a Hagelloch workflow says nothing about the heat example, in the header, t
     await expect(page.locator(where),where).not.toContainText(/heat|synthetic neighborhoods|cooling cent/i);
   await expect(page.locator('#inspector-content .notice')).toHaveCount(0);
   await expect(page.locator('#canvas-example')).toContainText('HAGELLOCH');
-  // The heat example keeps its own, which are true of it.
-  await page.goto('/?example=heat');
-  await expect(page.locator('#example-note')).toContainText('Synthetic neighborhoods and cooling centers');
+  // The heat example kept its own captions until it retired on 2026-11-11 (docs/audits/old-naledi-audit.md).
   expect(errors).toEqual([]);
 });

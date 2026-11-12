@@ -1,6 +1,6 @@
 # 151 — Typesetting an equation a practitioner wrote
 
-_Created 2026-10-30 · Updated 2026-10-31_
+_Created 2026-10-30 · Updated 2026-11-11_
 
 **Status:** validated — the dialect and the renderer, on both engines. The amendment of
 2026-10-30 below is **tried**: three widgets machine their equations and the worked example

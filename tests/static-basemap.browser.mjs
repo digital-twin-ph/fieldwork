@@ -1,4 +1,6 @@
 import {test,expect} from './fixtures.mjs';
+// Old Naledi's map until it retired on 2026-11-11; a synthetic static map stands in (tests/map-fixture.mjs).
+import {openMapFixture} from './map-fixture.mjs';
 import {inMapSettings} from './map-settings.mjs';
 
 /** GROUND UNDER A STATIC FIGURE. Experiment 137.
@@ -22,8 +24,7 @@ test('a static map bakes raster tiles in, and credits them in the figure',async(
   await page.route(/tile\.openstreetmap\.org/,route=>{requests++;
     route.fulfill({status:200,contentType:'image/png',body:PNG});});
 
-  await page.goto('/?example=old-naledi');
-  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
+  await openMapFixture(page);
   await page.locator('[data-view="workflow"]').click();
 
   // NOTHING IS FETCHED UNTIL A BASEMAP IS CHOSEN, which is the privacy condition: a tile request
@@ -62,8 +63,7 @@ test('a static map bakes raster tiles in, and credits them in the figure',async(
 });
 
 test('a vector style says why it cannot be baked, rather than drawing nothing',async({page})=>{
-  await page.goto('/?example=old-naledi');
-  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
+  await openMapFixture(page);
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="access-map"]').click();
   // A VECTOR STYLE CANNOT BE CHOSEN HERE ANY MORE, from 2026-10-27: a static figure is offered
@@ -107,11 +107,10 @@ test('choosing a basemap redraws the figure on screen, with one output and no ta
   await page.route(/tile\.openstreetmap\.org/,route=>{requests++;
     route.fulfill({status:200,contentType:'image/png',body:PNG});});
 
-  // `old-naledi` rather than a polygon map: ground is wired into the renderer that draws a study
+  // A study area with points (the map fixture, Old Naledi's until 2026-11-11) rather than a polygon map: ground is wired into the renderer that draws a study
   // area with points, and the polygon renderers do not have it yet. Recorded as a gap rather
   // than worked around -- a basemap under a catchment map is the same request.
-  await page.goto('/?example=old-naledi');
-  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
+  await openMapFixture(page);
   // Select the map node so the Inspector shows its settings, THEN go to the results and stay
   // there. The view switch happens before the choice, so it cannot be what draws the tiles.
   await page.locator('[data-view="workflow"]').click();
@@ -185,8 +184,7 @@ test('a boundary shows only its border once there is ground beneath it',async({p
   await page.route(/tile\.openstreetmap\.org/,route=>
     route.fulfill({status:200,contentType:'image/png',body:PNG}));
 
-  await page.goto('/?example=old-naledi');
-  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
+  await openMapFixture(page);
   await page.locator('[data-view="results"]').click();
 
   // With no basemap the wash is there, doing the job it is for.
@@ -220,8 +218,7 @@ test('a figure whose tiles cannot be fetched says so, and keeps its plot',async(
   // Every tile request fails, which is what no network looks like from inside the page.
   await page.route(/tile\.(openstreetmap|opentopomap)\.org/,route=>route.abort('failed'));
 
-  await page.goto('/?example=old-naledi');
-  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
+  await openMapFixture(page);
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="access-map"]').click();
   await inMapSettings(page,d=>d.locator('#map-basemap').selectOption('osm'));

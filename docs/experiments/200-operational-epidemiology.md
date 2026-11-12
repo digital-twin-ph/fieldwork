@@ -1,6 +1,6 @@
 # 200 · Operational epidemiology, anchored on 7-1-7
 
-_Created 2026-11-09 · Updated 2026-11-11_
+_Created 2026-11-09 · Updated 2026-11-12_
 
 **Status:** asked. A map of a body of work and what Fieldwork already holds of it, anchored on the 7-1-7 target and
 its bottleneck taxonomy, made to choose a first slice from. Nothing is built.
@@ -504,7 +504,21 @@ Targets are step settings in days, 7, 1 and 7 by default. Basis: Bochner et al. 
 **Practitioner observation, before it is known:** whether a learner reads "94 of 135 detected within 7 days" as the
 outbreak's detection, rather than its cases'.
 
-## What would close this
+## Built 2026-11-12: the ruleset, the column choice, and MERS's first workflow
+
+Built as decided above: `seven-one-seven` 1.0.0, Apply ruleset 0.12.0 (*Which column holds each*), and in
+example-2015-mers-korea (7f22f4e) *How quickly was each case detected and reported?*, built from an empty canvas by
+`tests/mers-from-scratch.browser.mjs`, which computes the file's own counts and finds them in the results:
+
+| Interval | Met | NotMet | NoVerdict |
+| --- | --- | --- | --- |
+| Onset to diagnosis, within 7 days | 94 | 41 | 27 |
+| Diagnosis to report, within 1 day | 161 | 1 | 0 |
+
+Found on the way: a verdict column holding one value on every row was shown by Table as a melted table's variable
+name, and lost its own column (Table 0.10.1). Checked: four cases by hand (`tests/seven-one-seven.browser.mjs`) and the
+162, in Chromium. **Not checked:** an independent recomputation in the lab; the contacts table, not yet read.
+
 
 The practitioner choosing the first slice and its data, and its being built and run by hand on an empty canvas.
 

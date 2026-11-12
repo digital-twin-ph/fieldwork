@@ -1,7 +1,7 @@
 {
   "schema": "fieldwork/example-catalog/1",
   "catalogVersion": "0.1.0",
-  "updated": "2026-11-02",
+  "updated": "2026-11-12",
   "description": "Curated worked-example repositories. This file is the trust root, on the same terms as widgets/packs.json: an example is admitted only at a full commit SHA, only from a curated owner, and every file it may fetch is pinned by digest here. A branch is never fetched, because a digest pinned against a moving ref verifies nothing.\n\nAn example is a RESOURCE -- a workflow document, data and a provenance record -- and declares no node type, so runtimeFetching: \"none\" in widgets/packs.json does not reach it. That rule governs widget definitions. See docs/experiments/127-examples-as-repositories.md.",
   "governance": {
     "curatedOwners": [
@@ -802,6 +802,74 @@
       ],
       "workflowCount": 3,
       "notYet": "Not a flood model: no tide, surge, defences or drainage, and the open terrain model is least certain at the coast (about 0.45 m). NAMRIA’s mean sea level period remains unstated; the third workflow does without it."
+    },
+    {
+      "id": "urn:fieldwork:example:mers-korea-2015",
+      "title": "MERS-CoV, South Korea, 2015",
+      "repository": "https://github.com/digital-twin-ph/example-2015-mers-korea",
+      "commit": "7f22f4e6182af1ef0d7ac8ad84d76a5be3c39702",
+      "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2015-mers-korea",
+      "licence": {
+        "data": "No licence stated for the data; used for teaching, as the outbreaks package describes it. The repository’s own files are CC0-1.0.",
+        "source": "The R package outbreaks (reconverse), mers_korea_2015, compiled by ECDC’s Epidemic Intelligence from public information in the outbreak’s first weeks.",
+        "note": "Decided 2026-11-11 by the practitioner: used in an example repository for teaching, attributed, never in the application."
+      },
+      "description": "A line list of 162 cases, each case’s onset, diagnosis and report set against the 7-1-7 targets by a published ruleset, and each verdict counted.",
+      "carries": {
+        "workflow": true,
+        "data": true,
+        "geography": false
+      },
+      "notYet": "No response dates, so no verdict on the third target; the 98 contacts are not yet read.",
+      "uses": [
+        "apply_ruleset",
+        "group_table",
+        "table_input",
+        "table_output"
+      ],
+      "files": [
+        {
+          "path": "fieldwork-project.json.gz",
+          "sha256": "3db3ef1c918e5623db1739443e29accdb8c9f9d04ba1a3be82a74bcd0dbd8c14",
+          "bytes": 3416
+        },
+        {
+          "path": "data/mers_korea_2015_linelist.csv",
+          "sha256": "b678afea07eb3f980658c95c7284fff75c3528d6f8c0e6ec4550c0506fd3ff7f",
+          "bytes": 27751
+        },
+        {
+          "path": "data/mers_korea_2015_contacts.csv",
+          "sha256": "6b94ef8ffa61e365572d05d65a33d559174212d95fe60d94bf6076a682b414c1",
+          "bytes": 3535
+        },
+        {
+          "path": "scripts/convert.R",
+          "sha256": "c4cc08c9f37c2461167ddfcc32aced45855c37abebd150049ba2399da534b125",
+          "bytes": 713
+        },
+        {
+          "path": "provenance.json",
+          "sha256": "1d51e0a9bfced98702d614cc7f278f0b75c60ec557aa670812700e28a6200ccf",
+          "bytes": 2259
+        },
+        {
+          "path": "README.md",
+          "sha256": "eefcdd91e4e3285e01004e0ccc105136f36a9930105fa292af65f66c40f62480",
+          "bytes": 2042
+        },
+        {
+          "path": "NOTICE.txt",
+          "sha256": "72b04bed16e539df84315ba56b9a9ddd221e4f7a6ee67ae92381b701f54fe39a",
+          "bytes": 2081
+        },
+        {
+          "path": "LICENSE",
+          "sha256": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499",
+          "bytes": 7048
+        }
+      ],
+      "workflowCount": 1
     }
   ]
 }

@@ -14,6 +14,7 @@
  ],
  "examplesPinned": [
   "brazil-dengue-rj-2024",
+  "mers-korea-2015",
   "nigeria-immunization-2024",
   "nyc-asthma-ozone-2016-2025",
   "oswego-1940",
@@ -72,13 +73,14 @@
    "nodeType": "apply_ruleset",
    "exampleUses": [
     "hagelloch-chains",
+    "mers-korea-2015",
     "nigeria-immunization-2024",
     "sea-level-rise-philippines",
     "sierra-leone-measles",
     "south-london-1854",
     "workflows-rulesets"
    ],
-   "exampleUseCount": 6,
+   "exampleUseCount": 7,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],
@@ -240,12 +242,13 @@
     "brazil-dengue-rj-2024",
     "hagelloch-chains",
     "hagelloch-people",
+    "mers-korea-2015",
     "nyc-asthma-ozone-2016-2025",
     "sierra-leone-measles",
     "south-london-1854",
     "workflows-rulesets"
    ],
-   "exampleUseCount": 7,
+   "exampleUseCount": 8,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],
@@ -629,6 +632,7 @@
    "nodeType": "table_input",
    "exampleUses": [
     "brazil-dengue-rj-2024",
+    "mers-korea-2015",
     "nigeria-immunization-2024",
     "nyc-asthma-ozone-2016-2025",
     "oswego-1940",
@@ -641,7 +645,7 @@
     "south-london-1854",
     "workflows-rulesets"
    ],
-   "exampleUseCount": 12,
+   "exampleUseCount": 13,
    "lab": "none",
    "labOwed": false,
    "fieldUse": [],
@@ -655,6 +659,7 @@
     "hagelloch-chains",
     "hagelloch-cluster",
     "hagelloch-people",
+    "mers-korea-2015",
     "nyc-asthma-ozone-2016-2025",
     "oswego-1940",
     "salmonella-germany-2021",
@@ -666,7 +671,7 @@
     "south-london-1854",
     "workflows-rulesets"
    ],
-   "exampleUseCount": 15,
+   "exampleUseCount": 16,
    "lab": "none",
    "labOwed": false,
    "fieldUse": [],

@@ -119,6 +119,9 @@ not a practitioner in the field.
    (Hagelloch's serial interval uses it). **Status, corrected 2026-11-11:** what is left is the data's terms, which the
    practitioner is checking at the package's pages, and converting `mers_korea_2015.RData` to CSV in the example
    repository.
+   **Built 2026-11-12** ([200](docs/experiments/200-operational-epidemiology.md)): the 7-1-7 ruleset, the column choice in Apply ruleset, and the
+   first workflow in example-2015-mers-korea (94 of 135 detected within 7 days, 161 of 162 reported within 1).
+   Next: the 98 contacts (who infected whom), and a lab recomputation.
    **Decided 2026-11-11 by the practitioner:** *"Our use case for these worked examples is for teaching so that fits MERS
    Korea purpose"*: the dataset is described as compiled "for teaching", and so are these examples. Used on that basis in
    an example repository, attributed to ECDC's Epidemic Intelligence and the outbreaks package, never in the

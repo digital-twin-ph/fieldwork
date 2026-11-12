@@ -4,7 +4,7 @@ import type {Boundary,Position} from './types.js';
 import type {RasterAsset,RasterGrid,RasterMetadata} from './raster.js';
 import {rasterImage} from './raster-image.js';
 export {rasterImage} from './raster-image.js';
-import {inspectRaster,rasterWindow,readRasterWindow,encodeRaster,rasterOverhang,overhangSentence} from './raster.js';
+import {inspectRaster,rasterWindow,readRasterWindow,encodeRaster,rasterOverhang,overhangSentence,rasterFileByteLimit,MAX_RASTER_CELLS} from './raster.js';
 import {contentHash} from './project-files.js';
 import {isNetcdf,inspectNetcdf,readNetcdfWindow,type NetcdfGrid} from './netcdf-raster.js';
 import {storePDFs} from './evidence-storage.js';
@@ -126,7 +126,7 @@ export function openRasterEditor(boundary:Boundary,onSave:(asset:RasterAsset)=>b
       say('Reading the selected window and saving…');
       const window=rasterWindow(metadata,boundary,Number(d.padding));
       const data=file&&netcdf?await readNetcdfWindow(file,netcdf,metadata,window):await readRasterWindow(from,metadata,window),bytes=encodeRaster(data);
-      if(bytes.length>5_000_000)throw new Error('Retained GeoTIFF exceeds 5 MB. Use a smaller study area.');
+      if(bytes.length>rasterFileByteLimit())throw new Error(`This window is ${data.values.length.toLocaleString('en')} cells, past the ${MAX_RASTER_CELLS.toLocaleString('en')} a step keeps. Use a smaller study area.`);
       const retained=await inspectRaster(new Blob([bytes])),asset:RasterAsset={provenance,filename:'raster-window.tif',mediaType:'image/tiff',bytes:bytes.length,sha256:await contentHash(bytes),metadata:retained,
         source:file?{filename:file.name,bytes:file.size,lastModified:file.lastModified,metadata}:{filename:nameOf(url!),bytes:urlBytes??0,lastModified:0,metadata,url:url!},window};
       await storePDFs(new Map([[asset.sha256,bytes]]),new Map([[asset.sha256,{...asset,asset}]]));

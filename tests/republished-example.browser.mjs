@@ -23,7 +23,7 @@ test('a republished worked example says so, and nothing is replaced without aski
   await page.goto('/?example=snow-voronoi');
 
   const toast=page.locator('#toast');
-  await expect(toast).toContainText('has been republished since you last opened it',{timeout:25000});
+  await expect(toast).toContainText('has been updated since this copy was made',{timeout:25000});
   // Amber: nothing failed, and nothing is wrong with the copy they have.
   await expect(toast).toHaveClass(/warning/);
   // The saved workspace is untouched until they ask. Discarding somebody's work in order to
@@ -31,7 +31,7 @@ test('a republished worked example says so, and nothing is replaced without aski
   await page.locator('[data-view="workflow"]').click();
   await expect(page.locator('.react-flow__node')).toHaveCount(1);
 
-  await toast.getByText('Load the published version').click();
+  await toast.getByText('Load the updated example').click();
   await page.locator('[data-view="workflow"]').click();
   await expect(page.locator('.react-flow__node')).toHaveCount(15,{timeout:20000});
   await page.locator('[data-view="workflow"]').click();
@@ -41,7 +41,7 @@ test('a republished worked example says so, and nothing is replaced without aski
   // from, so the next visit is quiet.
   await page.goto('/?example=snow-voronoi');
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
-  await expect(toast).not.toContainText('has been republished');
+  await expect(toast).not.toContainText('has been updated since');
   expect(errors).toEqual([]);
 });
 
@@ -53,6 +53,6 @@ test('a first visit is quiet',async({page})=>{
   await page.evaluate(()=>localStorage.clear());
   await page.goto('/?example=snow-extent');
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
-  await expect(page.locator('#toast')).not.toContainText('has been republished');
+  await expect(page.locator('#toast')).not.toContainText('has been updated since');
   expect(errors).toEqual([]);
 });

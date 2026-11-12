@@ -27,7 +27,8 @@ export {validateClipOptions};
  *  covers a province with room, and the costs beyond the read -- keeping a grid in the payload
  *  store, carrying it through an export, drawing it -- are not yet measured. That measurement is
  *  this cap's lift test, not a reason to leave a province refused in the meantime. */
-export const MAX_RASTER_CELLS=16_777_216;
+export {MAX_RASTER_CELLS,MAX_DECODE_BYTES,rasterFileByteLimit} from './raster-limits.js';
+import {MAX_RASTER_CELLS,MAX_DECODE_BYTES} from './raster-limits.js';
 export interface RasterMetadata {width:number;height:number;bands:number;bounds:Bounds;origin:[number,number];resolution:[number,number];crs:'EPSG:4326';rasterType:'PixelIsArea';
   /** The source's registration where its values sit at grid nodes, as a geoid grid's do. `origin` and `bounds` are
    *  then the cell corners around those nodes, half a cell out, and the window kept is written as area cells. */
@@ -69,7 +70,7 @@ export function rasterWindow(metadata:RasterMetadata,boundary:Boundary,paddingPi
   const window:[number,number,number,number]=[Math.max(0,Math.floor((west-x)/dx)),Math.max(0,Math.floor((north-y)/dy)),Math.min(metadata.width,Math.ceil((east-x)/dx)),Math.min(metadata.height,Math.ceil((south-y)/dy))];
   const width=window[2]-window[0],height=window[3]-window[1];check(width>0&&height>0,'Study area does not intersect any raster cells.');check(width*height<=MAX_RASTER_CELLS,'Raster window exceeds 262,144 cells. Use a smaller study area.');
   const blocksX=Math.floor((window[2]-1)/metadata.blockWidth)-Math.floor(window[0]/metadata.blockWidth)+1,blocksY=Math.floor((window[3]-1)/metadata.blockHeight)-Math.floor(window[1]/metadata.blockHeight)+1;
-  check(blocksX*blocksY*metadata.blockWidth*metadata.blockHeight*metadata.bytesPerPixel<=64_000_000,'Intersecting TIFF blocks exceed the 64 MB decoding budget. Retile this raster before importing.');return window;
+  check(blocksX*blocksY*metadata.blockWidth*metadata.blockHeight*metadata.bytesPerPixel<=MAX_DECODE_BYTES,'Intersecting TIFF blocks exceed the 512 MB decoding budget. Retile this raster before importing.');return window;
 }
 /** HOW FAR A STUDY AREA REACHES PAST THE RASTER, per edge, in degrees and roughly in kilometres; empty where it does not. */
 export function rasterOverhang(metadata:RasterMetadata,boundary:Boundary):{edge:'west'|'east'|'south'|'north';degrees:number;km:number}[]{
@@ -93,7 +94,10 @@ export async function readRasterWindow(blob:RasterSource,metadata:RasterMetadata
 }
 export function encodeRaster(grid:Pick<RasterGrid,'metadata'|'values'> & Partial<Pick<RasterGrid,'asset'|'boundary'|'mask'>>):Uint8Array<ArrayBuffer>{
   const m=grid.metadata;check(grid.values.length===m.width*m.height&&grid.values.length<=MAX_RASTER_CELLS,'Invalid retained raster dimensions.');
-  const bytes=new Uint8Array(writeArrayBuffer(new Float64Array(grid.values.map(v=>v===null?NaN:v)),{width:m.width,height:m.height,BitsPerSample:[64],SampleFormat:[3],SamplesPerPixel:[1],PhotometricInterpretation:1,ModelPixelScale:[m.resolution[0],-m.resolution[1],0],ModelTiepoint:[0,0,0,...m.origin,0],GeographicTypeGeoKey:4326,GTModelTypeGeoKey:2,GTRasterTypeGeoKey:1,GDAL_NODATA:'nan',...{ImageDescription:'Fieldwork derived raster; source metadata and provenance are retained in the project.'}}));
+  // AT THE SOURCE'S OWN PRECISION: 4 bytes a cell for a 4-byte source such as WorldPop, 8 where the source holds 8. Writing
+  // every grid as 8 bytes doubled what a window cost and claimed a precision the source does not have (2026-11-12).
+  const wide=!(m.bytesPerPixel>0&&m.bytesPerPixel<=4);
+  const bytes=new Uint8Array(writeArrayBuffer(wide?new Float64Array(grid.values.map(v=>v===null?NaN:v)):new Float32Array(grid.values.map(v=>v===null?NaN:v)),{width:m.width,height:m.height,BitsPerSample:[wide?64:32],SampleFormat:[3],SamplesPerPixel:[1],PhotometricInterpretation:1,ModelPixelScale:[m.resolution[0],-m.resolution[1],0],ModelTiepoint:[0,0,0,...m.origin,0],GeographicTypeGeoKey:4326,GTModelTypeGeoKey:2,GTRasterTypeGeoKey:1,GDAL_NODATA:'nan',...{ImageDescription:'Fieldwork derived raster; source metadata and provenance are retained in the project.'}}));
   if(!grid.asset)return bytes;
   return appendRasterDescription(bytes,JSON.stringify({schema:'fieldwork/raster-provenance/1',embeddedBy:'Fieldwork',sourceMetadataOrigin:'Workflow-author entry, separate from original TIFF tags',originalRasterMetadata:grid.asset.source.metadata,source:grid.asset.provenance||{},originalFile:grid.asset.source.filename,retainedInputSHA256:grid.asset.sha256,operation:grid.mask?grid.mask.method+' polygon clip':'native window',boundary:grid.boundary,mask:grid.mask}));
 }

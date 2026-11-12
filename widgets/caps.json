@@ -15,7 +15,8 @@
     "src/catchment-map.ts",
     "src/evidence.ts",
     "src/data-table.ts",
-    "src/chart-output.ts"
+    "src/chart-output.ts",
+    "src/raster-limits.ts"
   ],
   "measuredAt": "2026-11-05",
   "caps": [
@@ -402,6 +403,18 @@
       "refuses": "A panel chart of more points than that.",
       "liftTest": "Whether 30 s for a chart is read as the application failing or the data being large is the practitioner observation in the experiment; drawing fewer marks per pixel would change the measurement.",
       "kind": "discovery"
+    },
+    {
+      "id": "raster-decode-bytes",
+      "constant": "MAX_DECODE_BYTES",
+      "iri": "urn:fieldwork:cap:raster-decode-bytes",
+      "value": 512000000,
+      "unit": "bytes of TIFF blocks",
+      "kind": "discovery",
+      "basis": "measured",
+      "evidence": "Measured 2026-10-22: Botswana's whole WorldPop 2025 raster, 123.2M cells of 4 bytes, 493 MB of blocks, read in 8,382 ms in a Chromium tab with every value touched. It replaced a bare 64 MB with no evidence.",
+      "refuses": "A read whose intersecting blocks hold more than 512 MB.",
+      "liftTest": "Read a larger raster's window in a Chromium tab and record the time and the memory."
     }
   ],
   "kindVocabulary": {

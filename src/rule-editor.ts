@@ -672,7 +672,8 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
         return targetRules({later:target.later,earlier:target.earlier,days:target.days,target:Number(target.target),setting:target.setting,verdict:target.verdict});};
       const targetSaid=root.querySelector<HTMLElement>('#target-preview');
       const sayTarget=()=>{if(!targetSaid)return;try{const m=readTarget();
-          targetSaid.textContent=`${target.days} is ${shownName(target.later)} minus ${shownName(target.earlier)}; ${target.verdict} is Met at ${m.value} ${m.setting.unitLabel} or fewer, Not met above, No verdict where either is missing.`;
+          const labelOf=(p:string)=>choices.find(c=>c.predicate===p)?.label??shownName(p);
+          targetSaid.textContent=`${target.days} is ${labelOf(target.later)} minus ${labelOf(target.earlier)}; ${target.verdict} is Met at ${m.value} ${m.setting.unitLabel} or fewer, Not met above, No verdict where either is missing.`;
           targetSaid.classList.remove('rule-editor-bands-wrong');}
         catch(e){targetSaid.textContent=e instanceof Error?e.message:String(e);targetSaid.classList.add('rule-editor-bands-wrong');}};
       targetIds.forEach(([id])=>root.querySelector(`#${id}`)?.addEventListener('input',sayTarget));

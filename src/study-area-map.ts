@@ -22,7 +22,7 @@ import 'leaflet/dist/leaflet.css';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import {bboxPolygon,validateDrawnGeometry,geometryBounds,studyAreaN3,geometryWKT,boundaryFingerprint,CRS84} from './study-area.js';
 import type {RasterGrid} from './raster.js';
-import {clipRaster} from './raster.js';
+import {clipRaster,rasterOverhang,overhangSentence} from './raster.js';
 import {rasterImage} from './raster-ui.js';
 import type {RasterClipOptions,RasterMaskMethod} from './raster-mask.js';
 import {dimensionedBox,circleAround} from './area-buffer.js';
@@ -150,7 +150,9 @@ export function openStudyAreaEditor(node:WorkflowNode<'study_area'>,onApply:(par
   boxControls.querySelector<HTMLButtonElement>('#area-box-center')!.onclick=()=>{const c=map.getCenter();boxInput('lon').value=String(c.lng);boxInput('lat').value=String(c.lat);};
   boxControls.querySelector<HTMLButtonElement>('#area-box-create')!.onclick=()=>{try{const number=(id:string)=>boxInput(id).value.trim()?Number(boxInput(id).value):NaN;geometry=boxShape.value==='circle'?circleAround([number('lon'),number('lat')],number('radius')):dimensionedBox([number('lon'),number('lat')],number('width'),boxShape.value==='square'?number('width'):number('height'));selectionMode=boxShape.value==='circle'?'circle':'bbox';setTool('pan');refresh();fit();}catch(e){message(errorMessage(e));$('#area-feedback').setAttribute('role','alert');}};
   let rasterControls:HTMLElement|undefined,previewStatus:HTMLElement|undefined;
-  const validateClip=()=>{if(context.raster&&geometry){const clipped=clipRaster(context.raster,geometry,clipOptions);if(previewStatus)previewStatus.textContent=`Preview: ${clipped.metadata.width} × ${clipped.metadata.height} cells; ${clipped.mask!.inside} ${clipOptions.method==='all-touched'?'cells selected':'centers inside'}, ${clipped.mask!.valid} with data, ${clipped.mask!.outside} outside. ${clipOptions.method}; margin ${clipOptions.marginPixels} px; native resolution; no resampling.`;}};
+  const validateClip=()=>{if(context.raster&&geometry){const clipped=clipRaster(context.raster,geometry,clipOptions);if(previewStatus)previewStatus.textContent=`Preview: ${clipped.metadata.width} × ${clipped.metadata.height} cells; ${clipped.mask!.inside} ${clipOptions.method==='all-touched'?'cells selected':'centers inside'}, ${clipped.mask!.valid} with data, ${clipped.mask!.outside} outside. ${clipOptions.method}; margin ${clipOptions.marginPixels} px; native resolution; no resampling.`
+    // PAST THE KEPT WINDOW, said rather than refused (2026-11-12), in the same words Raster input uses.
+    +(overhangSentence(rasterOverhang(context.raster.metadata,geometry))?` ${overhangSentence(rasterOverhang(context.raster.metadata,geometry))}`:'');}};
   if(context.raster){
     const grid=context.raster,[west,south,east,north]=grid.metadata.bounds,bounds:L.LatLngBoundsExpression=[[south,west],[north,east]];
     map.createPane('raster-preview').style.zIndex='350';

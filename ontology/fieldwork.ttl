@@ -1931,3 +1931,12 @@ fw:oneRowPerMatch a owl:ObjectProperty; rdfs:label "kept one row per match";
   rdfs:comment "Present where a relate kept one row per match: how many keys matched several rows, and how many rows that added.".
 fw:keysMatchingSeveral a owl:DatatypeProperty; rdfs:label "keys matching several rows"; rdfs:range xsd:nonNegativeInteger.
 fw:rowsAddedForMatches a owl:DatatypeProperty; rdfs:label "rows added for further matches"; rdfs:range xsd:nonNegativeInteger.
+<urn:fieldwork:cap:raster-decode-bytes> a fw:Cap;
+  rdfs:label "raster-decode-bytes";
+  fw:capKind "discovery";
+  fw:capValue 512000000;
+  fw:capUnit "bytes of TIFF blocks";
+  fw:capBasis "measured";
+  fw:capEvidence "Measured 2026-10-22: Botswana's whole WorldPop 2025 raster, 123.2M cells of 4 bytes, 493 MB of blocks, read in 8,382 ms in a Chromium tab with every value touched. It replaced a bare 64 MB with no evidence.";
+  fw:capRefuses "A read whose intersecting blocks hold more than 512 MB.";
+  fw:capLiftTest "Read a larger raster's window in a Chromium tab and record the time and the memory.".

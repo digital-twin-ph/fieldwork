@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {EXAMPLE_TEMPLATES,WORKED_EXAMPLE_KEYS} from '../build/example-templates.js';
 import {addableTypes,RETIRED_FROM_PALETTE,ADDABLE_VIA_RULESET} from '../build/palette.js';
-import {bundledRulesets} from '../build/rulesets.js';
+import {bundledRulesets,WRITTEN_IN_WORKFLOW} from '../build/rulesets.js';
 
 /** NO WORKED EXAMPLE MAY USE A WIDGET SOMEBODY ELSE COULD NOT HAVE CONFIGURED BY HAND.
  *
@@ -53,7 +53,8 @@ test('every ruleset an example pins is one the chooser offers',()=>{
   for(const key of WORKED_EXAMPLE_KEYS)
     for(const node of nodesOf(EXAMPLE_TEMPLATES[key])){
       const pin=node.params?.ruleset;
-      if(!pin)continue;
+      // Rules written in the workflow carry their own identity (2026-11-11): written by hand on the step, by definition.
+      if(!pin||pin.id===WRITTEN_IN_WORKFLOW)continue;
       if(!bundled.has(`${pin.id}@${pin.version}`))bespoke.push(`${key}: ${pin.id}@${pin.version}`);
     }
   assert.deepEqual([...new Set(bespoke)],[],

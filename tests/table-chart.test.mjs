@@ -88,7 +88,7 @@ test('a chart declares every port it can draw, and requires none',()=>{
   const types=inputMode=>nodeInputs({type:'chart_output',params:{label:'c',inputMode}})
     .map(([,type])=>type);
   for(const mode of [undefined,'decisions','polygons','series'])
-    for(const needed of ['table','decisions','polygons'])
+    for(const needed of ['table','polygons'])
       assert.ok(types(mode).includes(needed),
         `a chart must offer a ${needed} port whatever inputMode says (${mode})`);
   assert.deepEqual(requiredInputs({type:'chart_output',params:{label:'c'}}),[],

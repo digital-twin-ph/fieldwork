@@ -49,7 +49,9 @@ test('a rename runs before a retirement refuses, so the refusal names the right 
   const raw=JSON.parse(readFileSync(new URL('./fixtures/old-naledi-source-2026-10-06.json',import.meta.url),'utf8'));
   assert.ok(raw.nodes.some(n=>n.type==='samples'),'the fixture must still name the old type, or this test is vacuous');
   assert.throws(()=>validateWorkflow(raw),error=>{
-    assert.match(error.message,/Facility access/,'the refusal must name the retired widget');
+    // Diagnostic evidence comes first in this file since 2026-11-11, when its migration to Apply ruleset ended with its
+    // ruleset; either way the refusal names a retired widget and not the renamed one.
+    assert.match(error.message,/Diagnostic evidence|Facility access/,'the refusal must name the retired widget');
     assert.doesNotMatch(error.message,/samples|Point grid/,'a renamed widget must not appear in a retirement refusal');
     return true;
   });

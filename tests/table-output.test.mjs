@@ -19,7 +19,7 @@ test('Table executes point data without a study area or invented review decision
   // `inputMode` parameter, so the port a connection needed might not exist on the node.
   assert.deepEqual(nodeInputs(w.nodes[1]),
     [['points','points'],['coverage','coverage-check'],['table','table'],
-     ['polygons','polygons'],['decisions','decisions']]);
+     ['polygons','polygons']]);
   // And it insists on none of them: a view with nothing wired is unfinished, not failed, which
   // is what `incomplete-workflow` reports. It used to throw "needs its points input connected",
   // which with every port declared would have demanded four unrelated inputs at once.
@@ -99,12 +99,13 @@ test('the renderer is read from what is wired, and the stored mode only as a fal
   const wire=port=>[{to:'t',port}];
   assert.equal(shownMode(node,wire('table')),'table');
   assert.equal(shownMode(node,wire('polygons')),'polygons');
-  assert.equal(shownMode(node,wire('decisions')),'decisions');
   assert.equal(shownMode(node,wire('points')),'spatial');
   assert.equal(shownMode(node,[]),'spatial','nothing wired is the general path, not a failure');
   // A workflow saved before this opens and shows what it showed.
-  const saved={...node,params:{...node.params,inputMode:'decisions'}};
-  assert.equal(shownMode(saved,[]),'decisions');
+  const saved={...node,params:{...node.params,inputMode:'polygons'}};
+  assert.equal(shownMode(saved,[]),'polygons');
+  // No decisions port since 2026-11-11: nothing produces decisions (docs/audits/old-naledi-audit.md).
+  assert.equal(shownMode({...node,params:{...node.params,inputMode:'decisions'}},[]),'spatial','a saved decisions mode reads as the general path');
   // But a connection beats the stored mode, so a saved node is not stuck in it.
   assert.equal(shownMode(saved,wire('table')),'table');
 });
@@ -112,7 +113,7 @@ test('the renderer is read from what is wired, and the stored mode only as a fal
 test('a table port and a points port coexist, so neither excludes the other',()=>{
   const node={...newTableOutput(),id:'t',x:0,y:0};
   const ports=nodeInputs(node).map(([port])=>port);
-  for(const port of ['points','coverage','table','polygons','decisions'])
+  for(const port of ['points','coverage','table','polygons'])
     assert.ok(ports.includes(port),`${port} is always offered`);
   // Specificity decides which renderer runs when more than one is wired.
   assert.equal(shownMode(node,[{to:'t',port:'points'},{to:'t',port:'table'}]),'table');

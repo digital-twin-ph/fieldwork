@@ -83,3 +83,11 @@ test('a blank panel is drawn and named as blank, and numbered categories run in 
   assert.equal(spec.vconcat[1].layer.at(-1).encoding.y.title,'gender blank');
   assert.deepEqual(spec.vconcat[0].layer.at(-1).encoding.x.sort,['2','9','10']);
 });
+
+test('bands that begin with a number run in the order of that number, not as text',()=>{
+  const bin=(p,l,n)=>({key:`${p}\u0000${l}`,label:l,count:n,panel:p});
+  const chart={field:'value',measure:'value',categoryTitle:'age_band',caption:'c',total:5,panels:['Male'],temporal:false,
+    bins:[bin('Male','10–14',1),bin('Male','15+',1),bin('Male','5–9',1),bin('Male','0',1),bin('Male','1–4',1)]};
+  const spec=chartVegaSpec(chart,{label:'x',panelsBy:'Sex'},{});
+  assert.deepEqual(spec.vconcat[0].layer.at(-1).encoding.x.sort,['0','1–4','5–9','10–14','15+']);
+});

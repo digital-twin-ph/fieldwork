@@ -317,6 +317,12 @@ export function openMapImageConfig(o:{step:string;initial:MapImageDraft;esc:Esca
       attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'}).addTo(map);
     const onMap=(p:ControlPoint)=>Number.isFinite(p.lonlat[0])&&Number.isFinite(p.lonlat[1]);
     const placed=d.points.filter(onMap);
+    // THE MAP RE-MEASURES ITS BOX when the box changes size (the practitioner, 2026-11-12: on reopening the dialog the
+    // basemap filled only part of the pane, at every zoom). Leaflet draws tiles for the size it measured when it was
+    // made, and a dialog is still laying out then; nothing told it the box grew.
+    const fit=new ResizeObserver(()=>{map.invalidateSize({pan:false});preview?.invalidateSize({pan:false});});
+    fit.observe(host);
+    requestAnimationFrame(()=>map.invalidateSize({pan:false}));
     if(view)map.setView(view.center,view.zoom);
     else if(placed.length>1)map.fitBounds(placed.map(p=>[p.lonlat[1],p.lonlat[0]] as [number,number]),{padding:[30,30]});
     else if(placed.length===1)map.setView([placed[0]!.lonlat[1],placed[0]!.lonlat[0]],16);
@@ -372,6 +378,7 @@ export function openMapImageConfig(o:{step:string;initial:MapImageDraft;esc:Esca
     const previewHost=root.querySelector<HTMLElement>('#geo-preview'),fitNow=fitOf(d);
     if(previewHost&&fitNow&&d.image){
       preview=L.map(previewHost,{zoomAnimation:false,fadeAnimation:false,markerZoomAnimation:false});
+      fit.observe(previewHost);
       L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,
         attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'}).addTo(preview);
       const corners=turnedCorners(fitNow.world,d.image.width,d.image.height);
@@ -392,6 +399,7 @@ export function openMapImageConfig(o:{step:string;initial:MapImageDraft;esc:Esca
     }
     dispose=()=>{
       document.removeEventListener('keydown',keys);document.removeEventListener('keyup',keys);
+      fit.disconnect();
       if(preview){preview.off();preview.eachLayer(l=>{if(!(l instanceof L.Renderer))preview!.removeLayer(l);});preview.remove();}
       map.off();map.eachLayer(l=>{if(!(l instanceof L.Renderer))map.removeLayer(l);});map.remove();};
   }

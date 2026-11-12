@@ -206,3 +206,33 @@ test('Shift + click places a point on the map; a plain click only says how; a po
   expect(ratio).toBeGreaterThan(4.5);
   expect(errors).toEqual([]);
 });
+
+// THE BASEMAP FILLS ITS PANE AFTER THE PANE GROWS (the practitioner, 2026-11-12: on Hagelloch's sheet, revisiting the
+// dialog showed tiles in part of the pane only, at every zoom). Leaflet measures its box when made; the dialog must
+// tell it when the box changes. Tiles are refused here, but their images are still laid out where they would draw.
+test('the map pane is tiled to its edges after the dialog grows',async({page})=>{
+  const errors=collectPageErrors(page);
+  await page.route(/tile\.openstreetmap\.org/,route=>route.abort('failed'));
+  const placed=structuredClone(workflow);
+  Object.assign(placed.nodes.find(n=>n.id==='plan').params,{placement:'points'});
+  await page.goto('/?example=blank');
+  await page.locator('#workflow-file').setInputFiles({name:'pane.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(placed))});
+  await page.locator('[data-view="workflow"]').click();
+  await page.locator('.react-flow__node[data-id="plan"]').click();
+  await page.locator('#configure-step').click();
+  const dialog=page.locator('#map-image-config');
+  const png=await page.evaluate(()=>{const c=document.createElement('canvas');c.width=400;c.height=300;c.getContext('2d').fillRect(0,0,400,300);
+    return c.toDataURL('image/png').split(',')[1];});
+  await dialog.locator('#map-image-file').setInputFiles({name:'plan.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')});
+  await dialog.locator('#geo-add-point').click();
+  // The pane grows without the window changing, as it does when the dialog lays itself out: Leaflet follows a window
+  // resize by itself, and not this.
+  const pane=dialog.locator('#geo-map-pane');
+  await pane.evaluate(el=>{el.style.width=`${el.getBoundingClientRect().width+300}px`;el.style.height=`${el.getBoundingClientRect().height+200}px`;});
+  await expect.poll(async()=>{
+    const box=await pane.boundingBox();
+    const right=await pane.locator('img.leaflet-tile').evaluateAll(els=>Math.max(...els.map(e=>e.getBoundingClientRect().right)));
+    return right>=box.x+box.width-1;
+  },{message:'tiles reach the right edge of the pane',timeout:10_000}).toBe(true);
+  expect(errors).toEqual([]);
+});

@@ -288,7 +288,12 @@ function panelVegaSpec(chart:ChartSummary,params:ChartParams,context:{sourceId?:
   // CATEGORIES IN THEIR OWN ORDER (Hagelloch's ages, 2026-11-12, drew 7, 6, 4, 8 … in the order the rows came): numbers
   // as numbers, so 2 comes before 10; anything else in the order the table holds it, as before.
   const labels=[...new Set(chart.bins.map(b=>b.label))];
-  const order=orderOf(labels)==='number'?[...labels].sort((a,b)=>a===''?1:b===''?-1:Number(a)-Number(b)):null;
+  // AND BANDS BY WHERE THEY BEGIN (2026-11-12): 0, 1–4, 5–9, 10–14, 15+ by their first number, where every label has one,
+  // so an age band reads in age order and not as text ("10–14" before "5–9").
+  const lead=(label:string)=>{const m=/^\s*(\d+(?:\.\d+)?)/.exec(label);return m?Number(m[1]):NaN;};
+  const banded=labels.filter(l=>l!=='').every(l=>Number.isFinite(lead(l)));
+  const order=orderOf(labels)==='number'?[...labels].sort((a,b)=>a===''?1:b===''?-1:Number(a)-Number(b))
+    :banded?[...labels].sort((a,b)=>a===''?1:b===''?-1:lead(a)-lead(b)||a.localeCompare(b)):null;
   // A BLANK PANEL IS NAMED AS BLANK, and its rows are drawn: matched by expression, since a filter on an empty string
   // matched nothing and left the panel empty with no name (the 11 Hagelloch children with no gender, 2026-11-12).
   const nameOf=(panel:string)=>panel===''?`${params.panelsBy?.trim()||'value'} blank`:panel;

@@ -41,7 +41,7 @@ test('bands from cut points: previewed, written as rules with no gap or overlap,
   await editor.locator('#bands-cuts').fill('1, 5, 10');
   await editor.locator('#bands-column').fill('age_band');
   await editor.locator('#bands-add').click();
-  await expect(editor.locator('[data-rule]')).toHaveCount(4);
+  await expect(editor.locator('.rule-card')).toHaveCount(4);
   await editor.locator('#config-apply').click();
   await page.locator('#node-library [data-add="table_output"]').click();
   const out=(await saved(page)).nodes.filter(n=>n.type==='table_output').pop().id;
@@ -55,8 +55,13 @@ test('bands from cut points: previewed, written as rules with no gap or overlap,
   const want={'0':0,'1 to 4':0,'5 to 9':0,'10 and over':0};
   for(const a of ages)want[a<1?'0':a<5?'1 to 4':a<10?'5 to 9':'10 and over']++;
   await page.locator('[data-view="results"]').click();
-  const text=await page.locator('main').first().innerText();
-  for(const band of Object.keys(want))expect(text).toContain(band);
+  await page.getByRole('tab',{name:'Point table'}).click();
+  // Each band's count, by filtering the table's rows on it.
+  for(const band of ['1 to 4','5 to 9','10 and over']){
+    await page.locator('#result-search').fill(band);
+    await expect(page.locator('#table-panel')).toContainText(` of ${want[band]} records`);
+  }
+  await page.locator('#result-search').fill('');
   expect(Object.values(want).reduce((a,b)=>a+b,0)).toBe(188);
   expect(errors).toEqual([]);
 });

@@ -254,8 +254,10 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
           const shown=held===undefined
             ?'not set'
             :`${held}${s.unitLabel?' '+s.unitLabel:''}`;
-          // NAMED BY WHAT IT MEANS where the ruleset says (7-1-7's "Days from emergence to detection"), not its key.
-          const said=(s as {meaning?:string}).meaning?.split('.')[0]?.trim()||s.name;
+          // NAMED BY WHAT IT MEANS where its name is a key (7-1-7's detectionTarget: "Days from emergence to detection");
+          // a name a person gave in words, such as "busy", stays theirs.
+          const keyLike=/[a-z][A-Z]|_/.test(s.name);
+          const said=keyLike&&(s as {meaning?:string}).meaning?.split('.')[0]?.trim()||s.name;
           return `<option value="${esc(s.name)}" ${s.name===setting?'selected':''}>${esc(said)} · ${esc(shown)}</option>`;
         }).join('')
         +`</select>`

@@ -1,8 +1,8 @@
 name: WorldPop catalogue
 
-# Weekly: read WorldPop's Global2 folders and, when the listing differs from widgets/worldpop-catalogue.json, push the
-# refreshed catalogue to a branch and open an issue saying what changed. Nothing reaches main without a person merging it.
-# An issue rather than a pull request: Actions in this repository may not open pull requests (repository setting).
+# Weekly: read WorldPop's Global2 folders and, when the listing differs from widgets/worldpop-catalogue.json, open a pull
+# request with the refreshed catalogue, saying what changed. Nothing reaches main without a person merging it. A newer
+# release with no change to the listing is reported in an issue, since there is nothing to merge.
 on:
   schedule:
     - cron: '17 6 * * 1'
@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
   issues: write
 
 jobs:
@@ -30,15 +31,18 @@ jobs:
         run: |
           day=$(date -u +%F)
           body="$RUNNER_TEMP/summary.md"
+          branch=worldpop-catalogue
           if [ "$CHANGED" = 'true' ]; then
-            branch="worldpop-catalogue-$day"
             git config user.name 'github-actions[bot]'
             git config user.email '41898283+github-actions[bot]@users.noreply.github.com'
             git switch -c "$branch"
             git add widgets/worldpop-catalogue.json
             git commit -q -m "WorldPop catalogue: Global2 listing of $day"
-            git push -q origin "$branch"
-            printf '\nThe refreshed catalogue is on branch `%s`: %s/%s/compare/main...%s\n' "$branch" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$branch" >> "$body"
+            git push -q --force origin "$branch"
+            open=$(gh pr list --head "$branch" --state open --json number --jq '.[0].number')
+            if [ -n "$open" ]; then gh pr comment "$open" --body-file "$body" && exit 0
+            elif gh pr create --head "$branch" --base main --title "WorldPop catalogue: Global2 listing of $day" --body-file "$body"; then exit 0; fi
+            printf '\nOpening a pull request failed; the refreshed catalogue is on branch `%s`.\n' "$branch" >> "$body"
           fi
           open=$(gh issue list --state open --search 'in:title "WorldPop catalogue changed"' --json number --jq '.[0].number')
           if [ -n "$open" ]; then gh issue comment "$open" --body-file "$body"

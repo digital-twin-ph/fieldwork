@@ -73,18 +73,17 @@ semantic hat, and it fails the re-run test identically.
 **`group_table` cannot simply gain the aggregate**, which is what this record first proposed. Its
 own comment refuses it:
 
-> SUM AND NOTHING ELSE, deliberately. Epi Info separates `MEANS` from `GROUP` … summing counts
-> gives a count, while summing rates gives a number with no referent … it offers the operation
-> that is right for the counts a contingency table is made of and leaves the other command
-> unbuilt rather than offering a choice it cannot police.
+It held to sum and nothing else, deliberately: MEANS and GROUP are separate commands, summing counts gives a count
+while summing rates gives a number with no referent, so it offered the operation right for the counts a contingency
+table is made of and left the other unbuilt rather than offer a choice it could not police.
 
 The additivity argument does not reach `MIN` and `MAX` — a maximum of three rates is a rate — but
 the comment is right that the answer is a different command, and it names it.
 
 ## It is SUMMARIZE, not MEANS, and the source says so
 
-The practitioner: *"Before we open MEANS, Epi Info AI has SUMMARY."* Read from
-`epi-info-ai` rather than from memory, because this project refuses to fill Epi Info claims from
+The practitioner: that a SUMMARIZE command should come before MEANS Read from
+an earlier engine of the practitioner's own rather than from memory, because this project refuses to fill a classic analysis package claims from
 recollection. The command is **`SUMMARIZE`**, and `COMMAND_SET.md` lists it beside `MEANS` as a
 separate Statistics command.
 
@@ -97,7 +96,7 @@ The difference is exactly the one that matters here:
 
 The Dulwich scenario needs a value in a table that flows onward into the next step. That is
 SUMMARIZE. `group_table`'s comment was pointing at the report command, and adding the aggregate
-there would have fused two commands Epi Info AI keeps apart.
+there would have fused two commands an earlier engine of the practitioner's own keeps apart.
 
 **`group_table` IS `SUMMARIZE` restricted to `SUM`**, under a name that does not say so:
 
@@ -108,7 +107,7 @@ there would have fused two commands Epi Info AI keeps apart.
 | `aggregate: MAX, MIN, AVG, COUNT, …` | absent |
 | `resultField`, `outputTable` | the table on its `records` port |
 
-That is the second widget found this week to be an Epi Info command wearing a different name —
+That is the second widget found this week to be a classic analysis package command wearing a different name —
 `derive_value` is DEFINE and ASSIGN, which the practitioner named the same day. **The pattern is
 worth recording separately from this experiment**, because a vocabulary a practitioner already has
 is the one a widget should use, and two instances is not a coincidence.
@@ -133,7 +132,7 @@ open question below.
 | An empty cell is not a zero | **run-time check** — inherited from `group_table`, including the declared exclusion |
 | A minimum over no values is not zero | **run-time check** — it is unknown, and says so |
 
-**The aggregate list is a vocabulary, not a menu to copy.** Epi Info AI offers `AVG COUNT FIRST
+**The aggregate list is a vocabulary, not a menu to copy.** an earlier engine of the practitioner's own offers `AVG COUNT FIRST
 LAST MAX MIN STDEV STDEVP SUM VAR VARP`. `STDEVP` and `VARP` are population variants, right on a
 census and wrong on a sample, and this step cannot tell which it has — the same argument that
 keeps `group_table` sum-only. `AVG` over rates has the referent problem that argument is about.
@@ -149,8 +148,7 @@ is a parameter of the step, not something a downstream consumer re-states.
 this record. The trace is the table above, and it failed at a named step.
 
 **D7 · Does the name state what was done?** `SUMMARIZE` is the practitioner's term and the source's
-term. The risk is the opposite of the usual one: naming it for Epi Info implies parity with Epi
-Info, which this project does not claim and `epiInfoLabelSource` exists to keep separate.
+term. The risk is the opposite of the usual one: naming it after a classic analysis package implies parity with that package, which this project does not claim and `conventionalLabelSource` exists to keep separate.
 
 **D8 · Does the evidence test the distinction, not only the arithmetic?** The tests must establish
 that an extremum is not reachable by the existing operations, that an aggregate invalid on the
@@ -166,7 +164,7 @@ negative.
 **Extend `group_table`, or admit a new widget and retire it into this one?** D2 says they are one
 command. The widget budget stands at 55 against a reference of 41 and this would be the sixth
 addition this week, which argues for extending. The recorded "sum and nothing else" decision and
-Epi Info's own separation argue for a separate command. The practitioner's answer to *"Yes to
+a classic analysis package's own separation argue for a separate command. The practitioner's answer to *"Yes to
 SUMMARIZE"* settles the name and not the shape.
 
 ## The test was re-run, and it still fails — one step later
@@ -197,14 +195,13 @@ above makes the obvious substitute wrong: Table VIII can give a rate from its ow
 those are seven weeks to 26 August against Table XII's 21 October, and using them understates the
 worst case threefold.
 
-**The missing operation is MERGE**, and Epi Info AI has it: `COMMAND_SET.md` lists `RELATE` and
+**The missing operation is MERGE**, and an earlier engine of the practitioner's own has it: `COMMAND_SET.md` lists `RELATE` and
 `MERGE` as separate Data commands. Fieldwork has RELATE — `relate-table.ts` opens with the word —
 and nothing for the other.
 
-**That is the third table operation this week found to be an Epi Info command**, after
+**That is the third table operation this week found to be a classic analysis package command**, after
 `derive_value` as DEFINE and ASSIGN and `group_table` as SUMMARIZE. At three it stops being a
-coincidence and becomes a finding about the shape of this application: its table operations are
-the Epi Info Data and Statistics commands, arrived at independently and named inconsistently —
+coincidence and becomes a finding about the shape of this application: its table operations are a classic analysis package's Data and Statistics commands, arrived at independently and named inconsistently —
 `relate_table` knows its name, `group_table` did not, `derive_value` still does not. Recorded in
 TODO as its own item rather than resolved here.
 
@@ -215,9 +212,9 @@ returned an extremum, and that was and is true.
 
 ## What this does not establish
 
-- **That Fieldwork's SUMMARIZE agrees with Epi Info's.** It will share a name and a vocabulary
-  read from `epi-info-ai`, and nothing here is validated against either Epi Info AI or Epi Info.
-  `epiInfoLabelSource` keeps those two claims apart already and the same discipline applies.
+- **That Fieldwork's SUMMARIZE agrees with a classic analysis package's.** It will share a name and a vocabulary
+  read from an earlier engine of the practitioner's own, and nothing here is validated against either an earlier engine of the practitioner's own or a classic analysis package.
+  `conventionalLabelSource` keeps those two claims apart already and the same discipline applies.
 - **That the bounded aggregates are the right bounded set.** `MIN` and `MAX` are safe on counts
   and rates alike. Everything else was excluded by an argument, not by a measurement.
 - **That a sensitivity analysis is what a practitioner would reach for.** It is what this

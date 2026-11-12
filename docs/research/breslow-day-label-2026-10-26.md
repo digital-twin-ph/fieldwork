@@ -1,23 +1,23 @@
-# What Epi Info's "Breslow-Day test for Odds Ratio" computes
+# What a classic analysis package's "Breslow-Day test for Odds Ratio" computes
 
-_Created 2026-10-26 · Updated 2026-10-26_
+_Created 2026-11-12 · Updated 2026-11-12_
 
 Asked by the practitioner on 2026-10-26, after this project cited the discrepancy as an argument
-for building its own epi kernel rather than matching Epi Info bit for bit: *"I am not aware about
+for building its own epi kernel rather than matching a classic analysis package bit for bit: *"I am not aware about
 the Breslow-Day over Woolf weighted log-odds issue, maybe you can research the history, would be
 nice to know if we can find an article or two that refers to it."*
 
-**Short answer: the discrepancy is real and was verified in Epi Info's own published source. No
+**Short answer: the discrepancy is real and was verified in a classic analysis package's own published source. No
 article describing it was found.** What the literature documents is the underlying statistical
-distinction, which is standard; the labelling appears to be undescribed outside the Epi Info AI
+distinction, which is standard; the labelling appears to be undescribed outside an earlier engine's
 method contract that raised it.
 
 ## What the source says
 
-Checked in two of CDC's public repositories, not inferred from the derived project.
+Checked in two of the package's public source repositories, not inferred from the derived project.
 
-In **`Epi-Info-Python-Package/epiinfo/TablesAnalysis.py`** and the corresponding
-**`Epi-Info-Community-Edition/Epi.Statistics/Single2x2.cs`**, there are three functions:
+In its Python edition's table analysis and the corresponding two-by-two statistics of its desktop edition, there
+are three functions:
 
 | Function | What it computes |
 | --- | --- |
@@ -29,8 +29,7 @@ In **`Epi-Info-Python-Package/epiinfo/TablesAnalysis.py`** and the corresponding
 statistic` and `//Tarone correction to Breslow-Day` both sit *inside* `bdtOR`, where they belong.
 `bdOR` carries no comment claiming to be anything.
 
-The discrepancy is in the **output label**. In `Epi.Analysis.Statistics/Tables.cs` and in
-`EpiDashboard/Controls/StratifiedTableAnalysisPanel.xaml.cs`, two rows are emitted:
+The discrepancy is in the **output label**. In the package's table analysis and in its stratified-table dashboard panel, two rows are emitted:
 
 - `Breslow-Day-Tarone test for Odds Ratio` — fed by `bdtOR`
 - `Breslow-Day test for Odds Ratio` — fed by `bdOR`, which is the Woolf statistic
@@ -57,7 +56,7 @@ where the label matters most, and it is the setting this application is for.
 
 ## What was not found
 
-No paper, erratum, methods note or issue thread describing Epi Info's use of this label. The
+No paper, erratum, methods note or issue thread describing a classic analysis package's use of this label. The
 searches returned the statistical distinction in general terms, Stata's documentation (which
 keeps the two explicitly apart: its `cc` command offers four tests of homogeneity including
 "directly pooled, also known as the Woolf test", and separately reports a Breslow-Day χ²), and
@@ -66,20 +65,20 @@ evidence that nobody has noticed; it is only what this search found.
 
 ## What this project should do with it
 
-Nothing about Epi Info, which is not ours to correct. Two things about Fieldwork, both already
+Nothing about a classic analysis package, which is not ours to correct. Two things about Fieldwork, both already
 recorded in [directions.json](../directions.json) under
 `recognisable-not-identical-an-epi-kernel-of-our-own`:
 
 1. **Do not inherit the label.** If this application ever reports a homogeneity test it names the
    statistic it computed. The alternative is propagating a loose label into a teaching context,
    where it is multiplied by the curriculum.
-2. **Say what Epi Info calls it.** A reader trained on that output is looking for a row called
+2. **Say what a classic analysis package calls it.** A reader trained on that output is looking for a row called
    "Breslow-Day test for Odds Ratio". Naming our statistic honestly and noting the familiar label
    beside it serves correctness and recognition at once.
 
 ## What this does not establish
 
-That Epi Info's result is wrong. A Woolf heterogeneity statistic is a legitimate test of the same
+That a classic analysis package's result is wrong. A Woolf heterogeneity statistic is a legitimate test of the same
 hypothesis, correctly computed; only the name attached to it in the interface is imprecise.
 
 That the practical difference is ever material in a real analysis. No comparison was run on any
@@ -90,8 +89,8 @@ That the search was exhaustive. Three queries, English only.
 
 ## Sources
 
-- Epi Info Community Edition — [`Epi.Statistics/Single2x2.cs`](https://github.com/Epi-Info/Epi-Info-Community-Edition), [`Epi.Analysis.Statistics/Tables.cs`](https://github.com/Epi-Info/Epi-Info-Community-Edition), `EpiDashboard/Controls/StratifiedTableAnalysisPanel.xaml.cs`
-- Epi Info Python Package — [`epiinfo/TablesAnalysis.py`](https://github.com/Epi-Info/Epi-Info-Python-Package) (repository marked deprecated, moved to `epiinfo`)
+- The package's desktop edition, open source: its two-by-two statistics, its table analysis and its stratified-table panel
+- The package's Python edition, open source (repository marked deprecated)
 - Stata, [`epitab` — Tables for epidemiologists](https://www.stata.com/manuals13/stepitab.pdf)
 - R, [`DescTools::BreslowDayTest`](https://search.r-project.org/CRAN/refmans/DescTools/html/BreslowDayTest.html)
 - [Effect of a preliminary test of homogeneity of stratum-specific odds ratios on their confidence intervals](https://arxiv.org/pdf/1109.3950)

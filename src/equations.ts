@@ -26,7 +26,7 @@
  *  the step this application can supply, so an estimate's interval gets its own line and its own
  *  source.
  *
- *  **A citation is READ OFF A SOURCE OR IT IS ABSENT**, which is `epiInfoLabel`'s rule in
+ *  **A citation is READ OFF A SOURCE OR IT IS ABSENT**, which is `conventionalLabel`'s rule in
  *  `epi-estimate.ts` applied to the second bibliographic field this project has needed. A method
  *  name filled from memory is how a wrong reference enters a teaching context, and a reference
  *  list is exactly where a reader stops checking. Two of the four interval methods here have a
@@ -87,7 +87,7 @@ export const METHOD_REFERENCES:Record<string,MethodReference>={
   // Verified 2026-10-30: Annals of Human Genetics 19(4):251-253, 1955,
   // doi 10.1111/j.1469-1809.1955.tb01348.x. Woolf is the source of the log-odds standard error
   // sqrt(1/a + 1/b + 1/c + 1/d) that `two-by-two.ts` uses for the odds ratio -- and the same
-  // construction `epi-estimate.ts` records Epi Info mislabelling as Breslow-Day, which is why
+  // construction `epi-estimate.ts` records a legacy program mislabelling as Breslow-Day, which is why
   // naming it here rather than calling it "Wald" alone is worth the line.
   'Wald log':{published:'1955',citation:{type:'article',
     authors:[{family:'Woolf',given:'B'}],
@@ -191,7 +191,7 @@ const said=(value:number):string=>value.toLocaleString('en-US');
  *  AND AN UNSOURCED METHOD IS STILL MARKED HERE, in three words rather than in a sentence. The
  *  full statement of what has not been read moves to References with the rest, but a reader
  *  meeting `Wald unpooled` among two cited methods would otherwise take it for a third -- the
- *  distinction `epiInfoLabelSource` exists to keep, which was the whole reason the old line
+ *  distinction `conventionalLabelSource` exists to keep, which was the whole reason the old line
  *  printed both outcomes. It still prints both; it prints them shorter. */
 function references(methods:readonly string[]):string{
   const named=[...new Set(methods)].map(method=>

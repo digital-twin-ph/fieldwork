@@ -150,10 +150,10 @@ can find the row you were trained to look for:
 | odds ratio · Wald log | `Odds Ratio (cross product)` |
 | risk difference · Wald unpooled | `Risk Difference (RD%)` |
 
-**Read from Epi Info AI's results panel, not from Epi Info.** That is a sibling project whose epi
+**Read from an earlier engine's results panel, not from a classic analysis package.** That is a sibling project whose epi
 kernel was synthesized from the original, so these are a good deduction and not a verification —
-and every estimate records which, in `epiInfoLabelSource`. The receipt says `deduced`. If somebody
-reads the labels off Epi Info itself the source becomes `verified`, and the words may or may not
+and every estimate records which, in `conventionalLabelSource`. The receipt says `deduced`. If somebody
+reads the labels off a classic analysis package itself the source becomes `verified`, and the words may or may not
 change; that is a different claim and the field keeps the two apart.
 
 `Odds Ratio (cross product)` keeps its qualifier on purpose: the same panel prints an
@@ -192,8 +192,8 @@ machined one goes on being rewritten by every run.
 
 ## What it will not do
 
-- **It will not claim agreement with Epi Info.** These are standard methods, named honestly, with
-  labels deduced from a project built from Epi Info. A parity claim needs a parity suite nobody has
+- **It will not claim agreement with another package.** These are standard methods, named honestly, with
+  labels deduced from a project built from a classic analysis package. A parity claim needs a parity suite nobody has
   written.
 - **It will not treat an empty cell as a zero.** An empty cell is unknown, and a two-by-two
   computed as though it were zero would understate that group.

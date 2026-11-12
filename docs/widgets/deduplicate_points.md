@@ -115,7 +115,7 @@ similarity. A figure that reports a deduplicated count can therefore say what pr
 
 ## Where the method comes from
 
-The contracts are those of `EPIAI RECORDLINK` — blocking before comparison, binary contributions
+The contracts are those of an earlier record-linkage command — blocking before comparison, binary contributions
 rather than a blended score, three classes rather than merge-or-not, and a missing value that never
 agrees with another missing value. This widget adds the spatial comparison and the merge the
 thresholds licence.

@@ -373,7 +373,7 @@ export interface ParamsByType {
   group_table:{label:string;by:string[];
     /** Which aggregate: the sum this step has always computed, a minimum or maximum, or a count
      *  of rows. See
-     *  `AGGREGATES` for why the rest of Epi Info AI's SUMMARIZE vocabulary is absent. */
+     *  `AGGREGATES` for why the rest of a SUMMARIZE command's vocabulary is absent. */
     aggregate?:import('./group-table.js').Aggregate;
     /** Total what is present, excluding empty cells. Declared, never assumed: the default is
      *  that a group holding an empty cell totals to nothing known. It EXCLUDES rather than

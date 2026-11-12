@@ -1,6 +1,6 @@
 # 206 · Syndromic surveillance: detecting an aberration in a count over time
 
-_Created 2026-11-12 · Updated 2026-11-12_
+_Created 2026-11-11 · Updated 2026-11-11_
 
 **Status:** asked. An analysis the practitioner brought on 2026-11-11, checked here against the palette as it stands;
 nothing built, and nothing placed in the order of work yet.
@@ -23,20 +23,22 @@ versioned; and a dedicated monitor output only if an interactive view with sensi
 | --- | --- | --- |
 | Cases by period | points, or a table of dated rows → table | Counts per day, week or month by a declared kind of date. Reads a table too (Snow's Table 1), so a feed already counted by day can enter here |
 | Rate with a denominator | records → table | A rate per period, with a stated population |
-| Apply ruleset | table → table | Rules over each row, including a value computed for every record; **never across rows** |
+| Apply ruleset | table → table | Rules over each row, including a value computed for every record; a computed value may read the same field in **the previous row of its group**, in a stated order: the row before, or a day, a week or a month earlier (188, stage 4) |
 | Regression | table → table | Logistic or Poisson regression of an outcome on an exposure, one model per lag if asked (185) |
 | Space-time scan | points → clusters | Kulldorff-style space-time scan, permutation p-values, a day-by-day replay (200) |
 | Chart | table → figure | Bars or a curve; its band difference is the only cross-row arithmetic, and it is drawing, not data |
 
 Searched for and absent: any rolling window, moving baseline, standard deviation over a window, CUSUM, EWMA, EARS
-C1–C3 or Farrington, in `src/`. The practitioner's epi-info-ai lists Epi Info 7's *Aberration Detection chart* as a
-legacy dashboard gap, not implemented.
+C1–C3 or Farrington, in `src/`.
 
 ## Three corrections to the analysis, from that check
 
-1. **Apply ruleset cannot do it, and is not to be made to.** A baseline reads earlier rows; Apply ruleset judges one
-   row at a time by design, and has no bespoke ruleset code since 2026-11-11 (docs/audits/old-naledi-audit.md). The
-   alert can stay there, as the analysis says; the baseline cannot.
+1. **Apply ruleset reaches one period back, not a window.** Corrected the same day: this record first said Apply
+   ruleset never reads across rows, which was wrong (found while removing other text, in `src/authored-rules.ts`). A
+   computed value can read the previous row of its group, a day, week or month earlier. EWMA and CUSUM are recursions
+   on the previous period (z = λx + (1−λ)·z₋₁; S = max(0, S₋₁ + x − k)), so they may already be writable as rules,
+   **if** "previous" can read a value computed in the same step: not yet checked. A mean or a standard deviation over
+   several periods (EARS C1–C3) cannot be written that way. The alert stays in Apply ruleset either way.
 2. **Regression is the closest existing primitive for the model-based methods.** Farrington is a quasi-Poisson
    regression on the same weeks of earlier years; the Regression step already fits Poisson models in the kernel. What
    it lacks is an expected count per period with its prediction interval, rather than a rate ratio. Extending it may
@@ -48,12 +50,13 @@ legacy dashboard gap, not implemented.
 
 | Option | What it adds | Covers |
 | --- | --- | --- |
+| E · EWMA or CUSUM written as rules in Apply ruleset | nothing new, if "previous" reads a computed column | stateful methods, one lag deep |
 | A · Cases by period gains baseline columns | `expected`, `sd`, `z` per period, from a stated window and lag | EARS C1–C3 style |
 | B · One new step after Cases by period, *Expected count* | the same columns, from a stated method: window mean and sd, CUSUM, EWMA | window and stateful methods; the analysis' recommendation |
 | C · Regression gains expected counts per period | fitted expected count and prediction interval per row | Farrington-style |
-| D · An aberration view in Chart | the curve with the expected band and flagged periods | display only; Epi Info's chart, the gap epi-info-ai lists |
+| D · An aberration view in Chart | the curve with the expected band and flagged periods | display only |
 
-Not decided. A and B differ in whether the baseline is a setting of counting or a step of its own; examine-before-
+Not decided. E is checked first, since it may need nothing built. A and B differ in whether the baseline is a setting of counting or a step of its own; examine-before-
 proposing points to A or C first, B only if neither carries it without a mode.
 
 ## Distinctions, and how each would be enforced

@@ -435,7 +435,7 @@
     {
       "id": "urn:fieldwork:widget:deduplicate_points",
       "nodeType": "deduplicate_points",
-      "currentVersion": "0.3.0",
+      "currentVersion": "0.3.1",
       "releases": [
         {
           "version": "0.1.0",
@@ -451,6 +451,11 @@
           "version": "0.3.0",
           "path": "widgets/releases/deduplicate_points/0.3.0.json",
           "sha256": "9bc9780b5879392a9c296f196b0ca1dc7ea23f4e9ea89375ff84d5040b936bf2"
+        },
+        {
+          "version": "0.3.1",
+          "path": "widgets/releases/deduplicate_points/0.3.1.json",
+          "sha256": "fd6d70b0675bd35ed7c8536a15d91a1e7ccac18cb421bda4659df0ea1ec1859b"
         }
       ]
     },
@@ -2001,7 +2006,7 @@
     {
       "id": "urn:fieldwork:widget:two_by_two",
       "nodeType": "two_by_two",
-      "currentVersion": "0.7.0",
+      "currentVersion": "0.7.1",
       "releases": [
         {
           "version": "0.1.0",
@@ -2042,6 +2047,11 @@
           "version": "0.7.0",
           "path": "widgets/releases/two_by_two/0.7.0.json",
           "sha256": "3171c91bc5adf4c8e883c97804944fbce5bfaa26ebf7e3479366b3ecaf12d8cb"
+        },
+        {
+          "version": "0.7.1",
+          "path": "widgets/releases/two_by_two/0.7.1.json",
+          "sha256": "750f2eecde20d68d519b31cf904b4c3ff9427d493358456b7a45971fe0f4569c"
         }
       ]
     },

@@ -938,7 +938,7 @@ eight boxes. What varies, from the evidence rather than from imagination:
 read is the professional-looking-and-wrong failure. What exists for MMWR is **one article read in
 full**, which this document already says is *"one article's practice, verified, and not a measured
 frequency across the journal"* — so the preset ships labelled as observed from one article rather
-than read off a style guide, the way `epiInfoLabelSource` separates deduced from verified. The
+than read off a style guide, the way `conventionalLabelSource` separates deduced from verified. The
 `authority` field is the slot for that sentence.
 
 **The default decides more than the settings do.** If the default numbers everything, then the

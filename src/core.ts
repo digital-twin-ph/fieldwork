@@ -1591,7 +1591,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
               +(node.params.nameField?`, named by ${node.params.nameField}`:'')+'.'});
         break;}
       case 'relate_table':{
-        // RELATE, not MERGE. Epi Info has three join commands and this project had none, which
+        // RELATE, not MERGE. Statistical packages commonly offer three join commands and this project had none, which
         // the 0.12.0 release notes recorded as the reason South London's contingency table is
         // "prepared outside the application". The one that table needs is the narrowest: a long
         // table's value column can only hold numbers, so a CATEGORY brought across is a key

@@ -23,7 +23,7 @@
  *  WHAT IS NOT CITED IS LISTED AS NOT CITED. A method with no primary source gets a line saying
  *  so rather than being left out, because a reader meeting a short list cannot tell a method
  *  nobody has looked up from a method with nothing to look up. The distinction
- *  `epiInfoLabelSource` exists to keep, applied to the one surface where a reader would act on
+ *  `conventionalLabelSource` exists to keep, applied to the one surface where a reader would act on
  *  it -- which is also why this list cannot be sorted into silence: an uncited method sorts
  *  among the rest rather than into a footnote.
  */

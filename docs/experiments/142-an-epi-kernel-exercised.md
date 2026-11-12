@@ -14,7 +14,7 @@ Two words carry the design. **Evolution**, because the three widgets already in 
 group arrived one at a time and share nothing: `rate` declares a denominator class and a vintage,
 `rate_ratio` declares an interval method and a level, `case_series` declares a kind of date, and no
 two of them agree on what a result owes a reader. **Exercising**, because the alternative to
-evolution is a feature list — and [the Epi Info command set](../../TODO.md) had just been recorded
+evolution is a feature list — and [a classic analysis package command set](../../TODO.md) had just been recorded
 as a coverage checklist, which is exactly the document that invites one.
 
 So: what does *better* mean, when a list of 48 commands is sitting there and the demo is in four
@@ -28,7 +28,7 @@ A kernel is not a set of widgets in a palette group. It is a shared answer to wh
 owes a reader, written once, so that the second estimate inherits the discipline instead of
 re-arguing it. That is [`src/epi-estimate.ts`](../../src/epi-estimate.ts), and it was written
 before the first estimate that uses it: a value, an interval with its level, **the method by its
-real name**, and **what Epi Info calls the same thing**, as two separate fields.
+real name**, and **what a classic analysis package calls the same thing**, as two separate fields.
 
 The two fields are separate because the direction
 [`recognisable-not-identical-an-epi-kernel-of-our-own`](../directions.json) found that they can
@@ -45,7 +45,7 @@ value into its own file would have reintroduced that defect, and now cannot.
 The chain was chosen by asking what the worked example could not do, not by reading down the
 command list.
 
-| | Operation | Epi Info | State before |
+| | Operation | a classic analysis package | State before |
 | --- | --- | --- | --- |
 | 1 | **Relate a column from another table** | `RELATE` | nothing joined two tables |
 | 2 | **Total within groups** | `GROUP` | `rate` did it internally and emitted a rate, so the totals were unreachable |
@@ -87,7 +87,7 @@ is kept and a column added to a file later is simply dropped, leaving the same g
 dropped and that new column silently becomes a grouping key, splitting groups without telling
 anybody.
 
-**And only addition is offered.** Epi Info separates `MEANS` from `GROUP`, and the separation is
+**And only addition is offered.** a classic analysis package separates `MEANS` from `GROUP`, and the separation is
 not bureaucratic: adding counts gives a count, adding rates gives a number with no referent. This
 step cannot tell a count from a rate, so it offers the operation that is right for counts rather
 than a choice it has no way to police.
@@ -163,18 +163,17 @@ one more unguarded dereference of that kind: none. The other three reads of `res
 
 - **No tests.** Pearson, Mantel-Haenszel, Yates, Fisher exact, mid-P. A larger piece, and the rule
   from [141](141-organising-snows-notes.md) is that tests are not started to meet a date.
-- **The Epi Info labels are read, from a sibling project rather than from Epi Info.** Recorded
+- **The conventional labels are read, from a sibling project rather than from a classic analysis package.** Recorded
   here as blocked on the morning of 2026-10-26 and unblocked the same afternoon by the
-  practitioner: *"The Epi Info labels can be deduced from the results panel that Epi Info AI
-  prints. That's the closest I got to the real thing."* Transcribed from the classic TABLES
-  estimate table in `epi-info-ai/wasm/demo/app.ts` — `Risk Ratio (RR)`,
+  practitioner: that the labels can be deduced from a results panel, the closest available source Transcribed from the classic TABLES
+  estimate table in `a results panel's source` — `Risk Ratio (RR)`,
   `Odds Ratio (cross product)`, `Risk Difference (RD%)`.
 
   Three things that followed, and the second is the one worth keeping.
 
-  **A second field, not a filled one.** `epiInfoLabelSource` sits beside the label, because a
-  label deduced from a rendering of Epi Info and one read from Epi Info are different claims. The
-  receipt writes `deduced`, and check 30 now **fails if any label claims `epi-info` as its
+  **A second field, not a filled one.** `conventionalLabelSource` sits beside the label, because a
+  label deduced from a rendering of a classic analysis package and one read from a classic analysis package are different claims. The
+  receipt writes `deduced`, and check 30 now **fails if any label claims `original-program` as its
   source** — the criterion inverted from "the label must be null" to "the label must name where it
   came from", which polices the provenance rather than the absence and is the same purpose.
 
@@ -196,9 +195,9 @@ one more unguarded dereference of that kind: none. The other three reads of `res
 
 ## What this does not establish
 
-- **That the estimates agree with Epi Info.** statsmodels is not Epi Info. No parity claim is made
+- **That the estimates agree with a classic analysis package.** statsmodels is not a classic analysis package. No parity claim is made
   and no parity suite exists; see the direction. **Nor do the labels establish it** — they are a
-  deduction about what Epi Info prints, read from a project synthesized from it, and the field
+  deduction about what a classic analysis package prints, read from a project synthesized from it, and the field
   says so.
 - **That the comparison is fair.** The both-companies stratum holds 16 of Snow's 32 sub-districts
   and is **excluded by name, not controlled for**. That is Snow's own confounding and the reason he
@@ -225,8 +224,8 @@ one more unguarded dereference of that kind: none. The other three reads of `res
 1. Checks 28 and 29 written, so all three operations carry independent evidence rather than one.
 2. `rate` and `case_series` emitting `EpiEstimate`, so the kernel is one vocabulary in fact and not
    only in intent.
-3. The Epi Info labels read off **Epi Info itself**, upgrading `epiInfoLabelSource` from
-   `epi-info-ai-results-panel` to `epi-info` — at which point the words may or may not change, and
+3. The conventional labels read off **a classic analysis package itself**, upgrading `conventionalLabelSource` from
+   `results-panel` to `original-program` — at which point the words may or may not change, and
    either outcome is information. Done 2026-10-26 to the extent a sibling project allows.
 4. A verdict on the three names.
 5. An FETP-trained reader shown the two-by-two and asked what they take each number to be —

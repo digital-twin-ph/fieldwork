@@ -151,7 +151,7 @@
       "verdict": "accepted",
       "reviewed": "2026-10-26",
       "reviewedBy": "practitioner",
-      "note": "Epi Info's command is GROUP, but \"group\" alone does not say that the values are added up, and this widget offers only a sum because summing a rate is meaningless. \"Total within groups\" says the operation and leaves the grouping implicit in the columns kept. For review: whether a practitioner would look under \"total\", \"sum\", \"aggregate\" or \"group\". ACCEPTED 2026-10-26 by the practitioner (\"Good names.\"). The title names the operation rather than Epi Info's command, which is the one place in these three where recognisability lost to accuracy on purpose: GROUP does not say the values are added up, and this widget only adds them up."
+      "note": "a classic analysis package's command is GROUP, but \"group\" alone does not say that the values are added up, and this widget offers only a sum because summing a rate is meaningless. \"Total within groups\" says the operation and leaves the grouping implicit in the columns kept. For review: whether a practitioner would look under \"total\", \"sum\", \"aggregate\" or \"group\". ACCEPTED 2026-10-26 by the practitioner (\"Good names.\"). The title names the operation rather than a classic analysis package's command, which is the one place in these three where recognisability lost to accuracy on purpose: GROUP does not say the values are added up, and this widget only adds them up."
     },
     {
       "nodeType": "isochrone",
@@ -298,7 +298,7 @@
       "verdict": "accepted",
       "reviewed": "2026-10-26",
       "reviewedBy": "practitioner",
-      "note": "Epi Info's own word, kept deliberately: RELATE is one of its three join commands and the one this matches, while MERGE and MATCH do different things. The tension for review is that a practitioner asking for this would probably say \"join\" -- and `join_table_to_area` already uses that word for putting a value onto a boundary, which is a different operation. The title is long and says what the row count does not do. ACCEPTED 2026-10-26 by the practitioner (\"Good names.\"), with the tension above left standing rather than resolved: \"join\" stays the word a practitioner would reach for, and this keeps Epi Info's narrower one because the operation is the narrow one. If the general join is ever built, MERGE is the name waiting for it and nothing has been spent."
+      "note": "a classic analysis package's own word, kept deliberately: RELATE is one of its three join commands and the one this matches, while MERGE and MATCH do different things. The tension for review is that a practitioner asking for this would probably say \"join\" -- and `join_table_to_area` already uses that word for putting a value onto a boundary, which is a different operation. The title is long and says what the row count does not do. ACCEPTED 2026-10-26 by the practitioner (\"Good names.\"), with the tension above left standing rather than resolved: \"join\" stays the word a practitioner would reach for, and this keeps a classic analysis package's narrower one because the operation is the narrow one. If the general join is ever built, MERGE is the name waiting for it and nothing has been spent."
     },
     {
       "nodeType": "reproject",

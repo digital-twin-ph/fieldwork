@@ -102,7 +102,7 @@ test('A METHOD IS CITED OR SAYS NO SOURCE HAS BEEN READ, never neither',async()=
   assert.match(cited,/fw:methodName "Katz log"/);
   assert.match(cited,/fw:methodReference "Katz D/);
   await conforms(cited);
-  // The absence is an assertion of its own, which is the distinction fw:epiInfoLabelSource
+  // The absence is an assertion of its own, which is the distinction fw:conventionalLabelSource
   // exists to keep: "nobody has looked it up" is not "there is nothing to say".
   const uncited=machinedNoteFacts(OUT,[{...EQUATION,cites:['Wald unpooled']}]);
   assert.match(uncited,/fw:methodUncited "A Wald interval/);

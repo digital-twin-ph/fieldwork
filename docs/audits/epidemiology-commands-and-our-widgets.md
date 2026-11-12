@@ -1,39 +1,34 @@
-# Epi Info's commands, against the widgets we actually have
+# A classic analysis package's commands, against the widgets we actually have
 
-_Created 2026-10-31 · Updated 2026-10-31_
+_Created 2026-11-12 · Updated 2026-11-12_
 
 **Status:** an audit, not a disposition. Nothing is renamed, built or retired by this document.
-Every mapping below was read from `epi-info-ai/COMMAND_SET.md` and from this repository's own
+Every mapping below was read from its command list and from this repository's own
 source on 2026-10-31; where something is inferred rather than read, it says so.
 
 ## Why this exists
 
-Three table operations were found to be Epi Info commands in a single day, each by needing one:
+Three table operations were found to be commands of a classic analysis package in a single day, each by needing one:
 
 - `derive_value` is **DEFINE** and **ASSIGN** — named by the practitioner on 2026-10-31.
 - `group_table` is **SUMMARIZE** restricted to `SUM` — found while trying to bound Dulwich, and
   its own comment had named the wrong command, `MEANS`, until the source was read.
 - `relate_table` is **RELATE** — which that file already knew: its first line says so.
 
-At three it stops being a coincidence. **This application arrived independently at a subset of the
-Epi Info Data and Statistics commands and named it inconsistently**: one widget carries the
+At three it stops being a coincidence. **This application arrived independently at a subset of a classic analysis package's Data and Statistics commands and named it inconsistently**: one widget carries the
 command in its documentation, one carried the wrong one, one mentions it nowhere. A practitioner
-who knows Epi Info has to rediscover each one by reading the implementation.
+who knows a classic analysis package has to rediscover each one by reading the implementation.
 
-The practitioner, 2026-10-31: *"since the epi commands are only exercised in the South London
-example, we can consider renaming what it is in Epi Info and creating/adapting the complementary
-command set equivalents in FW."* This audit is the measurement that proposal needs. It is
+The practitioner, 2026-10-31: that since the epidemiology commands are exercised only in the South London example, Fieldwork could take the established command names and adapt the complementary command set This audit is the measurement that proposal needs. It is
 deliberately not the proposal.
 
 ## What this audit is NOT measuring against, corrected 2026-10-31
 
-This document first read as though Epi Info were a standard to be faithful to, and said so in a
+This document first read as though a classic analysis package were a standard to be faithful to, and said so in a
 dozen places. The practitioner corrected it the same day:
 
-> Let's forget that we are establishing parity with Epi Info, it's a project that died and was
-> defunded a long time ago. Epi Info AI was an exploration to translate the code to a browser
-> based language, Rust and then Web Assembly, so even if I call it Epi Info AI, it's not Epi Info
-> anymore.
+The practitioner, 2026-10-31, set parity aside: the original package was defunded long ago, and their own engine was an
+exploration of translating it to a browser language, Rust and then WebAssembly, so it is no longer that package.
 
 **So there is no reference implementation to agree with, and no parity to disclaim.** A disclaimer
 defends against a comparison somebody might make; nobody can make this one against a defunded
@@ -48,18 +43,18 @@ product, and writing "no parity is claimed" implies a live standard where there 
   CDC."* The authority is the training; the software was how it was distributed.
 - **The command names are worth taking** for the same reason: they are the words a trained
   practitioner already has, which is the naming rule this project keeps.
-- **Not stating a label nobody has verified** stays right, and is what `epiInfoLabelSource`
+- **Not stating a label nobody has verified** stays right, and is what `conventionalLabelSource`
   actually protects: it refuses a fabricated label, which has nothing to do with parity.
 
 **What changes:**
 
-- `epi-info-ai` is the practitioner's own Apache-2.0 translation of that codified practice into
+- an earlier engine of the practitioner's own is the practitioner's own Apache-2.0 translation of that codified practice into
   Rust and WebAssembly. Reusing its kernel is an ordinary dependency decision about one's own
   code, not an act of fidelity to a third party.
-- The `epi-info` arm of `EPI_INFO_LABEL_SOURCES` points at something unmaintained. It was built to
+- The `original-program` arm of `CONVENTIONAL_LABEL_SOURCES` points at something unmaintained. It was built to
   mark the stronger claim; that claim may now be unreachable, which is worth recording rather than
   leaving as an aspiration.
-- Wherever this repository hedges about agreement with Epi Info, it is hedging about the wrong
+- Wherever this repository hedges about agreement with another package, it is hedging about the wrong
   thing. **Fourteen files carry the framing** and are listed as a sweep in TODO rather than
   rewritten here, because an audit measures and does not dispose.
 
@@ -79,22 +74,22 @@ worked example needs it.
 
 ### Commands this application answers
 
-| Epi Info | Fieldwork | How faithful |
+| a classic analysis package | Fieldwork | How faithful |
 | --- | --- | --- |
-| `RELATE` | `relate_table` | brings a KEY column across on a matched key. Epi Info relates tables; this brings one column. Narrower. |
+| `RELATE` | `relate_table` | brings a KEY column across on a matched key. a classic analysis package relates tables; this brings one column. Narrower. |
 | `SUMMARIZE` | `group_table` | `stratifyBy`→`by`, and from 2026-10-31 `SUM`, `MIN`, `MAX` of eleven aggregates. Narrower, deliberately — see `AGGREGATES`. |
 | `DEFINE` + `ASSIGN` | `derive_value` | defines one new value of a key column and assigns `left op right` over four operators. No constant operand, no condition. |
 | `SELECT` | `select_rows` | keeps rows whose key column takes named values. |
-| `TABLES` | `two_by_two` | the four cells and the estimates. Epi Info's TABLES also runs tests; those are not built. |
+| `TABLES` | `two_by_two` | the four cells and the estimates. a classic analysis package's TABLES also runs tests; those are not built. |
 | `FREQ` | `chart_output` over a table | counts by category, drawn. Not a frequency table with percentages and cumulative columns. |
 | `READ` | `table_input` | reads a long-format table. |
 | `LIST` | `table_output` | shows records. |
 | `GRAPH` | `chart_output` | bars only. |
-| `MAP` | `map_output` | listed as `Gap` in Epi Info AI's own column; this application's strongest area. |
+| `MAP` | `map_output` | listed as `Gap` in an earlier engine's own column; this application's strongest area. |
 
 ### Commands with no equivalent here, that a workflow has already wanted
 
-| Epi Info | What it would do | How it was found |
+| a classic analysis package | What it would do | How it was found |
 | --- | --- | --- |
 | **`MERGE`** | combine two tables sharing a key so their measures sit in one column | the Dulwich bound needs Table XII's deaths beside Table VIII's populations, and `RELATE` carries categories, not values. Found 2026-10-31 by the by-hand test failing. |
 | **`MEANS`** | a report of a measure by a cross-tab | named by `group_table`'s old comment as the command it was not |
@@ -159,14 +154,14 @@ experiment 112 reads the same declaration the palette does.
 **A declared currency, which the glossary calls a port type**: *"the declared name of what one
 port carries, and the thing a connection is actually checked against"*. Seventeen of them —
 `points`, `table`, `polygons`, `raster`, `area`, `design`, `network`, `decisions` and the rest.
-Epi Info has one currency, the current dataset, and every command acts on whatever it is. **That
+a classic analysis package has one currency, the current dataset, and every command acts on whatever it is. **That
 single fact is what makes the new economy above possible**: because what flows is typed and
 checked, one widget can serve several commands' worth of work without ambiguity about what it is
 acting on, and a wrong connection is impossible rather than reported afterwards. `design` is the
 newest of them and was added on 2026-10-31 for exactly that reason — a study design is not a
 table, and giving it the `table` port would have made it checkable only by convention.
 
-**Notes that become the publication.** Epi Info's Output group is a print stream — `ROUTEOUT`,
+**Notes that become the publication.** a classic analysis package's Output group is a print stream — `ROUTEOUT`,
 `PRINTOUT`, `REPORT` — which sends a rendering somewhere. This application has no analogue and
 does not want one. A note is machined by the step that earned it or authored by a practitioner,
 it carries its section, its function and its edges, the write-up is assembled from the project's
@@ -193,13 +188,12 @@ environment this application deliberately is not.
   The obligation is to say what is NOT there, which `AGGREGATES` already does, rather than to
   disclaim an agreement nobody can check.
 - **That the mappings above are faithful.** Each row was read from one source file and this
-  application's implementation. None was run side by side against Epi Info or Epi Info AI, and
+  application's implementation. None was run side by side against a classic analysis package or an earlier engine of the practitioner's own, and
   the "how faithful" column is an argument rather than a measurement.
 - ~~**Whether `apply_ruleset` is RECODE.**~~ **Withdrawn the same day — it was the wrong
   question.** See *What we are actually looking for* below.
 - **That a split vocabulary is coherent.** This is a GIS studio as well as an epidemiological
-  one, and `buffer_area`, `isochrone` and `study_area` have no Epi Info equivalent. Adopting Epi
-  Info names for the epi half produces a deliberately two-vocabulary palette. That may be right —
+  one, and `buffer_area`, `isochrone` and `study_area` have no equivalent in a classic analysis package. Adopting its names for the epi half produces a deliberately two-vocabulary palette. That may be right —
   each half named in the words of the practitioners who use it — but it is a decision somebody
   has to make, not a consequence of this audit.
 - **That the command set should be completed.** It is a map of another application's surface.
@@ -215,7 +209,7 @@ example of not seeking parity, if we think about geometry."*
 **`apply_ruleset` is the proof that this already works.** It does what `RECODE` is for — declare
 how values become categories, and keep the declaration where a reader can check it — and it does
 it as authored rules compiled to N3 and run by a reasoner, over records that may carry geometry.
-Epi Info had no spatial record to classify, so there is no command to be faithful to and nothing
+a classic analysis package had no spatial record to classify, so there is no command to be faithful to and nothing
 was lost by not being faithful to one. The widget is recognisable in what it ACCOMPLISHES and
 owes nothing to how the accomplishment was spelled.
 
@@ -226,7 +220,7 @@ Read that way, the mappings earlier in this document change meaning without chan
 They are not a fidelity scorecard. They record which patterns this application has already
 arrived at, which it has arrived at under a different name, and which it has not met yet:
 
-| pattern | carried by Epi Info as | Fieldwork |
+| pattern | carried by a classic analysis package as | Fieldwork |
 | --- | --- | --- |
 | declare how values become categories, auditably | `RECODE` | `apply_ruleset`, over geometry too — **a wider realisation, not a narrower one** |
 | name a new variable and say how it is computed | `DEFINE` + `ASSIGN` | `derive_value`, without a constant or a condition |
@@ -243,7 +237,7 @@ widget, I think that's new economy."*
 It is, and the count is arguably three. An `AuthoredRule` is
 `any: [{all: [conditions]}] → then: [conclusions]`. The conditions ARE `IF`. The conclusions are
 `RECODE` where they band a value into a category, and a conditional `ASSIGN` where they assert a
-fact about a subject. Epi Info files those in two different groups — `IF` under Select/If,
+fact about a subject. a classic analysis package files those in two different groups — `IF` under Select/If,
 `RECODE` and `ASSIGN` under Variables — because in a command language they are separate
 statements. **In a rule language the condition and the conclusion are one form, so one widget
 carries what three commands carried.**
@@ -258,7 +252,7 @@ not palette entries.
 **And it shows where the split actually falls.** Fieldwork does not divide assignment by command;
 it divides it by KIND. `derive_value` is arithmetic assignment — `DEFINE` plus an arithmetic
 `ASSIGN`, unconditional, over numeric measures. `apply_ruleset` is categorical assignment —
-conditional, over declared vocabulary, auditable as N3. Epi Info's line runs between statements;
+conditional, over declared vocabulary, auditable as N3. a classic analysis package's line runs between statements;
 this one runs between kinds of value. That is a substrate decision and it is why the two widgets
 do not overlap despite sharing `ASSIGN` between them.
 
@@ -268,7 +262,7 @@ commands and quietly drops what one of them did. `apply_ruleset` does not: the c
 expressive as `IF` needs for a classification, and the conclusions are checkable in a way a
 procedural `RECODE` never was, because they compile to facts with a receipt.
 
-**The test for adopting a pattern is not whether Epi Info had it.** It is whether a field workflow
+**The test for adopting a pattern is not whether a classic analysis package had it.** It is whether a field workflow
 in this application needs it — which is the rule D10 and the usage ledger already enforce — and
 whether this application's own substrate can realise it better than the command did. `RECODE` to
 `apply_ruleset` is the case where the answer was yes and the realisation is wider.

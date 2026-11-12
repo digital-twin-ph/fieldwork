@@ -27,12 +27,10 @@
  *  and `VARP` are population variants that are right on a census and wrong on a sample, and
  *  `FIRST` and `LAST` depend on a row order a long table does not promise.
  *
- *  AND THE COMMAND IS `SUMMARIZE`, not `MEANS`, which the old comment had wrong. Read from
- *  `epi-info-ai` rather than from memory: `COMMAND_SET.md` lists both as separate Statistics
- *  commands, and `classic-summarize.ts` takes an `aggregate`, a `stratifyBy`, a `resultField`
- *  and an `outputTable` -- it emits a DATASET -- while `ClassicMeansStatement` takes a field, a
- *  cross-tab and options and emits a REPORT. This step emits a table, so it was always the first
- *  of the two. It has been `SUMMARIZE` restricted to `SUM` all along, under a name that did not
+ *  AND THE COMMAND IS `SUMMARIZE`, not `MEANS`, which the old comment had wrong. The two are separate statistics
+ *  commands: `SUMMARIZE` takes an aggregate, the groups, a result field and an output table -- it emits a DATASET --
+ *  while `MEANS` takes a field, a cross-tab and options and emits a REPORT. This step emits a table, so it was always
+ *  the first of the two. It has been `SUMMARIZE` restricted to `SUM` all along, under a name that did not
  *  say so. Experiment 157; the node type stays `group_table` because renaming one rewrites every
  *  saved workflow that holds it, and the naming finding is recorded rather than acted on.
  *
@@ -45,9 +43,7 @@
  *  import with two value columns has two rows per person, so the receipt says ROWS and never
  *  people, and the manual says to import one value column.
  *
- *  NO PARITY WITH EPI INFO IS CLAIMED by sharing the name. `epiInfoLabelSource` keeps "what Epi
- *  Info AI prints" apart from "what Epi Info prints", and nothing here is checked against
- *  either.
+ *  NO PARITY WITH ANOTHER PROGRAM IS CLAIMED by sharing the command's name, and nothing here is checked against one.
  *
  *  A NULL IS NOT A ZERO, which is the whole risk of this operation. Every long table here can
  *  hold a null, meaning the cell was empty, and summing over one quietly produces a total that
@@ -60,8 +56,8 @@ import type {Workflow} from './types.js';
 
 /** THE AGGREGATES THIS STEP CAN POLICE, and no others.
  *
- *  Epi Info AI's `SUMMARIZE` offers AVG, COUNT, FIRST, LAST, MAX, MIN, STDEV, STDEVP, SUM, VAR
- *  and VARP. Four are admitted here and the absences are an argument rather than an oversight;
+ *  A `SUMMARIZE` command can offer AVG, COUNT, FIRST, LAST, MAX, MIN, STDEV, STDEVP, SUM, VAR and VARP. Four are
+ *  admitted here and the absences are an argument rather than an oversight;
  *  see the note at the head of this file. */
 export const AGGREGATES=['sum','minimum','maximum','count'] as const;
 export type Aggregate=typeof AGGREGATES[number];

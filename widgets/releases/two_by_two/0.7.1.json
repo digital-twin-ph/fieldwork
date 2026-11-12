@@ -1,0 +1,108 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "released": "2026-11-11",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "validationStatus": "application-only",
+  "shaclShapes": [],
+  "typescriptType": "ParamsByType['two_by_two']"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": null
+ },
+ "id": "urn:fieldwork:widget:two_by_two",
+ "nodeType": "two_by_two",
+ "version": "0.7.1",
+ "title": "Two-by-two table",
+ "ports": {
+  "inputs": [
+   {
+    "name": "records",
+    "type": "table"
+   },
+   {
+    "name": "design",
+    "type": "design"
+   }
+  ],
+  "output": "table",
+  "optionalInputs": [
+   {
+    "name": "design",
+    "type": "design"
+   }
+  ],
+  "note": "Takes a table holding one row per exposure-and-outcome combination and gives back the four cells of the named comparison, with the estimates carried on the value. The input must already be totalled: a cell matching more than one row is refused rather than summed here, because summing silently is how a 2x2 acquires subjects nobody counted. From 0.3.0 it also takes an OPTIONAL declared study design. Optional, and the optionality is the whole of the decision: a two-by-two with no design computes exactly as it did before, because a practitioner may not know which design they have and an application that refused to compute until told would be worse than one that stays quiet (experiment 147). Connected, the design is reported with the result -- which measure a+b and c+d can support depends on it, and under case-control sampling they are artefacts of how many cases and controls were sampled rather than populations at risk. Nothing is gated on it in this version; gating is step 3 of the sequence in docs/directions.json."
+ },
+ "ontology": {
+  "status": "gap",
+  "mappings": [],
+  "note": "GAP, meaning no mapping to an external vocabulary -- not meaning the terms are undeclared. fw:TwoByTwo and fw:EpiEstimate are declared in ontology/runtime.ttl with their properties, so every term the receipt asserts is declared and the coupling gate passes. What is absent is an alignment to an epidemiological ontology, and `fw:conventionalLabel` is deliberately NOT such an alignment: it is a field for what one tool displays, left empty because nobody has verified it. The receipt names the exposure and outcome attributes, the four counts, every stratum left out of the comparison, and for each estimate its name, interval method, level and -- where it has none -- why it has no value. The a classic analysis package label is written with its SOURCE and a status of `deduced`, `verified` or `unread`, never bare: a label read from an earlier engine's results panel and one read from a classic analysis package are different claims, and `fw:conventionalLabelSource` is what keeps them apart.",
+  "emits": {
+   "classes": [
+    "EpiEstimate",
+    "TwoByTwo"
+   ],
+   "properties": [
+    "caseValue",
+    "conventionalLabel",
+    "conventionalLabelSource",
+    "conventionalLabelStatus",
+    "estimate",
+    "estimateName",
+    "estimateUnavailable",
+    "estimateValue",
+    "exposedCaseCount",
+    "exposedGroup",
+    "exposedNonCaseCount",
+    "exposedUnitsAtRisk",
+    "exposureAttribute",
+    "intervalLevel",
+    "intervalLower",
+    "intervalMethod",
+    "intervalUpper",
+    "noDesignDeclared",
+    "notEstimable",
+    "outcomeAttribute",
+    "stratumLeftOut",
+    "subjectCount",
+    "unexposedCaseCount",
+    "unexposedGroup",
+    "unexposedNonCaseCount",
+    "unexposedUnitsAtRisk",
+    "unitsAtRiskValue",
+    "withheldEstimate"
+   ]
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/app.ts",
+   "src/core.ts",
+   "src/epi-estimate.ts",
+   "src/equations.ts",
+   "src/notes.ts",
+   "src/study-design.ts",
+   "src/two-by-two-rates.ts",
+   "src/two-by-two-view.ts",
+   "src/two-by-two.ts"
+  ],
+  "definition": "src/two-by-two.ts"
+ },
+ "changes": [
+  {
+   "kind": "patch",
+   "description": "Release text no longer names another product; nothing about the widget changed."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Unit tested on the three-stratum table the relate-and-group chain derives from Snow's Tables VIII and XII: risk ratio 5.3511 (3.3557 to 8.5328), odds ratio 5.3731 (3.3679 to 8.5720), risk difference 4.093 per 1,000. Fourteen tests, covering a zero reference count, a zero cell, a small cell, an empty cell, a missing cell, an ungrouped table, a table of rates, a group compared with itself, an unsupported interval level, and the stratum left out. NOTHING HERE ESTABLISHES AGREEMENT WITH ANOTHER PACKAGE, and no parity claim is made: these are standard methods named honestly, verified against this project's own arithmetic only. Lab check 30 is where they are compared against an independent implementation -- and its fixture has already earned its place, refuting this widget's own first account of why 8.40 and 5.35 differ -- and check 27 is the warning -- it found `rate_ratio` using a rounded 1.9600 for the normal quantile, a constant this widget now shares from one place so the defect cannot be reintroduced. Nor does anything here adjust for confounding: the both-companies stratum is excluded by name, not controlled for, and Snow went to the house level precisely because the sub-district comparison could not settle it. The equation note added in 0.2.0 is covered by tests/equations.test.mjs (13 unit checks, including that a method reference either renders completely or is null, that no note carries a table or a heading, and that a column name with an underscore is escaped rather than read as a subscript) and by tests/equation-notes.browser.mjs over the South London example on Chromium and WebKit, which is where it is established that the LaTeX is typeset to MathML rather than shown as its source. Both suites were mutation-checked by removing the behaviour and confirming they fail. Every Oswego food gives identical cells and estimates read from the rows and through a counted chain. Nothing here detects a person on two rows. From 0.7.0, the rate layout: tests/two-by-two-rates.test.mjs (6 unit checks) gives Snow's Table IX rate ratio as 8.401853429780243 (6.84096208049671 to 10.31889085553658), equal to the bit to the retired Rate ratio widget's output that lab check 27 compared with statsmodels, and holds the rate-ratio licences equal to the Poisson regression's for all five designs."
+ }
+}

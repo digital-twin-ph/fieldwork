@@ -581,10 +581,10 @@ an `extract-contract` ruleset would otherwise have required a fifth branch to be
 ### What this makes reachable: transforming a column
 
 The practitioner, 2026-10-25, on where a recode belongs: *"all the above can be built into the
-ruleset widget."* Checked against **Epi Info's documented command set** (CDC), which separates
+ruleset widget."* Checked against **a classic analysis package's documented command set**, which separates
 four commands this project had been treating as one:
 
-| Epi Info | here |
+| a classic analysis package | here |
 | --- | --- |
 | `IF` | the authored form's `any` / `all` conditions and its `then` conclusions — built |
 | `DEFINE` | `authoredProjection` adding a column the record did not have — built |
@@ -601,8 +601,7 @@ it, and nothing in the palette suggests it — which is a **confusion** cost und
 
 ### Where the bounded map goes, now that the generic path exists
 
-_Added 2026-10-26._ The practitioner, closing the loop: *"which brings us back to the RECODE,
-IF-THEN logic from Epi Info and embedding that in the ruleset widget."*
+_Added 2026-10-26._ The practitioner, closing the loop: that this brings back RECODE and IF-THEN logic, embedded in the ruleset widget
 
 It embeds with no new mechanism, and the format already shows the shape twice. A ruleset carries
 its rules at two levels — the compiled `rules` that run, and the `authored` form they were built
@@ -655,7 +654,7 @@ already declares, with `mm` added to the unit table; a label nothing recognises 
 IRI and the run still refuses by name. The declaration stays the practitioner's act, which is
 what a `DEFINE` is, and the published file is untouched.
 
-So of the three, two were already here wearing different clothes. That is the finding: Epi Info's
+So of the three, two were already here wearing different clothes. That is the finding: a classic analysis package's
 command set does not map onto missing capabilities here so much as onto capabilities this
 project had built without naming, and could therefore not offer.
 

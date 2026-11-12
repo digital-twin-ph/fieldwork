@@ -205,7 +205,7 @@ them. `tests/equations.test.mjs` asserts both forms are present rather than trus
 
 ### The citations, and the two that are absent
 
-**A citation is read off a source or it is absent.** That is `epiInfoLabel`'s rule in
+**A citation is read off a source or it is absent.** That is `conventionalLabel`'s rule in
 `epi-estimate.ts` — *"IS READ OFF A SOURCE OR IT IS NULL. Never filled from memory: that is how a
 wrong label enters a teaching context"* — applied to the second bibliographic field this project
 has needed. Looked up and verified against the bibliographic record on 2026-10-30:
@@ -226,7 +226,7 @@ absence: *"No primary source has been read for it."*
 
 Printing it rather than omitting the line is the point. A missing reference reads as *nothing to
 say*; what it means is *nobody has looked it up*, and those are two different claims — the
-distinction `epiInfoLabelSource` was introduced for, arriving here independently.
+distinction `conventionalLabelSource` was introduced for, arriving here independently.
 
 **A gap refuses the whole citation.** [144](144-provenance-as-structured-data.md)'s
 `renderCitation` is reused rather than a second renderer spelled, so a method reference missing a

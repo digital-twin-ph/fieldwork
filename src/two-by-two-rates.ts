@@ -91,7 +91,7 @@ export function computeRateTwoByTwo(table:DataTable,request:TwoByTwoRequest):Rat
   else if(!a1)estimates.push(estimateUnavailable(RATE_RATIO,level,LOG_NORMAL,
     `"${exposed}" has 0 ${caseValue}, so the ratio is 0 and its log interval is undefined.`));
   else estimates.push({name:RATE_RATIO,...rateRatio(a1,n1,a0,n0,level as IntervalLevel),level,
-    method:LOG_NORMAL,epiInfoLabel:null,epiInfoLabelSource:null,unavailable:null,
+    method:LOG_NORMAL,conventionalLabel:null,conventionalLabelSource:null,unavailable:null,
     notes:[`A rate per ${unitsAtRiskValue}. Both rates are per the same thing, so the ratio is dimensionless.`,
       // The assumption a reader will ask about, stated with the result. Experiment 139.
       'It treats the events as independent, which a transmitted disease is not: events that cluster are '

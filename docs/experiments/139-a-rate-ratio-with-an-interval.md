@@ -120,7 +120,7 @@ and hiding the table a reader checks it against, while holding that table in mem
 time. The measure names its unit — *houses at risk*, not *at risk* — because a count of houses is
 not a count of people, and that is the whole difference between 8.40 and 5.35.
 
-**This is a Poisson table, and the other 2x2 is binomial.** Checked against Epi Info's documented
+**This is a Poisson table, and the other 2x2 is binomial.** Checked against a classic analysis package's documented
 stratified 2x2 on 2026-10-26, whose four cells are exposed cases, exposed non-cases, unexposed
 cases and unexposed non-cases — people in four boxes, which is what a **risk ratio** or an **odds
 ratio** needs. This widget's four cells are events and units at risk, which is what a **rate
@@ -161,7 +161,7 @@ why. The direction encodes a hypothesis and records only its arithmetic conseque
 the result sees "Southwark and Vauxhall Company against Lambeth Company: rate ratio 8.40" and
 cannot tell from it whether that ordering means anything or was a coin toss.
 
-**Epi Info's design carries this and ours does not**, which is the third time its 2x2 has been
+**a classic analysis package's design carries this and ours does not**, which is the third time its 2x2 has been
 the better record: its table declares `exposedValue` and `unexposedValue`, so the table itself
 says which value counts as exposed rather than leaving it in the order of two parameters.
 
@@ -179,8 +179,7 @@ otherwise would be overclaiming.
 
 ## A result should not hide what it did
 
-_Added 2026-10-26, after the practitioner: "you should see how Epi Info AI presents epi
-computation results, it's more comprehensive, doesn't hide many things."_
+_Added 2026-10-26, after the practitioner: that an earlier engine of their own presents epidemiological results more comprehensively, hiding little_
 
 Read on the same day. Its categorical table result carries, per table: the counts, the **row and
 column percents**, the **expected counts** under the null, the totals — and the test's own

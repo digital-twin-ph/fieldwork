@@ -144,7 +144,7 @@ test('the note NAMES its methods and does not carry their bibliography',()=>{
   assert.doesNotMatch(note.text,/Woolf B\./);
   // AND AN UNSOURCED METHOD IS STILL MARKED, in three words. A reader meeting `Wald unpooled`
   // beside two cited methods would otherwise take it for a third -- the distinction
-  // `epiInfoLabelSource` exists to keep. The full statement of it is in References.
+  // `conventionalLabelSource` exists to keep. The full statement of it is in References.
   assert.match(note.text,/Wald unpooled \(no primary source read\)/);
 });
 

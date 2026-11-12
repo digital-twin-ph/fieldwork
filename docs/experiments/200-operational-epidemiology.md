@@ -209,7 +209,7 @@ exercises them.
 Asked for by the practitioner: *"Under detect can we add a cluster detection widget like SatScan?"*
 
 - **Space-time permutation scan**, for a line list with dates and places and no population: the first to build,
-  reusing Epi Info AI's candidate (circles over places and windows over time; dates shuffled across fixed places for
+  reusing an earlier engine's candidate (circles over places and windows over time; dates shuffled across fixed places for
   the p-value, with a recorded seed). There, SaTScan 10.1.3 chose the same leading window on a 30-case synthetic set;
   the counts differ because SaTScan loaded 28 cases, and the 30-case re-run is pending. A candidate until Fieldwork's
   own lab check passes. First use: Hagelloch replayed day by day, to find the first day a cluster would have been
@@ -225,7 +225,7 @@ Asked for by the practitioner: *"Under detect can we add a cluster detection wid
 ## The space-time scan, built 2026-11-10
 
 **Built** as Space-time scan 0.1.0, the first widget under **Detect** (the practitioner, 2026-11-10: *"Let's do
-space time"*), on the standard Inspector and dialog. Ported from Epi Info AI's candidate, with three changes:
+space time"*), on the standard Inspector and dialog. Ported from an earlier engine's candidate, with three changes:
 
 - **Circles are circles.** Places at the same distance from the centre join together; the candidate added them one at
   a time, so a window could hold one of two houses at the same distance.

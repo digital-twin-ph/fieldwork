@@ -345,6 +345,13 @@ not a practitioner in the field.
    openly licensed; temperature or heat index for the same places and days; the population at risk; and any
    published cooling-centre or outreach locations. Then a worked example in its own repository, its rules written
    as declared rules in Apply ruleset, with no bespoke ruleset code.
+31. **Syndromic surveillance: an aberration in a count over time** ([206](docs/experiments/206-syndromic-surveillance-aberration-detection.md);
+   the practitioner, 2026-11-11: *"We can add 206 to our TODO list."*). Not placed in the order yet. First, the check
+   that may need nothing built: whether Apply ruleset's previous-row value can read a value computed in the same step,
+   which would let EWMA and CUSUM be written as rules (option E). Then, closest step first: baseline columns on Cases
+   by period for window methods (A), expected counts from Regression for Farrington-style models (C), a new step only if
+   neither carries it (B), an aberration view in Chart (D). Open for the practitioner: which methods first; the New
+   York daily emergency-visit series as the first test bed; whether reading a syndromic feed as published is in scope.
 
 The high-contrast theme comes after Sierra Leone, as set on 2026-11-07; where it falls among 4 to 6 is not set.
 
@@ -897,10 +904,7 @@ teaches a method, and two things have now been found to need one:
 Not urgent against the items above, and recorded now because it has been
 implied twice in two days and never written down.
 
-**The Epi Info command set is a coverage checklist for the palette.** _Raised 2026-10-26: "if
-you look at the Results panel of Epi Info AI, it is like the outputs of each Epi Info command
-that has an input and output. The commands also carry parameters (our knobs) to modify the
-outputs."_ That is a structural correspondence, not an analogy: **a command is a widget** —
+**A classic analysis package command set is a coverage checklist for the palette.** _Raised 2026-10-26: the practitioner observed that a results panel reads like the outputs of commands that each have an input and an output, and that the commands carry parameters (Fieldwork's knobs) that modify the outputs._ That is a structural correspondence, not an analogy: **a command is a widget** —
 input, output, and parameters that are our knobs — and a results panel is the stream of their
 outputs.
 
@@ -916,7 +920,7 @@ for an operation in the taught curriculum the need is established by the discipl
 RELATE and MATCH are not speculative additions waiting for a local example to justify them.
 
 What it buys is a palette gap analysis grounded in a mature tool instead of invented. The 48
-modules in `epi-info-ai/wasm/app/programming/` split into `classic-*`, the original command set
+modules in its programming modules split into `classic-*`, the original command set
 ported, and `epi-ai-*`, the browser-era additions (GIS, record linkage, space-time clustering,
 data quality). Read against this palette, FROM FILENAMES ONLY and therefore a list to verify
 rather than a finding:
@@ -936,7 +940,7 @@ rather than a finding:
 
 **The join was the headline, and splitting it into three was the point.** What this project
 recorded as a single missing capability since 0.12.0 — nothing joins two tables on a shared column —
-is THREE commands in Epi Info, and only the narrowest of them was needed: a long table's value
+is THREE commands in a classic analysis package, and only the narrowest of them was needed: a long table's value
 column holds only numbers, so a category brought across can only be a key column and the row count
 does not change. That is `RELATE`, built 2026-10-26. Reading the command set as three operations
 rather than one is what kept `relate_table` from being a general join nobody had specified. It
@@ -945,9 +949,8 @@ being built here, and is the reason both are prepared outside. It is a standard 
 local wish.
 
 **The deprecations are NOT a list of unnecessary operations, and this file said they were.**
-Corrected 2026-10-26 by the practitioner: *"the deprecations were so much about Epi Info AI being
-browser based vs. Epi Info being a desktop app. Also some commands carried some security risks."*
-Checked in `wasm/docs/design/classic-command-compatibility-registry.md`, whose browser policy is
+Corrected 2026-10-26 by the practitioner: that the deprecations were mostly about a browser application against a desktop one, and that some commands carried security risks
+Checked in an earlier engine's compatibility registry, whose browser policy is
 a three-way vocabulary — `candidate`, reproducible through typed browser operations;
 `adapt-required`, where legacy behaviour depends on files, databases, printers, destructive state
 or UI effects; and `blocked`, where *"ambient desktop authority is not reproduced"* and legacy
@@ -985,9 +988,8 @@ Read the register before the next retirement.
 Do not treat the table above as scope. Several of those commands are large (`LOGISTIC` is
 regression), and the checklist's value is knowing what is absent, not committing to fill it.
 
-**A 2x2 invites a reading Fieldwork cannot yet support.** _Raised 2026-10-26: "if you look at
-how 2x2 tables are reported in Epi Info, that's what they will look at."_ Checked against
-`epi-info-ai`'s `Table2x2Result` contract, which returns **totals** (exposed, unexposed, cases,
+**A 2x2 invites a reading Fieldwork cannot yet support.** _Raised 2026-10-26: trained readers will look for the two-by-two layout they were taught._ Checked against
+an earlier engine's `Table2x2Result` contract, which returns **totals** (exposed, unexposed, cases,
 non-cases, overall), **estimates** (risk in exposed and unexposed, risk ratio with a Katz-log
 interval, odds ratio with Wald-log, risk difference with Wald-unpooled, conditional odds ratio),
 **tests** (Pearson, Mantel-Haenszel, Yates, Fisher exact, mid-P) and **diagnostics** (expected
@@ -996,46 +998,44 @@ nothing else.
 
 **The estimand is the sharp part, not the feature count.** `rate_ratio` computes a RATE ratio --
 events per unit, log-normal interval -- and the derived 2x2 is RISK-shaped: cases against
-non-cases. A reader trained on Epi Info's layout will expect a risk ratio and an odds ratio, and
+non-cases. A reader trained on a classic analysis package's layout will expect a risk ratio and an odds ratio, and
 may take the 8.40 already on the canvas for one of them. It is neither. That is a misreading the
 application currently invites by drawing the table and offering the wrong measure beside it.
 
 Smallest honest step, if this is taken: risk in each group, the risk ratio and the odds ratio,
-each with the interval method NAMED as Epi Info names its own, and each with a lab check against
+each with the interval method NAMED as a classic analysis package names its own, and each with a lab check against
 an independent implementation before it is claimed. Lab check 27 is the precedent and the
 warning: it found `rate_ratio` using a rounded 1.9600 for the normal quantile. Chi-square, Fisher
 and mid-P are a larger piece and should not be started to meet a date.
 
-**Which source is authoritative for what**, established by the practitioner 2026-10-26: Epi Info
-AI's **epi kernel was synthesized from the original Epi Info codebase**, which is public on
+**Which source is authoritative for what**, established by the practitioner 2026-10-26: an earlier engine's **epi kernel was synthesized from the original package's codebase**, which is public on
 GitHub; the rest of that project — its GIS kernel, adaptive learning kernel, evidence generation
 kernel, and its new and deprecated programming commands — are improvements and adaptations for a
 browser environment. So:
 
 | For | Go to |
 | --- | --- |
-| statistical behaviour: formulas, interval methods, the Fisher ordering and its `1.000001` tolerance, chi-square variants, warning thresholds | **the original Epi Info source**, as the thing being matched |
-| contract shape, result vocabulary, how a browser expresses it, and what was held to what tolerance | **Epi Info AI**, including `wasm/validation-lab/verify.py` |
+| statistical behaviour: formulas, interval methods, the Fisher ordering and its `1.000001` tolerance, chi-square variants, warning thresholds | **the original package's source**, as the thing being matched |
+| contract shape, result vocabulary, how a browser expresses it, and what was held to what tolerance | **an earlier engine of the practitioner's own** |
 | what an FETP-trained reader expects to see | the original's output layout and labels |
 
-A name in the Epi Info AI contract is a faithful description of the original's behaviour, not an
+A name in an earlier engine's contract is a faithful description of the original's behaviour, not an
 independent choice, so it can be read as a pointer INTO the original rather than as a
 specification to implement against.
 
-**Two things to check before copying anything.** The licence: Epi Info is CDC-produced and
-generally public domain, but this project records a licence IRI, a digest and a retrieval date
+**Two things to check before copying anything.** The licence: the package is generally public domain, but this project records a licence IRI, a digest and a retrieval date
 for every source it carries, and source code deserves that at least as much as a CSV.
 Reimplementing a documented method from reading it is not the same act as lifting an
 implementation, and which one was done belongs in the experiment.
 
-**And a second thing worth reading for its own sake.** Epi Info AI made DEPRECATION decisions
+**And a second thing worth reading for its own sake.** an earlier engine of the practitioner's own made DEPRECATION decisions
 about the original's programming commands. A sibling project deciding which of a mature command
 set to drop, and why, is directly relevant to this project's own widget retirement work — where
 the budget stands at 49 against a target of 41 and the plan has been written for weeks. That is
 not a 2x2 question and should not be bundled into one.
 
 **The approach is settled and the register has it.** Not parity — an epi kernel of our own,
-with the LAYOUT patterned after Epi Info so a reader needs no translation. See
+with the LAYOUT patterned after a classic analysis package so a reader needs no translation. See
 [directions.json](directions.json), `recognisable-not-identical-an-epi-kernel-of-our-own`. The
 cost of the alternative is concrete: `legacyBreslowDayOddsRatio` directly ports a Woolf weighted
 log-odds dispersion that the legacy output LABELS "Breslow-Day", so bit-for-bit parity imports a
@@ -1058,14 +1058,12 @@ who takes 8.40 for the risk ratio beside the houses table is RIGHT, and is there
 substitution is safe. It is safe only while the outcome is rare, and the layout shows the
 statistics rather than the subject being counted.
 
-**The recognisability half landed the same day.** _The practitioner: "The Epi Info labels can be
-deduced from the results panel that Epi Info AI prints. That's the closest I got to the real
-thing."_ Read from the classic TABLES estimate table in `epi-info-ai/wasm/demo/app.ts` and carried
+**The recognisability half landed the same day.** _The practitioner: the labels can be deduced from a results panel, the closest available source._ Read from the classic TABLES estimate table in `a results panel's source` and carried
 on the estimates: `Risk Ratio (RR)`, `Odds Ratio (cross product)`, `Risk Difference (RD%)`.
 
-A sibling project's rendering of Epi Info is a deduction and not a reading, so each label carries
-`epiInfoLabelSource`, the receipt writes a status of `deduced`, and **check 30 fails if a label
-ever claims `epi-info` as its source**. The criterion inverted rather than relaxed: from "the
+A sibling project's rendering of a classic analysis package is a deduction and not a reading, so each label carries
+`conventionalLabelSource`, the receipt writes a status of `deduced`, and **check 30 fails if a label
+ever claims `original-program` as its source**. The criterion inverted rather than relaxed: from "the
 label must be null" to "the label must name where it came from".
 
 Two details worth keeping. `Odds Ratio (cross product)` keeps its qualifier, because that panel
@@ -1073,9 +1071,9 @@ prints a conditional-MLE odds ratio beside it which is a different estimator and
 here. And the panel prints the risk difference as a PERCENTAGE — 0.4093% where this carries
 0.004093 — a scale difference stated on the estimate rather than reconciled away.
 
-**Still open:** reading the labels off Epi Info itself, which would upgrade the source to
-`epi-info` and either confirm the words or change them. Either outcome is information. Until then
-the 2x2 is not presented as an Epi Info 2x2 — it is presented as Fieldwork's own, labelled so a
+**Still open:** reading the labels off a classic analysis package itself, which would upgrade the source to
+`original-program` and either confirm the words or change them. Either outcome is information. Until then
+the 2x2 is not presented as a classic analysis package 2x2 — it is presented as Fieldwork's own, labelled so a
 trained reader can find their row.
 
 **The input-stage palette looks like a palette that failed to load.** _Found 2026-10-26, by the
@@ -1983,23 +1981,23 @@ the running application and are not yet experiments.
   and using them understates the worst case threefold. **A rate must come from the same table as
   the count it is applied to.**
 
-  Epi Info AI has the operation: `COMMAND_SET.md` lists `RELATE` and `MERGE` as separate Data
+  an earlier engine of the practitioner's own has the operation: `COMMAND_SET.md` lists `RELATE` and `MERGE` as separate Data
   commands, MERGE as a "reviewed current-project upsert". What Fieldwork needs is narrower than a
   general upsert — two long tables with the same key columns, appended, so their measures sit in
   one `measure` column — and that narrowness should be designed deliberately rather than inherited.
 
-- **THREE TABLE OPERATIONS ARE EPI INFO COMMANDS WEARING DIFFERENT NAMES.** Found across one day:
+- **THREE TABLE OPERATIONS ARE CLASSIC ANALYSIS COMMANDS WEARING DIFFERENT NAMES.** Found across one day:
   `derive_value` is DEFINE and ASSIGN, `group_table` is SUMMARIZE restricted to SUM, and
   `relate_table` is RELATE — which that file already knew, since its first line says so. At three
   this stops being a coincidence.
 
   The finding is not that the names are wrong. It is that this application arrived independently
-  at the Epi Info Data and Statistics command set and named it **inconsistently**: one widget
+  at a classic analysis package's Data and Statistics command set and named it **inconsistently**: one widget
   carries the command name in its documentation, one had the wrong command in its documentation
-  until it was checked, and one has no mention of it anywhere. A practitioner who knows Epi Info
+  until it was checked, and one has no mention of it anywhere. A practitioner who knows a classic analysis package
   has to rediscover each one.
 
-  **Measured in [the Epi Info command audit](audits/epi-info-commands-and-our-widgets.md),
+  **Measured in [the classic analysis commands audit](audits/epidemiology-commands-and-our-widgets.md),
   2026-10-31**, which also corrects what this entry first claimed a rename would cost:
   `RENAMED_NODE_TYPES` already maps six old node types to new ones, and `validate:widgets` refuses
   a registry declaring a rename the application does not perform — so a saved workflow migrates
@@ -2013,8 +2011,8 @@ the running application and are not yet experiments.
   discovering them one failed workflow at a time.
 
 - **STATCALC is organised by study design, and it reaches a phase Fieldwork does not have.**
-  Raised 2026-10-31: *"what may be useful for study design, in Epi Info AI, there is STATCALC."*
-  Read from `epi-info-ai/README.md` rather than from memory, the discipline SUMMARIZE established
+  Raised 2026-10-31: that a STATCALC command could be useful for study design
+  Read from its README rather than from memory, the discipline SUMMARIZE established
   the same day. Four slices exist there:
 
   | slice | what it takes and gives |
@@ -2039,7 +2037,7 @@ the running application and are not yet experiments.
 
   Three things to settle before any of it is built.
 
-  **The 2×2 overlap is a D2 question, not a detail.** `epi-info-ai` also has a StatCalc 2×2, and
+  **The 2×2 overlap is a D2 question, not a detail.** an earlier engine of the practitioner's own also has a StatCalc 2×2, and
   this application has `two_by_two`. They differ in where the numbers come from — typed counts
   against a table that arrived on a port — and that difference is either a second widget or a
   second input mode on the first. Getting it wrong is how a registry ends up with three
@@ -2051,8 +2049,7 @@ the running application and are not yet experiments.
   write-up the way the design declaration already does, or it will print an authoritative-looking
   number whose inputs nobody can see.
 
-  **No parity is claimed by sharing a name.** `epiInfoLabelSource` already separates "what Epi
-  Info AI prints" from "what Epi Info prints", and neither has been checked here.
+  **No parity is claimed by sharing a name.** `conventionalLabelSource` already separates what a rendering prints from what the original program prints, and neither has been checked here.
 
   Unverified: only the README's descriptions were read, not the implementations. Which formulas
   the Kelsey/Fleiss slice actually uses, and what the Chi Square for Trend slice computes, are
@@ -3385,8 +3382,8 @@ facilities can be deduplicated by name and point location. By name can be algori
 exact match, but we can study the OSM and Overture Places data sets before we decide what would
 work"* — and this entry said the rule was the unknown and should be measured first.
 
-What changed is where the rule came from. On 2026-10-21 the practitioner pointed at `EPIAI
-RECORDLINK` in their own `epi-info-ai` repository, where the contracts were already settled:
+What changed is where the rule came from. On 2026-10-21 the practitioner pointed at a record-linkage
+command in an earlier repository of their own, where the contracts were already settled:
 blocking before comparison, binary contributions rather than a blended score, three classes rather
 than merge-or-not, missing never agreeing with missing, and an authority boundary that classifies
 without deciding. The widget takes those and adds the spatial comparison.

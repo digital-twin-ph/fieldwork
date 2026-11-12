@@ -61,12 +61,11 @@ statistic wearing a node type. A table with a row per exposure is a view of the 
   interval: a hard stop per estimate. Unadjusted multiplicity: a **limitation**, stated and not solved.
 - **D10.** Oswego and Stegen instantiate it, with the Germany 2021 data for case-control.
 
-## Correction, the same day: reuse the Epi Info AI engine
+## Correction, the same day: reuse an earlier engine's engine
 
-The practitioner, 2026-11-02: *"Don't forget that we have an epi kernel to reuse from Epi Info AI
-workspace."* The design above was written without reading it, which was a mistake.
+The practitioner, 2026-11-02: that there is an epidemiology kernel of their own to reuse The design above was written without reading it, which was a mistake.
 
-`epi-info-ai/wasm/engine-rust` is one Rust file compiled to 28,495 bytes of WebAssembly with no imports,
+its Rust engine is one Rust file compiled to 28,495 bytes of WebAssembly with no imports,
 Apache-2.0, exporting 81 functions: the 2x2 measures, Mantel-Haenszel and conditional stratified
 estimates, Fisher and mid-P, matched pairs, trend, frequencies and means.
 
@@ -92,9 +91,7 @@ substrate and its roles, plural exposures, what a declared design licenses, and 
 Step 7 stops being undesigned. The arithmetic of step 1 moves into the Rust kernel if a run can wait for
 WebAssembly, which is not yet checked.
 
-**FW holds its own copy.** The practitioner, 2026-11-02: *"We should not use the Epi Info AI repo on my
-laptop, we should just copy the code over to FW."* And then: *"We should grow the Rust based kernel
-without thinking about Epi Info AI repo."* So the code lives in `kernel/`, renamed `fieldwork-kernel`,
+**FW holds its own copy.** The practitioner, 2026-11-02: that the code should be copied into Fieldwork rather than read from another repository on the laptop And then: that the Rust kernel should grow on its own from here So the code lives in `kernel/`, renamed `fieldwork-kernel`,
 and grows there. A pin was proposed first and is withdrawn. Upstream is not tracked; `ORIGIN.md` and
 the Apache-2.0 licence are what remains of the link.
 

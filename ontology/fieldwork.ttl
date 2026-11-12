@@ -1321,8 +1321,8 @@ fw:tableMissingValueCount a owl:DatatypeProperty; rdfs:domain fw:DataTable; rdfs
 # A keyed table is not a point dataset. This is the distinction the admission review turns on.
 fw:DataTable owl:disjointWith fw:PointDataset.
 
-# RECORD LINKAGE. The vocabulary follows `EPIAI RECORDLINK` in the epi-info-ai repository, which
-# the practitioner wrote and pointed this work at on 2026-10-21 rather than let it invent a second
+# RECORD LINKAGE. The vocabulary follows a record-linkage command the practitioner wrote earlier and
+# pointed this work at on 2026-10-21 rather than let it invent a second
 # set of words for the same thing. A candidate is a pair the blocking rule retained; a class is
 # what the thresholds proposed; a decision is what a person answered where the proposal was not
 # confident enough to act on.

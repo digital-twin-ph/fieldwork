@@ -82,7 +82,7 @@ nothing is computed from it.
 - That Count rows belongs in `group_table`, whose palette line still says it adds up.
 - Anything about the epidemic curve or incubation periods. Times are text here and were not tried.
 - That the vanilla ratio is causal, or a cohort estimate. No design is declared.
-- That the app's estimates agree with Epi Info. Nothing here checks it.
+- That the app's estimates agree with a classic analysis package. Nothing here checks it.
 
 ## Validation
 

@@ -1,6 +1,6 @@
 /** `RELATE`: bringing a column from one table onto the rows of another, on a shared key.
  *
- *  Epi Info has three join commands -- `MERGE`, `RELATE` and `MATCH` -- and this project had
+ *  Statistical packages commonly offer three join commands -- `MERGE`, `RELATE` and `MATCH` -- and this project had
  *  none, which the 0.12.0 release notes recorded as the reason South London's contingency table
  *  is "prepared outside the application". It was carried as one missing capability. It is not
  *  one: the three differ in what they bring across and in how they match, and the one the Snow

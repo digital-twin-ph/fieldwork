@@ -25,7 +25,7 @@ table so the user (an epidemiologist) can recognize what the rule does to his wi
 ## Where things stand
 
 Read 2026-11-07 from `src/rule-editor.ts`, `src/authored-rules.ts`, `src/derive-value.ts`, `src/data-table.ts` and
-[the Epi Info commands audit](../audits/epi-info-commands-and-our-widgets.md).
+[the classic analysis commands audit](../audits/epidemiology-commands-and-our-widgets.md).
 
 - **The rules dialog shows no data.** It shows conditions, conclusions and a count of compiled rules. What the rules do
   to the records is seen only after the rules are kept and the workflow is run.
@@ -91,9 +91,8 @@ values."* A file with one row per place and week, recording cumulative cases, gi
 say whose rows these are (the place). In a file that is wide by period (`cum_w1`, `cum_w2`, …) the same sum is within
 one row, and needs nothing new.
 
-**That order is Epi Info's `SORT`, and it is a prerequisite.** The practitioner, the same day: *"Epi Info AI has a
-SORT function."* Then: *"For between rows computation we can prerequisite table sort on a column. In cumulative values
-a date time column would be a candidate."* The [commands audit](../audits/epi-info-commands-and-our-widgets.md)
+**That order is a classic analysis package's `SORT`, and it is a prerequisite.** The practitioner, the same day: that a SORT function exists to draw on Then: *"For between rows computation we can prerequisite table sort on a column. In cumulative values
+a date time column would be a candidate."* The [commands audit](../audits/epidemiology-commands-and-our-widgets.md)
 records `SORT` as wanted and unbuilt: a chart has a bar order, a table none.
 
 - **A rule between rows needs the table sorted on a named column.** Until one is named, the rule does not run, and the

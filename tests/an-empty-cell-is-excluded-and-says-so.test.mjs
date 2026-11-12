@@ -156,7 +156,7 @@ test('an empty cell still makes the group unknown unless it is excluded',()=>{
 });
 
 test('THE VOCABULARY IS BOUNDED, and the absences are an argument',()=>{
-  // Epi Info AI's SUMMARIZE offers AVG COUNT FIRST LAST MAX MIN STDEV STDEVP SUM VAR VARP.
+  // A SUMMARIZE command can offer AVG COUNT FIRST LAST MAX MIN STDEV STDEVP SUM VAR VARP.
   // Four are admitted. AVG has the referent problem that kept this step sum-only -- rates do
   // not average meaningfully when the groups differ in size -- STDEVP and VARP are population
   // variants this step cannot tell it has, and FIRST and LAST depend on a row order a long table

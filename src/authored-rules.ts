@@ -70,7 +70,7 @@ export interface AuthoredGroup {all:AuthoredCondition[]}
  *  `previous`, the field's value in the previous row of the same group, in the step's order (experiment 188, stage 4). */
 export type Operand={field:string; previous?:true}|number|SettingReference;
 export const readsPrevious=(o:Operand):o is {field:string;previous:true}=>typeof o==='object'&&'field' in o&&o.previous===true;
-/** WHAT "PREVIOUS" MEANS, and the order it is read in. Epi Info's SORT, inside the step that needs it: the rows are
+/** WHAT "PREVIOUS" MEANS, and the order it is read in. A SORT, inside the step that needs it: the rows are
  *  sorted by `by` within each group of `within`, and a rule reading the previous row reads the row before it there.
  *  `previous` says which row that is: the row recorded just before, or the row a day, a week or a month earlier,
  *  which is absent where that period has no row. The order is never taken from the file. */

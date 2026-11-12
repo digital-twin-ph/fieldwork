@@ -250,12 +250,12 @@
    "replacementCandidate": "urn:fieldwork:widget:clip_points_to_area"
   },
   "deduplicate_points": {
-   "version": "0.3.0",
-   "released": "2026-11-09",
+   "version": "0.3.1",
+   "released": "2026-11-11",
    "changes": [
     {
-     "kind": "minor",
-     "description": "On the standard Inspector and dialog: its name, inputs, one sentence of what it compares, and Configure…, which holds every setting on a draft; what the last run found, and Review pairs, are in its Result."
+     "kind": "patch",
+     "description": "Release text no longer names another product; nothing about the widget changed."
     }
    ],
    "breaking": false,
@@ -986,12 +986,12 @@
    "migrationFrom": []
   },
   "two_by_two": {
-   "version": "0.7.0",
-   "released": "2026-11-05",
+   "version": "0.7.1",
+   "released": "2026-11-11",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Reads a table of events and units at risk, and reports the rate ratio with a log-normal interval. Choose 'events and units at risk' under 'The outcome column holds', then name the value holding the events and the one holding the units at risk. The figure shows a1, n1, a0, n0 and each group's rate; the Methods note writes the ratio and its interval in those letters. A declared design licenses a rate ratio under a cohort or an ecological design, as for a Poisson regression, and stops the step under any other, naming the reason. Units at risk may be person-time, so need not be whole; events must be. A group with no events keeps its counts and says why the ratio has none. This replaces the Rate ratio widget, retired the same day; experiment 161, step 6."
+     "kind": "patch",
+     "description": "Release text no longer names another product; nothing about the widget changed."
     }
    ],
    "breaking": false,

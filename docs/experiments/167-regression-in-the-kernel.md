@@ -14,8 +14,8 @@ The two-by-two gives crude measures. The three examples under way, or next, publ
 | NYC child asthma, 2016–2025 | Time-stratified Poisson regression on daily counts, several pollutants | Ozone, 1.061 (1.035–1.088) per 10 ppb; the authors' archived Table 2 |
 | London ozone and deaths, 2002–2006 | Poisson regression with seasonal splines and temperature, allowing for overdispersion | 0.991, 1.007, 1.003 per 10 µg/m³ |
 
-The practitioner, 2026-11-03: *"So do we need a regression widget?"*, then, on reusing Epi Info AI's: *"Let's just
-write our own regression for the kernel."* Epi Info AI implements only conditional logistic regression, which none of
+The practitioner, 2026-11-03: *"So do we need a regression widget?"*, then, on reusing an earlier engine's: *"Let's just
+write our own regression for the kernel."* an earlier engine of the practitioner's own implements only conditional logistic regression, which none of
 the three uses. The kernel's rule since 2026-11-02 stands: it grows without thinking about that repository.
 
 ## The design

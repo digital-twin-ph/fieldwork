@@ -30,7 +30,7 @@ test('a method with a source is listed as that source',()=>{
 
 test('A METHOD WITH NO SOURCE IS LISTED AS HAVING NONE, not left out',()=>{
   // A reader meeting a short list cannot tell a method nobody has looked up from a method with
-  // nothing to look up. `epiInfoLabelSource`'s distinction, on the surface a reader acts on.
+  // nothing to look up. `conventionalLabelSource`'s distinction, on the surface a reader acts on.
   const list=referenceList([{workflowName:'W',machined:[machined(['Wald unpooled'])],derived:[]}]);
   assert.equal(list.length,1);
   assert.equal(list[0].uncited,true);

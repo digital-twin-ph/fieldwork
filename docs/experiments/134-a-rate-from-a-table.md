@@ -29,7 +29,7 @@ the kind disconnects what was wired, since points and a table are not the same s
 
 ## What the external check found
 
-Table IX was published in 1855, outside this project and outside Epi Info AI. It is the
+Table IX was published in 1855, outside this project and outside an earlier engine of the practitioner's own. It is the
 independent reference `rate` has never had. Dividing its own columns:
 
 | | Quotient per 10,000 houses | Snow printed |

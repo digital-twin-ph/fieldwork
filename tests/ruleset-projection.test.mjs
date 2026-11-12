@@ -11,7 +11,7 @@ import {compileAuthoredRuleset} from '../build/authored-rules.js';
  *  one general projection. `inputContract.fieldFrom` is what lets a bundled ruleset use it.
  *
  *  This also settles where a recode belongs. The practitioner, 2026-10-25: *"all the above can
- *  be built into the ruleset widget."* Epi Info's command set separates `DEFINE`, `ASSIGN`,
+ *  be built into the ruleset widget."* A classic analysis command set separates `DEFINE`, `ASSIGN`,
  *  `RECODE` and `IF`; here the first three are this projection writing a conclusion as a new
  *  column, and the fourth is the authored form's conditions. */
 

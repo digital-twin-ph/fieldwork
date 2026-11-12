@@ -9,8 +9,8 @@ import {distanceKm} from './nearest-neighbour.js';
  *  be algorithmic match or exact match"* -- and, on the thresholds, 2026-10-21: *"Thresholds are
  *  knobs and settings should show up in N3 receipts."*
  *
- *  THE CONTRACTS COME FROM `EPIAI RECORDLINK`, which the practitioner wrote in the epi-info-ai
- *  repository and pointed this work at rather than let it reinvent them. What is taken, and why
+ *  THE CONTRACTS COME FROM A RECORD-LINKAGE COMMAND the practitioner wrote earlier and pointed this work at rather
+ *  than let it reinvent them. What is taken, and why
  *  each is right here:
  *
  *  - **Blocking is a step of its own.** Only pairs within `blockDistanceM` are candidates. Every

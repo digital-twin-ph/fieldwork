@@ -15,8 +15,7 @@ application:
 
 and then, on being shown that the answer was already half-built here:
 
-> *"It's the approach we decided to pursue with that other project -- Epi Info AI -- in designing
-> the GIS kernel."*
+> that it is the approach already decided for the GIS kernel of an earlier project
 
 > *"Let's move to Rust GIS kernel."*
 
@@ -92,7 +91,7 @@ arrive.
 
 ## Why, which is not the reason that first suggests itself
 
-The performance case is real and it is the weaker one. The Epi Info AI architecture gives the
+The performance case is real and it is the weaker one. An earlier engine's architecture gives the
 stronger reason for its own kernel: *"one implementation shared by browser, notebook,
 command-line"*, so that the canonical calculation cannot drift.
 
@@ -133,4 +132,4 @@ A kernel raises a ceiling. It does not make a number measured or a door visible.
 - Experiment 121 · Storage beyond localStorage -- the typed-array measurement
 - Experiment 125 · Caps below the limit we are testing -- what a kernel does not fix
 - `docs/directions.json` · `the-gis-kernel-owns-the-graph`
-- Epi Info AI, `docs/architecture.md` -- the Epi kernel this follows
+- an earlier engine of the practitioner's own -- the Epi kernel this follows

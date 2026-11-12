@@ -21,8 +21,7 @@
  *  `recognisable-not-identical-an-epi-kernel-of-our-own` says training makes the misreading
  *  near-certain, and this is the mechanism: the layout shows the statistics and not the subject.
  *
- *  WHAT IT COMPUTES, and the methods verified from the sibling project's architecture notes
- *  (`epi-info-ai/wasm/docs/architecture.md:466`, `migration-plan.md:570`): risk in each group,
+ *  WHAT IT COMPUTES, by the standard methods each is named for: risk in each group,
  *  the risk ratio with a Katz log interval, the odds ratio with a Wald log interval, and the
  *  risk difference with an unpooled Wald interval. NOT the tests -- Pearson, Mantel-Haenszel,
  *  Yates, Fisher, mid-P. Those are a larger piece, and experiment 141's rule is that tests are
@@ -41,16 +40,14 @@
  */
 import type {DataTable} from './data-table.js';
 import type {EpiEstimate,IntervalLevel} from './epi-estimate.js';
-import type {EpiInfoLabelSource} from './epi-estimate.js';
+import type {ConventionalLabelSource} from './epi-estimate.js';
 import {estimateUnavailable,oddsRatio,quantileFor,riskDifference,riskRatio} from './epi-estimate.js';
 import type {RateTwoByTwoResult} from './two-by-two-rates.js';
 
-/** What the Epi Info AI classic TABLES results panel prints for each of these quantities,
- *  transcribed from `epi-info-ai/wasm/demo/app.ts` where that table is built from literal
- *  strings. Read off source on 2026-10-26 on the practitioner's pointer -- *"The Epi Info labels
- *  can be deduced from the results panel that Epi Info AI prints. That's the closest I got to the
- *  real thing."* -- and therefore a DEDUCTION from a sibling project's rendering of Epi Info, not
- *  a reading of Epi Info, which is why every estimate carries the source beside the label.
+/** The conventional name a classic two-by-two results panel prints for each of these quantities, transcribed from a
+ *  panel that builds that table from literal strings. Read off source on 2026-10-26 on the practitioner's pointer, and
+ *  therefore a DEDUCTION from a rendering, not a reading of the original program, which is why every estimate carries
+ *  the source beside the label.
  *
  *  The panel heads its columns `Parameter | Estimate | 95% confidence interval` and prints, in
  *  this order: `Odds Ratio (cross product)`, `Odds Ratio (conditional MLE)`, `Risk Ratio (RR)`,
@@ -63,7 +60,7 @@ import type {RateTwoByTwoResult} from './two-by-two-rates.js';
  *  one hundred; this result carries the proportion. Same quantity, different scale on screen, and
  *  Snow's 0.004093 reads there as 0.4093%. A recognisability difference rather than a
  *  disagreement, so it is said on the estimate instead of being silently reconciled. */
-const EPI_INFO_AI_PANEL:EpiInfoLabelSource='epi-info-ai-results-panel';
+const RESULTS_PANEL:ConventionalLabelSource='results-panel';
 
 export interface TwoByTwoRequest {
   /** The key column holding the exposure, and the two of its values being compared. */
@@ -183,13 +180,13 @@ export function computeTwoByTwo(table:DataTable,request:TwoByTwoRequest):TwoByTw
   if(!c)estimates.push(estimateUnavailable(RISK_RATIO,level,KATZ,
     `"${unexposed}" has 0 ${caseValue}, so its risk is zero and the ratio has no value. `
     +'Adding half a case to every cell would make one, but that is an assumption rather than '
-    +'a measurement.',RISK_RATIO_LABEL,EPI_INFO_AI_PANEL));
+    +'a measurement.',RISK_RATIO_LABEL,RESULTS_PANEL));
   else if(!a)estimates.push(estimateUnavailable(RISK_RATIO,level,KATZ,
     `"${exposed}" has 0 ${caseValue}, so the ratio is 0 and its log interval is undefined.`,
-    RISK_RATIO_LABEL,EPI_INFO_AI_PANEL));
+    RISK_RATIO_LABEL,RESULTS_PANEL));
   else {
     estimates.push({name:RISK_RATIO,...riskRatio(a,b,c,d,level),level,
-      method:KATZ,epiInfoLabel:RISK_RATIO_LABEL,epiInfoLabelSource:EPI_INFO_AI_PANEL,
+      method:KATZ,conventionalLabel:RISK_RATIO_LABEL,conventionalLabelSource:RESULTS_PANEL,
       unavailable:null,
       // THE SUBJECT, not the estimand. What makes this incomparable with another ratio on this
       // canvas is what it counts, which is the thing the taught layout does not show.
@@ -211,10 +208,10 @@ export function computeTwoByTwo(table:DataTable,request:TwoByTwoRequest):TwoByTw
   if(zeroCells.length)estimates.push(estimateUnavailable(ODDS_RATIO,level,WALD_LOG,
     `${zeroCells.join(' and ')} ${zeroCells.length===1?'is':'are'} zero. `
     +'The Wald interval takes the reciprocal of every cell, so a zero cell leaves it undefined.',
-    ODDS_RATIO_LABEL,EPI_INFO_AI_PANEL));
+    ODDS_RATIO_LABEL,RESULTS_PANEL));
   else {
     estimates.push({name:ODDS_RATIO,...oddsRatio(a,b,c,d,level),level,
-      method:WALD_LOG,epiInfoLabel:ODDS_RATIO_LABEL,epiInfoLabelSource:EPI_INFO_AI_PANEL,
+      method:WALD_LOG,conventionalLabel:ODDS_RATIO_LABEL,conventionalLabelSource:RESULTS_PANEL,
       unavailable:null,
       notes:[...(riskExposed<0.1&&riskUnexposed<0.1
         ?['Both risks are under 10%, so the odds ratio is close to the risk ratio here. '
@@ -227,14 +224,14 @@ export function computeTwoByTwo(table:DataTable,request:TwoByTwoRequest):TwoByTw
   // measured on, so no log and no back-transformation.
   const difference=riskDifference(a,b,c,d,level);
   estimates.push({name:'risk difference',...difference,level,
-    method:'Wald unpooled',epiInfoLabel:'Risk Difference (RD%)',
-    epiInfoLabelSource:EPI_INFO_AI_PANEL,unavailable:null,
+    method:'Wald unpooled',conventionalLabel:'Risk Difference (RD%)',
+    conventionalLabelSource:RESULTS_PANEL,unavailable:null,
     notes:['A difference of risks, on the same scale as the risks themselves. '
       +'Unpooled: each group contributes its own variance rather than a common one.',
       // The scale difference, said where the number is, because the label carries a % and this
       // value does not. A reader comparing the two screens must not read 0.004093 against 0.4093%
       // and conclude the implementations disagree.
-      `Epi Info AI's panel prints this as a percentage under "Risk Difference (RD%)": `
+      `A classic results panel prints this as a percentage under "Risk Difference (RD%)": `
       +`${(difference.value*100).toFixed(4)}% for the same figure. Same quantity, different scale.`]});
 
   const named=new Set([exposed,unexposed]);
@@ -304,15 +301,15 @@ export function twoByTwoReceipt(node:{id:string},result:TwoByTwoResult,runId:str
         +`fw:intervalUpper ${num(estimate.upper!)}`)
     // Written even when null, so a receipt states that nobody has verified the label rather than
     // staying silent about a field the direction requires. See epi-estimate.ts.
-    // THE SOURCE TRAVELS WITH THE LABEL, always. A receipt carrying `fw:epiInfoLabel` and no
-    // provenance would let a label deduced from a sibling project's results panel be read as one
-    // verified against Epi Info -- two different claims, and the distinction this pair of fields
+    // THE SOURCE TRAVELS WITH THE LABEL, always. A receipt carrying `fw:conventionalLabel` and no
+    // provenance would let a label deduced from a results panel be read as one verified against the
+    // original program -- two different claims, and the distinction this pair of fields
     // exists to keep.
-    +(estimate.epiInfoLabel
-      ?`; fw:epiInfoLabel ${quote(estimate.epiInfoLabel)}; `
-        +`fw:epiInfoLabelSource ${quote(estimate.epiInfoLabelSource??'unstated')}; `
-        +`fw:epiInfoLabelStatus ${quote(estimate.epiInfoLabelSource==='epi-info'?'verified':'deduced')}`
-      :'; fw:epiInfoLabelStatus "unread"')+' ].').join('\n');
+    +(estimate.conventionalLabel
+      ?`; fw:conventionalLabel ${quote(estimate.conventionalLabel)}; `
+        +`fw:conventionalLabelSource ${quote(estimate.conventionalLabelSource??'unstated')}; `
+        +`fw:conventionalLabelStatus ${quote(estimate.conventionalLabelSource==='original-program'?'verified':'deduced')}`
+      :'; fw:conventionalLabelStatus "unread"')+' ].').join('\n');
   const facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n`
     +`@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.\n`
     +`${entity} a fw:TwoByTwo;\n`
@@ -335,10 +332,10 @@ export function twoByTwoReceipt(node:{id:string},result:TwoByTwoResult,runId:str
     +estimateFacts+'\n';
   return {nodeId:node.id,kind:'computation' as const,facts,rules:'',input:facts,conclusions:[],
     method:twoByTwoSentence(result)
-      +' Each estimate names its interval method, and the label Epi Info AI\'s results panel'
-      +' prints for the same quantity, read from that panel rather than from Epi Info itself.'
-      +' No agreement with Epi Info is claimed: the labels are a deduction from a sibling'
-      +' project synthesized from it, and the numbers are standard methods named honestly.'
+      +' Each estimate names its interval method, and the conventional label a classic results panel'
+      +' prints for the same quantity, read from that panel rather than from the original program.'
+      +' No agreement with another program is claimed: the labels are a deduction from a rendering,'
+      +' and the numbers are standard methods named honestly.'
       +' A contrast between two groups as they were supplied, not a measured effect: nothing'
       +' here adjusts for anything the two groups did not share.'
       +result.warnings.map(warning=>` ${warning}`).join('')};
@@ -429,15 +426,15 @@ export interface TwoByTwoEstimateRow {
   interval:{lower:number;upper:number;level:IntervalLevel}|null;
   method:string;
   unavailable:string|null;
-  /** What Epi Info calls the same quantity, where a source has been read for it. */
-  epiInfoLabel:string|null;
+  /** The conventional name for the same quantity, where a source has been read for it. */
+  conventionalLabel:string|null;
 }
 
 export const twoByTwoEstimateRows=(result:Pick<TwoByTwoResult,'estimates'>):TwoByTwoEstimateRow[]=>
   result.estimates.map(e=>({
     name:e.reportedAs??e.name,value:e.value,
     interval:e.lower===null||e.upper===null?null:{lower:e.lower,upper:e.upper,level:e.level},
-    method:e.method,unavailable:e.unavailable,epiInfoLabel:e.epiInfoLabel,
+    method:e.method,unavailable:e.unavailable,conventionalLabel:e.conventionalLabel,
   }));
 
 /** THE RATE LAYOUT'S SENTENCE AND RECEIPT, here with the four-cell ones so the widget's receipts are written in one
@@ -473,7 +470,7 @@ export function rateTwoByTwoReceipt(node:{id:string},result:RateTwoByTwoResult,r
       ?`fw:estimateUnavailable ${quote(estimate.unavailable??'')}`
       :`fw:estimateValue ${num(estimate.value)}; fw:intervalLower ${num(estimate.lower!)}; `
         +`fw:intervalUpper ${num(estimate.upper!)}`)
-    +'; fw:epiInfoLabelStatus "unread" ].').join('\n');
+    +'; fw:conventionalLabelStatus "unread" ].').join('\n');
   const facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n`
     +`@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.\n`
     +`${entity} a fw:TwoByTwo;\n`

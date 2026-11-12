@@ -78,19 +78,18 @@ test('the risk difference is symmetric, because a difference is not a ratio',()=
   assert.equal((e.value*1000).toFixed(3),'4.093');
 });
 
-test('every estimate names its method and carries a sourced Epi Info label',()=>{
+test('every estimate names its method and carries a sourced conventional label',()=>{
   for(const e of run().estimates){
     assert.ok(e.method&&!/^(default|standard|auto)$/.test(e.method),`${e.name} names its method`);
-    // READ OFF A SOURCE, NEVER FROM MEMORY. These were transcribed from the Epi Info AI classic
-    // TABLES results panel on 2026-10-26, which is a sibling project's rendering of Epi Info and
-    // not Epi Info -- so the source is asserted with the label. A label whose provenance went
+    // READ OFF A SOURCE, NEVER FROM MEMORY. These were transcribed from a classic two-by-two results panel on
+    // 2026-10-26, a rendering rather than the original program -- so the source is asserted with the label. A label whose provenance went
     // unstated would let a deduction be read as a verification.
-    assert.ok(e.epiInfoLabel,`${e.name} carries a label`);
-    assert.equal(e.epiInfoLabelSource,'epi-info-ai-results-panel');
-    assert.notEqual(e.epiInfoLabelSource,'epi-info','nobody has read Epi Info itself');
+    assert.ok(e.conventionalLabel,`${e.name} carries a label`);
+    assert.equal(e.conventionalLabelSource,'results-panel');
+    assert.notEqual(e.conventionalLabelSource,'original-program','nobody has read the original program itself');
     assert.equal(e.level,95);
   }
-  assert.deepEqual(run().estimates.map(e=>e.epiInfoLabel),
+  assert.deepEqual(run().estimates.map(e=>e.conventionalLabel),
     ['Risk Ratio (RR)','Odds Ratio (cross product)','Risk Difference (RD%)'],
     'the panel\'s own strings, including the qualifier that distinguishes the cross-product odds '
     +'ratio from the conditional MLE one printed beside it');
@@ -116,8 +115,8 @@ test('a zero reference count takes the risk ratio and leaves the risk difference
   assert.equal(rr.method,'Katz log','the method is stated even with no value');
   // And so is the label: an unavailable estimate still tells a reader which row of the familiar
   // layout it corresponds to, which is what lets them see that it is absent rather than missing.
-  assert.equal(rr.epiInfoLabel,'Risk Ratio (RR)');
-  assert.equal(rr.epiInfoLabelSource,'epi-info-ai-results-panel');
+  assert.equal(rr.conventionalLabel,'Risk Ratio (RR)');
+  assert.equal(rr.conventionalLabelSource,'results-panel');
   assert.equal(named(r,'odds ratio').value,null);
   assert.match(named(r,'odds ratio').unavailable,/reciprocal of every cell/);
   const rd=named(r,'risk difference');

@@ -255,7 +255,7 @@ Margins remain the one genuinely new input, and the consistency refusal above is
 
 - **That the standard formatting is one formatting.** This asserts the letters, the margins and
   the total as the shape an epidemiologist reads, on the practitioner's statement and on
-  `epi-estimate.ts`'s Epi Info labels. Which way round the exposure runs, and whether cases go in
+  `epi-estimate.ts`'s conventional labels. Which way round the exposure runs, and whether cases go in
   the first column, are conventions this has not checked against a textbook.
 - **That reporting an interval satisfies a journal.** It reports the interval, its level and the
   method. A journal requiring an interval requires one computed a particular way, and nothing here

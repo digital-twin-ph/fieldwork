@@ -4,7 +4,7 @@ _Created 2026-10-12 · Updated 2026-10-19_
 _Uses a term this project withdrew on 2026-10-12, named in [the withdrawn-vocabulary ledger](../withdrawn-vocabulary.json). The text stands as written — it is evidence of what was thought then, and rewording a dated record would falsify it. Live text says **port type** for what a connection is checked against._
 
 
-A set of recommendations was brought in from an external assistant, pitched at **Epi Info AI**,
+A set of recommendations was brought in from an external assistant, pitched at **an earlier engine of the practitioner's own**,
 which the practitioner says is close in structure to this project: adopt OGC Simple Feature
 Access as the normative operation contract, ISO 19107 as the conceptual model, GeoSPARQL as the
 semantic interface, DE-9IM as the predicate foundation, and build a Rust/WASM geometry kernel on
@@ -41,7 +41,7 @@ both orders, 5 times out of 5, with no error cell to show the practitioner. Heav
 in a browser is not a neutral choice here.
 
 **Corrected on the practitioner's clarification.** This note first read the advice as pitched at a
-portfolio and treated that as a scope mismatch. It is pitched at **Epi Info AI**, which the
+portfolio and treated that as a scope mismatch. It is pitched at **an earlier engine of the practitioner's own**, which the
 practitioner says is close in structure to this project. That makes the advice aimed at a sibling
 rather than mis-aimed, and it inverts what this section is for: Fieldwork's measurements are not an
 objection to the recommendation, they are **evidence available to it**, already paid for.
@@ -62,7 +62,7 @@ callers. That is a better case for it than this note first gave.
 **What decides it is a question about the sibling, not about the standards.** Fieldwork's constraint
 is the practitioner's own statement of its purpose: *field users with limited resources should get
 all the boost they need*, which makes tens of megabytes the wrong trade **here**. Whether it is the
-wrong trade for Epi Info AI depends on how its users receive it — bandwidth, offline requirement,
+wrong trade for an earlier engine of the practitioner's own depends on how its users receive it — bandwidth, offline requirement,
 first-load budget — and this note cannot answer that.
 
 **The cheapest thing to copy is not the kernel.** It is the discipline: emitting GeoSPARQL in

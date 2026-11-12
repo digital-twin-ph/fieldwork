@@ -70,7 +70,7 @@
     {
       "measuredAt": "2026-10-21",
       "widgets": 47,
-      "note": "deduplicate_points added, on the practitioner's request and against the contracts of EPIAI RECORDLINK in their own epi-info-ai repository. Two sources over one study area draw the same hospital twice and a count of facilities is wrong by however many of those there are; no widget could say which records were the same place. It is a primitive: the comparison, the thresholds and the three classes are the whole of it, and the merge is what the thresholds licence. The budget rises to 47 against a target of 41, deliberately: experiment 64's phases are what bring it down, and this is not one of the widgets they retire."
+      "note": "deduplicate_points added, on the practitioner's request and against the contracts of a record-linkage command the practitioner wrote earlier in an earlier engine of their own repository. Two sources over one study area draw the same hospital twice and a count of facilities is wrong by however many of those there are; no widget could say which records were the same place. It is a primitive: the comparison, the thresholds and the three classes are the whole of it, and the merge is what the thresholds licence. The budget rises to 47 against a target of 41, deliberately: experiment 64's phases are what bring it down, and this is not one of the widgets they retire."
     },
     {
       "measuredAt": "2026-10-25",

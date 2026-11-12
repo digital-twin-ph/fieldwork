@@ -653,9 +653,8 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
  *
  *  A table keyed by (group, measure) printed as six rows is a list; printed as a grid it is the
  *  2x2 a reader came for, and the comparison they are making runs along a row instead of down a
- *  column three rows apart. The practitioner, 2026-10-26, on the rate ratio's output: "still not
- *  quite like the Epi Info AI results" -- whose categorical output cross-tabulates exposure
- *  against outcome rather than listing cells.
+ *  column three rows apart. The practitioner, 2026-10-26, on the rate ratio's output: it did not yet look like the
+ *  categorical output a reader expects, which cross-tabulates exposure against outcome rather than listing cells.
  *
  *  Generic rather than epidemiological: ANY table with exactly two key columns pivots this way,
  *  including Snow's Table VIII at sub-district by measure. Declined when the second key has many

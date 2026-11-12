@@ -158,7 +158,7 @@ fw:layerFileDigest a owl:DatatypeProperty; rdfs:range xsd:string;
 # by exactly the ratio of their retained shares, so these numbers let somebody reconcile a figure
 # they did not expect against the join that produced it, from the receipt alone.
 fw:TableRelate a owl:Class;
-  rdfs:comment "One relate step: a key column brought from a second table onto the rows of a first, matched on a shared key. Epi Info's RELATE and deliberately not its MERGE -- the row count does not change, because a category brought across can only be a key column.".
+  rdfs:comment "One relate step: a key column brought from a second table onto the rows of a first, matched on a shared key. A RELATE and deliberately not a MERGE -- the row count does not change, because a category brought across can only be a key column.".
 fw:matchedWithinPeriod a owl:DatatypeProperty; rdfs:domain fw:TableRelate; rdfs:range xsd:string; rdfs:label "matched within period";
   rdfs:comment "A date of the first table matched to the row of the second whose start-end span contains it, among rows agreeing on the equal keys: a week to an 8-day satellite period. Experiment 180.".
 fw:dateShiftDays a owl:DatatypeProperty; rdfs:domain fw:TableRelate; rdfs:range xsd:integer; rdfs:label "date shift (days)";
@@ -260,7 +260,7 @@ fw:citesMethod a owl:ObjectProperty;
   rdfs:comment "Named rather than left to be read out of the prose, so an aggregate References part does not have to recover works by matching text against sentences -- which would break the first time a citation style changed, and a venue changes citation style on purpose.".
 fw:MethodCitation a owl:Class;
   rdfs:label "Method citation";
-  rdfs:comment "One estimator and what is known about where it comes from. It carries EITHER a rendered reference OR a stated reason there is none, never neither: a reader meeting a short list cannot tell a method nobody has looked up from a method with nothing to look up, and that is the distinction fw:epiInfoLabelSource exists to keep, one field over.".
+  rdfs:comment "One estimator and what is known about where it comes from. It carries EITHER a rendered reference OR a stated reason there is none, never neither: a reader meeting a short list cannot tell a method nobody has looked up from a method with nothing to look up, and that is the distinction fw:conventionalLabelSource exists to keep, one field over.".
 fw:methodName a owl:DatatypeProperty; rdfs:range xsd:string;
   rdfs:comment "The estimator as the implementation names it -- \"Katz log\", \"Wald unpooled\" -- which is the key its reference is held under.".
 fw:methodReference a owl:DatatypeProperty; rdfs:range xsd:string;
@@ -542,10 +542,9 @@ fw:CaseSeries owl:disjointWith fw:PointDataset.
 
 fw:PackCatalog owl:disjointWith fw:WidgetDefinition, fw:WorkflowNodePlan, fw:CanvasNodePlan.
 
-# The epi kernel's two-by-two, 2026-10-26. Patterned after Epi Info's TABLES output and
-# deliberately not claiming agreement with it: every estimate names the method that produced it,
-# and `fw:epiInfoLabelStatus` records that nobody has verified what Epi Info displays for the
-# same quantity. See docs/directions.json, recognisable-not-identical-an-epi-kernel-of-our-own.
+# The epi kernel's two-by-two, 2026-10-26. Laid out as a classic two-by-two results table and
+# deliberately not claiming agreement with any program: every estimate names the method that produced it,
+# and `fw:conventionalLabelStatus` records whether the conventional label for the same quantity was verified. See docs/directions.json, recognisable-not-identical-an-epi-kernel-of-our-own.
 fw:StudyDesign a owl:Class;
   rdfs:label "Study design"; rdfs:subClassOf prov:Entity;
   rdfs:comment "What kind of study a workflow is, DECLARED by a practitioner and never inferred from data. A design is not a property of a table: the same four counts arise from a cohort, a case-control study and a cross-sectional survey, and which measures are estimable differs in each, so nothing here reads a design off the numbers. Six are admitted, each one reachable with the computations this application has; a seventh that licenses nothing would be a declaration doing no work. What a design licenses is carried on this entity rather than left to a reader, because the refusal it causes downstream has to be explainable.".
@@ -645,12 +644,12 @@ fw:estimateName a owl:DatatypeProperty; rdfs:label "estimate name";
 fw:estimateValue a owl:DatatypeProperty; rdfs:label "estimate value"; rdfs:domain fw:EpiEstimate.
 fw:estimateUnavailable a owl:DatatypeProperty; rdfs:label "estimate unavailable";
   rdfs:domain fw:EpiEstimate; rdfs:comment "Why this estimate has no value. Present only when it has none, and never a substitute for a repaired cell: adding half a case to make a ratio computable is an assumption and not a measurement.".
-fw:epiInfoLabel a owl:DatatypeProperty; rdfs:label "Epi Info label";
-  rdfs:domain fw:EpiEstimate; rdfs:comment "What Epi Info displays for the same quantity, where somebody has verified it. SEPARATE from the method name on purpose, because the two can disagree: epi-info-ai's method contract records that its legacy Breslow-Day odds ratio ports a Woolf weighted log-odds dispersion which the legacy output labels \"Breslow-Day test for Odds\". One label field would force a choice between being correct and being recognisable.".
-fw:epiInfoLabelStatus a owl:DatatypeProperty; rdfs:label "Epi Info label status";
-  rdfs:domain fw:EpiEstimate; rdfs:comment "\"deduced\" when the label was read from a rendering of Epi Info rather than from Epi Info, \"verified\" when read from Epi Info itself, and \"unread\" when no source has been read at all. Written rather than omitted, so a receipt states which of the three it is instead of being silent about a field this project requires.".
-fw:epiInfoLabelSource a owl:DatatypeProperty; rdfs:label "Epi Info label source";
-  rdfs:domain fw:EpiEstimate; rdfs:comment "Where the label was read. \"epi-info-ai-results-panel\" is the classic TABLES estimate table in epi-info-ai/wasm/demo/app.ts, a sibling project whose epi kernel was synthesized from Epi Info -- a good deduction and not a verification. Carried BESIDE the label because a deduced label and a verified one are different claims, and conflating them is the same class of error as the Breslow-Day mislabelling that fw:epiInfoLabel exists to survive.".
+fw:conventionalLabel a owl:DatatypeProperty; rdfs:label "conventional label";
+  rdfs:domain fw:EpiEstimate; rdfs:comment "The conventional name a reader knows the same quantity by, where a source has been read for it. SEPARATE from the method name on purpose, because the two can disagree: a legacy Breslow-Day odds ratio computes a Woolf weighted log-odds dispersion which legacy output labels \"Breslow-Day test for Odds\". One label field would force a choice between being correct and being recognisable.".
+fw:conventionalLabelStatus a owl:DatatypeProperty; rdfs:label "conventional label status";
+  rdfs:domain fw:EpiEstimate; rdfs:comment "\"deduced\" when the label was read from a rendering of the original program rather than from the program, \"verified\" when read from the original program itself, and \"unread\" when no source has been read at all. Written rather than omitted, so a receipt states which of the three it is instead of being silent about a field this project requires.".
+fw:conventionalLabelSource a owl:DatatypeProperty; rdfs:label "conventional label source";
+  rdfs:domain fw:EpiEstimate; rdfs:comment "Where the label was read. \"results-panel\" is a classic two-by-two results table that renders these estimates -- a good deduction and not a verification; \"original-program\" would be the original's own output. Carried BESIDE the label because a deduced label and a verified one are different claims, and conflating them is the same class of error as the Breslow-Day mislabelling that fw:conventionalLabel exists to survive.".
 
 # WHO INFECTED WHOM, DRAWN AS CHAINS OVER TIME (experiment 200, step 5): a Chart's transmission tree.
 fw:TransmissionTree a owl:Class; rdfs:label "transmission tree"; rdfs:comment "A figure of who infected whom: each case at its date, joined to its infector. A presentation of the table's own rows; nothing inferred." .

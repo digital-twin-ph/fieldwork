@@ -84,7 +84,7 @@ fn round_to_even_nonnegative(value: f64) -> f64 {
     }
 }
 
-/// Reproduces the audited Epi Info Population Survey cluster-size sequence.
+/// Reproduces the audited population-survey cluster-size sequence.
 #[unsafe(no_mangle)]
 pub extern "C" fn population_survey_cluster_size(
     population: f64,
@@ -2411,7 +2411,7 @@ mod tests {
     }
 
     #[test]
-    fn exact_tails_preserve_legacy_epi_info_invariants() {
+    fn exact_tails_preserve_legacy_invariants() {
         for &(a, b, c, d) in &[
             (21.0, 27.0, 27.0, 25.0),
             (29.0, 17.0, 28.0, 26.0),

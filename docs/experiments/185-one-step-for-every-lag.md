@@ -151,7 +151,7 @@ when made.
 ## The question
 
 The practitioner, 2026-11-07, looking at the Brazil lag workflow at the canvas's smallest zoom: *"Does that Brazil
-canvas look like an optimization opportunity?"* Then: *"Yes 185 and should we look at Epi Info AI LOOP command?"*
+canvas look like an optimization opportunity?"* Then: yes to 185, and whether a LOOP command was worth looking at
 
 The fourth Brazil workflow, *Did warmer ground weeks earlier go with more cases?*, has **31 steps**; the fifth, over
 sixteen years, has **43**. Most of them are one chain copied once per lag and lead:
@@ -173,12 +173,11 @@ between ports, which is how this was noticed.
 [182](182-brazil-across-years.md) build the lag models one step each and say so; micro-workflows
 ([92](92-micro-workflow-on-the-canvas.md)) group steps but do not repeat them.
 
-## What Epi Info AI says about loops
+## What an earlier engine of the practitioner's own says about loops
 
-Read 2026-11-07 in `epi-info-ai` (`wasm/docs/design/legacy-capability-register.md`, REG-0104, and
-`wasm/docs/architecture.md`). There is no LOOP to borrow. The Classic language's grammar retains `REPEAT … UNTIL`, but
-the inspected Epi Info 7 Analysis interpreter builds no executable rule for it, and no `FOR`, `FOREACH` or `WHILE`
-production exists. Epi Info AI records it as a TODO "revival", not legacy parity, on conditions: typed, **bounded**
+Read 2026-11-07 in an earlier engine of the practitioner's own . There is no LOOP to borrow. The Classic language's grammar retains `REPEAT … UNTIL`, but
+the inspected classic analysis interpreter builds no executable rule for it, and no `FOR`, `FOREACH` or `WHILE`
+production exists. an earlier engine of the practitioner's own records it as a TODO "revival", not legacy parity, on conditions: typed, **bounded**
 iteration; the body and condition validated **before** anything runs; iteration, time and output limits; cancellation;
 effects that land together or not at all; and fixtures for zero, one and many iterations and for a runaway loop.
 
@@ -204,7 +203,7 @@ if ever offered, would be named as a different analysis.
 
 The fourth workflow would go from **31 steps to about 8**, the fifth from **43 to about 10**.
 
-**Bounded, as Epi Info AI asks.** The list is part of the step's settings, validated whole before the run: a shift
+**Bounded, as an earlier engine of the practitioner's own asks.** The list is part of the step's settings, validated whole before the run: a shift
 that is not a whole number of days, a repeated shift, or more shifts than a stated limit stops the step with the
 reason. The limit is measured, not chosen: the largest list the browser fits within the run's time on the sixteen-year
 data, recorded here when taken. Zero shifts is refused; one shift behaves exactly as the widget does today.
@@ -230,5 +229,4 @@ in a sentence, recorded with what was tried.
 ## What this does not establish
 
 That a list inside a widget is the right general answer to repeated chains: it answers lags. A repeated group of steps
-over a list — a micro-workflow run once per item — would be the general form, and would carry every one of Epi Info
-AI's conditions; it is not proposed here. That fewer steps are easier to understand is the expectation, not a finding.
+over a list — a micro-workflow run once per item — would be the general form, and would carry every one of an earlier engine's conditions; it is not proposed here. That fewer steps are easier to understand is the expectation, not a finding.

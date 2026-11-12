@@ -1446,7 +1446,7 @@ this section covers the work of 2026-10-25 and 26._
   facilities all take one gauge, so the assignment is 194 rows against a single column and
   perfectly dense, and drawing it as a grid hid the distance column a reader came for.
 
-- **A value can be derived from two others, and rows can be kept by value.** Epi Info separates
+- **A value can be derived from two others, and rows can be kept by value.** a classic analysis package separates
   `DEFINE` and `ASSIGN` from `IF`, and only the `IF` was here: rules conclude a *term* about a
   record and never a number computed from other numbers. **Derive a value** computes one, once per
   group of rows sharing the other key columns — a table here is long, so the two numbers combined
@@ -1795,7 +1795,7 @@ this section covers the work of 2026-10-25 and 26._
   one point. **Two merges on its own; one asks you.** A pair in the review band stays two records
   until somebody answers with a reason, and that reason is pinned to the records as they were, so
   editing either one lapses the judgement rather than letting a stale answer ride on changed data.
-  The method is the one in the practitioner's own `EPIAI RECORDLINK`: blocking first, so pairs
+  The method is the one in the practitioner's own a record-linkage command the practitioner wrote earlier: blocking first, so pairs
   beyond a declared distance are never compared; binary contributions, so a similarity of 0.87
   against a threshold of 0.88 contributes nothing rather than 0.87; and a missing value that never
   agrees with another missing value. Every threshold is a knob, and the receipt carries all of

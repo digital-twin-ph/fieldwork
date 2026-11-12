@@ -70,7 +70,7 @@ export function openDeduplicateReview(view:DeduplicateReviewView,esc:Escape):voi
       <label class="field-label" for="dedup-review-reason">Why</label>
       <input id="dedup-review-reason" maxlength="200" value="${esc(already?.reason||'')}"
         placeholder="What makes them one record, or two">
-      <p class="muted">The row you do not keep is left out of this step's table and named in its receipt. The input table is not changed.</p>
+      
       <div class="dialog-actions">
         <button id="dedup-previous" class="button small" ${index?'':'disabled'}>Previous</button>
         <button id="dedup-next" class="button small" ${index<view.candidates.length-1?'':'disabled'}>Skip</button>
@@ -113,8 +113,7 @@ export function openDeduplicateReview(view:DeduplicateReviewView,esc:Escape):voi
     const rows=fields(candidate.a,candidate.b);
     const agreeing=rows.filter(r=>r.agrees).length;
     dialog.innerHTML=`<h2 id="dedup-review-title">Are these the same place?</h2>
-      <p class="muted">${index+1} of ${view.candidates.length} waiting · a pair reaches you when the
-        two tests disagree, so the answer is a judgement rather than a calculation.</p>
+      <p class="muted">${index+1} of ${view.candidates.length} waiting</p>
       <div class="dedup-pair">${record(candidate.a)}${record(candidate.b)}</div>
       <div class="dedup-measures">
         <span><b>${Math.round(candidate.metres)} m</b> apart</span>
@@ -130,7 +129,7 @@ export function openDeduplicateReview(view:DeduplicateReviewView,esc:Escape):voi
       <label class="field-label" for="dedup-review-reason">Why</label>
       <input id="dedup-review-reason" maxlength="200" value="${esc(already?.reason||'')}"
         placeholder="What makes them the same, or different">
-      <p class="muted">Kept with the decision, and pinned to these records as they are: edit either one and the judgement lapses.</p>
+      
       <div class="dialog-actions">
         <button id="dedup-previous" class="button small" ${index?'':'disabled'}>Previous</button>
         <button id="dedup-next" class="button small" ${index<view.candidates.length-1?'':'disabled'}>Skip</button>

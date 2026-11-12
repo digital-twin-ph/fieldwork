@@ -61,6 +61,9 @@ Two cases are marked rather than dropped, and the widget names both:
 - **A site further from a street than the snap limit** is routed anyway and marked off-network.
 - **A site whose walk onto the network alone spends the budget** gets no catchment at all.
 
+A site snapped to the network before this step keeps the junction and the distance it arrived
+with. Nothing is projected for it, and the settings for attaching origins are not used.
+
 Coverage can also be cut short by the graph itself: a region stops where the downloaded network
 stops, which is a property of the extent that was downloaded and not of the travel time.
 
@@ -72,6 +75,11 @@ stops, which is a property of the extent that was downloaded and not of the trav
 
 ## What it will not do
 
+- **It will not certify a traveller.** The travel mode is checked against the speed, and an obvious mismatch is
+  refused; nothing more. Public transport is not a mode, because it follows routes and a timetable rather than the
+  street network.
+- **It will not treat inbound and outbound as the same.** Inbound reverses every street, so it answers who can reach
+  the site rather than where the site can reach. On one-way streets the two differ.
 - **It is not a service area or a routed travel time.** It is an approximation of shape, drawn
   to be read. Nobody agreed to it and no router produced it.
 - **It assumes the ground beside a street can be walked**, at walking speed, in any direction.

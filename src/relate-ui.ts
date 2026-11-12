@@ -229,7 +229,7 @@ export function openRelateConfig(view:RelateConfigView,esc:Escape):void{
           ?`<fieldset class="field" id="relate-also"><legend class="field-label">And also matched on</legend>`
             +shared.filter(c=>c!==draft.on).map(c=>`<label class="check"><input type="checkbox" value="${esc(c)}"`
               +`${draft.alsoOn.includes(c)?' checked':''}> ${esc(c)}</label>`).join('')
-            +'<p class="muted">Rows relate only where every chosen column agrees.</p></fieldset>'
+            +'</fieldset>'
           :'')
         +select('relate-bring','Bring across',bringable,draft.bring,'Connect both tables first')
         +`<div class="field"><label class="field-label" for="relate-bring-as">Bring it in as</label>`
@@ -240,22 +240,19 @@ export function openRelateConfig(view:RelateConfigView,esc:Escape):void{
         +`<option value="exact"${!draft.spelling&&draft.normalisation==='exact'?' selected':''}>Exactly, after trimming</option>`
         +`<option value="spelling"${draft.spelling?' selected':''}>Allowing for spelling, and dropping words</option></select></div>`
         +(draft.spelling
-          ?'<p class="muted">Each name is folded for case and punctuation, the words below are taken out as whole words, and a name '
-            +'that is not equal is matched to the one spelled closest, if it is close enough and no other is as close.</p>'
-            +`<div class="field"><label class="field-label" for="relate-drop-words">Words to drop, separated by commas</label>`
+          ?`<div class="field"><label class="field-label" for="relate-drop-words">Words to drop, separated by commas</label>`
             +`<input id="relate-drop-words" value="${esc(draft.dropWords)}" placeholder="for example District"></div>`
             +`<div class="field"><label class="field-label" for="relate-threshold">Spelling allowed: similarity at least (0.5 to 1)</label>`
             +`<input id="relate-threshold" inputmode="decimal" value="${esc(draft.threshold)}"></div>`
             +`<p class="muted">${DEFAULT_SPELLING_THRESHOLD} to start. Higher allows fewer differences; 1 allows none.</p>`
           :'')
         +'<h4>A date within a period <span class="muted">· optional</span></h4>'
-        +'<p class="muted">A row relates to the period whose start and end hold its date.</p>'
+        +''
         +select('relate-within-date','Date, in the first table',here,draft.within.date,'Connect the first table',{optional:true})
         +select('relate-within-start','Period start, in the second',there,draft.within.start,'Connect the second table',{optional:true})
         +select('relate-within-end','Period end, in the second',there,draft.within.end,'Connect the second table',{optional:true})
         +'<h4>Shifts, in days <span class="muted">· optional</span></h4>'
-        +'<p class="muted">The date is moved by each shift before it is matched: +3 takes a week\u2019s Sunday to its Wednesday, '
-        +'and a lag of k weeks is 7k fewer. Two or more shifts bring one column each.</p>'
+        +'<p class="muted">Each shift moves the date that many days before matching; two or more shifts bring one column each.</p>'
         +'<div id="relate-shifts">'
         +draft.shifts.map((s,i)=>`<div class="config-list-row"><label class="field-label" for="relate-shift-${i}">Shift ${i+1}</label>`
           +`<input id="relate-shift-${i}" data-shift="${i}" inputmode="numeric" value="${esc(s)}">`

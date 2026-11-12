@@ -13,8 +13,8 @@
   "ceilingRule": "It may be lowered freely and may never be raised. There is no slack and none is needed: this counts explanations that are too long, not characters, so a trim is recorded when it is made rather than banked against the next control.",
   "measuredAt": "2026-10-23",
   "concise": 240,
-  "overCeiling": 3,
-  "floor": 31,
+  "overCeiling": 1,
+  "floor": 46,
   "floorRule": "It may be raised freely and may never be lowered. The floor is the worst explanation currently in the Inspector, so a new one is never charged for being new -- only for reading worse than what is already there.",
   "score": {
     "what": "A proxy, and reported as one. It does not know whether an explanation is true, whether it explains the control a reader will take it to be about, or whether anyone understood it. Its job is the worst-first list it prints, which is where a human review should start. Treated as the review rather than a route to it, it is gamed by short bad sentences.",

@@ -57,16 +57,12 @@ export function openGroupConfig(view:GroupConfigView,esc:Escape):void{
             +'</fieldset>'
           :`<div class="field"><label class="field-label" for="group-by">Key columns to keep, one per line</label>`
             +`<textarea id="group-by" rows="3">${esc(draft.by.join('\n'))}</textarea></div>`)
-        +'<p class="muted">You name what is kept, not what is dropped: a column added to the file later is dropped, and the groups stay the same.</p>'
+        +''
         +`<div class="field"><label class="field-label" for="group-aggregate">Aggregate</label><select id="group-aggregate">`
         +AGGREGATES.map(a=>`<option value="${a}"${draft.aggregate===a?' selected':''}>${AGGREGATE_WORDS[a]}</option>`).join('')+'</select>'
-        +`<p class="muted">${draft.aggregate==='count'?'Counts rows, not people. Import one value column from a line list, or each person counts once per column.'
-          :draft.aggregate==='sum'?'Mean is not offered: averaging rates gives a number with no referent, and this step cannot tell a count from a rate.'
-          :'A group whose cells were all excluded has no minimum or maximum, and is reported as unknown, not zero.'}</p></div>`
+        +`${draft.aggregate==='count'?'<p class="muted">Counts rows, not people.</p>':''}</div>`
         +(draft.aggregate==='count'?''
-          :`<label class="check"><input type="checkbox" id="group-exclude-missing"${draft.excludeMissing?' checked':''}> Total what is present, excluding empty cells</label>`
-            +`<p class="muted">${draft.excludeMissing?'An excluded cell is not a zero. The receipt and the write-up say which groups and how many.'
-              :'Off, a group holding an empty cell totals to nothing known, because a value nobody recorded is not a zero.'}</p>`)
+          :`<label class="check"><input type="checkbox" id="group-exclude-missing"${draft.excludeMissing?' checked':''}> Total what is present, excluding empty cells</label>`)
         +(adds
           ?`<label class="check"><input type="checkbox" id="group-share"${draft.share?' checked':''}> Add each group's share, %</label>`
             +(draft.share&&draft.by.length

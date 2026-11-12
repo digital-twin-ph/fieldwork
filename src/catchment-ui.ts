@@ -40,23 +40,23 @@ function reachInspector(n:WorkflowNode<'reachable_nodes'>,
     +`<div class="field"><label class="field-label" for="catchment-travelMode">How people travel</label>`
     +`<select id="catchment-travelMode" data-catchment-param="travelMode">`
     +(['walking','cycling','driving','other'] as const).map(m=>`<option value="${m}" ${p.travelMode===m?'selected':''}>${m[0].toUpperCase()+m.slice(1)}</option>`).join('')
-    +`</select><p class="muted">The mode is checked against the speed and refuses an obvious mismatch. It certifies nothing about any actual traveller, and public transport is not a mode here because it follows routes and a timetable rather than the street network.</p></div>`
+    +`</select></div>`
     +`<div class="field"><label class="field-label" for="catchment-direction">Travel direction</label>`
     +`<select id="catchment-direction" data-catchment-param="direction">`
     +`<option value="outbound" ${p.direction==='outbound'?'selected':''}>From site (outbound)</option>`
     +`<option value="inbound" ${p.direction==='inbound'?'selected':''}>To site (inbound)</option>`
-    +`</select><p class="muted">Inbound reverses every edge, which answers who can reach the site rather than where it can get to. On one-way streets the two differ.</p></div>`
+    +`</select></div>`
     +`<div class="inspector-divider"></div><span class="inspector-section">Attaching origins to the network</span>`
-    +`<p class="muted">Read only for origins that arrive WITHOUT a network junction. A point snapped before this step keeps the junction and the distance it arrived with, nothing is projected, and these three are not used. Leave them unset in that case: the run says so by name if an unattached origin turns up.</p>`
+    +`<p class="muted">Used only for origins without a network junction; leave unset otherwise.</p>`
     +optional('zone','WGS84 UTM zone',p.zone,1,60)
     +`<div class="field"><label class="field-label" for="catchment-hemisphere">Hemisphere</label>`
     +`<select id="catchment-hemisphere" data-catchment-param="hemisphere" data-optional="true">`
     +`<option value="" ${p.hemisphere===undefined?'selected':''}>Not set</option>`
     +`<option value="north" ${p.hemisphere==='north'?'selected':''}>North</option>`
     +`<option value="south" ${p.hemisphere==='south'?'selected':''}>South</option>`
-    +`</select><p class="muted">Nearest junction is measured in metres: a degree of longitude is not a degree of latitude, and nearest-in-degrees picks the wrong junction away from the equator.</p></div>`
+    +`</select></div>`
     +optional('maxSnapM','Snap limit: mark an origin off-network past (metres)',p.maxSnapM,0,1000)
-    +`<p class="muted">Unset means no limit, and no origin is marked as having crossed unmapped ground. An origin beyond the limit is attached anyway and marked, never dropped: the sites furthest from a mapped road are where coverage is thinnest and where the question is usually being asked. The point is not moved \u2014 it keeps its own position and the distance to its junction is charged against the budget above.</p>`
+    +`<p class="muted">Unset means no limit. An origin beyond the limit is attached and marked, not dropped.</p>`
     ;
 }
 
@@ -80,12 +80,12 @@ export function catchmentInspector(n:WorkflowNode,esc:Escape,boundary?:Boundary,
       +reachInspector(n as WorkflowNode<'reachable_nodes'>,
         (key,label,value,min,max,step=1)=>`<div class="field"><label class="field-label" for="catchment-${key}">${label}</label><input id="catchment-${key}" data-catchment-param="${key}" type="number" min="${min}" max="${max}" step="${step}" value="${value}"></div>`);
   if(!Object.hasOwn(CATCHMENT_TYPES,n.type))return '';
-  let html=labelField(n.params.label||'',100,esc)+`<div class="notice">Local computation. Parameters and source links appear in N3 & evidence. Outputs are modeled catchments, not observed facility use.</div>`;
+  let html=labelField(n.params.label||'',100,esc);
   const number=(key:string,label:string,value:number,min:number,max:number,step=1)=>`<div class="field"><label class="field-label" for="catchment-${key}">${label}</label><input id="catchment-${key}" data-catchment-param="${key}" type="number" min="${min}" max="${max}" step="${step}" value="${value}"></div>`;
-  if(n.type==='voronoi'||n.type==='isochrone')html+=number('zone','Computation CRS: WGS84 UTM zone',n.params.zone,1,60)+`<label class="field-label" for="catchment-hemisphere">Hemisphere</label><select id="catchment-hemisphere" data-catchment-param="hemisphere"><option value="north" ${n.params.hemisphere==='north'?'selected':''}>North</option><option value="south" ${n.params.hemisphere==='south'?'selected':''}>South</option></select><p class="muted">Input/output: CRS84. Computation projects to the selected UTM CRS. Restricted to a local zone; no global distance claim.</p>`;
-  if(n.type==='isochrone')html+='<p class="muted">Large graphs are the limit here: about 5,250 network nodes is where this has been measured to strain memory. It runs in a worker, so too large a graph fails this step rather than the tab.</p>'
-    +`<label class="field-label" for="catchment-thresholds">Time thresholds (minutes, comma separated)</label><input id="catchment-thresholds" data-catchment-param="thresholds" value="${(n.params.thresholds||[]).join(', ')}"><small>Up to six increasing values. Leave empty to use the single travel time below.</small><label><input type="checkbox" data-catchment-param="fillHoles" ${n.params.fillHoles?'checked':''}> Fill interior holes (illustrative regions)</label><p class="muted">Infill can include locations not reachable on the network. Keep off for corridor coverage.</p>`+number('minutes','Travel time (minutes)',n.params.minutes,.1,60,.1)+number('speedMPerMin','Walking speed (metres/minute)',n.params.speedMPerMin,1,200)+number('bufferM','Final walk off the street (metres)',n.params.bufferM,1,100)+number('maxSnapM','Snap limit: mark a route off-network past (metres)',n.params.maxSnapM,0,1000)+`<label class="field-label" for="catchment-direction">Travel direction</label><select id="catchment-direction" data-catchment-param="direction"><option value="outbound" ${n.params.direction==='outbound'?'selected':''}>From site (outbound)</option><option value="inbound" ${n.params.direction==='inbound'?'selected':''}>To site (inbound)</option></select><p class="muted">All three legs are charged against the travel time: the walk onto the network, the streets, and the walk off. A site past the snap limit is routed anyway and marked; one whose walk alone spends the budget gets no catchment.</p>`;
-  if(n.type==='summarize_points_to_polygon')html+=`<label class="field-label" for="catchment-boundary">Points on polygon boundary</label><select id="catchment-boundary" data-catchment-param="boundary"><option value="include" ${n.params.boundary==='include'?'selected':''}>Include in every matching polygon</option><option value="exclude" ${n.params.boundary==='exclude'?'selected':''}>Exclude boundary points</option></select><label class="field-label" for="catchment-valueField">Optional numeric field to sum</label><input id="catchment-valueField" data-catchment-param="valueField" maxlength="100" value="${esc(n.params.valueField)}"><p class="muted">Location count is always retained. Empty field: chart counts locations. Enter DEATHS: chart sums deaths. Missing/non-numeric values are counted separately. Multiple memberships are reported, never silently deduplicated.</p>`;
+  if(n.type==='voronoi'||n.type==='isochrone')html+=number('zone','Computation CRS: WGS84 UTM zone',n.params.zone,1,60)+`<label class="field-label" for="catchment-hemisphere">Hemisphere</label><select id="catchment-hemisphere" data-catchment-param="hemisphere"><option value="north" ${n.params.hemisphere==='north'?'selected':''}>North</option><option value="south" ${n.params.hemisphere==='south'?'selected':''}>South</option></select>`;
+  if(n.type==='isochrone')html+=''
+    +`<label class="field-label" for="catchment-thresholds">Time thresholds (minutes, comma separated)</label><input id="catchment-thresholds" data-catchment-param="thresholds" value="${(n.params.thresholds||[]).join(', ')}"><small>Up to six increasing values. Leave empty to use the single travel time below.</small><label><input type="checkbox" data-catchment-param="fillHoles" ${n.params.fillHoles?'checked':''}> Fill interior holes (illustrative regions)</label>`+number('minutes','Travel time (minutes)',n.params.minutes,.1,60,.1)+number('speedMPerMin','Walking speed (metres/minute)',n.params.speedMPerMin,1,200)+number('bufferM','Final walk off the street (metres)',n.params.bufferM,1,100)+number('maxSnapM','Snap limit: mark a route off-network past (metres)',n.params.maxSnapM,0,1000)+`<label class="field-label" for="catchment-direction">Travel direction</label><select id="catchment-direction" data-catchment-param="direction"><option value="outbound" ${n.params.direction==='outbound'?'selected':''}>From site (outbound)</option><option value="inbound" ${n.params.direction==='inbound'?'selected':''}>To site (inbound)</option></select>`;
+  if(n.type==='summarize_points_to_polygon')html+=`<label class="field-label" for="catchment-boundary">Points on polygon boundary</label><select id="catchment-boundary" data-catchment-param="boundary"><option value="include" ${n.params.boundary==='include'?'selected':''}>Include in every matching polygon</option><option value="exclude" ${n.params.boundary==='exclude'?'selected':''}>Exclude boundary points</option></select><label class="field-label" for="catchment-valueField">Optional numeric field to sum</label><input id="catchment-valueField" data-catchment-param="valueField" maxlength="100" value="${esc(n.params.valueField)}"><p class="muted">Leave empty to count locations. Missing or non-numeric values are counted separately.</p>`;
   if(n.type==='network_input')html+=`<label class="field-label" for="network-input-method">Input method</label><select id="network-input-method" data-catchment-param="inputMethod"><option value="file" ${n.params.inputMethod!=='osm'&&n.params.inputMethod!=='extract'?'selected':''}>Upload network file</option><option value="osm" ${n.params.inputMethod==='osm'?'selected':''}>Download from OpenStreetMap</option><option value="extract" ${n.params.inputMethod==='extract'?'selected':''}>Read a published .osm.pbf extract (Geofabrik)</option></select>`+(n.params.inputMethod==='extract'?`<label class="field-label" for="network-travel-mode">Travel mode</label><select id="network-travel-mode" data-catchment-param="travelMode">`
     +`<option value="walking" ${(n.params.travelMode??defaultTravelMode(boundaryID))!=='driving'?'selected':''}>Walking</option>`
     +`<option value="driving" ${(n.params.travelMode??defaultTravelMode(boundaryID))==='driving'?'selected':''}>Driving</option>`
@@ -98,9 +98,7 @@ export function catchmentInspector(n:WorkflowNode,esc:Escape,boundary?:Boundary,
     // the practitioner's computer for every province after this one.
     +`<label class="field-label" for="network-extract">Published .osm.pbf extract</label>`
     +`<input id="network-extract" type="file" accept=".pbf,.osm.pbf,application/octet-stream">`
-    +`<p class="muted">Any published extract, downloaded here or given to you. Clipped to the study `
-    +`area; the file stays where it is. Measured to ${EXTRACT_MEASURED_NODES.toLocaleString('en')} `
-    +`junctions.</p>`
+    +`<p class="muted">A published extract, downloaded here or given to you, clipped to the study area.</p>`
     +(()=>{
       const regions=boundary?extractsFor(boundary):[];
       if(!regions.length)return boundary?`<p class="muted">No catalogued extract covers this area.</p>`:'';
@@ -174,14 +172,14 @@ export function catchmentInspector(n:WorkflowNode,esc:Escape,boundary?:Boundary,
     // Asked only when the practitioner asks, because every check is a request to a donated service.
     html+='<div class="field"><button class="button" id="check-endpoints">Check endpoint status</button>'
       +'<div id="endpoint-status"></div>'
-      +'<p class="muted">Reads each instance\'s own status: free slots, and when the next one frees.</p></div>';
+      +'</div>';
     // WHICH ONE SERVED the graph that is saved, which is provenance and not decoration.
     const held=n.params.data?.provenance as Record<string,unknown>|undefined;
     if(held?.travelMode)html+=`<p class="muted">Saved graph was downloaded for <strong>${esc(String(held.travelMode))}</strong>.</p>`;
     if(held)html+=`<p class="muted">Saved graph: ${held.fromCache
       ?`served from this device's cache, first retrieved ${esc(String(held.retrievedAt??'at an unrecorded time'))}`
       :`${esc(String(held.attribution??'OpenStreetMap contributors'))}, retrieved ${esc(String(held.retrievedAt??'at an unrecorded time'))}`}.</p>`;
-    html+='<p id="network-download-status" role="status"></p><p class="muted">One OSM request at a time; at least 60 seconds between attempts. No automatic retries. Saved networks remain usable offline. Changing the boundary or buffer does not expand a saved graph.</p>';
+    html+='<p id="network-download-status" role="status"></p><p class="muted">One OSM request at a time, at least 60 seconds apart. Changing the boundary or buffer does not expand a saved graph.</p>';
   }
   return html;
 }

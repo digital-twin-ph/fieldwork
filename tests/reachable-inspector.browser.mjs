@@ -1,5 +1,6 @@
 import {test,expect} from './fixtures.mjs';
 import {collectPageErrors} from './page-errors.mjs';
+import fs from 'node:fs';
 
 // `reachable_nodes` had no Inspector panel at all until 2026-10-17. It is addable,
 // implemented and tested, and every parameter it declares could only be set by editing the
@@ -30,7 +31,11 @@ test('the reachability step can be configured, and its optional frame can be uns
 
   // The three that are optional, and the panel saying when they are read.
   await expect(inspector).toContainText('Attaching origins to the network');
-  await expect(inspector).toContainText('A point snapped before this step keeps the junction');
+  await expect(inspector).toContainText('Used only for origins without a network junction');
+  // Why a snapped point skips these settings is explanation; it moved to the manual on 2026-11-11.
+  await expect(inspector).not.toContainText('keeps the junction');
+  expect(fs.readFileSync(new URL('../docs/widgets/isochrone.md',import.meta.url),'utf8'))
+    .toContain('keeps the junction and the distance it arrived');
   const zone=inspector.locator('#catchment-zone'),hemisphere=inspector.locator('#catchment-hemisphere');
   await expect(zone).toHaveValue('');
   await expect(hemisphere).toHaveValue('');

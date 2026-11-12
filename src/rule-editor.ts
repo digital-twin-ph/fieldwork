@@ -331,7 +331,7 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
       return [...columns.filter(dated),...columns.filter(c=>!dated(c))].map(c=>({column:c,date:dated(c)}));
     };
     const settingsMarkup=()=>`<section class="rule-order"><h3>Settings</h3>`
-      +`<p class="description">A number the rules compare against, such as a fever threshold, set on this step so it can be changed without rewriting a rule. It states its unit, which must be the unit of what it is compared with.</p>`
+      +`<p class="description">A number the rules compare against. State its unit: the unit of what it is compared with.</p>`
       +settings.map((setting,i)=>`<div class="rule-condition">`
         +`<input data-setting="${i}" data-setting-part="name" aria-label="Setting name" value="${esc(setting.name)}" placeholder="fever">`
         +`<span class="rule-is">is</span>`
@@ -342,7 +342,7 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
     const orderMarkup=()=>{
       const columns=sortColumns();
       return `<section class="rule-order"><h3>Before the rules: sort the records</h3>`
-        +`<p class="description">Needed by a rule that reads the previous row. The file's own order is not used.</p>`
+        +`<p class="description">Needed by a rule that reads the previous row.</p>`
         +`<div class="rule-condition"><label class="field-label" for="rule-order-by">Sort by</label>`
         +`<select id="rule-order-by" data-order="by"><option value="" ${order?.by?'':'selected'}>Not sorted</option>`
         +columns.map(c=>`<option value="${esc(c.column)}" ${order?.by===c.column?'selected':''}>${esc(c.column)}${c.date?' (dates)':''}</option>`).join('')
@@ -418,7 +418,7 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
             +([['number','number'],['date','date, year-month-day'],['term','category'],['boolean','true or false']] as const)
               .map(([k,w])=>`<option value="${k}"${f.kind===k?' selected':''}>${w}</option>`).join('')+`</select></td>`
             +`<td>${f.kind==='number'?`<input data-field-unit="${i}" value="${esc(f.unitLabel??'')}" placeholder="minutes" aria-label="Unit for ${esc(f.attribute)}">`:'—'}</td></tr>`).join('')
-          +`</tbody></table><p class="description">Nothing is guessed from a column name. A numeric column the rules read needs its unit.</p>`
+          +`</tbody></table><p class="description">A numeric column the rules read needs its unit.</p>`
         :options?.candidates?.length
           ?`<p class="description">The connected records carry ${options.candidates.length} column${options.candidates.length===1?'':'s'}: ${esc(options.candidates.map(c=>c.attribute).join(', '))}.</p>`
             +`<button class="button" id="use-columns" data-editor-add>Use these ${options.candidates.length} column${options.candidates.length===1?'':'s'}</button>`
@@ -509,14 +509,14 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
         +(review?'':fieldsMarkup())
         +(review&&!settings.length?'':settingsMarkup())
         +(review&&!order?'':orderMarkup())
-        +`<p class="description">Every rule is checked against every record. Rules that disagree must not both match a record. A column no rule reached for a record is left empty, or takes its otherwise.</p>`
+        +`<p class="description">Rules that disagree must not both match a record.</p>`
         +rules.map((rule,r)=>ruleCard(rule,r)).join('')
         +(review?'':`<div class="rule-editor-adds"><button class="button" id="rule-editor-add" data-editor-add>+ Add a rule</button>`
           +`<button class="button" id="rule-editor-add-every" data-editor-add>+ Add a value computed for every record</button></div>`)
         +otherwiseMarkup()
         +(evaluatedDirectly({rules:rules as never,otherwise})
-          ?`<p class="muted">${rules.length} rule${rules.length===1?'':'s'}, evaluated directly rather than compiled to N3, because ${otherwise.length?'a column has an otherwise':'a rule computes a value'}.</p>`
-          :`<p class="muted">${count} of ${RULE_CEILING} rules once compiled. Every alternative becomes a rule of its own, so alternatives multiply where conditions add.</p>`);
+          ?`<p class="muted">${rules.length} rule${rules.length===1?'':'s'}.</p>`
+          :`<p class="muted">${count} of ${RULE_CEILING} rules once compiled.</p>`);
       // DECISIONS: what the rules left for the person, named, not settled by the order of the rules.
       const conflicts=evaluation?evaluation.records.flatMap((o,i)=>o.conflicts.length?[i]:[]):[];
       const labelOf=(i:number)=>options?.preview?.records[i]?.label??`Record ${i+1}`;

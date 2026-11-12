@@ -101,7 +101,8 @@ import {TYPES,validateWorkflow,validateGeoJSON,executionPlan,executeWorkflow,nod
 import {suggestUTM,utmScaleFactor,workflowPositions} from './utm.js';
 import {mountCanvas} from './canvas.js';
 import {DATASET,OLD_TYPES,oldNalediWorkflow,tierLabel} from './old-naledi.js';
-import {oldInspector,oldEvidence,resultTable,oldMap,mapFrame,distanceText} from './old-naledi-ui.js';
+import {oldInspector,oldEvidence,resultTable,distanceText} from './old-naledi-ui.js';
+import {staticBoundaryMap,staticMapFrame} from './static-map.js';
 import {mapLayerList,membersOfPolygons,portIsDrawn,LAYER_LABEL_LIMIT,type MapLayer} from './map-layer-list.js';
 import {openPolygonReview} from './polygon-review.js';
 import {notesPanel,openNoteDialog,noteKey} from './notes-ui.js';
@@ -6177,7 +6178,7 @@ function renderMap(){
   }
   if(result?.pointTable){svg.innerHTML='';return;}
   if(result?.kind==='study-area'){svg.innerHTML=areaSvg(required(result.boundary),result.label);return;}
-  if(result?.boundary){svg.innerHTML=oldMap(result,selected,esc,statusLabel,
+  if(result?.boundary){svg.innerHTML=staticBoundaryMap(result,selected,esc,statusLabel,
     workflow.nodes.find((x):x is WorkflowNode<'map_output'>=>x.id===result.nodeId&&x.type==='map_output')?.params.labelField||{});
     // GROUND UNDER A STATIC FIGURE. Experiment 137. Choosing a basemap used to switch the map to
     // the interactive presentation, "the only one that draws tiles", so the figure this project
@@ -6188,7 +6189,7 @@ function renderMap(){
     // Drawn after the fact and inserted underneath, because fetching is asynchronous and the map
     // must appear immediately. If the view has moved on by the time the tiles arrive they are
     // dropped: a late basemap under the wrong figure is worse than none.
-    void drawStaticBasemap(result,svg,mapFrame(result));
+    void drawStaticBasemap(result,svg,staticMapFrame(result));
     svg.querySelectorAll<SVGElement>('[data-layer-link]').forEach(el=>{el.style.display=hiddenMapLayers.get(result.nodeId)?.has(el.dataset.layerLink!)?'none':'';});
     svg.querySelectorAll<HTMLElement & SVGElement>('[data-place]').forEach(el=>{el.style.display=hiddenMapLayers.get(result.nodeId)?.has(el.dataset.layer!)?'none':'';el.onclick=()=>selectResult(el.dataset.place!);el.onkeydown=e=>{if(e.key==='Enter')selectResult(el.dataset.place!);};});return;}
   if(!points.length){svg.innerHTML='<text x="425" y="140" text-anchor="middle">Run the workflow to map its local results.</text>';return;}
@@ -7005,14 +7006,14 @@ function renderNotesView(){
           :polygonSvg(output.polygons,esc))
         // No selection: a highlighted node is a state of the canvas and not a fact about the
         // figure, and a published map that dimmed everything but one record would be wrong.
-        :output.boundary?oldMap(output,undefined,esc,statusLabel,node.params.labelField||{}):null;
+        :output.boundary?staticBoundaryMap(output,undefined,esc,statusLabel,node.params.labelField||{}):null;
       if(!content)return null;
       const plotted=banded?catchmentFrame(output.polygons!,output.contextPoints):null;
       // THE FRAME THE CONTENT WAS DRAWN IN, per renderer, because each projects its own extent:
       // the walking-time plot is 850x650 and the rest are 850x295, and a plate placed from the
       // wrong frame is a plate in the wrong place. The same three-way choice `renderMap` makes.
       const frame=plotted||(output.polygons?polygonFrame(output.polygons)
-        :output.boundary?mapFrame(output):null);
+        :output.boundary?staticMapFrame(output):null);
       const plate=groundImageFor(node.id,held.workflow);
       // SWITCHED OFF MEANS NOT DRAWN, read from the setting the workflow KEEPS. The checkboxes
       // under the live map hold their state in `hiddenMapLayers`, which is memory lost on

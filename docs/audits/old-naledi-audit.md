@@ -70,6 +70,14 @@ Also found: Hagelloch's authored rules carry `outreach-criteria`'s identifier as
 written in this workflow" (`src/hagelloch-example.ts`). Rules written in a workflow should not borrow another
 ruleset's identity; it goes when `outreach-criteria` does.
 
+## And the decisions they produced
+
+Found while moving the tests off the heat example, 2026-11-11: every producer of the `decisions` port type is retired
+or retires here (`policy`, `access_policy`, `slr_threshold_comparison`, `facility_audit`); the rulesets that remain
+output tables. Map, Table and Chart kept a `decisions` port and decision-drawing modes (Review, NoFlag, Unknown) that
+nothing could feed. **Decided** (the practitioner, choosing from two): **removed in this pass**, the port type and the
+three modes, with the tests that exercised them through the heat workflow.
+
 ## What a saved workflow meets
 
 A workflow saved with `facilities`, `facility_audit` or `travel_time` is refused by name, with what replaces each: Keep

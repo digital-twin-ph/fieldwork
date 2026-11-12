@@ -11,7 +11,7 @@
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {oldMap} from '../build/old-naledi-ui.js';
+import {staticBoundaryMap as oldMap} from '../build/static-map.js';
 
 const esc=v=>String(v).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const AREA={type:'Polygon',coordinates:[[[-0.24,51.41],[-0.01,51.41],[-0.01,51.52],[-0.24,51.52],[-0.24,51.41]]]};

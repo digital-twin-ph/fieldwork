@@ -706,7 +706,7 @@
       "id": "urn:fieldwork:example:sea-level-rise-philippines",
       "title": "Sea-level rise at Manila’s health facilities",
       "repository": "https://github.com/digital-twin-ph/example-2026-sea-level-rise-philippines",
-      "commit": "89f20e64ab322759ce2c07520e258f9a511bdd5a",
+      "commit": "08b2394ff38c1625ded70021d737d321e86ecf97",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2026-sea-level-rise-philippines",
       "licence": {
         "data": "Projections and sites CC BY 4.0, with three required citations; DeltaDTM v1.1 and DTU25MSS subsets CC BY 4.0; facilities retrieved from OpenStreetMap (ODbL 1.0) by the workflows; the study area, diagram, manual and scripts CC0 1.0",
@@ -741,8 +741,8 @@
         },
         {
           "path": "manual.json",
-          "sha256": "257e0d41211383d36bee3e1897d3a0185b71669292a611e6df75a8477d86ed9a",
-          "bytes": 58769
+          "sha256": "aeaf9f8363dad65f5c857087a0c68d624e99a3bf2c45a74c167ba6b941d14af3",
+          "bytes": 58826
         },
         {
           "path": "README.md",
@@ -791,8 +791,8 @@
         },
         {
           "path": "scripts/make-manual.mjs",
-          "sha256": "9e040292773915e49d07093d17e92e080a095e680ef0f75a7c5d63246a365c78",
-          "bytes": 31344
+          "sha256": "742242918c5435f8cfc9eddbb3b4c94d984a97c7a1c3800eac521e41d0540db3",
+          "bytes": 31370
         },
         {
           "path": "scripts/make_grid_subsets.py",

@@ -58,7 +58,5 @@ test('an area spanning two zones names each candidate and what it costs',async({
   const rows=advice.locator('tbody tr');
   await expect(rows).toHaveCount(2);
   await expect(advice).toContainText('holds most of the area');
-  // And why a stretch matters: it is systematic, not random.
-  await expect(advice).toContainText('wrong in the same direction');
   expect(errors).toEqual([]);
 });

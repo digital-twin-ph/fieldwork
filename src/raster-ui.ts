@@ -59,7 +59,7 @@ export function openRasterEditor(boundary:Boundary,onSave:(asset:RasterAsset)=>b
             +`↓ Download the whole file · ${esc(nameOf(url))}${urlBytes?` · ${(urlBytes/1e6).toFixed(1)} MB`:''}</a>`
             +`<p class="muted">From ${esc(new URL(url).hostname)}${urlBytes?'':', size not stated by the host'}. Keep it on this laptop and choose it above to work without the connection; it is read in parts there too.</p>`:'')
           +`</div></details>`
-          +`<div class="field"><label for="raster-padding" class="field-label">Extra source coverage</label><select id="raster-padding"${existing&&!picked()?' disabled':''}>`
+          +`<div class="field"><label for="raster-padding" class="field-label">Extra source coverage (when preparing a file)</label><select id="raster-padding"${existing&&!picked()?' disabled':''}>`
           +`<option value="0"${d.padding===0?' selected':''}>None</option><option value="1"${d.padding===1?' selected':''}>One pixel around the study area</option></select>`
           +`<small>One cell more, for a small clipping margin.</small></div>`)
         +card('Source metadata and citation',

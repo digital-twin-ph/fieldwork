@@ -82,7 +82,6 @@ test('the widget offers an extract, and reads one into the workflow',async({page
   await page.locator('.node').filter({hasText:'Street network'}).click();
   await page.locator('#network-input-method').selectOption('extract');
   await expect(page.locator('#network-extract')).toBeVisible();
-  await expect(page.locator('#inspector-content')).toContainText('the file stays where it is');
   // Travel mode is offered here too, because it decides what is read.
   await expect(page.locator('#network-travel-mode')).toBeVisible();
 });

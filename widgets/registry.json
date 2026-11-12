@@ -1596,7 +1596,7 @@
     {
       "id": "urn:fieldwork:widget:sample_raster",
       "nodeType": "sample_raster",
-      "currentVersion": "0.4.0",
+      "currentVersion": "0.4.1",
       "releases": [
         {
           "version": "0.1.0",
@@ -1617,6 +1617,11 @@
           "version": "0.4.0",
           "path": "widgets/releases/sample_raster/0.4.0.json",
           "sha256": "bcfcddfe5d03825cb58b038d86ca2d5fff50b41690890c380b459b908c65dcb3"
+        },
+        {
+          "version": "0.4.1",
+          "path": "widgets/releases/sample_raster/0.4.1.json",
+          "sha256": "b715c80dbac9373e3c2407848b6c1badc35cf1e470371aa0602827d8db27fd21"
         }
       ]
     },

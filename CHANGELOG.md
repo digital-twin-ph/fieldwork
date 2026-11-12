@@ -3,7 +3,16 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## 0.101.0 — In development
+## 0.101.1 — 2026-11-12
+
+- **Sample a raster names its ports on the canvas**: Points, Areas, Study area, Raster and Satellite files, and its
+  output by what it gives, Points → or Areas →, where it showed five unnamed dots. A single point port now reads
+  "Points" on any widget, not "Points 1". Sample a raster 0.4.1.
+- **Fixed: 0.101.0's checks stopped before its browser tests on GitHub**, because the MERS lab fixture's builder needs
+  the MERS repository, which GitHub's runner does not check out. It is now named and skipped there, as other builders
+  needing a local copy are.
+
+## 0.101.0 — 2026-11-12
 
 - **Every number in a step's sentence comes from its result, and the gate checks it.** Each worked example, the built-in
   ones and those in their own repositories, is run and every number its steps' sentences state is looked for among that

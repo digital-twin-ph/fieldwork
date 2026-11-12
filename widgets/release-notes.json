@@ -742,12 +742,12 @@
    "migrationFrom": []
   },
   "sample_raster": {
-   "version": "0.4.0",
-   "released": "2026-11-11",
+   "version": "0.4.1",
+   "released": "2026-11-12",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Over areas, a choice in Configure… to also give each area's mean, smallest and largest cell value, of the cells with a value, as the columns cell_mean, cell_min and cell_max. Off by default; the total and its counts are unchanged. The practitioner, 2026-11-11: \"Let's add it anyway and have a checkbox to display it as an option for the output.\" A mean of cells is per cell, not per square kilometre, which the manual says."
+     "kind": "patch",
+     "description": "On the canvas each input is a named row, Points, Areas, Study area, Raster and Satellite files, and the output is named for what it gives, Points → at points and Areas → over areas, as Map, Table, Chart and Raster input draw theirs; it showed five unnamed dots (the practitioner, 2026-11-12: \"Sample a raster has not standardized its ports yet\")."
     }
    ],
    "breaking": false,

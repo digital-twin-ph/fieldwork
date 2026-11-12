@@ -49,7 +49,7 @@ test('Table draws what is connected and one port to add another, on the canvas a
   await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')).edges
     .filter(e=>e.to==='table').map(e=>`${e.from}:${e.port}`).sort())).toEqual(['deaths:table','pumps:points']);
   // Both results on this canvas are connected, so there is nothing left to add, and the add port goes, as Map's does.
-  await expect(node.locator('.node-port-row')).toHaveText(['Points 1','Tabular data']);
+  await expect(node.locator('.node-port-row')).toHaveText(['Points','Tabular data']);
   await expect(inspector.locator('#table-add-input')).toHaveCount(0);
   expect(errors).toEqual([]);
 });

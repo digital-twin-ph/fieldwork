@@ -22,11 +22,15 @@ import '../flow.css';
 function OperationNode({id,data,selected}:NodeProps<OperationFlowNode>) {
   const t=data.definition;
   const role=t.group==='Sources'?'input':t.group==='Outputs'?'output':'processing';
-  const spatialPorts=['map_output','table_output','chart_output','coverage_check','raster_input','clip_raster'].includes(data.type);
+  // NAMED PORT ROWS: each input a row with its name, and the output named. Sample a raster joined 2026-11-12 (the practitioner:
+  // "Sample a raster has not standardized its ports yet"): five unnamed dots, of which one or two are used at a time.
+  const spatialPorts=['map_output','table_output','chart_output','coverage_check','raster_input','clip_raster','sample_raster'].includes(data.type);
   const portLabel=(port:string)=>port==='context'?'Context points':port==='polygons'?'Catchment polygons':port==='network'?'Street network':port==='sites'?'Sites':port==='raster'?(data.type==='map_output'&&t.inputs.length>1?'Or: Raster':'Raster'):port==='decisions'?'Reasoning result':port==='area'?'Study area':port==='coverage'?'Or: Coverage result':port==='table'?'Tabular data':port==='ground'?'Map image (ground)'
     // NAMED, NEVER "Points undefined" (2026-11-10, a georeferenced map image on the ground port): a port this list does not
     // know is shown by its own name, and only a numbered point port is called Points.
-    :/^points(_\d+)?$/.test(port)?`Points ${port==='points'?'1':port.split('_')[1]}`:port.charAt(0).toUpperCase()+port.slice(1).replace(/[-_]/g,' ');
+    :port==='files'?'Satellite files'
+    // Numbered only where the node has several point ports, as the map has.
+    :/^points(_\d+)?$/.test(port)?(t.inputs.some(([p])=>p==='points_2')?`Points ${port==='points'?'1':port.split('_')[1]}`:'Points'):port.charAt(0).toUpperCase()+port.slice(1).replace(/[-_]/g,' ');
   // A map shows the layers it draws. Everything else keeps showing every port, because for those
   // widgets the ports ARE the thing: a coverage check with a hidden area port tells a practitioner
   // nothing about what it needs.
@@ -47,6 +51,9 @@ function OperationNode({id,data,selected}:NodeProps<OperationFlowNode>) {
   // they are what the receipt and the contract are written in terms of -- and the canvas stops
   // being where a practitioner meets them.
   // Table too (2026-11-09): what it shows, and one port to connect more.
+  // THE OUTPUT NAMED BY WHAT IT CARRIES: Sample a raster gives points at points and areas over areas.
+  const outputLabel=({raster:'Raster',points:'Points',polygons:'Areas','coverage-check':'Coverage result',table:'Table',area:'Study area'} as Record<string,string>)[String(t.output)]
+    ??String(t.output).charAt(0).toUpperCase()+String(t.output).slice(1).replace(/[-_]/g,' ');
   const layerNode=data.type==='map_output'||data.type==='table_output';
   const shownPorts=layerNode?t.inputs.filter(([port])=>connected.has(port)):t.inputs;
   const canAddLayer=layerNode&&[...available].some(port=>!connected.has(port));
@@ -77,7 +84,7 @@ function OperationNode({id,data,selected}:NodeProps<OperationFlowNode>) {
           aria-label={`${data.label}: ${data.type==='table_output'?'add an input':'add a layer'}`}/>
         <span>{data.type==='table_output'?'+ Add an input':'+ Add a layer'}</span>
       </div>}
-      {t.output&&<div className="node-port-row node-output-row"><span>{t.output==='raster'?'Raster →':'Coverage result →'}</span><Handle type="source" position={Position.Right} id="out" style={{top:'50%'}} title={t.output==='raster'?'Raster output':'Coverage result: study area, points and review decisions'} aria-label={`${data.label}: output`}/></div>}
+      {t.output&&<div className="node-port-row node-output-row"><span>{outputLabel} →</span><Handle type="source" position={Position.Right} id="out" style={{top:'50%'}} title={t.output==='coverage-check'?'Coverage result: study area, points and review decisions':`${outputLabel} output`} aria-label={`${data.label}: output`}/></div>}
     </div>}
     {data.alert&&<div className="node-alert" role="alert">
       <span title={data.alert}>⚠ {data.alert}</span>

@@ -1369,6 +1369,9 @@ const builders={
     // it: only the commit, each file's path and digest, and Fieldwork's results. The check reads the files at the commit.
     const pin=JSON.parse(await readFile(new URL('../widgets/examples.json',import.meta.url),'utf8')).examples.find(e=>e.id==='urn:fieldwork:example:mers-korea-2015');
     const repo=new URL('../../example-2015-mers-korea/',import.meta.url).pathname;
+    const {existsSync}=await import('node:fs');
+    // CI checks out some examples and not this one: said in the words the dry run names and skips.
+    if(!existsSync(repo))throw new Error('example-2015-mers-korea is not on this machine beside this repository.');
     const {execFileSync}=await import('node:child_process');
     const at=path=>execFileSync('git',['-C',repo,'show',`${pin.commit}:${path}`],{maxBuffer:1<<30});
     const doc=JSON.parse(gunzipSync(at('fieldwork-project.json.gz')));

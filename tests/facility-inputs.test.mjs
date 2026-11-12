@@ -16,9 +16,9 @@ const legacy=JSON.parse(await readFile(new URL('./fixtures/old-naledi-source-202
  */
 test('a workflow holding a non-replaceable retired widget refuses to open, naming it',()=>{
   const original=structuredClone(legacy);
-  // Diagnostic evidence is named first since 2026-11-11: it migrated to Apply ruleset with nb06-evidence until that
-  // ruleset retired, and is refused now, ahead of Facility access in this file.
-  assert.throws(()=>validateWorkflow(legacy),/Diagnostic evidence, which was retired and cannot be replaced/);
+  // Whichever of this file's retired widgets comes first is named: since 2026-11-11 that is no longer Facility access,
+  // because Select nearby facilities and Diagnostic evidence are refused too (docs/audits/old-naledi-audit.md).
+  assert.throws(()=>validateWorkflow(legacy),/(Select nearby facilities|Diagnostic evidence|Facility access), which was retired and cannot be replaced/);
   assert.deepEqual(legacy,original,'and the refusal does not mutate what it refused');
 });
 

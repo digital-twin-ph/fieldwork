@@ -5,7 +5,7 @@
     {
       "id": "urn:fieldwork:widget:access",
       "nodeType": "access",
-      "currentVersion": "0.2.0",
+      "currentVersion": "0.3.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -21,13 +21,18 @@
           "version": "0.2.0",
           "path": "widgets/releases/access/0.2.0.json",
           "sha256": "7dcc0c74ec9f90a3346985c54980bf3ec30ca2c4aa3cfaa5f7d83a8721553707"
+        },
+        {
+          "version": "0.3.0",
+          "path": "widgets/releases/access/0.3.0.json",
+          "sha256": "6912a2fdc4e71253dacdac46c2f9aac6811a9bc9546f1ebe823021477047e21e"
         }
       ]
     },
     {
       "id": "urn:fieldwork:widget:access_policy",
       "nodeType": "access_policy",
-      "currentVersion": "0.2.1",
+      "currentVersion": "0.3.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -43,6 +48,11 @@
           "version": "0.2.1",
           "path": "widgets/releases/access_policy/0.2.1.json",
           "sha256": "ca4c5e0ea08e66f57bc798034bb8d59339df7d1ea72befbc6bac63062ebe6d8a"
+        },
+        {
+          "version": "0.3.0",
+          "path": "widgets/releases/access_policy/0.3.0.json",
+          "sha256": "7345231330f294fb29be51f30866d086aa4240b184c9271f6704a683d5aced94"
         }
       ]
     },
@@ -91,7 +101,7 @@
     {
       "id": "urn:fieldwork:widget:apply_ruleset",
       "nodeType": "apply_ruleset",
-      "currentVersion": "0.10.0",
+      "currentVersion": "0.11.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -147,6 +157,11 @@
           "version": "0.10.0",
           "path": "widgets/releases/apply_ruleset/0.10.0.json",
           "sha256": "1cb071801d90657892bb6a02a97c2c50635a45427e221d60c5fa8e12403837c0"
+        },
+        {
+          "version": "0.11.0",
+          "path": "widgets/releases/apply_ruleset/0.11.0.json",
+          "sha256": "d40a0ccdc55fd52127f55afb8fef949a964e9321d389f16fa8e984b09052dc3f"
         }
       ]
     },
@@ -226,7 +241,7 @@
     {
       "id": "urn:fieldwork:widget:chart_output",
       "nodeType": "chart_output",
-      "currentVersion": "0.13.0",
+      "currentVersion": "0.14.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -297,6 +312,11 @@
           "version": "0.13.0",
           "path": "widgets/releases/chart_output/0.13.0.json",
           "sha256": "772722f731935b7bed9d860ec551ec1a0bbcbcb25f94c2a6e6a61747a0528966"
+        },
+        {
+          "version": "0.14.0",
+          "path": "widgets/releases/chart_output/0.14.0.json",
+          "sha256": "e402d60e7c886dda387755dec3cb1cd9f7093dfe1acd73717f7dae6bab584528"
         }
       ]
     },
@@ -466,7 +486,7 @@
     {
       "id": "urn:fieldwork:widget:facilities",
       "nodeType": "facilities",
-      "currentVersion": "1.0.0",
+      "currentVersion": "2.0.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -477,13 +497,18 @@
           "version": "1.0.0",
           "path": "widgets/releases/facilities/1.0.0.json",
           "sha256": "eb00060c04c677861289221e13da213b8864e43cc305f3c00307574fcf4480e2"
+        },
+        {
+          "version": "2.0.0",
+          "path": "widgets/releases/facilities/2.0.0.json",
+          "sha256": "df15a7a29f96e60aa081a01d8c2feefd0f827515c311bfa6eb8c7531b229a506"
         }
       ]
     },
     {
       "id": "urn:fieldwork:widget:facility_audit",
       "nodeType": "facility_audit",
-      "currentVersion": "0.2.0",
+      "currentVersion": "1.0.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -494,6 +519,11 @@
           "version": "0.2.0",
           "path": "widgets/releases/facility_audit/0.2.0.json",
           "sha256": "d7780e4c9c56bdff8942da3c9654719954287cd62c92c788c1709906e8429b8b"
+        },
+        {
+          "version": "1.0.0",
+          "path": "widgets/releases/facility_audit/1.0.0.json",
+          "sha256": "d7c70b5a2995b707fcede18514da8a802527476a00841faf546d14cc5c8ab87a"
         }
       ]
     },
@@ -709,7 +739,7 @@
     {
       "id": "urn:fieldwork:widget:map_output",
       "nodeType": "map_output",
-      "currentVersion": "0.25.0",
+      "currentVersion": "0.26.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -860,6 +890,11 @@
           "version": "0.25.0",
           "path": "widgets/releases/map_output/0.25.0.json",
           "sha256": "43ecb5b21e4c358551169cd3602f47f8e340b7635e8126f2daff94ef44a7440b"
+        },
+        {
+          "version": "0.26.0",
+          "path": "widgets/releases/map_output/0.26.0.json",
+          "sha256": "614f3334de0b0b8024033a2ed0d48d4bb47ce3bcff54ed66e44e51df882cdf49"
         }
       ]
     },
@@ -1073,7 +1108,7 @@
     {
       "id": "urn:fieldwork:widget:point_grid",
       "nodeType": "point_grid",
-      "currentVersion": "0.3.0",
+      "currentVersion": "0.3.1",
       "releases": [
         {
           "version": "0.1.0",
@@ -1094,6 +1129,11 @@
           "version": "0.3.0",
           "path": "widgets/releases/point_grid/0.3.0.json",
           "sha256": "e77ef8452e2f84331a925f7b531d31900e7ada9374eb55fb369bb0fa2b82e598"
+        },
+        {
+          "version": "0.3.1",
+          "path": "widgets/releases/point_grid/0.3.1.json",
+          "sha256": "85641018aba44914f48b21da2bf4218c613011f620b2a4765a5028478aa0a812"
         }
       ],
       "previousNodeTypes": [
@@ -1647,7 +1687,7 @@
     {
       "id": "urn:fieldwork:widget:study_area",
       "nodeType": "study_area",
-      "currentVersion": "0.8.0",
+      "currentVersion": "0.9.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -1703,6 +1743,11 @@
           "version": "0.8.0",
           "path": "widgets/releases/study_area/0.8.0.json",
           "sha256": "78049315689d062bff263b84388d9c6e12a1ec62001d442713583f5208201185"
+        },
+        {
+          "version": "0.9.0",
+          "path": "widgets/releases/study_area/0.9.0.json",
+          "sha256": "4f147e5f989fdffe5b2bfe1cfd24676a1e27083686dcd135b78ba4a9faf07341"
         }
       ],
       "previousNodeTypes": [
@@ -1823,7 +1868,7 @@
     {
       "id": "urn:fieldwork:widget:table_output",
       "nodeType": "table_output",
-      "currentVersion": "0.9.0",
+      "currentVersion": "0.10.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -1869,18 +1914,28 @@
           "version": "0.9.0",
           "path": "widgets/releases/table_output/0.9.0.json",
           "sha256": "2cbd0845c7d0093f0108c0cbad2b07a9d9d9c7caa248102978d74c5d47febcb3"
+        },
+        {
+          "version": "0.10.0",
+          "path": "widgets/releases/table_output/0.10.0.json",
+          "sha256": "0bc7b7d5b0ebd79a6519be9c3b40b80f213e7af91cc4b05348ac38a09dcda1d9"
         }
       ]
     },
     {
       "id": "urn:fieldwork:widget:travel_time",
       "nodeType": "travel_time",
-      "currentVersion": "0.1.0",
+      "currentVersion": "1.0.0",
       "releases": [
         {
           "version": "0.1.0",
           "path": "widgets/releases/travel_time/0.1.0.json",
           "sha256": "a80209355c0b19ab4dc5295f43a9d9685386f6f393f68e833a1df0aaaef59742"
+        },
+        {
+          "version": "1.0.0",
+          "path": "widgets/releases/travel_time/1.0.0.json",
+          "sha256": "13716b31f93382b21c742656b1848f18fdcde2cba3ba33148119693f73e9dc5b"
         }
       ]
     },
@@ -2005,7 +2060,7 @@
     {
       "id": "urn:fieldwork:widget:xpert",
       "nodeType": "xpert",
-      "currentVersion": "0.2.1",
+      "currentVersion": "0.3.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -2021,6 +2076,11 @@
           "version": "0.2.1",
           "path": "widgets/releases/xpert/0.2.1.json",
           "sha256": "a6d462d1a7085ef527243ebe270cd70d0c51c37c20af834f4ab0a30a0141b898"
+        },
+        {
+          "version": "0.3.0",
+          "path": "widgets/releases/xpert/0.3.0.json",
+          "sha256": "70d4b8bb9874fe1c0356680c8aca157a28b6d877d4b626b6165912cab934ff9d"
         }
       ]
     },

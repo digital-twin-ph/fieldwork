@@ -1,0 +1,77 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:facilities",
+ "version": "2.0.0",
+ "nodeType": "facilities",
+ "title": "Select nearby facilities",
+ "released": "2026-11-11",
+ "implementationStatus": "retired",
+ "standardization": "example-specific",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['facilities']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "shaclShapes": [],
+  "validationStatus": "application-only"
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "area",
+    "type": "area"
+   },
+   {
+    "name": "points",
+    "type": "points"
+   }
+  ],
+  "output": "facilities",
+  "dynamicInputs": null
+ },
+ "ontology": {
+  "status": "partial",
+  "mappings": [
+   {
+    "role": "activity",
+    "iri": "urn:fieldwork:NearbyFacilitySelection",
+    "file": "ontology/fieldwork.ttl"
+   }
+  ],
+  "note": "Implemented activity receipt. Facility field requirements are checked in application code; RDF configuration and port shapes remain incomplete.",
+  "emits": {
+   "classes": [],
+   "properties": []
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/core.ts"
+  ],
+  "definition": "src/core.ts#TYPES",
+  "note": "Retired. What remains is an archived definition, so a saved workflow naming the type is refused by name. docs/audits/old-naledi-audit.md."
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [
+   {
+    "nodeType": "facilities",
+    "adapterVersion": "1",
+    "implementation": "src/old-naledi.ts#migrateFacilitySources"
+   }
+  ],
+  "replacementCandidate": [
+   "urn:fieldwork:widget:clip_points_to_area"
+  ]
+ },
+ "changes": [
+  {
+   "kind": "major",
+   "description": "Retired with Old Naledi, its only example (the practitioner, 2026-11-11: \"retire old Naledi as an example along with its bespoke widgets\"). Keep points inside the area does what it did, bounded by the area itself rather than a radius from a box’s centre. A saved workflow holding one is refused by name."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Repository regression coverage exists; this release entry does not certify a widget independently."
+ }
+}

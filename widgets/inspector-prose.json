@@ -4,7 +4,6 @@
   "files": [
     "src/app.ts",
     "src/catchment-ui.ts",
-    "src/old-naledi-ui.ts",
     "src/input-data-ui.ts",
     "src/rule-editor.ts",
     "src/deduplicate-ui.ts",

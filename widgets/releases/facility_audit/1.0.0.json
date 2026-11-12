@@ -1,0 +1,62 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:facility_audit",
+ "version": "1.0.0",
+ "nodeType": "facility_audit",
+ "title": "Evidence register",
+ "released": "2026-11-11",
+ "implementationStatus": "retired",
+ "standardization": "example-specific",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['facility_audit']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "shaclShapes": [],
+  "validationStatus": "application-only"
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "points",
+    "type": "points"
+   }
+  ],
+  "output": "decisions",
+  "dynamicInputs": null
+ },
+ "ontology": {
+  "status": "gap",
+  "mappings": [],
+  "note": "Dedicated semantic contract is not yet registered; do not infer one from the widget title.",
+  "emits": {
+   "classes": [],
+   "properties": []
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/core.ts"
+  ],
+  "definition": "src/core.ts#TYPES",
+  "note": "Retired. What remains is an archived definition, so a saved workflow naming the type is refused by name. docs/audits/old-naledi-audit.md."
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": [
+   "urn:fieldwork:widget:table_output",
+   "urn:fieldwork:widget:apply_ruleset"
+  ]
+ },
+ "changes": [
+  {
+   "kind": "major",
+   "description": "Retired with Old Naledi, its only example. Table lists the records, and Apply ruleset classifies them. A saved workflow holding one is refused by name."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Repository regression coverage exists; this release entry does not certify a widget independently."
+ }
+}

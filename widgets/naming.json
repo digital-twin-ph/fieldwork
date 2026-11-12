@@ -5,21 +5,7 @@
   "domainPrefixes": {
     "urn:fieldwork:pack:sea-level-rise": "slr"
   },
-  "knownViolations": [
-    {
-      "nodeType": "facilities",
-      "rule": "audited-name",
-      "reason": "Names the content of one demonstration. It is a radius filter, not a facility list.",
-      "clearedBy": "Replace with clip_points_to_area, which exists since 2026-10-21 and honours totality; then retire. The blocker that stood here was lifted 2026-10-22: nothing is missing but the work."
-    },
-    {
-      "nodeType": "facility_audit",
-      "rule": "title-type-agreement",
-      "reason": "Titled 'Evidence register' against the type `facility_audit`. Neither says the other, and the widget runs no reasoner despite its decisions port.",
-      "gatedOn": "presentation-stage",
-      "clearedBy": "Decided with the presentation stage, which is where this widget is expected to land."
-    }
-  ],
+  "knownViolations": [],
   "clearedOn": [
     {
       "date": "2026-10-13",

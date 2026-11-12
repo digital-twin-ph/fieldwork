@@ -6,9 +6,6 @@
   "hagelloch-chains",
   "hagelloch-cluster",
   "hagelloch-sheet",
-  "heat",
-  "old-naledi",
-  "raster",
   "snow-extent",
   "snow-geoprivacy",
   "snow-isochrone",
@@ -36,11 +33,11 @@
  "weakest": "exampleUseCount 0 and a lab check still owed. That is the bottom of the ladder and the population the pending exemption is about.",
  "note": "Derived by scripts/widget-evidence.mjs from the shipped example workflows, the node types declared for each pinned worked example in widgets/examples.json, and widgets/check-coverage.json. Never hand-edited. Use counts through a composition, because a micro_workflow node is its members. A pinned example in its own repository counts as one example use like any other, and is read from the catalogue declaration rather than from a clone, so this file does not depend on what any machine happens to have checked out. Field use is declared and empty: an empty top rung is a measurement, a missing one is a flattering omission.",
  "counts": {
-  "declared only": 1,
-  "example only": 10,
-  "parity only": 9,
-  "example, lab not applicable": 11,
-  "example+parity": 23,
+  "declared only": 2,
+  "example only": 7,
+  "parity only": 10,
+  "example, lab not applicable": 10,
+  "example+parity": 22,
   "neither applies": 0
  },
  "compositionsUsedByNoExample": [
@@ -74,16 +71,13 @@
    "nodeType": "apply_ruleset",
    "exampleUses": [
     "hagelloch-chains",
-    "heat",
     "nigeria-immunization-2024",
-    "old-naledi",
     "sea-level-rise-philippines",
     "sierra-leone-measles",
-    "snow-extent",
     "south-london-1854",
     "workflows-rulesets"
    ],
-   "exampleUseCount": 9,
+   "exampleUseCount": 6,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],
@@ -121,14 +115,13 @@
     "hagelloch",
     "hagelloch-chains",
     "nyc-asthma-ozone-2016-2025",
-    "old-naledi",
     "sierra-leone-measles",
     "snow-extent",
     "snow-isochrone",
     "snow-voronoi",
     "south-london-1854"
    ],
-   "exampleUseCount": 10,
+   "exampleUseCount": 9,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],
@@ -157,14 +150,12 @@
   },
   {
    "nodeType": "clip_raster",
-   "exampleUses": [
-    "raster"
-   ],
-   "exampleUseCount": 1,
+   "exampleUses": [],
+   "exampleUseCount": 0,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],
-   "rung": "example+parity"
+   "rung": "parity only"
   },
   {
    "nodeType": "compare_point_sets",
@@ -207,28 +198,6 @@
    "labOwed": true,
    "fieldUse": [],
    "rung": "example only"
-  },
-  {
-   "nodeType": "facilities",
-   "exampleUses": [
-    "old-naledi"
-   ],
-   "exampleUseCount": 1,
-   "lab": "awaiting",
-   "labOwed": true,
-   "fieldUse": [],
-   "rung": "example only"
-  },
-  {
-   "nodeType": "facility_audit",
-   "exampleUses": [
-    "old-naledi"
-   ],
-   "exampleUseCount": 1,
-   "lab": "none",
-   "labOwed": false,
-   "fieldUse": [],
-   "rung": "example, lab not applicable"
   },
   {
    "nodeType": "fill_interior_gaps",
@@ -324,12 +293,9 @@
     "hagelloch-chains",
     "hagelloch-cluster",
     "hagelloch-sheet",
-    "heat",
     "nigeria-immunization-2024",
     "nyc-asthma-ozone-2016-2025",
-    "old-naledi",
     "oswego-1940",
-    "raster",
     "sea-level-rise-philippines",
     "sierra-leone-measles",
     "snow-extent",
@@ -339,7 +305,7 @@
     "south-london-1854",
     "workflows-rulesets"
    ],
-   "exampleUseCount": 19,
+   "exampleUseCount": 16,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],
@@ -368,11 +334,9 @@
   {
    "nodeType": "measure_distance",
    "exampleUses": [
-    "heat",
-    "old-naledi",
     "sea-level-rise-philippines"
    ],
-   "exampleUseCount": 3,
+   "exampleUseCount": 1,
    "lab": "awaiting",
    "labOwed": true,
    "fieldUse": [],
@@ -391,14 +355,12 @@
   },
   {
    "nodeType": "point_grid",
-   "exampleUses": [
-    "old-naledi"
-   ],
-   "exampleUseCount": 1,
+   "exampleUses": [],
+   "exampleUseCount": 0,
    "lab": "awaiting",
    "labOwed": true,
    "fieldUse": [],
-   "rung": "example only"
+   "rung": "declared only"
   },
   {
    "nodeType": "point_input",
@@ -407,9 +369,7 @@
     "hagelloch-chains",
     "hagelloch-cluster",
     "hagelloch-sheet",
-    "heat",
     "nyc-asthma-ozone-2016-2025",
-    "old-naledi",
     "oswego-1940",
     "sea-level-rise-philippines",
     "snow-extent",
@@ -419,7 +379,7 @@
     "south-london-1854",
     "workflows-rulesets"
    ],
-   "exampleUseCount": 15,
+   "exampleUseCount": 13,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],
@@ -440,10 +400,9 @@
   {
    "nodeType": "raster_input",
    "exampleUses": [
-    "raster",
     "sea-level-rise-philippines"
    ],
-   "exampleUseCount": 2,
+   "exampleUseCount": 1,
    "lab": "none",
    "labOwed": false,
    "fieldUse": [],
@@ -603,9 +562,7 @@
     "hagelloch-cluster",
     "hagelloch-sheet",
     "nyc-asthma-ozone-2016-2025",
-    "old-naledi",
     "oswego-1940",
-    "raster",
     "sea-level-rise-philippines",
     "sierra-leone-measles",
     "snow-geoprivacy",
@@ -614,7 +571,7 @@
     "south-london-1854",
     "workflows-rulesets"
    ],
-   "exampleUseCount": 16,
+   "exampleUseCount": 14,
    "lab": "none",
    "labOwed": false,
    "fieldUse": [],
@@ -693,36 +650,22 @@
     "hagelloch",
     "hagelloch-chains",
     "hagelloch-cluster",
-    "heat",
     "nyc-asthma-ozone-2016-2025",
-    "old-naledi",
     "oswego-1940",
     "salmonella-germany-2021",
     "sea-level-rise-philippines",
     "sierra-leone-measles",
-    "snow-extent",
     "snow-geoprivacy",
     "snow-isochrone",
     "snow-voronoi",
     "south-london-1854",
     "workflows-rulesets"
    ],
-   "exampleUseCount": 17,
+   "exampleUseCount": 14,
    "lab": "none",
    "labOwed": false,
    "fieldUse": [],
    "rung": "example, lab not applicable"
-  },
-  {
-   "nodeType": "travel_time",
-   "exampleUses": [
-    "old-naledi"
-   ],
-   "exampleUseCount": 1,
-   "lab": "awaiting",
-   "labOwed": true,
-   "fieldUse": [],
-   "rung": "example only"
   },
   {
    "nodeType": "travel_time_band",

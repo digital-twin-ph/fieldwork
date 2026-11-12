@@ -1,0 +1,66 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:study_area",
+ "version": "0.9.0",
+ "nodeType": "study_area",
+ "title": "Study area",
+ "released": "2026-11-11",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['study_area']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "shaclShapes": [],
+  "validationStatus": "application-only"
+ },
+ "ports": {
+  "inputs": [],
+  "output": "area",
+  "dynamicInputs": null
+ },
+ "ontology": {
+  "status": "partial",
+  "mappings": [
+   {
+    "role": "entity",
+    "iri": "urn:fieldwork:StudyArea",
+    "file": "ontology/fieldwork.ttl"
+   }
+  ],
+  "note": "Existing ontology alignment; full configuration and port shape contracts remain to be defined.",
+  "emits": {
+   "classes": [],
+   "properties": []
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/area-buffer.ts",
+   "src/area-countries-ui.ts",
+   "src/area-countries.ts",
+   "src/boundary-repair.ts",
+   "src/boundary-source.ts",
+   "src/study-area-map.ts",
+   "src/study-area.ts",
+   "src/core.ts"
+  ],
+  "definition": "src/core.ts#TYPES"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": null
+ },
+ "changes": [
+  {
+   "kind": "minor",
+   "description": "One form: drawn or acquired. The second form, a named dataset, loaded Old Naledi’s boundary through that example’s code and went with it (2026-11-11); the definition moved from Old Naledi’s module into the core."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Repository regression coverage exists; this release entry does not certify a widget independently. 0.8.0: tests/area-countries.test.mjs (4: the list read from a saved country; Gaborone to the border proposes Botswana and South Africa and the interior Botswana alone; half each on a square split by a straight border; the national outline's URL) and tests/area-countries.browser.mjs (found with shares, confirmed, applied; named by hand; a saved country as a list of one). Not checked by somebody else's code."
+ }
+}

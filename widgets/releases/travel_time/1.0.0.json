@@ -1,0 +1,61 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:travel_time",
+ "version": "1.0.0",
+ "nodeType": "travel_time",
+ "title": "Travel time from distance",
+ "released": "2026-11-11",
+ "implementationStatus": "retired",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['travel_time']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "shaclShapes": [],
+  "validationStatus": "application-only"
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "distances",
+    "type": "distances"
+   }
+  ],
+  "output": "distances",
+  "dynamicInputs": null
+ },
+ "ontology": {
+  "status": "gap",
+  "mappings": [],
+  "note": "The activity class fw:TravelTimeEstimate is declared; a dedicated semantic contract is not yet registered.",
+  "emits": {
+   "classes": [],
+   "properties": []
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/core.ts"
+  ],
+  "definition": "src/core.ts#TYPES",
+  "note": "Retired. What remains is an archived definition, so a saved workflow naming the type is refused by name. docs/audits/old-naledi-audit.md."
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": [
+   "urn:fieldwork:widget:apply_ruleset"
+  ]
+ },
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Unit tested. The arithmetic is a division and the interesting claim is the assumption, which no recomputation can validate -- whether 70 metres per minute is the right walking speed is a judgement, and whether a straight line stands for a walk is a limitation this widget states rather than tests."
+ },
+ "changes": [
+  {
+   "kind": "major",
+   "description": "Retired with Old Naledi, its only example (the practitioner, choosing from two, 2026-11-11). Its arithmetic, distance over a stated speed, is Apply ruleset’s computed column. A saved workflow holding one is refused by name."
+  }
+ ]
+}

@@ -15,24 +15,24 @@
  ],
  "widgets": {
   "access": {
-   "version": "0.2.0",
-   "released": "2026-10-12",
+   "version": "0.3.0",
+   "released": "2026-11-11",
    "changes": [
     {
      "kind": "minor",
-     "description": "Retired. Decomposed into the three steps it was always made of. Its candidate narrowing -- evidence tier at or above a minimum, service matching -- is now a candidateFilter knob on nearest, which is honest as a knob by the test experiment 107 derived: it leaves both ports and the output carrier untouched and changes only which candidates are eligible. Its nearest-neighbour search was already shared code, merged into src/nearest-neighbour.ts earlier the same day. Its proxy-minutes derivation is now the travel_time primitive, a widget rather than a knob because a minutes column changes every row for every consumer, and deliberately not a third value of the unit knob because minutes is a model and not a unit -- a straight-line distance walked at a constant speed, which this widget's own method string already admitted. The filter conditions reproduce this widget's eligibility exactly, verified against the real Old Naledi data at 1 of 122 graded facilities. Not replaceable by a single widget, so a saved workflow holding this node cannot be migrated automatically: it must be rebuilt as nearest with a candidate filter, then travel_time, then the access-review ruleset at 2.0.0. The Old Naledi example was rewired that way in the same commit."
+     "description": "Its record no longer points at Old Naledi’s module, which was deleted when the example retired (2026-11-11). Still refused by name."
     }
    ],
    "breaking": false,
    "migrationFrom": []
   },
   "access_policy": {
-   "version": "0.2.1",
-   "released": "2026-10-12",
+   "version": "0.3.0",
+   "released": "2026-11-11",
    "changes": [
     {
-     "kind": "patch",
-     "description": "Names its replacement. The 0.2.0 retirement carried replacementCandidate forward as null from 0.1.0, and null is not a neutral value here: by this project's own rule it reads as NOT REPLACEABLE, which is the state that makes a saved workflow refuse to open rather than migrate. This widget is fully replaceable -- apply_ruleset declares a migrationFrom adapter for it at src/core.ts#validateWorkflow, pinning the ruleset at the version that produced this widget's results -- so the field said the opposite of what the adapter does. Found by building the retired-widget lookup in docs/usage.md, which is what reading a declared field rather than the prose beside it is for."
+     "kind": "minor",
+     "description": "Refused by name since 2026-11-11: it migrated to Apply ruleset with access-review pinned, and that ruleset retired with Old Naledi."
     }
    ],
    "breaking": false,
@@ -75,12 +75,12 @@
    ]
   },
   "apply_ruleset": {
-   "version": "0.10.0",
-   "released": "2026-11-09",
+   "version": "0.11.0",
+   "released": "2026-11-11",
    "changes": [
     {
      "kind": "minor",
-     "description": "A column the rules read can be a date, written year-month-day. One date minus another gives days, stated as the new column's unit: a serial interval, or a 7-1-7 interval. Any other arithmetic with a date, or a date compared with a number, is refused while the rule is written; a date that is not a real day is unreadable, never moved to the next month (experiment 200)."
+     "description": "No code written for one ruleset (the practitioner, 2026-11-11: \"There should be no bespoke ruleset widgets\"): its six projections went with outreach-criteria, nb06-evidence, access-review and extent-review. Rules written in a workflow carry their own identity rather than borrowing a published ruleset’s. A published ruleset is cited in the receipt wherever it runs."
     }
    ],
    "breaking": false,
@@ -153,12 +153,12 @@
    "replacementCandidate": "urn:fieldwork:widget:observations"
   },
   "chart_output": {
-   "version": "0.13.0",
-   "released": "2026-11-10",
+   "version": "0.14.0",
+   "released": "2026-11-11",
    "changes": [
     {
      "kind": "minor",
-     "description": "The transmission tree is coloured by generation, its dots and both lines into each case, on the ramp Map's lines use, so a generation is one colour in both (the practitioner, 2026-11-10: \"color key the generation both in the tree and the map links\"). What a case is -- infected by a listed case, no infector recorded, infector not in the table, in a loop, no readable date -- moves to the dot's shape, keyed beside the generations."
+     "description": "No decisions port: nothing produces decisions since 2026-11-11 (docs/audits/old-naledi-audit.md)."
     }
    ],
    "breaking": false,
@@ -290,12 +290,12 @@
    "migrationFrom": []
   },
   "facilities": {
-   "version": "1.0.0",
-   "released": "2026-10-06",
+   "version": "2.0.0",
+   "released": "2026-11-11",
    "changes": [
     {
      "kind": "major",
-     "description": "Separate historical registry into shared Input data and connected radius selection. Legacy nodes without sourceMode receive a source and connector once; existing selection IDs, settings and outgoing connections remain. Computation receipt and source lineage are retained.",
+     "description": "Retired with Old Naledi, its only example (the practitioner, 2026-11-11: \"retire old Naledi as an example along with its bespoke widgets\"). Keep points inside the area does what it did, bounded by the area itself rather than a radius from a box’s centre. A saved workflow holding one is refused by name.",
      "breaking": true
     }
    ],
@@ -306,20 +306,27 @@
      "adapterVersion": "1",
      "implementation": "src/old-naledi.ts#migrateFacilitySources"
     }
+   ],
+   "replacementCandidate": [
+    "urn:fieldwork:widget:clip_points_to_area"
    ]
   },
   "facility_audit": {
-   "version": "0.2.0",
-   "released": "2026-10-12",
+   "version": "1.0.0",
+   "released": "2026-11-11",
    "changes": [
     {
      "kind": "major",
-     "description": "Consumes a general point layer instead of the gradedFacilities carrier, and the port is named for what it carries rather than for the widget that used to produce it. gradedFacilities was a producer-named stud -- D4a is the criterion -- emitted by one widget and consumed by two, and retiring it is what let nearest take the graded facilities as candidates and filter on tier and service with its own knob, which is what decomposing access needed. What a point layer cannot carry is the registry boundary and facilitySource that the old carrier passed through here; those belong to the nodes that produced them, and a consumer reaching through a carrier to find them is how a thin carrier becomes a thick one. Neither is used by the table this widget feeds, which is what makes the loss safe rather than merely acceptable.",
+     "description": "Retired with Old Naledi, its only example. Table lists the records, and Apply ruleset classifies them. A saved workflow holding one is refused by name.",
      "breaking": true
     }
    ],
    "breaking": true,
-   "migrationFrom": []
+   "migrationFrom": [],
+   "replacementCandidate": [
+    "urn:fieldwork:widget:table_output",
+    "urn:fieldwork:widget:apply_ruleset"
+   ]
   },
   "fill_interior_gaps": {
    "version": "0.1.0",
@@ -420,12 +427,12 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.25.0",
+   "version": "0.26.0",
    "released": "2026-11-11",
    "changes": [
     {
      "kind": "minor",
-     "description": "Each point layer's colour is chosen in Configure…, beside its mark and size: one of the six colour-blind-safe Okabe-Ito colours, named, or the default the layer's position gives it. A colour an example set that is not one of the six stays offered as it is. The practitioner, 2026-11-11, of the Hagelloch cases on the black-and-white 1824 sheet: \"The points should be colored differently compared to the black and white background but I am not sure how to do this in the Map Configuration dialog.\" That map now draws the cases in vermillion."
+     "description": "No decisions port: nothing produces decisions since 2026-11-11 (docs/audits/old-naledi-audit.md). The static map draws through its own module, with no caption or instruction printed on the figure."
     }
    ],
    "breaking": false,
@@ -557,16 +564,12 @@
    "replacementCandidate": "urn:fieldwork:widget:observations"
   },
   "point_grid": {
-   "version": "0.3.0",
-   "released": "2026-10-13",
+   "version": "0.3.1",
+   "released": "2026-11-11",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Renamed from `samples` to `point_grid`. The old identifier keeps resolving: a saved workflow naming `samples` is rewritten on open and stamped with sourceMigration, because the operation is unchanged and a rename must not refuse work the way a retirement does. `samples` named the content of one demonstration rather than the operation, and this widget's own title had said \"Point grid\" all along, so the type and the title disagreed -- which the naming convention forbids. Flagged by the ratchet added 2026-10-13 under audited-name and title-type-agreement; this clears both. No contract change: ports, output, parameters and behaviour are identical."
-    },
-    {
-     "kind": "minor",
-     "description": "Generalised in place. The computation was always general -- a bounding extent, a metre spacing converted to degrees at the extent's mid-latitude, and an even-odd containment test -- but the widget declared itself example-specific and earned it three ways: it was titled 'Sample locations', described as generating 'demonstration points', and defined inside one worked example's module in OLD_TYPES. It also stamped samplingBasis 'demonstration-grid' onto every point it produced, which is a claim about a demonstration rather than about a grid. The operation now lives in src/point-grid.ts with no default geometry, the title is 'Point grid', the stamp reads 'regular-grid', and the widget is on the shared palette instead of one example's template. No new node type and no migration: a saved workflow holding this node loads unchanged and no example's node count moves. The spacing range check moved to src/core.ts with it, because validateOldNode only runs for OLD_TYPES members and leaving it behind would have silently stopped enforcing 150-1000 m."
+     "kind": "patch",
+     "description": "Runs in the core’s own executor rather than through Old Naledi’s module, which was deleted with the example (2026-11-11). Same points, same evidence."
     }
    ],
    "breaking": false,
@@ -849,12 +852,12 @@
    "migrationFrom": []
   },
   "study_area": {
-   "version": "0.8.0",
-   "released": "2026-11-10",
+   "version": "0.9.0",
+   "released": "2026-11-11",
    "changes": [
     {
      "kind": "minor",
-     "description": "Countries, one or more (experiment 204): a study area states a list of countries, and a saved single country reads as a list of one. Configure countries… names them, or finds them from where the area falls: Natural Earth's outlines propose candidates, each candidate's national outline from geoBoundaries measures the share of the area in it, and the person ticks what to keep. Nothing is applied until Apply. The country moves off the Inspector into its own dialog; an acquired boundary still states its own."
+     "description": "One form: drawn or acquired. The second form, a named dataset, loaded Old Naledi’s boundary through that example’s code and went with it (2026-11-11); the definition moved from Old Naledi’s module into the core."
     }
    ],
    "breaking": false,
@@ -917,12 +920,12 @@
    "migrationFrom": []
   },
   "table_output": {
-   "version": "0.9.0",
-   "released": "2026-11-09",
+   "version": "0.10.0",
+   "released": "2026-11-11",
    "changes": [
     {
      "kind": "minor",
-     "description": "Its inputs streamlined as Map's are (the practitioner, 2026-11-09): the node draws what is connected and one port, + Add an input, that takes any result a table can show and binds it to the port its type belongs to; the Inspector lists what is connected and one Add an input picker, rather than a picker for each of five ports. The table port is labelled Tabular data on the canvas; it read Points undefined."
+     "description": "No decisions port: nothing produces decisions since 2026-11-11 (docs/audits/old-naledi-audit.md)."
     }
    ],
    "breaking": false,
@@ -935,16 +938,20 @@
    ]
   },
   "travel_time": {
-   "version": "0.1.0",
-   "released": "2026-10-12",
+   "version": "1.0.0",
+   "released": "2026-11-11",
    "changes": [
     {
-     "kind": "baseline",
-     "description": "Extracted from the retired access widget, which derived proxy minutes inside a nearest-neighbour search. A widget and not a knob on nearest, by the test experiment 107 derived: a minutes column changes every row for every consumer of the distances carrier, so the contract moves. And not a third value of the unit knob either -- metres to kilometres is a pure conversion while minutes is a MODEL, a straight-line distance walked at a constant speed, and putting a model behind a unit selector would present an assumption as a unit. The assumption is named in the receipt on every run. Reads each row unit rather than assuming kilometres, because a metre reading divided by metres-per-minute is right while a kilometre reading is wrong by a thousand. A row with no distance gains no minutes: a missing distance is not a travel time of zero."
+     "kind": "major",
+     "description": "Retired with Old Naledi, its only example (the practitioner, choosing from two, 2026-11-11). Its arithmetic, distance over a stated speed, is Apply ruleset’s computed column. A saved workflow holding one is refused by name.",
+     "breaking": true
     }
    ],
-   "breaking": false,
-   "migrationFrom": []
+   "breaking": true,
+   "migrationFrom": [],
+   "replacementCandidate": [
+    "urn:fieldwork:widget:apply_ruleset"
+   ]
   },
   "travel_time_band": {
    "version": "0.3.0",
@@ -1003,12 +1010,12 @@
    "migrationFrom": []
   },
   "xpert": {
-   "version": "0.2.1",
-   "released": "2026-10-12",
+   "version": "0.3.0",
+   "released": "2026-11-11",
    "changes": [
     {
-     "kind": "patch",
-     "description": "Names its replacement. The 0.2.0 retirement carried replacementCandidate forward as null from 0.1.0, and null is not a neutral value here: by this project's own rule it reads as NOT REPLACEABLE, which is the state that makes a saved workflow refuse to open rather than migrate. This widget is fully replaceable -- apply_ruleset declares a migrationFrom adapter for it at src/core.ts#validateWorkflow, pinning the ruleset at the version that produced this widget's results -- so the field said the opposite of what the adapter does. Found by building the retired-widget lookup in docs/usage.md, which is what reading a declared field rather than the prose beside it is for."
+     "kind": "minor",
+     "description": "Refused by name since 2026-11-11: it migrated to Apply ruleset with nb06-evidence pinned, and that ruleset retired with Old Naledi."
     }
    ],
    "breaking": false,

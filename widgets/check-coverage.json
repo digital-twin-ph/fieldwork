@@ -8,10 +8,10 @@
  },
  "measuredAt": "2026-11-10",
  "counts": {
-  "widgets": 54,
+  "widgets": 51,
   "covered": 32,
-  "awaiting": 10,
-  "none": 11,
+  "awaiting": 8,
+  "none": 10,
   "blocked": 1
  },
  "widgets": [
@@ -84,17 +84,6 @@
    "expectation": "parity",
    "check": null,
    "computes": "Displaces each point by a seeded random distance within an annulus."
-  },
-  {
-   "nodeType": "facilities",
-   "expectation": "parity",
-   "check": null,
-   "computes": "Selects facilities within a radius of an area, which is a distance computation."
-  },
-  {
-   "nodeType": "facility_audit",
-   "expectation": "none",
-   "reason": "Restates graded evidence as a register. It selects and presents; it derives no value."
   },
   {
    "nodeType": "fill_interior_gaps",
@@ -271,13 +260,6 @@
    "nodeType": "table_output",
    "expectation": "none",
    "reason": "Draws what it is given and derives no value."
-  },
-  {
-   "nodeType": "travel_time",
-   "expectation": "parity",
-   "check": null,
-   "computes": "Walking minutes from each distance at a stated speed, reading each row's declared unit.",
-   "reason": "A division, so the arithmetic is not the interesting part. What a lab check would establish is that the unit is read rather than assumed -- a metre reading divided by metres-per-minute against a kilometre reading, which differ by a thousand. Owed."
   },
   {
    "nodeType": "travel_time_band",

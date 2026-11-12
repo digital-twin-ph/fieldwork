@@ -1,0 +1,69 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:access",
+ "version": "0.3.0",
+ "nodeType": "access",
+ "title": "Facility access",
+ "released": "2026-11-11",
+ "implementationStatus": "retired",
+ "standardization": "example-specific",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['access']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "shaclShapes": [],
+  "validationStatus": "application-only"
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "samples",
+    "type": "points"
+   },
+   {
+    "name": "facilities",
+    "type": "gradedFacilities"
+   }
+  ],
+  "output": "access",
+  "dynamicInputs": null
+ },
+ "ontology": {
+  "status": "partial",
+  "mappings": [
+   {
+    "role": "activity",
+    "iri": "urn:fieldwork:SpatialOperation",
+    "file": "ontology/fieldwork.ttl"
+   }
+  ],
+  "note": "Generic spatial-operation alignment; accepts point features, preserves missing coordinates as unknown; no dedicated activity-type receipt is added.",
+  "emits": {
+   "classes": [],
+   "properties": []
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/core.ts"
+  ],
+  "definition": "src/core.ts#TYPES",
+  "note": "Retired. What remains is an archived definition, so a saved workflow naming the type is refused by name. docs/audits/old-naledi-audit.md."
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": null
+ },
+ "changes": [
+  {
+   "kind": "minor",
+   "description": "Its record no longer points at Old Naledi’s module, which was deleted when the example retired (2026-11-11). Still refused by name."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Repository regression coverage exists; this release entry does not certify a widget independently."
+ }
+}

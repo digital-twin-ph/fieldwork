@@ -67,8 +67,7 @@
       "id": "presentation-stage",
       "claim": "There is no communication, visualization and presentation STAGE, so a display-only widget has nowhere to go but the palette -- and logic that belongs in a decision class stays hidden in one, as facility_audit's tier-to-status ternary does.",
       "blocks": [
-        "comparison_map",
-        "facility_audit"
+        "comparison_map"
       ],
       "recorded": "2026-10-12",
       "lastRevisited": "2026-10-31",

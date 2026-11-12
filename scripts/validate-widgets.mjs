@@ -176,7 +176,8 @@ export async function validateRegistry({catalog,read=path=>readFile(localPath(pa
         const types=nodeInputs({type:'map_output',params:{inputMode,pointInputCount:1}}).map(([,t])=>t);
         // `coverage-check` left this list on 2026-10-21 with the widget that produced one: a
         // port nothing can fill is not a port a map owes anybody.
-        for(const needed of ['area','points','polygons','decisions','raster','network'])
+        // No decisions port since 2026-11-11: nothing produces decisions (docs/audits/old-naledi-audit.md).
+        for(const needed of ['area','points','polygons','raster','network'])
           check(types.includes(needed),`map_output must offer a ${needed} port whatever inputMode says`);
       }
     }
@@ -191,7 +192,7 @@ export async function validateRegistry({catalog,read=path=>readFile(localPath(pa
         check(!current.ports[stale],`chart_output still declares ${stale}: a chart has ports, not modes`);
       if(nodeInputs)for(const inputMode of ['polygons','decisions','series',undefined]){
         const types=nodeInputs({type:'chart_output',params:{inputMode}}).map(([,t])=>t);
-        for(const needed of ['table','decisions','polygons'])
+        for(const needed of ['table','polygons'])
           check(types.includes(needed),`chart_output must offer a ${needed} port whatever inputMode says`);
       }
     }
@@ -209,7 +210,7 @@ export async function validateRegistry({catalog,read=path=>readFile(localPath(pa
         check(!current.ports[stale],`table_output still declares ${stale}: a table has ports, not modes`);
       if(nodeInputs)for(const inputMode of ['table','polygons','decisions','spatial',undefined]){
         const types=nodeInputs({type:'table_output',params:{inputMode,pointInputCount:1}}).map(([,t])=>t);
-        for(const needed of ['points','coverage-check','table','polygons','decisions'])
+        for(const needed of ['points','coverage-check','table','polygons'])
           check(types.includes(needed),`table_output must offer a ${needed} port whatever inputMode says`);
       }
     }

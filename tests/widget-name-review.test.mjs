@@ -134,7 +134,9 @@ test('the shipped ledger passes and covers every live widget', ()=>{
   // place and time than expected (experiment 200).
   // 54 on 2026-11-11: sample_satellite_files_at_points retired into sample_raster, one widget for sampling a grid
   // (experiment 205).
-  assert.equal(review.reviews.length,54);
+  // 51 on 2026-11-11: facilities, facility_audit and travel_time retired with Old Naledi
+  // (docs/audits/old-naledi-audit.md).
+  assert.equal(review.reviews.length,51);
 });
 
 test('the generated table shows the palette words beside the identifier', ()=>{

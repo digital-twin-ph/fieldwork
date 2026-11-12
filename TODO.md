@@ -361,6 +361,13 @@ not a practitioner in the field.
 
 The high-contrast theme comes after Sierra Leone, as set on 2026-11-07; where it falls among 4 to 6 is not set.
 
+32. **Geoprivacy as worked examples of its own, with map encryption ported to Fieldwork** (the practitioner, 2026-11-12:
+   *"We may have to spin off the geoprivacy workflows on their own as geoprivacy worked examples which would include map
+   encryption which we haven't ported yet to FW."*). Out of the John Snow project: moving points (donut geomasking, and how
+   far the centre shifts) and counting by H3 cell, one question each, then map encryption from the geoprivacy notebooks
+   (git.cdc.gov/jupyterlite/2026-Map-Encryption-Library), which needs an experiment record and its admission review
+   before any widget. Until then `snow-geoprivacy` stays in the John Snow project, last ([210](docs/experiments/210-proposing-a-chart-or-a-map-from-the-data.md)).
+
 ## Urgent
 
 **Three assertions outlived what they asserted, in two days, and the fast gate cannot see any of

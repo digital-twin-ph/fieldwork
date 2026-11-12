@@ -11,12 +11,14 @@
  *  in step. */
 import type {Workflow} from './types.js';
 import {blankWorkflow} from './study-area.js';
-import {johnSnowExample,snowExtentExample} from './john-snow.js';
+import {johnSnowExample,snowExtentExample,snowDeathsExample,snowCurveExample} from './john-snow.js';
 import {geoprivacyExample} from './geoprivacy-example.js';
 import {hagellochExample,hagellochChainsExample,hagellochClusterExample,hagellochSheetExample,hagellochPeopleExample} from './hagelloch-example.js';
 
 export const EXAMPLE_TEMPLATES:Record<string,()=>Workflow>={
   blank:blankWorkflow,
+  'snow-deaths':snowDeathsExample,
+  'snow-curve':snowCurveExample,
   'snow-voronoi':()=>johnSnowExample('snow-voronoi'),
   'snow-isochrone':()=>johnSnowExample('snow-isochrone'),
   'snow-geoprivacy':geoprivacyExample,

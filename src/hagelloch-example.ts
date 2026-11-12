@@ -235,7 +235,8 @@ export function hagellochPeopleExample():Workflow{
   const nodes=[
     {...base.nodes.find(n=>n.id==='cases')!,x:20,y:60},
     {id:'by-age-gender',type:'group_table',x:400,y:40,params:{label:'Cases by age and gender',by:['age','gender'],aggregate:'count'}},
-    {id:'age-chart',type:'chart_output',x:780,y:40,params:{label:'Cases by age, one panel per gender',keyColumn:'age',panelsBy:'gender'}},
+    {id:'age-chart',type:'chart_output',x:780,y:40,params:{label:'Age and gender pyramid',keyColumn:'age',panelsBy:'gender',figure:'pyramid' as const,
+      chartTitle:'Measles cases by age and gender, Hagelloch, 1861',yAxisTitle:'Age in years'}},
     {id:'age-table',type:'table_output',x:780,y:250,params:{label:'Cases by age and gender'}},
     {id:'by-class',type:'group_table',x:400,y:420,params:{label:'Cases by school class',by:['class'],aggregate:'count'}},
     {id:'class-table',type:'table_output',x:780,y:420,params:{label:'Cases by school class'}},

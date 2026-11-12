@@ -136,7 +136,7 @@ car.
 
 ## Worked examples that use it
 
-**John Snow network isochrones**, in the 1854 Cholera Outbreak in London project, uses a prepared
+**John Snow: who lived within a walk of the pump?**, in the 1854 Cholera Outbreak in London project, uses a prepared
 Soho network to draw what each pump could be reached from on foot.
 
 ---

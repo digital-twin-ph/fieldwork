@@ -82,42 +82,33 @@ test('Snow’s 1855 table draws an epidemic curve that states which date it is o
   assert.deepEqual(errors,[]);
 });
 
-test('the John Snow workspace shows place and time together, and refuses to join them',async({page})=>{
-  await page.goto('/?example=snow-voronoi');
+// WHEN DID PEOPLE DIE? its own workflow from 2026-11-12 (experiment 210): the curve, and no place in it, because a
+// dated count has no location and nothing could join it to one.
+test('the John Snow curve answers when, on its own, and holds no place to join',async({page})=>{
+  await page.goto('/?example=snow-curve');
   await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:60000});
   await useClassicBars(page,'epidemic');
-
-  // The catchment map and the epidemic curve are results of one workspace.
-  await page.locator('[data-view="results"]').click();
-  await page.locator('#result-tabs [data-output="map"]').click();
-  await page.locator('[data-view="results"]').click();
-  await expect(page.locator('#map-panel')).toBeVisible();
   await page.locator('[data-view="results"]').click();
   await page.locator('#result-tabs [data-output="epidemic"]').click();
   await page.locator('[data-view="results"]').click();
   await expect(page.locator('#bars-panel')).toContainText('Cases by day of date of death');
-  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#bars-panel')).toContainText('616 cases from 43 records');
-  await page.locator('[data-view="results"]').click();
   await expect(page.locator('#bars-panel .bar-column')).toHaveCount(43);
 
   // Selecting the curve's source states what was excluded and why.
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="dates"]').click();
-  await expect(page.locator('.inspector')).toContainText('616 rows'.replace('616','43'));
+  await expect(page.locator('.inspector')).toContainText('43 rows');
   await expect(page.locator('.inspector')).toContainText('Snow 1855 Table 1');
 
-  // The two sources cannot be joined: the death locations carry no date, and the series carries no
-  // place, so no connection exists between them in the workflow.
-  const linked=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')).edges
-    .filter(e=>['dates','curve','epidemic'].includes(e.from)||['dates','curve','epidemic'].includes(e.to))
-    .map(e=>`${e.from}->${e.to}`));
-  expect(linked.sort()).toEqual(['curve->epidemic','dates->curve']);
+  const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));
+  expect(saved.edges.map(e=>`${e.from}->${e.to}`).sort()).toEqual(['curve->epidemic','dates->curve']);
+  expect(saved.nodes.some(n=>['point_input','study_area'].includes(n.type))).toBe(false);
 });
 
 // Vertical is a default, not a rule. The same series read the other way is the same series.
 test('the epidemic curve can be turned on its side, and reports the same counts',async({page})=>{
-  await page.goto('/?example=snow-isochrone');
+  await page.goto('/?example=snow-curve');
   await page.locator('#run-button').click();
   await page.locator('[data-view="results"]').click();
   await expect(page.locator('#result-tabs [data-output="epidemic"]')).toBeVisible({timeout:30000});

@@ -5,7 +5,7 @@ import {FIGURE_PALETTE,FIGURE_ROLE,FIGURE_TYPE,niceDistance,metresPerPixel,
 import {catchmentFrame} from '../build/catchment-output.js';
 import {mapPresentation,standaloneMapSvg} from '../build/map-communication.js';
 import {chartVegaSpec} from '../build/chart-vega.js';
-import {johnSnowExample} from '../build/john-snow.js';
+import {johnSnowExample,snowCurveExample} from '../build/john-snow.js';
 
 test('the palette is the validated six, in the validated order', ()=>{
   // Six hues from Okabe--Ito, in the order a palette validator passed on 2026-10-13. Asserted
@@ -166,7 +166,7 @@ test('the Snow figures ship complete rather than on fallbacks', ()=>{
 });
 
 test('an epidemic curve runs time along the bottom', ()=>{
-  const workflow=johnSnowExample('snow-epidemic-curve');
+  const workflow=snowCurveExample();
   const node=workflow.nodes.find(n=>n.id==='epidemic');
   // Vertical is the default for a series rather than a stored value; stating it explicitly is
   // refused without the Vega renderer, so the example relies on the default.

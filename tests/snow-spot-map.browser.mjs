@@ -17,7 +17,7 @@ import {inMapSettings} from './map-settings.mjs';
  *  A legend that disagrees with its plot is worse than no legend, because the reader trusts it.
  *  The one distinction this figure exists to make is deaths here, pumps there. */
 test('the spot map draws deaths and pumps as different marks, as its key says',async({page})=>{
-  await page.goto('/?example=snow-voronoi');
+  await page.goto('/?example=snow-deaths');
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
   await page.locator('[data-view="results"]').click();
   await page.locator('[data-output="spot-map"]').click();
@@ -54,7 +54,7 @@ test('the spot map draws deaths and pumps as different marks, as its key says',a
  *  map"*. They do merge, and no single default can prevent it — the same figure carries eight
  *  pumps spread across the parish, which want a mark a reader can find. */
 test('a layer mark can be resized, and the figure redraws where it stands',async({page})=>{
-  await page.goto('/?example=snow-voronoi');
+  await page.goto('/?example=snow-deaths');
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="spot-map"]').click();

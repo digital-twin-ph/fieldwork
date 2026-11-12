@@ -99,9 +99,10 @@ checks that the note describing the figure is filed in that same section.
 
 | Example | What the map shows |
 | --- | --- |
-| **John Snow · outbreak extent** | the outline of 250 death locations, with the pumps |
-| **John Snow · Voronoi catchments** | one catchment per pump, with deaths overlaid |
-| **John Snow · walking catchments** | travel-time bands, as a plot and as an interactive map |
+| **John Snow: where were the deaths?** | the deaths where they fell and the eight pumps, as Snow drew them |
+| **John Snow: which pump was nearest?** | one catchment per pump, with deaths overlaid |
+| **John Snow: who lived within a walk of the pump?** | travel-time bands, as a plot and as an interactive map |
+| **John Snow: how far did it spread?** | the outline of 250 death locations, with the pumps |
 | **Sea-level rise at Manila’s health facilities** (its own repository) | the study area, 194 facilities and the eight AR6 tide gauges |
 | **Geoprivacy** | the same records before and after being moved |
 | **Hagelloch · who infected whom** | a line from each infector's house to the case's |

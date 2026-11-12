@@ -16,7 +16,7 @@ test('a worked example replays widget by widget, and the palette follows',async(
   await expect(page.locator('body')).toContainText('Complete in',{timeout:45000});
 
   // Step 0: an empty canvas. Only the widgets that need no input are offered.
-  await expect(page.locator('#playback-step')).toHaveText('Step 0 of 7');
+  await expect(page.locator('#playback-step')).toHaveText('Step 0 of 4');
   await expect(page.locator('#playback-reason')).toContainText('offers only the widgets that need no input');
   await page.locator('[data-view="workflow"]').click();
   await expect(page.locator('.react-flow__node')).toHaveCount(0);
@@ -27,7 +27,7 @@ test('a worked example replays widget by widget, and the palette follows',async(
 
   // Step 1 places the death locations, which emit points.
   await page.locator('#playback-next').click();
-  await expect(page.locator('#playback-step')).toHaveText('Step 1 of 7');
+  await expect(page.locator('#playback-step')).toHaveText('Step 1 of 4');
   await page.locator('[data-view="workflow"]').click();
   await expect(page.locator('.react-flow__node')).toHaveCount(1);
   await expect(page.locator('#playback-reason')).toContainText('emits points');
@@ -39,15 +39,15 @@ test('a worked example replays widget by widget, and the palette follows',async(
 
   // Stepping back puts it exactly where it was: the playback is a view, not an edit.
   await page.locator('#playback-back').click();
-  await expect(page.locator('#playback-step')).toHaveText('Step 0 of 7');
+  await expect(page.locator('#playback-step')).toHaveText('Step 0 of 4');
   expect(await page.locator('.palette-node:not(.unrevealed)').count()).toBe(atStart);
 
   // Run it forward to the end: every node of the example arrives, in an order the rule allows.
-  for(let step=0;step<7;step++)await page.locator('#playback-next').click();
-  await expect(page.locator('#playback-step')).toHaveText('Step 7 of 7');
+  for(let step=0;step<4;step++)await page.locator('#playback-next').click();
+  await expect(page.locator('#playback-step')).toHaveText('Step 4 of 4');
   await page.locator('[data-view="workflow"]').click();
-  // Seven since 2026-11-11, when the extent rule and its decision table retired (docs/audits/old-naledi-audit.md).
-  await expect(page.locator('.react-flow__node')).toHaveCount(7);
+  // Four since 2026-11-12, one question (experiment 210): the curve has a workflow of its own.
+  await expect(page.locator('.react-flow__node')).toHaveCount(4);
   await expect(page.locator('#playback-next')).toBeDisabled();
 
   // Leaving restores the canvas and the ordinary palette, with nothing dimmed.
@@ -55,8 +55,8 @@ test('a worked example replays widget by widget, and the palette follows',async(
   await expect(page.locator('#playback-bar')).toBeHidden();
   await expect(page.locator('.palette-node.unrevealed')).toHaveCount(0);
   await page.locator('[data-view="workflow"]').click();
-  // Seven since 2026-11-11, when the extent rule and its decision table retired (docs/audits/old-naledi-audit.md).
-  await expect(page.locator('.react-flow__node')).toHaveCount(7);
+  // Four since 2026-11-12, one question (experiment 210): the curve has a workflow of its own.
+  await expect(page.locator('.react-flow__node')).toHaveCount(4);
   expect(errors).toEqual([]);
 });
 
@@ -66,8 +66,8 @@ test('the playback changes nothing that is saved',async({page})=>{
   const before=await page.evaluate(()=>localStorage.getItem('fieldwork-workflow-v1'));
   await page.goto('/?example=snow-extent&playback=1');
   await expect(page.locator('#playback-bar')).toBeVisible({timeout:45000});
-  for(let step=0;step<4;step++)await page.locator('#playback-next').click();
-  await expect(page.locator('#playback-step')).toHaveText('Step 4 of 7');
+  for(let step=0;step<3;step++)await page.locator('#playback-next').click();
+  await expect(page.locator('#playback-step')).toHaveText('Step 3 of 4');
   const during=await page.evaluate(()=>localStorage.getItem('fieldwork-workflow-v1'));
   expect(JSON.parse(during).nodes.length,'the saved workflow keeps every node').toBe(JSON.parse(before).nodes.length);
 });

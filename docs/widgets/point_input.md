@@ -57,7 +57,7 @@ events is something your labels and your weights have to say.
 
 ## Worked examples that use it
 
-**John Snow Voronoi catchments** loads 250 death locations and eight pumps. **Measles in Hagelloch,
+**John Snow: where were the deaths?** loads 250 death locations and eight pumps. **Measles in Hagelloch,
 1861** loads a 188-case line list.
 
 ---

@@ -36,7 +36,7 @@ Ruleset to make a judgement about its size.
 
 | Example | What it does there |
 | --- | --- |
-| **John Snow · outbreak extent** | outlines the 250 death locations, and a ruleset judges whether the outbreak extent is large enough to look at |
+| **John Snow: how far did it spread?** | outlines the 250 death locations: 0.139 km², 498 m at its widest |
 
 ## What it will not do
 

@@ -41,73 +41,9 @@ export function johnSnowExample(kind:'snow-voronoi'|'snow-isochrone'):Workflow{
       xAxisTitle:'Recorded deaths',
       yAxisTitle:iso?'Walking time from the pump':'Nearest pump',
       sourceNote:'Source: Snow 1855 death register, digitised by Robin Wilson; catchments recomputed in Fieldwork.'}},
-    // Place and time from the same outbreak, side by side and deliberately not joined: the map has
-    // buildings without dates and the table has dates without buildings, so no case links the two.
-    {id:'dates',type:'table_input',x:20,y:620,params:{label:'Snow 1855 Table 1 · deaths by date',
-      keys:['date'],valueField:'deaths',data:{kind:'data-table',keys:['date'],valueField:'deaths',
-        rows:dates.rows.map(row=>({key:{date:row.date},value:row.deaths})),
-        rowCount:dates.rows.length,missingValueCount:0},
-      source:{filename:'snow_dates.csv',bytes:828,sha256:'',rows:dates.rows.length}},
-      references:[reference('snow-dates','Snow 1855, Table 1','https://geodacenter.github.io/data-and-lab//snow/','data',
-        `Daily attacks and deaths for the Broad Street outbreak. ${dates.excludedUndated.attacks} attacks of unknown date are excluded, because a keyed table cannot hold an empty key.`)]},
-    {id:'curve',type:'case_series',x:470,y:620,params:{label:'Deaths by day',source:'table',
-      dateField:'date',dateKind:'death',period:'day'}},
-    // The presentation text is configured here; the renderer is the application's default.
-    {id:'epidemic',type:'chart_output',x:900,y:620,params:{label:'Epidemic curve · by date of death',inputMode:'series',
-      // Orientation is left to the default, which is vertical for a case series. Stating it
-      // explicitly is refused unless the Vega renderer is also selected -- an inconsistency, since
-      // the default reaches the same value and the classic bars draw it -- so the default is used.
-      chartTitle:'Cholera deaths by date of death, Soho, London, 1854',
-      subtitle:'Date of death, not date of onset or of report. The outbreak is conventionally dated from 31 August; the pump handle was removed on 8 September, by which time the curve had already turned.',
-      xAxisTitle:'Date of death, 1854',
-      yAxisTitle:'Recorded deaths',
-      sourceNote:'Source: John Snow, On the Mode of Communication of Cholera, 2nd ed., 1855, as digitised by Robin Wilson. 489 deaths at 250 distinct addresses.'}}
   ];
-  // Appended after the array rather than inside it, so the headline results keep their place:
-  // the result tabs follow node order, and inserting these two mid-array made the example open
-  // on a table of UTM coordinates instead of the cholera map. A supporting view must not
-  // displace what the example is about.
-  nodes.push(
-    // The Voronoi measures in EPSG:32630 and never shows it. Every catchment boundary, every
-    // area and every distance in this workflow is computed in that projected frame, and a reader
-    // sees only degrees going in and polygons coming out. These two nodes make the frame visible:
-    // the pump coordinates as the analysis actually measured them, which is also what a colleague
-    // reproducing this in desktop GIS needs.
-    //
-    // It is not decoration. `reproject` is a metric widget, so adding it makes this the first
-    // worked example with TWO widgets declaring a projection, and the one-projection rule of
-    // experiment 110 now has something real to hold together: change either zone and the run is
-    // refused by name. Added 2026-10-14; before it, no example instantiated the widget at all.
-    {id:'projected',type:'reproject',x:20,y:430,params:{label:iso?'Broadwick Street pump in UTM 30N':'Pump locations in UTM 30N',zone:30,hemisphere:'north'}},
-    {id:'projected-table',type:'table_output',x:320,y:430,params:{label:iso?'Pump coordinate as measured':'Pump coordinates as measured',inputMode:'spatial'}}
-  );
-  // SNOW'S OWN MAP, which this example did not have. Both John Snow workspaces drew a CATCHMENT
-  // map -- the Voronoi cells, or the walking-time bands -- and neither drew the figure the
-  // outbreak is actually remembered for: the deaths where they fell, and the pumps among them.
-  // The catchment is an argument ABOUT that map; it is not that map.
-  //
-  // Requested by the practitioner on 2026-10-25, wanting Snow's classic maps re-rendered as
-  // static figures. Appended rather than inserted, for the reason the comment above gives: result
-  // tabs follow node order, and this example must keep opening on the catchment map it is named
-  // for. Promote it only if the example is renamed to match.
-  //
-  // One dot per address, not per death. The 250 addresses carry 489 deaths between them, so a
-  // reader counting marks counts addresses -- which is what Snow's own plate does, and is why the
-  // subtitle says so rather than leaving the figure to be miscounted.
-  if(!iso)nodes.push({id:'spot-map',type:'map_output',x:1210,y:870,params:{
-    // TWO POINT LAYERS, not a context layer. `contextPoints` is drawn by the polygon renderer and
-    // this map has no polygons, so wiring the pumps there drew the deaths alone -- Snow's map
-    // without its pumps, which is the one thing it must not be. A second point layer takes a port
-    // of its own, and gets its own hue, mark and key entry with it.
-    label:'Deaths and pumps, as Snow drew them',inputMode:'spatial',presentation:'plot',pointInputCount:2,
-    mapTitle:'Cholera deaths and public pumps, Soho, London, 1854',
-    mapSubtitle:'One mark per address where a death was recorded, with the eight public pumps. '
-      +'250 addresses carry 489 deaths, so the marks count addresses and not deaths. Nothing here '
-      +'is inferred: no catchment, no nearest-pump assignment, and no claim about which pump anyone drank from.',
-    mapSourceNote:'Deaths and pump locations: John Snow, On the Mode of Communication of Cholera, '
-      +'2nd ed., 1855, as digitised by Robin Wilson (blog.rtwilson.com/john-snows-cholera-data-in-more-formats). '
-      +'Drawn in CRS84; see the run receipt for method and versions.',
-    showLegend:true}});
+  // ONE QUESTION EACH (experiment 210, the practitioner, 2026-11-12): the epidemic curve, the pump coordinates and Snow's
+  // own map of the deaths moved to workflows of their own, `snow-curve` and `snow-deaths`.
   if(iso)nodes.push({id:'network',type:'network_input',x:20,y:390,params:{label:'Soho OSM network snapshot',
       // THE OBLIGATION TRAVELS WITH THE DATA, from 2026-10-27. `data.source` has said
       // "OpenStreetMap contributors" in prose since this example was written, and a figure used
@@ -124,13 +60,10 @@ export function johnSnowExample(kind:'snow-voronoi'|'snow-isochrone'):Workflow{
     nodes.push({id:'interactive',type:'map_output',x:1210,y:870,params:{label:'Interactive isochrone map',inputMode:'polygons',presentation:'interactive',contextPoints:true}});
     nodes.find(n=>n.id==='catchments')!.references!.push(reference('nb04-visual','NB04 Cell 15 plot and Folium map','https://github.com/PHI-Case-Studies/1854-Cholera-Outbreak-London-Advanced-1/blob/97a1d13dfb23032387ed23804e3d6f4dbc99aec7/NB04-Cholera-Case-Study-Isochrone-Map.ipynb','method','Visual target: executed Cell 15 and Cell 18. Fieldwork retains its independent computational method; cumulative counts are not notebook band counts.'));
   }
-  const edges=[{id:'sites-catchments',from:'pumps',to:'catchments',port:'sites'},{id:'pumps-projected',from:'pumps',to:'projected',port:'points'},{id:'projected-projected-table',from:'projected',to:'projected-table',port:'points'},{id:'area-clip',from:'study',to:'clip',port:'area'},{id:'catchments-clip',from:'catchments',to:'clip',port:'polygons'},{id:'clip-summary',from:'clip',to:'summary',port:'polygons'},{id:'points-summary',from:'locations',to:'summary',port:'points'},...['map','table','chart'].map(id=>({id:'summary-'+id,from:'summary',to:id,port:'polygons'})),{id:'dates-curve',from:'dates',to:'curve',port:'cases'},{id:'curve-epidemic',from:'curve',to:'epidemic',port:'series'},iso?{id:'network-catchments',from:'network',to:'catchments',port:'network'}:{id:'area-catchments',from:'study',to:'catchments',port:'area'}];
-  if(!iso)edges.push({id:'spot-area',from:'study',to:'spot-map',port:'area'},
-    {id:'spot-points',from:'locations',to:'spot-map',port:'points'},
-    {id:'spot-pumps',from:'pumps',to:'spot-map',port:'points_2'});
+  const edges=[{id:'sites-catchments',from:'pumps',to:'catchments',port:'sites'},{id:'area-clip',from:'study',to:'clip',port:'area'},{id:'catchments-clip',from:'catchments',to:'clip',port:'polygons'},{id:'clip-summary',from:'clip',to:'summary',port:'polygons'},{id:'points-summary',from:'locations',to:'summary',port:'points'},...['map','table','chart'].map(id=>({id:'summary-'+id,from:'summary',to:id,port:'polygons'})),iso?{id:'network-catchments',from:'network',to:'catchments',port:'network'}:{id:'area-catchments',from:'study',to:'catchments',port:'area'}];
   if(iso){edges.push({id:'summary-interactive',from:'summary',to:'interactive',port:'polygons'},...['map','interactive'].map(to=>({id:'context-'+to,from:'context-pumps',to,port:'context'})));edges.push({id:'area-network',from:'study',to:'network',port:'area'});/* The network's own margin, 750 m, where a Buffer study area of 500 m stood until its retirement on 2026-11-06: the 500 plus the margin's 250, the same extent. The network is read from its file, so neither changes a result. */}
 
-  return {schema:'fieldwork/workflow/1',exampleId:kind,name:iso?'John Snow · network isochrones':'John Snow · Voronoi catchments',nodes,edges};
+  return {schema:'fieldwork/workflow/1',exampleId:kind,name:iso?'Who lived within a walk of the Broad Street pump? Soho, 1854':'Which pump was nearest each death? Soho, London, 1854',nodes,edges};
 }
 
 /** The smallest John Snow workspace, over the three datasets the outbreak left behind.
@@ -154,7 +87,7 @@ export function johnSnowExample(kind:'snow-voronoi'|'snow-isochrone'):Workflow{
  *  the question by itself. */
 export function snowExtentExample():Workflow{
   const deaths=structuredClone(data.deaths) as PointFeature[],pumps=structuredClone(data.pumps) as PointFeature[];
-  return {schema:'fieldwork/workflow/1',name:'John Snow · outbreak extent',exampleId:'snow-extent',nodes:[
+  return {schema:'fieldwork/workflow/1',name:'How far did the outbreak spread? Soho, London, 1854',exampleId:'snow-extent',nodes:[
     {id:'deaths',type:'point_input',x:20,y:20,params:{label:'250 death locations (489 deaths)',
       data:{type:'FeatureCollection',features:deaths},
       sourceInfo:{format:'CSV',url:voronoiSource+'data/cholera_deaths.csv',description:'Cholera deaths, Soho 1854, digitised by Robin Wilson from Snow\u2019s map. These records carry a place and no date.'}},
@@ -168,25 +101,70 @@ export function snowExtentExample():Workflow{
       mapTitle:'How far the 1854 Soho outbreak reached',
       mapSubtitle:'Convex hull of 250 death locations, measured in EPSG:32630, with the eight pumps for context',
       mapSourceNote:'John Snow, On the Mode of Communication of Cholera, 2nd ed., 1855, digitised by Robin Wilson. A hull is an outline of what was observed, not a boundary anyone agreed to, and it asserts area where nothing was seen.'}},
-    {id:'dates',type:'table_input',x:20,y:430,params:{label:'Snow 1855 Table 1 \u00b7 deaths by date',
-      keys:['date'],valueField:'deaths',data:{kind:'data-table',keys:['date'],valueField:'deaths',
-        rows:dates.rows.map(row=>({key:{date:row.date},value:row.deaths})),
-        rowCount:dates.rows.length,missingValueCount:0},
-      source:{filename:'snow_dates.csv',bytes:828,sha256:'',rows:dates.rows.length}},
-      references:[reference('snow-dates','Snow 1855, Table 1','https://geodacenter.github.io/data-and-lab//snow/','data',
-        `Daily attacks and deaths for the Broad Street outbreak. ${dates.excludedUndated.attacks} attacks of unknown date are excluded, because a keyed table cannot hold an empty key. These records carry a date and no place.`)]},
-    {id:'curve',type:'case_series',x:330,y:430,params:{label:'Deaths by day',source:'table',
-      dateField:'date',dateKind:'death',period:'day'}},
-    {id:'epidemic',type:'chart_output',x:640,y:430,params:{label:'Epidemic curve \u00b7 by date of death',inputMode:'series',
-      chartTitle:'Cholera deaths by date of death, Soho, London, 1854',
-      xAxisTitle:'Date of death, 1854',yAxisTitle:'Recorded deaths',
-      sourceNote:'Snow 1855, Table 1. Date of death, not of onset or of report.'}},
   ],edges:[
     {id:'deaths-extent',from:'deaths',to:'extent',port:'points'},
     {id:'extent-map',from:'extent',to:'map',port:'polygons'},
     {id:'pumps-map',from:'pumps',to:'map',port:'context'},
-    // No edge joins the two chains, and none can: a location has no date and a dated count has no
-    // place. The separation is the finding, not a gap waiting to be wired.
+  ]};
+}
+
+const SOHO_RECTANGLE={type:'Polygon' as const,coordinates:[[[-.142,51.509],[-.128,51.509],[-.128,51.517],[-.142,51.517],[-.142,51.509]]]};
+const DATES_TABLE=()=>({id:'dates',type:'table_input' as const,x:20,y:20,params:{label:'Snow 1855 Table 1 · deaths by date',
+  keys:['date'],valueField:'deaths',data:{kind:'data-table' as const,keys:['date'],valueField:'deaths',
+    rows:dates.rows.map(row=>({key:{date:row.date},value:row.deaths})),
+    rowCount:dates.rows.length,missingValueCount:0},
+  source:{filename:'snow_dates.csv',bytes:828,sha256:'',rows:dates.rows.length}},
+  references:[reference('snow-dates','Snow 1855, Table 1','https://geodacenter.github.io/data-and-lab//snow/','data',
+    `Daily attacks and deaths for the Broad Street outbreak. ${dates.excludedUndated.attacks} attacks of unknown date are excluded, because a keyed table cannot hold an empty key. These records carry a date and no place.`)]});
+
+/** WHERE WERE THE DEATHS? (experiment 210, 2026-11-12): Snow's own map, the deaths where they fell and the pumps among
+ *  them, with nothing inferred; and where the pumps were measured, in the UTM frame every catchment of this project is
+ *  computed in. Both were parts of the Voronoi workflow until it was split, one question per workflow. */
+export function snowDeathsExample():Workflow{
+  const pumps=structuredClone(data.pumps) as PointFeature[],deaths=structuredClone(data.deaths) as PointFeature[];
+  const nodes:WorkflowNode[]=[
+    {id:'study',type:'study_area',x:20,y:20,params:{source:'drawn',label:'Soho reporting rectangle (illustrative)',selectionMode:'bbox',geometry:structuredClone(SOHO_RECTANGLE)}},
+    {id:'locations',type:'point_input',x:20,y:200,params:{label:'250 death locations (489 deaths)',data:{type:'FeatureCollection',features:deaths},sourceInfo:{format:'CSV',url:voronoiSource+'data/cholera_deaths.csv',description:'This source subset has 250 locations; DEATHS totals 489.'}},references:[reference('deaths-source','Death location CSV',voronoiSource+'data/cholera_deaths.csv','data','Count locations and sum DEATHS separately. This is not the whole outbreak population or a mortality denominator.')]},
+    {id:'pumps',type:'point_input',x:20,y:400,params:{label:'Eight pump locations',data:{type:'FeatureCollection',features:pumps},sourceInfo:{format:'CSV',url:voronoiSource+'data/pumps.csv',description:'Original FID retained in attributes; stable IDs prefixed pump-'}},references:[reference('pumps-source','Pump CSV',voronoiSource+'data/pumps.csv','data','Historical case-study point table; not a facility attendance record.')]},
+    // One mark per address, not per death: 250 addresses carry 489 deaths, so the subtitle says what a mark counts.
+    {id:'spot-map',type:'map_output',x:400,y:20,params:{
+      label:'Deaths and pumps, as Snow drew them',inputMode:'spatial',presentation:'plot',pointInputCount:2,
+      mapTitle:'Cholera deaths and public pumps, Soho, London, 1854',
+      mapSubtitle:'One mark per address where a death was recorded, with the eight public pumps. '
+        +'250 addresses carry 489 deaths, so the marks count addresses and not deaths. Nothing here '
+        +'is inferred: no catchment, no nearest-pump assignment, and no claim about which pump anyone drank from.',
+      mapSourceNote:'Deaths and pump locations: John Snow, On the Mode of Communication of Cholera, '
+        +'2nd ed., 1855, as digitised by Robin Wilson (blog.rtwilson.com/john-snows-cholera-data-in-more-formats). '
+        +'Drawn in CRS84; see the run receipt for method and versions.',
+      showLegend:true}},
+    // WHERE THE PUMPS WERE MEASURED: the frame, EPSG:32630, in which every catchment, area and distance of this project
+    // is computed, shown as the coordinates themselves (kept here at the practitioner's choice, 2026-11-12).
+    {id:'projected',type:'reproject',x:400,y:400,params:{label:'Pump locations in UTM 30N',zone:30,hemisphere:'north'}},
+    {id:'projected-table',type:'table_output',x:720,y:400,params:{label:'Pump coordinates as measured',inputMode:'spatial'}},
+  ];
+  return {schema:'fieldwork/workflow/1',exampleId:'snow-deaths',name:'Where were the deaths? Soho, London, 1854',nodes,edges:[
+    {id:'spot-area',from:'study',to:'spot-map',port:'area'},
+    {id:'spot-points',from:'locations',to:'spot-map',port:'points'},
+    {id:'spot-pumps',from:'pumps',to:'spot-map',port:'points_2'},
+    {id:'pumps-projected',from:'pumps',to:'projected',port:'points'},
+    {id:'projected-projected-table',from:'projected',to:'projected-table',port:'points'},
+  ]};
+}
+
+/** WHEN DID PEOPLE DIE? (experiment 210, 2026-11-12): Snow's Table 1 as an epidemic curve, drawn once; it was drawn in
+ *  three workflows before they were split. These records carry a date and no place, so nothing here joins them to the
+ *  map: a location has no date and a dated count has no place. */
+export function snowCurveExample():Workflow{
+  return {schema:'fieldwork/workflow/1',exampleId:'snow-curve',name:'When did people die? Soho, London, 1854',nodes:[
+    DATES_TABLE(),
+    {id:'curve',type:'case_series',x:330,y:20,params:{label:'Deaths by day',source:'table',dateField:'date',dateKind:'death',period:'day'}},
+    {id:'epidemic',type:'chart_output',x:640,y:20,params:{label:'Epidemic curve · by date of death',inputMode:'series',
+      chartTitle:'Cholera deaths by date of death, Soho, London, 1854',
+      subtitle:'Date of death, not date of onset or of report. The outbreak is conventionally dated from 31 August; the pump handle was removed on 8 September, by which time the curve had already turned.',
+      xAxisTitle:'Date of death, 1854',
+      yAxisTitle:'Recorded deaths',
+      sourceNote:'Source: John Snow, On the Mode of Communication of Cholera, 2nd ed., 1855, as digitised by Robin Wilson. 489 deaths at 250 distinct addresses.'}},
+  ],edges:[
     {id:'dates-curve',from:'dates',to:'curve',port:'cases'},
     {id:'curve-epidemic',from:'curve',to:'epidemic',port:'series'},
   ]};

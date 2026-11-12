@@ -24,6 +24,24 @@ the 2022 census counted them?
 Joint Research Centre. Two sources agreeing is weaker evidence than it looks when they share their methods. All three
 spread a national total over cells; none counts people.
 
+## The 28 census districts, matched by name, 2026-11-12
+
+The practitioner chose the census's own 28 districts if the boundaries match. geoBoundaries' gbHumanitarian ADM2 for
+Botswana (UNFPA via HDX, 2021, CC BY 3.0 IGO; `geoBoundaries-BWA-ADM2.geojson`, 1,383,000 bytes, release 9469f09) has
+28 units, and each census district names exactly one of them. Six are spelled differently:
+
+| Census, Table 1 | Boundary `shapeName` |
+| --- | --- |
+| Central Serowe /Palapye | Serowe Palapye |
+| Central Mahalapye, Central Bobonong, Central Boteti, Central Tutume | Mahalapye, Bobonong, Boteti, Tutume |
+| Delta | Ngamiland Delta |
+| CKGR | Central Kgalagadi Game Reserve |
+| Sowa | Sowa Town |
+
+The other 22 match as written. **So the comparison is at the 28 census districts**, and the ten ADM1 districts are not
+needed. **Not established:** that the outlines are the ones the census counted within. The census publishes no
+boundaries, so the match is by name, and the boundaries represent 2021 against a census of August 2022.
+
 ## Why shares
 
 A share of the country separates where a source puts people from how many it counts in all. The census is three years
@@ -40,7 +58,7 @@ starting points.
 | The census by district | Table input, fetched from where it is published |
 | One table: a district, each source's total | Relate, three times |
 | Each source's share of the country | Total within groups, shares (experiment 191) |
-| Shares side by side, and on a map | Chart; Map |
+| Shares side by side, and on a map | Chart; Map, as a classed choropleth, the form [210](210-proposing-a-chart-or-a-map-from-the-data.md) proposes for a share on areas |
 
 Whether shares by column fit Total within groups as it stands, or need a step of their own, is to be checked before any
 widget is proposed.

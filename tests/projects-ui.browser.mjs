@@ -15,14 +15,14 @@ test('a project can be chosen, read and renamed, and its workflows are its own s
   // Two since 2026-11-11, when the heat example and Old Naledi retired (docs/audits/old-naledi-audit.md).
   await expect(page.locator('#project-select optgroup[label="Built in"] option')).toHaveCount(2); // Manila moved to its own repository, 2026-11-09 (195).
   const workflows=await page.locator('#workflow-select option').evaluateAll(o=>o.map(x=>x.value));
-  expect(workflows).toEqual(['snow-voronoi','snow-isochrone','snow-geoprivacy','snow-extent']);
+  expect(workflows).toEqual(['snow-deaths','snow-curve','snow-voronoi','snow-isochrone','snow-extent','snow-geoprivacy']);
 
   // The metadata is readable rather than hidden in a tooltip.
   // `Project details` was a disclosure in the header until 2026-10-23 and is now a section of
   // the Project tab, which IS the disclosure: one place to manage a project, reached one way.
   await page.locator('[data-view="project"]').click();
   await expect(page.locator('#project-name-edit')).toHaveValue('1854 Cholera Outbreak in London');
-  await expect(page.locator('#project-stats')).toContainText('4 workflows');
+  await expect(page.locator('#project-stats')).toContainText('6 workflows');
   // A built-in project says why it cannot be renamed instead of failing silently.
   await expect(page.locator('#project-name-edit')).toBeDisabled();
   await expect(page.locator('#project-readonly')).toBeVisible();

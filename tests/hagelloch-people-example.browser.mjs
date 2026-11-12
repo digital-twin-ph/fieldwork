@@ -18,12 +18,13 @@ test('Hagelloch: who fell ill opens, runs, and counts the children by age, gende
   const main=page.locator('main').first();
   for(const [code,count] of [['0','90'],['1','30'],['2','68']])
     await expect(main.locator('tr',{has:page.locator('td',{hasText:new RegExp(`^${code}$`)})}).first()).toContainText(count);
-  await page.getByRole('tab',{name:'Cases by age, one panel per gender'}).click();
+  // A POPULATION PYRAMID (experiment 210, 2026-11-12): the girls and boys back to back, the ages 0 to 15 up the middle
+  // with the youngest at the bottom, and the children with no gender recorded said, not drawn.
+  await page.getByRole('tab',{name:'Age and gender pyramid'}).click();
   await expect(page.locator('#vega-chart svg.marks')).toBeVisible({timeout:30_000});
-  // Ages as numbers, 0 to 15, not in the order the rows came; and the blank gender drawn, in a panel named as blank.
-  await expect(page.locator('#vega-chart [aria-label^="X-axis"]').last()).toHaveAttribute('aria-label',/16 values: 0, 1, 2, 3, 4, ending with 15/);
-  await expect(page.locator('#vega-chart svg.marks')).toContainText('gender blank');
-  await expect(page.locator('#vega-chart g.mark-rect.role-mark path')).toHaveCount(38);
+  await expect(page.locator('#vega-chart [aria-label^="Y-axis"]').first()).toHaveAttribute('aria-label',/16 values: 15, 14, 13, 12, 11, ending with 0/);
+  await expect(page.locator('#vega-chart svg.marks')).toContainText('11 with gender blank are not drawn.');
+  await expect(page.locator('#vega-chart svg.marks')).toContainText('f ← count → m');
   await page.screenshot({path:'test-results/hagelloch-people-example.png',fullPage:true});
   expect(errors).toEqual([]);
 });

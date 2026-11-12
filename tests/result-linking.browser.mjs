@@ -11,15 +11,10 @@ test('selecting an output node shows and marks its result',async({page})=>{
   await page.goto('/?example=snow-voronoi');
   await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:60000});
 
-  // Six outputs in this workspace: a map, a table, a chart of the catchments, the epidemic curve
-  // from Snow's own daily table, the pump coordinates in EPSG:32630 (2026-10-14) -- the frame the
-  // catchments are measured in -- and Snow's own spot map of deaths and pumps (2026-10-25), which
-  // neither John Snow workspace had: both drew a catchment map, and a catchment is an argument
-  // about Snow's map rather than that map. The catchment map must remain the FIRST tab: result
-  // tabs follow node order, the projected table briefly displaced it, and the example opened on a
-  // list of eastings instead of the cholera map.
+  // Three outputs, one question (experiment 210, 2026-11-12): the catchment map, its table and its chart. The curve,
+  // the pump coordinates and Snow's spot map have workflows of their own. The catchment map is the FIRST tab.
   const tabs=page.locator('#result-tabs [data-output]');
-  await expect(tabs).toHaveCount(6);
+  await expect(tabs).toHaveCount(3);
   await expect(tabs.first()).toContainText('map',{ignoreCase:true});
 
   // Selecting the chart node opens the chart's own tab and marks it as belonging to the selection.

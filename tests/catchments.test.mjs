@@ -112,13 +112,11 @@ test('pinned John Snow examples execute, conserve counts and emit parseable GeoS
     // interactive map; the Voronoi adds Snow's own spot map of deaths and pumps, which neither
     // workspace had until 2026-10-25 -- both drew a catchment map, and a catchment is an argument
     // about Snow's map rather than that map.
-    assert.equal(result.outputs.length,6);
+    // ONE QUESTION EACH from 2026-11-12 (experiment 210): the pump table, the curve and Snow's spot map moved to
+    // `snow-deaths` and `snow-curve`, tested below. Map, table and chart; the isochrone adds its interactive map.
+    assert.equal(result.outputs.length,kind==='snow-isochrone'?4:3);
     const map=result.outputs.find(o=>o.nodeId==='map'),p=map.polygons;
     assert.ok(p,'the map output must carry the catchment polygons');
-    // The projected table is the same eight pumps (one, for the isochrone) in metres.
-    const projected=result.outputs.find(o=>o.nodeId==='projected-table');
-    assert.ok(projected,'the example must instantiate reproject');
-    assert.equal(result.outputs.filter(o=>o.nodeId==='epidemic')[0].chart.bins.length,43);
     assert.equal(p.summary.records,250);assert.equal(p.summary.matched+p.summary.unmatched+p.summary.missingLocation,250);
     if(kind==='snow-voronoi'){assert.equal(p.summary.multiple,0);assert.equal(p.features.reduce((s,f)=>s+f.count,0),250);assert.equal(p.features.reduce((s,f)=>s+f.total,0),489);}else{
       // [minutes, located deaths, total deaths] per band, re-measured 2026-10-14 when D1 began to
@@ -144,7 +142,7 @@ test('pinned John Snow examples execute, conserve counts and emit parseable GeoS
       // this example exists to ask.
       assert.deepEqual(p.features.map(f=>[f.minutes,f.count,f.total]),[[1,21,65],[5,204,409],[10,250,489],[15,250,489]]);assert.equal(p.summary.multiple,250);assert.equal(map.contextPoints.features.length,8);assert.equal(result.outputs.at(-1).polygonPresentation,'interactive');assert.deepEqual(map.polygons,result.outputs.at(-1).polygons);assert.match(result.receipts.find(r=>r.nodeId==='map').facts,/output:context-pumps/);}
     for(const r of result.receipts)new Parser().parse(r.facts);
-    assert.ok(result.receipts.some(r=>r.facts.includes('geo:asWKT')));assert.equal(result.receipts.filter(r=>r.kind==='presentation').length,kind==='snow-isochrone'?6:5);
+    assert.ok(result.receipts.some(r=>r.facts.includes('geo:asWKT')));assert.equal(result.receipts.filter(r=>r.kind==='presentation').length,kind==='snow-isochrone'?4:3);
     assert.ok(result.evidence.length>=3);
   }
 });
@@ -328,4 +326,16 @@ test('buffer creates a distinct area and expands acquisition without carrying ol
   const node={id:'buffer',type:'buffer_area',params:{label:'Acquisition',distanceM:500},x:0,y:0};const result=bufferArea(node,source,'test');assert.deepEqual(boundary,snapshot);assert.notEqual(result.value.areaId,source.areaId);assert.equal(result.value.measurement,undefined);const before=geometryBounds(boundary),after=geometryBounds(result.value.boundary);assert.ok(after[0]<before[0]&&after[1]<before[1]&&after[2]>before[2]&&after[3]>before[3]);new Parser().parse(result.receipt.facts);
   assert.deepEqual(bufferedBoundary(boundary,0),boundary);assert.throws(()=>bufferedBoundary(boundary,-1),/0–50,000/);
   const box=geometryBounds(dimensionedBox([-.136,51.513],1000,1000)),width=(box[2]-box[0])*111195*Math.cos(51.513*Math.PI/180),height=(box[3]-box[1])*111195;assert.ok(Math.abs(width-height)<.001);assert.ok(Math.abs(width-1000)<.001);assert.throws(()=>dimensionedBox([0,89],1000,1000),/80/);
+});
+
+test('where were the deaths, and when: the spot map and the pumps as measured; the curve, once (experiment 210)',async()=>{
+  const {snowDeathsExample,snowCurveExample}=await import('../build/john-snow.js');
+  const deaths=snowDeathsExample();syncProjectManifest(deaths);
+  const where=await executeWorkflow(validateWorkflow(JSON.parse(JSON.stringify(deaths))),ready);
+  assert.deepEqual(where.outputs.map(o=>o.nodeId).sort(),['projected-table','spot-map']);
+  const curve=snowCurveExample();syncProjectManifest(curve);
+  const when=await executeWorkflow(validateWorkflow(JSON.parse(JSON.stringify(curve))),ready);
+  assert.equal(when.outputs.find(o=>o.nodeId==='epidemic').chart.bins.length,43);
+  // Nothing joins the curve to a place: a dated count has no location.
+  assert.ok(!curve.nodes.some(n=>n.type==='point_input'||n.type==='study_area'));
 });

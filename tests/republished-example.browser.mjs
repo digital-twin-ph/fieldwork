@@ -33,9 +33,10 @@ test('a republished worked example says so, and nothing is replaced without aski
 
   await toast.getByText('Load the updated example').click();
   await page.locator('[data-view="workflow"]').click();
-  await expect(page.locator('.react-flow__node')).toHaveCount(15,{timeout:20000});
+  // Nine steps from 2026-11-12, one question (experiment 210): the curve and the spot map have workflows of their own.
+  await expect(page.locator('.react-flow__node')).toHaveCount(9,{timeout:20000});
   await page.locator('[data-view="workflow"]').click();
-  await expect(page.locator('.react-flow__node').filter({hasText:'Snow 1855 Table 1'}).first()).toBeVisible();
+  await expect(page.locator('.react-flow__node').filter({hasText:'Nearest pump catchments'}).first()).toBeVisible();
 
   // And it does not nag afterwards: the workspace now records which published version it came
   // from, so the next visit is quiet.

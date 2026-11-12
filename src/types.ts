@@ -648,7 +648,7 @@ export interface ParamsByType {
   chart_output:{label:string; section?:import('./notes.js').FigureSection;
     /** WHAT IS DRAWN: bars (the default), or who infected whom as chains over time (experiment 200, step 5), with the
      *  columns naming each case, its infector and its date. */
-    figure?:'bars'|'tree'; tree?:{id:string;parent:string;date:string;
+    figure?:'bars'|'tree'|'pyramid'; tree?:{id:string;parent:string;date:string;
       /** A written value meaning no source recorded, such as "none recorded" (2026-11-12). Empty is always none. */
       none?:string};
     /** ONE PANEL PER VALUE of this key column, stacked on a shared x axis, each with its own y scale (experiment 174).
@@ -707,7 +707,7 @@ export interface WorkflowEdge {id:string; from:string; to:string; port:string}
  *  `exampleId`, so it carries the project it belongs to and the key it is stored under -- because
  *  the workspace map was keyed by a closed vocabulary of example ids, and a practitioner cannot
  *  mint one of those. `outputId` stays SINGULAR and per-workflow: one question, one answer. */
-export interface Workflow {schema:'fieldwork/workflow/1'; name:string; exampleId?:'blank'|'coverage'|'snow-voronoi'|'snow-isochrone'|'snow-geoprivacy'|'snow-extent'|'rulesets'; nodes:WorkflowNode[]; edges:WorkflowEdge[]; projectId?:string; workflowKey?:string; outputId?:string; manifest?:import('./project-manifest.js').ProjectManifest}
+export interface Workflow {schema:'fieldwork/workflow/1'; name:string; exampleId?:'blank'|'coverage'|'snow-deaths'|'snow-curve'|'snow-voronoi'|'snow-isochrone'|'snow-geoprivacy'|'snow-extent'|'rulesets'; nodes:WorkflowNode[]; edges:WorkflowEdge[]; projectId?:string; workflowKey?:string; outputId?:string; manifest?:import('./project-manifest.js').ProjectManifest}
 // 'samples' was removed on 2026-10-12: it sat in this union and nowhere else, produced by
 // nothing and consumed by nothing. Found by surveying the inventory sideways
 // (docs/experiments/105-five-directions.md), and removed rather than counted, because a closed

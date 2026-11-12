@@ -32,16 +32,26 @@ test('Reproject points is a transform: it declares its target frame and takes a 
 });
 
 test('a projected result is refused by a widget that measures, in the application',async({page})=>{
-  // From 2026-10-14 the example ships its own `projected` node, so this rewires that one rather
-  // than adding a second. The Voronoi measures, so feeding it metres must be refused by name.
+  // The Voronoi measures, so feeding it metres must be refused by name. Its `projected` step moved to `snow-deaths` on
+  // 2026-11-12 (experiment 210), so one is added here, as a person would: from the library, wired from the pumps.
   await page.goto('/?example=snow-voronoi');
   await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
   await page.locator('[data-view="workflow"]').click();
-  await expect(page.locator('.react-flow__node[data-id="projected"]')).toHaveCount(1);
+  await page.locator('#node-library [data-add="reproject"]').click();
+  const saved=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));
+  const projected=(await saved()).nodes.filter(n=>n.type==='reproject').pop().id;
+  await page.locator('#tidy-button').click();
+  const box=async()=>JSON.stringify([await page.locator('.react-flow__node[data-id="pumps"] [data-handleid="out"]').boundingBox(),
+    await page.locator(`.react-flow__node[data-id="${projected}"] [data-handleid="points"]`).boundingBox()]);
+  let before='';await expect.poll(async()=>{const now=await box(),still=now===before;before=now;return still;},{intervals:[150]}).toBe(true);
+  const [a,b]=JSON.parse(before);
+  await page.mouse.move(a.x+a.width/2,a.y+a.height/2);await page.mouse.down();
+  await page.mouse.move(b.x+b.width/2,b.y+b.height/2,{steps:20});await page.mouse.up();
+  await expect.poll(async()=>(await saved()).edges.some(e=>e.from==='pumps'&&e.to===projected)).toBe(true);
 
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="catchments"]').click();
-  await page.locator('#connect-sites').selectOption('projected');
+  await page.locator('#connect-sites').selectOption(projected);
   await page.locator('#run-button').click();
   await expect(page.locator('body')).toContainText('needs longitude and latitude',{timeout:45000});
   await expect(page.locator('body')).toContainText('Reproject points gives it easting and northing');

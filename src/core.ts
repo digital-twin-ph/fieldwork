@@ -2508,7 +2508,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
     }
     if(node.type==='chart_output'&&isRecord(value)&&(value as {chart?:ChartSummary}).chart){
       const chart=(value as {chart:ChartSummary}).chart;
-      const described=chartDescriptionNote(chart,node.params.label,node.id,chartRenderer(node.params)==='vega-lite'?node.params.mark??'bar':'bar');
+      const described=chartDescriptionNote(chart,node.params.label,node.id,node.params.figure==='pyramid'?'pyramid':chartRenderer(node.params)==='vega-lite'?node.params.mark??'bar':'bar');
       const note=described&&{...described,section:figureSection(node.params,node.type)};
       if(note){machined[node.id]=[note];withNote(receipts,runId,node.id,[note]);
         withArtifact(receipts,runId,node.id,{kind:'chart',barCount:chart.bins.length,

@@ -43,8 +43,9 @@ test('two built-in projects hold more than one workflow',()=>{
   // Who infected whom, beside the curve and the map (experiment 200, 2026-11-09), was there a cluster (2026-11-10), and
   // the 1824 sheet placed by hand (experiment 201, 2026-11-10).
   assert.deepEqual(projectById('hagelloch-1861').workflows,['hagelloch','hagelloch-chains','hagelloch-cluster','hagelloch-sheet','hagelloch-people']);
-  assert.equal(projectById('cholera-london-1854').workflows.length,4);
-  // All four Snow workflows ask about one outbreak, which is what makes them one project.
+  // One question to each workflow from 2026-11-12 (experiment 210), geoprivacy last until it leaves for its own example.
+  assert.deepEqual(projectById('cholera-london-1854').workflows,['snow-deaths','snow-curve','snow-voronoi','snow-isochrone','snow-extent','snow-geoprivacy']);
+  // All the Snow workflows ask about one outbreak, which is what makes them one project.
   assert.ok(projectById('cholera-london-1854').workflows.every(k=>k.startsWith('snow-')));
 });
 

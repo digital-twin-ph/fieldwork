@@ -81,6 +81,14 @@ recorded** names a value, such as *none recorded*, that means no source; an empt
 Hagelloch, 1861: 188 cases in 4 chains, 184 links; the largest chain starts with case 184 and holds 173 cases over 6
 generations. The tree draws the reconstruction of who infected whom that the table holds; it does not estimate one.
 
+### Two groups back to back: a population pyramid
+
+In **Configure…**, **Draw** *Population pyramid, two groups back to back by band*, then name the column whose two values
+sit left and right, such as gender. Each band of the category column, such as age, is a row, the youngest at the
+bottom; one group's counts run left and the other's right, and the axis reads as a count on both sides. Rows where the
+column is blank are not drawn, and the subtitle says how many. A column with other than two values is refused, naming
+them. Hagelloch's *Who fell ill?* draws its cases by age and gender this way.
+
 ### Variables moving together through time: one panel each
 
 When a table carries several variables in one column — what Table input's **Wide** shape makes of a file with a

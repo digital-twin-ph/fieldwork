@@ -153,12 +153,12 @@
    "replacementCandidate": "urn:fieldwork:widget:observations"
   },
   "chart_output": {
-   "version": "0.15.1",
+   "version": "0.16.0",
    "released": "2026-11-12",
    "changes": [
     {
-     "kind": "patch",
-     "description": "The chart's description in the notes counts what is drawn: estimates with their intervals, points on a line, or dots, where it said bars for all of them (Brazil's \"7 bars, one per shift\" over seven rate ratios, the practitioner 2026-11-12). In the notes a chart drawn with the enhanced renderer is now that figure, the same one its SVG download gives; an estimate with its interval had shown only a line asking for the enhanced renderer."
+     "kind": "minor",
+     "description": "Draws a population pyramid: two groups back to back by band, the youngest at the bottom, counts read on both sides, and the rows where the group column is blank said and not drawn (experiment 210, the first of the forms it proposes; the practitioner, 2026-11-12: \"We really want FW to shine and impress with its intelligent data visualizations\"). Hagelloch's cases by age and gender are drawn this way."
     }
    ],
    "breaking": false,

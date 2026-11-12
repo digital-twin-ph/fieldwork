@@ -20,7 +20,7 @@ import {calculateArea,AREA_METHOD} from '../build/area-computation.js';
 import {computeMeanCenter} from '../build/mean-center.js';
 import {snapToNetwork} from '../build/network-snap.js';
 import {reachableNodes} from '../build/reachable-nodes.js';
-import {johnSnowExample} from '../build/john-snow.js';
+import {johnSnowExample,snowCurveExample} from '../build/john-snow.js';
 import {travelTimeBand} from '../build/travel-time-band.js';
 import {reachableCorridor} from '../build/reachable-corridor.js';
 import {convexHull} from '../build/convex-hull.js';
@@ -295,7 +295,7 @@ const builders={
     // Snow example renders. The widget bins a weighted table by period, and the three periods
     // are checked because they are three different calendar rules -- a day key, a month key,
     // and the Monday of the ISO week -- and the week is the one most likely to be wrong.
-    const table=johnSnowExample('snow-voronoi').nodes.find(n=>n.id==='dates').params.data;
+    const table=snowCurveExample().nodes.find(n=>n.id==='dates').params.data;
     const dateField='date',dateKind='death';
     const byPeriod=Object.fromEntries(['day','week','month'].map(period=>{
       const series=caseSeriesFromTable(table,{dateField,dateKind,period});

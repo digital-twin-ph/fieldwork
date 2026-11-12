@@ -3,6 +3,17 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.102.0 — 2026-11-12
+
+- **John Snow asks one question in each workflow.** *Where were the deaths?*, *When did people die?*, *Which pump was
+  nearest?*, *Who lived within a walk of the pump?* and *How far did it spread?*, each named as its question; the epidemic
+  curve, drawn three times before, is drawn once. The workflows that were kept keep their addresses. Geoprivacy stays,
+  last, until it becomes a worked example of its own. Experiment 210.
+- **Chart draws a population pyramid**: two groups back to back by band, the youngest at the bottom, with the rows the
+  group column leaves blank said and not drawn. Hagelloch's *Who fell ill?* now draws its cases by age and gender this
+  way, where it drew two panels. The first of the forms experiment 210 sets out for Fieldwork to propose from the data.
+  Chart 0.16.0.
+
 ## 0.101.1 — 2026-11-12
 
 - **Sample a raster names its ports on the canvas**: Points, Areas, Study area, Raster and Satellite files, and its

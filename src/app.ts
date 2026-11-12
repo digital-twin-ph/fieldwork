@@ -2132,11 +2132,13 @@ function chartTableControls(n:WorkflowNode<'chart_output'>):string{
         const panels=p.panelsBy?held[p.panelsBy]??[]:[];
         const dates=held[axis]??[],temporal=orderOf(dates)==='date'&&dates.every(d=>d.length===10);
         const sorted=[...dates].sort();
-        out+=`<div class="field"><label class="field-label" for="chart-panels-by">One panel per</label>`
-          +`<select id="chart-panels-by"><option value="">No panels \u00b7 one chart</option>`
+        const pyramid=p.figure==='pyramid';
+        out+=`<div class="field"><label class="field-label" for="chart-panels-by">${pyramid?'Back to back, the two groups of':'One panel per'}</label>`
+          +`<select id="chart-panels-by"><option value="">${pyramid?'Choose a column with two values\u2026':'No panels \u00b7 one chart'}</option>`
           +columns.filter(name=>name!==axis).map(name=>`<option value="${esc(name)}" ${p.panelsBy===name?'selected':''}>${esc(name)}</option>`).join('')
-          +`</select><small>Each value of the column gets its own panel and scale, on one shared ${esc(axis)} axis, so a count and a concentration are never drawn on one scale.</small></div>`
-          +(panels.length
+          +`</select><small>${pyramid?`Its two values sit left and right of the ${esc(axis)} bands; rows where it is blank are counted and said, not drawn.`
+            :`Each value of the column gets its own panel and scale, on one shared ${esc(axis)} axis, so a count and a concentration are never drawn on one scale.`}</small></div>`
+          +(panels.length&&!pyramid
             ?panels.map(panel=>`<div class="field"><label class="field-label" for="chart-panel-mark-${esc(panel)}">Mark for ${esc(panel)}</label>`
               +`<select id="chart-panel-mark-${esc(panel)}" data-panel-mark="${esc(panel)}"><option value="">Automatic</option>`
               +`<option value="bar" ${p.panelMarks?.[panel]==='bar'?'selected':''}>Bars</option>`
@@ -2161,6 +2163,9 @@ function chartSentence(n:WorkflowNode<'chart_output'>):string{
   if(p.figure==='tree')return p.tree?.id&&p.tree.parent&&p.tree.date
     ?`Draws who infected whom in ${source} as chains over time: each case at its ${p.tree.date}, joined to the case named in ${p.tree.parent}.`
     :`Draws who infected whom in ${source} as chains over time. Name the case, infector and date columns in Configure\u2026`;
+  if(p.figure==='pyramid')return p.panelsBy
+    ?`Draws ${source} as a population pyramid: ${p.keyColumn||'each band'} up the middle, the two groups of ${p.panelsBy} back to back.`
+    :`Draws ${source} as a population pyramid. Name the column whose two groups sit back to back in Configure\u2026`;
   return `Draws ${source} as ${chartRenderer(p)==='vega-lite'&&p.mark==='point'?'dots':chartRenderer(p)==='vega-lite'&&p.mark==='line'?'a line':'bars'}${p.panelsBy?`, one panel per ${p.panelsBy}`:''}${p.chartTitle?`, titled \u201c${p.chartTitle}\u201d`:''}.`;
 }
 
@@ -2318,7 +2323,8 @@ function openChartConfig(nodeId:string){
         +columns.map(c=>`<option value="${esc(c)}" ${draft.tree?.[key]===c?'selected':''}>${esc(c)}</option>`).join('')
         +`</select><small>${hint}</small></div>`;
       const settings=(records?`<div class="field"><label class="field-label" for="chart-figure">Draw</label><select id="chart-figure">`
-          +`<option value="bars" ${tree?'':'selected'}>Bars, a category against a number</option>`
+          +`<option value="bars" ${tree||draft.figure==='pyramid'?'':'selected'}>Bars, a category against a number</option>`
+          +`<option value="pyramid" ${draft.figure==='pyramid'?'selected':''}>Population pyramid, two groups back to back by band</option>`
           +`<option value="tree" ${tree?'selected':''}>Transmission tree, who infected whom over time</option></select></div>`:'')
         +(tree
           ?(columns.length?'':'<p class="notice">Run the workflow once to list the table\u2019s columns.</p>')
@@ -2344,7 +2350,7 @@ function openChartConfig(nodeId:string){
     wire:(root,draft,redraw)=>{
       const on=(selector:string,fn:(el:HTMLInputElement&HTMLSelectElement&HTMLTextAreaElement)=>void)=>
         root.querySelectorAll<HTMLInputElement&HTMLSelectElement&HTMLTextAreaElement>(selector).forEach(el=>el.addEventListener('change',()=>{fn(el);redraw();}));
-      on('#chart-figure',el=>{if(el.value==='tree')draft.figure='tree';else delete draft.figure;});
+      on('#chart-figure',el=>{if(el.value==='tree'||el.value==='pyramid'){draft.figure=el.value;if(el.value==='pyramid')draft.renderer='vega-lite';}else delete draft.figure;});
       on('[data-tree]',el=>{draft.tree={id:'',parent:'',date:'',...draft.tree,[el.dataset.tree!]:el.value};});
       on('#chart-renderer',el=>{draft.renderer=el.value as 'html'|'vega-lite';if(draft.renderer==='html')draft.mark='bar';});
       on('#chart-mark',el=>{draft.mark=el.value as 'bar'|'point'|'line';});

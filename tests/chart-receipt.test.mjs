@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {Parser} from 'n3';
-import {johnSnowExample} from '../build/john-snow.js';
+import {johnSnowExample,snowCurveExample} from '../build/john-snow.js';
 import {chartOutput} from '../build/chart-output.js';
 import {executeWorkflow,validateWorkflow} from '../build/core.js';
 import {syncProjectManifest} from '../build/project-manifest.js';
@@ -20,7 +20,7 @@ const literal=(facts,predicate)=>{
 // chart, and the default was the classic bars. These checks are the reason that default changed.
 
 const cases=[
-  ['a case series',()=>johnSnowExample('snow-epidemic-curve'),'epidemic'],
+  ['a case series',()=>snowCurveExample(),'epidemic'],
   ['polygon summaries',()=>johnSnowExample('snow-voronoi'),'chart'],
   // The reasoning-decisions path is exercised directly below instead of through a full run: Old
   // Naledi needs the real EYE reasoner, and a stub cannot produce the evidence assertions it
@@ -59,7 +59,7 @@ for(const [name,build,nodeId] of cases){
 
 test('a chart on the classic bars still produces a receipt, and says the specification is absent', async()=>{
   // The classic renderer remains selectable, and its receipt must not pretend to carry a figure.
-  const workflow=johnSnowExample('snow-epidemic-curve');
+  const workflow=snowCurveExample();
   workflow.nodes.find(n=>n.id==='epidemic').params.renderer='html';
   const result=await run(workflow);
   const receipt=result.receipts.find(r=>r.nodeId==='epidemic');

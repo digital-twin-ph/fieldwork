@@ -148,7 +148,7 @@ test('the Project view shows the selected project, and does not call a worked ex
   await expect(page.locator('.project-view-block')).toHaveCount(1);
   await expect(page.locator('#project-view-title')).toHaveText('1854 Cholera Outbreak in London');
   const block=page.locator('.project-view-block');
-  await expect(block).toContainText('4 workflows');
+  await expect(block).toContainText('6 workflows');
   // "0 widgets" would be true about storage and false about the project, so an unopened
   // workflow says which question is being answered.
   await expect(block).toContainText('not opened');
@@ -162,7 +162,7 @@ test('the Project view shows the selected project, and does not call a worked ex
   await expect(block.locator('[data-delete-project]')).toHaveCount(0);
 
   // The workflow you have open is still marked, and its siblings are still reachable.
-  await expect(block.locator('.project-view-row')).toHaveCount(4);
+  await expect(block.locator('.project-view-row')).toHaveCount(6);
   await expect(block).toContainText('open');
 });
 

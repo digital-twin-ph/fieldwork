@@ -100,6 +100,7 @@ export function wrapToWidth(value:string,width:number):string[]{
 
 export function chartVegaSpec(chart:ChartSummary,params:ChartParams,context:{sourceId?:string;runId?:string;sourceLabel?:string}={}){
   if(chartRenderer(params)!=='vega-lite')throw new Error('Vega-Lite rendering is not selected.');
+  if(chart.panels?.length&&params.figure==='pyramid')return pyramidVegaSpec(chart,params,context);
   if(chart.panels?.length)return panelVegaSpec(chart,params,context);
   if(chart.interval)return intervalVegaSpec(chart,params,context);
   // A LINE runs along the categories in their order, left to right (the practitioner, 2026-11-12: Chart offered no line).
@@ -284,6 +285,53 @@ export const panelMark=(chart:ChartSummary,params:ChartParams,panel:string):'bar
  *  because a facet draws every panel with one mark and the practitioner chooses a mark per panel. Only the bottom panel
  *  carries the x axis, so the panels read as one figure. A shaded period is a rectangle behind every panel; it needs a
  *  time axis, since a range of categories has no width to shade. */
+/** A POPULATION PYRAMID (experiment 210, 2026-11-12): two groups back to back, one band per row, the youngest at the
+ *  bottom, each side counted outward and read as a count on either side. The groups are the two named values of the
+ *  column the panels would be drawn by; rows where it is blank are not drawn, and the subtitle says how many. */
+export function pyramidVegaSpec(chart:ChartSummary,params:ChartParams,context:{sourceId?:string;runId?:string;sourceLabel?:string}){
+  const by=params.panelsBy?.trim()||'group';
+  const sides=chart.panels!.filter(panel=>panel!=='');
+  if(sides.length!==2)throw new Error(`A pyramid sets two groups back to back; ${by} holds ${sides.length}: ${sides.join(', ')||'none'}.`);
+  const [left,right]=sides as [string,string];
+  const blank=chart.bins.filter(b=>b.panel===''&&!b.missing).reduce((sum,b)=>sum+b.count,0);
+  const values=chart.bins.filter(b=>b.panel===left||b.panel===right)
+    .map(b=>({group:b.panel,band:b.label,count:b.missing?0:b.count,signed:(b.missing?0:b.count)*(b.panel===left?-1:1)}));
+  const labels=[...new Set(chart.bins.map(b=>b.label))].filter(l=>l!=='');
+  const lead=(label:string)=>{const m=/^\s*(\d+(?:\.\d+)?)/.exec(label);return m?Number(m[1]):NaN;};
+  const ordered=labels.every(l=>Number.isFinite(lead(l)))?[...labels].sort((a,b)=>lead(a)-lead(b)||a.localeCompare(b)):labels;
+  const width=560,height=Math.max(160,Math.min(520,ordered.length*18));
+  const sourceNote=chartSourceNote(params,context.sourceId,context.runId,context.sourceLabel);
+  const left_note=blank?`${blank.toLocaleString('en')} with ${by} blank are not drawn.`:'';
+  return {
+    $schema:'https://vega.github.io/schema/vega-lite/v6.json',
+    background:FIGURE_ROLE.background,
+    description:chart.caption,
+    data:{values},
+    title:{text:params.chartTitle?.trim()||chart.caption,
+      subtitle:[params.subtitle?.trim(),left_note,sourceNote].filter((part):part is string=>!!part).flatMap(part=>wrapToWidth(part,width)),
+      anchor:'start' as const},
+    width,height,
+    mark:{type:'bar' as const},
+    encoding:{
+      // Youngest at the bottom: Vega-Lite lists a sorted nominal axis from the top, so the order is reversed.
+      y:{field:'band',type:'ordinal' as const,sort:[...ordered].reverse(),title:params.yAxisTitle?.trim()||chart.categoryTitle||null},
+      x:{field:'signed',type:'quantitative' as const,title:params.xAxisTitle?.trim()||`${left} ← count → ${right}`,
+        axis:{labelExpr:'abs(datum.value)',format:'d'}},
+      color:{field:'group',type:'nominal' as const,scale:{domain:[left,right],range:[FIGURE_PALETTE[0],FIGURE_PALETTE[1]]},
+        legend:{title:by,orient:'top' as const}},
+      tooltip:[{field:'band',type:'ordinal' as const,title:chart.categoryTitle??'band'},{field:'group',type:'nominal' as const,title:by},
+        {field:'count',type:'quantitative' as const,title:'count'}]},
+    config:{view:{stroke:null},font:FIGURE_TYPE.family,
+      axis:{...TUFTE_AXIS,labelFontSize:FIGURE_TYPE.tick,titleFontSize:FIGURE_TYPE.axisTitle,
+        labelColor:FIGURE_ROLE.quietInk,titleColor:FIGURE_ROLE.ink},
+      axisQuantitative:{grid:true,gridColor:FIGURE_GRID,gridWidth:1},
+      legend:{labelFontSize:FIGURE_TYPE.tick,titleFontSize:FIGURE_TYPE.axisTitle,labelColor:FIGURE_ROLE.ink,titleColor:FIGURE_ROLE.ink},
+      title:{fontSize:FIGURE_TYPE.title,subtitleFontSize:FIGURE_TYPE.subtitle,color:FIGURE_ROLE.ink,subtitleColor:FIGURE_ROLE.quietInk,
+        subtitlePadding:8,offset:12},
+      bar:{binSpacing:1}},
+  };
+}
+
 function panelVegaSpec(chart:ChartSummary,params:ChartParams,context:{sourceId?:string;runId?:string;sourceLabel?:string}){
   const panels=chart.panels!,temporal=!!chart.temporal;
   const values=chart.bins.map(b=>({panel:b.panel,label:b.label,count:b.missing?null:b.count}));

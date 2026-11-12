@@ -57,7 +57,7 @@ test('a run whose canvas moved on says so, and takes nothing down with it',async
   // results were not kept, and says what to do to see them.
   const toast=page.locator('#toast');
   await expect(toast).toContainText('after this canvas had already moved on',{timeout:60000});
-  await expect(toast).toContainText('John Snow · network isochrones');
+  await expect(toast).toContainText('Who lived within a walk of the Broad Street pump? Soho, 1854');
   await expect(toast).toContainText('they were not kept');
   // Nothing went wrong, so it is not red, and it does not claim a failure.
   await expect(toast).not.toHaveClass(/failure/);

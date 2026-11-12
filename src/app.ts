@@ -844,23 +844,34 @@ function recordRevision(key:string){
   try{localStorage.setItem(REVISIONS,JSON.stringify({...readRevisions(),[key]:exampleRevision(template(key))}));}
   catch{/* storage refused; the notice simply reappears next time, which is harmless */}
 }
+/** LOAD THE EXAMPLE AS IT SHIPS NOW, replacing this copy: from the note under the toolbar, and from the notice. */
+function loadPublished(key:string){
+  const replaced=change(w=>{replaceWorkflow(w,template(key));selected=null;});
+  if(replaced===false)return;
+  recordRevision(key);
+  result=null;runWorkflow=null;activeOutputId=null;history=[];future=[];statuses={};
+  renderResults();renderLibrary($('#node-search').value);render();
+  setTimeout(()=>flow?.fit(),80);
+  $('#toast').classList.remove('visible');
+  if(canAutoRun(workflow))run();
+}
+/** WHICH IS TRUE OF A SAVED COPY (the practitioner, 2026-11-12: Hagelloch's cluster workflow lacked the day-by-day
+ *  replay, added to the example after the copy was saved, and the bar said only "changed since"): the example moved on,
+ *  the copy was edited, or, for a copy saved before revisions were kept, only that it differs from the example now. */
+function exampleStanding(key:string):'same'|'updated'|'edited'|'differs'{
+  if(!isExampleKey(key)||key==='blank'||!divergedFromExample(key))return 'same';
+  const held=readRevisions()[key];
+  let now:string;try{now=exampleRevision(template(key));}catch{return 'same';}
+  if(held===undefined)return 'differs';
+  return held!==now?'updated':'edited';
+}
 /** Says so when the published example has moved on, and offers to load it. */
 function noticeIfRepublished(key:string){
   if(key==='blank')return;
   const held=readRevisions()[key];
   if(held===exampleRevision(template(key)))return;
-  toast('This worked example has been republished since you last opened it. Your copy is unchanged '
-    +'and still has your edits; the published version is a separate click.',
-    {tone:'warning',action:{label:'Load the published version',run:()=>{
-      const replaced=change(w=>{replaceWorkflow(w,template(key));selected=null;});
-      if(replaced===false)return;
-      recordRevision(key);
-      result=null;runWorkflow=null;activeOutputId=null;history=[];future=[];statuses={};
-      renderResults();renderLibrary($('#node-search').value);render();
-      setTimeout(()=>flow?.fit(),80);
-      $('#toast').classList.remove('visible');
-      if(canAutoRun(workflow))run();
-    }}});
+  toast('This worked example has been updated since this copy was made. Loading the updated example replaces this copy.',
+    {tone:'warning',action:{label:'Load the updated example',run:()=>loadPublished(key)}});
 }
 
 /** A key that no worked example owns. `template()` falls through to the heat example for an
@@ -1460,7 +1471,17 @@ function render(){
   // The practitioner met this twice before it was fixed, which is why it is withdrawn here rather
   // than corrected in eight branches: one place that can be read, instead of a rule repeated.
   if(divergedFromExample(exampleKey(workflow))){
-    $('#example-note').textContent=`Built on ${workflowTitle(exampleKey(workflow))} and changed since.`;
+    // SAID IN THE BAR, where it stays, and for every workflow opened, not only the first: which of the three it is.
+    const key=exampleKey(workflow),standing=exampleStanding(key);
+    const note=$('#example-note');
+    note.textContent=standing==='updated'?'The example has been updated since this copy was made. '
+      :standing==='differs'?`Differs from ${workflowTitle(key)} as it is now. `
+      :`Built on ${workflowTitle(key)} and changed since.`;
+    if(standing==='updated'||standing==='differs'){
+      const load=document.createElement('button');load.type='button';load.className='button small';load.id='load-published';
+      load.textContent=standing==='updated'?'Load the updated example':'Load the example as it is now';
+      load.title='Replaces this copy with the example as it ships now';load.onclick=()=>loadPublished(key);note.append(load);
+    }
     $('#canvas-example').textContent=(workflow.name||'This workflow').toUpperCase();
     // AND THE LINE UNDER THE TITLE, which described the example it started from: a dengue workflow built on a blank
     // canvas said "Define a study area and inspect its semantic representation" (the practitioner's screenshot,

@@ -10,6 +10,9 @@ shown in a local build is not a claim that it has been published.
   other recorded link is drawn dashed and counted. MERS's second workflow now draws who infected whom: SK_39 records
   three sources and SK_107 two.
 - **Relate can keep one row per match**, where a key matches several rows, saying how many. Relate 0.12.0.
+- **A saved copy of an example says when the example has been updated**, in the bar under the toolbar, with *Load the
+  updated example*; it said only "changed since", whether the example had moved on or you had. Hagelloch's cluster
+  workflow saved before the day-by-day replay was added is the case that showed it.
 - **Make bands…** in Apply ruleset writes the rules for age bands, or any bands of a number, from cut points, with no
   gap or overlap. Apply ruleset 0.13.0.
 

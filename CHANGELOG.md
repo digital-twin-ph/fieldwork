@@ -3,6 +3,11 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.100.0 — 2026-11-12
+
+- **Cases by month of the year**, January to December, every year's January together, all twelve kept: a season across
+  years of data. Cases by period 0.4.0.
+
 ## 0.99.0 — 2026-11-12
 
 - **Cases by day of the week.** Cases by period counts by day of the week, Monday to Sunday, all seven kept. Hagelloch's

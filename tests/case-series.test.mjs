@@ -169,3 +169,24 @@ test('a date column the table does not key on is refused with the keys it does h
   assert.throws(()=>caseSeriesFromTable(table,{dateField:'onset_date',dateKind:'onset',period:'day'}),
     /no key column "onset_date". Its key columns are: date/);
 });
+
+/** THE CYCLES (2026-11-12): day of the week and month of the year, counted by place in the cycle, every place kept. */
+const dated=dates=>({type:'FeatureCollection',features:dates.map(([date,n],i)=>({type:'Feature',id:`c${i}`,geometry:null,
+  properties:{name:`c${i}`,onset:date,...(n===undefined?{}:{n})}}))});
+test('month of the year counts January to December across years, keeps an empty month, and honours a weight',()=>{
+  // 2023-01-15 and 2024-01-03 are both January; 2024-03-31 counts 4; no case in February; one record undated.
+  const series=caseSeries(dated([['2023-01-15',1],['2024-01-03',1],['2024-03-31',4],['2023-12-25',1],['not a date',1]]),
+    {dateField:'onset',dateKind:'onset',period:'month-of-year',weightField:'n'});
+  assert.deepEqual(series.bins.map(b=>b.label),['January','February','March','April','May','June','July','August','September','October','November','December']);
+  assert.deepEqual(series.bins.map(b=>b.count),[2,0,4,0,0,0,0,0,0,0,0,1]);
+  assert.equal(series.total,7);
+  assert.equal(series.undatedRecords,1);
+  assert.match(seriesChart(series).caption,/Cases by month of the year of date of onset/);
+});
+test('day of the week runs Monday to Sunday as ISO 8601 numbers them',()=>{
+  // 2024-01-01 was a Monday, 2024-01-07 a Sunday, 2023-12-31 a Sunday.
+  const series=caseSeries(dated([['2024-01-01'],['2024-01-07'],['2023-12-31'],['2024-01-03']]),
+    {dateField:'onset',dateKind:'onset',period:'weekday'});
+  assert.deepEqual(series.bins.map(b=>`${b.label} ${b.count}`),
+    ['Monday 1','Tuesday 0','Wednesday 1','Thursday 0','Friday 0','Saturday 0','Sunday 2']);
+});

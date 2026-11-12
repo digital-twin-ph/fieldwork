@@ -2717,7 +2717,7 @@ function openSeriesConfig(nodeId:string){
         +`<div class="field"><label class="field-label" for="series-kind">Which date is it?</label><select id="series-kind" data-series="dateKind">`
         +DATE_KINDS.map(k=>`<option value="${k}" ${d.dateKind===k?'selected':''}>${k}</option>`).join('')+'</select></div>'
         +`<div class="field"><label class="field-label" for="series-period">Period</label><select id="series-period" data-series="period">`
-        +([['day','day'],['week','week, starting Monday (ISO 8601)'],['week-sunday','week, starting Sunday (epidemiological week)'],['month','month'],['weekday','day of the week']] as const)
+        +([['day','day'],['week','week, starting Monday (ISO 8601)'],['week-sunday','week, starting Sunday (epidemiological week)'],['month','month'],['weekday','day of the week'],['month-of-year','month of the year']] as const)
           .map(([v,t])=>`<option value="${v}" ${d.period===v?'selected':''}>${t}</option>`).join('')+'</select></div>'
         +(d.source==='table'?'':pick('series-weight','Cases per record (optional)','weightField','',true));
       return {settings,preview:`<p class="description">${esc(seriesSentence(d))}</p>`,

@@ -2,7 +2,7 @@
 
 _Created 2026-11-07 · Updated 2026-11-12_
 
-**An epidemic curve's counts.** Cases per day, week or month, or by day of the week, by a date whose kind you state: onset, report, death,
+**An epidemic curve's counts.** Cases per day, week or month, or by day of the week or month of the year, by a date whose kind you state: onset, report, death,
 specimen collection, or a date of unstated kind.
 
 ## What it does
@@ -33,7 +33,7 @@ set and applied with **Apply**:
 | **Records arrive as** | Points, one per record, or a table, each row a count |
 | **Date column** | The column holding the date, written as an ISO 8601 date (2024-01-07) |
 | **Which date is it?** | Onset, report, death, specimen collection, or other. It is written on the chart's axis and caption |
-| **Period** | Day; week, starting Monday (ISO 8601); week, starting Sunday (the epidemiological week); month; or day of the week |
+| **Period** | Day; week, starting Monday (ISO 8601); week, starting Sunday (the epidemiological week); month; day of the week; or month of the year |
 | **Cases per record** | Points only, optional: a column holding how many cases each record stands for |
 
 **Choose the week your data uses.** Brazil's notification system and the United States count epidemiological weeks
@@ -45,6 +45,10 @@ week of the Monday six days before it, and every bar is labelled a day early. A 
 clinic closed on Sundays, reports filed on Mondays. It is a cycle, not a time axis, and it does not say whether the
 differences between days are more than chance. Hagelloch's 188 prodrome dates: Monday 23, Tuesday 21, Wednesday 25,
 Thursday 34, Friday 30, Saturday 27, Sunday 28.
+
+**By month of the year**, the dates are counted January to December, every year's January together, all twelve kept: a
+season across several years of data. Over less than a year it shows only the months the outbreak lasted, and a month
+counted in more years than another holds more cases for that reason alone.
 
 **When the source does not say which date it is**, choose *other*. The chart then says *a date of unstated kind*.
 Brazil's weekly counts are notified cases by epidemiological week, and the source does not say whether the week is of

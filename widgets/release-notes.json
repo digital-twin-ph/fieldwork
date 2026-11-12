@@ -128,12 +128,12 @@
    "migrationFrom": []
   },
   "case_series": {
-   "version": "0.3.0",
+   "version": "0.4.0",
    "released": "2026-11-12",
    "changes": [
     {
      "kind": "minor",
-     "description": "Day of the week as a period: the dates counted Monday to Sunday, all seven kept (the practitioner, 2026-11-12, of Hagelloch). The standard Inspector and dialog (experiment 186): the settings move to Configure…, the panel keeps the name, the input, one sentence and the result."
+     "description": "Month of the year as a period: January to December, every year together, all twelve kept (the practitioner, 2026-11-12)."
     }
    ],
    "breaking": false,

@@ -14,11 +14,16 @@ export type DateKind=typeof DATE_KINDS[number];
  *  notification system and of the United States, as Brazil's `data_iniSE` records it (experiment 187). */
 /** `weekday` is the day of the week, Monday to Sunday as ISO 8601 numbers them (the practitioner, 2026-11-12, asking
  *  whether Hagelloch's onsets fall on some days more than others): a cycle, not a time axis, so all seven are kept. */
-export const PERIODS=['day','week','week-sunday','month','weekday'] as const;
+/** `month-of-year` likewise: January to December, all twelve kept, for a season across years of data (the practitioner,
+ *  2026-11-12: "Maybe we should also add month of the year"). */
+export const PERIODS=['day','week','week-sunday','month','weekday','month-of-year'] as const;
 export type Period=typeof PERIODS[number];
 /** Each period in words, for the axis, the caption and the method. */
-export const PERIOD_WORDS:Record<Period,string>={day:'day',week:'week','week-sunday':'week starting Sunday',month:'month',weekday:'day of the week'};
+export const PERIOD_WORDS:Record<Period,string>={day:'day',week:'week','week-sunday':'week starting Sunday',month:'month',weekday:'day of the week','month-of-year':'month of the year'};
 export const WEEKDAYS=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'] as const;
+export const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'] as const;
+/** The cycles: a period that repeats, counted by its place in the cycle and not along time. */
+const CYCLES:Partial<Record<Period,readonly string[]>>={weekday:WEEKDAYS,'month-of-year':MONTHS};
 
 export interface SeriesBin {key:string; label:string; count:number}
 export interface CaseSeries {
@@ -51,6 +56,7 @@ function periodKey(parts:{year:number;month:number;day:number},period:Period):st
   if(period==='day')return `${parts.year}-${pad(parts.month)}-${pad(parts.day)}`;
   // 1 for Monday to 7 for Sunday, so the key's order is the week's.
   if(period==='weekday')return String((new Date(utc(parts)).getUTCDay()+6)%7+1);
+  if(period==='month-of-year')return String(parts.month);
   // A week keyed by its first day, so order is the key's order: the Monday before (ISO 8601), or the Sunday before.
   const date=new Date(utc(parts));
   date.setUTCDate(date.getUTCDate()-(period==='week-sunday'?date.getUTCDay():(date.getUTCDay()+6)%7));
@@ -63,7 +69,7 @@ const nextKey=(key:string,period:Period):string=>{
   return date.toISOString().slice(0,10);
 };
 const label=(key:string,period:Period)=>period==='week'||period==='week-sunday'?`Week beginning ${key}`
-  :period==='weekday'?WEEKDAYS[Number(key)-1]!:key;
+  :CYCLES[period]?CYCLES[period]![Number(key)-1]!:key;
 
 export interface SeriesOptions {dateField:string; dateKind:DateKind; period:Period; weightField?:string|null}
 
@@ -114,11 +120,12 @@ export function caseSeries(points:PointCollection,options:SeriesOptions):CaseSer
   }
   const keys=[...counts.keys()].sort();
   const bins:SeriesBin[]=[];
-  // ALL SEVEN DAYS, in the week's order: a day with no case is a finding, as an empty period is.
-  if(period==='weekday'){
-    for(const [i,day] of WEEKDAYS.entries())bins.push({key:String(i+1),label:day,count:counts.get(String(i+1))??0});
+  // EVERY PLACE IN THE CYCLE, in its order: a day or a month with no case is a finding, as an empty period is.
+  const cycle=CYCLES[period];
+  if(cycle){
+    for(const [i,name] of cycle.entries())bins.push({key:String(i+1),label:name,count:counts.get(String(i+1))??0});
     return {kind:'case-series',bins,total,period,dateKind,dateField,weightField,
-      datedRecords,undatedRecords:undated.length,undated:undated.slice(0,50),firstPeriod:bins[0]!.key,lastPeriod:bins[6]!.key};
+      datedRecords,undatedRecords:undated.length,undated:undated.slice(0,50),firstPeriod:bins[0]!.key,lastPeriod:bins.at(-1)!.key};
   }
   // Zero-count periods are retained: a gap in a curve is a fact about the outbreak, and omitting
   // empty periods would compress the time axis and misstate the shape.
@@ -177,5 +184,5 @@ export function validateCaseSeriesNode(node:WorkflowNode):void{
   // An empty date field is not refused on save: a node added from the library starts empty, and refusing it meant
   // Cases by period could not be added (2026-11-06). The run refuses it.
   if(!DATE_KINDS.includes(p.dateKind))throw new Error('State which kind of date Cases by period uses.');
-  if(!PERIODS.includes(p.period))throw new Error('Choose day, week, week starting Sunday, month or day of the week for Cases by period.');
+  if(!PERIODS.includes(p.period))throw new Error('Choose day, week, week starting Sunday, month, day of the week or month of the year for Cases by period.');
 }

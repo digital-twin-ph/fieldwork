@@ -39,7 +39,9 @@ test('the node is a source of points and admits it holds none',async({page})=>{
   await expect(page.locator('#facilities-config #hf-source option')).toHaveCount(3);
   await page.locator('#facilities-config #config-cancel').click();
   await expect(page.locator('#inspector-content a[href="https://opendatacommons.org/licenses/odbl/1-0/"]')).toHaveCount(1);
-  await expect(page.locator('#inspector-content')).toContainText(/not the facilities that exist/);
+  // The caveat left the Inspector on 2026-11-11 (design explanation belongs in documents, not the UI); the manual says it.
+  await expect(page.locator('#inspector-content')).not.toContainText(/not the facilities that exist/);
+  assert.match(await (await import('node:fs/promises')).readFile('docs/widgets/find_health_facilities.md','utf8'),/an absence is not evidence of absence/);
 });
 
 test('the country code field appears only for the source that needs one',async({page})=>{

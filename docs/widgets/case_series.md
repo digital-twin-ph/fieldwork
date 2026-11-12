@@ -46,6 +46,9 @@ each record carries a count, *188 records* when each record is one case.
 
 ## What it will not do
 
+**It will not treat one kind of date as another.** A curve by date of death is not a curve by date of onset, so the
+kind of date is required and is written on the chart.
+
 **It will not guess a date.** A value that is not an ISO 8601 date is left out and counted, never read as day-first
 or month-first.
 

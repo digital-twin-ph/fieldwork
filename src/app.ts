@@ -197,7 +197,7 @@ function chartControls(n:WorkflowNode<'chart_output'>,options:{omitOrientation?:
       return drawn.interval.ratio
         ?`<label class="check"><input type="checkbox" id="chart-log-scale" ${p.ratioScale!=='linear'?'checked':''}> Log scale for the ${esc(drawn.interval.estimate)}</label>`
           +`<label class="check"><input type="checkbox" id="chart-reference-line" ${p.referenceLine!==false?'checked':''}> A dashed line at 1, no association</label>`
-          +'<p class="description">On by default for a ratio: on a log scale a ratio and its inverse sit equally far from 1. The figure says so.</p>'
+          +''
         :'';
     })()}
     ${p.panelsBy||interval?'':(()=>{
@@ -228,7 +228,7 @@ function chartControls(n:WorkflowNode<'chart_output'>,options:{omitOrientation?:
     ${p.panelsBy?'':`<label class="field-label" for="chart-y-axis">Vertical axis label</label><input id="chart-y-axis" maxlength="80" value="${esc(p.yAxisTitle||'')}" placeholder="Default from data">`}
     <label><input id="chart-legend" type="checkbox" ${p.colorByCategory?'checked':''}> Color categories and show legend</label>
     <label class="field-label" for="chart-source-note">Source / method note</label><textarea id="chart-source-note" maxlength="500" rows="2" placeholder="Default: connected result and run">${esc(p.sourceNote||'')}</textarea>
-    <p class="description">The title, note, axes and legend travel with the SVG. Both renderers use the same recorded values. Add a Method reference for supporting research.</p>`:'');
+    `:'');
 }
 /** WHICH ATTRIBUTE NAMES A PART, from what the last run drew. Interactive only: the static figure names
  *  no parts. */
@@ -285,7 +285,7 @@ function mapTextControls(n:WorkflowNode<'map_output'>){
     <label class="field-label" for="map-source-note">Source / method note</label><textarea id="map-source-note" maxlength="500" rows="3" placeholder="Default: connected source labels and method">${esc(p.mapSourceNote||'')}</textarea>
     ${partLabelControl(n)}
     ${frameCaptionControl(n)}
-    <p class="description">Title, key and note appear with the map and in its local SVG export. Interactive maps export connected data as a static plot; online basemap tiles are excluded.</p>`;
+    `;
 }
 /** One bordered group per heading, so each label is read with the controls it belongs to. */
 function groupSections(first:string,html:string):string{
@@ -1888,7 +1888,7 @@ function pinnedNotices(ruleset:Ruleset,pinnedVersion:string):string{
     html+=newer.incompatible
       ?`<div class="inspector-alert" role="alert"><strong>Pinned to ${esc(pinnedVersion)} · ${esc(newer.version)} is available and is not a drop-in</strong>`
         +`${said}<p>This step keeps running on ${esc(pinnedVersion)}, which is what reproduces the results it was built on. Choose the newer version in Configure only when you are ready to re-wire; Undo restores what this disconnects.</p></div>`
-      :`<div class="notice"><strong>${esc(newer.version)} is available.</strong> This step is pinned to ${esc(pinnedVersion)} and keeps running on it, because a rule change changes results.${said}</div>`;
+      :`<div class="notice"><strong>${esc(newer.version)} is available.</strong> This step is pinned to ${esc(pinnedVersion)} and keeps running on it.${said}</div>`;
   }
   const obligation=(ruleset as unknown as {obligation?:{summary:string;whatYouTakeOn:string;howToAcknowledge:string;ifYouDoNot:string}}).obligation;
   if(obligation)html+=`<div class="inspector-alert" role="note"><strong>What this obliges you to: ${esc(obligation.summary)}</strong>`
@@ -1928,7 +1928,7 @@ function openDistanceConfig(nodeId:string){
           +`<label class="field-label" for="filter-values-${i}">Values, separated by commas</label><input id="filter-values-${i}" data-filter-values="${i}" value="${esc(c.values.map(String).join(', '))}">`
           +`<button type="button" class="button small" data-filter-remove="${i}">Remove condition</button></div>`).join('')
         +'<button type="button" id="filter-add" class="button small">Add a condition</button>';
-      return {settings,preview:`<p class="muted">${esc(distanceSentence({...node,params:draft}))} Haversine, on a sphere of 6,371.0088 km.</p>`};
+      return {settings,preview:`<p class="muted">${esc(distanceSentence({...node,params:draft}))}</p>`};
     },
     wire:(root,draft,redraw)=>{
       const list=()=>draft.candidateFilter??(draft.candidateFilter=[]);
@@ -2036,8 +2036,8 @@ function openSatelliteSampleConfig(nodeId:string){
             +'<small>The product\'s documents differ, and only at exactly the threshold. The choice is stated on the result.</small></div>'
           :'<p class="notice">Connect the files from Search a satellite catalog first: the settings are the product\u2019s.</p>';
       const preview=grid
-        ?'<p class="muted">Land surface temperature is the ground\'s, where the sky was clear, not the air\'s. Terra and Aqua are kept apart. Each row says how many cells its mean rests on. Nothing is filled.</p>'
-        :'<p class="muted">The value of the pixel nearest each point, in every file the search kept. Each row says whether it passed the quality rule, or which gap it is. Nothing is filled.</p>';
+        ?''
+        :'';
       const decisions='<h4>Readings saved on this device</h4>'
         +'<p>A file read before, the same way at the same places, is taken from this device instead of being read again, and the result says how many were.</p>'
         +`<p id="satellite-saved">${saved?`${saved.count.toLocaleString('en-US')} saved, about ${(saved.bytes/1e6).toFixed(1)} MB.`:'Counting\u2026'}</p>`
@@ -2225,7 +2225,7 @@ function openScanConfig(nodeId:string){
       +`<div class="field"><label class="field-label" for="scan-mode">How to scan</label><select id="scan-mode">`
         +`<option value="once" ${draft.replay?'':'selected'}>Once, over the whole period (retrospective)</option>`
         +`<option value="replay" ${draft.replay?'selected':''}>Day by day, as the outbreak unfolded (prospective)</option></select>`
-        +`<p class="muted">Day by day asks, each day, whether something is happening now, from the cases known by then.</p></div>`
+        +`</div>`
       +`<div class="field"><label class="field-label" for="scan-unit">Count by</label><select id="scan-unit">`
         +`<option value="day" ${draft.unit==='day'?'selected':''}>Day</option><option value="week" ${draft.unit==='week'?'selected':''}>Week</option></select></div>`
       +`<div class="field"><label class="field-label" for="scan-case-share">Largest circle, as a share of all cases</label>`
@@ -2240,7 +2240,7 @@ function openScanConfig(nodeId:string){
         +`<input id="scan-replications" type="number" min="99" max="99999" step="1" value="${draft.replications}"></div>`
       +`<div class="field"><label class="field-label" for="scan-seed">Seed of the shuffles</label>`
         +`<input id="scan-seed" type="number" min="0" max="4294967295" step="1" value="${draft.seed}"></div>`
-      +`<p class="muted">The limits start at SaTScan\u2019s defaults. The p-value is reported as computed; which threshold to read it against is yours to state.</p>`,
+      +``,
       preview:`<p class="standard-sentence">${esc(scanSettingsSentence(draft))}</p>`}),
     wire:(root,draft,redraw)=>{
       const on=(id:string,fn:(el:HTMLInputElement&HTMLSelectElement)=>void)=>root.querySelector<HTMLInputElement&HTMLSelectElement>(id)?.addEventListener('change',e=>{fn(e.target as never);redraw();});
@@ -2290,7 +2290,7 @@ function openChartConfig(nodeId:string){
               +`<option value="horizontal" ${chartOrientation(draft)==='horizontal'?'selected':''}>Horizontal \u00b7 periods down the side</option></select></div>`:''))
         ;
       const preview=tree
-        ?'<p class="muted">Each case is a dot at its date, on a row of its own; a line runs from its infector to it, so its length across is the serial interval. Cases with no infector start a chain, and are counted.</p>'
+        ?''
         :'<p class="muted">The chart is drawn in Results when the workflow runs, with these settings.</p>';
       return {settings,preview};
     },
@@ -2352,7 +2352,7 @@ function openSampleConfig(nodeId:string){
       +`<option value="cell"${draft.method!=='bilinear'?' selected':''}>the cell containing the point</option>`
       +`<option value="bilinear"${draft.method==='bilinear'?' selected':''}>between the four nearest cells (bilinear)</option></select></div>`
       +''),
-      preview:`<p class="muted">${esc(sampleSentence({...node,params:draft}))} No value is set to zero.</p>`}),
+      preview:`<p class="muted">${esc(sampleSentence({...node,params:draft}))}</p>`}),
     wire:(root,draft,redraw)=>{
       root.querySelector<HTMLInputElement>('#sample-attribute')?.addEventListener('change',e=>{draft.attribute=(e.target as HTMLInputElement).value.trim();redraw();});
       root.querySelector<HTMLInputElement>('#sample-unit')?.addEventListener('change',e=>{draft.valueUnit=(e.target as HTMLInputElement).value.trim();redraw();});
@@ -2397,7 +2397,7 @@ function openTableConfig(nodeId:string){
       // THE MARGINS AN EPIDEMIOLOGIST READS FIRST, and the claim that earns them (2026-10-26). Offered only for a table,
       // and only where the table does not already state its unit.
       if(mode==='table'&&!tableUnitFor(node))settings+=`<label class="check"><input type="checkbox" id="output-totals" ${draft.totalsAsserted?'checked':''}> Show totals: these values count the same thing</label>`
-        +'<p class="description">Tick it only where every cell counts the same thing. The figure says you asserted it, because nothing here can check it.</p>';
+        +'<p class="description">Tick it only where every cell counts the same thing.</p>';
       if(!settings)settings='<p class="muted">Nothing to set: what you connect decides how it is shown.</p>';
       const shows={table:'Rows are shown as imported, an absent value as unknown.',
         other:'Every point with its coordinates and attributes, missing ones included.'};
@@ -2543,7 +2543,7 @@ function mapSettingsFlat(n:WorkflowNode<'map_output'>):string{
       // layers actually wired are offered, because a control for a layer that does not exist is
       // a setting nobody can check against the picture.
       +mapBasemapControls(n)+`<span class="inspector-section">Layers</span>`
-      +`<p class="muted">Ports receive; layers are displayed. Order them, name them as a reader should see them, and group the ones that belong together.</p>`
+      +`<p class="muted">Order, name and group the layers.</p>`
       +`<button class="button" data-manage-layers="${esc(n.id)}">Manage layers</button>`
       +(()=>{
         const sources=workflow.edges.filter(edge=>edge.to===n.id&&isPointPort(edge.port))
@@ -2630,7 +2630,7 @@ function mapSettingsFlat(n:WorkflowNode<'map_output'>):string{
         }).join('');
         const linked=linkPicker
           ?`<span class="inspector-section">Lines between records</span>`
-            +`<p class="muted">A line from the record a column names to the record naming it: an infector to a case, a contact to the person they were traced from. Each record is counted, drawn or not.</p>`+linkPicker
+            +``+linkPicker
           :'';
         const chosen=n.params.layerSymbols||{};
         return classed+named+linked+`<span class="inspector-section">Layer symbols</span>`
@@ -2697,7 +2697,7 @@ function openRateConfig(nodeId:string){
       const text=(id:string,label:string,key:keyof Draft,placeholder:string)=>`<div class="field"><label class="field-label" for="${id}">${label}</label>`
         +`<input id="${id}" data-rate="${String(key)}" maxlength="80" value="${esc(String(draft[key]??''))}" placeholder="${esc(placeholder)}"></div>`;
       const fields=wide?columns:measures;
-      const settings='<p class="description">Divides counted events by a declared population at risk. What the denominator counts is part of the result.</p>'
+      const settings='<p class="description">Divides counted events by a declared population at risk.</p>'
         +`<div class="field"><label class="field-label" for="rate-source">Records arrive as</label><select id="rate-source">`
         +[['points','points, one per subject'],['table','a table']].map(([v,t])=>`<option value="${v}" ${(draft.source||'points')===v?'selected':''}>${t}</option>`).join('')+'</select></div>'
         +(draft.source==='table'
@@ -2719,7 +2719,7 @@ function openRateConfig(nodeId:string){
         +`<div class="field"><label class="field-label" for="rate-minimum">Smallest denominator that gets a rate</label><input id="rate-minimum" type="number" min="0" data-rate-number="minimumDenominator" value="${draft.minimumDenominator}"></div>`
         +text('rate-period','Period the numerator covers','numeratorPeriod','1854 outbreak')
         +text('rate-vintage','Vintage of the denominator','denominatorVintage','1855 map')
-        +'<p class="muted">A proportion above one is refused; a ratio can exceed one. A group below the smallest denominator gets its counts and no rate.</p>';
+        +'';
       if(!draft.numeratorField||!draft.denominatorField)return {settings,preview:'<p class="muted">Choose the numerator and the denominator to see the rates.</p>'};
       if(!table)return {settings,preview:'<p class="muted">The rates are computed when the workflow runs'
         +(draft.source==='table'?', and shown here once the table can be read without a run.':'.')+'</p>'};
@@ -2786,7 +2786,7 @@ function dedupSettings(n:WorkflowNode<'deduplicate_points'>,p:import('./types.js
         +`<option value="fuzzy" ${p.nameMatch==='fuzzy'?'selected':''}>Jaro-Winkler similarity</option></select>`
         +(p.nameMatch==='fuzzy'?`<label class="field-label" for="dedup-fuzzy">Similarity at or above</label>`
           +`<input id="dedup-fuzzy" data-dedup="fuzzyThreshold" type="number" min="0.5" max="1" step="0.01" value="${p.fuzzyThreshold}">`:'');
-    }else html+=`<p class="description">Finds records in two or more sources that are the same place. A pair must pass BOTH tests to merge on its own; passing one asks you.</p>`
+    }else html+=`<p class="description">Finds records in two or more sources that are the same place.</p>`
     if(!tabular)html+=`<label class="field-label" for="dedup-name-field">Name attribute</label>`
       +`<input id="dedup-name-field" data-dedup="nameField" maxlength="60" value="${esc(p.nameField)}">`
       +`<label class="field-label" for="dedup-name-match">Name comparison</label>`
@@ -2798,15 +2798,15 @@ function dedupSettings(n:WorkflowNode<'deduplicate_points'>,p:import('./types.js
         +`<input id="dedup-fuzzy" data-dedup="fuzzyThreshold" type="number" min="0.5" max="1" step="0.01" value="${p.fuzzyThreshold}">`:'')
       +`<label class="field-label" for="dedup-block">Compare pairs within (m)</label>`
       +`<input id="dedup-block" data-dedup="blockDistanceM" type="number" min="1" max="50000" step="10" value="${p.blockDistanceM}">`
-      +`<p class="muted">Pairs further apart than this are never compared. It is the blocking rule, and the receipt says how many pairs it withheld.</p>`
+      +``
       +`<label class="field-label" for="dedup-near">Count as the same place within (m)</label>`
       +`<input id="dedup-near" data-dedup="nearDistanceM" type="number" min="1" max="50000" step="5" value="${p.nearDistanceM}">`
-      +`<p class="muted">Two sources digitise a building, a compound and a signpost differently, so this is a measurement on your data rather than a default worth trusting.</p>`
+      +``
       +`<label class="field-label" for="dedup-match">Merge automatically at a score of</label>`
       +`<input id="dedup-match" data-dedup="matchThreshold" type="number" min="1" max="2" step="1" value="${p.matchThreshold}">`
       +`<label class="field-label" for="dedup-review">Ask me at a score of</label>`
       +`<input id="dedup-review" data-dedup="reviewThreshold" type="number" min="0" max="2" step="1" value="${p.reviewThreshold}">`
-      +`<p class="muted">A pair scores one point for the name and one for the distance. Two means both agreed; one means they disagree about something and the answer is yours.</p>`;
+      +``;
   return html;
 }
 
@@ -2921,7 +2921,7 @@ function openRulesetConfig(nodeId:string){
         +[...new Map([...currentRulesets(),...(heldRuleset?[heldRuleset]:[])].map(r=>[`${r.id}@${r.version}`,r])).values()]
           .map(r=>`<option value="${esc(r.id+'@'+r.version)}" ${draft.choice===`${r.id}@${r.version}`?'selected':''}>`
           +`${esc(r.title)} ${esc(r.version)} · ${esc(r.inputContract.ports.inputs.map(([,t])=>t).join(', '))} → ${esc(r.inputContract.ports.output)}</option>`).join('')
-        +'</select><p class="muted">The ruleset decides what this step classifies, its inputs and what it gives back. Changing it disconnects what is wired here; Undo restores it.</p></div>';
+        +'</select><p class="muted">Changing the ruleset disconnects what is wired here; Undo restores it.</p></div>';
       if(chosen?.parameters.length)settings+=chosen.parameters.map(q=>`<div class="field"><label class="field-label" for="ruleset-${esc(q.name)}">${esc(q.meaning.split('.')[0])}</label>`
         +`<div class="input-unit"><input id="ruleset-${esc(q.name)}" data-ruleset-parameter="${esc(q.name)}" type="number" min="${q.min}" max="${q.max}" step="0.5" value="${draft.parameters[q.name]??q.default??''}">`
         +`<span>${esc(q.unitLabel||'')}</span></div><p class="muted">${esc(q.meaning)}</p></div>`).join('');
@@ -2936,7 +2936,7 @@ function openRulesetConfig(nodeId:string){
           v=>{const s=settingNamed(v);return s?`${s} · ${draft.parameters[s]??'not set'}`:typeof v==='string'&&v.includes(':')?v.slice(v.indexOf(':')+1):String(v);},esc)
           :'<p class="muted">This build carries no structured form of these rules.</p>')
         +`<div class="notice">${esc(chosen.mustNotBeReadAs)}</div>`
-        +`<p class="description"><strong>${esc(basis)}</strong>, ${chosen.basis.evidence.length} reference${chosen.basis.evidence.length===1?'':'s'}. Run by EYE-JS, Notation3.</p>`
+        +`<p class="description"><strong>${esc(basis)}</strong>, ${chosen.basis.evidence.length} reference${chosen.basis.evidence.length===1?'':'s'}.</p>`
         +(obligation?`<div class="inspector-alert" role="note"><strong>${esc(obligation.summary)}</strong><p>${esc(obligation.whatYouTakeOn)}</p>`
           +`<p><strong>How to acknowledge it.</strong> ${esc(obligation.howToAcknowledge)}</p><p><strong>If you do not.</strong> ${esc(obligation.ifYouDoNot)}</p></div>`:'');
       const newer=supersession(chosen.id,chosen.version);
@@ -3212,7 +3212,7 @@ function renderInspector(){
   // controls. The two links used to sit after whatever alerts a run had raised, so their position
   // moved with the state of the workflow and their size said they were an afterthought.
   const standard=STANDARD_INSPECTOR.has(n.type);
-  let content=title(n)+(standard?'':`<p class="description">${esc(n.type==='map_output'&&n.params.inputMode==='raster'?'Display native raster cells and the clipping boundary':TYPES[n.type].description)}. ${n.type==='policy'?'Turn computed spatial evidence into explicit, inspectable conclusions.':''}</p>`
+  let content=title(n)+(standard?'':`<p class="description">${esc(n.type==='map_output'&&n.params.inputMode==='raster'?'Display native raster cells and the clipping boundary':TYPES[n.type].description)}. </p>`
     +learnBlock(n.type,esc,hasManual(n.type)?n.type:''));
   const alert=nodeAlert(n.id);
   // The heading names what was found. It read "Out of bounds" for every alert, which is right for
@@ -3226,9 +3226,9 @@ function renderInspector(){
   if(alert)content+=`<div class="inspector-alert" role="alert"><strong>${issuesOnly?'Read as not recorded':gapsOnly?'Not declared':'Out of bounds'} · ${esc(alertHeadline(alert))}</strong><p>${esc(alertText(alert))}</p><table><thead><tr><th>${gapsOnly?'Field':'Site'}</th><th>What happened</th><th>${gapsOnly?'What is missing':'Distance'}</th></tr></thead><tbody>${alertRows(alert).map(r=>`<tr><td>${esc(r.name)}</td><td>${esc(r.outcome)}</td><td>${esc(r.detail)}</td></tr>`).join('')}</tbody></table>${dirty?'<p class="muted">From the previous run — rerun after changes.</p>':''}</div>`;
   if(!standard)content+=diveDeeperPanel(n.type,esc);
   if(n.type==='mean_center'){
-    content+=`<div class="notice">${n.params.weightField?.trim()?`Weighted by <strong>${esc(n.params.weightField.trim())}</strong>: each point counts in proportion to that attribute, and the receipt asserts the field and the weight total beside the point count.`:'Unweighted mean of projected point locations. Name an attribute below to weight each point by it \u2014 250 addresses carrying 489 deaths have two different centres.'} The computation uses UTM internally and emits one CRS84 center; it does not create a projected point dataset. Keep source and result private when locations are sensitive.</div><div class="field"><label class="field-label" for="mean-center-weight">Weight each point by this attribute (optional)</label><input id="mean-center-weight" data-slr="weightField" maxlength="60" value="${esc(n.params.weightField||'')}" placeholder="DEATHS"><p class="description">Leave empty for one point, one vote. A missing, non-numeric or negative weight is refused and counted; zero is kept, because a house where nobody died contributes no deaths.</p></div><label class="field-label" for="mean-center-zone">WGS84 UTM zone</label><input id="mean-center-zone" type="number" min="1" max="60" value="${n.params.zone}"><label class="field-label" for="mean-center-hemisphere">Hemisphere</label><select id="mean-center-hemisphere"><option value="north" ${n.params.hemisphere==='north'?'selected':''}>North</option><option value="south" ${n.params.hemisphere==='south'?'selected':''}>South</option></select>`;
+    content+=`<div class="notice">${n.params.weightField?.trim()?`Weighted by <strong>${esc(n.params.weightField.trim())}</strong>: each point counts in proportion to that attribute, and the receipt asserts the field and the weight total beside the point count.`:'Unweighted mean of projected point locations. Name an attribute below to weight each point by it \u2014 250 addresses carrying 489 deaths have two different centres.'} The computation uses UTM internally and emits one CRS84 center; it does not create a projected point dataset. Keep source and result private when locations are sensitive.</div><div class="field"><label class="field-label" for="mean-center-weight">Weight each point by this attribute (optional)</label><input id="mean-center-weight" data-slr="weightField" maxlength="60" value="${esc(n.params.weightField||'')}" placeholder="DEATHS"><p class="description">Leave empty for one point, one vote.</p></div><label class="field-label" for="mean-center-zone">WGS84 UTM zone</label><input id="mean-center-zone" type="number" min="1" max="60" value="${n.params.zone}"><label class="field-label" for="mean-center-hemisphere">Hemisphere</label><select id="mean-center-hemisphere"><option value="north" ${n.params.hemisphere==='north'?'selected':''}>North</option><option value="south" ${n.params.hemisphere==='south'?'selected':''}>South</option></select>`;
   }else if(n.type==='compare_point_sets'||n.type==='comparison_map'){
-    if(n.type==='compare_point_sets')content+=`<div class="notice">Connect a Mean center widget to each branch. Both centers must use this UTM CRS and have matching source counts. Original and moved locations stay private.</div><label class="field-label" for="comparison-zone">WGS84 UTM zone</label><input id="comparison-zone" type="number" min="1" max="60" value="${n.params.zone}"><label class="field-label" for="comparison-hemisphere">Hemisphere</label><select id="comparison-hemisphere"><option value="north" ${n.params.hemisphere==='north'?'selected':''}>North</option><option value="south" ${n.params.hemisphere==='south'?'selected':''}>South</option></select><p class="description">Distances to the nearest pump and between centers are measured in metres. Pump locations are geographic context.</p>`;
+    if(n.type==='compare_point_sets')content+=`<div class="notice">Connect a Mean center widget to each branch. Both centers must use this UTM CRS and have matching source counts. Original and moved locations stay private.</div><label class="field-label" for="comparison-zone">WGS84 UTM zone</label><input id="comparison-zone" type="number" min="1" max="60" value="${n.params.zone}"><label class="field-label" for="comparison-hemisphere">Hemisphere</label><select id="comparison-hemisphere"><option value="north" ${n.params.hemisphere==='north'?'selected':''}>North</option><option value="south" ${n.params.hemisphere==='south'?'selected':''}>South</option></select>`;
     else content+='<div class="notice">Private evaluation map: both panels share one extent and scale. This view displays existing comparison results and includes original coordinates.</div>';
   }else if(n.type==='donut_geomask'||n.type==='aggregate_points_to_h3_cell'){
     content+=`<div class="notice">Educational transformation only. The private source remains in the project and run evidence. No anonymity claim.</div>`;
@@ -3236,7 +3236,7 @@ function renderInspector(){
     if(n.type==='donut_geomask')content+=`<label class="field-label" for="privacy-innerM">Inner radius (m)</label><input id="privacy-innerM" type="number" min="0" max="5000" value="${n.params.innerM}"><label class="field-label" for="privacy-outerM">Outer radius (m)</label><input id="privacy-outerM" type="number" min="1" max="5000" value="${n.params.outerM}"><label class="field-label" for="privacy-seed">Demonstration seed</label><input id="privacy-seed" type="number" min="0" max="4294967295" value="${n.params.seed}"><p class="description">Output names and IDs are generated afresh; original attributes are not copied. The seeded generator is predictable and unsuitable as a production privacy control.</p>`;
     else content+=`<label class="field-label" for="privacy-resolution">H3 resolution</label><input id="privacy-resolution" type="number" min="0" max="15" value="${n.params.resolution}"><label class="field-label" for="privacy-minOccupancy">Minimum locations per released cell</label><input id="privacy-minOccupancy" type="number" min="2" max="100" value="${n.params.minOccupancy}"><p class="description">Counts locations, not deaths. Sparse cells are omitted; occupancy alone does not establish anonymity.</p>`;
   }else if(Object.hasOwn(CATCHMENT_TYPES,n.type)||n.type==='buffer_area'||n.type==='reachable_nodes'){
-    if(n.type==='buffer_area')content+='<label class="field-label" for="catchment-distanceM">Buffer distance (metres)</label><input type="number" id="catchment-distanceM" data-catchment-param="distanceM" min="0" max="5000" value="'+n.params.distanceM+'"><p class="notice">Connect this expanded boundary to Street network. Keep the original Study area for reporting and polygon clipping. A buffer reduces edge effects but does not guarantee complete access coverage.</p>';
+    if(n.type==='buffer_area')content+='<label class="field-label" for="catchment-distanceM">Buffer distance (metres)</label><input type="number" id="catchment-distanceM" data-catchment-param="distanceM" min="0" max="5000" value="'+n.params.distanceM+'">';
     // The study area is handed to the Inspector so a downloaded network can be seen against the
     // ground it was asked for. previewArea throws when nothing is connected, which is a legitimate
     // state: the caption then says coverage is unknown rather than implying it is complete.
@@ -3302,7 +3302,7 @@ function renderInspector(){
     content+=standardSection('Result',`<p class="standard-result${why?' standard-result-warning':''}">${esc(why?`The last run could not compute this step: ${why}`
       :drawn?`Shown in Results, under "${n.params.label||'Chart'}".`:'Not run yet.')}</p>`);
   }else if(n.type==='table_output'&&n.params.inputMode==='polygons'){
-    content+=`<label class="field-label" for="catchment-output-mode">Input mode</label><select id="catchment-output-mode"><option value="polygons">Catchment polygons / summaries</option><option value="spatial">Point layers</option></select><label class="field-label" for="polygon-source">Polygon input</label><select id="polygon-source" data-map-port="polygons"><option value="">Select input</option>${workflow.nodes.filter(x=>outputOf(x)==='polygons').map(x=>`<option value="${esc(x.id)}" ${workflow.edges.some(e=>e.to===n.id&&e.from===x.id)?'selected':''}>${esc(x.params.label||TYPES[x.type].title)}</option>`).join('')}</select><label class="field-label" for="polygon-output-label">Results tab name</label><input id="polygon-output-label" maxlength="60" value="${esc(n.params.label||'')}"><p class="notice">Connect a polygon operation. Charts require Summarize points in polygons. Display only; processing parameters belong to upstream nodes.</p>`;
+    content+=`<label class="field-label" for="catchment-output-mode">Input mode</label><select id="catchment-output-mode"><option value="polygons">Catchment polygons / summaries</option><option value="spatial">Point layers</option></select><label class="field-label" for="polygon-source">Polygon input</label><select id="polygon-source" data-map-port="polygons"><option value="">Select input</option>${workflow.nodes.filter(x=>outputOf(x)==='polygons').map(x=>`<option value="${esc(x.id)}" ${workflow.edges.some(e=>e.to===n.id&&e.from===x.id)?'selected':''}>${esc(x.params.label||TYPES[x.type].title)}</option>`).join('')}</select><label class="field-label" for="polygon-output-label">Results tab name</label><input id="polygon-output-label" maxlength="60" value="${esc(n.params.label||'')}"><p class="notice">Connect a polygon operation. Charts require Summarize points in polygons.</p>`;
     // map_output has its own branch above and is no longer reached here.
     // nor here: a map's communication controls are in its own branch.
   }else if(n.type==='table_output'){
@@ -3424,8 +3424,8 @@ function renderInspector(){
       +`<option value="fuzzy" ${n.params.normalisation==='fuzzy'?'selected':''}>Ignoring punctuation and spacing</option>`
       +`<option value="exact" ${n.params.normalisation==='exact'?'selected':''}>Exactly as written</option>`
       +`</select>`
-      +`<p class="description">Names are compared for equality, never for resemblance. Ignoring punctuation is what matches "St. George, Camberwell" to "St. George  Camberwell"; it will not match an abbreviation to a full name, and says so rather than guessing.</p>`
-      +`<div class="notice">A part no row names is drawn and left empty. Two parts sharing a name both take the value, which is true of a rate and is not true of a count.</div>`
+      +``
+      +`<div class="notice">A part no row names is drawn and left empty.</div>`
       // SHADE BY A CLASS, which is a different question from the value and is asked separately.
       // Offered from the same columns, less the one being matched on: classifying by the key
       // would make every part its own class.
@@ -3435,7 +3435,7 @@ function renderInspector(){
       +columns.filter(column=>column!==n.params.keyField)
         .map(column=>`<option value="${esc(column)}" ${n.params.frameField===column?'selected':''}>${esc(column)}</option>`).join('')
       +`</select>`
-      +`<p class="description">Each part carries one value per frame, such as a year, and an interactive map can play through them.</p>`
+      +``
       +`<label class="field-label" for="join-category">Shade by a class (optional)</label>`
       +`<select id="join-category"${columns.length?'':' disabled'}>`
       +`<option value="">No class \u2014 shade by the value</option>`
@@ -3447,7 +3447,7 @@ function renderInspector(){
       // light-to-dark ramp would tell a reader to rank things that have no order -- which is
       // recorded where the decision is, in `categoricalSteps`, with the practitioner's own words
       // for it. A control says what the setting does; it is not where an argument is kept.
-      +`<p class="description">A class is a kind, not an amount: which company supplied a sub-district, which zone a ward is in. One colour per class, named in the key, and a part the table gives no class is drawn in the neutral rather than in the first class.</p>`;
+      +``;
   }else if(n.type==='append_rows'){
     const p=n.params,count=appendTableCount(p);
     content+='<p class="description">Stacks the tables\' rows in order, as pandas <code>concat</code> does, '
@@ -3471,7 +3471,7 @@ function renderInspector(){
           +(p.labelsAreNumbers
             ?`<label class="field-label" for="append-numbers-unit">Their unit</label>`
               +`<input id="append-numbers-unit" maxlength="40" value="${esc(p.labelsAreNumbers.unit)}" placeholder="weeks before">`
-              +'<p class="description">Said by you, not read off the labels: a chart then spaces them as numbers, and titles the axis with the unit. A label that is not a number is a data quality finding, and its rows are kept.</p>'
+              +''
             :'')
         :'')
       +`<label class="check"><input type="checkbox" id="append-new-key" ${p.newKey?'checked':''}> Create a new primary key</label>`
@@ -3491,7 +3491,7 @@ function renderInspector(){
       +columns.map(c=>option(c,c,current===c)).join('')+`</select></div>`;
     const kinds=(current:string)=>[['numeric','Numeric'],['categorical','Categorical'],['spline','Spline, 4 df']].map(([v,l])=>option(v!,l!,current===v)).join('');
     const values=(column:string)=>held[column]??[];
-    content+='<p class="description">Logistic regression for a case-control or cross-sectional study, Poisson for counts over time or area. The outcome and every variable are columns of the table connected.</p>'
+    content+=''
       +labelForm('regression-label','Node label',p.label||'Regression')
       +(columns.length?'':'<div class="notice">Connect a table first.</div>')
       +`<div class="field"><label class="field-label" for="reg-family">Model</label><select id="reg-family">`
@@ -3516,7 +3516,7 @@ function renderInspector(){
             const offered=columns.filter(c=>!taken.has(c)||(several.includes(c)&&c!==p.exposure.column));
             if(!offered.length)return '';
             return `<fieldset class="field" id="reg-exposures"><legend class="field-label">Also fit, one model each, with</legend>`
-              +`<p class="description">Each is the same model with the exposure swapped, fitted on its own rows: a row missing one column is left out of that model only. The models come out as one table, one row per model and term.</p>`
+              +``
               +offered.map(c=>`<label class="check"><input type="checkbox" value="${esc(c)}" data-reg-also="${esc(c)}" ${several.includes(c)?'checked':''}> ${esc(c)}</label>`).join('')
               +`</fieldset>`;})()
         :'')
@@ -3550,7 +3550,7 @@ function renderInspector(){
       +(p.errors==='hac'
         ?`<div class="field"><label class="field-label" for="reg-hac-lag">Lags</label><input id="reg-hac-lag" type="number" min="0" max="60" value="${esc(String(p.hacLag??0))}"></div>`
           +columnSelect('reg-order','Rows in the order of',p.order,'The table\'s order'):'')
-      +'<div class="notice">An adjusted ratio is not a crude one: the result names every variable it is adjusted for. A model that does not converge reports no estimate.</div>';
+      +'';
   }else if(n.type==='select_rows'){
     // THE STANDARD INSPECTOR (experiment 186): the column, the values or the range, and the preview of what they keep
     // are in the configuration dialog; here, one sentence of what the step keeps and what the last run kept.
@@ -3705,8 +3705,8 @@ function renderInspector(){
     // The dialog maps four cells, a, b, c, d, which the rate layout does not have.
     if(!rates)content+=`<button class="button" id="twobytwo-map">Map the table onto a, b, c, d\u2026</button>`;
     content+=(rates
-      ?'<p class="description">Events and units at risk in each group, and the rate ratio with a log-normal interval. The table must already be totalled: one row per group for the events and one for the units at risk.</p>'
-      :'<p class="description">Risk in each group, the risk ratio, the odds ratio and the risk difference, each naming the method that produced it. The table must already be totalled: one row per combination of the exposure and the outcome.</p>')
+      ?'<p class="description">The table must already be totalled: one row per group for the events and one for the units at risk.</p>'
+      :'<p class="description">The table must already be totalled: one row per combination of the exposure and the outcome.</p>')
       +labelForm('twobytwo-label','Node label',p.label||'Two-by-two table')
       +(p.rowsAreSubjects?''
         :`<div class="field"><label class="field-label" for="twobytwo-layout">The outcome column holds</label>`
@@ -3749,8 +3749,8 @@ function renderInspector(){
           +`${esc(p.exposureColumn)}. Those subjects are in neither group: they are excluded from `
           +`this comparison, not controlled for, and the totals will be of the two groups you chose `
           +`rather than of the table.</div>`:'')
-      +(rates?'<div class="notice">The rate ratio\'s interval is a log-normal approximation and is not a p-value. It treats the events as independent, which a transmitted disease is not, so it is narrower than clustered events warrant. A group with no events has no ratio, and adding half an event to make one is an assumption rather than a measurement, so the estimate reports why it has no value. A declared study design decides whether a rate ratio may be reported: a cohort or an ecological study, as for a Poisson regression.</div>':'')
-      +(rates?'':'<div class="notice">Each estimate names its interval method — Katz log for the risk ratio, Wald log for the odds ratio, unpooled Wald for the risk difference — and none claims agreement with the labels another program displays, which nobody here has verified. An empty cell is unknown rather than zero and is refused. A group with no cases has no risk ratio, and adding half a case to make one is an assumption rather than a measurement, so the estimate reports why it has no value while the ones that are still defined stand. The tests — chi-square, Mantel-Haenszel, Yates, Fisher, mid-P — are not built.</div>');
+      +(rates?'':'')
+      +(rates?'':'');
   }else if(n.type==='rate'){
     // THE STANDARD INSPECTOR (experiment 186): the name, the input, one sentence, Configure…, and what the run gave.
     const p=n.params,ran=result?.receipts.some(r=>r.nodeId===n.id);
@@ -3766,7 +3766,7 @@ function renderInspector(){
     // A TABLE OR POINTS (experiment 187): a weekly table of counts, Brazil's, is read as rows whose value is the count.
     // The run read a table since Snow's daily deaths; nothing in the Inspector could choose it until 2026-11-07.
     const fromTable=p.source==='table';
-    content+='<p class="description">Counts cases per period from a declared date attribute. The kind of date travels with the series.</p>'
+    content+='<p class="description">Counts cases per period from a declared date attribute.</p>'
       +`<div class="field"><label class="field-label" for="series-input">Records arrive as</label><select id="series-input" data-series-input>${[['points','points, one per record'],['table','a table, each row a count']].map(([value,text])=>`<option value="${value}" ${(p.source||'points')===value?'selected':''}>${text}</option>`).join('')}</select></div>`
       +`<div class="field"><label class="field-label" for="series-date">Event date attribute</label><input id="series-date" data-slr="dateField" maxlength="60" value="${esc(p.dateField)}" placeholder="onset_date"></div>`
       +`<div class="field"><label class="field-label" for="series-kind">Which date is it?</label><select id="series-kind" data-slr="dateKind">${['onset','report','death','specimen-collection','other'].map(kind=>`<option value="${kind}" ${p.dateKind===kind?'selected':''}>${kind}</option>`).join('')}</select></div>`
@@ -3774,10 +3774,10 @@ function renderInspector(){
       +(fromTable?`<p class="description">Each row counts as its value column${upstreamValueField(n)?`, ${esc(upstreamValueField(n)!)}`:''}: the cases that row records.</p>`
         :`<div class="field"><label class="field-label" for="series-weight">Cases per record (attribute, optional)</label><input id="series-weight" data-slr="weightField" maxlength="60" value="${esc(p.weightField||'')}" placeholder="leave empty when one row is one case"></div>`)
       +(workflow.edges.some(e=>e.from===n.id)?'':'<div class="inspector-actions"><button id="add-series-chart" class="button small">＋ Add epidemic curve</button></div>')
-      +'<div class="notice">A curve by date of death is not a curve by date of onset, so the kind is required and is stated on the chart. Periods with no cases are kept, because a gap is a fact about the outbreak. Records whose date is not an ISO 8601 date are excluded and counted, never guessed at: this widget does not choose between day-first and month-first ordering. Leaving the weight empty asserts that one row is one case.</div>';
+      +'';
   }else if(n.type==='slr_extract_import'){
     const p=n.params;
-    content+='<p class="description">Declares an imported long-format table as a bounded extract of published AR6 projections. It imports and declares; it acquires nothing and produces no projection.</p>'
+    content+=''
       +`<div class="field"><label class="field-label" for="slr-dataset">Published dataset (IRI or DOI)</label><input id="slr-dataset" data-slr="datasetIRI" maxlength="300" value="${esc(p.datasetIRI)}" placeholder="https://doi.org/..."></div>`
       +`<div class="field"><label class="field-label" for="slr-version">Dataset version</label><input id="slr-version" data-slr="datasetVersion" maxlength="60" value="${esc(p.datasetVersion)}" placeholder="20210809"></div>`
       // Where the file came from, in the practitioner's own words. The IRI field above offers
@@ -3793,13 +3793,13 @@ function renderInspector(){
       +`<div class="field"><label class="field-label" for="slr-family-with">Family value that <strong>includes</strong> vertical land motion</label><input id="slr-family-with" data-slr-family="withVerticalLandMotion" maxlength="80" value="${esc(p.familyValues.withVerticalLandMotion)}"></div>`
       +`<div class="field"><label class="field-label" for="slr-family-without">Family value that <strong>excludes</strong> it</label><input id="slr-family-without" data-slr-family="withoutVerticalLandMotion" maxlength="80" value="${esc(p.familyValues.withoutVerticalLandMotion)}"></div>`
       +[0,1,2].map(i=>`<div class="field"><label class="field-label" for="slr-citation-${i}">Required citation ${i+1}</label><textarea id="slr-citation-${i}" data-slr-citation="${i}" rows="2" maxlength="400">${esc(p.citations[i]||'')}</textarea></div>`).join('')
-      +'<div class="notice">The licence makes three citations obligatory: the chapter, the FACTS model-description paper and the dataset at its version. Values from families that include and exclude vertical land motion are not comparable, and values from different workflows are not interchangeable.</div>';
+      +'';
   }else if(n.type==='slr_site_assignment'){
-    content+='<p class="description">Assigns each point its nearest published projection site and records the straight-line distance.</p>'
-      +'<div class="notice">The distance is part of the result, not a detail: a projection at a site is not a value for an arbitrary point. Connect the points of interest, the published site list as a point layer, and the projection extract. Points without coordinates are kept and reported as unassigned.</div>';
+    content+=''
+      +'';
   }else if(n.type==='slr_threshold_comparison'){
     const p=n.params;
-    content+='<p class="description">Compares one projected change against an elevation you supply, on a datum you state.</p>'
+    content+=''
       +(['scenario','basis','family','year','quantile'] as const).map(key=>`<div class="field"><label class="field-label" for="slr-${key}">${key[0].toUpperCase()+key.slice(1)}</label><input id="slr-${key}" data-slr="${key}" maxlength="60" value="${esc(p[key])}"></div>`).join('')
       +`<div class="field"><label class="field-label" for="slr-elevation">Point attribute holding the supplied elevation (m)</label><input id="slr-elevation" data-slr="elevationField" maxlength="60" value="${esc(p.elevationField)}"></div>`
       +`<div class="field"><label class="field-label" for="slr-datum">Vertical datum of those elevations</label><input id="slr-datum" data-slr="verticalDatum" maxlength="80" value="${esc(p.verticalDatum)}" placeholder="MSL 1995-2014, or a named datum"></div>`
@@ -3808,7 +3808,7 @@ function renderInspector(){
       +`<option value="baseline-sea-surface"${p.elevationReference==='baseline-sea-surface'?' selected':''}>The dataset's baseline sea surface</option>`
       +`<option value="other-datum"${p.elevationReference==='other-datum'?' selected':''}>Another datum (geodetic, or a local benchmark)</option>`
       +'</select></div>'
-      +'<div class="notice">A comparison of two numbers. It represents no hydrodynamics, defences, drainage or wave action, and must never be presented as a flood extent. It will not run without a stated datum and a named elevation attribute, and a projected change equal to the elevation counts as reaching it.</div>';
+      +'';
   }else if(n.type==='reproject'){
     const p=n.params,crs=`EPSG:${p.hemisphere==='south'?32700+p.zone:32600+p.zone}`;
     content+='<section class="source-card"><span class="inspector-section">Processing parameters</span>'
@@ -3817,15 +3817,15 @@ function renderInspector(){
       +'<div class="detail-row"><span>Target axis order</span><strong>easting/northing, metres</strong></div>'
       +'<div class="detail-row"><span>Datum shift</span><strong>None (WGS84 only)</strong></div>'
       +'</section>'
-      +'<p class="description">Projects connected longitude/latitude points into this UTM zone, in metres. The result is a projected dataset: it can be shown in a table and exported, and it is refused by the steps that measure, because those project for themselves.</p>';
+      +'<p class="description">Projects connected longitude/latitude points into this UTM zone, in metres.</p>';
     content+=nodeInputs(n).map(([port])=>`<div class="field"><label class="field-label" for="reproject-port-${port}">Points input</label><select id="reproject-port-${port}" data-map-port="${port}"><option value="">Select input</option>${workflow.nodes.filter(x=>x.id!==n.id&&outputOf(x)==='points').map(x=>`<option value="${esc(x.id)}" ${workflow.edges.some(e=>e.to===n.id&&e.port===port&&e.from===x.id)?'selected':''}>${esc(x.params.label||x.id)}</option>`).join('')}</select></div>`).join('');
   }else if(n.type==='clip_points_to_area'){
     content+=labelForm('clip-points-label','Node label',n.params.label||'Points inside the area')
-      +`<p class="description">Keeps the points that fall inside the connected study area. The test is the one the map uses, so a point counted inside here is inside there.</p>`
+      +`<p class="description">Keeps the points that fall inside the connected study area.</p>`
       +`<label class="field-option"><input type="checkbox" data-param="keepBoundary"${n.params.keepBoundary!==false?' checked':''}> Keep points that sit exactly on the outline</label>`
-      +`<p class="muted">A point on the border is in that jurisdiction's edge. Unticked, only points strictly within are kept \u2014 which is what GeoSPARQL's sfWithin means, and it gives a different count on the data where it matters.</p>`
+      +``
       +`<label class="field-option"><input type="checkbox" data-param="showExcluded"${n.params.showExcluded!==false?' checked':''}> Show the excluded points on a connected map</label>`
-      +`<p class="muted">They are drawn in the colour the map already uses for outside, and are not passed to anything downstream. A count tells you how many were set aside; seeing them tells you whether setting them aside was right.</p>`;
+      +``;
   }else if(n.type==='deduplicate_points'){
     // THE STANDARD INSPECTOR (experiments 186 and 193): the name, the inputs, one sentence of what it compares or links,
     // Configure…, and what the last run did -- the pairs counted, and the review, one button away.
@@ -3868,7 +3868,7 @@ function renderInspector(){
         +`<tr><th scope="row">Came out</th><td>${(linkage.inputCount-linkage.merged).toLocaleString()}</td><td>${share(linkage.inputCount-linkage.merged,linkage.inputCount)}</td><td></td></tr>`
         +`</tbody></table>`;
       if(waiting.length)summary+=`<button id="dedup-review-open" class="button primary">Review ${waiting.length} ${waiting.length===1?'pair':'pairs'}</button>`
-        +`<p class="muted">Each stays two records until it is decided. The dialog shows both records side by side with every attribute each one carries, which is what the decision actually rests on.</p>`;
+        +``;
       if(p.decisions.length)summary+=`<p class="muted">${p.decisions.length} ${p.decisions.length===1?'decision':'decisions'} recorded. Editing either record lapses the one made about it.</p>`;
     }
     content+=standardSection('Result',(why||!linkage?`<p class="standard-result${why?' standard-result-warning':''}">`
@@ -3906,14 +3906,14 @@ function renderInspector(){
       +(!list&&p.retrieved?`<p class="description">${esc(p.retrieved.attribution)}</p>`:'')
       +(list&&p.registerRetrieved?.registers.some(r=>r.licence.includes('odbl'))?`<p class="description">${esc(FACILITY_SOURCES['hdx-hot-export'].attribution)}</p>`:'')
       +(list&&p.registerRetrieved?`<p class="description">${esc(p.registerRetrieved.registers.map(r=>`${r.title}, ${r.licence.includes('by/4.0')?'CC BY 4.0':r.licence}`).join('; '))}</p>`:'')
-      +'<p class="description">These are the facilities a source records, not the facilities that exist: an absence is not evidence of absence.</p>'
+      +''
       +'<div data-standard-result></div>');
   }else if(n.type==='buffer_point'){
     const p=n.params;
     content+='<p class="description">Everything within a stated distance of one named point.</p>'
       +`<div class="field"><label class="field-label" for="bp-point">Point that defines the area</label><input id="bp-point" data-bp="pointId" maxlength="80" value="${esc(p.pointId)}" placeholder="MANILA"></div>`
       +`<div class="field"><label class="field-label" for="bp-distance">Radius in metres</label><input id="bp-distance" data-bp-number="distanceM" type="number" min="0" max="5000" step="100" value="${p.distanceM}"></div>`
-      +'<div class="notice">A derived scope, not a surveyed boundary: its edge is a decision and its radius an assumption of the question, so state why you chose it. One named point only \u2014 several distant points would make a raster window too coarse to sample. Local areas up to 5,000 m.</div>';
+      +'';
   }else if(n.type==='sample_raster'&&n.params.source!=='satellite-files'){
     // THE STANDARD INSPECTOR (experiments 186, 198): touched to read between the four nearest cells, as a geoid is read.
     const p=n.params;
@@ -4067,7 +4067,7 @@ function renderInspector(){
         +`<div class="detail-row"><span>Items</span><strong>${search.items.length} found, ${kept.length} kept</strong></div>`
         +(search.truncated?'<p class="notice notice-warning">The search stopped at its limit; narrow the dates for the rest.</p>':'')
         :'<p class="notice">Not searched yet.</p>')
-      +'<p class="notice">How many pixels each file holds over the area, and of what quality, is not known until a reader opens it.</p>';
+      +'';
   }else if(n.type==='find_satellite_products'){
     // WHICH SATELLITES MEASURE A VARIABLE: the choice is made in a dialog adapted from JLT's EO Satellite Guide, and
     // summarised here with what Fieldwork has read about it. Experiment 179.
@@ -4097,7 +4097,7 @@ function renderInspector(){
         +recordsPanel(n.id,n.params.data));
   }else if(n.type==='measure_area'){
     const input=workflow.edges.find(e=>e.to===n.id&&e.port==='area'),output=result?.outputs.find(o=>o.nodeId===n.id);
-    content+=`<div class="field"><label class="field-label" for="measure-area-source">Boundary input</label><select id="measure-area-source"><option value="">Select a Study area</option>${workflow.nodes.filter(x=>x.id!==n.id&&outputOf(x)==='area').map(x=>`<option value="${esc(x.id)}" ${input?.from===x.id?'selected':''}>${esc(x.params.label||TYPES[x.type].title)} · ${esc(x.id)}</option>`).join('')}</select><small>Selecting an area adds its connector to the canvas.</small><label class="field-label" for="area-unit">Area unit</label><select id="area-unit" data-param="unit">${areaUnitOptions(n.params.unit)}</select></div><div class="source-card"><span class="inspector-section">${dirty?'Run to calculate or update':'Calculated area'}</span><h3>${!dirty&&output?.measurement?esc(formatArea(output.measurement)):'—'}</h3><p>Approximate surface area on a sphere.</p></div><p class="description">Outputs the same study area with its calculated area attached. Connect it to a Study area input, such as Check spatial coverage. Square metres are retained as the canonical value; the selected unit controls display.</p><div class="notice">This calculation uses the polygon itself, including its shape, rather than its bounding box. It does not measure terrain surface area.</div>`;
+    content+=`<div class="field"><label class="field-label" for="measure-area-source">Boundary input</label><select id="measure-area-source"><option value="">Select a Study area</option>${workflow.nodes.filter(x=>x.id!==n.id&&outputOf(x)==='area').map(x=>`<option value="${esc(x.id)}" ${input?.from===x.id?'selected':''}>${esc(x.params.label||TYPES[x.type].title)} · ${esc(x.id)}</option>`).join('')}</select><small>Selecting an area adds its connector to the canvas.</small><label class="field-label" for="area-unit">Area unit</label><select id="area-unit" data-param="unit">${areaUnitOptions(n.params.unit)}</select></div><div class="source-card"><span class="inspector-section">${dirty?'Run to calculate or update':'Calculated area'}</span><h3>${!dirty&&output?.measurement?esc(formatArea(output.measurement)):'—'}</h3><p>Approximate surface area on a sphere.</p></div><p class="description">Outputs the same study area with its calculated area attached.</p>`;
   }else if(n.type==='apply_ruleset'){
     // THE STANDARD INSPECTOR (experiments 186 and 192): name, inputs, one sentence of what the step applies, Configure…,
     // and what the last run did. The rules, their columns and settings are in the dialog; here they are shown as blocks,
@@ -4127,7 +4127,7 @@ function renderInspector(){
       +`${esc(why?`The last run could not compute this step: ${why}`:receipt?.method?receipt.method.split('. ').slice(0,3).join('. ')+'.':'Not run yet.')}</p>`
       +'<div data-standard-result></div>');
   }else if(n.type==='policy'){
-    content+=`<span class="inspector-section">Rule settings</span><div class="field"><label class="field-label" for="threshold">Distance threshold</label><div class="input-unit"><input id="threshold" type="number" min="0" max="1000" step="0.5" value="${n.params.thresholdKm}"><span>km</span></div><small>Flag distances strictly greater than this value.</small></div><div class="rule-preview">When the heat alert is <b>active</b><br>and the nearest center is <b>more than ${n.params.thresholdKm} km away</b>,<br>flag the neighborhood for review.</div><span class="inspector-section">Missing evidence</span><p class="description">Missing coordinates, missing centers, or an unknown alert produce “Insufficient data”.</p><div class="inspector-divider"></div><span class="inspector-section">Execution engine</span><div class="engine-card"><span class="engine-mark">⋈</span><div><strong>EYE-JS · Notation3</strong><small>WebAssembly · runs on this device</small></div></div><div class="notice">Illustrative screening criteria. A flag is a reason to review evidence, not a risk estimate or an intervention order.</div>`;
+    content+=`<span class="inspector-section">Rule settings</span><div class="field"><label class="field-label" for="threshold">Distance threshold</label><div class="input-unit"><input id="threshold" type="number" min="0" max="1000" step="0.5" value="${n.params.thresholdKm}"><span>km</span></div><small>Flag distances strictly greater than this value.</small></div><div class="rule-preview">When the heat alert is <b>active</b><br>and the nearest center is <b>more than ${n.params.thresholdKm} km away</b>,<br>flag the neighborhood for review.</div><span class="inspector-section">Missing evidence</span><div class="inspector-divider"></div><span class="inspector-section">Execution engine</span><div class="engine-card"><span class="engine-mark">⋈</span><div><strong>EYE-JS · Notation3</strong><small>WebAssembly · runs on this device</small></div></div>`;
   }else if(n.type==='alert'){
     content+=`<div class="field"><label class="field-label" for="alert-state">Heat alert status</label><select id="alert-state"><option value="true" ${n.params.active===true?'selected':''}>Active</option><option value="false" ${n.params.active===false?'selected':''}>Inactive</option><option value="null" ${n.params.active===null?'selected':''}>Unknown</option></select><label class="field-label" for="assessment-date">Assessment date</label><input id="assessment-date" type="date" value="${n.params.date}"><small>This example supplies a single alert status for all locations on the assessment date. No external alert feed is queried.</small></div>`;
   }else if((n.type==='places'||n.type==='centers')){
@@ -4210,7 +4210,7 @@ function renderInspector(){
             +candidates.map(c=>`<tr><td>${esc(name({zone:c.zone,hemisphere:advice.choice.hemisphere}))}</td>`
               +`<td>${c.cost.toFixed(3)}%</td><td>${c.zone===advice.choice.zone?'holds most of the area':''}</td></tr>`).join('')
             +`</tbody></table>`
-            +`<p class="muted">A stretch applies to every length measured afterwards, so it is systematic rather than random: an area, a catchment and a distance are all wrong in the same direction by about this much.</p>`
+            +``
           :` Measured over this area, it stretches ground distance by at most <strong>${candidates[0].cost.toFixed(3)}%</strong>.`)
         +`</div>`;
     }

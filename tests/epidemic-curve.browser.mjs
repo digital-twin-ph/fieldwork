@@ -36,7 +36,9 @@ test('Snow’s 1855 table draws an epidemic curve that states which date it is o
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node').filter({hasText:'Deaths by day'}).click();
   await expect(page.locator('#series-kind')).toHaveValue('death');
-  await expect(page.locator('.inspector')).toContainText('not a curve by date of onset');
+  // The caveat left the Inspector on 2026-11-11 (design explanation belongs in documents, not the UI); the manual says it.
+  await expect(page.locator('.inspector')).not.toContainText('not a curve by date of onset');
+  assert.match(await readFile('docs/widgets/case_series.md','utf8'),/A curve by date of death is not a curve by date of onset/);
   await page.locator('#series-kind').selectOption('onset');
   await run(page);
   await page.locator('[data-view="results"]').click();

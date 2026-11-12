@@ -5,6 +5,9 @@ import {collectPageErrors} from './page-errors.mjs';
  *  saved before the day-by-day replay was added, said only "changed since"). The bar says which is true, and stays. */
 const saved=page=>page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));
 const dropReplay=async page=>{
+  // AFTER THE RUN THE EXAMPLE STARTS ON OPENING: its scan shuffles 999 times and replays every day, and while it runs
+  // Remove is disabled. On CI's slower runner that outlasted the click's 15 s (0.100.0 and 0.101.1, both engines).
+  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:120_000});
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="replay"]').click();
   await page.locator('#delete-node').click();

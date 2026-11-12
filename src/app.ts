@@ -2322,6 +2322,9 @@ function openChartConfig(nodeId:string){
             +`<div class="field"><label class="field-label" for="chart-tree-none">Written where no source is recorded (optional)</label>`
             +`<input id="chart-tree-none" data-tree="none" value="${esc(draft.tree?.none??'')}" placeholder="for example none recorded">`
             +`<small>An empty cell always means none.</small></div>`
+            // THE TREE'S TITLE AND SOURCE NOTE, as any chart's (2026-11-12: the tree offered neither, and drew its default).
+            +`<div class="field"><label class="field-label" for="chart-title">Chart title</label><input id="chart-title" maxlength="120" value="${esc(draft.chartTitle||'')}" placeholder="Who infected whom"></div>`
+            +`<div class="field"><label class="field-label" for="chart-source-note">Source / method note</label><input id="chart-source-note" maxlength="300" value="${esc(draft.sourceNote||'')}"></div>`
           :chartTableControls(shown)+chartControls(shown,{omitOrientation:draft.inputMode==='series'})
             +(draft.inputMode==='series'?`<div class="field"><label class="field-label" for="series-orientation">Bars</label>`
               +`<select id="series-orientation"><option value="vertical" ${chartOrientation(draft)==='vertical'?'selected':''}>Vertical \u00b7 periods along the bottom</option>`

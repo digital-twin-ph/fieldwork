@@ -234,6 +234,8 @@ test('MERS-CoV, South Korea, 2015: each case’s detection and notification agai
   await ch.locator('#chart-tree-date').selectOption('dt_onset');
   await ch.locator('#chart-tree-none').fill('none recorded');
   await ch.locator('#chart-tree-none').press('Tab');
+  await ch.locator('#chart-title').fill('Who infected whom, MERS-CoV, South Korea, 2015');
+  await ch.locator('#chart-title').press('Tab');
   await ch.locator('#config-apply').click();
   await label(page,tree,'Who infected whom');
   await run(page);

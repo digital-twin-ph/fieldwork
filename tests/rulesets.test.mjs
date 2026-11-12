@@ -13,23 +13,15 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {makeN3} from '../build/core.js';
-import {accessN3,facilityN3} from '../build/old-naledi.js';
 import {bundledRulesets,resolveRuleset,bindParameters} from '../build/rulesets.js';
 
-const golden=JSON.parse(readFileSync(new URL('./fixtures/ruleset-rules-before-extraction-2026-10-12.json',import.meta.url),'utf8'));
 const rows=[{id:'a',name:'A',coordinates:[0,0],distance:1.5,unit:'kilometres',center:{id:'c',name:'C',coordinates:[0,0]}},
             {id:'b',name:'B',coordinates:null,distance:null,unit:'kilometres',center:null}];
 
-test('declared rulesets assemble byte-identical rule text',()=>{
-  assert.equal(makeN3(rows,{active:true,date:'2026-07-15'},5).rules,golden.policy_t5);
-  assert.equal(makeN3(rows,{active:null,date:'2026-07-15'},0.25).rules,golden.policy_t0,
-    'a second threshold, so the placeholder is proved rather than one value coincidentally matching');
-  assert.equal(accessN3([{id:'s1',minutes:12.5},{id:'s2',minutes:null}],20).rules,golden.access_t20);
-  assert.equal(facilityN3([{id:'f1',name:'X',serviceType:'Clinic',owner:'GOVERNMENT'}]).rules,golden.facility);
-});
+// Byte-identity of rule text with the code it was extracted from, 2026-10-12, held for outreach-criteria, access-review
+// and nb06-evidence, which retired on 2026-11-11 (docs/audits/old-naledi-audit.md).
 
-test('a ruleset declares its basis, and two of six carry resolvable evidence',()=>{
+test('a ruleset declares its basis, and both shipped rulesets carry resolvable evidence',()=>{
   const sets=bundledRulesets();
   // Seven version files until 2026-10-25, now eight: outreach-criteria published a 1.1.0 that
   // drops its `alert` input port, with the rules byte-identical to 1.0.0. The third version file
@@ -50,10 +42,12 @@ test('a ruleset declares its basis, and two of six carry resolvable evidence',()
   // edit, and both are bundled because a saved workflow may pin either. Experiment 113.
   // Six on 2026-11-09, with compare-level-to-elevation: the comparison Compare level to elevation held as a widget
   // (experiment 197), published cited, so the uncited count and its ceiling are unchanged.
-  assert.equal(new Set(sets.map(s=>s.id)).size,6);
+  // Two on 2026-11-11: outreach-criteria, nb06-evidence, access-review and extent-review retired with the examples
+  // they existed for, each run through code written for it alone (docs/audits/old-naledi-audit.md).
+  assert.equal(new Set(sets.map(s=>s.id)).size,2);
   // Nine version files on 2026-10-26, with extract-contract: the AR6 contract that
   // slr_extract_import held in TypeScript, declared as data so the ledger can count its debt.
-  assert.equal(sets.length,10);
+  assert.equal(sets.length,2);
   for(const set of sets){
     assert.ok(set.basis.status&&set.basis.statedBy,`${set.id} must say what its basis is and who says so`);
     assert.ok(set.mustNotBeReadAs?.trim(),`${set.id} must say what it is not`);
@@ -84,38 +78,40 @@ test('a ruleset declares its basis, and two of six carry resolvable evidence',()
   const dois=resolvable.find(s=>s.id==='urn:fieldwork:ruleset:extract-contract').basis.evidence.map(e=>e.locator);
   assert.deepEqual(dois,['10.1017/9781009157896.011','10.5194/gmd-16-7461-2023','10.5281/zenodo.5914709'],
     'the chapter, the FACTS paper and the dataset version: the three the licence obliges');
-  const nb06=sets.find(s=>s.id==='urn:fieldwork:ruleset:nb06-evidence');
-  assert.equal(nb06.basis.status,'published');
-  assert.equal(nb06.basis.unresolvedCitations.length,3,'a published basis with three unopenable citations');
 });
 
 test('binding refuses what would silently conclude nothing',()=>{
-  const set=resolveRuleset('urn:fieldwork:ruleset:outreach-criteria','1.0.0');
+  const set={id:'urn:fieldwork:ruleset:test-threshold',version:'1.0.0',title:'A threshold',
+    parameters:[{name:'threshold',role:'threshold',type:'number',min:0,max:1000,placeholder:'{{threshold}}',meaning:'A distance'}],
+    rules:'{ ?s <urn:fieldwork:d> ?d. ?d math:greaterThan {{threshold}} } => { ?s <urn:fieldwork:decision> <urn:fieldwork:Review> }.'};
   assert.throws(()=>bindParameters(set,{}),/needs a value for threshold/);
   assert.throws(()=>bindParameters(set,{threshold:5000}),/between 0 and 1000/);
   // An unbound placeholder reaches the reasoner as text and matches nothing, so the ruleset
   // concludes nothing and reads as a dataset full of unknowns.
   assert.throws(()=>bindParameters({...set,parameters:[]},{}),/left \{\{threshold\}\} unbound/);
-  assert.throws(()=>resolveRuleset('urn:fieldwork:ruleset:outreach-criteria','9.9.9'),/carries .* at 1\.0\.0, 1\.1\.0 and not 9\.9\.9/);
+  assert.throws(()=>resolveRuleset('urn:fieldwork:ruleset:compare-level-to-elevation','9.9.9'),/carries .* at 1\.0\.0 and not 9\.9\.9/);
   assert.throws(()=>resolveRuleset('urn:fieldwork:ruleset:nope','1.0.0'),/carries no ruleset/);
+  // A retired ruleset is refused by name, not as one this build never heard of.
+  assert.throws(()=>resolveRuleset('urn:fieldwork:ruleset:outreach-criteria','1.1.0'),/Outreach criteria.*retired on 2026-11-11/);
 });
 
 test('ruleset basis reaches provenance and never a rule premise',async()=>{
-  const {exampleWorkflow,executeWorkflow}=await import('../build/core.js');
-  const w=exampleWorkflow();
+  // On compare-level-to-elevation since 2026-11-11, when the heat example this ran retired. Its rules end in an
+  // `otherwise`, so they are evaluated directly and reach no reasoner at all; what is held here is the provenance side.
+  const {executeWorkflow}=await import('../build/core.js');
+  const data={kind:'data-table',keys:['place','value_mm','elevation_m'],valueField:'n',numericKeys:{value_mm:'millimetre',elevation_m:'metre'},
+    rows:[{key:{place:'a',value_mm:500,elevation_m:0.2},value:1}],rowCount:1,missingValueCount:0};
+  const w={schema:'fieldwork/workflow/1',name:'t',nodes:[{id:'t',type:'table_input',x:0,y:0,params:{label:'t',keys:data.keys,valueField:'n',data}},
+    {id:'c',type:'apply_ruleset',x:0,y:0,params:{label:'c',ruleset:{id:'urn:fieldwork:ruleset:compare-level-to-elevation',version:'1.0.0',
+      title:'Compare a projected rise with an elevation',inputs:[['records','table']],output:'table'},parameters:{}}},
+    {id:'o',type:'table_output',x:0,y:0,params:{label:'o',inputMode:'table'}}],
+    edges:[{id:'e1',from:'t',to:'c',port:'records'},{id:'e2',from:'c',to:'o',port:'table'}]};
   const inputs=[];
-  const result=await executeWorkflow(w,async input=>{
-    inputs.push(input);
-    return w.nodes[0].params.data.features.map(f=>({subject:'urn:fieldwork:place:'+f.id,predicate:'urn:fieldwork:decision',object:'urn:fieldwork:Unknown'}));
-  });
+  const result=await executeWorkflow(w,async input=>{inputs.push(input);return [];});
   const applied=result.receipts.find(r=>r.ruleset);
-  assert.equal(applied.ruleset.id,'urn:fieldwork:ruleset:outreach-criteria');
-  // The shipped example pins 1.1.0 since 2026-10-25, which drops the `alert` input port with its
-  // rules byte-identical to 1.0.0. The conclusions this test reaches are the same ones.
-  assert.equal(applied.ruleset.version,'1.1.0');
-  assert.match(result.provenanceN3,/<urn:fieldwork:ruleset:outreach-criteria> a fw:Ruleset, prov:Plan/);
-  assert.match(result.provenanceN3,/fw:basisStatus fw:Illustrative/);
-  assert.match(result.provenanceN3,/prov:hadPlan <urn:fieldwork:ruleset:outreach-criteria>/);
+  assert.equal(applied.ruleset.id,'urn:fieldwork:ruleset:compare-level-to-elevation');
+  assert.match(result.provenanceN3,/<urn:fieldwork:ruleset:compare-level-to-elevation> a fw:Ruleset, prov:Plan/);
+  assert.match(result.provenanceN3,/prov:hadPlan <urn:fieldwork:ruleset:compare-level-to-elevation>/);
   // The constraint that predates rulesets: a citation in a premise would let the reasoner draw
   // conclusions from a bibliography.
   assert.ok(inputs.every(input=>!input.includes('basisStatus')&&!input.includes('dcterms:references')

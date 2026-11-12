@@ -56,7 +56,7 @@ import classification from '../widgets/classification.json' with {type:'json'};
 import facilityRegisters from '../widgets/facility-registers.json' with {type:'json'};
 import {listFacilitiesValue,type RegisterEntry} from './facility-matching.js';
 import {OLD_TYPES,validateOldNode,executeOldNode,migrateFacilitySources,applyAccessReview,applyFacilityGrading,gradedPointLayer,distancesAsAccess} from './old-naledi.js';
-import {resolveRuleset,RETIRED_RULESETS,WRITTEN_IN_WORKFLOW,bindParameters,tableContractFailures,rulesetCitation} from './rulesets.js';
+import {resolveRuleset,publishedRuleset,RETIRED_RULESETS,WRITTEN_IN_WORKFLOW,bindParameters,tableContractFailures,rulesetCitation} from './rulesets.js';
 import {selectRows,selectRange,rangeSentence} from './select-rows.js';
 import {appendTables,appendSentence,appendPort,appendTableCount} from './append-rows.js';
 import {fitRegression,specFrom,rowsOf,regressionTable,regressionSentence,regressionReceipt,exposureColumnsOf,fitEachExposure,
@@ -2082,7 +2082,10 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
               matchedByRule:evaluation.matchedByRule,unmatched:evaluation.unmatched,
               divisionsByZero:evaluation.records.flatMap((r,i)=>r.divisionsByZero.length?[records[i]!.label]:[]),
               conflicts:evaluation.records.flatMap((r,i)=>r.conflicts.map(c=>({record:records[i]!.label,...c}))),
-              ...(evaluation.defaultedByColumn?{defaultedByColumn:evaluation.defaultedByColumn}:{})} as unknown as Receipt);
+              ...(evaluation.defaultedByColumn?{defaultedByColumn:evaluation.defaultedByColumn}:{}),
+              // A PUBLISHED RULESET IS CITED wherever it runs. Evaluated directly, it wrote no citation until 2026-11-11,
+              // so its basis and DOIs never reached provenance; the heat example's path carried one and hid the gap.
+              ...(published?{ruleset:rulesetCitation(published)}:{})} as unknown as Receipt);
             break;
           }
           const facts=authoredFacts(subjects,authored.fields);
@@ -2094,7 +2097,8 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           const declared=(authored.parameters??[]).map(p=>({name:p.name,role:'authored',type:'number',
             min:p.min,max:p.max,default:undefined,decimals:p.decimals??9,
             placeholder:`{{${p.name}}}`,meaning:p.meaning,unitLabel:p.unitLabel}));
-          const rules=bindParameters({...resolveRuleset(pinned.id,pinned.version),
+          // Rules written in the workflow have no published ruleset to build on; the pin's own identity serves.
+          const rules=bindParameters({...(publishedRuleset(pinned)??{id:pinned.id,version:pinned.version} as unknown as ReturnType<typeof resolveRuleset>),
             title:authored.title,parameters:declared as never,rules:compiled},bound);
           const conclusions=await reasoner(facts+'\n'+rules);
           // What the records could not say, counted before anything is concluded from them.

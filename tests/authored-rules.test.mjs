@@ -15,7 +15,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {runInThisContext} from 'node:vm';
 import {compileAuthoredRuleset,compiledRuleCount,AuthoredRulesetError,RULE_CEILING,
-  resolveRuleset,bindParameters,authoredUnitProblems} from '../build/rulesets.js';
+  resolveRuleset,bindParameters,authoredUnitProblems,bundledRulesets} from '../build/rulesets.js';
 
 const root=new URL('../',import.meta.url);
 globalThis.self=globalThis;
@@ -66,6 +66,11 @@ test('the form refuses what the subset cannot express, rather than emitting it',
   assert.throws(()=>compileAuthoredRuleset({subject:'p',rules:[]}),AuthoredRulesetError);
 });
 
+// A declared ruleset with one numeric setting, written here: the shipped one these tests used, access-review, retired
+// with Old Naledi on 2026-11-11 (docs/audits/old-naledi-audit.md).
+const WITH_THRESHOLD={id:'urn:fieldwork:ruleset:test-threshold',version:'1.0.0',title:'A threshold',
+  parameters:[{name:'threshold',role:'threshold',type:'number',placeholder:'{{threshold}}',meaning:'A number to compare against'}]};
+
 test('a parameter stays a placeholder, so an authored ruleset binds like a declared one', () => {
   const n3=compileAuthoredRuleset({subject:'?p',rules:[{any:[{all:[
     {field:'fw:proxyMinutes',comparator:'greaterThan',value:'{{threshold}}'}]}],
@@ -73,7 +78,7 @@ test('a parameter stays a placeholder, so an authored ruleset binds like a decla
   assert.match(n3,/math:greaterThan \{\{threshold\}\}/);
   // Bound by the same function a declared ruleset uses, so an authored one reaches the reasoner
   // by exactly the same path rather than through a second mechanism that could disagree.
-  const declared={...resolveRuleset('urn:fieldwork:ruleset:access-review','2.0.0'),rules:n3};
+  const declared={...WITH_THRESHOLD,rules:n3};
   assert.match(bindParameters(declared,{threshold:30}),/math:greaterThan 30\.0+/);
 });
 
@@ -89,7 +94,7 @@ test('a condition refers to a setting by name, and the placeholder is written by
   assert.match(structured,/math:greaterThan \{\{threshold\}\}/);
   assert.equal(structured,compileAuthoredRuleset({subject:'?p',rules:rules('{{threshold}}')}),
     'the two ways of referring to a setting compile to the same N3');
-  const declared={...resolveRuleset('urn:fieldwork:ruleset:access-review','2.0.0'),rules:structured};
+  const declared={...WITH_THRESHOLD,rules:structured};
   assert.match(bindParameters(declared,{threshold:30}),/math:greaterThan 30\.0+/);
 });
 
@@ -127,7 +132,10 @@ test('A8, A9 · nothing compiled names an instance, and all of it parses', async
   // A9: the vendored parser is the one the application reads receipts with, so a ruleset it
   // cannot parse would be one the project could not inspect.
   const {Parser}=await import('n3');
-  for(const {id,version,authored,parameters} of B1){
+  // The shipped rulesets that compile to N3: one with an `otherwise` is evaluated directly instead.
+  const compiled=bundledRulesets().filter(r=>r.authored&&!r.authored.otherwise);
+  assert.ok(compiled.length>0,'at least one shipped ruleset compiles, so this checks something');
+  for(const {id,version,authored} of compiled){const parameters={};
     const n3=compileAuthoredRuleset(authored);
     assert.ok(!/<[a-z]+:[^>]*>/.test(n3),`${id}: no absolute IRI, so no instance IRI`);
     assert.ok(!/urn:fieldwork:(place|facility):/.test(n3));
@@ -146,108 +154,4 @@ test('A10 · two authored forms that compile identically produce identical text'
   assert.equal(compileAuthoredRuleset(one),compileAuthoredRuleset(two));
 });
 
-// ---------------------------------------------------------------------------------------------
-// B1. Each shipped ruleset rebuilt in the authored form, compiled, and reasoned against the rule
-// text it ships with, over facts that exercise every branch including the unknown ones.
-
-const B1=[
-  {id:'urn:fieldwork:ruleset:outreach-criteria',version:'1.0.0',parameters:{threshold:5},
-   authored:{subject:'?p',rules:[
-     {any:[{all:[{field:'fw:distanceKnown',comparator:'equals',value:false}]}],
-      then:[{predicate:'fw:decision',value:'fw:Unknown'}]},
-     {any:[{all:[{field:'fw:alertKnown',comparator:'equals',value:false}]}],
-      then:[{predicate:'fw:decision',value:'fw:Unknown'}]},
-     {any:[{all:[{field:'fw:distanceKm',comparator:'greaterThan',value:'{{threshold}}'},
-                 {field:'fw:heatAlert',comparator:'equals',value:true}]}],
-      then:[{predicate:'fw:decision',value:'fw:Review'}]},
-     {any:[{all:[{field:'fw:distanceKm',comparator:'notGreaterThan',value:'{{threshold}}'},
-                 {field:'fw:heatAlert',comparator:'equals',value:true}]}],
-      then:[{predicate:'fw:decision',value:'fw:NoFlag'}]},
-     {any:[{all:[{field:'fw:distanceKnown',comparator:'equals',value:true},
-                 {field:'fw:heatAlert',comparator:'equals',value:false}]}],
-      then:[{predicate:'fw:decision',value:'fw:NoFlag'}]},
-   ]},
-   facts:[
-     '<urn:fieldwork:place:far> fw:distanceKnown true; fw:alertKnown true; fw:distanceKm 9; fw:heatAlert true.',
-     '<urn:fieldwork:place:near> fw:distanceKnown true; fw:alertKnown true; fw:distanceKm 2; fw:heatAlert true.',
-     '<urn:fieldwork:place:edge> fw:distanceKnown true; fw:alertKnown true; fw:distanceKm 5; fw:heatAlert true.',
-     '<urn:fieldwork:place:calm> fw:distanceKnown true; fw:alertKnown true; fw:distanceKm 9; fw:heatAlert false.',
-     '<urn:fieldwork:place:nodistance> fw:distanceKnown false; fw:alertKnown true.',
-     '<urn:fieldwork:place:noalert> fw:distanceKnown true; fw:alertKnown false; fw:distanceKm 9.',
-   ].join('\n')},
-  {id:'urn:fieldwork:ruleset:access-review',version:'2.0.0',parameters:{threshold:30},
-   authored:{subject:'?p',rules:[
-     {any:[{all:[{field:'fw:accessKnown',comparator:'equals',value:false}]}],
-      then:[{predicate:'fw:decision',value:'fw:Unknown'},{predicate:'fw:zone',value:'fw:Unknown'}]},
-     {any:[{all:[{field:'fw:proxyMinutes',comparator:'greaterThan',value:'{{threshold}}'}]}],
-      then:[{predicate:'fw:decision',value:'fw:Review'}]},
-     {any:[{all:[{field:'fw:proxyMinutes',comparator:'notGreaterThan',value:'{{threshold}}'}]}],
-      then:[{predicate:'fw:decision',value:'fw:NoFlag'}]},
-     {any:[{all:[{field:'fw:proxyMinutes',comparator:'notGreaterThan',value:5}]}],
-      then:[{predicate:'fw:zone',value:'fw:Within5'}]},
-     {any:[{all:[{field:'fw:proxyMinutes',comparator:'greaterThan',value:5},
-                 {field:'fw:proxyMinutes',comparator:'notGreaterThan',value:15}]}],
-      then:[{predicate:'fw:zone',value:'fw:Within15'}]},
-     {any:[{all:[{field:'fw:proxyMinutes',comparator:'greaterThan',value:15},
-                 {field:'fw:proxyMinutes',comparator:'notGreaterThan',value:30}]}],
-      then:[{predicate:'fw:zone',value:'fw:Within30'}]},
-     {any:[{all:[{field:'fw:proxyMinutes',comparator:'greaterThan',value:30}]}],
-      then:[{predicate:'fw:zone',value:'fw:Over30'}]},
-   ]},
-   facts:[
-     '<urn:fieldwork:place:a> fw:accessKnown true; fw:proxyMinutes 3.',
-     '<urn:fieldwork:place:b> fw:accessKnown true; fw:proxyMinutes 5.',
-     '<urn:fieldwork:place:c> fw:accessKnown true; fw:proxyMinutes 12.',
-     '<urn:fieldwork:place:d> fw:accessKnown true; fw:proxyMinutes 15.',
-     '<urn:fieldwork:place:e> fw:accessKnown true; fw:proxyMinutes 22.',
-     '<urn:fieldwork:place:f> fw:accessKnown true; fw:proxyMinutes 30.',
-     '<urn:fieldwork:place:g> fw:accessKnown true; fw:proxyMinutes 44.',
-     '<urn:fieldwork:place:h> fw:accessKnown false.',
-   ].join('\n')},
-  {id:'urn:fieldwork:ruleset:nb06-evidence',version:'2.0.0',parameters:{},
-   authored:{subject:'?f',rules:[
-     {any:[{all:[{field:'fw:namedRule',comparator:'equals',value:'fw:Marina'}]}],
-      then:[{predicate:'fw:evidenceLevel',value:'fw:Direct'},{predicate:'fw:service',value:'fw:Onsite'}]},
-     {any:[{all:[{field:'fw:namedRule',comparator:'equals',value:'fw:Broadhurst'}]}],
-      then:[{predicate:'fw:evidenceLevel',value:'fw:Contextual'},{predicate:'fw:service',value:'fw:OnsiteOrReferral'}]},
-     {any:[{all:[{field:'fw:namedRule',comparator:'equals',value:'fw:None'},
-                 {field:'fw:government',comparator:'equals',value:true},
-                 {field:'fw:facilityKind',comparator:'equals',value:'fw:Hospital'}]}],
-      then:[{predicate:'fw:evidenceLevel',value:'fw:Contextual'},{predicate:'fw:service',value:'fw:Onsite'}]},
-     {any:[{all:[{field:'fw:namedRule',comparator:'equals',value:'fw:None'},
-                 {field:'fw:government',comparator:'equals',value:true},
-                 {field:'fw:facilityKind',comparator:'equals',value:'fw:Clinic'}]}],
-      then:[{predicate:'fw:evidenceLevel',value:'fw:Inferential'},{predicate:'fw:service',value:'fw:OnsiteOrReferral'}]},
-     {any:[{all:[{field:'fw:namedRule',comparator:'equals',value:'fw:None'},
-                 {field:'fw:government',comparator:'equals',value:true},
-                 {field:'fw:facilityKind',comparator:'equals',value:'fw:HealthPost'}]}],
-      then:[{predicate:'fw:evidenceLevel',value:'fw:Inferential'},{predicate:'fw:service',value:'fw:ReferralOnly'}]},
-     // One rule, two disjuncts: not government at all, or government and some other kind. The
-     // shipped text writes these as two rules with the same conclusion, which is the same thing.
-     {any:[{all:[{field:'fw:namedRule',comparator:'equals',value:'fw:None'},
-                 {field:'fw:government',comparator:'equals',value:false}]},
-           {all:[{field:'fw:namedRule',comparator:'equals',value:'fw:None'},
-                 {field:'fw:government',comparator:'equals',value:true},
-                 {field:'fw:facilityKind',comparator:'equals',value:'fw:Other'}]}],
-      then:[{predicate:'fw:evidenceLevel',value:'fw:None'},{predicate:'fw:service',value:'fw:Unknown'}]},
-   ]},
-   facts:[
-     '<urn:fieldwork:facility:1> fw:namedRule fw:Marina; fw:government true; fw:facilityKind fw:Hospital.',
-     '<urn:fieldwork:facility:2> fw:namedRule fw:Broadhurst; fw:government false; fw:facilityKind fw:Clinic.',
-     '<urn:fieldwork:facility:3> fw:namedRule fw:None; fw:government true; fw:facilityKind fw:Hospital.',
-     '<urn:fieldwork:facility:4> fw:namedRule fw:None; fw:government true; fw:facilityKind fw:Clinic.',
-     '<urn:fieldwork:facility:5> fw:namedRule fw:None; fw:government true; fw:facilityKind fw:HealthPost.',
-     '<urn:fieldwork:facility:6> fw:namedRule fw:None; fw:government true; fw:facilityKind fw:Other.',
-     '<urn:fieldwork:facility:7> fw:namedRule fw:None; fw:government false; fw:facilityKind fw:Clinic.',
-   ].join('\n')},
-];
-
-for(const {id,version,parameters,authored,facts} of B1)
-  test(`B1 · ${id.split(':').pop()} ${version} rebuilt in the authored form reaches the same conclusions`,async()=>{
-    const declared=resolveRuleset(id,version);
-    const shipped=bindParameters(declared,parameters);
-    const rebuilt=bindParameters({...declared,rules:compileAuthoredRuleset(authored)},parameters);
-    const [a,b]=await Promise.all([conclusions(shipped,facts),conclusions(rebuilt,facts)]);
-    assert.ok(a.length>0,'the shipped rules concluded something, so the comparison means something');
-    assert.deepEqual(b,a);
-  });
+// B1, each shipped ruleset rebuilt in the authored form, checked the four rulesets that retired on 2026-11-11.

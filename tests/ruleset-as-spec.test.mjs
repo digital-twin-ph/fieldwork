@@ -6,7 +6,10 @@ import {bindableRoles,declaredFields,isDerivedRole,bundledRulesets} from '../bui
 // Experiment 65 designed this before the code: the ruleset declares ROLES, not field names, and
 // fact generation becomes general the moment it does. Every bundled ruleset already carries both
 // halves; what was missing was the binding.
-const outreach=bundledRulesets().find(r=>r.id.endsWith('outreach-criteria'));
+// compare-level-to-elevation since 2026-11-11, when outreach-criteria, the ruleset these tests first used, retired.
+const shipped=bundledRulesets().find(r=>r.id.endsWith('compare-level-to-elevation'));
+const ALL_FOUR=[{predicate:'fw:projectedRise',attribute:'value_mm'},{predicate:'fw:elevation',attribute:'elevation_m'},
+  {predicate:'fw:projectedRiseKnown',attribute:'value_mm'},{predicate:'fw:elevationKnown',attribute:'elevation_m'}];
 
 // A spec declares which roles it computes for itself. Not inferred from the spelling: the
 // shipped rulesets pair fw:distanceKnown with fw:distanceKm and fw:alertKnown with fw:heatAlert,
@@ -38,22 +41,16 @@ test('a term role binds as a term, and a declared unit travels',()=>{
 });
 
 test('the shipped rulesets declare no derived roles, so all four of their roles are bindable',()=>{
-  // Recorded rather than fixed: their predicate naming predates the convention, and a published
-  // ruleset is immutable. They keep their bespoke generators and are untouched by the spec path.
-  assert.equal(bindableRoles(outreach).length,4);
+  assert.equal(bindableRoles(shipped).length,4);
 });
 
 test('a real shipped ruleset binds through the same path',()=>{
-  const fields=declaredFields(outreach,[
-    {predicate:'fw:distanceKm',attribute:'km_to_centre'},
-    {predicate:'fw:heatAlert',attribute:'alert'},
-    {predicate:'fw:distanceKnown',attribute:'km_to_centre'},
-    {predicate:'fw:alertKnown',attribute:'alert'}]);
-  const km=fields.find(f=>f.predicate==='fw:distanceKm');
-  assert.equal(km.attribute,'km_to_centre');
-  assert.equal(km.kind,'number');
-  assert.match(km.unit,/KM$/,'the unit comes from the ruleset, not from the column');
-  assert.equal(fields.find(f=>f.predicate==='fw:heatAlert').kind,'boolean');
+  const fields=declaredFields(shipped,ALL_FOUR);
+  const rise=fields.find(f=>f.predicate==='fw:projectedRise');
+  assert.equal(rise.attribute,'value_mm');
+  assert.equal(rise.kind,'number');
+  assert.match(rise.unit,/MilliM$/,'the unit comes from the ruleset, not from the column');
+  assert.equal(fields.find(f=>f.predicate==='fw:elevationKnown').kind,'boolean');
 });
 
 test('an unbound role is refused by name, and says what would happen',()=>{
@@ -91,34 +88,21 @@ import {compileAuthoredRuleset} from '../build/authored-rules.js';
 // validate-ruleset-sources.mjs proves that identity in the build; this proves the re-expression
 // does not disturb it.
 test('a pinned ruleset re-expressed as a spec keeps its own rules',()=>{
-  const spec=specFromPin(outreach,[
-    {predicate:'fw:distanceKm',attribute:'distanceKm'},
-    {predicate:'fw:heatAlert',attribute:'heatAlert'},
-    {predicate:'fw:distanceKnown',attribute:'distanceKm'},
-    {predicate:'fw:alertKnown',attribute:'heatAlert'}]);
-  assert.equal(spec.title,outreach.title);
-  assert.deepEqual(spec.rules,outreach.authored.rules,'the rules are the ruleset’s, untouched');
-  // And they still compile.
-  const compiled=compileAuthoredRuleset({subject:'?s',comment:spec.title,rules:spec.rules});
-  assert.ok(compiled.includes('=>'),'the re-expressed rules compile to N3');
+  const spec=specFromPin(shipped,ALL_FOUR);
+  assert.equal(spec.title,shipped.title);
+  assert.deepEqual(spec.rules,shipped.authored.rules,'the rules are the ruleset’s, untouched');
+  // Not compiled to N3 here: these rules compute and end in an `otherwise`, so they are evaluated directly.
 });
 
-test('a spec carries the ruleset’s own parameters, with their type',()=>{
-  const spec=specFromPin(outreach,[
-    {predicate:'fw:distanceKm',attribute:'d'},{predicate:'fw:heatAlert',attribute:'a'},
-    {predicate:'fw:distanceKnown',attribute:'d'},{predicate:'fw:alertKnown',attribute:'a'}]);
-  const threshold=spec.parameters.find(p=>p.name==='threshold');
-  assert.equal(threshold.type,'number');
-  assert.match(threshold.unit,/KM$/);
-  assert.equal(threshold.meaning,outreach.parameters[0].meaning,
-    'the meaning shown to a practitioner is the ruleset’s own');
+test('a spec carries the ruleset’s own parameters, and none when it declares none',()=>{
+  assert.deepEqual(specFromPin(shipped,ALL_FOUR).parameters,[]);
 });
 
 test('a ruleset with no structured form cannot be re-expressed, and says so by returning null',()=>{
-  assert.equal(specFromPin({...outreach,authored:undefined},[]),null);
+  assert.equal(specFromPin({...shipped,authored:undefined},[]),null);
 });
 
 test('binding failures surface through the spec, not after it',()=>{
-  assert.throws(()=>specFromPin(outreach,[{predicate:'fw:distanceKm',attribute:'d'}]),
+  assert.throws(()=>specFromPin(shipped,[{predicate:'fw:projectedRise',attribute:'value_mm'}]),
     /needs \d+ roles? bound/);
 });

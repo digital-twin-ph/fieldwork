@@ -25,7 +25,8 @@ const files=readdirSync(new URL('../rulesets/',import.meta.url),{withFileTypes:t
       JSON.parse(readFileSync(new URL(`../rulesets/${dir.name}/${name}`,import.meta.url),'utf8'))]));
 
 test('every bundled ruleset declares the authored form it was built from',()=>{
-  assert.ok(files.length>=8,`expected the bundled rulesets, found ${files.length}`);
+  // Two since 2026-11-11, when the four rulesets with code of their own retired (docs/audits/old-naledi-audit.md).
+  assert.ok(files.length>=2,`expected the bundled rulesets, found ${files.length}`);
   for(const [path,ruleset] of files)
     assert.ok(ruleset.authored,
       `${path} ships rules with no authored form. A ruleset nobody could have built by hand is `
@@ -44,11 +45,9 @@ test('every bundled ruleset declares the authored form it was built from',()=>{
  *  no NEW ruleset can join it, which is what the practitioner asked for:
  *  "no worked example should create a ruleset that cannot be created by hand using the primitive
  *  itself. It should be reproducible from scratch." */
-const HAND_WRITTEN_BEFORE_THE_BUILDER=[
-  'access-review/1.0.0.json','access-review/2.0.0.json',
-  'extent-review/1.0.0.json','extent-review/1.1.0.json',
-  'outreach-criteria/1.0.0.json','outreach-criteria/1.1.0.json',
-];
+// EMPTIED 2026-11-11: all six were versions of the four rulesets that retired with their examples, so every shipped
+// ruleset now rebuilds from its authored form byte for byte. The list may only shrink; it cannot grow back.
+const HAND_WRITTEN_BEFORE_THE_BUILDER=[];
 
 test('the authored form recompiles to the rules that ship, byte for byte',()=>{
   const broken=[];

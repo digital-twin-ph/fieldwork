@@ -3,6 +3,13 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.101.0 — 2026-11-12
+
+- **Fixed: a study area reaching just past a raster stopped Raster input.** Botswana's provinces from geoBoundaries
+  against WorldPop's file for Botswana, two outlines of one country that differ at the border, read "Boundary extends
+  beyond available raster coverage". The step now keeps the part the raster covers and says how far past which edge the
+  area reaches; the run records it as a data issue, *Area beyond the raster*. Raster input and Clip raster patched.
+
 ## 0.100.0 — 2026-11-12
 
 - **Chart draws a line**, along the categories in their order. Chart 0.15.0.

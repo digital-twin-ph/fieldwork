@@ -1007,6 +1007,8 @@ fw:ValueEmpty a fw:DataIssueKind; skos:inScheme fw:dataIssueKinds; skos:prefLabe
   skos:definition "The record carries the field and it is blank: somebody wrote the column and left it empty.".
 fw:BeyondFence a fw:DataIssueKind; skos:inScheme fw:dataIssueKinds; skos:prefLabel "Beyond 1.5×IQR"; dqv:inDimension fw:plausibility;
   skos:definition "A number more than 1.5 times the interquartile range beyond the first or third quartile. A value to look at, not an error: no distribution is assumed.".
+fw:AreaBeyondRaster a fw:DataIssueKind; skos:inScheme fw:dataIssueKinds; skos:prefLabel "Area beyond the raster"; dqv:inDimension fw:coverage;
+  skos:definition "Part of the study area lies past the raster's edge, as where two outlines of one country differ at the border; those parts have no values.".
 fw:plausibility a dqv:Dimension; rdfs:label "Whether a value sits where most of its column does".
 fw:absentValues skos:exactMatch fw:ValueAbsent.
 fw:unreadableValues skos:exactMatch fw:ValueUnreadable.

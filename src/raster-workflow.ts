@@ -1,8 +1,9 @@
+import {issueFacts} from './data-issues.js';
 import {validateRasterProvenance,rasterProvenanceN3} from './raster-provenance.js';
 import type {WorkflowNode} from './types.js';
 import type {AreaValue,Receipt} from './results.js';
 import type {RasterAsset,RasterGrid} from './raster.js';
-import {inspectRaster,readRasterWindow,rasterWindow,clipRaster,MAX_RASTER_CELLS} from './raster.js';
+import {inspectRaster,readRasterWindow,rasterWindow,clipRaster,MAX_RASTER_CELLS,rasterOverhang,overhangSentence} from './raster.js';
 import {verifiedProjectFile} from './evidence-storage.js';
 import {geometryWKT,CRS84} from './study-area.js';
 export function validateRasterAsset(asset:RasterAsset):void{
@@ -36,6 +37,11 @@ export function rasterReceipt(node:WorkflowNode<'raster_input'|'clip_raster'>,gr
     (sourceId?'':`${source} a fw:RasterDataset; fw:sha256 "${grid.asset.sha256}"; prov:wasDerivedFrom ${original}; fw:sourcePixelWindow ${JSON.stringify(grid.asset.window.join(','))}.\n${original} a fw:LocalFileDescriptor; dct:title ${JSON.stringify(grid.asset.source.filename)}; fw:sourceBytes ${grid.asset.source.bytes}; fw:rasterWidth ${grid.asset.source.metadata.width}; fw:rasterHeight ${grid.asset.source.metadata.height}.\n`)+
     (sourceId?`${original} a fw:LocalFileDescriptor. ${result} prov:wasDerivedFrom ${original}.\n`:'')+rasterProvenanceN3(original,grid.asset.provenance)+
     (grid.mask?`${activity} fw:rasterMarginPixels ${grid.mask.marginPixels||0}. ${result} fw:validCellCount ${grid.mask.valid}; fw:insideCellCount ${grid.mask.inside}.\n`:'');
-  return {nodeId:node.id,kind:'computation',facts,input:facts,rules:'',conclusions:[],method:grid.mask?`Mask native cells using ${grid.mask.method} inclusion and an outer margin of ${grid.mask.marginPixels||0} native pixels. Map hides pixel portions outside this footprint; stored values are unchanged. No resampling, population total or fractional-cell weighting.`:'Use a locally retained native-resolution GeoTIFF window. Original file descriptors and extracted source metadata accompany the raster asset.'};
+  // AN AREA REACHING PAST THE RASTER, as a data issue about the raster (2026-11-12): said, never refused.
+  const overhang=rasterOverhang(grid.metadata,area.boundary);
+  const beyond=overhang.length?issueFacts(activity,source,`urn:fieldwork:run:${runId}:raster:${node.id}`,
+    [{kind:'AreaBeyondRaster',says:overhangSentence(overhang)}]):'';
+  const all=facts+beyond;
+  return {nodeId:node.id,kind:'computation',facts:all,input:all,rules:'',conclusions:[],method:grid.mask?`Mask native cells using ${grid.mask.method} inclusion and an outer margin of ${grid.mask.marginPixels||0} native pixels. Map hides pixel portions outside this footprint; stored values are unchanged. No resampling, population total or fractional-cell weighting.`:'Use a locally retained native-resolution GeoTIFF window. Original file descriptors and extracted source metadata accompany the raster asset.'};
 }
 export {clipRaster};

@@ -60,13 +60,31 @@ export function rasterWindow(metadata:RasterMetadata,boundary:Boundary,paddingPi
   check(Number.isFinite(paddingPixels)&&paddingPixels>=0&&paddingPixels<=1.000000002,'Raster padding must be between 0 and 1 pixel.');
   const b=geometryBounds(boundary),px=paddingPixels*metadata.resolution[0],py=paddingPixels*-metadata.resolution[1];
   const [west,south,east,north]=[b[0]-px,b[1]-py,b[2]+px,b[3]+py],[left,bottom,right,top]=metadata.bounds,tolerance=1e-9;
-  check(west>=left-tolerance&&east<=right+tolerance&&south>=bottom-tolerance&&north<=top+tolerance,'Boundary extends beyond available raster coverage. Reacquire a larger window from the original file.');
+  // A STUDY AREA REACHING PAST THE RASTER IS SAID, NOT REFUSED (the practitioner, 2026-11-12: Botswana's provinces from
+  // geoBoundaries against WorldPop's file for Botswana, two outlines of one country that differ at the border). The
+  // window is the part the raster covers; `rasterOverhang` says how far past which edge. No overlap at all still stops.
+  void tolerance;
+  check(east>left&&west<right&&north>bottom&&south<top,'The study area and this raster do not overlap: check that the file covers the area.');
   const [x,y]=metadata.origin,[dx,dy]=metadata.resolution;
   const window:[number,number,number,number]=[Math.max(0,Math.floor((west-x)/dx)),Math.max(0,Math.floor((north-y)/dy)),Math.min(metadata.width,Math.ceil((east-x)/dx)),Math.min(metadata.height,Math.ceil((south-y)/dy))];
   const width=window[2]-window[0],height=window[3]-window[1];check(width>0&&height>0,'Study area does not intersect any raster cells.');check(width*height<=MAX_RASTER_CELLS,'Raster window exceeds 262,144 cells. Use a smaller study area.');
   const blocksX=Math.floor((window[2]-1)/metadata.blockWidth)-Math.floor(window[0]/metadata.blockWidth)+1,blocksY=Math.floor((window[3]-1)/metadata.blockHeight)-Math.floor(window[1]/metadata.blockHeight)+1;
   check(blocksX*blocksY*metadata.blockWidth*metadata.blockHeight*metadata.bytesPerPixel<=64_000_000,'Intersecting TIFF blocks exceed the 64 MB decoding budget. Retile this raster before importing.');return window;
 }
+/** HOW FAR A STUDY AREA REACHES PAST THE RASTER, per edge, in degrees and roughly in kilometres; empty where it does not. */
+export function rasterOverhang(metadata:RasterMetadata,boundary:Boundary):{edge:'west'|'east'|'south'|'north';degrees:number;km:number}[]{
+  const [west,south,east,north]=geometryBounds(boundary),[left,bottom,right,top]=metadata.bounds,tolerance=1e-9;
+  const kmPerDegree=111.32,cos=Math.cos((south+north)/2*Math.PI/180);
+  const out:{edge:'west'|'east'|'south'|'north';degrees:number;km:number}[]=[];
+  if(west<left-tolerance)out.push({edge:'west',degrees:left-west,km:(left-west)*kmPerDegree*cos});
+  if(east>right+tolerance)out.push({edge:'east',degrees:east-right,km:(east-right)*kmPerDegree*cos});
+  if(south<bottom-tolerance)out.push({edge:'south',degrees:bottom-south,km:(bottom-south)*kmPerDegree});
+  if(north>top+tolerance)out.push({edge:'north',degrees:north-top,km:(north-top)*kmPerDegree});
+  return out;
+}
+export const overhangSentence=(o:ReturnType<typeof rasterOverhang>):string=>!o.length?''
+  :`The study area reaches past this raster's ${o.map(e=>`${e.edge} edge by about ${e.km<1?`${Math.round(e.km*1000)} m`:`${e.km.toFixed(1)} km`}`).join(', ')}. `
+    +`Those parts have no values here.`;
 export async function readRasterWindow(blob:RasterSource,metadata:RasterMetadata,window:[number,number,number,number]):Promise<{metadata:RasterMetadata;values:(number|null)[]}>{
   const tiff=await openTiff(blob);try{const image=await tiff.getImage(),raw=await image.readRasters({window,samples:[0],interleave:true}),width=window[2]-window[0],height=window[3]-window[1],origin:[number,number]=[metadata.origin[0]+window[0]*metadata.resolution[0],metadata.origin[1]+window[1]*metadata.resolution[1]];
     const values=Array.from(raw as ArrayLike<number>,v=>Number.isFinite(v)&&v!==metadata.noData?v:null);

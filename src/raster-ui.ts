@@ -4,7 +4,7 @@ import type {Boundary,Position} from './types.js';
 import type {RasterAsset,RasterGrid,RasterMetadata} from './raster.js';
 import {rasterImage} from './raster-image.js';
 export {rasterImage} from './raster-image.js';
-import {inspectRaster,rasterWindow,readRasterWindow,encodeRaster} from './raster.js';
+import {inspectRaster,rasterWindow,readRasterWindow,encodeRaster,rasterOverhang,overhangSentence} from './raster.js';
 import {contentHash} from './project-files.js';
 import {isNetcdf,inspectNetcdf,readNetcdfWindow,type NetcdfGrid} from './netcdf-raster.js';
 import {storePDFs} from './evidence-storage.js';
@@ -75,9 +75,10 @@ export function openRasterEditor(boundary:Boundary,onSave:(asset:RasterAsset)=>b
       const preview=`<p id="raster-status" role="status">${esc(said)}</p>`
         +(shown?`<details><summary>Metadata read from the file</summary><pre id="raster-metadata">${esc(JSON.stringify(shown,null,2))}</pre></details>`:'');
       const problem=failure||windowFailure;
+      const overhang=metadata&&window&&!problem?overhangSentence(rasterOverhang(metadata,boundary)):'';
       return {settings,preview,decisions:`<p>Pixel values are not automatically interpreted as population totals.</p>`,
         blocked:!!reading||!!problem||!(metadata&&window)&&!(existing&&!picked()),
-        ...(problem?{message:{tone:'refusal' as const,text:problem}}:{})};
+        ...(problem?{message:{tone:'refusal' as const,text:problem}}:overhang?{message:{tone:'warning' as const,text:overhang}}:{})};
     },
     wire:(root,d,redraw)=>{
       redrawNow=redraw;

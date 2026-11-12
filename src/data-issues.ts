@@ -3,14 +3,14 @@
  *  ontology, label and all, so the screen and the evidence cannot say two things. */
 export type DataIssueKind='ValueAbsent'|'ValueUnreadable'|'KeyAbsent'|'KeyRepeated'|'ColumnUndescribed'|'DescriptionUnconfirmed'
   |'DictionaryMismatch'|'DeclarationAbsent'|'DivisionByZero'|'ConclusionsConflict'|'SiteUnreachable'|'RoutedOffNetwork'
-  |'FieldMissing'|'ValueEmpty'|'BeyondFence';
+  |'FieldMissing'|'ValueEmpty'|'BeyondFence'|'AreaBeyondRaster';
 
 export const ISSUE_LABEL:Record<DataIssueKind,string>={
   ValueAbsent:'No value',ValueUnreadable:'Not the declared kind',KeyAbsent:'No key',KeyRepeated:'Key repeated',
   ColumnUndescribed:'Column not described',DescriptionUnconfirmed:'Description not confirmed',
   DictionaryMismatch:'Disagrees with the data dictionary',DeclarationAbsent:'Not declared',DivisionByZero:'Divided by zero',
   ConclusionsConflict:'Rules disagree',SiteUnreachable:'No result',RoutedOffNetwork:'Routed off the network',
-  FieldMissing:'Field missing',ValueEmpty:'Empty',BeyondFence:'Beyond 1.5×IQR',
+  FieldMissing:'Field missing',ValueEmpty:'Empty',BeyondFence:'Beyond 1.5×IQR',AreaBeyondRaster:'Area beyond the raster',
 };
 
 export interface FoundIssue {kind:DataIssueKind; column?:string; count?:number; of?:number; says?:string}

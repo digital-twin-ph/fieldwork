@@ -195,12 +195,12 @@
    "migrationFrom": []
   },
   "clip_raster": {
-   "version": "1.1.0",
-   "released": "2026-10-23",
+   "version": "1.1.1",
+   "released": "2026-11-12",
    "changes": [
     {
-     "kind": "changed",
-     "description": "A custom node label, for the same reason as the raster input it follows: labelForm exists so the gesture is learned once, and these two had never been given it."
+     "kind": "patch",
+     "description": "A margin past the raster's edge is cut to the raster, never filled with cells it does not hold, where it used to stop the run."
     }
    ],
    "breaking": false,
@@ -624,12 +624,12 @@
    "migrationFrom": []
   },
   "raster_input": {
-   "version": "0.11.0",
-   "released": "2026-11-11",
+   "version": "0.11.1",
+   "released": "2026-11-12",
    "changes": [
     {
-     "kind": "minor",
-     "description": "WorldPop Global2 R2025A (2015 to 2030, constrained, 100 m) beside Global1 (2000 to 2020), for any country whose folder holds a 100 m total, 242 as listed 2026-11-11; every year of the chosen release is offered, and a year chosen stays chosen across releases where both publish it. Its citation and DOI 10.5258/SOTON/WP00839, CC BY 4.0, and its alpha status are said. The catalogue is refreshed by scripts/refresh-worldpop-catalogue.mjs, weekly on GitHub. Configure… moves to the standard dialog (experiment 186): heading and ×, Settings (where to get a file, the file, source metadata), Preview, Decisions, one message slot, Cancel and Apply; Apply reads and keeps the window."
+     "kind": "patch",
+     "description": "A study area reaching past the raster is said, not refused: the window is the part the raster covers, the dialog says how far past which edge, and the receipt records Area beyond the raster as a data issue. It refused Botswana's provinces from geoBoundaries against WorldPop's file for Botswana (the practitioner, 2026-11-12). No overlap at all still stops."
     }
    ],
    "breaking": false,

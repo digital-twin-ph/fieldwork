@@ -46,5 +46,4 @@ The step's panel holds its **Name**, its two inputs, one sentence saying what it
 
 ## Where it is used
 
-The Old Naledi example (sampled locations and the nearest eligible clinic) and the sea-level example (each facility's
-nearest tide gauge).
+The sea-level example (each facility's nearest tide gauge).

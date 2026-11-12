@@ -14,11 +14,6 @@ number goes on the bar, so nothing is asked of you: a rate of deaths per 1,000 p
 sub-districts is 32 bars, labelled by sub-district, each as tall as its own rate. Any table works —
 a rate, a total within groups, a derived value, a related column, a two-by-two, a case series.
 
-**A reasoning result.** One bar per category, counting records: by decision, by access zone, or by
-evidence tier. Categories with no records keep their bars, the order is the one the categories are
-defined in rather than alphabetical, and a value the application does not recognise is counted and
-shown separately instead of being folded into the others.
-
 **A summarised polygon layer.** One bar per polygon, carrying the count of locations inside it or
 the total of a numeric field, whichever the summary holds.
 
@@ -40,7 +35,7 @@ than the table beside it.
 ## How to use it
 
 1. Add **Chart** and select it. Name the Results tab under **Name**, and choose where it goes in the write-up.
-2. Under **Inputs**, pick what it should draw: *Table*, *Reasoning result*, or *Polygon summaries*.
+2. Under **Inputs**, pick what it should draw: *Table* or *Polygon summaries*.
 3. Press **Configure…**. Everything else is set there, and **Apply** writes it:
    - **Draw**: bars, or a **transmission tree** (below).
    - If the table keys on more than one column, which one labels the bars.

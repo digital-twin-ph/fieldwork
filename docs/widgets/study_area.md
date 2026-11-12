@@ -102,8 +102,7 @@ refuses shapes whose interiors overlap, and rings that cross or run along each o
 
 ## Worked examples that use it
 
-**Old Naledi · diagnostic access** uses a drawn settlement boundary. **Old Naledi · raster
-clipping** scopes a population raster to the same shape. The four **1854 Cholera Outbreak in
+**Measles in Hagelloch, 1861** uses the village. The four **1854 Cholera Outbreak in
 London** workflows each use their own Soho extent, which is why three of them differ.
 
 ---

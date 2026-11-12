@@ -63,5 +63,4 @@ offline once Fieldwork has been opened online, since its reader is saved with th
 
 ## Where it is used
 
-The Old Naledi example (a population surface) and the sea-level example (EGM2008, the mean sea surface and DeltaDTM
-around Manila).
+The sea-level example (EGM2008, the mean sea surface and DeltaDTM around Manila).

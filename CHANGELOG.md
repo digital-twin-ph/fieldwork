@@ -3,6 +3,22 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.96.0 — 2026-11-11
+
+- **Old Naledi and the heat example retired** as worked examples, after an audit of what only they used
+  (docs/audits/old-naledi-audit.md). **Select nearby facilities**, **Evidence register** and **Travel time from
+  distance** retired with them; Keep points inside the area, Table and Apply ruleset do what they did. A saved workflow
+  holding one refuses to open, naming it.
+- **A first visit opens Measles in Hagelloch, 1861**, rather than the synthetic heat example.
+- **No ruleset has code of its own any more.** Outreach criteria, Diagnostic evidence, Access review and Extent review
+  retired, with the six code paths Apply ruleset kept for them. Rules you write in a workflow keep working, under their
+  own name rather than a published ruleset's. Snow's outbreak extent keeps its outline, map and curve without its rule
+  step.
+- **Map, Table and Chart take no decisions input:** nothing produces one now.
+- **Fixed:** a published ruleset is now cited in the run's record wherever it runs, including the sea-level example's.
+- **No caption on a static map.** "STUDY AREA · SPATIAL COVERAGE" and "Select a point to review its relation to the
+  study boundary" no longer print across the figure; the Study area map's "Go to Old Naledi" button is gone.
+
 ## 0.95.0 — 2026-11-11
 
 - **Mean, smallest and largest cell over each area, if you want them.** Sample a raster's Configure… has a box, *Also

@@ -11,8 +11,7 @@ It takes four different things, and it works out which it is showing from what y
 - a **keyed table** from any step that produces one — Relate a column, Total within groups, a rate,
   a two-by-two, an imported table;
 - **point data**, with coordinates and attributes;
-- **catchment polygons** and their summaries;
-- **reasoning results**, with their decisions.
+- **catchment polygons** and their summaries.
 
 ## What you connect
 
@@ -21,8 +20,7 @@ show on it, or choose one under **Inputs › Add an input**, and it is connected
 is nothing to choose first.
 
 Connect a step's output and the table shows it. If you wire more than one,
-the more specific wins: a keyed table before polygons, polygons before decisions, and the point
-path is the general one.
+the more specific wins: a keyed table before polygons, and the point path is the general one.
 
 ## How to use it
 
@@ -36,7 +34,6 @@ shows, **Configure…**, and what the last run showed.
 | In Configure… | When it is offered |
 | --- | --- |
 | **Show totals: these values count the same thing** | A keyed table that states no unit. Tick it only where every cell counts the same thing; the figure says you asserted it |
-| **Display as**: Table, Map or Chart | A reasoning result. Map or Chart changes the step into that output |
 
 Nothing is required. A table with nothing connected is **unfinished**, not broken, and says so.
 

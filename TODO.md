@@ -100,7 +100,9 @@ not a practitioner in the field.
    its digest, with required alt text and a caption, shown on the Notes board and in the write-up; an SVG is shown as
    an image, never inlined. Its first use is the datum diagram, docs/images/vertical-datums.svg, as a note of the
    example.
-6. **Old Naledi**: `facilities` and `facility_audit` replaced by standard widgets (Keep points inside the area; Apply
+6. **Done 2026-11-11, differently: Old Naledi retired** (the practitioner: *"What we will do instead is retire old
+   Naledi as an example along with its bespoke widgets"*; docs/audits/old-naledi-audit.md, with the heat example, four
+   rulesets, Travel time and decisions). As first planned: **Old Naledi**: `facilities` and `facility_audit` replaced by standard widgets (Keep points inside the area; Apply
    ruleset and Table output), checked to give the same results, then moved to a repository.
    **Keep points inside the area is decided here** (the practitioner, 2026-11-08, asking whether it can be retired): if
    neither this nor Sierra Leone uses it, it is retired, and the Check spatial coverage migration that leads to it
@@ -3489,7 +3491,8 @@ the number nothing records today — and it is also the evidence that a prespeci
 not quietly rewritten after the fact.
 
 
-**Revisit the Gaborone ABM notebooks for smaller worked examples.** Worked example 02 Old
+**Revisit the Gaborone ABM notebooks for smaller worked examples.** (Old Naledi retired 2026-11-11; the notebooks remain
+the source for a later Gaborone example, and for experiment 199.) Worked example 02 Old
 Naledi was derived from them, and the practitioner, 2026-10-17: *"That's a complex set of
 notebooks and has a lot of potential smaller examples."* 02 currently carries two pinned
 rulesets and a whole diagnostic-access chain in one canvas; the notebooks behind it are a
@@ -3498,7 +3501,8 @@ source of narrower exercises that would each demonstrate one thing. Map them the
 cholera studies — operation by operation, against the palette — before deciding which become
 examples.
 
-**Retire worked example 01 Heat outreach.** The practitioner, 2026-10-17: *"we can get rid of
+**Done 2026-11-11: Retire worked example 01 Heat outreach** (docs/audits/old-naledi-audit.md; its real-data successor is
+TODO 30). The practitioner, 2026-10-17: *"we can get rid of
 that example as we generate better ruleset examples. That one was for starters and has outlived
 its usefulness."* It is the oldest example and the one that gave `outreach-criteria` its only
 use outside the teaching example. Retiring it needs the workspace key, the example template, the

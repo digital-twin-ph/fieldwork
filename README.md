@@ -18,7 +18,7 @@ or privacy control.
 | [Ontology viewer](https://digital-twin-ph.github.io/fieldwork-ontology/) | A reading view of this project's vocabulary, its shapes and its competency questions, with the schema-level questions as a build gate |
 
 Worked examples: [blank canvas](https://digital-twin-ph.github.io/fieldwork/?example=blank),
-[Old Naledi diagnostic access](https://digital-twin-ph.github.io/fieldwork/?example=old-naledi). Worked examples kept in
+[Measles in Hagelloch, 1861](https://digital-twin-ph.github.io/fieldwork/?example=hagelloch). Worked examples kept in
 their own repositories, such as [rules on synthetic data](https://github.com/digital-twin-ph/example-workflows-rulesets),
 open from the Catalog.
 The version beside the header mark is the released application version; see the
@@ -47,14 +47,12 @@ The version beside the header mark is the released application version; see the
 | N3 and evidence | Run EYE-JS locally, inspect facts and assertions, and download run receipts. |
 | Supporting references | Attach PDFs or URLs to nodes, describe supporting passages, and preserve citations and file identity with run provenance. |
 
-Worked examples cover heat outreach, Old Naledi diagnostic access and raster
-clipping, John Snow Voronoi and network catchments, and geoprivacy transformations. Heat uses synthetic neighborhoods; Old Naledi
-combines a real boundary and historical facility registry with generated
-demonstration locations.
+Built-in worked examples cover measles in Hagelloch, 1861, and John Snow's Voronoi and network catchments, outbreak extent
+and geoprivacy transformations. The heat and Old Naledi examples retired on 2026-11-11
+([audit](docs/audits/old-naledi-audit.md)).
 
 Step-by-step instructions are in [the usage guide](docs/usage.md); the worked
-examples have their own guides for [Old Naledi](docs/examples/old-naledi.md) and
-[John Snow](docs/examples/john-snow.md).
+examples have their own guides, such as [John Snow](docs/examples/john-snow.md).
 
 John Snow's own daily table of attacks and deaths (1855, Table 1) is bundled at
 `examples/john-snow/snow_dates.csv` with its provenance. It gives the time axis
@@ -237,8 +235,7 @@ proposed capabilities from implemented behaviour. Start with:
 ## Publication and license
 
 [Apache License 2.0](LICENSE). Third-party libraries and source datasets keep
-their own licenses and attribution; bundled notices and the Old Naledi
-provenance record are preserved.
+their own licenses and attribution; bundled notices and provenance records are preserved.
 
 A push to GitHub `main` runs `.github/workflows/pages.yml`: locked install,
 type-check, build, unit and Chromium suites, then deploy to Pages only on

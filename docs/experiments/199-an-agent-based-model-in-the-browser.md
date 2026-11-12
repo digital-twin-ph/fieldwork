@@ -38,7 +38,7 @@ krABMaga builds for WebAssembly, and on what licence, is to check from its own d
 | Part | What it is |
 | --- | --- |
 | Scope | TB natural history only: susceptible, latent, active, on treatment, recovered, at the Gaborone model's own rates. No care cascade, calibration, terrain or pollution |
-| Population | Old Naledi, already a worked example: its households or buildings become the agents' homes |
+| Population | Proposed as Old Naledi's homes; Old Naledi retired as an example on 2026-11-11 (docs/audits/old-naledi-audit.md). To choose: the Gaborone model's own inputs, read where they are, or Hagelloch's 188 children (the alternative below) |
 | In Fieldwork | A kernel (Rust compiled to WebAssembly, or a worker; see above) that steps the agents weekly from a recorded seed and gives back a table of counts by state per week, which Chart draws; a progress bar and a full record of the run, as the space-time scan has |
 | Check | The same configuration in Starsim in desktop Python, many runs each way. The random numbers differ, so the criterion is that the weekly counts fall within each other's run-to-run spread, not that they match. Desktop only if Starsim cannot run in the browser kernel, and the lab says so |
 | Measured | How many agents for how many years the browser handles before it is too slow: a limit found, not chosen |
@@ -49,7 +49,9 @@ on data already loaded; it ties to the replay, which says a scan would first hav
 the model could ask what a response from that day would have changed. It tests the same machinery and does not move
 the Gaborone port forward.
 
-**Proposed:** the TB spike on Old Naledi.
+**Proposed** on 2026-11-10: the TB spike on Old Naledi, before it retired. Its population is to choose again (above).
+The Rust kernel survey (reports/Rust agent based model kernels.md, 2026-11-11) recommends a small fixed-step kernel in
+Fieldwork's own Rust crate, with CDC's ixa tried beside it.
 
 ## Left for later, step by step, if the spike says yes
 
@@ -69,4 +71,4 @@ the Gaborone port forward.
 ## What this does not establish
 
 Nothing yet: it is asked. Agreement with Starsim would show the port is faithful, not that the Gaborone model's rates
-fit Old Naledi or any other place.
+fit any place.

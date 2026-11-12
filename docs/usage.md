@@ -53,13 +53,7 @@ When a table will later be joined to administrative boundaries, key it on an off
 **Street network** is a specialized input: upload directed WGS84 GraphML/JSON or explicitly download a bounded OSM walking candidate graph. Connect **Study area ? Buffer study area ? Street network** to expand acquisition while keeping the original area for reporting. Existing saved networks change only on upload/download. Study area also offers centre-and-dimension square/rectangle controls in addition to free boxes and polygons. Saved normalized networks are included in project export and offline replay; raw uploaded network files are represented by their hash, not embedded.
 
 
-Heat and Old Naledi now use the shared **Map** and **Table** widgets for reasoning results. There is no input mode on either: both declare every port they can show and work out what to draw from what you connect. Connecting removes nothing. A workflow saved when the mode existed opens showing what it showed. Legacy map/table outputs migrate on load with their identities and evidence intact. See the [shared result-output record](experiments/21-shared-result-outputs.md). The shared **Chart** widget now replaces legacy bar outputs, with explicit categorical counts and source provenance. Connect a reasoning result and name its Results tab. See the [chart standardization record](experiments/22-shared-chart.md).
-
-**Sample locations** now supplies shared point data to Map, Table and coverage widgets. **Facility access** also accepts points from Input data, preserving missing coordinates as Unknown results. The [shared sample-point design](experiments/20-shared-sample-points.md) records the contract, provenance and compatibility changes.
-
-Old Naledi now separates **Input data: Gaborone facility registry** from **Select nearby facilities**. Edit the connected records through the shared input form; the selection node retains the radius control and feeds the unchanged diagnostic rules. Existing saved Old Naledi workflows gain the explicit source on load. See the [facility-input standardization record](experiments/19-facility-input-standardization.md).
-
-Heat outreach's **Neighborhoods** and **Cooling centers** now use the shared **Input data** widget and its full editing form. Older saved sources are normalized on load while retaining their IDs, labels, scalar attributes, references and connections. The [first widget-standardization experiment](experiments/18-shared-input-standardization.md) documents this migration and the remaining work for Old Naledi and output widgets.
+**Map** and **Table** have no input mode: both declare every port they can show and work out what to draw from what you connect. Connecting removes nothing. A workflow saved when the mode existed opens showing what it showed. Legacy map/table outputs migrate on load with their identities and evidence intact. See the [shared result-output record](experiments/21-shared-result-outputs.md). The shared **Chart** widget now replaces legacy bar outputs, with explicit categorical counts and source provenance. Connect a reasoning result and name its Results tab. See the [chart standardization record](experiments/22-shared-chart.md).
 
 To begin from nothing, open `http://127.0.0.1:4173/?example=blank` or choose **New empty canvas**. Add **Study area**, open **Select area on map**, draw a bounding box or polygon, and apply it. Inspect **N3 & evidence**, then run to see the geometry preview and inferred readiness. The [study-area experiment record](experiments/01-study-area.md) documents each task, architectural decision, standards mapping, and evidence to collect. Readiness means the geometry meets the widget's input contract, not that the selected area is scientifically appropriate.
 
@@ -76,15 +70,11 @@ Selecting a node that produced no result leaves the open tab alone and clears th
 
 Workflow and N3 & evidence are the main views. Each visual output node creates a named Results tab; choose Map, Table, or Bar chart in its inspector. Select a location in a map or table to inspect the inputs and assertions behind its result. Expand Results for a larger view or filter table rows by text.
 
-Use the worked-example selector to open **Old Naledi diagnostic access**, or visit `http://127.0.0.1:4173/?example=old-naledi`. Its widgets control sample spacing, facility search radius, minimum evidence, diagnostic-service pathway, speed proxy, and review threshold. The [worked-example guide](examples/old-naledi.md) explains the source data, assumptions, and three comparisons to try. Each example retains its own local edits when you switch.
-
 Changes mark existing results as belonging to the previous run until you run again. Export a workflow to transfer it, or export a run receipt to preserve the executed workflow, N3 inputs, conclusions, and output data. Existing saved workflows remain local; Restore example replaces the current workflow with the latest example and can be undone.
 
 ## Local execution and offline use
 
 The local clipping prototype now supports all-touched inclusion and a 0-1 pixel outer margin. TypeScript/build and 76 unit tests passed; all 47 Chromium scenarios passed across the full run and correction of one test baseline, with the actual Botswana WorldPop file enabled. See the [validation record](experiments/29-raster-edge-inclusion.md). Clip raster owns its cutline and settings; Map displays their result.
-
-Open the dedicated [Old Naledi raster clipping workspace](http://127.0.0.1:4173/?example=raster), or choose **2 · Old Naledi raster clipping** in Workspace. Study area, Raster input, Clip raster and Map are already connected. Prepare your local GeoTIFF and its source citation, use **Clip parameters → Preview and adjust**, then **Run workflow**. This workspace saves separately from diagnostic access and your blank canvas. It waits for a raster before automatically running; no national raster is bundled with the app.
 
 For a raster exercise, connect **Study area → Raster input → Clip raster → Map**, with Study area also connected to Clip raster. In Raster input choose **Prepare GeoTIFF input**, select the local file and **Save raster window**. Select Clip raster, connect its raster input, and choose **Preview and adjust**. Drag polygon vertices or enter bounding coordinates; inspect the cell counts, then apply the clip parameters and run. Opacity is a display control. Out-of-coverage drafts cannot be applied; Cancel and Undo preserve or restore the prior cutline. Clip adjustments leave the shared Study area unchanged; masked-out space appears transparent in the output. See [preview parameters and decisions](experiments/28-raster-preview-and-adjustment.md).
 
@@ -164,7 +154,7 @@ three node types is one node type and three rulesets you can read. Each migrated
 ruleset at the version that produced that widget's results, because a change to a rule changes a
 result.
 
-**Five of the seven migrate silently-but-stamped**, and their release files name the widget that
+**Until 2026-11-11, five of the seven migrated silently-but-stamped**, and their release files name the widget that
 replaces each, so a saved workflow opens and the Inspector tells you what changed.
 
 **`Facility access` is the exception, deliberately.** It was three operations in one node, so no single
@@ -190,6 +180,21 @@ could be exploded into them; no worked example used one. A saved workflow holdin
 rebuild the steps it held from the palette. Its two groups were *Walking catchment* (Snap sites to the network,
 Reachable junctions, Travel time band, Reachable corridor) and *Extent review* (Convex hull, then Apply ruleset with
 *Extent review*); every one of those steps is still on the palette.
+
+**On 2026-11-11 Old Naledi and the heat example retired as worked examples**, with what only they used
+(`docs/audits/old-naledi-audit.md`). A saved workflow holding any of these **refuses to open**, naming it:
+
+| Was | Use instead |
+| --- | --- |
+| **Select nearby facilities** (`facilities`) | **Keep points inside the area**, bounded by the area itself |
+| **Evidence register** (`facility_audit`) | **Table** for the records, **Apply ruleset** to classify them |
+| **Travel time from distance** (`travel_time`) | **Apply ruleset**, with a value computed for every record |
+| **Outreach criteria**, **Access review** and **Diagnostic evidence** | **Apply ruleset**, with the rules written in it: their published rulesets retired, so these no longer migrate |
+
+The rulesets *Outreach criteria*, *Diagnostic evidence*, *Access review* and *Extent review* retired too: each ran
+through code written for it alone. A workflow pinning one refuses to run, naming it; write its rules in Apply ruleset.
+Rules written in a workflow keep working. Map, Table and Chart no longer take a *decisions* input, because nothing
+produces one now; Snow's outbreak extent keeps its outline, map and curve without its rule step.
 
 ## References and provenance
 

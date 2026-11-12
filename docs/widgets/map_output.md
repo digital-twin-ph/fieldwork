@@ -25,7 +25,6 @@ You connect what you want drawn. There is no setting that says what kind of map 
 | a study area | the boundary your work is inside |
 | a point layer | records with locations — up to eight separate layers |
 | catchment polygons | areas reached, covered or grouped |
-| a reasoning result | points coloured by the decision a ruleset reached |
 | a coverage check | points marked inside, outside or missing a location |
 | a raster | prepared or clipped cells |
 | a street network | the streets themselves |
@@ -100,11 +99,9 @@ checks that the note describing the figure is filed in that same section.
 
 | Example | What the map shows |
 | --- | --- |
-| **John Snow · outbreak extent** | the judged outline over 250 death locations |
+| **John Snow · outbreak extent** | the outline of 250 death locations, with the pumps |
 | **John Snow · Voronoi catchments** | one catchment per pump, with deaths overlaid |
 | **John Snow · walking catchments** | travel-time bands, as a plot and as an interactive map |
-| **Old Naledi · diagnostic access** | facilities coloured by the decision a ruleset reached |
-| **Old Naledi · raster clipping** | a clipped raster inside its boundary |
 | **Sea-level rise at Manila’s health facilities** (its own repository) | the study area, 194 facilities and the eight AR6 tide gauges |
 | **Geoprivacy** | the same records before and after being moved |
 | **Hagelloch · who infected whom** | a line from each infector's house to the case's |

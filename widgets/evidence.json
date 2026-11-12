@@ -118,6 +118,7 @@
     "hagelloch",
     "hagelloch-chains",
     "hagelloch-people",
+    "mers-korea-2015",
     "nyc-asthma-ozone-2016-2025",
     "sierra-leone-measles",
     "snow-extent",
@@ -125,7 +126,7 @@
     "snow-voronoi",
     "south-london-1854"
    ],
-   "exampleUseCount": 10,
+   "exampleUseCount": 11,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],
@@ -464,12 +465,13 @@
    "exampleUses": [
     "brazil-dengue-rj-2024",
     "hagelloch-chains",
+    "mers-korea-2015",
     "nyc-asthma-ozone-2016-2025",
     "sea-level-rise-philippines",
     "sierra-leone-measles",
     "south-london-1854"
    ],
-   "exampleUseCount": 6,
+   "exampleUseCount": 7,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],

@@ -75,12 +75,12 @@ evidence about that example.
 | `point_input` | 14 | hagelloch, hagelloch-chains, hagelloch-cluster, hagelloch-people, hagelloch-sheet, nyc-asthma-ozone-2016-2025, oswego-1940, sea-level-rise-philippines, snow-extent, snow-geoprivacy, snow-isochrone, snow-voronoi, south-london-1854, workflows-rulesets |
 | `study_area` | 14 | brazil-dengue-rj-2024, hagelloch, hagelloch-chains, hagelloch-cluster, hagelloch-sheet, nyc-asthma-ozone-2016-2025, oswego-1940, sea-level-rise-philippines, sierra-leone-measles, snow-geoprivacy, snow-isochrone, snow-voronoi, south-london-1854, workflows-rulesets |
 | `table_input` | 13 | brazil-dengue-rj-2024, mers-korea-2015, nigeria-immunization-2024, nyc-asthma-ozone-2016-2025, oswego-1940, salmonella-germany-2021, sea-level-rise-philippines, sierra-leone-measles, snow-extent, snow-isochrone, snow-voronoi, south-london-1854, workflows-rulesets |
-| `chart_output` | 10 | brazil-dengue-rj-2024, hagelloch, hagelloch-chains, hagelloch-people, nyc-asthma-ozone-2016-2025, sierra-leone-measles, snow-extent, snow-isochrone, snow-voronoi, south-london-1854 |
+| `chart_output` | 11 | brazil-dengue-rj-2024, hagelloch, hagelloch-chains, hagelloch-people, mers-korea-2015, nyc-asthma-ozone-2016-2025, sierra-leone-measles, snow-extent, snow-isochrone, snow-voronoi, south-london-1854 |
 | `group_table` | 8 | brazil-dengue-rj-2024, hagelloch-chains, hagelloch-people, mers-korea-2015, nyc-asthma-ozone-2016-2025, sierra-leone-measles, south-london-1854, workflows-rulesets |
 | `apply_ruleset` | 7 | hagelloch-chains, mers-korea-2015, nigeria-immunization-2024, sea-level-rise-philippines, sierra-leone-measles, south-london-1854, workflows-rulesets |
+| `relate_table` | 7 | brazil-dengue-rj-2024, hagelloch-chains, mers-korea-2015, nyc-asthma-ozone-2016-2025, sea-level-rise-philippines, sierra-leone-measles, south-london-1854 |
 | `select_rows` | 7 | brazil-dengue-rj-2024, nigeria-immunization-2024, nyc-asthma-ozone-2016-2025, salmonella-germany-2021, sea-level-rise-philippines, sierra-leone-measles, south-london-1854 |
 | `case_series` | 6 | brazil-dengue-rj-2024, hagelloch, sierra-leone-measles, snow-extent, snow-isochrone, snow-voronoi |
-| `relate_table` | 6 | brazil-dengue-rj-2024, hagelloch-chains, nyc-asthma-ozone-2016-2025, sea-level-rise-philippines, sierra-leone-measles, south-london-1854 |
 | `join_table_to_area` | 4 | brazil-dengue-rj-2024, nigeria-immunization-2024, sierra-leone-measles, south-london-1854 |
 | `rate` | 3 | brazil-dengue-rj-2024, sierra-leone-measles, south-london-1854 |
 | `regression` | 3 | brazil-dengue-rj-2024, nyc-asthma-ozone-2016-2025, salmonella-germany-2021 |
@@ -263,7 +263,7 @@ be read, selected and named inside the application, and claim B would hold for t
 - `urn:fieldwork:example:workflows-rulesets` declares 7 node types. Its inputs are files in its own repository, and `geo/water-intakes.geojson` was written on 2026-10-29 because those four features existed only inside the bundle until then — the one input a reader could not download.
 - `urn:fieldwork:example:sierra-leone-measles` declares 13 node types. Its inputs are files in its own repository, and `geo/water-intakes.geojson` was written on 2026-10-29 because those four features existed only inside the bundle until then — the one input a reader could not download.
 - `urn:fieldwork:example:sea-level-rise-philippines` declares 12 node types. Its inputs are files in its own repository, and `geo/water-intakes.geojson` was written on 2026-10-29 because those four features existed only inside the bundle until then — the one input a reader could not download.
-- `urn:fieldwork:example:mers-korea-2015` declares 4 node types. Its inputs are files in its own repository, and `geo/water-intakes.geojson` was written on 2026-10-29 because those four features existed only inside the bundle until then — the one input a reader could not download.
+- `urn:fieldwork:example:mers-korea-2015` declares 6 node types. Its inputs are files in its own repository, and `geo/water-intakes.geojson` was written on 2026-10-29 because those four features existed only inside the bundle until then — the one input a reader could not download.
 
 ## 3 · Recommendations
 

@@ -37,7 +37,7 @@ test('each panel has its own scale on one shared axis, and only the bottom one i
   assert.deepEqual(spec.resolve.scale,{x:'shared',y:'independent'});
   assert.equal(spec.vconcat.length,2);
   const [top,bottom]=spec.vconcat.map(panel=>panel.layer.at(-1));
-  assert.deepEqual(top.transform,[{filter:{field:'panel',equal:'count'}}]);
+  assert.deepEqual(top.transform,[{filter:'datum.panel === "count"'}]);
   assert.equal(top.encoding.y.title,'count');
   assert.equal(bottom.encoding.y.title,'pm25');
   assert.equal(top.encoding.x.type,'temporal');
@@ -73,4 +73,13 @@ test('what panels refuse, and the renderer that cannot draw them says so',()=>{
   assert.throws(()=>tableChart(twice,'date','variable'),/appears twice in the count panel/);
   assert.ok(PANEL_POINT_LIMIT>=4*3653,'ten years of four daily series fit');
   assert.match(chartMarkup(tableChart(melted(),'date','variable'),s=>s),/Panels are drawn by the Vega-Lite renderer/);
+});
+
+test('a blank panel is drawn and named as blank, and numbered categories run in number order',()=>{
+  const chart={field:'value',measure:'value',categoryTitle:'age',caption:'c',total:3,panels:['f',''],temporal:false,
+    bins:[{key:'f\u000010',label:'10',count:1,panel:'f'},{key:'f\u00002',label:'2',count:2,panel:'f'},{key:'\u00009',label:'9',count:3,panel:''}]};
+  const spec=chartVegaSpec(chart,{label:'x',panelsBy:'gender'},{});
+  assert.equal(spec.vconcat[1].layer.at(-1).transform[0].filter,'datum.panel === ""');
+  assert.equal(spec.vconcat[1].layer.at(-1).encoding.y.title,'gender blank');
+  assert.deepEqual(spec.vconcat[0].layer.at(-1).encoding.x.sort,['2','9','10']);
 });

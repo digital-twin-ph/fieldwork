@@ -432,7 +432,7 @@ function writeProjects(projects:Project[]):boolean{
 // example has an area node and was silently labelled, described and noted as Old Naledi until
 // it was added. This is the "examples are the default world" problem in TODO.md, in the one
 // place it is least visible.
-const NAMED_WORKSPACES=['blank','hagelloch','hagelloch-chains','hagelloch-cluster','hagelloch-sheet'];
+const NAMED_WORKSPACES=['blank','hagelloch','hagelloch-chains','hagelloch-cluster','hagelloch-sheet','hagelloch-people'];
 // A workflow a practitioner created is NOT an example, and the study-area fallback below would
 // label it Old Naledi -- the "examples are the default world" problem, reached at last by a real
 // workflow rather than by a new example. `projectId` is the discriminator: it is set only on a

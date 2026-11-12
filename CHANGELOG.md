@@ -9,6 +9,10 @@ shown in a local build is not a claim that it has been published.
   R2025A beside Global1 (2000 to 2020), for any of 242 countries; choose the year your project needs. Its citation and
   DOI, its licence and its alpha status are shown with the download. Raster input 0.11.0.
 - **Raster input's Configure… is the standard dialog**, with ×, Cancel and Apply.
+- **Hagelloch: who fell ill**, a fifth workflow: the 188 children by age and gender, and by school class, as the file
+  records them; the 11 with no gender are counted as their own group.
+- **Fixed:** a chart's panels drew numbered categories in row order (ages 7, 6, 4 …) and left a panel for a blank value
+  empty and unnamed. Numbers now run in order, and the blank panel is drawn and named. Chart 0.14.1.
 - **WorldPop's list is checked weekly** against WorldPop's site, and a change comes as a pull request.
 
 ## 0.96.0 — 2026-11-11

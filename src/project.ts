@@ -121,7 +121,7 @@ export function attachRepository(project:Project,owner:string,repo:string,
  *  project would have been a way to avoid asking. */
 export const BUILT_IN_PROJECTS:readonly Project[]=[
   {schema:'fieldwork/project/2',id:'cholera-london-1854',name:'1854 Cholera Outbreak in London',subject:'One cholera outbreak. Catchments, network reach, extent, and what the source coordinates disclose',workflows:['snow-voronoi','snow-isochrone','snow-geoprivacy','snow-extent']},
-  {schema:'fieldwork/project/2',id:'hagelloch-1861',name:'Measles in Hagelloch, 1861',subject:'A closed outbreak with a complete line list',workflows:['hagelloch','hagelloch-chains','hagelloch-cluster','hagelloch-sheet']},
+  {schema:'fieldwork/project/2',id:'hagelloch-1861',name:'Measles in Hagelloch, 1861',subject:'A closed outbreak with a complete line list',workflows:['hagelloch','hagelloch-chains','hagelloch-cluster','hagelloch-sheet','hagelloch-people']},
 ];
 /** Labels for the picker, kept beside the grouping so a workflow is named in one place. */
 /** NUMBERED WITHIN THEIR PROJECT, 1 to N (the practitioner, 2026-11-10: *"if we are numbering workflows it should be 1 to
@@ -130,7 +130,7 @@ export const BUILT_IN_PROJECTS:readonly Project[]=[
 export const WORKFLOW_LABELS:Readonly<Record<string,string>>={
   blank:'Blank · study area experiment','snow-voronoi':'1 · John Snow Voronoi catchments',
   'snow-isochrone':'2 · John Snow network isochrones','snow-geoprivacy':'3 · John Snow geoprivacy',
-  'snow-extent':'4 · John Snow outbreak extent',hagelloch:'1 · Measles in Hagelloch, 1861','hagelloch-chains':'2 · Hagelloch: who infected whom','hagelloch-cluster':'3 · Hagelloch: was there a cluster?','hagelloch-sheet':'4 · Hagelloch: the 1824 sheet, placed by hand',
+  'snow-extent':'4 · John Snow outbreak extent',hagelloch:'1 · Measles in Hagelloch, 1861','hagelloch-chains':'2 · Hagelloch: who infected whom','hagelloch-cluster':'3 · Hagelloch: was there a cluster?','hagelloch-sheet':'4 · Hagelloch: the 1824 sheet, placed by hand','hagelloch-people':'5 · Hagelloch: who fell ill',
 };
 /** Which investigation a workflow belongs to, or `undefined` for one that belongs to none. */
 export const projectOfWorkflow=(key:string,projects:readonly Project[]=BUILT_IN_PROJECTS):Project|undefined=>projects.find(p=>p.workflows.includes(key));

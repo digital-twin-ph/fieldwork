@@ -217,3 +217,27 @@ export function hagellochSheetExample():Workflow{
   return {schema:'fieldwork/workflow/1',name:'The 1824 sheet, placed by hand. Hagelloch',
     exampleId:'hagelloch-sheet',nodes,edges} as unknown as Workflow;
 }
+
+/** WHO FELL ILL (the practitioner, 2026-11-12: Hagelloch had no demographics described in any chart or table). The same
+ *  188 children by age and gender, and by school class, counted by Total within groups from the cases as the file has
+ *  them: the 11 children with no gender recorded are a group of their own, and `class` is shown as its codes. */
+export function hagellochPeopleExample():Workflow{
+  const base=hagellochExample();
+  const nodes=[
+    {...base.nodes.find(n=>n.id==='cases')!,x:20,y:60},
+    {id:'by-age-gender',type:'group_table',x:400,y:40,params:{label:'Cases by age and gender',by:['age','gender'],aggregate:'count'}},
+    {id:'age-chart',type:'chart_output',x:780,y:40,params:{label:'Cases by age, one panel per gender',keyColumn:'age',panelsBy:'gender'}},
+    {id:'age-table',type:'table_output',x:780,y:250,params:{label:'Cases by age and gender'}},
+    {id:'by-class',type:'group_table',x:400,y:420,params:{label:'Cases by school class',by:['class'],aggregate:'count'}},
+    {id:'class-table',type:'table_output',x:780,y:420,params:{label:'Cases by school class'}},
+  ];
+  const edges=[
+    {id:'cases-age',from:'cases',to:'by-age-gender',port:'records'},
+    {id:'age-chart-in',from:'by-age-gender',to:'age-chart',port:'records'},
+    {id:'age-table-in',from:'by-age-gender',to:'age-table',port:'table'},
+    {id:'cases-class',from:'cases',to:'by-class',port:'records'},
+    {id:'class-table-in',from:'by-class',to:'class-table',port:'table'},
+  ];
+  return {schema:'fieldwork/workflow/1',name:'Who fell ill? Hagelloch, 1861',
+    exampleId:'hagelloch-people',nodes,edges} as unknown as Workflow;
+}

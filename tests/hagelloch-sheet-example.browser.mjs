@@ -19,7 +19,7 @@ test('Hagelloch: the 1824 sheet is offered, placed by four guided junctions nort
   const errors=collectPageErrors(page);
   await page.route(/tile\.openstreetmap\.org/,route=>route.abort('failed'));
   await page.goto('/?example=hagelloch-sheet');
-  await expect(page.locator('#project-select option:checked')).toHaveText('Measles in Hagelloch, 1861 · 4 workflows');
+  await expect(page.locator('#project-select option:checked')).toHaveText('Measles in Hagelloch, 1861 · 5 workflows');
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="sheet"]').click();
   await expect(page.locator('#inspector-content')).toContainText('A worked example names 4 features to find');

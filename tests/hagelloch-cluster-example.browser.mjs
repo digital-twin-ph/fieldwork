@@ -9,7 +9,7 @@ test('Hagelloch: the space-time scan runs with a progress bar, and its clusters 
   test.setTimeout(420_000);
   const errors=collectPageErrors(page);
   await page.goto('/?example=hagelloch-cluster');
-  await expect(page.locator('#project-select option:checked')).toHaveText('Measles in Hagelloch, 1861 · 4 workflows');
+  await expect(page.locator('#project-select option:checked')).toHaveText('Measles in Hagelloch, 1861 · 5 workflows');
   await page.locator('[data-view="workflow"]').click();
   // WAIT FOR THE OPENING RUN TO FINISH, not only for Run to be enabled: on CI the button was enabled for a moment before
   // that run started and took it for minutes, so the click below timed out (three main runs, both engines, 0.81.2 to

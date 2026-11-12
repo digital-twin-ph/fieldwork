@@ -1,3 +1,4 @@
+import {orderOf} from './select-rows.js';
 import type {ChartSummary} from './results.js';
 import {generationColours} from './presentation.js';
 import type {WorkflowNode} from './types.js';
@@ -284,6 +285,13 @@ function panelVegaSpec(chart:ChartSummary,params:ChartParams,context:{sourceId?:
   const panels=chart.panels!,temporal=!!chart.temporal;
   const values=chart.bins.map(b=>({panel:b.panel,label:b.label,count:b.missing?null:b.count}));
   const width=640,height=Math.max(90,Math.min(160,Math.round(420/panels.length)));
+  // CATEGORIES IN THEIR OWN ORDER (Hagelloch's ages, 2026-11-12, drew 7, 6, 4, 8 … in the order the rows came): numbers
+  // as numbers, so 2 comes before 10; anything else in the order the table holds it, as before.
+  const labels=[...new Set(chart.bins.map(b=>b.label))];
+  const order=orderOf(labels)==='number'?[...labels].sort((a,b)=>a===''?1:b===''?-1:Number(a)-Number(b)):null;
+  // A BLANK PANEL IS NAMED AS BLANK, and its rows are drawn: matched by expression, since a filter on an empty string
+  // matched nothing and left the panel empty with no name (the 11 Hagelloch children with no gender, 2026-11-12).
+  const nameOf=(panel:string)=>panel===''?`${params.panelsBy?.trim()||'value'} blank`:panel;
   const shade=temporal&&params.shade&&(params.shade.from||params.shade.to)?(()=>{
     const dates=chart.bins.map(b=>b.label).sort();
     const from=params.shade!.from||dates[0]!,to=params.shade!.to||dates.at(-1)!;
@@ -306,18 +314,18 @@ function panelVegaSpec(chart:ChartSummary,params:ChartParams,context:{sourceId?:
       const x=temporal
         ?{field:'label',type:'temporal' as const,title:last?(params.xAxisTitle?.trim()||chart.categoryTitle||null):null,
           axis:last?{labelOverlap:true,format:'%-d %b %Y'}:{labels:false,ticks:false,title:null}}
-        :{field:'label',type:'nominal' as const,sort:null,title:last?(params.xAxisTitle?.trim()||chart.categoryTitle||null):null,
+        :{field:'label',type:'nominal' as const,sort:order,title:last?(params.xAxisTitle?.trim()||chart.categoryTitle||null):null,
           axis:last?{labelOverlap:'parity' as const}:{labels:false,ticks:false,title:null}};
-      const drawn={transform:[{filter:{field:'panel',equal:panel}}],
+      const drawn={transform:[{filter:`datum.panel === ${JSON.stringify(panel)}`}],
         mark:mark==='bar'
           ?{type:'bar' as const,color:FIGURE_ROLE.primary}
           :{type:'line' as const,color:FIGURE_ROLE.primary,strokeWidth:1.4,invalid:'break-paths-show-path-domains' as const},
         encoding:{x,
           // The name as the file spells it, its meaning beside it, over two lines so a long meaning fits the panel.
-          y:{field:'count',type:'quantitative' as const,title:chart.meanings?.[panel]?[panel,...wrapToWidth(chart.meanings[panel]!,height)]:panel,
+          y:{field:'count',type:'quantitative' as const,title:chart.meanings?.[panel]?[nameOf(panel),...wrapToWidth(chart.meanings[panel]!,height)]:nameOf(panel),
             scale:{zero:mark==='bar'}},
           tooltip:[{field:'label',type:temporal?'temporal' as const:'nominal' as const,title:chart.categoryTitle??'',...(temporal?{format:'%-d %b %Y'}:{})},
-            {field:'count',type:'quantitative' as const,title:panel}]}};
+            {field:'count',type:'quantitative' as const,title:nameOf(panel)}]}};
       return {width,height,layer:[...(shade?[shade]:[]),drawn]};
     }),
     resolve:{scale:{x:'shared' as const,y:'independent' as const}},

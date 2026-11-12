@@ -629,7 +629,7 @@
    "changes": [
     {
      "kind": "patch",
-     "description": "A study area reaching past the raster is said, not refused: the window is the part the raster covers, the dialog says how far past which edge, and the receipt records Area beyond the raster as a data issue. It refused Botswana's provinces from geoBoundaries against WorldPop's file for Botswana (the practitioner, 2026-11-12). No overlap at all still stops."
+     "description": "A study area reaching past the raster is said, not refused: the window is the part the raster covers, the dialog says how far past which edge, and the receipt records Area beyond the raster as a data issue. It refused Botswana's provinces from geoBoundaries against WorldPop's file for Botswana (the practitioner, 2026-11-12). No overlap at all still stops. The kept window is no longer limited to a bare 5 MB: the file limit follows the measured cell cap, and the window is kept at the source's own precision; the 64 MB decoding budget is the measured 512 MB (widgets/caps.json)."
     }
    ],
    "breaking": false,

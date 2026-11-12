@@ -3,7 +3,7 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## 0.101.0 — 2026-11-12
+## 0.100.0 — 2026-11-12
 
 - **Compare with a target…** in the rules dialog writes one interval against one target as ordinary rules: the days from
   one column to another, the target as a setting, Met and Not met, and No verdict where a value is missing. 7-1-7 by
@@ -15,9 +15,10 @@ shown in a local build is not a claim that it has been published.
   against WorldPop's file for Botswana, two outlines of one country that differ at the border, read "Boundary extends
   beyond available raster coverage". The step now keeps the part the raster covers and says how far past which edge the
   area reaches; the run records it as a data issue, *Area beyond the raster*. Raster input and Clip raster patched.
-
-## 0.100.0 — 2026-11-12
-
+- **Raster caps that were never measured are gone.** A kept raster window was limited to 5 MB, a figure from when
+  projects lived in 5 MB of local storage, which refused a province of Botswana at 100 m long before the measured cell
+  cap could. The file limit now follows the measured cell cap, windows are kept at the source's own precision (half the
+  bytes for WorldPop), and the 64 MB decoding budget is the measured 512 MB. Both are declared in the cap register.
 - **Chart draws a line**, along the categories in their order. Chart 0.15.0.
 - **Every recorded source in a transmission tree.** A case recorded with several sources sits under the first, and each
   other recorded link is drawn dashed and counted. MERS's second workflow now draws who infected whom: SK_39 records

@@ -17,6 +17,9 @@ shown in a local build is not a claim that it has been published.
   held. Apply ruleset 0.13.1.
 - **Counts a sentence states are in the receipt too**: Find health facilities records what it set aside and the total
   (0.4.2); Relate records the keys that matched several rows (0.12.1).
+- **Where MERS's hospitals are.** The MERS example's repository now has each hospital its line list names, as written,
+  with the facility it is, coordinates from OpenStreetMap or Wikidata, and how sure the identification is: 11 of 13 placed
+  at the facility, one only at its street, one not at all. Under the ODbL, as it carries OpenStreetMap data.
 - **Fixed: tables in four example repositories were fetched from commits the 2026-11-11 history rewrite replaced.** GitHub
   still served them, but only until it collects what nothing points to. They now point at the rewritten commits: the
   same files, with the same digests.

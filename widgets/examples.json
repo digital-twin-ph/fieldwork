@@ -807,7 +807,7 @@
       "id": "urn:fieldwork:example:mers-korea-2015",
       "title": "MERS-CoV, South Korea, 2015",
       "repository": "https://github.com/digital-twin-ph/example-2015-mers-korea",
-      "commit": "9b82f5ed351b0872fb3a78992ecf61d717edd055",
+      "commit": "9e8432cf5a89e238bff20b1b8becba7576d0ca11",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2015-mers-korea",
       "licence": {
         "data": "No licence stated for the data; used for teaching, as the outbreaks package describes it. The repository’s own files are CC0-1.0.",
@@ -846,24 +846,29 @@
           "bytes": 3535
         },
         {
+          "path": "data/mers_korea_2015_facilities.csv",
+          "sha256": "26fecb9e1afd2a4e7362ac6497d4cbc7fe6707fd114d9ab37eec6b93b28df0c3",
+          "bytes": 3877
+        },
+        {
           "path": "scripts/convert.R",
           "sha256": "c4cc08c9f37c2461167ddfcc32aced45855c37abebd150049ba2399da534b125",
           "bytes": 713
         },
         {
           "path": "provenance.json",
-          "sha256": "1d51e0a9bfced98702d614cc7f278f0b75c60ec557aa670812700e28a6200ccf",
-          "bytes": 2259
+          "sha256": "3067be1cd1a1f26fc8847f34b83361a13625b3b707e21e3ae4d4f1bbed63c70f",
+          "bytes": 3450
         },
         {
           "path": "README.md",
-          "sha256": "dfb480fddfe3c1a9e6507f6d28ec26aa43abe7e56e2d6a66e6e93587c6976db5",
-          "bytes": 2701
+          "sha256": "93e08c49b563cbae4e85457736c5fd09e04dca3d23d56c498dc472a1cf8ec083",
+          "bytes": 3790
         },
         {
           "path": "NOTICE.txt",
-          "sha256": "72b04bed16e539df84315ba56b9a9ddd221e4f7a6ee67ae92381b701f54fe39a",
-          "bytes": 2081
+          "sha256": "8375e93b53a481a0398d27a03cc03d3d83243bafe597c7ce7313cfb211192e91",
+          "bytes": 3084
         },
         {
           "path": "LICENSE",

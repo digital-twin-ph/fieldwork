@@ -6,8 +6,12 @@ import {readFileSync} from 'node:fs';
  *  rising cut points, the rules for each band, previewed as typed, added as ordinary rules; Hagelloch's ages banded. */
 const saved=page=>page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));
 const wire=async(page,from,to,port)=>{
-  const a=await page.locator(`.react-flow__node[data-id="${from}"] [data-handleid="out"]`).boundingBox();
-  const b=await page.locator(`.react-flow__node[data-id="${to}"] [data-handleid="${port}"]`).boundingBox();
+  // MEASURED ONCE THE CANVAS HAS STOPPED MOVING: Tidy moves the nodes and fits the view, and a handle measured mid-move is
+  // missed by the drag (gate 127 and CI, 2026-11-12: one run in three under load, never alone).
+  const box=async()=>JSON.stringify([await page.locator(`.react-flow__node[data-id="${from}"] [data-handleid="out"]`).boundingBox(),
+    await page.locator(`.react-flow__node[data-id="${to}"] [data-handleid="${port}"]`).boundingBox()]);
+  let before='';await expect.poll(async()=>{const now=await box(),still=now===before;before=now;return still;},{intervals:[150]}).toBe(true);
+  const [a,b]=JSON.parse(before);
   await page.mouse.move(a.x+a.width/2,a.y+a.height/2);await page.mouse.down();
   await page.mouse.move(b.x+b.width/2,b.y+b.height/2,{steps:20});await page.mouse.up();
   await expect.poll(async()=>(await saved(page)).edges.some(e=>e.from===from&&e.to===to)).toBe(true);

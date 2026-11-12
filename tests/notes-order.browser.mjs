@@ -87,7 +87,9 @@ test('a note moves within its section, and stays where it was put',async({page})
   await page.reload();
   await page.locator('[data-view="notes"]').click();
   await page.locator('.notes-part').first().waitFor();
-  expect(await keys(page)).toEqual(after);
+  // The notes that were there keep their order. Derived notes arrive with the run, and in CI's WebKit three arrived
+  // only after the reload (0.96.0): an addition at the end, not a reordering, so they are left out of the comparison.
+  expect((await keys(page)).filter(k=>after.includes(k))).toEqual(after);
 });
 
 test('a note dropped on itself does not move',async({page})=>{test.skip(!!skip,skip);

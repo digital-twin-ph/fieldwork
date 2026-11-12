@@ -189,6 +189,7 @@ test('four questions about a Salmonella outbreak, each its own short workflow',a
     await tidy(page);await wire(page,list,model,'records');
     await caseControl(page,model);
     await page.locator(`.react-flow__node[data-id="${model}"]`).click();
+    await page.locator('#configure-step').click();
     await page.locator('#reg-outcome').selectOption('fall');
     await page.locator('[data-reg-case="1"]').check();
     await page.locator('[data-reg-control="0"]').check();
@@ -198,6 +199,9 @@ test('four questions about a Salmonella outbreak, each its own short workflow',a
     await page.locator('#reg-adjust-add').selectOption('sex');
     await expect(page.locator('[data-reg-adjust-kind]')).toHaveCount(2);
     await expect(page.locator('#reg-errors')).toHaveValue('profile');
+    await page.locator('#config-apply').click();
+    await expect(page.locator('#inspector-content .standard-sentence')).toHaveText(
+      'Logistic regression of fall on galiamelo_apr2 (categorical), adjusted for age_group7, sex, with likelihood-ratio intervals.');
     await show(page,model,'Galia melon, adjusted for age group and sex');
     await run(page);
     const galia=await rowOf(page,'galiamelo_apr21');

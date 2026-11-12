@@ -161,3 +161,15 @@ test('every description survives the reading the Notes panel gives it',()=>{
     assert.doesNotMatch(note.text,/^#{1,4}\s/m);
   }
 });
+
+test('a chart counts what it draws: estimates with intervals, points on a line, dots, or bars',()=>{
+  // The practitioner, 2026-11-12, of Brazil: seven rate ratios with their intervals were described as "7 bars".
+  const estimates={field:'value',measure:'value',caption:'rate ratio with its 95% interval by shift_days',categoryTitle:'shift_days',total:7,
+    interval:{estimate:'rate ratio',level:95,ratio:true},
+    bins:Array.from({length:7},(_,i)=>({key:String(i),label:String(i),count:1.01,lower:1,upper:1.02}))};
+  assert.match(chartDescriptionNote(estimates,'Lags','n4').text,/7 estimates with their 95% intervals, one per `shift_days`\./);
+  assert.doesNotMatch(chartDescriptionNote(estimates,'Lags','n4').text,/bars?\b/);
+  assert.match(chartDescriptionNote(CHART,'Ranked','n3','line').text,/2 points on a line, one per `group`/);
+  assert.match(chartDescriptionNote(CHART,'Ranked','n3','point').text,/2 dots, one per `group`/);
+  assert.match(chartDescriptionNote(CHART,'Ranked','n3').text,/2 bars, one per `group`/);
+});

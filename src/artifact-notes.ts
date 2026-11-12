@@ -143,7 +143,7 @@ export function mapDescriptionNote(layers:readonly MapLayer[],label:string|undef
  *  So this does not write a second caption over the top of it. It carries the one the chart
  *  already states and adds what a reader of a published figure needs around it. */
 export function chartDescriptionNote(chart:ChartSummary,label:string|undefined,
-  nodeId:string):MachinedNote|null{
+  nodeId:string,mark:'bar'|'line'|'point'='bar'):MachinedNote|null{
   if(!chart?.bins)return null;
   const measures={'record-count':'a count of records','numeric-total':'a total',
     value:'a value'} as const;
@@ -154,7 +154,10 @@ export function chartDescriptionNote(chart:ChartSummary,label:string|undefined,
   // where the chart's own caption has not already said it.
   const unit=chart.unit&&!said.includes(chart.unit)?` in ${chart.unit}`:'';
   let text=`${titled(label)}${said}. `
-    +`${count(chart.bins.length,'bar')}`
+    // WHAT IS DRAWN IS COUNTED: an estimate with its interval is a point and a whisker, and a line joins points; neither
+    // is a bar (the practitioner, 2026-11-12, of Brazil's "7 bars, one per shift" over seven estimates).
+    +(chart.interval?`${count(chart.bins.length,'estimate')} with ${chart.bins.length===1?'its':'their'} ${chart.interval.level}% interval${chart.bins.length===1?'':'s'}`
+      :mark==='line'?`${count(chart.bins.length,'point')} on a line`:mark==='point'?count(chart.bins.length,'dot'):count(chart.bins.length,'bar'))
     +(chart.categoryTitle?`, one per \`${chart.categoryTitle}\``:'')
     +(measure&&unit?`, each ${measure}${unit}`:unit?`, each value${unit}`:'')+'.';
   // A BAR OF ZERO IS NOT A BAR OF NOTHING, and the two look identical. `rateChart` draws a

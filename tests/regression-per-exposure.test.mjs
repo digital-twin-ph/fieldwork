@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {Parser,Store} from 'n3';
 import {validateGraph} from '../scripts/validate-ontology.mjs';
-import {fitRegression,specFrom,rowsOf,exposureColumnsOf,fitEachExposure,regressionsTable,regressionsSentence,modelParams,
+import {fitRegression,specFrom,rowsOf,exposureColumnsOf,fitEachExposure,fitEachExposureStepwise,regressionsTable,regressionsSentence,modelParams,
   regressionsReceipt} from '../build/regression.js';
 import {relateAtShifts} from '../build/relate-table.js';
 
@@ -111,4 +111,12 @@ test('an adjustment that follows the shift adjusts each model for its own column
   for(const d of rainShifts)assert.ok(receipt.facts.includes(`fw:termAttribute "${rainColumn(d)}"`));
   assert.throws(()=>fitEachExposure(withRain,{...followed,adjust:[{column:'rain_0d',as:'numeric',perModel:['rain_0d']}]}),
     /needs one column for each of the 5 models; it has 1/);
+});
+
+test('fitted one at a time, the models are the same, and each is announced before it is fitted',async()=>{
+  // The practitioner, 2026-11-12: Brazil's run of seven models took 35 s with nothing on screen moving.
+  const heard=[];
+  const stepwise=await fitEachExposureStepwise(rows,params,related.table.columnShifts,undefined,async(k,of)=>{heard.push(`${k} of ${of}`);});
+  assert.deepEqual(heard,columns.map((_c,k)=>`${k} of ${columns.length}`));
+  assert.deepEqual(stepwise,fitEachExposure(rows,params,related.table.columnShifts));
 });

@@ -153,12 +153,12 @@
    "replacementCandidate": "urn:fieldwork:widget:observations"
   },
   "chart_output": {
-   "version": "0.15.0",
+   "version": "0.15.1",
    "released": "2026-11-12",
    "changes": [
     {
-     "kind": "minor",
-     "description": "A line mark, upright, along the categories in their order (the practitioner, 2026-11-12). The transmission tree keeps every recorded source: a case in several rows sits under its first source and each other recorded link is drawn dashed and counted; a written value can mean no source recorded. Panels order bands that begin with a number by that number."
+     "kind": "patch",
+     "description": "The chart's description in the notes counts what is drawn: estimates with their intervals, points on a line, or dots, where it said bars for all of them (Brazil's \"7 bars, one per shift\" over seven rate ratios, the practitioner 2026-11-12). In the notes a chart drawn with the enhanced renderer is now that figure, the same one its SVG download gives; an estimate with its interval had shown only a line asking for the enhanced renderer."
     }
    ],
    "breaking": false,
@@ -1023,12 +1023,12 @@
    "replacementCandidate": "urn:fieldwork:widget:apply_ruleset"
   },
   "regression": {
-   "version": "0.5.1",
-   "released": "2026-11-07",
+   "version": "0.6.0",
+   "released": "2026-11-12",
    "changes": [
     {
-     "kind": "patch",
-     "description": "With several models, each model's line in the result gives its own strata used and dropped and its own dispersion; the heading no longer states the first model's dispersion as if it were every model's. Checked against statsmodels in Validation Lab check 38."
+     "kind": "minor",
+     "description": "The standard Inspector and dialog (experiment 186): the panel holds the step's Name, its input, one sentence saying the model it will fit, Configure…, and the run's own sentence on what it estimated and which rows it used and left out. Every setting moved to Configure…, on a draft that changes the step only on Apply; nothing about the model changed. With several exposure columns the run says which model it is fitting, k of n, and lets the page draw it between models; the seven models of Brazil's lag workflow held the page for 35 s with nothing moving (the practitioner, 2026-11-12)."
     }
    ],
    "breaking": false,

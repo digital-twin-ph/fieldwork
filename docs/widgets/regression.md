@@ -24,6 +24,10 @@ from the names.
 
 ## How to use it
 
+The step's panel holds its **Name**, its input, one sentence saying what model it will fit, and **Configure…**, where
+these are set and applied with **Apply**. After a run, the panel says the main estimate and how many rows were used and
+left out.
+
 | Setting | What it decides |
 | --- | --- |
 | **Model** | Logistic (odds ratios) or Poisson (rate ratios) |

@@ -756,6 +756,8 @@ let runningBuild:string|undefined;
 /** Declared as a function so it may be called before `currentView` is initialised; it reads it
  *  only when the manifest resolves, which is after this module has finished evaluating. */
 function refreshNotesIfOpen(){if(currentView==='notes')renderNotesView();}
+/** Charts drawn for the notes, by run and step: the SVG, a line while it is drawn, or empty where it could not be. */
+const notesChartSvg=new Map<string,string>();
 void fetch('./build/asset-manifest.json',{cache:'no-store'})
   .then(r=>r.ok?r.json():null)
   .then(m=>{const id=m&&typeof m.cache==='string'?m.cache:undefined;
@@ -1057,11 +1059,15 @@ function upstreamRows(node:WorkflowNode):number|undefined{
   return up?.type==='table_input'?up.params.data.rows.length:undefined;
 }
 /** The product a sampler's files are of: its search's, which is its Find satellite products' choice. */
-/** THE STEP IN PROGRESS, drawn while a run reads files: a panel with the step, the count and a bar (2026-11-06). */
+/** THE STEP IN PROGRESS: a panel with the step, the count and a bar, for files read (2026-11-06), models fitted and a run's steps (2026-11-12). */
 let runProgress:import('./run-progress.js').RunDetail|null=null;
+let runStartedAt=0;
 function drawRunProgress(){
   let panel=document.getElementById('run-progress');
   if(!busy||!runProgress){panel?.remove();return;}
+  // A RUN'S OWN STEP COUNT waits a second, so a quick run does not flash a panel; a step's own progress shows at once.
+  const waited=performance.now()-runStartedAt;
+  if(runProgress.what==='steps'&&waited<1000){panel?.remove();setTimeout(drawRunProgress,1000-waited);return;}
   if(!panel){panel=document.createElement('div');panel.id='run-progress';panel.setAttribute('role','status');panel.setAttribute('aria-live','polite');document.body.append(panel);}
   const {label,done,of,what,verb='Reading'}=runProgress,share=of?done/of:0;
   panel.innerHTML=`<span class="run-progress-spinner" aria-hidden="true"></span><div><strong>${esc(label)}</strong>`
@@ -1073,7 +1079,7 @@ function drawRunProgress(){
 /** THE WIDGETS WHOSE INSPECTOR FOLLOWS THE STANDARD (experiment 186): Name, Inputs, Settings, Result, the links,
  *  Actions, in that order and nothing else, with every setting in the widget's configuration dialog. One at a time,
  *  Relate first; the set grows as each widget is moved, and a check holds them to it. */
-export const STANDARD_INSPECTOR=new Set<NodeType>(['case_series','point_input','chart_output','raster_input','sample_raster','measure_distance','table_output','relate_table','select_rows','table_input','find_health_facilities','group_table','apply_ruleset','map_output','deduplicate_points','rate','study_area','space_time_scan','map_image_input']);
+export const STANDARD_INSPECTOR=new Set<NodeType>(['case_series','regression','point_input','chart_output','raster_input','sample_raster','measure_distance','table_output','relate_table','select_rows','table_input','find_health_facilities','group_table','apply_ruleset','map_output','deduplicate_points','rate','study_area','space_time_scan','map_image_input']);
 function samplerProduct(node:WorkflowNode){
   const up=(id:string,port:string)=>{const e=workflow.edges.find(x=>x.to===id&&x.port===port);return e?workflow.nodes.find(m=>m.id===e.from):undefined;};
   const search=up(node.id,'files'),find=search?up(search.id,'product'):undefined;
@@ -2707,6 +2713,157 @@ function mapSettingsFlat(n:WorkflowNode<'map_output'>):string{
       })()
     +mapTextControls(n);
 }
+/** WHAT REGRESSION WILL FIT, in one sentence (experiment 186). */
+function regressionPlan(p:import('./types.js').ParamsByType['regression']):string{
+  if(!p.outcome||!p.exposure.column)return 'Not set up yet: choose the outcome and the exposure in Configure\u2026';
+  const model=p.family==='logistic'?'Logistic regression':'Poisson regression',strata=strataOf(p.strata);
+  const several=(p.exposureColumns?.length??0)>1?`, once for each of ${p.exposureColumns!.length} exposure columns`:'';
+  const intervals={profile:'likelihood-ratio',wald:'Wald',overdispersed:'Wald, scaled for overdispersion',hac:`HAC with ${p.hacLag??0} lags`}[p.errors];
+  return `${model} of ${p.outcome} on ${p.exposure.column} (${p.exposure.as})${several}`
+    +(p.adjust.length?`, adjusted for ${p.adjust.map(t=>t.column).join(', ')}`:', unadjusted')
+    +(strata.length?`, within strata of ${strata.join(', ')}`:'')+(p.offset?`, offset by ${p.offset}`:'')
+    +`, with ${intervals} intervals.`;
+}
+/** REGRESSION'S CONFIGURATION DIALOG (experiments 167 and 186, 2026-11-12): the model, the outcome and its cases, the
+ *  exposure and the columns fitted one model each, what it is adjusted for, strata and offset, and the intervals, on a
+ *  draft that changes the step only on Apply. */
+function openRegressionConfig(nodeId:string){
+  const node=getNode(workflow,nodeId,'regression');
+  type Draft=import('./types.js').ParamsByType['regression'];
+  openConfigDialog<Draft>({
+    id:'regression-config',widget:'Regression',step:node.params.label||TYPES.regression.title,draft:structuredClone(node.params),
+    sections:d=>{
+      const p=d,held=upstreamKeyValues(node)??{},valueField=upstreamValueField(node);
+      const columns=[...Object.keys(held),...(valueField&&!(valueField in held)?[valueField]:[])];
+      const option=(value:string,label:string,selected:boolean)=>`<option value="${esc(value)}" ${selected?'selected':''}>${esc(label)}</option>`;
+      const columnSelect=(id:string,label:string,current:string|undefined,none?:string)=>`<div class="field"><label class="field-label" for="${id}">${label}</label>`
+        +`<select id="${id}"${columns.length?'':' disabled'}>${none!==undefined?option('',none,!current):option('','Choose a column…',!current)}`
+        +columns.map(c=>option(c,c,current===c)).join('')+`</select></div>`;
+      const kinds=(current:string)=>[['numeric','Numeric'],['categorical','Categorical'],['spline','Spline, 4 df']].map(([v,l])=>option(v!,l!,current===v)).join('');
+      const values=(column:string)=>held[column]??[];
+      const settings=''
+        +`<div class="field"><label class="field-label" for="reg-family">Model</label><select id="reg-family">`
+          +option('logistic','Logistic regression · odds ratios',p.family==='logistic')+option('poisson','Poisson regression · rate ratios',p.family==='poisson')+`</select></div>`
+        +columnSelect('reg-outcome','Outcome',p.outcome)
+        +(p.family==='logistic'&&p.outcome&&values(p.outcome).length
+          ?`<div class="field"><span class="inspector-section">Cases and controls</span><p class="description">Values of ${esc(p.outcome)} that are cases and that are controls. Rows with any other value are left out.</p>`
+            +values(p.outcome).map(v=>`<div class="reg-outcome-value"><code>${esc(v)}</code>`
+              +`<label class="check"><input type="checkbox" data-reg-case="${esc(v)}" ${p.cases?.includes(v)?'checked':''}> case</label>`
+              +`<label class="check"><input type="checkbox" data-reg-control="${esc(v)}" ${p.controls?.includes(v)?'checked':''}> control</label></div>`).join('')+`</div>`
+          :'')
+        +columnSelect('reg-exposure','Exposure',p.exposure.column)
+        +(p.exposure.column
+          ?`<div class="field"><label class="field-label" for="reg-exposure-as">Exposure is</label><select id="reg-exposure-as">${kinds(p.exposure.as)}</select></div>`
+            +(p.exposure.as==='categorical'&&values(p.exposure.column).length
+              ?`<div class="field"><label class="field-label" for="reg-exposure-reference">Reference value</label><select id="reg-exposure-reference">`
+                +values(p.exposure.column).map(v=>option(v,v,(p.exposure.reference??[...values(p.exposure.column)].sort()[0])===v)).join('')+`</select></div>`:'')
+            +(()=>{
+              // ONE MODEL PER COLUMN (experiment 185): Relate's shift columns, or any others, each fitted on its own rows.
+              const several=p.exposureColumns??[],taken=new Set([p.outcome,p.exposure.column,...p.adjust.flatMap(t=>[t.column,...(t.perModel??[])]),
+                ...strataOf(p.strata),...(p.offset?[p.offset]:[])]);
+              const offered=columns.filter(c=>!taken.has(c)||(several.includes(c)&&c!==p.exposure.column));
+              if(!offered.length)return '';
+              return `<fieldset class="field" id="reg-exposures"><legend class="field-label">Also fit, one model each, with</legend>`
+                +``
+                +offered.map(c=>`<label class="check"><input type="checkbox" value="${esc(c)}" data-reg-also="${esc(c)}" ${several.includes(c)?'checked':''}> ${esc(c)}</label>`).join('')
+                +`</fieldset>`;})()
+          :'')
+        +`<span class="inspector-section">Adjusted for</span>`
+        +(p.adjust.length?p.adjust.map(term=>`<div class="reg-term"><label class="field-label" for="reg-kind-${esc(term.column)}">${esc(term.column)} as</label>`
+            +`<select id="reg-kind-${esc(term.column)}" data-reg-adjust-kind="${esc(term.column)}">${kinds(term.as)}</select>`
+            +`<button type="button" class="button small" data-reg-adjust-remove="${esc(term.column)}">Remove</button></div>`
+            // AN ADJUSTMENT THAT FOLLOWS THE SHIFT (experiment 185): with several models, model k may be adjusted for its
+            // own column, the rain at its own lag beside the temperature at that lag. One choice per model, in view.
+            +((p.exposureColumns?.length??0)>1
+              ?`<label class="check"><input type="checkbox" data-reg-follow="${esc(term.column)}" ${term.perModel?'checked':''}> ${esc(term.column)} follows the shift: each model is adjusted for its own column</label>`
+                +(term.perModel?p.exposureColumns!.map((exposure,k)=>`<div class="field"><label class="field-label" for="reg-follow-${esc(term.column)}-${k}">For the model of ${esc(exposure)}</label>`
+                  +`<select id="reg-follow-${esc(term.column)}-${k}" data-reg-follow-column="${esc(term.column)}" data-reg-follow-model="${k}">`
+                  +columns.map(c=>option(c,c,term.perModel![k]===c)).join('')+`</select></div>`).join(''):'')
+              :'')).join('')
+          :'<p class="muted">Nothing: the estimate is unadjusted.</p>')
+        +`<div class="field"><label class="field-label" for="reg-adjust-add">Add a variable</label><select id="reg-adjust-add">${option('','Choose a column…',true)}`
+          +columns.filter(c=>c!==p.outcome&&c!==p.exposure.column&&!p.adjust.some(t=>t.column===c)).map(c=>option(c,c,false)).join('')+`</select></div>`
+        +(p.family==='poisson'
+          // SEVERAL STRATA COLUMNS TOGETHER (experiment 182): each chosen column gets its own select, and one more is
+          // offered empty, so municipality, year and month are three choices in a row. The first keeps its saved id.
+          ?(()=>{const chosen=strataOf(p.strata);
+            return [...chosen,''].map((c,i)=>columnSelect(i===0?'reg-strata':`reg-strata-${i+1}`,
+              i===0?'Strata, as fixed effects':'Together with',c||undefined,i===0?'None':'Nothing more')).join('')
+              +(chosen.length>1?`<p class="description">One stratum for each combination of ${chosen.map(esc).join(', ')}: rows are compared only within it.</p>`:'');})()
+            +columnSelect('reg-offset','Offset (log of person-time or population)',p.offset,'None'):'')
+        +`<div class="field"><label class="field-label" for="reg-errors">Intervals</label><select id="reg-errors">`
+          +option('profile','Likelihood-ratio (profile)',p.errors==='profile')+option('wald','Wald, from the model',p.errors==='wald')
+          +(p.family==='poisson'?option('overdispersed','Wald, scaled for overdispersion',p.errors==='overdispersed')+option('hac','Wald, HAC (Newey-West) for serial correlation',p.errors==='hac'):'')
+          +`</select></div>`
+        +(p.errors==='hac'
+          ?`<div class="field"><label class="field-label" for="reg-hac-lag">Lags</label><input id="reg-hac-lag" type="number" min="0" max="60" value="${esc(String(p.hacLag??0))}"></div>`
+            +columnSelect('reg-order','Rows in the order of',p.order,'The table\'s order'):'')
+        +'';
+      return {settings,preview:`<p class="description">${esc(regressionPlan(d))}</p>`,
+        ...(columns.length?{}:{message:{tone:'warning' as const,text:'Connect a table first: its columns are the choices here.'}})};
+    },
+    wire:(root,d,redraw)=>{
+      const reg=(edit:(params:Draft)=>void)=>{edit(d);redraw();};
+    root.querySelector<HTMLElement>('#reg-family')?.addEventListener('change',e=>reg(p=>{p.family=control(e).value as 'logistic'|'poisson';
+      if(p.family==='logistic'){delete p.strata;delete p.offset;if(p.errors==='hac'||p.errors==='overdispersed')p.errors='profile';}}));
+    root.querySelector<HTMLElement>('#reg-outcome')?.addEventListener('change',e=>reg(p=>{p.outcome=control(e).value;delete p.cases;delete p.controls;}));
+    root.querySelectorAll<HTMLInputElement>('[data-reg-case],[data-reg-control]').forEach(el=>el.addEventListener('change',()=>reg(p=>{
+      const key=el.dataset.regCase!==undefined?'cases':'controls',value=required(el.dataset.regCase??el.dataset.regControl);
+      const list=(p[key]??[]).filter(v=>v!==value);if(el.checked)list.push(value);
+      if(list.length)p[key]=list;else delete p[key];})));
+    root.querySelector<HTMLElement>('#reg-exposure')?.addEventListener('change',e=>reg(p=>{const column=control(e).value,held=upstreamKeyValues(node)?.[column];
+      p.exposure={column,as:held&&orderOf(held)==='number'&&held.length>2?'numeric':held?'categorical':'numeric'};
+      p.adjust=p.adjust.filter(t=>t.column!==p.exposure.column);
+      if(p.exposureColumns){const also=p.exposureColumns.slice(1).filter(c=>c!==column);
+        if(also.length)p.exposureColumns=[column,...also];else delete p.exposureColumns;}}));
+    root.querySelectorAll<HTMLInputElement>('[data-reg-also]').forEach(el=>el.addEventListener('change',()=>reg(p=>{
+      const also=[...root.querySelectorAll<HTMLInputElement>('[data-reg-also]:checked')].map(b=>b.value)
+        .filter(c=>c!==p.exposure.column);
+      if(also.length)p.exposureColumns=[p.exposure.column,...also];else delete p.exposureColumns;
+      // An adjustment that follows the shift keeps one column per model: refilled in Relate's order, or dropped with the
+      // list.
+      const held=Object.keys(upstreamKeyValues(node)??{}),shiftless=(c:string)=>c.replace(/_[+-]?\d+d$/,'');
+      p.adjust=p.adjust.map(t=>{if(!t.perModel)return t;const {perModel,...rest}=t;
+        if(!p.exposureColumns)return {...rest,column:perModel[0]!};
+        const family=held.filter(c=>shiftless(c)===shiftless(t.column)&&/_[+-]?\d+d$/.test(c));
+        return {...rest,perModel:p.exposureColumns.map((_c,k)=>perModel[k]??family[k]??t.column)};});})));
+    root.querySelector<HTMLElement>('#reg-exposure-as')?.addEventListener('change',e=>reg(p=>{p.exposure={column:p.exposure.column,as:control(e).value as 'numeric'};}));
+    root.querySelector<HTMLElement>('#reg-exposure-reference')?.addEventListener('change',e=>reg(p=>{p.exposure={...p.exposure,reference:control(e).value};}));
+    // A COLUMN OF NUMBERS IS ADDED AS NUMERIC, as R treats a numeric column; anything else as categorical. Changed by a
+    // click either way.
+    root.querySelector<HTMLElement>('#reg-adjust-add')?.addEventListener('change',e=>{
+      const column=control(e).value,held=upstreamKeyValues(node)?.[column];
+      const as=held&&orderOf(held)==='number'?'numeric' as const:held?'categorical' as const:'numeric' as const;
+      reg(p=>{if(column&&!p.adjust.some(t=>t.column===column))p.adjust=[...p.adjust,{column,as}];});});
+    root.querySelectorAll<HTMLSelectElement>('[data-reg-adjust-kind]').forEach(el=>el.addEventListener('change',()=>reg(p=>{
+      p.adjust=p.adjust.map(t=>t.column===el.dataset.regAdjustKind?{column:t.column,as:el.value as 'numeric'}:t);})));
+    // FOLLOWING THE SHIFT, pre-filled in Relate's order: the columns that share this one's name without its shift, the
+    // k-th for model k. Each is a choice in view, and can be changed.
+    root.querySelectorAll<HTMLInputElement>('[data-reg-follow]').forEach(el=>el.addEventListener('change',()=>reg(p=>{
+      const column=required(el.dataset.regFollow),models=p.exposureColumns??[];
+      const held=Object.keys(upstreamKeyValues(node)??{}),base=column.replace(/_[+-]?\d+d$/,'');
+      const family=held.filter(c=>c.replace(/_[+-]?\d+d$/,'')===base&&/_[+-]?\d+d$/.test(c));
+      p.adjust=p.adjust.map(t=>{if(t.column!==column)return t;const {perModel:_,...rest}=t;
+        return el.checked?{...rest,perModel:models.map((_m,k)=>family[k]??column)}:rest;});})));
+    root.querySelectorAll<HTMLSelectElement>('[data-reg-follow-column]').forEach(el=>el.addEventListener('change',()=>reg(p=>{
+      const k=Number(el.dataset.regFollowModel);
+      p.adjust=p.adjust.map(t=>{if(t.column!==el.dataset.regFollowColumn||!t.perModel)return t;
+        const perModel=[...t.perModel];perModel[k]=el.value;return {...t,column:perModel[0]!,perModel};});})));
+    root.querySelectorAll<HTMLButtonElement>('[data-reg-adjust-remove]').forEach(el=>el.addEventListener('click',()=>reg(p=>{
+      p.adjust=p.adjust.filter(t=>t.column!==el.dataset.regAdjustRemove);})));
+    root.querySelectorAll<HTMLSelectElement>('[id^="reg-strata"]').forEach(el=>el.addEventListener('change',()=>reg(p=>{
+      const at=el.id==='reg-strata'?0:Number(el.id.slice('reg-strata-'.length))-1,list=strataOf(p.strata);
+      if(el.value)list[at]=el.value;else list.splice(at);
+      const clean=list.filter((c,i)=>c&&list.indexOf(c)===i);
+      if(!clean.length)delete p.strata;else p.strata=clean.length===1?clean[0]!:clean;})));
+    for(const [id,key] of [['#reg-offset','offset'],['#reg-order','order']] as const)
+      root.querySelector<HTMLElement>(id)?.addEventListener('change',e=>reg(p=>{const v=control(e).value;if(v)p[key]=v;else delete p[key];}));
+    root.querySelector<HTMLElement>('#reg-errors')?.addEventListener('change',e=>reg(p=>{p.errors=control(e).value as 'profile';}));
+    root.querySelector<HTMLElement>('#reg-hac-lag')?.addEventListener('change',e=>reg(p=>{p.hacLag=Math.max(0,Math.round(Number(control(e).value)||0));}));
+    },
+    apply:d=>{change(w=>{getNode(w,nodeId,'regression').params=d;});},
+  },esc);
+}
 /** RATE'S ONE SENTENCE (experiment 186). */
 function rateSentence(p:import('./types.js').ParamsByType['rate']):string{
   if(!p.numeratorField||!p.denominatorField)return 'Not set up yet: choose what is counted and the population at risk, in Configure…';
@@ -3587,76 +3744,15 @@ function renderInspector(){
           +`<p class="description">Numbers every row 1 to N. The old key column stays${p.nameSource?', and source with the old key is kept as a second unique key':''}.</p>`
         :'');
   }else if(n.type==='regression'){
-    // REGRESSION, experiment 167. Columns are the table's: its key columns and its value field. Variables are added
-    // one at a time, because a table can have ninety columns and a model uses a handful.
-    const p=n.params,held=upstreamKeyValues(n)??{},valueField=upstreamValueField(n);
-    const columns=[...Object.keys(held),...(valueField&&!(valueField in held)?[valueField]:[])];
-    const option=(value:string,label:string,selected:boolean)=>`<option value="${esc(value)}" ${selected?'selected':''}>${esc(label)}</option>`;
-    const columnSelect=(id:string,label:string,current:string|undefined,none?:string)=>`<div class="field"><label class="field-label" for="${id}">${label}</label>`
-      +`<select id="${id}"${columns.length?'':' disabled'}>${none!==undefined?option('',none,!current):option('','Choose a column…',!current)}`
-      +columns.map(c=>option(c,c,current===c)).join('')+`</select></div>`;
-    const kinds=(current:string)=>[['numeric','Numeric'],['categorical','Categorical'],['spline','Spline, 4 df']].map(([v,l])=>option(v!,l!,current===v)).join('');
-    const values=(column:string)=>held[column]??[];
-    content+=''
-      +labelForm('regression-label','Node label',p.label||'Regression')
-      +(columns.length?'':'<div class="notice">Connect a table first.</div>')
-      +`<div class="field"><label class="field-label" for="reg-family">Model</label><select id="reg-family">`
-        +option('logistic','Logistic regression · odds ratios',p.family==='logistic')+option('poisson','Poisson regression · rate ratios',p.family==='poisson')+`</select></div>`
-      +columnSelect('reg-outcome','Outcome',p.outcome)
-      +(p.family==='logistic'&&p.outcome&&values(p.outcome).length
-        ?`<div class="field"><span class="inspector-section">Cases and controls</span><p class="description">Values of ${esc(p.outcome)} that are cases and that are controls. Rows with any other value are left out.</p>`
-          +values(p.outcome).map(v=>`<div class="reg-outcome-value"><code>${esc(v)}</code>`
-            +`<label class="check"><input type="checkbox" data-reg-case="${esc(v)}" ${p.cases?.includes(v)?'checked':''}> case</label>`
-            +`<label class="check"><input type="checkbox" data-reg-control="${esc(v)}" ${p.controls?.includes(v)?'checked':''}> control</label></div>`).join('')+`</div>`
-        :'')
-      +columnSelect('reg-exposure','Exposure',p.exposure.column)
-      +(p.exposure.column
-        ?`<div class="field"><label class="field-label" for="reg-exposure-as">Exposure is</label><select id="reg-exposure-as">${kinds(p.exposure.as)}</select></div>`
-          +(p.exposure.as==='categorical'&&values(p.exposure.column).length
-            ?`<div class="field"><label class="field-label" for="reg-exposure-reference">Reference value</label><select id="reg-exposure-reference">`
-              +values(p.exposure.column).map(v=>option(v,v,(p.exposure.reference??[...values(p.exposure.column)].sort()[0])===v)).join('')+`</select></div>`:'')
-          +(()=>{
-            // ONE MODEL PER COLUMN (experiment 185): Relate's shift columns, or any others, each fitted on its own rows.
-            const several=p.exposureColumns??[],taken=new Set([p.outcome,p.exposure.column,...p.adjust.flatMap(t=>[t.column,...(t.perModel??[])]),
-              ...strataOf(p.strata),...(p.offset?[p.offset]:[])]);
-            const offered=columns.filter(c=>!taken.has(c)||(several.includes(c)&&c!==p.exposure.column));
-            if(!offered.length)return '';
-            return `<fieldset class="field" id="reg-exposures"><legend class="field-label">Also fit, one model each, with</legend>`
-              +``
-              +offered.map(c=>`<label class="check"><input type="checkbox" value="${esc(c)}" data-reg-also="${esc(c)}" ${several.includes(c)?'checked':''}> ${esc(c)}</label>`).join('')
-              +`</fieldset>`;})()
-        :'')
-      +`<span class="inspector-section">Adjusted for</span>`
-      +(p.adjust.length?p.adjust.map(term=>`<div class="reg-term"><label class="field-label" for="reg-kind-${esc(term.column)}">${esc(term.column)} as</label>`
-          +`<select id="reg-kind-${esc(term.column)}" data-reg-adjust-kind="${esc(term.column)}">${kinds(term.as)}</select>`
-          +`<button type="button" class="button small" data-reg-adjust-remove="${esc(term.column)}">Remove</button></div>`
-          // AN ADJUSTMENT THAT FOLLOWS THE SHIFT (experiment 185): with several models, model k may be adjusted for its
-          // own column, the rain at its own lag beside the temperature at that lag. One choice per model, in view.
-          +((p.exposureColumns?.length??0)>1
-            ?`<label class="check"><input type="checkbox" data-reg-follow="${esc(term.column)}" ${term.perModel?'checked':''}> ${esc(term.column)} follows the shift: each model is adjusted for its own column</label>`
-              +(term.perModel?p.exposureColumns!.map((exposure,k)=>`<div class="field"><label class="field-label" for="reg-follow-${esc(term.column)}-${k}">For the model of ${esc(exposure)}</label>`
-                +`<select id="reg-follow-${esc(term.column)}-${k}" data-reg-follow-column="${esc(term.column)}" data-reg-follow-model="${k}">`
-                +columns.map(c=>option(c,c,term.perModel![k]===c)).join('')+`</select></div>`).join(''):'')
-            :'')).join('')
-        :'<p class="muted">Nothing: the estimate is unadjusted.</p>')
-      +`<div class="field"><label class="field-label" for="reg-adjust-add">Add a variable</label><select id="reg-adjust-add">${option('','Choose a column…',true)}`
-        +columns.filter(c=>c!==p.outcome&&c!==p.exposure.column&&!p.adjust.some(t=>t.column===c)).map(c=>option(c,c,false)).join('')+`</select></div>`
-      +(p.family==='poisson'
-        // SEVERAL STRATA COLUMNS TOGETHER (experiment 182): each chosen column gets its own select, and one more is
-        // offered empty, so municipality, year and month are three choices in a row. The first keeps its saved id.
-        ?(()=>{const chosen=strataOf(p.strata);
-          return [...chosen,''].map((c,i)=>columnSelect(i===0?'reg-strata':`reg-strata-${i+1}`,
-            i===0?'Strata, as fixed effects':'Together with',c||undefined,i===0?'None':'Nothing more')).join('')
-            +(chosen.length>1?`<p class="description">One stratum for each combination of ${chosen.map(esc).join(', ')}: rows are compared only within it.</p>`:'');})()
-          +columnSelect('reg-offset','Offset (log of person-time or population)',p.offset,'None'):'')
-      +`<div class="field"><label class="field-label" for="reg-errors">Intervals</label><select id="reg-errors">`
-        +option('profile','Likelihood-ratio (profile)',p.errors==='profile')+option('wald','Wald, from the model',p.errors==='wald')
-        +(p.family==='poisson'?option('overdispersed','Wald, scaled for overdispersion',p.errors==='overdispersed')+option('hac','Wald, HAC (Newey-West) for serial correlation',p.errors==='hac'):'')
-        +`</select></div>`
-      +(p.errors==='hac'
-        ?`<div class="field"><label class="field-label" for="reg-hac-lag">Lags</label><input id="reg-hac-lag" type="number" min="0" max="60" value="${esc(String(p.hacLag??0))}"></div>`
-          +columnSelect('reg-order','Rows in the order of',p.order,'The table\'s order'):'')
-      +'';
+    // THE STANDARD INSPECTOR (experiment 186, 2026-11-12): the name, the input, one sentence, Configure…, and the result.
+    const p=n.params,receipt=result?.receipts.find(r=>r.nodeId===n.id);
+    const why=result?.unfinished?.find(u=>u.nodeId===n.id)?.message;
+    content+=standardSection('Name',labelForm('regression-label','Name',p.label||TYPES.regression.title));
+    content+=standardSection('Inputs',standardInputs(n));
+    content+=standardSection('Settings',`<p class="standard-sentence">${esc(regressionPlan(p))}</p>`
+      +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button></div>');
+    content+=standardSection('Result',`<p class="standard-result${why?' standard-result-warning':''}">${esc(why?`The last run could not compute this step: ${why}`
+      :receipt?.method??'Not run yet.')}</p>`);
   }else if(n.type==='select_rows'){
     // THE STANDARD INSPECTOR (experiment 186): the column, the values or the range, and the preview of what they keep
     // are in the configuration dialog; here, one sentence of what the step keeps and what the last run kept.
@@ -4995,64 +5091,7 @@ function renderInspector(){
   document.querySelectorAll<HTMLInputElement>('#output-totals').forEach(el=>
     el.addEventListener('change',()=>change(w=>{
       getNode(w,n.id,'table_output').params.totalsAsserted=el.checked||undefined;})));
-  // REGRESSION's controls.
-  const reg=(edit:(params:WorkflowNode<'regression'>['params'])=>void)=>change(w=>edit(getNode(w,n.id,'regression').params));
-  optionalElement('#reg-family')?.addEventListener('change',e=>reg(p=>{p.family=control(e).value as 'logistic'|'poisson';
-    if(p.family==='logistic'){delete p.strata;delete p.offset;if(p.errors==='hac'||p.errors==='overdispersed')p.errors='profile';}}));
-  optionalElement('#reg-outcome')?.addEventListener('change',e=>reg(p=>{p.outcome=control(e).value;delete p.cases;delete p.controls;}));
-  document.querySelectorAll<HTMLInputElement>('[data-reg-case],[data-reg-control]').forEach(el=>el.addEventListener('change',()=>reg(p=>{
-    const key=el.dataset.regCase!==undefined?'cases':'controls',value=required(el.dataset.regCase??el.dataset.regControl);
-    const list=(p[key]??[]).filter(v=>v!==value);if(el.checked)list.push(value);
-    if(list.length)p[key]=list;else delete p[key];})));
-  optionalElement('#reg-exposure')?.addEventListener('change',e=>reg(p=>{const column=control(e).value,held=upstreamKeyValues(n)?.[column];
-    p.exposure={column,as:held&&orderOf(held)==='number'&&held.length>2?'numeric':held?'categorical':'numeric'};
-    p.adjust=p.adjust.filter(t=>t.column!==p.exposure.column);
-    if(p.exposureColumns){const also=p.exposureColumns.slice(1).filter(c=>c!==column);
-      if(also.length)p.exposureColumns=[column,...also];else delete p.exposureColumns;}}));
-  document.querySelectorAll<HTMLInputElement>('[data-reg-also]').forEach(el=>el.addEventListener('change',()=>reg(p=>{
-    const also=[...document.querySelectorAll<HTMLInputElement>('[data-reg-also]:checked')].map(b=>b.value)
-      .filter(c=>c!==p.exposure.column);
-    if(also.length)p.exposureColumns=[p.exposure.column,...also];else delete p.exposureColumns;
-    // An adjustment that follows the shift keeps one column per model: refilled in Relate's order, or dropped with the
-    // list.
-    const held=Object.keys(upstreamKeyValues(n)??{}),shiftless=(c:string)=>c.replace(/_[+-]?\d+d$/,'');
-    p.adjust=p.adjust.map(t=>{if(!t.perModel)return t;const {perModel,...rest}=t;
-      if(!p.exposureColumns)return {...rest,column:perModel[0]!};
-      const family=held.filter(c=>shiftless(c)===shiftless(t.column)&&/_[+-]?\d+d$/.test(c));
-      return {...rest,perModel:p.exposureColumns.map((_c,k)=>perModel[k]??family[k]??t.column)};});})));
-  optionalElement('#reg-exposure-as')?.addEventListener('change',e=>reg(p=>{p.exposure={column:p.exposure.column,as:control(e).value as 'numeric'};}));
-  optionalElement('#reg-exposure-reference')?.addEventListener('change',e=>reg(p=>{p.exposure={...p.exposure,reference:control(e).value};}));
-  // A COLUMN OF NUMBERS IS ADDED AS NUMERIC, as R treats a numeric column; anything else as categorical. Changed by a
-  // click either way.
-  optionalElement('#reg-adjust-add')?.addEventListener('change',e=>{
-    const column=control(e).value,held=upstreamKeyValues(n)?.[column];
-    const as=held&&orderOf(held)==='number'?'numeric' as const:held?'categorical' as const:'numeric' as const;
-    reg(p=>{if(column&&!p.adjust.some(t=>t.column===column))p.adjust=[...p.adjust,{column,as}];});});
-  document.querySelectorAll<HTMLSelectElement>('[data-reg-adjust-kind]').forEach(el=>el.addEventListener('change',()=>reg(p=>{
-    p.adjust=p.adjust.map(t=>t.column===el.dataset.regAdjustKind?{column:t.column,as:el.value as 'numeric'}:t);})));
-  // FOLLOWING THE SHIFT, pre-filled in Relate's order: the columns that share this one's name without its shift, the
-  // k-th for model k. Each is a choice in view, and can be changed.
-  document.querySelectorAll<HTMLInputElement>('[data-reg-follow]').forEach(el=>el.addEventListener('change',()=>reg(p=>{
-    const column=required(el.dataset.regFollow),models=p.exposureColumns??[];
-    const held=Object.keys(upstreamKeyValues(n)??{}),base=column.replace(/_[+-]?\d+d$/,'');
-    const family=held.filter(c=>c.replace(/_[+-]?\d+d$/,'')===base&&/_[+-]?\d+d$/.test(c));
-    p.adjust=p.adjust.map(t=>{if(t.column!==column)return t;const {perModel:_,...rest}=t;
-      return el.checked?{...rest,perModel:models.map((_m,k)=>family[k]??column)}:rest;});})));
-  document.querySelectorAll<HTMLSelectElement>('[data-reg-follow-column]').forEach(el=>el.addEventListener('change',()=>reg(p=>{
-    const k=Number(el.dataset.regFollowModel);
-    p.adjust=p.adjust.map(t=>{if(t.column!==el.dataset.regFollowColumn||!t.perModel)return t;
-      const perModel=[...t.perModel];perModel[k]=el.value;return {...t,column:perModel[0]!,perModel};});})));
-  document.querySelectorAll<HTMLButtonElement>('[data-reg-adjust-remove]').forEach(el=>el.addEventListener('click',()=>reg(p=>{
-    p.adjust=p.adjust.filter(t=>t.column!==el.dataset.regAdjustRemove);})));
-  document.querySelectorAll<HTMLSelectElement>('[id^="reg-strata"]').forEach(el=>el.addEventListener('change',()=>reg(p=>{
-    const at=el.id==='reg-strata'?0:Number(el.id.slice('reg-strata-'.length))-1,list=strataOf(p.strata);
-    if(el.value)list[at]=el.value;else list.splice(at);
-    const clean=list.filter((c,i)=>c&&list.indexOf(c)===i);
-    if(!clean.length)delete p.strata;else p.strata=clean.length===1?clean[0]!:clean;})));
-  for(const [id,key] of [['#reg-offset','offset'],['#reg-order','order']] as const)
-    optionalElement(id)?.addEventListener('change',e=>reg(p=>{const v=control(e).value;if(v)p[key]=v;else delete p[key];}));
-  optionalElement('#reg-errors')?.addEventListener('change',e=>reg(p=>{p.errors=control(e).value as 'profile';}));
-  optionalElement('#reg-hac-lag')?.addEventListener('change',e=>reg(p=>{p.hacLag=Math.max(0,Math.round(Number(control(e).value)||0));}));
+  if(n.type==='regression')optionalElement('#configure-step')?.addEventListener('click',()=>openRegressionConfig(n.id));
   // A number, and `data-slr` writes strings, which would reach the module as a key not in its table.
   optionalElement('#twobytwo-level')?.addEventListener('change',e=>change(w=>{
     getNode(w,n.id,'two_by_two').params.level=
@@ -6372,7 +6411,7 @@ async function run(){if(busy)return;
   // a state line that says what is true -- not "Run failed", which claims something went wrong.
   try{executionPlan(workflow);}catch(e){
     if(e instanceof IncompleteWorkflow){runIncomplete=true;toast(errorMessage(e),{tone:'notice'});render();return;}
-    toast(errorMessage(e),{tone:'failure'});runFailed=true;render();console.error(e);return;}busy=true;statuses={};justFinished.clear();lastRunMs=null;render();const snapshot=structuredClone(workflow);const started=performance.now();try{const next=await executeWorkflow(snapshot,reason,(id,state)=>{statuses[id]=state;if(state==='done'){justFinished.add(id);setTimeout(()=>{justFinished.delete(id);if(!busy||statuses[id]==='done')flow?.update(playbackView(),selected,statuses);},FINISH_GLOW_MS);}flow?.update(playbackView(),selected,statuses);},(ref,provider,origin)=>{if(!credentials)throw new Error('Credentials are not available.');return credentials.resolve(ref,provider,origin);});lastRunMs=performance.now()-started;
+    toast(errorMessage(e),{tone:'failure'});runFailed=true;render();console.error(e);return;}busy=true;runStartedAt=performance.now();statuses={};justFinished.clear();lastRunMs=null;render();const snapshot=structuredClone(workflow);const started=performance.now();try{const next=await executeWorkflow(snapshot,reason,(id,state)=>{statuses[id]=state;if(state==='done'){justFinished.add(id);setTimeout(()=>{justFinished.delete(id);if(!busy||statuses[id]==='done')flow?.update(playbackView(),selected,statuses);},FINISH_GLOW_MS);}flow?.update(playbackView(),selected,statuses);},(ref,provider,origin)=>{if(!credentials)throw new Error('Credentials are not available.');return credentials.resolve(ref,provider,origin);});lastRunMs=performance.now()-started;
     // THE CANVAS CAN MOVE WHILE A RUN IS IN FLIGHT, and this run is then nobody's results.
     //
     // `renderResults` discards a result whose workflow is no longer the open one -- the rule
@@ -7057,6 +7096,21 @@ function renderNotesView(){
   // is worse in a write-up than one that renders once. A plate is a data URI the node already
   // holds and `mapImageMarkup` places it by its corners, so it composes here synchronously, in
   // the same frame the content was drawn in. See `withGroundUnder` and 143.
+  // THE CHART AS ON SCREEN (2026-11-12): drawn once per run and step, by the same function as its SVG download, and the
+  // notes drawn again when it is ready. Classic bars stay the HTML bars, which is what the screen shows for them.
+  const chartSvgOf=(held:{run:WorkflowRun; workflow:Workflow})=>(nodeId:string):string|null=>{
+    const output=held.run.outputs?.find(o=>o.nodeId===nodeId);
+    const node=held.workflow.nodes.find((n):n is WorkflowNode<'chart_output'>=>n.id===nodeId&&n.type==='chart_output');
+    if(!output?.chart?.bins?.length||!node)return null;
+    if(chartRenderer(node.params)!=='vega-lite'&&!output.chart.interval&&!output.chart.panels?.length)return null;
+    const key=`${held.run.runId}:${nodeId}`,drawn=notesChartSvg.get(key);
+    if(drawn!==undefined)return drawn||null;
+    notesChartSvg.set(key,'<p class="muted">Drawing the chart\u2026</p>');
+    standaloneChartSvg(output.chart,node.params,{sourceId:held.workflow.edges.find(e=>e.to===nodeId)?.from,runId:held.run.runId})
+      .then(svg=>{notesChartSvg.set(key,svg);refreshNotesIfOpen();},
+        error=>{notesChartSvg.set(key,'');console.error(error);refreshNotesIfOpen();});
+    return notesChartSvg.get(key)!;
+  };
   const mapSvgOf=(held:{run:WorkflowRun; workflow:Workflow}|undefined)=>(nodeId:string)=>{
     if(!held)return null;
     const output=held.run.outputs?.find(o=>o.nodeId===nodeId);
@@ -7135,7 +7189,7 @@ function renderNotesView(){
     if(note.kind!=='machined'&&note.kind!=='derived')return undefined;
     const key='workflowKey' in note&&note.workflowKey?note.workflowKey:storageKey(workflow);
     const held=heldFor(key);
-    return figureFor(id,held?{...held.run,mapSvg:mapSvgOf(held)}:undefined,esc)||undefined;
+    return figureFor(id,held?{...held.run,mapSvg:mapSvgOf(held),chartSvg:chartSvgOf(held)}:undefined,esc)||undefined;
   };
   // THE WORKS THIS PROJECT CITES, assembled from the entries rather than stored beside them.
   const references=referenceList(entries.map(e=>

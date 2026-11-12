@@ -28,6 +28,9 @@ test('the shift columns are offered as more exposures, and each ticked one is it
   await upload(page);
   await run(page);
   await page.locator('.react-flow__node[data-id="models"]').click();
+  // THE STANDARD INSPECTOR (experiment 186): the settings are in Configure…, and the Inspector says them in a sentence.
+  await expect(page.locator('#inspector-content .standard-sentence')).toContainText('Poisson regression of casos on LST_Day_1km_0d');
+  await page.locator('#configure-step').click();
   const also=page.locator('#reg-exposures');
   await expect(also.locator('legend')).toHaveText('Also fit, one model each, with');
   // The other shifts are offered; the exposure itself, the outcome and the strata are not.
@@ -42,6 +45,8 @@ test('the shift columns are offered as more exposures, and each ticked one is it
   await page.locator('#reg-adjust-add').selectOption('mes');
   await expect(page.locator('[data-reg-follow="mes"]')).toHaveCount(1);
   await page.locator('[data-reg-adjust-remove="mes"]').click();
+  await page.locator('#config-apply').click();
+  await expect(page.locator('#inspector-content .standard-sentence')).toContainText('once for each of 4 exposure columns');
   // The chart is offered the models' keys, the shift among them, before any run.
   await page.locator('.react-flow__node[data-id="plot"]').click();
   await page.locator('#configure-step').click();
@@ -53,11 +58,21 @@ test('the shift columns are offered as more exposures, and each ticked one is it
   await expect(results).toContainText('4 Poisson regressions of casos, one per exposure column and each on its own rows');
   await expect(results).toContainText('none adjusted for the number of comparisons');
   await expect(results).toContainText('shift_days');
+  // IN THE NOTES, THE CHART ON SCREEN (the practitioner, 2026-11-12, of Brazil): estimates with their intervals are drawn
+  // as the figure the SVG download gives, and described as estimates, not bars.
+  await page.locator('[data-view="notes"]').click();
+  const chart=page.locator('#notes-view .notes-figure[data-figure="chart"]');
+  await expect(chart.locator('svg').first()).toBeVisible({timeout:15000});
+  await expect(page.locator('#notes-view')).toContainText(/4 estimates with their 95% intervals/);
+  await expect(page.locator('#notes-view')).not.toContainText('choose it under Chart enhancement');
+  await page.locator('[data-view="results"]').click();
   // Unticking all but the exposure goes back to the single model.
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="models"]').click();
+  await page.locator('#configure-step').click();
   for(const c of ['LST_Day_1km_-7d','LST_Day_1km_-14d','LST_Day_1km_+7d'])
     await page.locator(`#reg-exposures input[value="${c}"]`).uncheck();
+  await page.locator('#config-apply').click();
   await run(page);
   await page.locator('[data-view="results"]').click();
   await expect(results).toContainText('Poisson regression of casos on LST_Day_1km_0d');

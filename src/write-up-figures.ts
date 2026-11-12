@@ -82,6 +82,11 @@ export interface RunArtifacts {
    *  the output carries nothing a map can be drawn from -- a map step that ran before its
    *  boundary arrived, which is an ordinary state and not a failure. */
   mapSvg?:(nodeId:string)=>string|null;
+  /** THE CHART AS THE STEP DRAWS IT ON SCREEN, composed by the caller from this run: the SVG its download gives, or a
+   *  line saying it is still being drawn. Null where the step draws classic bars, which `chartFigure` draws here too.
+   *  The practitioner, 2026-11-12: Brazil's chart of estimates with their intervals did not show in the notes, which
+   *  drew classic bars and those decline an interval. */
+  chartSvg?:(nodeId:string)=>string|null;
 }
 
 export type FigureKind='table'|'chart'|'map';
@@ -193,6 +198,8 @@ export function figureFor(nodeId:string,run:RunArtifacts|undefined,esc:Escape):s
   // figure in the write-up and the figure on the screen are now the same artifact by
   // construction rather than by a rule here that has to keep up.
   if(output?.view==='bars'){
+    const drawn=run.chartSvg?.(nodeId);
+    if(drawn)return `<figure class="notes-figure" data-figure="chart">${drawn}</figure>`;
     const asChart=chartFigure(output.chart,esc);
     if(asChart)return asChart;
   }

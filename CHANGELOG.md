@@ -21,6 +21,17 @@ shown in a local build is not a claim that it has been published.
   10 MB of rasters and PDFs together, and two obstacles: the GeoTIFF library took 32 s to write the window, now 0.2 s,
   and the browser stores no single value over 133 MB, so a large file is stored in parts. A workflow file carries at most
   about 177 MB of files, measured; past that it says to use *This workflow, encrypted*.
+- **Regression is on the standard Inspector and dialog.** The panel says in one sentence the model it will fit, and
+  after a run what it estimated and which rows it used and left out; every setting is in **Configure…**, applied with
+  **Apply**. The model is unchanged. Regression 0.6.0.
+- **A long run shows its progress.** After a second, a panel names the step being computed and how many of the
+  workflow's steps are done, and a Regression with several exposure columns counts its models as it fits them. Brazil's
+  lag workflow had held the page for 35 s with nothing moving. Each model is still fitted on the page, so the page waits
+  for one model at a time.
+- **A chart in the notes is the chart on screen.** A chart drawn with the enhanced renderer appears in the notes as the
+  same figure its SVG download gives; Brazil's rate ratios with their intervals had shown only a line asking for the
+  enhanced renderer. Its description counts what is drawn, estimates with their intervals, points on a line or dots,
+  rather than calling them all bars. Chart 0.15.1.
 - **Chart draws a line**, along the categories in their order. Chart 0.15.0.
 - **Every recorded source in a transmission tree.** A case recorded with several sources sits under the first, and each
   other recorded link is drawn dashed and counted. MERS's second workflow now draws who infected whom: SK_39 records

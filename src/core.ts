@@ -58,7 +58,8 @@ import {gridPoints,GRID_METHOD} from './point-grid.js';
 import {resolveRuleset,publishedRuleset,RETIRED_RULESETS,WRITTEN_IN_WORKFLOW,bindParameters,tableContractFailures,rulesetCitation} from './rulesets.js';
 import {selectRows,selectRange,rangeSentence} from './select-rows.js';
 import {appendTables,appendSentence,appendPort,appendTableCount} from './append-rows.js';
-import {fitRegression,specFrom,rowsOf,regressionTable,regressionSentence,regressionReceipt,exposureColumnsOf,fitEachExposure,
+import {runDetail} from './run-progress.js';
+import {fitRegression,specFrom,rowsOf,regressionTable,regressionSentence,regressionReceipt,exposureColumnsOf,fitEachExposure,fitEachExposureStepwise,
   regressionsTable,regressionsSentence,regressionsReceipt} from './regression.js';
 import {metadataFindings} from './column-metadata.js';
 import widgetRegistry from '../widgets/registry.json';
@@ -1176,6 +1177,9 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
   const optional=new Set(openEnds(workflow,planned).map(n=>n.id));
   const plan=[...planned,...workflow.nodes.filter(n=>optional.has(n.id))];
   const unfinished:{nodeId:string;message:string}[]=[],failedOptional=new Set<string>();
+  let drawn=performance.now();
+  const breathe=async()=>{if(performance.now()-drawn<50)return;await new Promise(resolve=>setTimeout(resolve,0));drawn=performance.now();};
+  try{
   for(const node of [...plan]){
     // A STEP UNDER CONSTRUCTION that fails, or stands on one that did, is named and set aside; the run goes on.
     if(optional.has(node.id)){
@@ -1200,8 +1204,15 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
       throw error;
     }
   }
+  }finally{runDetail(null);}
   async function runNode(node:typeof plan[number]){
-    onProgress(node.id,'running');const begin=performance.now();const beganAt=new Date().toISOString();
+    onProgress(node.id,'running');
+    // THE RUN'S OWN PROGRESS (the practitioner, 2026-11-12, of Brazil's 36-second run: "that workflow needs a progress
+    // bar"): which step, and how many of how many are done. A step that reports its own progress replaces it while it
+    // runs. The page is let draw only after 50 ms of computing, so a quick run is not slowed by it.
+    runDetail({nodeId:node.id,label:(node.params as {label?:string}).label||TYPES[node.type].title,done:plan.indexOf(node),of:plan.length,what:'steps',verb:'Computing'});
+    await breathe();
+    const begin=performance.now();const beganAt=new Date().toISOString();
     // A DISTANCES RESULT OR A POINT LAYER ON A TABLE PORT IS READ AS ITS TABLE (experiments 197, 200), here, where every
     // step's inputs are read.
     const inputs=Object.fromEntries(workflow.edges.filter(e=>e.to===node.id).map(e=>{
@@ -1869,7 +1880,10 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         const designed=!!declared&&!declared.stopped;
         // ONE MODEL PER EXPOSURE COLUMN (experiment 185), each on its own rows, in one table.
         if(exposureColumnsOf(node.params).length>1){
-          const models=fitEachExposure(rowsOf(table,node.params.order),node.params,table.columnShifts,licensed);
+          const label=node.params.label||TYPES.regression.title;
+          const models=await fitEachExposureStepwise(rowsOf(table,node.params.order),node.params,table.columnShifts,licensed,async(k,of)=>{
+            runDetail({nodeId:node.id,label,done:k,of,what:'models',verb:'Fitting'});
+            await new Promise(resolve=>setTimeout(resolve,0));drawn=performance.now();});
           const sentence=regressionsSentence(models,node.params)+(designed?` ${declared!.sentence}`:'');
           value={...regressionsTable(models,table.columns),sentence} as unknown as DisplayValue;
           receipts.push(regressionsReceipt(node,models,node.params,runId,source,designed,sentence) as unknown as Receipt);
@@ -2494,7 +2508,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
     }
     if(node.type==='chart_output'&&isRecord(value)&&(value as {chart?:ChartSummary}).chart){
       const chart=(value as {chart:ChartSummary}).chart;
-      const described=chartDescriptionNote(chart,node.params.label,node.id);
+      const described=chartDescriptionNote(chart,node.params.label,node.id,chartRenderer(node.params)==='vega-lite'?node.params.mark??'bar':'bar');
       const note=described&&{...described,section:figureSection(node.params,node.type)};
       if(note){machined[node.id]=[note];withNote(receipts,runId,node.id,[note]);
         withArtifact(receipts,runId,node.id,{kind:'chart',barCount:chart.bins.length,

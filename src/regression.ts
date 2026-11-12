@@ -366,6 +366,18 @@ export interface ModelRow {
  *  row saying why. Only when none can is the step stopped. */
 export function fitEachExposure(rows:Row[],params:RegressionParams,shifts?:Record<string,number>,
   measure?:string|null):ModelRow[]{
+  const columns=exposurePlan(params);
+  return fittedModels(columns.map((_column,k)=>fitModel(rows,params,columns,k,shifts,measure)));
+}
+/** THE SAME FITS, ONE AT A TIME, with `before` awaited ahead of each: the run reports "model k of n" and lets the page
+ *  draw it, which one synchronous call of seven Poisson fits did not (Brazil, 35 s, the practitioner 2026-11-12). */
+export async function fitEachExposureStepwise(rows:Row[],params:RegressionParams,shifts:Record<string,number>|undefined,
+  measure:string|null|undefined,before:(k:number,of:number)=>Promise<void>):Promise<ModelRow[]>{
+  const columns=exposurePlan(params),models:ModelRow[]=[];
+  for(let k=0;k<columns.length;k++){await before(k,columns.length);models.push(fitModel(rows,params,columns,k,shifts,measure));}
+  return fittedModels(models);
+}
+function exposurePlan(params:RegressionParams):string[]{
   const columns=exposureColumnsOf(params);
   const empty=columns.findIndex(c=>!c);
   if(empty>=0)throw new Error(`Exposure column ${empty+1} is not chosen.`);
@@ -374,14 +386,17 @@ export function fitEachExposure(rows:Row[],params:RegressionParams,shifts?:Recor
   const following=(params.adjust??[]).find(t=>t.perModel&&t.perModel.length!==columns.length);
   if(following)throw new Error(`"${following.column}" follows the shift, so it needs one column for each of the `
     +`${columns.length} models; it has ${following.perModel!.length}.`);
-  const models=columns.map((column,k):ModelRow=>{
-    const shiftDays=shifts?.[column];
-    const at=shiftDays===undefined?{}:{shiftDays};
-    try{
-      const fitted=fitRegression(rows,specFrom(modelParams(params,k)));
-      return {column,result:measure?{...fitted,measure}:fitted,reason:null,...at};
-    }catch(error){return {column,result:null,reason:error instanceof Error?error.message:String(error),...at};}
-  });
+  return columns;
+}
+function fitModel(rows:Row[],params:RegressionParams,columns:string[],k:number,shifts?:Record<string,number>,measure?:string|null):ModelRow{
+  const column=columns[k]!,shiftDays=shifts?.[column];
+  const at=shiftDays===undefined?{}:{shiftDays};
+  try{
+    const fitted=fitRegression(rows,specFrom(modelParams(params,k)));
+    return {column,result:measure?{...fitted,measure}:fitted,reason:null,...at};
+  }catch(error){return {column,result:null,reason:error instanceof Error?error.message:String(error),...at};}
+}
+function fittedModels(models:ModelRow[]):ModelRow[]{
   if(!models.some(m=>m.result))throw new Error(`No exposure column could be fitted: `
     +models.map(m=>`${m.column} (${m.reason})`).join('; '));
   return models;

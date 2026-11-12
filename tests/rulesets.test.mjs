@@ -48,7 +48,8 @@ test('a ruleset declares its basis, and every shipped ruleset carries resolvable
   assert.equal(new Set(sets.map(s=>s.id)).size,3);
   // Nine version files on 2026-10-26, with extract-contract: the AR6 contract that
   // slr_extract_import held in TypeScript, declared as data so the ledger can count its debt.
-  assert.equal(sets.length,3);
+  // Four version files on 2026-11-12: seven-one-seven 2.0.0 beside 1.0.0, which workflows may pin.
+  assert.equal(sets.length,4);
   for(const set of sets){
     assert.ok(set.basis.status&&set.basis.statedBy,`${set.id} must say what its basis is and who says so`);
     assert.ok(set.mustNotBeReadAs?.trim(),`${set.id} must say what it is not`);

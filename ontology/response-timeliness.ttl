@@ -193,7 +193,6 @@ fw:detectionWithinTarget a owl:ObjectProperty; rdfs:label "Detected within targe
 fw:notificationWithinTarget a owl:ObjectProperty; rdfs:label "Notified within target"; rdfs:range fw:TargetVerdict; fw:measuresTarget fw:NotificationTarget.
 fw:responseWithinTarget a owl:ObjectProperty; rdfs:label "Early response completed within target"; rdfs:range fw:TargetVerdict; fw:measuresTarget fw:EarlyResponseTarget.
 fw:TargetVerdict a owl:Class; rdfs:label "Verdict on a target";
-  owl:oneOf (fw:Met fw:NotMet fw:NoVerdict);
   rdfs:comment "Whether one record's interval met its target, as fw:metTarget says it for an event's interval, with a third value for a missing date.".
 fw:Met a fw:TargetVerdict, owl:NamedIndividual; rdfs:label "Met";
   rdfs:comment "The interval is at most the target's days. Equality meets it.".
@@ -201,3 +200,11 @@ fw:NotMet a fw:TargetVerdict, owl:NamedIndividual; rdfs:label "NotMet";
   rdfs:comment "The interval is more than the target's days.".
 fw:NoVerdict a fw:TargetVerdict, owl:NamedIndividual; rdfs:label "NoVerdict";
   rdfs:comment "A date the interval needs is missing, so no verdict is given: not a failure to meet the target.".
+fw:Not_met a fw:TargetVerdict, owl:NamedIndividual; rdfs:label "Not met";
+  rdfs:comment "The interval is more than the target's days. Replaces fw:NotMet from seven-one-seven 2.0.0, whose values read as words.".
+fw:No_verdict a fw:TargetVerdict, owl:NamedIndividual; rdfs:label "No verdict";
+  rdfs:comment "A date the interval needs is missing, so no verdict is given. Replaces fw:NoVerdict from seven-one-seven 2.0.0.".
+fw:NotMet owl:deprecated true; dcterms:isReplacedBy fw:Not_met; fw:implementationStatus "retired";
+  skos:changeNote "2026-11-12: seven-one-seven 2.0.0 writes values as words; 1.0.0, still bundled for workflows that pin it, writes this term.".
+fw:NoVerdict owl:deprecated true; dcterms:isReplacedBy fw:No_verdict; fw:implementationStatus "retired";
+  skos:changeNote "2026-11-12: seven-one-seven 2.0.0 writes values as words; 1.0.0, still bundled for workflows that pin it, writes this term.".

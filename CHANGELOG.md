@@ -5,6 +5,12 @@ shown in a local build is not a claim that it has been published.
 
 ## 0.101.0 — 2026-11-12
 
+- **Compare with a target…** in the rules dialog writes one interval against one target as ordinary rules: the days from
+  one column to another, the target as a setting, Met and Not met, and No verdict where a value is missing. 7-1-7 by
+  hand is this three times.
+- **7-1-7 2.0.0 reads as words**: `detected_within_target`, `notified_within_target`, `responded_within_target`, valued
+  Met, Not met and No verdict. 1.0.0 stays for workflows that pin it.
+- **A rule's otherwise writes the column its rules name**, rather than a second column under the term's own name.
 - **Fixed: a study area reaching just past a raster stopped Raster input.** Botswana's provinces from geoBoundaries
   against WorldPop's file for Botswana, two outlines of one country that differ at the border, read "Boundary extends
   beyond available raster coverage". The step now keeps the part the raster covers and says how far past which edge the

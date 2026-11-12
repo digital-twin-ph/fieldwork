@@ -182,6 +182,9 @@ export function evaluateAuthored(records:SubjectRecord[],bindings:FieldBinding[]
   if(problems.length)throw new Error(problems[0]);
   // WHAT EACH OTHERWISE WAITS FOR: every defaulted column its column's rules read, directly or through other columns.
   const reads=columnReads(rules),defaulted=new Set(otherwise.map(o=>o.predicate));
+  // AN OTHERWISE WRITES THE COLUMN ITS RULES WRITE (2026-11-12): where a rule names its column, the default goes there too,
+  // not under the term's own name, which split one verdict into two columns.
+  const columnOf=(p:string)=>rules.flatMap(r=>r.then).find(t=>t.predicate===p&&t.column?.trim())?.column?.trim()??localName(p);
   const waitsFor=new Map(otherwise.map(o=>{const seen=new Set<string>(),stack=[...(reads.get(o.predicate)??[])];
     while(stack.length){const c=stack.pop()!;if(seen.has(c))continue;seen.add(c);stack.push(...(reads.get(c)??[]));}
     return [o.predicate,[...seen].filter(c=>defaulted.has(c))];}));
@@ -261,12 +264,12 @@ export function evaluateAuthored(records:SubjectRecord[],bindings:FieldBinding[]
       if(!changed){if(waiting&&!last){last=true;continue;}break;}
     }
     // OTHERWISE, once the rules have run: each column no rule gave a value, whose waited-for columns are settled.
-    const settled=(p:string)=>applied.has(p)||given.has(localName(p));
+    const settled=(p:string)=>applied.has(p)||given.has(columnOf(p));
     const ready=otherwise.filter(o=>!applied.has(o.predicate)&&(waitsFor.get(o.predicate)??[]).every(settled));
     if(!ready.length)break;
     for(const o of ready){
       applied.add(o.predicate);
-      const column=localName(o.predicate);
+      const column=columnOf(o.predicate);
       if(given.has(column))continue;
       const term=valueTerm(o.value,settings);
       if(term)facts.set(o.predicate,term);

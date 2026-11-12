@@ -24,6 +24,7 @@ import type {PortType} from './types.js';
 import extractContract from '../rulesets/extract-contract/1.0.0.json' with {type:'json'};
 import compareLevel from '../rulesets/compare-level-to-elevation/1.0.0.json' with {type:'json'};
 import sevenOneSeven from '../rulesets/seven-one-seven/1.0.0.json' with {type:'json'};
+import sevenOneSeven2 from '../rulesets/seven-one-seven/2.0.0.json' with {type:'json'};
 
 export interface RulesetParameter {
   name:string; role:string; type:string; unit?:string; min?:number; max?:number;
@@ -179,7 +180,7 @@ export const rulesetCitation=(ruleset:Ruleset):RulesetCitation=>
 
 // Both versions of each changed ruleset are carried: a saved workflow pins the version that
 // produced its results, and a port type change does not entitle this build to forget the old one.
-const BUNDLED=[extractContract,compareLevel,sevenOneSeven] as unknown as Ruleset[];
+const BUNDLED=[extractContract,compareLevel,sevenOneSeven,sevenOneSeven2] as unknown as Ruleset[];
 /** RETIRED 2026-11-11 with the examples they existed for (docs/audits/old-naledi-audit.md): each ran through code
  *  written for it alone, and Apply ruleset carries no bespoke ruleset code now. A saved pin to one is refused by name. */
 export const RETIRED_RULESETS:Readonly<Record<string,string>>={

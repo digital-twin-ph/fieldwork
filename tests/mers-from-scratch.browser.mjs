@@ -50,7 +50,7 @@ function expected(){
   const split=line=>line.match(/("([^"]*)"|[^,]*)(,|$)/g).slice(0,cols.length).map(v=>v.replace(/,$/,'').replace(/^"|"$/g,''));
   const rows=lines.map(line=>Object.fromEntries(split(line).map((v,i)=>[cols[i],v])));
   const days=(a,b)=>a&&b?(Date.parse(b)-Date.parse(a))/86_400_000:null;
-  const verdict=(d,target)=>d===null?'NoVerdict':d<=target?'Met':'NotMet';
+  const verdict=(d,target)=>d===null?'No verdict':d<=target?'Met':'Not met';
   const tally=f=>rows.reduce((m,r)=>{const v=f(r);m[v]=(m[v]??0)+1;return m;},{});
   return {cases:rows.length,
     detection:tally(r=>verdict(days(r.dt_onset,r.dt_diag),7)),
@@ -89,7 +89,7 @@ test('MERS-CoV, South Korea, 2015: each case’s detection and notification agai
   const timely=await idOf(page,'apply_ruleset');
   await page.locator(`.react-flow__node[data-id="${timely}"]`).click();
   await page.locator('#configure-step').click();
-  await page.locator('#ruleset-config #ruleset-choice').selectOption('urn:fieldwork:ruleset:seven-one-seven@1.0.0');
+  await page.locator('#ruleset-config #ruleset-choice').selectOption('urn:fieldwork:ruleset:seven-one-seven@2.0.0');
   await page.locator('#ruleset-config #config-apply').click();
   await tidy(page);await wire(page,list,timely,'records');
   // Which column holds each date: the practitioner's choice, 2026-11-12.
@@ -108,7 +108,7 @@ test('MERS-CoV, South Korea, 2015: each case’s detection and notification agai
 
   // EACH VERDICT COUNTED, by Total within groups, configured once the verdicts exist.
   const counts=[];
-  for(const [column,title] of [['detectionWithinTarget','Detected within 7 days of onset'],['notificationWithinTarget','Reported within 1 day of diagnosis']]){
+  for(const [column,title] of [['detected_within_target','Detected within 7 days of onset'],['notified_within_target','Reported within 1 day of diagnosis']]){
     await add(page,'group_table');
     const group=await idOf(page,'group_table',counts.length);
     await tidy(page);await wire(page,timely,group,'records');
@@ -123,7 +123,7 @@ test('MERS-CoV, South Korea, 2015: each case’s detection and notification agai
     const shown=await idOf(page,'table_output',counts.length+1);
     await tidy(page);await wire(page,group,shown,'table');
     await label(page,shown,title);
-    counts.push({title,want:column==='detectionWithinTarget'?want.detection:want.notification});
+    counts.push({title,want:column==='detected_within_target'?want.detection:want.notification});
   }
   await run(page);
   await page.locator('[data-view="results"]').click();

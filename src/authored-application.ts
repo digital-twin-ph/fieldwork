@@ -380,7 +380,9 @@ export function evaluatedRecordFacts(
   const category=(column:string,value:unknown)=>{if(typeof value==='string'&&value.includes(':'))
     termOf.set(`${column}\u0000${curieLocal(value).replace(/_/g,' ')}`,value);};
   for(const rule of rules)for(const t of rule.then){const column=t.column??curieLocal(t.predicate);predicateOf.set(column,t.predicate);category(column,t.value);}
-  for(const o of otherwise){const column=curieLocal(o.predicate);predicateOf.set(column,o.predicate);category(column,o.value);}
+  for(const o of otherwise){
+    const column=rules.flatMap(r=>r.then).find(t=>t.predicate===o.predicate&&t.column?.trim())?.column?.trim()??curieLocal(o.predicate);
+    predicateOf.set(column,o.predicate);category(column,o.value);}
   const literal=(value:unknown,kind:FieldBinding['kind']):string|null=>{
     const read=readValue(value as Scalar|null|undefined,kind);
     if(!read.known)return null;

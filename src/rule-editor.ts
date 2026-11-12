@@ -20,7 +20,7 @@ import type {ParamsByType} from './types.js';
 import type {Escape} from './types.js';
 import {compileAuthoredRuleset,compiledRuleCount,RULE_CEILING,authoredUnitProblems,settingNamed,isComputed,computesValues,
   COMPUTE_OPERATORS,readsPrevious,readsPreviousRows,evaluatedDirectly,otherwiseProblems,type Operand,type AuthoredOrder,
-  type AuthoredOtherwise,bandRules} from './authored-rules.js';
+  type AuthoredOtherwise,bandRules,targetRules} from './authored-rules.js';
 import {evaluateAuthored,OPERATOR_WORDS,localName,undescribedSentence,type Evaluation,type NoPrevious} from './rule-evaluation.js';
 import {openConfigDialog,type ConfigSections} from './config-dialog.js';
 import type {SubjectRecord} from './authored-application.js';
@@ -180,6 +180,24 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
     // THE COLUMNS, THEIR KINDS AND UNITS, AND HOW THE RECORDS ARRIVE, edited here with the rules (experiment 186).
     let fields:Field[]=structuredClone(authored.fields),choices=readable(fields);
     const bands={open:false,field:'',start:'0',cuts:'',column:'band'};
+    const target={open:false,earlier:'',later:'',days:'days',target:'7',setting:'target_days',verdict:'within_target'};
+    const targetMarkup=()=>{
+      const columns=choices.filter(c=>c.kind==='date'||c.kind==='number');
+      if(review||columns.length<2)return '';
+      if(!columns.some(c=>c.predicate===target.earlier))target.earlier=columns[0]!.predicate;
+      if(!columns.some(c=>c.predicate===target.later))target.later=columns[1]!.predicate;
+      const pick=(id:string,key:'earlier'|'later',label:string)=>`<div class="field"><label class="field-label" for="${id}">${label}</label><select id="${id}">`
+        +columns.map(c=>`<option value="${esc(c.predicate)}" ${c.predicate===target[key]?'selected':''}>${esc(c.label)}</option>`).join('')+`</select></div>`;
+      const text=(id:string,key:'days'|'target'|'setting'|'verdict',label:string)=>`<div class="field"><label class="field-label" for="${id}">${label}</label>`
+        +`<input id="${id}" value="${esc(target[key])}"${key==='target'?' inputmode="decimal"':''}></div>`;
+      return `<details id="rule-editor-target" class="config-group"${target.open?' open':''}><summary>Compare with a target…</summary>`
+        +pick('target-earlier','earlier','From')+pick('target-later','later','To')
+        +text('target-days','days','New column for the days')
+        +text('target-value','target','Target, in days')+text('target-setting','setting','Name of the target setting')
+        +text('target-verdict','verdict','New column for the verdict')
+        +`<p id="target-preview" class="description" aria-live="polite"></p>`
+        +`<button type="button" class="button" id="target-add">Add these rules</button></details>`;
+    };
     const bandsMarkup=()=>{
       const numbers=choices.filter(c=>c.kind==='number');
       if(review||!numbers.length)return '';
@@ -540,7 +558,7 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
         +rules.map((rule,r)=>ruleCard(rule,r)).join('')
         +(review?'':`<div class="rule-editor-adds"><button class="button" id="rule-editor-add" data-editor-add>+ Add a rule</button>`
           +`<button class="button" id="rule-editor-add-every" data-editor-add>+ Add a value computed for every record</button></div>`
-          +bandsMarkup())
+          +bandsMarkup()+targetMarkup())
         +otherwiseMarkup()
         +(evaluatedDirectly({rules:rules as never,otherwise})
           ?`<p class="muted">${rules.length} rule${rules.length===1?'':'s'}.</p>`
@@ -645,6 +663,27 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
       root.querySelector<HTMLButtonElement>('#bands-add')?.addEventListener('click',()=>{
         let made;try{made=readBands();}catch{sayBands();return;}
         rules=[...rules,...made.rules];bands.open=false;bands.cuts='';render();});
+      // COMPARE WITH A TARGET: the days, the target as a setting, Met and Not met, and No verdict where a value is missing.
+      const targetBox=root.querySelector<HTMLDetailsElement>('#rule-editor-target');
+      targetBox?.addEventListener('toggle',()=>{target.open=targetBox.open;});
+      const targetIds:[string,keyof typeof target][]=[['target-earlier','earlier'],['target-later','later'],['target-days','days'],
+        ['target-value','target'],['target-setting','setting'],['target-verdict','verdict']];
+      const readTarget=()=>{for(const [id,key] of targetIds){const el=root.querySelector<HTMLInputElement>(`#${id}`);if(el)(target as Record<string,unknown>)[key]=el.value;}
+        return targetRules({later:target.later,earlier:target.earlier,days:target.days,target:Number(target.target),setting:target.setting,verdict:target.verdict});};
+      const targetSaid=root.querySelector<HTMLElement>('#target-preview');
+      const sayTarget=()=>{if(!targetSaid)return;try{const m=readTarget();
+          targetSaid.textContent=`${target.days} is ${shownName(target.later)} minus ${shownName(target.earlier)}; ${target.verdict} is Met at ${m.value} ${m.setting.unitLabel} or fewer, Not met above, No verdict where either is missing.`;
+          targetSaid.classList.remove('rule-editor-bands-wrong');}
+        catch(e){targetSaid.textContent=e instanceof Error?e.message:String(e);targetSaid.classList.add('rule-editor-bands-wrong');}};
+      targetIds.forEach(([id])=>root.querySelector(`#${id}`)?.addEventListener('input',sayTarget));
+      targetIds.forEach(([id])=>root.querySelector(`#${id}`)?.addEventListener('change',sayTarget));
+      if(target.open)sayTarget();
+      root.querySelector<HTMLButtonElement>('#target-add')?.addEventListener('click',()=>{
+        let made;try{made=readTarget();}catch{sayTarget();return;}
+        rules=[...rules,...made.rules];
+        otherwise=[...otherwise.filter(x=>x.predicate!==made.otherwise[0]!.predicate),...made.otherwise];
+        settings=[...settings.filter(x=>x.name!==made.setting.name),made.setting as never];values[made.setting.name]=made.value;
+        target.open=false;render();});
       root.querySelector<HTMLButtonElement>('#rule-editor-add')!.onclick=()=>{
         rules=[...rules,{any:[{all:[blankCondition(fields)]}],then:[{predicate:'fwa:decision',value:'fwa:Review'}]}];
         render();

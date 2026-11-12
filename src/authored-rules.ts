@@ -414,3 +414,27 @@ export function bandRules(field:string,start:number,cuts:number[],column:string)
   return {rules,labels};
 }
 
+
+/** COMPARE WITH A TARGET (the practitioner, 2026-11-12, asking how a person would write 7-1-7's rules by hand): one
+ *  interval against one target, as ordinary rules. The days from one column to another, computed for every record; the
+ *  target a setting, so it is changed in one place; Met where the days are at most the target and Not met where more;
+ *  and No verdict where either value is missing, so a missing date never reads as a failure. */
+export function targetRules(o:{later:string;earlier:string;days:string;target:number;setting:string;verdict:string;unitLabel?:string}):{
+  rules:AuthoredRule[];otherwise:{predicate:string;value:string}[];setting:{name:string;meaning:string;unit:string;unitLabel:string};value:number}{
+  const clean=(name:string,what:string)=>{const n=name.trim().replace(/[^A-Za-z0-9_]+/g,'_').replace(/^_+|_+$/g,'');
+    if(!n)throw new Error(`Name the ${what}.`);return n;};
+  if(!o.later||!o.earlier)throw new Error('Choose both columns.');
+  if(o.later===o.earlier)throw new Error('Choose two different columns: the days from a column to itself are always 0.');
+  if(!Number.isFinite(o.target)||o.target<0)throw new Error('The target is a number of days, 0 or more.');
+  const days=clean(o.days,'column for the days'),verdict=clean(o.verdict,'column for the verdict'),setting=clean(o.setting,'target');
+  if(days===verdict)throw new Error('The days and the verdict need different column names.');
+  const unit=o.unitLabel?.trim()||'days';
+  const rules=[
+    {any:[{all:[]}],then:[{predicate:`fwa:${days}`,column:days,unit,meaning:`From ${o.earlier.replace(/^\w+:/,'')} to ${o.later.replace(/^\w+:/,'')}`,
+      compute:{left:{field:o.later},operator:'minus',right:{field:o.earlier}}}]},
+    {any:[{all:[{field:`fwa:${days}`,comparator:'notGreaterThan',value:{setting}}]}],then:[{predicate:`fwa:${verdict}`,value:'fwa:Met'}]},
+    {any:[{all:[{field:`fwa:${days}`,comparator:'greaterThan',value:{setting}}]}],then:[{predicate:`fwa:${verdict}`,value:'fwa:Not_met'}]},
+  ] as unknown as AuthoredRule[];
+  return {rules,otherwise:[{predicate:`fwa:${verdict}`,value:'fwa:No_verdict'}],
+    setting:{name:setting,meaning:`Most ${unit} from ${o.earlier.replace(/^\w+:/,'')} to ${o.later.replace(/^\w+:/,'')}`,unit,unitLabel:unit},value:o.target};
+}

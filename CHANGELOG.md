@@ -27,8 +27,7 @@ shown in a local build is not a claim that it has been published.
   rules to each record, to classify it or compute a value". Table still mentioned catchment summaries and review
   decisions. A workflow started blank says it was built on a *Blank canvas*, not a "study area experiment".
 - **No count of records can exceed the records.** Each data issue carries the records it found, and one function counts
-  across issues by their union; the receipt shapes refuse an issue claiming more records than were considered; a test
-  runs every built-in example and MERS's project through that rule.
+  across issues by their union, so a record lacking two columns is counted once.
 - **Sierra Leone: who were the cases?**, a fourth workflow: cases by sex, and by age band (0, 1 to 4, 5 to 9, 10 to 14,
   15 and over) with one panel per sex.
 - **Chart orders bands that begin with a number by that number**: 0, 1 to 4, 5 to 9, 10 to 14, 15 and over, not as text.

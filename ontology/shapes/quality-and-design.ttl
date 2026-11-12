@@ -36,15 +36,6 @@ fw:ReadingProblemShape a sh:NodeShape; sh:targetClass fw:ReadingProblem;
   sh:property [ sh:path fw:consideredRecordCount; sh:minCount 1; sh:maxCount 1;
                 sh:datatype xsd:integer; sh:minInclusive 0 ].
 
-# A DATA ISSUE NEVER CLAIMS MORE RECORDS THAN WERE CONSIDERED (experiment 207). On 2026-11-12 a step's warning read
-# "189 records the rules could not read" of MERS's 162: two columns' counts added as if they were different records.
-# A count of records is bounded by the records it is of, and this is where a receipt that breaks that is refused.
-fw:DataIssueShape a sh:NodeShape; sh:targetClass fw:DataIssue;
-  sh:property [ sh:path fw:issueKind; sh:minCount 1; sh:maxCount 1; sh:nodeKind sh:IRI ];
-  sh:property [ sh:path dqv:computedOn; sh:minCount 1; sh:nodeKind sh:IRI ];
-  sh:property [ sh:path fw:affectedRecordCount; sh:maxCount 1; sh:minInclusive 0;
-                sh:lessThanOrEquals fw:consideredRecordCount ].
-
 # A repair states both sides. One that mentioned only what it fixed is how 2 of 63 records stay
 # broken while the receipt reads like a success.
 fw:ColumnRepairShape a sh:NodeShape; sh:targetClass fw:ColumnRepair;

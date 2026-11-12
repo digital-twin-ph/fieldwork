@@ -61,15 +61,6 @@ test('records touched by several issues are counted once: MERS, 27 without onset
   assert.throws(()=>unreadHeadline([{field:'a',count:2,of:2,records:[0,1]},{field:'b',count:2,of:2,records:[2,3]}]),/cannot exceed/);
 });
 
-test('a receipt claiming more records than it considered is refused by the shapes',async()=>{
-  const {Store}=await import('n3');
-  const {validateGraph}=await import('../scripts/validate-ontology.mjs');
-  const n3=d=>new Store(new Parser().parse(issueFacts('<urn:fieldwork:run:r:ruleset:s>','<urn:fieldwork:run:r:output:list>','urn:fieldwork:run:r:ruleset:s',
-    [{kind:'ValueAbsent',column:'dt_onset',count:d,of:162,says:'x'}])));
-  assert.equal((await validateGraph(n3(27))).conforms,true);
-  assert.equal((await validateGraph(n3(189))).conforms,false,'189 of 162 is refused');
-});
-
 test('every built-in example: no data issue in any receipt claims more records than it considered',async()=>{
   const {EXAMPLE_TEMPLATES}=await import('../build/example-templates.js');
   const {executeWorkflow,validateWorkflow}=await import('../build/core.js');

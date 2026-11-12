@@ -57,7 +57,6 @@ export interface SelectorElements {
   '#area-undo-point':HTMLButtonElement;
   '#area-clear':HTMLButtonElement;
   '#area-fit':HTMLButtonElement;
-  '#area-old-naledi':HTMLButtonElement;
   '#area-use-bounds':HTMLButtonElement;
   '#area-cancel':HTMLButtonElement;
   '#area-apply':HTMLButtonElement;

@@ -49,13 +49,12 @@ export {RENAMED_NODE_TYPES};
 import type {Reasoner} from './worker-types.js';
 import type {AreaValue,CoverageValue,DisplayValue,WorkflowRun,Output,Receipt,NearestRow,Status} from './results.js';
 import {declarationGaps,dataIssuesOf} from './results.js';
-import type {OldInputs} from './old-naledi.js';
 import {isRecord,required} from './guards.js';
-interface ExecutionInputs extends OldInputs {area2:AreaValue;polygons:Polygons;subjects:PointCollection;network:Network;sites:PointCollection;reached:PointCollection;points:PointCollection&{spatialReference?:import('./types.js').AnySpatialReference};original:PointCollection;moved:PointCollection;pumps:PointCollection;originalCenter:MeanCenter;movedCenter:MeanCenter;comparison:PointComparison;raster:RasterGrid;table:import('./data-table.js').DataTable;projections:import('./sea-level.js').ProjectionTable;series:import('./case-series.js').SeriesTable;records:PointCollection;cases:import('./data-table.js').DataTable;related:import('./data-table.js').DataTable;list:import('./data-table.js').DataTable;rates:import('./data-table.js').DataTable&{rate?:import('./rate.js').RateResult};assignments:import('./sea-level.js').AssignmentTable;coverage?:CoverageValue;candidates:PointCollection;distances:{rows:NearestRow[];centers:PointFeature[];method:string};alert:ParamsByType['alert'];decisions:DisplayValue;design:import('./study-design.js').DeclaredDesign}
+interface ExecutionInputs {samples:PointCollection&{sourceNodeId?:string;sourceKind?:string};area:import('./results.js').AreaValue;area2:AreaValue;polygons:Polygons;subjects:PointCollection;network:Network;sites:PointCollection;reached:PointCollection;points:PointCollection&{spatialReference?:import('./types.js').AnySpatialReference};original:PointCollection;moved:PointCollection;pumps:PointCollection;originalCenter:MeanCenter;movedCenter:MeanCenter;comparison:PointComparison;raster:RasterGrid;table:import('./data-table.js').DataTable;projections:import('./sea-level.js').ProjectionTable;series:import('./case-series.js').SeriesTable;records:PointCollection;cases:import('./data-table.js').DataTable;related:import('./data-table.js').DataTable;list:import('./data-table.js').DataTable;rates:import('./data-table.js').DataTable&{rate?:import('./rate.js').RateResult};assignments:import('./sea-level.js').AssignmentTable;coverage?:CoverageValue;candidates:PointCollection;distances:{rows:NearestRow[];centers:PointFeature[];method:string};alert:ParamsByType['alert'];decisions:DisplayValue;design:import('./study-design.js').DeclaredDesign}
 import classification from '../widgets/classification.json' with {type:'json'};
 import facilityRegisters from '../widgets/facility-registers.json' with {type:'json'};
 import {listFacilitiesValue,type RegisterEntry} from './facility-matching.js';
-import {OLD_TYPES,validateOldNode,executeOldNode,migrateFacilitySources,applyAccessReview,applyFacilityGrading,gradedPointLayer,distancesAsAccess} from './old-naledi.js';
+import {gridPoints,GRID_METHOD} from './point-grid.js';
 import {resolveRuleset,publishedRuleset,RETIRED_RULESETS,WRITTEN_IN_WORKFLOW,bindParameters,tableContractFailures,rulesetCitation} from './rulesets.js';
 import {selectRows,selectRange,rangeSentence} from './select-rows.js';
 import {appendTables,appendSentence,appendPort,appendTableCount} from './append-rows.js';
@@ -247,7 +246,14 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   // computation never was. The unit knob landed earlier the same day.
   measure_distance: {title:'Measure distance', group:'Spatial operations', icon:'⌁', color:'teal', description:'For each point, the straight-line distance to the nearest of a set of candidate points', inputs:[['points','points'],['candidates','points']], output:'distances'},
   policy: {title:'Outreach criteria', group:'Semantic reasoning', icon:'⋈', color:'purple', description:'Apply N3 rules with EYE-JS', inputs:[['distances','distances'],['alert','alert']], output:'decisions'},
-  ...OLD_TYPES,
+  // Study area's definition lived in Old Naledi's module until 2026-11-11 (docs/audits/old-naledi-audit.md).
+  study_area:{title:'Study area',group:'Sources',icon:'⬡',color:'blue',description:'Define the geographic extent used by your workflow',inputs:[],output:'area'},
+  // RETIRED with Old Naledi, 2026-11-11: kept so a saved workflow holding one is refused by name.
+  facilities:{title:'Select nearby facilities',group:'Spatial operations',icon:'⌂',color:'blue',description:'Retired — use Keep points inside the area',inputs:[['area','area'],['points','points']],output:'facilities'},
+  facility_audit:{title:'Evidence register',group:'Summaries',icon:'☷',color:'green',description:'Retired — use Table, and Apply ruleset for a classification',inputs:[['points','points']],output:'decisions'},
+  xpert:{title:'Diagnostic evidence',group:'Semantic reasoning',icon:'⋈',color:'purple',description:'Retired — use Apply ruleset',inputs:[['facilities','facilities']],output:'gradedFacilities'},
+  access:{title:'Facility access',group:'Spatial operations',icon:'⌁',color:'teal',description:'Retired — use Measure distance',inputs:[['samples','points'],['facilities','gradedFacilities']],output:'access'},
+  access_policy:{title:'Access review',group:'Semantic reasoning',icon:'⋈',color:'purple',description:'Retired — use Apply ruleset',inputs:[['access','access']],output:'decisions'},
   // Generalised in place on 2026-10-12, out of OLD_TYPES and into the shared palette. The grid
   // was always a general operation; its title said "Sample locations", its description promised
   // "demonstration points", and it lived in one example's module. src/point-grid.ts holds it now.
@@ -709,7 +715,6 @@ export function validateWorkflow(raw:unknown):Workflow {
   migrateDeriveValue(w);
   migrateSatelliteSampler(w);
   migrateHealthsitesNodes(w);
-  migrateFacilitySources(w);
   migrateOutputNodes(w);
   migrateGroupTableNulls(w);
   migrateSurveillanceDesign(w);
@@ -928,7 +933,6 @@ export function validateWorkflow(raw:unknown):Workflow {
     if (n.type==='point_grid' && (!Number.isFinite(n.params.spacingM) || n.params.spacingM<150 || n.params.spacingM>1000)) throw new Error('spacingM must be between 150 and 1000.');
     if (n.type==='policy' && (!Number.isFinite(n.params.thresholdKm) || n.params.thresholdKm<0 || n.params.thresholdKm>1000)) throw new Error('Distance threshold must be between 0 and 1,000 km.');
     if (n.type==='alert' && (![true,false,null].includes(n.params.active) || !/^\d{4}-\d{2}-\d{2}$/.test(n.params.date) || !Number.isFinite(Date.parse(n.params.date)) || new Date(n.params.date).toISOString().slice(0,10)!==n.params.date)) throw new Error('Invalid heat alert or assessment date.');
-    if(Object.hasOwn(OLD_TYPES,n.type))validateOldNode(n);
     if(n.type==='measure_area')validateAreaUnit(n.params.unit);
     if(n.type==='append_rows'&&n.params.tableCount!==undefined&&(!Number.isInteger(n.params.tableCount)||n.params.tableCount<2))throw new Error('Append rows stacks two tables or more.');
     if((n.type==='map_output'||n.type==='table_output'||n.type==='deduplicate_points')&&n.params.pointInputCount!==undefined&&(!Number.isInteger(n.params.pointInputCount)||n.params.pointInputCount<1||n.params.pointInputCount>MAX_POINT_LAYERS))throw new Error('Use 1–8 point input ports.');
@@ -2407,14 +2411,23 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
       case 'table_output':{const shown=shownMode(node,workflow.edges);if(shown==='table'){value={...structuredClone(inputs.table),centers:[],pointTable:true} as unknown as DisplayValue;const viewFacts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n<urn:fieldwork:run:${runId}:view:${node.id}> a fw:TableView, prov:Activity; prov:used <urn:fieldwork:run:${runId}:table:${workflow.edges.find(e=>e.to===node.id&&e.port==='table')!.from}>.\n`;receipts.push({nodeId:node.id,kind:'presentation',facts:viewFacts,rules:'',input:viewFacts,conclusions:[]});break;}if(shown==='polygons'){value=polygonDisplay(inputs.polygons,'table');receipts.push(polygonPresentationReceipt(node,workflow.edges.find(e=>e.to===node.id&&e.port==='polygons')!.from,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='context')?.from));break;}if(shown==='decisions'){const shown=decisionPresentation(node,inputs.decisions,workflow.edges.find(e=>e.to===node.id&&e.port==='decisions')!.from,runId);value=shown.value;receipts.push(shown.receipt);break;}const table=tableOutput(node,{points:pointInputs()},runId);value=table.value;receipts.push(table.receipt);break;}
       case 'measure_area':{const computed=measureArea(node,inputs.area,runId);value=computed.value;receipts.push(computed.receipt);break;}
       case 'study_area':{
-        if(node.params.source!=='drawn'){value={...await executeOldNode(node,inputs,reasoner,receipts,distanceKm,runId),areaId:`urn:fieldwork:area:${node.id}`,geometryId:`urn:fieldwork:geometry:${node.id}`,label:node.params.label||'Old Naledi',rows:[],centers:[]};break;}
+        if(node.params.source!=='drawn')throw new Error('This study area names a dataset rather than drawing or acquiring its outline. That form was Old Naledi\'s and retired with it on 2026-11-11; draw the area, or pick administrative units.');
         const n3=studyAreaN3(node),conclusions=await reasoner(n3.input);
         const ready=conclusions.some(q=>q.subject===`urn:fieldwork:area:${node.id}`&&q.predicate===NS+'readyForSpatialAnalysis'&&q.object==='true');
         if(!ready)throw new Error('The reasoner did not confirm the study-area input contract.');
         receipts.push({nodeId:node.id,...n3,conclusions});
         value={kind:'study-area',areaId:`urn:fieldwork:area:${node.id}`,geometryId:`urn:fieldwork:geometry:${node.id}`,boundary:structuredClone(node.params.geometry),...(node.params.boundary?.units?.length?{units:structuredClone(node.params.boundary.units)}:{}),bounds:geometryBounds(node.params.geometry!),label:node.params.label,selectionMode:node.params.selectionMode,ready,rows:[],centers:[],source:'User-drawn geometry in CRS84'};break;
       }
-      default:value=await executeOldNode(node,inputs,reasoner,receipts,distanceKm,runId);
+    case 'point_grid':{
+      const rows=gridPoints(inputs.area.boundary,node.params.spacingM);
+      const features:PointFeature[]=rows.map(p=>({type:'Feature',id:p.id,properties:{name:p.name,samplingBasis:'regular-grid'},geometry:{type:'Point',coordinates:[...p.coordinates]}}));
+      const step='<urn:fieldwork:run:'+runId+':grid:'+node.id+'>',dataset='<urn:fieldwork:run:'+runId+':output:'+node.id+'>';
+      let facts='@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n@prefix geo: <http://www.opengis.net/ont/geosparql#>.\n@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.\n'+step+' a fw:GridSampleGeneration; prov:used <'+inputs.area.areaId+'>; fw:spacingMetres '+node.params.spacingM+'; fw:generatedRecordCount '+rows.length+'.\n'+dataset+' a geo:FeatureCollection, prov:Entity; prov:wasGeneratedBy '+step+'.\n';
+      for(const point of rows){const feature='<urn:fieldwork:run:'+runId+':grid:'+node.id+':'+point.id+'>';facts+=dataset+' rdfs:member '+feature+'.\n'+feature+' a geo:Feature; geo:hasGeometry [ a geo:Geometry; geo:asWKT '+JSON.stringify('<http://www.opengis.net/def/crs/OGC/1.3/CRS84> POINT ('+point.coordinates.join(' ')+')')+'^^geo:wktLiteral ].\n';}
+      receipts.push({nodeId:node.id,kind:'computation',facts,rules:'',input:facts,conclusions:[],method:GRID_METHOD});
+      return {...inputs.area,type:'FeatureCollection' as const,features,rows,sourceNodeId:node.id,sourceKind:'generated-grid',spacingM:node.params.spacingM};
+    }
+      default:throw new Error(`This build carries no step of type ${node.type}.`);
     }
     if(node.type==='study_area'&&isRecord(value))value.spatialReference=structuredClone(node.params.spatialReference);
     // The list travels on the value, so the interactive map, the static figure and the key all

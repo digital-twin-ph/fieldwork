@@ -27,8 +27,7 @@ export function catalogLinks(example:{id:string;title:string;repository:string;c
 }
 
 /** The built-in examples with files of their own in Fieldwork's repository, by project. */
-const BUILT_IN_FOLDERS:Record<string,string>={'hagelloch-1861':'examples/hagelloch-1861','cholera-london-1854':'examples/john-snow',
-  'old-naledi':'examples/old-naledi'};
+const BUILT_IN_FOLDERS:Record<string,string>={'hagelloch-1861':'examples/hagelloch-1861','cholera-london-1854':'examples/john-snow'};
 
 export function builtInLinks(project:{id:string;name:string;workflows:readonly string[]},workflowKey:string):ExampleLinks|null{
   const folder=BUILT_IN_FOLDERS[project.id];

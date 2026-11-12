@@ -778,7 +778,7 @@ async function fetchWithProgress(url:string,estimate:number,onProgress:(read:num
         +`${pickedLevel!.source} \u00b7 ${pickedLevel!.boundaryID} \u00b7 ${pickedLevel!.licence}`;
     })();
   };
-  $('#area-fit').onclick=fit;$('#area-old-naledi').onclick=()=>map.setView([-24.685,25.901],14);
+  $('#area-fit').onclick=fit;
   name.oninput=refresh;
   /** Applying a published boundary is SLOW and was silent.
    *

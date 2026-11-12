@@ -2,7 +2,6 @@ import type {Workflow,WorkflowNode,Boundary} from './types.js';
 import type {RasterGrid} from './raster.js';
 import {clipRaster} from './raster.js';
 import {loadRasterAsset} from './raster-workflow.js';
-import {boundary as oldNalediBoundary} from '../examples/old-naledi/data.js';
 import {bufferedBoundary} from './area-buffer.js';
 
 export function previewArea(workflow:Workflow,nodeId:string):{node:WorkflowNode<'study_area'>;boundary:Boundary}{
@@ -10,7 +9,7 @@ export function previewArea(workflow:Workflow,nodeId:string):{node:WorkflowNode<
   while(!visited.has(id)){
     visited.add(id);const node=workflow.nodes.find(n=>n.id===id);
     if(node?.type==='study_area'){
-      const boundary=node.params.geometry||(node.params.source!=='drawn'?oldNalediBoundary as Boundary:null);
+      const boundary=node.params.geometry??null;
       if(!boundary)throw new Error('Define the connected Study area first.');
       return {node,boundary:buffers.toReversed().reduce((shape,distance)=>bufferedBoundary(shape,distance),boundary)};
     }

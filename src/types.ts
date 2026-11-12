@@ -166,7 +166,7 @@ export interface AreaRevision {at:string; geometry:Boundary; selectionMode:'bbox
 export type DrawnBy = {login:string; basis:import('./identity.js').IdentityBasis; at?:string};
 export type AreaParams = {source:'drawn'; label:string; selectionMode:'bbox'|'polygon'|'circle'; geometry:Boundary|null; spatialReference?:SpatialReference; country?:string;
   /** The countries it lies in, one or more (experiment 204); `country` is the one-country form it replaces. */
-  countries?:string[]} & {revisions?:AreaRevision[]; boundary?:BoundaryProvenance; drawnBy?:DrawnBy; /** The key the outline and its revisions are kept under in the payload store; written on save, read only by storage. */ areaRef?:string} | {source?:undefined; geometry?:never; selectionMode?:never; dataset:string; label?:string; spatialReference?:SpatialReference; country?:string};
+  countries?:string[]} & {revisions?:AreaRevision[]; boundary?:BoundaryProvenance; drawnBy?:DrawnBy; /** The key the outline and its revisions are kept under in the payload store; written on save, read only by storage. */ areaRef?:string};
 export interface Exclusion {sourceNodeId:string; featureId:string; signature:string; reason:string}
 export type AreaUnit = 'm2'|'km2'|'ha'|'ft2'|'acre'|'mi2';
 export interface Measurement {squareMetres:number; value:number; unit:AreaUnit; method:string}
@@ -700,7 +700,7 @@ export interface WorkflowEdge {id:string; from:string; to:string; port:string}
  *  `exampleId`, so it carries the project it belongs to and the key it is stored under -- because
  *  the workspace map was keyed by a closed vocabulary of example ids, and a practitioner cannot
  *  mint one of those. `outputId` stays SINGULAR and per-workflow: one question, one answer. */
-export interface Workflow {schema:'fieldwork/workflow/1'; name:string; exampleId?:'blank'|'coverage'|'old-naledi'|'raster'|'snow-voronoi'|'snow-isochrone'|'snow-geoprivacy'|'snow-extent'|'rulesets'; nodes:WorkflowNode[]; edges:WorkflowEdge[]; projectId?:string; workflowKey?:string; outputId?:string; manifest?:import('./project-manifest.js').ProjectManifest}
+export interface Workflow {schema:'fieldwork/workflow/1'; name:string; exampleId?:'blank'|'coverage'|'snow-voronoi'|'snow-isochrone'|'snow-geoprivacy'|'snow-extent'|'rulesets'; nodes:WorkflowNode[]; edges:WorkflowEdge[]; projectId?:string; workflowKey?:string; outputId?:string; manifest?:import('./project-manifest.js').ProjectManifest}
 // 'samples' was removed on 2026-10-12: it sat in this union and nowhere else, produced by
 // nothing and consumed by nothing. Found by surveying the inventory sideways
 // (docs/experiments/105-five-directions.md), and removed rather than counted, because a closed

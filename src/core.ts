@@ -93,7 +93,6 @@ import {authoredConclusions,authoredFacts,authoredProjection,authoredReceipt,aut
 import {applyRepairs} from './column-profile.js';
 import {compileAuthoredRuleset,authoredUnitProblems,evaluatedDirectly,fieldsRead} from './authored-rules.js';
 import {evaluateAuthored,evaluatedTable,evaluationSentence} from './rule-evaluation.js';
-import {travelTime,travelTimeReceipt,validateTravelTime,TRAVEL_TIME_METHOD} from './travel-time.js';
 import {studyAreaN3,geometryBounds,validateDrawnGeometry} from './study-area.js';
 import {measureArea,validateAreaUnit} from './area-measurement.js';
 import {mapOutput} from './map-output.js';
@@ -208,8 +207,9 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   // widget and not a knob: a minutes column changes every row for every consumer of `distances`,
   // so the contract moves, which is what the knob test refuses. And not a third value of the unit
   // knob either -- minutes is a model, not a unit.
+  // RETIRED with Old Naledi, 2026-11-11: kept so a saved workflow holding one is refused by name.
   travel_time:{title:'Travel time from distance',group:'Spatial operations',icon:'◷',color:'teal',
-    description:'Estimate walking minutes from each distance at a stated speed, as a proxy rather than a routed time',
+    description:'Retired — use Apply ruleset, with a value computed for every record',
     inputs:[['distances','distances']],output:'distances'},
   // One entry for every declared ruleset, replacing policy, access_policy and xpert, which
   // differed only in which rules they ran. Ports are the ruleset's and are pinned per node, so
@@ -266,9 +266,9 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   // definition, and a saved workflow that still names this type is migrated to
   // `clip_points_to_area` on open. It is in the retired list, so the palette never offers it.
   coverage_check:{title:'Check spatial coverage',group:'Comparisons and checks',icon:'◎',color:'purple',description:'Retired — use Keep points inside the area',inputs:[['area','area'],['points','points']],output:'coverage-check'},
-  map_output:{title:'Map',group:'Outputs',icon:'◈',color:'green',description:'Display the study polygon and points, including outside records',inputs:[['area','area'],['points','points'],['polygons','polygons'],['context','points'],['decisions','decisions'],['raster','raster'],['ground','ground'],['network','network']],output:null},
-  table_output:{title:'Table',group:'Outputs',icon:'☷',color:'green',description:'Display a keyed table, point coordinates, catchment summaries or review decisions',inputs:[['points','points'],['coverage','coverage-check'],['table','table'],['polygons','polygons'],['decisions','decisions']],output:null},
-  chart_output:{title:'Chart',group:'Outputs',icon:'▥',color:'green',description:'Draw a table\u2019s categories as bars, or count records by decision, access zone or evidence tier',inputs:[['records','table'],['decisions','decisions'],['polygons','polygons']],output:null},
+  map_output:{title:'Map',group:'Outputs',icon:'◈',color:'green',description:'Display the study polygon and points, including outside records',inputs:[['area','area'],['points','points'],['polygons','polygons'],['context','points'],['raster','raster'],['ground','ground'],['network','network']],output:null},
+  table_output:{title:'Table',group:'Outputs',icon:'☷',color:'green',description:'Display a keyed table, point coordinates, catchment summaries or review decisions',inputs:[['points','points'],['coverage','coverage-check'],['table','table'],['polygons','polygons']],output:null},
+  chart_output:{title:'Chart',group:'Outputs',icon:'▥',color:'green',description:'Draw a table\u2019s categories as bars, or count records by decision, access zone or evidence tier',inputs:[['records','table'],['polygons','polygons']],output:null},
   output: {title:'Visual output', group:'Outputs', icon:'◈', color:'green', description:'Display results as a map, table, or bar chart', inputs:[['decisions','decisions']], output:null}
 };
 const point = (id:string,name:string,coordinates:Position|null|undefined):PointFeature => ({type:'Feature',id,properties:{name},geometry: coordinates ? {type:'Point',coordinates} : null});
@@ -435,15 +435,15 @@ import {mapLayerList,validateLayerSettings,assertSomethingToDraw,membersOfPolygo
   from './map-layer-list.js';
 
 export function drawnMode(node:WorkflowNode<'map_output'>,edges:{to:string;port:string}[]):
-  'network'|'raster'|'polygons'|'decisions'|'spatial'{
+  'network'|'raster'|'polygons'|'spatial'{
   const wired=new Set(edges.filter(e=>e.to===node.id).map(e=>e.port));
   if(wired.has('network'))return 'network';
   if(wired.has('raster'))return 'raster';
   if(wired.has('polygons'))return 'polygons';
-  if(wired.has('decisions'))return 'decisions';
   if(wired.size)return 'spatial';
+  // 'decisions' is still read from a saved file and shown as spatial: nothing produces decisions since 2026-11-11.
   const stored=node.params.inputMode;
-  return stored==='network'||stored==='raster'||stored==='polygons'||stored==='decisions'?stored:'spatial';
+  return stored==='network'||stored==='raster'||stored==='polygons'?stored:'spatial';
 }
 
 /** Which renderer a TABLE uses, read from what is wired. The same direction, one widget over.
@@ -481,14 +481,13 @@ export function portSourceName(w:Workflow,nodeId:string,port:string,fallback:str
 }
 
 export function shownMode(node:WorkflowNode<'table_output'>,edges:{to:string;port:string}[]):
-  'table'|'polygons'|'decisions'|'spatial'{
+  'table'|'polygons'|'spatial'{
   const wired=new Set(edges.filter(e=>e.to===node.id).map(e=>e.port));
   if(wired.has('table'))return 'table';
   if(wired.has('polygons'))return 'polygons';
-  if(wired.has('decisions'))return 'decisions';
   if(wired.size)return 'spatial';
   const stored=node.params.inputMode;
-  return stored==='table'||stored==='polygons'||stored==='decisions'?stored:'spatial';
+  return stored==='table'||stored==='polygons'?stored:'spatial';
 }
 
 export function nodeInputs(node:WorkflowNode):[string,PortType][]{
@@ -527,7 +526,7 @@ export function nodeInputs(node:WorkflowNode):[string,PortType][]{
   // question about shape before having the shape.
   if(node.type==='map_output')return [['area','area'],
     ...Array.from({length:node.params.pointInputCount??1},(_,i)=>[pointPort(i),'points'] as [string,PortType]),
-    ['polygons','polygons'],['context','points'],['decisions','decisions'],
+    ['polygons','polygons'],['context','points'],
     // THE DYNAMIC LIST IS THE ONE THAT BINDS. `TYPES.map_output.inputs` declares the ports and
     // this function is what a connection is actually checked against, so a port added to the
     // declaration alone is a port nothing may connect to -- which is how `ground` arrived
@@ -547,7 +546,7 @@ export function nodeInputs(node:WorkflowNode):[string,PortType][]{
   // until the practitioner has answered a question about the shape before having the shape.
   if(node.type==='table_output')return [
     ...Array.from({length:node.params.pointInputCount??1},(_,i)=>[pointPort(i),'points'] as [string,PortType]),
-    ['coverage','coverage-check'],['table','table'],['polygons','polygons'],['decisions','decisions']];
+    ['coverage','coverage-check'],['table','table'],['polygons','polygons']];
   return TYPES[node.type].inputs;
 }
 /** STEPS WHOSE NEXT RUN READS EVERY SATELLITE FILE AGAIN, asked for in Sample satellite's dialog. Once: the run that
@@ -929,7 +928,6 @@ export function validateWorkflow(raw:unknown):Workflow {
       if (!['map','table','bars'].includes(n.params.view)) throw new Error('Visual outputs must use a map, table, or bar chart.');
       if (n.params.label !== undefined && (typeof n.params.label!=='string' || n.params.label.length>60)) throw new Error('Output names must be text of at most 60 characters.');
     }
-    if (n.type==='travel_time') validateTravelTime(n.params.speedMPerMin);
     if (n.type==='point_grid' && (!Number.isFinite(n.params.spacingM) || n.params.spacingM<150 || n.params.spacingM>1000)) throw new Error('spacingM must be between 150 and 1000.');
     if (n.type==='policy' && (!Number.isFinite(n.params.thresholdKm) || n.params.thresholdKm<0 || n.params.thresholdKm>1000)) throw new Error('Distance threshold must be between 0 and 1,000 km.');
     if (n.type==='alert' && (![true,false,null].includes(n.params.active) || !/^\d{4}-\d{2}-\d{2}$/.test(n.params.date) || !Number.isFinite(Date.parse(n.params.date)) || new Date(n.params.date).toISOString().slice(0,10)!==n.params.date)) throw new Error('Invalid heat alert or assessment date.');
@@ -2170,14 +2168,6 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         throw new Error(`${pinned.title} declares no columns to read its facts from, so this build cannot apply it.`);
         break;
       }
-      case 'travel_time':{
-        const source=workflow.edges.find(e=>e.to===node.id&&e.port==='distances')!.from;
-        const timed=travelTime(inputs.distances.rows,node.params.speedMPerMin);
-        value={...inputs.distances,rows:timed,
-          method:`${inputs.distances.method} ${TRAVEL_TIME_METHOD}`} as unknown as DisplayValue;
-        receipts.push(travelTimeReceipt(node,timed,runId,source));
-        break;
-      }
       case 'chart_output':{
         // WHICH EDGE IS CONNECTED DECIDES, and the stored mode is read only after that, so a
         // workflow saved under the old modes keeps drawing what it drew. A table arriving on
@@ -2237,14 +2227,13 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           break;
         }
         if(node.params.inputMode==='series'){const table=inputs.series;if(!table?.series)throw new Error('Connect Cases by period: a series chart needs the series, not a plain table.');const chart=seriesChart(table.series);const source=workflow.edges.find(e=>e.to===node.id&&e.port==='series')!.from;const facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n<urn:fieldwork:run:${runId}:view:${node.id}> a fw:ChartView, prov:Activity; prov:used <urn:fieldwork:run:${runId}:output:${source}>; fw:groupingField "period"; fw:eventDateKind ${JSON.stringify(table.series.dateKind)}.\n`+chartSpecificationFacts(node,runId,source,chart,table.series.weightField?'numeric-total':'record-count');value={...structuredClone(table) as unknown as DisplayValue,chart,rows:[],centers:[]};receipts.push({nodeId:node.id,kind:'presentation',facts,rules:'',input:facts,conclusions:[],method:chart.caption});break;}
-      if(node.params.inputMode==='polygons'){const shown=polygonDisplay(inputs.polygons,'chart');value=shown;const sourceId=workflow.edges.find(e=>e.to===node.id&&e.port==='polygons')!.from;const receipt=polygonPresentationReceipt(node,sourceId,runId);receipt.facts+=chartSpecificationFacts(node,runId,sourceId,shown.chart!,shown.chart!.field==='total'?'numeric-total':'location-membership-count');receipt.input=receipt.facts;receipts.push(receipt);break;}const decisionsEdge=wired('decisions');
+      if(node.params.inputMode==='polygons'){const shown=polygonDisplay(inputs.polygons,'chart');value=shown;const sourceId=workflow.edges.find(e=>e.to===node.id&&e.port==='polygons')!.from;const receipt=polygonPresentationReceipt(node,sourceId,runId);receipt.facts+=chartSpecificationFacts(node,runId,sourceId,shown.chart!,shown.chart!.field==='total'?'numeric-total':'location-membership-count');receipt.input=receipt.facts;receipts.push(receipt);break;}
         // NOTHING CONNECTED IS A SENTENCE, not a crash. A chart insists on no particular port
         // now, so the last branch could be reached with no edge at all and took `.from` off
         // undefined. The map says this in its own words and this says it in the chart's.
-        if(!decisionsEdge)throw new Error(`Connect something to "${node.params.label||node.id}". `
-          +'A Chart draws bars from what it is given \u2014 a table of categories and numbers, a '
-          +'reasoning result, or a summarised polygon layer \u2014 and nothing is connected to it.');
-        const shown=chartOutput(node,inputs.decisions,decisionsEdge.from,runId);value=shown.value;receipts.push(shown.receipt);break;}
+        throw new Error(`Connect something to "${node.params.label||node.id}". `
+          +'A Chart draws bars from what it is given \u2014 a table of categories and numbers, or a '
+          +'summarised polygon layer \u2014 and nothing is connected to it.');}
       case 'output':value=inputs.decisions;break;
       case 'map_output':{const mode=drawnMode(node,workflow.edges);
         // A map insists on no particular port and still insists on something: it draws what it is
@@ -2397,7 +2386,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           }
           break;
         }
-        const shown=decisionPresentation(node,{kind:'raster-map',raster:inputs.raster,boundary:inputs.raster.boundary,rows:[],centers:[]},source,runId);value=shown.value;receipts.push(shown.receipt);break;}if(mode==='decisions'){const shown=decisionPresentation(node,inputs.decisions,workflow.edges.find(e=>e.to===node.id&&e.port==='decisions')!.from,runId);value=shown.value;receipts.push(shown.receipt);break;}// A MAP OF POINTS NEEDS SOMETHING TO PUT THEM ON. The relation every row carries -- inside,
+        const shown=decisionPresentation(node,{kind:'raster-map',raster:inputs.raster,boundary:inputs.raster.boundary,rows:[],centers:[]},source,runId);value=shown.value;receipts.push(shown.receipt);break;}// A MAP OF POINTS NEEDS SOMETHING TO PUT THEM ON. The relation every row carries -- inside,
         // on the boundary, outside -- is a relation TO the study area, so without one there is no
         // map to draw and `mapOutput` read `boundary` off nothing: "Cannot read properties of
         // undefined (reading 'boundary')", reported 2026-10-21 on a Map wired to a deduplication
@@ -2408,7 +2397,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           +`rest of this workflow uses will do.`);
         const mapped=mapOutput(node,{area:inputs.area,points:pointInputs()},runId);value=mapped.value;if(mapped.receipt)receipts.push(mapped.receipt);break;}
       // The renderer follows the connections, not a stored mode: shownMode.
-      case 'table_output':{const shown=shownMode(node,workflow.edges);if(shown==='table'){value={...structuredClone(inputs.table),centers:[],pointTable:true} as unknown as DisplayValue;const viewFacts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n<urn:fieldwork:run:${runId}:view:${node.id}> a fw:TableView, prov:Activity; prov:used <urn:fieldwork:run:${runId}:table:${workflow.edges.find(e=>e.to===node.id&&e.port==='table')!.from}>.\n`;receipts.push({nodeId:node.id,kind:'presentation',facts:viewFacts,rules:'',input:viewFacts,conclusions:[]});break;}if(shown==='polygons'){value=polygonDisplay(inputs.polygons,'table');receipts.push(polygonPresentationReceipt(node,workflow.edges.find(e=>e.to===node.id&&e.port==='polygons')!.from,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='context')?.from));break;}if(shown==='decisions'){const shown=decisionPresentation(node,inputs.decisions,workflow.edges.find(e=>e.to===node.id&&e.port==='decisions')!.from,runId);value=shown.value;receipts.push(shown.receipt);break;}const table=tableOutput(node,{points:pointInputs()},runId);value=table.value;receipts.push(table.receipt);break;}
+      case 'table_output':{const shown=shownMode(node,workflow.edges);if(shown==='table'){value={...structuredClone(inputs.table),centers:[],pointTable:true} as unknown as DisplayValue;const viewFacts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n<urn:fieldwork:run:${runId}:view:${node.id}> a fw:TableView, prov:Activity; prov:used <urn:fieldwork:run:${runId}:table:${workflow.edges.find(e=>e.to===node.id&&e.port==='table')!.from}>.\n`;receipts.push({nodeId:node.id,kind:'presentation',facts:viewFacts,rules:'',input:viewFacts,conclusions:[]});break;}if(shown==='polygons'){value=polygonDisplay(inputs.polygons,'table');receipts.push(polygonPresentationReceipt(node,workflow.edges.find(e=>e.to===node.id&&e.port==='polygons')!.from,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='context')?.from));break;}const table=tableOutput(node,{points:pointInputs()},runId);value=table.value;receipts.push(table.receipt);break;}
       case 'measure_area':{const computed=measureArea(node,inputs.area,runId);value=computed.value;receipts.push(computed.receipt);break;}
       case 'study_area':{
         if(node.params.source!=='drawn')throw new Error('This study area names a dataset rather than drawing or acquiring its outline. That form was Old Naledi\'s and retired with it on 2026-11-11; draw the area, or pick administrative units.');

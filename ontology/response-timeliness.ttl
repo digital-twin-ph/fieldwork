@@ -173,3 +173,31 @@ fwg:viral-haemorrhagic-fevers a skos:Concept; skos:inScheme fw:EventGroups; skos
 fwg:respiratory-diseases a skos:Concept; skos:inScheme fw:EventGroups; skos:prefLabel "Respiratory diseases".
 fwg:other-events a skos:Concept; skos:inScheme fw:EventGroups; skos:prefLabel "Other events".
 
+
+# A CASE'S DATES, INTERVALS AND VERDICTS, as the seven-one-seven ruleset writes them for each record (experiment 200,
+# 2026-11-12). Case-level properties rather than fw:TimelinessInterval entities: on a line list each row is one case's
+# dates, and an interval of the event is not claimed from them. Each is tied to the milestone it dates or the target it
+# measures, so a receipt reads in this ontology's terms.
+fw:datesMilestone a owl:AnnotationProperty; rdfs:label "dates the milestone";
+  rdfs:comment "The milestone a record's date property dates.".
+fw:measuresTarget a owl:AnnotationProperty; rdfs:label "measures the target";
+  rdfs:comment "The target a record's interval or verdict property is measured against.".
+fw:emergenceDate a owl:DatatypeProperty; rdfs:label "Emergence date"; rdfs:range xsd:date; fw:datesMilestone fw:Emergence.
+fw:detectionDate a owl:DatatypeProperty; rdfs:label "Detection date"; rdfs:range xsd:date; fw:datesMilestone fw:Detection.
+fw:notificationDate a owl:DatatypeProperty; rdfs:label "Notification date"; rdfs:range xsd:date; fw:datesMilestone fw:Notification.
+fw:responseCompleteDate a owl:DatatypeProperty; rdfs:label "Early response complete date"; rdfs:range xsd:date; fw:datesMilestone fw:EarlyResponseActionCompleted.
+fw:daysToDetect a owl:DatatypeProperty; rdfs:label "Days to detect"; rdfs:range xsd:integer; fw:measuresTarget fw:DetectionTarget.
+fw:daysToNotify a owl:DatatypeProperty; rdfs:label "Days to notify"; rdfs:range xsd:integer; fw:measuresTarget fw:NotificationTarget.
+fw:daysToRespond a owl:DatatypeProperty; rdfs:label "Days to complete early response"; rdfs:range xsd:integer; fw:measuresTarget fw:EarlyResponseTarget.
+fw:detectionWithinTarget a owl:ObjectProperty; rdfs:label "Detected within target"; rdfs:range fw:TargetVerdict; fw:measuresTarget fw:DetectionTarget.
+fw:notificationWithinTarget a owl:ObjectProperty; rdfs:label "Notified within target"; rdfs:range fw:TargetVerdict; fw:measuresTarget fw:NotificationTarget.
+fw:responseWithinTarget a owl:ObjectProperty; rdfs:label "Early response completed within target"; rdfs:range fw:TargetVerdict; fw:measuresTarget fw:EarlyResponseTarget.
+fw:TargetVerdict a owl:Class; rdfs:label "Verdict on a target";
+  owl:oneOf (fw:Met fw:NotMet fw:NoVerdict);
+  rdfs:comment "Whether one record's interval met its target, as fw:metTarget says it for an event's interval, with a third value for a missing date.".
+fw:Met a fw:TargetVerdict, owl:NamedIndividual; rdfs:label "Met";
+  rdfs:comment "The interval is at most the target's days. Equality meets it.".
+fw:NotMet a fw:TargetVerdict, owl:NamedIndividual; rdfs:label "NotMet";
+  rdfs:comment "The interval is more than the target's days.".
+fw:NoVerdict a fw:TargetVerdict, owl:NamedIndividual; rdfs:label "NoVerdict";
+  rdfs:comment "A date the interval needs is missing, so no verdict is given: not a failure to meet the target.".

@@ -89,7 +89,9 @@ import {studyDesignSentence,studyDesignReceipt,DESIGN_LICENCES,includedMeasures,
 import {refinementSentences,investigatorAllocated} from './study-design-questions.js';
 import type {DeclaredDesign} from './study-design.js';
 import {pinnedRuleset} from './rule-application.js';
-import {authoredConclusions,authoredFacts,authoredProjection,authoredReceipt,authoredDataIssues,authoredSubjects} from './authored-application.js';
+import {authoredConclusions,authoredFacts,authoredProjection,authoredReceipt,authoredDataIssues,authoredSubjects,evaluatedRecordFacts} from './authored-application.js';
+import {issueFacts,tableIssues} from './data-issues.js';
+import {profileColumn} from './column-profile.js';
 import {applyRepairs} from './column-profile.js';
 import {compileAuthoredRuleset,authoredUnitProblems,evaluatedDirectly,fieldsRead} from './authored-rules.js';
 import {evaluateAuthored,evaluatedTable,evaluationSentence} from './rule-evaluation.js';
@@ -1957,7 +1959,15 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         const described=p.columns&&Object.keys(p.columns).length?{...declared,columns:p.columns}:declared;
         const imported=tableReceipt(node,described,runId);
         value={...imported.value,...(described.columns?{columns:described.columns}:{})} as unknown as DisplayValue;
-        receipts.push({...imported.receipt,...(described.columns?{columns:described.columns}:{})} as Receipt);break;}
+        // WHAT THE DATA QUALITY INSPECTOR SHOWS, IN THE RECEIPT (experiment 207): its findings and each column's profile,
+        // as data issues. The kinds a step downstream declares are the inspector's to show; here the table's own.
+        const rowsRead=described.rows.map(r=>({...r.key,[described.valueField]:r.value}));
+        const kinds=Object.fromEntries([...Object.keys(described.numericKeys??{}),described.valueField].map(c=>[c,'number' as const]));
+        const issues=tableIssues([...(described.findings??[]),...metadataFindings(described,p.columns,p.dictionaryCheck,p.wide)],
+          [...described.keys,described.valueField],rowsRead,(column,values)=>profileColumn(column,values,kinds[column]));
+        const found=issueFacts(`<urn:fieldwork:run:${runId}:tableinput:${node.id}>`,issues);
+        receipts.push({...imported.receipt,facts:imported.receipt.facts+found,input:imported.receipt.input+found,
+          ...(described.columns?{columns:described.columns}:{})} as Receipt);break;}
       // The conversion ran when the file was saved; execution replays it offline without reprojecting again.
       case 'deduplicate_points':{
         if(node.params.format==='table'){
@@ -2097,7 +2107,17 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
             value=(table??{...subjects,features:(subjects as PointCollection).features.map((f,i)=>
               ({...f,properties:{...f.properties,...evaluation.records[i]!.values}}))}) as unknown as DisplayValue;
             if(dataIssues.length)value={...(value as object),dataIssues,issuedBy:node.id} as unknown as DisplayValue;
-            receipts.push({nodeId:node.id,kind:'computation',method,
+            // WHAT IT READ, COMPUTED AND FOUND, in the receipt (experiment 207): the bindings and reading problems as the
+            // reasoner path states them, each record's values, and a division by zero or a disagreement as a data issue.
+            const stated=authoredReceipt(node,authored,
+              evaluatedRecordFacts(records,authored.fields,evaluation.records,authored.rules as never,authored.otherwise??[]),
+              '',[],Array.from({length:evaluation.unmatched},()=>''),runId,workflow.edges,dataIssues);
+            const zero=evaluation.records.flatMap(r=>r.divisionsByZero),clash=evaluation.records.flatMap(r=>r.conflicts.map(c=>c.column));
+            const tally=(columns:string[])=>[...columns.reduce((m,c)=>m.set(c,(m.get(c)??0)+1),new Map<string,number>())];
+            const found=issueFacts(`<urn:fieldwork:run:${runId}:ruleset:${node.id}>`,[
+              ...tally(zero).map(([column,count])=>({kind:'DivisionByZero' as const,column,count,of:records.length})),
+              ...tally(clash).map(([column,count])=>({kind:'ConclusionsConflict' as const,column,count,of:records.length}))]);
+            receipts.push({nodeId:node.id,kind:'computation',method,facts:stated.facts+found,input:stated.input+found,
               matchedByRule:evaluation.matchedByRule,unmatched:evaluation.unmatched,
               divisionsByZero:evaluation.records.flatMap((r,i)=>r.divisionsByZero.length?[records[i]!.label]:[]),
               conflicts:evaluation.records.flatMap((r,i)=>r.conflicts.map(c=>({record:records[i]!.label,...c}))),
@@ -2528,9 +2548,11 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
     //
     // Until now the cost of a run lived only in `trace`, in memory, and was lost on reload.
     const timed=receipts.find(r=>r.nodeId===node.id);
-    if(timed)timed.facts+=`<urn:fieldwork:run:${runId}:step:${node.id}> `
-      +`prov:startedAtTime "${beganAt}"^^<http://www.w3.org/2001/XMLSchema#dateTime>; `
-      +`prov:endedAtTime "${new Date().toISOString()}"^^<http://www.w3.org/2001/XMLSchema#dateTime>.\n`;
+    // Onto facts that may be empty, and in full IRIs: a receipt that declared no prefix began "undefined" and could not
+    // be parsed (found 2026-11-12, on 7-1-7's).
+    if(timed)timed.facts=(timed.facts??'')+`<urn:fieldwork:run:${runId}:step:${node.id}> `
+      +`<http://www.w3.org/ns/prov#startedAtTime> "${beganAt}"^^<http://www.w3.org/2001/XMLSchema#dateTime>; `
+      +`<http://www.w3.org/ns/prov#endedAtTime> "${new Date().toISOString()}"^^<http://www.w3.org/2001/XMLSchema#dateTime>.\n`;
     onProgress(node.id,'done');
   }
   const outputNodes=resultNodes({nodes:plan});

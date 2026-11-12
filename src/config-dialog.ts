@@ -45,6 +45,9 @@ export interface ConfigDialog<D> {
   readOnly?:boolean;
   /** Wider than a setting needs, for a body that is itself a form: the rules dialog. */
   wide?:boolean;
+  /** A REPORT, NOT SETTINGS: the body is shown without the Settings, Preview and Decisions headings (what a run found
+   *  on a step, 2026-11-12). Used with `readOnly`. */
+  report?:boolean;
 }
 
 export const CONFIG_APPLY='config-apply', CONFIG_CANCEL='config-cancel', CONFIG_CLOSE='config-close';
@@ -106,7 +109,8 @@ export function openConfigDialog<D>(spec:ConfigDialog<D>,esc:Escape):void{
 
     spec.beforeRedraw?.();
     const parts=spec.sections(draft);
-    body.innerHTML=section('Settings',parts.settings)+section('Preview',parts.preview)+section('Decisions',parts.decisions);
+    body.innerHTML=spec.report?`<section class="config-section" data-config-section="report">${parts.settings}</section>`
+      :section('Settings',parts.settings)+section('Preview',parts.preview)+section('Decisions',parts.decisions);
     slot.innerHTML=confirming
       ?`<div class="config-message config-message-warning" role="alert"><p>These changes are not applied. Discard them?</p>`
         +`<div class="config-message-actions"><button class="button" id="config-keep-editing">Keep editing</button>`

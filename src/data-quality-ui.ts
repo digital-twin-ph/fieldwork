@@ -16,6 +16,7 @@
  *  cannot be removed is a decision a practitioner cannot revisit.
  */
 import type {Escape} from './types.js';
+import {ISSUE_LABEL} from './data-issues.js';
 import {profileColumn,columnStates,histogram,type ColumnKind,type ColumnProfile} from './column-profile.js';
 
 export interface QualityRepair {column:string; to:ColumnKind; cast:number; unreadable:string[]; at:string}
@@ -52,7 +53,8 @@ export function openDataQuality(view:QualityView,esc:Escape):void{
   /** What is wrong, said first and plainly, or that nothing is. */
   const problems=(p:ColumnProfile)=>{
     const said:string[]=[];
-    if(p.mismatched)said.push(`<li class="quality-problem"><strong>${p.mismatched} of ${p.total}</strong> `
+    // EACH PROBLEM LED BY ITS KIND, as the ontology and the receipt name it (experiment 207).
+    if(p.mismatched)said.push(`<li class="quality-problem"><strong>${ISSUE_LABEL.ValueUnreadable} · ${p.mismatched} of ${p.total}</strong> `
       +`${p.mismatched===1?'value is':'values are'} not ${p.declared}s — `
       +`${p.examples.map(e=>`<code>${esc(e)}</code>`).join(', ')}`
       +`${p.repairable<p.mismatched?`. Only ${p.repairable} would survive being read as ${p.declared}s`:''}`
@@ -62,14 +64,11 @@ export function openDataQuality(view:QualityView,esc:Escape):void{
     // THE TWO ABSENCES, APART. A field the record does not have and a field it has and left empty
     // are different findings with different remedies -- the first is a question for the source,
     // the second for whoever filled the form. They were one number until 2026-10-21.
-    if(p.absent)said.push(`<li class="quality-problem"><strong>${p.absent} of ${p.total}</strong> `
-      +`${p.absent===1?'record has':'records have'} no value here`
-      +(p.missing&&p.empty?` — ${p.missing} ${p.missing===1?'does':'do'} not have the field at all, `
-        +`${p.empty} ${p.empty===1?'has':'have'} it and left it empty`
-        :p.empty?` — the field is there and empty`
-        :` — the field is not there at all`)
-      +`. Nothing is offered to fill ${p.absent===1?'it':'them'}: `
-      +`choosing a replacement is a modelling decision, not a correction.</li>`);
+    if(p.absent)said.push(`<li class="quality-problem"><strong>${ISSUE_LABEL.ValueAbsent} · ${p.absent} of ${p.total}</strong> `
+      +(p.missing&&p.empty?`${ISSUE_LABEL.FieldMissing}: ${p.missing} ${p.missing===1?'does':'do'} not have the field at all. `
+        +`${ISSUE_LABEL.ValueEmpty}: ${p.empty} ${p.empty===1?'has':'have'} it and left it empty.`
+        :p.empty?`${ISSUE_LABEL.ValueEmpty}: the field is there and empty.`
+        :`${ISSUE_LABEL.FieldMissing}: the field is not there at all.`)+`</li>`);
     // What "clean" means depends on whether anything was declared. Telling a practitioner that
     // every value is what the column was declared to be, when nothing declared it, is a claim
     // this cannot support -- and it is the claim they would most want to rely on.
@@ -84,7 +83,7 @@ export function openDataQuality(view:QualityView,esc:Escape):void{
     const rows:string[]=[];
     if(p.numeric)rows.push(`<tr><th>Range</th><td>${esc(trim(p.numeric.min))} to ${esc(trim(p.numeric.max))}, median ${esc(trim(p.numeric.median))}</td></tr>`
       +`<tr><th>Middle half</th><td>${esc(trim(p.numeric.q1))} to ${esc(trim(p.numeric.q3))}</td></tr>`
-      +`<tr><th>Beyond 1.5×IQR</th><td>${p.numeric.beyondFence} value${p.numeric.beyondFence===1?'':'s'}`
+      +`<tr><th>${ISSUE_LABEL.BeyondFence}</th><td>${p.numeric.beyondFence} value${p.numeric.beyondFence===1?'':'s'}`
       +`${p.numeric.beyondFence?` outside ${esc(trim(p.numeric.lowerFence))} to ${esc(trim(p.numeric.upperFence))}`:''}</td></tr>`);
     if(p.distinct!==undefined)rows.push(`<tr><th>Distinct</th><td>${p.distinct}</td></tr>`);
     if(p.frequencies?.length)rows.push(`<tr><th>Most often</th><td>`

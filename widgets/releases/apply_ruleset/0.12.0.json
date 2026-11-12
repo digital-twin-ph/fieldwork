@@ -65,11 +65,11 @@
  "changes": [
   {
    "kind": "minor",
-   "description": "A published ruleset's inputs are read from the columns chosen in Configure…, under Which column holds each, and the run's record states them; a chosen column the records do not carry stops the run, naming the columns they do (experiment 200). The 7-1-7 timeliness ruleset is published, cited to Bochner et al. 2023."
+   "description": "A published ruleset's inputs are read from the columns chosen in Configure…, under Which column holds each, and the run's record states them; a chosen column the records do not carry stops the run, naming the columns they do (experiment 200). The 7-1-7 timeliness ruleset is published, cited to Bochner et al. 2023. A ruleset evaluated directly now writes its receipt: the columns bound, each record's values read, computed and concluded (a date as xsd:date), and each data issue (experiment 207): no value, not the declared kind, divided by zero, rules disagree. It held start and end times only, prefixed \"undefined\". The warning table opens in a dialog, read whole, under the ontology's labels."
   }
  ],
  "evidence": {
   "status": "not-individually-certified",
-  "note": "Repository regression coverage exists, and the Validation Lab checks this widget exhaustively rather than by sample -- check 23 enumerates the complete input space of all three bundled rulesets, 46 cells, reproducing every conclusion with an independent decision table and verifying the emitted receipt. That is evidence about the rulesets and about this widget's four stages; it does not certify the widget independently, and it says nothing about whether any threshold is right. 0.12.0: tests/seven-one-seven.browser.mjs (four cases by hand: 9 and -1 days, NoVerdict where onset or response is missing); Chromium."
+  "note": "Repository regression coverage exists, and the Validation Lab checks this widget exhaustively rather than by sample -- check 23 enumerates the complete input space of all three bundled rulesets, 46 cells, reproducing every conclusion with an independent decision table and verifying the emitted receipt. That is evidence about the rulesets and about this widget's four stages; it does not certify the widget independently, and it says nothing about whether any threshold is right. 0.12.0: tests/seven-one-seven.browser.mjs (four cases by hand: 9 and -1 days, NoVerdict where onset or response is missing); Chromium. Experiment 207: tests/data-issues.test.mjs, tests/seven-one-seven-ontology.test.mjs, tests/ruleset-example.test.mjs."
  }
 }

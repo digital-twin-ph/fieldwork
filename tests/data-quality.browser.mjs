@@ -230,11 +230,9 @@ test('a tabular input is profiled too',async({page})=>{
   const dialog=page.locator('#data-quality');
   await expect(dialog).toBeVisible();
   const deaths=dialog.locator('.quality-column').filter({hasText:'deaths'});
-  // The three simulated gaps, said as absences — and no fix offered, because choosing a
-  // replacement is a modelling decision rather than a correction.
-  await expect(deaths).toContainText('3 of 43');
-  await expect(deaths).toContainText('Nothing is offered to fill them');
-  await expect(deaths).toContainText('modelling decision');
+  // The three simulated gaps, said as absences under the ontology's label, and no fix offered.
+  await expect(deaths).toContainText('No value · 3 of 43');
+  await expect(deaths.getByRole('button',{name:/fill/i})).toHaveCount(0);
   expect(errors).toEqual([]);
 });
 

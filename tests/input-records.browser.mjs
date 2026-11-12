@@ -109,20 +109,25 @@ test('records the rules cannot read are surfaced, and the notice can be read and
   // And the step carries the same finding, with the detail the toast has no room for.
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="text-building"]').click();
-  const alert=page.locator('.inspector-alert').first();
-  await expect(alert).toContainText('Read as not recorded');
-  await expect(alert).toContainText('63 records the rules could not read');
+  await expect(page.locator('.inspector-alert').first()).toContainText('Read as not recorded');
+  await expect(page.locator('.inspector-alert').first()).toContainText('63 records the rules could not read');
+  // The whole warning, in its dialog (2026-11-12): the columns fell off the Inspector.
+  await page.locator('#alert-details').click();
+  const alert=page.locator('#alert-dialog');
+  await expect(alert.locator('thead')).toContainText('Column');
   // Which column, and that this is NOT the same as a value nobody collected.
   await expect(alert).toContainText('DEATHS');
-  await expect(alert).toContainText('Not a number');
+  await expect(alert).toContainText('Not the declared kind');
   // Advice that fits what was found: the catchment advice used to be appended to every alert.
   await expect(alert).toContainText('Correct the column at its source');
   await expect(alert).not.toContainText('street network');
+  await alert.locator('#config-cancel').click();
 
   // The other step reports the other problem, in its own terms.
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="gap-day"]').click();
-  await expect(page.locator('.inspector-alert').first()).toContainText('No value');
+  await page.locator('#alert-details').click();
+  await expect(page.locator('#alert-dialog')).toContainText('No value');
   expect(errors).toEqual([]);
 });
 

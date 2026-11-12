@@ -187,6 +187,9 @@ html{scroll-padding-top:var(--project-bar-height,160px)}
 .inspector-alert strong{display:block;font-size:14px;font-weight:650;color:var(--danger-5);letter-spacing:.2px}
 .inspector-alert p{margin:7px 0 0;font-size:14px;line-height:1.7;color:var(--danger-5)}
 .inspector-alert table{margin-top:10px}
+.alert-table{width:100%;border-collapse:collapse;margin-top:12px;font-size:15px}
+.alert-table th,.alert-table td{text-align:left;vertical-align:top;padding:8px 10px;border-bottom:1px solid var(--line);overflow-wrap:anywhere}
+.alert-table th{font-weight:650}
 .inspector-alert th{background:none;color:var(--danger-5);border-bottom-color:var(--danger-3)}
 .inspector-alert td{color:var(--danger-5);border-bottom-color:var(--danger-3)}
 .inspector-alert tbody tr{cursor:default}

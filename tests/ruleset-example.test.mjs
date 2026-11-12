@@ -121,7 +121,9 @@ test('the fail conditions are in the evidence, not only on the screen',async()=>
 
   // A value nobody collected.
   const gaps=result.receipts.find(r=>r.nodeId==='gap-day').facts;
-  assert.match(gaps,/fw:readingProblem \[ a fw:ReadingProblem;/);
+  // A data issue too, in the terms every step uses (experiment 207): its kind and its column.
+  assert.match(gaps,/fw:readingProblem \[ a fw:ReadingProblem, fw:DataIssue;/);
+  assert.match(gaps,/fw:issueKind fw:ValueAbsent; fw:issueColumn "deaths"/);
   // In DQV's terms too, so a reader with its tooling can read this without knowing fw:. The
   // metric names which dimension it measures: completeness, not readability.
   assert.match(gaps,/dqv:isMeasurementOf fw:absentValues/);

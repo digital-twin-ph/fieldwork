@@ -11,6 +11,15 @@ shown in a local build is not a claim that it has been published.
 - **Choose which column a published ruleset reads**, in Apply ruleset's Configure…, under *Which column holds each*.
 - **Fixed:** a column of rule conclusions holding one value on every row was shown as a table's variable name, and lost
   its own column. Table 0.10.1.
+- **Data issues have their own ontology**, `ontology/data-issues.ttl`, built on W3C's Data Quality Vocabulary: one kind
+  of thing and fifteen kinds, from *No value* to *Rules disagree*. The Data quality inspector, the warning on a step and
+  the run's N3 receipt use the same labels, and the receipts of Table input and of Apply ruleset now state each issue.
+  Table input 0.9.1.
+- **The warning on a step opens whole, in a dialog**, with headings for what its rows are; *Site* and *Distance* showed
+  over every warning, left from a retired example.
+- **7-1-7's columns are in the ontology**, tied to the milestones and targets of `ontology/response-timeliness.ttl`, and
+  each record's dates, days and verdicts are in the receipt.
+- **Fixed:** a step whose rules compute values wrote a receipt holding only its timing, beginning "undefined".
 - **MERS-CoV, South Korea, 2015**, a worked example in its own repository: how quickly each of 162 cases was detected
   and reported, against 7-1-7 (94 of 135 detected within 7 days of onset, 161 of 162 reported within 1 day).
   And who infected whom, and where: the 98 probable links counted by source and by setting of exposure.

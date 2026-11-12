@@ -80,7 +80,7 @@
    "changes": [
     {
      "kind": "minor",
-     "description": "A published ruleset's inputs are read from the columns chosen in Configure…, under Which column holds each, and the run's record states them; a chosen column the records do not carry stops the run, naming the columns they do (experiment 200). The 7-1-7 timeliness ruleset is published, cited to Bochner et al. 2023."
+     "description": "A published ruleset's inputs are read from the columns chosen in Configure…, under Which column holds each, and the run's record states them; a chosen column the records do not carry stops the run, naming the columns they do (experiment 200). The 7-1-7 timeliness ruleset is published, cited to Bochner et al. 2023. A ruleset evaluated directly now writes its receipt: the columns bound, each record's values read, computed and concluded (a date as xsd:date), and each data issue (experiment 207): no value, not the declared kind, divided by zero, rules disagree. It held start and end times only, prefixed \"undefined\". The warning table opens in a dialog, read whole, under the ontology's labels."
     }
    ],
    "breaking": false,
@@ -908,12 +908,12 @@
    "migrationFrom": []
   },
   "table_input": {
-   "version": "0.9.0",
-   "released": "2026-11-09",
+   "version": "0.9.1",
+   "released": "2026-11-12",
    "changes": [
     {
-     "kind": "minor",
-     "description": "List the distinct values of: key columns ticked in the dialog are listed by the table, for a step that needs a column's values as a list. Assign projection site reads its sites from site_id there. Only code could set it before, so a workflow built in the application refused to run with a message pointing at a setting nobody could reach."
+     "kind": "patch",
+     "description": "The receipt carries what the Data quality inspector shows, as data issues in ontology/data-issues.ttl (experiment 207): repeated and missing keys, columns not described, and each column's field missing, empty, not the declared kind and beyond 1.5×IQR. The inspector leads each problem with the same label."
     }
    ],
    "breaking": false,

@@ -48,6 +48,7 @@ import {keyNoun,openRelateConfig,relateDraftOf,applyRelateDraft,relateSentence} 
 import {openSelectConfig,selectDraftOf,applySelectDraft,selectSentence} from './select-ui.js';
 import {openGroupConfig,groupDraftOf,applyGroupDraft,groupSentence} from './group-ui.js';
 import {openConfigDialog} from './config-dialog.js';
+import {ISSUE_LABEL} from './data-issues.js';
 import {openFacilitiesConfig,facilitiesDraftOf,applyFacilitiesDraft,facilitiesSentence} from './facilities-ui.js';
 import {fetchRegister,registerLayer,type RegisterEntry} from './facility-matching.js';
 import facilityRegistersJson from '../widgets/facility-registers.json';
@@ -1379,14 +1380,27 @@ function alertText(alert:NonNullable<ReturnType<typeof nodeAlert>>){
  *  reading it is asking the same question of every row: where does the road data stop? */
 function alertRows(alert:NonNullable<ReturnType<typeof nodeAlert>>){
   return [
+    // WHAT HAPPENED, IN THE ONTOLOGY'S WORDS (experiment 207): the label each kind of data issue carries in the receipt.
     ...(alert.dataIssues??[]).map(issue=>({name:issue.field,
-      outcome:issue.why==='missing'?'No value':'Not a number',detail:issue.says})),
-    ...(alert.gaps??[]).map(gap=>({name:gap.field,outcome:'Not declared',detail:gap.says})),
-    ...alert.unconnected.map(u=>({name:u.name,outcome:'No result',
+      outcome:ISSUE_LABEL[issue.why==='missing'?'ValueAbsent':'ValueUnreadable'],detail:issue.says})),
+    ...(alert.gaps??[]).map(gap=>({name:gap.field,outcome:ISSUE_LABEL.DeclarationAbsent,detail:gap.says})),
+    ...alert.unconnected.map(u=>({name:u.name,outcome:ISSUE_LABEL.SiteUnreachable,
       detail:`${Math.round(u.distanceM)} m to the nearest street, from a ${Math.round(u.budgetM)} m budget`})),
-    ...alert.offNetwork.map(u=>({name:u.name,outcome:'Routed off-network',
+    ...alert.offNetwork.map(u=>({name:u.name,outcome:ISSUE_LABEL.RoutedOffNetwork,
       detail:`${Math.round(u.distanceM)} m charged as a straight line, past a ${u.limitM} m limit`})),
   ];
+}
+/** WHAT A RUN FOUND ON A STEP, IN FULL: the advice and every row, in the standard frame with one Close, wide enough that no
+ *  column is cut off. Headed by what the rows are: columns the rules read, fields not declared, or sites. */
+function openAlertDialog(n:WorkflowNode,alert:NonNullable<ReturnType<typeof nodeAlert>>,issuesOnly:boolean,gapsOnly:boolean){
+  const sitesOnly=!alert.dataIssues?.length&&!alert.gaps?.length;
+  const [first,third]=issuesOnly?['Column','What it means']:gapsOnly?['Field','What is missing']:sitesOnly?['Site','Distance']:['Column, field or site','Detail'];
+  const heading=issuesOnly?'Read as not recorded':gapsOnly?'Not declared':'Out of bounds';
+  openConfigDialog<Record<string,never>>({id:'alert-dialog',widget:heading,step:n.params.label||TYPES[n.type].title,draft:{},readOnly:true,wide:true,report:true,
+    sections:()=>({settings:`<p><strong>${esc(alertHeadline(alert))}</strong></p><p>${esc(alertText(alert))}</p>`
+      +`<table class="alert-table"><thead><tr><th>${first}</th><th>What happened</th><th>${third}</th></tr></thead><tbody>`
+      +alertRows(alert).map(r=>`<tr><td>${esc(r.name)}</td><td>${esc(r.outcome)}</td><td>${esc(r.detail)}</td></tr>`).join('')+`</tbody></table>`}),
+    wire:()=>{},apply:()=>{}},esc);
 }
 function alertHeadline(alert:NonNullable<ReturnType<typeof nodeAlert>>){
   const parts=[];
@@ -3237,7 +3251,10 @@ function renderInspector(){
   // something nobody declared: the data is there and this step could not use it.
   const issuesOnly=!!alert&&!!alert.dataIssues?.length&&!alert.gaps?.length
     &&!alert.unconnected.length&&!alert.offNetwork.length;
-  if(alert)content+=`<div class="inspector-alert" role="alert"><strong>${issuesOnly?'Read as not recorded':gapsOnly?'Not declared':'Out of bounds'} · ${esc(alertHeadline(alert))}</strong><p>${esc(alertText(alert))}</p><table><thead><tr><th>${gapsOnly?'Field':'Site'}</th><th>What happened</th><th>${gapsOnly?'What is missing':'Distance'}</th></tr></thead><tbody>${alertRows(alert).map(r=>`<tr><td>${esc(r.name)}</td><td>${esc(r.outcome)}</td><td>${esc(r.detail)}</td></tr>`).join('')}</tbody></table>${dirty?'<p class="muted">From the previous run — rerun after changes.</p>':''}</div>`;
+  // THE WARNING IS READ WHOLE, in a dialog (the practitioner, 2026-11-12: its rightmost columns fell off the Inspector).
+  // The Inspector keeps what was found and the way in.
+  if(alert)content+=`<div class="inspector-alert" role="alert"><strong>${issuesOnly?'Read as not recorded':gapsOnly?'Not declared':'Out of bounds'} · ${esc(alertHeadline(alert))}</strong>`
+    +`<p><button type="button" class="button" id="alert-details">See what was found</button></p>${dirty?'<p class="muted">From the previous run — rerun after changes.</p>':''}</div>`;
   if(!standard)content+=diveDeeperPanel(n.type,esc);
   if(n.type==='mean_center'){
     content+=`<div class="notice">${n.params.weightField?.trim()?`Weighted by <strong>${esc(n.params.weightField.trim())}</strong>: each point counts in proportion to that attribute, and the receipt asserts the field and the weight total beside the point count.`:'Unweighted mean of projected point locations. Name an attribute below to weight each point by it \u2014 250 addresses carrying 489 deaths have two different centres.'} The computation uses UTM internally and emits one CRS84 center; it does not create a projected point dataset. Keep source and result private when locations are sensitive.</div><div class="field"><label class="field-label" for="mean-center-weight">Weight each point by this attribute (optional)</label><input id="mean-center-weight" data-slr="weightField" maxlength="60" value="${esc(n.params.weightField||'')}" placeholder="DEATHS"><p class="description">Leave empty for one point, one vote.</p></div><label class="field-label" for="mean-center-zone">WGS84 UTM zone</label><input id="mean-center-zone" type="number" min="1" max="60" value="${n.params.zone}"><label class="field-label" for="mean-center-hemisphere">Hemisphere</label><select id="mean-center-hemisphere"><option value="north" ${n.params.hemisphere==='north'?'selected':''}>North</option><option value="south" ${n.params.hemisphere==='south'?'selected':''}>South</option></select>`;
@@ -4249,6 +4266,7 @@ function renderInspector(){
   // WHERE THIS FIGURE GOES IN THE WRITE-UP, for every output widget: Results unless chosen otherwise. The practitioner,
   // 2026-11-05: "all output widgets may have default IMRAD sections but it should be flexible."
   $('#inspector-content').innerHTML=`<div class="inspector-body">${content}</div>`;
+  optionalElement('#alert-details')?.addEventListener('click',()=>{const found=nodeAlert(n.id);if(found)openAlertDialog(n,found,issuesOnly,gapsOnly);});
   // QUICK LOOK AT WHAT THIS STEP PRODUCED, for every widget that emits a table.
   //
   // The practitioner, 2026-10-27: *"Any widget that works on a table and outputs a table should

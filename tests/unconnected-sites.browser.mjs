@@ -23,13 +23,17 @@ test('a site past the snap limit is routed off-network, and the widget says so',
   await expect(widget.locator('.node-alert')).toContainText('routed off-network');
   await page.locator('[data-view="results"]').click();
   await expect(page.locator('#map [data-catchment]')).not.toHaveCount(0);
-  const alert=page.locator('.inspector-alert');
-  await expect(alert).toContainText('Out of bounds');
-  await expect(alert).toContainText('Routed off-network');
+  await expect(page.locator('.inspector-alert')).toContainText('Out of bounds');
+  // The whole warning, in its dialog (2026-11-12).
+  await page.locator('#alert-details').click();
+  const alert=page.locator('#alert-dialog');
+  await expect(alert.locator('thead')).toContainText('Site');
+  await expect(alert).toContainText('Routed off the network');
   await expect(alert).toContainText('charged as a straight line');
   // Mode-neutral: see tests/catchments.test.mjs. 2026-10-25.
   await expect(alert).toContainText('assumes ground that can be crossed');
   assert.ok((await alert.locator('tbody tr').count())>0,'each site is named with the leg it was charged');
+  await alert.locator('#config-cancel').click();
 
   // The badge closes. It covers the node it is about, and once it has been read it is in the
   // way -- the practitioner asked for an x on 2026-10-15. Closing it keeps the finding: the
@@ -89,10 +93,12 @@ test('a site whose walk spends the budget gets no result, and the omission trave
   await page.locator('#catchment-minutes').blur();
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
-  const alert=page.locator('.inspector-alert');
-  await expect(alert).toContainText('with no result');
+  await expect(page.locator('.inspector-alert')).toContainText('with no result');
+  await page.locator('#alert-details').click();
+  const alert=page.locator('#alert-dialog');
   await expect(alert).toContainText('No result');
   await expect(alert).toContainText('spends the whole travel budget');
+  await alert.locator('#config-cancel').click();
   await page.locator('[data-view="workflow"]').click();
   await expect(page.locator('.react-flow__node[data-id="summary"] .node')).toHaveClass(/alerting/);
   await page.locator('[data-view="rules"]').click();

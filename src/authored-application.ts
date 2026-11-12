@@ -319,13 +319,16 @@ export function authoredReceipt(
   // measurement of one metric over one resource, and saying so lets a reader with DQV tooling
   // read it without knowing this ontology. Researched 2026-10-17; experiment 117.
   const problems=dataIssues.map(issue=>
-    `${activity} fw:readingProblem [ a fw:ReadingProblem; `
+    // A data issue too (experiment 207): its kind, its column and what it means, in the terms every step uses.
+    `${activity} fw:readingProblem [ a fw:ReadingProblem, fw:DataIssue; `
+    +`fw:issueKind ${issue.why==='missing'?'fw:ValueAbsent':'fw:ValueUnreadable'}; fw:issueColumn ${JSON.stringify(issue.field)}; `
+    +`rdfs:comment ${JSON.stringify(issue.says)}; `
     +`dqv:isMeasurementOf ${issue.why==='missing'?'fw:absentValues':'fw:unreadableValues'}; `
     +`fw:boundAttribute ${JSON.stringify(issue.field)}; `
     +`fw:problemKind ${issue.why==='missing'?'fw:ValueAbsent':'fw:ValueUnreadable'}; `
     +`fw:affectedRecordCount ${issue.count}; fw:consideredRecordCount ${issue.of} ].`).join('\n');
   const statement=`@prefix fw: <${NS}>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n`
-    +(problems?`@prefix dqv: <http://www.w3.org/ns/dqv#>.\n`:'')
+    +(problems?`@prefix dqv: <http://www.w3.org/ns/dqv#>.\n@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.\n`:'')
     +`${activity} a fw:RuleApplication, prov:Activity; fw:ruleSource "authored"; `
     +`fw:rulesetTitle ${JSON.stringify(authored.title)}; `
     +`fw:mustNotBeReadAs ${JSON.stringify(authored.mustNotBeReadAs)}; `
@@ -345,4 +348,42 @@ export function authoredReceipt(
           +`${issue.why==='missing'?'no value':'an unreadable value'} for ${issue.field}, and the rules were `
           +`told it was not recorded.`).join(' ')
         :'Every bound value was readable.')};
+}
+
+/** WHAT A DIRECTLY EVALUATED STEP READ AND CONCLUDED, PER RECORD, as N3 for its receipt (experiment 207, 2026-11-12).
+ *  The reasoner path writes the facts it reasoned over; a step evaluated directly wrote none, so its receipt said nothing
+ *  about a value it read or computed. Each record is one subject; each bound column its predicate, a date as an
+ *  xsd:date, a number as a number; each computed or concluded column under the predicate its rule names. */
+export function evaluatedRecordFacts(
+  records:{id:string; properties?:Record<string,unknown>}[],bindings:FieldBinding[],
+  outcomes:{values:Record<string,string|number|null>}[],
+  rules:{then:{predicate:string; column?:string; value?:unknown}[]}[],otherwise:{predicate:string; value?:string}[]=[],
+):string{
+  // Each column's predicate, and each category's term as the rules wrote it (`fw:Met`), by the value the table shows.
+  const predicateOf=new Map<string,string>(),termOf=new Map<string,string>();
+  const category=(column:string,value:unknown)=>{if(typeof value==='string'&&value.includes(':'))
+    termOf.set(`${column}\u0000${curieLocal(value).replace(/_/g,' ')}`,value);};
+  for(const rule of rules)for(const t of rule.then){const column=t.column??curieLocal(t.predicate);predicateOf.set(column,t.predicate);category(column,t.value);}
+  for(const o of otherwise){const column=curieLocal(o.predicate);predicateOf.set(column,o.predicate);category(column,o.value);}
+  const literal=(value:unknown,kind:FieldBinding['kind']):string|null=>{
+    const read=readValue(value as Scalar|null|undefined,kind);
+    if(!read.known)return null;
+    return kind==='number'?String(Number(value)):kind==='boolean'?String(value===true||value==='true')
+      :kind==='date'?`${JSON.stringify(String(value).trim())}^^<http://www.w3.org/2001/XMLSchema#date>`:termFor(value as Scalar);
+  };
+  const lines=records.map((record,i)=>{
+    const parts:string[]=[];
+    for(const b of bindings){
+      const value=literal(record.properties?.[b.attribute],b.kind);
+      parts.push(`${knownPredicate(b.predicate)} ${value!==null}`);
+      if(value!==null)parts.push(`${b.predicate} ${value}`);
+    }
+    for(const [column,value] of Object.entries(outcomes[i]?.values??{})){
+      const predicate=predicateOf.get(column);
+      if(!predicate||value===null||value==='')continue;
+      parts.push(`${predicate} ${typeof value==='number'?String(value):termOf.get(`${column}\u0000${value}`)??termFor(value)}`);
+    }
+    return `<${NS}${AUTHORED_SUBJECT}:${encodeURIComponent(record.id)}> ${parts.join('; ')}.`;
+  });
+  return AUTHORED_PREFIX+lines.join('\n')+'\n';
 }

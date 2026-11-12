@@ -166,7 +166,7 @@
         {
           "version": "0.12.0",
           "path": "widgets/releases/apply_ruleset/0.12.0.json",
-          "sha256": "2c8d51da374d31e697c388dd17d1d9cebfcb6df4a65c41870a0ce95a6772d58d"
+          "sha256": "e7172ebd30f338ab5a315ca8558dd7714e3169a5dd52ede5faed78ac27233188"
         }
       ]
     },
@@ -1826,7 +1826,7 @@
     {
       "id": "urn:fieldwork:widget:table_input",
       "nodeType": "table_input",
-      "currentVersion": "0.9.0",
+      "currentVersion": "0.9.1",
       "releases": [
         {
           "version": "0.1.0",
@@ -1882,6 +1882,11 @@
           "version": "0.9.0",
           "path": "widgets/releases/table_input/0.9.0.json",
           "sha256": "63c876bea3e19d1b6f3bd6a853877be4fef9997940b3262d64098a3a30f26427"
+        },
+        {
+          "version": "0.9.1",
+          "path": "widgets/releases/table_input/0.9.1.json",
+          "sha256": "5c81d01e490e5781c970bcfb8ec45f9eff67d7cc04b3bdee2429e1ba2168bc35"
         }
       ]
     },

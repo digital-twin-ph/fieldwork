@@ -526,6 +526,8 @@ SK_39 has three recorded sources and SK_107 two, so a tree of one source per cas
 not make; how to show it is the practitioner's to decide.
 
 
+## What would close this
+
 The practitioner choosing the first slice and its data, and its being built and run by hand on an empty canvas.
 
 ## Related

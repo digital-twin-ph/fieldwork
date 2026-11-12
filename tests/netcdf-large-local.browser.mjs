@@ -34,7 +34,7 @@ test('DTU25MSS, 2.9 GB on this laptop, is read in parts and agrees with the subs
   await page.locator('#raster-source-citation').fill('Andersen, O. B. and Nilsson, B. DTU25MSS. DTU Space. doi:10.11583/DTU.29412275');
   await page.locator('#raster-source-units').fill('m');
   const saving=Date.now();
-  await page.locator('#raster-save').click();
+  await page.locator('#raster-dialog #config-apply').click();
   await expect(page.locator('#raster-dialog')).toHaveCount(0,{timeout:300_000});
   const read=Date.now()-saving;
 

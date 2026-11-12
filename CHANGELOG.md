@@ -3,6 +3,14 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.97.0 — 2026-11-11
+
+- **WorldPop's newer release, for any year from 2015 to 2030.** Raster input's Configure… offers WorldPop Global2
+  R2025A beside Global1 (2000 to 2020), for any of 242 countries; choose the year your project needs. Its citation and
+  DOI, its licence and its alpha status are shown with the download. Raster input 0.11.0.
+- **Raster input's Configure… is the standard dialog**, with ×, Cancel and Apply.
+- **WorldPop's list is checked weekly** against WorldPop's site, and a change comes as a pull request.
+
 ## 0.96.0 — 2026-11-11
 
 - **Old Naledi and the heat example retired** as worked examples, after an audit of what only they used

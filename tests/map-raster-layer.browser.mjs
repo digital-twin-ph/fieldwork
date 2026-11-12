@@ -31,11 +31,11 @@ test('a map draws a raster under a street network, not instead of it',async({pag
   await page.locator('#prepare-raster').click();
   await page.locator('#raster-file').setInputFiles({name:'soho.tif',mimeType:'image/tiff',
     buffer:Buffer.from(encodeRaster({metadata,values}))});
-  await expect(page.locator('#raster-save')).toBeEnabled();
+  await expect(page.locator('#raster-dialog #config-apply')).toBeEnabled();
   await page.locator('#raster-source-sourceURL').fill('https://example.org/raster');
   await page.locator('#raster-source-citation').fill('Synthetic raster citation');
   await page.locator('#raster-source-units').fill('people per cell');
-  await page.locator('#raster-save').click();
+  await page.locator('#raster-dialog #config-apply').click();
   await expect(page.locator('#raster-dialog')).toHaveCount(0);
 
   const saved=JSON.parse(await page.evaluate(()=>localStorage.getItem('fieldwork-workflow-v1')));
@@ -87,11 +87,11 @@ test('a map draws a raster with an area, points and a network all wired',async({
   await page.locator('#prepare-raster').click();
   await page.locator('#raster-file').setInputFiles({name:'soho.tif',mimeType:'image/tiff',
     buffer:Buffer.from(encodeRaster({metadata,values}))});
-  await expect(page.locator('#raster-save')).toBeEnabled();
+  await expect(page.locator('#raster-dialog #config-apply')).toBeEnabled();
   await page.locator('#raster-source-sourceURL').fill('https://example.org/raster');
   await page.locator('#raster-source-citation').fill('Synthetic raster citation');
   await page.locator('#raster-source-units').fill('people per cell');
-  await page.locator('#raster-save').click();
+  await page.locator('#raster-dialog #config-apply').click();
   await expect(page.locator('#raster-dialog')).toHaveCount(0);
   const source=JSON.parse(await page.evaluate(()=>localStorage.getItem('fieldwork-workflow-v1')))
     .nodes.find(n=>n.type==='raster_input');
@@ -150,11 +150,11 @@ test('the static plot draws points on the raster, and the key names them',async(
   await page.locator('#prepare-raster').click();
   await page.locator('#raster-file').setInputFiles({name:'soho.tif',mimeType:'image/tiff',
     buffer:Buffer.from(encodeRaster({metadata,values}))});
-  await expect(page.locator('#raster-save')).toBeEnabled();
+  await expect(page.locator('#raster-dialog #config-apply')).toBeEnabled();
   await page.locator('#raster-source-sourceURL').fill('https://example.org/raster');
   await page.locator('#raster-source-citation').fill('Synthetic raster citation');
   await page.locator('#raster-source-units').fill('people per cell');
-  await page.locator('#raster-save').click();
+  await page.locator('#raster-dialog #config-apply').click();
   await expect(page.locator('#raster-dialog')).toHaveCount(0);
   const source=JSON.parse(await page.evaluate(()=>localStorage.getItem('fieldwork-workflow-v1')))
     .nodes.find(n=>n.type==='raster_input');
@@ -227,11 +227,11 @@ test('each raster node offers its own GeoTIFF, without running the workflow',asy
   await page.locator('#prepare-raster').click();
   await page.locator('#raster-file').setInputFiles({name:'soho.tif',mimeType:'image/tiff',
     buffer:Buffer.from(encodeRaster({metadata,values}))});
-  await expect(page.locator('#raster-save')).toBeEnabled();
+  await expect(page.locator('#raster-dialog #config-apply')).toBeEnabled();
   await page.locator('#raster-source-sourceURL').fill('https://example.org/raster');
   await page.locator('#raster-source-citation').fill('Synthetic raster citation');
   await page.locator('#raster-source-units').fill('people per cell');
-  await page.locator('#raster-save').click();
+  await page.locator('#raster-dialog #config-apply').click();
   await expect(page.locator('#raster-dialog')).toHaveCount(0);
   const source=JSON.parse(await page.evaluate(()=>localStorage.getItem('fieldwork-workflow-v1')))
     .nodes.find(n=>n.type==='raster_input');

@@ -16,8 +16,16 @@ project, so a run needs neither the file nor the connection again.
 
 ## How to use it
 
-**Population from WorldPop, for the study area's country.** Configure… offers the WorldPop population raster of the
-country the study area states, a year to choose, and a download link with its size and the time it takes. The country is
+**Population from WorldPop, for the study area's country.** Configure… offers WorldPop's population raster for the
+country the study area states, in either release, under *Population source*:
+
+| Release | Years | What it is |
+| --- | --- | --- |
+| **Global2 R2025A** | every year, 2015 to 2030 | Constrained to settlements, 100 m, national totals scaled to the UN World Population Prospects 2024. An alpha release (September 2025) that WorldPop says may change. 242 countries. Cite doi:10.5258/SOTON/WP00839 |
+| **Global1** | every year, 2000 to 2020 | Unconstrained, 100 m |
+
+Choose the year your project needs; a year chosen in one release stays chosen in the other where both publish it. The
+download link gives the file's size, where it is known, and the time it takes. The country is
 set once, on the study area; where the area states none, Configure… asks for it and keeps it there. **Across a
 border**, where the study area states several countries, Configure… offers those, one file at a time: this step reads
 one file, so the part of the area in another country has no population from it.
@@ -33,7 +41,9 @@ over your study area is read, from JRC's copy on Amazon Web Services, so nothing
 is sent to that server. It counts residential population, spread over the volume of residential buildings, so it is
 weaker where buildings are hard to see, and should not be set against GHS-BUILT in the same analysis.
 
-The step's panel holds its **Name**, its study area, one sentence saying what it keeps, and **Configure…**:
+The step's panel holds its **Name**, its study area, one sentence saying what it keeps, and **Configure…**, the standard
+dialog: **Settings**, then **Preview** (the file's size in cells and the window kept), then **Decisions**. **Apply**
+reads the window and keeps it; **Cancel** or × leaves the step as it was.
 
 | In Configure… | What it does |
 | --- | --- |
@@ -50,6 +60,10 @@ and the panel says so. A NetCDF grid always is: its latitudes and longitudes are
 **A NetCDF file** must be NetCDF-4 (HDF5 inside), with one-dimensional coordinates named `latitude` or `lat` and
 `longitude` or `lon`, evenly spaced, west to east. Its fill value, scale factor and offset are applied. It works
 offline once Fieldwork has been opened online, since its reader is saved with the application.
+
+**WorldPop's list of countries and years** is kept with Fieldwork, since WorldPop's site does not let a browser read
+it. It is checked against WorldPop's folders every week; a change comes as a pull request to the repository, and a newer
+release is reported for a person to read before it is offered.
 
 ## What it will not do
 

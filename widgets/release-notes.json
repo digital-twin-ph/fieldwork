@@ -624,12 +624,12 @@
    "migrationFrom": []
   },
   "raster_input": {
-   "version": "0.10.0",
+   "version": "0.11.0",
    "released": "2026-11-11",
    "changes": [
     {
      "kind": "minor",
-     "description": "GHS-POP, the JRC's global population grid (R2023A, 1975 to 2030 every five years, 2025 and 2030 projected), as a population source that needs no country: its window over the study area is read from JRC's cloud-optimized copy on AWS by HTTP range, through the GeoTIFF-at-a-URL path, with nothing downloaded first. Said with its licence, both citations and its limits: residential population, weaker where buildings are hard to see, not to be set against GHS-BUILT."
+     "description": "WorldPop Global2 R2025A (2015 to 2030, constrained, 100 m) beside Global1 (2000 to 2020), for any country whose folder holds a 100 m total, 242 as listed 2026-11-11; every year of the chosen release is offered, and a year chosen stays chosen across releases where both publish it. Its citation and DOI 10.5258/SOTON/WP00839, CC BY 4.0, and its alpha status are said. The catalogue is refreshed by scripts/refresh-worldpop-catalogue.mjs, weekly on GitHub. Configure… moves to the standard dialog (experiment 186): heading and ×, Settings (where to get a file, the file, source metadata), Preview, Decisions, one message slot, Cancel and Apply; Apply reads and keeps the window."
     }
    ],
    "breaking": false,

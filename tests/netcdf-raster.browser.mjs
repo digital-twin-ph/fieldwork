@@ -34,7 +34,7 @@ test('a NetCDF grid on this device is read in parts and kept as the window aroun
   await page.locator('#raster-source-sourceURL').fill('https://example.org/grid');
   await page.locator('#raster-source-citation').fill('Synthetic grid made by tests/fixtures/make-netcdf-grid.py');
   await page.locator('#raster-source-units').fill('m');
-  await page.locator('#raster-save').click();
+  await page.locator('#raster-dialog #config-apply').click();
   await expect(page.locator('#raster-dialog')).toHaveCount(0,{timeout:30000});
 
   const asset=JSON.parse(await page.evaluate(()=>localStorage.getItem('fieldwork-workflow-v1'))).nodes.find(n=>n.id==='grid').params.asset;

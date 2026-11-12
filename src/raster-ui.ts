@@ -8,64 +8,131 @@ import {inspectRaster,rasterWindow,readRasterWindow,encodeRaster} from './raster
 import {contentHash} from './project-files.js';
 import {isNetcdf,inspectNetcdf,readNetcdfWindow,type NetcdfGrid} from './netcdf-raster.js';
 import {storePDFs} from './evidence-storage.js';
+import {openConfigDialog} from './config-dialog.js';
 
+const esc=(value:unknown):string=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]!);
+
+/** RASTER INPUT, CONFIGURED (experiment 186, 2026-11-11): where to get a file, the file or its address, the variable of a
+ *  NetCDF grid, the margin, and the source's citation, in the standard dialog. Apply reads the window and keeps it.
+ *  The file is held here, outside the controls, because a redraw empties a file input; a read that fails leaves the
+ *  dialog open with the reason, and nothing on the step changed. */
+type RasterDraft={provenance:RasterProvenance; padding:number; picked:string; variable:string};
 export function openRasterEditor(boundary:Boundary,onSave:(asset:RasterAsset)=>boolean,existing?:RasterAsset,
-  /** WHERE TO GET A FILE, above the chooser (2026-11-10): the WorldPop population raster for the study area's country,
-   *  moved here from the Inspector, which kept only Name, Inputs, Settings and Result. `wire` connects its controls. */
-  source?:{html:string;wire:(root:HTMLElement)=>void}):void{
-  const dialog=document.createElement('dialog');dialog.id='raster-dialog';dialog.setAttribute('aria-labelledby','raster-title');
-  dialog.innerHTML='<h2 id="raster-title">Prepare raster input</h2><p>Select a local GeoTIFF or NetCDF-4 grid. Only a native-resolution window around the connected study area will be saved. Clip raster applies the polygon mask separately.</p><label for="raster-file" class="field-label">GeoTIFF or NetCDF file</label><input id="raster-file" type="file" accept=".tif,.tiff,image/tiff,.nc,.nc4"><div id="raster-variable-row" hidden><label for="raster-variable" class="field-label">Variable</label><select id="raster-variable"></select></div><details id="raster-url-source"><summary>Or a GeoTIFF at a URL</summary><label for="raster-url" class="field-label">URL of a GeoTIFF</label><input id="raster-url" type="url" placeholder="https://"><button type="button" id="raster-url-read" class="button">Read</button><p class="muted">Only the window around the study area is read, by range: the file is never downloaded whole.</p><div id="raster-url-keep"></div></details><p id="raster-status" role="status"></p><details><summary>Extracted GeoTIFF metadata (from the file)</summary><pre id="raster-metadata"></pre></details><p>A NetCDF file is read in parts on this device: a regular latitude-longitude grid, one variable, its values at the grid nodes. A GeoTIFF: one band, north-up WGS84 / EPSG:4326, with cells or with values at grid nodes (a node grid is read as the cells around its nodes, and says so). No resampling or reprojection. Pixel values are not automatically interpreted as population totals.</p><p id="raster-error" role="alert" hidden></p><div class="package-actions"><button id="raster-cancel" class="button">Cancel</button><button id="raster-save" class="button primary" disabled>Save raster window</button></div>';
-  const fields=document.createElement('fieldset');fields.id='raster-source-fields';fields.innerHTML='<legend>Source metadata and citation (entered separately)</legend><p>Entered by the workflow author; separate from extracted GeoTIFF metadata. These details follow the raster through clipping and export.</p><button type="button" id="raster-worldpop" class="button" hidden>Use Botswana WorldPop source details</button>'+Object.entries(RASTER_SOURCE_FIELDS).map(([key,label])=>'<label class="field-label" for="raster-source-'+key+'">'+label+'</label><textarea id="raster-source-'+key+'" data-source-field="'+key+'" rows="'+(['citation','notes'].includes(key)?3:1)+'" maxlength="'+(['citation','notes'].includes(key)?4000:2000)+'"></textarea>').join('');dialog.querySelector('#raster-error')!.before(fields);
-  const controls=[...fields.querySelectorAll<HTMLTextAreaElement>('[data-source-field]')],fill=(values:RasterProvenance)=>controls.forEach(el=>el.value=values[el.dataset.sourceField as keyof RasterProvenance]||''),collect=():RasterProvenance=>Object.fromEntries(controls.map(el=>[el.dataset.sourceField!,el.value.trim()]).filter(([,v])=>v));fill(existing?.provenance||{});
-  const preset=fields.querySelector<HTMLButtonElement>('#raster-worldpop')!;preset.hidden=existing?.source.filename!==WORLDPOP_BOTSWANA_FILENAME;preset.onclick=()=>fill(WORLDPOP_BOTSWANA);
-  if(source){const block=document.createElement('section');block.id='raster-population';block.innerHTML=source.html;
-    dialog.querySelector('#raster-title')!.nextElementSibling!.after(block);source.wire(block);}
-  document.body.append(dialog);const fileInput=dialog.querySelector<HTMLInputElement>('#raster-file')!,save=dialog.querySelector<HTMLButtonElement>('#raster-save')!,cancel=dialog.querySelector<HTMLButtonElement>('#raster-cancel')!,error=dialog.querySelector<HTMLElement>('#raster-error')!,status=dialog.querySelector<HTMLElement>('#raster-status')!,preview=dialog.querySelector<HTMLElement>('#raster-metadata')!;
-  let netcdf:NetcdfGrid|undefined,file:File|undefined,url:string|undefined,urlBytes:number|undefined,metadata:RasterMetadata|undefined,busy=false,serial=0;
-  // A GEOTIFF AT A URL (experiment 198): read in parts, and offered whole as a link, so it can be kept on this laptop and
-  // chosen above, which also reads it in parts.
-  const urlInput=dialog.querySelector<HTMLInputElement>('#raster-url')!,urlKeep=dialog.querySelector<HTMLElement>('#raster-url-keep')!;
-  const variableRow=dialog.querySelector<HTMLElement>('#raster-variable-row')!,variableSelect=dialog.querySelector<HTMLSelectElement>('#raster-variable')!;
+  /** WHERE TO GET A FILE, at the top of Settings: the population sources for the study area's country. `html` is
+   *  called on every redraw; `wire` connects its controls. */
+  source?:{html:()=>string;wire:(root:HTMLElement)=>void},step=''):void{
+  let netcdf:NetcdfGrid|undefined,file:File|undefined,url:string|undefined,urlBytes:number|undefined,metadata:RasterMetadata|undefined;
+  let reading='',failure='',urlField='',urlOpen=false,serial=0,redrawNow:()=>void=()=>{};
   const nameOf=(href:string)=>{try{return decodeURIComponent(new URL(href).pathname.split('/').pop()||href);}catch{return href;}};
-  const paddingLabel=document.createElement('label');paddingLabel.className='field-label';paddingLabel.textContent='Extra source coverage (when preparing a file)';
-  const padding=document.createElement('select');padding.id='raster-padding';padding.innerHTML='<option value="0">None</option><option value="1">One pixel around Study area (allows a small clipping margin)</option>';paddingLabel.append(padding);fileInput.after(paddingLabel);padding.disabled=!!existing;
-  padding.onchange=()=>{if((!file&&!url)||!metadata)return;try{const window=rasterWindow(metadata,boundary,Number(padding.value));preview.textContent=JSON.stringify({sourceFile:file?file.name:url,sourceBytes:file?file.size:urlBytes??null,source:metadata,retainedWindow:window,extraPixels:Number(padding.value)},null,2);status.textContent=`Retain ${window[2]-window[0]} × ${window[3]-window[1]} cells, including selected source padding.`;error.hidden=true;save.disabled=false;}catch(e){save.disabled=true;fail(e);}};
-  if(existing){save.disabled=false;save.textContent='Save raster and source metadata';status.textContent='Edit source metadata without selecting the original file again.';preview.textContent=JSON.stringify(existing.source.metadata,null,2);}
-  const fail=(e:unknown)=>{error.textContent=e instanceof Error?e.message:String(e);error.hidden=false;error.scrollIntoView({block:'nearest'});};
-  cancel.onclick=()=>dialog.close();dialog.oncancel=e=>{if(busy)e.preventDefault();};dialog.onclose=()=>{serial++;file=undefined;metadata=undefined;dialog.remove();};
-  dialog.querySelector<HTMLButtonElement>('#raster-url-read')!.onclick=async()=>{
-    const request=++serial,href=urlInput.value.trim();file=undefined;netcdf=undefined;variableRow.hidden=true;fileInput.value='';metadata=undefined;save.disabled=true;error.hidden=true;urlKeep.innerHTML='';
-    try{const parsed=new URL(href);if(!/^https?:$/.test(parsed.protocol))throw new Error('Give an http or https address.');}catch(e){fail(e instanceof Error&&e.message.startsWith('Give')?e:new Error('That is not a web address.'));return;}
-    status.textContent='Reading the GeoTIFF header…';
-    try{
-      const source=await inspectRaster(href);if(request!==serial)return;
-      // THE SIZE, SAID BEFORE ANYONE DOWNLOADS IT. A host that does not say is said not to.
-      urlBytes=undefined;try{const head=await fetch(href,{method:'HEAD'});const n=Number(head.headers.get('content-length'));if(head.ok&&Number.isFinite(n)&&n>0)urlBytes=n;}catch{/* unstated */}
-      url=href;metadata=source;padding.disabled=false;
-      const window=rasterWindow(source,boundary,Number(padding.value));
-      preview.textContent=JSON.stringify({sourceURL:href,sourceBytes:urlBytes??null,source,retainedWindow:window,retainedCells:(window[2]-window[0])*(window[3]-window[1])},null,2);
-      status.textContent=`Source: ${source.width} × ${source.height}${source.sourceRegistration?', values at grid nodes, read as the cells around them':''}. Retain ${window[2]-window[0]} × ${window[3]-window[1]} cells.`;
-      const a=document.createElement('a');a.className='button';a.href=href;a.download=nameOf(href);a.target='_blank';a.rel='noopener noreferrer';
-      a.textContent=`\u2193 Download the whole file · ${nameOf(href)}${urlBytes?` · ${(urlBytes/1e6).toFixed(1)} MB`:''}`;
-      const said=document.createElement('p');said.className='muted';
-      said.textContent=`From ${new URL(href).hostname}${urlBytes?'':', size not stated by the host'}. Keep it on this laptop and choose it above to work without the connection; it is read in parts there too.`;
-      urlKeep.replaceChildren(a,said);save.disabled=false;
-    }catch(e){if(request===serial){status.textContent='Raster cannot be prepared.';url=undefined;fail(e);}}
+  const picked=()=>!!(file||url);
+  const windowOf=(d:RasterDraft)=>metadata?rasterWindow(metadata,boundary,Number(d.padding)):undefined;
+  const fail=(e:unknown)=>{failure=e instanceof Error?e.message:String(e);reading='';};
+  const card=(title:string,body:string)=>`<section class="config-group"><h3 class="config-group-title">${title}</h3>${body}</section>`;
+
+  const readNetcdf=async(chosen:File,request:number,d:RasterDraft,variable?:string)=>{
+    reading='Reading the NetCDF header…';redrawNow();
+    const found=await inspectNetcdf(chosen,variable);if(request!==serial)return;
+    netcdf=found.grid;metadata=found.metadata;d.variable=found.grid.variable;reading='';
   };
-  const shown=(source:RasterMetadata,picked:File)=>{const window=rasterWindow(source,boundary,Number(padding.value));preview.textContent=JSON.stringify({sourceFile:picked.name,sourceBytes:picked.size,source,retainedWindow:window,retainedCells:(window[2]-window[0])*(window[3]-window[1])},null,2);status.textContent=`Source: ${source.width} × ${source.height}${source.sourceRegistration?', values at grid nodes, read as the cells around them':''}. Retain ${window[2]-window[0]} × ${window[3]-window[1]} cells.`;save.disabled=false;};
-  // A NETCDF FILE IS ASKED WHICH VARIABLE, when it holds more than one grid: DTU25MSS carries mss and its sigma.
-  const readNetcdf=async(picked:File,request:number,variable?:string)=>{status.textContent='Reading the NetCDF header…';const found=await inspectNetcdf(picked,variable);if(request!==serial)return;netcdf=found.grid;metadata=found.metadata;
-    variableSelect.innerHTML=found.grid.candidates.map(name=>`<option value="${name.replace(/[&<>"]/g,'')}">${name.replace(/[&<>"]/g,'')}</option>`).join('');variableSelect.value=found.grid.variable;variableRow.hidden=found.grid.candidates.length<2;shown(found.metadata,picked);};
-  variableSelect.onchange=async()=>{if(!file||!netcdf)return;const request=++serial;save.disabled=true;error.hidden=true;try{await readNetcdf(file,request,variableSelect.value);}catch(e){if(request===serial){status.textContent='Raster cannot be prepared.';fail(e);}}};
-  fileInput.onchange=async()=>{const request=++serial;url=undefined;netcdf=undefined;variableRow.hidden=true;urlKeep.innerHTML='';file=fileInput.files?.[0];padding.disabled=!file;metadata=undefined;save.disabled=true;error.hidden=true;if(!file){save.disabled=!existing;return;}preset.hidden=file.name!==WORLDPOP_BOTSWANA_FILENAME;if(existing){fill({});status.textContent='Replacement file selected: review and re-enter source metadata.';}
-    try{if(isNetcdf(file)){await readNetcdf(file,request);return;}status.textContent='Reading GeoTIFF metadata…';const source=await inspectRaster(file);if(request!==serial)return;metadata=source;shown(source,file);}catch(e){if(request===serial){status.textContent='Raster cannot be prepared.';fail(e);}}};
-  save.onclick=async()=>{if(((!(file||url)||!metadata)&&!existing)||busy)return;busy=true;save.disabled=true;cancel.disabled=true;fileInput.disabled=true;padding.disabled=true;fields.disabled=true;error.hidden=true;status.textContent='Reading the selected window and saving…';try{
-    const provenance=collect();validateRasterProvenance(provenance);if(!file&&!url&&existing){const asset={...structuredClone(existing),provenance};if(!onSave(asset))throw new Error('Source metadata could not be saved. Retry Save.');dialog.close();return;}const from=file??url;if(!from||!metadata)throw new Error('Select a supported raster file.');
-    const window=rasterWindow(metadata,boundary,Number(padding.value)),data=file&&netcdf?await readNetcdfWindow(file,netcdf,metadata,window):await readRasterWindow(from,metadata,window),bytes=encodeRaster(data);if(bytes.length>5_000_000)throw new Error('Retained GeoTIFF exceeds 5 MB. Use a smaller study area.');
-    const retained=await inspectRaster(new Blob([bytes])),asset:RasterAsset={provenance,filename:'raster-window.tif',mediaType:'image/tiff',bytes:bytes.length,sha256:await contentHash(bytes),metadata:retained,source:file?{filename:file.name,bytes:file.size,lastModified:file.lastModified,metadata}:{filename:nameOf(url!),bytes:urlBytes??0,lastModified:0,metadata,url:url!},window};
-    await storePDFs(new Map([[asset.sha256,bytes]]),new Map([[asset.sha256,{...asset,asset}]]));if(!onSave(asset))throw new Error('Raster metadata could not be saved. Your previous project is unchanged; retry Save.');dialog.close();
-  }catch(e){fail(e);status.textContent='Raster has not been applied to the project.';}finally{busy=false;save.disabled=false;cancel.disabled=false;fileInput.disabled=false;padding.disabled=!file;fields.disabled=false;}};
-  dialog.showModal();
+
+  openConfigDialog<RasterDraft>({
+    id:'raster-dialog',widget:'Raster input',step,
+    draft:{provenance:structuredClone(existing?.provenance||{}),padding:0,picked:'',variable:''},
+    sections:d=>{
+      let window:ReturnType<typeof rasterWindow>|undefined,windowFailure='';
+      try{window=windowOf(d);}catch(e){windowFailure=e instanceof Error?e.message:String(e);}
+      const chosenName=file?file.name:url?nameOf(url):'';
+      const presetShown=(file?file.name:existing&&!url?existing.source.filename:'')===WORLDPOP_BOTSWANA_FILENAME;
+      const settings=(source?`<section class="config-group" id="raster-population">${source.html()}</section>`:'')
+        +card('The file',
+          `<div class="field"><label for="raster-file" class="field-label">GeoTIFF or NetCDF file</label>`
+          +`<input id="raster-file" type="file" accept=".tif,.tiff,image/tiff,.nc,.nc4">`
+          +`<small>${chosenName?`Chosen: ${esc(chosenName)}. `:existing?`Kept: ${esc(existing.source.filename)}. `:''}`
+          +`One band, north-up WGS 84 (EPSG:4326), or one grid of a NetCDF-4 file. Not resampled or reprojected.</small></div>`
+          +(netcdf&&netcdf.candidates.length>1?`<div class="field" id="raster-variable-row"><label for="raster-variable" class="field-label">Variable</label>`
+            +`<select id="raster-variable">${netcdf.candidates.map(name=>`<option value="${esc(name)}"${name===netcdf!.variable?' selected':''}>${esc(name)}</option>`).join('')}</select></div>`:'')
+          +`<details id="raster-url-source"${urlOpen?' open':''}><summary>Or a GeoTIFF at a URL</summary>`
+          +`<div class="field"><label for="raster-url" class="field-label">URL of a GeoTIFF</label><input id="raster-url" type="url" placeholder="https://" value="${esc(urlField)}">`
+          +`<small>Only the window around the study area is read, by range.</small></div>`
+          +`<button type="button" id="raster-url-read" class="button">Read</button><div id="raster-url-keep">`
+          +(url?`<a class="button" href="${esc(url)}" download="${esc(nameOf(url))}" target="_blank" rel="noopener noreferrer">`
+            +`↓ Download the whole file · ${esc(nameOf(url))}${urlBytes?` · ${(urlBytes/1e6).toFixed(1)} MB`:''}</a>`
+            +`<p class="muted">From ${esc(new URL(url).hostname)}${urlBytes?'':', size not stated by the host'}. Keep it on this laptop and choose it above to work without the connection; it is read in parts there too.</p>`:'')
+          +`</div></details>`
+          +`<div class="field"><label for="raster-padding" class="field-label">Extra source coverage</label><select id="raster-padding"${existing&&!picked()?' disabled':''}>`
+          +`<option value="0"${d.padding===0?' selected':''}>None</option><option value="1"${d.padding===1?' selected':''}>One pixel around the study area</option></select>`
+          +`<small>One cell more, for a small clipping margin.</small></div>`)
+        +card('Source metadata and citation',
+          (presetShown?`<button type="button" id="raster-worldpop" class="button">Use Botswana WorldPop source details</button>`:'')
+          +`<fieldset id="raster-source-fields">`+Object.entries(RASTER_SOURCE_FIELDS).map(([key,label])=>{const long=['citation','notes'].includes(key);
+            return `<div class="field"><label class="field-label" for="raster-source-${key}">${esc(label)}</label>`
+              +`<textarea id="raster-source-${key}" data-source-field="${key}" rows="${long?3:1}" maxlength="${long?4000:2000}">${esc(d.provenance[key as keyof RasterProvenance]||'')}</textarea></div>`;}).join('')
+          +`</fieldset>`);
+      const said=reading||(metadata&&window?`Source: ${metadata.width} × ${metadata.height}${metadata.sourceRegistration?', values at grid nodes, read as the cells around them':''}. Retain ${window[2]-window[0]} × ${window[3]-window[1]} cells.`
+        :existing?`Kept: ${existing.metadata.width} × ${existing.metadata.height} cells from ${existing.source.filename}.`:'No file chosen.');
+      const shown=metadata&&window?{...(file?{sourceFile:file.name,sourceBytes:file.size}:{sourceURL:url,sourceBytes:urlBytes??null}),source:metadata,retainedWindow:window,retainedCells:(window[2]-window[0])*(window[3]-window[1]),extraPixels:d.padding}
+        :existing?existing.source.metadata:undefined;
+      const preview=`<p id="raster-status" role="status">${esc(said)}</p>`
+        +(shown?`<details><summary>Metadata read from the file</summary><pre id="raster-metadata">${esc(JSON.stringify(shown,null,2))}</pre></details>`:'');
+      const problem=failure||windowFailure;
+      return {settings,preview,decisions:`<p>Pixel values are not automatically interpreted as population totals.</p>`,
+        blocked:!!reading||!!problem||!(metadata&&window)&&!(existing&&!picked()),
+        ...(problem?{message:{tone:'refusal' as const,text:problem}}:{})};
+    },
+    wire:(root,d,redraw)=>{
+      redrawNow=redraw;
+      const block=root.querySelector<HTMLElement>('#raster-population');if(block&&source)source.wire(block);
+      root.querySelector<HTMLDetailsElement>('#raster-url-source')?.addEventListener('toggle',e=>{urlOpen=(e.target as HTMLDetailsElement).open;});
+      const urlInput=root.querySelector<HTMLInputElement>('#raster-url')!;urlInput.addEventListener('input',()=>{urlField=urlInput.value;});
+      root.querySelectorAll<HTMLTextAreaElement>('[data-source-field]').forEach(el=>el.addEventListener('input',()=>{
+        const key=el.dataset.sourceField as keyof RasterProvenance,value=el.value.trim();
+        if(value)d.provenance[key]=value;else delete d.provenance[key];}));
+      root.querySelector<HTMLButtonElement>('#raster-worldpop')?.addEventListener('click',()=>{d.provenance={...WORLDPOP_BOTSWANA};redraw();});
+      root.querySelector<HTMLSelectElement>('#raster-padding')!.addEventListener('change',e=>{d.padding=Number((e.target as HTMLSelectElement).value);redraw();});
+      root.querySelector<HTMLSelectElement>('#raster-variable')?.addEventListener('change',async e=>{
+        if(!file||!netcdf)return;const request=++serial;failure='';
+        try{await readNetcdf(file,request,d,(e.target as HTMLSelectElement).value);}catch(error){if(request===serial)fail(error);}
+        if(request===serial)redraw();});
+      root.querySelector<HTMLInputElement>('#raster-file')!.addEventListener('change',async e=>{
+        const chosen=(e.target as HTMLInputElement).files?.[0];if(!chosen)return;
+        const request=++serial;file=chosen;url=undefined;urlBytes=undefined;netcdf=undefined;metadata=undefined;failure='';
+        d.picked=chosen.name;if(existing)d.provenance={};
+        try{
+          if(isNetcdf(chosen))await readNetcdf(chosen,request,d);
+          else{reading='Reading GeoTIFF metadata…';redraw();const found=await inspectRaster(chosen);if(request!==serial)return;metadata=found;reading='';}
+        }catch(error){if(request===serial)fail(error);}
+        if(request===serial)redraw();});
+      root.querySelector<HTMLButtonElement>('#raster-url-read')!.addEventListener('click',async()=>{
+        const request=++serial,href=urlInput.value.trim();urlField=href;urlOpen=true;
+        file=undefined;netcdf=undefined;metadata=undefined;url=undefined;urlBytes=undefined;failure='';
+        try{const parsed=new URL(href);if(!/^https?:$/.test(parsed.protocol))throw new Error('Give an http or https address.');}
+        catch(error){fail(error instanceof Error&&error.message.startsWith('Give')?error:new Error('That is not a web address.'));redraw();return;}
+        reading='Reading the GeoTIFF header…';redraw();
+        try{
+          const found=await inspectRaster(href);if(request!==serial)return;
+          // THE SIZE, SAID BEFORE ANYONE DOWNLOADS IT. A host that does not say is said not to.
+          try{const head=await fetch(href,{method:'HEAD'});const n=Number(head.headers.get('content-length'));if(head.ok&&Number.isFinite(n)&&n>0)urlBytes=n;}catch{/* unstated */}
+          if(request!==serial)return;
+          url=href;metadata=found;reading='';d.picked=href;if(existing)d.provenance={};
+        }catch(error){if(request===serial)fail(error);}
+        if(request===serial)redraw();});
+    },
+    apply:()=>{},
+    applyAsync:async(d,say)=>{
+      const provenance=structuredClone(d.provenance);validateRasterProvenance(provenance);
+      if(!picked()&&existing){if(!onSave({...structuredClone(existing),provenance}))throw new Error('Source metadata could not be saved. Retry Apply.');return true;}
+      const from=file??url;if(!from||!metadata)throw new Error('Choose a supported raster file.');
+      say('Reading the selected window and saving…');
+      const window=rasterWindow(metadata,boundary,Number(d.padding));
+      const data=file&&netcdf?await readNetcdfWindow(file,netcdf,metadata,window):await readRasterWindow(from,metadata,window),bytes=encodeRaster(data);
+      if(bytes.length>5_000_000)throw new Error('Retained GeoTIFF exceeds 5 MB. Use a smaller study area.');
+      const retained=await inspectRaster(new Blob([bytes])),asset:RasterAsset={provenance,filename:'raster-window.tif',mediaType:'image/tiff',bytes:bytes.length,sha256:await contentHash(bytes),metadata:retained,
+        source:file?{filename:file.name,bytes:file.size,lastModified:file.lastModified,metadata}:{filename:nameOf(url!),bytes:urlBytes??0,lastModified:0,metadata,url:url!},window};
+      await storePDFs(new Map([[asset.sha256,bytes]]),new Map([[asset.sha256,{...asset,asset}]]));
+      if(!onSave(asset))throw new Error('Raster metadata could not be saved. Your previous project is unchanged; retry Apply.');
+      return true;
+    },
+  },esc);
 }
 /** The frame the raster is drawn in, and the projection that puts anything else in it.
  *

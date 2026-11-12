@@ -30,7 +30,7 @@ const prepare=async page=>{
   await page.locator('#raster-source-sourceURL').fill('https://example.org/people');
   await page.locator('#raster-source-citation').fill('Synthetic grid made by tests/sample-raster-areas.browser.mjs');
   await page.locator('#raster-source-units').fill('people');
-  await page.locator('#raster-save').click();
+  await page.locator('#raster-dialog #config-apply').click();
   await expect(page.locator('#raster-dialog')).toHaveCount(0,{timeout:30000});
 };
 

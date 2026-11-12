@@ -67,6 +67,8 @@ export function openMapImageConfig(o:{step:string;initial:MapImageDraft;esc:Esca
   const {esc}=o;
   let dispose:(()=>void)|undefined;
   let view:{center:L.LatLngExpression;zoom:number}|undefined;
+  /** START AGAIN asks once before it clears (the practitioner, 2026-11-12, emptying the pairs one by one on Hagelloch). */
+  let confirmingReset=false;
   let active=0,imageZoom=1,previewing=false,previewOpacity=0.6;
   // WHERE THE SHEET PANE IS LOOKING, as fractions of the image, kept across zooms and redraws (the practitioner,
   // 2026-11-10: "once zoomed in it's hard to figure out where the glowing circle is").
@@ -197,7 +199,12 @@ export function openMapImageConfig(o:{step:string;initial:MapImageDraft;esc:Esca
           +`<td>${r?round(r.metres,0):''}</td><td>${lo!==null?round(lo,0):''}${doubt?' · check this pair':''}</td>`
           +`<td><button type="button" class="button small" data-geo-remove="${i}" aria-label="Remove point ${i+1}">Remove</button></td></tr>`;
       }).join('')+`</tbody></table>`
-      +`<button type="button" class="button" id="geo-add-point">+ Add a point</button>`
+      +`<div class="inspector-actions"><button type="button" class="button" id="geo-add-point">+ Add a point</button>`
+      +(d.points.length?`<button type="button" class="button" id="geo-reset">Start again</button>`:'')+`</div>`
+      +(confirmingReset?`<div class="config-message config-message-warning" role="alert" id="geo-reset-confirm"><p>Remove every pair and return `
+        +`today's map to where it opens? The image stays.</p><div class="config-message-actions">`
+        +`<button type="button" class="button" id="geo-reset-keep">Keep the pairs</button>`
+        +`<button type="button" class="button danger" id="geo-reset-yes">Start again</button></div></div>`:'')
       +`<p class="standard-sentence" id="geo-fit">${fit?esc(fitText(fit)):`Match ${MIN_POINTS[d.model]} points or more to place the image.`}</p>`
       +liveCheck(d,fit,out)
       +`<p><button type="button" class="button" id="geo-preview-toggle" ${fit?'':'disabled'} aria-expanded="${previewing&&!!fit}">`
@@ -260,6 +267,12 @@ export function openMapImageConfig(o:{step:string;initial:MapImageDraft;esc:Esca
     root.querySelector('#geo-model')?.remove();
     root.querySelector<HTMLSelectElement>('#map-image-model')?.addEventListener('change',e=>{
       d.model=(e.target as HTMLSelectElement).value==='north-up'?'north-up':'affine';redraw();});
+    root.querySelector('#geo-reset')?.addEventListener('click',()=>{confirmingReset=true;redraw();});
+    root.querySelector('#geo-reset-keep')?.addEventListener('click',()=>{confirmingReset=false;redraw();});
+    root.querySelector('#geo-reset-yes')?.addEventListener('click',()=>{
+      confirmingReset=false;view=undefined;active=0;look=undefined;
+      d.points=d.guide?.length?[{id:d.guide[0]!.id,pixel:[NaN,NaN],lonlat:[NaN,NaN]}]:[];
+      redraw();});
     root.querySelector('#geo-add-point')?.addEventListener('click',()=>{
       const p=blank();p.id=d.guide?.[d.points.length]?.id??'';d.points.push(p);active=d.points.length-1;redraw();});
     root.querySelectorAll<HTMLInputElement>('input[name="geo-active"]').forEach(el=>el.addEventListener('change',()=>{active=Number(el.value);if(d.guide?.length)redraw();}));

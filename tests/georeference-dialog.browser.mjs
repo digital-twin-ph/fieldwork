@@ -236,3 +236,38 @@ test('the map pane is tiled to its edges after the dialog grows',async({page})=>
   },{message:'tiles reach the right edge of the pane',timeout:10_000}).toBe(true);
   expect(errors).toEqual([]);
 });
+
+// START AGAIN (the practitioner, 2026-11-12: removing the pairs one by one, the last would not always go). One button,
+// asked once, clears every pair and returns the map to where it opens; the image stays.
+test('Start again clears every pair after asking once, and keeps the image',async({page})=>{
+  const errors=collectPageErrors(page);
+  await page.route(/tile\.openstreetmap\.org/,route=>route.abort('failed'));
+  const placed=structuredClone(workflow);
+  Object.assign(placed.nodes.find(n=>n.id==='plan').params,{placement:'points'});
+  await page.goto('/?example=blank');
+  await page.locator('#workflow-file').setInputFiles({name:'reset.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(placed))});
+  await page.locator('[data-view="workflow"]').click();
+  await page.locator('.react-flow__node[data-id="plan"]').click();
+  await page.locator('#configure-step').click();
+  const dialog=page.locator('#map-image-config');
+  const png=await page.evaluate(()=>{const c=document.createElement('canvas');c.width=400;c.height=300;c.getContext('2d').fillRect(0,0,400,300);
+    return c.toDataURL('image/png').split(',')[1];});
+  await dialog.locator('#map-image-file').setInputFiles({name:'plan.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')});
+  for(const i of [0,1]){
+    await dialog.locator('#geo-add-point').click();
+    const row=dialog.locator(`tr[data-geo-row="${i}"]`);
+    for(const [field,value] of [['x',String(50+i*200)],['y',String(60+i*150)],['lon',String(-0.137+i*0.002)],['lat',String(51.513-i*0.001)]]){
+      await row.locator(`[data-geo-field="${field}"]`).fill(value);await row.locator(`[data-geo-field="${field}"]`).press('Tab');}
+  }
+  await expect(dialog.locator('tr[data-geo-row]')).toHaveCount(2);
+  await dialog.locator('#geo-reset').click();
+  await expect(dialog.locator('#geo-reset-confirm')).toContainText('The image stays');
+  await dialog.locator('#geo-reset-keep').click();
+  await expect(dialog.locator('tr[data-geo-row]')).toHaveCount(2);
+  await dialog.locator('#geo-reset').click();
+  await dialog.locator('#geo-reset-yes').click();
+  await expect(dialog.locator('tr[data-geo-row]')).toHaveCount(0);
+  await expect(dialog).toContainText('plan.png');
+  await expect(dialog.locator('#geo-fit')).toContainText('Match');
+  expect(errors).toEqual([]);
+});

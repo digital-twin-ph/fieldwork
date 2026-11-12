@@ -3,7 +3,7 @@
   "description": "Independent recomputation of implemented widgets by an external process, recorded after release. Release files are immutable once committed, so evidence about a release lives here and accrues as checks run. A fixture digest recorded in a result is over canonical JSON content rather than the file’s bytes, revised 2026-10-11 because byte identity is unsatisfiable in the browser the lab publishes to. A parity result establishes numerical agreement with a named external implementation under a stated criterion. It is not scientific certification, and it says nothing about whether a method is appropriate for a question.",
   "lab": {
     "repository": "https://github.com/digital-twin-ph/validation-lab",
-    "commit": "99e178fae51842f739c2d14c7161543a06a65c9e",
+    "commit": "2e9d2f744d0d0b0df54067ebe81011a683712b67",
     "pinNote": "The commit CI checks the lab out at: .github/workflows/pages.yml reads it with `jq -r .lab.commit widgets/parity.json`. So this pin, not the clone beside this repository, is what `validate:dive-deeper` verifies against on a clean runner -- and it must be advanced whenever a check lands in the lab, in the same push-then-pin order the worked examples use."
   },
   "outcomes": {
@@ -876,6 +876,27 @@
       ],
       "note": "Covers the placement by matched points (src/georeference.ts), not the drawing. Settles experiment 201's question: Fieldwork's fit is GDAL's, coordinates from pixels; South London's hand fit predicted pixels from coordinates, which is why the two differ east-west. The fixture is Fieldwork's own code in Node (scripts/export-validation-fixture.mjs, georef-001).",
       "notebook": "48-georeference-vs-gdal.ipynb"
+    },
+    {
+      "widget": "urn:fieldwork:widget:apply_ruleset",
+      "coversRelease": "0.13.1",
+      "check": "49-mers",
+      "result": "content/results/check-49-mers.json",
+      "sha256": "b5289a456572971c227af115dfc51dd026fc89a228721e4c1beeeb1ff0819b50",
+      "external": [
+        "pandas 2.3.3"
+      ],
+      "criterion": "Exact: each case's days and three verdicts; the verdict, source and setting counts; Relate's rows and its related, kept and several counts; the tree's counts and each chain's size and generations; each counted data issue",
+      "outcome": "agrees",
+      "measured": "MERS-CoV, South Korea, 2015, both workflows, recomputed from the line list and contacts at example-2015-mers-korea 9b82f5e: 162 cases' days and three verdicts each, four count tables, Relate's 165 rows, the tree's 8 counts and 67 chains, and 7 data issues, all exactly. Agrees in CPython; the browser kernel reads the files from GitHub at the same commit.",
+      "ranAt": "2026-11-12T17:55:05+00:00",
+      "notEstablished": [
+        "That dt_onset, dt_diag and dt_report are 7-1-7's emergence, detection and notification: the bindings are the practitioner's, and both sides read the same columns.",
+        "That the contacts are the true transmission, or that a case's first listed source is its infector.",
+        "That a report dated before its diagnosis (7 cases here) is a fact and not an error in the source: both sides count it as a negative interval and so as Met."
+      ],
+      "note": "A whole example end to end (experiment 208), not one widget: it covers Table input, Apply ruleset with 7-1-7 2.0.0, Total within groups, Relate one row per match and the transmission tree as this example chains them. The fixture carries no row of the source, which states no licence (scripts/export-validation-fixture.mjs, mers-korea-001). Found on the way and fixed: Relate's several-match counts missing from the run's record, and a key value trimmed in silence.",
+      "notebook": "49-mers-end-to-end-vs-pandas.ipynb"
     }
   ],
   "notebookNote": "`notebook` names the lab notebook that carries the check, and `diveDeeper` the heading of its Dive Deeper section where it has one -- the part written for a practitioner who wants to understand the widget rather than for a reviewer checking it (experiment 94). Both are recorded rather than derived from the check id: `24-project-forward` lives in `24-project-vs-pyproj.ipynb`, so matching on the leading number works by luck and would break the first time a check and its notebook are named differently. The application reads `diveDeeper` to decide which widgets offer the link, and scripts/validate-dive-deeper.mjs refuses a heading the notebook does not actually carry."

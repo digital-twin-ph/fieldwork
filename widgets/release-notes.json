@@ -75,12 +75,12 @@
    ]
   },
   "apply_ruleset": {
-   "version": "0.13.0",
+   "version": "0.13.1",
    "released": "2026-11-12",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Make bands…: the rules for bands of a number written from a start and rising cut points, with no gap or overlap, as ordinary rules."
+     "kind": "patch",
+     "description": "A record from a table is named in the run's sentence by its declared key, or else by the first key column that tells every row apart, rather than by every key value joined: Hagelloch's serial interval had named four records as everything they held (experiment 208)."
     }
    ],
    "breaking": false,
@@ -341,12 +341,12 @@
    "migrationFrom": []
   },
   "find_health_facilities": {
-   "version": "0.4.1",
-   "released": "2026-11-09",
+   "version": "0.4.2",
+   "released": "2026-11-12",
    "changes": [
     {
      "kind": "patch",
-     "description": "Its description names both ways in, inside a study area or from a list."
+     "description": "The receipt records every count the run's sentence states about what a retrieval set aside: of a kind not asked for, without usable coordinates, without a name, and the total, beside the count outside the study area (experiment 208: \"Dropped 12582 records\" was a sum only the sentence held)."
     }
    ],
    "breaking": false,
@@ -712,12 +712,12 @@
    "migrationFrom": []
   },
   "relate_table": {
-   "version": "0.12.0",
+   "version": "0.12.1",
    "released": "2026-11-12",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Where a key matches several rows: stop and say which, as before, or keep one row per match, counted and said, and stated in the receipt (fw:oneRowPerMatch)."
+     "kind": "patch",
+     "description": "Under one row per match, the run's record of the step carries how many keys matched several rows and the rows that added, which its sentence already said (experiment 208; found by Validation Lab check 49)."
     }
    ],
    "breaking": false,
@@ -908,12 +908,12 @@
    "migrationFrom": []
   },
   "table_input": {
-   "version": "0.9.1",
+   "version": "0.9.2",
    "released": "2026-11-12",
    "changes": [
     {
      "kind": "patch",
-     "description": "The receipt carries what the Data quality inspector shows, as data issues in ontology/data-issues.ttl (experiment 207): repeated and missing keys, columns not described, and each column's field missing, empty, not the declared kind and beyond 1.5×IQR. The inspector leads each problem with the same label."
+     "description": "A key value written with spaces around it is read without them, as before, and now said: one finding per column, counting the values and naming the first, on the Data quality tab and in the receipt as the data issue Spaces trimmed (the practitioner, 2026-11-12: \"Trim, and say so\", after Validation Lab check 49 found MERS's \"Family member \" trimmed in silence)."
     }
    ],
    "breaking": false,

@@ -1,6 +1,6 @@
 # Regression
 
-_Created 2026-11-04 · Updated 2026-11-07_
+_Created 2026-11-04 · Updated 2026-11-12_
 
 **A model.** Logistic regression for a case-control or cross-sectional study, reporting odds ratios; Poisson
 regression for counts over time or area, reporting rate ratios. Each estimate is adjusted for the variables you add.

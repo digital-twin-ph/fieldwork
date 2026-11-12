@@ -23,7 +23,7 @@ export interface DataTableSource {filename:string; bytes:number; sha256:string; 
  *  these say what to look at. Row numbers are the file's, from 1. Experiment 164. */
 export interface TableFinding {
   /** The last three are about the columns' declared meaning, not the rows (experiment 172). */
-  kind:'repeated-key'|'missing-key'|'unreadable-value'|'undescribed-column'|'unconfirmed-description'|'dictionary-mismatch';
+  kind:'repeated-key'|'missing-key'|'unreadable-value'|'undescribed-column'|'unconfirmed-description'|'dictionary-mismatch'|'trimmed-value';
   rows:number[];
   column?:string;
   /** What the file holds there, as it was written. */
@@ -94,11 +94,24 @@ export function findingsSummary(table:Pick<DataTable,'findings'>):string{
   const held=table.findings??[];
   const count=(kind:TableFinding['kind'])=>held.filter(f=>f.kind===kind).length;
   const parts=[[count('repeated-key'),'repeated key value'],[count('missing-key'),'row with no key value'],
-    [count('unreadable-value'),'value that is not a number']] as const;
+    [count('unreadable-value'),'value that is not a number'],[count('trimmed-value'),'column whose values were read without spaces around them']] as const;
   return parts.filter(([n])=>n).map(([n,word])=>`${n} ${n===1?word:word.replace('row','rows').replace('value that is','values that are').replace('repeated key value','repeated key values')}`).join(', ');
 }
 
 const trimmed=(value:string)=>value.trim();
+/** KEY VALUES READ WITHOUT THE SPACES AROUND THEM, said (the practitioner, 2026-11-12: "Trim, and say so"). Trimming
+ *  keeps "Family member" and "Family member " one group, as MERS's contacts need; one finding per column counts the
+ *  values it changed and names the first, so the change is on the Data quality tab and in the receipt, not silent. */
+function trimFindings(rows:readonly (readonly string[])[],keys:readonly string[],index:(name:string)=>number):TableFinding[]{
+  return keys.flatMap(name=>{
+    const at=rows.flatMap((row,position)=>{const raw=row[index(name)]??'';return raw.trim()&&raw!==raw.trim()?[position+1]:[];});
+    if(!at.length)return [];
+    const first=rows[at[0]!-1]![index(name)]!;
+    return [{kind:'trimmed-value' as const,rows:at,column:name,value:first,
+      text:`${at.length===1?'1 value':`${at.length} values`} in ${JSON.stringify(name)} had spaces around ${at.length===1?'it':'them'}, read without: `
+        +`${JSON.stringify(first)} at row ${at[0]} is ${JSON.stringify(first.trim())}.`}];
+  });
+}
 
 /** Builds a table from a parsed CSV and an explicit column selection. Nothing is inferred:
  *  the caller names the key fields and the value field, and an absent column is an error
@@ -134,6 +147,7 @@ export function dataTable(table:TableRows,selection:TableSelection):DataTable {
     }
     return {key,value};
   });
+  findings.push(...trimFindings(table.rows,keys,index));
   const declared=declaredKeys(selection,keys);
   findings.push(...repeatedKeys(rows.map(row=>row.key),declared.primaryKey??keys));
   return {kind:'data-table',keys,valueField,...declared,...summed(findings),...(selection.unit?{unit:trimmed(selection.unit)}:{}),
@@ -250,6 +264,7 @@ export function wideDataTable(table:TableRows,selection:WideSelection):DataTable
   });
   // In a wide file one row IS one subject, so a repeat is a duplicate record rather than the long
   // shape: the opposite diagnosis from the long reader's, and why these are two readers.
+  findings.push(...trimFindings(table.rows,keys,index));
   const declared=declaredKeys(selection,keys);
   findings.push(...repeatedKeys(subjects,declared.primaryKey??keys));
   return {kind:'data-table',keys:[...keys,measureKey],valueField,

@@ -681,7 +681,10 @@ export function relateOutcome(left:DataTable,request:RelateRequest,result:Relate
     gaps:result.gaps,values:result.values,carried:[...left.keys,...shifted],
     ...(request.within?{within:request.within,shiftDays:request.shiftDays??0}:{}),
     overlap:result.overlap,shares:result.shares,normalisation:result.normalisation,
-    ...(result.declared?{declared:result.declared}:{})};
+    ...(result.declared?{declared:result.declared}:{}),
+    // UNDER ONE ROW PER MATCH, how many keys matched several rows and the rows that added: the sentence said them and the
+    // run's record did not (experiment 208, 2026-11-12, found by the lab's MERS check).
+    ...(result.several?{several:result.several}:{})};
 }
 
 const rounded=(share:number)=>`${(share*100).toFixed(1)}%`;

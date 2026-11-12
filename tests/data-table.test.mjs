@@ -98,3 +98,19 @@ test('a nonnumeric value and an empty key are findings; an oversized or empty ta
   assert.throws(()=>dataTable(many,{keys:['k'],valueField:'v'}),/at most 250,000 rows/);
   assert.throws(()=>dataTable(csv(['k','v'],[]),{keys:['k'],valueField:'v'}),/no rows/);
 });
+
+test('a key value with spaces around it is read without them, and that is said, not silent',async()=>{
+  // The practitioner, 2026-11-12, of MERS's "Family member " (Validation Lab check 49): "Trim, and say so".
+  const {dataTable:read,findingsSummary:summary}=await import('../build/data-table.js');
+  const {tableIssues}=await import('../build/data-issues.js');
+  const t=read({headers:['exposure','n'],rows:[['Family member ','1'],['Family member','2'],['  Hospital room','3'],['Hospital room','4']]},
+    {keys:['exposure'],valueField:'n'});
+  assert.deepEqual([...new Set(t.rows.map(r=>r.key.exposure))],['Family member','Hospital room']);
+  const trimmed=t.findings.filter(f=>f.kind==='trimmed-value');
+  assert.equal(trimmed.length,1);
+  assert.deepEqual(trimmed[0].rows,[1,3]);
+  assert.equal(trimmed[0].text,'2 values in "exposure" had spaces around them, read without: "Family member " at row 1 is "Family member".');
+  assert.match(summary(t),/1 column whose values were read without spaces around them/);
+  const issues=tableIssues(t.findings,[],t.rows,()=>({total:0,missing:0,empty:0,mismatched:0}));
+  assert.deepEqual(issues.filter(i=>i.kind==='ValueTrimmed').map(i=>[i.column,i.count,i.of]),[['exposure',2,4]]);
+});

@@ -101,7 +101,7 @@
     {
       "id": "urn:fieldwork:widget:apply_ruleset",
       "nodeType": "apply_ruleset",
-      "currentVersion": "0.13.0",
+      "currentVersion": "0.13.1",
       "releases": [
         {
           "version": "0.1.0",
@@ -172,6 +172,11 @@
           "version": "0.13.0",
           "path": "widgets/releases/apply_ruleset/0.13.0.json",
           "sha256": "c99130de9622f95ab9818337263010c36b7c9c4117c649b663c0d8c0b6d5a120"
+        },
+        {
+          "version": "0.13.1",
+          "path": "widgets/releases/apply_ruleset/0.13.1.json",
+          "sha256": "307d7fe4b87a674b65d961234d6711b965a4be8fcf5f972c3699ffecae44ef9e"
         }
       ]
     },
@@ -587,7 +592,7 @@
     {
       "id": "urn:fieldwork:widget:find_health_facilities",
       "nodeType": "find_health_facilities",
-      "currentVersion": "0.4.1",
+      "currentVersion": "0.4.2",
       "releases": [
         {
           "version": "0.1.0",
@@ -613,6 +618,11 @@
           "version": "0.4.1",
           "path": "widgets/releases/find_health_facilities/0.4.1.json",
           "sha256": "fcb331a1f94884094e76408d8e69ca31bd9649ca845e3e8b34d9c3e0619a5a29"
+        },
+        {
+          "version": "0.4.2",
+          "path": "widgets/releases/find_health_facilities/0.4.2.json",
+          "sha256": "55cd5a929041041b8c18dfa81e01bfe9ab698e2a4a93ed5d91de4a91df2eb6ca"
         }
       ]
     },
@@ -1472,7 +1482,7 @@
     {
       "id": "urn:fieldwork:widget:relate_table",
       "nodeType": "relate_table",
-      "currentVersion": "0.12.0",
+      "currentVersion": "0.12.1",
       "releases": [
         {
           "version": "0.1.0",
@@ -1558,6 +1568,11 @@
           "version": "0.12.0",
           "path": "widgets/releases/relate_table/0.12.0.json",
           "sha256": "44e138aa8a06aa3357dbf3148c0eb6bfaaf82cce71f18d6d0d10113f60a1627d"
+        },
+        {
+          "version": "0.12.1",
+          "path": "widgets/releases/relate_table/0.12.1.json",
+          "sha256": "7f7b25a40a7b5755e84abd7d8ef9f2b0d864d13fc5ad3b1d3afbcaf212e0b1c4"
         }
       ]
     },
@@ -1866,7 +1881,7 @@
     {
       "id": "urn:fieldwork:widget:table_input",
       "nodeType": "table_input",
-      "currentVersion": "0.9.1",
+      "currentVersion": "0.9.2",
       "releases": [
         {
           "version": "0.1.0",
@@ -1927,6 +1942,11 @@
           "version": "0.9.1",
           "path": "widgets/releases/table_input/0.9.1.json",
           "sha256": "5c81d01e490e5781c970bcfb8ec45f9eff67d7cc04b3bdee2429e1ba2168bc35"
+        },
+        {
+          "version": "0.9.2",
+          "path": "widgets/releases/table_input/0.9.2.json",
+          "sha256": "e5324d9a241acdcafa8208192065ce101f1eded472376955e922f08da6c0d065"
         }
       ]
     },

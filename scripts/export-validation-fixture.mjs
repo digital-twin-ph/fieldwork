@@ -11,7 +11,7 @@
 //                   | select-range-london-001
 //                   | regression-salmonella-001 | regression-nyc-001 (needs NYC_PKG)
 //                   | sample-satellite-s5p-001 | lag-response-brazil-001 | regression-strata-brazil-001
-//                   | lag-models-brazil-001 | sea-level-heights-manila-001 | chains-hagelloch-001 | tree-hagelloch-001 | links-hagelloch-001 | scan-hagelloch-001 | qr-links-001 | georef-001
+//                   | lag-models-brazil-001 | sea-level-heights-manila-001 | chains-hagelloch-001 | tree-hagelloch-001 | links-hagelloch-001 | scan-hagelloch-001 | qr-links-001 | georef-001 | mers-korea-001
 import {createHash} from 'node:crypto';
 import {readFile,writeFile} from 'node:fs/promises';
 import {reprojectToCRS84,projectFromCRS84} from '../build/reproject.js';
@@ -1362,6 +1362,62 @@ const builders={
       input:{facilityCount:facilities.features.length,sites:siteRows},
       output:{facilities:out,reaches:out.filter(r=>r.level==='Reaches').length},
     },files:{'egm2008-window.tif':encodeGrid(egm),'dtu25mss-window.tif':encodeGrid(dtu),'deltadtm-window.tif':encodeGrid(dtm)}};
+  },
+  async 'mers-korea-001'(){
+    // A WHOLE EXAMPLE, END TO END (experiment 208): both MERS workflows as the example repository pins them, run here,
+    // and every count and computed value they produce. The source states no licence, so the fixture carries no row of
+    // it: only the commit, each file's path and digest, and Fieldwork's results. The check reads the files at the commit.
+    const pin=JSON.parse(await readFile(new URL('../widgets/examples.json',import.meta.url),'utf8')).examples.find(e=>e.id==='urn:fieldwork:example:mers-korea-2015');
+    const repo=new URL('../../example-2015-mers-korea/',import.meta.url).pathname;
+    const {execFileSync}=await import('node:child_process');
+    const at=path=>execFileSync('git',['-C',repo,'show',`${pin.commit}:${path}`],{maxBuffer:1<<30});
+    const doc=JSON.parse(gunzipSync(at('fieldwork-project.json.gz')));
+    const {validateWorkflow}=await import('../build/core.js');
+    const ran=[];for(const x of doc.workflows){const w=x.document.workflow??x.document;ran.push({w,run:await executeWorkflow(validateWorkflow(w),async()=>[])});}
+    const [timely,links]=ran;
+    const nodeOf=(r,type,label)=>r.w.nodes.find(n=>n.type===type&&(!label||n.params.label===label));
+    const rows=(r,node)=>r.run.tables[node.id].rows;
+    const counts=(r,node,column)=>Object.fromEntries(rows(r,node).map(x=>[x.key[column],x.value]));
+    const rules=nodeOf(timely,'apply_ruleset'),tree=links.run.outputs.find(o=>o.kind==='transmission-tree').tree;
+    const relate=nodeOf(links,'relate_table'),relation=links.run.relations?.[relate.id];
+    const issues=[];
+    for(const {w,run} of ran)for(const r of run.receipts)
+      // Written in full IRIs by some steps and with the fw: prefix by others; both are read.
+      for(const line of (r.facts??'').split('\n').filter(l=>/(?:fieldwork:issueKind>|fw:issueKind) /.test(l))){
+        const field=re=>line.match(re)?.[1],column=field(/issueColumn>? ("(?:[^"\\]|\\.)*")/),count=field(/affectedRecordCount>? (\d+)/);
+        issues.push({workflow:w.name,step:w.nodes.find(n=>n.id===r.nodeId)?.params.label,
+          kind:field(/issueKind>? (?:<urn:fieldwork:|fw:)(\w+)/),column:column?JSON.parse(column):null,
+          ...(count!==undefined?{count:Number(count),of:Number(field(/consideredRecordCount>? (\d+)/))}:{})});}
+    const files=['data/mers_korea_2015_linelist.csv','data/mers_korea_2015_contacts.csv'].map(path=>({path,sha256:sha256(at(path)),
+      url:`${pin.rawBase}/${pin.commit}/${path}`}));
+    return {fixture:{
+      ...base('mers-korea-001','apply_ruleset','A whole example: MERS-CoV, South Korea, 2015, both workflows','example-2015-mers-korea at its pinned commit'),
+      source:`example-2015-mers-korea at ${pin.commit}: the line list and contacts of mers_korea_2015 in the R package outbreaks (Cauchemez et al.). No licence stated, so not redistributed: read from the repository at this commit and checked by digest.`,
+      declaredParameters:{
+        timeliness:{ruleset:`${rules.params.ruleset.id} ${rules.params.ruleset.version}`,bindings:rules.params.bindings,targets:rules.params.parameters,
+          days:'whole days from the earlier date to the later; negative where the later date comes first',
+          verdict:'Met where the days are at most the target, Not met where more, No verdict where either date is missing',
+          response:'No response date is bound, so every case has No verdict for response'},
+        groups:{detected:'cases counted by detected_within_target',notified:'cases counted by notified_within_target',
+          sources:'contact links counted by from',settings:'contact links counted by exposure'},
+        relate:{on:relate.params.on,rightOn:relate.params.rightOn,bring:relate.params.bring,several:relate.params.several,
+          unmatched:relate.params.unmatched?.label,normalisation:relate.params.normalisation},
+        tree:{columns:tree.columns,chain:'A case naming no infector, or one the table does not hold, starts a chain; a case with several sources sits under the first listed.'},
+      },
+      input:{files,note:'No rows: the check reads each file at the commit and verifies its digest first.'},
+      output:{
+        cases:rows(timely,nodeOf(timely,'table_output','Each case’s intervals and verdicts')).map(x=>({id:x.key.id,
+          days_to_detect:x.key.days_to_detect===''?null:Number(x.key.days_to_detect),days_to_notify:x.key.days_to_notify===''?null:Number(x.key.days_to_notify),
+          detected_within_target:x.key.detected_within_target,notified_within_target:x.key.notified_within_target,responded_within_target:x.key.responded_within_target})),
+        detected:counts(timely,nodeOf(timely,'group_table','Detected within 7 days of onset'),'detected_within_target'),
+        notified:counts(timely,nodeOf(timely,'group_table','Reported within 1 day of diagnosis'),'notified_within_target'),
+        sources:counts(links,nodeOf(links,'group_table','Cases each source infected'),'from'),
+        settings:counts(links,nodeOf(links,'group_table','Where exposure happened'),'exposure'),
+        related:{rows:rows(links,relate).map(x=>({id:x.key.id,from:x.key.from})),summary:relation??null},
+        tree:{counts:tree.counts,chains:tree.chains},
+        dataIssues:issues,
+      },
+    },files:{}};
   },
   async 'tree-hagelloch-001'(){
     // THE TRANSMISSION TREE (experiment 200, step 5), as Chart computes it: each case's chain, generation and row.

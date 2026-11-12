@@ -44,14 +44,20 @@ const isTable=(input:unknown):input is DataTable=>
  *  same contract the table widget already states, read the other way round. */
 export function authoredSubjects(input:PointCollection|DataTable):SubjectRecord[]{
   if(isTable(input)&&isWide(input))return wideSubjects(input).records;
-  if(isTable(input))
+  if(isTable(input)){
+    // The columns that name a row: those declared, else the first key column that tells every row apart.
+    const naming=input.primaryKey?.length?input.primaryKey
+      :[input.keys.find(k=>input.rows.every(r=>r.key[k])&&new Set(input.rows.map(r=>r.key[k])).size===input.rows.length)].filter((k):k is string=>!!k);
     return input.rows.map((row,index)=>({
       // Positional. A key can repeat across rows in a long-format table, so a key-derived id
       // would silently merge two records into one subject and the reasoner would conclude about
       // whichever won.
       id:`row-${index}`,
-      label:Object.values(row.key).join(' · ')||`Row ${index+1}`,
+      // NAMED BY ITS DECLARED KEY, where one is declared: joining every key column printed a whole record into a run's
+      // sentence ("case-141 · Case 141 · 141 · 50 · 4 · f …", Hagelloch, experiment 208, 2026-11-12).
+      label:(naming.length?naming.map(k=>row.key[k]??''):Object.values(row.key)).filter(Boolean).join(' · ')||`Row ${index+1}`,
       properties:{...row.key,...numbersOf(row.key,input.numericKeys),[input.valueField]:row.value}}));
+  }
   return (input?.features??[]).map(feature=>({
     id:String(feature.id),
     label:String(feature.properties?.name??feature.id),

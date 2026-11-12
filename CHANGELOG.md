@@ -3,6 +3,24 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.101.0 — In development
+
+- **Every number in a step's sentence comes from its result, and the gate checks it.** Each worked example, the built-in
+  ones and those in their own repositories, is run and every number its steps' sentences state is looked for among that
+  step's results: 420 numbers in 176 steps, none made up. Each is run twice, and every output and table is the same both
+  times. Experiment 208.
+- **The MERS example is checked end to end against pandas** (Validation Lab check 49): every case's days and verdicts,
+  every count, Relate's rows and the transmission tree, recomputed from the source files. It agrees exactly.
+- **A key value written with spaces around it is still read without them, and now that is said**, on the Data quality tab
+  and in the receipt, as *Spaces trimmed*: MERS's contacts write "Family member " once. Table input 0.9.2.
+- **A record is named by its key** in a step's sentence: Hagelloch's serial interval named four records as everything they
+  held. Apply ruleset 0.13.1.
+- **Counts a sentence states are in the receipt too**: Find health facilities records what it set aside and the total
+  (0.4.2); Relate records the keys that matched several rows (0.12.1).
+- **Fixed: tables in four example repositories were fetched from commits the 2026-11-11 history rewrite replaced.** GitHub
+  still served them, but only until it collects what nothing points to. They now point at the rewritten commits: the
+  same files, with the same digests.
+
 ## 0.100.0 — 2026-11-12
 
 - **Compare with a target…** in the rules dialog writes one interval against one target as ordinary rules: the days from

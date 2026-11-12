@@ -1009,6 +1009,8 @@ fw:BeyondFence a fw:DataIssueKind; skos:inScheme fw:dataIssueKinds; skos:prefLab
   skos:definition "A number more than 1.5 times the interquartile range beyond the first or third quartile. A value to look at, not an error: no distribution is assumed.".
 fw:AreaBeyondRaster a fw:DataIssueKind; skos:inScheme fw:dataIssueKinds; skos:prefLabel "Area beyond the raster"; dqv:inDimension fw:coverage;
   skos:definition "Part of the study area lies past the raster's edge, as where two outlines of one country differ at the border; those parts have no values.".
+fw:ValueTrimmed a fw:DataIssueKind; skos:inScheme fw:dataIssueKinds; skos:prefLabel "Spaces trimmed"; dqv:inDimension fw:consistency;
+  skos:definition "A key value written with spaces before or after it, read without them, so that it groups with the same value written without: \"Family member \" is read as \"Family member\". The file is not changed.".
 fw:plausibility a dqv:Dimension; rdfs:label "Whether a value sits where most of its column does".
 fw:absentValues skos:exactMatch fw:ValueAbsent.
 fw:unreadableValues skos:exactMatch fw:ValueUnreadable.
@@ -1221,6 +1223,12 @@ fw:recordCount a owl:DatatypeProperty; rdfs:range xsd:nonNegativeInteger.
 # it set aside, because "how many did the source return that were not in my area" is a question a
 # reviewer asks of a figure like this.
 fw:outsideStudyAreaCount a owl:DatatypeProperty; rdfs:range xsd:nonNegativeInteger.
+# The rest of what a retrieval set aside, each stated where the run's sentence states it (experiment 208): records of a
+# kind not asked for, without usable coordinates, without a name, and all of them together with those outside.
+fw:droppedRecordCount a owl:DatatypeProperty; rdfs:range xsd:nonNegativeInteger.
+fw:unrequestedKindCount a owl:DatatypeProperty; rdfs:range xsd:nonNegativeInteger.
+fw:withoutCoordinatesCount a owl:DatatypeProperty; rdfs:range xsd:nonNegativeInteger.
+fw:withoutNameCount a owl:DatatypeProperty; rdfs:range xsd:nonNegativeInteger.
 
 # Keeping the points that are in the area, as an operation rather than as a report.
 #

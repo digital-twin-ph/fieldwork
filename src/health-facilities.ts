@@ -294,6 +294,10 @@ export function facilitiesValue(
     // only appears in prose cannot be queried, and "how many did the source return that were not
     // in my area" is exactly the question a reviewer asks of a figure like this.
     +(outside?`fw:outsideStudyAreaCount ${outside}; `:'')
+    // AND EVERY OTHER COUNT THE SENTENCE STATES, with their total (experiment 208, 2026-11-12: "Dropped 12582 records"
+    // was a sum the sentence made and nothing recorded).
+    +`fw:droppedRecordCount ${got.dropped.kind+got.dropped.coordinates+got.dropped.name+outside}; `
+    +`fw:unrequestedKindCount ${got.dropped.kind}; fw:withoutCoordinatesCount ${got.dropped.coordinates}; fw:withoutNameCount ${got.dropped.name}; `
     +`fw:requestOrigin <${got.origin}>; `
     +(got.release?`dcterms:hasVersion ${JSON.stringify(got.release)}; `:'')
     +(got.filename?`fw:filename ${JSON.stringify(got.filename)}; `:'')

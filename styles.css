@@ -1322,3 +1322,5 @@ select.rule-op.rule-op-compare,select.rule-op.rule-op-equal,select.rule-op.rule-
 .geo-preview{height:460px;overflow:hidden}
 .geo-preview-block{margin:8px 0}
 @media (prefers-reduced-motion:reduce){.geo-cue,.geo-cue-map{animation:none;opacity:1}}
+
+#bands-preview.rule-editor-bands-wrong{color:var(--danger-5)}

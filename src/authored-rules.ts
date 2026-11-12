@@ -391,3 +391,26 @@ export function authoredUnitProblems(authored:{
     }
   return problems;
 }
+
+/** BANDS FROM CUT POINTS (the practitioner, 2026-11-12: "How do we assist the user in configuring age bands"). From a
+ *  starting value and ascending cut points, one ordinary rule per band, at least its lower bound and less than its
+ *  upper, the last open above: no gap and no overlap, and nothing hidden, since they are rules like any other. Whole
+ *  numbers are labelled as people write age bands, "1 to 4"; others "1.5 to under 3". A value below the start gets no
+ *  band, and the otherwise can say so. */
+export function bandRules(field:string,start:number,cuts:number[],column:string):{rules:AuthoredRule[];labels:string[]}{
+  const bounds=[start,...cuts];
+  if(!bounds.every(Number.isFinite))throw new Error('Give the start and the cut points as numbers.');
+  if(!cuts.length)throw new Error('Give at least one cut point.');
+  for(let i=1;i<bounds.length;i++)if(!(bounds[i]!>bounds[i-1]!))
+    throw new Error(`The cut points must rise, each above the one before: ${bounds[i-1]} then ${bounds[i]}.`);
+  const whole=bounds.every(Number.isInteger),name=column.trim().replace(/[^A-Za-z0-9_]+/g,'_')||'band';
+  const labels=bounds.map((lo,i)=>{const hi=bounds[i+1];
+    if(hi===undefined)return `${lo} and over`;
+    return whole?(hi-1===lo?`${lo}`:`${lo} to ${hi-1}`):`${lo} to under ${hi}`;});
+  const rules=labels.map((label,i)=>({any:[{all:[
+      {field,comparator:'notLessThan',value:bounds[i]!},
+      ...(bounds[i+1]!==undefined?[{field,comparator:'lessThan',value:bounds[i+1]!}]:[])]}],
+    then:[{predicate:`fwa:${name}`,value:`fwa:${label.replace(/[^A-Za-z0-9]+/g,'_')}`}]})) as unknown as AuthoredRule[];
+  return {rules,labels};
+}
+

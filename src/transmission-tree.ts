@@ -23,11 +23,16 @@ export interface TreeCase {
   generation:number; row:number; chain:string;
   /** Why this case starts a chain, where it does. */
   starts?:'no infector recorded'|'infector not in the table'|'in a loop';
+  /** EVERY OTHER RECORDED SOURCE (MERS, 2026-11-12: SK_39 records three, SK_107 two). The case sits under its first; each
+   *  of these is drawn too, dashed, and counted. Only sources the table holds. */
+  alsoFrom?:string[];
 }
 export interface TransmissionTree {
   columns:TreeColumns; cases:TreeCase[];
   chains:{root:string;size:number;generations:number}[];
-  counts:{cases:number;chains:number;noInfector:number;unknownInfector:number;undated:number;inLoop:number;links:number};
+  counts:{cases:number;chains:number;noInfector:number;unknownInfector:number;undated:number;inLoop:number;links:number;
+    /** Cases recording more than one source, and the further links drawn for them. */
+    severalSources:number;furtherLinks:number};
   firstDay:number|null; lastDay:number|null;
 }
 
@@ -40,13 +45,23 @@ export function transmissionTree(table:DataTable,columns:TreeColumns):Transmissi
   for(const [what,column] of [['case id',columns.id],['infector',columns.parent],['date',columns.date]] as const)
     if(!column||(!table.keys.includes(column)&&table.valueField!==column))
       throw new Error(`Choose the ${what} column in Configure…: this table has ${[...table.keys,table.valueField].filter(Boolean).join(', ')}.`);
-  const seen=new Map<string,{id:string;parent:string;date:string;day:number|null;order:number}>();
+  // A CASE IN SEVERAL ROWS records several sources, one a row (2026-11-12): the first source listed places it, the others
+  // are kept and drawn. An empty source in one row does not cancel a source in another; two dates for one case do refuse.
+  const seen=new Map<string,{id:string;parent:string;date:string;day:number|null;order:number;also:string[]}>();
   table.rows.forEach((row,order)=>{
     const id=valueOf(row,columns.id,table);
     if(!id)return;
-    if(seen.has(id))throw new Error(`The case id "${id}" appears twice in ${columns.id}. A transmission tree needs one row per case.`);
-    const date=valueOf(row,columns.date,table);
-    seen.set(id,{id,parent:valueOf(row,columns.parent,table),date,day:dayNumber(date)??null,order});
+    const date=valueOf(row,columns.date,table),parent=valueOf(row,columns.parent,table);
+    const held=seen.get(id);
+    if(held){
+      if(date&&held.date&&date!==held.date)
+        throw new Error(`The case "${id}" has two dates in ${columns.date}, ${held.date} and ${date}. A case is drawn at one date.`);
+      if(date&&!held.date){held.date=date;held.day=dayNumber(date)??null;}
+      if(parent&&!held.parent)held.parent=parent;
+      else if(parent&&parent!==held.parent&&!held.also.includes(parent))held.also.push(parent);
+      return;
+    }
+    seen.set(id,{id,parent,date,day:dayNumber(date)??null,order,also:[]});
   });
   const children=new Map<string,string[]>();
   for(const c of seen.values())if(c.parent&&seen.has(c.parent)&&c.parent!==c.id)
@@ -87,8 +102,9 @@ export function transmissionTree(table:DataTable,columns:TreeColumns):Transmissi
       const {id,generation}=stack.pop()!;
       if(placed.has(id))continue;
       const c=seen.get(id)!;
+      const also=c.also.filter(a=>seen.has(a)&&a!==id);
       placed.set(id,{id,parent:c.parent&&seen.has(c.parent)&&generation>0?c.parent:c.parent||null,date:c.date,day:c.day,
-        generation,row:row++,chain:root.id,...(generation===0?{starts:root.starts}:{})});
+        generation,row:row++,chain:root.id,...(generation===0?{starts:root.starts}:{}),...(also.length?{alsoFrom:also}:{})});
       size++;deepest=Math.max(deepest,generation);
       const kids=(children.get(id)??[]).filter(k=>!placed.has(k)&&reachesRoot.get(k)!==false);
       for(let i=kids.length-1;i>=0;i--)stack.push({id:kids[i]!,generation:generation+1});
@@ -103,7 +119,9 @@ export function transmissionTree(table:DataTable,columns:TreeColumns):Transmissi
       unknownInfector:roots.filter(r=>r.starts==='infector not in the table').length,
       undated:cases.filter(c=>c.day===null).length,
       inLoop:roots.filter(r=>r.starts==='in a loop').length,
-      links:cases.filter(c=>c.generation>0).length},
+      links:cases.filter(c=>c.generation>0).length,
+      severalSources:cases.filter(c=>c.alsoFrom?.length).length,
+      furtherLinks:cases.reduce((n,c)=>n+(c.alsoFrom?.length??0),0)},
     firstDay:days.length?Math.min(...days):null,lastDay:days.length?Math.max(...days):null};
 }
 
@@ -120,6 +138,8 @@ export function treeSentence(t:TransmissionTree):string{
     +(c.unknownInfector?`; ${n(c.unknownInfector,'case')} ${c.unknownInfector===1?'names an infector':'name infectors'} the table does not hold`:'')
     +(c.inLoop?`; ${n(c.inLoop,'case')} ${c.inLoop===1?'sits':'sit'} in a loop, which no chain can be`:'')
     +(c.undated?`; ${n(c.undated,'case')} without a readable date, drawn at the infector's date and marked`:'')
+    +(c.severalSources?`; ${n(c.severalSources,'case')} ${c.severalSources===1?'records':'record'} more than one source: `
+      +`each sits under the first listed, and the ${n(c.furtherLinks,'other link')} ${c.furtherLinks===1?'is':'are'} drawn dashed`:'')
     +`. Each line runs across from the infector's ${t.columns.date} to the case's: its length is the serial interval.`;
 }
 
@@ -134,7 +154,10 @@ export function treeSvg(t:TransmissionTree,esc:(s:string)=>string,title=''):stri
   const height=top+t.cases.length*rowH+56;
   const links=t.cases.filter(c=>c.generation>0&&c.parent&&at.has(c.parent)).map(c=>{
     const p=at.get(c.parent!)!,px=x(dayOf(p)),py=y(p.row),cx=x(dayOf(c)),cy=y(c.row);
-    return `<path d="M${px.toFixed(1)} ${py.toFixed(1)}V${cy.toFixed(1)}H${cx.toFixed(1)}" class="tree-link"/>`;}).join('');
+    return `<path d="M${px.toFixed(1)} ${py.toFixed(1)}V${cy.toFixed(1)}H${cx.toFixed(1)}" class="tree-link"/>`;}).join('')
+    // Every other recorded source, dashed.
+    +t.cases.flatMap(c=>(c.alsoFrom??[]).filter(a=>at.has(a)).map(a=>{const p=at.get(a)!,px=x(dayOf(p)),py=y(p.row),cx=x(dayOf(c)),cy=y(c.row);
+      return `<path d="M${px.toFixed(1)} ${py.toFixed(1)}V${cy.toFixed(1)}H${cx.toFixed(1)}" class="tree-link tree-link-also" stroke-dasharray="4 3"/>`;})).join('');
   const dots=t.cases.map(c=>`<circle cx="${x(dayOf(c)).toFixed(1)}" cy="${y(c.row).toFixed(1)}" r="3.5" class="tree-case${c.generation===0?' tree-start':''}${c.day===null?' tree-undated':''}">`
     +`<title>${esc(`Case ${c.id}, ${c.date||'no date'}${c.generation?`, infected by ${c.parent}, generation ${c.generation+1}`:`, ${c.starts}`}`)}</title></circle>`).join('');
   // A tick on the first of each month, labelled at 14 px.

@@ -20,7 +20,7 @@ import type {ParamsByType} from './types.js';
 import type {Escape} from './types.js';
 import {compileAuthoredRuleset,compiledRuleCount,RULE_CEILING,authoredUnitProblems,settingNamed,isComputed,computesValues,
   COMPUTE_OPERATORS,readsPrevious,readsPreviousRows,evaluatedDirectly,otherwiseProblems,type Operand,type AuthoredOrder,
-  type AuthoredOtherwise} from './authored-rules.js';
+  type AuthoredOtherwise,bandRules} from './authored-rules.js';
 import {evaluateAuthored,OPERATOR_WORDS,localName,undescribedSentence,type Evaluation,type NoPrevious} from './rule-evaluation.js';
 import {openConfigDialog,type ConfigSections} from './config-dialog.js';
 import type {SubjectRecord} from './authored-application.js';
@@ -171,6 +171,21 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
     let order:AuthoredOrder|undefined=authored.order?structuredClone(authored.order):undefined;
     // THE COLUMNS, THEIR KINDS AND UNITS, AND HOW THE RECORDS ARRIVE, edited here with the rules (experiment 186).
     let fields:Field[]=structuredClone(authored.fields),choices=readable(fields);
+    const bands={open:false,field:'',start:'0',cuts:'',column:'band'};
+    const bandsMarkup=()=>{
+      const numbers=choices.filter(c=>c.kind==='number');
+      if(review||!numbers.length)return '';
+      if(!numbers.some(c=>c.predicate===bands.field))bands.field=numbers[0]!.predicate;
+      return `<details id="rule-editor-bands" class="config-group"${bands.open?' open':''}><summary>Make bands…</summary>`
+        +`<div class="field"><label class="field-label" for="bands-field">Number column</label><select id="bands-field">`
+        +numbers.map(c=>`<option value="${esc(c.predicate)}" ${c.predicate===bands.field?'selected':''}>${esc(c.label)}</option>`).join('')+`</select></div>`
+        +`<div class="field"><label class="field-label" for="bands-start">The first band starts at</label><input id="bands-start" type="number" value="${esc(bands.start)}"></div>`
+        +`<div class="field"><label class="field-label" for="bands-cuts">Cut points, rising</label><input id="bands-cuts" value="${esc(bands.cuts)}" placeholder="1, 5, 10, 15">`
+        +`<small>Each cut point starts a new band. The last band is open above.</small></div>`
+        +`<div class="field"><label class="field-label" for="bands-column">New column</label><input id="bands-column" value="${esc(bands.column)}"></div>`
+        +`<p id="bands-preview" class="description" aria-live="polite"></p>`
+        +`<button type="button" class="button" id="bands-add">Add these rules</button></details>`;
+    };
     // A CATEGORY ANOTHER RULE CONCLUDED is a column a condition can read (experiment 192): rules in stages, a laboratory
     // result first, then the class read from it. Offered after the records' own columns, by the name the rule gave it.
     const concludedChoices=()=>{const own=new Set(fields.map(f=>f.predicate));
@@ -512,7 +527,8 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
         +`<p class="description">Rules that disagree must not both match a record.</p>`
         +rules.map((rule,r)=>ruleCard(rule,r)).join('')
         +(review?'':`<div class="rule-editor-adds"><button class="button" id="rule-editor-add" data-editor-add>+ Add a rule</button>`
-          +`<button class="button" id="rule-editor-add-every" data-editor-add>+ Add a value computed for every record</button></div>`)
+          +`<button class="button" id="rule-editor-add-every" data-editor-add>+ Add a value computed for every record</button></div>`
+          +bandsMarkup())
         +otherwiseMarkup()
         +(evaluatedDirectly({rules:rules as never,otherwise})
           ?`<p class="muted">${rules.length} rule${rules.length===1?'':'s'}.</p>`
@@ -600,6 +616,23 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
           compute:{left:first?{field:first}:0,operator:'minus',right:first?{field:first}:0}}]} as never];
         render();
       };
+      // MAKE BANDS: the rules written from a start and cut points, added to the rules already here.
+      const bandsBox=root.querySelector<HTMLDetailsElement>('#rule-editor-bands');
+      bandsBox?.addEventListener('toggle',()=>{bands.open=bandsBox.open;});
+      const bandsField=root.querySelector<HTMLSelectElement>('#bands-field'),bandsStart=root.querySelector<HTMLInputElement>('#bands-start');
+      const bandsCuts=root.querySelector<HTMLInputElement>('#bands-cuts'),bandsColumn=root.querySelector<HTMLInputElement>('#bands-column');
+      const bandsSaid=root.querySelector<HTMLElement>('#bands-preview');
+      const readBands=()=>{bands.field=bandsField?.value??bands.field;bands.start=bandsStart?.value??bands.start;
+        bands.cuts=bandsCuts?.value??bands.cuts;bands.column=bandsColumn?.value??bands.column;
+        const cuts=bands.cuts.split(/[,;\s]+/).filter(Boolean).map(Number);
+        return bandRules(bands.field,Number(bands.start),cuts,bands.column);};
+      const sayBands=()=>{if(!bandsSaid)return;try{bandsSaid.textContent=`${readBands().labels.join(' · ')}`;bandsSaid.classList.remove('rule-editor-bands-wrong');}
+        catch(e){bandsSaid.textContent=e instanceof Error?e.message:String(e);bandsSaid.classList.add('rule-editor-bands-wrong');}};
+      [bandsField,bandsStart,bandsCuts,bandsColumn].forEach(el=>el?.addEventListener('input',sayBands));
+      if(bandsCuts?.value)sayBands();
+      root.querySelector<HTMLButtonElement>('#bands-add')?.addEventListener('click',()=>{
+        let made;try{made=readBands();}catch{sayBands();return;}
+        rules=[...rules,...made.rules];bands.open=false;bands.cuts='';render();});
       root.querySelector<HTMLButtonElement>('#rule-editor-add')!.onclick=()=>{
         rules=[...rules,{any:[{all:[blankCondition(fields)]}],then:[{predicate:'fwa:decision',value:'fwa:Review'}]}];
         render();

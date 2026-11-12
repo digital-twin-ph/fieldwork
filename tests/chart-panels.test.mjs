@@ -91,3 +91,13 @@ test('bands that begin with a number run in the order of that number, not as tex
   const spec=chartVegaSpec(chart,{label:'x',panelsBy:'Sex'},{});
   assert.deepEqual(spec.vconcat[0].layer.at(-1).encoding.x.sort,['0','1–4','5–9','10–14','15+']);
 });
+
+test('a line runs along the categories, upright, with a dot at each value (2026-11-12)',()=>{
+  const chart={field:'value',measure:'value',categoryTitle:'week',caption:'c',total:3,
+    bins:[{key:'a',label:'2024-01-01',count:2},{key:'b',label:'2024-01-08',count:5},{key:'c',label:'2024-01-15',count:3}]};
+  const spec=chartVegaSpec(chart,{label:'x',renderer:'vega-lite',mark:'line',orientation:'horizontal'},{});
+  assert.equal(spec.mark.type,'line');
+  assert.ok(spec.mark.point,'a dot at each value');
+  assert.equal(spec.encoding.y.title!==undefined&&spec.encoding.x.title!==undefined,true);
+  assert.notEqual(spec.encoding.x.field,'count','upright: the categories run along the bottom');
+});

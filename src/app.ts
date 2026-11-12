@@ -188,8 +188,8 @@ function chartControls(n:WorkflowNode<'chart_output'>,options:{omitOrientation?:
   // AN ESTIMATE WITH ITS INTERVAL is a point and a whisker: no mark or orientation to choose (experiment 181).
   const interval=!!result?.outputs.find(o=>o.nodeId===n.id)?.chart?.interval;
   return `<div class="field"><label class="field-label" for="chart-renderer">Chart enhancement</label><select id="chart-renderer"><option value="html" ${chartRenderer(p)!=='vega-lite'?'selected':''}>Classic bars</option><option value="vega-lite" ${chartRenderer(p)==='vega-lite'?'selected':''}>Vega-Lite (experimental)</option></select></div>`+
-    (chartRenderer(p)==='vega-lite'?`${interval?'':`<label class="field-label" for="chart-mark">Mark</label><select id="chart-mark"><option value="bar" ${p.mark!=='point'?'selected':''}>Bars</option><option value="point" ${p.mark==='point'?'selected':''}>Dots</option></select>`}
-    ${options.omitOrientation||p.panelsBy||interval?'':`<label class="field-label" for="chart-orientation">Orientation</label><select id="chart-orientation"><option value="horizontal" ${p.orientation!=='vertical'?'selected':''}>Horizontal</option><option value="vertical" ${p.orientation==='vertical'?'selected':''}>Vertical</option></select>`}
+    (chartRenderer(p)==='vega-lite'?`${interval?'':`<label class="field-label" for="chart-mark">Mark</label><select id="chart-mark"><option value="bar" ${!p.mark||p.mark==='bar'?'selected':''}>Bars</option><option value="point" ${p.mark==='point'?'selected':''}>Dots</option><option value="line" ${p.mark==='line'?'selected':''}>Line</option></select>`}
+    ${options.omitOrientation||p.panelsBy||interval||p.mark==='line'?'':`<label class="field-label" for="chart-orientation">Orientation</label><select id="chart-orientation"><option value="horizontal" ${p.orientation!=='vertical'?'selected':''}>Horizontal</option><option value="vertical" ${p.orientation==='vertical'?'selected':''}>Vertical</option></select>`}
     ${(()=>{
       // AN ESTIMATE WITH ITS INTERVAL (experiment 181): for a ratio, the log scale and the line at 1 are on unless
       // turned off here. Read off the last run, as the bar order is, since the table's shape arrives with it.
@@ -2134,7 +2134,7 @@ function chartSentence(n:WorkflowNode<'chart_output'>):string{
   if(p.figure==='tree')return p.tree?.id&&p.tree.parent&&p.tree.date
     ?`Draws who infected whom in ${source} as chains over time: each case at its ${p.tree.date}, joined to the case named in ${p.tree.parent}.`
     :`Draws who infected whom in ${source} as chains over time. Name the case, infector and date columns in Configure\u2026`;
-  return `Draws ${source} as ${chartRenderer(p)==='vega-lite'&&p.mark==='point'?'dots':'bars'}${p.panelsBy?`, one panel per ${p.panelsBy}`:''}${p.chartTitle?`, titled \u201c${p.chartTitle}\u201d`:''}.`;
+  return `Draws ${source} as ${chartRenderer(p)==='vega-lite'&&p.mark==='point'?'dots':chartRenderer(p)==='vega-lite'&&p.mark==='line'?'a line':'bars'}${p.panelsBy?`, one panel per ${p.panelsBy}`:''}${p.chartTitle?`, titled \u201c${p.chartTitle}\u201d`:''}.`;
 }
 
 /** CHART'S CONFIGURATION DIALOG (experiment 186, 2026-11-09): what is drawn (bars, or a transmission tree), and every
@@ -2314,7 +2314,7 @@ function openChartConfig(nodeId:string){
       on('#chart-figure',el=>{if(el.value==='tree')draft.figure='tree';else delete draft.figure;});
       on('[data-tree]',el=>{draft.tree={id:'',parent:'',date:'',...draft.tree,[el.dataset.tree!]:el.value};});
       on('#chart-renderer',el=>{draft.renderer=el.value as 'html'|'vega-lite';if(draft.renderer==='html')draft.mark='bar';});
-      on('#chart-mark',el=>{draft.mark=el.value as 'bar'|'point';});
+      on('#chart-mark',el=>{draft.mark=el.value as 'bar'|'point'|'line';});
       on('#chart-orientation',el=>{draft.orientation=el.value as 'horizontal'|'vertical';});
       on('#series-orientation',el=>{draft.orientation=el.value as 'horizontal'|'vertical';});
       on('#chart-key-column',el=>{if(el.value)draft.keyColumn=el.value;else delete draft.keyColumn;});
@@ -5473,7 +5473,7 @@ function renderInspector(){
   // series -- it left the shipped Snow curve with no columns -- and became wrong for every chart
   // once vertical was made the default: a reset that overrides the default is not a reset.
   optionalElement('#chart-renderer')?.addEventListener('change',e=>change(w=>{const params=getNode(w,n.id,'chart_output').params;params.renderer=control(e).value as 'html'|'vega-lite';if(params.renderer==='html')params.mark='bar';}));
-  optionalElement('#chart-mark')?.addEventListener('change',e=>change(w=>getNode(w,n.id,'chart_output').params.mark=control(e).value as 'bar'|'point'));
+  optionalElement('#chart-mark')?.addEventListener('change',e=>change(w=>getNode(w,n.id,'chart_output').params.mark=control(e).value as 'bar'|'point'|'line'));
   optionalElement('#chart-orientation')?.addEventListener('change',e=>change(w=>getNode(w,n.id,'chart_output').params.orientation=control(e).value as 'horizontal'|'vertical'));
   for(const [selector,key] of [['#chart-title','chartTitle'],['#chart-subtitle','subtitle'],['#chart-x-axis','xAxisTitle'],['#chart-y-axis','yAxisTitle'],['#chart-source-note','sourceNote']] as const)
     document.querySelector<HTMLInputElement|HTMLTextAreaElement>(selector)?.addEventListener('change',e=>change(w=>{getNode(w,n.id,'chart_output').params[key]=control(e).value.trim();}));

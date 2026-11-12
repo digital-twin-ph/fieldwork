@@ -102,8 +102,9 @@ export function chartVegaSpec(chart:ChartSummary,params:ChartParams,context:{sou
   if(chartRenderer(params)!=='vega-lite')throw new Error('Vega-Lite rendering is not selected.');
   if(chart.panels?.length)return panelVegaSpec(chart,params,context);
   if(chart.interval)return intervalVegaSpec(chart,params,context);
-  const mark=params.mark||'bar',orientation=chartOrientation(params);
-  if(!['bar','point'].includes(mark)||!['horizontal','vertical'].includes(orientation))throw new Error('Unsupported chart encoding.');
+  // A LINE runs along the categories in their order, left to right (the practitioner, 2026-11-12: Chart offered no line).
+  const mark=params.mark||'bar',orientation=mark==='line'?'vertical':chartOrientation(params);
+  if(!['bar','point','line'].includes(mark)||!['horizontal','vertical'].includes(orientation))throw new Error('Unsupported chart encoding.');
   // A NEGATIVE VALUE IS NOT A MALFORMED ONE. This refused `b.count<0` until 2026-10-31, which
   // made the one quantity a before-and-after produces -- a change -- undrawable: Snow's 1849
   // against 1854 gives Southwark and Vauxhall +197 and Lambeth -125, and the step stopped the
@@ -178,7 +179,9 @@ export function chartVegaSpec(chart:ChartSummary,params:ChartParams,context:{sou
       subtitle:[params.subtitle?.trim(),sourceNote].filter((part):part is string=>!!part)
         .flatMap(part=>wrapToWidth(part,chartWidth)),
       anchor:'start' as const},
-    mark:{type:mark,filled:true,...(params.colorByCategory?{}:{color:FIGURE_ROLE.primary}),...(mark==='point'?{size:110}:{})},
+    mark:mark==='line'?{type:'line' as const,point:{filled:true,size:50,...(params.colorByCategory?{}:{color:FIGURE_ROLE.primary})},strokeWidth:2,
+        ...(params.colorByCategory?{}:{color:FIGURE_ROLE.primary})}
+      :{type:mark,filled:true,...(params.colorByCategory?{}:{color:FIGURE_ROLE.primary}),...(mark==='point'?{size:110}:{})},
     encoding:orientation==='horizontal'
       ?{x:{...quantity,title:params.xAxisTitle?.trim()||quantityTitle},y:{...category,title:params.yAxisTitle?.trim()||chart.categoryTitle||'Category'},...color,tooltip:[{field:'displayLabel',type:'nominal' as const,title:'Category'},{field:difference?'bandCount':'count',type:'quantitative' as const,title:quantityTitle},...(difference?[{field:'count',type:'quantitative' as const,title:'Cumulative to this band'}]:[])]}
       :{x:{...category,title:params.xAxisTitle?.trim()||chart.categoryTitle||'Category'},y:{...quantity,title:params.yAxisTitle?.trim()||quantityTitle},...color,tooltip:[{field:'displayLabel',type:'nominal' as const,title:'Category'},{field:difference?'bandCount':'count',type:'quantitative' as const,title:quantityTitle},...(difference?[{field:'count',type:'quantitative' as const,title:'Cumulative to this band'}]:[])]},
@@ -402,6 +405,9 @@ export function treeVegaSpec(tree:import('./transmission-tree.js').TransmissionT
       :c.day===null?'No readable date':'Infected by a listed case'}));
   const links=tree.cases.filter(c=>c.generation>0&&c.parent&&at.has(c.parent)).map(c=>{const p=at.get(c.parent!)!;
     return {from:iso(dayOf(p)),to:iso(dayOf(c)),fromRow:p.row,toRow:c.row,interval:(dayOf(c)??0)-(dayOf(p)??0),generation:c.generation+1};});
+  // EVERY OTHER RECORDED SOURCE, dashed (2026-11-12).
+  const further=tree.cases.flatMap(c=>(c.alsoFrom??[]).filter(a=>at.has(a)).map(a=>{const p=at.get(a)!;
+    return {from:iso(dayOf(p)),to:iso(dayOf(c)),fromRow:p.row,toRow:c.row,interval:(dayOf(c)??0)-(dayOf(p)??0),source:a,case:c.id};}));
   const width=860,height=Math.max(160,tree.cases.length*7);
   const sourceNote=chartSourceNote(params,context.sourceId,context.runId,context.sourceLabel);
   const x={field:'date',type:'temporal' as const,title:params.xAxisTitle?.trim()||tree.columns.date,
@@ -419,7 +425,8 @@ export function treeVegaSpec(tree:import('./transmission-tree.js').TransmissionT
   return {
     $schema:'https://vega.github.io/schema/vega-lite/v6.json',
     background:FIGURE_ROLE.background,
-    description:`Transmission tree: ${tree.counts.cases} cases in ${tree.counts.chains} chains, ${tree.counts.links} links.`,
+    description:`Transmission tree: ${tree.counts.cases} cases in ${tree.counts.chains} chains, ${tree.counts.links} links`
+      +(tree.counts.furtherLinks?`, and ${tree.counts.furtherLinks} further recorded links, dashed.`:'.'),
     title:{text:params.chartTitle?.trim()||'Who infected whom',
       subtitle:[params.subtitle?.trim()||`One row per case, chains top to bottom; ${tree.columns.date} left to right. A line's length across is the serial interval.`,sourceNote]
         .filter((part):part is string=>!!part).flatMap(part=>wrapToWidth(part,width)),anchor:'start' as const},
@@ -430,6 +437,13 @@ export function treeVegaSpec(tree:import('./transmission-tree.js').TransmissionT
       {data:{values:links},mark:{type:'rule' as const,strokeWidth:1.2},
         encoding:{x:{...x,field:'from'},x2:{field:'to'},y:{...y,field:'toRow'},color:{...generationColour,legend:null},
           tooltip:[{field:'interval',type:'quantitative' as const,title:'serial interval, days'}]}},
+      ...(further.length?[
+        {data:{values:further},mark:{type:'rule' as const,strokeWidth:1.2,strokeDash:[4,3],color:FIGURE_ROLE.quietInk},
+          encoding:{x:{...x,field:'from'},y:{...y,field:'fromRow'},y2:{field:'toRow'}}},
+        {data:{values:further},mark:{type:'rule' as const,strokeWidth:1.2,strokeDash:[4,3],color:FIGURE_ROLE.quietInk},
+          encoding:{x:{...x,field:'from'},x2:{field:'to'},y:{...y,field:'toRow'},
+            tooltip:[{field:'case',type:'nominal' as const,title:'case'},{field:'source',type:'nominal' as const,title:'also recorded as infected by'},
+              {field:'interval',type:'quantitative' as const,title:'days between onsets'}]}}]:[]),
       {data:{values:cases},mark:{type:'point' as const,filled:true,size:36,opacity:1},
         encoding:{x,y,
           color:{...generationColour,title:'Generation',

@@ -1,8 +1,22 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {exampleWorkflow,validateWorkflow,nearestPlaces,makeN3} from '../build/core.js';
+import {validateWorkflow,nearestPlaces} from '../build/core.js';
+import {syntheticWorkflow} from './fixtures/synthetic-workflow.mjs';
 
-test('heat sources share Input data and legacy normalization preserves identity, attributes and connections',()=>{
+/** Two point sources and the distance between them: the shape the retired `places` and `centers` steps had, which
+ *  still migrate when a saved file holds them. The heat example supplied it until it retired on 2026-11-11; these are
+ *  its synthetic places and its two cooling-centre locations, unchanged, so the distances below are the same. */
+const exampleWorkflow=()=>{
+  const places=syntheticWorkflow().nodes[0];
+  const centre=(id,name,coordinates)=>({type:'Feature',id,properties:{name},geometry:{type:'Point',coordinates}});
+  return {schema:'fieldwork/workflow/1',name:'Two sources',nodes:[places,
+    {id:'centers',type:'point_input',x:35,y:229,params:{label:'Centres',data:{type:'FeatureCollection',features:[
+      centre('library','Central Library',[-84.367,33.79]),centre('community','West Community Hall',[-84.426,33.823])]}}},
+    {id:'nearest',type:'measure_distance',x:323,y:90,params:{unit:'kilometres'}}],
+    edges:[{id:'e1',from:'places',to:'nearest',port:'points'},{id:'e2',from:'centers',to:'nearest',port:'candidates'}]};
+};
+
+test('two point sources share Input data and legacy normalization preserves identity, attributes and connections',()=>{
   const current=exampleWorkflow();
   assert.deepEqual(current.nodes.slice(0,2).map(n=>n.type),['point_input','point_input']);
   const legacy=structuredClone(current);
@@ -22,7 +36,6 @@ test('heat sources share Input data and legacy normalization preserves identity,
   const {rows}=nearestPlaces(normalized.nodes[0].params.data,normalized.nodes[1].params.data);
   const {rows:before}=nearestPlaces(original.nodes[0].params.data,original.nodes[1].params.data);
   assert.deepEqual(rows,before);
-  assert.deepEqual(makeN3(rows,{active:true,date:'2026-07-15'},5),makeN3(before,{active:true,date:'2026-07-15'},5));
   // `distanceKm` became `distance` with a stated `unit` when the unit became a knob: three
   // widgets implemented one operation partly because each baked a different unit in.
   assert.equal(rows.length,8);assert.equal(rows.filter(r=>r.distance>5).length,5);

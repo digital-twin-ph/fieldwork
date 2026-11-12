@@ -1,28 +1,25 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {exampleWorkflow,validateWorkflow,executionPlan,executeWorkflow,NS,IncompleteWorkflow} from '../build/core.js';
+import {validateWorkflow,executionPlan,executeWorkflow,NS,IncompleteWorkflow} from '../build/core.js';
+// The heat example retired on 2026-11-11; these run on a synthetic fixture of the same shape (tests/fixtures).
+import {exampleWorkflow,stubReasoner} from './fixtures/synthetic-workflow.mjs';
 
 test('all outputs run and share one upstream inference',async()=>{
-  const w=exampleWorkflow();let calls=0;
-  const r=await executeWorkflow(w,async()=>{
-    calls++;
-    return w.nodes[0].params.data.features.map(f=>({subject:NS+'place:'+f.id,predicate:NS+'decision',object:NS+'Unknown'}));
-  });
-  assert.equal(calls,1);
+  const w=exampleWorkflow(),reason=stubReasoner('urn:fieldwork:Unknown');
+  const r=await executeWorkflow(validateWorkflow(w),reason);
+  // Two calls: the study area's own check, and the rules, which the map and the table share rather than each running.
+  assert.equal(reason.calls,2);
   assert.deepEqual(r.outputs.map(o=>[o.nodeId,o.view]),[['map','map'],['table','table']]);
   assert.equal(r.outputs[0].rows.length,8);
   assert.equal(r.outputs[1].rows.length,8);
-  // 6 since 2026-10-25, when the `alert` node left this example: the condition it carried is
-  // declared on the node that applies the ruleset, so there is one fewer step and no step lost.
-  assert.equal(r.trace.length,6);
-  assert.equal(r.receipts.length,3);
+  assert.equal(r.trace.length,5);
+  assert.equal(r.receipts.length,4);
 });
 
 test('legacy output defaults to map and missing outputs are rejected',()=>{
   const w=exampleWorkflow();w.nodes=w.nodes.filter(n=>n.id!=='table');w.edges=w.edges.filter(e=>e.to!=='table');w.outputId='map';w.nodes.at(-1).type='output';w.nodes.at(-1).params={};
   assert.equal(validateWorkflow(w).nodes.at(-1).type,'map_output');
-  // 5 since 2026-10-25: one node fewer in the example, the alert having become a declaration.
-  assert.equal(executionPlan(w).length,5);
+  assert.equal(executionPlan(w).length,4);
   w.nodes=w.nodes.filter(n=>!['output','map_output','table_output'].includes(n.type));w.edges=w.edges.filter(e=>e.to!=='map');delete w.outputId;
   // The refusal NAMES what is on the canvas, because the message it replaced told a workflow
   // that already had a study area to start with one.

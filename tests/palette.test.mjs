@@ -1,15 +1,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {addableTypes,PALETTE_GROUPS,RETIRED_FROM_PALETTE,INPUT_STAGE} from '../build/palette.js';
-import {TYPES,exampleWorkflow} from '../build/core.js';
-import {oldNalediWorkflow} from '../build/old-naledi.js';
+import {TYPES} from '../build/core.js';
+import {EXAMPLE_TEMPLATES} from '../build/example-templates.js';
 import {johnSnowExample} from '../build/john-snow.js';
 import {geoprivacyExample} from '../build/geoprivacy-example.js';
 import {blankWorkflow} from '../build/study-area.js';
 import {clipExercise} from './fixtures/workflows.mjs';
 
 const EXAMPLES=[
-  ['heat',exampleWorkflow()],['old-naledi',oldNalediWorkflow()],['blank',blankWorkflow()],
+  // Heat and Old Naledi retired on 2026-11-11; Hagelloch is the first workflow a visit opens now.
+  ['hagelloch',EXAMPLE_TEMPLATES.hagelloch()],['blank',blankWorkflow()],
   ['coverage',clipExercise()],['snow-voronoi',johnSnowExample('snow-voronoi')],
   ['snow-isochrone',johnSnowExample('snow-isochrone')],['snow-geoprivacy',geoprivacyExample()],
 ];

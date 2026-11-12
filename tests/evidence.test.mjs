@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {referenceURL,validateReferences,pdfDigest,encodeFile,decodeFile,MAX_PDF_BYTES,evidenceProvenance} from '../build/evidence.js';
 import {importWorkflowDocument} from '../build/evidence-storage.js';
-import {validateWorkflow,executeWorkflow,exampleWorkflow} from '../build/core.js';
+import {validateWorkflow,executeWorkflow} from '../build/core.js';
+import {exampleWorkflow,stubReasoner} from './fixtures/synthetic-workflow.mjs';
 const reference=(overrides={})=>({id:'census',kind:'url',title:'Annual census',role:'data',url:'https://example.org/census/2022',authors:'Census office',published:'2022',locator:'Table 4, p. 27',notes:'Denominator for sampling',addedAt:'2026-10-06T12:00:00.000Z',modifiedAt:'2026-10-06T12:00:00.000Z',...overrides});
 const pdf=()=>new TextEncoder().encode('%PDF-1.4\nSynthetic regression fixture\n%%EOF');
 
@@ -35,13 +36,13 @@ test('workflow reference limits count unique PDFs and reject conflicting metadat
 test('run evidence snapshots citations and records lineage without injecting citations into rule premises',async()=>{
   const w=exampleWorkflow();w.nodes[0].references=[reference({title:'Census "quote"\nnew line'})];w.nodes.find(n=>n.type==='apply_ruleset').references=[reference({id:'method',role:'method'})];
   const inputs=[];
-  const result=await executeWorkflow(w,async input=>{inputs.push(input);return w.nodes[0].params.data.features.map(f=>({subject:'urn:fieldwork:place:'+f.id,predicate:'urn:fieldwork:decision',object:'urn:fieldwork:Unknown'}));});
+  const reason=stubReasoner('urn:fieldwork:Unknown');const result=await executeWorkflow(w,reason);inputs.push(...reason.inputs);
   assert.equal(result.evidence.length,2);assert.equal(result.receipts[0].references[0].role,'method');
   assert.match(result.provenanceN3,/dcterms:references/);assert.match(result.provenanceN3,/prov:used/);assert.match(result.provenanceN3,/fw:MethodReference/);
   assert.match(result.provenanceN3,/Census \\"quote\\"\\nnew line/);
   assert.ok(inputs.every(input=>!input.includes('example.org')&&!input.includes('dcterms:references')));
   w.nodes[0].references[0].title='Changed later';assert.notEqual(result.evidence[0].references[0].title,'Changed later');
-  const other=evidenceProvenance(w.nodes,w.edges,'different-run');assert.ok(other.provenanceN3.includes('run:different-run:reference:neighborhoods:census'));
+  const other=evidenceProvenance(w.nodes,w.edges,'different-run');assert.ok(other.provenanceN3.includes('run:different-run:reference:places:census'));
 });
 
 test('bundles reject altered, missing, duplicate and unreferenced PDFs before opening storage',async()=>{
@@ -78,8 +79,7 @@ test('every node output declares its port type, and every port type has an ontol
       `${portType} has no ${portTypeTerm(portType)} declared in ontology/fieldwork.ttl`);
 
   const w=exampleWorkflow();
-  const result=await executeWorkflow(w,async()=>w.nodes[0].params.data.features.map(f=>
-    ({subject:'urn:fieldwork:place:'+f.id,predicate:'urn:fieldwork:decision',object:'urn:fieldwork:Unknown'})));
+  const result=await executeWorkflow(w,stubReasoner('urn:fieldwork:Unknown'));
   for(const node of w.nodes){
     const expected=outputOf(node);
     if(!expected)continue;

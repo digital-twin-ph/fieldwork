@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import {MAX_BUNDLE_BYTES} from '../build/evidence.js';
 import {ZipReader,ZipWriter,BlobReader,BlobWriter,Uint8ArrayReader} from '@zip.js/zip.js';
 import {createEncryptedPackage,readEncryptedPackage,contentHash} from '../build/encrypted-package.js';
-import {exampleWorkflow,validateWorkflow} from '../build/core.js';
+import {validateWorkflow} from '../build/core.js';
+import {exampleWorkflow,stubReasoner} from './fixtures/synthetic-workflow.mjs';
 import {syncProjectManifest} from '../build/project-manifest.js';
 const password='a long test passphrase 🔐',pdf=new TextEncoder().encode('%PDF-1.4\nSynthetic private reference\n%%EOF');
 async function fixture(){const workflow=exampleWorkflow(),hash=await contentHash(pdf),ref={id:'census',kind:'pdf',filename:'private-census.pdf',sha256:hash,bytes:pdf.length,mediaType:'application/pdf',title:'Private annual census',role:'data',authors:'',published:'',locator:'',notes:'',addedAt:'2026-10-06T00:00:00.000Z',modifiedAt:'2026-10-06T00:00:00.000Z'};workflow.nodes[0].references=[ref];workflow.nodes[1].references=[structuredClone(ref)];return {workflow,files:new Map([[hash,pdf]])};}

@@ -187,6 +187,64 @@ test('MERS-CoV, South Korea, 2015: each case’s detection and notification agai
       await expect(main.locator('tr',{has:page.locator('th,td',{hasText:new RegExp(`^${value.trim().replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}$`)})}).first()).toContainText(String(count));
   }
 
+  // WHO INFECTED WHOM, AS A TREE (the practitioner, 2026-11-12: every recorded link). The cases, each with every source
+  // the contacts record: Relate on id = to, one row per match, the 67 with no recorded source kept as "none recorded".
+  await add(page,'table_input');
+  const people=await idOf(page,'table_input',1);
+  await page.locator('#open-table').click();
+  await page.locator('#table-file').setInputFiles(LIST);
+  await columnsOffered(page);
+  await page.locator('#table-shape').selectOption('long');
+  await page.locator('#table-value').selectOption('age');
+  await keepColumns(page,'table-keys',['id','dt_onset']);
+  await page.locator('#table-save').click();
+  await label(page,people,'The cases and their onsets');
+  await add(page,'relate_table');
+  const sources=await idOf(page,'relate_table');
+  await tidy(page);await wire(page,people,sources,'records');
+  await tidy(page);await wire(page,contacts,sources,'related');
+  await page.locator(`.react-flow__node[data-id="${sources}"]`).click();
+  await page.locator('#configure-step').click();
+  const rel=page.locator('#relate-config');
+  await rel.locator('#relate-on').selectOption('id');
+  await rel.locator('#relate-right-on').selectOption('to');
+  await rel.locator('#relate-bring').selectOption('from');
+  await rel.locator('#relate-several').selectOption('each');
+  await rel.locator('[name="relate-decision"][value="keep"]').check();
+  await rel.locator('#relate-join-label').fill('none recorded');
+  await rel.locator('#relate-join-label').press('Tab');
+  await rel.locator('#relate-join-reason').fill('A case the contacts name as nobody\u2019s has no recorded source.');
+  await rel.locator('#relate-join-reason').press('Tab');
+  await rel.locator('#config-apply').click();
+  await label(page,sources,'Each case with every recorded source');
+  await add(page,'table_output');
+  const listed=await idOf(page,'table_output',2);
+  await tidy(page);await wire(page,sources,listed,'table');
+  await label(page,listed,'Each case with every recorded source');
+  await run(page);
+  await add(page,'chart_output');
+  const tree=await idOf(page,'chart_output');
+  await tidy(page);await wire(page,sources,tree,'records');
+  await page.locator(`.react-flow__node[data-id="${tree}"]`).click();
+  await page.locator('#configure-step').click();
+  const ch=page.locator('#chart-config');
+  await ch.locator('#chart-figure').selectOption('tree');
+  await ch.locator('#chart-tree-id').selectOption('id');
+  await ch.locator('#chart-tree-parent').selectOption('from');
+  await ch.locator('#chart-tree-date').selectOption('dt_onset');
+  await ch.locator('#chart-tree-none').fill('none recorded');
+  await ch.locator('#chart-tree-none').press('Tab');
+  await ch.locator('#config-apply').click();
+  await label(page,tree,'Who infected whom');
+  await run(page);
+  await page.locator('[data-view="results"]').click();
+  await page.getByRole('tab',{name:'Each case with every recorded source'}).click();
+  await expect(page.locator('main').first()).toContainText('165 rows');
+  await page.getByRole('tab',{name:'Who infected whom'}).click();
+  await expect(page.locator('main').first()).toContainText('162 cases');
+  await expect(page.locator('main').first()).toContainText('2 cases record more than one source');
+  await page.screenshot({path:'test-results/mers-tree.png',fullPage:true});
+
   await page.locator('[data-view="project"]').click();
   await page.locator('#storage-status').click();
   const block=page.locator('.project-view-block').filter({hasText:'MERS-CoV, South Korea, 2015'}).first();

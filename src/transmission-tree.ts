@@ -16,7 +16,9 @@
 import type {DataTable} from './data-table.js';
 import {dayNumber} from './authored-application.js';
 
-export interface TreeColumns {id:string; parent:string; date:string}
+/** `none`: a written value that means no source is recorded, as a step keeping unmatched rows under a label writes one
+ *  (MERS, 2026-11-12). An empty cell always means none. */
+export interface TreeColumns {id:string; parent:string; date:string; none?:string}
 export interface TreeCase {
   id:string; parent:string|null; date:string; day:number|null;
   /** 0 for a case that starts a chain. */
@@ -51,7 +53,8 @@ export function transmissionTree(table:DataTable,columns:TreeColumns):Transmissi
   table.rows.forEach((row,order)=>{
     const id=valueOf(row,columns.id,table);
     if(!id)return;
-    const date=valueOf(row,columns.date,table),parent=valueOf(row,columns.parent,table);
+    const date=valueOf(row,columns.date,table),written=valueOf(row,columns.parent,table);
+    const parent=columns.none?.trim()&&written===columns.none.trim()?'':written;
     const held=seen.get(id);
     if(held){
       if(date&&held.date&&date!==held.date)

@@ -41,6 +41,12 @@ the run, naming the columns they do. The run's record states which column was re
 | **then**, a computed value | A new column and a sum: *houses without a death* is *houses* minus *deaths*. Plus, minus, times or divided by; each side a column, a value another rule computed, or a typed number |
 | **otherwise** (amber) | A column's value for a record no rule gave one: *class* is *Cannot be classified* |
 
+**Make bands…** writes the rules for bands of a number: choose the number column, the value the first band starts at,
+and the cut points, rising. *0* and *1, 5, 10, 15* write five rules, *0*, *1 to 4*, *5 to 9*, *10 to 14* and *15 and
+over*, each at least its lower bound and less than its upper: no gap and no overlap. Whole numbers are labelled as age
+bands are written; decimals *1.5 to under 3*. The rules are then ordinary rules, to read and change; a value below the
+start gets no band.
+
 Each block also has its own edge, solid, dotted, double or dashed, so the blocks are told apart without colour.
 **The comparison in a condition is keyed by its family** the same way: comparisons of numbers (*is more than*, *is at
 most*, *is less than*, *is at least*) teal; *is* and *is not* slate; *is recorded* and *is not recorded* rose, with a

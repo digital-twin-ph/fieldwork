@@ -66,6 +66,10 @@ export interface RelateRequest {
    *  folded, every difference being a single comma. This matched on raw strings, so the same nine
    *  rows would have been dropped here and matched next door. */
   normalisation?:'exact'|'fuzzy';
+  /** WHEN A KEY MATCHES SEVERAL ROWS of the second table (the practitioner, 2026-11-12, for MERS's cases and their
+   *  recorded sources): `each` keeps one row per match, as a one-to-many join does, counted and said. Absent, the step
+   *  stops and names the key, because choosing one value would put a value on a row the table does not support. */
+  several?:'each';
   /** The key column whose values name the numeric variables, so the overlap can be reported per
    *  variable rather than as one total -- the same pivot `rate` names `measureKey`, and the same
    *  thing `derive_value` and `select_rows` ask for as their key column.
@@ -214,6 +218,8 @@ export interface MeasureShare {
 
 export interface RelateResult {
   table:DataTable; related:number; dropped:number; gaps:RelateGap[];
+  /** Under one row per match: the keys that matched several rows, and the rows that added. */
+  several?:{keys:number; addedRows:number};
   /** Rows kept by a `keep` declaration, carrying the practitioner's own label. */
   kept:number;
   /** Distinct values of the brought column that actually landed, in first-seen order: what a
@@ -294,6 +300,8 @@ interface RelatePlan {
   /** Whether the column brought is the second table's value, and its unit. */
   bringsValue:boolean; bringsUnit?:string;
   lookup:Map<string,string>;
+  /** Under `several: 'each'`, every distinct value each key matched, in the second table's order. */
+  lookupAll?:Map<string,string[]>;
   fold:(value:string)=>string;
   gaps:RelateGap[];
   overlap:RelateOverlap;
@@ -369,6 +377,7 @@ function planRelate(left:DataTable,right:DataTable,request:RelateRequest):Relate
   // `area-join.ts` names this case `ambiguous-data-key` and checks it in the same place, for the
   // same reason.
   const lookup=new Map<string,string>();
+  const all=new Map<string,string[]>();
   const spellings=new Map<string,Set<string>>();
   const ambiguous=new Map<string,Set<string>>();
   for(const row of right.rows){
@@ -379,11 +388,13 @@ function planRelate(left:DataTable,right:DataTable,request:RelateRequest):Relate
     // other empty cell, which would relate unrelated rows to one another.
     if(!key)continue;
     (spellings.get(key)??spellings.set(key,new Set()).get(key)!).add(raw);
+    const list=all.get(key)??all.set(key,[]).get(key)!;
+    if(!list.includes(value))list.push(value);
     const held=lookup.get(key);
     if(held===undefined){lookup.set(key,value);continue;}
     if(held!==value)(ambiguous.get(key)??ambiguous.set(key,new Set([held])).get(key)!).add(value);
   }
-  if(ambiguous.size){
+  if(ambiguous.size&&request.several!=='each'){
     const [key,clashing]=[...ambiguous.entries()][0];
     const raws=[...(spellings.get(key)??new Set([key]))];
     throw new Error(`The second table gives "${raws[0]}" more than one "${bring}": `
@@ -391,6 +402,7 @@ function planRelate(left:DataTable,right:DataTable,request:RelateRequest):Relate
       +(ambiguous.size>1?`, and ${ambiguous.size-1} other ${ambiguous.size===2?'key does':'keys do'} the same`:'')
       +`. Relating cannot choose between them, and choosing would put a value on these rows that `
       +`the table does not support. `
+      +`Or, under Configure…, keep one row per match. `
       +(raws.length>1
         ?`Those rows are spelled ${raws.map(v=>`"${v}"`).join(' and ')} and are one key only because `
           +`"${on}" is compared with punctuation folded; comparing it exactly would keep them apart.`
@@ -449,7 +461,7 @@ function planRelate(left:DataTable,right:DataTable,request:RelateRequest):Relate
     gaps,
     rightOnlyKeys:rightOnly.map(key=>[...(spellings.get(key)??new Set([key]))][0]),
   };
-  return {on,keys,bring,as,normalisation,keyOf,lookup,fold,gaps,overlap,shares,...(matches?{matches,matchColumn}:{}),
+  return {on,keys,bring,as,normalisation,keyOf,lookup,...(request.several==='each'?{lookupAll:all}:{}),fold,gaps,overlap,shares,...(matches?{matches,matchColumn}:{}),
     bringsValue,...(right.unit?{bringsUnit:right.unit}:{}),
     signature:gapSignature(gaps,normalisation),values,matched,left};
 }
@@ -474,7 +486,8 @@ function buildRows(plan:RelatePlan,label:string|undefined):DataTable {
       rows.push({key:{...row.key,[as]:label,...how(row)},value:row.value});
       continue;
     }
-    rows.push({key:{...row.key,[as]:value,...how(row)},value:row.value});
+    // ONE ROW PER MATCH, where asked: the row repeated, once for each value its key matched.
+    for(const each of plan.lookupAll?.get(keyOf(row))??[value])rows.push({key:{...row.key,[as]:each,...how(row)},value:row.value});
   }
   // THE SECOND TABLE'S VALUE, BROUGHT AS A NUMBER (2026-11-09): declared numeric with its unit, so a rate can divide by
   // it. A category is still text, and so is a value kept with a word for the unmatched. A NUMBER THE PRACTITIONER NAMES
@@ -587,11 +600,15 @@ export function relateTable(left:DataTable,right:DataTable,request:RelateRequest
   if(refusal)throw new Error(refusal);
 
   const table=buildRows(plan,label===undefined?undefined:label.trim());
+  // How many keys matched several rows, and the rows that added: said, since the table now has more rows than the first.
+  const multiple=plan.lookupAll?[...new Set(left.rows.map(plan.keyOf))].map(k=>plan.lookupAll!.get(k)?.length??0).filter(n=>n>1):[];
+  const several=plan.lookupAll?{keys:multiple.length,
+    addedRows:left.rows.reduce((n,row)=>n+Math.max(0,(plan.lookupAll!.get(plan.keyOf(row))?.length??1)-1),0)}:undefined;
   const values=label===undefined?plan.values:[...plan.values,label.trim()];
   return {table,related:plan.matched,
     dropped:label===undefined?left.rows.length-plan.matched:0,
     kept:label===undefined?0:left.rows.length-plan.matched,
-    gaps,values,overlap:plan.overlap,shares:plan.shares,normalisation,
+    gaps,values,overlap:plan.overlap,shares:plan.shares,normalisation,...(several?{several}:{}),
     declared:declared?{decision:declared.decision,
       ...(declared.label?{label:declared.label.trim()}:{}),
       ...(declared.reason?{reason:declared.reason}:{})}:undefined};

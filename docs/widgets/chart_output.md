@@ -39,7 +39,8 @@ than the table beside it.
 3. Press **Configure…**. Everything else is set there, and **Apply** writes it:
    - **Draw**: bars, or a **transmission tree** (below).
    - If the table keys on more than one column, which one labels the bars.
-   - The mark and the orientation. Bars read best horizontally when the labels are long or there are many of them;
+   - The mark: bars, dots, or a **line**, which runs along the categories in their order, upright, with a dot at each
+     value. And the orientation, for bars and dots. Bars read best horizontally when the labels are long or there are many of them;
      32 sub-districts is many.
    - A title, a subtitle, axis titles and a source note, if you want them in the figure.
    - Optionally the category legend, which colours each bar. It holds at most six categories, because the validated
@@ -70,6 +71,12 @@ Nothing is dropped, and each is counted and said:
 | names an infector the table does not hold | starting a chain, counted apart |
 | sits in a loop (A infected by B, B by A) | starting a chain, counted as in a loop, which no chain can be |
 | has no readable date | at its infector's date, outlined |
+| records more than one source, one row per source | under the first source listed, each other recorded link dashed, counted |
+
+**More than one recorded source.** A table may hold a case in several rows, one per source recorded for it, as
+Relate's *keep one row per match* makes from MERS's contacts. The case is drawn once, under the first source listed;
+each other recorded link is drawn as a dashed line, and the cases and links are counted. **Written where no source is
+recorded** names a value, such as *none recorded*, that means no source; an empty cell always does.
 
 Hagelloch, 1861: 188 cases in 4 chains, 184 links; the largest chain starts with case 184 and holds 173 cases over 6
 generations. The tree draws the reconstruction of who infected whom that the table holds; it does not estimate one.

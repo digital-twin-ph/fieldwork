@@ -344,6 +344,8 @@ export interface ParamsByType {
     /** What was read and on what terms, kept beside the features it produced. */
     retrieval?:import('./osm-areas.js').AreaRetrieval};
   relate_table:{label:string;on:string;bring:string;
+    /** One row per match where a key matches several rows (2026-11-12). Absent, the step stops and names the key. */
+    several?:'each';
     /** The name the brought column is written under, where the first table has one called `bring` (experiment 200). */
     bringAs?:string;
     /** The second table's key column where it is named differently, and names matched allowing for spelling (experiment 193). */
@@ -646,7 +648,9 @@ export interface ParamsByType {
   chart_output:{label:string; section?:import('./notes.js').FigureSection;
     /** WHAT IS DRAWN: bars (the default), or who infected whom as chains over time (experiment 200, step 5), with the
      *  columns naming each case, its infector and its date. */
-    figure?:'bars'|'tree'; tree?:{id:string;parent:string;date:string};
+    figure?:'bars'|'tree'; tree?:{id:string;parent:string;date:string;
+      /** A written value meaning no source recorded, such as "none recorded" (2026-11-12). Empty is always none. */
+      none?:string};
     /** ONE PANEL PER VALUE of this key column, stacked on a shared x axis, each with its own y scale (experiment 174).
      *  `panelMarks` names a mark per panel; `shade` marks a period across every panel. */
     panelsBy?:string;panelMarks?:Record<string,'bar'|'line'>;shade?:{from:string;to:string};

@@ -1651,7 +1651,10 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         // THE FACTS, as N3. Built in `relate-table.ts` beside the computation, the way
         // `deduplicate-points.ts` and `area-join.ts` build theirs -- and because a release
         // declares the terms its own module asserts, which the gate checks.
-        const relateFacts=relateReceiptFacts(outcome,machined[node.id],{runId,nodeId:node.id});
+        // ONE ROW PER MATCH, where asked: how many keys matched several rows and the rows it added, in the receipt.
+        const relateFacts=relateReceiptFacts(outcome,machined[node.id],{runId,nodeId:node.id})
+          +(result.several?`<urn:fieldwork:run:${runId}:output:${node.id}> <urn:fieldwork:oneRowPerMatch> [ `
+            +`<urn:fieldwork:keysMatchingSeveral> ${result.several.keys}; <urn:fieldwork:rowsAddedForMatches> ${result.several.addedRows} ].\n`:'');
         receipts.push({nodeId:node.id,kind:'computation',
           facts:relateFacts,rules:'',input:relateFacts,conclusions:[],
           method:`${node.params.bring} brought across on ${outcome.on}`
@@ -1661,6 +1664,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
               +'at the practitioner\u2019s declared choice':'')
             +(result.kept?`, ${result.kept} kept as \u201c${decided?.label}\u201d at the `
               +'practitioner\u2019s declared choice, a category the second table never measured':'')
+            +(result.several?`; one row per match: ${result.several.keys} key${result.several.keys===1?'':'s'} matched several rows, adding ${result.several.addedRows} row${result.several.addedRows===1?'':'s'}`:'')
             +(shareText?`. Retained by variable \u2014 ${shareText}`:''),
           related:result.related,dropped:result.dropped,kept:result.kept,gaps:result.gaps,
           values:result.values,normalisation:result.normalisation,

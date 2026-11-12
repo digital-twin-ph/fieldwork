@@ -50,6 +50,7 @@ have changed something, the dialog asks before discarding it.
 | **And also matched on** | more shared columns, where one column does not identify a subject: a monitor's reading is one row per `site` **and** `date`. A row relates only where every chosen column agrees |
 | **Bring across** | the second table's column to add, such as `water_supply`, or its **value column**, such as a monitor's reading in ppb or a district's census population, which arrives as written and **as a number**, with its unit, so **Rate with a denominator** can divide by it |
 | **Bring it in as** | the name the brought column is written under. Needed where the first table already has a column of that name, as when a table is related to itself: `date_of_prodrome` brought in as `infector_prodrome`. Left empty, the column keeps its own name |
+| **Where a key matches several rows** | *Stop, and say which key*, as before; or *keep one row per match*: the row is repeated once for each, and the step says how many keys matched several rows and how many rows that added. MERS's cases related to their recorded sources: SK_39 becomes three rows |
 | **Compare keys** | folding punctuation and case; exactly after trimming; or allowing for spelling, and dropping words |
 | **A date within a period** | optional; see below |
 | **Shifts, in days** | optional; see below |

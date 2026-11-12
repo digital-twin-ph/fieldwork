@@ -83,6 +83,8 @@ export interface RelateDraft {
   bringAs:string;
   /** The second table's key column, empty where it is named as the first's. */
   rightOn:string;
+  /** One row per match where a key matches several rows (2026-11-12); otherwise the step stops and names the key. */
+  several:boolean;
   /** ALLOWING FOR SPELLING (experiment 193): the words to drop and the threshold as typed, and the names decided. */
   spelling:boolean; dropWords:string; threshold:string; spellingDecisions:Record<string,string>;
   within:{date:string;start:string;end:string};
@@ -95,7 +97,7 @@ export interface RelateDraft {
 export function relateDraftOf(p:RelateParams):RelateDraft{
   const shifts=(p.shifts?.length??0)>1?p.shifts!:p.shiftDays?[p.shiftDays]:[];
   return {on:p.on??'',alsoOn:[...(p.alsoOn??[])],bring:p.bring??'',bringAs:p.bringAs??'',normalisation:p.normalisation??'fuzzy',
-    rightOn:p.rightOn??'',spelling:!!p.spelling,dropWords:(p.spelling?.dropWords??[]).join(', '),
+    rightOn:p.rightOn??'',several:p.several==='each',spelling:!!p.spelling,dropWords:(p.spelling?.dropWords??[]).join(', '),
     threshold:String(p.spelling?.threshold??DEFAULT_SPELLING_THRESHOLD),spellingDecisions:{...(p.spelling?.decisions??{})},
     within:{date:p.within?.date??'',start:p.within?.start??'',end:p.within?.end??''},
     shifts:shifts.map(String),
@@ -131,6 +133,7 @@ export function requestOf(draft:RelateDraft,{measureKey}:{measureKey?:string}={}
   return {on:draft.on,...(draft.alsoOn.length?{alsoOn:draft.alsoOn}:{}),...within,
     ...(shifts.length===1&&shifts[0]!==0?{shiftDays:shifts[0]}:{}),bring:draft.bring,...(draft.bringAs.trim()&&draft.bringAs.trim()!==draft.bring?{bringAs:draft.bringAs.trim()}:{}),normalisation:draft.normalisation,
     ...(draft.rightOn&&draft.rightOn!==draft.on?{rightOn:draft.rightOn}:{}),
+    ...(draft.several?{several:'each' as const}:{}),
     ...(()=>{const {spelling}=draftSpelling(draft);return spelling?{spelling}:{};})(),
     ...(measureKey?{measureKey}:{}),
     ...(draft.decision==='keep'?{unmatched:{decision:'keep' as const,label:draft.label,signature:''}}:{})};
@@ -142,6 +145,7 @@ export function applyRelateDraft(p:RelateParams,draft:RelateDraft,plan?:{signatu
   p.on=draft.on; p.bring=draft.bring; p.normalisation=draft.normalisation;
   if(draft.bringAs.trim()&&draft.bringAs.trim()!==draft.bring)p.bringAs=draft.bringAs.trim();else delete p.bringAs;
   if(draft.rightOn&&draft.rightOn!==draft.on)p.rightOn=draft.rightOn;else delete p.rightOn;
+  if(draft.several)p.several='each';else delete p.several;
   const {spelling}=draftSpelling(draft);
   if(spelling)p.spelling=spelling;else delete p.spelling;
   if(draft.alsoOn.length)p.alsoOn=[...draft.alsoOn];else delete p.alsoOn;
@@ -239,6 +243,9 @@ export function openRelateConfig(view:RelateConfigView,esc:Escape):void{
         +`<option value="fuzzy"${draft.normalisation==='fuzzy'?' selected':''}>Folding punctuation and case</option>`
         +`<option value="exact"${!draft.spelling&&draft.normalisation==='exact'?' selected':''}>Exactly, after trimming</option>`
         +`<option value="spelling"${draft.spelling?' selected':''}>Allowing for spelling, and dropping words</option></select></div>`
+        +'<div class="field"><label class="field-label" for="relate-several">Where a key matches several rows</label><select id="relate-several">'
+        +`<option value="stop"${draft.several?'':' selected'}>Stop, and say which key</option>`
+        +`<option value="each"${draft.several?' selected':''}>Keep one row per match</option></select></div>`
         +(draft.spelling
           ?`<div class="field"><label class="field-label" for="relate-drop-words">Words to drop, separated by commas</label>`
             +`<input id="relate-drop-words" value="${esc(draft.dropWords)}" placeholder="for example District"></div>`
@@ -370,6 +377,7 @@ export function openRelateConfig(view:RelateConfigView,esc:Escape):void{
       on('relate-on',el=>{draft.on=el.value;draft.alsoOn=draft.alsoOn.filter(c=>c!==el.value);});
       on('relate-right-on',el=>{draft.rightOn=el.value===draft.on?'':el.value;});
       on('relate-bring',el=>{draft.bring=el.value;});
+      on('relate-several',el=>{draft.several=el.value==='each';});
       on('relate-compare',el=>{draft.spelling=el.value==='spelling';draft.normalisation=el.value==='exact'?'exact':'fuzzy';});
       const typed=(id:string,fn:(v:string)=>void)=>{const el=root.querySelector<HTMLInputElement>(`#${id}`);
         if(el){el.oninput=()=>fn(el.value);el.onchange=()=>{fn(el.value);redraw();};}};

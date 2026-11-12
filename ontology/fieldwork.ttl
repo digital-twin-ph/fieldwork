@@ -1921,3 +1921,11 @@ fw:roleConfirmed a owl:DatatypeProperty; rdfs:range xsd:boolean;
 fw:contributionEvidence a owl:DatatypeProperty; rdfs:range xsd:string;
   rdfs:label "The acts in the record that a proposed role rests on";
   rdfs:comment "What was observed, in the units it was observed in -- \"4 authored notes in Methods and Discussion\", \"2 study areas drawn\". NEVER A SHARE OR A RANK. A percentage of contribution would be a judgement wearing a number's clothes: one decisive limitation note can outweigh forty drawn boxes, and no count available to this application can tell the difference. Counting is offered as evidence for a reader, not as a measure of worth.".
+
+# ONE ROW PER MATCH (2026-11-12): a relate whose key matched several rows of the second table, kept as one row per match
+# at the practitioner's choice, as MERS's cases with their recorded sources. Counted, because the table then holds more
+# rows than the first did.
+fw:oneRowPerMatch a owl:ObjectProperty; rdfs:label "kept one row per match";
+  rdfs:comment "Present where a relate kept one row per match: how many keys matched several rows, and how many rows that added.".
+fw:keysMatchingSeveral a owl:DatatypeProperty; rdfs:label "keys matching several rows"; rdfs:range xsd:nonNegativeInteger.
+fw:rowsAddedForMatches a owl:DatatypeProperty; rdfs:label "rows added for further matches"; rdfs:range xsd:nonNegativeInteger.

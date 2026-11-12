@@ -75,12 +75,12 @@
    ]
   },
   "apply_ruleset": {
-   "version": "0.12.0",
+   "version": "0.13.0",
    "released": "2026-11-12",
    "changes": [
     {
      "kind": "minor",
-     "description": "A published ruleset's inputs are read from the columns chosen in Configure…, under Which column holds each, and the run's record states them; a chosen column the records do not carry stops the run, naming the columns they do (experiment 200). The 7-1-7 timeliness ruleset is published, cited to Bochner et al. 2023. A ruleset evaluated directly now writes its receipt: the columns bound, each record's values read, computed and concluded (a date as xsd:date), and each data issue (experiment 207): no value, not the declared kind, divided by zero, rules disagree. It held start and end times only, prefixed \"undefined\". The warning table opens in a dialog, read whole, under the ontology's labels."
+     "description": "Make bands…: the rules for bands of a number written from a start and rising cut points, with no gap or overlap, as ordinary rules."
     }
    ],
    "breaking": false,
@@ -153,12 +153,12 @@
    "replacementCandidate": "urn:fieldwork:widget:observations"
   },
   "chart_output": {
-   "version": "0.14.1",
+   "version": "0.15.0",
    "released": "2026-11-12",
    "changes": [
     {
-     "kind": "patch",
-     "description": "Panels: numbered categories run in number order (Hagelloch ages drew 7, 6, 4, 8 … in row order), and a panel for a blank value is drawn and named as blank (\"gender blank\"), where a filter on an empty string had matched nothing and left it empty and unnamed."
+     "kind": "minor",
+     "description": "A line mark, upright, along the categories in their order (the practitioner, 2026-11-12). The transmission tree keeps every recorded source: a case in several rows sits under its first source and each other recorded link is drawn dashed and counted; a written value can mean no source recorded. Panels order bands that begin with a number by that number."
     }
    ],
    "breaking": false,
@@ -712,12 +712,12 @@
    "migrationFrom": []
   },
   "relate_table": {
-   "version": "0.11.0",
-   "released": "2026-11-09",
+   "version": "0.12.0",
+   "released": "2026-11-12",
    "changes": [
     {
      "kind": "minor",
-     "description": "Brings a column under a name you give it (Bring it in as), so a table can be related to itself: Hagelloch's cases each gain their infector's prodrome date as infector_prodrome. Where the first table already has the column and no name is given, the refusal says to name one. Recorded as fw:broughtAs. And a point layer connects as a table: its attributes as columns, without its geometry (experiment 200). A kept category that is itself a number, typed, is written as that number and the brought column stays a number: Hagelloch's 126 children nobody names as infector have 0 secondary cases, and 188 rows add up to 184. The dialog says a number is counted, so use one only where no match means none."
+     "description": "Where a key matches several rows: stop and say which, as before, or keep one row per match, counted and said, and stated in the receipt (fw:oneRowPerMatch)."
     }
    ],
    "breaking": false,

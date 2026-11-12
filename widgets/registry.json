@@ -101,7 +101,7 @@
     {
       "id": "urn:fieldwork:widget:apply_ruleset",
       "nodeType": "apply_ruleset",
-      "currentVersion": "0.12.0",
+      "currentVersion": "0.13.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -167,6 +167,11 @@
           "version": "0.12.0",
           "path": "widgets/releases/apply_ruleset/0.12.0.json",
           "sha256": "e7172ebd30f338ab5a315ca8558dd7714e3169a5dd52ede5faed78ac27233188"
+        },
+        {
+          "version": "0.13.0",
+          "path": "widgets/releases/apply_ruleset/0.13.0.json",
+          "sha256": "c99130de9622f95ab9818337263010c36b7c9c4117c649b663c0d8c0b6d5a120"
         }
       ]
     },
@@ -256,7 +261,7 @@
     {
       "id": "urn:fieldwork:widget:chart_output",
       "nodeType": "chart_output",
-      "currentVersion": "0.14.1",
+      "currentVersion": "0.15.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -337,6 +342,11 @@
           "version": "0.14.1",
           "path": "widgets/releases/chart_output/0.14.1.json",
           "sha256": "1a57ebbf59f1c6427177744932165b5e6330e39644d91c201dfe3afd7d784eeb"
+        },
+        {
+          "version": "0.15.0",
+          "path": "widgets/releases/chart_output/0.15.0.json",
+          "sha256": "ee9a89e410f4e70c43858f6bb14004a27bc93b36278ca11dcc9cefc1cb9299a8"
         }
       ]
     },
@@ -1447,7 +1457,7 @@
     {
       "id": "urn:fieldwork:widget:relate_table",
       "nodeType": "relate_table",
-      "currentVersion": "0.11.0",
+      "currentVersion": "0.12.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -1528,6 +1538,11 @@
           "version": "0.11.0",
           "path": "widgets/releases/relate_table/0.11.0.json",
           "sha256": "82b91251edfade2f678bd4699a58ad17ac9560ce62e088002f1ef505f070d74e"
+        },
+        {
+          "version": "0.12.0",
+          "path": "widgets/releases/relate_table/0.12.0.json",
+          "sha256": "44e138aa8a06aa3357dbf3148c0eb6bfaaf82cce71f18d6d0d10113f60a1627d"
         }
       ]
     },

@@ -2298,6 +2298,9 @@ function openChartConfig(nodeId:string){
             +pick('chart-tree-id','id','Case id','One row per case.')
             +pick('chart-tree-parent','parent','Infected by','The case id of the infector; empty where none is recorded.')
             +pick('chart-tree-date','date','Date','Year-month-day, such as the date of onset.')
+            +`<div class="field"><label class="field-label" for="chart-tree-none">Written where no source is recorded (optional)</label>`
+            +`<input id="chart-tree-none" data-tree="none" value="${esc(draft.tree?.none??'')}" placeholder="for example none recorded">`
+            +`<small>An empty cell always means none.</small></div>`
           :chartTableControls(shown)+chartControls(shown,{omitOrientation:draft.inputMode==='series'})
             +(draft.inputMode==='series'?`<div class="field"><label class="field-label" for="series-orientation">Bars</label>`
               +`<select id="series-orientation"><option value="vertical" ${chartOrientation(draft)==='vertical'?'selected':''}>Vertical \u00b7 periods along the bottom</option>`

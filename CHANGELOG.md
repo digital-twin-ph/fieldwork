@@ -3,6 +3,16 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.100.0 — 2026-11-12
+
+- **Chart draws a line**, along the categories in their order. Chart 0.15.0.
+- **Every recorded source in a transmission tree.** A case recorded with several sources sits under the first, and each
+  other recorded link is drawn dashed and counted. MERS's second workflow now draws who infected whom: SK_39 records
+  three sources and SK_107 two.
+- **Relate can keep one row per match**, where a key matches several rows, saying how many. Relate 0.12.0.
+- **Make bands…** in Apply ruleset writes the rules for age bands, or any bands of a number, from cut points, with no
+  gap or overlap. Apply ruleset 0.13.0.
+
 ## 0.99.0 — 2026-11-12
 
 - **Cases by month of the year**, January to December, every year's January together, all twelve kept: a season across

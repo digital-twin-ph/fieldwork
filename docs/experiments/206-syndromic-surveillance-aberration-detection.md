@@ -62,6 +62,23 @@ written rules, open to any ruleset and not code for one, so it keeps to the rule
 checked first, since it may need nothing built; Farrington still wants C. A and B differ in whether the baseline is a setting of counting or a step of its own; examine-before-
 proposing points to A or C first, B only if neither carries it without a mode.
 
+## Checked 2026-11-11: can Apply ruleset already compute CUSUM?
+
+Against the built evaluator (`evaluateAuthored`), on a series of six by hand, k = 4, S = max(0, S₋₁ + x − k):
+
+| x | 3 | 5 | 2 | 8 | 9 | 1 |
+| --- | --- | --- | --- | --- | --- | --- |
+| S by hand | 0 | 1 | 0 | 4 | 9 | 6 |
+| Apply ruleset | empty | empty | empty | empty | empty | empty |
+
+Two findings. **"Previous" reads a value computed in the same step**: e = 10x and its previous row gave 30, 50, 20
+where expected, so a recursion can be written. **What stops CUSUM is its start**: the first period has no previous S,
+nothing says "0 when there is none", and the empty value carries down every row. EWMA has the same need. So option E
+needs one small, general addition, a starting value for a previous-row read (for example
+`{field, previous:true, otherwise:0}`), stated on the rule and said in the receipt. Whether a condition can read a
+value computed in the same step (the floor at zero is two conditional rules, there being no *max*) is still unchecked,
+because nothing reached it. EARS still needs a window (F).
+
 ## Distinctions, and how each would be enforced
 
 | Distinction | Enforced as |

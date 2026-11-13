@@ -3,6 +3,13 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.107.1 — 2026-11-13
+
+- **No text under 14 px in any figure.** Chart and map figures, on screen and downloaded as SVG or PNG, had subtitles,
+  legends, tick labels and notes at 11 and 12 px; they are 14 px now, axis titles 15. Lines wrap sooner, so a figure
+  with a long subtitle is taller. The small labels inside catchment, point comparison, raster and study area drawings
+  went to 14 px as well. Chart 0.20.1, Map 0.27.2.
+
 ## 0.107.0 — 2026-11-13
 
 - **Chart's Configure… previews the chart.** The last run is drawn with the settings as they are being edited, before

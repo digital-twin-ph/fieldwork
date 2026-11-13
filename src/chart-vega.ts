@@ -84,10 +84,10 @@ export function chartSourceNote(params:ChartParams,sourceId?:string,runId?:strin
 /** Breaks a line of title text to the width the plot is drawn at.
  *
  *  Vega-Lite leaves a long subtitle to run off the edge, where it is cut rather than wrapped. The
- *  character width is approximate -- 12px Helvetica averages near 6.2px a character -- and erring
+ *  character width is approximate -- 14px Helvetica averages near 7.3px a character -- and erring
  *  short costs a line break, while erring long costs a clipped sentence. */
 export function wrapToWidth(value:string,width:number):string[]{
-  const max=Math.max(24,Math.floor(width/6.2));
+  const max=Math.max(24,Math.floor(width/7.3));
   const lines:string[]=[];let line='';
   for(const word of value.split(/\s+/)){
     if(!line)line=word;

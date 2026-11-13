@@ -1,6 +1,6 @@
 # 210 · Proposing a chart or a map from what the data declare
 
-_Created 2026-11-12 · Updated 2026-11-12_
+_Created 2026-11-12 · Updated 2026-11-13_
 
 **Status:** asked. The practitioner, 2026-11-12, after asking whether Vega-Lite could detect incoming data and propose chart
 types: *"Let's make that an experiment. We really want FW to shine and impress with its intelligent data visualizations."*

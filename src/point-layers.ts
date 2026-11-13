@@ -78,7 +78,7 @@ export const markLabel=(row:MarkRow,field:string|undefined,x:number,y:number,rad
   // Drawn twice: a pale stroke under the ink, so a name over a dark polygon or a plate stays
   // readable without a box that would hide what it sits on. The same reasoning as `markHalo`.
   const at=`x="${(x+radius+3).toFixed(1)}" y="${(y+3.5).toFixed(1)}"`;
-  return `<text ${at} class="mark-label" font-size="10" stroke="#ffffff" stroke-width="3" `
+  return `<text ${at} class="mark-label" font-size="14" stroke="#ffffff" stroke-width="3" `
     +`stroke-linejoin="round" paint-order="stroke" fill="#2b2b2b">${esc(text)}</text>`;
 };
 export interface MarkStyle {colour:string; shape:LayerShape; size?:number; sizeBy?:string}

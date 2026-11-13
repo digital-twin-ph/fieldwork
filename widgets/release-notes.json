@@ -153,12 +153,12 @@
    "replacementCandidate": "urn:fieldwork:widget:observations"
   },
   "chart_output": {
-   "version": "0.20.0",
+   "version": "0.20.1",
    "released": "2026-11-13",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Configure… previews the chart: the last run, drawn with the settings being edited, before Apply (the practitioner, 2026-11-13: \"The ability to preview the Chart would be extremely useful\"). Draw is offered question first (experiment 210's proposer): the forms that suit what arrived come first, each named by the question it answers, with the reason for the one chosen beneath; for a case series, Draw comes first, as it does for a table. In Results the figure is no longer clipped by a scrolling box shorter than it, which cut the stacked curve's dates to their last characters."
+     "kind": "patch",
+     "description": "No text under 14 px in the figure or its export (the practitioner, who has low vision, 2026-11-13: \"Yes 14px\"): subtitles, legends, tick labels and notes went from 11 and 12 px to 14, axis titles to 15; lines wrap shorter to fit."
     }
    ],
    "breaking": false,
@@ -427,16 +427,12 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.27.1",
-   "released": "2026-11-12",
+   "version": "0.27.2",
+   "released": "2026-11-13",
    "changes": [
     {
      "kind": "patch",
-     "description": "Fixed: the order set in Manage layers did not reach the marks. Point layers are now drawn layer by layer in that order, bottom first, in the static figure, its export and the interactive map, and a change is drawn at once rather than at the next run (the practitioner, 2026-11-12: the pumps on John Snow's map would not come to the top). Catchment sites, such as Snow's pumps, stay above every point layer, so they can still be clicked."
-    },
-    {
-     "kind": "patch",
-     "description": "Size by is offered for a point layer made at run time, as Point data from a table is, from the map's last run: before, only a layer whose records are held in its step offered it. MERS's hospitals sized by their cases."
+     "description": "No text under 14 px in the figure or its export (the practitioner, who has low vision, 2026-11-13: \"Yes 14px\"): subtitles, legends, tick labels and notes went from 11 and 12 px to 14, axis titles to 15; lines wrap shorter to fit. Map labels and the in-figure notes of catchment, comparison, raster and study-area figures likewise."
     }
    ],
    "breaking": false,

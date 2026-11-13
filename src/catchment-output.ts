@@ -88,7 +88,7 @@ export function polygonSvg(p:Polygons,esc:Escape):string{
       if(c[1]<south)south=c[1];if(c[1]>north)north=c[1];
     }
     const {project,height}=plotFrame([west,south,east,north],{width:790,margin:60});
-    return `<rect width="850" height="${height}" fill="#f7faf8"/>`+p.features.map(f=>`<path data-hex-cell="${esc(f.id)}" d="M${(f.geometry.type==='Polygon'?f.geometry.coordinates[0]:f.geometry.coordinates[0][0]).map(c=>project(c).join(',')).join('L')}Z" fill="#3686a8" fill-opacity=".25" stroke="#19617c" stroke-width="1"><title>${esc(f.id)} · ${f.count} locations</title></path>`).join('')+'<text x="20" y="282" font-size="10">H3 aggregate cells · sparse cells omitted</text>';
+    return `<rect width="850" height="${height}" fill="#f7faf8"/>`+p.features.map(f=>`<path data-hex-cell="${esc(f.id)}" d="M${(f.geometry.type==='Polygon'?f.geometry.coordinates[0]:f.geometry.coordinates[0][0]).map(c=>project(c).join(',')).join('L')}Z" fill="#3686a8" fill-opacity=".25" stroke="#19617c" stroke-width="1"><title>${esc(f.id)} · ${f.count} locations</title></path>`).join('')+'<text x="20" y="282" font-size="14">H3 aggregate cells · sparse cells omitted</text>';
   }
   const rings=p.features.flatMap(f=>f.geometry.type==='Polygon'?f.geometry.coordinates:f.geometry.coordinates.flat()),coords=[...rings.flat(),...p.sites.flatMap(f=>f.geometry?[f.geometry.coordinates]:[]),...(p.observations?.features||[]).flatMap(f=>f.geometry?[f.geometry.coordinates]:[])];if(!coords.length)return '<text x="30" y="40">No intersecting polygons or located points</text>';
   const [west,south,east,north]=coords.reduce(([w,s,e,n],c)=>[Math.min(w,c[0]),Math.min(s,c[1]),Math.max(e,c[0]),Math.max(n,c[1])],[Infinity,Infinity,-Infinity,-Infinity]);
@@ -171,7 +171,7 @@ function plotKey(p:Polygons,classed:ReturnType<typeof classifyValues>,esc:Escape
     :'equal-interval classes, equal value spans, so the shade shows magnitude'}`
     // SAID, so a reader is not left to infer from the absence of breaks that there is an order.
     :grouped?` · polygon shade: the class each part belongs to, which has no order`:'';
-  const key=`<text x="20" y="${classed||grouped?290:282}" font-size="10">`
+  const key=`<text x="20" y="${classed||grouped?290:282}" font-size="14">`
     +esc(marks.join(' · ').replace(/^./,c=>c.toUpperCase())+method)+'</text>';
   // THE CLASSES, NAMED. A categorical figure's key is the only place a reader learns what a hue
   // MEANS -- there is no ramp to read and no breaks to interpolate -- so a swatch without its
@@ -187,7 +187,7 @@ function plotKey(p:Polygons,classed:ReturnType<typeof classifyValues>,esc:Escape
       return `<rect x="${x}" y="${y}" width="${swatch}" height="${swatch}" `
         +`fill="${grouped.colours[i]}" fill-opacity=".78" `
         +`stroke="${FIGURE_ROLE.quietInk}" stroke-width=".4"/>`
-        +`<text x="${x+swatch+6}" y="${y+swatch-1}" font-size="9" `
+        +`<text x="${x+swatch+6}" y="${y+swatch-1}" font-size="14" `
         +`fill="${FIGURE_ROLE.quietInk}">${esc(label)}</text>`;
     }).join('')+key;
   }
@@ -238,7 +238,7 @@ export function catchmentPlot(p:Polygons,esc:Escape,context?:PointCollection):st
   // title the standalone figure already puts above it. Both removed 2026-10-13, after Tufte: what is
   // left on the page is the geometry, its axis labels, and the furniture a reader measures with.
   '<rect width="850" height="650" fill="white"/>';
-  for(let i=0;i<=4;i++){const lon=west+(east-west)*i/4,lat=south+(north-south)*i/4,x=project([lon,south])[0],y=project([west,lat])[1];svg+=`<text x="${x}" y="595" text-anchor="middle" font-size="12">${lon.toFixed(4)}</text><text x="78" y="${y+4}" text-anchor="end" font-size="12">${lat.toFixed(4)}</text>`;}
+  for(let i=0;i<=4;i++){const lon=west+(east-west)*i/4,lat=south+(north-south)*i/4,x=project([lon,south])[0],y=project([west,lat])[1];svg+=`<text x="${x}" y="595" text-anchor="middle" font-size="14">${lon.toFixed(4)}</text><text x="78" y="${y+4}" text-anchor="end" font-size="14">${lat.toFixed(4)}</text>`;}
   svg+='<text x="455" y="617" text-anchor="middle" font-size="14">Longitude</text><text transform="translate(20,310) rotate(-90)" text-anchor="middle" font-size="14">Latitude</text>';
   for(const f of [...p.features].sort((a,b)=>(b.minutes||0)-(a.minutes||0))){const rings=f.geometry.type==='Polygon'?f.geometry.coordinates:f.geometry.coordinates.flat();svg+=`<path data-catchment="${esc(f.id)}" d="${rings.map(r=>'M'+r.map(c=>project(c).join(',')).join('L')+'Z').join('')}" fill="#1f77b4" fill-opacity=".2" fill-rule="evenodd"><title>${esc(f.name)}</title></path>`;}
   // THE COLOURS THE KEY NAMES, and the shapes it draws. This plot used `gray` and `red` while the
@@ -255,5 +255,5 @@ export function catchmentPlot(p:Polygons,esc:Escape,context?:PointCollection):st
     for(const f of fs){if(!f.geometry)continue;const [x,y]=project(f.geometry.coordinates);
       svg+=`<path data-plot-${kind}="${esc(f.id)}" d="${markPath(shape,x,y,r)}" fill="${color}" stroke="white" stroke-width=".8"><title>${esc(f.properties.name)}</title></path>`;}
   const times=[...new Set(p.features.flatMap(f=>f.minutes===undefined?[]:[f.minutes]))].sort((a,b)=>a-b);
-  return svg+`<text x="425" y="640" text-anchor="middle" font-size="11">${times.length?'Cumulative regions: '+times.join(', ')+' min · ':''}Dots: observations · squares: sites · CRS84</text>`;
+  return svg+`<text x="425" y="640" text-anchor="middle" font-size="14">${times.length?'Cumulative regions: '+times.join(', ')+' min · ':''}Dots: observations · squares: sites · CRS84</text>`;
 }

@@ -243,10 +243,10 @@ export function standaloneMapSvg(content:string,viewBox:string,spec:MapPresentat
   const escape=(s:string)=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
   const lines=(value:string,max:number)=>value.match(new RegExp(`.{1,${max}}(?:\\s|$)|.{1,${max}}`,'g'))?.map(line=>line.trim())||[];
   const t=FIGURE_TYPE;
-  const titleLines=lines(spec.title,60),subtitleLines=lines(spec.subtitle,105);
-  const width=850,height=Number(viewBox.trim().split(/\s+/)[3])||295,base=52+titleLines.length*24+subtitleLines.length*16,legendRows=spec.legend?Math.ceil(spec.items.length/2):0,noteLines=lines(spec.sourceNote,110);
-  const creditLines=spec.attribution?lines(spec.attribution,110):[];
-  const footer=38+legendRows*22+(noteLines.length+creditLines.length)*16,total=base+height+footer;
+  const titleLines=lines(spec.title,60),subtitleLines=lines(spec.subtitle,90);
+  const width=850,height=Number(viewBox.trim().split(/\s+/)[3])||295,base=52+titleLines.length*24+subtitleLines.length*19,legendRows=spec.legend?Math.ceil(spec.items.length/2):0,noteLines=lines(spec.sourceNote,94);
+  const creditLines=spec.attribution?lines(spec.attribution,94):[];
+  const footer=38+legendRows*22+(noteLines.length+creditLines.length)*19,total=base+height+footer;
   const legend=spec.legend?spec.items.map((item,i)=>{const x=28+(i%2)*402,y=base+height+24+Math.floor(i/2)*22;
     return (item.line?`<path d="M${x-2} ${y-4}H${x+8}" stroke="${item.color}" stroke-width="1.6"/><path d="M${x+7} ${y-8}L${x+13} ${y-4}L${x+7} ${y}z" fill="${item.color}"/>`
       :`<path d="${markPath(item.shape||'circle',x+5,y-4,5)}" fill="${item.hollow?'none':item.color}" stroke="${item.hollow?item.color:FIGURE_ROLE.quietInk}" stroke-width="1.4"/>`)
@@ -256,7 +256,7 @@ export function standaloneMapSvg(content:string,viewBox:string,spec:MapPresentat
   // where a reader looks for them and where they stay if the figure is cropped to the map.
   const furniture=(frame?.metresPerPixel?scaleBarSvg({x:110,y:base+height-26,metresPerPixel:frame.metresPerPixel}):'')
     +(frame?.metresPerPixel?northArrowSvg({x:width-52,y:base+28}):'');
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${total}" width="${width}" height="${total}" role="img" aria-label="${escape(spec.title)}"><title>${escape(spec.title)}</title><desc>${escape(spec.subtitle+' '+spec.sourceNote)}</desc><style>text{font-family:${t.family}}.gridline{stroke:#CDD8C5;stroke-width:.5;stroke-dasharray:2 6}.location-label{font-size:${t.tick-2}px;fill:${FIGURE_ROLE.quietInk}}</style><rect width="${width}" height="${total}" fill="${FIGURE_ROLE.background}"/>${titleLines.map((line,i)=>`<text x="28" y="${31+i*24}" font-size="${t.title}" font-weight="${t.titleWeight}" fill="${FIGURE_ROLE.ink}">${escape(line)}</text>`).join('')}${subtitleLines.map((line,i)=>`<text x="28" y="${35+titleLines.length*24+i*16}" font-size="${t.subtitle}" fill="${FIGURE_ROLE.quietInk}">${escape(line)}</text>`).join('')}<svg x="0" y="${base}" width="850" height="${height}" viewBox="${escape(viewBox)}">${content}</svg>${furniture}${legend}${[...noteLines,...creditLines].map((line,i)=>`<text x="28" y="${noteY+i*16}" font-size="${t.note}" fill="${FIGURE_ROLE.quietInk}">${escape(line)}</text>`).join('')}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${total}" width="${width}" height="${total}" role="img" aria-label="${escape(spec.title)}"><title>${escape(spec.title)}</title><desc>${escape(spec.subtitle+' '+spec.sourceNote)}</desc><style>text{font-family:${t.family}}.gridline{stroke:#CDD8C5;stroke-width:.5;stroke-dasharray:2 6}.location-label{font-size:${t.tick-2}px;fill:${FIGURE_ROLE.quietInk}}</style><rect width="${width}" height="${total}" fill="${FIGURE_ROLE.background}"/>${titleLines.map((line,i)=>`<text x="28" y="${31+i*24}" font-size="${t.title}" font-weight="${t.titleWeight}" fill="${FIGURE_ROLE.ink}">${escape(line)}</text>`).join('')}${subtitleLines.map((line,i)=>`<text x="28" y="${35+titleLines.length*24+i*19}" font-size="${t.subtitle}" fill="${FIGURE_ROLE.quietInk}">${escape(line)}</text>`).join('')}<svg x="0" y="${base}" width="850" height="${height}" viewBox="${escape(viewBox)}">${content}</svg>${furniture}${legend}${[...noteLines,...creditLines].map((line,i)=>`<text x="28" y="${noteY+i*19}" font-size="${t.note}" fill="${FIGURE_ROLE.quietInk}">${escape(line)}</text>`).join('')}</svg>`;
 }
 
 export function mapSpecificationFacts(node:WorkflowNode<'map_output'>,output:Output,workflow:Workflow,runId:string,receipt:Receipt):string{

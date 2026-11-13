@@ -192,7 +192,8 @@ export const FIGURE_ROLE={
  *  takes off the figure. */
 export const FIGURE_TYPE={
   family:"'Helvetica Neue',Helvetica,Arial,'Liberation Sans',sans-serif",
-  title:20,subtitle:12,legend:12,axisTitle:14,tick:12,note:11,
+  // NOTHING UNDER 14 PX (the practitioner, who has low vision, 2026-11-13: "Yes 14px"), in every figure and its export.
+  title:20,subtitle:14,legend:14,axisTitle:15,tick:14,note:14,
   titleWeight:700,
 } as const;
 

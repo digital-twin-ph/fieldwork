@@ -586,10 +586,12 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
     const legend=new L.Control({position:'bottomleft'});
     legend.onAdd=()=>{
       const box=L.DomUtil.create('div','map-class-legend');
-      box.innerHTML=`<div class="map-class-ramp">`
-        +classed.colours.map(c=>`<i style="background:${c}"></i>`).join('')
-        +`</div><div class="map-class-edges">`
-        +edges.map(v=>`<span>${round(v)}</span>`).join('')
+      // THE STATIC FIGURE'S KEY, the ramp with its edges (2026-11-13: the practitioner reads that one, and this one's six-digit
+      // edges ran together under 30-pixel classes). Each class is now as wide as an edge's number needs; the shade is named.
+      const said=(v:number)=>Number(round(v)).toLocaleString('en');
+      box.innerHTML=(p.valueName?.trim()?`<p class="map-class-name">${esc(p.valueName.trim())}</p>`:'')
+        +`<div class="map-class-ramp">`+classed.colours.map(c=>`<i style="background:${c}"></i>`).join('')
+        +`</div><div class="map-class-edges">`+edges.map(v=>`<span>${said(v)}</span>`).join('')
         +`</div><p>${classed.classes} ${classed.method==='quantile'
           ?'quantile classes · the shade shows rank'
           :'equal-interval classes · the shade shows magnitude'}</p>`;
@@ -836,8 +838,17 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
       return;
     }
     const source=BASEMAPS[choice as keyof typeof BASEMAPS];tiles=L.tileLayer(source.url,{maxZoom:source.maxZoom,referrerPolicy:'origin',updateWhenIdle:true,keepBuffer:0,attribution:source.attribution});
-    tiles.on('tileerror',()=>{status.textContent='Basemap unavailable; local layers remain visible.';});
-    tiles.addTo(map);tiles.bringToBack();status.textContent=`${source.label} online · viewed area sent to provider`;
+    // COUNTED, NOT FLIPPED BY ONE (2026-11-13): a single tile the provider did not answer set "Basemap unavailable" for good,
+    // over a map whose streets were plainly drawn (Botswana, a whole country in view). Said as unavailable only when no tile
+    // came; otherwise how many of the tiles in view could not be fetched.
+    let loaded=0,failed=0;
+    const say=()=>{status.textContent=!failed?`${source.label} online · viewed area sent to provider`
+      :!loaded?'Basemap unavailable; local layers remain visible.'
+      :`${source.label} online · ${failed} of ${loaded+failed} tiles in view could not be fetched; local layers remain visible.`;};
+    tiles.on('tileload',()=>{loaded++;if(failed)say();});
+    tiles.on('tileerror',()=>{failed++;say();});
+    tiles.on('loading',()=>{loaded=0;failed=0;});
+    tiles.addTo(map);tiles.bringToBack();say();
   };
   select.value=basemap;setBasemap(basemap);
   select.onchange=()=>{const choice=select.value as BasemapChoice;setBasemap(choice);onBasemapChange?.(choice);};
@@ -852,7 +863,7 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
   note.textContent=(timeline
     ?'Each day shows that day\u2019s most likely cluster and the cases with a date up to that day. Use the slider or Play. '
     :polygonShading(p.features).classed
-    ?'Polygon shade: the joined value, in classes shown in the key. Click a part for its number. '
+    ?`Polygon shade: ${p.valueName?.trim()||'the joined value'}, in classes shown in the key. Click a part for its number. `
     :p.features.some(f=>f.minutes!==undefined)
     ?'Blue nested regions: cumulative travel times. Red circles: observations (DEATHS radius capped at 20 px); blue squares: sites/context. '
     :'')

@@ -748,10 +748,12 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
    cannot state two different sets of breaks depending on which renderer the reader opened. */
 .map-class-legend{background:var(--surface-raised);padding:6px 8px;border-radius:6px;font-size:14px;
   box-shadow:var(--shadow);color:var(--ink);border:1px solid var(--line);max-width:260px}
-.map-class-ramp{display:flex}
-.map-class-ramp i{display:block;width:30px;height:10px;opacity:.78}
-.map-class-edges{display:flex;margin-left:-15px}
-.map-class-edges span{width:30px;text-align:center;font-size:14px;opacity:.85}
+.map-class-ramp{display:flex;margin:0 40px}
+.map-class-ramp i{display:block;width:80px;height:12px;opacity:.78;border:1px solid #4D4D4D;border-right:0}
+.map-class-ramp i:last-child{border-right:1px solid #4D4D4D}
+.map-class-edges{display:flex;margin:2px 0 0}
+.map-class-edges span{width:80px;text-align:center;font-size:14px;white-space:nowrap}
+.map-class-name{margin:0 0 4px;font-size:14px;font-weight:600}
 .map-class-legend p{margin:4px 0 0;font-size:14px;opacity:.85}
 
 /* THE SCALE BAR HAS TO BE READABLE, which Leaflet's default is not on a dark page: its own

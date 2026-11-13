@@ -12,6 +12,7 @@
 //                   | regression-salmonella-001 | regression-nyc-001 (needs NYC_PKG)
 //                   | sample-satellite-s5p-001 | lag-response-brazil-001 | regression-strata-brazil-001
 //                   | lag-models-brazil-001 | sea-level-heights-manila-001 | chains-hagelloch-001 | tree-hagelloch-001 | links-hagelloch-001 | scan-hagelloch-001 | qr-links-001 | georef-001 | mers-korea-001
+//                   | population-districts-001 (needs POP_FILES)
 import {createHash} from 'node:crypto';
 import {readFile,writeFile} from 'node:fs/promises';
 import {reprojectToCRS84,projectFromCRS84} from '../build/reproject.js';
@@ -1362,6 +1363,63 @@ const builders={
       input:{facilityCount:facilities.features.length,sites:siteRows},
       output:{facilities:out,reaches:out.filter(r=>r.level==='Reaches').length},
     },files:{'egm2008-window.tif':encodeGrid(egm),'dtu25mss-window.tif':encodeGrid(dtu),'deltadtm-window.tif':encodeGrid(dtm)}};
+  },
+  async 'population-districts-001'(){
+    // THREE POPULATION MODELS OVER THE CENSUS DISTRICTS (experiment 209), for Rwanda and Botswana: each raster's window kept
+    // as Raster input keeps it, around the districts together, and totalled over each district by the function Sample a
+    // raster runs over areas. The rasters are not redistributed (each is tens of megabytes): the fixture carries each
+    // file's name, address, size and digest, and the lab reads the same files from where they were downloaded (POP_FILES).
+    const files=process.env.POP_FILES,{existsSync}=await import('node:fs');
+    if(!files||!existsSync(files))throw new Error('Set POP_FILES to the folder of the downloads: the folder of population rasters is not on this machine beside this repository.');
+    const {areaTotals}=await import('../build/raster-areas.js');
+    const repo=new URL('../../example-population-models-census/',import.meta.url).pathname;
+    const provenance=JSON.parse(readFileSync(repo+'provenance.json','utf8'));
+    const digestOf=path=>sha256(readFileSync(path));
+    const GHS_URL='https://jrc-ghsl.s3.amazonaws.com/ghs-pop/r2023a/4326/3asec/2025/GHS_POP_E2025_GLOBE_R2023A_4326_3ss_V1_0.tif';
+    const COUNTRIES={
+      RWA:{boundaries:'dl-rwa-adm2/geoBoundaries-RWA-ADM2.geojson',census:'rwanda_census_2022_districts.csv',censusKey:'name',
+        rasters:{WorldPop:'dl-worldpop-rwa/rwa_pop_2025_CN_100m_R2025A_v1.tif',GRID3:'dl-grid3-rwa/rwa_SSApopulation_ 2025_v1_0_gridded.tif','GHS-POP':'dl-ghs/ghs_pop_2025_rwa_window.tif'}},
+      BWA:{boundaries:'dl-bwa-adm2/geoBoundaries-BWA-ADM2.geojson',census:'botswana_census_2022_districts.csv',censusKey:'name',
+        rasters:{WorldPop:'worldpop-dl/bwa_pop_2025_CN_100m_R2025A_v1.tif',GRID3:'dl-grid3-bwa/bwa_SSApopulation_ 2025_v1_0_gridded.tif','GHS-POP':'dl-ghs/ghs_pop_2025_bwa_window.tif'}},
+    };
+    const declared={},countries={};
+    for(const [code,c] of Object.entries(COUNTRIES)){
+      const boundaryPath=`${files}/${c.boundaries}`,gj=JSON.parse(readFileSync(boundaryPath,'utf8'));
+      const features=gj.features.map((f,i)=>({id:f.properties.shapeID??String(i),name:f.properties.shapeName,geometry:f.geometry}));
+      // The study area is the districts together: its box is the window Raster input keeps.
+      const area={type:'MultiPolygon',coordinates:features.flatMap(f=>f.geometry.type==='Polygon'?[f.geometry.coordinates]:f.geometry.coordinates)};
+      const boundary=provenance.boundaries.find(b=>b.country===code);
+      declared[code]={boundaries:{path:c.boundaries,url:boundary.url,bytes:boundary.bytes,sha256:digestOf(boundaryPath),licence:boundary.licence,nameField:'shapeName'},rasters:{}};
+      const rows=Object.fromEntries(features.map(f=>[f.name,{}]));
+      for(const [source,rel] of Object.entries(c.rasters)){
+        const path=`${files}/${rel}`,bytes=readFileSync(path),blob=new Blob([bytes]),m=await inspectRaster(blob);
+        const grid=await readRasterWindow(blob,m,rasterWindow(m,area,0));
+        const pinned=provenance.rasters.find(r=>r.country===code&&r.url.split('/').pop().replace('%20',' ')===rel.split('/').pop());
+        declared[code].rasters[source]={path:rel,bytes:bytes.length,sha256:sha256(bytes),
+          url:pinned?.url??GHS_URL,...(pinned?{}:{cut:'The cells of the global file around the districts\' box, one cell out, read with rasterio from the address above and written unchanged (deflate).'}),
+          window:rasterWindow(m,area,0)};
+        const {value}=areaTotals(features,grid,{attribute:'population',valueUnit:'people',over:'areas',source:'raster'});
+        for(const f of value.features)rows[f.name][source]={total:f.properties.population,cells:f.properties.cells,noData:f.properties.cells_no_data,outside:f.properties.cells_outside_raster};
+      }
+      const censusText=readFileSync(`${repo}data/${c.census}`,'utf8').trim().split(/\r?\n/).map(l=>l.split(','));
+      const [head,...lines]=censusText;
+      for(const l of lines)rows[l[head.indexOf(c.censusKey)]].census=Number(l[head.indexOf('population')]);
+      const sources=['census',...Object.keys(c.rasters)];
+      const totals=Object.fromEntries(sources.map(k=>[k,Object.values(rows).reduce((n,r)=>n+(k==='census'?r.census:r[k].total??0),0)]));
+      countries[code]={districts:Object.entries(rows).map(([name,r])=>({name,...r,
+        shares:Object.fromEntries(sources.map(k=>[k,(k==='census'?r.census:r[k].total??0)/totals[k]]))})),totals};
+    }
+    return {fixture:{
+      ...base('population-districts-001','sample_raster','Sample a raster over areas: three population models totalled over Rwanda\'s and Botswana\'s census districts','src/raster-areas.ts#areaTotals; src/raster.ts#readRasterWindow'),
+      source:'WorldPop Global2 R2025A (CC BY 4.0); GRID3 SSA 2025 v1.0 (CC BY 4.0); GHS-POP R2023A E2025 3 arc-seconds (European Commission JRC, CC BY 4.0); geoBoundaries ADM2 (Rwanda gbOpen CC BY 4.0, Botswana gbHumanitarian CC BY 3.0 IGO); the 2022 censuses as transcribed in example-population-models-census. The rasters are read from where they were downloaded, by digest.',
+      declaredParameters:{
+        window:'Each raster\'s cells meeting the box of all the districts together, no padding, as Raster input keeps them.',
+        cellRule:'A cell belongs to a district when its centre is inside or on the district; counted whole, not area-weighted. No data adds nothing and is counted apart.',
+        share:'A district\'s total over the sum of every district\'s total from the same source.',
+        countries:declared},
+      input:{},
+      output:{countries},
+    },files:{}};
   },
   async 'mers-korea-001'(){
     // A WHOLE EXAMPLE, END TO END (experiment 208): both MERS workflows as the example repository pins them, run here,

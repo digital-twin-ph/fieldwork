@@ -74,7 +74,10 @@ export interface AreaJoinResult {
     unmatchedParts:number; unmatchedRows:number; sharedParts:number};
   /** What the join was told to do, carried so the receipt can state it. */
   declared:{keyField:string; valueField:string; normalisation:'exact'|'fuzzy';
-    categoryField?:string; frameField?:string};
+    categoryField?:string; frameField?:string;
+    /** What the joined value is, in words, for the map's key: a share where every row is one, such as "% within source",
+     *  else the value column and its unit (2026-11-13: GHS-POP's shares were keyed "the joined value"). */
+    valueName?:string};
   /** The frames, in the order the table first gives them. */
   frames?:string[];
 }
@@ -180,7 +183,11 @@ export function joinTableToAreas(
 
   const matchedParts=parts.filter(part=>part.matched).length;
   return {parts,diagnostics,
-    declared:{keyField,valueField:table.valueField,normalisation,
+    declared:{keyField,valueField:table.valueField,normalisation,valueName:(()=>{
+        const shares=table.keys.includes('statistic')?new Set(table.rows.map(r=>r.key.statistic)):undefined;
+        const unit=table.unit?.trim();
+        // A column named for its unit ("per 1,000 people") is not named twice.
+        return shares?.size===1?[...shares][0]!:unit&&!table.valueField.includes(unit)?`${table.valueField}, ${unit}`:table.valueField;})(),
       ...(categoryField?{categoryField}:{}),...(frameField?{frameField}:{})},
     ...(frameField?{frames:frameOrder}:{}),
     counts:{parts:parts.length,rows:table.rows.length,matchedParts,
@@ -221,6 +228,7 @@ export function joinedPolygons(boundary:Boundary|undefined,result:AreaJoinResult
     // The node's own label names the layer: it is what the practitioner called this join, and
     // what they will look for when they toggle it beside the study area.
     layerName:label,
+    ...(result.declared.valueName?{valueName:result.declared.valueName}:{}),
     ...(result.frames?{frames:result.frames}:{}),
     method:`Keyed join on ${result.declared.keyField}, ${result.declared.normalisation} normalisation: `
       +`${counts.matchedParts} of ${counts.parts} parts carry a value from ${counts.matchedRows} of ${counts.rows} rows.`,

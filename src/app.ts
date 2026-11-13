@@ -98,7 +98,7 @@ import {pinnedRuleset} from './rule-application.js';
 function getNode<K extends NodeType>(w:Workflow,id:string,type:K):WorkflowNode<K>{const node=required(w.nodes.find(n=>n.id===id));if(node.type!==type)throw new Error('Node type changed while editing');return node as WorkflowNode<K>;}
 function updateParam(w:Workflow,id:string,key:string,value:unknown){Object.assign(required(w.nodes.find(n=>n.id===id)).params,{[key]:value});}
 function replaceWorkflow(w:Workflow,next:Workflow){for(const key of Object.keys(w))Reflect.deleteProperty(w,key);Object.assign(w,next);}
-import {PORT_NAMES} from './port-names.js';
+import {PORT_NAMES,PORT_GROUPS} from './port-names.js';
 import {proposeChartForms,proposalOrder,type ChartForm,type ChartProposal} from './chart-proposals.js';
 import {TYPES,validateWorkflow,validateGeoJSON,executionPlan,executeWorkflow,nodeInputs,outputOf,portAccepts,pointsAsTable,shownMode,portSourceName,IncompleteWorkflow,rereadOnce} from './core.js';
 import {suggestUTM,utmScaleFactor,workflowPositions} from './utm.js';
@@ -808,8 +808,15 @@ function rememberRunNotes(ran:Workflow,run:WorkflowRun):void{
 }
 /** Stable over a template's shape: the nodes it has and how they are wired. A label or a
  *  coordinate changing is not worth interrupting anybody for; a workflow gaining two halves is. */
+/** WHAT AN EXAMPLE IS, to compare a saved copy with the example as it ships: every step's settings and every connection,
+ *  not only which steps there are (2026-11-13: an FETP demo met Hagelloch without its day-by-day replay and John Snow's
+ *  geomasking without its donuts, from copies saved earlier on that computer; their steps and wiring were the example's,
+ *  so nothing said they were behind). Positions are left out, and the data a step holds, which is kept apart by digest. */
+const PAYLOAD_PARAMS=new Set(['data','dataRef','sourceTable','sourceRef','geometry','areaRef','revisions','search','searchRef','dictionary','dictionaryRef']);
 function exampleRevision(w:Workflow){
-  const shape=w.nodes.map(n=>`${n.id}:${n.type}`).sort().join(',')
+  const settings=(params:unknown)=>JSON.stringify(Object.fromEntries(Object.entries((params??{}) as Record<string,unknown>)
+    .filter(([k])=>!PAYLOAD_PARAMS.has(k)).sort(([a],[b])=>a.localeCompare(b))));
+  const shape=w.nodes.map(n=>`${n.id}:${n.type}:${settings(n.params)}`).sort().join(',')
     +'|'+w.edges.map(e=>`${e.from}>${e.to}:${e.port}`).sort().join(',');
   let hash=5381;
   for(let i=0;i<shape.length;i++)hash=((hash*33)^shape.charCodeAt(i))>>>0;
@@ -839,14 +846,35 @@ const publishedShape=new Map<string,number|string>();
 function divergedFromExample(key:string):boolean{
   if(!workflow.nodes.length)return false;
   if(!publishedShape.has(key)){
-    try{publishedShape.set(key,exampleRevision(template(key)));}
+    try{publishedShape.set(key,publishedRevision(key));}
     catch{return false;}   // no template to compare against, so nothing is claimed
   }
   return publishedShape.get(key)!==exampleRevision(workflow);
 }
+/** The example as it ships, as a saved copy holds it: through the same reading a saved copy goes through. */
+const publishedRevision=(key:string)=>exampleRevision(validateWorkflow(structuredClone(template(key))));
 function recordRevision(key:string){
-  try{localStorage.setItem(REVISIONS,JSON.stringify({...readRevisions(),[key]:exampleRevision(template(key))}));}
+  try{const now=publishedRevision(key);
+    localStorage.setItem(REVISIONS,JSON.stringify({...readRevisions(),[key]:now}));
+    // AND THAT THIS COPY IS THE EXAMPLE UNCHANGED, so it can follow the example when the example moves on.
+    localStorage.setItem(PRISTINE,JSON.stringify({...readPristine(),[key]:now}));}
   catch{/* storage refused; the notice simply reappears next time, which is harmless */}
+}
+const PRISTINE='fieldwork-example-pristine-v1';
+function readPristine():Record<string,string>{try{return JSON.parse(localStorage.getItem(PRISTINE)||'{}');}catch{return {};}}
+/** A COPY NOBODY CHANGED FOLLOWS ITS EXAMPLE (2026-11-13): opened, a saved copy that is still the example as it was loaded
+ *  is replaced by the example as it ships now, and says so. A copy somebody changed is kept, and the bar says the example
+ *  has moved on. True when it replaced the copy. */
+function followIfUntouched(key:string):boolean{
+  if(!isExampleKey(key)||key==='blank')return false;
+  const loaded=readPristine()[key];
+  let now:string;try{now=publishedRevision(key);}catch{return false;}
+  if(!loaded||loaded===now||exampleRevision(workflow)!==loaded)return false;
+  // NOT DURING A RUN: an example starts running as it opens, and a workflow is not replaced under a run.
+  const replace=()=>{if(busy){setTimeout(replace,500);return;}if(exampleKey(workflow)===key)loadPublished(key);};
+  replace();
+  toast('This example has been updated since it was last opened here, and nothing in it had been changed: it now opens as it ships.',{tone:'notice'});
+  return true;
 }
 /** LOAD THE EXAMPLE AS IT SHIPS NOW, replacing this copy: from the note under the toolbar, and from the notice. */
 function loadPublished(key:string){
@@ -865,15 +893,18 @@ function loadPublished(key:string){
 function exampleStanding(key:string):'same'|'updated'|'edited'|'differs'{
   if(!isExampleKey(key)||key==='blank'||!divergedFromExample(key))return 'same';
   const held=readRevisions()[key];
-  let now:string;try{now=exampleRevision(template(key));}catch{return 'same';}
+  let now:string;try{now=publishedRevision(key);}catch{return 'same';}
   if(held===undefined)return 'differs';
   return held!==now?'updated':'edited';
 }
 /** Says so when the published example has moved on, and offers to load it. */
 function noticeIfRepublished(key:string){
   if(key==='blank')return;
+  if(followIfUntouched(key))return;
+  // A copy that IS the example as it ships is recorded as such and says nothing, whatever an older record held.
+  if(!divergedFromExample(key)){recordRevision(key);return;}
   const held=readRevisions()[key];
-  if(held===exampleRevision(template(key)))return;
+  if(held===publishedRevision(key))return;
   toast('This worked example has been updated since this copy was made. Loading the updated example replaces this copy.',
     {tone:'warning',action:{label:'Load the updated example',run:()=>loadPublished(key)}});
 }
@@ -1299,6 +1330,16 @@ function layerPortFor(w:Workflow,source:WorkflowNode,target:WorkflowNode<'map_ou
 
 function setConnection(w:Workflow,from:string|null,to:string,port:string){
   const target=w.nodes.find(n=>n.id===to),map=['map_output','table_output'].includes(target?.type||'');
+  // A GROUPED PORT (PORT_GROUPS) binds to the one of its ports the source fits, and replaces whatever else in the group was
+  // connected: one raster or set of files, at one kind of place.
+  const group=target?PORT_GROUPS[target.type]?.[port]:undefined;
+  if(group){
+    w.edges=w.edges.filter(e=>!(e.to===to&&group.includes(e.port)));
+    const source=from?w.nodes.find(n=>n.id===from):undefined;
+    const bound=source?nodeInputs(target!).find(([p,type])=>group.includes(p)&&portAccepts(type,outputOf(source)))?.[0]:undefined;
+    if(!bound)return;
+    port=bound;
+  }
   // The map's and the table's single "add" port binds to a declared one by what the source emits (Table, 2026-11-09).
   if(from&&port==='layer'&&(target?.type==='map_output'||target?.type==='table_output')){
     const source=w.nodes.find(n=>n.id===from);
@@ -1489,6 +1530,9 @@ function render(){
   // documents, not the UI). A workflow changed from its example still says so, below: that is status.
   // The practitioner met this twice before it was fixed, which is why it is withdrawn here rather
   // than corrected in eight branches: one place that can be read, instead of a rule repeated.
+  // The open copy's fingerprint, as the comparison with its example reads it: on the bar, for a test to read.
+  {const key=exampleKey(workflow);const note=optionalElement('#example-note');
+    if(note){if(isExampleKey(key)&&key!=='blank'&&workflow.nodes.length)note.dataset.revision=exampleRevision(workflow);else delete note.dataset.revision;}}
   if(divergedFromExample(exampleKey(workflow))){
     // SAID IN THE BAR, where it stays, and for every workflow opened, not only the first: which of the three it is.
     const key=exampleKey(workflow),standing=exampleStanding(key);
@@ -1507,6 +1551,18 @@ function render(){
     // 2026-11-09). A workflow has no description of its own, so the line says nothing rather than something untrue.
     $('#project-description').textContent='';
   }
+  // A WORKFLOW OPENED FROM AN EXAMPLE REPOSITORY whose pinned version has moved on (the practitioner, 2026-11-13, opening
+  // repository examples "from project list"): the digest it was read from is not the one the catalog pins now. Fetching
+  // again opens the newer version beside this copy; nothing of this copy is replaced.
+  {const origin=originOf(storageKey(workflow)),example=origin&&exampleById(origin.exampleId);
+    const pinned=example?.files.find(f=>f.path===origin!.path);
+    if(origin&&example&&pinned&&pinned.sha256!==origin.sha256){
+      const note=$('#example-note');
+      note.append(`A newer version of ${example.title} is pinned. `);
+      const fetchAgain=document.createElement('button');fetchAgain.type='button';fetchAgain.className='button small';fetchAgain.id='fetch-pinned';
+      fetchAgain.textContent='Fetch again';fetchAgain.title='Opens the version pinned now as a project of its own; this copy stays';
+      fetchAgain.onclick=()=>void openCuratedExample(example.id,fetchAgain);note.append(fetchAgain);
+    }}
   $('#blank-canvas').hidden=workflow.nodes.length!==0||exampleKey(workflow)!=='blank';
   // The bar is refreshed here rather than only when a control is used, because the workflow can
   // change underneath it -- loading an example being the case that caught this: the playback had
@@ -2508,8 +2564,12 @@ function rasterArriving(nodeId:string):import('./raster.js').RasterAsset|undefin
     if(asset)return asset;at=edge.from;}
 }
 /** WHAT THE RASTER SAYS ITS VALUES ARE, where it says: the source record's units, else the file's own band tag. */
-function rasterUnits(asset:import('./raster.js').RasterAsset):{units:string;from:string}|undefined{
-  const stated=asset.provenance?.units?.trim();if(stated)return {units:stated,from:'its source record'};
+function rasterUnits(asset:import('./raster.js').RasterAsset):{units:string;from:string;name?:string}|undefined{
+  const stated=asset.provenance?.units?.trim();if(stated)return {units:stated,from:'its source record',...(/people|person|population/i.test(stated)?{name:'population'}:{})};
+  // KNOWN BY ITS FILE'S NAME (2026-11-13): a raster kept before Fieldwork recognised WorldPop's and GRID3's files says nothing
+  // of its units in its record, and the practitioner, looking at a WorldPop window, had "no idea what the raster is giving me".
+  const known=worldPopRecordFor(asset.source.filename)??grid3RecordFor(asset.source.filename,countryName);
+  if(known?.units)return {units:known.units,from:`${known.provider?.split(' - ')[0]??'its publisher'}\u2019s record for this file, recognised by its name,`,name:'population'};
   const tags={...(asset.source.metadata.gdal??{}),...(asset.source.metadata.band??{})} as Record<string,unknown>;
   const key=Object.keys(tags).find(k=>/^units?$/i.test(k));
   const tagged=key?String(tags[key]??'').trim():'';
@@ -2531,6 +2591,8 @@ function sampleArrivals(nodeId:string):{html:string;nothing:boolean;areas:Workfl
     raster=`<strong>${esc(title)}</strong>: ${asset.metadata.width.toLocaleString('en')} by ${asset.metadata.height.toLocaleString('en')} cells kept, each `
       +`${deg.toPrecision(3)}° across (about ${metres.toLocaleString('en')} m at the equator). `
       +(units?`Its values are in <strong>${esc(units.units)}</strong>, as ${units.from} states.`:'The file does not state what its values measure.')
+      // WHAT A CELL HOLDS, AND WHAT A TOTAL IS, in words, where the units are people.
+      +(units&&/people|person/i.test(units.units)?` <strong>Each cell holds an estimated number of people living in it</strong>, so a point takes the people in its cell, and an area\u2019s total is the estimated number of people living there.`:'')
       +(m.noData!==null?` No data is written as ${esc(String(m.noData))}.`:'')
       +(description?` The file describes itself: “${esc(description)}”`:'');
   }
@@ -2549,6 +2611,7 @@ function openSampleConfig(nodeId:string){
   const asset=rasterArriving(nodeId),stated=asset?rasterUnits(asset):undefined;
   const start=structuredClone(node.params);
   if(!start.valueUnit?.trim()&&stated)start.valueUnit=stated.units;
+  if(!start.attribute?.trim()&&stated?.name)start.attribute=stated.name;
   openConfigDialog<Draft>({
     id:'sample-config',widget:'Sample a raster at points or over areas',step:node.params.label||TYPES.sample_raster.title,draft:start,
     sections:draft=>({...(sampleArrivals(nodeId).nothing?{message:{tone:'warning' as const,text:'Nothing is connected to read the raster at, so a run has nothing to write to. Connect points, areas or a study area, or use the button above.'}}:{}),
@@ -2571,7 +2634,7 @@ function openSampleConfig(nodeId:string){
       // READ IT OVER A STUDY AREA: connect it, read over areas, and move a Map's or Table's points input to its polygons input.
       root.querySelectorAll<HTMLButtonElement>('[data-sample-over-area]').forEach(button=>button.addEventListener('click',()=>{
         const area=button.dataset.sampleOverArea!;
-        change(w=>{setConnection(w,area,nodeId,'area');
+        change(w=>{setConnection(w,area,nodeId,'at');
           for(const e of w.edges)if(e.from===nodeId&&e.port==='points'&&['map_output','table_output'].includes(w.nodes.find(n=>n.id===e.to)?.type??''))e.port='polygons';});
         draft.over='areas';redraw();}));
       root.querySelector<HTMLInputElement>('#sample-cell-statistics')?.addEventListener('change',e=>{
@@ -4581,7 +4644,9 @@ function renderInspector(){
   // no inputs and shows no section. The Map's layer manager keeps its own lists, which also order and name layers.
   const incoming=workflow.edges.filter(e=>e.to===n.id);
   const nameOf=(id:string)=>{const x=workflow.nodes.find(y=>y.id===id);return x?(x.params.label||TYPES[x.type].title):id;};
-  const ports=nodeInputs(n).filter(([port])=>!content.includes(`data-map-port="${port}"`)&&!content.includes(`data-connect-port="${port}"`));
+  // A port shown under its group's choice (PORT_GROUPS) is shown already.
+  const shownInGroup=new Set(Object.entries(PORT_GROUPS[n.type]??{}).filter(([group])=>content.includes(`data-connect-port="${group}"`)).flatMap(([,members])=>members));
+  const ports=nodeInputs(n).filter(([port])=>!shownInGroup.has(port)&&!content.includes(`data-map-port="${port}"`)&&!content.includes(`data-connect-port="${port}"`));
   if(ports.length)content+=`<div class="inspector-divider"></div><span class="inspector-section">Inputs</span>`
     +ports.map(([port])=>{
       const now=incoming.find(e=>e.port===port)?.from||'';
@@ -6867,7 +6932,7 @@ function switchView(view:string){
   if(view==='workflow')requestAnimationFrame(()=>flow?.fit());
 }
 /** An input's name in plain words, for the Inspector: never an internal id like `polygons_2` or `originalCenter`. */
-const PORT_LABELS:Record<string,string>={area:'Study area',points:'Points',polygons:'Polygons',records:'Records',table:'Table',
+const PORT_LABELS:Record<string,string>={area:'Study area',points:'Points',polygons:'Areas',records:'Records',table:'Table',
   raster:'Raster',network:'Street network',decisions:'Decisions',design:'Study design',cases:'Cases',series:'Series',
   original:'Original points',moved:'Moved points',pumps:'Reference points',originalCenter:'Original mean center',
   movedCenter:'Moved mean center',comparison:'Comparison',ground:'Ground',context:'Context points',centers:'Centers',
@@ -6881,6 +6946,19 @@ function standardSection(name:string,body:string):string{
  *  `labels` names a port in the widget's own words where the generic name would not say which table is which. */
 function standardInputs(n:WorkflowNode,labels:Record<string,string>={}):string{
   const incoming=workflow.edges.filter(e=>e.to===n.id);
+  // GROUPED PORTS, one choice each, as on the canvas (PORT_GROUPS).
+  const groups=PORT_GROUPS[n.type];
+  if(groups){
+    const nameOf=(id:string)=>{const x=workflow.nodes.find(y=>y.id===id);return x?(x.params.label||TYPES[x.type].title):id;};
+    return Object.entries(groups).map(([group,ports])=>{
+      const on=incoming.find(e=>ports.includes(e.port)),now=on?.from||'';
+      const offers=workflow.nodes.filter(x=>x.id===now||validConnection({source:x.id,target:n.id,sourceHandle:'out',targetHandle:group} as Connection));
+      const label=on?(PORT_NAMES[n.type]?.[on.port]??portLabel(on.port)):(PORT_NAMES[n.type]?.[group]??portLabel(group));
+      return `<label class="field-label" for="connect-${esc(group)}">${esc(label)}</label>`
+        +`<select id="connect-${esc(group)}" class="connect-port" data-connect-port="${esc(group)}"><option value="">${offers.length?'Not connected':'Nothing in this workflow can feed this yet'}</option>`
+        +offers.map(x=>`<option value="${esc(x.id)}"${x.id===now?' selected':''}>${esc(nameOf(x.id))}</option>`).join('')+`</select>`;
+    }).join('');
+  }
   const nameOf=(id:string)=>{const x=workflow.nodes.find(y=>y.id===id);return x?(x.params.label||TYPES[x.type].title):id;};
   return nodeInputs(n).map(([port])=>{
     const now=incoming.find(e=>e.port===port)?.from||'';
@@ -6899,6 +6977,8 @@ function validConnection(c:Connection|Edge){const a=workflow.nodes.find(n=>n.id=
   // The map's one configurable port accepts anything the map can draw; which declared port it
   // becomes is decided on connection, by what the source emits. Without this the drop is refused
   // before setConnection ever sees it, because `layer` is not a declared port.
+  const grouped=PORT_GROUPS[b.type]?.[c.targetHandle??''];
+  if(grouped)return nodeInputs(b).some(([p,type])=>grouped.includes(p)&&portAccepts(type,outputOf(a)));
   if(c.targetHandle==='layer'&&(b.type==='map_output'||b.type==='table_output'))
     return nodeInputs(b).some(([,type])=>type===outputOf(a))||(b.type==='table_output'&&portAccepts('table',outputOf(a)));
   return portAccepts(nodeInputs(b).find(([p])=>p===c.targetHandle)?.[1],outputOf(a));}
@@ -9409,6 +9489,10 @@ if(requestedExample&&hasExampleTemplate(requestedExample)&&requestedExample!==ex
   // the notice has to live here as well as on the picker, or the practitioner who follows a
   // link to a republished example still sees the version they already had.
   if(openedSaved)setTimeout(()=>noticeIfRepublished(requestedExample),900);else recordRevision(requestedExample);selected=requestedExample==='snow-geoprivacy'?'move':requestedExample.startsWith('snow-')?'catchments':workflow.nodes[0]?.id;}
+// AND THE EXAMPLE THE PAGE OPENS ON (2026-11-13): reopening the application lands on the last workflow, so a saved copy of
+// an example opened this way was never compared with the example as it ships, which is how an FETP demo met Hagelloch
+// without its replay.
+else{const key=exampleKey(workflow);if(isExampleKey(key)&&key!=='blank'&&Object.hasOwn(readSavedWorkflows(),key))setTimeout(()=>noticeIfRepublished(key),900);}
 wireThemeControl();renderLibrary();renderResults();save();render();mountPanelLayout();
 // Progressive reveal, played back. Behind ?playback=1 because the rule is not adopted: nothing
 // about the normal palette changes, and the control does not appear unless it is asked for.

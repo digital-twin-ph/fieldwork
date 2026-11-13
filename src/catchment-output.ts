@@ -203,13 +203,13 @@ function plotKey(p:Polygons,classed:ReturnType<typeof classifyValues>,esc:Escape
   // sub-district that sits on one. Experiment 137.
   const values=shadedValues(p.features);
   const lowest=Math.min(...values);
-  const width=56,left=24,top=foot+250;
-  const round=(v:number)=>{const a=Math.abs(v);return a>=100?v.toFixed(0):a>=10?v.toFixed(1):v.toFixed(2);};
+  // THE RAMP WITH ITS EDGES, as the practitioner reads it (2026-11-13: "The legend is readable"), each class 90 pixels wide
+  // so seven-figure edges with their separators stand apart: at 56, Botswana's 143454 and 217031 touched.
+  const width=90,left=40,top=foot+250;
+  const round=(v:number)=>{const a=Math.abs(v);return Number(a>=100?v.toFixed(0):a>=10?v.toFixed(1):v.toFixed(2)).toLocaleString('en');};
   const swatches=classed.colours.map((colour,i)=>
     `<rect x="${left+i*width}" y="${top}" width="${width}" height="10" fill="${colour}" `
     +`fill-opacity=".78" stroke="${FIGURE_ROLE.quietInk}" stroke-width=".4"/>`).join('');
-  // Edge labels, not per-class ranges: the breaks are the boundaries BETWEEN classes, and
-  // printing them under the gaps is what makes a ramp readable at this size.
   const edges=[lowest,...classed.breaks].map((v,i)=>
     `<text x="${left+i*width}" y="${top+23}" font-size="14" text-anchor="middle" `
     +`fill="${FIGURE_ROLE.quietInk}">${round(v)}</text>`).join('');

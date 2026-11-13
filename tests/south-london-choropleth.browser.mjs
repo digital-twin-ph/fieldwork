@@ -55,7 +55,8 @@ test('a table of rates joins to named parts and draws a classed figure',async({p
   // THE KEY SAYS WHAT IS DRAWN. No sites and no observations are on this figure, so neither is
   // named; the breaks are printed because a shade without them says only "more" and "less".
   const text=(await page.locator('#map text').allTextContents()).join(' · ');
-  expect(text).toContain('Polygon shade: the joined value');
+  // Named for what the shade is (Map 0.28.2), once: the column is named for its unit.
+  expect(text).toContain('Polygon shade: per 1,000 people · ');
   expect(text).toContain('5 quantile classes');
   expect(text).not.toContain('modeled catchments');
   expect(text).not.toContain('Squares: sites');

@@ -1,0 +1,163 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:sample_raster",
+ "version": "0.6.1",
+ "nodeType": "sample_raster",
+ "title": "Sample a raster at points or over areas",
+ "released": "2026-11-13",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['sample_raster']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "shaclShapes": [],
+  "validationStatus": "application-only"
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "points",
+    "type": "points"
+   },
+   {
+    "name": "areas",
+    "type": "polygons"
+   },
+   {
+    "name": "area",
+    "type": "area"
+   },
+   {
+    "name": "raster",
+    "type": "raster"
+   },
+   {
+    "name": "files",
+    "type": "satellite-files"
+   }
+  ],
+  "output": "points"
+ },
+ "ontology": {
+  "status": "partial",
+  "mappings": [
+   {
+    "role": "activity",
+    "iri": "urn:fieldwork:RasterPointSample",
+    "file": "ontology/fieldwork.ttl"
+   },
+   {
+    "role": "entity",
+    "iri": "urn:fieldwork:PointDataset",
+    "file": "ontology/runtime.ttl"
+   },
+   {
+    "role": "activity",
+    "iri": "urn:fieldwork:RasterAreaTotal",
+    "file": "ontology/fieldwork.ttl"
+   },
+   {
+    "role": "entity",
+    "iri": "urn:fieldwork:SatellitePointSample",
+    "file": "ontology/runtime.ttl"
+   },
+   {
+    "role": "entity",
+    "iri": "urn:fieldwork:SatelliteAreaSample",
+    "file": "ontology/runtime.ttl"
+   }
+  ],
+  "note": "Three readings, one widget (experiment 205). At points, from a raster: fw:RasterPointSample, as 0.2.0. Over areas, from a raster: fw:RasterAreaTotal, with the cell rule, the areas, the cells totalled, the cells with no data, the cells beyond the window and the areas with no total. From satellite files: fw:SatellitePointSample and fw:SatelliteAreaSample, as Sample satellite files 0.7.0 declared them. The output follows the input: points, polygons or a table. 0.4.0: fw:cellStatisticsGiven, stated when the mean, minimum and maximum of the cells are given.",
+  "emits": {
+   "classes": [
+    "RasterAreaTotal",
+    "RasterPointSample",
+    "SatelliteAreaSample",
+    "SatellitePointSample"
+   ],
+   "properties": [
+    "areaCount",
+    "areasWithoutValueCount",
+    "cellConvention",
+    "cellRule",
+    "cellSizeX",
+    "cellSizeY",
+    "cellStatisticsGiven",
+    "completenessRead",
+    "filesFromDevice",
+    "filesRead",
+    "imputed",
+    "noDataCellCount",
+    "noDataCount",
+    "outsideRasterCellCount",
+    "outsideRasterCount",
+    "pixelConvention",
+    "placesSampled",
+    "pointsSampled",
+    "qualityOperator",
+    "qualityRule",
+    "qualityThreshold",
+    "qualityVariable",
+    "rowsBelowQuality",
+    "rowsNoCell",
+    "rowsNoOverpass",
+    "rowsNoRetrieval",
+    "rowsPassing",
+    "rowsWritten",
+    "sampleConvention",
+    "sampledAttribute",
+    "sampledCount",
+    "sampledRoute",
+    "sampledValueUnit",
+    "sampledVariable",
+    "satelliteValueUnit",
+    "totalledCellCount",
+    "unitAsStated",
+    "unitConversion",
+    "unlocatedCount",
+    "valueUnitStatus"
+   ]
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/app.ts",
+   "src/canvas.tsx",
+   "src/core.ts",
+   "src/raster-areas.ts",
+   "src/sample-raster.ts",
+   "src/satellite-areas.ts",
+   "src/satellite-grid-sample.ts",
+   "src/satellite-pixels.ts",
+   "src/satellite-read.ts",
+   "src/satellite-reading-store.ts",
+   "src/satellite-sample-reader.ts",
+   "src/satellite-sample-worker.ts",
+   "src/satellite-sample.ts"
+  ],
+  "definition": "src/sample-raster.ts",
+  "emitting": [
+   "src/sample-raster.ts",
+   "src/raster-areas.ts",
+   "src/satellite-sample.ts",
+   "src/satellite-grid-sample.ts"
+  ]
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": null
+ },
+ "changes": [
+  {
+   "kind": "patch",
+   "description": "Two inputs on the canvas and in the Inspector, not five: Raster (a raster or satellite files) and Read at (points, a polygon layer or a study area), each named for what is connected, a second kind of place replacing the first. The five ports underneath are unchanged. The practitioner, 2026-11-13: \"Raster still shows multiple input ports\". Configure… knows a WorldPop or GRID3 raster by its file's name where its record states no units, says in words what each cell holds (\"Each cell holds an estimated number of people living in it\") and what a total is, and fills the units and the name, population (the practitioner, 2026-11-13: \"I still have no idea what the raster is giving me so I just guessed\")."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Seven unit checks cover the containing-cell value, no-data and masked cells, points outside the grid, points without coordinates, the half-open cell edges, a refused existing attribute, refused attribute names and a refused CRS. A cell value is not a measurement at the point and no interpolation is claimed. Agreement with an external point sampler is not established; see docs/experiments/67-sample-raster-at-points.md. Composition is established by tests/composition-elevation.test.mjs, a minimal fixture wiring Area around a point to Clip raster to Sample raster at points with synthetic data. The sea-level worked example remains the teaching artifact and does not gate this release; see the protective/maturity distinction in docs/audits/ontology-audit.md. 0.2.0: tests/raster-point-registration.test.mjs checks bilinear against hand arithmetic, a missing neighbour and an edge point. 0.3.0: tests/raster-areas.test.mjs checks totals on a 4x4 grid against hand counts, a no-data cell, an area half outside the window, an area with no cell, the output by source, and a saved satellite sampler migrated. Agreement with an external zonal sum is not yet established. 0.4.0: tests/raster-areas.test.mjs checks the minimum and maximum against hand counts, the mean of three cells, an area with no value giving none, and the statistics absent unless asked. 0.4.1: tests/sample-raster-areas.browser.mjs reads the five named ports and the output on the canvas; Chromium. 0.5.0: tests/sample-raster-arrivals.browser.mjs (the raster named, units filled as the source record states, nothing connected said, Read it over the square, 968 people over 16 cells; the Inspector's input names equal the node's); Chromium. 0.5.1: tests/raster-areas-scanline.test.mjs (the predicate's cells, cell for cell, over 25 random outlines with holes and parts; the totals' name); Botswana by hand against rasterio, every district's total and cell count equal; Chromium. 0.6.0: tests/sample-raster-areas.browser.mjs (the sixteen cells' statistics by hand); tests/population-models-from-scratch.browser.mjs (every district's share in Rwanda and Botswana equal to rasterio's); Chromium. 0.6.1: tests/sample-raster-arrivals.browser.mjs (canvas and Inspector show Raster and Read at; after Read it over, Raster and Study area); tests/sample-raster-areas.browser.mjs; Chromium. tests/sample-raster-arrivals.browser.mjs (a WorldPop-named file with no units in its record)."
+ }
+}

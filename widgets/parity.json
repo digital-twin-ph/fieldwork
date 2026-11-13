@@ -3,7 +3,7 @@
   "description": "Independent recomputation of implemented widgets by an external process, recorded after release. Release files are immutable once committed, so evidence about a release lives here and accrues as checks run. A fixture digest recorded in a result is over canonical JSON content rather than the file’s bytes, revised 2026-10-11 because byte identity is unsatisfiable in the browser the lab publishes to. A parity result establishes numerical agreement with a named external implementation under a stated criterion. It is not scientific certification, and it says nothing about whether a method is appropriate for a question.",
   "lab": {
     "repository": "https://github.com/digital-twin-ph/validation-lab",
-    "commit": "2e9d2f744d0d0b0df54067ebe81011a683712b67",
+    "commit": "4e04d1b89f88a882eb9ecab21466ab4d0a69fdb8",
     "pinNote": "The commit CI checks the lab out at: .github/workflows/pages.yml reads it with `jq -r .lab.commit widgets/parity.json`. So this pin, not the clone beside this repository, is what `validate:dive-deeper` verifies against on a clean runner -- and it must be advanced whenever a check lands in the lab, in the same push-then-pin order the worked examples use."
   },
   "outcomes": {
@@ -897,6 +897,28 @@
       ],
       "note": "A whole example end to end (experiment 208), not one widget: it covers Table input, Apply ruleset with 7-1-7 2.0.0, Total within groups, Relate one row per match and the transmission tree as this example chains them. The fixture carries no row of the source, which states no licence (scripts/export-validation-fixture.mjs, mers-korea-001). Found on the way and fixed: Relate's several-match counts missing from the run's record, and a key value trimmed in silence.",
       "notebook": "49-mers-end-to-end-vs-pandas.ipynb"
+    },
+    {
+      "widget": "urn:fieldwork:widget:sample_raster",
+      "coversRelease": "0.6.1",
+      "check": "50-population-districts",
+      "result": "content/results/check-50-population-districts.json",
+      "sha256": "e739611ddb593cf38ebd0b25486f14a093a3d8eba2ffae91e32b79dd9711fa75",
+      "external": [
+        "rasterio 1.5.2 (GDAL 3.12.2 rasterizer, cell centre)",
+        "NumPy 2.5.3"
+      ],
+      "criterion": "Each district's cells with a value equal; each total within 1e-9 relative; each share within 1e-12",
+      "outcome": "agrees",
+      "measured": "WorldPop, GRID3 and GHS-POP 2025 over Rwanda's 30 and Botswana's 28 census districts (experiment 209), from the same files read by digest: 174 cell counts equal, every total within 8e-14 relative, 232 shares (the census's included) within 4e-15. Agrees in CPython; the browser kernel cannot hold the rasters and says it did not run.",
+      "ranAt": "2026-11-13T18:55:40+00:00",
+      "notEstablished": [
+        "That any source is right: both sides total the same cells.",
+        "That a district's cells are its people: a cell is counted whole by the rule of its centre, not by the share of it inside the district.",
+        "That GHS-POP's window, cut from the global file with rasterio, is the window Fieldwork reads by range: tests/population-models-from-scratch.browser.mjs reads it by range and gives the same shares to 0.1 %."
+      ],
+      "note": "Covers Sample a raster over areas (src/raster-areas.ts, the scanline rule of 2026-11-13) and the window Raster input keeps (src/raster.ts). The rasters are not redistributed: the fixture carries each file's address, size and digest, and the check reads them from POP_FILES (scripts/export-validation-fixture.mjs, population-districts-001).",
+      "notebook": "50-population-districts-vs-rasterio.ipynb"
     }
   ],
   "notebookNote": "`notebook` names the lab notebook that carries the check, and `diveDeeper` the heading of its Dive Deeper section where it has one -- the part written for a practitioner who wants to understand the widget rather than for a reviewer checking it (experiment 94). Both are recorded rather than derived from the check id: `24-project-forward` lives in `24-project-vs-pyproj.ipynb`, so matching on the leading number works by luck and would break the first time a check and its notebook are named differently. The application reads `diveDeeper` to decide which widgets offer the link, and scripts/validate-dive-deeper.mjs refuses a heading the notebook does not actually carry."

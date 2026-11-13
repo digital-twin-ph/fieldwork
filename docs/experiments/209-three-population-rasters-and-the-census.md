@@ -3,9 +3,9 @@
 _Created 2026-11-12 · Updated 2026-11-13_
 
 **Status:** tried — built and run for Botswana and Rwanda, 2026-11-13, every district's share equal to rasterio's;
-Chromium. The Validation Lab check is not yet written. The practitioner, 2026-11-12, asking when a raster worked example
+Chromium. Validation Lab check 50 agrees, 2026-11-13. The practitioner, 2026-11-12, asking when a raster worked example
 would come, then of Botswana's population by district: *"For #1 we should compare the three sources of population
-rasters"*; 2026-11-13: *"Let's finish 209 as it helps refine raster input."*#1 we should compare the three sources of population rasters"*. Chosen the same day, from
+rasters"*; 2026-11-13: *"Let's finish 209 as it helps refine raster input."* Chosen on 2026-11-12, from
 options: Botswana's 2022 census as the reference, districts (ADM1), and each source's **share of the country**.
 
 ## The question
@@ -177,8 +177,8 @@ the total per km².
 | `tests/population-example-opens.browser.mjs`: the pinned example opened, Rwanda's three windows read again (two files, one by range) and checked, then run | passes; Gasabo 6.6 % in the census, WorldPop and GRID3 |
 | `tests/raster-reread.browser.mjs`: a window exported without its bytes, a different file refused, the right one read again | passes |
 | `tests/raster-areas-scanline.test.mjs`, `tests/sample-raster-areas.browser.mjs` (zonal statistics by hand) | pass |
+| Validation Lab check 50 (lab 4e04d1b): every district's cells, total and share recomputed with rasterio and GDAL's rasterizer from the same files, read by digest | agrees: 174 cell counts equal, totals within 8e-14 relative, 232 shares within 4e-15; CPython only, as the browser kernel cannot hold the rasters |
 
-**Not yet:** the Validation Lab check, recomputing every district's total and share from the published files.
 **The practitioner observation above has not been made.**
 
 ## Distinctions, and how each is enforced

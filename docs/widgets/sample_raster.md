@@ -9,6 +9,10 @@ population grid places in each district; the satellite's NO₂ over each monitor
 
 What it gives back follows what you connect, and the step says which it is doing.
 
+It has two inputs, on the canvas and in the Inspector: **Raster**, for a Raster input, Clip raster or satellite files, and
+**Read at**, for points, a polygon layer or a study area. Each is named for what is connected to it, and connecting a
+second kind of place replaces the first.
+
 | Connect | It gives back | Each place carries |
 | --- | --- | --- |
 | A **Raster input** (or **Clip raster**) to **raster**, and points to **points** | the points | the cell's value, as a new attribute |

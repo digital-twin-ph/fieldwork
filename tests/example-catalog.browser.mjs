@@ -149,6 +149,28 @@ test('an imported example is resettable, from the bytes already verified',async(
   expect(errors).toEqual([]);
 });
 
+/** A NEWER VERSION PINNED (2026-11-13): a workflow imported from a repository example and reopened from the project list
+ *  says so when the catalog pins a different digest for the file it was read from, and Fetch again opens the pinned one
+ *  beside it. Simulated by recording an older digest as the copy's origin. */
+test('a repository example whose pin has moved says so, and Fetch again opens the pinned version',async({page})=>{test.skip(!!skip,skip);
+  const errors=collectPageErrors(page);
+  await page.route(/raw\.githubusercontent\.com/,route=>route.fulfill({status:200,body:bundle}));
+  await openProjects(page);
+  await page.locator('[data-open-example="urn:fieldwork:example:south-london-1854"]').click();
+  await expect(page.locator('[data-example-status="urn:fieldwork:example:south-london-1854"]')).toContainText('digest matched',{timeout:20000});
+  await page.locator('[data-view="workflow"]').click();
+  await expect(page.locator('#fetch-pinned')).toHaveCount(0);
+  await page.evaluate(()=>{const key='fieldwork-example-origins-v1',all=JSON.parse(localStorage.getItem(key));
+    for(const o of Object.values(all))o.sha256='0'.repeat(64);localStorage.setItem(key,JSON.stringify(all));});
+  await page.reload();
+  await expect(page.locator('#example-note')).toContainText('A newer version of',{timeout:20000});
+  const before=await page.locator('#project-select option').count();
+  await page.locator('#fetch-pinned').click();
+  await expect.poll(()=>page.locator('#project-select option').count(),{timeout:20000}).toBeGreaterThan(before);
+  await expect(page.locator('#fetch-pinned')).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
+
 // THE SECOND EXAMPLE, opened from its pin rather than rebuilt. `oswego-from-scratch` proves it can
 // be made by hand; this proves what was published is what opens.
 const OSWEGO=new URL('../../example-1940-oswego-church-supper/fieldwork-project.json.gz',import.meta.url);

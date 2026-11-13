@@ -3,6 +3,23 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.111.1 — 2026-11-13
+
+- **Sample a raster shows two inputs, not five**: Raster, and Read at (points, a polygon layer or a study area). The
+  ports underneath are unchanged. Configure… recognises a WorldPop or GRID3 raster by its file's name and says what each
+  cell holds, such as *an estimated number of people living in it*. Sample a raster 0.6.1.
+- **A shaded map's key is readable on screen as in the figure**: a ramp with each class edge's number beneath it, with
+  thousands separators. The key names the shade, such as *population, persons*. The basemap is called unavailable only
+  when no tile came; otherwise the map says how many tiles could not be fetched. Map 0.28.2; Join table to areas 0.3.2.
+- **A worked example opened again is the example as it ships.** A saved copy nobody changed follows the example when it
+  changes. An edited copy says so in the bar and offers the example as it is now. The comparison reads every step's
+  settings, not only the steps and wires. Hagelloch's day-by-day replay and Snow's donuts were missing on a device whose
+  copies had been saved before.
+- **An example opened from its repository says when a newer version is pinned**, and Fetch again opens that version
+  beside the copy.
+- **Validation Lab check 50**: each district's cells, total and share from the three population models, recomputed
+  with rasterio from the same files; agrees. Experiment 209.
+
 ## 0.111.0 — 2026-11-13
 
 - **Population models beside a census, a worked example for Botswana and Rwanda.** WorldPop, GRID3 and GHS-POP

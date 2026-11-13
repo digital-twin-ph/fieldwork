@@ -38,10 +38,10 @@ test('a raster is totalled over a study area: the cells whose centre is inside, 
   const errors=collectPageErrors(page);
   await prepare(page);
 
-  // EACH PORT NAMED ON THE CANVAS, and the output (the practitioner, 2026-11-12: "Sample a raster has not standardized its
-  // ports yet"): five unnamed dots before. Over areas, it gives areas.
+  // TWO PORTS, EACH NAMED FOR WHAT IS CONNECTED, and the output (the practitioner, 2026-11-12: "Sample a raster has not
+  // standardized its ports yet"; 2026-11-13: "Raster still shows multiple input ports"). Over areas, it gives areas.
   await expect(page.locator('.react-flow__node[data-id="sample"] .node-port-row'))
-    .toHaveText(['Points','Areas','Study area','Raster','Satellite files','Areas →']);
+    .toHaveText(['Raster','Study area','Areas →']);
   // The step says what it does over areas, before it runs.
   await page.locator('.react-flow__node[data-id="sample"]').click();
   await expect(page.locator('.standard-sentence')).toContainText('Totals people');

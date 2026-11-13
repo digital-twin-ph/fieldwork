@@ -1,6 +1,6 @@
 import type {Node,NodeProps,Edge,Connection} from '@xyflow/react';
 import type {Workflow,WorkflowNode,NodeDefinition,NodeType} from './types.js';
-import {PORT_NAMES} from './port-names.js';
+import {PORT_NAMES,PORT_GROUPS,shownPort} from './port-names.js';
 export interface NodeDescription extends Record<string,unknown> {definition:NodeDefinition;
   /** Ports with something wired to them. A map declares every layer port it can draw, so listing
    *  them all on the canvas made a node three times taller than the layout it shipped in -- and
@@ -26,7 +26,7 @@ function OperationNode({id,data,selected}:NodeProps<OperationFlowNode>) {
   // NAMED PORT ROWS: each input a row with its name, and the output named. Sample a raster joined 2026-11-12 (the practitioner:
   // "Sample a raster has not standardized its ports yet"): five unnamed dots, of which one or two are used at a time.
   const spatialPorts=['map_output','table_output','chart_output','coverage_check','raster_input','clip_raster','sample_raster'].includes(data.type);
-  const portLabel=(port:string)=>PORT_NAMES[data.type as NodeType]?.[port]??(port==='context'?'Context points':port==='polygons'?'Catchment polygons':port==='network'?'Street network':port==='sites'?'Sites':port==='raster'?(data.type==='map_output'&&t.inputs.length>1?'Or: Raster':'Raster'):port==='decisions'?'Reasoning result':port==='area'?'Study area':port==='coverage'?'Or: Coverage result':port==='table'?'Tabular data':port==='ground'?'Map image (ground)'
+  const portLabel=(port:string)=>PORT_NAMES[data.type as NodeType]?.[port]??(port==='context'?'Context points':port==='polygons'?'Areas':port==='network'?'Street network':port==='sites'?'Sites':port==='raster'?(data.type==='map_output'&&t.inputs.length>1?'Or: Raster':'Raster'):port==='decisions'?'Reasoning result':port==='area'?'Study area':port==='coverage'?'Or: Coverage result':port==='table'?'Tabular data':port==='ground'?'Map image (ground)'
     // NAMED, NEVER "Points undefined" (2026-11-10, a georeferenced map image on the ground port): a port this list does not
     // know is shown by its own name, and only a numbered point port is called Points.
     :port==='files'?'Satellite files'
@@ -56,7 +56,11 @@ function OperationNode({id,data,selected}:NodeProps<OperationFlowNode>) {
   const outputLabel=({raster:'Raster',points:'Points',polygons:'Areas','coverage-check':'Coverage result',table:'Table',area:'Study area'} as Record<string,string>)[String(t.output)]
     ??String(t.output).charAt(0).toUpperCase()+String(t.output).slice(1).replace(/[-_]/g,' ');
   const layerNode=data.type==='map_output'||data.type==='table_output';
-  const shownPorts=layerNode?t.inputs.filter(([port])=>connected.has(port)):t.inputs;
+  // GROUPED PORTS, one row each, named for what is connected (see PORT_GROUPS).
+  const groups=PORT_GROUPS[data.type as NodeType];
+  const grouped:[string,string][]=groups?Object.entries(groups).map(([group,ports])=>{const on=ports.find(p=>connected.has(p));
+    return [group,on?portLabel(on):portLabel(group)];}):[];
+  const shownPorts=groups?[]:layerNode?t.inputs.filter(([port])=>connected.has(port)):t.inputs;
   const canAddLayer=layerNode&&[...available].some(port=>!connected.has(port));
   const hiddenPorts:[string,string][]=[];
   const updateInternals=useUpdateNodeInternals();
@@ -69,6 +73,10 @@ function OperationNode({id,data,selected}:NodeProps<OperationFlowNode>) {
     <div className="node-heading"><span className="node-icon">{t.icon}</span><div><strong>{data.label}</strong><span className="node-id">{t.group}</span></div></div>
     <div className="node-subtitle">{data.subtitle}</div>
     {spatialPorts&&<div className="node-ports">
+      {grouped.map(([group,label])=><div className="node-port-row" key={group}>
+        <Handle type="target" position={Position.Left} id={group} style={{top:'50%'}} title={label} aria-label={`${data.label}: ${label} input`}/>
+        <span>{label}</span>
+      </div>)}
       {shownPorts.map(([port,type])=><div className={`node-port-row ${port==='coverage'?'alternative-input':''}`} key={port}>
         <Handle type="target" position={Position.Left} id={port} style={{top:'50%'}} title={`${portLabel(port)} (${type})`} aria-label={`${data.label}: ${portLabel(port)} input`}/>
         <span>{portLabel(port)}</span>
@@ -123,7 +131,7 @@ export function mountCanvas(container:HTMLElement,callbacks:CanvasCallbacks):Can
         // Keep React Flow's measured dimensions across status and selection updates.
         // Dropping them during a run can leave an unchanged node hidden until it resizes.
         setNodes(previous=>{const current=new Map(previous.map(n=>[n.id,n]));return graph.nodes.map(n=>({...current.get(n.id),id:n.id,type:'operation',position:{x:n.x,y:n.y},selected:n.id===selection,data:callbacks.describe(n,statuses[n.id])}));});
-        setEdges(graph.edges.map(e=>({id:e.id,source:e.from,sourceHandle:'out',target:e.to,targetHandle:e.port,type:'default',style:{stroke:'#9fb5a5',strokeWidth:1.7},interactionWidth:20})));
+        setEdges(graph.edges.map(e=>({id:e.id,source:e.from,sourceHandle:'out',target:e.to,targetHandle:shownPort((graph.nodes.find(n=>n.id===e.to)?.type??'') as NodeType,e.port),type:'default',style:{stroke:'#9fb5a5',strokeWidth:1.7},interactionWidth:20})));
       };
       api.fit=()=>setFitRequested(true);api.zoomIn=()=>flow.zoomIn();api.zoomOut=()=>flow.zoomOut();api.setBusy=setBusy;
       callbacks.ready(api);

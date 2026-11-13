@@ -403,12 +403,12 @@
    "migrationFrom": []
   },
   "join_table_to_area": {
-   "version": "0.3.1",
-   "released": "2026-11-06",
+   "version": "0.3.2",
+   "released": "2026-11-13",
    "changes": [
     {
      "kind": "patch",
-     "description": "The parts of one unit, such as a municipality's islands, are no longer reported as a repeated name or flagged as shared: distinct units are counted, not parts. Experiment 180."
+     "description": "Its polygons say what their value is, for a map's key: a share where every row is one, such as \"% within source\", else the value column and its unit."
     }
    ],
    "breaking": false,
@@ -427,12 +427,12 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.28.1",
+   "version": "0.28.2",
    "released": "2026-11-13",
    "changes": [
     {
      "kind": "patch",
-     "description": "A classed polygon map's ramp and key line sit at the foot of the frame whatever its height: placed for 295, they were drawn across the middle of a 650 frame. The key says what the shade is, from the layer, such as \"population, people per pixel\", on its first class and in the line under the ramp."
+     "description": "The interactive map's class key is the static figure's, which the practitioner reads (\"The legend is readable\"): a ramp with each class edge's number beneath it, now 80 pixels a class on screen and 90 in the figure, with thousands separators; at 30 pixels, six-digit edges ran together (Botswana's districts by population). The key and the note under the map name the shade where the layer does, such as \"population, persons\", not \"the joined value\". The basemap status counts tiles: unavailable only when none came, otherwise how many of the tiles in view could not be fetched; one failed tile had said unavailable over a map whose streets were drawn. A polygon input is labelled Areas, not Catchment polygons."
     }
    ],
    "breaking": false,
@@ -742,12 +742,12 @@
    "migrationFrom": []
   },
   "sample_raster": {
-   "version": "0.6.0",
+   "version": "0.6.1",
    "released": "2026-11-13",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Over a study area, each named part is one area with all of its pieces, totalled once: Rwanda's Ngoma, a district and a 1 m² sliver, was two areas, the sliver with no total, which made every share of the country unknown. Zonal statistics, as experiment 209 chose them: each area's cell mean, median, population standard deviation, smallest and largest, cells above zero and their share, its size in km² on the sphere and the total per km². Its areas reach a table step as a table, one row per area. A drawn study area with no named parts is read as one area."
+     "kind": "patch",
+     "description": "Two inputs on the canvas and in the Inspector, not five: Raster (a raster or satellite files) and Read at (points, a polygon layer or a study area), each named for what is connected, a second kind of place replacing the first. The five ports underneath are unchanged. The practitioner, 2026-11-13: \"Raster still shows multiple input ports\". Configure… knows a WorldPop or GRID3 raster by its file's name where its record states no units, says in words what each cell holds (\"Each cell holds an estimated number of people living in it\") and what a total is, and fills the units and the name, population (the practitioner, 2026-11-13: \"I still have no idea what the raster is giving me so I just guessed\")."
     }
    ],
    "breaking": false,

@@ -1,0 +1,2 @@
+var a={chart_output:{records:"Table",polygons:"Polygon summaries"},sample_raster:{points:"Points",areas:"Areas",area:"Study area",raster:"Raster",files:"Satellite files",read:"Raster",at:"Read at"}},s={sample_raster:{read:["raster","files"],at:["points","areas","area"]}},o=(r,e)=>Object.entries(s[r]??{}).find(([,t])=>t.includes(e))?.[0]??e;export{a,s as b,o as c};
+//# sourceMappingURL=chunk-2UUYXHSW.js.map

@@ -85,7 +85,10 @@ export async function performManual(page,workflow,{timeout=120000,runTimeout=tim
       await page.locator(`.react-flow__node[data-id="${to}"]`).dispatchEvent('click');
       // The step's own list for the port where it still has one (TODO item 3), the shared Inputs list otherwise.
       const own=page.locator(`.inspector [data-map-port="${step.connect.port}"]`);
-      const list=await own.count()?own.first():page.locator(`#connect-${step.connect.port}`);
+      // A port shown under its group's one choice (src/port-names.ts PORT_GROUPS): Sample a raster's Raster and Read at.
+      const type=(await saved(page)).nodes.find(n=>n.id===to)?.type;
+      const group=type==='sample_raster'?({raster:'read',files:'read',points:'at',areas:'at',area:'at'})[step.connect.port]:undefined;
+      const list=await own.count()?own.first():page.locator(`#connect-${group??step.connect.port}`);
       await expect(list,{message:where}).toBeVisible();
       await list.selectOption(from);
       await expect.poll(async()=>(await saved(page)).edges.some(e=>e.from===from&&e.to===to&&e.port===step.connect.port),

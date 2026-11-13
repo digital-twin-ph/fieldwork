@@ -3,6 +3,15 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.110.1 — 2026-11-13
+
+- **Sample a raster over areas finishes on a country.** Botswana's 10 districts over WorldPop 2025 (123 million cells)
+  did not finish in ten minutes; each area's cells are now found row by row, by the same rule, in 6.3 s. Every
+  district's total equals rasterio's over the same files. Found walking the practitioner's workflow by hand. Sample a
+  raster 0.5.1. Experiment 205.
+- **A shaded map's ramp sits below the areas**, not across them, in a tall frame, and the key names what the shade is,
+  such as *population, people per pixel*. Map 0.28.1.
+
 ## 0.110.0 — 2026-11-13
 
 - **Colour by, for a point layer.** Map's Configure… can colour each mark by a number, in five classes from light to

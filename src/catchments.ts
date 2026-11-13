@@ -292,6 +292,8 @@ export interface Polygons {kind?:'hexbin';siteSourceNodeId?:string;
    *  ONE layer -- 33 sub-districts shaded by a rate are not 33 things to switch on and off
    *  -- so the control needs a name for the whole rather than one per part. */
   layerName?:string;
+  /** What a classed layer's shade is, in words, such as "population, people per pixel": the key says it. */
+  valueName?:string;
   /** THE FRAMES each part carries a value for, in order, where a join was given a frame column. */
   frames?:string[];
   /** Whether the features are NAMED THINGS or numbered parts of one layer. A read numbers what

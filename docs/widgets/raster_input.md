@@ -1,6 +1,6 @@
 # Raster input
 
-_Created 2026-11-09 · Updated 2026-11-12_
+_Created 2026-11-09 · Updated 2026-11-13_
 
 **A window of a GeoTIFF or NetCDF grid around the study area, kept in the project.** A population surface, a terrain model, a geoid.
 

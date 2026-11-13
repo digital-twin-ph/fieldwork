@@ -834,7 +834,7 @@
     {
       "id": "urn:fieldwork:widget:map_output",
       "nodeType": "map_output",
-      "currentVersion": "0.28.0",
+      "currentVersion": "0.28.1",
       "releases": [
         {
           "version": "0.1.0",
@@ -1015,6 +1015,11 @@
           "version": "0.28.0",
           "path": "widgets/releases/map_output/0.28.0.json",
           "sha256": "5da54bc5e3cc0d011c6de431e2aef5a1ddf99501821c6d2e4624d92b9c454ba0"
+        },
+        {
+          "version": "0.28.1",
+          "path": "widgets/releases/map_output/0.28.1.json",
+          "sha256": "d1ea325ac4bb09d19b59c12eab67a4024b136c27db235d0e34071c5716fe03f0"
         }
       ]
     },
@@ -1676,7 +1681,7 @@
     {
       "id": "urn:fieldwork:widget:sample_raster",
       "nodeType": "sample_raster",
-      "currentVersion": "0.5.0",
+      "currentVersion": "0.5.1",
       "releases": [
         {
           "version": "0.1.0",
@@ -1707,6 +1712,11 @@
           "version": "0.5.0",
           "path": "widgets/releases/sample_raster/0.5.0.json",
           "sha256": "ccbd699f5481dfb0264de810579e0bc8ac122bc2d566f4568d791ba5f13ec5dd"
+        },
+        {
+          "version": "0.5.1",
+          "path": "widgets/releases/sample_raster/0.5.1.json",
+          "sha256": "44c7847a5d71da726a924bf57a40a70440f771907f797b8fab72e2067c752217"
         }
       ]
     },

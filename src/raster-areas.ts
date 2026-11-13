@@ -8,7 +8,6 @@
 import type {Boundary,WorkflowNode} from './types.js';
 import type {Receipt} from './results.js';
 import type {RasterGrid} from './raster.js';
-import {rasterCellPredicate} from './raster-mask.js';
 
 export interface AreaTotalCounts {areas:number; cells:number; noData:number; outside:number; empty:number}
 interface AreaFeature {id:string|number; name?:string; geometry?:Boundary|null}
@@ -18,16 +17,40 @@ const boxOf=(b:Boundary)=>{let W=Infinity,S=Infinity,E=-Infinity,N=-Infinity;
     if(x<W)W=x;if(x>E)E=x;if(y<S)S=y;if(y>N)N=y;}
   return {W,S,E,N};};
 
+/** EACH ROW'S RUNS OF CELLS WHOSE CENTRE IS INSIDE OR ON THE AREA, by scanline (2026-11-13). The rule is
+ *  `rasterCellPredicate`'s, cell centre, and gives the same cells; it is computed once per row from where the outline
+ *  crosses the row's centre line, instead of testing every cell of the area's box against every vertex. That test took
+ *  Botswana's ten districts (47,321 vertices) over WorldPop's 123 million cells past ten minutes on the published site,
+ *  found walking the practitioner's own workflow by hand. Holes and parts are read even-odd, as rings never cross.
+ *  Returns, for each row from `r0`, inclusive column runs [first, last]. */
+export function centreRuns(geometry:Boundary,origin:readonly number[],resolution:readonly number[],r0:number,r1:number):[number,number][][]{
+  const [ox,oy]=origin as [number,number],[rx,ry]=resolution as [number,number];
+  const crossings:number[][]=Array.from({length:Math.max(0,r1-r0)},()=>[]);
+  for(const poly of geometry.type==='Polygon'?[geometry.coordinates]:geometry.coordinates)
+    for(const ring of poly as [number,number][][]){
+      for(let i=1;i<ring.length;i++){
+        const ax=(ring[i-1]![0]-ox)/rx,ay=(ring[i-1]![1]-oy)/ry,bx=(ring[i]![0]-ox)/rx,by=(ring[i]![1]-oy)/ry;
+        if(ay===by)continue;
+        // Rows whose centre line y = r + 0.5 lies in [low, high): each crossing counted once, at a shared vertex too.
+        const low=Math.min(ay,by),high=Math.max(ay,by);
+        const first=Math.max(r0,Math.ceil(low-0.5)),last=Math.min(r1-1,Math.ceil(high-0.5)-1);
+        for(let r=first;r<=last;r++){const y=r+0.5;crossings[r-r0]!.push(ax+(y-ay)*(bx-ax)/(by-ay));}
+      }
+    }
+  return crossings.map(xs=>{xs.sort((a,b)=>a-b);const runs:[number,number][]=[];
+    for(let i=0;i+1<xs.length;i+=2){const c0=Math.ceil(xs[i]!-0.5),c1=Math.floor(xs[i+1]!-0.5);if(c1>=c0)runs.push([c0,c1]);}
+    return runs;});
+}
+
 /** One area's total: its cells inside the window, those with no data, and those beyond the window. */
 export function totalOver(geometry:Boundary,grid:Pick<RasterGrid,'metadata'|'values'>):{total:number;cells:number;noData:number;outside:number;min:number|null;max:number|null}{
   const {origin,resolution,width,height,noData}=grid.metadata,[ox,oy]=origin,[rx,ry]=resolution;
   const {W,S,E,N}=boxOf(geometry);
   // Every cell of the grid's lattice the area's box touches, inside the window or not.
   const c0=Math.floor((W-ox)/rx),c1=Math.ceil((E-ox)/rx),r0=Math.floor((N-oy)/ry),r1=Math.ceil((S-oy)/ry);
-  const inside=rasterCellPredicate(geometry,origin,resolution,{method:'cell-center',marginPixels:0});
+  const runs=centreRuns(geometry,origin,resolution,r0,r1);
   let total=0,cells=0,missing=0,outside=0,min=Infinity,max=-Infinity;
-  for(let r=r0;r<r1;r++)for(let c=c0;c<c1;c++){
-    if(!inside(c,r))continue;
+  for(let r=r0;r<r1;r++)for(const [a,b] of runs[r-r0]!)for(let c=Math.max(a,c0);c<=Math.min(b,c1-1);c++){
     if(c<0||r<0||c>=width||r>=height){outside++;continue;}
     const v=grid.values[r*width+c];
     if(v===null||v===undefined||!Number.isFinite(v)||(typeof noData==='number'&&v===noData)){missing++;continue;}
@@ -54,6 +77,7 @@ export function areaTotals(features:readonly AreaFeature[],grid:RasterGrid,param
   });
   const sentence=areaTotalsSentence(counts,column,params.valueUnit,params.cellStatistics);
   return {value:{features:out,sites:[],crs:'EPSG:4326',layerName:params.label||'Raster totals',featuresNamed:true,
+    valueName:params.valueUnit?.trim()?`${column}, ${params.valueUnit.trim()}`:column,
     method:sentence,notes:[sentence]},counts,sentence};
 }
 

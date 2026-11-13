@@ -140,7 +140,7 @@ export function polygonSvg(p:Polygons,esc:Escape):string{
     // Value-bearing fills are readable at full strength; a catchment's identity wash is not
     // the same thing and keeps the lighter tint it has always had.
     const opacity=classed||grouped?(at===null?'.18':'.78'):categorical?'.55':wash?'.16':'.22';
-    return `<path data-catchment="${esc(f.id)}"${classed&&f.value!==undefined?` data-value="${f.value}"`:''}${grouped&&f.category?` data-category="${esc(f.category)}"`:''} d="${polys.flat().map(r=>'M'+r.map(c=>project(c).join(',')).join('L')+'Z').join('')}" fill="${fill}" fill-opacity="${opacity}" fill-rule="evenodd" stroke="${classed?FIGURE_ROLE.quietInk:fill}" stroke-width="${classed?'.6':'1'}"><title>${esc(f.name)}${f.category?` · ${esc(f.category)}`:''}${f.value===undefined?'':` · ${f.value}`}${f.count===undefined?'':` · ${f.count} locations`}</title></path>`;}).join('')+(p.observations?.features||[]).filter(f=>f.geometry).map(f=>{const [x,y]=project(f.geometry!.coordinates);return `<circle cx="${x}" cy="${y}" r="1.8" fill="#70523a"><title>${esc(f.properties.name)}</title></circle>`;}).join('')+p.sites.filter(f=>f.geometry).map(f=>{const [x,y]=project(f.geometry!.coordinates);return `<rect x="${x-4}" y="${y-4}" width="8" height="8" fill="#174d47"><title>${esc(f.properties.name)}</title></rect>`;}).join('')+plotKey(p,classed,esc,grouped);
+    return `<path data-catchment="${esc(f.id)}"${classed&&f.value!==undefined?` data-value="${f.value}"`:''}${grouped&&f.category?` data-category="${esc(f.category)}"`:''} d="${polys.flat().map(r=>'M'+r.map(c=>project(c).join(',')).join('L')+'Z').join('')}" fill="${fill}" fill-opacity="${opacity}" fill-rule="evenodd" stroke="${classed?FIGURE_ROLE.quietInk:fill}" stroke-width="${classed?'.6':'1'}"><title>${esc(f.name)}${f.category?` · ${esc(f.category)}`:''}${f.value===undefined?'':` · ${f.value}`}${f.count===undefined?'':` · ${f.count} locations`}</title></path>`;}).join('')+(p.observations?.features||[]).filter(f=>f.geometry).map(f=>{const [x,y]=project(f.geometry!.coordinates);return `<circle cx="${x}" cy="${y}" r="1.8" fill="#70523a"><title>${esc(f.properties.name)}</title></circle>`;}).join('')+p.sites.filter(f=>f.geometry).map(f=>{const [x,y]=project(f.geometry!.coordinates);return `<rect x="${x-4}" y="${y-4}" width="8" height="8" fill="#174d47"><title>${esc(f.properties.name)}</title></rect>`;}).join('')+plotKey(p,classed,esc,grouped,height);
 }
 
 // THE KEY NAMES WHAT IS DRAWN, and nothing else. This line was a fixed string -- "Squares:
@@ -150,7 +150,10 @@ export function polygonSvg(p:Polygons,esc:Escape):string{
 // does not carry is worse than no key: it is the one part of a figure a reader trusts without
 // checking. `EveryMarkIsInTheKey` in map-conformance asks the converse of the same question.
 function plotKey(p:Polygons,classed:ReturnType<typeof classifyValues>,esc:Escape,
-  grouped:ReturnType<typeof classifyCategories>=null):string{
+  grouped:ReturnType<typeof classifyCategories>=null,height=295):string{
+  // AT THE FOOT OF THE FRAME, whatever its height (2026-11-13): placed for 295, the ramp sat across the middle of Botswana's
+  // districts in a 650 frame. A 295 frame draws it where it always was.
+  const foot=height-295;
   const marks:string[]=[];
   if(p.sites.some(f=>f.geometry))marks.push('squares: sites');
   if((p.observations?.features||[]).some(f=>f.geometry))marks.push('dots: observations');
@@ -160,7 +163,9 @@ function plotKey(p:Polygons,classed:ReturnType<typeof classifyValues>,esc:Escape
   // catchments" was printed under a figure of the Thames on 2026-10-29: these were read from a
   // published extract and modelled by nobody. A catchment is modelled; a read water body is not,
   // and the key is the one part of a figure a reader trusts without checking.
-  marks.push(classed?'polygon shade: the joined value'
+  // WHAT THE SHADE IS, by the layer's own name for it where it gives one: "population, people per pixel", not "the joined
+  // value", which a raster's totals are not.
+  marks.push(classed?`polygon shade: ${p.valueName?.trim()||'the joined value'}`
     :p.layerName?.trim()?`polygons: ${p.layerName.trim()}`
     :p.features.some(f=>f.minutes!==undefined)?'polygons: modeled catchments'
     :'polygons: the layer drawn');
@@ -171,7 +176,7 @@ function plotKey(p:Polygons,classed:ReturnType<typeof classifyValues>,esc:Escape
     :'equal-interval classes, equal value spans, so the shade shows magnitude'}`
     // SAID, so a reader is not left to infer from the absence of breaks that there is an order.
     :grouped?` · polygon shade: the class each part belongs to, which has no order`:'';
-  const key=`<text x="20" y="${classed||grouped?290:282}" font-size="14">`
+  const key=`<text x="20" y="${foot+(classed||grouped?290:282)}" font-size="14">`
     +esc(marks.join(' · ').replace(/^./,c=>c.toUpperCase())+method)+'</text>';
   // THE CLASSES, NAMED. A categorical figure's key is the only place a reader learns what a hue
   // MEANS -- there is no ramp to read and no breaks to interpolate -- so a swatch without its
@@ -183,7 +188,7 @@ function plotKey(p:Polygons,classed:ReturnType<typeof classifyValues>,esc:Escape
   if(grouped){
     const perRow=2,swatch=11;
     return grouped.labels.map((label,i)=>{
-      const x=22+(i%perRow)*402,y=250+Math.floor(i/perRow)*18;
+      const x=22+(i%perRow)*402,y=foot+250+Math.floor(i/perRow)*18;
       return `<rect x="${x}" y="${y}" width="${swatch}" height="${swatch}" `
         +`fill="${grouped.colours[i]}" fill-opacity=".78" `
         +`stroke="${FIGURE_ROLE.quietInk}" stroke-width=".4"/>`
@@ -198,7 +203,7 @@ function plotKey(p:Polygons,classed:ReturnType<typeof classifyValues>,esc:Escape
   // sub-district that sits on one. Experiment 137.
   const values=shadedValues(p.features);
   const lowest=Math.min(...values);
-  const width=56,left=24,top=250;
+  const width=56,left=24,top=foot+250;
   const round=(v:number)=>{const a=Math.abs(v);return a>=100?v.toFixed(0):a>=10?v.toFixed(1):v.toFixed(2);};
   const swatches=classed.colours.map((colour,i)=>
     `<rect x="${left+i*width}" y="${top}" width="${width}" height="10" fill="${colour}" `

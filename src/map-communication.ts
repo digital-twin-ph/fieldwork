@@ -20,7 +20,7 @@ export interface MapPresentation {title:string; subtitle:string; sourceNote:stri
 /** The key a value-classed polygon layer deserves: one entry per class, labelled by the values
  *  that bound it, drawn from the same classification the figure colours with. Null when nothing
  *  carries a value, which is every catchment figure. */
-function classedItems(polygons:{features:{value?:number;category?:string;frames?:Record<string,number|null>}[]}):{label:string;color:string}[]|null{
+function classedItems(polygons:{valueName?:string;features:{value?:number;category?:string;frames?:Record<string,number|null>}[]}):{label:string;color:string}[]|null{
   // A CATEGORY OUTRANKS A VALUE, as it does in the figure. A joined layer that a ruleset then
   // classified carries both, and until 2026-11-02 this keyed Nigeria's priority map by zero-dose
   // ranges over polygons shaded by rule class.
@@ -32,8 +32,10 @@ function classedItems(polygons:{features:{value?:number;category?:string;frames?
   const lowest=Math.min(...values);
   const round=(v:number)=>{const a=Math.abs(v);return a>=100?v.toFixed(0):a>=10?v.toFixed(1):v.toFixed(2);};
   const edges=[lowest,...classed.breaks];
+  // WHAT THE NUMBERS ARE, on the first class, where the layer says (2026-11-13: Botswana's districts read "31005 to 61001").
+  const named=polygons.valueName?.trim();
   return classed.colours.map((color,i)=>
-    ({label:`${round(edges[i])} to ${round(edges[i+1])}`,color}));
+    ({label:`${i===0&&named?`${named}: `:''}${round(edges[i])} to ${round(edges[i+1])}`,color}));
 }
 
 /** One entry per named region, in the hues the renderers draw them in.

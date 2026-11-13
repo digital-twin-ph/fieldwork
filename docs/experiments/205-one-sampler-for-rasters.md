@@ -72,3 +72,18 @@ zero; an area reaching past the raster's window said, with how many of its cells
 
 Area-weighted totals for cells split by an edge: a 100 m cell over a ward of a few hectares can matter, and the rule
 here counts a cell whole or not at all.
+
+## 2026-11-13: found walking the practitioner's workflow by hand
+
+Botswana's 10 districts (geoBoundaries ADM1, 47,321 vertices) over WorldPop Global2 2025 (11,248 by 10,953 cells kept)
+did not finish in ten minutes on the published site (0.110.0): each area tested every cell of its box against every
+vertex, billions of tests for Central District. The tests used grids of a hundred cells, so nothing caught it. The cells
+are now found by scanline, row by row from where the outline crosses each row's centre line, by the same cell-centre rule:
+`tests/raster-areas-scanline.test.mjs` holds it equal to `rasterCellPredicate` cell for cell over 25 random outlines with
+holes and parts, and on a centre placed on the outline. The run took 6.3 s. Every district's total and cell count equals
+rasterio's (`rasterio.mask`, `all_touched=False`) over the same two files: South-East 396,924.5 over 66,156 cells;
+2,229,207 cells in all. 166 cells of the districts lie beyond the window Raster input kept, and are said.
+
+The same walk found the map's ramp drawn across the middle of the districts (placed for a 295 frame in a 650 one) and its
+key calling the totals "the joined value"; both fixed in 0.110.1.
+

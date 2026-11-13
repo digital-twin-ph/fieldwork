@@ -1,6 +1,6 @@
 # Sample a raster at points or over areas
 
-_Created 2026-11-09 · Updated 2026-11-11_
+_Created 2026-11-09 · Updated 2026-11-13_
 
 **A grid's value at each point, or its total over each area.** The ground's height at each clinic; the people a
 population grid places in each district; the satellite's NO₂ over each monitor, day by day.

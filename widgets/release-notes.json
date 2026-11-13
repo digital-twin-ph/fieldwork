@@ -427,12 +427,12 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.28.0",
+   "version": "0.28.1",
    "released": "2026-11-13",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Colour by: a point layer's marks one size, coloured by a number's quantile class on the ordered ramp, the highest drawn last, a mark with no value grey; the key gives each class's range and count. The practitioner, 2026-11-13, of MERS's hospitals sized by their cases: \"Note some hospitals under the big circle Samsung Medical Center. This is probably not the best way to display this map. Maybe color keyed to expose all the point locations.\" Colour by and Size by exclude each other. The key on screen edges each mark as the downloaded figure does, so a pale class is seen against white."
+     "kind": "patch",
+     "description": "A classed polygon map's ramp and key line sit at the foot of the frame whatever its height: placed for 295, they were drawn across the middle of a 650 frame. The key says what the shade is, from the layer, such as \"population, people per pixel\", on its first class and in the line under the ramp."
     }
    ],
    "breaking": false,
@@ -742,12 +742,12 @@
    "migrationFrom": []
   },
   "sample_raster": {
-   "version": "0.5.0",
+   "version": "0.5.1",
    "released": "2026-11-13",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Configure… says what arrived first: the raster's name, cells kept and their width, no-data value, and its units where its source record or the file's band tag states them, which fill What those values measure, said as the source's. It says what the raster is read at, or that nothing is connected and what to connect, with Read it over the study area: connects it, reads over areas, and moves a Map's or Table's input to polygons. A study area with no named parts is read as one area under its own name. The practitioner, 2026-11-13: \"Shouldn't sample a raster be able to detect what data the raster offers after retrieval ... I feel lost what to do next\". Its ports are named the same on the node and in the Inspector: Points, Areas, Study area, Raster, Satellite files (the practitioner, the same day: \"the port for that widget needs to be standardized\")."
+     "kind": "patch",
+     "description": "Over areas, the cells of each area are found by scanline, row by row from where its outline crosses the row's centre line, by the same cell-centre rule; it tested every cell of the area's box against every vertex, and Botswana's 10 districts over WorldPop 2025 (123 million cells) did not finish in ten minutes. Now 6.3 s. The totals name what they are, column and unit, for the map's key."
     }
    ],
    "breaking": false,

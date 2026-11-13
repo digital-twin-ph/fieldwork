@@ -153,12 +153,12 @@
    "replacementCandidate": "urn:fieldwork:widget:observations"
   },
   "chart_output": {
-   "version": "0.19.0",
-   "released": "2026-11-12",
+   "version": "0.20.0",
+   "released": "2026-11-13",
    "changes": [
     {
      "kind": "minor",
-     "description": "Ports standardized (the practitioner, 2026-11-12: \"Chart ports need to be standardized\"; the node read Series, Records and Catchment polygons, the Inspector Case series, Table and Polygon summaries). Two ports, Table and Polygon summaries, named the same on the canvas and in the Inspector. The series port is retired into Table: a saved workflow opens with its case series on Table, drawn and receipted as before."
+     "description": "Configure… previews the chart: the last run, drawn with the settings being edited, before Apply (the practitioner, 2026-11-13: \"The ability to preview the Chart would be extremely useful\"). Draw is offered question first (experiment 210's proposer): the forms that suit what arrived come first, each named by the question it answers, with the reason for the one chosen beneath; for a case series, Draw comes first, as it does for a table. In Results the figure is no longer clipped by a scrolling box shorter than it, which cut the stacked curve's dates to their last characters."
     }
    ],
    "breaking": false,

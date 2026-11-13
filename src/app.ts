@@ -99,6 +99,7 @@ function getNode<K extends NodeType>(w:Workflow,id:string,type:K):WorkflowNode<K
 function updateParam(w:Workflow,id:string,key:string,value:unknown){Object.assign(required(w.nodes.find(n=>n.id===id)).params,{[key]:value});}
 function replaceWorkflow(w:Workflow,next:Workflow){for(const key of Object.keys(w))Reflect.deleteProperty(w,key);Object.assign(w,next);}
 import {PORT_NAMES} from './port-names.js';
+import {proposeChartForms,proposalOrder,type ChartForm,type ChartProposal} from './chart-proposals.js';
 import {TYPES,validateWorkflow,validateGeoJSON,executionPlan,executeWorkflow,nodeInputs,outputOf,portAccepts,pointsAsTable,shownMode,portSourceName,IncompleteWorkflow,rereadOnce} from './core.js';
 import {suggestUTM,utmScaleFactor,workflowPositions} from './utm.js';
 import {mountCanvas} from './canvas.js';
@@ -134,7 +135,7 @@ import {openStudyAreaEditor} from './study-area-map.js';
 import {newAreaMeasurement,areaUnitOptions,formatArea,AREA_UNITS} from './area-measurement.js';
 import {newObservations,relationLabel} from './spatial-coverage.js';
 import {openInputDataEditor} from './input-data-ui.js';
-import {chartMarkup} from './chart-output.js';
+import {chartMarkup,tableChart} from './chart-output.js';
 import {chartOrientation,chartRenderer} from './chart-vega.js';
 import {standaloneChartSvg} from './chart-figure.js';
 import {networkPreviewSvg,networkCoverage,networkPreviewCaption} from './network-preview.js';
@@ -2349,6 +2350,59 @@ function openChartConfig(nodeId:string){
   const records=workflow.edges.find(e=>e.to===nodeId&&e.port==='records');
   // A CASE SERIES ON TABLE is drawn as a curve by its periods; the bars, pyramid and tree are for other tables.
   const curve=workflow.nodes.find(x=>x.id===records?.from)?.type==='case_series';
+  // DRAW, QUESTION FIRST (experiment 210's proposer, 2026-11-13): the forms that suit what arrived at the last run come
+  // first, each named by the question it answers, and the reason for the one chosen is said beneath.
+  const upstream=workflow.nodes.find(x=>x.id===records?.from);
+  const arrivedTable=records?result?.tables?.[records.from] as import('./data-table.js').DataTable|undefined:undefined;
+  const proposals=curve?proposeChartForms({kind:'series',splitBy:(upstream as WorkflowNode<'case_series'>).params.splitBy})
+    :arrivedTable?proposeChartForms({kind:'table',table:arrivedTable}):null;
+  const formValue=(f:ChartForm)=>curve?(f==='stacked'?'stacked':''):f;
+  const drawField=(draft:WorkflowNode<'chart_output'>['params'])=>{
+    const chosen:ChartForm=curve?(draft.figure==='stacked'?'stacked':'curve'):(draft.figure==='tree'||draft.figure==='pyramid'?draft.figure:'bars');
+    const listed=proposals??proposeChartForms(curve?{kind:'series'}:{kind:'table',table:{keys:[],rows:[]}});
+    const option=(p:ChartProposal)=>`<option value="${formValue(p.form)}" ${p.form===chosen?'selected':''}>${esc(p.question)} ${esc(p.name)}</option>`;
+    const ordered=proposalOrder(listed),fit=ordered.filter(p=>p.fits),rest=ordered.filter(p=>!p.fits);
+    const said=listed.find(p=>p.form===chosen);
+    return `<div class="field"><label class="field-label" for="${curve?'chart-series-figure':'chart-figure'}">Draw</label>`
+      +`<select id="${curve?'chart-series-figure':'chart-figure'}">`
+      +(proposals?`<optgroup label="Suits these data">${fit.map(option).join('')}</optgroup>`
+        +(rest.length?`<optgroup label="Needs other data">${rest.map(option).join('')}</optgroup>`:'')
+        :listed.map(option).join(''))
+      +`</select><small data-draw-because>${proposals&&said?esc(said.fits?`Suits these data: ${said.because}.`:`This ${said.because}.`)
+        :'Run the workflow once to see which of these suit the data.'}</small></div>`;
+  };
+  // ONE PREVIEW AT A TIME: each redraw finalizes the last, which would otherwise keep its listeners.
+  let previewView:{finalize:()=>void}|undefined;
+  const drawChartPreview=async(host:HTMLElement,draft:WorkflowNode<'chart_output'>['params'])=>{
+    previewView?.finalize();previewView=undefined;
+    const drawn=result?.outputs.find(o=>o.nodeId===nodeId) as {chart?:import('./results.js').ChartSummary;tree?:import('./transmission-tree.js').TransmissionTree}|undefined;
+    const sourceId=workflow.edges.find(e=>e.to===nodeId)?.from;
+    const context={sourceId,runId:result?.runId,sourceLabel:workflow.nodes.find(n=>n.id===sourceId)?.params.label};
+    let spec:object;
+    if(draft.figure==='tree'){
+      const t=draft.tree;
+      if(!t?.id||!t.parent||!t.date||!arrivedTable){host.innerHTML='<p class="muted">Choose the case id, infected-by and date columns to see the tree.</p>';return;}
+      const {transmissionTree}=await import('./transmission-tree.js');
+      const {treeVegaSpec}=await import('./chart-vega.js');
+      spec=treeVegaSpec(transmissionTree(arrivedTable,t),draft,context);
+    }else{
+      // What a setting changes in the counting itself, the key column or the panels, is recounted from the last run's
+      // table; everything else is drawn from the chart the run made.
+      let chart=drawn?.chart;
+      const recount=!curve&&arrivedTable&&!(arrivedTable as {chart?:unknown}).chart
+        &&(draft.keyColumn!==node.params.keyColumn||draft.panelsBy!==node.params.panelsBy||!chart);
+      if(recount)chart=tableChart(arrivedTable!,draft.keyColumn,draft.panelsBy);
+      if(!chart){host.innerHTML='<p class="muted">Run the workflow to preview this chart here.</p>';return;}
+      if(draft.barOrder&&draft.barOrder!=='category')chart={...chart,barOrder:draft.barOrder};
+      if(chartRenderer(draft)==='html'){host.innerHTML=chartMarkup(chart,esc,chartOrientation(draft));return;}
+      spec=chartVegaSpec(chart,draft,context);
+    }
+    const {default:embed}=await import('vega-embed');
+    if(!host.isConnected)return;
+    const view=await embed(host,spec as never,{mode:'vega-lite',renderer:'svg',actions:false,tooltip:true});
+    if(!host.isConnected){view.finalize();return;}
+    previewView=view;
+  };
   const columns=records?[...new Set([...tableKeyColumns(workflow.nodes.find(x=>x.id===records.from)),
     ...((result?.tables?.[records.from] as import('./data-table.js').DataTable|undefined)?.keys??[]),
     ...Object.keys(upstreamKeyValues(node,new Set(),'records')??{})])]:[];
@@ -2362,10 +2416,7 @@ function openChartConfig(nodeId:string){
         +`<option value="">Choose a column\u2026</option>`
         +columns.map(c=>`<option value="${esc(c)}" ${draft.tree?.[key]===c?'selected':''}>${esc(c)}</option>`).join('')
         +`</select><small>${hint}</small></div>`;
-      const settings=(records&&!curve?`<div class="field"><label class="field-label" for="chart-figure">Draw</label><select id="chart-figure">`
-          +`<option value="bars" ${tree||draft.figure==='pyramid'?'':'selected'}>Bars, a category against a number</option>`
-          +`<option value="pyramid" ${draft.figure==='pyramid'?'selected':''}>Population pyramid, two groups back to back by band</option>`
-          +`<option value="tree" ${tree?'selected':''}>Transmission tree, who infected whom over time</option></select></div>`:'')
+      const settings=(records?drawField(draft):'')
         +(tree
           ?(columns.length?'':'<p class="notice">Run the workflow once to list the table\u2019s columns.</p>')
             +pick('chart-tree-id','id','Case id','One row per case.')
@@ -2378,18 +2429,16 @@ function openChartConfig(nodeId:string){
             +`<div class="field"><label class="field-label" for="chart-title">Chart title</label><input id="chart-title" maxlength="120" value="${esc(draft.chartTitle||'')}" placeholder="Who infected whom"></div>`
             +`<div class="field"><label class="field-label" for="chart-source-note">Source / method note</label><input id="chart-source-note" maxlength="300" value="${esc(draft.sourceNote||'')}"></div>`
           :chartTableControls(shown)+chartControls(shown,{omitOrientation:curve})
-            // STACKED, where the series is split by a column (experiment 210): one bar per period, divided by its values.
-            +(curve?`<div class="field"><label class="field-label" for="chart-series-figure">Draw</label><select id="chart-series-figure">`
-              +`<option value="" ${draft.figure!=='stacked'?'selected':''}>Bars, or one panel per value where the series is split</option>`
-              +`<option value="stacked" ${draft.figure==='stacked'?'selected':''}>Stacked bars, one colour per value where the series is split</option></select></div>`:'')
             +(curve?`<div class="field"><label class="field-label" for="series-orientation">Bars</label>`
               +`<select id="series-orientation"><option value="vertical" ${chartOrientation(draft)==='vertical'?'selected':''}>Vertical \u00b7 periods along the bottom</option>`
               +`<option value="horizontal" ${chartOrientation(draft)==='horizontal'?'selected':''}>Horizontal \u00b7 periods down the side</option></select></div>`:'')
             +markedDatesControls(nodeId,draft))
         ;
-      const preview=tree
-        ?''
-        :'<p class="muted">The chart is drawn in Results when the workflow runs, with these settings.</p>';
+      // THE CHART ITSELF, AS IT WILL LOOK (the practitioner, 2026-11-13: "The ability to preview the Chart would be extremely
+      // useful"). The last run, drawn with the settings being edited, as Map's preview is; nothing is run again.
+      const preview=result?.outputs.some(o=>o.nodeId===nodeId)||arrivedTable
+        ?'<div id="chart-config-preview" class="chart-config-preview"></div><p class="muted">The last run, drawn with the settings above. Apply keeps them; nothing is run again.</p>'
+        :'<p class="muted">Run the workflow to preview this chart here. It is drawn in Results when the workflow runs.</p>';
       return {settings,preview};
     },
     wire:(root,draft,redraw)=>{
@@ -2421,6 +2470,8 @@ function openChartConfig(nodeId:string){
       root.querySelectorAll<HTMLButtonElement>('[data-mark-remove]').forEach(b=>b.addEventListener('click',()=>{
         const list=(draft.markedDates??[]).filter((_m,i)=>i!==Number(b.dataset.markRemove));
         if(list.length)draft.markedDates=list;else delete draft.markedDates;redraw();}));
+      const previewHost=root.querySelector<HTMLElement>('#chart-config-preview');
+      if(previewHost)void drawChartPreview(previewHost,draft).catch(e=>{if(previewHost.isConnected)previewHost.textContent=`The preview could not be drawn: ${errorMessage(e)}`;});
       root.querySelector<HTMLButtonElement>('#chart-mark-add')?.addEventListener('click',()=>{
         const range=datedRange(nodeId,draft);draft.markedDates=[...(draft.markedDates??[]),{date:range&&range!=='later'?range.first:'',label:''}];redraw();});
     },

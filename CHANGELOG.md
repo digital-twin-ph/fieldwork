@@ -3,6 +3,16 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.107.0 — 2026-11-13
+
+- **Chart's Configure… previews the chart.** The last run is drawn with the settings as they are being edited, before
+  Apply, as Map's preview is. Nothing is run again.
+- **Draw, question first.** The forms that suit the data come first, each named by the question it answers ("Who
+  infected whom? Transmission tree"), and the reason for the one chosen is said beneath it. Forms that need other data
+  are listed after, with what they need. Experiment 210's proposer, for the forms Chart draws today. Chart 0.20.0.
+- **Fixed: a chart in Results was cut off at the bottom.** Its box scrolled inside the Results panel and was shorter than
+  the figure, so the stacked curve's dates showed only their last characters.
+
 ## 0.106.0 — 2026-11-12
 
 - **MERS: where were the cases in hospital?** A third workflow in the MERS example counts the cases by the hospital the

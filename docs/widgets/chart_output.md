@@ -38,7 +38,11 @@ than the table beside it.
 1. Add **Chart** and select it. Name the Results tab under **Name**, and choose where it goes in the write-up.
 2. Under **Inputs**, pick what it should draw: *Table* or *Polygon summaries*.
 3. Press **Configure…**. Everything else is set there, and **Apply** writes it:
-   - **Draw**: bars, or a **transmission tree** (below).
+   - **Draw**: what to draw, listed by the question each form answers. Once the workflow has run, the forms that suit
+     the data come first, under *Suits these data*, and the reason for the one chosen is written beneath it: *Who
+     infected whom? Transmission tree* is offered first for a table with a column naming each case, one naming its
+     source and a date. Forms that need other data follow, with what they need. The choice is yours; nothing is drawn
+     until you pick.
    - If the table keys on more than one column, which one labels the bars.
    - The mark: bars, dots, or a **line**, which runs along the categories in their order, upright, with a dot at each
      value. And the orientation, for bars and dots. Bars read best horizontally when the labels are long or there are many of them;
@@ -46,12 +50,13 @@ than the table beside it.
    - A title, a subtitle, axis titles and a source note, if you want them in the figure.
    - Optionally the category legend, which colours each bar. It holds at most six categories, because the validated
      palette is six hues; past that, group the tail upstream rather than ask for a seventh colour.
-4. Run the workflow.
+4. Run the workflow. Afterwards, **Configure…** shows a **Preview** at the bottom: the last run drawn with the
+   settings as you change them, before **Apply**. Nothing is run again.
 
 ### Who infected whom: a transmission tree
 
 Connect a table, or a point layer, with one row per case: a column naming the case, one naming its infector, and a
-date. In **Configure…**, set **Draw** to **Transmission tree** and name the three columns.
+date. In **Configure…**, set **Draw** to *Who infected whom? Transmission tree* and name the three columns.
 
 Each case is a dot at its date, on a row of its own. A line runs from its infector's date down to its row and across
 to its own date, so the length across is the **serial interval**. A case naming no infector starts a chain; its
@@ -92,14 +97,14 @@ receipt records each date and its label. John Snow's *When did people die?* mark
 
 ### A curve divided by a column: stacked bars
 
-Where Cases by period counts each value of a column, as Hagelloch's school classes, **Draw** *Stacked bars* gives one
+Where Cases by period counts each value of a column, as Hagelloch's school classes, **Draw** *When, and of which kind? Stacked epidemic curve* gives one
 bar per period, its height the total, divided by those values in one colour each, the first at the bottom, with a key.
 More values than the six colours that can be told apart is refused, naming how many; draw panels instead, which is
 what the chart does where Draw is left at bars. Hagelloch's *Who fell ill?* stacks its curve by school class.
 
 ### Two groups back to back: a population pyramid
 
-In **Configure…**, **Draw** *Population pyramid, two groups back to back by band*, then name the column whose two values
+In **Configure…**, **Draw** *How are two groups spread across ages? Population pyramid*, then name the column whose two values
 sit left and right, such as gender. Each band of the category column, such as age, is a row, the youngest at the
 bottom; one group's counts run left and the other's right, and the axis reads as a count on both sides. Rows where the
 column is blank are not drawn, and the subtitle says how many. A column with other than two values is refused, naming

@@ -52,7 +52,14 @@ and a density surface. Each would extend Chart or Map, not add a widget.
    0 peak a week apart in that order, in *Who fell ill?*.
 5. **Histogram and scatter** in Chart: Hagelloch's serial intervals; Snow's deaths against walking distance to the pump.
 6. **The proposer**: the rules above, with their sentences, offered in Chart's and Map's Configure…, measured on every
-   worked example's figures.
+   worked example's figures. **Built in part 2026-11-13**, for Chart and the five forms it draws (the practitioner: *"It
+   would also be useful to have potential chart type candidates appear on the dropdown"*): Draw lists the forms that
+   suit what arrived first, each by its question, with its reason beneath; the rest follow under "Needs other data"
+   with what they need. With it, Configure… previews the chart from the last run (*"The ability to preview the Chart
+   would be extremely useful"*). The kinds are read from the values (a day, an age or band, two values, a column
+   naming another's values), because columns do not yet declare a category from a number: Hagelloch's `class`, coded
+   0, 1, 2, profiles with a median (the practitioner, the same day). **Not yet:** Map's proposals, the histogram and
+   scatter, and the measurement on every worked example's figures.
 
 Each form is built where an example needs it, so it is exercised the day it lands; the proposer comes last, when there
 are forms to propose.

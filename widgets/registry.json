@@ -271,7 +271,7 @@
     {
       "id": "urn:fieldwork:widget:chart_output",
       "nodeType": "chart_output",
-      "currentVersion": "0.19.0",
+      "currentVersion": "0.20.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -382,6 +382,11 @@
           "version": "0.19.0",
           "path": "widgets/releases/chart_output/0.19.0.json",
           "sha256": "768e436811b2b582c6f6f7f97140677f4d36ed99c9419131d0d73da516b2c9e9"
+        },
+        {
+          "version": "0.20.0",
+          "path": "widgets/releases/chart_output/0.20.0.json",
+          "sha256": "a544f1c70ac7959e038b295398585e753112b7a2722c8ec9d996518e01378a93"
         }
       ]
     },

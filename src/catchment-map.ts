@@ -1,4 +1,7 @@
 import {proportionalRadius,layerRanks} from './point-layers.js';
+/** SITES ABOVE EVERY POINT LAYER: point layers are lifted by their place in Manage layers, up to 1000 x 10,000 for a layer
+ *  the list does not name, and a pump covered by a death mark could not be clicked (gate 134, 2026-11-12). */
+const SITES_ON_TOP=100_000_000;
 import L from 'leaflet';
 import {TurnedImage} from './turned-image.js';
 /** HOW MANY STREET SEGMENTS AN INTERACTIVE MAP DRAWS. See the sampling below for the measurement
@@ -388,7 +391,7 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
   const pumps=L.featureGroup(),points=context?.features||p.sites;
   for(const f of points){if(!f.geometry)continue;const [lon,lat]=f.geometry.coordinates;
     if(!Number.isFinite(lat)||!Number.isFinite(lon))continue;
-    const marker=L.marker([lat,lon],{zIndexOffset:1000,icon:L.divIcon({className:'catchment-site-marker',iconSize:[12,12],iconAnchor:[6,6]}),title:f.properties.name}).bindPopup(`<b>${esc(f.properties.name)}</b><br>Location: ${lat.toFixed(6)}, ${lon.toFixed(6)}${p.sites.some(s=>s.id===f.id)?'<br>Travel-time origin':''}`).addTo(pumps);
+    const marker=L.marker([lat,lon],{zIndexOffset:SITES_ON_TOP,icon:L.divIcon({className:'catchment-site-marker',iconSize:[12,12],iconAnchor:[6,6]}),title:f.properties.name}).bindPopup(`<b>${esc(f.properties.name)}</b><br>Location: ${lat.toFixed(6)}, ${lon.toFixed(6)}${p.sites.some(s=>s.id===f.id)?'<br>Travel-time origin':''}`).addTo(pumps);
     marker.on('add',()=>{const icon=marker.getElement();if(icon){L.DomEvent.disableClickPropagation(icon);icon.addEventListener('mousedown',event=>event.preventDefault());icon.addEventListener('click',event=>{event.stopPropagation();marker.openPopup();});}});
   }
   if(pumps.getLayers().length){if(!hiddenPort('sites')){pumps.addTo(map);all.addLayer(pumps);}
@@ -553,7 +556,7 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
       // covered the site markers and swallowed their clicks. A custom pane fixed the stacking and
       // broke the vector basemap's attribution, which arrives through the bridge into Leaflet's
       // control; `zIndexOffset` orders them inside the one pane and leaves that alone.
-      L.marker([lat,lon],{zIndexOffset:1000,icon:L.divIcon({className:'catchment-site-marker',iconSize:[12,12],iconAnchor:[6,6]}),title:center.name})
+      L.marker([lat,lon],{zIndexOffset:SITES_ON_TOP,icon:L.divIcon({className:'catchment-site-marker',iconSize:[12,12],iconAnchor:[6,6]}),title:center.name})
         .bindPopup(`<b>${esc(center.name??'Center')}</b><br>Location: ${lat.toFixed(6)}, ${lon.toFixed(6)}`).addTo(group);
     }
     if(group.getLayers().length){if(!hiddenPort('centers')){group.addTo(map);all.addLayer(group);}

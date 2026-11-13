@@ -432,7 +432,7 @@
    "changes": [
     {
      "kind": "patch",
-     "description": "Fixed: the order set in Manage layers did not reach the marks. Point layers are now drawn layer by layer in that order, bottom first, in the static figure, its export and the interactive map, and a change is drawn at once rather than at the next run (the practitioner, 2026-11-12: the pumps on John Snow's map would not come to the top)."
+     "description": "Fixed: the order set in Manage layers did not reach the marks. Point layers are now drawn layer by layer in that order, bottom first, in the static figure, its export and the interactive map, and a change is drawn at once rather than at the next run (the practitioner, 2026-11-12: the pumps on John Snow's map would not come to the top). Catchment sites, such as Snow's pumps, stay above every point layer, so they can still be clicked."
     },
     {
      "kind": "patch",

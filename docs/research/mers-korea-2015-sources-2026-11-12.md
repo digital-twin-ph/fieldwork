@@ -1,6 +1,6 @@
 # MERS-CoV, South Korea, 2015: the data, their documentation, and other open sources
 
-_Created 2026-11-13 · Updated 2026-11-13_
+_Created 2026-11-12 · Updated 2026-11-12_
 
 Asked by the practitioner, 2026-11-12: *"dig deeper into the MERS documentation to find out if there are other data sets and
 if there is metadata available"*. Researched the same day from open pages only; no data file was downloaded or opened.

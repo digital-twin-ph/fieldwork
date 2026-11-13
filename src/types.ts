@@ -67,7 +67,12 @@ export interface ColumnRepair {column:string; to:'number'|'boolean'|'term'; cast
 export interface ObservationParams extends PointParams {
   /** Read from a connected table at run time: x (longitude) and y (latitude) columns, CRS84. Experiment 178. */
   fromTable?:import('./table-points.js').TableMapping;
-  fields?:FormField[]; attributeRules?:AttributeDefinition[]; sourceInfo?:SourceInfo; pinIdStrategy?:'uuid'|'sequential'; repairs?:ColumnRepair[]}
+  fields?:FormField[]; attributeRules?:AttributeDefinition[]; sourceInfo?:SourceInfo; pinIdStrategy?:'uuid'|'sequential'; repairs?:ColumnRepair[];
+  /** What the records' columns mean, their scale and codes, and the data dictionary they came with: as Tabular data's
+   *  (experiments 172, 211). Hagelloch's `class` is read here, which is why Point data has them too. */
+  columns?:import('./column-metadata.js').ColumnDeclarations;
+  dictionaryCheck?:import('./column-metadata.js').DictionaryCheck;
+  dictionary?:import('./column-metadata.js').TableDictionary; dictionaryRef?:string}
 /** One committed extent of a study area: the shape, how it was drawn, and when it was kept. */
 /** Where an acquired boundary came from, carried so the receipt can say whose line it is.
  *

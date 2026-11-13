@@ -1,0 +1,58 @@
+{
+ "note": "The variables of measles_hagelloch_1861 as the outbreaks R package 1.9.0 documents them (R/measles_hagelloch_1861.R, the @format block), transcribed by this project into one row per variable on 2026-11-13. The R markup (\\code{}) is removed; the words are the package's. x_loc's description continues in the source with how the coordinates were scaled, which is not transcribed here.",
+ "source": "https://github.com/reconverse/outbreaks/blob/master/R/measles_hagelloch_1861.R",
+ "headers": [
+  "variable",
+  "description"
+ ],
+ "rows": [
+  [
+   "case_ID",
+   "Case ID number"
+  ],
+  [
+   "infector",
+   "Number of patient who is the putative source of infection"
+  ],
+  [
+   "date_of_prodrome",
+   "Date of onset of prodromal symptoms"
+  ],
+  [
+   "date_of_rash",
+   "Date of onset of rash"
+  ],
+  [
+   "date_of_death",
+   "Date of death (NA implies recovered)"
+  ],
+  [
+   "age",
+   "Age in years (fractions ignored)"
+  ],
+  [
+   "gender",
+   "Gender of the individual (factor: f, m)"
+  ],
+  [
+   "family_ID",
+   "Family ID number"
+  ],
+  [
+   "class",
+   "School class (factor: 0, preschool; 1, 1st class; 2, 2nd class )"
+  ],
+  [
+   "complications",
+   "Complications (factor: no, yes)"
+  ],
+  [
+   "x_loc",
+   "x coordinate of house (in metres)."
+  ],
+  [
+   "y_loc",
+   "y coordinate of house (in metres). See x_loc above."
+  ]
+ ]
+}

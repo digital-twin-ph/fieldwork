@@ -3,6 +3,15 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.109.0 — 2026-11-13
+
+- **Point data describes its columns too.** Describe columns… and View the data dictionary, as in Tabular data, for
+  points held here. Point data 0.7.0.
+- **Hagelloch's cases carry their source's dictionary**, the outbreaks package's, transcribed in
+  `examples/hagelloch-1861/dictionary.json`. Every column arrives proposed, not accepted. `class` arrives as categories
+  in no order, because the package calls it a factor; saying it has an order makes Data quality count it 0, 1, 2 with
+  no median. Experiment 211.
+
 ## 0.108.0 — 2026-11-13
 
 - **A table's data dictionary is imported with it, and kept by the project.** Tabular data's Configure… takes the

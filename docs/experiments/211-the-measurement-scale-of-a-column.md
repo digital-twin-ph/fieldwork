@@ -3,7 +3,7 @@
 _Created 2026-11-13 · Updated 2026-11-13_
 
 **Status:** tried — the dictionary as a project asset, the scale and codes, and the profile built on Tabular data,
-2026-11-13, Chromium. Chart does not read the scale yet; Point data has no Columns dialog.
+2026-11-13, Chromium, then on Point data the same day with Hagelloch's dictionary. Chart does not read the scale yet.
 
 ## The question
 
@@ -130,7 +130,15 @@ dictionary but has no view of the list yet; the dictionary is viewed from the Ta
 into the project: the project keeps where a fetched source came from, not its contents. The practitioner has not
 been asked about this.
 
-**The practitioner observation above has not been made.**
+**Point data, the same day (0.109.0).** Describe columns… and the dictionary for points held here, so the question can
+be answered where it was asked. Hagelloch's cases now carry the outbreaks package's dictionary, transcribed into
+`examples/hagelloch-1861/dictionary.json` because the package documents its variables in R's help format rather than
+as a file. Everything it says is proposed. `tests/hagelloch-dictionary.test.mjs` checks the file's digest and that
+`class` arrives unconfirmed, nominal, with codes 0, 1, 2; `tests/data-dictionary.browser.mjs` declares it ordinal on
+the example and finds it counted in that order with no median. Both pass, Chromium. One column, `name`, is not in the
+source's dictionary: this project gave each case its name, and the check says so.
+
+**The practitioner observation above has not been made.** Hagelloch is now where it can be.
 
 ## What it does not establish
 

@@ -1885,7 +1885,7 @@ function qualityViewFor(n:WorkflowNode){
   const columns=[...new Set(features.flatMap(f=>Object.keys(f.properties??{})))];
   return {title:`${n.params.label||TYPES[n.type].title} · data quality`,columns,
     rows:features.map(f=>({...f.properties})),
-    declared:declaredKinds(workflow,n.id),repairs,
+    declared:declaredKinds(workflow,n.id),scales:scalesOf((n.params as {columns?:import('./column-metadata.js').ColumnDeclarations}).columns),repairs,
     onRepair:(column:string,to:'number'|'boolean'|'term')=>repairColumn(n.id,column,to),
     onRemoveRepair:(index:number)=>removeRepair(n.id,index)};
 }
@@ -3508,6 +3508,17 @@ const ROW_CHOICES=[10,25,50,200];
  *  field a rule can read, and the two line up with the bindings underneath. As JSON because a
  *  rule reads what is actually there -- a null, a number written as text, a key nobody expected
  *  -- and a table quietly tidies all three away. */
+/** What Point data's columns mean, counted, and the buttons to describe them and view the dictionary (experiment 211). */
+function pointMeaning(p:WorkflowNode<'point_input'>['params']):string{
+  const columns=[...new Set((p.data.features??[]).flatMap(f=>Object.keys(f.properties??{})))];
+  if(!columns.length)return '';
+  const described=columns.filter(c=>isDescribed(p.columns?.[c])).length,proposed=columns.filter(c=>p.columns?.[c]&&!p.columns[c]!.confirmed).length;
+  return `<p class="standard-state" data-table-meaning>What the columns mean: ${described} of ${columns.length} described`
+    +(proposed?`, ${proposed} proposed and not yet accepted`:'')+'.</p>'
+    +(p.dictionary?`<p class="standard-state" data-table-dictionary>Data dictionary: ${esc(p.dictionary.name)}, ${p.dictionary.sheets[0]?.rows.length??0} variables.</p>`:'')
+    +'<div class="inspector-actions"><button id="describe-columns" class="button">Describe columns\u2026</button>'
+    +(p.dictionary?'<button id="view-dictionary" class="button">View the data dictionary</button>':'')+'</div>';
+}
 function recordsPanel(nodeId:string,data:{features:{id?:string|number;properties?:Record<string,unknown>;geometry?:unknown}[]}){
   const view=dataViews.get(nodeId)??{mode:'table' as const,rows:10};
   const features=data.features??[];
@@ -4432,7 +4443,7 @@ function renderInspector(){
     content+=standardSection('Result',fromTable
       ?'<p class="standard-result">Run the workflow to place the table\u2019s rows. A row with no usable position is kept and counted, never dropped.</p>'
       :`<p class="standard-result">${n.params.data.features.length} point records · ${n.params.data.features.filter(f=>!f.geometry).length} without a location</p>`
-        +recordsPanel(n.id,n.params.data));
+        +pointMeaning(n.params)+recordsPanel(n.id,n.params.data));
   }else if(n.type==='measure_area'){
     const input=workflow.edges.find(e=>e.to===n.id&&e.port==='area'),output=result?.outputs.find(o=>o.nodeId===n.id);
     content+=`<div class="field"><label class="field-label" for="measure-area-source">Boundary input</label><select id="measure-area-source"><option value="">Select a Study area</option>${workflow.nodes.filter(x=>x.id!==n.id&&outputOf(x)==='area').map(x=>`<option value="${esc(x.id)}" ${input?.from===x.id?'selected':''}>${esc(x.params.label||TYPES[x.type].title)} · ${esc(x.id)}</option>`).join('')}</select><small>Selecting an area adds its connector to the canvas.</small><label class="field-label" for="area-unit">Area unit</label><select id="area-unit" data-param="unit">${areaUnitOptions(n.params.unit)}</select></div><div class="source-card"><span class="inspector-section">${dirty?'Run to calculate or update':'Calculated area'}</span><h3>${!dirty&&output?.measurement?esc(formatArea(output.measurement)):'—'}</h3><p>Approximate surface area on a sphere.</p></div><p class="description">Outputs the same study area with its calculated area attached.</p>`;
@@ -5284,7 +5295,26 @@ function renderInspector(){
   });
   // DESCRIBE COLUMNS, from the Inspector at any time; a fetched zip offers its own files as the dictionary, and a
   // dictionary made here for the same source before is offered too.
-  optionalElement('#describe-columns')?.addEventListener('click',async()=>{
+  // POINT DATA'S COLUMNS, described the same way (experiment 211): the records' attributes, as they are held.
+  if(n.type==='point_input')optionalElement('#describe-columns')?.addEventListener('click',()=>{
+    const points=getNode(workflow,n.id,'point_input').params;
+    const features=points.data.features??[];
+    const columns=[...new Set(features.flatMap(f=>Object.keys(f.properties??{})))];
+    openColumnsDialog({title:n.params.label||'Point data',columns,held:points.columns??{},
+      rows:features.map(f=>columns.map(c=>{const v=f.properties?.[c];return v===null||v===undefined?'':String(v);})),
+      ...(points.dictionary?{imported:{name:points.dictionary.name,sheets:points.dictionary.sheets}}:{}),
+      onSave:async(declared,check,loaded)=>{
+        const dictionary:TableDictionary|undefined=loaded?{name:loaded.name,sha256:await contentHash(loaded.bytes as Uint8Array<ArrayBuffer>),
+          sheets:loaded.sheets.map(s=>({name:s.name,headers:s.headers,rows:s.rows})),readAt:new Date().toISOString()}:undefined;
+        if(dictionary&&!await keepDataset(dictionaryKeyOf(dictionary.sha256),dictionary))return false;
+        const saved=change(w=>{const node=getNode(w,n.id,'point_input');
+          if(Object.keys(declared).length)node.params.columns=declared;else delete node.params.columns;
+          if(dictionary){node.params.dictionary=dictionary;node.params.dictionaryRef=dictionaryKeyOf(dictionary.sha256);}
+          if(check)node.params.dictionaryCheck=check;})!==false;
+        if(saved&&dictionary)listDictionary(n.id,dictionary,points.sourceInfo?.format??n.params.label??'Point data');
+        return saved;}},esc);
+  });
+  else optionalElement('#describe-columns')?.addEventListener('click',async()=>{
     const table=getNode(workflow,n.id,'table_input').params;
     const columns=describableColumns(table.data,table.wide);
     const archive=table.remote?await archiveOnDevice(table.remote):undefined;
@@ -5313,7 +5343,7 @@ function renderInspector(){
   });
   // THE DICTIONARY AS IT WAS PUBLISHED, every sheet, read-only (experiment 211).
   optionalElement('#view-dictionary')?.addEventListener('click',()=>{
-    const dictionary=getNode(workflow,n.id,'table_input').params.dictionary;if(!dictionary)return;
+    const dictionary=(n.type==='point_input'?getNode(workflow,n.id,'point_input'):getNode(workflow,n.id,'table_input')).params.dictionary;if(!dictionary)return;
     const view=(at:number):void=>{const sheet=dictionary.sheets[at]!;
       openTableViewer({title:`${dictionary.name}${dictionary.sheets.length>1?` \u00b7 ${sheet.name}`:''}`,columns:sheet.headers,
         rows:sheet.rows.map(r=>Object.fromEntries(sheet.headers.map((h,i)=>[h,r[i]??'']))),
@@ -5646,7 +5676,7 @@ function renderInspector(){
         rows:features.map(f=>({...f.properties})),
         // What any ruleset downstream has declared these columns to be. A column is not wrong
         // for being untyped -- it is undeclared -- so this says nothing where nothing was said.
-        declared:declaredKinds(workflow,n.id),
+        declared:declaredKinds(workflow,n.id),scales:scalesOf((n.params as {columns?:import('./column-metadata.js').ColumnDeclarations}).columns),
         onRepair:(column,to)=>repairColumn(n.id,column,to),
         note:`${features.length} records, ${columns.length} column${columns.length===1?'':'s'}. `
           +`These are the columns a rule can read; nothing is guessed from a name.`

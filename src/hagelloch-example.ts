@@ -2,6 +2,8 @@ import type {Workflow,WorkflowNode} from './types.js';
 import type {EvidenceReference} from './evidence.js';
 import cases from '../examples/hagelloch-1861/cases.json';
 import provenance from '../examples/hagelloch-1861/provenance.json';
+import dictionaryFile from '../examples/hagelloch-1861/dictionary.json';
+import {guessMapping,readDictionary,proposeFrom,checkDictionary,dictionaryKeyOf,type TableDictionary} from './column-metadata.js';
 import {pointsAsTable} from './core.js';
 import {groupTable} from './group-table.js';
 import {relateShape} from './relate-table.js';
@@ -36,6 +38,22 @@ const cite=(id:string,title:string,url:string,role:EvidenceReference['role'],not
   ({id,kind:'url',title,url,role,authors:'',published:'',locator:'',notes,
     addedAt:'2026-10-17T00:00:00.000Z',modifiedAt:'2026-10-17T00:00:00.000Z'});
 
+/** THE SOURCE'S DICTIONARY, with the cases (experiment 211). The practitioner, 2026-11-13, of `class`: *"What is class
+ *  really? Did we have a data dictionary or did we use the data dictionary feature of Table input?"* Neither, then. The
+ *  outbreaks package documents its variables, transcribed in dictionary.json; what it says is PROPOSED, not accepted,
+ *  so whether school classes have an order is still the practitioner's to say. The digest is the file's, checked by
+ *  tests/hagelloch-dictionary.test.mjs. */
+export const HAGELLOCH_DICTIONARY_SHA256='ff1734f23b0bd4f7bf924846b92c778f26a72736a6ed3a06c250b4f50263caca';
+function describedCases(){
+  const dictionary:TableDictionary={name:'outbreaks 1.9.0 · measles_hagelloch_1861',sha256:HAGELLOCH_DICTIONARY_SHA256,
+    sheets:[{name:'measles_hagelloch_1861',headers:dictionaryFile.headers,rows:dictionaryFile.rows}],readAt:'2026-11-13T00:00:00.000Z'};
+  const entries=readDictionary(dictionaryFile.headers,dictionaryFile.rows,guessMapping(dictionaryFile.headers));
+  const columns=[...new Set(cases.features.flatMap(f=>Object.keys(f.properties)))];
+  const rows=cases.features.map(f=>columns.map(c=>{const v=(f.properties as Record<string,unknown>)[c];return v===null||v===undefined?'':String(v);}));
+  return {dictionary,dictionaryRef:dictionaryKeyOf(dictionary.sha256),
+    columns:proposeFrom(entries,dictionary.name,columns),dictionaryCheck:checkDictionary(dictionary.name,entries,{headers:columns,rows})};
+}
+
 export function hagellochExample():Workflow{
   const nodes:WorkflowNode[]=[
     // The village, as the extent everything is reasoned within. Drawn around the anchored
@@ -48,7 +66,7 @@ export function hagellochExample():Workflow{
 
     {id:'cases',type:'point_input',x:20,y:60,
       params:{label:`${cases.features.length} measles cases, one per child`,
-        data:cases as never,
+        data:cases as never,...describedCases(),
         sourceInfo:{format:'R outbreaks 1.9.0 · measles_hagelloch_1861',
           url:provenance.dataset.originalScan,
           notes:`${provenance.dataset.collected}. ${provenance.georeference.doesNotEstablish}`}},

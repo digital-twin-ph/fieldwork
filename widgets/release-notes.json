@@ -576,12 +576,12 @@
    "migrationFrom": []
   },
   "point_input": {
-   "version": "0.6.0",
-   "released": "2026-11-09",
+   "version": "0.7.0",
+   "released": "2026-11-13",
    "changes": [
     {
      "kind": "minor",
-     "description": "On the standard Inspector and dialog (experiments 186, 200): Name, input, one sentence and Configure…, which opens the Input data editor for points held here, or, for points read from a table, a dialog naming the longitude, latitude, record ID and label columns, applied together. The table's columns are no longer set one by one on the panel. Its points can also be read by a step that takes a table, as rows of their attributes."
+     "description": "Describe columns… and the data dictionary for points held here, as Tabular data has them (experiment 211): a label, unit, description, measurement scale and codes per column, proposed from a dictionary and accepted, which Data quality follows. Hagelloch's cases carry the outbreaks package's dictionary, every column proposed; class arrives as categories in no order. The practitioner, 2026-11-13: \"What is class really? Did we have a data dictionary or did we use the data dictionary feature of Table input?\""
     }
    ],
    "breaking": false,

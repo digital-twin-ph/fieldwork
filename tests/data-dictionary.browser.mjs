@@ -74,3 +74,34 @@ test('a dictionary imported with the table is kept, viewed, proposes each column
   await expect(ageSection).toContainText('median');
   await page.screenshot({path:'test-results/data-dictionary-quality.png'});
 });
+
+/** AND WHERE THE QUESTION WAS ASKED: Hagelloch's cases, read by Point data, carry the outbreaks package's dictionary.
+ *  `class` arrives proposed as categories in no order, because the source calls it a factor; the order is said here. */
+test('Hagelloch\'s cases carry their source\'s dictionary, and class is counted in the order the practitioner gives it',async({page})=>{
+  await page.goto('/');await page.evaluate(()=>localStorage.clear());
+  await page.goto('/?example=hagelloch');
+  await page.locator('[data-view="workflow"]').click();
+  await page.locator('.react-flow__node[data-id="cases"]').click();
+  await expect(page.locator('[data-table-dictionary]')).toHaveText('Data dictionary: outbreaks 1.9.0 · measles_hagelloch_1861, 12 variables.');
+  await expect(page.locator('[data-table-meaning]')).toContainText('12 proposed and not yet accepted');
+  await page.locator('#view-dictionary').click();
+  await expect(page.locator('#table-viewer')).toContainText('Date of death (NA implies recovered)');
+  await page.locator('#table-viewer-close').click();
+
+  await page.locator('#describe-columns').click();
+  const dialog=page.locator('#columns-dialog');
+  await expect(dialog.locator('#column-scale-class')).toHaveValue('nominal');
+  await expect(dialog.locator('[data-column="name"] legend')).toContainText('Not described');
+  await dialog.locator('#column-scale-class').selectOption('ordinal');
+  await dialog.locator('#columns-save').click();
+  await expect(dialog).toHaveCount(0);
+  await expect(page.locator('[data-table-meaning]')).toContainText('11 proposed and not yet accepted');
+
+  await page.locator('[data-records-quality]').click();
+  const quality=page.locator('#data-quality');
+  await quality.getByRole('tab',{name:'Columns'}).click();
+  const klass=quality.locator('section.quality-column').filter({has:page.locator('h3',{hasText:/^class$/})});
+  await expect(klass).toContainText(/In order\s*0 preschool/);
+  await expect(klass).not.toContainText('median');
+  await page.screenshot({path:'test-results/hagelloch-class-quality.png'});
+});

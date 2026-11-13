@@ -45,6 +45,15 @@ The step's panel holds its **Name**, its input, one sentence saying what it hold
 Then check the column kinds, open **Data quality** to see what is missing or malformed, and name the step for what
 the records are, not where they came from.
 
+**What the columns mean.** For points held here, **Describe columns…** works as it does in Tabular data: a label, a
+unit, a description, what kind of values each column holds, and its codes, typed or proposed from a data dictionary.
+A dictionary chosen there is kept with the records, and **View the data dictionary** shows it as published. Points
+from a table take their meanings from that table's Tabular data step.
+
+Hagelloch's cases carry their source's dictionary, the outbreaks package's, so every column arrives proposed. `class`
+arrives as categories in no order, because the package calls it a factor; whether pre-school, first and second class
+are in order is yours to say.
+
 ## What it will not do
 
 It does not clean data silently. Nothing is coerced, dropped or filled in; what cannot be read is

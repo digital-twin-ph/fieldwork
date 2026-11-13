@@ -655,6 +655,7 @@ export interface ParamsByType {
     /** ONE PANEL PER VALUE of this key column, stacked on a shared x axis, each with its own y scale (experiment 174).
      *  `panelMarks` names a mark per panel; `shade` marks a period across every panel. */
     panelsBy?:string;panelMarks?:Record<string,'bar'|'line'>;shade?:{from:string;to:string};
+    /** DATES MARKED ON A TIME AXIS, each with the practitioner's own label (experiment 210). */ markedDates?:{date:string;label:string}[];
     /** For an estimate that is a ratio: a log scale and a dashed line at 1, on unless turned off (experiment 181). */
     ratioScale?:'log'|'linear';referenceLine?:boolean;
     /** Which key column a table is charted against. Absent takes the table's first, which is the

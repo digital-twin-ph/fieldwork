@@ -37,7 +37,9 @@ for(const [name,build,nodeId] of cases){
     const spec=JSON.parse(specs[0]);
     // It must be the figure, not a stub: its own data, its own encoding, and the design it used.
     assert.ok(Array.isArray(spec.data?.values)&&spec.data.values.length>0);
-    assert.ok(spec.encoding?.x&&spec.encoding?.y);
+    // With a marked date the chart is layers, its own mark first (experiment 210); without one, a single mark.
+    const drawn=spec.layer?.[0]??spec;
+    assert.ok(drawn.encoding?.x&&drawn.encoding?.y);
     assert.ok(spec.config?.font,'the typography travels with it, or the figure is not reproducible');
     assert.equal(spec.config.axis.domain,false,'and so does the design decision');
     assert.deepEqual(literal(receipt.facts,'chartRenderer'),['vega-lite'],'the default renderer is recorded as such');

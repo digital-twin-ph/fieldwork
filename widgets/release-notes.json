@@ -153,12 +153,12 @@
    "replacementCandidate": "urn:fieldwork:widget:observations"
   },
   "chart_output": {
-   "version": "0.16.0",
+   "version": "0.17.0",
    "released": "2026-11-12",
    "changes": [
     {
      "kind": "minor",
-     "description": "Draws a population pyramid: two groups back to back by band, the youngest at the bottom, counts read on both sides, and the rows where the group column is blank said and not drawn (experiment 210, the first of the forms it proposes; the practitioner, 2026-11-12: \"We really want FW to shine and impress with its intelligent data visualizations\"). Hagelloch's cases by age and gender are drawn this way."
+     "description": "Marked dates: on a chart whose axis is dates, each a dashed line at its day (or in the bar that holds it) with the practitioner's own label, several to a chart, over a single chart or across panels; set in Configure…, recorded in the receipt as fw:markedDate. John Snow's epidemic curve marks the day the pump handle came off (experiment 210)."
     }
    ],
    "breaking": false,

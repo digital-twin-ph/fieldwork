@@ -81,6 +81,14 @@ recorded** names a value, such as *none recorded*, that means no source; an empt
 Hagelloch, 1861: 188 cases in 4 chains, 184 links; the largest chain starts with case 184 and holds 173 cases over 6
 generations. The tree draws the reconstruction of who infected whom that the table holds; it does not estimate one.
 
+### A date marked on the curve
+
+Where the chart's axis is dates, as an epidemic curve's is, **Configure…** has **Marked dates**: a day and a label in
+your own words, such as *Pump handle removed*, and **+ Add a date** for more. Each is drawn as a dashed line at the day,
+in the bar that holds it for a weekly or monthly curve, with its label beside it, by the enhanced renderer; the classic
+bars do not draw them. A day of the week or a month of the year is a cycle, not a date, and is not offered. The run's
+receipt records each date and its label. John Snow's *When did people die?* marks 8 September 1854.
+
 ### Two groups back to back: a population pyramid
 
 In **Configure…**, **Draw** *Population pyramid, two groups back to back by band*, then name the column whose two values

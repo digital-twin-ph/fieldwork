@@ -1,0 +1,113 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:chart_output",
+ "version": "0.17.0",
+ "nodeType": "chart_output",
+ "title": "Chart",
+ "released": "2026-11-12",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['chart_output']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "shaclShapes": [],
+  "validationStatus": "application-only"
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "records",
+    "type": "table"
+   },
+   {
+    "name": "polygons",
+    "type": "polygons"
+   }
+  ],
+  "output": null,
+  "optionalInputs": [
+   "records",
+   "decisions",
+   "polygons"
+  ],
+  "note": "Every port a chart can draw, declared always, and none of them required. A chart draws what it is given, so which ports exist is not a question for the practitioner to answer before they have the shape -- the treatment map_output took on 2026-10-14 and table_output on 2026-10-27. `series` remains reachable only on a workflow saved with inputMode 'series'; a Cases by period table connected to `records` draws the same curve, because the shape that arrives decides and not the port it arrived on."
+ },
+ "ontology": {
+  "status": "partial",
+  "mappings": [
+   {
+    "role": "activity",
+    "iri": "urn:fieldwork:ChartView",
+    "file": "ontology/fieldwork.ttl"
+   },
+   {
+    "role": "activity",
+    "iri": "urn:fieldwork:CategoricalCount",
+    "file": "ontology/fieldwork.ttl"
+   },
+   {
+    "role": "configuration",
+    "iri": "urn:fieldwork:ChartSpecification",
+    "file": "ontology/fieldwork.ttl"
+   }
+  ],
+  "note": "Existing ontology alignment; full configuration and port shape contracts remain to be defined. The transmission tree asserts fw:TransmissionTree with its columns and counts, declared in ontology/runtime.ttl; listed here as none because this widget is defined in core.ts#TYPES, which the coupling check cannot attribute.",
+  "emits": {
+   "classes": [],
+   "properties": []
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/app.ts",
+   "src/artifact-notes.ts",
+   "src/chart-output.ts",
+   "src/chart-vega.ts",
+   "src/core.ts",
+   "src/notes.ts",
+   "src/presentation.ts",
+   "src/rate.ts",
+   "src/results.ts",
+   "src/transmission-tree.ts"
+  ],
+  "definition": "src/core.ts#TYPES"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [
+   {
+    "nodeType": "output",
+    "adapterVersion": "1",
+    "implementation": "src/output-contract.ts#migrateOutputNodes"
+   }
+  ],
+  "replacementCandidate": null
+ },
+ "changes": [
+  {
+   "kind": "minor",
+   "description": "Marked dates: on a chart whose axis is dates, each a dashed line at its day (or in the bar that holds it) with the practitioner's own label, several to a chart, over a single chart or across panels; set in Configure…, recorded in the receipt as fw:markedDate. John Snow's epidemic curve marks the day the pump handle came off (experiment 210)."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Repository regression coverage exists; this release entry does not certify a widget independently. The self-description added in 0.8.0 is covered by tests/artifact-notes.test.mjs (13 unit checks, including that nothing machined numbers its own artifact or calls itself a caption, that an unnamed artifact is left unnamed rather than titled, and that a unit is stated once) and by tests/equation-notes.browser.mjs over the South London example on Chromium and WebKit. Both were mutation-checked by reintroducing the behaviour they forbid. 0.13.0: tests/hagelloch-transmission-tree.browser.mjs and tests/hagelloch-chains-example.browser.mjs on Chromium. 0.14.1: tests/chart-panels.test.mjs (a blank panel drawn and named; 2, 9, 10 in number order) and tests/hagelloch-people-example.browser.mjs (ages 0 to 15, the gender-blank panel, 38 bars); Chromium. 0.15.0: tests/chart-panels.test.mjs (the line, band order), tests/transmission-tree.test.mjs and tests/relate-several.test.mjs (MERS: 162 cases, 2 with several sources, 3 further links). 0.15.1: tests/artifact-notes.test.mjs (estimates with their intervals, points on a line, dots and bars each counted as drawn). 0.16.0: tests/chart-pyramid.test.mjs (the two sides signed, the youngest at the bottom, the blanks said, a column of three refused) and tests/hagelloch-people-example.browser.mjs (Hagelloch's pyramid, ages 0 to 15, 11 without gender said); Chromium. 0.17.0: tests/chart-pyramid.test.mjs (a date falls in the bin that holds it; drawn as a rule and its label) and tests/epidemic-curve.browser.mjs (Snow's curve marked, a second date added in Configure); Chromium."
+ },
+ "renderers": {
+  "defaultRenderer": "vega-lite",
+  "vega-lite": {
+   "libraries": {
+    "vega-lite": "6.4.3",
+    "vega": "6.4.0",
+    "vega-embed": "7.3.0"
+   },
+   "specificationRecordedAs": "fw:rendererSpecification"
+  },
+  "html": {
+   "implementation": "src/chart-output.ts#chartMarkup",
+   "note": "This project's own bars. Versioned by this release rather than by a library, and it emits no specification because it has none to give."
+  }
+ }
+}

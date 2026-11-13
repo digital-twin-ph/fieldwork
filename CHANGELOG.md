@@ -3,6 +3,12 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.104.0 — 2026-11-12
+
+- **A chart marks dates.** On a time axis, such as an epidemic curve's, **Marked dates** in Configure… draws a dashed
+  line at each day with a label in your own words, several to a chart. John Snow's *When did people die?* marks 8
+  September 1854, *Pump handle removed*, where the curve had already turned. Chart 0.17.0, experiment 210.
+
 ## 0.103.0 — 2026-11-12
 
 - **Map sizes marks by a number: proportional symbols.** A point layer's marks can take their area from an attribute,

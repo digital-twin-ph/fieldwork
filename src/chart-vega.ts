@@ -163,7 +163,7 @@ export function chartVegaSpec(chart:ChartSummary,params:ChartParams,context:{sou
   const color=params.colorByCategory?{color:{field:'displayLabel',type:'nominal' as const,scale:{domain:values.map(v=>v.displayLabel),range:colors.slice(0,values.length)},legend:{title:'Category'}}}:{};
   const sourceNote=chartSourceNote(params,context.sourceId,context.runId,context.sourceLabel);
   const chartWidth=Math.min(560,Math.max(300,chart.bins.length*72));
-  return {
+  const spec={
     $schema:'https://vega.github.io/schema/vega-lite/v6.json',
     // Stated so an exported figure carries its own surface. Without it the SVG is transparent
     // and takes the colour of whatever it is dropped onto, which for a figure meant to be
@@ -186,6 +186,11 @@ export function chartVegaSpec(chart:ChartSummary,params:ChartParams,context:{sou
     encoding:orientation==='horizontal'
       ?{x:{...quantity,title:params.xAxisTitle?.trim()||quantityTitle},y:{...category,title:params.yAxisTitle?.trim()||chart.categoryTitle||'Category'},...color,tooltip:[{field:'displayLabel',type:'nominal' as const,title:'Category'},{field:difference?'bandCount':'count',type:'quantitative' as const,title:quantityTitle},...(difference?[{field:'count',type:'quantitative' as const,title:'Cumulative to this band'}]:[])]}
       :{x:{...category,title:params.xAxisTitle?.trim()||chart.categoryTitle||'Category'},y:{...quantity,title:params.yAxisTitle?.trim()||quantityTitle},...color,tooltip:[{field:'displayLabel',type:'nominal' as const,title:'Category'},{field:difference?'bandCount':'count',type:'quantitative' as const,title:quantityTitle},...(difference?[{field:'count',type:'quantitative' as const,title:'Cumulative to this band'}]:[])]},
+    ...(()=>{
+      // A MARKED DATE IS A LAYER OVER THE CHART (experiment 210): its rule at the bin it falls in, and its label.
+      const marked=markedLayers(params,values.map(v=>v.displayLabel),chart.bins,orientation==='horizontal'?'y':'x');
+      return marked.length?{marked}:{};
+    })(),
     width:chartWidth,
     height:orientation==='horizontal'?Math.max(140,chart.bins.length*38):280,
     // One type scale with the map, including the family: a chart that inherits the page font and a
@@ -203,6 +208,10 @@ export function chartVegaSpec(chart:ChartSummary,params:ChartParams,context:{sou
         symbolStrokeWidth:0,offset:12},
       bar:{binSpacing:2}},
   };
+  // Drawn as layers when dates are marked: the chart's own mark first, then each date's rule and label over it.
+  if(!('marked' in spec))return spec;
+  const {mark:drawnMark,encoding:drawnEncoding,marked,...rest}=spec as typeof spec&{marked:unknown[]};
+  return {...rest,layer:[{mark:drawnMark,encoding:drawnEncoding},...marked]};
 }
 
 /** The mark a panel is drawn with: the practitioner's, or bars up to 60 points and a line beyond, because 3,653 daily
@@ -213,6 +222,30 @@ export const ratioScale=(chart:ChartSummary,params:ChartParams):{log:boolean;lin
 
 /** WHY THE AXIS IS AS IT IS, said on the figure. The practitioner chose it on by default so a trainee meets the
  *  convention with its reason, not as an unexplained axis (experiment 181). */
+
+/** THE BIN A MARKED DATE FALLS IN (experiment 210): bins keyed by a day (YYYY-MM-DD), a week's first day or a month
+ *  (YYYY-MM); the last whose key is not after the date. Undefined for a cycle (days of the week) or a date outside them. */
+export function markedBin(bins:readonly {key:string}[],date:string):number|undefined{
+  const dated=bins.map((b,i)=>({i,key:b.key})).filter(b=>/^\d{4}-\d{2}(-\d{2})?$/.test(b.key));
+  if(!dated.length||dated.length!==bins.length)return undefined;
+  let found:number|undefined;
+  for(const b of dated)if(b.key<=date)found=b.i;
+  return found;
+}
+/** The rule and its label, as layers over a chart whose category axis lists the bins. */
+function markedLayers(params:ChartParams,labels:readonly string[],bins:readonly {key:string}[],axis:'x'|'y'){
+  const marks=(params.markedDates??[]).map(m=>({...m,at:markedBin(bins,m.date)})).filter(m=>m.at!==undefined)
+    .map(m=>({displayLabel:labels[m.at!]!,text:m.label.trim()||m.date,date:m.date}));
+  if(!marks.length)return [];
+  const position={[axis]:{field:'displayLabel',type:'nominal' as const}};
+  return [
+    {data:{values:marks},mark:{type:'rule' as const,color:FIGURE_ROLE.ink,strokeWidth:1.5,strokeDash:[5,3]},encoding:{...position,
+      tooltip:[{field:'date',type:'nominal' as const,title:'Date'},{field:'text',type:'nominal' as const,title:'Marked'}]}},
+    {data:{values:marks},mark:{type:'text' as const,align:'left' as const,baseline:'top' as const,dx:4,dy:2,fontSize:FIGURE_TYPE.tick,color:FIGURE_ROLE.ink,
+      ...(axis==='x'?{y:0}:{x:0})},encoding:{...position,text:{field:'text',type:'nominal' as const}}},
+  ];
+}
+
 export function ratioScaleNote(chart:ChartSummary,params:ChartParams):string|undefined{
   const {log,line}=ratioScale(chart,params);
   if(!log&&!line)return undefined;
@@ -382,7 +415,13 @@ function panelVegaSpec(chart:ChartSummary,params:ChartParams,context:{sourceId?:
             scale:{zero:mark==='bar'}},
           tooltip:[{field:'label',type:temporal?'temporal' as const:'nominal' as const,title:chart.categoryTitle??'',...(temporal?{format:'%-d %b %Y'}:{})},
             {field:'count',type:'quantitative' as const,title:nameOf(panel)}]}};
-      return {width,height,layer:[...(shade?[shade]:[]),drawn]};
+      // MARKED DATES across every panel, on the shared time axis; the label once, on the first (experiment 210).
+      const dated=temporal?(params.markedDates??[]).map(m=>({date:m.date,text:m.label.trim()||m.date})):[];
+      const rules=dated.length?[{data:{values:dated},mark:{type:'rule' as const,color:FIGURE_ROLE.ink,strokeWidth:1.5,strokeDash:[5,3]},
+        encoding:{x:{field:'date',type:'temporal' as const},tooltip:[{field:'date',type:'temporal' as const,title:'Date',format:'%-d %b %Y'},{field:'text',type:'nominal' as const,title:'Marked'}]}},
+        ...(index===0?[{data:{values:dated},mark:{type:'text' as const,align:'left' as const,baseline:'top' as const,dx:4,y:0,fontSize:FIGURE_TYPE.tick,color:FIGURE_ROLE.ink},
+          encoding:{x:{field:'date',type:'temporal' as const},text:{field:'text',type:'nominal' as const}}}]:[])]:[];
+      return {width,height,layer:[...(shade?[shade]:[]),drawn,...rules]};
     }),
     resolve:{scale:{x:'shared' as const,y:'independent' as const}},
     spacing:6,
@@ -408,7 +447,7 @@ export function chartSpecificationFacts(node:WorkflowNode<'chart_output'>,runId:
   const sourceNote=chartSourceNote(node.params,sourceId,runId);
   const rendererSpec=chartRenderer(node.params)==='vega-lite'?JSON.stringify(chartVegaSpec(chart,node.params,{sourceId,runId})):null;
   return `@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n@prefix dcterms: <http://purl.org/dc/terms/>.\n`+
-    `${spec} a fw:ChartSpecification, prov:Plan; dcterms:title ${JSON.stringify(title)}; fw:chartRenderer ${JSON.stringify(chartRenderer(node.params))}; fw:chartMark ${JSON.stringify(node.params.mark||'bar')}; fw:chartOrientation ${JSON.stringify(chartOrientation(node.params))}; fw:chartField ${JSON.stringify(chart.field)}; fw:chartMeasureKind ${JSON.stringify(banded?`band-difference-of-${measureKind}`:measureKind)}; fw:chartUnitStatus ${JSON.stringify(unitStatus)}; fw:chartLegend ${!!node.params.colorByCategory}; fw:chartSourceNote ${JSON.stringify(sourceNote)}; prov:wasDerivedFrom <urn:fieldwork:run:${runId}:output:${sourceId}>.\n`+
+    `${spec} a fw:ChartSpecification, prov:Plan; dcterms:title ${JSON.stringify(title)}; fw:chartRenderer ${JSON.stringify(chartRenderer(node.params))}; fw:chartMark ${JSON.stringify(node.params.mark||'bar')}; fw:chartOrientation ${JSON.stringify(chartOrientation(node.params))}; fw:chartField ${JSON.stringify(chart.field)}; fw:chartMeasureKind ${JSON.stringify(banded?`band-difference-of-${measureKind}`:measureKind)}; fw:chartUnitStatus ${JSON.stringify(unitStatus)}; fw:chartLegend ${!!node.params.colorByCategory}; fw:chartSourceNote ${JSON.stringify(sourceNote)}; ${(node.params.markedDates??[]).map(m=>`fw:markedDate [ dcterms:date "${m.date}"^^<http://www.w3.org/2001/XMLSchema#date>; <http://www.w3.org/2000/01/rdf-schema#label> ${JSON.stringify(m.label)} ]; `).join('')}prov:wasDerivedFrom <urn:fieldwork:run:${runId}:output:${sourceId}>.\n`+
     // The version is recorded for EITHER renderer. It used to be written only beside a Vega-Lite
     // specification, so a receipt from the classic bars said which renderer drew the figure without
     // saying which version of it -- and the classic bars are this project's own code, so the answer

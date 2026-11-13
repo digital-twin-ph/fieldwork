@@ -167,6 +167,8 @@ export function snowCurveExample():Workflow{
       subtitle:'Date of death, not date of onset or of report. The outbreak is conventionally dated from 31 August; the pump handle was removed on 8 September, by which time the curve had already turned.',
       xAxisTitle:'Date of death, 1854',
       yAxisTitle:'Recorded deaths',
+      // THE DAY THE HANDLE CAME OFF, marked on the curve it is remembered against (experiment 210): from Snow's own account.
+      markedDates:[{date:'1854-09-08',label:'Pump handle removed'}],
       sourceNote:'Source: John Snow, On the Mode of Communication of Cholera, 2nd ed., 1855, as digitised by Robin Wilson. 489 deaths at 250 distinct addresses.'}},
   ],edges:[
     {id:'dates-curve',from:'dates',to:'curve',port:'cases'},

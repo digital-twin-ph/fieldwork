@@ -136,3 +136,27 @@ test('the epidemic curve can be turned on its side, and reports the same counts'
   await page.locator('[data-view="results"]').click();
   await expect(page.locator('#bars-panel')).toContainText('616 cases from 43 records');
 });
+
+// A MARKED DATE (experiment 210, 2026-11-12): the day the pump handle came off, a line on the curve with its label, in the
+// figure the enhanced renderer draws, and set in Configure as a date and the practitioner's own words.
+test('Snow\'s curve marks the day the pump handle came off, and the mark is set in Configure',async({page})=>{
+  await page.goto('/?example=snow-curve');
+  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
+  await page.locator('[data-view="results"]').click();
+  await page.locator('#result-tabs [data-output="epidemic"]').click();
+  await expect(page.locator('#vega-chart svg.marks')).toContainText('Pump handle removed',{timeout:30000});
+  await page.locator('[data-view="workflow"]').click();
+  await page.locator('.react-flow__node[data-id="epidemic"]').click();
+  await expect(page.locator('.standard-sentence')).toContainText('marking Pump handle removed on 1854-09-08');
+  await page.locator('#configure-step').click();
+  await expect(page.locator('#chart-mark-date-0')).toHaveValue('1854-09-08');
+  await expect(page.locator('#chart-mark-label-0')).toHaveValue('Pump handle removed');
+  await page.locator('#chart-mark-add').click();
+  await page.locator('#chart-mark-date-1').fill('1854-08-31');
+  await page.locator('#chart-mark-date-1').dispatchEvent('change');
+  await page.locator('#chart-mark-label-1').fill('Outbreak begins');
+  await page.locator('#chart-mark-label-1').dispatchEvent('change');
+  await page.locator('#config-apply').click();
+  const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')).nodes.find(n=>n.id==='epidemic').params.markedDates);
+  expect(saved).toEqual([{date:'1854-09-08',label:'Pump handle removed'},{date:'1854-08-31',label:'Outbreak begins'}]);
+});

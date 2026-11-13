@@ -2124,6 +2124,31 @@ function openSatelliteSampleConfig(nodeId:string){
 
 /** CHART'S TABLE CONTROLS: which key column the bars run along, and panels with their marks and a shaded period
  *  (experiment 174). Moved into Configure… on 2026-11-09 with the same ids. */
+/** THE DATES A CHART'S AXIS RUNS OVER (experiment 210), from its last run's bins where it has run, else whether it will be
+ *  dated at all: a case series by day, week or month is; by day of the week or month of the year it is a cycle, not dates. */
+function datedRange(nodeId:string,draft:WorkflowNode<'chart_output'>['params']):{first:string;last:string}|null|'later'{
+  const bins=(result?.outputs.find(o=>o.nodeId===nodeId) as {chart?:{bins:{key:string}[]}}|undefined)?.chart?.bins;
+  if(bins?.length){const keys=bins.map(b=>b.key);if(!keys.every(k=>/^\d{4}-\d{2}(-\d{2})?$/.test(k)))return null;
+    const pad=(k:string)=>k.length===7?`${k}-01`:k;return {first:pad(keys[0]!),last:pad(keys.at(-1)!)};}
+  const up=workflow.nodes.find(m=>m.id===workflow.edges.find(e=>e.to===nodeId)?.from);
+  if(draft.inputMode==='series'||up?.type==='case_series')
+    return up?.type==='case_series'&&['weekday','month-of-year'].includes(up.params.period)?null:'later';
+  return null;
+}
+function markedDatesControls(nodeId:string,draft:WorkflowNode<'chart_output'>['params']):string{
+  const range=datedRange(nodeId,draft);
+  if(!range)return '';
+  const bounds=range==='later'?'':` min="${esc(range.first)}" max="${esc(range.last)}"`;
+  const marks=draft.markedDates??[];
+  return `<div class="config-group"><span class="inspector-section">Marked dates</span>`
+    +marks.map((m,i)=>`<div class="field"><label class="field-label" for="chart-mark-date-${i}">Date</label>`
+      +`<input id="chart-mark-date-${i}" type="date" data-mark-date="${i}" value="${esc(m.date)}"${bounds}>`
+      +`<label class="field-label" for="chart-mark-label-${i}">Label, in your words</label>`
+      +`<input id="chart-mark-label-${i}" data-mark-label="${i}" maxlength="80" value="${esc(m.label)}" placeholder="for example Pump handle removed">`
+      +`<button type="button" class="button small" data-mark-remove="${i}">Remove</button></div>`).join('')
+    +`<button type="button" class="button small" id="chart-mark-add">+ Add a date</button>`
+    +`<small>A line at each date, with its label, over the chart and in its figure, as the enhanced renderer draws it; the classic bars do not.${range==='later'?' The dates the chart covers are known after a run.':''}</small></div>`;
+}
 function chartTableControls(n:WorkflowNode<'chart_output'>):string{
   let out='';
       // WHICH COLUMN, only where there is a choice to make. A rate keys on `group` alone, so
@@ -2177,7 +2202,8 @@ function chartSentence(n:WorkflowNode<'chart_output'>):string{
   if(p.figure==='pyramid')return p.panelsBy
     ?`Draws ${source} as a population pyramid: ${p.keyColumn||'each band'} up the middle, the two groups of ${p.panelsBy} back to back.`
     :`Draws ${source} as a population pyramid. Name the column whose two groups sit back to back in Configure\u2026`;
-  return `Draws ${source} as ${chartRenderer(p)==='vega-lite'&&p.mark==='point'?'dots':chartRenderer(p)==='vega-lite'&&p.mark==='line'?'a line':'bars'}${p.panelsBy?`, one panel per ${p.panelsBy}`:''}${p.chartTitle?`, titled \u201c${p.chartTitle}\u201d`:''}.`;
+  const marked=p.markedDates?.length?`, marking ${p.markedDates.map(m=>`${m.label||m.date} on ${m.date}`).join('; ')}`:'';
+  return `Draws ${source} as ${chartRenderer(p)==='vega-lite'&&p.mark==='point'?'dots':chartRenderer(p)==='vega-lite'&&p.mark==='line'?'a line':'bars'}${p.panelsBy?`, one panel per ${p.panelsBy}`:''}${marked}${p.chartTitle?`, titled \u201c${p.chartTitle}\u201d`:''}.`;
 }
 
 /** CHART'S CONFIGURATION DIALOG (experiment 186, 2026-11-09): what is drawn (bars, or a transmission tree), and every
@@ -2351,7 +2377,8 @@ function openChartConfig(nodeId:string){
           :chartTableControls(shown)+chartControls(shown,{omitOrientation:draft.inputMode==='series'})
             +(draft.inputMode==='series'?`<div class="field"><label class="field-label" for="series-orientation">Bars</label>`
               +`<select id="series-orientation"><option value="vertical" ${chartOrientation(draft)==='vertical'?'selected':''}>Vertical \u00b7 periods along the bottom</option>`
-              +`<option value="horizontal" ${chartOrientation(draft)==='horizontal'?'selected':''}>Horizontal \u00b7 periods down the side</option></select></div>`:''))
+              +`<option value="horizontal" ${chartOrientation(draft)==='horizontal'?'selected':''}>Horizontal \u00b7 periods down the side</option></select></div>`:'')
+            +markedDatesControls(nodeId,draft))
         ;
       const preview=tree
         ?''
@@ -2380,11 +2407,21 @@ function openChartConfig(nodeId:string){
         on(selector,el=>{draft[key]=el.value.trim();});
       on('#chart-legend',el=>{draft.colorByCategory=el.checked;});
       on('#output-view',el=>{draft.view=el.value as Draft['view'];});
+      // MARKED DATES (experiment 210): each a day and the practitioner's own label; added and removed here, kept on Apply.
+      on('[data-mark-date]',el=>{const at=Number(el.dataset.markDate),list=[...(draft.markedDates??[])];list[at]={...list[at]!,date:el.value};draft.markedDates=list;});
+      on('[data-mark-label]',el=>{const at=Number(el.dataset.markLabel),list=[...(draft.markedDates??[])];list[at]={...list[at]!,label:el.value.trim()};draft.markedDates=list;});
+      root.querySelectorAll<HTMLButtonElement>('[data-mark-remove]').forEach(b=>b.addEventListener('click',()=>{
+        const list=(draft.markedDates??[]).filter((_m,i)=>i!==Number(b.dataset.markRemove));
+        if(list.length)draft.markedDates=list;else delete draft.markedDates;redraw();}));
+      root.querySelector<HTMLButtonElement>('#chart-mark-add')?.addEventListener('click',()=>{
+        const range=datedRange(nodeId,draft);draft.markedDates=[...(draft.markedDates??[]),{date:range&&range!=='later'?range.first:'',label:''}];redraw();});
     },
     apply:draft=>{
       const {view,...params}=draft;
       if(view&&view!=='bars'){change(w=>{const index=w.nodes.findIndex(x=>x.id===nodeId);
         w.nodes[index]={...w.nodes[index]!,type:'output',params:{label:params.label,view}} as never;});return;}
+      // A date added and left empty is not kept: a marked date is a day.
+      if(params.markedDates){params.markedDates=params.markedDates.filter(m=>/^\d{4}-\d{2}-\d{2}$/.test(m.date));if(!params.markedDates.length)delete params.markedDates;}
       change(w=>{getNode(w,nodeId,'chart_output').params=params;});
     },
   },esc);

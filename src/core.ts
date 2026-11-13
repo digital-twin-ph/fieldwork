@@ -1936,7 +1936,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         const rateNote=rateEquationNote(result,node.id);
         if(rateNote){machined[node.id]=[rateNote];withNote(receipts,runId,node.id,[rateNote]);}
         break;}
-      case 'case_series':{const series=node.params.source==='table'?caseSeriesFromTable(inputs.cases,{dateField:node.params.dateField,dateKind:node.params.dateKind,period:node.params.period}):caseSeries(inputs.points,{dateField:node.params.dateField,dateKind:node.params.dateKind,period:node.params.period,weightField:node.params.weightField});value={...seriesTable(series),chart:seriesChart(series)} as unknown as DisplayValue;receipts.push(seriesReceipt(node,series,runId,workflow.edges.find(e=>e.to===node.id&&(e.port==='points'||e.port==='cases'))!.from));break;}
+      case 'case_series':{const series=node.params.source==='table'?caseSeriesFromTable(inputs.cases,{dateField:node.params.dateField,dateKind:node.params.dateKind,period:node.params.period}):caseSeries(inputs.points,{dateField:node.params.dateField,dateKind:node.params.dateKind,period:node.params.period,weightField:node.params.weightField,splitBy:node.params.splitBy});value={...seriesTable(series),chart:seriesChart(series)} as unknown as DisplayValue;receipts.push(seriesReceipt(node,series,runId,workflow.edges.find(e=>e.to===node.id&&(e.port==='points'||e.port==='cases'))!.from));break;}
       case 'slr_extract_import':{const extract=projectionExtract(inputs.projections,{datasetIRI:node.params.datasetIRI,datasetVersion:node.params.datasetVersion,baselinePeriod:node.params.baselinePeriod,citations:node.params.citations,basisKind:node.params.basisKind,familyValues:node.params.familyValues,sourceNote:node.params.sourceNote});value=projectionTable(extract) as unknown as DisplayValue;receipts.push(extractReceipt(node,extract,runId));break;}
       case 'slr_site_assignment':{
         // A PLAIN TABLE AND THE RULESET THAT CONTRACTED FOR IT, or -- for a workflow saved before
@@ -2511,7 +2511,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
     }
     if(node.type==='chart_output'&&isRecord(value)&&(value as {chart?:ChartSummary}).chart){
       const chart=(value as {chart:ChartSummary}).chart;
-      const described=chartDescriptionNote(chart,node.params.label,node.id,node.params.figure==='pyramid'?'pyramid':chartRenderer(node.params)==='vega-lite'?node.params.mark??'bar':'bar');
+      const described=chartDescriptionNote(chart,node.params.label,node.id,node.params.figure==='pyramid'||node.params.figure==='stacked'?node.params.figure:chartRenderer(node.params)==='vega-lite'?node.params.mark??'bar':'bar');
       const note=described&&{...described,section:figureSection(node.params,node.type)};
       if(note){machined[node.id]=[note];withNote(receipts,runId,node.id,[note]);
         withArtifact(receipts,runId,node.id,{kind:'chart',barCount:chart.bins.length,

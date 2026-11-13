@@ -89,6 +89,13 @@ in the bar that holds it for a weekly or monthly curve, with its label beside it
 bars do not draw them. A day of the week or a month of the year is a cycle, not a date, and is not offered. The run's
 receipt records each date and its label. John Snow's *When did people die?* marks 8 September 1854.
 
+### A curve divided by a column: stacked bars
+
+Where Cases by period counts each value of a column, as Hagelloch's school classes, **Draw** *Stacked bars* gives one
+bar per period, its height the total, divided by those values in one colour each, the first at the bottom, with a key.
+More values than the six colours that can be told apart is refused, naming how many; draw panels instead, which is
+what the chart does where Draw is left at bars. Hagelloch's *Who fell ill?* stacks its curve by school class.
+
 ### Two groups back to back: a population pyramid
 
 In **Configure…**, **Draw** *Population pyramid, two groups back to back by band*, then name the column whose two values

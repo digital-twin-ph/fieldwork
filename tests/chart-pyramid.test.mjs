@@ -35,3 +35,19 @@ test('a marked date falls in the bin that holds it, and is drawn as a rule and i
   assert.deepEqual(spec.layer[2].data.values.map(v=>[v.displayLabel,v.text]),[['1854-09-08','Pump handle removed']]);
   assert.equal(chartVegaSpec(curve,{label:'C'}).layer,undefined,'no date marked, one mark as before');
 });
+
+test('a series split by a column: every period for every value, and stacked one colour each',async()=>{
+  const {caseSeries,seriesTable,seriesChart}=await import('../build/case-series.js');
+  const pts=[['2024-01-01','a'],['2024-01-01','b'],['2024-01-03','a'],['2024-01-03',''],].map(([d,g],i)=>({type:'Feature',id:`r${i}`,geometry:{type:'Point',coordinates:[0,0]},properties:{onset:d,class:g}}));
+  const series=caseSeries({type:'FeatureCollection',features:pts},{dateField:'onset',dateKind:'onset',period:'day',splitBy:'class'});
+  assert.deepEqual(series.groups,['a','b',''],'blank its own value, last');
+  assert.equal(series.bins.length,9,'three days for each of three values, the empty day kept');
+  assert.equal(series.total,4);
+  assert.deepEqual(seriesTable(series).keys,['period','class']);
+  const chart=seriesChart(series);
+  assert.equal(chart.groupedBy,'class');
+  const spec=chartVegaSpec(chart,{label:'S',inputMode:'series',figure:'stacked'});
+  assert.equal(spec.encoding.y.stack,'zero');
+  assert.deepEqual(spec.encoding.color.scale.domain,['a','b','class blank']);
+  assert.throws(()=>chartVegaSpec({...chart,panels:Array.from({length:12},(_,i)=>String(i))},{label:'S',figure:'stacked'}),/12 values, more than the 6 colours/);
+});

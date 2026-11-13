@@ -25,9 +25,12 @@ export const MONTHS=['January','February','March','April','May','June','July','A
 /** The cycles: a period that repeats, counted by its place in the cycle and not along time. */
 const CYCLES:Partial<Record<Period,readonly string[]>>={weekday:WEEKDAYS,'month-of-year':MONTHS};
 
-export interface SeriesBin {key:string; label:string; count:number}
+export interface SeriesBin {key:string; label:string; count:number;
+  /** The value of the column the series is split by, where it is (experiment 210): one bin per period and value. */ group?:string}
 export interface CaseSeries {
   kind:'case-series'; bins:SeriesBin[]; total:number; period:Period; dateKind:DateKind;
+  /** SPLIT BY A COLUMN (experiment 210): its name and its values, in order; each bin then carries its group. */
+  splitBy?:string; groups?:string[];
   dateField:string; weightField:string|null; datedRecords:number; undatedRecords:number;
   undated:{id:string; name:string; value:string}[]; firstPeriod:string|null; lastPeriod:string|null;
   /** The unit of each count, where the table read declares one: Brazil's "notified cases/week". */
@@ -71,7 +74,7 @@ const nextKey=(key:string,period:Period):string=>{
 const label=(key:string,period:Period)=>period==='week'||period==='week-sunday'?`Week beginning ${key}`
   :CYCLES[period]?CYCLES[period]![Number(key)-1]!:key;
 
-export interface SeriesOptions {dateField:string; dateKind:DateKind; period:Period; weightField?:string|null}
+export interface SeriesOptions {dateField:string; dateKind:DateKind; period:Period; weightField?:string|null; splitBy?:string|null}
 
 /** The same series from a keyed table, because a time series often arrives without geometry: Snow's
  *  daily table of attacks and deaths has dates and no places, while his map has places and no dates.
@@ -98,6 +101,9 @@ export function caseSeries(points:PointCollection,options:SeriesOptions):CaseSer
   if(!points?.features?.length)throw new Error('Cases by period needs at least one record.');
 
   const counts=new Map<string,number>(),undated:CaseSeries['undated']=[];
+  // SPLIT BY A COLUMN (experiment 210): each period counted for each of its values, blank its own value, as a case
+  // without a class is still a case.
+  const splitBy=options.splitBy?.trim()||null,byGroup=new Map<string,Map<string,number>>();
   let total=0,datedRecords=0;
   for(const feature of points.features){
     const properties=feature.properties as Record<string,unknown>;
@@ -116,6 +122,8 @@ export function caseSeries(points:PointCollection,options:SeriesOptions):CaseSer
     }
     const key=periodKey(parts,period);
     counts.set(key,(counts.get(key)??0)+weight);
+    if(splitBy){const group=String(properties[splitBy]??'').trim(),held=byGroup.get(group)??new Map<string,number>();
+      held.set(key,(held.get(key)??0)+weight);byGroup.set(group,held);}
     total+=weight;datedRecords++;
   }
   const keys=[...counts.keys()].sort();
@@ -124,7 +132,7 @@ export function caseSeries(points:PointCollection,options:SeriesOptions):CaseSer
   const cycle=CYCLES[period];
   if(cycle){
     for(const [i,name] of cycle.entries())bins.push({key:String(i+1),label:name,count:counts.get(String(i+1))??0});
-    return {kind:'case-series',bins,total,period,dateKind,dateField,weightField,
+    return {kind:'case-series',...splitBins(bins,splitBy,byGroup),total,period,dateKind,dateField,weightField,
       datedRecords,undatedRecords:undated.length,undated:undated.slice(0,50),firstPeriod:bins[0]!.key,lastPeriod:bins.at(-1)!.key};
   }
   // Zero-count periods are retained: a gap in a curve is a fact about the outbreak, and omitting
@@ -133,17 +141,23 @@ export function caseSeries(points:PointCollection,options:SeriesOptions):CaseSer
     bins.push({key,label:label(key,period),count:counts.get(key)??0});
     if(bins.length>5000)throw new Error('This date range produces more than 5,000 periods. Choose a longer period.');
   }
-  return {kind:'case-series',bins,total,period,dateKind,dateField,weightField,
+  return {kind:'case-series',...splitBins(bins,splitBy,byGroup),total,period,dateKind,dateField,weightField,
     datedRecords,undatedRecords:undated.length,undated:undated.slice(0,50),
     firstPeriod:keys[0]??null,lastPeriod:keys[keys.length-1]??null};
+}
+/** Every period for every group, zeros kept; groups in their own order, numbers as numbers, blank last. */
+function splitBins(bins:SeriesBin[],splitBy:string|null,byGroup:Map<string,Map<string,number>>):{bins:SeriesBin[];splitBy?:string;groups?:string[]}{
+  if(!splitBy)return {bins};
+  const groups=[...byGroup.keys()].sort((a,b)=>a===''?1:b===''?-1:Number.isFinite(Number(a))&&Number.isFinite(Number(b))?Number(a)-Number(b):a.localeCompare(b));
+  return {splitBy,groups,bins:groups.flatMap(group=>bins.map(bin=>({...bin,group,count:byGroup.get(group)!.get(bin.key)??0})))};
 }
 
 /** The key column a case-series table carries. Named for the same reason as RATE_TABLE_KEYS. */
 export const SERIES_TABLE_KEYS=['period'] as const;
 
 export function seriesTable(series:CaseSeries):SeriesTable{
-  return {kind:'data-table',keys:[...SERIES_TABLE_KEYS],valueField:'cases',
-    rows:series.bins.map(bin=>({key:{period:bin.key},value:bin.count})),
+  return {kind:'data-table',keys:[...SERIES_TABLE_KEYS,...(series.splitBy?[series.splitBy]:[])],valueField:'cases',
+    rows:series.bins.map(bin=>({key:{period:bin.key,...(series.splitBy?{[series.splitBy]:bin.group??''}:{})},value:bin.count})),
     rowCount:series.bins.length,missingValueCount:0,...(series.unit?{unit:series.unit}:{}),series};
 }
 
@@ -152,7 +166,11 @@ export function seriesChart(series:CaseSeries):ChartSummary{
   const kinds:Record<DateKind,string>={onset:'date of onset',report:'date of report',death:'date of death',
     'specimen-collection':'date of specimen collection',other:'a date of unstated kind'};
   const records=series.datedRecords+series.undatedRecords;
-  return {field:'period',total:series.total,bins:series.bins,...(series.weightField?{records}:{}),
+  return {field:'period',total:series.total,
+    // A SPLIT SERIES IS PANELS OF ONE CHART, one per value, which Chart draws as panels or, asked, stacked.
+    bins:series.splitBy?series.bins.map(({group,...bin})=>({...bin,panel:group??''})):series.bins,
+    ...(series.splitBy?{panels:series.groups??[],temporal:series.period==='day',groupedBy:series.splitBy}:{}),
+    ...(series.weightField?{records}:{}),
     ...(series.unit?{unit:series.unit}:{}),
     // The axis says WHICH date, not merely that there are dates. "Date of onset, by day" rather
     // than "Category", and the declared kind travels with it so a chart cannot quietly relabel
@@ -168,14 +186,16 @@ export function seriesReceipt(node:{id:string},series:CaseSeries,runId:string,so
   let facts='@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.\n'
     +`${activity} a fw:CaseSeriesComputation, prov:Activity; prov:used <${base}output:${source}>; `
     +`fw:eventDateField ${quote(series.dateField)}; fw:eventDateKind ${quote(series.dateKind)}; fw:seriesPeriod ${quote(series.period)}`
-    +(series.weightField?`; fw:caseWeightField ${quote(series.weightField)}`:'')+'.\n'
+    +(series.weightField?`; fw:caseWeightField ${quote(series.weightField)}`:'')
+    +(series.splitBy?`; fw:seriesSplitBy ${quote(series.splitBy)}`:'')+'.\n'
     +`${entity} a fw:CaseSeries, prov:Entity; prov:wasGeneratedBy ${activity}; fw:eventDateKind ${quote(series.dateKind)}; `
     +`fw:seriesPeriod ${quote(series.period)}; fw:seriesTotal "${series.total}"^^xsd:decimal; `
     +`fw:datedRecordCount "${series.datedRecords}"^^xsd:integer; fw:undatedRecordCount "${series.undatedRecords}"^^xsd:integer.\n`;
   for(const [index,bin] of series.bins.entries())
-    facts+=`${entity} fw:seriesBin <${base}output:${node.id}:period:${index}>.\n<${base}output:${node.id}:period:${index}> a fw:SeriesBin; fw:periodKey ${quote(bin.key)}; fw:caseCount "${bin.count}"^^xsd:decimal.\n`;
+    facts+=`${entity} fw:seriesBin <${base}output:${node.id}:period:${index}>.\n<${base}output:${node.id}:period:${index}> a fw:SeriesBin; fw:periodKey ${quote(bin.key)}; fw:caseCount "${bin.count}"^^xsd:decimal`
+      +(bin.group!==undefined?`; fw:seriesGroup ${quote(bin.group)}`:'')+'.\n';
   return {nodeId:node.id,kind:'computation',facts,input:facts,rules:'',conclusions:[],
-    method:`Cases per ${PERIOD_WORDS[series.period]} by ${series.dateKind} date${series.weightField?`, weighted by ${series.weightField}`:', one case per record'}. Zero-count periods are retained; records without an ISO 8601 date are excluded and counted, never redistributed.`};
+    method:`Cases per ${PERIOD_WORDS[series.period]} by ${series.dateKind} date${series.weightField?`, weighted by ${series.weightField}`:', one case per record'}${series.splitBy?`, for each value of ${series.splitBy} (${(series.groups??[]).map(g=>g||'blank').join(', ')})`:''}. Zero-count periods are retained; records without an ISO 8601 date are excluded and counted, never redistributed.`};
 }
 
 export function validateCaseSeriesNode(node:WorkflowNode):void{

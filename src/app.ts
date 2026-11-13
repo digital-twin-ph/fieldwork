@@ -2199,10 +2199,11 @@ function chartSentence(n:WorkflowNode<'chart_output'>):string{
   if(p.figure==='tree')return p.tree?.id&&p.tree.parent&&p.tree.date
     ?`Draws who infected whom in ${source} as chains over time: each case at its ${p.tree.date}, joined to the case named in ${p.tree.parent}.`
     :`Draws who infected whom in ${source} as chains over time. Name the case, infector and date columns in Configure\u2026`;
+  const marked=p.markedDates?.length?`, marking ${p.markedDates.map(m=>`${m.label||m.date} on ${m.date}`).join('; ')}`:'';
+  if(p.figure==='stacked')return `Draws ${source} as stacked bars, one per period, divided by the values the series is split by${marked}${p.chartTitle?`, titled \u201c${p.chartTitle}\u201d`:''}.`;
   if(p.figure==='pyramid')return p.panelsBy
     ?`Draws ${source} as a population pyramid: ${p.keyColumn||'each band'} up the middle, the two groups of ${p.panelsBy} back to back.`
     :`Draws ${source} as a population pyramid. Name the column whose two groups sit back to back in Configure\u2026`;
-  const marked=p.markedDates?.length?`, marking ${p.markedDates.map(m=>`${m.label||m.date} on ${m.date}`).join('; ')}`:'';
   return `Draws ${source} as ${chartRenderer(p)==='vega-lite'&&p.mark==='point'?'dots':chartRenderer(p)==='vega-lite'&&p.mark==='line'?'a line':'bars'}${p.panelsBy?`, one panel per ${p.panelsBy}`:''}${marked}${p.chartTitle?`, titled \u201c${p.chartTitle}\u201d`:''}.`;
 }
 
@@ -2375,6 +2376,10 @@ function openChartConfig(nodeId:string){
             +`<div class="field"><label class="field-label" for="chart-title">Chart title</label><input id="chart-title" maxlength="120" value="${esc(draft.chartTitle||'')}" placeholder="Who infected whom"></div>`
             +`<div class="field"><label class="field-label" for="chart-source-note">Source / method note</label><input id="chart-source-note" maxlength="300" value="${esc(draft.sourceNote||'')}"></div>`
           :chartTableControls(shown)+chartControls(shown,{omitOrientation:draft.inputMode==='series'})
+            // STACKED, where the series is split by a column (experiment 210): one bar per period, divided by its values.
+            +(draft.inputMode==='series'?`<div class="field"><label class="field-label" for="chart-series-figure">Draw</label><select id="chart-series-figure">`
+              +`<option value="" ${draft.figure!=='stacked'?'selected':''}>Bars, or one panel per value where the series is split</option>`
+              +`<option value="stacked" ${draft.figure==='stacked'?'selected':''}>Stacked bars, one colour per value where the series is split</option></select></div>`:'')
             +(draft.inputMode==='series'?`<div class="field"><label class="field-label" for="series-orientation">Bars</label>`
               +`<select id="series-orientation"><option value="vertical" ${chartOrientation(draft)==='vertical'?'selected':''}>Vertical \u00b7 periods along the bottom</option>`
               +`<option value="horizontal" ${chartOrientation(draft)==='horizontal'?'selected':''}>Horizontal \u00b7 periods down the side</option></select></div>`:'')
@@ -2388,6 +2393,7 @@ function openChartConfig(nodeId:string){
     wire:(root,draft,redraw)=>{
       const on=(selector:string,fn:(el:HTMLInputElement&HTMLSelectElement&HTMLTextAreaElement)=>void)=>
         root.querySelectorAll<HTMLInputElement&HTMLSelectElement&HTMLTextAreaElement>(selector).forEach(el=>el.addEventListener('change',()=>{fn(el);redraw();}));
+      on('#chart-series-figure',el=>{if(el.value==='stacked'){draft.figure='stacked';draft.renderer='vega-lite';}else delete draft.figure;});
       on('#chart-figure',el=>{if(el.value==='tree'||el.value==='pyramid'){draft.figure=el.value;if(el.value==='pyramid')draft.renderer='vega-lite';}else delete draft.figure;});
       on('[data-tree]',el=>{draft.tree={id:'',parent:'',date:'',...draft.tree,[el.dataset.tree!]:el.value};});
       on('#chart-renderer',el=>{draft.renderer=el.value as 'html'|'vega-lite';if(draft.renderer==='html')draft.mark='bar';});
@@ -2947,6 +2953,7 @@ function rateSentence(p:import('./types.js').ParamsByType['rate']):string{
 function seriesSentence(p:import('./types.js').ParamsByType['case_series']):string{
   if(!p.dateField)return 'Name the column holding each case\u2019s date in Configure\u2026';
   return `Counts cases by ${PERIOD_WORDS[p.period]} of ${p.dateField}, a date of ${p.dateKind}`
+    +(p.source!=='table'&&p.splitBy?`, for each value of ${p.splitBy}`:'')
     +(p.source==='table'?', each row as many cases as its value.':p.weightField?`, each record as many cases as its ${p.weightField}.`:', one case per record.');
 }
 /** CASES BY PERIOD'S CONFIGURATION DIALOG (experiments 186 and 206, 2026-11-12): how the records arrive, the date column
@@ -2959,10 +2966,10 @@ function openSeriesConfig(nodeId:string){
   openConfigDialog<Draft>({
     id:'series-config',widget:'Cases by period',step:node.params.label||TYPES.case_series.title,draft:structuredClone(node.params),
     sections:d=>{
-      const pick=(id:string,label:string,key:'dateField'|'weightField',placeholder:string,optional=false)=>{
+      const pick=(id:string,label:string,key:'dateField'|'weightField'|'splitBy',placeholder:string,optional=false)=>{
         const held=String(d[key]??'');
         return `<div class="field"><label class="field-label" for="${id}">${label}</label>`+(columns.length
-          ?`<select id="${id}" data-series="${key}"><option value="">${optional?'Not used: one case per record':'Choose…'}</option>`
+          ?`<select id="${id}" data-series="${key}"><option value="">${optional?(key==='splitBy'?'Not split: one count per period':'Not used: one case per record'):'Choose…'}</option>`
             +columns.map(c=>`<option value="${esc(c)}" ${c===held?'selected':''}>${esc(c)}</option>`).join('')+'</select>'
           :`<input id="${id}" data-series="${key}" maxlength="60" value="${esc(held)}" placeholder="${esc(placeholder)}">`)+'</div>';};
       const settings=`<div class="field"><label class="field-label" for="series-input">Records arrive as</label><select id="series-input">`
@@ -2973,7 +2980,9 @@ function openSeriesConfig(nodeId:string){
         +`<div class="field"><label class="field-label" for="series-period">Period</label><select id="series-period" data-series="period">`
         +([['day','day'],['week','week, starting Monday (ISO 8601)'],['week-sunday','week, starting Sunday (epidemiological week)'],['month','month'],['weekday','day of the week'],['month-of-year','month of the year']] as const)
           .map(([v,t])=>`<option value="${v}" ${d.period===v?'selected':''}>${t}</option>`).join('')+'</select></div>'
-        +(d.source==='table'?'':pick('series-weight','Cases per record (optional)','weightField','',true));
+        +(d.source==='table'?'':pick('series-weight','Cases per record (optional)','weightField','',true))
+        // SPLIT BY A COLUMN (experiment 210): each period counted for each of its values, for a curve stacked by them.
+        +(d.source==='table'?'':pick('series-split','Count each value of (optional)','splitBy','',true));
       return {settings,preview:`<p class="description">${esc(seriesSentence(d))}</p>`,
         // SAID, NOT BLOCKED: the input is chosen before it is connected, and the columns come with the connection; the
         // run refuses a missing date, as it did before (the Sierra Leone manual, 2026-11-12).
@@ -2983,8 +2992,8 @@ function openSeriesConfig(nodeId:string){
       root.querySelector<HTMLSelectElement>('#series-input')?.addEventListener('change',e=>{
         if((e.target as HTMLSelectElement).value==='table'){d.source='table';delete d.weightField;}else delete d.source;redraw();});
       root.querySelectorAll<HTMLInputElement&HTMLSelectElement>('[data-series]').forEach(el=>el.addEventListener('change',()=>{
-        const key=el.dataset.series as 'dateField'|'weightField'|'dateKind'|'period',value=el.value.trim();
-        if(key==='weightField'){if(value)d.weightField=value;else delete d.weightField;}
+        const key=el.dataset.series as 'dateField'|'weightField'|'dateKind'|'period'|'splitBy',value=el.value.trim();
+        if(key==='weightField'||key==='splitBy'){if(value)d[key]=value;else delete d[key];}
         else (d as Record<string,string>)[key]=value;redraw();}));
     },
     apply:d=>{change(w=>{const target=getNode(w,nodeId,'case_series');const was=target.params.source;target.params=d;

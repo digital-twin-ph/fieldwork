@@ -102,10 +102,11 @@
    "exampleUses": [
     "brazil-dengue-rj-2024",
     "hagelloch",
+    "hagelloch-people",
     "sierra-leone-measles",
     "snow-curve"
    ],
-   "exampleUseCount": 4,
+   "exampleUseCount": 5,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],

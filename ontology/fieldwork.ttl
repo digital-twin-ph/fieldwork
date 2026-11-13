@@ -1009,6 +1009,11 @@ fw:BeyondFence a fw:DataIssueKind; skos:inScheme fw:dataIssueKinds; skos:prefLab
   skos:definition "A number more than 1.5 times the interquartile range beyond the first or third quartile. A value to look at, not an error: no distribution is assumed.".
 fw:AreaBeyondRaster a fw:DataIssueKind; skos:inScheme fw:dataIssueKinds; skos:prefLabel "Area beyond the raster"; dqv:inDimension fw:coverage;
   skos:definition "Part of the study area lies past the raster's edge, as where two outlines of one country differ at the border; those parts have no values.".
+# A CASE SERIES SPLIT BY A COLUMN (experiment 210): the column, and each bin's value of it.
+fw:seriesSplitBy a owl:DatatypeProperty; rdfs:label "series split by";
+  rdfs:comment "The record column a case series is counted for each value of, such as a school class.".
+fw:seriesGroup a owl:DatatypeProperty; rdfs:label "series group";
+  rdfs:comment "The value of the split column a series bin counts; empty for records where it is blank.".
 # A DATE MARKED ON A CHART'S TIME AXIS (experiment 210): its day and the practitioner's own label, such as the day Snow's
 # pump handle came off. An annotation of the figure, not a result of the run.
 fw:markedDate a owl:ObjectProperty; rdfs:label "marked date";

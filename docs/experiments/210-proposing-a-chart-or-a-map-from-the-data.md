@@ -48,7 +48,8 @@ and a density surface. Each would extend Chart or Map, not add a widget.
 3. **A marked date** in Chart: Snow's epidemic curve with 8 September 1854, the day the pump handle came off. **Built
    2026-11-12**, several to a chart, each label the practitioner's (agreed the same day: *"Agree with both"*, to several
    dates and to Snow's label being written into the example from his account).
-4. **Stacked epidemic curve** in Chart: Hagelloch's by school class.
+4. **Stacked epidemic curve** in Chart: Hagelloch's by school class. **Built 2026-11-12**, by week: classes 1, 2 and
+   0 peak a week apart in that order, in *Who fell ill?*.
 5. **Histogram and scatter** in Chart: Hagelloch's serial intervals; Snow's deaths against walking distance to the pump.
 6. **The proposer**: the rules above, with their sentences, offered in Chart's and Map's Configure…, measured on every
    worked example's figures.

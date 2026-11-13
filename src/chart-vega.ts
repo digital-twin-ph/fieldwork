@@ -101,6 +101,7 @@ export function wrapToWidth(value:string,width:number):string[]{
 export function chartVegaSpec(chart:ChartSummary,params:ChartParams,context:{sourceId?:string;runId?:string;sourceLabel?:string}={}){
   if(chartRenderer(params)!=='vega-lite')throw new Error('Vega-Lite rendering is not selected.');
   if(chart.panels?.length&&params.figure==='pyramid')return pyramidVegaSpec(chart,params,context);
+  if(chart.panels?.length&&params.figure==='stacked')return stackedVegaSpec(chart,params,context);
   if(chart.panels?.length)return panelVegaSpec(chart,params,context);
   if(chart.interval)return intervalVegaSpec(chart,params,context);
   // A LINE runs along the categories in their order, left to right (the practitioner, 2026-11-12: Chart offered no line).
@@ -318,6 +319,42 @@ export const panelMark=(chart:ChartSummary,params:ChartParams,panel:string):'bar
  *  because a facet draws every panel with one mark and the practitioner chooses a mark per panel. Only the bottom panel
  *  carries the x axis, so the panels read as one figure. A shaded period is a rectangle behind every panel; it needs a
  *  time axis, since a range of categories has no width to shade. */
+/** STACKED BARS (experiment 210, 2026-11-12): one bar per period, its height the total, divided by the values of the column
+ *  the panels would be drawn by, one Okabe-Ito colour each, the first at the bottom. More values than the palette has hues
+ *  is refused, naming how many: colours repeated would group values nobody grouped. A marked date is drawn over it. */
+export function stackedVegaSpec(chart:ChartSummary,params:ChartParams,context:{sourceId?:string;runId?:string;sourceLabel?:string}){
+  const by=params.panelsBy?.trim()||chart.groupedBy||'group',groups=chart.panels!;
+  if(groups.length>FIGURE_PALETTE.length)throw new Error(`Stacked bars give each value of ${by} its own colour, and ${by} has ${groups.length} values, more than the ${FIGURE_PALETTE.length} colours that can be told apart. Draw panels instead.`);
+  const name=(g:string)=>g===''?`${by} blank`:g;
+  const labels=[...new Set(chart.bins.map(b=>b.label))];
+  const periodBins=labels.map(label=>chart.bins.find(b=>b.label===label)!);
+  const values=chart.bins.map(b=>({displayLabel:b.label,group:name(b.panel??''),order:groups.indexOf(b.panel??''),count:b.missing?0:b.count}));
+  const width=Math.min(640,Math.max(300,labels.length*14)),sourceNote=chartSourceNote(params,context.sourceId,context.runId,context.sourceLabel);
+  const marked=markedLayers(params,labels,periodBins,'x');
+  const drawn={mark:{type:'bar' as const},encoding:{
+    x:{field:'displayLabel',type:'nominal' as const,sort:labels,title:params.xAxisTitle?.trim()||chart.categoryTitle||null,axis:{labelOverlap:'parity' as const,labelSeparation:2}},
+    y:{field:'count',type:'quantitative' as const,stack:'zero' as const,title:params.yAxisTitle?.trim()||'Cases'},
+    color:{field:'group',type:'nominal' as const,scale:{domain:groups.map(name),range:FIGURE_PALETTE.slice(0,groups.length)},legend:{title:by,orient:'top' as const}},
+    order:{field:'order',type:'quantitative' as const},
+    tooltip:[{field:'displayLabel',type:'nominal' as const,title:chart.categoryTitle??'period'},{field:'group',type:'nominal' as const,title:by},{field:'count',type:'quantitative' as const,title:'cases'}]}};
+  return {
+    $schema:'https://vega.github.io/schema/vega-lite/v6.json',
+    background:FIGURE_ROLE.background,
+    description:chart.caption,
+    data:{values},
+    title:{text:params.chartTitle?.trim()||chart.caption,
+      subtitle:[params.subtitle?.trim(),sourceNote].filter((part):part is string=>!!part).flatMap(part=>wrapToWidth(part,width)),anchor:'start' as const},
+    width,height:280,
+    ...(marked.length?{layer:[drawn,...marked]}:drawn),
+    config:{view:{stroke:null},font:FIGURE_TYPE.family,
+      axis:{...TUFTE_AXIS,labelFontSize:FIGURE_TYPE.tick,titleFontSize:FIGURE_TYPE.axisTitle,labelColor:FIGURE_ROLE.quietInk,titleColor:FIGURE_ROLE.ink},
+      axisQuantitative:{grid:true,gridColor:FIGURE_GRID,gridWidth:1},
+      legend:{labelFontSize:FIGURE_TYPE.tick,titleFontSize:FIGURE_TYPE.axisTitle,labelColor:FIGURE_ROLE.ink,titleColor:FIGURE_ROLE.ink},
+      title:{fontSize:FIGURE_TYPE.title,subtitleFontSize:FIGURE_TYPE.subtitle,color:FIGURE_ROLE.ink,subtitleColor:FIGURE_ROLE.quietInk,subtitlePadding:8,offset:12},
+      bar:{binSpacing:1}},
+  };
+}
+
 /** A POPULATION PYRAMID (experiment 210, 2026-11-12): two groups back to back, one band per row, the youngest at the
  *  bottom, each side counted outward and read as a count on either side. The groups are the two named values of the
  *  column the panels would be drawn by; rows where it is blank are not drawn, and the subtitle says how many. */

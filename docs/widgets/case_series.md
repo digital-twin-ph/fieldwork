@@ -57,6 +57,13 @@ onset or of notification.
 The chart's line under the title gives the total and what it was counted from: *423,795 cases from 4,692 records* when
 each record carries a count, *188 records* when each record is one case.
 
+### Counted for each value of a column
+
+**Count each value of** names a column of the records, such as a school class. Each period is then counted for each
+of its values, every period kept for every value, a blank its own value; the table is keyed by period and the column,
+and Chart draws it in panels or, with **Draw** *Stacked bars*, as one bar per period divided by the values. Hagelloch's
+*Who fell ill?* counts its cases by week for each school class. Only for records that arrive as points.
+
 ## What it will not do
 
 **It will not treat one kind of date as another.** A curve by date of death is not a curve by date of onset, so the

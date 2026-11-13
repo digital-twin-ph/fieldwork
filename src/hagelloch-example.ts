@@ -240,6 +240,14 @@ export function hagellochPeopleExample():Workflow{
     {id:'age-table',type:'table_output',x:780,y:250,params:{label:'Cases by age and gender'}},
     {id:'by-class',type:'group_table',x:400,y:420,params:{label:'Cases by school class',by:['class'],aggregate:'count'}},
     {id:'class-table',type:'table_output',x:780,y:420,params:{label:'Cases by school class'}},
+    // WHEN, AMONG WHICH CLASS (experiment 210, 2026-11-12): the epidemic curve stacked by school class, a related question
+    // the data already answer. Class as the file codes it, 0 to 2, every child carrying one.
+    {id:'class-curve',type:'case_series',x:400,y:620,params:{label:'Cases by day of prodrome, by school class',source:'points',
+      dateField:'date_of_prodrome',dateKind:'onset',period:'week',splitBy:'class'}},
+    {id:'class-curve-chart',type:'chart_output',x:780,y:620,params:{label:'Epidemic curve by school class',inputMode:'series',figure:'stacked' as const,
+      chartTitle:'Measles cases by week of prodrome and school class, Hagelloch, 1861',yAxisTitle:'Cases',
+      // The codes as the file holds them, their meaning as its provenance records it.
+      subtitle:'School class as the file codes it: 0 pre-school, 1 first class, 2 second class.'}},
   ];
   const edges=[
     {id:'cases-age',from:'cases',to:'by-age-gender',port:'records'},
@@ -247,6 +255,8 @@ export function hagellochPeopleExample():Workflow{
     {id:'age-table-in',from:'by-age-gender',to:'age-table',port:'table'},
     {id:'cases-class',from:'cases',to:'by-class',port:'records'},
     {id:'class-table-in',from:'by-class',to:'class-table',port:'table'},
+    {id:'cases-class-curve',from:'cases',to:'class-curve',port:'points'},
+    {id:'class-curve-out',from:'class-curve',to:'class-curve-chart',port:'series'},
   ];
   return {schema:'fieldwork/workflow/1',name:'Who fell ill? Hagelloch, 1861',
     exampleId:'hagelloch-people',nodes,edges} as unknown as Workflow;

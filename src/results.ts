@@ -110,6 +110,7 @@ export interface ChartSummary {field:'status'|'zone'|'tier'|'count'|'total'|'per
   /** Panels, in the order first met, when the chart is drawn one panel per value of a key column. `temporal` says the
    *  category axis is dates, so it is drawn as time. Experiment 174. */
   panels?:string[]; temporal?:boolean;
+  /** The column a split series was counted by, which its panels or stack are the values of (experiment 210). */ groupedBy?:string;
   /** A panel's meaning, from the table's declared columns, shown beside its name (experiment 172). */
   meanings?:Record<string,string>;
   /** AN ESTIMATE WITH ITS INTERVAL per bin, read from the table's declaration (experiment 181). `ratio` puts the

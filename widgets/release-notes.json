@@ -128,12 +128,12 @@
    "migrationFrom": []
   },
   "case_series": {
-   "version": "0.4.0",
+   "version": "0.5.0",
    "released": "2026-11-12",
    "changes": [
     {
      "kind": "minor",
-     "description": "Month of the year as a period: January to December, every year together, all twelve kept (the practitioner, 2026-11-12)."
+     "description": "Count each value of a column: the series counted per period for each value of a record column, every period kept for every value, blank its own value; its table keyed by period and the column, its receipt saying so (fw:seriesSplitBy, fw:seriesGroup). For a curve stacked or in panels by the column (experiment 210)."
     }
    ],
    "breaking": false,
@@ -153,12 +153,12 @@
    "replacementCandidate": "urn:fieldwork:widget:observations"
   },
   "chart_output": {
-   "version": "0.17.0",
+   "version": "0.18.0",
    "released": "2026-11-12",
    "changes": [
     {
      "kind": "minor",
-     "description": "Marked dates: on a chart whose axis is dates, each a dashed line at its day (or in the bar that holds it) with the practitioner's own label, several to a chart, over a single chart or across panels; set in Configure…, recorded in the receipt as fw:markedDate. John Snow's epidemic curve marks the day the pump handle came off (experiment 210)."
+     "description": "Stacked bars: a case series split by a column drawn as one bar per period divided by its values, one colour each, refused past the six colours that can be told apart; set by Draw in Configure… for a series. Hagelloch's curve by school class (experiment 210)."
     }
    ],
    "breaking": false,

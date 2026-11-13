@@ -13,7 +13,7 @@ test('Hagelloch: who fell ill opens, runs, and counts the children by age, gende
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:90_000});
   await page.locator('[data-view="results"]').click();
-  await expect(page.locator('#result-tabs [data-output]')).toHaveCount(3);
+  await expect(page.locator('#result-tabs [data-output]')).toHaveCount(4);
   await page.getByRole('tab',{name:'Cases by school class'}).click();
   const main=page.locator('main').first();
   for(const [code,count] of [['0','90'],['1','30'],['2','68']])
@@ -25,6 +25,13 @@ test('Hagelloch: who fell ill opens, runs, and counts the children by age, gende
   await expect(page.locator('#vega-chart [aria-label^="Y-axis"]').first()).toHaveAttribute('aria-label',/16 values: 15, 14, 13, 12, 11, ending with 0/);
   await expect(page.locator('#vega-chart svg.marks')).toContainText('11 with gender blank are not drawn.');
   await expect(page.locator('#vega-chart svg.marks')).toContainText('f ← count → m');
+  // THE CURVE STACKED BY SCHOOL CLASS (experiment 210, 2026-11-12): one bar a week, divided by class 0, 1 and 2.
+  await page.getByRole('tab',{name:'Epidemic curve by school class'}).click();
+  await expect(page.locator('#vega-chart svg.marks')).toBeVisible({timeout:30_000});
+  await expect(page.locator('#vega-chart svg.marks')).toContainText('class');
+  await expect(page.locator('#vega-chart g.mark-rect.role-mark path')).toHaveCount(39);
+  await page.locator('#vega-chart').scrollIntoViewIfNeeded();
+  await page.screenshot({path:'test-results/hagelloch-class-curve.png'});
   await page.screenshot({path:'test-results/hagelloch-people-example.png',fullPage:true});
   expect(errors).toEqual([]);
 });

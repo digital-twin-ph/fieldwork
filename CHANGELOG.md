@@ -3,6 +3,13 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.105.0 — 2026-11-12
+
+- **An epidemic curve stacked by a column.** Cases by period can count each value of a column, and Chart draws the
+  curve as stacked bars, one colour a value. Hagelloch's *Who fell ill?* now stacks its weekly curve by school class: the
+  first class rises first, then the second, then the pre-school children. Cases by period and Chart 0.18.0,
+  experiment 210.
+
 ## 0.104.0 — 2026-11-12
 
 - **A chart marks dates.** On a time axis, such as an epidemic curve's, **Marked dates** in Configure… draws a dashed

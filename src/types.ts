@@ -419,7 +419,8 @@ export interface ParamsByType {
     search?:import('./satellite-catalog.js').CatalogSearch; kept?:string[];
     /** Where the search's items are kept in the payload store (experiment 182). Written on save. */ searchRef?:string};
   study_design:{label:string;design:StudyDesign;period:string;unitOfAnalysis:string;note:string;computations?:string[];answers?:Record<string,import('./study-design-questions.js').DesignAnswer>;table?:import('./study-design-questions.js').DeclaredTable};
-  case_series:{label:string;source?:'points'|'table';dateField:string;dateKind:import('./case-series.js').DateKind;period:import('./case-series.js').Period;weightField?:string};
+  case_series:{label:string;source?:'points'|'table';dateField:string;dateKind:import('./case-series.js').DateKind;period:import('./case-series.js').Period;weightField?:string;
+    /** Split by a record column (experiment 210). */ splitBy?:string};
   summarize_combined_area:{label:string;zone:number;hemisphere:'north'|'south';yields?:'area'};
   snap_to_network:{label:string;zone:number;hemisphere:'north'|'south';maxSnapM:number};
   /** `zone`, `hemisphere` and `maxSnapM` are OPTIONAL: they are needed only for origins this
@@ -649,7 +650,7 @@ export interface ParamsByType {
   chart_output:{label:string; section?:import('./notes.js').FigureSection;
     /** WHAT IS DRAWN: bars (the default), or who infected whom as chains over time (experiment 200, step 5), with the
      *  columns naming each case, its infector and its date. */
-    figure?:'bars'|'tree'|'pyramid'; tree?:{id:string;parent:string;date:string;
+    figure?:'bars'|'tree'|'pyramid'|'stacked'; tree?:{id:string;parent:string;date:string;
       /** A written value meaning no source recorded, such as "none recorded" (2026-11-12). Empty is always none. */
       none?:string};
     /** ONE PANEL PER VALUE of this key column, stacked on a shared x axis, each with its own y scale (experiment 174).

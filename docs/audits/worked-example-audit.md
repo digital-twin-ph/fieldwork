@@ -81,7 +81,7 @@ evidence about that example.
 | `apply_ruleset` | 7 | hagelloch-chains, mers-korea-2015, nigeria-immunization-2024, sea-level-rise-philippines, sierra-leone-measles, south-london-1854, workflows-rulesets |
 | `relate_table` | 7 | brazil-dengue-rj-2024, hagelloch-chains, mers-korea-2015, nyc-asthma-ozone-2016-2025, sea-level-rise-philippines, sierra-leone-measles, south-london-1854 |
 | `select_rows` | 7 | brazil-dengue-rj-2024, nigeria-immunization-2024, nyc-asthma-ozone-2016-2025, salmonella-germany-2021, sea-level-rise-philippines, sierra-leone-measles, south-london-1854 |
-| `case_series` | 4 | brazil-dengue-rj-2024, hagelloch, sierra-leone-measles, snow-curve |
+| `case_series` | 5 | brazil-dengue-rj-2024, hagelloch, hagelloch-people, sierra-leone-measles, snow-curve |
 | `join_table_to_area` | 4 | brazil-dengue-rj-2024, nigeria-immunization-2024, sierra-leone-measles, south-london-1854 |
 | `rate` | 3 | brazil-dengue-rj-2024, sierra-leone-measles, south-london-1854 |
 | `regression` | 3 | brazil-dengue-rj-2024, nyc-asthma-ozone-2016-2025, salmonella-germany-2021 |
@@ -143,7 +143,7 @@ that does not can be rebuilt only by copying this file.
 | `hagelloch-chains` | 10 | 2 | 1 | — | 1 | — |
 | `hagelloch-cluster` | 8 | 2 | 1 | — | 1 | — |
 | `hagelloch-sheet` | 4 | 3 | 1 | **1** — sheet (map_image_input) | 1 | — |
-| `hagelloch-people` | 6 | 1 | 1 | — | — | — |
+| `hagelloch-people` | 8 | 1 | 1 | — | — | — |
 
 Across the shipped examples, **3 nodes carry data and declare no source**. That is the list a from-scratch rebuild would have to copy rather than fetch. A further 8 study areas carry a drawn geometry with no declared source; those are redrawn rather than fetched, which the sized-box control makes an entry rather than a tracing.
 
@@ -176,8 +176,8 @@ different things: an example can be four nodes and complete, or eighteen and not
 | `snow-voronoi` | 9 | 2 / 4 | published files, rebuilt from scratch |
 | `hagelloch` | 8 | 2 / 4 | published files, rebuilt from scratch |
 | `hagelloch-cluster` | 8 | 2 / 4 | published files, rebuilt from scratch |
+| `hagelloch-people` | 8 | 2 / 4 | published files, rebuilt from scratch |
 | `snow-deaths` | 6 | 2 / 4 | published files, rebuilt from scratch |
-| `hagelloch-people` | 6 | 2 / 4 | published files, rebuilt from scratch |
 | `snow-extent` | 4 | 2 / 4 | published files, rebuilt from scratch |
 | `snow-geoprivacy` | 15 | 1 / 4 | unattached, published files, rebuilt from scratch |
 | `snow-isochrone` | 12 | 1 / 4 | sources, published files, rebuilt from scratch |

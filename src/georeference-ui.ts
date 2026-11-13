@@ -1,3 +1,4 @@
+import {exampleById,verifiedFile} from './example-catalog.js';
 /** GEOREFERENCED MAP IMAGE, CONFIGURED (experiments 186 and 201): the image, how it is placed -- by a world file, or by
  *  points matched between the image and today's map -- and how far it can be read through.
  *
@@ -42,7 +43,7 @@ export interface MapImageDraft {
   /** The image a worked example offers, served beside the application. */
   offered?:OfferedImage;
 }
-export interface OfferedImage {url:string; filename:string; credit:string; width?:number; height?:number}
+export interface OfferedImage {url?:string; from?:{example:string;path:string}; filename:string; credit:string; width?:number; height?:number}
 
 /** The cue, on or off, for this visit: a viewer's choice, not the workflow's. */
 let cuesOn=true;
@@ -127,9 +128,17 @@ export function openMapImageConfig(o:{step:string;initial:MapImageDraft;esc:Esca
       root.querySelector<HTMLButtonElement>('#map-image-offered')?.addEventListener('click',async e=>{
         const button=e.target as HTMLButtonElement,offered=d.offered!;button.disabled=true;button.textContent='Fetching the image…';
         try{
-          const response=await fetch(offered.url);
-          if(!response.ok)throw new Error(`The example's image could not be fetched (${response.status}).`);
-          const blob=await response.blob();
+          let blob:Blob;
+          if(offered.from){
+            // FROM THE EXAMPLE'S REPOSITORY, at its pinned commit, and refused unless its digest is the one pinned.
+            const example=exampleById(offered.from.example);
+            if(!example)throw new Error(`${offered.from.example} is not in this version's catalog of worked examples.`);
+            blob=new Blob([await verifiedFile(example,offered.from.path) as BlobPart],{type:offered.from.path.endsWith('.png')?'image/png':'image/jpeg'});
+          }else{
+            const response=await fetch(offered.url!);
+            if(!response.ok)throw new Error(`The example's image could not be fetched (${response.status}).`);
+            blob=await response.blob();
+          }
           await useFile(new File([blob],offered.filename,{type:blob.type||'image/jpeg'}));
         }catch(error){button.disabled=false;button.textContent=`Use this example's image: ${offered.filename}`;
           root.querySelector('.muted')?.insertAdjacentText('afterend',error instanceof Error?` ${error.message}`:'');}

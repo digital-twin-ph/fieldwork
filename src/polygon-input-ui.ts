@@ -5,6 +5,7 @@ import {extractsFor,EXTRACT_CATALOGUE_TAKEN} from './extract-catalogue.js';
 import {geometryBounds} from './study-area.js';
 import {labelField} from './catchment-ui.js';
 import {shareAlike} from './input-provenance.js';
+import type {FeatureDecisions} from './polygon-review.js';
 
 /** THE WIDGET HAD NO INSPECTOR AT ALL until this panel.
  *
@@ -102,23 +103,37 @@ function nameFields(p:WorkflowNode<'polygon_input'>['params'],esc:Escape):string
 export interface PolygonDraft {
   inputMethod:'file'|'extract'; kinds:AreaKind[]; marginM:number; minVertices?:number;
   nameField?:string; layerName?:string; area?:string; label:string;
+  /** Choose features' decisions, made in the same dialog (2026-11-13). */
+  decisions:FeatureDecisions;
 }
 export function polygonDraftOf(n:WorkflowNode<'polygon_input'>,connectedArea?:string):PolygonDraft{
   const p=n.params;
   return {inputMethod:p.inputMethod==='extract'?'extract':'file',kinds:[...(p.kinds??[])],marginM:p.marginM??0,
     ...(p.minVertices!==undefined?{minVertices:p.minVertices}:{}),...(p.nameField?{nameField:p.nameField}:{}),
-    ...(p.layerName?{layerName:p.layerName}:{}),...(connectedArea?{area:connectedArea}:{}),label:p.label||''};
+    ...(p.layerName?{layerName:p.layerName}:{}),...(connectedArea?{area:connectedArea}:{}),label:p.label||'',
+    decisions:{hidden:[...(p.hidden??[])],clipped:p.clipToBox===true,names:{...(p.names??{})},merges:(p.merges??[]).map(g=>[...g])}};
 }
-/** What is still missing before Apply can read, one thing at a time. */
-export function polygonMissing(d:PolygonDraft,file?:File):string{
+/** What is still missing before Apply, one thing at a time. A layer already held needs no file: Apply then writes the
+ *  settings and the features chosen, and a file is chosen only to replace what is held. */
+export function polygonMissing(d:PolygonDraft,file?:File,held=false):string{
+  if(held&&!file)return '';
   return d.inputMethod==='extract'
     ?(!d.area?'Choose the study area to read inside.':!d.kinds.length?'Choose at least one kind of area to read.'
       :!file?'Choose an extract file.':'')
     :(!file?'Choose a GeoJSON file.':'');
 }
+/** THE FILE THE LAYER HOLDS, said where the file is chosen: "No file chosen" beside a layer of 32 features read from one
+ *  (the practitioner's screenshot, 2026-11-13) said the opposite of what was there. */
+export function heldFileLine(source:WorkflowNode<'polygon_input'>['params']['source'],count:number,esc:Escape):string{
+  if(!count)return '';
+  return `<p class="polygon-held" data-polygon-held>Holding ${count.toLocaleString('en')} feature${count===1?'':'s'}`
+    +(source?.filename?` read from <strong>${esc(source.filename)}</strong>`:'')
+    +(source?.sha256?` \u00b7 sha256 ${esc(source.sha256.slice(0,12))}\u2026`:'')
+    +`. Choose a file only to replace them.</p>`;
+}
 /** The settings, as the panel had them, numbered in the order a person decides them. */
 export function polygonConfigSettings(d:PolygonDraft,esc:Escape,boundary:Boundary|undefined,
-  areaSources:{id:string;label:string}[],chosen?:string):string{
+  areaSources:{id:string;label:string}[],chosen?:string,held=''):string{
   const step=(index:number,title:string,inner:string)=>
     `<div class="field-step"><span class="inspector-section">${index} · ${esc(title)}</span>${inner}</div>`;
   const names=`<label class="field-label" for="polygon-name-field">Which property names each feature</label>`
@@ -127,7 +142,7 @@ export function polygonConfigSettings(d:PolygonDraft,esc:Escape,boundary:Boundar
     +`<label class="field-label" for="polygon-layer-name">What to call the layer</label>`
     +`<input id="polygon-layer-name" maxlength="100" value="${esc(d.layerName||'')}" placeholder="${esc(d.label||'Polygon layer')}">`
     +`<small>What a reader sees beside it on a map.</small>`;
-  const pending=`<p id="polygon-pending" class="muted">${chosen?`Chosen: ${esc(chosen)}`:''}</p>`;
+  const pending=(chosen?'':held)+`<p id="polygon-pending" class="muted">${chosen?`Chosen: ${esc(chosen)}`:''}</p>`;
   let html=step(1,'Where the features come from',
     `<select id="polygon-input-method" aria-label="Where the features come from">`
     +`<option value="file" ${d.inputMethod==='file'?'selected':''}>A GeoJSON file</option>`

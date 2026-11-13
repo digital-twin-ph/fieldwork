@@ -839,10 +839,14 @@ export function validateWorkflow(raw:unknown):Workflow {
         ||!(g.radiusPx>0)||!(g.radiusM>0)||Math.abs(g.lonlat[0])>180||Math.abs(g.lonlat[1])>90)))
         throw new Error('A guide point is a feature, why it was chosen, and where it is on the image and the map, each with a radius.');
       // Served beside the application, never fetched from elsewhere: a worked example's file, not a link.
-      if(p.offered!==undefined&&(typeof p.offered?.url!=='string'||!/^\.\/examples\/[a-z0-9-]+\/[a-z0-9._-]+\.(jpg|png)$/.test(p.offered.url)
+      // Or a file a curated example repository pins, fetched by its digest (2026-11-13). One of the two, never both.
+      const builtIn=typeof p.offered?.url==='string'&&/^\.\/examples\/[a-z0-9-]+\/[a-z0-9._-]+\.(jpg|png)$/.test(p.offered.url);
+      const pinned=typeof p.offered?.from?.example==='string'&&/^urn:fieldwork:example:[a-z0-9-]+$/.test(p.offered.from.example)
+        &&typeof p.offered.from.path==='string'&&/^[a-z0-9][a-z0-9/._-]*\.(jpg|png)$/.test(p.offered.from.path)&&!p.offered.from.path.includes('..');
+      if(p.offered!==undefined&&(builtIn===pinned
         ||typeof p.offered.filename!=='string'||p.offered.filename.length>200||typeof p.offered.credit!=='string'||p.offered.credit.length>600
         ||(p.offered.width!==undefined&&!(Number.isInteger(p.offered.width)&&p.offered.width>0))||(p.offered.height!==undefined&&!(Number.isInteger(p.offered.height)&&p.offered.height>0))))
-        throw new Error('An offered image is a file served with this application, under examples/, with its credit.');
+        throw new Error('An offered image is a file served with this application under examples/, or one a curated example pins, with its credit.');
       // AN UNCONFIGURED PLATE IS A DRAFT, NOT A BAD ONE. A node added from the palette carries
       // `[0,0,0,0]` because nobody has chosen an image yet, and until 2026-10-27 that tripped the
       // crossed-corners check: the widget could be offered and could not be added, which is what
@@ -1581,7 +1585,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         const setAside=new Set(node.params.hidden||[]);
         const features=setAside.size?merged.filter(f=>!setAside.has(String(f.id))):merged;
         if(!features.length)throw new Error(`Every feature in "${node.params.label||node.id}" is `
-          +'set aside, so this layer holds nothing. Open Choose features and tick at least one.');
+          +'set aside, so this layer holds nothing. In Configure…, tick at least one.');
         // CUT TO THE FRAME THE READ USED, where the practitioner asked for it. The same
         // `clipToBox` the viewer previews with, so what was on screen before Apply is what the
         // layer carries. Applied here rather than baked into the stored features: the read stays

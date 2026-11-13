@@ -415,12 +415,12 @@
    "migrationFrom": []
   },
   "map_image_input": {
-   "version": "0.6.0",
-   "released": "2026-11-11",
+   "version": "0.7.0",
+   "released": "2026-11-13",
    "changes": [
     {
      "kind": "minor",
-     "description": "On today's map the hand moves the map, Shift + click places the point with a crosshair while Shift is held, and a numbered point moves only after it is pressed and held, showing its coordinates as it moves (the practitioner, 2026-11-11: \"the pointer on the right map to place the point is a hand, not a precise tool\"). A plain click says how to place. Rows marked check this pair are readable in the dark theme, where their errors were light text on a light wash."
+     "description": "A worked example can offer an image its repository pins: fetched at the commit the catalog pins, only when the learner asks, and refused unless its digest matches. Until now an offered image had to be a file served with Fieldwork. Snow's Map 2 is the first, placed by hand by four recorded features (the practitioner, 2026-11-13: \"I think we can follow the Hagelloch example and allow the user to georeference it by hand as part of the worked example\")."
     }
    ],
    "breaking": false,
@@ -612,12 +612,12 @@
    "replacementCandidate": "urn:fieldwork:widget:apply_ruleset"
   },
   "polygon_input": {
-   "version": "0.4.0",
-   "released": "2026-11-11",
+   "version": "0.6.0",
+   "released": "2026-11-13",
    "changes": [
     {
      "kind": "minor",
-     "description": "On the standard Inspector (experiment 186; the practitioner, 2026-11-11: \"Let's also standardize the Polygon layer input ASAP\"): Name, Study area, one sentence of what it holds, and Configure…, which holds the five steps as a draft; Apply is the read. The dialog stays open while a read runs, saying each stage, and closes when the layer is kept; a failed read leaves it open with the reason and the step unchanged. Result shows the layer read and Choose features."
+     "description": "Choose features is in Configure…, under Preview: the features beside the file they came from, chosen in one dialog and written by Apply with the settings; Cancel leaves the layer as it was. The practitioner, 2026-11-13: \"I think the Choose features can be incorporated in the Configure dialog so the polygon can be viewed and configured in one go (less friction).\" Configure… opened on a layer it holds names the file and applies without it; it had said \"No file chosen\" and \"Choose a GeoJSON file.\" over 32 features read from one, with Apply disabled. A GeoJSON file is read as soon as it is chosen, so its features can be chosen before Apply; an extract is still read on Apply. A changed naming property names the held features again from their properties. Numbered 0.6.0 because widgets/releases/polygon_input/0.5.0.json, the three reductions of 2026-10-29, was committed and never registered; it is left as it was."
     }
    ],
    "breaking": false,

@@ -3,8 +3,21 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## 0.111.1 — 2026-11-13
+## 0.112.0 — 2026-11-13
 
+- **Snow's Map 2, placed by hand.** South London's plate is offered in Configure… and placed north-up by four features
+  recorded when it was first placed: Kennington Oval, Battersea Park, Crystal Palace grounds and Nunhead Cemetery. A
+  worked example can now offer an image from its own repository, fetched only when asked and checked against its pinned
+  digest. Map image 0.7.0; the example at de92a84, nine workflows.
+- **A polygon layer is viewed and configured in one dialog.** Choose features is in Configure…, under Preview: the
+  map and the rows beside the file. Opened again, Configure… names the file the layer holds and applies without it; it
+  had said "No file chosen" over 32 features read from one. A GeoJSON file's features can be chosen before Apply.
+  Polygon layer 0.6.0.
+- **A workflow opened from an example repository no longer says "Built on Blank canvas and changed since"** when
+  nobody changed it.
+- **The write-up says which workflows wait for you**, and for what, apart from those that have not run: Run workflows
+  had counted Map 2 placed by hand as never run.
+- **Describe columns saved during a run waits for the run** instead of saying the descriptions could not be saved.
 - **Sample a raster shows two inputs, not five**: Raster, and Read at (points, a polygon layer or a study area). The
   ports underneath are unchanged. Configure… recognises a WorldPop or GRID3 raster by its file's name and says what each
   cell holds, such as *an estimated number of people living in it*. Sample a raster 0.6.1.

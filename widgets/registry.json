@@ -802,7 +802,7 @@
     {
       "id": "urn:fieldwork:widget:map_image_input",
       "nodeType": "map_image_input",
-      "currentVersion": "0.6.0",
+      "currentVersion": "0.7.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -838,6 +838,11 @@
           "version": "0.6.0",
           "path": "widgets/releases/map_image_input/0.6.0.json",
           "sha256": "2e99d0537b44e952a6aa5e4eedb937841d17f383d67b7ccf6d7440395f3b6476"
+        },
+        {
+          "version": "0.7.0",
+          "path": "widgets/releases/map_image_input/0.7.0.json",
+          "sha256": "b838bb280516a9ffa754c0621f09fee817a02ba9644021f9917619fb0bf9ea4b"
         }
       ]
     },
@@ -1355,7 +1360,7 @@
     {
       "id": "urn:fieldwork:widget:polygon_input",
       "nodeType": "polygon_input",
-      "currentVersion": "0.4.0",
+      "currentVersion": "0.6.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -1376,6 +1381,11 @@
           "version": "0.4.0",
           "path": "widgets/releases/polygon_input/0.4.0.json",
           "sha256": "3c4ba9ea7a1a55b984ee29f00796f074793b98e167e6efd4be939e0d284c07fd"
+        },
+        {
+          "version": "0.6.0",
+          "path": "widgets/releases/polygon_input/0.6.0.json",
+          "sha256": "41c4108962d506a21981a15e5065b75dbe22671481ccaa3d896c991bf39ee88b"
         }
       ]
     },

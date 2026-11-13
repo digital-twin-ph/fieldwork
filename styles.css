@@ -845,7 +845,8 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 .polygon-review-row.is-picked{background:rgba(194,65,12,.16)}
 .polygon-review-name{background:none;border:0;color:inherit;font:inherit;text-align:left;cursor:pointer;padding:0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .polygon-review-name:hover{text-decoration:underline}
-#polygon-dialog{max-width:64rem;width:94vw}
+.polygon-review-actions{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin-top:.5rem}
+.polygon-held{margin:.4rem 0 0}
 @media (max-width:720px){.polygon-review-layout{grid-template-columns:1fr}}
 .polygon-review-row.is-chosen{background:rgba(29,78,216,.22)}
 #polygon-review-selection{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}

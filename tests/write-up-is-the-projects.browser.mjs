@@ -38,8 +38,13 @@ const bundle=skip?Buffer.alloc(0):readFileSync(BUNDLE);
  *  asserted is the RELATION the control reports -- all pending before anything runs, one fewer
  *  after one runs, all run at the end -- which is what the control is for and is true at any
  *  size. */
-const workflows=skip?[]:JSON.parse(gunzipSync(bundle)).workflows.map(w=>w.document.name);
-const TOTAL=workflows.length;
+const documents=skip?[]:JSON.parse(gunzipSync(bundle)).workflows.map(w=>w.document);
+const TOTAL=documents.length;
+// THE ONES THAT WAIT FOR THE LEARNER, also from the bundle: a map image the example offers and nobody has chosen yet
+// (Snow's Map 2 placed by hand, 2026-11-13). Said apart, as waiting; never counted as run, and never as failing to.
+const waits=d=>d.nodes.some(n=>n.type==='map_image_input'&&n.params.offered&&!n.params.image?.width);
+const workflows=documents.filter(d=>!waits(d)).map(d=>d.name),WAITING=documents.filter(waits).map(d=>d.name);
+const RUNNABLE=workflows.length;
 
 const open=async page=>{
   await page.route(/raw\.githubusercontent\.com/,r=>r.fulfill({status:200,body:bundle}));
@@ -137,7 +142,8 @@ test('a freshly opened project says why its write-up has no figures yet',async({
   await notes(page);
   await expect(machined(page)).toHaveCount(0);
   const bar=page.locator('.notes-run');
-  await expect(bar).toContainText(`${TOTAL} of this project's ${TOTAL} workflows`);
+  await expect(bar).toContainText(`${RUNNABLE} of this project's ${TOTAL} workflows`);
+  for(const name of WAITING)await expect(bar.locator('[data-notes-waiting]')).toContainText(name);
   await expect(bar).toContainText('have not run');
   await expect(bar).toContainText('not in this write-up yet');
   // NAMED AND CAPPED, which is `relate_table`'s rule for its gap keys: a count tells nobody what
@@ -158,7 +164,7 @@ test('the control reports what has run, and stays once everything has',async({pa
   await open(page);
   await run(page,'Deaths per 1,000 people, by sub-district');
   await notes(page);
-  await expect(page.locator('.notes-run')).toContainText(`${TOTAL-1} of this project`);
+  await expect(page.locator('.notes-run')).toContainText(`${RUNNABLE-1} of this project`);
   // It reports and does not grade: no score, no completeness bar, no warning tone. A
   // practitioner who has run one of eight is not doing anything wrong.
   await expect(page.locator('.notes-run')).not.toContainText(/incomplete|missing|warning/i);
@@ -170,7 +176,8 @@ test('the control reports what has run, and stays once everything has',async({pa
   // THE CONTROL DOES NOT GO WHEN THE WORK IS DONE. It used to, and a practitioner whose six
   // workflows had all run correctly was shown nothing -- with no way to tell a tab that had
   // decided against a button from a tab that never had one. Reported 2026-10-30.
-  await expect(page.locator('.notes-run')).toContainText(`All ${TOTAL} of this project's workflows`);
+  await expect(page.locator('.notes-run')).toContainText(`All ${RUNNABLE} of this project's workflows`);
+  for(const name of WAITING)await expect(page.locator('.notes-run [data-notes-waiting]')).toContainText(name);
   await expect(page.locator('.notes-run [data-run-pending]')).toHaveText('Run workflows again');
   // And the whole investigation is now in one write-up.
   expect(await machined(page).count()).toBeGreaterThan(8);
@@ -184,7 +191,7 @@ test('one button runs the rest and assembles the whole write-up',async({page})=>
   await notes(page);
   await expect(machined(page)).toHaveCount(0);
   await page.locator('[data-run-pending]').click();
-  await expect(page.locator('.notes-run')).toContainText(`All ${TOTAL}`,{timeout:120000});
+  await expect(page.locator('.notes-run')).toContainText(`All ${RUNNABLE}`,{timeout:120000});
   // Every artifact kind is now in one write-up, from six different workflows.
   expect(await machined(page).count()).toBeGreaterThan(8);
   await expect(machined(page).filter({hasText:'bottom to top'}).first()).toBeVisible();
@@ -210,7 +217,7 @@ test('running the rest returns the practitioner to the workflow they were readin
     const before=await page.locator('#workflow-select').inputValue();
     await notes(page);
     await page.locator('[data-run-pending]').click();
-    await expect(page.locator('.notes-run')).toContainText(`All ${TOTAL}`,{timeout:120000});
+    await expect(page.locator('.notes-run')).toContainText(`All ${RUNNABLE}`,{timeout:120000});
     // The canvas moves once per workflow and is put back. Leaving a practitioner on whichever
     // workflow happened to be last would be the surface rearranging their work to do its own.
     await page.locator('[data-view="workflow"]').click();

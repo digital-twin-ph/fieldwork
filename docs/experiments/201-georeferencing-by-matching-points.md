@@ -195,3 +195,24 @@ small instead of looking for the feature. If so, the distance should appear only
 
 **Not established**: whether a learner finds the drawn junctions; a second reader's readings; that the drawn streets
 of 1824 lie exactly where the streets of today do.
+
+## Snow's Map 2, placed by hand, 2026-11-13
+
+The practitioner, of South London's plate shown as published: *"I think we can follow the Hagelloch example and allow
+the user to georeference it by hand as part of the worked example."*
+
+Built (map image 0.7.0, the example at de92a84): a ninth workflow, *Snow's Map 2, placed by hand*. The plate is
+offered in Configure…, and it is not a file shipped with Fieldwork: an offer may now name a file a curated example
+repository pins, fetched at the pinned commit and refused unless its digest matches. The four cues are the features
+recorded when the plate was first placed (`geo/map2-georeference.json`): Kennington Oval, Battersea Park, Crystal Palace
+grounds and Nunhead Cemetery. Their pixels are scaled from the 5,000-pixel scan to this 1,002-pixel plate. The rings
+are 12 pixels and 200 m, wider than Hagelloch's, because these are areas rather than street corners, and the recorded
+Oval point is 144 m from the published placement. The plate's published extent is drawn as an outline over the
+learner's placement.
+
+Checked in Chromium (`tests/snow-map2-by-hand.browser.mjs`): the plate is not fetched until asked; fetched once and
+checked; the four recorded points typed in, each inside its ring; the fit's largest error at Kennington Oval; run and
+drawn.
+
+**Not established**: whether a learner finds the four features on a plate this coarse, about 16 m a pixel; and
+whether the published extent drawn as an outline helps a learner judge their placement or distracts them.

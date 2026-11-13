@@ -25,24 +25,27 @@ import {clipToBox,applyNames,applyMerges,namedByFile} from './polygon-layer.js';
  *  Built on `openInputDataEditor`'s shape, which is the pushpin editor beside it: its own markup,
  *  its own Leaflet map, and an apply that hands back the one thing it decided. */
 
-const markup=`<dialog id="polygon-dialog" aria-labelledby="polygon-dialog-title">
-<div class="area-dialog-heading"><h2 id="polygon-dialog-title">Choose features</h2>
-<button id="polygon-review-close" class="icon-button" aria-label="Close the feature viewer">×</button></div>
-<p class="description">Every feature the read returned. Select a row to find it on the map; clear its box to leave it out of the layer. Nothing is deleted — the read is unchanged, and a feature you set aside comes back by ticking it again.</p>
+/** THE CHOOSER, AS PART OF CONFIGURE… (2026-11-13). The practitioner, of the Polygon layer's two dialogs: *"I think the
+ *  Choose features can be incorporated in the Configure dialog so the polygon can be viewed and configured in one go
+ *  (less friction)."* So this mounts inside Configure…'s Preview, and its decisions are part of the dialog's draft:
+ *  Apply writes them with the settings, Cancel leaves the step as it was. */
+const markup=`<div class="polygon-chooser" data-polygon-chooser>
+<p class="muted">Select a row to find it on the map; clear its box to leave it out of the layer. Nothing is deleted: a feature you set aside comes back by ticking it again.</p>
 <div class="polygon-review-layout"><div id="polygon-review-map"></div>
-<div id="polygon-review-rows" role="listbox" aria-label="Features this read returned"></div></div>
+<div id="polygon-review-rows" role="listbox" aria-label="Features in this layer"></div></div>
 <p id="polygon-review-selection" class="notice" hidden>
 <span id="polygon-review-selected"></span>
-<button id="polygon-review-keep-only" class="button small">Keep only these</button>
-<button id="polygon-review-discard" class="button small">Discard these</button>
-<button id="polygon-review-merge" class="button small">Merge these</button>
-<button id="polygon-review-clear" class="button small">Clear selection</button></p>
+<button type="button" id="polygon-review-keep-only" class="button small">Keep only these</button>
+<button type="button" id="polygon-review-discard" class="button small">Discard these</button>
+<button type="button" id="polygon-review-merge" class="button small">Merge these</button>
+<button type="button" id="polygon-review-clear" class="button small">Clear selection</button></p>
 <p id="polygon-review-status" class="notice" role="status"></p>
-<div class="area-dialog-actions"><label class="polygon-review-unnamed"><input type="checkbox" id="polygon-review-hide-unnamed"> Set aside the unnamed</label>
-<button id="polygon-review-clip" class="button" hidden>Clip to the box</button>
-<button id="polygon-review-all" class="button">Keep all</button>
-<button id="polygon-review-cancel" class="button">Cancel</button>
-<button id="polygon-review-apply" class="button primary">Keep selection</button></div></dialog>`;
+<div class="polygon-review-actions"><label class="polygon-review-unnamed"><input type="checkbox" id="polygon-review-hide-unnamed"> Set aside the unnamed</label>
+<button type="button" id="polygon-review-clip" class="button small" hidden>Clip to the box</button>
+<button type="button" id="polygon-review-all" class="button small">Keep all</button></div></div>`;
+
+/** What the chooser decides: the same four things the step stores. */
+export interface FeatureDecisions {hidden:string[]; clipped:boolean; names:Record<string,string>; merges:string[][]}
 
 type Feature=WorkflowNode<'polygon_input'>['params']['data']['features'][number];
 const ringsOf=(feature:Feature):number[][][]=>feature.geometry.type==='Polygon'
@@ -61,19 +64,18 @@ const CHOSEN={color:'#1D4ED8',weight:3,fillColor:'#1D4ED8',fillOpacity:.4};
 /** The box the read was scoped to. A frame, so it is drawn as one and takes no clicks. */
 const BOX={color:'#4D4D4D',weight:1.5,dashArray:'6 4',fill:false,interactive:false};
 
-export function openPolygonReview(node:WorkflowNode<'polygon_input'>,
-  esc:(value:unknown)=>string,
-  onApply:(decided:{hidden:string[];clipped:boolean;names:Record<string,string>;
-    merges:string[][]})=>boolean|void,
+export function mountFeatureChooser(host:HTMLElement,features:readonly Feature[],nameField:string|undefined,
+  decided:FeatureDecisions,esc:(value:unknown)=>string,
+  /** Told after every decision, with whether any feature is kept, so the dialog can refuse an empty layer. */
+  onChange:(anyKept:boolean)=>void,
   /** The box the read was scoped to, drawn for reference. The practitioner, 2026-10-29: *"can we
    *  also show the study area bounding box?"* -- which is the frame everything here was read
    *  inside, and without it a river running off the edge looks like a river that was cut. */
-  box?:readonly [number,number,number,number]){
-  if(!document.querySelector('#polygon-dialog'))document.body.insertAdjacentHTML('beforeend',markup);
-  const dialog=element('#polygon-dialog') as HTMLDialogElement;
-  const $=<S extends string>(s:S)=>element(s,dialog);
-  const features=node.params.data.features as Feature[];
-  const hidden=new Set(node.params.hidden||[]);
+  box?:readonly [number,number,number,number]):()=>void{
+  host.innerHTML=markup;
+  const root=host.querySelector<HTMLElement>('[data-polygon-chooser]')!;
+  const $=<S extends string>(s:S)=>element(s,root);
+  const hidden=new Set(decided.hidden);
   const layers=new Map<string,L.GeoJSON>();
   let picked:string|null=null,map:L.Map|null=null;
   let group:L.FeatureGroup|null=null,surface:L.Canvas|null=null;
@@ -87,14 +89,14 @@ export function openPolygonReview(node:WorkflowNode<'polygon_input'>,
   const selected=new Set<string>();
   /** Whether the layer is cut to the frame. Shown here the moment it is pressed, and carried out
    *  again by the run -- the same function both times, so the preview is the answer. */
-  let clipped=node.params.clipToBox===true;
+  let clipped=decided.clipped;
   /** The names given here, and the groups merged here. Both are decisions the run applies in the
    *  same order this preview does, so what is listed is what the layer will hold. */
-  const given=new Map(Object.entries(node.params.names||{}));
-  let merges:string[][]=(node.params.merges||[]).map(group=>[...group]);
+  const given=new Map(Object.entries(decided.names));
+  let merges:string[][]=decided.merges.map(group=>[...group]);
   /** The features as they stand after naming and merging: what every row, count and shape below
    *  is about. Recomputed rather than mutated, so an undone merge needs no bookkeeping. */
-  let shown=features;
+  let shown:readonly Feature[]=features;
   const settle=()=>{
     shown=applyMerges(applyNames(features,Object.fromEntries(given)),merges);
   };
@@ -109,7 +111,9 @@ export function openPolygonReview(node:WorkflowNode<'polygon_input'>,
         +`${hidden.size?`, ${hidden.size.toLocaleString()} set aside`:''}`
         +`${clipped?', cut to the box':''}.`
       : 'Every feature is set aside, so this layer would hold nothing. Tick at least one.';
-    ($('#polygon-review-apply') as HTMLButtonElement).disabled=!kept;
+    // INTO THE DRAFT, every time: Apply writes what is shown here.
+    decided.hidden=[...hidden];decided.clipped=clipped;decided.names=Object.fromEntries(given);decided.merges=merges.map(g=>[...g]);
+    onChange(kept>0);
   };
 
   const selection=()=>{
@@ -166,7 +170,7 @@ export function openPolygonReview(node:WorkflowNode<'polygon_input'>,
         +`<input type="checkbox" data-keep="${esc(id)}" ${hidden.has(id)?'':'checked'} aria-label="Keep ${esc(feature.name||id)}">`
         +`<input class="polygon-review-name" data-name="${esc(id)}" value="${esc(feature.name||id)}" `
         +`maxlength="100" aria-label="Name for ${esc(feature.name||id)}"`
-        +`${namedByFile(feature,node.params.nameField)?'':' data-unnamed="true"'}>`
+        +`${namedByFile(feature,nameField)?'':' data-unnamed="true"'}>`
         +`<span class="muted">${outside(id)?'outside the box'
           :`${verticesOf(feature).toLocaleString()} vertices`}</span></div>`;
     }).join('');
@@ -179,7 +183,7 @@ export function openPolygonReview(node:WorkflowNode<'polygon_input'>,
     const layer=layers.get(id);
     if(layer&&map)map.fitBounds(layer.getBounds(),{padding:[24,24],maxZoom:14});
     rows();
-    (dialog.querySelector(`[data-pick="${CSS.escape(id)}"]`) as HTMLElement|null)?.focus();
+    (root.querySelector(`[data-pick="${CSS.escape(id)}"]`) as HTMLElement|null)?.focus();
   };
 
   $('#polygon-review-rows').addEventListener('input',event=>{
@@ -224,7 +228,7 @@ export function openPolygonReview(node:WorkflowNode<'polygon_input'>,
     if(box.checked)hidden.delete(id);else hidden.add(id);
     restyle(id);status();
   };
-  $('#polygon-review-all').onclick=()=>{hidden.clear();rows();for(const id of layers.keys())restyle(id);status();};
+  $('#polygon-review-all').onclick=()=>{hidden.clear();rows();status();for(const id of layers.keys())restyle(id);status();};
   $('#polygon-review-clip').onclick=()=>{
     clipped=!clipped;
     ($('#polygon-review-clip') as HTMLButtonElement).textContent=clipped
@@ -248,7 +252,7 @@ export function openPolygonReview(node:WorkflowNode<'polygon_input'>,
     const on=(event.target as HTMLInputElement).checked;
     for(const feature of shown){
       const id=String(feature.id);
-      if(namedByFile(feature,node.params.nameField)||given.has(id))continue;
+      if(namedByFile(feature,nameField)||given.has(id))continue;
       if(on)hidden.add(id);else hidden.delete(id);
     }
     rows();status();
@@ -261,22 +265,17 @@ export function openPolygonReview(node:WorkflowNode<'polygon_input'>,
     for(const id of was)restyle(id);
     rows();selection();
   };
-  const close=()=>{dialog.close();};
-  $('#polygon-review-close').onclick=close;
-  $('#polygon-review-cancel').onclick=close;
-  $('#polygon-review-apply').onclick=()=>{
-    if(onApply({hidden:[...hidden] as string[],clipped,
-      names:Object.fromEntries(given),merges})!==false)close();};
-
   // The clip is only offered where there is a frame to clip to.
   ($('#polygon-review-clip') as HTMLButtonElement).hidden=!box;
   ($('#polygon-review-clip') as HTMLButtonElement).textContent=clipped
     ?'Undo the clip':'Clip to the box';
-  settle();recut();rows();status();selection();
-  dialog.showModal();
+  settle();recut();rows();selection();status();
 
-  // AFTER THE DIALOG IS OPEN, because Leaflet measures a container that has no size until then.
-  if(!map){
+  // ONCE THE DIALOG IS ON SCREEN, because Leaflet measures a container that has no size until then.
+  let gone=false;
+  const draw=()=>{
+    if(gone||map)return;
+    if(!root.isConnected||!$('#polygon-review-map').offsetWidth){requestAnimationFrame(draw);return;}
     map=L.map($('#polygon-review-map'),{scrollWheelZoom:false,zoomAnimation:false,
       fadeAnimation:false,markerZoomAnimation:false});
     group=L.featureGroup().addTo(map);
@@ -293,6 +292,7 @@ export function openPolygonReview(node:WorkflowNode<'polygon_input'>,
     }
     if(group.getLayers().length)map.fitBounds(group.getBounds(),{padding:[16,16]});
     else map.setView([51.5,-0.12],10);
-  }
-  map.invalidateSize();
+  };
+  requestAnimationFrame(draw);
+  return ()=>{gone=true;map?.remove();map=null;};
 }

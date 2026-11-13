@@ -1,7 +1,7 @@
 {
   "schema": "fieldwork/example-catalog/1",
   "catalogVersion": "0.1.0",
-  "updated": "2026-11-12",
+  "updated": "2026-11-13",
   "description": "Curated worked-example repositories. This file is the trust root, on the same terms as widgets/packs.json: an example is admitted only at a full commit SHA, only from a curated owner, and every file it may fetch is pinned by digest here. A branch is never fetched, because a digest pinned against a moving ref verifies nothing.\n\nAn example is a RESOURCE -- a workflow document, data and a provenance record -- and declares no node type, so runtimeFetching: \"none\" in widgets/packs.json does not reach it. That rule governs widget definitions. See docs/experiments/127-examples-as-repositories.md.",
   "governance": {
     "curatedOwners": [
@@ -16,7 +16,7 @@
       "id": "urn:fieldwork:example:south-london-1854",
       "title": "Snow's South London water supply study, 1854",
       "repository": "https://github.com/digital-twin-ph/example-1855-cholera-south-london",
-      "commit": "ee15219e8c3c2a2b84c02a0535340f9939ead780",
+      "commit": "de92a84691ac3429f9270e0b003a4e386a29211b",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-1855-cholera-south-london",
       "licence": {
         "data": "CC0-1.0, except geo/sub-districts-csds.geojson which is BSD-2-Clause and geo/thames-reaches.geojson and geo/thames-tidal-limit.geojson which are ODbL-1.0",
@@ -33,13 +33,13 @@
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "a54b2ca5d77e971d64791d94ef95f7315267b8137fd443a49bb711c1b1d52f62",
-          "bytes": 1003274
+          "sha256": "ef2efe2f1af9656537103280acd3daae3f27ad34d768e8261630a91f2835a4eb",
+          "bytes": 1011770
         },
         {
           "path": "README.md",
-          "sha256": "d688ab9e634e50b20333a2ab544c86501dd219c3bb10787a79d714fe05fe9d76",
-          "bytes": 40820
+          "sha256": "fb3ecaa392ffff757248417ac1001f5dd889caa4ce8f105796490389750b9b16",
+          "bytes": 41643
         },
         {
           "path": "NOTICE.txt",
@@ -139,7 +139,7 @@
           "why": "The plate half was true when the pin was written and false from 2026-10-27, when map_image_input shipped and the bundle wired Map 2 as ground under the choropleth. This is the SECOND time this field has advertised the example as missing a workflow it ships, and the second time it was found by somebody working on the thing rather than by a check -- the bundle is verified byte for byte and this sentence is verified by nobody. Found 2026-10-31 while giving the plate a workflow of its own. The zones half is still true and stays."
         }
       ],
-      "workflowCount": 8,
+      "workflowCount": 9,
       "uses": [
         "apply_ruleset",
         "chart_output",

@@ -39,12 +39,17 @@ const layer=async page=>{
   // any order first. Choosing the file used to start the read on the spot.
   await expect(page.locator('#config-apply')).toBeEnabled();
   await page.locator('#config-apply').click();await expect(page.locator('#polygon-config')).toHaveCount(0,{timeout:30000});
-  await expect(page.locator('[data-review-polygons]')).toBeVisible();
+  await expect(page.locator('#inspector-content .source-card')).toContainText('32 features');
   return id;
 };
+// CHOOSE FEATURES IS IN CONFIGURE… since 2026-11-13: the practitioner, "the polygon can be viewed and configured in one go".
 const open=async page=>{
-  await page.locator('[data-review-polygons]').click();
-  await expect(page.locator('#polygon-dialog')).toBeVisible();
+  await page.locator('#configure-step').click();
+  await expect(page.locator('#polygon-config .polygon-review-row').first()).toBeVisible({timeout:30000});
+};
+const apply=async page=>{
+  await page.locator('#config-apply').click();
+  await expect(page.locator('#polygon-config')).toHaveCount(0,{timeout:30000});
 };
 
 test('every feature the read returned is a row, named by its own property',async({page})=>{test.skip(!!skip,skip);
@@ -73,12 +78,11 @@ test('a feature set aside leaves the layer, and the read is untouched',async({pa
   await page.locator('[data-keep]').nth(0).uncheck();
   await page.locator('[data-keep]').nth(1).uncheck();
   await expect(page.locator('#polygon-review-status')).toContainText('30 of 32 features kept, 2 set aside');
-  await page.locator('#polygon-review-apply').click();
-  await expect(page.locator('#polygon-dialog')).not.toBeVisible();
+  await apply(page);
 
   const node=(await saved(page)).nodes.find(n=>n.id===id);
   expect(node.params.hidden.length).toBe(2);
-  await expect(page.locator('[data-review-polygons]')).toContainText('2 set aside');
+  await expect(page.locator('#inspector-content')).toContainText('2 set aside');
   // NOTHING IS DELETED, and the check is the one a practitioner can make: reopen the viewer and
   // all 32 are still listed, two of them unticked. Asserted here rather than on the saved
   // params, which carry a `dataRef` instead of the features -- the payload store keeps a 5 MB
@@ -92,11 +96,11 @@ test('a feature comes back by ticking it again',async({page})=>{test.skip(!!skip
   const id=await layer(page);
   await open(page);
   await page.locator('[data-keep]').nth(0).uncheck();
-  await page.locator('#polygon-review-apply').click();
+  await apply(page);
   await open(page);
   await page.locator('#polygon-review-all').click();
   await expect(page.locator('#polygon-review-status')).toContainText('32 of 32 features kept');
-  await page.locator('#polygon-review-apply').click();
+  await apply(page);
   expect((await saved(page)).nodes.find(n=>n.id===id).params.hidden).toBe(undefined);
 });
 
@@ -105,15 +109,17 @@ test('setting every feature aside is refused, because the layer would hold nothi
   await open(page);
   for(const box of await page.locator('[data-keep]').all())await box.uncheck();
   await expect(page.locator('#polygon-review-status')).toContainText('would hold nothing');
-  await expect(page.locator('#polygon-review-apply')).toBeDisabled();
+  await expect(page.locator('#config-apply')).toBeDisabled();
 });
 
 test('cancel keeps what was there before',async({page})=>{test.skip(!!skip,skip);
   const id=await layer(page);
   await open(page);
   await page.locator('[data-keep]').nth(0).uncheck();
-  await page.locator('#polygon-review-cancel').click();
-  await expect(page.locator('#polygon-dialog')).not.toBeVisible();
+  // Cancel asks before it discards a change, as every Configure… does.
+  await page.locator('#config-cancel').click();
+  await page.locator('#config-discard').click();
+  await expect(page.locator('#polygon-config')).toHaveCount(0);
   expect((await saved(page)).nodes.find(n=>n.id===id).params.hidden).toBe(undefined);
 });
 
@@ -139,7 +145,7 @@ test('polygons chosen on the map can be kept, and the rest set aside',async({pag
   await page.locator('#polygon-review-keep-only').click();
   // Keep only these: everything NOT chosen is set aside, in one action.
   await expect(page.locator('#polygon-review-status')).toContainText('2 of 32 features kept, 30 set aside');
-  await page.locator('#polygon-review-apply').click();
+  await apply(page);
   expect((await saved(page)).nodes.find(n=>n.id===id).params.hidden.length).toBe(30);
 });
 
@@ -204,7 +210,7 @@ test('a feature can be named here, and the name is kept',async({page})=>{test.sk
   await open(page);
   const first=page.locator('[data-name]').first();
   await first.fill('Rotherhithe, 1854');
-  await page.locator('#polygon-review-apply').click();
+  await apply(page);
   const saved1=(await saved(page)).nodes.find(n=>n.id===id);
   expect(Object.values(saved1.params.names)).toContain('Rotherhithe, 1854');
   await open(page);
@@ -239,4 +245,33 @@ test('the unnamed can be set aside in one go',async({page})=>{test.skip(!!skip,s
   // checkbox has nothing to set aside -- which is the honest result, not a bug.
   await page.locator('#polygon-review-hide-unnamed').check();
   await expect(page.locator('#polygon-review-status')).toContainText('32 of 32 features kept');
+});
+
+/** ONE DIALOG, AND IT SAYS WHAT IT HOLDS (2026-11-13). The practitioner's screenshot: Configure… said "No file chosen" and
+ *  "Choose a GeoJSON file." over a layer of 32 features read from one, with Apply disabled. */
+test('Configure… names the file the layer holds, and applies without choosing it again',async({page})=>{test.skip(!!skip,skip);
+  const id=await layer(page);
+  await page.locator('#configure-step').click();
+  await expect(page.locator('#polygon-config [data-polygon-held]')).toContainText('Holding 32 features read from sub-districts-csds.geojson');
+  await expect(page.locator('#polygon-config')).not.toContainText('Choose a GeoJSON file.');
+  await expect(page.locator('#config-apply')).toBeEnabled();
+  await page.locator('[data-keep]').nth(0).uncheck();
+  await page.locator('#polygon-layer-name').fill('Sub-districts');await page.locator('#polygon-layer-name').press('Tab');
+  await apply(page);
+  const node=(await saved(page)).nodes.find(n=>n.id===id);
+  expect(node.params.hidden.length).toBe(1);
+  expect(node.params.layerName).toBe('Sub-districts');
+});
+
+test('a new naming property names the held features again, without the file',async({page})=>{test.skip(!!skip,skip);
+  await layer(page);
+  await page.locator('#configure-step').click();
+  const before=await page.locator('[data-name]').first().inputValue();
+  await page.locator('#polygon-name-field').fill('');await page.locator('#polygon-name-field').press('Tab');
+  await expect(page.locator('[data-name]').first()).toHaveValue('Feature 1');
+  expect(before).not.toBe('Feature 1');
+  // A property the features do not carry is refused, and says so.
+  await page.locator('#polygon-name-field').fill('nonesuch');await page.locator('#polygon-name-field').press('Tab');
+  await expect(page.locator('#polygon-config .config-message')).toContainText('carries no "nonesuch" property');
+  await expect(page.locator('#config-apply')).toBeDisabled();
 });

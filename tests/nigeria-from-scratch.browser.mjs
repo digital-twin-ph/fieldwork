@@ -80,7 +80,7 @@ const importLgas=async page=>{
   await page.locator('#polygon-layer-name').fill('Local Government Areas');
   await page.locator('#polygon-layer-name').press('Tab');
   await page.locator('#config-apply').click();await expect(page.locator('#polygon-config')).toHaveCount(0,{timeout:30000});
-  await expect(page.locator('[data-review-polygons]')).toBeVisible({timeout:60000});
+  await expect(page.locator('#inspector-content .source-card')).toBeVisible({timeout:60000});
   return area;
 };
 /** The last two steps of every question here: put the values on the LGAs, and draw them. */

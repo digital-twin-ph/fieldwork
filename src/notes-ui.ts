@@ -166,6 +166,8 @@ export interface RunState {
    *  practitioner nothing they can act on, and six long workflow names is a paragraph nobody
    *  reads. Three, then the remainder as a number. */
   pending:readonly string[];
+  /** Workflows that wait for the practitioner before they can run, and what each waits for. Not run, and not failing. */
+  waiting?:readonly {name:string;why:string}[];
   /** How many workflows the project holds at all, and 0 where the open workflow is in none. */
   total:number;
   /** WHY A NOTE CANNOT BE KEPT HERE, or null where one can.
@@ -179,7 +181,9 @@ export interface RunState {
 }
 
 const runControl=(state:RunState,esc:Escape):string=>{
-  const {pending,total}=state;
+  const {pending,total}=state,waiting=state.waiting??[];
+  const waits=waiting.length?`<p data-notes-waiting>${waiting.length===1?'One waits':`${waiting.length} wait`} for you: `
+    +waiting.map(w=>`${esc(w.name)}, ${esc(w.why)}`).join('; ')+'.</p>':'';
   // THE REASON IS SAID ONCE, HERE, and the controls it disables carry it as their tooltip. A
   // disabled button is a fact ("not here") without an account ("because..."), and a practitioner
   // who meets ten of them and no sentence is worse off than before.
@@ -190,9 +194,9 @@ const runControl=(state:RunState,esc:Escape):string=>{
   if(!pending.length)
     return `<div class="notes-run is-ready">`
       +`<button class="button primary" data-run-pending>Run workflows again</button>`
-      +`<p>All ${total} of this project's workflows have run in this session, so the tables, `
-      +`charts and maps below are drawn from those runs. Running them again redraws them from `
-      +`the data as it stands now.</p>${why}</div>`;
+      +`<p>All ${total-waiting.length} of this project's workflows${waiting.length?' that can run':''} have run in this `
+      +`session, so the tables, charts and maps below are drawn from those runs. Running them again redraws them from `
+      +`the data as it stands now.</p>${waits}${why}</div>`;
   const one=pending.length===1;
   const named=pending.slice(0,3).map(name=>esc(name)).join('; ')
     +(pending.length>3?`, and ${pending.length-3} more`:'');
@@ -204,7 +208,7 @@ const runControl=(state:RunState,esc:Escape):string=>{
     +`<button class="button primary" data-run-pending>Run workflows</button>`
     +`<p>${pending.length} of this project's ${total} workflows ${one?'has':'have'} not run in `
     +`this session, so ${one?'its':'their'} tables, charts and maps are not in this write-up `
-    +`yet \u2014 ${named}.</p>${why}</div>`;
+    +`yet \u2014 ${named}.</p>${waits}${why}</div>`;
 };
 
 /** THE ASSEMBLED REFERENCES, above the author's own notes in the same part.

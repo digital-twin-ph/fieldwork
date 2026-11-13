@@ -1,0 +1,74 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:map_image_input",
+ "version": "0.7.0",
+ "nodeType": "map_image_input",
+ "title": "Georeferenced map image",
+ "released": "2026-11-13",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['map_image_input']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "validationStatus": "application-only",
+  "shaclShapes": [],
+  "note": "Bounds, opacity and the data URI are checked in validateWorkflow; the georeference's CORRECTNESS is not checkable here and is recorded as not established in experiment 143."
+ },
+ "ports": {
+  "inputs": [],
+  "output": "ground",
+  "note": "The `ground` port type was added to the closed union for this widget, which is a base-contract change made deliberately under D4. A plate must not reach clip_raster or sample_raster: its pixels are ink, and sampling them returns the colour of a line. The port type makes that connection impossible rather than reporting it after it is made."
+ },
+ "ontology": {
+  "status": "gap",
+  "mappings": [],
+  "note": "GAP, meaning no alignment to an external cartographic vocabulary -- not meaning the terms are undeclared. fw:MapImageInput and fw:MapImage are declared in ontology/runtime.ttl with their properties. The receipt asserts the digest, the pixel dimensions, the four bounds, the ground resolution in metres and `fw:layerRole \"context\"`, which is the limit stated where a reader meets the layer rather than only in a document.",
+  "emits": {
+   "classes": [
+    "MapImage",
+    "MapImageInput"
+   ],
+   "properties": [
+    "eastBound",
+    "groundResolutionMetres",
+    "imageDigest",
+    "imagePixelHeight",
+    "imagePixelWidth",
+    "layerRole",
+    "northBound",
+    "southBound",
+    "westBound"
+   ]
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/app.ts",
+   "src/catchment-map.ts",
+   "src/core.ts",
+   "src/georeference-ui.ts",
+   "src/georeference.ts",
+   "src/map-image-ui.ts",
+   "src/map-image.ts",
+   "src/turned-image.ts"
+  ],
+  "definition": "src/map-image.ts"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": null
+ },
+ "changes": [
+  {
+   "kind": "minor",
+   "description": "A worked example can offer an image its repository pins: fetched at the commit the catalog pins, only when the learner asks, and refused unless its digest matches. Until now an offered image had to be a file served with Fieldwork. Snow's Map 2 is the first, placed by hand by four recorded features (the practitioner, 2026-11-13: \"I think we can follow the Hagelloch example and allow the user to georeference it by hand as part of the worked example\")."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Nine unit tests over the world-file reader, the extent it derives, the ground resolution and each refusal: a rotated world file, a flipped image, crossed corners, corners outside the world, and a projection that sends the plate nowhere finite. Checked against the example's own geo/map2.jgw byte for byte. That the georeference is CORRECT. The control points were placed by a reader of the plate and this draws what they recorded; an alignment error looks exactly like a correct placement. Measuring the residual against modern boundaries is what would close it. That a reader understands what a historical wash means. The plate's own legend and the example's prose do that work. That 1002x788 over South London, about 40 m per pixel, is enough for anything but ground. There is nothing here for a lab check to recompute -- placing an image where its georeference says has no second implementation that could disagree -- so widgets/check-coverage.json records `none` with that reason rather than claiming parity this project's arithmetic would be agreeing with itself about. 0.2.0: tests/georeference.test.mjs (4: an exact affine recovered; too few or collinear points refused; South London's four points refitted, north-south agreeing with the hand fit and east-west differing by the direction of the fit; a turned image drawn through a matrix) and tests/map-image.test.mjs. 0.3.0: tests/georeference.test.mjs (5: a click on a guide feature, on each pane, within its radius) and tests/georeference-dialog.browser.mjs (the feature and its reason named, the pulse on both panes at 2.4 s, a click on the feature said, nothing filled, the pulse off on request and still under reduced motion). 0.4.0: tests/georeference.test.mjs (6: the fit's scale and turn recovered, the error history, a pair 30 m off measured against the others) and tests/hagelloch-sheet-example.browser.mjs (the live check, the cursor distance, and the preview with its slider and four pairs drawn twice). 0.4.1: tests/georeference-dialog.browser.mjs (a cleared field reads as not clicked yet). 0.5.0: tests/hagelloch-sheet-example.browser.mjs (the cue held under the crosshair through three zooms and a redraw) and tests/georeference-dialog.browser.mjs (no cue on another image). 0.6.0: tests/georeference-dialog.browser.mjs (a plain click places nothing; Shift + click places; a quick drag leaves a point, a held drag moves it; table text at 4.5:1 in the dark theme). 0.7.0: tests/snow-map2-by-hand.browser.mjs (not fetched until asked, fetched once and checked, four recorded features placed north-up); tests/hagelloch-sheet-example.browser.mjs (an offer served with Fieldwork, unchanged); Chromium."
+ }
+}

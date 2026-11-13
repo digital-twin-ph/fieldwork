@@ -105,7 +105,7 @@ import {suggestUTM,utmScaleFactor,workflowPositions} from './utm.js';
 import {mountCanvas} from './canvas.js';
 import {staticBoundaryMap,staticMapFrame} from './static-map.js';
 import {mapLayerList,membersOfPolygons,portIsDrawn,LAYER_LABEL_LIMIT,type MapLayer} from './map-layer-list.js';
-import {openPolygonReview} from './polygon-review.js';
+import {mountFeatureChooser} from './polygon-review.js';
 import {notesPanel,openNoteDialog,noteKey} from './notes-ui.js';
 // THE WRITE-UP IS THE PROJECT'S. A run contributes its notes to a store the Notes tab reads
 // across every workflow of the project, rather than the tab reading the open run alone.
@@ -160,7 +160,7 @@ import {openTableEditor,dataTableMarkup,tableFromFetched} from './data-table-ui.
 import {openCatalogDialog,identityMarkup,widgetIdentity} from './catalog-ui.js';
 import {initTheme,applyTheme,saveThemePreference,isThemePreference} from './theme.js';
 import {previewArea,prepareRasterPreview,rasterOfNode} from './raster-preview.js';
-import {layerCard as polygonLayerCard,polygonConfigSettings,polygonDraftOf,polygonMissing,polygonSentence,type PolygonDraft} from './polygon-input-ui.js';
+import {layerCard as polygonLayerCard,polygonConfigSettings,polygonDraftOf,polygonMissing,polygonSentence,heldFileLine,type PolygonDraft} from './polygon-input-ui.js';
 import {areasInWorker,retrievalProvenance,readBox,AREA_KINDS,type AreaKind} from './osm-areas.js';
 import {readPolygonFeatures} from './polygon-layer.js';
 import {contentHash} from './project-files.js';
@@ -446,7 +446,18 @@ const exampleKey=(w:Workflow):string=>w.projectId?'blank':w.exampleId?.startsWit
  *  is minted per workflow because the example vocabulary is closed and compiled in. */
 const storageKey=(w:Workflow):string=>w.workflowKey||exampleKey(w);
 const template=(key:string)=>(EXAMPLE_TEMPLATES[key]||EXAMPLE_TEMPLATES.hagelloch)();
-const canAutoRun=(w:Workflow)=>w.nodes.length>0&&!w.nodes.some(n=>n.type==='raster_input'&&!n.params.asset||n.type==='network_input'&&!n.params.data.nodes.length||n.type==='table_input'&&!n.params.data.rows.length);
+/** WHAT A WORKFLOW WAITS FOR before it can run, in words, or null when nothing. A worked example's offered image waits for
+ *  the learner to choose it (Snow's Map 2 placed by hand, 2026-11-13: "Run workflows" had counted it as never run). */
+const waitsFor=(w:Workflow):string|null=>{
+  for(const n of w.nodes){
+    if(n.type==='raster_input'&&!n.params.asset)return 'its raster is read first';
+    if(n.type==='network_input'&&!n.params.data.nodes.length)return 'its street network is downloaded first';
+    if(n.type==='table_input'&&!n.params.data.rows.length)return 'its table is fetched first (select the table and choose Fetch the table)';
+    if(n.type==='map_image_input'&&n.params.offered&&!n.params.image?.width)return 'its map image is chosen and placed in Configure\u2026';
+  }
+  return null;
+};
+const canAutoRun=(w:Workflow)=>w.nodes.length>0&&!waitsFor(w);
 /** Why the last OSM download failed, kept until one succeeds.
  *
  *  The status line under the button reported only throttle state -- in progress, next available
@@ -1288,6 +1299,10 @@ function upstreamKeyValues(node:WorkflowNode,seen=new Set<string>(),
   return undefined;
 }
 
+/** WHEN NO RUN IS GOING. An edit is refused during a run, so a dialog that saves after a person pressed Save waits for
+ *  the run instead of failing: Hagelloch runs itself on open, and Describe columns saved while it ran said "The
+ *  descriptions could not be saved" (gate 146, 2026-11-13). */
+const runFinished=():Promise<void>=>new Promise(resolve=>{const wait=()=>busy?setTimeout(wait,200):resolve();wait();});
 function change(fn:(w:Workflow)=>void,{spatial=true,requirePersistence=false}={}){if(busy)return false;const previous=structuredClone(workflow);const heldPayloads=heldPayloadsOf(workflow);try{fn(workflow);reconcilePayloadRefs(heldPayloads,workflow);syncProjectManifest(workflow,true);workflow=validateWorkflow(workflow);const persisted=save();if(requirePersistence&&!persisted){const bytes=JSON.stringify(workflow).length;workflow=previous;dropFocus();render();toast(storageRefusal(bytes),{tone:'failure'});return false;}history.push(previous);if(history.length>40)history.shift();future=[];if(spatial){dirty=true;runFailed=false;statuses={};}dropFocus();render();return persisted;}catch(e){
   // The edit is rolled back and the panel is rewritten -- WHILE the control that made the edit
   // still holds focus. Chromium throws "The node to be removed is no longer a child of this
@@ -1533,7 +1548,9 @@ function render(){
   // The open copy's fingerprint, as the comparison with its example reads it: on the bar, for a test to read.
   {const key=exampleKey(workflow);const note=optionalElement('#example-note');
     if(note){if(isExampleKey(key)&&key!=='blank'&&workflow.nodes.length)note.dataset.revision=exampleRevision(workflow);else delete note.dataset.revision;}}
-  if(divergedFromExample(exampleKey(workflow))){
+  // A WORKFLOW FROM AN EXAMPLE REPOSITORY is compared with its pin below, not with a built-in: an untouched South London
+  // workflow said "Built on Blank canvas and changed since" (the practitioner's screenshots, 2026-11-13).
+  if(!originOf(storageKey(workflow))&&divergedFromExample(exampleKey(workflow))){
     // SAID IN THE BAR, where it stays, and for every workflow opened, not only the first: which of the three it is.
     const key=exampleKey(workflow),standing=exampleStanding(key);
     const note=$('#example-note');
@@ -2285,65 +2302,125 @@ function openPolygonConfig(nodeId:string){
   const connected=workflow.edges.find(e=>e.to===nodeId&&e.port==='area')?.from;
   const areaSources=workflow.nodes.filter(x=>x.id!==nodeId&&outputOf(x)==='area').map(x=>({id:x.id,label:x.params.label||TYPES[x.type].title}));
   let file:File|undefined;
+  type Feature=WorkflowNode<'polygon_input'>['params']['data']['features'][number];
+  const held=node.params.data.features as Feature[];
+  // THE FEATURES SHOWN in the chooser: a GeoJSON file just chosen, read on the spot so its features can be chosen before
+  // Apply; else the layer held, named again by the property in the draft where that changed. An extract is read on Apply.
+  let fresh:Feature[]|undefined,readError='',anyKept=true,unmount:(()=>void)|undefined;
+  const fromFile=node.params.inputMethod!=='extract';
+  const renamed=(features:readonly Feature[],nameField?:string):Feature[]=>readPolygonFeatures({type:'FeatureCollection',
+    features:features.map(f=>({type:'Feature',id:f.id,geometry:f.geometry,properties:(f as {properties?:object}).properties??{}}))},{nameField}) as Feature[];
+  const shownFor=(d:PolygonDraft):Feature[]|undefined=>{
+    if(file)return d.inputMethod==='file'?fresh:undefined;
+    if(!held.length)return undefined;
+    if(fromFile&&d.inputMethod==='file'&&(d.nameField??'')!==(node.params.nameField??'')){
+      try{readError='';return renamed(held,d.nameField);}catch(error){readError=errorMessage(error);return undefined;}
+    }
+    return held;
+  };
+  const readChosen=async(d:PolygonDraft)=>{
+    fresh=undefined;readError='';
+    if(!file||d.inputMethod!=='file')return;
+    try{fresh=readPolygonFeatures(JSON.parse(await file.text()),{nameField:d.nameField,layerName:d.layerName}) as Feature[];}
+    catch(error){readError=errorMessage(error);}
+  };
   const boundaryOf=(area?:string)=>{if(!area)return undefined;try{return previewArea(workflow,area).boundary;}catch{return undefined;}};
+  const frameOf=(d:PolygonDraft)=>{
+    // THE FRAME THE READ USED, where there is one: an extract read records its own box; a file layer has none, so the
+    // connected study area's bounds stand in.
+    if(node.params.retrieval?.bbox&&!file)return node.params.retrieval.bbox;
+    const area=boundaryOf(d.area??connected);const b=area?geometryBounds(area):undefined;
+    return b?[b[0],b[1],b[2],b[3]] as [number,number,number,number]:undefined;
+  };
   openConfigDialog<PolygonDraft>({
-    id:'polygon-config',widget:'Polygon layer',step:node.params.label||TYPES.polygon_input.title,draft:polygonDraftOf(node,connected),
-    sections:d=>{const missing=polygonMissing(d,file);
-      return {settings:polygonConfigSettings(d,esc,boundaryOf(d.area),areaSources,file?.name),blocked:!!missing,
-        ...(missing?{message:{tone:'warning' as const,text:missing}}:{})};},
+    id:'polygon-config',widget:'Polygon layer',step:node.params.label||TYPES.polygon_input.title,draft:polygonDraftOf(node,connected),wide:true,
+    sections:d=>{
+      const shown=shownFor(d);
+      const missing=readError||polygonMissing(d,file,held.length>0)||(shown&&!anyKept?'Every feature is set aside. Tick at least one.':'');
+      const preview=shown?`<div id="polygon-chooser-host"></div>`
+        :file&&d.inputMethod==='extract'?`<p class="muted">The areas are read from ${esc(file.name)} on Apply; open Configure… again to choose among them.</p>`
+        :'';
+      return {settings:polygonConfigSettings(d,esc,boundaryOf(d.area),areaSources,file?.name,heldFileLine(node.params.source,held.length,esc)),
+        ...(preview?{preview}:{}),blocked:!!missing,
+        ...(missing?{message:{tone:readError?'refusal' as const:'warning' as const,text:missing}}:{})};},
+    beforeRedraw:()=>{unmount?.();unmount=undefined;},
     wire:(root,d,redraw)=>{
       const on=(selector:string,fn:(el:HTMLInputElement&HTMLSelectElement)=>void)=>
         root.querySelectorAll<HTMLInputElement&HTMLSelectElement>(selector).forEach(el=>el.addEventListener('change',()=>{fn(el);redraw();}));
-      on('#polygon-input-method',el=>{d.inputMethod=el.value==='extract'?'extract':'file';file=undefined;});
+      on('#polygon-input-method',el=>{d.inputMethod=el.value==='extract'?'extract':'file';file=undefined;fresh=undefined;readError='';});
       on('#polygon-area',el=>{if(el.value)d.area=el.value;else delete d.area;});
-      on('[data-area-kind]',el=>{const kind=el.dataset.areaKind as AreaKind,held=new Set(d.kinds);
-        if(el.checked)held.add(kind);else held.delete(kind);d.kinds=AREA_KINDS.filter(k=>held.has(k));});
+      on('[data-area-kind]',el=>{const kind=el.dataset.areaKind as AreaKind,kept=new Set(d.kinds);
+        if(el.checked)kept.add(kind);else kept.delete(kind);d.kinds=AREA_KINDS.filter(k=>kept.has(k));});
       // UNSET IS A VALUE HERE, not zero: unset reads every area of the chosen kinds.
       on('#polygon-min-vertices',el=>{const raw=el.value.trim();if(raw==='')delete d.minVertices;else d.minVertices=Number(raw);});
       on('#polygon-margin',el=>{const raw=el.value.trim();d.marginM=raw===''?0:Number(raw);});
-      on('#polygon-name-field',el=>{const raw=el.value.trim();if(raw)d.nameField=raw;else delete d.nameField;});
       on('#polygon-layer-name',el=>{const raw=el.value.trim();if(raw)d.layerName=raw;else delete d.layerName;});
-      for(const id of ['#polygon-file','#polygon-extract'])on(id,el=>{file=el.files?.[0];});
+      // A FILE OR A NAMING PROPERTY CHANGED: the features are read again, and choices made among the others start over,
+      // since a feature's id may not name the same feature.
+      const fresh0=()=>{d.decisions={hidden:[],clipped:false,names:{},merges:[]};anyKept=true;};
+      root.querySelectorAll<HTMLInputElement>('#polygon-file,#polygon-extract').forEach(el=>el.addEventListener('change',()=>{
+        file=el.files?.[0];fresh0();void readChosen(d).then(redraw);}));
+      root.querySelector<HTMLInputElement>('#polygon-name-field')?.addEventListener('change',el=>{
+        const raw=(el.target as HTMLInputElement).value.trim();if(raw)d.nameField=raw;else delete d.nameField;
+        fresh0();void readChosen(d).then(redraw);});
+      const host=root.querySelector<HTMLElement>('#polygon-chooser-host'),shown=shownFor(d);
+      if(host&&shown)unmount=mountFeatureChooser(host,shown,d.nameField,d.decisions,esc,kept=>{
+        // Only a change of whether anything is kept redraws: a redraw rebuilds the map.
+        if(kept!==anyKept){anyKept=kept;redraw();}},frameOf(d));
     },
     apply:()=>{},
     applyAsync:async(d,say)=>{
-      if(!file)return false;
-      // The settings first, then the read: the read is of these settings, and the study area it reads inside.
-      change(w=>{const t=getNode(w,nodeId,'polygon_input').params;
+      // The settings first, then any read: the read is of these settings, and the study area it reads inside.
+      const settle=(w:Workflow)=>{const t=getNode(w,nodeId,'polygon_input').params;
         t.inputMethod=d.inputMethod;t.kinds=d.kinds;t.marginM=d.marginM;
         if(d.minVertices===undefined)delete t.minVertices;else t.minVertices=d.minVertices;
         if(d.nameField)t.nameField=d.nameField;else delete t.nameField;
         if(d.layerName)t.layerName=d.layerName;else delete t.layerName;
-        if(d.inputMethod==='extract'&&d.area)setConnection(w,d.area,nodeId,'area');});
+        if(d.inputMethod==='extract'&&d.area)setConnection(w,d.area,nodeId,'area');
+        // CHOOSE FEATURES' DECISIONS, each stored only where it was made, so a layer nobody reduced carries nothing.
+        const {hidden,clipped,names,merges}=d.decisions;
+        if(hidden.length)t.hidden=hidden;else delete t.hidden;
+        if(clipped)t.clipToBox=true;else delete t.clipToBox;
+        if(Object.keys(names).length)t.names=names;else delete t.names;
+        if(merges.length)t.merges=merges;else delete t.merges;};
+      const keepFeatures=async(features:Feature[],extra:(t:WorkflowNode<'polygon_input'>)=>void)=>{
+        const data={features};
+        const digest=await payloadDigest(data);
+        if(!await keepDataset(digest,data))
+          throw new Error(`These ${features.length.toLocaleString('en')} features could not be kept on this device, so they were not saved.`
+            +(d.inputMethod==='extract'?' A higher vertex threshold reads fewer of them.':' Export the workflow to a file to keep it.'));
+        const kept=change(w=>{settle(w);const t=getNode(w,nodeId,'polygon_input');t.params.data=data;t.params.dataRef=digest;extra(t);},{requirePersistence:true});
+        if(!kept){await dropPayload(digest);throw new Error('The layer could not be saved on this device.');}
+      };
+      if(!file){
+        // NOTHING NEW TO READ: the settings and the features chosen; the held layer named again where its property changed.
+        const shown=shownFor(d);
+        if(shown&&shown!==held)await keepFeatures(shown,t=>{if(t.params.source)t.params.source={...t.params.source,features:shown.length};});
+        else if(!change(w=>settle(w),{requirePersistence:true}))throw new Error('The layer could not be saved on this device.');
+        toast('Polygon layer updated. Rerun to update results.');
+        return true;
+      }
       const bytes=new Uint8Array(await file.arrayBuffer());
       const sha256=await contentHash(bytes);
-      const current=getNode(workflow,nodeId,'polygon_input');
-      let features,retrieval;
+      let features:Feature[],retrieval;
       if(d.inputMethod==='extract'){
         // THE SCOPE IS THE STUDY AREA'S, which is why the port exists: a read with no box is a read of whatever the file holds.
+        if(d.area)change(w=>setConnection(w,d.area!,nodeId,'area'));
         const {boundary}=previewArea(workflow,nodeId);
         const bounds=geometryBounds(boundary);
         const bbox=readBox([bounds[0],bounds[1],bounds[2],bounds[3]],d.marginM);
-        ({features,retrieval}=await areasInWorker(bytes,{kinds:d.kinds,bbox,nameTag:current.params.nameField,minVertices:current.params.minVertices},say));
+        ({features,retrieval}=await areasInWorker(bytes,{kinds:d.kinds,bbox,nameTag:d.nameField,minVertices:d.minVertices},say));
         say('Keeping the areas on this device…');
       }else{
         say(`Reading ${file.name}…`);
-        features=readPolygonFeatures(JSON.parse(new TextDecoder().decode(bytes)),{nameField:current.params.nameField,layerName:current.params.layerName});
+        features=fresh??readPolygonFeatures(JSON.parse(new TextDecoder().decode(bytes)),{nameField:d.nameField,layerName:d.layerName}) as Feature[];
       }
-      const data={features};
-      const digest=await payloadDigest(data);
-      if(!await keepDataset(digest,data))
-        throw new Error(`These ${features.length.toLocaleString('en')} features could not be kept on this device, so they were not saved.`
-          +(d.inputMethod==='extract'?' A higher vertex threshold reads fewer of them.':' Export the workflow to a file to keep it.'));
       const read=retrieval?{...retrieval,filename:file.name,sha256,bytes:bytes.length}:undefined;
-      const kept=change(w=>{const t=getNode(w,nodeId,'polygon_input');
-        t.params.data=data;t.params.dataRef=digest;
+      await keepFeatures(features,t=>{
         t.params.source={filename:file!.name,bytes:bytes.length,sha256,features:features.length};
         if(read){t.params.retrieval=read;t.params.provenance=retrievalProvenance(read,{filename:file!.name,sha256});}
         // A FILE LAYER HAS NO RETRIEVAL, and leaving the previous one would compare this file against a box it was never read for.
-        else delete t.params.retrieval;
-      },{requirePersistence:true});
-      if(!kept){await dropPayload(digest);throw new Error('The layer could not be saved on this device.');}
+        else delete t.params.retrieval;});
       toast(`${features.length.toLocaleString('en')} polygon feature${features.length===1?'':'s'} read`
         +`${d.inputMethod==='extract'?' from the extract and saved on this device':''}. Run the workflow to use them.`);
       return true;
@@ -3893,8 +3970,8 @@ function renderInspector(){
     content+=standardSection('Settings',`<p class="standard-sentence">${esc(polygonSentence(n))}</p>`
       +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button></div>');
     content+=standardSection('Result',p.data.features.length
-      ?polygonLayerCard(n,esc)+`<button class="button" data-review-polygons="${esc(n.id)}">Choose features`
-        +`${p.hidden?.length?` \u00b7 ${p.hidden.length} set aside`:''}</button>`
+      // Choosing among the features is in Configure… since 2026-11-13, beside the file they came from.
+      ?polygonLayerCard(n,esc)
       :'<p class="standard-result">Nothing read yet.</p>');
   }else if(n.type==='map_image_input'){
     // THE STANDARD INSPECTOR (experiments 186 and 201), touched to place an image by matched points: the name; no inputs;
@@ -5440,6 +5517,7 @@ function renderInspector(){
         const dictionary:TableDictionary|undefined=loaded?{name:loaded.name,sha256:await contentHash(loaded.bytes as Uint8Array<ArrayBuffer>),
           sheets:loaded.sheets.map(s=>({name:s.name,headers:s.headers,rows:s.rows})),readAt:new Date().toISOString()}:undefined;
         if(dictionary&&!await keepDataset(dictionaryKeyOf(dictionary.sha256),dictionary))return false;
+        await runFinished();
         const saved=change(w=>{const node=getNode(w,n.id,'point_input');
           if(Object.keys(declared).length)node.params.columns=declared;else delete node.params.columns;
           if(dictionary){node.params.dictionary=dictionary;node.params.dictionaryRef=dictionaryKeyOf(dictionary.sha256);}
@@ -5462,6 +5540,7 @@ function renderInspector(){
         const dictionary:TableDictionary|undefined=loaded?{name:loaded.name,sha256:await contentHash(loaded.bytes as Uint8Array<ArrayBuffer>),
           sheets:loaded.sheets.map(s=>({name:s.name,headers:s.headers,rows:s.rows})),readAt:new Date().toISOString()}:undefined;
         if(dictionary&&!await keepDataset(dictionaryKeyOf(dictionary.sha256),dictionary))return false;
+        await runFinished();
         const saved=change(w=>{const node=getNode(w,n.id,'table_input');
           if(Object.keys(declared).length)node.params.columns=declared;else delete node.params.columns;
           if(dictionary){node.params.dictionary=dictionary;node.params.dictionaryRef=dictionaryKeyOf(dictionary.sha256);}
@@ -7448,7 +7527,19 @@ function renderNotesView(){
     return runsByWorkflow.get(key);
   };
   const runOf=(key:string|undefined):WorkflowRun|undefined=>heldFor(key)?.run;
-  const pendingKeys=(project?.workflows||[]).filter(key=>!runOf(key));
+  // A WORKFLOW THAT WAITS FOR THE PRACTITIONER is said apart, with what it waits for: it has not failed to run.
+  // Only what loading cannot supply: a fetched table is filled from this device when its workflow loads (gate 148, NYC's
+  // four tables read as waiting), so here it is a learner's choice, an offered map image nobody has chosen.
+  const waitingFor=(key:string):string|null=>{
+    const saved=readSavedWorkflows()[key];
+    try{const w=saved?validateWorkflow(structuredClone(saved)):null;
+      return w&&w.nodes.some(n=>n.type==='map_image_input'&&n.params.offered&&!n.params.image?.width)?waitsFor(w):null;}catch{return null;}
+  };
+  const nameOfKey=(key:string)=>{const saved=readSavedWorkflows()[key] as {name?:unknown}|undefined;
+    return typeof saved?.name==='string'&&saved.name.trim()?saved.name.trim():WORKFLOW_LABELS[key]??key;};
+  const waitingKeys=(project?.workflows||[]).filter(key=>!runOf(key)&&waitingFor(key));
+  const waiting=waitingKeys.map(key=>({name:nameOfKey(key),why:waitingFor(key)!}));
+  const pendingKeys=(project?.workflows||[]).filter(key=>!runOf(key)&&!waitingKeys.includes(key));
   const pending=pendingKeys
     .map(key=>{
       const saved=readSavedWorkflows()[key] as {name?:unknown}|undefined;
@@ -7578,7 +7669,7 @@ function renderNotesView(){
     labelOf,esc,derived,sourceOf,
     // AND HOW MANY THERE ARE AT ALL, so the control can tell a project whose workflows have all
     // run from a workflow that is in no project. 0 is the second of those, not the first.
-    {pending,total:(project?.workflows||[]).length,readOnly:keptHere(project)},
+    {pending,waiting,total:(project?.workflows||[]).length,readOnly:keptHere(project)},
     figureOf,references,exampleLinksBlock(onlineLinks(project),esc));
   // THE FORMULAE, ONCE THE PANEL IS IN THE DOCUMENT. `notesPanel` returns the LaTeX on the
   // element that will hold it, so a note reads correctly before the converter has loaded and on
@@ -7592,30 +7683,30 @@ function renderNotesView(){
     // WITH NOTHING PENDING THE BUTTON RE-RUNS THE PROJECT, which is what "Run them again" says
     // it does. The control is on the tab whether or not the application has something to suggest.
     const was=storageKey(workflow);
-    const todo=pendingKeys.length?[...pendingKeys]:[...(project?.workflows||[])];
+    const todo=pendingKeys.length?[...pendingKeys]:(project?.workflows||[]).filter(key=>!waitingKeys.includes(key));
     if(!todo.length)return;
     const button=optionalElement('[data-run-pending]') as HTMLButtonElement|null;
     if(button){button.disabled=true;button.textContent='Running\u2026';}
-    let ran=0,failed=0;const waiting:string[]=[];
+    let ran=0,failed=0;const stillWaiting:string[]=[];
     for(const key of todo){
       try{
         await loadExample(key);
         // LOADED IS NOT RAN. A workflow whose fetched table is not on this device loads and does not run; counting it
         // as run told the practitioner the write-up held the whole project when it held half (2026-11-04).
-        if(canAutoRun(workflow))ran++;else waiting.push(workflow.name);
+        const why=waitsFor(workflow);
+        if(!why)ran++;else stillWaiting.push(`${workflow.name}: ${why}`);
       }
       catch{failed++;/* The one that failed says so on its own canvas; the rest still run. */}
     }
     // Back to the workflow they were reading, and back to the write-up.
     if(was&&was!==storageKey(workflow))await loadExample(was);
     switchView('notes');renderNotesView();
-    toast(waiting.length
-      ?`${ran} of ${todo.length} ran. ${waiting.length===1?'This one needs its table fetched':'These need their tables fetched'}`
-        +` first (select the table and choose Fetch the table): ${waiting.join('; ')}.`
+    toast(stillWaiting.length
+      ?`${ran} of ${todo.length} ran. Waiting for you: ${stillWaiting.join('; ')}.`
       :failed
       ?`${ran} of ${todo.length} ran; ${failed} could not. The write-up holds what ran.`
       :`${ran} workflow${ran===1?'':'s'} ran. The write-up now holds the whole project.`,
-      {tone:failed||waiting.length?'warning':'notice'});
+      {tone:failed||stillWaiting.length?'warning':'notice'});
   });
   const total=(project?.notes||[]).length+derived.length+machined.length;
   $('#notes-view-count').textContent=total?String(total):'';
@@ -9339,37 +9430,6 @@ document.addEventListener('click',event=>{
   if(!open)return;
   layerDialogNode=open.getAttribute('data-manage-layers');renderLayerDialog();
   ($('#layer-dialog') as HTMLDialogElement).showModal();
-});
-// THE FEATURE VIEWER, opened from the polygon layer's own panel.
-document.addEventListener('click',event=>{
-  const open=(event.target as HTMLElement).closest('[data-review-polygons]') as HTMLElement|null;
-  if(!open)return;
-  const id=open.getAttribute('data-review-polygons')!;
-  const node=getNode(workflow,id,'polygon_input');
-  // THE FRAME THE READ USED, where there is one. An extract read records its own box; a file
-  // layer has none, so the connected study area's bounds stand in and a layer connected to
-  // nothing simply has no frame to draw.
-  const area=(()=>{try{return previewArea(workflow,id).boundary;}catch{return undefined;}})();
-  const bounds=area?geometryBounds(area):undefined;
-  const frame=node.params.retrieval?.bbox
-    ??(bounds?[bounds[0],bounds[1],bounds[2],bounds[3]] as [number,number,number,number]:undefined);
-  openPolygonReview(node,esc,({hidden,clipped,names,merges})=>{
-    change(w=>{
-      const target=getNode(w,id,'polygon_input');
-      // Each decision is stored only where it was made, so a layer nobody reduced carries
-      // nothing and behaves exactly as it was read.
-      if(hidden.length)target.params.hidden=hidden;else delete target.params.hidden;
-      if(clipped)target.params.clipToBox=true;else delete target.params.clipToBox;
-      if(Object.keys(names).length)target.params.names=names;else delete target.params.names;
-      if(merges.length)target.params.merges=merges;else delete target.params.merges;
-    });
-    const said=[hidden.length?`${hidden.length} set aside`:'',
-      merges.length?`${merges.length} merge${merges.length===1?'':'s'}`:'',
-      Object.keys(names).length?`${Object.keys(names).length} renamed`:'',
-      clipped?'cut to the box':''].filter(Boolean);
-    toast(said.length?`${said.join(', ')}. Rerun to update results.`
-      :'Every feature kept as read. Rerun to update results.');
-  },frame);
 });
 // THE NOTES TAB'S OWN CONTROLS: open one, add one, move one.
 document.addEventListener('click',event=>{

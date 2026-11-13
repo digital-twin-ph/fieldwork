@@ -116,7 +116,7 @@ test('the worked example is rebuilt from an empty canvas and the published input
   // order first, and changing one afterwards no longer leaves the layer holding what the old
   // settings matched.
   await page.locator('#config-apply').click();await expect(page.locator('#polygon-config')).toHaveCount(0,{timeout:30000});
-  await expect(page.locator('[data-review-polygons]')).toBeVisible();
+  await expect(page.locator('#inspector-content .source-card')).toBeVisible();
 
   // 3. THE RIVER, the same way.
   await add(page,'polygon_input');
@@ -130,7 +130,7 @@ test('the worked example is rebuilt from an empty canvas and the published input
   await page.locator('#polygon-layer-name').fill('Thames reaches');
   await page.locator('#polygon-layer-name').press('Tab');
   await page.locator('#config-apply').click();await expect(page.locator('#polygon-config')).toHaveCount(0,{timeout:30000});
-  await expect(page.locator('[data-review-polygons]')).toBeVisible();
+  await expect(page.locator('#inspector-content .source-card')).toBeVisible();
 
   // 4. THE INTAKES. The layer that existed only inside the bundle until 2026-10-29.
   await add(page,'point_input');

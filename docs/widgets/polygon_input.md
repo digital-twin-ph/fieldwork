@@ -56,11 +56,15 @@ layer rather than remembered separately.
 ## How to use it
 
 The step's panel holds its **Name**, its **Study area**, one sentence saying what it holds, and **Configure…**. Under
-**Result**, the layer it read and **Choose features**.
+**Result**, the layer it read.
 
 **From a file.** Add the widget and press **Configure…**. Leave the method on *A GeoJSON file*, choose your file, and if
-your features carry a name, type that property's name into *Which property names each feature*. Press **Apply**. The
-panel then shows how many features and vertices it read.
+your features carry a name, type that property's name into *Which property names each feature*. The features appear
+under **Preview** as soon as the file is chosen, so you can choose among them before **Apply**. The panel then shows how
+many features and vertices it read.
+
+**Opened again,** Configure… says which file the layer holds, and **Apply** needs no file: choose a file only to replace
+the features. A different naming property names the held features again.
 
 **From an extract.**
 
@@ -116,9 +120,10 @@ A read of a published extract gives you everything of the kinds you asked for in
 Greater London's water areas are 606 features; the Thames is two of them. The rest are ponds,
 basins and a boating lake.
 
-**Choose features** opens a viewer: every feature the read returned, as a row, beside a map of
-all of them. Select a row and its polygon is marked on the map, so you can tell which one it is
-before deciding. Clear a row's box and that feature leaves the layer.
+Under **Preview** in Configure…, every feature the read returned is a row, beside a map of all of
+them. An extract's areas are listed once they are read: press **Apply**, then open Configure… again. Select a row and its polygon is marked on the map, so you can tell which one it is
+before deciding. Clear a row's box and that feature leaves the layer when you
+press **Apply**; **Cancel** leaves the layer as it was.
 
 Nothing is deleted. The read is unchanged, so a feature you set aside comes back by ticking it
 again rather than by reading 124 MB a second time. The receipt records how many the read returned

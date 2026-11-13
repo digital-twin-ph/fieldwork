@@ -259,8 +259,9 @@ export interface ParamsByType {
     controlPoints?:import('./georeference.js').ControlPoint[];placementModel?:import('./georeference.js').PlacementModel;
     /** A worked example's features to find, in order (experiment 201). Written by the example, never by a click. */
     guide?:import('./georeference.js').GuidePoint[];
-    /** The image a worked example offers, served beside the application; chosen only when the learner asks. */
-    offered?:{url:string;filename:string;credit:string;width?:number;height?:number}};
+    /** The image a worked example offers, chosen only when the learner asks: served beside the application (`url`), or a
+     *  file a curated example repository pins (`from`, 2026-11-13: Snow's Map 2), fetched and checked by its digest. */
+    offered?:{url?:string;from?:{example:string;path:string};filename:string;credit:string;width?:number;height?:number}};
   /** Retired 2026-11-05; the params a saved one held, so it can be named when refused. */
   rate_ratio:{label:string;compared:string;reference:string;level:90|95|99;method:'log-normal'};
   rate:{label:string;source?:'points'|'table';

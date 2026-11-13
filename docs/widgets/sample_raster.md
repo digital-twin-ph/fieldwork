@@ -17,6 +17,15 @@ What it gives back follows what you connect, and the step says which it is doing
 
 Points and areas are not mixed in one step.
 
+**Over a study area, each named part is one area**, all of its pieces together: a district drawn as a main outline and
+a sliver beside it is totalled once. With **Also give each area's zonal statistics** in Configure…, each area also
+carries its cells' mean, median, standard deviation, smallest and largest (of the cells with a value), how many cells
+are above zero and their share, its size in km² and the total per km². The cells' statistics are per cell: a
+latitude-longitude grid's cells are not all the same size.
+
+The areas, with their totals, can go on to a table step, such as Total within groups or Append rows, as a table: one row
+per area, its name and its numbers.
+
 **Configure… says what arrived first:** the raster's name, how many cells were kept and how wide each is, its no-data
 value, and what its values measure where its source record or the file says so, which then fills *What those values
 measure*. It says what the raster is read at, or that nothing is connected yet and what to connect. Where a study area

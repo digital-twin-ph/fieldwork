@@ -94,7 +94,7 @@ export async function exportEvidenceFiles(workflow:Workflow):Promise<EvidenceFil
   assertProjectManifest(workflow);
   // A WORKFLOW FILE IS ONE JSON TEXT, its files in base64. Said before encoding, rather than the tab crashing once a
   // country's raster has been written out (2026-11-12).
-  const refs=[...projectFiles(workflow).values()],encoded=refs.reduce((sum,ref)=>sum+Math.ceil(ref.bytes/3)*4,0);
+  const refs=[...projectFiles(workflow,true).values()],encoded=refs.reduce((sum,ref)=>sum+Math.ceil(ref.bytes/3)*4,0);
   if(encoded>MAX_WORKFLOW_FILE_ATTACHMENT_CHARS)throw new Error(`This workflow's files come to ${(encoded/1e6).toFixed(0)} MB in a workflow file, more than the `
     +`${MAX_WORKFLOW_FILE_ATTACHMENT_CHARS/1e6} MB one can carry. Back it up with “This workflow, encrypted”, which carries them as they are.`);
   const result:EvidenceFile[]=[];
@@ -109,11 +109,14 @@ export async function importWorkflowDocument(raw:unknown,validate:(raw:unknown)=
   if(!isRecord(raw)||raw.schema!=='fieldwork/bundle/1'){
     const workflow=validate(raw);
     // A reference-only document is complete only if its PDF bytes exist locally.
-    for(const ref of projectFiles(workflow).values())await verifiedProjectFile(ref);
+    for(const ref of projectFiles(workflow,true).values())await verifiedProjectFile(ref);
     return workflow;
   }
-  const workflow=validate(raw.workflow),expected=projectFiles(workflow);
-  if(!Array.isArray(raw.attachments)||raw.attachments.length!==expected.size)throw new Error('The workflow bundle must include exactly its referenced PDFs.');
+  // A WINDOW THAT CAN BE READ AGAIN may be in the bundle, as every one was before 0.111.0, or not; every other file must be.
+  const workflow=validate(raw.workflow),expected=projectFiles(workflow),carried=projectFiles(workflow,true);
+  if(!Array.isArray(raw.attachments)||raw.attachments.length>expected.size
+    ||[...carried.keys()].some(sha=>!(raw.attachments as {sha256?:unknown}[]).some(item=>isRecord(item)&&item.sha256===sha)))
+    throw new Error('The workflow bundle must include exactly its referenced PDFs.');
   const files=new Map<string,Uint8Array<ArrayBuffer>>();
   for(const item of raw.attachments){
     if(!isRecord(item)||typeof item.sha256!=='string'||files.has(item.sha256))throw new Error('Invalid or duplicate PDF in bundle.');

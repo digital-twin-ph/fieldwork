@@ -10,6 +10,6 @@ import type {RasterGrid} from './raster.js';
  */
 export function rasterImage(grid:RasterGrid):string{
   const {metadata:m,values}=grid,canvas=document.createElement('canvas');canvas.width=m.width;canvas.height=m.height;const context=canvas.getContext('2d')!,pixels=context.createImageData(m.width,m.height);let min=Infinity,max=-Infinity;
-  for(const value of values)if(value!==null){min=Math.min(min,value);max=Math.max(max,value);}for(let i=0;i<values.length;i++){const value=values[i];if(value===null)continue;const t=max===min?0.5:(value-min)/(max-min);pixels.data.set([Math.round(245-215*t),Math.round(250-145*t),Math.round(220-135*t),255],i*4);}context.putImageData(pixels,0,0);
+  for(const value of values)if(Number.isFinite(value)){min=Math.min(min,value);max=Math.max(max,value);}for(let i=0;i<values.length;i++){const value=values[i]!;if(!Number.isFinite(value))continue;const t=max===min?0.5:(value-min)/(max-min);pixels.data.set([Math.round(245-215*t),Math.round(250-145*t),Math.round(220-135*t),255],i*4);}context.putImageData(pixels,0,0);
   return canvas.toDataURL();
 }

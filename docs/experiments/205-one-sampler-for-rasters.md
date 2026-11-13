@@ -1,6 +1,6 @@
 # 205 · One sampler for rasters, at points or over areas
 
-_Created 2026-11-11 · Updated 2026-11-11_
+_Created 2026-11-11 · Updated 2026-11-13_
 
 **Status:** tried. Built 2026-11-11 in 0.94.0: Sample a raster reads a raster at points or over areas, or satellite files; the satellite sampler is retired into it. The lab check against an external zonal sum is not yet done. TODO 24.
 

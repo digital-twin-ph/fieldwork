@@ -220,3 +220,13 @@ test('an enclave whose outline is the hole around it is accepted, as Gwangju in 
   // Without the hole it is still ground counted twice.
   assert.throws(()=>validateDrawnGeometry({type:'MultiPolygon',coordinates:[[surround[0]],[enclave]]}),/lies inside another/);
 });
+
+// 2026-11-13: Rwanda's Ngoma district carries a triangle of about 1 m² beside itself in geoBoundaries, and was refused.
+test('a district with a very small extra part is accepted, and kept as the source draws it',async()=>{
+  const {validateDrawnGeometry}=await import('../build/study-area.js');
+  const district=[[30.40,-2.30],[30.60,-2.30],[30.60,-2.00],[30.40,-2.00],[30.40,-2.30]];
+  const sliver=[[30.656635066755,-2.14088343582188],[30.6566648001405,-2.14089039117856],[30.6566503192569,-2.14088192136353],[30.656635066755,-2.14088343582188]];
+  const kept=validateDrawnGeometry({type:'MultiPolygon',coordinates:[[district],[sliver]]});
+  assert.equal(kept.coordinates.length,2);
+  assert.throws(()=>validateDrawnGeometry({type:'Polygon',coordinates:[sliver]}),/too small/,'an area of 1 m² alone is still too small');
+});

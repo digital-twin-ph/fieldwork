@@ -294,6 +294,8 @@ export interface Polygons {kind?:'hexbin';siteSourceNodeId?:string;
   layerName?:string;
   /** What a classed layer's shade is, in words, such as "population, people per pixel": the key says it. */
   valueName?:string;
+  /** The attribute that holds each part's `value`, such as "population": the column a table of these parts totals. */
+  valueColumn?:string;
   /** THE FRAMES each part carries a value for, in order, where a join was given a frame column. */
   frames?:string[];
   /** Whether the features are NAMED THINGS or numbered parts of one layer. A read numbers what

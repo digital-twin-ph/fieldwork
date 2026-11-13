@@ -11,14 +11,16 @@ const box=(w,s,e,n)=>({type:'Polygon',coordinates:[[[w,s],[e,s],[e,n],[w,n],[w,s
 
 test('an area\'s total is the sum of the cells whose centre is inside it, by hand',()=>{
   // Cells with centres at x 0.5 and 1.5, y 3.5 and 2.5: values 1, 2, 5 and the no-data cell.
-  assert.deepEqual(totalOver(box(0,2,2,4),grid),{total:8,cells:3,noData:1,outside:0,min:1,max:5});
+  const counted=t=>({total:t.total,cells:t.cells,noData:t.noData,outside:t.outside,min:t.min,max:t.max});
+  assert.deepEqual(counted(totalOver(box(0,2,2,4),grid)),{total:8,cells:3,noData:1,outside:0,min:1,max:5});
   // The whole grid: 136 less the no-data cell's place, which adds nothing.
-  assert.deepEqual(totalOver(box(0,0,4,4),grid),{total:136-6,cells:15,noData:1,outside:0,min:1,max:16});
+  assert.deepEqual(counted(totalOver(box(0,0,4,4),grid)),{total:136-6,cells:15,noData:1,outside:0,min:1,max:16});
 });
 
 test('cells of an area beyond the raster\'s window are counted as outside, never as a smaller total',()=>{
   // Half the area lies east of the grid: two cells inside (4 and 8), two beyond.
-  assert.deepEqual(totalOver(box(3,2,5,4),grid),{total:12,cells:2,noData:0,outside:2,min:4,max:8});
+  const t=totalOver(box(3,2,5,4),grid);
+  assert.deepEqual({total:t.total,cells:t.cells,noData:t.noData,outside:t.outside,min:t.min,max:t.max},{total:12,cells:2,noData:0,outside:2,min:4,max:8});
 });
 
 test('areas come back as polygons carrying their total, cells, no data and outside, and one with no value has no total',()=>{
@@ -35,15 +37,18 @@ test('areas come back as polygons carrying their total, cells, no data and outsi
   assert.equal('cell_mean' in value.features[0].properties,false);
 });
 
-test('asked for, each area also carries its mean, smallest and largest cell value, of the cells with a value',()=>{
+test('asked for, each area also carries its zonal statistics, of the cells with a value (experiment 209)',()=>{
   const {value}=areaTotals([{id:'a',name:'A',geometry:box(0,2,2,4)},{id:'b',name:'Beyond',geometry:box(10,10,11,11)}],
     grid,{label:'Population',attribute:'population',valueUnit:'people',over:'areas',cellStatistics:true});
   // Cells 1, 2 and 5; the no-data cell is in none of the three.
-  assert.deepEqual(value.features[0].properties,{population:8,cells:3,cells_no_data:1,cells_outside_raster:0,
-    cell_mean:8/3,cell_min:1,cell_max:5});
+  // Cells 1, 2 and 5: median 2; population standard deviation sqrt((1+4+25)/3 - (8/3)^2); all three above zero.
+  const {area_km2,density_km2,...rest}=value.features[0].properties;
+  assert.deepEqual(rest,{population:8,cells:3,cells_no_data:1,cells_outside_raster:0,
+    cell_mean:8/3,cell_median:2,cell_sd:Math.sqrt(30/3-(8/3)**2),cell_min:1,cell_max:5,cells_populated:3,share_populated:1});
+  assert.ok(area_km2>0);assert.ok(Math.abs(density_km2-8/area_km2)<1e-9);
   // No cell with a value, so no statistic: empty, never zero.
   assert.deepEqual([value.features[1].properties.cell_mean,value.features[1].properties.cell_min,value.features[1].properties.cell_max],[null,null,null]);
-  assert.match(value.method,/mean, smallest and largest cell value/);
+  assert.match(value.method,/cell mean, median, standard deviation/);
 });
 
 test('one sampler: its output follows its source and places, and a saved satellite sampler opens as it',()=>{

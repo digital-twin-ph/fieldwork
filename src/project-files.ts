@@ -7,11 +7,13 @@ export async function contentHash(bytes:Uint8Array<ArrayBuffer>):Promise<string>
 /** THE LARGEST FILE OF EACH KIND a project carries: a PDF as evidence allows, a raster as the measured cell cap allows
  *  (2026-11-12; rasters were held to a combined 10 MB with PDFs, a number from before the cap was measured). */
 export const fileByteLimit=(mediaType:ProjectFile['mediaType']):number=>mediaType==='image/tiff'?rasterFileByteLimit():MAX_PDF_BYTES;
-export function projectFiles(workflow:Workflow):Map<string,ProjectFile>{
+/** `carried`: only the files a workflow file carries, leaving out raster windows that can be read again (experiment 209). */
+export function projectFiles(workflow:Workflow,carried=false):Map<string,ProjectFile>{
   const files=new Map<string,ProjectFile>(referencedPDFs(workflow));
-  for(const node of workflow.nodes)if(node.type==='raster_input'&&node.params.asset){const asset=node.params.asset,previous=files.get(asset.sha256);if(previous&&(previous.bytes!==asset.bytes||previous.mediaType!==asset.mediaType))throw new Error('Conflicting project asset identity.');files.set(asset.sha256,{...asset,asset});}
+  for(const node of workflow.nodes)if(node.type==='raster_input'&&node.params.asset&&!(carried&&rereadableAsset(node.params.asset))){const asset=node.params.asset,previous=files.get(asset.sha256);if(previous&&(previous.bytes!==asset.bytes||previous.mediaType!==asset.mediaType))throw new Error('Conflicting project asset identity.');files.set(asset.sha256,{...asset,asset});}
   return files;
 }
+const rereadableAsset=(asset:{source:{url?:string;sha256?:string}})=>!!asset.source.url||/^[a-f0-9]{64}$/.test(asset.source.sha256??'');
 export async function verifyProjectFile(file:ProjectFile,bytes:Uint8Array<ArrayBuffer>):Promise<void>{
   if(bytes.length!==file.bytes||bytes.length>fileByteLimit(file.mediaType)||await contentHash(bytes)!==file.sha256)throw new Error('Project asset checksum or size mismatch.');
   if(file.mediaType==='application/pdf'){await pdfDigest(bytes);return;}

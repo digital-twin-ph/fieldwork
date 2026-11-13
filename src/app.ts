@@ -4,7 +4,7 @@ import {openMapImageConfig} from './georeference-ui.js';
 import {openCountriesConfig} from './area-countries-ui.js';
 import {openChangelog} from './changelog-ui.js';
 import {GHS_CITATION,GHS_EPOCHS,GHS_LICENCE,GHS_NOTE,GHS_PROJECTED,ghsUrl} from './ghs-pop.js';
-import {grid3RasterFor,GRID3_CITATION,GRID3_COUNTRIES,GRID3_LICENCE,GRID3_NOTE,GRID3_PRODUCT,GRID3_TAKEN} from './grid3-catalogue.js';
+import {grid3RasterFor,grid3RecordFor,GRID3_CITATION,GRID3_COUNTRIES,GRID3_LICENCE,GRID3_NOTE,GRID3_PRODUCT,GRID3_TAKEN} from './grid3-catalogue.js';
 import {countriesOfArea} from './area-countries.js';
 import {placedCard} from './map-image-ui.js';
 import {catalogLinks,builtInLinks,exampleLinksBlock,exampleSlug,type ExampleLinks} from './example-links.js';
@@ -79,7 +79,7 @@ import {settingNamed} from './authored-rules.js';
 import {FACILITY_SOURCES,FACILITY_SOURCE_KEYS,FACILITY_KINDS,downloadFacilities,fetchHotExport,requireRunnableFindHealthFacilities} from './health-facilities.js';
 
 import {evidenceInspector,openEvidenceEditor} from './evidence-ui.js';
-import {workflowDocument,importWorkflowDocument,exportEvidenceFiles,keepBytes,readPDF} from './evidence-storage.js';
+import {workflowDocument,importWorkflowDocument,exportEvidenceFiles,keepBytes,readPDF,storePDFs} from './evidence-storage.js';
 import {curatedExamples,exampleById,verifiedFile,type CatalogExample} from './example-catalog.js';
 import {validateManual,renderManual,firstUndone,type WorkedExampleManual} from './worked-example-manual.js';
 import {saveRefusalMessage} from './save-refusal.js';
@@ -2494,7 +2494,7 @@ function sampleSentence(n:WorkflowNode<'sample_raster'>):string{
   // OVER AREAS (experiment 205): each area's cells totalled.
   if(p.over==='areas')return `Totals ${name||'total'}${p.valueUnit?.trim()?`, ${p.valueUnit.trim()},`:''} over each area: the cells whose `
     +'centre is inside or on it, each counted whole; cells with no data add nothing and are counted apart.'
-    +(p.cellStatistics?' Also each area\u2019s mean, smallest and largest cell value.':'');
+    +(p.cellStatistics?' Also each area\u2019s cell mean, median, standard deviation, smallest and largest, cells populated, and the total per km\u00b2.':'');
   if(!name)return 'Writes a raster\u2019s value onto each point. Name the attribute in Configure\u2026';
   return `Writes ${name}${p.valueUnit?.trim()?`, ${p.valueUnit.trim()},`:''} onto each point: `
     +(p.method==='bilinear'?'interpolated between the four nearest cells.':'the value of the cell containing it.');
@@ -2557,7 +2557,7 @@ function openSampleConfig(nodeId:string){
       +`<div class="field"><label class="field-label" for="sample-attribute">${draft.over==='areas'?'Name of the total':'Attribute to write'}</label><input id="sample-attribute" maxlength="60" value="${esc(draft.attribute)}" ></div>`
       +`<div class="field"><label class="field-label" for="sample-unit">What those values measure</label><input id="sample-unit" maxlength="60" value="${esc(draft.valueUnit)}">`
       +(stated&&draft.valueUnit===stated.units?`<small data-sample-unit-from>As ${esc(stated.from)} states. Change it if it says otherwise.</small>`:'')+'</div>'
-      +(draft.over==='areas'?`<div class="field"><label class="check"><input type="checkbox" id="sample-cell-statistics"${draft.cellStatistics?' checked':''}> Also give each area\u2019s mean, smallest and largest cell value</label></div>`:'')
+      +(draft.over==='areas'?`<div class="field"><label class="check"><input type="checkbox" id="sample-cell-statistics"${draft.cellStatistics?' checked':''}> Also give each area\u2019s zonal statistics: its cells\u2019 mean, median, standard deviation, smallest and largest, how many are populated, and people per km\u00b2</label></div>`:'')
       +(draft.over==='areas'?'':`<div class="field"><label class="field-label" for="sample-method">Read each value as</label><select id="sample-method">`
       +`<option value="cell"${draft.method!=='bilinear'?' selected':''}>the cell containing the point</option>`
       +`<option value="bilinear"${draft.method==='bilinear'?' selected':''}>between the four nearest cells (bilinear)</option></select></div>`
@@ -4396,6 +4396,7 @@ function renderInspector(){
        const why=result?.unfinished?.find(u=>u.nodeId===n.id)?.message;
        content+=standardSection('Result',`<p class="standard-result${why?' standard-result-warning':''}">${esc(why?`The last run could not compute this step: ${why}`
          :asset?`Holds ${asset.metadata.width} × ${asset.metadata.height} cells of ${asset.source.filename}.`:'Nothing kept yet: choose a GeoTIFF in Configure\u2026')}</p>`
+         +(asset?'<div data-raster-presence></div>':'')
          +(asset?`<details><summary>GeoTIFF metadata and source</summary><pre>${esc(JSON.stringify(asset,null,2))}</pre></details>`:''));}
       content+='<button id="download-node-raster" class="button">Download GeoTIFF</button><p class="description">The retained window at native resolution, with its georeferencing and source metadata.</p>';}else content+='<section class="source-card" data-clip-parameters><span class="inspector-section">Processing parameters</span><div class="detail-row"><span>Cutline</span><strong>Separate clip boundary</strong></div><div class="detail-row"><span>Inclusion rule</span><strong>Configured below</strong></div><div class="detail-row"><span>Resolution</span><strong>Native pixels</strong></div><div class="detail-row"><span>Outside polygon</span><strong>NoData</strong></div><p>Start with a copy of Study area, then save adjustments on this operation. Study area remains unchanged. Map displays the result.</p></section><button id="preview-raster-clip" class="button primary">Preview and adjust</button><button id="add-raster-map" class="button">Add raster map</button>';
     if(n.type==='clip_raster'){content+='<div class="field"><label class="field-label" for="clip-method">Pixel inclusion</label><select id="clip-method"><option value="all-touched" '+(n.params.method==='all-touched'?'selected':'')+'>All touched</option><option value="cell-center" '+(n.params.method==='cell-center'?'selected':'')+'>Cell center inside</option></select><label class="field-label" for="clip-margin">Outer margin (native pixels, 0-1)</label><input id="clip-margin" type="number" min="0" max="1" step="0.25" value="'+(n.params.marginPixels||0)+'"><small>All touched includes a cell when the boundary covers part of its area or crosses it, so a boundary running exactly along a cell border does not pull in the cell outside it. This matches GDAL except where a boundary vertex lies exactly on a cell border. For an outward margin, prepare the GeoTIFF with one pixel of extra source coverage; a margin is a grid distance with no GDAL equivalent. NoData is never filled.</small></div>';content+='<p class="description">'+(n.params.cutline?'Saved clip boundary; independent of Study area edits.':'Boundary will be initialized from the connected Study area.')+'</p><button id="reset-clip-boundary" class="button small" '+(!n.params.cutline?'disabled':'')+'>Use Study area boundary</button>';if(n.params.cutline)content+='<div class="source-card"><span class="inspector-section">Clip extent (degrees)</span>'+geometryBounds(n.params.cutline.geometry).map((value,i)=>'<div class="detail-row"><span>'+['West','South','East','North'][i]+'</span><strong>'+value.toFixed(6)+'</strong></div>').join('')+'</div>';content+='<button id="download-node-raster" class="button">Download GeoTIFF</button><p class="description">The masked grid at native resolution. Cells outside the boundary are NoData, not absent.</p>';}
@@ -5573,9 +5574,28 @@ function renderInspector(){
       };
     };
     let baseline=JSON.stringify(workflow);openRasterEditor(boundary,asset=>{if(JSON.stringify(workflow)!==baseline)throw new Error('The workflow changed. Reopen Prepare GeoTIFF input.');return change(w=>{getNode(w,n.id,'raster_input').params.asset=asset;},{requirePersistence:true});},getNode(workflow,n.id,'raster_input').params.asset,
-      {html:populationHtml,wire:wirePopulation},node.params.label,worldPopRecordFor);
+      {html:populationHtml,wire:wirePopulation},node.params.label,name=>worldPopRecordFor(name)??grid3RecordFor(name,countryName));
   });
   optionalElement('#add-raster-map')?.addEventListener('click',()=>change(w=>{const id=`map-${Date.now()}`;w.nodes.push({id,type:'map_output',x:n.x+270,y:n.y,params:{label:'Clipped raster',inputMode:'raster',pointInputCount:1}});w.edges.push({id:`e-${Date.now()}`,from:n.id,to:id,port:'raster'});selected=id;}));
+  // A WINDOW THAT TRAVELLED WITHOUT ITS BYTES (experiment 209): said, and read again from its address or its file, checked.
+  if(n.type==='raster_input'&&n.params.asset){const asset=n.params.asset,host=optionalElement('[data-raster-presence]');
+    if(host)void readPDF(asset.sha256).then(async held=>{
+      if(held||!host.isConnected)return;
+      const {rereadable,rereadWindow}=await import('./raster-workflow.js');
+      if(!rereadable(asset)){host.innerHTML='<p class="notice">The window is not on this device, and this project does not say where to read it again. Import the project with its files.</p>';return;}
+      const where=asset.source.url?new URL(asset.source.url).hostname:asset.source.filename;
+      host.innerHTML=`<p class="notice" data-raster-missing>The window is not on this device yet: the project carries where it came from, not its cells. Read it again from ${esc(where)}; it is checked against the window that was kept.</p>`
+        +(asset.source.url?'<div class="inspector-actions"><button id="raster-reread" class="button primary">Read the window again</button></div>'
+          :`<label class="field-label" for="raster-reread-file">Choose ${esc(asset.source.filename)} (${asset.source.bytes.toLocaleString('en')} bytes)</label><input id="raster-reread-file" type="file" accept=".tif,.tiff,image/tiff">`)
+        +'<p id="raster-reread-status" class="description" role="status"></p>';
+      const say=host.querySelector<HTMLElement>('#raster-reread-status')!;
+      const read=async(file?:File)=>{say.textContent='Reading the window again…';
+        try{const bytes=await rereadWindow(asset,file);await storePDFs(new Map([[asset.sha256,bytes]]),new Map([[asset.sha256,{...asset,asset}]]));
+          say.textContent='Read again and checked: it is the window that was kept.';renderInspector();}
+        catch(error){say.textContent=error instanceof Error?error.message:String(error);}};
+      host.querySelector('#raster-reread')?.addEventListener('click',()=>void read());
+      host.querySelector<HTMLInputElement>('#raster-reread-file')?.addEventListener('change',e=>{const f=(e.target as HTMLInputElement).files?.[0];if(f)void read(f);});
+    });}
   optionalElement('#download-node-raster')?.addEventListener('click',async e=>{
     const button=e.currentTarget as HTMLButtonElement,label=button.textContent||'Download GeoTIFF';
     button.disabled=true;button.textContent='Preparing\u2026';
@@ -9107,11 +9127,14 @@ $('#workflow-file').onchange=async e=>{const file=(control(e) as HTMLInputElemen
   if((parsed as {schema?:string})?.schema===PROJECT_DOCUMENT_SCHEMA){await importProjectDocument(parsed);control(e).value='';return;}
   const next=await importWorkflowDocument(parsed,validateWorkflow);const persisted=change(w=>{replaceWorkflow(w,next);selected=next.nodes.find(n=>n.type==='output')?.id;},{requirePersistence:true});if(!persisted)throw new Error('Workflow could not be saved. The previous workflow is unchanged.');discardPreviousRun();renderLibrary();flow?.fit();toast('Workflow imported. Run it to update results.');}catch(err){toast(errorMessage(err),{tone:'failure'});}control(e).value='';};
 $('#geojson-file').onchange=async e=>{const file=(control(e) as HTMLInputElement).files?.[0];if(!file)return;try{if(file.size>5e6)throw new Error('GeoJSON file is too large (5 MB maximum).');const data=validateGeoJSON(JSON.parse(await file.text()));change(w=>{const n=w.nodes.find(n=>n.id===importNode);if(!n)throw new Error('Source node no longer exists.');updateParam(w,n.id,'data',data);});toast('Local geographic data loaded. Run to update results.');}catch(err){toast(errorMessage(err),{tone:'failure'});}control(e).value='';};
+/** A RASTER'S CELLS, WRITTEN AS A LIST, no data as null, as a receipt always wrote them: a typed array (2026-11-13) would
+ *  otherwise be written as an object keyed "0", "1", ... */
+const cellsAsList=(_key:string,value:unknown)=>value instanceof Float32Array||value instanceof Float64Array?Array.from(value,v=>Number.isNaN(v)?null:v):value;
 $('#download-evidence').onclick=async()=>{if(!result||!runWorkflow){toast('Run the workflow first.');return;}const {tables:_held,...reported}=result;
   // The run's retained tables are a reading convenience for the open session, not evidence: the
   // receipt already carries the facts each step asserted, and copying every intermediate table
   // into it would grow an export by the size of the data it describes.
-  const snapshot=structuredClone({schema:'fieldwork/run/1',workflow:runWorkflow,...reported});try{const attachments=await exportEvidenceFiles(snapshot.workflow);download('fieldwork-run-receipt.json',JSON.stringify({...snapshot,...(attachments.length?{attachments}:{})},null,2));}catch(error){toast(errorMessage(error),{tone:'failure'});}};
+  const snapshot=structuredClone({schema:'fieldwork/run/1',workflow:runWorkflow,...reported});try{const attachments=await exportEvidenceFiles(snapshot.workflow);download('fieldwork-run-receipt.json',JSON.stringify({...snapshot,...(attachments.length?{attachments}:{})},cellsAsList,2));}catch(error){toast(errorMessage(error),{tone:'failure'});}};
 document.querySelectorAll<HTMLButtonElement>('[data-view]').forEach(b=>b.onclick=()=>switchView(b.dataset.view!));
 /** MANAGE LAYERS. The practitioner, 2026-10-29: *"Map output should have a dialog modal for
  *  layer management (ordering, labeling, grouping). It should honor all the mappable inputs,

@@ -28,6 +28,14 @@ export function barNumber(value:number,measure?:ChartSummary['measure']):string{
  *  A row with no value is kept and shown as zero-length rather than dropped, and counted in the
  *  caption: a sub-district whose rate was suppressed is not a sub-district with a rate of zero,
  *  and a chart that silently omitted it would be shorter than the table beside it. */
+/** WHAT THE NUMBERS ARE: a table's value column, or, where every row is a share Total within groups made (its
+ *  `statistic` key holding one value, such as "% within source"), that share (2026-11-13: Botswana's shares were captioned
+ *  "population by name"). */
+const measured=(table:DataTable):string=>{
+  if(!table.keys.includes('statistic'))return table.valueField;
+  const kinds=new Set(table.rows.map(r=>r.key.statistic));
+  return kinds.size===1?[...kinds][0]!:table.valueField;
+};
 export function tableChart(table:DataTable,keyColumn?:string,panelsBy?:string,
     said:Record<string,{scale?:Scale;codes?:readonly Code[]}>={}):ChartSummary{
   if(panelsBy?.trim())return panelChart(table,keyColumn,panelsBy.trim());
@@ -59,7 +67,7 @@ export function tableChart(table:DataTable,keyColumn?:string,panelsBy?:string,
   return {field:'value',measure:'value',
     ...(table.unit?{unit:table.unit}:{}),
     categoryTitle:column,
-    caption:`${table.valueField} by ${column}`
+    caption:`${measured(table)} by ${column}`
       +(other.length?` · one bar per row, keyed also by ${other.join(', ')}`:'')
       +(absent?` · ${absent} row${absent===1?'':'s'} with no value, drawn at zero`:''),
     total:table.rows.length,bins};
@@ -157,7 +165,7 @@ function panelChart(table:DataTable,keyColumn:string|undefined,panelsBy:string):
     return [name,text?`${text}${m!.unit?.trim()?` (${m!.unit.trim()})`:''}`:''];}).filter(([,m])=>m));
   return {field:'value',measure:'value',...(table.unit?{unit:table.unit}:{}),categoryTitle:column,
     ...(Object.keys(meanings).length?{meanings}:{}),
-    caption:`${table.valueField} by ${column}, one panel per ${panelsBy}`
+    caption:`${measured(table)} by ${column}, one panel per ${panelsBy}`
       +(absent?` · ${absent} point${absent===1?'':'s'} with no value, left as gaps`:''),
     total:table.rows.length,panels,temporal,bins};
 }

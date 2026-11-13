@@ -1,8 +1,25 @@
-import {fromBlob,fromUrl} from 'geotiff';
+import {fromBlob,fromUrl,fromArrayBuffer} from 'geotiff';
 /** A GEOTIFF FROM THIS DEVICE OR AT A URL (experiment 198). A URL is read by HTTP range: only the header and the window's
  *  blocks are fetched, so a published grid of tens of megabytes yields a window of a few kilobytes. */
-export type RasterSource=Blob|string;
-const openTiff=(source:RasterSource)=>typeof source==='string'?fromUrl(source):fromBlob(source);
+/** A GeoTIFF read from a file, a URL, or bytes already in memory. Bytes in memory are read in place: a 1 GB window kept on
+ *  this device, read back through a Blob, failed in the browser's FileReader (2026-11-13, GHS-POP over Botswana). */
+export type RasterSource=Blob|string|ArrayBuffer;
+const openTiff=(source:RasterSource)=>typeof source==='string'?fromUrl(source):source instanceof ArrayBuffer?fromArrayBuffer(source):fromBlob(source);
+/** THE CELLS OF A WINDOW FIELDWORK WROTE, read in place: uncompressed, little-endian, one band, its strips one after
+ *  another from an offset aligned to 8 bytes, no data already NaN (see writeGeoTiff). Undefined for any other layout, which
+ *  is then read the ordinary way. */
+export async function keptCells(buffer:ArrayBuffer,metadata:RasterMetadata):Promise<RasterValues|undefined>{
+  const tiff=await fromArrayBuffer(buffer);
+  try{const image=await tiff.getImage(),dir=image.getFileDirectory() as unknown as {loadValue?:(tag:string)=>Promise<unknown>;getValue?:(tag:string)=>unknown;StripOffsets?:unknown;Compression?:unknown};
+    const read=async(tag:string)=>dir.loadValue?await dir.loadValue(tag):(dir.getValue?dir.getValue(tag):(dir as Record<string,unknown>)[tag]);
+    const offsets=Array.from((await read('StripOffsets')) as ArrayLike<number>??[]),compression=Number((await read('Compression'))??1);
+    const bytes=metadata.bytesPerPixel,cells=metadata.width*metadata.height,first=offsets[0];
+    if(compression!==1||first===undefined||(bytes!==4&&bytes!==8)||first%bytes!==0||first+cells*bytes>buffer.byteLength)return undefined;
+    const rowBytes=metadata.width*bytes,rowsPerStrip=offsets.length>1?(offsets[1]!-first)/rowBytes:metadata.height;
+    if(!offsets.every((o,i)=>o===first+i*rowsPerStrip*rowBytes))return undefined;
+    return bytes===8?new Float64Array(buffer,first,cells):new Float32Array(buffer,first,cells);
+  }finally{await tiff.close();}
+}
 import type {Boundary,Bounds} from './types.js';
 import {geometryBounds} from './study-area.js';
 import {rasterCellPredicate,validateClipOptions} from './raster-mask.js';
@@ -33,8 +50,23 @@ export interface RasterMetadata {width:number;height:number;bands:number;bounds:
   sourceRegistration?:'PixelIsPoint';noData:number|string|null;bits:number;sampleFormat:number;compression:number;blockWidth:number;blockHeight:number;bytesPerPixel:number;geoKeys:Record<string,unknown>;gdal:Record<string,unknown>|null;band:Record<string,unknown>|null;description:string}
 export interface RasterAsset {sha256:string;bytes:number;mediaType:'image/tiff';filename:string;provenance?:import('./raster-provenance.js').RasterProvenance;metadata:RasterMetadata;source:{filename:string;bytes:number;lastModified:number;metadata:RasterMetadata;
   /** Where it was read from, when it was read at a URL rather than chosen from this device. */
-  url?:string};window:[number,number,number,number]}
-export interface RasterGrid {metadata:RasterMetadata;values:(number|null)[];asset:RasterAsset;boundary?:Boundary;mask?:{method:RasterMaskMethod;marginPixels?:number;inside:number;valid:number;outside:number}}
+  url?:string;
+  /** THE SOURCE FILE'S DIGEST, for a GeoTIFF chosen from this device (experiment 209): the file is checked against it
+   *  before its window is read again on another device. */
+  sha256?:string};window:[number,number,number,number]}
+/** A RASTER'S CELLS, compact (2026-11-13): 4 or 8 bytes a cell at the source's own precision, NaN where a cell has no data.
+ *  Held as an array of numbers and nulls, three national windows at 100 m (Botswana, 123 million cells each) stalled a run in
+ *  the tab; a typed array holds each in a third of the memory. */
+export type RasterValues=Float32Array|Float64Array;
+/** The cells of a window, no data as NaN, in an array as wide as the source needs: 8 bytes where it holds 8, or integers
+ *  of 32 bits that a 4-byte float would round. */
+export function rasterValues(raw:ArrayLike<number>,metadata:Pick<RasterMetadata,'noData'|'bytesPerPixel'|'sampleFormat'|'bits'>):RasterValues{
+  const wide=metadata.bytesPerPixel>4||(metadata.sampleFormat!==3&&metadata.bits>=32);
+  const out=wide?new Float64Array(raw.length):new Float32Array(raw.length),noData=typeof metadata.noData==='number'?metadata.noData:undefined;
+  for(let i=0;i<raw.length;i++){const v=raw[i]!;out[i]=Number.isFinite(v)&&v!==noData?v:NaN;}
+  return out;
+}
+export interface RasterGrid {metadata:RasterMetadata;values:RasterValues;asset:RasterAsset;boundary?:Boundary;mask?:{method:RasterMaskMethod;marginPixels?:number;inside:number;valid:number;outside:number}}
 function check(value:unknown,message:string):asserts value{if(!value)throw new Error(message);}
 export async function inspectRaster(blob:RasterSource):Promise<RasterMetadata>{
   const tiff=await openTiff(blob);try{const image=await tiff.getImage(),keys=image.getGeoKeys()||{},dir=image.getFileDirectory();
@@ -47,8 +79,10 @@ export async function inspectRaster(blob:RasterSource):Promise<RasterMetadata>{
     const tie=await image.getOrigin(),resolution=await image.getResolution(),nodata=await image.getGDALNoData();
     const origin=point?[tie[0]-resolution[0]/2,tie[1]-resolution[1]/2]:tie;
     const bounds=[origin[0],origin[1]+image.getHeight()*resolution[1],origin[0]+image.getWidth()*resolution[0],origin[1]];
-    // Half a cell beyond the world's edge is a point grid's outer cells, not an error.
-    const slack=point?Math.max(resolution[0],-resolution[1])/2+1e-9:0;
+    // Half a cell beyond the world's edge is a point grid's outer cells, not an error; and a global grid may carry a cell
+    // more at the edges, as GHS-POP R2023A's does: 432,002 columns of 3 arc-seconds, from 180.0004° W to 180.0012° E
+    // (2026-11-13: refused, reading Rwanda's window from JRC's copy). Two cells beyond the edge are allowed; more is refused.
+    const slack=Math.max(resolution[0],-resolution[1])*2+1e-9;
     check(origin.slice(0,2).every(Number.isFinite)&&resolution[0]>0&&resolution[1]<0&&bounds.every(Number.isFinite)&&bounds[0]>=-180-slack&&bounds[2]<=180+slack&&bounds[1]>=-90-slack&&bounds[3]<=90+slack,'Unsupported raster coordinates or resolution.');
     check([1,2,3].includes(image.getSampleFormat())&&[8,16,32,64].includes(image.getBitsPerSample())&&(image.getBitsPerSample()!==64||image.getSampleFormat()===3),'Unsupported raster sample type.');
     const result:RasterMetadata={width:image.getWidth(),height:image.getHeight(),bands:1,bounds:bounds as Bounds,origin:[origin[0],origin[1]],resolution:[resolution[0],resolution[1]],crs:'EPSG:4326',rasterType:'PixelIsArea',...(point?{sourceRegistration:'PixelIsPoint' as const}:{}),noData:nodata===null?null:Number.isFinite(nodata)?nodata:'NaN',bits:image.getBitsPerSample(),sampleFormat:image.getSampleFormat(),compression:Number(dir.getValue('Compression')||1),blockWidth:image.getTileWidth(),blockHeight:image.getTileHeight(),bytesPerPixel:image.getBytesPerPixel(),geoKeys:JSON.parse(JSON.stringify(keys)),gdal:await image.getGDALMetadata(),band:await image.getGDALMetadata(0),description:String(await dir.loadValue('ImageDescription')||'')};
@@ -84,9 +118,9 @@ export function rasterOverhang(metadata:RasterMetadata,boundary:Boundary):{edge:
 export const overhangSentence=(o:ReturnType<typeof rasterOverhang>):string=>!o.length?''
   :`The study area reaches past this raster's ${o.map(e=>`${e.edge} edge by about ${e.km<1?`${Math.round(e.km*1000)} m`:`${e.km.toFixed(1)} km`}`).join(', ')}. `
     +`Those parts have no values here.`;
-export async function readRasterWindow(blob:RasterSource,metadata:RasterMetadata,window:[number,number,number,number]):Promise<{metadata:RasterMetadata;values:(number|null)[]}>{
+export async function readRasterWindow(blob:RasterSource,metadata:RasterMetadata,window:[number,number,number,number]):Promise<{metadata:RasterMetadata;values:RasterValues}>{
   const tiff=await openTiff(blob);try{const image=await tiff.getImage(),raw=await image.readRasters({window,samples:[0],interleave:true}),width=window[2]-window[0],height=window[3]-window[1],origin:[number,number]=[metadata.origin[0]+window[0]*metadata.resolution[0],metadata.origin[1]+window[1]*metadata.resolution[1]];
-    const values=Array.from(raw as ArrayLike<number>,v=>Number.isFinite(v)&&v!==metadata.noData?v:null);
+    const values=rasterValues(raw as ArrayLike<number>,metadata);
     check(values.length===width*height,'Raster window size mismatch.');return {metadata:{...metadata,width,height,origin,bounds:[origin[0],origin[1]+height*metadata.resolution[1],origin[0]+width*metadata.resolution[0],origin[1]]},values};
   }finally{await tiff.close();}
 }
@@ -95,7 +129,9 @@ export function encodeRaster(grid:Pick<RasterGrid,'metadata'|'values'> & Partial
   // AT THE SOURCE'S OWN PRECISION: 4 bytes a cell for a 4-byte source such as WorldPop, 8 where the source holds 8. Writing
   // every grid as 8 bytes doubled what a window cost and claimed a precision the source does not have (2026-11-12).
   const wide=!(m.bytesPerPixel>0&&m.bytesPerPixel<=4),cells=wide?new Float64Array(grid.values.length):new Float32Array(grid.values.length);
-  for(let i=0;i<cells.length;i++){const v=grid.values[i];cells[i]=v===null||v===undefined?NaN:v;}
+  // A plain list of numbers and nulls is still accepted, its nulls as no data, never as 0.
+  if(grid.values instanceof Float32Array||grid.values instanceof Float64Array)cells.set(grid.values);
+  else for(let i=0;i<cells.length;i++){const v=(grid.values as ArrayLike<number|null>)[i];cells[i]=v===null||v===undefined?NaN:v;}
   const description=!grid.asset?'Fieldwork derived raster; source metadata and provenance are retained in the project.'
     :JSON.stringify({schema:'fieldwork/raster-provenance/1',embeddedBy:'Fieldwork',sourceMetadataOrigin:'Workflow-author entry, separate from original TIFF tags',originalRasterMetadata:grid.asset.source.metadata,source:grid.asset.provenance||{},originalFile:grid.asset.source.filename,retainedInputSHA256:grid.asset.sha256,operation:grid.mask?grid.mask.method+' polygon clip':'native window',boundary:grid.boundary,mask:grid.mask});
   return writeGeoTiff(cells,m.width,m.height,m.origin,m.resolution,description);
@@ -146,7 +182,12 @@ export function clipRaster(grid:RasterGrid,boundary:Boundary,options:RasterClipO
   const [x0,y0,x1,y1]=rasterWindow(grid.metadata,boundary,marginPixels),source=grid.metadata,width=x1-x0,height=y1-y0,origin:[number,number]=[source.origin[0]+x0*source.resolution[0],source.origin[1]+y0*source.resolution[1]];
   const m:RasterMetadata={...source,width,height,origin,bounds:[origin[0],origin[1]+height*source.resolution[1],origin[0]+width*source.resolution[0],origin[1]]};let inside=0,valid=0,outside=0;
   const included=rasterCellPredicate(boundary,source.origin,source.resolution,{method,marginPixels});
-  const values=Array.from({length:width*height},(_,i)=>{const column=i%width,row=Math.floor(i/width),value=grid.values[(row+y0)*source.width+column+x0];if(!included(column+x0,row+y0)){outside++;return null;}inside++;if(value!==null)valid++;return value;});
-  return {...structuredClone(grid),metadata:m,values,boundary:structuredClone(boundary),mask:{method,marginPixels,inside,valid,outside}};
+  const values=grid.values instanceof Float64Array?new Float64Array(width*height):new Float32Array(width*height);
+  for(let i=0;i<values.length;i++){const column=i%width,row=Math.floor(i/width),value=grid.values[(row+y0)*source.width+column+x0]!;
+    if(!included(column+x0,row+y0)){outside++;values[i]=NaN;continue;}inside++;
+    const v=value as number|null;if(v!==null&&Number.isFinite(v)){valid++;values[i]=v;}else values[i]=NaN;}
+  // The source's cells are not cloned on the way: only what describes them is.
+  const {values:_source,...rest}=grid;
+  return {...structuredClone(rest),metadata:m,values,boundary:structuredClone(boundary),mask:{method,marginPixels,inside,valid,outside}};
 }
 

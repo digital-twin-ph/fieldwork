@@ -16,3 +16,12 @@ export const GRID3_README=CATALOGUE.readme;
 /** The country's file, or null where GRID3 publishes none: outside sub-Saharan Africa, which is said, not guessed round. */
 export const grid3RasterFor=(iso3:string|null):Grid3Country|null=>iso3?CATALOGUE.countries.find(c=>c.iso3===iso3)??null:null;
 export const GRID3_COUNTRIES=CATALOGUE.countries.length;
+/** WHICH GRID3 FILE THIS IS, from its name as the catalogue gives it (2026-11-13), and its source record: as for WorldPop's,
+ *  the file Fieldwork pointed to, chosen from disk under that name, has its record filled in for the practitioner to keep or
+ *  change. Its URL writes a space as %20; the file on disk has the space. */
+export function grid3RecordFor(filename:string,countryName:(iso3:string)=>string=iso3=>iso3):import('./raster-provenance.js').RasterProvenance|undefined{
+  const name=filename.split('/').pop()!.toLowerCase();
+  const found=CATALOGUE.countries.find(c=>decodeURIComponent(c.url.split('/').pop()!).toLowerCase()===name);
+  return found?{title:`${countryName(found.iso3)} population, 2025, ${CATALOGUE.product}`,provider:'GRID3 and WorldPop, University of Southampton',
+    downloadURL:found.url,license:CATALOGUE.licence,citation:CATALOGUE.citation,temporalCoverage:'2025',units:'people per pixel'}:undefined;
+}

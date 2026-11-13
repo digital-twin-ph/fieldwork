@@ -40,7 +40,7 @@ test('bilinear reads between the four nearest centres; a missing one gives no va
   // A quarter of the way from 5 towards 6, on the row of 5.
   assert.equal(bilinearAt(g,[11.25,19],none),5.25);
   assert.equal(bilinearAt(g,[9.6,20.4],none),'outside','no four nodes around it');
-  const holed={...g,values:g.values.map((v,i)=>i===8?null:v)};
+  const holed={...g,values:Array.from(g.values,(v,i)=>i===8?null:v)};
   assert.equal(bilinearAt(holed,[11.5,18.5],none),null);
   const pts={type:'FeatureCollection',features:[[11.5,18.5],[9.6,20.4]].map((c,i)=>({type:'Feature',id:String(i),properties:{},geometry:{type:'Point',coordinates:c}}))};
   const out=sampleRaster(pts,{...g,asset:{}},{label:'s',attribute:'v',valueUnit:'m',method:'bilinear'});

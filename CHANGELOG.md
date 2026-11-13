@@ -3,6 +3,23 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.111.0 — 2026-11-13
+
+- **Population models beside a census, a worked example for Botswana and Rwanda.** WorldPop, GRID3 and GHS-POP
+  totalled over each census district and set beside the 2022 census as each district's share of the country. WorldPop's
+  and GRID3's shares follow the census by construction; GHS-POP's do not. Every share equals rasterio's over the same
+  files. Experiment 209.
+- **A raster window travels as its source, not its cells.** Exported, a window read from a web address or from a file
+  whose digest is kept carries its source, window and digest; another device reads it again, checked, from the same
+  address or file. Raster input 0.12.0.
+- **Raster input reaches a whole country from three sources.** Cells held compactly, a raster let go once read, a kept
+  window read in place: Botswana's three national windows had stalled the run. GHS-POP's global file and GRID3's files
+  are read and recognised. Caps measured again.
+- **Sample a raster totals each district once, over all its parts**, gives zonal statistics (median, standard
+  deviation, populated cells, density per km²), and its areas can go on to table steps. Sample a raster 0.6.0.
+- **A district with a 1 m² sliver is accepted.** Rwanda's Ngoma was refused. Study area 0.9.3.
+- **A chart of shares says so** in its caption. Chart 0.21.1.
+
 ## 0.110.1 — 2026-11-13
 
 - **Sample a raster over areas finishes on a country.** Botswana's 10 districts over WorldPop 2025 (123 million cells)

@@ -233,8 +233,12 @@ export function validateDrawnGeometry(raw:unknown):Boundary{
       if(!encloses(outer,rings[h][0]))throw new Error('An interior ring must lie inside the boundary.');
       for(let k=1;k<rings.length;k++)if(k!==h&&encloses(rings[k],rings[h][0]))throw new Error('Interior rings must not contain one another.');
     }
-    if(ringArea(outer,west,south)<1e-10)throw new Error('The selected area is too small or has zero area.');
+    // A PART WITH NO AREA AT ALL is refused; a very small one is not (2026-11-13): Rwanda's Ngoma district carries, beside
+    // itself, a triangle of about 1 m\u00b2 in geoBoundaries, and the whole district was refused for it. Too small is
+    // asked of the area as a whole, below.
+    if(ringArea(outer,west,south)===0)throw new Error('A part of the area has no area: its outline encloses nothing.');
   }
+  if(parts.reduce((sum,rings)=>sum+ringArea(rings[0],west,south),0)<1e-10)throw new Error('The selected area is too small or has zero area.');
   // One part inside another is only legitimate when it sits in that part's hole -- an enclave
   // that belongs to the area. Inside the outline but not in a hole would be the same ground
   // counted twice.

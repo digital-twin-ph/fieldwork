@@ -287,7 +287,7 @@ const point = (id:string,name:string,coordinates:Position|null|undefined):PointF
 /** WHETHER A PORT TAKES A RESULT. The same type, or a distances result on a table port (experiment 197): one row per point,
  *  its nearest candidate and the distance, which is a table, and which Relate and Select rows can then read. */
 export function portAccepts(wanted:PortType|undefined,given:PortType|null):boolean{
-  return !!wanted&&!!given&&(wanted===given||(wanted==='table'&&(given==='distances'||given==='points')));
+  return !!wanted&&!!given&&(wanted===given||(wanted==='table'&&(given==='distances'||given==='points'||given==='polygons')));
 }
 
 /** A POINT LAYER AS A TABLE (experiment 200): one row per point, its id and its attributes as columns, and no geometry,
@@ -305,10 +305,34 @@ export function pointsAsTable(value:{features?:{id?:unknown;properties?:Record<s
   return {kind:'data-table',keys:['id',...own],valueField:'',rows:rows as DataTable['rows'],rowCount:rows.length,missingValueCount:0,
     ...(numeric.length?{numericKeys:Object.fromEntries(numeric.map(n=>[n,'']))}:{})};
 }
-/** What a table port reads from a step: its table, its distances as a table, or its points as a table. */
+/** A STUDY AREA'S NAMED UNITS, ONE AREA EACH, with all of its parts (2026-11-13). The units list one entry per part, so
+ *  Rwanda's Ngoma, a district and a 1 m\u00b2 sliver beside it, was totalled as two areas, the sliver with no cell and no
+ *  total, and every share of the country became unknown. A unit's parts are one area, totalled together. */
+export function studyUnitAreas(study:{units:{id:string;name:string}[];boundary:import('./types.js').Boundary}):{id:string;name:string;geometry:import('./types.js').Boundary}[]{
+  const parts=study.boundary.type==='MultiPolygon'?study.boundary.coordinates:[study.boundary.coordinates];
+  const byId=new Map<string,{id:string;name:string;polygons:Position[][][]}>();
+  study.units.forEach((unit,index)=>{const part=parts[index];if(!part)return;
+    const held=byId.get(unit.id)??{id:unit.id,name:unit.name,polygons:[]};held.polygons.push(part as Position[][]);byId.set(unit.id,held);});
+  return [...byId.values()].map(u=>({id:u.id,name:u.name,geometry:u.polygons.length===1?{type:'Polygon',coordinates:u.polygons[0]!}:{type:'MultiPolygon',coordinates:u.polygons}}));
+}
+/** A POLYGON LAYER AS A TABLE (experiment 209): one row per part, its id, its name and its attributes as columns, no
+ *  geometry. Its number, where the layer names the column that holds it (Sample a raster's total, such as population), is
+ *  the table's value, so Total within groups adds it and gives each part's share; otherwise the parts' `value` is, under
+ *  "value", or there is none. Botswana's 28 districts' totals from three rasters set beside the census needed it. */
+export function polygonsAsTable(value:{valueColumn?:string;features?:{id?:unknown;name?:string;value?:number;properties?:Record<string,unknown>|null}[]}|undefined):DataTable{
+  const features=value?.features??[],column=value?.valueColumn?.trim();
+  const valued=features.some(f=>typeof f.value==='number');
+  const table=pointsAsTable({features:features.map(f=>{const props={...(f.properties??{})};if(column)delete props[column];
+    return {id:f.id,properties:{name:f.name??String(f.id??''),...props}};})});
+  if(!valued)return table;
+  const field=column||'value';
+  return {...table,valueField:field,rows:table.rows.map((row,i)=>({...row,value:typeof features[i]!.value==='number'?features[i]!.value!:null})),
+    missingValueCount:features.filter(f=>typeof f.value!=='number').length};
+}
+/** What a table port reads from a step: its table, its distances as a table, or its points or polygons as a table. */
 export function asTableInput(from:WorkflowNode|undefined,value:unknown):unknown{
   const out=from?outputOf(from):null;
-  return out==='distances'?distancesAsTable(value as never):out==='points'?pointsAsTable(value as never):value;
+  return out==='distances'?distancesAsTable(value as never):out==='points'?pointsAsTable(value as never):out==='polygons'?polygonsAsTable(value as never):value;
 }
 
 /** A DISTANCES RESULT AS A TABLE: keyed by `point_id`, the point's own attributes as `point_<attribute>`, `nearest_id`
@@ -1422,9 +1446,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           const study=(inputs as unknown as {area?:{units?:{id:string;name:string}[];boundary?:import('./types.js').Boundary}}).area;
           const layer=(inputs as unknown as {areas?:{features?:{id:string|number;name?:string;geometry?:import('./types.js').Boundary|null}[]}}).areas;
           if(study&&layer)throw new Error('Connect a polygon layer or a study area to areas, not both.');
-          const fromStudy=study?.units?.length&&study.boundary
-            ?study.units.map((unit,index)=>({id:unit.id,name:unit.name,geometry:{type:'Polygon' as const,
-              coordinates:study.boundary!.type==='MultiPolygon'?study.boundary!.coordinates[index]!:study.boundary!.coordinates} as import('./types.js').Boundary}))
+          const fromStudy=study?.units?.length&&study.boundary?studyUnitAreas(study as {units:{id:string;name:string}[];boundary:import('./types.js').Boundary})
             :study?.boundary?[{id:'area',name:'Study area',geometry:study.boundary}]:undefined;
           const features=layer?.features??fromStudy;
           if(!features?.length)throw new Error('Connect a polygon layer or a study area to areas: the raster is totalled over each.');
@@ -2580,6 +2602,14 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
       }
     }
     values.set(node.id,value);trace.push({nodeId:node.id,type:node.type,milliseconds:performance.now()-begin});
+    // A RASTER IS LET GO once every step that reads it has run (2026-11-13): three national windows at 100 m held to the
+    // end of Botswana's run stalled the tab, and nothing after the steps reading a raster reads it again. A step showing it,
+    // a map, holds its own reference.
+    for(const edge of workflow.edges.filter(e=>e.to===node.id)){
+      const above=workflow.nodes.find(n=>n.id===edge.from);
+      if(!above||(above.type!=='raster_input'&&above.type!=='clip_raster')||!values.has(above.id))continue;
+      if(workflow.edges.filter(e=>e.from===above.id).every(e=>values.has(e.to)))values.delete(above.id);
+    }
     // WHEN THIS STEP RAN, in the receipt, in PROV's own terms.
     //
     // The practitioner, 2026-10-23, on measuring the work a project holds: *"compute time in the

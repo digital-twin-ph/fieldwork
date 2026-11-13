@@ -180,12 +180,12 @@
       "id": "raster-window-cells",
       "constant": "MAX_RASTER_CELLS",
       "iri": "urn:fieldwork:cap:raster-window-cells",
-      "value": 123200000,
+      "value": 123300000,
       "unit": "cells",
       "kind": "discovery",
       "basis": "measured",
-      "evidence": "Measured 2026-11-12 in a Chromium tab at its default heap, against WorldPop Botswana 2025 at 100 m (11,248 by 10,953 cells, 16,232,187 bytes from data.worldpop.org): the whole 123,199,344-cell raster read in 5.7 s, kept as a 493 MB window in 0.2 s, stored in 0.16 s and read back in 0.43 s, carried through an encrypted workflow and back in 6.5 s, clipped in 7.5 s and drawn in 1.4 s, with the tab's heap peaking at about 3 GB. Two obstacles were removed to get there: the GeoTIFF library's writer took 32 s on the page for the same window, and IndexedDB refuses one value over 133,169,152 bytes, so a large file is stored in parts. Before that, 2026-10-22 measured the read alone and set 16,777,216; before that, 262,144 carried no evidence.",
-      "refuses": "A study area whose window on a raster holds more than 123.2 million cells: Botswana whole at 100 m fits; a larger country at 100 m does not.",
+      "evidence": "Measured 2026-11-13 in a Chromium tab at its default heap: GHS-POP R2023A 2025 over Botswana's 28 census districts, 123,276,912 cells of 8 bytes read by range from the JRC's copy and kept as a 986 MB window, beside WorldPop's and GRID3's 4-byte windows of the same country, the three totalled over the districts in one run of 16 steps in 1.2 min (tests/population-models-from-scratch.browser.mjs). Three changes removed what stopped it: a raster's cells held as a typed array (an array of numbers and nulls had stalled the run at step 6), a raster let go once every step reading it has run, and a window Fieldwork wrote read in place rather than through a Blob, which the browser's FileReader refused at this size. Before that, 2026-11-12: WorldPop Botswana alone, 123,199,344 cells, set 123,200,000; 2026-10-22 set 16,777,216.",
+      "refuses": "A study area whose window on a raster holds more than 123.3 million cells: Botswana whole at 100 m, from any of the three population sources, fits.",
       "liftTest": "Measure a larger country's window the same way, in Chromium and WebKit. The encrypted workflow's 500 MB, the bundle limit, is the next ceiling at 4 bytes a cell; clipping (7.5 s) holds the page and would be the next to move to a worker. Measured outside the application's own dialogs, which were not run at this size."
     },
     {
@@ -408,12 +408,12 @@
       "id": "raster-decode-bytes",
       "constant": "MAX_DECODE_BYTES",
       "iri": "urn:fieldwork:cap:raster-decode-bytes",
-      "value": 512000000,
+      "value": 1100000000,
       "unit": "bytes of TIFF blocks",
       "kind": "discovery",
       "basis": "measured",
-      "evidence": "Measured 2026-10-22: Botswana's whole WorldPop 2025 raster, 123.2M cells of 4 bytes, 493 MB of blocks, read in 8,382 ms in a Chromium tab with every value touched. It replaced a bare 64 MB with no evidence.",
-      "refuses": "A read whose intersecting blocks hold more than 512 MB.",
+      "evidence": "Measured 2026-11-13: GHS-POP R2023A's tiles over Botswana, 512 by 512 cells of 8 bytes, 1.06 GB of blocks, read by range from the JRC's copy in a Chromium tab and kept. Before that, 2026-10-22: Botswana's WorldPop 2025 raster, 493 MB of blocks, set 512,000,000.",
+      "refuses": "A read whose intersecting blocks hold more than 1.1 GB.",
       "liftTest": "Read a larger raster's window in a Chromium tab and record the time and the memory."
     },
     {

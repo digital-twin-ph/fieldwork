@@ -35,7 +35,14 @@ per country (Botswana's is 11.6 MB, against WorldPop's 293 MB). They are modelle
 spread over settled areas; they are not official government statistics and carry no uncertainty layer. Where GRID3
 publishes nothing for the country, the dialog says so. The download is your browser's, as WorldPop's is.
 
-**The WorldPop file you were pointed to is recognised.** Chosen from disk under the name WorldPop gave it, its source
+**A window travels as its source, not its cells.** A country's window is hundreds of megabytes, so a workflow file or
+project carries where the window came from, which part was kept, and its digest, not the cells. A GeoTIFF chosen on
+this computer keeps the file's digest too. Opened on another computer, Raster input says the window is not there yet and
+offers to read it again: **Read the window again** for one read at a web address, or a file chooser naming the file.
+The file is checked against the digest first, and the window read again against the window that was kept; either
+differing is refused, and nothing is kept.
+
+**The WorldPop or GRID3 file you were pointed to is recognised.** Chosen from disk under the name WorldPop gave it, its source
 record fills in: the country and year, the release, WorldPop as provider, its licence, and its units, *people per
 pixel*, which WorldPop's files do not carry themselves. Change any of it that says otherwise. A file under any other
 name is not guessed at.

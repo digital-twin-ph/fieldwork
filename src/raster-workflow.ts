@@ -10,7 +10,27 @@ export function validateRasterAsset(asset:RasterAsset):void{
   validateRasterProvenance(asset?.provenance);const m=asset?.metadata;
   if(!asset||asset.mediaType!=='image/tiff'||!/^[a-f0-9]{64}$/.test(asset.sha256)||!Number.isSafeInteger(asset.bytes)||asset.bytes<8||asset.bytes>rasterFileByteLimit()||typeof asset.filename!=='string'||asset.filename.length>200||!m||!Number.isSafeInteger(m.width)||!Number.isSafeInteger(m.height)||m.width<1||m.height<1||m.width*m.height>MAX_RASTER_CELLS||m.crs!=='EPSG:4326'||m.rasterType!=='PixelIsArea'||!Array.isArray(m.origin)||m.origin.length!==2||!m.origin.every(Number.isFinite)||!Array.isArray(m.resolution)||m.resolution.length!==2||!(m.resolution[0]>0&&m.resolution[1]<0)||!Array.isArray(m.bounds)||m.bounds.length!==4||!m.bounds.every(Number.isFinite)||!asset.source||typeof asset.source.filename!=='string'||!Number.isSafeInteger(asset.source.bytes)||!Array.isArray(asset.window)||asset.window.length!==4||!asset.window.every(Number.isSafeInteger)||JSON.stringify(asset).length>200000)throw new Error('Invalid retained raster asset or metadata.');
   const derived=[m.origin[0],m.origin[1]+m.height*m.resolution[1],m.origin[0]+m.width*m.resolution[0],m.origin[1]];
-  if(!m.resolution.every(Number.isFinite)||m.bands!==1||m.bounds.some((v,i)=>Math.abs(v-derived[i])>1e-9)||![m.blockWidth,m.blockHeight,m.bytesPerPixel].every(v=>Number.isSafeInteger(v)&&v>0)||(asset.source.url?asset.source.bytes<0||!/^https?:\/\/\S{1,2000}$/.test(asset.source.url):asset.source.bytes<8)||asset.source.filename.length>255||!Number.isFinite(asset.source.lastModified)||!asset.source.metadata||asset.window[0]<0||asset.window[1]<0||asset.window[2]-asset.window[0]!==m.width||asset.window[3]-asset.window[1]!==m.height)throw new Error('Raster bounds, dimensions or source window are inconsistent.');
+  if(!m.resolution.every(Number.isFinite)||m.bands!==1||m.bounds.some((v,i)=>Math.abs(v-derived[i])>1e-9)||![m.blockWidth,m.blockHeight,m.bytesPerPixel].every(v=>Number.isSafeInteger(v)&&v>0)||(asset.source.url?asset.source.bytes<0||!/^https?:\/\/\S{1,2000}$/.test(asset.source.url):asset.source.bytes<8)||asset.source.filename.length>255||(asset.source.sha256!==undefined&&!/^[a-f0-9]{64}$/.test(asset.source.sha256))||!Number.isFinite(asset.source.lastModified)||!asset.source.metadata||asset.window[0]<0||asset.window[1]<0||asset.window[2]-asset.window[0]!==m.width||asset.window[3]-asset.window[1]!==m.height)throw new Error('Raster bounds, dimensions or source window are inconsistent.');
+}
+/** A WINDOW THAT CAN BE READ AGAIN (experiment 209): from the address it was read at, or from a GeoTIFF whose digest was
+ *  kept. Such a window travels as its source, window and digest, not its bytes, because a country's window from each of
+ *  three sources is hundreds of megabytes; on another device it is read again and refused if it differs. */
+export const rereadable=(asset:RasterAsset):boolean=>!!asset.source.url||/^[a-f0-9]{64}$/.test(asset.source.sha256??'');
+/** READ THE KEPT WINDOW AGAIN, from its address or from the file chosen, and refuse it unless it is the window kept. */
+export async function rereadWindow(asset:RasterAsset,file?:File):Promise<Uint8Array<ArrayBuffer>>{
+  const {inspectRaster,readRasterWindow,encodeRaster}=await import('./raster.js');
+  const {contentHash}=await import('./project-files.js');
+  let from:File|string;
+  if(file){
+    if(asset.source.sha256&&(file.size!==asset.source.bytes||await contentHash(new Uint8Array(await file.arrayBuffer()))!==asset.source.sha256))
+      throw new Error(`That is not the file this window was read from: ${asset.source.filename}, ${asset.source.bytes.toLocaleString('en')} bytes, was expected. Nothing was kept.`);
+    from=file;
+  }else if(asset.source.url)from=asset.source.url;
+  else throw new Error(`Choose ${asset.source.filename} on this device to read the window again.`);
+  const metadata=await inspectRaster(from),data=await readRasterWindow(from,metadata,asset.window),bytes=encodeRaster(data);
+  if(bytes.length!==asset.bytes||await contentHash(bytes)!==asset.sha256)
+    throw new Error('The window read again is not the window that was kept: the source has changed since. Nothing was kept.');
+  return bytes;
 }
 export async function loadRaster(asset:RasterAsset,area:AreaValue):Promise<RasterGrid>{
   validateRasterAsset(asset);rasterWindow(asset.metadata,area.boundary);
@@ -21,11 +41,19 @@ export async function loadRaster(asset:RasterAsset,area:AreaValue):Promise<Raste
 /** Preview may need to repair a boundary outside the retained window. */
 export async function loadRasterAsset(asset:RasterAsset):Promise<RasterGrid>{
   validateRasterAsset(asset);
-  const bytes=await verifiedProjectFile({...asset,asset}),blob=new Blob([bytes]),actual=await inspectRaster(blob);
+  // NOT ON THIS DEVICE YET, where the window travels as its source: said as what to do, not as a missing file.
+  let bytes:Uint8Array<ArrayBuffer>;
+  try{bytes=await verifiedProjectFile({...asset,asset});}
+  catch(error){if(!rereadable(asset))throw error;
+    throw new Error(`The window is not on this device yet. In Raster input, read it again from ${asset.source.url?new URL(asset.source.url).hostname:asset.source.filename}.`);}
+  // READ IN PLACE (2026-11-13): the kept window is Fieldwork's own GeoTIFF, so its cells are taken as they lie in the bytes.
+  const buffer=bytes.byteOffset===0&&bytes.byteLength===bytes.buffer.byteLength?bytes.buffer:bytes.slice().buffer;
+  const blob=buffer,actual=await inspectRaster(blob);
   if(actual.width!==asset.metadata.width||actual.height!==asset.metadata.height||actual.bounds.some((v,i)=>Math.abs(v-asset.metadata.bounds[i])>1e-9))throw new Error('Retained GeoTIFF dimensions or bounds do not match the project metadata.');
   const [w,s,e,n]=actual.bounds;rasterWindow(actual,{type:'Polygon',coordinates:[[[w,s],[e,s],[e,n],[w,n],[w,s]]]});
-  const data=await readRasterWindow(blob,actual,[0,0,actual.width,actual.height]);
-  return {metadata:actual,values:data.values,asset};
+  const {keptCells}=await import('./raster.js');
+  const values=await keptCells(buffer,actual)??(await readRasterWindow(blob,actual,[0,0,actual.width,actual.height])).values;
+  return {metadata:actual,values,asset};
 }
 export function rasterReceipt(node:WorkflowNode<'raster_input'|'clip_raster'>,grid:RasterGrid,area:AreaValue,runId:string,sourceId?:string):Receipt{
   const activity=`<urn:fieldwork:run:${runId}:raster:${node.id}>`,result=`<urn:fieldwork:run:${runId}:output:${node.id}>`,source=sourceId?`<urn:fieldwork:run:${runId}:output:${sourceId}>`:`<urn:sha256:${grid.asset.sha256}>`;

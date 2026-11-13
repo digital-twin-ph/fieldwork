@@ -880,6 +880,76 @@
         }
       ],
       "workflowCount": 3
+    },
+    {
+      "id": "urn:fieldwork:example:population-models-census",
+      "title": "Population models beside a census",
+      "repository": "https://github.com/digital-twin-ph/example-population-models-census",
+      "commit": "6a3140feee4c995c01e9c8fa841e2bc8e9c8b62c",
+      "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-population-models-census",
+      "licence": {
+        "data": "Census counts: Statistics Botswana (free to use, acknowledged, as the user's own processing) and NISR (no terms found, used credited). Boundaries: geoBoundaries, CC BY 3.0 IGO (Botswana) and CC BY 4.0 (Rwanda). Rasters, read where published: WorldPop, GRID3 and GHS-POP, CC BY 4.0. The repository's own files are CC0-1.0.",
+        "source": "Statistics Botswana PHC 2022; NISR RPHC5 2022 Main Indicators; geoBoundaries 9469f09; WorldPop Global2 R2025A; GRID3 SSA 2025 v1.0; GHS-POP R2023A.",
+        "note": "NISR's counts used by the practitioner's decision of 2026-11-13, its terms unreadable; no raster is carried."
+      },
+      "description": "WorldPop, GRID3 and GHS-POP totalled over each census district of Botswana (28) and Rwanda (30) and set beside the 2022 census as each district's share of the country: WorldPop and GRID3 follow the census by construction, GHS-POP does not.",
+      "carries": {
+        "workflow": true,
+        "data": true,
+        "geography": true
+      },
+      "notYet": "The rasters are not carried: each window is read again from the file downloaded from WorldPop, or from the JRC's copy for GHS-POP, and checked against its digest.",
+      "uses": [
+        "append_rows",
+        "chart_output",
+        "group_table",
+        "join_table_to_area",
+        "map_output",
+        "raster_input",
+        "sample_raster",
+        "select_rows",
+        "study_area",
+        "table_input",
+        "table_output"
+      ],
+      "files": [
+        {
+          "path": "fieldwork-project.json.gz",
+          "sha256": "2a4e7f2848c4c46ebfd2850785176bfe8687d68ca5cfdc83625662c29c5cbfe2",
+          "bytes": 4873416
+        },
+        {
+          "path": "data/botswana_census_2022_districts.csv",
+          "sha256": "61657f725629d0e048cb98e1806b9ea6fa7926aeaad1406f840a678066643e15",
+          "bytes": 887
+        },
+        {
+          "path": "data/rwanda_census_2022_districts.csv",
+          "sha256": "ec3de0cfdd2c475bd73706a2d196cb2985ef533963ec3cd7dd6e6e51cf6a9add",
+          "bytes": 474
+        },
+        {
+          "path": "provenance.json",
+          "sha256": "a3d054d4f5ae0437ae2b47c39fec8066326c1f11e0fa42925d400507b486765b",
+          "bytes": 3679
+        },
+        {
+          "path": "README.md",
+          "sha256": "331d29e911210b48e02283e3cf609dd82369edb8d4ac38e07d38f97531edd62c",
+          "bytes": 3250
+        },
+        {
+          "path": "NOTICE.txt",
+          "sha256": "2342c60a21693ca010288757b8c12fb9c2bc38f1a0896ebc8d54ec647f22a9a5",
+          "bytes": 2514
+        },
+        {
+          "path": "LICENSE",
+          "sha256": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499",
+          "bytes": 7048
+        }
+      ],
+      "workflowCount": 2
     }
   ]
 }

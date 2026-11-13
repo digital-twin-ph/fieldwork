@@ -131,7 +131,10 @@ export function openRasterEditor(boundary:Boundary,onSave:(asset:RasterAsset)=>b
       const data=file&&netcdf?await readNetcdfWindow(file,netcdf,metadata,window):await readRasterWindow(from,metadata,window),bytes=encodeRaster(data);
       if(bytes.length>rasterFileByteLimit())throw new Error(`This window is ${data.values.length.toLocaleString('en')} cells, past the ${MAX_RASTER_CELLS.toLocaleString('en')} a step keeps. Use a smaller study area.`);
       const retained=await inspectRaster(new Blob([bytes])),asset:RasterAsset={provenance,filename:'raster-window.tif',mediaType:'image/tiff',bytes:bytes.length,sha256:await contentHash(bytes),metadata:retained,
-        source:file?{filename:file.name,bytes:file.size,lastModified:file.lastModified,metadata}:{filename:nameOf(url!),bytes:urlBytes??0,lastModified:0,metadata,url:url!},window};
+        // A GEOTIFF CHOSEN HERE keeps its digest, so its window can be read again from the same file elsewhere (experiment 209).
+        source:file?{filename:file.name,bytes:file.size,lastModified:file.lastModified,metadata,
+          ...(netcdf?{}:{sha256:await contentHash(new Uint8Array(await file.arrayBuffer()) as Uint8Array<ArrayBuffer>)})}
+          :{filename:nameOf(url!),bytes:urlBytes??0,lastModified:0,metadata,url:url!},window};
       await storePDFs(new Map([[asset.sha256,bytes]]),new Map([[asset.sha256,{...asset,asset}]]));
       if(!onSave(asset))throw new Error('Raster metadata could not be saved. Your previous project is unchanged; retry Apply.');
       return true;

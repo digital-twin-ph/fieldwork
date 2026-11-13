@@ -60,7 +60,7 @@ test('a raster is totalled over a study area: the cells whose centre is inside, 
   expect(errors).toEqual([]);
 });
 
-test('asked for in Configure, each area also carries its mean, smallest and largest cell value',async({page})=>{
+test('asked for in Configure, each area also carries its zonal statistics: the cells\u2019 mean, median, spread and size',async({page})=>{
   const errors=collectPageErrors(page);
   await prepare(page);
   await page.locator('.react-flow__node[data-id="sample"]').click();
@@ -68,13 +68,20 @@ test('asked for in Configure, each area also carries its mean, smallest and larg
   const box=page.locator('#sample-config #sample-cell-statistics');
   await expect(box).not.toBeChecked();
   await box.check();
-  await expect(page.locator('#sample-config')).toContainText('Also each area\u2019s mean, smallest and largest cell value.');
+  await expect(page.locator('#sample-config')).toContainText('Also each area\u2019s cell mean, median, standard deviation');
   await page.locator('#sample-config #config-apply').click();
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
   await page.locator('[data-view="results"]').click();
-  // The sixteen cells hold 44 to 77, rows 4-7 and columns 3-6 of 10r + c + 1; their mean is 968 / 16.
-  const row=(await page.locator('#result-rows').innerText()).trim().split('\t').slice(-7);
-  expect(row).toEqual(['968','16','0','0','60.5','44','77']);
+  // The sixteen cells hold 44 to 77, rows 4-7 and columns 3-6 of 10r + c + 1: mean 968 / 16, median the mean of 57 and
+  // 64, standard deviation sqrt(100 x 1.25 + 1.25) = 11.236, all sixteen above zero. Experiment 209's zonal statistics.
+  const row=(await page.locator('#result-rows').innerText()).trim().split('\t').slice(-13);
+  expect(row.slice(2).map(v=>v.slice(0,6))).toEqual(['968','16','0','0','60.5','60.5','11.236','44','77','16','1']);
+  // Twelve attributes to a page: the area and the density are on the next.
+  await page.locator('[data-table-fields="1"]').click();
+  const more=(await page.locator('#result-rows').innerText()).trim().split('\t').slice(-2);
+  const [km2,density]=more.map(Number);
+  expect(km2).toBeGreaterThan(18.9);expect(km2).toBeLessThan(19.3);
+  expect(Math.abs(density-968/km2)).toBeLessThan(0.01);
   expect(errors).toEqual([]);
 });

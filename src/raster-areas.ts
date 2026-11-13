@@ -8,6 +8,7 @@
 import type {Boundary,WorkflowNode} from './types.js';
 import type {Receipt} from './results.js';
 import type {RasterGrid} from './raster.js';
+import {calculateArea} from './area-computation.js';
 
 export interface AreaTotalCounts {areas:number; cells:number; noData:number; outside:number; empty:number}
 interface AreaFeature {id:string|number; name?:string; geometry?:Boundary|null}
@@ -43,20 +44,37 @@ export function centreRuns(geometry:Boundary,origin:readonly number[],resolution
 }
 
 /** One area's total: its cells inside the window, those with no data, and those beyond the window. */
-export function totalOver(geometry:Boundary,grid:Pick<RasterGrid,'metadata'|'values'>):{total:number;cells:number;noData:number;outside:number;min:number|null;max:number|null}{
+export function totalOver(geometry:Boundary,grid:Pick<RasterGrid,'metadata'|'values'>,keepValues=false):{total:number;cells:number;noData:number;outside:number;min:number|null;max:number|null;
+    squares:number;populated:number;values?:Float64Array}{
   const {origin,resolution,width,height,noData}=grid.metadata,[ox,oy]=origin,[rx,ry]=resolution;
   const {W,S,E,N}=boxOf(geometry);
   // Every cell of the grid's lattice the area's box touches, inside the window or not.
   const c0=Math.floor((W-ox)/rx),c1=Math.ceil((E-ox)/rx),r0=Math.floor((N-oy)/ry),r1=Math.ceil((S-oy)/ry);
   const runs=centreRuns(geometry,origin,resolution,r0,r1);
-  let total=0,cells=0,missing=0,outside=0,min=Infinity,max=-Infinity;
+  let total=0,cells=0,missing=0,outside=0,min=Infinity,max=-Infinity,squares=0,populated=0;
+  const kept:number[]=[];
   for(let r=r0;r<r1;r++)for(const [a,b] of runs[r-r0]!)for(let c=Math.max(a,c0);c<=Math.min(b,c1-1);c++){
     if(c<0||r<0||c>=width||r>=height){outside++;continue;}
     const v=grid.values[r*width+c];
     if(v===null||v===undefined||!Number.isFinite(v)||(typeof noData==='number'&&v===noData)){missing++;continue;}
-    total+=v;cells++;if(v<min)min=v;if(v>max)max=v;
+    total+=v;cells++;squares+=v*v;if(v>0)populated++;if(v<min)min=v;if(v>max)max=v;if(keepValues)kept.push(v);
   }
-  return {total,cells,noData:missing,outside,min:cells?min:null,max:cells?max:null};
+  return {total,cells,noData:missing,outside,min:cells?min:null,max:cells?max:null,squares,populated,...(keepValues?{values:Float64Array.from(kept)}:{})};
+}
+
+/** THE ZONAL STATISTICS experiment 209 chose, per area, of the cells with a value, each counted whole: mean, median (of two
+ *  middle values, their mean), standard deviation of those cells as the whole population (divided by n, as numpy and
+ *  rasterstats give by default), smallest and largest, how many are above zero and their share, and the total over the
+ *  area's size on the sphere, as Calculate area gives it. Per cell, as a mean is: a latitude-longitude grid's cells are not
+ *  equal in area. */
+function zonalStatistics(geometry:Boundary,t:ReturnType<typeof totalOver>){
+  const n=t.cells,mean=n?t.total/n:null;
+  const sorted=t.values?Float64Array.from(t.values).sort():new Float64Array(0);
+  const median=n?(n%2?sorted[(n-1)/2]!:(sorted[n/2-1]!+sorted[n/2]!)/2):null;
+  const sd=n&&mean!==null?Math.sqrt(Math.max(0,t.squares/n-mean*mean)):null;
+  const km2=calculateArea(geometry,'km2').value;
+  return {cell_mean:mean,cell_median:median,cell_sd:sd,cell_min:t.min,cell_max:t.max,
+    cells_populated:t.populated,share_populated:n?t.populated/n:null,area_km2:km2,density_km2:n&&km2>0?t.total/km2:null};
 }
 
 /** Every area's total, as polygons carrying it, so they can be mapped and related like any other polygon layer. */
@@ -65,7 +83,7 @@ export function areaTotals(features:readonly AreaFeature[],grid:RasterGrid,param
   const column=params.attribute?.trim()||'total';
   const counts:AreaTotalCounts={areas:0,cells:0,noData:0,outside:0,empty:0};
   const out=features.filter(f=>f.geometry).map(f=>{
-    const t=totalOver(f.geometry!,grid);
+    const t=totalOver(f.geometry!,grid,!!params.cellStatistics);
     counts.areas++;counts.cells+=t.cells;counts.noData+=t.noData;counts.outside+=t.outside;if(!t.cells)counts.empty++;
     const total=t.cells?t.total:null;
     return {id:String(f.id),name:f.name??String(f.id),geometry:f.geometry!,
@@ -73,18 +91,18 @@ export function areaTotals(features:readonly AreaFeature[],grid:RasterGrid,param
       properties:{[column]:total,cells:t.cells,cells_no_data:t.noData,cells_outside_raster:t.outside,
         // THE CELLS' OWN STATISTICS, when asked: of the cells with a value, each counted whole. A mean of cells is not a
         // density per square kilometre unless the cells are equal in area, which a latitude-longitude grid's are not.
-        ...(params.cellStatistics?{cell_mean:t.cells?t.total/t.cells:null,cell_min:t.min,cell_max:t.max}:{})}};
+        ...(params.cellStatistics?zonalStatistics(f.geometry!,t):{})}};
   });
   const sentence=areaTotalsSentence(counts,column,params.valueUnit,params.cellStatistics);
   return {value:{features:out,sites:[],crs:'EPSG:4326',layerName:params.label||'Raster totals',featuresNamed:true,
-    valueName:params.valueUnit?.trim()?`${column}, ${params.valueUnit.trim()}`:column,
+    valueName:params.valueUnit?.trim()?`${column}, ${params.valueUnit.trim()}`:column,valueColumn:column,
     method:sentence,notes:[sentence]},counts,sentence};
 }
 
 export function areaTotalsSentence(c:AreaTotalCounts,column:string,unit?:string,cellStatistics?:boolean):string{
   return `${column} totalled over ${c.areas} area${c.areas===1?'':'s'}: ${c.cells.toLocaleString('en-US')} cells whose centre is inside `
     +`or on an area${unit?.trim()?`, in ${unit.trim()}`:''}, each counted whole, not area-weighted.`
-    +(cellStatistics?' With each area\u2019s mean, smallest and largest cell value, of the cells with a value.':'')
+    +(cellStatistics?' With each area\u2019s cell mean, median, standard deviation (of the cells as the whole population), smallest and largest, of the cells with a value; how many are above zero and their share; its size on the sphere in km\u00b2 and the total per km\u00b2.':'')
     +(c.noData?` ${c.noData.toLocaleString('en-US')} cells with no data added nothing; no data is not zero.`:'')
     +(c.outside?` ${c.outside.toLocaleString('en-US')} cells of the areas lie beyond the raster's window and are not in any total.`:'')
     +(c.empty?` ${c.empty} area${c.empty===1?' has':'s have'} no cell with a value, and no total.`:'');
@@ -95,7 +113,7 @@ export function areaTotalsReceipt(node:WorkflowNode<'sample_raster'>,counts:Area
   const facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.\n`
     +`${activity} a fw:RasterAreaTotal, prov:Activity; prov:used <${base}output:${raster}>; `
     +`fw:cellRule "cell centre inside or on the area; counted whole, not area-weighted"; `
-    +(node.params.cellStatistics?`fw:cellStatisticsGiven "mean, minimum and maximum of the cells with a value"; `:'')
+    +(node.params.cellStatistics?`fw:cellStatisticsGiven "mean, median, population standard deviation, minimum, maximum, cells above zero and their share, of the cells with a value; and the total over the area's size on the sphere"; `:'')
     +`fw:areaCount "${counts.areas}"^^xsd:nonNegativeInteger; fw:totalledCellCount "${counts.cells}"^^xsd:nonNegativeInteger; `
     +`fw:noDataCellCount "${counts.noData}"^^xsd:nonNegativeInteger; fw:outsideRasterCellCount "${counts.outside}"^^xsd:nonNegativeInteger; `
     +`fw:areasWithoutValueCount "${counts.empty}"^^xsd:nonNegativeInteger.\n`;

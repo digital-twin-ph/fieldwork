@@ -52,7 +52,7 @@ export function bilinearAt(grid:Pick<RasterGrid,'metadata'|'values'>,coordinates
   const m=grid.metadata,[x,y]=coordinates,[rx,ry]=m.resolution;
   const fx=(x-m.origin[0])/rx-0.5,fy=(y-m.origin[1])/ry-0.5,c0=Math.floor(fx),r0=Math.floor(fy);
   if(!Number.isFinite(fx)||!Number.isFinite(fy)||c0<0||r0<0||c0+1>=m.width||r0+1>=m.height)return 'outside';
-  const at=(c:number,r:number)=>grid.values[r*m.width+c] as number|null;
+  const at=(c:number,r:number):number|null=>{const v=grid.values[r*m.width+c];return v!==undefined&&Number.isFinite(v)?v:null;};
   const v=[at(c0,r0),at(c0+1,r0),at(c0,r0+1),at(c0+1,r0+1)];
   if(v.some(isNoData))return null;
   const tx=fx-c0,ty=fy-r0,[a,b,c,d]=v as number[];
@@ -82,7 +82,7 @@ export function sampleRaster(points:PointCollection,grid:RasterGrid,params:Workf
     }else{
       const cell=cellAt(grid.metadata,coordinates);
       if(!cell){counts.outside++;return structuredClone(f);}
-      raw=grid.values[cell[1]*grid.metadata.width+cell[0]] as number|null;
+      {const v=grid.values[cell[1]*grid.metadata.width+cell[0]];raw=v!==undefined&&Number.isFinite(v)?v:null;}
     }
     if(isNoData(raw)){counts.noData++;return structuredClone(f);}
     counts.sampled++;

@@ -1,9 +1,11 @@
 # 209 · Three population rasters and the census, Botswana
 
-_Created 2026-11-12 · Updated 2026-11-12_
+_Created 2026-11-12 · Updated 2026-11-13_
 
-**Status:** asked. The practitioner, 2026-11-12, asking when a raster worked example would come, then of Botswana's
-population by district: *"For #1 we should compare the three sources of population rasters"*. Chosen the same day, from
+**Status:** tried — built and run for Botswana and Rwanda, 2026-11-13, every district's share equal to rasterio's;
+Chromium. The Validation Lab check is not yet written. The practitioner, 2026-11-12, asking when a raster worked example
+would come, then of Botswana's population by district: *"For #1 we should compare the three sources of population
+rasters"*; 2026-11-13: *"Let's finish 209 as it helps refine raster input."*#1 we should compare the three sources of population rasters"*. Chosen the same day, from
 options: Botswana's 2022 census as the reference, districts (ADM1), and each source's **share of the country**.
 
 ## The question
@@ -102,6 +104,82 @@ each with its file name, size and licence.
 global file per epoch, several gigabytes at 3 arc-seconds, which no one should download for one country. The JRC also
 publishes it in tiles; whether the tiles covering Botswana are in the same grid, and how large, is to be checked before
 building.
+
+## Rwanda as a second case, 2026-11-13
+
+The practitioner: *"Can Rwanda also be included in the raster comparison example?"* Yes: the opposite of Botswana, small
+and densely settled. Its census (NISR, PHC5, 16 to 30 August 2022, *Main Indicators*, Table 1) gives 30 districts adding
+to 13,246,394, and geoBoundaries' gbOpen ADM2 (from Open Data Rwanda, 2012, CC BY 4.0) has 30 units whose names match
+all 30 as written. NISR's terms could not be read (its site returned server errors); the practitioner chose to use the 30
+district counts, credited to NISR, stating that no terms were found. The workbook `PHC5-2022_Main_Indicators.xlsx`, 581,274
+bytes, matches the 568 KB file NISR lists, updated 4 February 2025.
+
+**Found on the way:** the workbook in the example repository's `source/`, named as Botswana's census in this record's first
+draft, is Rwanda's. Botswana's 28 counts are Statistics Botswana's report, read and transcribed 2026-11-12; their total is
+2,359,609.
+
+## First result, 2026-11-13: two of the three sources agree with the census by construction
+
+Computed with rasterio (`rasterio.mask`, `all_touched=False`, each source's no-data excluded) over the same boundaries,
+before any Fieldwork step was built:
+
+| | Census 2022 | WorldPop 2025 | GRID3 2025 | GHS-POP 2025 |
+| --- | --- | --- | --- | --- |
+| Botswana, people | 2,359,609 | 2,541,726 | 2,541,726 | 2,764,784 |
+| Largest district gap from the census share | | 0.02 points | 0.02 points | 4.09 points |
+| Rwanda, people | 13,246,394 | 14,403,490 | 14,403,921 | 14,711,409 |
+| Largest district gap from the census share | | 0.01 points | 0.01 points | 1.77 points |
+
+WorldPop's and GRID3's district shares equal the census's because both spread projected census counts by district over
+settlements: at the districts, agreement with the census is their input coming back. GRID3's grid is largely WorldPop's:
+same size and shape, 98 % of Botswana's cells and 63 % of Rwanda's identical. GHS-POP, built by the JRC its own way, is
+the independent comparison. **Decided, the practitioner, the same day:** keep the comparison at the census districts and
+say why: the near-identical shares are the lesson, stated in the example's README and the chart's caption. A comparison
+below the districts, where the models must place people themselves, is not built.
+
+## Built, 2026-11-13
+
+Each country is one workflow of 16 steps in the example repository `example-population-models-census` (6a3140f):
+
+| Step | Widget |
+| --- | --- |
+| The census districts | Study area: Rwanda's 30 from the picker (gbOpen ADM2); Botswana's 28 from the file (gbHumanitarian ADM2) |
+| Each source over the country | Raster input, three times: WorldPop and GRID3 from the downloaded file, GHS-POP read by range from the JRC's copy |
+| Each district's total | Sample a raster over the study area's districts, three times |
+| The census | Tabular data, from the example's CSV |
+| One table | Append rows, four tables, a `source` column naming each |
+| Each district's share of the country, by source | Total within groups by source and district, shares within source |
+| The shares | Select rows; Table; Chart, one panel per source |
+| GHS-POP's shares on the map | Select rows; Join a table to the study area; Map |
+
+**What refining Raster input took, found by building it.** Each was found by running a country, and each is in 0.111.0:
+
+| Found | Changed |
+| --- | --- |
+| A window's bytes went into every export: three national windows would not travel | A window read from a web address or a file whose digest is kept travels as its source, window and digest; on another device it is read again and refused if either differs |
+| Rwanda's Ngoma refused for a 1 m² sliver in its outline | A part with no area at all is refused; a very small one is not |
+| Sample a raster totalled each part of a district apart, so Ngoma's sliver had no total and every share of the country was unknown | Each named district totalled over all its parts |
+| GHS-POP's global file refused: 432,002 columns reach 180.0012° | Two cells beyond the world's edge allowed |
+| GRID3's file not recognised by its name | GRID3's names recognised, as WorldPop's are |
+| Botswana's three windows stalled the run at step 6 of 16 | Cells as typed arrays; a raster let go once read; a kept window read in place, not through the browser's FileReader, which refused 1 GB. The caps measured again: 123.3 million cells, 1.1 GB of blocks |
+| Sample a raster's areas could not reach a table step | A polygon layer arrives at a table input as a table, one row per area |
+
+Zonal statistics as chosen above are in Sample a raster's option: the mean, median, population standard deviation,
+smallest and largest of the cells with a value, cells above zero and their share, the area's size in km² on the sphere and
+the total per km².
+
+## Validation record, 2026-11-13, Chromium
+
+| Check | Result |
+| --- | --- |
+| `tests/population-models-from-scratch.browser.mjs`, Rwanda: 30 districts × 4 sources, each share against rasterio's totals over the same files, rounded as the step rounds | 120 of 120 equal, 46 s |
+| The same, Botswana | 112 of 112 equal, 1.2 min |
+| `tests/population-example-opens.browser.mjs`: the pinned example opened, Rwanda's three windows read again (two files, one by range) and checked, then run | passes; Gasabo 6.6 % in the census, WorldPop and GRID3 |
+| `tests/raster-reread.browser.mjs`: a window exported without its bytes, a different file refused, the right one read again | passes |
+| `tests/raster-areas-scanline.test.mjs`, `tests/sample-raster-areas.browser.mjs` (zonal statistics by hand) | pass |
+
+**Not yet:** the Validation Lab check, recomputing every district's total and share from the published files.
+**The practitioner observation above has not been made.**
 
 ## Distinctions, and how each is enforced
 

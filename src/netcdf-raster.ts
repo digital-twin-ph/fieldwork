@@ -45,12 +45,15 @@ export async function inspectNetcdf(file:File,variable?:string):Promise<{grid:Ne
 
 /** The window [column0, row0, column1, row1], north-first as rasterWindow gives it, read in parts. */
 export async function readNetcdfWindow(file:File,grid:NetcdfGrid,metadata:RasterMetadata,window:[number,number,number,number])
-  :Promise<{metadata:RasterMetadata;values:(number|null)[]}>{
+  :Promise<{metadata:RasterMetadata;values:Float64Array}>{
   const [c0,r0,c1,r1]=window,width=c1-c0,height=r1-r0,southFirst=grid.dlat>0;
   const rows:[number,number]=southFirst?[grid.rows-r1,grid.rows-r0]:[r0,r1];
   const {values:stored}=await ask<{values:(number|null)[]}>({op:'read',file,grid,rows,columns:[c0,c1]});
   if(stored.length!==width*height)throw new Error('The NetCDF window read has the wrong size.');
-  const values=southFirst?Array.from({length:height},(_,r)=>stored.slice((height-1-r)*width,(height-r)*width)).flat():stored;
+  // North first, no data as NaN, compact (2026-11-13).
+  const values=new Float64Array(width*height);
+  for(let r=0;r<height;r++){const from=(southFirst?height-1-r:r)*width;
+    for(let c=0;c<width;c++){const v=stored[from+c];values[r*width+c]=v===null||v===undefined||!Number.isFinite(v)?NaN:v;}}
   const origin:[number,number]=[metadata.origin[0]+c0*metadata.resolution[0],metadata.origin[1]+r0*metadata.resolution[1]];
   return {values,metadata:{...metadata,width,height,origin,
     bounds:[origin[0],origin[1]+height*metadata.resolution[1],origin[0]+width*metadata.resolution[0],origin[1]]}};

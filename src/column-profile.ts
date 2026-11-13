@@ -49,6 +49,8 @@ export interface ColumnProfile {
   frequencies?:{value:string;count:number;label?:string}[];
   /** The measurement scale declared for the column, when one was. */
   scale?:Scale;
+  /** Values that are none of the column's declared codes, where codes are declared (experiment 211). */
+  uncoded?:{count:number; examples:string[]};
   distinct?:number;
 }
 
@@ -96,9 +98,13 @@ export function profileColumn(column:string,values:unknown[],declared?:ColumnKin
     declared==='number'?asNumber(v)!==undefined
     :declared==='boolean'?asBoolean(v)!==undefined:false).length;
 
+  // A VALUE NONE OF THE CODES IS (211): counted and shown, never changed or dropped.
+  const coded=said?.codes?.length?new Set(said.codes.map(c=>c.value)):undefined;
+  const outside=coded?present.map(v=>String(v).trim()).filter(v=>!coded.has(v)):[];
   // A CODE IS NOT A QUANTITY (211): a column declared to hold categories has no median, whatever its values look like.
   const categories=said?.scale==='nominal'||said?.scale==='ordinal';
-  const profile:ColumnProfile={column,declared,...(said?.scale?{scale:said.scale}:{}),total,absent,missing,empty,
+  const profile:ColumnProfile={column,declared,...(said?.scale?{scale:said.scale}:{}),
+    ...(outside.length?{uncoded:{count:outside.length,examples:[...new Set(outside)].slice(0,EXAMPLES_SHOWN)}}:{}),total,absent,missing,empty,
     mismatched:mismatchedValues.length,
     examples:[...new Set(mismatchedValues.map(v=>String(v)))].slice(0,EXAMPLES_SHOWN),
     repairable};

@@ -153,12 +153,12 @@
    "replacementCandidate": "urn:fieldwork:widget:observations"
   },
   "chart_output": {
-   "version": "0.20.1",
+   "version": "0.21.0",
    "released": "2026-11-13",
    "changes": [
     {
-     "kind": "patch",
-     "description": "No text under 14 px in the figure or its export (the practitioner, who has low vision, 2026-11-13: \"Yes 14px\"): subtitles, legends, tick labels and notes went from 11 and 12 px to 14, axis titles to 15; lines wrap shorter to fit."
+     "kind": "minor",
+     "description": "Reads what the sources declared about a column (experiment 211): a declaration accepted on Tabular data or Point data follows the column to Chart by name. An ordinal column's bars, and the panels or stack of a series split by it, are in its declared order, each code with its meaning; a column declared nominal is never offered as a pyramid's bands, and one declared ordinal is, whatever its values look like. The Draw list says \"in its declared order\" when it read one."
     }
    ],
    "breaking": false,
@@ -427,12 +427,12 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.27.3",
+   "version": "0.28.0",
    "released": "2026-11-13",
    "changes": [
     {
-     "kind": "patch",
-     "description": "No figure text under 14 px: place labels in a downloaded map were 12 px, and a classed map's break values 8 px; both are 14 px, with the class swatches widened to fit."
+     "kind": "minor",
+     "description": "Colour by: a point layer's marks one size, coloured by a number's quantile class on the ordered ramp, the highest drawn last, a mark with no value grey; the key gives each class's range and count. The practitioner, 2026-11-13, of MERS's hospitals sized by their cases: \"Note some hospitals under the big circle Samsung Medical Center. This is probably not the best way to display this map. Maybe color keyed to expose all the point locations.\" Colour by and Size by exclude each other. The key on screen edges each mark as the downloaded figure does, so a pale class is seen against white."
     }
    ],
    "breaking": false,
@@ -576,12 +576,12 @@
    "migrationFrom": []
   },
   "point_input": {
-   "version": "0.7.0",
+   "version": "0.7.1",
    "released": "2026-11-13",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Describe columns… and the data dictionary for points held here, as Tabular data has them (experiment 211): a label, unit, description, measurement scale and codes per column, proposed from a dictionary and accepted, which Data quality follows. Hagelloch's cases carry the outbreaks package's dictionary, every column proposed; class arrives as categories in no order. The practitioner, 2026-11-13: \"What is class really? Did we have a data dictionary or did we use the data dictionary feature of Table input?\""
+     "kind": "patch",
+     "description": "A value none of a column's declared codes is shown in Data quality as Not among its codes; the value is kept as written."
     }
    ],
    "breaking": false,
@@ -624,12 +624,12 @@
    "migrationFrom": []
   },
   "raster_input": {
-   "version": "0.11.1",
-   "released": "2026-11-12",
+   "version": "0.11.2",
+   "released": "2026-11-13",
    "changes": [
     {
      "kind": "patch",
-     "description": "A study area reaching past the raster is said, not refused: the window is the part the raster covers, the dialog says how far past which edge, and the receipt records Area beyond the raster as a data issue. It refused Botswana's provinces from geoBoundaries against WorldPop's file for Botswana (the practitioner, 2026-11-12). No overlap at all still stops. A whole country now fits: Botswana at 100 m, 123.2 million cells, measured kept, stored, carried, clipped and drawn in Chromium, and the cell cap is that measurement (was 16.8 million). The window is kept at the source's own precision and written directly (0.2 s, from 32 s), stored in parts past 64 MiB, and no longer held to a bare 5 MB, nor to 10 MB with the project's PDFs; the 64 MB decoding budget is the measured 512 MB (widgets/caps.json)."
+     "description": "A WorldPop file chosen from disk under the name WorldPop gave it is recognised, and its source record filled in where none is written: country and year, release, provider, licence, and units, people per pixel."
     }
    ],
    "breaking": false,
@@ -742,12 +742,12 @@
    "migrationFrom": []
   },
   "sample_raster": {
-   "version": "0.4.1",
-   "released": "2026-11-12",
+   "version": "0.5.0",
+   "released": "2026-11-13",
    "changes": [
     {
-     "kind": "patch",
-     "description": "On the canvas each input is a named row, Points, Areas, Study area, Raster and Satellite files, and the output is named for what it gives, Points → at points and Areas → over areas, as Map, Table, Chart and Raster input draw theirs; it showed five unnamed dots (the practitioner, 2026-11-12: \"Sample a raster has not standardized its ports yet\")."
+     "kind": "minor",
+     "description": "Configure… says what arrived first: the raster's name, cells kept and their width, no-data value, and its units where its source record or the file's band tag states them, which fill What those values measure, said as the source's. It says what the raster is read at, or that nothing is connected and what to connect, with Read it over the study area: connects it, reads over areas, and moves a Map's or Table's input to polygons. A study area with no named parts is read as one area under its own name. The practitioner, 2026-11-13: \"Shouldn't sample a raster be able to detect what data the raster offers after retrieval ... I feel lost what to do next\". Its ports are named the same on the node and in the Inspector: Points, Areas, Study area, Raster, Satellite files (the practitioner, the same day: \"the port for that widget needs to be standardized\")."
     }
    ],
    "breaking": false,
@@ -908,12 +908,12 @@
    "migrationFrom": []
   },
   "table_input": {
-   "version": "0.10.0",
+   "version": "0.10.1",
    "released": "2026-11-13",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Its data dictionary is imported with the table (the practitioner, 2026-11-13: \"The data dictionary as a first class asset should be importable and viewable with the table input that first imports the two\"). Configure… takes the dictionary beside the table file; the file is kept by its digest, listed by the project, and viewed from the Inspector with View the data dictionary. A column can be described by its measurement scale and its codes; an R factor in a dictionary proposes the codes and no order; the data quality profile counts a column declared as categories, in its order, and gives it no median. Experiment 211."
+     "kind": "patch",
+     "description": "A value none of a column's declared codes is a data issue, Not among its codes (fw:ValueNotCoded), in Data quality and the receipt; the value is kept as written."
     }
    ],
    "breaking": false,

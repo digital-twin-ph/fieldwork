@@ -71,7 +71,7 @@ import {savedReadingsSummary,forgetSavedReadings} from './satellite-reading-stor
 import {MODIS_RULES,type ModisQualityRule} from './satellite-areas.js';
 import {openProductsDialog,productCard} from './satellite-products-ui.js';
 import {fetchRemoteTable,useDeviceCopies,archiveOnDevice,progressText} from './remote-table.js';
-import {describableColumns,fileRows,isDescribed,metadataFindings,entriesFrom,dictionaryKeyOf,scalesOf,type TableDictionary} from './column-metadata.js';
+import {describableColumns,fileRows,isDescribed,metadataFindings,entriesFrom,dictionaryKeyOf,scalesOf,declaredUpstream,type TableDictionary} from './column-metadata.js';
 import {openColumnsDialog} from './columns-dialog.js';
 import {castColumn,applyRepairs} from './column-profile.js';
 import {openDataQuality} from './data-quality-ui.js';
@@ -120,7 +120,7 @@ import {readAuthors,currentIdentity,attestIdentity,setCurrentIdentity,authorLabe
 
 /** A polygon layer's chosen file, waiting for Apply. Keyed by node, outside the DOM, because the
  *  Inspector re-renders on every setting change. */
-import {LAYER_SHAPES,resolveLayerSymbol,markPath,type LayerShape,FIGURE_PALETTE} from './presentation.js';
+import {LAYER_SHAPES,resolveLayerSymbol,markPath,type LayerShape,FIGURE_PALETTE,FIGURE_ROLE} from './presentation.js';
 /** A POINT LAYER'S COLOUR, chosen in the Map's Configure… (2026-11-11): the Okabe-Ito six, named, colour-blind safe. */
 const layerDefaultColour=(index:number)=>FIGURE_PALETTE[index%FIGURE_PALETTE.length]!;
 const LAYER_COLOUR_NAMES=['blue','vermillion','bluish green','orange','reddish purple','sky blue'];
@@ -144,7 +144,7 @@ import {openRasterEditor,rasterSvg,rasterFrame,downloadRaster} from './raster-ui
 import {TILE_PROVIDERS,basemapImages,fetchTileAsDataURI,useTileStore} from './basemap-tiles.js';
 import {rasteriseFigure,FIGURE_PIXEL_SCALE} from './figure-export.js';
 import {COUNTRIES,countryName,iso3Of,countryOfArea} from './boundary-source.js';
-import {worldPopRastersForCountry,GLOBAL2,WORLDPOP_LICENCE,WORLDPOP_TAKEN,WORLDPOP_BYTES_PER_SECOND,downloadWait} from './worldpop-catalogue.js';
+import {worldPopRastersForCountry,worldPopRecordFor,GLOBAL2,WORLDPOP_LICENCE,WORLDPOP_TAKEN,WORLDPOP_BYTES_PER_SECOND,downloadWait} from './worldpop-catalogue.js';
 import type {BoundaryProvenance} from './types.js';
 import {basemapAvailable,basemapOf,extentSpanKm,NATURAL_EARTH_MIN_SPAN_KM} from './basemaps.js';
 import {naturalEarthMarkup,NATURAL_EARTH,NATURAL_EARTH_CREDIT} from './natural-earth.js';
@@ -2354,8 +2354,10 @@ function openChartConfig(nodeId:string){
   // first, each named by the question it answers, and the reason for the one chosen is said beneath.
   const upstream=workflow.nodes.find(x=>x.id===records?.from);
   const arrivedTable=records?result?.tables?.[records.from] as import('./data-table.js').DataTable|undefined:undefined;
+  // What the sources declared about these columns, followed here by name (experiment 211).
+  const declaredScales=scalesOf(declaredUpstream(workflow.nodes,workflow.edges,nodeId));
   const proposals=curve?proposeChartForms({kind:'series',splitBy:(upstream as WorkflowNode<'case_series'>).params.splitBy})
-    :arrivedTable?proposeChartForms({kind:'table',table:arrivedTable}):null;
+    :arrivedTable?proposeChartForms({kind:'table',table:arrivedTable,scales:declaredScales}):null;
   const formValue=(f:ChartForm)=>curve?(f==='stacked'?'stacked':''):f;
   const drawField=(draft:WorkflowNode<'chart_output'>['params'])=>{
     const chosen:ChartForm=curve?(draft.figure==='stacked'?'stacked':'curve'):(draft.figure==='tree'||draft.figure==='pyramid'?draft.figure:'bars');
@@ -2391,7 +2393,7 @@ function openChartConfig(nodeId:string){
       let chart=drawn?.chart;
       const recount=!curve&&arrivedTable&&!(arrivedTable as {chart?:unknown}).chart
         &&(draft.keyColumn!==node.params.keyColumn||draft.panelsBy!==node.params.panelsBy||!chart);
-      if(recount)chart=tableChart(arrivedTable!,draft.keyColumn,draft.panelsBy);
+      if(recount)chart=tableChart(arrivedTable!,draft.keyColumn,draft.panelsBy,declaredScales);
       if(!chart){host.innerHTML='<p class="muted">Run the workflow to preview this chart here.</p>';return;}
       if(draft.barOrder&&draft.barOrder!=='category')chart={...chart,barOrder:draft.barOrder};
       if(chartRenderer(draft)==='html'){host.innerHTML=chartMarkup(chart,esc,chartOrientation(draft));return;}
@@ -2498,15 +2500,63 @@ function sampleSentence(n:WorkflowNode<'sample_raster'>):string{
     +(p.method==='bilinear'?'interpolated between the four nearest cells.':'the value of the cell containing it.');
 }
 
+/** THE RASTER ARRIVING AT A STEP: the asset a Raster input holds, found by following raster inputs up the canvas. */
+function rasterArriving(nodeId:string):import('./raster.js').RasterAsset|undefined{
+  const seen=new Set<string>();let at=nodeId;
+  for(;;){const edge=workflow.edges.find(e=>e.to===at&&e.port==='raster');if(!edge||seen.has(edge.from))return undefined;seen.add(edge.from);
+    const from=workflow.nodes.find(n=>n.id===edge.from);const asset=(from?.params as {asset?:import('./raster.js').RasterAsset}|undefined)?.asset;
+    if(asset)return asset;at=edge.from;}
+}
+/** WHAT THE RASTER SAYS ITS VALUES ARE, where it says: the source record's units, else the file's own band tag. */
+function rasterUnits(asset:import('./raster.js').RasterAsset):{units:string;from:string}|undefined{
+  const stated=asset.provenance?.units?.trim();if(stated)return {units:stated,from:'its source record'};
+  const tags={...(asset.source.metadata.gdal??{}),...(asset.source.metadata.band??{})} as Record<string,unknown>;
+  const key=Object.keys(tags).find(k=>/^units?$/i.test(k));
+  const tagged=key?String(tags[key]??'').trim():'';
+  return tagged?{units:tagged,from:'the file’s band tag'}:undefined;
+}
+/** WHAT ARRIVED, said first (2026-11-13). The practitioner, with a raster connected and nothing to read it at: "Shouldn't
+ *  sample a raster be able to detect what data the raster offers after retrieval ... I feel lost what to do next". */
+function sampleArrivals(nodeId:string):{html:string;nothing:boolean;areas:WorkflowNode<'study_area'>[]}{
+  const asset=rasterArriving(nodeId),into=(port:string)=>workflow.edges.filter(e=>e.to===nodeId&&e.port===port)
+    .map(e=>workflow.nodes.find(n=>n.id===e.from)).filter((n):n is WorkflowNode=>!!n);
+  const named=(n:WorkflowNode)=>n.params.label||TYPES[n.type].title;
+  const at=[...into('points').map(n=>`points from ${named(n)}`),...into('areas').map(n=>`areas from ${named(n)}`),
+    ...into('area').map(n=>`the study area ${named(n)}`),...into('files').map(n=>`satellite files from ${named(n)}`)];
+  let raster='No raster is connected to Raster yet.';
+  if(asset){
+    const m=asset.source.metadata,deg=Math.abs(m.resolution[0]),metres=Math.round(deg*111320);
+    const units=rasterUnits(asset),title=asset.provenance?.title?.trim()||asset.source.filename;
+    const description=m.description&&!m.description.trim().startsWith('{')?m.description.trim().slice(0,240):'';
+    raster=`<strong>${esc(title)}</strong>: ${asset.metadata.width.toLocaleString('en')} by ${asset.metadata.height.toLocaleString('en')} cells kept, each `
+      +`${deg.toPrecision(3)}° across (about ${metres.toLocaleString('en')} m at the equator). `
+      +(units?`Its values are in <strong>${esc(units.units)}</strong>, as ${units.from} states.`:'The file does not state what its values measure.')
+      +(m.noData!==null?` No data is written as ${esc(String(m.noData))}.`:'')
+      +(description?` The file describes itself: “${esc(description)}”`:'');
+  }
+  const areas=workflow.nodes.filter((n):n is WorkflowNode<'study_area'>=>n.type==='study_area'&&!!(n.params as {geometry?:unknown}).geometry);
+  return {nothing:!at.length,areas,html:`<div class="standard-arrivals" data-sample-arrivals><p>${raster}</p>`
+    +`<p>${at.length?`Read at: ${esc(at.join('; '))}.`:'<strong>Nothing to read it at yet.</strong> Connect points to Points (each takes its cell’s value), polygons to Areas, or a study area to Study area (a total for each named part, or for the whole area).'}</p>`
+    +(!at.length&&areas.length?`<div class="inspector-actions">${areas.map(a=>`<button type="button" class="button" data-sample-over-area="${esc(a.id)}">Read it over ${esc(a.params.label||'the study area')}</button>`).join('')}</div>`:'')
+    +'</div>'};
+}
+
 /** SAMPLE RASTER'S CONFIGURATION DIALOG (experiment 186): the attribute, what it measures, and how a value is read. */
 function openSampleConfig(nodeId:string){
   const node=getNode(workflow,nodeId,'sample_raster');
   type Draft=WorkflowNode<'sample_raster'>['params'];
+  // THE SOURCE'S OWN WORDS FILL WHAT IS EMPTY, said as theirs: the units a raster states (2026-11-13).
+  const asset=rasterArriving(nodeId),stated=asset?rasterUnits(asset):undefined;
+  const start=structuredClone(node.params);
+  if(!start.valueUnit?.trim()&&stated)start.valueUnit=stated.units;
   openConfigDialog<Draft>({
-    id:'sample-config',widget:'Sample a raster at points or over areas',step:node.params.label||TYPES.sample_raster.title,draft:structuredClone(node.params),
-    sections:draft=>({settings:`<p class="description">${draft.over==='areas'?'Reading over areas: each area\u2019s cells are totalled.':'Reading at points: each point takes its cell\u2019s value.'}</p>`
-      +`<div class="field"><label class="field-label" for="sample-attribute">${draft.over==='areas'?'Name of the total':'Attribute to write'}</label><input id="sample-attribute" maxlength="60" value="${esc(draft.attribute)}" placeholder="${draft.over==='areas'?'population':'elevation_m'}"></div>`
-      +`<div class="field"><label class="field-label" for="sample-unit">What those values measure</label><input id="sample-unit" maxlength="60" value="${esc(draft.valueUnit)}" placeholder="metres above the stated datum"></div>`
+    id:'sample-config',widget:'Sample a raster at points or over areas',step:node.params.label||TYPES.sample_raster.title,draft:start,
+    sections:draft=>({...(sampleArrivals(nodeId).nothing?{message:{tone:'warning' as const,text:'Nothing is connected to read the raster at, so a run has nothing to write to. Connect points, areas or a study area, or use the button above.'}}:{}),
+      settings:sampleArrivals(nodeId).html
+      +`<p class="description">${draft.over==='areas'?'Reading over areas: each area\u2019s cells are totalled.':'Reading at points: each point takes its cell\u2019s value.'}</p>`
+      +`<div class="field"><label class="field-label" for="sample-attribute">${draft.over==='areas'?'Name of the total':'Attribute to write'}</label><input id="sample-attribute" maxlength="60" value="${esc(draft.attribute)}" ></div>`
+      +`<div class="field"><label class="field-label" for="sample-unit">What those values measure</label><input id="sample-unit" maxlength="60" value="${esc(draft.valueUnit)}">`
+      +(stated&&draft.valueUnit===stated.units?`<small data-sample-unit-from>As ${esc(stated.from)} states. Change it if it says otherwise.</small>`:'')+'</div>'
       +(draft.over==='areas'?`<div class="field"><label class="check"><input type="checkbox" id="sample-cell-statistics"${draft.cellStatistics?' checked':''}> Also give each area\u2019s mean, smallest and largest cell value</label></div>`:'')
       +(draft.over==='areas'?'':`<div class="field"><label class="field-label" for="sample-method">Read each value as</label><select id="sample-method">`
       +`<option value="cell"${draft.method!=='bilinear'?' selected':''}>the cell containing the point</option>`
@@ -2518,6 +2568,12 @@ function openSampleConfig(nodeId:string){
       root.querySelector<HTMLInputElement>('#sample-unit')?.addEventListener('change',e=>{draft.valueUnit=(e.target as HTMLInputElement).value.trim();redraw();});
       root.querySelector<HTMLSelectElement>('#sample-method')?.addEventListener('change',e=>{const v=(e.target as HTMLSelectElement).value;
         if(v==='bilinear')draft.method='bilinear';else delete draft.method;redraw();});
+      // READ IT OVER A STUDY AREA: connect it, read over areas, and move a Map's or Table's points input to its polygons input.
+      root.querySelectorAll<HTMLButtonElement>('[data-sample-over-area]').forEach(button=>button.addEventListener('click',()=>{
+        const area=button.dataset.sampleOverArea!;
+        change(w=>{setConnection(w,area,nodeId,'area');
+          for(const e of w.edges)if(e.from===nodeId&&e.port==='points'&&['map_output','table_output'].includes(w.nodes.find(n=>n.id===e.to)?.type??''))e.port='polygons';});
+        draft.over='areas';redraw();}));
       root.querySelector<HTMLInputElement>('#sample-cell-statistics')?.addEventListener('change',e=>{
         if((e.target as HTMLInputElement).checked)draft.cellStatistics=true;else delete draft.cellStatistics;redraw();});
     },
@@ -2646,9 +2702,16 @@ function openMapConfig(nodeId:string){
         if(el.value)held[source]={...held[source],colour:el.value};
         else if(held[source]){const {colour:_dropped,...rest}=held[source]!;held[source]=rest;}
         draft.layerSymbols=held;});
+      // SIZE OR COLOUR, one at a time: a coloured layer draws every mark one size, so choosing one clears the other.
       on('[data-layer-size-by]',el=>{const source=el.dataset.layerSizeBy!,held={...(draft.layerSymbols||{})};
-        if(el.value)held[source]={...held[source],sizeBy:el.value};
+        if(el.value){const {colourBy:_c,...rest}=held[source]??{};held[source]={...rest,sizeBy:el.value};
+          const other=root.querySelector<HTMLSelectElement>(`[data-layer-colour-by="${CSS.escape(source)}"]`);if(other)other.value='';}
         else if(held[source]){const {sizeBy:_dropped,...rest}=held[source]!;held[source]=rest;}
+        draft.layerSymbols=held;});
+      on('[data-layer-colour-by]',el=>{const source=el.dataset.layerColourBy!,held={...(draft.layerSymbols||{})};
+        if(el.value){const {sizeBy:_s,...rest}=held[source]??{};held[source]={...rest,colourBy:el.value};
+          const other=root.querySelector<HTMLSelectElement>(`[data-layer-size-by="${CSS.escape(source)}"]`);if(other)other.value='';}
+        else if(held[source]){const {colourBy:_dropped,...rest}=held[source]!;held[source]=rest;}
         draft.layerSymbols=held;});
       on('[data-layer-size]',el=>{const source=el.dataset.layerSize!;
         draft.layerSymbols={...(draft.layerSymbols||{}),[source]:{...draft.layerSymbols?.[source],size:Number(el.value)}};});
@@ -2840,7 +2903,11 @@ function mapSettingsFlat(n:WorkflowNode<'map_output'>):string{
                 return `<label class="field-label" for="layer-size-by-${esc(source.id)}">Size by</label>`
                   +`<select id="layer-size-by-${esc(source.id)}" data-layer-size-by="${esc(source.id)}"><option value="">Same size for every mark</option>`
                   +keys.map(k=>`<option value="${esc(k)}" ${held?.sizeBy===k?'selected':''}>${esc(k)}, the area of each mark in proportion</option>`).join('')
-                  +`</select><small>The largest value takes three times the radius above; a mark's area is its share of that.</small>`;
+                  +`</select><small>The largest value takes three times the radius above; a mark's area is its share of that.</small>`
+                  +`<label class="field-label" for="layer-colour-by-${esc(source.id)}">Colour by</label>`
+                  +`<select id="layer-colour-by-${esc(source.id)}" data-layer-colour-by="${esc(source.id)}"><option value="">One colour for every mark</option>`
+                  +keys.map(k=>`<option value="${esc(k)}" ${held?.colourBy===k?'selected':''}>${esc(k)}, in five classes from light to dark</option>`).join('')
+                  +`</select><small>Every mark one size, so none hides another; the key gives each class's range. Replaces Size by.</small>`;
               })()
               +`</div>`;
           }).join('');
@@ -4267,7 +4334,7 @@ function renderInspector(){
     // THE STANDARD INSPECTOR (experiments 186, 198): touched to read between the four nearest cells, as a geoid is read.
     const p=n.params;
     content+=standardSection('Name',`<div class="field"><label class="field-label" for="sample-label">Name</label><input id="sample-label" data-sample="label" maxlength="60" value="${esc(p.label||TYPES.sample_raster.title)}"></div>`);
-    content+=standardSection('Inputs',standardInputs(n,{points:'Points to read at',raster:'Raster to read'}));
+    content+=standardSection('Inputs',standardInputs(n));
     content+=standardSection('Settings',`<p class="standard-sentence">${esc(sampleSentence(n))}</p>`
       +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button></div>');
     const why=result?.unfinished?.find(u=>u.nodeId===n.id)?.message;
@@ -5506,7 +5573,7 @@ function renderInspector(){
       };
     };
     let baseline=JSON.stringify(workflow);openRasterEditor(boundary,asset=>{if(JSON.stringify(workflow)!==baseline)throw new Error('The workflow changed. Reopen Prepare GeoTIFF input.');return change(w=>{getNode(w,n.id,'raster_input').params.asset=asset;},{requirePersistence:true});},getNode(workflow,n.id,'raster_input').params.asset,
-      {html:populationHtml,wire:wirePopulation},node.params.label);
+      {html:populationHtml,wire:wirePopulation},node.params.label,worldPopRecordFor);
   });
   optionalElement('#add-raster-map')?.addEventListener('click',()=>change(w=>{const id=`map-${Date.now()}`;w.nodes.push({id,type:'map_output',x:n.x+270,y:n.y,params:{label:'Clipped raster',inputMode:'raster',pointInputCount:1}});w.edges.push({id:`e-${Date.now()}`,from:n.id,to:id,port:'raster'});selected=id;}));
   optionalElement('#download-node-raster')?.addEventListener('click',async e=>{
@@ -6305,7 +6372,7 @@ function renderMap(){
     // square, so a triangle or a star on the map had no legend entry that matched it.
     const key=spec.legend?spec.items.map(item=>`<span><svg class="map-key-mark" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">`
       +(item.line?`<path d="M1 7H9" stroke="${item.color}" stroke-width="1.6"/><path d="M8 3L14 7L8 11z" fill="${item.color}"/>`
-        :`<path d="${markPath(item.shape||'circle',7,7,5)}" fill="${item.hollow?'none':item.color}" stroke="${item.color}" stroke-width="1.5"/>`)+`</svg>${esc(item.label)}</span>`).join(''):'';
+        :`<path d="${markPath(item.shape||'circle',7,7,5)}" fill="${item.hollow?'none':item.color}" stroke="${item.hollow?item.color:FIGURE_ROLE.quietInk}" stroke-width="1.5"/>`)+`</svg>${esc(item.label)}</span>`).join(''):'';
     $('#map-communication-key').innerHTML=key;$('#map-communication-header-key').innerHTML=key;
     $('#map-download-svg').onclick=()=>{const content=result?.polygons&&result.polygonPresentation==='interactive'?(result.polygons.features.some(f=>f.minutes!==undefined)?catchmentPlot(result.polygons,esc,result.contextPoints):polygonSvg(result.polygons,esc)):svg.innerHTML;
       const viewBox=result?.polygons&&result.polygons.features.some(f=>f.minutes!==undefined)?'0 0 850 650':frameBoxOf(content);

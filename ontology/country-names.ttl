@@ -1,0 +1,1696 @@
+@prefix fw: <urn:fieldwork:>.
+@prefix owl: <http://www.w3.org/2002/07/owl#>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix dcterms: <http://purl.org/dc/terms/>.
+@prefix dcat: <http://www.w3.org/ns/dcat#>.
+@prefix skosxl: <http://www.w3.org/2008/05/skos-xl#>.
+@prefix skos: <http://www.w3.org/2004/02/skos/core#>.
+
+# WRITTEN BY scripts/country-names.mjs from ontology/country-names.json's sources. Do not edit by hand.
+
+<urn:fieldwork:ontology:country-names> a owl:Ontology;
+  rdfs:label "Country names by source";
+  rdfs:comment "Every country Fieldwork's sources name. Each is a fw:Jurisdiction identified by its ISO 3166-1 alpha-3 code, with its alpha-2 and alpha-3 codes as typed SKOS notations and one SKOS-XL label per source saying which source gives that name. No source's name is preferred: the code is the key, and every name is an alias of it.".
+
+<urn:fieldwork:scheme:iso-3166-1-alpha-3> rdfs:label "ISO 3166-1 alpha-3".
+<urn:fieldwork:scheme:iso-3166-1-alpha-2> rdfs:label "ISO 3166-1 alpha-2".
+<urn:fieldwork:source:geoboundaries> a dcat:Dataset;
+  dcterms:title "geoBoundaries gbOpen, ADM0";
+  dcat:landingPage <https://www.geoboundaries.org/api/current/gbOpen/ALL/ADM0/>.
+<urn:fieldwork:source:natural-earth> a dcat:Dataset;
+  dcterms:title "Natural Earth 1:110m Admin 0 countries";
+  dcat:landingPage <https://github.com/nvkelso/natural-earth-vector>;
+  dcterms:license "Public domain. Natural Earth states no restrictions on use.".
+<urn:fieldwork:source:un-m49> a dcat:Dataset;
+  dcterms:title "ISO 3166-1 codes and UN M49 official English short names, as packaged by datasets/country-codes";
+  dcat:landingPage <https://github.com/datasets/country-codes/blob/main/data/country-codes.csv>;
+  dcterms:license "The package is ODC-PDDL-1.0 for its maintainers' own work only. The codes are facts; the names come from the UN Statistics Division (M49), whose terms were not checked on the M49 page itself.".
+
+<urn:fieldwork:country:ABW> a fw:Jurisdiction;
+  dcterms:identifier "ABW";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "ABW"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "AW"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Aruba"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Aruba"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:AFG> a fw:Jurisdiction;
+  dcterms:identifier "AFG";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "AFG"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "AF"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Afghanistan"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Afghanistan"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Afghanistan"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:AGO> a fw:Jurisdiction;
+  dcterms:identifier "AGO";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "AGO"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "AO"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Angola"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Angola"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Angola"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:AIA> a fw:Jurisdiction;
+  dcterms:identifier "AIA";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "AIA"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "AI"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Anguilla"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Anguilla"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:ALA> a fw:Jurisdiction;
+  dcterms:identifier "ALA";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "ALA"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "AX"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Åland Islands"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:ALB> a fw:Jurisdiction;
+  dcterms:identifier "ALB";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "ALB"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "AL"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Albania"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Albania"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Albania"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:AND> a fw:Jurisdiction;
+  dcterms:identifier "AND";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "AND"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "AD"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Andorra"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Andorra"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:ARE> a fw:Jurisdiction;
+  dcterms:identifier "ARE";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "ARE"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "AE"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "United Arab Emirates"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "United Arab Emirates"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "United Arab Emirates"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:ARG> a fw:Jurisdiction;
+  dcterms:identifier "ARG";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "ARG"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "AR"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Argentina"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Argentina"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Argentina"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:ARM> a fw:Jurisdiction;
+  dcterms:identifier "ARM";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "ARM"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "AM"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Armenia"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Armenia"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Armenia"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:ASM> a fw:Jurisdiction;
+  dcterms:identifier "ASM";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "ASM"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "AS"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "American Samoa"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "American Samoa"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:ATA> a fw:Jurisdiction;
+  dcterms:identifier "ATA";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "ATA"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "AQ"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Antartica"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Antarctica"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Antarctica"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:ATF> a fw:Jurisdiction;
+  dcterms:identifier "ATF";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "ATF"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "TF"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Fr. S. Antarctic Lands"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "French Southern Territories"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:ATG> a fw:Jurisdiction;
+  dcterms:identifier "ATG";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "ATG"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "AG"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Antigua and Barbuda"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Antigua and Barbuda"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:AUS> a fw:Jurisdiction;
+  dcterms:identifier "AUS";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "AUS"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "AU"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Australia"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Australia"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Australia"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:AUT> a fw:Jurisdiction;
+  dcterms:identifier "AUT";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "AUT"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "AT"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Austria"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Austria"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Austria"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:AZE> a fw:Jurisdiction;
+  dcterms:identifier "AZE";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "AZE"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "AZ"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Azerbaijan"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Azerbaijan"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Azerbaijan"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:BDI> a fw:Jurisdiction;
+  dcterms:identifier "BDI";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "BDI"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "BI"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Burundi"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Burundi"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Burundi"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:BEL> a fw:Jurisdiction;
+  dcterms:identifier "BEL";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "BEL"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "BE"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Belgium"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Belgium"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Belgium"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:BEN> a fw:Jurisdiction;
+  dcterms:identifier "BEN";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "BEN"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "BJ"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Benin"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Benin"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Benin"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:BES> a fw:Jurisdiction;
+  dcterms:identifier "BES";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "BES"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "BQ"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Bonaire Sint Eustatius and Saba"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Bonaire, Sint Eustatius and Saba"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:BFA> a fw:Jurisdiction;
+  dcterms:identifier "BFA";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "BFA"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "BF"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Burkina Faso"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Burkina Faso"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Burkina Faso"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:BGD> a fw:Jurisdiction;
+  dcterms:identifier "BGD";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "BGD"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "BD"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Bangladesh"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Bangladesh"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Bangladesh"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:BGR> a fw:Jurisdiction;
+  dcterms:identifier "BGR";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "BGR"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "BG"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Bulgaria"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Bulgaria"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Bulgaria"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:BHR> a fw:Jurisdiction;
+  dcterms:identifier "BHR";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "BHR"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "BH"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Bahrain"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Bahrain"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:BHS> a fw:Jurisdiction;
+  dcterms:identifier "BHS";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "BHS"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "BS"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Bahamas"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Bahamas"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Bahamas"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:BIH> a fw:Jurisdiction;
+  dcterms:identifier "BIH";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "BIH"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "BA"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Bosnia and Herzegovina"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Bosnia and Herz."@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Bosnia and Herzegovina"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:BLM> a fw:Jurisdiction;
+  dcterms:identifier "BLM";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "BLM"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "BL"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Saint Barthélemy"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Saint Barthélemy"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:BLR> a fw:Jurisdiction;
+  dcterms:identifier "BLR";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "BLR"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "BY"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Belarus"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Belarus"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Belarus"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:BLZ> a fw:Jurisdiction;
+  dcterms:identifier "BLZ";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "BLZ"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "BZ"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Belize"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Belize"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Belize"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:BMU> a fw:Jurisdiction;
+  dcterms:identifier "BMU";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "BMU"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "BM"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Bermuda"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Bermuda"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:BOL> a fw:Jurisdiction;
+  dcterms:identifier "BOL";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "BOL"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "BO"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Bolivia (Plurinational State of)"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Bolivia"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Bolivia (Plurinational State of)"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:BRA> a fw:Jurisdiction;
+  dcterms:identifier "BRA";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "BRA"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "BR"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Brazil"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Brazil"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Brazil"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:BRB> a fw:Jurisdiction;
+  dcterms:identifier "BRB";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "BRB"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "BB"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Barbados"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Barbados"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:BRN> a fw:Jurisdiction;
+  dcterms:identifier "BRN";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "BRN"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "BN"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Brunei Darussalam"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Brunei"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Brunei Darussalam"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:BTN> a fw:Jurisdiction;
+  dcterms:identifier "BTN";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "BTN"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "BT"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Bhutan"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Bhutan"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Bhutan"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:BVT> a fw:Jurisdiction;
+  dcterms:identifier "BVT";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "BVT"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "BV"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Bouvet Island"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:BWA> a fw:Jurisdiction;
+  dcterms:identifier "BWA";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "BWA"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "BW"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Botswana"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Botswana"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Botswana"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:CAF> a fw:Jurisdiction;
+  dcterms:identifier "CAF";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "CAF"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "CF"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Central African Republic"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Central African Rep."@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Central African Republic"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:CAN> a fw:Jurisdiction;
+  dcterms:identifier "CAN";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "CAN"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "CA"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Canada"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Canada"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Canada"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:CCK> a fw:Jurisdiction;
+  dcterms:identifier "CCK";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "CCK"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "CC"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Cocos (Keeling) Islands"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:CHE> a fw:Jurisdiction;
+  dcterms:identifier "CHE";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "CHE"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "CH"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Switzerland"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Switzerland"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Switzerland"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:CHL> a fw:Jurisdiction;
+  dcterms:identifier "CHL";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "CHL"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "CL"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Chile"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Chile"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Chile"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:CHN> a fw:Jurisdiction;
+  dcterms:identifier "CHN";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "CHN"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "CN"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "China"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "China"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "China"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:CIV> a fw:Jurisdiction;
+  dcterms:identifier "CIV";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "CIV"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "CI"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Côte d'Ivoire"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Côte d'Ivoire"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Ivory Coast"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:CMR> a fw:Jurisdiction;
+  dcterms:identifier "CMR";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "CMR"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "CM"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Cameroon"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Cameroon"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Cameroon"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:COD> a fw:Jurisdiction;
+  dcterms:identifier "COD";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "COD"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "CD"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Democratic Republic of the Congo"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Dem. Rep. Congo"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Democratic Republic of the Congo"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:COG> a fw:Jurisdiction;
+  dcterms:identifier "COG";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "COG"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "CG"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Congo"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Congo"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Congo"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:COK> a fw:Jurisdiction;
+  dcterms:identifier "COK";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "COK"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "CK"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Cook Islands"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Cook Islands"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:COL> a fw:Jurisdiction;
+  dcterms:identifier "COL";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "COL"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "CO"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Colombia"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Colombia"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Colombia"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:COM> a fw:Jurisdiction;
+  dcterms:identifier "COM";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "COM"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "KM"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Comoros"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Comoros"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:CPV> a fw:Jurisdiction;
+  dcterms:identifier "CPV";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "CPV"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "CV"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Cabo Verde"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Cabo Verde"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:CRI> a fw:Jurisdiction;
+  dcterms:identifier "CRI";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "CRI"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "CR"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Costa Rica"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Costa Rica"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Costa Rica"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:CUB> a fw:Jurisdiction;
+  dcterms:identifier "CUB";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "CUB"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "CU"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Cuba"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Cuba"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Cuba"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:CUW> a fw:Jurisdiction;
+  dcterms:identifier "CUW";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "CUW"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "CW"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Curaçao"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Curaçao"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:CXR> a fw:Jurisdiction;
+  dcterms:identifier "CXR";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "CXR"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "CX"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Christmas Island"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:CYM> a fw:Jurisdiction;
+  dcterms:identifier "CYM";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "CYM"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "KY"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Cayman Islands"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Cayman Islands"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:CYN> a fw:Jurisdiction;
+  dcterms:identifier "CYN";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "CYN"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "N. Cyprus"@en; dcterms:source <urn:fieldwork:source:natural-earth> ].
+<urn:fieldwork:country:CYP> a fw:Jurisdiction;
+  dcterms:identifier "CYP";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "CYP"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "CY"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Cyprus"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Cyprus"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Cyprus"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:CZE> a fw:Jurisdiction;
+  dcterms:identifier "CZE";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "CZE"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "CZ"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Czechia"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Czechia"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Czechia"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:DEU> a fw:Jurisdiction;
+  dcterms:identifier "DEU";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "DEU"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "DE"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Germany"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Germany"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Germany"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:DJI> a fw:Jurisdiction;
+  dcterms:identifier "DJI";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "DJI"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "DJ"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Djibouti"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Djibouti"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Djibouti"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:DMA> a fw:Jurisdiction;
+  dcterms:identifier "DMA";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "DMA"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "DM"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Dominica"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Dominica"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:DNK> a fw:Jurisdiction;
+  dcterms:identifier "DNK";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "DNK"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "DK"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Denmark"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Denmark"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Denmark"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:DOM> a fw:Jurisdiction;
+  dcterms:identifier "DOM";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "DOM"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "DO"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Dominican Republic"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Dominican Rep."@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Dominican Republic"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:DZA> a fw:Jurisdiction;
+  dcterms:identifier "DZA";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "DZA"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "DZ"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Algeria"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Algeria"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Algeria"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:ECU> a fw:Jurisdiction;
+  dcterms:identifier "ECU";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "ECU"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "EC"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Ecuador"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Ecuador"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Ecuador"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:EGY> a fw:Jurisdiction;
+  dcterms:identifier "EGY";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "EGY"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "EG"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Egypt"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Egypt"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Egypt"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:ERI> a fw:Jurisdiction;
+  dcterms:identifier "ERI";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "ERI"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "ER"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Eritrea"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Eritrea"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Eritrea"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:ESH> a fw:Jurisdiction;
+  dcterms:identifier "ESH";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "ESH"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "EH"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "W. Sahara"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Western Sahara"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:ESP> a fw:Jurisdiction;
+  dcterms:identifier "ESP";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "ESP"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "ES"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Spain"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Spain"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Spain"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:EST> a fw:Jurisdiction;
+  dcterms:identifier "EST";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "EST"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "EE"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Estonia"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Estonia"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Estonia"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:ETH> a fw:Jurisdiction;
+  dcterms:identifier "ETH";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "ETH"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "ET"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Ethiopia"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Ethiopia"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Ethiopia"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:FIN> a fw:Jurisdiction;
+  dcterms:identifier "FIN";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "FIN"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "FI"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Finland"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Finland"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Finland"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:FJI> a fw:Jurisdiction;
+  dcterms:identifier "FJI";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "FJI"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "FJ"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Fiji"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Fiji"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Fiji"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:FLK> a fw:Jurisdiction;
+  dcterms:identifier "FLK";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "FLK"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "FK"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Falkland Islands (Malvinas)"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Falkland Is."@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Falkland Islands"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:FRA> a fw:Jurisdiction;
+  dcterms:identifier "FRA";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "FRA"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "FR"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "France"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "France"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "France"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:FRO> a fw:Jurisdiction;
+  dcterms:identifier "FRO";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "FRO"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "FO"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Faroe Islands"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Faroe Islands"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:FSM> a fw:Jurisdiction;
+  dcterms:identifier "FSM";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "FSM"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "FM"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Micronesia (Fed. States of)"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Micronesia (Federated States of)"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:GAB> a fw:Jurisdiction;
+  dcterms:identifier "GAB";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "GAB"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "GA"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Gabon"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Gabon"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Gabon"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:GBR> a fw:Jurisdiction;
+  dcterms:identifier "GBR";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "GBR"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "GB"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "United Kingdom"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "United Kingdom"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "United Kingdom of Great Britain and Northern Ireland"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:GEO> a fw:Jurisdiction;
+  dcterms:identifier "GEO";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "GEO"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "GE"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Georgia"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Georgia"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Georgia"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:GGY> a fw:Jurisdiction;
+  dcterms:identifier "GGY";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "GGY"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "GG"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Guernsey"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Guernsey"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:GHA> a fw:Jurisdiction;
+  dcterms:identifier "GHA";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "GHA"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "GH"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Ghana"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Ghana"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Ghana"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:GIB> a fw:Jurisdiction;
+  dcterms:identifier "GIB";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "GIB"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "GI"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Gibraltar"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Gibraltar"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:GIN> a fw:Jurisdiction;
+  dcterms:identifier "GIN";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "GIN"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "GN"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Guinea"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Guinea"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Guinea"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:GLP> a fw:Jurisdiction;
+  dcterms:identifier "GLP";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "GLP"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "GP"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Guadeloupe"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Guadeloupe"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:GMB> a fw:Jurisdiction;
+  dcterms:identifier "GMB";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "GMB"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "GM"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Gambia"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Gambia"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Gambia"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:GNB> a fw:Jurisdiction;
+  dcterms:identifier "GNB";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "GNB"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "GW"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Guinea-Bissau"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Guinea-Bissau"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Guinea-Bissau"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:GNQ> a fw:Jurisdiction;
+  dcterms:identifier "GNQ";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "GNQ"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "GQ"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Equatorial Guinea"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Eq. Guinea"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Equatorial Guinea"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:GRC> a fw:Jurisdiction;
+  dcterms:identifier "GRC";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "GRC"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "GR"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Greece"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Greece"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Greece"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:GRD> a fw:Jurisdiction;
+  dcterms:identifier "GRD";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "GRD"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "GD"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Grenada"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Grenada"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:GRL> a fw:Jurisdiction;
+  dcterms:identifier "GRL";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "GRL"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "GL"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Greenland"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Greenland"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Greenland"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:GTM> a fw:Jurisdiction;
+  dcterms:identifier "GTM";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "GTM"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "GT"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Guatemala"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Guatemala"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Guatemala"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:GUF> a fw:Jurisdiction;
+  dcterms:identifier "GUF";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "GUF"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "GF"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "French Guiana"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "French Guiana"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:GUM> a fw:Jurisdiction;
+  dcterms:identifier "GUM";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "GUM"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "GU"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Guam"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Guam"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:GUY> a fw:Jurisdiction;
+  dcterms:identifier "GUY";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "GUY"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "GY"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Guyana"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Guyana"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Guyana"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:HKG> a fw:Jurisdiction;
+  dcterms:identifier "HKG";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "HKG"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "HK"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "China, Hong Kong Special Administrative Region"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:HMD> a fw:Jurisdiction;
+  dcterms:identifier "HMD";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "HMD"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "HM"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Heard Island and McDonald Islands"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:HND> a fw:Jurisdiction;
+  dcterms:identifier "HND";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "HND"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "HN"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Honduras"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Honduras"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Honduras"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:HRV> a fw:Jurisdiction;
+  dcterms:identifier "HRV";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "HRV"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "HR"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Croatia"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Croatia"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Croatia"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:HTI> a fw:Jurisdiction;
+  dcterms:identifier "HTI";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "HTI"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "HT"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Haiti"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Haiti"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Haiti"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:HUN> a fw:Jurisdiction;
+  dcterms:identifier "HUN";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "HUN"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "HU"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Hungary"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Hungary"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Hungary"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:IDN> a fw:Jurisdiction;
+  dcterms:identifier "IDN";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "IDN"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "ID"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Indonesia"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Indonesia"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Indonesia"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:IMN> a fw:Jurisdiction;
+  dcterms:identifier "IMN";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "IMN"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "IM"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Isle of Man"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Isle of Man"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:IND> a fw:Jurisdiction;
+  dcterms:identifier "IND";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "IND"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "IN"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "India"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "India"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:IOT> a fw:Jurisdiction;
+  dcterms:identifier "IOT";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "IOT"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "IO"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "British Indian Ocean Territory"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:IRL> a fw:Jurisdiction;
+  dcterms:identifier "IRL";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "IRL"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "IE"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Ireland"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Ireland"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Ireland"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:IRN> a fw:Jurisdiction;
+  dcterms:identifier "IRN";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "IRN"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "IR"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Iran (Islamic Republic of)"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Iran"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Iran (Islamic Republic of)"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:IRQ> a fw:Jurisdiction;
+  dcterms:identifier "IRQ";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "IRQ"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "IQ"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Iraq"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Iraq"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Iraq"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:ISL> a fw:Jurisdiction;
+  dcterms:identifier "ISL";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "ISL"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "IS"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Iceland"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Iceland"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Iceland"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:ISR> a fw:Jurisdiction;
+  dcterms:identifier "ISR";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "ISR"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "IL"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Israel"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Israel"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Israel"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:ITA> a fw:Jurisdiction;
+  dcterms:identifier "ITA";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "ITA"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "IT"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Italy"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Italy"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Italy"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:JAM> a fw:Jurisdiction;
+  dcterms:identifier "JAM";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "JAM"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "JM"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Jamaica"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Jamaica"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Jamaica"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:JEY> a fw:Jurisdiction;
+  dcterms:identifier "JEY";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "JEY"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "JE"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Jersey"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:JOR> a fw:Jurisdiction;
+  dcterms:identifier "JOR";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "JOR"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "JO"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Jordan"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Jordan"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Jordan"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:JPN> a fw:Jurisdiction;
+  dcterms:identifier "JPN";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "JPN"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "JP"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Japan"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Japan"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Japan"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:KAZ> a fw:Jurisdiction;
+  dcterms:identifier "KAZ";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "KAZ"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "KZ"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Kazakhstan"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Kazakhstan"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Kazakhstan"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:KEN> a fw:Jurisdiction;
+  dcterms:identifier "KEN";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "KEN"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "KE"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Kenya"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Kenya"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Kenya"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:KGZ> a fw:Jurisdiction;
+  dcterms:identifier "KGZ";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "KGZ"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "KG"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Kyrgyzstan"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Kyrgyzstan"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Kyrgyzstan"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:KHM> a fw:Jurisdiction;
+  dcterms:identifier "KHM";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "KHM"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "KH"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Cambodia"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Cambodia"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Cambodia"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:KIR> a fw:Jurisdiction;
+  dcterms:identifier "KIR";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "KIR"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "KI"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Kiribati"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Kiribati"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:KNA> a fw:Jurisdiction;
+  dcterms:identifier "KNA";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "KNA"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "KN"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Saint Kitts and Nevis"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Saint Kitts and Nevis"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:KOR> a fw:Jurisdiction;
+  dcterms:identifier "KOR";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "KOR"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "KR"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Republic of Korea"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "South Korea"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Republic of Korea"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:KOS> a fw:Jurisdiction;
+  dcterms:identifier "KOS";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "KOS"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Kosovo"@en; dcterms:source <urn:fieldwork:source:natural-earth> ].
+<urn:fieldwork:country:KWT> a fw:Jurisdiction;
+  dcterms:identifier "KWT";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "KWT"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "KW"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Kuwait"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Kuwait"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Kuwait"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:LAO> a fw:Jurisdiction;
+  dcterms:identifier "LAO";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "LAO"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "LA"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Lao People's Democratic Republic"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Laos"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Lao People's Democratic Republic"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:LBN> a fw:Jurisdiction;
+  dcterms:identifier "LBN";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "LBN"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "LB"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Lebanon"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Lebanon"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Lebanon"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:LBR> a fw:Jurisdiction;
+  dcterms:identifier "LBR";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "LBR"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "LR"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Liberia"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Liberia"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Liberia"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:LBY> a fw:Jurisdiction;
+  dcterms:identifier "LBY";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "LBY"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "LY"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Libya"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Libya"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Libya"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:LCA> a fw:Jurisdiction;
+  dcterms:identifier "LCA";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "LCA"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "LC"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Saint Lucia"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Saint Lucia"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:LIE> a fw:Jurisdiction;
+  dcterms:identifier "LIE";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "LIE"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "LI"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Liechtenstein"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Liechtenstein"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:LKA> a fw:Jurisdiction;
+  dcterms:identifier "LKA";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "LKA"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "LK"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Sri Lanka"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Sri Lanka"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Sri Lanka"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:LSO> a fw:Jurisdiction;
+  dcterms:identifier "LSO";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "LSO"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "LS"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Lesotho"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Lesotho"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Lesotho"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:LTU> a fw:Jurisdiction;
+  dcterms:identifier "LTU";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "LTU"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "LT"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Lithuania"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Lithuania"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Lithuania"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:LUX> a fw:Jurisdiction;
+  dcterms:identifier "LUX";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "LUX"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "LU"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Luxembourg"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Luxembourg"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Luxembourg"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:LVA> a fw:Jurisdiction;
+  dcterms:identifier "LVA";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "LVA"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "LV"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Latvia"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Latvia"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Latvia"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:MAC> a fw:Jurisdiction;
+  dcterms:identifier "MAC";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "MAC"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "MO"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "China, Macao Special Administrative Region"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:MAF> a fw:Jurisdiction;
+  dcterms:identifier "MAF";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "MAF"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "MF"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Saint Martin (French Part)"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:MAR> a fw:Jurisdiction;
+  dcterms:identifier "MAR";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "MAR"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "MA"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Morocco"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Morocco"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Morocco"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:MCO> a fw:Jurisdiction;
+  dcterms:identifier "MCO";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "MCO"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "MC"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Monaco"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Monaco"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:MDA> a fw:Jurisdiction;
+  dcterms:identifier "MDA";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "MDA"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "MD"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Republic of Moldova"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Moldova"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Republic of Moldova"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:MDG> a fw:Jurisdiction;
+  dcterms:identifier "MDG";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "MDG"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "MG"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Madagascar"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Madagascar"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Madagascar"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:MDV> a fw:Jurisdiction;
+  dcterms:identifier "MDV";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "MDV"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "MV"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Maldives"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Maldives"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:MEX> a fw:Jurisdiction;
+  dcterms:identifier "MEX";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "MEX"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "MX"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Mexico"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Mexico"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Mexico"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:MHL> a fw:Jurisdiction;
+  dcterms:identifier "MHL";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "MHL"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "MH"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Marshall Islands"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Marshall Islands"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:MKD> a fw:Jurisdiction;
+  dcterms:identifier "MKD";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "MKD"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "MK"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "North Macedonia"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "North Macedonia"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "North Macedonia"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:MLI> a fw:Jurisdiction;
+  dcterms:identifier "MLI";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "MLI"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "ML"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Mali"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Mali"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Mali"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:MLT> a fw:Jurisdiction;
+  dcterms:identifier "MLT";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "MLT"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "MT"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Malta"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Malta"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:MMR> a fw:Jurisdiction;
+  dcterms:identifier "MMR";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "MMR"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "MM"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Myanmar"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Myanmar"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Myanmar"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:MNE> a fw:Jurisdiction;
+  dcterms:identifier "MNE";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "MNE"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "ME"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Montenegro"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Montenegro"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Montenegro"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:MNG> a fw:Jurisdiction;
+  dcterms:identifier "MNG";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "MNG"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "MN"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Mongolia"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Mongolia"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Mongolia"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:MNP> a fw:Jurisdiction;
+  dcterms:identifier "MNP";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "MNP"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "MP"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Northern Mariana Islands"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Northern Mariana Islands"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:MOZ> a fw:Jurisdiction;
+  dcterms:identifier "MOZ";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "MOZ"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "MZ"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Mozambique"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Mozambique"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Mozambique"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:MRT> a fw:Jurisdiction;
+  dcterms:identifier "MRT";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "MRT"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "MR"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Mauritania"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Mauritania"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Mauritania"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:MSR> a fw:Jurisdiction;
+  dcterms:identifier "MSR";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "MSR"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "MS"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Montserrat"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Montserrat"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:MTQ> a fw:Jurisdiction;
+  dcterms:identifier "MTQ";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "MTQ"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "MQ"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Martinique"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Martinique"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:MUS> a fw:Jurisdiction;
+  dcterms:identifier "MUS";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "MUS"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "MU"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Mauritius"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Mauritius"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:MWI> a fw:Jurisdiction;
+  dcterms:identifier "MWI";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "MWI"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "MW"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Malawi"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Malawi"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Malawi"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:MYS> a fw:Jurisdiction;
+  dcterms:identifier "MYS";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "MYS"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "MY"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Malaysia"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Malaysia"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Malaysia"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:MYT> a fw:Jurisdiction;
+  dcterms:identifier "MYT";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "MYT"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "YT"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Mayotte"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Mayotte"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:NAM> a fw:Jurisdiction;
+  dcterms:identifier "NAM";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "NAM"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "NA"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Namibia"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Namibia"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Namibia"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:NCL> a fw:Jurisdiction;
+  dcterms:identifier "NCL";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "NCL"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "NC"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "New Caledonia"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "New Caledonia"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "New Caledonia"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:NER> a fw:Jurisdiction;
+  dcterms:identifier "NER";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "NER"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "NE"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Niger"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Niger"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Niger"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:NFK> a fw:Jurisdiction;
+  dcterms:identifier "NFK";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "NFK"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "NF"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Norfolk Island"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:NGA> a fw:Jurisdiction;
+  dcterms:identifier "NGA";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "NGA"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "NG"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Nigeria"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Nigeria"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Nigeria"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:NIC> a fw:Jurisdiction;
+  dcterms:identifier "NIC";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "NIC"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "NI"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Nicaragua"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Nicaragua"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Nicaragua"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:NIU> a fw:Jurisdiction;
+  dcterms:identifier "NIU";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "NIU"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "NU"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Niue"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Niue"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:NLD> a fw:Jurisdiction;
+  dcterms:identifier "NLD";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "NLD"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "NL"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Netherlands"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Netherlands"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Netherlands"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:NOR> a fw:Jurisdiction;
+  dcterms:identifier "NOR";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "NOR"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "NO"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Norway"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Norway"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Norway"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:NPL> a fw:Jurisdiction;
+  dcterms:identifier "NPL";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "NPL"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "NP"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Nepal"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Nepal"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Nepal"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:NRU> a fw:Jurisdiction;
+  dcterms:identifier "NRU";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "NRU"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "NR"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Nauru"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Nauru"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:NZL> a fw:Jurisdiction;
+  dcterms:identifier "NZL";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "NZL"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "NZ"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "New Zealand"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "New Zealand"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "New Zealand"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:OMN> a fw:Jurisdiction;
+  dcterms:identifier "OMN";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "OMN"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "OM"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Oman"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Oman"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Oman"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:PAK> a fw:Jurisdiction;
+  dcterms:identifier "PAK";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "PAK"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "PK"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Pakistan"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Pakistan"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Pakistan"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:PAN> a fw:Jurisdiction;
+  dcterms:identifier "PAN";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "PAN"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "PA"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Panama"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Panama"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Panama"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:PCN> a fw:Jurisdiction;
+  dcterms:identifier "PCN";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "PCN"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "PN"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Pitcairn Islands"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Pitcairn"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:PER> a fw:Jurisdiction;
+  dcterms:identifier "PER";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "PER"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "PE"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Peru"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Peru"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Peru"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:PHL> a fw:Jurisdiction;
+  dcterms:identifier "PHL";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "PHL"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "PH"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Philippines"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Philippines"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Philippines"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:PLW> a fw:Jurisdiction;
+  dcterms:identifier "PLW";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "PLW"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "PW"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Palau"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Palau"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:PNG> a fw:Jurisdiction;
+  dcterms:identifier "PNG";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "PNG"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "PG"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Papua New Guinea"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Papua New Guinea"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Papua New Guinea"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:POL> a fw:Jurisdiction;
+  dcterms:identifier "POL";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "POL"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "PL"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Poland"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Poland"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Poland"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:PRI> a fw:Jurisdiction;
+  dcterms:identifier "PRI";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "PRI"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "PR"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Puerto Rico"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Puerto Rico"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:PRK> a fw:Jurisdiction;
+  dcterms:identifier "PRK";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "PRK"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "KP"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Dem. People's Republic of Korea"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "North Korea"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Democratic People's Republic of Korea"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:PRT> a fw:Jurisdiction;
+  dcterms:identifier "PRT";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "PRT"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "PT"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Portugal"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Portugal"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Portugal"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:PRY> a fw:Jurisdiction;
+  dcterms:identifier "PRY";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "PRY"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "PY"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Paraguay"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Paraguay"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Paraguay"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:PSE> a fw:Jurisdiction;
+  dcterms:identifier "PSE";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "PSE"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "PS"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "State of Palestine"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Palestine"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "State of Palestine"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:PYF> a fw:Jurisdiction;
+  dcterms:identifier "PYF";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "PYF"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "PF"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "French Polynesia"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "French Polynesia"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:QAT> a fw:Jurisdiction;
+  dcterms:identifier "QAT";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "QAT"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "QA"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Qatar"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Qatar"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Qatar"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:REU> a fw:Jurisdiction;
+  dcterms:identifier "REU";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "REU"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "RE"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Réunion"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Réunion"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:ROU> a fw:Jurisdiction;
+  dcterms:identifier "ROU";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "ROU"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "RO"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Romania"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Romania"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Romania"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:RUS> a fw:Jurisdiction;
+  dcterms:identifier "RUS";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "RUS"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "RU"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Russian Federation"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Russia"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Russian Federation"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:RWA> a fw:Jurisdiction;
+  dcterms:identifier "RWA";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "RWA"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "RW"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Rwanda"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Rwanda"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Rwanda"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:SAU> a fw:Jurisdiction;
+  dcterms:identifier "SAU";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "SAU"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "SA"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Saudi Arabia"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Saudi Arabia"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Saudi Arabia"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:SDN> a fw:Jurisdiction;
+  dcterms:identifier "SDN";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "SDN"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "SD"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Sudan"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Sudan"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Sudan"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:SEN> a fw:Jurisdiction;
+  dcterms:identifier "SEN";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "SEN"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "SN"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Senegal"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Senegal"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Senegal"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:SGP> a fw:Jurisdiction;
+  dcterms:identifier "SGP";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "SGP"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "SG"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Singapore"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Singapore"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:SGS> a fw:Jurisdiction;
+  dcterms:identifier "SGS";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "SGS"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "GS"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "South Georgia and the South Sandwich Islands"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:SHN> a fw:Jurisdiction;
+  dcterms:identifier "SHN";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "SHN"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "SH"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Saint Helena"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Saint Helena"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:SJM> a fw:Jurisdiction;
+  dcterms:identifier "SJM";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "SJM"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "SJ"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Svalbard and Jan Mayen Islands"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:SLB> a fw:Jurisdiction;
+  dcterms:identifier "SLB";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "SLB"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "SB"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Solomon Islands"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Solomon Is."@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Solomon Islands"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:SLE> a fw:Jurisdiction;
+  dcterms:identifier "SLE";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "SLE"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "SL"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Sierra Leone"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Sierra Leone"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Sierra Leone"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:SLV> a fw:Jurisdiction;
+  dcterms:identifier "SLV";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "SLV"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "SV"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "El Salvador"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "El Salvador"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "El Salvador"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:SMR> a fw:Jurisdiction;
+  dcterms:identifier "SMR";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "SMR"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "SM"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "San Marino"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "San Marino"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:SOL> a fw:Jurisdiction;
+  dcterms:identifier "SOL";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "SOL"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Somaliland"@en; dcterms:source <urn:fieldwork:source:natural-earth> ].
+<urn:fieldwork:country:SOM> a fw:Jurisdiction;
+  dcterms:identifier "SOM";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "SOM"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "SO"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Somalia"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Somalia"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Somalia"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:SPM> a fw:Jurisdiction;
+  dcterms:identifier "SPM";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "SPM"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "PM"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Saint Pierre and Miquelon"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:SRB> a fw:Jurisdiction;
+  dcterms:identifier "SRB";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "SRB"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "RS"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Serbia"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Serbia"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Serbia"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:SSD> a fw:Jurisdiction;
+  dcterms:identifier "SSD";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "SSD"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "SS"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "South Sudan"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "S. Sudan"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "South Sudan"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:STP> a fw:Jurisdiction;
+  dcterms:identifier "STP";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "STP"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "ST"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Sao Tome and Principe"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Sao Tome and Principe"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:SUR> a fw:Jurisdiction;
+  dcterms:identifier "SUR";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "SUR"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "SR"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Suriname"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Suriname"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Suriname"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:SVK> a fw:Jurisdiction;
+  dcterms:identifier "SVK";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "SVK"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "SK"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Slovakia"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Slovakia"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Slovakia"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:SVN> a fw:Jurisdiction;
+  dcterms:identifier "SVN";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "SVN"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "SI"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Slovenia"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Slovenia"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Slovenia"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:SWE> a fw:Jurisdiction;
+  dcterms:identifier "SWE";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "SWE"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "SE"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Sweden"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Sweden"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Sweden"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:SWZ> a fw:Jurisdiction;
+  dcterms:identifier "SWZ";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "SWZ"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "SZ"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Eswatini"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "eSwatini"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Eswatini"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:SXM> a fw:Jurisdiction;
+  dcterms:identifier "SXM";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "SXM"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "SX"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Sint Maarten (Dutch part)"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:SYC> a fw:Jurisdiction;
+  dcterms:identifier "SYC";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "SYC"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "SC"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Seychelles"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Seychelles"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:SYR> a fw:Jurisdiction;
+  dcterms:identifier "SYR";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "SYR"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "SY"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Syrian Arab Republic"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Syria"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Syrian Arab Republic"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:TCA> a fw:Jurisdiction;
+  dcterms:identifier "TCA";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "TCA"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "TC"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Turks and Caicos Islands"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Turks and Caicos Islands"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:TCD> a fw:Jurisdiction;
+  dcterms:identifier "TCD";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "TCD"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "TD"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Chad"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Chad"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Chad"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:TGO> a fw:Jurisdiction;
+  dcterms:identifier "TGO";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "TGO"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "TG"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Togo"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Togo"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Togo"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:THA> a fw:Jurisdiction;
+  dcterms:identifier "THA";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "THA"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "TH"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Thailand"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Thailand"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Thailand"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:TJK> a fw:Jurisdiction;
+  dcterms:identifier "TJK";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "TJK"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "TJ"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Tajikistan"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Tajikistan"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Tajikistan"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:TKL> a fw:Jurisdiction;
+  dcterms:identifier "TKL";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "TKL"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "TK"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Tokelau"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Tokelau"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:TKM> a fw:Jurisdiction;
+  dcterms:identifier "TKM";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "TKM"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "TM"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Turkmenistan"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Turkmenistan"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Turkmenistan"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:TLS> a fw:Jurisdiction;
+  dcterms:identifier "TLS";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "TLS"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "TL"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Timor-Leste"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Timor-Leste"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Timor-Leste"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:TON> a fw:Jurisdiction;
+  dcterms:identifier "TON";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "TON"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "TO"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Tonga"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Tonga"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:TTO> a fw:Jurisdiction;
+  dcterms:identifier "TTO";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "TTO"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "TT"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Trinidad and Tobago"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Trinidad and Tobago"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Trinidad and Tobago"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:TUN> a fw:Jurisdiction;
+  dcterms:identifier "TUN";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "TUN"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "TN"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Tunisia"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Tunisia"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Tunisia"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:TUR> a fw:Jurisdiction;
+  dcterms:identifier "TUR";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "TUR"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "TR"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Turkey"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Turkey"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Türkiye"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:TUV> a fw:Jurisdiction;
+  dcterms:identifier "TUV";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "TUV"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "TV"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Tuvalu"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Tuvalu"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:TWN> a fw:Jurisdiction;
+  dcterms:identifier "TWN";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "TWN"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "TW"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Taiwan"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Taiwan"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Taiwan"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:TZA> a fw:Jurisdiction;
+  dcterms:identifier "TZA";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "TZA"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "TZ"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "United Republic of Tanzania"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Tanzania"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "United Republic of Tanzania"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:UGA> a fw:Jurisdiction;
+  dcterms:identifier "UGA";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "UGA"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "UG"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Uganda"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Uganda"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Uganda"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:UKR> a fw:Jurisdiction;
+  dcterms:identifier "UKR";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "UKR"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "UA"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Ukraine"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Ukraine"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Ukraine"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:UMI> a fw:Jurisdiction;
+  dcterms:identifier "UMI";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "UMI"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "UM"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "United States Minor Outlying Islands"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:URY> a fw:Jurisdiction;
+  dcterms:identifier "URY";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "URY"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "UY"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Uruguay"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Uruguay"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Uruguay"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:USA> a fw:Jurisdiction;
+  dcterms:identifier "USA";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "USA"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "US"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "United States of America"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "United States of America"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "United States of America"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:UZB> a fw:Jurisdiction;
+  dcterms:identifier "UZB";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "UZB"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "UZ"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Uzbekistan"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Uzbekistan"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Uzbekistan"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:VAT> a fw:Jurisdiction;
+  dcterms:identifier "VAT";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "VAT"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "VA"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Holy See"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Holy See"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:VCT> a fw:Jurisdiction;
+  dcterms:identifier "VCT";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "VCT"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "VC"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Saint Vincent and the Grenadines"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Saint Vincent and the Grenadines"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:VEN> a fw:Jurisdiction;
+  dcterms:identifier "VEN";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "VEN"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "VE"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Venezuela (Bolivarian Republic of)"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Venezuela"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Venezuela (Bolivarian Republic of)"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:VGB> a fw:Jurisdiction;
+  dcterms:identifier "VGB";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "VGB"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "VG"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "British Virgin Islands"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "British Virgin Islands"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:VIR> a fw:Jurisdiction;
+  dcterms:identifier "VIR";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "VIR"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "VI"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "United States Virgin Islands"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "United States Virgin Islands"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:VNM> a fw:Jurisdiction;
+  dcterms:identifier "VNM";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "VNM"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "VN"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Viet Nam"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Vietnam"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Viet Nam"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:VUT> a fw:Jurisdiction;
+  dcterms:identifier "VUT";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "VUT"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "VU"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Vanuatu"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Vanuatu"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Vanuatu"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:WLF> a fw:Jurisdiction;
+  dcterms:identifier "WLF";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "WLF"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "WF"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Wallis and Futuna Islands"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Wallis and Futuna Islands"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:WSM> a fw:Jurisdiction;
+  dcterms:identifier "WSM";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "WSM"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "WS"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Samoa"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Samoa"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:XKX> a fw:Jurisdiction;
+  dcterms:identifier "XKX";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "XKX"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Kosovo"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ].
+<urn:fieldwork:country:YEM> a fw:Jurisdiction;
+  dcterms:identifier "YEM";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "YEM"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "YE"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Yemen"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Yemen"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Yemen"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:ZAF> a fw:Jurisdiction;
+  dcterms:identifier "ZAF";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "ZAF"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "ZA"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "South Africa"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "South Africa"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "South Africa"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:ZMB> a fw:Jurisdiction;
+  dcterms:identifier "ZMB";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "ZMB"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "ZM"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Zambia"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Zambia"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Zambia"@en; dcterms:source <urn:fieldwork:source:un-m49> ].
+<urn:fieldwork:country:ZWE> a fw:Jurisdiction;
+  dcterms:identifier "ZWE";
+  fw:identifierScheme <urn:fieldwork:scheme:iso-3166-1-alpha-3>;
+  skos:notation "ZWE"^^<urn:fieldwork:scheme:iso-3166-1-alpha-3>, "ZW"^^<urn:fieldwork:scheme:iso-3166-1-alpha-2>;
+  skosxl:altLabel [ a skosxl:Label; skosxl:literalForm "Zimbabwe"@en; dcterms:source <urn:fieldwork:source:geoboundaries> ],
+    [ a skosxl:Label; skosxl:literalForm "Zimbabwe"@en; dcterms:source <urn:fieldwork:source:natural-earth> ],
+    [ a skosxl:Label; skosxl:literalForm "Zimbabwe"@en; dcterms:source <urn:fieldwork:source:un-m49> ].

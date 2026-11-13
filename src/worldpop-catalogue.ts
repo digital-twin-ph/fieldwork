@@ -1,6 +1,6 @@
 import catalogue from '../widgets/worldpop-catalogue.json';
 import type {Boundary,BoundaryProvenance} from './types.js';
-import {iso3Of} from './boundary-source.js';
+import {iso3Of,countryName} from './boundary-source.js';
 
 /** WHICH POPULATION RASTER COVERS THIS STUDY AREA.
  *
@@ -88,5 +88,20 @@ export function global2RastersForCountry(iso3:string|null):PopulationRaster[]{
 export const worldPopRastersForCountry=(iso3:string|null,release:WorldPopRelease):PopulationRaster[]=>
   release==='global2'?global2RastersForCountry(iso3):populationRastersForCountry(iso3);
 
+/** WHICH WORLDPOP FILE THIS IS, from its name, and its source record (2026-11-13). The file Fieldwork pointed the
+ *  practitioner to is named by the catalogue; chosen from disk under that name, it is that file, and what WorldPop says about
+ *  it is filled in for the practitioner to keep or change. WorldPop's GeoTIFFs do not carry their units. */
+export function worldPopRecordFor(filename:string):import('./raster-provenance.js').RasterProvenance|undefined{
+  const name=filename.split('/').pop()!.toLowerCase();
+  for(const release of ['global2','global1'] as const)
+    for(const c of release==='global2'?G2.countries:CATALOGUE.countries)
+      for(const r of worldPopRastersForCountry(c.iso3,release))
+        if(r.url.split('/').pop()!.toLowerCase()===name)
+          return {title:`${countryName(c.iso3)} population, ${r.year}, WorldPop ${release==='global2'?`Global2 ${G2.release}, constrained, 100 m`:'Global1, unconstrained, 100 m'}`,
+            provider:'WorldPop - University of Southampton',downloadURL:r.url,
+            ...(release==='global2'?{identifier:G2.doi,citation:G2.citation,license:G2.licence}:{license:CATALOGUE.licence}),
+            temporalCoverage:r.year,units:'people per pixel'};
+  return undefined;
+}
 /** Unused for now, kept so the module never tempts anyone to guess a country from a polygon. */
 export const neverGuessCountryFrom=(_boundary:Boundary):null=>null;

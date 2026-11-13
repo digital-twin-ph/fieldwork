@@ -36,3 +36,29 @@ test('a case, its source and a date propose the tree, with "none recorded" left 
   cases.rows.push(row({id:'SK_5',from:'unknown',dt_onset:'2015-05-26'}));
   assert.ok(!proposeChartForms({kind:'table',table:cases}).find(p=>p.form==='tree').fits);
 });
+
+// EXPERIMENT 211: what the sources declared is read before the values.
+test('a column declared ordered is the bands, and one declared unordered never is',async()=>{
+  const {proposeChartForms}=await import('../build/chart-proposals.js');
+  const rows=[['0','f'],['1','m'],['2','f'],['1','f']].map(([klass,gender])=>({key:{class:klass,gender},value:1}));
+  const table={keys:['class','gender'],rows};
+  const pyramid=s=>proposeChartForms({kind:'table',table,scales:s}).find(p=>p.form==='pyramid');
+  assert.equal(pyramid({}).fits,true,'0, 1, 2 read as bands from the values');
+  assert.equal(pyramid({class:{scale:'nominal'}}).fits,false,'declared in no order, not bands');
+  const ordered=pyramid({class:{scale:'ordinal'}});
+  assert.equal(ordered.fits,true);assert.match(ordered.because,/class in its declared order/);
+});
+test('bars of an ordinal column in its declared order, each code with its meaning; declarations follow the column downstream',async()=>{
+  const {tableChart}=await import('../build/chart-output.js');
+  const {declaredUpstream}=await import('../build/column-metadata.js');
+  const table={kind:'data-table',keys:['class'],valueField:'count',rows:[['2',68],['0',90],['1',30]].map(([c,v])=>({key:{class:c},value:v}))};
+  const said={class:{scale:'ordinal',codes:[{value:'0',label:'pre-school'},{value:'1',label:'first'},{value:'2',label:'second'}]}};
+  const chart=tableChart(table,'class',undefined,said);
+  assert.deepEqual(chart.bins.map(b=>[b.key,b.label]),[['0','0 pre-school'],['1','1 first'],['2','2 second']]);
+  assert.deepEqual(tableChart(table,'class').bins.map(b=>b.key),['2','0','1'],'undeclared, the table\'s own order');
+  const nodes=[{id:'cases',params:{columns:{class:{...said.class,origin:'practitioner',confirmed:true},age:{scale:'ratio',origin:'dictionary',confirmed:false}}}},
+    {id:'group',params:{}},{id:'chart',params:{}}];
+  const edges=[{from:'cases',to:'group'},{from:'group',to:'chart'}];
+  const found=declaredUpstream(nodes,edges,'chart');
+  assert.deepEqual(Object.keys(found),['class'],'accepted declarations only, found two steps up');
+});

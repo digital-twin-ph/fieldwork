@@ -1,5 +1,6 @@
 import type {PointInput,PointLayer} from './types.js';
-import type {LayerShape} from './presentation.js';
+import type {LayerShape,ValueClasses} from './presentation.js';
+import {classifyValues} from './presentation.js';
 export const MAX_POINT_LAYERS=8;
 export const pointPort=(index:number)=>index===0?'points':`points_${index+1}`;
 export const isPointPort=(port:string)=>port==='points'||/^points_[2-8]$/.test(port);
@@ -81,7 +82,22 @@ export const markLabel=(row:MarkRow,field:string|undefined,x:number,y:number,rad
   return `<text ${at} class="mark-label" font-size="14" stroke="#ffffff" stroke-width="3" `
     +`stroke-linejoin="round" paint-order="stroke" fill="#2b2b2b">${esc(text)}</text>`;
 };
-export interface MarkStyle {colour:string; shape:LayerShape; size?:number; sizeBy?:string}
+export interface MarkStyle {colour:string; shape:LayerShape; size?:number; sizeBy?:string; colourBy?:string}
+/** COLOUR BY CLASS (2026-11-13). The practitioner, of MERS's hospitals sized by their cases: *"Note some hospitals under
+ *  the big circle Samsung Medical Center. This is probably not the best way to display this map. Maybe color keyed to
+ *  expose all the point locations."* Each coloured layer's values in quantile classes on the ordered ramp, as a
+ *  choropleth's are, so every mark is one size and the key states the breaks. A mark with no value is drawn neutral:
+ *  absent is not a class. */
+export function colouredClasses(rows:readonly MarkRow[],symbols:Record<string,MarkStyle>):Map<string,ValueClasses>{
+  const out=new Map<string,ValueClasses>();
+  for(const [layer,symbol] of Object.entries(symbols)){
+    if(!symbol.colourBy)continue;
+    const values=rows.filter(r=>(r.sourceNodeId||'')===layer).map(r=>{const v=r.attributes?.[symbol.colourBy!];return v===''||v===null||v===undefined?null:Number(v);});
+    const classes=classifyValues(values);if(classes)out.set(layer,classes);
+  }
+  return out;
+}
+const valueOf=(row:MarkRow,by:string)=>{const v=row.attributes?.[by];return v===''||v===null||v===undefined?null:Number(v);};
 /** A MARK'S AREA IN PROPORTION TO ITS VALUE (experiment 210): the largest value takes three times the layer's radius, and
  *  every other mark the radius whose area is its share of that, so a house with four deaths covers four times the
  *  ground of one with one. A value that is not a positive number takes the smallest mark. */
@@ -135,7 +151,10 @@ export function markedPoints(rows:readonly MarkRow[],
   const sizeOf=(row:MarkRow)=>{const s=symbols[row.sourceNodeId||''];return s?.sizeBy?Number(row.attributes?.[s.sizeBy])||0:0;};
   // Layer by layer in the order set, the lowest first; within a sized layer, the largest marks first.
   const rank=layerRanks(mapLayers);
-  const ordered=[...rows].map((row,at)=>({row,at})).sort((a,b)=>rank(a.row.sourceNodeId)-rank(b.row.sourceNodeId)||sizeOf(b.row)-sizeOf(a.row)||a.at-b.at).map(x=>x.row);
+  // A coloured layer draws its highest values last, so where two marks touch the one with more is on top.
+  const coloured=colouredClasses(rows,symbols);
+  const colourOrder=(row:MarkRow)=>{const by=symbols[row.sourceNodeId||'']?.colourBy;return by?Number(valueOf(row,by))||0:0;};
+  const ordered=[...rows].map((row,at)=>({row,at})).sort((a,b)=>rank(a.row.sourceNodeId)-rank(b.row.sourceNodeId)||sizeOf(b.row)-sizeOf(a.row)||colourOrder(a.row)-colourOrder(b.row)||a.at-b.at).map(x=>x.row);
   for(const row of ordered){
     if(!row.coordinates)continue;
     if(hidden?.has(row.sourceNodeId||''))continue;
@@ -144,9 +163,13 @@ export function markedPoints(rows:readonly MarkRow[],
     const symbol=symbols[row.sourceNodeId||''];
     const classed=row.pinClass
       ?classes[row.sourceNodeId||'']?.find(entry=>entry.value===row.pinClass)?.colour:undefined;
-    const ink=classed||symbol?.colour||'#699178';
-    const sized=!!symbol?.sizeBy&&largest.has(row.sourceNodeId||'');
-    const radius=(sized?proportionalRadius(row.attributes?.[symbol!.sizeBy!],largest.get(row.sourceNodeId||'')!,symbol?.size??4):(symbol?.size??4))+(focusId===row.id?2:0);
+    const ramp=coloured.get(row.sourceNodeId||'');
+    const step=ramp&&symbol?.colourBy?ramp.classOf(valueOf(row,symbol.colourBy)):null;
+    const ink=ramp?(step===null?'#a89b87':ramp.colours[step]!):classed||symbol?.colour||'#699178';
+    const sized=!ramp&&!!symbol?.sizeBy&&largest.has(row.sourceNodeId||'');
+    const radius=(sized?proportionalRadius(row.attributes?.[symbol!.sizeBy!],largest.get(row.sourceNodeId||'')!,symbol?.size??4)
+      // A colour must be big enough to read: a coloured mark is never under 7 px across the radius.
+      :ramp?Math.max(7,symbol?.size??4):(symbol?.size??4))+(focusId===row.id?2:0);
     // Outside the area is drawn hollow and a record a clip set aside is drawn neutral: the same
     // two declarations `oldMap` makes, so one map does not say Outside in two ways.
     const hollow=row.relation==='Outside';
@@ -157,7 +180,8 @@ export function markedPoints(rows:readonly MarkRow[],
       +`aria-label="${esc(row.name||row.id)}${said?', '+esc(said):''}">`
       +`<title>${esc(row.name||row.id)}${said?' · '+esc(said):''}</title>`
       +`<path d="${markPath(symbol?.shape||'circle',x,y,radius)}" `
-      +`fill="${hollow?'none':aside?'#a89b87':ink}"${sized?' fill-opacity="0.55"':''} stroke="${aside?'#a89b87':ink}" `
+      // A class's pale step needs a dark edge to be seen on a basemap.
+      +`fill="${hollow?'none':aside?'#a89b87':ink}"${sized?' fill-opacity="0.55"':''} stroke="${aside?'#a89b87':ramp?'#1d2f3a':ink}" `
       +`stroke-width="1.6"/>`
       +((drawnPerLayer.get(row.sourceNodeId||'')||0)<=LABEL_CEILING
         ?markLabel(row,labelField[row.sourceNodeId||''],x,y,radius,esc):'')

@@ -3,7 +3,7 @@ import {pathToFileURL} from 'node:url';
 import {Parser, Store, Writer, DataFactory} from 'n3';
 import SHACLValidator from 'rdf-validate-shacl';
 
-export const ontologyFiles=['fieldwork','runtime','jurisdictions','gadm','stac','processing','response-timeliness'].map(n=>`ontology/${n}.ttl`)
+export const ontologyFiles=['fieldwork','runtime','jurisdictions','country-names','gadm','stac','processing','response-timeliness'].map(n=>`ontology/${n}.ttl`)
   // Vendored from the sea-level pack at the digest widgets/packs.json pins, so the host can
   // validate against the pack's own terms without minting duplicates of them.
   .concat(['ontology/packs/sea-level.ttl']);

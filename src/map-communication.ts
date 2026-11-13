@@ -133,6 +133,21 @@ export function mapPresentation(node:WorkflowNode<'map_output'>,output:Output,wo
       }
       // A SIZED LAYER SAYS WHAT ITS SIZE SHOWS, and over what range, so a large mark is read as a large value of a named
       // thing and not as a nearer or more important place (experiment 210).
+      // COLOUR BY CLASS (2026-11-13): one row per class, its range and how many marks are in it, an empty one included.
+      if(symbol.colourBy){
+        const values=(output.rows||[]).filter(row=>(row as {sourceNodeId?:string}).sourceNodeId===layer.sourceNodeId)
+          .map(row=>{const v=(row as {attributes?:Record<string,unknown>}).attributes?.[symbol.colourBy!];return v===''||v===null||v===undefined?null:Number(v);});
+        const ramp=classifyValues(values);
+        if(ramp){
+          const n=(v:number)=>v.toLocaleString('en',{maximumFractionDigits:2});
+          const lowest=Math.min(...values.filter((v):v is number=>typeof v==='number'&&Number.isFinite(v)));
+          // The layer is named once, on the first class; a class whose range is one value says the value.
+          const range=(i:number)=>{const low=i===0?lowest:ramp.breaks[i-1]!,top=ramp.breaks[i]!;
+            return i===0?(low===top?n(top):`${n(low)} to ${n(top)}`):`over ${n(low)} to ${n(top)}`;};
+          return ramp.breaks.map((_,i)=>({label:`${i===0?`${layer.label} (${layer.count}), coloured by ${symbol.colourBy}: `:`${symbol.colourBy} `}${range(i)} (${ramp.counts[i]})`,
+            color:ramp.colours[i]!,shape:symbol.shape}));
+        }
+      }
       if(symbol.sizeBy){
         const values=(output.rows||[]).filter(row=>(row as {sourceNodeId?:string}).sourceNodeId===layer.sourceNodeId)
           .map(row=>Number((row as {attributes?:Record<string,unknown>}).attributes?.[symbol.sizeBy!])).filter(v=>Number.isFinite(v));
@@ -375,7 +390,7 @@ export function mapSpecificationFacts(node:WorkflowNode<'map_output'>,output:Out
   //
   // The mark and hue say the same thing on purpose: colour alone is not an encoding everybody can
   // read, and WCAG 1.4.1 is the rule this answers rather than a preference.
-  const symbols=(output as {layerSymbols?:Record<string,{colour:string;shape:string;sizeBy?:string;chosen:{colour:boolean;shape:boolean}}>;layerNames?:Record<string,string>}).layerSymbols;
+  const symbols=(output as {layerSymbols?:Record<string,{colour:string;shape:string;sizeBy?:string;colourBy?:string;chosen:{colour:boolean;shape:boolean}}>;layerNames?:Record<string,string>}).layerSymbols;
   const names=(output as {layerNames?:Record<string,string>}).layerNames||{};
   const fill=(output as {fillEncoding?:typeof SPATIAL_RELATION_FILL}).fillEncoding||SPATIAL_RELATION_FILL;
   const encodingFacts=symbols?`<${iri}> fw:encoding [ fw:visualChannel "hue"; fw:encodesVariable "source layer"; `
@@ -385,7 +400,8 @@ export function mapSpecificationFacts(node:WorkflowNode<'map_output'>,output:Out
       +(fill.vocabulary?`; fw:markVocabulary <${fill.vocabulary}>`:'')
       +fill.categories.map(c=>`; fw:fillMeaning ${JSON.stringify(`${c.fill} is ${c.value}`)}`).join('')+` ]`
       // PROPORTIONAL SYMBOLS: the area channel, and the attribute each sized layer encodes in it (experiment 210).
-      +Object.entries(symbols).filter(([,s])=>s.sizeBy).map(([source,s])=>`, [ fw:visualChannel "area"; fw:encodesVariable ${JSON.stringify(`${s.sizeBy} of ${names[source]||source}`)} ]`).join('')
+      +Object.entries(symbols).filter(([,s])=>s.colourBy).map(([source,s])=>`, [ fw:visualChannel "lightness"; fw:encodesVariable ${JSON.stringify(`${s.colourBy} of ${names[source]||source}, in quantile classes`)} ]`).join('')
+      +Object.entries(symbols).filter(([,s])=>s.sizeBy&&!s.colourBy).map(([source,s])=>`, [ fw:visualChannel "area"; fw:encodesVariable ${JSON.stringify(`${s.sizeBy} of ${names[source]||source}`)} ]`).join('')
       +`.\n`
     +Object.entries(symbols).map(([source,symbol])=>
       `<${iri}> fw:layerSymbol [ fw:layerSource ${JSON.stringify(source)}; fw:layerLabel ${JSON.stringify(names[source]||source)}; `

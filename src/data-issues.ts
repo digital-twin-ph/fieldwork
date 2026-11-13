@@ -3,7 +3,7 @@
  *  ontology, label and all, so the screen and the evidence cannot say two things. */
 export type DataIssueKind='ValueAbsent'|'ValueUnreadable'|'KeyAbsent'|'KeyRepeated'|'ColumnUndescribed'|'DescriptionUnconfirmed'
   |'DictionaryMismatch'|'DeclarationAbsent'|'DivisionByZero'|'ConclusionsConflict'|'SiteUnreachable'|'RoutedOffNetwork'
-  |'FieldMissing'|'ValueEmpty'|'BeyondFence'|'AreaBeyondRaster'|'ValueTrimmed';
+  |'FieldMissing'|'ValueEmpty'|'BeyondFence'|'AreaBeyondRaster'|'ValueTrimmed'|'ValueNotCoded';
 
 export const ISSUE_LABEL:Record<DataIssueKind,string>={
   ValueAbsent:'No value',ValueUnreadable:'Not the declared kind',KeyAbsent:'No key',KeyRepeated:'Key repeated',
@@ -11,7 +11,7 @@ export const ISSUE_LABEL:Record<DataIssueKind,string>={
   DictionaryMismatch:'Disagrees with the data dictionary',DeclarationAbsent:'Not declared',DivisionByZero:'Divided by zero',
   ConclusionsConflict:'Rules disagree',SiteUnreachable:'No result',RoutedOffNetwork:'Routed off the network',
   FieldMissing:'Field missing',ValueEmpty:'Empty',BeyondFence:'Beyond 1.5×IQR',AreaBeyondRaster:'Area beyond the raster',
-  ValueTrimmed:'Spaces trimmed',
+  ValueTrimmed:'Spaces trimmed',ValueNotCoded:'Not among its codes',
 };
 
 export interface FoundIssue {kind:DataIssueKind; column?:string; count?:number; of?:number; says?:string}
@@ -42,7 +42,7 @@ const FINDING_KIND:Record<string,DataIssueKind>={'repeated-key':'KeyRepeated','m
 export function tableIssues(
   findings:readonly {kind:string; rows:number[]; column?:string; text:string}[],
   columns:readonly string[],rows:readonly Record<string,unknown>[],
-  profile:(column:string,values:unknown[])=>{total:number; missing:number; empty:number; mismatched:number; numeric?:{beyondFence:number}},
+  profile:(column:string,values:unknown[])=>{total:number; missing:number; empty:number; mismatched:number; numeric?:{beyondFence:number}; uncoded?:{count:number}},
 ):FoundIssue[]{
   // A finding about rows is counted in rows and, once grouped, said as a count; a finding about the columns' meaning is
   // said as the finding says it, with no row count, which would mean nothing.
@@ -64,6 +64,7 @@ export function tableIssues(
     add('FieldMissing',p.missing,`${p.missing} of ${p.total} records do not carry ${column}.`);
     add('ValueEmpty',p.empty,`${p.empty} of ${p.total} records carry ${column} empty.`);
     add('ValueUnreadable',p.mismatched,`${p.mismatched} of ${p.total} values of ${column} are not the declared kind.`);
+    add('ValueNotCoded',p.uncoded?.count??0,`${p.uncoded?.count??0} of ${p.total} values of ${column} are none of its declared codes.`);
     add('BeyondFence',p.numeric?.beyondFence??0,`${p.numeric?.beyondFence??0} of ${p.total} values of ${column} lie beyond the quartile fence.`);
   }
   return [...fromFindings,...profiled];

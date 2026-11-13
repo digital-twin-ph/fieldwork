@@ -61,7 +61,7 @@ import {appendTables,appendSentence,appendPort,appendTableCount} from './append-
 import {runDetail} from './run-progress.js';
 import {fitRegression,specFrom,rowsOf,regressionTable,regressionSentence,regressionReceipt,exposureColumnsOf,fitEachExposure,fitEachExposureStepwise,
   regressionsTable,regressionsSentence,regressionsReceipt} from './regression.js';
-import {metadataFindings} from './column-metadata.js';
+import {metadataFindings,declaredUpstream,scalesOf,inDeclaredOrder} from './column-metadata.js';
 import widgetRegistry from '../widgets/registry.json';
 import {relateTable,relateOutcome,machinedNotes,relateReceiptFacts,relateAtShifts,relateShiftsReceiptFacts,type RelateOutcome,type ShiftColumn} from './relate-table.js';
 // THE EQUATIONS THE COMPUTATIONS USED, machined as Methods notes. The second, third and fourth
@@ -1350,8 +1350,11 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         const fromStudy=study?.units?.length&&study.boundary
           ?{features:study.units.map((unit,index)=>({id:unit.id,name:unit.name,geometry:{type:'Polygon' as const,
             coordinates:study.boundary!.type==='MultiPolygon'?study.boundary!.coordinates[index]!:study.boundary!.coordinates} as import('./types.js').Boundary}))}
+          // A STUDY AREA DRAWN BY HAND, or with no named parts, is read as one area under its own name (2026-11-13: the
+          // practitioner connected a drawn area and a raster and could not see what to do next).
+          :study?.boundary?{features:[{id:(study as {label?:string}).label||'Study area',name:(study as {label?:string}).label||'Study area',geometry:study.boundary}]}
           :undefined;
-        if(study&&!fromStudy)throw new Error('This study area has no named parts to read over. Pick administrative units, or connect a polygon layer to areas.');
+        if(study&&!fromStudy)throw new Error('This study area has no outline yet. Choose it in the study area’s Configure…, or connect a polygon layer to areas.');
         const polygons=(inputs as unknown as {areas?:{features?:{id:string|number;name?:string;geometry?:import('./types.js').Boundary|null}[]}}).areas??fromStudy;
         if([raw,(inputs as {areas?:unknown}).areas,study].filter(Boolean).length>1)
           throw new Error('Connect one kind of place: points, a polygon layer, or a study area. One table holds one kind.');
@@ -1993,7 +1996,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         const rowsRead=described.rows.map(r=>({...r.key,[described.valueField]:r.value}));
         const kinds=Object.fromEntries([...Object.keys(described.numericKeys??{}),described.valueField].map(c=>[c,'number' as const]));
         const issues=tableIssues([...(described.findings??[]),...metadataFindings(described,p.columns,p.dictionaryCheck,p.wide)],
-          [...described.keys,described.valueField],rowsRead,(column,values)=>profileColumn(column,values,kinds[column]));
+          [...described.keys,described.valueField],rowsRead,(column,values)=>profileColumn(column,values,kinds[column],scalesOf(p.columns)[column]));
         // About the table this step brought in: its output, which every step after it names, and which is its table.
         const output=`<urn:fieldwork:run:${runId}:output:${node.id}>`;
         const found=`${output} <http://www.w3.org/ns/prov#alternateOf> <urn:fieldwork:run:${runId}:table:${node.id}>.\n`
@@ -2270,7 +2273,12 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           // A CASE SERIES IS STILL A TABLE, and it carries its periods with it: the curve is
           // drawn from the shape that arrived rather than from a mode somebody selected. Its receipt states the period and the
           // kind of date, as the retired `series` port's did (2026-11-12, Chart's ports standardized: Table and Polygon summaries).
-          if(arrived.series){const series=arrived.series as Parameters<typeof seriesChart>[0];const chart=seriesChart(series);const source=recordsEdge.from;
+          // WHAT THE SOURCES DECLARED, followed to this chart by column name (experiment 211).
+          const said=scalesOf(declaredUpstream(workflow.nodes,workflow.edges,node.id));
+          if(arrived.series){const series=arrived.series as Parameters<typeof seriesChart>[0];const drawn=seriesChart(series);const source=recordsEdge.from;
+            // A series split by an ordinal column is drawn in its declared order, panel by panel and in the stack.
+            const by=drawn.groupedBy?said[drawn.groupedBy]:undefined;
+            const chart=by&&drawn.panels?{...drawn,panels:inDeclaredOrder(drawn.panels,p=>p,by)}:drawn;
             const facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n<urn:fieldwork:run:${runId}:view:${node.id}> a fw:ChartView, prov:Activity; prov:used <urn:fieldwork:run:${runId}:output:${source}>; fw:groupingField "period"; fw:eventDateKind ${JSON.stringify(series.dateKind)}.\n`+chartSpecificationFacts(node,runId,source,chart,series.weightField?'numeric-total':'record-count');
             value={...structuredClone(arrived) as unknown as DisplayValue,chart,rows:[],centers:[]};receipts.push({nodeId:node.id,kind:'presentation',facts,rules:'',input:facts,conclusions:[],method:chart.caption});break;}
           const chart=arrived.series
@@ -2279,7 +2287,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
             // vintage disagreement and the groups it could not report, which a chart derived
             // from the rows alone cannot know.
             :arrived.chart??tableChart(arrived as unknown as import('./data-table.js').DataTable,
-              node.params.keyColumn,node.params.panelsBy);
+              node.params.keyColumn,node.params.panelsBy,said);
           // THE ORDER THE PRACTITIONER CHOSE, attached where the node's parameters are known so
           // every renderer downstream reads it off the summary rather than being told separately.
           // `orderBins` ignores it where the categories are a sequence, so an epidemic curve

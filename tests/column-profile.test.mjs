@@ -144,3 +144,15 @@ test('a column declared as ordered categories has no median, and its counts are 
   assert.deepEqual(p.frequencies.map(f=>[f.value,f.count,f.label]),[['0',2,'pre-school'],['1',1,'first'],['2',3,'second']]);
   assert.equal(profile('age',['1','2','3','4'],undefined,{scale:'ratio'}).numeric.median,2.5);
 });
+
+test('a value none of the declared codes is counted and named, and kept',async()=>{
+  const {profileColumn:profile}=await import('../build/column-profile.js');
+  const {tableIssues}=await import('../build/data-issues.js');
+  const said={scale:'ordinal',codes:[{value:'0',label:'pre-school'},{value:'1',label:'first'},{value:'2',label:'second'}]};
+  const p=profile('class',['0','1','3','2','3',''],undefined,said);
+  assert.deepEqual(p.uncoded,{count:2,examples:['3']});
+  assert.equal(p.frequencies.find(f=>f.value==='3').count,2,'still counted as it is written');
+  assert.equal(profile('class',['0','1'],undefined,said).uncoded,undefined);
+  const issues=tableIssues([],['class'],[{class:'3'},{class:'0'}],(c,v)=>profile(c,v,undefined,said));
+  assert.deepEqual(issues.map(i=>[i.kind,i.count,i.of]),[['ValueNotCoded',1,2]]);
+});

@@ -303,6 +303,7 @@ hand is pointless because the next run overwrites it.
 | `widgets/release-notes.json` | `npm run notes:releases` | `validate:release-notes` |
 | `docs/widget-names.md` | `npm run names:widgets` | `validate:names` |
 | the date stamp in every `docs/**.md` | `npm run stamp:docs` | `validate:docs` |
+| `ontology/country-names.json`, `ontology/country-names.ttl` | `npm run names:countries` | `validate:country-names` |
 
 **Run `stamp:docs` before `names:widgets`, not after.** `docs/widget-names.md` is both generated
 and stamped: the stamper rewrites the date in a file the generator has just produced, so running

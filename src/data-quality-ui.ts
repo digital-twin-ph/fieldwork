@@ -62,6 +62,9 @@ export function openDataQuality(view:QualityView,esc:Escape):void{
       +`${p.examples.map(e=>`<code>${esc(e)}</code>`).join(', ')}`
       +`${p.repairable<p.mismatched?`. Only ${p.repairable} would survive being read as ${p.declared}s`:''}`
       +`. A rule reading this column is told ${p.mismatched===1?'that value is':'those values are'} not recorded.</li>`);
+    if(p.uncoded)said.push(`<li class="quality-problem"><strong>${ISSUE_LABEL.ValueNotCoded} · ${p.uncoded.count} of ${p.total}</strong> `
+      +`${p.uncoded.examples.map(e=>`<code>${esc(e)}</code>`).join(', ')}: kept as written. Its declared codes are `
+      +`${esc((view.scales?.[p.column]?.codes??[]).map(c=>c.value).join(', '))}.</li>`);
     // Said, never offered a fix. Filling a gap is imputation: a modelling decision that belongs
     // to the practitioner and their method, not to a widget's convenience. 117 records why.
     // THE TWO ABSENCES, APART. A field the record does not have and a field it has and left empty

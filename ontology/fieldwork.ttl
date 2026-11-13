@@ -1020,6 +1020,9 @@ fw:markedDate a owl:ObjectProperty; rdfs:label "marked date";
   rdfs:comment "A date the figure marks on its time axis, with dcterms:date and the practitioner's rdfs:label.".
 fw:ValueTrimmed a fw:DataIssueKind; skos:inScheme fw:dataIssueKinds; skos:prefLabel "Spaces trimmed"; dqv:inDimension fw:consistency;
   skos:definition "A key value written with spaces before or after it, read without them, so that it groups with the same value written without: \"Family member \" is read as \"Family member\". The file is not changed.".
+# A VALUE NOT AMONG ITS COLUMN'S CODES (experiment 211): a column whose codes are declared, holding a value none of them is.
+fw:ValueNotCoded a fw:DataIssueKind; skos:inScheme fw:dataIssueKinds; skos:prefLabel "Not among its codes"; dqv:inDimension fw:consistency;
+  skos:definition "A value in a column whose codes are declared that is none of those codes, as a 3 where school class is coded 0, 1 and 2. The value is kept as written; whether the codes or the value is wrong is for the practitioner to say.".
 fw:plausibility a dqv:Dimension; rdfs:label "Whether a value sits where most of its column does".
 fw:absentValues skos:exactMatch fw:ValueAbsent.
 fw:unreadableValues skos:exactMatch fw:ValueUnreadable.

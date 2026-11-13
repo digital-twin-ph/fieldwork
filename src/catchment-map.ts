@@ -1,4 +1,4 @@
-import {proportionalRadius,layerRanks} from './point-layers.js';
+import {proportionalRadius,layerRanks,colouredClasses} from './point-layers.js';
 /** SITES ABOVE EVERY POINT LAYER: point layers are lifted by their place in Manage layers, up to 1000 x 10,000 for a layer
  *  the list does not name, and a pump covered by a death mark could not be clicked (gate 134, 2026-11-12). */
 const SITES_ON_TOP=100_000_000;
@@ -421,13 +421,17 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
     for(const [source,rows] of bySource){
       // Spread into one shape so the fallback does not narrow `size` away: `layerSymbol`
       // derives a colour and a mark from the layer's position and has no opinion on radius.
-      const symbol:{colour:string;shape:LayerShape;size?:number;sizeBy?:string}=
+      const symbol:{colour:string;shape:LayerShape;size?:number;sizeBy?:string;colourBy?:string}=
         layers.layerSymbols?.[source]??{...layerSymbol(index)};
+      // COLOUR BY CLASS, as the static figure draws it (2026-11-13): one size, the class's step, the highest drawn last.
+      const ramp=symbol.colourBy?colouredClasses(rows as never,{[source]:symbol}).get(source):undefined;
+      const valueOf=(row:unknown)=>{const v=(row as {attributes?:Record<string,unknown>}).attributes?.[symbol.colourBy!];return v===''||v===null||v===undefined?null:Number(v);};
+      if(ramp)rows.sort((a,b)=>(valueOf(a)??-Infinity)-(valueOf(b)??-Infinity));
       // THE LAYER'S PLACE IN THE STACK set in Manage layers (2026-11-12): Leaflet stacks markers by latitude unless told,
       // so each layer's marks are lifted by its position, and a layer moved up is drawn over the others.
       const lift=layerRanks(layers.mapLayers)(source)*10000;
       // PROPORTIONAL SYMBOLS, as the static figure draws them (experiment 210): largest first, so none hides another.
-      const largest=symbol.sizeBy?Math.max(0,...rows.map(row=>Number((row as {attributes?:Record<string,unknown>}).attributes?.[symbol.sizeBy!])).filter(Number.isFinite)):0;
+      const largest=symbol.sizeBy&&!ramp?Math.max(0,...rows.map(row=>Number((row as {attributes?:Record<string,unknown>}).attributes?.[symbol.sizeBy!])).filter(Number.isFinite)):0;
       if(largest>0)rows.sort((a,b)=>(Number((b as {attributes?:Record<string,unknown>}).attributes?.[symbol.sizeBy!])||0)-(Number((a as {attributes?:Record<string,unknown>}).attributes?.[symbol.sizeBy!])||0));
       // ONE GROUP PER PIN CLASS, where the layer has them. A class is what a record IS, so it
       // gets its own mark and its own row in the layer list -- not a nested checkbox under the
@@ -453,7 +457,9 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
         const encoding=layers.fillEncoding||SPATIAL_RELATION_FILL;
         const state=row.excluded?'Excluded':row.relation??row.status??'';
         const paint=row.fill??fillClass(encoding,state);
+        const step=ramp?ramp.classOf(valueOf(row)):null;
         const ink=paint==='absent'?'#8C8C8C'
+          :ramp?(step===null?'#a89b87':ramp.colours[step]!)
           :(row.pinClass&&classColour.get(row.pinClass))||symbol.colour;
         const inside=paint==='solid';
         // The mark is DRAWN, not just named. The layer control said "(square)" while every point
@@ -483,7 +489,8 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
         // THE ICON BOX IS DERIVED, because a 16x16 box clips anything past radius 5: the halo is
         // stroked at 3.4 and the symbol at 1.5, so the drawn extent is the radius plus about 2.5.
         // A fixed box would have silently capped the slider at a third of its range.
-        const r=largest>0?proportionalRadius((row as {attributes?:Record<string,unknown>}).attributes?.[symbol.sizeBy!],largest,markRadius(symbol.size)):markRadius(symbol.size);
+        const r=largest>0?proportionalRadius((row as {attributes?:Record<string,unknown>}).attributes?.[symbol.sizeBy!],largest,markRadius(symbol.size))
+          :ramp?Math.max(7,markRadius(symbol.size)):markRadius(symbol.size);
         const box=Math.ceil(2*(r+2.5)),centre=box/2;
         L.marker([lat,lon],{title:row.name,zIndexOffset:lift,icon:L.divIcon({className:'catchment-point-mark',
           iconSize:[box,box],iconAnchor:[centre,centre],
@@ -491,7 +498,7 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
             +(layers.markHalo===false?'':`<path d="${markPath(symbol.shape,centre,centre,r)}" fill="none" `
               +`stroke="${MARK_HALO}" stroke-width="3.4" stroke-linejoin="round"/>`)
             +`<path d="${markPath(symbol.shape,centre,centre,r)}" fill="${inside?ink:'none'}"${largest>0?' fill-opacity="0.55"':''} `
-            +`stroke="${ink}" stroke-width="1.5" stroke-linejoin="round"/></svg>`})})
+            +`stroke="${ramp?'#1d2f3a':ink}" stroke-width="1.5" stroke-linejoin="round"/></svg>`})})
           .bindPopup(`<b>${esc(row.name)}</b>${state?`<br>${esc(state)}`:''}`
             +`<br>${esc(named[source]||source)}<br>Location: ${lat.toFixed(6)}, ${lon.toFixed(6)}`)
           .addTo(groupFor(row));

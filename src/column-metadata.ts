@@ -220,6 +220,30 @@ export function scalesOf(declared?:ColumnDeclarations):Record<string,{scale?:Sca
     .map(([c,m])=>[c,{...(m.scale?{scale:m.scale}:{}),...(m.codes?.length?{codes:m.codes}:{})}]));
 }
 
+/** WHAT THE SOURCES SAID, FOLLOWED DOWNSTREAM (experiment 211). A step's table keeps a source's column under the same
+ *  name when it groups, relates or selects by it, so a declaration accepted on Tabular data or Point data is read by
+ *  name wherever that column arrives. A column a step computes, such as a count, has no declaration, and is given none.
+ *  The nearest source wins where two declare one name. */
+export function declaredUpstream(nodes:readonly {id:string;params:unknown}[],edges:readonly {from:string;to:string}[],
+    nodeId:string):ColumnDeclarations{
+  const out:ColumnDeclarations={},seen=new Set<string>([nodeId]),queue=[nodeId];
+  while(queue.length){
+    const at=queue.shift()!;
+    for(const edge of edges.filter(e=>e.to===at)){
+      if(seen.has(edge.from))continue;seen.add(edge.from);queue.push(edge.from);
+      const held=(nodes.find(n=>n.id===edge.from)?.params as {columns?:ColumnDeclarations}|undefined)?.columns;
+      for(const [column,meta] of Object.entries(held??{}))if(meta.confirmed&&!(column in out))out[column]=meta;
+    }
+  }
+  return out;
+}
+/** Values in their declared order, an ordinal column's codes first in order and anything else after, as it came. */
+export function inDeclaredOrder<T>(items:readonly T[],valueOf:(item:T)=>string,said?:{scale?:Scale;codes?:readonly Code[]}):T[]{
+  if(said?.scale!=='ordinal'||!said.codes?.length)return [...items];
+  const rank=(v:string)=>{const at=said.codes!.findIndex(c=>c.value===v);return at<0?said.codes!.length:at;};
+  return [...items].map((item,at)=>({item,at})).sort((a,b)=>rank(valueOf(a.item))-rank(valueOf(b.item))||a.at-b.at).map(x=>x.item);
+}
+
 /** A column is described when someone has confirmed a label or a description for it. */
 export const isDescribed=(meta?:ColumnMeta)=>!!meta&&meta.confirmed&&!(blank(meta.label)&&blank(meta.description));
 

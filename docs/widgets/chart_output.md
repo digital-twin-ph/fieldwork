@@ -102,6 +102,15 @@ bar per period, its height the total, divided by those values in one colour each
 More values than the six colours that can be told apart is refused, naming how many; draw panels instead, which is
 what the chart does where Draw is left at bars. Hagelloch's *Who fell ill?* stacks its curve by school class.
 
+### What the columns were declared to be
+
+Where a column was described at its source, in Tabular data's or Point data's **Describe columns…**, Chart reads that
+before the values, for any column that reaches it under the same name. A column declared as **categories in an order**
+draws its bars, and the panels or stack of a curve divided by it, in that order, and each code with its meaning beside
+it: *0 preschool*, *1 1st class*. One declared **in no order** is never offered as a pyramid's bands, however much its
+values look like ages. A column a step computes, such as a count, carries nothing from the source. Only accepted
+descriptions are read, never a dictionary's proposals.
+
 ### Two groups back to back: a population pyramid
 
 In **Configure…**, **Draw** *How are two groups spread across ages? Population pyramid*, then name the column whose two values

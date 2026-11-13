@@ -3,6 +3,32 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.110.0 — 2026-11-13
+
+- **Colour by, for a point layer.** Map's Configure… can colour each mark by a number, in five classes from light to
+  dark, every mark one size, the highest drawn on top; the key gives each class's range and count. MERS's hospitals
+  sized by their cases hid the hospitals near Samsung Medical Center under its circle. Colour by and Size by exclude
+  each other. Map 0.28.0.
+- **Chart follows what the columns were declared to be.** A column described at its source as categories in an
+  order draws its bars, and a curve's panels or stack divided by it, in that order, each code with its meaning; one
+  declared in no order is never a pyramid's bands. Chart 0.21.0. Experiment 211.
+- **A value none of a column's codes is a data quality finding**, *Not among its codes*, in Data quality and the
+  receipt (`fw:ValueNotCoded`). The value is kept as written. Tabular data 0.10.1, Point data 0.7.1.
+- **Sample a raster says what arrived, and what is missing.** Configure… names the raster, its cells and their width,
+  its no-data value and its units where its source or file states them, which fill *What those values measure*. With
+  nothing to read it at, it says so and offers **Read it over** the study area, which connects it and switches to areas.
+  A study area with no named parts is read as one area. Its ports have one name each, on the node and in the
+  Inspector. Sample a raster 0.5.0.
+- **A WorldPop file is recognised by its name.** Chosen from disk as WorldPop named it, its source record fills in,
+  units *people per pixel* included. Raster input 0.11.2.
+- **A country alias table, in the ontology.** `ontology/country-names.json` lists 253 countries by their ISO 3166-1
+  two- and three-letter codes, with each source's name: geoBoundaries, Natural Earth, and the UN's M49 names as packaged
+  by datasets/country-codes (`examples/country-codes/codes.json`, three of its columns). 31 are named differently by
+  different sources. `ontology/country-names.ttl` holds the same as `fw:Jurisdiction`s, both codes as SKOS notations
+  and one SKOS-XL label per source. The study area's country search reads it, and takes either code: "KR" finds the
+  Republic of Korea. Written by `npm run names:countries`, checked by `validate:country-names`. Kept as the sources
+  write them: geoBoundaries' "Antartica", and the package's "Ivory Coast" for the UN's Côte d'Ivoire.
+
 ## 0.109.0 — 2026-11-13
 
 - **Point data describes its columns too.** Describe columns… and View the data dictionary, as in Tabular data, for

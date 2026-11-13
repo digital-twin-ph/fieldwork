@@ -20,7 +20,9 @@ type RasterDraft={provenance:RasterProvenance; padding:number; picked:string; va
 export function openRasterEditor(boundary:Boundary,onSave:(asset:RasterAsset)=>boolean,existing?:RasterAsset,
   /** WHERE TO GET A FILE, at the top of Settings: the population sources for the study area's country. `html` is
    *  called on every redraw; `wire` connects its controls. */
-  source?:{html:()=>string;wire:(root:HTMLElement)=>void},step=''):void{
+  source?:{html:()=>string;wire:(root:HTMLElement)=>void},step='',
+  /** A file Fieldwork pointed to, recognised by its name: its source record, filled in where none is written. */
+  recognise?:(filename:string)=>RasterProvenance|undefined):void{
   let netcdf:NetcdfGrid|undefined,file:File|undefined,url:string|undefined,urlBytes:number|undefined,metadata:RasterMetadata|undefined;
   let reading='',failure='',urlField='',urlOpen=false,serial=0,redrawNow:()=>void=()=>{};
   const nameOf=(href:string)=>{try{return decodeURIComponent(new URL(href).pathname.split('/').pop()||href);}catch{return href;}};
@@ -98,6 +100,7 @@ export function openRasterEditor(boundary:Boundary,onSave:(asset:RasterAsset)=>b
         const chosen=(e.target as HTMLInputElement).files?.[0];if(!chosen)return;
         const request=++serial;file=chosen;url=undefined;urlBytes=undefined;netcdf=undefined;metadata=undefined;failure='';
         d.picked=chosen.name;if(existing)d.provenance={};
+        const known=recognise?.(chosen.name);if(known&&!Object.values(d.provenance??{}).some(v=>String(v??'').trim()))d.provenance={...known};
         try{
           if(isNetcdf(chosen))await readNetcdf(chosen,request,d);
           else{reading='Reading GeoTIFF metadata…';redraw();const found=await inspectRaster(chosen);if(request!==serial)return;metadata=found;reading='';}

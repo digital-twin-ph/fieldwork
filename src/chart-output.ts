@@ -3,6 +3,7 @@ import type {BarOrder,ChartSummary,DisplayValue,Receipt} from './results.js';
 import type {DataTable} from './data-table.js';
 import {chartSpecificationFacts} from './chart-vega.js';
 import {orderOf} from './select-rows.js';
+import {inDeclaredOrder,type Scale,type Code} from './column-metadata.js';
 
 /** A BAR'S NUMBER, written for a reader.
  *
@@ -27,7 +28,8 @@ export function barNumber(value:number,measure?:ChartSummary['measure']):string{
  *  A row with no value is kept and shown as zero-length rather than dropped, and counted in the
  *  caption: a sub-district whose rate was suppressed is not a sub-district with a rate of zero,
  *  and a chart that silently omitted it would be shorter than the table beside it. */
-export function tableChart(table:DataTable,keyColumn?:string,panelsBy?:string):ChartSummary{
+export function tableChart(table:DataTable,keyColumn?:string,panelsBy?:string,
+    said:Record<string,{scale?:Scale;codes?:readonly Code[]}>={}):ChartSummary{
   if(panelsBy?.trim())return panelChart(table,keyColumn,panelsBy.trim());
   if(table.kind!=='data-table')throw new Error('A chart of a table needs a table.');
   if(table.interval)return intervalChart(table,keyColumn);
@@ -39,14 +41,18 @@ export function tableChart(table:DataTable,keyColumn?:string,panelsBy?:string):C
   if(!table.rows.length)throw new Error('This table holds no rows, so there is nothing to chart.');
   const absent=table.rows.filter(row=>row.value===null).length;
   const seen=new Map<string,number>();
-  const bins=table.rows.map(row=>{
-    const label=row.key[column]??'';
+  // WHAT THE COLUMN WAS DECLARED TO BE (experiment 211): an ordinal column's bars in its declared order, and a code's
+  // meaning beside the code, the value itself never replaced.
+  const declared=said[column];
+  const meaning=(value:string)=>declared?.codes?.find(c=>c.value===value)?.label;
+  const bins=inDeclaredOrder(table.rows,row=>row.key[column]??'',declared).map(row=>{
+    const value=row.key[column]??'',label=meaning(value)?`${value} ${meaning(value)}`:value;
     // A KEY HAS TO BE UNIQUE for the renderer, and two rows may share a category when the table
     // keys on more than one column. The repeat is numbered rather than merged: adding them would
     // be a total nobody asked for, and a rate is not addable at all.
-    const seenBefore=seen.get(label)??0;
-    seen.set(label,seenBefore+1);
-    return {key:seenBefore?`${label}#${seenBefore+1}`:label||'(unnamed)',
+    const seenBefore=seen.get(value)??0;
+    seen.set(value,seenBefore+1);
+    return {key:seenBefore?`${value}#${seenBefore+1}`:value||'(unnamed)',
       label:label||'(unnamed)',count:row.value??0};
   });
   const other=table.keys.filter(name=>name!==column);

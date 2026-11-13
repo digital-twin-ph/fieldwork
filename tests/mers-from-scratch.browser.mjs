@@ -355,7 +355,11 @@ test('MERS-CoV, South Korea, 2015: each case’s detection and notification agai
   await page.locator(`.react-flow__node[data-id="${map}"]`).click();
   await page.locator('#configure-step').click();
   const mc=page.locator('#map-config');
+  // COLOURED, NOT SIZED (the practitioner, 2026-11-13: sized by cases, Samsung Medical Center's circle hid the hospitals
+  // near it; "Maybe color keyed to expose all the point locations"). Choosing colour clears size.
   await mc.locator(`[data-layer-size-by="${points}"]`).selectOption('cases');
+  await mc.locator(`[data-layer-colour-by="${points}"]`).selectOption('cases');
+  await expect(mc.locator(`[data-layer-size-by="${points}"]`)).toHaveValue('');
   await mc.locator('#map-title').fill('Cases by the hospital named for them, MERS-CoV, South Korea, 2015');
   await mc.locator('#map-title').press('Tab');
   await mc.locator('#config-apply').click();
@@ -369,7 +373,12 @@ test('MERS-CoV, South Korea, 2015: each case’s detection and notification agai
     await expect(ht.locator('tr',{hasText:name.split(',')[0]}).first()).toContainText(String(count));
   await page.getByRole('tab',{name:'Where were the cases in hospital?'}).click();
   await expect(page.locator('#map g.location')).toHaveCount(12);
+  // One size for every hospital, and a key that states each class's range and count.
+  const radii=await page.locator('#map g.location path').evaluateAll(paths=>[...new Set(paths.map(p=>p.getBoundingClientRect().width.toFixed(1)))]);
+  expect(radii.length,'every mark one size').toBe(1);
+  await expect(page.locator('#map-communication-header-key')).toContainText('coloured by cases: 1 (4)');
   await page.screenshot({path:'test-results/mers-hospitals.png',fullPage:true});
+  await page.locator('#map').screenshot({path:'test-results/mers-hospitals-map.png'});
 
   await page.locator('[data-view="project"]').click();
   await page.locator('#storage-status').click();

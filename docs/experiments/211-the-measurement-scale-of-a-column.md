@@ -138,6 +138,15 @@ as a file. Everything it says is proposed. `tests/hagelloch-dictionary.test.mjs`
 the example and finds it counted in that order with no median. Both pass, Chromium. One column, `name`, is not in the
 source's dictionary: this project gave each case its name, and the check says so.
 
+**Chart and codes, the same day (0.110.0, in development).** Point 5 is built: a declaration accepted on a source
+step is followed to Chart by column name (`declaredUpstream`), through Total within groups, Relate and Cases by period,
+which keep a column's name. An ordinal column's bars, and the panels or stack of a series split by it, are drawn in its
+declared order with each code's meaning; a column declared nominal is never a pyramid's bands. A column a step computes
+carries nothing. Matching by name is the limit: a step that renames a column loses its declaration, and two sources
+declaring one name differently are settled by the nearer. A value none of a column's declared codes is
+`fw:ValueNotCoded` (*Not among its codes*), a data issue in Data quality and the receipt, kept as written.
+`tests/chart-proposals.test.mjs` and `tests/column-profile.test.mjs`, Chromium not yet.
+
 **The practitioner observation above has not been made.** Hagelloch is now where it can be.
 
 ## What it does not establish

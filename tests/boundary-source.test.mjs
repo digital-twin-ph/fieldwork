@@ -266,9 +266,9 @@ test('a country is found by the name Natural Earth gives it, too',async()=>{
   assert.equal(resolveCountry('Vietnam'),'VNM');
   assert.equal(resolveCountry('Korea'),null,'two countries are called Korea');
   assert.equal(resolveCountry('Republic of Korea'),'KOR');
-  const {readFileSync}=await import('node:fs');
-  const ne=JSON.parse(readFileSync(new URL('../assets/natural-earth-110m-countries.json',import.meta.url),'utf8')).countries;
-  const gb=new Map(COUNTRIES.map(c=>[c.iso,c.name]));
-  const differing=ne.filter(c=>gb.has(c.iso)&&gb.get(c.iso)!==c.name).map(c=>`${c.iso} ${c.name}`).sort();
-  assert.deepEqual(ALSO_CALLED.map(c=>`${c.iso} ${c.name}`).sort(),differing,'the other names are Natural Earth\'s, all of them');
+  assert.equal(resolveCountry('KR'),'KOR','by its two-letter code');
+  assert.equal(resolveCountry('kp'),'PRK');
+  assert.ok(ALSO_CALLED.some(c=>c.iso==='KOR'&&c.name==='South Korea'));
+  assert.ok(ALSO_CALLED.every(c=>COUNTRIES.some(k=>k.iso===c.iso)&&COUNTRIES.find(k=>k.iso===c.iso).name!==c.name),
+    'only countries geoBoundaries publishes, by names other than its own');
 });

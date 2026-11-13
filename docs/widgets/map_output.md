@@ -96,6 +96,15 @@ are partly transparent, so a small one is never hidden under a large one. The ke
 what range, such as *the area of each mark shows DEATHS, 1 to 15*. A count suits it; a rate or a share belongs on areas,
 as shading. John Snow's *Where were the deaths?* draws each address this way.
 
+### Marks coloured by a number
+
+Where places are close together, a large mark hides its neighbours: MERS's hospitals sized by their cases put Samsung
+Medical Center's circle over the hospitals near it. **Colour by**, under Size by, draws every mark one size and colours
+it by its value instead, in five classes from light to dark, the highest drawn on top. The classes hold about equal
+numbers of marks, as a shaded map's quantile classes do, and the key gives each class's range and how many marks are in
+it, such as *coloured by cases: 1 (4)*. A mark with no value is drawn grey. Choosing Colour by clears Size by, and the
+other way round.
+
 ### Where it goes in the write-up
 
 **In the write-up, under**, in **Configure…**, chooses the part of the Notes write-up this output's figure and its note go in:

@@ -3,16 +3,19 @@
  *
  *  Rules over the shape of what arrived, each with the question it answers and its reason. No model: the rule and its
  *  sentence are the teaching. Only the forms Chart draws today are offered; a proposal is not a choice, so nothing is
- *  drawn until the practitioner picks one. The kinds are read from the values, because columns do not yet declare
- *  whether they hold a category or a number. */
+ *  drawn until the practitioner picks one. The kinds are read from the values, except where a source declared a
+ *  column's measurement scale (experiment 211), which is read first. */
 import type {DataTable} from './data-table.js';
+import type {Scale} from './column-metadata.js';
+/** What the sources declared each column to be (experiment 211), read before the values. */
+type Scales=Record<string,{scale?:Scale}>;
 
 export type ChartForm='bars'|'pyramid'|'tree'|'curve'|'stacked';
 export interface ChartProposal {form:ChartForm; question:string; name:string; because:string; fits:boolean}
 export type ChartArrival=
   |{kind:'series'; splitBy?:string}
   |{kind:'polygons'}
-  |{kind:'table'; table:Pick<DataTable,'keys'|'rows'>};
+  |{kind:'table'; table:Pick<DataTable,'keys'|'rows'>; scales?:Scales};
 
 const DATE=/^\d{4}-\d{2}-\d{2}$/;
 const BAND=/^(\d+(\.\d+)?|\d+\s*[-–]\s*\d+|\d+\s*\+|<\s*\d+)$/;
@@ -43,12 +46,14 @@ function caseAndSource(table:Pick<DataTable,'keys'|'rows'>):{id:string;parent:st
   return undefined;
 }
 
-/** Two groups across bands: a column of ages or bands, and one with two values. */
-function bandsByTwo(table:Pick<DataTable,'keys'|'rows'>):{bands:string;two:string}|undefined{
-  const bands=table.keys.find(c=>{const v=valuesOf(table,c);return new Set(v).size>=3&&v.every(x=>BAND.test(x));});
+/** Two groups across bands: a column of ages or bands, and one with two values. A column declared as categories in no
+ *  order is never the bands, whatever its values look like; one declared ordered is, whatever they look like. */
+function bandsByTwo(table:Pick<DataTable,'keys'|'rows'>,scales:Scales={}):{bands:string;two:string;declared:boolean}|undefined{
+  const declared=table.keys.find(c=>scales[c]?.scale==='ordinal'&&new Set(valuesOf(table,c)).size>=3);
+  const bands=declared??table.keys.find(c=>scales[c]?.scale!=='nominal'&&(()=>{const v=valuesOf(table,c);return new Set(v).size>=3&&v.every(x=>BAND.test(x));})());
   if(!bands)return undefined;
   const two=table.keys.find(c=>c!==bands&&new Set(valuesOf(table,c)).size===2);
-  return two?{bands,two}:undefined;
+  return two?{bands,two,declared:!!declared}:undefined;
 }
 
 export function proposeChartForms(arrived:ChartArrival):ChartProposal[]{
@@ -60,13 +65,13 @@ export function proposeChartForms(arrived:ChartArrival):ChartProposal[]{
   if(arrived.kind==='polygons')return [
     {form:'bars',question:'How do the areas differ?',name:'Bars',because:'one bar for each area, as tall as its count or total',fits:true}];
   const {table}=arrived;
-  const tree=caseAndSource(table),date=dateColumn(table),pyramid=bandsByTwo(table);
+  const tree=caseAndSource(table),date=dateColumn(table),pyramid=bandsByTwo(table,arrived.scales);
   return [
     {form:'tree',question:'Who infected whom?',name:'Transmission tree',
       because:tree&&date?`${tree.parent} holds values of ${tree.id}, in the same table, and ${date} dates each row`
         :'needs a column naming each case, one naming its source, and a date',fits:!!(tree&&date)},
     {form:'pyramid',question:'How are two groups spread across ages?',name:'Population pyramid',
-      because:pyramid?`${pyramid.bands} in bands, the two values of ${pyramid.two} back to back`
+      because:pyramid?`${pyramid.bands} in ${pyramid.declared?'its declared order':'bands'}, the two values of ${pyramid.two} back to back`
         :'needs a column of ages or bands, and one with two values',fits:!!pyramid},
     {form:'bars',question:'How do groups differ?',name:'Bars',because:'one bar for each category, as tall as its number',fits:true}];
 }

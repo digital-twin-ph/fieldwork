@@ -10,6 +10,10 @@ test('a study area refused for want of room says the store is full, and keeps th
     // the workflow the Apply is about to write.
     try{const big='x'.repeat(256*1024);for(let i=0;i<64;i++)localStorage.setItem(`ballast-${i}`,big);}catch{/* full is the point */}
     try{const small='x'.repeat(2048);for(let i=0;i<4096;i++)localStorage.setItem(`fine-${i}`,small);}catch{/* no headroom is the point */}
+    // AND DOWN TO THE LAST CHARACTER. Two passes left up to 2 KB, whatever the store held first, so whether the Apply fit
+    // depended on what else was stored: Hagelloch's dictionary (0.109.0) moved the remainder past the 510 characters the
+    // Apply writes, and the save succeeded (gate 140, 2026-11-13).
+    for(const size of [512,64,8,1]){let i=0;try{for(;;)localStorage.setItem(`last-${size}-${i++}`,'x'.repeat(size));}catch{/* full at this size */}}
   });
   await page.locator('[data-view="workflow"]').click();
   await page.locator('#node-library [data-add="study_area"]').click();

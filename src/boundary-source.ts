@@ -57,7 +57,7 @@ export interface BoundaryLevel {
 }
 
 import countries from '../examples/geoboundaries/countries.json';
-import alsoCalled from '../examples/geoboundaries/also-called.json';
+import countryNames from '../ontology/country-names.json';
 
 /** Every country geoBoundaries publishes, by ISO3 and name.
  *
@@ -76,9 +76,16 @@ export const COUNTRIES:readonly {iso:string;name:string}[]=countries.countries;
  *  Accepts the code directly, because somebody who knows it should not be made to scroll, and
  *  matches a name case- and space-insensitively. A prefix match is accepted only when it is
  *  unambiguous -- "Congo" matches two countries and must not silently pick one of them. */
-/** Other names a country goes by: Natural Earth's, where it differs. "South Korea" is the Republic of Korea, and the
- *  practitioner looking for the MERS outbreak typed it and was told no country matches. */
-export const ALSO_CALLED:readonly {iso:string;name:string}[]=alsoCalled.names;
+/** THE COUNTRY ALIAS TABLE (ontology/country-names.json, and .ttl in the ontology): every country whose name differs
+ *  between sources, by code. "South Korea" is the Republic of Korea, and the practitioner looking for the MERS outbreak
+ *  typed it and was told no country matches. Any name in the table finds its code. */
+export const COUNTRY_NAMES:readonly {iso3:string;iso2?:string;names:Record<string,string>;differ?:boolean}[]=countryNames.countries as unknown as {iso3:string;iso2?:string;names:Record<string,string>;differ?:boolean}[];
+/** The names other than geoBoundaries' own, for the countries geoBoundaries publishes, once each: the picker lists by them. */
+export const ALSO_CALLED:readonly {iso:string;name:string}[]=COUNTRY_NAMES.flatMap(c=>{
+  const own=c.names.geoboundaries;if(!own)return [];
+  return [...new Set(Object.entries(c.names).filter(([source,name])=>source!=='geoboundaries'&&name!==own).map(([,name])=>name))]
+    .map(name=>({iso:c.iso3,name}));});
+const ISO2=new Map(COUNTRY_NAMES.filter(c=>c.iso2).map(c=>[c.iso2!.toLowerCase(),c.iso3]));
 export const countryName=(iso:string)=>COUNTRIES.find(c=>c.iso===iso)?.name??iso;
 
 /** THE COUNTRY A STUDY AREA STATES IT IS IN, or null where it states none.
@@ -132,6 +139,9 @@ export function resolveCountry(typed:string):string|null{
   if(!needle)return null;
   const byCode=COUNTRIES.find(c=>c.iso.toLowerCase()===needle);
   if(byCode)return byCode.iso;
+  // Either code: "KR" is KOR. Only a country geoBoundaries publishes is returned, so nothing is offered that comes back empty.
+  const byTwo=needle.length===2?ISO2.get(needle):undefined;
+  if(byTwo&&COUNTRIES.some(c=>c.iso===byTwo))return byTwo;
   const names=[...COUNTRIES,...ALSO_CALLED];
   const exact=new Set(names.filter(c=>c.name.toLowerCase()===needle).map(c=>c.iso));
   if(exact.size===1)return [...exact][0];

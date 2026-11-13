@@ -35,6 +35,11 @@ per country (Botswana's is 11.6 MB, against WorldPop's 293 MB). They are modelle
 spread over settled areas; they are not official government statistics and carry no uncertainty layer. Where GRID3
 publishes nothing for the country, the dialog says so. The download is your browser's, as WorldPop's is.
 
+**The WorldPop file you were pointed to is recognised.** Chosen from disk under the name WorldPop gave it, its source
+record fills in: the country and year, the release, WorldPop as provider, its licence, and its units, *people per
+pixel*, which WorldPop's files do not carry themselves. Change any of it that says otherwise. A file under any other
+name is not guessed at.
+
 **Or GHS-POP**, the JRC's global population grid, for any country and every five years from 1975 to 2030 (2025 and
 2030 are projections). Choose the year and press **Read the window from JRC's copy**: only the part of the global grid
 over your study area is read, from JRC's copy on Amazon Web Services, so nothing is downloaded first, and the area read

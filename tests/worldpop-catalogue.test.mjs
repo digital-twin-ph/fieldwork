@@ -59,3 +59,15 @@ test('Global2 R2025A offers every year from 2015 to 2030, for any country with a
   assert.equal(GLOBAL2.doi,'10.5258/SOTON/WP00839');
   assert.match(GLOBAL2.licence,/CC BY 4\.0/);
 });
+
+// 2026-11-13: the file Fieldwork pointed to, chosen from disk, is recognised by its name and its record filled in.
+test('a WorldPop file is recognised by its name, with its units, release and year',async()=>{
+  const {worldPopRecordFor,worldPopRastersForCountry}=await import('../build/worldpop-catalogue.js');
+  const url=worldPopRastersForCountry('BWA','global2').find(r=>r.year==='2025').url;
+  const record=worldPopRecordFor(url.split('/').pop());
+  assert.equal(record.units,'people per pixel');
+  assert.equal(record.temporalCoverage,'2025');
+  assert.match(record.title,/^Botswana population, 2025, WorldPop Global2/);
+  assert.equal(record.downloadURL,url);
+  assert.equal(worldPopRecordFor('my-elevation.tif'),undefined,'a file it did not point to is not guessed at');
+});

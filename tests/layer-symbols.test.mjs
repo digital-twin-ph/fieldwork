@@ -77,3 +77,19 @@ test('a mark radius is per layer, defaulted, and clamped',async()=>{
   assert.equal(markRadius(Number.NaN),4);
   assert.equal(markRadius(undefined),4);
 });
+
+
+// COLOUR BY CLASS (2026-11-13, MERS's hospitals): every mark one size, coloured by its value's quantile class.
+test('a coloured layer draws every mark one size, in its class colour, the highest last',async()=>{
+  const {markedPoints,colouredClasses}=await import('../build/point-layers.js');
+  const rows=[1,1,3,4,12,80].map((cases,i)=>({id:'h'+i,name:'h'+i,sourceNodeId:'h',coordinates:[i,i],relation:'Inside',attributes:{cases}}));
+  rows.push({id:'none',name:'none',sourceNodeId:'h',coordinates:[9,9],relation:'Inside',attributes:{cases:''}});
+  const symbols={h:{colour:'#000000',shape:'circle',colourBy:'cases'}};
+  const ramp=colouredClasses(rows,symbols).get('h');
+  assert.equal(ramp.method,'quantile');
+  const svg=markedPoints(rows,c=>c,{esc:String,markPath:(s,x,y,r)=>`r${r}`,symbols});
+  assert.deepEqual([...new Set([...svg.matchAll(/d="r([\d.]+)"/g)].map(m=>m[1]))],['7'],'one size');
+  assert.ok(svg.indexOf('data-place="h5"')>svg.indexOf('data-place="h0"'),'the highest value drawn last');
+  assert.match(svg,/data-place="none"[^]*?fill="#a89b87"/,'no value is drawn neutral');
+  assert.match(svg,new RegExp(`data-place="h5"[^]*?fill="${ramp.colours.at(-1)}"`));
+});

@@ -17,6 +17,12 @@ What it gives back follows what you connect, and the step says which it is doing
 
 Points and areas are not mixed in one step.
 
+**Configure… says what arrived first:** the raster's name, how many cells were kept and how wide each is, its no-data
+value, and what its values measure where its source record or the file says so, which then fills *What those values
+measure*. It says what the raster is read at, or that nothing is connected yet and what to connect. Where a study area
+is on the canvas, **Read it over** *its name* connects it and reads the raster over its named parts, or over the whole
+area where it has none, and moves a Map's or Table's input from points to polygons.
+
 ## At points, from a raster
 
 For each point, it reads the raster at the point and writes the value onto it as a new attribute: the value of the

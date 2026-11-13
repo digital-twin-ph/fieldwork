@@ -9,12 +9,13 @@ named tab in Results and changes nothing about the data it is given.
 
 It takes whatever you connect and draws a bar per category, or an estimate with its interval.
 
-**A table.** One bar per row. The table already says which column names the categories and which
+**A table**, on the **Table** port. One bar per row. The table already says which column names the categories and which
 number goes on the bar, so nothing is asked of you: a rate of deaths per 1,000 people across 32
 sub-districts is 32 bars, labelled by sub-district, each as tall as its own rate. Any table works —
-a rate, a total within groups, a derived value, a related column, a two-by-two, a case series.
+a rate, a total within groups, a derived value, a related column, a two-by-two, a case series. A case series is
+drawn as a curve over its periods.
 
-**A summarised polygon layer.** One bar per polygon, carrying the count of locations inside it or
+**A summarised polygon layer**, on the **Polygon summaries** port. One bar per polygon, carrying the count of locations inside it or
 the total of a numeric field, whichever the summary holds.
 
 Connect one of them. The chart draws what it is given, so there is no mode to set first and no

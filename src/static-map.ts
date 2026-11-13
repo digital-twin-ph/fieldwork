@@ -3,7 +3,7 @@
  *  inside one example's code, and moved out when Old Naledi retired (docs/audits/old-naledi-audit.md, 2026-11-11);
  *  its overlay caption, "OLD NALEDI · SOURCE BOUNDARY" and later "STUDY AREA · SPATIAL COVERAGE", went with it. */
 import {plotFrame} from './catchment-output.js';
-import {proportionalRadius,sizedLargest} from './point-layers.js';
+import {proportionalRadius,sizedLargest,layerRanks} from './point-layers.js';
 import {linkLinesSvg} from './map-links.js';
 import type {Escape,Position} from './types.js';
 import type {DisplayValue} from './results.js';
@@ -68,7 +68,9 @@ export function staticBoundaryMap(output:DisplayValue,selected:string|null|undef
   // PROPORTIONAL SYMBOLS (experiment 210): each sized layer's largest value, and its marks drawn largest first.
   const largest=sizedLargest(output.rows as never,(symbols||{}) as never);
   const valueOf=(r:typeof output.rows[number])=>{const by=symbols?.[r.sourceNodeId||'']?.sizeBy;return by?Number((r as {attributes?:Record<string,unknown>}).attributes?.[by])||0:0;};
-  const rows=largest.size?[...output.rows].sort((a,b)=>valueOf(b)-valueOf(a)):output.rows;
+  // Layer by layer in the order set in Manage layers (2026-11-12); within a sized layer, the largest marks first.
+  const rank=layerRanks((output as {mapLayers?:{sourceNodeId?:string}[]}).mapLayers);
+  const rows=[...output.rows].map((r,at)=>({r,at})).sort((a,b)=>rank(a.r.sourceNodeId)-rank(b.r.sourceNodeId)||valueOf(b.r)-valueOf(a.r)||a.at-b.at).map(x=>x.r);
   for(const r of rows){if(!r.coordinates!)continue;const [x,y]=project(r.coordinates!),label=['spatial-coverage','spatial-map'].includes(output.kind||'')?(r.excluded?'Excluded':r.relation):statusLabel(r.status);
     const symbol=symbols?.[r.sourceNodeId||''];
     // The layer's own radius, or the default where none was chosen. A focused mark is drawn

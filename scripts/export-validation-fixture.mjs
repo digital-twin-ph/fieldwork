@@ -1376,7 +1376,9 @@ const builders={
     const at=path=>execFileSync('git',['-C',repo,'show',`${pin.commit}:${path}`],{maxBuffer:1<<30});
     const doc=JSON.parse(gunzipSync(at('fieldwork-project.json.gz')));
     const {validateWorkflow}=await import('../build/core.js');
-    const ran=[];for(const x of doc.workflows){const w=x.document.workflow??x.document;ran.push({w,run:await executeWorkflow(validateWorkflow(w),async()=>[])});}
+    // The two workflows lab check 49 recomputes. The third, Where were the cases in hospital? (2026-11-12), maps the
+    // hospitals over a study area, which needs the reasoner, and the hospitals carry no count the check reads.
+    const ran=[];for(const x of doc.workflows.slice(0,2)){const w=x.document.workflow??x.document;ran.push({w,run:await executeWorkflow(validateWorkflow(w),async()=>[])});}
     const [timely,links]=ran;
     const nodeOf=(r,type,label)=>r.w.nodes.find(n=>n.type===type&&(!label||n.params.label===label));
     const rows=(r,node)=>r.run.tables[node.id].rows;

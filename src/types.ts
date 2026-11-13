@@ -665,7 +665,7 @@ export interface ParamsByType {
     keyColumn?:string;
     /** Retained so a workflow saved under the old modes keeps drawing what it drew. It is read
      *  LAST, after the connected port, which is what stopped it deciding which ports exist. */
-    inputMode?:'decisions'|'polygons'|'series';renderer?:'html'|'vega-lite';mark?:'bar'|'point'|'line';orientation?:'horizontal'|'vertical';chartTitle?:string;subtitle?:string;xAxisTitle?:string;yAxisTitle?:string;colorByCategory?:boolean;sourceNote?:string;bandMeasure?:'cumulative'|'difference';
+    inputMode?:'decisions'|'polygons';renderer?:'html'|'vega-lite';mark?:'bar'|'point'|'line';orientation?:'horizontal'|'vertical';chartTitle?:string;subtitle?:string;xAxisTitle?:string;yAxisTitle?:string;colorByCategory?:boolean;sourceNote?:string;bandMeasure?:'cumulative'|'difference';
     /** Largest first, smallest first, or by category name, which is what it has always done and
      *  stays the default. Ignored where the categories are a sequence -- an epidemic curve's days
      *  mean something in the order they are in. */

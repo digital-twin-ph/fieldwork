@@ -52,7 +52,7 @@ test('Oswego is two short workflows: which food, and where',async({page})=>{test
   await page.locator('#project-create').click();
   await add(page,'table_input');
   const list=await idOf(page,'table_input');
-  await page.locator('#open-table').click();
+  await page.locator('#configure-step').click();
   await page.locator('#table-file').setInputFiles(LIST);
   await columnsOffered(page);
   await page.locator('#table-shape').selectOption('long');
@@ -166,7 +166,7 @@ test('a line list reaches a two-by-two directly, with nothing counted first',asy
   await page.goto('/?example=blank');
   await add(page,'table_input');
   const list=await idOf(page,'table_input');
-  await page.locator('#open-table').click();
+  await page.locator('#configure-step').click();
   await page.locator('#table-file').setInputFiles(LIST);
   await page.locator('#table-shape').selectOption('long');
   await page.locator('#table-value').selectOption('Age');
@@ -202,7 +202,7 @@ test('all 14 foods on one node give one table, in file order, unranked',async({p
   await page.goto('/?example=blank');
   await add(page,'table_input');
   const list=await idOf(page,'table_input');
-  await page.locator('#open-table').click();
+  await page.locator('#configure-step').click();
   await page.locator('#table-file').setInputFiles(LIST);
   await page.locator('#table-shape').selectOption('long');
   await page.locator('#table-value').selectOption('Age');

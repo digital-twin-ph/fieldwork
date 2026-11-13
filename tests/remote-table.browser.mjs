@@ -22,7 +22,7 @@ test('fetched from a zip, kept as a spec, fetched again by digest, and refused w
   await page.goto('/');await page.evaluate(()=>localStorage.clear());
   await page.goto('/?example=blank');
   await page.locator('#node-library [data-add="table_input"]').click();
-  await page.locator('#open-table').click();
+  await page.locator('#configure-step').click();
   await page.locator('#table-remote summary').click();
   await page.locator('#table-url').fill(URL);
   await page.locator('#table-fetch').click();
@@ -65,7 +65,9 @@ test('fetched from a zip, kept as a spec, fetched again by digest, and refused w
   await page.locator(`.react-flow__node[data-id="${tableId}"]`).click();
   await expect(page.locator('[data-table-remote]')).toContainText('The project keeps where it came from, not the rows');
   // A BUTTON OF ITS OWN, not a word inside a notice: the practitioner could not see it as one (2026-11-08).
-  await expect(page.locator('[data-standard-section="settings"] > .inspector-actions #table-fetch-remote')).toBeVisible();
+  // Under Result, beside "Not fetched yet."; Configure… ends Settings as in every standard Inspector (2026-11-12).
+  await expect(page.locator('[data-standard-section="result"] > .inspector-actions #table-fetch-remote')).toBeVisible();
+  await expect(page.locator('[data-standard-section="settings"] > .inspector-actions:last-child #configure-step.primary')).toBeVisible();
   await expect(page.locator('[data-table-remote] #table-fetch-remote')).toHaveCount(0);
 
   // A CHANGED FILE IS REFUSED, and nothing is read.

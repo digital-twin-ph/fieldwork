@@ -9,8 +9,8 @@ import {EXAMPLE_TEMPLATES} from '../build/example-templates.js';
 // (docs/audits/old-naledi-audit.md). The Vega-Lite test below charts Hagelloch's daily counts instead.
 test('Vega-Lite Chart enhancement renders from local count bins and reopens offline',async({page,context})=>{
   const w=EXAMPLE_TEMPLATES.hagelloch();delete w.exampleId;w.name='Hagelloch, charted';
-  w.nodes.push({id:'enhanced',type:'chart_output',x:850,y:420,params:{label:'Enhanced counts',inputMode:'series',renderer:'vega-lite',mark:'point',orientation:'horizontal'}});
-  w.edges.push({id:'enhanced-edge',from:'curve',to:'enhanced',port:'series'});
+  w.nodes.push({id:'enhanced',type:'chart_output',x:850,y:420,params:{label:'Enhanced counts',renderer:'vega-lite',mark:'point',orientation:'horizontal'}});
+  w.edges.push({id:'enhanced-edge',from:'curve',to:'enhanced',port:'records'});
   await page.goto('/?example=blank');await page.locator('#workflow-file').setInputFiles({name:'enhanced.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(w))});
   await page.locator('#run-button').click();await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
   await page.locator('[data-view="results"]').click();

@@ -1300,24 +1300,6 @@
               "polygons"
             ]
           ]
-        },
-        {
-          "when": "inputMode=series",
-          "required": [],
-          "optional": [
-            [
-              "series",
-              "table"
-            ],
-            [
-              "records",
-              "table"
-            ],
-            [
-              "polygons",
-              "polygons"
-            ]
-          ]
         }
       ]
     },

@@ -46,7 +46,7 @@ const importList=async(page,name,columns)=>{
   await add(page,'table_input');
   const node=(await saved(page)).nodes.filter(n=>n.type==='table_input').at(-1).id;
   await page.locator(`.react-flow__node[data-id="${node}"]`).click();
-  await page.locator('#open-table').click();
+  await page.locator('#configure-step').click();
   await page.locator('#table-file').setInputFiles(file(name));
   await columnsOffered(page);
   await page.locator('#table-shape').selectOption('long');

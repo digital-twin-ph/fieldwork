@@ -89,6 +89,13 @@ export const proportionalRadius=(value:unknown,largest:number,radius:number):num
   const v=Number(value),top=radius*3;
   return Number.isFinite(v)&&v>0&&largest>0?Math.max(1.5,top*Math.sqrt(v/largest)):1.5;
 };
+/** WHERE EACH POINT LAYER SITS IN THE STACK the practitioner set in Manage layers, bottom first, by the step it comes from;
+ *  a layer the list does not name sits on top, in the order it arrived (2026-11-12). */
+export function layerRanks(mapLayers:readonly {sourceNodeId?:string;kind?:string}[]|undefined):(source:string|null|undefined)=>number{
+  const ranks=new Map<string,number>();
+  (mapLayers??[]).forEach((layer,index)=>{if(layer.sourceNodeId&&!ranks.has(layer.sourceNodeId))ranks.set(layer.sourceNodeId,index);});
+  return source=>ranks.get(source??'')??1000;
+}
 /** The largest value of each sized layer, over the rows that carry it. */
 export function sizedLargest(rows:readonly MarkRow[],symbols:Record<string,MarkStyle>):Map<string,number>{
   const out=new Map<string,number>();
@@ -110,8 +117,10 @@ export function markedPoints(rows:readonly MarkRow[],
     label?:(row:MarkRow)=>string;
     /** Which property names each layer's marks, keyed by source node the way `symbols` is. */
     labelField?:Record<string,string>;
+    /** The layers in the order set in Manage layers, bottom first. */
+    mapLayers?:readonly {sourceNodeId?:string;kind?:string}[];
   }):string{
-  const {esc,markPath,symbols={},classes={},hidden,focusId,label,labelField={}}=options;
+  const {esc,markPath,symbols={},classes={},hidden,focusId,label,labelField={},mapLayers}=options;
   // Counted per layer over what will actually be DRAWN, so a hidden layer does not spend the
   // ceiling and a layer under it is named even where another is over.
   const drawnPerLayer=new Map<string,number>();
@@ -124,7 +133,9 @@ export function markedPoints(rows:readonly MarkRow[],
   // Sized marks are drawn largest first, so a small one is never hidden under a large one.
   const largest=sizedLargest(rows,symbols);
   const sizeOf=(row:MarkRow)=>{const s=symbols[row.sourceNodeId||''];return s?.sizeBy?Number(row.attributes?.[s.sizeBy])||0:0;};
-  const ordered=largest.size?[...rows].sort((a,b)=>sizeOf(b)-sizeOf(a)):rows;
+  // Layer by layer in the order set, the lowest first; within a sized layer, the largest marks first.
+  const rank=layerRanks(mapLayers);
+  const ordered=[...rows].map((row,at)=>({row,at})).sort((a,b)=>rank(a.row.sourceNodeId)-rank(b.row.sourceNodeId)||sizeOf(b.row)-sizeOf(a.row)||a.at-b.at).map(x=>x.row);
   for(const row of ordered){
     if(!row.coordinates)continue;
     if(hidden?.has(row.sourceNodeId||''))continue;

@@ -66,14 +66,14 @@ export function hagellochExample():Workflow{
       params:{label:'Cases by day of prodrome',source:'points',
         dateField:'date_of_prodrome',dateKind:'onset',period:'day'}},
     {id:'epidemic',type:'chart_output',x:840,y:60,
-      params:{label:'Epidemic curve · by day of prodrome',inputMode:'series'}},
+      params:{label:'Epidemic curve · by day of prodrome'}},
     // THE SAME DATES BY DAY OF THE WEEK (the practitioner, 2026-11-12: "is it possible that the day of the week can show a
     // pattern?"). A cycle, not a time axis: all seven days, Monday first.
     {id:'weekday',type:'case_series',x:430,y:-160,
       params:{label:'Cases by day of the week of prodrome',source:'points',
         dateField:'date_of_prodrome',dateKind:'onset',period:'weekday'}},
     {id:'weekday-chart',type:'chart_output',x:840,y:-160,
-      params:{label:'Cases by day of the week',inputMode:'series'}},
+      params:{label:'Cases by day of the week'}},
 
     // The same 188 records, mapped. Not a second dataset: the curve above and the map below are
     // the same children, which is what this example exists to demonstrate.
@@ -86,9 +86,9 @@ export function hagellochExample():Workflow{
   ];
   const edges=[
     {id:'cases-curve',from:'cases',to:'curve',port:'points'},
-    {id:'curve-chart',from:'curve',to:'epidemic',port:'series'},
+    {id:'curve-chart',from:'curve',to:'epidemic',port:'records'},
     {id:'cases-weekday',from:'cases',to:'weekday',port:'points'},
-    {id:'weekday-out',from:'weekday',to:'weekday-chart',port:'series'},
+    {id:'weekday-out',from:'weekday',to:'weekday-chart',port:'records'},
     {id:'cases-map',from:'cases',to:'map',port:'points'},
     {id:'cases-table',from:'cases',to:'table',port:'points'},
     {id:'village-map',from:'village',to:'map',port:'area'},
@@ -244,7 +244,7 @@ export function hagellochPeopleExample():Workflow{
     // the data already answer. Class as the file codes it, 0 to 2, every child carrying one.
     {id:'class-curve',type:'case_series',x:400,y:620,params:{label:'Cases by day of prodrome, by school class',source:'points',
       dateField:'date_of_prodrome',dateKind:'onset',period:'week',splitBy:'class'}},
-    {id:'class-curve-chart',type:'chart_output',x:780,y:620,params:{label:'Epidemic curve by school class',inputMode:'series',figure:'stacked' as const,
+    {id:'class-curve-chart',type:'chart_output',x:780,y:620,params:{label:'Epidemic curve by school class',figure:'stacked' as const,
       chartTitle:'Measles cases by week of prodrome and school class, Hagelloch, 1861',yAxisTitle:'Cases',
       // The codes as the file holds them, their meaning as its provenance records it.
       subtitle:'School class as the file codes it: 0 pre-school, 1 first class, 2 second class.'}},
@@ -256,7 +256,7 @@ export function hagellochPeopleExample():Workflow{
     {id:'cases-class',from:'cases',to:'by-class',port:'records'},
     {id:'class-table-in',from:'by-class',to:'class-table',port:'table'},
     {id:'cases-class-curve',from:'cases',to:'class-curve',port:'points'},
-    {id:'class-curve-out',from:'class-curve',to:'class-curve-chart',port:'series'},
+    {id:'class-curve-out',from:'class-curve',to:'class-curve-chart',port:'records'},
   ];
   return {schema:'fieldwork/workflow/1',name:'Who fell ill? Hagelloch, 1861',
     exampleId:'hagelloch-people',nodes,edges} as unknown as Workflow;

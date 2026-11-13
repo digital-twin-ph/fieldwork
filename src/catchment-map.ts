@@ -1,4 +1,4 @@
-import {proportionalRadius} from './point-layers.js';
+import {proportionalRadius,layerRanks} from './point-layers.js';
 import L from 'leaflet';
 import {TurnedImage} from './turned-image.js';
 /** HOW MANY STREET SEGMENTS AN INTERACTIVE MAP DRAWS. See the sampling below for the measurement
@@ -420,6 +420,9 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
       // derives a colour and a mark from the layer's position and has no opinion on radius.
       const symbol:{colour:string;shape:LayerShape;size?:number;sizeBy?:string}=
         layers.layerSymbols?.[source]??{...layerSymbol(index)};
+      // THE LAYER'S PLACE IN THE STACK set in Manage layers (2026-11-12): Leaflet stacks markers by latitude unless told,
+      // so each layer's marks are lifted by its position, and a layer moved up is drawn over the others.
+      const lift=layerRanks(layers.mapLayers)(source)*10000;
       // PROPORTIONAL SYMBOLS, as the static figure draws them (experiment 210): largest first, so none hides another.
       const largest=symbol.sizeBy?Math.max(0,...rows.map(row=>Number((row as {attributes?:Record<string,unknown>}).attributes?.[symbol.sizeBy!])).filter(Number.isFinite)):0;
       if(largest>0)rows.sort((a,b)=>(Number((b as {attributes?:Record<string,unknown>}).attributes?.[symbol.sizeBy!])||0)-(Number((a as {attributes?:Record<string,unknown>}).attributes?.[symbol.sizeBy!])||0));
@@ -479,7 +482,7 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
         // A fixed box would have silently capped the slider at a third of its range.
         const r=largest>0?proportionalRadius((row as {attributes?:Record<string,unknown>}).attributes?.[symbol.sizeBy!],largest,markRadius(symbol.size)):markRadius(symbol.size);
         const box=Math.ceil(2*(r+2.5)),centre=box/2;
-        L.marker([lat,lon],{title:row.name,icon:L.divIcon({className:'catchment-point-mark',
+        L.marker([lat,lon],{title:row.name,zIndexOffset:lift,icon:L.divIcon({className:'catchment-point-mark',
           iconSize:[box,box],iconAnchor:[centre,centre],
           html:`<svg width="${box}" height="${box}" viewBox="0 0 ${box} ${box}" aria-hidden="true">`
             +(layers.markHalo===false?'':`<path d="${markPath(symbol.shape,centre,centre,r)}" fill="none" `

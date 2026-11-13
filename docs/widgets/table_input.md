@@ -46,7 +46,7 @@ The table is then set up as any other.
 
 The project keeps where the table came from, the URL, the file inside and the digests, in place of its rows. An
 exported project carries no rows, so sharing it does not republish data whose terms do not allow that. On another
-device the step says its rows are not fetched yet, and **Fetch the table**, under Settings, reads the same file again
+device the step says its rows are not fetched yet, and **Fetch the table**, under Result, reads the same file again
 with the same settings. A file whose digest has changed is refused, and nothing is read.
 
 **Downloaded once per device.** What is fetched is kept on the device by its digest. Any table, in any project on the

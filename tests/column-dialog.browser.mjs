@@ -15,7 +15,7 @@ const openImport=async page=>{
   await page.locator('#node-library [data-add="table_input"]').click();
   const id=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')).nodes.find(n=>n.type==='table_input').id);
   await page.locator(`.react-flow__node[data-id="${id}"]`).click();
-  await page.locator('#open-table').click();
+  await page.locator('#configure-step').click();
 };
 
 test('twenty columns: a summary in the import dialog, the list in its own, chosen by pasting names',async({page})=>{

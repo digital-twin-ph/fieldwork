@@ -11,7 +11,7 @@ import {collectPageErrors} from './page-errors.mjs';
 
 const importTable=async (page,name,csv)=>{
   await page.locator('[data-add="table_input"]').click();
-  await page.locator('#open-table').click();
+  await page.locator('#configure-step').click();
   await expect(page.locator('#table-dialog')).toBeVisible();
   await page.locator('#table-file').setInputFiles({name,mimeType:'text/csv',buffer:Buffer.from(csv)});
   await expect(page.locator('#table-keys')).toBeVisible();

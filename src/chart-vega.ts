@@ -44,7 +44,7 @@ const colors=FIGURE_PALETTE;
 export const chartRenderer=(params:{renderer?:'html'|'vega-lite'}):'html'|'vega-lite'=>
   params.renderer??'vega-lite';
 
-export const chartOrientation=(params:{orientation?:'horizontal'|'vertical';inputMode?:string}):'horizontal'|'vertical'=>
+export const chartOrientation=(params:{orientation?:'horizontal'|'vertical'}):'horizontal'|'vertical'=>
   params.orientation??'vertical';
 
 /** THE DEFAULT IS WHAT MOST FIGURES PUBLISH WITH, so it has to be publishable.

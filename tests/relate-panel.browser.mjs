@@ -95,7 +95,7 @@ test('the relate step reports the join before the table it produced',async({page
  */
 const importTable=async (page,name,csv,{alreadyLong=false}={})=>{
   await page.locator('[data-add="table_input"]').click();
-  await page.locator('#open-table').click();
+  await page.locator('#configure-step').click();
   await expect(page.locator('#table-dialog')).toBeVisible();
   await page.locator('#table-file').setInputFiles({name,mimeType:'text/csv',buffer:Buffer.from(csv)});
   await expect(page.locator('#table-keys')).toBeVisible();

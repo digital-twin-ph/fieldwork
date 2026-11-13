@@ -20,7 +20,7 @@ test('Tabular data imports a long-format extract, displays it and replays offlin
   await expect(page.locator('.inspector .standard-sentence')).toHaveText('No table yet: import one in Configure\u2026');
   await expect(page.locator('.inspector')).toContainText('cannot run until a table is imported');
 
-  await page.locator('#open-table').click();
+  await page.locator('#configure-step').click();
   await expect(page.locator('#table-dialog')).toBeVisible();
   await expect(page.locator('#table-save')).toBeDisabled();
 
@@ -133,7 +133,7 @@ test('a wide table imports, and the refusals each shape can state still hold',as
   await expect(page.locator('#node-library')).toBeVisible({timeout:45000});
   await page.locator('[data-view="workflow"]').click();
   await page.locator('[data-add="table_input"]').click();
-  await page.locator('#open-table').click();
+  await page.locator('#configure-step').click();
 
   // One column per year: two value columns, so it is wide and is read as wide with no alert.
   await page.locator('#table-file').setInputFiles({name:'wide.csv',mimeType:'text/csv',

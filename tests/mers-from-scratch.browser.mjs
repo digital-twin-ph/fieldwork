@@ -11,7 +11,8 @@ test.use({serviceWorkers:'block'});
 
 const LIST=fileURLToPath(new URL('../../example-2015-mers-korea/data/mers_korea_2015_linelist.csv',import.meta.url));
 const CONTACTS=fileURLToPath(new URL('../../example-2015-mers-korea/data/mers_korea_2015_contacts.csv',import.meta.url));
-const skip=existsSync(LIST)&&existsSync(CONTACTS)?false:'example-2015-mers-korea is not checked out beside this repository.';
+const HOSPITALS=fileURLToPath(new URL('../../example-2015-mers-korea/data/mers_korea_2015_facilities.csv',import.meta.url));
+const skip=existsSync(LIST)&&existsSync(CONTACTS)&&existsSync(HOSPITALS)?false:'example-2015-mers-korea is not checked out beside this repository.';
 
 const add=async(page,type)=>{
   await page.locator('[data-view="workflow"]').click();
@@ -75,7 +76,7 @@ test('MERS-CoV, South Korea, 2015: each case’s detection and notification agai
   // THE LINE LIST, one row per case: its id, the three dates and who the case was, with age as the value column.
   await add(page,'table_input');
   const list=await idOf(page,'table_input');
-  await page.locator('#open-table').click();
+  await page.locator('#configure-step').click();
   await page.locator('#table-file').setInputFiles(LIST);
   await columnsOffered(page);
   await page.locator('#table-shape').selectOption('long');
@@ -149,7 +150,7 @@ test('MERS-CoV, South Korea, 2015: each case’s detection and notification agai
   await page.locator('#workflow-name-edit').press('Enter');
   await add(page,'table_input');
   const contacts=await idOf(page,'table_input');
-  await page.locator('#open-table').click();
+  await page.locator('#configure-step').click();
   await page.locator('#table-file').setInputFiles(CONTACTS);
   await columnsOffered(page);
   await page.locator('#table-shape').selectOption('long');
@@ -191,7 +192,7 @@ test('MERS-CoV, South Korea, 2015: each case’s detection and notification agai
   // the contacts record: Relate on id = to, one row per match, the 67 with no recorded source kept as "none recorded".
   await add(page,'table_input');
   const people=await idOf(page,'table_input',1);
-  await page.locator('#open-table').click();
+  await page.locator('#configure-step').click();
   await page.locator('#table-file').setInputFiles(LIST);
   await columnsOffered(page);
   await page.locator('#table-shape').selectOption('long');
@@ -247,10 +248,133 @@ test('MERS-CoV, South Korea, 2015: each case’s detection and notification agai
   await expect(page.locator('main').first()).toContainText('2 cases record more than one source');
   await page.screenshot({path:'test-results/mers-tree.png',fullPage:true});
 
+  // WHERE WERE THE CASES IN HOSPITAL? (the practitioner, 2026-11-12: the hospitals placed, then on a map). Cases counted by
+  // loc_hosp as the line list writes it, related to the hospitals table on that name, placed, and sized by their cases.
+  // Samsung's two spellings stay two rows at one place, 80 and 5, as written; 365 Seoul Yeollin Clinic has no position
+  // and is kept and counted, not drawn.
+  const [hHead,...hLines]=readFileSync(HOSPITALS,'utf8').trim().split(/\r?\n/);
+  expect(hHead.split(',').slice(0,5)).toEqual(['loc_hosp','facility','facility_ko','lon','lat']);
+  expect(hLines.length).toBe(13);
+  const byHospital=(()=>{const [h,...ls]=readFileSync(LIST,'utf8').trim().split(/\r?\n/);const cols=h.split(',').map(c=>c.replace(/"/g,''));
+    const at=cols.indexOf('loc_hosp');const split=line=>line.match(/("([^"]*)"|[^,]*)(,|$)/g).slice(0,cols.length).map(v=>v.replace(/,$/,'').replace(/^"|"$/g,''));
+    return ls.reduce((m,l)=>{const v=split(l)[at];m[v]=(m[v]??0)+1;return m;},{});})();
+  expect(Object.keys(byHospital).length).toBe(13);
+  await page.locator('[data-view="workflow"]').click();
+  await page.locator('#add-workflow').click();
+  await page.locator('[data-view="project"]').click();
+  await page.locator('#workflow-name-edit').fill('Where were the cases in hospital?');
+  await page.locator('#workflow-name-edit').press('Enter');
+  await add(page,'table_input');
+  const cases=await idOf(page,'table_input');
+  await page.locator('#configure-step').click();
+  await page.locator('#table-file').setInputFiles(LIST);
+  await columnsOffered(page);
+  await page.locator('#table-shape').selectOption('long');
+  await page.locator('#table-value').selectOption('age');
+  await keepColumns(page,'table-keys',['id','loc_hosp']);
+  await page.locator('#table-save').click();
+  await label(page,cases,'The cases and their hospitals');
+  await add(page,'group_table');
+  const perHospital=await idOf(page,'group_table');
+  await tidy(page);await wire(page,cases,perHospital,'records');
+  await page.locator(`.react-flow__node[data-id="${perHospital}"]`).click();
+  await page.locator('#configure-step').click();
+  await page.locator('#group-config [data-group-by="loc_hosp"]').check();
+  await page.locator('#group-config #group-aggregate').selectOption('count');
+  await page.locator('#group-config #config-apply').click();
+  await label(page,perHospital,'Cases per hospital, as the line list writes it');
+  await add(page,'table_output');
+  const perHospitalTable=await idOf(page,'table_output');
+  await tidy(page);await wire(page,perHospital,perHospitalTable,'table');
+  await label(page,perHospitalTable,'Cases per hospital, as the line list writes it');
+  await add(page,'table_input');
+  const hospitals=await idOf(page,'table_input',1);
+  await page.locator('#configure-step').click();
+  await page.locator('#table-file').setInputFiles(HOSPITALS);
+  await columnsOffered(page);
+  await page.locator('#table-shape').selectOption('long');
+  await page.locator('#table-value').selectOption('lon');
+  await keepColumns(page,'table-keys',['loc_hosp','facility','lat','position','confidence']);
+  await page.locator('#table-save').click();
+  await label(page,hospitals,'The hospitals, placed');
+  await run(page);
+  await add(page,'relate_table');
+  const placed=await idOf(page,'relate_table');
+  await tidy(page);await wire(page,hospitals,placed,'records');
+  await tidy(page);await wire(page,perHospital,placed,'related');
+  await page.locator(`.react-flow__node[data-id="${placed}"]`).click();
+  await page.locator('#configure-step').click();
+  const rh=page.locator('#relate-config');
+  await rh.locator('#relate-on').selectOption('loc_hosp');
+  await rh.locator('#relate-right-on').selectOption('loc_hosp');
+  await rh.locator('#relate-bring').selectOption('rows');
+  await rh.locator('#relate-bring-as').fill('cases');
+  await rh.locator('#relate-bring-as').press('Tab');
+  await rh.locator('#config-apply').click();
+  await label(page,placed,'Each hospital with its cases');
+  await add(page,'table_output');
+  const hospitalTable=await idOf(page,'table_output',1);
+  await tidy(page);await wire(page,placed,hospitalTable,'table');
+  await label(page,hospitalTable,'Each hospital with its cases');
+  await add(page,'point_input');
+  const points=await idOf(page,'point_input');
+  await tidy(page);await wire(page,placed,points,'records');
+  await run(page);
+  await page.locator(`.react-flow__node[data-id="${points}"]`).click();
+  await page.locator('#configure-step').click();
+  const pc=page.locator('#points-config');
+  await pc.locator('#from-table-x').selectOption('lon');
+  await pc.locator('#from-table-y').selectOption('lat');
+  await pc.locator('#from-table-id').selectOption('loc_hosp');
+  await pc.locator('#from-table-name').selectOption('facility');
+  await pc.locator('#config-apply').click();
+  await label(page,points,'The hospitals, as points');
+  await add(page,'map_output');
+  const map=await idOf(page,'map_output');
+  await tidy(page);await wire(page,points,map,'points');
+  // SOUTH KOREA'S 17 PROVINCES as the study area (geoBoundaries gbOpen ADM1, release 9469f09, Public Domain, from Natural
+  // Earth; the download approved by the practitioner, 2026-11-12): a map places its points against an area.
+  await add(page,'study_area');
+  const korea=await idOf(page,'study_area');
+  await page.locator(`.react-flow__node[data-id="${korea}"]`).click();
+  await page.locator('#edit-study-area').click();
+  await page.locator('#area-boundary-source summary').click();
+  await page.locator('#area-iso').fill('KOR');
+  await page.locator('#area-adm').selectOption('ADM1');
+  await page.locator('#area-boundary-check').click();
+  await expect(page.locator('#area-boundary-units')).toBeVisible({timeout:120_000});
+  await expect(page.locator('#area-boundary-status')).toContainText('17 units ready');
+  const provinces=await page.locator('#area-boundary-pick option').evaluateAll(os=>os.map(o=>o.value));
+  await page.locator('#area-boundary-pick').selectOption(provinces);
+  await page.locator('#area-boundary-use').click();
+  await page.locator('#area-apply').click();
+  await expect.poll(()=>page.locator('#area-dialog').evaluate(d=>d.open),{timeout:120_000}).toBe(false);
+  await label(page,korea,'South Korea, its 17 provinces');
+  await tidy(page);await wire(page,korea,map,'area');
+  await run(page);
+  await page.locator(`.react-flow__node[data-id="${map}"]`).click();
+  await page.locator('#configure-step').click();
+  const mc=page.locator('#map-config');
+  await mc.locator(`[data-layer-size-by="${points}"]`).selectOption('cases');
+  await mc.locator('#map-title').fill('Cases by the hospital named for them, MERS-CoV, South Korea, 2015');
+  await mc.locator('#map-title').press('Tab');
+  await mc.locator('#config-apply').click();
+  await label(page,map,'Where were the cases in hospital?');
+  await run(page);
+  await page.locator('[data-view="results"]').click();
+  await page.getByRole('tab',{name:'Each hospital with its cases'}).click();
+  const ht=page.locator('main').first();
+  await expect(ht).toContainText('13 rows · loc_hosp with facility, lat, position, cases');
+  for(const [name,count] of Object.entries(byHospital).filter(([,c])=>c>=10))
+    await expect(ht.locator('tr',{hasText:name.split(',')[0]}).first()).toContainText(String(count));
+  await page.getByRole('tab',{name:'Where were the cases in hospital?'}).click();
+  await expect(page.locator('#map g.location')).toHaveCount(12);
+  await page.screenshot({path:'test-results/mers-hospitals.png',fullPage:true});
+
   await page.locator('[data-view="project"]').click();
   await page.locator('#storage-status').click();
   const block=page.locator('.project-view-block').filter({hasText:'MERS-CoV, South Korea, 2015'}).first();
-  await expect(block).toContainText('2 workflows');
+  await expect(block).toContainText('3 workflows');
   if(process.env.MERS_EXPORT){
     const download=page.waitForEvent('download');
     await block.locator('button[data-export-project]').click();

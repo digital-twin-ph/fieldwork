@@ -86,3 +86,26 @@ test('a layer mark can be resized, and the figure redraws where it stands',async
   // And a presentation choice does not make the run stale.
   await expect(page.locator('#workflow-state')).toContainText('Run complete');
 });
+
+// MANAGE LAYERS ORDERS THE MARKS (the practitioner, 2026-11-12: the pumps would not come to the top). The order set in
+// the dialog is drawn at once, without a run: the layer last in the stack is drawn last, over the others.
+test('moving a layer in Manage layers redraws the marks in that order, at once',async({page})=>{
+  await page.goto('/?example=snow-deaths');
+  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
+  const topLayer=()=>page.locator('#map g.location').last().getAttribute('data-layer');
+  const open=async()=>{await page.locator('[data-view="workflow"]').click();await page.locator('.react-flow__node[data-id="spot-map"]').click();
+    await page.locator('[data-manage-layers]').first().click();await expect(page.locator('#layer-dialog')).toBeVisible();};
+  const show=async()=>{await page.locator('#layer-dialog-close, #layer-dialog [data-close]').first().click().catch(()=>{});
+    await page.keyboard.press('Escape').catch(()=>{});await page.locator('[data-view="results"]').click();await page.locator('[data-output="spot-map"]').click();};
+  await page.locator('[data-view="results"]').click();await page.locator('[data-output="spot-map"]').click();
+  await expect.poll(topLayer).toBe('pumps');
+  await open();
+  // Pumps down one: the deaths now over them.
+  await page.locator('[data-layer-move="points_2"][data-direction="up"]').click();
+  await show();
+  await expect.poll(topLayer).toBe('locations');
+  await open();
+  await page.locator('[data-layer-move="points_2"][data-direction="down"]').click();
+  await show();
+  await expect.poll(topLayer).toBe('pumps');
+});

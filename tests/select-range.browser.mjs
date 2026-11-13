@@ -37,7 +37,7 @@ test('a range of dates is two fields, and a long list of values can be searched'
 
   await add(page,'table_input');const table=await newest(page,'table_input');
   await select(page,table);
-  await page.locator('#open-table').click();
+  await page.locator('#configure-step').click();
   await page.locator('#table-file').setInputFiles({name:'days.csv',mimeType:'text/csv',buffer:Buffer.from(CSV)});
   await expect(page.locator('#table-keys')).toBeVisible();
   await page.locator('#table-shape').selectOption('long');

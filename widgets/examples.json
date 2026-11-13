@@ -807,33 +807,36 @@
       "id": "urn:fieldwork:example:mers-korea-2015",
       "title": "MERS-CoV, South Korea, 2015",
       "repository": "https://github.com/digital-twin-ph/example-2015-mers-korea",
-      "commit": "9e8432cf5a89e238bff20b1b8becba7576d0ca11",
+      "commit": "de79282f7acb5d12a04dab4b91fd7f6951cc8935",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2015-mers-korea",
       "licence": {
         "data": "No licence stated for the data; used for teaching, as the outbreaks package describes it. The repository’s own files are CC0-1.0.",
         "source": "The R package outbreaks (reconverse), mers_korea_2015, compiled by ECDC’s Epidemic Intelligence from public information in the outbreak’s first weeks.",
         "note": "Decided 2026-11-11 by the practitioner: used in an example repository for teaching, attributed, never in the application."
       },
-      "description": "A line list of 162 cases, each case’s onset, diagnosis and report set against the 7-1-7 targets by a published ruleset and each verdict counted; and the 98 probable links, counted by source and by setting of exposure.",
+      "description": "A line list of 162 cases, each case’s onset, diagnosis and report set against the 7-1-7 targets by a published ruleset and each verdict counted; and the 98 probable links, counted by source and by setting of exposure; and each hospital named for cases, placed and mapped over South Korea’s 17 provinces, sized by its cases.",
       "carries": {
         "workflow": true,
         "data": true,
-        "geography": false
+        "geography": true
       },
       "notYet": "No response dates, so no verdict on the third target.",
       "uses": [
         "apply_ruleset",
         "chart_output",
         "group_table",
+        "map_output",
+        "point_input",
         "relate_table",
+        "study_area",
         "table_input",
         "table_output"
       ],
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "1ed098c79f619512187151c83f2b76ef8acfa980433ba7dee4239b4f94eba3c3",
-          "bytes": 6272
+          "sha256": "5850cc3d4d2d94f78c1784cf3194e52e5d2d0c8b87983401d5923f26f0c5e1dd",
+          "bytes": 141076
         },
         {
           "path": "data/mers_korea_2015_linelist.csv",
@@ -857,18 +860,18 @@
         },
         {
           "path": "provenance.json",
-          "sha256": "3067be1cd1a1f26fc8847f34b83361a13625b3b707e21e3ae4d4f1bbed63c70f",
-          "bytes": 3450
+          "sha256": "c6ec55d2a3d989ceb458c8a12d88753e3059190f5517bbf04d6c89d9f250b8f2",
+          "bytes": 3907
         },
         {
           "path": "README.md",
-          "sha256": "93e08c49b563cbae4e85457736c5fd09e04dca3d23d56c498dc472a1cf8ec083",
-          "bytes": 3790
+          "sha256": "5316f685320853c0279280a4aebd60384e7f7454b682d62031f735e17ef14f69",
+          "bytes": 4665
         },
         {
           "path": "NOTICE.txt",
-          "sha256": "8375e93b53a481a0398d27a03cc03d3d83243bafe597c7ce7313cfb211192e91",
-          "bytes": 3084
+          "sha256": "59f42cec657062709ca68d3bf5aae76c8b1d31dfe26eeba6c197e67422093ced",
+          "bytes": 3401
         },
         {
           "path": "LICENSE",
@@ -876,7 +879,7 @@
           "bytes": 7048
         }
       ],
-      "workflowCount": 2
+      "workflowCount": 3
     }
   ]
 }

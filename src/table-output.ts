@@ -23,7 +23,7 @@ export function tableOutput(node:WorkflowNode<'table_output'>,inputs:TableInputs
   // rather than an absence of facts.
   const columnKeys=[...new Set(value.rows.flatMap(row=>Object.keys(row.attributes||{})))];
   for(const row of value.rows){
-    const record=`<urn:fieldwork:record:${row.sourceNodeId}:${row.recordId}>`,geometry=`<urn:fieldwork:record:${row.sourceNodeId}:${row.recordId}:geometry>`;
+    const record=`<urn:fieldwork:record:${row.sourceNodeId}:${encodeURIComponent(String(row.recordId))}>`,geometry=`<urn:fieldwork:record:${row.sourceNodeId}:${encodeURIComponent(String(row.recordId))}:geometry>`;
     facts+=`${record} a geo:Feature; rdfs:label ${JSON.stringify(row.name)}; <http://purl.org/dc/terms/isPartOf> <urn:fieldwork:source:${row.sourceNodeId}>.\n`;
     // The WKT names the frame the coordinates are actually in. It was hardcoded to CRS84, which
     // was true while nothing could project; once `reproject` can hand this view easting and

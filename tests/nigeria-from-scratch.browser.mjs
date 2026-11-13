@@ -53,7 +53,7 @@ const importTable=async(page,csv,shape,value,keys)=>{
   await add(page,'table_input');
   const nodes=(await saved(page)).nodes.filter(n=>n.type==='table_input');
   const table=nodes.at(-1).id;
-  await page.locator('#open-table').click();
+  await page.locator('#configure-step').click();
   await page.locator('#table-file').setInputFiles(file(csv));
   await columnsOffered(page);
   if(shape==='long'){

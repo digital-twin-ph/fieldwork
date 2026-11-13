@@ -25,7 +25,7 @@ export const VARIANTS={
   map_output:[{inputMode:'spatial'},{inputMode:'decisions'},{inputMode:'raster'},
     {inputMode:'polygons'},{inputMode:'polygons',contextPoints:true},{inputMode:'network'}],
   table_output:[{inputMode:'spatial'},{inputMode:'decisions'},{inputMode:'polygons'},{inputMode:'table'}],
-  chart_output:[{inputMode:'decisions'},{inputMode:'polygons'},{inputMode:'series'}],
+  chart_output:[{inputMode:'decisions'},{inputMode:'polygons'}],
   case_series:[{source:'table'},{source:'points'}],
   rate:[{source:'table'},{source:'points'}],
   compare_point_sets:[{},{centers:true}],

@@ -25,7 +25,7 @@ test('a workbook sheet is chosen, read as a table, and named on the step',async(
   await page.goto('/');await page.evaluate(()=>localStorage.clear());
   await page.goto('/?example=blank');
   await page.locator('#node-library [data-add="table_input"]').click();
-  await page.locator('#open-table').click();
+  await page.locator('#configure-step').click();
   await expect(page.locator('label[for="table-file"]')).toContainText('CSV, Excel or Stata file');
   await page.locator('#table-file').setInputFiles({name:'districts.xlsx',
     mimeType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',buffer:workbook()});

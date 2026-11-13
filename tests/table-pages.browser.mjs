@@ -14,7 +14,7 @@ test('the import dialog and Select rows turn their pages',async({page})=>{
   await page.goto('/');await page.evaluate(()=>localStorage.clear());
   await page.goto('/?example=blank');
   await page.locator('#node-library [data-add="table_input"]').click();
-  await page.locator('#open-table').click();
+  await page.locator('#configure-step').click();
   await page.locator('#table-file').setInputFiles({name:'days.csv',mimeType:'text/csv',buffer:Buffer.from(CSV)});
   await page.locator('#table-shape').selectOption('long');
   await page.locator('#table-value').selectOption('visits');

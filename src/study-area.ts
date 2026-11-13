@@ -250,7 +250,9 @@ export function validateDrawnGeometry(raw:unknown):Boundary{
   };
   for(let a=0;a<parts.length;a++)for(let b=0;b<parts.length;b++){
     if(a===b)continue;
-    const probe=parts[b][0].find(vertex=>!onRing(parts[a][0],vertex));
+    // Nor on its holes (2026-11-12): Gwangju's and Daegu's vertices lie on the edge of the hole South Jeolla and North
+    // Gyeongsang leave for them, which ray casting may read as outside the hole, so South Korea's 17 provinces were refused.
+    const probe=parts[b][0].find(vertex=>!parts[a].some(ring=>onRing(ring,vertex)));
     if(!probe)continue;
     if(encloses(parts[a][0],probe)&&!parts[a].slice(1).some(hole=>encloses(hole,probe)))
       throw new Error('One part of the area lies inside another. Parts must be separate, or sit in an interior ring.');

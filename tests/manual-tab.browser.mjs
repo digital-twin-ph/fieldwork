@@ -106,7 +106,7 @@ test('the manual detaches, stays through a new project and a reload, closes, and
   await page.locator('[data-view="workflow"]').click();
   const table=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')).nodes.find(n=>n.type==='table_input').id);
   await page.locator(`.react-flow__node[data-id="${table}"]`).click();
-  await page.locator('#open-table').click();
+  await page.locator('#configure-step').click();
   await expect(page.locator('dialog[open] #table-title')).toBeVisible();
   expect(await panel.evaluate(el=>el.parentElement?.matches('dialog[open]'))).toBe(true);
   expect(await panel.boundingBox()).toEqual(before);

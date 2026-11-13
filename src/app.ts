@@ -98,6 +98,7 @@ import {pinnedRuleset} from './rule-application.js';
 function getNode<K extends NodeType>(w:Workflow,id:string,type:K):WorkflowNode<K>{const node=required(w.nodes.find(n=>n.id===id));if(node.type!==type)throw new Error('Node type changed while editing');return node as WorkflowNode<K>;}
 function updateParam(w:Workflow,id:string,key:string,value:unknown){Object.assign(required(w.nodes.find(n=>n.id===id)).params,{[key]:value});}
 function replaceWorkflow(w:Workflow,next:Workflow){for(const key of Object.keys(w))Reflect.deleteProperty(w,key);Object.assign(w,next);}
+import {PORT_NAMES} from './port-names.js';
 import {TYPES,validateWorkflow,validateGeoJSON,executionPlan,executeWorkflow,nodeInputs,outputOf,portAccepts,pointsAsTable,shownMode,portSourceName,IncompleteWorkflow,rereadOnce} from './core.js';
 import {suggestUTM,utmScaleFactor,workflowPositions} from './utm.js';
 import {mountCanvas} from './canvas.js';
@@ -2131,8 +2132,7 @@ function datedRange(nodeId:string,draft:WorkflowNode<'chart_output'>['params']):
   if(bins?.length){const keys=bins.map(b=>b.key);if(!keys.every(k=>/^\d{4}-\d{2}(-\d{2})?$/.test(k)))return null;
     const pad=(k:string)=>k.length===7?`${k}-01`:k;return {first:pad(keys[0]!),last:pad(keys.at(-1)!)};}
   const up=workflow.nodes.find(m=>m.id===workflow.edges.find(e=>e.to===nodeId)?.from);
-  if(draft.inputMode==='series'||up?.type==='case_series')
-    return up?.type==='case_series'&&['weekday','month-of-year'].includes(up.params.period)?null:'later';
+  if(up?.type==='case_series')return ['weekday','month-of-year'].includes(up.params.period)?null:'later';
   return null;
 }
 function markedDatesControls(nodeId:string,draft:WorkflowNode<'chart_output'>['params']):string{
@@ -2347,6 +2347,8 @@ function openChartConfig(nodeId:string){
   const node=getNode(workflow,nodeId,'chart_output');
   type Draft=WorkflowNode<'chart_output'>['params']&{view?:'map'|'table'|'bars'};
   const records=workflow.edges.find(e=>e.to===nodeId&&e.port==='records');
+  // A CASE SERIES ON TABLE is drawn as a curve by its periods; the bars, pyramid and tree are for other tables.
+  const curve=workflow.nodes.find(x=>x.id===records?.from)?.type==='case_series';
   const columns=records?[...new Set([...tableKeyColumns(workflow.nodes.find(x=>x.id===records.from)),
     ...((result?.tables?.[records.from] as import('./data-table.js').DataTable|undefined)?.keys??[]),
     ...Object.keys(upstreamKeyValues(node,new Set(),'records')??{})])]:[];
@@ -2360,7 +2362,7 @@ function openChartConfig(nodeId:string){
         +`<option value="">Choose a column\u2026</option>`
         +columns.map(c=>`<option value="${esc(c)}" ${draft.tree?.[key]===c?'selected':''}>${esc(c)}</option>`).join('')
         +`</select><small>${hint}</small></div>`;
-      const settings=(records?`<div class="field"><label class="field-label" for="chart-figure">Draw</label><select id="chart-figure">`
+      const settings=(records&&!curve?`<div class="field"><label class="field-label" for="chart-figure">Draw</label><select id="chart-figure">`
           +`<option value="bars" ${tree||draft.figure==='pyramid'?'':'selected'}>Bars, a category against a number</option>`
           +`<option value="pyramid" ${draft.figure==='pyramid'?'selected':''}>Population pyramid, two groups back to back by band</option>`
           +`<option value="tree" ${tree?'selected':''}>Transmission tree, who infected whom over time</option></select></div>`:'')
@@ -2375,12 +2377,12 @@ function openChartConfig(nodeId:string){
             // THE TREE'S TITLE AND SOURCE NOTE, as any chart's (2026-11-12: the tree offered neither, and drew its default).
             +`<div class="field"><label class="field-label" for="chart-title">Chart title</label><input id="chart-title" maxlength="120" value="${esc(draft.chartTitle||'')}" placeholder="Who infected whom"></div>`
             +`<div class="field"><label class="field-label" for="chart-source-note">Source / method note</label><input id="chart-source-note" maxlength="300" value="${esc(draft.sourceNote||'')}"></div>`
-          :chartTableControls(shown)+chartControls(shown,{omitOrientation:draft.inputMode==='series'})
+          :chartTableControls(shown)+chartControls(shown,{omitOrientation:curve})
             // STACKED, where the series is split by a column (experiment 210): one bar per period, divided by its values.
-            +(draft.inputMode==='series'?`<div class="field"><label class="field-label" for="chart-series-figure">Draw</label><select id="chart-series-figure">`
+            +(curve?`<div class="field"><label class="field-label" for="chart-series-figure">Draw</label><select id="chart-series-figure">`
               +`<option value="" ${draft.figure!=='stacked'?'selected':''}>Bars, or one panel per value where the series is split</option>`
               +`<option value="stacked" ${draft.figure==='stacked'?'selected':''}>Stacked bars, one colour per value where the series is split</option></select></div>`:'')
-            +(draft.inputMode==='series'?`<div class="field"><label class="field-label" for="series-orientation">Bars</label>`
+            +(curve?`<div class="field"><label class="field-label" for="series-orientation">Bars</label>`
               +`<select id="series-orientation"><option value="vertical" ${chartOrientation(draft)==='vertical'?'selected':''}>Vertical \u00b7 periods along the bottom</option>`
               +`<option value="horizontal" ${chartOrientation(draft)==='horizontal'?'selected':''}>Horizontal \u00b7 periods down the side</option></select></div>`:'')
             +markedDatesControls(nodeId,draft))
@@ -2775,7 +2777,12 @@ function mapSettingsFlat(n:WorkflowNode<'map_output'>):string{
               // PROPORTIONAL SYMBOLS (experiment 210): an attribute that is a number on most of the layer's records may set
               // each mark's area. Offered only where the layer's records are held here, as Point data's are.
               +(()=>{
-                const features=(source.params as {data?:{features?:{properties?:Record<string,unknown>}[]}}).data?.features??[];
+                // A LAYER MADE AT RUN TIME, as Point data from a table is, has its records in the map's last run, not in its
+                // step (2026-11-12, MERS's hospitals sized by their cases).
+                const held_features=(source.params as {data?:{features?:{properties?:Record<string,unknown>}[]}}).data?.features??[];
+                const features=held_features.length?held_features
+                  :((result?.outputs.find(o=>o.nodeId===n.id) as {rows?:{sourceNodeId?:string|null;attributes?:Record<string,unknown>}[]}|undefined)?.rows??[])
+                    .filter(r=>r.sourceNodeId===source.id).map(r=>({properties:r.attributes}));
                 const keys=[...new Set(features.flatMap(f=>Object.keys(f.properties??{})))]
                   .filter(k=>features.filter(f=>Number.isFinite(Number(f.properties?.[k]))&&f.properties?.[k]!==''&&f.properties?.[k]!==null).length>=features.length*0.9&&!/^(id|fid|lat|lon|lng|latitude|longitude|x|y)$/i.test(k));
                 if(!keys.length)return '';
@@ -3636,7 +3643,7 @@ function renderInspector(){
     content+=standardSection('Name',labelForm('chart-label','Results tab name',n.params.label||'Chart')
       +`<div class="field"><label class="field-label" for="output-section">In the write-up, under</label>`
       +`<select id="output-section">${FIGURE_SECTIONS.map(s=>`<option value="${s}" ${s===figureSection(n.params,n.type)?'selected':''}>${s}${s===DEFAULT_FIGURE_SECTIONS[n.type]?' (default)':''}</option>`).join('')}</select></div>`);
-    content+=standardSection('Inputs',standardInputs(n,{records:'Table',decisions:'Reasoning result',polygons:'Polygon summaries',series:'Case series'}));
+    content+=standardSection('Inputs',standardInputs(n,{decisions:'Reasoning result'}));
     content+=standardSection('Settings',`<p class="standard-sentence">${esc(chartSentence(n))}</p>`
       +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button></div>');
     const drawn=result?.outputs.find(o=>o.nodeId===n.id);
@@ -3717,13 +3724,10 @@ function renderInspector(){
     content+=standardSection('Name',labelForm('table-label','Name',p.label||'Tabular data'));
     const host=p.remote?new URL(p.remote.url).hostname:'';
     const waiting=!!p.remote&&!p.data.rows.length;
+    // SETTINGS AS EVERY STANDARD WIDGET'S (2026-11-12, the practitioner: "The Table input inspector configure button is not
+    // standardized"): the sentence, where the table comes from, and Configure… last, primary. Fetching the rows is about
+    // what the step holds, so Fetch the table is under Result, beside "Not fetched yet."
     content+=standardSection('Settings',`<p class="standard-sentence">${esc(tableSentence(p))}</p>`
-      // WHILE THE ROWS ARE NOT HERE, fetching them is the thing to do, so it is the primary button and Configure… is not.
-      +(waiting
-        ?'<div class="inspector-actions"><button id="table-fetch-remote" class="button primary">Fetch the table</button></div>'
-          +`<p class="description">A file already on this device is read from there, without downloading it.</p>`
-        :'')
-      +`<div class="inspector-actions"><button id="open-table" class="button${waiting?'':' primary'}">Configure\u2026</button></div>`
       +(p.remote?`<p class="description" data-table-remote>From <a href="${esc(p.remote.url)}" rel="noopener" target="_blank">${esc(host)}</a>`
         +`${p.remote.entry?`, ${esc(p.remote.entry.split('/').at(-1))}`:''}. The project keeps where it came from, not the rows.`
         // WHERE THESE ROWS CAME FROM THIS TIME, said where it stays: a line written beside the button was erased by the
@@ -3731,7 +3735,7 @@ function renderInspector(){
         +(rowsReadFrom.get(n.id)==='device'?' These rows were read from the copy on this device, checked by its digest: nothing was downloaded.'
           :rowsReadFrom.get(n.id)==='source'?` These rows were downloaded from ${esc(host)}, and the file is now kept on this device.`:'')
         +'</p>':'')
-      +'<p id="table-fetch-status" class="description" role="status"></p>');
+      +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button></div>');
     // RESULT: what the step holds, counted, and where to look closer.
     if(p.data.rows.length){
       const columns=describableColumns(p.data,p.wide),described=columns.filter(c=>isDescribed(p.columns?.[c])).length;
@@ -3748,7 +3752,10 @@ function renderInspector(){
         +'<button id="describe-columns" class="button">Describe columns\u2026</button></div>'
         +(!workflow.edges.some(e=>e.from===n.id)?'<div class="inspector-actions"><button id="add-table-view" class="button small">\uff0b Display as table</button></div>':'')
         +'<div data-standard-result></div>');
-    }else content+=standardSection('Result',`<p class="standard-result">${waiting?'Not fetched yet.':'No table imported yet. This step cannot run until a table is imported.'}</p>`);
+    }else content+=standardSection('Result',`<p class="standard-result">${waiting?'Not fetched yet.':'No table imported yet. This step cannot run until a table is imported.'}</p>`
+      +(waiting?'<div class="inspector-actions"><button id="table-fetch-remote" class="button">Fetch the table</button></div>'
+        +'<p class="description">A file already on this device is read from there, without downloading it.</p>':'')
+      +'<p id="table-fetch-status" class="description" role="status"></p>');
   }else if(n.type==='join_table_to_area'){
     // THE KEY COLUMN IS OFFERED, NOT TYPED. The columns are on the connected table, so a
     // practitioner picks one rather than spelling it and discovering the mismatch at the run.
@@ -5181,7 +5188,7 @@ function renderInspector(){
     const node=getNode(w,n.id,'slr_extract_import');node.params.familyValues={...node.params.familyValues,[required(el.dataset.slrFamily)]:el.value.trim()};})));
   document.querySelectorAll<HTMLTextAreaElement>('[data-slr-citation]').forEach(el=>el.addEventListener('change',()=>change(w=>{
     const node=getNode(w,n.id,'slr_extract_import');const citations=[...node.params.citations];citations[Number(el.dataset.slrCitation)]=el.value.trim();node.params.citations=citations;})));
-  optionalElement('#add-series-chart')?.addEventListener('click',()=>change(w=>{const id=`curve-${Date.now()}`;w.nodes.push({id,type:'chart_output',x:n.x+270,y:n.y,params:{label:'Epidemic curve',inputMode:'series'}});w.edges.push({id:`e-${Date.now()}`,from:n.id,to:id,port:'series'});selected=id;}));
+  optionalElement('#add-series-chart')?.addEventListener('click',()=>change(w=>{const id=`curve-${Date.now()}`;w.nodes.push({id,type:'chart_output',x:n.x+270,y:n.y,params:{label:'Epidemic curve'}});w.edges.push({id:`e-${Date.now()}`,from:n.id,to:id,port:'records'});selected=id;}));
   document.querySelectorAll<HTMLInputElement>('#chart-label').forEach(el=>el.addEventListener('change',()=>change(w=>{required(w.nodes.find(x=>x.id===n.id)).params.label=el.value.trim()||'Chart';})));
   // Reading, not editing: it opens a dialog and touches nothing that is saved.
   optionalElement('#table-convert-on-run')?.addEventListener('change',e=>{
@@ -5245,7 +5252,7 @@ function renderInspector(){
         return saved;}},esc);
   });
   optionalElement('#add-table-view')?.addEventListener('click',()=>change(w=>{const id=`table-view-${Date.now()}`;w.nodes.push({id,type:'table_output',x:n.x+270,y:n.y,params:{label:'Imported table'}});w.edges.push({id:`e-${Date.now()}`,from:n.id,to:id,port:'table'});selected=id;}));
-  optionalElement('#open-table')?.addEventListener('click',()=>{
+  if(n.type==='table_input')optionalElement('#configure-step')?.addEventListener('click',()=>{
     const baseline=JSON.stringify(workflow),current=getNode(workflow,n.id,'table_input').params;
     openTableEditor(async result=>{
       if(JSON.stringify(workflow)!==baseline)throw new Error('The workflow changed. Close this and choose Configure\u2026 again.');
@@ -6172,6 +6179,15 @@ function renderMap(){
       [layer.sourceNodeId,resolveLayerSymbol(index,mapNode.params.layerSymbols?.[layer.sourceNodeId])]));
     (result as {layerSymbols?:unknown}).layerSymbols=live;
   }
+  // AND THE LAYERS IN THE ORDER SET NOW (2026-11-12, the practitioner: the pumps would not come to the top). Moving a layer
+  // in Manage layers is presentation too, so it is drawn from the live node, not from the order the last run recorded.
+  if(result&&mapNode&&(result as {mapLayers?:unknown}).mapLayers){
+    (result as {mapLayers?:import('./map-layer-list.js').MapLayer[]}).mapLayers=mapLayerList(mapNode,workflow.edges,
+      id=>workflow.nodes.find(n=>n.id===id)?.params.label,
+      ((result as {mapLayers?:import('./map-layer-list.js').MapLayer[]}).mapLayers||[]).filter(l=>l.origin==='within')
+        .reduce((within,l)=>{const at=within.find(w=>w.port===l.port);const member={name:l.id.slice(l.port.length+1),parts:l.parts??0};
+          if(at)at.members.push(member);else within.push({port:l.port,members:[member]});return within;},[] as {port:string;members:{name:string;parts:number}[]}[]));
+  }
   const spec=result&&mapNode&&runWorkflow?mapPresentation(mapNode,result,runWorkflow):undefined;
   $('#map-panel').classList.toggle('has-communication',!!spec);
   $('#map-communication').hidden=!spec;$('#map-communication-key').hidden=!spec?.legend;$('#map-communication-source').hidden=!spec;
@@ -6333,6 +6349,7 @@ function renderMap(){
          symbols:(result as {layerSymbols?:Record<string,import('./point-layers.js').MarkStyle>}).layerSymbols||{},
          classes:(result as {pinClasses?:Record<string,{value:string;colour:string}[]>}).pinClasses||{},
          hidden:hiddenMapLayers.get(result.nodeId),
+         mapLayers:(result as {mapLayers?:MapLayer[]}).mapLayers,
          labelField:(workflow.nodes.find((x):x is WorkflowNode<'map_output'>=>
            x.id===result.nodeId&&x.type==='map_output')?.params.labelField)||{},
          focusId:rows.find(r=>`result:${r.id}`===selected)?.id,
@@ -6666,7 +6683,7 @@ function standardInputs(n:WorkflowNode,labels:Record<string,string>={}):string{
   return nodeInputs(n).map(([port])=>{
     const now=incoming.find(e=>e.port===port)?.from||'';
     const offers=workflow.nodes.filter(x=>x.id===now||validConnection({source:x.id,target:n.id,sourceHandle:'out',targetHandle:port} as Connection));
-    return `<label class="field-label" for="connect-${esc(port)}">${esc(labels[port]??portLabel(port))}</label>`
+    return `<label class="field-label" for="connect-${esc(port)}">${esc(labels[port]??PORT_NAMES[n.type]?.[port]??portLabel(port))}</label>`
       +`<select id="connect-${esc(port)}" class="connect-port" data-connect-port="${esc(port)}"><option value="">${offers.length?'Not connected':'Nothing in this workflow can feed this yet'}</option>`
       +offers.map(x=>`<option value="${esc(x.id)}"${x.id===now?' selected':''}>${esc(nameOf(x.id))}</option>`).join('')+`</select>`;
   }).join('');
@@ -7240,6 +7257,7 @@ function renderNotesView(){
            symbols:(output as {layerSymbols?:Record<string,import('./point-layers.js').MarkStyle>}).layerSymbols||{},
            classes:(output as {pinClasses?:Record<string,{value:string;colour:string}[]>}).pinClasses||{},
            labelField:node.params.labelField||{},
+           mapLayers:(output as {mapLayers?:MapLayer[]}).mapLayers,
            label:row=>[row.excluded?'Excluded':row.relation,row.layerLabel].filter(Boolean).join(' \u00b7 ')})
         :'';
       return standaloneMapSvg(withGroundUnder(content,ground)+marks,banded?'0 0 850 650':frameBoxOf(content),

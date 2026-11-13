@@ -52,7 +52,7 @@ test(`measure a table of ${N} rows`,async({page,browserName})=>{
     await page.locator('#node-library [data-add="table_input"]').click();
     const id=(await saved(page)).nodes.filter(n=>n.type==='table_input').at(-1).id;
     await page.locator(`.react-flow__node[data-id="${id}"]`).click();
-    await page.locator('#open-table').click();
+    await page.locator('#configure-step').click();
     const read=await timed(`import ${name}: read and preview`,async()=>{
       await page.locator('#table-file').setInputFiles({name:`${name}.csv`,mimeType:'text/csv',buffer});
       const refused=page.getByText(/could not be read/);

@@ -162,7 +162,7 @@ export function snowCurveExample():Workflow{
   return {schema:'fieldwork/workflow/1',exampleId:'snow-curve',name:'When did people die? Soho, London, 1854',nodes:[
     DATES_TABLE(),
     {id:'curve',type:'case_series',x:330,y:20,params:{label:'Deaths by day',source:'table',dateField:'date',dateKind:'death',period:'day'}},
-    {id:'epidemic',type:'chart_output',x:640,y:20,params:{label:'Epidemic curve · by date of death',inputMode:'series',
+    {id:'epidemic',type:'chart_output',x:640,y:20,params:{label:'Epidemic curve · by date of death',
       chartTitle:'Cholera deaths by date of death, Soho, London, 1854',
       subtitle:'Date of death, not date of onset or of report. The outbreak is conventionally dated from 31 August; the pump handle was removed on 8 September, by which time the curve had already turned.',
       xAxisTitle:'Date of death, 1854',
@@ -172,6 +172,6 @@ export function snowCurveExample():Workflow{
       sourceNote:'Source: John Snow, On the Mode of Communication of Cholera, 2nd ed., 1855, as digitised by Robin Wilson. 489 deaths at 250 distinct addresses.'}},
   ],edges:[
     {id:'dates-curve',from:'dates',to:'curve',port:'cases'},
-    {id:'curve-epidemic',from:'curve',to:'epidemic',port:'series'},
+    {id:'curve-epidemic',from:'curve',to:'epidemic',port:'records'},
   ]};
 }

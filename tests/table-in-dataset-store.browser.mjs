@@ -15,7 +15,7 @@ test('a table is saved by reference, comes back whole after a reload, and runs',
   await page.locator('#node-library [data-add="table_input"]').click();
   const id=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')).nodes.find(n=>n.type==='table_input').id);
   await page.locator(`.react-flow__node[data-id="${id}"]`).click();
-  await page.locator('#open-table').click();
+  await page.locator('#configure-step').click();
   await page.locator('#table-file').setInputFiles({name:'many.csv',mimeType:'text/csv',buffer:Buffer.from(CSV)});
   await page.locator('#table-shape').selectOption('long');
   await page.locator('#table-value').selectOption('visits');

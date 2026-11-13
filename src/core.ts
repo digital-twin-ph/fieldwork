@@ -509,9 +509,7 @@ export function nodeInputs(node:WorkflowNode):[string,PortType][]{
   //
   // `series` stays only where a saved workflow already uses it. A Cases by period table
   // connected to `records` draws its curve just the same: the shape decides, not the port.
-  if(node.type==='chart_output')return node.params.inputMode==='series'
-    ?[['series','table'],...TYPES.chart_output.inputs]
-    :[...TYPES.chart_output.inputs];
+  if(node.type==='chart_output')return [...TYPES.chart_output.inputs];
   // AS MANY TABLES AS THE PRACTITIONER ADDS, one port each, in order (experiment 181). Two is the floor and the
   // ports of a workflow saved before keep their names.
   if(node.type==='append_rows')return Array.from({length:appendTableCount(node.params)},
@@ -716,6 +714,7 @@ export function validateWorkflow(raw:unknown):Workflow {
   }) as typeof w.nodes;
   migrateDeriveValue(w);
   migrateSatelliteSampler(w);
+  migrateChartSeriesPort(w);
   migrateHealthsitesNodes(w);
   migrateOutputNodes(w);
   migrateGroupTableNulls(w);
@@ -911,7 +910,7 @@ export function validateWorkflow(raw:unknown):Workflow {
     // say what the figure shows AND what it does not claim, and a full citation with its licence
     // runs to 253. The title stays at 120, because something longer than that is not a title.
     if(n.type==='map_output'&&((n.params.showLegend!==undefined&&typeof n.params.showLegend!=='boolean')||(n.params.basemap!==undefined&&!(BASEMAP_CHOICES as readonly string[]).includes(n.params.basemap))||(['mapTitle','mapSubtitle','mapSourceNote'] as const).some(key=>n.params[key]!==undefined&&(typeof n.params[key]!=='string'||n.params[key]!.length>({mapTitle:120,mapSubtitle:280,mapSourceNote:500}[key])))))throw new Error('Invalid map presentation settings.');
-    if(n.type==='chart_output'&&n.params.inputMode!==undefined&&!['decisions','polygons','series'].includes(n.params.inputMode))throw new Error('Invalid chart input mode.');
+    if(n.type==='chart_output'&&n.params.inputMode!==undefined&&!['decisions','polygons'].includes(n.params.inputMode))throw new Error('Invalid chart input mode.');
     if(n.type==='chart_output'&&n.params.bandMeasure!==undefined&&!['cumulative','difference'].includes(n.params.bandMeasure))throw new Error('Choose cumulative band counts or the difference between neighbouring bands.');
     // A difference is computed by the Vega-Lite specification, so it needs that renderer.
     if(n.type==='chart_output'&&n.params.bandMeasure==='difference'&&chartRenderer(n.params)!=='vega-lite')throw new Error('Band differences are computed in the Vega-Lite specification, so select the Vega-Lite renderer.');
@@ -2269,7 +2268,11 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
             break;
           }
           // A CASE SERIES IS STILL A TABLE, and it carries its periods with it: the curve is
-          // drawn from the shape that arrived rather than from a mode somebody selected.
+          // drawn from the shape that arrived rather than from a mode somebody selected. Its receipt states the period and the
+          // kind of date, as the retired `series` port's did (2026-11-12, Chart's ports standardized: Table and Polygon summaries).
+          if(arrived.series){const series=arrived.series as Parameters<typeof seriesChart>[0];const chart=seriesChart(series);const source=recordsEdge.from;
+            const facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n<urn:fieldwork:run:${runId}:view:${node.id}> a fw:ChartView, prov:Activity; prov:used <urn:fieldwork:run:${runId}:output:${source}>; fw:groupingField "period"; fw:eventDateKind ${JSON.stringify(series.dateKind)}.\n`+chartSpecificationFacts(node,runId,source,chart,series.weightField?'numeric-total':'record-count');
+            value={...structuredClone(arrived) as unknown as DisplayValue,chart,rows:[],centers:[]};receipts.push({nodeId:node.id,kind:'presentation',facts,rules:'',input:facts,conclusions:[],method:chart.caption});break;}
           const chart=arrived.series
             ?seriesChart(arrived.series as Parameters<typeof seriesChart>[0])
             // A table that already carries its own chart keeps it. A rate's chart states the
@@ -2296,7 +2299,6 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
             conclusions:[],method:chart.caption});
           break;
         }
-        if(node.params.inputMode==='series'){const table=inputs.series;if(!table?.series)throw new Error('Connect Cases by period: a series chart needs the series, not a plain table.');const chart=seriesChart(table.series);const source=workflow.edges.find(e=>e.to===node.id&&e.port==='series')!.from;const facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n<urn:fieldwork:run:${runId}:view:${node.id}> a fw:ChartView, prov:Activity; prov:used <urn:fieldwork:run:${runId}:output:${source}>; fw:groupingField "period"; fw:eventDateKind ${JSON.stringify(table.series.dateKind)}.\n`+chartSpecificationFacts(node,runId,source,chart,table.series.weightField?'numeric-total':'record-count');value={...structuredClone(table) as unknown as DisplayValue,chart,rows:[],centers:[]};receipts.push({nodeId:node.id,kind:'presentation',facts,rules:'',input:facts,conclusions:[],method:chart.caption});break;}
       if(node.params.inputMode==='polygons'){const shown=polygonDisplay(inputs.polygons,'chart');value=shown;const sourceId=workflow.edges.find(e=>e.to===node.id&&e.port==='polygons')!.from;const receipt=polygonPresentationReceipt(node,sourceId,runId);receipt.facts+=chartSpecificationFacts(node,runId,sourceId,shown.chart!,shown.chart!.field==='total'?'numeric-total':'location-membership-count');receipt.input=receipt.facts;receipts.push(receipt);break;}
         // NOTHING CONNECTED IS A SENTENCE, not a crash. A chart insists on no particular port
         // now, so the last branch could be reached with no edge at all and took `.from` off
@@ -2681,6 +2683,14 @@ function migrateDeriveValue(w:Workflow):void{
             compute:{left:{field:`fwa:${slug(left)}`},operator,right:{field:`fwa:${slug(right)}`}}}]}]}}};
   }) as typeof w.nodes;
   for(const edge of w.edges)if(edge&&derived.has(edge.to)&&edge.port==='records')edge.port='projections';
+}
+
+/** CHART'S `series` PORT, RETIRED INTO ITS TABLE PORT (2026-11-12, the practitioner: "Chart ports need to be standardized").
+ *  A case series arriving on Table was already drawn as a curve; the edge moves and the mode goes. */
+function migrateChartSeriesPort(w:Workflow):void{
+  const charts=new Set(w.nodes.filter(n=>n?.type==='chart_output').map(n=>n.id));
+  for(const n of w.nodes)if(n&&charts.has(n.id)&&(n.params as {inputMode?:string}).inputMode==='series')delete (n.params as {inputMode?:string}).inputMode;
+  for(const edge of w.edges)if(edge&&charts.has(edge.to)&&edge.port==='series')edge.port='records';
 }
 
 /** THE SATELLITE SAMPLER, RETIRED INTO SAMPLE A RASTER (experiment 205, 2026-11-11). The same reading, from the same

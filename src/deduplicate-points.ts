@@ -240,8 +240,8 @@ export function deduplicateReceipt(node:WorkflowNode<'deduplicate_points'>,resul
     facts+=`${pair} a fw:LinkageCandidate; fw:candidateClass ${quote(candidate.decided||candidate.classification)}; `
       +`fw:candidateScore ${candidate.score}; fw:matchedDistanceM ${Math.round(candidate.metres)}; `
       +(candidate.nameSimilarity===null?`fw:nameComparable false; `:`fw:matchedName ${candidate.nameSimilarity.toFixed(3)}; `)
-      +`prov:wasDerivedFrom <urn:fieldwork:record:${candidate.a.sourceNodeId}:${candidate.a.id}>, `
-      +`<urn:fieldwork:record:${candidate.b.sourceNodeId}:${candidate.b.id}>`
+      +`prov:wasDerivedFrom <urn:fieldwork:record:${candidate.a.sourceNodeId}:${encodeURIComponent(String(candidate.a.id))}>, `
+      +`<urn:fieldwork:record:${candidate.b.sourceNodeId}:${encodeURIComponent(String(candidate.b.id))}>`
       +(candidate.reason?`; fw:decisionReason ${quote(candidate.reason)}`:'')+`.\n`;
     facts+=`<${activity}> fw:linkageCandidate ${pair}.\n`;
   }
@@ -271,7 +271,7 @@ export function deduplicateTableReceipt(node:WorkflowNode<'deduplicate_points'>,
     const pair=`<${entity}:pair:${encodeURIComponent(candidate.key)}>`;
     facts+=`${pair} a fw:LinkageCandidate; fw:candidateClass ${quote(candidate.decided||candidate.classification)}; `
       +`fw:candidateScore ${candidate.score}; `
-      +`prov:wasDerivedFrom <urn:fieldwork:record:${sourceNodeId}:${candidate.a.id}>, <urn:fieldwork:record:${sourceNodeId}:${candidate.b.id}>`
+      +`prov:wasDerivedFrom <urn:fieldwork:record:${sourceNodeId}:${encodeURIComponent(String(candidate.a.id))}>, <urn:fieldwork:record:${sourceNodeId}:${encodeURIComponent(String(candidate.b.id))}>`
       +(candidate.reason?`; fw:decisionReason ${quote(candidate.reason)}`:'')+`.\n`;
     facts+=`<${activity}> fw:linkageCandidate ${pair}.\n`;
   }

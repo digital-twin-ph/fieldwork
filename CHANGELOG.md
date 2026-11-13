@@ -3,6 +3,32 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.106.0 — 2026-11-12
+
+- **MERS: where were the cases in hospital?** A third workflow in the MERS example counts the cases by the hospital the
+  line list names, relates each count to the hospitals table, and maps the hospitals over South Korea's 17 provinces,
+  each mark's area in proportion to its cases (1 to 80). 365 Seoul Yeollin Clinic has no position and is listed, not
+  drawn. Example de79282.
+- **Fixed: a study area whose units sit inside one another's holes was refused.** South Korea's 17 provinces were
+  refused as "one part of the area lies inside another": Gwangju sits in a hole of South Jeolla, Daegu in one of North
+  Gyeongsang. Study area 0.9.1.
+- **Size by, for points made from a table.** Map offered Size by only for a layer whose records are kept in its step; it
+  now also reads the map's last run. Map 0.27.1.
+- **The MERS data, researched:** what the package documents, where its data came from, other open data on the same
+  outbreak, and dates of the response, in `docs/research/mers-korea-2015-sources-2026-11-12.md`.
+
+- **Chart's ports, standardized.** Two ports, **Table** and **Polygon summaries**, named the same on the canvas and in
+  the Inspector; the node used to read Series, Records and Catchment polygons. A case series connects to Table and is
+  drawn as its curve, as before. A workflow saved with the old Series port opens with that connection on Table. Chart
+  0.19.0.
+
+- **Tabular data's Inspector, standardized.** Settings ends with **Configure…**, as every standardized Inspector does.
+  **Fetch the table** is now under Result, beside "Not fetched yet." Table input 0.9.3.
+
+- **Fixed: Manage layers did not change which marks are drawn on top.** The order was saved and not used. Point layers
+  are now drawn in that order, on the static map, in its figure and on the interactive map, and a move shows at once.
+  Map 0.27.1.
+
 ## 0.105.0 — 2026-11-12
 
 - **An epidemic curve stacked by a column.** Cases by period can count each value of a column, and Chart draws the

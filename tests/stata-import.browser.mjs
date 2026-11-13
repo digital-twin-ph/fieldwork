@@ -18,7 +18,7 @@ test('a Stata file becomes a table: dates read as dates, and a missing value is 
   await page.goto('/');await page.evaluate(()=>localStorage.clear());
   await page.goto('/?example=blank');
   await page.locator('#node-library [data-add="table_input"]').click();
-  await page.locator('#open-table').click();
+  await page.locator('#configure-step').click();
   await page.locator('#table-file').setInputFiles({name:'london.dta',mimeType:'application/octet-stream',buffer:stata115()});
   await expect(page.locator('#table-keys')).toBeVisible();
   await page.locator('#table-shape').selectOption('long');

@@ -207,3 +207,16 @@ test('a study area holds adjacent parts, and still refuses overlapping ones',()=
   // Probing from a vertex off the other outline fixed that without weakening the rule.
   assert.throws(()=>validateDrawnGeometry(parts([[sq(0,0,4,4)],[sq(1,1)]])),/lies inside another/);
 });
+
+test('an enclave whose outline is the hole around it is accepted, as Gwangju in South Jeolla is',()=>{
+  // South Korea's 17 provinces (geoBoundaries gbOpen ADM1) were refused on 2026-11-12: every vertex of the enclave lies on
+  // the hole's edge, and a probe on that edge read as outside the hole.
+  const hole=[[1,1],[1,2],[2,2],[2,1],[1,1]];
+  // Starting on the hole's east edge, where a ray cast eastwards reads a point as outside the hole: Gwangju's and Daegu's
+  // first vertices sat on the hole of South Jeolla and of North Gyeongsang in just this way.
+  const enclave=[[2,1.5],[2,2],[1.5,2],[1,2],[1,1.5],[1,1],[1.5,1],[2,1],[2,1.5]];
+  const surround=[[[0,0],[4,0],[4,4],[0,4],[0,0]],hole];
+  assert.doesNotThrow(()=>validateDrawnGeometry({type:'MultiPolygon',coordinates:[surround,[enclave]]}));
+  // Without the hole it is still ground counted twice.
+  assert.throws(()=>validateDrawnGeometry({type:'MultiPolygon',coordinates:[[surround[0]],[enclave]]}),/lies inside another/);
+});

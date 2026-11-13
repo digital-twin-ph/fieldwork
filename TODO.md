@@ -123,6 +123,10 @@ not a practitioner in the field.
    first workflow in example-2015-mers-korea (94 of 135 detected within 7 days, 161 of 162 reported within 1).
    The 98 contacts as a second workflow the same day (cases per source, setting of exposure). Next: a lab recomputation;
    the transmission tree, once the practitioner says how to show the two cases with more than one recorded source.
+   **2026-11-12:** the hospitals placed (example 9e8432c); the data's documentation and the other open sources researched,
+   [docs/research/mers-korea-2015-sources-2026-11-12.md](docs/research/mers-korea-2015-sources-2026-11-12.md). Next: a
+   workflow placing the cases by hospital; then, from that note, the KDCA 185-case file, an outbreak-level 7-1-7 review
+   from the response dates, and the README's corrections. **In progress** (the practitioner: *"We just begun"*).
    **Decided 2026-11-11 by the practitioner:** *"Our use case for these worked examples is for teaching so that fits MERS
    Korea purpose"*: the dataset is described as compiled "for teaching", and so are these examples. Used on that basis in
    an example repository, attributed to ECDC's Epidemic Intelligence and the outbreaks package, never in the

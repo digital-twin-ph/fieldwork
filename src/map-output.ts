@@ -45,7 +45,7 @@ export function mapOutput(node:WorkflowNode<'map_output'>,inputs:MapInputs,runId
   let facts=(area.areaFacts||'')+'@prefix fw: <urn:fieldwork:>.\n@prefix geo: <http://www.opengis.net/ont/geosparql#>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n'+
     `${activity} a fw:MapView, prov:Activity; prov:used <${area.areaId}>${layers.map(l=>`, <urn:fieldwork:source:${l.sourceNodeId}>`).join('')}.\n`+
     `<${area.areaId}> a geo:Feature; geo:hasGeometry <${area.geometryId}>.\n<${area.geometryId}> a geo:Geometry; geo:asWKT ${JSON.stringify('<'+CRS84+'> '+geometryWKT(area.boundary))}^^geo:wktLiteral.\n`;
-  for(const row of rows){const record=`<urn:fieldwork:record:${row.sourceNodeId}:${row.recordId}>`,shape=`<urn:fieldwork:record:${row.sourceNodeId}:${row.recordId}:geometry>`;
+  for(const row of rows){const record=`<urn:fieldwork:record:${row.sourceNodeId}:${encodeURIComponent(String(row.recordId))}>`,shape=`<urn:fieldwork:record:${row.sourceNodeId}:${encodeURIComponent(String(row.recordId))}:geometry>`;
     facts+=`${record} a geo:Feature; <http://purl.org/dc/terms/isPartOf> <urn:fieldwork:source:${row.sourceNodeId}>; fw:spatialRelation fw:${row.relation}.\n`;
     if(row.coordinates)facts+=`${record} geo:hasGeometry ${shape}; geo:${GEOSPARQL_PREDICATE[row.relation as Exclude<SpatialRelation,'MissingLocation'>]} <${area.areaId}>.\n${shape} a geo:Geometry; geo:asWKT ${JSON.stringify('<'+CRS84+'> POINT ('+row.coordinates.join(' ')+')')}^^geo:wktLiteral.\n`;
   }

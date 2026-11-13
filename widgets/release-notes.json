@@ -153,12 +153,12 @@
    "replacementCandidate": "urn:fieldwork:widget:observations"
   },
   "chart_output": {
-   "version": "0.18.0",
+   "version": "0.19.0",
    "released": "2026-11-12",
    "changes": [
     {
      "kind": "minor",
-     "description": "Stacked bars: a case series split by a column drawn as one bar per period divided by its values, one colour each, refused past the six colours that can be told apart; set by Draw in Configure… for a series. Hagelloch's curve by school class (experiment 210)."
+     "description": "Ports standardized (the practitioner, 2026-11-12: \"Chart ports need to be standardized\"; the node read Series, Records and Catchment polygons, the Inspector Case series, Table and Polygon summaries). Two ports, Table and Polygon summaries, named the same on the canvas and in the Inspector. The series port is retired into Table: a saved workflow opens with its case series on Table, drawn and receipted as before."
     }
    ],
    "breaking": false,
@@ -427,12 +427,16 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.27.0",
+   "version": "0.27.1",
    "released": "2026-11-12",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Proportional symbols: a point layer's marks can be sized by an attribute that holds a number, each mark's area in proportion to its value, the largest drawn first and partly transparent, in the static figure and the interactive map alike; the key and the receipt say what the size shows. John Snow's deaths are drawn so, one mark per address (experiment 210)."
+     "kind": "patch",
+     "description": "Fixed: the order set in Manage layers did not reach the marks. Point layers are now drawn layer by layer in that order, bottom first, in the static figure, its export and the interactive map, and a change is drawn at once rather than at the next run (the practitioner, 2026-11-12: the pumps on John Snow's map would not come to the top)."
+    },
+    {
+     "kind": "patch",
+     "description": "Size by is offered for a point layer made at run time, as Point data from a table is, from the map's last run: before, only a layer whose records are held in its step offered it. MERS's hospitals sized by their cases."
     }
    ],
    "breaking": false,
@@ -852,12 +856,12 @@
    "migrationFrom": []
   },
   "study_area": {
-   "version": "0.9.0",
-   "released": "2026-11-11",
+   "version": "0.9.1",
+   "released": "2026-11-12",
    "changes": [
     {
-     "kind": "minor",
-     "description": "One form: drawn or acquired. The second form, a named dataset, loaded Old Naledi’s boundary through that example’s code and went with it (2026-11-11); the definition moved from Old Naledi’s module into the core."
+     "kind": "patch",
+     "description": "Fixed: a set of units where one sits in another's hole, as Gwangju sits in South Jeolla and Daegu in North Gyeongsang, was refused as \"one part of the area lies inside another\". The test point was taken off the outer unit's outline but could still lie on the edge of its hole, where it read as outside the hole. It is now taken off every ring. South Korea's 17 provinces (geoBoundaries ADM1) are accepted."
     }
    ],
    "breaking": false,
@@ -908,12 +912,12 @@
    "migrationFrom": []
   },
   "table_input": {
-   "version": "0.9.2",
+   "version": "0.9.3",
    "released": "2026-11-12",
    "changes": [
     {
      "kind": "patch",
-     "description": "A key value written with spaces around it is read without them, as before, and now said: one finding per column, counting the values and naming the first, on the Data quality tab and in the receipt as the data issue Spaces trimmed (the practitioner, 2026-11-12: \"Trim, and say so\", after Validation Lab check 49 found MERS's \"Family member \" trimmed in silence)."
+     "description": "Inspector standardized (the practitioner, 2026-11-12, on the rules example: \"The Table input inspector configure button is not standardized\"). Settings ends with Configure…, primary, as every standard Inspector does; Fetch the table moved under Result, beside \"Not fetched yet.\""
     }
    ],
    "breaking": false,

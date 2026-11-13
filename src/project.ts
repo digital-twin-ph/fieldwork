@@ -88,7 +88,20 @@ export interface Project {
   /** THE REPOSITORY IT IS CO-OWNED IN, and the presence of this field is what makes a project
    *  collaborative. Attaching one is the conversion. See `src/identity.ts` and experiment 150. */
   repository?:import('./identity.js').ProjectRepository;
+  /** THE PROJECT'S DATA DICTIONARIES (experiment 211), one per file, by digest: which Table input imported it, with which
+   *  table, and when. The file itself is kept by that node, under `dictionaryRef`, so it travels with the workflow. */
+  dictionaries?:ProjectDictionary[];
 }
+export interface ProjectDictionary {sha256:string; name:string; workflow:string; node:string; table:string; importedAt:string}
+/** A dictionary the project lists that cannot be read is dropped, never half kept. */
+export function readProjectDictionaries(raw:unknown):ProjectDictionary[]{
+  if(!Array.isArray(raw))return [];
+  return raw.filter((d):d is ProjectDictionary=>!!d&&typeof d==='object'&&/^[0-9a-f]{64}$/.test(String(d.sha256))
+    &&['name','workflow','node','table','importedAt'].every(k=>typeof (d as Record<string,unknown>)[k]==='string'));
+}
+/** Listed once per file and table: importing the same dictionary again replaces its entry. */
+export const withDictionary=(project:Project,entry:ProjectDictionary):Project=>
+  ({...project,dictionaries:[...(project.dictionaries??[]).filter(d=>!(d.sha256===entry.sha256&&d.workflow===entry.workflow&&d.node===entry.node)),entry]});
 
 /** Whether this project is collaborative, which is one question and not a flag to keep in step. */
 export const isCollaborative=(project:Project):boolean=>!!project.repository;
@@ -240,11 +253,12 @@ export function validateProject(raw:unknown):Project{
   // shown as solo is an inconvenience, and one shown as collaborative with nowhere to write is a
   // sequence of failures a practitioner cannot diagnose.
   const repository=readRepository(raw.repository);
+  const dictionaries=readProjectDictionaries(raw.dictionaries);
   return {schema:'fieldwork/project/2',id:raw.id,name:raw.name,subject:raw.subject,
     workflows:[...new Set(raw.workflows as string[])],
     ...(changedAt?{changedAt}:{}),...(exportedAt?{exportedAt}:{}),...(work?{exportedWork:work}:{}),
     ...(notes.length?{notes}:{}),...(authors.length?{authors}:{}),
-    ...(createdAt?{createdAt}:{}),...(repository?{repository}:{})};
+    ...(createdAt?{createdAt}:{}),...(repository?{repository}:{}),...(dictionaries.length?{dictionaries}:{})};
 }
 
 /** The input widgets whose payload two workflows can genuinely share.
@@ -476,6 +490,7 @@ export function payloadsOf(params:Record<string,unknown>):[string,unknown][]{
   if(typeof params.areaRef==='string'&&params.geometry!==undefined&&params.geometry!==null)
     out.push([params.areaRef,{geometry:params.geometry,revisions:params.revisions??[]}]);
   if(typeof params.searchRef==='string'&&params.search!==undefined&&params.search!==null)out.push([params.searchRef,params.search]);
+  if(typeof params.dictionaryRef==='string'&&params.dictionary!==undefined)out.push([params.dictionaryRef,params.dictionary]);
   return out;
 }
 
@@ -549,6 +564,9 @@ export function dehydrateWorkflow<T extends {nodes:unknown[]}>(workflow:T,held:(
     // A catalog search's items go the same way, under `searchRef`.
     if(typeof params.searchRef==='string'&&params.search!==undefined&&held(params.searchRef)){
       const {search:_search,...rest}=params;params=rest;}
+    // A table's data dictionary, under `dictionaryRef`.
+    if(typeof params.dictionaryRef==='string'&&params.dictionary!==undefined&&held(params.dictionaryRef)){
+      const {dictionary:_dictionary,...rest}=params;params=rest;}
     if(typeof params.dataRef!=='string'||params.data===undefined||!held(params.dataRef))
       return params===node.params?node:{...node,params};
     const {data:_omitted,...rest}=params;
@@ -587,6 +605,11 @@ export function hydrateWorkflow(raw:unknown,datasets:Record<string,unknown>,clon
       const search=datasets[params.searchRef];
       if(search===undefined){missing.push(`${String(node.id??node.type??'a node')} (${params.searchRef.slice(0,19)})`);return node;}
       params={...params,search:clone?structuredClone(search):search};
+    }
+    if(typeof params.dictionaryRef==='string'&&params.dictionary===undefined){
+      const dictionary=datasets[params.dictionaryRef];
+      if(dictionary===undefined){missing.push(`${String(node.id??node.type??'a node')} (${params.dictionaryRef.slice(0,19)})`);return node;}
+      params={...params,dictionary:clone?structuredClone(dictionary):dictionary};
     }
     if(typeof params.dataRef!=='string'||params.data!==undefined)return params===node.params?node:{...node,params};
     const payload=datasets[params.dataRef];

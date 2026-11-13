@@ -133,3 +133,14 @@ test('nullity correlation needs two columns that vary, and says which do not',as
   assert.deepEqual(mixed.pairs,[],'one varying column makes no pair');
   assert.deepEqual(mixed.constant,['always','never']);
 });
+
+// EXPERIMENT 211: a code is not a quantity.
+test('a column declared as ordered categories has no median, and its counts are in its order with their meanings',async()=>{
+  const {profileColumn:profile}=await import('../build/column-profile.js');
+  const values=['2','0','1','2','2','0'];
+  assert.ok(profile('class',values).numeric,'undeclared, the values read as numbers');
+  const p=profile('class',values,undefined,{scale:'ordinal',codes:[{value:'0',label:'pre-school'},{value:'1',label:'first'},{value:'2',label:'second'}]});
+  assert.equal(p.numeric,undefined);
+  assert.deepEqual(p.frequencies.map(f=>[f.value,f.count,f.label]),[['0',2,'pre-school'],['1',1,'first'],['2',3,'second']]);
+  assert.equal(profile('age',['1','2','3','4'],undefined,{scale:'ratio'}).numeric.median,2.5);
+});

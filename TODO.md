@@ -3571,6 +3571,10 @@ honest design advice, and the place to declare it is the authored rule form, whe
 written and the practitioner already knows the answer. Nominal, ordinal, interval, ratio — a
 second fact, orthogonal to `kind`.
 
+**2026-11-13:** declared on the column instead, where its meaning is: [211](experiments/211-the-measurement-scale-of-a-column.md)
+built the scale and codes on Tabular data, with its data dictionary as a project asset. The binding's `kind` is
+unchanged; Chart, the map's colour scheme and Point data do not read the scale yet.
+
 **Cluster detection.** Named by the practitioner on 2026-10-17 as a future widget, with a source
 of example data attached: *"When we get into cluster detection (a future widget) SatScan.org has
 example data sets as well."* Surveyed in

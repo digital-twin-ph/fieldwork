@@ -6,7 +6,7 @@
 import {parseCSV} from './input-data.js';
 import {readXlsx,type Sheet} from './xlsx.js';
 import {readStata} from './stata.js';
-import {guessMapping,readDictionary,checkDictionary,proposeFrom,isDescribed,suggestConnections,dictionaryCsv,
+import {guessMapping,readDictionary,checkDictionary,proposeFrom,isDescribed,suggestConnections,dictionaryCsv,SCALES,SCALE_WORDS,readCodes,writeCodes,type Scale,
   type ColumnDeclarations,type DictionaryCheck,type DictionaryMapping,type DictionaryEntry,type Connections,type Suggestion} from './column-metadata.js';
 
 type Escape=(text:string)=>string;
@@ -21,7 +21,10 @@ export interface ColumnsDialogOptions {
   archive?:{entries:string[]; read:(entry:string)=>Promise<Uint8Array>};
   /** The dictionary the practitioner made for this same source before, from accepted descriptions. */
   own?:{name:string; entries:Map<string,DictionaryEntry>; savedAt:string};
-  onSave:(declared:ColumnDeclarations,check?:DictionaryCheck)=>boolean;
+  /** The data dictionary imported with the table (experiment 211), offered first. */
+  imported?:{name:string; sheets:Sheet[]};
+  /** `loaded` is a dictionary file read here, for the table to keep as its own. */
+  onSave:(declared:ColumnDeclarations,check?:DictionaryCheck,loaded?:{name:string;bytes:Uint8Array;sheets:Sheet[]})=>boolean|Promise<boolean>;
 }
 
 /** A dictionary file as sheets of headers and rows: one sheet for CSV and Stata, each sheet of a workbook. */
@@ -39,6 +42,7 @@ export function openColumnsDialog(options:ColumnsDialogOptions,esc:Escape):void{
   let declared:ColumnDeclarations=structuredClone(options.held);
   let check:DictionaryCheck|undefined;
   let sheets:Sheet[]=[],sheetName='',source='';
+  let loaded:{name:string;bytes:Uint8Array;sheets:Sheet[]}|undefined;
   // THE CONNECTION, kept as the dialog redraws: which dictionary column is which, and which variable describes each
   // of the table's columns. The practitioner, 2026-11-04: *"we need an explicit user focused mapping tool so the
   // dictionary actually gets connected to the data set."*
@@ -60,11 +64,17 @@ export function openColumnsDialog(options:ColumnsDialogOptions,esc:Escape):void{
       +`<label class="field-label" for="${id('label')}">Label</label><input id="${id('label')}" data-meaning="label" maxlength="120" value="${esc(meta?.label??'')}">`
       +`<label class="field-label" for="${id('unit')}">Unit</label><input id="${id('unit')}" data-meaning="unit" maxlength="40" value="${esc(meta?.unit??'')}">`
       +`<label class="field-label" for="${id('description')}">Description</label><textarea id="${id('description')}" data-meaning="description" rows="2" maxlength="600">${esc(meta?.description??'')}</textarea>`
+      // WHAT KIND OF VALUES (experiment 211): said by the practitioner or proposed by the dictionary, never read from the values.
+      +`<label class="field-label" for="${id('scale')}">Its values are</label><select id="${id('scale')}" data-meaning="scale">`
+        +`<option value="">Not said</option>`+SCALES.map(s=>`<option value="${s}" ${meta?.scale===s?'selected':''}>${SCALE_WORDS[s]}</option>`).join('')+`</select>`
+      +`<label class="field-label" for="${id('codes')}">Codes and what they mean, in order where there is one</label>`
+        +`<input id="${id('codes')}" data-meaning="codes" maxlength="600" placeholder="0 = pre-school; 1 = first class" value="${esc(writeCodes(meta?.codes))}">`
       +(meta&&!meta.confirmed?`<label class="check"><input type="checkbox" data-accept> Accept this description</label>`:'')
       +`</fieldset>`;
   };
   const sourcePicker=()=>`<details class="columns-dictionary"${sheets.length?' open':''}><summary>Propose from a data dictionary</summary>`
     +`<p class="description">A CSV, Excel workbook or Stata file with one row per variable. Its descriptions are proposals until you accept them.</p>`
+    +(options.imported?`<p class="description"><button type="button" class="button small" id="columns-imported">Use ${esc(options.imported.name)}</button> imported with this table.</p>`:'')
     +`<label class="field-label" for="columns-dictionary-file">Dictionary file</label><input id="columns-dictionary-file" type="file" accept=".csv,.xlsx,.dta,text/csv">`
     +(options.archive?.entries.length?`<label class="field-label" for="columns-dictionary-entry">Or a file in the same archive</label>`
       +`<select id="columns-dictionary-entry"><option value="">Choose a file…</option>`
@@ -123,8 +133,10 @@ export function openColumnsDialog(options:ColumnsDialogOptions,esc:Escape):void{
       +`<button type="button" class="button primary" id="columns-save">Save</button></div>`;
     wire();
   };
-  const readSource=async(name:string,bytes:Uint8Array)=>{
-    try{sheets=dictionarySheets(name,bytes);sheetName=sheets[0]?.name??'';source=name.split('/').at(-1)!;}
+  // `keep`: a file from this device is kept with the table; one inside a fetched archive is not, because the project keeps
+  // where a fetched source came from and not its contents.
+  const readSource=async(name:string,bytes:Uint8Array,keep=true)=>{
+    try{sheets=dictionarySheets(name,bytes);sheetName=sheets[0]?.name??'';source=name.split('/').at(-1)!;loaded=keep?{name:source,bytes,sheets}:undefined;}
     catch(error){sheets=[];showError(error);return;}
     if(!sheets.length||!sheets[0]!.headers.length){sheets=[];showError(new Error(`${name} holds no table to read.`));return;}
     mapping=guessMapping(sheet().headers);suggest();
@@ -138,7 +150,10 @@ export function openColumnsDialog(options:ColumnsDialogOptions,esc:Escape):void{
       const file=(e.target as HTMLInputElement).files?.[0];if(file)await readSource(file.name,new Uint8Array(await file.arrayBuffer()));});
     q<HTMLSelectElement>('#columns-dictionary-entry')?.addEventListener('change',async e=>{
       const entry=(e.target as HTMLSelectElement).value;if(!entry||!options.archive)return;
-      try{await readSource(entry,await options.archive.read(entry));}catch(error){showError(error);}});
+      try{await readSource(entry,await options.archive.read(entry),false);}catch(error){showError(error);}});
+    q<HTMLButtonElement>('#columns-imported')?.addEventListener('click',()=>{
+      sheets=options.imported!.sheets;sheetName=sheets[0]?.name??'';source=options.imported!.name;loaded=undefined;
+      mapping=guessMapping(sheet().headers);suggest();render();});
     q<HTMLSelectElement>('#columns-sheet')?.addEventListener('change',e=>{sheetName=(e.target as HTMLSelectElement).value;
       mapping=guessMapping(sheet().headers);suggest();render();});
     dialog.querySelectorAll<HTMLSelectElement>('[data-map]').forEach(el=>el.addEventListener('change',()=>{
@@ -171,21 +186,25 @@ export function openColumnsDialog(options:ColumnsDialogOptions,esc:Escape):void{
     dialog.querySelectorAll<HTMLFieldSetElement>('[data-column]').forEach(set=>{
       const column=set.dataset.column!;
       // TYPING IS DECLARING: an edited description is the practitioner's, and accepted.
-      set.querySelectorAll<HTMLInputElement|HTMLTextAreaElement>('[data-meaning]').forEach(field=>field.addEventListener('change',()=>{
-        const key=field.dataset.meaning as 'label'|'unit'|'description';
+      set.querySelectorAll<HTMLInputElement|HTMLTextAreaElement|HTMLSelectElement>('[data-meaning]').forEach(field=>field.addEventListener('change',()=>{
+        const key=field.dataset.meaning as 'label'|'unit'|'description'|'scale'|'codes';
         const meta={...(declared[column]??{origin:'practitioner' as const,confirmed:true})};
         const value=field.value.trim();
-        if(value)meta[key]=value;else delete meta[key];
+        if(key==='scale'){if(value)meta.scale=value as Scale;else delete meta.scale;}
+        else if(key==='codes'){const codes=readCodes(value);if(codes.length)meta.codes=codes;else delete meta.codes;}
+        else if(value)meta[key]=value;else delete meta[key];
         declared[column]={...meta,origin:'practitioner',confirmed:true};delete declared[column]!.from;
       }));
       set.querySelector<HTMLInputElement>('[data-accept]')?.addEventListener('change',e=>{
         if((e.target as HTMLInputElement).checked&&declared[column]){declared[column]!.confirmed=true;render();}});
     });
     q<HTMLButtonElement>('#columns-cancel')?.addEventListener('click',()=>dialog.close());
-    q<HTMLButtonElement>('#columns-save')?.addEventListener('click',()=>{
+    q<HTMLButtonElement>('#columns-save')?.addEventListener('click',async()=>{
       // An emptied declaration is no declaration.
-      for(const [c,m] of Object.entries(declared))if(!m.label&&!m.unit&&!m.description)delete declared[c];
-      if(options.onSave(declared,check))dialog.close();else showError(new Error('The descriptions could not be saved.'));
+      for(const [c,m] of Object.entries(declared))if(!m.label&&!m.unit&&!m.description&&!m.scale&&!m.codes?.length)delete declared[c];
+      // A file read here and proposed from is kept with the table, as one imported with it is.
+      if(await options.onSave(declared,check,check&&loaded&&check.source===loaded.name?loaded:undefined))dialog.close();
+      else showError(new Error('The descriptions could not be saved.'));
     });
   };
   dialog.addEventListener('close',()=>dialog.remove(),{once:true});

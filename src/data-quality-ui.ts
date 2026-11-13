@@ -17,7 +17,8 @@
  */
 import type {Escape} from './types.js';
 import {ISSUE_LABEL} from './data-issues.js';
-import {profileColumn,columnStates,histogram,type ColumnKind,type ColumnProfile} from './column-profile.js';
+import {profileColumn,columnStates,histogram,type ColumnKind,type ColumnProfile,type ColumnScale} from './column-profile.js';
+import {SCALE_WORDS} from './column-metadata.js';
 
 export interface QualityRepair {column:string; to:ColumnKind; cast:number; unreadable:string[]; at:string}
 export interface QualityView {
@@ -28,6 +29,8 @@ export interface QualityView {
   /** The records as they will be READ: declared repairs already applied. */
   rows:Record<string,unknown>[];
   declared:Record<string,ColumnKind>;
+  /** What the practitioner said each column is: its scale and codes (experiment 211). */
+  scales?:Record<string,ColumnScale>;
   /** A RESULT CANNOT BE REPAIRED -- you repair the input it came from. An output table opens this
    *  same dialog as a REPORT: the profiles, the missingness and the shapes, with nothing to press.
    *  Absent where the view is read-only, which is how the dialog knows. Added 2026-10-21, when the
@@ -48,7 +51,7 @@ export function openDataQuality(view:QualityView,esc:Escape):void{
   const close=()=>{dialog.close();dialog.remove();};
 
   const profiles=view.columns.map(column=>
-    profileColumn(column,view.rows.map(row=>row[column]),view.declared[column]));
+    profileColumn(column,view.rows.map(row=>row[column]),view.declared[column],view.scales?.[column]));
 
   /** What is wrong, said first and plainly, or that nothing is. */
   const problems=(p:ColumnProfile)=>{
@@ -75,19 +78,21 @@ export function openDataQuality(view:QualityView,esc:Escape):void{
     return said.length?`<ul class="quality-problems">${said.join('')}</ul>`
       :`<p class="quality-clean">${p.declared
         ?`Every record has a value, and every value is a ${esc(p.declared)}.`
+        :p.scale?'Every record has a value.'
         :'Every record has a value. Nothing has declared what they should be, so there is nothing here to be wrong against.'}</p>`;
   };
 
   /** What is in it. Awareness, not a finding — see the fence note below. */
   const shape=(p:ColumnProfile)=>{
     const rows:string[]=[];
+    if(p.scale)rows.push(`<tr><th>Scale</th><td>${SCALE_WORDS[p.scale]}</td></tr>`);
     if(p.numeric)rows.push(`<tr><th>Range</th><td>${esc(trim(p.numeric.min))} to ${esc(trim(p.numeric.max))}, median ${esc(trim(p.numeric.median))}</td></tr>`
       +`<tr><th>Middle half</th><td>${esc(trim(p.numeric.q1))} to ${esc(trim(p.numeric.q3))}</td></tr>`
       +`<tr><th>${ISSUE_LABEL.BeyondFence}</th><td>${p.numeric.beyondFence} value${p.numeric.beyondFence===1?'':'s'}`
       +`${p.numeric.beyondFence?` outside ${esc(trim(p.numeric.lowerFence))} to ${esc(trim(p.numeric.upperFence))}`:''}</td></tr>`);
     if(p.distinct!==undefined)rows.push(`<tr><th>Distinct</th><td>${p.distinct}</td></tr>`);
-    if(p.frequencies?.length)rows.push(`<tr><th>Most often</th><td>`
-      +p.frequencies.map(f=>`${esc(f.value)} <span class="quality-count">${f.count}</span>`).join(', ')+`</td></tr>`);
+    if(p.frequencies?.length)rows.push(`<tr><th>${p.scale==='ordinal'?'In order':'Most often'}</th><td>`
+      +p.frequencies.map(f=>`${esc(f.value)}${f.label?` ${esc(f.label)}`:''} <span class="quality-count">${f.count}</span>`).join(', ')+`</td></tr>`);
     return rows.length?`<table class="quality-shape">${rows.join('')}</table>`:'';
   };
 

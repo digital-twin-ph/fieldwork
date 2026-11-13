@@ -105,7 +105,7 @@ test('the rewrite is applied when a level is read',()=>{
   assert.match(level.geoJsonUrl,/^https:\/\/media\.githubusercontent\.com\/media\//);
 });
 
-import {resolveCountry,COUNTRIES,alsoMatching,countryName} from '../build/boundary-source.js';
+import {resolveCountry,COUNTRIES,alsoMatching,countryName,ALSO_CALLED} from '../build/boundary-source.js';
 
 // "Considering low friction, why do we not use a country dropdown or a predictive entry
 // selector?" -- the practitioner, 2026-10-18. Choosing which country to study is a judgment;
@@ -257,4 +257,18 @@ test('a study area acquired as administrative units states its country, read fro
   assert.equal(countryOfArea({country:'ZAF',boundary:{boundaryID:'BWA-ADM1-1'}}),'ZAF');
   assert.equal(countryOfArea({}),null);
   assert.equal(countryOfArea({boundary:{boundaryID:'local:plan.geojson'}}),null);
+});
+
+// "South Korea" was typed for the MERS outbreak and no country matched: geoBoundaries calls it the Republic of Korea.
+test('a country is found by the name Natural Earth gives it, too',async()=>{
+  assert.equal(resolveCountry('South Korea'),'KOR');
+  assert.equal(resolveCountry('north korea'),'PRK');
+  assert.equal(resolveCountry('Vietnam'),'VNM');
+  assert.equal(resolveCountry('Korea'),null,'two countries are called Korea');
+  assert.equal(resolveCountry('Republic of Korea'),'KOR');
+  const {readFileSync}=await import('node:fs');
+  const ne=JSON.parse(readFileSync(new URL('../assets/natural-earth-110m-countries.json',import.meta.url),'utf8')).countries;
+  const gb=new Map(COUNTRIES.map(c=>[c.iso,c.name]));
+  const differing=ne.filter(c=>gb.has(c.iso)&&gb.get(c.iso)!==c.name).map(c=>`${c.iso} ${c.name}`).sort();
+  assert.deepEqual(ALSO_CALLED.map(c=>`${c.iso} ${c.name}`).sort(),differing,'the other names are Natural Earth\'s, all of them');
 });

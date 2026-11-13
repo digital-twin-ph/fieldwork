@@ -178,7 +178,7 @@ function plotKey(p:Polygons,classed:ReturnType<typeof classifyValues>,esc:Escape
   // label is a colour with no referent. `EveryMarkIsInTheKey` asks the converse of this.
   //
   // Laid out in rows of two rather than a strip, because a class label is a phrase ("Southwark
-  // and Vauxhall Company only") and not a number, and a strip of 34-pixel swatches has nowhere
+  // and Vauxhall Company only") and not a number, and a strip of 56-pixel swatches has nowhere
   // to put one.
   if(grouped){
     const perRow=2,swatch=11;
@@ -198,7 +198,7 @@ function plotKey(p:Polygons,classed:ReturnType<typeof classifyValues>,esc:Escape
   // sub-district that sits on one. Experiment 137.
   const values=shadedValues(p.features);
   const lowest=Math.min(...values);
-  const width=34,left=20,top=250;
+  const width=56,left=24,top=250;
   const round=(v:number)=>{const a=Math.abs(v);return a>=100?v.toFixed(0):a>=10?v.toFixed(1):v.toFixed(2);};
   const swatches=classed.colours.map((colour,i)=>
     `<rect x="${left+i*width}" y="${top}" width="${width}" height="10" fill="${colour}" `
@@ -206,7 +206,7 @@ function plotKey(p:Polygons,classed:ReturnType<typeof classifyValues>,esc:Escape
   // Edge labels, not per-class ranges: the breaks are the boundaries BETWEEN classes, and
   // printing them under the gaps is what makes a ramp readable at this size.
   const edges=[lowest,...classed.breaks].map((v,i)=>
-    `<text x="${left+i*width}" y="${top+21}" font-size="8" text-anchor="middle" `
+    `<text x="${left+i*width}" y="${top+23}" font-size="14" text-anchor="middle" `
     +`fill="${FIGURE_ROLE.quietInk}">${round(v)}</text>`).join('');
   return swatches+edges+key;
 }

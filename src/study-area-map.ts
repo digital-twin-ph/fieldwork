@@ -1,6 +1,7 @@
 import type {WorkflowNode,AreaParams,Boundary,Polygon,Position} from './types.js';
 import {element} from './dom.js';
 import {errorMessage} from './guards.js';
+import {escapeProse as esc} from './prose.js';
 import type {SiblingArea} from './project.js';
 type DrawnParams=Extract<AreaParams,{source:'drawn'}>;
 type DrawTool='pan'|'bbox'|'polygon'|'circle';
@@ -518,10 +519,11 @@ async function fetchWithProgress(url:string,estimate:number,onProgress:(read:num
   const unitPick=$('#area-boundary-pick') as HTMLSelectElement;
   // The list is filled from the bundled snapshot the moment the dialog opens, so typing
   // "Congo" offers both Congos and the practitioner picks the one they mean.
-  void import('./boundary-source.js').then(({COUNTRIES})=>{
+  void import('./boundary-source.js').then(({COUNTRIES,ALSO_CALLED,countryName})=>{
     const list=$('#area-iso-options');
     if(list.childElementCount)return;
-    list.innerHTML=COUNTRIES.map(c=>`<option value="${c.name}">${c.iso}</option>`).join('');
+    list.innerHTML=COUNTRIES.map(c=>`<option value="${esc(c.name)}">${c.iso}</option>`).join('')
+      +ALSO_CALLED.map(c=>`<option value="${esc(c.name)}">${c.iso}, ${esc(countryName(c.iso))}</option>`).join('');
   });
   $('#area-boundary-check').onclick=async()=>{
     const typed=($('#area-iso') as HTMLInputElement).value;

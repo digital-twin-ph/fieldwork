@@ -6,6 +6,8 @@ import {readStata,type StataTable} from './stata.js';
 import {readXlsx,type Sheet} from './xlsx.js';
 import {fetchOrDeviceCopy,tablesInArchive,archiveEntry,asFile,type RemoteTableSource,progressText} from './remote-table.js';
 import {contentHash} from './project-files.js';
+import {dictionarySheets} from './columns-dialog.js';
+import {guessMapping,readDictionary,proposeFrom,checkDictionary,sameNames,fileRows,type TableDictionary,type DictionaryCheck,type ColumnDeclarations} from './column-metadata.js';
 
 const FILE_BYTES=MAX_TABLE_FILE_BYTES;
 export interface WideChoice {keys:string[]; valueFields:string[]; measureKey:string}
@@ -15,6 +17,8 @@ export interface TableImport {data:DataTable; source:DataTableSource; keys:strin
   unit?:string; wide?:WideChoice;
   /** What the file itself says its columns mean (Stata's variable labels), as unconfirmed proposals. */
   proposed?:import('./column-metadata.js').ColumnDeclarations;
+  /** THE DATA DICTIONARY IMPORTED WITH IT (experiment 211), and its check against the table. */
+  dictionary?:TableDictionary; dictionaryCheck?:DictionaryCheck;
   /** The parsed file, carried only for a wide read, so the node can melt it again on each run. */
   source_table?:{headers:string[];rows:string[][]};
   /** Melt the source table on each run, rather than use the table stored at import. */
@@ -133,6 +137,10 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
     +'<button class="config-close" id="table-close" aria-label="Close">\u00d7</button></header><div class="config-body">'
     +'<p>A <strong>wide</strong> CSV is assumed: one row per subject and a column per variable, which is what a line list, a surveillance export and a published table look like. Name the columns that identify the subject and the columns holding values; the rest of the application reads one long table, and this converts. A table has no geometry; latitude and longitude columns, if present, are ordinary columns.</p>'
     +'<label class="field-label" for="table-file">CSV, Excel or Stata file (up to '+FILE_BYTES/1e6+' MB, '+MAX_TABLE_ROWS.toLocaleString()+' rows)</label><input id="table-file" type="file" accept=".csv,text/csv,.xlsx,.dta">'
+    // ITS DATA DICTIONARY, imported with it (the practitioner, 2026-11-13: "importable and viewable with the table input
+    // that first imports the two"). Kept by the project; what it says each column means is proposed, not applied.
+    +'<label class="field-label" for="table-dictionary-file">Its data dictionary, if it has one: CSV, Excel or Stata, one row per variable</label>'
+    +'<input id="table-dictionary-file" type="file" accept=".csv,text/csv,.xlsx,.dta"><p id="table-dictionary-says" class="muted" role="status"></p>'
     // AN EXCEL WORKBOOK'S SHEET (the practitioner, 2026-11-08: "Yes add Excel"). Shown only for a workbook of several.
     +'<div id="table-sheet-row" hidden><label class="field-label" for="table-sheet">Sheet</label><select id="table-sheet"></select></div>'
     +'<p id="table-workbook" class="muted" hidden></p>'
@@ -219,6 +227,19 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
   shapeSelect.value=existing?(existing.wide?'wide':'long'):'wide';
   if(existing?.wide){measureKeyInput.value=existing.wide.measureKey;valueNameInput.value=existing.valueField;}
   let stata:StataTable|undefined;
+  let dictionaryFile:{name:string;bytes:Uint8Array;sheets:Sheet[]}|undefined;
+  const dictionaryInput=q<HTMLInputElement>('#table-dictionary-file'),dictionarySays=q<HTMLElement>('#table-dictionary-says');
+  dictionaryInput.onchange=async()=>{
+    const chosen=dictionaryInput.files?.[0];dictionaryFile=undefined;dictionarySays.textContent='';
+    if(!chosen)return;
+    try{
+      const bytes=new Uint8Array(await chosen.arrayBuffer()),sheets=dictionarySheets(chosen.name,bytes);
+      const first=sheets[0];
+      if(!first?.headers.length)throw new Error(`${chosen.name} holds no table to read.`);
+      dictionaryFile={name:chosen.name,bytes,sheets};
+      dictionarySays.textContent=`${first.rows.length} variables in ${chosen.name}${sheets.length>1?`, the first of ${sheets.length} sheets`:''}. Kept with the table; what it says is proposed for you to accept.`;
+    }catch(e){dictionarySays.textContent=e instanceof Error?e.message:String(e);}
+  };
   let sheets:Sheet[]|undefined,sheet:Sheet|undefined;
   let file:File|undefined,text='',parsed:ReturnType<typeof parseCSV>|undefined,result:TableImport|undefined,busy=false,serial=0;
   const shape=()=>shapeSelect.value==='wide'?'wide':'long';
@@ -635,8 +656,19 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
       const proposed=stata?Object.fromEntries(kept.map(c=>[c,stata!.labels[stata!.headers.indexOf(c)]?.trim()??''])
         .filter(([,label])=>label).map(([c,label])=>[c,{label,origin:'file' as const,confirmed:false,from:result!.source.filename}])):{};
       const source={...result.source,sha256,...(sheet?{sheet:sheet.name}:{})};
+      // THE DICTIONARY, kept as read and checked against the kept columns. Its descriptions are proposals, over the
+      // file's own labels: a dictionary is the fuller account of the two.
+      let dictionary:TableDictionary|undefined,dictionaryCheck:DictionaryCheck|undefined,described:ColumnDeclarations=proposed;
+      if(dictionaryFile){
+        const sheets=dictionaryFile.sheets.map(s=>({name:s.name,headers:s.headers,rows:s.rows}));
+        dictionary={name:dictionaryFile.name,sha256:await contentHash(dictionaryFile.bytes as Uint8Array<ArrayBuffer>),sheets,readAt:new Date().toISOString()};
+        const first=sheets[0]!,entries=readDictionary(first.headers,first.rows,guessMapping(first.headers));
+        described={...proposed,...proposeFrom(entries,dictionaryFile.name,kept,{},sameNames(kept,entries))};
+        dictionaryCheck=checkDictionary(dictionaryFile.name,entries,{headers:kept,rows:fileRows(result.data,result.wide)});
+      }
       const saved:TableImport={...result,data:{...result.data,source},source,
-        ...(remote?{remote}:{}),...(Object.keys(proposed).length?{proposed}:{}),
+        ...(remote?{remote}:{}),...(Object.keys(described).length?{proposed:described}:{}),
+        ...(dictionary?{dictionary}:{}),...(dictionaryCheck?{dictionaryCheck}:{}),
         ...(result.source_table&&convert.checked?{convertOnRun:true}:{})};
       // AWAITED: the rows are kept on this device before the dialog says they are (found 2026-11-08, a reload right after
       // Save could find the workflow pointing at rows not yet written).

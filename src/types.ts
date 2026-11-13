@@ -221,6 +221,10 @@ export interface ParamsByType {
     /** What the columns mean (experiment 172), and the last dictionary checked against the file. */
     columns?:import('./column-metadata.js').ColumnDeclarations;
     dictionaryCheck?:import('./column-metadata.js').DictionaryCheck;
+    /** THE DATA DICTIONARY IMPORTED WITH THE TABLE (experiment 211): the file as read, every sheet, kept by its digest
+     *  under `dictionaryRef` like the table's own source. The project lists it as one of its dictionaries. */
+    dictionary?:import('./column-metadata.js').TableDictionary;
+    dictionaryRef?:string;
     /** Where `sourceTable` is kept on the device: `source:` and the file's SHA-256. Kept out of the saved workflow
      *  like `dataRef` data, because a wide file of 92 columns did not fit in it (2026-11-04, NYC). */
     sourceRef?:string;

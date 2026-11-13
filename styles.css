@@ -894,6 +894,7 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 .column-dialog{width:min(640px,94vw)}
 .columns-dialog .column-meaning{border:1px solid var(--line);border-radius:6px;padding:8px 10px;margin:8px 0}
 .columns-dialog .column-meaning legend{padding:0 4px}
+.column-meaning input,.column-meaning select,.column-meaning textarea{display:block;width:100%;box-sizing:border-box;font:inherit;font-size:16px;padding:7px 9px}
 .columns-connect{max-height:min(40vh,360px);overflow:auto;margin:6px 0}
 .columns-dialog .inspector-section{display:block;margin:14px 0 4px}
 .columns-map{display:grid;grid-template-columns:repeat(auto-fill,minmax(9rem,1fr));gap:4px 12px}

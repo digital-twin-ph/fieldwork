@@ -12,8 +12,18 @@
 import type {DataTable,TableFinding} from './data-table.js';
 
 export type Origin='practitioner'|'dictionary'|'file';
+/** THE MEASUREMENT SCALE (experiment 211): categories in no order, categories in an order, numbers with no true zero,
+ *  amounts counted from zero. Declared, never inferred: a column of 0, 1 and 2 may be any of the four. */
+export type Scale='nominal'|'ordinal'|'interval'|'ratio';
+export const SCALES:readonly Scale[]=['nominal','ordinal','interval','ratio'];
+/** Each scale in the words the Columns dialog and the profile use. */
+export const SCALE_WORDS:Record<Scale,string>={nominal:'Categories, in no order',ordinal:'Categories in an order',
+  interval:'Numbers with no true zero',ratio:'Amounts counted from zero'};
+/** A value as the file writes it and what it means. For an ordinal column the list is the order. */
+export interface Code {value:string; label:string}
 export interface ColumnMeta {
   label?:string; unit?:string; description?:string;
+  scale?:Scale; codes?:Code[];
   /** Who said it: typed here, read from a data dictionary, or carried in the data file itself (Stata's labels). */
   origin:Origin;
   /** A proposal from a dictionary or file is unconfirmed until the practitioner accepts it. */
@@ -23,10 +33,51 @@ export interface ColumnMeta {
 }
 export type ColumnDeclarations=Record<string,ColumnMeta>;
 
+/** A DATA DICTIONARY AS AN ASSET (experiment 211). The practitioner, 2026-11-13: *"The data dictionary as a first class
+ *  asset should be importable and viewable with the table input that first imports the two."* The file as read, so it
+ *  can be viewed as it was published; what it proposes is in the column declarations, accepted or not. */
+export interface TableDictionary {name:string; sha256:string; sheets:{name:string;headers:string[];rows:string[][]}[]; readAt:string}
+export const dictionaryKeyOf=(sha256:string)=>`dictionary:${sha256}`;
+/** Read back, or undefined: a dictionary that is not one is dropped, never half kept. */
+export function readTableDictionary(raw:unknown):TableDictionary|undefined{
+  const r=raw as Partial<TableDictionary>|null;
+  if(!r||typeof r!=='object'||typeof r.name!=='string'||typeof r.sha256!=='string'||!/^[0-9a-f]{64}$/.test(r.sha256)
+    ||typeof r.readAt!=='string'||!Array.isArray(r.sheets))return undefined;
+  const text=(v:unknown)=>Array.isArray(v)&&v.every(c=>typeof c==='string');
+  if(!r.sheets.every(s=>s&&typeof s.name==='string'&&text(s.headers)&&Array.isArray(s.rows)&&s.rows.every(text)))return undefined;
+  return r as TableDictionary;
+}
+
 /** A data dictionary, as a table of its own: one row per variable. Which of its columns holds what is the
  *  practitioner's mapping, offered with a first guess from its headers. */
-export interface DictionaryMapping {name:string; label?:string; description?:string; unit?:string; missing?:string}
-export interface DictionaryEntry {label?:string; description?:string; unit?:string; missing?:number}
+export interface DictionaryMapping {name:string; label?:string; description?:string; unit?:string; missing?:string; scale?:string; codes?:string}
+export interface DictionaryEntry {label?:string; description?:string; unit?:string; missing?:number; scale?:Scale; codes?:Code[]}
+
+/** Codes as a person writes them: `0 = pre-school; 1 = first class`, one per line or separated by semicolons. A value
+ *  with no meaning given is kept with an empty one. */
+export function readCodes(text:string):Code[]{
+  return text.split(/[;\n]/).map(part=>part.trim()).filter(Boolean).map(part=>{
+    const at=part.indexOf('=');
+    return at<0?{value:part,label:''}:{value:part.slice(0,at).trim(),label:part.slice(at+1).trim()};
+  }).filter(c=>c.value!=='');
+}
+export const writeCodes=(codes?:readonly Code[])=>(codes??[]).map(c=>c.label?`${c.value} = ${c.label}`:c.value).join('; ');
+
+/** WHAT AN R DICTIONARY SAYS: *School class (factor: 0, preschool; 1, 1st class; 2, 2nd class)*, as the outbreaks
+ *  package documents Hagelloch. A factor is R's category with no order, so the scale proposed is nominal; R writes an
+ *  ordered one as `ordered`, and only then is ordinal proposed. Codes as `value, meaning` separated by semicolons, or
+ *  bare values separated by commas (`factor: f, m`). */
+export function codesInDescription(description:string):{scale:Scale;codes:Code[]}|undefined{
+  const found=/\((factor|ordered)\s*:\s*([^)]*)\)/i.exec(description);
+  if(!found)return undefined;
+  const body=found[2]!.trim();
+  const codes=body.includes(';')
+    ?body.split(';').map(p=>p.trim()).filter(Boolean).map(p=>{const at=p.indexOf(',');
+      return at<0?{value:p,label:''}:{value:p.slice(0,at).trim(),label:p.slice(at+1).trim()};})
+    :body.split(',').map(v=>v.trim()).filter(Boolean).map(value=>({value,label:''}));
+  return codes.length?{scale:found[1]!.toLowerCase()==='ordered'?'ordinal':'nominal',codes}:undefined;
+}
+const readScale=(text?:string):Scale|undefined=>{const t=(text??'').trim().toLowerCase();return (SCALES as readonly string[]).includes(t)?t as Scale:undefined;};
 export interface DictionaryCheck {
   source:string;
   /** Variables the dictionary describes that the file does not have. */
@@ -51,6 +102,8 @@ export function guessMapping(headers:readonly string[]):DictionaryMapping{
     ...(find(/^description$/i,/description/i,/meaning|bedeutung/i)?{description:find(/^description$/i,/description/i,/meaning|bedeutung/i)!}:{}),
     ...(find(/^units?$/i,/unit/i)?{unit:find(/^units?$/i,/unit/i)!}:{}),
     ...(find(/^missing(_n)?$/i,/^n_?missing$/i,/(^|_)missing/i)?{missing:find(/^missing(_n)?$/i,/^n_?missing$/i,/(^|_)missing/i)!}:{}),
+    ...(find(/^(measurement_?)?scale$/i)?{scale:find(/^(measurement_?)?scale$/i)!}:{}),
+    ...(find(/^(codes|value_?labels|values)$/i)?{codes:find(/^(codes|value_?labels|values)$/i)!}:{}),
   };
 }
 
@@ -59,7 +112,7 @@ export function readDictionary(headers:readonly string[],rows:readonly string[][
   const at=(column?:string)=>column===undefined?-1:headers.findIndex(h=>h.trim()===column);
   const name=at(mapping.name);
   if(name<0)throw new Error(`The dictionary has no column "${mapping.name}" to read variable names from.`);
-  const [label,description,unit,missing]=[at(mapping.label),at(mapping.description),at(mapping.unit),at(mapping.missing)];
+  const [label,description,unit,missing,scale,codes]=[at(mapping.label),at(mapping.description),at(mapping.unit),at(mapping.missing),at(mapping.scale),at(mapping.codes)];
   const entries=new Map<string,DictionaryEntry>();
   for(const row of rows){
     const key=(row[name]??'').trim();
@@ -67,7 +120,8 @@ export function readDictionary(headers:readonly string[],rows:readonly string[][
     const cell=(i:number)=>i<0?undefined:(row[i]??'').trim()||undefined;
     const count=cell(missing);
     entries.set(key,{...(cell(label)?{label:cell(label)}:{}),...(cell(description)?{description:cell(description)}:{}),
-      ...(cell(unit)?{unit:cell(unit)}:{}),...(count!==undefined&&Number.isFinite(Number(count))?{missing:Number(count)}:{})});
+      ...(cell(unit)?{unit:cell(unit)}:{}),...(count!==undefined&&Number.isFinite(Number(count))?{missing:Number(count)}:{}),
+      ...(readScale(cell(scale))?{scale:readScale(cell(scale))}:{}),...(cell(codes)&&readCodes(cell(codes)!).length?{codes:readCodes(cell(codes)!)}:{})});
   }
   return entries;
 }
@@ -127,8 +181,11 @@ export function proposeFrom(entries:Map<string,DictionaryEntry>,source:string,co
   for(const column of columns){
     const entry=linked[column]?entries.get(linked[column]!):undefined;
     if(!entry||held[column]?.confirmed)continue;
+    // A scale or codes the dictionary states in their own columns win over what its description says in R's words.
+    const said=entry.description?codesInDescription(entry.description):undefined;
+    const scale=entry.scale??said?.scale,codes=entry.codes??said?.codes;
     next[column]={...(entry.label?{label:entry.label}:{}),...(entry.description?{description:entry.description}:{}),
-      ...(entry.unit?{unit:entry.unit}:{}),origin:'dictionary',confirmed:false,from:source};
+      ...(entry.unit?{unit:entry.unit}:{}),...(scale?{scale}:{}),...(codes?.length?{codes}:{}),origin:'dictionary',confirmed:false,from:source};
   }
   return next;
 }
@@ -154,6 +211,13 @@ export function fileRows(table:Pick<DataTable,'keys'|'valueField'|'rows'>,wide?:
     row[text(r.key[wide.measureKey])]=text(r.value);subjects.set(id,row);
   }
   return [...subjects.values()].map(row=>[...wide.keys,...wide.valueFields].map(c=>row[c]??''));
+}
+
+/** The scales and codes the practitioner has accepted, for the profile to follow (experiment 211). A proposal is not
+ *  followed until accepted. */
+export function scalesOf(declared?:ColumnDeclarations):Record<string,{scale?:Scale;codes?:Code[]}>{
+  return Object.fromEntries(Object.entries(declared??{}).filter(([,m])=>m.confirmed&&(m.scale||m.codes?.length))
+    .map(([c,m])=>[c,{...(m.scale?{scale:m.scale}:{}),...(m.codes?.length?{codes:m.codes}:{})}]));
 }
 
 /** A column is described when someone has confirmed a label or a description for it. */
@@ -194,11 +258,12 @@ export function metadataFindings(table:Pick<DataTable,'keys'|'valueField'>,decla
  *  CSV a person can open, share or publish beside the data. */
 export function dictionaryCsv(declared:ColumnDeclarations,columns:readonly string[]):string{
   const cell=(v?:string)=>{const t=v??'';return /[",\n]/.test(t)?`"${t.replace(/"/g,'""')}"`:t;};
-  return ['variable,label,unit,description',...columns.filter(c=>isDescribed(declared[c])).map(c=>{
-    const m=declared[c]!;return [c,m.label,m.unit,m.description].map(cell).join(',');})].join('\n')+'\n';
+  return ['variable,label,unit,description,scale,codes',...columns.filter(c=>isDescribed(declared[c])).map(c=>{
+    const m=declared[c]!;return [c,m.label,m.unit,m.description,m.scale,writeCodes(m.codes)].map(cell).join(',');})].join('\n')+'\n';
 }
 /** The same, as entries, for offering to another table that reads the same source. */
 export function entriesFrom(declared:ColumnDeclarations):Map<string,DictionaryEntry>{
   return new Map(Object.entries(declared).filter(([,m])=>isDescribed(m)).map(([c,m])=>[c,
-    {...(m.label?{label:m.label}:{}),...(m.unit?{unit:m.unit}:{}),...(m.description?{description:m.description}:{})}]));
+    {...(m.label?{label:m.label}:{}),...(m.unit?{unit:m.unit}:{}),...(m.description?{description:m.description}:{}),
+      ...(m.scale?{scale:m.scale}:{}),...(m.codes?.length?{codes:m.codes}:{})}]));
 }

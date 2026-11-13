@@ -3,6 +3,22 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.108.0 — 2026-11-13
+
+- **A table's data dictionary is imported with it, and kept by the project.** Tabular data's Configure… takes the
+  dictionary beside the table file. The project keeps it by its digest and lists it; **View the data dictionary** shows
+  it as published. What it says each column means is proposed for you to accept. A dictionary from a fetched archive is
+  read, not copied. Experiment 211.
+- **What kind of values a column holds.** Describe columns… can say a column holds categories in no order, categories
+  in an order, numbers with no true zero or amounts counted from zero, and list its codes. An R factor in a dictionary
+  proposes its codes and no order. Data quality counts a column of categories in its order, with each code's meaning,
+  and gives it no median. Hagelloch's `class` is the case that asked for it. Chart does not read it yet. Tabular data
+  0.10.0.
+- **"South Korea" finds the Republic of Korea.** The study area's country list also takes the names Natural Earth uses
+  where geoBoundaries' differ (Vietnam, Laos, North Korea and 20 more). Study area 0.9.2.
+- **Two figure labels still under 14 px**: a downloaded map's place labels (12 px) and a classed map's break values
+  (8 px). Map 0.27.3.
+
 ## 0.107.1 — 2026-11-13
 
 - **No text under 14 px in any figure.** Chart and map figures, on screen and downloaded as SVG or PNG, had subtitles,

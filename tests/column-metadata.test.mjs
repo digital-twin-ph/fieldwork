@@ -85,6 +85,32 @@ test('a dictionary made from accepted descriptions, as a CSV and as entries for 
     o3:{label:'Ozone, "8-hour"',origin:'practitioner',confirmed:true},
     pm25:{label:'PM2.5',origin:'dictionary',confirmed:false}};
   assert.equal(dictionaryCsv(declared,['date','count','o3','pm25']),
-    'variable,label,unit,description\ncount,"Visits, ages 5 to 17",visits/day,\no3,"Ozone, ""8-hour""",,\n');
+    'variable,label,unit,description,scale,codes\ncount,"Visits, ages 5 to 17",visits/day,,,\no3,"Ozone, ""8-hour""",,,,\n');
   assert.deepEqual([...entriesFrom(declared).keys()],['count','o3']);
+});
+
+// EXPERIMENT 211: the measurement scale and codes, read from an R dictionary's words and kept with the descriptions.
+import {codesInDescription,readCodes,writeCodes,proposeFrom as proposeFrom211,readTableDictionary,scalesOf} from '../build/column-metadata.js';
+test('an R factor proposes its codes and no order; "ordered" proposes an order',()=>{
+  assert.deepEqual(codesInDescription('School class (factor: 0, preschool; 1, 1st class; 2, 2nd class )'),
+    {scale:'nominal',codes:[{value:'0',label:'preschool'},{value:'1',label:'1st class'},{value:'2',label:'2nd class'}]});
+  assert.deepEqual(codesInDescription('Gender of the individual (factor: f, m)'),{scale:'nominal',codes:[{value:'f',label:''},{value:'m',label:''}]});
+  assert.equal(codesInDescription('Severity (ordered: mild; moderate; severe)').scale,'ordinal');
+  assert.equal(codesInDescription('Age in years (fractions ignored)'),undefined);
+  const declared=proposeFrom211(new Map([['class',{description:'School class (factor: 0, preschool; 1, 1st class)'}]]),'d.csv',['class']);
+  assert.equal(declared.class.scale,'nominal');assert.equal(declared.class.confirmed,false);
+  assert.deepEqual(scalesOf(declared),{},'a proposal is not followed until accepted');
+  declared.class.confirmed=true;
+  assert.equal(scalesOf(declared).class.scale,'nominal');
+});
+test('codes as a person writes them, and back',()=>{
+  const codes=readCodes('0 = pre-school; 1 = first class\n2=second class');
+  assert.deepEqual(codes.map(c=>c.value),['0','1','2']);
+  assert.equal(writeCodes(codes),'0 = pre-school; 1 = first class; 2 = second class');
+});
+test('a kept dictionary that cannot be read is dropped, not half kept',()=>{
+  const ok={name:'d.csv',sha256:'a'.repeat(64),readAt:'2026-11-13T00:00:00Z',sheets:[{name:'d.csv',headers:['variable'],rows:[['x']]}]};
+  assert.ok(readTableDictionary(ok));
+  assert.equal(readTableDictionary({...ok,sha256:'nope'}),undefined);
+  assert.equal(readTableDictionary({...ok,sheets:[{name:'d',headers:[1],rows:[]}]}),undefined);
 });

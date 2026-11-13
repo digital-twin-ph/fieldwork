@@ -829,7 +829,7 @@
     {
       "id": "urn:fieldwork:widget:map_output",
       "nodeType": "map_output",
-      "currentVersion": "0.27.2",
+      "currentVersion": "0.27.3",
       "releases": [
         {
           "version": "0.1.0",
@@ -1000,6 +1000,11 @@
           "version": "0.27.2",
           "path": "widgets/releases/map_output/0.27.2.json",
           "sha256": "6f816a7637e658efd54768335c47cf70a079a0d2f007aea2770fa083d2aa5f6c"
+        },
+        {
+          "version": "0.27.3",
+          "path": "widgets/releases/map_output/0.27.3.json",
+          "sha256": "21e24669d414fd763135d75eaf1b23b72a5b6c7c1b0cfec5dafb61ef916ea660"
         }
       ]
     },
@@ -1817,7 +1822,7 @@
     {
       "id": "urn:fieldwork:widget:study_area",
       "nodeType": "study_area",
-      "currentVersion": "0.9.1",
+      "currentVersion": "0.9.2",
       "releases": [
         {
           "version": "0.1.0",
@@ -1883,6 +1888,11 @@
           "version": "0.9.1",
           "path": "widgets/releases/study_area/0.9.1.json",
           "sha256": "4db9120090b6a2b177a72367e76568d18b53ea60148926175af00a8309312c1a"
+        },
+        {
+          "version": "0.9.2",
+          "path": "widgets/releases/study_area/0.9.2.json",
+          "sha256": "02bf056aa885e5e7faefc2fa5d49f51ee23365e2c9ad6ad54f1fae5a2d7afd06"
         }
       ],
       "previousNodeTypes": [
@@ -1941,7 +1951,7 @@
     {
       "id": "urn:fieldwork:widget:table_input",
       "nodeType": "table_input",
-      "currentVersion": "0.9.3",
+      "currentVersion": "0.10.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -2012,6 +2022,11 @@
           "version": "0.9.3",
           "path": "widgets/releases/table_input/0.9.3.json",
           "sha256": "d41c63951d98dd91f7c52cfb7067b704bf055125ce6aa4c0399cccda55e8ff58"
+        },
+        {
+          "version": "0.10.0",
+          "path": "widgets/releases/table_input/0.10.0.json",
+          "sha256": "9318705bc49d9cf11ec03634058faa561cb84dd20d3ea7ab39191afc33227def"
         }
       ]
     },

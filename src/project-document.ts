@@ -63,6 +63,7 @@ export function unbundledReferences(workflows:Workflow[]):number{
       if(typeof params?.dataRef==='string'&&params.data===undefined)count++;
       if(typeof params?.areaRef==='string'&&params.geometry===undefined)count++;
       if(typeof params?.searchRef==='string'&&params.search===undefined)count++;
+      if(typeof params?.dictionaryRef==='string'&&params.dictionary===undefined)count++;
     }
   return count;
 }

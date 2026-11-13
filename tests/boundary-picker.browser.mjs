@@ -66,7 +66,8 @@ test('a study area can be chosen from administrative boundaries',async({page})=>
   // A NAME, not a code. "Considering low friction, why do we not use a country dropdown or a
   // predictive entry selector?" -- choosing the country is a judgment; remembering that the DRC
   // is COD is a lookup.
-  await expect(page.locator('#area-iso-options option')).toHaveCount(230);
+  // 230 countries by geoBoundaries' names, and 23 by Natural Earth's where they differ ("South Korea", 2026-11-13).
+  await expect(page.locator('#area-iso-options option')).toHaveCount(253);
   await page.locator('#area-iso').fill('Democratic Republic of the Congo');
   await page.locator('#area-adm').selectOption('ADM3');
   await page.locator('#area-boundary-check').click();

@@ -427,12 +427,12 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.27.2",
+   "version": "0.27.3",
    "released": "2026-11-13",
    "changes": [
     {
      "kind": "patch",
-     "description": "No text under 14 px in the figure or its export (the practitioner, who has low vision, 2026-11-13: \"Yes 14px\"): subtitles, legends, tick labels and notes went from 11 and 12 px to 14, axis titles to 15; lines wrap shorter to fit. Map labels and the in-figure notes of catchment, comparison, raster and study-area figures likewise."
+     "description": "No figure text under 14 px: place labels in a downloaded map were 12 px, and a classed map's break values 8 px; both are 14 px, with the class swatches widened to fit."
     }
    ],
    "breaking": false,
@@ -852,12 +852,12 @@
    "migrationFrom": []
   },
   "study_area": {
-   "version": "0.9.1",
-   "released": "2026-11-12",
+   "version": "0.9.2",
+   "released": "2026-11-13",
    "changes": [
     {
      "kind": "patch",
-     "description": "Fixed: a set of units where one sits in another's hole, as Gwangju sits in South Jeolla and Daegu in North Gyeongsang, was refused as \"one part of the area lies inside another\". The test point was taken off the outer unit's outline but could still lie on the edge of its hole, where it read as outside the hole. It is now taken off every ring. South Korea's 17 provinces (geoBoundaries ADM1) are accepted."
+     "description": "A country is found by the name Natural Earth gives it too: \"South Korea\" was typed for the MERS outbreak and no country matched, because geoBoundaries calls it the Republic of Korea. The other names are listed in the picker beside the code."
     }
    ],
    "breaking": false,
@@ -908,12 +908,12 @@
    "migrationFrom": []
   },
   "table_input": {
-   "version": "0.9.3",
-   "released": "2026-11-12",
+   "version": "0.10.0",
+   "released": "2026-11-13",
    "changes": [
     {
-     "kind": "patch",
-     "description": "Inspector standardized (the practitioner, 2026-11-12, on the rules example: \"The Table input inspector configure button is not standardized\"). Settings ends with Configure…, primary, as every standard Inspector does; Fetch the table moved under Result, beside \"Not fetched yet.\""
+     "kind": "minor",
+     "description": "Its data dictionary is imported with the table (the practitioner, 2026-11-13: \"The data dictionary as a first class asset should be importable and viewable with the table input that first imports the two\"). Configure… takes the dictionary beside the table file; the file is kept by its digest, listed by the project, and viewed from the Inspector with View the data dictionary. A column can be described by its measurement scale and its codes; an R factor in a dictionary proposes the codes and no order; the data quality profile counts a column declared as categories, in its order, and gives it no median. Experiment 211."
     }
    ],
    "breaking": false,

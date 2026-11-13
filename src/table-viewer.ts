@@ -12,7 +12,8 @@
 import type {DataTable} from './data-table.js';
 import {wideFrame} from './data-table-ui.js';
 import type {Escape} from './types.js';
-import {profileColumn,type ColumnKind,type ColumnProfile} from './column-profile.js';
+import {profileColumn,type ColumnKind,type ColumnProfile,type ColumnScale} from './column-profile.js';
+import {SCALE_WORDS} from './column-metadata.js';
 
 export interface TableView {
   title:string;
@@ -24,6 +25,8 @@ export interface TableView {
   /** What a ruleset has declared each column to be, where anything has. A column nobody has
    *  bound is not wrong; it is undeclared, and the profile says so by saying nothing. */
   declared?:Record<string,ColumnKind>;
+  /** What the practitioner said each column is: its scale and codes (experiment 211). */
+  scales?:Record<string,ColumnScale>;
   /** Where a column came from, for the columns whose origin is not obvious from the table alone.
    *
    *  The practitioner, 2026-10-27, on reading a related table: *"pandas also gives you the
@@ -97,12 +100,13 @@ export function openTableViewer(view:TableView,esc:Escape):void{
   // rows would be a profile of nothing, and the number a reader acts on has to be the whole
   // column's.
   const profiles=new Map<string,ColumnProfile>(view.columns.map(column=>
-    [column,profileColumn(column,view.rows.map(row=>row[column]),view.declared?.[column])]));
+    [column,profileColumn(column,view.rows.map(row=>row[column]),view.declared?.[column],view.scales?.[column])]));
 
   /** What the file says about this column, in the header, above the values it says it about. */
   const summary=(p:ColumnProfile)=>{
     const parts:string[]=[];
     if(p.declared)parts.push(`declared ${p.declared}`);
+    if(p.scale)parts.push(SCALE_WORDS[p.scale].toLowerCase());
     if(p.absent)parts.push(`<b class="profile-flag">${p.absent} absent</b>`);
     if(p.mismatched)parts.push(`<b class="profile-flag">${p.mismatched} not ${p.declared}s</b>`);
     if(p.numeric)parts.push(`min ${esc(trim(p.numeric.min))} · median ${esc(trim(p.numeric.median))} · max ${esc(trim(p.numeric.max))}`);
@@ -110,8 +114,8 @@ export function openTableViewer(view:TableView,esc:Escape):void{
     // the thing measured; this is a rank-based prompt to go and look at that many values.
     if(p.numeric?.beyondFence)parts.push(`${p.numeric.beyondFence} beyond 1.5×IQR`);
     if(p.distinct!==undefined)parts.push(`${p.distinct} distinct`);
-    if(p.frequencies?.length)parts.push(`most often ${p.frequencies.slice(0,3)
-      .map(f=>`${esc(f.value)} (${f.count})`).join(', ')}`);
+    if(p.frequencies?.length)parts.push(`${p.scale==='ordinal'?'in order':'most often'} ${p.frequencies.slice(0,3)
+      .map(f=>`${esc(f.value)}${f.label?` ${esc(f.label)}`:''} (${f.count})`).join(', ')}`);
     return parts.join(' · ');
   };
   const trim=(n:number)=>Number.isInteger(n)?String(n):n.toFixed(2);

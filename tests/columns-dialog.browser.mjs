@@ -78,7 +78,7 @@ test('the regression table\'s columns described from the dictionary in the same 
   const download=page.waitForEvent('download');
   await dialog.locator('#columns-download').click();
   const csv=readFileSync(await (await download).path(),'utf8');
-  expect(csv.split('\n')[0]).toBe('variable,label,unit,description');
+  expect(csv.split('\n')[0]).toBe('variable,label,unit,description,scale,codes');
   expect(csv).toContain('count,');
   expect(downloads).toBe(1);
 });

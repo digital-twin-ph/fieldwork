@@ -13,6 +13,9 @@
  *  make and does not claim to.
  */
 export type ColumnKind='number'|'boolean'|'term';
+import type {Scale,Code} from './column-metadata.js';
+/** What the practitioner said the column is (experiment 211): its measurement scale and its codes. */
+export interface ColumnScale {scale?:Scale; codes?:readonly Code[]}
 
 export interface ColumnProfile {
   column:string;
@@ -41,8 +44,11 @@ export interface ColumnProfile {
     /** Quartiles and the 1.5x fence they imply. Rank-based, so a skewed column does not make
      *  the fence meaningless, and no normality is assumed or claimed. */
     q1:number;q3:number;lowerFence:number;upperFence:number;beyondFence:number};
-  /** Present for a column that reads as categories: what is in it, and how often. */
-  frequencies?:{value:string;count:number}[];
+  /** Present for a column that reads as categories: what is in it, and how often. A declared code's meaning is beside
+   *  its value, and an ordinal column's counts are in its declared order. */
+  frequencies?:{value:string;count:number;label?:string}[];
+  /** The measurement scale declared for the column, when one was. */
+  scale?:Scale;
   distinct?:number;
 }
 
@@ -72,7 +78,7 @@ const quantile=(sorted:number[],p:number)=>{
 const FREQUENCY_SHOWN=5;
 const EXAMPLES_SHOWN=3;
 
-export function profileColumn(column:string,values:unknown[],declared?:ColumnKind):ColumnProfile{
+export function profileColumn(column:string,values:unknown[],declared?:ColumnKind,said?:ColumnScale):ColumnProfile{
   const total=values.length;
   const present=values.filter(v=>!isAbsent(v));
   const absent=total-present.length;
@@ -90,7 +96,9 @@ export function profileColumn(column:string,values:unknown[],declared?:ColumnKin
     declared==='number'?asNumber(v)!==undefined
     :declared==='boolean'?asBoolean(v)!==undefined:false).length;
 
-  const profile:ColumnProfile={column,declared,total,absent,missing,empty,
+  // A CODE IS NOT A QUANTITY (211): a column declared to hold categories has no median, whatever its values look like.
+  const categories=said?.scale==='nominal'||said?.scale==='ordinal';
+  const profile:ColumnProfile={column,declared,...(said?.scale?{scale:said.scale}:{}),total,absent,missing,empty,
     mismatched:mismatchedValues.length,
     examples:[...new Set(mismatchedValues.map(v=>String(v)))].slice(0,EXAMPLES_SHOWN),
     repairable};
@@ -98,7 +106,7 @@ export function profileColumn(column:string,values:unknown[],declared?:ColumnKin
   // The shape of the numbers, read from whatever reads as a number -- including numeric text,
   // because a reader asking "what is in this column" is not asking about its JavaScript type.
   const numbers=present.map(asNumber).filter((n):n is number=>n!==undefined).sort((a,b)=>a-b);
-  if(numbers.length>=4){
+  if(numbers.length>=4&&!categories){
     const q1=quantile(numbers,0.25),q3=quantile(numbers,0.75),iqr=q3-q1;
     const lowerFence=q1-1.5*iqr,upperFence=q3+1.5*iqr;
     profile.numeric={min:numbers[0],max:numbers[numbers.length-1],
@@ -112,8 +120,11 @@ export function profileColumn(column:string,values:unknown[],declared?:ColumnKin
     const counts=new Map<string,number>();
     for(const v of present)counts.set(String(v),(counts.get(String(v))??0)+1);
     profile.distinct=counts.size;
-    profile.frequencies=[...counts].sort((a,b)=>b[1]-a[1]).slice(0,FREQUENCY_SHOWN)
-      .map(([value,count])=>({value,count}));
+    const codes=said?.codes??[];
+    const rank=(value:string)=>{const at=codes.findIndex(c=>c.value===value);return at<0?codes.length:at;};
+    const labelOf=(value:string)=>codes.find(c=>c.value===value)?.label||undefined;
+    profile.frequencies=[...counts].sort((a,b)=>said?.scale==='ordinal'?rank(a[0])-rank(b[0])||b[1]-a[1]:b[1]-a[1])
+      .slice(0,FREQUENCY_SHOWN).map(([value,count])=>({value,count,...(labelOf(value)?{label:labelOf(value)}:{})}));
   }
   return profile;
 }

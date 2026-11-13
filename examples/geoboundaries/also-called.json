@@ -1,0 +1,99 @@
+{
+ "note": "Other names for countries in countries.json: the Natural Earth name wherever it differs from the geoBoundaries one (\"South Korea\" for \"Republic of Korea\"). Taken from assets/natural-earth-110m-countries.json; tests/boundary-source.test.mjs checks the two agree.",
+ "source": "https://github.com/nvkelso/natural-earth-vector",
+ "licence": "Public domain. Natural Earth states no restrictions on use.",
+ "names": [
+  {
+   "iso": "ATA",
+   "name": "Antarctica"
+  },
+  {
+   "iso": "BIH",
+   "name": "Bosnia and Herz."
+  },
+  {
+   "iso": "BOL",
+   "name": "Bolivia"
+  },
+  {
+   "iso": "BRN",
+   "name": "Brunei"
+  },
+  {
+   "iso": "CAF",
+   "name": "Central African Rep."
+  },
+  {
+   "iso": "COD",
+   "name": "Dem. Rep. Congo"
+  },
+  {
+   "iso": "DOM",
+   "name": "Dominican Rep."
+  },
+  {
+   "iso": "FLK",
+   "name": "Falkland Is."
+  },
+  {
+   "iso": "GNQ",
+   "name": "Eq. Guinea"
+  },
+  {
+   "iso": "IRN",
+   "name": "Iran"
+  },
+  {
+   "iso": "KOR",
+   "name": "South Korea"
+  },
+  {
+   "iso": "LAO",
+   "name": "Laos"
+  },
+  {
+   "iso": "MDA",
+   "name": "Moldova"
+  },
+  {
+   "iso": "PRK",
+   "name": "North Korea"
+  },
+  {
+   "iso": "PSE",
+   "name": "Palestine"
+  },
+  {
+   "iso": "RUS",
+   "name": "Russia"
+  },
+  {
+   "iso": "SLB",
+   "name": "Solomon Is."
+  },
+  {
+   "iso": "SSD",
+   "name": "S. Sudan"
+  },
+  {
+   "iso": "SWZ",
+   "name": "eSwatini"
+  },
+  {
+   "iso": "SYR",
+   "name": "Syria"
+  },
+  {
+   "iso": "TZA",
+   "name": "Tanzania"
+  },
+  {
+   "iso": "VEN",
+   "name": "Venezuela"
+  },
+  {
+   "iso": "VNM",
+   "name": "Vietnam"
+  }
+ ]
+}

@@ -71,7 +71,7 @@ import {savedReadingsSummary,forgetSavedReadings} from './satellite-reading-stor
 import {MODIS_RULES,type ModisQualityRule} from './satellite-areas.js';
 import {openProductsDialog,productCard} from './satellite-products-ui.js';
 import {fetchRemoteTable,useDeviceCopies,archiveOnDevice,progressText} from './remote-table.js';
-import {describableColumns,fileRows,isDescribed,metadataFindings,entriesFrom} from './column-metadata.js';
+import {describableColumns,fileRows,isDescribed,metadataFindings,entriesFrom,dictionaryKeyOf,scalesOf,type TableDictionary} from './column-metadata.js';
 import {openColumnsDialog} from './columns-dialog.js';
 import {castColumn,applyRepairs} from './column-profile.js';
 import {openDataQuality} from './data-quality-ui.js';
@@ -167,7 +167,7 @@ import {contentHash} from './project-files.js';
 import {projectDocument,readProjectDocument,unbundledReferences,PROJECT_DOCUMENT_SCHEMA} from './project-document.js';
 import {openPackageDialog} from './package-ui.js';
 import {syncProjectManifest} from './project-manifest.js';
-import {BUILT_IN_PROJECTS,WORKFLOW_LABELS,projectOfWorkflow,projectById,siblingAreas,newProject,validateProject,siblingInputs,payloadDigest,tableDataKey,dataPayloadKey,INLINE_DATA_LIMIT,areaPayloadKey,searchPayloadKey,payloadsOf,heldPayloadsOf,reconcilePayloadRefs,dehydrateWorkflow,hydrateWorkflow,projectSafety,unexportedWork,exportPredatesWork,type Project,type ProjectWork} from './project.js';
+import {withDictionary,BUILT_IN_PROJECTS,WORKFLOW_LABELS,projectOfWorkflow,projectById,siblingAreas,newProject,validateProject,siblingInputs,payloadDigest,tableDataKey,dataPayloadKey,INLINE_DATA_LIMIT,areaPayloadKey,searchPayloadKey,payloadsOf,heldPayloadsOf,reconcilePayloadRefs,dehydrateWorkflow,hydrateWorkflow,projectSafety,unexportedWork,exportPredatesWork,type Project,type ProjectWork} from './project.js';
 import {mountPanelLayout} from './panel-layout.js';
 import {newMapOutput,mapEvidence} from './map-output.js';
 import {newTableOutput,pointTableMarkup,pointTableEvidence} from './table-output.js';
@@ -3798,9 +3798,11 @@ function renderInspector(){
         +`<p class="standard-state" data-table-meaning>What the columns mean: ${described} of ${columns.length} described`
           +(proposed?`, ${proposed} proposed and not yet accepted`:'')+'.'
           +(described<columns.length?' A column nobody has described is a data quality finding.':'')+'</p>'
+        +(p.dictionary?`<p class="standard-state" data-table-dictionary>Data dictionary: ${esc(p.dictionary.name)}, ${p.dictionary.sheets[0]?.rows.length??0} variables.</p>`:'')
         +'<div class="inspector-actions"><button id="quick-look" class="button">Quick look at the table</button>'
         +'<button id="table-quality" class="button">Data quality</button>'
-        +'<button id="describe-columns" class="button">Describe columns\u2026</button></div>'
+        +'<button id="describe-columns" class="button">Describe columns\u2026</button>'
+        +(p.dictionary?'<button id="view-dictionary" class="button">View the data dictionary</button>':'')+'</div>'
         +(!workflow.edges.some(e=>e.from===n.id)?'<div class="inspector-actions"><button id="add-table-view" class="button small">\uff0b Display as table</button></div>':'')
         +'<div data-standard-result></div>');
     }else content+=standardSection('Result',`<p class="standard-result">${waiting?'Not fetched yet.':'No table imported yet. This step cannot run until a table is imported.'}</p>`
@@ -5249,7 +5251,7 @@ function renderInspector(){
   });
   optionalElement('#quick-look')?.addEventListener('click',()=>{
     const table=getNode(workflow,n.id,'table_input').params;
-    openTableViewer(tableViewOf(table.data,n.params.label||'Tabular data'),esc);
+    openTableViewer({...tableViewOf(table.data,n.params.label||'Tabular data'),scales:scalesOf(table.columns)},esc);
   });
   // A table's columns are its keys plus its one value field, which is the contract the widget
   // already declares. A ruleset reads them by those names, so the profile speaks of them too.
@@ -5275,7 +5277,7 @@ function renderInspector(){
       findings:[...(table.data.findings??[]),...metadataFindings(table.data,table.columns,table.dictionaryCheck,table.wide)],
       columns:[...table.data.keys,table.data.valueField],
       rows:table.data.rows.map(row=>({...row.key,[table.data.valueField]:row.value})),
-      declared:declaredKinds(workflow,n.id),repairs:[],
+      declared:declaredKinds(workflow,n.id),scales:scalesOf(table.columns),repairs:[],
       // A tabular import casts its value column at import, and a cell it cannot read is a finding
       // kept as unknown. No repair is offered here yet. 117, 164.
       onRepair:()=>{},onRemoveRepair:()=>{}},esc);
@@ -5291,16 +5293,33 @@ function renderInspector(){
       rows:fileRows(table.data,table.wide),
       ...(archive?{archive:{entries:archive.entries,read:async entry=>archive.read(entry)}}:{}),
       ...(own?{own:{name:own.name,entries:new Map(Object.entries(own.entries)),savedAt:own.savedAt}}:{}),
-      onSave:(declared,check)=>{
+      ...(table.dictionary?{imported:{name:table.dictionary.name,sheets:table.dictionary.sheets}}:{}),
+      onSave:async(declared,check,loaded)=>{
+        // A DICTIONARY READ IN THIS DIALOG becomes the table's own, kept and listed as one imported with it is.
+        const dictionary:TableDictionary|undefined=loaded?{name:loaded.name,sha256:await contentHash(loaded.bytes as Uint8Array<ArrayBuffer>),
+          sheets:loaded.sheets.map(s=>({name:s.name,headers:s.headers,rows:s.rows})),readAt:new Date().toISOString()}:undefined;
+        if(dictionary&&!await keepDataset(dictionaryKeyOf(dictionary.sha256),dictionary))return false;
         const saved=change(w=>{const node=getNode(w,n.id,'table_input');
           if(Object.keys(declared).length)node.params.columns=declared;else delete node.params.columns;
+          if(dictionary){node.params.dictionary=dictionary;node.params.dictionaryRef=dictionaryKeyOf(dictionary.sha256);}
           if(check)node.params.dictionaryCheck=check;})!==false;
+        if(saved&&dictionary)listDictionary(n.id,dictionary,table.source?.filename??table.data.source?.filename??'');
         // THE PRACTITIONER'S DICTIONARY FOR THIS SOURCE, kept on this device so the next table reading the same file
         // is offered it. Accepted descriptions only.
         const entries=entriesFrom(declared);
         if(saved&&key&&entries.size)keepOwnDictionary(key,{name:n.params.label||'Tabular data',
           entries:Object.fromEntries(entries),savedAt:new Date().toISOString()});
         return saved;}},esc);
+  });
+  // THE DICTIONARY AS IT WAS PUBLISHED, every sheet, read-only (experiment 211).
+  optionalElement('#view-dictionary')?.addEventListener('click',()=>{
+    const dictionary=getNode(workflow,n.id,'table_input').params.dictionary;if(!dictionary)return;
+    const view=(at:number):void=>{const sheet=dictionary.sheets[at]!;
+      openTableViewer({title:`${dictionary.name}${dictionary.sheets.length>1?` \u00b7 ${sheet.name}`:''}`,columns:sheet.headers,
+        rows:sheet.rows.map(r=>Object.fromEntries(sheet.headers.map((h,i)=>[h,r[i]??'']))),
+        note:`The data dictionary imported with ${n.params.label||'this table'}, as published: ${sheet.rows.length} rows. Read ${new Date(dictionary.readAt).toLocaleDateString()}.`,
+        ...(dictionary.sheets.length>1?{steps:{labels:dictionary.sheets.map(s=>s.name),at,go:view}}:{})},esc);};
+    view(0);
   });
   optionalElement('#add-table-view')?.addEventListener('click',()=>change(w=>{const id=`table-view-${Date.now()}`;w.nodes.push({id,type:'table_output',x:n.x+270,y:n.y,params:{label:'Imported table'}});w.edges.push({id:`e-${Date.now()}`,from:n.id,to:id,port:'table'});selected=id;}));
   if(n.type==='table_input')optionalElement('#configure-step')?.addEventListener('click',()=>{
@@ -5312,7 +5331,10 @@ function renderInspector(){
       // whose write had not committed, and the table was gone (CI, two runs of three).
       if(result.data.rows.length&&!await keepDataset(tableDataKey(result.data),result.data))
         throw new Error('This table could not be kept on this device, so it was not added. Export the project to keep it.');
-      return change(w=>{const node=getNode(w,n.id,'table_input');node.params.data=result.data;node.params.keys=result.keys;node.params.valueField=result.valueField;node.params.unit=result.unit;node.params.source=result.source;
+      // ITS DATA DICTIONARY, kept the same way and listed by the project (experiment 211).
+      if(result.dictionary&&!await keepDataset(dictionaryKeyOf(result.dictionary.sha256),result.dictionary))
+        throw new Error('The data dictionary could not be kept on this device, so the table was not added.');
+      const kept=change(w=>{const node=getNode(w,n.id,'table_input');node.params.data=result.data;node.params.keys=result.keys;node.params.valueField=result.valueField;node.params.unit=result.unit;node.params.source=result.source;
         // The shape the FILE was in, so the editor reopens in it and the receipt can cite the
         // columns taken. Deleted rather than set undefined when a table is re-read as long: a
         // stored `wide` block that no longer describes the table is a claim, and core.ts refuses
@@ -5328,7 +5350,11 @@ function renderInspector(){
         if(result.source_table){node.params.sourceTable=result.source_table;
           if(result.source?.sha256)node.params.sourceRef=`source:${result.source.sha256}`;else delete node.params.sourceRef;}
         else{delete node.params.sourceTable;delete node.params.sourceRef;delete node.params.convertOnRun;}
-        if(result.source_table){if(result.convertOnRun)node.params.convertOnRun=true;else delete node.params.convertOnRun;}},{requirePersistence:true});
+        if(result.source_table){if(result.convertOnRun)node.params.convertOnRun=true;else delete node.params.convertOnRun;}
+        if(result.dictionary){node.params.dictionary=result.dictionary;node.params.dictionaryRef=dictionaryKeyOf(result.dictionary.sha256);}
+        if(result.dictionaryCheck)node.params.dictionaryCheck=result.dictionaryCheck;},{requirePersistence:true});
+      if(kept!==false&&result.dictionary)listDictionary(n.id,result.dictionary,result.source.filename);
+      return kept;
     },current.keys.length?{keys:current.keys,valueField:current.valueField,unit:current.unit,primaryKey:current.data.primaryKey,secondaryKeys:current.data.secondaryKeys,
       ...(current.wide?{wide:current.wide}:{}),...(current.distinctValuesFor?.length?{distinctValuesFor:current.distinctValuesFor}:{})}:undefined,
     // THE STANDARD FRAME: the step's own name, and the one setting that can be applied without reading the file again.
@@ -6519,6 +6545,14 @@ const OWN_DICTIONARIES='fieldwork-dictionaries-v1';
 const ownDictionaries=():Record<string,OwnDictionary>=>{
   try{return JSON.parse(localStorage.getItem(OWN_DICTIONARIES)||'{}') as Record<string,OwnDictionary>;}catch{return {};}
 };
+/** THE PROJECT LISTS THE DICTIONARY (experiment 211): which Table input imported it, with which table. A canvas in no
+ *  project, or a shipped example's, keeps it on the node alone, and it is listed when the workflow is filed. */
+function listDictionary(nodeId:string,dictionary:TableDictionary,table:string):void{
+  const project=projectNow(),key=storageKey(workflow);
+  if(!project||!readProjects().some(p=>p.id===project.id))return;
+  writeProjects(readProjects().map(p=>p.id===project.id?withDictionary(p,{sha256:dictionary.sha256,name:dictionary.name,
+    workflow:key,node:nodeId,table,importedAt:dictionary.readAt}):p));
+}
 const keepOwnDictionary=(key:string,dictionary:OwnDictionary)=>{
   try{localStorage.setItem(OWN_DICTIONARIES,JSON.stringify({...ownDictionaries(),[key]:dictionary}));}catch{/* kept in the project either way */}
 };

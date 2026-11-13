@@ -92,6 +92,18 @@ Accept each proposal, or **Accept every proposal**; typing in a field makes the 
 
 A Stata file's own variable labels are proposed the same way when it is imported.
 
+**Its data dictionary, imported with it.** Configure… takes a second, optional file beside the table: its data
+dictionary. The project keeps it, and **View the data dictionary** under Result shows it as it was published. What it
+says each column means is proposed, not yet accepted. A dictionary chosen later in Describe columns… is kept the same
+way; one inside a fetched archive is not, because the project keeps where a fetched source came from, not its contents.
+
+**What kind of values.** Each column can say its values are *categories in no order*, *categories in an order*,
+*numbers with no true zero* or *amounts counted from zero*, and list its codes: `0 = pre-school; 1 = first class`. For
+categories in an order, the list is the order. A dictionary written in R's words, *(factor: 0, preschool; 1, 1st
+class)*, proposes the codes and **no order**, because a factor is R's word for categories with none; whether they have
+one is yours to say. Data quality then counts a column of categories, in its order, with what each code means, and
+gives it no median.
+
 ## Data quality
 
 A file is not refused for a quality problem. Every row is kept, the step's Result names what Data quality found, and the

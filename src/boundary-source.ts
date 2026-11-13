@@ -57,6 +57,7 @@ export interface BoundaryLevel {
 }
 
 import countries from '../examples/geoboundaries/countries.json';
+import alsoCalled from '../examples/geoboundaries/also-called.json';
 
 /** Every country geoBoundaries publishes, by ISO3 and name.
  *
@@ -75,6 +76,9 @@ export const COUNTRIES:readonly {iso:string;name:string}[]=countries.countries;
  *  Accepts the code directly, because somebody who knows it should not be made to scroll, and
  *  matches a name case- and space-insensitively. A prefix match is accepted only when it is
  *  unambiguous -- "Congo" matches two countries and must not silently pick one of them. */
+/** Other names a country goes by: Natural Earth's, where it differs. "South Korea" is the Republic of Korea, and the
+ *  practitioner looking for the MERS outbreak typed it and was told no country matches. */
+export const ALSO_CALLED:readonly {iso:string;name:string}[]=alsoCalled.names;
 export const countryName=(iso:string)=>COUNTRIES.find(c=>c.iso===iso)?.name??iso;
 
 /** THE COUNTRY A STUDY AREA STATES IT IS IN, or null where it states none.
@@ -119,7 +123,8 @@ export const countryOfArea=(params?:{country?:string;boundary?:{boundaryID?:stri
 export function alsoMatching(typed:string,chosen:string):readonly string[]{
   const needle=typed.trim().toLowerCase();
   if(!needle)return [];
-  return COUNTRIES.filter(c=>c.iso!==chosen&&c.name.toLowerCase().includes(needle)).map(c=>c.name);
+  const near=new Set([...COUNTRIES,...ALSO_CALLED].filter(c=>c.iso!==chosen&&c.name.toLowerCase().includes(needle)).map(c=>c.iso));
+  return COUNTRIES.filter(c=>near.has(c.iso)).map(c=>c.name);
 }
 
 export function resolveCountry(typed:string):string|null{
@@ -127,10 +132,11 @@ export function resolveCountry(typed:string):string|null{
   if(!needle)return null;
   const byCode=COUNTRIES.find(c=>c.iso.toLowerCase()===needle);
   if(byCode)return byCode.iso;
-  const exact=COUNTRIES.filter(c=>c.name.toLowerCase()===needle);
-  if(exact.length===1)return exact[0].iso;
-  const prefix=COUNTRIES.filter(c=>c.name.toLowerCase().startsWith(needle));
-  return prefix.length===1?prefix[0].iso:null;
+  const names=[...COUNTRIES,...ALSO_CALLED];
+  const exact=new Set(names.filter(c=>c.name.toLowerCase()===needle).map(c=>c.iso));
+  if(exact.size===1)return [...exact][0];
+  const prefix=new Set(names.filter(c=>c.name.toLowerCase().startsWith(needle)).map(c=>c.iso));
+  return prefix.size===1?[...prefix][0]:null;
 }
 
 export const ADM_LEVELS=['ADM0','ADM1','ADM2','ADM3','ADM4','ADM5'] as const;

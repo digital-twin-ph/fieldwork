@@ -427,12 +427,12 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.30.1",
+   "version": "0.30.2",
    "released": "2026-11-14",
    "changes": [
     {
      "kind": "patch",
-     "description": "Rasters side by side are drawn in Notes as in Results, cells and all: the districts they sit in had been drawn alone. Every raster and polygon layer wired to a map is in its layer list and its note, not only the first."
+     "description": "Polygon layers past the first are listed once, through the collection the run merges them into, as before 0.30.1; only rasters past the first are newly listed."
     }
    ],
    "breaking": false,

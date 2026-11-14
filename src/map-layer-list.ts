@@ -85,9 +85,10 @@ const KIND_DEPTH:Record<LayerKind,number>={BasemapLayer:0,RasterLayer:1,AreaLaye
 
 const KIND_BY_PORT=(port:string):LayerKind|null=>
   port==='area'?'AreaLayer'
-  // EVERY POLYGON AND RASTER PORT, not only the first (2026-11-14: Rwanda's three rasters side by side were one layer here,
-  // so the map's note named one source of three).
-  :port==='polygons'||/^polygons_[2-6]$/.test(port)?'PolygonsLayer'
+  :port==='polygons'?'PolygonsLayer'
+  // EVERY RASTER PORT, not only the first (2026-11-14: Rwanda's three rasters side by side were one layer here, so the map's
+  // note named one source of three). Polygon ports past the first are not here because the run merges them into
+  // `polygons`, whose members list each one; counting them again listed South London's Thames twice.
   :port==='raster'||/^raster_[2-4]$/.test(port)||port==='ground'?'RasterLayer'
   :port==='network'?'NetworkLayer'
   :port==='points'||/^points_[2-8]$/.test(port)||port==='context'||port==='decisions'?'PointsLayer'

@@ -38,9 +38,11 @@ const REMAINDER=/\band [\d,]+ more\b/g;
 /** "Rule 5: 3" names a rule by its place in the ruleset, as "SK_39" names a case: the 5 is a label, the 3 the result
  *  (found 2026-11-13 on MERS's event review, whose fifth rule's number matched no value). */
 const RULE_LABEL=/\bRule \d+(?=:)/g;
+/** "(Besag and Clifford 1991)" cites a method; its year is a reference, not a result (2026-11-14). */
+const CITATION=/\([A-Z][A-Za-z.' -]+(?: and [A-Z][A-Za-z.' -]+| et al\.?)?,? (?:1[89]|20)\d{2}[a-z]?\)/g;
 const IN_A_NAME=/[A-Za-z_][\w]*[-_:]\d[\w.-]*|\b[A-Za-z]+\d[\w]*/g;
 /** The numbers a sentence states, each with the decimals it is shown to. */
-const stated=text=>[...String(text).replace(STANDARD,' ').replace(DATE,' ').replace(REMAINDER,' ').replace(RULE_LABEL,' ').replace(IN_A_NAME,' ')
+const stated=text=>[...String(text).replace(STANDARD,' ').replace(DATE,' ').replace(REMAINDER,' ').replace(RULE_LABEL,' ').replace(CITATION,' ').replace(IN_A_NAME,' ')
   .matchAll(/-?\d[\d,]*(?:\.(\d+))?(\s?%)?/g)]
   .map(m=>({value:Number(m[0].replace(/[,%\s]/g,'')),decimals:m[1]?.length??0,percent:!!m[2]})).filter(n=>Number.isFinite(n.value));
 const numbersIn=text=>[...String(text).matchAll(/-?\d[\d,]*(?:\.\d+)?(?:e-?\d+)?/gi)].map(m=>Number(m[0].replace(/,/g,''))).filter(Number.isFinite);

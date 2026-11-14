@@ -1,6 +1,6 @@
 # Append rows
 
-_Created 2026-11-03 · Updated 2026-11-06_
+_Created 2026-11-03 · Updated 2026-11-14_
 
 **A summary step.** It stacks the rows of two or more tables, one after another, as pandas `concat` does.
 
@@ -16,9 +16,12 @@ because empty there means the question was not asked.
 | --- | --- |
 | **records** | the first table, whose rows come first |
 | **records_2** | the second table, whose rows follow |
-| **records_3**, ... | each further table, added with **＋ Add a table** in the Inspector |
+| **records_3**, ... | each further table, added with **＋ Add a table** in Configure… |
 
 ## How to use it
+
+Connect the tables, then open **Configure…**. The **Preview** shows the stacked table your settings make, and nothing
+changes until **Apply**.
 
 | Setting | What it decides |
 | --- | --- |

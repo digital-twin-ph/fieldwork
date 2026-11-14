@@ -12,6 +12,9 @@ fn panic(_info: &PanicInfo) -> ! {
 /// Logistic and Poisson regression. Experiment 167.
 pub mod glm;
 
+/// The space-time permutation scan's test. TODO 17, step 3.
+pub mod scan;
+
 fn ratio(numerator: f64, denominator: f64) -> f64 {
     if denominator > 0.0 {
         numerator / denominator

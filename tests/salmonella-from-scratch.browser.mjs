@@ -148,10 +148,14 @@ test('four questions about a Salmonella outbreak, each its own short workflow',a
     await tidy(page);await wire(page,select,append,'records');
     await tidy(page);await wire(page,panel,append,'records_2');
     await page.locator(`.react-flow__node[data-id="${append}"]`).click();
-    await page.locator('#append-name-source').check();
-    await page.locator('#append-first').fill('cases');await page.locator('#append-first').press('Tab');
-    await page.locator('#append-second').fill('matched panel controls');await page.locator('#append-second').press('Tab');
-    await page.locator('#append-new-key').check();
+    await page.locator('#configure-step').click();
+    const ap=page.locator('#append-config');
+    await ap.locator('#append-name-source').check();
+    await ap.locator('#append-first').fill('cases');await ap.locator('#append-first').press('Tab');
+    await ap.locator('#append-second').fill('matched panel controls');await ap.locator('#append-second').press('Tab');
+    await ap.locator('#append-new-key').check();
+    await ap.locator('#config-apply').click();
+    await expect(page.locator('#inspector-content .standard-sentence')).toContainText('"source" says which: cases, matched panel controls');
     await add(page,'two_by_two');const tbt=await idOf(page,'two_by_two');
     await tidy(page);await wire(page,append,tbt,'records');
     await caseControl(page,tbt);

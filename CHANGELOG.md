@@ -3,6 +3,16 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.115.0 — 2026-11-14
+
+- **A faster space-time scan.** Its shuffles stop once 50 have scored at least as high as the most likely cluster
+  (Besag and Clifford 1991), and the result says how many ran; a significant cluster runs them all and keeps its
+  p-value. The day-by-day replay runs its days across the device's cores. And the test runs in the Rust kernel,
+  shuffle for shuffle the same as before. Hagelloch's replay, in Node: 44 s to 8.3 s; the scan, 5.4 s to 3.4 s. Lab
+  check 46 re-run: agrees.
+- **Append rows on the standard Inspector and dialog**: the tables, the source column and its labels, numbers and a
+  new key are set in Configure…, with the stacked table as the preview. Append rows 0.2.2.
+
 ## 0.114.1 — 2026-11-14
 
 - **The population example compares each model with the census.** Each district's share in a model minus its share in

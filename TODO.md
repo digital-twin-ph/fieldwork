@@ -108,6 +108,24 @@ between sequences, and lineage import and export between places. No order set; a
    date is not an onset date and a recent week holds fewer sequences than cases. A further lead: a video, *Precision
    pathogen tracking: the power of genomic epidemiology* (YouTube, Computational Genome Biology).
 
+**Found 2026-11-14, from the practitioner's questions:** (1) Append rows was changed without moving to the standard
+Inspector and dialog: do it, with Join a table to the study area next when it is touched. (2) Map shows a polygon's
+name, key and shaded value, never its other attributes, so zonal statistics are not on the map: a table under the map
+linked to it, or every attribute in the popup, to be chosen. **Chosen 2026-11-14: the table under the map, linked**
+(a district's row highlights when the district is chosen, and the reverse); for 0.115.0. (3) A polygon layer reaches Table output two ways: into
+its polygons input as a points-style table with empty Longitude and Latitude and attributes 12 to a page, or into its
+table input as a plain table; make the first read as the second. The practitioner, 2026-11-14: *"As table output the
+geometry attributes could be reprojected as X, Y."* Then, the same day: *"Or we can exclude because the purpose of a
+table output is to use for other purposes and non-geometry computation purpose may not be appropriate."* **Decided: a
+polygon layer reaches a table with no coordinate columns**, only its own attributes, whichever input it arrives at;
+its shape stays on the map (a table has no geometry). A point keeps its longitude and latitude, which are its recorded
+location, not a stand-in. Coordinates for a polygon, where wanted, come from a step that says what it computed. For
+0.115.0. (4) A lead, unread: an article on a Vercel UI SDK for
+agent interfaces (marktechpost.com, 2026-11-13); against the rule of no AI in Fieldwork unless compelling, but its
+interface patterns may be worth a look. A second, the same day, also unread: an article on UI libraries for work with
+Claude Code (geeky-gadgets.com). Both to be read together when interface work is next planned; anything adopted is a
+dependency, so licence, size and offline use are checked first, as for any library here.
+
 **The order from here, as the practitioner set it on 2026-11-13:** *"After that let's finish MERS. Then table edit #12.
 Then Sierra Leone. Then ABM spike."* So 8, then 12, then 3, then 29. The numbering below is kept as written.
 
@@ -278,7 +296,14 @@ Then Sierra Leone. Then ABM spike."* So 8, then 12, then 3, then 29. The numberi
    one, kept with its strokes so it can be edited again, and placed in the write-up like any figure. To settle: pen,
    eraser and a few colours at sizes the practitioner can see; drawing over a map as a backdrop, or blank; a sketch map
    is not a georeferenced one and says so.
-17. **Faster space-time scans** (the practitioner, 2026-11-10: *"How can we speed up the browser"*, then *"Let's add all
+17. **Steps 1 and 2 done 2026-11-14 (Space-time scan 0.5.0, Fieldwork 0.115.0):** shuffles stop once 50 score as
+   high (Besag and Clifford 1991), and the replay's days run across the device's cores; Hagelloch's replay 44 s to 18.5 s
+   in Node from the stopping alone, and the example's browser test 1.5 min to 18 s (idle machine against a loaded gate,
+   so less than that ratio). Lab check 46 re-run: agrees. **Step 3 done the same day (Space-time scan 0.6.0):** the
+   test in the Rust kernel, identical to the script shuffle for shuffle (unit test); the scan 5.4 s to 3.4 s and the
+   replay 18.5 s to 8.3 s in Node. A speed-optimised build doubled the kernel (40 to 79 KB) for 3.4 to 2.9 s and was not
+   kept. **Left:** what remains is the method (1,305 circles by 87 days, about 3.7 million windows a shuffle for
+   Hagelloch), and lab check 46's own speed. Originally: **Faster space-time scans** (the practitioner, 2026-11-10: *"How can we speed up the browser"*, then *"Let's add all
    3 to TODO"*). In Fieldwork's replay, in order: stop shuffling once the answer is clear, after 50 shuffles score
    higher (Besag and Clifford 1991), and say when it stopped; run the days in parallel across the device's cores; move
    the scan's inner loop to the Rust kernel compiled to WebAssembly. In lab check 46: score every run length at once

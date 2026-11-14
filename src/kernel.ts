@@ -22,6 +22,11 @@ export interface Kernel {
   glm_hac_covariance(col:number,other:number,lag:number,stratified:number):number;
   glm_iterations():number; glm_loglik():number; glm_pearson():number;
   glm_used_rows():number; glm_used_strata():number; glm_dropped_strata():number; glm_fitted_value(row:number):number;
+  // The space-time scan's test (TODO 17, step 3): arrays laid out, written through scan_ptr, shuffles run in batches.
+  memory:WebAssembly.Memory;
+  scan_prepare(n:number,places:number,bins:number,centers:number,circles:number,order:number,replications:number):number;
+  scan_ptr(which:number):number; scan_begin(seed:number):void;
+  scan_run(count:number,top:number,stopAfter:number,longest:number,prospective:number):number;
 }
 const bytes=Uint8Array.from(atob(KERNEL_BASE64),character=>character.charCodeAt(0));
 export const kernel=(await WebAssembly.instantiate(bytes,{})).instance.exports as unknown as Kernel;

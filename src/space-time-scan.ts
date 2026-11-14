@@ -20,6 +20,8 @@
  *  What the model cannot see: a place where people simply live more densely is not a cluster here, because only the
  *  timing is compared across places. And a rise everywhere at once is not a cluster either. Nothing is dropped: a
  *  record without a readable date or a location, or outside the study period, is counted and named. */
+import {KERNEL_BASE64} from './kernel-bytes.js';
+import type {Kernel} from './kernel.js';
 import type {PointCollection,Position} from './types.js';
 
 export interface ScanSettings {
@@ -37,7 +39,16 @@ export interface ScanSettings {
   /** PROSPECTIVE: only runs ending on the last day of the study period, as SaTScan's prospective scan: is something
    *  happening now, rather than was there ever a cluster. The day-by-day replay runs this once a day. */
   prospective?:boolean;
+  /** SHUFFLE ONLY UNTIL THE ANSWER IS CLEAR (Besag and Clifford 1991; TODO 17, 2026-11-10; built 2026-11-14): once
+   *  STOP_AFTER shuffles have scored at least as high as the most likely cluster, it cannot be significant at any
+   *  conventional level, and the rest would only refine a large p-value. On by default; false runs every shuffle. */
+  stopEarly?:boolean;
+  /** Where the shuffles run: the Rust kernel (the default), or this module's own loop, kept to check one against the
+   *  other. Not offered in the dialog. */
+  engine?:'kernel'|'script';
 }
+/** How many shuffles scoring at least as high end the test (Besag and Clifford's h). */
+export const STOP_AFTER=50;
 export interface ScanCluster {
   rank:number; start:string; end:string; units:number;
   center:Position; radiusKm:number; places:Position[]; caseIds:string[];
@@ -50,6 +61,10 @@ export interface ScanResult {
   excluded:{noDate:number; noLocation:number; outsidePeriod:number};
   period:{start:string; end:string; unit:'day'|'week'};
   replications:number; seed:number; randomStream:'mulberry32-v1'; longestRunUnits:number; elapsedMs?:number;
+  /** Where the test stopped early: the shuffles run, of those asked for. Absent: every shuffle ran. */
+  stoppedAt?:number;
+  /** Where the shuffles ran: the kernel, or the script. */
+  engine:'kernel'|'script';
 }
 
 const DAY=86_400_000, EARTH_KM=6371.0088;
@@ -198,24 +213,75 @@ export function spaceTimeScan(points:PointCollection,s:ScanSettings,onProgress?:
 
   // THE TEST: dates shuffled across the fixed places, the highest score anywhere each time.
   const random=mulberry32(s.seed),shuffled=Int32Array.from(caseBin),maxima=new Float64Array(s.replications);
-  for(let r=0;r<s.replications;r++){
+  // The same stream as before, shuffle for shuffle, so a test that runs to the end gives the p-value it always gave.
+  const top=picked[0]?.llr,early=s.stopEarly!==false&&top!==undefined;
+  let ran=s.replications,above=0;
+  if(s.engine==='script')for(let r=0;r<s.replications;r++){
     for(let i=n-1;i>0;i--){const j=Math.floor(random()*(i+1));const t=shuffled[i]!;shuffled[i]=shuffled[j]!;shuffled[j]=t;}
     maxima[r]=scan(shuffled);
     if(onProgress&&((r+1)%Math.max(1,Math.floor(s.replications/100))===0||r+1===s.replications))onProgress(r+1,s.replications);
+    if(early&&maxima[r]!+1e-9>=top!&&++above>=STOP_AFTER&&r+1<s.replications){ran=r+1;onProgress?.(s.replications,s.replications);break;}
   }
+  else ran=kernelTest(s,{n,P,bins,casePlace,caseBin,byCenter,orders,longest,top:early?top!:0},maxima,onProgress);
+  const stopped=ran<s.replications;
 
   const clusters=picked.map((w,index)=>{
     const circle=circles[w.circle]!,members=[...orders[circle.center]!.slice(0,circle.size)],inside=new Set(members);
-    const exceedances=maxima.reduce((k,m)=>k+(m+1e-9>=w.llr?1:0),0);
+    let exceedances=0;for(let r=0;r<ran;r++)if(maxima[r]!+1e-9>=w.llr)exceedances++;
     const caseIds:string[]=[];for(let i=0;i<n;i++)if(inside.has(casePlace[i]!)&&caseBin[i]!>=w.a&&caseBin[i]!<=w.b)caseIds.push(read[i]!.id);
     return {rank:index+1,start:iso(first+w.a*width),end:iso(Math.min(last,first+(w.b+1)*width-DAY)),units:w.b-w.a+1,
       center:places[circle.center]!,radiusKm:circle.radiusKm,places:members.map(p=>places[p]!),caseIds,
-      observed:w.c,expected:w.e,ratio:w.c/w.e,llr:w.llr,pValue:(1+exceedances)/(1+s.replications),exceedances};
+      // Stopped early, Besag and Clifford's estimate, the share of the shuffles run that scored as high; else the usual.
+      observed:w.c,expected:w.e,ratio:w.c/w.e,llr:w.llr,pValue:stopped?exceedances/ran:(1+exceedances)/(1+s.replications),exceedances};
   });
   return {clusters,
     totals:{records:points.features.length,cases:n,places:P,bins,circles:circles.length,runs,windows:circles.length*runs},
     excluded,period:{start:iso(first),end:iso(last),unit:s.unit},
-    replications:s.replications,seed:s.seed,randomStream:'mulberry32-v1',longestRunUnits:longest,elapsedMs:Date.now()-began};
+    replications:s.replications,seed:s.seed,randomStream:'mulberry32-v1',longestRunUnits:longest,elapsedMs:Date.now()-began,
+    ...(stopped?{stoppedAt:ran}:{}),engine:s.engine==='script'?'script':'kernel'};
+}
+
+/** THE KERNEL, LOADED WHERE THE SCAN RUNS: in its worker, or in Node for the tests. Loaded synchronously, which a worker
+ *  and Node allow and a page's main thread does not for a module this size; so not through src/kernel.ts, whose
+ *  top-level await a worker's build cannot take (found 2026-11-14, when the gate's build stopped on it). */
+let scanKernel:Kernel|undefined;
+const kernelHere=():Kernel=>scanKernel??=new WebAssembly.Instance(new WebAssembly.Module(
+  Uint8Array.from(atob(KERNEL_BASE64),character=>character.charCodeAt(0))),{}).exports as unknown as Kernel;
+
+/** THE TEST IN THE KERNEL (TODO 17, step 3): the circles grouped by center as the observed scan grouped them, each
+ *  center's places in distance order, written into the kernel's memory; the shuffles run there in batches of about a
+ *  hundredth, so progress is still said. Returns the shuffles run. Same stream, same arithmetic, so the same maxima. */
+function kernelTest(s:ScanSettings,d:{n:number;P:number;bins:number;casePlace:Int32Array;caseBin:Int32Array;
+  byCenter:Map<number,{center:number;size:number;cases:number}[]>;orders:Int32Array[];longest:number;top:number},
+  maxima:Float64Array,onProgress?:(done:number,of:number)=>void):number{
+  const kernel=kernelHere();
+  const groups=[...d.byCenter.values()],orderLength=groups.reduce((k,list)=>k+Math.max(...list.map(c=>c.size)),0);
+  const circles=groups.reduce((k,list)=>k+list.length,0);
+  if(!kernel.scan_prepare(d.n,d.P,d.bins,groups.length,circles,orderLength,s.replications))
+    throw new Error('The space-time scan needs more memory than this device gives it. Choose a shorter period or fewer cases.');
+  const i32=(which:number,length:number)=>new Int32Array(kernel.memory.buffer,kernel.scan_ptr(which),length);
+  const f64=(which:number,length:number)=>new Float64Array(kernel.memory.buffer,kernel.scan_ptr(which),length);
+  i32(0,d.n).set(d.casePlace);i32(1,d.n).set(d.caseBin);
+  const centerStart=i32(2,groups.length+1),centerOrder=i32(3,groups.length+1),order=i32(4,orderLength);
+  const size=i32(5,circles),share=f64(6,circles);
+  let c=0,o=0;
+  groups.forEach((list,g)=>{
+    centerStart[g]=c;centerOrder[g]=o;
+    const deepest=Math.max(...list.map(x=>x.size));order.set(d.orders[list[0]!.center]!.subarray(0,deepest),o);o+=deepest;
+    for(const circle of list){size[c]=circle.size;share[c]=circle.cases/d.n;c++;}
+  });
+  centerStart[groups.length]=c;centerOrder[groups.length]=o;
+  kernel.scan_begin(s.seed>>>0);
+  const batch=Math.max(1,Math.floor(s.replications/100));
+  let ran=0;
+  for(;;){
+    const r=kernel.scan_run(batch,d.top,d.top>0?STOP_AFTER:0,d.longest,s.prospective?1:0);
+    const stopped=(r&0x80000000)!==0;ran=r&0x7fffffff;
+    onProgress?.(stopped?s.replications:ran,s.replications);
+    if(stopped||ran>=s.replications)break;
+  }
+  maxima.set(f64(14,ran));
+  return ran;
 }
 
 /** The scan in a Worker where there is one, and inline where there is not (Node, the tests). */
@@ -227,18 +293,34 @@ export function computeSpaceTimeReplay(points:PointCollection,settings:ScanSetti
 }
 function inWorker(points:PointCollection,settings:ScanSettings,replay:boolean,onProgress?:(done:number,of:number)=>void):Promise<ScanResult|ScanReplay>{
   if(typeof Worker==='undefined')return Promise.resolve(replay?spaceTimeReplay(points,settings,onProgress):spaceTimeScan(points,settings,onProgress));
+  if(replay)return replayInWorkers(points,settings,onProgress);
+  return oneWorker({points,settings},onProgress) as Promise<ScanResult>;
+}
+function oneWorker(message:object,onProgress?:(done:number,of:number)=>void):Promise<unknown>{
   return new Promise((resolve,reject)=>{
     const worker=new Worker('./build/space-time-scan-worker.js');
     const boot=setTimeout(()=>{worker.terminate();reject(new Error('The space-time scan did not start, so nothing was computed. Reload the page; if it persists, the offline cache may be incomplete.'));},4000);
-    worker.onmessage=({data}:MessageEvent<{alive?:boolean;progress?:[number,number];result?:ScanResult|ScanReplay;error?:string}>)=>{
+    worker.onmessage=({data}:MessageEvent<{alive?:boolean;progress?:[number,number];result?:unknown;error?:string}>)=>{
       if(data.alive){clearTimeout(boot);return;}
       if(data.progress){onProgress?.(...data.progress);return;}
       worker.terminate();
       if(data.result)resolve(data.result);else reject(new Error(data.error??'The space-time scan failed.'));
     };
     worker.onerror=event=>{clearTimeout(boot);worker.terminate();reject(new Error(event.message||'The space-time scan failed to start.'));};
-    worker.postMessage({points,settings,replay});
+    worker.postMessage(message);
   });
+}
+/** THE REPLAY'S DAYS ACROSS THE DEVICE'S CORES (TODO 17, built 2026-11-14): each day is its own scan, so they are dealt
+ *  out in turn to one worker per core but one, up to eight, later days costing more than earlier ones. */
+async function replayInWorkers(points:PointCollection,settings:ScanSettings,onProgress?:(done:number,of:number)=>void):Promise<ScanReplay>{
+  const plan=replayPlan(points,settings);
+  const cores=Math.max(1,Math.min(8,((typeof navigator!=='undefined'&&navigator.hardwareConcurrency)||2)-1,plan.days.length));
+  const shares=Array.from({length:cores},(_,k)=>plan.days.filter((_,i)=>i%cores===k));
+  let done=0;
+  const parts=await Promise.all(shares.map(days=>oneWorker({points,settings,first:plan.first,days},
+    ()=>{done++;onProgress?.(done,plan.days.length);}) as Promise<ReplayDay[]>));
+  const byDay=new Map(parts.flat().map(d=>[d.day,d]));
+  return replayOf(plan.days.map(day=>byDay.get(day)!),settings);
 }
 
 /** A circle on the ground, as a polygon of 64 sides, `km` from `center`. A cluster at one place has no radius; it is
@@ -267,7 +349,7 @@ export function scanSentence(r:ScanResult,dateField:string):string{
     +(left?` (${[ex.noDate?`${ex.noDate} without a readable date`:'',ex.noLocation?`${ex.noLocation} without a location`:'',ex.outsidePeriod?`${ex.outsidePeriod} outside the period`:''].filter(Boolean).join(', ')}, not scanned)`:'')
     +`; ${r.totals.windows.toLocaleString('en-US')} circles and runs scanned. `
     +(top?`The most likely cluster: ${plural(top.observed,'case')} where ${round(top.expected)} were expected, at ${plural(top.places.length,'place')}`
-      +`${top.radiusKm>0?` within ${round(top.radiusKm*1000,0)} m`:''}, ${top.start} to ${top.end}; p = ${round(top.pValue,3)} from ${r.replications.toLocaleString('en-US')} shuffles of the dates (seed ${r.seed}).`
+      +`${top.radiusKm>0?` within ${round(top.radiusKm*1000,0)} m`:''}, ${top.start} to ${top.end}; p = ${round(top.pValue,3)} from ${r.stoppedAt?`${r.stoppedAt.toLocaleString('en-US')} of ${r.replications.toLocaleString('en-US')} shuffles of the dates, stopped once ${STOP_AFTER} scored at least as high (Besag and Clifford 1991)`:`${r.replications.toLocaleString('en-US')} shuffles of the dates`} (seed ${r.seed}).`
       +(r.clusters.length>1?` ${plural(r.clusters.length-1,'secondary cluster')} sharing no place with it, each tested against the same shuffles.`:'')
      :'No circle and run held more cases than expected.');
 }
@@ -289,7 +371,7 @@ export function scanValue(r:ScanResult,node:{id:string;params:{label:string;date
     +`${activity} a fw:SpaceTimeScan, prov:Activity; prov:used <urn:fieldwork:source:${sourceId}>; `
     +`fw:scanModel "space-time permutation"; fw:dateColumn ${JSON.stringify(node.params.dateField)}; fw:timeUnit "${r.period.unit}"; `
     +`fw:studyStart "${r.period.start}"; fw:studyEnd "${r.period.end}"; fw:casesScanned ${r.totals.cases}; fw:placesScanned ${r.totals.places}; `
-    +`fw:windowsScanned ${r.totals.windows}; fw:longestRunUnits ${r.longestRunUnits}; fw:replications ${r.replications}; fw:randomSeed ${r.seed}; `
+    +`fw:windowsScanned ${r.totals.windows}; fw:longestRunUnits ${r.longestRunUnits}; fw:replications ${r.replications}; ${r.stoppedAt?`fw:replicationsRun ${r.stoppedAt}; fw:stopAfter ${STOP_AFTER}; `:''}fw:randomSeed ${r.seed}; `
     +`fw:randomStream "${r.randomStream}"; fw:recordsWithoutDate ${r.excluded.noDate}; fw:recordsWithoutLocation ${r.excluded.noLocation}; `
     +`fw:recordsOutsidePeriod ${r.excluded.outsidePeriod}.\n`;
   for(const c of r.clusters){
@@ -325,7 +407,8 @@ export function validateScanParams(p:Record<string,unknown>):void{
 }
 
 /** ONE DAY OF THE REPLAY: what a prospective scan would have said that evening, from the cases known by then. */
-export interface ReplayDay {day:string; cases:number; cluster:ScanCluster|null; skipped?:string}
+export interface ReplayDay {day:string; cases:number; cluster:ScanCluster|null; skipped?:string;
+  /** The shuffles that day's test ran, where it stopped early. */ stoppedAt?:number}
 export interface ScanReplay {days:ReplayDay[]; replications:number; seed:number;
   /** The first day the most likely cluster's p-value was at or under each level, where it was. */
   firstAt:Record<string,string|null>}
@@ -337,23 +420,33 @@ export const REPLAY_LEVELS=[0.05,0.01] as const;
  *  correct for over a run of analyses and this does not. So the replay says when a scan would first have flagged
  *  something; it does not say that flag was right. Cases are placed on the day of their date, which was not the day
  *  they were reported. */
-export function spaceTimeReplay(points:PointCollection,s:ScanSettings,onProgress?:(done:number,of:number)=>void):ScanReplay{
+/** The replay's days, as ISO dates, and the first, which every day's study period starts on. */
+export function replayPlan(points:PointCollection,s:ScanSettings):{first:string;days:string[]}{
   const days=points.features.map(f=>dayOf(f.properties?.[s.dateField])).filter((d):d is number=>d!==null);
   if(!days.length)throw new Error(`No case has a readable date in ${s.dateField}.`);
   const first=s.start?dayOf(s.start)!:Math.min(...days),last=s.end?dayOf(s.end)!:Math.max(...days);
-  const out:ReplayDay[]=[],step=(s.unit==='week'?7:1)*DAY;
-  const total=Math.floor((last-first)/step)+1;
-  for(let i=0,at=first;at<=last;i++,at+=step){
-    const day=iso(at);
-    const known=points.features.filter(f=>{const d=dayOf(f.properties?.[s.dateField]);return d!==null&&d<=at;}).length;
-    try{
-      const r=spaceTimeScan(points,{...s,start:iso(first),end:day,prospective:true,report:1});
-      out.push({day,cases:r.totals.cases,cluster:r.clusters[0]??null});
-    }catch(error){out.push({day,cases:known,cluster:null,skipped:error instanceof Error?error.message:String(error)});}
-    onProgress?.(i+1,total);
-  }
-  const firstAt=Object.fromEntries(REPLAY_LEVELS.map(level=>[String(level),out.find(d=>d.cluster&&d.cluster.pValue<=level)?.day??null]));
-  return {days:out,replications:s.replications,seed:s.seed,firstAt};
+  const out:string[]=[],step=(s.unit==='week'?7:1)*DAY;
+  for(let at=first;at<=last;at+=step)out.push(iso(at));
+  return {first:iso(first),days:out};
+}
+/** One day of the replay: the prospective scan on the cases known by then. Each day is its own scan, with the step's
+ *  seed, so a day gives the same answer whichever worker runs it and in whatever order. */
+export function replayDay(points:PointCollection,s:ScanSettings,first:string,day:string):ReplayDay{
+  const at=dayOf(day)!;
+  const known=points.features.filter(f=>{const d=dayOf(f.properties?.[s.dateField]);return d!==null&&d<=at;}).length;
+  try{
+    const r=spaceTimeScan(points,{...s,start:first,end:day,prospective:true,report:1});
+    return {day,cases:r.totals.cases,cluster:r.clusters[0]??null,...(r.stoppedAt?{stoppedAt:r.stoppedAt}:{})};
+  }catch(error){return {day,cases:known,cluster:null,skipped:error instanceof Error?error.message:String(error)};}
+}
+export function replayOf(days:ReplayDay[],s:ScanSettings):ScanReplay{
+  const firstAt=Object.fromEntries(REPLAY_LEVELS.map(level=>[String(level),days.find(d=>d.cluster&&d.cluster.pValue<=level)?.day??null]));
+  return {days,replications:s.replications,seed:s.seed,firstAt};
+}
+export function spaceTimeReplay(points:PointCollection,s:ScanSettings,onProgress?:(done:number,of:number)=>void):ScanReplay{
+  const plan=replayPlan(points,s),out:ReplayDay[]=[];
+  plan.days.forEach((day,i)=>{out.push(replayDay(points,s,plan.first,day));onProgress?.(i+1,plan.days.length);});
+  return replayOf(out,s);
 }
 
 /** What the replay found, in one sentence. Each level is the conventional one, stated; none is applied as a rule. */
@@ -366,7 +459,9 @@ export function replaySentence(r:ScanReplay,dateField:string):string{
     +(flagged?`The first day the most likely cluster had p at or under 0.05 was ${at('0.05')}: ${plural(flagged.observed,'case')} where ${round(flagged.expected)} were expected, at ${plural(flagged.places.length,'place')}, from ${flagged.start}`
       +` (p = ${round(flagged.pValue,3)}).`:'On no day did the most likely cluster have p at or under 0.05.')
     +(at('0.01')?` At or under 0.01: first on ${at('0.01')}.`:' On no day at or under 0.01.')
-    +` Each day's p-value is that day's alone, from ${r.replications.toLocaleString('en-US')} shuffles (seed ${r.seed}); looking every day raises the chance of a false alarm, which this does not correct.`;
+    +` Each day's p-value is that day's alone, from up to ${r.replications.toLocaleString('en-US')} shuffles (seed ${r.seed})`
+    +(r.days.some(d=>d.stoppedAt)?`; ${plural(r.days.filter(d=>d.stoppedAt).length,'day')} stopped early, once ${STOP_AFTER} shuffles scored at least as high (Besag and Clifford 1991)`:'')
+    +'; looking every day raises the chance of a false alarm, which this does not correct.';
 }
 
 export const REPLAY_FLAGGED='p at or under 0.05, that day alone',REPLAY_NOT_FLAGGED='p above 0.05, that day alone';
@@ -387,6 +482,7 @@ export function replayValue(r:ScanReplay,node:{id:string;params:{label:string;da
   let facts='@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n'
     +`${activity} a fw:SpaceTimeReplay, prov:Activity; prov:used <urn:fieldwork:source:${sourceId}>; fw:dateColumn ${JSON.stringify(node.params.dateField)}; `
     +`fw:daysScanned ${r.days.filter(d=>!d.skipped).length}; fw:daysTooEarly ${r.days.filter(d=>d.skipped).length}; fw:replications ${r.replications}; fw:randomSeed ${r.seed}`
+    +(r.days.some(d=>d.stoppedAt)?`; fw:stopAfter ${STOP_AFTER}; fw:daysStoppedEarly ${r.days.filter(d=>d.stoppedAt).length}`:'')
     +(r.firstAt['0.05']?`; fw:firstDayAtOrUnder05 "${r.firstAt['0.05']}"`:'')+(r.firstAt['0.01']?`; fw:firstDayAtOrUnder01 "${r.firstAt['0.01']}"`:'')+'.\n';
   for(const d of withCluster){const c=d.cluster!,id=`<urn:fieldwork:run:${runId}:replay:${node.id}:${d.day}>`;
     facts+=`${activity} fw:reportsCluster ${id}.\n${id} a fw:ScanCluster; fw:analysisDay "${d.day}"; fw:firstDay "${c.start}"; fw:lastDay "${c.end}"; `

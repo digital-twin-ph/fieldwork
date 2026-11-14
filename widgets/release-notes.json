@@ -359,12 +359,12 @@
    ]
   },
   "space_time_scan": {
-   "version": "0.4.0",
-   "released": "2026-11-10",
+   "version": "0.6.0",
+   "released": "2026-11-14",
    "changes": [
     {
      "kind": "minor",
-     "description": "The day-by-day replay classes each day's circle by that day's p: at or under 0.05, or above it, each 'that day alone'. The map colours them and names both in its key (the practitioner, 2026-11-10: \"what does the blue circle mean?\"; every circle had the map's one default blue). The p-values themselves are unchanged."
+     "description": "The test runs in the Rust kernel (TODO 17, step 3; the practitioner, 2026-11-14: \"Move scan to kernel\"): the seeded shuffles, bit for bit the same stream, and each shuffle's highest score, by the same arithmetic, with the same early stop. The places, the circles and the observed scan stay in the script. Hagelloch, in Node: the scan 5.4 s to 3.4 s, the day-by-day replay 18.5 s to 8.3 s, the same answer."
     }
    ],
    "breaking": false,
@@ -754,12 +754,12 @@
    "migrationFrom": []
   },
   "append_rows": {
-   "version": "0.2.1",
+   "version": "0.2.2",
    "released": "2026-11-14",
    "changes": [
     {
      "kind": "patch",
-     "description": "The columns a table lacks are named in one sentence per table, not one sentence per column: eleven zonal statistics, each said apart for the census table that had none of them, made a paragraph."
+     "description": "On the standard Inspector and dialog (experiment 186), changed the same day and so moved, as every widget touched is: the Inspector says in one sentence what is stacked; the tables, the source column and its labels, whether they are numbers, and a new key are set in Configure…, with the stacked table as the preview, and nothing changes until Apply."
     }
    ],
    "breaking": false,

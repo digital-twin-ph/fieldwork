@@ -694,7 +694,7 @@
     {
       "id": "urn:fieldwork:widget:space_time_scan",
       "nodeType": "space_time_scan",
-      "currentVersion": "0.4.0",
+      "currentVersion": "0.6.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -725,6 +725,16 @@
           "version": "0.4.0",
           "path": "widgets/releases/space_time_scan/0.4.0.json",
           "sha256": "81c6f6688a5a94e528f5a83b11a9124bcaac1ec35bd9c1c10ed4896a8d982e54"
+        },
+        {
+          "version": "0.5.0",
+          "path": "widgets/releases/space_time_scan/0.5.0.json",
+          "sha256": "09f28d0e4f2ad241db16551ede4325051573b8451ba0d07b07866774241dde0c"
+        },
+        {
+          "version": "0.6.0",
+          "path": "widgets/releases/space_time_scan/0.6.0.json",
+          "sha256": "efdfd5ab96124b4ec27f1ba409ae1e406531285fe69705ee38f7a890b002e5aa"
         }
       ]
     },
@@ -1818,7 +1828,7 @@
     {
       "id": "urn:fieldwork:widget:append_rows",
       "nodeType": "append_rows",
-      "currentVersion": "0.2.1",
+      "currentVersion": "0.2.2",
       "releases": [
         {
           "version": "0.1.0",
@@ -1834,6 +1844,11 @@
           "version": "0.2.1",
           "path": "widgets/releases/append_rows/0.2.1.json",
           "sha256": "9fe89aec255cbe958e79e918157affd6281fbddc9d7590a84d8f445edae31293"
+        },
+        {
+          "version": "0.2.2",
+          "path": "widgets/releases/append_rows/0.2.2.json",
+          "sha256": "102f4552ad26ce55c6f6a8d5f4d24e2d5bb9f322933ed748762ea08b67fc4659"
         }
       ]
     },

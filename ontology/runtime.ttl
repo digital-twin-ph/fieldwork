@@ -689,6 +689,12 @@ fw:placesScanned a owl:DatatypeProperty; rdfs:domain fw:SpaceTimeScan; rdfs:labe
 fw:windowsScanned a owl:DatatypeProperty; rdfs:domain fw:SpaceTimeScan; rdfs:label "windows scanned"; rdfs:comment "Circles times runs of time." .
 fw:longestRunUnits a owl:DatatypeProperty; rdfs:domain fw:SpaceTimeScan; rdfs:label "longest run, in units" .
 fw:replications a owl:DatatypeProperty; rdfs:domain fw:SpaceTimeScan; rdfs:label "replications" .
+fw:replicationsRun a owl:DatatypeProperty; rdfs:domain fw:SpaceTimeScan; rdfs:label "replications run";
+  rdfs:comment "The shuffles a test ran, where it stopped once fw:stopAfter of them scored at least as high as the most likely cluster (Besag and Clifford 1991). Absent: every one of fw:replications ran." .
+fw:stopAfter a owl:DatatypeProperty; rdfs:label "stop after";
+  rdfs:comment "How many shuffles scoring at least as high end a scan's test early." .
+fw:daysStoppedEarly a owl:DatatypeProperty; rdfs:domain fw:SpaceTimeReplay; rdfs:label "days stopped early";
+  rdfs:comment "The replay's days whose test stopped early, once fw:stopAfter shuffles scored at least as high." .
 fw:randomStream a owl:DatatypeProperty; rdfs:label "random stream" .
 fw:recordsWithoutDate a owl:DatatypeProperty; rdfs:label "records without a date" .
 fw:recordsWithoutLocation a owl:DatatypeProperty; rdfs:label "records without a location" .

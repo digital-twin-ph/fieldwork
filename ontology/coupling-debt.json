@@ -1,6 +1,6 @@
 {
  "schema": "fieldwork/ontology-coupling-debt/1",
  "note": "Terms the application asserts into receipts or into the rules the reasoner runs, that no ontology file declares. Empty since 2026-10-10, when all 53 found by the first measurement were declared: 11 widget properties for sample_raster and buffer_point, 13 core terms including the heat-outreach reasoning vocabulary and two prose-only value sets, and 29 of the Old Naledi example's own domain terms, which went to ontology/examples/old-naledi.ttl rather than into the core ontology. Kept as a file rather than deleted so that the ratchet has somewhere to record a term that genuinely cannot be declared yet, and so the history of it is not only in a commit.",
- "measuredAt": "2026-10-10",
+ "measuredAt": "2026-11-14",
  "terms": []
 }

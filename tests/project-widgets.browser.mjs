@@ -6,6 +6,9 @@ test('the Widgets tab names each widget the project uses, its workflows and step
   await page.goto('/');await page.evaluate(()=>localStorage.clear());
   await page.goto('/?example=snow-deaths');
   await page.locator('[data-view="widgets"]').click();
+  // A workflow is not opened while one runs: its buttons say so, as the selector does, until the run is done.
+  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
+  await expect(page.locator('#widgets-view [data-open-workflow]').first()).toBeEnabled();
   const view=page.locator('#widgets-view');
   await expect(view).toContainText('Widgets in 1854 Cholera Outbreak in London');
   await expect(view).toContainText('across 6 workflows');

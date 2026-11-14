@@ -1,0 +1,66 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:append_rows",
+ "nodeType": "append_rows",
+ "version": "0.2.2",
+ "title": "Append rows",
+ "released": "2026-11-14",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['append_rows']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "validationStatus": "application-only",
+  "shaclShapes": []
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "records",
+    "type": "table"
+   },
+   {
+    "name": "records_2",
+    "type": "table"
+   }
+  ],
+  "output": "table",
+  "optionalInputs": [],
+  "note": "Two tables in, one out: the rows of the second under the first, columns lined up by name. Both must have the same value column and unit; a key column only one has is empty on the other's rows."
+ },
+ "ontology": {
+  "status": "gap",
+  "mappings": [],
+  "note": "No ontology mapping yet. The receipt names how many rows came from each table and every column only one of them has.",
+  "emits": {
+   "classes": [],
+   "properties": []
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/append-rows.ts",
+   "src/core.ts",
+   "src/app.ts",
+   "src/append-ui.ts"
+  ],
+  "definition": "src/append-rows.ts"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": null
+ },
+ "changes": [
+  {
+   "kind": "patch",
+   "description": "On the standard Inspector and dialog (experiment 186), changed the same day and so moved, as every widget touched is: the Inspector says in one sentence what is stacked; the tables, the source column and its labels, whether they are numbers, and a new key are set in Configure…, with the stacked table as the preview, and nothing changes until Apply."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Unit tested on columns both, one and neither table hold, different value columns and units, and a source column that clashes. The Salmonella example uses it to stack 32 cases on 81 matched panel controls. Nothing here establishes that two tables are fit to be stacked. 0.2.1: tests/append-rows.test.mjs; tests/population-example-opens.browser.mjs; Chromium. 0.2.2: tests/salmonella-from-scratch.browser.mjs (the matched panel controls appended through the dialog, the sentence naming both labels); Chromium."
+ }
+}

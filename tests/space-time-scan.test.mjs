@@ -106,3 +106,28 @@ test('the circles do not depend on where the village sits: every longitude shift
     assert.deepEqual(there.clusters.map(c=>c.pValue),here.clusters.map(c=>c.pValue));
   }
 });
+
+test('THE TEST IN THE KERNEL GIVES THE SAME ANSWER AS THE SCRIPT, shuffle for shuffle, from the same seed',async()=>{
+  const {spaceTimeScan,replayDay,replayPlan}=await import('../build/space-time-scan.js');
+  const {EXAMPLE_TEMPLATES}=await import('../build/example-templates.js');
+  const w=EXAMPLE_TEMPLATES['hagelloch-cluster']();
+  const pts=w.nodes.find(n=>n.type==='point_input').params.data,s={...w.nodes.find(n=>n.type==='space_time_scan').params,replications:199};
+  const same=(a,b,what)=>{
+    assert.equal(a.stoppedAt,b.stoppedAt,`${what}: where it stopped`);
+    assert.deepEqual(a.clusters.map(c=>[c.exceedances,c.pValue]),b.clusters.map(c=>[c.exceedances,c.pValue]),`${what}: every cluster's exceedances and p`);
+  };
+  same(spaceTimeScan(pts,{...s,engine:'kernel'}),spaceTimeScan(pts,{...s,engine:'script'}),'retrospective');
+  same(spaceTimeScan(pts,{...s,stopEarly:false,engine:'kernel'}),spaceTimeScan(pts,{...s,stopEarly:false,engine:'script'}),'every shuffle');
+  const plan=replayPlan(pts,s);
+  for(const day of [plan.days[20],plan.days[40],plan.days.at(-1)]){
+    const k=replayDay(pts,{...s,engine:'kernel'},plan.first,day),j=replayDay(pts,{...s,engine:'script'},plan.first,day);
+    assert.deepEqual([k.cluster?.exceedances,k.cluster?.pValue,k.stoppedAt],[j.cluster?.exceedances,j.cluster?.pValue,j.stoppedAt],`prospective, ${day}`);
+  }
+  // Weekly bins, a radius limit and a different seed, on synthetic cases.
+  let seed=7;const rnd=()=>(seed=(seed*1103515245+12345)%2147483648)/2147483648;
+  const syn={type:'FeatureCollection',features:Array.from({length:120},(_,i)=>({type:'Feature',id:`c${i}`,
+    geometry:{type:'Point',coordinates:[10+Math.floor(rnd()*12)*0.01,50+Math.floor(rnd()*9)*0.01]},
+    properties:{d:new Date(Date.UTC(2024,0,1+Math.floor(rnd()*90))).toISOString().slice(0,10)}}))};
+  const t={dateField:'d',unit:'week',maxCaseShare:0.3,maxTimeShare:0.5,maxRadiusKm:3,replications:149,seed:123456789,report:5};
+  same(spaceTimeScan(syn,{...t,engine:'kernel'}),spaceTimeScan(syn,{...t,engine:'script'}),'synthetic, weekly');
+});

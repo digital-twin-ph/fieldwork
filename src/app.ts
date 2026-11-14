@@ -15,6 +15,7 @@ import {recordRun,runsFor} from './widget-usage.js';
 import {buildOrder,revealedTypes,revealReason} from './reveal-playback.js';
 import {manualButton,openManual,hasManual,renderManualPage} from './manual.js';
 import {projectWidgets,projectWidgetsMarkup} from './project-widgets.js';
+import {openAppendConfig,appendDraftOf,applyAppendDraft,appendSettingsSentence} from './append-ui.js';
 ﻿import widgetRegistry from '../widgets/registry.json';
 import {setupLabEvaluation} from './lab-evaluation-ui.js';
 import {canvasN3} from './canvas-semantics.js';
@@ -1146,7 +1147,7 @@ function drawRunProgress(){
 /** THE WIDGETS WHOSE INSPECTOR FOLLOWS THE STANDARD (experiment 186): Name, Inputs, Settings, Result, the links,
  *  Actions, in that order and nothing else, with every setting in the widget's configuration dialog. One at a time,
  *  Relate first; the set grows as each widget is moved, and a check holds them to it. */
-export const STANDARD_INSPECTOR=new Set<NodeType>(['case_series','regression','point_input','chart_output','raster_input','sample_raster','measure_distance','table_output','relate_table','select_rows','table_input','find_health_facilities','group_table','apply_ruleset','map_output','deduplicate_points','rate','study_area','space_time_scan','map_image_input','two_by_two']);
+export const STANDARD_INSPECTOR=new Set<NodeType>(['case_series','regression','point_input','chart_output','raster_input','sample_raster','measure_distance','table_output','relate_table','select_rows','table_input','find_health_facilities','group_table','apply_ruleset','map_output','deduplicate_points','rate','study_area','space_time_scan','map_image_input','two_by_two','append_rows']);
 function samplerProduct(node:WorkflowNode){
   const up=(id:string,port:string)=>{const e=workflow.edges.find(x=>x.to===id&&x.port===port);return e?workflow.nodes.find(m=>m.id===e.from):undefined;};
   const search=up(node.id,'files'),find=search?up(search.id,'product'):undefined;
@@ -1622,7 +1623,11 @@ function render(){
   drawRunProgress();
   $('#run-summary').textContent=result?(dirty?'Previous run · settings have changed':`${result.outputs.length} outputs · ${lastRunMs===null?'':`ran in ${elapsedText(lastRunMs)} · `}${Math.round(result.trace.reduce((a,t)=>a+t.milliseconds,0))} ms computing`):'Run the workflow to see results';
   if(exampleKey(workflow)==='snow-geoprivacy')$('#run-summary').textContent=result?'Private project and run evidence contain original coordinates. Derived tabs are educational; review before sharing.':'Private source coordinates are included in this workflow.';
-  ($('#project-select') as HTMLSelectElement).disabled=busy;($('#workflow-select') as HTMLSelectElement).disabled=busy;document.body.classList.toggle('busy',busy);flow?.setBusy(busy);renderInspector();
+  ($('#project-select') as HTMLSelectElement).disabled=busy;($('#workflow-select') as HTMLSelectElement).disabled=busy;
+  // THE WIDGETS TAB'S WORKFLOW BUTTONS TOO, as the selector: a workflow cannot be opened while one runs, and a button
+  // that does nothing when pressed said nothing (CI, 2026-11-14).
+  document.querySelectorAll<HTMLButtonElement>('[data-open-workflow]').forEach(b=>{b.disabled=busy;b.title=busy?'Wait for the run to finish':'';});
+  document.body.classList.toggle('busy',busy);flow?.setBusy(busy);renderInspector();
   $('#run-button').disabled=busy||!workflow.nodes.length;$('#new-workflow').disabled=busy;($('#add-workflow') as HTMLButtonElement).disabled=busy;$('#reset-example').disabled=busy||!workflow.nodes.length;$('#tidy-button').disabled=busy||workflow.nodes.length<2;
   // EVERY CONTROL WHOSE HANDLER OPENS WITH `if(busy)return` BELONGS ON THIS LINE, and the three
   // that open the project dialog did not. A guard that returns silently is invisible: the click
@@ -4174,37 +4179,15 @@ function renderInspector(){
       // for it. A control says what the setting does; it is not where an argument is kept.
       +``;
   }else if(n.type==='append_rows'){
-    const p=n.params,count=appendTableCount(p);
-    content+='<p class="description">Stacks the tables\' rows in order, as pandas <code>concat</code> does, '
-      +'lining columns up by name. All must measure the same thing in the same unit.</p>'
-      +labelForm('append-label','Node label',p.label||'Append rows')
-      +`<div class="inspector-actions"><button id="append-add-table" class="button small">＋ Add a table</button>`
-      +`<button id="append-remove-table" class="button small" ${count<=2?'disabled':''}>Remove the last table</button></div>`
-      +`<p class="muted">${count} tables, one port each.</p>`
-      +`<label class="check"><input type="checkbox" id="append-name-source" ${p.nameSource?'checked':''}> Name the source of each row</label>`
-      +(p.nameSource
-        ?`<label class="field-label" for="append-source">Column naming the source</label>`
-          +`<input id="append-source" data-slr="sourceColumn" maxlength="60" value="${esc(p.sourceColumn??'')}" placeholder="source">`
-          // ONE LABEL PER TABLE. The first two keep their ids, which saved manuals and tests fill.
-          +Array.from({length:count},(_,i)=>{const id=i===0?'append-first':i===1?'append-second':`append-label-${i+1}`;
-            const name=count===2?(i===0?'the first table':'the second table'):`table ${i+1}`;
-            const placeholder=i===0?'first':i===1?'second':`table ${i+1}`;
-            const given=p.labels?.[i]??(i===0?p.firstLabel:i===1?p.secondLabel:undefined)??'';
-            return `<label class="field-label" for="${id}">Label for rows of ${name}</label>`
-              +`<input id="${id}" data-append-label="${i}" maxlength="60" value="${esc(given)}" placeholder="${esc(placeholder)}">`;}).join('')
-          +`<label class="check"><input type="checkbox" id="append-numbers" ${p.labelsAreNumbers?'checked':''}> The labels are numbers</label>`
-          +(p.labelsAreNumbers
-            ?`<label class="field-label" for="append-numbers-unit">Their unit</label>`
-              +`<input id="append-numbers-unit" maxlength="40" value="${esc(p.labelsAreNumbers.unit)}" placeholder="weeks before">`
-              +''
-            :'')
-        :'')
-      +`<label class="check"><input type="checkbox" id="append-new-key" ${p.newKey?'checked':''}> Create a new primary key</label>`
-      +(p.newKey!==undefined
-        ?`<label class="field-label" for="append-key">New key column</label>`
-          +`<input id="append-key" data-slr="newKey" maxlength="60" value="${esc(p.newKey)}">`
-          +`<p class="description">Numbers every row 1 to N. The old key column stays${p.nameSource?', and source with the old key is kept as a second unique key':''}.</p>`
-        :'');
+    // THE STANDARD INSPECTOR (experiment 186, 2026-11-14): the name, the inputs, one sentence, Configure…, and the result.
+    const p=n.params,receipt=result?.receipts.find(r=>r.nodeId===n.id);
+    const why=result?.unfinished?.find(u=>u.nodeId===n.id)?.message;
+    content+=standardSection('Name',labelForm('append-label','Name',p.label||TYPES.append_rows.title));
+    content+=standardSection('Inputs',standardInputs(n));
+    content+=standardSection('Settings',`<p class="standard-sentence">${esc(appendSettingsSentence(p))}</p>`
+      +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button></div>');
+    content+=standardSection('Result',`<p class="standard-result${why?' standard-result-warning':''}">`
+      +`${esc(why?`The last run could not compute this step: ${why}`:receipt?.method??'Not run yet.')}</p>`);
   }else if(n.type==='regression'){
     // THE STANDARD INSPECTOR (experiment 186, 2026-11-12): the name, the input, one sentence, Configure…, and the result.
     const p=n.params,receipt=result?.receipts.find(r=>r.nodeId===n.id);
@@ -6021,29 +6004,23 @@ function renderInspector(){
       });
     });
   });
-  optionalElement('#append-name-source')?.addEventListener('change',e=>change(w=>{
-    const node=getNode(w,n.id,'append_rows');const on=(e.target as HTMLInputElement).checked;
-    node.params.nameSource=on;if(on&&!node.params.sourceColumn)node.params.sourceColumn='source';}));
-  optionalElement('#append-add-table')?.addEventListener('click',()=>change(w=>{
-    const node=getNode(w,n.id,'append_rows');node.params.tableCount=appendTableCount(node.params)+1;}));
-  optionalElement('#append-remove-table')?.addEventListener('click',()=>change(w=>{
-    const node=getNode(w,n.id,'append_rows'),count=appendTableCount(node.params);if(count<=2)return;
-    w.edges=w.edges.filter(e=>!(e.to===n.id&&e.port===appendPort(count-1)));
-    if(count-1===2)delete node.params.tableCount;else node.params.tableCount=count-1;
-    if(node.params.labels)node.params.labels=node.params.labels.slice(0,count-1);}));
-  document.querySelectorAll<HTMLInputElement>('[data-append-label]').forEach(el=>el.addEventListener('change',()=>change(w=>{
-    const node=getNode(w,n.id,'append_rows'),i=Number(el.dataset.appendLabel);
-    const labels=Array.from({length:appendTableCount(node.params)},(_,k)=>node.params.labels?.[k]
-      ??(k===0?node.params.firstLabel:k===1?node.params.secondLabel:undefined)??'');
-    labels[i]=el.value.trim();node.params.labels=labels;delete node.params.firstLabel;delete node.params.secondLabel;})));
-  optionalElement('#append-numbers')?.addEventListener('change',e=>change(w=>{
-    const node=getNode(w,n.id,'append_rows');
-    if((e.target as HTMLInputElement).checked)node.params.labelsAreNumbers={unit:''};else delete node.params.labelsAreNumbers;}));
-  optionalElement('#append-numbers-unit')?.addEventListener('change',e=>change(w=>{
-    const node=getNode(w,n.id,'append_rows');node.params.labelsAreNumbers={unit:(e.target as HTMLInputElement).value.trim()};}));
-  optionalElement('#append-new-key')?.addEventListener('change',e=>change(w=>{
-    const node=getNode(w,n.id,'append_rows');
-    if((e.target as HTMLInputElement).checked)node.params.newKey='row';else delete node.params.newKey;}));
+  if(n.type==='append_rows')optionalElement('#configure-step')?.addEventListener('click',()=>{
+    const node=workflow.nodes.find(x=>x.id===n.id);
+    if(node?.type!=='append_rows')return;
+    const most=Math.max(appendTableCount(node.params),8);
+    const ports=Array.from({length:most},(_,i)=>appendPort(i));
+    openAppendConfig({
+      step:node.params.label||TYPES.append_rows.title,
+      tables:ports.map(port=>tableOnPort(workflow,n.id,port)??undefined),
+      sources:ports.map(port=>{const from=workflow.edges.find(e=>e.to===n.id&&e.port===port)?.from;
+        const up=workflow.nodes.find(x=>x.id===from);return up?(up.params.label||TYPES[up.type].title):'';}),
+      initial:appendDraftOf(node.params),
+      apply:d=>{change(w=>{const target=getNode(w,n.id,'append_rows');
+        // FEWER TABLES DROP THE CONNECTIONS TO THE PORTS THAT GO.
+        w.edges=w.edges.filter(e=>!(e.to===n.id&&ports.slice(d.count).includes(e.port)));
+        applyAppendDraft(target.params,d);},{requirePersistence:true});},
+    },esc);
+  });
   optionalElement('#map-frame-caption')?.addEventListener('change',e=>change(w=>{
     const target=getNode(w,n.id,'map_output');const value=control(e).value.trim();
     if(value)target.params.frameCaption=value;else delete target.params.frameCaption;}));
@@ -7553,6 +7530,7 @@ function renderWidgetsView():void{
   const view=$('#widgets-view');
   view.innerHTML=projectWidgetsMarkup(project?.name??workflow.name??'this workflow',rows,docs.length,
     type=>({title:TYPES[type as NodeType]?.title??type,icon:TYPES[type as NodeType]?.icon??'',manual:hasManual(type)}),esc);
+  view.querySelectorAll<HTMLButtonElement>('[data-open-workflow]').forEach(b=>{b.disabled=busy;if(busy)b.title='Wait for the run to finish';});
   view.querySelectorAll<HTMLButtonElement>('[data-open-workflow]').forEach(b=>b.addEventListener('click',async()=>{
     const key=b.dataset.openWorkflow!;
     if(key!==storageKey(workflow))await loadExample(key);

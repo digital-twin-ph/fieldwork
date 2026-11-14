@@ -1,0 +1,104 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "released": "2026-11-14",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "validationStatus": "application-only",
+  "shaclShapes": [],
+  "typescriptType": "ParamsByType['space_time_scan']"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": null
+ },
+ "id": "urn:fieldwork:widget:space_time_scan",
+ "nodeType": "space_time_scan",
+ "version": "0.5.0",
+ "title": "Space-time scan",
+ "ports": {
+  "inputs": [
+   {
+    "name": "points",
+    "type": "points"
+   }
+  ],
+  "output": "polygons",
+  "optionalInputs": [],
+  "note": "Takes a point layer of cases, each with a date, and gives back the clusters it reports as circles: one polygon per cluster, carrying its days, places, observed and expected cases, likelihood ratio and p-value."
+ },
+ "ontology": {
+  "status": "gap",
+  "mappings": [],
+  "note": "GAP, meaning no mapping to an external vocabulary. fw:SpaceTimeScan and fw:ScanCluster are declared in ontology/runtime.ttl with their properties. The receipt names the date column, the unit, the study period, every record not scanned and why, the limits, the replications, the seed and the random stream, and every cluster reported with its counts and p-value.",
+  "emits": {
+   "classes": [
+    "ScanCluster",
+    "SpaceTimeReplay",
+    "SpaceTimeScan"
+   ],
+   "properties": [
+    "analysisDay",
+    "casesScanned",
+    "clusterRank",
+    "dateColumn",
+    "daysScanned",
+    "daysStoppedEarly",
+    "daysTooEarly",
+    "expectedCases",
+    "firstDay",
+    "firstDayAtOrUnder01",
+    "firstDayAtOrUnder05",
+    "lastDay",
+    "logLikelihoodRatio",
+    "longestRunUnits",
+    "monteCarloExceedances",
+    "observedCases",
+    "pValue",
+    "placesInCluster",
+    "placesScanned",
+    "radiusMetres",
+    "randomSeed",
+    "randomStream",
+    "recordsOutsidePeriod",
+    "recordsWithoutDate",
+    "recordsWithoutLocation",
+    "replications",
+    "replicationsRun",
+    "reportsCluster",
+    "scanModel",
+    "stopAfter",
+    "studyEnd",
+    "studyStart",
+    "timeUnit",
+    "windowsScanned"
+   ]
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/app.ts",
+   "src/catchment-map.ts",
+   "src/core.ts",
+   "src/equations.ts",
+   "src/run-progress.ts",
+   "src/space-time-scan-worker.ts",
+   "src/space-time-scan.ts"
+  ],
+  "definition": "src/space-time-scan.ts"
+ },
+ "changes": [
+  {
+   "kind": "minor",
+   "description": "Faster (TODO 17; the practitioner, 2026-11-14: \"We need to speed up that scan as planned\"). The shuffles stop once 50 have scored at least as high as the most likely cluster (Besag and Clifford 1991), and the run says so and how many ran; a significant cluster never reaches 50, so it runs every shuffle and keeps its p-value. The day-by-day replay runs its days across the device's cores, each day its own scan with the step's seed, so the answer does not depend on how many cores there are. Hagelloch's replay, 87 days: 44 s to 18.5 s by the stopping alone, in Node."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "tests/space-time-scan.test.mjs (7 unit checks, the replay and the note among them) and tests/hagelloch-cluster-example.browser.mjs on Chromium, which checks both progress bars, the replay's first flagged day and the reference in References. Lab check 46: the retrospective scan recomputed in numpy; the replay is checked there too (see parity). 0.3.0: tests/hagelloch-cluster-example.browser.mjs plays to 21 November 1861 and finds 32 cases drawn and the day's p = 0.041 in the caption; Chromium. 0.3.1: tests/space-time-scan.test.mjs checks the circles do not change when every longitude is shifted; lab check 46 re-run on the declared 10 cm tie. 0.4.0: tests/space-time-scan.test.mjs (each day's class follows its p; 21 November flagged) and tests/hagelloch-cluster-example.browser.mjs (the key names both classes). 0.5.0: tests/space-time-scan.test.mjs; lab check 46 re-run (Validation Lab a393491): every replay day within the Monte Carlo tolerance of the lab's own p-value from every shuffle, agrees; Chromium."
+ }
+}

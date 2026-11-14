@@ -1,6 +1,6 @@
 # 209 · Three population rasters and the census, Botswana
 
-_Created 2026-11-12 · Updated 2026-11-13_
+_Created 2026-11-12 · Updated 2026-11-14_
 
 **Status:** tried — built and run for Botswana and Rwanda, 2026-11-13, every district's share equal to rasterio's;
 Chromium. Validation Lab check 50 agrees, 2026-11-13. The practitioner, 2026-11-12, asking when a raster worked example

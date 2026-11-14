@@ -77,6 +77,9 @@ export interface Project {
    *  names one across 34 commits. Carrying the identity the repository already has into the
    *  artifacts is the point. See `src/identity.ts` and experiment 150. */
   authors?:import('./identity.js').Author[];
+  /** THE PARTS OF THE PUBLICATION THE PERSON WRITES (experiment 202): title, affiliations and keywords, the structured
+   *  abstract, conclusions and data availability, by part. Introduction and Discussion are notes, as before. */
+  publication?:Record<string,string>;
   /** WHEN THIS PROJECT BEGAN, as distinct from when it last changed.
    *
    *  Added 2026-10-29 while answering whether a solo project can become collaborative, where the
@@ -225,6 +228,9 @@ export const exportPredatesWork=(project:Project):boolean=>
 const MAX_WORKFLOWS=50;
 /** Checked at the storage boundary, like `validateWorkflow`: a stored project is practitioner
  *  data that a previous version of this application wrote, so it is read defensively. */
+/** The publication's written parts, by key (src/publication.ts), and the longest any may be. */
+export const PUBLICATION_PARTS=['title','affiliations','background','methods','results','conclusions','closing','data'];
+export const MAX_PUBLICATION_PART=20_000;
 export function validateProject(raw:unknown):Project{
   // A project written before 2026-10-23 says schema 1 and carries no timestamps. It is read, not
   // refused: the work is the same work, and what it does not know about itself is stated as not
@@ -254,11 +260,15 @@ export function validateProject(raw:unknown):Project{
   // sequence of failures a practitioner cannot diagnose.
   const repository=readRepository(raw.repository);
   const dictionaries=readProjectDictionaries(raw.dictionaries);
+  // Each part a string of its own, kept as written; anything else is dropped, never coerced.
+  const publication:Record<string,string>=isRecord(raw.publication)?Object.fromEntries(Object.entries(raw.publication as Record<string,unknown>)
+    .filter(([key,value])=>PUBLICATION_PARTS.includes(key)&&typeof value==='string'&&value.trim()&&value.length<=MAX_PUBLICATION_PART) as [string,string][]):{};
   return {schema:'fieldwork/project/2',id:raw.id,name:raw.name,subject:raw.subject,
     workflows:[...new Set(raw.workflows as string[])],
     ...(changedAt?{changedAt}:{}),...(exportedAt?{exportedAt}:{}),...(work?{exportedWork:work}:{}),
     ...(notes.length?{notes}:{}),...(authors.length?{authors}:{}),
-    ...(createdAt?{createdAt}:{}),...(repository?{repository}:{}),...(dictionaries.length?{dictionaries}:{})};
+    ...(createdAt?{createdAt}:{}),...(repository?{repository}:{}),...(dictionaries.length?{dictionaries}:{}),
+    ...(Object.keys(publication).length?{publication}:{})};
 }
 
 /** The input widgets whose payload two workflows can genuinely share.

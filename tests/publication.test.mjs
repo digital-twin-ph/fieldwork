@@ -56,3 +56,26 @@ test('a figure can be left out of the write-up',()=>{
   assert.equal(inWriteUp({section:'Results'}),true);
   assert.equal(inWriteUp({}),true);
 });
+
+test('Hagelloch cites its own source: a source note and Pfeilsticker in References',async()=>{
+  const {hagellochExample}=await import('../build/hagelloch-example.js');
+  const {derivedNotes}=await import('../build/notes-derived.js');
+  const {referenceList}=await import('../build/references.js');
+  const derived=derivedNotes(hagellochExample().nodes,'hagelloch');
+  assert.ok(derived.some(n=>n.fn==='source'&&/188 cases/.test(n.text)));
+  const refs=referenceList([{workflowName:'Hagelloch',machined:[],derived}],[]);
+  assert.ok(refs.some(r=>/^Pfeilsticker A\. .*1863\.$/.test(r.text)));
+});
+
+test('a map in the publication drops its own title, which its caption carries, and the band it stood in',async()=>{
+  const {standaloneMapSvg}=await import('../build/map-communication.js');
+  const {withoutHeading}=await import('../build/publication.js');
+  const spec={title:'The cluster, Hagelloch',subtitle:'Cases and the most likely cluster',sourceNote:'Source: Pfeilsticker 1863',items:[],legend:false};
+  const figure=`<figure class="notes-figure" data-figure="map">${standaloneMapSvg('<rect width="850" height="295"/>','0 0 850 295',spec)}</figure>`;
+  assert.match(figure,/The cluster, Hagelloch<\/text>/);
+  const cropped=withoutHeading(figure);
+  assert.doesNotMatch(cropped,/The cluster, Hagelloch<\/text>|Cases and the most likely cluster<\/text>/);
+  assert.match(cropped,/Source: Pfeilsticker 1863/);
+  const [,top]=/viewBox="0 (\d+) 850 \d+"/.exec(cropped);
+  assert.ok(Number(top)>0);
+});

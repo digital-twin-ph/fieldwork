@@ -137,6 +137,14 @@ the write-up, by the output's new "Not in the write-up" (the practitioner: "we c
 yet: a stored abstract, title, affiliations and keywords (prompts only, so far); the map's own title drawn inside the
 figure as well as in its caption; a figure numbered where the text cites it; Word.
 
+**The open items, 2026-11-14 (Fieldwork 0.118.0).** (5) Hagelloch's source is cited: Point input carries a provenance
+record, and the cases name Pfeilsticker's 1863 thesis; Vancouver prints it as a report, because the citation types have
+no thesis yet. The parts the person writes (title, affiliations and keywords, abstract, conclusions, data availability)
+are written in the publication itself, kept with the project, and shown in place of their prompts; a shipped example
+offers no Write. A map's title is dropped from the figure in the publication, its caption carrying it. Still open: (6)
+the basemap, to be checked on the practitioner's machine; figures cited by number in the text; a thesis citation type;
+Word.
+
 ## What this does not establish
 
 That one record can serve every product without each wanting its own: the Hagelloch story is the test. That a saved

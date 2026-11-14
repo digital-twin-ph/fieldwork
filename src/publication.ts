@@ -28,6 +28,10 @@ export interface PublicationInput {
   /** The figure a note speaks for, as markup, as the Notes tab draws it. */
   figureOf:(note:Note)=>string|undefined;
   references:readonly ReferenceEntry[];
+  /** What the person has written for each part, by key, kept with the project. */
+  written?:Readonly<Record<string,string>>;
+  /** Whether this project can keep what is written: false for a worked example that ships with Fieldwork. */
+  writable?:boolean;
 }
 
 const bodyOf=(note:Note)=>note.kind==='quoted'?note.quote:note.text;
@@ -35,7 +39,7 @@ const fnOf=(note:Note)=>('fn' in note&&note.fn)||'';
 const isLimitation=(note:Note)=>fnOf(note)==='limitation';
 
 /** The parts the person writes, each with what it is for and its length. Shown only where nothing has been written. */
-const PROMPTS={
+export const PROMPTS={
   title:['Title','up to 20 words','What was studied, where and when.'],
   affiliations:['Affiliations and keywords','one line each','Each author’s organisation; three to six keywords.'],
   background:['Background','up to 60 words','Why this question, and why it matters.'],
@@ -48,9 +52,27 @@ const PROMPTS={
   data:['Data availability','one or two sentences','Where a reader can obtain the data named here, and under what terms.'],
 } as const;
 
+/** A MAP WITHOUT ITS OWN TITLE, which its caption carries: the heading's lines dropped and the band they stood in cropped. */
+export function withoutHeading(figure:string):string{
+  const svg=/<svg data-heading="(\d+)" xmlns="http:\/\/www\.w3\.org\/2000\/svg" viewBox="0 0 (\d+) (\d+)" width="\d+" height="\d+"/.exec(figure);
+  if(!svg)return figure;
+  const [whole,cut,width,height]=svg as unknown as [string,string,string,string];
+  const kept=Number(height)-Number(cut);
+  return figure.replace(whole,`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 ${cut} ${width} ${kept}" width="${width}" height="${kept}"`)
+    .replace(/<text data-figure-heading[^>]*>[\s\S]*?<\/text>/g,'');
+}
+
 export function publicationMarkup(input:PublicationInput,esc:Escape):string{
-  const prompt=(key:keyof typeof PROMPTS)=>{const [label,length,ask]=PROMPTS[key];
-    return `<div class="pub-prompt"><p class="pub-prompt-label">${esc(label)} <span>· ${esc(length)}</span></p><p>${esc(ask)}</p></div>`;};
+  const written=input.written??{};
+  const control=(key:string,verb:string)=>input.writable
+    ?`<button class="button small pub-write" data-pub-write="${key}">${verb}</button>`:'';
+  // WRITTEN, SHOWN AS WRITTEN; UNWRITTEN, A PROMPT. Fieldwork drafts none of it.
+  const prompt=(key:keyof typeof PROMPTS,lead=false)=>{const [label,length,ask]=PROMPTS[key];
+    const text=written[key]?.trim();
+    if(text)return `<div class="pub-written" data-pub-part="${key}">`
+      +(lead?toHTML(`**${label}.** ${text}`):toHTML(text))+control(key,'Edit')+`</div>`;
+    return `<div class="pub-prompt" data-pub-part="${key}"><p class="pub-prompt-label">${esc(label)} <span>· ${esc(length)}</span></p>`
+      +`<p>${esc(ask)}</p>${control(key,'Write')}</div>`;};
   let figures=0,tables=0;
   const equations:{tex:string;from:string}[]=[];
   const numberOf=new Map<string,number>();
@@ -89,7 +111,7 @@ export function publicationMarkup(input:PublicationInput,esc:Escape):string{
   const sources:string[]=[];
   const rendered=(kept:{note:Note;from:string[]}[])=>kept.map(({note,from})=>{
     const label=from.join('; ');
-    const figure=input.figureOf(note);
+    let figure=input.figureOf(note);
     // A SOURCE'S TABLE IS NOT THE BODY'S: the sentence stays, and Data availability names it.
     if(note.kind==='derived'&&fnOf(note)==='source'){
       if(!sources.includes(note.text))sources.push(note.text);
@@ -97,6 +119,7 @@ export function publicationMarkup(input:PublicationInput,esc:Escape):string{
     }
     if(figure){
       const kind=/data-figure="([a-z-]+)"/.exec(figure)?.[1];
+      if(kind==='map')figure=withoutHeading(figure);
       const caption=lifted(prose(note),label).replace(/^<p>/,'').replace(/<\/p>$/,'');
       if(kind==='table'||kind==='two-by-two'){tables++;
         return `<div class="pub-table"><p class="pub-caption"><strong>Table ${tables}.</strong> ${caption}</p>${figure}</div>`;}
@@ -110,10 +133,10 @@ export function publicationMarkup(input:PublicationInput,esc:Escape):string{
   const limitations=merged(input.notes.filter(isLimitation));
   const introduction=part('Introduction'),methods=part('Methods'),results=part('Results'),discussion=part('Discussion');
 
-  const front=`<h1>${esc(input.title)}</h1>`
+  const front=`<h1 data-pub-part="title">${esc(written.title?.trim()||input.title)}</h1>`+control('title','Edit title')
     +(input.authors.length?`<p class="pub-authors">${input.authors.map(esc).join(', ')}</p>`:'')
     +`<p class="pub-date">${esc(input.date)}</p>`+prompt('affiliations');
-  const abstract=`<h2>Abstract</h2>`+prompt('background')+prompt('methods')+prompt('results')+prompt('conclusions');
+  const abstract=`<h2>Abstract</h2>`+prompt('background',true)+prompt('methods',true)+prompt('results',true)+prompt('conclusions',true);
   const intro=`<h2>1. Introduction</h2>`+(introduction.length?rendered(introduction):prompt('Introduction'));
   const method=`<h2>2. Methods</h2>`+rendered(methods);
   const result=`<h2>3. Results</h2>`+rendered(results);

@@ -54,6 +54,10 @@ Hagelloch's cases carry their source's dictionary, the outbreaks package's, so e
 arrives as categories in no order, because the package calls it a factor; whether pre-school, first and second class
 are in order is yours to say.
 
+**Where the points came from.** Points can carry a provenance record, as Tabular data does: what they are, the work or
+authority they came from, its address and its licence. A step with one writes a source note in Methods, and its work
+is listed in References. Hagelloch's cases cite Pfeilsticker's 1863 thesis this way.
+
 ## Editing a value by hand
 
 **Data quality**'s **Records** tab shows the records as the steps after this one read them, a page at a time, each value

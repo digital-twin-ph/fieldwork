@@ -112,7 +112,7 @@ import {mountFeatureChooser} from './polygon-review.js';
 import {applyFeatureEdits,applyTableEdits,editsAt,type CellEdit,type EditEntry} from './cell-edits.js';
 import {MAX_POLYGON_LAYERS,polygonPort} from './polygon-layers.js';
 import {MAX_RASTER_LAYERS,rasterPort} from './raster-panels.js';
-import {publicationMarkup,type PublicationInput} from './publication.js';
+import {publicationMarkup,PROMPTS,type PublicationInput} from './publication.js';
 import {notesPanel,openNoteDialog,noteKey} from './notes-ui.js';
 // THE WRITE-UP IS THE PROJECT'S. A run contributes its notes to a store the Notes tab reads
 // across every workflow of the project, rather than the tab reading the open run alone.
@@ -7753,7 +7753,13 @@ function renderNotesView(){
     title:project?.name||workflow.name,
     authors:(project?.authors||[]).map(a=>a.name||a.login),
     date:new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}),
-    notes:[...(project?.notes||[]),...derived,...machined],sourceOf,figureOf,references}));
+    notes:[...(project?.notes||[]),...derived,...machined],sourceOf,figureOf,references,
+    written:project?.publication,writable:!!project&&!keptHere(project)},
+    // KEPT WITH THE PROJECT, as its notes are; a shipped example has nowhere to keep it, and is offered no Write.
+    (key,text)=>{if(!project)return null;const stored=readProjects(),at=stored.findIndex(p=>p.id===project.id);
+      if(at<0)return null;const publication={...(stored[at]!.publication||{})};
+      if(text.trim())publication[key]=text;else delete publication[key];
+      stored[at]={...stored[at]!,publication};return writeProjects(stored)?publication:null;}));
   // THE FORMULAE, ONCE THE PANEL IS IN THE DOCUMENT. `notesPanel` returns the LaTeX on the
   // element that will hold it, so a note reads correctly before the converter has loaded and on
   // any machine where it never does. See `src/prose.ts`.
@@ -7796,19 +7802,48 @@ function renderNotesView(){
 }
 /** THE PUBLICATION, over the page, to read and to print (experiment 202). Back returns to Notes as it was; printing
  *  prints the publication alone, which the browser saves as PDF. Its maps and charts are the Notes tab's own. */
-function openPublication(input:PublicationInput){
+function openPublication(input:PublicationInput,keep:(key:string,text:string)=>Record<string,string>|null){
   let view=optionalElement('#publication-view');
   if(!view){view=document.createElement('div');view.id='publication-view';view.setAttribute('role','dialog');
     view.setAttribute('aria-modal','true');view.setAttribute('aria-label','Publication');document.body.append(view);}
-  view.innerHTML=`<div class="publication-bar"><button class="button" data-publication-back>Back to Notes</button>`
-    +`<button class="button primary" data-publication-print>Print or save as PDF</button></div>`
-    +publicationMarkup(input,esc);
+  const draw=()=>{const top=view!.scrollTop;
+    view!.innerHTML=`<div class="publication-bar"><button class="button" data-publication-back>Back to Notes</button>`
+      +`<button class="button primary" data-publication-print>Print or save as PDF</button></div>`
+      +publicationMarkup(input,esc);
+    view!.scrollTop=top;void typeset(view!);};
+  draw();
   view.hidden=false;document.body.classList.add('showing-publication');
+  // WRITING A PART IN PLACE: what it is for and its length above the box, the words counted as they are typed.
+  view.onclick=event=>{
+    const target=event.target as HTMLElement;
+    const key=target.closest<HTMLElement>('[data-pub-write]')?.dataset.pubWrite;
+    if(key){
+      const part=view!.querySelector<HTMLElement>(`[data-pub-part="${key}"]`);if(!part)return;
+      const [label,length,ask]=PROMPTS[key as keyof typeof PROMPTS]??[key,'',''];
+      const current=input.written?.[key]??'';
+      const editor=document.createElement('div');editor.className='pub-editor';
+      editor.innerHTML=`<label class="pub-prompt-label" for="pub-text">${esc(label)} <span>\u00b7 ${esc(length)}</span></label>`
+        +`<p>${esc(ask)}</p><textarea id="pub-text" rows="${key==='title'?2:6}">${esc(key==='title'&&!current?input.title:current)}</textarea>`
+        +`<p class="pub-count" aria-live="polite"></p><div class="pub-editor-actions">`
+        +`<button class="button primary" data-pub-save>Save</button><button class="button" data-pub-cancel>Cancel</button></div>`;
+      part.replaceWith(editor);view!.querySelector(`[data-pub-write="${key}"]`)?.remove();
+      const box=editor.querySelector('textarea')!,count=editor.querySelector<HTMLElement>('.pub-count')!;
+      const counted=()=>{const n=box.value.split(/\s+/).filter(Boolean).length;count.textContent=`${n} word${n===1?'':'s'}`;};
+      box.addEventListener('input',counted);counted();box.focus();
+      editor.querySelector('[data-pub-cancel]')!.addEventListener('click',draw);
+      editor.querySelector('[data-pub-save]')!.addEventListener('click',()=>{
+        const kept=keep(key,box.value);
+        if(!kept){toast('That could not be kept on this device. Your words are still in the box.',{tone:'failure'});return;}
+        input={...input,written:kept};draw();
+        view!.querySelector<HTMLElement>(`[data-pub-write="${key}"]`)?.focus();});
+      return;
+    }
+    if(target.closest('[data-publication-back]'))close();
+    else if(target.closest('[data-publication-print]'))window.print();
+  };
   const close=()=>{view!.hidden=true;document.body.classList.remove('showing-publication');
     (optionalElement('[data-publication]') as HTMLButtonElement|null)?.focus();};
-  view.querySelector('[data-publication-back]')!.addEventListener('click',close);
-  view.querySelector('[data-publication-print]')!.addEventListener('click',()=>window.print());
-  view.onkeydown=event=>{if(event.key==='Escape')close();};
+  view.onkeydown=event=>{if(event.key!=='Escape')return;if((event.target as HTMLElement).closest('.pub-editor'))draw();else close();};
   view.querySelector<HTMLButtonElement>('[data-publication-back]')!.focus();
   void typeset(view);
 }

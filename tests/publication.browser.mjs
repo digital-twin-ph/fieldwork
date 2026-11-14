@@ -34,6 +34,10 @@ test('Notes lays out a publication: clean IMRaD, numbered figures, an Appendix, 
   await expect(paper.locator('.pub-prompt-label',{hasText:'Background'})).toHaveCount(1);
   expect(await paper.locator('.notes-kind,[data-note],[data-add-note]').count()).toBe(0);
   await expect(paper).not.toContainText('The outbreak, day by day');
+  // Its own source cited (Point input 0.9.0), a map's title only in its caption, and a shipped example offers no Write.
+  await expect(paper.locator('.pub-references')).toContainText('Pfeilsticker A.');
+  expect(await paper.locator('.pub-figure svg [data-figure-heading]').count()).toBe(0);
+  expect(await paper.locator('[data-pub-write]').count()).toBe(0);
   // Every sentence once.
   const texts=await paper.locator('.pub-note').allTextContents();
   expect(texts.length).toBe(new Set(texts).size);
@@ -45,5 +49,40 @@ test('Notes lays out a publication: clean IMRaD, numbered figures, an Appendix, 
   await page.screenshot({path:'test-results/publication.png'});
   await view.locator('[data-publication-back]').click();
   await expect(view).toBeHidden();
+  expect(errors).toEqual([]);
+});
+
+test('the parts the person writes are kept with the project, and nothing is drafted for them',async({page})=>{
+  const errors=collectPageErrors(page);
+  await page.goto('/');await page.evaluate(()=>localStorage.clear());
+  await page.goto('/?example=blank');
+  await page.locator('#new-project').click();
+  await page.locator('#project-name-input').fill('Measles, Ward 4');
+  await page.locator('#project-create').click();
+  await page.locator('[data-view="notes"]').click();
+  await page.locator('[data-add-note="Methods"]').first().click();
+  await page.locator('#note-text').fill('Cases were counted by week of rash onset.');
+  await page.locator('#note-save').click();
+  await page.locator('[data-publication]').click();
+  const paper=page.locator('#publication-view .publication-page');
+  await expect(paper.locator('h1')).toHaveText('Measles, Ward 4');
+  // An empty box, never a draft.
+  await paper.locator('[data-pub-write="background"]').click();
+  await expect(paper.locator('#pub-text')).toHaveValue('');
+  await paper.locator('#pub-text').fill('Measles returned to Ward 4 after two years without a case.');
+  await expect(paper.locator('.pub-count')).toHaveText('11 words');
+  await paper.locator('[data-pub-save]').click();
+  await expect(paper.locator('[data-pub-part="background"]')).toContainText('Background. Measles returned to Ward 4');
+  await paper.locator('[data-pub-write="title"]').click();
+  await paper.locator('#pub-text').fill('Measles in Ward 4, 2026');
+  await paper.locator('[data-pub-save]').click();
+  await expect(paper.locator('h1')).toHaveText('Measles in Ward 4, 2026');
+  // Kept: read back after the page is loaded again.
+  await page.reload();
+  await page.locator('[data-view="notes"]').click();
+  await page.locator('[data-publication]').click();
+  await expect(paper.locator('h1')).toHaveText('Measles in Ward 4, 2026');
+  await expect(paper.locator('[data-pub-part="background"]')).toContainText('two years without a case');
+  await expect(paper.locator('[data-pub-part="methods"].pub-prompt')).toHaveCount(1);
   expect(errors).toEqual([]);
 });

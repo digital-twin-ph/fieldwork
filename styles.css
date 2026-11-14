@@ -1399,12 +1399,19 @@ th .column-label{display:block;font-weight:400;color:var(--muted);font-size:14px
 .publication-page .pub-equation{break-inside:avoid;margin:14px 0}
 .publication-page .pub-references li,.publication-page .pub-sources li{margin-bottom:6px}
 .publication-page .muted{color:#3d3d3d}
-.publication-page button,.publication-page .table-pager{display:none}
+.publication-page .table-page-group,.publication-page .notes-figure button{display:none}
+.publication-page .pub-write{margin-top:8px;font-family:system-ui,sans-serif}
+.publication-page h1+.pub-write{margin:0 0 8px}
+.publication-page .pub-editor{border:2px solid #176b59;padding:10px 14px;margin:12px 0;font:15px/1.45 system-ui,sans-serif;color:#111}
+.publication-page .pub-editor p{margin:0 0 6px}
+.publication-page .pub-editor textarea{width:100%;box-sizing:border-box;font:16px/1.5 Georgia,serif;color:#111;background:#fff;border:1px solid #6b6b6b;padding:8px}
+.publication-page .pub-count{color:#3d3d3d}
+.publication-page .pub-editor-actions{display:flex;gap:8px}
 @media (max-width:640px){.publication-page{padding:24px 16px}}
 @media print{
   body.showing-publication>*:not(#publication-view){display:none!important}
   #publication-view{position:static;overflow:visible;padding:0;background:#fff}
-  .publication-bar{display:none}
+  .publication-bar,.publication-page .pub-write,.publication-page .pub-prompt .pub-write{display:none}
   .publication-page{box-shadow:none;max-width:none;padding:0}
   @page{size:A4;margin:22mm 20mm}
 }

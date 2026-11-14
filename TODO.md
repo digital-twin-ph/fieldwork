@@ -141,8 +141,9 @@ sources), and MERS's epidemic curve coloured by transmission chain and its offsp
 **Then, the same day:** the publication render of Notes ([202](docs/experiments/202-one-record-several-products.md),
 reordered: publication first; formulas in an Appendix; a print layout saved as PDF first, Word later). The offspring
 distribution is built (0.116.0); the curve by chain needs a step that hands on each case's chain, designed first.
-**The publication's first step is built (0.117.0)**; next for it: Hagelloch's source cited (Point input needs a
-provenance field, a widget change), a stored abstract and front matter, and figures cited by number in the text.
+**The publication's first step is built (0.117.0)**, and its open items (0.118.0): Hagelloch's source cited, the
+written parts kept, a map's title in its caption only. Still open for it: figures cited by number in the text, a
+thesis citation type, Word; the basemap under the cluster map is the practitioner's to check.
 
 **The order from here, as the practitioner set it on 2026-11-13:** *"After that let's finish MERS. Then table edit #12.
 Then Sierra Leone. Then ABM spike."* So 8, then 12, then 3, then 29. The numbering below is kept as written.

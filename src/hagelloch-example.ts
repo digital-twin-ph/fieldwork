@@ -67,6 +67,14 @@ export function hagellochExample():Workflow{
     {id:'cases',type:'point_input',x:20,y:60,
       params:{label:`${cases.features.length} measles cases, one per child`,
         data:cases as never,...describedCases(),
+        // CITED, as a source note in Methods and a reference (experiment 202's publication found it cited nowhere). The
+        // work is Pfeilsticker's thesis; the chain to this file and the licence decision are the provenance record's.
+        provenance:{what:`${provenance.dataset.name}: ${provenance.dataset.records} cases, one record per child, ${provenance.dataset.periodCovered}`,
+          source:provenance.dataset.collected,url:provenance.dataset.originalScan,published:'1863',represents:'1861',
+          citation:{type:'report' as const,authors:[{family:'Pfeilsticker',given:'Albert'}],
+            title:'Beitrage zur Pathologie der Masern mit besonderer Berucksichtigung der statistischen Verhaltnisse',
+            place:'Tubingen',publisher:'Eberhard-Karls-Universitat'},
+          licence:'unstated',note:`${provenance.dataset.distributionChain}. ${provenance.dataset.licenceDecision}`},
         sourceInfo:{format:'R outbreaks 1.9.0 · measles_hagelloch_1861',
           url:provenance.dataset.originalScan,
           notes:`${provenance.dataset.collected}. ${provenance.georeference.doesNotEstablish}`}},

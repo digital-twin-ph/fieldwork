@@ -70,6 +70,9 @@ export interface ObservationParams extends PointParams {
   fields?:FormField[]; attributeRules?:AttributeDefinition[]; sourceInfo?:SourceInfo; pinIdStrategy?:'uuid'|'sequential'; repairs?:ColumnRepair[];
   /** Values edited by hand in Data quality (experiment 214), applied after the repairs, to a copy. */
   edits?:import('./cell-edits.js').EditEntry[];
+  /** WHAT THE POINTS ARE AND WHERE THEY CAME FROM, as Tabular data and Polygon input record it: a source note in Methods
+   *  and a reference in References (2026-11-14: Hagelloch's cases were cited nowhere in the publication). */
+  provenance?:import('./input-provenance.js').InputProvenance;
   /** What the records' columns mean, their scale and codes, and the data dictionary they came with: as Tabular data's
    *  (experiments 172, 211). Hagelloch's `class` is read here, which is why Point data has them too. */
   columns?:import('./column-metadata.js').ColumnDeclarations;

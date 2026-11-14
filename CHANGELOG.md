@@ -3,6 +3,17 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.118.0 — In development
+
+- **The publication keeps what you write.** Title, affiliations and keywords, the four parts of the abstract,
+  conclusions and data availability each have **Write**: a box in place, with what the part is for, its length and a
+  word count. What you write is kept with the project and printed in place of the prompt. Fieldwork drafts none of it.
+  A worked example that ships with Fieldwork is read-only, as its notes are.
+- **Hagelloch cites its source.** Its cases name Pfeilsticker's 1863 thesis, in Methods and in References. Point input
+  can carry a provenance record, as Tabular data does. Point input 0.9.0.
+- **A map's title is in its caption only.** In the publication, a map no longer prints its own title above the figure
+  as well.
+
 ## 0.117.0 — 2026-11-14
 
 - **Notes lays out a publication.** Publication, at the top of Notes, shows the write-up as a paper, ready to print or

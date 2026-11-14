@@ -576,12 +576,12 @@
    "migrationFrom": []
   },
   "point_input": {
-   "version": "0.8.0",
-   "released": "2026-11-13",
+   "version": "0.9.0",
+   "released": "2026-11-14",
    "changes": [
     {
      "kind": "minor",
-     "description": "A value can be edited by hand in Data quality, under Records (experiment 214): kept on the step as an edit with the value it replaced and when, applied to a copy of the records when they are handed on, never to the file; an empty value can be filled, and such edits are counted apart (the practitioner, 2026-11-13: \"Yes, like any edit\"). An edit whose value read is no longer there is not applied, and is reported. Edits (n) lists them, each removable. The run states each as fw:CellEdit. The practitioner, 2026-11-10: \"the ability to edit tables inline\"."
+     "description": "Points can carry a provenance record, as Tabular data does: a source note in Methods and a reference in References."
     }
    ],
    "breaking": false,

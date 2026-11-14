@@ -2599,6 +2599,13 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         withArtifact(receipts,runId,node.id,{kind:'chart',barCount:chart.bins.length,
           section:figureSection(node.params,node.type),sectionDeclared:figureSectionDeclared(node.params)});}
     }
+    // A TRANSMISSION TREE SAYS WHAT IT DREW, in Results, as a bar chart does (2026-11-14: MERS's tree wrote no note).
+    if(node.type==='chart_output'&&isRecord(value)&&(value as {kind?:string}).kind==='transmission-tree'){
+      const sentence=String((value as {sentence?:unknown}).sentence??'').trim();
+      if(sentence){const note:MachinedNote={kind:'machined',id:`${node.id}:description`,section:figureSection(node.params,node.type),
+        nodeId:node.id,text:`**${node.params.label||'Who infected whom'}.** ${sentence}`};
+        machined[node.id]=[note];withNote(receipts,runId,node.id,[note]);}
+    }
     if(node.type==='map_output'&&isRecord(value)){
       const plan=mapLayerList(node,workflow.edges,
         id=>workflow.nodes.find(n=>n.id===id)?.params.label,
@@ -2735,6 +2742,20 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
     for(const f of features.slice(0,200))for(const [k,v] of Object.entries(f.properties??{}))
       if(v!==null&&v!==undefined&&v!=='')(kinds.get(k)??kinds.set(k,new Set()).get(k)!).add(typeof v);
     if(kinds.size)pointColumns[nodeId]=[...kinds].map(([attribute,t])=>({attribute,kind:t.size===1&&t.has('number')?'number' as const:'term' as const}));
+  }
+  // EVERY STEP SAYS WHAT IT DID, IN METHODS (2026-11-14; the practitioner: "The Notes is where a user may want to see
+  // all the results, and right now it's where the biggest gap is"). MERS's eight workflows put 1 Methods note in for 13
+  // Total within groups steps and none for its rules: the run record held each step's sentence and nothing carried it
+  // to the write-up. A step that machined no Methods note of its own gets one, from that sentence, as written. Outputs
+  // are left out, as they write Results; sources too, as they write a source note from what they declare.
+  const RESULT_STEPS=new Set(['table_output','chart_output','map_output','comparison_map']);
+  const SOURCE_STEPS=new Set(['table_input','point_input','polygon_input','raster_input','study_area','network_input','map_image_input']);
+  for(const node of workflow.nodes){
+    if(RESULT_STEPS.has(node.type)||SOURCE_STEPS.has(node.type))continue;
+    if((machined[node.id]??[]).some(note=>note.section==='Methods'))continue;
+    const said=receipts.find(r=>r.nodeId===node.id&&typeof (r as {method?:unknown}).method==='string'&&(r as {method:string}).method.trim())as {method:string}|undefined;
+    if(!said)continue;
+    (machined[node.id]??=[]).push({kind:'machined',id:`${node.id}:method`,section:'Methods',fn:'method',nodeId:node.id,text:said.method.trim()});
   }
   return {...provenance,alerts,outputs,trace,receipts,runId,engine:'EYE-JS 21.1.24 (WASM)',runAt:new Date().toISOString(),
     ...(Object.keys(tables).length?{tables}:{}),

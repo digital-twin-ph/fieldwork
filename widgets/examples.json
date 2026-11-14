@@ -806,14 +806,14 @@
       "id": "urn:fieldwork:example:mers-korea-2015",
       "title": "MERS-CoV, South Korea, 2015",
       "repository": "https://github.com/digital-twin-ph/example-2015-mers-korea",
-      "commit": "41224325aba239509bd85c94c36bcd53d06307c3",
+      "commit": "2cd4392409a49142c3c20097c82b551a6f41365f",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2015-mers-korea",
       "licence": {
         "data": "No licence stated for the data; used for teaching, as the outbreaks package describes it. The repository’s own files are CC0-1.0.",
         "source": "The R package outbreaks (reconverse), mers_korea_2015, compiled by ECDC’s Epidemic Intelligence from public information in the outbreak’s first weeks.",
         "note": "Decided 2026-11-11 by the practitioner: used in an example repository for teaching, attributed, never in the application."
       },
-      "description": "A line list of 162 cases, each case’s onset, diagnosis and report set against the 7-1-7 targets by a published ruleset and each verdict counted; and the 98 probable links, counted by source and by setting of exposure; and each hospital named for cases, placed and mapped over South Korea’s 17 provinces, coloured by its cases. Deaths by age class and by sex in a two-by-two; the days from exposure to onset, with its median by outcome, and from onset to death; and the secondary cases per source and the serial interval by setting.",
+      "description": "A line list of 162 cases, each case’s onset, diagnosis and report set against the 7-1-7 targets by a published ruleset and each verdict counted; and the 98 probable links, counted by source and by setting of exposure; and each hospital named for cases, placed and mapped over South Korea’s 17 provinces, coloured by its cases. Deaths by age class and by sex in a two-by-two; the days from exposure to onset, with its median by outcome, and from onset to death; and the secondary cases per source and the serial interval by setting; and how many each case infected, the offspring distribution.",
       "carries": {
         "workflow": true,
         "data": true,
@@ -835,8 +835,8 @@
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "0c30031500962419f20882839f3b04e534f8153fa080c4590c18e48bcee9684c",
-          "bytes": 150874
+          "sha256": "9af1b8ebac11c788c8f607b73d1cd217e3a2e99cdc02777eb745cb23e044f9f9",
+          "bytes": 154731
         },
         {
           "path": "data/mers_korea_2015_linelist.csv",
@@ -865,8 +865,8 @@
         },
         {
           "path": "README.md",
-          "sha256": "d95a70ab81d8aeedb2aa1e11c46dcd8ff2fbb465169a20faab82152bc8204943",
-          "bytes": 8986
+          "sha256": "36024054b83c1b341e8b7a3a08e00dc6d5f1626da647279be44d71ef2af2ec57",
+          "bytes": 9745
         },
         {
           "path": "NOTICE.txt",
@@ -899,13 +899,13 @@
           "bytes": 3442
         }
       ],
-      "workflowCount": 8
+      "workflowCount": 9
     },
     {
       "id": "urn:fieldwork:example:population-models-census",
       "title": "Population models beside a census",
       "repository": "https://github.com/digital-twin-ph/example-population-models-census",
-      "commit": "bb160cc4f8fbfce7f7e4c7ac23cd3e232bf4aa97",
+      "commit": "1b42afedc498fdf8ba83a729ec960c8cdf343890",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-population-models-census",
       "licence": {
         "data": "Census counts: Statistics Botswana (free to use, acknowledged, as the user's own processing) and NISR (no terms found, used credited). Boundaries: geoBoundaries, CC BY 3.0 IGO (Botswana) and CC BY 4.0 (Rwanda). Rasters, read where published: WorldPop, GRID3 and GHS-POP, CC BY 4.0. The repository's own files are CC0-1.0.",
@@ -937,8 +937,8 @@
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "ece66b8c056bfe03f915330dd8fecdc1910353c496f0a427e455ca1a3c8242c2",
-          "bytes": 4877150
+          "sha256": "1eade2700405b9c9cff0b4f9d2c2cf5f97c06b9941989073e95387dac7299b9d",
+          "bytes": 4877708
         },
         {
           "path": "data/botswana_census_2022_districts.csv",
@@ -957,8 +957,8 @@
         },
         {
           "path": "README.md",
-          "sha256": "2d794739cb5e0c0ee8c6845b8641a238960184fc4be8a413480b0538f17a7cc5",
-          "bytes": 4574
+          "sha256": "bbbbcf1e02fad51b61e8514f78cf611144502d4edf9a966c52dd23bbf1c99309",
+          "bytes": 4778
         },
         {
           "path": "NOTICE.txt",

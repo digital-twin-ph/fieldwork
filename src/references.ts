@@ -94,8 +94,9 @@ export function referenceList(entries:readonly CitingEntry[],
     // declared one. A derived note without one is a source that states no citation, which is a
     // gap in the input rather than a reference, and 144's rule refuses to render half of one.
     for(const note of entry.derived||[]){
-      const attribution=clean(note.detail);
-      if(attribution)add(attribution,'source',workflow);
+      // THE WORK, cited whatever its licence; the licence's own attribution where there is no work to cite.
+      const cited=clean(note.reference)||clean(note.detail);
+      if(cited)add(cited,'source',workflow);
     }
     for(const note of entry.machined||[])
       for(const method of note.cites||[]){

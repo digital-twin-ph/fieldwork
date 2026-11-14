@@ -260,6 +260,9 @@ export function mapPresentation(node:WorkflowNode<'map_output'>,output:Output,wo
  *  a decision table, a basemap-backed interactive view -- and then no bar is drawn, because a
  *  figure missing a scale bar is incomplete while a figure with a wrong one is misleading. */
 export function standaloneMapSvg(content:string,viewBox:string,spec:MapPresentation,frame?:{metresPerPixel?:number}):string{
+  // ONE KEY, NOT TWO (2026-11-14): a categorical plot draws its classes and a key line at the foot of its own frame, over
+  // the map, for the page; a figure that draws its own key says the same thing below the map, so the plot's is left out.
+  if(spec?.legend)content=content.replace(/<(rect|text) data-plot-key="(class|line)"[^>]*?(\/>|>[^<]*<\/(rect|text)>)/g,'');
   const escape=(s:string)=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
   const lines=(value:string,max:number)=>value.match(new RegExp(`.{1,${max}}(?:\\s|$)|.{1,${max}}`,'g'))?.map(line=>line.trim())||[];
   const t=FIGURE_TYPE;

@@ -89,7 +89,11 @@ export function openGroupConfig(view:GroupConfigView,esc:Escape):void{
           ...(draft.total&&!draft.by.includes(draft.total)?{total:draft.total}:{}),...(draft.excludeMissing&&draft.aggregate!=='count'?{excludeMissing:true}:{}),
           ...(draft.share&&adds?{share:{within:draft.within.filter(w=>draft.by.includes(w))}}:{})});
         shown=result.table;
-        const preview=`<p class="select-preview-count">${result.collapsedFrom.toLocaleString()} rows into <strong>${result.groups.toLocaleString()}</strong> groups`
+        // BEFORE AND AFTER, as Apply ruleset's and Select rows' dialogs show them (2026-11-14: "the two total within
+        // groups have no before and after preview"): the rows coming in, then the table these settings make.
+        const preview=`<h4>Before: ${esc(view.sourceLabel)}, ${view.table.rows.length.toLocaleString()} rows</h4>`
+          +`<div class="group-before">${dataTableMarkup(view.table,esc,{pageSize:6})}</div>`
+          +`<h4>After</h4><p class="select-preview-count">${result.collapsedFrom.toLocaleString()} rows into <strong>${result.groups.toLocaleString()}</strong> groups`
           +`${result.shares?`, each with its ${esc(result.shares.name)}`:''}.</p>`
           +`<div class="group-preview">${dataTableMarkup(result.table,esc,{pageSize:12})}</div>`;
         const decisions=result.gaps.length&&!result.excluded
@@ -101,6 +105,7 @@ export function openGroupConfig(view:GroupConfigView,esc:Escape):void{
     },
     wire:(root,draft,redraw)=>{
       if(shown)wireTablePages(root.querySelector<HTMLElement>('.group-preview'),shown,esc,{pageSize:12});
+      if(shown&&view.table)wireTablePages(root.querySelector<HTMLElement>('.group-before'),view.table,esc,{pageSize:6});
       // THE KEPT COLUMNS ARE A LIST IN ORDER, and EVERY BOX IS READ ON ANY CHANGE, so several ticked at once -- as a
       // manual's step does -- are all kept: the order already kept, then any newly ticked in the order shown.
       const ticked=(attr:string)=>[...root.querySelectorAll<HTMLInputElement>(`[${attr}]`)].filter(b=>b.checked).map(b=>b.value);

@@ -349,6 +349,10 @@ export interface DerivedNote {
   text:string;
   /** The attribution the licence and citation require, as `attributionFor` renders it. */
   detail?:string;
+  /** THE WORK, AS REFERENCES LISTS IT: its citation rendered where it is complete, else the source as its author wrote
+   *  it, with where it was read. A source whose licence is unstated or waived has no attribution to carry and is still a
+   *  work the write-up rests on (2026-11-14: MERS's line list and KDCA's file were in no References). */
+  reference?:string;
   /** The input that declares it. */
   nodeId?:string;
   /** WHICH WORKFLOW PRODUCED IT, where it was not the one being read.

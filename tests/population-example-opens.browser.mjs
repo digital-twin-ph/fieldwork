@@ -36,7 +36,9 @@ test('Rwanda’s workflow opens from the example, its windows read again and che
   await reread('grid3','dl-grid3-rwa/rwa_SSApopulation_ 2025_v1_0_gridded.tif');
   await reread('ghs');
   await page.locator('#run-button').click();
-  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:600000});
+  await expect(page.locator('#workflow-state')).toContainText(/Run complete|Run failed/,{timeout:600000});
+  if((await page.locator('#workflow-state').innerText()).includes('failed'))console.log('FAILED:',(await page.locator('.toast').allInnerTexts()).join(' | '),(await page.locator('.react-flow__node.failed, .node-error, [data-status="failed"]').allInnerTexts()).join(' | ').slice(0,800));
+  await expect(page.locator('#workflow-state')).toContainText('Run complete');
   await page.locator('[data-view="results"]').click();
   await page.getByRole('tab',{name:'Shares by district and source'}).click();
   await page.locator('#result-search').fill('Gasabo');

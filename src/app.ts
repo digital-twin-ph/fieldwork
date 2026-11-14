@@ -782,6 +782,8 @@ let runningBuild:string|undefined;
 function refreshNotesIfOpen(){if(currentView==='notes')renderNotesView();}
 /** Charts drawn for the notes, by run and step: the SVG, a line while it is drawn, or empty where it could not be. */
 const notesChartSvg=new Map<string,string>();
+/** The write-up's maps, drawn off the page by the Results tab's renderer, by run and node. */
+const notesMapSvg=new Map<string,string>();
 void fetch('./build/asset-manifest.json',{cache:'no-store'})
   .then(r=>r.ok?r.json():null)
   .then(m=>{const id=m&&typeof m.cache==='string'?m.cache:undefined;
@@ -1273,7 +1275,11 @@ function upstreamKeyValues(node:WorkflowNode,seen=new Set<string>(),
     const shiftedAs=(()=>{if(!w)return '';let name=`${w.date}_shifted`,k=1;while(name in below)name=`${w.date}_shifted_${++k}`;return name;})();
     const period=w?{...(up.params.shiftDays?{[shiftedAs]:[]}:{}),[w.start in below?`${w.start}_matched`:w.start]:other?.[w.start]??[]}:{};
     if(!brought)return {...below,...period};
-    return {...below,...period,[brought]:other?.[brought]??[]};
+    // UNDER THE NAME IT IS WRITTEN AS, and with the label unmatched rows carry (2026-11-14: a column brought as
+    // "secondary_cases" was offered downstream, before a run, as "rows").
+    const as=up.params.bringAs?.trim()||brought,label=up.params.unmatched?.decision==='keep'?up.params.unmatched.label?.trim():'';
+    const values=[...(other?.[brought]??[])];if(label&&!values.includes(label))values.push(label);
+    return {...below,...period,[as]:values};
   }
   // A SATELLITE SAMPLE'S COLUMNS ARE KNOWN BEFORE IT RUNS: its fixed ones, with the id column named as the points'
   // source table names it, the ids read from that table and the days from the search. So a join downstream can be set
@@ -6380,21 +6386,25 @@ function groundImageFor(mapNodeId:string|undefined,
 }
 
 async function drawStaticBasemap(result:Output,svg:SVGSVGElement,
-  frame:{bounds:[number,number,number,number];project:(c:Position)=>[number,number]}):Promise<void>{
+  frame:{bounds:[number,number,number,number];project:(c:Position)=>[number,number]},
+  /** OFF THE PAGE, for the write-up (2026-11-14): the figure is drawn into an element that is never shown, so its tiles
+   *  are kept when they arrive, the page's map note is left alone, and the workflow is the one the run came from. */
+  offPage?:{workflow:Workflow;hidden?:Set<string>}):Promise<void>{
   // READ FROM THE LIVE WORKFLOW, not from the snapshot as run. A basemap is presentation: it
   // changes nothing the run computed, so it must appear the moment it is chosen. Reading
   // `runWorkflow` here meant choosing one did nothing at all until the workflow was run again,
   // which is the second way this control could look broken on the same day.
-  const node=(workflow.nodes.find((n):n is WorkflowNode<'map_output'>=>n.id===result.nodeId&&n.type==='map_output')
+  const node=offPage?offPage.workflow.nodes.find((n):n is WorkflowNode<'map_output'>=>n.id===result.nodeId&&n.type==='map_output')
+    :(workflow.nodes.find((n):n is WorkflowNode<'map_output'>=>n.id===result.nodeId&&n.type==='map_output')
     ??runWorkflow?.nodes.find((n):n is WorkflowNode<'map_output'>=>n.id===result.nodeId&&n.type==='map_output'));
   // THE PLATE FIRST, and ABOVE the guard below: a figure may carry a historical plate and no
   // basemap at all, and that guard returns early for `none`. It is the more specific ground --
   // a basemap says where this is and a plate says what was there -- so it sits over the tiles
   // and under everything the workflow produced.
-  const plate=groundImageFor(node?.id);
+  const plate=groundImageFor(node?.id,offPage?.workflow??workflow);
   // Unchecked in the layer list means not drawn. The same per-output set the point layers use.
   const plateHidden=!!plate&&!!result.nodeId
-    &&!!hiddenMapLayers.get(result.nodeId)?.has(plate.sourceNodeId);
+    &&!!(offPage?offPage.hidden:hiddenMapLayers.get(result.nodeId))?.has(plate.sourceNodeId);
   if(plate&&!plateHidden){
     const markup=mapImageMarkup(plate,frame.project as (c:[number,number])=>[number,number]);
     const background=[...svg.children].find(child=>child.tagName.toLowerCase()==='rect');
@@ -6403,13 +6413,13 @@ async function drawStaticBasemap(result:Output,svg:SVGSVGElement,
       else svg.insertAdjacentHTML('afterbegin',markup);
       for(const shape of svg.querySelectorAll('[data-fill-role="context"]'))shape.setAttribute('fill','none');
     }
-    const plateNote=$('#map-panel').querySelector('#map-note');
+    const plateNote=offPage?null:$('#map-panel').querySelector('#map-note');
     if(plateNote)plateNote.textContent=`${mapImageCredit(plate)} \u00b7 drawn as ground at about `
       +`${plate.groundResolutionM.toFixed(0)} m per pixel. Context: a plate is ink, not measurement.`;
   }
   const choice=node?basemapOf(node.params.basemap):undefined;
   if(!node||!choice||choice==='none')return;
-  const note=$('#map-panel').querySelector('#map-note');
+  const note=offPage?null:$('#map-panel').querySelector('#map-note');
   // THE GROUND'S CREDIT FOLLOWS THE MAP'S OWN NOTE, never replaces it: once OpenStreetMap became the default (2026-11-10)
   // every map lost its caption to "9 of 9 tiles ..." this way. Only what this added before is taken back out.
   const say=(text:string)=>{if(!note)return;const el=note as HTMLElement,prev=el.dataset.ground||'';
@@ -6448,7 +6458,7 @@ async function drawStaticBasemap(result:Output,svg:SVGSVGElement,
   let images;
   try{images=await basemapImages(frame.bounds,frame.project,provider,fetchTileAsDataURI);}
   catch{
-    if(svg.dataset.renderStamp!==stamp||!svg.isConnected)return;
+    if(svg.dataset.renderStamp!==stamp||(!offPage&&!svg.isConnected))return;
     const name=BASEMAP_OPTIONS.find(o=>o.value===choice)?.label||choice;
     say(`${name} tiles could not be fetched, so this figure is drawn `
       +'without its ground. The plot above is unaffected: a basemap is layer 0 and carries none of '
@@ -6456,8 +6466,8 @@ async function drawStaticBasemap(result:Output,svg:SVGSVGElement,
     return;
   }
   const {markup,drawn,requested,zoom}=images;
-  // The figure may have been replaced while the tiles were in flight.
-  if(svg.dataset.renderStamp!==stamp||!svg.isConnected)return;
+  // The figure may have been replaced while the tiles were in flight; off the page, it is the write-up's and kept.
+  if(svg.dataset.renderStamp!==stamp||(!offPage&&!svg.isConnected))return;
   // AFTER THE BACKGROUND, NOT BEFORE IT. `oldMap` opens by painting an opaque rect across the
   // whole frame, so inserting the tiles at `afterbegin` drew the ground and then covered it --
   // the practitioner saw a sliver of basemap above the plot and nothing within it: *"look at the
@@ -6556,6 +6566,89 @@ function mountRasterPanels(host:HTMLElement,panels:import('./raster-panels.js').
   return ()=>{cancelAnimationFrame(settle);ready=false;for(const d of disposers)d();host.classList.remove('map-panels-host');host.replaceChildren();};
 }
 const roundTo=(v:number|undefined)=>v===undefined?'':Number(Math.abs(v)>=100?v.toFixed(0):Math.abs(v)>=10?v.toFixed(1):v.toFixed(2)).toLocaleString('en');
+/** THE STATIC FIGURE OF A MAP, drawn into `svg`: one renderer for the Results tab and the write-up (2026-11-14; the
+ *  practitioner: "maps in Notes still don't look like complete polished maps"). The write-up had kept a copy of an older
+ *  version of this drawing, without panels, raster cells, link lines or ground, and fell further behind with each figure
+ *  the Results tab gained. Returns once the ground is drawn, or false where there is no static figure to draw. */
+async function drawStaticFigure(svg:SVGSVGElement,result:Output,mapNode:WorkflowNode<'map_output'>|undefined,
+  o:{selected?:string|null;hidden?:Set<string>;offPage?:{workflow:Workflow}}={}):Promise<boolean>{
+  const rows=result.rows||[],arranged=mapNode?.params.arrangement;
+  const rasterPanels=(result as {rasterPanels?:import('./raster-panels.js').DrawnDensity[]}).rasterPanels;
+  const hidden=o.hidden??new Set<string>();
+  const ground=(frame:{bounds:[number,number,number,number];project:(c:Position)=>[number,number]})=>
+    drawStaticBasemap(result,svg,frame,o.offPage?{workflow:o.offPage.workflow,hidden}:undefined);
+  if(result.network&&!result.pointLayers?.length){
+    svg.setAttribute('viewBox','0 0 252 168');
+    svg.innerHTML=networkPreviewSvg(result.network,result.boundary as never).replace(/^<svg[^>]*>/,'').replace(/<\/svg>$/,'');
+    return true;
+  }
+  if(result.polygons){
+    const banded=result.polygons.features.some(f=>f.minutes!==undefined);
+    if(banded){svg.setAttribute('viewBox','0 0 850 650');svg.innerHTML=catchmentPlot(result.polygons,esc,result.contextPoints);}
+    // PANELS SIDE BY SIDE, on one scale (experiment 212): each panel its own frame, so no single basemap or point overlay
+    // projects onto the figure; those are drawn on one map only.
+    else if(arranged){svg.innerHTML=polygonPanelsSvg(result.polygons,arranged.panels,arranged.grid,esc);applyFrame(svg,svg.innerHTML);}
+    else{svg.innerHTML=polygonSvg(result.polygons,esc);applyFrame(svg,svg.innerHTML);}
+    const polygonGround=arranged&&!banded?null:banded?catchmentFrame(result.polygons,result.contextPoints):polygonFrame(result.polygons);
+    const drawnLinks=(result as {links?:import('./map-links.js').MapLink[]}).links;
+    if(polygonGround&&drawnLinks?.length)
+      svg.insertAdjacentHTML('beforeend',linkLinesSvg(drawnLinks,rows,c=>polygonGround.project(c) as [number,number],hidden));
+    if(polygonGround&&rows.length)
+      svg.insertAdjacentHTML('beforeend',markedPoints(rows,
+        c=>polygonGround.project(c) as [number,number],
+        {esc,markPath,
+         symbols:(result as {layerSymbols?:Record<string,import('./point-layers.js').MarkStyle>}).layerSymbols||{},
+         classes:(result as {pinClasses?:Record<string,{value:string;colour:string}[]>}).pinClasses||{},
+         hidden,
+         mapLayers:(result as {mapLayers?:MapLayer[]}).mapLayers,
+         labelField:mapNode?.params.labelField||{},
+         ...(o.selected?{focusId:rows.find(r=>`result:${r.id}`===o.selected)?.id}:{}),
+         label:row=>[row.excluded?'Excluded':row.relation,row.layerLabel].filter(Boolean).join(' \u00b7 ')}));
+    if(polygonGround)await ground({bounds:polygonGround.bounds,project:c=>polygonGround.project(c) as [number,number]});
+    return true;
+  }
+  // GRID CELLS IN PANELS (experiment 212): the static figure, every panel on one scale.
+  if(rasterPanels?.length){
+    const breaks=(result as unknown as {densityBreaks:number[]}).densityBreaks;
+    const order=arranged?arranged.panels.map(p=>p.layer):rasterPanels.map(p=>p.layer);
+    const shownPanels=order.map(name=>rasterPanels.find(p=>p.layer===name)).filter((p):p is NonNullable<typeof p>=>!!p);
+    svg.innerHTML=rasterPanelsSvg(shownPanels,breaks,arranged?.grid??'grid',Object.fromEntries((arranged?.panels??[]).map(p=>[p.layer,p.title])),esc);
+    applyFrame(svg,svg.innerHTML);
+    return true;
+  }
+  if(result.raster){
+    const frame=rasterFrame(result.raster);
+    const symbols=(result as {layerSymbols?:Record<string,{colour:string;shape:Parameters<typeof markPath>[0];size?:number}>}).layerSymbols||{};
+    const focus=o.selected?rows.find(r=>`result:${r.id}`===o.selected):undefined;
+    const marks=rows.filter(r=>r.coordinates).map(r=>{
+      const [x,y]=frame.project(r.coordinates!);
+      const symbol=symbols[r.sourceNodeId||'']||{colour:'#699178',shape:'circle' as const};
+      const label=r.excluded?'Excluded':r.relation||statusLabel(r.status);
+      const radius=(symbol.size??4)+(focus?.id===r.id?2:0);
+      return `<g class="location" role="button" tabindex="0" data-place="${esc(r.id)}"`
+        +` data-layer="${esc(r.sourceNodeId||'')}"`
+        +` style="display:${hidden.has(r.sourceNodeId||'')?'none':''}"`
+        +` aria-label="${esc(r.name)}, ${esc(label)}${r.layerLabel?', '+esc(r.layerLabel):''}">`
+        +`<title>${esc(r.name)} \u00b7 ${esc(label)}${r.layerLabel?' \u00b7 '+esc(r.layerLabel):''}</title>`
+        +`<path d="${markPath(symbol.shape||'circle',x,y,radius)}" fill="${symbol.colour}" stroke="white" stroke-width="1.2"/></g>`;
+    }).join('');
+    const rasterLinks=(result as {links?:import('./map-links.js').MapLink[]}).links;
+    svg.innerHTML=rasterSvg(result.raster,(rasterLinks?.length?linkLinesSvg(rasterLinks,rows,c=>frame.project(c) as [number,number],hidden):'')+marks);
+    return true;
+  }
+  if(result.pointTable){svg.innerHTML='';return false;}
+  if(result.kind==='study-area'){svg.innerHTML=areaSvg(required(result.boundary),result.label);return true;}
+  if(result.boundary){
+    svg.innerHTML=staticBoundaryMap(result,o.selected??null,esc,statusLabel,mapNode?.params.labelField||{});
+    applyFrame(svg,svg.innerHTML);
+    svg.querySelectorAll<SVGElement>('[data-layer-link]').forEach(el=>{el.style.display=hidden.has(el.dataset.layerLink!)?'none':'';});
+    svg.querySelectorAll<SVGElement>('[data-place]').forEach(el=>{el.style.display=hidden.has(el.dataset.layer!)?'none':'';});
+    await ground(staticMapFrame(result));
+    return true;
+  }
+  svg.innerHTML='';
+  return false;
+}
 function renderMap(){
   if(!resultsOnScreen())return;
   disposeCatchmentMap?.();disposeCatchmentMap=undefined;document.querySelector('#catchment-map-host')?.remove();document.querySelector('#polygon-method')?.remove();document.querySelector('#catchment-plot-download')?.remove();document.querySelector('#comparison-map-host')?.remove();
@@ -6717,117 +6810,20 @@ function renderMap(){
     }
     return;
   }
-  if(result?.polygons){
+  // THE STATIC FIGURE, from the one renderer the write-up uses too (2026-11-14). What stays here is what only the page
+  // has: the method note under the map, the layer checkboxes' state, and choosing a mark to inspect it.
+  if(!result){svg.innerHTML='';return;}
+  if(result.polygons){
     const note=document.createElement('div');note.id='catchment-map-host';$('#map-panel').insertBefore(note,$('#map-communication-key'));
-    // Interactive for ANY map, not only one that has polygons. The renderer draws the layers it is
-    // given, so a study area with points on it is a map like any other -- and since only the
-    // interactive presentation can draw tiles, this is what makes a basemap reachable on a map
-    // that is not a catchment. Reported three times before the cause turned out to be here.
-    // GROUND HERE TOO. The basemap was wired into the renderer that draws a study area with
-    // points and into no other, so a catchment, isochrone or extent map -- most of the maps in
-    // the worked examples -- could not have one. Found 2026-10-25 by a test that reached for a
-    // basemap on `snow-extent` and got nothing: the comment above says the renderer draws the
-    // layers it is given, and ground was the layer it was not being given.
-    //
-    // Each plot carries its own frame, because each projects its own extent: the walking-time
-    // plot is 850x650 and the rest are 850x295, and a basemap computed from the wrong one is a
-    // basemap in the wrong place.
-    const banded=result.polygons.features.some(f=>f.minutes!==undefined);
-    if(banded){svg.setAttribute('viewBox','0 0 850 650');svg.innerHTML=catchmentPlot(result.polygons,esc,result.contextPoints);}
-    // PANELS SIDE BY SIDE, on one scale (experiment 212): each panel its own frame, so no single basemap or point overlay
-    // projects onto the figure; those are drawn on one map only.
-    else if(arranged)svg.innerHTML=polygonPanelsSvg(result.polygons,arranged.panels,arranged.grid,esc),applyFrame(svg,svg.innerHTML);
-    else{svg.innerHTML=polygonSvg(result.polygons,esc);applyFrame(svg,svg.innerHTML);}
-    const polygonGround=arranged&&!banded?null:banded?catchmentFrame(result.polygons,result.contextPoints):polygonFrame(result.polygons);
-    // AND THE POINTS THIS MAP COMPOSED, over the polygons rather than instead of them. See
-    // `markedPoints`: the value has carried them since 2026-10-29 and this renderer did not read
-    // them, so a map with a river, 32 sub-districts and four intakes drew no intakes while the
-    // layer control offered a checkbox for them.
-    const drawnLinks=(result as {links?:import('./map-links.js').MapLink[]}).links;
-    if(polygonGround&&drawnLinks?.length)
-      svg.insertAdjacentHTML('beforeend',linkLinesSvg(drawnLinks,rows,c=>polygonGround.project(c) as [number,number],hiddenMapLayers.get(result.nodeId)));
-    if(polygonGround&&rows.length)
-      svg.insertAdjacentHTML('beforeend',markedPoints(rows,
-        c=>polygonGround.project(c) as [number,number],
-        {esc,markPath,
-         symbols:(result as {layerSymbols?:Record<string,import('./point-layers.js').MarkStyle>}).layerSymbols||{},
-         classes:(result as {pinClasses?:Record<string,{value:string;colour:string}[]>}).pinClasses||{},
-         hidden:hiddenMapLayers.get(result.nodeId),
-         mapLayers:(result as {mapLayers?:MapLayer[]}).mapLayers,
-         labelField:(workflow.nodes.find((x):x is WorkflowNode<'map_output'>=>
-           x.id===result.nodeId&&x.type==='map_output')?.params.labelField)||{},
-         focusId:rows.find(r=>`result:${r.id}`===selected)?.id,
-         label:row=>[row.excluded?'Excluded':row.relation,row.layerLabel].filter(Boolean).join(' \u00b7 ')}));
-    if(polygonGround)void drawStaticBasemap(result,svg,
-      {bounds:polygonGround.bounds,project:c=>polygonGround.project(c) as [number,number]});
     const method=document.createElement('p');method.className='muted';
     method.id='polygon-method';method.textContent=result.polygons.notes.join(' ');
-    note.append(method);return;
+    note.append(method);
   }
-  // THE RASTER IS GROUND, NOT A MODE. Fourth instance of one defect, and the comments in
-  // core.ts name the first three: the study area was dropped on 2026-10-20, the facilities on
-  // 2026-10-22, the raster itself on 2026-10-23, each because the winning mode threw away every
-  // other wired layer. The value reaching here already carried the rows -- the layer list under
-  // the map counted seventeen facilities -- and this line drew the cells and returned, so the
-  // control offered a toggle for marks that were never drawn. Reported 2026-10-25 against a
-  // Gaborone map with a study area, a clipped raster, facilities and a street network wired,
-  // where only the raster appeared.
-  // GRID CELLS IN PANELS (experiment 212): the static figure, every panel on one scale.
-  if(rasterPanels?.length&&mapNode?.params.presentation!=='interactive'){
-    const breaks=(result as unknown as {densityBreaks:number[]}).densityBreaks;
-    const order=arranged?arranged.panels.map(p=>p.layer):rasterPanels.map(p=>p.layer);
-    const shownPanels=order.map(name=>rasterPanels.find(p=>p.layer===name)).filter((p):p is NonNullable<typeof p>=>!!p);
-    svg.innerHTML=rasterPanelsSvg(shownPanels,breaks,arranged?.grid??'grid',Object.fromEntries((arranged?.panels??[]).map(p=>[p.layer,p.title])),esc);
-    applyFrame(svg,svg.innerHTML);
-    return;
-  }
-  if(result?.raster){
-    const frame=rasterFrame(result.raster);
-    // Typed from markPath's own parameter, so a shape the renderer cannot draw is a build error
-    // rather than a mark that silently falls back to a circle.
-    const symbols=(result as {layerSymbols?:Record<string,{colour:string;shape:Parameters<typeof markPath>[0];size?:number}>}).layerSymbols||{};
-    const hidden=hiddenMapLayers.get(result.nodeId)||new Set<string>();
-    const focus=rows.find(r=>`result:${r.id}`===selected);
-    const marks=rows.filter(r=>r.coordinates).map(r=>{
-      const [x,y]=frame.project(r.coordinates!);
-      const symbol=symbols[r.sourceNodeId||'']||{colour:'#699178',shape:'circle' as const};
-      const label=r.excluded?'Excluded':r.relation||statusLabel(r.status);
-      const radius=(symbol.size??4)+(focus?.id===r.id?2:0);
-      return `<g class="location" role="button" tabindex="0" data-place="${esc(r.id)}"`
-        +` data-layer="${esc(r.sourceNodeId||'')}"`
-        +` style="display:${hidden.has(r.sourceNodeId||'')?'none':''}"`
-        +` aria-label="${esc(r.name)}, ${esc(label)}${r.layerLabel?', '+esc(r.layerLabel):''}">`
-        +`<title>${esc(r.name)} · ${esc(label)}${r.layerLabel?' · '+esc(r.layerLabel):''}</title>`
-        +`<path d="${markPath(symbol.shape||'circle',x,y,radius)}" fill="${symbol.colour}" stroke="white" stroke-width="1.2"/></g>`;
-    }).join('');
-    const rasterLinks=(result as {links?:import('./map-links.js').MapLink[]}).links;
-    svg.innerHTML=rasterSvg(result.raster,(rasterLinks?.length?linkLinesSvg(rasterLinks,rows,c=>frame.project(c) as [number,number],hidden):'')+marks);
-    svg.querySelectorAll<HTMLElement & SVGElement>('[data-place]').forEach(el=>{
-      el.onclick=()=>selectResult(el.dataset.place!);
-      el.onkeydown=e=>{if(e.key==='Enter')selectResult(el.dataset.place!);};
-    });
-    return;
-  }
-  if(result?.pointTable){svg.innerHTML='';return;}
-  if(result?.kind==='study-area'){svg.innerHTML=areaSvg(required(result.boundary),result.label);return;}
-  if(result?.boundary){svg.innerHTML=staticBoundaryMap(result,selected,esc,statusLabel,
-    workflow.nodes.find((x):x is WorkflowNode<'map_output'>=>x.id===result.nodeId&&x.type==='map_output')?.params.labelField||{});
-    applyFrame(svg,svg.innerHTML);
-    // GROUND UNDER A STATIC FIGURE. Experiment 137. Choosing a basemap used to switch the map to
-    // the interactive presentation, "the only one that draws tiles", so the figure this project
-    // most wants to publish was the one that could never have any context under it. The tiles are
-    // baked in, which makes the exported SVG MORE self-contained than the interactive map rather
-    // than less: a reader holding the file holds the ground too.
-    //
-    // Drawn after the fact and inserted underneath, because fetching is asynchronous and the map
-    // must appear immediately. If the view has moved on by the time the tiles arrive they are
-    // dropped: a late basemap under the wrong figure is worse than none.
-    void drawStaticBasemap(result,svg,staticMapFrame(result));
-    svg.querySelectorAll<SVGElement>('[data-layer-link]').forEach(el=>{el.style.display=hiddenMapLayers.get(result.nodeId)?.has(el.dataset.layerLink!)?'none':'';});
-    svg.querySelectorAll<HTMLElement & SVGElement>('[data-place]').forEach(el=>{el.style.display=hiddenMapLayers.get(result.nodeId)?.has(el.dataset.layer!)?'none':'';el.onclick=()=>selectResult(el.dataset.place!);el.onkeydown=e=>{if(e.key==='Enter')selectResult(el.dataset.place!);};});return;}
-  // The decision map that followed (heat's distances, thresholds and Review/NoFlag circles) retired with the decisions
-  // it drew, 2026-11-11 (docs/audits/old-naledi-audit.md). A result with no boundary and no layer draws nothing here.
-  svg.innerHTML='';
+  void drawStaticFigure(svg,result,mapNode,{selected,hidden:hiddenMapLayers.get(result.nodeId)??new Set<string>()});
+  svg.querySelectorAll<HTMLElement & SVGElement>('[data-place]').forEach(el=>{
+    el.onclick=()=>selectResult(el.dataset.place!);
+    el.onkeydown=e=>{if(e.key==='Enter')selectResult(el.dataset.place!);};
+  });
 }
 function reason(input:string):Promise<ReasonerQuad[]>{return new Promise<ReasonerQuad[]>((resolve,reject)=>{
   if(!worker)worker=new Worker('./build/reasoning-worker.js');const id=++seq;
@@ -7692,56 +7688,26 @@ function renderNotesView(){
     const node=held.workflow.nodes.find(
       (n):n is WorkflowNode<'map_output'>=>n.id===nodeId&&n.type==='map_output');
     if(!output||!node)return null;
-    try{
-      // THE SAME CHOICE OF RENDERER THE SVG DOWNLOAD MAKES, and getting this wrong is what the
-      // practitioner saw: *"We still need the map with the subdistricts."*
-      //
-      // `oldMap` draws `output.boundary` -- ONE geometry, the study extent -- and nothing else.
-      // South London's 32 sub-districts are features of `output.polygons`, which it never
-      // touches, so the figure was a green rectangle with the extent's outline and four points
-      // while its own key said "Polygons · 34 features". `polygonSvg` is the renderer that draws
-      // them, classifies them where they carry a value, and writes the key; `catchmentPlot` is
-      // its sibling for travel-time bands. Mirrored from `#map-download-svg` rather than decided
-      // again here, so the figure in the write-up and the exported SVG cannot diverge.
+    // THE FIGURE THE RESULTS TAB DRAWS (2026-11-14): drawn by the same renderer into an element off the page, its ground
+    // fetched, then kept, as a chart's is; the write-up shows "Drawing the map" until then and redraws when it is ready.
+    // Its layers as the workflow keeps them, never as the page's checkboxes happen to be.
+    const key=`${held.run.runId}:${nodeId}`,drawn=notesMapSvg.get(key);
+    if(drawn!==undefined)return drawn||null;
+    notesMapSvg.set(key,'<p class="muted">Drawing the map\u2026</p>');
+    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg') as SVGSVGElement;
+    svg.setAttribute('viewBox','0 0 850 295');
+    const kept=new Set<string>(mapLayerList(node,held.workflow.edges,id=>held.workflow.nodes.find(n=>n.id===id)?.params.label)
+      .filter(l=>!l.drawn).map(l=>l.sourceNodeId??l.id));
+    drawStaticFigure(svg,output,node,{hidden:kept,offPage:{workflow:held.workflow}}).then(ok=>{
+      if(!ok){notesMapSvg.set(key,'');refreshNotesIfOpen();return;}
       const banded=!!output.polygons?.features.some(f=>f.minutes!==undefined);
-      const content=output.polygons
-        ?(banded?catchmentPlot(output.polygons,esc,output.contextPoints)
-          :polygonSvg(output.polygons,esc))
-        // No selection: a highlighted node is a state of the canvas and not a fact about the
-        // figure, and a published map that dimmed everything but one record would be wrong.
-        :output.boundary?staticBoundaryMap(output,undefined,esc,statusLabel,node.params.labelField||{}):null;
-      if(!content)return null;
       const plotted=banded?catchmentFrame(output.polygons!,output.contextPoints):null;
-      // THE FRAME THE CONTENT WAS DRAWN IN, per renderer, because each projects its own extent:
-      // the walking-time plot is 850x650 and the rest are 850x295, and a plate placed from the
-      // wrong frame is a plate in the wrong place. The same three-way choice `renderMap` makes.
-      const frame=plotted||(output.polygons?polygonFrame(output.polygons)
-        :output.boundary?staticMapFrame(output):null);
-      const plate=groundImageFor(node.id,held.workflow);
-      // SWITCHED OFF MEANS NOT DRAWN, read from the setting the workflow KEEPS. The checkboxes
-      // under the live map hold their state in `hiddenMapLayers`, which is memory lost on
-      // reload; a published figure cannot be decided by that, and `node.params.layers` is the
-      // one of the two that persists.
-      const drawn=!plate||portIsDrawn(mapLayerList(node,held.workflow.edges,
-        id=>held.workflow.nodes.find(n=>n.id===id)?.params.label),'ground');
-      const ground=plate&&drawn&&frame
-        ?mapImageMarkup(plate,frame.project as (c:[number,number])=>[number,number]):'';
-      // THE SAME MARKS THE SCREEN DRAWS. `oldMap` draws its own rows; the polygon plot does not,
-      // so a published figure of a river, its sub-districts and four intakes carried no intakes
-      // while the live map carried them. Drawn through the one function both callers share.
-      const marks=output.polygons&&frame&&output.rows?.length
-        ?markedPoints(output.rows,frame.project as (c:[number,number])=>[number,number],
-          {esc,markPath,
-           symbols:(output as {layerSymbols?:Record<string,import('./point-layers.js').MarkStyle>}).layerSymbols||{},
-           classes:(output as {pinClasses?:Record<string,{value:string;colour:string}[]>}).pinClasses||{},
-           labelField:node.params.labelField||{},
-           mapLayers:(output as {mapLayers?:MapLayer[]}).mapLayers,
-           label:row=>[row.excluded?'Excluded':row.relation,row.layerLabel].filter(Boolean).join(' \u00b7 ')})
-        :'';
-      return standaloneMapSvg(withGroundUnder(content,ground)+marks,banded?'0 0 850 650':frameBoxOf(content),
+      notesMapSvg.set(key,standaloneMapSvg(svg.innerHTML,svg.getAttribute('viewBox')||frameBoxOf(svg.innerHTML),
         mapPresentation(node,output,held.workflow),
-        plotted?{metresPerPixel:metresPerPixel(plotted.pixelsPerDegreeLatitude)}:undefined);
-    }catch{return null;/* A figure that cannot be drawn says so; the write-up still reads. */}
+        plotted?{metresPerPixel:metresPerPixel(plotted.pixelsPerDegreeLatitude)}:undefined));
+      refreshNotesIfOpen();
+    },error=>{notesMapSvg.set(key,'');console.error(error);refreshNotesIfOpen();});
+    return notesMapSvg.get(key)!;
   };
   // WHICH NOTES CARRY A FIGURE, and the two kinds carry one for different reasons.
   //

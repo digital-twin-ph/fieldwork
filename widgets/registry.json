@@ -281,7 +281,7 @@
     {
       "id": "urn:fieldwork:widget:chart_output",
       "nodeType": "chart_output",
-      "currentVersion": "0.21.3",
+      "currentVersion": "0.21.4",
       "releases": [
         {
           "version": "0.1.0",
@@ -422,6 +422,11 @@
           "version": "0.21.3",
           "path": "widgets/releases/chart_output/0.21.3.json",
           "sha256": "f4a841d3f3cbfbfe67197f7a4e08b3c43b008c63e43267b7b73f58e3bb98bf74"
+        },
+        {
+          "version": "0.21.4",
+          "path": "widgets/releases/chart_output/0.21.4.json",
+          "sha256": "619d5a00c76c1f82411feb0311e2502931cbddb605ba217f9a385caa39c53c61"
         }
       ]
     },
@@ -741,7 +746,7 @@
     {
       "id": "urn:fieldwork:widget:group_table",
       "nodeType": "group_table",
-      "currentVersion": "0.4.1",
+      "currentVersion": "0.4.2",
       "releases": [
         {
           "version": "0.1.0",
@@ -777,6 +782,11 @@
           "version": "0.4.1",
           "path": "widgets/releases/group_table/0.4.1.json",
           "sha256": "f51897e769c5f20b3182c9460d04dfa77924f150acd38d8b0df0bc7c700105ba"
+        },
+        {
+          "version": "0.4.2",
+          "path": "widgets/releases/group_table/0.4.2.json",
+          "sha256": "f42c8f060aba21e18a0e634bd2ce6cf6ddda2ad13cb98fcc0689a56ea7cc43d8"
         }
       ]
     },
@@ -889,7 +899,7 @@
     {
       "id": "urn:fieldwork:widget:map_output",
       "nodeType": "map_output",
-      "currentVersion": "0.29.1",
+      "currentVersion": "0.29.2",
       "releases": [
         {
           "version": "0.1.0",
@@ -1090,6 +1100,11 @@
           "version": "0.29.1",
           "path": "widgets/releases/map_output/0.29.1.json",
           "sha256": "bc3a6d8eadf655fdd643cb99532169e4b5dadc6361dc1e8b96ea3e0bbc4fd8ac"
+        },
+        {
+          "version": "0.29.2",
+          "path": "widgets/releases/map_output/0.29.2.json",
+          "sha256": "8f3a6b87072734e026c7a4556ae4d756b7b07b0052a6fb891eeb4f438b71dc0d"
         }
       ]
     },
@@ -1662,7 +1677,7 @@
     {
       "id": "urn:fieldwork:widget:relate_table",
       "nodeType": "relate_table",
-      "currentVersion": "0.12.1",
+      "currentVersion": "0.12.2",
       "releases": [
         {
           "version": "0.1.0",
@@ -1753,6 +1768,11 @@
           "version": "0.12.1",
           "path": "widgets/releases/relate_table/0.12.1.json",
           "sha256": "7f7b25a40a7b5755e84abd7d8ef9f2b0d864d13fc5ad3b1d3afbcaf212e0b1c4"
+        },
+        {
+          "version": "0.12.2",
+          "path": "widgets/releases/relate_table/0.12.2.json",
+          "sha256": "30e7c547f2f31929029ff366462e8a8139c48c229c51391e8dba6b54df356002"
         }
       ]
     },

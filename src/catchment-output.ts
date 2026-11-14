@@ -176,7 +176,7 @@ function plotKey(p:Polygons,classed:ReturnType<typeof classifyValues>,esc:Escape
     :'equal-interval classes, equal value spans, so the shade shows magnitude'}`
     // SAID, so a reader is not left to infer from the absence of breaks that there is an order.
     :grouped?` · polygon shade: the class each part belongs to, which has no order`:'';
-  const key=`<text x="20" y="${foot+(classed||grouped?290:282)}" font-size="14">`
+  const key=`<text data-plot-key="line" x="20" y="${foot+(classed||grouped?290:282)}" font-size="14">`
     +esc(marks.join(' · ').replace(/^./,c=>c.toUpperCase())+method)+'</text>';
   // THE CLASSES, NAMED. A categorical figure's key is the only place a reader learns what a hue
   // MEANS -- there is no ramp to read and no breaks to interpolate -- so a swatch without its
@@ -189,10 +189,10 @@ function plotKey(p:Polygons,classed:ReturnType<typeof classifyValues>,esc:Escape
     const perRow=2,swatch=11;
     return grouped.labels.map((label,i)=>{
       const x=22+(i%perRow)*402,y=foot+250+Math.floor(i/perRow)*18;
-      return `<rect x="${x}" y="${y}" width="${swatch}" height="${swatch}" `
+      return `<rect data-plot-key="class" x="${x}" y="${y}" width="${swatch}" height="${swatch}" `
         +`fill="${grouped.colours[i]}" fill-opacity=".78" `
         +`stroke="${FIGURE_ROLE.quietInk}" stroke-width=".4"/>`
-        +`<text x="${x+swatch+6}" y="${y+swatch-1}" font-size="14" `
+        +`<text data-plot-key="class" x="${x+swatch+6}" y="${y+swatch-1}" font-size="14" `
         +`fill="${FIGURE_ROLE.quietInk}">${esc(label)}</text>`;
     }).join('')+key;
   }

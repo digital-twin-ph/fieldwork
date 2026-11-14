@@ -520,7 +520,7 @@ test('MERS-CoV, South Korea, 2015: each case’s detection and notification agai
   let groups=0,outputs=0;
   const newWorkflow=async name=>{groups=0;outputs=0;await page.locator('[data-view="project"]').click();await page.locator('#add-workflow').click();
     await page.locator('[data-view="project"]').click();await page.locator('#workflow-name-edit').fill(name);await page.locator('#workflow-name-edit').press('Enter');};
-  const importTable=async(path,value,keys,name)=>{await add(page,'table_input');const id=await idOf(page,'table_input');
+  const importTable=async(path,value,keys,name)=>{await add(page,'table_input');const id=(await saved(page)).nodes.filter(n=>n.type==='table_input').at(-1).id;
     await page.locator('#configure-step').click();await page.locator('#table-file').setInputFiles(path);await columnsOffered(page);
     await page.locator('#table-shape').selectOption('long');await page.locator('#table-value').selectOption(value);
     await keepColumns(page,'table-keys',keys);await page.locator('#table-save').click();await label(page,id,name);return id;};
@@ -615,11 +615,58 @@ test('MERS-CoV, South Korea, 2015: each case’s detection and notification agai
   await expect(si.locator('tr',{hasText:'Emergency room'}).first()).toContainText(String(median(er)));
   await page.screenshot({path:'test-results/mers-spread.png',fullPage:true});
 
+  // 9. HOW MANY DID EACH CASE INFECT (2026-11-14): the offspring distribution, superspreading in one chart. Each source's
+  // links counted, related onto all 162 cases, a case no link names as a source declared as 0, then cases counted by it.
+  await newWorkflow('How many did each case infect?');
+  const everyone=await importTable(LIST,'age',['id'],'The 162 cases');
+  const linksAgain=await importTable(CONTACTS,'diff_dt_onset',['from','to','exposure'],'The 98 probable links');
+  const offspring=await grouped(linksAgain,['from'],'count','Cases each source infected');
+  await run(page);
+  await add(page,'relate_table');const onto=await idOf(page,'relate_table');
+  await tidy(page);await wire(page,everyone,onto,'records');
+  await tidy(page);await wire(page,offspring,onto,'related');
+  await page.locator('[data-view="workflow"]').click();
+  await page.locator(`.react-flow__node[data-id="${onto}"]`).click();
+  await page.locator('#configure-step').click();
+  const ro=page.locator('#relate-config');
+  await ro.locator('#relate-on').selectOption('id');
+  await ro.locator('#relate-right-on').selectOption('from');
+  await ro.locator('#relate-bring').selectOption('rows');
+  await ro.locator('#relate-bring-as').fill('secondary_cases');await ro.locator('#relate-bring-as').press('Tab');
+  await ro.locator('[name="relate-decision"][value="keep"]').check();
+  await ro.locator('#relate-join-label').fill('0');await ro.locator('#relate-join-label').press('Tab');
+  await ro.locator('#relate-join-reason').fill('A case no probable link names as a source infected no recorded case.');
+  await ro.locator('#relate-join-reason').press('Tab');
+  await ro.locator('#config-apply').click();
+  await label(page,onto,'Each case with the cases it infected');
+  const distribution=await grouped(onto,['secondary_cases'],'count','Cases by how many they infected');
+  await add(page,'chart_output');const offspringChart=await idOf(page,'chart_output');
+  await tidy(page);await wire(page,distribution,offspringChart,'records');
+  await label(page,offspringChart,'The offspring distribution, as bars');
+  await run(page);
+  await page.locator('[data-view="workflow"]').click();
+  await page.locator(`.react-flow__node[data-id="${offspringChart}"]`).click();
+  await page.locator('#configure-step').click();
+  const oc=page.locator('#chart-config');
+  await oc.locator('#chart-orientation').selectOption({label:'Vertical'});
+  await oc.locator('#chart-title').fill('MERS-CoV cases by how many they infected, South Korea, 2015');
+  await oc.locator('#chart-title').press('Tab');
+  await oc.locator('#config-apply').click();
+  await run(page);
+  const perCase=Object.fromEntries(lineCases.map(c=>[c.id,0]));
+  for(const l of contactLinks)if(l.from in perCase)perCase[l.from]++;
+  const byCount=Object.values(perCase).reduce((m,k)=>{m[k]=(m[k]??0)+1;return m;},{});
+  const dist=await tab('Cases by how many they infected');
+  for(const [k,cases] of Object.entries(byCount))
+    await expect(dist.locator('tr',{has:page.locator('td:first-child,th:first-child',{hasText:new RegExp(`^${k}$`)})}).first()).toContainText(String(cases));
+  expect(byCount[0]).toBeGreaterThan(140);
+  await page.screenshot({path:'test-results/mers-offspring.png',fullPage:true});
+
   }
   await page.locator('[data-view="project"]').click();
   await page.locator('#storage-status').click();
   const block=page.locator('.project-view-block').filter({hasText:'MERS-CoV, South Korea, 2015'}).first();
-  await expect(block).toContainText('8 workflows');
+  await expect(block).toContainText('9 workflows');
   if(process.env.MERS_EXPORT){
     const download=page.waitForEvent('download');
     await block.locator('button[data-export-project]').click();

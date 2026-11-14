@@ -1,6 +1,7 @@
 import type {WorkflowNode} from './types.js';
 import type {InputProvenance} from './input-provenance.js';
-import {attributionFor} from './input-provenance.js';
+import {attributionFor,renderCitation,citationGaps} from './input-provenance.js';
+import {METHOD_CITATION_STYLE} from './equations.js';
 import type {DerivedNote} from './notes.js';
 
 /** THE SOURCES A WORKFLOW CAN CITE WITHOUT BEING ASKED TWICE.
@@ -33,6 +34,19 @@ export function derivedNotes(nodes:readonly WorkflowNode[],
   const made:DerivedNote[]=[];
   const seen=new Set<string>();
   for(const node of nodes){
+    // A RASTER'S SOURCE, as Raster input records it with its window (2026-11-14: WorldPop's and GRID3's citations, with
+    // their DOIs, reached no write-up). Its citation is the reference; its licence, the attribution.
+    const raster=node.type==='raster_input'?(node.params as {asset?:{provenance?:{title?:string;provider?:string;downloadURL?:string;
+      citation?:string;license?:string;temporalCoverage?:string}}}).asset?.provenance:undefined;
+    if(raster?.title?.trim()){
+      const key=`raster\u0000${raster.title.trim()}`;
+      if(seen.has(key))continue;seen.add(key);
+      const reference=raster.citation?.trim()||[raster.provider?.trim(),raster.downloadURL?.trim()].filter(Boolean).join('. ');
+      const owned=(node.params as {noteId?:string}).noteId?.trim();
+      made.push({kind:'derived',id:owned||`derived:${workflowKey||'workflow'}/${node.id}`,section:'Methods',fn:'source',
+        text:raster.title.trim(),...(raster.license?.trim()?{detail:raster.license.trim()}:{}),...(reference?{reference}:{}),nodeId:node.id});
+      continue;
+    }
     const provenance=(node.params as {provenance?:InputProvenance}).provenance;
     if(!provenance)continue;
     // What the data IS, in the practitioner's own words. Without that there is nothing to say
@@ -41,6 +55,9 @@ export function derivedNotes(nodes:readonly WorkflowNode[],
     const what=provenance.what?.trim();
     if(!what)continue;
     const detail=attributionFor(provenance).trim();
+    const rendered=provenance.citation&&!citationGaps(provenance).length?renderCitation(provenance,METHOD_CITATION_STYLE)?.trim():undefined;
+    const reference=rendered||[provenance.source?.trim(),provenance.url?.trim()&&`${provenance.url.trim()}${provenance.retrieved?` (accessed ${provenance.retrieved})`:''}`]
+      .filter(Boolean).join('. ');
     // One citation, however many widgets rest on it. Two workflows reading the same table is one
     // source in a reference list, and a write-up that says it twice reads as two.
     const key=`${what}\u0000${detail}`;
@@ -54,7 +71,7 @@ export function derivedNotes(nodes:readonly WorkflowNode[],
     made.push({kind:'derived',
       id:owned||`derived:${workflowKey||'workflow'}/${node.id}`,
       section:'Methods',fn:'source',
-      text:what,...(detail?{detail}:{}),nodeId:node.id});
+      text:what,...(detail?{detail}:{}),...(reference?{reference}:{}),nodeId:node.id});
   }
   return made;
 }

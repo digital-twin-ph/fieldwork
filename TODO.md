@@ -126,6 +126,22 @@ interface patterns may be worth a look. A second, the same day, also unread: an 
 Claude Code (geeky-gadgets.com). Both to be read together when interface work is next planned; anything adopted is a
 dependency, so licence, size and offline use are checked first, as for any library here.
 
+**From the practitioner, 2026-11-14, for the next batch:** (1) Hagelloch's *What a daily scan would have said* map is hard
+to read in Notes: leave it out of the write-up (outputs need a "not in the write-up" choice), and later six
+representative days as static maps side by side (212's panels). (2) Formulas in Notes as footnotes or in an Appendix:
+proposed, an Appendix, each Methods note keeping its sentence and pointing to its numbered formula with this run's
+numbers. (3) Other examples for a space-time scan: Sierra Leone's measles line list (Hagelloch's shape, next in the
+order); MERS by hospital (12 places, coarse); Brazil's dengue by municipality and week, which needs the scan to read
+counts per area as cases at the area's centre. Snow's deaths, Salmonella and NYC have no per-case date and place.
+
+**The order from here, as the practitioner set it on 2026-11-14:** *"Yes but after that let's work on our TODO."* First
+Notes as the place every result is (a Methods note from every step's own record; a source note with its provenance and
+its citation into References, or a limitation where none is described; provenance filled for MERS and the population
+sources), and MERS's epidemic curve coloured by transmission chain and its offspring distribution; then the TODO.
+**Then, the same day:** the publication render of Notes ([202](docs/experiments/202-one-record-several-products.md),
+reordered: publication first; formulas in an Appendix; a print layout saved as PDF first, Word later). The offspring
+distribution is built (0.116.0); the curve by chain needs a step that hands on each case's chain, designed first.
+
 **The order from here, as the practitioner set it on 2026-11-13:** *"After that let's finish MERS. Then table edit #12.
 Then Sierra Leone. Then ABM spike."* So 8, then 12, then 3, then 29. The numbering below is kept as written.
 

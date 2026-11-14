@@ -3,6 +3,26 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.116.0 — In development
+
+- **Notes hold every step's account.** A step that writes no Methods note of its own now says what it did, from its own
+  run record; outputs write Results, sources a source note. MERS's notes: 30 to 48. A transmission tree writes its
+  Results note too.
+- **References list every source, whatever its licence.** A source with no licence stated, or whose publisher waived
+  terms, was in no References: the licence's attribution had been taken for the reference. Now the work is cited, by its
+  citation where complete, else by its source and where it was read. A raster's citation, held with its window, reaches
+  Notes and References as a table's does.
+- **The MERS and population examples say where every table and layer came from**: ECDC's line list, KDCA's file,
+  OpenStreetMap, the milestones; both censuses, and WorldPop's, GRID3's and GHS-POP's citations with their DOIs.
+- **MERS: how many each case infected**, the offspring distribution, a ninth workflow: 151 of 162 cases infected no
+  recorded case, and three infected 21, 26 and 38.
+- **Maps in Notes are the maps in Results.** The write-up drew maps with an older copy of the renderer: no panels, no
+  raster cells, no basemap. It now draws each with the same renderer, off the page, ground included, and a categorical
+  map has one key. Map 0.29.2.
+- **Total within groups shows before and after** in Configure…: the rows coming in, then the table its settings make.
+  Total within groups 0.4.2.
+- **Relate offers a brought column under the name it is written as**, before a run. Relate a column 0.12.2; Chart 0.21.4.
+
 ## 0.115.0 — 2026-11-14
 
 - **A faster space-time scan.** Its shuffles stop once 50 have scored at least as high as the most likely cluster

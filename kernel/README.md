@@ -1,6 +1,6 @@
 # The FW epi kernel
 
-_Created 2026-11-02 · Updated 2026-11-02_
+_Created 2026-11-02 · Updated 2026-11-14_
 
 The statistical arithmetic under Fieldwork: Rust, compiled to WebAssembly, with no runtime dependencies.
 **This code is FW's own and grows here.** Measures are added, named and tested in this folder.

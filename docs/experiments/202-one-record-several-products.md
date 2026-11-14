@@ -2,8 +2,8 @@
 
 _Created 2026-11-10 · Updated 2026-11-10_
 
-**Status:** asked. A design for the Notes tab, built on [141](141-organising-snows-notes.md), to be tried on Hagelloch.
-Nothing is built.
+**Status:** asked. A design for the Notes tab, built on [141](141-organising-snows-notes.md). Reordered 2026-11-14: the
+publication render first. Nothing is built.
 
 ## The question
 
@@ -82,6 +82,48 @@ standard configuration dialog (kind, audience, which notes, order, preview).
    establishes.
 2. Include and exclude, and versions with their flag.
 3. The poster and the field report; the dashboard last.
+
+## Publication first, 2026-11-14
+
+The practitioner: *"And let's advance the Notes UI one more level. Let's begin to think about the different renders
+(report, publication, poster, sit rep, story map), beginning with publication."* The plan above is reordered: the
+publication render first, the story map after. A sit rep, a situation report, joins the products, beside the field
+report. Asked the same day which way formulas go, *"as footnotes or in an Appendix section"*, and which output first, the
+practitioner agreed to both proposals: **formulas in an Appendix**, and **a print layout first**, saved as PDF from the
+browser, with Word for a journal's template later.
+
+What the publication render holds, and today's Notes tab does not:
+
+| Part | The publication |
+| --- | --- |
+| Front matter | title, authors and affiliations from the project's authors, date, keywords |
+| Abstract | structured (background, methods, results, conclusions), written by the person, with a prompt and a word limit per part |
+| Body | IMRaD as clean text, without the tab's badges and controls; each step's Methods note as prose |
+| Figures and tables | numbered, captioned, cited in the text by number; a figure can be left out of this product |
+| Formulas | an Appendix, numbered, with the run's own numbers; the Methods note keeps its sentence and points to it |
+| References | numbered, Vancouver, cited in the text |
+| Limitations | gathered under Discussion |
+| Output | a print layout, saved as PDF from the browser, offline |
+
+People write the narrative (title, abstract, introduction, discussion, conclusions); Fieldwork prompts, guides length
+and checks, and drafts none of it. A widget's note is formatted for the publication, not rewritten.
+
+**Simulated on Hagelloch, 2026-11-14** (the practitioner: *"Let's simulate the render with Hagelloch"*). Laid out by a
+script, not by the application, from Hagelloch's own Notes after its five workflows ran (Fieldwork 0.116.0 in
+development): 11 Methods notes and 17 Results notes, 8 figures, 4 tables, 3 equations moved to the Appendix, 13 A4 pages,
+with the parts the author writes as prompts. What it found, which the render must handle:
+
+1. **The same note twice.** Two workflows ran the same step on the same data and each wrote its Methods sentence: a
+   product merges identical notes, naming every workflow they came from.
+2. **A source table in full.** The 188-row line list ran over several pages and off the right edge. In a publication a
+   source belongs in a data-availability statement or a supplement, not the body.
+3. **Captions.** A figure's note already says what it shows ("3 layers, bottom to top..."): it is the caption, not body
+   text; and the map draws its title inside the figure as well.
+4. **The tab's furniture leaked through**: "References 0 notes · 0 words", the online-links block's heading.
+5. **One reference.** Kulldorff's paper is cited and Hagelloch's source is not: its source step probably lacks the
+   `what` a source note needs, as MERS's did. To be checked.
+6. **No ground under the cluster map** in the simulation: tiles do not load in the test environment; to be checked on
+   the practitioner's machine.
 
 ## What this does not establish
 

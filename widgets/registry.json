@@ -101,7 +101,7 @@
     {
       "id": "urn:fieldwork:widget:apply_ruleset",
       "nodeType": "apply_ruleset",
-      "currentVersion": "0.13.1",
+      "currentVersion": "0.13.2",
       "releases": [
         {
           "version": "0.1.0",
@@ -177,6 +177,11 @@
           "version": "0.13.1",
           "path": "widgets/releases/apply_ruleset/0.13.1.json",
           "sha256": "307d7fe4b87a674b65d961234d6711b965a4be8fcf5f972c3699ffecae44ef9e"
+        },
+        {
+          "version": "0.13.2",
+          "path": "widgets/releases/apply_ruleset/0.13.2.json",
+          "sha256": "d905fc6d79ca61c9fd5034258c6fb4936bc60defc20e2cd2169efc69a0f636de"
         }
       ]
     },
@@ -271,7 +276,7 @@
     {
       "id": "urn:fieldwork:widget:chart_output",
       "nodeType": "chart_output",
-      "currentVersion": "0.21.1",
+      "currentVersion": "0.21.2",
       "releases": [
         {
           "version": "0.1.0",
@@ -402,6 +407,11 @@
           "version": "0.21.1",
           "path": "widgets/releases/chart_output/0.21.1.json",
           "sha256": "7c62831ee6b00f0f4100e917771293e8449af7611a2e1aa777b9309ad92f274d"
+        },
+        {
+          "version": "0.21.2",
+          "path": "widgets/releases/chart_output/0.21.2.json",
+          "sha256": "d6b5a5d66819127cf3d7c0412ca45e5b470efc0b707a71639b6e566b5001ae88"
         }
       ]
     },
@@ -849,7 +859,7 @@
     {
       "id": "urn:fieldwork:widget:map_output",
       "nodeType": "map_output",
-      "currentVersion": "0.29.0",
+      "currentVersion": "0.29.1",
       "releases": [
         {
           "version": "0.1.0",
@@ -1045,6 +1055,11 @@
           "version": "0.29.0",
           "path": "widgets/releases/map_output/0.29.0.json",
           "sha256": "a02870583f9c41e4b9c77999af75ff6646423a10927b5f3a585b331c67b3d116"
+        },
+        {
+          "version": "0.29.1",
+          "path": "widgets/releases/map_output/0.29.1.json",
+          "sha256": "bc3a6d8eadf655fdd643cb99532169e4b5dadc6361dc1e8b96ea3e0bbc4fd8ac"
         }
       ]
     },
@@ -1397,7 +1412,7 @@
     {
       "id": "urn:fieldwork:widget:raster_input",
       "nodeType": "raster_input",
-      "currentVersion": "0.12.0",
+      "currentVersion": "0.12.1",
       "releases": [
         {
           "version": "0.1.0",
@@ -1483,6 +1498,11 @@
           "version": "0.12.0",
           "path": "widgets/releases/raster_input/0.12.0.json",
           "sha256": "2710654041a08d8f6aec18c7a62d98b2790dc4dc4cd133a953b5edd51d2c81bb"
+        },
+        {
+          "version": "0.12.1",
+          "path": "widgets/releases/raster_input/0.12.1.json",
+          "sha256": "9694db27012264def7767ca4b1c28c210afe1142c842840052c35d48a236a3ab"
         }
       ]
     },

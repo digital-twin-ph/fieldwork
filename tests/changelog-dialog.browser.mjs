@@ -23,6 +23,12 @@ test('the version opens its release notes, steps to the one before and back, and
   // A bullet's wrapped lines are one item, not a bullet and a paragraph.
   await expect(dialog.locator('.manual-body p')).toHaveCount(0);
   await expect(dialog.locator('.manual-body li').first()).toBeVisible();
+  // CLOSE STAYS IN REACH (2026-11-13): scrolled to the end of a long series, Close is still in view at the top.
+  await dialog.evaluate(d=>{d.scrollTop=d.scrollHeight;});
+  await expect(dialog.locator('#changelog-close')).toBeInViewport();
+  const head=await dialog.locator('.manual-head').boundingBox(),box=await dialog.boundingBox();
+  expect(Math.abs(head.y-box.y)).toBeLessThan(4);
+  await dialog.evaluate(d=>{d.scrollTop=0;});
   await dialog.locator('#changelog-older').click();
   await expect(dialog.locator('#changelog-title')).toHaveText(`What changed in v${before}`);
   await dialog.locator('#changelog-current').click();

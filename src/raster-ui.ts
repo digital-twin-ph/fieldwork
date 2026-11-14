@@ -1,3 +1,4 @@
+import {fileDigest} from './sha256-stream.js';
 import {RASTER_SOURCE_FIELDS,validateRasterProvenance,WORLDPOP_BOTSWANA,WORLDPOP_BOTSWANA_FILENAME} from './raster-provenance.js';
 import type {RasterProvenance} from './raster-provenance.js';
 import type {Boundary,Position} from './types.js';
@@ -130,10 +131,12 @@ export function openRasterEditor(boundary:Boundary,onSave:(asset:RasterAsset)=>b
       const window=rasterWindow(metadata,boundary,Number(d.padding));
       const data=file&&netcdf?await readNetcdfWindow(file,netcdf,metadata,window):await readRasterWindow(from,metadata,window),bytes=encodeRaster(data);
       if(bytes.length>rasterFileByteLimit())throw new Error(`This window is ${data.values.length.toLocaleString('en')} cells, past the ${MAX_RASTER_CELLS.toLocaleString('en')} a step keeps. Use a smaller study area.`);
+      // THE SOURCE FILE'S DIGEST, read a slice at a time: a global grid of 12 GB could not be read whole (2026-11-13).
+      const chosen=file,sourceDigest=chosen&&!netcdf?await fileDigest(chosen,(read,of)=>say(`Checking ${chosen.name}: ${Math.round(100*read/of)}% of ${(of/1e9).toFixed(1)} GB read…`)):undefined;
       const retained=await inspectRaster(new Blob([bytes])),asset:RasterAsset={provenance,filename:'raster-window.tif',mediaType:'image/tiff',bytes:bytes.length,sha256:await contentHash(bytes),metadata:retained,
         // A GEOTIFF CHOSEN HERE keeps its digest, so its window can be read again from the same file elsewhere (experiment 209).
         source:file?{filename:file.name,bytes:file.size,lastModified:file.lastModified,metadata,
-          ...(netcdf?{}:{sha256:await contentHash(new Uint8Array(await file.arrayBuffer()) as Uint8Array<ArrayBuffer>)})}
+          ...(sourceDigest?{sha256:sourceDigest}:{})}
           :{filename:nameOf(url!),bytes:urlBytes??0,lastModified:0,metadata,url:url!},window};
       await storePDFs(new Map([[asset.sha256,bytes]]),new Map([[asset.sha256,{...asset,asset}]]));
       if(!onSave(asset))throw new Error('Raster metadata could not be saved. Your previous project is unchanged; retry Apply.');

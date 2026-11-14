@@ -34,10 +34,12 @@ type Field=Authored['fields'][number];
  *  category would compile to a math builtin that silently matches nothing, which is the failure
  *  the compiler refuses and this list prevents a practitioner from reaching. */
 const COMPARATORS:Record<Field['kind'],{value:string;label:string}[]>={
-  number:[{value:'equals',label:'is'},{value:'notEquals',label:'is not'},{value:'greaterThan',label:'is more than'},
-    {value:'notGreaterThan',label:'is at most'},{value:'lessThan',label:'is less than'},
-    {value:'notLessThan',label:'is at least'}],
-  term:[{value:'equals',label:'is'},{value:'notEquals',label:'is not'}],
+  // WITH THEIR SYMBOLS (the practitioner, 2026-11-13: "Do we have less than or equal to and greater than or equal to?"
+  // They were there, as "is at most" and "is at least", and could not be found by the sign a practitioner looks for).
+  number:[{value:'equals',label:'is (=)'},{value:'notEquals',label:'is not (≠)'},{value:'greaterThan',label:'is more than (>)'},
+    {value:'notLessThan',label:'is at least (≥)'},{value:'lessThan',label:'is less than (<)'},
+    {value:'notGreaterThan',label:'is at most (≤)'}],
+  term:[{value:'equals',label:'is (=)'},{value:'notEquals',label:'is not (≠)'}],
   boolean:[{value:'equals',label:'is'}],
   // A DATE is a day, matched or not; it is compared through the days between two dates (experiment 200).
   date:[{value:'equals',label:'is'},{value:'notEquals',label:'is not'}],

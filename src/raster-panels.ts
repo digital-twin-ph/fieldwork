@@ -1,4 +1,6 @@
 import type {RasterGrid} from './raster.js';
+import type {Boundary} from './types.js';
+import {centreRuns} from './raster-areas.js';
 
 /** GRID CELLS IN PANELS, ONE SCALE (experiment 212, 2026-11-13). The practitioner: *"the maps with the reddish orange
  *  hues actually show the grid cells."* Each raster a Map is given becomes a drawn grid of people per km², at no more
@@ -22,6 +24,16 @@ export interface DrawnDensity {
   density:Float32Array;
   /** About how many metres a drawn cell is across, east-west at the window's middle latitude. */
   drawnCellM:number; sourceCellM:number; factor:number;
+  /** The study area's outline, thinned for drawing: rings of [lon, lat]. Absent where the raster carries no area. */
+  outline?:number[][][];
+}
+/** AT MOST SO MANY POINTS OF OUTLINE A PANEL DRAWS: Rwanda's districts are 149,000 vertices, three panels of them a figure
+ *  nobody can open. Every ring keeps its first and last point; between, every k-th. */
+export const MAX_OUTLINE_POINTS=6000;
+export function thinnedOutline(boundary:Boundary,max=MAX_OUTLINE_POINTS):number[][][]{
+  const rings=(boundary.type==='Polygon'?[boundary.coordinates]:boundary.coordinates).flat() as unknown as number[][][];
+  const total=rings.reduce((n,r)=>n+r.length,0),k=Math.max(1,Math.ceil(total/max));
+  return rings.map(r=>r.filter((_,i)=>i%k===0||i===r.length-1)).filter(r=>r.length>=4);
 }
 
 const R_KM=6371.0088;
@@ -29,7 +41,7 @@ const R_KM=6371.0088;
 const cellAreaKm2=(latNorth:number,latSouth:number,lonSpan:number)=>
   R_KM*R_KM*Math.abs(lonSpan*Math.PI/180)*Math.abs(Math.sin(latNorth*Math.PI/180)-Math.sin(latSouth*Math.PI/180));
 
-export function drawnDensity(grid:Pick<RasterGrid,'metadata'|'values'>,layer:string,maxSide=MAX_DRAWN_SIDE):DrawnDensity{
+export function drawnDensity(grid:Pick<RasterGrid,'metadata'|'values'>&{boundary?:Boundary|null},layer:string,maxSide=MAX_DRAWN_SIDE):DrawnDensity{
   const m=grid.metadata;
   if(m.crs!=='EPSG:4326')throw new Error(`${layer}: a raster is drawn in panels in EPSG:4326 only; this one is ${m.crs}.`);
   const [ox,oy]=m.origin as [number,number],[rx,ry]=m.resolution as [number,number];
@@ -37,9 +49,16 @@ export function drawnDensity(grid:Pick<RasterGrid,'metadata'|'values'>,layer:str
   const width=Math.ceil(m.width/factor),height=Math.ceil(m.height/factor);
   const people=new Float64Array(width*height),area=new Float64Array(width*height);
   const noData=typeof m.noData==='number'?m.noData:undefined;
+  // ONLY THE STUDY AREA'S CELLS (the practitioner, 2026-11-13: "How come the static maps did not have a study area?"): a
+  // window cut from a global grid, as GHS-POP's is, holds the neighbours' cells too, and they would enter the shared
+  // classes. A cell counts when its centre is inside or on the area, Sample a raster's rule.
+  const runs=grid.boundary?centreRuns(grid.boundary,m.origin,m.resolution,0,m.height):undefined;
+  const inside=(r:number,c:number)=>!runs||runs[r]!.some(([a,b])=>c>=a&&c<=b);
   for(let r=0;r<m.height;r++){
     const north=oy+r*ry,south=north+ry,a=cellAreaKm2(north,south,rx),row=Math.floor(r/factor)*width;
+    if(runs&&!runs[r]!.length)continue;
     for(let c=0;c<m.width;c++){
+      if(!inside(r,c))continue;
       const v=grid.values[r*m.width+c] as number|null|undefined;
       if(v===null||v===undefined||!Number.isFinite(v)||v===noData||v<0)continue;
       const at=row+Math.floor(c/factor);people[at]+=v;area[at]+=a;
@@ -50,7 +69,8 @@ export function drawnDensity(grid:Pick<RasterGrid,'metadata'|'values'>,layer:str
   const mid=oy+(m.height*ry)/2,metresPerDegree=111_320*Math.cos(mid*Math.PI/180);
   const west=ox,east=ox+m.width*rx,north=oy,south=oy+m.height*ry;
   return {layer,width,height,bounds:[Math.min(west,east),Math.min(south,north),Math.max(west,east),Math.max(south,north)],
-    density,drawnCellM:Math.abs(rx)*factor*metresPerDegree,sourceCellM:Math.abs(rx)*metresPerDegree,factor};
+    density,drawnCellM:Math.abs(rx)*factor*metresPerDegree,sourceCellM:Math.abs(rx)*metresPerDegree,factor,
+    ...(grid.boundary?{outline:thinnedOutline(grid.boundary)}:{})};
 }
 
 /** ONE SET OF CLASSES OVER EVERY PANEL'S DRAWN CELLS ABOVE ZERO: quantiles, six of them. Returns the five inner breaks;

@@ -526,6 +526,26 @@ SK_39 has three recorded sources and SK_107 two, so a tree of one source per cas
 not make; how to show it is the practitioner's to decide.
 
 
+## MERS finished, 2026-11-13: every confirmed case, and the outbreak as one event
+
+The practitioner: *"After that let's finish MERS."* Two workflows added to example-2015-mers-korea (4c7bf0c), built from an
+empty canvas in `tests/mers-from-scratch.browser.mjs`:
+
+| Workflow | What it reads | What it finds |
+| --- | --- | --- |
+| *Who were the 185 cases KDCA confirmed?* | KDCA's 185 confirmed cases, data.go.kr 15155636, no restriction on use (the download approved by the practitioner); its values as KDCA writes them, in Korean, with KDCA's field descriptions as the dictionary | cases by week of report (peaking in weeks 23 and 24 of 2015), by the province of the reporting hospital (Gyeonggi 67, Seoul 50, Daejeon 24) and by sex (110 men, 75 women) |
+| *Did the outbreak's response meet 7-1-7?* | the outbreak's milestones, one row for each of three candidate dates for early response complete (the practitioner: *"Show all three"*) | detection 9 days after emergence, not met; notification the same day, met; early response 9, 18 or 19 days after detection, not met whichever action counts |
+
+Emergence is SK_1's onset, 11 May 2015; detection its laboratory confirmation, 20 May; notification the day Korea told
+WHO, 20 May. The response candidates and their sources are in `data/mers_event_milestones.csv`. Which action completes
+the early response is not decided by the example: the verdict is the same for all three, and the days differ.
+
+**Found on the way:** Chart's bar order *By category name* did not sort, so the weeks drew in the order the rows came;
+fixed in Chart 0.21.2.
+
+**Not established:** the lab recomputation of these two workflows (check 49 covers the first two); that report week is
+the week a case was confirmed rather than reported by the hospital, which is all data.go.kr says.
+
 ## What would close this
 
 The practitioner choosing the first slice and its data, and its being built and run by hand on an empty canvas.

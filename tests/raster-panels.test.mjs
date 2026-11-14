@@ -32,3 +32,12 @@ test('the raster ports follow the polygon convention, four at most',()=>{
   assert.equal(rasterPort(0),'raster');assert.equal(rasterPort(3),'raster_4');
   assert.ok(isRasterPort('raster_4')&&!isRasterPort('raster_5'));
 });
+
+test('only the study area\u2019s cells are counted: a cell whose centre is outside adds nothing',()=>{
+  // Two cells; the area covers the western one's centre only.
+  const g=grid([100,900],2,1);
+  const area={type:'Polygon',coordinates:[[[30,-2.001],[30.0012,-2.001],[30.0012,-2],[30,-2],[30,-2.001]]]};
+  const all=drawnDensity(g,'all',1),inArea=drawnDensity({...g,boundary:area},'in',1);
+  assert.ok(inArea.density[0]<all.density[0],'the eastern cell is left out');
+  assert.ok(inArea.outline?.length===1,'the outline travels with the panel');
+});

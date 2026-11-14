@@ -48,7 +48,10 @@ export function rasterPanelsSvg(panels:readonly DrawnDensity[],breaks:readonly n
     const wPx=(p.bounds[2]-p.bounds[0])*cos*scale,hPx=(p.bounds[3]-p.bounds[1])*scale;
     return `<g data-map-panel="${esc(p.layer)}"><rect x="${x0}" y="${y0+title}" width="${cellWidth}" height="${frameHeight}" fill="#f7faf8" stroke="#4d4d4d" stroke-width=".4"/>`
       +`<text x="${x0}" y="${y0+15}" font-size="14" font-weight="600">${esc(titles[p.layer]?.trim()||p.layer)}</text>`
-      +`<image href="${densityImage(p,breaks)}" x="${x}" y="${y}" width="${wPx}" height="${hPx}" preserveAspectRatio="none" style="image-rendering:pixelated"/></g>`;
+      +`<image href="${densityImage(p,breaks)}" x="${x}" y="${y}" width="${wPx}" height="${hPx}" preserveAspectRatio="none" style="image-rendering:pixelated"/>`
+      // THE STUDY AREA, over the cells, so a panel says where its edge is (the practitioner, 2026-11-13).
+      +(p.outline?.length?`<path data-panel-outline d="${p.outline.map(ring=>'M'+ring.map(([lon,lat])=>`${(cx+(lon!-(east+west)/2)*cos*scale).toFixed(1)},${(cy-(lat!-(north+south)/2)*scale).toFixed(1)}`).join('L')+'Z').join('')}" fill="none" stroke="#1f2a24" stroke-width=".7" stroke-opacity=".8"/>`:'')
+      +`</g>`;
   }).join('');
   const colours=rampFor(breaks),top=height-94,width=90;
   const swatches=colours.map((c,i)=>`<rect x="${40+i*width}" y="${top}" width="${width}" height="10" fill="${c}" stroke="#4d4d4d" stroke-width=".4"/>`).join('');

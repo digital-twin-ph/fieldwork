@@ -8,6 +8,7 @@
  *  Nothing reaches the workflow until Apply. The widget edits a draft; Cancel, × and Escape leave the step as it was,
  *  and ask first when the draft differs from what the step holds. */
 import type {Escape} from './types.js';
+import {errorMessage} from './guards.js';
 
 export interface ConfigMessage {tone:'warning'|'refusal'; text:string}
 export interface ConfigSections {
@@ -96,7 +97,7 @@ export function openConfigDialog<D>(spec:ConfigDialog<D>,esc:Escape):void{
     applyButton.disabled=true;cancelButton.disabled=true;const was=applyButton.textContent;applyButton.textContent='Working\u2026';
     try{
       if(await spec.applyAsync(draft,text=>say(text))){applied=true;close();return;}
-    }catch(error){say(error instanceof Error?error.message:String(error),'failure');}
+    }catch(error){say(errorMessage(error),'failure');}
     applyButton.textContent=was;applyButton.disabled=false;cancelButton.disabled=false;
   };
 

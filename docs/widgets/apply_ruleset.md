@@ -34,7 +34,7 @@ the run, naming the columns they do. The run's record states which column was re
 
 | Block | What it decides |
 | --- | --- |
-| **if** (blue) | A column, a comparison (*is*, *is not*, *is more than*, *is at most*, *is less than*, *is at least*, *is recorded*, *is not recorded*) and a value: a typed number or one of the step's settings |
+| **if** (blue) | A column, a comparison (see *Comparisons* below) and a value: a typed number or one of the step's settings |
 | **+ and** | Conditions in one *if* block, which must all hold |
 | **or** (purple) | An alternative *if* block, any of which will do |
 | **then** (green), a category | A new column and the value a matching record gets: *band* is *Short* |
@@ -100,6 +100,45 @@ The table comes out in this order. The preview is then **Before**, **Sorted** an
 **Before and after.** The dialog's Preview shows the records as they arrive and as these rules would leave
 them, on every edit: each new column, and which rule each record matched. Each rule's heading says how many records it
 matched. The first 50 records are drawn; the counts are of all of them.
+
+## Comparisons
+
+| In the editor | Means | Example | Matches |
+| --- | --- | --- | --- |
+| **is (=)** | equal to | *rash* is *Yes* | records whose rash is Yes |
+| **is not (≠)** | a recorded value other than this | *rash* is not *No* | Yes and Unknown; not a rash left blank |
+| **is more than (>)** | greater than | *temperature_c* is more than *38* | 38.1 and over; not 38 |
+| **is at least (≥)** | greater than or equal to | *days_to_detect* is at least *8* | 8 and over |
+| **is less than (<)** | less than | *age* is less than *5* | 4.9 and under; not 5 |
+| **is at most (≤)** | less than or equal to | *days_to_detect* is at most *7* | 7 and under: 7-1-7's target met |
+| **is recorded** | the column has a readable value | *dt_diag* is recorded | records with a diagnosis date |
+| **is not recorded** | the column is blank or unreadable | *dt_diag* is not recorded | records with no diagnosis date |
+
+The four comparisons of size, >, ≥, < and ≤, are offered for numbers, and for the days between two dates; *is* and
+*is not* for categories and for true or false too. A record whose column is not recorded matches none of the first
+six: it is neither more nor less than 7. Ask *is not recorded* for it.
+
+## Combining conditions
+
+**+ and** puts conditions in one *if* block, all of which must hold; **or** adds another *if* block, any of which will
+do. Every rule is one or more *if* blocks joined by *or*, each holding conditions joined by *and*. Any combination of
+*and*, *or* and *not* can be written that way:
+
+| You want | Write it as | In the editor |
+| --- | --- | --- |
+| A and B | one *if* block | *if* A **+ and** B |
+| A or B | two *if* blocks | *if* A **or** *if* B |
+| (A and B) or (C and D) | two *if* blocks of two conditions | *if* A **+ and** B **or** *if* C **+ and** D |
+| A and (B or C) | the A repeated in each block | *if* A **+ and** B **or** *if* A **+ and** C |
+| a range, 5 ≤ x ≤ 10 | two conditions in one block | *if* x is at least 5 **+ and** x is at most 10 |
+| outside a range, x < 5 or x > 10 | two blocks | *if* x is less than 5 **or** *if* x is more than 10 |
+| not (A and B) | each condition turned round, joined by *or* | *if* not-A **or** *if* not-B |
+| not (A or B) | each condition turned round, joined by *and* | *if* not-A **+ and** not-B |
+| x is not more than 7 | the comparison turned round | *if* x is at most 7 |
+
+A condition is turned round by its opposite comparison: *is* and *is not*, *is more than* and *is at most*, *is less
+than* and *is at least*, *is recorded* and *is not recorded*. There is no *not* around a whole block: it is written as in
+the last three rows. When nothing else applies, **otherwise** gives the value.
 
 ## What it says instead of guessing
 

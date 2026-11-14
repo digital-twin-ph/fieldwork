@@ -219,7 +219,7 @@ function chartControls(n:WorkflowNode<'chart_output'>,options:{omitOrientation?:
         `<option value="${esc(value)}" ${(p.barOrder||'category')===value?'selected':''}>${esc(label)}</option>`;
       return `<label class="field-label" for="chart-bar-order">Bar order</label>`
         +`<select id="chart-bar-order"${sequence?' disabled':''}>`
-        +option('category','By category name')
+        +option('category','In the table\u2019s order, numbers rising')
         +option('largest','Largest first')
         +option('smallest','Smallest first')
         +`</select>`
@@ -5790,7 +5790,7 @@ function renderInspector(){
         +'<p id="raster-reread-status" class="description" role="status"></p>';
       const say=host.querySelector<HTMLElement>('#raster-reread-status')!;
       const read=async(file?:File)=>{say.textContent='Reading the window again…';
-        try{const bytes=await rereadWindow(asset,file);await storePDFs(new Map([[asset.sha256,bytes]]),new Map([[asset.sha256,{...asset,asset}]]));
+        try{const bytes=await rereadWindow(asset,file,text=>{say.textContent=text;});await storePDFs(new Map([[asset.sha256,bytes]]),new Map([[asset.sha256,{...asset,asset}]]));
           say.textContent='Read again and checked: it is the window that was kept.';renderInspector();}
         catch(error){say.textContent=error instanceof Error?error.message:String(error);}};
       host.querySelector('#raster-reread')?.addEventListener('click',()=>void read());
@@ -6616,7 +6616,7 @@ function mountRasterPanels(host:HTMLElement,panels:import('./raster-panels.js').
     finally{moving=false;}};
   const basemap=basemapOf(mapNode.params.basemap);
   const disposers=shown.map((p,i)=>mountDensityPanel(host.querySelector<HTMLElement>(`[data-map-panel-host="${i}"]`)!,densityImage(p,breaks),p.bounds,basemap,
-    map=>{maps.push(map);map.on('move zoom',()=>follow(map));}));
+    map=>{maps.push(map);map.on('move zoom',()=>follow(map));},p.outline));
   // FITTED ONCE THE PANELS HAVE A SIZE: fitted before, they opened zoomed into the middle (Rwanda, 2026-11-13).
   const all=[Math.min(...shown.map(p=>p.bounds[0])),Math.min(...shown.map(p=>p.bounds[1])),Math.max(...shown.map(p=>p.bounds[2])),Math.max(...shown.map(p=>p.bounds[3]))];
   const settle=requestAnimationFrame(()=>requestAnimationFrame(()=>{for(const m of maps)m.invalidateSize();

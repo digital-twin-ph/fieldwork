@@ -75,12 +75,12 @@
    ]
   },
   "apply_ruleset": {
-   "version": "0.13.1",
-   "released": "2026-11-12",
+   "version": "0.13.2",
+   "released": "2026-11-13",
    "changes": [
     {
      "kind": "patch",
-     "description": "A record from a table is named in the run's sentence by its declared key, or else by the first key column that tells every row apart, rather than by every key value joined: Hagelloch's serial interval had named four records as everything they held (experiment 208)."
+     "description": "The comparisons carry their symbols in the rule editor, and the two of each pair sit together: is (=), is not (≠), is more than (>), is at least (≥), is less than (<), is at most (≤). The practitioner, 2026-11-13: \"Do we have less than or equal to and greater than or equal to?\" They were there as \"is at most\" and \"is at least\" and could not be found by the sign. The manual gains a table of every comparison with an example, and a table of how and, or and not are written as if blocks: (A and B) or (C and D), a range, not (A and B). No rule, receipt or saved workflow changes."
     }
    ],
    "breaking": false,
@@ -153,12 +153,12 @@
    "replacementCandidate": "urn:fieldwork:widget:observations"
   },
   "chart_output": {
-   "version": "0.21.1",
+   "version": "0.21.2",
    "released": "2026-11-13",
    "changes": [
     {
      "kind": "patch",
-     "description": "A chart of shares says it is of shares: where every row is a share Total within groups made, the caption names it, such as \"% within source by name\", not the table's value column."
+     "description": "Bar order's first choice draws the bars in the table's order with numbers rising, and says so: \"In the table's order, numbers rising\". It had kept the rows' order under the name \"By category name\", so MERS's weeks of report drew 27, 26, 24, 25, 23, 21, 22, 28. Categories that are all numbers now rise; others keep the table's order, which for days of the week or a dictionary's codes is their meaning (sorting them alphabetically drew Friday, Monday, Saturday, gate 152). A column's declared order (experiment 211) is still kept."
     }
    ],
    "breaking": false,
@@ -427,12 +427,12 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.29.0",
+   "version": "0.29.1",
    "released": "2026-11-13",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Several polygon layers, each on its own input, as point layers are: polygons, polygons_2 and so on to six, a layer dropped on Add a layer taking the next; collected for drawing as Collect polygon layers did, which retired into Map the same day. And maps side by side (experiment 212): Arrange, in Configure…, puts the polygon layers in panels in one row, two by two or one column, each panel one layer by name with an optional title, all on one scale with one key; interactive panels move together unless that is turned off. The practitioner, 2026-11-13: \"Static it would be a 2x2 map panel. We should have the capability to arrange the maps in the Configure dialog.\" The Inspector names the inputs as the canvas does: Areas 1, Points 2. And grid cells: up to four rasters, raster to raster_4, drawn in panels as people per km² of each cell's area, at most 1,000 drawn cells a side, in one set of six quantile classes (YlOrRd) over every panel; interactive panels linked as they move (the practitioner: \"the maps with the reddish orange hues actually show the grid cells\")."
+     "kind": "patch",
+     "description": "Colour by is drawn on the static map of a study area and points: it was read only by the interactive map and the polygon figure, so MERS's twelve hospitals drew in one blue under a key that said \"coloured by cases\". The cell panels count and draw only the study area's cells, a cell's centre inside or on it, and draw its outline: GHS-POP's window held the neighbouring countries' cells, in its panel and in the shared classes (the practitioner, 2026-11-13: \"How come the static maps did not have a study area?\")."
     }
    ],
    "breaking": false,
@@ -624,12 +624,12 @@
    "migrationFrom": []
   },
   "raster_input": {
-   "version": "0.12.0",
+   "version": "0.12.1",
    "released": "2026-11-13",
    "changes": [
     {
-     "kind": "minor",
-     "description": "A window read from a web address, or from a GeoTIFF whose digest is now kept, travels as its source, window and digest, not its cells: a country's window from each of three sources is hundreds of megabytes (experiment 209). On another device the Inspector says the window is not there yet and reads it again, from the address or the file chosen; the file is checked against its digest first and the window read again against the one kept, and either differing is refused. A file of the GRID3 catalogue is recognised by its name and its record filled in, as WorldPop's are. A global grid may reach two cells past the world's edge, as GHS-POP R2023A's does. A raster's cells are held as a typed array at the source's precision, NaN where there is no data, and a window Fieldwork kept is read in place: Botswana's three national windows stalled a run, and a 1 GB window read through a Blob was refused by the browser. Caps measured again: 123.3 million cells, 1.1 GB of blocks."
+     "kind": "patch",
+     "description": "A GeoTIFF of any size chosen on the computer is kept: its digest is read a slice at a time, in a worker, saying how far it has got. It was read whole, and GHS-POP's global grid, 12,047,498,632 bytes chosen from the practitioner's Downloads folder, failed with the browser's \"could not be read, typically due to permission problems\" (2026-11-13). The same when a window is read again from a file. The digest is the file's, as before. The browser's message for a file it will not read is said in words of what to try."
     }
    ],
    "breaking": false,

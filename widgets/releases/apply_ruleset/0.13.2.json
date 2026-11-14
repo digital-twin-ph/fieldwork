@@ -1,0 +1,75 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:apply_ruleset",
+ "version": "0.13.2",
+ "nodeType": "apply_ruleset",
+ "title": "Apply ruleset",
+ "released": "2026-11-13",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['apply_ruleset']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "shaclShapes": [],
+  "validationStatus": "application-only"
+ },
+ "ports": {
+  "inputs": [],
+  "output": null
+ },
+ "ontology": {
+  "status": "gap",
+  "mappings": [],
+  "note": "The semantic contract belongs to the ruleset, which declares its own output vocabulary and basis; do not infer one from this widget.",
+  "emits": {
+   "classes": [],
+   "properties": []
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/rule-application.ts",
+   "src/rulesets.ts",
+   "src/core.ts",
+   "src/rule-evaluation.ts",
+   "src/rule-editor.ts",
+   "src/authored-application.ts",
+   "src/authored-rules.ts",
+   "src/config-dialog.ts"
+  ],
+  "definition": "src/core.ts#TYPES"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [
+   {
+    "nodeType": "policy",
+    "adapterVersion": "1",
+    "implementation": "src/core.ts#validateWorkflow"
+   },
+   {
+    "nodeType": "access_policy",
+    "adapterVersion": "1",
+    "implementation": "src/core.ts#validateWorkflow"
+   },
+   {
+    "nodeType": "xpert",
+    "adapterVersion": "1",
+    "implementation": "src/core.ts#validateWorkflow"
+   }
+  ],
+  "replacementCandidate": null
+ },
+ "changes": [
+  {
+   "kind": "patch",
+   "description": "The comparisons carry their symbols in the rule editor, and the two of each pair sit together: is (=), is not (≠), is more than (>), is at least (≥), is less than (<), is at most (≤). The practitioner, 2026-11-13: \"Do we have less than or equal to and greater than or equal to?\" They were there as \"is at most\" and \"is at least\" and could not be found by the sign. The manual gains a table of every comparison with an example, and a table of how and, or and not are written as if blocks: (A and B) or (C and D), a range, not (A and B). No rule, receipt or saved workflow changes."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Repository regression coverage exists, and the Validation Lab checks this widget exhaustively rather than by sample -- check 23 enumerates the complete input space of all three bundled rulesets, 46 cells, reproducing every conclusion with an independent decision table and verifying the emitted receipt. That is evidence about the rulesets and about this widget's four stages; it does not certify the widget independently, and it says nothing about whether any threshold is right. 0.12.0: tests/seven-one-seven.browser.mjs (four cases by hand: 9 and -1 days, NoVerdict where onset or response is missing); Chromium. Experiment 207: tests/data-issues.test.mjs, tests/seven-one-seven-ontology.test.mjs, tests/ruleset-example.test.mjs. 0.13.0: tests/band-rules.test.mjs (labels, conditions, every age in exactly one band, refusals). 0.13.1: scripts/sentence-numbers.mjs finds every number in each step's sentence among its results, across every worked example; Validation Lab check 49 recomputes MERS's 7-1-7 verdicts from the source files. 0.13.2: tests/rule-editor.browser.mjs and the rule tests; Chromium."
+ }
+}

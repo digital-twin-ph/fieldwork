@@ -806,7 +806,7 @@
       "id": "urn:fieldwork:example:mers-korea-2015",
       "title": "MERS-CoV, South Korea, 2015",
       "repository": "https://github.com/digital-twin-ph/example-2015-mers-korea",
-      "commit": "f59e9f583eddd81e313e2748f9fd87564234c1ac",
+      "commit": "4c7bf0c6e7fb96d001e998c629c3cfc2f36f30be",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2015-mers-korea",
       "licence": {
         "data": "No licence stated for the data; used for teaching, as the outbreaks package describes it. The repository’s own files are CC0-1.0.",
@@ -834,8 +834,8 @@
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "aa93cbf27802d33552c95f6d6c24d8ac394b08aaa90d428dbb1cced7f64c1ef8",
-          "bytes": 141083
+          "sha256": "02d1afe663478bd450f0053113d71eafaf9a3f8afcd9228549bb63e23f46e89b",
+          "bytes": 143796
         },
         {
           "path": "data/mers_korea_2015_linelist.csv",
@@ -859,26 +859,46 @@
         },
         {
           "path": "provenance.json",
-          "sha256": "c6ec55d2a3d989ceb458c8a12d88753e3059190f5517bbf04d6c89d9f250b8f2",
-          "bytes": 3907
+          "sha256": "0ce7ce84471cfcaf5bbfdd9355a830b662385353d54fafff38d876d816cd118e",
+          "bytes": 5824
         },
         {
           "path": "README.md",
-          "sha256": "20bd3b1e5573fbf0c8872a768765cd5edc3fbdfff3b7a5870248e6d049c3fa41",
-          "bytes": 4817
+          "sha256": "ce9c50373165b5428930b784e7cdab1146e623ef92df000a5f5395a7878245b4",
+          "bytes": 7469
         },
         {
           "path": "NOTICE.txt",
-          "sha256": "59f42cec657062709ca68d3bf5aae76c8b1d31dfe26eeba6c197e67422093ced",
-          "bytes": 3401
+          "sha256": "3d99941506891d7dd2a16eb57fa08f08e1228e865b76ce9f1cbfaf59b4e9a6c3",
+          "bytes": 4218
         },
         {
           "path": "LICENSE",
           "sha256": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499",
           "bytes": 7048
+        },
+        {
+          "path": "data/kdca_mers_2015_cases.csv",
+          "sha256": "5b1be3dc2dff50c0a77a2e86bf318c0620d3f8b257d1ec1ae231686ff6b76e9d",
+          "bytes": 4011
+        },
+        {
+          "path": "data/kdca_mers_2015_dictionary.csv",
+          "sha256": "0a3b20b2af0da3e73de17058364ef44cc9acd2e9c9a50c4cf0271c62a7fb6d0e",
+          "bytes": 803
+        },
+        {
+          "path": "data/mers_event_milestones.csv",
+          "sha256": "1c43baebea1a8342f3d4762d76b8e51ee93e3c1369e7714bb8a1a966ba4b21d1",
+          "bytes": 497
+        },
+        {
+          "path": "source/kdca_mers_2015_cases_cp949.csv",
+          "sha256": "3dbb93c7debee7840f31b85c4f9d952fcc5f14053c452bf8a6afeeea88718ece",
+          "bytes": 3442
         }
       ],
-      "workflowCount": 3
+      "workflowCount": 5
     },
     {
       "id": "urn:fieldwork:example:population-models-census",

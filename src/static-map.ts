@@ -3,7 +3,7 @@
  *  inside one example's code, and moved out when Old Naledi retired (docs/audits/old-naledi-audit.md, 2026-11-11);
  *  its overlay caption, "OLD NALEDI · SOURCE BOUNDARY" and later "STUDY AREA · SPATIAL COVERAGE", went with it. */
 import {plotFrame} from './catchment-output.js';
-import {proportionalRadius,sizedLargest,layerRanks} from './point-layers.js';
+import {proportionalRadius,sizedLargest,layerRanks,colouredClasses} from './point-layers.js';
 import {linkLinesSvg} from './map-links.js';
 import type {Escape,Position} from './types.js';
 import type {DisplayValue} from './results.js';
@@ -54,7 +54,13 @@ export function staticBoundaryMap(output:DisplayValue,selected:string|null|undef
   //
   // Where no symbols are declared the status colours stand, so every example that predates layer
   // symbols looks exactly as it did.
-  const symbols=(output as {layerSymbols?:Record<string,{colour:string;shape:Parameters<typeof markPath>[0];size?:number;sizeBy?:string}>}).layerSymbols;
+  const symbols=(output as {layerSymbols?:Record<string,{colour:string;shape:Parameters<typeof markPath>[0];size?:number;sizeBy?:string;colourBy?:string}>}).layerSymbols;
+  // COLOUR BY, HERE TOO (2026-11-13): this renderer never read it, so MERS's static map drew twelve hospitals in one blue
+  // under a key that said "coloured by cases". Each coloured layer's classes, as the interactive map and the polygon
+  // figure take them.
+  const coloured=colouredClasses(output.rows as never,(symbols||{}) as never);
+  const colourValue=(r:typeof output.rows[number])=>{const by=symbols?.[r.sourceNodeId||'']?.colourBy;if(!by)return null;
+    const v=(r as {attributes?:Record<string,unknown>}).attributes?.[by];return v===''||v===null||v===undefined?null:Number(v);};
   // AND THE PIN CLASS, WHERE THE LAYER HAS ONE. The interactive map drew "water intake" and
   // "tidal limit" in two hues while this one drew both in the layer's single colour -- the same
   // disagreement between a figure and its key that this comment block records for the pumps, one
@@ -70,20 +76,24 @@ export function staticBoundaryMap(output:DisplayValue,selected:string|null|undef
   const valueOf=(r:typeof output.rows[number])=>{const by=symbols?.[r.sourceNodeId||'']?.sizeBy;return by?Number((r as {attributes?:Record<string,unknown>}).attributes?.[by])||0:0;};
   // Layer by layer in the order set in Manage layers (2026-11-12); within a sized layer, the largest marks first.
   const rank=layerRanks((output as {mapLayers?:{sourceNodeId?:string}[]}).mapLayers);
-  const rows=[...output.rows].map((r,at)=>({r,at})).sort((a,b)=>rank(a.r.sourceNodeId)-rank(b.r.sourceNodeId)||valueOf(b.r)-valueOf(a.r)||a.at-b.at).map(x=>x.r);
+  const rows=[...output.rows].map((r,at)=>({r,at})).sort((a,b)=>rank(a.r.sourceNodeId)-rank(b.r.sourceNodeId)||valueOf(b.r)-valueOf(a.r)||(colourValue(a.r)??0)-(colourValue(b.r)??0)||a.at-b.at).map(x=>x.r);
   for(const r of rows){if(!r.coordinates!)continue;const [x,y]=project(r.coordinates!),label=['spatial-coverage','spatial-map'].includes(output.kind||'')?(r.excluded?'Excluded':r.relation):statusLabel(r.status);
     const symbol=symbols?.[r.sourceNodeId||''];
     // The layer's own radius, or the default where none was chosen. A focused mark is drawn
     // larger than whatever that is, rather than at a fixed size that could be smaller than the
     // mark it is meant to pick out.
-    const sized=!!symbol?.sizeBy&&largest.has(r.sourceNodeId||'');
-    const base=sized?proportionalRadius((r as {attributes?:Record<string,unknown>}).attributes?.[symbol!.sizeBy!],largest.get(r.sourceNodeId||'')!,symbol?.size??4):symbol?.size??4;
+    const ramp=symbol?.colourBy?coloured.get(r.sourceNodeId||''):undefined;
+    const step=ramp?ramp.classOf(colourValue(r)):null;
+    const sized=!ramp&&!!symbol?.sizeBy&&largest.has(r.sourceNodeId||'');
+    // A colour must be big enough to read: a coloured mark is never under 7 px across the radius.
+    const base=sized?proportionalRadius((r as {attributes?:Record<string,unknown>}).attributes?.[symbol!.sizeBy!],largest.get(r.sourceNodeId||'')!,symbol?.size??4)
+      :ramp?Math.max(7,symbol?.size??4):symbol?.size??4;
     const radius=focus?.id===r.id?base+3:base;
     const statusFill={Review:'#c18b4f',NoFlag:'#699178',Unknown:'#a89b87'}[r.status!];
     // `hollow` is the declared fill for a point outside the area, and `absent` for one a clip set
     // aside: drawn as an outline and as a neutral, never as a second hue competing with a layer.
     const hollow=r.relation==='Outside',aside=r.excluded||r.relation==='MissingLocation';
-    const ink=classColour(r.sourceNodeId,(r as {pinClass?:string}).pinClass)||symbol?.colour;
+    const ink=ramp?(step===null?'#a89b87':ramp.colours[step]!):classColour(r.sourceNodeId,(r as {pinClass?:string}).pinClass)||symbol?.colour;
     const mark=symbol
       ?`<path d="${markPath(symbol.shape,x,y,radius)}" fill="${hollow?'none':aside?'#a89b87':ink}"${sized?' fill-opacity="0.55"':''} stroke="${aside?'#a89b87':ink}" stroke-width="1.6"/>`
       :`<circle cx="${x}" cy="${y}" r="${radius}" fill="${statusFill}" stroke="white" stroke-width="1.2"/>`;

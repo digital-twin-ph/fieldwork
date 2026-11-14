@@ -17,12 +17,14 @@ export function validateRasterAsset(asset:RasterAsset):void{
  *  three sources is hundreds of megabytes; on another device it is read again and refused if it differs. */
 export const rereadable=(asset:RasterAsset):boolean=>!!asset.source.url||/^[a-f0-9]{64}$/.test(asset.source.sha256??'');
 /** READ THE KEPT WINDOW AGAIN, from its address or from the file chosen, and refuse it unless it is the window kept. */
-export async function rereadWindow(asset:RasterAsset,file?:File):Promise<Uint8Array<ArrayBuffer>>{
+export async function rereadWindow(asset:RasterAsset,file?:File,say?:(text:string)=>void):Promise<Uint8Array<ArrayBuffer>>{
   const {inspectRaster,readRasterWindow,encodeRaster}=await import('./raster.js');
   const {contentHash}=await import('./project-files.js');
   let from:File|string;
   if(file){
-    if(asset.source.sha256&&(file.size!==asset.source.bytes||await contentHash(new Uint8Array(await file.arrayBuffer()))!==asset.source.sha256))
+    // Read a slice at a time: the whole file in memory failed on a 12 GB grid (2026-11-13).
+    const {fileDigest}=await import('./sha256-stream.js');
+    if(asset.source.sha256&&(file.size!==asset.source.bytes||await fileDigest(file,(read,of)=>say?.(`Checking ${file.name}: ${Math.round(100*read/of)}% read…`))!==asset.source.sha256))
       throw new Error(`That is not the file this window was read from: ${asset.source.filename}, ${asset.source.bytes.toLocaleString('en')} bytes, was expected. Nothing was kept.`);
     from=file;
   }else if(asset.source.url)from=asset.source.url;

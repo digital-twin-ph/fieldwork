@@ -140,7 +140,7 @@ Method: the researcher read help pages, repository files through the GitHub API,
 
 | Possible next step, as offered 2026-11-12 | State |
 | --- | --- |
-| 1. A facilities table in the MERS repository | Done: 9e8432c. A workflow placing the cases by hospital: not yet built |
-| 2. The KDCA 185-case CSV, the most openly licensed data here | Not started; downloading it waits for the practitioner's OK, with its name and size first |
-| 3. An outbreak-level 7-1-7 review from the response dates above | Not started |
-| 4. README corrections: ECDC as the compiler, the column definitions, the gaps above | Partly: the README names ECDC and the `loc_hosp` definition |
+| 1. A facilities table in the MERS repository | Done: 9e8432c; the hospitals mapped, 2026-11-12 |
+| 2. The KDCA 185-case CSV, the most openly licensed data here | Done 2026-11-13 (example 4c7bf0c): 3,442 bytes, CP949, 185 rows; download approved by the practitioner |
+| 3. An outbreak-level 7-1-7 review from the response dates above | Done 2026-11-13: three candidate dates, each a row; not met whichever counts |
+| 4. README corrections: ECDC as the compiler, the column definitions, the gaps above | Done 2026-11-13: what the line list does not say |

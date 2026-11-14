@@ -157,3 +157,10 @@ side by side*, WorldPop, GRID3 and GHS-POP in a row.
 **Found on the way:** the line above the figure described the first raster alone (*0 valid*); the single-raster key
 (*Relative cell value*) was printed over the panels; a district map's note was left on the next tab; the interactive
 panels opened zoomed into the middle, fitted before they had a size. Each fixed and checked in the test above.
+
+**Found by the practitioner, 2026-11-13:** *"How come the static maps did not have a study area?"* The cell panels drew the
+cells and nothing else, and GHS-POP's window, cut as a rectangle from a global grid, carried the neighbouring countries'
+cells into its panel and into the shared classes, so the scale was not Rwanda's. Now only cells whose centre is inside
+or on the study area are drawn or classed, Sample a raster's rule, and each panel draws the study area's outline, thinned
+to at most 6,000 points. Rwanda's class edges moved from 122 to 1,521 to 176 to 1,586 people per km². Checked in
+`tests/raster-panels.test.mjs` and the population example's test (three outlines, static and interactive); Chromium.

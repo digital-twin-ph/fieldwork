@@ -887,12 +887,15 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
 /** ONE PANEL OF GRID CELLS (experiment 212): a small map, its tile basemap where one is chosen, the panel's cells as one
  *  image, and the Leaflet map handed back so the panels can be linked. No toolbar and no key: the figure says those once. */
 export function mountDensityPanel(host:HTMLElement,image:string,bounds:readonly [number,number,number,number],basemap:BasemapChoice,
-    onMap:(map:L.Map)=>void):()=>void{
+    onMap:(map:L.Map)=>void,outline?:number[][][]):()=>void{
   const map=L.map(host,{scrollWheelZoom:true,zoomAnimation:false,fadeAnimation:false,markerZoomAnimation:false,zoomSnap:0.25});
   if(Object.hasOwn(BASEMAPS,basemap)){const source=BASEMAPS[basemap as keyof typeof BASEMAPS];
     L.tileLayer(source.url,{maxZoom:source.maxZoom,referrerPolicy:'origin',updateWhenIdle:true,keepBuffer:0,attribution:source.attribution}).addTo(map);}
   const [w,s,e,n]=bounds;
   L.imageOverlay(image,[[s,w],[n,e]],{opacity:.85,interactive:false,className:'raster-panel-image'}).addTo(map);
+  // The study area's outline, over the cells.
+  if(outline?.length)L.polygon(outline.map(ring=>ring.map(([lon,lat])=>[lat!,lon!] as [number,number])),
+    {color:'#1f2a24',weight:1,opacity:.8,fill:false,interactive:false,className:'raster-panel-outline'}).addTo(map);
   map.fitBounds([[s,w],[n,e]],{padding:[8,8]});
   onMap(map);
   return ()=>{map.remove();};

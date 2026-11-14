@@ -35,9 +35,12 @@ const STANDARD=/\b(?:ISO|EPSG|RFC|IEC|ICD|WGS|UTM|ISO\/IEC)[\s:-]*\d[\d:.-]*/g;
 const DATE=/\b\d{4}-\d{2}(?:-\d{2}(?:T[\d:.]+Z?)?)?\b/g;
 /** "and 157 more" is the remainder of a list the sentence names, not a result. */
 const REMAINDER=/\band [\d,]+ more\b/g;
+/** "Rule 5: 3" names a rule by its place in the ruleset, as "SK_39" names a case: the 5 is a label, the 3 the result
+ *  (found 2026-11-13 on MERS's event review, whose fifth rule's number matched no value). */
+const RULE_LABEL=/\bRule \d+(?=:)/g;
 const IN_A_NAME=/[A-Za-z_][\w]*[-_:]\d[\w.-]*|\b[A-Za-z]+\d[\w]*/g;
 /** The numbers a sentence states, each with the decimals it is shown to. */
-const stated=text=>[...String(text).replace(STANDARD,' ').replace(DATE,' ').replace(REMAINDER,' ').replace(IN_A_NAME,' ')
+const stated=text=>[...String(text).replace(STANDARD,' ').replace(DATE,' ').replace(REMAINDER,' ').replace(RULE_LABEL,' ').replace(IN_A_NAME,' ')
   .matchAll(/-?\d[\d,]*(?:\.(\d+))?(\s?%)?/g)]
   .map(m=>({value:Number(m[0].replace(/[,%\s]/g,'')),decimals:m[1]?.length??0,percent:!!m[2]})).filter(n=>Number.isFinite(n.value));
 const numbersIn=text=>[...String(text).matchAll(/-?\d[\d,]*(?:\.\d+)?(?:e-?\d+)?/gi)].map(m=>Number(m[0].replace(/,/g,''))).filter(Number.isFinite);

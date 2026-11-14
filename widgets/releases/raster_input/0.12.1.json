@@ -1,0 +1,83 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:raster_input",
+ "version": "0.12.1",
+ "nodeType": "raster_input",
+ "title": "Raster input",
+ "released": "2026-11-13",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['raster_input']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "shaclShapes": [],
+  "validationStatus": "application-only"
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "area",
+    "type": "area"
+   }
+  ],
+  "output": "raster"
+ },
+ "ontology": {
+  "status": "partial",
+  "mappings": [
+   {
+    "role": "entity",
+    "iri": "urn:fieldwork:RasterDataset",
+    "file": "ontology/fieldwork.ttl"
+   },
+   {
+    "role": "activity",
+    "iri": "urn:fieldwork:RasterInputReading",
+    "file": "ontology/fieldwork.ttl"
+   }
+  ],
+  "note": "Existing ontology alignment; full configuration and port shape contracts remain to be defined. Emits is empty because the terms this widget's provenance asserts are written by src/raster-provenance.ts, while implementation.definition names src/core.ts#TYPES; the release declares what the defining module asserts, which is nothing of its own.",
+  "emits": {
+   "classes": [],
+   "properties": []
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/app.ts",
+   "src/config-dialog.ts",
+   "src/ghs-pop.ts",
+   "src/grid3-catalogue.ts",
+   "src/netcdf-raster.ts",
+   "src/netcdf-worker.ts",
+   "src/raster-provenance.ts",
+   "src/raster-ui.ts",
+   "src/raster-workflow.ts",
+   "src/raster.ts",
+   "src/worldpop-catalogue.ts",
+   "src/raster-limits.ts",
+   "src/evidence-storage.ts",
+   "src/project-files.ts",
+   "src/sha256-stream.ts",
+   "src/sha256-worker.ts"
+  ],
+  "definition": "src/core.ts#TYPES"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": null
+ },
+ "changes": [
+  {
+   "kind": "patch",
+   "description": "A GeoTIFF of any size chosen on the computer is kept: its digest is read a slice at a time, in a worker, saying how far it has got. It was read whole, and GHS-POP's global grid, 12,047,498,632 bytes chosen from the practitioner's Downloads folder, failed with the browser's \"could not be read, typically due to permission problems\" (2026-11-13). The same when a window is read again from a file. The digest is the file's, as before. The browser's message for a file it will not read is said in words of what to try."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Repository regression coverage exists; this release entry does not certify a widget independently. 0.6.0: tests/raster-point-registration.test.mjs checks a point grid read as cells around its nodes, and a window keeping each value at its node; EGM2008 read from cdn.proj.org at the Manila gauge gives 43.009 m bilinearly, PROJ's value. 0.7.1: tests/country-from-study-area.browser.mjs checks the Inspector asks no country, and Configure… offers WorldPop for Botswana from the area, or says to set the country on the area; Chromium. 0.7.2: tests/country-from-study-area.browser.mjs chooses Botswana in the dialog, finds the download link, and finds the country kept on the study area; Chromium. 0.8.0: tests/area-countries.browser.mjs (two countries offered, the one-file limit said, the area's list left as it was). 0.9.0: tests/grid3-catalogue.test.mjs and tests/country-from-study-area.browser.mjs (GRID3 for Botswana, 11.6 MB; none for Germany). 0.10.0: tests/ghs-pop.browser.mjs (twelve years offered, the 2015 window read by range only, from a stand-in for JRC's server). The file's layout was measured from one 16 KB read of its header, 2026-11-11. 0.11.0: tests/worldpop-catalogue.test.mjs (sixteen Global2 years for Rwanda, the address as WorldPop publishes it, no link for a folder without a 100 m total) and tests/country-from-study-area.browser.mjs (both releases offered, the year kept across them); the 23 raster browser tests on the standard dialog; Chromium. 0.11.1: tests/raster.test.mjs (the window cut to the raster, the overhang said, no overlap refused; a 16.8 MB window validated and round-tripped through an encrypted workflow) and tests/stored-in-parts.browser.mjs (a 150 MB file stored in parts and read back whole); Botswana whole measured outside the application's dialogs, 2026-11-12, Chromium. 0.11.2: tests/worldpop-catalogue.test.mjs (Botswana 2025, Global2: units, year, title, URL; another name not guessed at); Chromium not run for this path. 0.12.0: tests/raster-reread.browser.mjs (exported without its bytes; a different file refused; the same read again and run, 968); tests/population-models-from-scratch.browser.mjs (Rwanda and Botswana, three sources each, GHS-POP read by range); tests/population-example-opens.browser.mjs (the pinned example's windows read again and checked, then run); tests/worldpop-catalogue.test.mjs; Chromium. 0.12.1: tests/sha256-stream.test.mjs (equal to SHA-256 at every block edge, fed unevenly, and read from a Blob); the practitioner's 12 GB file by hand in Chromium: kept in 68 s, digest equal to shasum's, the page drawing frames throughout."
+ }
+}

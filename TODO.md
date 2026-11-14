@@ -56,7 +56,12 @@ not a practitioner in the field.
 
 ## The order of work, as the practitioner set it (2026-11-08)
 
-1. **Table input on the standard Inspector and dialog** ([186](docs/experiments/186-one-standard-inspector.md)). With
+**Found 2026-11-13, not yet done:** a Polygon layer read from an OpenStreetMap extract reads the whole file into memory, as Raster input's digest did before it was read in slices; a country's extract of several gigabytes would fail the same way.
+
+**The order from here, as the practitioner set it on 2026-11-13:** *"After that let's finish MERS. Then table edit #12.
+Then Sierra Leone. Then ABM spike."* So 8, then 12, then 3, then 29. The numbering below is kept as written.
+
+1. **Done 2026-11-08 (Table input 0.7.0).** ~~**Table input on the standard Inspector and dialog**~~ ([186](docs/experiments/186-one-standard-inspector.md)). With
    it, *Fetch the table*: in the dark theme it sits inline in the orange notice and does not read as a button.
 2. **Done 2026-11-08 (0.59.0).** ~~The built-in rulesets example moves to example-workflows-rulesets~~, then is removed: rules all of one category
    (run by the reasoner), rules over points with a map, and counts written as text repaired in Data quality. The seven
@@ -158,7 +163,7 @@ not a practitioner in the field.
    appendix of the 41-event Lancet Global Health paper (`mmc1.pdf`, 229.5 KB, PMC), not yet read; the Sierra Leone
    Ebola 2014 line list's own terms (Fang et al. 2016).
 
-9. **Who infected whom, on Hagelloch: operational epidemiology's first slice to build** ([200](docs/experiments/200-operational-epidemiology.md);
+9. **Done 2026-11-13, checked against what is built** (the practitioner: *"I think #9 is finished. You can check."*): the transmission tree in Chart, each case at its date joined to its infector, in Hagelloch's built-in *Who infected whom*; lab checks 43, 44 and 45. ~~**Who infected whom, on Hagelloch: operational epidemiology's first slice to build**~~ ([200](docs/experiments/200-operational-epidemiology.md);
    the practitioner, 2026-11-09: *"Should we proceed first with contact tracing in Hagelloch"*, and *"After DTU"*).
    Before MERS (8), whose data terms are open. In order: Relate the cases to themselves on `infector` (check a table
    may be related to itself); **days between two dates** in Apply ruleset (a `date` kind; `minus` of two dates gives

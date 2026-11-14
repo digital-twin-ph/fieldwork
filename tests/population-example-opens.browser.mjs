@@ -84,6 +84,9 @@ test('Rwanda’s workflow opens from the example, its windows read again and che
   await expect(cellPanels).toHaveCount(3,{timeout:30000});
   expect(await cellPanels.evaluateAll(gs=>gs.map(g=>g.getAttribute('data-map-panel')))).toEqual(['WorldPop 2025','GRID3 2025','GHS-POP 2025']);
   await expect(page.locator('#map image')).toHaveCount(3);
+  // Each panel draws the study area's outline (the practitioner, 2026-11-13: "How come the static maps did not have a
+  // study area?").
+  await expect(page.locator('#map path[data-panel-outline]')).toHaveCount(3);
   expect((await page.locator('#map text').allTextContents()).join(' ')).toContain('Cell shade: people per km², one scale for every panel');
   await page.screenshot({path:'test-results/population-cells-static.png',fullPage:true});
   await page.locator('[data-view="workflow"]').click();
@@ -96,6 +99,7 @@ test('Rwanda’s workflow opens from the example, its windows read again and che
   const cellMaps=page.locator('.raster-panel-map.leaflet-container');
   await expect(cellMaps).toHaveCount(3,{timeout:30000});
   await expect(page.locator('[data-density-key]')).toContainText('people per km²');
+  await expect(page.locator('.raster-panel-map path.raster-panel-outline')).toHaveCount(3);
   // Where the third panel's cells are drawn, which a zoom or a pan of the first changes.
   const drawnAt=i=>cellMaps.nth(i).evaluate(el=>{const img=el.querySelector('.raster-panel-image');return img?`${img.style.width} ${img.style.transform}`:'';});
   const was=await drawnAt(2);

@@ -228,7 +228,16 @@ export const orderableBins=(bins:readonly {order?:number}[]):boolean=>
  *  sorted it in place would reorder the chart every other surface draws from the same object. */
 export function orderBins<T extends {label:string; count:number; order?:number}>(
   bins:readonly T[],order:BarOrder|undefined):T[]{
-  if(!order||order==='category'||!orderableBins(bins))return [...bins];
+  // IN THE TABLE'S ORDER, NUMBERS RISING (2026-11-13). Categories that are all numbers rise, so MERS's weeks of report,
+  // which arrived 27, 26, 24 …, draw 21 to 28. Any other categories keep the order the table gives them, which is their
+  // meaning more often than the alphabet is: Hagelloch's days of the week, or codes in the order a dictionary declares.
+  // Sorting names alphabetically drew Friday, Monday, Saturday (gate 152).
+  if(!order||order==='category'){
+    if(bins.some(b=>b.order!==undefined))return [...bins];
+    const numeric=bins.length>1&&bins.every(b=>b.label.trim()!==''&&Number.isFinite(Number(b.label)));
+    return numeric?[...bins].sort((a,b)=>Number(a.label)-Number(b.label)):[...bins];
+  }
+  if(!orderableBins(bins))return [...bins];
   const by=order==='largest'?-1:1;
   // Ties keep the order they arrived in, which for a table is its own row order: a sort that
   // shuffled equal values would make the same data draw differently on two runs.

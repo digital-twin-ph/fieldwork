@@ -3,6 +3,25 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.113.1 — 2026-11-13
+
+- **A raster file of any size can be chosen.** GHS-POP's 12 GB global grid failed with the browser's "could not be read,
+  typically due to permission problems": its digest was taken by reading the file whole. It is now read a slice at a
+  time, in a worker, with its progress shown and the page still responding; about a minute for 12 GB. Raster input.
+- **The cell panels show the study area, and count only its cells.** GHS-POP's window held the neighbouring countries'
+  cells, in its panel and in the shared classes; each panel now draws the area's outline. Map. Experiment 212.
+- **Colour by on the static map of an area and points.** It was read only by the interactive map and polygon figures,
+  so MERS's hospitals drew in one colour under a key that said "coloured by cases". Map.
+- **Close stays at the top of the changelog and the manual** as you scroll.
+- **MERS-CoV, South Korea, 2015, finished.** Two workflows in its repository: all 185 cases KDCA confirmed, by week of
+  report, province and sex, with KDCA's own field descriptions as the dictionary; and the outbreak as one event against
+  7-1-7, with three candidate dates for early response complete. Experiment 200.
+- **A chart's bars in the table's order, numbers rising.** Categories that are all numbers rise, so weeks of report draw
+  21 to 28, not 27, 26, 24 …; others keep the table's order, such as the days of the week. The menu says so. Chart 0.21.2.
+- **The rule editor shows each comparison's symbol**, the two of each pair together: is (=), is not (≠), is more than
+  (>), is at least (≥), is less than (<), is at most (≤). Its manual gains a table of the comparisons and one of how
+  *and*, *or* and *not* are written, such as (A and B) or (C and D). Apply ruleset 0.13.2.
+
 ## 0.113.0 — 2026-11-13
 
 - **Maps side by side.** Map's Configure… has **Arrange**: the polygon layers in panels in one row, two by two or one

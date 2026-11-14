@@ -12,7 +12,10 @@ test.use({serviceWorkers:'block'});
 const LIST=fileURLToPath(new URL('../../example-2015-mers-korea/data/mers_korea_2015_linelist.csv',import.meta.url));
 const CONTACTS=fileURLToPath(new URL('../../example-2015-mers-korea/data/mers_korea_2015_contacts.csv',import.meta.url));
 const HOSPITALS=fileURLToPath(new URL('../../example-2015-mers-korea/data/mers_korea_2015_facilities.csv',import.meta.url));
-const skip=existsSync(LIST)&&existsSync(CONTACTS)&&existsSync(HOSPITALS)?false:'example-2015-mers-korea is not checked out beside this repository.';
+const KDCA=fileURLToPath(new URL('../../example-2015-mers-korea/data/kdca_mers_2015_cases.csv',import.meta.url));
+const KDCA_DICTIONARY=fileURLToPath(new URL('../../example-2015-mers-korea/data/kdca_mers_2015_dictionary.csv',import.meta.url));
+const MILESTONES=fileURLToPath(new URL('../../example-2015-mers-korea/data/mers_event_milestones.csv',import.meta.url));
+const skip=existsSync(LIST)&&existsSync(CONTACTS)&&existsSync(HOSPITALS)&&existsSync(KDCA)&&existsSync(MILESTONES)?false:'example-2015-mers-korea is not checked out beside this repository.';
 
 const add=async(page,type)=>{
   await page.locator('[data-view="workflow"]').click();
@@ -377,13 +380,127 @@ test('MERS-CoV, South Korea, 2015: each case’s detection and notification agai
   const radii=await page.locator('#map g.location path').evaluateAll(paths=>[...new Set(paths.map(p=>p.getBoundingClientRect().width.toFixed(1)))]);
   expect(radii.length,'every mark one size').toBe(1);
   await expect(page.locator('#map-communication-header-key')).toContainText('coloured by cases: 1 (4)');
-  await page.screenshot({path:'test-results/mers-hospitals.png',fullPage:true});
+  // COLOURED, AND SEEN TO BE: the key said "coloured by cases" over twelve marks in one blue until 2026-11-13, because the
+  // static map of an area and points never read Colour by. The fills now take more than one class, and the
+  // largest hospital is in the darkest.
+  const fills=await page.locator('#map g.location path').evaluateAll(ps=>ps.map(p=>p.getAttribute('fill')));
+  expect(new Set(fills).size,'more than one class drawn').toBeGreaterThan(1);  await page.screenshot({path:'test-results/mers-hospitals.png',fullPage:true});
   await page.locator('#map').screenshot({path:'test-results/mers-hospitals-map.png'});
+
+  // ALL 185 CASES KDCA CONFIRMED (2026-11-13; data.go.kr 15155636, no restriction on use; the download approved by the
+  // practitioner): by report week, province of the reporting hospital and sex, with KDCA's own field descriptions as the
+  // dictionary, in English with the Korean beside it. The file's values are kept as KDCA writes them.
+  const kdca=readFileSync(KDCA,'utf8').trim().split(/\r?\n/).slice(1).map(l=>l.split(','));
+  expect(kdca.length).toBe(185);
+  const tallyOf=i=>kdca.reduce((m,r)=>{m[r[i]]=(m[r[i]]??0)+1;return m;},{});
+  await page.locator('[data-view="project"]').click();
+  await page.locator('#add-workflow').click();
+  await page.locator('[data-view="project"]').click();
+  await page.locator('#workflow-name-edit').fill('Who were the 185 cases KDCA confirmed?');
+  await page.locator('#workflow-name-edit').press('Enter');
+  await add(page,'table_input');
+  const cases185=await idOf(page,'table_input');
+  await page.locator('#configure-step').click();
+  await page.locator('#table-file').setInputFiles(KDCA);
+  await page.locator('#table-dictionary-file').setInputFiles(KDCA_DICTIONARY);
+  await expect(page.locator('#table-dictionary-says')).toContainText('5 variables in kdca_mers_2015_dictionary.csv');
+  await columnsOffered(page);
+  await page.locator('#table-shape').selectOption('long');
+  await page.locator('#table-value').selectOption('연령');
+  await keepColumns(page,'table-keys',['구분','등록시도','성별','신고 주차']);
+  await page.locator('#table-save').click();
+  await label(page,cases185,'KDCA: 185 confirmed cases');
+  const kdcaCounts=[];
+  for(const [column,title,index] of [['신고 주차','Cases by week of report',4],['등록시도','Cases by province of the reporting hospital',1],['성별','Cases by sex',2]]){
+    await add(page,'group_table');
+    const group=await idOf(page,'group_table',kdcaCounts.length);
+    await tidy(page);await wire(page,cases185,group,'records');
+    await page.locator(`.react-flow__node[data-id="${group}"]`).click();
+    await page.locator('#configure-step').click();
+    const g=page.locator('#group-config');
+    await g.locator(`[data-group-by="${column}"]`).check();
+    await g.locator('#group-aggregate').selectOption('count');
+    await g.locator('#config-apply').click();
+    await label(page,group,title);
+    await add(page,'table_output');
+    const shown=await idOf(page,'table_output',kdcaCounts.length);
+    await tidy(page);await wire(page,group,shown,'table');
+    await label(page,shown,title);
+    kdcaCounts.push({title,tally:tallyOf(index),group});
+  }
+  // THE WEEKS AS BARS, an epidemic curve by week of report.
+  await add(page,'chart_output');
+  const weekChart=await idOf(page,'chart_output');
+  await tidy(page);await wire(page,kdcaCounts[0].group,weekChart,'records');
+  // Run first: Configure… offers the columns that arrived.
+  await run(page);
+  await page.locator('[data-view="workflow"]').click();
+  await page.locator(`.react-flow__node[data-id="${weekChart}"]`).click();
+  await page.locator('#configure-step').click();
+  const wc=page.locator('#chart-config');
+  // One bar per week, upright and in week order, as an epidemic curve is read.
+  await wc.locator('#chart-orientation').selectOption({label:'Vertical'});
+  await wc.locator('#chart-title').fill('MERS-CoV cases by week of report, South Korea, 2015');
+  await wc.locator('#chart-title').press('Tab');
+  await wc.locator('#config-apply').click();
+  await label(page,weekChart,'Cases by week of report, as bars');
+  await run(page);
+  await page.locator('[data-view="results"]').click();
+  for(const {title,tally} of kdcaCounts){
+    await page.getByRole('tab',{name:new RegExp(`${title}$`)}).click();
+    const main=page.locator('main').first();
+    await expect(main).toContainText(`${Object.keys(tally).length} of ${Object.keys(tally).length} rows`);
+    for(const [value,count] of Object.entries(tally))
+      await expect(main.locator('tr',{has:page.locator('th,td',{hasText:new RegExp(`^${value}$`)})}).first()).toContainText(String(count));
+  }
+  await page.getByRole('tab',{name:'Cases by week of report, as bars'}).click();
+  await page.screenshot({path:'test-results/mers-kdca.png',fullPage:true});
+
+  // THE OUTBREAK AS ONE EVENT, against 7-1-7 (the practitioner, 2026-11-13: "Show all three"). Emergence is the index
+  // case's onset, detection and notification 20 May; early response complete is one of three dated actions, each a row,
+  // so the response verdict is read beside the action it assumes. Same ruleset, its own column names.
+  await page.locator('[data-view="project"]').click();
+  await page.locator('#add-workflow').click();
+  await page.locator('[data-view="project"]').click();
+  await page.locator('#workflow-name-edit').fill('Did the outbreak\u2019s response meet 7-1-7?');
+  await page.locator('#workflow-name-edit').press('Enter');
+  await add(page,'table_input');
+  const events=await idOf(page,'table_input');
+  await page.locator('#configure-step').click();
+  await page.locator('#table-file').setInputFiles(MILESTONES);
+  await columnsOffered(page);
+  await page.locator('#table-shape').selectOption('long');
+  await page.locator('#table-value').selectOption('candidate');
+  await keepColumns(page,'table-keys',['early_response_action','emergence_date','detection_date','notification_date','early_response_date','source_of_response_date']);
+  await page.locator('#table-save').click();
+  await label(page,events,'The outbreak\u2019s milestones, three candidate response dates');
+  await add(page,'apply_ruleset');
+  const eventRules=await idOf(page,'apply_ruleset');
+  await page.locator(`.react-flow__node[data-id="${eventRules}"]`).click();
+  await page.locator('#configure-step').click();
+  await page.locator('#ruleset-config #ruleset-choice').selectOption('urn:fieldwork:ruleset:seven-one-seven@2.0.0');
+  await page.locator('#ruleset-config #config-apply').click();
+  await tidy(page);await wire(page,events,eventRules,'records');
+  await add(page,'table_output');
+  const verdicts=await idOf(page,'table_output');
+  await tidy(page);await wire(page,eventRules,verdicts,'table');
+  await label(page,verdicts,'Each candidate response date, and the verdicts');
+  await run(page);
+  await page.locator('[data-view="results"]').click();
+  await page.getByRole('tab',{name:'Each candidate response date, and the verdicts'}).click();
+  const v=page.locator('main').first();
+  // Detected 9 days after emergence: not met; notified the same day: met; response 9, 18 and 19 days after detection.
+  for(const [action,days] of [['Close-contact definition broadened',9],['Names of the 24 affected hospitals',18],['Rapid Response Team',19]]){
+    const row=v.locator('tr',{hasText:action}).first();
+    await expect(row).toContainText(String(days));
+    await expect(row).toContainText('Not met');
+  }
+  await page.screenshot({path:'test-results/mers-event.png',fullPage:true});
 
   await page.locator('[data-view="project"]').click();
   await page.locator('#storage-status').click();
   const block=page.locator('.project-view-block').filter({hasText:'MERS-CoV, South Korea, 2015'}).first();
-  await expect(block).toContainText('3 workflows');
+  await expect(block).toContainText('5 workflows');
   if(process.env.MERS_EXPORT){
     const download=page.waitForEvent('download');
     await block.locator('button[data-export-project]').click();

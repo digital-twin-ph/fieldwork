@@ -30,6 +30,9 @@ export type ManualStep=
   /** Several options of one list, named as the reader sees them: the boroughs among a level's units. */
   | {pick:string; label:string; values:string[]; dialog?:string}
   | {keyRole:string; value:'primary'|'secondary'|''; shown:string; dialog?:string}
+  /** A VALUE EDITED BY HAND in a step's Data quality, under Records (experiment 214): the record as Records names it
+   *  (a point's id, or `row N`), the column, and the value to type. */
+  | {edit:string; record:string; column:string; value:string}
   | {run:true}
   | {see:string; check?:string}
   | {note:string};
@@ -41,7 +44,7 @@ const VIEW_NAMES:Record<ManualView,string>={project:'Project',workflow:'Workflow
 export interface ManualWorkflow {name:string; question?:string; steps:ManualStep[]}
 export interface WorkedExampleManual {schema:string; example:string; intro?:string; workflows:ManualWorkflow[]}
 
-const KINDS=['add','reuse','select','connect','click','file','fill','choose','tick','pick','keyRole','run','see','note'] as const;
+const KINDS=['add','reuse','select','connect','click','file','fill','choose','tick','pick','keyRole','edit','run','see','note'] as const;
 const kindOf=(step:ManualStep):string=>KINDS.find(kind=>kind in step)??'';
 
 /** Refuses a manual that could not be followed: an unknown step, a node named before it is added, a handle used
@@ -61,6 +64,7 @@ export function validateManual(value:unknown):WorkedExampleManual{
       if('select' in step)named(step.select);
       if('connect' in step){named(step.connect.from);named(step.connect.to);}
       if(('fill' in step||'choose' in step)&&step.in)named(step.in);
+      if('edit' in step)named(step.edit);
     });
   }
   return manual;
@@ -99,6 +103,8 @@ export function stepSentence(step:ManualStep,types:Record<string,string>,title:(
   if('pick' in step)return sentence(`Under ${bold(step.label,esc)}, choose ${step.values.map(v=>bold(v,esc)).join(', ')}. `
     +'Hold Ctrl, or \u2318 on a Mac, to choose more than one.');
   if('keyRole' in step)return sentence(`Make <code>${esc(step.keyRole)}</code> a ${bold(step.shown,esc)}.`);
+  if('edit' in step)return `Open ${bold('Data quality',esc)} of ${node(step.edit)}, and under ${bold('Records',esc)} set `
+    +`<code>${esc(step.column)}</code> of ${bold(step.record,esc)} to <code>${esc(step.value)}</code>. It is kept as an edit on the step, with the value it replaced; the file is not changed.`;
   if('run' in step)return `Press ${bold('Run workflow',esc)}.`;
   if('see' in step)return `You should see ${esc(step.see)}.`;
   return esc(step.note);
@@ -149,3 +155,20 @@ export function renderManual(manual:WorkedExampleManual,openName:string|undefine
         +(workflow.question?`<p class="muted">${esc(workflow.question)}</p>`:'')+html+'</section>';
     }).join('');
 }
+
+/** PLAYED BACK, ONE STEP AT A TIME (experiment 173's dialog, built 2026-11-13): for each step, the nodes on the canvas once
+ *  it is done. A manual names nodes by its own handles; a workflow's nodes have minted ids. Each handle is matched to a node
+ *  of its widget type in the order the workflow holds them, the n-th added of a type to the n-th of that type, which is
+ *  how a from-scratch build adds them. A handle with no node of its type left is not placed, and says nothing more. */
+export function placedByStep(steps:readonly ManualStep[],nodes:readonly {id:string;type:string}[]):string[][]{
+  const used=new Map<string,number>(),placed:string[]=[],out:string[][]=[];
+  for(const step of steps){
+    const type='add' in step?step.add:'reuse' in step?step.reuse:undefined;
+    if(type){const k=used.get(type)??0,match=nodes.filter(n=>n.type===type)[k];used.set(type,k+1);if(match)placed.push(match.id);}
+    out.push([...placed]);
+  }
+  return out;
+}
+/** The widget type each handle names, for wording a step. */
+export const handleTypes=(steps:readonly ManualStep[]):Record<string,string>=>
+  Object.fromEntries(steps.flatMap(step=>'add' in step?[[step.as,step.add]]:'reuse' in step?[[step.as,step.reuse]]:[]));

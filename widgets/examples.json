@@ -806,14 +806,14 @@
       "id": "urn:fieldwork:example:mers-korea-2015",
       "title": "MERS-CoV, South Korea, 2015",
       "repository": "https://github.com/digital-twin-ph/example-2015-mers-korea",
-      "commit": "4c7bf0c6e7fb96d001e998c629c3cfc2f36f30be",
+      "commit": "41224325aba239509bd85c94c36bcd53d06307c3",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2015-mers-korea",
       "licence": {
         "data": "No licence stated for the data; used for teaching, as the outbreaks package describes it. The repository’s own files are CC0-1.0.",
         "source": "The R package outbreaks (reconverse), mers_korea_2015, compiled by ECDC’s Epidemic Intelligence from public information in the outbreak’s first weeks.",
         "note": "Decided 2026-11-11 by the practitioner: used in an example repository for teaching, attributed, never in the application."
       },
-      "description": "A line list of 162 cases, each case’s onset, diagnosis and report set against the 7-1-7 targets by a published ruleset and each verdict counted; and the 98 probable links, counted by source and by setting of exposure; and each hospital named for cases, placed and mapped over South Korea’s 17 provinces, coloured by its cases.",
+      "description": "A line list of 162 cases, each case’s onset, diagnosis and report set against the 7-1-7 targets by a published ruleset and each verdict counted; and the 98 probable links, counted by source and by setting of exposure; and each hospital named for cases, placed and mapped over South Korea’s 17 provinces, coloured by its cases. Deaths by age class and by sex in a two-by-two; the days from exposure to onset, with its median by outcome, and from onset to death; and the secondary cases per source and the serial interval by setting.",
       "carries": {
         "workflow": true,
         "data": true,
@@ -829,13 +829,14 @@
         "relate_table",
         "study_area",
         "table_input",
-        "table_output"
+        "table_output",
+        "two_by_two"
       ],
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "02d1afe663478bd450f0053113d71eafaf9a3f8afcd9228549bb63e23f46e89b",
-          "bytes": 143796
+          "sha256": "0c30031500962419f20882839f3b04e534f8153fa080c4590c18e48bcee9684c",
+          "bytes": 150874
         },
         {
           "path": "data/mers_korea_2015_linelist.csv",
@@ -864,8 +865,8 @@
         },
         {
           "path": "README.md",
-          "sha256": "ce9c50373165b5428930b784e7cdab1146e623ef92df000a5f5395a7878245b4",
-          "bytes": 7469
+          "sha256": "d95a70ab81d8aeedb2aa1e11c46dcd8ff2fbb465169a20faab82152bc8204943",
+          "bytes": 8986
         },
         {
           "path": "NOTICE.txt",
@@ -884,8 +885,8 @@
         },
         {
           "path": "data/kdca_mers_2015_dictionary.csv",
-          "sha256": "0a3b20b2af0da3e73de17058364ef44cc9acd2e9c9a50c4cf0271c62a7fb6d0e",
-          "bytes": 803
+          "sha256": "f7fb1404e23710ce9f6135aa8931a736383f8c4bafd504aa5d608c0358df8c86",
+          "bytes": 873
         },
         {
           "path": "data/mers_event_milestones.csv",
@@ -898,7 +899,7 @@
           "bytes": 3442
         }
       ],
-      "workflowCount": 5
+      "workflowCount": 8
     },
     {
       "id": "urn:fieldwork:example:population-models-census",

@@ -3,7 +3,7 @@
   "description": "Independent recomputation of implemented widgets by an external process, recorded after release. Release files are immutable once committed, so evidence about a release lives here and accrues as checks run. A fixture digest recorded in a result is over canonical JSON content rather than the file’s bytes, revised 2026-10-11 because byte identity is unsatisfiable in the browser the lab publishes to. A parity result establishes numerical agreement with a named external implementation under a stated criterion. It is not scientific certification, and it says nothing about whether a method is appropriate for a question.",
   "lab": {
     "repository": "https://github.com/digital-twin-ph/validation-lab",
-    "commit": "bfb058567b0aeada2f815fd374c692578a0bc288",
+    "commit": "ef22e479869d5bc480752e311586701dc213fa40",
     "pinNote": "The commit CI checks the lab out at: .github/workflows/pages.yml reads it with `jq -r .lab.commit widgets/parity.json`. So this pin, not the clone beside this repository, is what `validate:dive-deeper` verifies against on a clean runner -- and it must be advanced whenever a check lands in the lab, in the same push-then-pin order the worked examples use."
   },
   "outcomes": {
@@ -919,6 +919,28 @@
       "note": "Covers the draw order of a Map’s polygon layers (Map 0.29.0), which Collect polygon layers computed until it retired into Map on 2026-11-13 (docs/audits/collect-polygon-layers-retired.md). The earlier entry for stack_polygons 0.2.0 stands as the record of that release.",
       "notebook": "16-stack-polygons-vs-sort.ipynb",
       "diveDeeper": "Dive deeper · why extent is the wrong number to quote"
+    },
+    {
+      "widget": "urn:fieldwork:widget:group_table",
+      "coversRelease": "0.4.0",
+      "check": "51-mers-epi",
+      "result": "content/results/check-51-mers-epi.json",
+      "sha256": "3868105ae3f8abdd9188d2da85034d9e859eddb3e1298e738a55dfc0333912d6",
+      "external": [
+        "pandas 2.3.3",
+        "Python statistics.NormalDist"
+      ],
+      "criterion": "Exact: each case's days, every count, every share under the declared rounding, every median; the two-by-two's cells exact and its estimates and limits within 1e-9 relative",
+      "outcome": "agrees",
+      "measured": "The MERS-CoV example's workflows 6 to 8, recomputed from the line list and contacts at example-2015-mers-korea ddf30f6: 324 days from exposure to onset and onset to death, 50 counts, 24 shares, 7 medians (two of a column computed by a rule, by Total within groups' Column to total), and the two-by-two's 9 estimates and limits, all agreeing. Tampering with a median, a share and an interval limit in a copy of the fixture made each one differ.",
+      "ranAt": "2026-11-14T05:41:32+00:00",
+      "notEstablished": [
+        "That days from the last day of exposure to onset are an incubation period: 3 cases have onset before the exposure window closed, and both sides keep them as written.",
+        "That diff_dt_onset is a serial interval: the package does not document how links or their days were set.",
+        "That the risk ratio by sex says anything about sex: its interval holds 1, and no study design is declared."
+      ],
+      "note": "A whole example's epidemiology, not one widget: it covers Total within groups' Mean, Median and Column to total, Apply ruleset's days between dates, and Two-by-two as this example chains them. The fixture carries no row of the source (scripts/export-validation-fixture.mjs, mers-epi-001).",
+      "notebook": "51-mers-epidemiology-vs-pandas.ipynb"
     }
   ],
   "notebookNote": "`notebook` names the lab notebook that carries the check, and `diveDeeper` the heading of its Dive Deeper section where it has one -- the part written for a practitioner who wants to understand the widget rather than for a reviewer checking it (experiment 94). Both are recorded rather than derived from the check id: `24-project-forward` lives in `24-project-vs-pyproj.ipynb`, so matching on the leading number works by luck and would break the first time a check and its notebook are named differently. The application reads `diveDeeper` to decide which widgets offer the link, and scripts/validate-dive-deeper.mjs refuses a heading the notebook does not actually carry."

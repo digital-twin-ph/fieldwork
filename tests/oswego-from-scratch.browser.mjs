@@ -69,11 +69,13 @@ test('Oswego is two short workflows: which food, and where',async({page})=>{test
   await page.locator(`.react-flow__node[data-id="${table}"]`).click();
   await page.locator('#twobytwo-label').fill('Attack rates by food');
   await page.locator('#twobytwo-label').press('Enter');
+  await page.locator('#configure-step').click();
   await page.locator('#twobytwo-rows').check();
-  await page.locator('[data-slr="outcomeColumn"]').selectOption('Ill');
+  await page.locator('#two-by-two-config [data-mapping="outcomeColumn"]').selectOption('Ill');
   for(const food of FOODS)await page.locator(`[data-twobytwo-exposure="${food}"]`).check();
-  const pick=async(key,value)=>{await page.locator(`[data-slr="${key}"]`).selectOption(value);};
+  const pick=async(key,value)=>{await page.locator(`#two-by-two-config [data-mapping="${key}"]`).selectOption(value);};
   await pick('exposed','Y');await pick('unexposed','N');await pick('caseValue','Y');await pick('nonCaseValue','N');
+  await page.locator('#two-by-two-config #config-apply').click();
   await page.locator(`.react-flow__node[data-id="${shown}"]`).click();
   await page.locator('#table-label').fill('Attack rates by food');
   await page.locator('#table-label').press('Tab');
@@ -180,13 +182,15 @@ test('a line list reaches a two-by-two directly, with nothing counted first',asy
   await tidy(page);await wire(page,table,shown,'table');
 
   await page.locator(`.react-flow__node[data-id="${table}"]`).click();
-  await page.locator('#twobytwo-rows').check();
-  await page.locator('#twobytwo-map').click();
-  const map=async(key,value)=>{await page.locator(`[data-mapping="${key}"]`).selectOption(value);};
-  await map('exposureColumn','Ice cream (vanilla)');await map('exposed','Y');await map('unexposed','N');
-  await map('outcomeColumn','Ill');await map('caseValue','Y');await map('nonCaseValue','N');
-  await expect(page.locator('.map-cell').first()).toContainText('43');
-  await page.locator('#mapping-close').click();
+  await page.locator('#configure-step').click();
+  const dialog=page.locator('#two-by-two-config');
+  await dialog.locator('#twobytwo-rows').check();
+  const map=async(key,value)=>{await dialog.locator(`[data-mapping="${key}"]`).selectOption(value);};
+  await map('outcomeColumn','Ill');
+  await dialog.locator('[data-twobytwo-exposure="Ice cream (vanilla)"]').check();
+  await map('exposed','Y');await map('unexposed','N');await map('caseValue','Y');await map('nonCaseValue','N');
+  await expect(dialog.locator('.map-cell').first()).toContainText('43');
+  await dialog.locator('#config-apply').click();
 
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
@@ -215,8 +219,9 @@ test('all 14 foods on one node give one table, in file order, unranked',async({p
   const shown=await idOf(page,'table_output');
   await tidy(page);await wire(page,table,shown,'table');
   await page.locator(`.react-flow__node[data-id="${table}"]`).click();
+  await page.locator('#configure-step').click();
   await page.locator('#twobytwo-rows').check();
-  await page.locator('[data-slr="outcomeColumn"]').selectOption('Ill');
+  await page.locator('#two-by-two-config [data-mapping="outcomeColumn"]').selectOption('Ill');
   for(const food of FOODS)await page.locator(`[data-twobytwo-exposure="${food}"]`).check();
   // AN ID IS NOT AN EXPOSURE, and the list reads down one left edge. Both reported 2026-11-02.
   await expect(page.locator('[data-twobytwo-exposure="ID"]')).toHaveCount(0);
@@ -225,9 +230,10 @@ test('all 14 foods on one node give one table, in file order, unranked',async({p
   expect(edges).toHaveLength(1);
   const legend=await page.locator('.exposure-list legend').boundingBox();
   expect(edges[0]-legend.x).toBeLessThan(20);
-  const pick=async(key,value)=>{await page.locator(`[data-slr="${key}"]`).selectOption(value);};
+  const pick=async(key,value)=>{await page.locator(`#two-by-two-config [data-mapping="${key}"]`).selectOption(value);};
   await pick('exposed','Y');await pick('unexposed','N');await pick('caseValue','Y');await pick('nonCaseValue','N');
   await page.screenshot({path:'test-results/oswego-menu-panel.png'});
+  await page.locator('#two-by-two-config #config-apply').click();
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
   await page.locator('[data-view="results"]').click();

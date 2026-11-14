@@ -3,6 +3,45 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.114.0 — 2026-11-14
+
+- **Edit a value by hand, in Data quality.** A **Records** tab shows the records as the steps after read them, each
+  value a box. A change is kept on the step as an edit, with the value it replaced and when, applied to a copy when the
+  records are handed on; the file is never changed. An empty value can be filled the same way, counted apart. **Edits**
+  lists them, each removable, and the run states each. Tabular data 0.11.0, Point data 0.8.0. Experiment 214.
+- **A worked example's manual plays back one step at a time.** *Play back these steps*, on the Manual tab: the step
+  in the manual's words, Previous and Next, the canvas holding what is placed by then. A manual can ask for an edit in
+  Data quality. Experiment 173.
+- **Total within groups: Mean, Median, and a column to total.** The median of each group's values present, or their
+  mean; and the column summarised can be a key column holding numbers, such as days a rule computed, rather than only
+  the table's value column. Its blanks are empty cells; a value that is not a number stops the run and names the row.
+  Total within groups 0.4.0.
+- **The MERS-CoV example has eight workflows.** Deaths by age class and by sex in a two-by-two; days from exposure to
+  onset and from onset to death, with the median by outcome; secondary cases per source and the median days between
+  onsets by setting. Lab check 51 recomputes them with pandas and agrees.
+- **Two-by-two on the standard Inspector and dialog.** The Inspector says what is compared; Configure… holds the
+  columns and values for a, b, c and d, a line list's exposures and the interval level, with the four cells counted as
+  you map them. The separate mapping dialog is folded into it. Two-by-two 0.8.0.
+- **A progress bar while a raster window is read.** Raster input's Apply shows how much of the window has been read,
+  from a file or a remote copy such as GHS-POP's, and how much of a chosen file has been checked. Raster input 0.12.2.
+- **English labels beside Korean column names.** A column's confirmed label, from a data dictionary or written in
+  Describe columns, is shown beside its own name in a chart's axis and caption and beneath it in a table's heading,
+  never in its place. The MERS example's KDCA dictionary gains short English labels. A chart's source line in Notes
+  names the step, not its id.
+- **A widget's manual page can be detached**, as a worked example's manual can: a panel beside the canvas and any
+  dialog, kept through a reload, closed with Close. Italics in the manual show as italics, not asterisks.
+- **Fieldwork's mark in the middle of a worked example's QR codes**, drawn at the highest error correction so a
+  reader still decodes them.
+- **Apply ruleset reads a number brought by Relate on a table of named values**, and "%" is understood as percent.
+- **The widget catalog counts the examples built into Fieldwork**, Snow's London and Hagelloch, read from their own
+  workflows; Street network and others they use no longer read "Not in a worked example yet". Each repository example's
+  widgets and workflow count are written from its pinned project (`npm run examples:uses`), no longer typed.
+- **A Widgets tab for each project**, beside Notes: every widget the project's workflows use, which workflows use it
+  and as which steps, its manual one press away, and each workflow one press away. Read from the workflows each time,
+  so nothing is kept by hand.
+- **Edited values are marked in tables**, wherever the rows are shown as they were handed on, with what each replaced.
+  Edits are versioned: taking one back or restoring an earlier version adds a version, and nothing is deleted.
+
 ## 0.113.1 — 2026-11-13
 
 - **A raster file of any size can be chosen.** GHS-POP's 12 GB global grid failed with the browser's "could not be read,

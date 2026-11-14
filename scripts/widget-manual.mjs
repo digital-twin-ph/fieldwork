@@ -77,6 +77,9 @@ function esc(t){return t.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;
 function inline(t){return esc(t)
   .replace(/`([^`]+)`/g,'<code>$1</code>')
   .replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>')
+  // ITALICS, *like this*, outside code: printed with their asterisks until 2026-11-14 ("*if*" in Apply ruleset's page).
+  .split(/(<code>.*?<\/code>)/).map(part=>part.startsWith('<code>')?part
+    :part.replace(/(^|[^*\w])\*([^*\s](?:[^*]*[^*\s])?)\*(?![*\w])/g,'$1<em>$2</em>')).join('')
   .replace(/\[([^\]]+)\]\((https?:[^)]+)\)/g,'<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');}
 
 export function toHTML(markdown){

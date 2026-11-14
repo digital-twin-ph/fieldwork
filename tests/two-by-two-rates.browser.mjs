@@ -24,13 +24,15 @@ test('Table IX is read as events and units at risk, and gives 8.40',async({page}
 
   // The Inspector states the layout, and offers the values of the outcome column it reads.
   await page.locator('.react-flow__node[data-id="ratio"]').click();
+  await expect(page.locator('#inspector-content .standard-sentence')).toContainText('deaths per houses');
+  await page.locator('#configure-step').click();
   await expect(page.locator('#twobytwo-layout')).toHaveValue('rates');
   await expect(page.locator('#twobytwo-case')).toHaveValue('deaths');
   await expect(page.locator('#twobytwo-units')).toHaveValue('houses');
   // The four-cell controls are not offered: this layout has no non-case and no a, b, c, d to map.
   await expect(page.locator('#twobytwo-noncase')).toHaveCount(0);
-  await expect(page.locator('#twobytwo-map')).toHaveCount(0);
   await expect(page.locator('#twobytwo-rows')).toHaveCount(0);
+  await page.locator('#two-by-two-config #config-cancel').click();
 
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
@@ -63,10 +65,12 @@ test('switching the layout back to cases and non-cases restores the four cells',
   const water=page.locator('#workflow-select option',{hasText:'Deaths per house, by water company'});
   await page.locator('#workflow-select').selectOption(await water.getAttribute('value'));
   await page.locator('.react-flow__node[data-id="ratio"]').click();
+  await page.locator('#configure-step').click();
   await page.locator('#twobytwo-layout').selectOption('cases');
   await expect(page.locator('#twobytwo-noncase')).toBeVisible();
   await expect(page.locator('#twobytwo-units')).toHaveCount(0);
-  await expect(page.locator('#twobytwo-map')).toBeVisible();
+  await expect(page.locator('#two-by-two-config .map-cell')).toHaveCount(4);
+  await page.locator('#two-by-two-config #config-apply').click();
   const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));
   expect(saved.nodes.find(n=>n.id==='ratio').params.unitsAtRiskValue).toBeUndefined();
 });

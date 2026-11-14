@@ -96,3 +96,17 @@ test('a kept window past the old 5 MB and 10 MB limits validates and round trips
   assert.throws(()=>decodeFile(base64),/oversized/);
   assert.equal(decodeFile(base64,fileByteLimit('image/tiff')).length,bytes.length);
 });
+
+test('a window read in bands, saying how far it has got, gives the cells a whole read gives',async()=>{
+  const {writeGeoTiff}=await import('../build/raster.js');
+  const width=2000,height=1500,cells=new Float32Array(width*height).map((_,i)=>i%97===0?NaN:i*0.5);
+  const blob=new Blob([writeGeoTiff(cells,width,height,[30,-1],[0.001,-0.001],'test')]),m=await inspectRaster(blob),window=[3,7,1900,1490];
+  const whole=await readRasterWindow(blob,m,window),seen=[];
+  const banded=await readRasterWindow(blob,m,window,(rows,of)=>seen.push([rows,of]));
+  assert.equal(banded.values.length,whole.values.length);
+  for(let i=0;i<whole.values.length;i++)if(!Object.is(banded.values[i],whole.values[i]))assert.fail(`cell ${i}: ${banded.values[i]} against ${whole.values[i]}`);
+  assert.deepEqual(banded.metadata,whole.metadata);
+  assert.ok(seen.length>=3,`${seen.length} reports`);
+  assert.deepEqual(seen.at(-1),[1483,1483]);assert.deepEqual(seen[0],[0,1483]);
+  assert.ok(seen.every(([r],i)=>i===0||r>seen[i-1][0]),'rows only rise');
+});

@@ -1,6 +1,6 @@
 # Fieldwork semantic development checkpoints
 
-_Created 2026-10-07 · Updated 2026-11-13_
+_Created 2026-10-07 · Updated 2026-11-14_
 
 ## Developmental evaluation
 
@@ -304,6 +304,7 @@ hand is pointless because the next run overwrites it.
 | `docs/widget-names.md` | `npm run names:widgets` | `validate:names` |
 | the date stamp in every `docs/**.md` | `npm run stamp:docs` | `validate:docs` |
 | `ontology/country-names.json`, `ontology/country-names.ttl` | `npm run names:countries` | `validate:country-names` |
+| `uses` and `workflowCount` in `widgets/examples.json` | `npm run examples:uses`, after a pin | `validate:examples` |
 
 **Run `stamp:docs` before `names:widgets`, not after.** `docs/widget-names.md` is both generated
 and stamped: the stamper rewrites the date in a file the generator has just produced, so running

@@ -161,7 +161,10 @@ test('THE VOCABULARY IS BOUNDED, and the absences are an argument',()=>{
   // not average meaningfully when the groups differ in size -- STDEVP and VARP are population
   // variants this step cannot tell it has, and FIRST and LAST depend on a row order a long table
   // does not promise.
-  assert.deepEqual([...AGGREGATES],['sum','minimum','maximum','count']);
+  // 2026-11-14: MEAN AND MEDIAN ADMITTED, for an incubation period and a serial interval, which are summarised by their
+  // median (the practitioner: "For MERS if there are any more epi computations that can be included let's do that").
+  // The referent problem stands, and is why neither is offered with a share. The rest stay absent for the reasons above.
+  assert.deepEqual([...AGGREGATES],['sum','minimum','maximum','count','mean','median']);
 });
 test('COUNT READS NO VALUE: a line list reaches its four cells, and a blank is still a row',()=>{
   const person=(ill,ate,value)=>({key:{id:String(person.n=(person.n||0)+1),ill,ate,measure:'Age'},value});

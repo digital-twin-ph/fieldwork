@@ -36,7 +36,7 @@ export interface ConfigDialog<D> {
   /** AN APPLY THAT TAKES TIME AND CAN FAIL: a read of a file (the Polygon layer, 2026-11-11). The dialog stays open while
    *  it runs, saying what it is doing through `say`; it closes when this resolves true, and stays open, its controls
    *  usable, when it resolves false or throws, with the reason as its message. Used instead of `apply` when given. */
-  applyAsync?:(draft:D,say:(text:string)=>void)=>Promise<boolean>;
+  applyAsync?:(draft:D,say:(text:string,share?:number)=>void)=>Promise<boolean>;
   /** Called when the dialog closes without Apply: Cancel, ×, Escape or Discard. */
   onClose?:()=>void;
   /** Called before every rebuild of the sections, and before the dialog closes either way: release what `wire` mounted
@@ -92,11 +92,15 @@ export function openConfigDialog<D>(spec:ConfigDialog<D>,esc:Escape):void{
   applyButton.onclick=async()=>{
     if(applyButton.disabled||spec.readOnly)return;
     if(!spec.applyAsync){applied=true;spec.apply(draft);close();return;}
-    const say=(text:string,tone:'info'|'failure'='info')=>{slot.innerHTML=text
-      ?`<div class="config-message config-message-${tone}" role="${tone==='failure'?'alert':'status'}"><p>${esc(text)}</p></div>`:'';};
+    // A SHARE, WHERE THE WORK KNOWS ONE, IS DRAWN AS A BAR under the words (2026-11-14).
+    const say=(text:string,tone:'info'|'failure'='info',share?:number)=>{slot.innerHTML=text
+      ?`<div class="config-message config-message-${tone}" role="${tone==='failure'?'alert':'status'}"><p>${esc(text)}</p>`
+        +(share!==undefined&&Number.isFinite(share)
+          ?`<div class="config-progress" role="progressbar" aria-label="${esc(text)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(share*100)}"><div style="width:${(Math.max(0,Math.min(1,share))*100).toFixed(1)}%"></div></div>`:'')
+        +'</div>':'';};
     applyButton.disabled=true;cancelButton.disabled=true;const was=applyButton.textContent;applyButton.textContent='Working\u2026';
     try{
-      if(await spec.applyAsync(draft,text=>say(text))){applied=true;close();return;}
+      if(await spec.applyAsync(draft,(text,share)=>say(text,'info',share))){applied=true;close();return;}
     }catch(error){say(errorMessage(error),'failure');}
     applyButton.textContent=was;applyButton.disabled=false;cancelButton.disabled=false;
   };

@@ -9,6 +9,7 @@ import {reachableNodes,validateReachNode} from './reachable-nodes.js';
 import {reachableCorridor,validateCorridorNode} from './reachable-corridor.js';
 import {travelTimeBand,validateBandNode} from './travel-time-band.js';
 import {collectPolygonLayers,isPolygonPort,polygonPort,MAX_POLYGON_LAYERS} from './polygon-layers.js';
+import {applyFeatureEdits,applyTableEdits,editsFacts,editsSentence,validEdits,editsAt} from './cell-edits.js';
 import {drawnDensity,pooledBreaks,isRasterPort,rasterPort,MAX_RASTER_LAYERS,MAX_DRAWN_SIDE} from './raster-panels.js';
 import {fillInteriorGaps,validateFillNode} from './fill-interior-gaps.js';
 /** Resolves a named credential to its secret. No current widget needs one; the credential
@@ -975,6 +976,8 @@ export function validateWorkflow(raw:unknown):Workflow {
     if((n.type==='map_output'||n.type==='table_output'||n.type==='deduplicate_points')&&n.params.pointInputCount!==undefined&&(!Number.isInteger(n.params.pointInputCount)||n.params.pointInputCount<1||n.params.pointInputCount>MAX_POINT_LAYERS))throw new Error('Use 1–8 point input ports.');
     if(n.type==='space_time_scan')validateScanParams(n.params as never);
     // THE ARRANGEMENT AND THE POLYGON INPUTS, checked as they arrive (experiment 212; Collect polygon layers retired).
+    if((n.type==='point_input'||n.type==='table_input')&&(n.params as {edits?:unknown}).edits!==undefined&&!validEdits((n.params as {edits?:unknown}).edits))
+      throw new Error('Edits made in Data quality are a record, a column, the value read and the value written; at most 2,000 to a step.');
     if(n.type==='map_output'&&n.params.rasterInputCount!==undefined&&!(Number.isInteger(n.params.rasterInputCount)&&n.params.rasterInputCount>=1&&n.params.rasterInputCount<=MAX_RASTER_LAYERS))
       throw new Error(`A map takes 1 to ${MAX_RASTER_LAYERS} rasters.`);
     if(n.type==='map_output'&&n.params.polygonInputCount!==undefined&&!(Number.isInteger(n.params.polygonInputCount)&&n.params.polygonInputCount>=1&&n.params.polygonInputCount<=MAX_POLYGON_LAYERS))
@@ -1536,7 +1539,9 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         if(table&&!node.params.fromTable)throw new Error('A table is connected. Choose its x (longitude) and y (latitude) columns.');
         const mapping=table?node.params.fromTable:undefined;
         const read=table&&mapping?tablePoints(table,mapping):null;
-        const emitted=applyRepairs(read?read.points.features:node.params.data.features??[],node.params.repairs??[]);
+        // VALUES EDITED BY HAND, after the repairs, on a copy (experiment 214).
+        const editLog=node.params.edits??[],edited=applyFeatureEdits(applyRepairs(read?read.points.features:node.params.data.features??[],node.params.repairs??[]),editsAt(editLog));
+        const emitted=edited.features;
         const tableEdge=workflow.edges.find(e=>e.to===node.id&&e.port==='records');
         value={...node.params.data,features:emitted,sourceNodeId:node.id,sourceKind:'input-points',
           sourceInfo:read?{format:'table',from:tableEdge?.from??''}:structuredClone(node.params.sourceInfo),
@@ -1550,6 +1555,10 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
             `<urn:fieldwork:run:${runId}:output:${tableEdge.from}>`,mapping,read);
           receipts.push({nodeId:node.id,kind:'computation',facts,rules:'',input:facts,conclusions:[],
             method:tablePointsSentence(read,mapping)} as unknown as Receipt);
+        }
+        if(editLog.length){
+          const facts=editsFacts(`<urn:fieldwork:run:${runId}:output:${node.id}>`,edited,editLog.length);
+          receipts.push({nodeId:node.id,kind:'computation',facts,rules:'',input:facts,conclusions:[],method:editsSentence(edited,editLog.length).trim()} as unknown as Receipt);
         }
         // A repaired column is stated in the evidence. The records this node emits are no longer
         // the records the file held, and a reader has to be able to learn that from the run
@@ -1756,6 +1765,8 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           method:`${result.collapsedFrom} rows ${result.aggregate==='sum'?'totalled'
             :result.aggregate==='minimum'?'reduced to their minimum'
             :result.aggregate==='maximum'?'reduced to their maximum'
+            :result.aggregate==='mean'?'reduced to their mean'
+            :result.aggregate==='median'?'reduced to their median'
             :'counted'} into ${result.groups} within `
             +`${node.params.by.join(' and ')}, dropping ${result.dropped.join(' and ')}`
             // THE OVERRIDE IS IN THE RECEIPT'S OWN SENTENCE, not only in a field beside it. A
@@ -2011,9 +2022,11 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         receipts.push(mapImageReceipt(node,image,runId));break;}
       case 'table_input':{
         const p=node.params;
-        const table=p.convertOnRun&&p.sourceTable&&p.wide
+        const unedited=p.convertOnRun&&p.sourceTable&&p.wide
           ?wideDataTable(p.sourceTable,{...p.wide,valueField:p.valueField,primaryKey:p.data.primaryKey,secondaryKeys:p.data.secondaryKeys,...(p.unit?{unit:p.unit}:{})})
           :p.data;
+        // VALUES EDITED BY HAND, on a copy (experiment 214).
+        const tableLog=p.edits??[],editedTable=applyTableEdits(unedited,editsAt(tableLog)),table=editedTable.table;
         if(!table.rows.length&&p.remote)throw new Error(`This table is fetched from ${p.remote.url} and its rows are not kept `
           +'in the project. Select the node and choose Fetch the table.');
         if(!table.rows.length)throw new Error(p.convertOnRun
@@ -2037,7 +2050,12 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         const found=`${output} <http://www.w3.org/ns/prov#alternateOf> <urn:fieldwork:run:${runId}:table:${node.id}>.\n`
           +issueFacts(`<urn:fieldwork:run:${runId}:tableinput:${node.id}>`,output,`urn:fieldwork:run:${runId}:tableinput:${node.id}`,issues);
         receipts.push({...imported.receipt,facts:imported.receipt.facts+found,input:imported.receipt.input+found,
-          ...(described.columns?{columns:described.columns}:{})} as Receipt);break;}
+          ...(described.columns?{columns:described.columns}:{})} as Receipt);
+        if(tableLog.length){
+          const facts=editsFacts(output,editedTable,tableLog.length);
+          receipts.push({nodeId:node.id,kind:'computation',facts,rules:'',input:facts,conclusions:[],method:editsSentence(editedTable,tableLog.length).trim()} as unknown as Receipt);
+        }
+        break;}
       // The conversion ran when the file was saved; execution replays it offline without reprojecting again.
       case 'deduplicate_points':{
         if(node.params.format==='table'){

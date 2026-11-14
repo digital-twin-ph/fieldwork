@@ -1,3 +1,4 @@
+import {editedTitle,type EditedCells} from './cell-edits.js';
 import type {Escape} from './types.js';
 import type {DataTable,DataTableSource,TableSelection} from './data-table.js';
 import {dataTable,wideDataTable,keyDomains,MAX_TABLE_ROWS,MAX_TABLE_FILE_BYTES,type TableRows} from './data-table.js';
@@ -29,7 +30,9 @@ export interface TableImport {data:DataTable; source:DataTableSource; keys:strin
  *  than in the file -- whether the source is converted on each run -- which can be applied without reading a file again. */
 export interface TableFrame {step?:string; convertOnRun?:boolean; hasSource?:boolean; onConvertOnRun?:(on:boolean)=>boolean}
 /** What the editor reopens with. `wide` present means the file was read as wide. */
-export interface TableReopen extends TableSelection {wide?:WideChoice; distinctValuesFor?:string[]}
+export interface TableReopen extends TableSelection {wide?:WideChoice; distinctValuesFor?:string[];
+  /** Where the table is published, shown in the URL box and the box opened, so a reopened step says where it reads from. */
+  remote?:RemoteTableSource}
 
 /** Reads a CSV in either shape, and ASSUMES WIDE on a fresh import.
  *
@@ -524,6 +527,8 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
   shapeAccept.onclick=()=>{shapeSelect.value='long';applyShape();};
   let remote:RemoteTableSource|undefined,archive:Uint8Array<ArrayBuffer>|undefined,archiveSha256:string|undefined;
   const urlInput=q<HTMLInputElement>('#table-url'),entrySelect=q<HTMLSelectElement>('#table-entry');
+  // THE ADDRESS IT IS PUBLISHED AT, shown when the step is reopened (2026-11-14: NYC's Zenodo table read as if it had none).
+  if(existing?.remote?.url){urlInput.value=existing.remote.url;q<HTMLDetailsElement>('#table-remote').open=true;}
   const readFetched=async(bytes:Uint8Array<ArrayBuffer>,path:string)=>{
     remote={url:urlInput.value.trim(),...(archive?{entry:path,archiveSha256}:{}),
       sha256:await contentHash(bytes),bytes:bytes.length};
@@ -878,8 +883,13 @@ const roleOf=(roles:ColumnRoles|undefined,column:string)=>roles&&Object.hasOwn(r
 const roleAttr=(roles:ColumnRoles|undefined,column:string,also='')=>{const r=roleOf(roles,column);
   const classes=[also,r?`column-role-${r}`:''].filter(Boolean).join(' ');
   return (classes?` class="${classes}"`:'')+(r?` data-column-role="${r}"`:'');};
+/** A HEADING IS THE COLUMN'S OWN NAME, with its confirmed label beneath (2026-11-14: "Let's make sure we use data
+ *  dictionary labels in English"), never in its place: a reader checking the file finds the column it names. */
+let headingLabels:DataTable['columns']|undefined;
 const roleHead=(roles:ColumnRoles|undefined,column:string,esc:Escape,also='')=>{const r=roleOf(roles,column);
+  const meta=headingLabels?.[column],label=meta?.confirmed?meta.label?.trim():'';
   return `<th scope="col"${roleAttr(roles,column,also)}>${esc(column)}`
+    +(label&&label!==column?`<span class="column-label">${esc(label)}</span>`:'')
     +(r?`<span class="column-role">${r==='key'?'matched on':'brought across'}</span>`:'')+'</th>';};
 
 /** PAGES THAT TURN. `dataTableMarkup` writes Previous rows and Next rows, and until 2026-11-08 only the Results view
@@ -899,6 +909,7 @@ export function wireTablePages(container:HTMLElement|null|undefined,table:DataTa
 
 export function dataTableMarkup(table:DataTable,esc:Escape,{query='',page=0,pageSize=40,assertTotals=false,roles}:
   {query?:string;page?:number;pageSize?:number;assertTotals?:boolean;roles?:ColumnRoles}={}){
+  headingLabels=table.columns;
   const matching=query?table.rows.filter(row=>Object.values(row.key).some(v=>String(v).toLowerCase().includes(query.toLowerCase()))):table.rows;
   const pages=Math.max(1,Math.ceil(matching.length/pageSize)),shown=matching.slice(page*pageSize,page*pageSize+pageSize);
   const unit=table.unit?esc(table.unit):'<span class="muted">unit unstated</span>';
@@ -955,7 +966,10 @@ export function dataTableMarkup(table:DataTable,esc:Escape,{query='',page=0,page
           +`count the same thing. The table states no unit, so nothing here checks that.</p>`:'');
   return `<div class="table-meta muted">${matching.length} of ${table.rowCount} rows${table.missingValueCount?` · ${table.missingValueCount} values absent and kept as unknown`:''} · value in ${unit}</div>`
     +`<table><thead><tr>${table.keys.map(k=>roleHead(roles,k,esc)).join('')}${roleHead(roles,table.valueField,esc)}</tr></thead><tbody>`
-    +shown.map(row=>`<tr>${table.keys.map(k=>`<td${roleAttr(roles,k)}>${esc(row.key[k])}</td>`).join('')}<td${roleAttr(roles,table.valueField)}>${row.value===null?'<span class="muted">unknown</span>':esc(row.value)}</td></tr>`).join('')
+    // A CELL EDITED BY HAND IS MARKED, with what it was on hover (experiment 214).
+    +shown.map(row=>{const edited=(row as {edited?:EditedCells}).edited;
+      const cell=(c:string)=>roleAttr(roles,c,edited?.[c]?'cell-edited':'')+(edited?.[c]?` data-cell-edited title="${esc(editedTitle(edited[c]!))}"`:'');
+      return `<tr>${table.keys.map(k=>`<td${cell(k)}>${esc(row.key[k])}</td>`).join('')}<td${cell(table.valueField)}>${row.value===null?'<span class="muted">unknown</span>':esc(row.value)}</td></tr>`;}).join('')
     +`</tbody></table>`+(pages>1?`<div class="table-page-group"><button class="button small" data-table-page="${page-1}" ${page===0?'disabled':''}>Previous rows</button><span role="status">Page ${page+1} of ${pages}</span><button class="button small" data-table-page="${page+1}" ${page+1>=pages?'disabled':''}>Next rows</button></div>`:'');
 }
 

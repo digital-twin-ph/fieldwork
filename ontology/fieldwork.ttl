@@ -1111,6 +1111,24 @@ fw:choiceMade a owl:DatatypeProperty; rdfs:domain fw:DesignChoice; rdfs:range xs
 fw:choiceOffered a owl:DatatypeProperty; rdfs:domain fw:DesignChoice; rdfs:range xsd:string;
   rdfs:comment "What else was available. A choice between alternatives nobody can see is a setting rather than a judgement, and recording it as a judgement would overstate it.".
 
+fw:CellEdit a owl:Class;
+  rdfs:label "Value edited by hand"@en;
+  rdfs:comment "One value of one record changed by a person in Data quality (experiment 214), applied to a copy of the records a step hands on, never to its file. Says what it replaced, and is applied only where the record still holds that value."@en.
+fw:editedRecord a owl:DatatypeProperty; rdfs:domain fw:CellEdit; rdfs:range xsd:string;
+  rdfs:label "edited record"@en; rdfs:comment "The record edited: a point's id, or a table's row as row N."@en.
+fw:valueBefore a owl:DatatypeProperty; rdfs:domain fw:CellEdit; rdfs:range xsd:string;
+  rdfs:label "value before"@en; rdfs:comment "The value read, as text; empty where none was recorded."@en.
+fw:valueAfter a owl:DatatypeProperty; rdfs:domain fw:CellEdit; rdfs:range xsd:string;
+  rdfs:label "value after"@en; rdfs:comment "The value written, as text; empty where the cell was emptied."@en.
+fw:filledEmptyCell a owl:DatatypeProperty; rdfs:domain fw:CellEdit; rdfs:range xsd:boolean;
+  rdfs:label "filled an empty cell"@en; rdfs:comment "Whether the edit supplied a value where none was recorded: what experiment 117 calls imputation, counted apart."@en.
+fw:editApplied a owl:DatatypeProperty; rdfs:domain fw:CellEdit; rdfs:range xsd:boolean;
+  rdfs:label "edit applied"@en; rdfs:comment "False where the record no longer holds the value the edit was made against, so the edit was not applied."@en.
+fw:editedAt a owl:DatatypeProperty; rdfs:domain fw:CellEdit; rdfs:range xsd:string;
+  rdfs:label "edited at"@en; rdfs:comment "When the edit was made, as an ISO 8601 time."@en.
+fw:editVersion a owl:DatatypeProperty; rdfs:range xsd:integer;
+  rdfs:label "edit version"@en; rdfs:comment "The version of a step's edit log a run read: each edit, each edit taken back and each version restored is one version, and none is deleted (experiment 214). 0 is the records as imported."@en.
+
 # The four rules, declared in full here rather than only in the code that applies them.
 #
 # They were bare `a fw:DesignRule` lines until 2026-10-17, when the SHACL shape written the same

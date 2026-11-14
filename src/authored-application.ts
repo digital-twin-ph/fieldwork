@@ -97,7 +97,9 @@ export function wideSubjects(table:DataTable&{wide:NonNullable<DataTable['wide']
       const key=Object.fromEntries(Object.entries(row.key).filter(([k])=>k!==measureKey));
       subjectKey.push(key);
       records.push({id:`subject-${at}`,label:subjectKeys.map(k=>row.key[k]).join(' · ')||`Subject ${at+1}`,
-        properties:{...key}});
+        // A number brought as a key, by Relate, read as a number here too (2026-11-14: a census share related onto a
+        // wide table of shares was unreadable to the rules, while the same column on a long table was read).
+        properties:{...key,...numbersOf(key,table.numericKeys)}});
     }
     rowSubject.push(at);
     if(row.value!==null)records[at]!.properties[row.key[measureKey]!]=row.value;

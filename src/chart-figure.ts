@@ -24,7 +24,7 @@ type ChartParams=WorkflowNode<'chart_output'>['params'];
  *  it could not store a specification as data -- and the better answer was that nothing needed to be
  *  drawn by hand in the first place. */
 export async function standaloneChartSvg(chart:ChartSummary,params:ChartParams,
-  context:{sourceId?:string;runId?:string}={}):Promise<string>{
+  context:{sourceId?:string;runId?:string;sourceLabel?:string}={}):Promise<string>{
   // Forced to the Vega-Lite renderer so a chart drawn on the classic bars still has a figure to
   // export. Everything else about the specification -- titles, axis names, source note, orientation,
   // colours, the Tufte axis configuration -- is the practitioner's, unchanged.

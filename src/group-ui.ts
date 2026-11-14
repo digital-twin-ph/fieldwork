@@ -9,10 +9,10 @@ import {dataTableMarkup,wireTablePages} from './data-table-ui.js';
 import {AGGREGATES,groupTable,type Aggregate} from './group-table.js';
 
 type GroupParams=ParamsByType['group_table'];
-export interface GroupDraft {by:string[]; aggregate:Aggregate; excludeMissing:boolean; share:boolean; within:string[]}
+export interface GroupDraft {by:string[]; aggregate:Aggregate; excludeMissing:boolean; share:boolean; within:string[]; total:string}
 
 export function groupDraftOf(p:GroupParams):GroupDraft{
-  return {by:[...p.by],aggregate:p.aggregate??'sum',excludeMissing:!!p.excludeMissing,share:!!p.share,within:[...(p.share?.within??[])]};
+  return {by:[...p.by],aggregate:p.aggregate??'sum',excludeMissing:!!p.excludeMissing,share:!!p.share,within:[...(p.share?.within??[])],total:p.total??''};
 }
 export function applyGroupDraft(p:GroupParams,draft:GroupDraft):void{
   p.by=[...draft.by];
@@ -20,15 +20,18 @@ export function applyGroupDraft(p:GroupParams,draft:GroupDraft):void{
   if(draft.excludeMissing&&draft.aggregate!=='count')p.excludeMissing=true;else delete p.excludeMissing;
   if(draft.share&&(draft.aggregate==='sum'||draft.aggregate==='count'))p.share={within:draft.within.filter(w=>draft.by.includes(w))};
   else delete p.share;
+  if(draft.total&&draft.aggregate!=='count'&&!draft.by.includes(draft.total))p.total=draft.total;else delete p.total;
 }
 
-const AGGREGATE_WORDS:Record<Aggregate,string>={sum:'Sum',minimum:'Minimum',maximum:'Maximum',count:'Count rows'};
+const AGGREGATE_WORDS:Record<Aggregate,string>={sum:'Sum',minimum:'Minimum',maximum:'Maximum',count:'Count rows',mean:'Mean',median:'Median'};
 
 /** THE INSPECTOR'S ONE SENTENCE. */
 export function groupSentence(p:GroupParams):string{
   if(!p.by.length)return 'Choose the key columns to keep, in Configure…';
-  const how=p.aggregate==='count'?'Counts the rows':p.aggregate==='minimum'?'Takes the minimum of the rows'
-    :p.aggregate==='maximum'?'Takes the maximum of the rows':'Adds up the rows';
+  const verb:Record<Aggregate,string>={sum:'Adds up',minimum:'Takes the minimum of',maximum:'Takes the maximum of',
+    count:'Counts',mean:'Takes the mean of',median:'Takes the median of'};
+  const agg=p.aggregate??'sum';
+  const how=agg==='count'?'Counts the rows':p.total?`${verb[agg]} ${p.total} over the rows`:`${verb[agg]} the rows`;
   return `${how} that agree on ${p.by.join(' and ')}${p.excludeMissing&&p.aggregate!=='count'?', excluding empty cells':''}`
     +(p.share?`, with each group's share ${p.share.within.length?`within ${p.share.within.join(' and ')}`:'of the whole table'}, %`:'')+'.';
 }
@@ -38,6 +41,8 @@ export interface GroupConfigView {
   sourceLabel:string;
   /** The key columns of the table coming in. */
   columns:string[];
+  /** The table's value column, summarised unless another is chosen. */
+  valueField?:string|undefined;
   table?:DataTable;
   initial:GroupDraft;
   apply:(draft:GroupDraft)=>void;
@@ -62,6 +67,11 @@ export function openGroupConfig(view:GroupConfigView,esc:Escape):void{
         +AGGREGATES.map(a=>`<option value="${a}"${draft.aggregate===a?' selected':''}>${AGGREGATE_WORDS[a]}</option>`).join('')+'</select>'
         +`${draft.aggregate==='count'?'<p class="muted">Counts rows, not people.</p>':''}</div>`
         +(draft.aggregate==='count'?''
+          :`<div class="field"><label class="field-label" for="group-total">Column to total</label><select id="group-total">`
+            +`<option value=""${draft.total?'':' selected'}>${esc(view.valueField||'The value column')}</option>`
+            +view.columns.filter(c=>!draft.by.includes(c)).map(c=>`<option value="${esc(c)}"${draft.total===c?' selected':''}>${esc(c)}</option>`).join('')
+            +'</select></div>')
+        +(draft.aggregate==='count'?''
           :`<label class="check"><input type="checkbox" id="group-exclude-missing"${draft.excludeMissing?' checked':''}> Total what is present, excluding empty cells</label>`)
         +(adds
           ?`<label class="check"><input type="checkbox" id="group-share"${draft.share?' checked':''}> Add each group's share, %</label>`
@@ -69,13 +79,14 @@ export function openGroupConfig(view:GroupConfigView,esc:Escape):void{
               ?`<fieldset id="group-within" class="field"><legend class="field-label">Share within (none ticked: of the whole table)</legend>`
                 +draft.by.map(c=>`<label class="check"><input type="checkbox" value="${esc(c)}" data-group-within="${esc(c)}"${draft.within.includes(c)?' checked':''}> ${esc(c)}</label>`).join('')
                 +'<p class="muted">The groups within each value of a ticked column total 100%. Held to one decimal place.</p></fieldset>':'')
-          :'<p class="muted">A share is offered with Sum and Count rows: a minimum or a maximum does not add up to a total.</p>');
+          :'<p class="muted">A share is offered with Sum and Count rows: a minimum, maximum, mean or median does not add up to a total.</p>');
       shown=undefined;
       if(!draft.by.length)return {settings,preview:'<p class="muted">Choose the key columns to keep.</p>'};
       if(!view.table)return {settings,preview:'<p class="muted">Run the workflow once the table is connected, and the table these '
         +'settings make is shown here before they are applied.</p>'};
       try{
-        const result=groupTable(view.table,{by:draft.by,aggregate:draft.aggregate,...(draft.excludeMissing&&draft.aggregate!=='count'?{excludeMissing:true}:{}),
+        const result=groupTable(view.table,{by:draft.by,aggregate:draft.aggregate,
+          ...(draft.total&&!draft.by.includes(draft.total)?{total:draft.total}:{}),...(draft.excludeMissing&&draft.aggregate!=='count'?{excludeMissing:true}:{}),
           ...(draft.share&&adds?{share:{within:draft.within.filter(w=>draft.by.includes(w))}}:{})});
         shown=result.table;
         const preview=`<p class="select-preview-count">${result.collapsedFrom.toLocaleString()} rows into <strong>${result.groups.toLocaleString()}</strong> groups`
@@ -101,6 +112,8 @@ export function openGroupConfig(view:GroupConfigView,esc:Escape):void{
         draft.by=(e.target as HTMLTextAreaElement).value.split('\n').map(l=>l.trim()).filter(Boolean);redraw();});
       root.querySelector<HTMLSelectElement>('#group-aggregate')?.addEventListener('change',e=>{
         draft.aggregate=(e.target as HTMLSelectElement).value as Aggregate;redraw();});
+      root.querySelector<HTMLSelectElement>('#group-total')?.addEventListener('change',e=>{
+        draft.total=(e.target as HTMLSelectElement).value;redraw();});
       root.querySelector<HTMLInputElement>('#group-exclude-missing')?.addEventListener('change',e=>{
         draft.excludeMissing=(e.target as HTMLInputElement).checked;redraw();});
       root.querySelector<HTMLInputElement>('#group-share')?.addEventListener('change',e=>{

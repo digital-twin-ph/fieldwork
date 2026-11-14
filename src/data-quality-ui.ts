@@ -19,6 +19,7 @@ import type {Escape} from './types.js';
 import {ISSUE_LABEL} from './data-issues.js';
 import {profileColumn,columnStates,histogram,type ColumnKind,type ColumnProfile,type ColumnScale} from './column-profile.js';
 import {SCALE_WORDS} from './column-metadata.js';
+import {valueText,editsAt,versionWords,versionOf,editedTitle,type CellEdit,type EditEntry} from './cell-edits.js';
 
 export interface QualityRepair {column:string; to:ColumnKind; cast:number; unreadable:string[]; at:string}
 export interface QualityView {
@@ -40,18 +41,35 @@ export interface QualityView {
   /** Taking a repair back. The records a node holds were never overwritten, so this restores
    *  the originals rather than re-reading a file. */
   onRemoveRepair?:(index:number)=>void;
+  /** EDITING BY HAND (experiment 214): each record's id, in the order of `rows`; the edits the step holds; and, given
+   *  an edit or a removal, the view as it now reads, so the dialog redraws in place. Absent: the view is a report. */
+  recordIds?:string[];
+  /** The step's edit log, every version (experiment 214). */
+  edits?:EditEntry[];
+  /** Edits whose value read is no longer there, so they were not applied. */
+  staleEdits?:number;
+  onEdit?:(edit:CellEdit)=>QualityView|undefined;
+  /** Take back the edit a version made, as a new version. */
+  onRemoveEdit?:(version:number)=>QualityView|undefined;
+  /** Restore an earlier version, 0 being the records as imported, as a new version. */
+  onRestore?:(version:number)=>QualityView|undefined;
 }
+const PAGE=50;
 
 const trim=(n:number)=>Number.isInteger(n)?String(n):n.toFixed(2);
 
-export function openDataQuality(view:QualityView,esc:Escape):void{
+export function openDataQuality(first:QualityView,esc:Escape):void{
+  let view=first;
   const dialog=document.createElement('dialog');
   dialog.id='data-quality';
   dialog.setAttribute('aria-labelledby','data-quality-title');
   const close=()=>{dialog.close();dialog.remove();};
 
-  const profiles=view.columns.map(column=>
+  let profiles=view.columns.map(column=>
     profileColumn(column,view.rows.map(row=>row[column]),view.declared[column],view.scales?.[column]));
+  const refresh=(next:QualityView|undefined)=>{if(!next)return;view=next;
+    profiles=view.columns.map(column=>profileColumn(column,view.rows.map(row=>row[column]),view.declared[column],view.scales?.[column]));render();};
+  let page=0;
 
   /** What is wrong, said first and plainly, or that nothing is. */
   const problems=(p:ColumnProfile)=>{
@@ -227,19 +245,58 @@ export function openDataQuality(view:QualityView,esc:Escape):void{
   // OPENED ON FINDINGS WHEN THE ROWS OR THE DICTIONARY HAVE A PROBLEM. Columns nobody has described yet is a finding
   // every new table carries (experiment 172), and opening on it every time hid the column profile this dialog leads with.
   const pressing=(view.findings??[]).some(f=>f.kind!=='undescribed-column'&&f.kind!=='unconfirmed-description');
-  let tab:'findings'|'columns'|'shapes'=pressing?'findings':'columns';
+  let tab:'findings'|'columns'|'shapes'|'records'|'edits'=pressing?'findings':'columns';
 
+  /** THE RECORDS, A PAGE AT A TIME, EACH CELL A BOX (experiment 214). What is shown is what is handed on: repairs and
+   *  edits applied. Typing a value and leaving the box records an edit; nothing is written to the file. */
+  const recordsTab=()=>{
+    const ids=view.recordIds??[],pages=Math.max(1,Math.ceil(view.rows.length/PAGE));page=Math.min(page,pages-1);
+    const from=page*PAGE,shown=view.rows.slice(from,from+PAGE);
+    return `<p class="description">Each value as the steps downstream will read it. Change one and leave the box: it is `
+      +`recorded as an edit on this step, with the value it replaced, and can be removed under Edits. The file is not changed.</p>`
+      +`<div class="quality-records-nav"><button class="button small" data-records-page="${page-1}" ${page?'':'disabled'}>Previous</button>`
+      +`<span>Records ${(from+1).toLocaleString('en')} to ${Math.min(view.rows.length,from+PAGE).toLocaleString('en')} of ${view.rows.length.toLocaleString('en')}</span>`
+      +`<button class="button small" data-records-page="${page+1}" ${page<pages-1?'':'disabled'}>Next</button></div>`
+      +`<div class="quality-records"><table><thead><tr><th scope="col">Record</th>${view.columns.map(c=>`<th scope="col">${esc(c)}</th>`).join('')}</tr></thead><tbody>`
+      +shown.map((row,k)=>{const id=ids[from+k]??String(from+k+1);
+        return `<tr><th scope="row">${esc(id)}</th>${view.columns.map(c=>{const v=valueText(row[c]);
+          const made=editsAt(view.edits??[]).filter(e=>e.record===id&&e.column===c),edited=made.length>0;
+          return `<td${edited?` class="is-edited cell-edited" data-cell-edited title="${esc(editedTitle({from:made[0]!.from,version:made.at(-1)!.version}))}"`:''}><input aria-label="${esc(c)} of ${esc(id)}" data-edit-record="${esc(id)}" data-edit-column="${esc(c)}" value="${esc(v??'')}" placeholder="not recorded"></td>`;}).join('')}</tr>`;}).join('')
+      +`</tbody></table></div>`;
+  };
+  const editsTab=()=>{
+    const log=view.edits??[],now=editsAt(log),filled=now.filter(e=>e.from===null).length;
+    const current=now.length
+      ?`<p class="description">Version ${log.length}: ${now.length} value${now.length===1?'':'s'} edited by hand on this step${filled?`, ${filled} of them filling an empty cell`:''}. `
+        +`Each is applied to a copy when the records are handed on, and stated in the run.`
+        +(view.staleEdits?` <strong>${view.staleEdits} ${view.staleEdits===1?'is':'are'} not applied</strong>: the value it was made against is no longer there.`:'')+`</p>`
+        +`<ul class="quality-edits" data-quality-edits>`+[...now].reverse().map(e=>
+          `<li><code>${esc(e.column)}</code> of <strong>${esc(e.record)}</strong>: ${e.from===null?'<em>not recorded</em>':`“${esc(e.from)}”`} → `
+          +`${e.to===null?'<em>emptied</em>':`“${esc(e.to)}”`} <span class="muted">version ${e.version}</span>`
+          +` <button class="button small" data-remove-edit="${e.version}">Take back</button></li>`).join('')+`</ul>`
+      :`<p class="description">${log.length?`Version ${log.length}: no value is edited by hand now.`:'No value has been edited by hand. Edit one under Records.'}</p>`;
+    // THE HISTORY, EVERY VERSION, NOTHING DELETED: a version can be restored, and the restoring is a version too.
+    const history=log.length?`<h3 class="quality-heading">History</h3><p class="description">Every change, newest first. Taking an edit back `
+      +`or restoring a version adds a version; none is deleted.</p><ol class="quality-history" reversed data-edit-history>`
+      +log.map((_,i)=>i).reverse().map(i=>`<li value="${versionOf(log,i)}"><strong>Version ${versionOf(log,i)}</strong>: ${esc(versionWords(log,i))} `
+        +`<span class="muted">${esc((log[i]!.at??'').slice(0,16).replace('T',' '))}</span>`
+        +(i<log.length-1?` <button class="button small" data-restore-version="${versionOf(log,i)}">Restore this version</button>`:' <span class="pill">Now</span>')+`</li>`).join('')
+      +`<li value="0"><strong>Version 0</strong>: the records as imported <button class="button small" data-restore-version="0">Restore this version</button></li></ol>`:'';
+    return current+history;
+  };
   const render=()=>{
     dialog.innerHTML=`<div class="manual-head"><h2 id="data-quality-title">${esc(view.title)}</h2>`
       +`<div><button class="button primary" id="data-quality-close">Close</button></div></div>`
       +`<div class="result-switch quality-tabs" role="tablist">`
       +([...(view.findings?.length?[['findings',`Findings (${view.findings.length})`]] as const:[]),
-        ['columns','Columns'],['shapes','Shapes and gaps']] as const).map(([key,label])=>
+        ['columns','Columns'],['shapes','Shapes and gaps'],
+        ...(view.onEdit&&view.recordIds?[['records','Records']] as const:[]),
+        ...(view.onEdit?[['edits',`Edits (${editsAt(view.edits??[]).length})`]] as const:[])] as const).map(([key,label])=>
         `<button role="tab" aria-selected="${key===tab}" data-quality-tab="${key}" `
         +`class="${key===tab?'active':''}">${label}</button>`).join('')
       +`</div>`
       +`<div class="quality-body">`
-      +(tab==='findings'
+      +(tab==='records'?recordsTab():tab==='edits'?editsTab():tab==='findings'
         ?`<p class="description">What reading the file found. Every row was kept as it stands.</p>`
          +`<ul class="quality-problems" data-quality-findings>${view.findings!.slice(0,200).map(f=>
            `<li class="quality-problem">${esc(f.text)}</li>`).join('')}</ul>`
@@ -284,6 +341,19 @@ export function openDataQuality(view:QualityView,esc:Escape):void{
       button.onclick=()=>{tab=button.dataset.qualityTab as typeof tab;render();};
     });
     dialog.querySelector<HTMLButtonElement>('#data-quality-close')!.onclick=close;
+    dialog.querySelectorAll<HTMLButtonElement>('[data-records-page]').forEach(button=>{
+      button.onclick=()=>{page=Number(button.dataset.recordsPage);render();};});
+    dialog.querySelectorAll<HTMLInputElement>('[data-edit-record]').forEach(box=>{
+      const held=valueText(box.value);
+      box.addEventListener('change',()=>{
+        const to=valueText(box.value.trim());if(to===held)return;
+        refresh(view.onEdit?.({record:box.dataset.editRecord!,column:box.dataset.editColumn!,from:held,to,at:new Date().toISOString()}));});
+      box.addEventListener('keydown',e=>{if(e.key==='Enter')box.blur();});
+    });
+    dialog.querySelectorAll<HTMLButtonElement>('[data-remove-edit]').forEach(button=>{
+      button.onclick=()=>refresh(view.onRemoveEdit?.(Number(button.dataset.removeEdit)));});
+    dialog.querySelectorAll<HTMLButtonElement>('[data-restore-version]').forEach(button=>{
+      button.onclick=()=>refresh(view.onRestore?.(Number(button.dataset.restoreVersion)));});
     dialog.querySelectorAll<HTMLButtonElement>('[data-repair]').forEach(button=>{
       button.onclick=()=>{
         const column=button.dataset.repair!;

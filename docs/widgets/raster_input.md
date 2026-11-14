@@ -1,6 +1,6 @@
 # Raster input
 
-_Created 2026-11-09 · Updated 2026-11-13_
+_Created 2026-11-09 · Updated 2026-11-14_
 
 **A window of a GeoTIFF or NetCDF grid around the study area, kept in the project.** A population surface, a terrain model, a geoid.
 
@@ -55,7 +55,8 @@ weaker where buildings are hard to see, and should not be set against GHS-BUILT 
 
 The step's panel holds its **Name**, its study area, one sentence saying what it keeps, and **Configure…**, the standard
 dialog: **Settings**, then **Preview** (the file's size in cells and the window kept), then **Decisions**. **Apply**
-reads the window and keeps it; **Cancel** or × leaves the step as it was.
+reads the window and keeps it, with a bar showing how much of the window has been read, then how much of a chosen file
+has been checked; **Cancel** or × leaves the step as it was. A NetCDF file shows the words without the bar.
 
 | In Configure… | What it does |
 | --- | --- |

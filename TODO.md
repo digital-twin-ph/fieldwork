@@ -1,6 +1,6 @@
 # TODO
 
-_Created 2026-10-10 · Updated 2026-11-13_
+_Created 2026-10-10 · Updated 2026-11-14_
 
 The project's one list of open work. **Merged 2026-10-26 from two**: a root `TODO.md` of
 deferred work created 2026-10-10 and a `docs/todo.md` of committed work created 2026-10-11, one
@@ -57,6 +57,56 @@ not a practitioner in the field.
 ## The order of work, as the practitioner set it (2026-11-08)
 
 **Found 2026-11-13, not yet done:** a Polygon layer read from an OpenStreetMap extract reads the whole file into memory, as Raster input's digest did before it was read in slices; a country's extract of several gigabytes would fail the same way.
+
+**Added 2026-11-14:** build [213](docs/experiments/213-an-inset-in-a-map.md), the map inset and the Locator (MERS
+hospitals, Oswego); and revisit Oswego, one of the first examples (the practitioner: *"It has very few workflows, and
+being one of the first examples, we can probably revisit this to enhance"*), with four workflows chosen that day: the
+epidemic curve by hour of onset, the incubation period in hours from the meal (needs hours between two date-times in
+Apply ruleset), attack rates by age band and sex, and vanilla ice cream as its own two-by-two with the ill who did not
+eat it listed.
+
+**Added 2026-11-14:** revisit Salmonella the same way (the practitioner: *"Same with Salmonella example, we need to
+revisit"*), with four workflows chosen that day: who the cases were (age group and sex beside the classical controls),
+every food ranked in one two-by-two, where they shopped (organic shop, organic produce, market), and cases by federal
+state mapped over Germany's 16 Länder. The file has no onset dates, so no epidemic curve.
+
+**Found 2026-11-14, not yet done:** each static map in Results is more complete and professional than the same map in
+Notes (the practitioner: "still needs improvement"); compare the two renderers and make Notes draw what Results draws.
+And for NYC, a diagram of how ground-station and satellite measurements relate, as an authored note (the practitioner's
+request, same day).
+
+**2026-11-14, the practitioner: "For population rasters, did we finish the zonal statistics? And can we add them to the
+workflows?"** Built (Sample a raster's cell statistics, experiment 209) but switched on in neither population workflow,
+and lab check 50 recomputes only the totals. With the comparison: turn them on in all six sample steps, show them per
+district and source, and extend check 50 to the mean, median, standard deviation, cells populated and density.
+
+**A future case study, 2026-11-14: road traffic injuries on a street network.** The practitioner passed on notes from
+another assistant; **nothing in them is verified yet**, neither the datasets, their licences, nor what they hold. Leads
+to check at their sources: Barcelona's open traffic-accident data (points with time, vehicles and severity); a
+Medellín traffic incidents and fatalities dataset, 2008–2025, said to be published with a data descriptor; NHTSA's
+Pedestrian Crash Data Study on data.gov. Methods named: crashes snapped to the street network, kernel density along
+the network rather than on the plane, and network measures such as betweenness as covariates in a Poisson or negative
+binomial regression. What exists here: Street network, Snap sites to the network, Regression (Poisson). What does
+not: kernel density along a network, and betweenness. No order set; a design and admission review first, as for any
+new widget.
+
+**A future case study, 2026-11-14: genomic epidemiology, to be explored.** Notes from another assistant, passed on by
+the practitioner; **nothing in them is verified yet**, neither the repositories, their licences, nor their contents.
+Leads to check at their sources: Nextstrain's `ncov-tutorial` repository (said to hold about 200 SARS-CoV-2 sequences
+with `metadata.tsv`, strain, collection date and place, and a built tree, `auspice/default-build.json`); Nextclade's
+example datasets (`github.com/nextstrain/nextclade`; reference sequences, `genome_annotation.gff3`, small
+`sequences.fasta`, for SARS-CoV-2, influenza and RSV, made for tools that run in the browser); and a CERI/KRISP webinar,
+*Genomics surveillance in Africa: import/export analysis of viral lineages* (YouTube). What exists here: Tabular data
+reads a TSV's metadata; Cases by period gives sequences by collection week; Map places them by country or state; Chart
+draws a tree from a table of who came from whom. What does not: reading FASTA or a Nextstrain tree, a distance matrix
+between sequences, and lineage import and export between places. No order set; a design and admission review first.
+   More notes the same day, also unverified, give the distinctions a design would have to state and enforce: a line
+   list is one row per case and says when and where; sequences (FASTA, FASTQ, VCF, alignments) say how alike two
+   pathogens are, and reach analysis as pairwise distances or clusters; **genetic closeness is not transmission**, it
+   can suggest links contact tracing missed and tell an import from local spread, but does not show who infected whom;
+   and **sequences arrive days to weeks after the case** (collection, extraction, sequencing, assembly), so a sequence
+   date is not an onset date and a recent week holds fewer sequences than cases. A further lead: a video, *Precision
+   pathogen tracking: the power of genomic epidemiology* (YouTube, Computational Genome Biology).
 
 **The order from here, as the practitioner set it on 2026-11-13:** *"After that let's finish MERS. Then table edit #12.
 Then Sierra Leone. Then ABM spike."* So 8, then 12, then 3, then 29. The numbering below is kept as written.
@@ -132,6 +182,9 @@ Then Sierra Leone. Then ABM spike."* So 8, then 12, then 3, then 29. The numberi
    [docs/research/mers-korea-2015-sources-2026-11-12.md](docs/research/mers-korea-2015-sources-2026-11-12.md). Next: a
    workflow placing the cases by hospital; then, from that note, the KDCA 185-case file, an outbreak-level 7-1-7 review
    from the response dates, and the README's corrections. **In progress** (the practitioner: *"We just begun"*).
+   **2026-11-14:** three more workflows (example ddf30f6): deaths by age class and sex in a two-by-two, days from
+   exposure to onset and onset to death with the median, secondary cases per source and the serial interval by setting;
+   lab check 51 agrees. Total within groups gained Mean, Median and Column to total for them.
    **Decided 2026-11-11 by the practitioner:** *"Our use case for these worked examples is for teaching so that fits MERS
    Korea purpose"*: the dataset is described as compiled "for teaching", and so are these examples. Used on that basis in
    an example repository, attributed to ECDC's Epidemic Intelligence and the outbreaks package, never in the
@@ -184,7 +237,7 @@ Then Sierra Leone. Then ABM spike."* So 8, then 12, then 3, then 29. The numberi
    as Space-time scan 0.1.0; owes a lab check, SaTScan on its benchmark and the day-by-day replay); the **Poisson spatial scan**, on the same machinery; then **Describe where points are dense**
    (HDBSCAN, kernel density, and kernel density as a ratio of two layers), labelled exploratory, never under Detect.
    Each on the standard Inspector, with a lab check, and SaTScan run by hand on its benchmark sets.
-12. **Edit a table's values inline, in the data quality check** (the practitioner, 2026-11-10: *"One thing I have been
+12. **Built 2026-11-13 ([214](docs/experiments/214-editing-a-table-inline.md))**: values edited in Data quality's Records tab, kept as edits on the step with the value replaced, applied to a copy, stated in the run, removable; an empty cell filled like any edit (the practitioner's choice); and the playback dialog of 173. **Left:** a worked example's manual with an edit exercise, first in Sierra Leone. ~~**Edit a table's values inline, in the data quality check**~~ (the practitioner, 2026-11-10: *"One thing I have been
    meaning to add to data quality checks is the ability to edit tables inline. Can be added as a widget playback
    exercise."*). To shape: per [117](docs/experiments/117-data-quality.md), a change to an input is a declared repair
    on the node, never a write to the file, and every repair can be taken back. So an edited cell would be one more

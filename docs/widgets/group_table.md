@@ -1,6 +1,6 @@
 # Total within groups
 
-_Created 2026-10-26 · Updated 2026-11-08_
+_Created 2026-10-26 · Updated 2026-11-14_
 
 **Addition, or a count.** It takes a table, keeps the key columns you name, and adds up the values
 of every row that agrees on them, or counts those rows.
@@ -44,7 +44,8 @@ nothing changes until **Apply**.
 | Setting | What it decides |
 | --- | --- |
 | **Key columns to keep** | The key columns that survive. Rows agreeing on all of them become one row. |
-| **Aggregate** | Sum, Minimum, Maximum or Count rows |
+| **Aggregate** | Sum, Minimum, Maximum, Count rows, Mean or Median |
+| **Column to total** | The table's value column, or a key column that holds numbers, such as one a rule computed |
 | **Total what is present, excluding empty cells** | Off: a group holding an empty cell totals to nothing known. On: what was recorded is totalled, and the receipt and the write-up say so |
 | **Add each group's share, %** | A share beside each count or total |
 | **Share within** | The columns whose groups each make 100%. None ticked: the whole table |
@@ -65,12 +66,21 @@ Count rows never reads the value, so a blank is still a row and the result's val
 `rows`. **It counts rows, not people.** Import one value column from a line list: two value columns
 give two rows per person, and each person then counts twice. The step cannot detect that.
 
-### Why it only adds up
+### Adding, and what does not add
 
 Adding counts gives you a count. Adding **rates** gives you a number with no referent — deaths per
 1,000 in three sub-districts do not add up to deaths per 3,000 in one. This step cannot tell a
-count from a rate, so it offers the operation that is right for counts and does not offer a choice
-it has no way to police. Averages are a different operation and are not built.
+count from a rate, and will add up rates if asked.
+
+**Mean** and **Median** summarise the values present in each group: an incubation period or a serial
+interval is usually reported as a median. Neither is offered with a share, because neither adds up to a total.
+
+### Totalling a column other than the value
+
+A table holds one value column, and that is what is totalled unless you choose another. A key column holding
+numbers can be chosen instead: the days from exposure to onset that a rule computed for every case, say, with
+**Median** by outcome. Its blank cells are empty cells, as in the value column; a cell that is not a number stops the
+run and names the row. The result carries no unit, because the unit the table declares is its value column's.
 
 ## Reading what you get
 
@@ -91,7 +101,7 @@ rows collapsed into how many groups, and every group that held an empty cell.
 
 ## Where it is used
 
-The South London example: *Died or survived, by water supply*.
+The South London example: *Died or survived, by water supply*. The MERS-CoV example: *Median days from exposure to onset, by outcome*.
 
 ## What this does not establish
 

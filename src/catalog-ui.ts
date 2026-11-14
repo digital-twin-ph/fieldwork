@@ -6,6 +6,8 @@ import classification from '../widgets/classification.json';
 import releaseNotes from '../widgets/release-notes.json';
 import examplesCatalog from '../widgets/examples.json';
 import {TYPES} from './core.js';
+import {BUILT_IN_PROJECTS} from './project.js';
+import {EXAMPLE_TEMPLATES} from './example-templates.js';
 import type {Escape,NodeType} from './types.js';
 
 /** The widget catalog, rendered from the same files the receipts cite: widgets/registry.json for
@@ -70,26 +72,36 @@ export function identityMarkup(nodeType:string,esc:Escape):string{
  *  definition, retired ones too, with versions, digests, ports, checks, this browser's run counts and the packs: a
  *  provenance table no one opened it for. A step's version, digest and independent check stay in its Inspector, where
  *  the step is. Worked-example use is read from widgets/examples.json, the same list widgets/evidence.json counts. */
-type Example={title:string;repository:string;uses:string[]};
-const EXAMPLES=(examplesCatalog.examples as Example[]);
+type Example={title:string;repository:string;uses:string[];builtIn?:boolean};
+/** THE EXAMPLES BUILT INTO FIELDWORK COUNT TOO, read from their own workflows when the catalog opens (the practitioner,
+ *  2026-11-14: "Can that tally be automated?"). Until then only the repository examples were tallied, so a widget only
+ *  Snow's London or Hagelloch uses, Street network among them, read "Not in a worked example yet". A repository
+ *  example's `uses` is checked against its pinned bundle by validate:examples. */
+const builtInExamples=():Example[]=>BUILT_IN_PROJECTS.map(project=>({title:project.name,builtIn:true,
+  repository:`./?example=${project.workflows[0]}`,
+  uses:[...new Set(project.workflows.flatMap(key=>{try{return (EXAMPLE_TEMPLATES[key]?.().nodes??[]).map(n=>n.type as string);}catch{return [];}}))]}));
+let examplesHeld:Example[]|undefined;
+const examplesNow=()=>examplesHeld??=[...builtInExamples(),...(examplesCatalog.examples as Example[])];
 export const activeWidgetTypes=():NodeType[]=>(Object.keys(TYPES) as NodeType[]).filter(type=>!(kindOf(type) as {retired?:boolean}|undefined)?.retired);
 
 export function openCatalogDialog(esc:Escape):void{
   document.getElementById('catalog-dialog')?.remove();
   const dialog=document.createElement('dialog');dialog.id='catalog-dialog';dialog.setAttribute('aria-labelledby','catalog-title');
-  const active=activeWidgetTypes(),usedBy=(type:string)=>EXAMPLES.filter(example=>example.uses.includes(type));
+  const EXAMPLES=examplesNow(),active=activeWidgetTypes(),usedBy=(type:string)=>EXAMPLES.filter(example=>example.uses.includes(type));
   const used=active.filter(type=>usedBy(type).length).length;
   // The palette's ordering, not a second copy of it: two lists that must agree will not.
   const rows=(group:string)=>active.filter(type=>TYPES[type].group===group).map(type=>{
     const examples=usedBy(type);
     return `<tr data-widget="${esc(type)}"><th scope="row">${TYPES[type].icon} ${esc(TYPES[type].title)}</th>`
       +`<td data-examples="${examples.length}">${examples.length
-        ?examples.map(example=>`<a href="${esc(example.repository)}" target="_blank" rel="noopener">${esc(example.title)}</a>`).join('<br>')
+        ?examples.map(example=>example.builtIn
+          ?`<a href="${esc(example.repository)}">${esc(example.title)}</a> <span class="muted">· built in</span>`
+          :`<a href="${esc(example.repository)}" target="_blank" rel="noopener">${esc(example.title)}</a>`).join('<br>')
         :'<span class="muted">Not in a worked example yet</span>'}</td></tr>`;
   }).join('');
   const groups=PALETTE_GROUPS.filter(group=>active.some(type=>TYPES[type].group===group));
   dialog.innerHTML=`<h2 id="catalog-title">Widget catalog</h2>
-    <p>${active.length} widgets you can use. ${used} of them are used in at least one of the ${EXAMPLES.length} worked examples.</p>
+    <p>${active.length} widgets you can use. ${used} of them are used in at least one of the ${EXAMPLES.length} worked examples, ${EXAMPLES.filter(e=>e.builtIn).length} of them built in.</p>
     ${groups.map(group=>`<h3>${esc(group)}</h3><table class="catalog-table"><thead><tr><th scope="col">Widget</th><th scope="col">Used in worked examples</th></tr></thead><tbody>${rows(group)}</tbody></table>`).join('')}
     <div class="package-actions"><button id="catalog-close" class="button primary">Close</button></div>`;
   document.body.append(dialog);

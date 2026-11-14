@@ -1,6 +1,6 @@
 # 203 · QR codes from a product to its digital form
 
-_Created 2026-11-10 · Updated 2026-11-10_
+_Created 2026-11-10 · Updated 2026-11-14_
 
 **Status:** tried. The first use is built (0.80.0): two QR codes at the foot of a worked example's References, and
 `?example=` opening a catalog example. Checked by lab check 47 in CPython.
@@ -85,3 +85,11 @@ codes on exported figures and products ([202](202-one-record-several-products.md
 
 That a reader will scan a code: the printed address is for those who cannot. That an address stays up: a repository
 can be deleted; the commit pin guards against change, not against loss.
+
+## Fieldwork's mark in the middle, 2026-11-14
+
+The practitioner: *"Can we add the FW logo to the QR code?"* A worked example's codes are drawn at error correction H,
+the middle modules cleared for the mark (an odd number of modules near a fifth of the side, with one module around it).
+Lab check 52 (Validation Lab 2a13bf1): OpenCV's ArUco detector reads all 26 addresses with the mark's patch light and
+with it dark; the classic detector reads 25, and reads segno's unmarked code at the same version for only 24, so no
+miss is the mark's. Not established: that a phone camera reads a printed code with the mark.

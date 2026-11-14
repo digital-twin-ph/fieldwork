@@ -1,6 +1,6 @@
 # Two-by-two table
 
-_Created 2026-10-26 · Updated 2026-11-11_
+_Created 2026-10-26 · Updated 2026-11-14_
 
 **The analysis under the table.** It takes four counts — two groups by two outcomes — and reports
 the risk in each group, the risk ratio, the odds ratio and the risk difference, each naming the
@@ -116,8 +116,14 @@ connected to it draws in the write-up with a note of its own.
 
 ## How to use it
 
+Connect a table, then open **Configure…**. The **Preview** shows the four cells your settings make, each with its
+letter and count, or what is wrong with it: no row with that combination, several rows, or an empty value. Nothing
+changes until **Apply**.
+
 | Setting | What it decides |
 | --- | --- |
+| **Each row is one subject** | a line list: each cell is how many rows agree, and several exposures can be compared |
+| **Exposures to compare** | with a line list, the columns ticked, each its own two-by-two |
 | **Exposure column** | the column holding the groups |
 | **Exposed** / **Unexposed** | which two of its values are being compared |
 | **Outcome column** | the column holding the outcome |
@@ -217,3 +223,5 @@ machined one goes on being rewritten by every run.
 
 The South London example: *Died or survived, by water supply*, and, in the rate layout, *Deaths per
 house, by water company*.
+
+The MERS-CoV example: *Death by sex, a two-by-two*.

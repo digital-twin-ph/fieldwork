@@ -55,7 +55,7 @@ test('a stratum whose total is unknown has every share unknown, and is counted',
 });
 
 test('a share is refused with a minimum or a maximum, and when every kept column is a "within" column',()=>{
-  assert.throws(()=>groupTable(table,{by:['classification'],aggregate:'maximum',share:{within:[]}}),/minimum or a maximum/);
+  assert.throws(()=>groupTable(table,{by:['classification'],aggregate:'maximum',share:{within:[]}}),/minimum, maximum, mean or median/);
   assert.throws(()=>groupTable(table,{by:['classification'],aggregate:'count',share:{within:['classification']}}),/100% of itself/);
   assert.throws(()=>groupTable(table,{by:['classification'],aggregate:'count',share:{within:['symptoms']}}),/not a kept column/);
 });

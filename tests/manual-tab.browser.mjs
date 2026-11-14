@@ -159,3 +159,39 @@ test('the manual detaches, stays through a new project and a reload, closes, and
   await expect(panel.locator('[data-step="0:2"]')).toBeInViewport();
   await page.screenshot({path:'test-results/manual-detached.png'});
 });
+
+/** PLAYED BACK, ONE STEP AT A TIME (experiment 173's dialog, built 2026-11-13 with 214): the open workflow's steps in a
+ *  panel that is not modal, the canvas holding what is placed by each step; Close restores the canvas. */
+test('the manual’s steps play back one at a time, the canvas growing with them',async({page})=>{test.skip(!!skip,skip);
+  await page.route(/raw\.githubusercontent\.com/,route=>{
+    const path=new URL(route.request().url()).pathname.split('/').slice(4).join('/');
+    route.fulfill({status:200,body:readFileSync(new URL(path,REPO))});
+  });
+  await page.goto('/');await page.evaluate(()=>localStorage.clear());
+  await page.goto('/?example=blank');
+  await page.locator('[data-view="project"]').click();
+  await page.locator('[data-open-example="urn:fieldwork:example:nyc-asthma-ozone-2016-2025"]').click();
+  await expect(page.locator('[data-example-status="urn:fieldwork:example:nyc-asthma-ozone-2016-2025"]')).toContainText('digest matched',{timeout:30000});
+  const all=await page.locator('.react-flow__node').count();
+  await page.locator('[data-view="manual"]').click();
+  await page.locator('#manual-playback-start').click();
+  const panel=page.locator('#manual-playback');
+  await expect(panel).toBeVisible();
+  await expect(panel.locator('[data-playback-at]')).toHaveText(/^Step 1 of \d+$/);
+  // The manual's first step is its own: the NYC manual's opens with a new project, so nothing is on the canvas yet.
+  await expect(panel.locator('[data-playback-step]')).toContainText('New project');
+  await page.locator('[data-view="workflow"]').click();
+  await expect(page.locator('.react-flow__node')).toHaveCount(0);
+  // Next until the first widget is added: its step names the library search, and one node is placed.
+  for(let i=0;i<20&&await page.locator('.react-flow__node').count()<1;i++)await panel.locator('#manual-playback-next').click();
+  await expect(page.locator('.react-flow__node')).toHaveCount(1);
+  await expect(panel.locator('[data-playback-step]')).toContainText('Find a node…');
+  // And a second; the canvas grows with the steps and never past the workflow.
+  for(let i=0;i<20&&await page.locator('.react-flow__node').count()<2;i++)await panel.locator('#manual-playback-next').click();
+  await expect(page.locator('.react-flow__node')).toHaveCount(2);
+  await panel.locator('#manual-playback-back').click();
+  await expect(page.locator('.react-flow__node')).toHaveCount(1);
+  await panel.locator('#manual-playback-close').click();
+  await expect(panel).toHaveCount(0);
+  await expect(page.locator('.react-flow__node')).toHaveCount(all);
+});

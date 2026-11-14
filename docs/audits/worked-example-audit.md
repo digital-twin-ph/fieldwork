@@ -82,10 +82,10 @@ evidence about that example.
 | `case_series` | 5 | brazil-dengue-rj-2024, hagelloch, hagelloch-people, sierra-leone-measles, snow-curve |
 | `join_table_to_area` | 5 | brazil-dengue-rj-2024, nigeria-immunization-2024, population-models-census, sierra-leone-measles, south-london-1854 |
 | `sample_raster` | 4 | brazil-dengue-rj-2024, nyc-asthma-ozone-2016-2025, population-models-census, sea-level-rise-philippines |
+| `two_by_two` | 4 | mers-korea-2015, oswego-1940, salmonella-germany-2021, south-london-1854 |
 | `append_rows` | 3 | brazil-dengue-rj-2024, population-models-census, salmonella-germany-2021 |
 | `rate` | 3 | brazil-dengue-rj-2024, sierra-leone-measles, south-london-1854 |
 | `regression` | 3 | brazil-dengue-rj-2024, nyc-asthma-ozone-2016-2025, salmonella-germany-2021 |
-| `two_by_two` | 3 | oswego-1940, salmonella-germany-2021, south-london-1854 |
 | `clip_polygons` | 2 | snow-isochrone, snow-voronoi |
 | `find_health_facilities` | 2 | sea-level-rise-philippines, sierra-leone-measles |
 | `find_satellite_products` | 2 | brazil-dengue-rj-2024, nyc-asthma-ozone-2016-2025 |
@@ -266,7 +266,7 @@ be read, selected and named inside the application, and claim B would hold for t
 - `urn:fieldwork:example:workflows-rulesets` declares 7 node types. Its inputs are files in its own repository, and `geo/water-intakes.geojson` was written on 2026-10-29 because those four features existed only inside the bundle until then — the one input a reader could not download.
 - `urn:fieldwork:example:sierra-leone-measles` declares 13 node types. Its inputs are files in its own repository, and `geo/water-intakes.geojson` was written on 2026-10-29 because those four features existed only inside the bundle until then — the one input a reader could not download.
 - `urn:fieldwork:example:sea-level-rise-philippines` declares 12 node types. Its inputs are files in its own repository, and `geo/water-intakes.geojson` was written on 2026-10-29 because those four features existed only inside the bundle until then — the one input a reader could not download.
-- `urn:fieldwork:example:mers-korea-2015` declares 9 node types. Its inputs are files in its own repository, and `geo/water-intakes.geojson` was written on 2026-10-29 because those four features existed only inside the bundle until then — the one input a reader could not download.
+- `urn:fieldwork:example:mers-korea-2015` declares 10 node types. Its inputs are files in its own repository, and `geo/water-intakes.geojson` was written on 2026-10-29 because those four features existed only inside the bundle until then — the one input a reader could not download.
 - `urn:fieldwork:example:population-models-census` declares 11 node types. Its inputs are files in its own repository, and `geo/water-intakes.geojson` was written on 2026-10-29 because those four features existed only inside the bundle until then — the one input a reader could not download.
 
 ## 3 · Recommendations

@@ -1,6 +1,6 @@
 # Apply ruleset
 
-_Created 2026-11-08 · Updated 2026-11-12_
+_Created 2026-11-08 · Updated 2026-11-13_
 
 **Rules over records.** Each rule says *if* some conditions hold *then* a record gets a category, such as a band, or a
 new value computed from its columns. The rules are written in the step's dialog, or read from a published ruleset.

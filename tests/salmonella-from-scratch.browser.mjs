@@ -69,11 +69,13 @@ const compare=async(page,tbt,label,columns,caseValue,nonCaseValue)=>{
   await page.locator(`.react-flow__node[data-id="${tbt}"]`).click();
   await page.locator('#twobytwo-label').fill(label);
   await page.locator('#twobytwo-label').press('Enter');
+  await page.locator('#configure-step').click();
   await page.locator('#twobytwo-rows').check();
-  await page.locator('[data-slr="outcomeColumn"]').selectOption('fall');
+  await page.locator('#two-by-two-config [data-mapping="outcomeColumn"]').selectOption('fall');
   for(const column of columns)await page.locator(`[data-twobytwo-exposure="${column}"]`).check();
-  const pick=async(key,value)=>{await page.locator(`[data-slr="${key}"]`).selectOption(value);};
+  const pick=async(key,value)=>{await page.locator(`#two-by-two-config [data-mapping="${key}"]`).selectOption(value);};
   await pick('exposed','1');await pick('unexposed','0');await pick('caseValue',caseValue);await pick('nonCaseValue',nonCaseValue);
+  await page.locator('#two-by-two-config #config-apply').click();
 };
 const show=async(page,from,label)=>{
   await add(page,'table_output');

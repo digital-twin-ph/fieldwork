@@ -697,11 +697,12 @@
   {
    "nodeType": "two_by_two",
    "exampleUses": [
+    "mers-korea-2015",
     "oswego-1940",
     "salmonella-germany-2021",
     "south-london-1854"
    ],
-   "exampleUseCount": 3,
+   "exampleUseCount": 4,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],

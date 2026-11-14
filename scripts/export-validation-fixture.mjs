@@ -11,7 +11,7 @@
 //                   | select-range-london-001
 //                   | regression-salmonella-001 | regression-nyc-001 (needs NYC_PKG)
 //                   | sample-satellite-s5p-001 | lag-response-brazil-001 | regression-strata-brazil-001
-//                   | lag-models-brazil-001 | sea-level-heights-manila-001 | chains-hagelloch-001 | tree-hagelloch-001 | links-hagelloch-001 | scan-hagelloch-001 | qr-links-001 | georef-001 | mers-korea-001
+//                   | lag-models-brazil-001 | sea-level-heights-manila-001 | chains-hagelloch-001 | tree-hagelloch-001 | links-hagelloch-001 | scan-hagelloch-001 | qr-links-001 | qr-mark-001 | georef-001 | mers-korea-001 | mers-epi-001
 //                   | population-districts-001 (needs POP_FILES)
 import {createHash} from 'node:crypto';
 import {readFile,writeFile} from 'node:fs/promises';
@@ -52,7 +52,7 @@ import {nearestPlaces,distancesAsTable,pointsAsTable} from '../build/core.js';
 import {transmissionTree} from '../build/transmission-tree.js';
 import {mapOutput} from '../build/map-output.js';
 import {spaceTimeScan,spaceTimeReplay} from '../build/space-time-scan.js';
-import {qrMatrix} from '../build/qr.js';
+import {qrMatrix,qrDrawn} from '../build/qr.js';
 import {fitPlacement} from '../build/georeference.js';
 import {catalogLinks,builtInLinks} from '../build/example-links.js';
 import {downloadFacilities} from '../build/health-facilities.js';
@@ -1478,6 +1478,56 @@ const builders={
       },
     },files:{}};
   },
+  async 'mers-epi-001'(){
+    // THE MERS EXAMPLE'S EPIDEMIOLOGY (2026-11-14; the practitioner: "For MERS if there are any more epi computations
+    // that can be included let's do that"): its workflows 6 to 8 as the example repository pins them, run here. As
+    // mers-korea-001, the fixture carries no row of the data: only the commit, each file's digest, and Fieldwork's results.
+    const pin=JSON.parse(await readFile(new URL('../widgets/examples.json',import.meta.url),'utf8')).examples.find(e=>e.id==='urn:fieldwork:example:mers-korea-2015');
+    const repo=new URL('../../example-2015-mers-korea/',import.meta.url).pathname;
+    const {existsSync}=await import('node:fs');
+    if(!existsSync(repo))throw new Error('example-2015-mers-korea is not on this machine beside this repository.');
+    const {execFileSync}=await import('node:child_process');
+    const at=path=>execFileSync('git',['-C',repo,'show',`${pin.commit}:${path}`],{maxBuffer:1<<30});
+    const doc=JSON.parse(gunzipSync(at('fieldwork-project.json.gz')));
+    const {validateWorkflow}=await import('../build/core.js');
+    const named=name=>{const x=doc.workflows.find(x=>(x.document.workflow??x.document).name===name);if(!x)throw new Error(`The example has no workflow "${name}".`);return x.document.workflow??x.document;};
+    const runOf=async name=>{const w=named(name);return {w,run:await executeWorkflow(validateWorkflow(w),async()=>[])};};
+    const [deadly,long,spread]=[await runOf('How deadly was it, and for whom?'),
+      await runOf('How long from exposure to onset, and from onset to death?'),await runOf('Who spread it, and how fast?')];
+    const step=(r,type,label)=>{const n=r.w.nodes.find(n=>n.type===type&&n.params.label===label);if(!n)throw new Error(`No ${type} "${label}".`);return n;};
+    const rowsOfStep=(r,n)=>r.run.tables[n.id].rows.map(x=>({...x.key,value:x.value}));
+    const groupOf=(r,label)=>{const n=step(r,'group_table',label);return {params:{by:n.params.by,aggregate:n.params.aggregate??'sum',
+      ...(n.params.total?{total:n.params.total}:{}),...(n.params.excludeMissing?{excludeMissing:true}:{}),...(n.params.share?{share:n.params.share}:{})},
+      valueField:r.run.tables[n.id].valueField,rows:rowsOfStep(r,n)};};
+    const rules=step(long,'apply_ruleset','Days from exposure to onset, and onset to death');
+    const tbt=deadly.run.outputs.find(o=>o.twoByTwo)?.twoByTwo;
+    const files=['data/mers_korea_2015_linelist.csv','data/mers_korea_2015_contacts.csv'].map(path=>({path,sha256:sha256(at(path)),
+      url:`${pin.rawBase}/${pin.commit}/${path}`}));
+    return {fixture:{
+      ...base('mers-epi-001','group_table','The MERS example\'s epidemiology: deaths by age class and sex, days from exposure to onset, secondary cases and the serial interval','example-2015-mers-korea at its pinned commit'),
+      source:`example-2015-mers-korea at ${pin.commit}: the line list and contacts of mers_korea_2015 in the R package outbreaks (Cauchemez et al.). No licence stated, so not redistributed: read from the repository at this commit and checked by digest.`,
+      declaredParameters:{
+        imports:{lineList:{value:'age',keys:['id','age_class','sex','outcome']},dates:{value:'age',keys:['id','dt_onset','dt_end_exp','outcome','dt_death']},
+          links:{value:'diff_dt_onset',keys:['from','to','exposure']}},
+        computed:{columns:rules.params.authored?.rules?.flatMap(r=>r.then.map(t=>t.column)).filter(Boolean)??['incubation_days','onset_to_death_days'],
+          days:'whole days, the later date minus the earlier; empty where either date is empty'},
+        median:'the middle value of those present, or the mean of the middle two',
+        share:'the group\'s count / its stratum\'s total * 1000, rounded half up, / 10',
+        twoByTwo:tbt?.request,
+      },
+      input:{files,note:'No rows: the check reads each file at the commit and verifies its digest first.'},
+      output:{
+        byAgeClass:groupOf(deadly,'Died or survived, by age class'),
+        bySex:groupOf(deadly,'Died or survived, by sex'),
+        twoByTwo:{cells:tbt.cells,estimates:tbt.estimates.map(e=>({name:e.name,method:e.method,level:e.level,value:e.value,lower:e.lower,upper:e.upper}))},
+        computedDays:rowsOfStep(long,rules).map(x=>({id:x.id,incubation_days:x.incubation_days,onset_to_death_days:x.onset_to_death_days})),
+        medianIncubation:groupOf(long,'Median days from exposure to onset, by outcome'),
+        byIncubation:groupOf(long,'Cases by days from exposure to onset'),
+        perSource:groupOf(spread,'Secondary cases per source'),
+        serialInterval:groupOf(spread,'Median days between onsets, by setting'),
+      },
+    },files:{}};
+  },
   async 'tree-hagelloch-001'(){
     // THE TRANSMISSION TREE (experiment 200, step 5), as Chart computes it: each case's chain, generation and row.
     const cases=JSON.parse(await readFile(new URL('../examples/hagelloch-1861/cases.json',import.meta.url),'utf8'));
@@ -1533,6 +1583,26 @@ const builders={
       declaredParameters:{encoder:'qrcode-generator 2.0.4 (MIT)',errorCorrection:'M',mode:'Byte',version:'the smallest that holds the address',quietZone:4},
       input:{addresses},
       output:{codes:addresses.map(text=>({text,rows:qrMatrix(text).map(r=>r.map(d=>d?'1':'0').join(''))}))},
+    },files:{}};
+  },
+  async 'qr-mark-001'(){
+    // THE CODES WITH FIELDWORK'S MARK IN THE MIDDLE (2026-11-14): drawn at error correction H with the middle cleared. The
+    // rows are the modules as drawn, the cleared ones light; `mark` is where the mark sits, so the check can also decode
+    // them with that patch dark, as a camera may read a dark green mark.
+    const catalog=JSON.parse(await readFile(new URL('../widgets/examples.json',import.meta.url),'utf8')).examples;
+    const builtIn=[{id:'hagelloch-1861',name:'Measles in Hagelloch, 1861',workflows:['hagelloch']},
+      {id:'cholera-london-1854',name:'1854 Cholera Outbreak in London',workflows:['snow-voronoi']}];
+    const links=[...catalog.map(catalogLinks),...builtIn.map(p=>builtInLinks(p,p.workflows[0])).filter(Boolean)];
+    const addresses=[...new Set(links.flatMap(l=>[l.app,l.files]))];
+    return {fixture:{
+      schema:'fieldwork/validation-fixture/1',fixtureId:'qr-mark-001',exportedAt:new Date().toISOString(),
+      application:{name:'Fieldwork',version},
+      operation:{component:'example-links',release:version,label:'The QR codes a worked example\'s write-up prints, with Fieldwork\'s mark',implementation:'src/qr.ts#qrDrawn'},
+      source:'widgets/examples.json, the catalog of worked examples, and the built-in examples of src/project.ts',
+      declaredParameters:{encoder:'qrcode-generator 2.0.4 (MIT)',errorCorrection:'H',mode:'Byte',version:'the smallest that holds the address',quietZone:4,
+        mark:'an odd number of modules near a fifth of the side, centred, with one module cleared around it'},
+      input:{addresses},
+      output:{codes:addresses.map(text=>{const d=qrDrawn(text,true);return {text,rows:d.rows.map(r=>r.map(x=>x?'1':'0').join('')),mark:d.mark};})},
     },files:{}};
   },
   async 'scan-hagelloch-001'(){

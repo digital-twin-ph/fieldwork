@@ -59,7 +59,9 @@ import type {Workflow} from './types.js';
  *  A `SUMMARIZE` command can offer AVG, COUNT, FIRST, LAST, MAX, MIN, STDEV, STDEVP, SUM, VAR and VARP. Four are
  *  admitted here and the absences are an argument rather than an oversight;
  *  see the note at the head of this file. */
-export const AGGREGATES=['sum','minimum','maximum','count'] as const;
+/** MEAN AND MEDIAN, 2026-11-14 (the practitioner: "For MERS if there are any more epi computations that can be included
+ *  let's do that"): an incubation period or a serial interval is summarised by its median, which no step gave. */
+export const AGGREGATES=['sum','minimum','maximum','count','mean','median'] as const;
 export type Aggregate=typeof AGGREGATES[number];
 
 export interface GroupRequest {
@@ -100,6 +102,11 @@ export interface GroupRequest {
   /** EACH GROUP'S SHARE OF A TOTAL, % (experiment 191). `within`: the kept columns whose groups each total 100; none,
    *  the whole table. Offered with a sum and a count, which add up to a total; never with a minimum or a maximum. */
   share?:{within:string[]};
+  /** THE COLUMN SUMMARISED, when it is not the table's value column (2026-11-14): a key column holding numbers, such
+   *  as days from exposure to onset computed by a rule. Its blank cells are empty cells, as the value column's are; a
+   *  cell that is not a number is refused, because a median of words is not a number. The result's values are named
+   *  after it, and carry no unit: the unit the table declares is its value column's. */
+  total?:string;
 }
 /** THE KEY THAT TELLS A COUNT FROM ITS SHARE, in a table that carries both (experiment 191). */
 export const SHARE_MEASURE='statistic';
@@ -121,8 +128,23 @@ export interface GroupResult {
 }
 
 export function groupTable(table:DataTable,request:GroupRequest):GroupResult {
+  if(request.total&&request.total!==table.valueField&&(request.aggregate??'sum')!=='count')table=totalling(table,request.total);
   const result=groupTotals(table,request);
   return request.share?withShares(result,request.by.map(n=>n.trim()).filter(Boolean),request.share.within):result;
+}
+
+/** The table with a key column as its value column: each cell read as a number, a blank as an empty cell. */
+export function totalling(table:DataTable,column:string):DataTable{
+  if(!table.keys.includes(column))throw new Error(`This table has no "${column}" column to total. Its columns are ${table.keys.join(', ')}.`);
+  const rows=table.rows.map((row,i)=>{
+    const cell=(row.key[column]??'').trim();
+    const value=cell===''?null:Number(cell);
+    if(value!==null&&!Number.isFinite(value))throw new Error(`"${column}" holds "${cell}" in row ${i+1}, which is not a number, so it cannot be totalled.`);
+    const {[column]:_,...key}=row.key;
+    return {key,value};
+  });
+  const {unit:_unit,wide:_wide,...rest}=table;
+  return {...rest,keys:table.keys.filter(k=>k!==column),valueField:column,rows,missingValueCount:rows.filter(r=>r.value===null).length};
 }
 
 /** THE SHARES, beside the totals they are shares of: the result gains a `measure` key whose rows are the total and
@@ -130,8 +152,8 @@ export function groupTable(table:DataTable,request:GroupRequest):GroupResult {
  *  99.9 or 100.1. A stratum whose total is unknown, because a group in it summed over an empty cell, has every share
  *  unknown: a share of an unknown total is not a smaller share. */
 export function withShares(result:GroupResult,by:readonly string[],within:readonly string[]):GroupResult{
-  if(result.aggregate==='minimum'||result.aggregate==='maximum')
-    throw new Error('A share needs a total, and a minimum or a maximum does not add up to one. Choose Sum or Count rows.');
+  if(result.aggregate!=='sum'&&result.aggregate!=='count')
+    throw new Error('A share needs a total, and a minimum, maximum, mean or median does not add up to one. Choose Sum or Count rows.');
   for(const w of within)if(!by.includes(w))throw new Error(`"${w}" is not a kept column, so there are no groups within it to total 100.`);
   if(within.length&&within.length===by.length)throw new Error('Every kept column is a "within" column, so each group would be 100% of itself. '
     +'Leave at least one kept column out of "within".');
@@ -195,7 +217,11 @@ function groupTotals(table:DataTable,request:GroupRequest):GroupResult {
   const aggregated=(group:{total:number; values:number[]}):number|null=>
     aggregate==='sum'?group.total
     :!group.values.length?null
-    :aggregate==='minimum'?Math.min(...group.values):Math.max(...group.values);
+    :aggregate==='minimum'?Math.min(...group.values)
+    :aggregate==='maximum'?Math.max(...group.values)
+    :aggregate==='mean'?group.total/group.values.length
+    // THE MEDIAN, of the values present: the middle one, or the mean of the middle two.
+    :(()=>{const v=[...group.values].sort((a,b)=>a-b),m=v.length>>1;return v.length%2?v[m]!:(v[m-1]!+v[m]!)/2;})();
   const rows=[...groups.values()].map(group=>({key:group.key,
     value:group.empty&&!request.excludeMissing?null:aggregated(group)}));
   const gaps=[...groups.values()].filter(group=>group.empty)

@@ -97,19 +97,11 @@ export function mappingMarkup(table:DataTable|undefined,request:MappingParams,
   const valuesOf=(column:string):string[]=>table&&column
     ?[...new Set(table.rows.map(r=>r.key[column]).filter(v=>v!==undefined&&v!==''))].sort()
     :[];
-  const cells=resolveCells(table,request);
-  const left=strataNotNamed(table,request);
   const picker=(id:string,key:keyof MappingParams,label:string,choices:string[]):string=>
     `<label class="field-label" for="${id}">${esc(label)}</label>`
     +`<select id="${id}" data-mapping="${esc(String(key))}"${choices.length?'':' disabled'}>`
     +`<option value="">Choose…</option>`
     +choices.map(v=>option(v,String(request[key]??''),esc)).join('')+`</select>`;
-  const cellBox=(c:CellResolution):string=>
-    `<td class="map-cell${c.problem?' map-cell-problem':''}">`
-    +`<span class="tbt-letter">${c.letter}</span>`
-    +(c.value===null?`<span class="map-problem">${esc(c.problem??'')}</span>`
-      :`<span class="tbt-value">${esc(c.value.toLocaleString('en-US'))}</span>`)
-    +`</td>`;
   return `<div class="mapping-body">`
     +`<p class="description">Every measure a two-by-two reports is a function of these four `
     +`letters. Choose the columns and the values; the cells follow, and the step reads the whole `
@@ -122,10 +114,28 @@ export function mappingMarkup(table:DataTable|undefined,request:MappingParams,
     +`<div class="field">${picker('map-case','caseValue','Case value',valuesOf(request.outcomeColumn))}</div>`
     +`<div class="field">${picker('map-noncase','nonCaseValue','Non-case value',valuesOf(request.outcomeColumn))}</div>`
     +`</div>`
-    +`<table class="two-by-two mapping-preview"><thead><tr>`
+    +cellsMarkup(table,request,esc)
+    +`</div>`;
+}
+
+/** THE FOUR CELLS, each its letter and count or what is wrong with it, and what the mapping leaves out: the Preview of
+ *  the standard dialog (experiment 186, 2026-11-14). In the rate layout the columns are the events and the units at
+ *  risk, and the letters a1, n1, a0, n0. */
+export function cellsMarkup(table:DataTable|undefined,request:MappingParams,esc:Escape):string{
+  const rates=request.unitsAtRiskValue!==undefined;
+  const cells=resolveCells(table,rates?{...request,nonCaseValue:request.unitsAtRiskValue??''}:request);
+  const left=strataNotNamed(table,request);
+  const letters=rates?['a1','n1','a0','n0']:['a','b','c','d'];
+  const cellBox=(c:CellResolution):string=>
+    `<td class="map-cell${c.problem?' map-cell-problem':''}">`
+    +`<span class="tbt-letter">${letters['abcd'.indexOf(c.letter)]}</span>`
+    +(c.value===null?`<span class="map-problem">${esc(c.problem??'')}</span>`
+      :`<span class="tbt-value">${esc(c.value.toLocaleString('en-US'))}</span>`)
+    +`</td>`;
+  return `<table class="two-by-two mapping-preview"><thead><tr>`
     +`<th scope="col">${esc(request.exposureColumn||'exposure')}</th>`
-    +`<th scope="col">${esc(request.caseValue||'case')}</th>`
-    +`<th scope="col">${esc(request.nonCaseValue||'non-case')}</th>`
+    +`<th scope="col">${esc(request.caseValue||(rates?'events':'case'))}</th>`
+    +`<th scope="col">${esc((rates?request.unitsAtRiskValue:request.nonCaseValue)||(rates?'units at risk':'non-case'))}</th>`
     +`</tr></thead><tbody>`
     +`<tr><th scope="row">${esc(request.exposed||'exposed')}</th>`
     +cellBox(cells[0])+cellBox(cells[1])+`</tr>`
@@ -141,42 +151,7 @@ export function mappingMarkup(table:DataTable|undefined,request:MappingParams,
         +`. Those rows are in neither group, so the totals will be of the two named values and `
         +`not of the table.</div>`
       :'')
-    +`</div>`;
-}
-
-/** Open the mapping dialog. `onChange` is called with the whole updated mapping, so the caller
- *  writes it through its own `change()` gate rather than this module reaching into a workflow. */
-export function openMappingDialog(table:DataTable|undefined,request:MappingParams,esc:Escape,
-  onChange:(next:MappingParams)=>void):void{
-  const dialog=document.createElement('dialog');
-  dialog.id='two-by-two-mapping';
-  dialog.setAttribute('aria-labelledby','two-by-two-mapping-title');
-  let current={...request};
-  const close=()=>{dialog.close();dialog.remove();};
-  const render=()=>{
-    dialog.innerHTML=`<div class="manual-head">`
-      +`<h2 id="two-by-two-mapping-title">Map the table onto the two-by-two</h2>`
-      +`<div><button class="button primary" id="mapping-close">Done</button></div></div>`
-      +mappingMarkup(table,current,esc);
-    dialog.querySelector<HTMLButtonElement>('#mapping-close')!.onclick=close;
-    dialog.querySelectorAll<HTMLSelectElement>('[data-mapping]').forEach(select=>{
-      select.onchange=()=>{
-        const key=select.dataset.mapping as keyof MappingParams;
-        current={...current,[key]:select.value} as MappingParams;
-        // CHANGING A COLUMN DROPS THE VALUES CHOSEN FROM THE OLD ONE. They name values that no
-        // longer exist, and leaving them would show a mapping whose cells cannot resolve while
-        // the fields still read as answered.
-        if(key==='exposureColumn')current={...current,exposed:'',unexposed:''};
-        if(key==='outcomeColumn')current={...current,caseValue:'',nonCaseValue:''};
-        onChange(current);
-        render();
-      };
-    });
-  };
-  render();
-  document.body.append(dialog);
-  dialog.addEventListener('cancel',event=>{event.preventDefault();close();});
-  dialog.showModal();
+    ;
 }
 
 /** More levels than this is a measurement, not groups to compare. */

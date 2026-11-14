@@ -1,6 +1,6 @@
 # 200 · Operational epidemiology, anchored on 7-1-7
 
-_Created 2026-11-09 · Updated 2026-11-12_
+_Created 2026-11-09 · Updated 2026-11-14_
 
 **Status:** asked. A map of a body of work and what Fieldwork already holds of it, anchored on the 7-1-7 target and
 its bottleneck taxonomy, made to choose a first slice from. Nothing is built.
@@ -545,6 +545,30 @@ fixed in Chart 0.21.2.
 
 **Not established:** the lab recomputation of these two workflows (check 49 covers the first two); that report week is
 the week a case was confirmed rather than reported by the hospital, which is all data.go.kr says.
+
+## More epidemiology, 2026-11-14: deaths, days, and spread
+
+The practitioner: *"For MERS if there are any more epi computations that can be included let's do that."* Three
+workflows added to example-2015-mers-korea (ddf30f6), built from an empty canvas in `tests/mers-from-scratch.browser.mjs`:
+
+| Workflow | What it computes | What it finds |
+| --- | --- | --- |
+| *How deadly was it, and for whom?* | deaths by age class, each class's shares; deaths by sex in a two-by-two | 70-79: 7 of 25 died, 28%; men 14 of 99, women 5 of 63: risk ratio 1.78 (95% 0.67 to 4.71) |
+| *How long from exposure to onset, and from onset to death?* | both as columns computed by rules; the first's median by outcome, and its distribution | median 6 days for 118 survivors, 7 for 15 deaths; onset to death has both dates for 7 of 19 deaths |
+| *Who spread it, and how fast?* | secondary cases per source with each one's share; median days between onsets by setting | SK_14 38 of 98 links (38.8%); family member 7 days, emergency room 18 |
+
+**Found on the way:** Total within groups summarised only a table's value column, so the median of a column a rule had
+computed came out as the median age (55). It gained Mean and Median, and **Column to total**, a key column of numbers
+(Total within groups 0.4.0). Some cases have onset before the last day of exposure, down to −8 days; they are kept as
+written, and the README says the figure is not an incubation period for them.
+
+**Validation, 2026-11-14:** lab check 51 (`51-mers-epi`, Validation Lab ef22e47) recomputes the three workflows from
+the files with pandas and the textbook interval formulas: 324 days, 50 counts, 24 shares, 7 medians and 9 estimates
+and limits agree, exactly or within 1e-9 relative. A tampered copy of the fixture made a median, a share and a limit
+each differ. Chromium only for the browser test.
+
+**Not established:** that `diff_dt_onset` is a serial interval; that days from the last day of exposure are an
+incubation period; that the ratio by sex means anything about sex.
 
 ## What would close this
 

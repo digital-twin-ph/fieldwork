@@ -13,7 +13,8 @@ import {linkLinesSvg} from './map-links.js';
 import {diveDeeperPanel,learnBlock} from './dive-deeper.js';
 import {recordRun,runsFor} from './widget-usage.js';
 import {buildOrder,revealedTypes,revealReason} from './reveal-playback.js';
-import {manualButton,openManual,hasManual} from './manual.js';
+import {manualButton,openManual,hasManual,renderManualPage} from './manual.js';
+import {projectWidgets,projectWidgetsMarkup} from './project-widgets.js';
 ﻿import widgetRegistry from '../widgets/registry.json';
 import {setupLabEvaluation} from './lab-evaluation-ui.js';
 import {canvasN3} from './canvas-semantics.js';
@@ -82,7 +83,7 @@ import {FACILITY_SOURCES,FACILITY_SOURCE_KEYS,FACILITY_KINDS,downloadFacilities,
 import {evidenceInspector,openEvidenceEditor} from './evidence-ui.js';
 import {workflowDocument,importWorkflowDocument,exportEvidenceFiles,keepBytes,readPDF,storePDFs} from './evidence-storage.js';
 import {curatedExamples,exampleById,verifiedFile,type CatalogExample} from './example-catalog.js';
-import {validateManual,renderManual,firstUndone,type WorkedExampleManual} from './worked-example-manual.js';
+import {validateManual,renderManual,firstUndone,stepSentence,placedByStep,handleTypes,type WorkedExampleManual} from './worked-example-manual.js';
 import {saveRefusalMessage} from './save-refusal.js';
 import {MAX_BUNDLE_BYTES} from './evidence.js';
 import type {Workflow,WorkflowNode,NodeType,NodeSpec,Boundary,Position,SpatialRelation,ParamsByType,ColumnRepair,BasemapChoice} from './types.js';
@@ -107,6 +108,7 @@ import {mountCanvas} from './canvas.js';
 import {staticBoundaryMap,staticMapFrame} from './static-map.js';
 import {mapLayerList,membersOfPolygons,portIsDrawn,LAYER_LABEL_LIMIT,type MapLayer} from './map-layer-list.js';
 import {mountFeatureChooser} from './polygon-review.js';
+import {applyFeatureEdits,applyTableEdits,editsAt,type CellEdit,type EditEntry} from './cell-edits.js';
 import {MAX_POLYGON_LAYERS,polygonPort} from './polygon-layers.js';
 import {MAX_RASTER_LAYERS,rasterPort} from './raster-panels.js';
 import {notesPanel,openNoteDialog,noteKey} from './notes-ui.js';
@@ -176,7 +178,8 @@ import {newMapOutput,mapEvidence} from './map-output.js';
 import {newTableOutput,pointTableMarkup,pointTableEvidence} from './table-output.js';
 import {pointPort,MAX_POINT_LAYERS,markedPoints,markLabel,LABEL_CEILING} from './point-layers.js';
 import {twoByTwoMarkup} from './two-by-two-view.js';
-import {exposureColumnsOffered,openMappingDialog} from './two-by-two-mapping.js';
+import {exposureColumnsOffered} from './two-by-two-mapping.js';
+import {openTwoByTwoConfig,twoByTwoDraftOf,applyTwoByTwoDraft,twoByTwoSettingsSentence} from './two-by-two-ui.js';
 import {repositoryFiles} from './project-repository.js';
 import {orderableBins} from './chart-output.js';
 import {AGGREGATES,type Aggregate} from './group-table.js';
@@ -496,8 +499,12 @@ const justFinished=new Set<string>();
  *  can make a practitioner conclude the application cannot do something it can -- the asymmetry
  *  experiment 112 recorded before any of this was built. */
 let playbackStep:number|null=null;
+/** A MANUAL PLAYED BACK, one step at a time (experiment 173's dialog; 214's exercise): the nodes placed once each step
+ *  is done. Exclusive with the build playback above. */
+let manualPlayback:{steps:import('./worked-example-manual.js').ManualStep[];types:Record<string,string>;placed:string[][];index:number;name:string}|null=null;
 const playbackOrder=()=>buildOrder(workflow).order;
-const playbackPlaced=()=>playbackStep===null?workflow.nodes:playbackOrder().slice(0,playbackStep);
+const playbackPlaced=()=>manualPlayback?workflow.nodes.filter(n=>manualPlayback!.placed[manualPlayback!.index]!.includes(n.id))
+  :playbackStep===null?workflow.nodes:playbackOrder().slice(0,playbackStep);
 /** The canvas as the playback wants it: the nodes placed so far and the edges between them.
  *
  *  Every path that draws the canvas has to go through this, not only `render`. A run's status
@@ -506,7 +513,7 @@ const playbackPlaced=()=>playbackStep===null?workflow.nodes:playbackOrder().slic
  *  showing one. Locally the run finished before anyone clicked; in CI it did not, and the
  *  playback test failed there and nowhere else. */
 const playbackView=():Workflow=>{
-  if(playbackStep===null)return workflow;
+  if(playbackStep===null&&!manualPlayback)return workflow;
   const placed=new Set(playbackPlaced().map(n=>n.id));
   return {...workflow,nodes:workflow.nodes.filter(n=>placed.has(n.id)),
     edges:workflow.edges.filter(e=>placed.has(e.from)&&placed.has(e.to))};
@@ -1003,7 +1010,7 @@ function valueFieldOf(up:WorkflowNode|undefined,seen=new Set<string>()):string|u
   if(['select_rows','relate_table','append_rows','apply_ruleset'].includes(up.type))return upstreamValueField(up,seen);
   // A COUNT IS NAMED "rows"; a sum, a mean or an extremum keeps the name of what it summarised (group-table.ts). Found
   // 2026-11-09: a Rate after Relate after a count was offered every column but the count.
-  if(up.type==='group_table')return up.params.aggregate==='count'?'rows':upstreamValueField(up,seen);
+  if(up.type==='group_table')return up.params.aggregate==='count'?'rows':up.params.total||upstreamValueField(up,seen);
   return undefined;
 }
 function tableKeyColumns(node:WorkflowNode|undefined,seen=new Set<string>()):readonly string[]{
@@ -1080,6 +1087,8 @@ function tableUnitFor(output:WorkflowNode):string|undefined{
     if(up.type==='table_input')return up.params.data.unit?.trim()||undefined;
     // relate_table and group_table pass the unit through too: relating adds a key column and
     // totalling adds up values already in the unit, so neither changes what the numbers count.
+    // A total of a key column carries no unit: the unit declared is the value column's.
+    if(up.type==='group_table'&&up.params.total)return undefined;
     if(up.type==='select_rows'||up.type==='relate_table'||up.type==='append_rows'
       ||up.type==='group_table'||up.type==='two_by_two')return walk(up,'records',seen);
     if(up.type==='apply_ruleset')return walk(up,tablePortOf(up),seen);
@@ -1137,7 +1146,7 @@ function drawRunProgress(){
 /** THE WIDGETS WHOSE INSPECTOR FOLLOWS THE STANDARD (experiment 186): Name, Inputs, Settings, Result, the links,
  *  Actions, in that order and nothing else, with every setting in the widget's configuration dialog. One at a time,
  *  Relate first; the set grows as each widget is moved, and a check holds them to it. */
-export const STANDARD_INSPECTOR=new Set<NodeType>(['case_series','regression','point_input','chart_output','raster_input','sample_raster','measure_distance','table_output','relate_table','select_rows','table_input','find_health_facilities','group_table','apply_ruleset','map_output','deduplicate_points','rate','study_area','space_time_scan','map_image_input']);
+export const STANDARD_INSPECTOR=new Set<NodeType>(['case_series','regression','point_input','chart_output','raster_input','sample_raster','measure_distance','table_output','relate_table','select_rows','table_input','find_health_facilities','group_table','apply_ruleset','map_output','deduplicate_points','rate','study_area','space_time_scan','map_image_input','two_by_two']);
 function samplerProduct(node:WorkflowNode){
   const up=(id:string,port:string)=>{const e=workflow.edges.find(x=>x.to===id&&x.port===port);return e?workflow.nodes.find(m=>m.id===e.from):undefined;};
   const search=up(node.id,'files'),find=search?up(search.id,'product'):undefined;
@@ -1838,7 +1847,7 @@ const UNIT_IRIS:Record<string,string>={
   houses:'NUM',deaths:'NUM',visits:'NUM',records:'NUM',doses:'NUM',
   years:'YR',year:'YR',kilograms:'KiloGM',kilogram:'KiloGM',kg:'KiloGM',milligrams:'MilliGM',milligram:'MilliGM',mg:'MilliGM',
   'degrees celsius':'DEG_C','°c':'DEG_C','degrees fahrenheit':'DEG_F','°f':'DEG_F',
-  proportion:'FRAC',fraction:'FRAC',count:'NUM',children:'NUM',people:'NUM',cases:'NUM',minutes:'MIN',minute:'MIN',min:'MIN',hours:'HR',hour:'HR',hr:'HR',seconds:'SEC',second:'SEC',days:'DAY',day:'DAY',metres:'M',meters:'M',m:'M',kilometres:'KiloM',kilometers:'KiloM',km:'KiloM',millimetres:'MilliM',millimeters:'MilliM',millimetre:'MilliM',millimeter:'MilliM',mm:'MilliM',percent:'PERCENT'};
+  proportion:'FRAC',fraction:'FRAC',count:'NUM',children:'NUM',people:'NUM',cases:'NUM',minutes:'MIN',minute:'MIN',min:'MIN',hours:'HR',hour:'HR',hr:'HR',seconds:'SEC',second:'SEC',days:'DAY',day:'DAY',metres:'M',meters:'M',m:'M',kilometres:'KiloM',kilometers:'KiloM',km:'KiloM',millimetres:'MilliM',millimeters:'MilliM',millimetre:'MilliM',millimeter:'MilliM',mm:'MilliM',percent:'PERCENT','%':'PERCENT'};
 const unitIriFor=(label?:string)=>{
   const code=UNIT_IRIS[(label??'').trim().toLowerCase()];
   return code?`http://qudt.org/vocab/unit/${code}`:undefined;
@@ -1963,16 +1972,55 @@ function removeRepair(nodeId:string,index:number){
 }
 
 /** Everything the quality dialog needs about one input, in the shape it reads. */
-function qualityViewFor(n:WorkflowNode){
-  const held=n.params as {data?:{features?:{properties?:Record<string,unknown>}[]};repairs?:ColumnRepair[]};
-  const repairs=held.repairs??[];
-  const features=applyRepairs(held.data?.features??[],repairs);
+function qualityViewFor(n:WorkflowNode):import('./data-quality-ui.js').QualityView{
+  const held=n.params as {data?:{features?:{id?:string|number;properties?:Record<string,unknown>}[]};repairs?:ColumnRepair[];edits?:EditEntry[]};
+  const repairs=held.repairs??[],edits=held.edits??[];
+  // WHAT IS HANDED ON: repairs, then the values edited by hand (experiment 214).
+  const edited=applyFeatureEdits(applyRepairs(held.data?.features??[],repairs),editsAt(edits)),features=edited.features;
   const columns=[...new Set(features.flatMap(f=>Object.keys(f.properties??{})))];
   return {title:`${n.params.label||TYPES[n.type].title} · data quality`,columns,
     rows:features.map(f=>({...f.properties})),
     declared:declaredKinds(workflow,n.id),scales:scalesOf((n.params as {columns?:import('./column-metadata.js').ColumnDeclarations}).columns),repairs,
     onRepair:(column:string,to:'number'|'boolean'|'term')=>repairColumn(n.id,column,to),
-    onRemoveRepair:(index:number)=>removeRepair(n.id,index)};
+    onRemoveRepair:(index:number)=>removeRepair(n.id,index),
+    ...(n.type==='point_input'?{recordIds:features.map(f=>String(f.id)),edits,staleEdits:edited.stale.length,
+      onEdit:(edit:CellEdit)=>editCell(n.id,edit),onRemoveEdit:(version:number)=>removeEdit(n.id,version),
+      onRestore:(version:number)=>restoreEdits(n.id,version)}:{})};
+}
+/** AN EDIT MADE IN DATA QUALITY, added to the step's log as its next version (experiment 214); nothing is deleted. */
+const appendEdit=(nodeId:string,entry:(v:number)=>EditEntry)=>change(w=>{const p=w.nodes.find(x=>x.id===nodeId)!.params as {edits?:EditEntry[]};
+  const log=p.edits??[];p.edits=[...log,entry(log.length+1)];});
+function editCell(nodeId:string,edit:CellEdit):import('./data-quality-ui.js').QualityView|undefined{
+  if(!appendEdit(nodeId,version=>({...edit,version})))return undefined;
+  toast(`${edit.column} of ${edit.record} edited by hand. Rerun to use it.`);
+  return qualityViewOf(nodeId);
+}
+/** TAKEN BACK, as a new version that revokes the one that made it. */
+function removeEdit(nodeId:string,made:number):import('./data-quality-ui.js').QualityView|undefined{
+  if(!appendEdit(nodeId,version=>({version,revokes:made,at:new Date().toISOString()})))return undefined;
+  return qualityViewOf(nodeId);
+}
+/** RESTORED, as a new version whose values are those of an earlier one; 0 is the records as imported. */
+function restoreEdits(nodeId:string,to:number):import('./data-quality-ui.js').QualityView|undefined{
+  if(!appendEdit(nodeId,version=>({version,restore:to,at:new Date().toISOString()})))return undefined;
+  toast(to?`Version ${to} restored, as a new version. Rerun to use it.`:'The records as imported restored, as a new version. Rerun to use it.');
+  return qualityViewOf(nodeId);
+}
+const qualityViewOf=(nodeId:string)=>{const n=workflow.nodes.find(x=>x.id===nodeId)!;return n.type==='table_input'?tableQualityView(n as WorkflowNode<'table_input'>):qualityViewFor(n);};
+function tableQualityView(n:WorkflowNode<'table_input'>):import('./data-quality-ui.js').QualityView{
+  const table=n.params,edits=table.edits??[];
+  const edited=applyTableEdits(table.data,editsAt(edits)),data=edited.table;
+  return {title:`${n.params.label||'Tabular data'} · data quality`,
+    findings:[...(table.data.findings??[]),...metadataFindings(table.data,table.columns,table.dictionaryCheck,table.wide)],
+    columns:[...data.keys,data.valueField],
+    rows:data.rows.map(row=>({...row.key,[data.valueField]:row.value})),
+    declared:declaredKinds(workflow,n.id),scales:scalesOf(table.columns),repairs:[],
+    // A tabular import casts its value column at import, and a cell it cannot read is a finding
+    // kept as unknown. No repair is offered here yet. 117, 164.
+    onRepair:()=>{},onRemoveRepair:()=>{},
+    recordIds:data.rows.map((_,i)=>`row ${i+1}`),edits,staleEdits:edited.stale.length,
+    onEdit:(edit:CellEdit)=>editCell(n.id,edit),onRemoveEdit:(version:number)=>removeEdit(n.id,version),
+    onRestore:(version:number)=>restoreEdits(n.id,version)};
 }
 
 /** A published ruleset's source, shaped for the editor to display.
@@ -4080,7 +4128,8 @@ function renderInspector(){
         +(!workflow.edges.some(e=>e.from===n.id)?'<div class="inspector-actions"><button id="add-table-view" class="button small">\uff0b Display as table</button></div>':'')
         +'<div data-standard-result></div>');
     }else content+=standardSection('Result',`<p class="standard-result">${waiting?'Not fetched yet.':'No table imported yet. This step cannot run until a table is imported.'}</p>`
-      +(waiting?'<div class="inspector-actions"><button id="table-fetch-remote" class="button">Fetch the table</button></div>'
+      // THE ONE THING TO DO NEXT, so it looks like it (2026-11-14: "the Fetch the table is there, just not conspicuous").
+      +(waiting?'<div class="inspector-actions"><button id="table-fetch-remote" class="button primary">Fetch the table</button></div>'
         +'<p class="description">A file already on this device is read from there, without downloading it.</p>':'')
       +'<p id="table-fetch-status" class="description" role="status"></p>');
   }else if(n.type==='join_table_to_area'){
@@ -4289,83 +4338,16 @@ function renderInspector(){
       +`<div class="field"><label class="field-label" for="design-note">Note</label>`
       +`<textarea id="design-note" data-slr="note" rows="2" maxlength="400">${esc(p.note)}</textarea></div>`;
   }else if(n.type==='two_by_two'){
-    const p=n.params,shape=upstreamKeyValues(n),columns=Object.keys(shape??{});
-    const valuesOf=(column:string)=>shape?.[column]??[];
-    const column=(id:string,key:'exposureColumn'|'outcomeColumn',label:string)=>
-      `<div class="field"><label class="field-label" for="${id}">${label}</label>`
-      +`<select id="${id}" data-slr="${key}"${columns.length?'':' disabled'}>`
-      +(columns.length?`<option value="">Choose a column…</option>`:`<option value="${esc(p[key])}">Connect a table first</option>`)
-      +columns.map(name=>`<option value="${esc(name)}" ${p[key]===name?'selected':''}>${esc(name)}</option>`).join('')
-      +`</select></div>`;
-    const value=(id:string,key:'exposed'|'unexposed'|'caseValue'|'nonCaseValue'|'unitsAtRiskValue',label:string,from:string,placeholder:string)=>{
-      const held=valuesOf(from);
-      return `<div class="field"><label class="field-label" for="${id}">${label}</label>`
-        +(held.length
-          ?`<select id="${id}" data-slr="${key}"><option value="">Choose a value…</option>`
-            +held.map(v=>`<option value="${esc(v)}" ${p[key]===v?'selected':''}>${esc(v)}</option>`).join('')+`</select>`
-          :`<input id="${id}" data-slr="${key}" maxlength="120" value="${esc(p[key]??'')}" placeholder="${esc(placeholder)}">`)
-        +`</div>`;
-    };
-    // THE RATE LAYOUT, declared: the outcome column holds events and units at risk rather than cases and non-cases.
-    // Experiment 161, step 6, which retired the Rate ratio widget into this one.
-    const rates=p.unitsAtRiskValue!==undefined;
-    const unnamed=p.exposureColumn?valuesOf(p.exposureColumn)
-      .filter(v=>v!==p.exposed&&v!==p.unexposed):[];
-    // THE MAPPING HAS ITS OWN DIALOG, on the practitioner's reasoning of 2026-10-31: *"I think
-    // in the 2x2 widget, that mapping exercise, being important, deserves a modal dialog."* Six
-    // fields in an Inspector column could not show the table they produce, and which rows become
-    // which letter is the step where the arithmetic acquires its meaning. The fields stay below
-    // -- the dialog is a better place to do it, not the only place -- and both write the same
-    // six parameters. Experiment 153.
-    // The dialog maps four cells, a, b, c, d, which the rate layout does not have.
-    if(!rates)content+=`<button class="button" id="twobytwo-map">Map the table onto a, b, c, d\u2026</button>`;
-    content+=(rates
-      ?'<p class="description">The table must already be totalled: one row per group for the events and one for the units at risk.</p>'
-      :'<p class="description">The table must already be totalled: one row per combination of the exposure and the outcome.</p>')
-      +labelForm('twobytwo-label','Node label',p.label||'Two-by-two table')
-      +(p.rowsAreSubjects?''
-        :`<div class="field"><label class="field-label" for="twobytwo-layout">The outcome column holds</label>`
-          +`<select id="twobytwo-layout"><option value="cases" ${rates?'':'selected'}>cases and non-cases</option>`
-          +`<option value="rates" ${rates?'selected':''}>events and units at risk</option></select></div>`)
-      +(p.rowsAreSubjects?'':column('twobytwo-exposure','exposureColumn','Exposure column'))
-      +value('twobytwo-exposed','exposed','Exposed',p.exposureColumn,'the group a claim is being made about')
-      +value('twobytwo-unexposed','unexposed','Unexposed',p.exposureColumn,'the group it is compared with')
-      +column('twobytwo-outcome','outcomeColumn','Outcome column')
-      +(rates
-        ?value('twobytwo-case','caseValue','Events',p.outcomeColumn,'deaths')
-          +value('twobytwo-units','unitsAtRiskValue','Units at risk',p.outcomeColumn,'houses')
-        :value('twobytwo-case','caseValue','Case',p.outcomeColumn,'died')
-          +value('twobytwo-noncase','nonCaseValue','Non-case',p.outcomeColumn,'survived'))
-      +(rates?'':`<label class="check"><input type="checkbox" id="twobytwo-rows" `
-      +`${p.rowsAreSubjects?'checked':''}> Each row is one subject, as in a line list</label>`)
-      +(rates?'':p.rowsAreSubjects
-        ?'<p class="description">A cell is how many rows agree, so a combination nobody fell into '
-          +'is a true zero.</p>'
-        :'<p class="description">Off, each row holds a count and a missing row is not a zero.</p>')
-      // SEVERAL EXPOSURES, offered only for a line list. Ticking one column is the ordinary
-      // two-by-two, and `exposureColumn` is kept as the first ticked so nothing else has to know.
-      +(p.rowsAreSubjects&&columns.length
-        ?`<fieldset class="field exposure-list"><legend class="field-label">Exposures to compare</legend>`
-          +exposureColumnsOffered(withoutDeclaredKeys(n,shape??{}),p,upstreamRows(n)).map(name=>
-            `<label class="check"><input type="checkbox" data-twobytwo-exposure="${esc(name)}" `
-            +`${(p.exposureColumns?.length?p.exposureColumns:[p.exposureColumn]).includes(name)?'checked':''}> `
-            +`${esc(name)}</label>`).join('')+`</fieldset>`
-        :'')
-      +`<div class="field"><label class="field-label" for="twobytwo-level">Interval level</label>`
-      +`<select id="twobytwo-level">`
-      +[90,95,99].map(level=>`<option value="${level}" ${p.level===level?'selected':''}>${level}%</option>`).join('')
-      +`</select></div>`
-      // THE STRATUM LEFT OUT, said in the Inspector and not only on the result. Snow's
-      // people-denominated table has three supply categories because 16 of 32 sub-districts were
-      // supplied by both companies, and a practitioner choosing two of three should be told at
-      // the moment they choose.
-      +(unnamed.length
-        ?`<div class="notice notice-warning">This table also holds ${esc(unnamed.join(', '))} in `
-          +`${esc(p.exposureColumn)}. Those subjects are in neither group: they are excluded from `
-          +`this comparison, not controlled for, and the totals will be of the two groups you chose `
-          +`rather than of the table.</div>`:'')
-      +(rates?'':'')
-      +(rates?'':'');
+    // THE STANDARD INSPECTOR (experiment 186, 2026-11-14; the practitioner: "If we touch 2x2 we have to standardize"):
+    // the name, the input, one sentence of what is compared, Configure…, and what the run gave.
+    const p=n.params,receipt=result?.receipts.find(r=>r.nodeId===n.id);
+    const why=result?.unfinished?.find(u=>u.nodeId===n.id)?.message;
+    content+=standardSection('Name',labelForm('twobytwo-label','Name',p.label||TYPES.two_by_two.title));
+    content+=standardSection('Inputs',standardInputs(n));
+    content+=standardSection('Settings',`<p class="standard-sentence">${esc(twoByTwoSettingsSentence(p))}</p>`
+      +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button></div>');
+    content+=standardSection('Result',`<p class="standard-result${why?' standard-result-warning':''}">`
+      +`${esc(why?`The last run could not compute this step: ${why}`:receipt?.method?`${receipt.method}`:'Not run yet.')}</p>`);
   }else if(n.type==='rate'){
     // THE STANDARD INSPECTOR (experiment 186): the name, the input, one sentence, Configure…, and what the run gave.
     const p=n.params,ran=result?.receipts.some(r=>r.nodeId===n.id);
@@ -4943,39 +4925,19 @@ function renderInspector(){
       if(chosen===DEFAULT_FIGURE_SECTIONS[node.type as keyof typeof DEFAULT_FIGURE_SECTIONS])delete params.section;
       else params.section=chosen;});
   });
-  optionalElement('#twobytwo-layout')?.addEventListener('change',event=>{
-    const toRates=(event.target as HTMLSelectElement).value==='rates';
-    const id=selected;
-    if(!id)return;
-    change(w=>{const node=getNode(w,id,'two_by_two');
-      if(toRates){node.params.unitsAtRiskValue=node.params.unitsAtRiskValue??'';delete node.params.exposureColumns;}
-      else delete node.params.unitsAtRiskValue;});
-  });
-  optionalElement('#twobytwo-rows')?.addEventListener('change',event=>{
-    const on=(event.target as HTMLInputElement).checked;
-    const id=selected;
-    if(!id)return;
-    change(w=>{const node=getNode(w,id,'two_by_two');
-      if(on)node.params.rowsAreSubjects=true;else delete node.params.rowsAreSubjects;});
-  });
-  document.querySelectorAll<HTMLInputElement>('[data-twobytwo-exposure]').forEach(el=>
-    el.addEventListener('change',()=>{
-      const id=selected;
-      if(!id)return;
-      const order=[...document.querySelectorAll<HTMLInputElement>('[data-twobytwo-exposure]')]
-        .filter(box=>box.checked).map(box=>required(box.dataset.twobytwoExposure));
-      change(w=>{const node=getNode(w,id,'two_by_two');
-        node.params.exposureColumn=order[0]??'';
-        if(order.length>1)node.params.exposureColumns=order;else delete node.params.exposureColumns;});
-    }));
-  optionalElement('#twobytwo-map')?.addEventListener('click',()=>{
-    const node=workflow.nodes.find(x=>x.id===selected) as WorkflowNode<'two_by_two'>|undefined;
-    if(!node)return;
-    openMappingDialog(tableOnPort(workflow,node.id,'records')??undefined,node.params,esc,next=>{
-      // Written through `change()` like every other edit, so a mapping made in a dialog is
-      // undoable, persisted and validated on exactly the same terms as one typed in the panel.
-      change(w=>{Object.assign(getNode(w,node.id,'two_by_two').params,next);});
-    });
+  if(n.type==='two_by_two')optionalElement('#configure-step')?.addEventListener('click',()=>{
+    const node=workflow.nodes.find(x=>x.id===n.id);
+    if(node?.type!=='two_by_two')return;
+    const shape=upstreamKeyValues(node)??{},table=tableOnPort(workflow,n.id,'records')??undefined;
+    openTwoByTwoConfig({
+      step:node.params.label||TYPES.two_by_two.title,
+      sourceLabel:portSourceName(workflow,n.id,'records','the table'),
+      values:table?Object.fromEntries(table.keys.map(k=>[k,[...new Set(table.rows.map(r=>r.key[k]??'').filter(Boolean))].sort()])):shape,
+      exposuresOffered:d=>exposureColumnsOffered(withoutDeclaredKeys(node,shape),{outcomeColumn:d.outcomeColumn,exposed:d.exposed,unexposed:d.unexposed},upstreamRows(node)),
+      table,
+      initial:twoByTwoDraftOf(node.params),
+      apply:d=>{change(w=>{applyTwoByTwoDraft(getNode(w,n.id,'two_by_two').params,d);},{requirePersistence:true});},
+    },esc);
   });
   optionalElement('#output-run-look')?.addEventListener('click',async()=>{
     await run();
@@ -5154,6 +5116,7 @@ function renderInspector(){
       step:node.params.label||TYPES[n.type].title,
       sourceLabel:portSourceName(workflow,n.id,'records','the table'),
       columns:table?.keys??Object.keys(upstreamKeyValues(node)??{}),
+      valueField:table?.valueField??upstreamValueField(node),
       ...(table?{table}:{}),
       initial:groupDraftOf(node.params),
       apply:draft=>{change(w=>{applyGroupDraft(getNode(w,n.id,'group_table').params,draft);},{requirePersistence:true});},
@@ -5509,9 +5472,6 @@ function renderInspector(){
       getNode(w,n.id,'table_output').params.totalsAsserted=el.checked||undefined;})));
   if(n.type==='regression')optionalElement('#configure-step')?.addEventListener('click',()=>openRegressionConfig(n.id));
   // A number, and `data-slr` writes strings, which would reach the module as a key not in its table.
-  optionalElement('#twobytwo-level')?.addEventListener('change',e=>change(w=>{
-    getNode(w,n.id,'two_by_two').params.level=
-      Number((e.target as HTMLSelectElement).value) as 90|95|99;}));
   document.querySelectorAll<HTMLInputElement|HTMLTextAreaElement|HTMLSelectElement>('[data-slr]').forEach(el=>el.addEventListener('change',()=>change(w=>{
     const node=required(w.nodes.find(x=>x.id===n.id));(node.params as unknown as Record<string,string>)[required(el.dataset.slr)]=el.value.trim();})));
   document.querySelectorAll<HTMLInputElement>('[data-slr-family]').forEach(el=>el.addEventListener('change',()=>change(w=>{
@@ -5528,7 +5488,8 @@ function renderInspector(){
   });
   optionalElement('#quick-look')?.addEventListener('click',()=>{
     const table=getNode(workflow,n.id,'table_input').params;
-    openTableViewer({...tableViewOf(table.data,n.params.label||'Tabular data'),scales:scalesOf(table.columns)},esc);
+    // AS HANDED ON, edits applied and marked (experiment 214).
+    openTableViewer({...tableViewOf(applyTableEdits(table.data,editsAt(table.edits??[])).table,n.params.label||'Tabular data'),scales:scalesOf(table.columns)},esc);
   });
   // A table's columns are its keys plus its one value field, which is the contract the widget
   // already declares. A ruleset reads them by those names, so the profile speaks of them too.
@@ -5549,15 +5510,7 @@ function renderInspector(){
     }catch(error){button.disabled=false;say.textContent=` ${error instanceof Error?error.message:'The table could not be fetched.'}`;}
   });
   optionalElement('#table-quality')?.addEventListener('click',()=>{
-    const table=getNode(workflow,n.id,'table_input').params;
-    openDataQuality({title:`${n.params.label||'Tabular data'} · data quality`,
-      findings:[...(table.data.findings??[]),...metadataFindings(table.data,table.columns,table.dictionaryCheck,table.wide)],
-      columns:[...table.data.keys,table.data.valueField],
-      rows:table.data.rows.map(row=>({...row.key,[table.data.valueField]:row.value})),
-      declared:declaredKinds(workflow,n.id),scales:scalesOf(table.columns),repairs:[],
-      // A tabular import casts its value column at import, and a cell it cannot read is a finding
-      // kept as unknown. No repair is offered here yet. 117, 164.
-      onRepair:()=>{},onRemoveRepair:()=>{}},esc);
+    openDataQuality(tableQualityView(getNode(workflow,n.id,'table_input')),esc);
   });
   // DESCRIBE COLUMNS, from the Inspector at any time; a fetched zip offers its own files as the dictionary, and a
   // dictionary made here for the same source before is offered too.
@@ -5654,7 +5607,8 @@ function renderInspector(){
       if(kept!==false&&result.dictionary)listDictionary(n.id,result.dictionary,result.source.filename);
       return kept;
     },current.keys.length?{keys:current.keys,valueField:current.valueField,unit:current.unit,primaryKey:current.data.primaryKey,secondaryKeys:current.data.secondaryKeys,
-      ...(current.wide?{wide:current.wide}:{}),...(current.distinctValuesFor?.length?{distinctValuesFor:current.distinctValuesFor}:{})}:undefined,
+      ...(current.wide?{wide:current.wide}:{}),...(current.distinctValuesFor?.length?{distinctValuesFor:current.distinctValuesFor}:{}),
+        ...(current.remote?{remote:current.remote}:{})}:undefined,
     // THE STANDARD FRAME: the step's own name, and the one setting that can be applied without reading the file again.
     {step:current.label||'Tabular data',convertOnRun:!!current.convertOnRun,hasSource:!!current.sourceTable,
       onConvertOnRun:on=>change(w=>{const node=getNode(w,n.id,'table_input');if(on)node.params.convertOnRun=true;else delete node.params.convertOnRun;})});
@@ -6278,7 +6232,8 @@ function renderResults(){
     button.disabled=true;
     try{
       const svg=await standaloneChartSvg(output!.chart!,chartNode!.params,
-        {sourceId:runWorkflow?.edges.find(e=>e.to===output!.nodeId)?.from,runId:result?.runId});
+        (()=>{const from=runWorkflow?.edges.find(e=>e.to===output!.nodeId)?.from;
+          return {sourceId:from,runId:result?.runId,sourceLabel:runWorkflow?.nodes.find(n=>n.id===from)?.params.label};})());
       download(`${output!.nodeId}-chart.svg`,svg,'image/svg+xml');
     }catch(error){toast(errorMessage(error),{tone:'failure'});}
     finally{button.disabled=false;}
@@ -7134,6 +7089,7 @@ function switchView(view:string){
   $('#project-view').hidden=view!=='project';
   $('#notes-view').hidden=view!=='notes';
   $('#manual-view').hidden=view!=='manual';
+  $('#widgets-view').hidden=view!=='widgets';
   document.querySelectorAll<HTMLButtonElement>('[data-view]').forEach(b=>{
     const active=b.dataset.view===view;
     b.classList.toggle('active',active);b.setAttribute('aria-selected',String(active));
@@ -7150,6 +7106,7 @@ function switchView(view:string){
   // Introduction.
   if(view==='notes')renderNotesView();
   if(view==='manual')renderManualView();
+  if(view==='widgets')renderWidgetsView();
   if(view==='results')renderMap();
   if(view==='workflow')requestAnimationFrame(()=>flow?.fit());
 }
@@ -7579,6 +7536,30 @@ let shownNotes:Note[]=[];
  *  storage and refuses when it is not there -- so this reads for display and the writes still
  *  refuse where there is nothing to write to. What a built-in's read-only write-up must not do is
  *  OFFER to take a note, which is what `keptHere` is for. */
+/** THE PROJECT'S WIDGETS TAB: each widget its workflows use, and as which steps. A canvas in no project shows its own. */
+function renderWidgetsView():void{
+  const project=projectNow(),here=storageKey(workflow),saved=readSavedWorkflows();
+  const docOf=(key:string):Workflow|undefined=>{
+    if(key===here)return workflow;
+    const stored=saved[key] as Workflow|undefined;
+    if(stored?.nodes)return stored;
+    try{return EXAMPLE_TEMPLATES[key]?.();}catch{return undefined;}
+  };
+  const keys=project?.workflows?.length?[...project.workflows]:[here];
+  const docs=keys.map(key=>({key,doc:docOf(key)})).filter((x):x is {key:string;doc:Workflow}=>!!x.doc)
+    .map(({key,doc})=>({key,name:doc.name?.trim()||WORKFLOW_LABELS[key]||key,nodes:doc.nodes}));
+  const order=PALETTE_GROUPS.flatMap(g=>(Object.keys(TYPES) as NodeType[]).filter(t=>TYPES[t].group===g));
+  const rows=projectWidgets(docs,order);
+  const view=$('#widgets-view');
+  view.innerHTML=projectWidgetsMarkup(project?.name??workflow.name??'this workflow',rows,docs.length,
+    type=>({title:TYPES[type as NodeType]?.title??type,icon:TYPES[type as NodeType]?.icon??'',manual:hasManual(type)}),esc);
+  view.querySelectorAll<HTMLButtonElement>('[data-open-workflow]').forEach(b=>b.addEventListener('click',async()=>{
+    const key=b.dataset.openWorkflow!;
+    if(key!==storageKey(workflow))await loadExample(key);
+    switchView('workflow');}));
+  view.querySelectorAll<HTMLButtonElement>('[data-widget-manual]').forEach(b=>b.addEventListener('click',()=>{
+    const type=b.dataset.widgetManual as NodeType;openManual(type,TYPES[type]?.title??type,esc);}));
+}
 const projectNow=()=>{
   const key=storageKey(workflow);
   return workflow.projectId?allProjects().find(p=>p.id===workflow.projectId)
@@ -7719,7 +7700,10 @@ function renderNotesView(){
     const key=`${held.run.runId}:${nodeId}`,drawn=notesChartSvg.get(key);
     if(drawn!==undefined)return drawn||null;
     notesChartSvg.set(key,'<p class="muted">Drawing the chart\u2026</p>');
-    standaloneChartSvg(output.chart,node.params,{sourceId:held.workflow.edges.find(e=>e.to===nodeId)?.from,runId:held.run.runId})
+    standaloneChartSvg(output.chart,node.params,(()=>{
+      // THE STEP'S NAME, not its id, as the Results tab says it (2026-11-14: the write-up read "Source: group_table-17946…").
+      const from=held.workflow.edges.find(e=>e.to===nodeId)?.from;
+      return {sourceId:from,runId:held.run.runId,sourceLabel:held.workflow.nodes.find(n=>n.id===from)?.params.label};})())
       .then(svg=>{notesChartSvg.set(key,svg);refreshNotesIfOpen();},
         error=>{notesChartSvg.set(key,'');console.error(error);refreshNotesIfOpen();});
     return notesChartSvg.get(key)!;
@@ -8595,16 +8579,46 @@ function wireManualSteps(host:HTMLElement,digest:string){
   });
 }
 /** THE MANUAL TAB: how to build each of this example's workflows by hand, the open one first. Experiment 173. */
+/** THE MANUAL'S STEPS FOR THE OPEN WORKFLOW, PLAYED BACK: a panel that is not modal, the step in the manual's words, and
+ *  the canvas holding what is placed by then. Changes nothing: the workflow is not edited, and Close restores it. */
+function openManualPlayback(steps:import('./worked-example-manual.js').ManualStep[],name:string):void{
+  playbackStep=null;renderPlayback();
+  manualPlayback={steps,types:handleTypes(steps),placed:placedByStep(steps,workflow.nodes),index:0,name};
+  renderManualPlayback();render();
+}
+function renderManualPlayback():void{
+  document.getElementById('manual-playback')?.remove();
+  if(!manualPlayback)return;
+  const {steps,types,index,name}=manualPlayback,step=steps[index]!;
+  const panel=document.createElement('section');panel.id='manual-playback';panel.className='manual-playback';
+  panel.setAttribute('role','dialog');panel.setAttribute('aria-labelledby','manual-playback-title');
+  const counted=steps.filter(x=>!('note' in x)).length,at=steps.slice(0,index+1).filter(x=>!('note' in x)).length;
+  panel.innerHTML=`<div class="manual-head"><h2 id="manual-playback-title">${esc(name)}</h2>`
+    +`<button class="button" id="manual-playback-close">Close</button></div>`
+    +`<p class="muted" data-playback-at>${'note' in step?'A note':`Step ${at} of ${counted}`}</p>`
+    +`<p class="manual-playback-step" data-playback-step>${stepSentence(step,types,t=>TYPES[t as NodeType]?.title??t,esc)}</p>`
+    +`<div class="inspector-actions"><button class="button" id="manual-playback-back" ${index?'':'disabled'}>Previous</button>`
+    +`<button class="button primary" id="manual-playback-next" ${index<steps.length-1?'':'disabled'}>Next</button></div>`
+    +`<p class="muted">The canvas holds what is placed by this step. Nothing is changed; Close puts it back.</p>`;
+  document.body.append(panel);
+  const go=(to:number)=>{if(!manualPlayback)return;manualPlayback.index=Math.max(0,Math.min(steps.length-1,to));renderManualPlayback();render();};
+  panel.querySelector<HTMLButtonElement>('#manual-playback-back')!.onclick=()=>go(index-1);
+  panel.querySelector<HTMLButtonElement>('#manual-playback-next')!.onclick=()=>go(index+1);
+  panel.querySelector<HTMLButtonElement>('#manual-playback-close')!.onclick=()=>{manualPlayback=null;renderManualPlayback();render();};
+}
 function renderManualView():void{
   const digest=exampleManualDigest(),manual=manualByDigest(digest),host=$('#manual-view');
   host.innerHTML=manual&&digest
     ?'<div class="manual-intro"><strong>Build it by hand</strong><span>Each workflow from an empty canvas, step by step. '
       +'Click a step when it is done. Detach the manual to keep it beside you in a project of your own.</span>'
-      +`<div class="inspector-actions"><button class="button small" id="manual-detach">${detachedManual()?.digest===digest?'Detached':'Detach'}</button></div></div>`
+      +`<div class="inspector-actions"><button class="button small" id="manual-detach">${detachedManual()?.digest===digest?'Detached':'Detach'}</button>`
+      +(manual?.workflows.some(w=>w.name===workflow.name)?`<button class="button small" id="manual-playback-start">Play back these steps</button>`:'')+`</div></div>`
       +renderManual(manual,workflow.name,manualTitle(manual),esc,manualProgress(digest))
     :'<p class="muted">This workflow has no manual.</p>';
   if(manual&&digest){
     wireManualSteps(host,digest);
+    optionalElement('#manual-playback-start')?.addEventListener('click',()=>{
+      const steps=manual.workflows.find(w=>w.name===workflow.name)?.steps;if(steps)openManualPlayback(steps,workflow.name);});
     optionalElement('#manual-detach')?.addEventListener('click',()=>{
       const origin=originOf(storageKey(workflow));
       detachManual({digest,title:exampleById(origin?.exampleId??'')?.title??'Worked example'});
@@ -8642,10 +8656,12 @@ function placeManualFloat():void{
   for(const d of [...openedModals])if(!d.isConnected||!d.open)openedModals.splice(openedModals.indexOf(d),1);
   for(const d of document.querySelectorAll<HTMLDialogElement>('dialog[open]'))
     if(d.matches(':modal')&&!openedModals.includes(d))openedModals.push(d);
-  const panel=document.getElementById('manual-float');
-  if(!panel)return;
+  // A worked example's manual and a widget's page, each moved above the top modal and back.
   const home=openedModals.at(-1)??document.body;
-  if(panel.parentElement!==home)home.append(panel);
+  for(const id of ['manual-float','widget-manual-float']){
+    const panel=document.getElementById(id);
+    if(panel&&panel.parentElement!==home)home.append(panel);
+  }
 }
 new MutationObserver(placeManualFloat).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['open']});
 function renderManualFloat(resume=false):void{
@@ -9775,8 +9791,9 @@ if('serviceWorker' in navigator){
   }
 }
 if(canAutoRun(workflow))setTimeout(run,350);
-// A manual left detached stays detached across a reload, until Close.
+// A manual left detached stays detached across a reload, until Close: a worked example's, and a widget's page.
 renderManualFloat(true);
+renderManualPage();
 
 setInterval(()=>{const button=document.querySelector<HTMLButtonElement>('#download-network'),message=document.querySelector<HTMLElement>('#network-download-status');if(!button||!message)return;const state=networkDownloadStatus();button.disabled=busy||state.inFlight||state.waitSeconds>0;message.textContent=state.inFlight?(networkDownloadPhase??'One OSM request is in progress.'):networkDownloadError?networkDownloadError+(state.waitSeconds?' Next attempt available in '+state.waitSeconds+' seconds.':''):state.waitSeconds?'Next OSM download available in '+state.waitSeconds+' seconds. Saved graphs are available offline.':'Ready for one bounded OSM request; no automatic refresh.';},1000);
 

@@ -27,8 +27,15 @@ test('the widget catalog lists the widgets that can be used and the worked examp
   const rows=dialog.locator('tr[data-widget]');
   await expect(rows).toHaveCount(active.length);
   for(const type of retired)await expect(dialog.locator(`tr[data-widget="${type}"]`)).toHaveCount(0);
+  // THE BUILT-IN EXAMPLES COUNT TOO (2026-11-14): Snow's London and Hagelloch, read from their own workflows, so the
+  // tally is at least what the repository examples alone give, and Street network, which only Snow uses, is in it.
   const used=active.filter(type=>usedBy(type).length).length;
-  await expect(dialog).toContainText(`${active.length} widgets you can use. ${used} of them are used in at least one of the ${examples.length} worked examples.`);
+  const said=await dialog.locator('p').first().textContent();
+  const m=said.match(new RegExp(`^${active.length} widgets you can use\\. (\\d+) of them are used in at least one of the ${examples.length+2} worked examples, 2 of them built in\\.$`));
+  expect(m,said).not.toBeNull();
+  expect(Number(m[1])).toBeGreaterThan(used);
+  await expect(dialog.locator('tr[data-widget="network_input"]')).toContainText('1854 Cholera Outbreak in London');
+  await expect(dialog.locator('tr[data-widget="network_input"]')).toContainText('built in');
 
   // A widget used by examples names each of them, linked to its repository.
   const row=dialog.locator('tr[data-widget="raster_input"]');
@@ -36,8 +43,9 @@ test('the widget catalog lists the widgets that can be used and the worked examp
     await expect(row.locator(`a[href="${example.repository}"]`)).toHaveText(example.title);
   }
   // One no example uses says so, rather than leaving the cell empty.
-  const unused=active.find(type=>!usedBy(type).length);
-  if(unused)await expect(dialog.locator(`tr[data-widget="${unused}"]`)).toContainText('Not in a worked example yet');
+  const unused=dialog.locator('td[data-examples="0"]');
+  if(await unused.count())await expect(unused.first()).toHaveText('Not in a worked example yet');
+  await expect(dialog.locator('td[data-examples="0"]')).toHaveCount(active.length-Number(m[1]));
   await dialog.locator('#catalog-close').click();
   await expect(dialog).toBeHidden();
 

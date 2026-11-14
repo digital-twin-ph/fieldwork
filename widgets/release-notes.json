@@ -75,12 +75,12 @@
    ]
   },
   "apply_ruleset": {
-   "version": "0.13.2",
-   "released": "2026-11-13",
+   "version": "0.13.3",
+   "released": "2026-11-14",
    "changes": [
     {
      "kind": "patch",
-     "description": "The comparisons carry their symbols in the rule editor, and the two of each pair sit together: is (=), is not (≠), is more than (>), is at least (≥), is less than (<), is at most (≤). The practitioner, 2026-11-13: \"Do we have less than or equal to and greater than or equal to?\" They were there as \"is at most\" and \"is at least\" and could not be found by the sign. The manual gains a table of every comparison with an example, and a table of how and, or and not are written as if blocks: (A and B) or (C and D), a range, not (A and B). No rule, receipt or saved workflow changes."
+     "description": "A number Relate brings onto a table whose values are named by a column, such as statistic, is read as a number, as on any other table: a census share related onto the shares of three population models was unreadable. \"%\" is understood as a unit, percent."
     }
    ],
    "breaking": false,
@@ -153,12 +153,12 @@
    "replacementCandidate": "urn:fieldwork:widget:observations"
   },
   "chart_output": {
-   "version": "0.21.2",
-   "released": "2026-11-13",
+   "version": "0.21.3",
+   "released": "2026-11-14",
    "changes": [
     {
      "kind": "patch",
-     "description": "Bar order's first choice draws the bars in the table's order with numbers rising, and says so: \"In the table's order, numbers rising\". It had kept the rows' order under the name \"By category name\", so MERS's weeks of report drew 27, 26, 24, 25, 23, 21, 22, 28. Categories that are all numbers now rise; others keep the table's order, which for days of the week or a dictionary's codes is their meaning (sorting them alphabetically drew Friday, Monday, Saturday, gate 152). A column's declared order (experiment 211) is still kept."
+     "description": "A column is named with its confirmed label beside it, in the axis title and the caption: \"신고 주차 (Week of report)\"; never in its place. The source line in Notes and in the downloaded SVG names the step, not its id. The practitioner, 2026-11-14: \"This Chart has koren. And we do not have translation capability (yet).\""
     }
    ],
    "breaking": false,
@@ -371,12 +371,12 @@
    "migrationFrom": []
   },
   "group_table": {
-   "version": "0.3.0",
-   "released": "2026-11-08",
+   "version": "0.4.0",
+   "released": "2026-11-14",
    "changes": [
     {
      "kind": "minor",
-     "description": "Each group's share of a total, %, beside its count or sum, within the kept columns ticked or of the whole table (experiment 191); a stratum whose total is unknown has unknown shares. Held to one decimal place. On the standard Inspector and dialog (experiment 186): keep, aggregate, empty cells and shares are set in Configure…, with the table they make as the preview."
+     "description": "Mean and Median beside Sum, Minimum, Maximum and Count rows, of the values present in each group; neither offered with a share. Column to total: the table's value column, or a key column holding numbers, such as one a rule computed; its blanks are empty cells, a cell that is not a number stops the run, and the result carries no unit. The practitioner, 2026-11-14: \"For MERS if there are any more epi computations that can be included let's do that.\""
     }
    ],
    "breaking": false,
@@ -576,12 +576,12 @@
    "migrationFrom": []
   },
   "point_input": {
-   "version": "0.7.1",
+   "version": "0.8.0",
    "released": "2026-11-13",
    "changes": [
     {
-     "kind": "patch",
-     "description": "A value none of a column's declared codes is shown in Data quality as Not among its codes; the value is kept as written."
+     "kind": "minor",
+     "description": "A value can be edited by hand in Data quality, under Records (experiment 214): kept on the step as an edit with the value it replaced and when, applied to a copy of the records when they are handed on, never to the file; an empty value can be filled, and such edits are counted apart (the practitioner, 2026-11-13: \"Yes, like any edit\"). An edit whose value read is no longer there is not applied, and is reported. Edits (n) lists them, each removable. The run states each as fw:CellEdit. The practitioner, 2026-11-10: \"the ability to edit tables inline\"."
     }
    ],
    "breaking": false,
@@ -624,12 +624,12 @@
    "migrationFrom": []
   },
   "raster_input": {
-   "version": "0.12.1",
-   "released": "2026-11-13",
+   "version": "0.12.2",
+   "released": "2026-11-14",
    "changes": [
     {
      "kind": "patch",
-     "description": "A GeoTIFF of any size chosen on the computer is kept: its digest is read a slice at a time, in a worker, saying how far it has got. It was read whole, and GHS-POP's global grid, 12,047,498,632 bytes chosen from the practitioner's Downloads folder, failed with the browser's \"could not be read, typically due to permission problems\" (2026-11-13). The same when a window is read again from a file. The digest is the file's, as before. The browser's message for a file it will not read is said in words of what to try."
+     "description": "A progress bar while Apply reads the window and checks a chosen file: the share of the window's rows read, from a file or a remote copy such as JRC's GHS-POP, and the share of a file checked; the words beside it say the same. The window is read in bands of whole tiles to know it; the cells are the same. The practitioner, 2026-11-14: \"Can we add a progress bar to this?\""
     }
    ],
    "breaking": false,
@@ -908,24 +908,24 @@
    "migrationFrom": []
   },
   "table_input": {
-   "version": "0.10.1",
+   "version": "0.11.0",
    "released": "2026-11-13",
    "changes": [
     {
-     "kind": "patch",
-     "description": "A value none of a column's declared codes is a data issue, Not among its codes (fw:ValueNotCoded), in Data quality and the receipt; the value is kept as written."
+     "kind": "minor",
+     "description": "A value can be edited by hand in Data quality, under Records (experiment 214): kept on the step as an edit with the value it replaced and when, applied to a copy of the records when they are handed on, never to the file; an empty value can be filled, and such edits are counted apart (the practitioner, 2026-11-13: \"Yes, like any edit\"). An edit whose value read is no longer there is not applied, and is reported. Edits (n) lists them, each removable. The run states each as fw:CellEdit. The practitioner, 2026-11-10: \"the ability to edit tables inline\"."
     }
    ],
    "breaking": false,
    "migrationFrom": []
   },
   "table_output": {
-   "version": "0.10.1",
-   "released": "2026-11-12",
+   "version": "0.10.2",
+   "released": "2026-11-14",
    "changes": [
     {
      "kind": "patch",
-     "description": "A column the rules concluded is never read as the variable of a melted table: the 7-1-7 response verdict, NoVerdict on every row, headed the count column and lost its own."
+     "description": "Each heading shows the column's confirmed label beneath its own name. The practitioner, 2026-11-14: \"Let's make sure we use data dictionary labels in English.\""
     }
    ],
    "breaking": false,
@@ -986,12 +986,12 @@
    "migrationFrom": []
   },
   "two_by_two": {
-   "version": "0.7.1",
-   "released": "2026-11-11",
+   "version": "0.8.0",
+   "released": "2026-11-14",
    "changes": [
     {
-     "kind": "patch",
-     "description": "Release text no longer names another product; nothing about the widget changed."
+     "kind": "minor",
+     "description": "On the standard Inspector and dialog (experiment 186): the Inspector says in one sentence what is compared; the layout, each row one subject, the columns and values for a, b, c and d, the exposures to compare and the interval level are set in Configure…, with the four cells counted as the preview, and nothing changes until Apply. The separate mapping dialog (experiment 153) is folded into it. The practitioner, 2026-11-14: \"If we touch 2x2 we have to standardize\"."
     }
    ],
    "breaking": false,

@@ -20,8 +20,10 @@ test('project, workflow, results, N3 and notes are five tabs, and only one is on
   // a corner of the project record.
   // Manual joined them on 2026-11-04 (experiment 173), shown only for a worked example that publishes a manual, so
   // it is the sixth tab and hidden here.
+  // Widgets joined them on 2026-11-14, beside Notes (the practitioner: "each project should name the widget and its
+  // workflows in a tab beside notes, N3, results, workflow tabs").
   await expect(page.locator('[data-view]'))
-    .toHaveText([/^Project/,/^Workflow/,/^Results/,/N3/,/^Notes/,/^Manual/]);
+    .toHaveText([/^Project/,/^Workflow/,/^Results/,/N3/,/^Notes/,/^Widgets/,/^Manual/]);
   await expect(page.locator('[data-view="manual"]')).toBeHidden();
 
   // A finished run does not move you: the canvas is still what is on screen, and the tab says

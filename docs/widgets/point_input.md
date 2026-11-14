@@ -1,6 +1,6 @@
 # Point data
 
-_Created 2026-10-19 · Updated 2026-11-13_
+_Created 2026-10-19 · Updated 2026-11-14_
 
 **An input widget.** It brings located records into a workflow — one row per thing, each with a
 position and whatever attributes came with it.
@@ -53,6 +53,18 @@ from a table take their meanings from that table's Tabular data step.
 Hagelloch's cases carry their source's dictionary, the outbreaks package's, so every column arrives proposed. `class`
 arrives as categories in no order, because the package calls it a factor; whether pre-school, first and second class
 are in order is yours to say.
+
+## Editing a value by hand
+
+**Data quality**'s **Records** tab shows the records as the steps after this one read them, a page at a time, each value
+in a box. Change a value and leave the box: it is kept as an **edit** on this step, with the value it replaced and when,
+and the run applies it to a copy of the records. The file is not changed. An empty value can be filled the same way; such
+edits are counted apart, because a supplied value is not a reading. **Edits (n)** lists every edit, newest first, each
+with **Remove**, which takes it back.
+
+An edit is applied only where the record still holds the value it was made against. If the data has changed under it,
+after a new import, the edit is not applied and Data quality says so. The run's record states each edit, before and
+after (`fw:CellEdit`). Experiment 214.
 
 ## What it will not do
 

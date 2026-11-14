@@ -1,8 +1,8 @@
 # 173 · A manual for each worked example
 
-_Created 2026-11-04 · Updated 2026-11-04_
+_Created 2026-11-04 · Updated 2026-11-14_
 
-**Status:** tried — the Manual tab and its detached panel, on the NYC example, Chromium. The playback dialog is designed, not built.
+**Status:** tried — the Manual tab and its detached panel, on the NYC example, Chromium. The playback dialog built 2026-11-13, with experiment 214.
 
 ## The task
 
@@ -92,6 +92,20 @@ columns now lists them in a dialog of its own, opened from a one-line summary, w
 which is what the manual's Copy gives -- and a file read long starts with nothing ticked. The manual's step became
 paste and **Keep these**. Every test that builds a worked example by hand moved to the same dialog through one helper
 (`tests/keep-columns.mjs`), and NYC's manual ran in 21 seconds instead of about 90, without a rebuild per untick.
+
+## The playback dialog, built 2026-11-13
+
+The practitioner chose it as the exercise for editing a table inline ([214](214-editing-a-table-inline.md)): *"The
+playback dialog (173)"*. **Play back these steps**, on the Manual tab, opens a panel that is not modal: the open
+workflow's steps one at a time in the manual's own words, with Previous, Next and Close, and the canvas holding the
+nodes placed by that step. Nothing is changed; Close restores the canvas.
+
+**The matching left open above is settled this way:** each handle is matched to a node of its widget type in the order
+the workflow holds them, the n-th added of a type to the n-th of that type, as a build from an empty canvas adds them.
+A handle with no node of its type left places nothing. A manual can now ask for an edit in Data quality (`edit`: the
+step, the record, the column, the value), worded as a step and checked like the others.
+
+**Not established:** that a workflow built in another order than its manual's places the right node for each handle.
 
 ## Validation
 

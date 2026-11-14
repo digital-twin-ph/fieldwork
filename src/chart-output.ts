@@ -36,6 +36,13 @@ const measured=(table:DataTable):string=>{
   const kinds=new Set(table.rows.map(r=>r.key.statistic));
   return kinds.size===1?[...kinds][0]!:table.valueField;
 };
+/** A COLUMN AS A CHART NAMES IT: its own name, and the label described for it beside it, never instead (the practitioner,
+ *  2026-11-14: "This Chart has koren [Korean]. And we do not have translation capability (yet)"). A label is what the practitioner
+ *  wrote, or a dictionary gave, in Describe columns; with none, the column alone. */
+export const columnTitle=(table:DataTable,column:string):string=>{
+  const meta=table.columns?.[column],label=meta?.confirmed?meta.label?.trim():undefined;
+  return label&&label!==column?`${column} (${label})`:column;
+};
 export function tableChart(table:DataTable,keyColumn?:string,panelsBy?:string,
     said:Record<string,{scale?:Scale;codes?:readonly Code[]}>={}):ChartSummary{
   if(panelsBy?.trim())return panelChart(table,keyColumn,panelsBy.trim());
@@ -66,8 +73,8 @@ export function tableChart(table:DataTable,keyColumn?:string,panelsBy?:string,
   const other=table.keys.filter(name=>name!==column);
   return {field:'value',measure:'value',
     ...(table.unit?{unit:table.unit}:{}),
-    categoryTitle:column,
-    caption:`${measured(table)} by ${column}`
+    categoryTitle:columnTitle(table,column),
+    caption:`${measured(table)} by ${columnTitle(table,column)}`
       +(other.length?` · one bar per row, keyed also by ${other.join(', ')}`:'')
       +(absent?` · ${absent} row${absent===1?'':'s'} with no value, drawn at zero`:''),
     total:table.rows.length,bins};
@@ -163,9 +170,9 @@ function panelChart(table:DataTable,keyColumn:string|undefined,panelsBy:string):
   const meanings=Object.fromEntries(panels.map(name=>{const m=table.columns?.[name];
     const text=m?.confirmed?(m.label?.trim()||m.description?.trim()||''):'';
     return [name,text?`${text}${m!.unit?.trim()?` (${m!.unit.trim()})`:''}`:''];}).filter(([,m])=>m));
-  return {field:'value',measure:'value',...(table.unit?{unit:table.unit}:{}),categoryTitle:column,
+  return {field:'value',measure:'value',...(table.unit?{unit:table.unit}:{}),categoryTitle:columnTitle(table,column),
     ...(Object.keys(meanings).length?{meanings}:{}),
-    caption:`${measured(table)} by ${column}, one panel per ${panelsBy}`
+    caption:`${measured(table)} by ${columnTitle(table,column)}, one panel per ${columnTitle(table,panelsBy)}`
       +(absent?` · ${absent} point${absent===1?'':'s'} with no value, left as gaps`:''),
     total:table.rows.length,panels,temporal,bins};
 }

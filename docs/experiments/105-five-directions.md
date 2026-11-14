@@ -224,6 +224,24 @@ three it is.
 
 Only the third is debt, and only the third needs a ceiling that may fall and never rise.
 
+## Above, 2026-11-14 · a core and its domain packs
+
+The practitioner, on the question recorded in [experiment 43](43-widget-packs.md) the same day (whether widgets should
+travel in packs with their worked examples, street network analytics and genomic epidemiology among them): *"From a DE
+perspective this is an important milestone in the conceptual framework for FW."*
+
+What the forest looks like from here: Fieldwork as a **core** every investigation uses (sources, tables, maps, charts,
+rules, the epidemiology every field team needs) and **domain packs** around it, each a set of widgets with the worked
+examples that exercise them and the lab checks that recompute them, switched on where a project needs them. Until now
+the framework grew one widget at a time into one list, 50 long; a pack is the first unit above the widget that is not a
+project. The question had been asked once, on 2026-10-08 (43), as a matter of trust and supply chain; this time it is
+asked as a matter of what the framework is.
+
+Designed in [215](215-domain-packs-of-widgets-and-examples.md), not decided: whether the existing street-network widgets move, what a pack widget may do inside the application, and
+whether packs are switched on per project. It is not entered in [directions.json](../directions.json), which holds
+settled directions with what each requires in code; it enters there when a design is chosen. The widget count, 50, is
+recorded, not argued from.
+
 ## What would close it
 
 The **forward prediction**, and only that: collapsing one private pipe and seeing whether the merge
@@ -275,3 +293,4 @@ changed this file; a date stamp sweep is not an update._
 | 2026-10-12 | Survey the inventory sideways, delete what it found, and check it stays deleted |
 | 2026-10-12 | A standard is a validated input, and vocabulary is the unratcheted basis |
 | 2026-10-12 | Withdraw fw:Carrier: no standard defines it and nothing consumed it |
+| 2026-11-14 | Above: a core and its domain packs, the practitioner's milestone in the conceptual framework (43) |

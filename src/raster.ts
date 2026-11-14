@@ -118,8 +118,25 @@ export function rasterOverhang(metadata:RasterMetadata,boundary:Boundary):{edge:
 export const overhangSentence=(o:ReturnType<typeof rasterOverhang>):string=>!o.length?''
   :`The study area reaches past this raster's ${o.map(e=>`${e.edge} edge by about ${e.km<1?`${Math.round(e.km*1000)} m`:`${e.km.toFixed(1)} km`}`).join(', ')}. `
     +`Those parts have no values here.`;
-export async function readRasterWindow(blob:RasterSource,metadata:RasterMetadata,window:[number,number,number,number]):Promise<{metadata:RasterMetadata;values:RasterValues}>{
-  const tiff=await openTiff(blob);try{const image=await tiff.getImage(),raw=await image.readRasters({window,samples:[0],interleave:true}),width=window[2]-window[0],height=window[3]-window[1],origin:[number,number]=[metadata.origin[0]+window[0]*metadata.resolution[0],metadata.origin[1]+window[1]*metadata.resolution[1]];
+/** `onProgress`, when given, is told the rows read so far and of how many: the window is then read in bands of whole
+ *  tiles, about twenty of them, so a person reading a country from a remote copy sees how far it has got (the
+ *  practitioner, 2026-11-14: "Can we add a progress bar to this?"). The cells are the same either way. */
+export async function readRasterWindow(blob:RasterSource,metadata:RasterMetadata,window:[number,number,number,number],
+  onProgress?:(rows:number,of:number)=>void):Promise<{metadata:RasterMetadata;values:RasterValues}>{
+  const tiff=await openTiff(blob);try{const image=await tiff.getImage(),width=window[2]-window[0],height=window[3]-window[1],origin:[number,number]=[metadata.origin[0]+window[0]*metadata.resolution[0],metadata.origin[1]+window[1]*metadata.resolution[1]];
+    let raw:ArrayLike<number>;
+    if(!onProgress)raw=await image.readRasters({window,samples:[0],interleave:true}) as unknown as ArrayLike<number>;
+    else{
+      const tile=Math.max(1,image.getTileHeight?.()||1),band=Math.max(tile,Math.ceil(height/20/tile)*tile);
+      const parts:ArrayLike<number>[]=[];onProgress(0,height);
+      for(let top=window[1];top<window[3];top+=band){
+        const part=await image.readRasters({window:[window[0],top,window[2],Math.min(window[3],top+band)],samples:[0],interleave:true}) as unknown as ArrayLike<number>;
+        parts.push(part);onProgress(Math.min(height,top+band-window[1]),height);
+      }
+      const Kind=(parts[0] as unknown as {constructor:new(n:number)=>{set(a:ArrayLike<number>,at:number):void}&ArrayLike<number>}).constructor;
+      const joined=new Kind(width*height);let at=0;for(const part of parts){joined.set(part,at);at+=part.length;}
+      raw=joined;
+    }
     const values=rasterValues(raw as ArrayLike<number>,metadata);
     check(values.length===width*height,'Raster window size mismatch.');return {metadata:{...metadata,width,height,origin,bounds:[origin[0],origin[1]+height*metadata.resolution[1],origin[0]+width*metadata.resolution[0],origin[1]]},values};
   }finally{await tiff.close();}

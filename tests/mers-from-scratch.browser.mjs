@@ -43,8 +43,11 @@ const run=async page=>{
 const label=async(page,id,text)=>{
   await page.locator('[data-view="workflow"]').click();
   await page.locator(`.react-flow__node[data-id="${id}"]`).click();
-  const box=page.locator('[data-standard-section="name"] input').first();
+  // A step on the standard Inspector names itself under Name; one not yet on it, under Node label.
+  const standard=page.locator('[data-standard-section="name"] input').first();
+  const box=await standard.count()?standard:page.locator('#inspector-content').getByLabel('Node label',{exact:true});
   await box.fill(text);await box.press('Enter');
+  if(!await standard.count())await page.getByRole('button',{name:'Apply label'}).click();
 };
 
 /** THE FILE'S OWN COUNTS, per verdict, as the ruleset defines them. */
@@ -432,9 +435,16 @@ test('MERS-CoV, South Korea, 2015: each case’s detection and notification agai
   await add(page,'chart_output');
   const weekChart=await idOf(page,'chart_output');
   await tidy(page);await wire(page,kdcaCounts[0].group,weekChart,'records');
-  // Run first: Configure… offers the columns that arrived.
+  // Run first: Configure… offers the columns that arrived, and Describe columns waits for a run.
   await run(page);
   await page.locator('[data-view="workflow"]').click();
+  // KDCA'S COLUMNS ARE IN KOREAN: the dictionary's short English labels, accepted, are shown beside them (2026-11-14).
+  await page.locator(`.react-flow__node[data-id="${cases185}"]`).click();
+  await page.locator('#describe-columns').click();
+  const described=page.locator('#columns-dialog');
+  await described.locator('#columns-accept-all').click();
+  await described.locator('#columns-save').click();
+  await expect(described).toHaveCount(0);
   await page.locator(`.react-flow__node[data-id="${weekChart}"]`).click();
   await page.locator('#configure-step').click();
   const wc=page.locator('#chart-config');
@@ -453,7 +463,11 @@ test('MERS-CoV, South Korea, 2015: each case’s detection and notification agai
     for(const [value,count] of Object.entries(tally))
       await expect(main.locator('tr',{has:page.locator('th,td',{hasText:new RegExp(`^${value}$`)})}).first()).toContainText(String(count));
   }
+  // EACH KOREAN HEADING WITH ITS ENGLISH LABEL BENEATH, from the dictionary as accepted.
+  await page.getByRole('tab',{name:/Cases by week of report$/}).click();
+  await expect(page.locator('main').first().locator('th .column-label').first()).toHaveText('Week of report');
   await page.getByRole('tab',{name:'Cases by week of report, as bars'}).click();
+  await expect(page.locator('main').first()).toContainText('신고 주차 (Week of report)',{timeout:15000});
   await page.screenshot({path:'test-results/mers-kdca.png',fullPage:true});
 
   // THE OUTBREAK AS ONE EVENT, against 7-1-7 (the practitioner, 2026-11-13: "Show all three"). Emergence is the index
@@ -497,10 +511,115 @@ test('MERS-CoV, South Korea, 2015: each case’s detection and notification agai
   }
   await page.screenshot({path:'test-results/mers-event.png',fullPage:true});
 
+  {
+  // MORE OF THE EPIDEMIOLOGY (the practitioner, 2026-11-14: "For MERS if there are any more epi computations that can be
+  // included let's do that"). Each from the files, by steps a practitioner can add, the expected numbers computed here.
+  const parse=(path)=>{const [head,...lines]=readFileSync(path,'utf8').trim().split(/\r?\n/);const cols=head.split(',').map(c=>c.replace(/"/g,''));
+    return lines.map(line=>Object.fromEntries(line.match(/("([^"]*)"|[^,]*)(,|$)/g).slice(0,cols.length).map((v,i)=>[cols[i],v.replace(/,$/,'').replace(/^"|"$/g,'')])));};
+  const lineCases=parse(LIST),contactLinks=parse(CONTACTS);
+  let groups=0,outputs=0;
+  const newWorkflow=async name=>{groups=0;outputs=0;await page.locator('[data-view="project"]').click();await page.locator('#add-workflow').click();
+    await page.locator('[data-view="project"]').click();await page.locator('#workflow-name-edit').fill(name);await page.locator('#workflow-name-edit').press('Enter');};
+  const importTable=async(path,value,keys,name)=>{await add(page,'table_input');const id=await idOf(page,'table_input');
+    await page.locator('#configure-step').click();await page.locator('#table-file').setInputFiles(path);await columnsOffered(page);
+    await page.locator('#table-shape').selectOption('long');await page.locator('#table-value').selectOption(value);
+    await keepColumns(page,'table-keys',keys);await page.locator('#table-save').click();await label(page,id,name);return id;};
+  const grouped=async(from,by,aggregate,title,{share,exclude,total}={})=>{
+    await add(page,'group_table');const g=await idOf(page,'group_table',groups++);
+    await tidy(page);await wire(page,from,g,'records');
+    await page.locator(`.react-flow__node[data-id="${g}"]`).click();await page.locator('#configure-step').click();
+    const d=page.locator('#group-config');
+    for(const c of by)await d.locator(`[data-group-by="${c}"]`).check();
+    await d.locator('#group-aggregate').selectOption(aggregate);
+    if(total)await d.locator('#group-total').selectOption(total);
+    if(exclude)await d.locator('#group-exclude-missing').check();
+    if(share){await d.locator('#group-share').check();for(const w of share)await d.locator(`[data-group-within="${w}"]`).check();}
+    await d.locator('#config-apply').click();await label(page,g,title);
+    await add(page,'table_output');const o=await idOf(page,'table_output',outputs++);
+    await tidy(page);await wire(page,g,o,'table');await label(page,o,title);return g;};
+  const tab=async title=>{await page.locator('[data-view="results"]').click();await page.getByRole('tab',{name:new RegExp(`${title}$`)}).click();return page.locator('main').first();};
+
+  // 6. HOW DEADLY, AND FOR WHOM: deaths as a share of cases by age class; the line list's sexes in a two-by-two.
+  await newWorkflow('How deadly was it, and for whom?');
+  const deadly=await importTable(LIST,'age',['id','age_class','sex','outcome'],'The line list: age, sex and outcome');
+  await grouped(deadly,['age_class','outcome'],'count','Died or survived, by age class',{share:['age_class']});
+  const bySex=await grouped(deadly,['sex','outcome'],'count','Died or survived, by sex');
+  await add(page,'two_by_two');const tbt=await idOf(page,'two_by_two');
+  await tidy(page);await wire(page,bySex,tbt,'records');
+  await run(page);
+  await page.locator('[data-view="workflow"]').click();await page.locator(`.react-flow__node[data-id="${tbt}"]`).click();
+  await page.locator('#configure-step').click();
+  const map=page.locator('#two-by-two-config');
+  for(const [key,value] of [['exposureColumn','sex'],['exposed','M'],['unexposed','F'],['outcomeColumn','outcome'],['caseValue','Dead'],['nonCaseValue','Alive']])
+    await map.locator(`[data-mapping="${key}"]`).selectOption(value);
+  await expect(map.locator('.map-cell').first()).toContainText('14');
+  await map.locator('#config-apply').click();
+  await label(page,tbt,'Death by sex, a two-by-two');
+  await add(page,'table_output');const tbtShown=await idOf(page,'table_output',outputs++);
+  await tidy(page);await wire(page,tbt,tbtShown,'table');await label(page,tbtShown,'Death by sex, a two-by-two');
+  await run(page);
+  const died=lineCases.filter(c=>c.outcome==='Dead').length;
+  const cls=await tab('Died or survived, by age class');
+  for(const age of ['70-79','80-89']){const n=lineCases.filter(c=>c.age_class===age).length,d=lineCases.filter(c=>c.age_class===age&&c.outcome==='Dead').length;
+    if(d)await expect(cls.locator('tr',{hasText:age}).filter({hasText:'Dead'}).first()).toContainText(String(Math.round(1000*d/n)/10));}
+  const two=await tab('Death by sex, a two-by-two');
+  await expect(two).toContainText(String(lineCases.filter(c=>c.sex==='M'&&c.outcome==='Dead').length));
+  await page.screenshot({path:'test-results/mers-deadly.png',fullPage:true});
+  expect(died).toBe(19);
+
+  // 7. HOW LONG: exposure to onset (the incubation period, where the line list gives the last day of exposure) and onset
+  // to death, each a column computed for every case, their medians, and the incubation period's distribution.
+  await newWorkflow('How long from exposure to onset, and from onset to death?');
+  const timed=await importTable(LIST,'age',['id','outcome','dt_end_exp','dt_onset','dt_death'],'The line list: the dates');
+  await add(page,'apply_ruleset');const rules=await idOf(page,'apply_ruleset');
+  await page.locator(`.react-flow__node[data-id="${rules}"]`).click();await page.locator('#configure-step').click();
+  await page.locator('#ruleset-config #ruleset-choice').selectOption('authored');
+  await page.locator('#ruleset-config #config-apply').click();
+  await page.locator('#rule-editor #ruleset-records').selectOption('table');
+  await page.locator('#rule-editor #config-apply').click();await expect(page.locator('#rule-editor')).toBeHidden();
+  await tidy(page);await wire(page,timed,rules,'subjects');
+  await page.locator(`.react-flow__node[data-id="${rules}"]`).click();await page.locator('#configure-step').click();
+  const editor=page.locator('#rule-editor');await expect(editor).toBeVisible();
+  await editor.locator('[aria-label="Unit for age"]').fill('years');await editor.locator('[aria-label="Unit for age"]').press('Tab');
+  for(const c of ['dt_end_exp','dt_onset','dt_death'])await editor.locator(`[aria-label="Kind of ${c}"]`).selectOption('date');
+  const set=async(rule,part,value)=>{const el=editor.locator(`[data-rule="${rule}"][data-part="${part}"]`);
+    if(await el.evaluate(e=>e.tagName)==='SELECT')await el.selectOption(value);else{await el.fill(value);await el.press('Tab');}};
+  for(const [i,[column,later,earlier]] of [['incubation_days','dt_onset','dt_end_exp'],['onset_to_death_days','dt_death','dt_onset']].entries()){
+    await editor.locator('#rule-editor-add-every').click();
+    await set(i,'column',column);await set(i,'left-source',{label:later});await set(i,'operator','minus');await set(i,'right-source',{label:earlier});}
+  await editor.locator('#config-apply').click();
+  await label(page,rules,'Days from exposure to onset, and onset to death');
+  const days=(a,b)=>a&&b?(Date.parse(b)-Date.parse(a))/86_400_000:null;
+  const median=v=>{const s=[...v].sort((a,b)=>a-b),m=s.length>>1;return s.length%2?s[m]:(s[m-1]+s[m])/2;};
+  const incubation=lineCases.map(c=>days(c.dt_end_exp,c.dt_onset)).filter(v=>v!==null);
+  await grouped(rules,['outcome'],'median','Median days from exposure to onset, by outcome',{exclude:true,total:'incubation_days'});
+  await grouped(rules,['incubation_days'],'count','Cases by days from exposure to onset');
+  await run(page);
+  const med=await tab('Median days from exposure to onset, by outcome');
+  const alive=median(lineCases.filter(c=>c.outcome==='Alive').map(c=>days(c.dt_end_exp,c.dt_onset)).filter(v=>v!==null));
+  await expect(med.locator('tr',{hasText:'Alive'}).first()).toContainText(String(alive));
+  expect(incubation.length).toBeGreaterThan(100);
+  await page.screenshot({path:'test-results/mers-how-long.png',fullPage:true});
+
+  // 8. WHO SPREAD IT, AND HOW FAST: each source's links and their share of all; the serial interval's median by setting.
+  await newWorkflow('Who spread it, and how fast?');
+  const spread=await importTable(CONTACTS,'diff_dt_onset',['from','to','exposure'],'The 98 probable links');
+  await grouped(spread,['from'],'count','Secondary cases per source',{share:[]});
+  await grouped(spread,['exposure'],'median','Median days between onsets, by setting',{exclude:true});
+  await run(page);
+  const per=await tab('Secondary cases per source');
+  const top=Object.entries(contactLinks.reduce((m,l)=>{m[l.from]=(m[l.from]??0)+1;return m;},{})).sort((a,b)=>b[1]-a[1])[0];
+  await expect(per.locator('tr',{hasText:top[0]}).first()).toContainText(String(top[1]));
+  const si=await tab('Median days between onsets, by setting');
+  const er=contactLinks.filter(l=>l.exposure==='Emergency room'&&l.diff_dt_onset!=='').map(l=>Number(l.diff_dt_onset));
+  await expect(si.locator('tr',{hasText:'Emergency room'}).first()).toContainText(String(median(er)));
+  await page.screenshot({path:'test-results/mers-spread.png',fullPage:true});
+
+  }
   await page.locator('[data-view="project"]').click();
   await page.locator('#storage-status').click();
   const block=page.locator('.project-view-block').filter({hasText:'MERS-CoV, South Korea, 2015'}).first();
-  await expect(block).toContainText('5 workflows');
+  await expect(block).toContainText('8 workflows');
   if(process.env.MERS_EXPORT){
     const download=page.waitForEvent('download');
     await block.locator('button[data-export-project]').click();

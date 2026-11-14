@@ -68,6 +68,8 @@ export interface ObservationParams extends PointParams {
   /** Read from a connected table at run time: x (longitude) and y (latitude) columns, CRS84. Experiment 178. */
   fromTable?:import('./table-points.js').TableMapping;
   fields?:FormField[]; attributeRules?:AttributeDefinition[]; sourceInfo?:SourceInfo; pinIdStrategy?:'uuid'|'sequential'; repairs?:ColumnRepair[];
+  /** Values edited by hand in Data quality (experiment 214), applied after the repairs, to a copy. */
+  edits?:import('./cell-edits.js').EditEntry[];
   /** What the records' columns mean, their scale and codes, and the data dictionary they came with: as Tabular data's
    *  (experiments 172, 211). Hagelloch's `class` is read here, which is why Point data has them too. */
   columns?:import('./column-metadata.js').ColumnDeclarations;
@@ -183,6 +185,8 @@ export interface ParamsByType {
   aggregate_points_to_h3_cell:{label:string;resolution:number;minOccupancy:number};
   buffer_area:{label:string;distanceM:number};
   table_input:{provenance?:import('./input-provenance.js').InputProvenance;label:string;
+    /** Values edited by hand in Data quality (experiment 214), applied to a copy when the rows are handed on. */
+    edits?:import('./cell-edits.js').EditEntry[];
     /** Where the table is fetched from, kept in place of its rows when the project leaves the device. Experiment 170. */
     remote?:import('./remote-table.js').RemoteTableSource;
     keys:string[];valueField:string;unit?:string;data:import('./data-table.js').DataTable;dataRef?:string;source?:import('./data-table.js').DataTableSource;
@@ -392,7 +396,9 @@ export interface ParamsByType {
      *  zeroing — see `GroupRequest` for why those are different claims. */
     excludeMissing?:boolean;
     /** Each group's share of a total, %, within the kept columns named (experiment 191). */
-    share?:{within:string[]}};
+    share?:{within:string[]};
+    /** The column summarised, when not the table's value column: a key column of numbers. */
+    total?:string};
   two_by_two:{label:string;exposureColumn:string;exposed:string;unexposed:string;outcomeColumn:string;caseValue:string;nonCaseValue:string;level:90|95|99;
     /** Each row is one subject, so a cell is how many rows agree. See `TwoByTwoRequest`. */
     rowsAreSubjects?:boolean;

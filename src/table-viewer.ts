@@ -1,3 +1,4 @@
+import {editedTitle} from './cell-edits.js';
 /** A table, at a width you can actually read it.
  *
  *  The practitioner, 2026-10-16: *"For tabular data, I should have a quick look button to browse
@@ -20,6 +21,8 @@ export interface TableView {
   /** Column names, in the order they should be read. */
   columns:string[];
   rows:Record<string,unknown>[];
+  /** Cells edited by hand, by row (experiment 214): marked, with what they were on hover. */
+  edited?:Map<Record<string,unknown>,import('./cell-edits.js').EditedCells>;
   /** One line under the title: what this table is keyed by, what it measures, in what unit. */
   note?:string;
   /** What a ruleset has declared each column to be, where anything has. A column nobody has
@@ -163,8 +166,9 @@ export function openTableViewer(view:TableView,esc:Escape):void{
               +`</th>`;
           }).join('')+`</tr></thead><tbody>`
           +shown.map((row,i)=>`<tr${view.excluded?.rows.has(row)?' class="row-excluded" data-row-excluded':''}><td>${i+1}</td>`
-            +view.columns.map(c=>{const classes=[mismatches(c,row[c])?'cell-mismatch':'',view.roles?.[c]?`column-role-${view.roles[c]}`:''].filter(Boolean);
-              return `<td${classes.length?` class="${classes.join(' ')}"`:''}>${cell(row[c])}</td>`;}).join('')+`</tr>`).join('')
+            +view.columns.map(c=>{const was=view.edited?.get(row)?.[c];
+              const classes=[mismatches(c,row[c])?'cell-mismatch':'',view.roles?.[c]?`column-role-${view.roles[c]}`:'',was?'cell-edited':''].filter(Boolean);
+              return `<td${classes.length?` class="${classes.join(' ')}"`:''}${was?` data-cell-edited title="${esc(editedTitle(was))}"`:''}>${cell(row[c])}</td>`;}).join('')+`</tr>`).join('')
           +`</tbody></table></div>`
         :`<div class="notice">No row matches that filter.</div>`)
       +`</div>`;
@@ -230,8 +234,11 @@ export function tableViewOf(
         +(frame.attributes.length?`, with ${frame.attributes.join(' and ')}`:'')
         +`, and ${frame.columns.length} variable${frame.columns.length===1?'':'s'} in ${unit}. `
         +`${data.rowCount} values in all.`};
+  const edited=new Map<Record<string,unknown>,import('./cell-edits.js').EditedCells>();
   return {title,columns:[...data.keys,data.valueField],
-    rows:data.rows.map(row=>({...row.key,[data.valueField]:row.value})),
+    rows:data.rows.map(row=>{const r={...row.key,[data.valueField]:row.value} as Record<string,unknown>;
+      const e=(row as {edited?:import('./cell-edits.js').EditedCells}).edited;if(e)edited.set(r,e);return r;}),
+    ...(edited.size?{edited}:{}),
     note:`Keyed by ${data.keys.join(', ')}. One value column, ${data.valueField}, `
       +`in ${unit}. ${data.rowCount} rows in all.`};
 }

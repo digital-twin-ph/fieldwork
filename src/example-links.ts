@@ -39,7 +39,7 @@ export function builtInLinks(project:{id:string;name:string;workflows:readonly s
 /** The block the write-up shows: per example, two codes, each with its address printed beneath it. */
 export function exampleLinksBlock(links:readonly ExampleLinks[],esc:(s:string)=>string):string{
   if(!links.length)return '';
-  const card=(href:string,label:string)=>`<figure class="example-qr">${qrSvg(href,150,`QR code: ${label}`)}`
+  const card=(href:string,label:string)=>`<figure class="example-qr">${qrSvg(href,150,`QR code: ${label}`,true)}`
     +`<figcaption><strong>${esc(label)}</strong><br><a href="${esc(href)}">${esc(href)}</a></figcaption></figure>`;
   return `<section class="example-links" aria-label="This worked example, online"><h4>This worked example, online</h4>`
     +links.map(l=>`<p class="muted">${esc(l.title)}</p><div class="example-qr-pair">`

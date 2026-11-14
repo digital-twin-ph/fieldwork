@@ -432,3 +432,25 @@ changed this file; a date stamp sweep is not an update._
 | 2026-10-08 | Record what the exercise taught, and correct the claim that installation was impossible |
 | 2026-10-10 | Treat the project as developmental evaluation, and move the audits into docs/audits |
 | 2026-10-10 | Define extraction by its purpose, not by a size the data no longer has |
+
+## Asked again, 2026-11-14: packs around case studies, and widgets that already exist
+
+The practitioner, after two future case studies were recorded (road traffic injuries on a street network, and
+genomic epidemiology): *"I am beginning to wonder revisiting the idea that even widgets can be packaged with their
+worked examples this time since road traffic injuries or more generic specialized widget packages like street network
+analytics, genomic epidemiology analytics."* Then: *"So for John Snow isochrones, we need the street network analytics
+pack if we move the currently street network related widgets to the SNA (street network analytics) pack?"*
+
+Not decided here: the design is [215](215-domain-packs-of-widgets-and-examples.md), the practitioner choosing a new
+experiment built on this one. What this record already settles, and what it does not:
+
+| Already here | Not yet asked until now |
+| --- | --- |
+| A pack may ship widget code, installed at build time at a pinned commit (the 2026-10-09 correction) | Moving widgets that exist into a pack: Street network, Isochrone, Snap sites to the network, Reachable junctions, Travel time band, Reachable corridor |
+| Curated by this project; three reviews; withdrawal | A pack switched on per project, so its widgets show only where it is used |
+| Worked examples are part of the pack | A pack shaped around a case study, its widgets and examples versioned together |
+| | What a pack widget may do inside the application, which widgets today do not need to say: they are branches of the run in `src/core.ts` |
+
+Found while answering, 2026-11-14: of those six widgets, only Street network and Isochrone are used by any worked
+example, both by Snow's *who lived within a walk of the pump?*; the other four by none. Moved, Snow's London project
+would declare the pack and switch it on when opened; nothing would be fetched while running.

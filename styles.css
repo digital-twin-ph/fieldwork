@@ -1190,10 +1190,12 @@ i.bar-zero{position:absolute;top:0;bottom:0;width:1px;background:var(--ink,#2b2b
 #run-progress span{color:var(--muted)}
 .run-progress-bar{margin-top:6px;height:6px;width:240px;border-radius:3px;background:var(--line);overflow:hidden}
 .run-progress-bar>div{height:100%;background:var(--accent,#176b59);transition:width .4s ease}
+.config-progress{margin-top:8px;height:12px;width:100%;border-radius:6px;background:var(--line);overflow:hidden;border:1px solid var(--muted,#6b7280)}
+.config-progress>div{height:100%;background:var(--accent,#176b59);transition:width .3s ease}
 .run-progress-spinner{flex:none;width:22px;height:22px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--accent,#176b59);animation:run-spin 0.9s linear infinite}
 .run-spin{display:inline-block;animation:run-spin 1.2s linear infinite}
 @keyframes run-spin{to{transform:rotate(360deg)}}
-@media (prefers-reduced-motion:reduce){.run-progress-spinner,.run-spin{animation:none}.run-progress-bar>div{transition:none}}
+@media (prefers-reduced-motion:reduce){.run-progress-spinner,.run-spin{animation:none}.run-progress-bar>div,.config-progress>div{transition:none}}
 
 /* Lab evaluation (experiment 184): hidden unless switched on in Help. */
 body:not(.lab-evaluation) .lab-only{display:none!important}
@@ -1346,3 +1348,29 @@ select.rule-op.rule-op-compare,select.rule-op.rule-op-equal,select.rule-op.rule-
 .map-panels-key{display:flex;flex-wrap:wrap;gap:.35rem .9rem;align-items:center;margin:.25rem 0 .5rem}
 .map-panels-key i{display:inline-block;width:16px;height:12px;border:1px solid #4d4d4d;margin-right:.3rem;vertical-align:-1px}
 .raster-panel-map{height:340px}
+.quality-records{overflow:auto;max-height:60vh;border:1px solid var(--line);border-radius:6px}
+.quality-records table{border-collapse:collapse;font-size:14px}
+.quality-records th,.quality-records td{border-bottom:1px solid var(--line);padding:2px 4px;text-align:left;white-space:nowrap}
+.quality-records thead th{position:sticky;top:0;background:var(--surface,#fff)}
+.quality-records input{font:inherit;min-width:8ch;width:100%;border:1px solid transparent;background:transparent;color:inherit;padding:2px 4px}
+.quality-records input:focus{border-color:var(--accent,#176b59);outline:none}
+.quality-records td.is-edited input{background:rgba(213,94,0,.12)}
+.quality-records-nav{display:flex;gap:.6rem;align-items:center;margin:.4rem 0}
+.quality-edits li{margin:.25rem 0}
+.manual-playback{position:fixed;right:24px;bottom:24px;z-index:60;width:min(440px,92vw);background:var(--surface,#fff);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:16px 18px;box-shadow:0 8px 28px rgba(0,0,0,.22)}
+.manual-playback-step{font-size:16px;line-height:1.5}
+/* A CELL EDITED BY HAND (experiment 214): a tint and a corner mark, so it is not told by colour alone. */
+td.cell-edited{background:rgba(213,94,0,.14);position:relative}
+td.cell-edited::after{content:"";position:absolute;top:0;right:0;border-style:solid;border-width:0 7px 7px 0;border-color:transparent #D55E00 transparent transparent}
+
+/* A column's confirmed label, beneath its own name in a table heading (2026-11-14). */
+th .column-label{display:block;font-weight:400;color:var(--muted);font-size:14px}
+/* A widget's manual page, detached: over the canvas, top left, clear of the Inspector and above a worked example's manual (2026-11-14). */
+.widget-manual-float{left:246px;top:96px;bottom:auto;height:min(42vh,520px)}
+@media (max-width:900px){.widget-manual-float{left:16px;right:auto}}
+.widget-manual-float .manual-float-body{font-size:16px;line-height:1.55}
+/* A project's Widgets tab (2026-11-14): each widget, its manual, and the workflows that use it. */
+.widgets-view{padding:16px 18px;overflow:auto;font-size:16px}
+.widgets-view .project-widgets th[scope="row"]{white-space:nowrap;vertical-align:top}
+.widgets-view .widget-use{padding:2px 0}
+.widgets-view .widget-use .text-button{font-size:16px}

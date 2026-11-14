@@ -1,8 +1,8 @@
 # 206 · Syndromic surveillance: detecting an aberration in a count over time
 
-_Created 2026-11-11 · Updated 2026-11-12_
+_Created 2026-11-11 · Updated 2026-11-14_
 
-**Status:** asked. An analysis the practitioner brought on 2026-11-11, checked here against the palette as it stands;
+**Status:** asked; first methods chosen 2026-11-14. An analysis the practitioner brought on 2026-11-11, checked here against the palette as it stands;
 nothing built, and nothing placed in the order of work yet.
 
 ## The question
@@ -78,6 +78,20 @@ needs one small, general addition, a starting value for a previous-row read (for
 `{field, previous:true, otherwise:0}`), stated on the rule and said in the receipt. Whether a condition can read a
 value computed in the same step (the floor at zero is two conditional rules, there being no *max*) is still unchecked,
 because nothing reached it. EARS still needs a window (F).
+
+## Decided 2026-11-14
+
+The practitioner: *"NYC will be test bed and build CUSUM and EWMA first. And we may need to pick which types of charts we
+can use."* So option E first: a starting value for a previous-row read, which is all the 2026-11-11 check found
+missing, and CUSUM and EWMA written as declared rules over the New York example's ten years of daily visits. Which
+charts show an aberration was the practitioner's choice, made the same day: all four offered.
+
+| Chart | What it shows |
+| --- | --- |
+| Counts with alert days | daily visits, the expected value, the threshold as a band, flagged days marked |
+| CUSUM statistic | the running CUSUM against its decision line h |
+| EWMA with control limits | the smoothed value between its upper and lower limits |
+| Table of alert days | each flagged day: date, count, expected, threshold, the method that flagged it |
 
 ## Distinctions, and how each would be enforced
 

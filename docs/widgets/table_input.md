@@ -1,6 +1,6 @@
 # Tabular data
 
-_Created 2026-11-02 · Updated 2026-11-13_
+_Created 2026-11-02 · Updated 2026-11-14_
 
 **A source.** It reads a CSV, Excel or Stata file into a table.
 
@@ -121,6 +121,18 @@ A file with no rows, too many rows or a missing column is still refused, because
 long and offers to read it so. Usually it is. But a wide file can repeat a subject because the source has a fault,
 and the Brazil dengue file has one week twice for every municipality. Read as wide anyway, every row is kept and
 each repeat is a finding in Data quality.
+
+## Editing a value by hand
+
+**Data quality**'s **Records** tab shows the records as the steps after this one read them, a page at a time, each value
+in a box. Change a value and leave the box: it is kept as an **edit** on this step, with the value it replaced and when,
+and the run applies it to a copy of the records. The file is not changed. An empty value can be filled the same way; such
+edits are counted apart, because a supplied value is not a reading. **Edits (n)** lists every edit, newest first, each
+with **Remove**, which takes it back.
+
+An edit is applied only where the record still holds the value it was made against. If the data has changed under it,
+after a new import, the edit is not applied and Data quality says so. The run's record states each edit, before and
+after (`fw:CellEdit`). Experiment 214.
 
 ## What it will not do
 

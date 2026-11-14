@@ -1,6 +1,6 @@
 # 117 — Data quality: what a file will not tell you, and what to do about it
 
-_Created 2026-10-16 · Updated 2026-11-02_
+_Created 2026-10-16 · Updated 2026-11-14_
 
 **Status:** tried — a **data quality dialog per input widget** profiles every column, offers one
 repair and takes it back, and the rest of the scope below is open. The practitioner, 2026-10-16: *"We should also offer
@@ -385,6 +385,13 @@ would otherwise reach for the same wrong conclusion.
    only fetched.
 
 ## What changed our minds
+
+**2026-11-13, an empty cell may be filled by hand.** The practitioner, asked whether inline editing (experiment
+[214](214-editing-a-table-inline.md)) may type a value into an empty cell: *"Yes, like any edit."* The reasoning above
+stands for repairs: no repair fills missing values, because which value is right is the practitioner's to know and not
+the application's to choose. An edit is that: a person stating a value. So it is allowed, and it is recorded as an edit
+whose value read was *not recorded*, counted apart in the edit log and the run, so the evidence still says how many
+values were supplied rather than read.
 
 The repair was going to be an automatic cast at import — the plan recorded as option (a) when
 the practitioner asked how a CSV distinguishes absent from unreadable. Writing it down against

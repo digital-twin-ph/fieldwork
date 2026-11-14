@@ -15,6 +15,9 @@ shown in a local build is not a claim that it has been published.
 - **A figure can be left out of the write-up.** Map, Table and Chart offer "Not in the write-up" beside the four
   sections: the figure stays in Results and no note is written for it. Hagelloch's day-by-day map is left out this way.
   Map 0.30.0, Table 0.11.0, Chart 0.22.0.
+- **Rasters side by side are in Notes.** Rwanda's and Botswana's maps of each source's cells showed only the district
+  outlines in Notes: the cells are drawn now, on one scale, as in Results. And a map's note names every raster and
+  polygon layer wired to it, not only the first. Map 0.30.1.
 
 ## 0.116.0 — 2026-11-14
 

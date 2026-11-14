@@ -128,5 +128,9 @@ test('Rwanda’s workflow opens from the example, its windows read again and che
   // The project's notes, as written.
   await page.locator('[data-view="notes"]').click();
   await expect(page.locator('#notes-view')).toContainText('the share of the country\u2019s people the model places in a different district');
+  // THE CELLS, not only the districts they sit in (2026-11-14: Botswana's side-by-side map showed outlines alone in Notes).
+  const sideBySide=page.locator('#notes-view .notes-note',{hasText:'Each source\u2019s cells, side by side'}).first();
+  await expect(sideBySide.locator('svg image').first()).toBeAttached({timeout:30000});
+  expect(await sideBySide.locator('svg image').count()).toBeGreaterThan(1);
   expect(errors).toEqual([]);
 });

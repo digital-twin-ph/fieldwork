@@ -1,0 +1,121 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:map_output",
+ "version": "0.30.1",
+ "nodeType": "map_output",
+ "title": "Map",
+ "released": "2026-11-14",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['map_output']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "shaclShapes": [],
+  "validationStatus": "application-only"
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "area",
+    "type": "area"
+   },
+   {
+    "name": "points",
+    "type": "points"
+   },
+   {
+    "name": "polygons",
+    "type": "polygons"
+   },
+   {
+    "name": "context",
+    "type": "points"
+   },
+   {
+    "name": "raster",
+    "type": "raster"
+   },
+   {
+    "name": "ground",
+    "type": "ground"
+   },
+   {
+    "name": "network",
+    "type": "network"
+   }
+  ],
+  "output": null,
+  "dynamicInputs": {
+   "kind": "point-layers",
+   "minimum": 1,
+   "maximum": 8,
+   "implementation": "src/core.ts#nodeInputs"
+  },
+  "note": "Every layer port, on every map, whatever its parameters say. The ports used to vary with an inputMode parameter -- reasoningInput, rasterInput, polygonInput, networkInput were four separate declarations of that -- so the port a connection needed might not exist on the node. Which renderer draws is now read from what is wired: src/core.ts#drawnMode."
+ },
+ "ontology": {
+  "status": "partial",
+  "mappings": [
+   {
+    "role": "activity",
+    "iri": "urn:fieldwork:MapView",
+    "file": "ontology/fieldwork.ttl"
+   },
+   {
+    "role": "configuration",
+    "iri": "urn:fieldwork:MapSpecification",
+    "file": "ontology/fieldwork.ttl"
+   }
+  ],
+  "note": "Map presentation plan and MapView activity are implemented; broader map artifact and cartographic contracts remain open. 0.11.0 declared fw:MapSpecification and the fifteen encoding properties here. That was wrong: emits records what the module named in implementation.definition asserts, and this widget is defined in src/core.ts#TYPES, which asserts nothing. The encoding terms are asserted by src/map-communication.ts and are gated by validate:ontology-coupling, which holds at zero undeclared. A release file is immutable, so 0.11.0 keeps the over-declaration and this one corrects it.",
+  "emits": {
+   "classes": [],
+   "properties": []
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/app.ts",
+   "src/artifact-notes.ts",
+   "src/catchment-map.ts",
+   "src/catchment-output.ts",
+   "src/core.ts",
+   "src/map-communication.ts",
+   "src/map-links.ts",
+   "src/map-output.ts",
+   "src/notes.ts",
+   "src/presentation.ts",
+   "src/static-map.ts",
+   "src/point-layers.ts",
+   "src/polygon-layers.ts",
+   "src/raster-panels.ts",
+   "src/raster-image.ts",
+   "src/publication.ts",
+   "src/map-layer-list.ts"
+  ],
+  "definition": "src/core.ts#TYPES"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [
+   {
+    "nodeType": "output",
+    "adapterVersion": "1",
+    "implementation": "src/output-contract.ts#migrateOutputNodes"
+   }
+  ],
+  "replacementCandidate": null
+ },
+ "changes": [
+  {
+   "kind": "patch",
+   "description": "Rasters side by side are drawn in Notes as in Results, cells and all: the districts they sit in had been drawn alone. Every raster and polygon layer wired to a map is in its layer list and its note, not only the first."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Repository regression coverage exists; this release entry does not certify a widget independently. The self-description added in 0.17.0 is covered by tests/artifact-notes.test.mjs (13 unit checks, including that nothing machined numbers its own artifact or calls itself a caption, that an unnamed artifact is left unnamed rather than titled, and that a unit is stated once) and by tests/equation-notes.browser.mjs over the South London example on Chromium and WebKit. Both were mutation-checked by reintroducing the behaviour they forbid. 0.21.1: tests/value-classes.test.mjs checks that 98 parts of 16 units give the 16 units' breaks, with no equal breaks and no empty class, and that two units sharing a name still count twice. 0.22.0: tests/map-links.test.mjs (4 unit checks: Hagelloch's 188 records as 94 drawn, 90 at one place and 4 naming nothing; every outcome counted exactly once; lines stopped short of the mark and hidden with their layer; the receipt's facts) and tests/map-links.browser.mjs and tests/hagelloch-chains-example.browser.mjs on Chromium. 0.23.0: tests/map-links.test.mjs checks each of Hagelloch's 94 lines carries the tree's generation and its colour; tests/map-links.browser.mjs checks the preview draws 188 marks and follows the radius before Apply, PMTiles in Configure… and the key by generation; tests/hagelloch-cluster-example.browser.mjs checks the replay plays, 32 cases on 21 November; tests/tile-import.browser.mjs checks the import from Configure…. Chromium. 0.23.1: tests/static-basemap.browser.mjs, basemap-reach, interactive-any-map, openfreemap-basemap and map-links repeated four times each on Chromium (48 of 48) and once on WebKit with tests/hagelloch-cluster-example.browser.mjs (13 of 13). 0.23.2: tests/hagelloch-cluster-example.browser.mjs (the key is shown beside the playback). 0.24.0: tests/map-config-groups.browser.mjs, tests/map-controls-contrast.browser.mjs (every map control at 4.5:1, light and dark), and the basemap, catchment and figure-section tests updated to the default. 0.27.0: tests/proportional-symbols.test.mjs (area in proportion; each layer its own largest value) and tests/snow-spot-map.browser.mjs (the key names DEATHS, 1 to 15); Chromium. 0.27.1: tests/snow-spot-map.browser.mjs (the pumps moved under the deaths and back in Manage layers, the marks redrawn in each order without a run); Chromium. tests/mers-from-scratch.browser.mjs (the hospitals, Point data from a table, sized by cases in Configure…); Chromium. tests/catchments.browser.mjs (a pump clicked over the deaths). 0.27.2: tests/snow-spot-map.browser.mjs, tests/map-*.browser.mjs and the figure tests; Chromium. 0.27.3: tsc; the existing map and catchment browser tests in the gate; Chromium. 0.28.0: tests/layer-symbols.test.mjs (one size, class colours, highest last, no value neutral); tests/mers-from-scratch.browser.mjs (MERS hospitals coloured by cases: Size by cleared, every mark one size, key \"coloured by cases: 1 (4)\"); Chromium. 0.28.1: Botswana's districts by hand, Chromium. 0.28.2: Botswana's districts by hand; tests/catchments.browser.mjs and tests/map-output.browser.mjs; Chromium. 0.29.0: tests/polygon-layers.test.mjs; tests/map-panels.browser.mjs; tests/population-example-opens.browser.mjs (Rwanda's four shares two by two, Gasabo one shade in three panels, the interactive panels moving together); tests/recreate-from-scratch.browser.mjs; tests/raster-panels.test.mjs and the population example's cells, static and interactive; Chromium. 0.29.1: tests/mers-from-scratch.browser.mjs (more than one class drawn); tests/raster-panels.test.mjs; tests/population-example-opens.browser.mjs (three outlines, static and interactive); Chromium. 0.29.2: tests/notes-*.browser.mjs and every browser test reading #map or Notes (134 passed); Chromium. 0.30.0: Experiment 202, the publication render; the practitioner, 2026-11-14, of Hagelloch's daily-scan map: \"we can leave it out of the notes\". tests/write-up-shapes.test.mjs, tests/publication.test.mjs. 0.30.1: The practitioner, 2026-11-14, of Botswana's side-by-side map in Notes: \"I am not sure why this map looks like this and what it's supposed to show.\" tests/map-layers.test.mjs; tests/population-example-opens.browser.mjs."
+ }
+}

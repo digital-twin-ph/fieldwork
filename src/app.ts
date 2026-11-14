@@ -6582,6 +6582,17 @@ async function drawStaticFigure(svg:SVGSVGElement,result:Output,mapNode:Workflow
   const hidden=o.hidden??new Set<string>();
   const ground=(frame:{bounds:[number,number,number,number];project:(c:Position)=>[number,number]})=>
     drawStaticBasemap(result,svg,frame,o.offPage?{workflow:o.offPage.workflow,hidden}:undefined);
+  // GRID CELLS IN PANELS (experiment 212): the static figure, every panel on one scale. FIRST, because the panels carry
+  // the areas they are drawn within as polygons too, and the polygon branch drew those alone: Botswana's districts and
+  // no cells in Notes (2026-11-14).
+  if(rasterPanels?.length){
+    const breaks=(result as unknown as {densityBreaks:number[]}).densityBreaks;
+    const order=arranged?arranged.panels.map(p=>p.layer):rasterPanels.map(p=>p.layer);
+    const shownPanels=order.map(name=>rasterPanels.find(p=>p.layer===name)).filter((p):p is NonNullable<typeof p>=>!!p);
+    svg.innerHTML=rasterPanelsSvg(shownPanels,breaks,arranged?.grid??'grid',Object.fromEntries((arranged?.panels??[]).map(p=>[p.layer,p.title])),esc);
+    applyFrame(svg,svg.innerHTML);
+    return true;
+  }
   if(result.network&&!result.pointLayers?.length){
     svg.setAttribute('viewBox','0 0 252 168');
     svg.innerHTML=networkPreviewSvg(result.network,result.boundary as never).replace(/^<svg[^>]*>/,'').replace(/<\/svg>$/,'');
@@ -6610,15 +6621,6 @@ async function drawStaticFigure(svg:SVGSVGElement,result:Output,mapNode:Workflow
          ...(o.selected?{focusId:rows.find(r=>`result:${r.id}`===o.selected)?.id}:{}),
          label:row=>[row.excluded?'Excluded':row.relation,row.layerLabel].filter(Boolean).join(' \u00b7 ')}));
     if(polygonGround)await ground({bounds:polygonGround.bounds,project:c=>polygonGround.project(c) as [number,number]});
-    return true;
-  }
-  // GRID CELLS IN PANELS (experiment 212): the static figure, every panel on one scale.
-  if(rasterPanels?.length){
-    const breaks=(result as unknown as {densityBreaks:number[]}).densityBreaks;
-    const order=arranged?arranged.panels.map(p=>p.layer):rasterPanels.map(p=>p.layer);
-    const shownPanels=order.map(name=>rasterPanels.find(p=>p.layer===name)).filter((p):p is NonNullable<typeof p>=>!!p);
-    svg.innerHTML=rasterPanelsSvg(shownPanels,breaks,arranged?.grid??'grid',Object.fromEntries((arranged?.panels??[]).map(p=>[p.layer,p.title])),esc);
-    applyFrame(svg,svg.innerHTML);
     return true;
   }
   if(result.raster){

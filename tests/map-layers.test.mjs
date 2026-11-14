@@ -222,3 +222,12 @@ test('a blank or missing class value is no class, not a class called empty', () 
   assert.equal(value.rows[3].pinClass,undefined);
   assert.deepEqual(value.pinClasses.intakes.map(c=>c.value),['water intake','tidal limit']);
 });
+
+test('every raster and polygon port is a layer, not only the first',()=>{
+  // 2026-11-14: Rwanda's three rasters side by side counted as one layer, so the map's note named one source of three.
+  const node={id:'m',type:'map_output',params:{label:'Side by side'}};
+  const edges=['raster','raster_2','raster_3','polygons','polygons_2'].map((port,i)=>({from:`s${i}`,to:'m',port}));
+  const layers=mapLayerList(node,edges,id=>({s0:'WorldPop',s1:'GRID3',s2:'GHS-POP',s3:'Districts',s4:'Lakes'})[id]);
+  assert.deepEqual(layers.map(l=>l.label).sort(),['Districts','GHS-POP','GRID3','Lakes','WorldPop']);
+  assert.equal(layers.filter(l=>l.kind==='RasterLayer').length,3);
+});

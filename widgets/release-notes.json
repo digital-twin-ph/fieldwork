@@ -427,12 +427,12 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.30.0",
+   "version": "0.30.1",
    "released": "2026-11-14",
    "changes": [
     {
-     "kind": "minor",
-     "description": "A figure can be left out of the write-up: \"Not in the write-up\" beside the four sections keeps it in Results, and the run writes no note for it and states it was left out (fw:figureInWriteUp false)."
+     "kind": "patch",
+     "description": "Rasters side by side are drawn in Notes as in Results, cells and all: the districts they sit in had been drawn alone. Every raster and polygon layer wired to a map is in its layer list and its note, not only the first."
     }
    ],
    "breaking": false,

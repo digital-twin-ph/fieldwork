@@ -31,8 +31,8 @@ test('Total within groups: six sections, the settings in Configure…, and each 
   await dialog.locator('[data-group-within="classification"]').check();
   const preview=dialog.locator('[data-config-section="preview"]');
   await expect(preview).toContainText('8 rows into 3 groups, each with its % within classification');
-  await expect(preview.locator('thead')).toContainText('% within classification');
-  await expect(preview.locator('tr').filter({hasText:'none'})).toContainText('75');
+  await expect(preview.locator('.group-preview').locator('thead')).toContainText('% within classification');
+  await expect(preview.locator('.group-preview').locator('tr').filter({hasText:'none'})).toContainText('75');
   await dialog.screenshot({path:'test-results/group-shares.png'});
   await dialog.locator('#config-apply').click();
   await expect(page.locator('.inspector .standard-sentence')).toContainText("Counts the rows that agree on classification and symptoms, with each group's share within classification, %.");

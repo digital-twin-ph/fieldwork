@@ -3,7 +3,7 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## 0.116.0 — In development
+## 0.116.0 — 2026-11-14
 
 - **Notes hold every step's account.** A step that writes no Methods note of its own now says what it did, from its own
   run record; outputs write Results, sources a source note. MERS's notes: 30 to 48. A transmission tree writes its

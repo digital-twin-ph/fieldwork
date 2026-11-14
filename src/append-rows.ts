@@ -130,7 +130,13 @@ export function appendTables(tables:DataTable[],params:AppendParams={}):AppendRe
 export function appendSentence(result:AppendResult,params:AppendParams):string{
   const two=result.from.length===2,total=result.from.reduce((a,b)=>a+b,0);
   const which=(table:number)=>two?`the ${table===1?'first':'second'} table`:`table ${table}`;
-  const said=result.missing.map(m=>`"${m.column}" is empty on the ${m.rows} rows from ${which(m.table)}, which has no such column`);
+  // ONE SENTENCE PER TABLE, naming its missing columns together (2026-11-14: eleven zonal-statistics columns, each said
+  // apart for the census table that has none of them, made a paragraph nobody would read).
+  const byTable=new Map<number,{rows:number;columns:string[]}>();
+  for(const m of result.missing){const t=byTable.get(m.table)??{rows:m.rows,columns:[]};t.columns.push(m.column);byTable.set(m.table,t);}
+  const said=[...byTable].map(([table,{rows,columns}])=>columns.length===1
+    ?`"${columns[0]}" is empty on the ${rows} rows from ${which(table)}, which has no such column`
+    :`${columns.length} columns are empty on the ${rows} rows from ${which(table)}, which has none of them: ${columns.map(c=>`"${c}"`).join(', ')}`);
   const source=params.nameSource&&params.sourceColumn?.trim();
   return (two?`${result.from[0]} rows from the first table and ${result.from[1]} from the second, `
       :`${result.from.map((n,i)=>`${n} from table ${i+1}`).join(', ')}: `)

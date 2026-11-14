@@ -371,12 +371,12 @@
    "migrationFrom": []
   },
   "group_table": {
-   "version": "0.4.0",
+   "version": "0.4.1",
    "released": "2026-11-14",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Mean and Median beside Sum, Minimum, Maximum and Count rows, of the values present in each group; neither offered with a share. Column to total: the table's value column, or a key column holding numbers, such as one a rule computed; its blanks are empty cells, a cell that is not a number stops the run, and the result carries no unit. The practitioner, 2026-11-14: \"For MERS if there are any more epi computations that can be included let's do that.\""
+     "kind": "patch",
+     "description": "A sum is held to the most decimals among the values it adds: shares held to one decimal added up to 5.600000000000001 in binary arithmetic, a precision the table never had."
     }
    ],
    "breaking": false,
@@ -754,12 +754,12 @@
    "migrationFrom": []
   },
   "append_rows": {
-   "version": "0.2.0",
-   "released": "2026-11-06",
+   "version": "0.2.1",
+   "released": "2026-11-14",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Stacks any number of tables, one port each, added from the Inspector; a label per table; the labels can be declared numbers in a unit, and a label that is not one is a data quality finding."
+     "kind": "patch",
+     "description": "The columns a table lacks are named in one sentence per table, not one sentence per column: eleven zonal statistics, each said apart for the census table that had none of them, made a paragraph."
     }
    ],
    "breaking": false,

@@ -203,3 +203,22 @@ the total per km².
 
 That any source is right. The census is the closest thing to a count here, and it is three years older and reported by
 census district, which may not match the boundaries' units one for one.
+
+## In both workflows, 2026-11-14
+
+The practitioner: *"For population rasters, did we finish the zonal statistics? And can we add them to the
+workflows?"* Built on 2026-11-13 and switched on in neither workflow; now on in all six raster steps, each shown as a
+table per source. And how far each model is from the census, as asked the same day: each district's share in a model
+minus the census's, in percentage points, drawn per model; and, adding the differences above zero, the share of the
+country's people a model places in a different district (example bb160cc). Built from existing steps: Select rows,
+Relate (the census share beside each model's), two Apply ruleset steps (the difference; the difference where above
+zero) and Total within groups. Found on the way and fixed: a number Relate brings onto a table of named values was
+unreadable to the rules (Apply ruleset 0.13.3); a sum of one-decimal shares showed binary noise (Total within groups
+0.4.1); Append rows named eleven missing columns in eleven sentences (0.2.1).
+
+Validation, Chromium: `tests/population-example-opens.browser.mjs`, Rwanda end to end from the files: WorldPop 0.0,
+GRID3 0.0, GHS-POP 5.6, matching a recomputation from the reference totals; the difference chart and the zonal tables
+drawn. **Botswana not run in the browser** this time; its 0.1, 0.1 and 11.9 come from the same chain over the reference
+totals. **Not yet done:** lab check 50 recomputes the totals, not the zonal statistics; extending it to the mean,
+median, standard deviation, cells populated and density is owed. The figure is computed from shares held to one decimal,
+so it is low by a few tenths (5.75 and 12.07 from unrounded shares).

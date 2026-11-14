@@ -127,6 +127,12 @@ export interface GroupResult {
   shares?:{within:string[]; name:string; unknownStrata:number; zeroStrata:number};
 }
 
+/** How many decimals a number is written with, as JavaScript writes it: 2.8 one, 7 none, 1e-7 seven. */
+const decimalsOf=(v:number):number=>{
+  if(!Number.isFinite(v)||Number.isInteger(v))return 0;
+  const [mant,exp]=String(Math.abs(v)).split('e'),frac=(mant!.split('.')[1]??'').length;
+  return Math.max(0,frac-(exp?Number(exp):0));
+};
 export function groupTable(table:DataTable,request:GroupRequest):GroupResult {
   if(request.total&&request.total!==table.valueField&&(request.aggregate??'sum')!=='count')table=totalling(table,request.total);
   const result=groupTotals(table,request);
@@ -215,7 +221,9 @@ function groupTotals(table:DataTable,request:GroupRequest):GroupResult {
    *  minimum at all, because there is no value to be the smallest. Returning 0 there would
    *  invent an observation, which is the error this whole file is about. */
   const aggregated=(group:{total:number; values:number[]}):number|null=>
-    aggregate==='sum'?group.total
+    // A SUM HAS NO MORE DECIMALS THAN WHAT IT ADDS: shares held to one decimal added to 5.600000000000001 in binary
+    // arithmetic (2026-11-14), a precision the table never had. Rounded to the most decimals among its values.
+    aggregate==='sum'?Number(group.total.toFixed(Math.min(12,Math.max(0,...group.values.map(decimalsOf)))))
     :!group.values.length?null
     :aggregate==='minimum'?Math.min(...group.values)
     :aggregate==='maximum'?Math.max(...group.values)

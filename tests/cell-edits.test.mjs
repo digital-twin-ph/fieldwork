@@ -125,3 +125,15 @@ test('a project’s widgets: each with the workflows that use it and its steps t
   assert.deepEqual(rows[2].uses,[{key:'a',name:'How deadly?',steps:['By age','By sex']}]);
   assert.deepEqual(rows[1].uses[0].steps,['']);
 });
+
+test('a sum of values held to one decimal is held to one decimal, not to binary arithmetic’s noise',async()=>{
+  const {groupTable}=await import('../build/group-table.js');
+  const vals=[1.1,2.2];
+  const t={kind:'data-table',keys:['g','id'],valueField:'v',rows:vals.map((v,i)=>({key:{g:'a',id:String(i)},value:v})),rowCount:vals.length,missingValueCount:0};
+  assert.equal(vals.reduce((a,b)=>a+b,0),3.3000000000000003,'the noise is real');
+  assert.equal(groupTable(t,{by:['g']}).table.rows[0].value,3.3);
+  const whole={...t,rows:[{key:{g:'a',id:'1'},value:3},{key:{g:'a',id:'2'},value:4}]};
+  assert.equal(groupTable(whole,{by:['g']}).table.rows[0].value,7);
+  const fine={...t,rows:[{key:{g:'a',id:'1'},value:0.125},{key:{g:'a',id:'2'},value:2.5}]};
+  assert.equal(groupTable(fine,{by:['g']}).table.rows[0].value,2.625);
+});

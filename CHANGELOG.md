@@ -3,6 +3,18 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.114.1 — 2026-11-14
+
+- **The population example compares each model with the census.** Each district's share in a model minus its share in
+  the census, drawn per model, and the share of the country's people each model places in a different district:
+  Rwanda, GHS-POP 5.6%, WorldPop and GRID3 0.0%. Each raster step also gives its districts' zonal statistics, a table
+  per source. The project carries the practitioner's notes.
+- **A sum keeps the precision of what it adds.** Total within groups no longer shows 5.600000000000001 for shares held
+  to one decimal. Total within groups 0.4.1.
+- **Append rows names a table's missing columns in one sentence**, not one per column.
+- **Experiment 215** records the question of domain packs: general field tools and specialized ones, the domains
+  proposed, and the first test of their boundaries against the 13 worked examples.
+
 ## 0.114.0 — 2026-11-14
 
 - **Edit a value by hand, in Data quality.** A **Records** tab shows the records as the steps after read them, each

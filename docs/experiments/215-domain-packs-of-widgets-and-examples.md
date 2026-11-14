@@ -221,6 +221,64 @@ What it found:
 Not established: that the boundaries fit examples not yet made; this stage tests the examples there are, which were
 made one at a time, mostly before the question was asked.
 
+## Two kinds of network, 2026-11-14
+
+The practitioner: *"Street network analytics can also include the study of food deserts, access to lab testing sites
+but when broadened to Networks can include analysis of social networks, flight routes."* The broadening splits the
+word in two:
+
+| | Spatial networks | Relational networks |
+| --- | --- | --- |
+| Questions | food deserts, access to a lab or a clinic, travel time, road traffic injuries | contact and social networks, flight routes between cities (importation), transmission chains |
+| A link is | a street, with a length and a travel time | a relationship, with a weight and no geometry |
+| In Fieldwork now | Street network, Network isochrone and four more, one example (Snow) | who infected whom, drawn as a tree from a table (Hagelloch, MERS): in the core, as outbreak work |
+
+**Corrected the same day.** The practitioner: *"Flights have geometry, airports have locations."* The column above saying
+a relational link has no geometry is wrong, and is left as written: airports are located and a route has a
+great-circle distance and a flight time, and a contact network's people often have homes and workplaces. Geometry does
+not separate the two kinds. What does is **what a link is**:
+
+| | Networks travelled along | Networks of connections |
+| --- | --- | --- |
+| A link is | a stretch of street, whose shape is the path; a trip is routed along a chain of them | a connection between two places or people, each perhaps located; nothing is routed between them |
+| Distance comes from | the segments added along the route | the endpoints: great-circle between airports, or none for a contact |
+| A link's weight | travel time along it | passengers, flights a week, how often two people meet |
+| Examples | food deserts, lab access, road traffic injuries, Snow's walking times | flight routes and importation, contact and social networks, transmission chains |
+
+Accessibility, food deserts and lab sites among it, is the street-network domain's main use, inside the narrow boundary
+the observed stage kept, and it would give its unused widgets the examples they lack. What the two kinds share is the
+graph method (shortest paths, centrality, components, degree), not their data. Proposed, as for the agent-based model
+(point 9): **a graph engine as a kernel**, with no domain words; **a street networks pack** using it with geometry and
+travel cost; later **a networks-of-connections pack** using it for contact networks, flight routes and transmission,
+whose nodes may be located and mapped. Not decided; it keeps "networks" from becoming one domain too broad to pass the test above.
+
+**Transport, the same day.** The practitioner: *"Even transportation routes count eg trains buses taxis."* Transit shows
+the two kinds combine rather than stand apart: a bus or train route is travelled along a physical path and is a set of
+scheduled connections between stops (the open standard is GTFS); a trip by transit chains them, walking along streets
+to a stop, riding, walking on; a taxi travels the streets, and as data its trips are flows between places, as
+commuting is; flights are scheduled connections between located airports, much as transit is. So the cut that emerges
+may be neither geometry nor the kind of link, but **what is moving or meeting**:
+
+| | Movement of people | Contact between people |
+| --- | --- | --- |
+| Networks | streets, transit routes and timetables, flights, taxi and commuting flows | contact, social and sexual networks, transmission chains |
+| Data and standards | OpenStreetMap, GTFS, flight schedules, origin–destination tables | contact lists, network surveys, transmission tables |
+| Field questions | access to care, testing and food; road traffic injuries; where an import arrives from | who is central, what links outbreaks, who infected whom |
+
+Both pass the test above, each with its own data, standards and practice, and both would use the one graph engine.
+Street networks would then be part of a **mobility and access** domain, not a domain of their own. An emerging
+alternative, not decided; the observed stage would be run again against it.
+
+**Migration, the same day.** The practitioner: *"Migration routes."* In the movement column, and adding two things daily
+travel does not. A **time scale** of weeks to years, with routes partly informal (crossings, corridors, transit towns),
+data from flow monitoring points and origin–transit–destination tables rather than timetables (the International
+Organization for Migration's Displacement Tracking Matrix is one source; not yet checked, nor its terms), and field
+questions of measles, polio or TB along a corridor, vaccination at crossings and cross-border response. And movement
+that is **not only people**: bird flyways and avian influenza, livestock trading networks and animal disease, a One
+Health concern with its own data and practice. So movement may have layers: daily mobility (streets, transit, taxis,
+commuting), population movement (migration, displacement, seasonal movement), and animal movement beside them. One
+domain or several is the boundary question this section asks; not decided.
+
 ## Admission review
 
 D1: no new widget in this experiment. Six existing widgets move; the two new ones are admitted by their own reviews.

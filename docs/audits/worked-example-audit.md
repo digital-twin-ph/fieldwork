@@ -76,9 +76,9 @@ evidence about that example.
 | `chart_output` | 12 | brazil-dengue-rj-2024, hagelloch, hagelloch-chains, hagelloch-people, mers-korea-2015, nyc-asthma-ozone-2016-2025, population-models-census, sierra-leone-measles, snow-curve, snow-isochrone, snow-voronoi, south-london-1854 |
 | `table_input` | 12 | brazil-dengue-rj-2024, mers-korea-2015, nigeria-immunization-2024, nyc-asthma-ozone-2016-2025, oswego-1940, population-models-census, salmonella-germany-2021, sea-level-rise-philippines, sierra-leone-measles, snow-curve, south-london-1854, workflows-rulesets |
 | `group_table` | 9 | brazil-dengue-rj-2024, hagelloch-chains, hagelloch-people, mers-korea-2015, nyc-asthma-ozone-2016-2025, population-models-census, sierra-leone-measles, south-london-1854, workflows-rulesets |
+| `apply_ruleset` | 8 | hagelloch-chains, mers-korea-2015, nigeria-immunization-2024, population-models-census, sea-level-rise-philippines, sierra-leone-measles, south-london-1854, workflows-rulesets |
+| `relate_table` | 8 | brazil-dengue-rj-2024, hagelloch-chains, mers-korea-2015, nyc-asthma-ozone-2016-2025, population-models-census, sea-level-rise-philippines, sierra-leone-measles, south-london-1854 |
 | `select_rows` | 8 | brazil-dengue-rj-2024, nigeria-immunization-2024, nyc-asthma-ozone-2016-2025, population-models-census, salmonella-germany-2021, sea-level-rise-philippines, sierra-leone-measles, south-london-1854 |
-| `apply_ruleset` | 7 | hagelloch-chains, mers-korea-2015, nigeria-immunization-2024, sea-level-rise-philippines, sierra-leone-measles, south-london-1854, workflows-rulesets |
-| `relate_table` | 7 | brazil-dengue-rj-2024, hagelloch-chains, mers-korea-2015, nyc-asthma-ozone-2016-2025, sea-level-rise-philippines, sierra-leone-measles, south-london-1854 |
 | `case_series` | 5 | brazil-dengue-rj-2024, hagelloch, hagelloch-people, sierra-leone-measles, snow-curve |
 | `join_table_to_area` | 5 | brazil-dengue-rj-2024, nigeria-immunization-2024, population-models-census, sierra-leone-measles, south-london-1854 |
 | `sample_raster` | 4 | brazil-dengue-rj-2024, nyc-asthma-ozone-2016-2025, population-models-census, sea-level-rise-philippines |
@@ -267,7 +267,7 @@ be read, selected and named inside the application, and claim B would hold for t
 - `urn:fieldwork:example:sierra-leone-measles` declares 13 node types. Its inputs are files in its own repository, and `geo/water-intakes.geojson` was written on 2026-10-29 because those four features existed only inside the bundle until then — the one input a reader could not download.
 - `urn:fieldwork:example:sea-level-rise-philippines` declares 12 node types. Its inputs are files in its own repository, and `geo/water-intakes.geojson` was written on 2026-10-29 because those four features existed only inside the bundle until then — the one input a reader could not download.
 - `urn:fieldwork:example:mers-korea-2015` declares 10 node types. Its inputs are files in its own repository, and `geo/water-intakes.geojson` was written on 2026-10-29 because those four features existed only inside the bundle until then — the one input a reader could not download.
-- `urn:fieldwork:example:population-models-census` declares 11 node types. Its inputs are files in its own repository, and `geo/water-intakes.geojson` was written on 2026-10-29 because those four features existed only inside the bundle until then — the one input a reader could not download.
+- `urn:fieldwork:example:population-models-census` declares 13 node types. Its inputs are files in its own repository, and `geo/water-intakes.geojson` was written on 2026-10-29 because those four features existed only inside the bundle until then — the one input a reader could not download.
 
 ## 3 · Recommendations
 

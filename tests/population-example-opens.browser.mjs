@@ -108,5 +108,23 @@ test('Rwanda’s workflow opens from the example, its windows read again and che
   await expect(page.locator('#result-metrics')).toContainText('3 rasters side by side');
   await expect(page.locator('#polygon-method')).toHaveCount(0);
   await page.screenshot({path:'test-results/population-cells-interactive.png',fullPage:true});
+
+  // HOW FAR EACH MODEL IS FROM THE CENSUS (experiment 209, 2026-11-14): the share of the country's people each places in a
+  // different district, from shares held to one decimal; WorldPop and GRID3 follow the census by construction.
+  await page.getByRole('tab',{name:'People each model places in another district, %'}).click();
+  const moved=Object.fromEntries((await page.locator('#data-table-view tbody tr').evaluateAll(trs=>trs.map(tr=>[...tr.children].map(td=>td.textContent.trim()))))
+    .map(r=>[r[0],Number(r.at(-1))]));
+  expect(moved).toEqual({'WorldPop 2025':0,'GRID3 2025':0,'GHS-POP 2025':5.6});
+  await page.getByRole('tab',{name:'Difference from the census, by district'}).click();
+  await expect(page.locator('main').first()).toContainText('Percentage points');
+  await page.screenshot({path:'test-results/population-difference.png',fullPage:true});
+  // ZONAL STATISTICS, per district, for each source.
+  await page.getByRole('tab',{name:'GHS-POP 2025: zonal statistics by district'}).click();
+  const zonal=page.locator('main').first();
+  for(const column of ['cell_median','density_km2'])await expect(zonal).toContainText(column);
+  await page.screenshot({path:'test-results/population-zonal.png',fullPage:true});
+  // The project's notes, as written.
+  await page.locator('[data-view="notes"]').click();
+  await expect(page.locator('#notes-view')).toContainText('the share of the country\u2019s people the model places in a different district');
   expect(errors).toEqual([]);
 });

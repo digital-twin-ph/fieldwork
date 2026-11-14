@@ -3,7 +3,7 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## 0.117.0 — In development
+## 0.117.0 — 2026-11-14
 
 - **Notes lays out a publication.** Publication, at the top of Notes, shows the write-up as a paper, ready to print or
   save as PDF: title, authors and date; a structured abstract; Introduction, Methods, Results and Discussion as clean

@@ -16,7 +16,7 @@
       "id": "urn:fieldwork:example:south-london-1854",
       "title": "Snow's South London water supply study, 1854",
       "repository": "https://github.com/digital-twin-ph/example-1855-cholera-south-london",
-      "commit": "de92a84691ac3429f9270e0b003a4e386a29211b",
+      "commit": "3858ace76b0cfe923a2c4fd1d5f9a5b5e115368d",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-1855-cholera-south-london",
       "licence": {
         "data": "CC0-1.0, except geo/sub-districts-csds.geojson which is BSD-2-Clause and geo/thames-reaches.geojson and geo/thames-tidal-limit.geojson which are ODbL-1.0",
@@ -33,13 +33,13 @@
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "ef2efe2f1af9656537103280acd3daae3f27ad34d768e8261630a91f2835a4eb",
-          "bytes": 1011770
+          "sha256": "fa29153d4e7c82b00b15f2fcaaa16703295ce4c5df45697cc6137611e7ed6e15",
+          "bytes": 1011680
         },
         {
           "path": "README.md",
-          "sha256": "fb3ecaa392ffff757248417ac1001f5dd889caa4ce8f105796490389750b9b16",
-          "bytes": 41643
+          "sha256": "b9d1b1faef0f19350c9edf846521184c5a26afd7236813be78f912d4df586f48",
+          "bytes": 41626
         },
         {
           "path": "NOTICE.txt",
@@ -152,7 +152,6 @@
         "rate",
         "relate_table",
         "select_rows",
-        "stack_polygons",
         "study_area",
         "study_design",
         "table_input",
@@ -885,7 +884,7 @@
       "id": "urn:fieldwork:example:population-models-census",
       "title": "Population models beside a census",
       "repository": "https://github.com/digital-twin-ph/example-population-models-census",
-      "commit": "6a3140feee4c995c01e9c8fa841e2bc8e9c8b62c",
+      "commit": "7242e4f7841cd00246dc5e9bf5e8ab42f094e048",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-population-models-census",
       "licence": {
         "data": "Census counts: Statistics Botswana (free to use, acknowledged, as the user's own processing) and NISR (no terms found, used credited). Boundaries: geoBoundaries, CC BY 3.0 IGO (Botswana) and CC BY 4.0 (Rwanda). Rasters, read where published: WorldPop, GRID3 and GHS-POP, CC BY 4.0. The repository's own files are CC0-1.0.",
@@ -915,8 +914,8 @@
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "2a4e7f2848c4c46ebfd2850785176bfe8687d68ca5cfdc83625662c29c5cbfe2",
-          "bytes": 4873416
+          "sha256": "7e1dddd7feb64896f7f028fb051d490a7f91bb617c2406e12c7766b8e8ac294d",
+          "bytes": 4911130
         },
         {
           "path": "data/botswana_census_2022_districts.csv",
@@ -935,8 +934,8 @@
         },
         {
           "path": "README.md",
-          "sha256": "331d29e911210b48e02283e3cf609dd82369edb8d4ac38e07d38f97531edd62c",
-          "bytes": 3250
+          "sha256": "0f9475d1dd6166d1fc052a82cd552287bacbcf38ee60216fd93b438d6827fddc",
+          "bytes": 3641
         },
         {
           "path": "NOTICE.txt",

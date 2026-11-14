@@ -615,6 +615,12 @@ export interface ParamsByType {
    *  can be migrated rather than refused. Nothing adds one, nothing runs one. */
   coverage_check:{exclusions:Exclusion[]; pointInputCount?:number};
   map_output:{label:string; section?:import('./notes.js').FigureSection; pointInputCount?:number;
+    /** How many polygon layers it takes, as `polygons`, `polygons_2` … (2026-11-13: Collect polygon layers retired). */
+    polygonInputCount?:number;
+    /** How many rasters, as `raster` to `raster_4` (experiment 212, grid cells in panels). */
+    rasterInputCount?:number;
+    /** Maps side by side (experiment 212): one panel per polygon layer, by its name, in a grid, on one scale. Absent: one map. */
+    arrangement?:{grid:import('./catchment-output.js').PanelGrid;panels:import('./catchment-output.js').MapPanel[]};
     /** What the practitioner decided about each layer in Manage layers, keyed by layer id.
      *  Absent means "as it comes": a map nobody has opened that dialog on draws the default
      *  stack, and a layer wired afterwards arrives with its own default rather than at the
@@ -692,7 +698,7 @@ export type NodeType = keyof ParamsByType;
 export type NodeSpec<K extends NodeType = NodeType> = {[T in K]:{type:T; params:ParamsByType[T] & {label?:string}}}[K];
 /** The node types a saved workflow may still name and no canvas may still hold. A retired widget
  *  never runs, so loading one is a rewrite that must say so, or a refusal that names it. */
-export type RetiredNodeType='places'|'centers'|'output'|'policy'|'access_policy'|'xpert'|'coverage_check'|'rate_ratio'|'derive_value'|'sample_satellite_files_at_points';
+export type RetiredNodeType='places'|'centers'|'output'|'policy'|'access_policy'|'xpert'|'coverage_check'|'rate_ratio'|'derive_value'|'sample_satellite_files_at_points'|'stack_polygons';
 /** A node type that still exists but whose contract changed, so a node saved under the old one is
  *  migrated to a different type. `reproject` was a Source holding an imported file; from
  *  2026-10-13 it is a points-to-points transform, and the saved nodes become the `point_input`

@@ -1329,3 +1329,16 @@ select.rule-op.rule-op-compare,select.rule-op.rule-op-equal,select.rule-op.rule-
 @media (prefers-reduced-motion:reduce){.geo-cue,.geo-cue-map{animation:none;opacity:1}}
 
 #bands-preview.rule-editor-bands-wrong{color:var(--danger-5)}
+
+.map-panels{display:flex;flex-direction:column;gap:.4rem}
+.map-panel-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:.5rem;align-items:center}
+.map-panels-grid{display:grid;gap:.75rem}
+.map-panel h4{margin:0 0 .3rem;font-size:15px}
+.map-panel [data-map-panel-host]{height:320px;overflow:hidden}
+.map-panel [data-map-panel-host] .catchment-map-canvas,.map-panel [data-map-panel-host] .leaflet-container{height:320px!important;min-height:0}
+.map-panels-sync{display:inline-flex;gap:.4rem;align-items:center;margin-bottom:.5rem}
+/* A panel is its map: the figure's key, basemap and notes are said once, above the panels (experiment 212). */
+.map-panel .catchment-map-toolbar,.map-panel .map-class-legend,.map-panel .leaflet-control-layers,.map-panel [data-map-panel-host]>p.muted{display:none}
+.map-panels-key{display:flex;flex-wrap:wrap;gap:.35rem .9rem;align-items:center;margin:.25rem 0 .5rem}
+.map-panels-key i{display:inline-block;width:16px;height:12px;border:1px solid #4d4d4d;margin-right:.3rem;vertical-align:-1px}
+.raster-panel-map{height:340px}

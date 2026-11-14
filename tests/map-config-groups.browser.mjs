@@ -14,7 +14,7 @@ test('Configure… groups its settings, defaults to OpenStreetMap, and the previ
   const dialog=page.locator('#map-config');
   // One bordered group per heading, Basemap second.
   const titles=await dialog.locator('.config-group-title').allTextContents();
-  expect(titles.slice(0,3)).toEqual(['Presentation','Basemap','Layers']);
+  expect(titles.slice(0,4)).toEqual(['Presentation','Basemap','Arrange','Layers']);
   expect(titles).toContain('Title, key and note');
   // A map that stated no basemap draws OpenStreetMap.
   const basemap=dialog.locator('.config-group',{has:page.locator('.config-group-title',{hasText:'Basemap'})}).locator('#map-basemap');

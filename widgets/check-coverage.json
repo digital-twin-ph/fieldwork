@@ -8,8 +8,8 @@
  },
  "measuredAt": "2026-11-10",
  "counts": {
-  "widgets": 51,
-  "covered": 32,
+  "widgets": 50,
+  "covered": 31,
   "awaiting": 8,
   "none": 10,
   "blocked": 1
@@ -220,11 +220,6 @@
    "nodeType": "snap_to_network",
    "expectation": "parity",
    "check": "19-snap"
-  },
-  {
-   "nodeType": "stack_polygons",
-   "expectation": "parity",
-   "check": "16-stack-polygons"
   },
   {
    "nodeType": "study_area",

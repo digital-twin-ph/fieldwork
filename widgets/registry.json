@@ -849,7 +849,7 @@
     {
       "id": "urn:fieldwork:widget:map_output",
       "nodeType": "map_output",
-      "currentVersion": "0.28.2",
+      "currentVersion": "0.29.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -1040,6 +1040,11 @@
           "version": "0.28.2",
           "path": "widgets/releases/map_output/0.28.2.json",
           "sha256": "c93cb0f5f6d1007d89962eeb6990cfb8c035417cdf5a856c2380b1aeea2b04bd"
+        },
+        {
+          "version": "0.29.0",
+          "path": "widgets/releases/map_output/0.29.0.json",
+          "sha256": "a02870583f9c41e4b9c77999af75ff6646423a10927b5f3a585b331c67b3d116"
         }
       ]
     },
@@ -1885,7 +1890,7 @@
     {
       "id": "urn:fieldwork:widget:stack_polygons",
       "nodeType": "stack_polygons",
-      "currentVersion": "0.2.0",
+      "currentVersion": "1.0.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -1896,6 +1901,11 @@
           "version": "0.2.0",
           "path": "widgets/releases/stack_polygons/0.2.0.json",
           "sha256": "0fd6afc409b1521500f0b0c85edc4e520f96ab2189601e289ac1703b350f07cd"
+        },
+        {
+          "version": "1.0.0",
+          "path": "widgets/releases/stack_polygons/1.0.0.json",
+          "sha256": "f13c8667c34007c616a1fa0485a002451b8b0a6686eac76dfc374afb426a728b"
         }
       ]
     },

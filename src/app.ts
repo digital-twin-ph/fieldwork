@@ -26,8 +26,9 @@ import {geoprivacyExample} from './geoprivacy-example.js';
 import {pointComparisonMarkup} from './point-comparison-ui.js';
 import {CATCHMENT_TYPES,defaultTravelMode} from './catchments.js';
 import {catchmentInspector} from './catchment-ui.js';
-import {mountCatchmentMap,basemapOptions,BASEMAP_OPTIONS} from './catchment-map.js';
-import {catchmentPlot,polygonSvg,catchmentFrame,polygonFrame} from './catchment-output.js';
+import {mountCatchmentMap,mountDensityPanel,basemapOptions,BASEMAP_OPTIONS} from './catchment-map.js';
+import {catchmentPlot,polygonSvg,polygonPanelsSvg,panelColumns,catchmentFrame,polygonFrame} from './catchment-output.js';
+import {rasterPanelsSvg,densityImage,rampFor} from './raster-image.js';
 import {mapPresentation,standaloneMapSvg} from './map-communication.js';
 import {metresPerPixel} from './presentation.js';
 import {RATE_TABLE_KEYS,computeRate,fromTable,fromWideTable} from './rate.js';
@@ -106,6 +107,8 @@ import {mountCanvas} from './canvas.js';
 import {staticBoundaryMap,staticMapFrame} from './static-map.js';
 import {mapLayerList,membersOfPolygons,portIsDrawn,LAYER_LABEL_LIMIT,type MapLayer} from './map-layer-list.js';
 import {mountFeatureChooser} from './polygon-review.js';
+import {MAX_POLYGON_LAYERS,polygonPort} from './polygon-layers.js';
+import {MAX_RASTER_LAYERS,rasterPort} from './raster-panels.js';
 import {notesPanel,openNoteDialog,noteKey} from './notes-ui.js';
 // THE WRITE-UP IS THE PROJECT'S. A run contributes its notes to a store the Notes tab reads
 // across every workflow of the project, rather than the tab reading the open run alone.
@@ -1339,6 +1342,15 @@ function layerPortFor(w:Workflow,source:WorkflowNode,target:WorkflowNode<'map_ou
   if(type==='points'){
     const next=(target.params.pointInputCount??1)+1;
     if(next<=8){target.params.pointInputCount=next;return pointPort(next-1);}
+  }
+  // And a map's polygon layers, since Collect polygon layers retired (2026-11-13).
+  if(type==='raster'&&target.type==='map_output'){
+    const next=(target.params.rasterInputCount??1)+1;
+    if(next<=MAX_RASTER_LAYERS){target.params.rasterInputCount=next;return rasterPort(next-1);}
+  }
+  if(type==='polygons'&&target.type==='map_output'){
+    const next=(target.params.polygonInputCount??1)+1;
+    if(next<=MAX_POLYGON_LAYERS){target.params.polygonInputCount=next;return polygonPort(next-1);}
   }
   return declared[0];
 }
@@ -2810,6 +2822,19 @@ function openMapConfig(nodeId:string){
           catch(error){previewHost.textContent=`The preview could not be drawn: ${errorMessage(error)}`;}});
         disposePreview=()=>{cancelled=true;cancelAnimationFrame(frame);};
       }
+      // ARRANGE (experiment 212): panels for every layer the last run drew, in that order, until some are left out.
+      on('#map-arrange',el=>{
+        if(!el.value){delete draft.arrangement;return;}
+        const layers=drawnPolygonLayers(nodeId);
+        draft.arrangement={grid:el.value as 'row'|'grid'|'column',panels:draft.arrangement?.panels?.length?draft.arrangement.panels:layers.map(layer=>({layer}))};});
+      on('[data-panel-include]',el=>{if(!draft.arrangement)return;const layer=el.dataset.panelInclude!;
+        const order=[...new Set([...drawnPolygonLayers(nodeId),...draft.arrangement.panels.map(p=>p.layer)])];
+        const held=new Map(draft.arrangement.panels.map(p=>[p.layer,p]));
+        if(el.checked)held.set(layer,held.get(layer)??{layer});else held.delete(layer);
+        const panels=order.filter(l=>held.has(l)).map(l=>held.get(l)!);
+        if(panels.length)draft.arrangement={...draft.arrangement,panels};else delete draft.arrangement;});
+      on('[data-panel-title]',el=>{const panel=draft.arrangement?.panels.find(p=>p.layer===el.dataset.panelTitle);
+        if(panel){const t=el.value.trim();if(t)panel.title=t;else delete panel.title;}});
       on('#polygon-presentation',el=>{
         draft.presentation=el.value==='interactive'?'interactive':'plot';
         // A BASEMAP THE NEW PRESENTATION CANNOT DRAW is set to none, and the person told, as the Inspector did.
@@ -2896,6 +2921,31 @@ function openMapConfig(nodeId:string){
  *  write-up, each point layer's class, mark name and symbol, and the standalone figure. Built from a draft, so the same
  *  markup serves the dialog's every redraw and nothing reaches the step before Apply. */
 let disposePreview:(()=>void)|undefined;
+/** ARRANGE: ONE MAP, OR PANELS SIDE BY SIDE (experiment 212). The practitioner, 2026-11-13: "We should have the capability
+ *  to arrange the maps in the Configure dialog." The panels are the polygon layers the last run drew, by name. */
+const drawnPolygonLayers=(nodeId:string):string[]=>{
+  const out=result?.outputs.find(o=>o.nodeId===nodeId);
+  // AND THE RASTERS, each a panel of grid cells (experiment 212).
+  const rasters=((out as {rasterPanels?:{layer:string}[]}|undefined)?.rasterPanels??[]).map(p=>p.layer);
+  return [...new Set([...rasters,...(out?.polygons?.features??[]).map(f=>f.layerName).filter((x):x is string=>!!x)])];
+};
+function mapArrangeSection(n:WorkflowNode<'map_output'>):string{
+  const names=drawnPolygonLayers(n.id),a=n.params.arrangement;
+  const layers=[...new Set([...names,...(a?.panels??[]).map(p=>p.layer)])];
+  if(layers.length<2&&!a)return `<span class="inspector-section">Arrange</span><p class="muted">One map. Connect two or more polygon `
+    +`layers or rasters and run the workflow to put them in panels side by side, on one scale.</p>`;
+  const grid=a?.grid??'';
+  return `<span class="inspector-section">Arrange</span><div class="field"><label class="field-label" for="map-arrange">Arrange</label>`
+    +`<select id="map-arrange"><option value="" ${grid===''?'selected':''}>One map, the layers over each other</option>`
+    +`<option value="row" ${grid==='row'?'selected':''}>Panels in one row</option>`
+    +`<option value="grid" ${grid==='grid'?'selected':''}>Panels two by two</option>`
+    +`<option value="column" ${grid==='column'?'selected':''}>Panels in one column</option></select></div>`
+    +(a?`<p class="muted">One panel per layer, every panel on one scale and one key. A panel shows its layer only.</p>`
+      +`<div class="map-panels" data-map-panels>`+layers.map((layer,i)=>{const panel=a.panels.find(p=>p.layer===layer);
+        return `<div class="map-panel-row"><label><input type="checkbox" data-panel-include="${esc(layer)}" ${panel?'checked':''}> ${esc(layer)}</label>`
+          +`<input type="text" maxlength="120" aria-label="Title of the panel for ${esc(layer)}" data-panel-title="${esc(layer)}" value="${esc(panel?.title??'')}" placeholder="${esc(layer)}" ${panel?'':'disabled'}>`
+          +(names.includes(layer)?'':' <span class="muted">not drawn in the last run</span>')+`</div>`;void i;}).join('')+`</div>`:'');
+}
 function mapSettings(n:WorkflowNode<'map_output'>):string{return groupSections('Presentation',mapSettingsFlat(n));}
 function mapSettingsFlat(n:WorkflowNode<'map_output'>):string{
   const at=figureSection(n.params,n.type),fallback=DEFAULT_FIGURE_SECTIONS[n.type];
@@ -2909,7 +2959,7 @@ function mapSettingsFlat(n:WorkflowNode<'map_output'>):string{
       // potential point layer in the map gets a configurable/selectable symbol." Only the point
       // layers actually wired are offered, because a control for a layer that does not exist is
       // a setting nobody can check against the picture.
-      +mapBasemapControls(n)+`<span class="inspector-section">Layers</span>`
+      +mapBasemapControls(n)+mapArrangeSection(n)+`<span class="inspector-section">Layers</span>`
       +`<p class="muted">Order, name and group the layers.</p>`
       +`<button class="button" data-manage-layers="${esc(n.id)}">Manage layers</button>`
       +(()=>{
@@ -3878,7 +3928,13 @@ function renderInspector(){
       +nodeInputs(n).map(([port,type])=>{
         if(!workflow.edges.some(e=>e.to===n.id&&e.port===port))return '';
         const sources=workflow.nodes.filter(x=>x.id!==n.id&&outputOf(x)===type);
-        return `<div class="field"><label class="field-label" for="map-${port}">${esc(port)}</label>`
+        // NAMED AS THE CANVAS NAMES THEM (2026-11-13): "polygons_2" was shown as it is stored.
+        const several=(kind:string)=>nodeInputs(n).filter(([p])=>new RegExp(`^${kind}(_\\d+)?$`).test(p)).length>1;
+        const number=port.includes('_')?port.split('_')[1]:'1';
+        const named=port==='area'?'Study area':port==='ground'?'Ground (map image)':/^raster/.test(port)?(several('raster')?`Raster ${number}`:'Raster'):port==='network'?'Street network'
+          :port==='context'?'Context points':/^polygons/.test(port)?(several('polygons')?`Areas ${number}`:'Areas')
+          :/^points/.test(port)?(several('points')?`Points ${number}`:'Points'):port;
+        return `<div class="field"><label class="field-label" for="map-${port}">${esc(named)}</label>`
           +`<select id="map-${port}" data-map-port="${port}"><option value="">Not connected</option>`
           +sources.map(x=>`<option value="${esc(x.id)}" ${workflow.edges.some(e=>e.to===n.id&&e.port===port&&e.from===x.id)?'selected':''}>${esc(x.params.label||TYPES[x.type].title)}</option>`).join('')
           +`</select></div>`;
@@ -6298,7 +6354,7 @@ function renderResults(){
       declared:runWorkflow&&shown?declaredKinds(runWorkflow,shown.sourceNodeId||shown.nodeId):{}},esc);
   };
   $('#result-rows').querySelectorAll<HTMLElement & SVGElement>('[data-place]').forEach(el=>{el.onclick=()=>selectResult(el.dataset.place!);el.onkeydown=e=>{if(e.key==='Enter')selectResult(el.dataset.place!);};});
-  const raster=output?.raster;$('#raster-download').hidden=!raster;$('#raster-download').onclick=()=>{if(raster)try{downloadRaster(raster);}catch(e){toast(errorMessage(e),{tone:'failure'});}};if(raster){$('#result-metrics').textContent=`${raster.metadata.width} x ${raster.metadata.height} cells | ${raster.values.filter(v=>v!==null).length} valid | ${raster.mask?(raster.mask.method==='all-touched'?'All-touched polygon mask':'Cell-center polygon mask')+' / margin '+(raster.mask.marginPixels||0)+' px':'Unmasked input window'} | Source-reported units: ${raster.asset.provenance?.units||'Not supplied'}`;$('.map-legend').hidden=true;}else $('.map-legend').hidden=false;
+  const raster=output?.raster;$('#raster-download').hidden=!raster;$('#raster-download').onclick=()=>{if(raster)try{downloadRaster(raster);}catch(e){toast(errorMessage(e),{tone:'failure'});}};const panelsOf=(output as {rasterPanels?:import('./raster-panels.js').DrawnDensity[]}|undefined)?.rasterPanels;if(panelsOf?.length){$('#result-metrics').textContent=`${panelsOf.length} rasters side by side · people per km² in each cell, one scale · drawn cells about ${Math.round(Math.max(...panelsOf.map(p=>p.drawnCellM))).toLocaleString('en')} m across`;$('.map-legend').hidden=true;}else if(raster){$('#result-metrics').textContent=`${raster.metadata.width} x ${raster.metadata.height} cells | ${raster.values.filter(v=>v!==null).length} valid | ${raster.mask?(raster.mask.method==='all-touched'?'All-touched polygon mask':'Cell-center polygon mask')+' / margin '+(raster.mask.marginPixels||0)+' px':'Unmasked input window'} | Source-reported units: ${raster.asset.provenance?.units||'Not supplied'}`;$('.map-legend').hidden=true;}else $('.map-legend').hidden=false;
   if(output?.polygons){const p=output.polygons;$('.map-legend').hidden=true;$('#map-note').textContent=p.method;$('#result-metrics').textContent=p.kind==='hexbin'?`${p.features.length} released H3 cells / ${p.summary?.matched} locations represented / ${p.summary?.unmatched} locations in omitted sparse cells`:p.summary?`${p.summary.records} locations / ${p.summary.matched} matched / ${p.summary.unmatched} outside / ${p.summary.missingLocation} missing location / ${p.summary.multiple} multiple memberships`:p.features.length+' polygon'+(p.features.length===1?'':'s');$('#map-note').textContent=p.method+' / '+p.notes.join(' ');}
   if(exampleKey(workflow)==='snow-geoprivacy'&&output)$('#map-note').textContent=(output.nodeId.startsWith('before-')?'PRIVATE SOURCE · original coordinates. ':'DERIVED DISPLAY · educational transformation; no anonymity guarantee. ')+$('#map-note').textContent;
   if(output?.comparison){$('#map-note').textContent='PRIVATE EVALUATION · original and moved coordinates, mean centers and pumps';$('.map-legend').hidden=true;}
@@ -6499,9 +6555,78 @@ async function drawStaticBasemap(result:Output,svg:SVGSVGElement,
     ?`${provider.attribution} · ${drawn} of ${requested} tiles at zoom ${zoom}, drawn into this figure.`
     :`No basemap tiles could be fetched, so this figure has no ground under it. ${provider.attribution}`);
 }
+/** MAPS SIDE BY SIDE, INTERACTIVE (experiment 212): one small map per panel, in the grid chosen, each classed over every
+ *  panel's values so a shade is one number everywhere, and moving one moves the others unless that is turned off. JLT's
+ *  population comparison viewer (jltobias/JupyterLite-Population-Data-Comparison) has the same: four panels and
+ *  "Synchronize map navigation". */
+let panelsMoveTogether=true;
+function mountMapPanels(host:HTMLElement,shown:NonNullable<ReturnType<typeof activeOutput>>,mapNode:WorkflowNode<'map_output'>,
+    arranged:NonNullable<WorkflowNode<'map_output'>['params']['arrangement']>):()=>void{
+  const all=shown.polygons!.features,panels=arranged.panels.filter(panel=>all.some(f=>f.layerName===panel.layer));
+  const drawn=all.filter(f=>panels.some(panel=>panel.layer===f.layerName));
+  const columns=panelColumns(arranged.grid,panels.length);
+  host.classList.add('map-panels-host');
+  host.innerHTML=`<label class="map-panels-sync"><input type="checkbox" id="map-panels-sync" ${panelsMoveTogether?'checked':''}> Move the panels together</label>`
+    +`<div class="map-panels-grid" style="grid-template-columns:repeat(${columns},minmax(0,1fr))">`
+    +panels.map((panel,i)=>`<section class="map-panel" data-map-panel="${esc(panel.layer)}"><h4>${esc(panel.title?.trim()||panel.layer)}</h4><div data-map-panel-host="${i}"></div></section>`).join('')+`</div>`;
+  host.querySelector<HTMLInputElement>('#map-panels-sync')!.onchange=e=>{panelsMoveTogether=(e.target as HTMLInputElement).checked;};
+  // FOLLOWING STARTS ONCE EVERY PANEL IS LAID OUT: a map moved while another is still mounting has no position yet
+  // ("reading '_leaflet_pos'", which emptied the first panel of the population example, 2026-11-13).
+  const maps:import('leaflet').Map[]=[];let moving=false,ready=false;
+  const follow=(from:import('leaflet').Map)=>{
+    if(moving||!ready||!panelsMoveTogether)return;moving=true;
+    try{for(const other of maps)if(other!==from&&other.getContainer().isConnected)other.setView(from.getCenter(),from.getZoom(),{animate:false});}
+    finally{moving=false;}};
+  // A PANEL THAT CANNOT BE DRAWN SAYS WHY, in its place, and the others are still drawn.
+  const disposers=panels.map((panel,i)=>{const at=host.querySelector<HTMLElement>(`[data-map-panel-host="${i}"]`)!;
+    try{return mountCatchmentMap(at,
+      {...shown,polygons:{...shown.polygons!,features:all.filter(f=>f.layerName===panel.layer)}} as never,
+      undefined,esc,basemapOf(mapNode.params.basemap),undefined,`${mapNode.id}-panel-${i}`,undefined,mapNode.params.partLabel,undefined,
+      {classifyOver:drawn,onMap:map=>{maps.push(map);
+        // LINKED AS IT MOVES, not when it stops (the practitioner, 2026-11-13: "if you zoom on one and move left to right or up
+        // and down all the maps move the same").
+        map.on('move zoom',()=>follow(map));}});}
+    catch(error){at.innerHTML=`<p class="notice" data-panel-error>This panel could not be drawn: ${esc(errorMessage(error))}</p>`;return ()=>{};}});
+  // One view for all of them, the first panel's, once they are drawn.
+  const settle=requestAnimationFrame(()=>requestAnimationFrame(()=>{ready=true;if(maps[0])follow(maps[0]);}));
+  return ()=>{cancelAnimationFrame(settle);ready=false;for(const dispose of disposers)dispose();host.classList.remove('map-panels-host');};
+}
+/** GRID CELLS IN PANELS, INTERACTIVE (experiment 212): one small map per raster, each its cells in the shared classes,
+ *  linked as they move. The key is drawn once, above. */
+function mountRasterPanels(host:HTMLElement,panels:import('./raster-panels.js').DrawnDensity[],breaks:number[],
+    mapNode:WorkflowNode<'map_output'>):()=>void{
+  const arranged=mapNode.params.arrangement;
+  const order=arranged?arranged.panels.map(p=>p.layer):panels.map(p=>p.layer);
+  const shown=order.map(name=>panels.find(p=>p.layer===name)).filter((p):p is NonNullable<typeof p>=>!!p);
+  const title=(layer:string)=>arranged?.panels.find(p=>p.layer===layer)?.title?.trim()||layer;
+  const columns=panelColumns(arranged?.grid??'grid',shown.length),colours=rampFor(breaks);
+  host.classList.add('map-panels-host');
+  host.innerHTML=`<div class="map-panels-key" data-density-key>${colours.map((c,i)=>`<span><i style="background:${c}"></i>${
+      i===0?`up to ${roundTo(breaks[0])}`:i===colours.length-1?`over ${roundTo(breaks[i-1])}`:`${roundTo(breaks[i-1])} to ${roundTo(breaks[i])}`}</span>`).join('')}`
+    +` <span class="muted">people per km², one scale for every panel; side by side, not a difference</span></div>`
+    +`<label class="map-panels-sync"><input type="checkbox" id="map-panels-sync" ${panelsMoveTogether?'checked':''}> Move the panels together</label>`
+    +`<div class="map-panels-grid" style="grid-template-columns:repeat(${columns},minmax(0,1fr))">`
+    +shown.map((p,i)=>`<section class="map-panel" data-map-panel="${esc(p.layer)}"><h4>${esc(title(p.layer))}</h4><div data-map-panel-host="${i}" class="raster-panel-map"></div></section>`).join('')+`</div>`
+    +`<p class="muted">Drawn cells about ${Math.round(Math.max(...shown.map(p=>p.drawnCellM))).toLocaleString('en')} m across: each the people in the source cells under it over their area.</p>`;
+  host.querySelector<HTMLInputElement>('#map-panels-sync')!.onchange=e=>{panelsMoveTogether=(e.target as HTMLInputElement).checked;};
+  const maps:import('leaflet').Map[]=[];let moving=false,ready=false;
+  const follow=(from:import('leaflet').Map)=>{
+    if(moving||!ready||!panelsMoveTogether)return;moving=true;
+    try{for(const other of maps)if(other!==from&&other.getContainer().isConnected)other.setView(from.getCenter(),from.getZoom(),{animate:false});}
+    finally{moving=false;}};
+  const basemap=basemapOf(mapNode.params.basemap);
+  const disposers=shown.map((p,i)=>mountDensityPanel(host.querySelector<HTMLElement>(`[data-map-panel-host="${i}"]`)!,densityImage(p,breaks),p.bounds,basemap,
+    map=>{maps.push(map);map.on('move zoom',()=>follow(map));}));
+  // FITTED ONCE THE PANELS HAVE A SIZE: fitted before, they opened zoomed into the middle (Rwanda, 2026-11-13).
+  const all=[Math.min(...shown.map(p=>p.bounds[0])),Math.min(...shown.map(p=>p.bounds[1])),Math.max(...shown.map(p=>p.bounds[2])),Math.max(...shown.map(p=>p.bounds[3]))];
+  const settle=requestAnimationFrame(()=>requestAnimationFrame(()=>{for(const m of maps)m.invalidateSize();
+    maps[0]?.fitBounds([[all[1]!,all[0]!],[all[3]!,all[2]!]],{padding:[8,8],animate:false});ready=true;if(maps[0])follow(maps[0]);}));
+  return ()=>{cancelAnimationFrame(settle);ready=false;for(const d of disposers)d();host.classList.remove('map-panels-host');host.replaceChildren();};
+}
+const roundTo=(v:number|undefined)=>v===undefined?'':Number(Math.abs(v)>=100?v.toFixed(0):Math.abs(v)>=10?v.toFixed(1):v.toFixed(2)).toLocaleString('en');
 function renderMap(){
   if(!resultsOnScreen())return;
-  disposeCatchmentMap?.();disposeCatchmentMap=undefined;document.querySelector('#catchment-map-host')?.remove();document.querySelector('#catchment-plot-download')?.remove();document.querySelector('#comparison-map-host')?.remove();
+  disposeCatchmentMap?.();disposeCatchmentMap=undefined;document.querySelector('#catchment-map-host')?.remove();document.querySelector('#polygon-method')?.remove();document.querySelector('#catchment-plot-download')?.remove();document.querySelector('#comparison-map-host')?.remove();
   const result=activeOutput(),svg=$('#map'), rows=result?.rows||[], centers=result?.centers||[], points=[...rows.filter(r=>r.coordinates).map(r=>r.coordinates!),...centers.filter(c=>c.geometry).map(c=>c.geometry!.coordinates)];
   // PRESENTATION IS LIVE, NOT BAKED INTO THE RUN. The node is read from the current workflow and
   // not from the snapshot as run, because a title, a key, a basemap and a mark's size change
@@ -6509,6 +6634,9 @@ function renderMap(){
   // rerun for them would be asking a practitioner to recompute a figure to resize a dot.
   const mapNode=workflow.nodes.find((n):n is WorkflowNode<'map_output'>=>n.id===result?.nodeId&&n.type==='map_output')
     ??runWorkflow?.nodes.find((n):n is WorkflowNode<'map_output'>=>n.id===result?.nodeId&&n.type==='map_output');
+  const arranged=mapNode?.params.arrangement;
+  const rasterPanels=(result as {rasterPanels?:import('./raster-panels.js').DrawnDensity[]}|undefined)?.rasterPanels;
+  const polygonFigure=(p:import('./catchments.js').Polygons)=>arranged?polygonPanelsSvg(p,arranged.panels,arranged.grid,esc):polygonSvg(p,esc);
   // The symbols the run resolved are the run's, so they carry the sizes that were current then.
   // Re-resolved here against the live node, in the layer order the run recorded, so the marks and
   // the key cannot disagree about what a layer looks like.
@@ -6538,7 +6666,7 @@ function renderMap(){
       +(item.line?`<path d="M1 7H9" stroke="${item.color}" stroke-width="1.6"/><path d="M8 3L14 7L8 11z" fill="${item.color}"/>`
         :`<path d="${markPath(item.shape||'circle',7,7,5)}" fill="${item.hollow?'none':item.color}" stroke="${item.hollow?item.color:FIGURE_ROLE.quietInk}" stroke-width="1.5"/>`)+`</svg>${esc(item.label)}</span>`).join(''):'';
     $('#map-communication-key').innerHTML=key;$('#map-communication-header-key').innerHTML=key;
-    $('#map-download-svg').onclick=()=>{const content=result?.polygons&&result.polygonPresentation==='interactive'?(result.polygons.features.some(f=>f.minutes!==undefined)?catchmentPlot(result.polygons,esc,result.contextPoints):polygonSvg(result.polygons,esc)):svg.innerHTML;
+    $('#map-download-svg').onclick=()=>{const content=result?.polygons&&result.polygonPresentation==='interactive'?(result.polygons.features.some(f=>f.minutes!==undefined)?catchmentPlot(result.polygons,esc,result.contextPoints):polygonFigure(result.polygons)):svg.innerHTML;
       const viewBox=result?.polygons&&result.polygons.features.some(f=>f.minutes!==undefined)?'0 0 850 650':frameBoxOf(content);
       // The scale bar is derived from the plot's own frame, and only for the catchment plot, whose
       // vertical axis is latitude. A decision table or a basemap-backed view has no single ground
@@ -6557,7 +6685,7 @@ function renderMap(){
       button.disabled=true;button.textContent='Rendering\u2026';
       try{
         const content=result?.polygons&&result.polygonPresentation==='interactive'
-          ?(result.polygons.features.some(f=>f.minutes!==undefined)?catchmentPlot(result.polygons,esc,result.contextPoints):polygonSvg(result.polygons,esc))
+          ?(result.polygons.features.some(f=>f.minutes!==undefined)?catchmentPlot(result.polygons,esc,result.contextPoints):polygonFigure(result.polygons))
           :svg.innerHTML;
         const viewBox=result?.polygons&&result.polygons.features.some(f=>f.minutes!==undefined)?'0 0 850 650':frameBoxOf(content);
         const plotted=result?.polygons&&result.polygons.features.some(f=>f.minutes!==undefined)
@@ -6630,7 +6758,10 @@ function renderMap(){
           label:mapImageCredit(livePlate),
           ...(livePlate.corners?{corners:livePlate.corners,width:livePlate.width,height:livePlate.height}:{})}}
       :result;
-    disposeCatchmentMap=mountCatchmentMap(host,withPlate.polygons?{...withPlate,polygons:withPlate.polygons}:withPlate,
+    if(rasterPanels?.length&&mapNode)disposeCatchmentMap=mountRasterPanels(host,rasterPanels,
+      (result as unknown as {densityBreaks:number[]}).densityBreaks,mapNode);
+    else if(arranged&&result.polygons&&mapNode)disposeCatchmentMap=mountMapPanels(host,withPlate,mapNode,arranged);
+    else disposeCatchmentMap=mountCatchmentMap(host,withPlate.polygons?{...withPlate,polygons:withPlate.polygons}:withPlate,
       result.contextPoints,esc,mapNode?basemapOf(mapNode.params.basemap):'none',
       choice=>{if(mapNode)change(w=>getNode(w,mapNode.id,'map_output').params.basemap=choice);},
       // The node is the view's identity. Without it every presentation change -- and Mark radius
@@ -6671,8 +6802,11 @@ function renderMap(){
     // basemap in the wrong place.
     const banded=result.polygons.features.some(f=>f.minutes!==undefined);
     if(banded){svg.setAttribute('viewBox','0 0 850 650');svg.innerHTML=catchmentPlot(result.polygons,esc,result.contextPoints);}
+    // PANELS SIDE BY SIDE, on one scale (experiment 212): each panel its own frame, so no single basemap or point overlay
+    // projects onto the figure; those are drawn on one map only.
+    else if(arranged)svg.innerHTML=polygonPanelsSvg(result.polygons,arranged.panels,arranged.grid,esc),applyFrame(svg,svg.innerHTML);
     else{svg.innerHTML=polygonSvg(result.polygons,esc);applyFrame(svg,svg.innerHTML);}
-    const polygonGround=banded?catchmentFrame(result.polygons,result.contextPoints):polygonFrame(result.polygons);
+    const polygonGround=arranged&&!banded?null:banded?catchmentFrame(result.polygons,result.contextPoints):polygonFrame(result.polygons);
     // AND THE POINTS THIS MAP COMPOSED, over the polygons rather than instead of them. See
     // `markedPoints`: the value has carried them since 2026-10-29 and this renderer did not read
     // them, so a map with a river, 32 sub-districts and four intakes drew no intakes while the
@@ -6706,6 +6840,15 @@ function renderMap(){
   // control offered a toggle for marks that were never drawn. Reported 2026-10-25 against a
   // Gaborone map with a study area, a clipped raster, facilities and a street network wired,
   // where only the raster appeared.
+  // GRID CELLS IN PANELS (experiment 212): the static figure, every panel on one scale.
+  if(rasterPanels?.length&&mapNode?.params.presentation!=='interactive'){
+    const breaks=(result as unknown as {densityBreaks:number[]}).densityBreaks;
+    const order=arranged?arranged.panels.map(p=>p.layer):rasterPanels.map(p=>p.layer);
+    const shownPanels=order.map(name=>rasterPanels.find(p=>p.layer===name)).filter((p):p is NonNullable<typeof p>=>!!p);
+    svg.innerHTML=rasterPanelsSvg(shownPanels,breaks,arranged?.grid??'grid',Object.fromEntries((arranged?.panels??[]).map(p=>[p.layer,p.title])),esc);
+    applyFrame(svg,svg.innerHTML);
+    return;
+  }
   if(result?.raster){
     const frame=rasterFrame(result.raster);
     // Typed from markPath's own parameter, so a shape the renderer cannot draw is a build error

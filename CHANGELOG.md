@@ -3,6 +3,18 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.113.0 — 2026-11-13
+
+- **Maps side by side.** Map's Configure… has **Arrange**: the polygon layers in panels in one row, two by two or one
+  column, each with a title, all on one scale with one key, so a shade is the same number in every panel. Interactive
+  panels are linked as they move: pan or zoom one and the others follow. **Grid cells too:** up to four rasters, each a
+  panel of people per km² in each cell, on one reddish-orange scale. The population example shows the four sources'
+  shares two by two and the three grids' cells in a row. Map 0.29.0. Experiment 212.
+- **Collect polygon layers is retired into Map.** A Map takes each polygon layer on its own input, up to six, and the
+  canvas and Inspector name them Areas 1, Areas 2. A saved workflow that collected layers for a map opens rewritten; one
+  that collected them for another step is refused and named. South London is rewritten. The widget count is 50.
+  docs/audits/collect-polygon-layers-retired.md.
+
 ## 0.112.0 — 2026-11-13
 
 - **Snow's Map 2, placed by hand.** South London's plate is offered in Configure… and placed north-up by four features

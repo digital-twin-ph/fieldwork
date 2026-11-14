@@ -3,7 +3,7 @@
   "description": "Independent recomputation of implemented widgets by an external process, recorded after release. Release files are immutable once committed, so evidence about a release lives here and accrues as checks run. A fixture digest recorded in a result is over canonical JSON content rather than the file’s bytes, revised 2026-10-11 because byte identity is unsatisfiable in the browser the lab publishes to. A parity result establishes numerical agreement with a named external implementation under a stated criterion. It is not scientific certification, and it says nothing about whether a method is appropriate for a question.",
   "lab": {
     "repository": "https://github.com/digital-twin-ph/validation-lab",
-    "commit": "4e04d1b89f88a882eb9ecab21466ab4d0a69fdb8",
+    "commit": "bfb058567b0aeada2f815fd374c692578a0bc288",
     "pinNote": "The commit CI checks the lab out at: .github/workflows/pages.yml reads it with `jq -r .lab.commit widgets/parity.json`. So this pin, not the clone beside this repository, is what `validate:dive-deeper` verifies against on a clean runner -- and it must be advanced whenever a check lands in the lab, in the same push-then-pin order the worked examples use."
   },
   "outcomes": {
@@ -233,24 +233,6 @@
       "note": "Two unrelated algorithms for the same partition: Fieldwork clips a rectangle with one half-plane per other site, the reference asks GEOS for the Voronoi diagram of the same projected points. Neither method informs the other. The envelope is recomputed from the boundary by the declared rule rather than taken from the fixture, so that derivation is checked too. This completes the John Snow Voronoi chain: cells, clip and count are all now independently recomputed. Agreement says nothing about whether a nearest-pump cell models which pump anybody drank from -- the notebook measures that 138,081 m2 of the ground reachable on foot in five minutes falls outside the cell, and the two answer different questions.",
       "notebook": "15-voronoi-vs-shapely.ipynb",
       "diveDeeper": "Dive deeper · the assumption is straight-line distance"
-    },
-    {
-      "widget": "urn:fieldwork:widget:stack_polygons",
-      "coversRelease": "0.1.0",
-      "check": "16-stack-polygons",
-      "result": "content/results/check-16-stack-polygons.json",
-      "sha256": "9fe3f955cec8f0437dcdd34f8783cb607de7825d712efad0e88929fc9ce72173",
-      "external": [
-        "shapely 2.2.0",
-        "GEOS 3.14.1"
-      ],
-      "criterion": "the order of identifiers exactly as the declared extent rule gives it, the same multiset of identifiers in and out, and the layer, polygon and banded-polygon counts exact",
-      "outcome": "agrees",
-      "measured": "the order of all 3 identifiers exact, the same polygons in and out, the layer, polygon and banded counts exact, and 0 ties in extent",
-      "ranAt": "2026-10-11T21:25:52.043065+00:00",
-      "note": "A check of a rule rather than of arithmetic: this widget concatenates layers and sorts by extent, and has no geometry to compare. Extent is deliberately crude and is declared in full -- the sum of every ring's absolute shoelace area in SQUARE DEGREES, unprojected, holes added not subtracted -- because it is a sort key and not a measurement. The notebook measures the gap on the real bands: extent exceeds the net area by 0.6%, 10.8% and 7.6% for the 2, 5 and 10 minute corridors. Ties are reported because a tie would leave the order ambiguous while this check still passed; there are none here.",
-      "notebook": "16-stack-polygons-vs-sort.ipynb",
-      "diveDeeper": "Dive deeper · why extent is the wrong number to quote"
     },
     {
       "widget": "urn:fieldwork:widget:buffer_point",
@@ -919,6 +901,24 @@
       ],
       "note": "Covers Sample a raster over areas (src/raster-areas.ts, the scanline rule of 2026-11-13) and the window Raster input keeps (src/raster.ts). The rasters are not redistributed: the fixture carries each file's address, size and digest, and the check reads them from POP_FILES (scripts/export-validation-fixture.mjs, population-districts-001).",
       "notebook": "50-population-districts-vs-rasterio.ipynb"
+    },
+    {
+      "widget": "urn:fieldwork:widget:map_output",
+      "coversRelease": "0.29.0",
+      "check": "16-stack-polygons",
+      "result": "content/results/check-16-stack-polygons.json",
+      "sha256": "7186a2142d368b0b85cc2a245ef7e2965f793ec38fdb65ca37d73d958efb8d0e",
+      "external": [
+        "shapely 2.2.0",
+        "GEOS 3.14.1"
+      ],
+      "criterion": "the order of identifiers exactly as the declared extent rule gives it, the same multiset of identifiers in and out, and the layer, polygon and banded-polygon counts exact",
+      "outcome": "agrees",
+      "measured": "Three walking-time corridors drawn on one Map, collected for drawing by src/polygon-layers.ts#collectPolygonLayers: the order of the three, largest extent first, equal to the order recomputed independently, with no ties. Re-run 2026-11-13 when Collect polygon layers retired into Map; the function moved unchanged.",
+      "ranAt": "2026-11-13T23:25:59.448176+00:00",
+      "note": "Covers the draw order of a Map’s polygon layers (Map 0.29.0), which Collect polygon layers computed until it retired into Map on 2026-11-13 (docs/audits/collect-polygon-layers-retired.md). The earlier entry for stack_polygons 0.2.0 stands as the record of that release.",
+      "notebook": "16-stack-polygons-vs-sort.ipynb",
+      "diveDeeper": "Dive deeper · why extent is the wrong number to quote"
     }
   ],
   "notebookNote": "`notebook` names the lab notebook that carries the check, and `diveDeeper` the heading of its Dive Deeper section where it has one -- the part written for a practitioner who wants to understand the widget rather than for a reviewer checking it (experiment 94). Both are recorded rather than derived from the check id: `24-project-forward` lives in `24-project-vs-pyproj.ipynb`, so matching on the leading number works by luck and would break the first time a check and its notebook are named differently. The application reads `diveDeeper` to decide which widgets offer the link, and scripts/validate-dive-deeper.mjs refuses a heading the notebook does not actually carry."

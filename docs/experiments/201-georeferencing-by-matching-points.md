@@ -1,6 +1,6 @@
 # 201 · Georeferencing a map image by matching points
 
-_Created 2026-11-10 · Updated 2026-11-10_
+_Created 2026-11-10 · Updated 2026-11-13_
 
 **Status:** tried. The fit, the dialog and turned drawing are built (0.81.0); South London's four points refitted; lab
 check 48 agrees with GDAL; the cue for a worked example is built, and Hagelloch's 1824 sheet is placed by hand in Hagelloch's

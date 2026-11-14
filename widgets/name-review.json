@@ -340,15 +340,6 @@
       "reviewedBy": null
     },
     {
-      "nodeType": "stack_polygons",
-      "title": "Collect polygon layers",
-      "group": "Spatial operations",
-      "fingerprint": "3d9e5ec883c0",
-      "verdict": "pending",
-      "reviewed": null,
-      "reviewedBy": null
-    },
-    {
       "nodeType": "study_area",
       "title": "Study area",
       "group": "Sources",

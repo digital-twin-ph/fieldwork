@@ -925,6 +925,10 @@ fw:affectedRecordCount a owl:DatatypeProperty; rdfs:domain fw:ReadingProblem; rd
   rdfs:subPropertyOf dqv:value;
   rdfs:comment "How many of the judged records were affected. The measurement's value, in DQV's terms.".
 
+fw:drawnAs a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:label "drawn as"@en;
+  rdfs:comment "How a map drew rasters in panels side by side (experiment 212): the quantity a cell's shade shows, how many source cells a drawn cell holds at most, and that one set of classes covers every panel. Stated so a figure's scale can be read from its receipt."@en.
+
 # The two metrics these measurements are of, and the dimensions they sit in. DQV deliberately
 # does not say what quality means -- it is a frame -- so the dimensions are named here.
 #

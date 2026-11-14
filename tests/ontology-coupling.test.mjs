@@ -37,7 +37,7 @@ test('every term the isochrone primitives assert is declared',async()=>{
   const [declared,emitted,debt]=await Promise.all([declaredTerms(),emittedTerms(),debtFile()]);
   const owed=new Set(debt.terms.map(t=>t.term));
   const modules=['convex-hull.ts','combined-area.ts','network-snap.ts','reachable-nodes.ts',
-    'reachable-corridor.ts','travel-time-band.ts','stack-polygons.ts','fill-interior-gaps.ts'];
+    'reachable-corridor.ts','travel-time-band.ts','fill-interior-gaps.ts'];
   for(const [term,sources] of emitted)
     for(const source of sources)
       if(modules.includes(source)){

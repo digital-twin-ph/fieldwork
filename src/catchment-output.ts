@@ -262,3 +262,47 @@ export function catchmentPlot(p:Polygons,esc:Escape,context?:PointCollection):st
   const times=[...new Set(p.features.flatMap(f=>f.minutes===undefined?[]:[f.minutes]))].sort((a,b)=>a-b);
   return svg+`<text x="425" y="640" text-anchor="middle" font-size="14">${times.length?'Cumulative regions: '+times.join(', ')+' min · ':''}Dots: observations · squares: sites · CRS84</text>`;
 }
+
+/** MAPS SIDE BY SIDE, ONE SCALE (experiment 212). Each panel draws the features of one polygon layer; the classes are
+ *  taken over every panel's values together, so a shade is the same number in every panel; the panels share one frame,
+ *  so a district sits in the same place in each; and the figure has one key. The practitioner, 2026-11-13: "Static it
+ *  would be a 2x2 map panel." */
+export type PanelGrid='row'|'grid'|'column';
+export interface MapPanel {layer:string; title?:string}
+export function panelColumns(grid:PanelGrid,count:number):number{
+  return grid==='column'?1:grid==='row'?Math.max(1,count):Math.min(2,Math.max(1,count));
+}
+export function polygonPanelsSvg(p:Polygons,panels:readonly MapPanel[],grid:PanelGrid,esc:Escape):string{
+  const shown=panels.filter(panel=>p.features.some(f=>f.layerName===panel.layer));
+  if(!shown.length)return '<text x="30" y="40">No polygon layer to put in a panel</text>';
+  const drawn=p.features.filter(f=>shown.some(panel=>panel.layer===f.layerName));
+  let west=Infinity,east=-Infinity,south=Infinity,north=-Infinity;
+  for(const f of drawn)for(const ring of f.geometry.type==='Polygon'?f.geometry.coordinates:f.geometry.coordinates.flat())
+    for(const c of ring){if(c[0]<west)west=c[0];if(c[0]>east)east=c[0];if(c[1]<south)south=c[1];if(c[1]>north)north=c[1];}
+  // ONE CLASSIFICATION OVER EVERY PANEL'S VALUES: the hard stop of 212's admission review.
+  const {grouped,classed}=polygonShading(drawn);
+  const columns=panelColumns(grid,shown.length),rows=Math.ceil(shown.length/columns);
+  const gap=16,left=20,cellWidth=(850-2*left-gap*(columns-1))/columns,title=22;
+  const cos=Math.cos((south+north)/2*Math.PI/180),w=Math.max((east-west)*cos,1e-5),h=Math.max(north-south,1e-5);
+  const cellHeight=Math.round(Math.min(cellWidth*h/w,rows===1?520:300))+title;
+  const scale=Math.min(cellWidth/w,(cellHeight-title)/h);
+  const keyRoom=classed||grouped?70:40,height=Math.max(295,rows*cellHeight+(rows-1)*gap+keyRoom+10);
+  const cells=shown.map((panel,i)=>{
+    const x0=left+(i%columns)*(cellWidth+gap),y0=10+Math.floor(i/columns)*(cellHeight+gap);
+    const cx=x0+cellWidth/2,cy=y0+title+(cellHeight-title)/2;
+    const project=(c:Position)=>[cx+(c[0]-(east+west)/2)*cos*scale,cy-(c[1]-(north+south)/2)*scale];
+    const paths=p.features.filter(f=>f.layerName===panel.layer).map(f=>{
+      const polys=f.geometry.type==='Polygon'?[f.geometry.coordinates]:f.geometry.coordinates;
+      const at=classed?classed.classOf(f.value):grouped?grouped.classOf(f.category):null;
+      const fill=classed||grouped?(at===null?FIGURE_ROLE.unknown:(classed??grouped)!.colours[at]):FIGURE_ROLE.unknown;
+      return `<path data-catchment="${esc(f.id)}"${f.value!==undefined?` data-value="${f.value}"`:''} d="${polys.flat().map(r=>'M'+r.map(c=>project(c).join(',')).join('L')+'Z').join('')}" `
+        +`fill="${fill}" fill-opacity="${at===null&&(classed||grouped)?'.18':'.78'}" fill-rule="evenodd" stroke="${FIGURE_ROLE.quietInk}" stroke-width=".6">`
+        +`<title>${esc(f.name)}${f.value===undefined?'':` · ${f.value}`}</title></path>`;}).join('');
+    return `<g data-map-panel="${esc(panel.layer)}"><rect x="${x0}" y="${y0+title}" width="${cellWidth}" height="${cellHeight-title}" fill="#f7faf8" stroke="${FIGURE_ROLE.quietInk}" stroke-width=".4"/>`
+      +`<text x="${x0}" y="${y0+15}" font-size="14" font-weight="600">${esc(panel.title?.trim()||panel.layer)}</text>${paths}</g>`;
+  }).join('');
+  // ONE KEY FOR THE FIGURE, and the limitation said in it: side by side is not a difference, and no panel is right.
+  const key=plotKey({...p,features:drawn},classed,esc,grouped,height-10)
+    .replace(/(polygon shade: [^<·]*?)(\s*·|<)/i,'$1, one scale for every panel; side by side, not a difference$2');
+  return `<rect width="850" height="${height}" fill="#ffffff"/>${cells}${key}`;
+}

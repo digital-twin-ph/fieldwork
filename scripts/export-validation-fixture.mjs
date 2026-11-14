@@ -28,7 +28,7 @@ import {convexHull} from '../build/convex-hull.js';
 import {fillInteriorGaps} from '../build/fill-interior-gaps.js';
 import {combinedArea} from '../build/combined-area.js';
 import {voronoi,clipPolygons,summarizePolygons} from '../build/catchments.js';
-import {stackPolygons} from '../build/stack-polygons.js';
+import {collectPolygonLayers} from '../build/polygon-layers.js';
 import {bufferPoint,BUFFER_POINT_STEPS} from '../build/buffer-point.js';
 import {bufferedBoundary} from '../build/area-buffer.js';
 import {aggregateHex} from '../build/geoprivacy.js';
@@ -586,33 +586,29 @@ const builders={
     },files:{}};
   },
   'stack-polygons-soho-001'(){
-    // Three bands' corridors collected into one layer. The widget does one thing -- order the
-    // polygons largest extent first, so a smaller band draws on top of a larger one -- and the
-    // rule is deliberately crude: the sum of every ring's absolute shoelace area in SQUARE
-    // DEGREES, holes added rather than subtracted, with no projection. It decides draw order
-    // and nothing else, which is why it takes no zone, and the fixture says so explicitly so
-    // that a reader does not mistake the extent for an area.
+    // Three bands' corridors drawn on one Map, which collects its polygon layers in one order -- largest extent first, so a
+    // smaller band draws on top -- by a deliberately crude rule: the sum of every ring's absolute shoelace area in SQUARE
+    // DEGREES, holes added rather than subtracted, with no projection. It decides draw order and nothing else. Collect
+    // polygon layers did this until it retired into Map on 2026-11-13; the function moved unchanged, the fixture's id kept.
     const {layers}=sohoCorridors([2,5,10]);
-    const node={id:'stack',type:'stack_polygons',x:0,y:0,params:{label:'Collected bands'}};
-    const stacked=stackPolygons(layers,node,'fixture',['a','b','c']);
-    const facts=stacked.receipt.facts,number=name=>Number(new RegExp(`fw:${name} (-?[0-9.]+)`).exec(facts)[1]);
+    const collected=collectPolygonLayers(layers,['2 minutes','5 minutes','10 minutes']);
     return {fixture:{
-      ...base('stack-polygons-soho-001','stack_polygons','Collect polygon layers','src/stack-polygons.ts#stackPolygons'),
+      ...base('stack-polygons-soho-001','map_output','A Map\u2019s polygon layers, collected for drawing','src/polygon-layers.ts#collectPolygonLayers'),
       declaredParameters:{
         computationCRS:'OGC:CRS84',
         rule:'Concatenate the layers, then sort the polygons by extent, largest first. Nothing is merged, clipped or reprojected, and no polygon is dropped.',
         extentRule:'Extent is the sum over every ring of a polygon -- outer and interior alike -- of the absolute shoelace area of that ring, in square degrees. Holes are added, not subtracted.',
-        semantics:'Extent is a sort key, not an area. It is unprojected and it counts holes positively, so it must never be read as a measurement of ground. summarize_combined_area and summarize_hull report areas; this widget does not, which is why it takes no UTM zone.',
-        identityRule:'Two polygons sharing an identifier are refused, because once collected they cannot be told apart.'
+        semantics:'Extent is a sort key, not an area. It is unprojected and it counts holes positively, so it must never be read as a measurement of ground.',
+        identityRule:'Two polygons sharing an identifier are made distinct by their layer\u2019s position; none here do.'
       },
       input:{layers:layers.map((layer,index)=>({layer:index+1,
         polygons:layer.features.map(f=>({id:f.id,minutes:f.minutes??null,geometry:f.geometry}))}))},
       output:{
-        order:stacked.value.features.map(f=>f.id),
-        polygons:stacked.value.features.map(f=>({id:f.id,minutes:f.minutes??null})),
-        layerCount:number('layerCount'),
-        polygonCount:number('polygonCount'),
-        bandedPolygonCount:number('bandedPolygonCount')},
+        order:collected.features.map(f=>f.id),
+        polygons:collected.features.map(f=>({id:f.id,minutes:f.minutes??null})),
+        layerCount:layers.length,
+        polygonCount:collected.features.length,
+        bandedPolygonCount:collected.features.filter(f=>f.minutes!==undefined).length},
       note:'Concatenate the layers, compute each polygon\u2019s extent by the declared rule, sort descending, and compare the resulting order of identifiers exactly.'
     },files:{}};
   },

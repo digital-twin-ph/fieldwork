@@ -26,7 +26,7 @@ function OperationNode({id,data,selected}:NodeProps<OperationFlowNode>) {
   // NAMED PORT ROWS: each input a row with its name, and the output named. Sample a raster joined 2026-11-12 (the practitioner:
   // "Sample a raster has not standardized its ports yet"): five unnamed dots, of which one or two are used at a time.
   const spatialPorts=['map_output','table_output','chart_output','coverage_check','raster_input','clip_raster','sample_raster'].includes(data.type);
-  const portLabel=(port:string)=>PORT_NAMES[data.type as NodeType]?.[port]??(port==='context'?'Context points':port==='polygons'?'Areas':port==='network'?'Street network':port==='sites'?'Sites':port==='raster'?(data.type==='map_output'&&t.inputs.length>1?'Or: Raster':'Raster'):port==='decisions'?'Reasoning result':port==='area'?'Study area':port==='coverage'?'Or: Coverage result':port==='table'?'Tabular data':port==='ground'?'Map image (ground)'
+  const portLabel=(port:string)=>PORT_NAMES[data.type as NodeType]?.[port]??(port==='context'?'Context points':port==='polygons'?(t.inputs.some(([p])=>p==='polygons_2')?'Areas 1':'Areas'):/^polygons_\d$/.test(port)?`Areas ${port.split('_')[1]}`:port==='network'?'Street network':port==='sites'?'Sites':port==='raster'?(data.type==='map_output'&&t.inputs.length>1?'Or: Raster':'Raster'):port==='decisions'?'Reasoning result':port==='area'?'Study area':port==='coverage'?'Or: Coverage result':port==='table'?'Tabular data':port==='ground'?'Map image (ground)'
     // NAMED, NEVER "Points undefined" (2026-11-10, a georeferenced map image on the ground port): a port this list does not
     // know is shown by its own name, and only a numbered point port is called Points.
     :port==='files'?'Satellite files'

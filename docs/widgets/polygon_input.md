@@ -1,6 +1,6 @@
 # Polygon layer
 
-_Created 2026-10-28 · Updated 2026-11-11_
+_Created 2026-10-28 · Updated 2026-11-13_
 
 **An input widget.** It supplies a layer of polygons — many areas, each with its own name and
 attributes — as distinct from a study area, which is the single boundary your work sits inside.

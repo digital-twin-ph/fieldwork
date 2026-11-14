@@ -42,7 +42,7 @@
   "example only": 7,
   "parity only": 10,
   "example, lab not applicable": 10,
-  "example+parity": 22,
+  "example+parity": 21,
   "neither applies": 0
  },
  "compositionsUsedByNoExample": [
@@ -557,17 +557,6 @@
    "nodeType": "space_time_scan",
    "exampleUses": [
     "hagelloch-cluster"
-   ],
-   "exampleUseCount": 1,
-   "lab": "parity",
-   "labOwed": false,
-   "fieldUse": [],
-   "rung": "example+parity"
-  },
-  {
-   "nodeType": "stack_polygons",
-   "exampleUses": [
-    "south-london-1854"
    ],
    "exampleUseCount": 1,
    "lab": "parity",

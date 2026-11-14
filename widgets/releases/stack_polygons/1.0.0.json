@@ -1,0 +1,80 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:stack_polygons",
+ "version": "1.0.0",
+ "nodeType": "stack_polygons",
+ "title": "Collect polygon layers",
+ "released": "2026-11-13",
+ "implementationStatus": "retired",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['stack_polygons']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "shaclShapes": [],
+  "validationStatus": "application-only"
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "polygons",
+    "type": "polygons"
+   },
+   {
+    "name": "polygons_2",
+    "type": "polygons"
+   },
+   {
+    "name": "polygons_3",
+    "type": "polygons"
+   },
+   {
+    "name": "polygons_4",
+    "type": "polygons"
+   },
+   {
+    "name": "polygons_5",
+    "type": "polygons"
+   },
+   {
+    "name": "polygons_6",
+    "type": "polygons"
+   }
+  ],
+  "output": "polygons"
+ },
+ "ontology": {
+  "status": "gap",
+  "mappings": [],
+  "note": "Retired 2026-11-13. fw:PolygonCollection is no longer asserted; a Map's receipt names each polygon layer it used.",
+  "emits": {
+   "classes": [],
+   "properties": []
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/core.ts"
+  ],
+  "definition": "src/core.ts#TYPES",
+  "note": "Retired 2026-11-13. Its collecting is Map's, in src/polygon-layers.ts; what remains here is an archived definition, so a saved workflow naming the type can be migrated rather than refused."
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": [
+   "urn:fieldwork:widget:map_output"
+  ]
+ },
+ "changes": [
+  {
+   "kind": "major",
+   "description": "Retired into Map, which takes each polygon layer on its own input, polygons to polygons_6, and collects them for drawing as this widget did: nothing merged, each feature keeping its layer's name, the larger drawn first. The practitioner, 2026-11-13: \"This is collect polygon layers widget and I think we can retire it as we can connect polygon layers directly to the Map output.\" Retired outright, with no deprecation period, because nobody outside this project uses it (AGENTS.md). A saved workflow whose collector feeds only maps opens rewritten, each layer on the map's next polygon input; one feeding any other step is refused and named, since a single polygon input cannot hold several layers. docs/audits/collect-polygon-layers-retired.md."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Five unit checks cover collection without merging in largest-first order; bands being recognised with the cumulative-count warning stated; refusal of layers in different coordinate systems, of duplicate identifiers, of an empty connection and of a blank label; and the numbered ports matching the point-layer convention. The fifth runs the whole output stage on the John Snow example: one traversal, four bands, four corridors, collected into one layer, with the 250 recorded death locations counted per band -- 48 within one minute of the Broad Street pump, 216 within five, 250 within ten and none beyond. Both the geometry and the counts are checked to be nested. Not established: that nested bands are the right presentation, or that the disjoint counts NB04 charts can be produced here. Taking the difference between neighbouring bands is not an operation any widget performs yet. 1.0.0: tests/polygon-layers.test.mjs (the migration, and the refusal); South London's two workflows rewritten; Chromium."
+ }
+}

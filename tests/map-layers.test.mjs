@@ -96,10 +96,11 @@ test('the key names the regions drawn, not a modelled catchment',async()=>{
 });
 
 /** A collector that required every slot could never be used. */
-test('collecting polygon layers needs one layer, not six',()=>{
-  const node={type:'stack_polygons',params:{label:'Collected'}};
-  assert.equal(nodeInputs(node).length,6,'six slots are offered');
-  assert.deepEqual(requiredInputs(node),[['polygons','polygons']],'and one is required');
+// A MAP'S POLYGON INPUTS (2026-11-13, Collect polygon layers retired into Map): as many as it holds, none required.
+test('a map offers a polygon input per layer it holds, and requires none',()=>{
+  const node={type:'map_output',params:{label:'Map',polygonInputCount:2}};
+  assert.deepEqual(nodeInputs(node).filter(([,t])=>t==='polygons').map(([p])=>p),['polygons','polygons_2']);
+  assert.ok(!requiredInputs(node).some(([,t])=>t==='polygons'));
 });
 
 /** THE DESCRIPTION IS THE SOURCE, AND THE RECEIPT CAN BE ASKED ABOUT IT.

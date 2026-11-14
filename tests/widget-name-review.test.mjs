@@ -136,7 +136,9 @@ test('the shipped ledger passes and covers every live widget', ()=>{
   // (experiment 205).
   // 51 on 2026-11-11: facilities, facility_audit and travel_time retired with Old Naledi
   // (docs/audits/old-naledi-audit.md).
-  assert.equal(review.reviews.length,51);
+  // 50 on 2026-11-13: stack_polygons retired into Map, which takes each polygon layer on its own input
+  // (docs/audits/collect-polygon-layers-retired.md).
+  assert.equal(review.reviews.length,50);
 });
 
 test('the generated table shows the palette words beside the identifier', ()=>{

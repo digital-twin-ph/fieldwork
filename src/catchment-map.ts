@@ -150,7 +150,10 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
   /** SVG ONLY, for Configure…'s preview (2026-11-10): a canvas renderer created and removed within milliseconds, as the
    *  preview is on every change, can redraw on a canvas already gone ("reading 'clearRect'"). The Results map keeps
    *  the canvas, which a boundary of tens of thousands of vertices needs. */
-  options:{svgOnly?:boolean}={}){
+  options:{svgOnly?:boolean;
+    /** A PANEL OF SEVERAL (experiment 212): the features its classes are taken over, every panel's together, so a shade is
+     *  the same number in each; and the Leaflet map handed back, so panels can move together. */
+    classifyOver?:Polygons['features'];onMap?:(map:L.Map)=>void}={}){
   const canvasRenderer=()=>options.svgOnly?undefined:L.canvas();
   // A Polygons value passed directly is the old call, kept working: it is one layer set with no
   // boundary and no rows.
@@ -170,6 +173,7 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
   // Views can disappear immediately on tab/workspace changes. Avoid delayed zoom
   // transition callbacks that outlive Leaflet's removed panes.
   const map=L.map(canvas,{scrollWheelZoom:false,zoomAnimation:false,fadeAnimation:false,markerZoomAnimation:false}),all=L.featureGroup(),overlays:Record<string,L.Layer>=Object.create(null);
+  options.onMap?.(map);
   // EVERY OVERLAY'S NAME AND POSITION COMES FROM THE LAYER LIST, not from the line that happens
   // to construct it. Each of these used to invent its own string where it was built -- "Study
   // area", "Population raster", "Observations (red circles)", "Sites / context (blue squares)" --
@@ -232,7 +236,7 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
   // the practitioner, 2026-10-26: "when I shift to Interactive, the choropleth loses its shades."
   // Both renderers now read the same `classifyValues`, because a figure whose meaning depends on
   // which renderer drew it is two different figures.
-  const shading=polygonShading(p.features);
+  const shading=polygonShading(options.classifyOver??p.features);
   const {grouped}=shading;
   // FRAMES SHARE ONE KEY. Classes come from every value in every frame, so a part darker in one frame
   // than another really is higher; classes recomputed per frame would hide the trend. Experiment 168.
@@ -862,7 +866,7 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
   // was not shaded. The travel-time sentence is now said only where the features carry minutes.
   note.textContent=(timeline
     ?'Each day shows that day\u2019s most likely cluster and the cases with a date up to that day. Use the slider or Play. '
-    :polygonShading(p.features).classed
+    :polygonShading(options.classifyOver??p.features).classed
     ?`Polygon shade: ${p.valueName?.trim()||'the joined value'}, in classes shown in the key. Click a part for its number. `
     :p.features.some(f=>f.minutes!==undefined)
     ?'Blue nested regions: cumulative travel times. Red circles: observations (DEATHS radius capped at 20 px); blue squares: sites/context. '
@@ -878,4 +882,18 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
     map.stop();
     map.eachLayer(layer=>{if(!(layer instanceof L.Renderer))map.removeLayer(layer);});
     map.remove();host.replaceChildren();};
+}
+
+/** ONE PANEL OF GRID CELLS (experiment 212): a small map, its tile basemap where one is chosen, the panel's cells as one
+ *  image, and the Leaflet map handed back so the panels can be linked. No toolbar and no key: the figure says those once. */
+export function mountDensityPanel(host:HTMLElement,image:string,bounds:readonly [number,number,number,number],basemap:BasemapChoice,
+    onMap:(map:L.Map)=>void):()=>void{
+  const map=L.map(host,{scrollWheelZoom:true,zoomAnimation:false,fadeAnimation:false,markerZoomAnimation:false,zoomSnap:0.25});
+  if(Object.hasOwn(BASEMAPS,basemap)){const source=BASEMAPS[basemap as keyof typeof BASEMAPS];
+    L.tileLayer(source.url,{maxZoom:source.maxZoom,referrerPolicy:'origin',updateWhenIdle:true,keepBuffer:0,attribution:source.attribution}).addTo(map);}
+  const [w,s,e,n]=bounds;
+  L.imageOverlay(image,[[s,w],[n,e]],{opacity:.85,interactive:false,className:'raster-panel-image'}).addTo(map);
+  map.fitBounds([[s,w],[n,e]],{padding:[8,8]});
+  onMap(map);
+  return ()=>{map.remove();};
 }

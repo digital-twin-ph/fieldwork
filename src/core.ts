@@ -8,7 +8,8 @@ import {snapToNetwork,validateSnapNode} from './network-snap.js';
 import {reachableNodes,validateReachNode} from './reachable-nodes.js';
 import {reachableCorridor,validateCorridorNode} from './reachable-corridor.js';
 import {travelTimeBand,validateBandNode} from './travel-time-band.js';
-import {stackPolygons,validateStackNode,isPolygonPort,polygonPort,MAX_POLYGON_LAYERS} from './stack-polygons.js';
+import {collectPolygonLayers,isPolygonPort,polygonPort,MAX_POLYGON_LAYERS} from './polygon-layers.js';
+import {drawnDensity,pooledBreaks,isRasterPort,rasterPort,MAX_RASTER_LAYERS,MAX_DRAWN_SIDE} from './raster-panels.js';
 import {fillInteriorGaps,validateFillNode} from './fill-interior-gaps.js';
 /** Resolves a named credential to its secret. No current widget needs one; the credential
  *  manager stands on its own (experiment 30) and executeWorkflow still accepts a resolver so a
@@ -226,7 +227,9 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
     description:'Retired — build the steps it held from the palette',
     inputs:[],output:null},
   fill_interior_gaps:{title:'Fill interior gaps',group:'Spatial operations',icon:'◍',color:'teal',description:'Make each polygon solid by dropping its interior gaps, which enlarges it',inputs:[['polygons','polygons']],output:'polygons'},
-  stack_polygons:{title:'Collect polygon layers',group:'Spatial operations',icon:'▤',color:'teal',description:'Gather several polygon layers into one without merging them, largest first',inputs:[['polygons','polygons'],['polygons_2','polygons'],['polygons_3','polygons'],['polygons_4','polygons'],['polygons_5','polygons'],['polygons_6','polygons']],output:'polygons'},
+  // RETIRED 2026-11-13 into Map, which takes several polygon layers itself (docs/audits/collect-polygon-layers-retired.md).
+  // Kept so a saved workflow naming it is migrated.
+  stack_polygons:{title:'Collect polygon layers',group:'Spatial operations',icon:'▤',color:'teal',description:'Retired — connect each polygon layer to the Map',inputs:[['polygons','polygons'],['polygons_2','polygons'],['polygons_3','polygons'],['polygons_4','polygons'],['polygons_5','polygons'],['polygons_6','polygons']],output:'polygons'},
   travel_time_band:{title:'Travel time band',group:'Spatial operations',icon:'◔',color:'teal',description:'Narrow reachable junctions to a shorter time, recomputing the budget left at each',inputs:[['reached','points']],output:'points'},
   reachable_corridor:{title:'Reachable corridor',group:'Spatial operations',icon:'▦',color:'teal',description:'The strip of ground along the streets a traveller can get down within the budget',inputs:[['reached','points'],['network','network']],output:'polygons'},
   reachable_nodes:{title:'Reachable junctions',group:'Spatial operations',icon:'◴',color:'teal',description:'Street junctions within a travel time, each carrying the budget left on arrival',inputs:[['sites','points'],['network','network']],output:'points'},
@@ -407,14 +410,6 @@ export function requiredInputs(node:WorkflowNode,options?:{coverageConnected?:bo
   // cannot be satisfied from a blank canvas. Experiment 154.
   if(node.type==='two_by_two'||node.type==='regression')
     return all.filter(([port])=>port!=='design');
-  // A COLLECTOR TAKES WHAT IT IS GIVEN. `stack_polygons` declares six polygon ports and required
-  // all six, so a widget whose own description is "gather SEVERAL polygon layers" and whose
-  // implementation refuses with *"Connect at least one polygon layer to collect"* could only run
-  // with exactly six connected. Found on 2026-10-28 wiring two layers -- sub-districts and the
-  // river -- into one map: "Collect polygon layers needs its polygons_3 input connected." The
-  // first is required because a collector of nothing has nothing to emit; the rest are extra
-  // slots, which is what they were always meant to be.
-  if(node.type==='stack_polygons')return all.filter(([port])=>port==='polygons');
   // THE PARTS MAY BE A STUDY AREA OR A POLYGON LAYER, so neither is required of itself and the run
   // says so if both are missing. Nigeria's 774 LGAs are 218,000 vertices, which a study area, one
   // extent of about 26,000, cannot hold and a polygon layer exists for.
@@ -465,8 +460,8 @@ export function drawnMode(node:WorkflowNode<'map_output'>,edges:{to:string;port:
   'network'|'raster'|'polygons'|'spatial'{
   const wired=new Set(edges.filter(e=>e.to===node.id).map(e=>e.port));
   if(wired.has('network'))return 'network';
-  if(wired.has('raster'))return 'raster';
-  if(wired.has('polygons'))return 'polygons';
+  if([...wired].some(isRasterPort))return 'raster';
+  if([...wired].some(isPolygonPort))return 'polygons';
   if(wired.size)return 'spatial';
   // 'decisions' is still read from a saved file and shown as spatial: nothing produces decisions since 2026-11-11.
   const stored=node.params.inputMode;
@@ -551,12 +546,17 @@ export function nodeInputs(node:WorkflowNode):[string,PortType][]{
   // question about shape before having the shape.
   if(node.type==='map_output')return [['area','area'],
     ...Array.from({length:node.params.pointInputCount??1},(_,i)=>[pointPort(i),'points'] as [string,PortType]),
-    ['polygons','polygons'],['context','points'],
+    // SEVERAL POLYGON LAYERS, each its own port, as point layers are (2026-11-13): the practitioner, of Collect polygon
+    // layers, "we can connect polygon layers directly to the Map output".
+    ...Array.from({length:Math.max(1,Math.min(MAX_POLYGON_LAYERS,node.params.polygonInputCount??1))},(_,i)=>[polygonPort(i),'polygons'] as [string,PortType]),
+    ['context','points'],
     // THE DYNAMIC LIST IS THE ONE THAT BINDS. `TYPES.map_output.inputs` declares the ports and
     // this function is what a connection is actually checked against, so a port added to the
     // declaration alone is a port nothing may connect to -- which is how `ground` arrived
     // refusing its own widget with "Incompatible node connection" on 2026-10-27.
-    ['raster','raster'],['ground','ground'],['network','network']];
+    // UP TO FOUR RASTERS, each its own input (experiment 212: grid cells in panels side by side).
+    ...Array.from({length:Math.max(1,Math.min(MAX_RASTER_LAYERS,node.params.rasterInputCount??1))},(_,i)=>[rasterPort(i),'raster'] as [string,PortType]),
+    ['ground','ground'],['network','network']];
 
   // A street network is a thing to look at, not only a thing to route over. Four widgets consume a
   // `network` and none of them was an output, so a downloaded network could not be seen.
@@ -738,6 +738,7 @@ export function validateWorkflow(raw:unknown):Workflow {
   }) as typeof w.nodes;
   migrateDeriveValue(w);
   migrateSatelliteSampler(w);
+  migrateCollectedPolygons(w);
   migrateChartSeriesPort(w);
   migrateHealthsitesNodes(w);
   migrateOutputNodes(w);
@@ -783,7 +784,6 @@ export function validateWorkflow(raw:unknown):Workflow {
     if(n.type==='reachable_nodes')validateReachNode(n);
     if(n.type==='reachable_corridor')validateCorridorNode(n);
     if(n.type==='travel_time_band')validateBandNode(n);
-    if(n.type==='stack_polygons')validateStackNode(n);
     if(n.type==='fill_interior_gaps')validateFillNode(n);
     if(n.type==='apply_ruleset'){
       const r=n.params.ruleset;
@@ -974,6 +974,15 @@ export function validateWorkflow(raw:unknown):Workflow {
     if(n.type==='append_rows'&&n.params.tableCount!==undefined&&(!Number.isInteger(n.params.tableCount)||n.params.tableCount<2))throw new Error('Append rows stacks two tables or more.');
     if((n.type==='map_output'||n.type==='table_output'||n.type==='deduplicate_points')&&n.params.pointInputCount!==undefined&&(!Number.isInteger(n.params.pointInputCount)||n.params.pointInputCount<1||n.params.pointInputCount>MAX_POINT_LAYERS))throw new Error('Use 1–8 point input ports.');
     if(n.type==='space_time_scan')validateScanParams(n.params as never);
+    // THE ARRANGEMENT AND THE POLYGON INPUTS, checked as they arrive (experiment 212; Collect polygon layers retired).
+    if(n.type==='map_output'&&n.params.rasterInputCount!==undefined&&!(Number.isInteger(n.params.rasterInputCount)&&n.params.rasterInputCount>=1&&n.params.rasterInputCount<=MAX_RASTER_LAYERS))
+      throw new Error(`A map takes 1 to ${MAX_RASTER_LAYERS} rasters.`);
+    if(n.type==='map_output'&&n.params.polygonInputCount!==undefined&&!(Number.isInteger(n.params.polygonInputCount)&&n.params.polygonInputCount>=1&&n.params.polygonInputCount<=MAX_POLYGON_LAYERS))
+      throw new Error(`A map takes 1 to ${MAX_POLYGON_LAYERS} polygon layers.`);
+    if(n.type==='map_output'&&n.params.arrangement!==undefined){const a=n.params.arrangement;
+      if(!['row','grid','column'].includes(a?.grid)||!Array.isArray(a.panels)||a.panels.length<1||a.panels.length>MAX_POLYGON_LAYERS
+        ||a.panels.some(p=>typeof p?.layer!=='string'||!p.layer.trim()||p.layer.length>120||(p.title!==undefined&&(typeof p.title!=='string'||p.title.length>120))))
+        throw new Error('A map\u2019s panels are 1 to 6 layers by name, each with an optional title, in a row, two by two or a column.');}
     if(n.type==='map_output'&&n.params.linkField!==undefined){
       if(typeof n.params.linkField!=='object'||n.params.linkField===null)throw new Error('Invalid map line settings.');
       for(const [source,l] of Object.entries(n.params.linkField)){
@@ -1250,6 +1259,13 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
       const wanted=nodeInputs(node).find(([p])=>p===e.port)?.[1];
       return [e.port,wanted==='table'?asTableInput(from,value):value];
     })) as unknown as ExecutionInputs;
+    // A MAP'S POLYGON LAYERS, collected as one value the way Collect polygon layers did: each feature keeps its layer's
+    // name, so the layer list shows each layer; nothing is merged; larger ones draw first.
+    if(node.type==='map_output'){
+      const fed=workflow.edges.filter(e=>e.to===node.id&&isPolygonPort(e.port)).sort((a,b)=>a.port.localeCompare(b.port,'en',{numeric:true}));
+      if(fed.length>1||fed.length===1&&fed[0]!.port!=='polygons')(inputs as unknown as {polygons:Polygons}).polygons=collectPolygonLayers(fed.map(e=>values.get(e.from) as Polygons),
+        fed.map(e=>{const from=workflow.nodes.find(n=>n.id===e.from);return (from?.params as {layerName?:string;label?:string}|undefined)?.layerName||from?.params.label||e.from;}));
+    }
     // A DECLARED PORT IS NOT A CONNECTED ONE. map_output declares `points` and `context` beside
     // `area`, so a study area shown on its own -- the whole of experiment 01, and every area a
     // practitioner inspects before adding data -- has point ports with no edge behind them. This
@@ -1297,13 +1313,6 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
       }
       case 'fill_interior_gaps':{
         const made=fillInteriorGaps(inputs.polygons,node,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='polygons')!.from);
-        value=made.value;receipts.push(made.receipt);break;
-      }
-      case 'stack_polygons':{
-        const connected=workflow.edges.filter(e=>e.to===node.id&&isPolygonPort(e.port))
-          .sort((a,b)=>a.port.localeCompare(b.port));
-        const made=stackPolygons(connected.map(e=>values.get(e.from) as Polygons),node,runId,
-          connected.map(e=>e.from));
         value=made.value;receipts.push(made.receipt);break;
       }
       case 'travel_time_band':{
@@ -2415,9 +2424,13 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         break;}
       if(mode==='polygons'){
         const shown=polygonDisplay(inputs.polygons,'map') as DisplayValue;
-        const polygonSource=workflow.edges.find(e=>e.to===node.id&&e.port==='polygons')!.from;
+        const polygonSource=workflow.edges.find(e=>e.to===node.id&&isPolygonPort(e.port))!.from;
         const contextSource=workflow.edges.find(e=>e.to===node.id&&e.port==='context')?.from;
         const receipt=polygonPresentationReceipt(node,polygonSource,runId,contextSource);
+        // EVERY POLYGON LAYER IT DREW, used: one per input since Collect polygon layers retired.
+        for(const e of workflow.edges.filter(e=>e.to===node.id&&isPolygonPort(e.port)&&e.from!==polygonSource)){
+          const used=`<urn:fieldwork:run:${runId}:output:${node.id}:view> prov:used <urn:fieldwork:run:${runId}:output:${e.from}>.\n`;
+          receipt.facts+=used;receipt.input=(receipt.input??'')+used;}
         // THE FOURTH TIME A WINNING MODE THREW THE OTHER LAYERS AWAY. The study area went on
         // 2026-10-20, the facilities on 2026-10-22, the raster on 2026-10-23 -- each patched one
         // layer at a time -- and on 2026-10-28 a practitioner wired a study area, four points and
@@ -2471,7 +2484,22 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         (value as DisplayValue).polygonPresentation=node.params.presentation||'plot';
         if(node.params.contextPoints)(value as DisplayValue).contextPoints=(inputs as unknown as {context:PointCollection}).context;
         receipts.push(receipt);
-        break;}if(mode==='raster'){const source=workflow.edges.find(e=>e.to===node.id&&e.port==='raster')!.from;
+        break;}if(mode==='raster'){
+        // GRID CELLS IN PANELS, ONE SCALE (experiment 212): several rasters, or an arrangement, draw each raster's people per
+        // km² in a panel of its own, every panel classed together.
+        const rasterFed=workflow.edges.filter(e=>e.to===node.id&&isRasterPort(e.port)).sort((a,b)=>a.port.localeCompare(b.port,'en',{numeric:true}));
+        if(rasterFed.length>1||node.params.arrangement){
+          const panels=rasterFed.map(e=>{const from=workflow.nodes.find(n=>n.id===e.from);
+            return drawnDensity(values.get(e.from) as RasterGrid,from?.params.label||e.from);});
+          const breaks=pooledBreaks(panels);
+          const first=values.get(rasterFed[0]!.from) as RasterGrid;
+          const shown=decisionPresentation(node,{kind:'raster-map',raster:{...first,values:new Float32Array(0)},boundary:first.boundary,rows:[],centers:[]},rasterFed[0]!.from,runId);
+          value={...shown.value,rasterPanels:panels,densityBreaks:breaks} as unknown as DisplayValue;
+          const used=rasterFed.slice(1).map(e=>`<urn:fieldwork:run:${runId}:map:${node.id}> prov:used <urn:fieldwork:run:${runId}:output:${e.from}>.\n`).join('');
+          shown.receipt.facts+=used+`<urn:fieldwork:run:${runId}:map:${node.id}> fw:drawnAs "people per km² of each cell's area on the sphere, at most ${MAX_DRAWN_SIDE} drawn cells a side, every panel classed together in ${breaks.length+1} quantile classes"^^<http://www.w3.org/2001/XMLSchema#string>.\n`;
+          shown.receipt.input=shown.receipt.facts;receipts.push(shown.receipt);break;
+        }
+        const source=workflow.edges.find(e=>e.to===node.id&&e.port==='raster')!.from;
         // THE SAME FIX THE NETWORK BRANCH ABOVE ALREADY HAS. `rows:[]` threw away every point
         // layer wired beside the raster before a renderer could see one, so the map drew cells
         // alone and the layer list under it had nothing to list. The network branch learned this
@@ -2737,6 +2765,33 @@ function migrateChartSeriesPort(w:Workflow):void{
 
 /** THE SATELLITE SAMPLER, RETIRED INTO SAMPLE A RASTER (experiment 205, 2026-11-11). The same reading, from the same
  *  ports, with its settings kept and its source said. Stamped, as every migration is. */
+/** COLLECT POLYGON LAYERS, RETIRED 2026-11-13 into Map's own polygon inputs. A collector that feeds only maps is
+ *  rewritten exactly: each layer it collected goes to the map's next polygon input, in its order, and the map collects them
+ *  as the widget did. One that feeds anything else is refused, named: a single polygon input cannot hold several layers,
+ *  and the rewrite would have to invent steps. */
+function migrateCollectedPolygons(w:Workflow):void{
+  for(const stack of w.nodes.filter(n=>n&&(n.type as string)==='stack_polygons')){
+    const label=(stack.params as {label?:string}).label||'Collect polygon layers';
+    const out=w.edges.filter(e=>e&&e.from===stack.id);
+    const other=out.find(e=>w.nodes.find(n=>n.id===e.to)?.type!=='map_output');
+    if(other)throw new Error(`"${label}" is a retired Collect polygon layers step feeding "${(w.nodes.find(n=>n.id===other.to)?.params as {label?:string}|undefined)?.label||other.to}". `
+      +'Collecting now happens in the Map, which takes each polygon layer on its own input, so this one cannot be rewritten automatically. '
+      +'Connect each polygon layer to a Map, or to the step that needs it one at a time.');
+    const collected=w.edges.filter(e=>e&&e.to===stack.id&&isPolygonPort(e.port)).sort((a,b)=>a.port.localeCompare(b.port,'en',{numeric:true}));
+    for(const edge of out){
+      const map=w.nodes.find(n=>n.id===edge.to) as WorkflowNode<'map_output'>;
+      const held=w.edges.filter(e=>e.to===map.id&&isPolygonPort(e.port)&&e.from!==stack.id).map(e=>e.from);
+      const layers=[...held,...collected.map(e=>e.from)].filter((id,i,a)=>a.indexOf(id)===i);
+      if(layers.length>MAX_POLYGON_LAYERS)throw new Error(`"${label}" would give "${map.params.label||map.id}" ${layers.length} polygon layers; a Map takes ${MAX_POLYGON_LAYERS}.`);
+      w.edges=w.edges.filter(e=>!(e.to===map.id&&isPolygonPort(e.port)));
+      layers.forEach((from,i)=>w.edges.push({id:`${map.id}-${polygonPort(i)}-${from}`,from,to:map.id,port:polygonPort(i)}));
+      if(layers.length>1)map.params.polygonInputCount=layers.length;else delete map.params.polygonInputCount;
+      map.sourceMigration={fromType:'stack_polygons',version:'1'};
+    }
+    w.edges=w.edges.filter(e=>e.from!==stack.id&&e.to!==stack.id);
+    w.nodes=w.nodes.filter(n=>n.id!==stack.id);
+  }
+}
 function migrateSatelliteSampler(w:Workflow):void{
   w.nodes=w.nodes.map(n=>{
     if(!n||(n.type as string)!=='sample_satellite_files_at_points')return n;

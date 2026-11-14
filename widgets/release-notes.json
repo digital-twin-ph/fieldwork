@@ -427,12 +427,12 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.28.2",
+   "version": "0.29.0",
    "released": "2026-11-13",
    "changes": [
     {
-     "kind": "patch",
-     "description": "The interactive map's class key is the static figure's, which the practitioner reads (\"The legend is readable\"): a ramp with each class edge's number beneath it, now 80 pixels a class on screen and 90 in the figure, with thousands separators; at 30 pixels, six-digit edges ran together (Botswana's districts by population). The key and the note under the map name the shade where the layer does, such as \"population, persons\", not \"the joined value\". The basemap status counts tiles: unavailable only when none came, otherwise how many of the tiles in view could not be fetched; one failed tile had said unavailable over a map whose streets were drawn. A polygon input is labelled Areas, not Catchment polygons."
+     "kind": "minor",
+     "description": "Several polygon layers, each on its own input, as point layers are: polygons, polygons_2 and so on to six, a layer dropped on Add a layer taking the next; collected for drawing as Collect polygon layers did, which retired into Map the same day. And maps side by side (experiment 212): Arrange, in Configure…, puts the polygon layers in panels in one row, two by two or one column, each panel one layer by name with an optional title, all on one scale with one key; interactive panels move together unless that is turned off. The practitioner, 2026-11-13: \"Static it would be a 2x2 map panel. We should have the capability to arrange the maps in the Configure dialog.\" The Inspector names the inputs as the canvas does: Areas 1, Points 2. And grid cells: up to four rasters, raster to raster_4, drawn in panels as people per km² of each cell's area, at most 1,000 drawn cells a side, in one set of six quantile classes (YlOrRd) over every panel; interactive panels linked as they move (the practitioner: \"the maps with the reddish orange hues actually show the grid cells\")."
     }
    ],
    "breaking": false,
@@ -836,20 +836,20 @@
    "migrationFrom": []
   },
   "stack_polygons": {
-   "version": "0.2.0",
-   "released": "2026-10-28",
+   "version": "1.0.0",
+   "released": "2026-11-13",
    "changes": [
     {
-     "kind": "changed",
-     "description": "A COLLECTOR TAKES WHAT IT IS GIVEN. Six polygon ports were declared and all six were REQUIRED, so a widget whose description is \"gather several polygon layers into one\" and whose implementation refuses with \"Connect at least one polygon layer to collect\" could only ever run with exactly six connected. Found on 2026-10-28 wiring two layers -- a sub-district layer and a river -- into one map: \"Collect polygon layers needs its polygons_3 input connected.\" The first port is required, because a collector of nothing has nothing to emit; the other five are the extra slots they were always meant to be. The widget was addable, implemented, unit tested and unusable, which is the third widget this year found in that state."
-    },
-    {
-     "kind": "initial",
-     "description": "Gathers up to six polygon layers into one with nothing merged, ordered largest area first so smaller polygons draw on top. Needed because the isochrone rings arrive as one corridor per band and every output node takes a single polygons input: unioning them with summarize_combined_area would give one blob the size of the largest band with the walking times gone. Numbered ports follow the point-layer convention in src/point-layers.ts, capped at six because isochrone accepts at most six thresholds. Takes no UTM zone: ring extent in degrees decides draw order and is never reported, so there is no area to get wrong. Refuses layers computed in different coordinate systems, and refuses polygons sharing an identifier, which could not be told apart once collected."
+     "kind": "major",
+     "description": "Retired into Map, which takes each polygon layer on its own input, polygons to polygons_6, and collects them for drawing as this widget did: nothing merged, each feature keeping its layer's name, the larger drawn first. The practitioner, 2026-11-13: \"This is collect polygon layers widget and I think we can retire it as we can connect polygon layers directly to the Map output.\" Retired outright, with no deprecation period, because nobody outside this project uses it (AGENTS.md). A saved workflow whose collector feeds only maps opens rewritten, each layer on the map's next polygon input; one feeding any other step is refused and named, since a single polygon input cannot hold several layers. docs/audits/collect-polygon-layers-retired.md.",
+     "breaking": true
     }
    ],
-   "breaking": false,
-   "migrationFrom": []
+   "breaking": true,
+   "migrationFrom": [],
+   "replacementCandidate": [
+    "urn:fieldwork:widget:map_output"
+   ]
   },
   "study_area": {
    "version": "0.9.3",

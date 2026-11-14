@@ -24,7 +24,7 @@ You connect what you want drawn. There is no setting that says what kind of map 
 | --- | --- |
 | a study area | the boundary your work is inside |
 | a point layer | records with locations — up to eight separate layers |
-| catchment polygons | areas reached, covered or grouped |
+| a polygon layer | areas: districts, catchments, cells or bands — up to six separate layers |
 | a coverage check | points marked inside, outside or missing a location |
 | a raster | prepared or clipped cells |
 | a street network | the streets themselves |
@@ -172,6 +172,20 @@ A polygon layer carrying a value, such as a rate joined to districts, is shaded 
 the value at each class edge. The classes are quantiles: each holds about the same number of places, so the shade
 shows rank. Each place counts once, however many parts its outline has; a district of 83 islands is one district,
 and every one of its parts is drawn in its class.
+
+## Maps side by side
+
+**Arrange**, in **Configure…**, puts the polygon layers in panels side by side instead of over each other: in one row,
+two by two, or in one column. Each panel draws one layer, by its name, and can be given a title; a layer can be left
+out. The panels share **one scale**, so a shade is the same number in every panel, and the figure has one key. On an
+interactive map each panel is a small map of its own, and **Move the panels together** keeps them on the same view.
+
+**Rasters too.** Connect up to four rasters and each is a panel of its grid cells, shaded by people per km² of each
+cell's own area, on one scale. A panel is drawn at no more than 1,000 cells a side, each drawn cell the people in the
+cells under it over their area; the figure says how large a drawn cell is.
+
+Side by side shows where layers differ. It does not say which is right, and the key says so. The population example
+shows four sources' shares of each district's people this way.
 
 ## Playing through frames
 

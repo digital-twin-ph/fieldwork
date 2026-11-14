@@ -143,23 +143,23 @@ test('the worked example is rebuilt from an empty canvas and the published input
   await page.locator('#input-apply').click();
   await expect(page.locator('#input-dialog')).not.toBeVisible();
 
-  // 5. COLLECTED, and drawn.
-  await add(page,'stack_polygons');
-  const collected=await idOf(page,'stack_polygons');
+  // 5. DRAWN, each polygon layer on a map input of its own (2026-11-13: Collect polygon layers retired into Map). The
+  // second is added as a practitioner adds any layer, through Add a layer, and takes the map's next polygon input.
   await add(page,'map_output');
   const where=await idOf(page,'map_output');
 
-  await connect(page,districts,collected,'polygons');
-  await connect(page,thames,collected,'polygons_2');
+  await connect(page,districts,where,'polygons');
   await connect(page,extent,where,'area');
   await connect(page,intakes,where,'points');
-  await connect(page,collected,where,'polygons');
+  await page.locator(`.react-flow__node[data-id="${where}"]`).dispatchEvent('click');
+  await page.locator('#map-add-layer').selectOption(thames);
+  await expect.poll(async()=>(await saved(page)).edges.some(e=>e.from===thames&&e.to===where&&e.port==='polygons_2')).toBe(true);
 
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
 
   // THE EXAMPLE'S OWN NUMBERS, reached without the example. 32 sub-districts and 2 Thames
-  // reaches collected into 34 polygons, and the four intake points beside them.
+  // reaches drawn as 34 polygons, and the four intake points beside them.
   await page.locator('[data-view="results"]').click();
   await expect(page.locator('#result-metrics')).toContainText('34 polygons');
 
@@ -179,7 +179,7 @@ test('the worked example is rebuilt from an empty canvas and the published input
   for(let i=0;i<listed;i++)
     await expect(boxes.nth(i),`overlay ${i} is listed but not on the map`).toBeChecked();
 
-  // AND THE LAYERS ARE THE EXAMPLE'S LAYERS: four of them, the collection listed as its parts.
+  // AND THE LAYERS ARE THE EXAMPLE'S LAYERS: four of them, the two polygon layers each by its own name.
   await page.locator('[data-view="workflow"]').click();
   await page.locator(`.react-flow__node[data-id="${where}"]`).click();
   await page.locator('[data-manage-layers]').click();

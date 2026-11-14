@@ -192,8 +192,9 @@ export function hagellochClusterExample():Workflow{
     {id:'replay',type:'space_time_scan',x:430,y:580,params:{label:'When would it have been flagged?',dateField:'date_of_prodrome',
       unit:'day' as const,maxCaseShare:0.5,maxTimeShare:0.5,replications:999,seed:20261110,replay:true}},
     {id:'replay-table',type:'table_output',x:840,y:580,params:{label:'Each day’s most likely cluster',inputMode:'polygons' as const}},
-    // AND PLAYED, day by day, on the map: that day's circle and the cases known by then.
-    {id:'replay-map',type:'map_output',x:840,y:840,params:{label:'The outbreak, day by day',presentation:'interactive' as const,
+    // AND PLAYED, day by day, on the map: that day's circle and the cases known by then. Not in the write-up (the
+    // practitioner, 2026-11-14: "hard to interpret ... we can leave it out of the notes"); it plays in Results.
+    {id:'replay-map',type:'map_output',x:840,y:840,params:{label:'The outbreak, day by day',presentation:'interactive' as const,section:'none' as const,
       mapTitle:'What a daily scan would have said, Hagelloch, 1861',layerSymbols:{cases:{colour:'#3d4a45',size:3}}}},
   ];
   const edges=[

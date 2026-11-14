@@ -66,6 +66,8 @@ Introduction; a figure that shows how the analysis was done can go in Methods. R
 holds works and not figures. The run's receipt states the section and whether you chose it, and a validation rule
 checks that the note describing the figure is filed in that same section.
 
+**Not in the write-up**, the last choice, keeps the figure in Results and out of Notes and the publication: the run writes no note for it, and its receipt says it was left out. Hagelloch's day-by-day map is left out this way.
+
 ## What it will not do
 
 - **It will not ask you what shape your data is.** There is no mode to set, and connecting

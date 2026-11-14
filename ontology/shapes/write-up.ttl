@@ -72,10 +72,14 @@ fw:PublishedArtifactShape a sh:NodeShape; sh:targetClass fw:PublishedArtifact;
 # Targeted at the SUBJECT of fw:publishesArtifact rather than at the artifact, so the note stays
 # where it already lives -- on the step's output entity -- and nothing has to be duplicated under
 # the artifact to satisfy a shape.
+# UNLESS IT IS LEFT OUT OF THE WRITE-UP, which the practitioner chooses on the output widget (2026-11-14: "we can leave
+# it out of the notes"): then it says so, and owes the write-up nothing.
 fw:PublishedArtifactIsDescribedShape a sh:NodeShape;
   sh:targetSubjectsOf fw:publishesArtifact;
-  sh:property [ sh:path fw:machinedNote; sh:minCount 1; sh:class fw:MachinedNote;
-    sh:message "A step that publishes a table, chart or map must machine a note about it." ].
+  sh:or (
+    [ sh:property [ sh:path fw:figureInWriteUp; sh:hasValue false ] ]
+    [ sh:property [ sh:path fw:machinedNote; sh:minCount 1; sh:class fw:MachinedNote ] ] );
+  sh:message "A step that publishes a table, chart or map must machine a note about it, or state that it is left out of the write-up.".
 
 # --- Where a figure goes, and the rule that its note goes there too ------------------------------
 
@@ -85,10 +89,13 @@ fw:PublishedArtifactIsDescribedShape a sh:NodeShape;
 # states where its figure went and whether that was chosen.
 fw:FigureSectionShape a sh:NodeShape;
   sh:targetSubjectsOf fw:publishesArtifact;
-  sh:property [ sh:path fw:figureSection; sh:minCount 1; sh:maxCount 1;
-                sh:in ( "Introduction" "Methods" "Results" "Discussion" );
-    sh:message "A step that publishes a table, chart or map states which part of the write-up it goes in, and References is not one: it holds works, not figures." ];
-  sh:property [ sh:path fw:figureSectionDeclared; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:boolean ].
+  sh:xone (
+    [ sh:property [ sh:path fw:figureInWriteUp; sh:hasValue false ]; sh:property [ sh:path fw:figureSection; sh:maxCount 0 ] ]
+    [ sh:property [ sh:path fw:figureInWriteUp; sh:maxCount 0 ];
+      sh:property [ sh:path fw:figureSection; sh:minCount 1; sh:maxCount 1;
+                    sh:in ( "Introduction" "Methods" "Results" "Discussion" ) ];
+      sh:property [ sh:path fw:figureSectionDeclared; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:boolean ] ] );
+  sh:message "A step that publishes a table, chart or map states which part of the write-up it goes in, or that it is left out; References is not one: it holds works, not figures.".
 
 # THE NOTE GOES WHERE THE FIGURE GOES. The figure is drawn beside the note that describes it, so a note filed in one
 # section and a placement stated as another would put the figure somewhere nobody chose. Held structurally, on the

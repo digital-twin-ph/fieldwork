@@ -30,7 +30,9 @@ test('a map moved to the Introduction is filed there, and Results is the default
     const section=d.locator('#output-section');
     await expect(section).toHaveValue('Results');
     await expect(section.locator('option[value="Results"]')).toHaveText('Results (default)');
-    await expect(section.locator('option')).toHaveCount(4);
+    // The four sections, and leaving it out (experiment 202, 2026-11-14).
+    await expect(section.locator('option')).toHaveCount(5);
+    await expect(section.locator('option[value="none"]')).toHaveText('Not in the write-up');
     await section.selectOption('Introduction');
   });
   const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));

@@ -198,6 +198,8 @@ export interface PublishedArtifact {
   /** Where the figure goes in the write-up, and whether the practitioner chose it or it is the widget's default. */
   section?:FigureSection;
   sectionDeclared?:boolean;
+  /** Left out of the write-up by the practitioner's choice: shown in Results, no note, no section. */
+  leftOut?:boolean;
 }
 
 export function publishedArtifactFacts(subject:string,artifact:PublishedArtifact):string{
@@ -219,7 +221,8 @@ export function publishedArtifactFacts(subject:string,artifact:PublishedArtifact
   if(counts===null)return '';
   // THE PLACEMENT IS THE STEP'S, beside its note, so `fw:FigureFiledWhereDeclaredShape` can hold the note's section
   // against it on a real receipt.
-  const placed=artifact.section
+  const placed=artifact.leftOut?`${subject} fw:figureInWriteUp false.\n`
+    :artifact.section
     ?`${subject} fw:figureSection ${JSON.stringify(artifact.section)}; `
       +`fw:figureSectionDeclared ${artifact.sectionDeclared?'true':'false'}.\n`:'';
   return `${subject} fw:publishesArtifact [ a fw:PublishedArtifact; `

@@ -72,7 +72,7 @@ import {tablePoints,tablePointsSentence,tablePointsFacts} from './table-points.j
 import {defaultKept,searchFacts,searchSentence} from './satellite-catalog.js';
 import type {SatelliteProduct} from './satellite-products.js';
 import {productFor,productFacts,productSentence} from './satellite-products.js';
-import {figureSection,figureSectionDeclared} from './notes.js';
+import {figureSection,figureSectionDeclared,inWriteUp} from './notes.js';
 import {rateEquationNote,rateTwoByTwoEquationNote,twoByTwoEquationNote,scanEquationNote,replayEquationNote,machinedNoteFacts}
   from './equations.js';
 // WHAT AN ARTIFACT DECLARES ABOUT ITSELF. A table, a map and a chart are what a Results
@@ -2585,8 +2585,10 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         node.params.label,node.id,portSourceName(workflow,node.id,'table',''));
       // FILED WHERE THE PRACTITIONER PUT IT, Results unless they chose otherwise.
       const note=described&&{...described,section:figureSection(node.params,node.type)};
-      if(note){machined[node.id]=[note];withNote(receipts,runId,node.id,[note]);
-        const table=value as unknown as import('./data-table.js').DataTable;
+      const table=value as unknown as import('./data-table.js').DataTable;
+      if(!inWriteUp(node.params))withArtifact(receipts,runId,node.id,{kind:'table',rowCount:table.rowCount,
+        missingValueCount:table.missingValueCount,leftOut:true});
+      else if(note){machined[node.id]=[note];withNote(receipts,runId,node.id,[note]);
         withArtifact(receipts,runId,node.id,{kind:'table',rowCount:table.rowCount,
           missingValueCount:table.missingValueCount,section:figureSection(node.params,node.type),
           sectionDeclared:figureSectionDeclared(node.params)});}
@@ -2595,14 +2597,15 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
       const chart=(value as {chart:ChartSummary}).chart;
       const described=chartDescriptionNote(chart,node.params.label,node.id,node.params.figure==='pyramid'||node.params.figure==='stacked'?node.params.figure:chartRenderer(node.params)==='vega-lite'?node.params.mark??'bar':'bar');
       const note=described&&{...described,section:figureSection(node.params,node.type)};
-      if(note){machined[node.id]=[note];withNote(receipts,runId,node.id,[note]);
+      if(!inWriteUp(node.params))withArtifact(receipts,runId,node.id,{kind:'chart',barCount:chart.bins.length,leftOut:true});
+      else if(note){machined[node.id]=[note];withNote(receipts,runId,node.id,[note]);
         withArtifact(receipts,runId,node.id,{kind:'chart',barCount:chart.bins.length,
           section:figureSection(node.params,node.type),sectionDeclared:figureSectionDeclared(node.params)});}
     }
     // A TRANSMISSION TREE SAYS WHAT IT DREW, in Results, as a bar chart does (2026-11-14: MERS's tree wrote no note).
     if(node.type==='chart_output'&&isRecord(value)&&(value as {kind?:string}).kind==='transmission-tree'){
       const sentence=String((value as {sentence?:unknown}).sentence??'').trim();
-      if(sentence){const note:MachinedNote={kind:'machined',id:`${node.id}:description`,section:figureSection(node.params,node.type),
+      if(sentence&&inWriteUp(node.params)){const note:MachinedNote={kind:'machined',id:`${node.id}:description`,section:figureSection(node.params,node.type),
         nodeId:node.id,text:`**${node.params.label||'Who infected whom'}.** ${sentence}`};
         machined[node.id]=[note];withNote(receipts,runId,node.id,[note]);}
     }
@@ -2621,7 +2624,9 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
       (value as unknown as {mapLayers?:MapLayer[]}).mapLayers=plan;
       const described=mapDescriptionNote(plan,node.params.label,node.id);
       const note=described&&{...described,section:figureSection(node.params,node.type)};
-      if(note){machined[node.id]=[note];withNote(receipts,runId,node.id,[note]);
+      if(!inWriteUp(node.params))withArtifact(receipts,runId,node.id,
+        {kind:'map',layerCount:plan.filter(l=>l.drawn).length,leftOut:true});
+      else if(note){machined[node.id]=[note];withNote(receipts,runId,node.id,[note]);
         // DRAWN, not connected: the distinction `fw:layerDrawn` exists for.
         withArtifact(receipts,runId,node.id,
           {kind:'map',layerCount:plan.filter(l=>l.drawn).length,
@@ -2646,7 +2651,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
       machined[node.id]=[...(machined[node.id]??[]),note];
       withNote(receipts,runId,node.id,[note]);
     }
-    if(node.type==='map_output'){
+    if(node.type==='map_output'&&inWriteUp(node.params)){
       const says=basemapLimitation(node.params.basemap);
       if(says){
         // BESIDE any note the map already wrote, which this must not replace, and IN THE FIGURE'S OWN SECTION: a figure's

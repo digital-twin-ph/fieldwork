@@ -153,12 +153,12 @@
    "replacementCandidate": "urn:fieldwork:widget:observations"
   },
   "chart_output": {
-   "version": "0.21.4",
+   "version": "0.22.0",
    "released": "2026-11-14",
    "changes": [
     {
-     "kind": "patch",
-     "description": "A transmission tree says what it drew in Results, as a bar chart does: MERS's tree wrote no note."
+     "kind": "minor",
+     "description": "A figure can be left out of the write-up: \"Not in the write-up\" beside the four sections keeps it in Results, and the run writes no note for it and states it was left out (fw:figureInWriteUp false)."
     }
    ],
    "breaking": false,
@@ -427,12 +427,12 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.29.2",
+   "version": "0.30.0",
    "released": "2026-11-14",
    "changes": [
     {
-     "kind": "patch",
-     "description": "The write-up draws a map with the renderer the Results tab uses, off the page: panels side by side, raster cells, link lines, points, ground and a plate, as the Results tab shows them; it had kept an older copy that drew none of these and no basemap. A categorical figure has one key, below the map, not a second one drawn over it. The practitioner, 2026-11-14: \"maps in Notes still don't look like complete polished maps.\""
+     "kind": "minor",
+     "description": "A figure can be left out of the write-up: \"Not in the write-up\" beside the four sections keeps it in Results, and the run writes no note for it and states it was left out (fw:figureInWriteUp false)."
     }
    ],
    "breaking": false,
@@ -920,12 +920,12 @@
    "migrationFrom": []
   },
   "table_output": {
-   "version": "0.10.2",
+   "version": "0.11.0",
    "released": "2026-11-14",
    "changes": [
     {
-     "kind": "patch",
-     "description": "Each heading shows the column's confirmed label beneath its own name. The practitioner, 2026-11-14: \"Let's make sure we use data dictionary labels in English.\""
+     "kind": "minor",
+     "description": "A figure can be left out of the write-up: \"Not in the write-up\" beside the four sections keeps it in Results, and the run writes no note for it and states it was left out (fw:figureInWriteUp false)."
     }
    ],
    "breaking": false,

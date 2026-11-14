@@ -1,6 +1,6 @@
 # 202 · One record, several products
 
-_Created 2026-11-10 · Updated 2026-11-10_
+_Created 2026-11-10 · Updated 2026-11-14_
 
 **Status:** asked. A design for the Notes tab, built on [141](141-organising-snows-notes.md). Reordered 2026-11-14: the
 publication render first. Nothing is built.
@@ -124,6 +124,18 @@ with the parts the author writes as prompts. What it found, which the render mus
    `what` a source note needs, as MERS's did. To be checked.
 6. **No ground under the cluster map** in the simulation: tiles do not load in the test environment; to be checked on
    the practitioner's machine.
+
+**Built, 2026-11-14 (Fieldwork 0.117.0).** Publication, at the top of Notes, lays out the record as the table above
+describes, from the same notes, figures and references, over the page and printable alone (A4, saved as PDF from the
+browser's print dialog, offline). Of the simulation's six findings: (1) identical notes are merged, naming each
+workflow; (2) a source's table is not printed, its sentence stays in Methods and Data availability names it; (3) a
+figure's note is its caption; (4) none of the tab's furniture is drawn. (5) is confirmed: Hagelloch's cases are a Point
+input, which carries its sources as Evidence links and a source line, and no `provenance` with a `what`; only that
+reaches a source note and References. Point input has no provenance field to give it, so the fix is a change to that
+widget, its own batch. (6) is still to be checked on the practitioner's machine. Hagelloch's day-by-day map is out of
+the write-up, by the output's new "Not in the write-up" (the practitioner: "we can leave it out of the notes"). Not
+yet: a stored abstract, title, affiliations and keywords (prompts only, so far); the map's own title drawn inside the
+figure as well as in its caption; a figure numbered where the text cites it; Word.
 
 ## What this does not establish
 

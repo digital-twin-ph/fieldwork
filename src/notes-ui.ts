@@ -273,7 +273,9 @@ export function notesPanel(notes:readonly Note[],
     +(['derived','machined','authored','quoted'] as const)
       .map(kind=>count(kind)?` · ${count(kind)} ${kind}`:'').join('')
     +` · ${extent.words.toLocaleString()} words`
-    +` · ${extent.characters.toLocaleString()} characters</span></div>`
+    +` · ${extent.characters.toLocaleString()} characters</span>`
+    // THE PUBLICATION (experiment 202): the same notes laid out as a paper, to print or save as PDF.
+    +(extent.notes?`<button class="button small" data-publication>Publication</button>`:'')+`</div>`
     +`<p class="description">What survives into the write-up, in the order a reader meets it. `
     +`Quoted and authored notes belong to the investigation; derived and machined ones come from `
     +`the last run of each workflow in this project.</p>`;

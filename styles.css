@@ -1374,3 +1374,37 @@ th .column-label{display:block;font-weight:400;color:var(--muted);font-size:14px
 .widgets-view .project-widgets th[scope="row"]{white-space:nowrap;vertical-align:top}
 .widgets-view .widget-use{padding:2px 0}
 .widgets-view .widget-use .text-button{font-size:16px}
+/* THE PUBLICATION (experiment 202): paper over the page, white with dark ink in either theme because it is what prints;
+   nothing under 14px. Printing prints it alone. */
+#publication-view{position:fixed;inset:0;z-index:60;overflow:auto;background:var(--surface-tint);padding:0 16px 48px}
+#publication-view[hidden]{display:none}
+.publication-bar{position:sticky;top:0;display:flex;gap:10px;justify-content:center;padding:12px 0;background:var(--surface-tint)}
+.publication-page{background:#fff;color:#111;max-width:46rem;margin:0 auto;padding:40px 48px;font:16px/1.6 Georgia,'Times New Roman',serif;box-shadow:0 1px 4px var(--shadow-10)}
+.publication-page h1{font-size:28px;line-height:1.25;margin:0 0 8px}
+.publication-page h2{font-size:21px;margin:32px 0 10px;border-bottom:1px solid #8a8a8a;padding-bottom:4px}
+.publication-page h3{font-size:18px;margin:20px 0 8px}
+.publication-page .pub-authors{font-size:17px;margin:4px 0}
+.publication-page .pub-date{font-size:15px;color:#333;margin:0 0 12px}
+.publication-page .pub-prompt{border:2px dashed #555;padding:10px 14px;margin:12px 0;font:15px/1.45 system-ui,sans-serif;color:#222}
+.publication-page .pub-prompt p{margin:0}
+.publication-page .pub-prompt-label{font-weight:700;margin-bottom:4px!important}
+.publication-page .pub-prompt-label span{font-weight:400;color:#3d3d3d}
+.publication-page .pub-figure{margin:20px 0;break-inside:avoid}
+.publication-page .pub-figure svg{width:100%;height:auto;max-height:200mm}
+.publication-page .pub-caption{font:15px/1.45 system-ui,sans-serif;color:#111;margin:6px 0}
+.publication-page .pub-table{margin:16px 0;break-inside:avoid;overflow-x:auto}
+.publication-page table{border-collapse:collapse;font:14px/1.4 system-ui,sans-serif;color:#111}
+.publication-page td,.publication-page th{border-bottom:1px solid #9a9a9a;padding:3px 8px;text-align:left}
+.publication-page .pub-eqref{font-style:italic;color:#333}
+.publication-page .pub-equation{break-inside:avoid;margin:14px 0}
+.publication-page .pub-references li,.publication-page .pub-sources li{margin-bottom:6px}
+.publication-page .muted{color:#3d3d3d}
+.publication-page button,.publication-page .table-pager{display:none}
+@media (max-width:640px){.publication-page{padding:24px 16px}}
+@media print{
+  body.showing-publication>*:not(#publication-view){display:none!important}
+  #publication-view{position:static;overflow:visible;padding:0;background:#fff}
+  .publication-bar{display:none}
+  .publication-page{box-shadow:none;max-width:none;padding:0}
+  @page{size:A4;margin:22mm 20mm}
+}

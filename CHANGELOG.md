@@ -3,6 +3,19 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.117.0 — In development
+
+- **Notes lays out a publication.** Publication, at the top of Notes, shows the write-up as a paper, ready to print or
+  save as PDF: title, authors and date; a structured abstract; Introduction, Methods, Results and Discussion as clean
+  text, without the tab's labels and controls; figures and tables numbered, each captioned by its own note;
+  limitations gathered under Discussion; Data availability naming each source; numbered references; formulas in a
+  numbered Appendix, a pointer left where each stood. A sentence two workflows both wrote is printed once, and a source
+  table stays out of the body. The parts you write show what they are for and how long they run; Fieldwork drafts none
+  of them. Introduction and Discussion take your own notes from those sections.
+- **A figure can be left out of the write-up.** Map, Table and Chart offer "Not in the write-up" beside the four
+  sections: the figure stays in Results and no note is written for it. Hagelloch's day-by-day map is left out this way.
+  Map 0.30.0, Table 0.11.0, Chart 0.22.0.
+
 ## 0.116.0 — 2026-11-14
 
 - **Notes hold every step's account.** A step that writes no Methods note of its own now says what it did, from its own

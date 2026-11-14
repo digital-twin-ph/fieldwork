@@ -44,6 +44,14 @@ test('A STEP THAT PUBLISHES AND DESCRIBES NOTHING IS REFUSED',async()=>{
   await refused(publishedArtifactFacts(OUT,{kind:'table',rowCount:32,missingValueCount:0}));
 });
 
+test('a figure left out of the write-up states it, and owes no note and no section',async()=>{
+  // The practitioner, 2026-11-14, of Hagelloch's daily-scan replay map: "we can leave it out of the notes".
+  await conforms(publishedArtifactFacts(OUT,{kind:'map',layerCount:3,leftOut:true}));
+  // Left out and placed at once is two answers to one question.
+  await refused(publishedArtifactFacts(OUT,{kind:'map',layerCount:3,leftOut:true})
+    +`${OUT} fw:figureSection "Results"; fw:figureSectionDeclared true.\n`+machinedNoteFacts(OUT,[DESCRIPTION]));
+});
+
 test('a table that does not count its empty cells is refused',async()=>{
   // An empty cell is unknown and not zero: this application refuses a two-by-two over one, and a
   // published table whose gaps are unstated hands a reader measured absence.

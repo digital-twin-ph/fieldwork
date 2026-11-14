@@ -238,6 +238,9 @@ fw:PublishedArtifact a owl:Class; rdfs:subClassOf prov:Entity;
 fw:figureSection a owl:DatatypeProperty; rdfs:range xsd:string;
   rdfs:label "Where the step's figure goes in the write-up";
   rdfs:comment "The part of the write-up that a published table, chart or map is filed under: Introduction, Methods, Results or Discussion. Asserted on the step that published it, beside its machined note, and held equal to that note's fw:noteSection by fw:FigureFiledWhereDeclaredShape. References holds works and is not a value here. The practitioner, 2026-11-05: all output widgets may have default IMRAD sections, but it should be flexible.".
+fw:figureInWriteUp a owl:DatatypeProperty; rdfs:range xsd:boolean;
+  rdfs:label "Whether the step's figure is in the write-up";
+  rdfs:comment "Asserted false when the practitioner chose Not in the write-up on the output widget: the figure is shown in Results and the run writes no note for it, so the step states no section. The practitioner, 2026-11-14, of Hagelloch's daily-scan replay map: we can leave it out of the notes.".
 fw:figureSectionDeclared a owl:DatatypeProperty; rdfs:range xsd:boolean;
   rdfs:label "Whether the section was chosen";
   rdfs:comment "True when the practitioner chose the section on the output widget, false when it is the widget's fw:defaultFigureSection. A figure in Results by default and one placed there deliberately are the same placement and different decisions.".

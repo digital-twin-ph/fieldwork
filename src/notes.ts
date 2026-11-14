@@ -64,6 +64,10 @@ export const figureSection=(params:{section?:string}|undefined,
   nodeType?:keyof typeof DEFAULT_FIGURE_SECTIONS):FigureSection=>
   (FIGURE_SECTIONS as readonly string[]).includes(params?.section??'')?params!.section as FigureSection
     :nodeType?DEFAULT_FIGURE_SECTIONS[nodeType]:DEFAULT_FIGURE_SECTION;
+/** LEFT OUT OF THE WRITE-UP (the practitioner, 2026-11-14, of Hagelloch's daily-scan replay map: "we can leave it out of
+ *  the notes"). Chosen where the section is chosen; the figure stays in Results, and the run writes no note for it. */
+export const LEFT_OUT='none';
+export const inWriteUp=(params:{section?:string}|undefined):boolean=>params?.section!==LEFT_OUT;
 /** Whether the section was chosen, as distinct from defaulted: a receipt says which. */
 export const figureSectionDeclared=(params:{section?:string}|undefined):boolean=>
   (FIGURE_SECTIONS as readonly string[]).includes(params?.section??'');

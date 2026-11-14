@@ -1,0 +1,2 @@
+import{a}from"./chunks/chunk-3FWDJY5D.js";import"./chunks/chunk-PJNHW6ZD.js";import"./chunks/chunk-VIPZOQT2.js";import"./chunks/chunk-4TSTYO6N.js";import"./chunks/chunk-NFLCAI7Q.js";import"./chunks/chunk-VERKK3AH.js";import"./chunks/chunk-YUV2LIIV.js";import"./chunks/chunk-DW7YEB2H.js";import"./chunks/chunk-H7CTJV3U.js";import"./chunks/chunk-KVMUXFPB.js";export{a as publicationMarkup};
+//# sourceMappingURL=publication.js.map

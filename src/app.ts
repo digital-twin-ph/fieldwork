@@ -112,6 +112,7 @@ import {mountFeatureChooser} from './polygon-review.js';
 import {applyFeatureEdits,applyTableEdits,editsAt,type CellEdit,type EditEntry} from './cell-edits.js';
 import {MAX_POLYGON_LAYERS,polygonPort} from './polygon-layers.js';
 import {MAX_RASTER_LAYERS,rasterPort} from './raster-panels.js';
+import {publicationMarkup,type PublicationInput} from './publication.js';
 import {notesPanel,openNoteDialog,noteKey} from './notes-ui.js';
 // THE WRITE-UP IS THE PROJECT'S. A run contributes its notes to a store the Notes tab reads
 // across every workflow of the project, rather than the tab reading the open run alone.
@@ -121,7 +122,7 @@ import {WRITE_UP_STORE,readWriteUp,entryForRun,recordEntry,writeUpOf,sourceOfNot
   type WriteUp,type WriteUpEntry} from './write-up.js';
 import {typeset} from './prose.js';
 import {readNotes,WRITE_UP_PARTS,type Note,type WriteUpPart,moveNote,forkMachinedNote,
-  UNWRITTEN,type MachinedNote,FIGURE_SECTIONS,DEFAULT_FIGURE_SECTIONS,figureSection,type FigureSection} from './notes.js';
+  UNWRITTEN,type MachinedNote,FIGURE_SECTIONS,DEFAULT_FIGURE_SECTIONS,figureSection,type FigureSection,LEFT_OUT,inWriteUp} from './notes.js';
 import {readAuthors,currentIdentity,attestIdentity,setCurrentIdentity,authorLabel} from './identity.js';
 
 /** A polygon layer's chosen file, waiting for Apply. Keyed by node, outside the DOM, because the
@@ -2902,7 +2903,7 @@ function openMapConfig(nodeId:string){
           const name=BASEMAP_OPTIONS.find(o=>o.value===held)?.label||held;draft.basemap='none';
           note=`${name} is drawn from vector tiles, which a static figure cannot bake in, so this map now has no basemap. `
             +'OpenStreetMap and OpenTopoMap are fetched once and drawn into the figure, and are offered here; the vector styles are offered on the interactive map.';}});
-      on('#output-section',el=>{const chosen=el.value as FigureSection;
+      on('#output-section',el=>{const chosen=el.value as FigureSection|'none';
         if(chosen===DEFAULT_FIGURE_SECTIONS.map_output)delete draft.section;else draft.section=chosen;});
       on('#output-view',el=>{draft.view=el.value as Draft['view'];});
       const perSource=(key:'pinClassField'|'labelField',source:string,value:string)=>{
@@ -3005,13 +3006,19 @@ function mapArrangeSection(n:WorkflowNode<'map_output'>):string{
           +`<input type="text" maxlength="120" aria-label="Title of the panel for ${esc(layer)}" data-panel-title="${esc(layer)}" value="${esc(panel?.title??'')}" placeholder="${esc(layer)}" ${panel?'':'disabled'}>`
           +(names.includes(layer)?'':' <span class="muted">not drawn in the last run</span>')+`</div>`;void i;}).join('')+`</div>`:'');
 }
+/** WHERE AN OUTPUT'S FIGURE GOES IN THE WRITE-UP, or that it is left out, one control for all three output widgets. */
+function writeUpSelect(n:WorkflowNode<'map_output'|'table_output'|'chart_output'>):string{
+  const at=inWriteUp(n.params)?figureSection(n.params,n.type):LEFT_OUT,fallback=DEFAULT_FIGURE_SECTIONS[n.type];
+  return `<div class="field"><label class="field-label" for="output-section">In the write-up, under</label>`
+    +`<select id="output-section">${FIGURE_SECTIONS.map(s=>`<option value="${s}" ${s===at?'selected':''}>${s}${s===fallback?' (default)':''}</option>`).join('')}`
+    +`<option value="${LEFT_OUT}" ${at===LEFT_OUT?'selected':''}>Not in the write-up</option></select></div>`;
+}
 function mapSettings(n:WorkflowNode<'map_output'>):string{return groupSections('Presentation',mapSettingsFlat(n));}
 function mapSettingsFlat(n:WorkflowNode<'map_output'>):string{
   const at=figureSection(n.params,n.type),fallback=DEFAULT_FIGURE_SECTIONS[n.type];
   return ''
     +`<div class="field"><label class="field-label" for="polygon-presentation">Presentation</label><select id="polygon-presentation" data-catchment-param="presentation"><option value="plot" ${n.params.presentation!=='interactive'?'selected':''}>Static plot (SVG)</option><option value="interactive" ${n.params.presentation==='interactive'?'selected':''}>Interactive map</option></select></div>`
-    +`<div class="field"><label class="field-label" for="output-section">In the write-up, under</label>`
-      +`<select id="output-section">${FIGURE_SECTIONS.map(s=>`<option value="${s}" ${s===at?'selected':''}>${s}${s===fallback?' (default)':''}</option>`).join('')}</select></div>`
+    +writeUpSelect(n)
     // Shown when decisions are wired, as before: a reasoning result reads as a map, a table or
       // a chart, and this switches which. It used to be gated on the map being in decisions MODE.
       // A SYMBOL PER LAYER, chosen or left to the default. The practitioner, 2026-10-20: "So each
@@ -4025,8 +4032,7 @@ function renderInspector(){
     // Results tab's, and its place in the write-up; its inputs; one sentence and Configure…, which holds every setting
     // the three old panels held, under the same ids; and what the last run drew.
     content+=standardSection('Name',labelForm('chart-label','Results tab name',n.params.label||'Chart')
-      +`<div class="field"><label class="field-label" for="output-section">In the write-up, under</label>`
-      +`<select id="output-section">${FIGURE_SECTIONS.map(s=>`<option value="${s}" ${s===figureSection(n.params,n.type)?'selected':''}>${s}${s===DEFAULT_FIGURE_SECTIONS[n.type]?' (default)':''}</option>`).join('')}</select></div>`);
+      +writeUpSelect(n));
     content+=standardSection('Inputs',standardInputs(n,{decisions:'Reasoning result'}));
     content+=standardSection('Settings',`<p class="standard-sentence">${esc(chartSentence(n))}</p>`
       +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button></div>');
@@ -4046,8 +4052,7 @@ function renderInspector(){
     const mode=shownMode(n,workflow.edges);
     const at=figureSection(n.params,n.type),fallback=DEFAULT_FIGURE_SECTIONS[n.type];
     content+=standardSection('Name',`<div class="field"><label class="field-label" for="table-label">Results tab name</label><input id="table-label" maxlength="60" value="${esc(n.params.label)}"></div>`
-      +`<div class="field"><label class="field-label" for="output-section">In the write-up, under</label>`
-      +`<select id="output-section">${FIGURE_SECTIONS.map(s=>`<option value="${s}" ${s===at?'selected':''}>${s}${s===fallback?' (default)':''}</option>`).join('')}</select></div>`);
+      +writeUpSelect(n));
     const portName=(port:string)=>({area:'Study area',coverage:'Or: spatial coverage check',decisions:'Reasoning result',table:'Tabular data',raster:'Or: Raster',network:'Street network',polygons:'Polygons'} as Record<string,string>)[port]
       ||'Point data '+(port==='points'?1:port.split('_')[1]);
     // WHAT IS CONNECTED, and one picker to connect more (2026-11-09, the practitioner: *"streamline its input ports like
@@ -4908,9 +4913,9 @@ function renderInspector(){
     });
   });
   optionalElement('#output-section')?.addEventListener('change',event=>{
-    const chosen=(event.target as HTMLSelectElement).value as FigureSection;
+    const chosen=(event.target as HTMLSelectElement).value as FigureSection|'none';
     change(w=>{const node=required(w.nodes.find(x=>x.id===n.id));
-      const params=node.params as {section?:FigureSection};
+      const params=node.params as {section?:FigureSection|'none'};
       if(chosen===DEFAULT_FIGURE_SECTIONS[node.type as keyof typeof DEFAULT_FIGURE_SECTIONS])delete params.section;
       else params.section=chosen;});
   });
@@ -7742,6 +7747,11 @@ function renderNotesView(){
     // run from a workflow that is in no project. 0 is the second of those, not the first.
     {pending,waiting,total:(project?.workflows||[]).length,readOnly:keptHere(project)},
     figureOf,references,exampleLinksBlock(onlineLinks(project),esc));
+  optionalElement('[data-publication]')?.addEventListener('click',()=>openPublication({
+    title:project?.name||workflow.name,
+    authors:(project?.authors||[]).map(a=>a.name||a.login),
+    date:new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}),
+    notes:[...(project?.notes||[]),...derived,...machined],sourceOf,figureOf,references}));
   // THE FORMULAE, ONCE THE PANEL IS IN THE DOCUMENT. `notesPanel` returns the LaTeX on the
   // element that will hold it, so a note reads correctly before the converter has loaded and on
   // any machine where it never does. See `src/prose.ts`.
@@ -7781,6 +7791,24 @@ function renderNotesView(){
   });
   const total=(project?.notes||[]).length+derived.length+machined.length;
   $('#notes-view-count').textContent=total?String(total):'';
+}
+/** THE PUBLICATION, over the page, to read and to print (experiment 202). Back returns to Notes as it was; printing
+ *  prints the publication alone, which the browser saves as PDF. Its maps and charts are the Notes tab's own. */
+function openPublication(input:PublicationInput){
+  let view=optionalElement('#publication-view');
+  if(!view){view=document.createElement('div');view.id='publication-view';view.setAttribute('role','dialog');
+    view.setAttribute('aria-modal','true');view.setAttribute('aria-label','Publication');document.body.append(view);}
+  view.innerHTML=`<div class="publication-bar"><button class="button" data-publication-back>Back to Notes</button>`
+    +`<button class="button primary" data-publication-print>Print or save as PDF</button></div>`
+    +publicationMarkup(input,esc);
+  view.hidden=false;document.body.classList.add('showing-publication');
+  const close=()=>{view!.hidden=true;document.body.classList.remove('showing-publication');
+    (optionalElement('[data-publication]') as HTMLButtonElement|null)?.focus();};
+  view.querySelector('[data-publication-back]')!.addEventListener('click',close);
+  view.querySelector('[data-publication-print]')!.addEventListener('click',()=>window.print());
+  view.onkeydown=event=>{if(event.key==='Escape')close();};
+  view.querySelector<HTMLButtonElement>('[data-publication-back]')!.focus();
+  void typeset(view);
 }
 /** OPEN A NOTE, AND LET THE TWO EDITABLE KINDS BE WRITTEN.
  *

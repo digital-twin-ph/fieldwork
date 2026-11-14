@@ -127,7 +127,7 @@ Claude Code (geeky-gadgets.com). Both to be read together when interface work is
 dependency, so licence, size and offline use are checked first, as for any library here.
 
 **From the practitioner, 2026-11-14, for the next batch:** (1) Hagelloch's *What a daily scan would have said* map is hard
-to read in Notes: leave it out of the write-up (outputs need a "not in the write-up" choice), and later six
+to read in Notes: leave it out of the write-up (**done 0.117.0**: "Not in the write-up" on Map, Table and Chart), and later six
 representative days as static maps side by side (212's panels). (2) Formulas in Notes as footnotes or in an Appendix:
 proposed, an Appendix, each Methods note keeping its sentence and pointing to its numbered formula with this run's
 numbers. (3) Other examples for a space-time scan: Sierra Leone's measles line list (Hagelloch's shape, next in the
@@ -141,6 +141,8 @@ sources), and MERS's epidemic curve coloured by transmission chain and its offsp
 **Then, the same day:** the publication render of Notes ([202](docs/experiments/202-one-record-several-products.md),
 reordered: publication first; formulas in an Appendix; a print layout saved as PDF first, Word later). The offspring
 distribution is built (0.116.0); the curve by chain needs a step that hands on each case's chain, designed first.
+**The publication's first step is built (0.117.0)**; next for it: Hagelloch's source cited (Point input needs a
+provenance field, a widget change), a stored abstract and front matter, and figures cited by number in the text.
 
 **The order from here, as the practitioner set it on 2026-11-13:** *"After that let's finish MERS. Then table edit #12.
 Then Sierra Leone. Then ABM spike."* So 8, then 12, then 3, then 29. The numbering below is kept as written.

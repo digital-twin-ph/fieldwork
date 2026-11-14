@@ -620,7 +620,7 @@ export interface ParamsByType {
    *  parameters stay so the registry entry resolves and a saved workflow that still names the type
    *  can be migrated rather than refused. Nothing adds one, nothing runs one. */
   coverage_check:{exclusions:Exclusion[]; pointInputCount?:number};
-  map_output:{label:string; section?:import('./notes.js').FigureSection; pointInputCount?:number;
+  map_output:{label:string; section?:import('./notes.js').FigureSection|'none'; pointInputCount?:number;
     /** How many polygon layers it takes, as `polygons`, `polygons_2` … (2026-11-13: Collect polygon layers retired). */
     polygonInputCount?:number;
     /** How many rasters, as `raster` to `raster_4` (experiment 212, grid cells in panels). */
@@ -670,8 +670,8 @@ export interface ParamsByType {
     partLabel?:string;
     /** What a frame is, written by the practitioner: "Birth cohort". The frame's own name is the data's. */
     frameCaption?:string;
-    inputMode?:'spatial'|'decisions'|'raster'|'polygons'|'network';presentation?:'plot'|'interactive';contextPoints?:boolean;mapTitle?:string;mapSubtitle?:string;mapSourceNote?:string;showLegend?:boolean;basemap?:BasemapChoice}; table_output:{label:string; section?:import('./notes.js').FigureSection; pointInputCount?:number; inputMode?:'spatial'|'decisions'|'polygons'|'table'; totalsAsserted?:boolean};
-  chart_output:{label:string; section?:import('./notes.js').FigureSection;
+    inputMode?:'spatial'|'decisions'|'raster'|'polygons'|'network';presentation?:'plot'|'interactive';contextPoints?:boolean;mapTitle?:string;mapSubtitle?:string;mapSourceNote?:string;showLegend?:boolean;basemap?:BasemapChoice}; table_output:{label:string; section?:import('./notes.js').FigureSection|'none'; pointInputCount?:number; inputMode?:'spatial'|'decisions'|'polygons'|'table'; totalsAsserted?:boolean};
+  chart_output:{label:string; section?:import('./notes.js').FigureSection|'none';
     /** WHAT IS DRAWN: bars (the default), or who infected whom as chains over time (experiment 200, step 5), with the
      *  columns naming each case, its infector and its date. */
     figure?:'bars'|'tree'|'pyramid'|'stacked'; tree?:{id:string;parent:string;date:string;

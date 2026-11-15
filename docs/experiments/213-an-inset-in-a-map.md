@@ -2,7 +2,7 @@
 
 _Created 2026-11-13 · Updated 2026-11-14_
 
-**Status:** asked — design and admission review, written before the code.
+**Status:** tried — built 2026-11-14 (Fieldwork 0.119.0, Map 0.31.0); the browser test and the two worked examples to follow.
 
 ## The question
 
@@ -69,6 +69,20 @@ name ("an inset").
 | The inset's scale of distance is its own | **validation rule**: an inset is drawn with its own scale bar, and its box on the main map |
 | The inset's box lies inside the main map's frame | **validation rule**: a view outside it is refused when it is picked |
 | An inset enlarges; it does not add detail the data lacks | **limitation**, said nowhere on the figure: a drawn mark is no more precise for being larger |
+
+## Built, 2026-11-14
+
+As designed, with two departures, each a result:
+
+1. **The locator draws no lines.** Its box sits in the small frame and the part fills the figure, so lines from the box
+   to the large frame would cross the whole figure. The box alone says where.
+2. **The basemap is drawn under the large frame only.** The small frame shows the layers on the map's plain ground.
+   Drawing tiles into a nested frame is a second fetch at another zoom; not done yet.
+
+An inset is offered for a map over its study area (the plain static map). A map in panels has none; a polygon map
+without a study area has none yet. In the unit test, two marks about 1.4 km apart in Seoul, on a map of 126 to 130 E: 1.7 px apart on the whole map
+(their 5 px marks overlapping) and 21.1 px apart in an inset of 126.8 to 127.2 E, each mark the same 5 px radius in
+both. Synthetic coordinates, not MERS's hospitals.
 
 ## What it commits to, written before the result
 

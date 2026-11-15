@@ -1417,3 +1417,12 @@ th .column-label{display:block;font-weight:400;color:var(--muted);font-size:14px
 }
 /* The inset picker under the interactive map (experiment 213). */
 .map-inset-bar{display:flex;flex-direction:column;gap:6px;padding:6px;background:var(--surface-raised);font-size:14px}
+/* THE TAB BAR WRAPS RATHER THAN OVERLAPS (2026-11-15: the Widgets tab cut off behind the library button, the run state
+   on two lines). The tabs keep one row of their own; the actions move to a second row when there is no room. */
+.canvas-toolbar{height:auto;min-height:48px;flex-wrap:wrap;column-gap:16px}
+.canvas-toolbar .tabs{height:48px;flex:0 1 auto}
+.toolbar-actions{margin-left:auto;flex-wrap:wrap;min-height:48px}
+/* NEXT TO THE PANEL IT HIDES (the practitioner, 2026-11-15: "should be closer to the left side panel"): first in the bar,
+   before the tabs, and there whether the panel is shown or not. */
+.canvas-toolbar .library-toggle{flex:0 0 auto}
+.toolbar-actions .state{white-space:nowrap}

@@ -18,7 +18,7 @@ Projects now keep a manifest alongside their workflow. Edits update its inventor
 
 On desktop, drag the dividers beside the Node library and Inspector, or between Workflow/N3 and Results, to resize the panels. Sizes are saved on this device. Focus a divider and use arrow keys for keyboard resizing; double-click it or choose **Reset layout** to restore defaults. Narrow screens keep the stacked layout. See the [panel-layout design record](experiments/23-resizable-panels.md).
 
-Use **Hide widgets** beside the workflow tabs to collapse the left node library. The workbench and Results each have a **Full screen** control; press Escape or the same control to return to the normal layout.
+Use **Hide node library**, at the left end of the bar of tabs, to collapse the node library on the left. The workbench and Results each have a **Full screen** control; press Escape or the same control to return to the normal layout.
 
 ## Choosing a colour theme
 

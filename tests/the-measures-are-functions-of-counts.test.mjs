@@ -160,3 +160,14 @@ test('under a case-control design the table has cells and odds, and no attack ra
   assert.equal(cell('left out'),8,'the second control group is counted as left out');
   assert.match(out.sentence,/Left out of every comparison: o "2"/);
 });
+test('the four cells are named in words beside their letters: non-cases, or controls where the design fixed the columns',()=>{
+  const row=(id,e,o)=>({key:{id,e,o},value:1});
+  const table={kind:'data-table',keys:['id','e','o'],valueField:'v',missingValueCount:0,rowCount:4,
+    rows:[row('1','Y','I'),row('2','N','W'),row('3','Y','W'),row('4','N','I')]};
+  const request={exposureColumn:'e',exposed:'Y',unexposed:'N',outcomeColumn:'o',caseValue:'I',nonCaseValue:'W',level:95,rowsAreSubjects:true};
+  const out=computeExposures(table,request,['e','e'],keep);
+  const said=out.table.headings;
+  assert.equal(said.a,'exposed cases');assert.equal(said.c,'unexposed cases');
+  assert.match(said.b,/^exposed (non-cases|controls)$/);
+  assert.ok(out.table.rows.some(r=>r.key.measure==='a')&&out.table.rows.some(r=>r.key.measure==='c'),'the letters stay the measure names');
+});

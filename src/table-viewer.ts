@@ -20,6 +20,8 @@ export interface TableView {
   title:string;
   /** Column names, in the order they should be read. */
   columns:string[];
+  /** What a column holds, in words, shown beside its name (a two-by-two's "a": exposed cases). */
+  headings?:Record<string,string>;
   rows:Record<string,unknown>[];
   /** Cells edited by hand, by row (experiment 214): marked, with what they were on hover. */
   edited?:Map<Record<string,unknown>,import('./cell-edits.js').EditedCells>;
@@ -153,7 +155,7 @@ export function openTableViewer(view:TableView,esc:Escape):void{
             const p=profiles.get(c)!,said=summary(p);
             const from=view.origins?.[c];
             const role=view.roles?.[c];
-            return `<th${role?` class="column-role-${role}" data-column-role="${role}"`:''}>${esc(c)}`
+            return `<th${role?` class="column-role-${role}" data-column-role="${role}"`:''}>${esc(c)}${view.headings?.[c]?`<span class="meaning">: ${esc(view.headings[c]!)}</span>`:''}`
               +(role?`<span class="column-role">${role==='key'?'matched on':'brought across'}</span>`:'')
               +(from?`<span class="column-origin">${esc(from)}</span>`:'')
               +(said?`<span class="profile">${said}</span>`:'')
@@ -219,13 +221,13 @@ export function openTableViewer(view:TableView,esc:Escape):void{
  *  resolve -- an assignment table keeps its value column's heading -- and the stored rows are
  *  shown then, which is honest about a table nobody can pivot. */
 export function tableViewOf(
-  data:{kind?:string;keys:string[];valueField:string;unit?:string;rows:{key:Record<string,string>;value:number|null}[];rowCount:number},
+  data:{kind?:string;keys:string[];valueField:string;unit?:string;rows:{key:Record<string,string>;value:number|null}[];rowCount:number;headings?:Record<string,string>},
   title:string,
 ):TableView{
   const unit=data.unit?`${data.unit}`:'an unstated unit';
   const frame=wideFrame({kind:'data-table',...data} as DataTable);
   if(frame)
-    return {title,
+    return {title,...(data.headings?{headings:data.headings}:{}),
       columns:[frame.subject,...frame.attributes,...frame.columns],
       rows:frame.rows.map(row=>({[frame.subject]:row.label,
         ...Object.fromEntries(frame.attributes.map((name,i)=>[name,row.attributes[i]])),

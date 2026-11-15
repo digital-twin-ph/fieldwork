@@ -1,4 +1,5 @@
 import {test,expect} from './fixtures.mjs';
+import {firstRow} from './table-row.mjs';
 import {writeArrayBuffer} from 'geotiff';
 import {seedWorkflow} from './seed-workflow.mjs';
 
@@ -50,8 +51,8 @@ test('Configure says what the raster holds, fills its stated units, and offers t
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
   await page.locator('[data-view="results"]').click();
-  const row=(await page.locator('#result-rows').innerText()).trim().split('\t').slice(-4);
-  expect(row).toEqual(['968','16','0','0']);
+  const row=await firstRow(page);
+  expect([row.people,row.cells,row.cells_no_data,row.cells_outside_raster]).toEqual(['968','16','0','0']);
 });
 
 // "I still have no idea what the raster is giving me" (2026-11-13): a WorldPop window kept before its file was recognised,

@@ -45,6 +45,9 @@ export interface DataTable {
   /** What a value of the first key column means, for a table whose rows name columns of another (a regression's
    *  terms): shown beside the value, never instead of it. */
   meanings?:Record<string,string>;
+  /** WHAT A COLUMN OF A SPREAD TABLE HOLDS, in words, shown beside its name and never instead of it: a two-by-two's "a"
+   *  is "exposed cases" (2026-11-15, the practitioner: "the abcd labels should be human friendly"). */
+  headings?:Record<string,string>;
   /** AN ESTIMATE WITH ITS INTERVAL, held as rows (experiment 181). Inside, a table holds one number per row, so a
    *  regression's ratio and its limits are three rows told apart by `column`. Declared by the step that made them,
    *  so a chart reads the interval from the declaration and never from the names. `ratio` says the estimate is a

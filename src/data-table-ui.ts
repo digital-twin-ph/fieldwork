@@ -889,9 +889,9 @@ const roleAttr=(roles:ColumnRoles|undefined,column:string,also='')=>{const r=rol
 /** A HEADING IS THE COLUMN'S OWN NAME, with its confirmed label beneath (2026-11-14: "Let's make sure we use data
  *  dictionary labels in English"), never in its place: a reader checking the file finds the column it names. */
 let headingLabels:DataTable['columns']|undefined;
-const roleHead=(roles:ColumnRoles|undefined,column:string,esc:Escape,also='')=>{const r=roleOf(roles,column);
+const roleHead=(roles:ColumnRoles|undefined,column:string,esc:Escape,also='',means?:string)=>{const r=roleOf(roles,column);
   const meta=headingLabels?.[column],label=meta?.confirmed?meta.label?.trim():'';
-  return `<th scope="col"${roleAttr(roles,column,also)}>${esc(column)}`
+  return `<th scope="col"${roleAttr(roles,column,also)}>${esc(column)}${means?`<span class="meaning">: ${esc(means)}</span>`:''}`
     +(label&&label!==column?`<span class="column-label">${esc(label)}</span>`:'')
     +(r?`<span class="column-role">${r==='key'?'matched on':'brought across'}</span>`:'')+'</th>';};
 
@@ -934,7 +934,7 @@ export function dataTableMarkup(table:DataTable,esc:Escape,{query='',page=0,page
       // An attribute is marked, because it describes the subject rather than measuring it and a
       // reader totalling a column needs to know which columns are numbers.
       +frame.attributes.map(a=>roleHead(roles,a,esc,'frame-attribute')).join('')
-      +frame.columns.map(c=>roleHead(roles,c,esc)).join('')
+      +frame.columns.map(c=>roleHead(roles,c,esc,'',table.headings?.[c])).join('')
       +'</tr></thead><tbody>'
       +frame.rows.map(r=>`<tr><th scope="row"${roleAttr(roles,frame.subject)}>${esc(r.label)}</th>`
         +r.attributes.map((a,i)=>`<td${roleAttr(roles,frame.attributes[i]!,'frame-attribute')}>${esc(a)}</td>`).join('')
@@ -946,7 +946,7 @@ export function dataTableMarkup(table:DataTable,esc:Escape,{query='',page=0,page
     return `<div class="table-meta muted">${table.rowCount} cells · ${esc(grid.rowKey)} by ${esc(grid.colKey)}`
       +` · value in ${unit}</div>`
       +`<table class="crosstab"><thead><tr>${roleHead(roles,grid.rowKey,esc)}`
-      +grid.columns.map(c=>`<th scope="col">${esc(c)}</th>`).join('')
+      +grid.columns.map(c=>`<th scope="col">${esc(c)}${table.headings?.[c]?`<span class="meaning">: ${esc(table.headings[c]!)}</span>`:''}</th>`).join('')
       +(grid.grandTotal===null?'':'<th scope="col">Total</th>')
       +`</tr></thead><tbody>`
       // A ROW'S MEANING BESIDE ITS NAME, where the table carries one (a regression's terms, experiment 172).

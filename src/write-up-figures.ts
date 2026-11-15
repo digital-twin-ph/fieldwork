@@ -123,7 +123,7 @@ export function tableFigure(table:DataTable|undefined,label:string|undefined,
   const over=view.rows.length-drawn.length;
   return `<figure class="notes-figure" data-figure="table">`
     +`<table><thead><tr>`
-    +view.columns.map(name=>`<th>${esc(name)}</th>`).join('')
+    +view.columns.map(name=>`<th>${esc(name)}${view.headings?.[name]?`<span class="meaning">: ${esc(view.headings[name]!)}</span>`:''}</th>`).join('')
     +`</tr></thead><tbody>`
     +drawn.map(row=>`<tr>`+view.columns.map(name=>cell(row[name],esc)).join('')+`</tr>`).join('')
     +`</tbody></table>`

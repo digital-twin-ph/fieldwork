@@ -76,6 +76,11 @@ the mapping did not name it. Oswego's 14 foods take one node. Under a declared c
 table shows the four cells and the odds ratio, and no attack rate, because the study fixed the columns.
 Choose a control group by choosing the non-case value; the others are named as left out.
 
+Each cell's column says what it holds beside its letter: **a: exposed cases**, **b: exposed controls**, **c: unexposed
+cases**, **d: unexposed controls** under a case-control design, and *non-cases* in place of *controls* otherwise. The
+letters are the ones the equations in Notes use, and stay the columns' names. An exposure that cannot be read keeps
+the table's layout, its cells empty, so every row lines up.
+
 The rows stay in the order you ticked them. Nothing is ranked or highlighted: seeing which exposure
 stands apart is the reading. The result says how many comparisons were made and that **no interval is
 adjusted for that number**. Exposures also overlap, so one food's association can belong to another,

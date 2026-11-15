@@ -1,4 +1,5 @@
 import {test,expect} from './fixtures.mjs';
+import {firstRow} from './table-row.mjs';
 import {writeArrayBuffer} from 'geotiff';
 import {seedWorkflow} from './seed-workflow.mjs';
 import {collectPageErrors} from './page-errors.mjs';
@@ -54,9 +55,9 @@ test('a raster is totalled over a study area: the cells whose centre is inside, 
   await expect(inspector).toContainText('not area-weighted');
   // The total itself, as the step hands it on: one polygon carrying 968 people over 16 cells, none missing or outside.
   await page.locator('[data-view="results"]').click();
-  // Columns: layer, id, name, two location columns empty for a polygon, kind, then people, cells, no data, outside.
-  const row=(await page.locator('#result-rows').innerText()).trim().split('\t').slice(-4);
-  expect(row).toEqual(['968','16','0','0']);
+  // A plain table, one row per area: people, cells, no data, outside, by name and without coordinate columns.
+  const row=await firstRow(page);
+  expect([row.people,row.cells,row.cells_no_data,row.cells_outside_raster]).toEqual(['968','16','0','0']);
   expect(errors).toEqual([]);
 });
 
@@ -75,12 +76,11 @@ test('asked for in Configure, each area also carries its zonal statistics: the c
   await page.locator('[data-view="results"]').click();
   // The sixteen cells hold 44 to 77, rows 4-7 and columns 3-6 of 10r + c + 1: mean 968 / 16, median the mean of 57 and
   // 64, standard deviation sqrt(100 x 1.25 + 1.25) = 11.236, all sixteen above zero. Experiment 209's zonal statistics.
-  const row=(await page.locator('#result-rows').innerText()).trim().split('\t').slice(-13);
-  expect(row.slice(2).map(v=>v.slice(0,6))).toEqual(['968','16','0','0','60.5','60.5','11.236','44','77','16','1']);
-  // Twelve attributes to a page: the area and the density are on the next.
-  await page.locator('[data-table-fields="1"]').click();
-  const more=(await page.locator('#result-rows').innerText()).trim().split('\t').slice(-2);
-  const [km2,density]=more.map(Number);
+  const row=await firstRow(page);
+  expect(['people','cells','cells_no_data','cells_outside_raster','cell_mean','cell_median','cell_sd','cell_min','cell_max','cells_populated','share_populated']
+    .map(k=>row[k].slice(0,6))).toEqual(['968','16','0','0','60.5','60.5','11.236','44','77','16','1']);
+  // The area and the density, on the same row now that the table is a table.
+  const [km2,density]=[Number(row.area_km2),Number(row.density_km2)];
   expect(km2).toBeGreaterThan(18.9);expect(km2).toBeLessThan(19.3);
   expect(Math.abs(density-968/km2)).toBeLessThan(0.01);
   expect(errors).toEqual([]);

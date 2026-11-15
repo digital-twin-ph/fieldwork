@@ -44,6 +44,9 @@ test('Salmonella: who the cases were, every food, where the cases shopped and wh
   await expect(main).toContainText('galiamelo2');
   await expect(main).toContainText('21.4');
   await expect(main).toContainText('trockenobst2');
+  // The four cells in words beside their letters; controls, because the design is declared case-control.
+  for(const said of ['a: exposed cases','b: exposed controls','c: unexposed cases','d: unexposed controls'])
+    await expect(main.locator('th',{hasText:said}).first()).toBeVisible();
 
   await run(page,'Where did the cases shop?');
   await tab(page,'How often the cases shop at an organic shop');
@@ -62,5 +65,9 @@ test('Salmonella: who the cases were, every food, where the cases shopped and wh
   await expect(main).toContainText('4 quantile classes, tied values kept in one class');
   // The key has its own band under the map, so a basemap never runs under its labels (2026-11-15).
   await expect(page.locator('#map [data-plot-key-band]')).toHaveCount(1);
+  // The authored notes on the melons, under Results and Discussion.
+  await page.locator('[data-view="notes"]').click();
+  await expect(page.locator('main').first()).toContainText('Galia melon eaten in the week after Easter has an odds ratio of 15.6');
+  await expect(page.locator('main').first()).toContainText('6 of the 10 who ate watermelon also ate Galia melon');
   expect(errors).toEqual([]);
 });

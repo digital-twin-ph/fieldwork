@@ -920,12 +920,12 @@
    "migrationFrom": []
   },
   "table_output": {
-   "version": "0.12.0",
+   "version": "0.12.1",
    "released": "2026-11-15",
    "changes": [
     {
-     "kind": "minor",
-     "description": "A polygon layer is shown as a plain table at either input: one row per polygon with its id, name and attributes and what the step that made it says of each (locations and totals, minutes, a rule's conclusion, an area), no coordinate columns, and the table note in Notes. A table with no value column is listed, never spread into columns of \"unknown\", and shows no empty value column."
+     "kind": "patch",
+     "description": "A spread table shows what each column holds beside its name where the step that made it says (a two-by-two's cells), in Results, the full table viewer, Notes and the publication."
     }
    ],
    "breaking": false,
@@ -986,12 +986,12 @@
    "migrationFrom": []
   },
   "two_by_two": {
-   "version": "0.8.0",
-   "released": "2026-11-14",
+   "version": "0.8.1",
+   "released": "2026-11-15",
    "changes": [
     {
-     "kind": "minor",
-     "description": "On the standard Inspector and dialog (experiment 186): the Inspector says in one sentence what is compared; the layout, each row one subject, the columns and values for a, b, c and d, the exposures to compare and the interval level are set in Configure…, with the four cells counted as the preview, and nothing changes until Apply. The separate mapping dialog (experiment 153) is folded into it. The practitioner, 2026-11-14: \"If we touch 2x2 we have to standardize\"."
+     "kind": "patch",
+     "description": "Several exposures: each cell column says what it holds beside its letter (a: exposed cases, b: exposed controls or non-cases, c: unexposed cases, d: unexposed controls; a+b, c+d, left out), the letters kept as the column names; an exposure that cannot be read takes the readable rows' layout, so a case-control table with an empty column still spreads one row per exposure."
     }
    ],
    "breaking": false,

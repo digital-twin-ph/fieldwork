@@ -310,7 +310,7 @@
       "id": "urn:fieldwork:example:salmonella-germany-2021",
       "title": "Salmonella Braenderup and melons, Germany 2021",
       "repository": "https://github.com/digital-twin-ph/example-2021-salmonella-germany",
-      "commit": "5e3bbcdf4fbf63598ecc9be720deead39cb17a5f",
+      "commit": "d983edde69e21bf16e4ff2c6dc5ef1460a179e80",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2021-salmonella-germany",
       "licence": {
         "data": "CC-BY-4.0",
@@ -341,8 +341,8 @@
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "b4ea8f6103971c4da04267f971064a3c43d8bda23cd54a756d0d23cb72761f9a",
-          "bytes": 461124
+          "sha256": "61d3294731afe3b47594f3faa78bf02de08a837711579a678a649b56648cea02",
+          "bytes": 455227
         },
         {
           "path": "data/Complete_dataset_Luczynska_et_al_2022.csv",
@@ -366,8 +366,8 @@
         },
         {
           "path": "README.md",
-          "sha256": "e03ba5caca7eed2f97cf11b84bf65e0bb0728e07852da4e751d1ec0356dfba71",
-          "bytes": 8872
+          "sha256": "0c5d5688b21a4277e971821b5f9eb44beae8eabb986f49ce00a9318427cbcacd",
+          "bytes": 9205
         },
         {
           "path": "NOTICE.txt",

@@ -505,6 +505,11 @@ The high-contrast theme comes after Sierra Leone, as set on 2026-11-07; where it
    a `notebooks/` folder in the example's own repo, shaped on the PHI-Case-Studies John Snow series; the prose drafted
    as Markdown for the practitioner to edit; each closes by setting its numbers beside Fieldwork's, and the lab lists
    that check. Oswego first, then Salmonella.
+34. **What a two-by-two says of itself: its arithmetic readings as facts, interpretation left to authored notes**
+   ([218](docs/experiments/218-what-a-two-by-two-says-of-itself.md); the practitioner, 2026-11-15, on Salmonella's melon
+   table: *"unless the ontology can help structure the interpretation"*, then *"Yes"* to both). The step states what
+   follows from its cells (interval above, below or across 1; a zero cell, no ratio; a cell of 1 or 2, unstable), never
+   which exposure is the vehicle. Salmonella's interpretation goes in as authored notes now.
 
 ## Urgent
 

@@ -1,4 +1,5 @@
 import {test,expect} from './fixtures.mjs';
+import {firstRow} from './table-row.mjs';
 import {writeArrayBuffer} from 'geotiff';
 import {readFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
@@ -55,5 +56,6 @@ test('a raster window leaves the device as its source and digest, and is read ag
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
   await page.locator('[data-view="results"]').click();
-  expect((await page.locator('#result-rows').innerText()).trim().split('\t').slice(-4)).toEqual(['968','16','0','0']);
+  const row=await firstRow(page);
+  expect([row.people,row.cells,row.cells_no_data,row.cells_outside_raster]).toEqual(['968','16','0','0']);
 });

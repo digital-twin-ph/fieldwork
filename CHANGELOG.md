@@ -5,6 +5,12 @@ shown in a local build is not a claim that it has been published.
 
 ## 0.123.0 — In development
 
+- **A two-by-two's cells say what they hold.** Beside a, b, c and d: exposed cases, exposed controls, unexposed cases,
+  unexposed controls (non-cases outside a case-control study), in Results, Notes and the publication. Salmonella's 34
+  fruit items, four of them empty, now show one row each. Two-by-two 0.8.1, Table output 0.12.1.
+- **Two experiments recorded for later**: each worked example retold in Python notebooks, for validation and teaching
+  (217); and what a two-by-two can say of its own arithmetic, interpretation left to authored notes (218).
+
 - **A map's key no longer sits on the map.** In a static map the class key has its own band under the map, so a
   basemap's tiles and place names never run under the labels. Salmonella's Länder over OpenStreetMap had the key on
   Switzerland. Map 0.32.1.

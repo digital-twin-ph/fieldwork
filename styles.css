@@ -1453,3 +1453,5 @@ th .column-label{display:block;font-weight:400;color:var(--muted);font-size:14px
 #map-panel:not([hidden]) #catchment-map-host:has(~ #map-parts) .catchment-leaflet{flex:none;height:480px}
 #map-panel:fullscreen #catchment-map-host:has(~ #map-parts){flex:1 1 auto}
 #map-panel:fullscreen #catchment-map-host:has(~ #map-parts) .catchment-leaflet{flex:1 1 auto;height:auto}
+/* What a spread table's column holds, beside its name: a two-by-two's "a: exposed cases" (2026-11-15). */
+th .meaning{font-weight:400;white-space:normal}

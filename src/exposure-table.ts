@@ -45,11 +45,14 @@ export function computeExposures(table:DataTable,request:TwoByTwoRequest,columns
   // TO THE PRECISION A READER USES. This table is read across, and the full values stay on `rows`.
   const percent=(part:number,whole:number)=>Math.round(1000*part/whole)/10;
   const ratio=(value:number|null|undefined)=>value===null||value===undefined?null:Math.round(100*value)/100;
+  // ONE LAYOUT FOR EVERY ROW, the readable rows': an exposure that could not be read took the cohort layout (a+b, %) in a
+  // case-control table, so the rows did not line up and Salmonella's 34 foods could not be spread (2026-11-15).
+  const layout=rows.find(row=>row.result)?.result;
   for(const {column,result,leftOut} of rows){
     const main=result?.estimates[0];
     // A ROW TOTAL MEANS SOMETHING ONLY WHERE THE DESIGN FIXED ROWS. A case-control study fixed the
     // columns, so a/(a+b) is no quantity and the four cells are shown in its place.
-    const rowProportion=result?.reading?.rowProportion!==null;
+    const rowProportion=(result??layout)?.reading?.rowProportion!==null;
     put(column,'a',result?.cells.exposedCases??null);
     if(rowProportion){
       put(column,'a+b',result?.exposedTotal??null);
@@ -74,6 +77,12 @@ export function computeExposures(table:DataTable,request:TwoByTwoRequest,columns
     +(outcomes.length?` Left out of every comparison: ${request.outcomeColumn} `
       +`${outcomes.map(v=>`"${v}"`).join(', ')}.`:'')
     +(unreadable.length?` Not read: ${unreadable.map(row=>`${row.column} (${row.reason})`).join('; ')}`:'');
+  // THE CELLS IN WORDS, the letter kept for the equations in Notes. Controls where the design fixed the columns, as a
+  // case-control study does; otherwise non-cases.
+  const fixed=rows.some(row=>row.result&&row.result.reading?.rowProportion===null);
+  const non=fixed?'controls':'non-cases';
+  const headings:Record<string,string>={a:'exposed cases',b:`exposed ${non}`,c:'unexposed cases',d:`unexposed ${non}`,
+    'a+b':'all exposed','c+d':'all unexposed','left out':'rows in neither group'};
   return {rows,sentence,table:{kind:'data-table',keys:['exposure','measure'],valueField:'value',
-    rows:out,rowCount:out.length,missingValueCount:out.filter(row=>row.value===null).length}};
+    rows:out,rowCount:out.length,missingValueCount:out.filter(row=>row.value===null).length,headings}};
 }

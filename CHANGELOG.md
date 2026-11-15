@@ -16,7 +16,7 @@ shown in a local build is not a claim that it has been published.
   small in a corner. Marks keep their size, so marks crowded together on the whole map stand apart. Map 0.31.0;
   experiment 213.
 
-## 0.118.0 — In development
+## 0.118.0 — 2026-11-14
 
 - **The publication keeps what you write.** Title, affiliations and keywords, the four parts of the abstract,
   conclusions and data availability each have **Write**: a box in place, with what the part is for, its length and a

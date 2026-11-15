@@ -3,7 +3,7 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## 0.118.0 — In development
+## 0.118.0 — 2026-11-14
 
 - **The publication keeps what you write.** Title, affiliations and keywords, the four parts of the abstract,
   conclusions and data availability each have **Write**: a box in place, with what the part is for, its length and a

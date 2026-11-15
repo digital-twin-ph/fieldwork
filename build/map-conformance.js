@@ -1,2 +1,2 @@
-import{a,b,c,d,e,f,g,h,i}from"./chunks/chunk-JQBPTEQ3.js";import"./chunks/chunk-B43FVBC2.js";import"./chunks/chunk-KVMUXFPB.js";export{c as DESIGN_RULES,d as applyDesignRules,b as contrastRatio,i as designChoiceFacts,h as designRuleDeclarations,g as designRuleFacts,f as figureDesign,e as isNeutral,a as relativeLuminance};
+import{a,b,c,d,e,f,g,h,i}from"./chunks/chunk-6GLCGHAT.js";import"./chunks/chunk-3A372FHG.js";import"./chunks/chunk-KVMUXFPB.js";export{c as DESIGN_RULES,d as applyDesignRules,b as contrastRatio,i as designChoiceFacts,h as designRuleDeclarations,g as designRuleFacts,f as figureDesign,e as isNeutral,a as relativeLuminance};
 //# sourceMappingURL=map-conformance.js.map

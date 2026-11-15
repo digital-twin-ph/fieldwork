@@ -69,8 +69,22 @@ Each cluster carries its first and last day, its places, its radius, the cases o
 log likelihood ratio and the p-value. The case ids inside it are listed.
 
 - The **p-value** is reported as computed. Which threshold to read it against is yours to state, in your write-up.
-- A cluster at **one place** has no radius. It is drawn 15 m round.
+- A cluster at **one place** has no radius. It is drawn as a ring 15 m round that place, red for the most likely and blue otherwise, outline only, so what is under it shows.
 - Records **without a date or a location**, or outside the study period, are not scanned. They are counted and named.
+
+### How to read the cluster map
+
+- **A circle is a group of places and a run of days together.** Its cases fell ill closer together, in those places and
+  on those days, than the whole outbreak's timing and places would lead one to expect. It is not a boundary of spread.
+- **The most likely cluster** is the one least likely to be chance; the others are **secondary**, each with its own
+  p-value. A p-value near 1 says that cluster is what shuffling the dates gives routinely.
+- **A cluster at one house is a ring round it**, red for the most likely and blue for a secondary one, so the
+  house shows through and the ring stands out on a black-and-white sheet; its size is not an area. Hagelloch's most
+  likely cluster is one house: 8 children of three families, the outbreak's first case among them, ill from 30 October to
+  18 November 1861, where 0.55 were expected, p = 0.001.
+- **It says where and when, not who infected whom.** That is the transmission tree's question.
+- **A cluster over several houses is filled**, in its rank's colour. Neither colour nor ring says the p-value: read it
+  from the table of clusters.
 
 ## Worked examples that use it
 

@@ -13,7 +13,7 @@ import type {Polygons} from './catchments.js';
 import type {PointCollection,Escape,Position} from './types.js';
 
 import {BASEMAP_CHOICES,basemapAvailable,basemapOptions,BASEMAP_LABELS,type BasemapChoice} from './basemaps.js';
-import {layerSymbol,markPath,markRadius,polygonShading,shadedValues,classRanges,categoricalSteps,FIGURE_ROLE} from './presentation.js';
+import {RING_RED,RING_BLUE,layerSymbol,markPath,markRadius,polygonShading,shadedValues,classRanges,categoricalSteps,FIGURE_ROLE} from './presentation.js';
 import type {LayerShape,FillClass,FillEncoding} from './presentation.js';
 import {fillClass,SPATIAL_RELATION_FILL,MARK_HALO} from './presentation.js';
 import {rasterImage} from './raster-image.js';
@@ -275,7 +275,9 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
     // A categorical fill is readable at the strength a value-bearing one is: the identity wash
     // was tuned for nested catchments drawn over each other, and two named regions are not that.
     const fillOpacity=shaded?(at===null?.18:.78):hue?.55:.2;
-    const layer=L.geoJSON(f.geometry,{style:{color:shaded?FIGURE_ROLE.quietInk:hue??'#39779e',weight:1,fillColor,fillOpacity}});
+    // A RING, outline only, where the polygon stands for one place: a cluster at one house (2026-11-15).
+    const layer=L.geoJSON(f.geometry,{style:f.ring?{color:f.ring==='secondary'?RING_BLUE:RING_RED,weight:3.5,fillColor,fillOpacity:0}
+      :{color:shaded?FIGURE_ROLE.quietInk:hue??'#39779e',weight:1,fillColor,fillOpacity}});
     // THE VALUE THE SHADE ENCODES, in the popup. A choropleth whose popup names only the polygon
     // leaves a reader with a colour and no number, and reading a value off a five-class ramp is
     // exactly what a legend cannot do. The practitioner, 2026-10-26.

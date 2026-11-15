@@ -1,4 +1,4 @@
-import {orderedSteps,categoricalSteps,polygonShading,shadedValues,classRanges,type classifyValues,type classifyCategories,FIGURE_ROLE,markPath} from './presentation.js';
+import {RING_RED,RING_BLUE,orderedSteps,categoricalSteps,polygonShading,shadedValues,classRanges,type classifyValues,type classifyCategories,FIGURE_ROLE,markPath} from './presentation.js';
 import type {Polygons} from './catchments.js';
 import type {DisplayValue,Receipt} from './results.js';
 import type {Escape,Position,PointCollection,WorkflowNode} from './types.js';
@@ -143,8 +143,9 @@ export function polygonSvg(p:Polygons,esc:Escape):string{
     const fill=classed||grouped?(at===null?FIGURE_ROLE.unknown:colors[at]):colors[i%colors.length];
     // Value-bearing fills are readable at full strength; a catchment's identity wash is not
     // the same thing and keeps the lighter tint it has always had.
-    const opacity=classed||grouped?(at===null?'.18':'.78'):categorical?'.55':wash?'.16':'.22';
-    return `<path data-catchment="${esc(f.id)}"${classed&&f.value!==undefined?` data-value="${f.value}"`:''}${grouped&&f.category?` data-category="${esc(f.category)}"`:''} d="${polys.flat().map(r=>'M'+r.map(c=>project(c).join(',')).join('L')+'Z').join('')}" fill="${fill}" fill-opacity="${opacity}" fill-rule="evenodd" stroke="${classed?FIGURE_ROLE.quietInk:fill}" stroke-width="${classed?'.6':'1'}"><title>${esc(f.name)}${f.category?` · ${esc(f.category)}`:''}${f.value===undefined?'':` · ${f.value}`}${f.count===undefined?'':` · ${f.count} locations`}</title></path>`;}).join('')+(p.observations?.features||[]).filter(f=>f.geometry).map(f=>{const [x,y]=project(f.geometry!.coordinates);return `<circle cx="${x}" cy="${y}" r="1.8" fill="#70523a"><title>${esc(f.properties.name)}</title></circle>`;}).join('')+p.sites.filter(f=>f.geometry).map(f=>{const [x,y]=project(f.geometry!.coordinates);return `<rect x="${x-4}" y="${y-4}" width="8" height="8" fill="#174d47"><title>${esc(f.properties.name)}</title></rect>`;}).join('')
+    // A RING, outline only, where the polygon stands for one place (a cluster at one house): what is under it shows.
+    const opacity=f.ring?'0':classed||grouped?(at===null?'.18':'.78'):categorical?'.55':wash?'.16':'.22';
+    return `<path data-catchment="${esc(f.id)}"${f.ring?' data-ring=""':''}${classed&&f.value!==undefined?` data-value="${f.value}"`:''}${grouped&&f.category?` data-category="${esc(f.category)}"`:''} d="${polys.flat().map(r=>'M'+r.map(c=>project(c).join(',')).join('L')+'Z').join('')}" fill="${fill}" fill-opacity="${opacity}" fill-rule="evenodd" stroke="${f.ring?(f.ring==='secondary'?RING_BLUE:RING_RED):classed?FIGURE_ROLE.quietInk:fill}" stroke-width="${f.ring?'3.5':classed?'.6':'1'}"><title>${esc(f.name)}${f.category?` · ${esc(f.category)}`:''}${f.value===undefined?'':` · ${f.value}`}${f.count===undefined?'':` · ${f.count} locations`}</title></path>`;}).join('')+(p.observations?.features||[]).filter(f=>f.geometry).map(f=>{const [x,y]=project(f.geometry!.coordinates);return `<circle cx="${x}" cy="${y}" r="1.8" fill="#70523a"><title>${esc(f.properties.name)}</title></circle>`;}).join('')+p.sites.filter(f=>f.geometry).map(f=>{const [x,y]=project(f.geometry!.coordinates);return `<rect x="${x-4}" y="${y-4}" width="8" height="8" fill="#174d47"><title>${esc(f.properties.name)}</title></rect>`;}).join('')
     +`<rect data-plot-key-band x="0" y="${height-KEY_BAND}" width="850" height="${KEY_BAND}" fill="#f7faf8"/>`+plotKey(p,classed,esc,grouped,height);
 }
 

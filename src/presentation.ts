@@ -531,3 +531,8 @@ export function polygonShading(features:readonly {id?:string;value?:number|null;
   // interactive map share one set of breaks (experiment 168), and over each unit once, not each part.
   return {grouped,classed:grouped?null:classifyValues(shadedValues(features))};
 }
+
+/** THE RINGS' COLOURS (2026-11-15, the practitioner: "Make the rings red border so it contrasts against black and white
+ *  of the sheet map", then "Ok then red and blue rings"): a one-place cluster's outline, red for the most likely and blue
+ *  for the rest, both standing out on a black-and-white sheet. */
+export const RING_RED='#d7191c',RING_BLUE='#2166ac';

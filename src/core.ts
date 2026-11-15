@@ -842,7 +842,11 @@ export function validateWorkflow(raw:unknown):Workflow {
       if(p.placement!==undefined&&p.placement!=='world-file'&&p.placement!=='points')throw new Error('Invalid map image placement.');
       if(p.world!==undefined&&!(['xScale','ySkew','xSkew','yScale','xOrigin','yOrigin'] as const).every(k=>Number.isFinite(p.world![k])))
         throw new Error('A map image\'s placement is six numbers.');
-      if(p.placementModel!==undefined&&p.placementModel!=='north-up'&&p.placementModel!=='affine')throw new Error('Invalid placement model.');
+      if(p.placementModel!==undefined&&p.placementModel!=='north-up'&&p.placementModel!=='affine'&&p.placementModel!=='shift')throw new Error('Invalid placement model.');
+      // WHERE THE FILE'S OWN TAGS PUT IT (TODO 35), kept beside the placement it was moved to.
+      if(p.tagsWorld!==undefined&&!(['xScale','ySkew','xSkew','yScale','xOrigin','yOrigin'] as const).every(k=>Number.isFinite(p.tagsWorld![k])))
+        throw new Error('The file\'s own placement is six numbers.');
+      if(p.tagsSaid!==undefined&&(typeof p.tagsSaid!=='string'||p.tagsSaid.length>300))throw new Error('What the file says of its placement is a short sentence.');
       if(p.controlPoints!==undefined&&(!Array.isArray(p.controlPoints)||p.controlPoints.length>100||p.controlPoints.some(c=>
         typeof c?.id!=='string'||c.id.length>120||!Array.isArray(c.pixel)||!Array.isArray(c.lonlat)
         ||![...c.pixel,...c.lonlat].every(Number.isFinite)||Math.abs(c.lonlat[0])>180||Math.abs(c.lonlat[1])>90)))

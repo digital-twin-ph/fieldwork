@@ -360,6 +360,8 @@ export function scanValue(r:ScanResult,node:{id:string;params:{label:string;date
     id:`cluster-${c.rank}`,name:`Cluster ${c.rank}`,
     // SaTScan's own two kinds, so the key tells the most likely cluster from the rest. No p-value threshold is drawn.
     category:c.rank===1?'Most likely cluster':'Secondary cluster',
+    // ONE PLACE IS A RING round it: its circle is drawn 15 m round to be seen, and a filled disc read as an area.
+    ...(c.places.length===1?{ring:c.rank===1?true:'secondary' as const}:{}),
     geometry:{type:'Polygon' as const,coordinates:[circle(c.center,c.radiusKm)]},
     properties:{cluster:c.rank,first_day:c.start,last_day:c.end,[`${r.period.unit}s`]:c.units,places:c.places.length,
       radius_m:round(c.radiusKm*1000,0),observed:c.observed,expected:round(c.expected),observed_over_expected:round(c.ratio),
@@ -474,6 +476,7 @@ export function replayValue(r:ScanReplay,node:{id:string;params:{label:string;da
     // COLOURED BY THAT DAY'S p, with a legend (the practitioner, 2026-11-10, of the one blue every circle had: "what does
     // the blue circle mean?"). A day's p is that day's alone; the note says that looking every day raises false alarms.
     category:c.pValue<=0.05?REPLAY_FLAGGED:REPLAY_NOT_FLAGGED,
+    ...(c.places.length===1?{ring:c.pValue<=0.05?true:'secondary' as const}:{}),
     properties:{analysis_day:d.day,cases_known:d.cases,first_day:c.start,places:c.places.length,radius_m:round(c.radiusKm*1000,0),
       observed:c.observed,expected:round(c.expected),observed_over_expected:round(c.ratio),log_likelihood_ratio:round(c.llr,3),
       p_value:round(c.pValue,4),cases:c.caseIds.join(', ')}};});

@@ -226,6 +226,9 @@ export const graphLimits=(maxNodes=NETWORK_NODE_LIMIT)=>
  *  delivery, so `Catchment` overclaims even for the producer it was named after, and it now also
  *  carries H3 cells, a hull, a union and administrative units. */
 export interface Catchment {id:string;name:string;
+  /** DRAWN AS A RING, outline only, where the polygon stands for one place and its size is not an area: a space-time
+   *  cluster at one house (2026-11-15, the practitioner: "Yes ring around the house"). */
+  ring?:boolean|'secondary';
   /** One value per frame, where the layer carries frames. Experiment 168. */
   frames?:Record<string,number|null>;
   /** WHICH LAYER THIS POLYGON CAME FROM, where it came from one that was collected.

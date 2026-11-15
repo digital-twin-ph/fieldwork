@@ -22,7 +22,9 @@
  *  Fitted in degrees, which over a village or a city is the same as fitting in metres to well under a metre. */
 import type {WorldFile} from './map-image.js';
 
-export type PlacementModel='north-up'|'affine';
+/** `shift` moves a starting placement, such as a GeoTIFF's own tags, by where matched pairs say it lies: its scale and
+ *  turn are the file's, and one pair is enough (TODO 35, 2026-11-15). */
+export type PlacementModel='north-up'|'affine'|'shift';
 export interface ControlPoint {id:string; pixel:[number,number]; lonlat:[number,number]; feature?:string}
 export interface Residual {id:string; eastM:number; northM:number; metres:number}
 export interface Placement {
@@ -32,7 +34,7 @@ export interface Placement {
   world:WorldFile; residuals:Residual[]; rmsM:number; maxM:number;
 }
 
-export const MIN_POINTS:Record<PlacementModel,number>={'north-up':2,'affine':3};
+export const MIN_POINTS:Record<PlacementModel,number>={'north-up':2,'affine':3,'shift':1};
 
 /** A FEATURE A WORKED EXAMPLE ASKS THE LEARNER TO FIND (experiment 201). The practitioner, 2026-11-10: *"For the worked
  *  example we can give them cues like a blinking point to click on"*. Where it is, on the image and on the map, each
@@ -63,20 +65,20 @@ export function fitShape(p:Placement,latitude:number):{acrossM:number;downM:numb
 
 /** The overall error each time a pair was added, from the first pair that can be checked: when it stops changing, more
  *  pairs are adding little. */
-export function errorHistory(points:readonly ControlPoint[],model:PlacementModel):{pairs:number;rmsM:number}[]{
+export function errorHistory(points:readonly ControlPoint[],model:PlacementModel,base?:WorldFile):{pairs:number;rmsM:number}[]{
   const out:{pairs:number;rmsM:number}[]=[];
   for(let n=MIN_POINTS[model]+1;n<=points.length;n++){
-    try{out.push({pairs:n,rmsM:fitPlacement(points.slice(0,n),model).rmsM});}catch{/* collinear so far */}
+    try{out.push({pairs:n,rmsM:fitPlacement(points.slice(0,n),model,base).rmsM});}catch{/* collinear so far */}
   }
   return out;
 }
 
 /** Where the OTHER points expect a pixel to be on the ground, or null while they cannot place it. */
 export function expectedFromOthers(points:readonly ControlPoint[],leave:number,model:PlacementModel,
-  pixel:readonly [number,number]):[number,number]|null{
+  pixel:readonly [number,number],base?:WorldFile):[number,number]|null{
   const others=points.filter((p,i)=>i!==leave&&[...p.pixel,...p.lonlat].every(Number.isFinite));
   if(others.length<MIN_POINTS[model]||!pixel.every(Number.isFinite))return null;
-  try{const {a,b,c,d,e,f}=fitPlacement(others,model).coefficients;return [a*pixel[0]+b*pixel[1]+c,d*pixel[0]+e*pixel[1]+f];}
+  try{const {a,b,c,d,e,f}=fitPlacement(others,model,base).coefficients;return [a*pixel[0]+b*pixel[1]+c,d*pixel[0]+e*pixel[1]+f];}
   catch{return null;}
 }
 
@@ -99,11 +101,18 @@ function leastSquares(rows:number[][],values:number[]):number[]{
   return ata.map((row,i)=>row[k]!/row[i]!);
 }
 
-export function fitPlacement(points:readonly ControlPoint[],model:PlacementModel):Placement{
+export function fitPlacement(points:readonly ControlPoint[],model:PlacementModel,base?:WorldFile):Placement{
   const need=MIN_POINTS[model];
   if(points.length<need)throw new Error(`A ${model} placement needs at least ${need} points; there ${points.length===1?'is':'are'} ${points.length}.`);
   let a=0,b=0,c=0,d=0,e=0,f=0;
-  if(model==='north-up'){
+  if(model==='shift'){
+    if(!base)throw new Error('A shift needs a placement to start from, such as the file\u2019s own.');
+    // THE FILE'S SCALE AND TURN, moved by the mean of where the pairs say the pixels lie.
+    a=base.xScale;b=base.xSkew;d=base.ySkew;e=base.yScale;
+    const c0=base.xOrigin-a*0.5-b*0.5,f0=base.yOrigin-d*0.5-e*0.5;
+    c=c0+points.reduce((s,p)=>s+p.lonlat[0]-(a*p.pixel[0]+b*p.pixel[1]+c0),0)/points.length;
+    f=f0+points.reduce((s,p)=>s+p.lonlat[1]-(d*p.pixel[0]+e*p.pixel[1]+f0),0)/points.length;
+  }else if(model==='north-up'){
     [a,c]=leastSquares(points.map(p=>[p.pixel[0],1]),points.map(p=>p.lonlat[0])) as [number,number];
     [e,f]=leastSquares(points.map(p=>[p.pixel[1],1]),points.map(p=>p.lonlat[1])) as [number,number];
   }else{

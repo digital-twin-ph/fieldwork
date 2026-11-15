@@ -203,6 +203,9 @@ export function hagellochClusterExample():Workflow{
         width:2200,height:2489}}},
     {id:'cluster-map',type:'map_output',x:840,y:60,params:{label:'Clusters over the village',presentation:'plot' as const,
       mapTitle:'Space-time clusters of measles, Hagelloch, 1861',
+      // HOW TO READ IT (the practitioner, 2026-11-15: "Can we add a how to read for the cluster map?"), on the figure so it
+      // travels into Notes, the publication and the downloads.
+      mapSubtitle:'Circles hold houses whose cases fell ill closer together in time than the outbreak would predict. Red ring, most likely: one house, 8 cases 30 Oct to 18 Nov 1861, 0.55 expected, p = 0.001. Blue rings and orange: secondary, none below p = 0.07. A ring is a house, not an area.',
       // The cases small and dark, so the clusters' two hues are the only colour on the figure.
       layerSymbols:{cases:{colour:'#3d4a45',size:3}}}},
     {id:'cluster-table',type:'table_output',x:840,y:320,params:{label:'Every cluster reported',inputMode:'polygons' as const}},

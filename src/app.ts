@@ -5226,6 +5226,7 @@ function renderInspector(){
     openMapImageConfig({step:p.label||'Georeferenced map image',esc,near,
       initial:{label:p.label,...(placed?{image:{data:p.data!,...p.image}}:{}),placement:p.placement??'world-file',
         model:p.placementModel??'affine',points:structuredClone(p.controlPoints??[]),opacity:p.opacity??0.85,
+        ...(p.tagsWorld&&p.tagsSaid?{tags:{world:p.tagsWorld,said:p.tagsSaid}}:{}),
         ...(p.guide?.length?{guide:p.guide}:{}),...(p.offered?{offered:p.offered}:{})},
       apply:(d,{world,fit})=>void (async()=>{
         try{
@@ -5243,6 +5244,7 @@ function renderInspector(){
             t.params.bounds=bounds;t.params.world=world;t.params.placement=d.placement;t.params.opacity=d.opacity;
             if(d.placement==='points'){t.params.controlPoints=d.points.filter(c=>[...c.pixel,...c.lonlat].every(Number.isFinite));t.params.placementModel=d.model;}
             else{delete t.params.controlPoints;delete t.params.placementModel;}
+            if(d.tags){t.params.tagsWorld=d.tags.world;t.params.tagsSaid=d.tags.said;}else{delete t.params.tagsWorld;delete t.params.tagsSaid;}
           },{requirePersistence:true});
           if(fit)toast(`Placed from ${fit.points} points: errors ${Math.round(fit.rmsM)} m root mean square. Run the workflow to draw it.`);
         }catch(error){toast(errorMessage(error),{tone:'failure'});}

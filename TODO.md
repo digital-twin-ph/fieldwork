@@ -516,6 +516,22 @@ The high-contrast theme comes after Sierra Leone, as set on 2026-11-07; where it
    table: *"unless the ontology can help structure the interpretation"*, then *"Yes"* to both). The step states what
    follows from its cells (interval above, below or across 1; a zero cell, no ratio; a cell of 1 or 2, unstable), never
    which exposure is the vehicle. Salmonella's interpretation goes in as authored notes now.
+35. **Lycoming's 1943 sheets under Oswego's map, through Fieldwork's own widgets: next, ahead of NYC, Sierra Leone and
+   the ABM spike** (the practitioner, 2026-11-15: *"Do we have a 1940 map of Lycoming?"*, *"Yes download"*, *"I want
+   this process to use as much of the built in infrastructure FW has already with some enhancements"*, and *"Yes,
+   next"*). USGS 1:31,680 *Oswego East, NY, 1943* and *West of Texas, NY, 1943*, public domain, polyconic on NAD27.
+   Found on the way: **Oswego East's GeoTIFF tags place it 652 m east-west off its printed corners** (244 pixels at
+   both the north-east and south-west corners, under 2 vertically); West of Texas is exact; at the seam the road through
+   Lycoming steps 40 to 50 m. Known gaps in existing widgets, closed in this order, no new widget:
+   (1) **Georeferenced map image reads a GeoTIFF**: a picture told from a values raster by its tags (colour bands,
+   8-bit), its projection read with proj4 (polyconic, transverse Mercator and the like), redrawn north-up over the study
+   area only; (2) **it opens on the file's own placement, its printed corners marked**, so a misplacement shows on sight
+   in the existing preview over today's map; (3) **a shift-only fit** among the placement models, for tags that are
+   only offset, both placements kept in the record; (4) **Map takes several ground inputs**, as it takes several point
+   layers. With them, Raster input names a picture and points to Georeferenced map image. Then Lycoming ships in the
+   Oswego repository with both sheets and junction guides, as Hagelloch's 1824 sheet does, each sheet matched to
+   today's junctions so the seam is settled by evidence. Still a separate question: (b) a step that finds a historical
+   map for the study area from an open catalogue, which would need an experiment record first.
 
 ## Urgent
 

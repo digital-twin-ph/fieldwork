@@ -27,6 +27,7 @@ import type {Escape} from './types.js';
 import {openConfigDialog} from './config-dialog.js';
 import {errorHistory,expectedFromOthers,fitPlacement,fitShape,groundMetres,MIN_POINTS,onGuide,type ControlPoint,type GuidePoint,type Placement,type PlacementModel} from './georeference.js';
 import {readWorldFile,turnedCorners,type WorldFile} from './map-image.js';
+import {dms,footprintOf,graticuleOf,northUpPixels,northUpPlan,pictureOrValues,printedSheetOf,projectionOf,type Box,type PictureTags} from './geotiff-picture.js';
 import {TurnedImage} from './turned-image.js';
 
 export interface MapImageDraft {
@@ -42,6 +43,10 @@ export interface MapImageDraft {
   guide?:GuidePoint[];
   /** The image a worked example offers, served beside the application. */
   offered?:OfferedImage;
+  /** WHERE A GEOTIFF'S OWN TAGS PUT IT (TODO 35): the placement a shift starts from, kept beside any correction. */
+  tags?:{world:WorldFile;said:string;printed?:Box};
+  /** The printed sheet, in longitude and latitude, the image is cut to on Apply so its margin covers no neighbour. */
+  clip?:Box;
 }
 export interface OfferedImage {url?:string; from?:{example:string;path:string}; filename:string; credit:string; width?:number; height?:number}
 
@@ -51,10 +56,10 @@ let cuesOn=true;
 const round=(v:number,d:number)=>Number.isFinite(v)?v.toFixed(d):'';
 
 /** The fit with each point left out in turn: how far that point is from where the others put it. */
-function leftOut(points:readonly ControlPoint[],model:PlacementModel):(number|null)[]{
+function leftOut(points:readonly ControlPoint[],model:PlacementModel,base?:WorldFile):(number|null)[]{
   if(points.length<=MIN_POINTS[model])return points.map(()=>null);
   return points.map((p,i)=>{
-    try{const others=fitPlacement(points.filter((_,j)=>j!==i),model),{a,b,c,d,e,f}=others.coefficients;
+    try{const others=fitPlacement(points.filter((_,j)=>j!==i),model,base),{a,b,c,d,e,f}=others.coefficients;
       const lon=a*p.pixel[0]+b*p.pixel[1]+c,lat=d*p.pixel[0]+e*p.pixel[1]+f;
       return Math.hypot((lon-p.lonlat[0])*111_320*Math.cos(p.lonlat[1]*Math.PI/180),(lat-p.lonlat[1])*110_570);}
     catch{return null;}
@@ -80,8 +85,12 @@ export function openMapImageConfig(o:{step:string;initial:MapImageDraft;esc:Esca
   if(o.initial.guide?.length&&!o.initial.points.length)o.initial.points.push({id:o.initial.guide[0]!.id,pixel:[NaN,NaN],lonlat:[NaN,NaN]});
   const fitOf=(d:MapImageDraft):Placement|undefined=>{
     const ok=d.points.filter(p=>[...p.pixel,...p.lonlat].every(Number.isFinite));
+    // THE FILE'S OWN PLACEMENT before any pair, so it can be previewed over today's map and checked at once.
+    if(d.model==='shift'&&d.tags&&!ok.length){const w=d.tags.world;
+      return {model:'shift',points:0,world:w,residuals:[],rmsM:0,maxM:0,
+        coefficients:{a:w.xScale,b:w.xSkew,c:w.xOrigin-w.xScale*0.5-w.xSkew*0.5,d:w.ySkew,e:w.yScale,f:w.yOrigin-w.ySkew*0.5-w.yScale*0.5}};}
     if(ok.length<MIN_POINTS[d.model])return undefined;
-    try{return fitPlacement(ok,d.model);}catch{return undefined;}
+    try{return fitPlacement(ok,d.model,d.tags?.world);}catch{return undefined;}
   };
   openConfigDialog<MapImageDraft>({
     id:'map-image-config',widget:'Georeferenced map image',step:o.step,draft:structuredClone({...o.initial,file:undefined}),wide:true,
@@ -89,7 +98,7 @@ export function openMapImageConfig(o:{step:string;initial:MapImageDraft;esc:Esca
       const image=d.image;
       const settings=''
         +`<div class="field"><label class="field-label" for="map-image-file">The map image</label>`
-          +`<input id="map-image-file" type="file" accept="image/png,image/jpeg,.png,.jpg,.jpeg">`
+          +`<input id="map-image-file" type="file" accept="image/png,image/jpeg,image/tiff,.png,.jpg,.jpeg,.tif,.tiff">`
           +(d.offered&&!image?`<p><button type="button" class="button" id="map-image-offered">Use this example's image: ${esc(d.offered.filename)}</button></p>`
             +`<p class="muted">${esc(d.offered.credit)}</p>`:'')
           +`<p class="muted">${image?`${esc(image.filename||'The image')}: ${image.width.toLocaleString('en-US')} × ${image.height.toLocaleString('en-US')} pixels.`
@@ -114,6 +123,11 @@ export function openMapImageConfig(o:{step:string;initial:MapImageDraft;esc:Esca
     beforeRedraw:()=>{dispose?.();dispose=undefined;},
     wire:(root,d,redraw)=>{
       const useFile=async(file:File)=>{
+        if(/\.tiff?$/i.test(file.name)||file.type==='image/tiff'){
+          const read=await readTiffPicture(file,o.near);
+          d.image=read.image;d.file=file;d.tags=read.tags;d.clip=read.tags.printed;d.placement='points';d.model='shift';d.points=[];active=0;
+          redraw();return;
+        }
         const bitmap=await createImageBitmap(file);
         const data=await new Promise<string>((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(String(r.result));
           r.onerror=()=>reject(new Error('That image could not be read.'));r.readAsDataURL(file);});
@@ -148,6 +162,8 @@ export function openMapImageConfig(o:{step:string;initial:MapImageDraft;esc:Esca
       root.querySelector<HTMLInputElement>('#map-image-world')?.addEventListener('change',async e=>{
         const file=(e.target as HTMLInputElement).files?.[0];if(!file)return;
         d.worldText=await file.text();d.worldName=file.name;redraw();});
+      root.querySelector<HTMLInputElement>('#geo-clip')?.addEventListener('change',e=>{
+        if((e.target as HTMLInputElement).checked&&d.tags?.printed)d.clip=d.tags.printed;else delete d.clip;redraw();});
       root.querySelector<HTMLInputElement>('#map-image-opacity')?.addEventListener('change',e=>{
         d.opacity=Number((e.target as HTMLInputElement).value);redraw();});
       if(d.placement==='points')wirePoints(root,d,redraw);
@@ -158,13 +174,19 @@ export function openMapImageConfig(o:{step:string;initial:MapImageDraft;esc:Esca
         o.apply(d,{world:readWorldFile(d.worldText!)});return;
       }
       const fit=fitOf(d)!;
+      // CUT TO THE PRINTED SHEET in its final placement, so its margin covers no neighbour (TODO 35). North up only.
+      if(d.clip&&d.image&&Math.abs(fit.world.xSkew)<1e-12&&Math.abs(fit.world.ySkew)<1e-12){
+        void cutToSheet(d.image,fit.world,d.clip).then(cut=>{if(cut){d.image=cut.image;o.apply(d,{world:cut.world,fit:{...fit,world:cut.world}});}
+          else o.apply(d,{world:fit.world,fit});});
+        return;
+      }
       o.apply(d,{world:fit.world,fit});
     },
   },esc);
 
   function pointsPanel(d:MapImageDraft):string{
     if(!d.image)return '<p class="muted">Choose the map image first.</p>';
-    const fit=fitOf(d),out=leftOut(d.points.filter(p=>[...p.pixel,...p.lonlat].every(Number.isFinite)),d.model);
+    const fit=fitOf(d),out=leftOut(d.points.filter(p=>[...p.pixel,...p.lonlat].every(Number.isFinite)),d.model,d.tags?.world);
     let k=0;
     const fits=guideFits(d),target=fits?d.guide?.[active]:undefined,status=(v:boolean|null)=>v===null?'not clicked yet':v?'on the feature':'not on it yet: look inside the ring';
     const found=target&&d.points[active]?onGuide(d.points[active]!,target):null;
@@ -184,7 +206,15 @@ export function openMapImageConfig(o:{step:string;initial:MapImageDraft;esc:Esca
         +`coordinates, use those first.</p></div>`
       +`<div class="field"><label class="field-label" for="map-image-model">Placement</label><select id="map-image-model">`
         +`<option value="affine" ${d.model==='affine'?'selected':''}>Turned and stretched as needed (affine, 3 points or more)</option>`
-        +`<option value="north-up" ${d.model==='north-up'?'selected':''}>North up, no turning (2 points or more)</option></select></div>`
+        +`<option value="north-up" ${d.model==='north-up'?'selected':''}>North up, no turning (2 points or more)</option>`
+        +(d.tags?`<option value="shift" ${d.model==='shift'?'selected':''}>Moved from the file’s own placement (1 point or more)</option>`:'')+`</select></div>`
+      // WHAT THE FILE SAID OF ITSELF, and the printed sheet it is cut to (TODO 35).
+      +(d.tags?`<div class="geo-tags"><p><strong>The file’s own placement:</strong> ${esc(d.tags.said)}. Previewed over today’s map below `
+        +`before any pair; its graticule is drawn dashed, and the sheet’s printed ticks and edge should lie on it. Where they do not, `
+        +`match a pair or two and the placement moves by where they say.</p>`
+        +(d.tags.printed?`<label class="check"><input type="checkbox" id="geo-clip" ${d.clip?'checked':''}> Keep only the printed sheet, `
+          +`${esc(dms(d.tags.printed[0],['E','W']))} to ${esc(dms(d.tags.printed[2],['E','W']))}, ${esc(dms(d.tags.printed[1],['N','S']))} to `
+          +`${esc(dms(d.tags.printed[3],['N','S']))}, so its margin covers no neighbouring sheet</label>`:'')+`</div>`:'')
       +`<div class="geo-panes"><div><p class="geo-pane-title">On the image <span id="geo-cursor" class="geo-cursor"></span></p>`
         +`<div class="geo-image-tools"><button type="button" class="button small" data-geo-zoom="1.5">Zoom in</button>`
         +`<button type="button" class="button small" data-geo-zoom="0.667">Zoom out</button></div>`
@@ -251,7 +281,7 @@ export function openMapImageConfig(o:{step:string;initial:MapImageDraft;esc:Esca
     const lat=complete.length?complete.reduce((s,c)=>s+c.lonlat[1],0)/complete.length:0;
     const shape=fit?fitShape(fit,lat):undefined;
     const turn=shape?Math.abs(shape.turnDeg)<0.05?'not turned':`turned ${Math.abs(shape.turnDeg).toFixed(1)}° ${shape.turnDeg>0?'anticlockwise':'clockwise'}`:'';
-    const history=errorHistory(complete,d.model);
+    const history=errorHistory(complete,d.model,d.tags?.world);
     return `<div class="geo-live" id="geo-live" aria-live="polite">`
       +`<p id="geo-live-pair"><strong>This pair:</strong> ${pair}</p>`
       +(shape?`<p id="geo-live-shape"><strong>What the fit implies:</strong> ${shape.acrossM.toFixed(2)} m a pixel across, `
@@ -390,7 +420,7 @@ export function openMapImageConfig(o:{step:string;initial:MapImageDraft;esc:Esca
     map.on('mouseout',()=>placing(false));
     map.on('moveend',()=>{view={center:map.getCenter(),zoom:map.getZoom()};});
     const hover=root.querySelector<HTMLElement>('#geo-hover');
-    const current=d.points[active],wanted=current?expectedFromOthers(d.points,active,d.model,current.pixel):null;
+    const current=d.points[active],wanted=current?expectedFromOthers(d.points,active,d.model,current.pixel,d.tags?.world):null;
     if(hover&&wanted)map.on('mousemove',e=>{
       hover.textContent=`The cursor is ${Math.round(groundMetres([e.latlng.lng,e.latlng.lat],wanted))} m from where your other pairs `
         +`expect ${current!.id?`“${current!.id}”`:'this point'}.`;});
@@ -414,6 +444,12 @@ export function openMapImageConfig(o:{step:string;initial:MapImageDraft;esc:Esca
           .bindTooltip(p.id||'A pair').addTo(preview!);
       });
       const lats=corners.map(x=>x[1]),lons=corners.map(x=>x[0]);
+      // THE GRATICULE, dashed, where the meridians and parallels truly run: the sheet's printed ticks should lie on it.
+      if(d.tags){const box:Box=[Math.min(...lons),Math.min(...lats),Math.max(...lons),Math.max(...lats)],g=graticuleOf(box);
+        for(const lon of g.meridians)L.polyline([[box[1],lon],[box[3],lon]],{color:'#d7191c',weight:2,dashArray:'6 5',interactive:false,className:'geo-graticule'})
+          .bindTooltip(dms(lon,['E','W']),{permanent:true,direction:'top',className:'geo-graticule-label'}).addTo(preview);
+        for(const lat of g.parallels)L.polyline([[lat,box[0]],[lat,box[2]]],{color:'#d7191c',weight:2,dashArray:'6 5',interactive:false,className:'geo-graticule'})
+          .bindTooltip(dms(lat,['N','S']),{permanent:true,direction:'right',className:'geo-graticule-label'}).addTo(preview);}
       preview.fitBounds([[Math.min(...lats),Math.min(...lons)],[Math.max(...lats),Math.max(...lons)]]);
       root.querySelector<HTMLInputElement>('#geo-preview-opacity')?.addEventListener('input',ev=>{
         previewOpacity=Number((ev.target as HTMLInputElement).value);sheet.setOpacity(previewOpacity);
@@ -427,3 +463,46 @@ export function openMapImageConfig(o:{step:string;initial:MapImageDraft;esc:Esca
   }
 }
 let expect:[number,number]|undefined;
+
+/** A GEOTIFF READ AS A PICTURE (TODO 35): its tags say whether it is one and where it lies; the part over the study area,
+ *  with a margin, is redrawn north-up and kept as a JPEG, placed by a world file of that box. A values raster is named
+ *  and sent to Raster input; nothing is guessed. */
+async function readTiffPicture(file:File,near?:[number,number,number,number]):Promise<{image:NonNullable<MapImageDraft['image']>;tags:NonNullable<MapImageDraft['tags']>}>{
+  const {fromArrayBuffer}=await import('geotiff');
+  const tif=await fromArrayBuffer(await file.arrayBuffer()),img=await tif.getImage(),dir=img.fileDirectory as unknown as Record<string,unknown>;
+  const tags:PictureTags={samplesPerPixel:img.getSamplesPerPixel(),bitsPerSample:img.getBitsPerSample(),
+    photometric:dir.PhotometricInterpretation as number|undefined,sampleFormat:img.getSampleFormat(),
+    geoKeys:img.getGeoKeys() as Record<string,unknown>,width:img.getWidth(),height:img.getHeight(),
+    origin:img.getOrigin().slice(0,2) as [number,number],resolution:img.getResolution().slice(0,2) as [number,number]};
+  const kind=pictureOrValues(tags);
+  if(kind.kind==='values')throw new Error(`${file.name} holds ${kind.said}. A picture goes here; add it with Raster input instead.`);
+  if(dir.ModelTransformation)throw new Error(`${file.name} is placed by a turned transform, which this does not read. Export it north up, or place it by matching points.`);
+  const projection=projectionOf(tags.geoKeys),foot=footprintOf(tags,projection.proj);
+  const want:Box=near?(()=>{const mx=(near[2]-near[0])*0.25,my=(near[3]-near[1])*0.25;return [near[0]-mx,near[1]-my,near[2]+mx,near[3]+my];})():foot;
+  const plan=northUpPlan(tags,projection.proj,want);
+  if(!plan)throw new Error(`${file.name} does not cover the study area: it lies from ${dms(foot[0],['E','W'])} to ${dms(foot[2],['E','W'])}, ${dms(foot[1],['N','S'])} to ${dms(foot[3],['N','S'])}.`);
+  const rgb=await img.readRGB({window:plan.window,interleave:true}) as unknown as Uint8Array;
+  const pixels=northUpPixels(tags,projection.proj,plan,rgb);
+  const canvas=document.createElement('canvas');canvas.width=plan.width;canvas.height=plan.height;
+  canvas.getContext('2d')!.putImageData(new ImageData(new Uint8ClampedArray(pixels),plan.width,plan.height),0,0);
+  const data=canvas.toDataURL('image/jpeg',0.85);
+  const xs=(plan.box[2]-plan.box[0])/plan.width,ys=-(plan.box[3]-plan.box[1])/plan.height;
+  const world:WorldFile={xScale:xs,ySkew:0,xSkew:0,yScale:ys,xOrigin:plan.box[0]+xs/2,yOrigin:plan.box[3]+ys/2};
+  const printed=printedSheetOf(foot)?.box;
+  return {image:{data,width:plan.width,height:plan.height,bytes:file.size,sha256:'',filename:file.name},
+    tags:{world,said:`${projection.said}, read from ${file.name}`,...(printed?{printed}:{})}};
+}
+
+/** THE IMAGE CUT TO A BOX in longitude and latitude, by its north-up world file: the rows and columns inside the box, and
+ *  the world file of what is left. Null where the box leaves nothing or everything. */
+async function cutToSheet(image:NonNullable<MapImageDraft['image']>,world:WorldFile,box:Box):Promise<{image:NonNullable<MapImageDraft['image']>;world:WorldFile}|null>{
+  const col=(lon:number)=>(lon-world.xOrigin)/world.xScale+0.5,row=(lat:number)=>(lat-world.yOrigin)/world.yScale+0.5;
+  const x0=Math.max(0,Math.floor(col(box[0]))),x1=Math.min(image.width,Math.ceil(col(box[2])));
+  const y0=Math.max(0,Math.floor(row(box[3]))),y1=Math.min(image.height,Math.ceil(row(box[1])));
+  if(!(x1>x0&&y1>y0)||(x0===0&&y0===0&&x1===image.width&&y1===image.height))return null;
+  const picture=new Image();picture.src=image.data;await picture.decode();
+  const canvas=document.createElement('canvas');canvas.width=x1-x0;canvas.height=y1-y0;
+  canvas.getContext('2d')!.drawImage(picture,x0,y0,x1-x0,y1-y0,0,0,x1-x0,y1-y0);
+  return {image:{...image,data:canvas.toDataURL('image/jpeg',0.85),width:x1-x0,height:y1-y0},
+    world:{...world,xOrigin:world.xOrigin+x0*world.xScale,yOrigin:world.yOrigin+y0*world.yScale}};
+}

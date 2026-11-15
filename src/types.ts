@@ -264,6 +264,9 @@ export interface ParamsByType {
      *  the origin at the top-left pixel's centre; where it carries rotation, `bounds` is the envelope of its corners. */
     placement?:'world-file'|'points';world?:import('./map-image.js').WorldFile;
     controlPoints?:import('./georeference.js').ControlPoint[];placementModel?:import('./georeference.js').PlacementModel;
+    /** WHERE A GEOTIFF'S OWN TAGS PUT IT, and what it said of its projection (TODO 35): kept beside the placement a shift
+     *  moved it to, so a reader sees that it was corrected, by how much, and on which pairs. */
+    tagsWorld?:import('./map-image.js').WorldFile;tagsSaid?:string;
     /** A worked example's features to find, in order (experiment 201). Written by the example, never by a click. */
     guide?:import('./georeference.js').GuidePoint[];
     /** The image a worked example offers, chosen only when the learner asks: served beside the application (`url`), or a

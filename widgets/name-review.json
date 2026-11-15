@@ -480,6 +480,16 @@
       "reviewed": null,
       "reviewedBy": null,
       "note": "SaTScan calls the method a scan; \"space-time\" says what is scanned. For review: whether a practitioner would look under \"cluster\", \"scan\" or \"SaTScan\". Moved from \"Detect\" to Epidemiology on 2026-11-11 by the practitioner: \"No 717 categories here.\""
+    },
+    {
+      "nodeType": "transmission_chains",
+      "title": "Transmission chains",
+      "group": "Summaries",
+      "fingerprint": "9d89bc900478",
+      "verdict": "accepted",
+      "reviewed": "2026-11-14",
+      "reviewedBy": "the practitioner, choosing between two designs offered",
+      "note": "The practitioner chose \"New step: Transmission chains\" over a link-following rule in Apply ruleset (experiment 216). The name says what is handed on; the columns are chain, generation, offspring and chain_size."
     }
   ],
   "rule": "After a transform verb the slot names what the verb acts ON. A second operand is stated with a preposition -- summarize_points_to_polygon, aggregate_points_to_h3_cell, snap_to_network -- never left to the reader and never put in the object slot. A method name stands in for the operation only where the method name IS the practitioner's term, which is the existing exemption that keeps `voronoi`, `isochrone` and `summarize_hull`. Recorded 2026-10-19 with the first two reviews; see docs/audits/ontology-audit.md for the convention it corrects.",

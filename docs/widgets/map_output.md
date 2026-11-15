@@ -189,6 +189,25 @@ cells under it over their area; the figure says how large a drawn cell is.
 Side by side shows where layers differ. It does not say which is right, and the key says so. The population example
 shows four sources' shares of each district's people this way.
 
+## An inset
+
+Where marks crowd each other at the scale of the whole map, enlarge a part of it beside the whole. On the interactive
+map in Results, zoom to the part and choose **Use this view as the inset**: the view on screen is kept as the inset's
+box. The static figure, in Notes, in the publication and in the downloads, then draws the box on the map, the part
+enlarged in a framed corner with its own scale bar, and two dashed lines from the box to the frame. **Clear the inset**
+removes it.
+
+In **Configure…**, under **Inset**:
+
+- **Show**: *Inset*, the part enlarged in a corner of the whole map; or *Locator*, the part as the figure with the
+  whole map small in a corner and the box drawn on it, for a reader who needs to know where the place is.
+- **In the corner**: where the frame covers fewest marks and not the box, or a corner you choose.
+- **Its width**: a third or half of the figure.
+
+Marks keep their size in the inset, so marks that overlap on the whole map stand apart: the inset enlarges the
+distances, not the marks, and the same mark is the same colour in both. An inset is offered for a map over its study
+area; maps in panels have none. The basemap is drawn under the large frame only.
+
 ## Playing through frames
 
 Where the layer carries frames, from a join given **Frames from**, the interactive map shows a frame control: a

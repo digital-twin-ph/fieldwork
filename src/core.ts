@@ -167,6 +167,10 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   space_time_scan:{title:'Space-time scan',group:'Epidemiology',icon:'◎',color:'amber',
     description:'Look for places where cases came closer together in time than the rest of the line list would lead one to expect',
     inputs:[['points','points']],output:'polygons'},
+  // EACH CASE ITS CHAIN (experiment 216), handed on as columns, so a curve, a map or a table can use it.
+  transmission_chains:{title:'Transmission chains',group:'Summaries',icon:'⤳',color:'teal',
+    description:'Follow each case’s recorded source back to the case its chain starts with: each row gains its chain, generation, offspring and chain size',
+    inputs:[['records','table']],output:'table'},
   group_table:{title:'Total within groups',group:'Summaries',icon:'Σ',color:'teal',
     description:'Add up the values of the rows that agree on the key columns you keep',
     inputs:[['records','table']],output:'table'},
@@ -1732,6 +1736,23 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           machinedNotes:machined[node.id],
           ...(decided?{declared:decided}:{})} as unknown as Receipt);
         break;}
+      case 'transmission_chains':{
+        const table=inputs.records as unknown as import('./data-table.js').DataTable;
+        if(table?.kind!=='data-table')throw new Error('Connect a table of cases: this step follows each case to its chain.');
+        const p=node.params;
+        if(!p.id||!p.parent)throw new Error('Name the case id and infected-by columns in this step\u2019s Configure\u2026');
+        const {transmissionChains,chainsFacts}=await import('./transmission-chains.js');
+        const result=transmissionChains(table,{id:p.id,parent:p.parent,...(p.none?{none:p.none}:{}),...(p.date?{date:p.date}:{})});
+        value=result.table as unknown as DisplayValue;
+        const facts=chainsFacts(`<urn:fieldwork:run:${runId}:step:${node.id}>`,{id:p.id,parent:p.parent},result);
+        receipts.push({nodeId:node.id,kind:'computation',method:result.sentence,facts,rules:'',input:facts,conclusions:[]});
+        // WHAT A CHAIN HERE IS, in the write-up beside the method: the record's links, not proven infections.
+        machined[node.id]=[{kind:'machined',id:`${node.id}:what-a-chain-is`,section:'Methods',fn:'limitation',nodeId:node.id,
+          text:`A chain in "${p.label||'Transmission chains'}" follows the source each case's record names. It is the record's `
+            +`chain: a recorded link is not a proven infection, and a case with no source recorded starts a chain of its own.`}];
+        withNote(receipts,runId,node.id,machined[node.id]!);
+        break;
+      }
       case 'group_table':{
         const table=inputs.records as unknown as import('./data-table.js').DataTable;
         if(table?.kind!=='data-table')throw new Error('Connect a table: this step totals the rows of one.');

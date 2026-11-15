@@ -113,6 +113,8 @@ import {applyFeatureEdits,applyTableEdits,editsAt,type CellEdit,type EditEntry} 
 import {MAX_POLYGON_LAYERS,polygonPort} from './polygon-layers.js';
 import {MAX_RASTER_LAYERS,rasterPort} from './raster-panels.js';
 import {publicationMarkup,PROMPTS,type PublicationInput} from './publication.js';
+import {CHAIN_COLUMNS,transmissionChains} from './transmission-chains.js';
+import {boxInside,composeInset,type Corner} from './map-inset.js';
 import {notesPanel,openNoteDialog,noteKey} from './notes-ui.js';
 // THE WRITE-UP IS THE PROJECT'S. A run contributes its notes to a store the Notes tab reads
 // across every workflow of the project, rather than the tab reading the open run alone.
@@ -1011,7 +1013,7 @@ function valueFieldOf(up:WorkflowNode|undefined,seen=new Set<string>()):string|u
   seen.add(up.id);
   if(up.type==='table_input')return up.params.data.valueField||up.params.valueField||undefined;
   if(up.type==='measure_distance')return 'distance';
-  if(['select_rows','relate_table','append_rows','apply_ruleset'].includes(up.type))return upstreamValueField(up,seen);
+  if(['select_rows','relate_table','append_rows','apply_ruleset','transmission_chains'].includes(up.type))return upstreamValueField(up,seen);
   // A COUNT IS NAMED "rows"; a sum, a mean or an extremum keeps the name of what it summarised (group-table.ts). Found
   // 2026-11-09: a Rate after Relate after a count was offered every column but the count.
   if(up.type==='group_table')return up.params.aggregate==='count'?'rows':up.params.total||upstreamValueField(up,seen);
@@ -1049,6 +1051,9 @@ function tableKeyColumns(node:WorkflowNode|undefined,seen=new Set<string>()):rea
         return tableKeyColumns(up?workflow.nodes.find(m=>m.id===up.from):undefined,new Set(seen));};
       const source=node.params.nameSource?node.params.sourceColumn?.trim():undefined,key=node.params.newKey?.trim();
       return [...new Set([...(key?[key]:[]),...Array.from({length:appendTableCount(node.params)},(_,i)=>of(appendPort(i))).flat(),...(source?[source]:[])])];}
+    // EACH CASE'S CHAIN, added to every column it had (experiment 216).
+    case 'transmission_chains':{const up=workflow.edges.find(e=>e.to===node.id&&e.port==='records');
+      return [...tableKeyColumns(up?workflow.nodes.find(m=>m.id===up.from):undefined,new Set(seen)),...CHAIN_COLUMNS];}
     case 'group_table':return node.params.by;
     // A REGRESSION'S TABLE is always its terms by its statistics (experiment 181).
     // With several exposure columns (experiment 185), one table of every model: the keys `regressionsTable` writes.
@@ -1094,7 +1099,7 @@ function tableUnitFor(output:WorkflowNode):string|undefined{
     // A total of a key column carries no unit: the unit declared is the value column's.
     if(up.type==='group_table'&&up.params.total)return undefined;
     if(up.type==='select_rows'||up.type==='relate_table'||up.type==='append_rows'
-      ||up.type==='group_table'||up.type==='two_by_two')return walk(up,'records',seen);
+      ||up.type==='group_table'||up.type==='two_by_two'||up.type==='transmission_chains')return walk(up,'records',seen);
     if(up.type==='apply_ruleset')return walk(up,tablePortOf(up),seen);
     return undefined;
   };
@@ -1150,7 +1155,7 @@ function drawRunProgress(){
 /** THE WIDGETS WHOSE INSPECTOR FOLLOWS THE STANDARD (experiment 186): Name, Inputs, Settings, Result, the links,
  *  Actions, in that order and nothing else, with every setting in the widget's configuration dialog. One at a time,
  *  Relate first; the set grows as each widget is moved, and a check holds them to it. */
-export const STANDARD_INSPECTOR=new Set<NodeType>(['case_series','regression','point_input','chart_output','raster_input','sample_raster','measure_distance','table_output','relate_table','select_rows','table_input','find_health_facilities','group_table','apply_ruleset','map_output','deduplicate_points','rate','study_area','space_time_scan','map_image_input','two_by_two','append_rows']);
+export const STANDARD_INSPECTOR=new Set<NodeType>(['transmission_chains','case_series','regression','point_input','chart_output','raster_input','sample_raster','measure_distance','table_output','relate_table','select_rows','table_input','find_health_facilities','group_table','apply_ruleset','map_output','deduplicate_points','rate','study_area','space_time_scan','map_image_input','two_by_two','append_rows']);
 function samplerProduct(node:WorkflowNode){
   const up=(id:string,port:string)=>{const e=workflow.edges.find(x=>x.to===id&&x.port===port);return e?workflow.nodes.find(m=>m.id===e.from):undefined;};
   const search=up(node.id,'files'),find=search?up(search.id,'product'):undefined;
@@ -1210,6 +1215,12 @@ function upstreamKeyValues(node:WorkflowNode,seen=new Set<string>(),
     const table=up.params.data;
     return Object.fromEntries(table.keys.map(key=>
       [key,[...new Set(table.rows.map(row=>String(row.key[key])))]]));
+  }
+  // EACH CASE'S CHAIN (experiment 216): the columns it was given, and four more whose values the last run knows.
+  if(up.type==='transmission_chains'){
+    const below=upstreamKeyValues(up,seen)??{};
+    const ran=result?.tables?.[up.id];
+    return {...below,...Object.fromEntries(CHAIN_COLUMNS.map(c=>[c,ran?[...new Set(ran.rows.map(r=>String(r.key[c]??'')))].slice(0,200):[]]))};
   }
   if(up.type==='select_rows'){
     const below=upstreamKeyValues(up,seen);
@@ -2882,6 +2893,10 @@ function openMapConfig(nodeId:string){
           catch(error){previewHost.textContent=`The preview could not be drawn: ${errorMessage(error)}`;}});
         disposePreview=()=>{cancelled=true;cancelAnimationFrame(frame);};
       }
+      // THE INSET (experiment 213): its box is kept; which frame is large, the corner and the width are chosen here.
+      on('#map-inset-arrange',el=>{if(!draft.inset)return;if(!el.value){delete draft.inset;return;}draft.inset={...draft.inset,arrange:el.value as 'inset'|'locator'};});
+      on('#map-inset-corner',el=>{if(!draft.inset)return;const next={...draft.inset};if(el.value)next.corner=el.value as Corner;else delete next.corner;draft.inset=next;});
+      on('#map-inset-size',el=>{if(!draft.inset)return;draft.inset={...draft.inset,size:el.value as 'third'|'half'};});
       // ARRANGE (experiment 212): panels for every layer the last run drew, in that order, until some are left out.
       on('#map-arrange',el=>{
         if(!el.value){delete draft.arrangement;return;}
@@ -2989,6 +3004,23 @@ const drawnPolygonLayers=(nodeId:string):string[]=>{
   const rasters=((out as {rasterPanels?:{layer:string}[]}|undefined)?.rasterPanels??[]).map(p=>p.layer);
   return [...new Set([...rasters,...(out?.polygons?.features??[]).map(f=>f.layerName).filter((x):x is string=>!!x)])];
 };
+/** AN INSET (experiment 213): picked on the interactive map in Results; here, which frame is large, where it goes, how big. */
+function mapInsetSection(n:WorkflowNode<'map_output'>):string{
+  const i=n.params.inset;
+  if(!i)return `<span class="inspector-section">Inset</span><p class="muted">No inset. On the interactive map in Results, zoom to `
+    +`the part to enlarge and choose Use this view as the inset.</p>`;
+  const opt=(v:string,label:string,at:string)=>`<option value="${v}" ${v===at?'selected':''}>${label}</option>`;
+  return `<span class="inspector-section">Inset</span>`
+    +`<div class="field"><label class="field-label" for="map-inset-arrange">Show</label><select id="map-inset-arrange">`
+    +opt('inset','Inset: the part enlarged, in a corner of the whole map',i.arrange??'inset')
+    +opt('locator','Locator: the whole map small, in a corner of the part',i.arrange??'inset')
+    +opt('','No inset',i.arrange??'inset')+`</select></div>`
+    +`<div class="field"><label class="field-label" for="map-inset-corner">In the corner</label><select id="map-inset-corner">`
+    +opt('','Where it covers least',i.corner??'')+opt('ne','Top right',i.corner??'')+opt('nw','Top left',i.corner??'')
+    +opt('se','Bottom right',i.corner??'')+opt('sw','Bottom left',i.corner??'')+`</select></div>`
+    +`<div class="field"><label class="field-label" for="map-inset-size">Its width</label><select id="map-inset-size">`
+    +opt('third','A third of the figure',i.size??'third')+opt('half','Half the figure',i.size??'third')+`</select></div>`;
+}
 function mapArrangeSection(n:WorkflowNode<'map_output'>):string{
   const names=drawnPolygonLayers(n.id),a=n.params.arrangement;
   const layers=[...new Set([...names,...(a?.panels??[]).map(p=>p.layer)])];
@@ -3025,7 +3057,7 @@ function mapSettingsFlat(n:WorkflowNode<'map_output'>):string{
       // potential point layer in the map gets a configurable/selectable symbol." Only the point
       // layers actually wired are offered, because a control for a layer that does not exist is
       // a setting nobody can check against the picture.
-      +mapBasemapControls(n)+mapArrangeSection(n)+`<span class="inspector-section">Layers</span>`
+      +mapBasemapControls(n)+mapArrangeSection(n)+(n.params.arrangement?'':mapInsetSection(n))+`<span class="inspector-section">Layers</span>`
       +`<p class="muted">Order, name and group the layers.</p>`
       +`<button class="button" data-manage-layers="${esc(n.id)}">Manage layers</button>`
       +(()=>{
@@ -3792,7 +3824,7 @@ function renderLibrary(search=''){
       :type==='measure_distance'?{type:'measure_distance' as const,params:{unit:'kilometres' as const}}
       :type==='facility_audit'?{type:'facility_audit' as const,params:{} as Record<string,never>}
       :type==='apply_ruleset'?{type:'apply_ruleset' as const,params:{label:'Apply ruleset',parameters:{}}}
-      :type==='point_grid'?{type:'point_grid' as const,params:{spacingM:250}}:type==='mean_center'?{type:'mean_center' as const,params:{label:'Mean center',zone:30,hemisphere:'north' as const}}:type==='compare_point_sets'?{type:'compare_point_sets' as const,params:{label:'Compare point sets',zone:30,hemisphere:'north' as const}}:type==='comparison_map'?{type:'comparison_map' as const,params:{label:'Point comparison map'}}:type==='donut_geomask'?{type:'donut_geomask' as const,params:{label:'Donut geomasking',innerM:50,outerM:125,seed:42}}:type==='aggregate_points_to_h3_cell'?{type:'aggregate_points_to_h3_cell' as const,params:{label:'H3 cell aggregation',resolution:9,minOccupancy:2}}:type==='buffer_area'?{type:'buffer_area' as const,params:{label:'Buffered study area',distanceM:500}}:type==='network_input'?{type:'network_input' as const,params:{label:'Street network',data:{nodes:[],edges:[],source:'Not prepared'},inputMethod:'file' as const,marginM:250}}:Object.hasOwn(CATCHMENT_TYPES,type)?[...johnSnowExample('snow-voronoi').nodes,...johnSnowExample('snow-isochrone').nodes].find(n=>n.type===type):type==='join_table_to_area'?{type:'join_table_to_area' as const,params:{label:'Values on the study area',keyField:'',normalisation:'fuzzy' as const}}:type==='regression'?{type:'regression' as const,params:{label:'Regression',family:'logistic' as const,outcome:'',exposure:{column:'',as:'categorical' as const},adjust:[],errors:'profile' as const}}:type==='append_rows'?{type:'append_rows' as const,params:{label:'Append rows'}}:type==='select_rows'?{type:'select_rows' as const,params:{label:'Select rows by value',keyColumn:'measure',values:[]}}:type==='relate_table'?{type:'relate_table' as const,params:{label:'Relate a column from another table',on:'',bring:''}}:type==='group_table'?{type:'group_table' as const,params:{label:'Total within groups',by:[]}}:type==='space_time_scan'?{type:'space_time_scan' as const,params:{label:'Space-time scan',dateField:'',...SCAN_DEFAULTS,seed:newScanSeed()}}:type==='find_satellite_products'?{type:'find_satellite_products' as const,params:{label:'Find satellite products'}}:type==='search_satellite_catalog'?{type:'search_satellite_catalog' as const,params:{label:'Search a satellite catalog',from:'',until:''}}:type==='study_design'?{type:'study_design' as const,params:{label:'Study design',design:'cohort' as const,period:'',unitOfAnalysis:'',note:''}}:type==='two_by_two'?{type:'two_by_two' as const,params:{label:'Two-by-two table',exposureColumn:'',exposed:'',unexposed:'',outcomeColumn:'',caseValue:'',nonCaseValue:'',level:95 as const}}:type==='rate'?{type:'rate' as const,params:{label:'Rate with a denominator',numeratorField:'',denominatorField:'',denominatorUnit:'people' as const,rateKind:'proportion' as const,multiplier:100,minimumDenominator:20,numeratorPeriod:'',denominatorVintage:''}}:type==='case_series'?{type:'case_series' as const,params:{label:'Cases by period',dateField:'',dateKind:'onset' as const,period:'week' as const}}:type==='slr_extract_import'?{type:'slr_extract_import' as const,params:{label:'Sea-level projection extract',datasetIRI:'',datasetVersion:'',baselinePeriod:'',citations:['','',''],basisKind:'' as const,familyValues:{withVerticalLandMotion:'',withoutVerticalLandMotion:''}}}:type==='slr_site_assignment'?{type:'slr_site_assignment' as const,params:{label:'Assign projection site'}}:type==='slr_threshold_comparison'?{type:'slr_threshold_comparison' as const,params:{label:'Compare level to elevation',scenario:'',basis:'',family:'',year:'',quantile:'',elevationField:'',verticalDatum:'',elevationReference:'' as const}}:type==='polygon_input'?{type:'polygon_input' as const,params:{label:'Polygon layer',data:{features:[]}}}:type==='map_image_input'?{type:'map_image_input' as const,params:{label:'Georeferenced map image',image:{width:0,height:0,bytes:0,sha256:''},bounds:[0,0,0,0] as [number,number,number,number],opacity:0.85}}:type==='table_input'?{type:'table_input' as const,params:{label:'Tabular data',keys:[],valueField:'',data:{kind:'data-table' as const,keys:[],valueField:'',rows:[],rowCount:0,missingValueCount:0}}}:type==='deduplicate_points'?{type:'deduplicate_points' as const,params:{label:'Deduplicated records',pointInputCount:2,nameField:'name',nameMatch:'fuzzy' as const,fuzzyThreshold:0.88,blockDistanceM:500,nearDistanceM:50,matchThreshold:2,reviewThreshold:1,decisions:[]}}:type==='clip_points_to_area'?{type:'clip_points_to_area' as const,params:{label:'Points inside the area',keepBoundary:true,showExcluded:true}}:type==='reproject'?{type:'reproject' as const,params:{label:'Reproject points',zone:35,hemisphere:'south' as const}}:type==='raster_input'?{type:'raster_input' as const,params:{label:'Raster input'}}:type==='fill_interior_gaps'?{type:'fill_interior_gaps' as const,params:{label:'Filled gaps'}}:type==='stack_polygons'?{type:'stack_polygons' as const,params:{label:'Collected polygon layers'}}:type==='travel_time_band'?{type:'travel_time_band' as const,params:{label:'Travel time band',minutes:5}}:type==='reachable_corridor'?{type:'reachable_corridor' as const,params:{label:'Reachable corridor',bufferM:25,zone:30,hemisphere:'north' as const}}:type==='reachable_nodes'?{type:'reachable_nodes' as const,params:{label:'Reachable junctions',minutes:10,speedMPerMin:80,direction:'outbound' as const,travelMode:'walking' as const}}:type==='snap_to_network'?{type:'snap_to_network' as const,params:{label:'Snap sites to the network',zone:30,hemisphere:'north' as const,maxSnapM:150}}:type==='summarize_combined_area'?{type:'summarize_combined_area' as const,params:{label:'Combined area',zone:30,hemisphere:'north' as const}}:type==='summarize_hull'?{type:'summarize_hull' as const,params:{label:'Convex hull',zone:30,hemisphere:'north' as const}}:type==='find_health_facilities'?{type:'find_health_facilities' as const,params:{label:'Find health facilities',source:'openstreetmap-live' as const,kinds:['hospital','clinic'],requireName:true,country:'PHL',minConfidence:0.7,data:null,retrieved:null}}:type==='buffer_point'?{type:'buffer_point' as const,params:{label:'Area around a point',pointId:'',distanceM:5000}}:type==='sample_raster'?{type:'sample_raster' as const,params:{label:'Sample a raster',attribute:'',valueUnit:''}}:type==='clip_raster'?{type:'clip_raster' as const,params:{label:'Clipped raster',method:'all-touched' as const,marginPixels:0}}:type==='chart_output'?{type:'chart_output' as const,params:{label:'Chart'}}:type==='table_output'?newTableOutput():type==='map_output'?newMapOutput():type==='point_input'?newObservations():type==='measure_area'?newAreaMeasurement():['blank','coverage'].includes(exampleKey(workflow))&&type==='study_area'?newStudyArea():template(exampleKey(workflow)).nodes.find(n=>n.type===type));
+      :type==='point_grid'?{type:'point_grid' as const,params:{spacingM:250}}:type==='mean_center'?{type:'mean_center' as const,params:{label:'Mean center',zone:30,hemisphere:'north' as const}}:type==='compare_point_sets'?{type:'compare_point_sets' as const,params:{label:'Compare point sets',zone:30,hemisphere:'north' as const}}:type==='comparison_map'?{type:'comparison_map' as const,params:{label:'Point comparison map'}}:type==='donut_geomask'?{type:'donut_geomask' as const,params:{label:'Donut geomasking',innerM:50,outerM:125,seed:42}}:type==='aggregate_points_to_h3_cell'?{type:'aggregate_points_to_h3_cell' as const,params:{label:'H3 cell aggregation',resolution:9,minOccupancy:2}}:type==='buffer_area'?{type:'buffer_area' as const,params:{label:'Buffered study area',distanceM:500}}:type==='network_input'?{type:'network_input' as const,params:{label:'Street network',data:{nodes:[],edges:[],source:'Not prepared'},inputMethod:'file' as const,marginM:250}}:Object.hasOwn(CATCHMENT_TYPES,type)?[...johnSnowExample('snow-voronoi').nodes,...johnSnowExample('snow-isochrone').nodes].find(n=>n.type===type):type==='join_table_to_area'?{type:'join_table_to_area' as const,params:{label:'Values on the study area',keyField:'',normalisation:'fuzzy' as const}}:type==='regression'?{type:'regression' as const,params:{label:'Regression',family:'logistic' as const,outcome:'',exposure:{column:'',as:'categorical' as const},adjust:[],errors:'profile' as const}}:type==='append_rows'?{type:'append_rows' as const,params:{label:'Append rows'}}:type==='select_rows'?{type:'select_rows' as const,params:{label:'Select rows by value',keyColumn:'measure',values:[]}}:type==='relate_table'?{type:'relate_table' as const,params:{label:'Relate a column from another table',on:'',bring:''}}:type==='transmission_chains'?{type:'transmission_chains' as const,params:{label:'Transmission chains'}}:type==='group_table'?{type:'group_table' as const,params:{label:'Total within groups',by:[]}}:type==='space_time_scan'?{type:'space_time_scan' as const,params:{label:'Space-time scan',dateField:'',...SCAN_DEFAULTS,seed:newScanSeed()}}:type==='find_satellite_products'?{type:'find_satellite_products' as const,params:{label:'Find satellite products'}}:type==='search_satellite_catalog'?{type:'search_satellite_catalog' as const,params:{label:'Search a satellite catalog',from:'',until:''}}:type==='study_design'?{type:'study_design' as const,params:{label:'Study design',design:'cohort' as const,period:'',unitOfAnalysis:'',note:''}}:type==='two_by_two'?{type:'two_by_two' as const,params:{label:'Two-by-two table',exposureColumn:'',exposed:'',unexposed:'',outcomeColumn:'',caseValue:'',nonCaseValue:'',level:95 as const}}:type==='rate'?{type:'rate' as const,params:{label:'Rate with a denominator',numeratorField:'',denominatorField:'',denominatorUnit:'people' as const,rateKind:'proportion' as const,multiplier:100,minimumDenominator:20,numeratorPeriod:'',denominatorVintage:''}}:type==='case_series'?{type:'case_series' as const,params:{label:'Cases by period',dateField:'',dateKind:'onset' as const,period:'week' as const}}:type==='slr_extract_import'?{type:'slr_extract_import' as const,params:{label:'Sea-level projection extract',datasetIRI:'',datasetVersion:'',baselinePeriod:'',citations:['','',''],basisKind:'' as const,familyValues:{withVerticalLandMotion:'',withoutVerticalLandMotion:''}}}:type==='slr_site_assignment'?{type:'slr_site_assignment' as const,params:{label:'Assign projection site'}}:type==='slr_threshold_comparison'?{type:'slr_threshold_comparison' as const,params:{label:'Compare level to elevation',scenario:'',basis:'',family:'',year:'',quantile:'',elevationField:'',verticalDatum:'',elevationReference:'' as const}}:type==='polygon_input'?{type:'polygon_input' as const,params:{label:'Polygon layer',data:{features:[]}}}:type==='map_image_input'?{type:'map_image_input' as const,params:{label:'Georeferenced map image',image:{width:0,height:0,bytes:0,sha256:''},bounds:[0,0,0,0] as [number,number,number,number],opacity:0.85}}:type==='table_input'?{type:'table_input' as const,params:{label:'Tabular data',keys:[],valueField:'',data:{kind:'data-table' as const,keys:[],valueField:'',rows:[],rowCount:0,missingValueCount:0}}}:type==='deduplicate_points'?{type:'deduplicate_points' as const,params:{label:'Deduplicated records',pointInputCount:2,nameField:'name',nameMatch:'fuzzy' as const,fuzzyThreshold:0.88,blockDistanceM:500,nearDistanceM:50,matchThreshold:2,reviewThreshold:1,decisions:[]}}:type==='clip_points_to_area'?{type:'clip_points_to_area' as const,params:{label:'Points inside the area',keepBoundary:true,showExcluded:true}}:type==='reproject'?{type:'reproject' as const,params:{label:'Reproject points',zone:35,hemisphere:'south' as const}}:type==='raster_input'?{type:'raster_input' as const,params:{label:'Raster input'}}:type==='fill_interior_gaps'?{type:'fill_interior_gaps' as const,params:{label:'Filled gaps'}}:type==='stack_polygons'?{type:'stack_polygons' as const,params:{label:'Collected polygon layers'}}:type==='travel_time_band'?{type:'travel_time_band' as const,params:{label:'Travel time band',minutes:5}}:type==='reachable_corridor'?{type:'reachable_corridor' as const,params:{label:'Reachable corridor',bufferM:25,zone:30,hemisphere:'north' as const}}:type==='reachable_nodes'?{type:'reachable_nodes' as const,params:{label:'Reachable junctions',minutes:10,speedMPerMin:80,direction:'outbound' as const,travelMode:'walking' as const}}:type==='snap_to_network'?{type:'snap_to_network' as const,params:{label:'Snap sites to the network',zone:30,hemisphere:'north' as const,maxSnapM:150}}:type==='summarize_combined_area'?{type:'summarize_combined_area' as const,params:{label:'Combined area',zone:30,hemisphere:'north' as const}}:type==='summarize_hull'?{type:'summarize_hull' as const,params:{label:'Convex hull',zone:30,hemisphere:'north' as const}}:type==='find_health_facilities'?{type:'find_health_facilities' as const,params:{label:'Find health facilities',source:'openstreetmap-live' as const,kinds:['hospital','clinic'],requireName:true,country:'PHL',minConfidence:0.7,data:null,retrieved:null}}:type==='buffer_point'?{type:'buffer_point' as const,params:{label:'Area around a point',pointId:'',distanceM:5000}}:type==='sample_raster'?{type:'sample_raster' as const,params:{label:'Sample a raster',attribute:'',valueUnit:''}}:type==='clip_raster'?{type:'clip_raster' as const,params:{label:'Clipped raster',method:'all-touched' as const,marginPixels:0}}:type==='chart_output'?{type:'chart_output' as const,params:{label:'Chart'}}:type==='table_output'?newTableOutput():type==='map_output'?newMapOutput():type==='point_input'?newObservations():type==='measure_area'?newAreaMeasurement():['blank','coverage'].includes(exampleKey(workflow))&&type==='study_area'?newStudyArea():template(exampleKey(workflow)).nodes.find(n=>n.type===type));
     // Every zone-taking widget was defaulted to Soho's 30/north in the branches above, which is
     // wrong anywhere else and said nothing about it. Suggest the zone the workflow's own data is
     // in, from the mean longitude of every coordinate already configured. The parameter stays: a
@@ -3906,6 +3938,40 @@ function tableOnPort(w:Workflow,nodeId:string,port:string):import('./data-table.
   // A point layer that holds its points is a table already, before a run (experiment 200).
   if(from.type==='point_input')return pointsAsTable(from.params.data);
   return result?.tables?.[from.id]??null;
+}
+/** TRANSMISSION CHAINS' SETTINGS (experiment 216), in the standard dialog: which column names each case, which names its
+ *  recorded source, the value written for "no source", and the date that orders a case's children. The preview runs on
+ *  the table the last run handed this step. */
+function openChainsConfig(node:WorkflowNode<'transmission_chains'>){
+  type Draft={id:string;parent:string;none:string;date:string};
+  const values=upstreamKeyValues(node)??{},table=tableOnPort(workflow,node.id,'records');
+  const columns=table?.keys??Object.keys(values);
+  const pick=(id:string,label:string,chosen:string,optional=false)=>`<div class="field"><label class="field-label" for="${id}">${label}</label>`
+    +`<select id="${id}">${optional||!chosen?`<option value="">${optional?'None':'Choose a column'}</option>`:''}`
+    +columns.map(c=>`<option value="${esc(c)}" ${c===chosen?'selected':''}>${esc(c)}</option>`).join('')+`</select></div>`;
+  openConfigDialog<Draft>({id:'chains-dialog',widget:TYPES.transmission_chains.title,step:node.params.label||TYPES.transmission_chains.title,
+    draft:{id:node.params.id??'',parent:node.params.parent??'',none:node.params.none??'',date:node.params.date??''},
+    sections:draft=>{
+      const settings=pick('chains-id','Each case is named in',draft.id)+pick('chains-parent','Its recorded source is in',draft.parent)
+        +`<div class="field"><label class="field-label" for="chains-none">Written for "no source recorded"</label>`
+        +`<input id="chains-none" value="${esc(draft.none)}" placeholder="Leave empty if an empty cell means none"></div>`
+        +pick('chains-date','Order each case\u2019s children by',draft.date,true);
+      if(!draft.id||!draft.parent)return {settings,message:{tone:'warning',text:'Choose the column naming each case and the column naming its source.'},blocked:true};
+      if(!table)return {settings,preview:'<p>Run the workflow once to see the chains this finds.</p>'};
+      try{
+        const found=transmissionChains(table,{id:draft.id,parent:draft.parent,...(draft.none?{none:draft.none}:{}),...(draft.date?{date:draft.date}:{})});
+        return {settings,preview:`<p class="select-preview-count">${esc(found.sentence)}</p>`
+          +`<div class="chains-preview">${dataTableMarkup(found.table,esc,{pageSize:8})}</div>`};
+      }catch(error){return {settings,message:{tone:'refusal',text:errorMessage(error)},blocked:true};}
+    },
+    wire:(root,draft,redraw)=>{
+      for(const [id,key] of [['chains-id','id'],['chains-parent','parent'],['chains-date','date']] as const)
+        root.querySelector<HTMLSelectElement>('#'+id)?.addEventListener('change',e=>{draft[key]=(e.target as HTMLSelectElement).value;redraw();});
+      root.querySelector<HTMLInputElement>('#chains-none')?.addEventListener('change',e=>{draft.none=(e.target as HTMLInputElement).value.trim();redraw();});
+    },
+    apply:draft=>{change(w=>{const p=getNode(w,node.id,'transmission_chains').params;
+      for(const key of ['id','parent','none','date'] as const){if(draft[key])p[key]=draft[key];else delete p[key];}},{requirePersistence:true});},
+  },esc);
 }
 function labelForm(id:string,caption:string,value:string,maxLength=60):string{
   return `<form class="field" data-label-form="${id}"><label class="field-label" for="${id}">${caption}</label>`
@@ -4273,6 +4339,20 @@ function renderInspector(){
         :'Not run yet.';
     content+=standardSection('Result',`<p class="standard-result${relation?.dropped||why?' standard-result-warning':''}">${esc(line)}</p>`
       +'<div data-standard-result></div>');
+  }else if(n.type==='transmission_chains'){
+    // THE STANDARD INSPECTOR (experiment 186) for Transmission chains (experiment 216): the columns are in Configure…;
+    // here, what it follows, and what the last run found.
+    const p=n.params;
+    content+=standardSection('Name',labelForm('chains-label','Name',p.label||'Transmission chains'));
+    content+=standardSection('Inputs',standardInputs(n,{records:'Cases, each with its recorded source'}));
+    content+=standardSection('Settings',`<p class="standard-sentence">${esc(p.id&&p.parent
+      ?`Follows ${p.parent} from each ${p.id} back to the case its chain starts with${p.none?`; "${p.none}" means no source`:''}.`
+      :'Choose the case id and infected-by columns in Configure\u2026')}</p>`
+      +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button></div>');
+    const receipt=result?.receipts.find(r=>r.nodeId===n.id) as unknown as {method?:string}|undefined;
+    const why=result?.unfinished?.find(u=>u.nodeId===n.id)?.message;
+    content+=standardSection('Result',`<p class="standard-result${why?' standard-result-warning':''}">`
+      +`${esc(why?`The last run could not compute this step: ${why}`:receipt?.method??'Not run yet.')}</p>`);
   }else if(n.type==='group_table'){
     // THE STANDARD INSPECTOR (experiments 186 and 191): what is kept, the aggregate, empty cells and shares are in the
     // configuration dialog; here, one sentence of what the step totals and what the last run made.
@@ -5101,6 +5181,11 @@ function renderInspector(){
           if(fit)toast(`Placed from ${fit.points} points: errors ${Math.round(fit.rmsM)} m root mean square. Run the workflow to draw it.`);
         }catch(error){toast(errorMessage(error),{tone:'failure'});}
       })()});
+  });
+  if(n.type==='transmission_chains')optionalElement('#configure-step')?.addEventListener('click',()=>{
+    const node=workflow.nodes.find(x=>x.id===n.id);
+    if(node?.type!=='transmission_chains')return;
+    openChainsConfig(node as WorkflowNode<'transmission_chains'>);
   });
   if(n.type==='group_table')optionalElement('#configure-step')?.addEventListener('click',()=>{
     const node=workflow.nodes.find(x=>x.id===n.id);
@@ -6646,7 +6731,22 @@ async function drawStaticFigure(svg:SVGSVGElement,result:Output,mapNode:Workflow
   if(result.pointTable){svg.innerHTML='';return false;}
   if(result.kind==='study-area'){svg.innerHTML=areaSvg(required(result.boundary),result.label);return true;}
   if(result.boundary){
-    svg.innerHTML=staticBoundaryMap(result,o.selected??null,esc,statusLabel,mapNode?.params.labelField||{});
+    const inset=mapNode?.params.inset,labels=mapNode?.params.labelField||{};
+    const wholeFrame=staticMapFrame(result);
+    // AN INSET OR A LOCATOR (experiment 213), where its box lies inside the map: the same layers drawn twice, composed.
+    if(inset&&boxInside(inset.box,wholeFrame.bounds)){
+      const partFrame=staticMapFrame(result,inset.box);
+      const drawing=(content:string,f:typeof wholeFrame)=>({content,height:f.height,project:f.project as (c:[number,number])=>[number,number],scale:f.scale});
+      const composed=composeInset(drawing(staticBoundaryMap(result,o.selected??null,esc,statusLabel,labels),wholeFrame),
+        drawing(staticBoundaryMap(result,o.selected??null,esc,statusLabel,labels,inset.box),partFrame),inset,
+        result.rows.filter(r=>r.coordinates).map(r=>r.coordinates as [number,number]));
+      svg.innerHTML=composed.content;
+      applyFrame(svg,svg.innerHTML);
+      svg.querySelectorAll<SVGElement>('[data-place]').forEach(el=>{el.style.display=hidden.has(el.dataset.layer!)?'none':'';});
+      await ground(inset.arrange==='locator'?partFrame:wholeFrame);
+      return true;
+    }
+    svg.innerHTML=staticBoundaryMap(result,o.selected??null,esc,statusLabel,labels);
     applyFrame(svg,svg.innerHTML);
     svg.querySelectorAll<SVGElement>('[data-layer-link]').forEach(el=>{el.style.display=hidden.has(el.dataset.layerLink!)?'none':'';});
     svg.querySelectorAll<SVGElement>('[data-place]').forEach(el=>{el.style.display=hidden.has(el.dataset.layer!)?'none':'';});
@@ -6655,6 +6755,32 @@ async function drawStaticFigure(svg:SVGSVGElement,result:Output,mapNode:Workflow
   }
   svg.innerHTML='';
   return false;
+}
+/** THE INSET IS PICKED HERE (experiment 213; the practitioner, 2026-11-13: "inset picker on the interactive map"): zoom
+ *  to the part and use the view on screen as the inset's box, kept in longitude and latitude. Offered where the static
+ *  figure can draw one, a map over its study area. */
+function insetPicker(host:HTMLElement,mapNode:WorkflowNode<'map_output'>|undefined,shown:Output,map:import('leaflet').Map){
+  host.parentElement?.querySelector('.map-inset-bar')?.remove();
+  if(!mapNode||!shown.boundary||mapNode.params.arrangement)return;
+  const bar=document.createElement('div');bar.className='map-inset-bar';
+  const held=mapNode.params.inset;
+  bar.innerHTML=`<button class="button small" type="button" data-inset-use>Use this view as the inset</button>`
+    +(held?`<button class="button small" type="button" data-inset-clear>Clear the inset</button>`
+      +`<span class="muted">${held.arrange==='locator'?'Locator':'Inset'} on the static figure; arrange it in Configure\u2026</span>`:'');
+  host.after(bar);
+  bar.querySelector('[data-inset-use]')!.addEventListener('click',()=>{
+    const b=map.getBounds(),box:[number,number,number,number]=[b.getWest(),b.getSouth(),b.getEast(),b.getNorth()];
+    const whole=staticMapFrame(shown).bounds;
+    // Clipped to the map's own extent, then refused if nothing of it is left: an inset shows a part of the map.
+    const clipped:[number,number,number,number]=[Math.max(box[0],whole[0]),Math.max(box[1],whole[1]),Math.min(box[2],whole[2]),Math.min(box[3],whole[3])];
+    if(!boxInside(clipped,whole)){toast('This view is outside the map. Zoom to a part of it.',{tone:'warning'});return;}
+    if((clipped[2]-clipped[0])>=(whole[2]-whole[0])*0.9&&(clipped[3]-clipped[1])>=(whole[3]-whole[1])*0.9){
+      toast('This view shows nearly the whole map. Zoom in to the part to enlarge.',{tone:'warning'});return;}
+    change(w=>{const p=getNode(w,mapNode.id,'map_output').params;p.inset={...(p.inset??{}),box:clipped};},{spatial:false});
+    toast('Kept as the inset. The static figure, in Notes and in the downloads, now shows it.');
+  });
+  bar.querySelector('[data-inset-clear]')?.addEventListener('click',()=>{
+    change(w=>{delete getNode(w,mapNode.id,'map_output').params.inset;},{spatial:false});});
 }
 function renderMap(){
   if(!resultsOnScreen())return;
@@ -6799,7 +6925,8 @@ function renderMap(){
       // The node is the view's identity. Without it every presentation change -- and Mark radius
       // is one -- remounted the map and refitted it, throwing away the pan and zoom the
       // practitioner had chosen in order to judge the change they were making.
-      mapNode?.id,mapNode?.params.tileExtract,mapNode?.params.partLabel,mapNode?.params.frameCaption);
+      mapNode?.id,mapNode?.params.tileExtract,mapNode?.params.partLabel,mapNode?.params.frameCaption,
+      {onMap:m=>{insetPicker(host,mapNode,result,m);}});
     if(result.polygons){
       // ONE OF THESE, NOT ONE PER RENDER. This was inserted into the panel on every render and
       // nothing removed the last, so a map rendered three times carried the same paragraph three

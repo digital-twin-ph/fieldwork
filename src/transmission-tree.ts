@@ -19,6 +19,8 @@ import {dayNumber} from './authored-application.js';
 /** `none`: a written value that means no source is recorded, as a step keeping unmatched rows under a label writes one
  *  (MERS, 2026-11-12). An empty cell always means none. */
 export interface TreeColumns {id:string; parent:string; date:string; none?:string}
+/** For a step that hands chains on (experiment 216) the date only orders each case's children, so it may be left out. */
+export type ChainColumns=Omit<TreeColumns,'date'>&{date?:string};
 export interface TreeCase {
   id:string; parent:string|null; date:string; day:number|null;
   /** 0 for a case that starts a chain. */
@@ -43,8 +45,9 @@ const valueOf=(row:DataTable['rows'][number],column:string,table:DataTable):stri
   return column===table.valueField&&row.value!==null&&row.value!==undefined?String(row.value):'';
 };
 
-export function transmissionTree(table:DataTable,columns:TreeColumns):TransmissionTree{
-  for(const [what,column] of [['case id',columns.id],['infector',columns.parent],['date',columns.date]] as const)
+export function transmissionTree(table:DataTable,given:TreeColumns|ChainColumns):TransmissionTree{
+  const columns:TreeColumns={...given,date:given.date??''};
+  for(const [what,column] of [['case id',columns.id],['infector',columns.parent],...(given.date!==undefined?[['date',columns.date] as const]:[])] as const)
     if(!column||(!table.keys.includes(column)&&table.valueField!==column))
       throw new Error(`Choose the ${what} column in Configure…: this table has ${[...table.keys,table.valueField].filter(Boolean).join(', ')}.`);
   // A CASE IN SEVERAL ROWS records several sources, one a row (2026-11-12): the first source listed places it, the others

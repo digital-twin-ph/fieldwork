@@ -389,6 +389,8 @@ export interface ParamsByType {
     maxRadiusKm?:number;replications:number;seed:number;start?:string;end?:string;report?:number;
     /** Day by day, as the outbreak unfolded: a prospective scan each day on the cases known by then. */
     replay?:boolean};
+  /** Experiment 216: the id and infected-by columns, the value written for "no source", and the date that orders children. */
+  transmission_chains:{label:string; id?:string; parent?:string; none?:string; date?:string};
   group_table:{label:string;by:string[];
     /** Which aggregate: the sum this step has always computed, a minimum or maximum, or a count
      *  of rows. See
@@ -623,7 +625,9 @@ export interface ParamsByType {
    *  parameters stay so the registry entry resolves and a saved workflow that still names the type
    *  can be migrated rather than refused. Nothing adds one, nothing runs one. */
   coverage_check:{exclusions:Exclusion[]; pointInputCount?:number};
-  map_output:{label:string; section?:import('./notes.js').FigureSection|'none'; pointInputCount?:number;
+  map_output:{label:string; section?:import('./notes.js').FigureSection|'none';
+    /** An enlarged part, or a locator, on the static figure (experiment 213), its box picked on the interactive map. */
+    inset?:import('./map-inset.js').InsetSettings; pointInputCount?:number;
     /** How many polygon layers it takes, as `polygons`, `polygons_2` … (2026-11-13: Collect polygon layers retired). */
     polygonInputCount?:number;
     /** How many rasters, as `raster` to `raster_4` (experiment 212, grid cells in panels). */

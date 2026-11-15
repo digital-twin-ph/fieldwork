@@ -904,7 +904,7 @@
     {
       "id": "urn:fieldwork:widget:map_output",
       "nodeType": "map_output",
-      "currentVersion": "0.30.2",
+      "currentVersion": "0.31.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -1125,6 +1125,11 @@
           "version": "0.30.2",
           "path": "widgets/releases/map_output/0.30.2.json",
           "sha256": "d728483997bddca8ccfb0c9875b13075cc68580ceb83b9a4bc58865d7faf211a"
+        },
+        {
+          "version": "0.31.0",
+          "path": "widgets/releases/map_output/0.31.0.json",
+          "sha256": "a00fc74ee62312e5b0d7a5427da6af7b3b16239f3d2d054953f328e0c1906fa7"
         }
       ]
     },
@@ -2654,6 +2659,18 @@
           "version": "1.0.0",
           "path": "widgets/releases/sample_satellite_files_at_points/1.0.0.json",
           "sha256": "ae29f110c47bbd701ef2548b9386f96ef2676e1341e24f7731a349aaa4d5b124"
+        }
+      ]
+    },
+    {
+      "id": "urn:fieldwork:widget:transmission_chains",
+      "nodeType": "transmission_chains",
+      "currentVersion": "0.1.0",
+      "releases": [
+        {
+          "version": "0.1.0",
+          "path": "widgets/releases/transmission_chains/0.1.0.json",
+          "sha256": "69b252234aadabc2c04d1df5fc796c7cbcecf2c07b5daa3d9e28f4dfdcf1d40a"
         }
       ]
     }

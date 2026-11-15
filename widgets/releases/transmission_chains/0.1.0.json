@@ -1,0 +1,72 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "released": "2026-11-14",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "validationStatus": "application-only",
+  "shaclShapes": [],
+  "typescriptType": "ParamsByType['transmission_chains']"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": null
+ },
+ "id": "urn:fieldwork:widget:transmission_chains",
+ "nodeType": "transmission_chains",
+ "version": "0.1.0",
+ "title": "Transmission chains",
+ "ports": {
+  "inputs": [
+   {
+    "name": "records",
+    "type": "table"
+   }
+  ],
+  "output": "table",
+  "optionalInputs": [],
+  "note": "Takes a table of cases, each naming its recorded source, and gives back every row with four more columns: chain (the id of the case the chain starts with), generation, offspring and chain_size. Nothing is dropped: a case naming no source, or a source the table does not hold, or in a loop, starts a chain of its own and is counted."
+ },
+ "ontology": {
+  "status": "gap",
+  "mappings": [],
+  "note": "The receipt types the step fw:TransmissionChains and states the columns followed, the chains found, and the cases with no source, a source not held, or in a loop, and the rows without a case id.",
+  "emits": {
+   "classes": [
+    "TransmissionChains"
+   ],
+   "properties": [
+    "caseIdColumn",
+    "casesInLoop",
+    "casesInfectorNotFound",
+    "casesNoInfector",
+    "chainsFound",
+    "infectorColumn",
+    "rowsWithoutCaseId"
+   ]
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/transmission-chains.ts",
+   "src/transmission-tree.ts",
+   "src/core.ts",
+   "src/app.ts"
+  ],
+  "definition": "src/transmission-chains.ts"
+ },
+ "changes": [
+  {
+   "kind": "initial",
+   "description": "Each case's transmission chain handed on as columns, so a curve, a map or a table can use it. The practitioner, 2026-11-14, choosing a new step over a rule in Apply ruleset: \"New step: Transmission chains\". Experiment 216."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "0.1.0: tests/transmission-chains.test.mjs (a loop, a source not in the table, several sources, a written none, a case in two rows, a row without an id; MERS's 162 cases in 67 chains, the largest SK_1's 94 over 4 generations, SK_76's 3, 65 single). Shares the computation Chart's tree draws (experiment 200). Chromium. Nothing here establishes that a recorded link is an infection."
+ }
+}

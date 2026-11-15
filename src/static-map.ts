@@ -16,10 +16,11 @@ import {markLabel,LABEL_CEILING} from './point-layers.js';
  *  arithmetic and getting a slightly different answer -- the pattern `rasterFrame` already uses.
  *  A basemap needs both: the extent, to know which tiles cover it, and the projection, to place
  *  each tile by its own corners. Experiment 137. */
-export function staticMapFrame(output:DisplayValue){
+/** `box`: draw over this extent instead of the data's own, for an inset's enlarged view (experiment 213). */
+export function staticMapFrame(output:DisplayValue,box?:readonly [number,number,number,number]){
   const boundary=output.boundary!,polygons=boundary.type==='MultiPolygon'?boundary.coordinates:[boundary.coordinates];
-  const outline=polygons.flat(2),points=[...outline,...output.rows.filter(r=>r.coordinates!).map(r=>r.coordinates!),...(output.centers||[]).filter(c=>c.geometry).map(c=>c.geometry!.coordinates)];
-  const xs=points.map(p=>p![0]),ys=points.map(p=>p![1]),xmin=Math.min(...xs),xmax=Math.max(...xs),ymin=Math.min(...ys),ymax=Math.max(...ys),cos=Math.cos((ymin+ymax)/2*Math.PI/180);
+  const outline=polygons.flat(2),points=box?[[box[0],box[1]],[box[2],box[3]]]:[...outline,...output.rows.filter(r=>r.coordinates!).map(r=>r.coordinates!),...(output.centers||[]).filter(c=>c.geometry).map(c=>c.geometry!.coordinates)];
+  const xs=points.map(p=>p![0]!),ys=points.map(p=>p![1]!),xmin=Math.min(...xs),xmax=Math.max(...xs),ymin=Math.min(...ys),ymax=Math.max(...ys),cos=Math.cos((ymin+ymax)/2*Math.PI/180);
   const frame=plotFrame([xmin,ymin,xmax,ymax],{width:720,margin:70}),scale=frame.scale;
   return {polygons,xmin,xmax,ymin,ymax,cos,scale,height:frame.height,
     bounds:[xmin,ymin,xmax,ymax] as [number,number,number,number],
@@ -28,8 +29,9 @@ export function staticMapFrame(output:DisplayValue){
 /** `labelField` names each layer's marks, keyed by source node, exactly as it does for the
  *  polygon plot. Passed in rather than read here so BOTH static renderers name marks the same
  *  way: this widget's history is a list of layers one renderer carried and another did not. */
-export function staticBoundaryMap(output:DisplayValue,selected:string|null|undefined,esc:Escape,statusLabel:(status:string|undefined)=>string,labelField:Record<string,string>={}){
-  const {polygons,project,height}=staticMapFrame(output);
+export function staticBoundaryMap(output:DisplayValue,selected:string|null|undefined,esc:Escape,statusLabel:(status:string|undefined)=>string,labelField:Record<string,string>={},
+  box?:readonly [number,number,number,number]){
+  const {polygons,project,height}=staticMapFrame(output,box);
   let svg=`<rect width="850" height="${height}" fill="#f0f3e9"/>`;
   // TAGGED AS CARRYING NO VALUE. This polygon is a boundary: it says where the study area is and
   // encodes no measurement, so its fill is spending a visual variable on nothing -- the same

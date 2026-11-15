@@ -427,12 +427,12 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.30.2",
+   "version": "0.31.0",
    "released": "2026-11-14",
    "changes": [
     {
-     "kind": "patch",
-     "description": "Polygon layers past the first are listed once, through the collection the run merges them into, as before 0.30.1; only rasters past the first are newly listed."
+     "kind": "minor",
+     "description": "An inset on the static figure: a part picked on the interactive map, enlarged in a framed corner with its own scale bar and two lines to its box; or a locator, the part as the figure with the whole map small in a corner. Marks keep their size, so crowded marks stand apart."
     }
    ],
    "breaking": false,
@@ -1073,6 +1073,18 @@
    "replacementCandidate": [
     "urn:fieldwork:widget:sample_raster"
    ]
+  },
+  "transmission_chains": {
+   "version": "0.1.0",
+   "released": "2026-11-14",
+   "changes": [
+    {
+     "kind": "initial",
+     "description": "Each case's transmission chain handed on as columns, so a curve, a map or a table can use it. The practitioner, 2026-11-14, choosing a new step over a rule in Apply ruleset: \"New step: Transmission chains\". Experiment 216."
+    }
+   ],
+   "breaking": false,
+   "migrationFrom": []
   }
  }
 }

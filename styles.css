@@ -1415,3 +1415,5 @@ th .column-label{display:block;font-weight:400;color:var(--muted);font-size:14px
   .publication-page{box-shadow:none;max-width:none;padding:0}
   @page{size:A4;margin:22mm 20mm}
 }
+/* The inset picker under the interactive map (experiment 213). */
+.map-inset-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0;font-size:15px}

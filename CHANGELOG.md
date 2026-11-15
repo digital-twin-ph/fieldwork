@@ -3,6 +3,19 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.119.0 — In development
+
+- **Transmission chains, a new step.** It follows each case's recorded source back to the case its chain starts with
+  and hands on every row with its `chain`, `generation`, `offspring` and `chain_size`, so a curve can be split by
+  generation, a table can list the chains by size, and a map can be coloured by chain. Nothing is dropped: a case with
+  no source, a source the table does not hold, or a loop starts a chain of its own and is counted. On MERS: 162 cases
+  in 67 chains, SK_1's of 94 over 4 generations. Transmission chains 0.1.0; experiment 216.
+- **An inset in a map.** On the interactive map, zoom to a crowded part and choose **Use this view as the inset**. The
+  static figure, in Notes, the publication and the downloads, then shows that part enlarged in a corner, with its own
+  scale bar and lines to the box it came from; or, as a **Locator**, the part fills the figure and the whole map sits
+  small in a corner. Marks keep their size, so marks crowded together on the whole map stand apart. Map 0.31.0;
+  experiment 213.
+
 ## 0.118.0 — In development
 
 - **The publication keeps what you write.** Title, affiliations and keywords, the four parts of the abstract,

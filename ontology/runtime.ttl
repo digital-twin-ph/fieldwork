@@ -656,16 +656,19 @@ fw:conventionalLabelSource a owl:DatatypeProperty; rdfs:label "conventional labe
 
 # WHO INFECTED WHOM, DRAWN AS CHAINS OVER TIME (experiment 200, step 5): a Chart's transmission tree.
 fw:TransmissionTree a owl:Class; rdfs:label "transmission tree"; rdfs:comment "A figure of who infected whom: each case at its date, joined to its infector. A presentation of the table's own rows; nothing inferred." .
-fw:caseIdColumn a owl:DatatypeProperty; rdfs:domain fw:TransmissionTree; rdfs:label "case id column" .
-fw:infectorColumn a owl:DatatypeProperty; rdfs:domain fw:TransmissionTree; rdfs:label "infector column"; rdfs:comment "The column naming, for each case, the case id of its infector." .
+fw:caseIdColumn a owl:DatatypeProperty; rdfs:domain [ owl:unionOf ( fw:TransmissionTree fw:TransmissionChains ) ]; rdfs:label "case id column" .
+fw:infectorColumn a owl:DatatypeProperty; rdfs:domain [ owl:unionOf ( fw:TransmissionTree fw:TransmissionChains ) ]; rdfs:label "infector column"; rdfs:comment "The column naming, for each case, the case id of its infector." .
 fw:caseDateColumn a owl:DatatypeProperty; rdfs:domain fw:TransmissionTree; rdfs:label "case date column" .
 fw:casesDrawn a owl:DatatypeProperty; rdfs:domain fw:TransmissionTree; rdfs:range xsd:integer; rdfs:label "cases drawn" .
 fw:chainsDrawn a owl:DatatypeProperty; rdfs:domain fw:TransmissionTree; rdfs:range xsd:integer; rdfs:label "chains drawn" .
 fw:linksDrawn a owl:DatatypeProperty; rdfs:domain fw:TransmissionTree; rdfs:range xsd:integer; rdfs:label "links drawn"; rdfs:comment "Links from an infector to a case, both in the table." .
-fw:casesNoInfector a owl:DatatypeProperty; rdfs:domain fw:TransmissionTree; rdfs:range xsd:integer; rdfs:label "cases naming no infector" .
-fw:casesInfectorNotFound a owl:DatatypeProperty; rdfs:domain fw:TransmissionTree; rdfs:range xsd:integer; rdfs:label "cases naming an infector the table does not hold" .
+fw:casesNoInfector a owl:DatatypeProperty; rdfs:domain [ owl:unionOf ( fw:TransmissionTree fw:TransmissionChains ) ]; rdfs:range xsd:integer; rdfs:label "cases naming no infector" .
+fw:casesInfectorNotFound a owl:DatatypeProperty; rdfs:domain [ owl:unionOf ( fw:TransmissionTree fw:TransmissionChains ) ]; rdfs:range xsd:integer; rdfs:label "cases naming an infector the table does not hold" .
 fw:casesUndated a owl:DatatypeProperty; rdfs:domain fw:TransmissionTree; rdfs:range xsd:integer; rdfs:label "cases without a readable date" .
-fw:casesInLoop a owl:DatatypeProperty; rdfs:domain fw:TransmissionTree; rdfs:range xsd:integer; rdfs:label "cases in a loop"; rdfs:comment "Cases whose infectors lead back to themselves, which no transmission chain can do." .
+fw:casesInLoop a owl:DatatypeProperty; rdfs:domain [ owl:unionOf ( fw:TransmissionTree fw:TransmissionChains ) ]; rdfs:range xsd:integer; rdfs:label "cases in a loop"; rdfs:comment "Cases whose infectors lead back to themselves, which no transmission chain can do." .
+fw:TransmissionChains a owl:Class; rdfs:subClassOf prov:Activity; rdfs:label "transmission chains"; rdfs:comment "A step that follows each case's recorded source back to the case its chain starts with, and hands on each row with its chain, generation, offspring and chain size (experiment 216). The record's chains: a recorded link is not a proven infection, and a case with no source recorded starts a chain of its own." .
+fw:chainsFound a owl:DatatypeProperty; rdfs:domain fw:TransmissionChains; rdfs:range xsd:integer; rdfs:label "chains found" .
+fw:rowsWithoutCaseId a owl:DatatypeProperty; rdfs:domain fw:TransmissionChains; rdfs:range xsd:integer; rdfs:label "rows without a case id"; rdfs:comment "Rows that name no case, handed on without a chain and counted." .
 fw:MapLinks a owl:Class; rdfs:label "map links"; rdfs:comment "Lines on a map from each record to the record it names in one column, found by another column. Every record of the layer is counted, drawn or not." .
 fw:drawsLinks a owl:ObjectProperty; rdfs:domain fw:MapView; rdfs:range fw:MapLinks; rdfs:label "draws links" .
 fw:linkSource a owl:ObjectProperty; rdfs:domain fw:MapLinks; rdfs:label "link source"; rdfs:comment "The point layer whose records are linked." .

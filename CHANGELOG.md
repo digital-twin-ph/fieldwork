@@ -10,6 +10,9 @@ shown in a local build is not a claim that it has been published.
 - **The tab bar no longer overlaps.** When the window is narrow the buttons move to a second row, so every tab stays
   whole and "Run complete" stays on one line. **Hide widgets** is now **Hide node library**, at the left end of the bar,
   next to the panel it hides; it had sat beside the Widgets tab, which is something else.
+- **Oswego's map shows where Lycoming is.** The hamlet fills the figure and New York State sits small in a corner with
+  Lycoming marked: a locator. The state's outline is the US Census Bureau's, public domain. A locator's box is always at
+  least 18 px on the page, so a place a few kilometres across can be found in a map of a state. Map 0.31.3.
 
 ## 0.119.0 — 2026-11-14
 

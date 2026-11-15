@@ -79,10 +79,13 @@ export function composeInset(whole:Drawing,part:Drawing,settings:InsetSettings,p
   const boxOnLarge=locator?undefined:rectOf(settings.box,whole.project);
   const corner=settings.corner??chooseCorner(locator?points.map(p=>part.project(p)):points.map(p=>whole.project(p)),w,h,large.height,boxOnLarge);
   const frame=frameAt(corner,w,h,large.height);
-  const box=(r:Rect)=>`<rect data-inset-box x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" fill="none" stroke="#c0392b" stroke-width="2"/>`;
+  // THE BOX IS ALWAYS FINDABLE: drawn in the small frame, a part a few kilometres across in a state is under a pixel, so
+  // it is drawn at least 18 px on the page, centred where it is, its outline as thick on the page as on the whole map.
+  const box=(r:Rect,scale=1)=>{const least=18*scale,w=Math.max(r.w,least),h=Math.max(r.h,least);
+    return `<rect data-inset-box x="${r.x+r.w/2-w/2}" y="${r.y+r.h/2-h/2}" width="${w}" height="${h}" fill="none" stroke="#c0392b" stroke-width="${2*scale}"/>`;};
   // The small drawing in its frame, clipped to it; the box drawn on the whole, wherever the whole is.
   const nested=`<svg data-inset-frame x="${frame.x}" y="${frame.y}" width="${frame.w}" height="${frame.h}" viewBox="0 0 850 ${small.height}" preserveAspectRatio="xMidYMid meet">`
-    +small.content+(locator?box(rectOf(settings.box,whole.project)):'')+`</svg>`;
+    +small.content+(locator?box(rectOf(settings.box,whole.project),850/w):'')+`</svg>`;
   const content=large.content+(boxOnLarge?box(boxOnLarge)+pointer(boxOnLarge,frame,corner):'')
     +`<rect x="${frame.x-2}" y="${frame.y-2}" width="${frame.w+4}" height="${frame.h+4}" fill="#ffffff"/>`
     +nested+`<rect x="${frame.x}" y="${frame.y}" width="${frame.w}" height="${frame.h}" fill="none" stroke="#1f2a24" stroke-width="1.5"/>`

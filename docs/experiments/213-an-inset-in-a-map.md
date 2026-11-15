@@ -2,7 +2,7 @@
 
 _Created 2026-11-13 · Updated 2026-11-14_
 
-**Status:** tried — built 2026-11-14 (Fieldwork 0.119.0, Map 0.31.0); MERS's inset in its example and its browser test; Oswego's locator waits for New York State's boundary.
+**Status:** tried — built 2026-11-14 (Fieldwork 0.119.0, Map 0.31.0); MERS's inset and Oswego's locator in their examples, with browser tests.
 
 ## The question
 
@@ -88,8 +88,10 @@ As designed, with two departures, each a result:
 **MERS** (pinned 2026-11-15): Seoul to Pyeongtaek in a third-wide frame enlarged about 3.5 times, not enough for the
 Pyeongtaek hospitals, about 2 km apart, to separate at their marks' size. The box was tightened to Pyeongtaek, about
 18 km across, half the figure wide: in the browser test the four hospitals stand at least 2.2 marks' widths apart.
-**Oswego's locator is not built**: its study area is a box about 2 km across around Lycoming, and a locator needs the
-whole it sits in, New York State, as the map's extent; that boundary has to be read in first, with the Oswego revisit.
+**Oswego** (pinned 2026-11-15): its map's study area became New York State, the US Census Bureau's 2018 outline via
+geoBoundaries (public domain; the practitioner approved the download, 5.47 MB), and the box Lycoming had been drawn as,
+about 2 km across, became the locator's part. That box was under a pixel in the state's frame: **a locator's box is now
+drawn at least 18 px on the page** (Map 0.31.3), centred where it is. Both cases of this experiment are built.
 
 An inset is offered for a map over its study area (the plain static map). A map in panels has none; a polygon map
 without a study area has none yet. In the unit test, two marks about 1.4 km apart in Seoul, on a map of 126 to 130 E: 1.7 px apart on the whole map

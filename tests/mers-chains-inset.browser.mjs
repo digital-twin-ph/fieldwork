@@ -137,3 +137,28 @@ test('who infected whom is drawn in Notes, as in Results, not only its sentence'
   await note.screenshot({path:'test-results/mers-tree-notes.png'}).catch(()=>{});
   expect(errors).toEqual([]);
 });
+
+test('Oswego’s map is a locator: Lycoming fills the figure, New York State small in a corner with Lycoming marked',async({page})=>{
+  const OSWEGO=new URL('../../example-1940-oswego-church-supper/fieldwork-project.json.gz',import.meta.url);
+  test.skip(!existsSync(OSWEGO),'example-1940-oswego-church-supper is not checked out beside this repository.');
+  test.setTimeout(240000);
+  const errors=collectPageErrors(page);
+  const bundle=readFileSync(OSWEGO);
+  await page.route(/raw\.githubusercontent\.com\/digital-twin-ph\/example-1940-oswego-church-supper\/[^/]+\/fieldwork-project\.json\.gz/,r=>r.fulfill({status:200,body:bundle}));
+  await page.goto('/');await page.evaluate(()=>localStorage.clear());
+  await page.goto('/?example=blank');
+  await page.locator('[data-view="project"]').click();
+  await page.locator('[data-open-example="urn:fieldwork:example:oswego-1940"]').click();
+  await expect(page.locator('[data-example-status="urn:fieldwork:example:oswego-1940"]')).toContainText('digest matched',{timeout:60000});
+  await run(page,'question 2');
+  await page.locator('[data-view="notes"]').click();
+  const figure=page.locator('#notes-view figure[data-figure="map"]').first();
+  const frame=figure.locator('svg [data-inset-frame]');
+  await expect(frame).toBeAttached({timeout:30000});
+  await expect(frame.locator('[data-inset-box]')).toHaveCount(1);
+  expect(await figure.locator('svg [data-inset-line]').count()).toBe(0);
+  const box=await frame.locator('[data-inset-box]').boundingBox();
+  expect(box.width).toBeGreaterThanOrEqual(17);
+  await expect(page.locator('#notes-view')).toContainText('New York State');
+  expect(errors).toEqual([]);
+});

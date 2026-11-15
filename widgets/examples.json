@@ -165,7 +165,7 @@
       "id": "urn:fieldwork:example:oswego-1940",
       "title": "The Oswego church supper, 1940",
       "repository": "https://github.com/digital-twin-ph/example-1940-oswego-church-supper",
-      "commit": "e39be55a4938aa11ac5e9c47478cab24430fd3b1",
+      "commit": "6eb9d5b772cc5ebe21c9bb0a8bfe65fcd43171e1",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-1940-oswego-church-supper",
       "licence": {
         "data": "Stated as unconfirmed public domain for the line list; geo/lycoming-church.geojson is ODbL-1.0; the arrangement is CC0-1.0",
@@ -190,8 +190,8 @@
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "3916a50cd5acf907213fed5665bc4a179ca0b6092550d9c72606f669b3c7929a",
-          "bytes": 2698
+          "sha256": "486d1cdb3fcc04ec508c2560396d9f551da6c60fd78ba244e8aa4b11c7299cb3",
+          "bytes": 25611
         },
         {
           "path": "data/oswego-line-list.csv",
@@ -205,13 +205,13 @@
         },
         {
           "path": "provenance.json",
-          "sha256": "6fa2b1612b1b2f1bb39bd99510677fdf7c8c397208e4e03335a9f5ee0a13c545",
-          "bytes": 2625
+          "sha256": "5419e537e457cba4fd270f68a815e4ba2cfe21507fc9c67ef4d0d3f25c2ae62a",
+          "bytes": 3550
         },
         {
           "path": "README.md",
-          "sha256": "d47caa9c3c318be6e93efb8b06f2ca744129fafb73f8eca51aaa3202c9c39cde",
-          "bytes": 5717
+          "sha256": "74b452aabf3a272764dd2c7d36b982046663c2f1c63a520bce5478d7fa4deb64",
+          "bytes": 6438
         },
         {
           "path": "NOTICE.txt",

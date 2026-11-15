@@ -59,11 +59,14 @@ not a practitioner in the field.
 **Found 2026-11-13, not yet done:** a Polygon layer read from an OpenStreetMap extract reads the whole file into memory, as Raster input's digest did before it was read in slices; a country's extract of several gigabytes would fail the same way.
 
 **Added 2026-11-14:** build [213](docs/experiments/213-an-inset-in-a-map.md), the map inset and the Locator (MERS
-hospitals, Oswego); and revisit Oswego, one of the first examples (the practitioner: *"It has very few workflows, and
+hospitals, Oswego) (**done 0.119.0 and 0.120.0**: MERS's inset over Pyeongtaek, Oswego's locator in New York State);
+and revisit Oswego, one of the first examples (the practitioner: *"It has very few workflows, and
 being one of the first examples, we can probably revisit this to enhance"*), with four workflows chosen that day: the
 epidemic curve by hour of onset, the incubation period in hours from the meal (needs hours between two date-times in
 Apply ruleset), attack rates by age band and sex, and vanilla ice cream as its own two-by-two with the ill who did not
-eat it listed.
+eat it listed. Found 2026-11-15, before building: the line list writes onset as `4/19` and `12:30 AM` and the meal as
+`8:00 PM`, no year and no ISO form; Cases by period has no hour; Apply ruleset subtracts days, not hours. The curve and
+the incubation period wait on a design for times of day.
 
 **Added 2026-11-14:** revisit Salmonella the same way (the practitioner: *"Same with Salmonella example, we need to
 revisit"*), with four workflows chosen that day: who the cases were (age group and sex beside the classical controls),

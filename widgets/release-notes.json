@@ -427,12 +427,12 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.31.2",
-   "released": "2026-11-14",
+   "version": "0.31.3",
+   "released": "2026-11-15",
    "changes": [
     {
      "kind": "patch",
-     "description": "The inset picker sits on the interactive map, top left, as a map control: a bar under the map took 40 px from it at full screen. It is offered only where the static figure can draw an inset, the map of a study area and its points."
+     "description": "A locator's box is drawn at least 18 px on the page, so a part a few kilometres across is findable in a map of a state."
     }
    ],
    "breaking": false,

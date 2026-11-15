@@ -70,3 +70,11 @@ test('drawn for a frame a third as wide, the inset\'s marks are drawn three time
   const part=staticBoundaryMap(output,null,s=>s,()=>'',{},box,shrink);
   assert.ok(Math.abs(radius(part)/shrink-radius(whole))<1e-9);
 });
+
+test('a locator\'s box is never under 18 px on the page, however small the part is in the whole',()=>{
+  const tiny=[126.98,37.56,126.99,37.57];
+  const r=composeInset(drawing(),drawing(tiny),{box:tiny,arrange:'locator'},hospitals);
+  const inside=r.content.split('<svg data-inset-frame')[1];
+  const width=Number(/data-inset-box x="[^"]+" y="[^"]+" width="([\d.]+)"/.exec(inside)[1]);
+  assert.ok(width>=18*3-1e-9,`${width} units, a third-wide frame`);
+});

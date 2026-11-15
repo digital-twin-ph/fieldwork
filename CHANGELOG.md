@@ -3,7 +3,7 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## 0.121.0 — In development
+## 0.121.0 — 2026-11-15
 
 - **Salmonella has four more workflows**: who the cases were, by age group and sex beside the classical controls; all
   34 fruit items in one two-by-two, where Galia melon has the largest odds ratio, 21.4; how often the cases shop at an

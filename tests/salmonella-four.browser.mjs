@@ -40,7 +40,7 @@ test('Salmonella: who the cases were, every food, where the cases shopped and wh
   await expect(main).toContainText('59.4');
   await expect(main).toContainText('63.6');
 
-  await run(page,'Every food, against classical controls');
+  await run(page,'Which foods did cases eat more often than classical controls?');
   await expect(main).toContainText('galiamelo2');
   await expect(main).toContainText('21.4');
   await expect(main).toContainText('trockenobst2');

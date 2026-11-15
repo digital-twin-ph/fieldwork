@@ -2,7 +2,7 @@ import {test,expect} from './fixtures.mjs';
 import {readFileSync,existsSync} from 'node:fs';
 import {collectPageErrors} from './page-errors.mjs';
 
-/** MERS AS PINNED: the waves (experiment 216) and the hospitals' inset (experiment 213). Opened from the example
+/** MERS AS PINNED: the waves (experiment 216) and the hospitals' inset (Map's manual, History: the inset). Opened from the example
  *  repository's bundle, served locally as the pinned file, and run. The numbers asserted were measured in 216: 67
  *  chains, SK_1's of 94; 135 dated cases by generation 40, 28, 65 and 2. */
 test.use({serviceWorkers:'block'});
@@ -150,7 +150,7 @@ test('Oswego’s map is a locator: Lycoming fills the figure, New York State sma
   await page.locator('[data-view="project"]').click();
   await page.locator('[data-open-example="urn:fieldwork:example:oswego-1940"]').click();
   await expect(page.locator('[data-example-status="urn:fieldwork:example:oswego-1940"]')).toContainText('digest matched',{timeout:60000});
-  await run(page,'question 2');
+  await run(page,'Where was the church supper?');
   await page.locator('[data-view="notes"]').click();
   const figure=page.locator('#notes-view figure[data-figure="map"]').first();
   const frame=figure.locator('svg [data-inset-frame]');

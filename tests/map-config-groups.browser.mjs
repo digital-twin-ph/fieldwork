@@ -14,7 +14,7 @@ test('Configure… groups its settings, defaults to OpenStreetMap, and the previ
   const dialog=page.locator('#map-config');
   // One bordered group per heading, Basemap second.
   const titles=await dialog.locator('.config-group-title').allTextContents();
-  // Inset after Arrange (experiment 213, 2026-11-14).
+  // Inset after Arrange (Map's manual, History: the inset, 2026-11-14).
   expect(titles.slice(0,5)).toEqual(['Presentation','Basemap','Arrange','Inset','Layers']);
   expect(titles).toContain('Title, key and note');
   // A map that stated no basemap draws OpenStreetMap.

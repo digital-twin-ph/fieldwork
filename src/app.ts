@@ -2942,18 +2942,18 @@ function openMapConfig(nodeId:string){
           catch(error){previewHost.textContent=`The preview could not be drawn: ${errorMessage(error)}`;}});
         disposePreview=()=>{cancelled=true;cancelAnimationFrame(frame);};
       }
-      // THE INSET PICKED ON THE PREVIEW (experiment 213), for a map shown as a static figure, which cannot be zoomed.
+      // THE INSET PICKED ON THE PREVIEW (Map's manual, History: the inset), for a map shown as a static figure, which cannot be zoomed.
       root.querySelector('[data-inset-from-preview]')?.addEventListener('click',()=>{
         const drawnNow=result?.outputs.find(o=>o.nodeId===nodeId);
         if(!previewMap||!drawnNow?.boundary){note='Run the workflow to preview the map, then zoom the preview to the part.';redraw();return;}
         const picked=insetBoxFrom(previewMap,drawnNow);
         if(typeof picked==='string')note=picked;else{note='';draft.inset={...(draft.inset??{}),box:picked};}
         redraw();});
-      // THE INSET (experiment 213): its box is kept; which frame is large, the corner and the width are chosen here.
+      // THE INSET (Map's manual, History: the inset): its box is kept; which frame is large, the corner and the width are chosen here.
       on('#map-inset-arrange',el=>{if(!draft.inset)return;if(!el.value){delete draft.inset;return;}draft.inset={...draft.inset,arrange:el.value as 'inset'|'locator'};});
       on('#map-inset-corner',el=>{if(!draft.inset)return;const next={...draft.inset};if(el.value)next.corner=el.value as Corner;else delete next.corner;draft.inset=next;});
       on('#map-inset-size',el=>{if(!draft.inset)return;draft.inset={...draft.inset,size:el.value as 'third'|'half'};});
-      // ARRANGE (experiment 212): panels for every layer the last run drew, in that order, until some are left out.
+      // ARRANGE (Map's manual, History: panels): panels for every layer the last run drew, in that order, until some are left out.
       on('#map-arrange',el=>{
         if(!el.value){delete draft.arrangement;return;}
         const layers=drawnPolygonLayers(nodeId);
@@ -3052,15 +3052,15 @@ function openMapConfig(nodeId:string){
  *  write-up, each point layer's class, mark name and symbol, and the standalone figure. Built from a draft, so the same
  *  markup serves the dialog's every redraw and nothing reaches the step before Apply. */
 let disposePreview:(()=>void)|undefined;let previewMap:import('leaflet').Map|undefined;
-/** ARRANGE: ONE MAP, OR PANELS SIDE BY SIDE (experiment 212). The practitioner, 2026-11-13: "We should have the capability
+/** ARRANGE: ONE MAP, OR PANELS SIDE BY SIDE (Map's manual, History: panels). The practitioner, 2026-11-13: "We should have the capability
  *  to arrange the maps in the Configure dialog." The panels are the polygon layers the last run drew, by name. */
 const drawnPolygonLayers=(nodeId:string):string[]=>{
   const out=result?.outputs.find(o=>o.nodeId===nodeId);
-  // AND THE RASTERS, each a panel of grid cells (experiment 212).
+  // AND THE RASTERS, each a panel of grid cells (Map's manual, History: panels).
   const rasters=((out as {rasterPanels?:{layer:string}[]}|undefined)?.rasterPanels??[]).map(p=>p.layer);
   return [...new Set([...rasters,...(out?.polygons?.features??[]).map(f=>f.layerName).filter((x):x is string=>!!x)])];
 };
-/** AN INSET (experiment 213): picked on the interactive map in Results; here, which frame is large, where it goes, how big. */
+/** AN INSET (Map's manual, History: the inset): picked on the interactive map in Results; here, which frame is large, where it goes, how big. */
 function mapInsetSection(n:WorkflowNode<'map_output'>):string{
   const i=n.params.inset;
   const pick=`<button class="button small" type="button" data-inset-from-preview>Use the preview\u2019s view as the inset</button>`;
@@ -6664,7 +6664,7 @@ async function drawStaticBasemap(result:Output,svg:SVGSVGElement,
     ?`${provider.attribution} · ${drawn} of ${requested} tiles at zoom ${zoom}, drawn into this figure.`
     :`No basemap tiles could be fetched, so this figure has no ground under it. ${provider.attribution}`);
 }
-/** MAPS SIDE BY SIDE, INTERACTIVE (experiment 212): one small map per panel, in the grid chosen, each classed over every
+/** MAPS SIDE BY SIDE, INTERACTIVE (Map's manual, History: panels): one small map per panel, in the grid chosen, each classed over every
  *  panel's values so a shade is one number everywhere, and moving one moves the others unless that is turned off. JLT's
  *  population comparison viewer (jltobias/JupyterLite-Population-Data-Comparison) has the same: four panels and
  *  "Synchronize map navigation". */
@@ -6700,7 +6700,7 @@ function mountMapPanels(host:HTMLElement,shown:NonNullable<ReturnType<typeof act
   const settle=requestAnimationFrame(()=>requestAnimationFrame(()=>{ready=true;if(maps[0])follow(maps[0]);}));
   return ()=>{cancelAnimationFrame(settle);ready=false;for(const dispose of disposers)dispose();host.classList.remove('map-panels-host');};
 }
-/** GRID CELLS IN PANELS, INTERACTIVE (experiment 212): one small map per raster, each its cells in the shared classes,
+/** GRID CELLS IN PANELS, INTERACTIVE (Map's manual, History: panels): one small map per raster, each its cells in the shared classes,
  *  linked as they move. The key is drawn once, above. */
 function mountRasterPanels(host:HTMLElement,panels:import('./raster-panels.js').DrawnDensity[],breaks:number[],
     mapNode:WorkflowNode<'map_output'>):()=>void{
@@ -6744,7 +6744,7 @@ async function drawStaticFigure(svg:SVGSVGElement,result:Output,mapNode:Workflow
   const hidden=o.hidden??new Set<string>();
   const ground=(frame:{bounds:[number,number,number,number];project:(c:Position)=>[number,number]})=>
     drawStaticBasemap(result,svg,frame,o.offPage?{workflow:o.offPage.workflow,hidden}:undefined);
-  // GRID CELLS IN PANELS (experiment 212): the static figure, every panel on one scale. FIRST, because the panels carry
+  // GRID CELLS IN PANELS (Map's manual, History: panels): the static figure, every panel on one scale. FIRST, because the panels carry
   // the areas they are drawn within as polygons too, and the polygon branch drew those alone: Botswana's districts and
   // no cells in Notes (2026-11-14).
   if(rasterPanels?.length){
@@ -6762,12 +6762,14 @@ async function drawStaticFigure(svg:SVGSVGElement,result:Output,mapNode:Workflow
   }
   if(result.polygons){
     const banded=result.polygons.features.some(f=>f.minutes!==undefined);
+    // The study area drawn under the polygons only where one is wired to this Map, so it is the area, not the polygons' own.
+    const wiredArea=workflow.edges.some(e=>e.to===mapNode?.id&&e.port==='area')?result.boundary:undefined;
     if(banded){svg.setAttribute('viewBox','0 0 850 650');svg.innerHTML=catchmentPlot(result.polygons,esc,result.contextPoints);}
-    // PANELS SIDE BY SIDE, on one scale (experiment 212): each panel its own frame, so no single basemap or point overlay
+    // PANELS SIDE BY SIDE, on one scale (Map's manual, History: panels): each panel its own frame, so no single basemap or point overlay
     // projects onto the figure; those are drawn on one map only.
     else if(arranged){svg.innerHTML=polygonPanelsSvg(result.polygons,arranged.panels,arranged.grid,esc);applyFrame(svg,svg.innerHTML);}
-    else{svg.innerHTML=polygonSvg(result.polygons,esc);applyFrame(svg,svg.innerHTML);}
-    const polygonGround=arranged&&!banded?null:banded?catchmentFrame(result.polygons,result.contextPoints):polygonFrame(result.polygons);
+    else{svg.innerHTML=polygonSvg(result.polygons,esc,wiredArea);applyFrame(svg,svg.innerHTML);}
+    const polygonGround=arranged&&!banded?null:banded?catchmentFrame(result.polygons,result.contextPoints):polygonFrame(result.polygons,wiredArea);
     const drawnLinks=(result as {links?:import('./map-links.js').MapLink[]}).links;
     if(polygonGround&&drawnLinks?.length)
       svg.insertAdjacentHTML('beforeend',linkLinesSvg(drawnLinks,rows,c=>polygonGround.project(c) as [number,number],hidden));
@@ -6810,7 +6812,7 @@ async function drawStaticFigure(svg:SVGSVGElement,result:Output,mapNode:Workflow
   if(result.boundary){
     const inset=mapNode?.params.inset,labels=mapNode?.params.labelField||{};
     const wholeFrame=staticMapFrame(result);
-    // AN INSET OR A LOCATOR (experiment 213), where its box lies inside the map: the same layers drawn twice, composed.
+    // AN INSET OR A LOCATOR (Map's manual, History: the inset), where its box lies inside the map: the same layers drawn twice, composed.
     if(inset&&boxInside(inset.box,wholeFrame.bounds)){
       const partFrame=staticMapFrame(result,inset.box);
       const drawing=(content:string,f:typeof wholeFrame)=>({content,height:f.height,project:f.project as (c:[number,number])=>[number,number],scale:f.scale});
@@ -6818,7 +6820,8 @@ async function drawStaticFigure(svg:SVGSVGElement,result:Output,mapNode:Workflow
       const shrink=850/insetWidth(inset),locator=inset.arrange==='locator';
       const composed=composeInset(drawing(staticBoundaryMap(result,o.selected??null,esc,statusLabel,labels,undefined,locator?shrink:1),wholeFrame),
         drawing(staticBoundaryMap(result,o.selected??null,esc,statusLabel,labels,inset.box,locator?1:shrink),partFrame),inset,
-        result.rows.filter(r=>r.coordinates).map(r=>r.coordinates as [number,number]));
+        result.rows.filter(r=>r.coordinates).map(r=>r.coordinates as [number,number]),
+        {whole:(workflow.nodes.find(x=>x.id===workflow.edges.find(e=>e.to===mapNode?.id&&e.port==='area')?.from)?.params as {label?:string}|undefined)?.label});
       svg.innerHTML=composed.content;
       applyFrame(svg,svg.innerHTML);
       svg.querySelectorAll<SVGElement>('[data-place]').forEach(el=>{el.style.display=hidden.has(el.dataset.layer!)?'none':'';});
@@ -6835,7 +6838,7 @@ async function drawStaticFigure(svg:SVGSVGElement,result:Output,mapNode:Workflow
   svg.innerHTML='';
   return false;
 }
-/** THE INSET IS PICKED HERE (experiment 213; the practitioner, 2026-11-13: "inset picker on the interactive map"): zoom
+/** THE INSET IS PICKED HERE (Map's manual, History: the inset; the practitioner, 2026-11-13: "inset picker on the interactive map"): zoom
  *  to the part and use the view on screen as the inset's box, kept in longitude and latitude. Offered where the static
  *  figure can draw one, a map over its study area. */
 /** The view on a Leaflet map as an inset's box: clipped to the whole map's extent, or a sentence saying why not. */
@@ -6882,7 +6885,7 @@ function renderMap(){
     ??runWorkflow?.nodes.find((n):n is WorkflowNode<'map_output'>=>n.id===result?.nodeId&&n.type==='map_output');
   const arranged=mapNode?.params.arrangement;
   const rasterPanels=(result as {rasterPanels?:import('./raster-panels.js').DrawnDensity[]}|undefined)?.rasterPanels;
-  const polygonFigure=(p:import('./catchments.js').Polygons)=>arranged?polygonPanelsSvg(p,arranged.panels,arranged.grid,esc):polygonSvg(p,esc);
+  const polygonFigure=(p:import('./catchments.js').Polygons)=>arranged?polygonPanelsSvg(p,arranged.panels,arranged.grid,esc):polygonSvg(p,esc,workflow.edges.some(e=>e.to===mapNode?.id&&e.port==='area')?result?.boundary:undefined);
   // The symbols the run resolved are the run's, so they carry the sizes that were current then.
   // Re-resolved here against the live node, in the layer order the run recorded, so the marks and
   // the key cannot disagree about what a layer looks like.

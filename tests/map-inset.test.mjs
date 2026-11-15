@@ -78,3 +78,13 @@ test('a locator\'s box is never under 18 px on the page, however small the part 
   const width=Number(/data-inset-box x="[^"]+" y="[^"]+" width="([\d.]+)"/.exec(inside)[1]);
   assert.ok(width>=18*3-1e-9,`${width} units, a third-wide frame`);
 });
+
+test('A LOCATOR NAMES THE WHOLE: the boundary named in its frame, escaped; an inset, whose frame is the part, does not',()=>{
+  const box=[-76.42,43.48,-76.36,43.52];
+  const locator=composeInset(drawing(),drawing(box),{box,arrange:'locator'},[],{whole:'New York <State>'});
+  assert.match(locator.content,/data-inset-name/);
+  assert.match(locator.content,/New York &lt;State&gt;/);
+  assert.match(locator.content,/font-size="15"/);
+  assert.doesNotMatch(composeInset(drawing(),drawing(box),{box},[],{whole:'New York'}).content,/data-inset-name/);
+  assert.doesNotMatch(composeInset(drawing(),drawing(box),{box,arrange:'locator'}).content,/data-inset-name/);
+});

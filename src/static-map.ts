@@ -16,7 +16,7 @@ import {markLabel,LABEL_CEILING} from './point-layers.js';
  *  arithmetic and getting a slightly different answer -- the pattern `rasterFrame` already uses.
  *  A basemap needs both: the extent, to know which tiles cover it, and the projection, to place
  *  each tile by its own corners. Experiment 137. */
-/** `box`: draw over this extent instead of the data's own, for an inset's enlarged view (experiment 213). */
+/** `box`: draw over this extent instead of the data's own, for an inset's enlarged view (Map's manual, History: the inset). */
 export function staticMapFrame(output:DisplayValue,box?:readonly [number,number,number,number]){
   const boundary=output.boundary!,polygons=boundary.type==='MultiPolygon'?boundary.coordinates:[boundary.coordinates];
   const outline=polygons.flat(2),points=box?[[box[0],box[1]],[box[2],box[3]]]:[...outline,...output.rows.filter(r=>r.coordinates!).map(r=>r.coordinates!),...(output.centers||[]).filter(c=>c.geometry).map(c=>c.geometry!.coordinates)];
@@ -31,7 +31,7 @@ export function staticMapFrame(output:DisplayValue,box?:readonly [number,number,
  *  way: this widget's history is a list of layers one renderer carried and another did not. */
 export function staticBoundaryMap(output:DisplayValue,selected:string|null|undefined,esc:Escape,statusLabel:(status:string|undefined)=>string,labelField:Record<string,string>={},
   box?:readonly [number,number,number,number],
-  /** For a drawing shown smaller than its 850 units, as an inset is (experiment 213): marks and lines drawn this many
+  /** For a drawing shown smaller than its 850 units, as an inset is (Map's manual, History: the inset): marks and lines drawn this many
    *  times larger, so on the page they are the size they are on the whole map. */
   markScale=1){
   const {polygons,project,height}=staticMapFrame(output,box);

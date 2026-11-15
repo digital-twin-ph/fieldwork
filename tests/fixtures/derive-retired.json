@@ -4,7 +4,7 @@
  "workflows": [
   {
    "repo": "example-1855-cholera-south-london",
-   "workflow": "Cholera in 1849 compared with 1854",
+   "workflow": "How did cholera in 1854 compare with 1849?",
    "outputs": {
     "both-years": {
      "rows": 64,
@@ -18,7 +18,7 @@
   },
   {
    "repo": "example-1855-cholera-south-london",
-   "workflow": "Deaths per house, by water company",
+   "workflow": "How many died per house supplied by each water company?",
    "outputs": {
     "two-by-two": {
      "rows": 4,
@@ -36,7 +36,7 @@
   },
   {
    "repo": "example-1855-cholera-south-london",
-   "workflow": "Died or survived, by water supply",
+   "workflow": "Were deaths more common with one water supply than the other?",
    "outputs": {
     "contingency": {
      "rows": 6,

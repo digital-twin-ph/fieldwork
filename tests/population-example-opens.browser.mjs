@@ -47,7 +47,7 @@ test('Rwanda’s workflow opens from the example, its windows read again and che
   expect(rows.filter(r=>r[0]!=='GHS-POP 2025').map(r=>r.at(-1))).toEqual(['6.6','6.6','6.6']);
   await page.locator('#result-search').fill('');
 
-  // MAPS SIDE BY SIDE, ONE SCALE (experiment 212): the four sources' shares in four panels, two by two, one key. Gasabo's
+  // MAPS SIDE BY SIDE, ONE SCALE (Map's manual, History: panels): the four sources' shares in four panels, two by two, one key. Gasabo's
   // share is the same in the census, WorldPop and GRID3, so its shade is the same in their three panels.
   await page.getByRole('tab',{name:'Each source\u2019s share, side by side'}).click();
   const panels=page.locator('#map g[data-map-panel]');
@@ -79,7 +79,7 @@ test('Rwanda’s workflow opens from the example, its windows read again and che
   await expect.poll(()=>centre(3),{timeout:10000}).not.toBe(before);
   await page.screenshot({path:'test-results/population-panels-interactive.png',fullPage:true});
 
-  // GRID CELLS IN PANELS (experiment 212, the practitioner: "the maps with the reddish orange hues actually show the grid
+  // GRID CELLS IN PANELS (Map's manual, History: panels, the practitioner: "the maps with the reddish orange hues actually show the grid
   // cells"): the three rasters in a row, people per km², one scale; interactive, linked as they move.
   await page.getByRole('tab',{name:'Each source\u2019s cells, side by side'}).click();
   const cellPanels=page.locator('#map g[data-map-panel]');

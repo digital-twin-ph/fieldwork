@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {drawnDensity,pooledBreaks,classOfDensity,rasterPort,isRasterPort} from '../build/raster-panels.js';
 
-/** GRID CELLS IN PANELS (experiment 212): people per km² of each cell's own area, drawn at most so many cells a side,
+/** GRID CELLS IN PANELS (Map's manual, History: panels): people per km² of each cell's own area, drawn at most so many cells a side,
  *  and one set of classes over every panel. */
 const grid=(values,width,height,res=0.001,origin=[30,-2])=>({metadata:{crs:'EPSG:4326',origin,resolution:[res,-res],width,height,noData:-99999},values:Float32Array.from(values)});
 

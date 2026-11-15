@@ -1,7 +1,7 @@
 import {RING_RED,RING_BLUE,orderedSteps,categoricalSteps,polygonShading,shadedValues,classRanges,type classifyValues,type classifyCategories,FIGURE_ROLE,markPath} from './presentation.js';
 import type {Polygons} from './catchments.js';
 import type {DisplayValue,Receipt} from './results.js';
-import type {Escape,Position,PointCollection,WorkflowNode} from './types.js';
+import type {Boundary,Escape,Position,PointCollection,WorkflowNode} from './types.js';
 export function polygonDisplay(p:Polygons,view:'map'|'table'|'chart'):DisplayValue{
   if(p.kind==='hexbin'){
     if(view==='chart')throw new Error('H3 cell charts are not configured in this example.');
@@ -63,11 +63,14 @@ export function plotFrame(bounds:[number,number,number,number],usable:{width:num
   const scale=Math.min(usable.width/w,(height-usable.margin)/h),middle=height/2-2.5;
   return {height,scale,cos,project:(c:Position):[number,number]=>[425+(c[0]-(east+west)/2)*cos*scale,middle-(c[1]-(north+south)/2)*scale]};
 }
-export function polygonFrame(p:Polygons):{project:(c:Position)=>[number,number];bounds:[number,number,number,number];height:number}|null{
+/** A STUDY AREA WIRED BESIDE THE POLYGONS (2026-11-15): Sierra Leone's scan drew its circles on a blank ground, the
+ *  country connected and named in the Sources line but on no figure. Its rings, for the frame and the drawing. */
+const contextRings=(area?:Boundary|null):Position[][]=>!area?[]:area.type==='Polygon'?area.coordinates:area.coordinates.flat();
+export function polygonFrame(p:Polygons,area?:Boundary|null):{project:(c:Position)=>[number,number];bounds:[number,number,number,number];height:number}|null{
   const coords=p.kind==='hexbin'
     ?p.features.flatMap(f=>f.geometry.type==='Polygon'?f.geometry.coordinates.flat():f.geometry.coordinates.flat(2))
     :[...p.features.flatMap(f=>(f.geometry.type==='Polygon'?f.geometry.coordinates:f.geometry.coordinates.flat())).flat(),
-      ...p.sites.flatMap(f=>f.geometry?[f.geometry.coordinates]:[])];
+      ...p.sites.flatMap(f=>f.geometry?[f.geometry.coordinates]:[]),...(p.kind==='hexbin'?[]:contextRings(area).flat())];
   if(!coords.length)return null;
   let west=Infinity,east=-Infinity,south=Infinity,north=-Infinity;
   for(const c of coords as Position[]){
@@ -81,7 +84,7 @@ export function polygonFrame(p:Polygons):{project:(c:Position)=>[number,number];
  *  ramp and its labels lay on Switzerland's tiles and place names and could not be read. The figure is this much
  *  taller; the map keeps its place and scale; the band is plain ground, so no tile runs under the key. */
 export const KEY_BAND=56;
-export function polygonSvg(p:Polygons,esc:Escape):string{
+export function polygonSvg(p:Polygons,esc:Escape,area?:Boundary|null):string{
   if(p.kind==='hexbin'){
     const coords=p.features.flatMap(f=>f.geometry.type==='Polygon'?f.geometry.coordinates.flat():f.geometry.coordinates.flat(2));
     if(!coords.length)return '<text x="30" y="40">No cells meet the minimum occupancy</text>';
@@ -94,7 +97,7 @@ export function polygonSvg(p:Polygons,esc:Escape):string{
     const framed=plotFrame([west,south,east,north],{width:790,margin:60}),project=framed.project,height=framed.height+KEY_BAND;
     return `<rect width="850" height="${height}" fill="#f7faf8"/>`+p.features.map(f=>`<path data-hex-cell="${esc(f.id)}" d="M${(f.geometry.type==='Polygon'?f.geometry.coordinates[0]:f.geometry.coordinates[0][0]).map(c=>project(c).join(',')).join('L')}Z" fill="#3686a8" fill-opacity=".25" stroke="#19617c" stroke-width="1"><title>${esc(f.id)} · ${f.count} locations</title></path>`).join('')+'<text x="20" y="282" font-size="14">H3 aggregate cells · sparse cells omitted</text>';
   }
-  const rings=p.features.flatMap(f=>f.geometry.type==='Polygon'?f.geometry.coordinates:f.geometry.coordinates.flat()),coords=[...rings.flat(),...p.sites.flatMap(f=>f.geometry?[f.geometry.coordinates]:[]),...(p.observations?.features||[]).flatMap(f=>f.geometry?[f.geometry.coordinates]:[])];if(!coords.length)return '<text x="30" y="40">No intersecting polygons or located points</text>';
+  const rings=p.features.flatMap(f=>f.geometry.type==='Polygon'?f.geometry.coordinates:f.geometry.coordinates.flat()),coords=[...rings.flat(),...contextRings(area).flat(),...p.sites.flatMap(f=>f.geometry?[f.geometry.coordinates]:[]),...(p.observations?.features||[]).flatMap(f=>f.geometry?[f.geometry.coordinates]:[])];if(!coords.length)return '<text x="30" y="40">No intersecting polygons or located points</text>';
   const [west,south,east,north]=coords.reduce(([w,s,e,n],c)=>[Math.min(w,c[0]),Math.min(s,c[1]),Math.max(e,c[0]),Math.max(n,c[1])],[Infinity,Infinity,-Infinity,-Infinity]);
   const framed=plotFrame([west,south,east,north],{width:790,margin:60}),project=framed.project,height=framed.height+KEY_BAND;
   // COLOURED BY VALUE WHERE THERE IS ONE, by position where there is not. A catchment's colour
@@ -135,7 +138,10 @@ export function polygonSvg(p:Polygons,esc:Escape):string{
   const colors=classed?classed.colours
     :grouped?grouped.colours
     :categorical??(wash?[FIGURE_ROLE.unknown]:orderedSteps(p.features.length));
-  return `<rect width="850" height="${height}" fill="#f7faf8"/>`+p.features.map((f,i)=>{const polys=f.geometry.type==='Polygon'?[f.geometry.coordinates]:f.geometry.coordinates;const at=classed?classed.classOf(f.value):grouped?grouped.classOf(f.category):null;
+  const context=contextRings(area);
+  return `<rect width="850" height="${height}" fill="#f7faf8"/>`
+    +(context.length?`<path data-fill-role="context" data-study-area d="${context.map(ring=>'M'+ring.map(c=>project(c as Position).join(',')).join('L')+'Z').join(' ')}" fill="#dbe8d6" stroke="#668870" stroke-width="1.5"/>`:'')
+    +p.features.map((f,i)=>{const polys=f.geometry.type==='Polygon'?[f.geometry.coordinates]:f.geometry.coordinates;const at=classed?classed.classOf(f.value):grouped?grouped.classOf(f.category):null;
     // A part with no value is drawn in a neutral, never in the lowest class: an unmatched
     // boundary would otherwise read as a finding of low incidence rather than as no data.
     // A part with no class is drawn in the neutral for the same reason a part with no value is:
@@ -275,7 +281,7 @@ export function catchmentPlot(p:Polygons,esc:Escape,context?:PointCollection):st
   return svg+`<text x="425" y="640" text-anchor="middle" font-size="14">${times.length?'Cumulative regions: '+times.join(', ')+' min · ':''}Dots: observations · squares: sites · CRS84</text>`;
 }
 
-/** MAPS SIDE BY SIDE, ONE SCALE (experiment 212). Each panel draws the features of one polygon layer; the classes are
+/** MAPS SIDE BY SIDE, ONE SCALE (Map's manual, History: panels). Each panel draws the features of one polygon layer; the classes are
  *  taken over every panel's values together, so a shade is the same number in every panel; the panels share one frame,
  *  so a district sits in the same place in each; and the figure has one key. The practitioner, 2026-11-13: "Static it
  *  would be a 2x2 map panel." */
@@ -291,7 +297,7 @@ export function polygonPanelsSvg(p:Polygons,panels:readonly MapPanel[],grid:Pane
   let west=Infinity,east=-Infinity,south=Infinity,north=-Infinity;
   for(const f of drawn)for(const ring of f.geometry.type==='Polygon'?f.geometry.coordinates:f.geometry.coordinates.flat())
     for(const c of ring){if(c[0]<west)west=c[0];if(c[0]>east)east=c[0];if(c[1]<south)south=c[1];if(c[1]>north)north=c[1];}
-  // ONE CLASSIFICATION OVER EVERY PANEL'S VALUES: the hard stop of 212's admission review.
+  // ONE CLASSIFICATION OVER EVERY PANEL'S VALUES: the hard stop of the panels' design.
   const {grouped,classed}=polygonShading(drawn);
   const columns=panelColumns(grid,shown.length),rows=Math.ceil(shown.length/columns);
   const gap=16,left=20,cellWidth=(850-2*left-gap*(columns-1))/columns,title=22;

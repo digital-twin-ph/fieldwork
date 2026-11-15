@@ -108,3 +108,17 @@ test('a hidden layer does not spend the ceiling on behalf of a visible one',()=>
   assert.match(svg,/>Teddington Lock</);
   assert.equal((svg.match(/<text/g)||[]).length,1);
 });
+
+test('THE SEVENTH: a study area wired beside polygons is drawn under them and in the frame (Sierra Leone scan, 2026-11-15)',async()=>{
+  const {polygonSvg,polygonFrame}=await import('../build/catchment-output.js');
+  const circle={type:'Feature',id:'c1',properties:{},geometry:{type:'Polygon',coordinates:[[[-12,8],[-11.9,8],[-11.9,8.1],[-12,8.1],[-12,8]]]}};
+  const p={kind:'regions',features:[circle],sites:[]};
+  const area={type:'Polygon',coordinates:[[[-13.3,6.9],[-10.3,6.9],[-10.3,10],[-13.3,10],[-13.3,6.9]]]};
+  assert.doesNotMatch(polygonSvg(p,esc),/data-study-area/,'nothing wired, nothing drawn');
+  const svg=polygonSvg(p,esc,area);
+  assert.match(svg,/data-study-area/);
+  assert.ok(svg.indexOf('data-study-area')<svg.indexOf('data-polygon')||!svg.includes('data-polygon'),'the area first, under the polygons');
+  const framed=polygonFrame(p,area).bounds,alone=polygonFrame(p).bounds;
+  assert.deepEqual(framed,[-13.3,6.9,-10.3,10],'the frame takes the area in');
+  assert.deepEqual(alone,[-12,8,-11.9,8.1]);
+});

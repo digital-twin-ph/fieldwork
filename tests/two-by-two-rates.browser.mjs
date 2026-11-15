@@ -19,7 +19,7 @@ test('Table IX is read as events and units at risk, and gives 8.40',async({page}
   await expect(page.locator('.toast')).toContainText(/imported with \d+ workflows/,{timeout:30000});
 
   await page.locator('[data-view="workflow"]').click();
-  const water=page.locator('#workflow-select option',{hasText:'Deaths per house, by water company'});
+  const water=page.locator('#workflow-select option',{hasText:'How many died per house supplied by each water company?'});
   await page.locator('#workflow-select').selectOption(await water.getAttribute('value'));
 
   // The Inspector states the layout, and offers the values of the outcome column it reads.
@@ -62,7 +62,7 @@ test('switching the layout back to cases and non-cases restores the four cells',
   await page.locator('#workflow-file').setInputFiles(BUNDLE.pathname);
   await expect(page.locator('.toast')).toContainText(/imported with \d+ workflows/,{timeout:30000});
   await page.locator('[data-view="workflow"]').click();
-  const water=page.locator('#workflow-select option',{hasText:'Deaths per house, by water company'});
+  const water=page.locator('#workflow-select option',{hasText:'How many died per house supplied by each water company?'});
   await page.locator('#workflow-select').selectOption(await water.getAttribute('value'));
   await page.locator('.react-flow__node[data-id="ratio"]').click();
   await page.locator('#configure-step').click();

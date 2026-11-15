@@ -96,14 +96,14 @@ test('a curated example opens as a project with its workflows',async({page})=>{t
   await expect(page.locator('#project-select'))
     .toContainText(`${catalog.examples[0].workflowCount} workflows`);
   const workflows=await page.locator('#workflow-select option').allTextContents();
-  expect(workflows).toContain('Deaths per 1,000 people, by sub-district');
+  expect(workflows).toContain('How many died per 1,000 people in each sub-district?');
   // Renamed on 2026-10-29, when the study area became the bounding extent and the 32
   // sub-districts became a polygon layer beside the river: the question is the ground, not a count.
-  expect(workflows).toContain('The ground: an extent, its sub-districts and the river');
-  expect(workflows).toContain('Cholera in 1849 compared with 1854');
-  expect(workflows).toContain('Deaths per 1,000 people, mapped');
-  expect(workflows).toContain('Deaths per house, by water company');
-  expect(workflows).toContain('Died or survived, by water supply');
+  expect(workflows).toContain('Where are the sub-districts and the river?');
+  expect(workflows).toContain('How did cholera in 1854 compare with 1849?');
+  expect(workflows).toContain('Where were deaths per 1,000 people highest?');
+  expect(workflows).toContain('How many died per house supplied by each water company?');
+  expect(workflows).toContain('Were deaths more common with one water supply than the other?');
 });
 
 /** RESET REACHES AN IMPORTED EXAMPLE TOO.

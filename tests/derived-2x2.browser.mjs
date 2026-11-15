@@ -26,7 +26,7 @@ test('the water-company 2x2 is derived from Table IX rather than imported as an 
   await expect(page.locator('.toast')).toContainText(/imported with \d+ workflows/,{timeout:30000});
 
   await page.locator('[data-view="workflow"]').click();
-  const water=page.locator('#workflow-select option',{hasText:'Deaths per house, by water company'});
+  const water=page.locator('#workflow-select option',{hasText:'How many died per house supplied by each water company?'});
   await page.locator('#workflow-select').selectOption(await water.getAttribute('value'));
 
   // The assumption travels on the node, where a reader meets it, not in a footnote.

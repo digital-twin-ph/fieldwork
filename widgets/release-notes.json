@@ -427,12 +427,16 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.33.0",
+   "version": "0.33.1",
    "released": "2026-11-15",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Up to four map images as ground, each its own input, drawn in input order and each its own layer to switch off, in the static figure and on the interactive map. A space-time cluster at one place is a ring round it, red for the most likely and blue otherwise, with the key saying so."
+     "kind": "patch",
+     "description": "A locator names the whole map in its frame: the study area connected as the map's area, such as New York State, in the top-left corner at the page's 15 px on a white backing. The practitioner, 2026-11-15: \"We should label the admin boundary for the map inset\"."
+    },
+    {
+     "kind": "patch",
+     "description": "A study area wired beside polygon layers is drawn under them on the static figure, and the figure is framed to take it in. Found on a space-time scan of Sierra Leone (built and withdrawn the same day), whose circles were drawn on blank ground, the country named in the Sources line and on no figure; a polygon map with no area wired is drawn as before."
     }
    ],
    "breaking": false,

@@ -153,7 +153,7 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
    *  preview is on every change, can redraw on a canvas already gone ("reading 'clearRect'"). The Results map keeps
    *  the canvas, which a boundary of tens of thousands of vertices needs. */
   options:{svgOnly?:boolean;
-    /** A PANEL OF SEVERAL (experiment 212): the features its classes are taken over, every panel's together, so a shade is
+    /** A PANEL OF SEVERAL (Map's manual, History: panels): the features its classes are taken over, every panel's together, so a shade is
      *  the same number in each; and the Leaflet map handed back, so panels can move together. */
     classifyOver?:Polygons['features'];onMap?:(map:L.Map)=>void;
     /** THE TABLE UNDER THE MAP (2026-11-14): a place chosen on the map is reported by its id, and the table is handed a
@@ -911,7 +911,7 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
     map.remove();host.replaceChildren();};
 }
 
-/** ONE PANEL OF GRID CELLS (experiment 212): a small map, its tile basemap where one is chosen, the panel's cells as one
+/** ONE PANEL OF GRID CELLS (Map's manual, History: panels): a small map, its tile basemap where one is chosen, the panel's cells as one
  *  image, and the Leaflet map handed back so the panels can be linked. No toolbar and no key: the figure says those once. */
 export function mountDensityPanel(host:HTMLElement,image:string,bounds:readonly [number,number,number,number],basemap:BasemapChoice,
     onMap:(map:L.Map)=>void,outline?:number[][][]):()=>void{
@@ -928,7 +928,7 @@ export function mountDensityPanel(host:HTMLElement,image:string,bounds:readonly 
   return ()=>{map.remove();};
 }
 
-/** AN ELEMENT AS A CONTROL ON THE MAP, taking no room from it (the inset picker, experiment 213: a bar under the map
+/** AN ELEMENT AS A CONTROL ON THE MAP, taking no room from it (the inset picker, Map's manual, History: the inset: a bar under the map
  *  took 40 px from it at full screen). Clicks inside it do not reach the map. Returns a remover. */
 export function placeOnMap(map:L.Map,element:HTMLElement,position:L.ControlPosition='topleft'):()=>void{
   const control=new L.Control({position});

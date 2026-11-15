@@ -224,7 +224,7 @@ applying it. The run records it in the evidence.
 
 ## Where it is used
 
-The South London example: *Died or survived, by water supply*. The NYC example: *Did the satellite
+The South London example: *Were deaths more common with one water supply than the other?* The NYC example: *Did the satellite
 see the city's NO₂?*, which matches satellite and ground readings on `site` and `date` together and
 brings the ground reading, the second table's value, across.
 

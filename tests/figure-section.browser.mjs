@@ -22,7 +22,7 @@ test('a map moved to the Introduction is filed there, and Results is the default
   await expect(page.locator('[data-example-status="urn:fieldwork:example:south-london-1854"]')).toContainText('digest matched',{timeout:20000});
 
   await page.locator('[data-view="workflow"]').click();
-  const ground=page.locator('#workflow-select option',{hasText:'The ground'});
+  const ground=page.locator('#workflow-select option',{hasText:'Where are the sub-districts and the river?'});
   await page.locator('#workflow-select').selectOption(await ground.getAttribute('value'));
   await page.locator('.react-flow__node[data-id="where"]').click();
   // Where it can be found: in the map's Configure… (experiment 186), not at the foot of the Inspector.

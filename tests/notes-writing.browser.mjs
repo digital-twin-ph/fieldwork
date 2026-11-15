@@ -175,7 +175,7 @@ const contingency=async page=>{
   await expect(page.locator('.toast')).toContainText(/imported with \d+ workflows/,{timeout:30000});
   await page.locator('[data-view="workflow"]').click();
   const option=page.locator('#workflow-select option',
-    {hasText:'Died or survived, by water supply'});
+    {hasText:'Were deaths more common with one water supply than the other?'});
   await page.locator('#workflow-select').selectOption(await option.getAttribute('value'));
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});

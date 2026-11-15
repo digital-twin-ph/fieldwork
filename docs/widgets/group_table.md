@@ -107,7 +107,7 @@ rows collapsed into how many groups, and every group that held an empty cell.
 
 ## Where it is used
 
-The South London example: *Died or survived, by water supply*. The MERS-CoV example: *Median days from exposure to onset, by outcome*.
+The South London example: *Were deaths more common with one water supply than the other?* The MERS-CoV example: *How long from exposure to onset, and from onset to death?*.
 
 ## What this does not establish
 

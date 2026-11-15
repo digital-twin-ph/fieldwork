@@ -226,7 +226,7 @@ machined one goes on being rewritten by every run.
 
 ## Where it is used
 
-The South London example: *Died or survived, by water supply*, and, in the rate layout, *Deaths per
-house, by water company*.
+The South London example: *Were deaths more common with one water supply than the other?*, and, in the rate layout, *How many died per
+house supplied by each water company?*
 
 The MERS-CoV example: *Death by sex, a two-by-two*.

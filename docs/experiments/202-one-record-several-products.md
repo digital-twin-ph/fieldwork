@@ -150,3 +150,22 @@ Word.
 That one record can serve every product without each wanting its own: the Hagelloch story is the test. That a saved
 view is enough for a scene: a story may need emphasis a view does not carry. That the products' names are settled:
 **Fieldwork story** is provisional, and `story map` is one presentation of one.
+
+## The draft as a document, asked 2026-11-15
+
+The practitioner: *"The other thing we can improve is the render part. The draft document should be configurable: (1)
+notes text and images should be resizable such that polished charts, maps and graphs can be inserted side by side or
+"inserted" like in Word (2) we can make the draft document appear like a publication. (3) We just need one example each
+of a publication, a surveillance report, sit rep for now for demo purposes."* Ordered after the Notes maps and before
+the ABM spike, and, the same day: *"The above can partly close the render experiment."*
+
+So three things, each a product of the record rather than a new one: a figure's width and its place beside text or
+beside another figure, set per product; the draft laid out as the publication is, on screen, not only in print; and
+three worked products, a publication, a surveillance report and a situation report, one example each. What it would
+partly close: the products this record designed (the field report becomes the surveillance report and the sit rep;
+the poster, story map and dashboard stay open), and how a figure sits on the page, which the record did not ask.
+
+**Where the publication render stands, the practitioner, the same day:** *"The publication render exists but it is not
+ready for demo. Still not convincing."* So the publication is one of the three to bring to a demo, not a product
+already done: the built render of 0.117.0 and 0.118.0 is the starting point, and the work above is what is to make it
+convincing.

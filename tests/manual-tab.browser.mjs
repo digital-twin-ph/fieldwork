@@ -70,7 +70,7 @@ test('a worked example with a manual has a Manual tab, and a workflow without on
   // Switching workflow moves the mark.
   const other=await page.locator('#workflow-select option').filter({hasText:'Ten years'}).getAttribute('value');
   await page.locator('#workflow-select').selectOption(other);
-  await expect(view.locator('[data-manual-workflow]').first()).toHaveAttribute('data-manual-workflow','Ten years of daily visits');
+  await expect(view.locator('[data-manual-workflow]').first()).toHaveAttribute('data-manual-workflow','How many visits were there each day over ten years?');
 });
 
 /** THE MANUAL DETACHED, beside a project of the practitioner's own. The practitioner, 2026-11-04: *"Can the manual be

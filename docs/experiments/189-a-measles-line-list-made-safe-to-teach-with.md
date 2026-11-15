@@ -132,3 +132,9 @@ The practitioner, 2026-11-08: *"Let me know when I can also make the repo public
 - That the spelling matches are right: they are candidates, and the type differences show some are not.
 - The licence of the original line list beyond training.
 - Anything about OpenStreetMap's coverage of the names not found: not yet queried.
+
+## The ten-case rule is the practitioner's, 2026-11-15
+
+A facility is mapped only where it has ten cases or more, so that no mark points at one child. The example's manual had
+called this "this file's terms"; asked where it came from, the practitioner answered that they set it. It is the
+practitioner's rule for this file, not a condition of the FETP's agreement, and the README now says so.

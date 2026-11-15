@@ -105,7 +105,7 @@ export function mapPresentation(node:WorkflowNode<'map_output'>,output:Output,wo
       ??categoricalKey(output.polygons)
       ??[{label:'Modeled catchment',color:R.primary},{label:'Observations',color:R.secondary},{label:'Sites',color:R.site,shape:'square'}];
   }else if((output as {rasterPanels?:unknown[]}).rasterPanels?.length){
-    // GRID CELLS IN PANELS (experiment 212): the classes and their edges are the figure's own key, drawn once with it.
+    // GRID CELLS IN PANELS (Map's manual, History: panels): the classes and their edges are the figure's own key, drawn once with it.
     items=[];
   }else if(output.raster){
     // The raster's own two entries, and then the layers drawn ON it. This read `else if` and

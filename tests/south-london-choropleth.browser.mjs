@@ -28,7 +28,7 @@ test('a table of rates joins to named parts and draws a classed figure',async({p
   await expect(page.locator('.toast')).toContainText(/imported with \d+ workflows/,{timeout:30000});
 
   await page.locator('[data-view="workflow"]').click();
-  const mapped=page.locator('#workflow-select option',{hasText:'Deaths per 1,000 people, mapped'});
+  const mapped=page.locator('#workflow-select option',{hasText:'Where were deaths per 1,000 people highest?'});
   await page.locator('#workflow-select').selectOption(await mapped.getAttribute('value'));
 
   // THE COLUMN IS OFFERED, not typed. The rate upstream is not a table_input, and offering only

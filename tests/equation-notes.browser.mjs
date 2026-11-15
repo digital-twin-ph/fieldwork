@@ -44,7 +44,7 @@ const methodsCard=(page,holds)=>
   page.locator(`${METHODS} .notes-note.k-machined`).filter({hasText:holds});
 
 test('a two-by-two machines its equations into Methods, typeset',async({page})=>{test.skip(!!skip,skip);
-  await runWorkflow(page,'Died or survived, by water supply');
+  await runWorkflow(page,'Were deaths more common with one water supply than the other?');
   const card=methodsCard(page,'The four cells');
   await expect(card).toHaveCount(1);
   // TYPESET BY THE BROWSER, not shown as its source. `prose.ts` leaves the LaTeX on the element
@@ -64,7 +64,7 @@ test('a two-by-two machines its equations into Methods, typeset',async({page})=>
 });
 
 test('the cells are stated as a, b, c, d with what each one counts',async({page})=>{test.skip(!!skip,skip);
-  await runWorkflow(page,'Died or survived, by water supply');
+  await runWorkflow(page,'Were deaths more common with one water supply than the other?');
   const card=methodsCard(page,'The four cells');
   // Experiment 147's vocabulary, on a surface for the first time. An FETP-trained reader is
   // taught these letters; `exposureColumn` and `caseValue` are this application's words.
@@ -84,7 +84,7 @@ test('the card names its methods and sends the works to References',async({page}
   // The practitioner, 2026-10-31, reading this card in South London: *"these are citations and
   // should be in the References."* The card printed every method's full citation while the
   // References part assembled the same works from the same field.
-  await runWorkflow(page,'Died or survived, by water supply');
+  await runWorkflow(page,'Were deaths more common with one water supply than the other?');
   const card=methodsCard(page,'The four cells');
   await expect(card).toContainText('Katz log');
   await expect(card).toContainText('Wald log');
@@ -99,7 +99,7 @@ test('the card names its methods and sends the works to References',async({page}
 });
 
 test('a rate machines its equation, and cites nothing because it estimates nothing',async({page})=>{test.skip(!!skip,skip);
-    await runWorkflow(page,'Deaths per 1,000 people, by sub-district');
+    await runWorkflow(page,'How many died per 1,000 people in each sub-district?');
     const card=methodsCard(page,'divided by');
     await expect(card).toHaveCount(1);
     await expect(card.locator('math').first()).toBeVisible();
@@ -110,7 +110,7 @@ test('a rate machines its equation, and cites nothing because it estimates nothi
   });
 
 test('a machined equation survives a reload and is still the same note',async({page})=>{test.skip(!!skip,skip);
-  await runWorkflow(page,'Died or survived, by water supply');
+  await runWorkflow(page,'Were deaths more common with one water supply than the other?');
   await expect(methodsCard(page,'The four cells')).toHaveCount(1);
   await page.reload();
   await page.locator('[data-view="notes"]').click();
@@ -141,7 +141,7 @@ const RESULTS='.notes-part[data-section="Results"]';
 const described=page=>page.locator(`${RESULTS} .notes-note.k-machined`);
 
 test('a table and a chart describe themselves into Results',async({page})=>{test.skip(!!skip,skip);
-  await runWorkflow(page,'Deaths per 1,000 people, by sub-district');
+  await runWorkflow(page,'How many died per 1,000 people in each sub-district?');
   await expect(described(page)).toHaveCount(2);
   const table=described(page).filter({hasText:'Mortality by sub-district'});
   // THE COLUMNS AS THE TABLE SPELLS THEM, in code spans, rather than forced into prose. On this
@@ -155,7 +155,7 @@ test('a table and a chart describe themselves into Results',async({page})=>{test
 });
 
 test('a map describes its layers, bottom to top',async({page})=>{test.skip(!!skip,skip);
-  await runWorkflow(page,'The ground: an extent, its sub-districts and the river');
+  await runWorkflow(page,'Where are the sub-districts and the river?');
   const map=described(page).filter({hasText:'bottom to top'});
   await expect(map).toHaveCount(1);
   await expect(map).toContainText('4 layers, bottom to top');
@@ -169,7 +169,7 @@ test('nothing machined numbers its own artifact, or claims to be the caption',
     // Two rules at once, both the practitioner's. A number is computed per venue when a document
     // is rendered, so writing one would be wrong the first time a card moved; and the caption is
     // the author's, so nothing machined may present itself as one.
-    await runWorkflow(page,'Died or survived, by water supply');
+    await runWorkflow(page,'Were deaths more common with one water supply than the other?');
     for(const text of await described(page).allTextContents()){
       expect(text).not.toMatch(/\b(Table|Figure|Chart|Exhibit)\s+\d+\b/i);
       expect(text).not.toMatch(/\bcaption\b/i);

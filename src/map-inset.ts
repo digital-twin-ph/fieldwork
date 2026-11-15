@@ -1,4 +1,4 @@
-/** AN INSET IN A MAP (experiment 213; the practitioner, 2026-11-14: "Build 213 now").
+/** AN INSET IN A MAP (Map's manual, History: the inset; the practitioner, 2026-11-14: "Build 213 now", when it was an experiment).
  *
  *  Two drawings of the same layers in the same marks and classes, one over the whole extent and one over a box picked on
  *  the interactive map, composed into one static figure. **Inset**: the whole is the figure, the box drawn on it, the
@@ -11,6 +11,9 @@
 export type Box=[west:number,south:number,east:number,north:number];
 export type Corner='ne'|'nw'|'se'|'sw';
 export interface InsetSettings {box:Box; arrange?:'inset'|'locator'; corner?:Corner; size?:'third'|'half'}
+/** The whole extent's name, such as the study area's boundary, written in the locator's frame (the practitioner,
+ *  2026-11-15: "We should label the admin boundary for the map inset"). */
+export interface InsetLabels {whole?:string}
 /** How many of the figure's 850 units the small frame is wide, so its marks can be drawn to keep their size on the page. */
 export const insetWidth=(settings:Pick<InsetSettings,'size'>):number=>Math.round(850*(settings.size==='half'?0.5:1/3));
 export interface Drawing {content:string; height:number; project:(c:[number,number])=>[number,number];
@@ -63,6 +66,15 @@ function scaleBar(drawing:Drawing,frame:Rect):string{
     +`<text x="${x}" y="${y-8}" font-size="13" fill="#1f2a24">${metresLabel(metres)}</text></g>`;
 }
 
+const escapeText=(t:string)=>t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+/** THE WHOLE'S NAME in the frame's top-left corner, on the page's scale: 15 units of the 850-wide figure, a white
+ *  backing so it reads over a boundary line. Its width is estimated, at 0.58 of the size a character. */
+function nameIn(frame:Rect,name:string):string{
+  const size=15,width=Math.min(frame.w-16,Math.ceil(name.length*size*0.58)+10),x=frame.x+6,y=frame.y+6;
+  return `<g data-inset-name><rect x="${x}" y="${y}" width="${width}" height="${size+8}" fill="#ffffff" fill-opacity="0.9"/>`
+    +`<text x="${x+5}" y="${y+size+1}" font-size="${size}" font-weight="600" fill="#1f2a24">${escapeText(name)}</text></g>`;
+}
+
 /** The two lines from the box to the frame, joining corresponding corners on the sides that face each other. */
 function pointer(box:Rect,frame:Rect,corner:Corner):string{
   const pairs=corner==='ne'||corner==='sw'
@@ -72,7 +84,7 @@ function pointer(box:Rect,frame:Rect,corner:Corner):string{
 }
 
 /** THE FIGURE. `whole` is drawn over the whole extent, `part` over the box; which is large is the arrangement's. */
-export function composeInset(whole:Drawing,part:Drawing,settings:InsetSettings,points:readonly [number,number][]=[]):{content:string;height:number;corner:Corner}{
+export function composeInset(whole:Drawing,part:Drawing,settings:InsetSettings,points:readonly [number,number][]=[],labels:InsetLabels={}):{content:string;height:number;corner:Corner}{
   const locator=settings.arrange==='locator';
   const large=locator?part:whole,small=locator?whole:part;
   const w=insetWidth(settings),h=Math.round(w*small.height/850);
@@ -89,6 +101,7 @@ export function composeInset(whole:Drawing,part:Drawing,settings:InsetSettings,p
   const content=large.content+(boxOnLarge?box(boxOnLarge)+pointer(boxOnLarge,frame,corner):'')
     +`<rect x="${frame.x-2}" y="${frame.y-2}" width="${frame.w+4}" height="${frame.h+4}" fill="#ffffff"/>`
     +nested+`<rect x="${frame.x}" y="${frame.y}" width="${frame.w}" height="${frame.h}" fill="none" stroke="#1f2a24" stroke-width="1.5"/>`
-    +(locator?'':scaleBar(part,frame));
+    +(locator?'':scaleBar(part,frame))
+    +(locator&&labels.whole?.trim()?nameIn(frame,labels.whole.trim()):'');
   return {content,height:large.height,corner};
 }

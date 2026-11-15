@@ -572,7 +572,7 @@ export function nodeInputs(node:WorkflowNode):[string,PortType][]{
     // this function is what a connection is actually checked against, so a port added to the
     // declaration alone is a port nothing may connect to -- which is how `ground` arrived
     // refusing its own widget with "Incompatible node connection" on 2026-10-27.
-    // UP TO FOUR RASTERS, each its own input (experiment 212: grid cells in panels side by side).
+    // UP TO FOUR RASTERS, each its own input (Map's manual, History: panels: grid cells in panels side by side).
     ...Array.from({length:Math.max(1,Math.min(MAX_RASTER_LAYERS,node.params.rasterInputCount??1))},(_,i)=>[rasterPort(i),'raster'] as [string,PortType]),
     // SEVERAL SHEETS AS GROUND (TODO 35, 2026-11-15): Lycoming lies across two 1943 sheets, each placed and cut on its own.
     ...Array.from({length:Math.max(1,Math.min(MAX_GROUND_LAYERS,node.params.groundInputCount??1))},(_,i)=>[groundPort(i),'ground'] as [string,PortType]),
@@ -1000,7 +1000,7 @@ export function validateWorkflow(raw:unknown):Workflow {
     if(n.type==='append_rows'&&n.params.tableCount!==undefined&&(!Number.isInteger(n.params.tableCount)||n.params.tableCount<2))throw new Error('Append rows stacks two tables or more.');
     if((n.type==='map_output'||n.type==='table_output'||n.type==='deduplicate_points')&&n.params.pointInputCount!==undefined&&(!Number.isInteger(n.params.pointInputCount)||n.params.pointInputCount<1||n.params.pointInputCount>MAX_POINT_LAYERS))throw new Error('Use 1–8 point input ports.');
     if(n.type==='space_time_scan')validateScanParams(n.params as never);
-    // THE ARRANGEMENT AND THE POLYGON INPUTS, checked as they arrive (experiment 212; Collect polygon layers retired).
+    // THE ARRANGEMENT AND THE POLYGON INPUTS, checked as they arrive (Map's manual, History: panels; Collect polygon layers retired).
     if((n.type==='point_input'||n.type==='table_input')&&(n.params as {edits?:unknown}).edits!==undefined&&!validEdits((n.params as {edits?:unknown}).edits))
       throw new Error('Edits made in Data quality are a record, a column, the value read and the value written; at most 2,000 to a step.');
     if(n.type==='map_output'&&n.params.groundInputCount!==undefined&&!(Number.isInteger(n.params.groundInputCount)&&n.params.groundInputCount>=1&&n.params.groundInputCount<=MAX_GROUND_LAYERS))
@@ -2548,7 +2548,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         if(node.params.contextPoints)(value as DisplayValue).contextPoints=(inputs as unknown as {context:PointCollection}).context;
         receipts.push(receipt);
         break;}if(mode==='raster'){
-        // GRID CELLS IN PANELS, ONE SCALE (experiment 212): several rasters, or an arrangement, draw each raster's people per
+        // GRID CELLS IN PANELS, ONE SCALE (Map's manual, History: panels): several rasters, or an arrangement, draw each raster's people per
         // km² in a panel of its own, every panel classed together.
         const rasterFed=workflow.edges.filter(e=>e.to===node.id&&isRasterPort(e.port)).sort((a,b)=>a.port.localeCompare(b.port,'en',{numeric:true}));
         if(rasterFed.length>1||node.params.arrangement){

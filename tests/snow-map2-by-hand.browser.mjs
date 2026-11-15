@@ -24,7 +24,7 @@ test('Snow’s Map 2: the plate offered from its repository, placed north-up by 
   await page.locator('[data-view="project"]').click();
   await page.locator('[data-open-example="urn:fieldwork:example:south-london-1854"]').click();
   await expect(page.locator('[data-example-status="urn:fieldwork:example:south-london-1854"]')).toContainText('digest matched',{timeout:20000});
-  await page.locator('#workflow-select').selectOption({label:'Snow’s Map 2, placed by hand'});
+  await page.locator('#workflow-select').selectOption({label:'Where does Snow’s Map 2 fall on today’s map?'});
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="plate"]').click();
   await expect(page.locator('#inspector-content')).toContainText('A worked example names 4 features to find');

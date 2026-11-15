@@ -3,6 +3,22 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.126.0 — In development
+
+- **Sierra Leone's facility map places seven more facilities**: names GRID3 holds under another type (MCHP or CHP
+  where it writes CHP or CHC), each decided in the manual as the facility of that name in the case's district. A
+  space-time scan was built as a fifth workflow and removed before release (the practitioner: *"Remove scan for SL"*):
+  over five years of routine surveillance every cluster reached p = 0.001, waves and reporting changes alike, so it
+  said nothing the district curves do not, and invited reading a wave as a detected outbreak.
+- **Every worked example's workflows are named as questions.** Seventeen were not, among them Oswego's two left at
+  "· question 2"; the examples validator now refuses a pinned example whose workflow name is not a question.
+- **A locator names its whole map**, such as *New York State*, in its frame. **A study area wired beside polygons is
+  drawn under them** on the static figure. Map 0.33.1.
+- **Map's panels and inset, and the two-by-two's readings, are widget work, not experiments** (the practitioner):
+  212 and 213 are now a dated History on Map's manual page; 218's plan is TODO item 34.
+- WebKit's intermittent `polygon-input` failures were a startup race: a workflow file given before the import
+  handler was bound was dropped. The page now marks itself ready, and the test waits for it.
+
 ## 0.125.1 — 2026-11-15
 
 - **NYC's Introduction has a diagram**, as an authored note with its image: what a monitor and the satellite each
@@ -39,7 +55,7 @@ shown in a local build is not a claim that it has been published.
   unexposed controls (non-cases outside a case-control study), in Results, Notes and the publication. Salmonella's 34
   fruit items, four of them empty, now show one row each. Two-by-two 0.8.1, Table output 0.12.1.
 - **Two experiments recorded for later**: each worked example retold in Python notebooks, for validation and teaching
-  (217); and what a two-by-two can say of its own arithmetic, interpretation left to authored notes (218).
+  (217); and what a two-by-two can say of its own arithmetic, interpretation left to authored notes (TODO 34).
 
 - **A map's key no longer sits on the map.** In a static map the class key has its own band under the map, so a
   basemap's tiles and place names never run under the labels. Salmonella's Länder over OpenStreetMap had the key on
@@ -97,7 +113,7 @@ shown in a local build is not a claim that it has been published.
   scale bar and lines to the box it came from; or, as a **Locator**, the part fills the figure and the whole map sits
   small in a corner. Marks keep their size on the page, so marks crowded together on the whole map stand apart. A map
   shown as a static figure is picked on the preview in **Configure…**. MERS's hospitals map has one, over Pyeongtaek.
-  Map 0.31.2; experiment 213.
+  Map 0.31.2; Map's manual, History.
 - **A curve from a table of cases.** Cases by period takes a table whose rows are each one case, counted once, and can
   split it by a column, as it does points. A case in several rows, one per recorded source, counts once when the
   column naming each case is chosen. MERS's tenth workflow, *Did it come in waves?*, uses it: 135 dated cases by

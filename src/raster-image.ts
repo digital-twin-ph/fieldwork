@@ -15,7 +15,7 @@ export function rasterImage(grid:RasterGrid):string{
   return canvas.toDataURL();
 }
 
-/** A panel's drawn cells in the shared classes (experiment 212): YlOrRd, clear where no one is modelled. */
+/** A panel's drawn cells in the shared classes (Map's manual, History: panels): YlOrRd, clear where no one is modelled. */
 export function densityImage(panel:DrawnDensity,breaks:readonly number[]):string{
   const canvas=document.createElement('canvas');canvas.width=panel.width;canvas.height=panel.height;
   const context=canvas.getContext('2d')!,pixels=context.createImageData(panel.width,panel.height);

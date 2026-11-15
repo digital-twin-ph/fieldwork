@@ -69,14 +69,14 @@ const machined=page=>page.locator('.notes-note.k-machined');
 
 test('a second workflow adds to the write-up instead of replacing it',async({page})=>{test.skip(!!skip,skip);
   await open(page);
-  await run(page,'Deaths per 1,000 people, by sub-district');
+  await run(page,'How many died per 1,000 people in each sub-district?');
   await notes(page);
   const first=await machined(page).count();
   expect(first).toBeGreaterThan(0);
   // THE ASSERTION THE OLD BEHAVIOUR FAILS. Running a second workflow replaced the first's notes,
   // so this count used to go DOWN -- the ground contributes one note where mortality contributes
   // three.
-  await run(page,'The ground: an extent, its sub-districts and the river');
+  await run(page,'Where are the sub-districts and the river?');
   await notes(page);
   expect(await machined(page).count()).toBeGreaterThan(first);
   // And the first workflow's own notes are still there by name, not merely the count.
@@ -86,8 +86,8 @@ test('a second workflow adds to the write-up instead of replacing it',async({pag
 
 test('a note from another workflow says which workflow it came from',async({page})=>{test.skip(!!skip,skip);
   await open(page);
-  await run(page,'Deaths per 1,000 people, by sub-district');
-  await run(page,'The ground: an extent, its sub-districts and the river');
+  await run(page,'How many died per 1,000 people in each sub-district?');
+  await run(page,'Where are the sub-districts and the river?');
   await notes(page);
   // The open workflow's own notes carry no source line -- the step chip already says it, and
   // repeating the workflow name on every card would be noise.
@@ -95,14 +95,14 @@ test('a note from another workflow says which workflow it came from',async({page
   await expect(here.locator('.notes-source')).toHaveCount(0);
   // A note from elsewhere says where it came from and when that run happened.
   const elsewhere=machined(page).filter({hasText:'Mortality by sub-district'});
-  await expect(elsewhere.locator('.notes-source')).toContainText('Deaths per 1,000 people');
+  await expect(elsewhere.locator('.notes-source')).toContainText('How many died per 1,000 people');
   await expect(elsewhere.locator('.notes-source')).toContainText('ran 20');
 });
 
 test('the write-up survives a reload, because a publication is not a run',async({page})=>{test.skip(!!skip,skip);
   await open(page);
-  await run(page,'Deaths per 1,000 people, by sub-district');
-  await run(page,'Died or survived, by water supply');
+  await run(page,'How many died per 1,000 people in each sub-district?');
+  await run(page,'Were deaths more common with one water supply than the other?');
   await notes(page);
   const before=await machined(page).count();
   expect(before).toBeGreaterThan(4);
@@ -120,9 +120,9 @@ test('notes from several workflows do not collide on a node id they share',
     // `table-viii` is a node in three of South London's six workflows, so a write-up keyed by
     // node id silently dropped two of every three notes, and two cards sharing a `data-note`
     // attribute made opening one act on the other.
-    await run(page,'Deaths per 1,000 people, by sub-district');
-    await run(page,'Cholera in 1849 compared with 1854');
-    await run(page,'Died or survived, by water supply');
+    await run(page,'How many died per 1,000 people in each sub-district?');
+    await run(page,'How did cholera in 1854 compare with 1849?');
+    await run(page,'Were deaths more common with one water supply than the other?');
     await notes(page);
     const keys=await machined(page).evaluateAll(ns=>ns.map(n=>n.getAttribute('data-note')));
     expect(keys.length).toBeGreaterThan(5);
@@ -148,7 +148,7 @@ test('a freshly opened project says why its write-up has no figures yet',async({
   await expect(bar).toContainText('not in this write-up yet');
   // NAMED AND CAPPED, which is `relate_table`'s rule for its gap keys: a count tells nobody what
   // to do, and six long workflow names is a paragraph nobody reads.
-  await expect(bar).toContainText('Deaths per 1,000 people, by sub-district');
+  await expect(bar).toContainText('How many died per 1,000 people in each sub-district?');
   await expect(bar).toContainText(/and \d+ more/);
   // AND IT IS THE FIRST THING IN THE TAB, which is the second report of 2026-10-31: the markup
   // was there and the control was not, because it rendered as a sentence under the counts and
@@ -162,7 +162,7 @@ test('a freshly opened project says why its write-up has no figures yet',async({
 
 test('the control reports what has run, and stays once everything has',async({page})=>{test.skip(!!skip,skip);
   await open(page);
-  await run(page,'Deaths per 1,000 people, by sub-district');
+  await run(page,'How many died per 1,000 people in each sub-district?');
   await notes(page);
   await expect(page.locator('.notes-run')).toContainText(`${RUNNABLE-1} of this project`);
   // It reports and does not grade: no score, no completeness bar, no warning tone. A
@@ -213,7 +213,7 @@ test('one button runs the rest and assembles the whole write-up',async({page})=>
 test('running the rest returns the practitioner to the workflow they were reading',
   async({page})=>{test.skip(!!skip,skip);
     await open(page);
-    await run(page,'Died or survived, by water supply');
+    await run(page,'Were deaths more common with one water supply than the other?');
     const before=await page.locator('#workflow-select').inputValue();
     await notes(page);
     await page.locator('[data-run-pending]').click();

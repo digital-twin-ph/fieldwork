@@ -122,6 +122,15 @@ for(const example of pinned(catalog)){
               +`${phantom.length===1?'it':'them'} nowhere. `:''}`
             +'widgets/evidence.json counts example use from this list, so a wrong entry here is a '
             +'wrong claim about which widgets have evidence.');
+        // A WORKFLOW'S NAME IS THE QUESTION IT ANSWERS, and a worked example is where that is learned (the
+        // practitioner, 2026-11-15: "Worked examples should demonstrate that workflow titles ask questions to be
+        // answered by the workflow"). Oswego had shipped two with the default "· question 2".
+        const notQuestions=(bundle.workflows??[]).map(w=>(w.document?.workflow??w.document)?.name)
+          .filter(n=>!(typeof n==='string'&&n.trim().endsWith('?')));
+        if(notQuestions.length)
+          problems.push(`${name}: ${notQuestions.length} workflow name${notQuestions.length===1?' is':'s are'} not a `
+            +`question: ${notQuestions.map(n=>n?`"${n}"`:'(no name)').join(', ')}. A worked example's workflow is `
+            +'named for the question it answers.');
         const workflows=(bundle.workflows??[]).length;
         if(example.workflowCount!==undefined&&example.workflowCount!==workflows)
           problems.push(`${name}: the catalogue says ${example.workflowCount} workflows and the `

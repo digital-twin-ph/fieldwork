@@ -1,7 +1,7 @@
 import {test,expect} from './fixtures.mjs';
 import {collectPageErrors} from './page-errors.mjs';
 
-/** MAPS SIDE BY SIDE (experiment 212), on two small layers with values: the panels, one scale, and the interactive maps
+/** MAPS SIDE BY SIDE (Map's manual, History: panels), on two small layers with values: the panels, one scale, and the interactive maps
  *  moving together. The population example's own panels are checked in population-example-opens.browser.mjs. */
 test.use({serviceWorkers:'block'});
 const square=(id,name,x,value)=>({type:'Feature',id,properties:{name,share:value},

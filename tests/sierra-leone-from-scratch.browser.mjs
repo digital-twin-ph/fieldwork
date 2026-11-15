@@ -39,6 +39,9 @@ test('measles in Sierra Leone, built by following the manual',async({page})=>{te
   const tally=f=>cells.reduce((m,c)=>{const k=f(c);m[k]=(m[k]??0)+1;return m;},{});
   const bySex=tally(c=>c[sexAt]);
   expect(bySex.Male+bySex.Female).toBe(2601);
+  // Who were the cases? is chosen by name before its results are read, whichever workflow was built last.
+  const who=page.locator('#workflow-select option',{hasText:'Who were the cases?'}).first();
+  await page.locator('#workflow-select').selectOption(await who.getAttribute('value'));
   await page.locator('[data-view="results"]').click();
   await page.getByRole('tab',{name:'Cases by sex'}).click();
   const main=page.locator('main').first();

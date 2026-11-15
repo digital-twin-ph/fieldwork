@@ -631,13 +631,13 @@ export interface ParamsByType {
    *  can be migrated rather than refused. Nothing adds one, nothing runs one. */
   coverage_check:{exclusions:Exclusion[]; pointInputCount?:number};
   map_output:{label:string; section?:import('./notes.js').FigureSection|'none';
-    /** An enlarged part, or a locator, on the static figure (experiment 213), its box picked on the interactive map. */
+    /** An enlarged part, or a locator, on the static figure (Map's manual, History: the inset), its box picked on the interactive map. */
     inset?:import('./map-inset.js').InsetSettings; pointInputCount?:number;
     /** How many polygon layers it takes, as `polygons`, `polygons_2` … (2026-11-13: Collect polygon layers retired). */
     polygonInputCount?:number;
-    /** How many rasters, as `raster` to `raster_4` (experiment 212, grid cells in panels). */
+    /** How many rasters, as `raster` to `raster_4` (Map's manual, History: panels, grid cells in panels). */
     rasterInputCount?:number;
-    /** Maps side by side (experiment 212): one panel per polygon layer, by its name, in a grid, on one scale. Absent: one map. */
+    /** Maps side by side (Map's manual, History: panels): one panel per polygon layer, by its name, in a grid, on one scale. Absent: one map. */
     arrangement?:{grid:import('./catchment-output.js').PanelGrid;panels:import('./catchment-output.js').MapPanel[]};
     /** What the practitioner decided about each layer in Manage layers, keyed by layer id.
      *  Absent means "as it comes": a map nobody has opened that dialog on draws the default

@@ -202,9 +202,9 @@ const southLondonTables=()=>{
       +'. These fixtures find a workflow by the name a practitioner gave it, because a workflow '
       +'KEY is minted as `${projectId}/w${n}` and carries no meaning across a rebuild.');
   };
-  const workflow=byName('Died or survived, by water supply');
+  const workflow=byName('Were deaths more common with one water supply than the other?');
   const node=id=>workflow.document.nodes.find(n=>n.id===id).params.data;
-  const choropleth=byName('Deaths per 1,000 people, mapped');
+  const choropleth=byName('Where were deaths per 1,000 people highest?');
   const cnode=id=>choropleth.document.nodes.find(n=>n.id===id);
   return {left:node('table-viii'),right:node('table-xii'),
     // The choropleth chain: Table VIII, the rate declared over it, and the study area's named
@@ -1845,8 +1845,8 @@ const builders={
       if(found.length!==1)throw new Error(`The South London checkout carries ${found.length} workflows named "${name}".`);
       return found[0].document;};
     const reasoner={reason:async()=>({conclusions:[]})};
-    const tableIX=named('Deaths per house, by water company').nodes.find(n=>n.id==='table-ix').params.data;
-    const people=(await executeWorkflow(structuredClone(named('Died or survived, by water supply')),reasoner)).tables['by-supply'];
+    const tableIX=named('How many died per house supplied by each water company?').nodes.find(n=>n.id==='table-ix').params.data;
+    const people=(await executeWorkflow(structuredClone(named('Were deaths more common with one water supply than the other?')),reasoner)).tables['by-supply'];
     const SV='Southwark and Vauxhall Company only',LB='Lambeth Company only',BOTH='Lambeth Company and Southwark and Vauxhall Company';
     const houses={exposureColumn:'supplier',outcomeColumn:'measure',caseValue:'deaths',nonCaseValue:'',unitsAtRiskValue:'houses',level:95};
     const persons={exposureColumn:'water_supply',outcomeColumn:'measure',caseValue:'deaths_seven_weeks',nonCaseValue:'',

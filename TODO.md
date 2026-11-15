@@ -58,7 +58,7 @@ not a practitioner in the field.
 
 **Found 2026-11-13, not yet done:** a Polygon layer read from an OpenStreetMap extract reads the whole file into memory, as Raster input's digest did before it was read in slices; a country's extract of several gigabytes would fail the same way.
 
-**Added 2026-11-14:** build [213](docs/experiments/213-an-inset-in-a-map.md), the map inset and the Locator (MERS
+**Added 2026-11-14:** build the map inset and the Locator ([Map's manual, History](docs/widgets/map_output.md#history)) (MERS
 hospitals, Oswego) (**done 0.119.0 and 0.120.0**: MERS's inset over Pyeongtaek, Oswego's locator in New York State);
 and revisit Oswego, one of the first examples (the practitioner: *"It has very few workflows, and
 being one of the first examples, we can probably revisit this to enhance"*), with four workflows chosen that day: the
@@ -94,10 +94,16 @@ numeric value column it does not use, so `data/laender.csv`'s `name` is its valu
 list must name a numeric value column it does not use*, below).
 
 **2026-11-15: Hagelloch's replay in Notes is a chart, not six maps.** Six static panels were built and withdrawn before
-release ([212](docs/experiments/212-map-panels-side-by-side.md), dated section): the maps repeated their captions, and
+release ([Map's manual, History](docs/widgets/map_output.md#history)): the maps repeated their captions, and
 the two flags are what 78 unadjusted daily looks give by chance. The practitioner chose each evening's p-value with the
 0.05 line, beside the cases known. With it, the 1824 cadastral sheet under *Clusters over the village* (the practitioner,
 the same day: "Yes, the 1824 sheet").
+
+**Next, in this order, set 2026-11-15:** (1) the Notes maps below; (2) **the draft document configurable**
+([202](docs/experiments/202-one-record-several-products.md), dated section; the practitioner: *"I would do this before ABM
+spike"*, and *"The above can partly close the render experiment"*): notes' text and images resizable, so figures sit side
+by side or inserted beside text as in Word; the draft shown as the publication looks; one example each of a publication,
+a surveillance report and a sit rep; (3) the ABM spike.
 
 **Found 2026-11-14, not yet done:** each static map in Results is more complete and professional than the same map in
 Notes (the practitioner: "still needs improvement"); compare the two renderers and make Notes draw what Results draws.
@@ -159,7 +165,7 @@ dependency, so licence, size and offline use are checked first, as for any libra
 
 **From the practitioner, 2026-11-14, for the next batch:** (1) Hagelloch's *What a daily scan would have said* map is hard
 to read in Notes: leave it out of the write-up (**done 0.117.0**: "Not in the write-up" on Map, Table and Chart), and later six
-representative days as static maps side by side (212's panels). (2) Formulas in Notes as footnotes or in an Appendix:
+representative days as static maps side by side (Map's panels). (2) Formulas in Notes as footnotes or in an Appendix:
 proposed, an Appendix, each Methods note keeping its sentence and pointing to its numbered formula with this run's
 numbers. (3) Other examples for a space-time scan: Sierra Leone's measles line list (Hagelloch's shape, next in the
 order); MERS by hospital (12 places, coarse); Brazil's dengue by municipality and week, which needs the scan to read
@@ -191,6 +197,12 @@ Then Sierra Leone. Then ABM spike."* So 8, then 12, then 3, then 29. The numberi
    (0.62.0, [191](docs/experiments/191-shares-within-groups.md)); *is not* and *otherwise* in Apply ruleset, which the
    WHO classification needs ([192](docs/experiments/192-is-not-and-otherwise.md)). **Next:** the example's workflows and
    manual: epidemic curve and cases by facility **built (0.65.0)**; cases by district next.
+   **A space-time scan, built and removed 2026-11-15:** a fifth workflow at the facilities with ten cases or more (the
+   practitioner's rule), 25 km circles. Every one of ten clusters reached p = 0.001 (the most likely, 198 cases against
+   53.9 expected near Freetown, October 2021 to April 2022, is the 2021-22 wave reaching Western Area); over five years
+   the scan's null fails for mundane reasons, waves and reporting changes, and visits were moved up to a week when the
+   file was made. Asked *"Is it really worth doing scan for SL?"*, then *"Remove scan for SL"*. Hagelloch remains the
+   scan's example. Kept from it: seven type-differs names decided on the facility map.
    **Map on the standard, 0.66.0.** **Cases by district next**, as rates per 100,000 over WorldPop's 2021 district
    sums on OCHA COD-AB's 16 districts (data/district-population.csv and data/districts-cod-ab.geojson, uncommitted in
    the example until the workflow is built; WorldPop is 5.8% above the 2021 census). Names differ ("Bo District",
@@ -512,10 +524,25 @@ The high-contrast theme comes after Sierra Leone, as set on 2026-11-07; where it
    as Markdown for the practitioner to edit; each closes by setting its numbers beside Fieldwork's, and the lab lists
    that check. Oswego first, then Salmonella.
 34. **What a two-by-two says of itself: its arithmetic readings as facts, interpretation left to authored notes**
-   ([218](docs/experiments/218-what-a-two-by-two-says-of-itself.md); the practitioner, 2026-11-15, on Salmonella's melon
+   (the practitioner, 2026-11-15, on Salmonella's melon
    table: *"unless the ontology can help structure the interpretation"*, then *"Yes"* to both). The step states what
    follows from its cells (interval above, below or across 1; a zero cell, no ratio; a cell of 1 or 2, unstable), never
-   which exposure is the vehicle. Salmonella's interpretation goes in as authored notes now.
+   which exposure is the vehicle. Salmonella's interpretation goes in as authored notes now. A widget improvement, not an
+   experiment (the practitioner, 2026-11-15: *"218 should also not be an experiment it's widget improvement"*); the plan:
+   - **The step states:** the interval wholly above 1, wholly below it, or across it; a cell of 0, so no ratio (today the
+     cell says "unknown" and nothing says why); a cell of 1 or 2, unstable; several exposures with no correction for the
+     number of comparisons, and odds ratios only for the declared design (both said today). **The practitioner states,
+     as authored notes:** which exposure is the likely vehicle, exposures that go together, what confirmed the vehicle
+     beyond the table, crude here and adjusted elsewhere. No exposure is named, ranked or highlighted, as experiment 161
+     decided for the table itself.
+   - **To decide:** whether "unstable" at 1 or 2 is stated, or the smallest cell given and the reader left to judge;
+     where a reading appears (a column per row, a line in the Notes table note, or both); reading classes in `fw:` so a
+     SHACL shape can check that no ratio is reported over a zero cell, reusing STATO or OBCS terms where one means the same.
+   - **Checked on:** Salmonella's matched panel table (Galia wholly above 1, 4.02 to 60.6; the other melons b = 0, no
+     ratio; cantaloupe b = 1, unstable); Oswego's menu (vanilla ice cream wholly above 1).
+   - **To watch with a trainee:** whether, with the readings beside the table, they still reason to the vehicle
+     themselves or read the readings as the answer. Not established by any reading: that an exposure caused illness, or
+     that the readings are complete.
 35. **Lycoming's 1943 sheets under Oswego's map, through Fieldwork's own widgets: next, ahead of NYC, Sierra Leone and
    the ABM spike** (the practitioner, 2026-11-15: *"Do we have a 1940 map of Lycoming?"*, *"Yes download"*, *"I want
    this process to use as much of the built in infrastructure FW has already with some enhancements"*, and *"Yes,
@@ -2742,6 +2769,15 @@ which is the question that decides whether this is useful or a demonstration. Wo
 separate field question when it gets that far.
 
 **Not started.** No experiment record yet; this is the note that precedes one.
+
+**Asked again 2026-11-15** (*"Since we have Docker on this machine can we demonstrate FW connecting to DHIS2 and
+retrieving surveillance data from it?"*); the downloads were offered and the practitioner chose *"Not now"*. What was
+found, by metadata only: Docker 28.3.2 runs here; `dhis2/core:2.43.2` is about 468 MB compressed (Docker Hub, updated
+2026-10-28), `postgis/postgis:16-3.4-alpine` about 162 MB, and DHIS2's Sierra Leone demo database for 2.43,
+`databases.dhis2.org/sierra-leone/2.43/dhis2-db-sierra-leone.sql.gz`, 90,059,621 bytes. The demo database is Sierra
+Leone's, fictional, the same country as the measles example, so its organisation units could sit beside GRID3's. DHIS2
+needs 2 to 4 GB of memory while running: stop it during gates. Still to establish first: CORS and a personal access
+token from a browser.
 
 ### Stress-test the remaining caps, and find the examples that do it
 

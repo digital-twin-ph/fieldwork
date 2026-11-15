@@ -2,7 +2,7 @@ import type {RasterGrid} from './raster.js';
 import type {Boundary} from './types.js';
 import {centreRuns} from './raster-areas.js';
 
-/** GRID CELLS IN PANELS, ONE SCALE (experiment 212, 2026-11-13). The practitioner: *"the maps with the reddish orange
+/** GRID CELLS IN PANELS, ONE SCALE (Map's manual, History: panels, 2026-11-13). The practitioner: *"the maps with the reddish orange
  *  hues actually show the grid cells."* Each raster a Map is given becomes a drawn grid of people per km², at no more
  *  than `MAX_DRAWN_SIDE` cells on a side, and every panel's drawn cells are classed together.
  *

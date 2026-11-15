@@ -16,7 +16,7 @@
       "id": "urn:fieldwork:example:south-london-1854",
       "title": "Snow's South London water supply study, 1854",
       "repository": "https://github.com/digital-twin-ph/example-1855-cholera-south-london",
-      "commit": "3858ace76b0cfe923a2c4fd1d5f9a5b5e115368d",
+      "commit": "09da2794bf2af7d69ad29113f211d67aaa633233",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-1855-cholera-south-london",
       "licence": {
         "data": "CC0-1.0, except geo/sub-districts-csds.geojson which is BSD-2-Clause and geo/thames-reaches.geojson and geo/thames-tidal-limit.geojson which are ODbL-1.0",
@@ -33,13 +33,13 @@
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "fa29153d4e7c82b00b15f2fcaaa16703295ce4c5df45697cc6137611e7ed6e15",
-          "bytes": 1011680
+          "sha256": "2108526054f4168d4b70ad947e89d7e873fc77f3f383558960a5146f17905185",
+          "bytes": 1016505
         },
         {
           "path": "README.md",
-          "sha256": "b9d1b1faef0f19350c9edf846521184c5a26afd7236813be78f912d4df586f48",
-          "bytes": 41626
+          "sha256": "c263a4346a7016da455a801be22574e34160c248d34311a948cd9b7f343408f0",
+          "bytes": 41699
         },
         {
           "path": "NOTICE.txt",
@@ -165,7 +165,7 @@
       "id": "urn:fieldwork:example:oswego-1940",
       "title": "The Oswego church supper, 1940",
       "repository": "https://github.com/digital-twin-ph/example-1940-oswego-church-supper",
-      "commit": "770377932e5202f15dee597d44f749de066e1d9e",
+      "commit": "97d7d43c76a3f0ce0fe6700fb7dba94ee74ffa38",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-1940-oswego-church-supper",
       "licence": {
         "data": "Stated as unconfirmed public domain for the line list; geo/lycoming-church.geojson is ODbL-1.0; the arrangement is CC0-1.0",
@@ -195,8 +195,8 @@
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "798ea8e10f58b945c336925da3e53fcab16778d963b13213702dafb109665a97",
-          "bytes": 36372
+          "sha256": "ca87678088f405c30c330d6c24381bf5f33e35e0bcdd69c8a8939b83b05474c6",
+          "bytes": 36314
         },
         {
           "path": "data/oswego-line-list.csv",
@@ -310,7 +310,7 @@
       "id": "urn:fieldwork:example:salmonella-germany-2021",
       "title": "Salmonella Braenderup and melons, Germany 2021",
       "repository": "https://github.com/digital-twin-ph/example-2021-salmonella-germany",
-      "commit": "d983edde69e21bf16e4ff2c6dc5ef1460a179e80",
+      "commit": "780837930fb75aa7f53614143bb9cc33a44f19e3",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2021-salmonella-germany",
       "licence": {
         "data": "CC-BY-4.0",
@@ -341,8 +341,8 @@
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "61d3294731afe3b47594f3faa78bf02de08a837711579a678a649b56648cea02",
-          "bytes": 455227
+          "sha256": "ea17bd871de7ed49feb9fe1c7ca27f5242fcd897df615edff332fa2f411ea0d5",
+          "bytes": 455272
         },
         {
           "path": "data/Complete_dataset_Luczynska_et_al_2022.csv",
@@ -366,8 +366,8 @@
         },
         {
           "path": "README.md",
-          "sha256": "0c5d5688b21a4277e971821b5f9eb44beae8eabb986f49ce00a9318427cbcacd",
-          "bytes": 9205
+          "sha256": "332148c17bb485e66e59b8253a8ac996629c31b1d59bb9481751494faa96f242",
+          "bytes": 9228
         },
         {
           "path": "NOTICE.txt",
@@ -396,7 +396,7 @@
       "id": "urn:fieldwork:example:nyc-asthma-ozone-2016-2025",
       "title": "Ozone and child asthma emergency visits, New York City, 2016–2025",
       "repository": "https://github.com/digital-twin-ph/example-2025-nyc-ozone",
-      "commit": "d16ad99249d886d60e47388043154b055ec1a82f",
+      "commit": "b6e87d063361a509183d0e59783e38c8122a17a0",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2025-nyc-ozone",
       "licence": {
         "data": "Not redistributed",
@@ -427,8 +427,8 @@
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "37900fb0ba05982b2d76f33b77bc827cfbf56bfad5c4a813d59cd8b27bea443b",
-          "bytes": 17083
+          "sha256": "4864df1e709a632858a5d00d26a7ba6104a36989fa41c5e0707426d21664cf99",
+          "bytes": 17095
         },
         {
           "path": "provenance.json",
@@ -437,8 +437,8 @@
         },
         {
           "path": "README.md",
-          "sha256": "729ab83c959c174d3291f572c7c7bed37a795809c2913409c1907a938357007a",
-          "bytes": 6681
+          "sha256": "da05dab5833e2d4c9521e30e3340bf5f46bc9e7c279ca63deae777ceaa6335fe",
+          "bytes": 6707
         },
         {
           "path": "NOTICE.txt",
@@ -447,8 +447,8 @@
         },
         {
           "path": "manual.json",
-          "sha256": "70d7838909da5ad1789e937b26161b361f83fcb2231db21ea6c39a0a131e3177",
-          "bytes": 46636
+          "sha256": "4c13437213059baa26bbb45bd9adb49125a9505a1c44e2bcf43dcf403cae8f77",
+          "bytes": 46688
         }
       ],
       "workflowCount": 6
@@ -547,7 +547,7 @@
       "id": "urn:fieldwork:example:workflows-rulesets",
       "title": "Rules on synthetic data",
       "repository": "https://github.com/digital-twin-ph/example-workflows-rulesets",
-      "commit": "c6da1c1cfd5f7af7802b7ea8b6591b4ea7b62fca",
+      "commit": "1771ac3b464b2531f7dac978163642d6259d61ec",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-workflows-rulesets",
       "licence": {
         "data": "CC0-1.0",
@@ -572,13 +572,13 @@
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "072c68d634898a7ad749c7b3f6292006dc8f75d667d63ed4a96b2678b210ff00",
-          "bytes": 4876
+          "sha256": "34527a5a88e9f2a8a0efe1a1d05809ad8b85e38e43e8f0104090606a1f1d5665",
+          "bytes": 4968
         },
         {
           "path": "manual.json",
-          "sha256": "e44098a24a7a3a12418ccd5bd071c595f5d20f03d1ae1b5d6321ef8d60382c44",
-          "bytes": 80568
+          "sha256": "663c24021a3e348d8d410839be89737b3458ce059dbef2e0c2c60dff69e55dae",
+          "bytes": 80684
         },
         {
           "path": "data/clinic-visits.csv",
@@ -612,8 +612,8 @@
         },
         {
           "path": "README.md",
-          "sha256": "2bca16d98f41f72f1b862650ad25b6ebcb8e4b2e4f781efd01ef046e71e78709",
-          "bytes": 6916
+          "sha256": "6167ec29bd1ff4ffebb7872d322e9d4fd9ecc1f3da769fa25b680a41206f7a42",
+          "bytes": 6974
         },
         {
           "path": "LICENSE",
@@ -643,7 +643,7 @@
       "id": "urn:fieldwork:example:sierra-leone-measles",
       "title": "Measles in Sierra Leone, 2019 to 2023",
       "repository": "https://github.com/digital-twin-ph/example-2019-sierra-leone-measles",
-      "commit": "da88fd89a18a441b235c2bcf586b4ac4e35866e2",
+      "commit": "2d251cedf0d2e194fc17cbf50d4abff8cbf58f92",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2019-sierra-leone-measles",
       "licence": {
         "data": "Used with the Sierra Leone FETP’s agreement for distributable training materials; modified for a public teaching repository",
@@ -674,13 +674,13 @@
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "bdb221f0dcec807b6fe728d54b06d8afd64f6b6abc139b72f148a45a22232488",
-          "bytes": 831724
+          "sha256": "046336f1de3641b0e9c35174d42b68faa76e530ca3a7b252123f5630941a7def",
+          "bytes": 826782
         },
         {
           "path": "manual.json",
-          "sha256": "c9f824cd773e9f2f3de286bfe5692e3441c4ec698d07ae7aa0ea356c5bce2f8e",
-          "bytes": 51480
+          "sha256": "b9ad42e320fa3317cba23d1ef6f5e7b2e55ce2851c70ea499472a525b7162c70",
+          "bytes": 53610
         },
         {
           "path": "data/measles-sierra-leone-semisynthetic.csv",
@@ -689,8 +689,8 @@
         },
         {
           "path": "README.md",
-          "sha256": "4b2b93c8943cf17a6877ea7a0bbf5912d5298c11efd6b62d9b8cee57e1e66908",
-          "bytes": 9089
+          "sha256": "66550d8e4a2edf6021d7b788e7c6dad92dd9ad1f86a41cd7f16c8e853acfaa0d",
+          "bytes": 9365
         },
         {
           "path": "CITATION.cff",
@@ -725,7 +725,7 @@
       "id": "urn:fieldwork:example:sea-level-rise-philippines",
       "title": "Sea-level rise at Manila’s health facilities",
       "repository": "https://github.com/digital-twin-ph/example-2026-sea-level-rise-philippines",
-      "commit": "feb923a0c18c16151548dd0fc9a773b562b05fe6",
+      "commit": "e4875003092de33ecadf694d1b51a32fc01495d2",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2026-sea-level-rise-philippines",
       "licence": {
         "data": "Projections and sites CC BY 4.0, with three required citations; DeltaDTM v1.1 and DTU25MSS subsets CC BY 4.0; facilities retrieved from OpenStreetMap (ODbL 1.0) by the workflows; the study area, diagram, manual and scripts CC0 1.0",
@@ -755,8 +755,8 @@
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "04f0e3eff8d9c5b390040b53156f8d489724470c5c25f5f4a1e1aae7bbca6101",
-          "bytes": 778661
+          "sha256": "8ba0a9dd505b4593e71ff3f7ef85a84ed35540b7965f1b782073fdbc6be2ef4e",
+          "bytes": 779308
         },
         {
           "path": "manual.json",

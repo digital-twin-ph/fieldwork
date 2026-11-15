@@ -3,7 +3,7 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## 0.125.1 — In development
+## 0.125.1 — 2026-11-15
 
 - **NYC's Introduction has a diagram**, as an authored note with its image: what a monitor and the satellite each
   measure (the air at an inlet as a daily mean in ppb; the NO₂ column over a pixel of about 3.5 × 5.5 km, once a day, in

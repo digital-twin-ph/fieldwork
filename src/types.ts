@@ -501,7 +501,7 @@ export interface ParamsByType {
       /** A numeric field must declare the unit it is measured in, as a QUDT IRI -- the same
        *  vocabulary the published rulesets use. Not optional: a number without a unit is not a
        *  measurement, and a rule comparing one to another is comparing two numbers and hoping. */
-      fields:{attribute:string;predicate:string;kind:'number'|'boolean'|'term'|'date';label?:string;
+      fields:{attribute:string;predicate:string;kind:'number'|'boolean'|'term'|'date'|'datetime';label?:string;
         unit?:string;unitLabel?:string}[];
       /** The numbers a practitioner can change without rewriting a rule. Declared by the authored
        *  ruleset itself rather than borrowed from a bundled one: a step whose rules use no

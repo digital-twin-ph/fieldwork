@@ -246,6 +246,28 @@ Experiment [185](185-one-step-for-every-lag.md)'s lag chart is to be tried two w
 column computed from a key column of Regression's table: *then weeks_before is (3 − shift_days) ÷ 7*. That is item 2's
 computed conclusion on the Brazil models, beside the synthetic repo.
 
+## Dates and times of day, 2026-11-15
+
+A known gap, closed here rather than in a record of its own (the practitioner, 2026-11-15: *"It's not an experiment.
+It's addressing a known widget gap"*, and *"Date time arithmetic is important"*). Oswego's line list writes onset as
+`4/19` and `12:30 AM` and the meal as `8:00 PM`, no year; a rule read a date only as `1940-04-19` and subtracted dates
+in whole days.
+
+- **A rule writes a date and time** from a date column in a declared form (`month/day`, `day/month`, with or without a
+  year, or ISO), the year as a setting where the form has none, and a time column on a declared clock (`12-hour` or
+  `24-hour`). It writes ISO 8601 without a time zone, `1940-04-19T00:30`, the record's local time. A value that does
+  not fit the declared form is never guessed: the row gets no value, and the step counts it and says what it saw.
+- **A difference of two date-times names its unit**: days, hours or minutes. Two dates still give days.
+- **Cases by period counts by hour**, for date-times.
+
+The year supplied is the step's, not the record's, and a recalled 1940 onset is rounded: both are said in the step's
+note, not hidden in the arithmetic.
+
+**Built, 2026-11-15 (Fieldwork 0.120.0).** Also: one date for every record, as the source gives it, for a column the
+line list does not have (Oswego's meal date). On Oswego, against figures computed by hand from the CSV before the run:
+44 of the 46 ill have an onset date and time (two write `12:00 AM*`, listed as unreadable); onset from 3 PM on 18 April
+to 10 AM on 19 April, 10 at 1 AM; a median of 4 hours from the meal for the 21 with both times. Chromium.
+
 ## What would close it
 
 **The repository** is [example-workflows-rulesets](https://github.com/digital-twin-ph/example-workflows-rulesets),

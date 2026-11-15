@@ -82,8 +82,18 @@ export const COMPUTE_OPERATORS=['minus','plus','times','dividedBy'] as const;
 export type ComputeOperator=typeof COMPUTE_OPERATORS[number];
 /** A CATEGORY (`value`) or a COMPUTED VALUE (`compute`), never both. A computed value is Derive a value's arithmetic
  *  inside a rule: one of four operators between two operands (experiment 188). */
+/** A DIFFERENCE OF TWO DATE-TIMES NAMES ITS UNIT (experiment 188, 2026-11-15); two dates without one give days. */
+export const DIFFERENCE_UNITS=['days','hours','minutes'] as const;
+export type DifferenceUnit=typeof DIFFERENCE_UNITS[number];
+/** A DATE AND TIME WRITTEN FROM ITS PARTS (experiment 188, 2026-11-15): the date column and its declared form, the year
+ *  where the form has none, and the time column on its declared clock. */
+export interface WrittenDateTime {
+  /** The date column; or, where every record shares one date the source gives (Oswego's supper, 18 April 1940), `on`. */
+  date:string; on?:string; form:import('./authored-application.js').DateForm;
+  year?:number|SettingReference; time?:string; clock?:import('./authored-application.js').Clock}
 export interface AuthoredConclusion {predicate:string; value?:string;
-  compute?:{left:Operand; operator:ComputeOperator; right:Operand};
+  compute?:{left:Operand; operator:ComputeOperator; right:Operand; per?:DifferenceUnit};
+  datetime?:WrittenDateTime;
   /** THE NEW COLUMN AS ITS AUTHOR NAMED IT, for a computed value: "1854 deaths per 1849 death". The predicate is the
    *  rules' own word for it; this is the table's. Absent: the predicate's local name. */
   column?:string;
@@ -93,8 +103,9 @@ export interface AuthoredConclusion {predicate:string; value?:string;
 export const isComputed=(c:AuthoredConclusion):c is AuthoredConclusion&{compute:NonNullable<AuthoredConclusion['compute']>}=>
   !!c.compute;
 /** Whether any rule computes a value. Such a ruleset is evaluated directly, not by the reasoner (experiment 188). */
+export const isWrittenDateTime=(c:AuthoredConclusion):c is AuthoredConclusion&{datetime:WrittenDateTime}=>!!c.datetime;
 export const computesValues=(ruleset:{rules:{then:AuthoredConclusion[]}[]}):boolean=>
-  ruleset.rules.some(rule=>rule.then.some(isComputed));
+  ruleset.rules.some(rule=>rule.then.some(c=>isComputed(c)||isWrittenDateTime(c)));
 export interface AuthoredRule {
   any:AuthoredGroup[];
   /** A LIST, because the rulesets that exist refute a single conclusion: access-review concludes a
@@ -121,6 +132,7 @@ export function fieldsRead(rules:AuthoredRule[]):Set<string>{
     for(const g of rule.any)for(const c of g.all)read.add(c.field.replace(/Known$/,''));
     for(const t of rule.then)if(t.compute)for(const o of [t.compute.left,t.compute.right])
       if(typeof o==='object'&&o&&'field' in o)read.add(o.field);
+    for(const t of rule.then)if(t.datetime){if(t.datetime.on===undefined)read.add(t.datetime.date);if(t.datetime.time)read.add(t.datetime.time);}
   }
   return read;
 }
@@ -275,7 +287,7 @@ export function compileAuthoredRuleset(ruleset:AuthoredRuleset):string{
       }
       const premise=[`${subject} ${subjectParts.join('; ')}.`,
         ...[...builtins].map(([variable,tests])=>`${variable} ${tests.join('; ')}.`)].join(' ');
-      if(rule.then.some(isComputed))throw new AuthoredRulesetError('A rule that computes a value is evaluated directly, '
+      if(rule.then.some(c=>isComputed(c)||isWrittenDateTime(c)))throw new AuthoredRulesetError('A rule that computes a value is evaluated directly, '
         +'not compiled to N3: compile it with evaluateAuthored instead.');
       const conclusion=rule.then.map(c=>`${c.predicate} ${term(c.value!)}`).join('; ');
       lines.push(`{ ${premise} } => { ${subject} ${conclusion}. }.`);
@@ -364,18 +376,39 @@ export function authoredUnitProblems(authored:{
       }
   // A DATE IN ARITHMETIC (experiment 200): one date taken from another gives days; nothing else a date can do here
   // means anything. A date plus a number of days is a date, which is a later extension, not a number.
-  const isDate=(o:unknown)=>typeof o==='object'&&o!==null&&'field' in o&&named((o as {field:string}).field)?.kind==='date';
+  // A DATE AND TIME (2026-11-15) is a field of that kind, or one a rule writes; its difference names its unit.
+  const written=new Set(authored.rules.flatMap(rule=>(rule.then??[]).filter(c=>c.datetime).map(c=>c.predicate)));
+  const kindOf=(o:unknown):'date'|'datetime'|undefined=>{
+    if(typeof o!=='object'||o===null||!('field' in o))return undefined;
+    const f=(o as {field:string}).field;
+    if(written.has(f))return authored.rules.flatMap(r=>r.then??[]).find(c=>c.predicate===f)?.datetime?.time?'datetime':'date';
+    const k=named(f)?.kind;return k==='date'||k==='datetime'?k:undefined;};
   for(const [r,rule] of authored.rules.entries())
     for(const c of rule.then??[]){
+      if(c.datetime){
+        const d=c.datetime,label=(p:string)=>named(p)?.attribute||p;
+        if(d.on!==undefined){if(!/^\d{4}-\d{2}-\d{2}$/.test(d.on))problems.push({field:c.predicate,says:`Rule ${r+1}: write the date every record shares as year-month-day, such as 1940-04-18.`});}
+        else if(!named(d.date))problems.push({field:c.predicate,says:`Rule ${r+1}: choose the column holding the date.`});
+        if(d.on===undefined&&!d.form)problems.push({field:c.predicate,says:`Rule ${r+1}: say how ${label(d.date)} writes its dates, such as month/day. A form is declared, never guessed.`});
+        if(d.on===undefined&&d.form&&!d.form.endsWith('year')&&d.form!=='year-month-day'&&d.year===undefined)
+          problems.push({field:c.predicate,says:`Rule ${r+1}: ${label(d.date)} is written ${d.form}, with no year. Give the year as a setting.`});
+        if(d.time&&!d.clock)problems.push({field:c.predicate,says:`Rule ${r+1}: say whether ${label(d.time)} is on a 12-hour or a 24-hour clock.`});
+        continue;
+      }
       if(!c.compute)continue;
-      const [a,b]=[isDate(c.compute.left),isDate(c.compute.right)];
+      const [a,b]=[kindOf(c.compute.left),kindOf(c.compute.right)];
       if((a||b)&&!(a&&b&&c.compute.operator==='minus'))
         problems.push({field:c.predicate,says:`Rule ${r+1}: a date can only be taken from another date, which gives days. `
           +`Choose a date for both values, and minus.`});
+      else if(a&&b&&a!==b)
+        problems.push({field:c.predicate,says:`Rule ${r+1}: one value is a date and the other a date and time. A date is not `
+          +`taken as midnight unless written so: write both as dates and times.`});
+      else if(a==='datetime'&&!c.compute.per)
+        problems.push({field:c.predicate,says:`Rule ${r+1}: a difference of two dates and times names its unit: days, hours or minutes.`});
     }
   for(const [r,rule] of authored.rules.entries())
     for(const group of rule.any??[])for(const condition of group.all??[])
-      if(named(condition.field)?.kind==='date'&&!['equals','notEquals'].includes(condition.comparator))
+      if(['date','datetime'].includes(named(condition.field)?.kind??'')&&!['equals','notEquals'].includes(condition.comparator))
         problems.push({field:condition.field,says:`Rule ${r+1}: ${named(condition.field)?.attribute||condition.field} is a date, `
           +`so it cannot be more or less than a number. Compute the days between two dates, and compare those.`});
   // A SUM OR A DIFFERENCE OF TWO DIFFERENT UNITS is refused while the rule is written: houses minus people is not a

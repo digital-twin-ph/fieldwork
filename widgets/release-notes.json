@@ -75,12 +75,12 @@
    ]
   },
   "apply_ruleset": {
-   "version": "0.13.3",
-   "released": "2026-11-14",
+   "version": "0.14.0",
+   "released": "2026-11-15",
    "changes": [
     {
-     "kind": "patch",
-     "description": "A number Relate brings onto a table whose values are named by a column, such as statistic, is read as a number, as on any other table: a census share related onto the shares of three population models was unreadable. \"%\" is understood as a unit, percent."
+     "kind": "minor",
+     "description": "Dates and times: a column read as a date and time; a rule writes one from a date column in a declared form, the year where it has none, or one date for every record, and a time column on a declared clock, never guessing a value that does not fit; one date and time minus another in days, hours or minutes."
     }
    ],
    "breaking": false,
@@ -128,12 +128,12 @@
    "migrationFrom": []
   },
   "case_series": {
-   "version": "0.6.0",
-   "released": "2026-11-14",
+   "version": "0.7.0",
+   "released": "2026-11-15",
    "changes": [
     {
      "kind": "minor",
-     "description": "Records can arrive as a table whose rows are each one case, counted once, the value column not read; a case in several rows, one per recorded source, counts once when the column naming each case is chosen, and rows that disagree on its date are refused. Such a table can be split by a column, as points can."
+     "description": "An hour period, for dates and times, every hour kept; a date with no time is listed, never put at midnight."
     }
    ],
    "breaking": false,

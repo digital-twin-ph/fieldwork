@@ -37,7 +37,7 @@ set and applied with **Apply**:
 | **Records arrive as** | Points, one per record; a table, each row a count; or a table, each row one case |
 | **Date column** | The column holding the date, written as an ISO 8601 date (2024-01-07) |
 | **Which date is it?** | Onset, report, death, specimen collection, or other. It is written on the chart's axis and caption |
-| **Period** | Day; week, starting Monday (ISO 8601); week, starting Sunday (the epidemiological week); month; day of the week; or month of the year |
+| **Period** | Hour, for dates and times; day; week, starting Monday (ISO 8601); week, starting Sunday (the epidemiological week); month; day of the week; or month of the year |
 | **Cases per record** | Points only, optional: a column holding how many cases each record stands for |
 
 **Choose the week your data uses.** Brazil's notification system and the United States count epidemiological weeks
@@ -86,3 +86,10 @@ or month-first.
 
 That the kind of date chosen is the one the counts were made by: that is the source's to say. And that a weekly
 count is complete: late notifications reach the last weeks after the data were taken.
+
+## By the hour
+
+**Hour** counts dates and times, `1940-04-19T00:30`, by the hour, every hour between the first and the last kept. A
+date with no time cannot be placed in an hour, so it is listed with the records without a usable date, as written,
+never put at midnight. Oswego's *When did they fall ill?* counts 44 cases from 3 PM on 18 April to 10 AM on 19 April,
+the date and time put together from the line list's two columns by Apply ruleset.

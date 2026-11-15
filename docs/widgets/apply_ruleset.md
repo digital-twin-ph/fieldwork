@@ -79,6 +79,17 @@ column's unit: a serial interval, or the days from onset to report. A date is no
 a number, and a day that does not exist, such as 1861-02-30, is reported unreadable rather than moved into March. A file that stores counts as text, "34", offers them as a category: say they are a number, and
 the text is reported unreadable at the run, where **Data quality** can read it as numbers.
 
+**A date and time.** A column can be read as a date and time, written `1940-04-19T00:30`. Where a line list writes the
+date and the time apart, and not in that form, a rule puts them together: choose **a date and time** as the
+conclusion, then the date column and how it writes dates (*month/day*, *day/month*, either with the year, or
+*year-month-day*), the year where the column has none, and the time column on its clock (*12-hour*, as `8:00 PM`, or
+*24-hour*, as `20:00`). Where every record shares one date the source gives, such as the evening of a church supper,
+choose *one date for every record* and type it. A value that does not fit what was declared is never guessed: the
+record gets no date and time, and the step says which record and what it saw, such as `"12:00 AM*" is not a 12-hour
+time`. Times have no time zone: they are the record's local times, as written. One date and time minus another names
+its unit, **days, hours or minutes**: Oswego's hours from the meal to onset, a median of 4. A date is not taken from a
+date and time, which would read the date as midnight.
+
 **Units.** Each column the rules read states its unit, under *Records and columns*. A setting compared with a
 column must be in the column's unit, and a sum or difference must be of two columns in the same unit; either is refused
 while the rule is written. Columns the rules do not read need no unit.

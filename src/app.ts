@@ -1747,13 +1747,22 @@ function rulesList(rules:ShownRule[],
       +`<div class="rule-then rule-block rule-block-then"><span class="rule-keyword">THEN</span><div class="rule-conditions">`
       +rule.then.map((conclusion,t)=>`<div class="rule-row">`
         +(t?`<span class="rule-and">and</span>`:`<span class="rule-and"></span>`)
+        // A DATE AND TIME reads as its parts (2026-11-15): "onset_at is Date of onset, month/day, 1940, at Time of onset, 12-hour".
+        +(conclusion.datetime
+          ?`<span class="rule-field">${esc(conclusion.column?.trim()||conclusion.predicate.slice(conclusion.predicate.indexOf(':')+1))}</span>`
+            +`<span class="rule-op">is</span>`
+            +`<span class="rule-value">${esc((conclusion.datetime.on!==undefined?conclusion.datetime.on
+              :`${named(conclusion.datetime.date)}, ${conclusion.datetime.form}`+(conclusion.datetime.year!==undefined
+                ?`, ${typeof conclusion.datetime.year==='number'?conclusion.datetime.year:conclusion.datetime.year.setting}`:''))
+              +(conclusion.datetime.time?` at ${named(conclusion.datetime.time)}, ${conclusion.datetime.clock??''}`:''))}</span>`
         // A COMPUTED VALUE reads as its sum (experiment 188): "change 2005 to 2024 is dtp1_2024 minus dtp1_2005".
-        +(conclusion.compute
+        :conclusion.compute
           ?`<span class="rule-field">${esc(conclusion.column?.trim()||conclusion.predicate.slice(conclusion.predicate.indexOf(':')+1))}</span>`
             +`<span class="rule-op">is</span>`
             +`<span class="rule-value">${esc([conclusion.compute.left,conclusion.compute.right].map(o=>typeof o==='object'&&'field' in o
               ?(rules.flatMap(r=>r.then).find(t=>t.predicate===o.field)?.column?.trim()||named(o.field))+((o as {previous?:true}).previous?' in the previous row':''):readable(o as never))
-              .join(` ${({minus:'minus',plus:'plus',times:'times',dividedBy:'divided by'} as Record<string,string>)[conclusion.compute.operator]} `))}</span>`
+              .join(` ${({minus:'minus',plus:'plus',times:'times',dividedBy:'divided by'} as Record<string,string>)[conclusion.compute.operator]} `)
+              +(conclusion.compute.per?`, in ${conclusion.compute.per}`:''))}</span>`
           :`<span class="rule-field">${esc(conclusion.predicate.slice(conclusion.predicate.indexOf(':')+1))}</span>`
             +`<span class="rule-op">is</span>`
             +`<span class="rule-value">${esc(readable(conclusion.value??''))}</span>`)
@@ -1941,7 +1950,7 @@ function declaredKinds(workflow:Workflow,inputId:string):Record<string,'number'|
     if(node.type!=='apply_ruleset'||!reachable.has(node.id))continue;
     for(const field of node.params.authored?.fields??[])
       // A date is a category to the column profile, which has no date kind of its own.
-      if(!(field.attribute in kinds))kinds[field.attribute]=field.kind==='date'?'term':field.kind;
+      if(!(field.attribute in kinds))kinds[field.attribute]=field.kind==='date'||field.kind==='datetime'?'term':field.kind;
   }
   return kinds;
 }
@@ -3400,7 +3409,7 @@ function openSeriesConfig(nodeId:string){
         +`<div class="field"><label class="field-label" for="series-kind">Which date is it?</label><select id="series-kind" data-series="dateKind">`
         +DATE_KINDS.map(k=>`<option value="${k}" ${d.dateKind===k?'selected':''}>${k}</option>`).join('')+'</select></div>'
         +`<div class="field"><label class="field-label" for="series-period">Period</label><select id="series-period" data-series="period">`
-        +([['day','day'],['week','week, starting Monday (ISO 8601)'],['week-sunday','week, starting Sunday (epidemiological week)'],['month','month'],['weekday','day of the week'],['month-of-year','month of the year']] as const)
+        +([['hour','hour, for dates and times'],['day','day'],['week','week, starting Monday (ISO 8601)'],['week-sunday','week, starting Sunday (epidemiological week)'],['month','month'],['weekday','day of the week'],['month-of-year','month of the year']] as const)
           .map(([v,t])=>`<option value="${v}" ${d.period===v?'selected':''}>${t}</option>`).join('')+'</select></div>'
         +(d.source==='table'?'':pick('series-weight','Cases per record (optional)','weightField','',true))
         // SPLIT BY A COLUMN (experiment 210): each period counted for each of its values, for a curve stacked by them.
@@ -3985,6 +3994,13 @@ function openChainsConfig(node:WorkflowNode<'transmission_chains'>){
     apply:draft=>{change(w=>{const p=getNode(w,node.id,'transmission_chains').params;
       for(const key of ['id','parent','none','date'] as const){if(draft[key])p[key]=draft[key];else delete p[key];}},{requirePersistence:true});},
   },esc);
+}
+/** THE RULES' ACCOUNT IN THE INSPECTOR: the first three sentences, and every sentence saying what could not be given a
+ *  value, which the first three can leave out (2026-11-15: Oswego's two unreadable onset times were the fifth sentence). */
+function rulesResultLine(method:string):string{
+  const sentences=method.split('. ').map(x=>x.trim()).filter(Boolean);
+  const kept=sentences.filter((x,i)=>i<3||/no value|no date and time|an empty value|otherwise/.test(x));
+  return kept.join('. ').replace(/\.?$/,'.');
 }
 function labelForm(id:string,caption:string,value:string,maxLength=60):string{
   return `<form class="field" data-label-form="${id}"><label class="field-label" for="${id}">${caption}</label>`
@@ -4806,7 +4822,7 @@ function renderInspector(){
     const receipt=result?.receipts.find(r=>r.nodeId===n.id) as unknown as {method?:string}|undefined;
     const why=result?.unfinished?.find(u=>u.nodeId===n.id)?.message;
     content+=standardSection('Result',`<p class="standard-result${why?' standard-result-warning':''}">`
-      +`${esc(why?`The last run could not compute this step: ${why}`:receipt?.method?receipt.method.split('. ').slice(0,3).join('. ')+'.':'Not run yet.')}</p>`
+      +`${esc(why?`The last run could not compute this step: ${why}`:receipt?.method?rulesResultLine(receipt.method):'Not run yet.')}</p>`
       +'<div data-standard-result></div>');
   }else if(n.type==='policy'){
     content+=`<span class="inspector-section">Rule settings</span><div class="field"><label class="field-label" for="threshold">Distance threshold</label><div class="input-unit"><input id="threshold" type="number" min="0" max="1000" step="0.5" value="${n.params.thresholdKm}"><span>km</span></div><small>Flag distances strictly greater than this value.</small></div><div class="rule-preview">When the heat alert is <b>active</b><br>and the nearest center is <b>more than ${n.params.thresholdKm} km away</b>,<br>flag the neighborhood for review.</div><span class="inspector-section">Missing evidence</span><div class="inspector-divider"></div><span class="inspector-section">Execution engine</span><div class="engine-card"><span class="engine-mark">⋈</span><div><strong>EYE-JS · Notation3</strong><small>WebAssembly · runs on this device</small></div></div>`;

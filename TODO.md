@@ -65,8 +65,12 @@ being one of the first examples, we can probably revisit this to enhance"*), wit
 epidemic curve by hour of onset, the incubation period in hours from the meal (needs hours between two date-times in
 Apply ruleset), attack rates by age band and sex, and vanilla ice cream as its own two-by-two with the ill who did not
 eat it listed. Found 2026-11-15, before building: the line list writes onset as `4/19` and `12:30 AM` and the meal as
-`8:00 PM`, no year and no ISO form; Cases by period has no hour; Apply ruleset subtracts days, not hours. The curve and
-the incubation period wait on a design for times of day.
+`8:00 PM`, no year and no ISO form; Cases by period has no hour; Apply ruleset subtracts days, not hours. **A widget
+gap, closed in 0.120.0** (the practitioner, 2026-11-15: *"Date time arithmetic is important"*), and the four Oswego
+workflows built on it: Apply ruleset writes a
+date and time from a date column in a declared form, a year given as a setting and a time column on a declared clock,
+never guessing a value that does not fit; a difference of two date-times names its unit, days, hours or minutes; Cases
+by period gains an hour.
 
 **Added 2026-11-14:** revisit Salmonella the same way (the practitioner: *"Same with Salmonella example, we need to
 revisit"*), with four workflows chosen that day: who the cases were (age group and sex beside the classical controls),

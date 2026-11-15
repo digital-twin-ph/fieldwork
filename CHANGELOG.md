@@ -13,6 +13,13 @@ shown in a local build is not a claim that it has been published.
 - **Oswego's map shows where Lycoming is.** The hamlet fills the figure and New York State sits small in a corner with
   Lycoming marked: a locator. The state's outline is the US Census Bureau's, public domain. A locator's box is always at
   least 18 px on the page, so a place a few kilometres across can be found in a map of a state. Map 0.31.3.
+- **Dates and times of day.** Apply ruleset puts a date and a time together where a line list writes them apart, as
+  `4/19` and `12:30 AM`: the date's form, the year it lacks and the clock are declared, and a value that does not fit is
+  listed, never guessed. One date and time minus another is in days, hours or minutes. Cases by period counts by the
+  hour. Apply ruleset 0.14.0, Cases by period 0.7.0.
+- **Oswego has four more workflows**: when they fell ill, by the hour, peaking at 1 AM; hours from the meal to onset, a
+  median of 4; who fell ill, by age and sex; and the vanilla ice cream on its own, a risk ratio of 5.57, with the three
+  ill who did not eat it listed.
 
 ## 0.119.0 — 2026-11-14
 

@@ -16,10 +16,10 @@ export type DateKind=typeof DATE_KINDS[number];
  *  whether Hagelloch's onsets fall on some days more than others): a cycle, not a time axis, so all seven are kept. */
 /** `month-of-year` likewise: January to December, all twelve kept, for a season across years of data (the practitioner,
  *  2026-11-12: "Maybe we should also add month of the year"). */
-export const PERIODS=['day','week','week-sunday','month','weekday','month-of-year'] as const;
+export const PERIODS=['hour','day','week','week-sunday','month','weekday','month-of-year'] as const;
 export type Period=typeof PERIODS[number];
 /** Each period in words, for the axis, the caption and the method. */
-export const PERIOD_WORDS:Record<Period,string>={day:'day',week:'week','week-sunday':'week starting Sunday',month:'month',weekday:'day of the week','month-of-year':'month of the year'};
+export const PERIOD_WORDS:Record<Period,string>={hour:'hour',day:'day',week:'week','week-sunday':'week starting Sunday',month:'month',weekday:'day of the week','month-of-year':'month of the year'};
 export const WEEKDAYS=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'] as const;
 export const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'] as const;
 /** The cycles: a period that repeats, counted by its place in the cycle and not along time. */
@@ -40,23 +40,26 @@ export interface CaseSeries {
 }
 export type SeriesTable=DataTable&{series:CaseSeries};
 
-const ISO=/^(\d{4})-(\d{2})-(\d{2})(?:[T ].*)?$/;
+const ISO=/^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2})(?::\d{2})?)?$/;
 const pad=(n:number)=>String(n).padStart(2,'0');
 
 /** ISO 8601 only. A widget that guessed between day-first and month-first ordering would be wrong
  *  silently for a third of the year, so an unrecognised value is reported as undated, never parsed. */
-function parseDate(value:unknown):{year:number;month:number;day:number}|null{
+function parseDate(value:unknown):{year:number;month:number;day:number;hour?:number}|null{
   const text=typeof value==='string'?value.trim():typeof value==='number'?String(value):'';
   const match=ISO.exec(text);
   if(!match)return null;
-  const [,year,month,day]=match.map(Number) as unknown as [string,number,number,number];
+  const [year,month,day]=[Number(match[1]),Number(match[2]),Number(match[3])];
   const date=new Date(Date.UTC(year,month-1,day));
   if(date.getUTCFullYear()!==year||date.getUTCMonth()!==month-1||date.getUTCDate()!==day)return null;
+  // A TIME OF DAY, where the date carries one (2026-11-15): read for the hour, never invented for a date without one.
+  if(match[4]!==undefined){const hour=Number(match[4]),minute=Number(match[5]);if(hour>23||minute>59)return null;return {year,month,day,hour};}
   return {year,month,day};
 }
 const utc=(d:{year:number;month:number;day:number})=>Date.UTC(d.year,d.month-1,d.day);
 
-function periodKey(parts:{year:number;month:number;day:number},period:Period):string{
+function periodKey(parts:{year:number;month:number;day:number;hour?:number},period:Period):string{
+  if(period==='hour')return `${parts.year}-${pad(parts.month)}-${pad(parts.day)}T${pad(parts.hour!)}`;
   if(period==='month')return `${parts.year}-${pad(parts.month)}`;
   if(period==='day')return `${parts.year}-${pad(parts.month)}-${pad(parts.day)}`;
   // 1 for Monday to 7 for Sunday, so the key's order is the week's.
@@ -68,12 +71,14 @@ function periodKey(parts:{year:number;month:number;day:number},period:Period):st
   return date.toISOString().slice(0,10);
 }
 const nextKey=(key:string,period:Period):string=>{
+  if(period==='hour'){const date=new Date(key+':00:00Z');date.setUTCHours(date.getUTCHours()+1);return date.toISOString().slice(0,13);}
   if(period==='month'){const [y,m]=key.split('-').map(Number);return m===12?`${y+1}-01`:`${y}-${pad(m+1)}`;}
   const date=new Date(key+'T00:00:00Z');
   date.setUTCDate(date.getUTCDate()+(period==='day'?1:7));
   return date.toISOString().slice(0,10);
 };
-const label=(key:string,period:Period)=>period==='week'||period==='week-sunday'?`Week beginning ${key}`
+const label=(key:string,period:Period)=>period==='hour'?`${key.slice(0,10)} ${key.slice(11)}:00`
+  :period==='week'||period==='week-sunday'?`Week beginning ${key}`
   :CYCLES[period]?CYCLES[period]![Number(key)-1]!:key;
 
 export interface SeriesOptions {dateField:string; dateKind:DateKind; period:Period; weightField?:string|null; splitBy?:string|null}
@@ -132,7 +137,9 @@ export function caseSeries(points:PointCollection,options:SeriesOptions):CaseSer
   let total=0,datedRecords=0;
   for(const feature of points.features){
     const properties=feature.properties as Record<string,unknown>;
-    const parts=parseDate(properties[dateField]);
+    const parsed=parseDate(properties[dateField]);
+    // BY THE HOUR, a date with no time is not put at midnight: it is listed with the undated, its value as written.
+    const parts=period==='hour'&&parsed&&parsed.hour===undefined?null:parsed;
     if(!parts){
       undated.push({id:String(feature.id),name:String(properties.name??feature.id),
         value:properties[dateField]===undefined?'(attribute absent)':String(properties[dateField]??'')});
@@ -229,5 +236,5 @@ export function validateCaseSeriesNode(node:WorkflowNode):void{
   // An empty date field is not refused on save: a node added from the library starts empty, and refusing it meant
   // Cases by period could not be added (2026-11-06). The run refuses it.
   if(!DATE_KINDS.includes(p.dateKind))throw new Error('State which kind of date Cases by period uses.');
-  if(!PERIODS.includes(p.period))throw new Error('Choose day, week, week starting Sunday, month, day of the week or month of the year for Cases by period.');
+  if(!PERIODS.includes(p.period))throw new Error('Choose hour, day, week, week starting Sunday, month, day of the week or month of the year for Cases by period.');
 }

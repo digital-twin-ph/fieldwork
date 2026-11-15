@@ -165,14 +165,14 @@
       "id": "urn:fieldwork:example:oswego-1940",
       "title": "The Oswego church supper, 1940",
       "repository": "https://github.com/digital-twin-ph/example-1940-oswego-church-supper",
-      "commit": "6eb9d5b772cc5ebe21c9bb0a8bfe65fcd43171e1",
+      "commit": "770377932e5202f15dee597d44f749de066e1d9e",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-1940-oswego-church-supper",
       "licence": {
         "data": "Stated as unconfirmed public domain for the line list; geo/lycoming-church.geojson is ODbL-1.0; the arrangement is CC0-1.0",
         "source": "CDC Case Studies in Applied Epidemiology No. 401-303, which carries no copyright notice that was found.",
         "note": "No explicit public-domain statement was read for the CDC guide, so this is a reasonable reading and not a confirmed fact."
       },
-      "description": "A person-level line list of 75 people and 14 foods, read into one table of attack rates, with a locator map whose church is placed by inference. No study design is declared.",
+      "description": "A person-level line list of 75 people and 14 foods: attack rates by food; when they fell ill, by the hour; hours from the meal to onset; who fell ill, by age and sex; the vanilla ice cream on its own; and a locator map of Lycoming in New York State, whose church is placed by inference. No study design is declared.",
       "carries": {
         "workflow": true,
         "data": true,
@@ -180,8 +180,13 @@
       },
       "notYet": "No epidemic curve or incubation period: onset times are text here.",
       "uses": [
+        "apply_ruleset",
+        "case_series",
+        "chart_output",
+        "group_table",
         "map_output",
         "point_input",
+        "select_rows",
         "study_area",
         "table_input",
         "table_output",
@@ -190,8 +195,8 @@
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "486d1cdb3fcc04ec508c2560396d9f551da6c60fd78ba244e8aa4b11c7299cb3",
-          "bytes": 25611
+          "sha256": "798ea8e10f58b945c336925da3e53fcab16778d963b13213702dafb109665a97",
+          "bytes": 36372
         },
         {
           "path": "data/oswego-line-list.csv",
@@ -210,8 +215,8 @@
         },
         {
           "path": "README.md",
-          "sha256": "74b452aabf3a272764dd2c7d36b982046663c2f1c63a520bce5478d7fa4deb64",
-          "bytes": 6438
+          "sha256": "21a7484e19a7da5e22bd97cc53f99a810a3f90e05d7ef52d474e1ee34cf8ca58",
+          "bytes": 7608
         },
         {
           "path": "NOTICE.txt",
@@ -224,7 +229,7 @@
           "bytes": 7048
         }
       ],
-      "workflowCount": 2
+      "workflowCount": 6
     },
     {
       "id": "urn:fieldwork:example:nigeria-immunization-2024",

@@ -117,7 +117,7 @@ export interface Ruleset {
      *  ruleset a code change rather than a data change. Experiment 65.
      *
      *  Absent on a ruleset whose facts come from a bespoke generator; those are the four. */
-    fieldFrom?:{attribute:string; predicate:string; kind:'number'|'boolean'|'term'|'date';
+    fieldFrom?:{attribute:string; predicate:string; kind:'number'|'boolean'|'term'|'date'|'datetime';
       label?:string; unitLabel?:string}[];
     /** What the TABLE must be, as opposed to what each row must carry.
      *

@@ -128,8 +128,10 @@ export interface FieldBinding {
   attribute:string;
   /** The predicate the rules use, in CURIE form: `fwa:waitMinutes`. */
   predicate:string;
-  /** `date`: a day written year-month-day (experiment 200), so one date can be taken from another, giving days. */
-  kind:'number'|'boolean'|'term'|'date';
+  /** `date`: a day written year-month-day (experiment 200), so one date can be taken from another, giving days.
+   *  `datetime`: a day and a time of day, `1940-04-19T00:30`, so a difference can be in hours (experiment 188,
+   *  2026-11-15). No time zone: the record's local time. */
+  kind:'number'|'boolean'|'term'|'date'|'datetime';
   /** Shown to a reader, and carried into the explanation. */
   label?:string;
   unitLabel?:string;
@@ -164,12 +166,64 @@ export function dayNumber(raw:unknown):number|undefined{
   if(d.getUTCFullYear()!==Number(m[1])||d.getUTCMonth()!==Number(m[2])-1||d.getUTCDate()!==Number(m[3]))return undefined;
   return Math.round(t/86_400_000);
 }
+/** A date and time of day, `YYYY-MM-DDTHH:MM` with optional seconds, as minutes from 1970-01-01T00:00, or undefined. No
+ *  time zone is read or assumed: two times in one record are compared as written. */
+export function minuteNumber(raw:unknown):number|undefined{
+  const m=/^(\d{4}-\d{2}-\d{2})[T ](\d{2}):(\d{2})(?::(\d{2}))?$/.exec(String(raw??'').trim());
+  if(!m)return undefined;
+  const day=dayNumber(m[1]),h=Number(m[2]),min=Number(m[3]),sec=Number(m[4]??0);
+  if(day===undefined||h>23||min>59||sec>59)return undefined;
+  return day*1440+h*60+min+sec/60;
+}
+export const DATE_FORMS=['month/day','day/month','month/day/year','day/month/year','year-month-day'] as const;
+export type DateForm=typeof DATE_FORMS[number];
+export const CLOCKS=['12-hour','24-hour'] as const;
+export type Clock=typeof CLOCKS[number];
+/** A DATE AND TIME PUT TOGETHER (experiment 188, 2026-11-15): a date in a declared form, the year where the form has
+ *  none, and a time on a declared clock. `4/19`, 1940, `12:30 AM` → `1940-04-19T00:30`. A value that does not fit is
+ *  never guessed: the reason is returned, naming what was seen. */
+export function assembleDateTime(date:unknown,form:DateForm,year:number|undefined,time?:unknown,clock?:Clock):{iso:string}|{unreadable:string}{
+  const d=String(date??'').trim(),t=time===undefined?undefined:String(time??'').trim();
+  if(!d)return {unreadable:'no date'};
+  let y:number|undefined,mo:number,da:number;
+  if(form==='year-month-day'){const m=/^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(d);if(!m)return {unreadable:`"${d}" is not year-month-day`};y=+m[1]!;mo=+m[2]!;da=+m[3]!;}
+  else{
+    const withYear=form.endsWith('/year');
+    const m=(withYear?/^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})$/:/^(\d{1,2})\/(\d{1,2})$/).exec(d);
+    if(!m)return {unreadable:`"${d}" is not ${form}`};
+    const [a,b]=[+m[1]!,+m[2]!];
+    [mo,da]=form.startsWith('month')?[a,b]:[b,a];
+    if(withYear){if(m[3]!.length===2)return {unreadable:`"${d}" has a two-digit year`};y=+m[3]!;}
+  }
+  y??=year;
+  if(y===undefined||!Number.isInteger(y))return {unreadable:'no year: give the year as a setting'};
+  const iso=`${String(y).padStart(4,'0')}-${String(mo).padStart(2,'0')}-${String(da).padStart(2,'0')}`;
+  if(dayNumber(iso)===undefined)return {unreadable:`"${d}" is not a day of ${y}`};
+  if(t===undefined)return {iso};
+  if(!t)return {unreadable:'no time'};
+  let h:number,mi:number;
+  if(clock==='12-hour'){
+    const m=/^(\d{1,2}):(\d{2})\s*([AaPp])\.?\s*[Mm]\.?$/.exec(t);
+    if(!m)return {unreadable:`"${t}" is not a 12-hour time`};
+    h=+m[1]!;mi=+m[2]!;
+    if(h<1||h>12||mi>59)return {unreadable:`"${t}" is not a 12-hour time`};
+    const pm=m[3]!.toLowerCase()==='p';
+    h=h%12+(pm?12:0);
+  }else{
+    const m=/^(\d{1,2}):(\d{2})$/.exec(t);
+    if(!m)return {unreadable:`"${t}" is not a 24-hour time`};
+    h=+m[1]!;mi=+m[2]!;
+    if(h>23||mi>59)return {unreadable:`"${t}" is not a 24-hour time`};
+  }
+  return {iso:`${iso}T${String(h).padStart(2,'0')}:${String(mi).padStart(2,'0')}`};
+}
 export type ValueReading={known:true}|{known:false;why:'missing'|'unreadable';saw:string};
 export function readValue(raw:Scalar|null|undefined,kind:FieldBinding['kind']):ValueReading{
   if(raw===undefined||raw===null||raw==='')return {known:false,why:'missing',saw:''};
   if(kind==='number'&&!(typeof raw==='number'&&Number.isFinite(raw)))
     return {known:false,why:'unreadable',saw:String(raw)};
   if(kind==='date'&&dayNumber(raw)===undefined)return {known:false,why:'unreadable',saw:String(raw)};
+  if(kind==='datetime'&&minuteNumber(raw)===undefined)return {known:false,why:'unreadable',saw:String(raw)};
   return {known:true};
 }
 
@@ -395,7 +449,8 @@ export function evaluatedRecordFacts(
     const read=readValue(value as Scalar|null|undefined,kind);
     if(!read.known)return null;
     return kind==='number'?String(Number(value)):kind==='boolean'?String(value===true||value==='true')
-      :kind==='date'?`${JSON.stringify(String(value).trim())}^^<http://www.w3.org/2001/XMLSchema#date>`:termFor(value as Scalar);
+      :kind==='date'?`${JSON.stringify(String(value).trim())}^^<http://www.w3.org/2001/XMLSchema#date>`
+      :kind==='datetime'?`${JSON.stringify(String(value).trim().replace(' ','T'))}^^<http://www.w3.org/2001/XMLSchema#dateTime>`:termFor(value as Scalar);
   };
   const lines=records.map((record,i)=>{
     const parts:string[]=[];

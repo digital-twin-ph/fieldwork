@@ -18,12 +18,12 @@
  */
 import type {ParamsByType} from './types.js';
 import type {Escape} from './types.js';
-import {compileAuthoredRuleset,compiledRuleCount,RULE_CEILING,authoredUnitProblems,settingNamed,isComputed,computesValues,
+import {compileAuthoredRuleset,compiledRuleCount,RULE_CEILING,authoredUnitProblems,settingNamed,isComputed,isWrittenDateTime,DIFFERENCE_UNITS,computesValues,
   COMPUTE_OPERATORS,readsPrevious,readsPreviousRows,evaluatedDirectly,otherwiseProblems,type Operand,type AuthoredOrder,
   type AuthoredOtherwise,bandRules,targetRules} from './authored-rules.js';
 import {evaluateAuthored,OPERATOR_WORDS,localName,undescribedSentence,type Evaluation,type NoPrevious} from './rule-evaluation.js';
 import {openConfigDialog,type ConfigSections} from './config-dialog.js';
-import type {SubjectRecord} from './authored-application.js';
+import {DATE_FORMS,CLOCKS,type SubjectRecord} from './authored-application.js';
 
 type Authored=NonNullable<ParamsByType['apply_ruleset']['authored']>;
 type Field=Authored['fields'][number];
@@ -43,6 +43,8 @@ const COMPARATORS:Record<Field['kind'],{value:string;label:string}[]>={
   boolean:[{value:'equals',label:'is'}],
   // A DATE is a day, matched or not; it is compared through the days between two dates (experiment 200).
   date:[{value:'equals',label:'is'},{value:'notEquals',label:'is not'}],
+  // A DATE AND TIME likewise: compared through the hours between two of them (2026-11-15).
+  datetime:[{value:'equals',label:'is'},{value:'notEquals',label:'is not'}],
 };
 
 /** Whether a value was there to read is a COMPARATOR, not a field of its own.
@@ -324,11 +326,14 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
       if(!options?.preview?.records.length)return null;
       try{return evaluateAuthored(options.preview.records,fields as never,rules as never,numericSettings,order,otherwise);}catch{return null;}
     };
-    const computedColumns=()=>rules.flatMap(rule=>rule.then.filter(isComputed)
+    const computedColumns=()=>rules.flatMap(rule=>rule.then.filter(c=>isComputed(c)||isWrittenDateTime(c))
       .map(c=>({predicate:c.predicate,label:c.column?.trim()||localName(c.predicate)})));
+    // A DATE-LIKE OPERAND (2026-11-15): a date or date-time column, or a date and time a rule writes.
+    const writtenDates=()=>new Set(rules.flatMap(rule=>rule.then.filter(isWrittenDateTime).map(c=>c.predicate)));
+    const dateLike=(o:Operand)=>typeof o==='object'&&'field' in o&&(writtenDates().has(o.field)||['date','datetime'].includes(kindOf(o.field)));
     const operandControl=(r:number,t:number,side:'left'|'right',operand:Operand)=>{
       // A DATE is offered too: one date minus another gives days (experiment 200); anything else with one is refused.
-      const numbers=choices.filter(c=>c.kind==='number'||c.kind==='date');
+      const numbers=choices.filter(c=>c.kind==='number'||c.kind==='date'||c.kind==='datetime');
       const own=rules[r]!.then[t]!.predicate;
       const others=computedColumns().filter(c=>c.predicate!==own);
       const chosen=typeof operand==='object'&&'field' in operand?(readsPrevious(operand)?`previous:${operand.field}`:operand.field):'';
@@ -462,7 +467,7 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
       +(fields.length
         ?`<table class="inspector-table"><thead><tr><th>Column</th><th>Kind</th><th>Unit</th></tr></thead><tbody>`
           +fields.map((f,i)=>`<tr><td>${esc(f.attribute)}</td><td><select data-field-kind="${i}" aria-label="Kind of ${esc(f.attribute)}">`
-            +([['number','number'],['date','date, year-month-day'],['term','category'],['boolean','true or false']] as const)
+            +([['number','number'],['date','date, year-month-day'],['datetime','date and time, year-month-dayThh:mm'],['term','category'],['boolean','true or false']] as const)
               .map(([k,w])=>`<option value="${k}"${f.kind===k?' selected':''}>${w}</option>`).join('')+`</select></td>`
             +`<td>${f.kind==='number'?`<input data-field-unit="${i}" value="${esc(f.unitLabel??'')}" placeholder="minutes" aria-label="Unit for ${esc(f.attribute)}">`:'—'}</td></tr>`).join('')
           +`</tbody></table><p class="description">A numeric column the rules read needs its unit.</p>`
@@ -474,18 +479,49 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
 
     // A RULE AS BLOCKS (experiment 192): each part its own kind of block, with its word, so the structure reads at a glance
     // and in greyscale. The word is the cue; the colour and the edge repeat it.
+    // A DATE AND TIME FROM ITS PARTS (2026-11-15): the date column and how it writes dates, the year where it has none,
+    // and the time column with its clock. Every form is declared; a value that does not fit is counted, never guessed.
+    const dateTimeRow=(r:number,t:number,conclusion:Authored['rules'][number]['then'][number]&{datetime:NonNullable<Authored['rules'][number]['then'][number]['datetime']>})=>{
+      const d=conclusion.datetime,where=`data-rule="${r}" data-then="${t}"`;
+      const columns=(chosen:string|undefined,part:string,label:string,none?:string)=>`<select ${where} data-part="${part}" aria-label="${label}">`
+        +(none!==undefined?`<option value="" ${chosen?'':'selected'}>${none}</option>`:'')
+        +fields.map(f=>`<option value="${esc(f.predicate)}" ${f.predicate===chosen?'selected':''}>${esc(f.attribute)}</option>`).join('')+`</select>`;
+      const yearSetting=d.year!==undefined&&typeof d.year==='object'?d.year.setting:'';
+      const needsYear=!d.form.endsWith('year')&&d.form!=='year-month-day';
+      return `<input ${where} data-part="column" aria-label="New column" value="${esc(conclusion.column??localName(conclusion.predicate))}" placeholder="new column">`
+        +`<span class="rule-is">is the date in</span><select ${where} data-part="dt-date" aria-label="Date column">`
+        +`<option value="" ${d.on!==undefined?'selected':''}>one date for every record</option>`
+        +fields.map(f=>`<option value="${esc(f.predicate)}" ${d.on===undefined&&f.predicate===d.date?'selected':''}>${esc(f.attribute)}</option>`).join('')+`</select>`
+        +(d.on!==undefined?`<input ${where} data-part="dt-on" aria-label="The date every record shares" value="${esc(d.on)}" placeholder="1940-04-18">`
+          :`<span class="rule-is">written</span><select ${where} data-part="dt-form" aria-label="How the dates are written">`
+          +DATE_FORMS.map(f=>`<option value="${f}" ${f===d.form?'selected':''}>${f}</option>`).join('')+`</select>`)
+        +(needsYear&&d.on===undefined?`<span class="rule-is">in the year</span><select ${where} data-part="dt-year-source" aria-label="Where the year comes from">`
+          +`<option value="" ${yearSetting?'':'selected'}>typed here</option>`
+          +settings.map(x=>`<option value="${esc(x.name)}" ${x.name===yearSetting?'selected':''}>${esc(x.name)}</option>`).join('')+`</select>`
+          +(yearSetting?'':`<input ${where} data-part="dt-year" aria-label="Year" inputmode="numeric" value="${esc(typeof d.year==='number'?String(d.year):'')}" placeholder="1940">`):'')
+        +`<span class="rule-is">at the time in</span>`+columns(d.time,'dt-time','Time column','no time')
+        +(d.time?`<select ${where} data-part="dt-clock" aria-label="Clock">`
+          +CLOCKS.map(c=>`<option value="${c}" ${c===d.clock?'selected':''}>${c==='12-hour'?'12-hour, as 8:00 PM':'24-hour, as 20:00'}</option>`).join('')+`</select>`:'');
+    };
     const conclusionRow=(r:number,t:number,conclusion:Authored['rules'][number]['then'][number],rule:Authored['rules'][number])=>
       `<div class="rule-condition">`
       +`<select data-rule="${r}" data-then="${t}" data-part="then-kind" aria-label="Kind of conclusion">`
-        +`<option value="category" ${isComputed(conclusion)?'':'selected'}>a category</option>`
-        +`<option value="computed" ${isComputed(conclusion)?'selected':''}>a computed value</option></select>`
-      +(isComputed(conclusion)
+        +`<option value="category" ${isComputed(conclusion)||isWrittenDateTime(conclusion)?'':'selected'}>a category</option>`
+        +`<option value="computed" ${isComputed(conclusion)?'selected':''}>a computed value</option>`
+        +`<option value="datetime" ${isWrittenDateTime(conclusion)?'selected':''}>a date and time</option></select>`
+      +(isWrittenDateTime(conclusion)?dateTimeRow(r,t,conclusion)
+      :isComputed(conclusion)
         ?`<input data-rule="${r}" data-then="${t}" data-part="column" aria-label="New column" value="${esc(conclusion.column??localName(conclusion.predicate))}" placeholder="new column">`
           +`<span class="rule-is">is</span>`
           +operandControl(r,t,'left',conclusion.compute.left)
           +`<select data-rule="${r}" data-then="${t}" data-part="operator" aria-label="Operation">`
           +COMPUTE_OPERATORS.map(o=>`<option value="${o}" ${o===conclusion.compute.operator?'selected':''}>${OPERATOR_WORDS[o]}</option>`).join('')+`</select>`
           +operandControl(r,t,'right',conclusion.compute.right)
+          // A DIFFERENCE OF DATES OR DATES AND TIMES, IN A UNIT IT NAMES (2026-11-15).
+          +(dateLike(conclusion.compute.left)&&dateLike(conclusion.compute.right)
+            ?`<span class="rule-is">in</span><select data-rule="${r}" data-then="${t}" data-part="per" aria-label="Unit of the difference">`
+              +`<option value="" ${conclusion.compute.per?'':'selected'}>days, between dates</option>`
+              +DIFFERENCE_UNITS.map(u=>`<option value="${u}" ${conclusion.compute.per===u?'selected':''}>${u}</option>`).join('')+`</select>`:'')
           +`<span class="rule-is">measured in</span>`
           +`<input data-rule="${r}" data-then="${t}" data-part="unit" aria-label="Unit of the new column" value="${esc(conclusion.unit??'')}" placeholder="unit, such as days">`
           +`<input data-rule="${r}" data-then="${t}" data-part="meaning" aria-label="What the new column measures" value="${esc(conclusion.meaning??'')}" placeholder="what it measures">`
@@ -766,7 +802,25 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
               const first=choices.find(c=>c.kind==='number')?.predicate;
               rules[r].then[t]={predicate:conclusion.predicate,column:localName(conclusion.predicate),
                 compute:{left:first?{field:first}:0,operator:'minus',right:first?{field:first}:0}} as never;
+            }else if(value==='datetime'){
+              const first=fields[0]?.predicate??'';
+              rules[r].then[t]={predicate:conclusion.predicate.startsWith('fwa:c_')?conclusion.predicate:`fwa:c_${localName(conclusion.predicate)}`,
+                column:localName(conclusion.predicate),datetime:{date:first,form:'month/day'}} as never;
             }else rules[r].then[t]={predicate:conclusion.predicate,value:'fwa:Stated'};
+          }
+          if(conclusion&&isWrittenDateTime(conclusion)){
+            const d=conclusion.datetime;
+            if(part==='column'){const was=conclusion.predicate,now=`fwa:c_${value.trim().replace(/[^A-Za-z0-9]+/g,'_')||'value'}`;
+              conclusion.column=value.trim();conclusion.predicate=now;
+              for(const rule of rules)for(const c of rule.then)if(isComputed(c))for(const side of ['left','right'] as const){
+                const o=c.compute[side];if(typeof o==='object'&&'field' in o&&o.field===was)c.compute[side]={field:now};}}
+            if(part==='dt-date'){if(value){d.date=value;delete d.on;}else d.on=d.on??'';}
+            if(part==='dt-on')d.on=value.trim();
+            if(part==='dt-form'){d.form=value as import('./authored-application.js').DateForm;if(d.form.endsWith('year')||d.form==='year-month-day')delete d.year;}
+            if(part==='dt-year-source')d.year=value?{setting:value}:undefined;
+            if(part==='dt-year'){const y=Number(value);if(value.trim()&&Number.isInteger(y))d.year=y;else delete d.year;}
+            if(part==='dt-time'){if(value){d.time=value;d.clock??='12-hour';}else{delete d.time;delete d.clock;}}
+            if(part==='dt-clock')d.clock=value as never;
           }
           if(conclusion&&isComputed(conclusion)){
             if(part==='column'){
@@ -777,6 +831,7 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
                 const o=c.compute[side];if(typeof o==='object'&&'field' in o&&o.field===was)c.compute[side]=readsPrevious(o)?{field:now,previous:true}:{field:now};}
             }
             if(part==='operator')conclusion.compute.operator=value as never;
+            if(part==='per'){if(value)conclusion.compute.per=value as never;else delete conclusion.compute.per;}
             if(part==='unit'){if(value.trim())conclusion.unit=value.trim();else delete conclusion.unit;}
             if(part==='meaning'){if(value.trim())conclusion.meaning=value.trim();else delete conclusion.meaning;}
             for(const side of ['left','right'] as const){

@@ -14,8 +14,8 @@
  *  counted. An operand with no value gives no value, and is named. Two rules giving one record different values give
  *  it none, and the conflict is reported, never settled by whichever rule came first.
  */
-import {dayNumber,knownPredicate,readValue,termFor,type FieldBinding,type SubjectRecord} from './authored-application.js';
-import {isComputed,isSettingReference,settingNamed,readsPrevious,readsPreviousRows,columnReads,otherwiseProblems,
+import {dayNumber,minuteNumber,assembleDateTime,knownPredicate,readValue,termFor,type FieldBinding,type SubjectRecord} from './authored-application.js';
+import {isComputed,isWrittenDateTime,isSettingReference,settingNamed,readsPrevious,readsPreviousRows,columnReads,otherwiseProblems,
   type AuthoredRule,type ComputeOperator,type Operand,type AuthoredOrder,type AuthoredOtherwise} from './authored-rules.js';
 import {orderOf} from './select-rows.js';
 import type {Scalar} from './types.js';
@@ -40,6 +40,8 @@ export interface RecordOutcome {
   conflicts:{column:string; values:(string|number|null)[]; rules:number[]}[];
   /** A column that reads the previous row and got no value, because there was no single previous row, and why. */
   noPrevious:{column:string; why:NoPrevious}[];
+  /** A date and time that could not be written from its parts, and what was seen (2026-11-15). */
+  unreadable:{column:string; saw:string}[];
   /** A column whose value read below the previous row's: a cumulative count that fell. Kept as computed, and said. */
   fell:string[];
   /** COLUMNS THAT TOOK THEIR OTHERWISE (experiment 192): no rule gave them a value. */
@@ -57,6 +59,8 @@ export interface Evaluation {
   unmatched:number;
   /** The columns that hold computed numbers, as against categories. */
   computedColumns:string[];
+  /** Dates and times a rule writes from their parts, as ISO text (2026-11-15). */
+  writtenColumns?:string[];
   /** What each computed column measures and its unit, where stated. */
   computedMeta?:Record<string,{meaning?:string; unit?:string}>;
   /** The records in the order the rules read them: the step's sort, or as they arrived. Indices into `records`. */
@@ -119,7 +123,9 @@ export function orderRecords(records:SubjectRecord[],order:AuthoredOrder):{seque
 
 /** A fact as N3 would write it, so equality is the reasoner's term equality. */
 /** `day`: a date's day number, kept apart from `number` so a date is never compared with a number (experiment 200). */
-type Fact={text:string; number?:number; day?:number};
+type Fact={text:string; number?:number; day?:number;
+  /** Minutes from 1970-01-01T00:00, for a date (its midnight) or a date and time, so a difference can be in hours. */
+  minute?:number};
 
 function factsOf(record:SubjectRecord,bindings:FieldBinding[]):Map<string,Fact>{
   const facts=new Map<string,Fact>();
@@ -130,7 +136,9 @@ function factsOf(record:SubjectRecord,bindings:FieldBinding[]):Map<string,Fact>{
     if(!known)continue;
     if(binding.kind==='number'){const n=Number(raw);facts.set(binding.predicate,{text:String(n),number:n});}
     else if(binding.kind==='boolean')facts.set(binding.predicate,{text:String(raw===true||raw==='true')});
-    else if(binding.kind==='date')facts.set(binding.predicate,{text:JSON.stringify(String(raw).trim()),day:dayNumber(raw)});
+    else if(binding.kind==='date'){const day=dayNumber(raw);facts.set(binding.predicate,{text:JSON.stringify(String(raw).trim()),day,...(day!==undefined?{minute:day*1440}:{})});}
+    else if(binding.kind==='datetime'){const minute=minuteNumber(raw);
+      facts.set(binding.predicate,{text:JSON.stringify(String(raw).trim()),...(minute!==undefined?{minute,day:Math.floor(minute/1440)}:{})});}
     else facts.set(binding.predicate,{text:termFor(raw as Scalar)});
   }
   return facts;
@@ -164,12 +172,13 @@ function holds(condition:AuthoredRule['any'][number]['all'][number],facts:Map<st
 }
 
 function operandValue(operand:Operand,facts:Map<string,Fact>,settings:Record<string,number>,
-  previousFacts?:Map<string,Fact>):number|undefined{
+  previousFacts?:Map<string,Fact>,per?:string):number|undefined{
   if(typeof operand==='number')return operand;
   if(isSettingReference(operand))return settings[operand.setting];
   // A DATE GIVES ITS DAY NUMBER here only: the static check allows a date only in a difference of two dates.
   const fact=readsPrevious(operand)?previousFacts?.get(operand.field):facts.get(operand.field);
-  return fact?.number??fact?.day;
+  // A DIFFERENCE IN A NAMED UNIT reads minutes; without one, a date gives its day number, as before.
+  return per?fact?.minute:fact?.number??fact?.day;
 }
 const operandLabel=(operand:Operand,labelOf:(predicate:string)=>string)=>
   typeof operand==='number'?String(operand):isSettingReference(operand)?operand.setting
@@ -200,6 +209,8 @@ export function evaluateAuthored(records:SubjectRecord[],bindings:FieldBinding[]
   const labelOf=(predicate:string)=>{const b=bindings.find(x=>x.predicate===predicate);return b?.attribute??localName(predicate);};
   const matchedByRule=rules.map(()=>0);
   const computedColumns=[...new Set(rules.flatMap(r=>r.then.filter(isComputed).map(c=>c.column?.trim()||localName(c.predicate))))];
+  // DATES AND TIMES WRITTEN by a rule: text, ISO 8601, not numbers (2026-11-15).
+  const writtenColumns=[...new Set(rules.flatMap(r=>r.then.filter(isWrittenDateTime).map(c=>c.column?.trim()||localName(c.predicate))))];
   let unmatched=0;
   const outcomes:RecordOutcome[]=[];
   // IN THE STEP'S ORDER, so a row's previous one has been evaluated, and its computed values can be read too.
@@ -209,7 +220,7 @@ export function evaluateAuthored(records:SubjectRecord[],bindings:FieldBinding[]
     finalFacts[recordIndex]=facts;
     const before=sorted?.previous[recordIndex];
     const previousFacts=before?.index!=null?finalFacts[before.index]:undefined;
-    const outcome:RecordOutcome={values:{},rules:[],divisionsByZero:[],missing:[],conflicts:[],noPrevious:[],fell:[],defaulted:[]};
+    const outcome:RecordOutcome={values:{},rules:[],divisionsByZero:[],missing:[],conflicts:[],noPrevious:[],fell:[],defaulted:[],unreadable:[]};
     // What each rule concluded for each predicate, so a conflict names both rules.
     const given=new Map<string,{value:string|number|null; rule:number}[]>();
     const fired=new Set<number>();
@@ -234,18 +245,32 @@ export function evaluateAuthored(records:SubjectRecord[],bindings:FieldBinding[]
         for(const conclusion of rule.then){
           const column=conclusion.column?.trim()||localName(conclusion.predicate);
           let value:string|number|null;
-          if(isComputed(conclusion)){
+          if(isWrittenDateTime(conclusion)){
+            // A DATE AND TIME FROM ITS PARTS, each in its declared form; what does not fit is said, never guessed.
+            const d=conclusion.datetime,attr=(p:string)=>bindings.find(b=>b.predicate===p)?.attribute??localName(p);
+            const year=d.year===undefined?undefined:isSettingReference(d.year)?settings[d.year.setting]:d.year;
+            // ONE DATE FOR EVERY RECORD, as the source gives it (Oswego's supper), or each record's own.
+            const made=d.on!==undefined?assembleDateTime(d.on,'year-month-day',undefined,d.time?record.properties?.[attr(d.time)]:undefined,d.clock)
+              :assembleDateTime(record.properties?.[attr(d.date)],d.form,year,d.time?record.properties?.[attr(d.time)]:undefined,d.clock);
+            if('unreadable' in made){outcome.unreadable.push({column,saw:made.unreadable});continue;}
+            value=made.iso;
+            const minute=d.time?minuteNumber(made.iso):dayNumber(made.iso)!*1440;
+            facts.set(conclusion.predicate,{text:JSON.stringify(made.iso),...(minute!==undefined?{minute,day:Math.floor(minute/1440)}:{})});
+          }else if(isComputed(conclusion)){
             const {left,operator,right}=conclusion.compute;
             // NO SINGLE PREVIOUS ROW: no value, and why, rather than a value from whichever row happened to come first.
             if((readsPrevious(left)||readsPrevious(right))&&before&&before.index===null){
               outcome.noPrevious.push({column,why:before.why??'first'});continue;}
-            const a=operandValue(left,facts,settings,previousFacts),b=operandValue(right,facts,settings,previousFacts);
+            const per=conclusion.compute.per;
+            const a=operandValue(left,facts,settings,previousFacts,per),b=operandValue(right,facts,settings,previousFacts,per);
             if(a===undefined||b===undefined){
               outcome.missing.push({column,operands:[...(a===undefined?[operandLabel(left,labelOf)]:[]),
                 ...(b===undefined?[operandLabel(right,labelOf)]:[])]});
               continue;
             }
             value=apply[operator](a,b);
+            // IN THE UNIT IT NAMES: minutes between two date-times, over 1440 for days or 60 for hours.
+            if(per&&value!==null)value=Math.round(value/({days:1440,hours:60,minutes:1}[per])*1e6)/1e6;
             // A VALUE THAT FELL from the previous row's, such as a cumulative count corrected down. Kept, and said.
             for(const side of [left,right])if(readsPrevious(side)){
               const now=facts.get(side.field)?.number,then=previousFacts?.get(side.field)?.number;
@@ -292,8 +317,8 @@ export function evaluateAuthored(records:SubjectRecord[],bindings:FieldBinding[]
   const isDate=(o:Operand)=>typeof o==='object'&&'field' in o&&bindings.some(b=>b.predicate===o.field&&b.kind==='date');
   const computedMeta=Object.fromEntries(rules.flatMap(r=>r.then.filter(isComputed)).map(c=>[c.column?.trim()||localName(c.predicate),
     {...(c.meaning?.trim()?{meaning:c.meaning.trim()}:{}),
-      ...(c.unit?.trim()?{unit:c.unit.trim()}:isDate(c.compute.left)&&isDate(c.compute.right)?{unit:'days'}:{})}]));
-  return {records:outcomes,matchedByRule,unmatched,computedColumns,computedMeta,sequence,...(order?.by?{order}:{}),
+      ...(c.unit?.trim()?{unit:c.unit.trim()}:c.compute.per?{unit:c.compute.per}:isDate(c.compute.left)&&isDate(c.compute.right)?{unit:'days'}:{})}]));
+  return {records:outcomes,matchedByRule,unmatched,computedColumns,writtenColumns,computedMeta,sequence,...(order?.by?{order}:{}),
     ...(otherwise.length?{defaultedByColumn}:{})};
 }
 
@@ -332,7 +357,8 @@ export function evaluationSentence(evaluation:Evaluation,labels:string[]):string
   const zero=where(r=>r.divisionsByZero.length>0),missing=where(r=>r.missing.length>0),conflict=where(r=>r.conflicts.length>0);
   const unmatched=where(r=>!r.rules.length);
   const records=(k:number)=>`${k.toLocaleString('en')} record${k===1?'':'s'}`,has=(k:number)=>k===1?'has':'have';
-  return `Rules evaluated directly over ${n.toLocaleString('en')} record${n===1?'':'s'}, because ${evaluation.computedColumns.length?'a rule computes a value':'a column has an otherwise'}. `
+  const unread=where(r=>r.unreadable.length>0);
+  return `Rules evaluated directly over ${n.toLocaleString('en')} record${n===1?'':'s'}, because ${evaluation.computedColumns.length||evaluation.writtenColumns?.length?'a rule computes a value':'a column has an otherwise'}. `
     +(evaluation.order?orderSentence(evaluation.order)+' '+previousSentence(evaluation,labels)+' ':'')
     +evaluation.matchedByRule.map((c,i)=>`Rule ${i+1}: ${c.toLocaleString('en')}`).join('; ')+'. '
     +(unmatched.length?`${records(unmatched.length)} matched no rule: ${named(unmatched)}. `:'Every record matched a rule. ')
@@ -341,6 +367,10 @@ export function evaluationSentence(evaluation:Evaluation,labels:string[]):string
     +(zero.length?`${records(zero.length)} ${has(zero.length)} an empty value, from a division by zero: ${named(zero)}. `:'')
     +(missing.length?`${records(missing.length)} ${has(missing.length)} no value, because a value to compute from is missing: ${named(missing)}. `:'')
     +(conflict.length?`${records(conflict.length)} ${has(conflict.length)} no value, because two rules gave different values: ${named(conflict)}. `:'')
+    // A DATE AND TIME THAT COULD NOT BE WRITTEN, with what was seen, never guessed.
+    +(unread.length?`${records(unread.length)} ${has(unread.length)} no date and time, because a part did not read as declared: `
+      +unread.slice(0,5).map(i=>`${labels[i]} (${evaluation.records[i]!.unreadable.map(u=>u.saw).join('; ')})`).join(', ')
+      +(unread.length>5?` and ${unread.length-5} more`:'')+'. ':'')
     +undescribedSentence(evaluation);
 }
 

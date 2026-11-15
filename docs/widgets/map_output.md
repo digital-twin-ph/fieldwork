@@ -192,7 +192,8 @@ shows four sources' shares of each district's people this way.
 ## An inset
 
 Where marks crowd each other at the scale of the whole map, enlarge a part of it beside the whole. On the interactive
-map in Results, zoom to the part and choose **Use this view as the inset**: the view on screen is kept as the inset's
+map in Results, zoom to the part and choose **Use this view as the inset**; or, for a map shown as a static figure,
+zoom the preview in **Configure…** and choose **Use the preview's view as the inset**. The view is kept as the inset's
 box. The static figure, in Notes, in the publication and in the downloads, then draws the box on the map, the part
 enlarged in a framed corner with its own scale bar, and two dashed lines from the box to the frame. **Clear the inset**
 removes it.
@@ -204,8 +205,10 @@ In **Configure…**, under **Inset**:
 - **In the corner**: where the frame covers fewest marks and not the box, or a corner you choose.
 - **Its width**: a third or half of the figure.
 
-Marks keep their size in the inset, so marks that overlap on the whole map stand apart: the inset enlarges the
-distances, not the marks, and the same mark is the same colour in both. An inset is offered for a map over its study
+Marks keep their size on the page in the inset, so marks that overlap on the whole map stand apart: the inset enlarges
+the distances, not the marks, and the same mark is the same colour in both. How far apart they stand depends on the box
+and the frame's width: MERS's four hospitals at Pyeongtaek, in a box about 18 km across shown half the figure wide,
+stand at least two marks' widths apart. An inset is offered for a map over its study
 area; maps in panels have none. The basemap is drawn under the large frame only.
 
 ## Playing through frames

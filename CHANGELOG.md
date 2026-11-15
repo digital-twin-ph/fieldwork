@@ -13,8 +13,13 @@ shown in a local build is not a claim that it has been published.
 - **An inset in a map.** On the interactive map, zoom to a crowded part and choose **Use this view as the inset**. The
   static figure, in Notes, the publication and the downloads, then shows that part enlarged in a corner, with its own
   scale bar and lines to the box it came from; or, as a **Locator**, the part fills the figure and the whole map sits
-  small in a corner. Marks keep their size, so marks crowded together on the whole map stand apart. Map 0.31.0;
-  experiment 213.
+  small in a corner. Marks keep their size on the page, so marks crowded together on the whole map stand apart. A map
+  shown as a static figure is picked on the preview in **Configure…**. MERS's hospitals map has one, over Pyeongtaek.
+  Map 0.31.1; experiment 213.
+- **A curve from a table of cases.** Cases by period takes a table whose rows are each one case, counted once, and can
+  split it by a column, as it does points. A case in several rows, one per recorded source, counts once when the
+  column naming each case is chosen. MERS's tenth workflow, *Did it come in waves?*, uses it: 135 dated cases by
+  generation, 40, 28, 65 and 2, the second generation the large wave. Cases by period 0.6.0.
 
 ## 0.118.0 — 2026-11-14
 

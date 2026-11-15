@@ -222,7 +222,7 @@
     {
       "id": "urn:fieldwork:widget:case_series",
       "nodeType": "case_series",
-      "currentVersion": "0.5.0",
+      "currentVersion": "0.6.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -253,6 +253,11 @@
           "version": "0.5.0",
           "path": "widgets/releases/case_series/0.5.0.json",
           "sha256": "9ba34af6b89707f7b0ef36b9885a0dcd5cf6258460800fb7237f747869b9e701"
+        },
+        {
+          "version": "0.6.0",
+          "path": "widgets/releases/case_series/0.6.0.json",
+          "sha256": "23eb1870debb67e563c3c9a30146acbfdb6e4cedb5facc801e717186215fcd5c"
         }
       ]
     },
@@ -904,7 +909,7 @@
     {
       "id": "urn:fieldwork:widget:map_output",
       "nodeType": "map_output",
-      "currentVersion": "0.31.0",
+      "currentVersion": "0.31.1",
       "releases": [
         {
           "version": "0.1.0",
@@ -1130,6 +1135,11 @@
           "version": "0.31.0",
           "path": "widgets/releases/map_output/0.31.0.json",
           "sha256": "a00fc74ee62312e5b0d7a5427da6af7b3b16239f3d2d054953f328e0c1906fa7"
+        },
+        {
+          "version": "0.31.1",
+          "path": "widgets/releases/map_output/0.31.1.json",
+          "sha256": "8d246e1b674dd0eb4eefef41291e53379f2a57828be125d6fa7bfbababd79f2b"
         }
       ]
     },

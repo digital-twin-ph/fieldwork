@@ -1,8 +1,8 @@
 # 216 · Each case its chain: handing the transmission chain on
 
-_Created 2026-11-15 · Updated 2026-11-15_
+_Created 2026-11-14 · Updated 2026-11-14_
 
-**Status:** tried — option B, a new step, chosen by the practitioner on 2026-11-14 and built; admission review below, written before the code. Not yet in a worked example.
+**Status:** tried — option B, a new step, chosen by the practitioner on 2026-11-14 and built; admission review below, written before the code. In MERS's tenth workflow, *Did it come in waves?*, pinned 2026-11-15.
 
 ## The question
 

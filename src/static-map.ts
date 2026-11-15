@@ -30,7 +30,10 @@ export function staticMapFrame(output:DisplayValue,box?:readonly [number,number,
  *  polygon plot. Passed in rather than read here so BOTH static renderers name marks the same
  *  way: this widget's history is a list of layers one renderer carried and another did not. */
 export function staticBoundaryMap(output:DisplayValue,selected:string|null|undefined,esc:Escape,statusLabel:(status:string|undefined)=>string,labelField:Record<string,string>={},
-  box?:readonly [number,number,number,number]){
+  box?:readonly [number,number,number,number],
+  /** For a drawing shown smaller than its 850 units, as an inset is (experiment 213): marks and lines drawn this many
+   *  times larger, so on the page they are the size they are on the whole map. */
+  markScale=1){
   const {polygons,project,height}=staticMapFrame(output,box);
   let svg=`<rect width="850" height="${height}" fill="#f0f3e9"/>`;
   // TAGGED AS CARRYING NO VALUE. This polygon is a boundary: it says where the study area is and
@@ -39,7 +42,7 @@ export function staticBoundaryMap(output:DisplayValue,selected:string|null|undef
   // pale wash still earns its place by separating figure from ground; over a basemap it simply
   // hides the ground, which is what the practitioner met on the South London figure, 2026-10-25.
   // So the fill is declared here and withdrawn by whoever draws ground underneath it.
-  svg+=polygons.map(rings=>`<path data-fill-role="context" d="${rings.map(ring=>'M'+ring.map(p=>project(p).join(',')).join('L')+'Z').join(' ')}" fill="#dbe8d6" stroke="#668870" stroke-width="1.5" fill-rule="evenodd"/>`).join('');
+  svg+=polygons.map(rings=>`<path data-fill-role="context" d="${rings.map(ring=>'M'+ring.map(p=>project(p).join(',')).join('L')+'Z').join(' ')}" fill="#dbe8d6" stroke="#668870" stroke-width="${1.5*markScale}" fill-rule="evenodd"/>`).join('');
   const focus=output.rows.find(r=>'result:'+r.id===selected);
   if(focus?.center){svg+=`<path d="M${project(focus.coordinates!).join(',')}L${project(focus.center.coordinates!).join(',')}" stroke="#587d6c" stroke-dasharray="4 4"/>`;}
   for(const c of output.centers||[]){if(!c.geometry)continue;const [x,y]=project(c.geometry!.coordinates);svg+=`<rect x="${x-5}" y="${y-5}" width="10" height="10" fill="#315d57" stroke="white"/><text x="${x+9}" y="${y-8}">${esc(c.properties.name)}</text>`;}
@@ -90,15 +93,15 @@ export function staticBoundaryMap(output:DisplayValue,selected:string|null|undef
     // A colour must be big enough to read: a coloured mark is never under 7 px across the radius.
     const base=sized?proportionalRadius((r as {attributes?:Record<string,unknown>}).attributes?.[symbol!.sizeBy!],largest.get(r.sourceNodeId||'')!,symbol?.size??4)
       :ramp?Math.max(7,symbol?.size??4):symbol?.size??4;
-    const radius=focus?.id===r.id?base+3:base;
+    const radius=(focus?.id===r.id?base+3:base)*markScale;
     const statusFill={Review:'#c18b4f',NoFlag:'#699178',Unknown:'#a89b87'}[r.status!];
     // `hollow` is the declared fill for a point outside the area, and `absent` for one a clip set
     // aside: drawn as an outline and as a neutral, never as a second hue competing with a layer.
     const hollow=r.relation==='Outside',aside=r.excluded||r.relation==='MissingLocation';
     const ink=ramp?(step===null?'#a89b87':ramp.colours[step]!):classColour(r.sourceNodeId,(r as {pinClass?:string}).pinClass)||symbol?.colour;
     const mark=symbol
-      ?`<path d="${markPath(symbol.shape,x,y,radius)}" fill="${hollow?'none':aside?'#a89b87':ink}"${sized?' fill-opacity="0.55"':''} stroke="${aside?'#a89b87':ink}" stroke-width="1.6"/>`
-      :`<circle cx="${x}" cy="${y}" r="${radius}" fill="${statusFill}" stroke="white" stroke-width="1.2"/>`;
+      ?`<path d="${markPath(symbol.shape,x,y,radius)}" fill="${hollow?'none':aside?'#a89b87':ink}"${sized?' fill-opacity="0.55"':''} stroke="${aside?'#a89b87':ink}" stroke-width="${1.6*markScale}"/>`
+      :`<circle cx="${x}" cy="${y}" r="${radius}" fill="${statusFill}" stroke="white" stroke-width="${1.2*markScale}"/>`;
     const named=output.rows.filter(x=>x.coordinates&&x.sourceNodeId===r.sourceNodeId).length<=LABEL_CEILING
       ?markLabel(r as never,labelField[r.sourceNodeId||''],x,y,radius,esc):'';
     svg+=`<g class="location" role="button" tabindex="0" data-place="${esc(r.id)}" data-layer="${esc(r.sourceNodeId||'')}" aria-label="${esc(r.name)}, ${esc(label)}${r.layerLabel?', '+esc(r.layerLabel):''}"><title>${esc(r.name)} · ${esc(label)}${r.layerLabel?' · '+esc(r.layerLabel):''}</title>${mark}${named}</g>`;}

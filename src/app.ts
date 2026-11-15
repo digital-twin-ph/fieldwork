@@ -114,7 +114,7 @@ import {MAX_POLYGON_LAYERS,polygonPort} from './polygon-layers.js';
 import {MAX_RASTER_LAYERS,rasterPort} from './raster-panels.js';
 import {publicationMarkup,PROMPTS,type PublicationInput} from './publication.js';
 import {CHAIN_COLUMNS,transmissionChains} from './transmission-chains.js';
-import {boxInside,composeInset,type Corner} from './map-inset.js';
+import {boxInside,composeInset,insetWidth,type Corner} from './map-inset.js';
 import {notesPanel,openNoteDialog,noteKey} from './notes-ui.js';
 // THE WRITE-UP IS THE PROJECT'S. A run contributes its notes to a store the Notes tab reads
 // across every workflow of the project, rather than the tab reading the open run alone.
@@ -2888,11 +2888,18 @@ function openMapConfig(nodeId:string){
         let cancelled=false;
         const frame=requestAnimationFrame(()=>{if(cancelled||!previewHost.isConnected)return;
           try{const dispose=mountCatchmentMap(previewHost,shown.polygons?{...shown,polygons:shown.polygons}:shown,shown.contextPoints,esc,
-            basemapOf(draft.basemap),undefined,`preview-${nodeId}`,draft.tileExtract,draft.partLabel,draft.frameCaption,{svgOnly:true});
-            disposePreview=()=>{cancelled=true;dispose();};}
+            basemapOf(draft.basemap),undefined,`preview-${nodeId}`,draft.tileExtract,draft.partLabel,draft.frameCaption,{svgOnly:true,onMap:m=>{previewMap=m;}});
+            disposePreview=()=>{cancelled=true;previewMap=undefined;dispose();};}
           catch(error){previewHost.textContent=`The preview could not be drawn: ${errorMessage(error)}`;}});
         disposePreview=()=>{cancelled=true;cancelAnimationFrame(frame);};
       }
+      // THE INSET PICKED ON THE PREVIEW (experiment 213), for a map shown as a static figure, which cannot be zoomed.
+      root.querySelector('[data-inset-from-preview]')?.addEventListener('click',()=>{
+        const drawnNow=result?.outputs.find(o=>o.nodeId===nodeId);
+        if(!previewMap||!drawnNow?.boundary){note='Run the workflow to preview the map, then zoom the preview to the part.';redraw();return;}
+        const picked=insetBoxFrom(previewMap,drawnNow);
+        if(typeof picked==='string')note=picked;else{note='';draft.inset={...(draft.inset??{}),box:picked};}
+        redraw();});
       // THE INSET (experiment 213): its box is kept; which frame is large, the corner and the width are chosen here.
       on('#map-inset-arrange',el=>{if(!draft.inset)return;if(!el.value){delete draft.inset;return;}draft.inset={...draft.inset,arrange:el.value as 'inset'|'locator'};});
       on('#map-inset-corner',el=>{if(!draft.inset)return;const next={...draft.inset};if(el.value)next.corner=el.value as Corner;else delete next.corner;draft.inset=next;});
@@ -2995,7 +3002,7 @@ function openMapConfig(nodeId:string){
 /** MAP'S SETTINGS, for its configuration dialog (experiments 186): the presentation, where its figure goes in the
  *  write-up, each point layer's class, mark name and symbol, and the standalone figure. Built from a draft, so the same
  *  markup serves the dialog's every redraw and nothing reaches the step before Apply. */
-let disposePreview:(()=>void)|undefined;
+let disposePreview:(()=>void)|undefined;let previewMap:import('leaflet').Map|undefined;
 /** ARRANGE: ONE MAP, OR PANELS SIDE BY SIDE (experiment 212). The practitioner, 2026-11-13: "We should have the capability
  *  to arrange the maps in the Configure dialog." The panels are the polygon layers the last run drew, by name. */
 const drawnPolygonLayers=(nodeId:string):string[]=>{
@@ -3007,8 +3014,9 @@ const drawnPolygonLayers=(nodeId:string):string[]=>{
 /** AN INSET (experiment 213): picked on the interactive map in Results; here, which frame is large, where it goes, how big. */
 function mapInsetSection(n:WorkflowNode<'map_output'>):string{
   const i=n.params.inset;
-  if(!i)return `<span class="inspector-section">Inset</span><p class="muted">No inset. On the interactive map in Results, zoom to `
-    +`the part to enlarge and choose Use this view as the inset.</p>`;
+  const pick=`<button class="button small" type="button" data-inset-from-preview>Use the preview\u2019s view as the inset</button>`;
+  if(!i)return `<span class="inspector-section">Inset</span><p class="muted">No inset. Zoom the preview below, or the interactive `
+    +`map in Results, to the part to enlarge, and use that view as the inset.</p>`+pick;
   const opt=(v:string,label:string,at:string)=>`<option value="${v}" ${v===at?'selected':''}>${label}</option>`;
   return `<span class="inspector-section">Inset</span>`
     +`<div class="field"><label class="field-label" for="map-inset-arrange">Show</label><select id="map-inset-arrange">`
@@ -3019,7 +3027,7 @@ function mapInsetSection(n:WorkflowNode<'map_output'>):string{
     +opt('','Where it covers least',i.corner??'')+opt('ne','Top right',i.corner??'')+opt('nw','Top left',i.corner??'')
     +opt('se','Bottom right',i.corner??'')+opt('sw','Bottom left',i.corner??'')+`</select></div>`
     +`<div class="field"><label class="field-label" for="map-inset-size">Its width</label><select id="map-inset-size">`
-    +opt('third','A third of the figure',i.size??'third')+opt('half','Half the figure',i.size??'third')+`</select></div>`;
+    +opt('third','A third of the figure',i.size??'third')+opt('half','Half the figure',i.size??'third')+`</select></div>`+pick;
 }
 function mapArrangeSection(n:WorkflowNode<'map_output'>):string{
   const names=drawnPolygonLayers(n.id),a=n.params.arrangement;
@@ -3366,8 +3374,8 @@ function rateSentence(p:import('./types.js').ParamsByType['rate']):string{
 function seriesSentence(p:import('./types.js').ParamsByType['case_series']):string{
   if(!p.dateField)return 'Name the column holding each case\u2019s date in Configure\u2026';
   return `Counts cases by ${PERIOD_WORDS[p.period]} of ${p.dateField}, a date of ${p.dateKind}`
-    +(p.source!=='table'&&p.splitBy?`, for each value of ${p.splitBy}`:'')
-    +(p.source==='table'?', each row as many cases as its value.':p.weightField?`, each record as many cases as its ${p.weightField}.`:', one case per record.');
+    +(p.splitBy?`, for each value of ${p.splitBy}`:'')
+    +(p.source==='table'?(p.rowAsCase?(p.caseId?`, each ${p.caseId} once.`:', one case per row.'):', each row as many cases as its value.'):p.weightField?`, each record as many cases as its ${p.weightField}.`:', one case per record.');
 }
 /** CASES BY PERIOD'S CONFIGURATION DIALOG (experiments 186 and 206, 2026-11-12): how the records arrive, the date column
  *  and its kind, the period (day of the week among them), and the weight. Changing how records arrive disconnects
@@ -3379,14 +3387,15 @@ function openSeriesConfig(nodeId:string){
   openConfigDialog<Draft>({
     id:'series-config',widget:'Cases by period',step:node.params.label||TYPES.case_series.title,draft:structuredClone(node.params),
     sections:d=>{
-      const pick=(id:string,label:string,key:'dateField'|'weightField'|'splitBy',placeholder:string,optional=false)=>{
+      const pick=(id:string,label:string,key:'dateField'|'weightField'|'splitBy'|'caseId',placeholder:string,optional=false)=>{
         const held=String(d[key]??'');
         return `<div class="field"><label class="field-label" for="${id}">${label}</label>`+(columns.length
-          ?`<select id="${id}" data-series="${key}"><option value="">${optional?(key==='splitBy'?'Not split: one count per period':'Not used: one case per record'):'Choose…'}</option>`
+          ?`<select id="${id}" data-series="${key}"><option value="">${optional?(key==='splitBy'?'Not split: one count per period':key==='caseId'?'Not named: every row a case':'Not used: one case per record'):'Choose…'}</option>`
             +columns.map(c=>`<option value="${esc(c)}" ${c===held?'selected':''}>${esc(c)}</option>`).join('')+'</select>'
           :`<input id="${id}" data-series="${key}" maxlength="60" value="${esc(held)}" placeholder="${esc(placeholder)}">`)+'</div>';};
       const settings=`<div class="field"><label class="field-label" for="series-input">Records arrive as</label><select id="series-input">`
-        +[['points','points, one per record'],['table','a table, each row a count']].map(([v,t])=>`<option value="${v}" ${(d.source||'points')===v?'selected':''}>${t}</option>`).join('')+'</select></div>'
+        +[['points','points, one per record'],['table','a table, each row a count'],['table-case','a table, each row one case']]
+          .map(([v,t])=>`<option value="${v}" ${(d.source==='table'?(d.rowAsCase?'table-case':'table'):'points')===v?'selected':''}>${t}</option>`).join('')+'</select></div>'
         +pick('series-date','Date column','dateField','onset_date')
         +`<div class="field"><label class="field-label" for="series-kind">Which date is it?</label><select id="series-kind" data-series="dateKind">`
         +DATE_KINDS.map(k=>`<option value="${k}" ${d.dateKind===k?'selected':''}>${k}</option>`).join('')+'</select></div>'
@@ -3395,7 +3404,9 @@ function openSeriesConfig(nodeId:string){
           .map(([v,t])=>`<option value="${v}" ${d.period===v?'selected':''}>${t}</option>`).join('')+'</select></div>'
         +(d.source==='table'?'':pick('series-weight','Cases per record (optional)','weightField','',true))
         // SPLIT BY A COLUMN (experiment 210): each period counted for each of its values, for a curve stacked by them.
-        +(d.source==='table'?'':pick('series-split','Count each value of (optional)','splitBy','',true));
+        // A CASE IN SEVERAL ROWS, one per recorded source, counted once (MERS, 2026-11-15).
+        +(d.rowAsCase?pick('series-case','Each case is named in (optional)','caseId','',true):'')
+        +(d.source==='table'&&!d.rowAsCase?'':pick('series-split','Count each value of (optional)','splitBy','',true));
       return {settings,preview:`<p class="description">${esc(seriesSentence(d))}</p>`,
         // SAID, NOT BLOCKED: the input is chosen before it is connected, and the columns come with the connection; the
         // run refuses a missing date, as it did before (the Sierra Leone manual, 2026-11-12).
@@ -3403,11 +3414,13 @@ function openSeriesConfig(nodeId:string){
     },
     wire:(root,d,redraw)=>{
       root.querySelector<HTMLSelectElement>('#series-input')?.addEventListener('change',e=>{
-        if((e.target as HTMLSelectElement).value==='table'){d.source='table';delete d.weightField;}else delete d.source;redraw();});
+        const v=(e.target as HTMLSelectElement).value;
+        if(v==='table'||v==='table-case'){d.source='table';delete d.weightField;if(v==='table-case')d.rowAsCase=true;else{delete d.rowAsCase;delete d.splitBy;delete d.caseId;}}
+        else{delete d.source;delete d.rowAsCase;delete d.caseId;}redraw();});
       root.querySelectorAll<HTMLInputElement&HTMLSelectElement>('[data-series]').forEach(el=>el.addEventListener('change',()=>{
-        const key=el.dataset.series as 'dateField'|'weightField'|'dateKind'|'period'|'splitBy',value=el.value.trim();
-        if(key==='weightField'||key==='splitBy'){if(value)d[key]=value;else delete d[key];}
-        else (d as Record<string,string>)[key]=value;redraw();}));
+        const key=el.dataset.series as 'dateField'|'weightField'|'dateKind'|'period'|'splitBy'|'caseId',value=el.value.trim();
+        if(key==='weightField'||key==='splitBy'||key==='caseId'){if(value)d[key]=value;else delete d[key];}
+        else (d as unknown as Record<string,string>)[key]=value;redraw();}));
     },
     apply:d=>{change(w=>{const target=getNode(w,nodeId,'case_series');const was=target.params.source;target.params=d;
       if((was||'points')!==(d.source||'points'))w.edges=w.edges.filter(e=>e.to!==nodeId);});},
@@ -6737,8 +6750,10 @@ async function drawStaticFigure(svg:SVGSVGElement,result:Output,mapNode:Workflow
     if(inset&&boxInside(inset.box,wholeFrame.bounds)){
       const partFrame=staticMapFrame(result,inset.box);
       const drawing=(content:string,f:typeof wholeFrame)=>({content,height:f.height,project:f.project as (c:[number,number])=>[number,number],scale:f.scale});
-      const composed=composeInset(drawing(staticBoundaryMap(result,o.selected??null,esc,statusLabel,labels),wholeFrame),
-        drawing(staticBoundaryMap(result,o.selected??null,esc,statusLabel,labels,inset.box),partFrame),inset,
+      // THE SMALL FRAME'S MARKS KEEP THEIR SIZE ON THE PAGE: drawn larger by as much as the frame is shrunk.
+      const shrink=850/insetWidth(inset),locator=inset.arrange==='locator';
+      const composed=composeInset(drawing(staticBoundaryMap(result,o.selected??null,esc,statusLabel,labels,undefined,locator?shrink:1),wholeFrame),
+        drawing(staticBoundaryMap(result,o.selected??null,esc,statusLabel,labels,inset.box,locator?1:shrink),partFrame),inset,
         result.rows.filter(r=>r.coordinates).map(r=>r.coordinates as [number,number]));
       svg.innerHTML=composed.content;
       applyFrame(svg,svg.innerHTML);
@@ -6759,6 +6774,15 @@ async function drawStaticFigure(svg:SVGSVGElement,result:Output,mapNode:Workflow
 /** THE INSET IS PICKED HERE (experiment 213; the practitioner, 2026-11-13: "inset picker on the interactive map"): zoom
  *  to the part and use the view on screen as the inset's box, kept in longitude and latitude. Offered where the static
  *  figure can draw one, a map over its study area. */
+/** The view on a Leaflet map as an inset's box: clipped to the whole map's extent, or a sentence saying why not. */
+function insetBoxFrom(map:import('leaflet').Map,shown:Output):[number,number,number,number]|string{
+  const b=map.getBounds(),whole=staticMapFrame(shown).bounds;
+  const clipped:[number,number,number,number]=[Math.max(b.getWest(),whole[0]),Math.max(b.getSouth(),whole[1]),Math.min(b.getEast(),whole[2]),Math.min(b.getNorth(),whole[3])];
+  if(!boxInside(clipped,whole))return 'This view is outside the map. Zoom to a part of it.';
+  if((clipped[2]-clipped[0])>=(whole[2]-whole[0])*0.9&&(clipped[3]-clipped[1])>=(whole[3]-whole[1])*0.9)
+    return 'This view shows nearly the whole map. Zoom in to the part to enlarge.';
+  return clipped;
+}
 function insetPicker(host:HTMLElement,mapNode:WorkflowNode<'map_output'>|undefined,shown:Output,map:import('leaflet').Map){
   host.parentElement?.querySelector('.map-inset-bar')?.remove();
   if(!mapNode||!shown.boundary||mapNode.params.arrangement)return;
@@ -6769,13 +6793,9 @@ function insetPicker(host:HTMLElement,mapNode:WorkflowNode<'map_output'>|undefin
       +`<span class="muted">${held.arrange==='locator'?'Locator':'Inset'} on the static figure; arrange it in Configure\u2026</span>`:'');
   host.after(bar);
   bar.querySelector('[data-inset-use]')!.addEventListener('click',()=>{
-    const b=map.getBounds(),box:[number,number,number,number]=[b.getWest(),b.getSouth(),b.getEast(),b.getNorth()];
-    const whole=staticMapFrame(shown).bounds;
     // Clipped to the map's own extent, then refused if nothing of it is left: an inset shows a part of the map.
-    const clipped:[number,number,number,number]=[Math.max(box[0],whole[0]),Math.max(box[1],whole[1]),Math.min(box[2],whole[2]),Math.min(box[3],whole[3])];
-    if(!boxInside(clipped,whole)){toast('This view is outside the map. Zoom to a part of it.',{tone:'warning'});return;}
-    if((clipped[2]-clipped[0])>=(whole[2]-whole[0])*0.9&&(clipped[3]-clipped[1])>=(whole[3]-whole[1])*0.9){
-      toast('This view shows nearly the whole map. Zoom in to the part to enlarge.',{tone:'warning'});return;}
+    const clipped=insetBoxFrom(map,shown);
+    if(typeof clipped==='string'){toast(clipped,{tone:'warning'});return;}
     change(w=>{const p=getNode(w,mapNode.id,'map_output').params;p.inset={...(p.inset??{}),box:clipped};},{spatial:false});
     toast('Kept as the inset. The static figure, in Notes and in the downloads, now shows it.');
   });

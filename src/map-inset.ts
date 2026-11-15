@@ -11,6 +11,8 @@
 export type Box=[west:number,south:number,east:number,north:number];
 export type Corner='ne'|'nw'|'se'|'sw';
 export interface InsetSettings {box:Box; arrange?:'inset'|'locator'; corner?:Corner; size?:'third'|'half'}
+/** How many of the figure's 850 units the small frame is wide, so its marks can be drawn to keep their size on the page. */
+export const insetWidth=(settings:Pick<InsetSettings,'size'>):number=>Math.round(850*(settings.size==='half'?0.5:1/3));
 export interface Drawing {content:string; height:number; project:(c:[number,number])=>[number,number];
   /** Pixels per degree of latitude, which the scale bar is read from. */ scale:number}
 
@@ -73,7 +75,7 @@ function pointer(box:Rect,frame:Rect,corner:Corner):string{
 export function composeInset(whole:Drawing,part:Drawing,settings:InsetSettings,points:readonly [number,number][]=[]):{content:string;height:number;corner:Corner}{
   const locator=settings.arrange==='locator';
   const large=locator?part:whole,small=locator?whole:part;
-  const w=Math.round(850*(settings.size==='half'?0.5:1/3)),h=Math.round(w*small.height/850);
+  const w=insetWidth(settings),h=Math.round(w*small.height/850);
   const boxOnLarge=locator?undefined:rectOf(settings.box,whole.project);
   const corner=settings.corner??chooseCorner(locator?points.map(p=>part.project(p)):points.map(p=>whole.project(p)),w,h,large.height,boxOnLarge);
   const frame=frameAt(corner,w,h,large.height);

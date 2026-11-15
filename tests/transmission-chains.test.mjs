@@ -59,3 +59,25 @@ test('MERS: 162 cases in 67 chains, SK_1’s of 94 over 4 generations, SK_76’s
   assert.equal(r.tree.chains.find(c=>c.size===94).root,'SK_1');
   assert.equal(r.tree.chains.find(c=>c.size===94).generations,4);
 });
+
+test('a curve from a table of cases, one per row, split by generation (Case series 0.x, 2026-11-15)',async()=>{
+  const {caseSeriesFromTable}=await import('../build/case-series.js');
+  const r=transmissionChains({kind:'data-table',keys:['id','from','onset'],valueField:'age',
+    rows:[['A','','2015-05-11',68],['B','A','2015-05-20',63],['C','A','2015-05-20',40],['D','B','2015-05-28',51]]
+      .map(([id,from,onset,age])=>({key:{id,from,onset},value:age})),rowCount:4,missingValueCount:0},{id:'id',parent:'from'});
+  const s=caseSeriesFromTable(r.table,{dateField:'onset',dateKind:'onset',period:'day',splitBy:'generation',rowAsCase:true});
+  assert.equal(s.total,4);                                   // four cases, not 222 years of age
+  assert.deepEqual(s.bins.filter(b=>b.count).map(b=>[b.key,b.group,b.count]),
+    [['2015-05-11','0',1],['2015-05-20','1',2],['2015-05-28','2',1]]);
+  assert.equal(s.unit,undefined);
+});
+
+test('a case in several rows, one per recorded source, is counted once; rows that disagree on its date are refused',async()=>{
+  const {caseSeriesFromTable}=await import('../build/case-series.js');
+  const t=rows=>({kind:'data-table',keys:['id','from','onset'],valueField:'age',rows:rows.map(([id,from,onset])=>({key:{id,from,onset},value:1})),rowCount:rows.length,missingValueCount:0});
+  const s=caseSeriesFromTable(t([['A','','2015-05-11'],['B','A','2015-05-20'],['B','C','2015-05-20'],['C','','2015-05-12']]),
+    {dateField:'onset',dateKind:'onset',period:'day',rowAsCase:true,caseId:'id'});
+  assert.equal(s.total,3);
+  assert.throws(()=>caseSeriesFromTable(t([['B','A','2015-05-20'],['B','C','2015-05-21']]),
+    {dateField:'onset',dateKind:'onset',period:'day',rowAsCase:true,caseId:'id'}),/The case "B" is in two rows with different onset/);
+});

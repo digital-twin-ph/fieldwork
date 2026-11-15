@@ -128,12 +128,12 @@
    "migrationFrom": []
   },
   "case_series": {
-   "version": "0.5.0",
-   "released": "2026-11-12",
+   "version": "0.6.0",
+   "released": "2026-11-14",
    "changes": [
     {
      "kind": "minor",
-     "description": "Count each value of a column: the series counted per period for each value of a record column, every period kept for every value, blank its own value; its table keyed by period and the column, its receipt saying so (fw:seriesSplitBy, fw:seriesGroup). For a curve stacked or in panels by the column (experiment 210)."
+     "description": "Records can arrive as a table whose rows are each one case, counted once, the value column not read; a case in several rows, one per recorded source, counts once when the column naming each case is chosen, and rows that disagree on its date are refused. Such a table can be split by a column, as points can."
     }
    ],
    "breaking": false,
@@ -427,12 +427,12 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.31.0",
+   "version": "0.31.1",
    "released": "2026-11-14",
    "changes": [
     {
-     "kind": "minor",
-     "description": "An inset on the static figure: a part picked on the interactive map, enlarged in a framed corner with its own scale bar and two lines to its box; or a locator, the part as the figure with the whole map small in a corner. Marks keep their size, so crowded marks stand apart."
+     "kind": "patch",
+     "description": "The inset's marks keep their size on the page, drawn larger by as much as its frame is shrunk; and a map shown as a static figure has its inset picked on Configure…'s preview."
     }
    ],
    "breaking": false,

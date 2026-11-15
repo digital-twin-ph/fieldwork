@@ -61,3 +61,12 @@ test('a corner is chosen where the frame covers fewest points, and never over th
   assert.notEqual(chooseCorner([],200,100,295,{x:700,y:10,w:100,h:50}),'ne');
   assert.equal(niceMetres(7300),5000);assert.equal(niceMetres(180),100);
 });
+
+test('drawn for a frame a third as wide, the inset\'s marks are drawn three times larger: the same size on the page',async()=>{
+  const {insetWidth}=await import('../build/map-inset.js');
+  const shrink=850/insetWidth({});
+  const radius=content=>Number(/data-place="h0"[\s\S]*?<path d="M[^"]*?a([\d.]+),/.exec(content)[1]);
+  const whole=staticBoundaryMap(output,null,s=>s,()=>'',{});
+  const part=staticBoundaryMap(output,null,s=>s,()=>'',{},box,shrink);
+  assert.ok(Math.abs(radius(part)/shrink-radius(whole))<1e-9);
+});

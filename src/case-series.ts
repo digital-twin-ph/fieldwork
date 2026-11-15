@@ -29,6 +29,8 @@ export interface SeriesBin {key:string; label:string; count:number;
   /** The value of the column the series is split by, where it is (experiment 210): one bin per period and value. */ group?:string}
 export interface CaseSeries {
   kind:'case-series'; bins:SeriesBin[]; total:number; period:Period; dateKind:DateKind;
+  /** From a table whose rows are cases, each named once (2026-11-15): the column, and how many rows were read. */
+  caseId?:string; rowsRead?:number;
   /** SPLIT BY A COLUMN (experiment 210): its name and its values, in order; each bin then carries its group. */
   splitBy?:string; groups?:string[];
   dateField:string; weightField:string|null; datedRecords:number; undatedRecords:number;
@@ -79,18 +81,41 @@ export interface SeriesOptions {dateField:string; dateKind:DateKind; period:Peri
 /** The same series from a keyed table, because a time series often arrives without geometry: Snow's
  *  daily table of attacks and deaths has dates and no places, while his map has places and no dates.
  *  Neither can be turned into the other, which is why both paths exist. */
-export function caseSeriesFromTable(table:DataTable,options:Omit<SeriesOptions,'weightField'>):CaseSeries{
-  const {dateField,dateKind,period}=options;
-  if(table?.kind!=='data-table')throw new Error('Connect a table of counts by date.');
+/** `rowAsCase`: each row is one case, counted, its value not read (a line list as a table: MERS's cases, whose value
+ *  column is age, 2026-11-15). Otherwise each row is as many cases as its value. `splitBy`: a key column, as for points. */
+export function caseSeriesFromTable(table:DataTable,options:Omit<SeriesOptions,'weightField'>&{rowAsCase?:boolean;
+  /** With `rowAsCase`: the column naming each case, so a case in several rows (one per recorded source) counts once. */
+  caseId?:string|null}):CaseSeries{
+  const {dateField,dateKind,period}=options,splitBy=options.splitBy?.trim()||null;
+  if(table?.kind!=='data-table')throw new Error(options.rowAsCase?'Connect a table of cases, one row each.':'Connect a table of counts by date.');
   if(!table.keys.includes(dateField))
     throw new Error(`The table has no key column "${dateField}". Its key columns are: ${table.keys.join(', ')}.`);
-  const features=table.rows.map((row,index)=>({type:'Feature' as const,id:`row-${index+1}`,
-    properties:{name:`Row ${index+1}`,[dateField]:row.key[dateField],
-      [table.valueField]:row.value===null?'':row.value} as Record<string,unknown>,geometry:null}));
+  if(splitBy&&!table.keys.includes(splitBy))
+    throw new Error(`The table has no key column "${splitBy}" to split by. Its key columns are: ${table.keys.join(', ')}.`);
+  const caseId=options.rowAsCase?options.caseId?.trim()||null:null;
+  if(caseId&&!table.keys.includes(caseId))
+    throw new Error(`The table has no key column "${caseId}" naming the cases. Its key columns are: ${table.keys.join(', ')}.`);
+  // ONE CASE, ONCE: its rows must agree on its date and on what it is split by, or the step says which case disagrees.
+  const seen=new Map<string,DataTable['rows'][number]>();
+  const rows=caseId?table.rows.filter(row=>{
+    const id=String(row.key[caseId]??'').trim();if(!id)return true;
+    const held=seen.get(id);
+    if(!held){seen.set(id,row);return false;}
+    for(const column of [dateField,...(splitBy?[splitBy]:[])])
+      if(String(held.key[column]??'')!==String(row.key[column]??''))
+        throw new Error(`The case "${id}" is in two rows with different ${column}: ${held.key[column]||'empty'} and ${row.key[column]||'empty'}. A case is counted once, at one date.`);
+    return false;
+  }).concat([]):table.rows;
+  const counted=caseId?[...seen.values(),...rows]:rows;
+  const features=counted.map((row,index)=>({type:'Feature' as const,id:`row-${index+1}`,
+    properties:{name:`Row ${index+1}`,[dateField]:row.key[dateField],...(splitBy?{[splitBy]:row.key[splitBy]??''}:{}),
+      ...(options.rowAsCase?{}:{[table.valueField]:row.value===null?'':row.value})} as Record<string,unknown>,geometry:null}));
   const series=caseSeries({type:'FeatureCollection',features} as unknown as PointCollection,
-    {dateField,dateKind,period,weightField:table.valueField});
-  // THE COUNTS KEEP THEIR UNIT: each row's value is summed as it is, so the table's unit is the series'.
-  return table.unit?.trim()?{...series,unit:table.unit.trim()}:series;
+    {dateField,dateKind,period,weightField:options.rowAsCase?null:table.valueField,splitBy});
+  // THE COUNTS KEEP THEIR UNIT: each row's value is summed as it is, so the table's unit is the series'. Rows counted as
+  // cases are cases.
+  const named=caseId?{...series,caseId,rowsRead:table.rows.length}:series;
+  return !options.rowAsCase&&table.unit?.trim()?{...named,unit:table.unit.trim()}:named;
 }
 
 export function caseSeries(points:PointCollection,options:SeriesOptions):CaseSeries{
@@ -195,7 +220,7 @@ export function seriesReceipt(node:{id:string},series:CaseSeries,runId:string,so
     facts+=`${entity} fw:seriesBin <${base}output:${node.id}:period:${index}>.\n<${base}output:${node.id}:period:${index}> a fw:SeriesBin; fw:periodKey ${quote(bin.key)}; fw:caseCount "${bin.count}"^^xsd:decimal`
       +(bin.group!==undefined?`; fw:seriesGroup ${quote(bin.group)}`:'')+'.\n';
   return {nodeId:node.id,kind:'computation',facts,input:facts,rules:'',conclusions:[],
-    method:`Cases per ${PERIOD_WORDS[series.period]} by ${series.dateKind} date${series.weightField?`, weighted by ${series.weightField}`:', one case per record'}${series.splitBy?`, for each value of ${series.splitBy} (${(series.groups??[]).map(g=>g||'blank').join(', ')})`:''}. Zero-count periods are retained; records without an ISO 8601 date are excluded and counted, never redistributed.`};
+    method:`Cases per ${PERIOD_WORDS[series.period]} by ${series.dateKind} date${series.weightField?`, weighted by ${series.weightField}`:series.caseId?`, each ${series.caseId} once (${series.rowsRead} rows read)`:', one case per record'}${series.splitBy?`, for each value of ${series.splitBy} (${(series.groups??[]).map(g=>g||'blank').join(', ')})`:''}. Zero-count periods are retained; records without an ISO 8601 date are excluded and counted, never redistributed.`};
 }
 
 export function validateCaseSeriesNode(node:WorkflowNode):void{

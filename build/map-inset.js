@@ -1,2 +1,2 @@
-import{a,b,c,d}from"./chunks/chunk-2VN5EBDU.js";import"./chunks/chunk-KVMUXFPB.js";export{a as boxInside,c as chooseCorner,d as composeInset,b as niceMetres};
+import{a,b,c,d,e}from"./chunks/chunk-5IONLLYC.js";import"./chunks/chunk-KVMUXFPB.js";export{b as boxInside,d as chooseCorner,e as composeInset,a as insetWidth,c as niceMetres};
 //# sourceMappingURL=map-inset.js.map

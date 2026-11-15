@@ -806,14 +806,14 @@
       "id": "urn:fieldwork:example:mers-korea-2015",
       "title": "MERS-CoV, South Korea, 2015",
       "repository": "https://github.com/digital-twin-ph/example-2015-mers-korea",
-      "commit": "2cd4392409a49142c3c20097c82b551a6f41365f",
+      "commit": "6d617bf53a9b90644e847841e9c5158002974a71",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2015-mers-korea",
       "licence": {
         "data": "No licence stated for the data; used for teaching, as the outbreaks package describes it. The repository’s own files are CC0-1.0.",
         "source": "The R package outbreaks (reconverse), mers_korea_2015, compiled by ECDC’s Epidemic Intelligence from public information in the outbreak’s first weeks.",
         "note": "Decided 2026-11-11 by the practitioner: used in an example repository for teaching, attributed, never in the application."
       },
-      "description": "A line list of 162 cases, each case’s onset, diagnosis and report set against the 7-1-7 targets by a published ruleset and each verdict counted; and the 98 probable links, counted by source and by setting of exposure; and each hospital named for cases, placed and mapped over South Korea’s 17 provinces, coloured by its cases. Deaths by age class and by sex in a two-by-two; the days from exposure to onset, with its median by outcome, and from onset to death; and the secondary cases per source and the serial interval by setting; and how many each case infected, the offspring distribution.",
+      "description": "A line list of 162 cases, each case’s onset, diagnosis and report set against the 7-1-7 targets by a published ruleset and each verdict counted; and the 98 probable links, counted by source and by setting of exposure; and each hospital named for cases, placed and mapped over South Korea’s 17 provinces, coloured by its cases. Deaths by age class and by sex in a two-by-two; the days from exposure to onset, with its median by outcome, and from onset to death; and the secondary cases per source and the serial interval by setting; and how many each case infected, the offspring distribution; and each case its transmission chain, the epidemic curve by generation and the chains by size, and an inset over the hospitals at Pyeongtaek.",
       "carries": {
         "workflow": true,
         "data": true,
@@ -822,6 +822,7 @@
       "notYet": "No response dates, so no verdict on the third target.",
       "uses": [
         "apply_ruleset",
+        "case_series",
         "chart_output",
         "group_table",
         "map_output",
@@ -830,13 +831,14 @@
         "study_area",
         "table_input",
         "table_output",
+        "transmission_chains",
         "two_by_two"
       ],
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "9af1b8ebac11c788c8f607b73d1cd217e3a2e99cdc02777eb745cb23e044f9f9",
-          "bytes": 154731
+          "sha256": "ed8687c33657cf48be38707a0f445562acd36dae883fe91d1d193b397abc6055",
+          "bytes": 156737
         },
         {
           "path": "data/mers_korea_2015_linelist.csv",
@@ -865,8 +867,8 @@
         },
         {
           "path": "README.md",
-          "sha256": "36024054b83c1b341e8b7a3a08e00dc6d5f1626da647279be44d71ef2af2ec57",
-          "bytes": 9745
+          "sha256": "a258dfca535d0a2b69366b15d78b5debe04dbfbeb4a56f595e04bb3d9e2444d0",
+          "bytes": 10687
         },
         {
           "path": "NOTICE.txt",
@@ -899,7 +901,7 @@
           "bytes": 3442
         }
       ],
-      "workflowCount": 9
+      "workflowCount": 10
     },
     {
       "id": "urn:fieldwork:example:population-models-census",

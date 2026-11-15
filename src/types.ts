@@ -441,7 +441,9 @@ export interface ParamsByType {
     /** Where the search's items are kept in the payload store (experiment 182). Written on save. */ searchRef?:string};
   study_design:{label:string;design:StudyDesign;period:string;unitOfAnalysis:string;note:string;computations?:string[];answers?:Record<string,import('./study-design-questions.js').DesignAnswer>;table?:import('./study-design-questions.js').DeclaredTable};
   case_series:{label:string;source?:'points'|'table';dateField:string;dateKind:import('./case-series.js').DateKind;period:import('./case-series.js').Period;weightField?:string;
-    /** Split by a record column (experiment 210). */ splitBy?:string};
+    /** Split by a record column (experiment 210). */ splitBy?:string;
+    /** From a table, each row one case rather than as many as its value (2026-11-15). */ rowAsCase?:boolean;
+    /** With rowAsCase: the column naming each case, so a case in several rows counts once. */ caseId?:string};
   summarize_combined_area:{label:string;zone:number;hemisphere:'north'|'south';yields?:'area'};
   snap_to_network:{label:string;zone:number;hemisphere:'north'|'south';maxSnapM:number};
   /** `zone`, `hemisphere` and `maxSnapM` are OPTIONAL: they are needed only for origins this

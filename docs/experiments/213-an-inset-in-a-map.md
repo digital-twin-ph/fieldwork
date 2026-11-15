@@ -2,7 +2,7 @@
 
 _Created 2026-11-13 · Updated 2026-11-14_
 
-**Status:** tried — built 2026-11-14 (Fieldwork 0.119.0, Map 0.31.0); the browser test and the two worked examples to follow.
+**Status:** tried — built 2026-11-14 (Fieldwork 0.119.0, Map 0.31.0); MERS's inset in its example and its browser test; Oswego's locator waits for New York State's boundary.
 
 ## The question
 
@@ -78,6 +78,18 @@ As designed, with two departures, each a result:
    to the large frame would cross the whole figure. The box alone says where.
 2. **The basemap is drawn under the large frame only.** The small frame shows the layers on the map's plain ground.
    Drawing tiles into a nested frame is a second fetch at another zoom; not done yet.
+
+3. **Marks keep their size on the page.** The first build drew the enlarged part at the figure's 850 units and shrank it
+   into its frame, so its marks shrank to a third: they stood apart because they were small. Found on MERS's own map,
+   2026-11-15. Now the small frame's marks and lines are drawn larger by as much as the frame is shrunk.
+4. **Also picked on Configure…'s preview.** MERS's hospital map is a static figure in Results, which cannot be zoomed;
+   the preview in Configure… can, and offers the same choice.
+
+**MERS** (pinned 2026-11-15): Seoul to Pyeongtaek in a third-wide frame enlarged about 3.5 times, not enough for the
+Pyeongtaek hospitals, about 2 km apart, to separate at their marks' size. The box was tightened to Pyeongtaek, about
+18 km across, half the figure wide: in the browser test the four hospitals stand at least 2.2 marks' widths apart.
+**Oswego's locator is not built**: its study area is a box about 2 km across around Lycoming, and a locator needs the
+whole it sits in, New York State, as the map's extent; that boundary has to be read in first, with the Oswego revisit.
 
 An inset is offered for a map over its study area (the plain static map). A map in panels has none; a polygon map
 without a study area has none yet. In the unit test, two marks about 1.4 km apart in Seoul, on a map of 126 to 130 E: 1.7 px apart on the whole map

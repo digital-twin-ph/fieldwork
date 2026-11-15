@@ -18,6 +18,10 @@ and the last, empty ones as zero. A gap in a curve is a fact about the outbreak,
   or carries its count in **Cases per record**.
 - **a table, each row a count**: a table with a date key column, such as Snow's deaths by day or Brazil's notified
   cases by municipality and week. Each row adds its value column to its period.
+- **a table, each row one case**: a line list that arrives as a table, such as MERS's cases with their recorded
+  sources. Each row counts once, and its value column is not read: MERS's is age. Where a case has a row for each
+  recorded source, choose **Each case is named in** and each case counts once, at its date; two rows for one case with
+  different dates are refused, naming the case.
 
 Changing it disconnects the input, because points and a table are not the same shape.
 
@@ -30,7 +34,7 @@ set and applied with **Apply**:
 
 | Setting | What it decides |
 | --- | --- |
-| **Records arrive as** | Points, one per record, or a table, each row a count |
+| **Records arrive as** | Points, one per record; a table, each row a count; or a table, each row one case |
 | **Date column** | The column holding the date, written as an ISO 8601 date (2024-01-07) |
 | **Which date is it?** | Onset, report, death, specimen collection, or other. It is written on the chart's axis and caption |
 | **Period** | Day; week, starting Monday (ISO 8601); week, starting Sunday (the epidemiological week); month; day of the week; or month of the year |
@@ -62,7 +66,9 @@ each record carries a count, *188 records* when each record is one case.
 **Count each value of** names a column of the records, such as a school class. Each period is then counted for each
 of its values, every period kept for every value, a blank its own value; the table is keyed by period and the column,
 and Chart draws it in panels or, with **Draw** *Stacked bars*, as one bar per period divided by the values. Hagelloch's
-*Who fell ill?* counts its cases by week for each school class. Only for records that arrive as points.
+*Who fell ill?* counts its cases by week for each school class. For points, and for a table whose rows are each one
+case: MERS's curve by generation splits its cases by the `generation` column **Transmission chains** adds. Not for a
+table of counts.
 
 ## What it will not do
 

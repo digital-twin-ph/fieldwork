@@ -3,7 +3,7 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## 0.124.0 — In development
+## 0.124.0 — 2026-11-15
 
 - **Hagelloch's daily scan as a chart, in Notes.** Each evening's p-value, with a dashed line at 0.05, over the cases
   known by then. It touches the line twice, on 21 November and 5 December 1861, about what 78 unadjusted daily looks

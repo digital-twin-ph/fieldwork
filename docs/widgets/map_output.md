@@ -180,6 +180,9 @@ merged, so no class is empty: Salmonella's 16 Länder, nine of them with no case
 classes, 0, 1, 2 to 5 and 6 to 11, and the key says the tied values were kept in one class. Those classes do not hold
 about equal numbers of places.
 
+**The key has its own band under the map**, as tall as it needs, so a basemap never runs under the class labels: on
+Salmonella's Länder over OpenStreetMap they had lain on Switzerland's tiles and place names.
+
 **Whole numbers are keyed as whole numbers.** Where every value is a whole number, such as a count of cases, each
 class is labelled under its shade with the values it holds, "2 to 5", rather than with the edges between shades.
 

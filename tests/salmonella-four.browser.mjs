@@ -60,5 +60,7 @@ test('Salmonella: who the cases were, every food, where the cases shopped and wh
   for(const said of ['cases: 0','1','2 to 5','6 to 11'])await expect(main.getByText(said,{exact:true}).first()).toBeVisible();
   await expect(main).not.toContainText('0.00 to 0.00');
   await expect(main).toContainText('4 quantile classes, tied values kept in one class');
+  // The key has its own band under the map, so a basemap never runs under its labels (2026-11-15).
+  await expect(page.locator('#map [data-plot-key-band]')).toHaveCount(1);
   expect(errors).toEqual([]);
 });

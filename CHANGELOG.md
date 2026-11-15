@@ -3,6 +3,15 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.123.0 — In development
+
+- **A map's key no longer sits on the map.** In a static map the class key has its own band under the map, so a
+  basemap's tiles and place names never run under the labels. Salmonella's Länder over OpenStreetMap had the key on
+  Switzerland. Map 0.32.1.
+- **A polygon layer in Table output is a plain table.** One row per polygon with its attributes and what the step that
+  made it says of each, such as a catchment's locations and deaths, and no empty Longitude and Latitude columns. A
+  table with no value column is listed as it is, not spread into columns of "unknown". Table output 0.12.0.
+
 ## 0.122.0 — 2026-11-15
 
 - **A table under the map.** A map of districts, states or other areas now has a table under it in Results with every

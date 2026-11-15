@@ -9,9 +9,15 @@ const newProject=async(page,name)=>{
   // click on New project landed on a disabled button and the name field never appeared: this failed CI twice, on
   // 0.31.0 and 0.35.0, and never locally (2026-11-06).
   await expect(page.locator('#workflow-state')).not.toContainText('Running',{timeout:60000});
-  await expect(page.locator('#new-project')).toBeEnabled();
-  await page.locator('#new-project').click();
-  await page.locator('#project-name-input').fill(name);
+  // AND AGAIN UNTIL THE FIELD OPENS: on CI the isochrone example's own check began after that wait and swallowed the click
+  // (0.122.0, 2026-11-15). Click while enabled, and try again until the name field is there.
+  const field=page.locator('#project-name-input');
+  await expect.poll(async()=>{
+    if(await field.isVisible())return true;
+    if(await page.locator('#new-project').isEnabled())await page.locator('#new-project').click({timeout:2000}).catch(()=>{});
+    return field.isVisible();
+  },{timeout:60000,intervals:[1000]}).toBe(true);
+  await field.fill(name);
   await page.locator('#project-create').click();
   await page.locator('[data-view="workflow"]').click();
 };

@@ -75,8 +75,12 @@ export function polygonFrame(p:Polygons):{project:(c:Position)=>[number,number];
     if(c[1]<south)south=c[1];if(c[1]>north)north=c[1];
   }
   const frame=plotFrame([west,south,east,north],{width:790,margin:60});
-  return {bounds:[west,south,east,north],height:frame.height,project:frame.project};
+  return {bounds:[west,south,east,north],height:frame.height+KEY_BAND,project:frame.project};
 }
+/** THE KEY'S OWN BAND, under the map rather than over it (2026-11-15): drawn in the frame's last 45 px, Salmonella's
+ *  ramp and its labels lay on Switzerland's tiles and place names and could not be read. The figure is this much
+ *  taller; the map keeps its place and scale; the band is plain ground, so no tile runs under the key. */
+export const KEY_BAND=56;
 export function polygonSvg(p:Polygons,esc:Escape):string{
   if(p.kind==='hexbin'){
     const coords=p.features.flatMap(f=>f.geometry.type==='Polygon'?f.geometry.coordinates.flat():f.geometry.coordinates.flat(2));
@@ -87,12 +91,12 @@ export function polygonSvg(p:Polygons,esc:Escape):string{
       if(c[0]<west)west=c[0];if(c[0]>east)east=c[0];
       if(c[1]<south)south=c[1];if(c[1]>north)north=c[1];
     }
-    const {project,height}=plotFrame([west,south,east,north],{width:790,margin:60});
+    const framed=plotFrame([west,south,east,north],{width:790,margin:60}),project=framed.project,height=framed.height+KEY_BAND;
     return `<rect width="850" height="${height}" fill="#f7faf8"/>`+p.features.map(f=>`<path data-hex-cell="${esc(f.id)}" d="M${(f.geometry.type==='Polygon'?f.geometry.coordinates[0]:f.geometry.coordinates[0][0]).map(c=>project(c).join(',')).join('L')}Z" fill="#3686a8" fill-opacity=".25" stroke="#19617c" stroke-width="1"><title>${esc(f.id)} · ${f.count} locations</title></path>`).join('')+'<text x="20" y="282" font-size="14">H3 aggregate cells · sparse cells omitted</text>';
   }
   const rings=p.features.flatMap(f=>f.geometry.type==='Polygon'?f.geometry.coordinates:f.geometry.coordinates.flat()),coords=[...rings.flat(),...p.sites.flatMap(f=>f.geometry?[f.geometry.coordinates]:[]),...(p.observations?.features||[]).flatMap(f=>f.geometry?[f.geometry.coordinates]:[])];if(!coords.length)return '<text x="30" y="40">No intersecting polygons or located points</text>';
   const [west,south,east,north]=coords.reduce(([w,s,e,n],c)=>[Math.min(w,c[0]),Math.min(s,c[1]),Math.max(e,c[0]),Math.max(n,c[1])],[Infinity,Infinity,-Infinity,-Infinity]);
-  const {project,height}=plotFrame([west,south,east,north],{width:790,margin:60});
+  const framed=plotFrame([west,south,east,north],{width:790,margin:60}),project=framed.project,height=framed.height+KEY_BAND;
   // COLOURED BY VALUE WHERE THERE IS ONE, by position where there is not. A catchment's colour
   // says which catchment; a choropleth's colour says how much, and reading the second as the
   // first is the misreading this whole figure exists to avoid. `classifyValues` returns null
@@ -140,7 +144,8 @@ export function polygonSvg(p:Polygons,esc:Escape):string{
     // Value-bearing fills are readable at full strength; a catchment's identity wash is not
     // the same thing and keeps the lighter tint it has always had.
     const opacity=classed||grouped?(at===null?'.18':'.78'):categorical?'.55':wash?'.16':'.22';
-    return `<path data-catchment="${esc(f.id)}"${classed&&f.value!==undefined?` data-value="${f.value}"`:''}${grouped&&f.category?` data-category="${esc(f.category)}"`:''} d="${polys.flat().map(r=>'M'+r.map(c=>project(c).join(',')).join('L')+'Z').join('')}" fill="${fill}" fill-opacity="${opacity}" fill-rule="evenodd" stroke="${classed?FIGURE_ROLE.quietInk:fill}" stroke-width="${classed?'.6':'1'}"><title>${esc(f.name)}${f.category?` · ${esc(f.category)}`:''}${f.value===undefined?'':` · ${f.value}`}${f.count===undefined?'':` · ${f.count} locations`}</title></path>`;}).join('')+(p.observations?.features||[]).filter(f=>f.geometry).map(f=>{const [x,y]=project(f.geometry!.coordinates);return `<circle cx="${x}" cy="${y}" r="1.8" fill="#70523a"><title>${esc(f.properties.name)}</title></circle>`;}).join('')+p.sites.filter(f=>f.geometry).map(f=>{const [x,y]=project(f.geometry!.coordinates);return `<rect x="${x-4}" y="${y-4}" width="8" height="8" fill="#174d47"><title>${esc(f.properties.name)}</title></rect>`;}).join('')+plotKey(p,classed,esc,grouped,height);
+    return `<path data-catchment="${esc(f.id)}"${classed&&f.value!==undefined?` data-value="${f.value}"`:''}${grouped&&f.category?` data-category="${esc(f.category)}"`:''} d="${polys.flat().map(r=>'M'+r.map(c=>project(c).join(',')).join('L')+'Z').join('')}" fill="${fill}" fill-opacity="${opacity}" fill-rule="evenodd" stroke="${classed?FIGURE_ROLE.quietInk:fill}" stroke-width="${classed?'.6':'1'}"><title>${esc(f.name)}${f.category?` · ${esc(f.category)}`:''}${f.value===undefined?'':` · ${f.value}`}${f.count===undefined?'':` · ${f.count} locations`}</title></path>`;}).join('')+(p.observations?.features||[]).filter(f=>f.geometry).map(f=>{const [x,y]=project(f.geometry!.coordinates);return `<circle cx="${x}" cy="${y}" r="1.8" fill="#70523a"><title>${esc(f.properties.name)}</title></circle>`;}).join('')+p.sites.filter(f=>f.geometry).map(f=>{const [x,y]=project(f.geometry!.coordinates);return `<rect x="${x-4}" y="${y-4}" width="8" height="8" fill="#174d47"><title>${esc(f.properties.name)}</title></rect>`;}).join('')
+    +`<rect data-plot-key-band x="0" y="${height-KEY_BAND}" width="850" height="${KEY_BAND}" fill="#f7faf8"/>`+plotKey(p,classed,esc,grouped,height);
 }
 
 // THE KEY NAMES WHAT IS DRAWN, and nothing else. This line was a fixed string -- "Squares:

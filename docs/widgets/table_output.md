@@ -11,7 +11,12 @@ It takes four different things, and it works out which it is showing from what y
 - a **keyed table** from any step that produces one — Relate a column, Total within groups, a rate,
   a two-by-two, an imported table;
 - **point data**, with coordinates and attributes;
-- **catchment polygons** and their summaries.
+- **a polygon layer**: catchments, districts, clusters, with what each carries.
+
+A polygon layer is shown as a plain table, whichever input it arrives at: one row per polygon, its id, its name and
+its attributes, with what the step that made it says of each (a catchment's locations and totals, a band's minutes, a
+rule's conclusion, an area). There are no coordinate columns: a table has no geometry, and a polygon's shape stays on
+the map. Where coordinates for a polygon are wanted, a step that says what it computed has to supply them.
 
 ## What you connect
 
@@ -42,7 +47,7 @@ its own heading, even where every row holds the same number.
 
 ### It states its own shape in the write-up
 
-Every run machines a note into **Results** on the Notes tab stating what this table is made of. It names the columns as the table spells them, says how many rows, reports empty cells as unknown rather than zero, and names the source file and digest where the table came in as a file. Only in the table mode: the point, polygon and decision views are not published tables.
+Every run machines a note into **Results** on the Notes tab stating what this table is made of. It names the columns as the table spells them, says how many rows, reports empty cells as unknown rather than zero, and names the source file and digest where the table came in as a file. Not for the point and decision views, which are not published tables.
 
 Column names are shown as they are, in `code`, rather than bent into a sentence. A generator cannot tell whether `measure` or `group` is a noun, so it states them and leaves the prose to you.
 

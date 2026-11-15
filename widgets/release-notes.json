@@ -427,12 +427,12 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.32.0",
+   "version": "0.32.1",
    "released": "2026-11-15",
    "changes": [
     {
-     "kind": "minor",
-     "description": "A table under a map of polygons in Results: one row per place with every attribute the polygons carry, sortable, linked both ways to the map (a row chosen outlines its place, brings it into view and opens its popup; a place chosen marks its row), on the static figure and the interactive map. The Inspector says when it is there. The interactive map keeps its height when a table follows it."
+     "kind": "patch",
+     "description": "The static figure's key is drawn in its own band under the map, with plain ground, so a basemap never runs under the class labels; the figure is 56 px taller and the map keeps its place and scale."
     }
    ],
    "breaking": false,
@@ -920,12 +920,12 @@
    "migrationFrom": []
   },
   "table_output": {
-   "version": "0.11.0",
-   "released": "2026-11-14",
+   "version": "0.12.0",
+   "released": "2026-11-15",
    "changes": [
     {
      "kind": "minor",
-     "description": "A figure can be left out of the write-up: \"Not in the write-up\" beside the four sections keeps it in Results, and the run writes no note for it and states it was left out (fw:figureInWriteUp false)."
+     "description": "A polygon layer is shown as a plain table at either input: one row per polygon with its id, name and attributes and what the step that made it says of each (locations and totals, minutes, a rule's conclusion, an area), no coordinate columns, and the table note in Notes. A table with no value column is listed, never spread into columns of \"unknown\", and shows no empty value column."
     }
    ],
    "breaking": false,

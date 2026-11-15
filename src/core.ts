@@ -327,11 +327,20 @@ export function studyUnitAreas(study:{units:{id:string;name:string}[];boundary:i
  *  geometry. Its number, where the layer names the column that holds it (Sample a raster's total, such as population), is
  *  the table's value, so Total within groups adds it and gives each part's share; otherwise the parts' `value` is, under
  *  "value", or there is none. Botswana's 28 districts' totals from three rasters set beside the census needed it. */
-export function polygonsAsTable(value:{valueColumn?:string;features?:{id?:unknown;name?:string;value?:number;properties?:Record<string,unknown>|null}[]}|undefined):DataTable{
+export function polygonsAsTable(value:{valueColumn?:string;kind?:string;summary?:{valueField?:string};
+  features?:{id?:unknown;name?:string;value?:number;properties?:Record<string,unknown>|null;minutes?:number;status?:string;explanation?:string|null;
+    areaSquareMetres?:number;count?:number;total?:number;missingValues?:number}[]}|undefined):DataTable{
   const features=value?.features??[],column=value?.valueColumn?.trim();
   const valued=features.some(f=>typeof f.value==='number');
+  // WHAT THE STEP THAT MADE THE LAYER SAYS OF EACH POLYGON, beside its own attributes, as Table output's polygon view showed
+  // them: a band's minutes, a rule's conclusion, an area, the locations a catchment holds (2026-11-15, read one way).
+  const summary=value?.summary;
+  const said=(f:typeof features[number])=>({...(f.minutes!==undefined?{minutes:f.minutes}:{}),
+    ...(f.status!==undefined?{status:f.status,explanation:f.explanation??null}:{}),
+    ...(f.areaSquareMetres!==undefined?{areaSquareMetres:f.areaSquareMetres}:{}),
+    ...(value?.kind==='hexbin'?{count:f.count??0}:summary?{locations:f.count??null,...(summary.valueField?{numericTotal:f.total??null}:{}),missingValues:f.missingValues??null}:{})});
   const table=pointsAsTable({features:features.map(f=>{const props={...(f.properties??{})};if(column)delete props[column];
-    return {id:f.id,properties:{name:f.name??String(f.id??''),...props}};})});
+    return {id:f.id,properties:{name:f.name??String(f.id??''),...props,...said(f)}};})});
   if(!valued)return table;
   const field=column||'value';
   return {...table,valueField:field,rows:table.rows.map((row,i)=>({...row,value:typeof features[i]!.value==='number'?features[i]!.value!:null})),
@@ -2571,7 +2580,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           +`rest of this workflow uses will do.`);
         const mapped=mapOutput(node,{area:inputs.area,points:pointInputs()},runId);value=mapped.value;if(mapped.receipt)receipts.push(mapped.receipt);break;}
       // The renderer follows the connections, not a stored mode: shownMode.
-      case 'table_output':{const shown=shownMode(node,workflow.edges);if(shown==='table'){value={...structuredClone(inputs.table),centers:[],pointTable:true} as unknown as DisplayValue;const viewFacts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n<urn:fieldwork:run:${runId}:view:${node.id}> a fw:TableView, prov:Activity; prov:used <urn:fieldwork:run:${runId}:table:${workflow.edges.find(e=>e.to===node.id&&e.port==='table')!.from}>.\n`;receipts.push({nodeId:node.id,kind:'presentation',facts:viewFacts,rules:'',input:viewFacts,conclusions:[]});break;}if(shown==='polygons'){value=polygonDisplay(inputs.polygons,'table');receipts.push(polygonPresentationReceipt(node,workflow.edges.find(e=>e.to===node.id&&e.port==='polygons')!.from,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='context')?.from));break;}const table=tableOutput(node,{points:pointInputs()},runId);value=table.value;receipts.push(table.receipt);break;}
+      case 'table_output':{const shown=shownMode(node,workflow.edges);if(shown==='table'){value={...structuredClone(inputs.table),centers:[],pointTable:true} as unknown as DisplayValue;const viewFacts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n<urn:fieldwork:run:${runId}:view:${node.id}> a fw:TableView, prov:Activity; prov:used <urn:fieldwork:run:${runId}:table:${workflow.edges.find(e=>e.to===node.id&&e.port==='table')!.from}>.\n`;receipts.push({nodeId:node.id,kind:'presentation',facts:viewFacts,rules:'',input:viewFacts,conclusions:[]});break;}if(shown==='polygons'){value={...polygonsAsTable(inputs.polygons as never),centers:[],pointTable:true} as unknown as DisplayValue;receipts.push(polygonPresentationReceipt(node,workflow.edges.find(e=>e.to===node.id&&e.port==='polygons')!.from,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='context')?.from));break;}const table=tableOutput(node,{points:pointInputs()},runId);value=table.value;receipts.push(table.receipt);break;}
       case 'measure_area':{const computed=measureArea(node,inputs.area,runId);value=computed.value;receipts.push(computed.receipt);break;}
       case 'study_area':{
         if(node.params.source!=='drawn')throw new Error('This study area names a dataset rather than drawing or acquiring its outline. That form was Old Naledi\'s and retired with it on 2026-11-11; draw the area, or pick administrative units.');
@@ -2604,7 +2613,8 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
     // table, and captioning that would caption a computation as though it were a figure.
     if(node.type==='table_output'&&(value as {kind?:string})?.kind==='data-table'){
       const described=tableDescriptionNote(value as unknown as import('./data-table.js').DataTable,
-        node.params.label,node.id,portSourceName(workflow,node.id,'table',''));
+        node.params.label,node.id,portSourceName(workflow,node.id,
+          workflow.edges.some(e=>e.to===node.id&&e.port==='polygons')?'polygons':'table',''));
       // FILED WHERE THE PRACTITIONER PUT IT, Results unless they chose otherwise.
       const note=described&&{...described,section:figureSection(node.params,node.type)};
       const table=value as unknown as import('./data-table.js').DataTable;

@@ -55,7 +55,7 @@ test('John Snow examples use shared primitives, persist parameters and replay of
   await page.locator('[data-view="results"]').click();
   await expect(page.locator('#map [data-catchment]')).toHaveCount(8);await expect(page.locator('#result-metrics')).toContainText('250 matched');
   await page.locator('[data-view="results"]').click();
-  await page.locator('#result-tab-table').click();await expect(page.locator('#result-rows')).toContainText('340');await expect(page.locator('#result-head')).toContainText('locations');await page.locator('#result-tab-chart').click();await expect(page.locator('#bars-panel')).toContainText('Sum DEATHS');
+  await page.locator('#result-tab-table').click();await expect(page.locator('#data-table-view')).toContainText('340');await expect(page.locator('#data-table-view thead')).toContainText('locations');await expect(page.locator('#data-table-view thead')).not.toContainText('Longitude');await page.locator('#result-tab-chart').click();await expect(page.locator('#bars-panel')).toContainText('Sum DEATHS');
   await page.locator('[data-view="workflow"]').click();
   await page.locator('[data-view="results"]').click();
   await page.locator('[data-view="workflow"]').click();

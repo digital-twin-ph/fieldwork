@@ -749,6 +749,9 @@ export interface WideFrame {
 export function wideFrame(table:DataTable):WideFrame|null{
   const keys=table.keys;
   if(keys.length<2)return null;
+  // NO VALUE COLUMN, NOTHING TO SPREAD: a layer of polygons or points as a table is its attributes, one row each, and
+  // pivoting on its names drew John Snow's eight pumps as eight columns of "unknown" (2026-11-15).
+  if(!table.valueField)return null;
   // A DECLARED READING ORDER decides (experiment 191): totals and their shares by two columns have two keys that vary
   // within a subject, and the person who kept them put them in order.
   if(table.wide?.asDeclared&&keys.includes(table.wide.measureKey))return declaredFrame(table,table.wide.measureKey,table.wide.subjectKeys);
@@ -964,12 +967,14 @@ export function dataTableMarkup(table:DataTable,esc:Escape,{query='',page=0,page
       +(grid.grandTotal!==null&&assertTotals&&!table.unit?.trim()
         ?`<p class="table-meta muted">Totals are shown because this step was told these values `
           +`count the same thing. The table states no unit, so nothing here checks that.</p>`:'');
-  return `<div class="table-meta muted">${matching.length} of ${table.rowCount} rows${table.missingValueCount?` · ${table.missingValueCount} values absent and kept as unknown`:''} · value in ${unit}</div>`
-    +`<table><thead><tr>${table.keys.map(k=>roleHead(roles,k,esc)).join('')}${roleHead(roles,table.valueField,esc)}</tr></thead><tbody>`
+  // A TABLE WITH NO VALUE COLUMN, a layer's attributes, shows none: an empty "unknown" on every row said nothing.
+  const valued=!!table.valueField;
+  return `<div class="table-meta muted">${matching.length} of ${table.rowCount} rows${valued&&table.missingValueCount?` · ${table.missingValueCount} values absent and kept as unknown`:''}${valued?` · value in ${unit}`:''}</div>`
+    +`<table><thead><tr>${table.keys.map(k=>roleHead(roles,k,esc)).join('')}${valued?roleHead(roles,table.valueField,esc):''}</tr></thead><tbody>`
     // A CELL EDITED BY HAND IS MARKED, with what it was on hover (experiment 214).
     +shown.map(row=>{const edited=(row as {edited?:EditedCells}).edited;
       const cell=(c:string)=>roleAttr(roles,c,edited?.[c]?'cell-edited':'')+(edited?.[c]?` data-cell-edited title="${esc(editedTitle(edited[c]!))}"`:'');
-      return `<tr>${table.keys.map(k=>`<td${cell(k)}>${esc(row.key[k])}</td>`).join('')}<td${cell(table.valueField)}>${row.value===null?'<span class="muted">unknown</span>':esc(row.value)}</td></tr>`;}).join('')
+      return `<tr>${table.keys.map(k=>`<td${cell(k)}>${esc(row.key[k])}</td>`).join('')}${valued?`<td${cell(table.valueField)}>${row.value===null?'<span class="muted">unknown</span>':esc(row.value)}</td>`:''}</tr>`;}).join('')
     +`</tbody></table>`+(pages>1?`<div class="table-page-group"><button class="button small" data-table-page="${page-1}" ${page===0?'disabled':''}>Previous rows</button><span role="status">Page ${page+1} of ${pages}</span><button class="button small" data-table-page="${page+1}" ${page+1>=pages?'disabled':''}>Next rows</button></div>`:'');
 }
 

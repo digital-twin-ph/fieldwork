@@ -144,7 +144,8 @@ table output is to use for other purposes and non-geometry computation purpose m
 polygon layer reaches a table with no coordinate columns**, only its own attributes, whichever input it arrives at;
 its shape stays on the map (a table has no geometry). A point keeps its longitude and latitude, which are its recorded
 location, not a stand-in. Coordinates for a polygon, where wanted, come from a step that says what it computed. For
-0.115.0. (4) A lead, unread: an article on a Vercel UI SDK for
+0.115.0. **Built 2026-11-15** (0.123.0, Table output 0.12.0), with what the step that made a layer says of each
+polygon kept as columns. (4) A lead, unread: an article on a Vercel UI SDK for
 agent interfaces (marktechpost.com, 2026-11-13); against the rule of no AI in Fieldwork unless compelling, but its
 interface patterns may be worth a look. A second, the same day, also unread: an article on UI libraries for work with
 Claude Code (geeky-gadgets.com). Both to be read together when interface work is next planned; anything adopted is a

@@ -1,6 +1,6 @@
 # 201 · Georeferencing a map image by matching points
 
-_Created 2026-11-10 · Updated 2026-11-13_
+_Created 2026-11-10 · Updated 2026-11-15_
 
 **Status:** tried. The fit, the dialog and turned drawing are built (0.81.0); South London's four points refitted; lab
 check 48 agrees with GDAL; the cue for a worked example is built, and Hagelloch's 1824 sheet is placed by hand in Hagelloch's
@@ -240,6 +240,19 @@ east and 11 m south. *West of Texas, NY, 1943* is exact. At their shared edge th
 **Checked** in `tests/geotiff-picture.test.mjs` (USGS's own tags for Oswego East: picture, polyconic, printed sheet,
 window, shift) and `tests/geotiff-sheet.browser.mjs` (a fixture drawn 600 m off its tags: preview, graticule, one pair
 moving it about 600 m, both placements kept, two sheets drawn and listed), Chromium.
+
+**Lesson learned (the practitioner, 2026-11-15): "we do not assume a GeoTIFF's metadata is always accurate".** A
+GeoTIFF's tags are a claim about where it lies, not evidence. USGS's own *Oswego East, NY, 1943*, from the National
+Map's historical collection, is 652 m off its printed corners by its tags, while its neighbour *West of Texas* is exact:
+the same publisher, the same series, the same year, and one wrong. So the widget opens a GeoTIFF on its tags only as a
+starting point, shows the sheet's graticule against them, and keeps the tags' placement beside any correction.
+
+**Lycoming placed through the dialog, 2026-11-15.** Oswego East by its printed corner and today's two crossroads
+(Lycoming, County Route 29 and Miner Road; North Scriba, County Route 1 and County Route 29, from OpenStreetMap): 649 m
+east, 1 m south; errors 10, 7 and 12 m. Corner alone 652 m east; the two crossroads alone 648 m east, agreeing to 9 m:
+two independent kinds of evidence give one shift. West of Texas by its printed corner: 0 m. At their shared edge
+County Route 29 steps about 20 to 30 m; the northern sheet draws its roads 11 to 28 m west of today's, so the step is
+mostly the 1943 northern sheet's own drawing, left as it is.
 
 **Not established**: whether a learner reads the dashed graticule against printed ticks without being told where to
 look; and whether junctions matched across 83 years settle the seam better than the sheets' own corners.

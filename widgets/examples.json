@@ -396,7 +396,7 @@
       "id": "urn:fieldwork:example:nyc-asthma-ozone-2016-2025",
       "title": "Ozone and child asthma emergency visits, New York City, 2016–2025",
       "repository": "https://github.com/digital-twin-ph/example-2025-nyc-ozone",
-      "commit": "90c572fa53b0a64542896a26a679c1b45ba841cc",
+      "commit": "d16ad99249d886d60e47388043154b055ec1a82f",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2025-nyc-ozone",
       "licence": {
         "data": "Not redistributed",
@@ -427,8 +427,8 @@
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "b6777a3bd4f54f12639e96de966dd4b8a0ef295685da692c8abc11066a3afcc6",
-          "bytes": 11154
+          "sha256": "37900fb0ba05982b2d76f33b77bc827cfbf56bfad5c4a813d59cd8b27bea443b",
+          "bytes": 17083
         },
         {
           "path": "provenance.json",
@@ -437,8 +437,8 @@
         },
         {
           "path": "README.md",
-          "sha256": "cc7c2f10ce97c77f66525e8bf45961611e729bf31038360e466505dcbc3b1764",
-          "bytes": 6456
+          "sha256": "729ab83c959c174d3291f572c7c7bed37a795809c2913409c1907a938357007a",
+          "bytes": 6681
         },
         {
           "path": "NOTICE.txt",
@@ -447,8 +447,8 @@
         },
         {
           "path": "manual.json",
-          "sha256": "a192be4b76ece4a816f414286d208bf2633f8543de94f5d80630292045a173ab",
-          "bytes": 43897
+          "sha256": "70d7838909da5ad1789e937b26161b361f83fcb2231db21ea6c39a0a131e3177",
+          "bytes": 46636
         }
       ],
       "workflowCount": 6

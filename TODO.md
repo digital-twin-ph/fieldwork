@@ -101,8 +101,8 @@ the same day: "Yes, the 1824 sheet").
 
 **Found 2026-11-14, not yet done:** each static map in Results is more complete and professional than the same map in
 Notes (the practitioner: "still needs improvement"); compare the two renderers and make Notes draw what Results draws.
-And for NYC, a diagram of how ground-station and satellite measurements relate, as an authored note (the practitioner's
-request, same day).
+**Done 2026-11-15 (0.125.1):** NYC's diagram of how ground-station and satellite measurements relate, as an authored
+note in the Introduction (the practitioner's request, same day).
 
 **2026-11-14, the practitioner: "For population rasters, did we finish the zonal statistics? And can we add them to the
 workflows?"** Built (Sample a raster's cell statistics, experiment 209) but switched on in neither population workflow,

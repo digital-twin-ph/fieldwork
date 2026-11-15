@@ -3,6 +3,15 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.125.1 — In development
+
+- **NYC's Introduction has a diagram**, as an authored note with its image: what a monitor and the satellite each
+  measure (the air at an inlet as a daily mean in ppb; the NO₂ column over a pixel of about 3.5 × 5.5 km, once a day, in
+  mol/m²) and how the sixth workflow puts them side by side. Its manual ends by adding it, and the from-scratch run
+  builds it.
+- Experiment 201 records the lesson of the Oswego East sheet: a GeoTIFF's placement tags are a claim, checked against
+  its printed graticule and today's map.
+
 ## 0.125.0 — 2026-11-15
 
 - **A scanned map sheet as a GeoTIFF.** Georeferenced map image reads one: it tells a picture from values by its tags,

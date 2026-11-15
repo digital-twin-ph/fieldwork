@@ -15,7 +15,8 @@ import {makeFixture,serveRange} from './fixtures/s5p-fixture.mjs';
 test.use({serviceWorkers:'block'});
 
 const ZENODO='https://zenodo.org/api/records/22757330/files/NYC_Pediatric_Asthma_Ozone_JHM_Reproducibility_v1.0.zip/content';
-const MANUAL=new URL('../../example-2025-nyc-ozone/manual.json',import.meta.url);
+const REPO=new URL('../../example-2025-nyc-ozone/',import.meta.url);
+const MANUAL=new URL('manual.json',REPO);
 const local=process.env.NYC_PKG;
 const skip=!existsSync(MANUAL)?'example-2025-nyc-ozone is not checked out beside this repository.'
   :process.env.NYC_REAL||(local&&existsSync(local))?false:'Set NYC_PKG to a local copy of the Zenodo package, or NYC_REAL=1.';
@@ -57,7 +58,7 @@ test('two questions about child asthma visits in New York City, built by followi
     // Only the satellite workflow gets hours: given to every step, a stalled boundary download in the fifth waited for
     // hours instead of failing (found 2026-11-05).
     const reads=live&&workflow.steps.some(s=>s.add==='sample_satellite_files_at_points');
-    await performManual(page,workflow,reads?{runTimeout:5*3600_000}:undefined);
+    await performManual(page,workflow,{repo:REPO,...reads?{runTimeout:5*3600_000}:{}});
     await page.screenshot({path:`test-results/nyc-${manual.workflows.indexOf(workflow)+1}.png`});
     await page.locator('[data-view="workflow"]').click();await page.locator('#tidy-button').click();
   }

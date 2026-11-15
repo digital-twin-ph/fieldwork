@@ -3,7 +3,7 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## 0.125.0 — In development
+## 0.125.0 — 2026-11-15
 
 - **A scanned map sheet as a GeoTIFF.** Georeferenced map image reads one: it tells a picture from values by its tags,
   reads its projection (polyconic, transverse Mercator, Lambert, Albers, UTM) and redraws the part over the study area

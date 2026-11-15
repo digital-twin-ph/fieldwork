@@ -120,3 +120,20 @@ test('on an interactive map the picker sits on the map: zoom in, use the view, a
   await expect(page.locator('.map-inset-bar.leaflet-control [data-inset-clear]')).toBeVisible({timeout:20000});
   expect(errors).toEqual([]);
 });
+
+test('who infected whom is drawn in Notes, as in Results, not only its sentence',async({page})=>{
+  test.skip(!!skip,skip);test.setTimeout(240000);
+  const errors=collectPageErrors(page);
+  await open(page);
+  await run(page,'Who infected whom, and where?');
+  await page.locator('[data-view="notes"]').click();
+  const note=page.locator('#notes-view .notes-note',{hasText:'Who infected whom.'}).first();
+  await expect(note).toContainText('162 cases in 67 chains');
+  await expect(note.locator('figure[data-figure="chart"] svg')).toBeAttached({timeout:20000});
+  await expect(note.locator('figure svg')).toContainText('Who infected whom, MERS-CoV, South Korea, 2015');
+  // And the publication numbers it as a figure.
+  await page.locator('[data-publication]').click();
+  await expect(page.locator('#publication-view .pub-figure',{hasText:'Who infected whom.'})).toHaveCount(1);
+  await note.screenshot({path:'test-results/mers-tree-notes.png'}).catch(()=>{});
+  expect(errors).toEqual([]);
+});

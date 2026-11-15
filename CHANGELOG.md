@@ -3,6 +3,14 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.120.0 — In development
+
+- **Who infected whom is in Notes.** The transmission tree was in Results and reached Notes as its sentence only; it is
+  now drawn there too, and numbered as a figure in the publication. MERS and Hagelloch. Chart 0.22.1.
+- **The tab bar no longer overlaps.** When the window is narrow the buttons move to a second row, so every tab stays
+  whole and "Run complete" stays on one line. **Hide widgets** is now **Hide node library**, at the left end of the bar,
+  next to the panel it hides; it had sat beside the Widgets tab, which is something else.
+
 ## 0.119.0 — 2026-11-14
 
 - **Transmission chains, a new step.** It follows each case's recorded source back to the case its chain starts with

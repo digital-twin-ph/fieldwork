@@ -153,12 +153,12 @@
    "replacementCandidate": "urn:fieldwork:widget:observations"
   },
   "chart_output": {
-   "version": "0.22.0",
-   "released": "2026-11-14",
+   "version": "0.22.1",
+   "released": "2026-11-15",
    "changes": [
     {
-     "kind": "minor",
-     "description": "A figure can be left out of the write-up: \"Not in the write-up\" beside the four sections keeps it in Results, and the run writes no note for it and states it was left out (fw:figureInWriteUp false)."
+     "kind": "patch",
+     "description": "Who infected whom is drawn in Notes and the publication as in Results; it reached the write-up as its sentence alone."
     }
    ],
    "breaking": false,

@@ -7827,6 +7827,9 @@ function renderNotesView(){
   const chartSvgOf=(held:{run:WorkflowRun; workflow:Workflow})=>(nodeId:string):string|null=>{
     const output=held.run.outputs?.find(o=>o.nodeId===nodeId);
     const node=held.workflow.nodes.find((n):n is WorkflowNode<'chart_output'>=>n.id===nodeId&&n.type==='chart_output');
+    // WHO INFECTED WHOM, as Results draws it (2026-11-15: MERS's tree reached Notes as its sentence and no figure).
+    const tree=(output as {kind?:string;tree?:import('./transmission-tree.js').TransmissionTree}|undefined);
+    if(tree?.kind==='transmission-tree'&&tree.tree&&node)return treeSvg(tree.tree,esc,node.params.chartTitle||'');
     if(!output?.chart?.bins?.length||!node)return null;
     if(chartRenderer(node.params)!=='vega-lite'&&!output.chart.interval&&!output.chart.panels?.length)return null;
     const key=`${held.run.runId}:${nodeId}`,drawn=notesChartSvg.get(key);

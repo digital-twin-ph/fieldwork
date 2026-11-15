@@ -1,6 +1,6 @@
 # TODO
 
-_Created 2026-10-10 · Updated 2026-11-14_
+_Created 2026-10-10 · Updated 2026-11-15_
 
 The project's one list of open work. **Merged 2026-10-26 from two**: a root `TODO.md` of
 deferred work created 2026-10-10 and a `docs/todo.md` of committed work created 2026-10-11, one
@@ -135,7 +135,8 @@ between sequences, and lineage import and export between places. No order set; a
 Inspector and dialog: do it, with Join a table to the study area next when it is touched. (2) Map shows a polygon's
 name, key and shaded value, never its other attributes, so zonal statistics are not on the map: a table under the map
 linked to it, or every attribute in the popup, to be chosen. **Chosen 2026-11-14: the table under the map, linked**
-(a district's row highlights when the district is chosen, and the reverse); for 0.115.0. (3) A polygon layer reaches Table output two ways: into
+(a district's row highlights when the district is chosen, and the reverse); for 0.115.0. **Built 2026-11-15** (0.122.0, Map 0.32.0), in Results under both
+the static figure and the interactive map; not in Notes or the write-up, and not under maps side by side. (3) A polygon layer reaches Table output two ways: into
 its polygons input as a points-style table with empty Longitude and Latitude and attributes 12 to a page, or into its
 table input as a plain table; make the first read as the second. The practitioner, 2026-11-14: *"As table output the
 geometry attributes could be reprojected as X, Y."* Then, the same day: *"Or we can exclude because the purpose of a

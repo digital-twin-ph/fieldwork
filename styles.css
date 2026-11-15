@@ -757,7 +757,9 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 .map-class-ramp i:last-child{border-right:1px solid #4D4D4D}
 .map-class-edges{display:flex;margin:2px 0 0}
 .map-class-edges span{width:80px;text-align:center;font-size:14px;white-space:nowrap}
-.map-class-edges.ranges{margin:2px 40px 0}
+.map-class-edges.ranges{margin:2px 0 0}
+.map-class-legend.ranges .map-class-ramp{margin:0}
+.map-class-legend.ranges .map-class-ramp i,.map-class-edges.ranges span{flex:1 1 0;width:auto;min-width:0}
 .map-class-name{margin:0 0 4px;font-size:14px;font-weight:600}
 .map-class-legend p{margin:4px 0 0;font-size:14px;opacity:.85}
 
@@ -1427,3 +1429,27 @@ th .column-label{display:block;font-weight:400;color:var(--muted);font-size:14px
    before the tabs, and there whether the panel is shown or not. */
 .canvas-toolbar .library-toggle{flex:0 0 auto}
 .toolbar-actions .state{white-space:nowrap}
+
+/* The table under a map of polygons, linked to it both ways (2026-11-14). */
+.map-parts{margin:12px 0 0}
+.map-parts-caption{margin:0 0 6px;font-size:14px;font-weight:600}
+.map-parts-scroll{max-height:360px;overflow:auto;border:1px solid var(--line);border-radius:6px}
+.map-parts-table{border-collapse:collapse;width:100%;font-size:14px}
+.map-parts-table th{position:sticky;top:0;background:var(--surface-raised);text-align:left;border-bottom:1px solid var(--line)}
+.map-parts-table th button{all:unset;cursor:pointer;display:block;padding:6px 10px;font-weight:600;white-space:nowrap}
+.map-parts-table th button:focus-visible{outline:2px solid var(--ink)}
+.map-parts-table td{padding:5px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+.map-parts-table td.number{text-align:right;font-variant-numeric:tabular-nums}
+.map-parts-table tbody tr{cursor:pointer}
+.map-parts-table tbody tr:hover{background:var(--surface-sunken,rgba(0,0,0,.04))}
+.map-parts-table tbody tr.chosen{background:#fbe3df;outline:2px solid #c0392b;outline-offset:-2px}
+:root[data-theme="dark"] .map-parts-table tbody tr.chosen{background:#4a2420}
+#map path.part-chosen{stroke:#c0392b;stroke-width:3}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]):not([data-theme="dark"]) .map-parts-table tbody tr.chosen{background:#4a2420}}
+/* A MAP WITH A TABLE UNDER IT keeps its height and the panel scrolls: told to fill the panel, the map shrank to 74 px and
+   the table lay over it (2026-11-15). Full screen still gives the map the whole screen. */
+#map-panel #map-parts{flex-shrink:0}
+#map-panel:not([hidden]) #catchment-map-host:has(~ #map-parts){flex:0 0 auto}
+#map-panel:not([hidden]) #catchment-map-host:has(~ #map-parts) .catchment-leaflet{flex:none;height:480px}
+#map-panel:fullscreen #catchment-map-host:has(~ #map-parts){flex:1 1 auto}
+#map-panel:fullscreen #catchment-map-host:has(~ #map-parts) .catchment-leaflet{flex:1 1 auto;height:auto}

@@ -427,12 +427,12 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.31.4",
+   "version": "0.32.0",
    "released": "2026-11-15",
    "changes": [
     {
-     "kind": "patch",
-     "description": "Quantile class edges that fall on one tied value are merged, so no class is empty and the key says the tied values were kept in one class; classes of whole numbers are keyed as whole numbers, under each shade (\"2 to 5\"), in the figure, its key line and the interactive map."
+     "kind": "minor",
+     "description": "A table under a map of polygons in Results: one row per place with every attribute the polygons carry, sortable, linked both ways to the map (a row chosen outlines its place, brings it into view and opens its popup; a place chosen marks its row), on the static figure and the interactive map. The Inspector says when it is there. The interactive map keeps its height when a table follows it."
     }
    ],
    "breaking": false,

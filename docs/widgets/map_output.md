@@ -1,6 +1,6 @@
 # Map
 
-_Created 2026-10-14 · Updated 2026-11-14_
+_Created 2026-10-14 · Updated 2026-11-15_
 
 **An output widget.** It draws what your workflow produced. It computes nothing, changes
 nothing and decides nothing — if a number looks wrong on the map, the step that produced it is
@@ -182,6 +182,17 @@ about equal numbers of places.
 
 **Whole numbers are keyed as whole numbers.** Where every value is a whole number, such as a count of cases, each
 class is labelled under its shade with the values it holds, "2 to 5", rather than with the edges between shades.
+
+## The table under the map
+
+Where the polygons carry attributes, Results shows a table under the map: one row per place, and a column for every
+attribute, named as the file or the join names it. A place drawn in several parts, a district with its islands, is one
+row. Choose a column heading to sort by it, numbers as numbers. Choose a row and its place is outlined in red on the
+map, brought into view and its popup opened; choose a place on the map and its row is marked. On Salmonella's Länder:
+16 rows, with each Land's name, its codes and its cases.
+
+The table is in Results only, not in Notes or the write-up, and not under maps side by side. A layer with no
+attributes, such as catchments, has none.
 
 ## Maps side by side
 

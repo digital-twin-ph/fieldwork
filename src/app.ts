@@ -112,6 +112,7 @@ import {mountFeatureChooser} from './polygon-review.js';
 import {applyFeatureEdits,applyTableEdits,editsAt,type CellEdit,type EditEntry} from './cell-edits.js';
 import {MAX_POLYGON_LAYERS,polygonPort} from './polygon-layers.js';
 import {MAX_RASTER_LAYERS,rasterPort} from './raster-panels.js';
+import {partsTable,partsTableMarkup} from './map-parts-table.js';
 import {publicationMarkup,PROMPTS,type PublicationInput} from './publication.js';
 import {CHAIN_COLUMNS,transmissionChains} from './transmission-chains.js';
 import {boxInside,composeInset,insetWidth,type Corner} from './map-inset.js';
@@ -3606,11 +3607,14 @@ function mapSentence(n:WorkflowNode<'map_output'>):string{
   const layers=workflow.edges.filter(e=>e.to===n.id).map(e=>workflow.nodes.find(x=>x.id===e.from)).filter(Boolean)
     .map(x=>x!.params.label||TYPES[x!.type].title);
   const classed=Object.keys(n.params.pinClassField??{}).length;
+  const drawn=result?.outputs.find(o=>o.nodeId===n.id)?.polygons;
+  const tabled=drawn&&!n.params.arrangement?partsTable(drawn.features as never):null;
   return layers.length
     ?`Draws ${layers.join(', ')} as ${n.params.presentation==='interactive'?'an interactive map':'a static figure'}`
       +`${basemapOf(n.params.basemap)!=='none'?`, over ${BASEMAP_OPTIONS.find(o=>o.value===basemapOf(n.params.basemap))?.label??basemapOf(n.params.basemap)}`:''}`
       +`${classed?`, ${classed} layer${classed===1?'':'s'} classed`:''}`
-      +`${Object.entries(n.params.linkField??{}).map(([,l])=>`, with a line to each record named in ${l.column}`).join('')}; in the write-up under ${figureSection(n.params,n.type)}.`
+      +`${Object.entries(n.params.linkField??{}).map(([,l])=>`, with a line to each record named in ${l.column}`).join('')}`
+      +`${tabled?`, with a table of the ${tabled.rows.length.toLocaleString('en')} places' attributes under it in Results`:''}; in the write-up under ${figureSection(n.params,n.type)}.`
     :'Draws what it is given: connect a layer under Inputs.';
 }
 
@@ -6824,7 +6828,7 @@ function insetPicker(host:HTMLElement,mapNode:WorkflowNode<'map_output'>|undefin
 }
 function renderMap(){
   if(!resultsOnScreen())return;
-  disposeCatchmentMap?.();disposeCatchmentMap=undefined;document.querySelector('#catchment-map-host')?.remove();document.querySelector('#polygon-method')?.remove();document.querySelector('#catchment-plot-download')?.remove();document.querySelector('#comparison-map-host')?.remove();
+  disposeCatchmentMap?.();disposeCatchmentMap=undefined;document.querySelector('#catchment-map-host')?.remove();document.querySelector('#polygon-method')?.remove();document.querySelector('#catchment-plot-download')?.remove();document.querySelector('#map-parts')?.remove();document.querySelector('#comparison-map-host')?.remove();
   const result=activeOutput(),svg=$('#map'), rows=result?.rows||[], centers=result?.centers||[], points=[...rows.filter(r=>r.coordinates).map(r=>r.coordinates!),...centers.filter(c=>c.geometry).map(c=>c.geometry!.coordinates)];
   // PRESENTATION IS LIVE, NOT BAKED INTO THE RUN. The node is read from the current workflow and
   // not from the snapshot as run, because a title, a key, a basemap and a mark's size change
@@ -6941,6 +6945,8 @@ function renderMap(){
   //
   // Hoisted out, because only the interactive presentation can draw tiles: leaving it inside the
   // polygon branch means a basemap is reachable only on a catchment.
+  // THE TABLE UNDER THE MAP, one row per place with every attribute it carries, linked to the map both ways (2026-11-14).
+  const parts=result?.polygons&&!arranged&&!rasterPanels?.length?partsTableUnderMap(result.polygons):undefined;
   if(mapNode?.params.presentation==='interactive'&&result?.view==='map'){
     if(result.network)$('#map-panel').querySelector('#map-note')!.textContent=networkPreviewCaption(networkCoverage(result.network));
     const host=document.createElement('div');host.id='catchment-map-host';
@@ -6966,7 +6972,8 @@ function renderMap(){
       // is one -- remounted the map and refitted it, throwing away the pan and zoom the
       // practitioner had chosen in order to judge the change they were making.
       mapNode?.id,mapNode?.params.tileExtract,mapNode?.params.partLabel,mapNode?.params.frameCaption,
-      {onMap:m=>{insetPicker(host,mapNode,result,m);}});
+      {onMap:m=>{insetPicker(host,mapNode,result,m);},
+        ...(parts?{onPart:(id:string)=>parts.choose(id,'map'),partChooser:(mark:(id:string|null)=>void)=>{parts.mark=mark;}}:{})});
     if(result.polygons){
       // ONE OF THESE, NOT ONE PER RENDER. This was inserted into the panel on every render and
       // nothing removed the last, so a map rendered three times carried the same paragraph three
@@ -6993,11 +7000,37 @@ function renderMap(){
     method.id='polygon-method';method.textContent=result.polygons.notes.join(' ');
     note.append(method);
   }
-  void drawStaticFigure(svg,result,mapNode,{selected,hidden:hiddenMapLayers.get(result.nodeId)??new Set<string>()});
+  void drawStaticFigure(svg,result,mapNode,{selected,hidden:hiddenMapLayers.get(result.nodeId)??new Set<string>()}).then(()=>{
+    if(!parts)return;
+    parts.mark=id=>svg.querySelectorAll<SVGElement>('[data-catchment]').forEach(el=>el.classList.toggle('part-chosen',el.dataset.catchment===id));
+    svg.querySelectorAll<SVGElement>('[data-catchment]').forEach(el=>{el.onclick=()=>parts.choose(el.dataset.catchment!,'map');});
+  });
   svg.querySelectorAll<HTMLElement & SVGElement>('[data-place]').forEach(el=>{
     el.onclick=()=>selectResult(el.dataset.place!);
     el.onkeydown=e=>{if(e.key==='Enter')selectResult(el.dataset.place!);};
   });
+}
+/** The table under a map of polygons, placed under the figure, and the two-way link: a row chosen marks its place on
+ *  the map; a place chosen on the map marks and scrolls to its row. `mark` is set by whichever renderer drew the map. */
+function partsTableUnderMap(polygons:NonNullable<Output['polygons']>):{choose:(id:string,from:'map'|'table')=>void;mark?:(id:string|null)=>void}|undefined{
+  const table=partsTable(polygons.features as never);if(!table)return undefined;
+  const host=document.createElement('section');host.id='map-parts';host.className='map-parts';
+  host.setAttribute('aria-label','Attributes of the places on the map');
+  $('#map-panel').insertBefore(host,$('#map-communication-source').nextSibling);
+  let sort:{column:string;direction:'ascending'|'descending'}|undefined,chosen:string|null=null;
+  const link:{choose:(id:string,from:'map'|'table')=>void;mark?:(id:string|null)=>void}={choose:()=>{}};
+  const draw=()=>{host.innerHTML=partsTableMarkup(table,esc,{sort,chosen});};
+  link.choose=(id,from)=>{chosen=chosen===id&&from==='table'?null:id;draw();
+    link.mark?.(chosen);
+    if(from==='map')host.querySelector<HTMLElement>(`tr[data-map-part="${CSS.escape(id)}"]`)?.scrollIntoView({block:'nearest'});};
+  host.addEventListener('click',e=>{const t=e.target as HTMLElement;
+    const button=t.closest<HTMLElement>('[data-parts-sort]');
+    if(button){sort={column:button.dataset.partsSort!,direction:button.dataset.partsDirection as 'ascending'|'descending'};draw();return;}
+    const row=t.closest<HTMLElement>('tr[data-map-part]');if(row)link.choose(row.dataset.mapPart!,'table');});
+  host.addEventListener('keydown',e=>{const row=(e.target as HTMLElement).closest<HTMLElement>('tr[data-map-part]');
+    if(row&&(e.key==='Enter'||e.key===' ')){e.preventDefault();link.choose(row.dataset.mapPart!,'table');}});
+  draw();
+  return link;
 }
 function reason(input:string):Promise<ReasonerQuad[]>{return new Promise<ReasonerQuad[]>((resolve,reject)=>{
   if(!worker)worker=new Worker('./build/reasoning-worker.js');const id=++seq;

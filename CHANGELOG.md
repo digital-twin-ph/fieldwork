@@ -3,6 +3,12 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.122.0 — In development
+
+- **A table under the map.** A map of districts, states or other areas now has a table under it in Results with every
+  attribute each place carries, a zonal statistic included, one row per place. Sort it by any column. Choose a row and
+  the place is outlined on the map; choose a place on the map and its row is marked. Map 0.32.0.
+
 ## 0.121.0 — 2026-11-15
 
 - **Salmonella has four more workflows**: who the cases were, by age group and sex beside the classical controls; all

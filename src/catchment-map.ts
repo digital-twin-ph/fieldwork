@@ -153,7 +153,10 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
   options:{svgOnly?:boolean;
     /** A PANEL OF SEVERAL (experiment 212): the features its classes are taken over, every panel's together, so a shade is
      *  the same number in each; and the Leaflet map handed back, so panels can move together. */
-    classifyOver?:Polygons['features'];onMap?:(map:L.Map)=>void}={}){
+    classifyOver?:Polygons['features'];onMap?:(map:L.Map)=>void;
+    /** THE TABLE UNDER THE MAP (2026-11-14): a place chosen on the map is reported by its id, and the table is handed a
+     *  way to mark a place on the map, so either can find the other. */
+    onPart?:(id:string)=>void;partChooser?:(choose:(id:string|null)=>void)=>void}={}){
   const canvasRenderer=()=>options.svgOnly?undefined:L.canvas();
   // A Polygons value passed directly is the old call, kept working: it is one layer set with no
   // boundary and no rows.
@@ -260,6 +263,7 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
   const hueOf=new Map<string,string>(categorical?p.features.map((f,i)=>[f.id,categorical[i]]):[]);
   // One group for every part a value-classed layer draws, so the control lists the LAYER.
   const themed=L.featureGroup();
+  const partLayers=new Map<string,L.GeoJSON[]>();
   const round=(v:number)=>{const a=Math.abs(v);return a>=100?v.toFixed(0):a>=10?v.toFixed(1):v.toFixed(2);};
   for(const f of sorted){
     const shaded=classed??grouped;
@@ -291,6 +295,8 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
     // unchecked over a river that was plainly drawn, reported 2026-10-29. Whatever ends up
     // standing alone is added below.
     if(partDay)(layer as unknown as {_timelineId?:string})._timelineId=f.id;
+    if(options.onPart){const id=String(f.id);(partLayers.get(id)??partLayers.set(id,[]).get(id)!).push(layer);
+      layer.on('click',()=>options.onPart!(id));}
     all.addLayer(layer);
     // A CHOROPLETH'S PARTS ARE ONE LAYER, NOT THIRTY-THREE. A catchment or an isochrone band is
     // a distinct thing worth toggling; a sub-district shaded by a rate is one of many parts of a
@@ -589,7 +595,7 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
     const edges=[Math.min(...values),...classed.breaks];
     const legend=new L.Control({position:'bottomleft'});
     legend.onAdd=()=>{
-      const box=L.DomUtil.create('div','map-class-legend');
+      const box=L.DomUtil.create('div',values.every(v=>Number.isInteger(v))?'map-class-legend ranges':'map-class-legend');
       // THE STATIC FIGURE'S KEY, the ramp with its edges (2026-11-13: the practitioner reads that one, and this one's six-digit
       // edges ran together under 30-pixel classes). Each class is now as wide as an edge's number needs; the shade is named.
       const said=(v:number)=>Number(round(v)).toLocaleString('en');
@@ -876,6 +882,20 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
     +'Use layer controls and click features for details.';
   host.append(note);
   let disposed=false;const observer=new ResizeObserver(()=>{if(!disposed)map.invalidateSize();});observer.observe(canvas);observer.observe(panel());
+  // A PLACE CHOSEN IN THE TABLE is outlined on the map, brought into view if it is out of it, and its popup opened; the
+  // place chosen before goes back to how it was drawn.
+  if(options.partChooser){
+    let marked:{layers:L.GeoJSON[];styles:L.PathOptions[]}|undefined;
+    options.partChooser(id=>{
+      marked?.layers.forEach((l,i)=>l.setStyle(marked!.styles[i]!));marked=undefined;
+      const found=id===null?undefined:partLayers.get(id);if(!found?.length)return;
+      marked={layers:found,styles:found.map(l=>{const o=(l.getLayers()[0] as L.Path|undefined)?.options;return {color:o?.color,weight:o?.weight};})};
+      found.forEach(l=>{l.setStyle({color:'#c0392b',weight:3});l.bringToFront();});
+      const bounds=L.featureGroup(found).getBounds();
+      if(bounds.isValid()&&!map.getBounds().contains(bounds))map.fitBounds(bounds,{maxZoom:Math.max(map.getZoom(),6)});
+      found[0]!.openPopup(bounds.isValid()?bounds.getCenter():undefined);
+    });
+  }
   return ()=>{disposed=true;stopFrames();observer.disconnect();
     for(const event of ['fullscreenchange','webkitfullscreenchange'])document.removeEventListener(event,markFullscreen);
     // SHAPES FIRST, RENDERERS LAST (2026-11-10, CI WebKit: "undefined is not an object (evaluating 'this._ctx.save')").

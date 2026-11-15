@@ -350,7 +350,9 @@ test('five questions about 774 LGAs, each its own short workflow',async({page})=
     await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:120000});
     await page.locator('[data-view="results"]').click();
     await expect(page.locator('[data-tile-status]')).toContainText('tiles held on this device',{timeout:30000});
-    await page.locator('#catchment-map-host path.leaflet-interactive').nth(400).click({force:true});
+    // Reached through the table under the map, which opens the LGA's popup: a polygon picked by its index can lie
+    // outside the map's view now that the map keeps its height above the table (2026-11-15).
+    await page.locator('#map-parts tbody tr').nth(400).click();
     const popup=page.locator('.leaflet-popup-content');
     await expect(popup.locator('b')).not.toHaveText(/^\d+$/);
     await expect(popup.locator('.muted')).toHaveText(/^\d+$/);

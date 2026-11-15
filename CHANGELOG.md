@@ -15,7 +15,7 @@ shown in a local build is not a claim that it has been published.
   scale bar and lines to the box it came from; or, as a **Locator**, the part fills the figure and the whole map sits
   small in a corner. Marks keep their size on the page, so marks crowded together on the whole map stand apart. A map
   shown as a static figure is picked on the preview in **Configure…**. MERS's hospitals map has one, over Pyeongtaek.
-  Map 0.31.1; experiment 213.
+  Map 0.31.2; experiment 213.
 - **A curve from a table of cases.** Cases by period takes a table whose rows are each one case, counted once, and can
   split it by a column, as it does points. A case in several rows, one per recorded source, counts once when the
   column naming each case is chosen. MERS's tenth workflow, *Did it come in waves?*, uses it: 135 dated cases by

@@ -427,12 +427,12 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.31.1",
+   "version": "0.31.2",
    "released": "2026-11-14",
    "changes": [
     {
      "kind": "patch",
-     "description": "The inset's marks keep their size on the page, drawn larger by as much as its frame is shrunk; and a map shown as a static figure has its inset picked on Configure…'s preview."
+     "description": "The inset picker sits on the interactive map, top left, as a map control: a bar under the map took 40 px from it at full screen. It is offered only where the static figure can draw an inset, the map of a study area and its points."
     }
    ],
    "breaking": false,

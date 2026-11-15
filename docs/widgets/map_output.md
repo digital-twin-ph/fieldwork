@@ -192,7 +192,7 @@ shows four sources' shares of each district's people this way.
 ## An inset
 
 Where marks crowd each other at the scale of the whole map, enlarge a part of it beside the whole. On the interactive
-map in Results, zoom to the part and choose **Use this view as the inset**; or, for a map shown as a static figure,
+map in Results, zoom to the part and choose **Use this view as the inset**, on the map at its top left; or, for a map shown as a static figure,
 zoom the preview in **Configure…** and choose **Use the preview's view as the inset**. The view is kept as the inset's
 box. The static figure, in Notes, in the publication and in the downloads, then draws the box on the map, the part
 enlarged in a framed corner with its own scale bar, and two dashed lines from the box to the frame. **Clear the inset**

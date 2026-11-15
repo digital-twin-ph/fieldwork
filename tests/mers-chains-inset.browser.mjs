@@ -90,3 +90,33 @@ test('the hospitals’ map carries its inset: the box, the enlarged part, two li
   expect(box[0]).toBeLessThan(box[2]);
   expect(errors).toEqual([]);
 });
+
+test('on an interactive map the picker sits on the map: zoom in, use the view, and the box is kept',async({page})=>{
+  const errors=collectPageErrors(page);
+  await page.goto('/');await page.evaluate(()=>localStorage.clear());
+  await page.goto('/?example=hagelloch');
+  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:90000});
+  // Hagelloch's map of its cases over the village, switched to the interactive map in Configure….
+  await page.locator('.react-flow__node[data-id="map"]').click();
+  await page.locator('#configure-step').click();
+  const dialog=page.locator('dialog[open]').last();
+  await dialog.locator('#polygon-presentation').selectOption('interactive');
+  await dialog.locator('#config-apply').click();
+  await page.locator('#run-button').click();
+  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:90000});
+  await page.locator('[data-view="results"]').click();
+  await page.getByRole('tab',{name:'Where the cases were'}).click();
+  const use=page.locator('.map-inset-bar.leaflet-control [data-inset-use]');
+  await expect(use).toBeVisible({timeout:30000});
+  // The whole view is refused: an inset shows a part.
+  await page.locator('.leaflet-control-zoom-out').first().click();
+  await use.click();
+  await expect(page.locator('.toast').last()).toContainText(/whole map|outside the map/);
+  for(let i=0;i<3;i++)await page.locator('.leaflet-control-zoom-in').first().click();
+  await page.locator('.map-inset-bar.leaflet-control [data-inset-use]').click();
+  await expect(page.locator('.toast').last()).toContainText('Kept as the inset');
+  const inset=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')).nodes.find(n=>n.id==='map').params.inset);
+  expect(inset.box[0]).toBeLessThan(inset.box[2]);
+  await expect(page.locator('.map-inset-bar.leaflet-control [data-inset-clear]')).toBeVisible({timeout:20000});
+  expect(errors).toEqual([]);
+});

@@ -900,3 +900,12 @@ export function mountDensityPanel(host:HTMLElement,image:string,bounds:readonly 
   onMap(map);
   return ()=>{map.remove();};
 }
+
+/** AN ELEMENT AS A CONTROL ON THE MAP, taking no room from it (the inset picker, experiment 213: a bar under the map
+ *  took 40 px from it at full screen). Clicks inside it do not reach the map. Returns a remover. */
+export function placeOnMap(map:L.Map,element:HTMLElement,position:L.ControlPosition='topleft'):()=>void{
+  const control=new L.Control({position});
+  control.onAdd=()=>{L.DomEvent.disableClickPropagation(element);L.DomEvent.disableScrollPropagation(element);return element;};
+  control.addTo(map);
+  return ()=>control.remove();
+}

@@ -28,7 +28,7 @@ import {geoprivacyExample} from './geoprivacy-example.js';
 import {pointComparisonMarkup} from './point-comparison-ui.js';
 import {CATCHMENT_TYPES,defaultTravelMode} from './catchments.js';
 import {catchmentInspector} from './catchment-ui.js';
-import {mountCatchmentMap,mountDensityPanel,basemapOptions,BASEMAP_OPTIONS} from './catchment-map.js';
+import {mountCatchmentMap,mountDensityPanel,basemapOptions,BASEMAP_OPTIONS,placeOnMap} from './catchment-map.js';
 import {catchmentPlot,polygonSvg,polygonPanelsSvg,panelColumns,catchmentFrame,polygonFrame} from './catchment-output.js';
 import {rasterPanelsSvg,densityImage,rampFor} from './raster-image.js';
 import {mapPresentation,standaloneMapSvg} from './map-communication.js';
@@ -6784,23 +6784,27 @@ function insetBoxFrom(map:import('leaflet').Map,shown:Output):[number,number,num
   return clipped;
 }
 function insetPicker(host:HTMLElement,mapNode:WorkflowNode<'map_output'>|undefined,shown:Output,map:import('leaflet').Map){
-  host.parentElement?.querySelector('.map-inset-bar')?.remove();
-  if(!mapNode||!shown.boundary||mapNode.params.arrangement)return;
-  const bar=document.createElement('div');bar.className='map-inset-bar';
-  const held=mapNode.params.inset;
-  bar.innerHTML=`<button class="button small" type="button" data-inset-use>Use this view as the inset</button>`
-    +(held?`<button class="button small" type="button" data-inset-clear>Clear the inset</button>`
-      +`<span class="muted">${held.arrange==='locator'?'Locator':'Inset'} on the static figure; arrange it in Configure\u2026</span>`:'');
-  host.after(bar);
-  bar.querySelector('[data-inset-use]')!.addEventListener('click',()=>{
-    // Clipped to the map's own extent, then refused if nothing of it is left: an inset shows a part of the map.
-    const clipped=insetBoxFrom(map,shown);
-    if(typeof clipped==='string'){toast(clipped,{tone:'warning'});return;}
-    change(w=>{const p=getNode(w,mapNode.id,'map_output').params;p.inset={...(p.inset??{}),box:clipped};},{spatial:false});
-    toast('Kept as the inset. The static figure, in Notes and in the downloads, now shows it.');
-  });
-  bar.querySelector('[data-inset-clear]')?.addEventListener('click',()=>{
-    change(w=>{delete getNode(w,mapNode.id,'map_output').params.inset;},{spatial:false});});
+  // Where the static figure can draw one: the plain map of a study area and its points, not polygons, a raster or panels.
+  if(!mapNode||!shown.boundary||mapNode.params.arrangement||shown.polygons||shown.raster||shown.network)return;
+  const bar=document.createElement('div');bar.className='map-inset-bar leaflet-bar';
+  // DRAWN FROM THE NODE AS IT IS NOW, and again after each choice: the map is kept, not remounted, so the bar redraws.
+  const fill=()=>{
+    const held=workflow.nodes.find((n):n is WorkflowNode<'map_output'>=>n.id===mapNode.id&&n.type==='map_output')?.params.inset;
+    bar.innerHTML=`<button class="button small" type="button" data-inset-use>Use this view as the inset</button>`
+      +(held?`<button class="button small" type="button" data-inset-clear>Clear the inset</button>`:'');
+    bar.querySelector('[data-inset-use]')!.addEventListener('click',()=>{
+      // Clipped to the map's own extent, then refused if nothing of it is left: an inset shows a part of the map.
+      const clipped=insetBoxFrom(map,shown);
+      if(typeof clipped==='string'){toast(clipped,{tone:'warning'});return;}
+      change(w=>{const p=getNode(w,mapNode.id,'map_output').params;p.inset={...(p.inset??{}),box:clipped};},{spatial:false});
+      toast('Kept as the inset. The static figure, in Notes and in the downloads, now shows it.');fill();
+    });
+    bar.querySelector('[data-inset-clear]')?.addEventListener('click',()=>{
+      change(w=>{delete getNode(w,mapNode.id,'map_output').params.inset;},{spatial:false});fill();});
+  };
+  fill();
+  // ON THE MAP, as a control: a bar under it took 40 px from the map at full screen.
+  placeOnMap(map,bar,'topleft');
 }
 function renderMap(){
   if(!resultsOnScreen())return;

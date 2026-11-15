@@ -3,7 +3,7 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## 0.122.0 — In development
+## 0.122.0 — 2026-11-15
 
 - **A table under the map.** A map of districts, states or other areas now has a table under it in Results with every
   attribute each place carries, a zonal statistic included, one row per place. Sort it by any column. Choose a row and

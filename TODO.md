@@ -497,6 +497,13 @@ The high-contrast theme comes after Sierra Leone, as set on 2026-11-07; where it
    far the centre shifts) and counting by H3 cell, one question each, then map encryption from the geoprivacy notebooks
    (git.cdc.gov/jupyterlite/2026-Map-Encryption-Library), which needs an experiment record and its admission review
    before any widget. Until then `snow-geoprivacy` stays in the John Snow project, last ([210](docs/experiments/210-proposing-a-chart-or-a-map-from-the-data.md)).
+33. **Each worked example retold in Python notebooks, for validation and pedagogy: after the items above**
+   ([217](docs/experiments/217-worked-examples-as-python-notebooks.md); the practitioner, 2026-11-15: *"This is not a
+   generator problem but a set of notebooks we sculpt down to prose. It boils down to two things. Validation and
+   pedagogy."*, then *"this is a TODO item. After the others. And an experiment too."*). Hand-written per example, in
+   a `notebooks/` folder in the example's own repo, shaped on the PHI-Case-Studies John Snow series; the prose drafted
+   as Markdown for the practitioner to edit; each closes by setting its numbers beside Fieldwork's, and the lab lists
+   that check. Oswego first, then Salmonella.
 
 ## Urgent
 

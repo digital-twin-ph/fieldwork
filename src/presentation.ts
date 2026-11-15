@@ -414,6 +414,8 @@ export interface ValueClasses {
   /** How many values fell in each class, so an empty class is visible rather than implied. */
   counts:number[];
   colours:string[];
+  /** True where quantile breaks fell on one tied value and were merged, so the classes do not hold about equal counts. */
+  merged?:boolean;
   /** The class a value falls in, or null where there is no value: absent is not a class. */
   classOf:(value:number|null|undefined)=>number|null;
 }
@@ -424,21 +426,37 @@ export function classifyValues(values:(number|null|undefined)[],
   if(!present.length)return null;
   const classes=Math.max(1,Math.min(options.classes??ORDERED_PALETTE.length,present.length));
   const lowest=present[0],highest=present[present.length-1];
-  const breaks=method==='equal-interval'
+  const cut=method==='equal-interval'
     ? Array.from({length:classes},(_,i)=>lowest+(highest-lowest)*(i+1)/classes)
     // The value at each quantile position, taken from the data rather than interpolated, so every
     // break is a number that actually occurs and a reader can find it in the table.
     : Array.from({length:classes},(_,i)=>present[Math.min(present.length-1,
         Math.ceil((i+1)*present.length/classes)-1)]);
-  const colours=orderedSteps(classes);
+  // A BREAK REPEATED IS ONE BREAK. Nine of Germany's 16 Länder have no case in Salmonella's study, so two quantile
+  // positions fell on 0 and the key printed "0.00 to 0.00" over an empty class (2026-11-15). Fewer classes, none empty.
+  const breaks=cut.filter((b,i)=>i===0||b!==cut[i-1]);
+  const colours=orderedSteps(breaks.length);
   const classOf=(value:number|null|undefined)=>{
     if(typeof value!=='number'||!Number.isFinite(value))return null;
     for(let i=0;i<breaks.length;i++)if(value<=breaks[i])return i;
     return breaks.length-1;
   };
-  const counts=Array.from({length:classes},()=>0);
+  const counts=Array.from({length:breaks.length},()=>0);
   for(const value of present){const at=classOf(value);if(at!==null)counts[at]++;}
-  return {method,classes,breaks,counts,colours,classOf};
+  return {method,classes:breaks.length,breaks,counts,colours,classOf,...(breaks.length<cut.length?{merged:true}:{})};
+}
+
+/** EACH CLASS IN WORDS: its lowest and highest value, one value where they are the same. Whole numbers, a count of
+ *  cases, are labelled in whole numbers: a class above 1 and up to 5 holds 2 to 5, and "1.00 to 5.00" said otherwise. */
+export function classRanges(values:readonly number[],breaks:readonly number[]):string[]{
+  const whole=values.every(v=>Number.isInteger(v));
+  const round=(v:number)=>{const a=Math.abs(v);return Number(a>=100?v.toFixed(0):a>=10?v.toFixed(1):v.toFixed(2)).toLocaleString('en');};
+  const lowest=Math.min(...values);
+  return breaks.map((top,i)=>{
+    const low=i===0?lowest:whole?Math.floor(breaks[i-1]!)+1:breaks[i-1]!;
+    const say=whole?(v:number)=>v.toLocaleString('en'):round;
+    return low===top?say(top):`${say(low)} to ${say(top)}`;
+  });
 }
 
 /** CLASSES THAT HAVE NO ORDER, and are drawn so no reader can rank them.

@@ -5,7 +5,7 @@ import type {WorkflowNode,Workflow} from './types.js';
 import {basemapAvailable,basemapOf} from './basemaps.js';
 import {attributionsFor,provenanceOf} from './input-provenance.js';
 import type {LayerShape} from './presentation.js';
-import {polygonShading,shadedValues,markPath,resolveLayerSymbol,SPATIAL_RELATION_FILL,FIGURE_PALETTE_NAME,FIGURE_PALETTE_AUTHORITY,MARK_VOCABULARY,FIGURE_ROLE,FIGURE_TYPE,FIGURE_PALETTE,scaleBarSvg,northArrowSvg,metresPerPixel,classifyValues,categoricalSteps} from './presentation.js';
+import {polygonShading,shadedValues,classRanges,markPath,resolveLayerSymbol,SPATIAL_RELATION_FILL,FIGURE_PALETTE_NAME,FIGURE_PALETTE_AUTHORITY,MARK_VOCABULARY,FIGURE_ROLE,FIGURE_TYPE,FIGURE_PALETTE,scaleBarSvg,northArrowSvg,metresPerPixel,classifyValues,categoricalSteps} from './presentation.js';
 import {applyDesignRules,figureDesign,designRuleFacts,designRuleDeclarations,designChoiceFacts} from './map-conformance.js';
 
 export interface MapPresentation {title:string; subtitle:string; sourceNote:string; legend:boolean; items:{label:string;color:string;shape?:LayerShape;hollow?:boolean;line?:boolean}[]; presentation:'plot'|'interactive'; basemap:import('./types.js').BasemapChoice;
@@ -28,14 +28,10 @@ function classedItems(polygons:{valueName?:string;features:{value?:number;catego
   if(grouped)return [...grouped.labels.map((label,i)=>({label,color:grouped.colours[i]!})),
     ...(polygons.features.some(f=>!f.category?.trim())?[{label:'No class',color:FIGURE_ROLE.unknown}]:[])];
   if(!classed)return null;
-  const values=shadedValues(polygons.features);
-  const lowest=Math.min(...values);
-  const round=(v:number)=>{const a=Math.abs(v);return a>=100?v.toFixed(0):a>=10?v.toFixed(1):v.toFixed(2);};
-  const edges=[lowest,...classed.breaks];
+  const ranges=classRanges(shadedValues(polygons.features),classed.breaks);
   // WHAT THE NUMBERS ARE, on the first class, where the layer says (2026-11-13: Botswana's districts read "31005 to 61001").
   const named=polygons.valueName?.trim();
-  return classed.colours.map((color,i)=>
-    ({label:`${i===0&&named?`${named}: `:''}${round(edges[i])} to ${round(edges[i+1])}`,color}));
+  return classed.colours.map((color,i)=>({label:`${i===0&&named?`${named}: `:''}${ranges[i]}`,color}));
 }
 
 /** One entry per named region, in the hues the renderers draw them in.

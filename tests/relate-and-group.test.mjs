@@ -558,3 +558,14 @@ test('several shifts bring one column each, keep every row, and count what is em
   const again=relateAtShifts(table,{...rain,valueField:'rain2'},{...request,bring:'rain2'},[0,-7]);
   assert.deepEqual(again.table.columnShifts,{...table.columnShifts,'rain2_0d':0,'rain2_-7d':-7});
 });
+
+test('keeping every column with a column chosen to total hands that column on as the value; without one it is refused', ()=>{
+  // Salmonella's Länder: each row a Land, its count of cases a key column brought from another table.
+  const t={kind:'data-table',keys:['bula','iso','cases'],valueField:'name',rowCount:3,missingValueCount:3,
+    rows:[{key:{bula:'1',iso:'DE-SH',cases:'3'},value:null},{key:{bula:'4',iso:'DE-HB',cases:'0'},value:null},{key:{bula:'8',iso:'DE-BW',cases:'11'},value:null}]};
+  const r=groupTable(t,{by:['bula','iso'],aggregate:'sum',total:'cases'});
+  assert.equal(r.table.valueField,'cases');
+  assert.deepEqual(r.table.rows.map(x=>[x.key.iso,x.value]),[['DE-SH',3],['DE-HB',0],['DE-BW',11]]);
+  assert.deepEqual(r.dropped,[]);
+  assert.throws(()=>groupTable({...t,keys:['bula','iso'],rows:t.rows.map(x=>({key:{bula:x.key.bula,iso:x.key.iso},value:1}))},{by:['bula','iso'],aggregate:'sum'}),/would change nothing/);
+});

@@ -1,4 +1,4 @@
-import {orderedSteps,categoricalSteps,polygonShading,shadedValues,type classifyValues,type classifyCategories,FIGURE_ROLE,markPath} from './presentation.js';
+import {orderedSteps,categoricalSteps,polygonShading,shadedValues,classRanges,type classifyValues,type classifyCategories,FIGURE_ROLE,markPath} from './presentation.js';
 import type {Polygons} from './catchments.js';
 import type {DisplayValue,Receipt} from './results.js';
 import type {Escape,Position,PointCollection,WorkflowNode} from './types.js';
@@ -172,7 +172,7 @@ function plotKey(p:Polygons,classed:ReturnType<typeof classifyValues>,esc:Escape
   // The method belongs on the key line, not beside the ramp: set beside it, the sentence ran
   // across the polygons it was explaining.
   const method=classed?` · ${classed.classes} ${classed.method==='quantile'
-    ?'quantile classes, about equal counts, so the shade shows rank'
+    ?`quantile classes, ${classed.merged?'tied values kept in one class':'about equal counts'}, so the shade shows rank`
     :'equal-interval classes, equal value spans, so the shade shows magnitude'}`
     // SAID, so a reader is not left to infer from the absence of breaks that there is an order.
     :grouped?` · polygon shade: the class each part belongs to, which has no order`:'';
@@ -210,7 +210,13 @@ function plotKey(p:Polygons,classed:ReturnType<typeof classifyValues>,esc:Escape
   const swatches=classed.colours.map((colour,i)=>
     `<rect x="${left+i*width}" y="${top}" width="${width}" height="10" fill="${colour}" `
     +`fill-opacity=".78" stroke="${FIGURE_ROLE.quietInk}" stroke-width=".4"/>`).join('');
-  const edges=[lowest,...classed.breaks].map((v,i)=>
+  // WHOLE NUMBERS ARE LABELLED BY CLASS, under each shade: a count's class above 1 and up to 5 holds 2 to 5, and an
+  // edge "1" between two shades said neither (Salmonella's Länder, 2026-11-15).
+  const edges=values.every(v=>Number.isInteger(v))
+    ?classRanges(values,classed.breaks).map((said,i)=>
+      `<text x="${left+i*width+width/2}" y="${top+23}" font-size="14" text-anchor="middle" `
+      +`fill="${FIGURE_ROLE.quietInk}">${esc(said)}</text>`).join('')
+    :[lowest,...classed.breaks].map((v,i)=>
     `<text x="${left+i*width}" y="${top+23}" font-size="14" text-anchor="middle" `
     +`fill="${FIGURE_ROLE.quietInk}">${round(v)}</text>`).join('');
   return swatches+edges+key;

@@ -1789,7 +1789,8 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
             :result.aggregate==='mean'?'reduced to their mean'
             :result.aggregate==='median'?'reduced to their median'
             :'counted'} into ${result.groups} within `
-            +`${node.params.by.join(' and ')}, dropping ${result.dropped.join(' and ')}`
+            +`${node.params.by.join(' and ')}`+(result.dropped.length?`, dropping ${result.dropped.join(' and ')}`
+              :`, each row its own group, ${node.params.total} as the value`)
             // THE OVERRIDE IS IN THE RECEIPT'S OWN SENTENCE, not only in a field beside it. A
             // reader checking how a total was reached meets the assumption here or not at all.
             +(result.excluded

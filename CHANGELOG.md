@@ -3,6 +3,19 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.121.0 — In development
+
+- **Salmonella has four more workflows**: who the cases were, by age group and sex beside the classical controls; all
+  34 fruit items in one two-by-two, where Galia melon has the largest odds ratio, 21.4; how often the cases shop at an
+  organic shop and at a market, counted for the cases alone because the controls were not asked; and where the cases
+  lived, mapped over Germany's 16 Länder, with 0 where no case in the study lived. The Länder are the Federal Agency for
+  Cartography and Geodesy's, dl-de/by-2-0.
+- **A map's key no longer prints an empty class.** Where many places share a value, as nine Länder share 0, two class
+  edges fell on it and the key printed "0.00 to 0.00". The edges are merged, and the key says so. A count is keyed in
+  whole numbers under each shade: 0, 1, 2 to 5, 6 to 11. Map 0.31.4.
+- **Total within groups can hand on a column as the value** even when every row is its own group, as a Land with its
+  count of cases is. Without a column chosen, keeping every column is still refused. Total within groups 0.5.0.
+
 ## 0.120.0 — 2026-11-15
 
 - **Who infected whom is in Notes.** The transmission tree was in Results and reached Notes as its sentence only; it is

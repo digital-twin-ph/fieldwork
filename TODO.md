@@ -76,6 +76,22 @@ by period gains an hour.
 revisit"*), with four workflows chosen that day: who the cases were (age group and sex beside the classical controls),
 every food ranked in one two-by-two, where they shopped (organic shop, organic produce, market), and cases by federal
 state mapped over Germany's 16 Länder. The file has no onset dates, so no epidemic curve.
+**Built 2026-11-15** (0.121.0), with three departures, each found in the file. (1) **Where they shopped is counted, not
+compared**: `bioladen` and `markt` were filled in for cases only, and `bio` joins two questions (an organic shop for
+cases, organic food for controls), which would show 23 of 30 cases never against 0 of 108 controls; the practitioner
+chose cases only. (2) **Every food is not ranked**: the Two-by-two keeps exposures in the order chosen, by design
+([161](docs/experiments/161-the-epi-kernel-one-table-many-exposures.md)), so the 34 items are in the questionnaire's
+order. (3) **`bula`, `kreis`, `bioladen` and `markt` are not in the codebook**; `bula` is read as the official state
+code because `kreis` begins with it in all 110 classical controls. Found on the way and fixed: the map's key printed an
+empty "0.00 to 0.00" class when edges tied (Map 0.31.4), and Total within groups refused to hand on a column when
+every row was its own group (0.5.0).
+
+**Found 2026-11-15, not yet done:** (1) Two-by-two words a column that is empty in every row as `"1" has nobody in it,
+so it has no risk`, which names a risk in a case-control study and does not say the column is empty: Salmonella's
+`andobst2`, `obstsalat2`, `tkobst2`, `trockenobst2`. (2) Total within groups lists groups in the order they first appear,
+so Salmonella's age groups read 18-35, 60-79, 36-59, 1-4; nothing orders them by age. (3) The Länder table needs a
+numeric value column it does not use, so `data/laender.csv`'s `name` is its value and is lost at the relate (*a line
+list must name a numeric value column it does not use*, below).
 
 **Found 2026-11-14, not yet done:** each static map in Results is more complete and professional than the same map in
 Notes (the practitioner: "still needs improvement"); compare the two renderers and make Notes draw what Results draws.

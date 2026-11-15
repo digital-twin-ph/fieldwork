@@ -175,6 +175,14 @@ the value at each class edge. The classes are quantiles: each holds about the sa
 shows rank. Each place counts once, however many parts its outline has; a district of 83 islands is one district,
 and every one of its parts is drawn in its class.
 
+**Tied values make fewer classes.** Where many places share one value, two class edges can fall on it. They are
+merged, so no class is empty: Salmonella's 16 Länder, nine of them with no case in the study, are shaded in four
+classes, 0, 1, 2 to 5 and 6 to 11, and the key says the tied values were kept in one class. Those classes do not hold
+about equal numbers of places.
+
+**Whole numbers are keyed as whole numbers.** Where every value is a whole number, such as a count of cases, each
+class is labelled under its shade with the values it holds, "2 to 5", rather than with the edges between shades.
+
 ## Maps side by side
 
 **Arrange**, in **Configure…**, puts the polygon layers in panels side by side instead of over each other: in one row,

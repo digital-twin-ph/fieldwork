@@ -82,6 +82,12 @@ numbers can be chosen instead: the days from exposure to onset that a rule compu
 **Median** by outcome. Its blank cells are empty cells, as in the value column; a cell that is not a number stops the
 run and names the row. The result carries no unit, because the unit the table declares is its value column's.
 
+**Every column kept, one column chosen to total.** Keeping every other column makes each row its own group, and the
+step still does one thing: the chosen column becomes the value the table hands on. Salmonella's map uses this. Each
+Land arrives with its count of cases as a column brought from another table, and **Sum** of `cases` within `bula` and
+`iso` makes that count what Join a table to the study area draws. Without a column chosen, keeping every column is
+refused, because nothing would change.
+
 ## Reading what you get
 
 One row per group, and a receipt stating which columns were kept, which were dropped, how many

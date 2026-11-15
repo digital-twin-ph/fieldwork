@@ -310,23 +310,28 @@
       "id": "urn:fieldwork:example:salmonella-germany-2021",
       "title": "Salmonella Braenderup and melons, Germany 2021",
       "repository": "https://github.com/digital-twin-ph/example-2021-salmonella-germany",
-      "commit": "ed04b111e7f894b0b1d8770e3ae0e8eb821ee900",
+      "commit": "5e3bbcdf4fbf63598ecc9be720deead39cb17a5f",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2021-salmonella-germany",
       "licence": {
         "data": "CC-BY-4.0",
         "source": "Łuczyńska et al., dataset on Zenodo, doi:10.5281/zenodo.7333295",
-        "note": "Stated on the Zenodo record. Attribution is in NOTICE.txt."
+        "note": "Stated on the Zenodo record. Attribution is in NOTICE.txt. The boundaries are © GeoBasis-DE / BKG, dl-de/by-2-0, via geoBoundaries."
       },
-      "description": "A case-control study with two control groups: 32 cases against 110 classical controls and against 81 matched panel controls, six melon items each, with a declared case-control design so only odds ratios are reported.",
+      "description": "A case-control study with two control groups: 32 cases against 110 classical controls and against 81 matched panel controls, six melon items each, with a declared case-control design so only odds ratios are reported; who the cases were, all 34 fruit items, where the cases shopped, and where they lived over Germany's 16 Länder.",
       "carries": {
         "workflow": true,
         "data": true,
-        "geography": false
+        "geography": true
       },
       "notYet": "The paper's multivariable model (Table 4) came from stepwise selection, which is not reproduced; its single-food adjusted ratios are.",
       "uses": [
         "append_rows",
+        "group_table",
+        "join_table_to_area",
+        "map_output",
+        "polygon_input",
         "regression",
+        "relate_table",
         "select_rows",
         "study_design",
         "table_input",
@@ -336,8 +341,8 @@
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "9e1df4063c7d073ec934a999ec70fbb6ecc0f720ffd6d0adaad9b96374871649",
-          "bytes": 14828
+          "sha256": "b4ea8f6103971c4da04267f971064a3c43d8bda23cd54a756d0d23cb72761f9a",
+          "bytes": 461124
         },
         {
           "path": "data/Complete_dataset_Luczynska_et_al_2022.csv",
@@ -356,26 +361,36 @@
         },
         {
           "path": "provenance.json",
-          "sha256": "b61a6de584f0ff497ef56b815dffa130a8e6bc67d6666201285293775389641e",
-          "bytes": 1645
+          "sha256": "9fad10b5b1f7be8dbeeef7aad647071a2e9cd4e25511754752bf5ce2759d8f0a",
+          "bytes": 3335
         },
         {
           "path": "README.md",
-          "sha256": "bd4dffa81daae8d4e22a92f3d2b7123039a6b12a6cce5ecb9660f00b656bcb63",
-          "bytes": 5020
+          "sha256": "e03ba5caca7eed2f97cf11b84bf65e0bb0728e07852da4e751d1ec0356dfba71",
+          "bytes": 8872
         },
         {
           "path": "NOTICE.txt",
-          "sha256": "90bad9ad749e6ae093af4008d7d75ad852d5cfdc4abaeda8703e28cf39baed3d",
-          "bytes": 795
+          "sha256": "909cf2cd943750caee51c5082f0e6f9f8758c47dbeacdf2ba43c44613f3b6e95",
+          "bytes": 1151
         },
         {
           "path": "LICENSE-data",
           "sha256": "9ba9550ad48438d0836ddab3da480b3b69ffa0aac7b7878b5a0039e7ab429411",
           "bytes": 18657
+        },
+        {
+          "path": "data/laender.csv",
+          "sha256": "ed8282ec48c1368d9f5fd74697ffd605ffb30376e2e079d95fe040a892424dde",
+          "bytes": 351
+        },
+        {
+          "path": "geo/germany-laender.geojson",
+          "sha256": "511b3625ad4568d12a6bfcb1bdea4e877199e1923e502cb80224b8164128eb05",
+          "bytes": 1209873
         }
       ],
-      "workflowCount": 4
+      "workflowCount": 8
     },
     {
       "id": "urn:fieldwork:example:nyc-asthma-ozone-2016-2025",

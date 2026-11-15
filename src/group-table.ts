@@ -134,8 +134,9 @@ const decimalsOf=(v:number):number=>{
   return Math.max(0,frac-(exp?Number(exp):0));
 };
 export function groupTable(table:DataTable,request:GroupRequest):GroupResult {
-  if(request.total&&request.total!==table.valueField&&(request.aggregate??'sum')!=='count')table=totalling(table,request.total);
-  const result=groupTotals(table,request);
+  const totalled=!!request.total&&request.total!==table.valueField&&(request.aggregate??'sum')!=='count';
+  if(totalled)table=totalling(table,request.total!);
+  const result=groupTotals(table,request,totalled);
   return request.share?withShares(result,request.by.map(n=>n.trim()).filter(Boolean),request.share.within):result;
 }
 
@@ -178,7 +179,7 @@ export function withShares(result:GroupResult,by:readonly string[],within:readon
     shares:{within:[...within],name,unknownStrata:[...totals].filter(([,v])=>v===null).length,zeroStrata:[...totals].filter(([,v])=>v===0).length}};
 }
 
-function groupTotals(table:DataTable,request:GroupRequest):GroupResult {
+function groupTotals(table:DataTable,request:GroupRequest,totalled=false):GroupResult {
   const by=request.by.map(name=>name.trim()).filter(Boolean);
   if(!by.length)throw new Error('Name at least one key column to total within. '
     +'Grouping by nothing would give one number, which a table cannot hold a key for.');
@@ -187,7 +188,9 @@ function groupTotals(table:DataTable,request:GroupRequest):GroupResult {
     if(!table.keys.includes(name))
       throw new Error(`This table has no "${name}" column. Its columns are ${table.keys.join(', ')}.`);
   const dropped=table.keys.filter(name=>!by.includes(name));
-  if(!dropped.length)
+  // A COLUMN CHOSEN TO TOTAL CHANGES THE TABLE even where every row is its own group: that column becomes what the
+  // table hands on, as a Land's count of cases does for a map (Salmonella, 2026-11-15).
+  if(!dropped.length&&!totalled)
     throw new Error('Those are all of this table\'s key columns, so every row is already its own '
       +'group and totalling would change nothing. Leave out the column whose rows should be added up.');
 

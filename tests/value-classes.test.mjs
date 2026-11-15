@@ -87,3 +87,18 @@ test('two units sharing a name are two units, and a part with no id is its own',
   // Frames are taken once per unit too.
   assert.deepEqual(shadedValues([{id:'a',frames:{y1:1,y2:2}},{id:'a',frames:{y1:1,y2:2}}]),[1,2]);
 });
+
+test('quantile breaks that fall on one tied value are merged, and whole numbers are labelled as whole numbers', async()=>{
+  const {classifyValues,classRanges}=await import('../build/presentation.js');
+  // Salmonella's 16 Länder: nine with no case in the study.
+  const cases=[3,1,5,0,6,0,0,11,5,0,1,0,0,0,0,0];
+  const c=classifyValues(cases);
+  assert.deepEqual(c.breaks,[0,1,5,11]);
+  assert.equal(c.classes,4);assert.equal(c.colours.length,4);assert.equal(c.merged,true);
+  assert.deepEqual(c.counts,[9,2,3,2]);
+  assert.deepEqual(classRanges(cases,c.breaks),['0','1','2 to 5','6 to 11']);
+  // No tie: five classes, nothing merged, decimals kept.
+  const d=classifyValues([0.5,1.25,2,3.5,4,5.75,6,7.5,8,9.25]);
+  assert.equal(d.classes,5);assert.equal(d.merged,undefined);
+  assert.equal(classRanges([0.5,1.25,2,3.5,4,5.75,6,7.5,8,9.25],d.breaks)[0],'0.5 to 1.25');
+});

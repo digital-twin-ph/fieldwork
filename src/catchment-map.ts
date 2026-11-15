@@ -13,7 +13,7 @@ import type {Polygons} from './catchments.js';
 import type {PointCollection,Escape,Position} from './types.js';
 
 import {BASEMAP_CHOICES,basemapAvailable,basemapOptions,BASEMAP_LABELS,type BasemapChoice} from './basemaps.js';
-import {layerSymbol,markPath,markRadius,polygonShading,shadedValues,categoricalSteps,FIGURE_ROLE} from './presentation.js';
+import {layerSymbol,markPath,markRadius,polygonShading,shadedValues,classRanges,categoricalSteps,FIGURE_ROLE} from './presentation.js';
 import type {LayerShape,FillClass,FillEncoding} from './presentation.js';
 import {fillClass,SPATIAL_RELATION_FILL,MARK_HALO} from './presentation.js';
 import {rasterImage} from './raster-image.js';
@@ -595,7 +595,9 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
       const said=(v:number)=>Number(round(v)).toLocaleString('en');
       box.innerHTML=(p.valueName?.trim()?`<p class="map-class-name">${esc(p.valueName.trim())}</p>`:'')
         +`<div class="map-class-ramp">`+classed.colours.map(c=>`<i style="background:${c}"></i>`).join('')
-        +`</div><div class="map-class-edges">`+edges.map(v=>`<span>${said(v)}</span>`).join('')
+        +(values.every(v=>Number.isInteger(v))
+          ?`</div><div class="map-class-edges ranges">`+classRanges(values,classed.breaks).map(r=>`<span>${esc(r)}</span>`).join('')
+          :`</div><div class="map-class-edges">`+edges.map(v=>`<span>${said(v)}</span>`).join(''))
         +`</div><p>${classed.classes} ${classed.method==='quantile'
           ?'quantile classes · the shade shows rank'
           :'equal-interval classes · the shade shows magnitude'}</p>`;

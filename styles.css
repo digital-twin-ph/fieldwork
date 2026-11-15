@@ -757,6 +757,7 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 .map-class-ramp i:last-child{border-right:1px solid #4D4D4D}
 .map-class-edges{display:flex;margin:2px 0 0}
 .map-class-edges span{width:80px;text-align:center;font-size:14px;white-space:nowrap}
+.map-class-edges.ranges{margin:2px 40px 0}
 .map-class-name{margin:0 0 4px;font-size:14px;font-weight:600}
 .map-class-legend p{margin:4px 0 0;font-size:14px;opacity:.85}
 

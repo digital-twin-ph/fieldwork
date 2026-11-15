@@ -3,7 +3,7 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## 0.120.0 — In development
+## 0.120.0 — 2026-11-15
 
 - **Who infected whom is in Notes.** The transmission tree was in Results and reached Notes as its sentence only; it is
   now drawn there too, and numbered as a figure in the publication. MERS and Hagelloch. Chart 0.22.1.

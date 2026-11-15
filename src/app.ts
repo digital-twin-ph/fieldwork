@@ -10084,3 +10084,8 @@ function tableSentence(p:WorkflowNode<'table_input'>['params']):string{
   const unit=p.unit?.trim()?`, in ${p.unit.trim()}`:', unit unstated';
   return `${what}, ${shape}${unit}${p.convertOnRun&&p.sourceTable?', converted on each run':''}.`;
 }
+
+/** STARTUP IS OVER: every top-level handler above is bound, the stored payloads among the awaits before them. A file
+ *  given to #workflow-file before this is dropped without a word, because nothing is listening yet; WebKit on CI hit
+ *  that window in three runs of 2026-11-15. Tests wait for this mark before importing. */
+document.documentElement.dataset.ready='true';

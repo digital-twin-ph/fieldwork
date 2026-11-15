@@ -23,6 +23,8 @@ const blank=async page=>{
   await page.goto('/');
   await page.evaluate(()=>localStorage.clear());
   await page.goto('/?example=blank');
+  // The import handler is bound only once startup's awaits are over; a file given before that is dropped.
+  await expect(page.locator('html[data-ready="true"]')).toHaveCount(1,{timeout:30000});
 };
 /** A study area already connected, imported as a workflow file.
  *

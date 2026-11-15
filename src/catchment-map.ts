@@ -116,6 +116,8 @@ export interface MapLayers {
   plate?:{data:string; bounds:[number,number,number,number]; opacity:number; label:string;
     /** A turned plate's corners and pixel size (experiment 201): drawn by `TurnedImage`, not an upright overlay. */
     corners?:[number,number][]; width?:number; height?:number};
+  /** SEVERAL SHEETS, in the order they are drawn, where a map has more than one (TODO 35); `plate` is the first. */
+  plates?:NonNullable<MapLayers['plate']>[];
   /** A street graph, drawn as itself. Added 2026-10-20: a Map showing a network could not be made
    *  interactive and could carry no basemap, because the static branch returned before the
    *  interactive one was reached. */
@@ -208,16 +210,17 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
   // facilities on 2026-10-22, each patched one layer at a time; this is the third.
   // THE PLATE FIRST, so every other layer draws over it, and `bringToBack` for the case where a
   // later layer is added to the map before this one has painted.
-  if(layers.plate){
-    const [west,south,east,north]=layers.plate.bounds;
-    const turned=layers.plate.corners&&layers.plate.width&&layers.plate.height;
+  // EACH SHEET in order; the first sent to the back first, so a later sheet lies over an earlier one.
+  const sheets=layers.plates??(layers.plate?[layers.plate]:[]);
+  [...sheets].reverse().forEach((sheet,back)=>{const i=sheets.length-1-back,key=i===0?'plate':`plate_${i+1}`;
+    const [west,south,east,north]=sheet.bounds;
+    const turned=sheet.corners&&sheet.width&&sheet.height;
     const plate:L.Layer=turned
-      ?new TurnedImage(layers.plate.data,layers.plate.corners!,layers.plate.width!,layers.plate.height!,layers.plate.opacity)
-      :L.imageOverlay(layers.plate.data,[[south,west],[north,east]],
-        {opacity:layers.plate.opacity,interactive:false,className:'map-plate-image'});
-    if(!hiddenPort('plate')){plate.addTo(map);(plate as L.ImageOverlay).bringToBack?.();all.addLayer(plate);}
-    place('plate',layers.plate.label,plate);
-  }
+      ?new TurnedImage(sheet.data,sheet.corners!,sheet.width!,sheet.height!,sheet.opacity)
+      :L.imageOverlay(sheet.data,[[south,west],[north,east]],
+        {opacity:sheet.opacity,interactive:false,className:'map-plate-image'});
+    if(!hiddenPort(key)){plate.addTo(map);(plate as L.ImageOverlay).bringToBack?.();all.addLayer(plate);}
+    place(key,sheet.label,plate);});
   if(layers.raster?.metadata){
     const [west,south,east,north]=layers.raster.metadata.bounds;
     const overlay=L.imageOverlay(rasterImage(layers.raster),[[south,west],[north,east]],

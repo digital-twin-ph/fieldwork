@@ -86,6 +86,8 @@ does not overlap the raster at all is refused.
 ## What it will not do
 
 - **It will not reproject.** A GeoTIFF in another coordinate system is refused, named.
+- **It will not read a picture.** A GeoTIFF of colour bands, such as a scanned map, is named as one and sent to
+  Georeferenced map image, which draws it as ground; its colours are ink, not values to measure.
 - **It will not read a file at a URL whose host forbids it.** A browser can read another site's file in parts only if
   that site allows it. Where it does not, **Download the whole file** still works, and the file is then chosen from
   this device.

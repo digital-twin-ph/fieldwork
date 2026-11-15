@@ -1,6 +1,6 @@
 # 212 · Maps side by side, arranged in Configure
 
-_Created 2026-11-13 · Updated 2026-11-13_
+_Created 2026-11-13 · Updated 2026-11-15_
 
 **Status:** tried — built 2026-11-13; the population example's shares in four panels; Chromium. The practitioner
 observation has not been made.

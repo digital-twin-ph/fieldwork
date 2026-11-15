@@ -116,6 +116,10 @@ import {joinTableToAreas,joinedPolygons,areaJoinReceipt} from './area-join.js';
 import {projectionExtract,projectionTable,readExtract,extractFromRuleset,assignSites,assignmentTable,compareToElevation,extractReceipt,assignmentReceipt,comparisonReceipt as thresholdReceipt,validateSeaLevelNode} from './sea-level.js';
 import {distanceKm,nearestOf,satisfies} from './nearest-neighbour.js';
 export const NS = 'urn:fieldwork:';
+/** A MAP'S GROUND PORTS: `ground`, then `ground_2` to `ground_4`, as its raster ports are numbered. */
+export const MAX_GROUND_LAYERS=4;
+export const groundPort=(index:number)=>index===0?'ground':`ground_${index+1}`;
+export const isGroundPort=(port:string)=>port==='ground'||/^ground_[2-4]$/.test(port);
 export const TYPES:Record<NodeType,NodeDefinition> = {
   mean_center:{title:'Mean center',group:'Spatial operations',icon:'⊙',color:'teal',description:'Compute the center of point locations in a metric CRS, optionally weighted by a record attribute',inputs:[['points','points']],output:'mean-center'},
   compare_point_sets:{title:'Compare point sets',group:'Spatial operations',icon:'⊕',color:'teal',description:'Compare two mean centers and locate them against reference pumps',inputs:[['original','points'],['moved','points'],['pumps','points']],output:'point-comparison'},
@@ -570,7 +574,9 @@ export function nodeInputs(node:WorkflowNode):[string,PortType][]{
     // refusing its own widget with "Incompatible node connection" on 2026-10-27.
     // UP TO FOUR RASTERS, each its own input (experiment 212: grid cells in panels side by side).
     ...Array.from({length:Math.max(1,Math.min(MAX_RASTER_LAYERS,node.params.rasterInputCount??1))},(_,i)=>[rasterPort(i),'raster'] as [string,PortType]),
-    ['ground','ground'],['network','network']];
+    // SEVERAL SHEETS AS GROUND (TODO 35, 2026-11-15): Lycoming lies across two 1943 sheets, each placed and cut on its own.
+    ...Array.from({length:Math.max(1,Math.min(MAX_GROUND_LAYERS,node.params.groundInputCount??1))},(_,i)=>[groundPort(i),'ground'] as [string,PortType]),
+    ['network','network']];
 
   // A street network is a thing to look at, not only a thing to route over. Four widgets consume a
   // `network` and none of them was an output, so a downloaded network could not be seen.
@@ -847,6 +853,8 @@ export function validateWorkflow(raw:unknown):Workflow {
       if(p.tagsWorld!==undefined&&!(['xScale','ySkew','xSkew','yScale','xOrigin','yOrigin'] as const).every(k=>Number.isFinite(p.tagsWorld![k])))
         throw new Error('The file\'s own placement is six numbers.');
       if(p.tagsSaid!==undefined&&(typeof p.tagsSaid!=='string'||p.tagsSaid.length>300))throw new Error('What the file says of its placement is a short sentence.');
+      if((p.tagsGeographic!==undefined&&(typeof p.tagsGeographic!=='string'||!/^\+proj=longlat [ -~]{0,200}$/.test(p.tagsGeographic)))
+        ||(p.tagsDatum!==undefined&&(typeof p.tagsDatum!=='string'||p.tagsDatum.length>120)))throw new Error('The file\'s datum is a short definition.');
       if(p.controlPoints!==undefined&&(!Array.isArray(p.controlPoints)||p.controlPoints.length>100||p.controlPoints.some(c=>
         typeof c?.id!=='string'||c.id.length>120||!Array.isArray(c.pixel)||!Array.isArray(c.lonlat)
         ||![...c.pixel,...c.lonlat].every(Number.isFinite)||Math.abs(c.lonlat[0])>180||Math.abs(c.lonlat[1])>90)))
@@ -995,6 +1003,8 @@ export function validateWorkflow(raw:unknown):Workflow {
     // THE ARRANGEMENT AND THE POLYGON INPUTS, checked as they arrive (experiment 212; Collect polygon layers retired).
     if((n.type==='point_input'||n.type==='table_input')&&(n.params as {edits?:unknown}).edits!==undefined&&!validEdits((n.params as {edits?:unknown}).edits))
       throw new Error('Edits made in Data quality are a record, a column, the value read and the value written; at most 2,000 to a step.');
+    if(n.type==='map_output'&&n.params.groundInputCount!==undefined&&!(Number.isInteger(n.params.groundInputCount)&&n.params.groundInputCount>=1&&n.params.groundInputCount<=MAX_GROUND_LAYERS))
+      throw new Error(`A map draws between 1 and ${MAX_GROUND_LAYERS} map images as ground.`);
     if(n.type==='map_output'&&n.params.rasterInputCount!==undefined&&!(Number.isInteger(n.params.rasterInputCount)&&n.params.rasterInputCount>=1&&n.params.rasterInputCount<=MAX_RASTER_LAYERS))
       throw new Error(`A map takes 1 to ${MAX_RASTER_LAYERS} rasters.`);
     if(n.type==='map_output'&&n.params.polygonInputCount!==undefined&&!(Number.isInteger(n.params.polygonInputCount)&&n.params.polygonInputCount>=1&&n.params.polygonInputCount<=MAX_POLYGON_LAYERS))

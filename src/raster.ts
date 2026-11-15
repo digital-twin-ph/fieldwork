@@ -1,4 +1,5 @@
 import {fromBlob,fromUrl,fromArrayBuffer} from 'geotiff';
+import {pictureOrValues} from './geotiff-picture.js';
 /** A GEOTIFF FROM THIS DEVICE OR AT A URL (experiment 198). A URL is read by HTTP range: only the header and the window's
  *  blocks are fetched, so a published grid of tens of megabytes yields a window of a few kilobytes. */
 /** A GeoTIFF read from a file, a URL, or bytes already in memory. Bytes in memory are read in place: a 1 GB window kept on
@@ -70,6 +71,10 @@ export interface RasterGrid {metadata:RasterMetadata;values:RasterValues;asset:R
 function check(value:unknown,message:string):asserts value{if(!value)throw new Error(message);}
 export async function inspectRaster(blob:RasterSource):Promise<RasterMetadata>{
   const tiff=await openTiff(blob);try{const image=await tiff.getImage(),keys=image.getGeoKeys()||{},dir=image.getFileDirectory();
+    // A PICTURE IS NAMED AND SENT ON (TODO 35): a scanned map's colour bands are ink, not values to measure.
+    const kind=pictureOrValues({samplesPerPixel:image.getSamplesPerPixel(),bitsPerSample:image.getBitsPerSample(),
+      photometric:(image.fileDirectory as unknown as {PhotometricInterpretation?:number}).PhotometricInterpretation,sampleFormat:image.getSampleFormat()});
+    check(kind.kind==='values',`This GeoTIFF holds ${kind.said}. Add it with Georeferenced map image, which draws it as ground under a map; Raster input measures values.`);
     check(image.getSamplesPerPixel()===1,'Choose a single-band GeoTIFF. Multi-band selection is not implemented yet.');
     check(keys.GeographicTypeGeoKey===4326&&keys.GTModelTypeGeoKey===2,'This raster needs reprojection: the prototype requires explicit WGS84 / EPSG:4326.');
     check((keys.GTRasterTypeGeoKey===1||keys.GTRasterTypeGeoKey===2)&&!dir.hasTag('ModelTransformation'),'Use a north-up GeoTIFF without a rotated transform.');

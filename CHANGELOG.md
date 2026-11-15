@@ -3,6 +3,18 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.125.0 — In development
+
+- **A scanned map sheet as a GeoTIFF.** Georeferenced map image reads one: it tells a picture from values by its tags,
+  reads its projection (polyconic, transverse Mercator, Lambert, Albers, UTM) and redraws the part over the study area
+  north up. It opens where the file says it lies, with the sheet's graticule dashed over today's map, so a sheet in the
+  wrong place shows at once; one pair moves it, and both placements are kept. USGS's 1943 Oswego East sheet is 652 m off
+  by its own tags, and one pair corrects it. The image can be cut to its printed sheet. Map image 0.8.0.
+- **Two sheets under one map.** A map takes up to four map images as ground. Map 0.33.0.
+- **Rings round single houses.** A space-time cluster at one house is a ring, red for the most likely, blue otherwise,
+  and Hagelloch's cluster map says how to read it. Map 0.33.0, Space-time scan 0.6.1.
+- **Raster input names a picture** and sends it to Georeferenced map image. Raster input 0.12.3.
+
 ## 0.124.0 — 2026-11-15
 
 - **Hagelloch's daily scan as a chart, in Notes.** Each evening's p-value, with a dashed line at 0.05, over the cases

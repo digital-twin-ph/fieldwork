@@ -216,3 +216,30 @@ drawn.
 
 **Not established**: whether a learner finds the four features on a plate this coarse, about 16 m a pixel; and
 whether the published extent drawn as an outline helps a learner judge their placement or distracts them.
+
+## A GeoTIFF's own placement, checked and moved, 2026-11-15
+
+TODO 35, from the practitioner's *"Do we have a 1940 map of Lycoming?"* and *"I want this process to use as much of the
+built in infrastructure FW has already with some enhancements"*. USGS's 1943 sheets of Lycoming are GeoTIFFs,
+polyconic on NAD27, which this widget could not read. Built, as known gaps in this widget and Map, not a new one:
+
+- **A GeoTIFF read as a picture**, its projection from its tags through proj4, the part over the study area redrawn
+  north up (`src/geotiff-picture.ts`).
+- **The file's own placement as a starting point**, previewed before any pair with the graticule dashed **on the sheet's
+  datum**. Drawn first on WGS 84, the check put a correct NAD27 corner 30 m off its line, and a pair typed from the
+  printed numbers carried that 30 m into the correction (623 m against 652): the datum is part of the check.
+- **A shift**, one pair or more, from that placement; both placements kept in the record.
+- **The printed sheet**, the file's extent rounded to 7½′, 15′ or 30′, cut in the final placement.
+- **Several grounds** under one Map.
+
+**Found:** *Oswego East, NY, 1943* is placed 652 m east-west off its printed corners by its tags, measured at its
+north-east and south-west corners (244 and 242 pixels), under 2 pixels vertically; one pair in the dialog moves it 652 m
+east and 11 m south. *West of Texas, NY, 1943* is exact. At their shared edge the road through Lycoming steps 40 to
+50 m, which matching each sheet to today's junctions is to settle.
+
+**Checked** in `tests/geotiff-picture.test.mjs` (USGS's own tags for Oswego East: picture, polyconic, printed sheet,
+window, shift) and `tests/geotiff-sheet.browser.mjs` (a fixture drawn 600 m off its tags: preview, graticule, one pair
+moving it about 600 m, both placements kept, two sheets drawn and listed), Chromium.
+
+**Not established**: whether a learner reads the dashed graticule against printed ticks without being told where to
+look; and whether junctions matched across 83 years settle the seam better than the sheets' own corners.

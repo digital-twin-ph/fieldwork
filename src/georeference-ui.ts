@@ -27,7 +27,7 @@ import type {Escape} from './types.js';
 import {openConfigDialog} from './config-dialog.js';
 import {errorHistory,expectedFromOthers,fitPlacement,fitShape,groundMetres,MIN_POINTS,onGuide,type ControlPoint,type GuidePoint,type Placement,type PlacementModel} from './georeference.js';
 import {readWorldFile,turnedCorners,type WorldFile} from './map-image.js';
-import {dms,footprintOf,graticuleOf,northUpPixels,northUpPlan,pictureOrValues,printedSheetOf,projectionOf,type Box,type PictureTags} from './geotiff-picture.js';
+import {boxToWgs84,dms,footprintOf,graticuleLines,northUpPixels,northUpPlan,pictureOrValues,printedSheetOf,projectionOf,type Box,type PictureTags} from './geotiff-picture.js';
 import {TurnedImage} from './turned-image.js';
 
 export interface MapImageDraft {
@@ -44,9 +44,13 @@ export interface MapImageDraft {
   /** The image a worked example offers, served beside the application. */
   offered?:OfferedImage;
   /** WHERE A GEOTIFF'S OWN TAGS PUT IT (TODO 35): the placement a shift starts from, kept beside any correction. */
-  tags?:{world:WorldFile;said:string;printed?:Box};
+  tags?:{world:WorldFile;said:string;printed?:Box;
+    /** The sheet's own longitude and latitude (its datum), which its printed numbers are in. */
+    geographic?:string;datum?:string};
   /** The printed sheet, in longitude and latitude, the image is cut to on Apply so its margin covers no neighbour. */
   clip?:Box;
+  /** Why the last file chosen could not be read, said beside the picker. */
+  readError?:string;
 }
 export interface OfferedImage {url?:string; from?:{example:string;path:string}; filename:string; credit:string; width?:number; height?:number}
 
@@ -76,6 +80,8 @@ export function openMapImageConfig(o:{step:string;initial:MapImageDraft;esc:Esca
   /** START AGAIN asks once before it clears (the practitioner, 2026-11-12, emptying the pairs one by one on Hagelloch). */
   let confirmingReset=false;
   let active=0,imageZoom=1,previewing=false,previewOpacity=0.6;
+  /** The draft's file placement, for the sentence a shift is described in. */
+  let draftTags:MapImageDraft['tags'];
   // WHERE THE SHEET PANE IS LOOKING, as fractions of the image, kept across zooms and redraws (the practitioner,
   // 2026-11-10: "once zoomed in it's hard to figure out where the glowing circle is").
   let look:{fx:number;fy:number}|undefined;
@@ -95,12 +101,14 @@ export function openMapImageConfig(o:{step:string;initial:MapImageDraft;esc:Esca
   openConfigDialog<MapImageDraft>({
     id:'map-image-config',widget:'Georeferenced map image',step:o.step,draft:structuredClone({...o.initial,file:undefined}),wide:true,
     sections:d=>{
+      draftTags=d.tags;
       const image=d.image;
       const settings=''
         +`<div class="field"><label class="field-label" for="map-image-file">The map image</label>`
           +`<input id="map-image-file" type="file" accept="image/png,image/jpeg,image/tiff,.png,.jpg,.jpeg,.tif,.tiff">`
           +(d.offered&&!image?`<p><button type="button" class="button" id="map-image-offered">Use this example's image: ${esc(d.offered.filename)}</button></p>`
             +`<p class="muted">${esc(d.offered.credit)}</p>`:'')
+          +(d.readError?`<p class="config-message config-message-warning" role="alert" id="map-image-read-error">${esc(d.readError)}</p>`:'')
           +`<p class="muted">${image?`${esc(image.filename||'The image')}: ${image.width.toLocaleString('en-US')} × ${image.height.toLocaleString('en-US')} pixels.`
             :'A scan or export of a published map, drawn as ground under everything the workflow produces.'}</p></div>`
         +`<div class="field"><label class="field-label" for="map-image-placement">How to place it</label><select id="map-image-placement">`
@@ -123,9 +131,12 @@ export function openMapImageConfig(o:{step:string;initial:MapImageDraft;esc:Esca
     beforeRedraw:()=>{dispose?.();dispose=undefined;},
     wire:(root,d,redraw)=>{
       const useFile=async(file:File)=>{
+        delete d.readError;
         if(/\.tiff?$/i.test(file.name)||file.type==='image/tiff'){
           const read=await readTiffPicture(file,o.near);
-          d.image=read.image;d.file=file;d.tags=read.tags;d.clip=read.tags.printed;d.placement='points';d.model='shift';d.points=[];active=0;
+          d.image=read.image;d.file=file;d.tags=read.tags;
+          if(read.tags.printed)d.clip=boxToWgs84(read.tags.printed,read.tags.geographic!);d.placement='points';d.model='shift';
+          d.points=[{id:'',pixel:[NaN,NaN],lonlat:[NaN,NaN]}];active=0;
           redraw();return;
         }
         const bitmap=await createImageBitmap(file);
@@ -137,7 +148,9 @@ export function openMapImageConfig(o:{step:string;initial:MapImageDraft;esc:Esca
         redraw();
       };
       root.querySelector<HTMLInputElement>('#map-image-file')?.addEventListener('change',e=>{
-        const file=(e.target as HTMLInputElement).files?.[0];if(file)void useFile(file);});
+        const file=(e.target as HTMLInputElement).files?.[0];
+        // A FILE THAT CANNOT BE READ SAYS WHY, beside the picker, rather than nothing happening (TODO 35).
+        if(file)void useFile(file).catch(error=>{d.readError=error instanceof Error?error.message:String(error);redraw();});});
       // THE EXAMPLE'S OWN IMAGE, fetched from beside the application: the same bytes a person would download and choose.
       root.querySelector<HTMLButtonElement>('#map-image-offered')?.addEventListener('click',async e=>{
         const button=e.target as HTMLButtonElement,offered=d.offered!;button.disabled=true;button.textContent='Fetching the image…';
@@ -163,7 +176,7 @@ export function openMapImageConfig(o:{step:string;initial:MapImageDraft;esc:Esca
         const file=(e.target as HTMLInputElement).files?.[0];if(!file)return;
         d.worldText=await file.text();d.worldName=file.name;redraw();});
       root.querySelector<HTMLInputElement>('#geo-clip')?.addEventListener('change',e=>{
-        if((e.target as HTMLInputElement).checked&&d.tags?.printed)d.clip=d.tags.printed;else delete d.clip;redraw();});
+        if((e.target as HTMLInputElement).checked&&d.tags?.printed)d.clip=boxToWgs84(d.tags.printed,d.tags.geographic??'+proj=longlat +datum=WGS84 +no_defs');else delete d.clip;redraw();});
       root.querySelector<HTMLInputElement>('#map-image-opacity')?.addEventListener('change',e=>{
         d.opacity=Number((e.target as HTMLInputElement).value);redraw();});
       if(d.placement==='points')wirePoints(root,d,redraw);
@@ -211,10 +224,12 @@ export function openMapImageConfig(o:{step:string;initial:MapImageDraft;esc:Esca
       // WHAT THE FILE SAID OF ITSELF, and the printed sheet it is cut to (TODO 35).
       +(d.tags?`<div class="geo-tags"><p><strong>The file’s own placement:</strong> ${esc(d.tags.said)}. Previewed over today’s map below `
         +`before any pair; its graticule is drawn dashed, and the sheet’s printed ticks and edge should lie on it. Where they do not, `
-        +`match a pair or two and the placement moves by where they say.</p>`
+        +`match a pair or two and the placement moves by where they say.`
+        +(d.tags.datum&&d.tags.datum!=='WGS 84'?` The sheet numbers its ticks on ${esc(d.tags.datum.split(',')[0]!)}, and today’s map is WGS 84: for a printed `
+          +`corner, click where the dashed lines cross rather than typing its printed numbers.`:'')+`</p>`
         +(d.tags.printed?`<label class="check"><input type="checkbox" id="geo-clip" ${d.clip?'checked':''}> Keep only the printed sheet, `
           +`${esc(dms(d.tags.printed[0],['E','W']))} to ${esc(dms(d.tags.printed[2],['E','W']))}, ${esc(dms(d.tags.printed[1],['N','S']))} to `
-          +`${esc(dms(d.tags.printed[3],['N','S']))}, so its margin covers no neighbouring sheet</label>`:'')+`</div>`:'')
+          +`${esc(dms(d.tags.printed[3],['N','S']))}${d.tags.datum&&d.tags.datum!=='WGS 84'?` on ${esc(d.tags.datum.split(',')[0]!)}`:''}, so its margin covers no neighbouring sheet</label>`:'')+`</div>`:'')
       +`<div class="geo-panes"><div><p class="geo-pane-title">On the image <span id="geo-cursor" class="geo-cursor"></span></p>`
         +`<div class="geo-image-tools"><button type="button" class="button small" data-geo-zoom="1.5">Zoom in</button>`
         +`<button type="button" class="button small" data-geo-zoom="0.667">Zoom out</button></div>`
@@ -295,9 +310,22 @@ export function openMapImageConfig(o:{step:string;initial:MapImageDraft;esc:Esca
   }
 
   function fitText(fit:Placement):string{
+    // THE FILE'S OWN PLACEMENT, before any pair: nothing measured yet, and the preview is the check.
+    if(!fit.points)return 'Placed where the file\u2019s own tags put it, with no pair yet. Preview it on today\u2019s map: where the '
+      +'sheet\u2019s printed ticks miss the dashed graticule, match a pair and it moves.';
+    if(fit.model==='shift')return `Moved from the file\u2019s own placement by ${fit.points} pair${fit.points===1?'':'s'}: `
+      +`${Math.round(Math.hypot(...shiftOf(fit)))} m in all, ${Math.round(shiftOf(fit)[0])} m east and ${Math.round(shiftOf(fit)[1])} m north. `
+      +(fit.points>1?`The pairs disagree by ${Math.round(fit.rmsM)} m root mean square.`:'One pair moves it; a second says how far the pairs agree.');
     const worst=fit.residuals.reduce((w,r)=>r.metres>w.metres?r:w,fit.residuals[0]!);
     return `Placed from ${fit.points} points: errors ${Math.round(fit.rmsM)} m root mean square, largest ${Math.round(fit.maxM)} m at ${worst.id||'a point'}.`
       +(fit.points===MIN_POINTS[fit.model]?' With no more points than the fit needs, every error is zero and says nothing: add a point to measure it.':'');
+  }
+
+  /** How far a shift moved the file's placement, east and north in metres. */
+  function shiftOf(fit:Placement):[number,number]{
+    const base=draftTags?.world;if(!base)return [0,0];
+    const lat=fit.world.yOrigin;
+    return [(fit.world.xOrigin-base.xOrigin)*111_320*Math.cos(lat*Math.PI/180),(fit.world.yOrigin-base.yOrigin)*110_570];
   }
 
   function wirePoints(root:HTMLElement,d:MapImageDraft,redraw:()=>void){
@@ -445,11 +473,12 @@ export function openMapImageConfig(o:{step:string;initial:MapImageDraft;esc:Esca
       });
       const lats=corners.map(x=>x[1]),lons=corners.map(x=>x[0]);
       // THE GRATICULE, dashed, where the meridians and parallels truly run: the sheet's printed ticks should lie on it.
-      if(d.tags){const box:Box=[Math.min(...lons),Math.min(...lats),Math.max(...lons),Math.max(...lats)],g=graticuleOf(box);
-        for(const lon of g.meridians)L.polyline([[box[1],lon],[box[3],lon]],{color:'#d7191c',weight:2,dashArray:'6 5',interactive:false,className:'geo-graticule'})
-          .bindTooltip(dms(lon,['E','W']),{permanent:true,direction:'top',className:'geo-graticule-label'}).addTo(preview);
-        for(const lat of g.parallels)L.polyline([[lat,box[0]],[lat,box[2]]],{color:'#d7191c',weight:2,dashArray:'6 5',interactive:false,className:'geo-graticule'})
-          .bindTooltip(dms(lat,['N','S']),{permanent:true,direction:'right',className:'geo-graticule-label'}).addTo(preview);}
+      // ON THE SHEET'S OWN DATUM, carried to today's map: the lines its printed ticks were numbered for.
+      if(d.tags){const box:Box=[Math.min(...lons),Math.min(...lats),Math.max(...lons),Math.max(...lats)];
+        const on=d.tags.datum&&d.tags.datum!=='WGS 84'?` (${d.tags.datum.split(',')[0]})`:'';
+        for(const line of graticuleLines(box,d.tags.geographic??'+proj=longlat +datum=WGS84 +no_defs'))
+          L.polyline(line.points.map(([x,y])=>[y,x] as [number,number]),{color:'#d7191c',weight:2,dashArray:'6 5',interactive:false,className:'geo-graticule'})
+            .bindTooltip(dms(line.value,line.along==='meridian'?['E','W']:['N','S'])+on,{permanent:true,direction:line.along==='meridian'?'top':'right',className:'geo-graticule-label'}).addTo(preview);}
       preview.fitBounds([[Math.min(...lats),Math.min(...lons)],[Math.max(...lats),Math.max(...lons)]]);
       root.querySelector<HTMLInputElement>('#geo-preview-opacity')?.addEventListener('input',ev=>{
         previewOpacity=Number((ev.target as HTMLInputElement).value);sheet.setOpacity(previewOpacity);
@@ -477,7 +506,7 @@ async function readTiffPicture(file:File,near?:[number,number,number,number]):Pr
   const kind=pictureOrValues(tags);
   if(kind.kind==='values')throw new Error(`${file.name} holds ${kind.said}. A picture goes here; add it with Raster input instead.`);
   if(dir.ModelTransformation)throw new Error(`${file.name} is placed by a turned transform, which this does not read. Export it north up, or place it by matching points.`);
-  const projection=projectionOf(tags.geoKeys),foot=footprintOf(tags,projection.proj);
+  const projection=projectionOf(tags.geoKeys),foot=footprintOf(tags,projection.proj),footOnDatum=footprintOf(tags,projection.proj,projection.geographic);
   const want:Box=near?(()=>{const mx=(near[2]-near[0])*0.25,my=(near[3]-near[1])*0.25;return [near[0]-mx,near[1]-my,near[2]+mx,near[3]+my];})():foot;
   const plan=northUpPlan(tags,projection.proj,want);
   if(!plan)throw new Error(`${file.name} does not cover the study area: it lies from ${dms(foot[0],['E','W'])} to ${dms(foot[2],['E','W'])}, ${dms(foot[1],['N','S'])} to ${dms(foot[3],['N','S'])}.`);
@@ -488,9 +517,10 @@ async function readTiffPicture(file:File,near?:[number,number,number,number]):Pr
   const data=canvas.toDataURL('image/jpeg',0.85);
   const xs=(plan.box[2]-plan.box[0])/plan.width,ys=-(plan.box[3]-plan.box[1])/plan.height;
   const world:WorldFile={xScale:xs,ySkew:0,xSkew:0,yScale:ys,xOrigin:plan.box[0]+xs/2,yOrigin:plan.box[3]+ys/2};
-  const printed=printedSheetOf(foot)?.box;
+  // THE PRINTED SHEET on the sheet's own datum, where its corners are numbered.
+  const printed=printedSheetOf(footOnDatum)?.box;
   return {image:{data,width:plan.width,height:plan.height,bytes:file.size,sha256:'',filename:file.name},
-    tags:{world,said:`${projection.said}, read from ${file.name}`,...(printed?{printed}:{})}};
+    tags:{world,said:`${projection.said}, read from ${file.name}`,geographic:projection.geographic,datum:projection.datum,...(printed?{printed}:{})}};
 }
 
 /** THE IMAGE CUT TO A BOX in longitude and latitude, by its north-up world file: the rows and columns inside the box, and

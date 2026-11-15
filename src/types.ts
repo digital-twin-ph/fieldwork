@@ -266,7 +266,7 @@ export interface ParamsByType {
     controlPoints?:import('./georeference.js').ControlPoint[];placementModel?:import('./georeference.js').PlacementModel;
     /** WHERE A GEOTIFF'S OWN TAGS PUT IT, and what it said of its projection (TODO 35): kept beside the placement a shift
      *  moved it to, so a reader sees that it was corrected, by how much, and on which pairs. */
-    tagsWorld?:import('./map-image.js').WorldFile;tagsSaid?:string;
+    tagsWorld?:import('./map-image.js').WorldFile;tagsSaid?:string;tagsGeographic?:string;tagsDatum?:string;
     /** A worked example's features to find, in order (experiment 201). Written by the example, never by a click. */
     guide?:import('./georeference.js').GuidePoint[];
     /** The image a worked example offers, chosen only when the learner asks: served beside the application (`url`), or a
@@ -682,7 +682,7 @@ export interface ParamsByType {
     partLabel?:string;
     /** What a frame is, written by the practitioner: "Birth cohort". The frame's own name is the data's. */
     frameCaption?:string;
-    inputMode?:'spatial'|'decisions'|'raster'|'polygons'|'network';presentation?:'plot'|'interactive';contextPoints?:boolean;mapTitle?:string;mapSubtitle?:string;mapSourceNote?:string;showLegend?:boolean;basemap?:BasemapChoice}; table_output:{label:string; section?:import('./notes.js').FigureSection|'none'; pointInputCount?:number; inputMode?:'spatial'|'decisions'|'polygons'|'table'; totalsAsserted?:boolean};
+    inputMode?:'spatial'|'decisions'|'raster'|'polygons'|'network';/** How many map images the map draws as ground, each its own port (TODO 35). */ groundInputCount?:number;presentation?:'plot'|'interactive';contextPoints?:boolean;mapTitle?:string;mapSubtitle?:string;mapSourceNote?:string;showLegend?:boolean;basemap?:BasemapChoice}; table_output:{label:string; section?:import('./notes.js').FigureSection|'none'; pointInputCount?:number; inputMode?:'spatial'|'decisions'|'polygons'|'table'; totalsAsserted?:boolean};
   chart_output:{label:string; section?:import('./notes.js').FigureSection|'none';
     /** WHAT IS DRAWN: bars (the default), or who infected whom as chains over time (experiment 200, step 5), with the
      *  columns naming each case, its infector and its date. */

@@ -1,6 +1,6 @@
 # Space-time scan
 
-_Created 2026-11-10 · Updated 2026-11-10_
+_Created 2026-11-10 · Updated 2026-11-15_
 
 Looks for places where cases came closer together in time than the rest of the line list would lead you to expect.
 It is the space-time permutation scan that SaTScan runs, for a line list of cases with a date and a place, and no

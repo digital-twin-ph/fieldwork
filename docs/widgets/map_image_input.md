@@ -1,6 +1,6 @@
 # Georeferenced map image
 
-_Created 2026-10-27 · Updated 2026-11-11_
+_Created 2026-10-27 · Updated 2026-11-15_
 
 ## What it does
 
@@ -45,12 +45,11 @@ and `layerRole "context"`.
 - **It will not draw a rotated plate.** If the world file carries rotation terms, it stops and says
   so. Drawing a rotated image as an upright rectangle would put the map in the wrong place while
   looking entirely correct.
-- **It will not reproject.** The corners are read as CRS84 degrees. Corners outside the world
-  usually mean a projected georeference, and it refuses rather than reading one datum's
-  coordinates as another's — an error that moves a map by hundreds of metres and still looks like
-  a map.
-- **It will not tell you the georeference is right.** It draws where you said. An alignment error
-  looks exactly like a correct placement.
+- **A world file is read as CRS84 degrees.** Corners outside the world usually mean a projected georeference, and it
+  refuses rather than reading one datum's coordinates as another's. **A GeoTIFF is read in its own projection** (see
+  below); a projection it does not read is named and refused.
+- **It will not tell you the georeference is right.** It draws where you said, or where the file says. The preview over
+  today's map, with the sheet's graticule dashed, is how a misplacement is seen; matched pairs measure it.
 
 ## Where it is used
 
@@ -121,3 +120,29 @@ not the image's bytes. When the workflow runs, the image is fetched from beside 
 digest, and kept on this device; a file that does not match is refused. Hagelloch's cluster map has the 1824 cadastral
 sheet under it this way, placed from the same four junctions the sheet workflow asks a learner to match. The sheet
 workflow itself still waits for the learner to choose and place the image.
+
+## A scanned sheet as a GeoTIFF
+
+Choose a `.tif` and the widget reads its tags first:
+
+- **Whether it is a picture.** Three colour bands of 8 bits, or one band with a palette, is a scan of something
+  printed. One band of numbers is a measurement, and the widget sends you to Raster input.
+- **Its projection**, from the tags: longitude and latitude; UTM by its code on WGS 84, NAD83 or NAD27; or a projection
+  the file defines itself, polyconic, transverse Mercator, Lambert conformal or Albers, as published sheets use. NAD27 is
+  carried to WGS 84 by its mean shift for the conterminous United States, good to a few metres.
+- **The part over the study area**, with a quarter of its size again on every side, redrawn north up. A sheet of 6,600
+  pixels is not decoded whole.
+
+The dialog then opens **on the file's own placement**, before any pair, and its preview over today's map draws the
+sheet's **graticule** dashed, on the sheet's own datum: the printed ticks and the sheet's edge should lie on it. Where
+they do not, the tags are wrong. Choose **Moved from the file's own placement** and match a pair or two; one moves it,
+a second says how far the pairs agree. For a printed corner, click where the dashed lines cross on today's map rather
+than typing its printed numbers, which are on the sheet's datum. Both placements are kept, the file's and the corrected
+one, with the pairs.
+
+**Keep only the printed sheet** cuts the image to the sheet's printed edge in its final placement, rounded from the
+file's extent to 7½′, 15′ or 30′, so its margin covers no neighbouring sheet.
+
+USGS's *Oswego East, NY, 1943*: its tags place it 652 m east-west off its printed corners. One pair at its north-east
+corner moves it 652 m east and 11 m south, the same as measured from its pixels. *West of Texas, NY, 1943*, the sheet
+north of it, is placed correctly by its tags.

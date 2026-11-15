@@ -359,12 +359,12 @@
    ]
   },
   "space_time_scan": {
-   "version": "0.6.0",
-   "released": "2026-11-14",
+   "version": "0.6.1",
+   "released": "2026-11-15",
    "changes": [
     {
-     "kind": "minor",
-     "description": "The test runs in the Rust kernel (TODO 17, step 3; the practitioner, 2026-11-14: \"Move scan to kernel\"): the seeded shuffles, bit for bit the same stream, and each shuffle's highest score, by the same arithmetic, with the same early stop. The places, the circles and the observed scan stay in the script. Hagelloch, in Node: the scan 5.4 s to 3.4 s, the day-by-day replay 18.5 s to 8.3 s, the same answer."
+     "kind": "patch",
+     "description": "A cluster at one place is marked to be drawn as a ring round it, so its 15 m circle is not read as an area; the manual says how to read the cluster map."
     }
    ],
    "breaking": false,
@@ -415,24 +415,24 @@
    "migrationFrom": []
   },
   "map_image_input": {
-   "version": "0.7.1",
+   "version": "0.8.0",
    "released": "2026-11-15",
    "changes": [
     {
-     "kind": "patch",
-     "description": "A worked example can ship an image already placed, with the digest of its image and not its bytes: before a run the image is fetched from beside the application, checked against the digest, and kept on the device."
+     "kind": "minor",
+     "description": "Reads a GeoTIFF: a picture told from values by its tags, its projection read from them (polyconic, transverse Mercator, Lambert, Albers, UTM by code; NAD27 by its mean shift), the part over the study area redrawn north up. Opens on the file's own placement with the graticule dashed on the sheet's datum; a shift from that placement by one pair or more; both placements kept; the image cut to its printed sheet. A reading error is said beside the picker."
     }
    ],
    "breaking": false,
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.32.1",
+   "version": "0.33.0",
    "released": "2026-11-15",
    "changes": [
     {
-     "kind": "patch",
-     "description": "The static figure's key is drawn in its own band under the map, with plain ground, so a basemap never runs under the class labels; the figure is 56 px taller and the map keeps its place and scale."
+     "kind": "minor",
+     "description": "Up to four map images as ground, each its own input, drawn in input order and each its own layer to switch off, in the static figure and on the interactive map. A space-time cluster at one place is a ring round it, red for the most likely and blue otherwise, with the key saying so."
     }
    ],
    "breaking": false,
@@ -624,12 +624,12 @@
    "migrationFrom": []
   },
   "raster_input": {
-   "version": "0.12.2",
-   "released": "2026-11-14",
+   "version": "0.12.3",
+   "released": "2026-11-15",
    "changes": [
     {
      "kind": "patch",
-     "description": "A progress bar while Apply reads the window and checks a chosen file: the share of the window's rows read, from a file or a remote copy such as JRC's GHS-POP, and the share of a file checked; the words beside it say the same. The window is read in bands of whole tiles to know it; the cells are the same. The practitioner, 2026-11-14: \"Can we add a progress bar to this?\""
+     "description": "A GeoTIFF of colour bands is named as a picture and sent to Georeferenced map image, instead of being refused as not single-band."
     }
    ],
    "breaking": false,

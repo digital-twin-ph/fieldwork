@@ -197,6 +197,12 @@ map, brought into view and its popup opened; choose a place on the map and its r
 The table is in Results only, not in Notes or the write-up, and not under maps side by side. A layer with no
 attributes, such as catchments, has none.
 
+## Several sheets as ground
+
+A map takes up to four map images as ground, each its own input, as it takes several point layers: two published
+sheets of one place, each placed and cut on its own. They are drawn in the order of their inputs, a later one over an
+earlier one, and each is its own layer to switch off.
+
 ## Maps side by side
 
 **Arrange**, in **Configure…**, puts the polygon layers in panels side by side instead of over each other: in one row,

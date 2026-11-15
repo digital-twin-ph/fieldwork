@@ -531,7 +531,8 @@ The high-contrast theme comes after Sierra Leone, as set on 2026-11-07; where it
    layers. With them, Raster input names a picture and points to Georeferenced map image. Then Lycoming ships in the
    Oswego repository with both sheets and junction guides, as Hagelloch's 1824 sheet does, each sheet matched to
    today's junctions so the seam is settled by evidence. Still a separate question: (b) a step that finds a historical
-   map for the study area from an open catalogue, which would need an experiment record first.
+   map for the study area from an open catalogue, which would need an experiment record first. **Enhancements (1) to (4) built 2026-11-15** (0.125.0; experiment 201, dated section); Lycoming's sheets in the
+   Oswego repository next.
 
 ## Urgent
 

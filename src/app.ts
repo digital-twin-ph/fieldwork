@@ -1,3 +1,4 @@
+import {MAX_GROUND_LAYERS,groundPort,isGroundPort} from './core.js';
 import {noteImageDigest,noteImageFigure,noteImageKey,readNoteImagePayload,type NoteImage} from './note-image.js';
 import {boundsOf} from './health-facilities.js';
 import {openMapImageConfig} from './georeference-ui.js';
@@ -1380,6 +1381,11 @@ function layerPortFor(w:Workflow,source:WorkflowNode,target:WorkflowNode<'map_ou
   if(type==='raster'&&target.type==='map_output'){
     const next=(target.params.rasterInputCount??1)+1;
     if(next<=MAX_RASTER_LAYERS){target.params.rasterInputCount=next;return rasterPort(next-1);}
+  }
+  // And its ground: two sheets of one place, each placed and cut on its own (TODO 35).
+  if(type==='ground'&&target.type==='map_output'){
+    const next=(target.params.groundInputCount??1)+1;
+    if(next<=MAX_GROUND_LAYERS){target.params.groundInputCount=next;return groundPort(next-1);}
   }
   if(type==='polygons'&&target.type==='map_output'){
     const next=(target.params.polygonInputCount??1)+1;
@@ -5226,7 +5232,7 @@ function renderInspector(){
     openMapImageConfig({step:p.label||'Georeferenced map image',esc,near,
       initial:{label:p.label,...(placed?{image:{data:p.data!,...p.image}}:{}),placement:p.placement??'world-file',
         model:p.placementModel??'affine',points:structuredClone(p.controlPoints??[]),opacity:p.opacity??0.85,
-        ...(p.tagsWorld&&p.tagsSaid?{tags:{world:p.tagsWorld,said:p.tagsSaid}}:{}),
+        ...(p.tagsWorld&&p.tagsSaid?{tags:{world:p.tagsWorld,said:p.tagsSaid,...(p.tagsGeographic?{geographic:p.tagsGeographic}:{}),...(p.tagsDatum?{datum:p.tagsDatum}:{})}}:{}),
         ...(p.guide?.length?{guide:p.guide}:{}),...(p.offered?{offered:p.offered}:{})},
       apply:(d,{world,fit})=>void (async()=>{
         try{
@@ -5244,7 +5250,9 @@ function renderInspector(){
             t.params.bounds=bounds;t.params.world=world;t.params.placement=d.placement;t.params.opacity=d.opacity;
             if(d.placement==='points'){t.params.controlPoints=d.points.filter(c=>[...c.pixel,...c.lonlat].every(Number.isFinite));t.params.placementModel=d.model;}
             else{delete t.params.controlPoints;delete t.params.placementModel;}
-            if(d.tags){t.params.tagsWorld=d.tags.world;t.params.tagsSaid=d.tags.said;}else{delete t.params.tagsWorld;delete t.params.tagsSaid;}
+            if(d.tags){t.params.tagsWorld=d.tags.world;t.params.tagsSaid=d.tags.said;
+              if(d.tags.geographic)t.params.tagsGeographic=d.tags.geographic;if(d.tags.datum)t.params.tagsDatum=d.tags.datum;}
+            else{delete t.params.tagsWorld;delete t.params.tagsSaid;delete t.params.tagsGeographic;delete t.params.tagsDatum;}
           },{requirePersistence:true});
           if(fit)toast(`Placed from ${fit.points} points: errors ${Math.round(fit.rmsM)} m root mean square. Run the workflow to draw it.`);
         }catch(error){toast(errorMessage(error),{tone:'failure'});}
@@ -6425,12 +6433,10 @@ function renderResults(){
   //
   // It is listed FIRST because it is drawn first, so the list reads in the order the figure
   // stacks. Keyed by the plate node's own id, which is what `hiddenMapLayers` already stores.
-  const listedPlate=groundImageFor(output?.nodeId);
-  const plateEntry=listedPlate&&output
-    ?`<label><input type="checkbox" data-map-layer="${esc(listedPlate.sourceNodeId)}" `
+  const plateEntry=output?groundImagesFor(output.nodeId).map(listedPlate=>
+    `<label><input type="checkbox" data-map-layer="${esc(listedPlate.sourceNodeId)}" `
       +`${hiddenMapLayers.get(output.nodeId)?.has(listedPlate.sourceNodeId)?'':'checked'}> `
-      +`${esc(mapImageCredit(listedPlate))} (backdrop)</label>`
-    :'';
+      +`${esc(mapImageCredit(listedPlate))} (backdrop)</label>`).join(''):'';
   $('#map-layer-list').innerHTML=plateEntry+(output?.pointLayers||[]).map(layer=>`<label><input type="checkbox" data-map-layer="${esc(layer.sourceNodeId)}" ${hiddenMapLayers.get(output!.nodeId)?.has(layer.sourceNodeId)?'':'checked'}> ${esc(layer.label)} (${layer.count})</label>`).join('');
   $('#map-layer-list').querySelectorAll<HTMLInputElement>('[data-map-layer]').forEach(el=>el.onchange=()=>{const hidden=hiddenMapLayers.get(output!.nodeId)||new Set();if(el.checked)hidden.delete(el.dataset.mapLayer!);else hidden.add(el.dataset.mapLayer!);hiddenMapLayers.set(output!.nodeId,hidden);renderMap();});
   // THE SAME CHECK AN INPUT GETS, over the table a practitioner actually reads. An output table
@@ -6525,6 +6531,14 @@ function resultsOnScreen(){return $('.work-area').classList.contains('showing-re
  *
  *  Undefined where nothing is connected, where the connected node has no image yet, or where its
  *  georeference does not survive `mapImage` -- a figure without ground rather than a broken one. */
+/** EVERY SHEET UNDER A MAP, in the order of its ground ports, so a later sheet draws over an earlier one (TODO 35). */
+function groundImagesFor(mapNodeId:string|undefined,source:Workflow=workflow):(MapImage&{sourceNodeId:string})[]{
+  if(!mapNodeId)return [];
+  return source.edges.filter(e=>e.to===mapNodeId&&isGroundPort(e.port))
+    .sort((a,b)=>a.port.localeCompare(b.port,'en',{numeric:true}))
+    .flatMap(edge=>{const node=source.nodes.find((n):n is WorkflowNode<'map_image_input'>=>n.id===edge.from&&n.type==='map_image_input');
+      if(!node)return [];try{return [{...mapImage(node),sourceNodeId:node.id}];}catch{return [];}});
+}
 function groundImageFor(mapNodeId:string|undefined,
   /** WHICH CANVAS TO READ IT OFF, because the write-up draws figures for workflows that are not
    *  the open one. The default is the open canvas, which is what the live map wants: a plate is
@@ -6533,14 +6547,9 @@ function groundImageFor(mapNodeId:string|undefined,
    *  the plate of whatever canvas happens to be open. */
   source:Workflow=workflow):(MapImage&{sourceNodeId:string})|undefined{
   if(!mapNodeId)return undefined;
-  const edge=source.edges.find(e=>e.to===mapNodeId&&e.port==='ground');
-  if(!edge)return undefined;
-  const node=source.nodes.find((n):n is WorkflowNode<'map_image_input'>=>
-    n.id===edge.from&&n.type==='map_image_input');
-  if(!node)return undefined;
   // The node id travels with it: the layer list keys a checkbox by the SOURCE node, the way it
   // does for every point layer, so hiding one plate does not hide another.
-  try{return {...mapImage(node),sourceNodeId:node.id};}catch{return undefined;}
+  return groundImagesFor(mapNodeId,source)[0];
 }
 
 async function drawStaticBasemap(result:Output,svg:SVGSVGElement,
@@ -6559,21 +6568,21 @@ async function drawStaticBasemap(result:Output,svg:SVGSVGElement,
   // basemap at all, and that guard returns early for `none`. It is the more specific ground --
   // a basemap says where this is and a plate says what was there -- so it sits over the tiles
   // and under everything the workflow produced.
-  const plate=groundImageFor(node?.id,offPage?.workflow??workflow);
-  // Unchecked in the layer list means not drawn. The same per-output set the point layers use.
-  const plateHidden=!!plate&&!!result.nodeId
-    &&!!(offPage?offPage.hidden:hiddenMapLayers.get(result.nodeId))?.has(plate.sourceNodeId);
-  if(plate&&!plateHidden){
+  // EVERY SHEET, in port order, each over the one before (TODO 35); unchecked in the layer list means not drawn.
+  const drawnPlates=groundImagesFor(node?.id,offPage?.workflow??workflow).filter(plate=>!(result.nodeId
+    &&(offPage?offPage.hidden:hiddenMapLayers.get(result.nodeId))?.has(plate.sourceNodeId)));
+  let after:Element|undefined=[...svg.children].find(child=>child.tagName.toLowerCase()==='rect');
+  for(const plate of drawnPlates){
     const markup=mapImageMarkup(plate,frame.project as (c:[number,number])=>[number,number]);
-    const background=[...svg.children].find(child=>child.tagName.toLowerCase()==='rect');
-    if(markup){
-      if(background)background.insertAdjacentHTML('afterend',markup);
-      else svg.insertAdjacentHTML('afterbegin',markup);
-      for(const shape of svg.querySelectorAll('[data-fill-role="context"]'))shape.setAttribute('fill','none');
-    }
+    if(!markup)continue;
+    const holder=document.createElementNS('http://www.w3.org/2000/svg','g');holder.setAttribute('data-plate',plate.sourceNodeId);holder.innerHTML=markup;
+    if(after)after.after(holder);else svg.prepend(holder);after=holder;
+    for(const shape of svg.querySelectorAll('[data-fill-role="context"]'))shape.setAttribute('fill','none');
+  }
+  if(drawnPlates.length){
     const plateNote=offPage?null:$('#map-panel').querySelector('#map-note');
-    if(plateNote)plateNote.textContent=`${mapImageCredit(plate)} \u00b7 drawn as ground at about `
-      +`${plate.groundResolutionM.toFixed(0)} m per pixel. Context: a plate is ink, not measurement.`;
+    if(plateNote)plateNote.textContent=drawnPlates.map(plate=>`${mapImageCredit(plate)} \u00b7 drawn as ground at about `
+      +`${plate.groundResolutionM.toFixed(0)} m per pixel`).join('; ')+'. Context: a plate is ink, not measurement.';
   }
   const choice=node?basemapOf(node.params.basemap):undefined;
   if(!node||!choice||choice==='none')return;
@@ -6991,12 +7000,10 @@ function renderMap(){
     // like the basemap is, because `map_output` is single-mode and the mode that wins drops
     // every other layer from the value before a renderer sees it -- the defect that took the
     // study area on 2026-10-20, the facilities on 2026-10-22 and the raster on 2026-10-23.
-    const livePlate=groundImageFor(mapNode?.id);
-    const withPlate=livePlate
-      ?{...result,plate:{data:livePlate.data,bounds:livePlate.bounds,opacity:livePlate.opacity,
-          label:mapImageCredit(livePlate),
-          ...(livePlate.corners?{corners:livePlate.corners,width:livePlate.width,height:livePlate.height}:{})}}
-      :result;
+    // EVERY SHEET, each its own layer in the control (TODO 35).
+    const plates=groundImagesFor(mapNode?.id).map(livePlate=>({data:livePlate.data,bounds:livePlate.bounds,opacity:livePlate.opacity,
+      label:mapImageCredit(livePlate),...(livePlate.corners?{corners:livePlate.corners,width:livePlate.width,height:livePlate.height}:{})}));
+    const withPlate=plates.length?{...result,plate:plates[0]!,...(plates.length>1?{plates}:{})}:result;
     if(rasterPanels?.length&&mapNode)disposeCatchmentMap=mountRasterPanels(host,rasterPanels,
       (result as unknown as {densityBreaks:number[]}).densityBreaks,mapNode);
     else if(arranged&&result.polygons&&mapNode)disposeCatchmentMap=mountMapPanels(host,withPlate,mapNode,arranged);

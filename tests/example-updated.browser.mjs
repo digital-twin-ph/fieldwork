@@ -75,9 +75,16 @@ test(`${key}: opened and run fresh, it is the example as it ships`,async({page})
   await page.goto(`/?example=${key}`);
   await page.locator('[data-view="workflow"]').click();
   // Run, so a setting a run writes back is in the copy compared.
-  if(!(await page.locator('#workflow-state').innerText()).includes('Run complete')){
-    await expect(page.locator('#run-button')).toBeEnabled({timeout:240_000});
-    if(!(await page.locator('#workflow-state').innerText()).includes('Run complete'))await page.locator('#run-button').click();}
+  // AN EXAMPLE THAT RUNS ITSELF ON OPENING can start between the button being enabled and the click, disabling it: the
+  // cluster scan did on CI (2026-11-15), and the click waited out its 15 s. So: click only while enabled, briefly, and
+  // try again until a run is complete, whichever run it was.
+  const run=page.locator('#run-button');
+  await expect.poll(async()=>{
+    if((await page.locator('#workflow-state').innerText()).includes('Run complete'))return true;
+    if(key==='hagelloch-sheet'&&await page.getByText('This step has no image yet').isVisible())return true;
+    if(await run.isEnabled())await run.click({timeout:2000}).catch(()=>{});
+    return false;
+  },{timeout:240_000,intervals:[1000]}).toBe(true);
   // The 1824 sheet waits for the learner: its image is offered in Configure… and chosen only on request (experiment 201).
   if(key==='hagelloch-sheet')await expect(page.getByText('This step has no image yet')).toBeVisible({timeout:240_000});
   else await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:240_000});

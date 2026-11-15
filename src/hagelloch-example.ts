@@ -191,6 +191,16 @@ export function hagellochClusterExample():Workflow{
     {...base.nodes.find(n=>n.id==='village')!,x:20,y:320},
     {id:'scan',type:'space_time_scan',x:430,y:60,params:{label:'Was there a cluster?',dateField:'date_of_prodrome',unit:'day' as const,
       maxCaseShare:0.5,maxTimeShare:0.5,replications:999,seed:20261110,report:10}},
+    // THE 1824 SHEET UNDER THE CLUSTERS (the practitioner, 2026-11-15: "Yes, the 1824 sheet"), placed already: the four
+    // junctions the sheet workflow asks the learner to match, fitted north-up. Its image is the example's own file,
+    // fetched from beside the application and checked against this digest when the workflow opens.
+    {id:'sheet',type:'map_image_input',x:430,y:320,params:{label:'The 1824 cadastral sheet, placed',
+      image:{width:2200,height:2489,bytes:875895,sha256:'e0519ff3e2cdb3141d79b3325a417ae35085f370e0e178fb9c1a02cea426419e',filename:'flurkarte-nw-iii-3-1824.jpg'},
+      dataRef:'e1fea091a8349058adac0926e4fb425710515b2993e1669a88f2e84c20e69739',bounds:[9.00178029527589, 48.53713176663825, 9.022082358345884, 48.552454461311136],world:{"xScale": 9.228210486361189e-06, "ySkew": 0, "xSkew": 0, "yScale": -6.156164995135614e-06, "xOrigin": 9.001784909381133, "yOrigin": 48.552451383228636},
+      placement:'points' as const,placementModel:'north-up' as const,controlPoints:[{"id": "North road, above the stream", "pixel": [1171.6, 1553.3], "lonlat": [9.0125918, 48.542892]}, {"id": "West entry", "pixel": [951.4, 1853.6], "lonlat": [9.01056, 48.5410433]}, {"id": "North fork", "pixel": [1192.1, 1667.3], "lonlat": [9.0127814, 48.5421903]}, {"id": "South lane", "pixel": [1120.8, 1709.3], "lonlat": [9.0121234, 48.5419319]}],opacity:0.85,
+      offered:{url:'./examples/hagelloch-1861/flurkarte-nw-iii-3-1824.jpg',filename:'flurkarte-nw-iii-3-1824.jpg',
+        credit:'Flurkarte NW III 3, 1824. Landesarchiv Baden-Württemberg, Staatsarchiv Ludwigsburg EL 68 VI Nr 7243, Public Domain Mark.',
+        width:2200,height:2489}}},
     {id:'cluster-map',type:'map_output',x:840,y:60,params:{label:'Clusters over the village',presentation:'plot' as const,
       mapTitle:'Space-time clusters of measles, Hagelloch, 1861',
       // The cases small and dark, so the clusters' two hues are the only colour on the figure.
@@ -204,15 +214,24 @@ export function hagellochClusterExample():Workflow{
     // practitioner, 2026-11-14: "hard to interpret ... we can leave it out of the notes"); it plays in Results.
     {id:'replay-map',type:'map_output',x:840,y:840,params:{label:'The outbreak, day by day',presentation:'interactive' as const,section:'none' as const,
       mapTitle:'What a daily scan would have said, Hagelloch, 1861',layerSymbols:{cases:{colour:'#3d4a45',size:3}}}},
+    // WHEN, ON A TIME AXIS, for Notes (the practitioner, 2026-11-15, choosing a chart over six static maps): each evening's
+    // most likely cluster's p-value with 0.05 marked, over the cases known by then. 78 looks, none adjusted for looking
+    // every day, so a crossing is no stronger than chance would give.
+    {id:'replay-chart',type:'chart_output',x:1180,y:580,params:{label:'Each evening’s scan',keyColumn:'analysis_day',
+      panelColumns:['p_value','cases_known'],panelMarks:{p_value:'line',cases_known:'bar'},
+      panelLines:{p_value:{value:0.05,label:'p = 0.05'}},
+      chartTitle:'What a scan run each evening would have said, Hagelloch, 1861',
+      subtitle:'The most likely cluster’s p-value on each evening, over the cases known by then. 78 evenings, none adjusted for looking every day.'}},
   ];
   const edges=[
     {id:'cases-scan',from:'cases',to:'scan',port:'points'},
-    {id:'scan-map',from:'scan',to:'cluster-map',port:'polygons'},{id:'cases-cluster-map',from:'cases',to:'cluster-map',port:'points'},
+    {id:'scan-map',from:'scan',to:'cluster-map',port:'polygons'},{id:'sheet-cluster-map',from:'sheet',to:'cluster-map',port:'ground'},{id:'cases-cluster-map',from:'cases',to:'cluster-map',port:'points'},
     {id:'village-cluster-map',from:'village',to:'cluster-map',port:'area'},
     {id:'scan-table',from:'scan',to:'cluster-table',port:'polygons'},
     {id:'cases-replay',from:'cases',to:'replay',port:'points'},{id:'replay-out',from:'replay',to:'replay-table',port:'polygons'},
     {id:'replay-map-in',from:'replay',to:'replay-map',port:'polygons'},{id:'cases-replay-map',from:'cases',to:'replay-map',port:'points'},
     {id:'village-replay-map',from:'village',to:'replay-map',port:'area'},
+    {id:'replay-chart-in',from:'replay',to:'replay-chart',port:'records'},
   ];
   return {schema:'fieldwork/workflow/1',name:'Was there a cluster? Hagelloch, 1861',
     exampleId:'hagelloch-cluster',nodes,edges} as unknown as Workflow;

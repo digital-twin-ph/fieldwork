@@ -1,4 +1,5 @@
 import {test,expect} from './fixtures.mjs';
+import {inChartSettings} from './map-settings.mjs';
 import {collectPageErrors} from './page-errors.mjs';
 
 // WAS THERE A CLUSTER IN HAGELLOCH? (experiment 200, Detect): the third workflow, as shipped. The scan runs in a worker
@@ -40,6 +41,9 @@ test('Hagelloch: the space-time scan runs with a progress bar, and its clusters 
   await page.getByRole('tab',{name:'Every cluster reported'}).click();
   await expect(page.locator('main').first()).toContainText('observed_over_expected');
   await page.getByRole('tab',{name:'Clusters over the village'}).click();
+  // THE 1824 SHEET UNDER THE CLUSTERS (2026-11-15): placed already, its image filled from the example's own file.
+  await expect(page.locator('#map image').first()).toBeVisible({timeout:30000});
+  await page.locator('#map').screenshot({path:test.info().outputPath('cluster-sheet.png')});
   await expect(page.locator('#map')).toBeVisible();
   // The replay PLAYS on the map (the practitioner, 2026-11-10: "Where do I see the day by day play"): each day its
   // circle, the cases known by then, and what the scan said.
@@ -57,6 +61,19 @@ test('Hagelloch: the space-time scan runs with a progress bar, and its clusters 
   // The replay: one row per day with a cluster, and the Inspector names the first day flagged.
   await page.getByRole('tab',{name:'Each day’s most likely cluster'}).click();
   await expect(page.locator('main').first()).toContainText('analysis_day');
+  // WHEN, ON A TIME AXIS (2026-11-15): each evening's p-value with 0.05 marked, over the cases known, a chart in Notes.
+  await page.getByRole('tab',{name:'Each evening\u2019s scan'}).click();
+  await expect(page.locator('main').first()).toContainText('p = 0.05');
+  // Its settings in Configure: the columns as panels, the p-value's line at 0.05 with its label.
+  await page.locator('[data-view="workflow"]').click();
+  await page.locator('.react-flow__node[data-id="replay-chart"]').click();
+  await expect(page.locator('#inspector-content')).toContainText('one panel each for p_value and cases_known, a dashed line at 0.05 on p_value');
+  await inChartSettings(page,async d=>{
+    await expect(d.locator('[data-panel-column="p_value"]')).toBeChecked();
+    await expect(d.locator('[data-panel-line-value="p_value"]')).toHaveValue('0.05');
+    await expect(d.locator('[data-panel-line-label="p_value"]')).toHaveValue('p = 0.05');
+  },{apply:false});
+  await page.locator('[data-view="results"]').click();
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="replay"]').click();
   await expect(page.locator('#inspector-content')).toContainText('The first day the most likely cluster had p at or under 0.05 was 1861-11-21');

@@ -93,6 +93,12 @@ so Salmonella's age groups read 18-35, 60-79, 36-59, 1-4; nothing orders them by
 numeric value column it does not use, so `data/laender.csv`'s `name` is its value and is lost at the relate (*a line
 list must name a numeric value column it does not use*, below).
 
+**2026-11-15: Hagelloch's replay in Notes is a chart, not six maps.** Six static panels were built and withdrawn before
+release ([212](docs/experiments/212-map-panels-side-by-side.md), dated section): the maps repeated their captions, and
+the two flags are what 78 unadjusted daily looks give by chance. The practitioner chose each evening's p-value with the
+0.05 line, beside the cases known. With it, the 1824 cadastral sheet under *Clusters over the village* (the practitioner,
+the same day: "Yes, the 1824 sheet").
+
 **Found 2026-11-14, not yet done:** each static map in Results is more complete and professional than the same map in
 Notes (the practitioner: "still needs improvement"); compare the two renderers and make Notes draw what Results draws.
 And for NYC, a diagram of how ground-station and satellite measurements relate, as an authored note (the practitioner's

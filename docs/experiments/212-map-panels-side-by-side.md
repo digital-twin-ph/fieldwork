@@ -164,3 +164,22 @@ cells into its panel and into the shared classes, so the scale was not Rwanda's.
 or on the study area are drawn or classed, Sample a raster's rule, and each panel draws the study area's outline, thinned
 to at most 6,000 points. Rwanda's class edges moved from 122 to 1,521 to 176 to 1,586 people per km². Checked in
 `tests/raster-panels.test.mjs` and the population example's test (three outlines, static and interactive); Chromium.
+
+## Days of a replay in panels: built and withdrawn, 2026-11-15
+
+The practitioner, 2026-11-14, of Hagelloch's replay map in Notes: *"hard to interpret we can leave it out of the notes
+unless we want to show representative days as static maps in 6-map panel."* Built the same day as panels by day (a
+panel naming a day of a timeline, drawing that day's cluster and the cases dated by then), with six days the
+practitioner chose, anchored on what the scan said. Drawn from the example's own run, it was then withdrawn before
+release, on the practitioner's questions *"What's the point of showing it by day as sequential static maps? Is the by
+day static maps actually useful"*.
+
+**What the drawing showed.** What a reader needs is in the captions (the day, the cases known, the p-value); the maps
+mostly show a circle moving about a village a few hundred metres across, which invites reading the moves as the
+outbreak travelling. And the two days a scan would have flagged are what chance alone gives: 78 evening scans at
+p < 0.05 expect about 4 false alarms from repeated looking, and it raised 2 (p = 0.039 and 0.047); the replay does not
+adjust for looking every day, as a prospective scan's recurrence interval would. Six panels would have presented two
+chance-level flags as turning points.
+
+**Instead**, the practitioner chose a chart: each evening's p-value with the 0.05 line, beside the cases known. A
+question about when is answered on a time axis. The panels-by-day code was removed, not kept unused.

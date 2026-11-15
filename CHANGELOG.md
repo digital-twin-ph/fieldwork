@@ -3,6 +3,15 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.124.0 — In development
+
+- **Hagelloch's daily scan as a chart, in Notes.** Each evening's p-value, with a dashed line at 0.05, over the cases
+  known by then. It touches the line twice, on 21 November and 5 December 1861, about what 78 unadjusted daily looks
+  give by chance, and the chart says so. Six static maps of chosen days were tried and withdrawn: the maps repeated
+  their captions. Chart 0.23.0 draws several columns as panels and a line at a value you state.
+- **The 1824 cadastral sheet under Hagelloch's clusters.** Placed from the four junctions the sheet workflow teaches,
+  its image fetched from beside the application and checked. Map image 0.7.1.
+
 ## 0.123.0 — 2026-11-15
 
 - **A two-by-two's cells say what they hold.** Beside a, b, c and d: exposed cases, exposed controls, unexposed cases,

@@ -136,6 +136,13 @@ A value missing from a panel is a gap in its line, never a zero. Panels draw up 
 table holds; measured in Chromium, 100,000 points took about 10 seconds to draw and 250,000 about 30 (experiment 175). They are drawn by the Vega-Lite renderer; the plain renderer and the write-up figure say so
 instead of drawing them on one scale. Experiment 174.
 
+**Or one panel per column.** When the variables are separate columns of numbers in one table, tick them under **Or one
+panel per column**: each is its own panel, on its own scale, along the category column. A column holding a blank or a
+word is not offered, and a cell with no number is a gap. Under each ticked column, **A dashed line at** draws a line at
+a value you state, with **Its label**. Hagelloch's daily scan draws each evening's p-value with a line at 0.05,
+labelled *p = 0.05*, over the cases known by then: the line is where a reader would call a cluster, and the subtitle
+says that 78 evenings were looked at with no adjustment for looking every day.
+
 **Two y axes on one plot are not offered.** The ratio between two axes is arbitrary, so it can make any two series
 look correlated. **Aligned panels show timing, not effect**: that visits rose with PM2.5 in the same week is not a
 measure of how much PM2.5 raises them.

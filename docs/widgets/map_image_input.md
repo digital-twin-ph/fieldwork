@@ -113,3 +113,11 @@ its error.
 The map pane fetches OpenStreetMap's tiles, which sends the area you view to its servers.
 
 A world file that turns the image is drawn turned.
+
+## An image a worked example has already placed
+
+A worked example can ship an image already placed: its placement, its control points and the digest of its image, but
+not the image's bytes. When the workflow runs, the image is fetched from beside the application, checked against the
+digest, and kept on this device; a file that does not match is refused. Hagelloch's cluster map has the 1824 cadastral
+sheet under it this way, placed from the same four junctions the sheet workflow asks a learner to match. The sheet
+workflow itself still waits for the learner to choose and place the image.

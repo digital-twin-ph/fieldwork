@@ -1059,7 +1059,8 @@ function tableKeyColumns(node:WorkflowNode|undefined,seen=new Set<string>()):rea
     // A REGRESSION'S TABLE is always its terms by its statistics (experiment 181).
     // With several exposure columns (experiment 185), one table of every model: the keys `regressionsTable` writes.
     case 'regression':return severalModelKeys(node.params)??['term','statistic'];
-    default:return [];
+    // A LAYER ON A TABLE PORT is its attributes, known from the last run (2026-11-15).
+    default:return outputOf(node)==='polygons'||outputOf(node)==='points'?result?.tables?.[node.id]?.keys??[]:[];
   }
 }
 
@@ -1212,6 +1213,9 @@ function upstreamKeyValues(node:WorkflowNode,seen=new Set<string>(),
     const ran=result?.tables?.[up.id];
     return ran?Object.fromEntries(ran.keys.map(key=>[key,[...new Set(ran.rows.map(row=>String(row.key[key]??'')))].slice(0,200)])):undefined;
   }
+  // A POLYGON LAYER ON A TABLE PORT is its attributes, from the last run (2026-11-15).
+  if(outputOf(up)==='polygons'){const ran=result?.tables?.[up.id];
+    return ran?Object.fromEntries(ran.keys.map(key=>[key,[...new Set(ran.rows.map(row=>String(row.key[key]??'')))].slice(0,200)])):undefined;}
   if(up.type==='table_input'){
     const table=up.params.data;
     return Object.fromEntries(table.keys.map(key=>
@@ -2352,7 +2356,26 @@ function chartTableControls(n:WorkflowNode<'chart_output'>):string{
                   +`<label class="field-label" for="chart-shade-to">To</label><input id="chart-shade-to" type="date" data-chart-shade="to" min="${esc(sorted[0]??'')}" max="${esc(sorted.at(-1)??'')}" value="${esc(p.shade?.to??'')}">`
                   +`<small>Shaded behind every panel, both days included. Leave both empty for none.</small></div>`
                 :'')
-            :'');
+            :'')
+          // OR ONE PANEL PER COLUMN (2026-11-15): several number columns of the table, each on its own scale along the
+          // same axis, and a dashed line at a stated value in any of them (p = 0.05 on a p-value).
+          +(!p.panelsBy&&!pyramid?(()=>{
+            const numeric=columns.filter(name=>name!==axis&&(held[name]??[]).length>0&&(held[name]??[]).every(v=>v.trim()!==''&&Number.isFinite(Number(v))));
+            const chosen=p.panelColumns??[];
+            if(!numeric.length&&!chosen.length)return '';
+            return `<fieldset class="field"><legend class="field-label">Or one panel per column</legend>`
+              +[...new Set([...chosen,...numeric])].map(name=>{const on=chosen.includes(name),line=p.panelLines?.[name];
+                return `<label class="check"><input type="checkbox" data-panel-column="${esc(name)}" ${on?'checked':''}> ${esc(name)}</label>`
+                  +(on?`<div class="panel-column-settings"><label class="field-label" for="chart-panel-mark-${esc(name)}">Mark for ${esc(name)}</label>`
+                    +`<select id="chart-panel-mark-${esc(name)}" data-panel-mark="${esc(name)}"><option value="">Automatic</option>`
+                    +`<option value="bar" ${p.panelMarks?.[name]==='bar'?'selected':''}>Bars</option>`
+                    +`<option value="line" ${p.panelMarks?.[name]==='line'?'selected':''}>Line</option></select>`
+                    +`<label class="field-label" for="chart-panel-line-${esc(name)}">A dashed line at</label>`
+                    +`<input id="chart-panel-line-${esc(name)}" type="number" step="any" data-panel-line-value="${esc(name)}" value="${line?esc(String(line.value)):''}" placeholder="None">`
+                    +`<label class="field-label" for="chart-panel-line-label-${esc(name)}">Its label</label>`
+                    +`<input id="chart-panel-line-label-${esc(name)}" maxlength="60" data-panel-line-label="${esc(name)}" value="${esc(line?.label??'')}" placeholder="The value"></div>`:'');}).join('')
+              +`<small>Each column its own panel and scale, on one shared ${esc(axis)} axis. A column with a blank or a word in it is not offered.</small></fieldset>`;
+          })():'');
       }
   return out;
 }
@@ -2371,7 +2394,7 @@ function chartSentence(n:WorkflowNode<'chart_output'>):string{
   if(p.figure==='pyramid')return p.panelsBy
     ?`Draws ${source} as a population pyramid: ${p.keyColumn||'each band'} up the middle, the two groups of ${p.panelsBy} back to back.`
     :`Draws ${source} as a population pyramid. Name the column whose two groups sit back to back in Configure\u2026`;
-  return `Draws ${source} as ${chartRenderer(p)==='vega-lite'&&p.mark==='point'?'dots':chartRenderer(p)==='vega-lite'&&p.mark==='line'?'a line':'bars'}${p.panelsBy?`, one panel per ${p.panelsBy}`:''}${marked}${p.chartTitle?`, titled \u201c${p.chartTitle}\u201d`:''}.`;
+  return `Draws ${source} as ${chartRenderer(p)==='vega-lite'&&p.mark==='point'?'dots':chartRenderer(p)==='vega-lite'&&p.mark==='line'?'a line':'bars'}${p.panelsBy?`, one panel per ${p.panelsBy}`:p.panelColumns?.length?`, one panel each for ${p.panelColumns.join(' and ')}`:''}${Object.entries(p.panelLines??{}).map(([c,l])=>`, a dashed line at ${l.value} on ${c}`).join('')}${marked}${p.chartTitle?`, titled \u201c${p.chartTitle}\u201d`:''}.`;
 }
 
 /** CHART'S CONFIGURATION DIALOG (experiment 186, 2026-11-09): what is drawn (bars, or a transmission tree), and every
@@ -2618,8 +2641,9 @@ function openChartConfig(nodeId:string){
       // table; everything else is drawn from the chart the run made.
       let chart=drawn?.chart;
       const recount=!curve&&arrivedTable&&!(arrivedTable as {chart?:unknown}).chart
-        &&(draft.keyColumn!==node.params.keyColumn||draft.panelsBy!==node.params.panelsBy||!chart);
-      if(recount)chart=tableChart(arrivedTable!,draft.keyColumn,draft.panelsBy,declaredScales);
+        &&(draft.keyColumn!==node.params.keyColumn||draft.panelsBy!==node.params.panelsBy
+          ||(draft.panelColumns??[]).join('\u0000')!==(node.params.panelColumns??[]).join('\u0000')||!chart);
+      if(recount)chart=tableChart(arrivedTable!,draft.keyColumn,draft.panelsBy,declaredScales,draft.panelColumns);
       if(!chart){host.innerHTML='<p class="muted">Run the workflow to preview this chart here.</p>';return;}
       if(draft.barOrder&&draft.barOrder!=='category')chart={...chart,barOrder:draft.barOrder};
       if(chartRenderer(draft)==='html'){host.innerHTML=chartMarkup(chart,esc,chartOrientation(draft));return;}
@@ -2683,6 +2707,15 @@ function openChartConfig(nodeId:string){
       on('#chart-panels-by',el=>{if(el.value)draft.panelsBy=el.value;else{delete draft.panelsBy;delete draft.panelMarks;delete draft.shade;}});
       on('[data-panel-mark]',el=>{const marks={...(draft.panelMarks||{})};if(el.value)marks[el.dataset.panelMark!]=el.value as 'bar'|'line';else delete marks[el.dataset.panelMark!];
         if(Object.keys(marks).length)draft.panelMarks=marks;else delete draft.panelMarks;});
+      on('[data-panel-column]',el=>{const name=el.dataset.panelColumn!,held=new Set(draft.panelColumns??[]);
+        if((el as HTMLElement as HTMLInputElement).checked)held.add(name);else{held.delete(name);
+          if(draft.panelLines){const {[name]:_,...rest}=draft.panelLines;if(Object.keys(rest).length)draft.panelLines=rest;else delete draft.panelLines;}}
+        if(held.size)draft.panelColumns=[...held];else delete draft.panelColumns;});
+      on('[data-panel-line-value]',el=>{const name=el.dataset.panelLineValue!,raw=el.value.trim(),lines={...(draft.panelLines||{})};
+        if(raw===''||!Number.isFinite(Number(raw)))delete lines[name];else lines[name]={value:Number(raw),label:lines[name]?.label??''};
+        if(Object.keys(lines).length)draft.panelLines=lines;else delete draft.panelLines;});
+      on('[data-panel-line-label]',el=>{const name=el.dataset.panelLineLabel!,at=draft.panelLines?.[name];
+        if(at)draft.panelLines={...draft.panelLines,[name]:{...at,label:el.value.trim()}};});
       on('[data-chart-shade]',el=>{const shade={from:'',to:'',...draft.shade,[el.dataset.chartShade!]:el.value};
         if(shade.from||shade.to)draft.shade=shade;else delete draft.shade;});
       on('#chart-log-scale',el=>{if(el.checked)delete draft.ratioScale;else draft.ratioScale='linear';});
@@ -7032,6 +7065,27 @@ function partsTableUnderMap(polygons:NonNullable<Output['polygons']>):{choose:(i
   draw();
   return link;
 }
+/** A WORKED EXAMPLE'S PLACED IMAGE, filled in from its own file (2026-11-15): Hagelloch's 1824 sheet ships placed under
+ *  the cluster map with the image's digest and not its bytes, so the bytes are fetched from beside the application,
+ *  checked against that digest, and kept on the device. A sheet the learner places is not touched: it has no image yet. */
+async function fillPlacedImages():Promise<void>{
+  for(const n of workflow.nodes){
+    if(n.type!=='map_image_input')continue;
+    const p=(n as WorkflowNode<'map_image_input'>).params;
+    if(!p.offered?.url||!p.image?.width||!p.world||(typeof p.data==='string'&&p.data.startsWith('data:')))continue;
+    const response=await fetch(p.offered.url);
+    if(!response.ok)throw new Error(`${p.offered.filename} could not be fetched from beside the application (${response.status}).`);
+    const bytes=new Uint8Array(await response.arrayBuffer());
+    if(p.image.sha256&&await contentHash(bytes)!==p.image.sha256)
+      throw new Error(`${p.offered.filename} is not the file this example placed: its digest differs. Reload the application.`);
+    const data=await new Promise<string>((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(String(r.result));
+      r.onerror=()=>reject(new Error(`${p.offered!.filename} could not be read.`));
+      r.readAsDataURL(new Blob([bytes],{type:p.offered!.url!.endsWith('.png')?'image/png':'image/jpeg'}));});
+    const digest=await payloadDigest(data);
+    if(!await keepDataset(digest,data))throw new Error(`${p.offered.filename} could not be kept on this device.`);
+    p.data=data;p.dataRef=digest;
+  }
+}
 function reason(input:string):Promise<ReasonerQuad[]>{return new Promise<ReasonerQuad[]>((resolve,reject)=>{
   if(!worker)worker=new Worker('./build/reasoning-worker.js');const id=++seq;
   const timeout=setTimeout(()=>{worker?.terminate();worker=null;reject(new Error('Reasoning exceeded 45 seconds. Reduce the dataset and try again.'));},45000);
@@ -7132,7 +7186,7 @@ async function run(){if(busy)return;
   // a state line that says what is true -- not "Run failed", which claims something went wrong.
   try{executionPlan(workflow);}catch(e){
     if(e instanceof IncompleteWorkflow){runIncomplete=true;toast(errorMessage(e),{tone:'notice'});render();return;}
-    toast(errorMessage(e),{tone:'failure'});runFailed=true;render();console.error(e);return;}busy=true;runStartedAt=performance.now();statuses={};justFinished.clear();lastRunMs=null;render();const snapshot=structuredClone(workflow);const started=performance.now();try{const next=await executeWorkflow(snapshot,reason,(id,state)=>{statuses[id]=state;if(state==='done'){justFinished.add(id);setTimeout(()=>{justFinished.delete(id);if(!busy||statuses[id]==='done')flow?.update(playbackView(),selected,statuses);},FINISH_GLOW_MS);}flow?.update(playbackView(),selected,statuses);},(ref,provider,origin)=>{if(!credentials)throw new Error('Credentials are not available.');return credentials.resolve(ref,provider,origin);});lastRunMs=performance.now()-started;
+    toast(errorMessage(e),{tone:'failure'});runFailed=true;render();console.error(e);return;}busy=true;runStartedAt=performance.now();statuses={};justFinished.clear();lastRunMs=null;render();try{await fillPlacedImages();}catch(e){busy=false;toast(errorMessage(e),{tone:'failure'});runFailed=true;render();return;}const snapshot=structuredClone(workflow);const started=performance.now();try{const next=await executeWorkflow(snapshot,reason,(id,state)=>{statuses[id]=state;if(state==='done'){justFinished.add(id);setTimeout(()=>{justFinished.delete(id);if(!busy||statuses[id]==='done')flow?.update(playbackView(),selected,statuses);},FINISH_GLOW_MS);}flow?.update(playbackView(),selected,statuses);},(ref,provider,origin)=>{if(!credentials)throw new Error('Credentials are not available.');return credentials.resolve(ref,provider,origin);});lastRunMs=performance.now()-started;
     // THE CANVAS CAN MOVE WHILE A RUN IS IN FLIGHT, and this run is then nobody's results.
     //
     // `renderResults` discards a result whose workflow is no longer the open one -- the rule

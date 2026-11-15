@@ -153,12 +153,12 @@
    "replacementCandidate": "urn:fieldwork:widget:observations"
   },
   "chart_output": {
-   "version": "0.22.1",
+   "version": "0.23.0",
    "released": "2026-11-15",
    "changes": [
     {
-     "kind": "patch",
-     "description": "Who infected whom is drawn in Notes and the publication as in Results; it reached the write-up as its sentence alone."
+     "kind": "minor",
+     "description": "One panel per column: several number columns of one table, each its own panel and scale along the category column, chosen in Configure; and a dashed line at a stated value in any of them, with its label. A polygon layer on its records port offers its columns from the last run."
     }
    ],
    "breaking": false,
@@ -415,12 +415,12 @@
    "migrationFrom": []
   },
   "map_image_input": {
-   "version": "0.7.0",
-   "released": "2026-11-13",
+   "version": "0.7.1",
+   "released": "2026-11-15",
    "changes": [
     {
-     "kind": "minor",
-     "description": "A worked example can offer an image its repository pins: fetched at the commit the catalog pins, only when the learner asks, and refused unless its digest matches. Until now an offered image had to be a file served with Fieldwork. Snow's Map 2 is the first, placed by hand by four recorded features (the practitioner, 2026-11-13: \"I think we can follow the Hagelloch example and allow the user to georeference it by hand as part of the worked example\")."
+     "kind": "patch",
+     "description": "A worked example can ship an image already placed, with the digest of its image and not its bytes: before a run the image is fetched from beside the application, checked against the digest, and kept on the device."
     }
    ],
    "breaking": false,

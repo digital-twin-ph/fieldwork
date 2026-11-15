@@ -44,8 +44,9 @@ export const columnTitle=(table:DataTable,column:string):string=>{
   return label&&label!==column?`${column} (${label})`:column;
 };
 export function tableChart(table:DataTable,keyColumn?:string,panelsBy?:string,
-    said:Record<string,{scale?:Scale;codes?:readonly Code[]}>={}):ChartSummary{
+    said:Record<string,{scale?:Scale;codes?:readonly Code[]}>={},panelColumns?:readonly string[]):ChartSummary{
   if(panelsBy?.trim())return panelChart(table,keyColumn,panelsBy.trim());
+  if(panelColumns?.length)return columnPanelChart(table,keyColumn,panelColumns);
   if(table.kind!=='data-table')throw new Error('A chart of a table needs a table.');
   if(table.interval)return intervalChart(table,keyColumn);
   const column=keyColumn?.trim()||table.keys[0];
@@ -175,6 +176,36 @@ function panelChart(table:DataTable,keyColumn:string|undefined,panelsBy:string):
     caption:`${measured(table)} by ${columnTitle(table,column)}, one panel per ${columnTitle(table,panelsBy)}`
       +(absent?` · ${absent} point${absent===1?'':'s'} with no value, left as gaps`:''),
     total:table.rows.length,panels,temporal,bins};
+}
+
+/** COLUMNS AS PANELS (2026-11-15): each named column of numbers its own panel along the key column, one point per row,
+ *  a cell that is empty or not a number a gap. Hagelloch's daily scan: the p-value of each evening's most likely
+ *  cluster over the cases known by then, on one day axis. */
+function columnPanelChart(table:DataTable,keyColumn:string|undefined,columns:readonly string[]):ChartSummary{
+  if(table.kind!=='data-table')throw new Error('A chart of a table needs a table.');
+  const along=keyColumn?.trim()||table.keys.find(key=>!columns.includes(key));
+  if(!along)throw new Error('Panels need a key column to run along, besides the columns drawn.');
+  for(const name of [along,...columns])if(!table.keys.includes(name)&&name!==table.valueField)
+    throw new Error(`This table has no "${name}" column. Its columns are ${[...table.keys,table.valueField].filter(Boolean).join(', ')}.`);
+  if(columns.includes(along))throw new Error(`"${along}" cannot be both the axis and a panel.`);
+  if(!table.rows.length)throw new Error('This table holds no rows, so there is nothing to chart.');
+  if(table.rows.length*columns.length>PANEL_POINT_LIMIT)throw new Error(`Panels draw at most ${PANEL_POINT_LIMIT.toLocaleString('en')} points.`);
+  const seen=new Set<string>();
+  const bins=table.rows.flatMap(row=>columns.map(panel=>{
+    const label=row.key[along]??'',raw=panel===table.valueField?row.value:row.key[panel];
+    const n=raw===null||raw===undefined||String(raw).trim()===''?NaN:Number(raw);
+    const key=`${panel}\u0000${label}`;
+    if(seen.has(key))throw new Error(`"${label}" appears twice in the ${panel} panel. Each panel needs one row per ${along}.`);
+    seen.add(key);
+    return {key,label,count:Number.isFinite(n)?n:0,panel,...(Number.isFinite(n)?{}:{missing:true as const})};
+  }));
+  const labels=[...new Set(bins.map(bin=>bin.label))];
+  const temporal=orderOf(labels)==='date'&&labels.every(label=>label.length===10);
+  const absent=bins.filter(bin=>bin.missing).length;
+  return {field:'value',measure:'value',categoryTitle:columnTitle(table,along),
+    caption:`${columns.map(c=>columnTitle(table,c)).join(' and ')} by ${columnTitle(table,along)}, one panel each`
+      +(absent?` · ${absent} point${absent===1?'':'s'} with no value, left as gaps`:''),
+    total:table.rows.length,panels:[...columns],temporal,bins};
 }
 
 /** Bounded categorical frequency adapter. No filtering or population weighting. */

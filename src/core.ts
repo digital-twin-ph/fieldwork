@@ -2371,7 +2371,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
             // vintage disagreement and the groups it could not report, which a chart derived
             // from the rows alone cannot know.
             :arrived.chart??tableChart(arrived as unknown as import('./data-table.js').DataTable,
-              node.params.keyColumn,node.params.panelsBy,said);
+              node.params.keyColumn,node.params.panelsBy,said,node.params.panelColumns);
           // THE ORDER THE PRACTITIONER CHOSE, attached where the node's parameters are known so
           // every renderer downstream reads it off the summary rather than being told separately.
           // `orderBins` ignores it where the categories are a sequence, so an epidemic curve
@@ -2766,8 +2766,10 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
     else{const n=workflow.nodes.find(x=>x.id===nodeId);if(n&&outputOf(n)==='distances')tables[nodeId]=distancesAsTable(value as never);
       // A POINT LAYER WIRED TO A TABLE PORT is a table too (experiment 200): only where it is wired so, since every
       // point layer as a table would hold a second copy of each.
-      else if(n&&outputOf(n)==='points'&&workflow.edges.some(e=>{if(e.from!==n.id)return false;const to=workflow.nodes.find(x=>x.id===e.to);
-        return !!to&&nodeInputs(to).find(([p])=>p===e.port)?.[1]==='table';}))tables[nodeId]=pointsAsTable(value as never);}
+      else if(n&&(outputOf(n)==='points'||outputOf(n)==='polygons')&&workflow.edges.some(e=>{if(e.from!==n.id)return false;const to=workflow.nodes.find(x=>x.id===e.to);
+        return !!to&&nodeInputs(to).find(([p])=>p===e.port)?.[1]==='table';}))
+        // A POLYGON LAYER TOO (2026-11-15): a chart of a replay's p-values is offered its columns from the last run.
+        tables[nodeId]=outputOf(n)==='points'?pointsAsTable(value as never):polygonsAsTable(value as never);}
   // A POINT LAYER'S COLUMNS, not the layer (experiment 192): a rules step after a computed one, such as Find health
   // facilities from a list, is offered the columns that step gave out. Bounded: names and kinds from 200 points.
   const pointColumns:Record<string,{attribute:string;kind:'number'|'term'}[]>={};

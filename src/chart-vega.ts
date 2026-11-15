@@ -458,7 +458,14 @@ function panelVegaSpec(chart:ChartSummary,params:ChartParams,context:{sourceId?:
         encoding:{x:{field:'date',type:'temporal' as const},tooltip:[{field:'date',type:'temporal' as const,title:'Date',format:'%-d %b %Y'},{field:'text',type:'nominal' as const,title:'Marked'}]}},
         ...(index===0?[{data:{values:dated},mark:{type:'text' as const,align:'left' as const,baseline:'top' as const,dx:4,y:0,fontSize:FIGURE_TYPE.tick,color:FIGURE_ROLE.ink},
           encoding:{x:{field:'date',type:'temporal' as const},text:{field:'text',type:'nominal' as const}}}]:[])]:[];
-      return {width,height,layer:[...(shade?[shade]:[]),drawn,...rules]};
+      // A LINE AT A STATED VALUE in this panel, dashed, labelled at its right end: p = 0.05 on a p-value (2026-11-15).
+      const at=params.panelLines?.[panel];
+      const level=at&&Number.isFinite(at.value)?[{data:{values:[{y:at.value,text:at.label.trim()||String(at.value)}]},
+          mark:{type:'rule' as const,color:'#c0392b',strokeWidth:1.5,strokeDash:[6,3]},encoding:{y:{field:'y',type:'quantitative' as const}}},
+        {data:{values:[{y:at.value,text:at.label.trim()||String(at.value)}]},
+          mark:{type:'text' as const,align:'right' as const,baseline:'bottom' as const,dy:-3,x:'width' as const,fontSize:FIGURE_TYPE.tick,color:'#c0392b'},
+          encoding:{y:{field:'y',type:'quantitative' as const},text:{field:'text',type:'nominal' as const}}}]:[];
+      return {width,height,layer:[...(shade?[shade]:[]),drawn,...rules,...level]};
     }),
     resolve:{scale:{x:'shared' as const,y:'independent' as const}},
     spacing:6,

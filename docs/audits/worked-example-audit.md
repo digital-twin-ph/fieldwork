@@ -74,7 +74,7 @@ evidence about that example.
 | `table_output` | 18 | brazil-dengue-rj-2024, hagelloch, hagelloch-chains, hagelloch-cluster, hagelloch-people, mers-korea-2015, nyc-asthma-ozone-2016-2025, oswego-1940, population-models-census, salmonella-germany-2021, sea-level-rise-philippines, sierra-leone-measles, snow-deaths, snow-geoprivacy, snow-isochrone, snow-voronoi, south-london-1854, workflows-rulesets |
 | `study_area` | 17 | brazil-dengue-rj-2024, hagelloch, hagelloch-chains, hagelloch-cluster, hagelloch-sheet, mers-korea-2015, nyc-asthma-ozone-2016-2025, oswego-1940, population-models-census, sea-level-rise-philippines, sierra-leone-measles, snow-deaths, snow-geoprivacy, snow-isochrone, snow-voronoi, south-london-1854, workflows-rulesets |
 | `point_input` | 16 | hagelloch, hagelloch-chains, hagelloch-cluster, hagelloch-people, hagelloch-sheet, mers-korea-2015, nyc-asthma-ozone-2016-2025, oswego-1940, sea-level-rise-philippines, snow-deaths, snow-extent, snow-geoprivacy, snow-isochrone, snow-voronoi, south-london-1854, workflows-rulesets |
-| `chart_output` | 13 | brazil-dengue-rj-2024, hagelloch, hagelloch-chains, hagelloch-people, mers-korea-2015, nyc-asthma-ozone-2016-2025, oswego-1940, population-models-census, sierra-leone-measles, snow-curve, snow-isochrone, snow-voronoi, south-london-1854 |
+| `chart_output` | 14 | brazil-dengue-rj-2024, hagelloch, hagelloch-chains, hagelloch-cluster, hagelloch-people, mers-korea-2015, nyc-asthma-ozone-2016-2025, oswego-1940, population-models-census, sierra-leone-measles, snow-curve, snow-isochrone, snow-voronoi, south-london-1854 |
 | `table_input` | 12 | brazil-dengue-rj-2024, mers-korea-2015, nigeria-immunization-2024, nyc-asthma-ozone-2016-2025, oswego-1940, population-models-census, salmonella-germany-2021, sea-level-rise-philippines, sierra-leone-measles, snow-curve, south-london-1854, workflows-rulesets |
 | `group_table` | 11 | brazil-dengue-rj-2024, hagelloch-chains, hagelloch-people, mers-korea-2015, nyc-asthma-ozone-2016-2025, oswego-1940, population-models-census, salmonella-germany-2021, sierra-leone-measles, south-london-1854, workflows-rulesets |
 | `apply_ruleset` | 9 | hagelloch-chains, mers-korea-2015, nigeria-immunization-2024, oswego-1940, population-models-census, sea-level-rise-philippines, sierra-leone-measles, south-london-1854, workflows-rulesets |
@@ -85,13 +85,13 @@ evidence about that example.
 | `sample_raster` | 4 | brazil-dengue-rj-2024, nyc-asthma-ozone-2016-2025, population-models-census, sea-level-rise-philippines |
 | `two_by_two` | 4 | mers-korea-2015, oswego-1940, salmonella-germany-2021, south-london-1854 |
 | `append_rows` | 3 | brazil-dengue-rj-2024, population-models-census, salmonella-germany-2021 |
+| `map_image_input` | 3 | hagelloch-cluster, hagelloch-sheet, south-london-1854 |
 | `polygon_input` | 3 | nigeria-immunization-2024, salmonella-germany-2021, south-london-1854 |
 | `rate` | 3 | brazil-dengue-rj-2024, sierra-leone-measles, south-london-1854 |
 | `regression` | 3 | brazil-dengue-rj-2024, nyc-asthma-ozone-2016-2025, salmonella-germany-2021 |
 | `clip_polygons` | 2 | snow-isochrone, snow-voronoi |
 | `find_health_facilities` | 2 | sea-level-rise-philippines, sierra-leone-measles |
 | `find_satellite_products` | 2 | brazil-dengue-rj-2024, nyc-asthma-ozone-2016-2025 |
-| `map_image_input` | 2 | hagelloch-sheet, south-london-1854 |
 | `raster_input` | 2 | population-models-census, sea-level-rise-philippines |
 | `search_satellite_catalog` | 2 | brazil-dengue-rj-2024, nyc-asthma-ozone-2016-2025 |
 | `study_design` | 2 | salmonella-germany-2021, south-london-1854 |
@@ -141,11 +141,11 @@ that does not can be rebuilt only by copying this file.
 | `snow-extent` | 4 | 2 | 2 | — | — | — |
 | `hagelloch` | 8 | 2 | 1 | — | 1 | — |
 | `hagelloch-chains` | 10 | 2 | 1 | — | 1 | — |
-| `hagelloch-cluster` | 8 | 2 | 1 | — | 1 | — |
+| `hagelloch-cluster` | 10 | 3 | 1 | **1** — sheet (map_image_input) | 1 | — |
 | `hagelloch-sheet` | 4 | 3 | 1 | **1** — sheet (map_image_input) | 1 | — |
 | `hagelloch-people` | 8 | 1 | 1 | — | — | — |
 
-Across the shipped examples, **3 nodes carry data and declare no source**. That is the list a from-scratch rebuild would have to copy rather than fetch. A further 8 study areas carry a drawn geometry with no declared source; those are redrawn rather than fetched, which the sized-box control makes an entry rather than a tracing.
+Across the shipped examples, **4 nodes carry data and declare no source**. That is the list a from-scratch rebuild would have to copy rather than fetch. A further 8 study areas carry a drawn geometry with no declared source; those are redrawn rather than fetched, which the sized-box control makes an entry rather than a tracing.
 
 ### What this cannot establish
 
@@ -175,12 +175,12 @@ different things: an example can be four nodes and complete, or eighteen and not
 | `hagelloch-chains` | 10 | 2 / 4 | published files, rebuilt from scratch |
 | `snow-voronoi` | 9 | 2 / 4 | published files, rebuilt from scratch |
 | `hagelloch` | 8 | 2 / 4 | published files, rebuilt from scratch |
-| `hagelloch-cluster` | 8 | 2 / 4 | published files, rebuilt from scratch |
 | `hagelloch-people` | 8 | 2 / 4 | published files, rebuilt from scratch |
 | `snow-deaths` | 6 | 2 / 4 | published files, rebuilt from scratch |
 | `snow-extent` | 4 | 2 / 4 | published files, rebuilt from scratch |
 | `snow-geoprivacy` | 15 | 1 / 4 | unattached, published files, rebuilt from scratch |
 | `snow-isochrone` | 12 | 1 / 4 | sources, published files, rebuilt from scratch |
+| `hagelloch-cluster` | 10 | 1 / 4 | sources, published files, rebuilt from scratch |
 | `hagelloch-sheet` | 4 | 1 / 4 | sources, published files, rebuilt from scratch |
 | `snow-curve` | 3 | 1 / 4 | sources, published files, rebuilt from scratch |
 | `south-london-1854` (pinned) | — | **3 / 4** | rebuilt from scratch: 1 of its 6 workflows |
@@ -277,7 +277,7 @@ Generated from the numbers above, so a recommendation cannot outlive the gap tha
 Each says what was measured and what closing it would mean. None says whether it is worth
 doing: that is a decision with a cost, and this file measures.
 
-**R1. Give the 3 data-carrying nodes a declared source.** 3 shipped examples hold 3 nodes that carry data and name no origin: `snow-curve` (1), `snow-isochrone` (1), `hagelloch-sheet` (1). Closing it means either a `sourceInfo`/`provenance` block naming where the data came from, or a published file beside the example the way `geo/water-intakes.geojson` was written on 2026-10-29. Until then each is a payload a rebuild must copy rather than fetch.
+**R1. Give the 4 data-carrying nodes a declared source.** 4 shipped examples hold 4 nodes that carry data and name no origin: `snow-curve` (1), `snow-isochrone` (1), `hagelloch-cluster` (1), `hagelloch-sheet` (1). Closing it means either a `sourceInfo`/`provenance` block naming where the data came from, or a published file beside the example the way `geo/water-intakes.geojson` was written on 2026-10-29. Until then each is a payload a rebuild must copy rather than fetch.
 
 **R2. Ask D11 of the 8 widgets no workflow reaches.** `buffer_point`, `clip_points_to_area`, `clip_raster`, `deduplicate_points`, `fill_interior_gaps`, `measure_area`, `point_grid`, `summarize_combined_area`. Not a retirement list: D11 asks whether a residual function remains that nothing else performs, and a widget may be unreached because no example poses its problem. The answer is per widget and this audit does not have it.
 

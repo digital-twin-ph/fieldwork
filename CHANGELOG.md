@@ -3,7 +3,7 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## 0.119.0 — In development
+## 0.119.0 — 2026-11-14
 
 - **Transmission chains, a new step.** It follows each case's recorded source back to the case its chain starts with
   and hands on every row with its `chain`, `generation`, `offspring` and `chain_size`, so a curve can be split by

@@ -369,3 +369,10 @@ supports, a result, a background point, a method, a limitation, and appears ther
 output's figure is filed by section (Results by default, movable, `figureSection`), which is a step towards this and
 not the same: what is missing is the attachment to one statement. In South London's mock-up, Snow's Map 2 supports the
 Introduction's point on supply areas, and one table or figure supports each objective's result.
+
+**Components carry their data as attachments (the practitioner, the same day: *"Data tables can be attachments as CSV.
+Maps can be attached geopackages. Charts as Vega-lite specs and/or SVG. So reproducible."*).** Each table, map and chart
+attached to a statement ships with its data in an open format, so the product can be reproduced from its supplement.
+Today: tables are read from CSV and never exported as CSV; GeoPackages are read (SQLite in the browser) and never
+written, maps exporting as SVG and PNG and rasters as GeoTIFF; charts are built from a Vega-Lite specification and
+exported as SVG, the specification itself not offered. Each is feasible with what the code holds; none is built.

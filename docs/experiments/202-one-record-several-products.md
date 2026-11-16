@@ -354,3 +354,10 @@ alone do not answer. **Test before design:** South London's publication written 
 (Coleman 2020 for content, Barnett 2020 for form; workspace `reports/South London publication, model papers.md`), each
 paragraph marked with its role, what supplies it now and its length, against two targets at once, the publication and
 a sit rep.
+
+**Objectives are the workflows' questions (the practitioner, the same day: *"For the publication, the results should
+match publication questions or objectives"*).** A paper's Introduction states its objectives, Results answers each in
+the same order, and the Discussion returns to them. Fieldwork already names each workflow for the question it answers,
+so a publication's objectives are drawn from the project's workflow questions: each objective a Results slot, filled
+by that workflow's result and figure, with the person's sentence giving the answer; workflows the paper does not ask
+about support Methods or stay out. South London's mock-up has three: per house, per person, 1854 against 1849.

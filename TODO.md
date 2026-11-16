@@ -117,9 +117,9 @@ and legible, not merged; **reading a repository back into Fieldwork is unbuilt**
 Identity first (the practitioner: *"we have to strengthen the concept of identity within FW, perhaps using Open Science as
 a platform (e.g., identities - ORCID, GitHub, etc.)"* and *"We have to develop an encrypted identity file which user loads
 when identity requiring activities are active"*, *"Identity only"*): experiment
-[219](docs/experiments/219-an-identity-you-carry.md), an encrypted identity file carrying the profile (name, GitHub,
+[218](docs/experiments/218-an-identity-you-carry.md), an encrypted identity file carrying the profile (name, GitHub,
 ORCID, ROR affiliation, CRediT roles), its attestations and a signing key, loaded only for identity-requiring work.
-Needed, in order: (0) the identity file of 219; (1) read a project repository back; (2) show a conflict legibly, per file, two versions side by side
+Needed, in order: (0) the identity file of 218; (1) read a project repository back; (2) show a conflict legibly, per file, two versions side by side
 for a person to choose; (3) a contribution path (branch or fork, work in Fieldwork, export, pull request, review),
 which onboarding modules 4 and 6 teach; (4) 150's second-author pilot, with the graduate as the second author.
 

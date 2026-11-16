@@ -124,11 +124,13 @@ test('the manual detaches, stays through a new project and a reload, closes, and
   await expect(panel.locator('.manual-float-head')).toContainText('2 of');
   await expect(panel.locator('[data-step="0:0"]')).toHaveClass(/done/);
 
-  // A project of the practitioner's own: the panel stays, the tab goes. And while the New project dialog is open the
-  // manual is inside it, readable and copyable, not blurred behind it (the practitioner, 2026-11-04).
+  // A project of the practitioner's own: the panel stays, the tab goes. New project is a tab of the Project view since
+  // 2026-11-16, so nothing covers the manual and it stays where it floats, readable and copyable.
   await page.locator('#new-project').click();
-  await expect(page.locator('#project-dialog')).toBeVisible();
-  expect(await panel.evaluate(el=>el.parentElement?.id)).toBe('project-dialog');
+  await expect(page.locator('#project-tab-new')).toBeVisible();
+  // Docked beside the form, not over it: Create project stays in reach.
+  expect(await panel.evaluate(el=>el.parentElement?.id)).toBe('project-new-manual');
+  await page.locator('#project-tab-new').screenshot({path:'test-results/project-new-with-manual.png'});
   const name=panel.locator('[data-copy^="Ozone and child asthma"]').first();
   await name.scrollIntoViewIfNeeded();await name.click();
   await expect(name).toHaveText(/^(Copied|Selected)$/);

@@ -33,10 +33,12 @@ test('a copy made before the example was updated says so in the bar, and loads t
   await page.evaluate(()=>{const k='fieldwork-example-revisions-v1';const r=JSON.parse(localStorage.getItem(k)||'{}');
     r['hagelloch-cluster']='an earlier version';localStorage.setItem(k,JSON.stringify(r));});
   await page.goto('/?example=hagelloch-cluster');
+  // ONCE STARTUP IS OVER: a click during it is lost to the start's own save (WebKit on CI, 0.128.0 and 0.129.0).
+  await expect(page.locator('html[data-ready="true"]')).toHaveCount(1,{timeout:30000});
   const note=page.locator('#example-note');
   await expect(note).toContainText('The example has been updated since this copy was made');
   await page.locator('#load-published').click();
-  await expect.poll(async()=>(await saved(page)).nodes.some(n=>n.id==='replay')).toBe(true);
+  await expect.poll(async()=>(await saved(page)).nodes.some(n=>n.id==='replay'),{timeout:30000}).toBe(true);
   await expect(note).not.toContainText('updated since');
   expect(errors).toEqual([]);
 });

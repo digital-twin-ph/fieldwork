@@ -18,7 +18,7 @@ test('a stored project says whether a copy exists, and that is the way to make o
   await page.locator('#project-name-input').fill('Ituri health zones');
   await page.locator('#project-subject-input').fill('Ebola response denominators');
   await page.locator('#project-create').click();
-  await expect(page.locator('#project-dialog')).toBeHidden();
+  await expect(page.locator('#project-name-input')).toHaveValue('');
 
   // Said where the practitioner already looks, without opening anything.
   const safety=page.locator('#project-safety');

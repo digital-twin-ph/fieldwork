@@ -1517,3 +1517,50 @@ th .meaning{font-weight:400;white-space:normal}
 .note-components legend{font-weight:600;padding:0 4px}
 .note-components label{display:flex;gap:8px;align-items:flex-start}
 .outline-objectives{margin:6px 0 0 18px;font-size:14px;display:grid;gap:4px}
+/* Experiment 218, the spike: the Identity dialog, and a note's versions. */
+.identity-body{display:grid;gap:8px;font-size:14px}
+.identity-body section,.identity-body details{display:grid;gap:4px;border-top:1px solid var(--line-soft-2);padding-top:8px}
+.identity-body input{font-size:14px;padding:6px}
+.identity-status{font-weight:600}
+.note-versions{font-size:14px;margin:8px 0}
+.note-versions .version-fails{color:var(--danger,#b00020)}
+/* Avatars (218): your avatar on the Identity button, the chooser, the key pattern beside a signature. */
+/* In the header's top-right corner, where the placeholder "FW" circle stood: who is signed in. */
+.identity-button{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface-raised-1);padding:3px 12px 3px 4px;border-radius:22px;font-size:14px;font-weight:600;color:var(--ink)}
+.identity-button .fw-avatar{flex:none}
+@media(max-width:530px){.identity-button span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}.identity-button{padding:3px}}
+.identity-who{display:flex;align-items:center;gap:12px}
+.identity-who svg{flex:none}
+.avatar-chooser{border:1px solid var(--line-soft-2);border-radius:6px;padding:8px 10px;display:grid;gap:10px}
+.avatar-chooser legend{font-weight:600;padding:0 4px}
+.avatar-icons{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:6px}
+.avatar-option{display:grid;justify-items:center;gap:4px;padding:6px;border-radius:6px;border:2px solid transparent;cursor:pointer;font-size:14px;text-align:center}
+.avatar-option:has(input:checked){border-color:var(--ink)}
+.avatar-option:has(input:focus-visible){outline:2px solid var(--ink);outline-offset:2px}
+.avatar-option input,.avatar-colour input{position:absolute;opacity:0;width:1px;height:1px}
+.avatar-colours{display:flex;flex-wrap:wrap;gap:6px}
+.avatar-colour{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:6px;border:2px solid transparent;cursor:pointer;font-size:14px}
+.avatar-colour:has(input:checked){border-color:var(--ink)}
+.avatar-colour:has(input:focus-visible){outline:2px solid var(--ink);outline-offset:2px}
+.avatar-colour .swatch{width:20px;height:20px;border-radius:50%;border:1px solid #fff;box-shadow:0 0 0 1px var(--line-soft-2)}
+.note-versions .key-pattern{vertical-align:middle}
+.identity-who #identity-avatar{display:grid;justify-items:center;gap:6px}
+.key-label{display:inline-flex;align-items:center;gap:6px;font-size:14px;white-space:nowrap}
+/* The Project view's three tabs (2026-11-16), and its checkboxes kept beside their labels. */
+.project-tabs{display:inline-flex;margin:4px 0 16px}
+.project-tabs button{font-size:15px;padding:7px 14px}
+.project-new-panel{max-width:640px;display:grid;gap:2px}
+.project-new-panel h2{font-size:20px;margin:0 0 4px}
+.project-new-panel input,.project-new-panel textarea{width:100%;border:1px solid var(--line-soft-2);background:var(--surface-raised-1);padding:7px;font-size:15px;color:var(--ink);border-radius:6px}
+.project-new-panel .dialog-actions{margin-top:12px}
+.project-import-block{margin-top:22px;padding-top:14px;border-top:1px solid var(--line)}
+.project-import-block h3{font-size:16px;margin:0 0 4px}
+.targets-field input[type="checkbox"],.project-detail-grid .targets-field input[type="checkbox"],.project-new-panel input[type="checkbox"]{width:auto;flex:none;margin:0;padding:0}
+.targets-choice{justify-content:flex-start;text-align:left}
+.project-tabs button.active{font-weight:700;border:1px solid var(--accent-4,var(--green))}
+/* New project with a worked example's manual open: the manual in a column beside the form, never over it. */
+#project-tab-new:not([hidden]){display:grid;grid-template-columns:minmax(0,640px) minmax(0,1fr);gap:24px;align-items:start;max-width:none}
+.project-new-form{display:grid;gap:2px;min-width:0}
+.project-new-manual:empty{display:none}
+.project-new-manual .manual-float{position:sticky!important;top:8px!important;left:auto!important;right:auto!important;bottom:auto!important;width:100%!important;height:min(70vh,640px)!important;z-index:1;resize:none}
+@media(max-width:900px){#project-tab-new:not([hidden]){grid-template-columns:1fr}}

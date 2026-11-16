@@ -20,6 +20,7 @@ test('the Project view is a tab, and counts what each project holds',async({page
   await expect(page.locator('#project-view')).toBeVisible();
   await expect(page.locator('#project-view-title')).toHaveText('No project selected');
   await expect(page.locator('.project-view-block')).toHaveCount(0);
+  await page.locator('#project-tab-this-button').click();
   await expect(page.locator('#project-unfiled')).toBeVisible();
 
   await page.locator('[data-view="workflow"]').click();
@@ -27,7 +28,7 @@ test('the Project view is a tab, and counts what each project holds',async({page
   await page.locator('#project-name-input').fill('Ituri health zones');
   await page.locator('#project-subject-input').fill('Ebola response denominators');
   await page.locator('#project-create').click();
-  await expect(page.locator('#project-dialog')).toBeHidden();
+  await expect(page.locator('#project-name-input')).toHaveValue('');
 
   await page.locator('[data-view="project"]').click();
   const block=page.locator('.project-view-block');
@@ -81,14 +82,17 @@ test('the project is selected in one place and managed in one place',async({page
   await page.locator('#project-name-input').fill('Facilities and networks');
   await page.locator('#project-subject-input').fill('Ituri');
   await page.locator('#project-create').click();
-  await expect(page.locator('#project-dialog')).toBeHidden();
+  await expect(page.locator('#project-name-input')).toHaveValue('');
 
   // Selected in the dropdown.
   await expect(page.locator('#project-select')).toHaveValue(/.+/);
   // Managed in the tab, and nowhere else: the old doors are gone.
   await page.locator('[data-view="project"]').click();
   await expect(page.locator('#project-view-title')).toHaveText('Facilities and networks');
+  // Starting one, made or imported, is its own tab.
+  await page.locator('#project-new').click();
   await expect(page.locator('#project-import')).toBeVisible();
+  await page.locator('#project-tab-this-button').click();
   await expect(page.locator('#project-name-edit')).toHaveValue('Facilities and networks');
   await expect(page.locator('#storage-meter')).toBeVisible();
 

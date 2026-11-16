@@ -74,8 +74,8 @@ test('a step inside a dialog says so where the dialog begins, not on every step 
     {fill:'project-name-input',label:'Name',value:'NYC',dialog:'New project'},
     {fill:'project-subject-input',label:'Subject',value:'Daily',dialog:'New project'},
     {click:'#project-create',label:'Create project',dialog:'New project'}]}]}),'W',title,esc);
-  assert.match(html,/Press <strong>New project<\/strong>\. The New project dialog opens\./);
-  assert.match(html,/In the <strong>New project<\/strong> dialog, set <strong>Name<\/strong>/);
-  assert.equal((html.match(/In the <strong>New project<\/strong> dialog/g)??[]).length,1);
+  assert.match(html,/Press <strong>New project<\/strong>\. The New project tab opens\./);
+  assert.match(html,/On the <strong>New project<\/strong> tab, set <strong>Name<\/strong>/);
+  assert.equal((html.match(/On the <strong>New project<\/strong> tab/g)??[]).length,1);
   assert.match(html,/Press <strong>Create project<\/strong>\./);
 });

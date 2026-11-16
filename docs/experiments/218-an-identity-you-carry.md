@@ -2,7 +2,7 @@
 
 _Created 2026-11-15 · Updated 2026-11-15_
 
-**Status:** asked. A design, written before the code. Nothing built.
+**Status:** tried. A design, written before the code; its spike built 2026-11-16 (steps 1, 2, 4, 5 and 6; 3 in part; 7 not yet), below.
 
 ## The question
 
@@ -94,3 +94,99 @@ asks for it by name.
 That a signature shows who wrote the words: it shows which key signed them. That an ORCID iD or a GitHub login belongs
 to the person holding the file, beyond what each provider attests. Anything about collaboration itself, which needs
 reading a project repository back (experiment 150's unbuilt half).
+
+## The spike: who did what, 2026-11-16
+
+The practitioner, after 202's planning notes were designed: *"So a publication in fact can have an audit trail
+including who generated what in collaborative projects. So before we proceed let's do a spike with identity as this is
+needed for who did what."* And, the same day in 202: planning and non-planning notes *"Both should have versioning."*
+
+An audit trail of a publication is a note's versions, each saying who made it. That needs the identity of this record,
+and versions, which no note has. The spike takes the parts whose answer is not known in advance, in this order:
+
+| Step | Question it answers | Done when |
+| --- | --- | --- |
+| 1. The file | Can a browser make, encrypt and reopen an identity file with nothing installed? | A profile and a key pair, encrypted with a passphrase (PBKDF2 and AES-GCM), saved as `.fwid`, reopened; refused with a wrong passphrase; refused if it holds a service token |
+| 2. The key | Does Ed25519 sign and verify in both engines, or is ECDSA P-256 the fallback? (open question 1) | Measured in Chromium and WebKit |
+| 3. What is signed | A canonical form of an authored note that survives a project export and import (open question 3) | The same bytes before and after the round trip |
+| 4. A version | A note's version: when, by whom (login and public key), the canonical note's digest, the signature | Saving an authored note with an identity loaded appends a signed version; without one, an unsigned version says *declared* or *unattributed*, as today |
+| 5. Checked | Each version verified offline against the key it names; a tampered note fails | A note's dialog lists its versions, each *signed and verified*, *signature fails*, or *not signed* |
+| 6. Nothing left behind | The identity in memory only | Browser storage holds none of it after loading and after locking |
+
+**GitHub's two roles (the practitioner, the same day):** *"GitHub therefore plays dual roles - for identity and
+project coordination. Question is - is an identity token different from an access token that allows a user to post
+something on GitHub?"* There is one kind of token; what differs is its permissions. A token with none can still ask
+GitHub whose it is (`GET /user`, which `attestIdentity` uses); posting needs permissions on chosen repositories.
+Least privilege is two tokens: one with no permissions, used once to confirm identity; one scoped to the project
+repository, kept in Credentials. A token is a bearer secret and says only who holds it now; the identity file's key is
+what can be checked offline later.
+
+| Step | Question it answers | Done when |
+| --- | --- | --- |
+| 7. A key linked to an account, with no token | Can the identity file's public key be published as a GitHub SSH signing key, and read back from GitHub's public API by a browser? | The key converted to SSH form; `api.github.com/users/<login>/ssh_signing_keys` measured for an answer a browser can read; a match shown as *linked to @login* |
+
+Open science, which identity serves, is its own experiment: [219](219-open-science-requirements.md).
+
+**Out of the spike:** ORCID and GitHub attestation (open question 2); key rotation (4); versions of workflows, machined
+notes and validations (5); reading a project repository back (150); planning notes (202). Each waits on what this
+finds.
+
+**The observation that can come out badly**, as above: whether carrying a file and a passphrase is workable for the
+second author, or is the step people skip.
+
+## The spike, result, 2026-11-16
+
+| Step | Result |
+| --- | --- |
+| 1. The file | Built: `src/identity-file.ts`. Profile and key encrypted with PBKDF2 (600,000 rounds, SHA-256) and AES-GCM; reopened; a wrong passphrase refused; a file with a field named for a secret refused; an ORCID iD's check digit verified offline. The **Identity** button in the header, beside Credentials (`src/identity-ui.ts`) |
+| 2. The key | **Ed25519 signs and verifies in both engines** (Playwright 1.64's Chromium and WebKit) and in Node 22, so ECDSA P-256 stays a fallback, tested in Node. Real Safari and older browsers not measured |
+| 3. What is signed | The canonical content (keys sorted, no whitespace; versions and author excluded) survives storing and reading back through `readNotes`. **Not run:** a project's Back up and Import, and a repository export, which is the round trip 150 needs |
+| 4. A version | Every save that changes a note of your own appends a version: content, time, digest, and where an identity is open, the signer and signature. Kept on the note, so it travels with the project |
+| 5. Checked | The note's dialog lists its versions, each *signed, and the signature checks*, *signed, and the signature does not check: changed since*, or *not signed* |
+| 6. Nothing left behind | After making, locking and reopening: neither the passphrase nor the sealed file nor the format name in localStorage or sessionStorage, no IndexedDB database named for identity. The public key is in each signed version by design |
+| 7. A key linked to GitHub | Not yet run |
+
+Checked: `tests/identity-file.test.mjs` (6), `tests/identity.browser.mjs` (1, Chromium and WebKit: an identity made in
+the dialog, a wrong ORCID refused, a note signed and checked, a version altered in storage failing, lock, a wrong
+passphrase refused, reopened from the file, storage clean).
+
+**Found on the way:** a version is written after the note, once the signature is made, so Notes drawn in between showed
+the note without it; Notes is now redrawn when the version is kept.
+
+**Not established:** that the 600,000 rounds are tolerable on a low-end phone (measured only on this Mac, where the
+whole test took about two seconds); that people keep the file and passphrase (the observation above); the glossary
+terms *note version* and *identity file*, added the same day, have not been read by the practitioner.
+
+**Avatars, the same day.** The practitioner: *"Can the identity button sport an avatar?"*, *"It could also be custom FW
+avatars"*, *"Yes build both so we can also see the UI."* Built in `src/avatars.ts`: thirteen icons drawn for Fieldwork
+on nine colours (white on each at 6.3:1 or better), kept in the file as two short names, initials until chosen; a
+change seals the file again with the same key (`updateIdentityFile`). The key pattern, a mirrored 5 by 5 grid from the
+public key, stands beside each signed version. The Identity button took the header's top-right place, where a
+placeholder circle reading "FW" had stood. Checked: `tests/identity-file.test.mjs` (8), `tests/identity.browser.mjs`
+(Chromium and WebKit).
+
+## What each file holds, planned 2026-11-16
+
+The practitioner: *"So let's also plan what goes into the identity and credentials file. For example, identify files
+have GitHub, ORCID and ROR at least. The first two need user to do something. So we need an open science checklist for
+the user to complete. Then credentials file -- GitHub for project management and coordination, Zenodo for data storage
+and provenance (not sure about requirements, DOI (?)"*
+
+| | Identity file (`.fwid`) | Credentials file (`.fwcredentials`) |
+| --- | --- | --- |
+| Says | Who you are; anyone may read it once published | What you may do on a service; never published |
+| Holds | Name; **GitHub login**; **ORCID iD**; **ROR ID** of the affiliation; the person's usual CRediT roles; the signing key pair; when and how each identifier was confirmed | A **GitHub** token scoped to the project repository (coordination: contents, issues, discussions; never workflows); a **Zenodo** token (deposit, and publish where the person chooses to); any other service key |
+| Needs the person to act | GitHub: an account. ORCID: register at orcid.org and make the iD public. ROR: nothing but choosing the organisation, as ROR IDs are public | Make each token on its service, with the least permission that does the job |
+| If lost | Signatures already made still check; new ones cannot be made; no recovery | Revoke and remake the token on the service |
+
+The two stay apart, as the design above requires: an identity is not a credential. The steps the person takes outside
+Fieldwork are the open-science checklist of [219](219-open-science-requirements.md).
+
+**ROR is confirmed by lookup, not by the person**: an affiliation chosen from ROR's public registry carries its ID and
+name. Whether ROR's API answers a browser is to be measured.
+
+**ORCID is declared until confirmed.** Confirming that a person holds an iD needs ORCID's sign-in, which needs a
+client registered with ORCID; whether that works from a browser with no server of ours is open question 2 above. Until
+then, two cheap links a reader can follow: the GitHub login listed on the ORCID record, and the ORCID iD on the GitHub
+profile.
+

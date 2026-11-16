@@ -28,6 +28,8 @@ const openProjects=async page=>{
   await page.goto('/');await page.evaluate(()=>localStorage.clear());
   await page.goto('/?example=blank');
   await page.locator('[data-view="project"]').click();
+  // No project open, so the Project view starts on its Worked examples tab.
+  await expect(page.locator('#project-tab-examples-button')).toHaveAttribute('aria-selected','true');
   await expect(page.locator('#project-examples')).toBeVisible();
 };
 

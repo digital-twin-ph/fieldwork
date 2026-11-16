@@ -73,13 +73,17 @@ export function validateManual(value:unknown):WorkedExampleManual{
 const bold=(text:string,esc:(s:string)=>string)=>`<strong>${esc(text)}</strong>`;
 
 /** One step, as a sentence a practitioner follows. `title` names a widget as the library does. */
+/** SURFACES A MANUAL NAMES AS A DIALOG THAT ARE NOW A TAB. New project moved into the Project view on 2026-11-16; the
+ *  manuals in the example repositories keep naming it, and read it as a tab, so none of them had to change. */
+export const TAB_SURFACES:ReadonlySet<string>=new Set(['New project']);
+const surfaceKind=(surface:string)=>TAB_SURFACES.has(surface)?'tab':'dialog';
 export function stepSentence(step:ManualStep,types:Record<string,string>,title:(type:string)=>string,
     esc:(s:string)=>string,{sameDialog=false}:{sameDialog?:boolean}={}):string{
   const node=(handle:string)=>bold(title(types[handle]??handle),esc);
   const where=(handle?:string)=>handle?` in ${node(handle)}`:'';
   // WHERE IT HAPPENS: a dialog when there is one, which is nearer than the tab behind it.
   // Named where it changes, not on every step inside it: ten steps in one dialog say so once.
-  const tab=('dialog' in step&&step.dialog)?(sameDialog?'':`In the ${bold(step.dialog,esc)} dialog, `)
+  const tab=('dialog' in step&&step.dialog)?(sameDialog?'':`${TAB_SURFACES.has(step.dialog)?'On':'In'} the ${bold(step.dialog,esc)} ${surfaceKind(step.dialog)}, `)
     :('view' in step&&step.view)?`In ${bold(VIEW_NAMES[step.view],esc)}, `:'';
   const sentence=(text:string)=>tab?tab+text.charAt(0).toLowerCase()+text.slice(1):text;
   // THE LIBRARY'S SEARCH, named in every add: the practitioner, 2026-11-04, *"so users while building by hand and
@@ -91,7 +95,7 @@ export function stepSentence(step:ManualStep,types:Record<string,string>,title:(
   if('select' in step)return `Select ${node(step.select)} on the canvas.`;
   if('connect' in step)return `Connect the output of ${node(step.connect.from)} to the <em>${esc(step.connect.port)}</em> `
     +`input of ${node(step.connect.to)}.`;
-  if('click' in step)return sentence(`Press ${bold(step.label,esc)}.${step.opens?` The ${esc(step.opens)} dialog opens.`:''}`);
+  if('click' in step)return sentence(`Press ${bold(step.label,esc)}.${step.opens?` The ${esc(step.opens)} ${surfaceKind(step.opens)} opens.`:''}`);
   // A VALUE TO TYPE CAN BE COPIED. The practitioner, 2026-11-04: *"whenever there is an opportunity to copy and paste
   // instead of typing we should offer it for labels, titles, subjects, URLs like the Zenodo one."*
   if('fill' in step)return sentence(`Set ${bold(step.label,esc)}${where(step.in)} to <code>${esc(step.value)}</code>`

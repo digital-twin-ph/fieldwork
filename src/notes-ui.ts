@@ -2,6 +2,8 @@ import {hasManual,openManual} from './manual.js';
 import {GUIDE_QUESTIONS} from './imrad-guide.js';
 import type {Escape} from './types.js';
 import {noteKey,objectivesOf,type NoteItem} from './notes.js';
+import {checkVersion} from './identity-file.js';
+import {keyPatternSvg} from './avatars.js';
 import {element} from './dom.js';
 import {toHTML,typeset,hasMarkup} from './prose.js';
 import {groupNotes,notesOfPart,noteExtent,forkHasDrifted,KNOWN_NOTE_FUNCTIONS,NOTE_WORDS,NOTE_ARGUMENT,UNWRITTEN,
@@ -428,7 +430,7 @@ const DIALOG=`<dialog id="note-dialog" aria-labelledby="note-dialog-title">
   aria-label="The note" spellcheck="true"></textarea>
 <div id="note-preview" class="prose note-preview" hidden aria-live="polite"></div>
 <div id="note-items" class="note-items-editor" hidden></div><div id="note-links" class="note-links" hidden></div><div id="note-targets" class="note-targets"></div>
-<p id="note-why" class="why"></p><p id="note-status" class="note-status" role="status"></p>
+<div id="note-versions" class="note-versions"></div><p id="note-why" class="why"></p><p id="note-status" class="note-status" role="status"></p>
 <div id="note-detail" class="panel"></div></div>
 <div class="dlg-foot"><span id="note-count"></span>
 <button id="note-close" class="button grow">Close</button>
@@ -569,6 +571,14 @@ export function openNoteDialog(note:Note,context:NoteContext,esc:Escape){
   drawTargets(note.section,fn);
   const itemsPanel=$('#note-items');
   itemsPanel.hidden=true;itemsPanel.innerHTML='';
+  // ITS VERSIONS, newest first, each checked offline against the key that signed it (experiment 218, the spike).
+  const versionsPanel=$('#note-versions');versionsPanel.innerHTML='';
+  const versions=note.kind==='authored'?[...(note.versions??[])].reverse():[];
+  if(versions.length)void Promise.all(versions.map(checkVersion)).then(checks=>{
+    const said={verified:'signed, and the signature checks',fails:'signed, and the signature does not check: changed since',unsigned:'not signed'};
+    versionsPanel.innerHTML=`<details><summary>Versions (${versions.length})</summary><ol reversed>${versions.map((v,i)=>
+      `<li class="version-${checks[i]}">${esc(new Date(v.at).toLocaleString('en-GB',{dateStyle:'medium',timeStyle:'short'}))}`
+      +`${v.by?`, ${keyPatternSvg(v.by.publicKey,20)} ${esc([v.by.name,v.by.login?`@${v.by.login}`:''].filter(Boolean).join(' · '))}`:''}: ${said[checks[i]!]}</li>`).join('')}</ol></details>`;});
   if(!writing){
     body.textContent=text;
     body.insertAdjacentHTML('beforeend',itemsList(note,esc));

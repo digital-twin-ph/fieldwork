@@ -49,6 +49,8 @@ is worth knowing before you trip over one:
 | **Parity** | Agreement between this project's computation and an independent external one ([57](experiments/57-parity-evidence.md), [kinds of validation](audits/validation.md)) | Number of births a woman has had. "Concordance" would have been the better choice |
 | **Usage** | Whether a worked example exercises a widget — `npm run usage:widgets` | Not a collision, but note **coverage** is deliberately avoided for this, since coverage means the proportion of a target population reached |
 | **Receipt** | The per-step record of what ran and what it used | Closest familiar equivalent is an **audit trail** |
+| **Note version** | What a note of your own said each time it was saved, when, and, if an identity file was open, who, signed ([218](experiments/218-an-identity-you-carry.md)). Not a receipt: a receipt records a computation, a note version records writing | A note's versions together are its revision history; a publication's audit trail of who wrote what is read from them |
+| **Identity file** | A file the person keeps (`.fwid`), encrypted with their passphrase, holding their name, identifiers and signing key ([218](experiments/218-an-identity-you-carry.md)). Never a credential | No collision |
 
 Two neighbouring glossaries are not repeated here. The vocabulary of ontology engineering
 (IRI, triple, SHACL, OWL) and the standard vocabularies reused rather than reinvented

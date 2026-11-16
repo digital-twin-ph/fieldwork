@@ -3,6 +3,22 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.130.0 — In development
+
+- **Identity, apart from Credentials.** The **Identity** button, top right in the header where the placeholder circle
+  stood, makes your identity file (name, GitHub login, ORCID iD with its check digit verified, a signing key), opens it
+  with its passphrase, and locks it. It is yours to keep; Fieldwork never stores it, and it holds no tokens. A spike of
+  experiment 218: Ed25519 signatures, checked in Chromium and WebKit.
+- **A note's versions.** Every save that changes a note of your own keeps a version: what it said, when, and, with your
+  identity open, who, signed. The note's dialog lists them, each *signed, and the signature checks*, *does not check*,
+  or *not signed*.
+- **Avatars.** An icon from Fieldwork's own set on a colour you choose, kept in your identity file; your initials until
+  you choose. Beside each signature, a pattern drawn from the signer's key, so two keys never look alike.
+- **The Project view in three tabs**: This project, New project (the form that was a dialog, with Import project) and
+  Worked examples. With a worked example's manual open, it sits beside the New project form instead of over it. The
+  *Writing towards* checkboxes sit beside their labels again.
+- A test that clicked before startup had finished now waits for it (WebKit on CI, 0.128.0 and 0.129.0).
+
 ## 0.129.0 — 2026-11-16
 
 - **Objectives first, then what answers them.** A new project can write its objectives before it has any workflow.

@@ -129,6 +129,8 @@ import {typeset} from './prose.js';
 import {readNotes,WRITE_UP_PARTS,type Note,type WriteUpPart,moveNote,forkMachinedNote,
   UNWRITTEN,objectivesOf,type MachinedNote,FIGURE_SECTIONS,DEFAULT_FIGURE_SECTIONS,figureSection,type FigureSection,LEFT_OUT,inWriteUp} from './notes.js';
 import {readAuthors,currentIdentity,attestIdentity,setCurrentIdentity,authorLabel} from './identity.js';
+import {installIdentity,openIdentity} from './identity-ui.js';
+import {noteVersion} from './identity-file.js';
 
 /** A polygon layer's chosen file, waiting for Apply. Keyed by node, outside the DOM, because the
  *  Inspector re-renders on every setting change. */
@@ -7335,7 +7337,8 @@ function switchView(view:string){
   $('#rules-view').hidden=view!=='rules';
   $('#project-view').hidden=view!=='project';
   // AS THE PROJECT IS NOW: objectives written in Notes since the last render are offered to this workflow (Stage B).
-  if(view==='project')renderProjectDetails();
+  queueMicrotask(placeManualFloat);
+  if(view==='project'){renderProjectDetails();if(!document.querySelector('#project-tab-new:not([hidden])'))showProjectTab(rememberedProjectTab(),false);}
   $('#notes-view').hidden=view!=='notes';
   $('#manual-view').hidden=view!=='manual';
   $('#widgets-view').hidden=view!=='widgets';
@@ -7543,10 +7546,44 @@ function targetsChoices(name:string,chosen:readonly string[],legend:boolean,disa
     +TARGETS.map(t=>`<label class="targets-choice"><input type="checkbox" name="${name}" value="${esc(t.id)}"${chosen.includes(t.id)?' checked':''}${disabled?' disabled':''}> ${esc(t.label)}</label>`).join('');
 }
 const chosenTargets=(name:string)=>[...document.querySelectorAll<HTMLInputElement>(`input[name="${name}"]:checked`)].map(i=>i.value);
+/** THE PROJECT TAB'S THREE PARTS (the practitioner, 2026-11-16: *"I think we can separate the example projects, new
+ *  project, and loaded project into three tabs so it's cleaner."*): the project open now, a new one, the worked
+ *  examples. Which was last shown is remembered on this device, as a convenience. */
+type ProjectTab='this'|'new'|'examples';
+const PROJECT_TAB_KEY='fieldwork-project-tab-v1';
+function showProjectTab(which:ProjectTab,chosen=true){
+  for(const tab of document.querySelectorAll<HTMLButtonElement>('[data-project-tab]')){
+    const on=tab.dataset.projectTab===which;
+    tab.classList.toggle('active',on);tab.setAttribute('aria-selected',String(on));tab.tabIndex=on?0:-1;
+    const panel=document.getElementById(tab.getAttribute('aria-controls')||'');if(panel)panel.hidden=!on;
+  }
+  if(chosen)try{localStorage.setItem(PROJECT_TAB_KEY,which);}catch{/* a convenience only */}
+  // After the module has finished starting: the manual's placement reads state declared further down.
+  queueMicrotask(placeManualFloat);
+}
+/** The tab last chosen; before any is chosen, the open project, or the worked examples when no project is open, since
+ *  This project then has nothing of a project to show. */
+function rememberedProjectTab():ProjectTab{
+  try{const v=localStorage.getItem(PROJECT_TAB_KEY);if(v==='this'||v==='new'||v==='examples')return v;}catch{/* none */}
+  const key=storageKey(workflow);
+  return workflow.projectId||projectOfWorkflow(key,allProjects())?'this':'examples';
+}
+for(const tab of document.querySelectorAll<HTMLButtonElement>('[data-project-tab]')){
+  tab.addEventListener('click',()=>{const which=tab.dataset.projectTab as ProjectTab;
+    if(which==='new')openProjectDialog();else showProjectTab(which);});
+  // ARROW KEYS MOVE BETWEEN TABS, as a tab list does.
+  tab.addEventListener('keydown',event=>{
+    const all=[...document.querySelectorAll<HTMLButtonElement>('[data-project-tab]')],at=all.indexOf(tab);
+    const next=event.key==='ArrowRight'?all[(at+1)%all.length]:event.key==='ArrowLeft'?all[(at+all.length-1)%all.length]:undefined;
+    if(next){event.preventDefault();next.focus();next.click();}});
+}
+/** NEW PROJECT, a tab of the Project view since 2026-11-16 (it was a dialog). What is typed there stays while the
+ *  person looks at the other tabs, and is cleared once the project is made. */
 function openProjectDialog(){
   if(busy)return;
-  $('#project-name-input').value='';$('#project-subject-input').value='';
-  ($('#project-targets-new') as HTMLElement).innerHTML=targetsChoices('project-target-new',[],true);
+  if(currentView!=='project')switchView('project');
+  const targets=$('#project-targets-new') as HTMLElement;
+  if(!targets.innerHTML)targets.innerHTML=targetsChoices('project-target-new',[],true);
   // WHAT HAPPENS TO THE CANVAS YOU HAVE OPEN, said before it happens. This created the project and
   // then replaced the canvas with an empty workflow named "<project> · first question", which is
   // right when starting an investigation from nothing -- the practitioner's own 2026-10-19 request,
@@ -7562,7 +7599,7 @@ function openProjectDialog(){
   $('#project-adopt-label').textContent=filed
     ?`"${name}" is already filed under a project, so a new one starts with an empty workflow.`
     :`Put "${name}" in it, instead of starting with an empty workflow.`;
-  $('#project-dialog').showModal();$('#project-name-input').focus();
+  showProjectTab('new',false);$('#project-name-input').focus();
 }
 function createProjectFromDialog(){
   const name=$('#project-name-input').value.trim();
@@ -7574,8 +7611,10 @@ function createProjectFromDialog(){
   const targets=chosenTargets('project-target-new');if(targets.length)project.targets=targets;
   const key=`${project.id}/w1`;
   project.workflows=[key];
-  if(!writeProjects([...stored,project])){$('#project-dialog').close();return;}
-  $('#project-dialog').close();
+  if(!writeProjects([...stored,project]))return;
+  // MADE: the form is cleared for the next one, and the tab returns to the project now open.
+  $('#project-name-input').value='';$('#project-subject-input').value='';($('#project-targets-new') as HTMLElement).innerHTML='';
+  showProjectTab('this',false);
   save();
   // ADOPTING THE OPEN CANVAS takes the path that already files a workflow, rather than a second
   // implementation of the same act: the project is written with no workflows and
@@ -8183,6 +8222,21 @@ function openPublication(input:PublicationInput,keep:(key:string,text:string)=>R
  *
  *  `notes-ui` says which of the two is about to happen before the button is pressed; this does
  *  it. The split lives here because only this module knows where a project's notes are kept. */
+/** A VERSION OF A NOTE OF YOUR OWN, ON EVERY SAVE THAT CHANGED IT (experiment 218, the spike): what it says, when, and,
+ *  where an identity is open, who, signed. Kept on the note, so it travels with the project. */
+async function versionNote(id:string){
+  const find=()=>{const notes=[...(projectNow()?.notes||[])] as Note[];
+    return {notes,at:notes.findIndex(n=>n.kind==='authored'&&n.id===id)};};
+  const before=find();if(before.at<0)return;
+  const version=await noteVersion(before.notes[before.at]!,new Date().toISOString(),openIdentity());
+  // READ AGAIN AFTER THE WAIT: another save may have landed while the signature was made.
+  const {notes,at}=find();if(at<0)return;
+  const note=notes[at] as Note&{versions?:import('./identity-file.js').NoteVersion[]};
+  const last=note.versions?.at(-1);
+  if(last&&last.digest===version.digest&&(last.signature||!version.signature))return;
+  notes[at]={...note,versions:[...(note.versions||[]),version]} as Note;
+  if(writeNotes(notes))refreshNotesIfOpen();
+}
 function writeInNoteDialog(note:Note){
   // AND THE DIALOG IS READ-ONLY WHERE A NOTE CANNOT BE KEPT. `openNoteDialog` decides whether to
   // offer writing by whether it was handed a `write`, so withholding it is how the dialog is told
@@ -8226,6 +8280,7 @@ function writeInNoteDialog(note:Note){
           ...(components.length?{components}:{})} as Note;
         if(!writeNotes(held))return false;
         renderNotesView();
+        void versionNote(which.id);
         toast('Your note was kept.');
         return true;
       }
@@ -8238,6 +8293,7 @@ function writeInNoteDialog(note:Note){
         if(who)fork.author=who.login;
         if(!writeNotes([...held,fork]))return false;
         renderNotesView();
+        void versionNote(fork.id);
         toast('Forked into a note of your own. The machined note is unchanged, and the next run '
           +'will rewrite it.');
         return true;
@@ -8587,7 +8643,6 @@ function renderUnfiled():void{
 // project document and a workflow document arrive through one input, so a practitioner handed a
 // file does not have to know which of two buttons made it.
 $('#project-import').onclick=()=>$('#workflow-file').click();
-$('#project-new').onclick=openProjectDialog;
 $('#project-file').onclick=()=>{
   const id=$('#project-file-under').value;
   if(!id)return;
@@ -9012,10 +9067,14 @@ function placeManualFloat():void{
   for(const d of document.querySelectorAll<HTMLDialogElement>('dialog[open]'))
     if(d.matches(':modal')&&!openedModals.includes(d))openedModals.push(d);
   // A worked example's manual and a widget's page, each moved above the top modal and back.
-  const home=openedModals.at(-1)??document.body;
+  // BESIDE THE NEW PROJECT FORM, not over it (2026-11-16, when New project became a tab): docked in its column, so a
+  // learner following the manual can read it and still reach Create project.
+  const beside=document.querySelector<HTMLElement>('#project-view:not([hidden]) #project-tab-new:not([hidden]) #project-new-manual');
+  const home=openedModals.at(-1)??(beside&&document.getElementById('manual-float')?beside:document.body);
   for(const id of ['manual-float','widget-manual-float']){
     const panel=document.getElementById(id);
-    if(panel&&panel.parentElement!==home)home.append(panel);
+    const to=id==='manual-float'?home:openedModals.at(-1)??document.body;
+    if(panel&&panel.parentElement!==to)to.append(panel);
   }
 }
 new MutationObserver(placeManualFloat).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['open']});
@@ -9637,7 +9696,7 @@ $('#delete-workflow').onclick=deleteCurrentWorkflow;
 // THE PILL IS A READOUT, NOT A DOOR. It opened the projects dialog, which is how the project
 // level came to be reachable only by recognising a storage figure as a button -- the fault
 // experiment 131 exists to end. What it was a door to is the Project tab, which has its own.
-$('#storage-status').onclick=()=>switchView('project');
+$('#storage-status').onclick=()=>{switchView('project');showProjectTab('this',false);$('#project-storage').scrollIntoView({block:'nearest'});};
 $('#storage-meter').addEventListener('click',async event=>{
   if((event.target as HTMLElement).id!=='drop-unreferenced')return;
   const loose=unreferencedPayloads();
@@ -9709,7 +9768,6 @@ for(const id of ['#project-name-edit','#project-subject-edit','#workflow-name-ed
   $(id).addEventListener('keydown',event=>{if((event as KeyboardEvent).key==='Enter'){event.preventDefault();applyProjectDetails();}});
 $('#blank-project').onclick=openProjectDialog;
 $('#project-create').onclick=createProjectFromDialog;
-for(const id of ['#project-cancel','#project-dialog-close'] as const)$(id).onclick=()=>$('#project-dialog').close();
 $('#new-workflow').onclick=()=>{if(busy)return;loadExample('blank');change(w=>{replaceWorkflow(w,blankWorkflow());selected=null;});result=null;runWorkflow=null;activeOutputId=null;renderResults();render();switchView('workflow');};
 $('#result-search').oninput=e=>{if(activeOutput()?.pointTable){tablePage=0;renderPointTable();return;}$('#result-rows').querySelectorAll('tr').forEach(row=>row.hidden=!row.textContent.toLowerCase().includes(control(e).value.toLowerCase()));};
 const libraryToggle=$('#toggle-library'),library=$('.library');
@@ -9734,6 +9792,7 @@ function setFullScreen(on:boolean){
 }
 $('#fullscreen-workbench').onclick=()=>setFullScreen(!fullScreen);
 document.addEventListener('keydown',event=>{if(event.key==='Escape'&&fullScreen){setFullScreen(false);event.preventDefault();}});
+installIdentity(document.querySelector<HTMLButtonElement>('#identity-button')!,esc);
 credentials=installCredentials(document.querySelector<HTMLButtonElement>('#credentials-button')!,
   // The token is handed over, used once and not kept here. What is kept is the NAME it resolved
   // to, which is not a secret -- so it survives a reload, where the credential deliberately does

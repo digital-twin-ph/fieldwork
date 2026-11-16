@@ -28,6 +28,7 @@
 import {readNoteImage} from './note-image.js';
 import {isRecord} from './guards.js';
 import {validLogin} from './identity.js';
+import {readNoteVersions} from './identity-file.js';
 
 /** The parts of a write-up a note can TARGET, which is the IMRAD body and nothing else.
  *
@@ -356,6 +357,9 @@ export interface AuthoredNote {
    *  tables and maps are components that support each result. Charts, tables and maps can also support background in
    *  introduction, and other sections when needed."* Drawn after this note wherever it sits, and not in their own place. */
   components?:string[];
+  /** ITS VERSIONS, oldest first (experiment 218, the spike): what it said each time it was saved, when, and, where an
+   *  identity was open, who, signed. The practitioner: *"Both should have versioning."* */
+  versions?:import('./identity-file.js').NoteVersion[];
   /** A picture the note carries, kept by its digest, with alt text and a caption (experiment 196). */
   image?:import('./note-image.js').NoteImage;
 }
@@ -513,6 +517,7 @@ export function readNotes(raw:unknown):{notes:Note[]; unreadable:number}{
         ...(readNoteItems(entry.items).length?{items:readNoteItems(entry.items)}:{}),
         ...(text(entry.answers)?{answers:text(entry.answers)}:{}),
         ...(edges(entry.components).length?{components:[...new Set(edges(entry.components))]}:{}),
+        ...(readNoteVersions(entry.versions).length?{versions:readNoteVersions(entry.versions)}:{}),
         ...(readNoteImage(entry.image)?{image:readNoteImage(entry.image)!}:{})});
       continue;
     }

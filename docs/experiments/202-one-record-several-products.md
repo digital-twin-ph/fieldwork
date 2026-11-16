@@ -502,3 +502,100 @@ from the objective's own words reads well in a paper (the mock-up's headings are
 find the components checklist where they look for it; the South London objectives entered for real, which waits on the
 practitioner's wording.
 
+## The planning note: the paper's shell, written first, never rendered, 2026-11-16
+
+The practitioner, after Stage B was built:
+
+> So if we begin with the end in mind, we might have workflows that won't end up answering questions for every output
+> target that project has. If we have a study we can create the shell for the paper with charts, maps, tables (table
+> shells) planned at a high level. This can go in an authored note that looks like a planning note. So am thinking
+> perhaps we can have a structured format for a planning note. The planning note can follow the role targets we
+> identified earlier - example background introduction, discussion limitations. etc. And it's fine to have workflows
+> not map explicitly to any planning notes as workflows also serve a hypothesis generation purpose. And may actually
+> lead to the next steps part of the discussion. Planning notes do not get rendered.
+
+With the two statements before it the same day (plan against product as a check for gaps and for self-reflection;
+planning text copied into product notes without retyping), this makes a design. **Proposed, not built.**
+
+| Part | What it is |
+| --- | --- |
+| **The planning note** | One authored note per project, of its own function (`plan`), structured by the roles the outlines already declare: background, objectives, data sources, methods, a result per objective, principal finding, limitations, next steps. Each part holds what the person intends to write there, in a line or two |
+| **Shells** | Within the plan, each planned table, chart or map: its kind, a working title, what it shows (rows and columns, or the measure and its breakdown), and the objective or part it supports. A table shell is the epidemiologist's ordinary planning tool, written before the data are analysed |
+| **Never rendered** | No product draws a planning note or its shells: a hard stop in the render, as a limitation is gathered rather than lost. It is the person's own working, not the reader's |
+| **Copied, with its link** | A part of the plan can start a product note: its text copied in, and the note keeping the plan part it came from, as an edited machined note keeps its original (`forkedFrom`). No retyping, and the plan still shows what each part became |
+| **Plan against product** | Per part and per shell: planned and written, planned and not written, written and not planned. A real component can be said to fulfil a shell. This is the comparison for gaps and for reflection; it reports, it does not grade |
+| **Workflows outside the plan** | A workflow need not answer any part of the plan, nor any target. Exploring is part of the work: such a workflow may generate the hypothesis that becomes a next step in the Discussion. Said in the comparison as *not in the plan*, never flagged as a gap |
+| **Targets** | A plan part a target has no slot for is kept and not drawn there, as today's outline says per target. A project's workflows will not all serve every target, and that is expected |
+
+**Against the record (found 2026-11-16, [219](219-open-science-requirements.md)):** 133 and 141 argued the planning
+stage a month earlier: *"A section written before the run is a prediction"*, and the difference between
+pre-registration and confirmation bias is measurable here. A planning note dated before the run is that prediction.
+141 also listed *"a workflow whose answer appears in no section"* as an omission Fieldwork could notice; the ruling
+above makes it *not in the plan*, reported and not flagged, since exploring is part of the work.
+
+**Next steps** has no role yet: the roles hold *Recommendations* (sit reps) and *Conclusion*, neither of which is a
+paper's next steps. It would be added to the roles and to the publication's Discussion.
+
+| Distinction | Enforced as |
+| --- | --- |
+| A plan is the author's working, not the product | **hard stop**: the render skips a note whose function is `plan` |
+| A workflow outside the plan is exploration, not a gap | **out-of-scope decision**: the comparison names it, nothing flags it |
+| A copied part stays traceable to the plan | **run-time check**: a copy keeps the plan part it came from, and the comparison reads it |
+| Fieldwork drafts none of the narrative | **out-of-scope decision**: the plan's parts and prompts come from the roles; the words are the person's |
+
+**Open, for the practitioner:**
+
+1. Whether the objectives note of Stage B becomes the plan's objectives part (one place, rendered as the paper's
+   numbered list), or stays a separate product note that the plan's part is copied into.
+2. Whether the plan is kept as first written (dated), which the comparison needs to show change and which identity
+   (218) and collaborative projects would bring, or only as it is now.
+3. Where it sits in the stages: before C (short forms), since it shapes what the notes are written towards.
+
+**The observation that can come out badly:** whether a trainee writes a plan before the analysis when nothing makes
+them, and whether the plan-against-product view reads as reflection or as a mark.
+
+**Not established:** whether one structure fits a publication, a sit rep and a surveillance report, or each target
+wants its own plan; whether shells are written as tables or as a sentence each.
+
+**The notes taxonomy, tentative (the practitioner, the same day):** *"So our tentative notes taxonomy is this - we have
+planning notes and non-planning notes. Both should have versioning. The user must distinguish when planning notes are
+complete. Completeness can be judged if template planning notes have been filled up. Template planning notes can be
+generated automatically once target paths (publication, sit rep, surveillance summary) are picked."*
+
+| | Planning notes | Non-planning notes |
+| --- | --- | --- |
+| What they are | The plan: what each part of each target will hold, and its shells | Everything a product is drawn from: authored, quoted, machined, derived |
+| Rendered | Never | As today |
+| Versioned | Yes | Yes |
+| Made by | **Template planning notes**, generated when the project's targets are picked: one part per slot of each target's outline, each with the slot's prompt and length and no words. The person fills them | The person, the record, the widgets |
+| Complete | **The person marks it complete.** Fieldwork shows whether every template part is filled, which is the evidence for the judgement and not the judgement | — |
+
+This answers the second open question above: the plan is versioned, and so is every other note. Versioning is not
+built for any note today. It reaches identity (218) and collaborative projects, which need a note's history for the
+same reason.
+
+Generating the templates drafts nothing: a template part carries the slot's heading, prompt and length, as the outline
+does today, and stays empty until the person writes in it.
+
+**Counted completeness (the practitioner, the same day):** *"Completeness can also be assessed automatically by
+checking numbers - how many non-planning notes map to respective planning notes."* So two measures, kept apart:
+
+| Measure | Read from | Who decides |
+| --- | --- | --- |
+| The plan filled | template parts with words in them, of all parts | the person marks the plan complete |
+| The plan carried out | per planning part, how many non-planning notes map to it; per shell, whether a component fulfils it | counted by Fieldwork, shown per part |
+
+A non-planning note maps to a planning part by the copy's link, or by the role it fills (its section and function, as
+the outline matches today). The count reports; it marks nothing complete on its own, and a part with no note mapped is
+said, not flagged. Notes that map to no planning part are counted too: they are what was written and not planned,
+which the reflection needs as much as the gaps.
+
+**Still open:**
+
+1. One planning note per target, each with its parts, or one planning note per part, shared by the targets that use it
+   (the outline already joins the targets into one, part by part).
+2. What happens to a template when a target is added or dropped after planning has begun: its parts added, and a
+   dropped target's filled parts kept rather than lost.
+3. The first open question above, the Stage B objectives note and the plan's objectives part.
+4. Whether *complete* can be undone, and whether a version is taken when it is marked.
+

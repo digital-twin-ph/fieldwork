@@ -17,6 +17,8 @@ shown in a local build is not a claim that it has been published.
   leave Fieldwork through it); React Flow is credited in Help. In Safari, hold Option with Tab.
 - **Identity, continued.** Once your key is linked to GitHub, the section is one line. Credentials: the passphrase and
   its confirmation together, checked as you type; the file saved as `FWCRED-<your name>.fwcredentials`.
+- **The outline counts what the draft holds on the way back.** A title or abstract written in the draft still showed
+  as empty in the outline until Notes was redrawn some other way.
 - The footer's old "Exploratory research / v0.2" is gone; the version is the one in the header.
 
 ## 0.130.0 — 2026-11-16

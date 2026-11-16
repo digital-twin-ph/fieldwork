@@ -50,6 +50,12 @@ Does Fieldwork conform, where does it not, and what would it take?
 4. **A conformance report** in the form agencies use, the Accessibility Conformance Report (the VPAT's 508 edition):
    each criterion, supports, partially supports or does not support, with the evidence.
 
+**Decided, 2026-11-16:** the testing follows the **Trusted Tester** method, each test recorded as pass or fail with
+no partial credit (the practitioner: *"Agree with Trusted Tester Method"*). Both reporting forms hold Fieldwork to the
+same standard, the Revised 508 Standards, which is WCAG 2.0 A and AA. The VPAT 508 edition is a self-report that
+allows *partially supports*; an agency checklist is usually pass or fail per test, and so stricter in practice. Pass
+or fail per test meets either. Which form CDC accepts is a question for CDC's Section 508 coordinator, not yet asked.
+
 **The observation that can come out badly:** whether the canvas, the heart of the application, can be operated by
 keyboard at all, or needs a second way to build a workflow.
 

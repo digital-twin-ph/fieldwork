@@ -91,6 +91,14 @@ test('targets chosen on the Project tab give the Notes board an outline, and an 
   const order=await paper.evaluate(el=>{const t=el.innerHTML;return [t.indexOf('3.2 Recompute'),t.indexOf('Deaths per 1,000 people fell')];});
   expect(order[0]).toBeGreaterThan(0);expect(order[1]).toBeGreaterThan(order[0]);
   await page.screenshot({path:'test-results/outline.png'});
+  // A TITLE WRITTEN IN THE DRAFT IS COUNTED ON THE WAY BACK (the practitioner, 2026-11-16: the outline still said
+  // "empty" after the title was written, until Notes was redrawn some other way).
+  await expect(page.locator('.notes-outline [data-outline-role="title"]')).toHaveClass(/is-empty/);
+  await page.locator('#publication-view [data-pub-write$="title"]').first().click();
+  await page.locator('#pub-text').fill('Deaths by water company, south London, 1854');
+  await page.locator('#publication-view [data-pub-save]').click();
+  await page.locator('[data-publication-back]').click();
+  await expect(page.locator('.notes-outline [data-outline-role="title"]')).toHaveClass(/is-filled/);
   expect(errors).toEqual([]);
 });
 

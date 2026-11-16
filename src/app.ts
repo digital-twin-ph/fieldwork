@@ -8213,7 +8213,10 @@ function openPublication(input:PublicationInput,keep:(key:string,text:string)=>R
     if(target.closest('[data-publication-back]'))close();
     else if(target.closest('[data-publication-print]'))window.print();
   };
+  // BACK TO NOTES REDRAWS THEM: the outline counts what the draft holds, and a title or abstract written there was
+  // still "empty" in it until something else redrew Notes (the practitioner, 2026-11-16).
   const close=()=>{view!.hidden=true;document.body.classList.remove('showing-publication');
+    renderNotesView();
     (optionalElement('[data-publication]') as HTMLButtonElement|null)?.focus();};
   view.onkeydown=event=>{if(event.key!=='Escape')return;if((event.target as HTMLElement).closest('.pub-editor'))draw();else close();};
   view.querySelector<HTMLButtonElement>('[data-publication-back]')!.focus();

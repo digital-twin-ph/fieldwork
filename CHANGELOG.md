@@ -14,6 +14,8 @@ shown in a local build is not a claim that it has been published.
 - **A map in Notes is the map in Results.** The figure Notes and the SVG download share kept a shaded map's ramp but
   dropped the line saying what the shade is and how it was classed, and listed the classes again in two loose columns.
   Map 0.33.2.
+- **A workflow file chosen while the page is still starting is imported**, not dropped. WebKit on CI failed four more
+  tests for it after 0.126.0, each importing a file the moment the page opened.
 
 ## 0.126.0 — 2026-11-15
 

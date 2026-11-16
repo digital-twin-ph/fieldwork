@@ -10113,4 +10113,8 @@ function tableSentence(p:WorkflowNode<'table_input'>['params']):string{
 /** STARTUP IS OVER: every top-level handler above is bound, the stored payloads among the awaits before them. A file
  *  given to #workflow-file before this is dropped without a word, because nothing is listening yet; WebKit on CI hit
  *  that window in three runs of 2026-11-15. Tests wait for this mark before importing. */
+// A FILE GIVEN BEFORE THE HANDLER WAS BOUND IS STILL ON THE INPUT: imported now, rather than dropped. Nothing between the
+// binding and here awaits, so a file present now can only have arrived before it. WebKit on CI hit that window in four
+// more tests on 2026-11-15, each importing a workflow the moment the page opened.
+if(($('#workflow-file') as HTMLInputElement).files?.length)$('#workflow-file').dispatchEvent(new Event('change'));
 document.documentElement.dataset.ready='true';

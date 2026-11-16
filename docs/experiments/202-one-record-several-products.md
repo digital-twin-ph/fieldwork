@@ -437,3 +437,22 @@ corrections like MS Word does?"* Decided, on the practitioner's *"Yes record in 
 
 **What would reopen it:** a case where a model builds reasoning or reaches people the record otherwise cannot, such as
 translating a sit rep into a local language; it would be its own experiment, judged on that case.
+
+**Objectives as an enumeration (the practitioner, the same day: *"For a note holding document objectives, should the
+objectives / questions be captured as one item each (an enumeration) and not as a block of text? If enumeration, it
+allows result mapping."*). Corrected the same day: *"Actually not one note per objective but one note, able to
+enumerate objectives as items."*** One note, function `objective`, holding its objectives as **items**, each with its
+own stable id and text, in order, and each able to name the workflow question it comes from. The render prints them as
+the numbered list a paper uses; in Stage B a finding records which item it answers, by the item's id, so the outline
+shows per objective whether it has its answer and its supporting figure, and Results follows the items' order. Stage
+A: the note carries its items, and the Objectives slot counts them.
+
+**Stage A, part 1, built 2026-11-15.** `Project.targets` (New project and the Project tab, *Writing towards*); the note
+function `objective`, and `items` on a note for its enumerated objectives, each with its own id; outlines per target in
+`widgets/report-formats.json` (15 slots for the publication, 13 for each sit rep, 11 for each surveillance report, 14
+for the MMWR report), with roles that match notes by section and function; `src/outline.ts` joining the targets'
+outlines into one with coverage per target, shown above the notes; **Write it** on an empty slot adds a note of that
+section and function; a note not yet written fills nothing; the browser's spell check explicit on every writing box.
+Checked: `tests/outline.test.mjs` (5), `tests/outline.browser.mjs` (2, South London with a publication and a WHO-style
+sit rep, and a new project's targets), Chromium. **Part 2 next:** the note's Configure dialog in the standard form,
+with its Role and *In each target* sections, and the items editor for objectives.

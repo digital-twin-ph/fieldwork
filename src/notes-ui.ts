@@ -368,7 +368,7 @@ export function notesPanel(notes:readonly Note[],
             // carried verbatim, and a derived note restates what somebody typed into a widget,
             // so neither is reinterpreted here.
             :EDITABLE[note.kind]&&text!==UNWRITTEN
-            ?`<div class="prose">${cite(toHTML(text),note)}</div>`
+            ?`<div class="prose">${cite(toHTML(text),note)}${itemsList(note,esc)}</div>`
             :`<p${text===UNWRITTEN?' class="unwritten"':''}>${esc(text)}</p>`
               +(note.kind==='derived'&&note.detail
                 ?`<p class="muted">${esc(note.detail)}</p>`:''))
@@ -441,6 +441,11 @@ const WHY:Record<Note['kind'],(what:string)=>string>={
   authored:()=>'This note is yours. What you write here is what the write-up says.',
 };
 
+/** A NOTE'S ITEMS, numbered, each carrying its id so a result can point at it (experiment 202). */
+export function itemsList(note:Note,esc:Escape):string{
+  const items='items' in note?note.items:undefined;
+  return items?.length?`<ol class="note-items">${items.map(i=>`<li data-item="${esc(i.id)}">${esc(i.text)}</li>`).join('')}</ol>`:'';
+}
 export function openNoteDialog(note:Note,context:NoteContext,esc:Escape){
   if(!document.querySelector('#note-dialog'))
     document.body.insertAdjacentHTML('beforeend',DIALOG);
@@ -622,9 +627,9 @@ export function openNoteDialog(note:Note,context:NoteContext,esc:Escape){
         +(chosen?`<div id="note-image-preview">${noteImageFigure({...chosen,alt:imageAlt()||'(alt text not written yet)',caption:imageCaption()||'(caption not written yet)'},held,esc)}</div>`
           +`<p class="muted">${esc(chosen.filename||'Picture')} · ${(chosen.bytes/1024).toFixed(1)} KB · sha256 ${esc(chosen.sha256.slice(0,12))}…</p>`
           +`<label class="field-label" for="note-image-alt">Alt text: what the picture shows</label>`
-          +`<textarea id="note-image-alt" rows="3">${esc(image?.alt??'')}</textarea>`
+          +`<textarea spellcheck="true" id="note-image-alt" rows="3">${esc(image?.alt??'')}</textarea>`
           +`<label class="field-label" for="note-image-caption">Caption: what a reader is to take from it</label>`
-          +`<textarea id="note-image-caption" rows="2">${esc(image?.caption??'')}</textarea>`
+          +`<textarea spellcheck="true" id="note-image-caption" rows="2">${esc(image?.caption??'')}</textarea>`
           +`<ul id="note-image-gaps" class="quality-problems"></ul>`
           +`<button type="button" id="note-image-remove" class="button">Remove the picture</button>`
           :`<p class="muted">No picture. One shown here goes above the note's words, on the board and in the write-up.</p>`);
@@ -670,7 +675,7 @@ export function openNoteDialog(note:Note,context:NoteContext,esc:Escape){
         +`<div class="note-cite-form"><label class="field-label" for="cite-type">Kind of work</label><select id="cite-type">`
         +CITATION_TYPES.map(t=>`<option value="${t}">${t}</option>`).join('')+`</select>`
         +`<label class="field-label" for="cite-authors">Authors, one per line</label>`
-        +`<textarea id="cite-authors" rows="3" placeholder="Utazi, C. Edson&#10;World Health Organization"></textarea>`
+        +`<textarea spellcheck="true" id="cite-authors" rows="3" placeholder="Utazi, C. Edson&#10;World Health Organization"></textarea>`
         +`<p class="muted">Family name, comma, given names. A line with no comma is an organisation.</p>`
         +`<label class="check"><input type="checkbox" id="cite-et-al"> The work names more authors than these (et al.)</label>`
         +field('cite-title','Title')+field('cite-published','Published','','2022 or 2022-11-26')

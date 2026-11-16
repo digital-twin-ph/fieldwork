@@ -173,6 +173,8 @@ export function publicationMarkup(input:PublicationInput,esc:Escape):string{
     if(note.kind==='quoted')return `<blockquote>${esc(text)}</blockquote>`;
     if(note.kind==='derived')return `<p>${esc(text)}</p>`;
     let html=toHTML(text);
+    // An enumerating note's items, numbered as a paper numbers its objectives.
+    if(note.kind==='authored'&&note.items?.length)html+=`<ol class="pub-items">${note.items.map(i=>`<li>${esc(i.text)}</li>`).join('')}</ol>`;
     const numbers=note.kind==='authored'?[...new Set((note.works??[]).map(w=>numberOf.get(workKey(w))).filter(Boolean))]:[];
     if(numbers.length){const at=html.lastIndexOf('</p>'),mark=` [${numbers.join(', ')}]`;
       html=at<0?html+mark:html.slice(0,at)+mark+html.slice(at);}

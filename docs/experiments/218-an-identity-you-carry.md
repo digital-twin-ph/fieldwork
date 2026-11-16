@@ -1,6 +1,6 @@
 # 218 · An identity you carry
 
-_Created 2026-11-16 · Updated 2026-11-16_
+_Created 2026-11-15 · Updated 2026-11-15_
 
 **Status:** asked. A design, written before the code. Nothing built.
 

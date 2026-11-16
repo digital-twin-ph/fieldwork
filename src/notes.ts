@@ -120,7 +120,10 @@ export type WriteUpPart=typeof WRITE_UP_PARTS[number];
  *  decides grouping only -- `groupNotes` ranks known functions first -- and a function outside
  *  this list is kept and sorted after, never refused. Somebody else's word for what their note
  *  does is not ours to drop. */
-export const KNOWN_NOTE_FUNCTIONS=['context','rationale','source','method','verification',
+/** `objective` is the eighth, 2026-11-15 (experiment 202): a paper's Introduction states its objectives, and Results
+ *  answers each in order. The practitioner: *"For the publication, the results should match publication questions or
+ *  objectives"*; and *"Yes, build it"* to roles being a note's section and function, with this one added. */
+export const KNOWN_NOTE_FUNCTIONS=['context','rationale','objective','source','method','verification',
   'finding','limitation'];
 
 /** NOTES ARE COMPOSED, THE WAY WIDGETS ARE.
@@ -275,6 +278,22 @@ export interface CitedWork {
   url?:string;
   retrieved?:string;
 }
+/** One item of an enumerating note: its own id, its text, and where it comes from. */
+export interface NoteItem {id:string; text:string; question?:string}
+/** Items read back: each needs an id and text; an id seen twice keeps the first, so a result's link means one thing. */
+export function readNoteItems(raw:unknown):NoteItem[]{
+  if(!Array.isArray(raw))return [];
+  const seen=new Set<string>();const out:NoteItem[]=[];
+  for(const entry of raw){
+    if(!entry||typeof entry!=='object')continue;
+    const r=entry as Record<string,unknown>;
+    const id=typeof r.id==='string'?r.id.trim():'',text=typeof r.text==='string'?r.text.trim():'';
+    if(!id||!text||seen.has(id))continue;seen.add(id);
+    const question=typeof r.question==='string'&&r.question.trim()?r.question.trim():'';
+    out.push({id,text,...(question?{question}:{})});
+  }
+  return out;
+}
 export interface AuthoredNote {
   kind:'authored';
   id:string;
@@ -325,6 +344,11 @@ export interface AuthoredNote {
   words?:string;
   /** Whose argument: whether it reports the works or argues from them. See NOTE_ARGUMENT. */
   argument?:string;
+  /** ITEMS, FOR A NOTE THAT ENUMERATES (experiment 202, 2026-11-15): the objectives of a paper, in order, each with its
+   *  own stable id so a result can say which it answers. The practitioner: *"not one note per objective but one note,
+   *  able to enumerate objectives as items."* The note's text is the lead-in; each item may name the workflow question it
+   *  comes from, by the workflow's key. */
+  items?:NoteItem[];
   /** A picture the note carries, kept by its digest, with alt text and a caption (experiment 196). */
   image?:import('./note-image.js').NoteImage;
 }
@@ -479,6 +503,7 @@ export function readNotes(raw:unknown):{notes:Note[]; unreadable:number}{
         ...((text(entry.words)||LEGACY_FORM[text(entry.form)]||text(entry.form))
           ?{words:text(entry.words)||LEGACY_FORM[text(entry.form)]||text(entry.form)}:{}),
         ...(text(entry.argument)?{argument:text(entry.argument)}:{}),
+        ...(readNoteItems(entry.items).length?{items:readNoteItems(entry.items)}:{}),
         ...(readNoteImage(entry.image)?{image:readNoteImage(entry.image)!}:{})});
       continue;
     }

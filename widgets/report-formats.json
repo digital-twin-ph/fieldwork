@@ -1,6 +1,6 @@
 {
   "schema": "fieldwork/report-formats/1",
-  "note": "THE DRAFT'S FORMATS, AS MAPPINGS ONTO ROLES (experiment 202, 2026-11-15). A role is what a section holds and where it comes from; a format is its own headings, in its own order, each pointing to roles. What the person writes is kept by role, so it follows them from one format to another. Each format names the published reports it follows, read at their sources (workspace reports/Sit rep and surveillance report templates.md). The publication is laid out by its own code and is not declared here.",
+  "note": "THE DRAFT'S FORMATS, AS MAPPINGS ONTO ROLES (experiment 202, 2026-11-15). A role is what a section holds and where it comes from; a format is its own headings, in its own order, each pointing to roles. What the person writes is kept by role, so it follows them from one format to another. Each format names the published reports it follows, read at their sources (workspace reports/Sit rep and surveillance report templates.md). The publication is laid out by its own code and is not declared here. Each target's outline lists its slots: a role, the heading the slot takes there and the length it wants; a notes role matches notes by section and function.",
   "roles": {
     "reportNumber": {
       "source": "written",
@@ -25,7 +25,11 @@
     "background": {
       "source": "notes",
       "part": "Introduction",
-      "label": "Background"
+      "label": "Background",
+      "fns": [
+        "context",
+        "rationale"
+      ]
     },
     "situation": {
       "source": "notes",
@@ -85,6 +89,92 @@
     "abstract": {
       "source": "written",
       "label": "Abstract"
+    },
+    "title": {
+      "source": "written",
+      "label": "Title",
+      "keys": [
+        "title",
+        "role:title"
+      ]
+    },
+    "abstractParts": {
+      "source": "written",
+      "label": "Abstract (background, methods, results, conclusions)",
+      "keys": [
+        "background",
+        "methods",
+        "results",
+        "conclusions"
+      ]
+    },
+    "keyMessages": {
+      "source": "written",
+      "label": "Key messages"
+    },
+    "objectives": {
+      "source": "notes",
+      "part": "Introduction",
+      "fns": [
+        "objective"
+      ],
+      "label": "Objectives"
+    },
+    "dataSources": {
+      "source": "notes",
+      "part": "Methods",
+      "fns": [
+        "source"
+      ],
+      "label": "Data sources"
+    },
+    "dataChecks": {
+      "source": "notes",
+      "part": "Methods",
+      "fns": [
+        "verification"
+      ],
+      "label": "Data checks"
+    },
+    "howItWasDone": {
+      "source": "notes",
+      "part": "Methods",
+      "fns": [
+        "method"
+      ],
+      "label": "Design, measures and analysis"
+    },
+    "principalFinding": {
+      "source": "notes",
+      "part": "Discussion",
+      "fns": [
+        "finding"
+      ],
+      "label": "Principal finding"
+    },
+    "comparison": {
+      "source": "notes",
+      "part": "Discussion",
+      "fns": [
+        "verification"
+      ],
+      "label": "Comparison with other work"
+    },
+    "conclusion": {
+      "source": "written",
+      "label": "Conclusion",
+      "keys": [
+        "closing",
+        "role:conclusion"
+      ]
+    },
+    "dataAvailability": {
+      "source": "written",
+      "label": "Data availability",
+      "keys": [
+        "data",
+        "role:dataAvailability"
+      ]
     }
   },
   "formats": [
@@ -538,5 +628,404 @@
         }
       ]
     }
-  ]
+  ],
+  "outlines": {
+    "publication": [
+      {
+        "role": "title",
+        "heading": "Title",
+        "length": "up to 20 words"
+      },
+      {
+        "role": "abstractParts",
+        "heading": "Abstract",
+        "length": "250 words, structured"
+      },
+      {
+        "role": "keyMessages",
+        "heading": "Key messages",
+        "length": "3 bullets"
+      },
+      {
+        "role": "background",
+        "heading": "Introduction: background",
+        "length": "150 to 300 words"
+      },
+      {
+        "role": "objectives",
+        "heading": "Introduction: objectives",
+        "length": "2 to 4 objectives"
+      },
+      {
+        "role": "dataSources",
+        "heading": "Methods: data sources",
+        "length": "one paragraph"
+      },
+      {
+        "role": "dataChecks",
+        "heading": "Methods: data checks",
+        "length": "one paragraph"
+      },
+      {
+        "role": "howItWasDone",
+        "heading": "Methods: design, measures and analysis",
+        "length": "one or two paragraphs"
+      },
+      {
+        "role": "situation",
+        "heading": "Results",
+        "length": "a paragraph per objective"
+      },
+      {
+        "role": "principalFinding",
+        "heading": "Discussion: principal finding",
+        "length": "one paragraph"
+      },
+      {
+        "role": "comparison",
+        "heading": "Discussion: comparison with other work",
+        "length": "one paragraph"
+      },
+      {
+        "role": "limitations",
+        "heading": "Discussion: limitations",
+        "length": "one or two paragraphs"
+      },
+      {
+        "role": "conclusion",
+        "heading": "Conclusions",
+        "length": "up to 100 words"
+      },
+      {
+        "role": "dataAvailability",
+        "heading": "Data availability",
+        "length": "one or two sentences"
+      },
+      {
+        "role": "references",
+        "heading": "References",
+        "length": "numbered"
+      }
+    ],
+    "sitrep-who": [
+      {
+        "role": "title",
+        "heading": "Title",
+        "length": "up to 15 words"
+      },
+      {
+        "role": "reportNumber",
+        "heading": "Report number and date issued",
+        "length": "one line"
+      },
+      {
+        "role": "dataAsOf",
+        "heading": "Data as of",
+        "length": "one line"
+      },
+      {
+        "role": "highlights",
+        "heading": "Highlights",
+        "length": "3 to 6 bullets"
+      },
+      {
+        "role": "keyFigures",
+        "heading": "Situation in numbers",
+        "length": "3 to 6 lines"
+      },
+      {
+        "role": "background",
+        "heading": "Background",
+        "length": "1 or 2 sentences"
+      },
+      {
+        "role": "situation",
+        "heading": "Epidemiological update",
+        "length": "short paragraphs and figures"
+      },
+      {
+        "role": "riskAssessment",
+        "heading": "Risk assessment",
+        "length": "a level and 2 or 3 sentences"
+      },
+      {
+        "role": "response",
+        "heading": "Preparedness and response",
+        "length": "bullets"
+      },
+      {
+        "role": "recommendations",
+        "heading": "Recommendations",
+        "length": "bullets"
+      },
+      {
+        "role": "howItWasDone",
+        "heading": "Data notes",
+        "length": "one line each"
+      },
+      {
+        "role": "limitations",
+        "heading": "Data notes: limits",
+        "length": "one line each"
+      },
+      {
+        "role": "references",
+        "heading": "Resources and references",
+        "length": "a list"
+      }
+    ],
+    "sitrep-ocha": [
+      {
+        "role": "title",
+        "heading": "Title",
+        "length": "up to 15 words"
+      },
+      {
+        "role": "reportNumber",
+        "heading": "Report number",
+        "length": "one line"
+      },
+      {
+        "role": "dataAsOf",
+        "heading": "As of",
+        "length": "one line"
+      },
+      {
+        "role": "highlights",
+        "heading": "Highlights",
+        "length": "2 to 5 bullets"
+      },
+      {
+        "role": "keyFigures",
+        "heading": "Key figures",
+        "length": "3 to 6 lines"
+      },
+      {
+        "role": "background",
+        "heading": "Situation overview: background",
+        "length": "1 or 2 sentences"
+      },
+      {
+        "role": "situation",
+        "heading": "Situation overview",
+        "length": "short paragraphs and figures"
+      },
+      {
+        "role": "response",
+        "heading": "Key priorities and response activities",
+        "length": "bullets"
+      },
+      {
+        "role": "gaps",
+        "heading": "Operational gaps and challenges",
+        "length": "bullets"
+      },
+      {
+        "role": "howItWasDone",
+        "heading": "Notes on the data",
+        "length": "one line each"
+      },
+      {
+        "role": "limitations",
+        "heading": "Notes on the data: limits",
+        "length": "one line each"
+      },
+      {
+        "role": "references",
+        "heading": "References",
+        "length": "a list"
+      },
+      {
+        "role": "contacts",
+        "heading": "Contacts",
+        "length": "one line each"
+      }
+    ],
+    "surveillance-ecdc": [
+      {
+        "role": "title",
+        "heading": "Title",
+        "length": "up to 20 words"
+      },
+      {
+        "role": "period",
+        "heading": "Reporting period",
+        "length": "one line"
+      },
+      {
+        "role": "highlights",
+        "heading": "Key facts",
+        "length": "3 to 5 bullets"
+      },
+      {
+        "role": "background",
+        "heading": "Introduction",
+        "length": "one paragraph"
+      },
+      {
+        "role": "dataSources",
+        "heading": "Methods: data sources",
+        "length": "one paragraph"
+      },
+      {
+        "role": "howItWasDone",
+        "heading": "Methods",
+        "length": "one or two paragraphs"
+      },
+      {
+        "role": "situation",
+        "heading": "Epidemiology",
+        "length": "paragraphs and figures"
+      },
+      {
+        "role": "interpretation",
+        "heading": "Discussion",
+        "length": "one or two paragraphs"
+      },
+      {
+        "role": "limitations",
+        "heading": "Discussion: limits",
+        "length": "one paragraph"
+      },
+      {
+        "role": "recommendations",
+        "heading": "Public health implications",
+        "length": "3 to 5 bullets"
+      },
+      {
+        "role": "references",
+        "heading": "References",
+        "length": "numbered"
+      }
+    ],
+    "surveillance-mmwr": [
+      {
+        "role": "title",
+        "heading": "Title",
+        "length": "up to 20 words"
+      },
+      {
+        "role": "period",
+        "heading": "Period covered",
+        "length": "one line"
+      },
+      {
+        "role": "highlights",
+        "heading": "Summary",
+        "length": "3 to 5 bullets"
+      },
+      {
+        "role": "background",
+        "heading": "Introduction",
+        "length": "one paragraph"
+      },
+      {
+        "role": "dataSources",
+        "heading": "Methods: data source",
+        "length": "one paragraph"
+      },
+      {
+        "role": "howItWasDone",
+        "heading": "Methods",
+        "length": "one or two paragraphs"
+      },
+      {
+        "role": "situation",
+        "heading": "Results",
+        "length": "paragraphs and figures"
+      },
+      {
+        "role": "interpretation",
+        "heading": "Discussion",
+        "length": "one or two paragraphs"
+      },
+      {
+        "role": "limitations",
+        "heading": "Limitations",
+        "length": "one paragraph"
+      },
+      {
+        "role": "recommendations",
+        "heading": "Public health action",
+        "length": "2 to 4 sentences"
+      },
+      {
+        "role": "references",
+        "heading": "References",
+        "length": "numbered"
+      }
+    ],
+    "mmwr-report": [
+      {
+        "role": "title",
+        "heading": "Title",
+        "length": "up to 20 words"
+      },
+      {
+        "role": "alreadyKnown",
+        "heading": "Summary: what is already known",
+        "length": "1 or 2 sentences"
+      },
+      {
+        "role": "addedHere",
+        "heading": "Summary: what this adds",
+        "length": "2 or 3 sentences"
+      },
+      {
+        "role": "practiceImplications",
+        "heading": "Summary: implications for practice",
+        "length": "1 or 2 sentences"
+      },
+      {
+        "role": "abstract",
+        "heading": "Abstract",
+        "length": "up to 250 words"
+      },
+      {
+        "role": "background",
+        "heading": "Introduction",
+        "length": "one or two paragraphs"
+      },
+      {
+        "role": "objectives",
+        "heading": "Introduction: objectives",
+        "length": "1 to 3 objectives"
+      },
+      {
+        "role": "dataSources",
+        "heading": "Methods: data sources",
+        "length": "one paragraph"
+      },
+      {
+        "role": "howItWasDone",
+        "heading": "Methods",
+        "length": "one or two paragraphs"
+      },
+      {
+        "role": "situation",
+        "heading": "Results",
+        "length": "paragraphs and figures"
+      },
+      {
+        "role": "interpretation",
+        "heading": "Discussion",
+        "length": "one or two paragraphs"
+      },
+      {
+        "role": "limitations",
+        "heading": "Limitations",
+        "length": "one paragraph"
+      },
+      {
+        "role": "recommendations",
+        "heading": "Public health implications",
+        "length": "2 or 3 sentences"
+      },
+      {
+        "role": "references",
+        "heading": "References",
+        "length": "numbered"
+      }
+    ]
+  }
 }

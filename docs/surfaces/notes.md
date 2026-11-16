@@ -13,7 +13,7 @@ A note is one of four kinds:
 - **machined**: written by a widget about what it did; the next run rewrites it.
 - **authored**: written by you.
 
-Each note has a **function**, which says what it does for a reader (context, rationale, source, method, verification, finding, limitation). An authored note can also answer two questions about its sources: **whose words** and **whose argument**.
+Each note has a **function**, which says what it does for a reader (context, rationale, objective, source, method, verification, finding, limitation). An authored note can also answer two questions about its sources: **whose words** and **whose argument**.
 
 ## How to use it
 
@@ -117,6 +117,24 @@ Both are optional and read **unstated** until answered. A note on your own data,
 - **My words: the main points**, of Mordecai and colleagues, 2017: *Transmission by* Aedes aegypti *peaks near 29 °C and stops below about 18 °C and above about 35 °C, with adult survival setting the upper limit.*
 - **My words: the main points**, of Murdock 2017 and Wimberly 2020: *Where temperature was logged at the places mosquitoes rest, it differed from the weather station's by enough to change modelled transmission, and the difference varied with season and land cover.*
 - **What I make of them**, from the Brazil example: *The leads match lag 0, so an association of that size arises without temperature causing cases, and lag 0 cannot be read as transmission.* It reports nothing a work says; it is a reading of this study's own results.
+
+## The outline: what the project is writing towards
+
+A project names what it is writing towards, with its question: in **New project**, or later on the **Project** tab
+under **Writing towards**. One or more: a publication, a situation report, a surveillance report. None yet is fine.
+
+Once one is named, Notes opens on its **outline**: every part those products need, in reading order. Each part says:
+
+- **how much fills it**: the notes that fill it, or that it is written in the draft, or **empty**;
+- **which products use it**, and the heading and length it takes in each: a background of 150 to 300 words in the
+  publication is one or two sentences in the situation report.
+
+Above the parts, each product's **coverage**: how many of its parts are filled.
+
+A note fills a part by its section and its function together: a note in Methods whose function is *verification*
+fills **Data checks**. **Write it**, beside an empty part, adds a note with that section and function already set.
+
+**Objectives** are one note, function *objective*, listing its objectives as numbered items, each answerable by a result.
 
 ## Draft as a document
 

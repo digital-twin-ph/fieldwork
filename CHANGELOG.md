@@ -3,6 +3,14 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.128.0 — In development
+
+- **What a project is writing towards, and its outline.** A project names its targets with its question (New project,
+  the Project tab): a publication, situation reports, surveillance reports. Notes then opens on one outline for all of
+  them: each part, how much fills it, which products use it and how long it runs in each, and each product's coverage.
+  A note fills a part by its section and function; **Write it** on an empty part adds a note of that kind. A new
+  function, *objective*, and a note's numbered **items**, so objectives can be answered one by one.
+
 ## 0.127.0 — 2026-11-15
 
 - **The draft as a document, in six formats.** In Notes, Publication now offers **Draft as**: the publication, a WHO-

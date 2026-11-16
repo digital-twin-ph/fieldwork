@@ -114,6 +114,7 @@ import {applyFeatureEdits,applyTableEdits,editsAt,type CellEdit,type EditEntry} 
 import {MAX_POLYGON_LAYERS,polygonPort} from './polygon-layers.js';
 import {MAX_RASTER_LAYERS,rasterPort} from './raster-panels.js';
 import {partsTable,partsTableMarkup} from './map-parts-table.js';
+import {TARGETS,projectOutline,outlineMarkup} from './outline.js';
 import {publicationMarkup,promptFor,PRODUCT_KINDS,isProductKind,layoutKey,type ProductKind,type PublicationInput} from './publication.js';
 import {CHAIN_COLUMNS,transmissionChains} from './transmission-chains.js';
 import {boxInside,composeInset,insetWidth,type Corner} from './map-inset.js';
@@ -242,7 +243,7 @@ function chartControls(n:WorkflowNode<'chart_output'>,options:{omitOrientation?:
     <label class="field-label" for="chart-x-axis">Horizontal axis label</label><input id="chart-x-axis" maxlength="80" value="${esc(p.xAxisTitle||'')}" placeholder="Default from data">
     ${p.panelsBy?'':`<label class="field-label" for="chart-y-axis">Vertical axis label</label><input id="chart-y-axis" maxlength="80" value="${esc(p.yAxisTitle||'')}" placeholder="Default from data">`}
     <label><input id="chart-legend" type="checkbox" ${p.colorByCategory?'checked':''}> Color categories and show legend</label>
-    <label class="field-label" for="chart-source-note">Source / method note</label><textarea id="chart-source-note" maxlength="500" rows="2" placeholder="Default: connected result and run">${esc(p.sourceNote||'')}</textarea>
+    <label class="field-label" for="chart-source-note">Source / method note</label><textarea spellcheck="true" id="chart-source-note" maxlength="500" rows="2" placeholder="Default: connected result and run">${esc(p.sourceNote||'')}</textarea>
     `:'');
 }
 /** WHICH ATTRIBUTE NAMES A PART, from what the last run drew. Interactive only: the static figure names
@@ -297,7 +298,7 @@ function mapTextControls(n:WorkflowNode<'map_output'>){
     <label class="field-label" for="map-subtitle">Subtitle / context</label><input id="map-subtitle" maxlength="280" value="${esc(p.mapSubtitle||'')}" placeholder="Optional scope or limitation">
     <label><input id="map-legend-toggle" type="checkbox" ${p.showLegend!==false?'checked':''}> Show map key</label>
     <label><input id="map-halo-toggle" type="checkbox" ${p.markHalo!==false?'checked':''}> Dark outline on point symbols</label>
-    <label class="field-label" for="map-source-note">Source / method note</label><textarea id="map-source-note" maxlength="500" rows="3" placeholder="Default: connected source labels and method">${esc(p.mapSourceNote||'')}</textarea>
+    <label class="field-label" for="map-source-note">Source / method note</label><textarea spellcheck="true" id="map-source-note" maxlength="500" rows="3" placeholder="Default: connected source labels and method">${esc(p.mapSourceNote||'')}</textarea>
     ${partLabelControl(n)}
     ${frameCaptionControl(n)}
     `;
@@ -4482,7 +4483,7 @@ function renderInspector(){
       +`<p class="description">What one row counts. An ecological design counts groups and not `
       +`people, and a measure over groups need not hold between individuals.</p>`
       +`<div class="field"><label class="field-label" for="design-note">Note</label>`
-      +`<textarea id="design-note" data-slr="note" rows="2" maxlength="400">${esc(p.note)}</textarea></div>`;
+      +`<textarea spellcheck="true" id="design-note" data-slr="note" rows="2" maxlength="400">${esc(p.note)}</textarea></div>`;
   }else if(n.type==='two_by_two'){
     // THE STANDARD INSPECTOR (experiment 186, 2026-11-14; the practitioner: "If we touch 2x2 we have to standardize"):
     // the name, the input, one sentence of what is compared, Configure…, and what the run gave.
@@ -4532,7 +4533,7 @@ function renderInspector(){
       +'</select></div>'
       +`<div class="field"><label class="field-label" for="slr-family-with">Family value that <strong>includes</strong> vertical land motion</label><input id="slr-family-with" data-slr-family="withVerticalLandMotion" maxlength="80" value="${esc(p.familyValues.withVerticalLandMotion)}"></div>`
       +`<div class="field"><label class="field-label" for="slr-family-without">Family value that <strong>excludes</strong> it</label><input id="slr-family-without" data-slr-family="withoutVerticalLandMotion" maxlength="80" value="${esc(p.familyValues.withoutVerticalLandMotion)}"></div>`
-      +[0,1,2].map(i=>`<div class="field"><label class="field-label" for="slr-citation-${i}">Required citation ${i+1}</label><textarea id="slr-citation-${i}" data-slr-citation="${i}" rows="2" maxlength="400">${esc(p.citations[i]||'')}</textarea></div>`).join('')
+      +[0,1,2].map(i=>`<div class="field"><label class="field-label" for="slr-citation-${i}">Required citation ${i+1}</label><textarea spellcheck="true" id="slr-citation-${i}" data-slr-citation="${i}" rows="2" maxlength="400">${esc(p.citations[i]||'')}</textarea></div>`).join('')
       +'';
   }else if(n.type==='slr_site_assignment'){
     content+=''
@@ -7533,9 +7534,17 @@ $('#blank-add').onclick=()=>$('#node-library [data-add="study_area"]')?.click();
  *  The practitioner, 2026-10-19: *"the first step is not even study area - it's create a project."*
  *  So this runs BEFORE any geography: it names the investigation, then opens one empty canvas
  *  belonging to it. The study area is step two, inside that workflow, where it always was. */
+/** WHAT A PROJECT IS WRITING TOWARDS (experiment 202, Stage A): one box per target, none required. */
+function targetsChoices(name:string,chosen:readonly string[],legend:boolean,disabled=false):string{
+  return (legend?'<legend class="field-label">Writing towards</legend>':'')
+    +'<p class="muted">What this project will become: one or more, or none yet. Notes shows the outline of each.</p>'
+    +TARGETS.map(t=>`<label class="targets-choice"><input type="checkbox" name="${name}" value="${esc(t.id)}"${chosen.includes(t.id)?' checked':''}${disabled?' disabled':''}> ${esc(t.label)}</label>`).join('');
+}
+const chosenTargets=(name:string)=>[...document.querySelectorAll<HTMLInputElement>(`input[name="${name}"]:checked`)].map(i=>i.value);
 function openProjectDialog(){
   if(busy)return;
   $('#project-name-input').value='';$('#project-subject-input').value='';
+  ($('#project-targets-new') as HTMLElement).innerHTML=targetsChoices('project-target-new',[],true);
   // WHAT HAPPENS TO THE CANVAS YOU HAVE OPEN, said before it happens. This created the project and
   // then replaced the canvas with an empty workflow named "<project> · first question", which is
   // right when starting an investigation from nothing -- the practitioner's own 2026-10-19 request,
@@ -7560,6 +7569,7 @@ function createProjectFromDialog(){
   // the project simply has none -- an unattributed project is honest, a guessed author is not.
   const stored=readProjects(),project=newProject(name,$('#project-subject-input').value,
     allProjects(),currentIdentity(localStorage));
+  const targets=chosenTargets('project-target-new');if(targets.length)project.targets=targets;
   const key=`${project.id}/w1`;
   project.workflows=[key];
   if(!writeProjects([...stored,project])){$('#project-dialog').close();return;}
@@ -7745,6 +7755,7 @@ function renderProjectDetails(){
   const saved=readSavedWorkflows();
   ($('#project-name-edit') as HTMLInputElement).value=project?project.name:'';
   ($('#project-subject-edit') as HTMLInputElement).value=project?project.subject:'';
+  ($('#project-targets-edit') as HTMLElement).innerHTML=targetsChoices('project-target-edit',project?.targets??[],false,!project||builtIn);
   ($('#workflow-name-edit') as HTMLInputElement).value=workflow.name||'';
   for(const id of ['#project-name-edit','#project-subject-edit'])
     ($(id) as HTMLInputElement).disabled=!project||builtIn;
@@ -8018,7 +8029,14 @@ function renderNotesView(){
     // run from a workflow that is in no project. 0 is the second of those, not the first.
     {pending,waiting,total:(project?.workflows||[]).length,readOnly:keptHere(project)},
     figureOf,references,exampleLinksBlock(onlineLinks(project),esc));
-  optionalElement('[data-publication]')?.addEventListener('click',()=>openPublication({
+  // THE OUTLINE OF WHAT THE PROJECT IS WRITING TOWARDS (experiment 202, Stage A), above the notes it is filled from.
+  {const stored=project&&readProjects().find(p=>p.id===project.id);
+   const targets=stored?.targets??project?.targets??[];
+   if(targets.length)$('#notes-view').insertAdjacentHTML('afterbegin',outlineMarkup(projectOutline(targets,
+     [...(project?.notes||[]),...derived,...machined],stored?.publication??project?.publication??{},
+     references.filter(r=>!r.uncited).length),esc,!keptHere(project)));}
+  // EVERY "Write" that opens the draft, the outline's among them.
+  for(const opener of document.querySelectorAll('#notes-view [data-publication]'))opener.addEventListener('click',()=>openPublication({
     title:project?.name||workflow.name,
     authors:(project?.authors||[]).map(a=>a.name||a.login),
     date:new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}),
@@ -8114,7 +8132,7 @@ function openPublication(input:PublicationInput,keep:(key:string,text:string)=>R
       const current=input.written?.[key]??'';
       const editor=document.createElement('div');editor.className='pub-editor';
       editor.innerHTML=`<label class="pub-prompt-label" for="pub-text">${esc(label)} <span>\u00b7 ${esc(length)}</span></label>`
-        +`<p>${esc(ask)}</p><textarea id="pub-text" rows="${key.endsWith('title')?2:6}">${esc(key.endsWith('title')&&!current?input.title:current)}</textarea>`
+        +`<p>${esc(ask)}</p><textarea spellcheck="true" id="pub-text" rows="${key.endsWith('title')?2:6}">${esc(key.endsWith('title')&&!current?input.title:current)}</textarea>`
         +`<p class="pub-count" aria-live="polite"></p><div class="pub-editor-actions">`
         +`<button class="button primary" data-pub-save>Save</button><button class="button" data-pub-cancel>Cancel</button></div>`;
       part.replaceWith(editor);view!.querySelector(`[data-pub-write="${key}"]`)?.remove();
@@ -8209,7 +8227,9 @@ function applyProjectDetails(){
   if(workflowName&&workflowName!==workflow.name)change(w=>{w.name=workflowName;},{spatial:false});
   if(project){
     if(!name){toast('A project needs a name: what are you investigating?',{tone:'warning'});return;}
-    const next=readProjects().map(p=>p.id===project.id?{...p,name,subject}:p);
+    const targets=chosenTargets('project-target-edit');
+    const next=readProjects().map(p=>{if(p.id!==project.id)return p;const {targets:_was,...rest}=p;void _was;
+      return {...rest,name,subject,...(targets.length?{targets}:{})};});
     if(!writeProjects(next))return;
   }
   forgetSavedWorkflows();render();renderResults();
@@ -9918,8 +9938,10 @@ document.addEventListener('click',event=>{
   // A UUID, because a note somebody writes has no natural key and the whole point of the id is
   // that another note can point at it. `Date.now()` collides within a millisecond, which is never
   // by hand and certain under a loop.
+  // FROM AN OUTLINE SLOT, the note arrives with the function the slot wants (experiment 202, Stage A).
+  const fn=target.closest('[data-add-note]')?.getAttribute('data-add-fn')||'';
   const made:Note={kind:'authored',id:crypto.randomUUID(),
-    section:section as WriteUpPart,text:UNWRITTEN};
+    section:section as WriteUpPart,text:UNWRITTEN,...(fn?{fn}:{})};
   if(!writeNotes([...held,made])){
     toast('That note could not be kept on this device.',{tone:'failure'});return;}
   renderNotesView();

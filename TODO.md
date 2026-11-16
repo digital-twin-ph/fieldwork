@@ -105,7 +105,11 @@ Sierra Leone how to support the development of FieldWork. At some point, this we
 training materials. This important step could help with FW field testing."* Settled the same day: the graduate's
 role is **field testing, worked examples, review and validation, code contributions and localisation**; the materials
 are **guided modules** (each a goal, a hands-on exercise in Fieldwork and a check); they live in **a new repository**,
-which the practitioner creates (repository creation is a human action). The Sierra Leone measles example, made from that
+which the practitioner creates (repository creation is a human action). **Staged, slides first, starting the week
+of 2026-11-16** (the practitioner, the same day: *"The onboarding materials can be staged. Slides first, and we can start
+it next week. For now I am more interested in finishing up render as it's very consequential for uptake."*); the render
+work (202, Stages A to E) comes first. **Then identity, then collaborative projects** (the practitioner, the same day: *"Once we finish render,
+we can start identity, then collaborative project."*). The Sierra Leone measles example, made from that
 country's FETP line list, is the natural first exercise; its rules hold throughout (the original FETP file in no
 repository; no free text from it printed).
 

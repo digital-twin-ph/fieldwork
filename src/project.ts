@@ -80,6 +80,9 @@ export interface Project {
   /** THE PARTS OF THE PUBLICATION THE PERSON WRITES (experiment 202): title, affiliations and keywords, the structured
    *  abstract, conclusions and data availability, by part. Introduction and Discussion are notes, as before. */
   publication?:Record<string,string>;
+  /** WHAT THE PROJECT IS WRITING TOWARDS (experiment 202, Stage A): the publication or declared formats, by id, chosen
+   *  with its question. Absent means not chosen yet, which is allowed: the outline appears once one is named. */
+  targets?:string[];
   /** WHEN THIS PROJECT BEGAN, as distinct from when it last changed.
    *
    *  Added 2026-10-29 while answering whether a solo project can become collaborative, where the
@@ -275,6 +278,9 @@ export function validateProject(raw:unknown):Project{
   const repository=readRepository(raw.repository);
   const dictionaries=readProjectDictionaries(raw.dictionaries);
   // Each part a string of its own, kept as written; anything else is dropped, never coerced.
+  // Targets named, kept only where they are the publication or a declared format, each once, in the order given.
+  const known=['publication',...REPORT_FORMATS.formats.map(f=>f.id)];
+  const targets=Array.isArray(raw.targets)?[...new Set((raw.targets as unknown[]).filter((t):t is string=>typeof t==='string'&&known.includes(t)))]:[];
   const publication:Record<string,string>=isRecord(raw.publication)?Object.fromEntries(Object.entries(raw.publication as Record<string,unknown>)
     .filter(([key,value])=>typeof value==='string'&&isPublicationEntry(key,value)&&value.trim()&&value.length<=MAX_PUBLICATION_PART) as [string,string][]):{};
   return {schema:'fieldwork/project/2',id:raw.id,name:raw.name,subject:raw.subject,
@@ -282,7 +288,8 @@ export function validateProject(raw:unknown):Project{
     ...(changedAt?{changedAt}:{}),...(exportedAt?{exportedAt}:{}),...(work?{exportedWork:work}:{}),
     ...(notes.length?{notes}:{}),...(authors.length?{authors}:{}),
     ...(createdAt?{createdAt}:{}),...(repository?{repository}:{}),...(dictionaries.length?{dictionaries}:{}),
-    ...(Object.keys(publication).length?{publication}:{})};
+    ...(Object.keys(publication).length?{publication}:{}),
+    ...(targets.length?{targets}:{})};
 }
 
 /** The input widgets whose payload two workflows can genuinely share.

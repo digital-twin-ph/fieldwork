@@ -332,3 +332,25 @@ exist for us to bridge the gap between what we have and that end?"* Read off Sou
 **Most consequential:** 7, then 1, 3 and 9; the others largely follow once a product has an outline and paragraphs that
 cite their evidence. **Not established:** whether an outline per product is the right shape for "the end in mind";
 the real model paper being sought now is to inform it.
+
+## The design for gap 7: targets chosen at the start, notes written to roles, 2026-11-15
+
+From the practitioner, the same day: *"I think the role for the notes has to be picked early so the outline for the
+type of output (and render) guides what form the notes take, the length of each note, and where they go"*; *"And
+where do we pick publication, sit rep, surveillance summary? And when in the process?"*; *"For the project, could
+render targets be multiple?"*; and *"Yes"* to the design below.
+
+| Part | What it is |
+| --- | --- |
+| Targets | A project names what it is writing towards, at its start, beside its question: one or more formats (publication, a WHO-style sit rep, an MMWR report …). "Not chosen yet" is allowed for exploratory work. Changing them drops nothing |
+| Roles | A note's role is independent of any product (the case definition, the main finding), finer than IMRaD's sections. Each target maps the roles it uses to its own headings. A step's note takes its role from the widget that writes it. A note may be left unplaced |
+| The outline | Notes shows one outline: every role any target needs, each slot saying which targets use it and the length each wants. Slots only one target uses are marked, so their cost shows |
+| Writing | Once, in the fullest form a target needs; a target that wants it shorter asks for a short form, flagged when the full note changes |
+| Coverage | Per target: slots filled of slots needed, so readiness is judged per product |
+| Suggested by design | The study design (159) can suggest a target; it does not choose |
+
+**Open in it:** a target's own cut-off in time (a sit rep is "as of" a date, a paper covers the whole event), which roles
+alone do not answer. **Test before design:** South London's publication written as a mock-up from a real model
+(Coleman 2020 for content, Barnett 2020 for form; workspace `reports/South London publication, model papers.md`), each
+paragraph marked with its role, what supplies it now and its length, against two targets at once, the publication and
+a sit rep.

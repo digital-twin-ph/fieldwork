@@ -62,6 +62,9 @@ const run=async (page,named)=>{
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
 };
 const notes=async page=>{
+  // After a reload the tab is clicked only once startup is over: a click before its handler is bound is lost (WebKit on
+  // CI, 0.128.0).
+  await expect(page.locator('html[data-ready="true"]')).toHaveCount(1,{timeout:30000});
   await page.locator('[data-view="notes"]').click();
   await page.locator('.notes-part').first().waitFor();
 };

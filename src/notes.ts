@@ -349,6 +349,13 @@ export interface AuthoredNote {
    *  able to enumerate objectives as items."* The note's text is the lead-in; each item may name the workflow question it
    *  comes from, by the workflow's key. */
   items?:NoteItem[];
+  /** THE OBJECTIVE THIS NOTE ANSWERS, by the item's id (experiment 202, Stage B): a result states which of the paper's
+   *  objectives it answers, so Results follows the objectives' order and the outline can say which has its answer. */
+  answers?:string;
+  /** THE TABLES, CHARTS AND MAPS THIS NOTE RESTS ON, by their notes' keys (`noteKey`), in order. The practitioner: *"charts,
+   *  tables and maps are components that support each result. Charts, tables and maps can also support background in
+   *  introduction, and other sections when needed."* Drawn after this note wherever it sits, and not in their own place. */
+  components?:string[];
   /** A picture the note carries, kept by its digest, with alt text and a caption (experiment 196). */
   image?:import('./note-image.js').NoteImage;
 }
@@ -504,6 +511,8 @@ export function readNotes(raw:unknown):{notes:Note[]; unreadable:number}{
           ?{words:text(entry.words)||LEGACY_FORM[text(entry.form)]||text(entry.form)}:{}),
         ...(text(entry.argument)?{argument:text(entry.argument)}:{}),
         ...(readNoteItems(entry.items).length?{items:readNoteItems(entry.items)}:{}),
+        ...(text(entry.answers)?{answers:text(entry.answers)}:{}),
+        ...(edges(entry.components).length?{components:[...new Set(edges(entry.components))]}:{}),
         ...(readNoteImage(entry.image)?{image:readNoteImage(entry.image)!}:{})});
       continue;
     }
@@ -522,6 +531,21 @@ export function readNotes(raw:unknown):{notes:Note[]; unreadable:number}{
     unreadable++;
   }
   return {notes,unreadable:unreadable+Math.max(0,(Array.isArray(raw)?raw.length:0)-MAX_NOTES)};
+}
+
+/** A note's handle, stable enough to find it again in a list rebuilt from scratch. SCOPED BY WORKFLOW where the note has
+ *  one: an id of `table-viii:description` is unique within a workflow and not within a project. */
+export function noteKey(note:Note):string{
+  const scope='workflowKey' in note&&note.workflowKey?`${note.workflowKey}/`:'';
+  if('id' in note&&note.id)return `${scope}${note.id}`;
+  const body=note.kind==='quoted'?note.quote:note.text;
+  return `${scope}${note.kind}:${note.section}:${body.slice(0,40)}`;
+}
+
+/** THE PROJECT'S OBJECTIVES, numbered: the items of its first objectives note that has any. */
+export function objectivesOf(notes:readonly Note[]):(NoteItem&{n:number})[]{
+  const holder=notes.find(n=>n.kind==='authored'&&n.fn==='objective'&&n.items?.length) as AuthoredNote|undefined;
+  return (holder?.items??[]).map((item,i)=>({...item,n:i+1}));
 }
 
 export interface NoteGroup {fn:string; notes:Note[]}

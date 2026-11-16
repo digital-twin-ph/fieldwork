@@ -76,3 +76,37 @@ test('a note\'s dialog says what its section and function become in each target'
   assert.deepEqual(limits,['Discussion: limitations','Data notes: limits'],'a limitation is a limitation wherever it sits');
   assert.deepEqual(slotsForNote([],'Methods','source'),[],'no target, nothing to say');
 });
+
+/** STAGE B (2026-11-16): a result says which objective it answers; a table, chart or map goes with the note it supports;
+ *  Results follows the objectives' order. Objectives can be written before any workflow exists. */
+const staged=[
+  {kind:'authored',id:'o1',section:'Introduction',fn:'objective',text:'Our objectives were to:',items:[
+    {id:'a',text:'reproduce the comparison per house',question:'w-house'},{id:'b',text:'recompute it per person'}]},
+  {kind:'authored',id:'bg',section:'Introduction',fn:'context',text:'The pipes ran down the same streets.',components:['w-map/m:description']},
+  {kind:'machined',id:'m:description',workflowKey:'w-map',nodeId:'m',section:'Results',text:'**Map 2.** The supply areas.'},
+  {kind:'machined',id:'t:description',workflowKey:'w-house',nodeId:'t',section:'Results',text:'**Deaths per house.** 2 rows.'},
+  {kind:'authored',id:'r1',section:'Results',fn:'finding',text:'Southwark and Vauxhall houses had 315 deaths per 10,000.',answers:'a'},
+];
+test('a note keeps what it answers and the components it rests on, each once',()=>{
+  const {notes:[back]}=readNotes([{...staged[1],components:['x','x','y'],answers:'a'}]);
+  assert.deepEqual(back.components,['x','y']);assert.equal(back.answers,'a');
+});
+test('the outline says of each objective whether it has its answer, its components and its workflow',async()=>{
+  const {objectiveStates}=await import('../build/outline.js');
+  const states=objectiveStates(staged,{isComponent:n=>n.kind==='machined',workflowName:k=>k==='w-house'?'How many died per house?':undefined});
+  assert.deepEqual(states.map(s=>[s.n,s.answered,s.components,s.workflow]),[[1,true,1,'How many died per house?'],[2,false,0,undefined]]);
+  const html=outlineMarkup(projectOutline(['publication'],staged,{},0,{isComponent:n=>n.kind==='machined'}),esc,true);
+  assert.match(html,/data-objective="b"[\s\S]*?no answer yet[\s\S]*?no workflow yet[\s\S]*?data-add-answers="b"/);
+});
+test('the render: Results by objective, a component after the note it supports and nowhere else',async()=>{
+  const {publicationMarkup}=await import('../build/publication.js');
+  const html=publicationMarkup({title:'T',authors:[],date:'',notes:staged,sourceOf:()=>undefined,
+    figureOf:n=>n.kind==='machined'?`<svg data-figure="chart"></svg>`:undefined,references:[]},esc);
+  const at=s=>html.indexOf(s);
+  assert.ok(at('The pipes ran')<at('The supply areas')&&at('The supply areas')<at('2. Methods'),'the map supports the Introduction');
+  assert.equal(html.split('The supply areas').length,2,'drawn once');
+  assert.ok(at('3.1 Reproduce the comparison per house (objective 1)')<at('315 deaths')&&at('315 deaths')<at('Deaths per house.')
+    &&at('Deaths per house.')<at('3.2 Recompute'),'the answer, then its workflow\'s table, under objective 1');
+  assert.match(html,/3\.2 Recompute it per person \(objective 2\)<\/h3><div class="pub-prompt">/);
+  assert.match(html,/<strong>Figure 1\.<\/strong> <strong>Map 2/,'numbered in reading order');
+});

@@ -12,7 +12,7 @@
  *  3. A figure's note is its caption.
  *  4. Nothing of the Notes tab's furniture.
  *  Limitations are gathered under Discussion; display formulas go to a numbered Appendix, a pointer left in their place. */
-import {notesOfPart,UNWRITTEN,type Note,type WriteUpPart} from './notes.js';
+import {notesOfPart,noteKey,objectivesOf,UNWRITTEN,type Note,type WriteUpPart} from './notes.js';
 import {toHTML} from './prose.js';
 import {workKey,type ReferenceEntry} from './references.js';
 import type {Escape} from './types.js';
@@ -181,7 +181,17 @@ export function publicationMarkup(input:PublicationInput,esc:Escape):string{
     return html;
   };
   const sources:string[]=[];
-  const rendered=(kept:{note:Note;from:string[]}[])=>inRows(kept.map(({note,from})=>{
+  // A COMPONENT GOES WITH THE NOTE IT SUPPORTS (Stage B): a table, chart or map a written note names is drawn after that
+  // note, in whatever section it sits, and not in its own place. The first note to name it keeps it.
+  const byKey=new Map(input.notes.map(n=>[noteKey(n),n] as const));
+  const claimed=new Map<string,Note>();
+  for(const note of input.notes)if(note.kind==='authored'&&note.text!==UNWRITTEN)
+    for(const key of note.components??[])if(byKey.has(key)&&!claimed.has(key)&&key!==noteKey(note))claimed.set(key,note);
+  const isClaimed=(note:Note)=>claimed.has(noteKey(note));
+  const withComponents=(kept:{note:Note;from:string[]}[])=>kept.flatMap(k=>[k,
+    ...(k.note.kind==='authored'?(k.note.components??[]):[]).filter(key=>claimed.get(key)===k.note)
+      .map(key=>({note:byKey.get(key)!,from:[input.sourceOf(byKey.get(key)!)].filter((x):x is string=>!!x)}))]);
+  const rendered=(kept:{note:Note;from:string[]}[])=>inRows(withComponents(kept).map(({note,from})=>{
     const label=from.join('; ');
     let figure=input.figureOf(note);
     // A SOURCE'S TABLE IS NOT THE BODY'S: the sentence stays, and Data availability names it.
@@ -201,8 +211,8 @@ export function publicationMarkup(input:PublicationInput,esc:Escape):string{
     return `<div class="pub-note">${lifted(prose(note),label)}</div>`;
   }));
   const part=(section:WriteUpPart,keep:(note:Note)=>boolean=note=>!isLimitation(note))=>
-    merged(notesOfPart(input.notes,section).filter(keep));
-  const limitations=merged(input.notes.filter(isLimitation));
+    merged(notesOfPart(input.notes,section).filter(note=>keep(note)&&!isClaimed(note)));
+  const limitations=merged(input.notes.filter(note=>isLimitation(note)&&!isClaimed(note)));
   const introduction=part('Introduction'),methods=part('Methods'),results=part('Results'),discussion=part('Discussion');
 
   if(kind!=='publication'){
@@ -251,7 +261,23 @@ export function publicationMarkup(input:PublicationInput,esc:Escape):string{
   const abstract=`<h2>Abstract</h2>`+prompt('background',true)+prompt('methods',true)+prompt('results',true)+prompt('conclusions',true);
   const intro=`<h2>1. Introduction</h2>`+(introduction.length?rendered(introduction):prompt('Introduction'));
   const method=`<h2>2. Methods</h2>`+rendered(methods);
-  const result=`<h2>3. Results</h2>`+rendered(results);
+  // RESULTS IN THE OBJECTIVES' ORDER (Stage B): under each objective, the notes that answer it, then the Results of the
+  // workflow that answers it; what answers none comes first. With no objectives, Results as the record has it.
+  const objectives=objectivesOf(input.notes);
+  const workflowOf=(note:Note)=>'workflowKey' in note?note.workflowKey:undefined;
+  const objectiveOf=(r:{note:Note})=>{const n=r.note;
+    return objectives.find(o=>n.kind==='authored'&&n.answers===o.id)
+      ??objectives.find(o=>!!o.question&&workflowOf(n)===o.question);};
+  const capital=(text:string)=>text.charAt(0).toUpperCase()+text.slice(1);
+  const result=`<h2>3. Results</h2>`+(objectives.length
+    ?rendered(results.filter(r=>!objectiveOf(r)))+objectives.map(o=>{
+      const mine=results.filter(r=>objectiveOf(r)===o);
+      const answered=mine.filter(r=>r.note.kind==='authored'),rest=mine.filter(r=>r.note.kind!=='authored');
+      return `<h3 data-pub-objective="${esc(o.id)}">3.${o.n} ${esc(capital(o.text))} (objective ${o.n})</h3>`
+        +(mine.length?rendered([...answered,...rest]):`<div class="pub-prompt"><p class="pub-prompt-label">Result for objective ${o.n} <span>· one paragraph and its table or figure</span></p>`
+          +`<p>What the analysis found for this objective. Write it as a note in Results that answers objective ${o.n}.</p></div>`);
+    }).join('')
+    :rendered(results));
   const discuss=`<h2>4. Discussion</h2>`+(discussion.length?rendered(discussion):prompt('Discussion'))
     +(limitations.length?`<h3>Limitations</h3>`+rendered(limitations):'')
     +`<h3>Conclusions</h3>`+prompt('closing');

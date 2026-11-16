@@ -1509,3 +1509,11 @@ th .meaning{font-weight:400;white-space:normal}
 .note-targets{font-size:15px;margin:8px 0}
 .note-targets ul{margin:0;padding-left:20px}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+/* Stage B: what a note answers and rests on; each objective's state in the outline. */
+.field-pair{display:grid;gap:4px}
+.note-links{display:grid;gap:6px;margin:10px 0}
+.note-links select{font-size:14px;padding:6px;max-width:100%}
+.note-components{border:1px solid var(--line-soft-2);border-radius:6px;padding:8px 10px;display:grid;gap:6px;font-size:14px}
+.note-components legend{font-weight:600;padding:0 4px}
+.note-components label{display:flex;gap:8px;align-items:flex-start}
+.outline-objectives{margin:6px 0 0 18px;font-size:14px;display:grid;gap:4px}

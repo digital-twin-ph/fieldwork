@@ -3,6 +3,18 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.129.0 — In development
+
+- **Objectives first, then what answers them.** A new project can write its objectives before it has any workflow.
+  The outline shows each objective: whether a note answers it, how many tables, charts and maps support it, and which
+  workflow answers it. On the Project tab, a workflow says which objective it answers. **Write its answer** adds a
+  Results note for that objective.
+- **A table, chart or map goes with the note it supports.** In a note of your own, tick the ones it rests on; the draft
+  draws them after that note, in any section, numbered in reading order.
+- **The publication's Results follows the objectives**: a numbered subsection per objective, with its answer and its
+  workflow's results.
+- A test that reloaded and opened Notes before startup finished now waits for it (WebKit on CI, 0.128.0).
+
 ## 0.128.0 — 2026-11-16
 
 - **What a project is writing towards, and its outline.** A project names its targets with its question (New project,

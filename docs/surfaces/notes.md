@@ -140,6 +140,21 @@ In the note's dialog, **Add an objective** adds an item; each can be moved up or
 A note's dialog also shows, under **In each target**, the heading and length its section and function take in each
 product the project writes towards.
 
+**Objectives come first; workflows answer them later.** A new project can write its objectives before it has any
+workflow. Under the Objectives part, each objective says whether a note answers it, how many tables, charts and maps
+support it, and which workflow answers it, or **no workflow yet**. **Write its answer** adds a note in Results that
+answers that objective.
+
+- **The objective a workflow answers** is chosen on the **Project** tab, under the workflow's name, once the project has
+  objectives. A workflow answers one objective at most.
+- **Answers**, in a Results note's dialog, says which objective the note answers.
+- **Tables, charts and maps shown with this note**, in any note of your own: ticked ones are drawn after that note in
+  the draft, wherever it sits, and not in their own place. A map can support a point in the Introduction.
+
+In the draft's Results, each objective is a numbered subsection, in the objectives' order: the notes that answer it, then
+the results of the workflow that answers it. Results that answer no objective come first. An objective with nothing yet
+says what belongs there.
+
 ## Draft as a document
 
 **Publication**, at the top of Notes, lays the write-up out as a document on a page, to read and to print. **Draft as**

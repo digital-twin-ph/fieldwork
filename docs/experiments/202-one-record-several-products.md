@@ -465,3 +465,40 @@ Configure frame touches its editor, citations and image tabs and many tests, and
 `tests/outline.test.mjs` (6), `tests/outline.browser.mjs` (an objectives note with two items, counted in the outline;
 its dialog naming the publication's slot), Chromium. Rendering objectives as the paper's numbered list, and a result
 answering an item, are Stage B.
+
+**Objectives before workflows (the practitioner, 2026-11-16, as Stage B began):** *"Actually if we think about it from a
+fresh project perspective there will be no workflows yet. But objectives can already be written."* This reversed the
+design's line above, *"A target's objectives are chosen from the project's workflow questions"*. Objectives are written
+first, as items. A workflow is linked to the objective it answers later, from the workflow's side. The link is kept on
+the objective item (`question`, the workflow's key), and a workflow answers one objective at most.
+
+**Plan against product (the practitioner, the same day):** *"So in the end, user can compare planning notes / sections
+with actual product facing notes as a check for gaps and as substrate for self reflection (important for deliberate
+practice in building expertise)."* Recorded as said; it is not yet a rule. What Stage B supports today is the live
+comparison: each objective's answer and support, and each part's fill. **The gap:** the plan is not kept as it was first
+written. An objective edited later overwrites the original, so there is no earlier plan to set against the product. A
+dated plan belongs with the versions that identity (218) and collaborative projects bring, and is not built here.
+
+**Planning text reused (the practitioner, the same day):** *"But planning notes content can be copied into non-planning
+authored notes as needed (less friction from not having to retype or recreate useful content)."* Recorded as said. Not
+built. Two things are open: what marks a note as planning (today only the objectives and the outline's parts are the
+plan), and whether a copy keeps a link to the note it came from, as a fork keeps its machined original (`forkedFrom`).
+With the link, the copy still shows what the plan became, which the comparison above needs.
+
+**Stage B, built 2026-11-16.**
+
+| Part | Built |
+| --- | --- |
+| A result answers an objective | `answers` on a note of your own, by the item's id; **Answers** in a Results note's dialog; **Write its answer** on an objective's row in the outline |
+| A workflow answers an objective | **The objective it answers** on the Project tab, offered once the project has objectives; kept on the item |
+| Components attached to the notes they support | `components` on a note of your own, by note key (`noteKey`, now in `notes.ts`); **Tables, charts and maps shown with this note** in its dialog; drawn after the note in every product, in any section, and not in their own place; numbered in reading order |
+| The outline per objective | answered or not, how many components, the workflow or **no workflow yet** |
+| The publication's Results | a numbered subsection per objective, in order: its answering notes, then its workflow's results; results answering none first; an objective with nothing says what belongs there |
+
+Checked: `tests/outline.test.mjs` (9), `tests/outline.browser.mjs` (3: South London with two objectives, its workflow
+linked to objective 1, objective 2 answered with a component and drawn under 3.2; a fresh project's objectives with no
+workflow), and the Notes, draft and project browser tests (46), Chromium. **Not established:** whether a heading taken
+from the objective's own words reads well in a paper (the mock-up's headings are shorter noun phrases); whether people
+find the components checklist where they look for it; the South London objectives entered for real, which waits on the
+practitioner's wording.
+

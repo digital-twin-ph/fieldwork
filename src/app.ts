@@ -127,7 +127,7 @@ import {WRITE_UP_STORE,readWriteUp,entryForRun,recordEntry,writeUpOf,sourceOfNot
   type WriteUp,type WriteUpEntry} from './write-up.js';
 import {typeset} from './prose.js';
 import {readNotes,WRITE_UP_PARTS,type Note,type WriteUpPart,moveNote,forkMachinedNote,
-  UNWRITTEN,type MachinedNote,FIGURE_SECTIONS,DEFAULT_FIGURE_SECTIONS,figureSection,type FigureSection,LEFT_OUT,inWriteUp} from './notes.js';
+  UNWRITTEN,objectivesOf,type MachinedNote,FIGURE_SECTIONS,DEFAULT_FIGURE_SECTIONS,figureSection,type FigureSection,LEFT_OUT,inWriteUp} from './notes.js';
 import {readAuthors,currentIdentity,attestIdentity,setCurrentIdentity,authorLabel} from './identity.js';
 
 /** A polygon layer's chosen file, waiting for Apply. Keyed by node, outside the DOM, because the
@@ -7334,6 +7334,8 @@ function switchView(view:string){
   $('#workflow-view').hidden=view!=='workflow';
   $('#rules-view').hidden=view!=='rules';
   $('#project-view').hidden=view!=='project';
+  // AS THE PROJECT IS NOW: objectives written in Notes since the last render are offered to this workflow (Stage B).
+  if(view==='project')renderProjectDetails();
   $('#notes-view').hidden=view!=='notes';
   $('#manual-view').hidden=view!=='manual';
   $('#widgets-view').hidden=view!=='widgets';
@@ -7757,6 +7759,12 @@ function renderProjectDetails(){
   ($('#project-subject-edit') as HTMLInputElement).value=project?project.subject:'';
   ($('#project-targets-edit') as HTMLElement).innerHTML=targetsChoices('project-target-edit',project?.targets??[],false,!project||builtIn);
   ($('#workflow-name-edit') as HTMLInputElement).value=workflow.name||'';
+  // THE OBJECTIVE THIS WORKFLOW ANSWERS (Stage B): offered once the project has objectives, which a project begun from
+  // its objectives has before it has any workflow. Kept on the objective, as the workflow it is answered by.
+  {const objectives=objectivesOf((project?.notes||[]) as Note[]),pick=$('#workflow-objective-edit') as HTMLSelectElement;
+   $('#workflow-objective-field').hidden=!objectives.length;pick.disabled=!project||builtIn;
+   pick.innerHTML=`<option value="">None of them</option>`+objectives.map(o=>
+     `<option value="${esc(o.id)}"${o.question===key?' selected':''}>Objective ${o.n}: ${esc(o.text)}</option>`).join('');}
   for(const id of ['#project-name-edit','#project-subject-edit'])
     ($(id) as HTMLInputElement).disabled=!project||builtIn;
   ($('#project-delete') as HTMLButtonElement).disabled=!project||builtIn;
@@ -7775,6 +7783,11 @@ function renderProjectDetails(){
  *  the grouping does not. */
 /** The notes on screen, so a click can find the one it names. Rebuilt with the view. */
 let shownNotes:Note[]=[];
+/** THE TABLES, CHARTS AND MAPS THE NOTES BOARD SHOWS, by note key, named for a person choosing one (Stage B). */
+let shownComponents:{key:string;label:string}[]=[];
+/** A table, chart or map: a step's description of what it published, or a picture somebody put in their note. */
+const isComponent=(note:Note)=>(note.kind==='authored'&&!!note.image)
+  ||(note.kind==='machined'&&!!note.nodeId&&!!describedNode(note.id));
 /** THE PROJECT THE OPEN WORKFLOW BELONGS TO, read for DISPLAY and so read from all of them.
  *
  *  This asked `readProjects()` until 2026-10-31, which is localStorage only -- so the seven
@@ -7929,6 +7942,11 @@ function renderNotesView(){
         ?saved.name.trim():WORKFLOW_LABELS[key]??key;
     });
   shownNotes=[...(project?.notes||[]),...derived,...machined] as Note[];
+  shownComponents=shownNotes.filter(isComponent).map(note=>{
+    const words=(note.kind==='authored'&&note.image?.caption)||(note.kind==='quoted'?note.quote:note.text);
+    const plain=words.replace(/[*_`$]/g,'').replace(/\s+/g,' ').trim();
+    const from=sourceOf(note);
+    return {key:noteKey(note),label:`${plain.length>80?plain.slice(0,79)+'…':plain}${from?` (${from})`:''}`};});
   // THE ARTIFACT A DESCRIPTION NOTE SPEAKS FOR, drawn from the run that produced it. The note
   // carries its workflow, so a table from another workflow is drawn from THAT workflow's run
   // rather than from whatever shares its node id on the open canvas -- the same trap `labelOf`
@@ -8034,7 +8052,7 @@ function renderNotesView(){
    const targets=stored?.targets??project?.targets??[];
    if(targets.length)$('#notes-view').insertAdjacentHTML('afterbegin',outlineMarkup(projectOutline(targets,
      [...(project?.notes||[]),...derived,...machined],stored?.publication??project?.publication??{},
-     references.filter(r=>!r.uncited).length),esc,!keptHere(project)));}
+     references.filter(r=>!r.uncited).length,{isComponent,workflowName:nameOfKey}),esc,!keptHere(project)));}
   // EVERY "Write" that opens the draft, the outline's among them.
   for(const opener of document.querySelectorAll('#notes-view [data-publication]'))opener.addEventListener('click',()=>openPublication({
     title:project?.name||workflow.name,
@@ -8180,6 +8198,8 @@ function writeInNoteDialog(note:Note){
     keepImage:(sha,payload)=>keepDataset(noteImageKey(sha),payload),
     targetsFor:(section,fn)=>{const p=projectNow();const t=(p&&readProjects().find(x=>x.id===p.id)?.targets)??p?.targets??[];
       return slotsForNote(t,section,fn);},
+    objectives:()=>objectivesOf((projectNow()?.notes||[]) as Note[]),
+    components:()=>shownComponents,
     labelOf:id=>workflow.nodes.find(n=>n.id===id)?.params.label,
     machined:Object.values(result?.machined||{}).flat(),
     write:keeps?(which,draft)=>{
@@ -8193,14 +8213,17 @@ function writeInNoteDialog(note:Note){
         // THE FUNCTION IS DROPPED WHEN IT IS CLEARED, not stored empty: `readNotes` keeps `fn`
         // only when it has a value, so an empty string here would be written and then read back
         // as absent -- two states that look the same and are not.
-        const {fn:_was,works:_cited,form:_form,words:_words,argument:_argument,image:pictured,items:listed,...rest}=held[at] as Note&{fn?:string;works?:unknown;form?:string;words?:string;argument?:string;image?:NoteImage;items?:import('./notes.js').NoteItem[]};
+        const {fn:_was,works:_cited,form:_form,words:_words,argument:_argument,image:pictured,items:listed,answers:answered,components:resting,...rest}=held[at] as Note&{fn?:string;works?:unknown;form?:string;words?:string;argument?:string;image?:NoteImage;items?:import('./notes.js').NoteItem[];answers?:string;components?:string[]};
+        // WHAT IT ANSWERS AND RESTS ON (Stage B): as drafted, or as they were where the draft does not say.
+        const answers=draft.answers??answered??'',components=draft.components??resting??[];
         // ITEMS ONLY ON AN OBJECTIVES NOTE: kept as drafted, or as they were where the draft does not say.
         const items=fn==='objective'?(draft.items??listed??[]):[];
         // THE PICTURE: unchanged where the draft does not mention it, removed where it says null.
         const image=draft.image===undefined?pictured:draft.image??undefined;
         held[at]={...rest,text,section,...(fn?{fn}:{}),...(draft.works?.length?{works:draft.works}:{}),
           ...(draft.words?{words:draft.words}:{}),...(draft.argument?{argument:draft.argument}:{}),
-          ...(image?{image}:{}),...(items.length?{items}:{})} as Note;
+          ...(image?{image}:{}),...(items.length?{items}:{}),...(answers?{answers}:{}),
+          ...(components.length?{components}:{})} as Note;
         if(!writeNotes(held))return false;
         renderNotesView();
         toast('Your note was kept.');
@@ -8222,6 +8245,12 @@ function writeInNoteDialog(note:Note){
       return false;
     }:undefined},esc);
 }
+/** THE OBJECTIVES WITH THIS WORKFLOW ANSWERING ONE OF THEM, or none: a workflow answers one objective at most. */
+function answeredBy(notes:Note[],key:string,objective:string):Note[]{
+  const holder=objectivesOf(notes).length?notes.find(n=>n.kind==='authored'&&n.fn==='objective'&&n.items?.length):undefined;
+  return notes.map(n=>n!==holder||n.kind!=='authored'?n:{...n,items:n.items!.map(({question,...item})=>
+    item.id===objective?{...item,question:key}:question&&question!==key?{...item,question}:item)});
+}
 function applyProjectDetails(){
   const key=storageKey(workflow);
   const project=workflow.projectId?readProjects().find(p=>p.id===workflow.projectId):projectOfWorkflow(key,readProjects());
@@ -8232,8 +8261,10 @@ function applyProjectDetails(){
   if(project){
     if(!name){toast('A project needs a name: what are you investigating?',{tone:'warning'});return;}
     const targets=chosenTargets('project-target-edit');
+    const answers=($('#workflow-objective-field') as HTMLElement).hidden?undefined:($('#workflow-objective-edit') as HTMLSelectElement).value;
     const next=readProjects().map(p=>{if(p.id!==project.id)return p;const {targets:_was,...rest}=p;void _was;
-      return {...rest,name,subject,...(targets.length?{targets}:{})};});
+      return {...rest,name,subject,...(targets.length?{targets}:{}),
+        ...(answers===undefined?{}:{notes:answeredBy((p.notes||[]) as Note[],key,answers)})};});
     if(!writeProjects(next))return;
   }
   forgetSavedWorkflows();render();renderResults();
@@ -9944,8 +9975,10 @@ document.addEventListener('click',event=>{
   // by hand and certain under a loop.
   // FROM AN OUTLINE SLOT, the note arrives with the function the slot wants (experiment 202, Stage A).
   const fn=target.closest('[data-add-note]')?.getAttribute('data-add-fn')||'';
+  // FROM AN OBJECTIVE'S ROW (Stage B), it arrives answering that objective.
+  const answers=target.closest('[data-add-note]')?.getAttribute('data-add-answers')||'';
   const made:Note={kind:'authored',id:crypto.randomUUID(),
-    section:section as WriteUpPart,text:UNWRITTEN,...(fn?{fn}:{})};
+    section:section as WriteUpPart,text:UNWRITTEN,...(fn?{fn}:{}),...(answers?{answers}:{})};
   if(!writeNotes([...held,made])){
     toast('That note could not be kept on this device.',{tone:'failure'});return;}
   renderNotesView();

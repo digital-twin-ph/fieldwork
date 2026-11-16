@@ -1,7 +1,7 @@
 import {hasManual,openManual} from './manual.js';
 import {GUIDE_QUESTIONS} from './imrad-guide.js';
 import type {Escape} from './types.js';
-import type {NoteItem} from './notes.js';
+import {noteKey,objectivesOf,type NoteItem} from './notes.js';
 import {element} from './dom.js';
 import {toHTML,typeset,hasMarkup} from './prose.js';
 import {groupNotes,notesOfPart,noteExtent,forkHasDrifted,KNOWN_NOTE_FUNCTIONS,NOTE_WORDS,NOTE_ARGUMENT,UNWRITTEN,
@@ -38,7 +38,11 @@ export interface NoteDraft {text:string; section:WriteUpPart; fn:string; works?:
   /** The note's picture; absent leaves it as it was, null removes it. */
   image?:NoteImage|null;
   /** An objectives note's items, in order; absent leaves them as they were. */
-  items?:NoteItem[]}
+  items?:NoteItem[];
+  /** The objective a Results note answers, by item id; empty answers none. Absent leaves it as it was. */
+  answers?:string;
+  /** The keys of the tables, charts and maps shown with this note, in order. Absent leaves them as they were. */
+  components?:string[]}
 export type NoteWrite=(note:Note,draft:NoteDraft)=>boolean;
 
 export interface NoteContext {
@@ -54,6 +58,10 @@ export interface NoteContext {
   /** WHAT THIS NOTE BECOMES IN EACH TARGET the project writes towards (experiment 202, Stage A): the heading and length
    *  of the slot a note of this section and function fills. Absent or empty: the project names no target. */
   targetsFor?:(section:WriteUpPart,fn:string)=>{label:string;heading:string;length:string}[];
+  /** THE PROJECT'S OBJECTIVES, numbered (Stage B), for a Results note to say which it answers. */
+  objectives?:()=>{id:string;n:number;text:string}[];
+  /** THE TABLES, CHARTS AND MAPS IN THE PROJECT, by note key and a name a person can recognise, for a note to rest on. */
+  components?:()=>{key:string;label:string}[];
 }
 
 /** THE TWO KINDS SOMEBODY MAY WRITE, and the reason is the warrant each carries.
@@ -263,6 +271,7 @@ export function notesPanel(notes:readonly Note[],
   online=''):string{
   const fromRun:Note[]=[...(machined||[])];
   const all=[...notes,...derived,...fromRun];
+  const objectiveNo=new Map(objectivesOf(notes).map(o=>[o.id,o.n] as const));
   const extent=noteExtent(all);
   const parts=groupNotes(all);
   const count=(kind:Note['kind'])=>all.filter(note=>note.kind===kind).length;
@@ -350,6 +359,8 @@ export function notesPanel(notes:readonly Note[],
           +(('fn' in note&&note.fn)?`<span class="notes-fn">${esc(note.fn)}</span>`:'')
           +(note.kind==='authored'&&note.words?`<span class="notes-form" title="Whose words">${esc(answerLabel(NOTE_WORDS,note.words))}</span>`:'')
           +(note.kind==='authored'&&note.argument?`<span class="notes-form" title="Whose argument">${esc(answerLabel(NOTE_ARGUMENT,note.argument))}</span>`:'')
+          +(note.kind==='authored'&&note.answers&&objectiveNo.has(note.answers)?`<span class="notes-form notes-answers">answers objective ${objectiveNo.get(note.answers)}</span>`:'')
+          +(note.kind==='authored'&&note.components?.length?`<span class="notes-form notes-components">with ${note.components.length} ${note.components.length===1?'table, chart or map':'tables, charts or maps'}</span>`:'')
           +(from?`<button class="chip flowlink" data-open-node="${esc(from)}"`
             +`${'workflowKey' in note&&note.workflowKey
               ?` data-open-workflow="${esc(note.workflowKey)}"`:''}>`
@@ -392,11 +403,7 @@ export function notesPanel(notes:readonly Note[],
  *  SCOPED BY WORKFLOW where the note has one. An id of `table-viii:description` is unique within
  *  a workflow and not within a project, and the panel now holds a project's worth: two notes
  *  sharing a `data-note` attribute would make opening or dragging one of them act on the other. */
-export function noteKey(note:Note):string{
-  const scope='workflowKey' in note&&note.workflowKey?`${note.workflowKey}/`:'';
-  if('id' in note&&note.id)return `${scope}${note.id}`;
-  return `${scope}${note.kind}:${note.section}:${bodyOf(note).slice(0,40)}`;
-}
+export {noteKey};
 
 const DIALOG=`<dialog id="note-dialog" aria-labelledby="note-dialog-title">
 <div class="dlg"><div class="dlg-head"><h3 id="note-dialog-title">Note</h3><button type="button" class="chip lab-only" id="note-evaluate">Evaluate</button>
@@ -420,7 +427,7 @@ const DIALOG=`<dialog id="note-dialog" aria-labelledby="note-dialog-title">
 <textarea id="note-text" class="note-text" rows="9" hidden
   aria-label="The note" spellcheck="true"></textarea>
 <div id="note-preview" class="prose note-preview" hidden aria-live="polite"></div>
-<div id="note-items" class="note-items-editor" hidden></div><div id="note-targets" class="note-targets"></div>
+<div id="note-items" class="note-items-editor" hidden></div><div id="note-links" class="note-links" hidden></div><div id="note-targets" class="note-targets"></div>
 <p id="note-why" class="why"></p><p id="note-status" class="note-status" role="status"></p>
 <div id="note-detail" class="panel"></div></div>
 <div class="dlg-foot"><span id="note-count"></span>
@@ -598,14 +605,41 @@ export function openNoteDialog(note:Note,context:NoteContext,esc:Escape){
         itemsPanel.querySelector<HTMLInputElement>(`#note-item-${items.length-1}`)?.focus();};
     };
     drawItems();
-    const roleChanged=()=>{drawItems();drawTargets(section?section.value:note.section,workFn?workFn.value:fn);};
+    // WHAT A NOTE OF YOURS ANSWERS AND RESTS ON (Stage B): the objective a result answers, and the tables, charts and maps
+    // drawn after it in every product. Only an authored note keeps them; a machined note's are its widget's.
+    const linksPanel=$('#note-links');
+    const answersWas=note.kind==='authored'?note.answers??'':'';
+    let answers=answersWas;
+    const resting:string[]=note.kind==='authored'?[...(note.components??[])]:[];
+    const componentsWas=JSON.stringify(resting);
+    const drawLinks=()=>{
+      const sec=section?section.value:note.section;
+      const objectives=note.kind==='authored'&&sec==='Results'?context.objectives?.()??[]:[];
+      const own=noteKey(note);
+      const offered=note.kind==='authored'?(context.components?.()??[]).filter(c=>c.key!==own):[];
+      linksPanel.hidden=!objectives.length&&!offered.length;
+      linksPanel.innerHTML=(objectives.length?`<label class="field-label" for="note-answers">Answers</label>`
+        +`<select id="note-answers"><option value="">No objective</option>${objectives.map(o=>
+          `<option value="${esc(o.id)}"${o.id===answers?' selected':''}>Objective ${o.n}: ${esc(o.text)}</option>`).join('')}</select>`:'')
+        +(offered.length?`<fieldset class="note-components"><legend>Tables, charts and maps shown with this note</legend>`
+          +offered.map((c,i)=>`<label><input type="checkbox" id="note-component-${i}" data-component="${esc(c.key)}"${resting.includes(c.key)?' checked':''}> ${esc(c.label)}</label>`).join('')
+          +`</fieldset>`:'');
+      const pick=linksPanel.querySelector<HTMLSelectElement>('#note-answers');
+      if(pick)pick.onchange=()=>{answers=pick.value;relabel();};
+      linksPanel.querySelectorAll<HTMLInputElement>('[data-component]').forEach(box=>box.onchange=()=>{
+        const key=box.dataset.component!,at=resting.indexOf(key);
+        if(box.checked&&at<0)resting.push(key);else if(!box.checked&&at>=0)resting.splice(at,1);relabel();});
+    };
+    drawLinks();
+    const roleChanged=()=>{drawItems();drawLinks();drawTargets(section?section.value:note.section,workFn?workFn.value:fn);};
     section?.addEventListener('change',roleChanged);workFn?.addEventListener('change',roleChanged);
     const keptItems=()=>items.map(it=>({...it,text:it.text.trim()})).filter(it=>it.text);
     tell(area.value);
     save.textContent=fresh?'Add note':'Save';
     const unchanged=()=>area.value.trim()===was
       &&(!section||section.value===note.section)&&(!workFn||workFn.value===fn)&&(!workWords||workWords.value===wordsWas)&&(!workArgument||workArgument.value===argumentWas)
-      &&JSON.stringify(works)===startedWith&&JSON.stringify(image)===imageStartedWith&&JSON.stringify(items)===itemsWas;
+      &&JSON.stringify(works)===startedWith&&JSON.stringify(image)===imageStartedWith&&JSON.stringify(items)===itemsWas
+      &&answers===answersWas&&JSON.stringify(resting)===componentsWas;
     // SAY WHAT LEAVING WOULD COST, once there is something to lose. A dialog whose only exit is
     // labelled "Close" discards an edit without ever having said so. A note being written for
     // the first time has nothing to go back to, so its exit is "Discard" throughout.
@@ -827,6 +861,7 @@ export function openNoteDialog(note:Note,context:NoteContext,esc:Escape){
         fn:workFn?workFn.value:fn,works,
         words:workWords?workWords.value:wordsWas,argument:workArgument?workArgument.value:argumentWas,
         items:(workFn?workFn.value:fn)==='objective'?keptItems():[],
+        ...(note.kind==='authored'?{answers:(section?section.value:note.section)==='Results'?answers:'',components:resting}:{}),
         ...(JSON.stringify(image)!==imageStartedWith?{image}:{})}))dialog.close();
       else{
         status.textContent='That note could not be kept on this device.';

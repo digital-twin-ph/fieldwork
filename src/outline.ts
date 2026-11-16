@@ -9,7 +9,7 @@
  *
  *  It reads; it drafts nothing. A slot is filled by the person's writing or the record's notes, never by this. */
 import reportFormats from '../widgets/report-formats.json';
-import {UNWRITTEN,type Note,type WriteUpPart} from './notes.js';
+import {noteKey,objectivesOf,UNWRITTEN,type Note,type WriteUpPart} from './notes.js';
 
 export interface RoleDeclaration {source:'written'|'notes'|'limitations'|'references'; part?:WriteUpPart; fns?:string[];
   keys?:string[]; label:string}
@@ -30,7 +30,14 @@ export interface OutlineSlot {
   byTarget:Record<string,{heading:string;length:string}>;
   /** How many notes fill it, or 1 where a written part does. */
   filled:number;
+  /** For the objectives slot: each objective, whether a note answers it, how many components support it, and the
+   *  workflow that answers it, where one is named. */
+  objectives?:ObjectiveState[];
 }
+export interface ObjectiveState {id:string; n:number; text:string; answered:boolean; components:number; workflow?:string}
+/** What the outline needs to know of the record beyond the notes: which notes are a table, chart or map, and a
+ *  workflow's name by its key. */
+export interface OutlineRecord {isComponent?:(note:Note)=>boolean; workflowName?:(key:string)=>string|undefined}
 export interface Outline {slots:OutlineSlot[]; coverage:{target:string;label:string;filled:number;of:number}[]}
 
 const fnOf=(note:Note)=>('fn' in note&&note.fn)||'';
@@ -49,7 +56,7 @@ export function noteFills(note:Note,role:RoleDeclaration):boolean{
 
 /** ONE OUTLINE FOR EVERY TARGET: the union of their slots, in the order the first target to use each meets it. */
 export function projectOutline(targets:readonly string[],notes:readonly Note[],written:Readonly<Record<string,string>>,
-  references:number):Outline{
+  references:number,record:OutlineRecord={}):Outline{
   const chosen=targets.filter(isTarget);
   const order:string[]=[];const byRole=new Map<string,OutlineSlot>();
   for(const target of chosen)for(const decl of OUTLINES[target]??[]){
@@ -61,7 +68,8 @@ export function projectOutline(targets:readonly string[],notes:readonly Note[],w
         :role.source==='references'?(references>0?1:0)
         :notes.filter(n=>noteFills(n,role)).reduce((sum,n)=>sum+(role.fns?.includes('objective')&&'items' in n&&n.items?.length?n.items.length:1),0);
       slot={role:decl.role,label:role.label,source:role.source,...(role.part?{part:role.part}:{}),
-        ...(role.fns?{fns:role.fns}:{}),byTarget:{},filled};
+        ...(role.fns?{fns:role.fns}:{}),byTarget:{},filled,
+        ...(role.fns?.includes('objective')&&filled?{objectives:objectiveStates(notes,record)}:{})};
       byRole.set(decl.role,slot);order.push(decl.role);
     }
     slot.byTarget[target]={heading:decl.heading,length:decl.length};
@@ -70,6 +78,21 @@ export function projectOutline(targets:readonly string[],notes:readonly Note[],w
   const coverage=chosen.map(target=>{const mine=slots.filter(s=>s.byTarget[target]);
     return {target,label:TARGETS.find(t=>t.id===target)!.label,filled:mine.filter(s=>s.filled>0).length,of:mine.length};});
   return {slots,coverage};
+}
+
+/** EACH OBJECTIVE'S STATE (Stage B): answered where a written Results note says it answers it; its components, those
+ *  its answering notes name and the tables, charts and maps in Results of the workflow that answers it. An objective
+ *  with no workflow yet is an ordinary state of a project begun from its objectives, said and not flagged. */
+export function objectiveStates(notes:readonly Note[],record:OutlineRecord):ObjectiveState[]{
+  const written=(n:Note)=>{const body=bodyOf(n)?.trim();return !!body&&body!==UNWRITTEN;};
+  return objectivesOf(notes).map(o=>{
+    const answering=notes.filter(n=>n.kind==='authored'&&n.answers===o.id&&n.section==='Results'&&written(n));
+    const keys=new Set(answering.flatMap(n=>n.kind==='authored'?n.components??[]:[]));
+    if(o.question&&record.isComponent)for(const n of notes)
+      if(n.section==='Results'&&'workflowKey' in n&&n.workflowKey===o.question&&record.isComponent(n))keys.add(noteKey(n));
+    const workflow=o.question?record.workflowName?.(o.question)??o.question:undefined;
+    return {id:o.id,n:o.n,text:o.text,answered:answering.length>0,components:keys.size,...(workflow?{workflow}:{})};
+  });
 }
 
 /** THE OUTLINE ON THE NOTES BOARD: coverage per target, then each slot with its state, the targets that use it and
@@ -87,7 +110,13 @@ export function outlineMarkup(outline:Outline,esc:(v:unknown)=>string,canWrite:b
       ?`<button type="button" class="button small" data-add-note="${esc(slot.part)}" data-add-fn="${esc(slot.fns?.[0]??'')}">Write it</button>`
       :canWrite&&!slot.filled&&slot.source==='written'?`<button type="button" class="button small" data-publication>Write it in the draft</button>`:'';
     return `<li class="outline-slot is-${slot.filled?'filled':'empty'}" data-outline-role="${esc(slot.role)}">`
-      +`<p><strong>${esc(slot.label)}</strong> <span class="outline-state">${esc(state)}</span> ${add}</p><ul>${wants}</ul></li>`;
+      +`<p><strong>${esc(slot.label)}</strong> <span class="outline-state">${esc(state)}</span> ${add}</p><ul>${wants}</ul>`
+      +(slot.objectives?.length?`<ol class="outline-objectives">${slot.objectives.map(o=>`<li data-objective="${esc(o.id)}">`
+        +`${esc(o.text)}: <span class="outline-state">${o.answered?'answered':'no answer yet'}</span>, `
+        +`${o.components} ${o.components===1?'table, chart or map':'tables, charts or maps'}, `
+        +(o.workflow?`answered by <em>${esc(o.workflow)}</em>`:'no workflow yet')
+        +(canWrite&&!o.answered?` <button type="button" class="button small" data-add-note="Results" data-add-fn="finding" data-add-answers="${esc(o.id)}">Write its answer</button>`:'')
+        +`</li>`).join('')}</ol>`:'')+`</li>`;
   }).join('');
   return `<section class="notes-outline" aria-label="Outline"><h3>Outline</h3><ul class="outline-coverage">${cover}</ul>`
     +`<ol class="outline-slots">${rows}</ol></section>`;

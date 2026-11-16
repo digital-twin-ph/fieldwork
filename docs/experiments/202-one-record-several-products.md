@@ -290,3 +290,12 @@ page as arranged. The width and place menus built the same day are a stand-in fo
 only have been presets for it. Dragging was set aside earlier the same day as harder to print the same; that
 judgement is reversed by the practitioner's direction, and printing the same becomes the thing to test. Not yet
 designed.
+
+The practitioner, the same day: *"And the publication render as it is now is a mish mash of notes, it does not provide
+a cohesive scientific narrative yet."* Arranging blocks better would not cure that: every note is placed by its
+section, so the render is the record laid end to end, and nothing in it is the argument. A paper's narrative is
+written, by the person (Fieldwork drafts none of it): what was asked, what was done, what was found, what it means. The
+steps' notes, sources and figures are its material and its evidence. **What this implies, not yet designed:** the
+draft centres the person's narrative, section by section, and the record's notes and figures sit beside it as material
+to draw into it, cited or placed where the narrative calls for them, rather than poured in by default; what the
+narrative does not use stays out of the document and is named as not used, so nothing is lost from the record.

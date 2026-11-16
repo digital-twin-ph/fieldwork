@@ -3,7 +3,7 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## 0.131.0 — In development
+## 0.131.0 — 2026-11-16
 
 - **Accessibility, Section 508's floor.** An automated scan against WCAG 2.0 A and AA, now part of the gate: every view
   and the main dialogs, light and dark, and in six worked examples every widget's Inspector, the dialogs its buttons

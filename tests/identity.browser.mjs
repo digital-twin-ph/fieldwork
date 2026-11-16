@@ -40,7 +40,7 @@ test('an identity made here signs a note, the signature checks, and storage keep
   const saving=page.waitForEvent('download');
   await dialog.locator('#identity-create').click();
   const download=await saving;
-  expect(download.suggestedFilename()).toBe('Ada-Lovelace.fwid');
+  expect(download.suggestedFilename()).toBe('FWID-Ada-Lovelace.fwid');
   const file=readFileSync(await download.path(),'utf8');
   expect(file).not.toContain('Ada');
   await expect(dialog.locator('#identity-status')).toContainText(`Open: Ada Lovelace · @ada · ORCID 0000-0002-1825-0097. Notes you save now are signed (${ed25519?'Ed25519':'ECDSA-P256'})`);
@@ -85,7 +85,7 @@ test('an identity made here signs a note, the signature checks, and storage keep
   await dialog.locator('#identity-lock').click();
   await expect(page.locator('#identity-button')).toHaveAttribute('aria-label','Identity');
   await expect(dialog.locator('#identity-tab-open')).toHaveAttribute('aria-selected','true');
-  await dialog.locator('#identity-file').setInputFiles({name:'Ada-Lovelace.fwid',mimeType:'application/json',buffer:Buffer.from(file)});
+  await dialog.locator('#identity-file').setInputFiles({name:'FWID-Ada-Lovelace.fwid',mimeType:'application/json',buffer:Buffer.from(file)});
   await dialog.locator('#identity-passphrase').fill('not the passphrase');
   await dialog.locator('#identity-open').click();
   await expect(dialog.locator('#identity-error')).toContainText('passphrase does not open');

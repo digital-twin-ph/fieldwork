@@ -26,6 +26,10 @@ function openedHere():boolean{try{return localStorage.getItem(OPENED_KEY)==='yes
 function markOpenedHere(){try{localStorage.setItem(OPENED_KEY,'yes');}catch{/* a convenience only */}}
 function lock(){if(open)set(null);}
 
+/** THE FILE'S NAME, easy to find in a folder (the practitioner, 2026-11-16: *"Need to automatically prefix the identify
+ *  file with FWID-<name here>.fwid so it's easy to identify in a folder"*): FWID-, the name with spaces and punctuation as
+ *  hyphens, .fwid. */
+export const identityFileName=(name:string)=>`FWID-${name.replace(/[^\p{L}\p{N}]+/gu,'-').replace(/^-|-$/g,'')||'identity'}.fwid`;
 /** The name as a byline: the name, then the GitHub login and ORCID iD where the file carries them. */
 export const identityLabel=(p:{name:string;login?:string;orcid?:string})=>
   [p.name,p.login?`@${p.login}`:'',p.orcid?`ORCID ${p.orcid}`:''].filter(Boolean).join(' · ');
@@ -139,7 +143,7 @@ export function installIdentity(button:HTMLButtonElement,esc:Escape){
         const {file,identity}=await createIdentityFile({name:v('#identity-name'),login:v('#identity-login'),...(orcid?{orcid}:{}),...(avatar?{avatar}:{})},v('#identity-new-passphrase'));
         const a=document.createElement('a');
         a.href=URL.createObjectURL(new Blob([file],{type:'application/json'}));
-        a.download=`${identity.profile.name.replace(/[^\p{L}\p{N}]+/gu,'-').replace(/^-|-$/g,'')||'identity'}.fwid`;
+        a.download=identityFileName(identity.profile.name);
         a.click();setTimeout(()=>URL.revokeObjectURL(a.href),10_000);
         for(const s of ['#identity-new-passphrase','#identity-confirm'])($(s) as HTMLInputElement).value='';
         for(const t of d.querySelectorAll<HTMLButtonElement>('[data-identity-tab="open"]'))t.click();
@@ -154,7 +158,7 @@ export function installIdentity(button:HTMLButtonElement,esc:Escape){
           {avatar:chosenIn($('#identity-change-avatar'),'change')??null});
         if(open&&identity.publicKey!==open.publicKey){fail('That file is another identity, not the one open here.');return;}
         const a=document.createElement('a');
-        a.href=URL.createObjectURL(new Blob([next],{type:'application/json'}));a.download=file.name;a.click();
+        a.href=URL.createObjectURL(new Blob([next],{type:'application/json'}));a.download=identityFileName(identity.profile.name);a.click();
         setTimeout(()=>URL.revokeObjectURL(a.href),10_000);
         ($('#identity-change-passphrase') as HTMLInputElement).value='';
         set(identity);lastActivity=Date.now();

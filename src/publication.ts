@@ -17,15 +17,22 @@ import {toHTML} from './prose.js';
 import {workKey,type ReferenceEntry} from './references.js';
 import type {Escape} from './types.js';
 
-/** WHAT THE DRAFT IS LAID OUT AS (experiment 202, 2026-11-15): the same record, three kinds of document. */
-export type ProductKind='publication'|'surveillance'|'sitrep';
-export const PRODUCT_KINDS:readonly {kind:ProductKind;label:string;kicker:string}[]=[
-  {kind:'publication',label:'Publication',kicker:''},
-  {kind:'surveillance',label:'Surveillance report',kicker:'Surveillance report'},
-  {kind:'sitrep',label:'Situation report',kicker:'Situation report'}];
+import reportFormats from '../widgets/report-formats.json';
+
+/** WHAT THE DRAFT IS LAID OUT AS (experiment 202, 2026-11-15): the publication, laid out below, or a format declared in
+ *  widgets/report-formats.json as a mapping of its own headings onto roles. */
+export type ProductKind=string;
+export interface RoleDeclaration {source:'written'|'notes'|'limitations'|'references'; part?:WriteUpPart; label:string}
+export interface FormatSection {heading:string; roles:string[]; box?:boolean; prompt?:[string,string,string]}
+export interface ReportFormat {id:string; label:string; kicker:string; follows:string;
+  masthead:{role:string;prompt:[string,string,string]}[]; sections:FormatSection[]}
+export const ROLES=reportFormats.roles as unknown as Record<string,RoleDeclaration>;
+export const FORMATS=reportFormats.formats as unknown as ReportFormat[];
+export const PRODUCT_KINDS:readonly {kind:ProductKind;label:string}[]=[{kind:'publication',label:'Publication'},
+  ...FORMATS.map(f=>({kind:f.id,label:f.label}))];
 export const isProductKind=(v:unknown):v is ProductKind=>PRODUCT_KINDS.some(k=>k.kind===v);
-/** Where a kind keeps what is written: the publication's keys as they always were, the others under their kind's name. */
-export const partKey=(kind:ProductKind,key:string)=>kind==='publication'||key==='kind'?key:`${kind}:${key}`;
+/** WHAT IS WRITTEN IS KEPT BY ROLE, so it follows the person from one format to another. */
+export const roleKey=(role:string)=>`role:${role}`;
 /** A FIGURE'S PLACE IN ONE PRODUCT, kept by its note and the product, never in the note. */
 export type FigureWidth='full'|'half'|'third';
 export type FigurePlace='line'|'beside'|'left'|'right'|'out';
@@ -70,17 +77,15 @@ export const PROMPTS={
   Discussion:['Discussion','300 to 600 words','What the results show and how they compare with what is known. Write it as notes in Discussion on the Notes tab.'],
   closing:['Conclusions','up to 100 words','What follows from the evidence, and nothing beyond it.'],
   data:['Data availability','one or two sentences','Where a reader can obtain the data named here, and under what terms.'],
-  period:['Reporting period','one line','The dates this report covers, and the date of the data.'],
-  keypoints:['Key points','three to five bullets','What a reader must know, each one sentence with its number.'],
-  recommendations:['Recommendations','three to five bullets','What should be done, and by whom, following from the findings.'],
-  header:['Report details','one line each','Report number, date issued, period covered, and who prepared it.'],
-  highlights:['Highlights','three to five bullets','The numbers, and what changed since the last report, one sentence each.'],
-  actions:['Response actions','bullets','What has been done since the last report.'],
-  gaps:['Gaps and needs','bullets','What is missing, or needed, to respond.'],
-  next:['Next steps','bullets','What will be done before the next report, and by whom.'],
 } as const;
-/** The prompt for a stored key, whichever kind it belongs to. */
-export const promptFor=(stored:string)=>PROMPTS[(stored.includes(':')?stored.split(':').pop():stored) as keyof typeof PROMPTS];
+/** The prompt for a stored key: a publication part's own, or the prompt the format gives the role. */
+export function promptFor(stored:string,kind:ProductKind='publication'):readonly [string,string,string]|undefined{
+  if(!stored.startsWith('role:'))return PROMPTS[stored as keyof typeof PROMPTS];
+  const role=stored.slice(5),format=FORMATS.find(f=>f.id===kind);
+  if(role==='title')return ['Title','up to 20 words','What happened, where and when.'];
+  return format?.masthead.find(m=>m.role===role)?.prompt??format?.sections.find(x=>x.roles.includes(role))?.prompt
+    ??(ROLES[role]?[ROLES[role]!.label,'',''] as const:undefined);
+}
 const WIDTHS:readonly [FigureWidth,string][]=[['full','Full width'],['half','Half'],['third','A third']];
 const PLACES:readonly [FigurePlace,string][]=[['line','On its own line'],['beside','Side by side with the next figure'],
   ['left','Text runs round it, figure left'],['right','Text runs round it, figure right'],['out','Left out of this product']];
@@ -102,7 +107,7 @@ export function publicationMarkup(input:PublicationInput,esc:Escape):string{
     ?`<button class="button small pub-write" data-pub-write="${key}">${verb}</button>`:'';
   // WRITTEN, SHOWN AS WRITTEN; UNWRITTEN, A PROMPT. Fieldwork drafts none of it.
   const prompt=(key:keyof typeof PROMPTS,lead=false)=>{const [label,length,ask]=PROMPTS[key];
-    const stored=partKey(kind,key),text=written[stored]?.trim();
+    const stored=key,text=written[stored]?.trim();
     if(text)return `<div class="pub-written" data-pub-part="${stored}">`
       +(lead?toHTML(`**${label}.** ${text}`):toHTML(text))+control(stored,'Edit')+`</div>`;
     return `<div class="pub-prompt" data-pub-part="${stored}"><p class="pub-prompt-label">${esc(label)} <span>· ${esc(length)}</span></p>`
@@ -196,30 +201,44 @@ export function publicationMarkup(input:PublicationInput,esc:Escape):string{
   const introduction=part('Introduction'),methods=part('Methods'),results=part('Results'),discussion=part('Discussion');
 
   if(kind!=='publication'){
-    const titleKey=partKey(kind,'title'),kicker=PRODUCT_KINDS.find(k=>k.kind===kind)!.kicker;
-    const head=`<p class="pub-kicker">${esc(kicker)}</p><h1 data-pub-part="${titleKey}">${esc(written[titleKey]?.trim()||input.title)}</h1>`
-      +control(titleKey,'Edit title')
+    const format=FORMATS.find(f=>f.id===kind)??FORMATS[0]!;
+    // A WRITTEN ROLE: its text where written, the format's prompt for it where not.
+    const writtenRole=(role:string,ask:readonly [string,string,string]|undefined,cls='')=>{
+      const key=roleKey(role),text=written[key]?.trim(),[label,length,what]=ask??[ROLES[role]?.label??role,'',''];
+      if(text)return `<div class="pub-written${cls}" data-pub-part="${key}">${toHTML(text)}${control(key,'Edit')}</div>`;
+      return `<div class="pub-prompt${cls}" data-pub-part="${key}"><p class="pub-prompt-label">${esc(label)}${length?` <span>· ${esc(length)}</span>`:''}</p>`
+        +`<p>${esc(what)}</p>${control(key,'Write')}</div>`;};
+    // FROM THE RECORD: each role's notes rendered once, Methods first so its sources are known by the time references are.
+    const methodsHtml=rendered(methods);
+    const fromRecord:Record<string,()=>string>={
+      background:()=>rendered(introduction),situation:()=>rendered(results),methods:()=>methodsHtml,
+      interpretation:()=>rendered(discussion),limitations:()=>rendered(limitations),
+      references:()=>(sources.length?`<ul class="pub-sources">${sources.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:'')
+        +(cited.length?`<ol class="pub-references">${cited.map(e=>`<li>${esc(e.text)}</li>`).join('')}</ol>`:'')};
+    const hasRecord:Record<string,boolean>={background:introduction.length>0,situation:results.length>0,methods:methods.length>0,
+      interpretation:discussion.length>0,limitations:limitations.length>0,references:sources.length+cited.length>0};
+    const roleBody=(role:string,section?:FormatSection)=>ROLES[role]?.source==='written'
+      ?writtenRole(role,section?.prompt):(fromRecord[role]?.()??'');
+    const head=`<p class="pub-kicker">${esc(format.kicker)}</p>`
+      +`<h1 data-pub-part="${roleKey('title')}">${esc(written[roleKey('title')]?.trim()||input.title)}</h1>`+control(roleKey('title'),'Edit title')
       +(input.authors.length?`<p class="pub-authors">${input.authors.map(esc).join(', ')}</p>`:'')
-      +`<p class="pub-date">${esc(input.date)}</p>`;
-    // THE SAME NOTES, IN THIS KIND'S ORDER: what was found leads, and the methods follow, short.
-    const section=(title:string,body:string)=>body?`<h2>${esc(title)}</h2>${body}`:'';
-    const found=rendered(results),background=introduction.length?rendered(introduction):'';
-    const assessment=(discussion.length?rendered(discussion):'')+(limitations.length?`<h3>Limitations</h3>`+rendered(limitations):'');
-    const how=rendered(methods);
-    const sourcesList=sources.length?`<ul class="pub-sources">${sources.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:'';
-    const refsList=cited.length?`<ol class="pub-references">${cited.map(e=>`<li>${esc(e.text)}</li>`).join('')}</ol>`:'';
-    const tail=(sourcesList||refsList?`<h2>Data sources and references</h2>${sourcesList}${refsList}`:'')
-      +(equations.length?`<h2>Annex: equations</h2>`+equations.map((e,at)=>
-        `<div class="pub-equation"><p><strong>Equation A${at+1}.</strong>${e.from?` ${esc(e.from)}`:''}</p>`
-        +`<p class="prose-display"><span class="prose-math is-display" data-tex="${e.tex}">$$${e.tex}$$</span></p></div>`).join(''):'');
-    const body=kind==='surveillance'
-      ?head+prompt('period')+section('Key points',prompt('keypoints'))+section('The situation',found)
-        +section('Background',background)+section('Interpretation',assessment)+section('Data and methods',how)
-        +section('Recommendations',prompt('recommendations'))+tail
-      :head+prompt('header')+section('Highlights',prompt('highlights'))+section('The situation in numbers',found)
-        +section('Background',background)+section('Assessment',assessment)+section('Response actions',prompt('actions'))
-        +section('Gaps and needs',prompt('gaps'))+section('Next steps',prompt('next'))+section('Methods and data',how)+tail;
-    return numbered(`<article class="publication-page pub-kind-${kind}" lang="en">${body}</article>`);
+      +`<p class="pub-date">${esc(input.date)}</p>`
+      +format.masthead.map(m=>writtenRole(m.role,m.prompt,' pub-masthead')).join('');
+    const body=format.sections.map(section=>{
+      const inner=section.roles.map(role=>roleBody(role,section)).join('');
+      if(!inner)return '';
+      return `<h2>${esc(section.heading)}</h2>`+(section.box?`<div class="pub-keyfigures">${inner}</div>`:inner);
+    }).join('');
+    // WHAT THIS FORMAT DOES NOT CARRY, named rather than lost: a role holding text or notes that no heading here maps.
+    const used=new Set(['title',...format.masthead.map(m=>m.role),...format.sections.flatMap(x=>x.roles)]);
+    const left=Object.entries(ROLES).filter(([role,decl])=>!used.has(role)
+      &&(decl.source==='written'?!!written[roleKey(role)]?.trim():!!hasRecord[role])).map(([,decl])=>decl.label);
+    const leftover=left.length?`<aside class="pub-leftover"><p>Not in this format, kept for the others: ${left.map(esc).join('; ')}.</p></aside>`:'';
+    const annex=equations.length?`<h2>Annex: equations</h2>`+equations.map((e,at)=>
+      `<div class="pub-equation"><p><strong>Equation A${at+1}.</strong>${e.from?` ${esc(e.from)}`:''}</p>`
+      +`<p class="prose-display"><span class="prose-math is-display" data-tex="${e.tex}">$$${e.tex}$$</span></p></div>`).join(''):'';
+    const follows=`<p class="pub-follows">Laid out as ${esc(format.label)}, after ${esc(format.follows)}.</p>`;
+    return numbered(`<article class="publication-page pub-kind-${esc(kind)}" lang="en">${head}${body}${annex}${follows}${leftover}</article>`);
   }
   const front=`<h1 data-pub-part="title">${esc(written.title?.trim()||input.title)}</h1>`+control('title','Edit title')
     +(input.authors.length?`<p class="pub-authors">${input.authors.map(esc).join(', ')}</p>`:'')

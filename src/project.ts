@@ -234,18 +234,17 @@ export const PUBLICATION_PARTS=['title','affiliations','background','methods','r
  *  chosen; a surveillance report's or a sit rep's own parts under their kind's name; a figure's width and place per
  *  product and note. Until these were listed here, reading a project dropped them, so a figure set beside another lost
  *  its setting the moment a second one was set. */
-export const PRODUCT_PARTS:Record<string,readonly string[]>={
-  surveillance:['title','period','keypoints','recommendations'],
-  sitrep:['title','header','highlights','actions','gaps','next']};
 export function isPublicationEntry(key:string,value:string):boolean{
   if(PUBLICATION_PARTS.includes(key))return true;
-  if(key==='kind')return value==='publication'||value==='surveillance'||value==='sitrep';
-  const layout=/^layout:(publication|surveillance|sitrep):(.{1,200})$/.exec(key);
-  if(layout)return /^(full|half|third)\|(line|beside|left|right|out)$/.test(value);
-  const [kind,part]=key.split(':');
-  return !!kind&&!!part&&key.split(':').length===2&&!!PRODUCT_PARTS[kind]?.includes(part);
+  const formats=['publication',...REPORT_FORMATS.formats.map(f=>f.id)];
+  if(key==='kind')return formats.includes(value);
+  const layout=/^layout:([a-z-]+):(.{1,200})$/.exec(key);
+  if(layout)return formats.includes(layout[1]!)&&/^(full|half|third)\|(line|beside|left|right|out)$/.test(value);
+  const role=/^role:([a-zA-Z]+)$/.exec(key)?.[1];
+  return !!role&&(role==='title'||role in REPORT_FORMATS.roles);
 }
 export const MAX_PUBLICATION_PART=20_000;
+import REPORT_FORMATS from '../widgets/report-formats.json';
 export function validateProject(raw:unknown):Project{
   // A project written before 2026-10-23 says schema 1 and carries no timestamps. It is read, not
   // refused: the work is the same work, and what it does not know about itself is stated as not

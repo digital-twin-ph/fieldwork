@@ -123,14 +123,18 @@ Both are optional and read **unstated** until answered. A note on your own data,
 **Publication**, at the top of Notes, lays the write-up out as a document on a page, to read and to print. **Draft as**
 chooses the kind:
 
-| Kind | Its parts |
-| --- | --- |
-| Publication | Title, abstract, Introduction, Methods, Results, Discussion, data availability, references, an appendix of equations |
-| Surveillance report | Reporting period, key points, the situation, background, interpretation, data and methods, recommendations, sources |
-| Situation report | Report details, highlights, the situation in numbers, background, assessment, response actions, gaps and needs, next steps, methods and data |
+| Format | Follows | Its parts |
+| --- | --- | --- |
+| Publication | a journal article | Title, abstract, Introduction, Methods, Results, Discussion, data availability, references, appendix |
+| Situation report, WHO style | WHO situation reports | Report number, data as of, highlights, situation in numbers, background, epidemiological update, risk assessment, preparedness and response, recommendations, data notes, references |
+| Situation report, OCHA style | UN OCHA situation reports | Report number, as of, highlights, key figures, situation overview, response, gaps and challenges, notes on the data, references, contacts |
+| Surveillance report, ECDC style | ECDC annual epidemiological reports | Reporting period, key facts, introduction, methods, epidemiology, discussion, public health implications, references |
+| Surveillance summary, MMWR style | CDC MMWR surveillance summaries | Period covered, summary, introduction, methods, results, discussion, limitations, public health action, references |
 
-Each kind is filled from the same notes. The parts you write, such as highlights or recommendations, are written in
-place with **Write**; until then the part shows what it is for and how long it runs, and prints nothing.
+Each format is filled from the same notes. The parts you write, such as highlights or recommendations, are written in
+place with **Write**; until then the part shows what it is for and how long it runs, and prints nothing. **What you write
+follows you between formats**: highlights written for a WHO-style sit rep are the key facts of an ECDC-style report. A
+part one format has and another does not is named on screen, not lost.
 
 **Each figure and table has a width and a place**, set above it:
 
@@ -138,8 +142,8 @@ place with **Write**; until then the part shows what it is for and how long it r
 - **Place**: on its own line; side by side with the next figure, which is drawn beside it; or with the text running
   round it, on the left or the right, as in Word; or left out of this kind of document.
 
-The kind and each figure's place are kept with the project, separately for each kind, so a figure can be half width
-in the situation report and full width in the publication. The controls do not print. **Print or save as PDF** prints
+The format and each figure's place are kept with the project, a figure's place separately for each format, so it can
+be half width in the situation report and full width in the publication. The controls do not print. **Print or save as PDF** prints
 the document alone. A worked example that ships with Fieldwork shows its document as it was set, with no controls.
 
 ## What it will not do

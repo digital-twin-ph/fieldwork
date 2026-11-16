@@ -1421,6 +1421,12 @@ th .column-label{display:block;font-weight:400;color:var(--muted);font-size:14px
 .publication-page .pub-w-half{width:49%}
 .publication-page .pub-w-third{width:32%}
 .publication-page .pub-p-line{display:block;margin-left:auto;margin-right:auto}
+.publication-page .pub-keyfigures{border:2px solid #176b59;background:#f3f8f6;padding:10px 16px;margin:10px 0;font:16px/1.5 system-ui,sans-serif}
+.publication-page .pub-keyfigures ul{margin:0;padding-left:20px}
+.publication-page .pub-masthead{font:15px/1.4 system-ui,sans-serif;margin:2px 0}
+.publication-page .pub-written.pub-masthead p{margin:0}
+.publication-page .pub-follows{font:14px/1.4 system-ui,sans-serif;color:#3d3d3d;margin-top:28px;border-top:1px solid #9a9a9a;padding-top:8px}
+.publication-page .pub-leftover{border:1px dashed #6b6b6b;padding:6px 10px;margin:12px 0;font:14px system-ui,sans-serif;color:#222}
 .publication-page .pub-left-out{border:1px dashed #6b6b6b;padding:6px 10px;margin:10px 0;font:14px system-ui,sans-serif;color:#222}
 .publication-page .pub-left-out p{margin:4px 0 0}
 .publication-page .pub-row{display:flex;gap:2%;align-items:flex-start;margin:16px 0;break-inside:avoid}
@@ -1440,7 +1446,7 @@ th .column-label{display:block;font-weight:400;color:var(--muted);font-size:14px
   body.showing-publication>*:not(#publication-view){display:none!important}
   #publication-view{position:static;overflow:visible;padding:0;background:#fff}
   .publication-bar,.publication-page .pub-write,.publication-page .pub-prompt .pub-write,.publication-page .pub-layout,
-  .publication-page .pub-prompt,.publication-page .pub-left-out{display:none}
+  .publication-page .pub-prompt,.publication-page .pub-left-out,.publication-page .pub-leftover{display:none}
   .publication-page{box-shadow:none;max-width:none;padding:0}
   @page{size:A4;margin:22mm 20mm}
 }

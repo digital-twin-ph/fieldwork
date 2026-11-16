@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-const {publicationMarkup,partKey,layoutKey,readLayout}=await import('../build/publication.js');
+const {publicationMarkup,roleKey,layoutKey,readLayout,FORMATS,ROLES,promptFor}=await import('../build/publication.js');
 const {inWriteUp,LEFT_OUT}=await import('../build/notes.js');
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
@@ -81,54 +81,75 @@ test('a map in the publication drops its own title, which its caption carries, a
 });
 
 
-// DRAFT AS, AND A FIGURE'S PLACE (experiment 202, 2026-11-15).
-const base={title:'Measles in Hagelloch, 1861',authors:[],date:'15 November 2026',notes,sourceOf:n=>from[n.nodeId],
+// FORMATS AS MAPPINGS ONTO ROLES (experiment 202, 2026-11-15), declared in widgets/report-formats.json.
+const base={title:'Measles in Hagelloch, 1861',authors:[],date:'15 November 2026',
+  notes:[...notes,{kind:'authored',id:'i1',section:'Introduction',text:'Measles came to the village in October.'},
+    {kind:'authored',id:'d2',section:'Discussion',text:'The school drove the spread.'}],
+  sourceOf:n=>from[n.nodeId],
   figureOf:n=>n.nodeId==='map'&&n.id.endsWith('description')?'<figure class="notes-figure" data-figure="map"><svg></svg></figure>':undefined,
   references:[{kind:'method',text:'Kulldorff M. 2005.',citedBy:['Cluster']}]};
-test('a surveillance report and a sit rep lay out the same notes in their own sections',()=>{
-  const report=publicationMarkup({...base,kind:'surveillance'},esc),sitrep=publicationMarkup({...base,kind:'sitrep'},esc);
-  assert.match(report,/Surveillance report[\s\S]*Key points[\s\S]*The situation[\s\S]*Figure 1\.[\s\S]*Data and methods[\s\S]*Recommendations/);
-  assert.match(sitrep,/Situation report[\s\S]*Report details[\s\S]*Highlights[\s\S]*The situation in numbers[\s\S]*Figure 1\.[\s\S]*Response actions[\s\S]*Gaps and needs[\s\S]*Next steps/);
-  assert.doesNotMatch(report,/Abstract/);
-  // The same note, once each, in each.
-  for(const html of [report,sitrep])assert.equal(html.split('Cases were counted by day.').length-1,1);
+const h2s=html=>[...html.matchAll(/<h2>([^<]*)<\/h2>/g)].map(m=>m[1]);
+test('every format maps only roles that are declared, and names the reports it follows',()=>{
+  assert.ok(FORMATS.length>=4);
+  for(const f of FORMATS){
+    assert.ok(f.follows&&f.kicker&&f.label,f.id);
+    for(const r of [...f.masthead.map(m=>m.role),...f.sections.flatMap(x=>x.roles)])assert.ok(r in ROLES,`${f.id}: ${r}`);
+  }
 });
-test('what is written is kept per kind; the publication keeps the keys it always had',()=>{
-  assert.equal(partKey('publication','title'),'title');
-  assert.equal(partKey('sitrep','highlights'),'sitrep:highlights');
-  const html=publicationMarkup({...base,kind:'sitrep',written:{'sitrep:highlights':'Three new cases.',highlights:'Not this one.'}},esc);
-  assert.match(html,/Three new cases\./);
-  assert.doesNotMatch(html,/Not this one/);
+test('each format lays out the same notes under its own headings, in its own order',()=>{
+  const who=publicationMarkup({...base,kind:'sitrep-who'},esc),ecdc=publicationMarkup({...base,kind:'surveillance-ecdc'},esc);
+  assert.deepEqual(h2s(who),['Highlights','Situation in numbers','Background','Epidemiological update','Risk assessment',
+    'Preparedness and response','Recommendations','Data notes','Resources and references','Annex: equations']);
+  assert.deepEqual(h2s(ecdc),['Key facts','Introduction','Methods','Epidemiology','Discussion','Public health implications','References','Annex: equations']);
+  for(const html of [who,ecdc]){
+    assert.equal(html.split('Cases were counted by day.').length-1,1,'a note once');
+    assert.match(html,/Figure 1\./);
+  }
+  // Background before the situation, as every source puts it; methods in a sit rep are its data notes, at the end.
+  assert.ok(who.indexOf('Measles came to the village')<who.indexOf('Figure 1.'));
+  assert.ok(who.indexOf('Cases were counted by day.')>who.indexOf('Figure 1.'));
+  assert.match(who,/Laid out as Situation report, WHO style, after WHO situation reports/);
 });
-test('a figure\'s width and place are kept per product, by its note',()=>{
-  const written={[layoutKey('sitrep','map:description')]:'half|right'};
-  const sitrep=publicationMarkup({...base,kind:'sitrep',written},esc),pub=publicationMarkup({...base,written},esc);
-  assert.match(sitrep,/class="pub-figure pub-w-half pub-p-right"/);
-  assert.match(pub,/class="pub-figure pub-w-full pub-p-line"/,'another product keeps its own');
+test('what is written is kept by role and appears under each format\'s heading for it',()=>{
+  const written={[roleKey('highlights')]:'Three new cases this week.',[roleKey('keyFigures')]:'- 188 cases'};
+  const who=publicationMarkup({...base,kind:'sitrep-who',written},esc),ocha=publicationMarkup({...base,kind:'sitrep-ocha',written},esc),
+    ecdc=publicationMarkup({...base,kind:'surveillance-ecdc',written},esc);
+  for(const html of [who,ocha,ecdc])assert.match(html,/Three new cases this week\./);
+  assert.match(ecdc,/<h2>Key facts<\/h2><div class="pub-written" data-pub-part="role:highlights">/);
+  assert.match(who,/<h2>Situation in numbers<\/h2><div class="pub-keyfigures">/);
+  // The surveillance report has no key figures: named, not lost.
+  assert.match(ecdc,/Not in this format, kept for the others: Key figures\./);
+  assert.doesNotMatch(who,/pub-leftover/);
+});
+test('a role unwritten shows the format\'s own prompt for it',()=>{
+  const ocha=publicationMarkup({...base,kind:'sitrep-ocha'},esc);
+  assert.match(ocha,/Highlights <span>· two to five bullets<\/span>/);
+  assert.deepEqual([...promptFor('role:highlights','surveillance-ecdc')],['Key facts','three to five bullets','What a reader must know, each one sentence with its number.']);
+  assert.equal(promptFor('title')[0],'Title','the publication keeps its own parts');
+});
+test('a figure\'s width and place are kept per format, by its note',()=>{
+  const written={[layoutKey('sitrep-who','map:description')]:'half|right'};
+  assert.match(publicationMarkup({...base,kind:'sitrep-who',written},esc),/class="pub-figure pub-w-half pub-p-right"/);
+  assert.match(publicationMarkup({...base,kind:'sitrep-ocha',written},esc),/class="pub-figure pub-w-full pub-p-line"/);
   assert.deepEqual(readLayout('third|beside'),{width:'third',place:'beside'});
-  assert.deepEqual(readLayout('wide|everywhere'),{width:'full',place:'line'},'anything else is the default');
+  assert.deepEqual(readLayout('wide|everywhere'),{width:'full',place:'line'});
 });
 test('the layout controls are offered only where the layout can be kept',()=>{
-  assert.match(publicationMarkup({...base,writable:true},esc),/data-pub-layout="map:description"/);
-  assert.doesNotMatch(publicationMarkup({...base,writable:false},esc),/data-pub-layout/);
+  assert.match(publicationMarkup({...base,kind:'sitrep-who',writable:true},esc),/data-pub-layout="map:description"/);
+  assert.doesNotMatch(publicationMarkup({...base,kind:'sitrep-who'},esc),/data-pub-layout/);
 });
-
 test('a figure set side by side draws the next figure beside it, numbered in the order drawn',()=>{
   const two=[...notes,{kind:'authored',id:'a1',section:'Results',text:'Between the two figures.'},
     {kind:'machined',id:'chart:description',section:'Results',text:'**A chart.** 3 bars.',nodeId:'chart'}];
   const figureOf=n=>n.nodeId==='map'&&n.id.endsWith('description')?'<figure class="notes-figure" data-figure="map"><svg></svg></figure>'
     :n.nodeId==='chart'?'<figure class="notes-figure" data-figure="chart"><svg></svg></figure>':undefined;
-  const html=publicationMarkup({...base,notes:two,figureOf,kind:'sitrep',written:{[layoutKey('sitrep','map:description')]:'half|beside'}},esc);
-  assert.match(html,/<div class="pub-row"><figure class="pub-figure pub-w-half pub-p-beside" data-pub-note="map:description">[\s\S]*?Figure 1\.[\s\S]*?<figure class="pub-figure pub-w-full pub-p-line" data-pub-note="chart:description">[\s\S]*?Figure 2\.[\s\S]*?<\/div>/);
-  assert.ok(html.indexOf('Figure 2.')<html.indexOf('Between the two figures.'),'the second figure is pulled up past the text');
+  const html=publicationMarkup({...base,notes:two,figureOf,kind:'sitrep-who',written:{[layoutKey('sitrep-who','map:description')]:'half|beside'}},esc);
+  assert.match(html,/<div class="pub-row"><figure class="pub-figure pub-w-half pub-p-beside" data-pub-note="map:description">[\s\S]*?Figure 1\.[\s\S]*?data-pub-note="chart:description">[\s\S]*?Figure 2\.[\s\S]*?<\/div>/);
+  assert.ok(html.indexOf('Figure 2.')<html.indexOf('Between the two figures.'));
 });
-
-test('a figure left out of one product is gone from it, kept in the others, and can be brought back where it is kept',()=>{
-  const written={[layoutKey('sitrep','map:description')]:'full|out'};
-  const read=publicationMarkup({...base,kind:'sitrep',written},esc);
-  assert.doesNotMatch(read,/data-figure="map"/);
-  assert.doesNotMatch(read,/pub-left-out/,'nothing where it cannot be kept');
-  const kept=publicationMarkup({...base,kind:'sitrep',written,writable:true},esc);
-  assert.match(kept,/class="pub-left-out" data-pub-note="map:description"[\s\S]*Cluster map\. is left out of this product|class="pub-left-out" data-pub-note="map:description"/);
+test('a figure left out of one format is gone from it, kept in the others, and can be brought back where it is kept',()=>{
+  const written={[layoutKey('sitrep-who','map:description')]:'full|out'};
+  assert.doesNotMatch(publicationMarkup({...base,kind:'sitrep-who',written},esc),/data-figure="map"|pub-left-out/);
+  assert.match(publicationMarkup({...base,kind:'sitrep-who',written,writable:true},esc),/class="pub-left-out" data-pub-note="map:description"/);
   assert.match(publicationMarkup({...base,written},esc),/data-figure="map"/,'the publication keeps it');
 });

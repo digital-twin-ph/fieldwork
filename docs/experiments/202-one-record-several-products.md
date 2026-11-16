@@ -219,3 +219,43 @@ role; a heading with no role in the other format is named as not carried over, n
 **What it depends on, and what would close it:** whether the open templates share enough structure for one role set to
 cover them, which the check will show. Designed from what it finds, not before: the role set, each source format's
 mapping, and where the formats disagree.
+
+**What the check found, 2026-11-15** (the full comparison: `reports/Sit rep and surveillance report templates.md` in the
+workspace, 10 situation reports and alerts and 5 surveillance reports, each read at its source). Situation reports
+share a masthead (number, issue date, a separate data cut-off), a key-figures box of 3 to 6 numbers, 2 to 6
+highlights, the situation with its figures, response, gaps, a risk assessment with a level, recommendations, data notes
+at the end (never a Methods section), references and contacts. Surveillance reports share key points, background,
+methods, results, interpretation with limitations, public health implications and references. The day's two layouts
+had the parts but not the order or the names: the sit rep's background after its figures, no cut-off, no key figures,
+"Next steps" where sources have recommendations, a Methods section no sit rep has; the surveillance report's
+"situation" where sources say results, and methods after interpretation. The practitioner: *"Mapping first"*.
+
+**The design (written before the code).**
+
+| Part | What it is |
+| --- | --- |
+| A role | What a section holds, and where it comes from: the notes of a part, or text the person writes. Roles: report number, data as of, reporting period, key figures, highlights or key points, background, the situation or results, methods or data notes, interpretation, limitations, risk assessment, response, gaps, recommendations, contacts, references |
+| A format | A declaration: its name, its kicker, the template it follows and where that was read, and its sections in order, each a heading of its own pointing to a role, with its prompt and length. Five to start: the publication (unchanged), a WHO-style sit rep (A1, A2), an OCHA-style sit rep (A4, A5), an ECDC-style surveillance report (B2) and an MMWR-style surveillance summary (B3) |
+| What is written | Kept by role, not by format: highlights written under a WHO sit rep are an OCHA sit rep's highlights and an ECDC report's key facts |
+| What does not carry | A format lacking a role that holds text says so on screen, by name: written for another format and not in this one |
+| A figure's place | Kept per format, as before |
+
+| Distinction | Enforced as |
+| --- | --- |
+| A format arranges the record and never rewrites it | **hard stop**: a role fills from notes or the person's text, nothing else |
+| A role's text is the same text under every format's heading | **validation rule**: one key per role |
+| Text a format leaves out is named, not lost | **run-time check**: the leftovers listed on screen |
+
+The day's unreleased `sitrep:` and `surveillance:` keys are withdrawn for role keys; nothing outside this machine wrote
+them.
+
+**Built, 2026-11-15.** `widgets/report-formats.json` declares 16 roles and four formats, each naming the reports it
+follows; the publication keeps its own layout. Written text is kept as `role:<role>` and laid out under each format's
+heading for it; a role with text or notes that a format does not map is listed on screen as kept for the others. A
+project reads `role:`, `kind` and `layout:` keys only for declared roles and formats; the day's `sitrep:` and
+`surveillance:` keys are dropped. Checked: `tests/publication.test.mjs` (every format maps only declared roles; WHO and
+ECDC headings in their declared order, background before the figures, a sit rep's methods as data notes at the end;
+highlights written once appear under all three; key figures named as not carried by the ECDC report; each format's own
+prompt), `tests/project.test.mjs`, and `tests/draft-products.browser.mjs` on South London in Chromium (WHO style, the
+OCHA style's gaps section, back again, figures side by side and left out, kept on reopening). **Not established:**
+whether a reader takes the drafts for the reports they follow; that comes with the demos.

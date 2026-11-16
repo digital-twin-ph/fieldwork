@@ -8110,7 +8110,7 @@ function openPublication(input:PublicationInput,keep:(key:string,text:string)=>R
     const key=target.closest<HTMLElement>('[data-pub-write]')?.dataset.pubWrite;
     if(key){
       const part=view!.querySelector<HTMLElement>(`[data-pub-part="${key}"]`);if(!part)return;
-      const [label,length,ask]=promptFor(key)??[key,'',''];
+      const [label,length,ask]=promptFor(key,kind)??[key,'',''];
       const current=input.written?.[key]??'';
       const editor=document.createElement('div');editor.className='pub-editor';
       editor.innerHTML=`<label class="pub-prompt-label" for="pub-text">${esc(label)} <span>\u00b7 ${esc(length)}</span></label>`

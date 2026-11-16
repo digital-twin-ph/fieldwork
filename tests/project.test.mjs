@@ -231,14 +231,15 @@ test('a workflow\'s number is its place in its project, 1 to N, not a count acro
     assert.match(WORKFLOW_LABELS[key],new RegExp(`^${i+1} · `),`${key} is workflow ${i+1} of ${project.id}`);});
 });
 
-test('A PROJECT KEEPS EACH PRODUCT\'S PARTS AND ITS FIGURES\' PLACES, and nothing else (experiment 202, 2026-11-15)',async()=>{
+test('A PROJECT KEEPS WHAT IS WRITTEN BY ROLE, THE FORMAT AND ITS FIGURES\' PLACES, and nothing else (experiment 202, 2026-11-15)',async()=>{
   const {validateProject}=await import('../build/project.js');
   const raw={schema:'fieldwork/project/2',id:'p',name:'P',subject:'S',workflows:[],publication:{
-    title:'A title','kind':'sitrep','sitrep:highlights':'Three new cases.','surveillance:period':'Weeks 1 to 4',
-    'layout:sitrep:map:description':'half|beside','layout:publication:t:description':'third|right',
-    'kind2':'x','sitrep:abstract':'not a sit rep part','layout:sitrep:m':'huge|everywhere','kind ':'sitrep'}};
+    title:'A title','kind':'sitrep-who','role:highlights':'Three new cases.','role:period':'Weeks 1 to 4',
+    'layout:sitrep-who:map:description':'half|beside','layout:publication:t:description':'third|right',
+    'kind2':'x','role:abstract':'no such role','layout:sitrep-who:m':'huge|everywhere','layout:poster:m':'full|line',
+    'kind ':'sitrep-who','sitrep:highlights':'a key of the withdrawn kind'}};
   const kept=validateProject(raw).publication;
-  assert.deepEqual(Object.keys(kept).sort(),['kind','layout:publication:t:description','layout:sitrep:map:description',
-    'sitrep:highlights','surveillance:period','title']);
+  assert.deepEqual(Object.keys(kept).sort(),['kind','layout:publication:t:description','layout:sitrep-who:map:description',
+    'role:highlights','role:period','title']);
   assert.equal(validateProject({...raw,publication:{kind:'poster'}}).publication,undefined,'an unknown kind is dropped');
 });

@@ -9,7 +9,7 @@ test.use({serviceWorkers:'block'});
 const REPO=new URL('../../example-1855-cholera-south-london/',import.meta.url);
 const skip=existsSync(REPO)?false:'example-1855-cholera-south-london is not checked out beside this repository.';
 
-test('Draft as: a sit rep with two figures side by side, one left out, kept when the draft is opened again',async({page})=>{
+test('Draft as: a WHO-style sit rep with two figures side by side, one left out, kept when the draft is opened again',async({page})=>{
   test.skip(!!skip,skip);test.setTimeout(400000);
   const errors=collectPageErrors(page);
   await page.setViewportSize({width:1300,height:1600});
@@ -28,11 +28,16 @@ test('Draft as: a sit rep with two figures side by side, one left out, kept when
   await page.locator('[data-view="notes"]').click();
   await page.locator('[data-publication]').click();
   const view=page.locator('#publication-view'),paper=view.locator('.publication-page');
-  await view.locator('[data-publication-kind]').selectOption('sitrep');
+  await view.locator('[data-publication-kind]').selectOption('sitrep-who');
   await expect(paper.locator('.pub-kicker')).toHaveText('Situation report');
-  for(const heading of ['Highlights','The situation in numbers','Response actions','Gaps and needs','Next steps','Methods and data'])
+  for(const heading of ['Highlights','Situation in numbers','Epidemiological update','Risk assessment','Preparedness and response','Data notes'])
     await expect(paper.locator('h2',{hasText:heading})).toHaveCount(1);
   await expect(paper.locator('h2',{hasText:'Abstract'})).toHaveCount(0);
+  await expect(paper.locator('.pub-follows')).toContainText('WHO situation reports');
+  // Switched to the OCHA style and back: what is laid out follows the format, and the kind is kept.
+  await view.locator('[data-publication-kind]').selectOption('sitrep-ocha');
+  await expect(paper.locator('h2',{hasText:'Operational gaps and challenges'})).toHaveCount(1);
+  await view.locator('[data-publication-kind]').selectOption('sitrep-who');
   // The first figure half width, side by side with the next; the first table left out.
   const figure=()=>paper.locator('.pub-figure[data-pub-note]').first();
   const id=await figure().getAttribute('data-pub-note');
@@ -57,7 +62,7 @@ test('Draft as: a sit rep with two figures side by side, one left out, kept when
   // Closed and opened again: the kind and the layout were kept with the project.
   await view.locator('[data-publication-back]').click();
   await page.locator('[data-publication]').click();
-  await expect(view.locator('[data-publication-kind]')).toHaveValue('sitrep');
+  await expect(view.locator('[data-publication-kind]')).toHaveValue('sitrep-who');
   await expect(paper.locator(`[data-pub-note="${id}"]`)).toHaveClass(/pub-w-half pub-p-beside/);
   await expect(paper.locator(`.pub-left-out[data-pub-note="${tableId}"]`)).toHaveCount(1);
   await page.screenshot({path:'test-results/draft-sitrep.png'});

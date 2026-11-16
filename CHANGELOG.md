@@ -5,8 +5,9 @@ shown in a local build is not a claim that it has been published.
 
 ## 0.127.0 — In development
 
-- **The draft as a document, of three kinds.** In Notes, Publication now offers **Draft as**: publication, surveillance
-  report or situation report, each with its own parts and prompts, filled from the same notes. **Each figure and table
+- **The draft as a document, in five formats.** In Notes, Publication now offers **Draft as**: the publication, a WHO-
+  or OCHA-style situation report, or an ECDC- or MMWR-style surveillance report, each checked against published
+  reports of its kind and declared as a mapping onto shared roles, so what is written follows from one format to the next. **Each figure and table
   has a width and a place**: full, half or a third; on its own line, side by side with the next figure, text running
   round it left or right as in Word, or left out of that kind of document. Kept with the project per kind, the same on
   screen and in print. Found on the way: reading a project dropped every publication key but the original eight, so a

@@ -1,6 +1,6 @@
 # 218 · An identity you carry
 
-_Created 2026-11-15 · Updated 2026-11-15_
+_Created 2026-11-15 · Updated 2026-11-16_
 
 **Status:** tried. A design, written before the code; its spike built 2026-11-16 (steps 1, 2, 4, 5 and 6; 3 in part; 7 not yet), below.
 
@@ -144,7 +144,7 @@ second author, or is the step people skip.
 | 4. A version | Every save that changes a note of your own appends a version: content, time, digest, and where an identity is open, the signer and signature. Kept on the note, so it travels with the project |
 | 5. Checked | The note's dialog lists its versions, each *signed, and the signature checks*, *signed, and the signature does not check: changed since*, or *not signed* |
 | 6. Nothing left behind | After making, locking and reopening: neither the passphrase nor the sealed file nor the format name in localStorage or sessionStorage, no IndexedDB database named for identity. The public key is in each signed version by design |
-| 7. A key linked to GitHub | Not yet run |
+| 7. A key linked to GitHub | Both halves measured 2026-11-16 (below); the link itself waits on a real account |
 
 Checked: `tests/identity-file.test.mjs` (6), `tests/identity.browser.mjs` (1, Chromium and WebKit: an identity made in
 the dialog, a wrong ORCID refused, a note signed and checked, a version altered in storage failing, lock, a wrong
@@ -164,6 +164,29 @@ change seals the file again with the same key (`updateIdentityFile`). The key pa
 public key, stands beside each signed version. The Identity button took the header's top-right place, where a
 placeholder circle reading "FW" had stood. Checked: `tests/identity-file.test.mjs` (8), `tests/identity.browser.mjs`
 (Chromium and WebKit).
+
+**Step 7, measured 2026-11-16** (the practitioner: *"Ok for 3 probe signing"*). GitHub's
+`/users/<login>/ssh_signing_keys` answered a request carrying an `Origin` with **200 and
+`access-control-allow-origin: *`, no token**, using the public test account `octocat` (which has none published: an
+empty list). A Web Crypto Ed25519 public key, its last 32 bytes wrapped in SSH's wire format, read as a valid
+**ED25519** key to `ssh-keygen -l`. So a person can add their identity key to GitHub as a signing key, and Fieldwork
+can confirm the link by reading GitHub's public answer, with no token at all. **Not run:** the match on a real account,
+which needs the person to add their key; and the same request from a page in a browser (measured with `curl`).
+
+**Identity and credentials stay apart (the practitioner, the same day: *"I thought we separated the identity and
+credentials function. There will be pros and cons for sharing."*).** They are two files today. The one place they
+touched is confirming a GitHub login, which until now meant unlocking a token in Credentials. With step 7 that needs no
+token:
+
+| | Confirm with a token | Confirm with the published key |
+| --- | --- | --- |
+| Needs | A token, pasted once, or kept in Credentials | The person adds their key on GitHub once |
+| Proves | Who holds the token now | That the account published this key, which signs the notes |
+| Lives in | Credentials (the token) and Identity (the result) | Identity only |
+| Cost | A secret handled, for a one-off check | One step on GitHub; nothing secret leaves the file |
+
+So confirmation can move into the Identity dialog as *Confirm with GitHub* by the published key, and Credentials
+keeps only what acts on a service. Not built.
 
 ## What each file holds, planned 2026-11-16
 

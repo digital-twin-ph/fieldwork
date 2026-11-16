@@ -67,6 +67,8 @@ test('an unfiled workflow with an example-shaped key is deleted, not refused',as
   });
   await page.goto('/?example=blank');
   await page.locator('[data-view="project"]').click();
+  // Workflows in no project are listed on This project; with none open, the view starts on the worked examples.
+  await page.locator('#project-tab-this-button').click();
 
   const row=page.locator('#project-unfiled-rows',{hasText:'South London'});
   await expect(row).toContainText('South London');

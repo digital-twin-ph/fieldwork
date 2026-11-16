@@ -17,6 +17,8 @@ shown in a local build is not a claim that it has been published.
 - **The Project view in three tabs**: This project, New project (the form that was a dialog, with Import project) and
   Worked examples. With a worked example's manual open, it sits beside the New project form instead of over it. The
   *Writing towards* checkboxes sit beside their labels again.
+- **The Identity dialog leads with what to do**: *Make my identity file* or *Open my identity file*, as two tabs, Make
+  first until an identity has been opened on this device.
 - A test that clicked before startup had finished now waits for it (WebKit on CI, 0.128.0 and 0.129.0).
 
 ## 0.129.0 — 2026-11-16

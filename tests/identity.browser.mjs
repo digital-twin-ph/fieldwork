@@ -24,7 +24,7 @@ test('an identity made here signs a note, the signature checks, and storage keep
   await page.locator('#identity-button').click();
   const dialog=page.locator('#identity-dialog');
   await expect(dialog.locator('#identity-status')).toContainText('No identity is open');
-  await dialog.locator('#identity-create-part summary').click();
+  await expect(dialog.locator('#identity-tab-make')).toHaveAttribute('aria-selected','true');
   await dialog.locator('#identity-name').fill('Ada Lovelace');
   await dialog.locator('#identity-login').fill('ada');
   await dialog.locator('#identity-orcid').fill('0000-0002-1825-0098');
@@ -84,6 +84,7 @@ test('an identity made here signs a note, the signature checks, and storage keep
   await page.locator('#identity-button').click();
   await dialog.locator('#identity-lock').click();
   await expect(page.locator('#identity-button')).toHaveAttribute('aria-label','Identity');
+  await expect(dialog.locator('#identity-tab-open')).toHaveAttribute('aria-selected','true');
   await dialog.locator('#identity-file').setInputFiles({name:'Ada-Lovelace.fwid',mimeType:'application/json',buffer:Buffer.from(file)});
   await dialog.locator('#identity-passphrase').fill('not the passphrase');
   await dialog.locator('#identity-open').click();

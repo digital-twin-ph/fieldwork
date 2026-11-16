@@ -1564,3 +1564,7 @@ th .meaning{font-weight:400;white-space:normal}
 .project-new-manual:empty{display:none}
 .project-new-manual .manual-float{position:sticky!important;top:8px!important;left:auto!important;right:auto!important;bottom:auto!important;width:100%!important;height:min(70vh,640px)!important;z-index:1;resize:none}
 @media(max-width:900px){#project-tab-new:not([hidden]){grid-template-columns:1fr}}
+.identity-tabs{display:inline-flex;justify-self:start;margin:4px 0}
+.identity-tabs button{font-size:15px;padding:7px 14px}
+.identity-tabs button.active{font-weight:700;border:1px solid var(--accent-4,var(--green))}
+#identity-create-part,#identity-open-part{border-top:0;padding-top:0}

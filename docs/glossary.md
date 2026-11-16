@@ -1,6 +1,6 @@
 # Fieldwork's glossary of terms
 
-_Created 2026-10-10 · Updated 2026-11-08_
+_Created 2026-10-10 · Updated 2026-11-16_
 
 ## Start here
 

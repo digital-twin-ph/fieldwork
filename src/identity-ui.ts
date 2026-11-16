@@ -18,7 +18,12 @@ export function openIdentity():OpenIdentity|null{
   return open;
 }
 export function onIdentityChange(listener:()=>void){listeners.add(listener);}
-function set(next:OpenIdentity|null){open=next;listeners.forEach(l=>l());}
+function set(next:OpenIdentity|null){open=next;if(next)markOpenedHere();listeners.forEach(l=>l());}
+/** WHETHER AN IDENTITY HAS BEEN OPENED ON THIS DEVICE: a yes, nothing of the identity, so the dialog can lead with Open
+ *  for someone who has a file and with Make for someone who does not. */
+const OPENED_KEY='fieldwork-identity-opened-v1';
+function openedHere():boolean{try{return localStorage.getItem(OPENED_KEY)==='yes';}catch{return false;}}
+function markOpenedHere(){try{localStorage.setItem(OPENED_KEY,'yes');}catch{/* a convenience only */}}
 function lock(){if(open)set(null);}
 
 /** The name as a byline: the name, then the GitHub login and ORCID iD where the file carries them. */
@@ -31,11 +36,14 @@ const DIALOG=`<dialog id="identity-dialog" aria-labelledby="identity-title"><div
 <p>Your identity file says who you are and holds the key that signs your notes, so anyone can check who wrote what.
 It is yours to keep, like a key: Fieldwork never stores it. It holds no passwords or tokens for any service.</p>
 <div class="identity-who"><span id="identity-avatar"></span><p id="identity-status" class="identity-status" role="status"></p></div>
-<section id="identity-open-part"><h4>Open your identity file</h4>
+<div class="result-switch identity-tabs" role="tablist" aria-label="Identity file">
+<button type="button" role="tab" id="identity-tab-make" data-identity-tab="make" aria-controls="identity-create-part">Make my identity file</button>
+<button type="button" role="tab" id="identity-tab-open" data-identity-tab="open" aria-controls="identity-open-part">Open my identity file</button></div>
+<section id="identity-open-part" role="tabpanel" aria-labelledby="identity-tab-open">
 <label class="field-label" for="identity-file">Identity file (.fwid)</label><input id="identity-file" type="file" accept=".fwid,application/json">
 <label class="field-label" for="identity-passphrase">Passphrase</label><input id="identity-passphrase" type="password" autocomplete="off">
 <button id="identity-open" class="button primary">Open</button></section>
-<details id="identity-create-part"><summary>Make a new identity file</summary>
+<section id="identity-create-part" role="tabpanel" aria-labelledby="identity-tab-make">
 <label class="field-label" for="identity-name">Your name, as it should appear on a paper</label><input id="identity-name" maxlength="120">
 <label class="field-label" for="identity-login">GitHub login (optional)</label><input id="identity-login" maxlength="39" autocomplete="off">
 <label class="field-label" for="identity-orcid">ORCID iD (optional), such as 0000-0002-1825-0097</label><input id="identity-orcid" maxlength="19" autocomplete="off">
@@ -43,7 +51,7 @@ It is yours to keep, like a key: Fieldwork never stores it. It holds no password
 <label class="field-label" for="identity-confirm">The passphrase again</label><input id="identity-confirm" type="password" autocomplete="new-password">
 <div id="identity-new-avatar"></div>
 <p>If you lose the file or forget its passphrase, it cannot be recovered. Keep a copy somewhere safe.</p>
-<button id="identity-create" class="button primary">Make and save the file</button></details>
+<button id="identity-create" class="button primary">Make and save the file</button></section>
 <details id="identity-avatar-part" hidden><summary>Change your avatar</summary>
 <p>Your avatar is kept in your identity file, so changing it saves a new file to keep in place of the old one. Choose the
 file and enter its passphrase.</p>
@@ -106,6 +114,12 @@ export function installIdentity(button:HTMLButtonElement,esc:Escape){
         wireChooser($('#identity-change-avatar'),'change',esc);}
     };
     if(!$('#identity-new-avatar').innerHTML){$('#identity-new-avatar').innerHTML=chooserMarkup('new',undefined,esc);wireChooser($('#identity-new-avatar'),'new',esc);}
+    // MAKE OR OPEN: two tabs, Make first on a device where no identity has been opened, Open once one has.
+    const showTab=(which:'make'|'open')=>{for(const t of d.querySelectorAll<HTMLButtonElement>('[data-identity-tab]')){
+      const on=t.dataset.identityTab===which;t.classList.toggle('active',on);t.setAttribute('aria-selected',String(on));t.tabIndex=on?0:-1;
+      $(`#${t.getAttribute('aria-controls')}`).hidden=!on;}};
+    for(const t of d.querySelectorAll<HTMLButtonElement>('[data-identity-tab]'))t.onclick=()=>showTab(t.dataset.identityTab as 'make'|'open');
+    showTab(openedHere()?'open':'make');
     draw();redraw=draw;
     $('#identity-open').onclick=async()=>{
       const file=($('#identity-file') as HTMLInputElement).files?.[0];
@@ -128,7 +142,7 @@ export function installIdentity(button:HTMLButtonElement,esc:Escape){
         a.download=`${identity.profile.name.replace(/[^\p{L}\p{N}]+/gu,'-').replace(/^-|-$/g,'')||'identity'}.fwid`;
         a.click();setTimeout(()=>URL.revokeObjectURL(a.href),10_000);
         for(const s of ['#identity-new-passphrase','#identity-confirm'])($(s) as HTMLInputElement).value='';
-        ($('#identity-create-part') as HTMLDetailsElement).open=false;
+        for(const t of d.querySelectorAll<HTMLButtonElement>('[data-identity-tab="open"]'))t.click();
         set(identity);lastActivity=Date.now();
       }catch(e){fail(e instanceof Error?e.message:'The file could not be made.');}
     };

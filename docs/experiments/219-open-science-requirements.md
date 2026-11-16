@@ -122,6 +122,69 @@ Leone FETP file is never in any repository; a deposit carries what the example's
 specification and digest, not the data. Zenodo answering a browser was measured for reading record files only;
 depositing from a browser is unmeasured.
 
+**More than data (the practitioner, the same day):** *"I also noticed that on browsing Zenodo there is so much more to
+it - can upload images, publications, presentations, etc."* Zenodo takes many kinds of record, each with its own DOI and
+links between them. As recalled, to check against its current list: publications (articles, reports, preprints),
+posters, presentations, lessons, datasets, images (figures, diagrams, photos), video, software, workflows, and others;
+grouped in **communities**, and linked to one another (this supplements that, this is part of that). What each could
+hold from Fieldwork:
+
+| Record | From Fieldwork |
+| --- | --- |
+| Publication (report) | A rendered product: the publication, a sit rep, a surveillance report, as PDF |
+| Image (figure) | A figure or map from a product, with its caption and source |
+| Dataset | The data a project may share, with its provenance |
+| Workflow | A project's workflows, which rerun |
+| Software | Fieldwork itself, and each worked example's repository, by their GitHub releases |
+| Presentation, lesson | The onboarding slides and modules for new contributors |
+| A community | Fieldwork's worked examples, gathered as one curated collection |
+
+Linked, these are the release of a project: the report, its figures, its data and its workflows as separate citable
+records pointing at each other. **To check:** Zenodo's current resource types and its linking vocabulary (the
+relation types come from DataCite's metadata schema); limits on size and number of files.
+
+**Fieldwork as a community (the practitioner, the same day):** *"So fieldwork can be a community"*. A Zenodo community
+is a curated collection with owners who accept or decline each record submitted to it; each record keeps its own DOI.
+Fieldwork's could gather the worked examples (each archived from its GitHub release), Fieldwork itself, products their
+authors submit, and the onboarding modules. Accepting a record is a reviewer's judgement, which is the governance of
+[155](155-discussions-as-the-governance-surface.md) and the vouching the catalog does for worked examples, extended to
+collaborative projects that no catalog pins (150's trust gap, 2026-11-10). **The practitioner's to decide:** who owns it
+(a person, two, or an organisation); its name and address, to check as free when it is made; and the policy for
+accepting a record (an open licence, provenance declared, no data whose terms forbid sharing). Making it is a human
+action, as making a repository is. A record removed from the community stays published on Zenodo.
+
+**Made, 2026-11-16:** the practitioner created the community, *"I was able to create fieldwork as a Zenodo
+community"*, at `https://zenodo.org/communities/fieldwork`, owned by the practitioner. Its curation policy, review
+setting and first record are next; nothing is deposited yet.
+
+**Restricted files, read 2026-11-16** (the practitioner: *"Apparently Zenodo also has restricted files. Can you dig into
+that some more?"*). From Zenodo's own pages ([visibility](https://help.zenodo.org/docs/about/whats-changed/),
+[access requests](https://help.zenodo.org/docs/share/access-requests), [secret links](https://help.zenodo.org/docs/share/link-sharing),
+[infrastructure](https://about.zenodo.org/infrastructure)):
+
+| | What Zenodo says |
+| --- | --- |
+| What is restricted | The files only. Since October 2023 a record is *public* or *restricted*, and *"metadata is always public"*: title, description, authors and file names stay visible to anyone |
+| Who gets in | The owner chooses: signed-in users (access kept until revoked) and or guests (a secret link that expires when the owner says), each asking with a message; the owner may state conditions and approves or declines each request |
+| Secret links | Made by the owner, optionally expiring; *view*, *preview draft* or *edit*; they apply to every version, present and future |
+| Embargo | Files restricted until a date, then public automatically |
+| Communities | **Members of a community can view the restricted files of its records** |
+| Confidential data | Zenodo: closed access *"is not suitable for secret or confidential data"*; files are stored unencrypted and may be viewed by its staff under specific conditions. Written of the old *closed access*; the page has not been updated for the new terms |
+| Not said on these pages | Whether a restricted record gets a DOI; what happens to a request nobody answers |
+
+**What it means here:**
+
+| Data | Restricted on Zenodo? |
+| --- | --- |
+| The Sierra Leone FETP file | **No.** It is never in any repository, and a restricted record is one |
+| The NYC counts | **No**, unless their terms allow sharing with approved people; restricted access is still sharing, and the title and file names are public |
+| Data whose provider allows sharing on conditions (Zenodo's own example: anonymised clinical trial data for medical professionals only) | **A fit**: the conditions stated, each request read by the owner |
+| A product before it is released (a report under review) | **A fit, with an embargo**: public on a date |
+| Anything in a record submitted to the fieldwork community | **Seen by every member** if its files are restricted; the community's policy has to say so |
+
+**Open:** whether Fieldwork's encrypted package (a file sealed with a passphrase given separately) belongs inside a
+restricted record, so that neither the public nor Zenodo's staff can read it; it would still leave the metadata public.
+
 **Open:** whether a deposit from Fieldwork is needed at all, when Zenodo's GitHub link archives a project repository's
 releases without one.
 

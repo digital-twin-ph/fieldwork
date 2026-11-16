@@ -69,31 +69,36 @@ function OperationNode({id,data,selected}:NodeProps<OperationFlowNode>) {
   // port is a drop target the library does not know the position of and a drag onto it does
   // nothing. Found exactly that way: the aria-label was right and the connection never formed.
   },[id,JSON.stringify(t.inputs),JSON.stringify([...connected]),JSON.stringify([...available]),updateInternals]);
+  // REACT FLOW'S CORNER LINK IS HIDDEN (`hideAttribution` on the canvas below): one Tab from a node reached it with a faint focus ring,
+  // and Enter left Fieldwork for reactflow.dev (the practitioner, 2026-11-16). It is credited in Help instead; MIT asks
+  // for no attribution on screen.
+  // A PORT IS A POINTER'S DROP TARGET, hidden from assistive technology (aria-hidden on each Handle): connecting by
+  // keyboard or screen reader is the Inspector's list for each input (the Section 508 audit, 2026-11-16).
   return <div data-node-role={role} style={{minHeight:!spatialPorts&&t.inputs.length>3?48+(t.inputs.length-1)*26+24:undefined}} className={`node ${t.color} ${selected?'selected':''} ${data.status==='running'?'running':''} ${data.status==='failed'?'failed':''} ${data.glow?'just-finished':''} ${data.flagged??data.alert?'alerting':''}`}>
     <div className="node-heading"><span className="node-icon">{t.icon}</span><div><strong>{data.label}</strong><span className="node-id">{t.group}</span></div></div>
     <div className="node-subtitle">{data.subtitle}</div>
     {spatialPorts&&<div className="node-ports">
       {grouped.map(([group,label])=><div className="node-port-row" key={group}>
-        <Handle type="target" position={Position.Left} id={group} style={{top:'50%'}} title={label} aria-label={`${data.label}: ${label} input`}/>
+        <Handle aria-hidden="true" type="target" position={Position.Left} id={group} style={{top:'50%'}} title={label}/>
         <span>{label}</span>
       </div>)}
       {shownPorts.map(([port,type])=><div className={`node-port-row ${port==='coverage'?'alternative-input':''}`} key={port}>
-        <Handle type="target" position={Position.Left} id={port} style={{top:'50%'}} title={`${portLabel(port)} (${type})`} aria-label={`${data.label}: ${portLabel(port)} input`}/>
+        <Handle aria-hidden="true" type="target" position={Position.Left} id={port} style={{top:'50%'}} title={`${portLabel(port)} (${type})`}/>
         <span>{portLabel(port)}</span>
       </div>)}
       {/* Every other port is still a drop target, stacked down the left edge without a row of
           its own. A practitioner drags onto the one they want; the node stays the size of what
           it draws. The title carries the name a row would have shown. */}
-      {hiddenPorts.map(([port,type],i)=><Handle key={port} type="target" position={Position.Left} id={port}
+      {hiddenPorts.map(([port,type],i)=><Handle aria-hidden="true" key={port} type="target" position={Position.Left} id={port}
         className="node-spare-port" style={{top:`${56+i*14}px`}} title={`${portLabel(port)} (${type})`}
-        aria-label={`${data.label}: ${portLabel(port)} input`}/>)}
+       />)}
       {canAddLayer&&<div className="node-port-row node-add-layer" key="layer">
-        <Handle type="target" position={Position.Left} id="layer" style={{top:'50%'}}
+        <Handle aria-hidden="true" type="target" position={Position.Left} id="layer" style={{top:'50%'}}
           title={data.type==='table_output'?'Add an input: drop any result to show here':'Add a layer: drop any drawable result here'}
-          aria-label={`${data.label}: ${data.type==='table_output'?'add an input':'add a layer'}`}/>
+         />
         <span>{data.type==='table_output'?'+ Add an input':'+ Add a layer'}</span>
       </div>}
-      {t.output&&<div className="node-port-row node-output-row"><span>{outputLabel} →</span><Handle type="source" position={Position.Right} id="out" style={{top:'50%'}} title={t.output==='coverage-check'?'Coverage result: study area, points and review decisions':`${outputLabel} output`} aria-label={`${data.label}: output`}/></div>}
+      {t.output&&<div className="node-port-row node-output-row"><span>{outputLabel} →</span><Handle aria-hidden="true" type="source" position={Position.Right} id="out" style={{top:'50%'}} title={t.output==='coverage-check'?'Coverage result: study area, points and review decisions':`${outputLabel} output`}/></div>}
     </div>}
     {data.alert&&<div className="node-alert" role="alert">
       <span title={data.alert}>⚠ {data.alert}</span>
@@ -108,7 +113,7 @@ function OperationNode({id,data,selected}:NodeProps<OperationFlowNode>) {
     </div>}
     <div className="node-bottom"><span>{data.detail}</span><span className="count">{data.status==='done'?'✓ Done':data.status==='running'?'Running…':data.type==='policy'?'N3 · WASM':'●'}</span></div>
     {!spatialPorts&&t.inputs.map(([port,type],i)=><Handle key={port} type="target" position={Position.Left} id={port} style={{top:48+i*26}} title={`${port} (${type})`} aria-label={`${data.label}: ${port} input`}><span className="handle-name">{port}</span></Handle>)}
-    {!spatialPorts&&t.output&&<Handle type="source" position={Position.Right} id="out" style={{top:54}} title={`${t.output} output`} aria-label={`${data.label}: output`}/>}
+    {!spatialPorts&&t.output&&<Handle aria-hidden="true" type="source" position={Position.Right} id="out" style={{top:54}} title={`${t.output} output`}/>}
   </div>;
 }
 const nodeTypes={operation:OperationNode};
@@ -137,11 +142,16 @@ export function mountCanvas(container:HTMLElement,callbacks:CanvasCallbacks):Can
       callbacks.ready(api);
     },[]);
     return <ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange}
-      onNodeClick={(_,n)=>callbacks.select(n.id)} onPaneClick={()=>callbacks.clear()}
+      onNodeClick={(_,n)=>callbacks.select(n.id)}
+      onFocusCapture={e=>{
+        // FOCUS SELECTS, BY KEYBOARD: a widget reached by Tab becomes the selected one, so the Inspector follows the
+        // keyboard and the arrow keys move what has the focus (the Section 508 audit, 2026-11-16).
+        const el=e.target as HTMLElement;const id=el.classList?.contains('react-flow__node')?el.getAttribute('data-id'):null;
+        if(id&&el.matches(':focus-visible')&&!el.classList.contains('selected'))callbacks.select(id);}} onPaneClick={()=>callbacks.clear()}
       onNodeDragStop={(_,n)=>callbacks.move(n.id,n.position)} onConnect={c=>callbacks.connect(c)} isValidConnection={callbacks.valid}
       onNodesDelete={ns=>callbacks.remove(ns.map(n=>n.id))} onEdgesDelete={es=>callbacks.removeEdges(es.map(e=>e.id))}
       onEdgeClick={(_,e)=>callbacks.removeEdges([e.id])} onMove={(_,v)=>callbacks.zoom(v.zoom)}
-      nodesDraggable={!busy} nodesConnectable={!busy} deleteKeyCode={busy?null:['Backspace','Delete']} minZoom={.3} maxZoom={1.8}
+      proOptions={{hideAttribution:true}} nodesDraggable={!busy} nodesConnectable={!busy} deleteKeyCode={busy?null:['Backspace','Delete']} minZoom={.3} maxZoom={1.8}
       connectionLineStyle={{stroke:'#176b59',strokeWidth:2}} fitViewOptions={{padding:.16}}>
       <Background color="#c8d3c1" gap={18} size={1}/>
     </ReactFlow>;

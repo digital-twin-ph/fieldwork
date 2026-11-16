@@ -1,6 +1,6 @@
 # 150 — Can several authors collaborate on a publication in a project repository?
 
-_Created 2026-10-29 · Updated 2026-11-10_
+_Created 2026-10-29 · Updated 2026-11-16_
 
 **Status:** tried — the layout is published as `digital-twin-ph/fieldwork-project-template`,
 competency question 1 was decided by measurement, and **from 2026-10-31 the application WRITES the
@@ -1060,3 +1060,26 @@ trustworthy:
 author on a real project, with conflicts shown in the application; pushing from Fieldwork with the scoped token; the
 Discussions of [155](155-discussions-as-the-governance-surface.md); products published to the repository's Pages
 ([202](202-one-record-several-products.md)).
+
+## The sequence a person follows, 2026-11-16
+
+The practitioner: *"Lets build the manual for the collaborative project. And I don't think we have a config item in
+the new project dialog to configure it as collaborative. We need to think about the sequencing of the steps for the
+user to follow."* The order follows what each step needs:
+
+| Order | Step | Needs |
+| --- | --- | --- |
+| 1 | Who you are: the identity file of [218](218-an-identity-you-carry.md), the key linked to GitHub | nothing; once per person |
+| 2 | Where it lives: a repository from `fieldwork-project-template`, Discussions on, co-authors invited | a GitHub account; a human act |
+| 3 | What Fieldwork may do there: a fine-grained token for that repository only (Contents and Discussions, read and write; never Workflows), in the credentials file | the repository, to scope the token to it |
+| 4 | The project in Fieldwork, made as shared and pointed at the repository | 1 to sign, 3 to write |
+| 5 | Working: get the latest, save as one commit, talk in Discussions | 4 |
+
+A co-author does 1, accepts the invitation in place of 2, does 3, and opens the shared project in place of making it.
+
+**New project, proposed:** *Where this project lives*: on this device (as today), or shared through a GitHub
+repository, with the repository's name; beneath it a readiness list that ticks itself and blocks nothing (identity
+open, key linked, a GitHub credential unlocked, the repository answering and writable). Beside **Import project**:
+**Open a shared project from GitHub**. The manual, drafted for the practitioner's edit, is
+`demo-drafts/collaborative-project-manual.md` in the workspace. Nothing of steps 4 and 5 is built.
+

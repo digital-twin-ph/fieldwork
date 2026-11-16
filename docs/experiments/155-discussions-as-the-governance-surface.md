@@ -1,6 +1,6 @@
 # 155 · Discussions as the governance surface of a project
 
-_Created 2026-10-31 · Updated 2026-10-31_
+_Created 2026-10-31 · Updated 2026-11-16_
 
 **Status:** asked — nothing is built. Opened as the companion to
 [150](150-can-several-authors-collaborate-in-a-project-repository.md), which made a clash legible
@@ -57,6 +57,10 @@ asset), which is precisely what a discussion has to coordinate.
   2026-10-31 as REST-reachable; the WRITE path is believed to be GraphQL only, with no REST
   create. Unverified, and it decides the shape of the client. A fine-grained token with
   Discussions: Read and write now exists for this, held outside the repository.
+- **Measured 2026-11-16:** a preflight from `https://digital-twin-ph.github.io` to `api.github.com/graphql` answered
+  204, `access-control-allow-origin: *`, methods including POST, headers including Authorization and Content-Type; the
+  Git Data API (`/git/trees`, for one commit of many files) the same. Writing a discussion from a browser is reachable;
+  an actual write, with a token, is not yet made.
 - **Whether the CORS wall stands where it stood for DHIS2 and geoBoundaries.** `api.github.com`
   answered `access-control-allow-origin: *` for the Contents API, measured for 150. The GraphQL
   endpoint has not been checked and is a different host path.

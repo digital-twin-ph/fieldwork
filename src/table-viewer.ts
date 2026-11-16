@@ -150,7 +150,7 @@ export function openTableViewer(view:TableView,esc:Escape):void{
       +`<span class="records-rows">${rows.length} of ${view.rows.length} rows`
       +`${shown.length<rows.length?`, showing the first ${shown.length}`:''}</span></div>`
       +(shown.length
-        ?`<div class="table-viewer-table"><table><thead><tr><th>#</th>`
+        ?`<div class="table-viewer-table" tabindex="0" role="region" aria-label="Table"><table><thead><tr><th>#</th>`
           +view.columns.map(c=>{
             const p=profiles.get(c)!,said=summary(p);
             const from=view.origins?.[c];

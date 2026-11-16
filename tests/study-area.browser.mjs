@@ -39,7 +39,7 @@ const points=async(list)=>{const b=await page.locator('#area-map').boundingBox()
   await expect(page.locator('#n3-preview')).toContainText(`rdfs:label "${label}"`);await expect(page.locator('#map')).toContainText(label);
   await expect(page.locator('#n3-preview')).toContainText('"true"^^<http://www.w3.org/2001/XMLSchema#boolean>');
   await page.locator('[data-view="results"]').click();
-  await expect(page.getByRole('tab')).toHaveCount(1);
+  await expect(page.getByRole('tablist',{name:'Workflow outputs'}).getByRole('tab')).toHaveCount(1);
   // The run receipt is downloaded from the N3 & evidence view, which is its own tab now.
   await page.locator('[data-view="rules"]').click();
   const receiptDownload=page.waitForEvent('download');await page.locator('#download-evidence').click();

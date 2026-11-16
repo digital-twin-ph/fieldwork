@@ -518,8 +518,12 @@ export async function renderVegaChart(host:HTMLElement,chart:ChartSummary,params
   if(ticket!==generation||!host.isConnected)return;
   const result=await embed(host,spec,{mode:'vega-lite',renderer:'svg',actions:{export:{svg:true,png:false},source:false,compiled:false,editor:false},tooltip:true});
   if(ticket!==generation||!host.isConnected){result.finalize();return;}
+  nameActions(host);
   current=result;
 }
+
+/** Vega's actions menu opens from an icon alone; a screen reader is given its name (WCAG 4.1.2). */
+const nameActions=(host:HTMLElement)=>host.querySelector('details > summary')?.setAttribute('aria-label','Chart actions');
 
 /** WHO INFECTED WHOM, IN VEGA-LITE (experiment 200, step 5; the practitioner, 2026-11-09: "Vega lite for tree chart").
  *  The same figure the tree module computes, drawn by the renderer every other chart uses, so it exports, carries its
@@ -598,5 +602,6 @@ export async function renderVegaTree(host:HTMLElement,tree:import('./transmissio
   if(ticket!==generation||!host.isConnected)return;
   const result=await embed(host,spec as never,{mode:'vega-lite',renderer:'svg',actions:{export:{svg:true,png:false},source:false,compiled:false,editor:false},tooltip:true});
   if(ticket!==generation||!host.isConnected){result.finalize();return;}
+  nameActions(host);
   current=result;
 }

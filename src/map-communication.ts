@@ -262,6 +262,9 @@ export function mapPresentation(node:WorkflowNode<'map_output'>,output:Output,wo
  *  a decision table, a basemap-backed interactive view -- and then no bar is drawn, because a
  *  figure missing a scale bar is incomplete while a figure with a wrong one is misleading. */
 export function standaloneMapSvg(content:string,viewBox:string,spec:MapPresentation,frame?:{metresPerPixel?:number}):string{
+  // A FIGURE, NOT A MAP TO OPERATE: the live map's keyboard stops and links are taken out, so the picture is one image
+  // to assistive technology and nothing inside it takes focus (WCAG 4.1.2; the Section 508 audit, 2026-11-16).
+  content=content.replace(/\s(tabindex|role|aria-[a-z]+)="[^"]*"/g,'').replace(/<a\b[^>]*>|<\/a>/g,'');
   // ONE KEY, NOT TWO (2026-11-14): a categorical plot draws its classes and a key line at the foot of its own frame, over
   // the map, for the page; a figure that draws its own key says the same thing below the map, so the plot's is left out.
   // BUT A SHADED MAP'S LINE STAYS (2026-11-15): under a ramp it says what the shade is and how it was classed ("5 quantile

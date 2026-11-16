@@ -58,7 +58,7 @@ test('unticking a measure removes it from the result of the next run',async({pag
   const dialog=page.locator('#study-design-dialog');
   await dialog.locator('[data-design-measure="odds ratio"]').uncheck();
   await dialog.locator('#design-close').click();
-  await expect(page.locator('#inspector, body')).toContainText('reports risk ratio, risk difference');
+  await expect(page.locator('body')).toContainText('reports risk ratio, risk difference');
   await page.locator('#run-button').click();
   await page.locator('[data-view="results"]').click();
   await expect(estimates(page)).toHaveText(['risk ratio','risk difference']);

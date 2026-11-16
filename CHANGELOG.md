@@ -3,6 +3,22 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.131.0 — In development
+
+- **Accessibility, Section 508's floor.** An automated scan against WCAG 2.0 A and AA, now part of the gate: every view
+  and the main dialogs, light and dark, and in six worked examples every widget's Inspector, the dialogs its buttons
+  open, and the Results. What it found is fixed: the view tabs say they are tabs; no text is faded below AA contrast
+  (the library is disabled while a run is in flight, and entries nothing feeds yet are marked by an outline instead);
+  two light-theme colours darkened; map figures in Notes no longer hold keyboard stops; scrolling tables reachable by
+  keyboard; the chart's actions menu named. The audit: `docs/audits/section-508-audit.md`.
+- **A workflow built with the keyboard alone.** The first Tab offers *Skip to the canvas* and *Skip to the Inspector*.
+  A widget reached by Tab shows a thick ring and becomes the selected one, so the Inspector follows; arrow keys move
+  it. Connect in the Inspector, by choosing the source in an input's list. React Flow's corner link is gone (Tab could
+  leave Fieldwork through it); React Flow is credited in Help. In Safari, hold Option with Tab.
+- **Identity, continued.** Once your key is linked to GitHub, the section is one line. Credentials: the passphrase and
+  its confirmation together, checked as you type; the file saved as `FWCRED-<your name>.fwcredentials`.
+- The footer's old "Exploratory research / v0.2" is gone; the version is the one in the header.
+
 ## 0.130.0 — 2026-11-16
 
 - **Identity, apart from Credentials.** The **Identity** button, top right in the header where the placeholder circle

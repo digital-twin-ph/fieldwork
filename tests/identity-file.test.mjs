@@ -117,3 +117,11 @@ test('the key reaches a phone as a link to key.html, the key after #; a QR code 
   assert.ok(qr.qrMatrix(url).length>20);
   assert.throws(()=>qr.qrMatrix(ssh),/https address/,'never the key as text');
 });
+
+test('files named to be found in a folder: FWID- and FWCRED- with the name',async()=>{
+  const {identityFileName,credentialsFileName}=await import('../build/identity-ui.js');
+  assert.equal(identityFileName('Herman Tolentino, MD'),'FWID-Herman-Tolentino-MD.fwid');
+  assert.equal(credentialsFileName('Herman Tolentino, MD'),'FWCRED-Herman-Tolentino-MD.fwcredentials');
+  assert.equal(credentialsFileName(undefined),'FWCRED.fwcredentials');
+  assert.equal(identityFileName('Zoë Ndiaye'),'FWID-Zoë-Ndiaye.fwid');
+});

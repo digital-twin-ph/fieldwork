@@ -87,6 +87,11 @@ test('an identity made here signs a note, the signature checks, and storage keep
   keys=[{id:1,key:ssh.split(' ').slice(0,2).join(' '),title:'Fieldwork',created_at:'2026-11-16T10:00:00Z'}];
   await dialog.locator('#identity-ssh-check').click();
   await expect(dialog.locator('#identity-ssh-result')).toHaveText('✓ Linked: @ada has published this key on GitHub (added 16 November 2026).');
+  // Linked: next time the section is one closed line.
+  await dialog.locator('#identity-close').click();await page.locator('#identity-button').click();
+  await expect(dialog.locator('#identity-github-summary')).toContainText('✓ Linked to GitHub as @ada (checked');
+  await expect(dialog.locator('#identity-github-part')).not.toHaveAttribute('open','');
+  await dialog.locator('#identity-github-summary').click();
   if(info.project.name==='chromium')await dialog.locator('#identity-github-part').screenshot({path:'test-results/identity-github.png'});
   await dialog.locator('#identity-close').click();
 

@@ -1659,6 +1659,9 @@ function render(){
   // THE WIDGETS TAB'S WORKFLOW BUTTONS TOO, as the selector: a workflow cannot be opened while one runs, and a button
   // that does nothing when pressed said nothing (CI, 2026-11-14).
   document.querySelectorAll<HTMLButtonElement>('[data-open-workflow]').forEach(b=>{b.disabled=busy;b.title=busy?'Wait for the run to finish':'';});
+  // THE LIBRARY DISABLED, NOT ONLY FADED, while a run is in flight: a faded button still took Enter, and a control that
+  // is inactive has to say so to be exempt from contrast (WCAG 1.4.3; the Section 508 audit, 2026-11-16).
+  document.querySelectorAll<HTMLButtonElement>('.palette-node').forEach(b=>{b.disabled=busy;});
   document.body.classList.toggle('busy',busy);flow?.setBusy(busy);renderInspector();
   $('#run-button').disabled=busy||!workflow.nodes.length;$('#new-workflow').disabled=busy;($('#add-workflow') as HTMLButtonElement).disabled=busy;$('#reset-example').disabled=busy||!workflow.nodes.length;$('#tidy-button').disabled=busy||workflow.nodes.length<2;
   // EVERY CONTROL WHOSE HANDLER OPENS WITH `if(busy)return` BELONGS ON THIS LINE, and the three
@@ -3819,7 +3822,7 @@ function renderLibrary(search=''){
   // What progressive reveal would offer at this step. Dimmed rather than removed: a hidden
   // widget can make a practitioner conclude the application cannot do something it can.
   const revealed=playbackStep===null?null:revealedTypes(playbackPlaced());
-  let group='';const entries=Object.entries(TYPES).filter(([k,t])=>allowed.has(k)&&!ADDABLE_VIA_RULESET.includes(k as typeof ADDABLE_VIA_RULESET[number])&&(t.title+' '+t.description).toLowerCase().includes(search.toLowerCase())).sort((a,b)=>PALETTE_GROUPS.indexOf(a[1].group as typeof PALETTE_GROUPS[number])-PALETTE_GROUPS.indexOf(b[1].group as typeof PALETTE_GROUPS[number]));$('#library-count').textContent=revealed?`${entries.filter(([k])=>revealed.has(k as NodeType)).length} of ${allowed.size}`:String(allowed.size);$('#node-library').innerHTML=entries.map(([k,t])=>{const heading=t.group!==group?`<div class="library-group">${t.group}</div>`:'';group=t.group;return `${heading}<button class="palette-node ${t.color} ${workflow.nodes.find(n=>n.id===selected)?.type===k?'primitive-selected':''} ${revealed&&!revealed.has(k as NodeType)?'unrevealed':''}" ${revealed&&!revealed.has(k as NodeType)?'title="Nothing on the canvas emits what this takes, at this step"':''} aria-current="${workflow.nodes.find(n=>n.id===selected)?.type===k?'true':'false'}" data-add="${k}"><span class="palette-icon">${t.icon}</span><strong>${t.title}</strong><span>+</span></button>`;}).join('');
+  let group='';const entries=Object.entries(TYPES).filter(([k,t])=>allowed.has(k)&&!ADDABLE_VIA_RULESET.includes(k as typeof ADDABLE_VIA_RULESET[number])&&(t.title+' '+t.description).toLowerCase().includes(search.toLowerCase())).sort((a,b)=>PALETTE_GROUPS.indexOf(a[1].group as typeof PALETTE_GROUPS[number])-PALETTE_GROUPS.indexOf(b[1].group as typeof PALETTE_GROUPS[number]));$('#library-count').textContent=revealed?`${entries.filter(([k])=>revealed.has(k as NodeType)).length} of ${allowed.size}`:String(allowed.size);$('#node-library').innerHTML=entries.map(([k,t])=>{const heading=t.group!==group?`<div class="library-group">${t.group}</div>`:'';group=t.group;return `${heading}<button class="palette-node ${t.color} ${workflow.nodes.find(n=>n.id===selected)?.type===k?'primitive-selected':''} ${revealed&&!revealed.has(k as NodeType)?'unrevealed':''}" ${revealed&&!revealed.has(k as NodeType)?'title="Nothing on the canvas emits what this takes, at this step"':''} aria-current="${workflow.nodes.find(n=>n.id===selected)?.type===k?'true':'false'}" data-add="${k}"${busy?' disabled':''}><span class="palette-icon">${t.icon}</span><strong>${t.title}</strong>${revealed&&!revealed.has(k as NodeType)?'<span class="sr-only">, nothing on the canvas feeds it yet</span>':''}<span>+</span></button>`;}).join('');
   // One entry per bundled ruleset, each adding a node with that ruleset already pinned. The
   // generic "Apply ruleset" entry that stood here until 2026-10-14 added a node with no ruleset,
   // which has no ports and cannot run -- exactly what src/palette.ts said must not happen, while
@@ -3952,9 +3955,9 @@ function recordsPanel(nodeId:string,data:{features:{id?:string|number;properties
     // recorded" is a case the rules have to handle and an empty cell reads like a tidy zero.
     ?`<em class="record-missing">not recorded</em>`:esc(String(value));
   const body=view.mode==='json'
-    ?`<pre class="record-json">${esc(JSON.stringify(shown,null,2))}</pre>`
+    ?`<pre class="record-json" tabindex="0" role="region" aria-label="Records as JSON">${esc(JSON.stringify(shown,null,2))}</pre>`
     :columns.length
-      ?`<div class="record-table"><table><thead><tr><th>#</th>`
+      ?`<div class="record-table" tabindex="0" role="region" aria-label="Records"><table><thead><tr><th>#</th>`
         +columns.map(c=>`<th>${esc(c)}</th>`).join('')+`</tr></thead><tbody>`
         +shown.map((f,i)=>`<tr><td>${i+1}</td>`
           +columns.map(c=>`<td>${cell(f.properties?.[c])}</td>`).join('')+`</tr>`).join('')
@@ -6354,7 +6357,7 @@ function renderResults(){
     const chartContext={sourceId:chartSourceId,runId:result?.runId,
       sourceLabel:runWorkflow?.nodes.find(n=>n.id===chartSourceId)?.params.label};
     const spec=chartVegaSpec(output.chart,chartNode.params,chartContext);
-    $('#bars-panel').innerHTML=`<p class="muted">${esc(output.chart.caption)} · ${output.chart.records!==undefined?`${output.chart.total.toLocaleString('en')} cases from ${output.chart.records.toLocaleString('en')} records`:`${output.chart.total.toLocaleString('en')} records`} · grouping: ${esc(output.chart.field)}</p>${output.chart.field==='total'?'<p class="notice">The chart source does not declare a physical unit for this numeric total. Check the source and method before interpreting it.</p>':''}<div id="vega-chart" role="img" aria-label="${esc(output.chart.caption)}"></div><details><summary>Underlying chart values</summary><table><thead><tr><th>Category</th><th>Value</th></tr></thead><tbody>${output.chart.bins.map(b=>`<tr><td>${esc(b.label)}</td><td>${b.count}</td></tr>`).join('')}</tbody></table></details><details><summary>Vega-Lite specification</summary><pre>${esc(JSON.stringify(spec,null,2))}</pre></details>`;
+    $('#bars-panel').innerHTML=`<p class="muted">${esc(output.chart.caption)} · ${output.chart.records!==undefined?`${output.chart.total.toLocaleString('en')} cases from ${output.chart.records.toLocaleString('en')} records`:`${output.chart.total.toLocaleString('en')} records`} · grouping: ${esc(output.chart.field)}</p>${output.chart.field==='total'?'<p class="notice">The chart source does not declare a physical unit for this numeric total. Check the source and method before interpreting it.</p>':''}<div id="vega-chart" role="figure" aria-label="${esc(output.chart.caption)}"></div><details><summary>Underlying chart values</summary><table><thead><tr><th>Category</th><th>Value</th></tr></thead><tbody>${output.chart.bins.map(b=>`<tr><td>${esc(b.label)}</td><td>${b.count}</td></tr>`).join('')}</tbody></table></details><details><summary>Vega-Lite specification</summary><pre>${esc(JSON.stringify(spec,null,2))}</pre></details>`;
     const host=$('#vega-chart');void renderVegaChart(host,output.chart,chartNode.params,chartContext).catch(e=>{if(host.isConnected)host.textContent=`Chart could not render: ${errorMessage(e)}. Underlying values remain available below.`;});
   }else if((output as {tree?:unknown}|undefined)?.tree){
     // WHO INFECTED WHOM (experiment 200): the tree, its sentence above it.

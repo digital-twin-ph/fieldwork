@@ -104,7 +104,7 @@ test('local WorldPop file clips to Old Naledi without retaining the national ras
  // plus the configurable one that can add any result this map could draw.
  await expect(page.locator('#map-raster')).toHaveCount(0);
  await expect(page.locator('#map-add-layer')).toBeVisible();
- const source=page.locator('.react-flow__node[data-id="clip"] [data-handleid="out"]'),target=page.locator('.react-flow__node[data-id="map"] [data-handleid="layer"]');await expect(target).toHaveAttribute('aria-label','Map: add a layer');await page.locator('#fit-button').click();await page.waitForTimeout(300);
+ const source=page.locator('.react-flow__node[data-id="clip"] [data-handleid="out"]'),target=page.locator('.react-flow__node[data-id="map"] [data-handleid="layer"]');await expect(target).toHaveAttribute('aria-hidden','true');await page.locator('#fit-button').click();await page.waitForTimeout(300);
  const a=await source.boundingBox(),b=await target.boundingBox();await page.mouse.move(a.x+a.width/2,a.y+a.height/2);await page.mouse.down();await page.mouse.move(b.x+b.width/2,b.y+b.height/2,{steps:20});await page.mouse.up();
  await expect(page.locator('#map-raster')).toHaveValue('clip');const saved=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));// The other layers stay wired. Connecting a raster used to delete them, which is how a mode
  // change paid for itself with a practitioner's connections.

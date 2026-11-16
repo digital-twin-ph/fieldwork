@@ -295,7 +295,7 @@ export function openDataQuality(first:QualityView,esc:Escape):void{
         `<button role="tab" aria-selected="${key===tab}" data-quality-tab="${key}" `
         +`class="${key===tab?'active':''}">${label}</button>`).join('')
       +`</div>`
-      +`<div class="quality-body">`
+      +`<div class="quality-body" tabindex="0" role="region" aria-label="Data quality">`
       +(tab==='records'?recordsTab():tab==='edits'?editsTab():tab==='findings'
         ?`<p class="description">What reading the file found. Every row was kept as it stands.</p>`
          +`<ul class="quality-problems" data-quality-findings>${view.findings!.slice(0,200).map(f=>

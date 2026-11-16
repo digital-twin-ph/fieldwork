@@ -23,6 +23,23 @@ export function openIdentity():OpenIdentity|null{
 }
 export function onIdentityChange(listener:()=>void){listeners.add(listener);}
 function set(next:OpenIdentity|null){open=next;if(next)markOpenedHere();listeners.forEach(l=>l());}
+/** A LINK TO GITHUB ONCE CONFIRMED, remembered on this device: the public key and the login, both public, and the day it
+ *  was checked. So the dialog shows a linked key as one closed line (the practitioner, 2026-11-16: *"This section of the
+ *  dialog does not always need to be exposed once SSH signing key is set up on GitHub"*). A check that no longer finds
+ *  the key forgets it. */
+const LINKS_KEY='fieldwork-identity-links-v1';
+function readLinks():Record<string,{login:string;checked:string}>{
+  try{const v=JSON.parse(localStorage.getItem(LINKS_KEY)||'{}');return v&&typeof v==='object'?v:{};}catch{return {};}
+}
+function linkedHere(publicKey:string,login:string):string|null{
+  const hit=readLinks()[publicKey];
+  return hit&&hit.login===login?new Date(hit.checked).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}):null;
+}
+function rememberLink(publicKey:string,login:string,linked:boolean){
+  const links=readLinks();
+  if(linked)links[publicKey]={login,checked:new Date().toISOString()};else delete links[publicKey];
+  try{localStorage.setItem(LINKS_KEY,JSON.stringify(links));}catch{/* a convenience only */}
+}
 /** WHETHER AN IDENTITY HAS BEEN OPENED ON THIS DEVICE: a yes, nothing of the identity, so the dialog can lead with Open
  *  for someone who has a file and with Make for someone who does not. */
 const OPENED_KEY='fieldwork-identity-opened-v1';
@@ -33,7 +50,11 @@ function lock(){if(open)set(null);}
 /** THE FILE'S NAME, easy to find in a folder (the practitioner, 2026-11-16: *"Need to automatically prefix the identify
  *  file with FWID-<name here>.fwid so it's easy to identify in a folder"*): FWID-, the name with spaces and punctuation as
  *  hyphens, .fwid. */
-export const identityFileName=(name:string)=>`FWID-${name.replace(/[^\p{L}\p{N}]+/gu,'-').replace(/^-|-$/g,'')||'identity'}.fwid`;
+const fileNamePart=(name:string)=>name.replace(/[^\p{L}\p{N}]+/gu,'-').replace(/^-|-$/g,'');
+export const identityFileName=(name:string)=>`FWID-${fileNamePart(name)||'identity'}.fwid`;
+/** A CREDENTIALS FILE NAMED TO MATCH (the practitioner, 2026-11-16: *"Yes to match"*): FWCRED-, the open identity's name
+ *  where one is open, .fwcredentials. */
+export const credentialsFileName=(name?:string)=>`FWCRED${name&&fileNamePart(name)?`-${fileNamePart(name)}`:''}.fwcredentials`;
 /** THE PAGE A PHONE OPENS FROM THE QR CODE (2026-11-16: a code holding the key as plain text was offered as a web search):
  *  Fieldwork's own key.html, the key after #, which a browser never sends. On a published Fieldwork, this site's page;
  *  anywhere else (a local copy a phone cannot reach), the published one. */
@@ -76,7 +97,7 @@ It is yours to keep, like a key: Fieldwork never stores it. It holds no password
 <p>If you lose the file or forget its passphrase, it cannot be recovered. Keep a copy somewhere safe.</p>
 <p id="identity-create-error" class="field-check is-bad" role="alert" hidden></p>
 <button id="identity-create" class="button primary">Make and save the file</button></section>
-<section id="identity-github-part" class="identity-github" hidden><h4>Link your key to GitHub</h4>
+<details id="identity-github-part" class="identity-github" hidden><summary id="identity-github-summary">Link your key to GitHub</summary>
 <p>So anyone can check that the notes you sign are yours, publish your key on your GitHub account as a <strong>signing
 key</strong>. Only the public key leaves Fieldwork; it cannot be used to sign in to GitHub.</p>
 <ol class="identity-steps">
@@ -85,7 +106,7 @@ key</strong>. Only the public key leaves Fieldwork; it cannot be used to sign in
 <li><a id="identity-ssh-open" href="https://github.com/settings/ssh/new" target="_blank" rel="noopener">Open GitHub's page for a new key</a>, signed in as <strong id="identity-ssh-login"></strong>.</li>
 <li>Set <strong>Key type</strong> to <strong>Signing Key</strong>, paste the key, and press <strong>Add SSH key</strong>.</li>
 <li>Then check: <button type="button" class="button small" id="identity-ssh-check">Check the link</button></li></ol>
-<p id="identity-ssh-result" class="field-check" role="status" aria-live="polite"></p></section>
+<p id="identity-ssh-result" class="field-check" role="status" aria-live="polite"></p></details>
 <details id="identity-avatar-part" hidden><summary>Change your avatar</summary>
 <p>Your avatar is kept in your identity file, so changing it saves a new file to keep in place of the old one. Choose the
 file and enter its passphrase.</p>
@@ -199,7 +220,11 @@ export function installIdentity(button:HTMLButtonElement,esc:Escape){
       const ssh=open?sshPublicKey(open):null;
       $('#identity-github-part').hidden=!ssh||!open?.profile.login;
       if(ssh&&open?.profile.login){$('#identity-ssh-key').textContent=ssh;$('#identity-ssh-login').textContent=`@${open.profile.login}`;
-        $('#identity-ssh-qr').innerHTML=qrSvg(keyPageUrl(ssh),200,'Your public key, as a link for your phone');}
+        $('#identity-ssh-qr').innerHTML=qrSvg(keyPageUrl(ssh),200,'Your public key, as a link for your phone');
+        // LINKED ALREADY: one line, closed, until the person opens it; not yet: open, with its steps.
+        const linked=linkedHere(open.publicKey,open.profile.login);
+        $('#identity-github-summary').textContent=linked?`✓ Linked to GitHub as @${open.profile.login} (checked ${linked})`:'Link your key to GitHub';
+        ($('#identity-github-part') as HTMLDetailsElement).open=!linked;}
       if(open&&!$('#identity-change-avatar').innerHTML){$('#identity-change-avatar').innerHTML=chooserMarkup('change',open.profile.avatar,esc);
         wireChooser($('#identity-change-avatar'),'change',esc);}
     };
@@ -274,6 +299,7 @@ export function installIdentity(button:HTMLButtonElement,esc:Escape){
         if(r.status===404)return tell(`GitHub has no account named @${login}.`,'is-bad');
         if(!r.ok)return tell(`GitHub answered ${r.status}; try again in a while.`,'');
         const hit=keyPublished(ssh,await r.json() as {key?:unknown;created_at?:unknown}[]);
+        rememberLink(open!.publicKey,login,!!hit);
         tell(hit?`✓ Linked: @${login} has published this key on GitHub${hit.at?` (added ${new Date(hit.at).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})})`:''}.`
           :`Not among @${login}'s signing keys yet. Check that the key type was Signing Key, then check again.`,hit?'is-good':'is-bad');
       }catch{tell('Could not reach GitHub: offline, or blocked.','');}

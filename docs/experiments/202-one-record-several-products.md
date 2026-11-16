@@ -383,3 +383,57 @@ exported as SVG, the specification itself not offered. Each is feasible with wha
 **The mock-up judged, 2026-11-15:** the practitioner, of `demo-drafts/south-london-mockup.md` (objectives from the
 workflow questions, components attached to statements, attachments listed): *"Mockup looks OK."* It stands as the end
 state the build works towards. Gaps 13 to 15 were added to the table above from it.
+
+## The build design, from the mock-up (written before the code), 2026-11-15
+
+**Admission review, D1.** No new widget. Three things extend: the project (what it writes towards), the note (its role,
+its forms, what it supports) and the product formats (an outline of slots, not only headings). The person asks for it
+by name: *"the role for the notes has to be picked early so the outline … guides what form the notes take, the length
+of each note, and where they go."*
+
+| Part | What it is | Built on |
+| --- | --- | --- |
+| **Targets** | `Project.targets`: the formats the project writes towards, chosen with its question in New project and on the Project tab; none is allowed | the formats of `widgets/report-formats.json` and the publication |
+| **Roles** | A note's role, product-independent and finer than a section: objectives, data sources, case definition, study design, measures, matching, a result for an objective, principal finding, comparison with the original, limitation, conclusion, key messages, … The section follows from the role. A note may be unplaced | the note's existing function (`fn`: rationale, method, source, limitation …), which becomes the role; declared beside the formats' roles |
+| **The outline** | Each format declares slots, each a role with a length and a prompt; Notes shows the union for the project's targets, each slot saying which targets use it and its length in each, filled or empty; coverage per target | the formats' sections and prompts |
+| **Objectives** | A target's objectives are chosen from the project's workflow questions, in order; each is a result slot, filled by that workflow's components and the person's answering sentence | workflows named as questions |
+| **Components** | A table, chart or map attaches to the note it supports, in any section, numbered in reading order | today's figure per output, filed by section |
+| **Forms** | A note may carry a short form per target; a step's note declares a full and a short form, written by its widget | 202's planned versions per product |
+| **Attachments** | Each component exports its data: CSV, GeoPackage, Vega-Lite specification and SVG | today's SVG, PNG and GeoTIFF |
+| **The page** | Notes and components as blocks to arrange, keep or leave out, resize and wrap, per target, before the PDF | today's width and place per figure |
+
+| Distinction | Enforced as |
+| --- | --- |
+| A role is the note's, a heading the product's | **hard stop**: a note stores a role, never a format's heading |
+| Nothing a target leaves out is lost from the record | **run-time check**: unused notes listed per target |
+| A result answers a stated objective | **validation rule**: a result slot names its workflow |
+| Fieldwork drafts none of the narrative | **out-of-scope decision**: prompts and lengths, never sentences |
+
+**Stages, each a release:** (A) targets on the project, roles on notes, the outline in Notes with coverage per target;
+(B) objectives from workflow questions, and components attached to the notes they support; (C) short forms per target,
+and each widget's note given its role and a short form; (D) the page of blocks, and the render from the outline;
+(E) attachments.
+
+**What it commits to, before the result:** South London built to the mock-up through the application, as the test of
+each stage: after (A) its outline shows the mock-up's 23 slots and their state; after (B) its three objectives and their
+components; after (D) a render the practitioner judges against the mock-up. **The observation that can come out
+badly:** whether writing to a slot helps a practitioner write the paper, or feels like filling in a form.
+
+**Not established:** whether the role set holds beyond South London (the sit rep and MMWR demos are the next tests);
+how a note's role and its existing section are reconciled for notes written before roles; whether a target's cut-off
+(gap 14) belongs to the target or to the runs it reads.
+
+## Help with the writing: checks that flag, not a model that rewrites, 2026-11-15
+
+The practitioner: *"At this point is it worth exploring a small language model to help with formatting, grammar and
+corrections like MS Word does?"* Decided, on the practitioner's *"Yes record in 202"*:
+
+| Help | Decision | Why |
+| --- | --- | --- |
+| The browser's own spelling check in every writing box | **In**, made explicit on every textarea (one sets it today; the rest rely on the browser's default) | Free, offline, in the person's language |
+| Checks that flag and never rewrite: long sentences, passive voice, repeated words, jargon, each with its reason | **In**, with Stage A, if a small open library fits (licence and size to be read first; the retext family is one candidate) | Deterministic, explainable, kilobytes, offline; matches the project's plain-language rules |
+| Checks only Fieldwork can make: a number in the text that no longer matches the run (gap 5), a unit that disagrees with the step's, a figure cited that does not exist, a note over its slot's length | **In**, with Stages A to C | They read the record; no general tool can |
+| A small language model in the browser, correcting grammar and wording | **Set aside** | Hundreds of megabytes to a gigabyte to download and a recent GPU to run, wrong for low-resource settings; it rewrites rather than flags, and a "correction" can change a scientific sentence's meaning; and it works against two of the project's principles, that people write the notes and Fieldwork drafts none of it, and that AI comes in only where it builds a trainee's reasoning, never where it replaces it |
+
+**What would reopen it:** a case where a model builds reasoning or reaches people the record otherwise cannot, such as
+translating a sit rep into a local language; it would be its own experiment, judged on that case.

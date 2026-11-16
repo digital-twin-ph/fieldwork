@@ -99,6 +99,30 @@ the two flags are what 78 unadjusted daily looks give by chance. The practitione
 0.05 line, beside the cases known. With it, the 1824 cadastral sheet under *Clusters over the village* (the practitioner,
 the same day: "Yes, the 1824 sheet").
 
+**A major item, this week (the practitioner, 2026-11-15): onboarding training materials for an Advanced FETP graduate
+from Sierra Leone**, who is to support Fieldwork's development: *"I am supposed to train an Advanced FETP graduate from
+Sierra Leone how to support the development of FieldWork. At some point, this week I need to develop onboarding
+training materials. This important step could help with FW field testing."* Settled the same day: the graduate's
+role is **field testing, worked examples, review and validation, code contributions and localisation**; the materials
+are **guided modules** (each a goal, a hands-on exercise in Fieldwork and a check); they live in **a new repository**,
+which the practitioner creates (repository creation is a human action). The Sierra Leone measles example, made from that
+country's FETP line list, is the natural first exercise; its rules hold throughout (the original FETP file in no
+repository; no free text from it printed).
+
+**And with it, collaborative projects (the practitioner, the same day):** *"This also means we have to start working on
+collaborative projects, because this is how future worked examples are going to be developed."* Experiment
+[150](docs/experiments/150-can-several-authors-collaborate-in-a-project-repository.md) built the export (a project as
+a repository, one file per workflow, one note per object, authors by GitHub login) and decided conflicts are made rare
+and legible, not merged; **reading a repository back into Fieldwork is unbuilt**, which is what blocks a second author.
+Identity first (the practitioner: *"we have to strengthen the concept of identity within FW, perhaps using Open Science as
+a platform (e.g., identities - ORCID, GitHub, etc.)"* and *"We have to develop an encrypted identity file which user loads
+when identity requiring activities are active"*, *"Identity only"*): experiment
+[219](docs/experiments/219-an-identity-you-carry.md), an encrypted identity file carrying the profile (name, GitHub,
+ORCID, ROR affiliation, CRediT roles), its attestations and a signing key, loaded only for identity-requiring work.
+Needed, in order: (0) the identity file of 219; (1) read a project repository back; (2) show a conflict legibly, per file, two versions side by side
+for a person to choose; (3) a contribution path (branch or fork, work in Fieldwork, export, pull request, review),
+which onboarding modules 4 and 6 teach; (4) 150's second-author pilot, with the graduate as the second author.
+
 **Next, in this order, set 2026-11-15:** (1) the Notes maps below; (2) **the draft document configurable**
 ([202](docs/experiments/202-one-record-several-products.md), dated section; the practitioner: *"I would do this before ABM
 spike"*, and *"The above can partly close the render experiment"*): notes' text and images resizable, so figures sit side
@@ -1649,6 +1673,20 @@ contrast after Sierra Leone"*. The first pass is a review, not a build:
 _Carried over whole from the root `TODO.md` of 2026-10-10 in the merge above, headings
 demoted one level and nothing else changed. An item here is a decision to do it later._
 
+
+### Fieldwork in other languages: localisation, not a model (asked 2026-11-15)
+
+The practitioner, on translation for Africa: *"The interface is more deterministic in terms of translation, and so
+are manuals and training materials."* Three parts, all fixed text, translated once, reviewed by a speaker and kept as
+files, with no model at run time (a translation tool may help draft at authoring time, never ship unreviewed):
+(1) **interface labels**, today written inline in English throughout `src/`, every page `lang="en"`, so a large
+retrofit into per-language string files; (2) **manual pages and training materials**, per-language Markdown beside the
+English, compiled as now; (3) **the steps' machine notes**, which widgets compose from templates and so can be given
+templates per language. The person's own writing stays in their language; a draft's language follows the project.
+**Order:** French and Portuguese (the WHO Africa region's working languages with English), then Arabic (which needs
+right-to-left layout) and Swahili (an African Union working language). Speaker numbers and what WHO's Africa region and
+Africa CDC publish in are from general knowledge and to be checked at source before this is scheduled. Related: 202,
+*Help with the writing* (a model set aside; translation of a sit rep named as what could reopen it).
 ### Search a satellite catalog: keep the full files, so they are not downloaded again (asked 2026-11-05)
 
 The practitioner, 2026-11-05: *"For STAC widget can we have the option to download the full files? Not urgent but

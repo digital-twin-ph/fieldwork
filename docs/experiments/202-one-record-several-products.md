@@ -308,3 +308,27 @@ state written first, the whole paper as a mock-up with each paragraph marked by 
 step's note, a figure, or nothing yet; (3) the practitioner's judgement of it; (4) working back to the notes: authored
 notes to write or reshape (drafted for the practitioner to edit), machine notes that need a short form for a
 publication (a change to the widgets that write them), notes the paper does not carry.
+
+## Gaps in the model, found 2026-11-15
+
+The practitioner: *"This is an important DE moment, when we discover gaps in our underlying model. What gaps still
+exist for us to bridge the gap between what we have and that end?"* Read off South London's 22-page render:
+
+| # | Gap | Where it sits |
+| --- | --- | --- |
+| 1 | No narrative layer: a note is filed by IMRaD section only, so the render lays the record end to end; nothing records what a paragraph argues and which notes, figures and numbers are its evidence (`relatesTo` exists and the render ignores it) | the note |
+| 2 | No order within a section beyond the order steps ran | the note |
+| 3 | One register: each step writes its note once, as a full technical account; the full, short and one-line forms designed above were not built | the note, and each widget that writes one |
+| 4 | Methods are per step, not per method: every Select, Relate and rule writes a sentence; no finer function within Methods (data, case definition, analysis, statistics) to gather them by | the note's function vocabulary |
+| 5 | Numbers in written text are typed, not bound to the computed value, so a rerun that changes one goes unnoticed | the note |
+| 6 | Quotations overlap and are cut at their edges (one sentence printed twice; one cut at "(No.") | quoted notes |
+| 7 | **No outline**: a product has sections and prompts, but no statement of what each section must argue, so nothing can say which points have material and which are missing. The "end in mind" has no home | the product |
+| 8 | No editorial selection: every output a figure, every formula in the appendix, every table whole | the product |
+| 9 | Captions are machine descriptions; a figure in Results has no authored caption, as a note's image has | the product, per figure |
+| 10 | No cross-references: no "Figure 2" cited in the text; quoted sources not cited in the text | the product |
+| 11 | No working page: blocks to move, keep, resize and wrap text around before the PDF | the surface |
+| 12 | Guidance per section, not per point of the argument | the surface |
+
+**Most consequential:** 7, then 1, 3 and 9; the others largely follow once a product has an outline and paragraphs that
+cite their evidence. **Not established:** whether an outline per product is the right shape for "the end in mind";
+the real model paper being sought now is to inform it.

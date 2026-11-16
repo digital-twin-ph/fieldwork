@@ -3,7 +3,7 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## 0.129.0 — In development
+## 0.129.0 — 2026-11-16
 
 - **Objectives first, then what answers them.** A new project can write its objectives before it has any workflow.
   The outline shows each objective: whether a note answers it, how many tables, charts and maps support it, and which

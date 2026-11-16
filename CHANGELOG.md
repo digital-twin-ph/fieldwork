@@ -3,7 +3,7 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## 0.130.0 — In development
+## 0.130.0 — 2026-11-16
 
 - **Identity, apart from Credentials.** The **Identity** button, top right in the header where the placeholder circle
   stood, makes your identity file (name, GitHub login, ORCID iD with its check digit verified, a signing key), opens it

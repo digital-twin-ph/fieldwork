@@ -427,16 +427,12 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.33.1",
+   "version": "0.33.2",
    "released": "2026-11-15",
    "changes": [
     {
      "kind": "patch",
-     "description": "A locator names the whole map in its frame: the study area connected as the map's area, such as New York State, in the top-left corner at the page's 15 px on a white backing. The practitioner, 2026-11-15: \"We should label the admin boundary for the map inset\"."
-    },
-    {
-     "kind": "patch",
-     "description": "A study area wired beside polygon layers is drawn under them on the static figure, and the figure is framed to take it in. Found on a space-time scan of Sierra Leone (built and withdrawn the same day), whose circles were drawn on blank ground, the country named in the Sources line and on no figure; a polygon map with no area wired is drawn as before."
+     "description": "The figure in Notes and the downloaded SVG are the map in Results: a shaded map keeps the key line under its ramp, saying what the shade is and how it was classed (\"5 quantile classes, about equal counts, so the shade shows rank\"), which the figure had stripped while keeping the ramp, so it showed the classes twice and their meaning nowhere; the legend's entries run along a line, each as wide as its label, rather than in two fixed columns; and the heading sits closer to the map. The practitioner, 2026-11-14: each static map in Results \"is more complete\" than the same map in Notes."
     }
    ],
    "breaking": false,

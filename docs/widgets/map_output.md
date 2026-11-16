@@ -186,6 +186,9 @@ Salmonella's Länder over OpenStreetMap they had lain on Switzerland's tiles and
 **Whole numbers are keyed as whole numbers.** Where every value is a whole number, such as a count of cases, each
 class is labelled under its shade with the values it holds, "2 to 5", rather than with the edges between shades.
 
+**The figure in Notes and the downloaded SVG are the map in Results**, with its title above and its sources below: the
+key's line saying what the shade is and how it was classed stays under the ramp, and the classes run along one line.
+
 ## A study area under polygons
 
 Where a Study area is connected beside polygon layers, such as a space-time scan's clusters, the static figure draws the

@@ -105,7 +105,9 @@ spike"*, and *"The above can partly close the render experiment"*): notes' text 
 by side or inserted beside text as in Word; the draft shown as the publication looks; one example each of a publication,
 a surveillance report and a sit rep; (3) the ABM spike.
 
-**Found 2026-11-14, not yet done:** each static map in Results is more complete and professional than the same map in
+**Done 2026-11-15 (Map 0.33.2):** compared on Salmonella, South London and MERS, the Notes figure had lost the key's line
+under a shaded map's ramp and listed its classes again in two loose columns; both fixed in the figure Notes and the SVG
+download share. **Found 2026-11-14:** each static map in Results is more complete and professional than the same map in
 Notes (the practitioner: "still needs improvement"); compare the two renderers and make Notes draw what Results draws.
 **Done 2026-11-15 (0.125.1):** NYC's diagram of how ground-station and satellite measurements relate, as an authored
 note in the Introduction (the practitioner's request, same day).

@@ -1,6 +1,6 @@
 # 189 · A measles line list, made safe to teach with, and its facilities found
 
-_Created 2026-11-08 · Updated 2026-11-08_
+_Created 2026-11-08 · Updated 2026-11-15_
 
 **Status:** asked. The data are de-identified and semi-synthetic in
 [example-2019-sierra-leone-measles](https://github.com/digital-twin-ph/example-2019-sierra-leone-measles), **public

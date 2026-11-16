@@ -264,15 +264,25 @@ export function mapPresentation(node:WorkflowNode<'map_output'>,output:Output,wo
 export function standaloneMapSvg(content:string,viewBox:string,spec:MapPresentation,frame?:{metresPerPixel?:number}):string{
   // ONE KEY, NOT TWO (2026-11-14): a categorical plot draws its classes and a key line at the foot of its own frame, over
   // the map, for the page; a figure that draws its own key says the same thing below the map, so the plot's is left out.
-  if(spec?.legend)content=content.replace(/<(rect|text) data-plot-key="(class|line)"[^>]*?(\/>|>[^<]*<\/(rect|text)>)/g,'');
+  // BUT A SHADED MAP'S LINE STAYS (2026-11-15): under a ramp it says what the shade is and how it was classed ("5 quantile
+  // classes, about equal counts, so the shade shows rank"), which no entry below says. Results shows it; Notes and the
+  // SVG download dropped it, and kept the ramp, so they showed the classes twice and their meaning nowhere.
+  const ramped=content.includes('data-plot-key-band')&&!content.includes('data-plot-key="class"');
+  if(spec?.legend)content=content.replace(ramped?/<(rect|text) data-plot-key="class"[^>]*?(\/>|>[^<]*<\/(rect|text)>)/g
+    :/<(rect|text) data-plot-key="(class|line)"[^>]*?(\/>|>[^<]*<\/(rect|text)>)/g,'');
   const escape=(s:string)=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
   const lines=(value:string,max:number)=>value.match(new RegExp(`.{1,${max}}(?:\\s|$)|.{1,${max}}`,'g'))?.map(line=>line.trim())||[];
   const t=FIGURE_TYPE;
   const titleLines=lines(spec.title,60),subtitleLines=lines(spec.subtitle,90);
-  const width=850,height=Number(viewBox.trim().split(/\s+/)[3])||295,base=52+titleLines.length*24+subtitleLines.length*19,legendRows=spec.legend?Math.ceil(spec.items.length/2):0,noteLines=lines(spec.sourceNote,94);
+  // THE ENTRIES FLOW ALONG A LINE, as Results sets them, each as wide as its label, rather than in two fixed columns that
+  // left a short label half a figure from its neighbour (2026-11-15).
+  const placed:{x:number;row:number}[]=[];
+  {let x=28,row=0;for(const item of spec.legend?spec.items:[]){const w=17+Math.ceil(item.label.length*7.4)+22;
+    if(x>28&&x+w>850-20){x=28;row++;}placed.push({x,row});x+=w;}}
+  const width=850,height=Number(viewBox.trim().split(/\s+/)[3])||295,base=40+titleLines.length*24+subtitleLines.length*19,legendRows=spec.legend&&placed.length?placed[placed.length-1]!.row+1:0,noteLines=lines(spec.sourceNote,94);
   const creditLines=spec.attribution?lines(spec.attribution,94):[];
   const footer=38+legendRows*22+(noteLines.length+creditLines.length)*19,total=base+height+footer;
-  const legend=spec.legend?spec.items.map((item,i)=>{const x=28+(i%2)*402,y=base+height+24+Math.floor(i/2)*22;
+  const legend=spec.legend?spec.items.map((item,i)=>{const x=placed[i]!.x,y=base+height+24+placed[i]!.row*22;
     return (item.line?`<path d="M${x-2} ${y-4}H${x+8}" stroke="${item.color}" stroke-width="1.6"/><path d="M${x+7} ${y-8}L${x+13} ${y-4}L${x+7} ${y}z" fill="${item.color}"/>`
       :`<path d="${markPath(item.shape||'circle',x+5,y-4,5)}" fill="${item.hollow?'none':item.color}" stroke="${item.hollow?item.color:FIGURE_ROLE.quietInk}" stroke-width="1.4"/>`)
       +`<text x="${x+17}" y="${y}" font-size="${t.legend}" fill="${FIGURE_ROLE.ink}">${escape(item.label)}</text>`;}).join(''):'';

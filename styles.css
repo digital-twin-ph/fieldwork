@@ -1568,3 +1568,16 @@ th .meaning{font-weight:400;white-space:normal}
 .identity-tabs button{font-size:15px;padding:7px 14px}
 .identity-tabs button.active{font-weight:700;border:1px solid var(--accent-4,var(--green))}
 #identity-create-part,#identity-open-part{border-top:0;padding-top:0}
+.field-check{margin:2px 0 6px;font-size:14px;min-height:1.2em}
+.field-check.is-good{color:var(--accent-4,#176b59)}
+.field-check.is-bad{color:var(--danger-2,#a8201a);font-weight:600}
+.lookup-row{display:flex;gap:8px;align-items:center}
+.lookup-row input{flex:1;min-width:0}
+.identity-steps{display:grid;gap:8px;padding-left:22px;font-size:14px}
+.identity-ssh-key{display:block;word-break:break-all;font-size:13px;background:var(--surface-raised-12,#f3f3f0);padding:6px;border-radius:4px;margin:4px 0}
+.identity-done{color:var(--accent-4,#176b59);font-weight:700}
+.identity-github{display:grid;gap:6px;border-top:1px solid var(--line-soft-2);padding-top:10px}
+.identity-github h4{margin:0;font-size:16px}
+.identity-qr{display:flex;gap:12px;align-items:center;margin-top:8px}
+.identity-qr p{font-size:14px;margin:0}
+.identity-qr svg{background:#fff;padding:6px;border-radius:4px;flex:none}

@@ -1,2 +1,2 @@
-import{a,b,c,d,e}from"./chunks/chunk-DKLDTSLP.js";import"./chunks/chunk-LRQF22IZ.js";import"./chunks/chunk-ZMEPJGZL.js";import"./chunks/chunk-KVMUXFPB.js";export{c as identityFileName,d as identityLabel,e as installIdentity,b as onIdentityChange,a as openIdentity};
+import{a,b,c,d,e,f}from"./chunks/chunk-RGWQ2C3A.js";import"./chunks/chunk-RQQPAANV.js";import"./chunks/chunk-R24Z5UO6.js";import"./chunks/chunk-ZMEPJGZL.js";import"./chunks/chunk-YUV2LIIV.js";import"./chunks/chunk-DW7YEB2H.js";import"./chunks/chunk-KVMUXFPB.js";export{c as identityFileName,e as identityLabel,f as installIdentity,d as keyPageUrl,b as onIdentityChange,a as openIdentity};
 //# sourceMappingURL=identity-ui.js.map

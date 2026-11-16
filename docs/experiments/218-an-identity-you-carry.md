@@ -188,6 +188,17 @@ token:
 So confirmation can move into the Identity dialog as *Confirm with GitHub* by the published key, and Credentials
 keeps only what acts on a service. Not built.
 
+**Tried by hand the same day, on a local copy (rapid cycle).** What the practitioner found, and what changed: *Make*
+was a collapsed line nobody saw (now two tabs, Make or Open); a passphrase mismatch said nothing where they looked
+(now checked as typed, and said beside the button); opening a file gave no feedback (now said at the top); the open
+identity's view showed the Make form and a second avatar chooser (now one view per state); the file is saved as
+`FWID-<name>.fwid`; a GitHub login and an ORCID iD are checked as typed, and **Look up** shows the name each service has
+on record, found and not verified (both answer a browser with no token: ORCID's public API and GitHub's users API,
+measured with test identifiers). **Link your key to GitHub** shows the key in SSH form with Copy and a QR code. A code
+holding the key as text was offered by the phone as a web search; it now holds a link to `key.html` on Fieldwork's
+site, with the key after `#`, which no server receives. Found in testing: on WebKit the app's service worker carried
+the lookups past the test's stubs to the real services; the test now blocks it.
+
 ## What each file holds, planned 2026-11-16
 
 The practitioner: *"So let's also plan what goes into the identity and credentials file. For example, identify files

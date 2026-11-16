@@ -5,6 +5,8 @@ import {collectPageErrors} from './page-errors.mjs';
 /** WHO DID WHAT (experiment 218, the spike of 2026-11-16): an identity file made in the Identity dialog, a note signed
  *  with it and checked offline, the file opened again after a lock, and nothing of the identity left in storage. */
 const PASS='correct horse battery staple';
+// The offline service worker would make the lookups itself, past the stubs below, and reach the real services.
+test.use({serviceWorkers:'block'});
 
 test('an identity made here signs a note, the signature checks, and storage keeps none of the identity',async({page},info)=>{
   const errors=collectPageErrors(page);
@@ -28,11 +30,33 @@ test('an identity made here signs a note, the signature checks, and storage keep
   await dialog.locator('#identity-name').fill('Ada Lovelace');
   await dialog.locator('#identity-login').fill('ada');
   await dialog.locator('#identity-orcid').fill('0000-0002-1825-0098');
+  await expect(dialog.locator('#identity-orcid-check')).toHaveText('The check digit does not match: a digit is mistyped.');
+  // Looked up only when asked: the name on record, from a stand-in for ORCID's public answer.
+  await page.route('https://pub.orcid.org/**',route=>route.fulfill({status:200,contentType:'application/json',
+    headers:{'access-control-allow-origin':'*'},body:JSON.stringify({name:{'given-names':{value:'Josiah'},'family-name':{value:'Carberry'}}})}));
+  await dialog.locator('#identity-login').fill('-ada');
+  await expect(dialog.locator('#identity-login-check')).toContainText('A GitHub login is');
+  await dialog.locator('#identity-login').fill('ada');
+  // Checked as it is typed: too short, then a second passphrase that differs, then one that matches.
+  await dialog.locator('#identity-new-passphrase').fill('short');
+  await expect(dialog.locator('#identity-length')).toHaveText('7 more characters needed.');
   await dialog.locator('#identity-new-passphrase').fill(PASS);
-  await dialog.locator('#identity-confirm').fill(PASS);
+  await expect(dialog.locator('#identity-length')).toHaveText('Long enough.');
+  await dialog.locator('#identity-confirm').fill('correct horse');
+  await expect(dialog.locator('#identity-match')).toHaveText('Keep typing: not the whole passphrase yet.');
+  await dialog.locator('#identity-confirm').fill('correct horse battery stable');
+  await expect(dialog.locator('#identity-match')).toHaveText('The passphrases do not match.');
   await dialog.locator('#identity-create').click();
-  await expect(dialog.locator('#identity-error')).toContainText('check digit');
+  await expect(dialog.locator('#identity-create-error')).toContainText('check digit');
   await dialog.locator('#identity-orcid').fill('0000-0002-1825-0097');
+  await expect(dialog.locator('#identity-orcid-check')).toHaveText('The check digit is right.');
+  await dialog.locator('#identity-orcid-lookup').click();
+  await expect(dialog.locator('#identity-orcid-check')).toHaveText('ORCID record found: Josiah Carberry. Is this you?');
+  // Pressed with passphrases that differ: said beside the button, and nothing is made.
+  await dialog.locator('#identity-create').click();
+  await expect(dialog.locator('#identity-create-error')).toHaveText('The two passphrases do not match. Type the second again.');
+  await dialog.locator('#identity-confirm').fill(PASS);
+  await expect(dialog.locator('#identity-match')).toHaveText('The passphrases match.');
   // An avatar from Fieldwork's set: the water pump, in teal.
   await dialog.locator('.avatar-colour:has(input[value="teal"])').click();
   await dialog.locator('.avatar-option:has(input[value="pump"])').click();
@@ -50,6 +74,20 @@ test('an identity made here signs a note, the signature checks, and storage keep
   if(info.project.name==='chromium'){await dialog.locator('#identity-status').scrollIntoViewIfNeeded();
     await dialog.screenshot({path:'test-results/identity-open.png'});
 }
+  // LINKED TO GITHUB: the key shown in SSH form, and found among the account's signing keys (GitHub's answer stubbed).
+  await expect(dialog.locator('#identity-github-part')).toBeVisible();
+  await expect(dialog.locator('#identity-ssh-qr svg')).toHaveCount(1);
+  const ssh=(await dialog.locator('#identity-ssh-key').textContent()).trim();
+  expect(ssh).toMatch(/^ssh-ed25519 AAAA\S+ FWID Ada Lovelace$/);
+  let keys=[];
+  await page.route('https://api.github.com/users/ada/ssh_signing_keys',route=>{return route.fulfill({status:200,contentType:'application/json',
+    headers:{'access-control-allow-origin':'*'},body:JSON.stringify(keys)});});
+  await dialog.locator('#identity-ssh-check').click();
+  await expect(dialog.locator('#identity-ssh-result')).toContainText("Not among @ada's signing keys yet");
+  keys=[{id:1,key:ssh.split(' ').slice(0,2).join(' '),title:'Fieldwork',created_at:'2026-11-16T10:00:00Z'}];
+  await dialog.locator('#identity-ssh-check').click();
+  await expect(dialog.locator('#identity-ssh-result')).toHaveText('✓ Linked: @ada has published this key on GitHub (added 16 November 2026).');
+  if(info.project.name==='chromium')await dialog.locator('#identity-github-part').screenshot({path:'test-results/identity-github.png'});
   await dialog.locator('#identity-close').click();
 
   if(info.project.name==='chromium')await page.locator('header').first().screenshot({path:'test-results/identity-button.png'});
@@ -88,9 +126,14 @@ test('an identity made here signs a note, the signature checks, and storage keep
   await dialog.locator('#identity-file').setInputFiles({name:'FWID-Ada-Lovelace.fwid',mimeType:'application/json',buffer:Buffer.from(file)});
   await dialog.locator('#identity-passphrase').fill('not the passphrase');
   await dialog.locator('#identity-open').click();
-  await expect(dialog.locator('#identity-error')).toContainText('passphrase does not open');
+  await expect(dialog.locator('#identity-open-result')).toContainText('passphrase does not open');
   await dialog.locator('#identity-passphrase').fill(PASS);
   await dialog.locator('#identity-open').click();
+  await expect(dialog.locator('#identity-status')).toContainText('✓ Opened from your file. Open: Ada Lovelace · @ada · ORCID 0000-0002-1825-0097.');
+  // With an identity open, the dialog is about it only: no Make or Open, one avatar chooser.
+  await expect(dialog.locator('.identity-tabs')).toBeHidden();
+  await expect(dialog.locator('#identity-create-part')).toBeHidden();
+  await expect(dialog.locator('.avatar-chooser:visible')).toHaveCount(0);
   await expect(page.locator('#identity-button')).toHaveAttribute('aria-label','Identity: Ada Lovelace');
 
   // NOTHING OF THE IDENTITY IN STORAGE: not the file, not the passphrase. The public key is in the note's versions by
@@ -105,4 +148,17 @@ test('an identity made here signs a note, the signature checks, and storage keep
     expect(where).not.toContain(PASS);expect(where).not.toContain(sealed);expect(where).not.toContain('fieldwork/identity/1');}
   expect(kept.dbs).not.toMatch(/identity/i);
   expect(errors).toEqual([]);
+});
+
+test('the key page a phone opens from the QR code shows the key, offers Copy and GitHub, and says when none is given',async({page})=>{
+  const key='AAAAC3NzaC1lZDI1NTE5AAAAIMuMl5Lp/2DSpHaSLa7tm+PnQ3fk+BYZpSTExTBckjt7';
+  await page.goto(`/key.html#k=${key}`);
+  await expect(page.locator('#key')).toHaveText(`ssh-ed25519 ${key}`);
+  await expect(page.getByRole('button',{name:'Copy the key'})).toBeVisible();
+  await expect(page.getByRole('link',{name:"Open GitHub's page for a new key"})).toHaveAttribute('href','https://github.com/settings/ssh/new');
+  await page.setViewportSize({width:390,height:844});
+  await page.screenshot({path:'test-results/key-page.png'});
+  await page.goto('/key.html#k=not-a-key');
+  await expect(page.locator('#missing')).toBeVisible();
+  await expect(page.locator('#found')).toBeHidden();
 });

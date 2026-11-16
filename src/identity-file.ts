@@ -199,3 +199,23 @@ export function readNoteVersions(raw:unknown):NoteVersion[]{
   }
   return out;
 }
+
+/** THE PUBLIC KEY IN SSH'S FORM, for GitHub's *Signing Key* (experiment 218, step 7): `ssh-ed25519`, then the key as SSH
+ *  writes it (a length-prefixed type name and the 32 raw bytes, base64), then a comment. Only an Ed25519 key has one
+ *  here; a P-256 key would need SSH's ECDSA form, not written yet, and gets null. */
+export function sshPublicKey(identity:Pick<OpenIdentity,'algorithm'|'publicKey'|'profile'>):string|null{
+  if(identity.algorithm!=='Ed25519')return null;
+  const raw=unb64(identity.publicKey).slice(-32);
+  const field=(bytes:Uint8Array)=>{const out=new Uint8Array(4+bytes.length);new DataView(out.buffer).setUint32(0,bytes.length);out.set(bytes,4);return out;};
+  const type=enc.encode('ssh-ed25519'),a=field(type),b=field(raw);
+  const blob=new Uint8Array(a.length+b.length);blob.set(a);blob.set(b,a.length);
+  return `ssh-ed25519 ${b64(blob)} FWID ${identity.profile.name}`;
+}
+/** WHETHER AN ACCOUNT HAS PUBLISHED THIS KEY: compared by type and key, the comment ignored, against the keys GitHub
+ *  lists for the login (`/users/<login>/ssh_signing_keys`, public). */
+export function keyPublished(ssh:string,listed:readonly {key?:unknown;created_at?:unknown}[]):{at?:string}|null{
+  const mine=ssh.split(' ').slice(0,2).join(' ');
+  const hit=listed.find(k=>typeof k.key==='string'&&k.key.trim().split(/\s+/).slice(0,2).join(' ')===mine);
+  return hit?{...(typeof hit.created_at==='string'?{at:hit.created_at}:{})}:null;
+}
+

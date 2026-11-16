@@ -7,7 +7,7 @@ const root=fileURLToPath(new URL('../',import.meta.url));
 const destination=path.resolve(root,'_site');
 if(path.dirname(destination)!==path.resolve(root))throw new Error('Invalid staging directory');
 const manifest=JSON.parse(await readFile(path.join(root,'build/asset-manifest.json'),'utf8'));
-const files=new Set(['sw.js','LICENSE','build/asset-manifest.json']);
+const files=new Set(['sw.js','LICENSE','build/asset-manifest.json','key.html']);
 for(const asset of [...manifest.assets,...(manifest.online??[])]){
   const file=asset==='./'?'index.html':asset.replace(/^\.\//,'');
   if(file.includes('\\')||file.split('/').some(part=>part.startsWith('.')||!part)||path.isAbsolute(file))throw new Error('Invalid asset path');

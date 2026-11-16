@@ -96,3 +96,24 @@ test('the key pattern: the same key, the same picture; another key, another pict
   assert.equal(av.keyPatternSvg(a.identity.publicKey),av.keyPatternSvg(a.identity.publicKey));
   assert.notEqual(av.keyPatternSvg(a.identity.publicKey),av.keyPatternSvg(b.identity.publicKey));
 });
+
+test('the key in SSH form for GitHub, and found among the keys an account lists, whatever the comment',async()=>{
+  const {identity}=await id.createIdentityFile({name:'Ada Lovelace'},PASS,FAST);
+  const ssh=id.sshPublicKey(identity);
+  assert.match(ssh,/^ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI[A-Za-z0-9+/]{43} FWID Ada Lovelace$/);
+  const [type,key]=ssh.split(' ');
+  assert.deepEqual(id.keyPublished(ssh,[{key:'ssh-ed25519 AAAAother'},{key:`${type} ${key}`,created_at:'2026-11-16T10:00:00Z'}]),{at:'2026-11-16T10:00:00Z'});
+  assert.equal(id.keyPublished(ssh,[{key:'ssh-ed25519 AAAAother'}]),null);
+  const p256=await id.createIdentityFile({name:'Ada'},PASS,{...FAST,prefer:['ECDSA-P256']});
+  assert.equal(id.sshPublicKey(p256.identity),null,'no SSH form written for P-256 yet');
+});
+
+test('the key reaches a phone as a link to key.html, the key after #; a QR code holds only an address',async()=>{
+  const qr=await import('../build/qr.js');
+  const {keyPageUrl}=await import('../build/identity-ui.js');
+  const {identity}=await id.createIdentityFile({name:'Zoë'},PASS,FAST);
+  const ssh=id.sshPublicKey(identity),url=keyPageUrl(ssh);
+  assert.equal(url,`https://digital-twin-ph.github.io/fieldwork/key.html#k=${ssh.split(' ')[1]}`);
+  assert.ok(qr.qrMatrix(url).length>20);
+  assert.throws(()=>qr.qrMatrix(ssh),/https address/,'never the key as text');
+});

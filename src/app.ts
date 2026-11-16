@@ -7596,6 +7596,9 @@ function openProjectDialog(){
   const name=workflow.name||WORKFLOW_LABELS[key]||key;
   adopt.checked=!filed&&workflow.nodes.length>0;
   adopt.disabled=filed;
+  // ONLY WHERE IT IS A CHOICE (the practitioner, 2026-11-16: *"I clicked new project so I expect an empty workflow"*): a
+  // workflow already in a project cannot be moved by this, so the box and its explanation are not shown.
+  (adopt.closest('label') as HTMLElement).hidden=filed;
   $('#project-adopt-label').textContent=filed
     ?`"${name}" is already filed under a project, so a new one starts with an empty workflow.`
     :`Put "${name}" in it, instead of starting with an empty workflow.`;

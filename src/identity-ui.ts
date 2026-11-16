@@ -3,12 +3,16 @@
  *  Apart from Credentials on purpose: an identity is not a credential. Until this, identity came only as a side effect
  *  of unlocking a GitHub token there, under a label that did not say so. The open identity is held here, in memory,
  *  and nowhere else: never in browser storage; locked after fifteen idle minutes and when the page goes. */
-import {createIdentityFile,openIdentityFile,updateIdentityFile,validOrcid,type OpenIdentity} from './identity-file.js';
+import {createIdentityFile,openIdentityFile,updateIdentityFile,validOrcid,sshPublicKey,keyPublished,type OpenIdentity} from './identity-file.js';
 import {AVATAR_COLOURS,AVATAR_ICONS,avatarSvg,iconSvg,keyPatternSvg,type AvatarChoice} from './avatars.js';
 import type {Escape} from './types.js';
+import {validLogin} from './identity.js';
+import {qrSvg} from './qr.js';
 
 const IDLE_MS=15*60*1000;
 let open:OpenIdentity|null=null;
+/** Set for the dialog's next drawing after an identity is opened or made, so it says so where the person looks. */
+let justOpened='';
 let lastActivity=Date.now();
 const listeners=new Set<()=>void>();
 
@@ -30,6 +34,14 @@ function lock(){if(open)set(null);}
  *  file with FWID-<name here>.fwid so it's easy to identify in a folder"*): FWID-, the name with spaces and punctuation as
  *  hyphens, .fwid. */
 export const identityFileName=(name:string)=>`FWID-${name.replace(/[^\p{L}\p{N}]+/gu,'-').replace(/^-|-$/g,'')||'identity'}.fwid`;
+/** THE PAGE A PHONE OPENS FROM THE QR CODE (2026-11-16: a code holding the key as plain text was offered as a web search):
+ *  Fieldwork's own key.html, the key after #, which a browser never sends. On a published Fieldwork, this site's page;
+ *  anywhere else (a local copy a phone cannot reach), the published one. */
+export function keyPageUrl(ssh:string):string{
+  const here=typeof location!=='undefined'&&location.protocol==='https:'?new URL('key.html',location.href).href
+    :'https://digital-twin-ph.github.io/fieldwork/key.html';
+  return `${here}#k=${ssh.split(' ')[1]}`;
+}
 /** The name as a byline: the name, then the GitHub login and ORCID iD where the file carries them. */
 export const identityLabel=(p:{name:string;login?:string;orcid?:string})=>
   [p.name,p.login?`@${p.login}`:'',p.orcid?`ORCID ${p.orcid}`:''].filter(Boolean).join(' · ');
@@ -46,23 +58,41 @@ It is yours to keep, like a key: Fieldwork never stores it. It holds no password
 <section id="identity-open-part" role="tabpanel" aria-labelledby="identity-tab-open">
 <label class="field-label" for="identity-file">Identity file (.fwid)</label><input id="identity-file" type="file" accept=".fwid,application/json">
 <label class="field-label" for="identity-passphrase">Passphrase</label><input id="identity-passphrase" type="password" autocomplete="off">
-<button id="identity-open" class="button primary">Open</button></section>
+<button id="identity-open" class="button primary">Open</button>
+<p id="identity-open-result" class="field-check" role="status" aria-live="polite"></p></section>
 <section id="identity-create-part" role="tabpanel" aria-labelledby="identity-tab-make">
 <label class="field-label" for="identity-name">Your name, as it should appear on a paper</label><input id="identity-name" maxlength="120">
-<label class="field-label" for="identity-login">GitHub login (optional)</label><input id="identity-login" maxlength="39" autocomplete="off">
-<label class="field-label" for="identity-orcid">ORCID iD (optional), such as 0000-0002-1825-0097</label><input id="identity-orcid" maxlength="19" autocomplete="off">
-<label class="field-label" for="identity-new-passphrase">Passphrase, at least 12 characters</label><input id="identity-new-passphrase" type="password" autocomplete="new-password">
-<label class="field-label" for="identity-confirm">The passphrase again</label><input id="identity-confirm" type="password" autocomplete="new-password">
+<label class="field-label" for="identity-login">GitHub login (optional)</label>
+<div class="lookup-row"><input id="identity-login" maxlength="39" autocomplete="off" aria-describedby="identity-login-check"><button type="button" class="button small" id="identity-login-lookup">Look up on GitHub</button></div>
+<p id="identity-login-check" class="field-check" aria-live="polite"></p>
+<label class="field-label" for="identity-orcid">ORCID iD (optional), such as 0000-0002-1825-0097</label>
+<div class="lookup-row"><input id="identity-orcid" maxlength="19" autocomplete="off" aria-describedby="identity-orcid-check"><button type="button" class="button small" id="identity-orcid-lookup">Look up on ORCID</button></div>
+<p id="identity-orcid-check" class="field-check" aria-live="polite"></p>
+<label class="field-label" for="identity-new-passphrase">Passphrase, at least 12 characters</label><input id="identity-new-passphrase" type="password" autocomplete="new-password" aria-describedby="identity-length">
+<p id="identity-length" class="field-check" aria-live="polite"></p>
+<label class="field-label" for="identity-confirm">The passphrase again</label><input id="identity-confirm" type="password" autocomplete="new-password" aria-describedby="identity-match">
+<p id="identity-match" class="field-check" aria-live="polite"></p>
 <div id="identity-new-avatar"></div>
 <p>If you lose the file or forget its passphrase, it cannot be recovered. Keep a copy somewhere safe.</p>
+<p id="identity-create-error" class="field-check is-bad" role="alert" hidden></p>
 <button id="identity-create" class="button primary">Make and save the file</button></section>
+<section id="identity-github-part" class="identity-github" hidden><h4>Link your key to GitHub</h4>
+<p>So anyone can check that the notes you sign are yours, publish your key on your GitHub account as a <strong>signing
+key</strong>. Only the public key leaves Fieldwork; it cannot be used to sign in to GitHub.</p>
+<ol class="identity-steps">
+<li>Copy your key: <code id="identity-ssh-key" class="identity-ssh-key"></code> <button type="button" class="button small" id="identity-ssh-copy">Copy</button>
+<div class="identity-qr"><div id="identity-ssh-qr"></div><p>Or scan it with your phone, if GitHub is open there: it opens a page showing your key, with Copy and a button to GitHub. The key travels in the link and is not sent to any server.</p></div></li>
+<li><a id="identity-ssh-open" href="https://github.com/settings/ssh/new" target="_blank" rel="noopener">Open GitHub's page for a new key</a>, signed in as <strong id="identity-ssh-login"></strong>.</li>
+<li>Set <strong>Key type</strong> to <strong>Signing Key</strong>, paste the key, and press <strong>Add SSH key</strong>.</li>
+<li>Then check: <button type="button" class="button small" id="identity-ssh-check">Check the link</button></li></ol>
+<p id="identity-ssh-result" class="field-check" role="status" aria-live="polite"></p></section>
 <details id="identity-avatar-part" hidden><summary>Change your avatar</summary>
 <p>Your avatar is kept in your identity file, so changing it saves a new file to keep in place of the old one. Choose the
 file and enter its passphrase.</p>
 <div id="identity-change-avatar"></div>
 <label class="field-label" for="identity-change-file">Identity file (.fwid)</label><input id="identity-change-file" type="file" accept=".fwid,application/json">
 <label class="field-label" for="identity-change-passphrase">Passphrase</label><input id="identity-change-passphrase" type="password" autocomplete="off">
-<button id="identity-change" class="button primary">Save the new file</button></details>
+<div><button id="identity-change" class="button primary">Save the new file</button></div></details>
 <p id="identity-error" class="is-failure" role="alert" hidden></p>
 </div>
 <div class="dlg-foot"><button id="identity-lock" class="button">Lock</button><button id="identity-close" class="button grow">Close</button></div>
@@ -105,39 +135,104 @@ export function installIdentity(button:HTMLButtonElement,esc:Escape){
     const d=document.querySelector<HTMLDialogElement>('#identity-dialog')!;
     const $=<T extends HTMLElement>(s:string)=>d.querySelector<T>(s)!;
     const error=$('#identity-error');
-    const fail=(message:string)=>{error.textContent=message;error.hidden=false;};
+    // SAID WHERE THE PERSON IS LOOKING: a problem with making the file beside its button, not at the foot of the dialog.
+    const fail=(message:string,at:HTMLElement=error)=>{at.textContent=message;at.hidden=false;at.scrollIntoView({block:'nearest'});};
+    // THE PASSPHRASE CHECKED AS IT IS TYPED: its length, then whether the second matches the first.
+    const checkPassphrase=()=>{
+      const first=($('#identity-new-passphrase') as HTMLInputElement).value,again=($('#identity-confirm') as HTMLInputElement).value;
+      const length=$('#identity-length'),match=$('#identity-match');
+      length.textContent=!first?'':first.length<12?`${12-first.length} more character${12-first.length===1?'':'s'} needed.`:'Long enough.';
+      length.className=`field-check ${first&&first.length<12?'is-bad':first?'is-good':''}`;
+      match.textContent=!again?'':again===first?'The passphrases match.':first.startsWith(again)?'Keep typing: not the whole passphrase yet.':'The passphrases do not match.';
+      match.className=`field-check ${!again?'':again===first?'is-good':first.startsWith(again)?'':'is-bad'}`;
+      $('#identity-create-error').hidden=true;
+    };
+    for(const id of ['#identity-new-passphrase','#identity-confirm'])$(id).oninput=checkPassphrase;
+    // IDENTIFIERS, CHECKED AS TYPED, offline: a GitHub login by GitHub's rule, an ORCID iD by its check digit.
+    const mark=(el:HTMLElement,text:string,tone:''|'is-good'|'is-bad')=>{el.textContent=text;el.className=`field-check ${tone}`;};
+    const checkLogin=()=>{const v=($('#identity-login') as HTMLInputElement).value.trim(),el=$('#identity-login-check');
+      if(!v)return mark(el,'','');
+      mark(el,validLogin(v)?'':'A GitHub login is letters, digits and single hyphens, up to 39, not starting or ending with a hyphen.',validLogin(v)?'':'is-bad');};
+    const checkOrcid=()=>{const v=($('#identity-orcid') as HTMLInputElement).value.trim(),el=$('#identity-orcid-check');
+      if(!v)return mark(el,'','');
+      if(v.length<19)return mark(el,'Four groups of four, such as 0000-0002-1825-0097.','');
+      mark(el,validOrcid(v)?'The check digit is right.':'The check digit does not match: a digit is mistyped.',validOrcid(v)?'is-good':'is-bad');};
+    $('#identity-login').oninput=checkLogin;$('#identity-orcid').oninput=checkOrcid;
+    // LOOKED UP ONLINE, ONLY WHEN ASKED: the name each service has on record, so the person sees whether it is theirs.
+    // Found is not verified: anyone can type someone else's identifier.
+    const lookup=async(url:string,el:HTMLElement,found:(j:Record<string,unknown>)=>string,missing:string)=>{
+      mark(el,'Looking up…','');
+      try{const r=await fetch(url,{headers:{Accept:'application/json'},cache:'no-store'});
+        if(r.status===404)return mark(el,missing,'is-bad');
+        if(!r.ok)return mark(el,`Could not look it up just now (the service answered ${r.status}).`,'');
+        mark(el,found(await r.json() as Record<string,unknown>),'is-good');}
+      catch{mark(el,'Could not reach the service: offline, or blocked. The identifier is kept as typed.','');}
+    };
+    $('#identity-login-lookup').onclick=()=>{const v=($('#identity-login') as HTMLInputElement).value.trim(),el=$('#identity-login-check');
+      if(!validLogin(v))return checkLogin();
+      void lookup(`https://api.github.com/users/${encodeURIComponent(v)}`,el,j=>`GitHub account found: @${String(j.login)}${j.name?`, ${String(j.name)}`:''}. Is this you?`,
+        `No GitHub account named ${v}.`);};
+    $('#identity-orcid-lookup').onclick=()=>{const v=($('#identity-orcid') as HTMLInputElement).value.trim(),el=$('#identity-orcid-check');
+      if(!validOrcid(v))return checkOrcid();
+      void lookup(`https://pub.orcid.org/v3.0/${v}/person`,el,j=>{
+        const n=(j.name??{}) as {['given-names']?:{value?:string};['family-name']?:{value?:string};['credit-name']?:{value?:string}};
+        const name=n['credit-name']?.value||[n['given-names']?.value,n['family-name']?.value].filter(Boolean).join(' ');
+        return name?`ORCID record found: ${name}. Is this you?`:'ORCID record found; its name is not public.';},
+        `No ORCID record with the iD ${v}.`);};
+    // TWO STATES, NOT ONE FORM (the practitioner, 2026-11-16, of two avatar choosers and two save buttons on screen at
+    // once): with no identity open, Make or Open, as two tabs; with one open, that identity only: linking it to GitHub,
+    // changing its avatar, locking it.
+    let tab:'make'|'open'='make';
     const draw=()=>{
       error.hidden=true;
+      d.querySelector<HTMLElement>('.identity-tabs')!.hidden=!!open;
+      for(const t of d.querySelectorAll<HTMLButtonElement>('[data-identity-tab]')){
+        const on=t.dataset.identityTab===tab;t.classList.toggle('active',on);t.setAttribute('aria-selected',String(on));t.tabIndex=on?0:-1;
+        $(`#${t.getAttribute('aria-controls')}`).hidden=!!open||!on;}
       $('#identity-status').innerHTML=open
-        ?`Open: <strong>${esc(identityLabel(open.profile))}</strong>. Notes you save now are signed (${esc(open.algorithm)}). It locks after 15 minutes without use, and when this tab closes.`
+        ?`${justOpened?`<span class="identity-done">✓ ${esc(justOpened)}</span> `:''}Open: <strong>${esc(identityLabel(open.profile))}</strong>. Notes you save now are signed (${esc(open.algorithm)}). It locks after 15 minutes without use, and when this tab closes.`
         :'No identity is open. Notes you save are kept with their versions, unsigned.';
       ($('#identity-lock') as HTMLButtonElement).disabled=!open;
       $('#identity-avatar').innerHTML=open?avatarSvg(open.profile,48)+`<span class="key-label">${keyPatternSvg(open.publicKey,28)} Your key</span>`:'';
       $('#identity-avatar-part').hidden=!open;
+      // LINK TO GITHUB: offered once an identity with a GitHub login and an Ed25519 key is open.
+      const ssh=open?sshPublicKey(open):null;
+      $('#identity-github-part').hidden=!ssh||!open?.profile.login;
+      if(ssh&&open?.profile.login){$('#identity-ssh-key').textContent=ssh;$('#identity-ssh-login').textContent=`@${open.profile.login}`;
+        $('#identity-ssh-qr').innerHTML=qrSvg(keyPageUrl(ssh),200,'Your public key, as a link for your phone');}
       if(open&&!$('#identity-change-avatar').innerHTML){$('#identity-change-avatar').innerHTML=chooserMarkup('change',open.profile.avatar,esc);
         wireChooser($('#identity-change-avatar'),'change',esc);}
     };
     if(!$('#identity-new-avatar').innerHTML){$('#identity-new-avatar').innerHTML=chooserMarkup('new',undefined,esc);wireChooser($('#identity-new-avatar'),'new',esc);}
-    // MAKE OR OPEN: two tabs, Make first on a device where no identity has been opened, Open once one has.
-    const showTab=(which:'make'|'open')=>{for(const t of d.querySelectorAll<HTMLButtonElement>('[data-identity-tab]')){
-      const on=t.dataset.identityTab===which;t.classList.toggle('active',on);t.setAttribute('aria-selected',String(on));t.tabIndex=on?0:-1;
-      $(`#${t.getAttribute('aria-controls')}`).hidden=!on;}};
-    for(const t of d.querySelectorAll<HTMLButtonElement>('[data-identity-tab]'))t.onclick=()=>showTab(t.dataset.identityTab as 'make'|'open');
-    showTab(openedHere()?'open':'make');
+    for(const t of d.querySelectorAll<HTMLButtonElement>('[data-identity-tab]'))t.onclick=()=>{tab=t.dataset.identityTab as 'make'|'open';draw();};
+    tab=openedHere()?'open':'make';
     draw();redraw=draw;
+    // WHAT OPENING DID, SAID UNDER THE BUTTON that was pressed (the practitioner, 2026-11-16: *"After I load file and
+    // enter passphrase I do not get feedback whether the import was successful or not"*).
+    const result=$('#identity-open-result');
+    const said=(text:string,good:boolean)=>{result.textContent=text;result.className=`field-check ${good?'is-good':'is-bad'}`;
+      result.scrollIntoView({block:'nearest'});};
     $('#identity-open').onclick=async()=>{
       const file=($('#identity-file') as HTMLInputElement).files?.[0];
       const pass=($('#identity-passphrase') as HTMLInputElement).value;
-      if(!file){fail('Choose your identity file first.');return;}
-      try{set(await openIdentityFile(await file.text(),pass));lastActivity=Date.now();
-        ($('#identity-passphrase') as HTMLInputElement).value='';}
-      catch(e){fail(e instanceof Error?e.message:'The file could not be opened.');}
+      if(!file){said('Choose your identity file first.',false);return;}
+      if(!pass){said('Enter the passphrase for this file.',false);$('#identity-passphrase').focus();return;}
+      said('Opening…',true);
+      try{const identity=await openIdentityFile(await file.text(),pass);justOpened='Opened from your file.';set(identity);lastActivity=Date.now();justOpened='';
+        ($('#identity-passphrase') as HTMLInputElement).value='';($('#identity-file') as HTMLInputElement).value='';result.textContent='';
+        $('#identity-status').scrollIntoView({block:'nearest'});}
+      catch(e){said(e instanceof Error?e.message:'The file could not be opened.',false);($('#identity-passphrase') as HTMLInputElement).select();}
     };
+    for(const id of ['#identity-file','#identity-passphrase'])$(id).addEventListener('input',()=>{result.textContent='';});
     $('#identity-create').onclick=async()=>{
       const v=(s:string)=>($(s) as HTMLInputElement).value;
       const orcid=v('#identity-orcid').trim();
-      if(orcid&&!validOrcid(orcid)){fail(`${orcid} is not an ORCID iD: its check digit does not match.`);return;}
-      if(v('#identity-new-passphrase')!==v('#identity-confirm')){fail('The two passphrases differ.');return;}
+      const here=$('#identity-create-error');
+      if(!v('#identity-name').trim()){fail('Write your name first: it is how your notes will be signed.',here);$('#identity-name').focus();return;}
+      if(v('#identity-login').trim()&&!validLogin(v('#identity-login').trim())){fail(`${v('#identity-login').trim()} is not a GitHub login.`,here);$('#identity-login').focus();return;}
+      if(orcid&&!validOrcid(orcid)){fail(`${orcid} is not an ORCID iD: its check digit does not match.`,here);$('#identity-orcid').focus();return;}
+      if(v('#identity-new-passphrase').length<12){fail('The passphrase needs at least 12 characters.',here);$('#identity-new-passphrase').focus();return;}
+      if(v('#identity-new-passphrase')!==v('#identity-confirm')){fail('The two passphrases do not match. Type the second again.',here);$('#identity-confirm').focus();return;}
       try{
         const avatar=chosenIn($('#identity-new-avatar'),'new');
         const {file,identity}=await createIdentityFile({name:v('#identity-name'),login:v('#identity-login'),...(orcid?{orcid}:{}),...(avatar?{avatar}:{})},v('#identity-new-passphrase'));
@@ -146,9 +241,11 @@ export function installIdentity(button:HTMLButtonElement,esc:Escape){
         a.download=identityFileName(identity.profile.name);
         a.click();setTimeout(()=>URL.revokeObjectURL(a.href),10_000);
         for(const s of ['#identity-new-passphrase','#identity-confirm'])($(s) as HTMLInputElement).value='';
-        for(const t of d.querySelectorAll<HTMLButtonElement>('[data-identity-tab="open"]'))t.click();
-        set(identity);lastActivity=Date.now();
-      }catch(e){fail(e instanceof Error?e.message:'The file could not be made.');}
+        checkPassphrase();
+        tab='open';
+        justOpened=`Made and saved as ${identityFileName(identity.profile.name)}: keep it somewhere safe.`;set(identity);lastActivity=Date.now();justOpened='';
+        $('#identity-status').scrollIntoView({block:'nearest'});
+      }catch(e){fail(e instanceof Error?e.message:'The file could not be made.',$('#identity-create-error'));}
     };
     $('#identity-change').onclick=async()=>{
       const file=($('#identity-change-file') as HTMLInputElement).files?.[0];
@@ -163,6 +260,23 @@ export function installIdentity(button:HTMLButtonElement,esc:Escape){
         ($('#identity-change-passphrase') as HTMLInputElement).value='';
         set(identity);lastActivity=Date.now();
       }catch(e){fail(e instanceof Error?e.message:'The file could not be changed.');}
+    };
+    $('#identity-ssh-copy').onclick=async()=>{const ssh=open&&sshPublicKey(open);if(!ssh)return;
+      try{await navigator.clipboard.writeText(ssh);$('#identity-ssh-copy').textContent='Copied';}
+      catch{const range=document.createRange();range.selectNodeContents($('#identity-ssh-key'));const sel=getSelection();sel?.removeAllRanges();sel?.addRange(range);
+        $('#identity-ssh-copy').textContent='Selected: press Cmd or Ctrl C';}};
+    $('#identity-ssh-check').onclick=async()=>{
+      const el=$('#identity-ssh-result'),ssh=open&&sshPublicKey(open),login=open?.profile.login;
+      const tell=(text:string,tone:string)=>{el.textContent=text;el.className=`field-check ${tone}`;};
+      if(!ssh||!login)return;
+      tell('Asking GitHub…','');
+      try{const r=await fetch(`https://api.github.com/users/${encodeURIComponent(login)}/ssh_signing_keys`,{headers:{Accept:'application/vnd.github+json'},cache:'no-store'});
+        if(r.status===404)return tell(`GitHub has no account named @${login}.`,'is-bad');
+        if(!r.ok)return tell(`GitHub answered ${r.status}; try again in a while.`,'');
+        const hit=keyPublished(ssh,await r.json() as {key?:unknown;created_at?:unknown}[]);
+        tell(hit?`✓ Linked: @${login} has published this key on GitHub${hit.at?` (added ${new Date(hit.at).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})})`:''}.`
+          :`Not among @${login}'s signing keys yet. Check that the key type was Signing Key, then check again.`,hit?'is-good':'is-bad');
+      }catch{tell('Could not reach GitHub: offline, or blocked.','');}
     };
     $('#identity-lock').onclick=lock;
     $('#identity-close').onclick=()=>d.close();

@@ -20,6 +20,15 @@ shown in a local build is not a claim that it has been published.
 - **The Identity dialog leads with what to do**: *Make my identity file* or *Open my identity file*, as two tabs, Make
   first until an identity has been opened on this device. The file is saved as `FWID-<your name>.fwid`, easy to
   find in a folder.
+- **Making and opening an identity says what happened.** The passphrase is checked as it is typed (its length, then
+  whether the second matches); a problem is said beside the button that was pressed; opening or making a file says so
+  at the top. With an identity open, the dialog is about it only: linking it to GitHub, changing its avatar, locking it.
+- **A GitHub login and an ORCID iD, checked.** As typed: GitHub's rule for a login, the iD's check digit. On request
+  only, **Look up** shows the name each service has on record, so you can see whether it is yours; found is not
+  verified.
+- **Link your key to GitHub.** Your public key in the form GitHub takes, with Copy, GitHub's page for a new signing key,
+  and **Check the link**, which reads GitHub's public list of your signing keys. A QR code opens a page on this site
+  showing the key on your phone, with Copy; the key travels after `#` in the link and is sent to no server.
 - A test that clicked before startup had finished now waits for it (WebKit on CI, 0.128.0 and 0.129.0).
 
 ## 0.129.0 — 2026-11-16

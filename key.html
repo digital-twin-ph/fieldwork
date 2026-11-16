@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>Your Fieldwork key</title>
+<!-- A FIELDWORK IDENTITY'S PUBLIC KEY, OPENED FROM ITS QR CODE (experiment 218, 2026-11-16). The key is in the address
+     after #, which a browser never sends to the server; this page reads it, shows it, and offers to copy it and to open
+     GitHub's page for a new signing key. Nothing is stored or sent. -->
+<style>
+:root{--ink:#1d2a24;--muted:#45524b;--bg:#f6f7f3;--card:#fff;--green:#1f5c47;--line:#c9d1cb;--bad:#a8201a}
+@media (prefers-color-scheme:dark){:root{--ink:#e8efe9;--muted:#c2ccc5;--bg:#141a17;--card:#1d2420;--green:#6fc2a2;--line:#3b4741;--bad:#ff9b8f}}
+body{margin:0;background:var(--bg);color:var(--ink);font:18px/1.5 system-ui,-apple-system,'Segoe UI',sans-serif}
+main{max-width:560px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:24px;margin:0 0 8px}
+p,li{color:var(--muted)}
+code{display:block;word-break:break-all;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px;font-size:16px;color:var(--ink)}
+.button{display:block;width:100%;box-sizing:border-box;margin:12px 0;padding:14px;border-radius:10px;font:inherit;font-weight:700;text-align:center;text-decoration:none;border:2px solid var(--green)}
+.primary{background:var(--green);color:var(--bg)}
+.secondary{background:transparent;color:var(--green)}
+ol{padding-left:22px}
+.bad{color:var(--bad);font-weight:700}
+</style>
+</head>
+<body>
+<main>
+<h1>Your Fieldwork key</h1>
+<div id="found" hidden>
+<p>This is the public key of your Fieldwork identity. Add it to GitHub as a <strong>signing key</strong>, so anyone can
+check that the notes you sign are yours. It cannot be used to sign in to GitHub.</p>
+<code id="key"></code>
+<button type="button" class="button primary" id="copy">Copy the key</button>
+<a class="button secondary" href="https://github.com/settings/ssh/new" rel="noopener noreferrer">Open GitHub's page for a new key</a>
+<ol>
+<li>On GitHub, give it a title, such as <em>Fieldwork</em>.</li>
+<li>Set <strong>Key type</strong> to <strong>Signing Key</strong>.</li>
+<li>Paste the key and press <strong>Add SSH key</strong>.</li>
+<li>Back in Fieldwork, press <strong>Check the link</strong>.</li>
+</ol>
+</div>
+<p id="missing" class="bad" hidden>This address carries no key. Scan the code again from Fieldwork's Identity dialog.</p>
+</main>
+<script>
+const show=()=>{
+  const raw=decodeURIComponent(location.hash.replace(/^#k=/,''));
+  const ok=/^[A-Za-z0-9+/]+={0,2}$/.test(raw)&&raw.startsWith('AAAAC3NzaC1lZDI1NTE5');
+  document.getElementById('missing').hidden=ok;document.getElementById('found').hidden=!ok;
+  if(!ok)return;
+  const key=`ssh-ed25519 ${raw}`;
+  document.getElementById('key').textContent=key;
+  const copy=document.getElementById('copy');
+  copy.onclick=async()=>{
+    try{await navigator.clipboard.writeText(key);copy.textContent='Copied';}
+    catch{const r=document.createRange();r.selectNodeContents(document.getElementById('key'));
+      const s=getSelection();s.removeAllRanges();s.addRange(r);copy.textContent='Selected: copy it from the menu';}
+  };
+};
+show();window.addEventListener('hashchange',show);
+</script>
+</body>
+</html>

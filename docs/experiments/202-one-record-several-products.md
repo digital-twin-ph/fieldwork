@@ -361,3 +361,11 @@ the same order, and the Discussion returns to them. Fieldwork already names each
 so a publication's objectives are drawn from the project's workflow questions: each objective a Results slot, filled
 by that workflow's result and figure, with the person's sentence giving the answer; workflows the paper does not ask
 about support Methods or stay out. South London's mock-up has three: per house, per person, 1854 against 1849.
+
+**Charts, tables and maps are components of the statements they support (the practitioner, the same day: *"And charts,
+tables and maps are components that support each result. Charts, tables and maps can also support background in
+introduction, and other sections when needed."*).** A figure is not a Results item: it attaches to the statement it
+supports, a result, a background point, a method, a limitation, and appears there, numbered in reading order. Today an
+output's figure is filed by section (Results by default, movable, `figureSection`), which is a step towards this and
+not the same: what is missing is the attachment to one statement. In South London's mock-up, Snow's Map 2 supports the
+Introduction's point on supply areas, and one table or figure supports each objective's result.

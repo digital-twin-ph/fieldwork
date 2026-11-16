@@ -47,6 +47,19 @@ test('targets chosen on the Project tab give the Notes board an outline, and an 
   // Not yet written, it fills nothing.
   await page.locator('#note-close').click();
   await expect(page.locator('.notes-outline [data-outline-role="principalFinding"]')).toContainText('empty');
+  // An objectives note: its dialog says where it goes in each target, and holds its objectives as items.
+  const objectives=page.locator('.notes-outline [data-outline-role="objectives"]');
+  await objectives.locator('[data-add-note]').click();
+  const dialog=page.locator('#note-dialog');
+  await expect(dialog.locator('#note-targets')).toContainText('Publication: Introduction: objectives, 2 to 4 objectives');
+  await dialog.locator('#note-text').fill('Our objectives were to:');
+  await dialog.locator('#note-item-add').click();
+  await dialog.locator('#note-item-0').fill('reproduce the comparison per house');
+  await dialog.locator('#note-item-add').click();
+  await dialog.locator('#note-item-1').fill('recompute it per person');
+  await dialog.locator('#note-save').click();
+  await expect(page.locator('.notes-outline [data-outline-role="objectives"]')).toContainText('2 objectives');
+  await expect(page.locator('#notes-view .note-items li')).toHaveCount(2);
   await page.screenshot({path:'test-results/outline.png'});
   expect(errors).toEqual([]);
 });

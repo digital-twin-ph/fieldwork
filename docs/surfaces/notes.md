@@ -135,6 +135,10 @@ A note fills a part by its section and its function together: a note in Methods 
 fills **Data checks**. **Write it**, beside an empty part, adds a note with that section and function already set.
 
 **Objectives** are one note, function *objective*, listing its objectives as numbered items, each answerable by a result.
+In the note's dialog, **Add an objective** adds an item; each can be moved up or removed.
+
+A note's dialog also shows, under **In each target**, the heading and length its section and function take in each
+product the project writes towards.
 
 ## Draft as a document
 

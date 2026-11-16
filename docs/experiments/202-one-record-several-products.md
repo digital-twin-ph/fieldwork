@@ -456,3 +456,12 @@ section and function; a note not yet written fills nothing; the browser's spell 
 Checked: `tests/outline.test.mjs` (5), `tests/outline.browser.mjs` (2, South London with a publication and a WHO-style
 sit rep, and a new project's targets), Chromium. **Part 2 next:** the note's Configure dialog in the standard form,
 with its Role and *In each target* sections, and the items editor for objectives.
+
+**Stage A, part 2, built 2026-11-16.** The note's dialog says what its section and function become **in each target**
+the project writes towards (the heading and length of the slot it fills; `slotsForNote`), refreshed as either changes;
+an objectives note holds its objectives as **items**, added, removed and reordered there, each keeping its id. The
+dialog already set a note's role (its section and function selects); moving the whole dialog into the standard
+Configure frame touches its editor, citations and image tabs and many tests, and is its own step. Checked:
+`tests/outline.test.mjs` (6), `tests/outline.browser.mjs` (an objectives note with two items, counted in the outline;
+its dialog naming the publication's slot), Chromium. Rendering objectives as the paper's numbered list, and a result
+answering an item, are Stage B.

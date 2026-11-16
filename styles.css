@@ -1502,3 +1502,10 @@ th .meaning{font-weight:400;white-space:normal}
 .targets-field{border:0;padding:0;margin:8px 0;display:flex;flex-direction:column;gap:4px}
 .targets-choice{display:flex;gap:6px;align-items:center;font-size:15px}
 .note-items,.pub-items{margin:6px 0 0;padding-left:24px}
+.note-items-editor{margin:10px 0}
+.note-items-editor h4,.note-targets h4{margin:8px 0 4px;font-size:15px}
+.note-items-editor li{display:flex;gap:6px;align-items:center;margin:4px 0}
+.note-items-editor li input{flex:1;font-size:15px;padding:4px 6px}
+.note-targets{font-size:15px;margin:8px 0}
+.note-targets ul{margin:0;padding-left:20px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}

@@ -1,6 +1,6 @@
 # 184 · A heuristic evaluation in the lab: the notes dialog against Nielsen's ten
 
-_Created 2026-11-07 · Updated 2026-11-15_
+_Created 2026-11-07 · Updated 2026-11-16_
 
 **Status:** asked. The screens are captured and one evaluator's pass is recorded; the second evaluator's pass and the
 severity ratings are not done.

@@ -67,3 +67,12 @@ test('an enumerating note keeps its items, each with its own id, once',()=>{
   const [back]=readNotes([notes[1]]).notes??readNotes([notes[1]]);
   assert.equal(back.items.length,3);
 });
+
+test('a note\'s dialog says what its section and function become in each target',async()=>{
+  const {slotsForNote}=await import('../build/outline.js');
+  assert.deepEqual(slotsForNote(['publication','sitrep-who'],'Discussion','finding'),
+    [{target:'publication',label:'Publication',heading:'Discussion: principal finding',length:'one paragraph'}]);
+  const limits=slotsForNote(['publication','sitrep-who'],'Methods','limitation').map(s=>s.heading);
+  assert.deepEqual(limits,['Discussion: limitations','Data notes: limits'],'a limitation is a limitation wherever it sits');
+  assert.deepEqual(slotsForNote([],'Methods','source'),[],'no target, nothing to say');
+});

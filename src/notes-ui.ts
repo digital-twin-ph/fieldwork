@@ -1,6 +1,7 @@
 import {hasManual,openManual} from './manual.js';
 import {GUIDE_QUESTIONS} from './imrad-guide.js';
 import type {Escape} from './types.js';
+import type {NoteItem} from './notes.js';
 import {element} from './dom.js';
 import {toHTML,typeset,hasMarkup} from './prose.js';
 import {groupNotes,notesOfPart,noteExtent,forkHasDrifted,KNOWN_NOTE_FUNCTIONS,NOTE_WORDS,NOTE_ARGUMENT,UNWRITTEN,
@@ -35,7 +36,9 @@ import {noteImageFigure,noteImageFromFile,noteImageGaps,type NoteImage,type Note
  *  before the button is pressed. */
 export interface NoteDraft {text:string; section:WriteUpPart; fn:string; works?:CitedWork[]; words?:string; argument?:string;
   /** The note's picture; absent leaves it as it was, null removes it. */
-  image?:NoteImage|null}
+  image?:NoteImage|null;
+  /** An objectives note's items, in order; absent leaves them as they were. */
+  items?:NoteItem[]}
 export type NoteWrite=(note:Note,draft:NoteDraft)=>boolean;
 
 export interface NoteContext {
@@ -48,6 +51,9 @@ export interface NoteContext {
   imageOf?:(sha256:string)=>NoteImagePayload|undefined;
   /** Keep a picture's bytes before the note points at them; false where they could not be kept. */
   keepImage?:(sha256:string,payload:NoteImagePayload)=>Promise<boolean>;
+  /** WHAT THIS NOTE BECOMES IN EACH TARGET the project writes towards (experiment 202, Stage A): the heading and length
+   *  of the slot a note of this section and function fills. Absent or empty: the project names no target. */
+  targetsFor?:(section:WriteUpPart,fn:string)=>{label:string;heading:string;length:string}[];
 }
 
 /** THE TWO KINDS SOMEBODY MAY WRITE, and the reason is the warrant each carries.
@@ -414,6 +420,7 @@ const DIALOG=`<dialog id="note-dialog" aria-labelledby="note-dialog-title">
 <textarea id="note-text" class="note-text" rows="9" hidden
   aria-label="The note" spellcheck="true"></textarea>
 <div id="note-preview" class="prose note-preview" hidden aria-live="polite"></div>
+<div id="note-items" class="note-items-editor" hidden></div><div id="note-targets" class="note-targets"></div>
 <p id="note-why" class="why"></p><p id="note-status" class="note-status" role="status"></p>
 <div id="note-detail" class="panel"></div></div>
 <div class="dlg-foot"><span id="note-count"></span>
@@ -547,8 +554,17 @@ export function openNoteDialog(note:Note,context:NoteContext,esc:Escape){
   area.hidden=!writing;
   save.hidden=!writing;
   const tell=(of:string)=>{count.textContent=`${words(of)} words · ${of.length} chars`;};
+  // IN EACH TARGET: the heading and length this note's role takes in each product the project writes towards.
+  const targetsPanel=$('#note-targets');
+  const drawTargets=(sec:string,f:string)=>{const rows=context.targetsFor?.(sec as WriteUpPart,f)??[];
+    targetsPanel.innerHTML=rows.length?`<h4>In each target</h4><ul>${rows.map(r=>`<li><strong>${esc(r.label)}</strong>: ${esc(r.heading)}, ${esc(r.length)}</li>`).join('')}</ul>`
+      :context.targetsFor?'<p class="muted">No target the project writes towards has a place for a note of this section and function.</p>':'';};
+  drawTargets(note.section,fn);
+  const itemsPanel=$('#note-items');
+  itemsPanel.hidden=true;itemsPanel.innerHTML='';
   if(!writing){
     body.textContent=text;
+    body.insertAdjacentHTML('beforeend',itemsList(note,esc));
     tell(text);
     close.textContent='Close';
   }else{
@@ -561,11 +577,35 @@ export function openNoteDialog(note:Note,context:NoteContext,esc:Escape){
     // the application's bookkeeping the practitioner's problem.
     const was=fresh?'':text;
     area.value=was;
+    // AN OBJECTIVES NOTE'S ITEMS (experiment 202): one per objective, in order, each keeping its id so a result can say
+    // which it answers. Edited here; shown while the function is objective.
+    const items:NoteItem[]=structuredClone(('items' in note&&note.items)||[]);
+    const itemsWas=JSON.stringify(items);
+    const drawItems=()=>{
+      const on=(workFn?workFn.value:fn)==='objective';
+      itemsPanel.hidden=!on;
+      if(!on)return;
+      itemsPanel.innerHTML='<h4>Objectives, one per item</h4><ol>'+items.map((it,i)=>`<li><label class="sr-only" for="note-item-${i}">Objective ${i+1}</label>`
+        +`<input id="note-item-${i}" data-item="${i}" value="${esc(it.text)}" spellcheck="true">`
+        +`<button type="button" class="chip" data-item-up="${i}"${i?'':' disabled'} aria-label="Move objective ${i+1} up">↑</button>`
+        +`<button type="button" class="chip" data-item-remove="${i}" aria-label="Remove objective ${i+1}">Remove</button></li>`).join('')
+        +'</ol><button type="button" class="button small" id="note-item-add">Add an objective</button>';
+      itemsPanel.querySelectorAll<HTMLInputElement>('[data-item]').forEach(el=>el.oninput=()=>{items[Number(el.dataset.item)]!.text=el.value;});
+      itemsPanel.querySelectorAll<HTMLButtonElement>('[data-item-remove]').forEach(b=>b.onclick=()=>{items.splice(Number(b.dataset.itemRemove),1);drawItems();});
+      itemsPanel.querySelectorAll<HTMLButtonElement>('[data-item-up]').forEach(b=>b.onclick=()=>{const i=Number(b.dataset.itemUp);
+        [items[i-1],items[i]]=[items[i]!,items[i-1]!];drawItems();});
+      itemsPanel.querySelector<HTMLButtonElement>('#note-item-add')!.onclick=()=>{items.push({id:crypto.randomUUID(),text:''});drawItems();
+        itemsPanel.querySelector<HTMLInputElement>(`#note-item-${items.length-1}`)?.focus();};
+    };
+    drawItems();
+    const roleChanged=()=>{drawItems();drawTargets(section?section.value:note.section,workFn?workFn.value:fn);};
+    section?.addEventListener('change',roleChanged);workFn?.addEventListener('change',roleChanged);
+    const keptItems=()=>items.map(it=>({...it,text:it.text.trim()})).filter(it=>it.text);
     tell(area.value);
     save.textContent=fresh?'Add note':'Save';
     const unchanged=()=>area.value.trim()===was
       &&(!section||section.value===note.section)&&(!workFn||workFn.value===fn)&&(!workWords||workWords.value===wordsWas)&&(!workArgument||workArgument.value===argumentWas)
-      &&JSON.stringify(works)===startedWith&&JSON.stringify(image)===imageStartedWith;
+      &&JSON.stringify(works)===startedWith&&JSON.stringify(image)===imageStartedWith&&JSON.stringify(items)===itemsWas;
     // SAY WHAT LEAVING WOULD COST, once there is something to lose. A dialog whose only exit is
     // labelled "Close" discards an edit without ever having said so. A note being written for
     // the first time has nothing to go back to, so its exit is "Discard" throughout.
@@ -786,6 +826,7 @@ export function openNoteDialog(note:Note,context:NoteContext,esc:Escape){
         section:(section?section.value:note.section) as WriteUpPart,
         fn:workFn?workFn.value:fn,works,
         words:workWords?workWords.value:wordsWas,argument:workArgument?workArgument.value:argumentWas,
+        items:(workFn?workFn.value:fn)==='objective'?keptItems():[],
         ...(JSON.stringify(image)!==imageStartedWith?{image}:{})}))dialog.close();
       else{
         status.textContent='That note could not be kept on this device.';

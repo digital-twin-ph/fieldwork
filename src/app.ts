@@ -114,7 +114,7 @@ import {applyFeatureEdits,applyTableEdits,editsAt,type CellEdit,type EditEntry} 
 import {MAX_POLYGON_LAYERS,polygonPort} from './polygon-layers.js';
 import {MAX_RASTER_LAYERS,rasterPort} from './raster-panels.js';
 import {partsTable,partsTableMarkup} from './map-parts-table.js';
-import {TARGETS,projectOutline,outlineMarkup} from './outline.js';
+import {TARGETS,projectOutline,outlineMarkup,slotsForNote} from './outline.js';
 import {publicationMarkup,promptFor,PRODUCT_KINDS,isProductKind,layoutKey,type ProductKind,type PublicationInput} from './publication.js';
 import {CHAIN_COLUMNS,transmissionChains} from './transmission-chains.js';
 import {boxInside,composeInset,insetWidth,type Corner} from './map-inset.js';
@@ -8178,6 +8178,8 @@ function writeInNoteDialog(note:Note){
   openNoteDialog(note,{
     imageOf:sha=>readNoteImagePayload(cachedPayload(noteImageKey(sha))),
     keepImage:(sha,payload)=>keepDataset(noteImageKey(sha),payload),
+    targetsFor:(section,fn)=>{const p=projectNow();const t=(p&&readProjects().find(x=>x.id===p.id)?.targets)??p?.targets??[];
+      return slotsForNote(t,section,fn);},
     labelOf:id=>workflow.nodes.find(n=>n.id===id)?.params.label,
     machined:Object.values(result?.machined||{}).flat(),
     write:keeps?(which,draft)=>{
@@ -8191,12 +8193,14 @@ function writeInNoteDialog(note:Note){
         // THE FUNCTION IS DROPPED WHEN IT IS CLEARED, not stored empty: `readNotes` keeps `fn`
         // only when it has a value, so an empty string here would be written and then read back
         // as absent -- two states that look the same and are not.
-        const {fn:_was,works:_cited,form:_form,words:_words,argument:_argument,image:pictured,...rest}=held[at] as Note&{fn?:string;works?:unknown;form?:string;words?:string;argument?:string;image?:NoteImage};
+        const {fn:_was,works:_cited,form:_form,words:_words,argument:_argument,image:pictured,items:listed,...rest}=held[at] as Note&{fn?:string;works?:unknown;form?:string;words?:string;argument?:string;image?:NoteImage;items?:import('./notes.js').NoteItem[]};
+        // ITEMS ONLY ON AN OBJECTIVES NOTE: kept as drafted, or as they were where the draft does not say.
+        const items=fn==='objective'?(draft.items??listed??[]):[];
         // THE PICTURE: unchanged where the draft does not mention it, removed where it says null.
         const image=draft.image===undefined?pictured:draft.image??undefined;
         held[at]={...rest,text,section,...(fn?{fn}:{}),...(draft.works?.length?{works:draft.works}:{}),
           ...(draft.words?{words:draft.words}:{}),...(draft.argument?{argument:draft.argument}:{}),
-          ...(image?{image}:{})} as Note;
+          ...(image?{image}:{}),...(items.length?{items}:{})} as Note;
         if(!writeNotes(held))return false;
         renderNotesView();
         toast('Your note was kept.');

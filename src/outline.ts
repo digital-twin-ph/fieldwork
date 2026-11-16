@@ -92,3 +92,16 @@ export function outlineMarkup(outline:Outline,esc:(v:unknown)=>string,canWrite:b
   return `<section class="notes-outline" aria-label="Outline"><h3>Outline</h3><ul class="outline-coverage">${cover}</ul>`
     +`<ol class="outline-slots">${rows}</ol></section>`;
 }
+
+/** WHAT A NOTE OF THIS SECTION AND FUNCTION BECOMES IN EACH TARGET: the heading and length of the slot it fills there,
+ *  for the note's own dialog. Empty where no target names a slot for it. */
+export function slotsForNote(targets:readonly string[],section:WriteUpPart,fn:string):{target:string;label:string;heading:string;length:string}[]{
+  const probe={kind:'authored',id:'probe',section,text:'probe',...(fn?{fn}:{})} as Note;
+  const out:{target:string;label:string;heading:string;length:string}[]=[];
+  for(const target of targets.filter(isTarget))for(const decl of OUTLINES[target]??[]){
+    const role=ROLES[decl.role];
+    if(role&&(role.source==='notes'||role.source==='limitations')&&noteFills(probe,role))
+      out.push({target,label:TARGETS.find(t=>t.id===target)!.label,heading:decl.heading,length:decl.length});
+  }
+  return out;
+}

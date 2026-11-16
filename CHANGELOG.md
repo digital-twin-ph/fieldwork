@@ -3,7 +3,7 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## 0.128.0 — In development
+## 0.128.0 — 2026-11-16
 
 - **What a project is writing towards, and its outline.** A project names its targets with its question (New project,
   the Project tab): a publication, situation reports, surveillance reports. Notes then opens on one outline for all of

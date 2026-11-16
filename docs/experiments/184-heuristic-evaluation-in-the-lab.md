@@ -1,6 +1,6 @@
 # 184 · A heuristic evaluation in the lab: the notes dialog against Nielsen's ten
 
-_Created 2026-11-07 · Updated 2026-11-07_
+_Created 2026-11-07 · Updated 2026-11-15_
 
 **Status:** asked. The screens are captured and one evaluator's pass is recorded; the second evaluator's pass and the
 severity ratings are not done.
@@ -173,4 +173,5 @@ submitting GitHub Issues."* Built:
 Checked: `tests/lab-evaluation.test.mjs` (every field the link fills is a field of the form, every dropdown value one
 of its options), `tests/lab-evaluation.browser.mjs` (switched on in the footer; a finding's link), Chromium. **Not
 established:** that GitHub applies the forms' labels, which it does only for labels that exist in the repository
-(`lab-evaluation` and `field-test` are not created yet); that a long finding fits in a link, which GitHub caps.
+(`lab-evaluation` and `field-test` were created on the repository on 2026-11-16, on the practitioner's *"Yes to
+labels"*); that a long finding fits in a link, which GitHub caps.

@@ -13,6 +13,8 @@ shown in a local build is not a claim that it has been published.
 - **An evaluation finding opens as a GitHub issue**, in a standard form the repository now carries (one for lab
   evaluation, one for field testing): its fields filled in, for the person to read and submit. The **Lab evaluation**
   switch moves to the footer, beside Ontology and Validation Lab.
+- **Help says how Fieldwork works now**: projects and what they write towards, workflows as questions, Results, Notes
+  and the outline, the worked examples and their manuals, and keeping your work. The stale guide is gone.
 
 ## 0.127.0 — 2026-11-15
 

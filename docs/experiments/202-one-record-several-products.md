@@ -299,3 +299,12 @@ steps' notes, sources and figures are its material and its evidence. **What this
 draft centres the person's narrative, section by section, and the record's notes and figures sit beside it as material
 to draw into it, cited or placed where the narrative calls for them, rather than poured in by default; what the
 narrative does not use stays out of the document and is named as not used, so nothing is lost from the record.
+
+The practitioner, the same day: *"Remember we are simulating a publication, like the ones for sit rep and surveillance
+summary. The publication has to look like one, which means we have to go back to the source notes, both machined and
+authored, and begin with the end in mind."* So the order of work: (1) a real model, an openly readable paper of the
+kind South London's would be, as the sit rep followed WHO's and the surveillance report McArdle et al.'s; (2) the end
+state written first, the whole paper as a mock-up with each paragraph marked by what supplies it, an authored note, a
+step's note, a figure, or nothing yet; (3) the practitioner's judgement of it; (4) working back to the notes: authored
+notes to write or reshape (drafted for the practitioner to edit), machine notes that need a short form for a
+publication (a change to the widgets that write them), notes the paper does not carry.

@@ -271,3 +271,22 @@ three questions, each a role the person writes with its own prompt (a format sec
 monitors, which that day was **two**; over Chen et al.'s windows the authors' series gives 115.3 against a reference of
 10.7, against Chen's 100.9 and 9.0 from ten monitors. Checked in `tests/publication.test.mjs` (the Summary box's three
 questions, a written answer led by its question).
+
+## The draft as a page you work on, 2026-11-15
+
+Rendered from the draft text, South London's publication ran to 22 A4 pages
+(`demo-drafts/south-london-publication.pdf` in the workspace): a front page that reads as a paper, then a Methods
+section of every step's machine note in full ("kept 1854 deaths per 1849 death of measure", runs of "(Equation A3, in
+the Appendix.)", a quotation cut at "(No."), each figure and table on a page of its own, and machine descriptions as
+captions. The practitioner, first: *"For the render, remember we need to be able to configure the output per role."*
+Offered settings per role (which notes, how much of each, which figures), the practitioner answered that it is a UI
+problem, and said what was meant: *"I meant UI problem as a design problem, not as a problem that is an issue. Which
+means we need to be able to manipulate blocks of text (notes) and figures (resize, and text flows around figures).
+This is before a final render to PDF."*
+
+So the draft is a surface to work on, not a set of options: notes and figures are **blocks** the person moves, keeps
+or leaves out, and resizes, with the text flowing around a figure as in a word processor; the PDF is rendered from the
+page as arranged. The width and place menus built the same day are a stand-in for that, and settings per role would
+only have been presets for it. Dragging was set aside earlier the same day as harder to print the same; that
+judgement is reversed by the practitioner's direction, and printing the same becomes the thing to test. Not yet
+designed.

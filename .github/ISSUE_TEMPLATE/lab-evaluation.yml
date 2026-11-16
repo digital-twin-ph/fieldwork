@@ -1,0 +1,79 @@
+name: Lab evaluation finding
+description: One usability problem found on one Fieldwork screen, against Nielsen's ten heuristics. One issue per problem.
+title: "[Evaluation] "
+labels: ["lab-evaluation"]
+body:
+  - type: markdown
+    attributes:
+      value: One problem per issue. Filled in from Fieldwork's Evaluate form, or by hand. Say what happens and what it costs; severity is rated later, on the merged list.
+  - type: input
+    id: screen
+    attributes:
+      label: Screen
+      description: Where in Fieldwork, e.g. "Notes › Note dialog" or "Workflow › Map"
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Fieldwork version
+      description: Shown in the header, e.g. 0.127.0
+    validations:
+      required: true
+  - type: input
+    id: widget
+    attributes:
+      label: Widget and version
+      description: The widget the screen belongs to, if any, e.g. map_output 0.33.2
+  - type: dropdown
+    id: heuristic
+    attributes:
+      label: Heuristic
+      options:
+        - "H1 Visibility of system status"
+        - "H2 Match between the system and the real world"
+        - "H3 User control and freedom"
+        - "H4 Consistency and standards"
+        - "H5 Error prevention"
+        - "H6 Recognition rather than recall"
+        - "H7 Flexibility and efficiency of use"
+        - "H8 Aesthetic and minimalist design"
+        - "H9 Help users recognize, diagnose, and recover from errors"
+        - "H10 Help and documentation"
+    validations:
+      required: true
+  - type: textarea
+    id: happens
+    attributes:
+      label: What happens
+      description: What you saw or did, in plain words
+    validations:
+      required: true
+  - type: textarea
+    id: costs
+    attributes:
+      label: What it costs
+      description: "What it costs the person using Fieldwork, such as time, a wrong reading, lost work, or giving up"
+    validations:
+      required: true
+  - type: dropdown
+    id: text-kind
+    attributes:
+      label: Kind of text, if the problem is in on-screen text
+      options:
+        - "not about text"
+        - "instruction"
+        - "status"
+        - "design explanation"
+  - type: input
+    id: evaluator
+    attributes:
+      label: Evaluator
+      description: Your name or GitHub login
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Browser and device
+      description: e.g. Chrome on a Windows laptop, Safari on an iPad

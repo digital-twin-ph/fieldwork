@@ -34,3 +34,22 @@ test('the Markdown names the screen, the evaluator and the version, and holds no
 test('the file name sorts by screen, evaluator and moment',()=>{
   assert.equal(fileStem(pass),'fieldwork-evaluation-notes-tab-note-dialog-herman-2026-11-07T102030');
 });
+
+test('a finding becomes a GitHub issue in the repository\'s own form, each field filled from it',async()=>{
+  const {findingIssueUrl}=await import('../build/lab-evaluation.js');
+  const {readFileSync}=await import('node:fs');
+  const pass={schema:'fieldwork/lab-evaluation/1',evaluator:'Lab tester',screen:'Notes › Note dialog',
+    widget:{type:'map_output',version:'0.33.2'},appVersion:'0.128.0',at:'2026-11-15T00:00:00Z',findings:[],works:''};
+  const url=new URL(findingIssueUrl(pass,{heuristic:'H4',happens:'Two words for one thing.',costs:'A reader thinks they differ.'}));
+  const p=url.searchParams;
+  assert.equal(p.get('template'),'lab-evaluation.yml');
+  assert.equal(p.get('title'),'[Evaluation] Notes › Note dialog: Consistency and standards');
+  assert.equal(p.get('heuristic'),'H4 Consistency and standards');
+  assert.equal(p.get('widget'),'map_output 0.33.2');
+  assert.equal(p.get('text-kind'),'not about text');
+  // Every field the link fills is a field of the form, and every dropdown value one of its options.
+  const form=readFileSync(new URL('../.github/ISSUE_TEMPLATE/lab-evaluation.yml',import.meta.url),'utf8');
+  for(const key of [...p.keys()].filter(k=>!['template','title'].includes(k)))assert.match(form,new RegExp(`id: ${key}\\n`),key);
+  assert.ok(form.includes(`"${p.get('heuristic')}"`),'the heuristic is one of the form\'s options');
+  assert.ok(form.includes(`"${p.get('text-kind')}"`));
+});

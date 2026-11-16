@@ -10,6 +10,9 @@ shown in a local build is not a claim that it has been published.
   them: each part, how much fills it, which products use it and how long it runs in each, and each product's coverage.
   A note fills a part by its section and function; **Write it** on an empty part adds a note of that kind. A new
   function, *objective*, and a note's numbered **items**, so objectives can be answered one by one.
+- **An evaluation finding opens as a GitHub issue**, in a standard form the repository now carries (one for lab
+  evaluation, one for field testing): its fields filled in, for the person to read and submit. The **Lab evaluation**
+  switch moves to the footer, beside Ontology and Validation Lab.
 
 ## 0.127.0 — 2026-11-15
 

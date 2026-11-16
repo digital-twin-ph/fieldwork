@@ -1,6 +1,7 @@
-/** THE LAB EVALUATION FORM, switched on in Help and opened from the header or a note being written. Experiment 184.
+/** THE LAB EVALUATION FORM, switched on in the footer beside Ontology and Validation Lab (2026-11-15; it was in Help) and
+ *  opened from the footer or a note being written. Experiment 184. Each finding opens as a GitHub issue in the repository's form.
  *  The words on it are labels and one question per heuristic, nothing that explains the design. */
-import {HEURISTICS,TEXT_KINDS,toMarkdown,fileStem,cleanPass,type EvaluationPass,type Finding} from './lab-evaluation.js';
+import {HEURISTICS,TEXT_KINDS,toMarkdown,fileStem,cleanPass,findingIssueUrl,type EvaluationPass,type Finding} from './lab-evaluation.js';
 
 export interface EvaluationContext {screen:string; widget?:{type:string; version:string}}
 
@@ -19,18 +20,18 @@ function save(name:string,body:string,type:string){
 /** Wire the switch into Help, the header button, and the note dialog's button. */
 export function setupLabEvaluation(context:()=>EvaluationContext):void{
   const apply=()=>document.body.classList.toggle('lab-evaluation',labEvaluationOn());
-  const help=document.querySelector('#help-dialog');
-  if(help&&!help.querySelector('#lab-evaluation-switch')){
-    const p=document.createElement('p');
-    p.innerHTML=`<label><input type="checkbox" id="lab-evaluation-switch"${labEvaluationOn()?' checked':''}> Lab evaluation</label>`;
-    help.append(p);
-    p.querySelector('input')!.addEventListener('change',e=>{put(ON,(e.target as HTMLInputElement).checked?'1':null);apply();});
-  }
-  const header=document.querySelector('#help-button');
-  if(header&&!document.querySelector('#lab-evaluate')){
+  // IN THE FOOTER, beside Ontology and Validation Lab (the practitioner, 2026-11-15: "move evaluate from the question mark
+  // dialog to the bottom with validation and ontology"): the switch, and the Evaluate button it shows.
+  const links=document.querySelector('.footer-links');
+  if(links&&!document.querySelector('#lab-evaluation-switch')){
+    const label=document.createElement('label');
+    label.className='footer-link footer-lab-switch';
+    label.innerHTML=`<input type="checkbox" id="lab-evaluation-switch"${labEvaluationOn()?' checked':''}> Lab evaluation`;
+    links.append(label);
+    label.querySelector('input')!.addEventListener('change',e=>{put(ON,(e.target as HTMLInputElement).checked?'1':null);apply();});
     const b=document.createElement('button');
     b.id='lab-evaluate';b.className='button small lab-only';b.textContent='Evaluate';b.title='Lab evaluation of this screen';
-    header.before(b);b.onclick=()=>openEvaluation(context());
+    links.append(b);b.onclick=()=>openEvaluation(context());
   }
   document.addEventListener('click',e=>{
     const t=(e.target as HTMLElement|null)?.closest?.('#note-evaluate');
@@ -53,7 +54,8 @@ export function openEvaluation(ctx:EvaluationContext):void{
     +`<label>What happens<textarea data-f="happens" rows="2">${esc(f.happens)}</textarea></label>`
     +`<label>What it costs<textarea data-f="costs" rows="2">${esc(f.costs)}</textarea></label>`
     +`<label>Text<select data-f="textKind"><option value="">—</option>${TEXT_KINDS.map(k=>`<option${f.textKind===k?' selected':''}>${k}</option>`).join('')}</select></label>`
-    +`<button type="button" class="chip" data-remove="${i}">Remove</button></div>`;
+    +`<button type="button" class="chip" data-remove="${i}">Remove</button>`
+    +`<a class="button small" data-issue="${i}" href="#" target="_blank" rel="noopener noreferrer">Open as GitHub issue</a></div>`;
   const draw=()=>{
     d.innerHTML=`<div class="manual-head"><h2 id="lab-evaluation-title">Evaluate: ${esc(pass.screen)}</h2>`
       +`<button class="button" id="lab-evaluation-close">Close</button></div>`
@@ -74,6 +76,12 @@ export function openEvaluation(ctx:EvaluationContext):void{
     d.querySelectorAll<HTMLButtonElement>('[data-add]').forEach(b=>b.onclick=()=>{
       keep();pass.findings.push({heuristic:b.dataset.add!,happens:'',costs:''});draw();
       d.querySelector<HTMLDetailsElement>(`[data-h="${b.dataset.add}"]`)!.open=true;});
+    // AS A GITHUB ISSUE: the form filled from this finding, opened for the person to read and submit.
+    d.querySelectorAll<HTMLAnchorElement>('[data-issue]').forEach(a=>a.onclick=e=>{
+      keep();const f=pass.findings[Number(a.dataset.issue)];
+      if(!pass.evaluator||!f?.happens.trim()){e.preventDefault();
+        d.querySelector('#lab-status')!.textContent=!pass.evaluator?'Add your name as evaluator first.':'Say what happens first.';return;}
+      a.href=findingIssueUrl(cleanPass({...pass,at:pass.at||new Date().toISOString()}),f,navigator.userAgent.includes('Mobile')?'mobile browser':'');});
     d.querySelectorAll<HTMLButtonElement>('[data-remove]').forEach(b=>b.onclick=()=>{
       keep();pass.findings.splice(Number(b.dataset.remove),1);draw();});
     d.querySelector<HTMLButtonElement>('#lab-save')!.onclick=()=>{

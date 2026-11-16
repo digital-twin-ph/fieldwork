@@ -87,3 +87,22 @@ export function fileStem(pass:EvaluationPass):string{
   const at=pass.at.replace(/[:]/g,'').replace(/\..*$/,'');
   return ['fieldwork-evaluation',slug(pass.screen)||'screen',slug(pass.evaluator)||'evaluator',at].join('-');
 }
+
+/** A FINDING AS A GITHUB ISSUE, in the repository's own form (`.github/ISSUE_TEMPLATE/lab-evaluation.yml`), its fields
+ *  filled in from the evaluation. The practitioner, 2026-11-15: *"The evaluation is not helpful unless it's able to
+ *  populate GitHub Issues"*, and *"let's make sure we have a standard format for submitting GitHub Issues."* The link
+ *  opens GitHub's new-issue page with the form filled; the person reads it and submits it. Nothing is posted for them,
+ *  and no token is needed. */
+export const ISSUE_REPOSITORY='digital-twin-ph/fieldwork';
+export function findingIssueUrl(pass:EvaluationPass,finding:Finding,environment=''):string{
+  const h=HEURISTICS.find(x=>x.id===finding.heuristic);
+  const params=new URLSearchParams({template:'lab-evaluation.yml',
+    title:`[Evaluation] ${pass.screen||'a screen'}: ${h?.name||finding.heuristic}`,
+    screen:pass.screen,version:pass.appVersion,
+    ...(pass.widget?{widget:`${pass.widget.type} ${pass.widget.version}`}:{}),
+    ...(h?{heuristic:`${h.id} ${h.name}`}:{}),
+    happens:finding.happens,costs:finding.costs,
+    'text-kind':finding.textKind||'not about text',
+    evaluator:pass.evaluator,...(environment?{environment}:{})});
+  return `https://github.com/${ISSUE_REPOSITORY}/issues/new?${params}`;
+}

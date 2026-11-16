@@ -157,3 +157,20 @@ That trainees or practitioners can use the notes surface: a heuristic evaluation
 them. That two evaluators find most problems; Nielsen's own guidance asks for more. That a heuristic broken is a problem
 in this setting: some of what breaks a heuristic here was chosen on purpose and recorded where it was chosen, and the
 merge should say so rather than count it as a defect.
+
+## Findings as GitHub issues, and the switch in the footer, 2026-11-15
+
+The practitioner: *"The evaluation is not helpful unless it's able to populate GitHub Issues. Let's move evaluate from
+the question mark dialog to the bottom with validation and ontology. And let's make sure we have a standard format for
+submitting GitHub Issues."* Built:
+
+| | |
+| --- | --- |
+| The standard format | Two GitHub issue forms in the repository, `.github/ISSUE_TEMPLATE/lab-evaluation.yml` (screen, version, widget, heuristic, what happens, what it costs, kind of text, evaluator, browser and device) and `field-test.yml` (the task, what was done, what happened, what was expected, the project or example, version, tester, browser, device and connection); one issue per problem |
+| From the Evaluate form | Each finding has **Open as GitHub issue**: GitHub's new-issue page with the form filled from the finding. The person reads it and submits it; nothing is posted for them and no token is needed |
+| The switch | **Lab evaluation** in the footer, beside Ontology and Validation Lab, with the Evaluate button it shows; no longer in Help |
+
+Checked: `tests/lab-evaluation.test.mjs` (every field the link fills is a field of the form, every dropdown value one
+of its options), `tests/lab-evaluation.browser.mjs` (switched on in the footer; a finding's link), Chromium. **Not
+established:** that GitHub applies the forms' labels, which it does only for labels that exist in the repository
+(`lab-evaluation` and `field-test` are not created yet); that a long finding fits in a link, which GitHub caps.

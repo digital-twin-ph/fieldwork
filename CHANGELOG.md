@@ -3,7 +3,7 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## 0.126.0 — In development
+## 0.126.0 — 2026-11-15
 
 - **Sierra Leone's facility map places seven more facilities**: names GRID3 holds under another type (MCHP or CHP
   where it writes CHP or CHC), each decided in the manual as the facility of that name in the case's district. A

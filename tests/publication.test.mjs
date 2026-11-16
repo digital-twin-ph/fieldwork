@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-const {publicationMarkup}=await import('../build/publication.js');
+const {publicationMarkup,partKey,layoutKey,readLayout}=await import('../build/publication.js');
 const {inWriteUp,LEFT_OUT}=await import('../build/notes.js');
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
@@ -30,7 +30,7 @@ test('a source table stays out of the body and is named under Data availability'
   assert.match(html,/Data availability[\s\S]*Hagelloch line list: 188 cases\./);
 });
 test('a figure is numbered and its note is its caption; a table is numbered apart',()=>{
-  assert.match(html,/<figure class="pub-figure"><figure class="notes-figure" data-figure="map"><svg><\/svg><\/figure><figcaption class="pub-caption"><strong>Figure 1\.<\/strong> <strong>Cluster map\.<\/strong> 3 layers\./);
+  assert.match(html,/<figure class="pub-figure pub-w-full pub-p-line" data-pub-note="map:description"><figure class="notes-figure" data-figure="map"><svg><\/svg><\/figure><figcaption class="pub-caption"><strong>Figure 1\.<\/strong> <strong>Cluster map\.<\/strong> 3 layers\./);
   assert.match(html,/<strong>Table 1\.<\/strong> <strong>Cases by class\.<\/strong>/);
 });
 test('a display formula goes to the Appendix, its pointer left in its place',()=>{
@@ -78,4 +78,57 @@ test('a map in the publication drops its own title, which its caption carries, a
   assert.match(cropped,/Source: Pfeilsticker 1863/);
   const [,top]=/viewBox="0 (\d+) 850 \d+"/.exec(cropped);
   assert.ok(Number(top)>0);
+});
+
+
+// DRAFT AS, AND A FIGURE'S PLACE (experiment 202, 2026-11-15).
+const base={title:'Measles in Hagelloch, 1861',authors:[],date:'15 November 2026',notes,sourceOf:n=>from[n.nodeId],
+  figureOf:n=>n.nodeId==='map'&&n.id.endsWith('description')?'<figure class="notes-figure" data-figure="map"><svg></svg></figure>':undefined,
+  references:[{kind:'method',text:'Kulldorff M. 2005.',citedBy:['Cluster']}]};
+test('a surveillance report and a sit rep lay out the same notes in their own sections',()=>{
+  const report=publicationMarkup({...base,kind:'surveillance'},esc),sitrep=publicationMarkup({...base,kind:'sitrep'},esc);
+  assert.match(report,/Surveillance report[\s\S]*Key points[\s\S]*The situation[\s\S]*Figure 1\.[\s\S]*Data and methods[\s\S]*Recommendations/);
+  assert.match(sitrep,/Situation report[\s\S]*Report details[\s\S]*Highlights[\s\S]*The situation in numbers[\s\S]*Figure 1\.[\s\S]*Response actions[\s\S]*Gaps and needs[\s\S]*Next steps/);
+  assert.doesNotMatch(report,/Abstract/);
+  // The same note, once each, in each.
+  for(const html of [report,sitrep])assert.equal(html.split('Cases were counted by day.').length-1,1);
+});
+test('what is written is kept per kind; the publication keeps the keys it always had',()=>{
+  assert.equal(partKey('publication','title'),'title');
+  assert.equal(partKey('sitrep','highlights'),'sitrep:highlights');
+  const html=publicationMarkup({...base,kind:'sitrep',written:{'sitrep:highlights':'Three new cases.',highlights:'Not this one.'}},esc);
+  assert.match(html,/Three new cases\./);
+  assert.doesNotMatch(html,/Not this one/);
+});
+test('a figure\'s width and place are kept per product, by its note',()=>{
+  const written={[layoutKey('sitrep','map:description')]:'half|right'};
+  const sitrep=publicationMarkup({...base,kind:'sitrep',written},esc),pub=publicationMarkup({...base,written},esc);
+  assert.match(sitrep,/class="pub-figure pub-w-half pub-p-right"/);
+  assert.match(pub,/class="pub-figure pub-w-full pub-p-line"/,'another product keeps its own');
+  assert.deepEqual(readLayout('third|beside'),{width:'third',place:'beside'});
+  assert.deepEqual(readLayout('wide|everywhere'),{width:'full',place:'line'},'anything else is the default');
+});
+test('the layout controls are offered only where the layout can be kept',()=>{
+  assert.match(publicationMarkup({...base,writable:true},esc),/data-pub-layout="map:description"/);
+  assert.doesNotMatch(publicationMarkup({...base,writable:false},esc),/data-pub-layout/);
+});
+
+test('a figure set side by side draws the next figure beside it, numbered in the order drawn',()=>{
+  const two=[...notes,{kind:'authored',id:'a1',section:'Results',text:'Between the two figures.'},
+    {kind:'machined',id:'chart:description',section:'Results',text:'**A chart.** 3 bars.',nodeId:'chart'}];
+  const figureOf=n=>n.nodeId==='map'&&n.id.endsWith('description')?'<figure class="notes-figure" data-figure="map"><svg></svg></figure>'
+    :n.nodeId==='chart'?'<figure class="notes-figure" data-figure="chart"><svg></svg></figure>':undefined;
+  const html=publicationMarkup({...base,notes:two,figureOf,kind:'sitrep',written:{[layoutKey('sitrep','map:description')]:'half|beside'}},esc);
+  assert.match(html,/<div class="pub-row"><figure class="pub-figure pub-w-half pub-p-beside" data-pub-note="map:description">[\s\S]*?Figure 1\.[\s\S]*?<figure class="pub-figure pub-w-full pub-p-line" data-pub-note="chart:description">[\s\S]*?Figure 2\.[\s\S]*?<\/div>/);
+  assert.ok(html.indexOf('Figure 2.')<html.indexOf('Between the two figures.'),'the second figure is pulled up past the text');
+});
+
+test('a figure left out of one product is gone from it, kept in the others, and can be brought back where it is kept',()=>{
+  const written={[layoutKey('sitrep','map:description')]:'full|out'};
+  const read=publicationMarkup({...base,kind:'sitrep',written},esc);
+  assert.doesNotMatch(read,/data-figure="map"/);
+  assert.doesNotMatch(read,/pub-left-out/,'nothing where it cannot be kept');
+  const kept=publicationMarkup({...base,kind:'sitrep',written,writable:true},esc);
+  assert.match(kept,/class="pub-left-out" data-pub-note="map:description"[\s\S]*Cluster map\. is left out of this product|class="pub-left-out" data-pub-note="map:description"/);
+  assert.match(publicationMarkup({...base,written},esc),/data-figure="map"/,'the publication keeps it');
 });

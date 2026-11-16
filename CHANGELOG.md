@@ -3,6 +3,18 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.127.0 — In development
+
+- **The draft as a document, of three kinds.** In Notes, Publication now offers **Draft as**: publication, surveillance
+  report or situation report, each with its own parts and prompts, filled from the same notes. **Each figure and table
+  has a width and a place**: full, half or a third; on its own line, side by side with the next figure, text running
+  round it left or right as in Word, or left out of that kind of document. Kept with the project per kind, the same on
+  screen and in print. Found on the way: reading a project dropped every publication key but the original eight, so a
+  second figure's setting appeared to erase the first's.
+- **A map in Notes is the map in Results.** The figure Notes and the SVG download share kept a shaded map's ramp but
+  dropped the line saying what the shade is and how it was classed, and listed the classes again in two loose columns.
+  Map 0.33.2.
+
 ## 0.126.0 — 2026-11-15
 
 - **Sierra Leone's facility map places seven more facilities**: names GRID3 holds under another type (MCHP or CHP

@@ -114,7 +114,7 @@ import {applyFeatureEdits,applyTableEdits,editsAt,type CellEdit,type EditEntry} 
 import {MAX_POLYGON_LAYERS,polygonPort} from './polygon-layers.js';
 import {MAX_RASTER_LAYERS,rasterPort} from './raster-panels.js';
 import {partsTable,partsTableMarkup} from './map-parts-table.js';
-import {publicationMarkup,PROMPTS,type PublicationInput} from './publication.js';
+import {publicationMarkup,promptFor,PRODUCT_KINDS,isProductKind,layoutKey,type ProductKind,type PublicationInput} from './publication.js';
 import {CHAIN_COLUMNS,transmissionChains} from './transmission-chains.js';
 import {boxInside,composeInset,insetWidth,type Corner} from './map-inset.js';
 import {notesPanel,openNoteDialog,noteKey} from './notes-ui.js';
@@ -8023,7 +8023,8 @@ function renderNotesView(){
     authors:(project?.authors||[]).map(a=>a.name||a.login),
     date:new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}),
     notes:[...(project?.notes||[]),...derived,...machined],sourceOf,figureOf,references,
-    written:project?.publication,writable:!!project&&!keptHere(project)},
+    // READ AS STORED NOW, not as when Notes was drawn: a kind or a layout set since then is kept, and must be what opens.
+    written:(project&&readProjects().find(p=>p.id===project.id)?.publication)||project?.publication,writable:!!project&&!keptHere(project)},
     // KEPT WITH THE PROJECT, as its notes are; a shipped example has nowhere to keep it, and is offered no Write.
     (key,text)=>{if(!project)return null;const stored=readProjects(),at=stored.findIndex(p=>p.id===project.id);
       if(at<0)return null;const publication={...(stored[at]!.publication||{})};
@@ -8075,11 +8076,32 @@ function openPublication(input:PublicationInput,keep:(key:string,text:string)=>R
   let view=optionalElement('#publication-view');
   if(!view){view=document.createElement('div');view.id='publication-view';view.setAttribute('role','dialog');
     view.setAttribute('aria-modal','true');view.setAttribute('aria-label','Publication');document.body.append(view);}
+  // DRAFT AS (experiment 202, 2026-11-15): which kind of document the record is laid out as, kept with the project where
+  // it can be, so a shipped example opens as the kind it was made to show.
+  let kind:ProductKind=isProductKind(input.written?.kind)?input.written!.kind as ProductKind:'publication';
   const draw=()=>{const top=view!.scrollTop;
     view!.innerHTML=`<div class="publication-bar"><button class="button" data-publication-back>Back to Notes</button>`
+      +`<label class="pub-kind">Draft as <select data-publication-kind>${PRODUCT_KINDS.map(k=>
+        `<option value="${k.kind}"${k.kind===kind?' selected':''}>${esc(k.label)}</option>`).join('')}</select></label>`
       +`<button class="button primary" data-publication-print>Print or save as PDF</button></div>`
-      +publicationMarkup(input,esc);
+      +publicationMarkup({...input,kind},esc);
     view!.scrollTop=top;void typeset(view!);};
+  // A FIGURE'S WIDTH AND PLACE, and the kind, set where they are shown.
+  view.onchange=event=>{
+    const target=event.target as HTMLElement;
+    if(target.matches('[data-publication-kind]')){
+      kind=(target as HTMLSelectElement).value as ProductKind;
+      if(input.writable){const kept=keep('kind',kind);if(kept)input={...input,written:kept};}
+      draw();return;
+    }
+    const tools=target.closest<HTMLElement>('[data-pub-layout]');
+    if(tools){
+      const width=tools.querySelector<HTMLSelectElement>('[data-pub-width]')!.value,place=tools.querySelector<HTMLSelectElement>('[data-pub-place]')!.value;
+      const kept=keep(layoutKey(kind,tools.dataset.pubLayout!),width==='full'&&place==='line'?'':`${width}|${place}`);
+      if(!kept){toast('That could not be kept on this device.',{tone:'failure'});return;}
+      input={...input,written:kept};draw();
+    }
+  };
   draw();
   view.hidden=false;document.body.classList.add('showing-publication');
   // WRITING A PART IN PLACE: what it is for and its length above the box, the words counted as they are typed.
@@ -8088,11 +8110,11 @@ function openPublication(input:PublicationInput,keep:(key:string,text:string)=>R
     const key=target.closest<HTMLElement>('[data-pub-write]')?.dataset.pubWrite;
     if(key){
       const part=view!.querySelector<HTMLElement>(`[data-pub-part="${key}"]`);if(!part)return;
-      const [label,length,ask]=PROMPTS[key as keyof typeof PROMPTS]??[key,'',''];
+      const [label,length,ask]=promptFor(key)??[key,'',''];
       const current=input.written?.[key]??'';
       const editor=document.createElement('div');editor.className='pub-editor';
       editor.innerHTML=`<label class="pub-prompt-label" for="pub-text">${esc(label)} <span>\u00b7 ${esc(length)}</span></label>`
-        +`<p>${esc(ask)}</p><textarea id="pub-text" rows="${key==='title'?2:6}">${esc(key==='title'&&!current?input.title:current)}</textarea>`
+        +`<p>${esc(ask)}</p><textarea id="pub-text" rows="${key.endsWith('title')?2:6}">${esc(key.endsWith('title')&&!current?input.title:current)}</textarea>`
         +`<p class="pub-count" aria-live="polite"></p><div class="pub-editor-actions">`
         +`<button class="button primary" data-pub-save>Save</button><button class="button" data-pub-cancel>Cancel</button></div>`;
       part.replaceWith(editor);view!.querySelector(`[data-pub-write="${key}"]`)?.remove();

@@ -169,3 +169,31 @@ the poster, story map and dashboard stay open), and how a figure sits on the pag
 ready for demo. Still not convincing."* So the publication is one of the three to bring to a demo, not a product
 already done: the built render of 0.117.0 and 0.118.0 is the starting point, and the work above is what is to make it
 convincing.
+
+**Decided the same day.** The three demos: **a publication on South London** (Snow's rates, maps and two-by-two),
+**a surveillance report on NYC** (ten years of daily asthma visits and the air), **a sit rep on MERS** (South Korea
+2015: hospitals, chains, response times). Their written parts are drafted as Markdown for the practitioner to edit,
+then entered as authored notes. A figure's size and place are **a width (full, half, third) and a placement (on its
+own line, beside the next figure, or beside the text, left or right, as Word wraps)**, kept per product and drawn the
+same on screen and in print; dragging was the alternative, set aside as harder to print the same.
+
+**The design, written before the code (2026-11-15).**
+
+| Part | What it is |
+| --- | --- |
+| Draft as | A choice at the top of the render: Publication, Surveillance report, Sit rep. Each kind is a template: its sections, their order, their headings and the prompts for what the person writes, filled from the same notes |
+| Surveillance report | Title and reporting period; key points; the situation (Results); trends (the figures); data and methods (Methods, short); limitations; recommendations; data sources and references |
+| Sit rep | Report number, date, period and who prepared it; highlights; the situation in numbers (Results); epidemiology (the figures); response actions; gaps and needs; next steps |
+| A figure's layout | Width: full, half or a third of the text column. Place: on its own line; beside the next figure; or beside the text, on the left or the right, the text running round it. Set from a small toolbar on the figure that does not print; kept per product with the project, as the written parts are |
+| The page | The draft drawn as a page on screen: a text column, margins, a body face for reading, headings and numbering, the same as it prints |
+
+| Distinction | Enforced as |
+| --- | --- |
+| A product lays out the record and never copies it: a figure's layout is per product, its caption is its note | **hard stop**: the layout is stored by note and product, not in the note |
+| A kind's parts that the person writes stay prompts until written | **validation rule**: an unwritten part prints its prompt on screen and nothing in print |
+| The same layout on screen and in print | **run-time check**: the browser test measures a figure's width on screen and in the print stylesheet |
+
+**What it commits to, before the result:** a unit test that each kind places the record's notes in its sections and that a
+layout is kept per product; a browser test that a figure set to half and beside the next sits on one line with it, on
+screen and in print emulation; and the practitioner's own look at the three demos, which can come out badly: is each
+convincing as what it claims to be?

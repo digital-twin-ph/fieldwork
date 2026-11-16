@@ -1410,11 +1410,37 @@ th .column-label{display:block;font-weight:400;color:var(--muted);font-size:14px
 .publication-page .pub-editor textarea{width:100%;box-sizing:border-box;font:16px/1.5 Georgia,serif;color:#111;background:#fff;border:1px solid #6b6b6b;padding:8px}
 .publication-page .pub-count{color:#3d3d3d}
 .publication-page .pub-editor-actions{display:flex;gap:8px}
-@media (max-width:640px){.publication-page{padding:24px 16px}}
+/* DRAFT AS, AND A FIGURE'S PLACE (experiment 202, 2026-11-15). A width is a share of the text column; a figure set side by
+   side sits in a row with its neighbours set the same; left or right, the text runs round it, as Word wraps. */
+.publication-bar .pub-kind{display:flex;align-items:center;gap:6px;font:15px system-ui,sans-serif}
+.publication-page .pub-kicker{font:600 15px/1.3 system-ui,sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#176b59;margin:0 0 6px}
+.publication-page.pub-kind-sitrep h1,.publication-page.pub-kind-surveillance h1{font-family:system-ui,sans-serif}
+.publication-page h2,.publication-page h3{clear:both}
+.publication-page .pub-figure,.publication-page .pub-table{box-sizing:border-box}
+.publication-page .pub-w-full{width:100%}
+.publication-page .pub-w-half{width:49%}
+.publication-page .pub-w-third{width:32%}
+.publication-page .pub-p-line{display:block;margin-left:auto;margin-right:auto}
+.publication-page .pub-left-out{border:1px dashed #6b6b6b;padding:6px 10px;margin:10px 0;font:14px system-ui,sans-serif;color:#222}
+.publication-page .pub-left-out p{margin:4px 0 0}
+.publication-page .pub-row{display:flex;gap:2%;align-items:flex-start;margin:16px 0;break-inside:avoid}
+.publication-page .pub-row>*{margin:0;float:none}
+.publication-page .pub-row>.pub-w-full{flex:1 1 0;width:auto}
+.publication-page .pub-p-left{float:left;margin:4px 20px 12px 0}
+.publication-page .pub-p-right{float:right;margin:4px 0 12px 20px}
+.publication-page .pub-figure svg,.publication-page .pub-figure img{max-width:100%;height:auto}
+.publication-page::after{content:"";display:block;clear:both}
+.publication-page .pub-layout{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 6px;font:14px system-ui,sans-serif;color:#222}
+.publication-page .pub-layout select{font:14px system-ui,sans-serif}
+@media (max-width:640px){.publication-page{padding:24px 16px}
+  .publication-page .pub-w-half,.publication-page .pub-w-third{width:100%}
+  .publication-page .pub-p-left,.publication-page .pub-p-right{float:none;display:block;margin:12px 0}
+  .publication-page .pub-row{flex-direction:column}}
 @media print{
   body.showing-publication>*:not(#publication-view){display:none!important}
   #publication-view{position:static;overflow:visible;padding:0;background:#fff}
-  .publication-bar,.publication-page .pub-write,.publication-page .pub-prompt .pub-write{display:none}
+  .publication-bar,.publication-page .pub-write,.publication-page .pub-prompt .pub-write,.publication-page .pub-layout,
+  .publication-page .pub-prompt,.publication-page .pub-left-out{display:none}
   .publication-page{box-shadow:none;max-width:none;padding:0}
   @page{size:A4;margin:22mm 20mm}
 }

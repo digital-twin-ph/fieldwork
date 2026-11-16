@@ -230,3 +230,15 @@ test('a workflow\'s number is its place in its project, 1 to N, not a count acro
   for(const project of BUILT_IN_PROJECTS)project.workflows.forEach((key,i)=>{
     assert.match(WORKFLOW_LABELS[key],new RegExp(`^${i+1} · `),`${key} is workflow ${i+1} of ${project.id}`);});
 });
+
+test('A PROJECT KEEPS EACH PRODUCT\'S PARTS AND ITS FIGURES\' PLACES, and nothing else (experiment 202, 2026-11-15)',async()=>{
+  const {validateProject}=await import('../build/project.js');
+  const raw={schema:'fieldwork/project/2',id:'p',name:'P',subject:'S',workflows:[],publication:{
+    title:'A title','kind':'sitrep','sitrep:highlights':'Three new cases.','surveillance:period':'Weeks 1 to 4',
+    'layout:sitrep:map:description':'half|beside','layout:publication:t:description':'third|right',
+    'kind2':'x','sitrep:abstract':'not a sit rep part','layout:sitrep:m':'huge|everywhere','kind ':'sitrep'}};
+  const kept=validateProject(raw).publication;
+  assert.deepEqual(Object.keys(kept).sort(),['kind','layout:publication:t:description','layout:sitrep:map:description',
+    'sitrep:highlights','surveillance:period','title']);
+  assert.equal(validateProject({...raw,publication:{kind:'poster'}}).publication,undefined,'an unknown kind is dropped');
+});

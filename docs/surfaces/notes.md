@@ -118,6 +118,30 @@ Both are optional and read **unstated** until answered. A note on your own data,
 - **My words: the main points**, of Murdock 2017 and Wimberly 2020: *Where temperature was logged at the places mosquitoes rest, it differed from the weather station's by enough to change modelled transmission, and the difference varied with season and land cover.*
 - **What I make of them**, from the Brazil example: *The leads match lag 0, so an association of that size arises without temperature causing cases, and lag 0 cannot be read as transmission.* It reports nothing a work says; it is a reading of this study's own results.
 
+## Draft as a document
+
+**Publication**, at the top of Notes, lays the write-up out as a document on a page, to read and to print. **Draft as**
+chooses the kind:
+
+| Kind | Its parts |
+| --- | --- |
+| Publication | Title, abstract, Introduction, Methods, Results, Discussion, data availability, references, an appendix of equations |
+| Surveillance report | Reporting period, key points, the situation, background, interpretation, data and methods, recommendations, sources |
+| Situation report | Report details, highlights, the situation in numbers, background, assessment, response actions, gaps and needs, next steps, methods and data |
+
+Each kind is filled from the same notes. The parts you write, such as highlights or recommendations, are written in
+place with **Write**; until then the part shows what it is for and how long it runs, and prints nothing.
+
+**Each figure and table has a width and a place**, set above it:
+
+- **Width**: full, half or a third of the text column.
+- **Place**: on its own line; side by side with the next figure, which is drawn beside it; or with the text running
+  round it, on the left or the right, as in Word; or left out of this kind of document.
+
+The kind and each figure's place are kept with the project, separately for each kind, so a figure can be half width
+in the situation report and full width in the publication. The controls do not print. **Print or save as PDF** prints
+the document alone. A worked example that ships with Fieldwork shows its document as it was set, with no controls.
+
 ## What it will not do
 
 - It does not check that a note is faithful to the works it cites, or that "my words" are. That is for the author and the reader; it seldom holds the source's text.

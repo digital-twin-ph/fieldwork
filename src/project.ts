@@ -230,6 +230,21 @@ const MAX_WORKFLOWS=50;
  *  data that a previous version of this application wrote, so it is read defensively. */
 /** The publication's written parts, by key (src/publication.ts), and the longest any may be. */
 export const PUBLICATION_PARTS=['title','affiliations','background','methods','results','conclusions','closing','data'];
+/** THE OTHER KINDS' PARTS, AND A FIGURE'S PLACE (experiment 202, 2026-11-15), kept beside the publication's: the kind
+ *  chosen; a surveillance report's or a sit rep's own parts under their kind's name; a figure's width and place per
+ *  product and note. Until these were listed here, reading a project dropped them, so a figure set beside another lost
+ *  its setting the moment a second one was set. */
+export const PRODUCT_PARTS:Record<string,readonly string[]>={
+  surveillance:['title','period','keypoints','recommendations'],
+  sitrep:['title','header','highlights','actions','gaps','next']};
+export function isPublicationEntry(key:string,value:string):boolean{
+  if(PUBLICATION_PARTS.includes(key))return true;
+  if(key==='kind')return value==='publication'||value==='surveillance'||value==='sitrep';
+  const layout=/^layout:(publication|surveillance|sitrep):(.{1,200})$/.exec(key);
+  if(layout)return /^(full|half|third)\|(line|beside|left|right|out)$/.test(value);
+  const [kind,part]=key.split(':');
+  return !!kind&&!!part&&key.split(':').length===2&&!!PRODUCT_PARTS[kind]?.includes(part);
+}
 export const MAX_PUBLICATION_PART=20_000;
 export function validateProject(raw:unknown):Project{
   // A project written before 2026-10-23 says schema 1 and carries no timestamps. It is read, not
@@ -262,7 +277,7 @@ export function validateProject(raw:unknown):Project{
   const dictionaries=readProjectDictionaries(raw.dictionaries);
   // Each part a string of its own, kept as written; anything else is dropped, never coerced.
   const publication:Record<string,string>=isRecord(raw.publication)?Object.fromEntries(Object.entries(raw.publication as Record<string,unknown>)
-    .filter(([key,value])=>PUBLICATION_PARTS.includes(key)&&typeof value==='string'&&value.trim()&&value.length<=MAX_PUBLICATION_PART) as [string,string][]):{};
+    .filter(([key,value])=>typeof value==='string'&&isPublicationEntry(key,value)&&value.trim()&&value.length<=MAX_PUBLICATION_PART) as [string,string][]):{};
   return {schema:'fieldwork/project/2',id:raw.id,name:raw.name,subject:raw.subject,
     workflows:[...new Set(raw.workflows as string[])],
     ...(changedAt?{changedAt}:{}),...(exportedAt?{exportedAt}:{}),...(work?{exportedWork:work}:{}),

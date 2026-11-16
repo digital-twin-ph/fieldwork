@@ -328,6 +328,9 @@ exist for us to bridge the gap between what we have and that end?"* Read off Sou
 | 10 | No cross-references: no "Figure 2" cited in the text; quoted sources not cited in the text | the product |
 | 11 | No working page: blocks to move, keep, resize and wrap text around before the PDF | the surface |
 | 12 | Guidance per section, not per point of the argument | the surface |
+| 13 | Papers want summary tables (3 rows by supply) where the steps make working tables (32 rows); no summary form of a step's table | the product, per component |
+| 14 | A target's cut-off in time: a sit rep is "as of" a date, a paper covers the whole event | the product |
+| 15 | No attachments: tables not exported as CSV, maps not written as GeoPackage, charts' Vega-Lite specifications not offered | each output widget |
 
 **Most consequential:** 7, then 1, 3 and 9; the others largely follow once a product has an outline and paragraphs that
 cite their evidence. **Not established:** whether an outline per product is the right shape for "the end in mind";
@@ -376,3 +379,7 @@ attached to a statement ships with its data in an open format, so the product ca
 Today: tables are read from CSV and never exported as CSV; GeoPackages are read (SQLite in the browser) and never
 written, maps exporting as SVG and PNG and rasters as GeoTIFF; charts are built from a Vega-Lite specification and
 exported as SVG, the specification itself not offered. Each is feasible with what the code holds; none is built.
+
+**The mock-up judged, 2026-11-15:** the practitioner, of `demo-drafts/south-london-mockup.md` (objectives from the
+workflow questions, components attached to statements, attachments listed): *"Mockup looks OK."* It stands as the end
+state the build works towards. Gaps 13 to 15 were added to the table above from it.

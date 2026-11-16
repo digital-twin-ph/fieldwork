@@ -197,3 +197,25 @@ same on screen and in print; dragging was the alternative, set aside as harder t
 layout is kept per product; a browser test that a figure set to half and beside the next sits on one line with it, on
 screen and in print emulation; and the practitioner's own look at the three demos, which can come out badly: is each
 convincing as what it claims to be?
+
+## Formats as mappings onto section roles, asked 2026-11-15
+
+The practitioner, asked whether the sit rep follows a standard format: *"Check against open templates"*, and then: *"If
+the standard templates have enough structure perhaps we can do interformat mapping so presentation format is
+flexible."* The sit rep and surveillance report built the same day were laid out from general knowledge of WHO and
+OCHA reports, not from a template checked at its source; that check is running (WHO, OCHA, ECDC, Africa CDC, PAHO for
+situation reports; ECDC, WHO's Weekly Epidemiological Record and CDC's MMWR for surveillance reports, open sources
+only).
+
+**The idea, not yet designed.** One set of section **roles** beneath every format: key points or highlights, the
+situation in numbers, the epidemiological description, background, assessment or interpretation, response actions,
+gaps and needs, next steps, recommendations, methods, limitations, sources. Each role says where its content comes
+from: the notes of a part (Results, Methods, Discussion, limitations), or text the person writes. **A format is a
+mapping**: its own headings, in its own order, each pointing to a role, with its own prompt and length; declared as
+data, as a ruleset is, so a WHO sit rep, an OCHA sit rep or an ECDC report is a declaration, not code. **Changing
+format keeps what was written**: text written for a role appears under whichever heading another format gives that
+role; a heading with no role in the other format is named as not carried over, never guessed into another.
+
+**What it depends on, and what would close it:** whether the open templates share enough structure for one role set to
+cover them, which the check will show. Designed from what it finds, not before: the role set, each source format's
+mapping, and where the formats disagree.

@@ -103,7 +103,9 @@ the same day: "Yes, the 1824 sheet").
 ([202](docs/experiments/202-one-record-several-products.md), dated section; the practitioner: *"I would do this before ABM
 spike"*, and *"The above can partly close the render experiment"*): notes' text and images resizable, so figures sit side
 by side or inserted beside text as in Word; the draft shown as the publication looks; one example each of a publication,
-a surveillance report and a sit rep; (3) the ABM spike.
+a surveillance report and a sit rep, and then **formats as mappings onto section roles**, so the presentation format is
+flexible (202, dated section of the same day: the practitioner, *"perhaps we can do interformat mapping"*), designed
+from the check of open sit rep and surveillance report templates; (3) the ABM spike.
 
 **Done 2026-11-15 (Map 0.33.2):** compared on Salmonella, South London and MERS, the Notes figure had lost the key's line
 under a shaded map's ramp and listed its classes again in two loose columns; both fixed in the figure Notes and the SVG

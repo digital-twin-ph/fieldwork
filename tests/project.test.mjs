@@ -236,7 +236,7 @@ test('A PROJECT KEEPS WHAT IS WRITTEN BY ROLE, THE FORMAT AND ITS FIGURES\' PLAC
   const raw={schema:'fieldwork/project/2',id:'p',name:'P',subject:'S',workflows:[],publication:{
     title:'A title','kind':'sitrep-who','role:highlights':'Three new cases.','role:period':'Weeks 1 to 4',
     'layout:sitrep-who:map:description':'half|beside','layout:publication:t:description':'third|right',
-    'kind2':'x','role:abstract':'no such role','layout:sitrep-who:m':'huge|everywhere','layout:poster:m':'full|line',
+    'kind2':'x','role:noSuchRole':'no such role','layout:sitrep-who:m':'huge|everywhere','layout:poster:m':'full|line',
     'kind ':'sitrep-who','sitrep:highlights':'a key of the withdrawn kind'}};
   const kept=validateProject(raw).publication;
   assert.deepEqual(Object.keys(kept).sort(),['kind','layout:publication:t:description','layout:sitrep-who:map:description',

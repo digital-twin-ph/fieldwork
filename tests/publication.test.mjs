@@ -153,3 +153,11 @@ test('a figure left out of one format is gone from it, kept in the others, and c
   assert.match(publicationMarkup({...base,kind:'sitrep-who',written,writable:true},esc),/class="pub-left-out" data-pub-note="map:description"/);
   assert.match(publicationMarkup({...base,written},esc),/data-figure="map"/,'the publication keeps it');
 });
+test('an MMWR-style report opens on its Summary box of three questions, each answered by the person',()=>{
+  const written={[roleKey('addedHere')]:'Visits doubled on 7 June.'};
+  const html=publicationMarkup({...base,kind:'mmwr-report',written},esc);
+  assert.deepEqual(h2s(html).slice(0,3),['Summary','Abstract','Introduction']);
+  assert.match(html,/<h2>Summary<\/h2><div class="pub-keyfigures"><div class="pub-prompt pub-qa" data-pub-part="role:alreadyKnown"><p class="pub-prompt-label">What is already known about this topic\?/);
+  assert.match(html,/<p class="pub-question">What is added by this report\?<\/p><p>Visits doubled on 7 June\.<\/p>/);
+  assert.match(html,/Morbidity and Mortality Weekly Report/);
+});

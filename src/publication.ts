@@ -23,7 +23,9 @@ import reportFormats from '../widgets/report-formats.json';
  *  widgets/report-formats.json as a mapping of its own headings onto roles. */
 export type ProductKind=string;
 export interface RoleDeclaration {source:'written'|'notes'|'limitations'|'references'; part?:WriteUpPart; label:string}
-export interface FormatSection {heading:string; roles:string[]; box?:boolean; prompt?:[string,string,string]}
+export interface FormatSection {heading:string; roles:string[]; box?:boolean; prompt?:[string,string,string];
+  /** A prompt per role, where a section holds several the person writes, as MMWR's Summary box does. */
+  prompts?:Record<string,[string,string,string]>}
 export interface ReportFormat {id:string; label:string; kicker:string; follows:string;
   masthead:{role:string;prompt:[string,string,string]}[]; sections:FormatSection[]}
 export const ROLES=reportFormats.roles as unknown as Record<string,RoleDeclaration>;
@@ -83,7 +85,8 @@ export function promptFor(stored:string,kind:ProductKind='publication'):readonly
   if(!stored.startsWith('role:'))return PROMPTS[stored as keyof typeof PROMPTS];
   const role=stored.slice(5),format=FORMATS.find(f=>f.id===kind);
   if(role==='title')return ['Title','up to 20 words','What happened, where and when.'];
-  return format?.masthead.find(m=>m.role===role)?.prompt??format?.sections.find(x=>x.roles.includes(role))?.prompt
+  const section=format?.sections.find(x=>x.roles.includes(role));
+  return format?.masthead.find(m=>m.role===role)?.prompt??section?.prompts?.[role]??section?.prompt
     ??(ROLES[role]?[ROLES[role]!.label,'',''] as const:undefined);
 }
 const WIDTHS:readonly [FigureWidth,string][]=[['full','Full width'],['half','Half'],['third','A third']];
@@ -205,7 +208,7 @@ export function publicationMarkup(input:PublicationInput,esc:Escape):string{
     // A WRITTEN ROLE: its text where written, the format's prompt for it where not.
     const writtenRole=(role:string,ask:readonly [string,string,string]|undefined,cls='')=>{
       const key=roleKey(role),text=written[key]?.trim(),[label,length,what]=ask??[ROLES[role]?.label??role,'',''];
-      if(text)return `<div class="pub-written${cls}" data-pub-part="${key}">${toHTML(text)}${control(key,'Edit')}</div>`;
+      if(text)return `<div class="pub-written${cls}" data-pub-part="${key}">${cls.includes('pub-qa')?`<p class="pub-question">${esc(label)}</p>`:''}${toHTML(text)}${control(key,'Edit')}</div>`;
       return `<div class="pub-prompt${cls}" data-pub-part="${key}"><p class="pub-prompt-label">${esc(label)}${length?` <span>· ${esc(length)}</span>`:''}</p>`
         +`<p>${esc(what)}</p>${control(key,'Write')}</div>`;};
     // FROM THE RECORD: each role's notes rendered once, Methods first so its sources are known by the time references are.
@@ -218,7 +221,7 @@ export function publicationMarkup(input:PublicationInput,esc:Escape):string{
     const hasRecord:Record<string,boolean>={background:introduction.length>0,situation:results.length>0,methods:methods.length>0,
       interpretation:discussion.length>0,limitations:limitations.length>0,references:sources.length+cited.length>0};
     const roleBody=(role:string,section?:FormatSection)=>ROLES[role]?.source==='written'
-      ?writtenRole(role,section?.prompt):(fromRecord[role]?.()??'');
+      ?writtenRole(role,section?.prompts?.[role]??section?.prompt,section?.prompts?.[role]?' pub-qa':''):(fromRecord[role]?.()??'');
     const head=`<p class="pub-kicker">${esc(format.kicker)}</p>`
       +`<h1 data-pub-part="${roleKey('title')}">${esc(written[roleKey('title')]?.trim()||input.title)}</h1>`+control(roleKey('title'),'Edit title')
       +(input.authors.length?`<p class="pub-authors">${input.authors.map(esc).join(', ')}</p>`:'')

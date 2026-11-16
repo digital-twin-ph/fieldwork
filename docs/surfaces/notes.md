@@ -130,6 +130,7 @@ chooses the kind:
 | Situation report, OCHA style | UN OCHA situation reports | Report number, as of, highlights, key figures, situation overview, response, gaps and challenges, notes on the data, references, contacts |
 | Surveillance report, ECDC style | ECDC annual epidemiological reports | Reporting period, key facts, introduction, methods, epidemiology, discussion, public health implications, references |
 | Surveillance summary, MMWR style | CDC MMWR surveillance summaries | Period covered, summary, introduction, methods, results, discussion, limitations, public health action, references |
+| Report, MMWR style | CDC MMWR full reports | A summary box of three questions (what is already known, what this adds, implications for practice), abstract, introduction, methods, results, discussion, limitations, public health implications, references |
 
 Each format is filled from the same notes. The parts you write, such as highlights or recommendations, are written in
 place with **Write**; until then the part shows what it is for and how long it runs, and prints nothing. **What you write

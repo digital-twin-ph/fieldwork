@@ -259,3 +259,15 @@ highlights written once appear under all three; key figures named as not carried
 prompt), `tests/project.test.mjs`, and `tests/draft-products.browser.mjs` on South London in Chromium (WHO style, the
 OCHA style's gaps section, back again, figures side by side and left out, kept on reopening). **Not established:**
 whether a reader takes the drafts for the reports they follow; that comes with the demos.
+
+**A fifth format, and the real thing it follows, 2026-11-15.** The practitioner, asked whether a surveillance summary of
+the NYC data was ever published: *"we need something that comes really close to the real thing."* None was found
+(workspace `reports/NYC asthma and the June 2023 smoke, published reports.md`): no CDC or NYC health department report
+gives NYC figures for the June 2023 smoke; the nearest are McArdle et al. (MMWR 2023, HHS Region 2, ages 5 to 17), Meek
+et al. (MMWR 2023, New York State without NYC), and Chen et al. (JAMA 2023, NYC ages 5 to 17, rate ratio 1.32). The
+practitioner chose the MMWR full report: **Report, MMWR style**, after McArdle et al., opens on its Summary box of
+three questions, each a role the person writes with its own prompt (a format section may now carry a prompt per role).
+**Found on the way:** the example's PM2.5 of 190 µg/m³ on 7 June 2023 is the authors' citywide mean of eligible
+monitors, which that day was **two**; over Chen et al.'s windows the authors' series gives 115.3 against a reference of
+10.7, against Chen's 100.9 and 9.0 from ten monitors. Checked in `tests/publication.test.mjs` (the Summary box's three
+questions, a written answer led by its question).

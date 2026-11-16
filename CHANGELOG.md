@@ -3,7 +3,7 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## 0.127.0 — In development
+## 0.127.0 — 2026-11-15
 
 - **The draft as a document, in six formats.** In Notes, Publication now offers **Draft as**: the publication, a WHO-
   or OCHA-style situation report, an ECDC- or MMWR-style surveillance report, or an MMWR-style full report, each checked against published

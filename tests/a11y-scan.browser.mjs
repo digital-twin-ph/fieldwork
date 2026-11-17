@@ -25,7 +25,10 @@ const scanner=(page,info)=>async(surface,theme,scope)=>{
   if(scope)b=b.include(scope);
   // SETTLED BEFORE IT IS MEASURED (found on WebKit's CI run of 2026-11-16): a toast caught mid-fade in the dark theme
   // read as contrast 1.41, its colours halfway through the transition. Running animations finish before the scan.
-  await page.waitForFunction(()=>document.getAnimations().every(a=>a.playState!=='running'||a.effect?.getComputedTiming().iterations===Infinity),null,{timeout:5000}).catch(()=>{});
+  // A toast raised a moment after a click (2026-11-17, light theme, 1.69 on #project-new) had not begun to fade when
+  // the first check ran, so the page must be settled twice, a quarter of a second apart.
+  const settled=()=>page.waitForFunction(()=>document.getAnimations().every(a=>a.playState!=='running'||a.effect?.getComputedTiming().iterations===Infinity),null,{timeout:5000}).catch(()=>{});
+  for(let i=0;i<2;i++){await page.waitForTimeout(250);await settled();}
   const r=await b.analyze();
   for(const v of r.violations)found.push({project:info.project.name,surface,theme,rule:v.id,impact:v.impact,help:v.help,
     wcag:v.tags.filter(t=>/^wcag\d{3,}$/.test(t)),nodes:v.nodes.length,

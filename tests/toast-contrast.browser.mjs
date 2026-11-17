@@ -13,6 +13,7 @@ for(const scheme of ['dark','light'])
     await page.goto('/');
     await page.emulateMedia({colorScheme:scheme});
     await page.goto('/?example=blank');
+    await expect(page.locator('html[data-ready="true"]')).toHaveCount(1,{timeout:30000});
     // Raise a toast that carries an action, the way the update prompt does.
     await page.evaluate(()=>{
       const toast=document.getElementById('toast');
@@ -21,6 +22,9 @@ for(const scheme of ['dark','light'])
       button.className='button small';button.textContent='Reload';
       toast.append(button);toast.classList.add('visible');
     });
+    // Measured once its fade has finished: halfway through, its colours are neither theme's (WebKit CI, 2026-11-17).
+    await page.waitForTimeout(100);
+    await page.locator('#toast').evaluate(el=>Promise.all(el.getAnimations({subtree:true}).map(a=>a.finished.catch(()=>{}))));
     const contrast=await page.locator('#toast .button').evaluate(el=>{
       const parse=v=>(v.match(/\d+(\.\d+)?/g)||[0,0,0]).slice(0,3).map(Number);
       const L=c=>{const [r,g,b]=c.map(v=>{const s=v/255;return s<=.03928?s/12.92:((s+.055)/1.055)**2.4;});

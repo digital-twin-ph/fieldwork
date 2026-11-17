@@ -92,7 +92,8 @@ says whether your click landed on the feature. It fills nothing in. **Show where
 reduced motion set on your device, the ring stays still.
 
 **Zooming the image.** A crosshair marks the centre of the image pane. Scroll until what you want is under it, then press
-**Zoom in**: it stays under the crosshair. The pane keeps its place after each click.
+**Zoom in**: it stays under the crosshair. The pane keeps its place after each click. Without a mouse, press Tab until
+the image pane is outlined, then scroll it with the arrow keys.
 
 **While you match pairs**, a box under the table says:
 

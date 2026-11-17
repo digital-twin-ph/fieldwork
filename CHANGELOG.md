@@ -10,6 +10,8 @@ shown in a local build is not a claim that it has been published.
   Map shares a raster's cells with Raster input instead of copying them. The peak of a whole Apply or run is within
   the spread between runs: not shown to be lower.
 - **The accessibility scan and the toast contrast test measure a toast after its fade**, not halfway through it.
+- **The Map image dialog's image pane scrolls by keyboard**: press Tab to reach it, then the arrow keys. The scan,
+  waiting longer, found it scrollable and out of reach.
 - **Experiment 199:** Aaby, Thoma and Dietz (2022) is subscription only; its abstract counts 187 cases. The source table
   says what was read and what was not.
 

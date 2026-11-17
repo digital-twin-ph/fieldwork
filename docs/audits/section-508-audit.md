@@ -113,6 +113,14 @@ OpenStreetMap tiles refused to WebKit from this machine, and fails the same way 
 
 **WebKit, the same day.** CI's WebKit run stopped at its 75-minute limit, at test 504 of 531: the scans added about six minutes there. The six examples' Inspector scans now run on Chromium only; WebKit still scans every view and the note dialog. The markup axe reads is the same in both engines, so what is lost is only an engine difference in what the page builds, which none of the scans has shown. The local gate, Chromium only, is unchanged.
 
+## A scan that waits finds one more, 2026-11-17
+
+The scan now waits for the page to settle twice, a quarter of a second apart, after CI caught a toast mid-fade. With
+the longer wait, the Map image dialog's image had loaded and overflowed its pane before the scan, which found it
+scrollable and unreachable by keyboard: scrollable-region-focusable (2.1.1), in hagelloch-cluster, light theme. The
+earlier scans had measured the pane before the image filled it. The pane is now a named region in the Tab order,
+scrolled with the arrow keys. Gate 196 found it on Chromium; WebKit does not run the examples' Inspector scans.
+
 ## What it does not establish
 
 Anything yet. An automated scan finding nothing would not establish conformance; only the full method would, and

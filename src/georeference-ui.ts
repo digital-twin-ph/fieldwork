@@ -234,7 +234,7 @@ export function openMapImageConfig(o:{step:string;initial:MapImageDraft;esc:Esca
         +`<div class="geo-image-tools"><button type="button" class="button small" data-geo-zoom="1.5">Zoom in</button>`
         +`<button type="button" class="button small" data-geo-zoom="0.667">Zoom out</button></div>`
         +`<div class="geo-image-wrap"><span class="geo-crosshair" aria-hidden="true"></span>`
-        +`<div class="geo-pane geo-image-pane" id="geo-image-pane"><div class="geo-image-frame" id="geo-image-frame">`
+        +`<div class="geo-pane geo-image-pane" id="geo-image-pane" tabindex="0" role="region" aria-label="The map image; scroll with the arrow keys"><div class="geo-image-frame" id="geo-image-frame">`
         +`<img id="geo-image" src="${d.image.data}" alt="The map image" draggable="false"><div id="geo-image-marks"></div></div></div></div></div>`
         +`<div><p class="geo-pane-title">On today's map</p>`
         +`<p class="geo-map-how" id="geo-map-how">Drag to move the map. <strong>Shift + click</strong> to place the point. `

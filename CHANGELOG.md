@@ -3,7 +3,7 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## 0.136.0 — In development
+## 0.136.0 — 2026-11-17
 
 - **Nigeria whole at 100 m.** Raster input keeps a window of up to 166.4 million cells, raised from 123.3 million and
   measured on WorldPop over Nigeria: the dialog and a run of Study area, Raster input and Map. A window of more than

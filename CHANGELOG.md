@@ -3,7 +3,7 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## 0.133.0 — In development
+## 0.133.0 — 2026-11-17
 
 - **A remote raster read survives a dropped connection.** Raster input reads a file at a URL in about twenty parts; a
   part whose connection drops is now tried again, up to four times. If it stays down, the dialog says where the read

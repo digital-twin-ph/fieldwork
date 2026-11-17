@@ -41,3 +41,22 @@ test('only the study area\u2019s cells are counted: a cell whose centre is outsi
   assert.ok(inArea.density[0]<all.density[0],'the eastern cell is left out');
   assert.ok(inArea.outline?.length===1,'the outline travels with the panel');
 });
+
+// "Like broken glass" (2026-11-17): Botswana's 28 districts thinned to every k-th vertex became straight chords. Now each
+// ring is simplified by shape: every original point stays within the tolerance of the drawn ring, and a small ring
+// survives beside a large one.
+test('an outline is simplified by shape: every point stays near the drawn line, and small rings survive',async()=>{
+  const {thinnedOutline,simplifyRing}=await import('../build/raster-panels.js');
+  const jagged=(cx,cy,r,n)=>{const ring=[];for(let i=0;i<n;i++){const t=2*Math.PI*i/n,w=r*(1+0.05*Math.sin(i*1.7)+0.02*Math.sin(i*13.1));ring.push([cx+w*Math.cos(t),cy+w*Math.sin(t)]);}ring.push([...ring[0]]);return ring;};
+  const big=jagged(24,-22,4,200000),small=jagged(25.9,-24.65,0.05,3000);
+  const outline=thinnedOutline({type:'MultiPolygon',coordinates:[[big],[small]]});
+  assert.equal(outline.length,2,'the small ring is still drawn');
+  assert.ok(outline.reduce((n,r)=>n+r.length,0)<=20000);
+  const distance=(p,ring)=>{let best=Infinity;for(let i=0;i+1<ring.length;i++){const [ax,ay]=ring[i],[bx,by]=ring[i+1],dx=bx-ax,dy=by-ay,l=dx*dx+dy*dy,t=l?Math.max(0,Math.min(1,((p[0]-ax)*dx+(p[1]-ay)*dy)/l)):0;best=Math.min(best,Math.hypot(p[0]-ax-t*dx,p[1]-ay-t*dy));}return best;};
+  // The tolerance is half a pixel of a 1,000-pixel panel over the outline's extent (8 degrees here): 0.004 degrees,
+  // doubled at most twice to fit 20,000 points.
+  const worst=Math.max(...big.filter((_,i)=>i%997===0).map(p=>distance(p,outline[0])));
+  assert.ok(worst<=0.016+1e-12,`a point of the border ${worst.toFixed(4)} degrees from the drawn line`);
+  const ring=simplifyRing([[0,0],[1,0],[2,0],[2,1],[2,2],[0,2],[0,0]],0.01);
+  assert.deepEqual(ring,[[0,0],[2,0],[2,2],[0,2],[0,0]],'a square keeps its corners and loses the points along its sides');
+});

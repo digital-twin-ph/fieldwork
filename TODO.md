@@ -543,6 +543,10 @@ Then Sierra Leone. Then ABM spike."* So 8, then 12, then 3, then 29. The numberi
    the Gaborone model's rates, on Old Naledi's homes; weekly counts from a recorded seed, held against Starsim by
    run-to-run spread; the browser's limit measured; about a day. Proposed 2026-11-10 and left unrecorded for a day,
    found when the practitioner asked when the spike was.
+   **2026-11-17: moved ahead of MERS by the practitioner and run on Hagelloch's measles instead (*"Measles, Hagelloch
+   188"*): yes.** Same tables natively and in WebAssembly; agreement with Starsim 3.7.4 within run-to-run spread over
+   500 runs each; 188 children 1 ms a run, 940,000 3.3 s. Next, the practitioner's to choose: periods from an open
+   source, the Starsim script into the Validation Lab, a widget to run it, or a comparison with the recorded curve.
 30. **A heat stress worked example on real data, replacing the heat example** (the practitioner, 2026-11-11: *"We will
    replace heat stress with a worked example, with real data so this needs a TODO so we can do the research."*). The
    synthetic heat example retires in the Old Naledi pass (docs/audits/old-naledi-audit.md). Research first, open

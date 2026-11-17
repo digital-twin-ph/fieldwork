@@ -27,6 +27,12 @@ export interface Kernel {
   scan_prepare(n:number,places:number,bins:number,centers:number,circles:number,order:number,replications:number):number;
   scan_ptr(which:number):number; scan_begin(seed:number):void;
   scan_run(count:number,top:number,stopAfter:number,longest:number,prospective:number):number;
+  // An agent-based model of an outbreak (experiment 199's spike): households and classes written through abm_ptr, one
+  // run per seed, the daily counts of S, E, I and R read back at abm_ptr(5). abm_run's count comes back signed: read it
+  // with >>>0, where 4294967295 means the parameters were refused.
+  abm_prepare(n:number,days:number):number; abm_ptr(which:number):number;
+  abm_run(seed:bigint,index:number,pHousehold:number,pClass:number,pVillage:number,latentMin:number,latentMax:number,
+    infectiousMin:number,infectiousMax:number):number;
 }
 const bytes=Uint8Array.from(atob(KERNEL_BASE64),character=>character.charCodeAt(0));
 export const kernel=(await WebAssembly.instantiate(bytes,{})).instance.exports as unknown as Kernel;

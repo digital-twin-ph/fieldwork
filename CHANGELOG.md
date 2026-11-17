@@ -3,6 +3,20 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.136.0 — In development
+
+- **Nigeria whole at 100 m.** Raster input keeps a window of up to 166.4 million cells, raised from 123.3 million and
+  measured on WorldPop over Nigeria: the dialog and a run of Study area, Raster input and Map. A window of more than
+  1.1 GB is still refused, so GHS-POP over Nigeria, at twice the bytes, is not admitted. DR Congo whole is refused:
+  measured, it is read but cannot yet be saved.
+- **Boundaries in the side-by-side panels follow their borders.** Outlines were thinned to every so many points, which
+  drew Botswana's districts as straight lines across the country. They are now simplified by shape, each border kept
+  within about half a drawn pixel, and small areas are no longer dropped.
+- **An agent-based model in the kernel, not yet in the application.** The spike for experiment 199: measles in
+  Hagelloch's 188 children over their households, school classes and village, a day at a time from a recorded seed.
+  The same seed gives the same table natively and in WebAssembly, and 500 runs agree with Starsim 3.7.4 within their
+  run-to-run spread.
+
 ## 0.135.0 — 2026-11-17
 
 - **A large raster no longer kills the tab after a run.** The line under the map saying how many cells hold a value

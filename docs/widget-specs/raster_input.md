@@ -72,3 +72,28 @@ freezes while it runs, and the step counter is not redrawn. Not established unti
 
 The reductions made earlier the same day, the drawing at 2,048 pixels a side and fewer copies when reading and saving,
 stay: the drawing at one pixel a cell measured 1.4 GB on its own.
+
+Confirmed on 0.135.0 the same day: the practitioner's workflow, Study area of 40,744 vertices (Botswana, from
+geoBoundaries), Raster input of 11,248 x 10,950 cells and Map, ran to "Run complete" in Edge on Windows, where on
+0.133.0 it had stopped at "1 of 3". JLT's run in Chrome on Windows is still to report.
+
+### The limit raised to Nigeria; DR Congo dies saving (2026-11-17)
+
+The practitioner, with Nigeria and then DR Congo refused at 123.3 million cells: *"We reached the cap again I think we
+increase to double"*, then, offered a measurement first, *"See COD also"* and *"You should still run DR Congo"*.
+
+Measured in headless Chromium on a Mac, the limits raised in a local build only, with Study area across each file's
+whole extent, Raster input through its own dialog, and Map:
+
+| WorldPop 2026, 100 m | Window | Apply | Run |
+| --- | --- | --- | --- |
+| Botswana | 123.2 M cells, 0.49 GB | | 2.2 GB peak |
+| Nigeria | 166.4 M cells, 0.67 GB | 73 s, 2.3 GB peak | 2 s, 3.2 GB peak |
+| DR Congo | 518.8 M cells, 2.07 GB | read in 15 s; died saving, at 4.35 GB | not reached |
+
+The limit is now Nigeria's window, 166.4 million cells. The decoding limit, 1.1 GB, is unchanged, so GHS-POP over
+Nigeria, 8 bytes a cell, is still refused: never run. Doubling the cell limit, as first asked, would have admitted
+it. Not established: Nigeria in Edge or Chrome on Windows, which the practitioner is to try.
+
+Above Nigeria the obstacle is saving: the window is written out as a second whole copy, then stored. Writing and
+storing it in parts, and reading it band by band in the steps that use it, is the change DR Congo needs; not begun.

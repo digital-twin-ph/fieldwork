@@ -28,12 +28,42 @@ export interface DrawnDensity {
   outline?:number[][][];
 }
 /** AT MOST SO MANY POINTS OF OUTLINE A PANEL DRAWS: Rwanda's districts are 149,000 vertices, three panels of them a figure
- *  nobody can open. Every ring keeps its first and last point; between, every k-th. */
-export const MAX_OUTLINE_POINTS=6000;
+ *  nobody can open.
+ *
+ *  SIMPLIFIED BY SHAPE, NOT BY COUNT (2026-11-17). Every k-th vertex of every ring, one k for all, drew Botswana's 28
+ *  census districts as straight chords across the country, "like broken glass" (the practitioner's screenshot), and
+ *  dropped small rings. Now each ring is simplified by Douglas-Peucker to within a tolerance of about half a drawn
+ *  pixel of a panel 1,000 pixels across: a border stays within that of where it is, straight runs lose their points
+ *  and bends keep theirs. Only if that still leaves more than `max` points is the tolerance doubled, and doubled again,
+ *  until it does not. */
+export const MAX_OUTLINE_POINTS=20000;
+const PANEL_PIXELS=1000;
+/** The points of `ring` (closed: its last point repeats its first) kept within `tolerance` of it, as a closed ring. */
+export function simplifyRing(ring:readonly number[][],tolerance:number):number[][]{
+  const n=ring.length-1;if(n<3)return ring.map(p=>[...p]);
+  // Split the closed ring at the point farthest from its first, so each half is an open run with two ends to keep.
+  let far=0,best=-1;for(let i=1;i<n;i++){const d=(ring[i]![0]!-ring[0]![0]!)**2+(ring[i]![1]!-ring[0]![1]!)**2;if(d>best){best=d;far=i;}}
+  const keep=new Uint8Array(n+1);keep[0]=keep[far]=keep[n]=1;
+  const t2=tolerance*tolerance,stack:[number,number][]=[[0,far],[far,n]];
+  while(stack.length){const [a,b]=stack.pop()!;if(b-a<2)continue;
+    const [ax,ay]=ring[a]!,[bx,by]=ring[b]!,dx=bx!-ax!,dy=by!-ay!,len2=dx*dx+dy*dy;let at=-1,max=-1;
+    for(let i=a+1;i<b;i++){const [px,py]=ring[i]!;let d:number;
+      if(len2===0)d=(px!-ax!)**2+(py!-ay!)**2;
+      else{const t=Math.max(0,Math.min(1,((px!-ax!)*dx+(py!-ay!)*dy)/len2));d=(px!-ax!-t*dx)**2+(py!-ay!-t*dy)**2;}
+      if(d>max){max=d;at=i;}}
+    if(max>t2){keep[at]=1;stack.push([a,at],[at,b]);}}
+  const out:number[][]=[];for(let i=0;i<=n;i++)if(keep[i])out.push([...ring[i]!]);
+  return out;
+}
 export function thinnedOutline(boundary:Boundary,max=MAX_OUTLINE_POINTS):number[][][]{
   const rings=(boundary.type==='Polygon'?[boundary.coordinates]:boundary.coordinates).flat() as unknown as number[][][];
-  const total=rings.reduce((n,r)=>n+r.length,0),k=Math.max(1,Math.ceil(total/max));
-  return rings.map(r=>r.filter((_,i)=>i%k===0||i===r.length-1)).filter(r=>r.length>=4);
+  let west=Infinity,east=-Infinity,south=Infinity,north=-Infinity;
+  for(const r of rings)for(const [x,y] of r){if(x!<west)west=x!;if(x!>east)east=x!;if(y!<south)south=y!;if(y!>north)north=y!;}
+  let tolerance=Math.max(east-west,north-south)/PANEL_PIXELS/2;
+  if(!(tolerance>0))return rings.map(r=>r.map(p=>[...p]));
+  for(;;){const out=rings.map(r=>simplifyRing(r,tolerance)).filter(r=>r.length>=4);
+    if(out.reduce((n,r)=>n+r.length,0)<=max)return out;
+    tolerance*=2;}
 }
 
 const R_KM=6371.0088;

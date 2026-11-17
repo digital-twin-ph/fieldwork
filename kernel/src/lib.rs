@@ -15,6 +15,9 @@ pub mod glm;
 /// The space-time permutation scan's test. TODO 17, step 3.
 pub mod scan;
 
+/// An agent-based model of an outbreak over households, classes and a village. Experiment 199's spike.
+pub mod abm;
+
 fn ratio(numerator: f64, denominator: f64) -> f64 {
     if denominator > 0.0 {
         numerator / denominator

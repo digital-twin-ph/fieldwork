@@ -3,7 +3,7 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## 0.132.0 — In development
+## 0.132.0 — 2026-11-17
 
 - **A project shared through GitHub.** New project now offers two paths: **New local project**, or **Open shared
   GitHub project**, the second only while Credentials are unlocked. Each has **Import project from backup**. A shared

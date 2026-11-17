@@ -3,6 +3,16 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.137.0 — In development
+
+- **One less copy of a raster window while saving and showing it.** The digest of a saved window over 64 MB is taken
+  over the bytes in place, not a copy; on Nigeria the step's peak fell from 2.33 to 1.71 GB, at about 2.5 s more.
+  Map shares a raster's cells with Raster input instead of copying them. The peak of a whole Apply or run is within
+  the spread between runs: not shown to be lower.
+- **The accessibility scan and the toast contrast test measure a toast after its fade**, not halfway through it.
+- **Experiment 199:** Aaby, Thoma and Dietz (2022) is subscription only; its abstract counts 187 cases. The source table
+  says what was read and what was not.
+
 ## 0.136.0 — 2026-11-17
 
 - **Nigeria whole at 100 m.** Raster input keeps a window of up to 166.4 million cells, raised from 123.3 million and

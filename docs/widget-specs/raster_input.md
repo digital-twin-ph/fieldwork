@@ -97,3 +97,23 @@ it. Not established: Nigeria in Edge or Chrome on Windows, which the practitione
 
 Above Nigeria the obstacle is saving: the window is written out as a second whole copy, then stored. Writing and
 storing it in parts, and reading it band by band in the steps that use it, is the change DR Congo needs; not begun.
+
+### Two copies removed; the workflow's peak not measurably lower (2026-11-17)
+
+Two places held a second copy of a window for a moment. The digest of the saved window went through SubtleCrypto,
+which takes its own copy of the bytes. Map's presentation step deep-copied its input, raster cells included. Above
+64 MB the digest is now taken over slices of the same bytes, and the presentation shares the cells and copies the
+rest. Nothing writes to a grid's cells once read.
+
+Measured on Nigeria, the same file and the same Mac:
+
+| | Before | After |
+| --- | --- | --- |
+| Digest step alone (read, encode, digest) | 2.33 GB peak | 1.71 GB peak, the same digest |
+| Apply, the whole dialog, two runs | 2.1 GB, 2.3 GB | 2.3 GB, 2.2 GB |
+| Run of the workflow, two runs | 3.6 GB, 3.1 GB | 2.9 GB, 3.1 GB |
+
+The digest step is 0.6 GB lighter. The workflow's peaks are within the spread between runs, so a lower peak for
+Apply or Run is not established. Apply's peak comes from somewhere other than the digest. The cost: hashing in place
+is about ten times slower than SubtleCrypto (260 against 2,450 MB/s in Node), about 2.5 s on Nigeria's 0.67 GB window.
+The copies were removed for the change DR Congo needs, where the window is saved in parts and no step may hold two.

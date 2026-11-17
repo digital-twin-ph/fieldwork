@@ -25,3 +25,13 @@ test('a Blob read a slice at a time gives the file’s digest, and says how far 
   assert.deepEqual(seen.at(-1),[data.length,data.length]);
   assert.equal(seen.length,Math.ceil(data.length/65_536));
 });
+
+/** A SAVED WINDOW HASHED IN PLACE (2026-11-17): above the threshold the digest is taken over slices of the same bytes, not
+ *  a copy, and must be the one SubtleCrypto gives. 70 MB is above the default threshold and spans three slices; an
+ *  infinite threshold sends the same bytes to SubtleCrypto. */
+test('hashed in place or by SubtleCrypto, a buffer has one digest',async()=>{
+  const {contentHash}=await import('../build/project-files.js');
+  const data=new Uint8Array(randomBytes(70_000_123)),expected=createHash('sha256').update(data).digest('hex');
+  assert.equal(await contentHash(data),expected);
+  assert.equal(await contentHash(data,Infinity),expected);
+});

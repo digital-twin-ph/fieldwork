@@ -21,5 +21,8 @@ export function decisionPresentation(node:WorkflowNode<'map_output'|'table_outpu
   const activity=`<urn:fieldwork:run:${runId}:view:${node.id}>`,source=`<urn:fieldwork:run:${runId}:output:${sourceNodeId}>`,result=`<urn:fieldwork:run:${runId}:output:${node.id}>`;
   const facts='@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n'+
     `${activity} a fw:${node.type==='map_output'?'MapView':'TableView'}, prov:Activity; prov:used ${source}.\n${result} a prov:Entity; prov:wasGeneratedBy ${activity}; prov:wasDerivedFrom ${source}.\n`;
-  return {value:structuredClone(input),receipt:{nodeId:node.id,kind:'presentation',facts,rules:'',input:facts,conclusions:[],method:input.raster?'Present native raster cell values and boundary without resampling or new inference.':'Present existing decisions and evidence without recomputing, filtering or reclassifying records.'}};
+  // THE CELLS ARE SHARED, NOT COPIED (2026-11-17): a deep copy of the input held a second raster in memory for each Map,
+  // 0.67 GB for Nigeria at 100 m. Nothing writes to a grid's cells once read; the rest is still copied.
+  const {raster,...rest}=input,value:DisplayValue=raster?{...structuredClone(rest),raster:{...structuredClone({...raster,values:[]}),values:raster.values}}:structuredClone(input);
+  return {value,receipt:{nodeId:node.id,kind:'presentation',facts,rules:'',input:facts,conclusions:[],method:input.raster?'Present native raster cell values and boundary without resampling or new inference.':'Present existing decisions and evidence without recomputing, filtering or reclassifying records.'}};
 }

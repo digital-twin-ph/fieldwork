@@ -3,7 +3,16 @@ import type {RasterAsset} from './raster.js';
 import {rasterFileByteLimit,MAX_DECODE_BYTES} from './raster-limits.js';
 import {referencedPDFs,pdfDigest,MAX_PDF_BYTES} from './evidence.js';
 export interface ProjectFile {sha256:string;bytes:number;filename:string;mediaType:'application/pdf'|'image/tiff';asset?:RasterAsset}
-export async function contentHash(bytes:Uint8Array<ArrayBuffer>):Promise<string>{return [...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(b=>b.toString(16).padStart(2,'0')).join('');}
+/** A SHA-256 THAT DOES NOT COPY WHAT IT HASHES (2026-11-17). SubtleCrypto takes its own copy of the buffer, which for a
+ *  saved raster window is a second window in memory at the moment saving is already at its peak (Nigeria: 0.67 GB).
+ *  Above `inPlaceFrom` bytes the digest is computed over slices of the same buffer, about ten times slower (260 MB/s
+ *  against 2,450 MB/s, measured in Node), pausing between slices so the page keeps answering. Same digest either way. */
+export async function contentHash(bytes:Uint8Array<ArrayBuffer>,inPlaceFrom=64*1024*1024):Promise<string>{
+  if(bytes.length<inPlaceFrom)return [...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(b=>b.toString(16).padStart(2,'0')).join('');
+  const {Sha256}=await import('./sha256-stream.js'),hash=new Sha256(),slice=32*1024*1024;
+  for(let at=0;at<bytes.length;at+=slice){hash.update(bytes.subarray(at,at+slice));await new Promise(r=>setTimeout(r,0));}
+  return hash.hex();
+}
 /** THE LARGEST FILE OF EACH KIND a project carries: a PDF as evidence allows, a raster as the measured cell cap allows
  *  (2026-11-12; rasters were held to a combined 10 MB with PDFs, a number from before the cap was measured). */
 export const fileByteLimit=(mediaType:ProjectFile['mediaType']):number=>mediaType==='image/tiff'?rasterFileByteLimit():MAX_PDF_BYTES;

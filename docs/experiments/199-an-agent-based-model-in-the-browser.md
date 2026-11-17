@@ -1,6 +1,6 @@
 # 199 · An agent-based model in the browser, checked against Starsim
 
-_Created 2026-11-11 · Updated 2026-11-11_
+_Created 2026-11-11 · Updated 2026-11-17_
 
 **Status:** asked. A spike proposed 2026-11-10 and placed after MERS (TODO 29); moved ahead of MERS by the practitioner on
 2026-11-17 (*"Let's investigate the ABM spike next"*), on Hagelloch's measles. **Spike run 2026-11-17: yes.** A
@@ -71,15 +71,15 @@ The practitioner chose the smaller alternative: *"Measles, Hagelloch 188"*, and 
 | Over 600 inhabitants first in 1849; stagnant in the 1850s and 1860s through emigration; 587 in 1871, 748 in 1900 | Stadtarchiv Tübingen, finding aid C30, Ortsarchiv Hagelloch (open PDF on tuebingen.de) | Text extracted from the PDF |
 | 579 inhabitants, year not stated | Beschreibung des Oberamts Tübingen (1867), Hagelloch, on Wikisource | Read on the page |
 | 188 children aged 15 and under were susceptible, and every one was infected | Groendyke, Welch and Hunter (2012), Biometrics, author's copy on cs.auckland.ac.nz (licence not stated) | Text extracted from the PDF |
-| 577 inhabitants in 1861; 197 children under 14, 185 infected; the previous outbreak in 1847 | Aaby, Thoma and Dietz (2022), Journal of Infection; a record at publikationen.uni-tuebingen.de | **Not read**: the repository refused the connection. Known only from a search summary |
+| From the abstract: "nearly all children under 14 years of age" affected; deaths 12 of 187 cases, 7 of 70 under five; 82 of 187 secondary cases. From a search summary only: 577 inhabitants in 1861, 197 children under 14, the previous outbreak in 1847 | Aaby P, Thoma H, Dietz K (2022), "Measles in the European past: outbreak of severe measles in an isolated German village, 1861", J Infect 84(5):668–674, doi:10.1016/j.jinf.2022.02.010; abstract on Europe PMC (PMID 35182549) | **Full text not read**: subscription only, not in PMC; the Tübingen repository refused the connection again on 2026-11-17. The abstract was read |
 | 185 of 197 infected; children born after 1847 susceptible | Neal and Roberts (2004), Biostatistics | **Not read**: no open copy found; the publisher's is closed |
 
 **No 1861 census count is in hand.** The archive's census files (A 7) begin in 1895, and its register of residents
 (A 114) in 1885. What was read brackets the village at 577 to 600 or so in the 1860s; the 577 for 1861 is unread.
 
 **For the model:** the 188 children, as recorded, are the population; the one open source read says all were
-susceptible and all were infected. The 197 and the 185 come from sources not read, and the two counts of cases (185,
-188) are not reconciled here. Adults are left out as immune after the 1847 outbreak: an assumption, stated. If the
+susceptible and all were infected. The 577 and the 197 come from a search summary, not the paper, and the counts of
+cases (187 in Aaby's abstract, 188 in Groendyke) are not reconciled here. Adults are left out as immune after the 1847 outbreak: an assumption, stated. If the
 Tübingen repository's copy of Aaby 2022 opens later, the 197 is checked against it before any model uses it.
 
 ## The spike, run 2026-11-17

@@ -97,8 +97,8 @@ does not overlap the raster at all is refused.
   this device.
 - **It will not read classic NetCDF-3**, a satellite swath, or a grid on another projection. A NetCDF-3 file can be
   converted with `nccopy -k nc4`. **A NetCDF file at a URL** is not read yet: keep it on this laptop and choose it.
-- **It will not keep more than 166.4 million cells**, nor a window of more than 1.1 GB. Nigeria whole at 100 m fits;
-  DR Congo whole does not. A smaller study area keeps fewer.
+- **It will not keep more than 518.9 million cells**, nor a window of more than 2.1 GB. DR Congo whole at 100 m fits.
+  A smaller study area keeps fewer.
 
 ## Where it is used
 

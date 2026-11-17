@@ -26,7 +26,7 @@ const rereadableAsset=(asset:{source:{url?:string;sha256?:string}})=>!!asset.sou
 export async function verifyProjectFile(file:ProjectFile,bytes:Uint8Array<ArrayBuffer>):Promise<void>{
   if(bytes.length!==file.bytes||bytes.length>fileByteLimit(file.mediaType)||await contentHash(bytes)!==file.sha256)throw new Error('Project asset checksum or size mismatch.');
   if(file.mediaType==='application/pdf'){await pdfDigest(bytes);return;}
-  const {inspectRaster,MAX_RASTER_CELLS}=await import('./raster.js'),actual=await inspectRaster(new Blob([bytes])),expected=file.asset?.metadata;
+  const {inspectRaster,MAX_RASTER_CELLS}=await import('./raster.js'),actual=await inspectRaster(bytes.byteOffset===0&&bytes.byteLength===bytes.buffer.byteLength?bytes.buffer:new Blob([bytes])),expected=file.asset?.metadata;
   if(actual.width*actual.height>MAX_RASTER_CELLS||actual.blockWidth*actual.blockHeight*actual.bytesPerPixel>MAX_DECODE_BYTES)throw new Error('Packaged raster exceeds decoding limits.');
   if(expected&&JSON.stringify([actual.width,actual.height,actual.origin,actual.resolution])!==JSON.stringify([expected.width,expected.height,expected.origin,expected.resolution]))throw new Error('Raster asset metadata does not match its GeoTIFF.');
 }

@@ -3,6 +3,19 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.138.0 — In development
+
+- **DR Congo whole at 100 m.** Raster input keeps a window of up to 518.9 million cells and 2.1 GB, raised from 166.4
+  million and 1.1 GB, measured on WorldPop over DR Congo: Apply 75 s at 2.6 GB, a run at 2.7 GB, a run again at 3.0 GB,
+  in Chromium on a Mac. Not yet tried on Windows.
+- **A raster window is held once, not three or four times.** It is read straight into the file it is saved as; its
+  stored parts are read back one at a time; its header is read from its bytes; and the last run's raster is let go when
+  the next run starts. Nigeria's Apply fell from 2.1 to 2.3 GB to 1.6 GB, and a run pressed again from 3.0 to 3.6 GB to
+  at most 2.2 GB.
+- **A refusal for too many TIFF blocks names the real limit**, not a 512 MB budget retired in October.
+- **The Credentials dialog has a manual**: how to make a GitHub token for one repository and fill in the form. Detached,
+  it stays beside the form.
+
 ## 0.137.0 — 2026-11-17
 
 - **One less copy of a raster window while saving and showing it.** The digest of a saved window over 64 MB is taken

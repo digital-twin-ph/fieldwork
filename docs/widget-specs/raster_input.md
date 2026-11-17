@@ -117,3 +117,34 @@ The digest step is 0.6 GB lighter. The workflow's peaks are within the spread be
 Apply or Run is not established. Apply's peak comes from somewhere other than the digest. The cost: hashing in place
 is about ten times slower than SubtleCrypto (260 against 2,450 MB/s in Node), about 2.5 s on Nigeria's 0.67 GB window.
 The copies were removed for the change DR Congo needs, where the window is saved in parts and no step may hold two.
+
+### DR Congo whole, at one window and a half (2026-11-17)
+
+The practitioner, with DR Congo refused: *"Let's address the limit as this country is in the middle of an Ebola
+crisis"*. Fieldwork is not in use in the field, so this was the limit lifted, not a stopgap.
+
+Where the memory went, found by measuring each stage on Nigeria, then DR Congo, in headless Chromium on a Mac:
+
+- **Saving held the window twice over.** The cells as read, the file they were written into, a Blob copy of that file
+  made only to read its header back, and the digest's copy. Now the window is read straight into the place the saved
+  file keeps its cells, so the cells and the file are one buffer; the header is read from the bytes; the digest is
+  taken over them in place.
+- **A run read the stored window back twice.** Its 64 MB parts were all asked for at once, so every part arrived before
+  the first was copied into the whole. Now each is asked for when the last is copied. The header check made a Blob copy
+  here too; now it reads the bytes.
+- **Opening a project runs it, and Run pressed again ran beside the last run's raster.** The Results and the Notes tab's
+  record of the last run both kept it. Both let it go when the next run starts.
+
+| WorldPop 2026, 100 m | Apply | Run on opening | Run again |
+| --- | --- | --- | --- |
+| Nigeria, before | 2.1 to 2.3 GB | 1.82 GB | 3.0 to 3.6 GB |
+| Nigeria, after | 1.59 to 1.60 GB | 1.30 to 1.35 GB | 1.30 to 2.19 GB |
+| DR Congo, before | died saving, about 6 GB | not reached | not reached |
+| DR Congo, after (two runs) | 75 s, 2.58 to 2.63 GB | 2.53 to 2.66 GB | 2.88 to 3.01 GB |
+
+DR Congo's window is 518,812,635 cells of 4 bytes (2.07 GB) over 2,123,366,400 bytes of TIFF blocks. The cell limit is
+now 518.9 million and the decoding limit 2.124 GB, both rounded up from it.
+
+Not established: DR Congo, or Nigeria, in Edge or Chrome on Windows, where a tab may hold less than on a Mac. GHS-POP over
+Nigeria, 8 bytes a cell and 1.33 GB, is now admitted and has not been run. A window past 2^31 bytes would pass the largest
+single array some browsers allow; the decoding limit sits just under it.

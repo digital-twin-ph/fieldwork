@@ -53,7 +53,7 @@ test('window bounds, decoding budgets and smaller native-grid crops are enforced
   const w=rasterWindow(metadata,past);assert.ok(w[0]>=0&&w[1]>=0&&w[2]<=metadata.width&&w[3]<=metadata.height);
   assert.ok(rasterOverhang(metadata,past).length>0);assert.match(overhangSentence(rasterOverhang(metadata,past)),/reaches past this raster/);
   assert.deepEqual(rasterOverhang(metadata,boundary),[]);
-  assert.throws(()=>rasterWindow(metadata,{type:'Polygon',coordinates:[[[0,0],[1,0],[1,1],[0,0]]]}),/do not overlap/);}assert.throws(()=>rasterWindow({...metadata,blockWidth:20000,blockHeight:20000},boundary),/decoding budget/);const small=clipRaster(grid,{type:'Polygon',coordinates:[[[25.25,-24.25],[25.5,-24.25],[25.5,-24.5],[25.25,-24.5],[25.25,-24.25]]]});assert.deepEqual(small.metadata.origin,[25.25,-24.25]);assert.equal(small.values.length,1);assert.equal(cell(small.values[0]),null);});
+  assert.throws(()=>rasterWindow(metadata,{type:'Polygon',coordinates:[[[0,0],[1,0],[1,1],[0,0]]]}),/do not overlap/);}assert.throws(()=>rasterWindow({...metadata,blockWidth:20000,blockHeight:20000},boundary),/GB to decode/);const small=clipRaster(grid,{type:'Polygon',coordinates:[[[25.25,-24.25],[25.5,-24.25],[25.5,-24.5],[25.25,-24.5],[25.25,-24.25]]]});assert.deepEqual(small.metadata.origin,[25.25,-24.25]);assert.equal(small.values.length,1);assert.equal(cell(small.values[0]),null);});
 test('raster assets are complete, digest-checked portable encrypted project contents',async()=>{const {grid,bytes}=await fixture(),w=oldNalediWorkflow();w.nodes.push({id:'raster',type:'raster_input',x:0,y:0,params:{label:'Raster',asset:grid.asset}});const files=new Map([[grid.asset.sha256,bytes]]),password='raster test passphrase',zip=await createEncryptedPackage(w,files,password),result=await readEncryptedPackage(zip,password,validateWorkflow);assert.deepEqual(result.files,files);assert.equal(result.workflow.manifest.inventory.assets[0].mediaType,'image/tiff');await assert.rejects(()=>createEncryptedPackage(w,new Map(),password));const bad=new Uint8Array(bytes);bad[100]^=1;await assert.rejects(()=>createEncryptedPackage(w,new Map([[grid.asset.sha256,bad]]),password),/checksum/);const receipt=rasterReceipt({id:'clip',type:'clip_raster',params:{label:'Clip',method:'cell-center'}},clipRaster(grid,boundary),{boundary,areaId:'urn:area',geometryId:'urn:geometry'},'trial','raster');assert.ok(new Parser().parse(receipt.facts).length>10);assert.match(receipt.facts,/RasterClipping/);});
 
 // A POINT-REGISTERED GRID IS NO LONGER REFUSED (experiment 198, 2026-11-09): it is read as the cells around its nodes,
@@ -152,4 +152,20 @@ test('a file on this device is not retried',async()=>{
   const cells=new Float32Array(100*100).fill(1),blob=new Blob([writeGeoTiff(cells,100,100,[30,-1],[0.001,-0.001],'t')]),m=await inspectRaster(blob);
   const broken=new Blob([await blob.slice(0,2000).arrayBuffer()]);let notes=0;
   await assert.rejects(readRasterWindow(broken,m,[0,0,100,100],(r,o,note)=>{if(note)notes++;},1));assert.equal(notes,0);
+});
+
+/** ONE COPY WHILE SAVING (2026-11-17): a window read into the place the saved file keeps its cells is saved without a
+ *  second buffer, and the file is byte for byte the one written the ordinary way. */
+test('a window read into its saved file\'s place is saved in place, to the same bytes',async()=>{
+  const {writeGeoTiff,savedWindowCells}=await import('../build/raster.js');
+  const width=1200,height=900,cells=new Float32Array(width*height).map((_,i)=>i%53===0?NaN:i*0.25);
+  const blob=new Blob([writeGeoTiff(cells,width,height,[30,-1],[0.001,-0.001],'test')]),m=await inspectRaster(blob),window=[5,9,1100,880];
+  const ordinary=encodeRaster(await readRasterWindow(blob,m,window,()=>{}));
+  const into=savedWindowCells(m,window),read=await readRasterWindow(blob,m,window,()=>{},undefined,into);
+  assert.equal(read.values,into,'the cells were read where they were given');
+  const saved=encodeRaster(read);
+  assert.equal(saved.buffer,into.buffer,'the file is the buffer the cells were read into');
+  assert.deepEqual(saved,ordinary);
+  // A grid whose cells lie elsewhere is copied, as before.
+  assert.deepEqual(encodeRaster({...read,values:new Float32Array(read.values)}),ordinary);
 });

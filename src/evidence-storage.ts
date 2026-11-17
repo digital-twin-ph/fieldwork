@@ -65,11 +65,14 @@ export async function readPDF(hash:string):Promise<Uint8Array<ArrayBuffer>|null>
       const value=request.result as unknown;
       if(value===undefined)resolve(null);
       else if(isRecord(value)&&Number.isSafeInteger(value.parts)&&Number.isSafeInteger(value.bytes)){
-        const parts=value.parts as number,whole=new Uint8Array(value.bytes as number);let offset=0,read=0;
-        for(let i=0;i<parts;i++){const part=store.get(`${hash}:part:${i}`);part.onerror=()=>reject(stored(`part ${i+1} of ${parts}`,part.error));part.onsuccess=()=>{
+        const parts=value.parts as number,whole=new Uint8Array(value.bytes as number);let offset=0;
+        // ONE PART AT A TIME (2026-11-17): asked for all at once, every part arrived before the first was copied, so a window
+        // was in memory twice. Each part is asked for when the last has been copied, inside the same transaction.
+        const next=(i:number)=>{const part=store.get(`${hash}:part:${i}`);part.onerror=()=>reject(stored(`part ${i+1} of ${parts}`,part.error));part.onsuccess=()=>{
           if(!(part.result instanceof Uint8Array)){reject(new Error('A stored file is missing a part. Reattach the original.'));return;}
-          // Parts are requested in order and IndexedDB answers in request order, so each lands after the last.
-          whole.set(part.result,offset);offset+=part.result.length;if(++read===parts)resolve(offset===whole.length?whole:null);};}
+          if(offset+part.result.length>whole.length){resolve(null);return;}
+          whole.set(part.result,offset);offset+=part.result.length;if(i+1<parts)next(i+1);else resolve(offset===whole.length?whole:null);};};
+        next(0);
       }
       else if(value instanceof Uint8Array)resolve(value as Uint8Array<ArrayBuffer>);
       else if(value instanceof ArrayBuffer)resolve(new Uint8Array(value));

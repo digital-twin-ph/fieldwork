@@ -111,7 +111,7 @@ export function rasterWindow(metadata:RasterMetadata,boundary:Boundary,paddingPi
   const window:[number,number,number,number]=[Math.max(0,Math.floor((west-x)/dx)),Math.max(0,Math.floor((north-y)/dy)),Math.min(metadata.width,Math.ceil((east-x)/dx)),Math.min(metadata.height,Math.ceil((south-y)/dy))];
   const width=window[2]-window[0],height=window[3]-window[1];check(width>0&&height>0,'Study area does not intersect any raster cells.');check(width*height<=MAX_RASTER_CELLS,`This window is ${(width*height).toLocaleString('en')} cells, past the ${MAX_RASTER_CELLS.toLocaleString('en')} a step keeps. Use a smaller study area.`);
   const blocksX=Math.floor((window[2]-1)/metadata.blockWidth)-Math.floor(window[0]/metadata.blockWidth)+1,blocksY=Math.floor((window[3]-1)/metadata.blockHeight)-Math.floor(window[1]/metadata.blockHeight)+1;
-  check(blocksX*blocksY*metadata.blockWidth*metadata.blockHeight*metadata.bytesPerPixel<=MAX_DECODE_BYTES,'Intersecting TIFF blocks exceed the 512 MB decoding budget. Retile this raster before importing.');return window;
+  check(blocksX*blocksY*metadata.blockWidth*metadata.blockHeight*metadata.bytesPerPixel<=MAX_DECODE_BYTES,`The parts of this raster under the study area come to more than ${(MAX_DECODE_BYTES/1e9).toFixed(1)} GB to decode. Use a smaller study area.`);return window;
 }
 /** HOW FAR A STUDY AREA REACHES PAST THE RASTER, per edge, in degrees and roughly in kilometres; empty where it does not. */
 export function rasterOverhang(metadata:RasterMetadata,boundary:Boundary):{edge:'west'|'east'|'south'|'north';degrees:number;km:number}[]{
@@ -138,7 +138,7 @@ export const overhangSentence=(o:ReturnType<typeof rasterOverhang>):string=>!o.l
  *  retried: a read that failed there would fail the same way again. */
 const RETRIES=4,RETRY_MS=1500,bandsRead=new Map<string,{values:RasterValues;bands:number}>();
 export async function readRasterWindow(blob:RasterSource,metadata:RasterMetadata,window:[number,number,number,number],
-  onProgress?:(rows:number,of:number,note?:string)=>void,retryMs=RETRY_MS):Promise<{metadata:RasterMetadata;values:RasterValues}>{
+  onProgress?:(rows:number,of:number,note?:string)=>void,retryMs=RETRY_MS,into?:RasterValues):Promise<{metadata:RasterMetadata;values:RasterValues}>{
   let tiff=await openTiff(blob);try{let image=await tiff.getImage();const width=window[2]-window[0],height=window[3]-window[1],origin:[number,number]=[metadata.origin[0]+window[0]*metadata.resolution[0],metadata.origin[1]+window[1]*metadata.resolution[1]];
     let values:RasterValues;
     if(!onProgress)values=rasterValues(await image.readRasters({window,samples:[0],interleave:true}) as unknown as ArrayLike<number>,metadata);
@@ -147,7 +147,7 @@ export async function readRasterWindow(blob:RasterSource,metadata:RasterMetadata
       const remote=typeof blob==='string',key=remote?`${blob}|${window.join(',')}`:'';
       // ONE ARRAY, FILLED A BAND AT A TIME (2026-11-17): the bands, their join and the converted copy were three windows'
       // worth at once, about 1.5 GB for WorldPop over Botswana, before anything was saved.
-      const held=remote?bandsRead.get(key):undefined,state=held??{values:emptyValues(width*height,metadata),bands:0};
+      const held=remote?bandsRead.get(key):undefined,state=held??{values:into&&into.length===width*height&&into.constructor===emptyValues(0,metadata).constructor?into:emptyValues(width*height,metadata),bands:0};
       if(remote)bandsRead.set(key,state);values=state.values;
       onProgress(Math.min(height,state.bands*band),height,state.bands?'carrying on from where the last read stopped':undefined);
       let stale=false;
@@ -188,7 +188,7 @@ export function encodeRaster(grid:Pick<RasterGrid,'metadata'|'values'> & Partial
   if(ready){/* as they are */}
   else if(grid.values instanceof Float32Array||grid.values instanceof Float64Array)cells.set(grid.values);
   else for(let i=0;i<cells.length;i++){const v=(grid.values as ArrayLike<number|null>)[i];cells[i]=v===null||v===undefined?NaN:v;}
-  const description=!grid.asset?'Fieldwork derived raster; source metadata and provenance are retained in the project.'
+  const description=!grid.asset?DERIVED_DESCRIPTION
     :JSON.stringify({schema:'fieldwork/raster-provenance/1',embeddedBy:'Fieldwork',sourceMetadataOrigin:'Workflow-author entry, separate from original TIFF tags',originalRasterMetadata:grid.asset.source.metadata,source:grid.asset.provenance||{},originalFile:grid.asset.source.filename,retainedInputSHA256:grid.asset.sha256,operation:grid.mask?grid.mask.method+' polygon clip':'native window',boundary:grid.boundary,mask:grid.mask});
   return writeGeoTiff(cells,m.width,m.height,m.origin,m.resolution,description);
 }
@@ -197,12 +197,13 @@ export function encodeRaster(grid:Pick<RasterGrid,'metadata'|'values'> & Partial
  *  (EPSG:4326) and PixelIsArea, NoData NaN, the description in place. GeoTIFF.js's writer did the same through per-value
  *  arrays and took 2.7 s for 16.8 million cells and 32 s for Botswana's 123 million, all of it blocking the page
  *  (measured 2026-11-12); this copies the cells once. Read back by the same reader as every other raster. */
-export function writeGeoTiff(cells:Float32Array|Float64Array,width:number,height:number,origin:readonly [number,number],resolution:readonly [number,number],description:string):Uint8Array<ArrayBuffer>{
-  check(new Uint8Array(new Uint16Array([1]).buffer)[0]===1,'Raster encoding expects a little-endian platform.');
-  check(cells.length===width*height,'Invalid retained raster dimensions.');
+const DERIVED_DESCRIPTION='Fieldwork derived raster; source metadata and provenance are retained in the project.';
+/** WHERE THE CELLS WILL LIE IN THE FILE, worked out before they are read (2026-11-17): a window read straight into this
+ *  place is already saved, so the cells and the file are one copy, not two. DR Congo at 100 m is 2.07 GB a copy. */
+function tiffPlan(width:number,height:number,bytesPerCell:number,origin:readonly [number,number],resolution:readonly [number,number],description:string){
   const ascii=description.replace(/[\u007f-\uffff]/g,c=>'\\u'+c.charCodeAt(0).toString(16).padStart(4,'0'))+'\0';
   check(ascii.length<=60000,'Raster export metadata exceeds 60 KB. Shorten the source notes or export the project package.');
-  const bytesPerCell=cells.BYTES_PER_ELEMENT,rowBytes=width*bytesPerCell,rowsPerStrip=Math.max(1,Math.min(height,Math.floor((1<<20)/rowBytes))),strips=Math.ceil(height/rowsPerStrip);
+  const rowBytes=width*bytesPerCell,rowsPerStrip=Math.max(1,Math.min(height,Math.floor((1<<20)/rowBytes))),strips=Math.ceil(height/rowsPerStrip);
   const geoKeys=[1,1,0,3, 1024,0,1,2, 1025,0,1,1, 2048,0,1,4326],nodata='nan\0';
   // [tag, type, count, inline value or the bytes to place after the directory]. Types: 2 ASCII, 3 SHORT, 4 LONG, 12 DOUBLE.
   type Entry=[number,number,number,number|Uint8Array];
@@ -219,7 +220,24 @@ export function writeGeoTiff(cells:Float32Array|Float64Array,width:number,height
   let at=afterDirectory;const placed=new Map<number,number>();
   for(const [tag,,,value] of entries)if(value instanceof Uint8Array&&value.length>4){placed.set(tag,at);at+=value.length+(value.length%2);}
   const offsetsAt=strips>1?at:0;if(strips>1)at+=strips*4;
-  const cellsAt=at+((8-at%8)%8),total=cellsAt+cells.byteLength,out=new Uint8Array(total),view=new DataView(out.buffer);
+  const cellsAt=at+((8-at%8)%8),total=cellsAt+width*height*bytesPerCell;
+  return {entries,placed,offsetsAt,cellsAt,total,strips,rowsPerStrip,rowBytes,directory};
+}
+/** Cells for a window of `metadata` that Raster input will save: they lie where the saved file keeps them. */
+export function savedWindowCells(metadata:RasterMetadata,window:[number,number,number,number]):RasterValues{
+  const width=window[2]-window[0],height=window[3]-window[1],wide=!(metadata.bytesPerPixel>0&&metadata.bytesPerPixel<=4),bytesPerCell=wide?8:4;
+  const {cellsAt,total}=tiffPlan(width,height,bytesPerCell,[0,0],[1,-1],DERIVED_DESCRIPTION),buffer=new ArrayBuffer(total);
+  return wide?new Float64Array(buffer,cellsAt,width*height):new Float32Array(buffer,cellsAt,width*height);
+}
+export function writeGeoTiff(cells:Float32Array|Float64Array,width:number,height:number,origin:readonly [number,number],resolution:readonly [number,number],description:string):Uint8Array<ArrayBuffer>{
+  check(new Uint8Array(new Uint16Array([1]).buffer)[0]===1,'Raster encoding expects a little-endian platform.');
+  check(cells.length===width*height,'Invalid retained raster dimensions.');
+  const longs=(values:number[])=>new Uint8Array(new Uint32Array(values).buffer);
+  const {entries,placed,offsetsAt,cellsAt,total,strips,rowsPerStrip,rowBytes,directory}=tiffPlan(width,height,cells.BYTES_PER_ELEMENT,origin,resolution,description);
+  // IN PLACE when the cells were read into the file's own buffer: only the header is written, into the bytes before them.
+  const inPlace=cells.buffer instanceof ArrayBuffer&&cells.byteOffset===cellsAt&&cells.buffer.byteLength===total;
+  if(inPlace)new Uint8Array(cells.buffer,0,cellsAt).fill(0);
+  const out=inPlace?new Uint8Array(cells.buffer as ArrayBuffer):new Uint8Array(total),view=new DataView(out.buffer);
   view.setUint16(0,0x4949,false);view.setUint16(2,42,true);view.setUint32(4,directory,true);view.setUint16(directory,entries.length,true);
   const stripOffsets=Array.from({length:strips},(_,i)=>cellsAt+i*rowsPerStrip*rowBytes);
   entries.forEach(([tag,type,count,value],i)=>{
@@ -230,7 +248,7 @@ export function writeGeoTiff(cells:Float32Array|Float64Array,width:number,height
     view.setUint32(entry+8,placed.get(tag)!,true);out.set(value,placed.get(tag)!);
   });
   view.setUint32(directory+2+entries.length*12,0,true);
-  out.set(new Uint8Array(cells.buffer,cells.byteOffset,cells.byteLength),cellsAt);
+  if(!inPlace)out.set(new Uint8Array(cells.buffer,cells.byteOffset,cells.byteLength),cellsAt);
   return out;
 }
 export function clipRaster(grid:RasterGrid,boundary:Boundary,options:RasterClipOptions={}):RasterGrid{

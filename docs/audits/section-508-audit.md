@@ -1,6 +1,6 @@
 # Section 508 audit
 
-_Created 2026-11-16 · Updated 2026-11-16_
+_Created 2026-11-16 · Updated 2026-11-17_
 
 **Status:** in progress. The automated floor measured, widened to every widget's Inspector and its dialogs, and in the gate, with no violation left, 2026-11-16; the canvas operable by keyboard; the other checks by hand not begun. An audit, not an experiment (the
 practitioner, 2026-11-16: *"It should not be an experiment but an audit"*): it checks the application against a

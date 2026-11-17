@@ -200,7 +200,20 @@ export interface ProjectRepository {
    *  project is later than the work it already holds — and that gap is the honest reason a
    *  contributions statement under-credits earlier work rather than a defect in it. */
   attachedAt:string;
+  /** THIS DEVICE'S HOLD ON IT (2026-11-16), none of which goes in the repository or a backup: which credential reaches
+   *  it, by reference and never the token; the commit last read or saved here; each file's digest at that moment, so
+   *  "changed here" is a comparison rather than a guess; and when its Discussions were last looked at here. */
+  credential?:string;
+  commit?:string;
+  files?:Record<string,string>;
+  /** Each file's digest AS GITHUB HELD IT at that moment, which this device's own regeneration may not match byte for
+   *  byte: what "changed on GitHub" is measured against. */
+  remote?:Record<string,string>;
+  syncedAt?:string;
+  seenAt?:string;
 }
+/** The fields a backup leaves behind: they describe this device, not the project. */
+export const DEVICE_REPOSITORY_FIELDS=['credential','commit','files','remote','syncedAt','seenAt'] as const;
 
 /** GitHub's rule for a repository name: letters, digits, hyphen, underscore and period, at most
  *  100 characters, and never `.` or `..` alone. Narrower than the owner rule, which is a login. */
@@ -215,7 +228,11 @@ export function readRepository(raw:unknown):ProjectRepository|null{
   // Without the moment there is no conversion to speak of: the field exists to say WHEN a project
   // stopped being solo, and a repository with no date cannot answer the question it is here for.
   if(!attachedAt)return null;
-  return {owner:raw.owner as string,repo:raw.repo as string,attachedAt};
+  const text=(key:string)=>typeof raw[key]==='string'&&raw[key]?{[key]:raw[key] as string}:{};
+  const digests=(key:'files'|'remote')=>{const v=raw[key];return isRecord(v)&&Object.values(v).every(x=>typeof x==='string')?{[key]:v as Record<string,string>}:{};};
+  const files={...digests('files'),...digests('remote')};
+  return {owner:raw.owner as string,repo:raw.repo as string,attachedAt,
+    ...text('credential'),...text('commit'),...files,...text('syncedAt'),...text('seenAt')};
 }
 
 /** `owner/repo`, which is how GitHub writes it and how a practitioner will read it back. */

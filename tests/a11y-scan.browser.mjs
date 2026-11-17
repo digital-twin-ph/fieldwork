@@ -84,7 +84,10 @@ test('the note dialog, both themes',async({page},info)=>{
   expect(report(info,'note')).toEqual([]);
 });
 
-for(const example of EXAMPLES)test(`${example}: each widget's Inspector, the dialogs it opens, and the Results`,async({page},info)=>{
+/** CHROMIUM ONLY (2026-11-16): axe reads the page's markup, which both engines are given alike, and the six examples cost
+ *  WebKit about 4.5 minutes, enough to stop CI's WebKit run at its 75-minute limit. WebKit still scans the views and dialogs. */
+for(const example of EXAMPLES)test(`${example}: each widget's Inspector, the dialogs it opens, and the Results`,async({page,browserName},info)=>{
+  test.skip(browserName==='webkit','Inspector markup is scanned on Chromium; WebKit runs out of CI time');
   const scan=scanner(page,info);
   for(const theme of example==='snow-isochrone'?['light','dark']:['light']){
     await page.emulateMedia({colorScheme:theme});

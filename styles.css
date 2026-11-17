@@ -1588,3 +1588,59 @@ th .meaning{font-weight:400;white-space:normal}
 .skip-links{position:absolute;left:8px;top:8px;z-index:1000;display:flex;gap:8px}
 .skip-link{position:absolute;left:-10000px;padding:10px 14px;background:var(--surface-raised-1);color:var(--ink);border:2px solid var(--accent-4,#176b59);border-radius:6px;font-size:16px;font-weight:700}
 .skip-link:focus{position:static;left:auto}
+.project-repo-block{margin-top:1.5rem}
+.project-repo-block select,.project-repo-block input{display:block;margin-bottom:.75rem;font-size:1rem;padding:.4rem .5rem;min-height:2.5rem}
+.project-repo-block .muted{font-size:1rem}
+.repo-post{margin-top:1rem}
+.repo-post h4{font-size:1rem;margin:0 0 .5rem}
+.repo-post select,.repo-post input,.repo-post textarea{display:block;width:100%;max-width:36rem;margin-bottom:.75rem;font-size:1rem;padding:.4rem .5rem;min-height:2.5rem;box-sizing:border-box}
+.repo-check-result{list-style:none;padding:0;margin:.75rem 0 0}
+.repo-check-result li{margin:.35rem 0;font-size:1rem}
+.repo-check-result li.is-no strong{color:var(--danger-2,#93503a)}
+
+#credentials-button.is-unlocked{background:var(--surface-tint-2);border-color:var(--accent-1);color:var(--accent-1)}
+#credentials-button .padlock{vertical-align:-2px;margin-right:.35rem}
+.shared-discussion-list{list-style:none;padding:0;margin:.5rem 0}
+.shared-discussion-list li{margin:.35rem 0;font-size:1rem}
+.shared-discussion-list li.is-new a{font-weight:700}
+.shared-discussion-list .category{display:inline-block;font-size:.875rem;padding:0 .4rem;border:1px solid var(--line-1);border-radius:.25rem}
+#project-shared .muted,#project-shared p{font-size:1rem}
+#project-shared input,#project-shared select{display:block;margin-bottom:.75rem;font-size:1rem;padding:.4rem .5rem;min-height:2.5rem}
+.shared-people-list{list-style:none;padding:0;margin:.5rem 0}
+.shared-people-list li{margin:.75rem 0;font-size:1rem}
+.shared-people-list select{display:inline-block;margin:.25rem 0}
+.shared-people-list .is-no strong{color:var(--danger-2,#93503a)}
+.affiliations{border:1px solid var(--line-1);border-radius:.375rem;padding:.5rem .75rem;margin:.75rem 0}
+.affiliations legend{font-size:1rem}
+.affiliation-list{padding-left:1.25rem;margin:.25rem 0}
+.affiliation-row{margin:.5rem 0 1rem}
+.affiliation-matches{list-style:none;padding:0;margin:.25rem 0}
+.affiliation-matches li{margin:.25rem 0}
+.recent-repositories{margin:0 0 .75rem}
+.recent-repositories select{font-size:1rem;padding:.4rem .5rem;min-height:2.5rem}
+.project-paths{border:0;padding:0;margin:.75rem 0 1.25rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(16rem,1fr));gap:.75rem}
+.project-path{display:flex;gap:.6rem;align-items:flex-start;border:1px solid var(--line-1);border-radius:.5rem;padding:.75rem .9rem;cursor:pointer;font-size:1rem}
+.project-path:has(input:checked){border-color:var(--accent-1);background:var(--surface-tint-2);box-shadow:inset 0 0 0 1px var(--accent-1)}
+.project-path input{width:1.15rem;height:1.15rem;margin-top:.15rem;flex:none}
+.project-path strong{display:block;font-size:1.05rem}
+.project-path .muted{display:block;font-size:.95rem;margin-top:.15rem}
+#path-github{margin-top:0}
+#github-empty input,#github-empty textarea{display:block;width:100%;max-width:36rem;font-size:1rem;padding:.4rem .5rem;margin-bottom:.75rem;box-sizing:border-box}
+.project-path[hidden]{display:none}
+.token-projects{list-style:none;padding:0;margin:.5rem 0 1rem}
+.token-projects>li{margin:.6rem 0;font-size:1rem}
+.token-repositories{list-style:none;padding:0;margin:.3rem 0 0 1rem}
+.token-repositories li{margin:.3rem 0}
+.token-repositories .repo-name{font-weight:600}
+.repo-typed{margin:.5rem 0}
+.repo-typed summary{font-size:1rem;cursor:pointer}
+.token-guess{margin:.4rem 0 .4rem 1rem;font-size:1rem}
+.token-choose{margin:.3rem 0 .3rem 1rem}
+.token-choose summary{cursor:pointer;font-size:1rem}
+.token-public{display:flex;gap:.4rem;align-items:center;font-size:1rem;margin:.3rem 0}
+/* A PENCIL BESIDE THE WORKFLOW'S TITLE (2026-11-16): it was editable, and only a tooltip said so. Drawn by CSS so a
+   redraw of the title cannot remove it; decoration only, the title's own label says what it does. */
+#project-title[role="button"]::after{content:"";display:inline-block;width:.8em;height:.8em;margin-left:.45em;vertical-align:-.05em;background:var(--text-muted-1,#5b6e57);-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.6' stroke-linejoin='round' stroke-linecap='round'%3E%3Cpath d='M4 20l1.2-4.6L15.6 5a2.1 2.1 0 0 1 3 0l.4.4a2.1 2.1 0 0 1 0 3L8.6 18.8 4 20z'/%3E%3Cpath d='M13.8 6.8l3.4 3.4'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linejoin='round' stroke-linecap='round'%3E%3Cpath d='M4 20l1.2-4.6L15.6 5a2.1 2.1 0 0 1 3 0l.4.4a2.1 2.1 0 0 1 0 3L8.6 18.8 4 20z'/%3E%3Cpath d='M13.8 6.8l3.4 3.4'/%3E%3C/svg%3E") center/contain no-repeat}
+#project-title[role="button"]:has(.inline-rename)::after{display:none}
+.lock-warning{position:fixed;left:50%;bottom:1.25rem;transform:translateX(-50%);z-index:1000;display:flex;gap:.9rem;align-items:center;max-width:min(40rem,calc(100vw - 2rem));padding:.8rem 1rem;border-radius:.5rem;background:var(--surface-raised-1);color:var(--text-1);border:2px solid var(--warning-1);box-shadow:0 4px 18px var(--shadow-1);font-size:1.05rem}
+.lock-warning[hidden]{display:none}

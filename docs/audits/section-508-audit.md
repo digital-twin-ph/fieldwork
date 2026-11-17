@@ -32,7 +32,7 @@ Does Fieldwork conform, where does it not, and what would it take?
 | The workflow canvas: adding, connecting and moving nodes | 2.1.1 Keyboard | Built for a pointer; connecting two ports by keyboard alone is unproven |
 | Notes moved between sections by dragging | 2.1.1 Keyboard | Drag and drop; a keyboard path may not exist |
 | Maps and charts | 1.1.1 Non-text content; 1.4.1 Use of colour | A choropleth tells its classes by colour; a figure's text alternative is its caption, which may not be enough |
-| The 15-minute lock of identity and credentials | 2.2.1 Timing adjustable | Locks without warning; nothing is lost, but the person must open the file again |
+| The 10-minute lock of identity and credentials (15 until 2026-11-16, shortened at the practitioner's choice; a reload no longer locks) | 2.2.1 Timing adjustable | **Fixed 2026-11-16:** a warning a minute before, in words (`role="alert"`), with **Keep them open**. Tested in `tests/credentials.browser.mjs` with the clock run forward; Chromium only |
 | Dialogs and tabs | 2.4.3 Focus order; 4.1.2 Name, role, value | Many dialogs, some built by hand; focus on open and close is unchecked across them |
 | The PDFs of a product | Section 508's rule for documents | Printed by the browser; whether the PDF is tagged depends on the browser |
 | Status messages (toasts, results said under a button) | 4.1.3 Status messages is WCAG 2.1, not 2.0, so outside 508's floor; checked anyway | Spoken or not depends on live regions |
@@ -110,6 +110,8 @@ After the fixes: no violations, Chromium and WebKit, 8 scan tests. Tests that ha
 outputs' tabs, a port's label, the Inspector's id) were updated; 189 of the browser tests touching the changed markup
 passed on Chromium, and the four updated ones on both engines but `outputs.browser.mjs` on WebKit, which fails on
 OpenStreetMap tiles refused to WebKit from this machine, and fails the same way on 0.130.0.
+
+**WebKit, the same day.** CI's WebKit run stopped at its 75-minute limit, at test 504 of 531: the scans added about six minutes there. The six examples' Inspector scans now run on Chromium only; WebKit still scans every view and the note dialog. The markup axe reads is the same in both engines, so what is lost is only an engine difference in what the page builds, which none of the scans has shown. The local gate, Chromium only, is unchanged.
 
 ## What it does not establish
 

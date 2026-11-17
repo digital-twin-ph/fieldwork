@@ -2,14 +2,17 @@
  *
  *  Apart from Credentials on purpose: an identity is not a credential. Until this, identity came only as a side effect
  *  of unlocking a GitHub token there, under a label that did not say so. The open identity is held here, in memory,
- *  and nowhere else: never in browser storage; locked after fifteen idle minutes and when the page goes. */
-import {createIdentityFile,openIdentityFile,updateIdentityFile,validOrcid,sshPublicKey,keyPublished,type OpenIdentity} from './identity-file.js';
+ *  and, encrypted, in this browser's storage so a reload keeps it (`session-keep.ts`); locked after ten idle minutes or
+ *  at Lock. */
+import {affiliationEditor,readAffiliationEditor} from './affiliations-ui.js';
+import {createIdentityFile,openIdentityFile,updateIdentityFile,validOrcid,validRor,sshPublicKey,keyPublished,type OpenIdentity} from './identity-file.js';
 import {AVATAR_COLOURS,AVATAR_ICONS,avatarSvg,iconSvg,keyPatternSvg,type AvatarChoice} from './avatars.js';
 import type {Escape} from './types.js';
 import {validLogin} from './identity.js';
 import {qrSvg} from './qr.js';
+import {keep,restore,extend,drop,UNLOCKED_FOR_MS} from './session-keep.js';
 
-const IDLE_MS=15*60*1000;
+const IDLE_MS=UNLOCKED_FOR_MS;
 let open:OpenIdentity|null=null;
 /** Set for the dialog's next drawing after an identity is opened or made, so it says so where the person looks. */
 let justOpened='';
@@ -22,7 +25,16 @@ export function openIdentity():OpenIdentity|null{
   return open;
 }
 export function onIdentityChange(listener:()=>void){listeners.add(listener);}
-function set(next:OpenIdentity|null){open=next;if(next)markOpenedHere();listeners.forEach(l=>l());}
+/** Milliseconds until the open identity locks for want of use, or null when none is open. */
+export function identityUntilLock():number|null{return open?Math.max(0,lastActivity+IDLE_MS-Date.now()):null;}
+/** KEPT THROUGH A RELOAD while open (2026-11-16, `session-keep.ts`): the profile encrypted, the signing key as the
+ *  non-exportable CryptoKey it is. Dropped the moment it locks. */
+function set(next:OpenIdentity|null,kept=false){open=next;if(next)markOpenedHere();listeners.forEach(l=>l());
+  if(next&&!kept)void keep('identity',{profile:next.profile,algorithm:next.algorithm,publicKey:next.publicKey},Date.now()+IDLE_MS,{privateKey:next.privateKey});
+  if(!next)void drop('identity');}
+let extendedAt=0;
+/** Activity moves the kept identity's expiry on, at most twice a minute. */
+function used(){lastActivity=Date.now();if(open&&lastActivity-extendedAt>30_000){extendedAt=lastActivity;void extend('identity',lastActivity+IDLE_MS);}}
 /** A LINK TO GITHUB ONCE CONFIRMED, remembered on this device: the public key and the login, both public, and the day it
  *  was checked. So the dialog shows a linked key as one closed line (the practitioner, 2026-11-16: *"This section of the
  *  dialog does not always need to be exposed once SSH signing key is set up on GitHub"*). A check that no longer finds
@@ -64,8 +76,8 @@ export function keyPageUrl(ssh:string):string{
   return `${here}#k=${ssh.split(' ')[1]}`;
 }
 /** The name as a byline: the name, then the GitHub login and ORCID iD where the file carries them. */
-export const identityLabel=(p:{name:string;login?:string;orcid?:string})=>
-  [p.name,p.login?`@${p.login}`:'',p.orcid?`ORCID ${p.orcid}`:''].filter(Boolean).join(' · ');
+export const identityLabel=(p:{name:string;login?:string;orcid?:string;affiliations?:{name:string}[]})=>
+  [p.name,p.login?`@${p.login}`:'',p.orcid?`ORCID ${p.orcid}`:'',...(p.affiliations??[]).map(a=>a.name)].filter(Boolean).join(' · ');
 
 const DIALOG=`<dialog id="identity-dialog" aria-labelledby="identity-title"><div class="dlg">
 <div class="dlg-head"><h3 id="identity-title">Identity</h3></div>
@@ -89,6 +101,7 @@ It is yours to keep, like a key: Fieldwork never stores it. It holds no password
 <label class="field-label" for="identity-orcid">ORCID iD (optional), such as 0000-0002-1825-0097</label>
 <div class="lookup-row"><input id="identity-orcid" maxlength="19" autocomplete="off" aria-describedby="identity-orcid-check"><button type="button" class="button small" id="identity-orcid-lookup">Look up on ORCID</button></div>
 <p id="identity-orcid-check" class="field-check" aria-live="polite"></p>
+<div id="identity-new-affiliations"></div>
 <label class="field-label" for="identity-new-passphrase">Passphrase, at least 12 characters</label><input id="identity-new-passphrase" type="password" autocomplete="new-password" aria-describedby="identity-length">
 <p id="identity-length" class="field-check" aria-live="polite"></p>
 <label class="field-label" for="identity-confirm">The passphrase again</label><input id="identity-confirm" type="password" autocomplete="new-password" aria-describedby="identity-match">
@@ -107,10 +120,11 @@ key</strong>. Only the public key leaves Fieldwork; it cannot be used to sign in
 <li>Set <strong>Key type</strong> to <strong>Signing Key</strong>, paste the key, and press <strong>Add SSH key</strong>.</li>
 <li>Then check: <button type="button" class="button small" id="identity-ssh-check">Check the link</button></li></ol>
 <p id="identity-ssh-result" class="field-check" role="status" aria-live="polite"></p></details>
-<details id="identity-avatar-part" hidden><summary>Change your avatar</summary>
-<p>Your avatar is kept in your identity file, so changing it saves a new file to keep in place of the old one. Choose the
+<details id="identity-avatar-part" hidden><summary>Change your avatar or affiliations</summary>
+<p>Both are kept in your identity file, so changing them saves a new file to keep in place of the old one. Choose the
 file and enter its passphrase.</p>
 <div id="identity-change-avatar"></div>
+<div id="identity-change-affiliations"></div>
 <label class="field-label" for="identity-change-file">Identity file (.fwid)</label><input id="identity-change-file" type="file" accept=".fwid,application/json">
 <label class="field-label" for="identity-change-passphrase">Passphrase</label><input id="identity-change-passphrase" type="password" autocomplete="off">
 <div><button id="identity-change" class="button primary">Save the new file</button></div></details>
@@ -148,9 +162,13 @@ export function installIdentity(button:HTMLButtonElement,esc:Escape){
   onIdentityChange(label);label();
   let redraw=()=>{};onIdentityChange(()=>redraw());
   for(const event of ['pointerdown','keydown'])document.addEventListener(event,()=>{
-    if(open&&Date.now()-lastActivity>=IDLE_MS)lock();lastActivity=Date.now();},{capture:true});
+    if(open&&Date.now()-lastActivity>=IDLE_MS)lock();used();},{capture:true});
   setInterval(()=>{if(open&&Date.now()-lastActivity>=IDLE_MS)lock();},10_000);
-  window.addEventListener('pagehide',lock);
+  // NOT LOCKED ON LEAVING THE PAGE any more: a reload keeps it, until ten minutes without use or Lock.
+  void restore<{profile:OpenIdentity['profile'];algorithm:OpenIdentity['algorithm'];publicKey:string}>('identity').then(kept=>{
+    const privateKey=kept?.keys?.privateKey;
+    if(!kept||!privateKey||open)return;
+    lastActivity=kept.expiresAt-IDLE_MS;set({...kept.value,privateKey},true);});
   button.onclick=()=>{
     if(!document.querySelector('#identity-dialog'))document.body.insertAdjacentHTML('beforeend',DIALOG);
     const d=document.querySelector<HTMLDialogElement>('#identity-dialog')!;
@@ -211,7 +229,7 @@ export function installIdentity(button:HTMLButtonElement,esc:Escape){
         const on=t.dataset.identityTab===tab;t.classList.toggle('active',on);t.setAttribute('aria-selected',String(on));t.tabIndex=on?0:-1;
         $(`#${t.getAttribute('aria-controls')}`).hidden=!!open||!on;}
       $('#identity-status').innerHTML=open
-        ?`${justOpened?`<span class="identity-done">✓ ${esc(justOpened)}</span> `:''}Open: <strong>${esc(identityLabel(open.profile))}</strong>. Notes you save now are signed (${esc(open.algorithm)}). It locks after 15 minutes without use, and when this tab closes.`
+        ?`${justOpened?`<span class="identity-done">✓ ${esc(justOpened)}</span> `:''}Open: <strong>${esc(identityLabel(open.profile))}</strong>. Notes you save now are signed (${esc(open.algorithm)}). It stays open through a reload, and locks after 10 minutes without use or when you press Lock.`
         :'No identity is open. Notes you save are kept with their versions, unsigned.';
       ($('#identity-lock') as HTMLButtonElement).disabled=!open;
       $('#identity-avatar').innerHTML=open?avatarSvg(open.profile,48)+`<span class="key-label">${keyPatternSvg(open.publicKey,28)} Your key</span>`:'';
@@ -226,9 +244,11 @@ export function installIdentity(button:HTMLButtonElement,esc:Escape){
         $('#identity-github-summary').textContent=linked?`✓ Linked to GitHub as @${open.profile.login} (checked ${linked})`:'Link your key to GitHub';
         ($('#identity-github-part') as HTMLDetailsElement).open=!linked;}
       if(open&&!$('#identity-change-avatar').innerHTML){$('#identity-change-avatar').innerHTML=chooserMarkup('change',open.profile.avatar,esc);
-        wireChooser($('#identity-change-avatar'),'change',esc);}
+        wireChooser($('#identity-change-avatar'),'change',esc);
+        affiliationEditor($('#identity-change-affiliations'),'change',open.profile.affiliations??[],esc);}
     };
     if(!$('#identity-new-avatar').innerHTML){$('#identity-new-avatar').innerHTML=chooserMarkup('new',undefined,esc);wireChooser($('#identity-new-avatar'),'new',esc);}
+    if(!$('#identity-new-affiliations').innerHTML)affiliationEditor($('#identity-new-affiliations'),'new',[],esc);
     for(const t of d.querySelectorAll<HTMLButtonElement>('[data-identity-tab]'))t.onclick=()=>{tab=t.dataset.identityTab as 'make'|'open';draw();};
     tab=openedHere()?'open':'make';
     draw();redraw=draw;
@@ -256,11 +276,14 @@ export function installIdentity(button:HTMLButtonElement,esc:Escape){
       if(!v('#identity-name').trim()){fail('Write your name first: it is how your notes will be signed.',here);$('#identity-name').focus();return;}
       if(v('#identity-login').trim()&&!validLogin(v('#identity-login').trim())){fail(`${v('#identity-login').trim()} is not a GitHub login.`,here);$('#identity-login').focus();return;}
       if(orcid&&!validOrcid(orcid)){fail(`${orcid} is not an ORCID iD: its check digit does not match.`,here);$('#identity-orcid').focus();return;}
+      const affiliations=readAffiliationEditor($('#identity-new-affiliations'));
+      const badRor=affiliations.find(a=>a.ror&&!validRor(a.ror));
+      if(badRor){fail(`${badRor.ror} is not a ROR ID: its checksum does not match.`,here);return;}
       if(v('#identity-new-passphrase').length<12){fail('The passphrase needs at least 12 characters.',here);$('#identity-new-passphrase').focus();return;}
       if(v('#identity-new-passphrase')!==v('#identity-confirm')){fail('The two passphrases do not match. Type the second again.',here);$('#identity-confirm').focus();return;}
       try{
         const avatar=chosenIn($('#identity-new-avatar'),'new');
-        const {file,identity}=await createIdentityFile({name:v('#identity-name'),login:v('#identity-login'),...(orcid?{orcid}:{}),...(avatar?{avatar}:{})},v('#identity-new-passphrase'));
+        const {file,identity}=await createIdentityFile({name:v('#identity-name'),login:v('#identity-login'),...(orcid?{orcid}:{}),...(affiliations.length?{affiliations}:{}),...(avatar?{avatar}:{})},v('#identity-new-passphrase'));
         const a=document.createElement('a');
         a.href=URL.createObjectURL(new Blob([file],{type:'application/json'}));
         a.download=identityFileName(identity.profile.name);
@@ -277,7 +300,7 @@ export function installIdentity(button:HTMLButtonElement,esc:Escape){
       if(!file){fail('Choose your identity file first.');return;}
       try{
         const {file:next,identity}=await updateIdentityFile(await file.text(),($('#identity-change-passphrase') as HTMLInputElement).value,
-          {avatar:chosenIn($('#identity-change-avatar'),'change')??null});
+          {avatar:chosenIn($('#identity-change-avatar'),'change')??null,affiliations:readAffiliationEditor($('#identity-change-affiliations'))});
         if(open&&identity.publicKey!==open.publicKey){fail('That file is another identity, not the one open here.');return;}
         const a=document.createElement('a');
         a.href=URL.createObjectURL(new Blob([next],{type:'application/json'}));a.download=identityFileName(identity.profile.name);a.click();

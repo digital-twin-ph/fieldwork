@@ -3,6 +3,42 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.132.0 — In development
+
+- **A project shared through GitHub.** New project now offers two paths: **New local project**, or **Open shared
+  GitHub project**, the second only while Credentials are unlocked. Each has **Import project from backup**. A shared
+  project lists one row per GitHub token, for the repository the token names; **Check it**, then **Load the
+  project**, whether the repository already holds one or is new from the project template. In **This project**:
+  - **Save to the repository** sends the project as one commit, with a line you write. It is never forced over
+    someone else's save.
+  - **Get the latest** merges file by file: what is only here is kept, what changed on GitHub comes in, and a
+    workflow changed on both is your choice.
+  - **Check GitHub** says what changed on each side and lists the latest discussions. **Start a discussion** posts one.
+  - **People** shows who has access on GitHub and each person's project role (lead author, co-author, reviewer),
+    saved in the project.
+  - Shared projects are grouped in the Project list. A workflow's file in the repository no longer carries this
+    computer's internal keys (`projectId`, `workflowKey`), so a save does not rewrite every workflow.
+- **Who you are, with your organisations.** The identity file holds affiliations, each with its ROR ID, found on ROR
+  by name or checked by its checksum. **This is me** signs your name, ORCID iD and affiliations into the project's
+  People, so they reach the other authors with the next save. Nobody can enter them for you.
+- **Unlocked through a reload.** Identity and credentials stay unlocked across a reload, kept encrypted in this
+  browser, and lock after 10 minutes without use (was 15) or at Lock. A minute before, a warning says so, with **Keep
+  them open**. While unlocked, a script on this page could use them; that was your choice, recorded in experiment
+  218.
+- **Credentials.** The Credentials button shows a padlock and a tint while unlocked. A label left empty is the
+  reference. A GitHub credential can name the repository it is for.
+- **Smaller things.** A pencil beside the workflow's title says it can be renamed.
+- **The project ontology.** `fw:Project`, `fw:ProjectRole` (lead author, co-author, reviewer),
+  `fw:ProjectMembership` and `fw:minimumRepositoryRole`, built on the W3C Organization Ontology.
+- **Open science inventory.** A running list of what Fieldwork has and lacks: `docs/audits/open-science-inventory.md`.
+- **Tests and CI.** The six worked examples' accessibility scans run on Chromium only, so CI's WebKit run fits its
+  75 minutes.
+
+- **Validation limits.** Everything shared through GitHub is tested against a GitHub kept in memory, on Chromium.
+  Against the real GitHub, the practitioner has run the read-only check, posted one discussion and loaded a project.
+  No save, no second author and no merge have run there yet. That a fine-grained token lists only its own repository
+  was expected and proved wrong: it listed 86, which is why a credential now names its repository.
+
 ## 0.131.0 — 2026-11-16
 
 - **Accessibility, Section 508's floor.** An automated scan against WCAG 2.0 A and AA, now part of the gate: every view

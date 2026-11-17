@@ -21,6 +21,10 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
 @prefix dcterms: <http://purl.org/dc/terms/>.
 @prefix skos: <http://www.w3.org/2004/02/skos/core#>.
+# The W3C Organization Ontology, a Recommendation of 16 January 2014. Adopted 2026-11-16 for who is in a project and
+# in what project role: org:Membership already relates an agent, an organization and a role, so nothing is minted for
+# the relation itself.
+@prefix org: <http://www.w3.org/ns/org#>.
 
 # Bounded catchment primitives, experimental implementation (2026-10-07).
 fw:VoronoiComputation a owl:Class;
@@ -1991,3 +1995,37 @@ fw:rowsAddedForMatches a owl:DatatypeProperty; rdfs:label "rows added for furthe
   fw:capEvidence "Measured 2026-11-12 in a Chromium tab at its default heap: a workflow file carrying a 134 MB raster (178.9M characters) was written in 2.1 s and one of 177 MB (236.3M) in 2.8 s; one of 220 MB crashed the tab both times it was tried, as did one of 268 MB. The text is held several times over while it is written: the file in base64, the document, and its compression.";
   fw:capRefuses "Nothing: a workflow whose files would be larger is backed up with “This workflow, encrypted”, which carries them as they are, and the message says so.";
   fw:capLiftTest "Write the workflow file as a stream rather than one text, then measure again past 220 MB.".
+
+# WHO IS IN A PROJECT, AND IN WHAT PROJECT ROLE (2026-11-16, experiment 150). The practitioner: "How do we map GitHub
+# roles to FW project roles? ... this needs an ontology entry." Two things kept apart, and neither is authorship:
+# a REPOSITORY ROLE is what GitHub lets a person do in the repository, granted only on GitHub; a PROJECT ROLE is the
+# person's place in the investigation, recorded in the project. Who did what is CRediT, proposed from the record.
+fw:Project a owl:Class;
+  rdfs:subClassOf org:Organization;
+  rdfs:label "Project";
+  rdfs:comment "One investigation: its subject, the workflows that ask its questions, its notes and its people. An org:Organization in ORG's sense, a collection of people organized together. Not an org:OrganizationalCollaboration, whose members are organizations rather than people.";
+  fw:implementationStatus "implemented".
+fw:ProjectRole a owl:Class;
+  rdfs:subClassOf org:Role, prov:Role;
+  rdfs:label "Project role";
+  rdfs:comment "A person's place in a project: lead author, co-author or reviewer. Not a widget's role (what a widget needs from a column), and not a CRediT contributor role (what a person did): a co-author who has done nothing yet holds this project role and no contributor role.";
+  fw:implementationStatus "implemented".
+fw:LeadAuthor a fw:ProjectRole; rdfs:label "Lead author";
+  rdfs:comment "Starts the project and its repository, and invites the others on GitHub.";
+  fw:minimumRepositoryRole "maintain".
+fw:CoAuthor a fw:ProjectRole; rdfs:label "Co-author";
+  rdfs:comment "Works on the project alongside the lead author and saves to its repository.";
+  fw:minimumRepositoryRole "write".
+fw:Reviewer a fw:ProjectRole; rdfs:label "Reviewer";
+  rdfs:comment "Reads the project and comments in its Discussions without saving to it.";
+  fw:minimumRepositoryRole "read".
+fw:ProjectMembership a owl:Class;
+  rdfs:subClassOf org:Membership;
+  rdfs:label "Project membership";
+  rdfs:comment "One person in one project in one project role: org:member the person, keyed by GitHub login; org:organization the fw:Project; org:role the fw:ProjectRole. Recorded in the project's own project.json, so every author who opens it sees the same team. Being given access to the repository does not make one; the project role is given in the project.";
+  fw:implementationStatus "implemented".
+fw:minimumRepositoryRole a owl:DatatypeProperty;
+  rdfs:domain fw:ProjectRole; rdfs:range xsd:string;
+  rdfs:label "Minimum repository role";
+  rdfs:comment "The least GitHub repository role this project role needs to do its work, as GitHub's API names repository roles: read, triage, write, maintain, admin. A person whose repository role is below it is flagged, never refused: GitHub, not this application, decides what a person may do in the repository.";
+  fw:implementationStatus "implemented".

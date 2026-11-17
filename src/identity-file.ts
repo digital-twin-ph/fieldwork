@@ -19,7 +19,34 @@ export const IDENTITY_FORMAT='fieldwork/identity/1';
 export const KDF_ITERATIONS=600_000;
 export type SigningAlgorithm='Ed25519'|'ECDSA-P256';
 
+/** AN AFFILIATION (2026-11-16): the organisation's name as the person writes it on a paper, and its ROR ID where it has
+ *  one, so a reader can tell which organisation of that name is meant. */
+export interface Affiliation {name:string; ror?:string}
+
+const CROCKFORD='0123456789abcdefghjkmnpqrstvwxyz';
+/** A ROR ID, bare or as a ror.org address, made bare and lower case; null when it is neither. */
+export function rorId(raw:string):string|null{
+  const m=/^(?:https?:\/\/ror\.org\/)?(0[0-9a-hjkmnp-tv-z]{6}[0-9]{2})\/?$/i.exec(raw.trim());
+  return m?m[1]!.toLowerCase():null;
+}
+/** A ROR ID, checked offline: 0, six base-32 characters, and a two-digit ISO 7064 Mod 97-10 checksum over them. */
+export function validRor(raw:string):boolean{
+  const id=rorId(raw);if(!id)return false;
+  let n=0n;for(const c of id.slice(1,7))n=n*32n+BigInt(CROCKFORD.indexOf(c));
+  return String(98n-((n*100n)%97n)).padStart(2,'0')===id.slice(7);
+}
+/** Read tolerantly: an affiliation with no name is dropped, and a ROR ID that fails its checksum is not kept. */
+export function readAffiliations(raw:unknown):Affiliation[]{
+  if(!Array.isArray(raw))return [];
+  return raw.flatMap(a=>{if(!a||typeof a!=='object')return [];const r=a as Record<string,unknown>;
+    const name=typeof r.name==='string'?r.name.trim():'';if(!name)return [];
+    const ror=typeof r.ror==='string'&&validRor(r.ror)?rorId(r.ror)!:undefined;
+    return [{name:name.slice(0,200),...(ror?{ror}:{})}];}).slice(0,10);
+}
+
 export interface IdentityProfile {name:string; login?:string; orcid?:string;
+  /** Where the person works, in the order a paper should list them. */
+  affiliations?:Affiliation[];
   /** An icon of Fieldwork's set on a colour (`avatars.ts`); initials where absent. */
   avatar?:AvatarChoice}
 /** An identity opened for this session: its profile, its public key, and a private key that cannot be exported. */
@@ -70,7 +97,10 @@ export async function createIdentityFile(profile:IdentityProfile,passphrase:stri
   const {algorithm,keys}=await generateKeys(options.prefer);
   const publicKey=b64(await subtle().exportKey('spki',keys.publicKey));
   const privateKey=b64(await subtle().exportKey('pkcs8',keys.privateKey));
+  const affiliations=readAffiliations(profile.affiliations);
+  for(const a of profile.affiliations??[])if(a.ror&&!validRor(a.ror))throw new Error(`${a.ror} is not a ROR ID: its checksum does not match.`);
   const clean:IdentityProfile={name,...(profile.login?.trim()?{login:profile.login.trim()}:{}),...(profile.orcid?{orcid:profile.orcid}:{}),
+    ...(affiliations.length?{affiliations}:{}),
     ...(isAvatarChoice(profile.avatar)?{avatar:{icon:profile.avatar.icon,colour:profile.avatar.colour}}:{})};
   const file=await seal({profile:clean,key:{algorithm,publicKey,privateKey}},passphrase,options.iterations??KDF_ITERATIONS);
   return {file,identity:await openFrom(clean,algorithm,publicKey,privateKey)};
@@ -104,10 +134,14 @@ export async function openIdentityFile(file:string,passphrase:string):Promise<Op
 
 /** A CHANGED PROFILE, SEALED AGAIN: the same key, a new salt. The opened key cannot be read back out of the session,
  *  so a change needs the file and its passphrase again, and gives a new file to keep in place of the old. */
-export async function updateIdentityFile(file:string,passphrase:string,change:{avatar?:AvatarChoice|null}):Promise<{file:string;identity:OpenIdentity}>{
+export async function updateIdentityFile(file:string,passphrase:string,change:{avatar?:AvatarChoice|null;affiliations?:Affiliation[]}):Promise<{file:string;identity:OpenIdentity}>{
   const {inner,iterations}=await unseal(file,passphrase);
-  const {avatar:_was,...rest}=inner.profile;void _was;
-  const profile:IdentityProfile={...rest,...(change.avatar&&isAvatarChoice(change.avatar)?{avatar:change.avatar}:{})};
+  for(const a of change.affiliations??[])if(a.ror&&!validRor(a.ror))throw new Error(`${a.ror} is not a ROR ID: its checksum does not match.`);
+  const {avatar:_was,affiliations:_had,...rest}=inner.profile;void _was;
+  const affiliations=change.affiliations?readAffiliations(change.affiliations):readAffiliations(_had);
+  // An avatar left out of the change is kept; null removes it.
+  const avatar=change.avatar===undefined?_was:change.avatar;
+  const profile:IdentityProfile={...rest,...(affiliations.length?{affiliations}:{}),...(avatar&&isAvatarChoice(avatar)?{avatar}:{})};
   const next={profile,key:inner.key};
   return {file:await seal(next,passphrase,iterations),identity:await openFrom(profile,inner.key.algorithm,inner.key.publicKey,inner.key.privateKey)};
 }
@@ -219,3 +253,17 @@ export function keyPublished(ssh:string,listed:readonly {key?:unknown;created_at
   return hit?{...(typeof hit.created_at==='string'?{at:hit.created_at}:{})}:null;
 }
 
+
+/** A SHORT STATEMENT SIGNED BY THE PERSON IT IS ABOUT (2026-11-16): who a project member is, given by them, so nobody
+ *  else can put an ORCID iD on a project in their name. */
+export async function signStatement(identity:OpenIdentity,statement:string):Promise<{algorithm:SigningAlgorithm;publicKey:string;signature:string}>{
+  const signature=b64(await subtle().sign(PARAMS[identity.algorithm].sign,identity.privateKey,enc.encode(statement)));
+  return {algorithm:identity.algorithm,publicKey:identity.publicKey,signature};
+}
+/** Checked offline against the key it names. False for an unknown algorithm or a key that cannot be read. */
+export async function verifyStatement(algorithm:string,publicKey:string,statement:string,signature:string):Promise<boolean>{
+  if(!(algorithm in PARAMS))return false;
+  try{const key=await subtle().importKey('spki',unb64(publicKey) as BufferSource,PARAMS[algorithm as SigningAlgorithm].import,false,['verify']);
+    return await subtle().verify(PARAMS[algorithm as SigningAlgorithm].sign,key,unb64(signature) as BufferSource,enc.encode(statement));}
+  catch{return false;}
+}

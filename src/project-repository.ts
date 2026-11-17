@@ -61,6 +61,17 @@ export interface RepositorySource {
 
 const stringify=(value:unknown):string=>JSON.stringify(value,null,1)+'\n';
 
+/** A WORKFLOW'S KEYS ON THIS DEVICE, LEFT HERE (2026-11-16). `projectId` and `workflowKey` are minted per device, so two
+ *  authors holding the same workflow hold it under different keys: written into the repository, every save would
+ *  rewrite every workflow file, and a diff would show a change nobody made. Opening the repository mints them again. */
+export function withoutDeviceKeys(document:unknown):unknown{
+  if(!document||typeof document!=='object')return document;
+  const record=document as Record<string,unknown>;
+  if(record.schema==='fieldwork/bundle/1'&&record.workflow&&typeof record.workflow==='object'){
+    const {projectId:_p,workflowKey:_k,...workflow}=record.workflow as Record<string,unknown>;return {...record,workflow};}
+  const {projectId:_p,workflowKey:_k,...workflow}=record;return workflow;
+}
+
 /** THE REPOSITORY, AS PATHS AND CONTENTS. Pure: no zip, no download, no clock.
  *
  *  Separated from the writing so the layout can be asserted without a browser, which is what
@@ -86,7 +97,7 @@ export function repositoryFiles(source:RepositorySource):Map<string,string>{
       +`name "${file}.json". Rename one: a repository where two workflows cannot be told apart `
       +'by their file names is one nobody can review.');
     names.set(file,name);
-    files.set(`workflows/${file}.json`,stringify(workflow.document));
+    files.set(`workflows/${file}.json`,stringify(withoutDeviceKeys(workflow.document)));
   }
   files.set('project.json',stringify({
     schema:'fieldwork/project/2',
@@ -99,6 +110,8 @@ export function repositoryFiles(source:RepositorySource):Map<string,string>{
     ...(source.project.createdAt?{createdAt:source.project.createdAt}:{}),
     ...(source.project.changedAt?{changedAt:source.project.changedAt}:{}),
     ...(source.project.authors?{authors:source.project.authors}:{}),
+    // WHO IS IN IT, as one team every author reads alike (fw:ProjectMembership).
+    ...(source.project.members?.length?{members:source.project.members}:{}),
   }));
   for(const [id,note] of Object.entries(source.notes??{}))
     files.set(`notes/${id}.json`,stringify(note));

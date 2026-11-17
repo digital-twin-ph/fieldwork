@@ -60,6 +60,21 @@ test('an identity made here signs a note, the signature checks, and storage keep
   // An avatar from Fieldwork's set: the water pump, in teal.
   await dialog.locator('.avatar-colour:has(input[value="teal"])').click();
   await dialog.locator('.avatar-option:has(input[value="pump"])').click();
+  // AN AFFILIATION, FOUND ON ROR BY NAME (2026-11-16), from a stand-in for ROR's public answer; then a ROR ID typed wrong
+  // is caught by its checksum, and the one chosen is kept.
+  await page.route('https://api.ror.org/**',route=>route.fulfill({status:200,contentType:'application/json',
+    headers:{'access-control-allow-origin':'*'},body:JSON.stringify({items:[{id:'https://ror.org/03vek6s52',
+      names:[{value:'Harvard University',types:['ror_display','label']}],locations:[{geonames_details:{name:'Cambridge',country_name:'United States'}}]}]})}));
+  await dialog.locator('[data-aff-add]').click();
+  await dialog.locator('[data-aff-name]').fill('Harvard');
+  await dialog.locator('[data-aff-find]').click();
+  await dialog.locator('[data-aff-pick="0"]').click();
+  await expect(dialog.locator('[data-aff-name]')).toHaveValue('Harvard University');
+  await expect(dialog.locator('[data-aff-ror]')).toHaveValue('03vek6s52');
+  await dialog.locator('[data-aff-ror]').fill('03vek6s53');
+  await expect(dialog.locator('.affiliation-row .field-check')).toContainText('Not a ROR ID');
+  await dialog.locator('[data-aff-ror]').fill('https://ror.org/03vek6s52');
+  await expect(dialog.locator('.affiliation-row .field-check')).toHaveText('The checksum is right.');
   if(info.project.name==='chromium')await dialog.screenshot({path:'test-results/identity-make.png'});
   const saving=page.waitForEvent('download');
   await dialog.locator('#identity-create').click();
@@ -67,7 +82,7 @@ test('an identity made here signs a note, the signature checks, and storage keep
   expect(download.suggestedFilename()).toBe('FWID-Ada-Lovelace.fwid');
   const file=readFileSync(await download.path(),'utf8');
   expect(file).not.toContain('Ada');
-  await expect(dialog.locator('#identity-status')).toContainText(`Open: Ada Lovelace · @ada · ORCID 0000-0002-1825-0097. Notes you save now are signed (${ed25519?'Ed25519':'ECDSA-P256'})`);
+  await expect(dialog.locator('#identity-status')).toContainText(`Open: Ada Lovelace · @ada · ORCID 0000-0002-1825-0097 · Harvard University. Notes you save now are signed (${ed25519?'Ed25519':'ECDSA-P256'})`);
   await expect(page.locator('#identity-button')).toHaveAttribute('aria-label','Identity: Ada Lovelace');
   await expect(dialog.locator('#identity-avatar svg.fw-avatar')).toHaveCount(1);
   await expect(dialog.locator('#identity-avatar svg.key-pattern')).toHaveCount(1);
@@ -134,24 +149,37 @@ test('an identity made here signs a note, the signature checks, and storage keep
   await expect(dialog.locator('#identity-open-result')).toContainText('passphrase does not open');
   await dialog.locator('#identity-passphrase').fill(PASS);
   await dialog.locator('#identity-open').click();
-  await expect(dialog.locator('#identity-status')).toContainText('✓ Opened from your file. Open: Ada Lovelace · @ada · ORCID 0000-0002-1825-0097.');
+  await expect(dialog.locator('#identity-status')).toContainText('✓ Opened from your file. Open: Ada Lovelace · @ada · ORCID 0000-0002-1825-0097 · Harvard University.');
   // With an identity open, the dialog is about it only: no Make or Open, one avatar chooser.
   await expect(dialog.locator('.identity-tabs')).toBeHidden();
   await expect(dialog.locator('#identity-create-part')).toBeHidden();
   await expect(dialog.locator('.avatar-chooser:visible')).toHaveCount(0);
   await expect(page.locator('#identity-button')).toHaveAttribute('aria-label','Identity: Ada Lovelace');
 
-  // NOTHING OF THE IDENTITY IN STORAGE: not the file, not the passphrase. The public key is in the note's versions by
-  // design, as the thing a reader checks against.
+  // OPEN THROUGH A RELOAD (the practitioner, 2026-11-16: stay unlocked, and lock after 10 minutes).
+  await page.reload();
+  await expect(page.locator('#identity-button')).toHaveAttribute('aria-label','Identity: Ada Lovelace');
+  // NOTHING OF THE IDENTITY IN STORAGE AS PLAIN TEXT: not the file, not the passphrase, not the name. It is kept
+  // encrypted while open, and the public key is in the note's versions by design, as the thing a reader checks against.
   const kept=await page.evaluate(async()=>{
     const local=Object.keys(localStorage).map(k=>k+localStorage.getItem(k)).join('');
     const session=Object.keys(sessionStorage).map(k=>k+sessionStorage.getItem(k)).join('');
     const dbs=(await indexedDB.databases?.())?.map(d=>d.name).join(',')??'';
-    return {local,session,dbs};});
+    const db=await new Promise((resolve,reject)=>{const r=indexedDB.open('fieldwork-unlocked-v1');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});
+    const record=await new Promise(resolve=>{const r=db.transaction('kept','readonly').objectStore('kept').get('identity');r.onsuccess=()=>resolve(r.result);});db.close();
+    const unlocked=record?Array.from(new Uint8Array(record.data),b=>String.fromCharCode(b)).join(''):'';
+    return {local,session,dbs,unlocked,extractable:record?.keys?.privateKey?.extractable};});
+  expect(kept.unlocked.length).toBeGreaterThan(0);
+  expect(kept.unlocked).not.toContain('Ada');expect(kept.unlocked).not.toContain(PASS);
+  expect(kept.extractable).toBe(false);
   const sealed=JSON.parse(file).data;
   for(const where of [kept.local,kept.session]){
     expect(where).not.toContain(PASS);expect(where).not.toContain(sealed);expect(where).not.toContain('fieldwork/identity/1');}
   expect(kept.dbs).not.toMatch(/identity/i);
+  // LOCK ENDS IT: locked, then reloaded, it stays locked.
+  await page.locator('#identity-button').click();await dialog.locator('#identity-lock').click();
+  await page.reload();
+  await expect(page.locator('#identity-button')).toHaveAttribute('aria-label','Identity');
   expect(errors).toEqual([]);
 });
 

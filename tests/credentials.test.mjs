@@ -16,3 +16,11 @@ test('session resolution binds provider and origin and cannot revive idle creden
 test('lock cancels a pending unlock and a bad file preserves an existing session',async()=>{
  const s=new CredentialSession();s.replace(entries);await assert.rejects(()=>s.unlock(new Blob(['bad']),password));assert.equal(s.list().length,1);const blob=await encryptCredentials(entries,password),pending=s.unlock(blob,password);s.lock();await assert.rejects(()=>pending,/cancelled/);assert.equal(s.unlocked,false);
 });
+
+test('a GitHub credential may name the one repository it is for; a malformed one is refused, and files without it still read',async()=>{
+  const {validateCredentials}=await import('../build/credentials.js');
+  const base={ref:'gh',provider:'github',label:'GH',origin:'https://api.github.com',secret:'x'};
+  assert.equal(validateCredentials([{...base,repository:'digital-twin-ph/project-test-collaboration'}])[0].repository,'digital-twin-ph/project-test-collaboration');
+  assert.equal(validateCredentials([base])[0].repository,undefined);
+  assert.throws(()=>validateCredentials([{...base,repository:'no-slash'}]),/owner\/name/);
+});

@@ -1,4 +1,5 @@
 import type {Boundary,BoundaryProvenance} from './types.js';
+import {readMembers} from './project-roles.js';
 import {isRecord} from './guards.js';
 import {readNotes} from './notes.js';
 import {readAuthors,readRepository} from './identity.js';
@@ -97,6 +98,9 @@ export interface Project {
   /** THE PROJECT'S DATA DICTIONARIES (experiment 211), one per file, by digest: which Table input imported it, with which
    *  table, and when. The file itself is kept by that node, under `dictionaryRef`, so it travels with the workflow. */
   dictionaries?:ProjectDictionary[];
+  /** WHO IS IN IT, AND IN WHAT PROJECT ROLE (fw:ProjectMembership, 2026-11-16). Not the author list: being in the project
+   *  is not authorship. Travels in project.json, so every author sees the same team. */
+  members?:import('./project-roles.js').ProjectMember[];
 }
 export interface ProjectDictionary {sha256:string; name:string; workflow:string; node:string; table:string; importedAt:string}
 /** A dictionary the project lists that cannot be read is dropped, never half kept. */
@@ -277,6 +281,7 @@ export function validateProject(raw:unknown):Project{
   // sequence of failures a practitioner cannot diagnose.
   const repository=readRepository(raw.repository);
   const dictionaries=readProjectDictionaries(raw.dictionaries);
+  const members=readMembers(raw.members);
   // Each part a string of its own, kept as written; anything else is dropped, never coerced.
   // Targets named, kept only where they are the publication or a declared format, each once, in the order given.
   const known=['publication',...REPORT_FORMATS.formats.map(f=>f.id)];
@@ -289,7 +294,7 @@ export function validateProject(raw:unknown):Project{
     ...(notes.length?{notes}:{}),...(authors.length?{authors}:{}),
     ...(createdAt?{createdAt}:{}),...(repository?{repository}:{}),...(dictionaries.length?{dictionaries}:{}),
     ...(Object.keys(publication).length?{publication}:{}),
-    ...(targets.length?{targets}:{})};
+    ...(targets.length?{targets}:{}),...(members.length?{members}:{})};
 }
 
 /** The input widgets whose payload two workflows can genuinely share.

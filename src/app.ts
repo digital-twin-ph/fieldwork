@@ -38,6 +38,10 @@ import {RATE_TABLE_KEYS,computeRate,fromTable,fromWideTable} from './rate.js';
 import {SERIES_TABLE_KEYS,PERIOD_WORDS,DATE_KINDS} from './case-series.js';
 import {SITE_ASSIGNMENT_TABLE_KEYS} from './sea-level.js';
 import {installCredentials} from './credentials-ui.js';
+import {saveToRepository} from './repository-save.js';
+import {PROJECT_ROLES,PROJECT_ROLE_LABEL,REPOSITORY_ROLES,proposedProjectRole,roleShortfall,readMembers,memberStatement,type ProjectRole,type RepositoryRole} from './project-roles.js';
+import {readProjectAt,projectDocumentFromFiles,fileDigests,changedPaths,headCommit,recentDiscussions,listCollaborators,discussionTargets,tokenRepositories,namedRepository,mergeLatest,type Merge} from './shared-project.js';
+import {checkRepository,postDiscussion,repositoryName,GITHUB_API,type RepositoryCheck} from './repository-check.js';
 import type {CredentialAccess} from './credentials-ui.js';
 import {addableTypes,PALETTE_GROUPS,ADDABLE_VIA_RULESET} from './palette.js';
 import {MARK_RADIUS_MIN,MARK_RADIUS_MAX} from './presentation.js';
@@ -128,8 +132,10 @@ import {WRITE_UP_STORE,readWriteUp,entryForRun,recordEntry,writeUpOf,sourceOfNot
 import {typeset} from './prose.js';
 import {readNotes,WRITE_UP_PARTS,type Note,type WriteUpPart,moveNote,forkMachinedNote,
   UNWRITTEN,objectivesOf,type MachinedNote,FIGURE_SECTIONS,DEFAULT_FIGURE_SECTIONS,figureSection,type FigureSection,LEFT_OUT,inWriteUp} from './notes.js';
-import {readAuthors,currentIdentity,attestIdentity,setCurrentIdentity,authorLabel} from './identity.js';
-import {installIdentity,openIdentity} from './identity-ui.js';
+import {readAuthors,currentIdentity,attestIdentity,setCurrentIdentity,authorLabel,DEVICE_REPOSITORY_FIELDS,readRepository} from './identity.js';
+import {installIdentity,openIdentity,identityUntilLock} from './identity-ui.js';
+import {signStatement,verifyStatement} from './identity-file.js';
+import {affiliationLabel} from './affiliations-ui.js';
 import {noteVersion} from './identity-file.js';
 
 /** A polygon layer's chosen file, waiting for Apply. Keyed by node, outside the DOM, because the
@@ -490,6 +496,11 @@ let networkDownloadPhase:string|null=null;
 let endpointStatuses:import('./street-network.js').OverpassStatus[]|null=null;
 let endpointsCheckedAt:string|null=null;
 let credentials:CredentialAccess|null=null;
+/** The shared project's section: when GitHub was last read for it, and what it was last drawn for. */
+let remoteChecked:{project:string;at:number}|null=null;
+let sharedSignature='';
+/** A backup about to be imported into a shared repository, set by its button and taken by the import. */
+let pendingShare:{repository:NonNullable<Project['repository']>;at:number}|null=null;
 let workflow=EXAMPLE_TEMPLATES.hagelloch(),selected:string|null|undefined='cases',result:WorkflowRun|null=null,runWorkflow:Workflow|null=null,busy=false,dirty=true,runFailed=false,runIncomplete=false,statuses:Record<string,string>={},history:Workflow[]=[],future:Workflow[]=[],flow:CanvasAPI|null=null,worker:Worker|null=null,seq=0,lastNodeCount=0,importNode:string|null=null;
 let toastTimer:ReturnType<typeof setTimeout>|undefined,activeOutputId:string|null=null,tablePage=0,tableAttributePage=0;
 let tableSort:import('./table-output.js').TableSort|undefined;
@@ -7341,7 +7352,7 @@ function switchView(view:string){
   $('#project-view').hidden=view!=='project';
   // AS THE PROJECT IS NOW: objectives written in Notes since the last render are offered to this workflow (Stage B).
   queueMicrotask(placeManualFloat);
-  if(view==='project'){renderProjectDetails();if(!document.querySelector('#project-tab-new:not([hidden])'))showProjectTab(rememberedProjectTab(),false);}
+  if(view==='project'){sharedSignature='';renderProjectDetails();if(!document.querySelector('#project-tab-new:not([hidden])'))showProjectTab(rememberedProjectTab(),false);}
   $('#notes-view').hidden=view!=='notes';
   $('#manual-view').hidden=view!=='manual';
   $('#widgets-view').hidden=view!=='widgets';
@@ -7608,36 +7619,45 @@ function openProjectDialog(){
   showProjectTab('new',false);$('#project-name-input').focus();
 }
 function createProjectFromDialog(){
-  const name=$('#project-name-input').value.trim();
-  if(!name){$('#project-name-input').focus();toast('A project needs a name: what are you investigating?');return;}
+  const made=createProject({name:$('#project-name-input').value.trim(),subject:$('#project-subject-input').value,
+    targets:chosenTargets('project-target-new'),adopt:$('#project-adopt-current').checked&&!$('#project-adopt-current').disabled,
+    nameField:$('#project-name-input')});
+  if(made){$('#project-name-input').value='';$('#project-subject-input').value='';($('#project-targets-new') as HTMLElement).innerHTML='';}
+  return made;
+}
+/** A NEW PROJECT, from either path of New project: on this device, or started in a shared repository (2026-11-16). */
+function createProject(o:{name:string;subject:string;targets?:string[];adopt?:boolean;nameField?:HTMLElement;repository?:NonNullable<Project['repository']>}):Project|null{
+  const name=o.name.trim();
+  if(!name){o.nameField?.focus();toast('A project needs a name: what are you investigating?');return null;}
   // The person making it is its first author. Absent when this device records nobody, and then
   // the project simply has none -- an unattributed project is honest, a guessed author is not.
-  const stored=readProjects(),project=newProject(name,$('#project-subject-input').value,
+  const stored=readProjects(),project=newProject(name,o.subject,
     allProjects(),currentIdentity(localStorage));
-  const targets=chosenTargets('project-target-new');if(targets.length)project.targets=targets;
+  if(o.targets?.length)project.targets=o.targets;
+  if(o.repository)project.repository=o.repository;
   const key=`${project.id}/w1`;
   project.workflows=[key];
-  if(!writeProjects([...stored,project]))return;
-  // MADE: the form is cleared for the next one, and the tab returns to the project now open.
-  $('#project-name-input').value='';$('#project-subject-input').value='';($('#project-targets-new') as HTMLElement).innerHTML='';
+  if(!writeProjects([...stored,project]))return null;
+  // MADE: the tab returns to the project now open.
   showProjectTab('this',false);
   save();
   // ADOPTING THE OPEN CANVAS takes the path that already files a workflow, rather than a second
   // implementation of the same act: the project is written with no workflows and
   // `assignCurrentWorkflow` gives this one its key and puts it in.
-  if($('#project-adopt-current').checked&&!$('#project-adopt-current').disabled){
+  if(o.adopt){
     project.workflows=[];
-    if(!writeProjects([...stored,project])){return;}
+    if(!writeProjects([...stored,project])){return null;}
     assignCurrentWorkflow(project.id);
     renderProjectOptions();render();
     toast(`"${workflow.name||'This workflow'}" is now in "${project.name}". `
       +'Add a workflow for each further question you want to ask about it.');
-    return;
+    return project;
   }
   workflow={...blankWorkflow(),name:`${project.name} · first question`,projectId:project.id,workflowKey:key,exampleId:undefined};
   selected=null;result=null;runWorkflow=null;activeOutputId=null;history=[];future=[];statuses={};dirty=true;
   save();renderProjectOptions();renderLibrary();renderResults();render();switchView('workflow');
   toast(`Project "${project.name}" created with one empty workflow. Add a workflow for each question you want to ask about it.`);
+  return project;
 }
 /** Stored projects in the picker, grouped exactly as the built-in seven are in index.html.
  *  Without this a created project persists and becomes unreachable, which is worse than refusing
@@ -7664,7 +7684,12 @@ function renderProjectOptions(){
   // workflow belonging to no investigation -- the blank canvas among them -- became unreachable
   // the moment a project was selected, which is a navigation trap rather than a tidy list.
   projects.innerHTML=
-    group('Your projects',stored.map(p=>optionFor(p.id,`${p.name} · ${count(p)}`,p.workflows)).join(''))
+    // SHARED ONES IN A GROUP OF THEIR OWN, with the repository (the practitioner, 2026-11-16, asking why a worked example
+    // shows here and a collaborative project did not seem to: it did, unmarked, among the rest).
+    // The repository is not repeated in the entry (the practitioner, 2026-11-16: "That is a very long drop down item"):
+    // the group says where, and This project names the repository.
+    group('Shared through GitHub',stored.filter(p=>p.repository).map(p=>optionFor(p.id,`${p.name} · ${count(p)}`,p.workflows)).join(''))
+    +group('Your projects',stored.filter(p=>!p.repository).map(p=>optionFor(p.id,`${p.name} · ${count(p)}`,p.workflows)).join(''))
     +group('Built in',BUILT_IN_PROJECTS.map(p=>optionFor(p.id,`${p.name} · ${count(p)}`,p.workflows)).join(''))
     +optionFor('','— No project —',['blank',...unfiled]);
   projects.value=current?current.id:'';
@@ -7819,6 +7844,7 @@ function renderProjectDetails(){
   $('#project-stats').textContent=project
     ?`${held.length===1?'1 workflow':`${held.length} workflows`}: ${named.join(' · ')}. Project id ${project.id}.`
     :'This canvas belongs to no investigation. Choose one below, or create a project to group the questions you are asking.';
+  renderSharedProject(project,builtIn);
 }
 /** THE NOTES VIEW. A spike: `notes.ts` has existed since 2026-10-28 and nothing imported it, so
  *  notes were produced, stored, grouped and counted where no practitioner could see one.
@@ -8651,7 +8677,7 @@ function renderUnfiled():void{
 // the other half of exporting it. It reuses the same file control the header's Import uses: a
 // project document and a workflow document arrive through one input, so a practitioner handed a
 // file does not have to know which of two buttons made it.
-$('#project-import').onclick=()=>$('#workflow-file').click();
+$('#project-import').onclick=()=>{pendingShare=null;$('#workflow-file').click();};
 $('#project-file').onclick=()=>{
   const id=$('#project-file-under').value;
   if(!id)return;
@@ -9451,6 +9477,36 @@ function renderStorageStatus(){
  *  get it off". */
 
 
+/** THE REPOSITORY'S FILES FOR ONE PROJECT: what Export as repository zips and Save to the repository commits. */
+async function projectRepositoryFileMap(project:Project):Promise<Map<string,string>>{
+    const saved=readSavedWorkflows();
+    const held=project.workflows.filter(key=>Object.hasOwn(saved,key));
+    if(!held.length)throw new Error('That project has no saved workflow to save.');
+    const workflows:{key:string;document:unknown}[]=[];
+    for(const key of held){
+      // The OPEN canvas as it stands, the same rule `exportProject` keeps: a practitioner looking
+      // at their work would not expect an older copy in the file.
+      const source=key===storageKey(workflow)?workflow:validateWorkflow(structuredClone(saved[key]));
+      workflows.push({key,document:await workflowDocument(source)});
+    }
+    // THE AUTHORED NOTES, AND DELIBERATELY NOT THE MACHINED ONES.
+    //
+    // A quoted or authored note is somebody's writing: it is the project's, it survives a run,
+    // and losing it would lose work nobody can regenerate. A machined note is prose this
+    // application wrote from a run, stamped with the build that wrote it and dropped on read
+    // when the build moves on — committing it would put derived output in a repository and
+    // guarantee a conflict on every re-run, for text a clone reproduces by pressing Run.
+    //
+    // The same rule the layout already applies to payloads: an acquired one is not committed,
+    // the declaration that reproduces it is. Found by exporting and counting -- the first
+    // version read `entry.notes` off the write-up store, which has no such field, and wrote
+    // eleven files where the published conversion has twenty-four.
+    const notes:Record<string,unknown>={};
+    for(const note of readNotes((project as {notes?:unknown}).notes).notes)
+      if(note.id)notes[note.id]=note;
+  return repositoryFiles({project:{...project,workflows:held},workflows,notes});
+}
+
 /** A PROJECT AS A GIT REPOSITORY, zipped, ready to be committed.
  *
  *  The practitioner, 2026-10-31, on why this is not a side quest: *"it is a selling point of FW,
@@ -9476,32 +9532,7 @@ async function exportProjectRepository(id:string){
   if(!project)return;
   try{
     save();
-    const saved=readSavedWorkflows();
-    const held=project.workflows.filter(key=>Object.hasOwn(saved,key));
-    if(!held.length)throw new Error('That project has no saved workflow to export.');
-    const workflows:{key:string;document:unknown}[]=[];
-    for(const key of held){
-      // The OPEN canvas as it stands, the same rule `exportProject` keeps: a practitioner looking
-      // at their work would not expect an older copy in the file.
-      const source=key===storageKey(workflow)?workflow:validateWorkflow(structuredClone(saved[key]));
-      workflows.push({key,document:await workflowDocument(source)});
-    }
-    // THE AUTHORED NOTES, AND DELIBERATELY NOT THE MACHINED ONES.
-    //
-    // A quoted or authored note is somebody's writing: it is the project's, it survives a run,
-    // and losing it would lose work nobody can regenerate. A machined note is prose this
-    // application wrote from a run, stamped with the build that wrote it and dropped on read
-    // when the build moves on — committing it would put derived output in a repository and
-    // guarantee a conflict on every re-run, for text a clone reproduces by pressing Run.
-    //
-    // The same rule the layout already applies to payloads: an acquired one is not committed,
-    // the declaration that reproduces it is. Found by exporting and counting -- the first
-    // version read `entry.notes` off the write-up store, which has no such field, and wrote
-    // eleven files where the published conversion has twenty-four.
-    const notes:Record<string,unknown>={};
-    for(const note of readNotes((project as {notes?:unknown}).notes).notes)
-      if(note.id)notes[note.id]=note;
-    const files=repositoryFiles({project:{...project,workflows:held},workflows,notes});
+    const files=await projectRepositoryFileMap(project);
     const zip=new ZipWriter(new BlobWriter('application/zip'));
     for(const [path,text] of files)await zip.add(path,new TextReader(text));
     const blob=await zip.close();
@@ -9536,7 +9567,11 @@ async function exportProject(id:string){
     // THE PICTURES IN ITS NOTES go in the file with it, by digest; one this device does not hold is left out and said.
     const pictured=readNotes((project as {notes?:unknown}).notes).notes.flatMap(n=>n.kind==='authored'&&n.image?[n.image.sha256]:[]);
     const images=Object.fromEntries(pictured.flatMap(sha=>{const p=readNoteImagePayload(cachedPayload(noteImageKey(sha)));return p?[[sha,p]]:[];}));
-    const document=projectDocument({...project,workflows:held},workflows,images);
+    // A BACKUP CARRIES WHERE THE PROJECT IS SHARED, NOT THIS DEVICE'S HOLD ON IT: the credential, the commit and the
+    // digests describe this laptop, and on another one they would point at nothing.
+    const shared=project.repository?{repository:Object.fromEntries(Object.entries(project.repository)
+      .filter(([k])=>!(DEVICE_REPOSITORY_FIELDS as readonly string[]).includes(k))) as Project['repository']}:{};
+    const document=projectDocument({...project,...shared,workflows:held},workflows,images);
     const loose=unbundledReferences(validated);
     // WRITTEN COMPACT, because indentation is paid in the one resource that binds. Measured
     // 2026-10-23 on a million-junction document: 194 MB compact, 517 MB at indent 2 -- 2.66
@@ -9602,6 +9637,15 @@ async function importProjectDocument(raw:unknown):Promise<string[]>{
   // importer would manufacture authorship on a publication.
   const authors=readAuthors((document.project as {authors?:unknown}).authors);
   if(authors.length)project.authors=authors;
+  // WHERE IT IS SHARED COMES WITH IT, and nothing of the device that backed it up: the token is chosen again here.
+  const shared=readRepository((document.project as {repository?:unknown}).repository);
+  if(shared)project.repository={owner:shared.owner,repo:shared.repo,attachedAt:shared.attachedAt};
+  // IMPORTED INTO A SHARED REPOSITORY (2026-11-16): Open shared GitHub project, Import project from backup. Taken once,
+  // and only within two minutes of the press, so a picker closed without a file does not share a later import.
+  if(pendingShare&&Date.now()-pendingShare.at<120_000)project.repository=pendingShare.repository;
+  pendingShare=null;
+  const members=readMembers((document.project as {members?:unknown}).members);
+  if(members.length)project.members=members;
   const keys:string[]=[];
   const workflows:Workflow[]=[];
   for(const entry of document.workflows){
@@ -9776,7 +9820,7 @@ $('#project-delete').onclick=deleteCurrentProject;
 for(const id of ['#project-name-edit','#project-subject-edit','#workflow-name-edit'])
   $(id).addEventListener('keydown',event=>{if((event as KeyboardEvent).key==='Enter'){event.preventDefault();applyProjectDetails();}});
 $('#blank-project').onclick=openProjectDialog;
-$('#project-create').onclick=createProjectFromDialog;
+$('#project-create').onclick=()=>void createProjectFromDialog();
 $('#new-workflow').onclick=()=>{if(busy)return;loadExample('blank');change(w=>{replaceWorkflow(w,blankWorkflow());selected=null;});result=null;runWorkflow=null;activeOutputId=null;renderResults();render();switchView('workflow');};
 $('#result-search').oninput=e=>{if(activeOutput()?.pointTable){tablePage=0;renderPointTable();return;}$('#result-rows').querySelectorAll('tr').forEach(row=>row.hidden=!row.textContent.toLowerCase().includes(control(e).value.toLowerCase()));};
 const libraryToggle=$('#toggle-library'),library=$('.library');
@@ -9813,6 +9857,440 @@ credentials=installCredentials(document.querySelector<HTMLButtonElement>('#crede
         +'so projects you create will not carry the name.');
     return authorLabel(who);
   });
+
+// A PROJECT SHARED THROUGH ITS REPOSITORY (experiment 150, 2026-11-16). The project here is a working copy and the
+// repository is the record: saving here stays automatic, saving there is a press, one commit, never forced. What this
+// device holds about the repository (which credential, the commit last read or saved, each file's digest then, when
+// Discussions were last looked at) stays on this device; a backup carries only the repository's name.
+/** REPOSITORIES USED HERE (2026-11-16), so a name is not retyped: the practitioner, "Should FW keep a record of past
+ *  entries so I do not have to retype the GitHub project?" Remembered once a check of it succeeds, with the credential's
+ *  reference and never the token; five at most, the latest first; on this device only. */
+const RECENT_REPOSITORIES='fieldwork-recent-repositories-v1';
+function recentRepositories():{repository:string;credential?:string}[]{
+  try{const raw=JSON.parse(localStorage.getItem(RECENT_REPOSITORIES)||'[]');
+    return Array.isArray(raw)?raw.filter((r):r is {repository:string;credential?:string}=>!!r&&typeof r.repository==='string'&&!!repositoryName(r.repository)).slice(0,5):[];}
+  catch{return [];}}
+function rememberRepository(repository:string,credential?:string){
+  try{localStorage.setItem(RECENT_REPOSITORIES,JSON.stringify([{repository,...(credential?{credential}:{})},
+    ...recentRepositories().filter(r=>r.repository.toLowerCase()!==repository.toLowerCase())].slice(0,5)));}catch{/* kept for this visit only */}}
+function forgetRepository(repository:string){
+  try{localStorage.setItem(RECENT_REPOSITORIES,JSON.stringify(recentRepositories().filter(r=>r.repository!==repository)));}catch{/* nothing kept */}}
+/** The remembered repositories as a list beside the field: choosing one fills `input` and the token it was used with. A
+ *  list rather than buttons (the practitioner, 2026-11-16), like the token list beneath it, and one line however many. */
+function drawRecentRepositories(box:HTMLElement,input:HTMLInputElement,pick:HTMLSelectElement){
+  const recent=recentRepositories();
+  if(!recent.length){box.innerHTML='';return;}
+  const id=`${input.id}-recent`;
+  box.innerHTML=`<label class="field-label" for="${id}">Used here before</label><div class="lookup-row recent-repositories">`
+    +`<select id="${id}"><option value="">Choose one, or type a new one below</option>${recent.map((r,i)=>`<option value="${i}">${esc(r.repository)}</option>`).join('')}</select>`
+    +`<button type="button" class="button small" data-forget>Forget it</button></div>`;
+  const list=box.querySelector('select')!;
+  list.onchange=()=>{const r=recent[Number(list.value)];if(!r)return;
+    input.value=r.repository;if(r.credential&&[...pick.options].some(o=>o.value===r.credential))pick.value=r.credential;};
+  box.querySelector<HTMLButtonElement>('[data-forget]')!.onclick=()=>{const r=recent[Number(list.value)];if(!r)return;
+    forgetRepository(r.repository);if(input.value===r.repository)input.value='';drawRecentRepositories(box,input,pick);};
+}
+function githubRefs(){return (credentials?.unlocked?credentials.references():[]).filter(r=>r.provider==='github');}
+function credentialOptions(chosen?:string){const refs=githubRefs();
+  return refs.length?refs.map(r=>`<option value="${esc(r.ref)}"${r.ref===chosen?' selected':''}>${esc(r.label)}</option>`).join('')
+    :'<option value="">None unlocked: open Credentials</option>';}
+function tokenFor(ref:string|undefined){if(!ref)throw new Error('Unlock your credentials first, with a GitHub token for this repository.');
+  try{return credentials!.resolve(ref,'github',GITHUB_API);}
+  catch{throw new Error('Unlock your credentials first, with a GitHub token for this repository whose Allowed HTTPS origin is https://api.github.com.');}}
+function repositoryOf(project:Project){return project.repository?`${project.repository.owner}/${project.repository.repo}`:'';}
+function updateRepository(id:string,patch:Partial<NonNullable<Project['repository']>>|null){
+  writeProjects(readProjects().map(p=>p.id!==id?p:patch===null?(({repository:_r,...rest})=>rest)(p) as Project
+    :{...p,repository:{...p.repository!,...patch}}));}
+/** What this device would save now, against what it last read or saved. */
+async function localChanges(project:Project):Promise<{files:Map<string,string>;changed:string[]}>{
+  const files=await projectRepositoryFileMap(project);
+  return {files,changed:changedPaths(project.repository?.files??{},await fileDigests(files))};}
+function describeChanges(changed:string[]){
+  const workflows=changed.filter(p=>p.startsWith('workflows/')).length,notes=changed.filter(p=>p.startsWith('notes/')).length;
+  const parts=[workflows&&`${workflows} workflow${workflows===1?'':'s'}`,notes&&`${notes} note${notes===1?'':'s'}`,
+    changed.includes('project.json')&&'the project\'s details'].filter(Boolean);
+  return parts.length?parts.join(', '):'nothing';}
+/** Opened, or got again: the repository's project made into a project here, by the importer a backup uses. */
+async function openSharedProject(repository:string,credential:string,replacing?:Project):Promise<void>{
+  const token=tokenFor(credential);
+  const {commit,files}=await readProjectAt(repository,token);
+  const keys=await importProjectDocument(projectDocumentFromFiles(files));
+  const made=readProjects().find(p=>p.workflows.includes(keys[0]));
+  if(!made)throw new Error('The project was read and could not be recorded on this device.');
+  if(replacing)removeProjectQuietly(replacing.id);
+  const [owner,repo]=repository.split('/');
+  const now=new Date().toISOString();
+  writeProjects(readProjects().map(p=>p.id!==made.id?p:{...p,repository:{owner,repo,attachedAt:replacing?.repository?.attachedAt??now,
+    credential,commit,syncedAt:now,...(replacing?.repository?.seenAt?{seenAt:replacing.repository.seenAt}:{})}}));
+  const fresh=readProjects().find(p=>p.id===made.id)!;
+  updateRepository(made.id,{files:await fileDigests(await projectRepositoryFileMap(fresh)),remote:await fileDigests(files)});
+  renderProjectOptions();renderProjectDetails();
+}
+/** The repository's latest, merged with this device's project (`mergeLatest`), made into the project here. */
+async function getLatest(current:Project,credential:string):Promise<Merge>{
+  const token=tokenFor(credential),repository=repositoryOf(current);
+  const {commit,files:github}=await readProjectAt(repository,token);
+  const here=await projectRepositoryFileMap(current);
+  const merge=await mergeLatest(current.repository?.files??{},current.repository?.remote??{},here,github,async path=>{
+    const what=path.replace(/^workflows\/|^notes\/|\.json$/g,'');
+    return confirm(`"${what}" was changed here and on GitHub since you last got the latest.\n\n`
+      +'OK keeps the version here (save it afterwards). Cancel takes the version on GitHub.')?'here':'github';});
+  const keys=await importProjectDocument(projectDocumentFromFiles(merge.files));
+  const made=readProjects().find(p=>p.workflows.includes(keys[0]));
+  if(!made)throw new Error('The project was read and could not be recorded on this device.');
+  removeProjectQuietly(current.id);
+  const now=new Date().toISOString();
+  writeProjects(readProjects().map(p=>p.id!==made.id?p:{...p,repository:{owner:current.repository!.owner,repo:current.repository!.repo,
+    attachedAt:current.repository!.attachedAt,credential,commit,syncedAt:now,...(current.repository?.seenAt?{seenAt:current.repository.seenAt}:{})}}));
+  // WHAT WAS KEPT FROM HERE STAYS "CHANGED HERE": its baseline is GitHub's version, or none, so the next save sends it.
+  const fresh=readProjects().find(p=>p.id===made.id)!;
+  const baseline=await fileDigests(await projectRepositoryFileMap(fresh)),theirs=await fileDigests(github);
+  for(const path of merge.keptHere){if(theirs[path])baseline[path]=theirs[path];else delete baseline[path];}
+  updateRepository(made.id,{files:baseline,remote:theirs});
+  renderProjectOptions();renderProjectDetails();
+  return merge;
+}
+/** A project and its workflows removed without asking: used only where the same project has just been read again. */
+function removeProjectQuietly(id:string){
+  const project=readProjects().find(p=>p.id===id);if(!project)return;
+  const keys=project.workflows.filter(k=>!isExampleKey(k));
+  try{const raw=JSON.parse(localStorage.getItem(WORKSPACES)||'{}') as Record<string,unknown>;
+    for(const key of keys)delete raw[key];localStorage.setItem(WORKSPACES,JSON.stringify(raw));forgetSavedWorkflows();}catch{/* the record goes either way */}
+  forgetOrigins(keys);writeProjects(readProjects().filter(p=>p.id!==id));
+}
+function renderSharedProject(project:Project|undefined,builtIn:boolean){
+  const box=$('#project-shared');
+  if(!project||builtIn){box.hidden=true;sharedSignature='';return;}
+  box.hidden=false;
+  // NOT ON EVERY EDIT: `render` calls this at each keystroke, and rebuilding would wipe what is being typed and
+  // re-read every workflow. Rebuilt when the Project view opens, or when the share itself changes.
+  const signature=`${project.id}|${JSON.stringify(project.repository??null)}|${credentials?.unlocked?1:0}`;
+  if($('#project-view').hidden||signature===sharedSignature)return;
+  sharedSignature=signature;
+  const repository=repositoryOf(project);
+  if(!repository){
+    box.innerHTML=`<h3 id="project-shared-title">Shared through GitHub</h3>`
+      +`<p class="muted">Not shared. To share it, make a repository from the project template, and a token for it in Credentials.</p>`
+      +`<div id="share-recent"></div><label class="field-label" for="share-name">Repository</label><input id="share-name" maxlength="200" autocomplete="off" spellcheck="false">`
+      +`<label class="field-label" for="share-credential">GitHub token</label><select id="share-credential">${credentialOptions()}</select>`
+      +`<button id="share-send" class="button" type="button">Share through this repository</button><p id="share-result" class="repo-check-result" aria-live="polite"></p>`;
+    const pick=$('#share-credential') as HTMLSelectElement;pick.addEventListener('focus',()=>{pick.innerHTML=credentialOptions(pick.value);});
+    drawRecentRepositories($('#share-recent'),$('#share-name') as HTMLInputElement,pick);
+    ($('#share-send') as HTMLButtonElement).onclick=async()=>{
+      const out=$('#share-result'),name=repositoryName(($('#share-name') as HTMLInputElement).value);
+      if(!name){out.textContent='Enter the repository as owner/name.';return;}
+      try{const token=tokenFor(pick.value);out.textContent=`Reading ${name}…`;
+        const check=await checkRepository(name,token);const line=(key:string)=>check.lines.find(l=>l.key===key);
+        const refusal=line('token')?.state==='no'?line('token')!.text:line('found')?.state!=='yes'?line('found')?.text
+          :line('layout')?.state!=='yes'?line('layout')?.text:/^Your role here is (Read|Triage)/.test(line('role')?.text??'')?line('role')!.text
+          :/no name yet/.test(line('project')?.text??'')?null:`It already holds a project (${line('project')?.text??''}). Open it from New project instead, so neither is lost.`;
+        if(refusal){out.innerHTML=`<strong>No.</strong> ${esc(refusal)}`;return;}
+        const [owner,repo]=name.split('/');
+        rememberRepository(name,pick.value);
+        writeProjects(readProjects().map(p=>p.id!==project.id?p:{...p,repository:{owner,repo,attachedAt:new Date().toISOString(),credential:pick.value}}));
+        renderProjectOptions();renderProjectDetails();}
+      catch(e){out.innerHTML=`<strong>No.</strong> ${esc(errorMessage(e))}`;}};
+    return;
+  }
+  const r=project.repository!;
+  box.innerHTML=`<h3 id="project-shared-title">Shared through GitHub</h3>`
+    +`<p>Shared with <a href="https://github.com/${esc(repository)}" target="_blank" rel="noopener">${esc(repository)}</a>.`
+    +` ${r.syncedAt?`Last read or saved here ${esc(new Date(r.syncedAt).toLocaleString('en-GB',{dateStyle:'medium',timeStyle:'short'}))}.`:'Not yet saved to it.'}</p>`
+    +`<ul id="shared-state" class="repo-check-result" aria-live="polite"></ul>`
+    +`<label class="field-label" for="shared-credential">GitHub token</label><select id="shared-credential">${credentialOptions(r.credential)}</select>`
+    +`<label class="field-label" for="shared-message">What this save is</label><input id="shared-message" maxlength="200">`
+    +`<div class="project-detail-actions"><button id="shared-save" class="button" type="button">Save to the repository</button>`
+    +`<button id="shared-latest" class="button" type="button">Get the latest</button>`
+    +`<button id="shared-check" class="button" type="button">Check GitHub</button></div>`
+    +`<p id="shared-result" class="repo-check-result" aria-live="polite"></p>`
+    +`<h4>People</h4><div id="shared-people"></div>`
+    +`<h4>Discussions</h4><div id="shared-discussions" class="shared-discussions"><p class="muted">Press Check GitHub to see them.</p></div>`
+    +`<form id="shared-post" class="repo-post" hidden><h4>Start a discussion</h4>`
+    +`<label class="field-label" for="shared-post-category">Category</label><select id="shared-post-category"></select>`
+    +`<label class="field-label" for="shared-post-title">Title</label><input id="shared-post-title" maxlength="200">`
+    +`<label class="field-label" for="shared-post-body">Message</label><textarea id="shared-post-body" rows="4" spellcheck="true"></textarea>`
+    +`<button id="shared-post-send" class="button" type="submit">Post to Discussions</button><p id="shared-post-result" class="repo-check-result" aria-live="polite"></p></form>`
+    +`<p><button id="shared-stop" class="button small" type="button">Stop sharing on this device</button></p>`;
+  const pick=$('#shared-credential') as HTMLSelectElement,out=$('#shared-result'),state=$('#shared-state');
+  pick.addEventListener('focus',()=>{pick.innerHTML=credentialOptions(pick.value||r.credential);});
+  pick.onchange=()=>{if(pick.value)updateRepository(project.id,{credential:pick.value});};
+  const line=(kind:string,text:string)=>`<li class="is-${kind}"><strong>${kind==='yes'?'Yes':kind==='no'?'No':'Not checked'}.</strong> ${esc(text)}</li>`;
+  const refresh=async(remote:boolean)=>{
+    const current=readProjects().find(p=>p.id===project.id);if(!current?.repository)return;
+    const lines:string[]=[];
+    try{const {changed}=await localChanges(current);
+      lines.push(changed.length?line('no',`Changed here since last read or saved: ${describeChanges(changed)}.`):line('yes','Nothing changed here since last read or saved.'));}
+    catch(e){lines.push(line('no',errorMessage(e)));}
+    if(remote){
+      try{const token=tokenFor(pick.value||current.repository.credential);
+        const head=await headCommit(repository,token);
+        lines.push(head.sha===current.repository.commit?line('yes','GitHub has nothing newer.')
+          :current.repository.commit?line('no','Someone saved to GitHub since. Get the latest before saving.')
+          :line('unknown','This project has not been saved to the repository yet.'));
+        const talk=await recentDiscussions(repository,token,current.repository.seenAt);
+        $('#shared-discussions').innerHTML=`<p>${talk.total} discussion${talk.total===1?'':'s'}`
+          +`${current.repository.seenAt?`, ${talk.fresh} changed since you last looked`:''}. `
+          +`<a id="shared-discussions-open" href="https://github.com/${esc(repository)}/discussions" target="_blank" rel="noopener">Open on GitHub</a></p>`
+          +(talk.items.length?`<ul class="shared-discussion-list">${talk.items.slice(0,5).map(d=>`<li${d.isNew?' class="is-new"':''}>`
+            +`<span class="category">${esc(d.category)}</span> <a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.title)}</a>`
+            +` <span class="muted">${esc(d.author)}, ${esc(new Date(d.updatedAt).toLocaleDateString('en-GB',{day:'numeric',month:'short'}))}`
+            +`, ${d.replies} repl${d.replies===1?'y':'ies'}${d.isNew?', new':''}</span></li>`).join('')}</ul>`:'');
+        const seen=()=>updateRepository(project.id,{seenAt:new Date().toISOString()});
+        $('#shared-discussions').querySelectorAll('a').forEach(a=>a.addEventListener('click',seen));
+        try{const targets=await discussionTargets(repository,token);postTarget=targets.repositoryId;
+          // The category chosen is kept when the list is drawn again: a refresh reset it, and a post went to the wrong one.
+          const categoryList=$('#shared-post-category') as HTMLSelectElement,chosen=categoryList.value;
+          categoryList.innerHTML=targets.categories.map(c=>`<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('');
+          if(targets.categories.some(c=>c.id===chosen))categoryList.value=chosen;
+          $('#shared-post').hidden=!targets.categories.length;}
+        catch{$('#shared-post').hidden=true;}
+        try{collaborators=await listCollaborators(repository,token);peopleNote='';}
+        catch(e){collaborators=null;peopleNote=errorMessage(e);}
+        remoteChecked={project:project.id,at:Date.now()};}
+      catch(e){lines.push(line('unknown',`GitHub not read: ${errorMessage(e)}`));}
+    }
+    state.innerHTML=lines.join('');
+    void renderPeople();};
+  // PEOPLE (fw:ProjectMembership): everyone GitHub lists and everyone the project names, each with their repository role
+  // and project role. The project role is given here and saved with the project; who a member is, they give themselves.
+  let collaborators:{login:string;role:string}[]|null=null,peopleNote='Press Check GitHub to see who has access.';
+  const renderPeople=async()=>{
+    const current=readProjects().find(p=>p.id===project.id);if(!current)return;
+    const members=current.members??[];const me=openIdentity();
+    const logins=[...new Set([...(collaborators??[]).map(c=>c.login),...members.map(m=>m.login)])];
+    const rows:string[]=[];
+    for(const login of logins){
+      const member=members.find(m=>m.login.toLowerCase()===login.toLowerCase());
+      const repo=collaborators?.find(c=>c.login.toLowerCase()===login.toLowerCase())?.role as RepositoryRole|undefined;
+      const known=repo&&(REPOSITORY_ROLES as readonly string[]).includes(repo)?repo:undefined;
+      const verified=member?.signature&&member.publicKey&&member.algorithm
+        ?await verifyStatement(member.algorithm,member.publicKey,memberStatement(member),member.signature):false;
+      const who=member?.name?`${esc(member.name)}${member.orcid?` · ORCID <a href="https://orcid.org/${esc(member.orcid)}" target="_blank" rel="noopener">${esc(member.orcid)}</a>`:''}`
+        +(member.affiliations??[]).map(a=>` · ${affiliationLabel(a,esc)}`).join('')+`${verified?' · signed by them':' · not signed'}`
+        :'<span class="muted">Has not said who they are yet.</span>';
+      const shortfall=member&&collaborators?roleShortfall(member.role,known):null;
+      const options=`<option value="">Not in the project</option>`+PROJECT_ROLES.map(r=>`<option value="${r}"${member?.role===r?' selected':''}>${PROJECT_ROLE_LABEL[r]}</option>`).join('');
+      const proposal=!member&&known?` <span class="muted">(${PROJECT_ROLE_LABEL[proposedProjectRole(known)]} would fit)</span>`:'';
+      const mine=me?.profile.login&&me.profile.login.toLowerCase()===login.toLowerCase();
+      rows.push(`<li><strong>${esc(login)}</strong> <span class="muted">on GitHub: ${esc(repo??'no access listed')}</span><br>${who}`
+        +`<br><label class="field-label" for="member-${esc(login)}">Project role</label><select id="member-${esc(login)}" data-member="${esc(login)}">${options}</select>${proposal}`
+        +(mine&&member?` <button class="button small" type="button" data-member-me="${esc(login)}">This is me</button>`:'')
+        +(shortfall?`<br><span class="is-no"><strong>No.</strong> ${esc(shortfall)}</span>`:'')+'</li>');
+    }
+    $('#shared-people').innerHTML=(peopleNote?`<p class="muted">${esc(peopleNote)}</p>`:'')
+      +(rows.length?`<ul class="shared-people-list">${rows.join('')}</ul>`:'')
+      +`<p class="muted">A project role is saved with the project. Inviting someone, and their access, stay on GitHub.</p>`;
+    $('#shared-people').querySelectorAll<HTMLSelectElement>('[data-member]').forEach(select=>select.onchange=()=>{
+      const login=select.dataset.member!,role=select.value as ProjectRole|'';
+      writeProjects(readProjects().map(p=>{if(p.id!==project.id)return p;
+        const rest=(p.members??[]).filter(m=>m.login.toLowerCase()!==login.toLowerCase());
+        const was=(p.members??[]).find(m=>m.login.toLowerCase()===login.toLowerCase());
+        const members=role?[...rest,{...(was??{login,since:new Date().toISOString()}),role}]:rest;
+        const {members:_m,...without}=p;return members.length?{...without,members}:without as Project;}));
+      void refresh(false);});
+    $('#shared-people').querySelectorAll<HTMLButtonElement>('[data-member-me]').forEach(button=>button.onclick=async()=>{
+      const identity=openIdentity();if(!identity)return;
+      const login=button.dataset.memberMe!;
+      const statement={login,name:identity.profile.name,...(identity.profile.orcid?{orcid:identity.profile.orcid}:{}),
+        ...(identity.profile.affiliations?.length?{affiliations:identity.profile.affiliations}:{})};
+      const signed=await signStatement(identity,memberStatement(statement));
+      writeProjects(readProjects().map(p=>p.id!==project.id?p:{...p,members:(p.members??[]).map(m=>
+        m.login.toLowerCase()!==login.toLowerCase()?m:{...m,...statement,...signed})}));
+      void refresh(false);});
+  };
+  // A DISCUSSION STARTED FROM THE PROJECT, in the words the person types (the first write of 2026-11-16, moved here from
+  // New project). Sent through the API, it carries no category form: GitHub applies those only on its own page.
+  let postTarget='';
+  ($('#shared-post') as HTMLFormElement).onsubmit=async event=>{event.preventDefault();
+    const result=$('#shared-post-result');
+    const title=($('#shared-post-title') as HTMLInputElement).value.trim(),body=($('#shared-post-body') as HTMLTextAreaElement).value.trim();
+    if(!title||!body){result.textContent='Write a title and a message first.';return;}
+    const send=$('#shared-post-send') as HTMLButtonElement;
+    try{const token=tokenFor(pick.value||project.repository?.credential);send.disabled=true;result.textContent='Posting…';
+      const made=await postDiscussion(postTarget,($('#shared-post-category') as HTMLSelectElement).value,title,body,token);
+      if(made.ok){result.innerHTML=`<strong>Posted.</strong> Discussion #${made.number}: <a href="${esc(made.url)}" target="_blank" rel="noopener">open it on GitHub</a>.`;
+        ($('#shared-post-title') as HTMLInputElement).value='';($('#shared-post-body') as HTMLTextAreaElement).value='';}
+      else result.innerHTML=`<strong>No.</strong> ${esc(made.text)}`;}
+    catch(e){result.innerHTML=`<strong>No.</strong> ${esc(errorMessage(e))}`;}
+    finally{send.disabled=false;}};
+  ($('#shared-check') as HTMLButtonElement).onclick=()=>void refresh(true);
+  ($('#shared-save') as HTMLButtonElement).onclick=async()=>{
+    const message=($('#shared-message') as HTMLInputElement).value.trim();
+    if(!message){out.textContent='Say what this save is first.';return;}
+    const current=readProjects().find(p=>p.id===project.id)!;
+    try{const token=tokenFor(pick.value||current.repository?.credential);
+      const {files,changed}=await localChanges(current);
+      if(current.repository?.commit&&!changed.length){out.textContent='Nothing changed here since last read or saved, so there is nothing to save.';return;}
+      out.textContent='Saving…';
+      const done=await saveToRepository(repository,files,message,token,fetch,current.repository?.commit);
+      if(!done.ok){out.innerHTML=`<strong>No.</strong> ${esc(done.text)}`;return;}
+      const sent=await fileDigests(files);
+      updateRepository(project.id,{commit:done.sha,files:sent,remote:sent,syncedAt:new Date().toISOString(),credential:pick.value||current.repository?.credential});
+      ($('#shared-message') as HTMLInputElement).value='';
+      renderProjectDetails();
+      $('#shared-result').innerHTML=`<strong>Saved.</strong> ${esc(describeChanges(changed))} in one commit: <a href="${esc(done.url)}" target="_blank" rel="noopener">open it on GitHub</a>.`;}
+    catch(e){out.innerHTML=`<strong>No.</strong> ${esc(errorMessage(e))}`;}};
+  // GET THE LATEST MERGES (2026-11-16): what is only here is kept, what changed on GitHub comes in, and a workflow
+  // changed on both is the person's choice (`mergeLatest`). Before, it replaced everything here after one confirm.
+  ($('#shared-latest') as HTMLButtonElement).onclick=async()=>{
+    const current=readProjects().find(p=>p.id===project.id)!;
+    try{out.textContent='Reading the repository…';
+      const merge=await getLatest(current,pick.value||current.repository!.credential!);
+      const name=(p:string)=>p==='project.json'?'the project\'s details':p.replace(/^workflows\/|^notes\/|\.json$/g,'');
+      const kept=merge.keptHere;
+      toast(`Got the latest. `+[
+        merge.fromGitHub.length&&`From GitHub: ${merge.fromGitHub.map(name).join(', ')}.`,
+        kept.length&&`Kept from here, to save: ${kept.map(name).join(', ')}.`,
+        merge.removed.length&&`Removed on GitHub, so removed here: ${merge.removed.map(name).join(', ')}.`,
+        !merge.fromGitHub.length&&!kept.length&&!merge.removed.length&&'Nothing had changed.'].filter(Boolean).join(' '),{tone:'notice'});}
+    catch(e){out.innerHTML=`<strong>No.</strong> ${esc(errorMessage(e))}`;}};
+  ($('#shared-stop') as HTMLButtonElement).onclick=()=>{
+    if(!confirm(`Stop sharing "${project.name}" with ${repository} on this device?\n\nThe project stays here and the repository is untouched.`))return;
+    updateRepository(project.id,null);renderProjectOptions();renderProjectDetails();};
+  const recent=remoteChecked?.project===project.id&&Date.now()-remoteChecked.at<60_000;
+  void refresh(!!credentials?.unlocked&&!recent&&!!(pick.value||r.credential));
+}
+// TWO PATHS IN NEW PROJECT (2026-11-16). The practitioner: "The UI taxonomy should be New Local Project or Open Shared
+// GitHub Project. Now under each Import project from backup should also work." A local project as before. A shared
+// one: the repository checked, then the project it holds opened, or, where it holds the empty template and the person
+// may write to it, a project started in it, new or from a backup. Replaced a "Where it is kept" choice made earlier the
+// same day, after "There is only 1 Create Project button and it's above the Shared through GitHub".
+{const path=()=>document.querySelector<HTMLInputElement>('input[name="project-path"]:checked')?.value??'local';
+ const nameInput=$('#repo-check-name') as HTMLInputElement,pick=$('#repo-check-credential') as HTMLSelectElement;
+ const result=$('#repo-check-result'),openResult=$('#repo-open-result');
+ const fill=()=>{pick.innerHTML=credentialOptions(pick.value||undefined);drawRecentRepositories($('#repo-check-recent'),nameInput,pick);};
+ pick.addEventListener('focus',()=>{pick.innerHTML=credentialOptions(pick.value||undefined);});
+ document.querySelector('#project-new')?.addEventListener('click',fill);fill();
+ const showPath=()=>{$('#path-local').hidden=path()!=='local';$('#path-github').hidden=path()!=='github';if(path()==='github')fill();};
+ // THE TOKENS ARE THE LIST (2026-11-16): one row for each GitHub token in Credentials, with the repository it reaches.
+ // A repository a project here is already shared with says so; any other is checked by pressing its button, which runs
+ // the same check as a typed one.
+ const tokenRows=async()=>{
+   const list=$('#token-projects'),refs=githubRefs();
+   if(!refs.length){list.innerHTML='<li class="muted">No GitHub token in your Credentials. Add one for the repository, in Credentials.</li>';return;}
+   list.innerHTML=refs.map((r,i)=>`<li data-token-row="${i}"><strong>${esc(r.label)}</strong> <span class="muted">Asking GitHub which repository it reaches…</span></li>`).join('');
+   const repoRow=(name:string,ref:string)=>{const here=readProjects().find(p=>repositoryOf(p).toLowerCase()===name.toLowerCase());
+     return `<span class="repo-name">${esc(name)}</span> `+(here
+       ?`<span class="muted">On this device as "${esc(here.name)}".</span> <button type="button" class="button small" data-open-here="${esc(here.id)}">Go to it</button>`
+       :`<button type="button" class="button small" data-check-repo="${esc(name)}" data-check-ref="${esc(ref)}">Check it</button>`);};
+   for(const [i,r] of refs.entries()){
+     const row=list.querySelector<HTMLElement>(`[data-token-row="${i}"]`)!;
+     // THE CREDENTIAL NAMES ITS REPOSITORY: that one, and only that one.
+     if(r.repository){row.innerHTML=`<strong>${esc(r.label)}</strong><ul class="token-repositories"><li>${repoRow(r.repository,r.ref)}</li></ul>`;continue;}
+     // IT DOES NOT YET: asked once, from what the token reaches, private first; the answer is kept in the credential.
+     try{const repos=await tokenRepositories(tokenFor(r.ref));
+       if(!repos.length){row.innerHTML=`<strong>${esc(r.label)}</strong> <span class="muted">reaches no repository.</span>`;continue;}
+       const id=`token-repo-${i}`,named=namedRepository(repos,r.label,r.ref);
+       const options=(all:boolean)=>`<option value="">Which repository is it for?</option>`
+         +repos.filter(x=>all||x.private).map(x=>`<option>${esc(x.name)}</option>`).join('');
+       const privates=repos.filter(x=>x.private).length;
+       // THE NAME MATCH FIRST (2026-11-16, of a list of 86): a repository named as the credential is labelled is offered
+       // alone; the list, private repositories only unless asked, stays behind Choose another.
+       row.innerHTML=`<strong>${esc(r.label)}</strong> <span class="muted">does not say which repository it is for.</span>`
+         +(named?`<div class="token-guess">For <span class="repo-name">${esc(named)}</span>? `
+           +`<button type="button" class="button small" data-set-repo="${esc(r.ref)}" data-value="${esc(named)}">Yes, this one</button></div>`:'')
+         +`<details class="token-choose"${named?'':' open'}><summary>${named?'Choose another':'Choose the repository'}</summary>`
+         +`<div class="lookup-row"><label class="visually-hidden" for="${id}">Repository this token is for</label><select id="${id}">${options(!privates)}</select>`
+         +`<button type="button" class="button small" data-set-repo="${esc(r.ref)}" data-from="${id}">This one</button></div>`
+         +(privates&&privates<repos.length?`<label class="token-public"><input type="checkbox" data-public="${id}"> Show public ones too (${repos.length-privates})</label>`:'')
+         +`</details>`;
+       row.querySelector<HTMLInputElement>(`[data-public="${id}"]`)?.addEventListener('change',e=>{
+         (document.getElementById(id) as HTMLSelectElement).innerHTML=options((e.target as HTMLInputElement).checked);});}
+     catch(e){row.innerHTML=`<strong>${esc(r.label)}</strong> <span class="is-no"><strong>No.</strong> ${esc(errorMessage(e))}</span>`;}
+   }
+   list.querySelectorAll<HTMLButtonElement>('[data-set-repo]').forEach(b=>b.onclick=()=>{
+     const chosen=b.dataset.value??(document.getElementById(b.dataset.from!) as HTMLSelectElement).value;if(!chosen)return;
+     credentials!.setRepository(b.dataset.setRepo!,chosen);rowsFor='';void tokenRows().then(()=>{
+       list.insertAdjacentHTML('beforeend','<li class="muted">Kept for this visit. To keep it, open Credentials and download your credentials file again.</li>');});});
+   list.querySelectorAll<HTMLButtonElement>('[data-check-repo]').forEach(b=>b.onclick=()=>{
+     nameInput.value=b.dataset.checkRepo!;pick.innerHTML=credentialOptions(b.dataset.checkRef);pick.value=b.dataset.checkRef!;
+     ($('#repo-check') as HTMLButtonElement).click();});
+   list.querySelectorAll<HTMLButtonElement>('[data-open-here]').forEach(b=>b.onclick=()=>{
+     const project=readProjects().find(p=>p.id===b.dataset.openHere);const key=project?.workflows[0];
+     if(!project||!key)return;
+     ($('#project-select') as HTMLSelectElement).value=project.id;$('#project-select').dispatchEvent(new Event('change'));});
+ };
+ let rowsFor='';
+ const showTokens=()=>{if(path()!=='github')return;const sig=githubRefs().map(r=>`${r.ref}:${r.repository??''}`).join(',')+'|'+readProjects().map(p=>repositoryOf(p)).join(',');
+   if(sig!==rowsFor){rowsFor=sig;void tokenRows();}};
+ document.querySelectorAll<HTMLInputElement>('input[name="project-path"]').forEach(r=>r.onchange=()=>{showPath();showTokens();});
+ document.querySelector('#project-new')?.addEventListener('click',()=>{rowsFor='';showTokens();});
+ // NOT OFFERED WHILE CREDENTIALS ARE LOCKED (the practitioner, 2026-11-16: "if Credential is locked, there should be no
+ // Open Shared GitHub Project"): without a token nothing on that path can work. Watched through the Credentials
+ // button, whose class says whether they are unlocked.
+ const offerShared=()=>{const unlocked=!!credentials?.unlocked;
+   const choice=document.querySelector<HTMLInputElement>('input[name="project-path"][value="github"]')!;
+   choice.closest('label')!.hidden=!unlocked;
+   if(!unlocked&&choice.checked){document.querySelector<HTMLInputElement>('input[name="project-path"][value="local"]')!.checked=true;}
+   showPath();rowsFor='';showTokens();};
+ new MutationObserver(offerShared).observe($('#credentials-button'),{attributes:true,attributeFilter:['class']});
+ document.querySelector('#project-new')?.addEventListener('click',offerShared);offerShared();
+ const say=(lines:{state:string;text:string}[])=>{result.innerHTML=lines.map(l=>
+   `<li class="is-${l.state}"><strong>${l.state==='yes'?'Yes':l.state==='no'?'No':'Not checked'}.</strong> ${esc(l.text)}</li>`).join('');};
+ let checked:RepositoryCheck|null=null;
+ const next=(c:RepositoryCheck|null)=>{
+   const line=(key:string)=>c?.lines.find(l=>l.key===key);
+   const usable=!!c&&line('found')?.state==='yes'&&line('layout')?.state==='yes';
+   const empty=usable&&/no name yet/.test(line('project')?.text??'');
+   const reader=/^Your role here is (Read|Triage)/.test(line('role')?.text??'');
+   $('#github-holds').hidden=!(usable&&!empty);
+   $('#github-empty').hidden=!(empty&&!reader);
+   // A NEW SHARED PROJECT IS OPENED, NOT CREATED (the practitioner, 2026-11-16: "we just opened a GitHub project why
+   // create a project in it?"). Its name starts as the repository's, for the person to change.
+   if(empty&&!reader&&c&&!($('#github-name') as HTMLInputElement).value)($('#github-name') as HTMLInputElement).value=c.repository.split('/')[1]!;
+   if(empty&&reader)openResult.innerHTML='<strong>No.</strong> It holds no project yet, and your role there only lets you read: the lead author starts it.';
+   else openResult.textContent='';};
+ ($('#repo-check') as HTMLButtonElement).onclick=async()=>{
+   checked=null;next(null);
+   const name=repositoryName(nameInput.value);
+   if(!name){say([{state:'no',text:'Enter the repository as owner/name, for example digital-twin-ph/project-test-collaboration.'}]);nameInput.focus();return;}
+   let token:string;
+   try{token=tokenFor(pick.value);}catch(e){say([{state:'no',text:errorMessage(e)}]);return;}
+   const button=$('#repo-check') as HTMLButtonElement;button.disabled=true;say([{state:'unknown',text:`Reading ${name}…`}]);
+   try{checked=await checkRepository(name,token);say(checked.lines);
+     if(checked.lines.some(l=>l.key==='found'&&l.state==='yes')){rememberRepository(name,pick.value);drawRecentRepositories($('#repo-check-recent'),nameInput,pick);}
+     next(checked);}
+   catch(e){say([{state:'no',text:`GitHub could not be reached: ${errorMessage(e)}`}]);}
+   finally{button.disabled=false;}};
+ nameInput.addEventListener('input',()=>{checked=null;next(null);});
+ const sharing=():NonNullable<Project['repository']>|null=>{if(!checked)return null;const [owner,repo]=checked.repository.split('/');
+   return {owner:owner!,repo:repo!,attachedAt:new Date().toISOString(),...(pick.value?{credential:pick.value}:{})};};
+ ($('#github-create') as HTMLButtonElement).onclick=()=>{
+   const repository=sharing();if(!repository)return;
+   const made=createProject({name:($('#github-name') as HTMLInputElement).value,subject:($('#github-subject') as HTMLTextAreaElement).value,
+     nameField:$('#github-name'),repository});
+   if(!made)return;
+   ($('#github-name') as HTMLInputElement).value='';($('#github-subject') as HTMLTextAreaElement).value='';result.innerHTML='';checked=null;next(null);
+   renderProjectOptions();renderProjectDetails();rowsFor='';
+   toast(`"${made.name}" is shared with ${repository.owner}/${repository.repo}. Save it to the repository from Project, This project, when there is something to share.`);};
+ ($('#github-import') as HTMLButtonElement).onclick=()=>{
+   const repository=sharing();if(!repository)return;
+   pendingShare={repository,at:Date.now()};$('#workflow-file').click();};
+ ($('#repo-open-send') as HTMLButtonElement).onclick=async()=>{
+   const send=$('#repo-open-send') as HTMLButtonElement;
+   if(!checked)return;const name=checked.repository;
+   const already=readProjects().find(p=>repositoryOf(p)===name);
+   if(already){openResult.innerHTML=`<strong>No.</strong> "${esc(already.name)}" on this device is already shared with ${esc(name)}. Open it, and press Get the latest.`;return;}
+   send.disabled=true;openResult.textContent='Reading the repository…';
+   try{await openSharedProject(name,pick.value);openResult.textContent='';rowsFor='';}
+   catch(e){openResult.innerHTML=`<strong>No.</strong> ${esc(errorMessage(e))}`;}
+   finally{send.disabled=false;}};}
+
+// A MINUTE'S WARNING BEFORE THE LOCK (Section 508, WCAG 2.2.1 Timing adjustable; 2026-11-16, with the lock at ten
+// minutes): said in words, with a button that keeps them open. Any press counts as use, so the button needs no work of
+// its own beyond hiding the warning. Nothing is lost when they lock; opening the files again is the cost.
+{const warning=document.createElement('div');warning.id='lock-warning';warning.className='lock-warning';warning.setAttribute('role','alert');warning.hidden=true;
+ document.body.append(warning);let shown='';
+ const tick=()=>{
+   const left=[['Your credentials',credentials?.untilLock??null],['Your identity',identityUntilLock()]] as [string,number|null][];
+   const soon=left.filter(([,ms])=>ms!==null&&ms<=60_000);
+   const text=soon.length?`${soon.map(([who])=>who).join(' and ')} will lock in under a minute without use.`:'';
+   if(text===shown)return;shown=text;
+   warning.hidden=!text;
+   if(text){warning.innerHTML=`<span>${esc(text)}</span><button type="button" class="button primary" id="lock-keep">Keep them open</button>`;
+     ($('#lock-keep') as HTMLButtonElement).onclick=()=>{warning.hidden=true;shown='';};}};
+ setInterval(tick,5_000);}
+
 const showCatalog=()=>{try{openCatalogDialog(esc);}catch(error){toast(errorMessage(error),{tone:'failure'});}};
 $('#open-catalog').onclick=showCatalog;
 // Deep link, so the catalog can be pointed at rather than described: ?catalog=1 or #catalog.

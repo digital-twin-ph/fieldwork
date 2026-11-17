@@ -1083,3 +1083,262 @@ open, key linked, a GitHub credential unlocked, the repository answering and wri
 **Open a shared project from GitHub**. The manual, drafted for the practitioner's edit, is
 `demo-drafts/collaborative-project-manual.md` in the workspace. Nothing of steps 4 and 5 is built.
 
+
+## The first read of a real repository, 2026-11-16
+
+**Check the repository** (Project, New project, *Shared through GitHub*) reads a repository through a token from the
+credentials file and writes nothing: `src/repository-check.ts`. The practitioner ran it against
+`digital-twin-ph/project-test-collaboration`, a private repository made from `fieldwork-project-template` under an
+organisation, with a fine-grained token scoped to it.
+
+| Line | First run | After the practitioner's change |
+| --- | --- | --- |
+| Answers through the token, private | Yes | Yes |
+| The template's layout (`.fieldwork/format.json`) | Yes | Yes |
+| `project.json`, empty | Yes | Yes |
+| Discussions on | Yes, GitHub's 6 default categories | Yes, 7 |
+| Discussions held | Yes, 0 | Yes, 0 |
+| A `decisions` category | **No** | Yes |
+| The token may write | Not checked | Not checked |
+
+**Found:**
+- A repository made from the template does not carry the template's Discussion categories, so the decision form
+  has no category to post in until the lead author makes one by hand: **Decisions**, Open-ended discussion. The
+  manual now carries it as a set-up step, and the check names it when it is missing.
+- Discussions, with categories readable through a fine-grained token, works on a private repository under this
+  organisation.
+- The token's expiry date was not shown, and no layout version was printed. Either the token has no expiry or the
+  browser is not allowed to read GitHub's expiry header. The template's `format.json` may carry no `version`.
+
+**The first write, the same day.** **Post a discussion**, beneath the check, sends one GraphQL `createDiscussion` with
+the title and message the person types (`postDiscussion` in `src/repository-check.ts`). The practitioner posted
+*Test post*, #1, in Decisions. GitHub shows it as started by the token's owner, marked Maintainer. Posted through the
+API, it carries the typed text only: the category's form applies on GitHub's own page, not to a post sent from
+Fieldwork, so a decision posted from Fieldwork has to carry the form's questions itself.
+
+**What this does not establish:** that the token may write to the repository's contents, which a discussion does
+not touch; that a co-author's or a reviewer's token reads and posts the same; whether Discussions is available on a private repository under a
+personal account on GitHub's free plan.
+
+## The process as it emerged, 2026-11-16
+
+Each step below came from trying the one before it with the practitioner's own repository, not from the plan of
+2026-10-31. Recorded in the order it happened, because the order is the finding.
+
+1. **The manual first, then the order of its steps.** Drafting the manual showed that the repository has to exist
+   before a token can name it: *"First probably is create repo from project template."* The manual's order became
+   repository, token, project, invitations.
+2. **A read before any write.** **Check the repository** read the practitioner's repository through their token
+   (above). It found that a repository made from the template has no `decisions` category.
+3. **The first write was a discussion, not a file.** *"We can also test the project chat feature through
+   Discussions."* Discussion #1 posted. It showed that a post sent through the API carries no form.
+4. **Then a file.** *"We also have not tested uploading a workflow to a remote project."* The same files Export as
+   repository makes, as one commit through the Git Data API: blobs, a tree on the last commit, a commit, then the
+   branch moved, never forced.
+5. **Roles.** *"How do we know if a user has a certain GitHub role?"* GitHub's answer about the repository carries
+   the person's role. The token can allow less than that role, and nothing says how much less; only a write shows it.
+6. **What Discussions is in Fieldwork.** The practitioner asked whether a count and a link were enough. Yes, with
+   two corrections. It counts what changed *since you last looked here*, not "unread": GitHub keeps read state in
+   its notifications, which these tokens cannot read (expected, not tried). And it shows the latest titles, each
+   linking to GitHub. Reading and replying stay on GitHub.
+7. **Where the share is recorded.** *"So the user should also be able to save collaborative project specs on his
+   laptop?"* Yes, in the project's record on the device. The repository's name travels with a backup. The
+   credential's reference, the commit last read or saved, each file's digest at that moment, and when Discussions
+   was last looked at stay on the device. The token stays in the credentials file.
+8. **Two kinds of save.** *"How will the user save the workflow to GitHub, simultaneous with saving to local
+   storage?"* They are not simultaneous. Saving on the device stays automatic. Saving to GitHub is a press, with a
+   line the person writes, made into one commit. A commit on every edit would bury the history the co-authors
+   review, and would need the network and an unlocked token at every keystroke.
+
+**Built, not yet tried against a real repository:** in **This project**, a project can be shared with a repository
+made from the template. **Save to the repository** compares each file's digest with the last read or save, and
+refuses when nothing changed. It also refuses when the branch has moved since this device read it ("get the latest
+first"); nothing is written. **Get the latest** asks before replacing changes made here. **Check GitHub** reports
+both sides and the latest discussions. **Stop sharing on this device** leaves the repository untouched. In **New
+project**, a checked repository that holds a project can be opened as a shared project, by the importer a backup
+uses. `tests/shared-project.browser.mjs` runs all of it against a GitHub kept in memory.
+
+**Found while building:** every workflow file carried this device's `projectId` and `workflowKey`. Both are minted
+per device, so every author's save would have rewritten every workflow file. They are now left out of the repository
+(`withoutDeviceKeys`), and opening the repository mints them again.
+
+**Who shows as whom.** A collaborator invited on GitHub appears in Fieldwork only by their GitHub login, beside what
+they post in Discussions. They are not added to the project's authors: access is not authorship, the rule the
+importer already keeps. An author is added as an author, from their identity file.
+
+**What this does not establish:**
+- That any of this works against GitHub itself. Every request has been seen only by the fake.
+- What happens when two authors change the same workflow. A save is refused rather than merged. Showing both
+  versions and asking which to keep is not built.
+- That a token whose owner has the Read role is refused at the first write. The role line says Read; no write has
+  been tried with such a token.
+
+## People, project roles and repository roles, 2026-11-16
+
+The practitioner: *"From a FW project perspective, how do I add JLT? How do we map GitHub roles to FW project roles?
+I don't think we have this mapping yet. This is in addition to me manually adding JLT as a co-maintainer on GH. And
+this needs an ontology entry."* Then: *"How do co-authors' ORCIDs and RORs end up on my copy of the
+notes/publication?"* and *"How do we use GitHub to exchange ORCIDs and RORs?"*
+
+**Two things kept apart, and neither is authorship.** A **repository role** is GitHub's term for what a person may do
+in the repository (Read, Triage, Write, Maintain, Admin), and only GitHub grants it. A **project role** is a person's
+place in the investigation (Lead author, Co-author, Reviewer). Who did what stays CRediT, proposed from the record.
+The practitioner chose the term *project role*; *role* alone is the glossary's word for what a widget needs from a
+column.
+
+**In the ontology, from a standard rather than minted.** The W3C Organization Ontology (Recommendation, 16 January
+2014; read in the specification, not recalled) already relates a person, an organisation and a role:
+`org:Membership`, `org:member`, `org:organization`, `org:role`. Declared: `fw:Project` (an `org:Organization`, not an
+`org:OrganizationalCollaboration`, whose members are organisations), `fw:ProjectRole` (an `org:Role` and a
+`prov:Role`) with `fw:LeadAuthor`, `fw:CoAuthor` and `fw:Reviewer`, `fw:ProjectMembership` (an `org:Membership`), and
+`fw:minimumRepositoryRole`.
+
+| Project role | Least repository role | Proposed from |
+| --- | --- | --- |
+| Lead author | maintain | admin |
+| Co-author | write | maintain, write (the practitioner's choice for Maintain) |
+| Reviewer | read | triage, read |
+
+**Adding a person.** Invite them on GitHub. In the shared project's **People**, Fieldwork lists everyone GitHub
+reports with access, with their repository role and a proposed project role. The lead author gives the project role,
+and it is saved in `project.json` (the practitioner's choice), so every author sees the same team. A repository role
+below what the project role needs is flagged, never refused.
+
+**Who a member is is theirs to give.** With their own identity open, the person presses **This is me**. Their name and
+ORCID iD are written into their entry, signed with their identity's key. Each copy checks the signature, so nobody can
+put an ORCID iD on the project in someone else's name. **The exchange is the repository itself.** The entry travels
+in `project.json` with their next save and reaches the others when they get the latest. Before this, a co-author's
+ORCID iD reached another author only inside the notes they had signed. The project's author list held a login and a
+name, and no affiliation was held anywhere except as typed text.
+
+**What this does not establish:**
+- That GitHub lists collaborators to a fine-grained token with only Contents and Discussions. If it refuses, People
+  says so and shows the project's own members.
+- ROR: affiliations are not yet held with an identifier. The question is put to the practitioner. *Answered the same
+  day: "Yes to RORs", below.*
+- That the publication's author line is drawn from the members. It is not yet.
+
+## Affiliations with ROR IDs, 2026-11-16
+
+The practitioner: *"Yes to RORs."* An identity file now holds **affiliations**: each an organisation's name as written
+on a paper, and its ROR ID where it has one, in the order a paper lists them. Made or changed in the Identity dialog
+(**Change your avatar or affiliations** for a file already made). **Find on ROR** searches ROR's open API by name and
+offers up to five matches. **Check on ROR** looks up a typed ID. A typed ID is first checked offline by its checksum:
+ISO 7064 Mod 97-10 over the six base-32 characters. That rule was confirmed on five real ROR IDs, and a one-digit
+change fails it. Found on ROR is not verified, as with an ORCID iD: anyone can type an organisation they do not
+belong to.
+
+**This is me** now signs the affiliations with the name and ORCID iD, so they travel in `project.json` the same way.
+Each copy shows each affiliation with a link to its ROR record.
+
+**Validation, 2026-11-16, Chromium only:**
+- `tests/identity-file.test.mjs`: the checksum, tolerant reading, the file round trip, a change keeping the avatar,
+  and a bad ID refused.
+- `tests/identity.browser.mjs`: found by name on a stubbed ROR, a mistyped ID caught, and the affiliation on the open
+  identity's line.
+- The accessibility scan of the Identity dialog passes, but it opens the dialog with no affiliation rows, so the
+  rows themselves are not scanned.
+
+**What this does not establish:**
+- ~~That ROR's live API answers in the shape the stub does.~~ *Established the same day by the practitioner:* **Find on
+  ROR** against the live service found the Centers for Disease Control and Prevention, ROR `042twtr12`. Only the
+  search was seen; **Check on ROR** has not been tried against the live service.
+- That the publication's author and affiliation lines are drawn from the members. They are not yet.
+
+
+## New project in two paths, 2026-11-16
+
+Built in four turns, each answering the practitioner's last look:
+
+1. A **Check the repository** block below **Create project**, which could check an empty repository and do nothing
+   with it. Neither copy held a project to share, and the repository had only its template commit. *"Still not
+   there."*
+2. A **Create the project above, shared with this repository** button under the check. *"There is only 1 Create
+   Project button and it's above the Shared through GitHub which does not look intuitive."*
+3. A **Where it is kept** choice above the one **Create project**. *"The UI taxonomy should be New Local Project or Open
+   Shared GitHub Project. Now under each Import project from backup should also work."*
+4. **Two paths at the top of New project.**
+   - **New local project**: the form as before, then **Or import a project from a backup**.
+   - **Open shared GitHub project**: the repository is checked first. A repository holding a project offers **Open
+     the shared project**. One holding the empty template, where the person may write, offers **Create the project
+     in it** (name and subject) or **Import project from backup** into it; the imported project is shared with the
+     repository.
+   - *"If Credential is locked, there should be no Open Shared GitHub Project"*: the second path is not offered
+     while Credentials are locked.
+
+The two forms that were tests of the first writes moved or went. **Post a discussion** moved to the shared project's
+Discussions, as **Start a discussion**, where a refresh had been resetting the chosen category: a post went to the
+first category until the choice was kept (found by the test). **Save a project to the repository** went, superseded
+by the shared project's own save.
+
+**Validation, 2026-11-16, Chromium only:** `tests/shared-project.browser.mjs`, four tests against a GitHub kept in
+memory. They cover: the path hidden while locked; a project started in the empty template, listed and saved; a backup
+imported into it and shared; Open offered and start not offered where a project exists; and a discussion posted to
+the chosen category. Its neighbours pass too (project view, projects, export, identity, citations, manual tab).
+
+**What this does not establish:** any of it against GitHub itself. The practitioner's repository still holds only
+the template.
+
+## The tokens are the list, 2026-11-16
+
+The practitioner: *"So essentially there should be a match between credentials for projects in the credentials file
+(since each token is for only one project) and the projects that show up on the shared project list."* **Open shared
+GitHub project** now lists one row for each GitHub token in Credentials. Each row shows the repository GitHub says the
+token reaches (`/user/repos`, `tokenRepositories`), and either **Go to it** (a project here is already shared with it)
+or **Check it**, which runs the same check as before. Typing a repository is kept, folded, as **Type a repository
+instead**.
+
+**What this does not establish:** that a fine-grained token given one repository lists only that one. It is
+expected, and the row lets the person choose when there are several. It has been seen only with the fake.
+
+**Corrected the same day, by the practitioner's first run:** *"The token reached 86 repositories!"* GitHub's list of
+the repositories a token reaches is not scoped to a fine-grained token's chosen repository: it held every repository
+the person can see, public ones included. So the list cannot say which project a token is for. **A GitHub credential
+now names its repository** (an optional `repository` field, owner/name; credentials files made before it still open).
+A credential that names one gets one row. One that does not is asked once, from what the token reaches with private
+repositories first, and the answer is kept in the credential. The credentials file has to be downloaded again to keep
+it, and the row says so. Validated against the fake only: `tests/shared-project.browser.mjs` (five tests) and
+`tests/credentials.test.mjs`.
+
+*"The drop down is still 86 repositories."* Asking once was still a choice among 86. Now a repository whose name
+matches the credential's label or reference is offered alone ("For digital-twin-ph/project-test-collaboration? **Yes,
+this one**"), and the list stays folded behind **Choose another**. The list shows private repositories only, with
+**Show public ones too** for the rest. A name match is offered, never assumed: the person says yes.
+
+*"We just opened a GitHub project why create a project in it?"* The repository is the project, so it is opened
+whether it is new or not. A new one says it has no name or subject yet. Its name starts as the repository's, for the
+person to change, and the button is **Open the shared project**, as for one that holds a project. **Or start it from
+a backup** replaces "Or import a project from a backup into it".
+
+*"First there's check it. If it's the right one, the next button should be 'Load the Project'."* Both buttons that
+follow **Check it** now read **Load the project**.
+
+## Get the latest merges, 2026-11-16
+
+Before tomorrow's test with two authors, the practitioner chose to fix this first. **Get the latest** replaced the
+project here with the repository's, so a second author whose save was refused would lose their new workflow on
+getting the latest. It now merges file by file (`mergeLatest`):
+
+| A file that changed… | Becomes |
+| --- | --- |
+| only on GitHub, or is new there | GitHub's |
+| only here, or is new here | this device's, still "changed here", to be saved |
+| on both, to different contents | the person's choice, asked by name |
+| removed on GitHub, unchanged here | removed |
+| removed on GitHub, changed here | kept |
+
+`project.json` is taken whole when one side changed it. When both did, it is GitHub's, with the workflows both sides
+hold and every member either side names.
+
+**Found while building it:** this device regenerates the repository's files when it loads a project, and the
+regenerated bytes need not match GitHub's. Measured against one baseline, an unchanged workflow would have looked
+changed on both sides and asked a needless question. Each side is now measured against its own baseline:
+`repository.files` for this device and `repository.remote` for GitHub.
+
+**Validation, 2026-11-16, Chromium only:**
+- `tests/shared-project.test.mjs`: every row of the table, and that byte differences alone are not a change on GitHub.
+- `tests/shared-project.browser.mjs`: another author adds a workflow while this device adds its own. This device's
+  save is refused; Get the latest brings theirs and keeps this one without asking; the next save holds both. Run twice.
+
+**What this does not establish:** a merge of one workflow's contents. Two authors who change the same workflow
+choose one version; nothing combines them. Against the real GitHub, it is untried until 2026-11-17.

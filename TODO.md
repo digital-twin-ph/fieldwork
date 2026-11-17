@@ -434,6 +434,21 @@ Then Sierra Leone. Then ABM spike."* So 8, then 12, then 3, then 29. The numberi
    repository back into a project; a second author on a real project; push from Fieldwork with the scoped token;
    Discussions ([155](docs/experiments/155-discussions-as-the-governance-surface.md)); products on the repository's
    Pages. Trust without a catalog: a commit pin, who and what before opening, data never instructions, a label.
+   **Progress 2026-11-16:** a repository read back into a project (Load the project), Save to the repository as one
+   commit, Get the latest, project roles and People, Discussions listed and posted from the project; tried against the
+   practitioner's repository up to loading, not yet a save or a second author.
+   **Next, to try:** mentioning a person in a discussion post, as `@login`, so GitHub notifies them (the
+   practitioner, 2026-11-16: *"try @user to direct discussion post to certain GitHub users"*). First observed from
+   GitHub's side: JLT posts to the practitioner with their login mentioned, on 2026-11-17, and we see whether the
+   notification arrives. Then from Fieldwork: whether a post sent through the API notifies the person mentioned the
+   same way, and whether **Start a discussion** should offer the project's members to mention.
+   **Next, to try:** a shared project saved with test workflows by different authors (the practitioner, 2026-11-16:
+   *"save a collab project with test workflows by different users"*). The practitioner and JLT each load
+   `project-test-collaboration`, each add a test workflow of their own, and each save to the repository. What it should
+   show: both workflows in `project.json` and under `workflows/`, each commit under its author's login; the second save
+   refused until its author gets the latest, then accepted; both authors' **This is me** entries in **People**. What it
+   may show instead, and is worth recording either way: a save that overwrites the other's `project.json` entry, since
+   the project file is shared and the workflow files are not (experiment 150, "the two files that do not divide").
 22. **QR codes from a product to its digital form** (first use built 2026-11-10, 0.80.0; lab check 47) ([203](docs/experiments/203-qr-codes-from-a-product-to-its-digital-form.md)):
    first, a note for a worked example with two codes, Fieldwork with the example opened and the example's repository at
    its pinned commit; needs `?example=` to open a repository example through the catalog. Ask before installing an
@@ -506,7 +521,9 @@ Then Sierra Leone. Then ABM spike."* So 8, then 12, then 3, then 29. The numberi
    exported as a repository; provenance receipts in N3; licences, citations and pinned commits on every worked example;
    the Validation Lab's independent checks; open evidence only. **Open, for the practitioner:** which statement of the
    principles (for example UNESCO's 2021 Recommendation on Open Science, FAIR), and which components that means here.
-   An experiment record first, with the survey of what exists, before any widget.
+   An experiment record first, with the survey of what exists, before any widget. **Begun 2026-11-16:** ORCID iDs and
+   ROR IDs in the identity file and the project's membership; the running inventory is
+   [docs/audits/open-science-inventory.md](docs/audits/open-science-inventory.md).
 28. **The 1854 map under the John Snow example** (the practitioner, 2026-11-11: *"For John Snow built in example can we
    look for an 1854 map of Soho district?"*). After the items already ordered (the stale-text sweep, the census
    comparison, MERS). Found by search, none opened yet and every licence to confirm on its page:

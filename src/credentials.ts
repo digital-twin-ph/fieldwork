@@ -1,19 +1,23 @@
 /** Separate from workflow state and persistence. Never log payloads or underlying crypto errors. */
-export interface Credential {ref:string;provider:string;label:string;origin:string;secret:string}
+/** `repository` (2026-11-16): for a GitHub token, the one repository it was made for, as owner/name. Optional, so files
+ *  made before it still open. GitHub cannot say which repository a fine-grained token was given: its list of the
+ *  repositories a token reaches held 86 for a token given one (found by the practitioner, 2026-11-16). */
+export interface Credential {ref:string;provider:string;label:string;origin:string;secret:string;repository?:string}
 const PROFILE='fieldwork/credentials/1',ITERATIONS=600_000,LIMIT=512_000;
 const encoder=new TextEncoder(),aad=encoder.encode(PROFILE+';PBKDF2-SHA256;600000;AES-256-GCM');
 function requireValue(ok:unknown,message:string):asserts ok {if(!ok)throw new Error(message);}
 const record=(v:unknown):v is Record<string,unknown>=>!!v&&typeof v==='object'&&!Array.isArray(v);
 export function validateCredentials(raw:unknown):Credential[]{
  requireValue(Array.isArray(raw)&&raw.length<=50,'Use at most 50 credentials.');const refs=new Set<string>();
- return raw.map(v=>{requireValue(record(v)&&Object.keys(v).sort().join(',')==='label,origin,provider,ref,secret','Invalid credential fields.');
+ return raw.map(v=>{requireValue(record(v)&&['label,origin,provider,ref,secret','label,origin,provider,ref,repository,secret'].includes(Object.keys(v).sort().join(',')),'Invalid credential fields.');
   requireValue(typeof v.ref==='string'&&/^[a-zA-Z][a-zA-Z0-9_-]{0,63}$/.test(v.ref)&&!refs.has(v.ref),'Use unique references beginning with a letter (up to 64 characters).');refs.add(v.ref);
   requireValue(typeof v.provider==='string'&&/^[a-z][a-z0-9-]{0,63}$/.test(v.provider),'Use a lowercase provider identifier.');
   requireValue(typeof v.label==='string'&&v.label.trim().length>0&&v.label.length<=120,'Enter a label up to 120 characters.');
   requireValue(typeof v.secret==='string'&&v.secret.length>0&&v.secret.length<=4096,'Enter a secret up to 4096 characters.');
   requireValue(typeof v.origin==='string','Enter an HTTPS origin.');let url:URL;try{url=new URL(v.origin);}catch{throw new Error('Enter an HTTPS origin, such as https://healthsites.io.');}
   requireValue(url.protocol==='https:'&&url.origin===v.origin,'Use an exact HTTPS origin without path, query or credentials.');
-  return {ref:v.ref,provider:v.provider,label:v.label,origin:v.origin,secret:v.secret};
+  requireValue(v.repository===undefined||(typeof v.repository==='string'&&/^[A-Za-z0-9-]{1,39}\/[A-Za-z0-9._-]{1,100}$/.test(v.repository)),'Name the repository as owner/name.');
+  return {ref:v.ref,provider:v.provider,label:v.label,origin:v.origin,secret:v.secret,...(typeof v.repository==='string'?{repository:v.repository}:{})};
  });
 }
 const base64=(bytes:Uint8Array)=>{let s='';for(const b of bytes)s+=String.fromCharCode(b);return btoa(s);};
@@ -34,15 +38,20 @@ export async function decryptCredentials(blob:Blob,password:string):Promise<Cred
 }
 export class CredentialSession {
  #entries:Credential[]|null=null;#last=0;#generation=0;
- constructor(private changed:()=>void=()=>{},private now:()=>number=Date.now,readonly idleMs=15*60_000){}
+ constructor(private changed:()=>void=()=>{},private now:()=>number=Date.now,readonly idleMs=10*60_000){}
  get generation(){return this.#generation;}
  expire(){if(this.#entries&&this.now()-this.#last>=this.idleMs)this.lock();}
  get unlocked(){this.expire();return this.#entries!==null;}
  touch(){this.expire();if(this.#entries)this.#last=this.now();}
  lock(){this.#entries=null;this.#generation++;this.changed();}
  replace(entries:unknown){this.#entries=validateCredentials(entries);this.#last=this.now();this.#generation++;this.changed();}
+ /** Back after a reload, with the time of its last use, so the idle clock is not restarted by the reload. */
+ resume(entries:unknown,last:number){this.#entries=validateCredentials(entries);this.#last=last;this.#generation++;this.expire();this.changed();}
+ get lastUsed(){return this.#last;}
  async unlock(blob:Blob,password:string){const generation=this.#generation,entries=await decryptCredentials(blob,password);requireValue(generation===this.#generation,'Unlock cancelled because the session changed.');this.replace(entries);}
  list(){this.expire();return (this.#entries||[]).map(({secret,...metadata})=>metadata);}
+ /** Which repository a GitHub token is for, chosen once and kept in the credential; the file is downloaded again to keep it. */
+ setRepository(ref:string,repository:string){this.expire();requireValue(this.#entries,'Unlock credentials first.');this.replace(this.#entries.map(v=>v.ref===ref?{...v,repository}:v));}
  snapshot(){this.expire();requireValue(this.#entries,'Unlock credentials first.');return structuredClone(this.#entries);}
  resolve(ref:string,provider:string,origin:string){this.expire();const entry=this.#entries?.find(v=>v.ref===ref&&v.provider===provider&&v.origin===origin);requireValue(entry,'Matching credentials are unavailable.');return entry.secret;}
 }

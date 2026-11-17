@@ -125,3 +125,20 @@ test('files named to be found in a folder: FWID- and FWCRED- with the name',asyn
   assert.equal(credentialsFileName(undefined),'FWCRED.fwcredentials');
   assert.equal(identityFileName('Zoë Ndiaye'),'FWID-Zoë-Ndiaye.fwid');
 });
+
+test('a ROR ID is checked by its checksum, bare or as an address; an affiliation without a name is dropped',()=>{
+  assert.equal(id.validRor('03vek6s52'),true);assert.equal(id.validRor('https://ror.org/03vek6s52'),true);
+  assert.equal(id.validRor('03vek6s53'),false);assert.equal(id.validRor('3vek6s52'),false);
+  assert.deepEqual(id.readAffiliations([{name:' Harvard University ',ror:'https://ror.org/03VEK6S52'},{name:''},{name:'Clinic',ror:'03vek6s53'}]),
+    [{name:'Harvard University',ror:'03vek6s52'},{name:'Clinic'}]);
+});
+
+test('affiliations go into the file, and changing them keeps the avatar; a bad ROR ID is refused',async()=>{
+  const {file}=await id.createIdentityFile({name:'Ada',affiliations:[{name:'Harvard University',ror:'03vek6s52'}],avatar:{icon:'pump',colour:'teal'}},PASS,FAST);
+  const opened=await id.openIdentityFile(file,PASS);
+  assert.deepEqual(opened.profile.affiliations,[{name:'Harvard University',ror:'03vek6s52'}]);
+  const {identity}=await id.updateIdentityFile(file,PASS,{affiliations:[{name:'Clinic'}]});
+  assert.deepEqual(identity.profile.affiliations,[{name:'Clinic'}]);
+  assert.deepEqual(identity.profile.avatar,{icon:'pump',colour:'teal'});
+  await assert.rejects(()=>id.createIdentityFile({name:'Ada',affiliations:[{name:'X',ror:'03vek6s53'}]},PASS,FAST),/checksum/);
+});

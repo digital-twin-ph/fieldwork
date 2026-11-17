@@ -224,3 +224,34 @@ client registered with ORCID; whether that works from a browser with no server o
 then, two cheap links a reader can follow: the GitHub login listed on the ORCID record, and the ORCID iD on the GitHub
 profile.
 
+## Unlocked through a reload, ten minutes, 2026-11-16
+
+Until today, an open identity and unlocked credentials were held in the page's memory only and locked at any reload.
+Offered three ways to make a reload cost less (choose the files again, as before; remember the files so only the
+passphrase is asked; or stay unlocked), the practitioner chose: *"I want stay unlocked but shorten the lock time to
+10 minutes."*
+
+**What changed** (`src/session-keep.ts`):
+- While unlocked, both are kept in this browser's IndexedDB. The credentials and the identity's profile are encrypted
+  with an AES-GCM key made in the browser, which cannot be exported. The signing key is kept as the non-exportable
+  CryptoKey it already was.
+- They lock after **10 minutes** without use (was 15), or at **Lock**. A reload, or closing and reopening the tab, no
+  longer locks them.
+- **Found by the test, and fixed:** deleting the kept copy takes a moment, so a reload straight after **Lock** came
+  back unlocked. The time of a lock is now written synchronously, and a copy kept before it is never restored.
+
+**What this costs, said plainly.** Encryption keeps the stored bytes unreadable in the browser's storage panel, in a
+copy of the profile folder, and to other sites. It does not protect against a script running on this page: while
+unlocked, that script can use the key and the tokens. Before today that held only while the page stayed open; now it
+holds for up to ten minutes across reloads. The earlier rule, *never in browser storage*, is superseded by this
+decision. It is not removed from the record above.
+
+**Validation, 2026-11-16, Chromium only:** `tests/credentials.browser.mjs` (unlocked after a reload, the stored bytes
+hold neither the token nor its reference, Lock then a reload stays locked, ten idle minutes lock) and
+`tests/identity.browser.mjs` (open after a reload, the stored bytes hold neither the name nor the passphrase, the key is
+not extractable, Lock then a reload stays locked). Both runs passed twice in a row.
+
+**What this does not establish:**
+- That WebKit stores a non-exportable CryptoKey in IndexedDB the way Chromium does. It is expected, not run.
+- ~~The warning before the lock that WCAG 2.2.1 asks for.~~ Built the same day: a minute before, with **Keep them open**.
+

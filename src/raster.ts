@@ -61,11 +61,15 @@ export interface RasterAsset {sha256:string;bytes:number;mediaType:'image/tiff';
 export type RasterValues=Float32Array|Float64Array;
 /** The cells of a window, no data as NaN, in an array as wide as the source needs: 8 bytes where it holds 8, or integers
  *  of 32 bits that a 4-byte float would round. */
+const wideValues=(metadata:Pick<RasterMetadata,'bytesPerPixel'|'sampleFormat'|'bits'>)=>metadata.bytesPerPixel>4||(metadata.sampleFormat!==3&&metadata.bits>=32);
+const emptyValues=(n:number,metadata:Pick<RasterMetadata,'bytesPerPixel'|'sampleFormat'|'bits'>):RasterValues=>wideValues(metadata)?new Float64Array(n):new Float32Array(n);
+/** `raw` converted into `out` from `at`: no data is NaN. */
+function fillValues(out:RasterValues,raw:ArrayLike<number>,at:number,metadata:Pick<RasterMetadata,'noData'>):void{
+  const noData=typeof metadata.noData==='number'?metadata.noData:undefined;
+  for(let i=0;i<raw.length;i++){const v=raw[i]!;out[at+i]=Number.isFinite(v)&&v!==noData?v:NaN;}
+}
 export function rasterValues(raw:ArrayLike<number>,metadata:Pick<RasterMetadata,'noData'|'bytesPerPixel'|'sampleFormat'|'bits'>):RasterValues{
-  const wide=metadata.bytesPerPixel>4||(metadata.sampleFormat!==3&&metadata.bits>=32);
-  const out=wide?new Float64Array(raw.length):new Float32Array(raw.length),noData=typeof metadata.noData==='number'?metadata.noData:undefined;
-  for(let i=0;i<raw.length;i++){const v=raw[i]!;out[i]=Number.isFinite(v)&&v!==noData?v:NaN;}
-  return out;
+  const out=emptyValues(raw.length,metadata);fillValues(out,raw,0,metadata);return out;
 }
 export interface RasterGrid {metadata:RasterMetadata;values:RasterValues;asset:RasterAsset;boundary?:Boundary;mask?:{method:RasterMaskMethod;marginPixels?:number;inside:number;valid:number;outside:number}}
 function check(value:unknown,message:string):asserts value{if(!value)throw new Error(message);}
@@ -132,26 +136,29 @@ export const overhangSentence=(o:ReturnType<typeof rasterOverhang>):string=>!o.l
  *  a remote file that fails is now tried again, after a pause that grows; one that keeps failing is said in plain words,
  *  and the bands already read stay in this page, so Apply again carries on from there. A file on this device is not
  *  retried: a read that failed there would fail the same way again. */
-const RETRIES=4,RETRY_MS=1500,bandsRead=new Map<string,ArrayLike<number>[]>();
+const RETRIES=4,RETRY_MS=1500,bandsRead=new Map<string,{values:RasterValues;bands:number}>();
 export async function readRasterWindow(blob:RasterSource,metadata:RasterMetadata,window:[number,number,number,number],
   onProgress?:(rows:number,of:number,note?:string)=>void,retryMs=RETRY_MS):Promise<{metadata:RasterMetadata;values:RasterValues}>{
   let tiff=await openTiff(blob);try{let image=await tiff.getImage();const width=window[2]-window[0],height=window[3]-window[1],origin:[number,number]=[metadata.origin[0]+window[0]*metadata.resolution[0],metadata.origin[1]+window[1]*metadata.resolution[1]];
-    let raw:ArrayLike<number>;
-    if(!onProgress)raw=await image.readRasters({window,samples:[0],interleave:true}) as unknown as ArrayLike<number>;
+    let values:RasterValues;
+    if(!onProgress)values=rasterValues(await image.readRasters({window,samples:[0],interleave:true}) as unknown as ArrayLike<number>,metadata);
     else{
       const tile=Math.max(1,image.getTileHeight?.()||1),band=Math.max(tile,Math.ceil(height/20/tile)*tile);
       const remote=typeof blob==='string',key=remote?`${blob}|${window.join(',')}`:'';
-      const parts:ArrayLike<number>[]=remote?bandsRead.get(key)??[]:[];
-      if(remote)bandsRead.set(key,parts);
-      onProgress(Math.min(height,parts.length*band),height,parts.length?'carrying on from where the last read stopped':undefined);
+      // ONE ARRAY, FILLED A BAND AT A TIME (2026-11-17): the bands, their join and the converted copy were three windows'
+      // worth at once, about 1.5 GB for WorldPop over Botswana, before anything was saved.
+      const held=remote?bandsRead.get(key):undefined,state=held??{values:emptyValues(width*height,metadata),bands:0};
+      if(remote)bandsRead.set(key,state);values=state.values;
+      onProgress(Math.min(height,state.bands*band),height,state.bands?'carrying on from where the last read stopped':undefined);
       let stale=false;
-      for(let top=window[1]+parts.length*band;top<window[3];top+=band){
+      for(let top=window[1]+state.bands*band;top<window[3];top+=band){
         const bottom=Math.min(window[3],top+band),done=top-window[1];
         for(let attempt=1;;attempt++){
           try{
             // A FRESH CONNECTION after a failure, so nothing half-received is reused; opening it can fail too, and is retried.
             if(stale){await Promise.resolve(tiff.close()).catch(()=>undefined);tiff=await openTiff(blob);image=await tiff.getImage();stale=false;}
-            parts.push(await image.readRasters({window:[window[0],top,window[2],bottom],samples:[0],interleave:true}) as unknown as ArrayLike<number>);break;}
+            fillValues(state.values,await image.readRasters({window:[window[0],top,window[2],bottom],samples:[0],interleave:true}) as unknown as ArrayLike<number>,done*width,metadata);
+            state.bands++;break;}
           catch(error){
             if(!remote)throw error;
             const why=error instanceof Error?error.message:String(error);
@@ -165,11 +172,7 @@ export async function readRasterWindow(blob:RasterSource,metadata:RasterMetadata
         onProgress(Math.min(height,bottom-window[1]),height);
       }
       if(remote)bandsRead.delete(key);
-      const Kind=(parts[0] as unknown as {constructor:new(n:number)=>{set(a:ArrayLike<number>,at:number):void}&ArrayLike<number>}).constructor;
-      const joined=new Kind(width*height);let at=0;for(const part of parts){joined.set(part,at);at+=part.length;}
-      raw=joined;
     }
-    const values=rasterValues(raw as ArrayLike<number>,metadata);
     check(values.length===width*height,'Raster window size mismatch.');return {metadata:{...metadata,width,height,origin,bounds:[origin[0],origin[1]+height*metadata.resolution[1],origin[0]+width*metadata.resolution[0],origin[1]]},values};
   }finally{await tiff.close();}
 }
@@ -177,9 +180,13 @@ export function encodeRaster(grid:Pick<RasterGrid,'metadata'|'values'> & Partial
   const m=grid.metadata;check(grid.values.length===m.width*m.height&&grid.values.length<=MAX_RASTER_CELLS,'Invalid retained raster dimensions.');
   // AT THE SOURCE'S OWN PRECISION: 4 bytes a cell for a 4-byte source such as WorldPop, 8 where the source holds 8. Writing
   // every grid as 8 bytes doubled what a window cost and claimed a precision the source does not have (2026-11-12).
-  const wide=!(m.bytesPerPixel>0&&m.bytesPerPixel<=4),cells=wide?new Float64Array(grid.values.length):new Float32Array(grid.values.length);
+  const wide=!(m.bytesPerPixel>0&&m.bytesPerPixel<=4),ready=wide?grid.values instanceof Float64Array:grid.values instanceof Float32Array;
+  // CELLS ALREADY AT THE RIGHT PRECISION ARE WRITTEN AS THEY ARE, not copied first: half a gigabyte for WorldPop over
+  // Botswana (2026-11-17). writeGeoTiff only reads them.
+  const cells=ready?grid.values as Float32Array|Float64Array:wide?new Float64Array(grid.values.length):new Float32Array(grid.values.length);
   // A plain list of numbers and nulls is still accepted, its nulls as no data, never as 0.
-  if(grid.values instanceof Float32Array||grid.values instanceof Float64Array)cells.set(grid.values);
+  if(ready){/* as they are */}
+  else if(grid.values instanceof Float32Array||grid.values instanceof Float64Array)cells.set(grid.values);
   else for(let i=0;i<cells.length;i++){const v=(grid.values as ArrayLike<number|null>)[i];cells[i]=v===null||v===undefined?NaN:v;}
   const description=!grid.asset?'Fieldwork derived raster; source metadata and provenance are retained in the project.'
     :JSON.stringify({schema:'fieldwork/raster-provenance/1',embeddedBy:'Fieldwork',sourceMetadataOrigin:'Workflow-author entry, separate from original TIFF tags',originalRasterMetadata:grid.asset.source.metadata,source:grid.asset.provenance||{},originalFile:grid.asset.source.filename,retainedInputSHA256:grid.asset.sha256,operation:grid.mask?grid.mask.method+' polygon clip':'native window',boundary:grid.boundary,mask:grid.mask});

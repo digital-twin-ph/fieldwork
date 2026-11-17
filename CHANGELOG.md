@@ -3,6 +3,17 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.134.0 — In development
+
+- **Less memory for a large raster.** A raster window is drawn on the maps at no more than 2,048 pixels a side, each
+  pixel the mean of the cells it covers, and the caption says so; it was drawn one pixel a cell, about 11,000 a side
+  for Botswana's WorldPop, for a map 850 pixels wide. Reading a window fills one array instead of three, and saving it
+  no longer copies the cells first. The cells and every total computed from them are unchanged. Found when Chrome on
+  Windows ran out of memory on the Botswana WorldPop workflow.
+- **Load the updated example waits for the run.** A copy that runs itself on opening offered the button while the run
+  was going, and a press did nothing. The button is now unavailable until the run finishes, and says so.
+- **Tests:** the dark-theme contrast check waits for fades to finish before measuring.
+
 ## 0.133.0 — 2026-11-17
 
 - **A remote raster read survives a dropped connection.** Raster input reads a file at a URL in about twenty parts; a

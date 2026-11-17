@@ -9,9 +9,29 @@ import type {RasterGrid} from './raster.js';
  *  results map, including the ones with no raster at all. It needs a canvas and a grid and
  *  nothing else, so it sits where that is true.
  */
-export function rasterImage(grid:RasterGrid):string{
-  const {metadata:m,values}=grid,canvas=document.createElement('canvas');canvas.width=m.width;canvas.height=m.height;const context=canvas.getContext('2d')!,pixels=context.createImageData(m.width,m.height);let min=Infinity,max=-Infinity;
-  for(const value of values)if(Number.isFinite(value)){min=Math.min(min,value);max=Math.max(max,value);}for(let i=0;i<values.length;i++){const value=values[i]!;if(!Number.isFinite(value))continue;const t=max===min?0.5:(value-min)/(max-min);pixels.data.set([Math.round(245-215*t),Math.round(250-145*t),Math.round(220-135*t),255],i*4);}context.putImageData(pixels,0,0);
+/** AT MOST `MAX_IMAGE_SIDE` PIXELS ON A SIDE (2026-11-17). JLT ran the Botswana WorldPop workflow in Chrome on Windows on
+ *  0.133.0 and the tab died, "Out of Memory". The window is about 11,000 x 11,000 cells, and it was drawn one pixel a
+ *  cell: an image buffer, a canvas, a PNG and the browser's decoded copy of it, each about half a gigabyte or more, for a
+ *  map 850 pixels wide. A larger window is now drawn with each pixel the mean of the cells with data in its block; the
+ *  cells themselves, and everything computed from them, are unchanged. */
+export const MAX_IMAGE_SIDE=2048;
+/** How many cells on a side one drawn pixel covers: 1 when the window fits. */
+export const rasterImageFactor=(m:{width:number;height:number},maxSide=MAX_IMAGE_SIDE)=>Math.max(1,Math.ceil(Math.max(m.width,m.height)/maxSide));
+export function rasterImage(grid:Pick<RasterGrid,'metadata'|'values'>,maxSide=MAX_IMAGE_SIDE):string{
+  const {metadata:m,values}=grid,factor=rasterImageFactor(m,maxSide),width=Math.ceil(m.width/factor),height=Math.ceil(m.height/factor);
+  let min=Infinity,max=-Infinity;
+  for(let i=0;i<values.length;i++){const value=values[i]!;if(Number.isFinite(value)){if(value<min)min=value;if(value>max)max=value;}}
+  const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;
+  const context=canvas.getContext('2d')!,pixels=context.createImageData(width,height),data=pixels.data;
+  const paint=(at:number,value:number)=>{const t=max===min?0.5:(value-min)/(max-min);
+    data[at]=Math.round(245-215*t);data[at+1]=Math.round(250-145*t);data[at+2]=Math.round(220-135*t);data[at+3]=255;};
+  if(factor===1){for(let i=0;i<values.length;i++){const value=values[i]!;if(Number.isFinite(value))paint(i*4,value);}}
+  else{const sum=new Float64Array(width),count=new Uint32Array(width);
+    for(let y=0;y<height;y++){sum.fill(0);count.fill(0);
+      for(let row=y*factor;row<Math.min(m.height,(y+1)*factor);row++){const base=row*m.width;
+        for(let col=0;col<m.width;col++){const value=values[base+col]!;if(Number.isFinite(value)){const x=(col/factor)|0;sum[x]+=value;count[x]++;}}}
+      for(let x=0;x<width;x++)if(count[x])paint((y*width+x)*4,sum[x]!/count[x]!);}}
+  context.putImageData(pixels,0,0);
   return canvas.toDataURL();
 }
 

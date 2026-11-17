@@ -37,6 +37,8 @@ test('a copy made before the example was updated says so in the bar, and loads t
   await expect(page.locator('html[data-ready="true"]')).toHaveCount(1,{timeout:30000});
   const note=page.locator('#example-note');
   await expect(note).toContainText('The example has been updated since this copy was made');
+  // The copy runs itself on opening, and the button waits for that run to finish.
+  await expect(page.locator('#load-published')).toBeEnabled({timeout:120_000});
   await page.locator('#load-published').click();
   await expect.poll(async()=>(await saved(page)).nodes.some(n=>n.id==='replay'),{timeout:30000}).toBe(true);
   await expect(note).not.toContainText('updated since');

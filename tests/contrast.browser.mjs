@@ -49,7 +49,9 @@ test('dark meets WCAG AA for every rendered text element',async({page})=>{
   await page.locator('#theme-select').selectOption('dark');
   // Every disclosure open, so what hides behind one is measured rather than skipped.
   await page.evaluate(()=>document.querySelectorAll('details').forEach(d=>{d.open=true;}));
-  await page.waitForTimeout(400);
+  // EVERY FADE FINISHED before measuring: buttons fade their background over 0.15 s, and on a busy runner WebKit was
+  // still partway through the change of theme after a fixed 0.4 s (CI, 2026-11-17).
+  await page.waitForFunction(()=>document.getAnimations().every(a=>a.playState!=='running'||a.effect?.getComputedTiming().iterations===Infinity),null,{timeout:5000}).catch(()=>{});
   const {examined,failures}=await measure(page);
   expect(examined).toBeGreaterThan(150);
   expect(failures.map(f=>`${f.ratio} ${f.pair} "${f.text}" at ${f.where} own=${f.ownBackground} --surface-raised-1=${f.surface} theme=${f.theme}`)).toEqual([]);
@@ -63,7 +65,9 @@ test('light does not get worse than its recorded baseline',async({page})=>{
   await page.goto('/?example=hagelloch');
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
   await page.locator('#theme-select').selectOption('light');
-  await page.waitForTimeout(400);
+  // EVERY FADE FINISHED before measuring: buttons fade their background over 0.15 s, and on a busy runner WebKit was
+  // still partway through the change of theme after a fixed 0.4 s (CI, 2026-11-17).
+  await page.waitForFunction(()=>document.getAnimations().every(a=>a.playState!=='running'||a.effect?.getComputedTiming().iterations===Infinity),null,{timeout:5000}).catch(()=>{});
   const {pairs}=await measure(page);
   expect(pairs.length,'distinct failing colour pairs in light').toBeLessThanOrEqual(46);
 });

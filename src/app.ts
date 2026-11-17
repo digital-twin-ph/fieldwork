@@ -1625,7 +1625,10 @@ function render(){
     if(standing==='updated'||standing==='differs'){
       const load=document.createElement('button');load.type='button';load.className='button small';load.id='load-published';
       load.textContent=standing==='updated'?'Load the updated example':'Load the example as it is now';
-      load.title='Replaces this copy with the example as it ships now';load.onclick=()=>loadPublished(key);note.append(load);
+      // NOT DURING A RUN: an edit made while one runs is refused, and this click did nothing and said nothing. The copy runs
+      // itself on opening, so the button was there to press while it could not work (WebKit on CI, 2026-11-16 and -17).
+      load.disabled=busy;load.title=busy?'Wait for the run to finish':'Replaces this copy with the example as it ships now';
+      load.onclick=()=>loadPublished(key);note.append(load);
     }
     $('#canvas-example').textContent=(workflow.name||'This workflow').toUpperCase();
     // AND THE LINE UNDER THE TITLE, which described the example it started from: a dengue workflow built on a blank

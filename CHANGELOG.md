@@ -3,7 +3,7 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## 0.134.0 — In development
+## 0.134.0 — 2026-11-17
 
 - **Less memory for a large raster.** A raster window is drawn on the maps at no more than 2,048 pixels a side, each
   pixel the mean of the cells it covers, and the caption says so; it was drawn one pixel a cell, about 11,000 a side

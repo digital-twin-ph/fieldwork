@@ -1649,6 +1649,15 @@ function render(){
       fetchAgain.onclick=()=>void openCuratedExample(example.id,fetchAgain);note.append(fetchAgain);
     }}
   $('#blank-canvas').hidden=workflow.nodes.length!==0||exampleKey(workflow)!=='blank';
+  // IN A PROJECT OF ONE'S OWN, STEP 2 (2026-11-17). Just after Create project the empty canvas offered Create a project
+  // again, step 1 of 2, with a line about the 1854 outbreak (the practitioner's screenshot, Edge on Windows).
+  {const project=workflow.projectId?allProjects().find(p=>p.id===workflow.projectId):projectOfWorkflow(storageKey(workflow),allProjects());
+    const own=!!project&&!BUILT_IN_PROJECTS.some(p=>p.id===project.id);
+    $('#blank-step').textContent=own?'STEP 2 OF 2':'STEP 1 OF 2';
+    $('#blank-heading').textContent=own?'Where does the work take place?':'What are you investigating?';
+    $('#blank-what').textContent=own?`${project!.name} is open. A workflow begins with its study area.`
+      :'A project is one investigation: one subject, and a workflow for each question you ask about it.';
+    $('#blank-project').hidden=own;$('#blank-area').hidden=!own;$('#blank-step-two').hidden=own;}
   // The bar is refreshed here rather than only when a control is used, because the workflow can
   // change underneath it -- loading an example being the case that caught this: the playback had
   // been set up against the default canvas and went on reporting its length.
@@ -6476,13 +6485,17 @@ function renderResults(){
       declared:runWorkflow&&shown?declaredKinds(runWorkflow,shown.sourceNodeId||shown.nodeId):{}},esc);
   };
   $('#result-rows').querySelectorAll<HTMLElement & SVGElement>('[data-place]').forEach(el=>{el.onclick=()=>selectResult(el.dataset.place!);el.onkeydown=e=>{if(e.key==='Enter')selectResult(el.dataset.place!);};});
-  const raster=output?.raster;$('#raster-download').hidden=!raster;$('#raster-download').onclick=()=>{if(raster)try{downloadRaster(raster);}catch(e){toast(errorMessage(e),{tone:'failure'});}};const panelsOf=(output as {rasterPanels?:import('./raster-panels.js').DrawnDensity[]}|undefined)?.rasterPanels;if(panelsOf?.length){$('#result-metrics').textContent=`${panelsOf.length} rasters side by side · people per km² in each cell, one scale · drawn cells about ${Math.round(Math.max(...panelsOf.map(p=>p.drawnCellM))).toLocaleString('en')} m across`;$('.map-legend').hidden=true;}else if(raster){$('#result-metrics').textContent=`${raster.metadata.width} x ${raster.metadata.height} cells | ${raster.values.filter(v=>v!==null).length} valid | ${raster.mask?(raster.mask.method==='all-touched'?'All-touched polygon mask':'Cell-center polygon mask')+' / margin '+(raster.mask.marginPixels||0)+' px':'Unmasked input window'} | Source-reported units: ${raster.asset.provenance?.units||'Not supplied'}`;$('.map-legend').hidden=true;}else $('.map-legend').hidden=false;
+  const raster=output?.raster;$('#raster-download').hidden=!raster;$('#raster-download').onclick=()=>{if(raster)try{downloadRaster(raster);}catch(e){toast(errorMessage(e),{tone:'failure'});}};const panelsOf=(output as {rasterPanels?:import('./raster-panels.js').DrawnDensity[]}|undefined)?.rasterPanels;if(panelsOf?.length){$('#result-metrics').textContent=`${panelsOf.length} rasters side by side · people per km² in each cell, one scale · drawn cells about ${Math.round(Math.max(...panelsOf.map(p=>p.drawnCellM))).toLocaleString('en')} m across`;$('.map-legend').hidden=true;}else if(raster){$('#result-metrics').textContent=`${raster.metadata.width} x ${raster.metadata.height} cells | ${validCells(raster.values).toLocaleString('en')} valid | ${raster.mask?(raster.mask.method==='all-touched'?'All-touched polygon mask':'Cell-center polygon mask')+' / margin '+(raster.mask.marginPixels||0)+' px':'Unmasked input window'} | Source-reported units: ${raster.asset.provenance?.units||'Not supplied'}`;$('.map-legend').hidden=true;}else $('.map-legend').hidden=false;
   if(output?.polygons){const p=output.polygons;$('.map-legend').hidden=true;$('#map-note').textContent=p.method;$('#result-metrics').textContent=p.kind==='hexbin'?`${p.features.length} released H3 cells / ${p.summary?.matched} locations represented / ${p.summary?.unmatched} locations in omitted sparse cells`:p.summary?`${p.summary.records} locations / ${p.summary.matched} matched / ${p.summary.unmatched} outside / ${p.summary.missingLocation} missing location / ${p.summary.multiple} multiple memberships`:p.features.length+' polygon'+(p.features.length===1?'':'s');$('#map-note').textContent=p.method+' / '+p.notes.join(' ');}
   if(exampleKey(workflow)==='snow-geoprivacy'&&output)$('#map-note').textContent=(output.nodeId.startsWith('before-')?'PRIVATE SOURCE · original coordinates. ':'DERIVED DISPLAY · educational transformation; no anonymity guarantee. ')+$('#map-note').textContent;
   if(output?.comparison){$('#map-note').textContent='PRIVATE EVALUATION · original and moved coordinates, mean centers and pumps';$('.map-legend').hidden=true;}
   renderMap();
   if(result){$('#n3-preview').textContent=result.receipts.map(receiptText).join('\n\n');}
 }
+/** CELLS WITH A VALUE, COUNTED, NOT COPIED (2026-11-17). `values.filter(...)` on Botswana's WorldPop window, 123,199,344
+ *  cells, gathered every kept value one by one before building the result, past what one tab may hold: the tab died
+ *  just after the run, in Chrome on Windows and on the Mac. It also counted every cell, since no data is NaN, not null. */
+function validCells(values:ArrayLike<number|null>):number{let n=0;for(let i=0;i<values.length;i++){const v=values[i];if(typeof v==='number'&&Number.isFinite(v))n++;}return n;}
 function renderPointTable(){
   const active=required(activeOutput()) as {kind?:string};
   const dataView=$('#data-table-view');
@@ -7534,6 +7547,8 @@ $('#project-select').onchange=e=>{
   else addWorkflowToProject(project.id);
 };
 $('#blank-add').onclick=()=>$('#node-library [data-add="study_area"]')?.click();
+$('#blank-area').onclick=()=>$('#node-library [data-add="study_area"]')?.click();
+$('#blank-examples').onclick=()=>{switchView('project');showProjectTab('examples');};
 /** The eyebrow above the workflow's name: the investigation it belongs to, and how many
  *  workflows that investigation holds. Said rather than implied, because the whole finding behind
  *  experiment 122 is that four workflows about one outbreak looked like four unrelated workspaces. */

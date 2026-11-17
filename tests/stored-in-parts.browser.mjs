@@ -15,3 +15,19 @@ test('a file larger than one stored value is kept in parts and read back whole',
   });
   expect(result).toEqual({same:true,last:true,small:'1,2,3,4,5'});
 });
+
+// A run in Edge on Windows stopped at Raster input and never moved (2026-11-17): a read the browser ended partway answered
+// nobody. Ended here by aborting the transaction at the second part, the read must fail, and say so, at once.
+test('a stored read the browser ends partway fails with a sentence instead of waiting for ever',async({page})=>{
+  await page.goto('/?example=blank');
+  const result=await page.evaluate(async()=>{
+    const {keepBytes,readPDF}=await import('/build/evidence-storage.js');
+    await keepBytes(new Map([['parts-test-abort',new Uint8Array(150*1024*1024)]]));
+    const get=IDBObjectStore.prototype.get;
+    IDBObjectStore.prototype.get=function(key){const r=get.call(this,key);if(String(key).endsWith(':part:1'))this.transaction.abort();return r;};
+    try{const outcome=await Promise.race([readPDF('parts-test-abort').then(()=>'resolved',e=>e.message),
+      new Promise(r=>setTimeout(()=>r('still waiting after 10 s'),10_000))]);return outcome;}
+    finally{IDBObjectStore.prototype.get=get;}
+  });
+  expect(result).toMatch(/^Could not read (part \d of \d|it) from this browser's storage \(the browser said: AbortError.*\)\. Read the window again in Raster input, or reattach the original\.$/);
+});

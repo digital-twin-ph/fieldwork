@@ -55,6 +55,8 @@ export async function keepBytes(files:Map<string,Uint8Array<ArrayBuffer>>):Promi
 /** Reads stored bytes. Accepts a Blob as well, because a database written by a version that
  *  stored Blobs is still on the devices of everyone who used one, and their attachments must keep
  *  opening. Nothing writes a Blob any more. */
+const stored=(what:string,error:DOMException|null)=>new Error(`Could not read ${what} from this browser's storage`
+  +`${error?.name?` (the browser said: ${error.name}${error.message?`, ${error.message}`:''})`:''}. Read the window again in Raster input, or reattach the original.`);
 export async function readPDF(hash:string):Promise<Uint8Array<ArrayBuffer>|null> {
   const db=await openDatabase();
   try{return await new Promise((resolve,reject)=>{
@@ -64,7 +66,7 @@ export async function readPDF(hash:string):Promise<Uint8Array<ArrayBuffer>|null>
       if(value===undefined)resolve(null);
       else if(isRecord(value)&&Number.isSafeInteger(value.parts)&&Number.isSafeInteger(value.bytes)){
         const parts=value.parts as number,whole=new Uint8Array(value.bytes as number);let offset=0,read=0;
-        for(let i=0;i<parts;i++){const part=store.get(`${hash}:part:${i}`);part.onsuccess=()=>{
+        for(let i=0;i<parts;i++){const part=store.get(`${hash}:part:${i}`);part.onerror=()=>reject(stored(`part ${i+1} of ${parts}`,part.error));part.onsuccess=()=>{
           if(!(part.result instanceof Uint8Array)){reject(new Error('A stored file is missing a part. Reattach the original.'));return;}
           // Parts are requested in order and IndexedDB answers in request order, so each lands after the last.
           whole.set(part.result,offset);offset+=part.result.length;if(++read===parts)resolve(offset===whole.length?whole:null);};}
@@ -74,7 +76,11 @@ export async function readPDF(hash:string):Promise<Uint8Array<ArrayBuffer>|null>
       else if(value instanceof Blob)value.arrayBuffer().then(buffer=>resolve(new Uint8Array(buffer)),()=>reject(new Error('Could not read the locally stored file. Reattach the original.')));
       else reject(new Error('Invalid stored file. Reattach the original.'));
     };
-    request.onerror=()=>reject(new Error('Could not read the locally stored file.'));
+    request.onerror=()=>reject(stored('it',request.error));
+    // A FAILED READ IS SAID, NOT WAITED ON FOR EVER (2026-11-17). The practitioner's run in Edge on Windows stopped at
+    // Raster input, "Computing steps: 1 of 3", and never moved: a part that failed, or a transaction the browser ended,
+    // answered nobody, so the run waited without end and without a word.
+    tx.onabort=()=>reject(stored('it',tx.error));
   });}finally{db.close();}
 }
 export async function verifiedPDF(ref:Extract<EvidenceReference,{kind:'pdf'}>):Promise<Uint8Array<ArrayBuffer>> {

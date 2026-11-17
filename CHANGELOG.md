@@ -3,6 +3,19 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.135.0 — In development
+
+- **A large raster no longer kills the tab after a run.** The line under the map saying how many cells hold a value
+  copied every cell to count them, past what one tab may hold: Botswana's WorldPop window, 123 million cells, wired to
+  a Map died just after the run, in Chrome and Edge on Windows and on the Mac. They are now counted without a copy, and
+  only cells holding a value are counted; no-data cells were counted too.
+- **A run no longer waits for ever on a stored file.** A large file kept in this browser is read back in parts; if the
+  browser failed a part or ended the read, the run waited without end and without a word. It now stops and says what
+  failed, with what to do.
+- **The empty canvas knows when a project is open.** Just after Create project it offered Create a project again. In a
+  project of your own it now asks for the study area, step 2 of 2; either way it offers a built-in project or a worked
+  example to look at first. The line about the 1854 outbreak is gone.
+
 ## 0.134.0 — 2026-11-17
 
 - **Less memory for a large raster.** A raster window is drawn on the maps at no more than 2,048 pixels a side, each

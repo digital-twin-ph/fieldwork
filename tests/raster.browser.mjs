@@ -156,3 +156,20 @@ test('a Map with no stored input mode draws a raster wired to it',async({page})=
  await expect(page.locator('#map image')).toHaveCount(1);
  await expect(page.locator('#result-metrics')).toContainText('Cell-center polygon mask');
 });
+// THE VALID CELLS ARE COUNTED, NOT COPIED, AND NO DATA IS NOT COUNTED (2026-11-17). The Results line copied every cell to
+// count them, which killed the tab on Botswana's WorldPop window, and counted no-data cells as valid, since they are NaN.
+test('a raster wired straight to a Map says how many of its cells hold a value',async({page})=>{
+ const w=oldNalediWorkflow();w.nodes.push({id:'raster-input',type:'raster_input',x:310,y:190,params:{label:'Raster'}},{id:'raster-map',type:'map_output',x:620,y:40,params:{label:'Map',inputMode:'raster'}});
+ w.edges=[{id:'a',from:'area',to:'raster-input',port:'area'},{id:'b',from:'raster-input',to:'raster-map',port:'raster'}];
+ await page.goto('/?example=blank');await page.locator('#workflow-file').setInputFiles({name:'raster.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(w))});
+ await page.locator('[data-view="workflow"]').click();await page.locator('.react-flow__node[data-id="raster-input"]').click();
+ const metadata={width:60,height:60,origin:[25.88,-24.67],resolution:[.001,-.001]},values=Array.from({length:3600},(_,i)=>i%23===0?null:i/10);
+ await page.locator('#prepare-raster').click();await page.locator('#raster-file').setInputFiles({name:'gaps.tif',mimeType:'image/tiff',buffer:Buffer.from(encodeRaster({metadata,values}))});
+ await expect(page.locator('#raster-dialog #config-apply')).toBeEnabled();await page.locator('#raster-dialog #config-apply').click();await expect(page.locator('#raster-dialog')).toHaveCount(0);
+ await page.locator('[data-view="results"]').click();await page.locator('#run-button').click();
+ await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
+ const [,w0,h0,valid]=(await page.locator('#result-metrics').textContent()).match(/^(\d+) x (\d+) cells \| ([\d,]+) valid/);
+ const cells=Number(w0)*Number(h0),n=Number(valid.replaceAll(',',''));
+ // Every 23rd cell of the source is no data, so a window of this size holds some.
+ expect(n).toBeGreaterThan(0);expect(n).toBeLessThan(cells);
+});

@@ -10,6 +10,11 @@ export interface SelectorElements {
   '#undo-button':HTMLButtonElement;
   '#redo-button':HTMLButtonElement;
   '#blank-add':HTMLButtonElement;
+  '#blank-area':HTMLButtonElement;
+  '#blank-examples':HTMLButtonElement;
+  '#blank-step':HTMLElement;
+  '#blank-heading':HTMLElement;
+  '#blank-what':HTMLElement;
   '#blank-project':HTMLButtonElement;
   '#check-endpoints':HTMLButtonElement;
   '#endpoint-status':HTMLElement;

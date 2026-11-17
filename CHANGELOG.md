@@ -3,7 +3,7 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## 0.135.0 — In development
+## 0.135.0 — 2026-11-17
 
 - **A large raster no longer kills the tab after a run.** The line under the map saying how many cells hold a value
   copied every cell to count them, past what one tab may hold: Botswana's WorldPop window, 123 million cells, wired to

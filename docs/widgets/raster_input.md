@@ -78,6 +78,10 @@ offline once Fieldwork has been opened online, since its reader is saved with th
 it. It is checked against WorldPop's folders every week; a change comes as a pull request to the repository, and a newer
 release is reported for a person to read before it is offered.
 
+**A file at a URL is read in about twenty parts**, and the dialog says how far it has got. A part whose connection
+drops is tried again, up to four times, with a longer pause each time. If the connection stays down, the dialog says
+where it stopped; what was read is kept while the page is open, and **Apply** again carries on from there.
+
 **A study area reaching past the raster** keeps the part the raster covers. The dialog says how far past which edge,
 and the run records it as a data issue, *Area beyond the raster*. Two outlines of one country rarely agree at the
 border: Botswana's provinces from geoBoundaries reach a little past WorldPop's file for Botswana. Only an area that
@@ -98,3 +102,8 @@ does not overlap the raster at all is refused.
 ## Where it is used
 
 The sea-level example (EGM2008, the mean sea surface and DeltaDTM around Manila).
+
+---
+
+*How this widget is built, what it assumes, and what has been measured about it:
+[docs/widget-specs/raster_input.md](../widget-specs/raster_input.md).*

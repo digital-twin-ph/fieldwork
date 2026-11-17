@@ -110,3 +110,46 @@ test('a window read in bands, saying how far it has got, gives the cells a whole
   assert.deepEqual(seen.at(-1),[1483,1483]);assert.deepEqual(seen[0],[0,1483]);
   assert.ok(seen.every(([r],i)=>i===0||r>seen[i-1][0]),'rows only rise');
 });
+
+// GHS-POP over Botswana stopped at 37% in Edge with a bare "Failed to fetch" (2026-11-17): a remote band that fails is
+// tried again, one that keeps failing is said plainly, and the bands already read are kept for Apply again.
+async function servedGrid(){
+  const {writeGeoTiff}=await import('../build/raster.js');
+  const width=600,height=900,cells=new Float32Array(width*height).map((_,i)=>i%89===0?NaN:i*0.25);
+  const bytes=writeGeoTiff(cells,width,height,[30,-1],[0.001,-0.001],'test'),blob=new Blob([bytes]),m=await inspectRaster(blob);
+  const window=[5,11,590,880],whole=await readRasterWindow(blob,m,window);
+  const real=globalThis.fetch;let requests=0,failWhen=()=>false;
+  globalThis.fetch=async(_url,init={})=>{requests++;if(failWhen(requests))throw new TypeError('Failed to fetch');
+    const range=new Headers(init.headers).get('Range'),[a,b]=(range??`bytes=0-${bytes.length-1}`).slice(6).split('-').map(Number),end=Math.min(b,bytes.length-1);
+    return new Response(bytes.slice(a,end+1),{status:206,headers:{'Content-Range':`bytes ${a}-${end}/${bytes.length}`,'Content-Length':String(end-a+1)}});};
+  return {m,window,whole,url:`https://grid.example.org/served-${Math.random()}.tif`,setFail:f=>{failWhen=f;},requests:()=>requests,restore:()=>{globalThis.fetch=real;}};
+}
+const sameCells=(a,b)=>{assert.equal(a.length,b.length);for(let i=0;i<a.length;i++)if(!Object.is(a[i],b[i]))assert.fail(`cell ${i}: ${a[i]} against ${b[i]}`);};
+
+test('a remote band whose connection drops is tried again, and the cells are the same',async()=>{
+  const s=await servedGrid();
+  try{let failed=0;s.setFail(()=>{const n=s.requests();if(n>4&&failed<2){failed++;return true;}return false;});
+    const notes=[],read=await readRasterWindow(s.url,s.m,s.window,(rows,of,note)=>{if(note)notes.push(note);},1);
+    sameCells(read.values,s.whole.values);
+    assert.ok(notes.some(n=>/trying again \(2 of 4\)/.test(n)),notes.join(' | '));}
+  finally{s.restore();}
+});
+
+test('a connection that stays down is said plainly, and Apply again carries on from what was read',async()=>{
+  const s=await servedGrid();
+  try{let at=0;s.setFail(n=>{if(!at&&n>4)at=n;return at>0;});
+    await assert.rejects(readRasterWindow(s.url,s.m,s.window,()=>{},1),
+      e=>/^The connection to grid\.example\.org dropped at \d+% \(.+ rows\) and did not come back after 4 tries \(the browser said: Failed to fetch\)\. What was read is kept: press Apply again/.test(e.message)||assert.fail(e.message));
+    s.setFail(()=>false);const seen=[];
+    const read=await readRasterWindow(s.url,s.m,s.window,(rows,of,note)=>seen.push([rows,note]),1);
+    assert.ok(seen[0][0]>0,`began at ${seen[0][0]}`);assert.match(seen[0][1],/carrying on/);
+    sameCells(read.values,s.whole.values);}
+  finally{s.restore();}
+});
+
+test('a file on this device is not retried',async()=>{
+  const {writeGeoTiff}=await import('../build/raster.js');
+  const cells=new Float32Array(100*100).fill(1),blob=new Blob([writeGeoTiff(cells,100,100,[30,-1],[0.001,-0.001],'t')]),m=await inspectRaster(blob);
+  const broken=new Blob([await blob.slice(0,2000).arrayBuffer()]);let notes=0;
+  await assert.rejects(readRasterWindow(broken,m,[0,0,100,100],(r,o,note)=>{if(note)notes++;},1));assert.equal(notes,0);
+});

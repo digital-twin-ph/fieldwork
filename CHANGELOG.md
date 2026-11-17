@@ -3,6 +3,15 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.133.0 — In development
+
+- **A remote raster read survives a dropped connection.** Raster input reads a file at a URL in about twenty parts; a
+  part whose connection drops is now tried again, up to four times. If it stays down, the dialog says where the read
+  stopped, and **Apply** again carries on from there instead of starting over. Found reading GHS-POP over Botswana in
+  Edge, which stopped at 37% with "Failed to fetch".
+- **Tests:** the accessibility scan waits for fades to finish before measuring contrast; it had measured a button and
+  a message halfway through their fade.
+
 ## 0.132.0 — 2026-11-17
 
 - **A project shared through GitHub.** New project now offers two paths: **New local project**, or **Open shared

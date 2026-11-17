@@ -23,6 +23,9 @@ const found=[];
 const scanner=(page,info)=>async(surface,theme,scope)=>{
   let b=new AxeBuilder({page}).withTags(['wcag2a','wcag2aa']);
   if(scope)b=b.include(scope);
+  // SETTLED BEFORE IT IS MEASURED (found on WebKit's CI run of 2026-11-16): a toast caught mid-fade in the dark theme
+  // read as contrast 1.41, its colours halfway through the transition. Running animations finish before the scan.
+  await page.waitForFunction(()=>document.getAnimations().every(a=>a.playState!=='running'||a.effect?.getComputedTiming().iterations===Infinity),null,{timeout:5000}).catch(()=>{});
   const r=await b.analyze();
   for(const v of r.violations)found.push({project:info.project.name,surface,theme,rule:v.id,impact:v.impact,help:v.help,
     wcag:v.tags.filter(t=>/^wcag\d{3,}$/.test(t)),nodes:v.nodes.length,

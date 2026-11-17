@@ -130,8 +130,8 @@ export function openRasterEditor(boundary:Boundary,onSave:(asset:RasterAsset)=>b
       say('Reading the selected window…');
       const window=rasterWindow(metadata,boundary,Number(d.padding));
       const data=file&&netcdf?await readNetcdfWindow(file,netcdf,metadata,window)
-        :await readRasterWindow(from,metadata,window,(rows,of)=>say(`Reading the selected window: ${Math.round(100*rows/of)}%, `
-          +`${rows.toLocaleString('en')} of ${of.toLocaleString('en')} rows${file?'':` from ${nameOf(url!)}`}…`,rows/of));
+        :await readRasterWindow(from,metadata,window,(rows,of,note)=>say(`Reading the selected window: ${Math.round(100*rows/of)}%, `
+          +`${rows.toLocaleString('en')} of ${of.toLocaleString('en')} rows${file?'':` from ${nameOf(url!)}`}${note?`; ${note}`:''}…`,rows/of));
       say('Saving the window…');
       const bytes=encodeRaster(data);
       if(bytes.length>rasterFileByteLimit())throw new Error(`This window is ${data.values.length.toLocaleString('en')} cells, past the ${MAX_RASTER_CELLS.toLocaleString('en')} a step keeps. Use a smaller study area.`);

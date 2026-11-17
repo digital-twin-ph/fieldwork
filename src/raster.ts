@@ -125,19 +125,46 @@ export const overhangSentence=(o:ReturnType<typeof rasterOverhang>):string=>!o.l
     +`Those parts have no values here.`;
 /** `onProgress`, when given, is told the rows read so far and of how many: the window is then read in bands of whole
  *  tiles, about twenty of them, so a person reading a country from a remote copy sees how far it has got (the
- *  practitioner, 2026-11-14: "Can we add a progress bar to this?"). The cells are the same either way. */
+ *  practitioner, 2026-11-14: "Can we add a progress bar to this?"). The cells are the same either way.
+ *
+ *  A DROPPED CONNECTION IS TRIED AGAIN, AND WHAT WAS READ IS KEPT (2026-11-17). GHS-POP over Botswana, read from the
+ *  JRC's copy in Edge, stopped at 37% with the browser's bare "Failed to fetch", and the 37% was thrown away. A band of
+ *  a remote file that fails is now tried again, after a pause that grows; one that keeps failing is said in plain words,
+ *  and the bands already read stay in this page, so Apply again carries on from there. A file on this device is not
+ *  retried: a read that failed there would fail the same way again. */
+const RETRIES=4,RETRY_MS=1500,bandsRead=new Map<string,ArrayLike<number>[]>();
 export async function readRasterWindow(blob:RasterSource,metadata:RasterMetadata,window:[number,number,number,number],
-  onProgress?:(rows:number,of:number)=>void):Promise<{metadata:RasterMetadata;values:RasterValues}>{
-  const tiff=await openTiff(blob);try{const image=await tiff.getImage(),width=window[2]-window[0],height=window[3]-window[1],origin:[number,number]=[metadata.origin[0]+window[0]*metadata.resolution[0],metadata.origin[1]+window[1]*metadata.resolution[1]];
+  onProgress?:(rows:number,of:number,note?:string)=>void,retryMs=RETRY_MS):Promise<{metadata:RasterMetadata;values:RasterValues}>{
+  let tiff=await openTiff(blob);try{let image=await tiff.getImage();const width=window[2]-window[0],height=window[3]-window[1],origin:[number,number]=[metadata.origin[0]+window[0]*metadata.resolution[0],metadata.origin[1]+window[1]*metadata.resolution[1]];
     let raw:ArrayLike<number>;
     if(!onProgress)raw=await image.readRasters({window,samples:[0],interleave:true}) as unknown as ArrayLike<number>;
     else{
       const tile=Math.max(1,image.getTileHeight?.()||1),band=Math.max(tile,Math.ceil(height/20/tile)*tile);
-      const parts:ArrayLike<number>[]=[];onProgress(0,height);
-      for(let top=window[1];top<window[3];top+=band){
-        const part=await image.readRasters({window:[window[0],top,window[2],Math.min(window[3],top+band)],samples:[0],interleave:true}) as unknown as ArrayLike<number>;
-        parts.push(part);onProgress(Math.min(height,top+band-window[1]),height);
+      const remote=typeof blob==='string',key=remote?`${blob}|${window.join(',')}`:'';
+      const parts:ArrayLike<number>[]=remote?bandsRead.get(key)??[]:[];
+      if(remote)bandsRead.set(key,parts);
+      onProgress(Math.min(height,parts.length*band),height,parts.length?'carrying on from where the last read stopped':undefined);
+      let stale=false;
+      for(let top=window[1]+parts.length*band;top<window[3];top+=band){
+        const bottom=Math.min(window[3],top+band),done=top-window[1];
+        for(let attempt=1;;attempt++){
+          try{
+            // A FRESH CONNECTION after a failure, so nothing half-received is reused; opening it can fail too, and is retried.
+            if(stale){await Promise.resolve(tiff.close()).catch(()=>undefined);tiff=await openTiff(blob);image=await tiff.getImage();stale=false;}
+            parts.push(await image.readRasters({window:[window[0],top,window[2],bottom],samples:[0],interleave:true}) as unknown as ArrayLike<number>);break;}
+          catch(error){
+            if(!remote)throw error;
+            const why=error instanceof Error?error.message:String(error);
+            if(attempt>=RETRIES)throw new Error(`The connection to ${new URL(blob).host} dropped at ${Math.round(100*done/height)}% `
+              +`(${done.toLocaleString('en')} of ${height.toLocaleString('en')} rows) and did not come back after ${RETRIES} tries `
+              +`(the browser said: ${why}). What was read is kept: press Apply again to carry on from there.`);
+            onProgress(done,height,`the connection dropped; trying again (${attempt+1} of ${RETRIES})`);
+            stale=true;await new Promise(resolve=>setTimeout(resolve,retryMs*2**(attempt-1)));
+          }
+        }
+        onProgress(Math.min(height,bottom-window[1]),height);
       }
+      if(remote)bandsRead.delete(key);
       const Kind=(parts[0] as unknown as {constructor:new(n:number)=>{set(a:ArrayLike<number>,at:number):void}&ArrayLike<number>}).constructor;
       const joined=new Kind(width*height);let at=0;for(const part of parts){joined.set(part,at);at+=part.length;}
       raw=joined;

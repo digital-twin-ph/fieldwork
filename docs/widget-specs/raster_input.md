@@ -148,3 +148,15 @@ now 518.9 million and the decoding limit 2.124 GB, both rounded up from it.
 Not established: DR Congo, or Nigeria, in Edge or Chrome on Windows, where a tab may hold less than on a Mac. GHS-POP over
 Nigeria, 8 bytes a cell and 1.33 GB, is now admitted and has not been run. A window past 2^31 bytes would pass the largest
 single array some browsers allow; the decoding limit sits just under it.
+
+### The kept window moved into the dialog (2026-11-17)
+
+The practitioner, with a screenshot of the Rwanda workflow's Raster input: *"in the inspector for raster input we still
+have choose file / download geotiff part that's also in the configure dialog. Stale?"* Not dead code: the chooser was the
+re-read for a window that travelled without its cells, beside the dialog's own chooser for a new file, with nothing to
+tell the two apart; and the window's record and **Download GeoTIFF** sat in the Inspector too. Experiment 186's standard
+Inspector holds Name, Inputs, Settings, Result, the links and the actions, and nothing else. All three moved into the
+dialog: the re-read as **The kept window**, opening the dialog when the cells are not here, its chooser naming the same
+file; the record in the preview; the download beside it. The Inspector's Result line says *Not on this device yet:
+read it again in Configure…*. Clip raster's Inspector still holds its own settings, its preview and its download, off the
+standard: a change of its own, not made here.

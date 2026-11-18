@@ -4749,9 +4749,7 @@ function renderInspector(){
        const why=result?.unfinished?.find(u=>u.nodeId===n.id)?.message;
        content+=standardSection('Result',`<p class="standard-result${why?' standard-result-warning':''}">${esc(why?`The last run could not compute this step: ${why}`
          :asset?`Holds ${asset.metadata.width} × ${asset.metadata.height} cells of ${asset.source.filename}.`:'Nothing kept yet: choose a GeoTIFF in Configure\u2026')}</p>`
-         +(asset?'<div data-raster-presence></div>':'')
-         +(asset?`<details><summary>GeoTIFF metadata and source</summary><pre>${esc(JSON.stringify(asset,null,2))}</pre></details>`:''));}
-      content+='<button id="download-node-raster" class="button">Download GeoTIFF</button><p class="description">The retained window at native resolution, with its georeferencing and source metadata.</p>';}else content+='<section class="source-card" data-clip-parameters><span class="inspector-section">Processing parameters</span><div class="detail-row"><span>Cutline</span><strong>Separate clip boundary</strong></div><div class="detail-row"><span>Inclusion rule</span><strong>Configured below</strong></div><div class="detail-row"><span>Resolution</span><strong>Native pixels</strong></div><div class="detail-row"><span>Outside polygon</span><strong>NoData</strong></div><p>Start with a copy of Study area, then save adjustments on this operation. Study area remains unchanged. Map displays the result.</p></section><button id="preview-raster-clip" class="button primary">Preview and adjust</button><button id="add-raster-map" class="button">Add raster map</button>';
+         +(asset?'<div data-raster-presence></div>':''));}}else content+='<section class="source-card" data-clip-parameters><span class="inspector-section">Processing parameters</span><div class="detail-row"><span>Cutline</span><strong>Separate clip boundary</strong></div><div class="detail-row"><span>Inclusion rule</span><strong>Configured below</strong></div><div class="detail-row"><span>Resolution</span><strong>Native pixels</strong></div><div class="detail-row"><span>Outside polygon</span><strong>NoData</strong></div><p>Start with a copy of Study area, then save adjustments on this operation. Study area remains unchanged. Map displays the result.</p></section><button id="preview-raster-clip" class="button primary">Preview and adjust</button><button id="add-raster-map" class="button">Add raster map</button>';
     if(n.type==='clip_raster'){content+='<div class="field"><label class="field-label" for="clip-method">Pixel inclusion</label><select id="clip-method"><option value="all-touched" '+(n.params.method==='all-touched'?'selected':'')+'>All touched</option><option value="cell-center" '+(n.params.method==='cell-center'?'selected':'')+'>Cell center inside</option></select><label class="field-label" for="clip-margin">Outer margin (native pixels, 0-1)</label><input id="clip-margin" type="number" min="0" max="1" step="0.25" value="'+(n.params.marginPixels||0)+'"><small>All touched includes a cell when the boundary covers part of its area or crosses it, so a boundary running exactly along a cell border does not pull in the cell outside it. This matches GDAL except where a boundary vertex lies exactly on a cell border. For an outward margin, prepare the GeoTIFF with one pixel of extra source coverage; a margin is a grid distance with no GDAL equivalent. NoData is never filled.</small></div>';content+='<p class="description">'+(n.params.cutline?'Saved clip boundary; independent of Study area edits.':'Boundary will be initialized from the connected Study area.')+'</p><button id="reset-clip-boundary" class="button small" '+(!n.params.cutline?'disabled':'')+'>Use Study area boundary</button>';if(n.params.cutline)content+='<div class="source-card"><span class="inspector-section">Clip extent (degrees)</span>'+geometryBounds(n.params.cutline.geometry).map((value,i)=>'<div class="detail-row"><span>'+['West','South','East','North'][i]+'</span><strong>'+value.toFixed(6)+'</strong></div>').join('')+'</div>';content+='<button id="download-node-raster" class="button">Download GeoTIFF</button><p class="description">The masked grid at native resolution. Cells outside the boundary are NoData, not absent.</p>';}
   }else if(n.type==='study_area'){
     // THE STANDARD INSPECTOR (experiment 186): the name; no inputs; one sentence, the country and the map, which is this
@@ -5911,36 +5909,34 @@ function renderInspector(){
         block.innerHTML=populationHtml();wirePopulation(block);
       };
     };
-    let baseline=JSON.stringify(workflow);openRasterEditor(boundary,asset=>{if(JSON.stringify(workflow)!==baseline)throw new Error('The workflow changed. Reopen Prepare GeoTIFF input.');return change(w=>{getNode(w,n.id,'raster_input').params.asset=asset;},{requirePersistence:true});},getNode(workflow,n.id,'raster_input').params.asset,
-      {html:populationHtml,wire:wirePopulation},node.params.label,name=>worldPopRecordFor(name)??grid3RecordFor(name,countryName));
+    let baseline=JSON.stringify(workflow);
+    const keptAsset=getNode(workflow,n.id,'raster_input').params.asset;
+    const open=(kept?:Parameters<typeof openRasterEditor>[6])=>openRasterEditor(boundary,asset=>{if(JSON.stringify(workflow)!==baseline)throw new Error('The workflow changed. Reopen Prepare GeoTIFF input.');return change(w=>{getNode(w,n.id,'raster_input').params.asset=asset;},{requirePersistence:true});},keptAsset,
+      {html:populationHtml,wire:wirePopulation},node.params.label,name=>worldPopRecordFor(name)??grid3RecordFor(name,countryName),kept);
+    if(!keptAsset){open();return;}
+    void (async()=>{
+      const {rereadable,rereadWindow}=await import('./raster-workflow.js');
+      open({onDevice:!!await readPDF(keptAsset.sha256),rereadable:rereadable(keptAsset),
+        reread:async(file,say)=>{const bytes=await rereadWindow(keptAsset,file,say);
+          await storePDFs(new Map([[keptAsset.sha256,bytes]]),new Map([[keptAsset.sha256,{...keptAsset,asset:keptAsset}]]));renderInspector();},
+        download:async()=>{downloadRaster(await rasterOfNode(workflow,n.id));}});
+    })();
   });
   optionalElement('#add-raster-map')?.addEventListener('click',()=>change(w=>{const id=`map-${Date.now()}`;w.nodes.push({id,type:'map_output',x:n.x+270,y:n.y,params:{label:'Clipped raster',inputMode:'raster',pointInputCount:1}});w.edges.push({id:`e-${Date.now()}`,from:n.id,to:id,port:'raster'});selected=id;}));
-  // A WINDOW THAT TRAVELLED WITHOUT ITS BYTES (experiment 209): said, and read again from its address or its file, checked.
-  if(n.type==='raster_input'&&n.params.asset){const asset=n.params.asset,host=optionalElement('[data-raster-presence]');
-    if(host)void readPDF(asset.sha256).then(async held=>{
-      if(held||!host.isConnected)return;
-      const {rereadable,rereadWindow}=await import('./raster-workflow.js');
-      if(!rereadable(asset)){host.innerHTML='<p class="notice">The window is not on this device, and this project does not say where to read it again. Import the project with its files.</p>';return;}
-      const where=asset.source.url?new URL(asset.source.url).hostname:asset.source.filename;
-      host.innerHTML=`<p class="notice" data-raster-missing>The window is not on this device yet: the project carries where it came from, not its cells. Read it again from ${esc(where)}; it is checked against the window that was kept.</p>`
-        +(asset.source.url?'<div class="inspector-actions"><button id="raster-reread" class="button primary">Read the window again</button></div>'
-          :`<label class="field-label" for="raster-reread-file">Choose ${esc(asset.source.filename)} (${asset.source.bytes.toLocaleString('en')} bytes)</label><input id="raster-reread-file" type="file" accept=".tif,.tiff,image/tiff">`)
-        +'<p id="raster-reread-status" class="description" role="status"></p>';
-      const say=host.querySelector<HTMLElement>('#raster-reread-status')!;
-      const read=async(file?:File)=>{say.textContent='Reading the window again…';
-        try{const bytes=await rereadWindow(asset,file,text=>{say.textContent=text;});await storePDFs(new Map([[asset.sha256,bytes]]),new Map([[asset.sha256,{...asset,asset}]]));
-          say.textContent='Read again and checked: it is the window that was kept.';renderInspector();}
-        catch(error){say.textContent=error instanceof Error?error.message:String(error);}};
-      host.querySelector('#raster-reread')?.addEventListener('click',()=>void read());
-      host.querySelector<HTMLInputElement>('#raster-reread-file')?.addEventListener('change',e=>{const f=(e.target as HTMLInputElement).files?.[0];if(f)void read(f);});
-    });}
-  optionalElement('#download-node-raster')?.addEventListener('click',async e=>{
+  // Clip raster's own download, of the masked grid; Raster input's is in its dialog (186, 2026-11-17).
+  if(n.type==='clip_raster')optionalElement('#download-node-raster')?.addEventListener('click',async e=>{
     const button=e.currentTarget as HTMLButtonElement,label=button.textContent||'Download GeoTIFF';
     button.disabled=true;button.textContent='Preparing\u2026';
     try{downloadRaster(await rasterOfNode(workflow,n.id));}
     catch(error){toast(errorMessage(error),{tone:'failure'});}
     finally{button.disabled=false;button.textContent=label;}
   });
+  // A WINDOW THAT TRAVELLED WITHOUT ITS BYTES (experiment 209): said on the Result line; read again in Configure… (186).
+  if(n.type==='raster_input'&&n.params.asset){const asset=n.params.asset,host=optionalElement('[data-raster-presence]');
+    if(host)void readPDF(asset.sha256).then(held=>{
+      if(held||!host.isConnected)return;
+      host.innerHTML=`<p class="standard-result standard-result-warning" data-raster-not-here>Not on this device yet: read it again in Configure\u2026</p>`;
+    });}
   optionalElement('#preview-raster-clip')?.addEventListener('click',async e=>{
     const button=e.currentTarget as HTMLButtonElement,baseline=JSON.stringify(workflow);button.disabled=true;button.textContent='Loading raster preview…';
     try{

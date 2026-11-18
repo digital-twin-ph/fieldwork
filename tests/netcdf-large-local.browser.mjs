@@ -39,8 +39,9 @@ test('DTU25MSS, 2.9 GB on this laptop, is read in parts and agrees with the subs
   const read=Date.now()-saving;
 
   await page.locator('.react-flow__node[data-id="mss"]').click();
+  await page.locator('#prepare-raster').click();
   const wait=page.waitForEvent('download');
-  await page.locator('#download-node-raster').click();
+  await page.locator('#raster-dialog #download-node-raster').click();
   const mine=await (await fromArrayBuffer(bytesOf(await (await wait).path()))).getImage();
   const theirs=await (await fromArrayBuffer(bytesOf(EXAMPLE))).getImage();
   const [a]=await mine.readRasters(),[b]=await theirs.readRasters();

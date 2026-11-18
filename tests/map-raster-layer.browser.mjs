@@ -236,14 +236,17 @@ test('each raster node offers its own GeoTIFF, without running the workflow',asy
   const source=JSON.parse(await page.evaluate(()=>localStorage.getItem('fieldwork-workflow-v1')))
     .nodes.find(n=>n.type==='raster_input');
 
-  // The full window, from the Raster input's own Inspector.
+  // The full window, from the Raster input's own dialog (186, 2026-11-17: no longer in its Inspector).
   await page.locator(`.react-flow__node[data-id="${source.id}"]`).click();
-  await expect(page.locator('#download-node-raster')).toBeVisible();
+  await expect(page.locator('#inspector #download-node-raster')).toHaveCount(0);
+  await page.locator('#prepare-raster').click();
+  await expect(page.locator('#raster-dialog #download-node-raster')).toBeVisible();
   const windowFile=await (async()=>{
     const wait=page.waitForEvent('download');
-    await page.locator('#download-node-raster').click();
+    await page.locator('#raster-dialog #download-node-raster').click();
     return wait;
   })();
+  await page.locator('#raster-dialog #config-cancel').click();
   expect(windowFile.suggestedFilename()).toBe('fieldwork-raster-window.tif');
 
   // A clip of it, and its Inspector offers the masked grid under its own name.

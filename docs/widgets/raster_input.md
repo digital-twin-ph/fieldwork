@@ -37,10 +37,15 @@ publishes nothing for the country, the dialog says so. The download is your brow
 
 **A window travels as its source, not its cells.** A country's window is hundreds of megabytes, so a workflow file or
 project carries where the window came from, which part was kept, and its digest, not the cells. A GeoTIFF chosen on
-this computer keeps the file's digest too. Opened on another computer, Raster input says the window is not there yet and
-offers to read it again: **Read the window again** for one read at a web address, or a file chooser naming the file.
+this computer keeps the file's digest too. Opened on another computer, the step's Result says the window is not on this
+device yet. **Configure…** then opens on **The kept window**: **Read the window again** for one read at a web address, or
+a file chooser naming the same file, which is not the chooser for a new file below it.
 The file is checked against the digest first, and the window read again against the window that was kept; either
 differing is refused, and nothing is kept.
+
+**The kept window is in the dialog.** Once it is on this device, **Configure…** shows its record (where it came from,
+the part kept, its digest) and **Download GeoTIFF**, the kept window at native resolution with its georeferencing and
+source metadata.
 
 **The WorldPop or GRID3 file you were pointed to is recognised.** Chosen from disk under the name WorldPop gave it, its source
 record fills in: the country and year, the release, WorldPop as provider, its licence, and its units, *people per

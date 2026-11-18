@@ -27,10 +27,13 @@ test('Rwanda’s workflow opens from the example, its windows read again and che
   await page.locator('[data-view="workflow"]').click();
   const reread=async(id,file)=>{
     await page.locator(`.react-flow__node[data-id="${id}"]`).click();
+    await expect(page.locator('[data-raster-not-here]')).toBeVisible({timeout:30000});
+    await page.locator('#prepare-raster').click();
     await expect(page.locator('[data-raster-missing]')).toContainText('The window is not on this device yet',{timeout:30000});
     if(file)await page.locator('#raster-reread-file').setInputFiles(`${FILES}/${file}`);
     else await page.locator('#raster-reread').click();
     await expect(page.locator('[data-raster-missing]')).toHaveCount(0,{timeout:600000});
+    await page.locator('#raster-dialog #config-cancel').click();
   };
   await reread('worldpop','dl-worldpop-rwa/rwa_pop_2025_CN_100m_R2025A_v1.tif');
   await reread('grid3','dl-grid3-rwa/rwa_SSApopulation_ 2025_v1_0_gridded.tif');

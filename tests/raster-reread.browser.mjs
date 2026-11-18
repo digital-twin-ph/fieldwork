@@ -46,6 +46,9 @@ test('a raster window leaves the device as its source and digest, and is read ag
   await page.locator('#workflow-file').setInputFiles(file);
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="grid"]').click();
+  // The Inspector says so on its Result line; the reading again is in Configure… (186, 2026-11-17).
+  await expect(page.locator('[data-raster-not-here]')).toContainText('Not on this device yet: read it again in Configure');
+  await page.locator('#prepare-raster').click();
   await expect(page.locator('[data-raster-missing]')).toContainText('The window is not on this device yet');
 
   // A DIFFERENT FILE IS REFUSED; the same one is read again and checked.
@@ -53,6 +56,9 @@ test('a raster window leaves the device as its source and digest, and is read ag
   await expect(page.locator('#raster-reread-status')).toContainText('That is not the file this window was read from');
   await page.locator('#raster-reread-file').setInputFiles(tif);
   await expect(page.locator('[data-raster-missing]')).toHaveCount(0,{timeout:30000});
+  await expect(page.locator('[data-raster-reread-done]')).toContainText('Read again and checked');
+  await page.locator('#raster-dialog #config-cancel').click();
+  await expect(page.locator('[data-raster-not-here]')).toHaveCount(0);
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
   await page.locator('[data-view="results"]').click();

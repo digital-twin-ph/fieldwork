@@ -44,8 +44,9 @@ test('a NetCDF grid on this device is read in parts and kept as the window aroun
 
   // The window, downloaded, checked cell by cell against the formula, north first and the fill value missing.
   await page.locator('.react-flow__node[data-id="grid"]').click();
+  await page.locator('#prepare-raster').click();
   const wait=page.waitForEvent('download');
-  await page.locator('#download-node-raster').click();
+  await page.locator('#raster-dialog #download-node-raster').click();
   const tiff=await fromArrayBuffer(bytesOf(await (await wait).path()));
   const image=await tiff.getImage(),[values]=await image.readRasters(),[x0,y0]=image.getOrigin(),[dx,dy]=image.getResolution();
   const width=image.getWidth(),height=image.getHeight();

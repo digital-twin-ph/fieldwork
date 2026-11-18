@@ -23,9 +23,12 @@ export function openRasterEditor(boundary:Boundary,onSave:(asset:RasterAsset)=>b
    *  called on every redraw; `wire` connects its controls. */
   source?:{html:()=>string;wire:(root:HTMLElement)=>void},step='',
   /** A file Fieldwork pointed to, recognised by its name: its source record, filled in where none is written. */
-  recognise?:(filename:string)=>RasterProvenance|undefined):void{
+  recognise?:(filename:string)=>RasterProvenance|undefined,
+  /** THE KEPT WINDOW, in the dialog rather than the Inspector (experiment 186's standard, 2026-11-17): whether its cells
+   *  are on this device, reading them again from the same source when they are not, and downloading them when they are. */
+  kept?:{onDevice:boolean;rereadable:boolean;reread:(file:File|undefined,say:(text:string)=>void)=>Promise<void>;download:()=>Promise<void>}):void{
   let netcdf:NetcdfGrid|undefined,file:File|undefined,url:string|undefined,urlBytes:number|undefined,metadata:RasterMetadata|undefined;
-  let reading='',failure='',urlField='',urlOpen=false,serial=0,redrawNow:()=>void=()=>{};
+  let reading='',failure='',urlField='',urlOpen=false,serial=0,redrawNow:()=>void=()=>{},rereadSaid='',rereadDone=false;
   const nameOf=(href:string)=>{try{return decodeURIComponent(new URL(href).pathname.split('/').pop()||href);}catch{return href;}};
   const picked=()=>!!(file||url);
   const windowOf=(d:RasterDraft)=>metadata?rasterWindow(metadata,boundary,Number(d.padding)):undefined;
@@ -46,7 +49,16 @@ export function openRasterEditor(boundary:Boundary,onSave:(asset:RasterAsset)=>b
       try{window=windowOf(d);}catch(e){windowFailure=e instanceof Error?e.message:String(e);}
       const chosenName=file?file.name:url?nameOf(url):'';
       const presetShown=(file?file.name:existing&&!url?existing.source.filename:'')===WORLDPOP_BOTSWANA_FILENAME;
-      const settings=(source?`<section class="config-group" id="raster-population">${source.html()}</section>`:'')
+      const away=existing&&kept&&!kept.onDevice&&!picked();
+      const where=existing?(existing.source.url?new URL(existing.source.url).hostname:existing.source.filename):'';
+      const keptCard=rereadDone&&!picked()?card('The kept window','<p class="notice" data-raster-reread-done>Read again and checked: it is the window that was kept.</p>')
+        :!away?'':card('The kept window',kept!.rereadable
+        ?`<p class="notice" data-raster-missing>The window is not on this device yet: the project carries where it came from, not its cells. Read it again from ${esc(where)}; it is checked against the window that was kept.</p>`
+          +(existing!.source.url?'<div class="inspector-actions"><button type="button" id="raster-reread" class="button primary">Read the window again</button></div>'
+            :`<div class="field"><label class="field-label" for="raster-reread-file">The same file again: ${esc(existing!.source.filename)} (${existing!.source.bytes.toLocaleString('en')} bytes)</label><input id="raster-reread-file" type="file" accept=".tif,.tiff,image/tiff"></div>`)
+          +`<p id="raster-reread-status" class="description" role="status">${esc(rereadSaid)}</p>`
+        :'<p class="notice" data-raster-missing>The window is not on this device, and this project does not say where to read it again. Import the project with its files.</p>');
+      const settings=keptCard+(source?`<section class="config-group" id="raster-population">${source.html()}</section>`:'')
         +card('The file',
           `<div class="field"><label for="raster-file" class="field-label">GeoTIFF or NetCDF file</label>`
           +`<input id="raster-file" type="file" accept=".tif,.tiff,image/tiff,.nc,.nc4">`
@@ -74,9 +86,11 @@ export function openRasterEditor(boundary:Boundary,onSave:(asset:RasterAsset)=>b
       const said=reading||(metadata&&window?`Source: ${metadata.width} × ${metadata.height}${metadata.sourceRegistration?', values at grid nodes, read as the cells around them':''}. Retain ${window[2]-window[0]} × ${window[3]-window[1]} cells.`
         :existing?`Kept: ${existing.metadata.width} × ${existing.metadata.height} cells from ${existing.source.filename}.`:'No file chosen.');
       const shown=metadata&&window?{...(file?{sourceFile:file.name,sourceBytes:file.size}:{sourceURL:url,sourceBytes:urlBytes??null}),source:metadata,retainedWindow:window,retainedCells:(window[2]-window[0])*(window[3]-window[1]),extraPixels:d.padding}
-        :existing?existing.source.metadata:undefined;
+        :existing?existing:undefined;
       const preview=`<p id="raster-status" role="status">${esc(said)}</p>`
-        +(shown?`<details><summary>Metadata read from the file</summary><pre id="raster-metadata">${esc(JSON.stringify(shown,null,2))}</pre></details>`:'');
+        +(shown?`<details><summary>${metadata&&window?'Metadata read from the file':'The kept window: its source, window and digest'}</summary><pre id="raster-metadata">${esc(JSON.stringify(shown,null,2))}</pre></details>`:'')
+        +(existing&&kept?.onDevice&&!picked()?'<div class="inspector-actions"><button type="button" id="download-node-raster" class="button">Download GeoTIFF</button></div>'
+          +'<p class="description">The kept window at native resolution, with its georeferencing and source metadata.</p>':'');
       const problem=failure||windowFailure;
       const overhang=metadata&&window&&!problem?overhangSentence(rasterOverhang(metadata,boundary)):'';
       return {settings,preview,decisions:`<p>Pixel values are not automatically interpreted as population totals.</p>`,
@@ -85,6 +99,17 @@ export function openRasterEditor(boundary:Boundary,onSave:(asset:RasterAsset)=>b
     },
     wire:(root,d,redraw)=>{
       redrawNow=redraw;
+      const reread=async(chosen?:File)=>{rereadSaid='Reading the window again…';redraw();
+        try{await kept!.reread(chosen,text=>{rereadSaid=text;const at=root.querySelector('#raster-reread-status');if(at)at.textContent=text;});
+          kept!.onDevice=true;rereadSaid='';rereadDone=true;}
+        catch(error){rereadSaid=error instanceof Error?error.message:String(error);}
+        redraw();};
+      root.querySelector('#raster-reread')?.addEventListener('click',()=>void reread());
+      root.querySelector<HTMLInputElement>('#raster-reread-file')?.addEventListener('change',e=>{const f=(e.target as HTMLInputElement).files?.[0];if(f)void reread(f);});
+      root.querySelector<HTMLButtonElement>('#download-node-raster')?.addEventListener('click',async e=>{
+        const button=e.currentTarget as HTMLButtonElement;button.disabled=true;button.textContent='Preparing\u2026';
+        try{await kept!.download();}catch(error){fail(error);redraw();return;}
+        button.disabled=false;button.textContent='Download GeoTIFF';});
       const block=root.querySelector<HTMLElement>('#raster-population');if(block&&source)source.wire(block);
       root.querySelector<HTMLDetailsElement>('#raster-url-source')?.addEventListener('toggle',e=>{urlOpen=(e.target as HTMLDetailsElement).open;});
       const urlInput=root.querySelector<HTMLInputElement>('#raster-url')!;urlInput.addEventListener('input',()=>{urlField=urlInput.value;});

@@ -92,6 +92,29 @@ the source's own words, its page, how a derived value was worked out, when it wa
 changed value asks for its new source or is marked assumed, and the run's record keeps both. Each parameter's record
 follows the shape `widgets/caps.json` already gives a limit: value, basis in a closed vocabulary, evidence.
 
+## What the research found, 2026-11-17
+
+Report: reports/Declaring disease models with evidence.md, in the workspace beside this repository, with its notes;
+every source marked open or closed and by how it was read. In short:
+
+- **No declaration format is reused whole.** Starsim's 4.0 release candidate (MIT) is the only one that declares all
+  four diseases as transitions, as agents or compartments, with a rate per network, strains, places and mosquitoes
+  counted per place; its Ebola keeps the dead infectious until burial. It has no JSON form of the transitions found,
+  its API is not final, and its parameter `source` is free text: its library values say "Illustrative". AMR and MIRA
+  are compartmental only, with ontology grounding; SimInf has an event table worth borrowing.
+- **Proposed:** Fieldwork's own JSON with Starsim's meaning; units, distributions and ontology terms after AMR and
+  MIRA; events after SimInf; each parameter an evidence record whose basis is cited, derived, fitted or assumed. The
+  compartmental part exported to AMR for an outside check.
+- **Checks that can run by themselves:** the agents' mean against the deterministic model of the same declaration,
+  R0 from the next-generation matrix, the final size; for TB, the published progression curves.
+- **Values:** much of the TB care cascade in Botswana has open sources; preventive therapy among household contacts,
+  acquired MDR on treatment and an HIV multiplier for progression do not. For Ebola in eastern DR Congo, onset to
+  isolation, serial interval, case fatality, ring vaccination and the effect of insecurity are open; incubation, onset
+  to death, death to burial and infections in health facilities have no open primary source found.
+- **7-1-7:** no published model scores it from its own events. To do so a model must date emergence (for an endemic
+  disease, by a declared threshold), detect through an observation process apart from infection, notify, and date the
+  start of each of the seven actions.
+
 ## Open questions
 
 - Reading the Gaborone model and its notebooks, under digitaltwin-aas. The practitioner, 2026-11-17: *"Yes you can

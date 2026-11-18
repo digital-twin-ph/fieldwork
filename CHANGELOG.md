@@ -3,7 +3,7 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## 0.137.0 — In development
+## 0.137.0 — 2026-11-17
 
 - **One less copy of a raster window while saving and showing it.** The digest of a saved window over 64 MB is taken
   over the bytes in place, not a copy; on Nigeria the step's peak fell from 2.33 to 1.71 GB, at about 2.5 s more.

@@ -113,6 +113,43 @@ as the workflow this experiment designs for:
 A worked example may ship calibrated, so a trainee starts at step 4 and works back: why a scenario moves so much,
 which parameter it is most sensitive to, and how good that parameter's evidence is.
 
+## Homes, kombis, and a laptop, 2026-11-17
+
+**Homes from classified buildings.** The practitioner: *"For home transmission, in Gaborone, I remember classifying
+buildings as residential vs. non-residential."* Notebook 03b, read: 156,275 footprints, OpenStreetMap's with Overture's
+and Copernicus's where OpenStreetMap is thin, classed non-residential by their `building`, `amenity` or `landuse` tag
+(school, kindergarten, church, mosque, place of worship, clinic, retail and others). Most carry only `building=yes` and
+default to residential; GHSL's settlement zones (GHS-BUILT-C, 10 m, 2018) move some to non-residential. Floors come
+from GHS-BUILT-H height at 3 m a floor, a missing height taking the neighbourhood's mean with a flag. Notebook 04
+spreads people over residential buildings by floor area, and a building's residents are a home. Two consequences here:
+"residential by default" is an assumption about most of the city, and shows as one; and 03b reads which buildings are
+schools and churches and then discards the type. Kept, those buildings are the places a school and a church network
+start from, which neither Gaborone model has.
+
+**Kombi contact, as the model has it.** The practitioner: *"I don't remember how we modeled exposure to crowded kombi
+buses. We reconstructed the kombi bus routes by hand."* As read in the current model, the hand-traced routes
+(`GaboroneCombiRoutes.geojson`, from the 2015 combi map, appendix notebook 05a) feed an access score and the pollution
+proxy, not contacts. Contacts: 55% of people commute, each placed at random in one of a set of groups of 15 (riders per
+kombi, unsourced), every pair in a group in contact, groups fixed for a year, each contact at half weight; the kombi
+rate held at an assumed 0.03 a year, where an earlier fit had 0.388. Where people live and which route they ride play no
+part. The practitioner: *"It might have been a simplification out of necessity."*
+
+**On a laptop, not a cluster.** The practitioner: *"We ran the notebooks in a Kubernetes cluster to speed things up,
+but that's not the direction we want to take as not everyone in the world esp in low resource settings can run
+simulations in a cluster."* And: *"I remember running the simulation on a VM for almost a day for Gaborone."* A model
+here runs in one browser tab on an ordinary laptop. The kernel counts infectious people per group, so a group's cost is
+per person, not per pair: riders on one route in one time window are a network like a household, whatever their number,
+and route-based kombi contact costs no more than the random groups of 15. Starsim keeps contacts as pairs, 105 for a
+group of 15.
+
+**How cost grows with population, to measure.** The practitioner: *"It depends on the number of agents."* Committed:
+one model at several sizes (1,000, 10,000, 100,000 and Gaborone's 385,500), timed in Starsim and in the kernel, so the
+growth of each and the largest population a laptop browser runs in reasonable time are found, not guessed; measles
+once branching is in, TB once the kernel runs it. Gaborone's `sweep_rate_vs_n.py` timed one run at 25,000 to the full
+population, but its output was not kept. An extrapolation from Hagelloch (the kernel about 900 times Starsim's speed;
+940,000 children over a run in 3.3 s) puts a Gaborone TB run at seconds to minutes in a tab; it is not a measurement,
+and TB carries more than measles. Calibration's hundreds of runs stay out of a tab and ship done.
+
 ## How far each value's evidence travelled, agreed 2026-11-17
 
 The practitioner, asked what happens when an adaptation lacks evidence for some parameters: *"somewhere in the

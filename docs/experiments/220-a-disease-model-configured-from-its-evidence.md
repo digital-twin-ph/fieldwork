@@ -48,6 +48,16 @@ As described by the practitioner; being read for this experiment.
   (detection, notification, diagnosis, treatment, contact tracing), it is the bridge to 7-1-7's targets
   ([200](200-operational-epidemiology.md)).
 
+## The Ebola model for North Kivu and Ituri
+
+The practitioner, 2026-11-17: *"Even more important we have an Ebola version of ABM in that workspace I think,
+NordKivu-Ituri in DRC"*, and *"I don't think we completed the NordKivu-Ituri one but it should be informative."* Read
+on the same terms as Gaborone. Sixteen notebooks, from health zones, buildings and population through Lake Albert
+crossings, forest cover, conflict and displacement, the case time series, a Starsim kernel, calibration and
+interventions; what is finished is to be found, not assumed. Ebola adds a route neither measles nor TB has: infection
+from the dead before burial. Its population can come from WorldPop over DR Congo, which Raster input keeps whole at
+100 m since 0.138.0.
+
 ## The configuration, as first proposed
 
 **On the canvas, not in one dialog.** The population, each contact network and the disease are separate steps, each

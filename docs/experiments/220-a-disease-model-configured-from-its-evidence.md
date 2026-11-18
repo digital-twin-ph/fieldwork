@@ -58,6 +58,24 @@ interventions; what is finished is to be found, not assumed. Ebola adds a route 
 from the dead before burial. Its population can come from WorldPop over DR Congo, which Raster input keeps whole at
 100 m since 0.138.0.
 
+## The two models, inventoried 2026-11-17
+
+Read, not run, by the code, their own documents and their saved outputs. The inventories are drafts for the
+practitioner and JLT to check, outside this repository; what follows is what they found, not yet confirmed by the
+models' authors.
+
+| | Gaborone TB | North Kivu and Ituri Ebola |
+| --- | --- | --- |
+| State | in use; scenarios on the current Starsim model and, for the three named ones, on an older Mesa model | about half built: data preparation finished, the simulation unfinished; its fit to the case curve removed |
+| Parameters in the simulation | 100: 10 cited, 10 derived, 9 fitted, 71 assumed | 52: 8 cited, 5 derived, 4 fitted, 1 placeholder, 34 assumed |
+| Networks | households, neighbourhoods, kombi routes; no church or school network in the current model; the older model not yet read | zones and venues; Lake Albert crossings, roads, forest and buildings prepared but not read by the simulation |
+| Timing for 7-1-7 | none: treatment start counted as notification, contacts found at once, scenarios on from the start | none: detection at once, no notification, fixed delays without a source |
+| Code against its documents | 11 disagreements | 7 noted, among them an at-risk fraction labelled as evidence that the evidence does not give |
+
+What it means here: in both, most values would show as assumed in a dialog that shows evidence, which is the dialog's
+purpose rather than a fault of the models. The timing a 7-1-7 target needs is to be built, not ported. Gaborone's
+calibration rests on three parameters at their bounds, which its own lessons call a red flag.
+
 ## The configuration, as first proposed
 
 **On the canvas, not in one dialog.** The population, each contact network and the disease are separate steps, each

@@ -3,7 +3,7 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## 0.140.0 — In development
+## 0.140.0 — 2026-11-18
 
 - **Map shades a raster by its unit.** A raster whose unit is a count per cell, such as *people per pixel*, is shown per
   km² in yellow to red, as before; any other unit, such as *NDVI* or *metres*, as its value in viridis, below zero

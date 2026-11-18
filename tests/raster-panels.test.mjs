@@ -60,3 +60,33 @@ test('an outline is simplified by shape: every point stays near the drawn line, 
   const ring=simplifyRing([[0,0],[1,0],[2,0],[2,1],[2,2],[0,2],[0,0]],0.01);
   assert.deepEqual(ring,[[0,0],[2,0],[2,2],[0,2],[0,0]],'a square keeps its corners and loses the points along its sides');
 });
+
+/** A RASTER'S UNIT DECIDES WHAT ITS PANEL SHOWS (2026-11-17). */
+test('a unit per pixel or per cell is a count; any other stated unit a value; none stated, a count, said so',async()=>{
+  const {rasterMeasure}=await import('../build/raster-panels.js');
+  assert.deepEqual(rasterMeasure('people per pixel'),{kind:'count',unit:'people per pixel',stated:true,noun:'people'});
+  assert.equal(rasterMeasure('buildings / cell').noun,'buildings');
+  assert.equal(rasterMeasure('Population').kind,'count');
+  assert.deepEqual(rasterMeasure('NDVI'),{kind:'value',unit:'NDVI',stated:true,noun:'NDVI'});
+  assert.equal(rasterMeasure('metres above sea level').kind,'value');
+  assert.deepEqual(rasterMeasure('  '),{kind:'count',unit:'',stated:false,noun:''});
+});
+
+test('a value panel is the mean of its cells, below zero included; a count panel drops what is below zero',async()=>{
+  const {drawnDensity,pooledBreaks,classOfDensity}=await import('../build/raster-panels.js');
+  const metadata={width:2,height:2,origin:[0,0],resolution:[0.01,-0.01],crs:'EPSG:4326'};
+  const value=drawnDensity({metadata,values:[-0.4,0.2,0.6,1.0]},'NDVI',1,'value');
+  assert.equal(value.width,1);assert.ok(Math.abs(value.density[0]-0.35)<1e-6,String(value.density[0]));
+  const count=drawnDensity({metadata,values:[-0.4,0.2,0.6,1.0]},'People',1,'density');
+  assert.ok(count.density[0]>0&&count.mode==='density');
+  // Equal steps from lowest to highest, below zero allowed for a value.
+  const panel={density:Float32Array.from([-1,0,1,2,3,4,5])};
+  assert.deepEqual(pooledBreaks([panel],6,'equal','value').map(x=>Math.round(x*100)/100),[0,1,2,3,4]);
+  assert.equal(classOfDensity(-1,[0,1],'value'),0);assert.equal(classOfDensity(-1,[0,1],'density'),-1);
+});
+
+test('a map\'s raster shading is one of the stated choices or refused',async()=>{
+  const {validRasterShading}=await import('../build/raster-panels.js');
+  assert.ok(validRasterShading({})&&validRasterShading({show:'cell-value',ramp:'viridis',classes:'equal'}));
+  assert.ok(!validRasterShading({ramp:'jet'})&&!validRasterShading({show:'log'})&&!validRasterShading({other:1}));
+});

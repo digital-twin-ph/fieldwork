@@ -637,6 +637,8 @@ export interface ParamsByType {
     polygonInputCount?:number;
     /** How many rasters, as `raster` to `raster_4` (Map's manual, History: panels, grid cells in panels). */
     rasterInputCount?:number;
+    /** How raster panels are shown, chosen in Configure…; absent, each raster's stated unit decides (2026-11-17). */
+    rasterShading?:import('./raster-panels.js').RasterShading;
     /** Maps side by side (Map's manual, History: panels): one panel per polygon layer, by its name, in a grid, on one scale. Absent: one map. */
     arrangement?:{grid:import('./catchment-output.js').PanelGrid;panels:import('./catchment-output.js').MapPanel[]};
     /** What the practitioner decided about each layer in Manage layers, keyed by layer id.

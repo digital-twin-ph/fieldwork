@@ -10,7 +10,8 @@ import {reachableCorridor,validateCorridorNode} from './reachable-corridor.js';
 import {travelTimeBand,validateBandNode} from './travel-time-band.js';
 import {collectPolygonLayers,isPolygonPort,polygonPort,MAX_POLYGON_LAYERS} from './polygon-layers.js';
 import {applyFeatureEdits,applyTableEdits,editsFacts,editsSentence,validEdits,editsAt} from './cell-edits.js';
-import {drawnDensity,pooledBreaks,isRasterPort,rasterPort,MAX_RASTER_LAYERS,MAX_DRAWN_SIDE} from './raster-panels.js';
+import {rasterUnitsOf} from './raster-units.js';
+import {drawnDensity,pooledBreaks,isRasterPort,rasterPort,rasterMeasure,validRasterShading,RAMPS,MAX_RASTER_LAYERS,MAX_DRAWN_SIDE,type PanelScale} from './raster-panels.js';
 import {fillInteriorGaps,validateFillNode} from './fill-interior-gaps.js';
 /** Resolves a named credential to its secret. No current widget needs one; the credential
  *  manager stands on its own (experiment 30) and executeWorkflow still accepts a resolver so a
@@ -1009,6 +1010,8 @@ export function validateWorkflow(raw:unknown):Workflow {
       throw new Error(`A map takes 1 to ${MAX_RASTER_LAYERS} rasters.`);
     if(n.type==='map_output'&&n.params.polygonInputCount!==undefined&&!(Number.isInteger(n.params.polygonInputCount)&&n.params.polygonInputCount>=1&&n.params.polygonInputCount<=MAX_POLYGON_LAYERS))
       throw new Error(`A map takes 1 to ${MAX_POLYGON_LAYERS} polygon layers.`);
+    if(n.type==='map_output'&&n.params.rasterShading!==undefined&&!validRasterShading(n.params.rasterShading))
+      throw new Error('A map\u2019s raster panels show a count per km² or the cell value, in YlOrRd or viridis, in quantile classes or equal steps.');
     if(n.type==='map_output'&&n.params.arrangement!==undefined){const a=n.params.arrangement;
       if(!['row','grid','column'].includes(a?.grid)||!Array.isArray(a.panels)||a.panels.length<1||a.panels.length>MAX_POLYGON_LAYERS
         ||a.panels.some(p=>typeof p?.layer!=='string'||!p.layer.trim()||p.layer.length>120||(p.title!==undefined&&(typeof p.title!=='string'||p.title.length>120))))
@@ -2552,14 +2555,32 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         // km² in a panel of its own, every panel classed together.
         const rasterFed=workflow.edges.filter(e=>e.to===node.id&&isRasterPort(e.port)).sort((a,b)=>a.port.localeCompare(b.port,'en',{numeric:true}));
         if(rasterFed.length>1||node.params.arrangement){
-          const panels=rasterFed.map(e=>{const from=workflow.nodes.find(n=>n.id===e.from);
-            return drawnDensity(values.get(e.from) as RasterGrid,from?.params.label||e.from);});
-          const breaks=pooledBreaks(panels);
+          // WHAT EACH PANEL SHOWS, from its raster's stated unit unless Configure… says (2026-11-17): a count per km², or
+          // the cell's value. Counts share one scale; values share one per unit. One scale, one key.
+          const shading=node.params.rasterShading??{};
+          const scales:PanelScale[]=[],layerOf=(id:string)=>workflow.nodes.find(n=>n.id===id)?.params.label||id;
+          const unstated:string[]=[];
+          const panels=rasterFed.map(e=>{const grid=values.get(e.from) as RasterGrid,layer=layerOf(e.from);
+            const measure=rasterMeasure(grid.asset?rasterUnitsOf(grid.asset)?.units:undefined);
+            const mode=shading.show==='cell-value'?'value':shading.show==='per-km2'?'density':measure.kind==='count'?'density':'value';
+            if(!measure.stated)unstated.push(layer);
+            const key=mode==='density'?'density':`value:${measure.unit}`;
+            let at=scales.findIndex(x=>(x.mode==='density'?'density':`value:${x.label}`)===key);
+            if(at<0){at=scales.length;scales.push({mode,label:mode==='density'?'':measure.unit||'value, unit not stated',
+              ramp:shading.ramp??(mode==='density'?'YlOrRd':'viridis'),classes:shading.classes??'quantile',breaks:[],layers:[],noun:''});}
+            const scale=scales[at]!;scale.layers.push(layer);
+            if(mode==='density'&&measure.stated&&!scale.noun)scale.noun=measure.noun;
+            return drawnDensity(grid,layer,MAX_DRAWN_SIDE,mode,at);});
+          for(const [k,scale] of scales.entries()){
+            if(scale.mode==='density')scale.label=`${scale.noun||'count'} per km²${unstated.length?` (unit not stated for ${unstated.join(', ')}; read as a count per cell)`:''}`;
+            scale.breaks=pooledBreaks(panels.filter(p=>p.scale===k),RAMPS[scale.ramp].length,scale.classes,scale.mode);}
+          const breaks=scales[0]!.breaks;
           const first=values.get(rasterFed[0]!.from) as RasterGrid;
           const shown=decisionPresentation(node,{kind:'raster-map',raster:{...first,values:new Float32Array(0)},boundary:first.boundary,rows:[],centers:[]},rasterFed[0]!.from,runId);
-          value={...shown.value,rasterPanels:panels,densityBreaks:breaks} as unknown as DisplayValue;
+          value={...shown.value,rasterPanels:panels,densityBreaks:breaks,panelScales:scales} as unknown as DisplayValue;
           const used=rasterFed.slice(1).map(e=>`<urn:fieldwork:run:${runId}:map:${node.id}> prov:used <urn:fieldwork:run:${runId}:output:${e.from}>.\n`).join('');
-          shown.receipt.facts+=used+`<urn:fieldwork:run:${runId}:map:${node.id}> fw:drawnAs "people per km² of each cell's area on the sphere, at most ${MAX_DRAWN_SIDE} drawn cells a side, every panel classed together in ${breaks.length+1} quantile classes"^^<http://www.w3.org/2001/XMLSchema#string>.\n`;
+          const said=scales.map(x=>`${x.layers.join(', ')}: ${x.mode==='density'?`${x.label} of each cell's area on the sphere`:`${x.label}, the mean of the cells under each drawn cell`}, in ${x.breaks.length+1} ${x.classes==='equal'?'equal steps':'quantile classes'}`).join('; ');
+          shown.receipt.facts+=used+`<urn:fieldwork:run:${runId}:map:${node.id}> fw:drawnAs ${JSON.stringify(`${said}; at most ${MAX_DRAWN_SIDE} drawn cells a side`)}^^<http://www.w3.org/2001/XMLSchema#string>.\n`;
           shown.receipt.input=shown.receipt.facts;receipts.push(shown.receipt);break;
         }
         const source=workflow.edges.find(e=>e.to===node.id&&e.port==='raster')!.from;

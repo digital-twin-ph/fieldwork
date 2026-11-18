@@ -218,9 +218,22 @@ two by two, or in one column. Each panel draws one layer, by its name, and can b
 out. The panels share **one scale**, so a shade is the same number in every panel, and the figure has one key. On an
 interactive map each panel is a small map of its own, and **Move the panels together** keeps them on the same view.
 
-**Rasters too.** Connect up to four rasters and each is a panel of its grid cells, shaded by people per km² of each
-cell's own area, on one scale. A panel is drawn at no more than 1,000 cells a side, each drawn cell the people in the
-cells under it over their area; the figure says how large a drawn cell is.
+**Rasters too.** Connect up to four rasters and each is a panel of its grid cells. What a panel shows comes from the
+raster's unit, as Raster input records it in **Pixel value units** (filled in for WorldPop, GRID3 and GHS-POP):
+
+| The unit | The panel shows | Colours |
+| --- | --- | --- |
+| A count per cell: *people per pixel*, *buildings per cell* | The count per km² of each cell's own area | Yellow to red |
+| Any other unit: *NDVI*, *metres*, *mm of rain* | The cell's value, as it is | Viridis |
+| None stated | Read as a count per km², and the key says the unit was not stated | Yellow to red |
+
+Panels showing the same thing in the same unit share one scale and one key; a count and an NDVI raster side by side
+have two. A panel is drawn at no more than 1,000 cells a side: each drawn cell is the count in the cells under it over
+their area, or the mean of their values. The figure says how large a drawn cell is.
+
+**Raster panels**, in **Configure…**, overrides what the unit decides: **Each cell shows** a count per km² or the cell's
+value; **Colours**, yellow to red or viridis; **Classes**, quantiles (about as many cells in each) or equal steps from the
+lowest value to the highest.
 
 Side by side shows where layers differ. It does not say which is right, and the key says so. The population example
 shows four sources' shares of each district's people this way.

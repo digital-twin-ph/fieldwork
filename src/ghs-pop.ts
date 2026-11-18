@@ -15,3 +15,14 @@ export const GHS_CITATION='Schiavina M., Freire S., Carioli A., MacManus K. (202
 export const GHS_NOTE='Residential population: census counts spread over residential building volume, 3 arc-seconds (about 90 m), '
   +'warped from the 100 m Mollweide grid. Weaker where buildings are hard to see, which is often rural. Built from the same '
   +'buildings as GHS-BUILT, so the two should not be set against each other in one analysis.';
+
+/** GHS-POP'S SOURCE RECORD, recognised from its file name (2026-11-17), so its unit is stated as WorldPop's and GRID3's are:
+ *  a Map shows a count per cell per km², and a raster whose unit is not stated is read that way only with a note. */
+export function ghsRecordFor(filename:string):import('./raster-provenance.js').RasterProvenance|undefined{
+  const epoch=filename.match(/^GHS_POP_E(\d{4})_GLOBE_R2023A_4326_3ss_V1_0\.tif$/)?.[1];
+  if(!epoch||!(GHS_EPOCHS as readonly string[]).includes(epoch))return undefined;
+  return {title:`GHS-POP R2023A, epoch ${epoch}, 3 arc-seconds, WGS 84`,provider:'European Commission, Joint Research Centre (JRC)',
+    downloadURL:ghsUrl(epoch as (typeof GHS_EPOCHS)[number]),citation:GHS_CITATION,license:GHS_LICENCE,version:'R2023A',
+    temporalCoverage:epoch,units:'people per pixel',...(GHS_PROJECTED.has(epoch)?{notes:'A projected epoch, not an estimate of an observed year.'}:{})};
+}
+

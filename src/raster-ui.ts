@@ -144,6 +144,8 @@ export function openRasterEditor(boundary:Boundary,onSave:(asset:RasterAsset)=>b
           try{const head=await fetch(href,{method:'HEAD'});const n=Number(head.headers.get('content-length'));if(head.ok&&Number.isFinite(n)&&n>0)urlBytes=n;}catch{/* unstated */}
           if(request!==serial)return;
           url=href;metadata=found;reading='';d.picked=href;if(existing)d.provenance={};
+          // A FILE READ BY ITS ADDRESS IS RECOGNISED BY ITS NAME TOO (2026-11-17): GHS-POP is read this way, and its unit is stated.
+          const known=recognise?.(nameOf(href));if(known&&!Object.values(d.provenance??{}).some(v=>String(v??'').trim()))d.provenance={...known};
         }catch(error){if(request===serial)fail(error);}
         if(request===serial)redraw();});
     },

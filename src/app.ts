@@ -4,7 +4,8 @@ import {boundsOf} from './health-facilities.js';
 import {openMapImageConfig} from './georeference-ui.js';
 import {openCountriesConfig} from './area-countries-ui.js';
 import {openChangelog} from './changelog-ui.js';
-import {GHS_CITATION,GHS_EPOCHS,GHS_LICENCE,GHS_NOTE,GHS_PROJECTED,ghsUrl} from './ghs-pop.js';
+import {GHS_CITATION,GHS_EPOCHS,GHS_LICENCE,GHS_NOTE,GHS_PROJECTED,ghsUrl,ghsRecordFor} from './ghs-pop.js';
+import {rasterUnitsOf} from './raster-units.js';
 import {grid3RasterFor,grid3RecordFor,GRID3_CITATION,GRID3_COUNTRIES,GRID3_LICENCE,GRID3_NOTE,GRID3_PRODUCT,GRID3_TAKEN} from './grid3-catalogue.js';
 import {countriesOfArea} from './area-countries.js';
 import {placedCard} from './map-image-ui.js';
@@ -31,7 +32,7 @@ import {CATCHMENT_TYPES,defaultTravelMode} from './catchments.js';
 import {catchmentInspector} from './catchment-ui.js';
 import {mountCatchmentMap,mountDensityPanel,basemapOptions,BASEMAP_OPTIONS,placeOnMap} from './catchment-map.js';
 import {catchmentPlot,polygonSvg,polygonPanelsSvg,panelColumns,catchmentFrame,polygonFrame} from './catchment-output.js';
-import {rasterPanelsSvg,densityImage,rampFor} from './raster-image.js';
+import {rasterPanelsSvg,densityImage,rampFor,scaleWords,drawnWords} from './raster-image.js';
 import {mapPresentation,standaloneMapSvg} from './map-communication.js';
 import {metresPerPixel} from './presentation.js';
 import {RATE_TABLE_KEYS,computeRate,fromTable,fromWideTable} from './rate.js';
@@ -116,7 +117,7 @@ import {mapLayerList,membersOfPolygons,portIsDrawn,LAYER_LABEL_LIMIT,type MapLay
 import {mountFeatureChooser} from './polygon-review.js';
 import {applyFeatureEdits,applyTableEdits,editsAt,type CellEdit,type EditEntry} from './cell-edits.js';
 import {MAX_POLYGON_LAYERS,polygonPort} from './polygon-layers.js';
-import {MAX_RASTER_LAYERS,rasterPort} from './raster-panels.js';
+import {MAX_RASTER_LAYERS,rasterPort,isRasterPort} from './raster-panels.js';
 import {partsTable,partsTableMarkup} from './map-parts-table.js';
 import {TARGETS,projectOutline,outlineMarkup,slotsForNote} from './outline.js';
 import {publicationMarkup,promptFor,PRODUCT_KINDS,isProductKind,layoutKey,type ProductKind,type PublicationInput} from './publication.js';
@@ -2803,15 +2804,9 @@ function rasterArriving(nodeId:string):import('./raster.js').RasterAsset|undefin
 }
 /** WHAT THE RASTER SAYS ITS VALUES ARE, where it says: the source record's units, else the file's own band tag. */
 function rasterUnits(asset:import('./raster.js').RasterAsset):{units:string;from:string;name?:string}|undefined{
-  const stated=asset.provenance?.units?.trim();if(stated)return {units:stated,from:'its source record',...(/people|person|population/i.test(stated)?{name:'population'}:{})};
-  // KNOWN BY ITS FILE'S NAME (2026-11-13): a raster kept before Fieldwork recognised WorldPop's and GRID3's files says nothing
-  // of its units in its record, and the practitioner, looking at a WorldPop window, had "no idea what the raster is giving me".
-  const known=worldPopRecordFor(asset.source.filename)??grid3RecordFor(asset.source.filename,countryName);
-  if(known?.units)return {units:known.units,from:`${known.provider?.split(' - ')[0]??'its publisher'}\u2019s record for this file, recognised by its name,`,name:'population'};
-  const tags={...(asset.source.metadata.gdal??{}),...(asset.source.metadata.band??{})} as Record<string,unknown>;
-  const key=Object.keys(tags).find(k=>/^units?$/i.test(k));
-  const tagged=key?String(tags[key]??'').trim():'';
-  return tagged?{units:tagged,from:'the file’s band tag'}:undefined;
+  const found=rasterUnitsOf(asset);if(!found)return undefined;
+  const population=/people|person|population/i.test(found.units)||found.from!=='its source record'&&found.from!=='the file\u2019s band tag';
+  return {...found,...(population?{name:'population'}:{})};
 }
 /** WHAT ARRIVED, said first (2026-11-13). The practitioner, with a raster connected and nothing to read it at: "Shouldn't
  *  sample a raster be able to detect what data the raster offers after retrieval ... I feel lost what to do next". */
@@ -2995,6 +2990,10 @@ function openMapConfig(nodeId:string){
         if(panels.length)draft.arrangement={...draft.arrangement,panels};else delete draft.arrangement;});
       on('[data-panel-title]',el=>{const panel=draft.arrangement?.panels.find(p=>p.layer===el.dataset.panelTitle);
         if(panel){const t=el.value.trim();if(t)panel.title=t;else delete panel.title;}});
+      const shade=(key:'show'|'ramp'|'classes',value:string)=>{const next={...(draft.rasterShading??{})} as Record<string,string>;
+        if(value)next[key]=value;else delete next[key];
+        if(Object.keys(next).length)draft.rasterShading=next as NonNullable<Draft['rasterShading']>;else delete draft.rasterShading;};
+      on('#raster-show',el=>shade('show',el.value));on('#raster-ramp',el=>shade('ramp',el.value));on('#raster-classes',el=>shade('classes',el.value));
       on('#polygon-presentation',el=>{
         draft.presentation=el.value==='interactive'?'interactive':'plot';
         // A BASEMAP THE NEW PRESENTATION CANNOT DRAW is set to none, and the person told, as the Inspector did.
@@ -3107,6 +3106,19 @@ function mapInsetSection(n:WorkflowNode<'map_output'>):string{
     +`<div class="field"><label class="field-label" for="map-inset-size">Its width</label><select id="map-inset-size">`
     +opt('third','A third of the figure',i.size??'third')+opt('half','Half the figure',i.size??'third')+`</select></div>`+pick;
 }
+/** RASTER PANELS, SHOWN AS CHOSEN (2026-11-17; the practitioner: "I can't seem to find how Map output enables rendering of pop
+ *  density as YlOrRd hues"). Each left at its first option, the rasters' stated units decide. */
+function mapRasterSection(n:WorkflowNode<'map_output'>):string{
+  if(!workflow.edges.some(e=>e.to===n.id&&isRasterPort(e.port)))return '';
+  const r=n.params.rasterShading??{};
+  const select=(id:string,label:string,options:[string,string][],held:string|undefined)=>`<div class="field"><label class="field-label" for="${id}">${label}</label>`
+    +`<select id="${id}">${options.map(([v,t])=>`<option value="${v}" ${(held??'')===v?'selected':''}>${t}</option>`).join('')}</select></div>`;
+  return `<span class="inspector-section">Raster panels</span>`
+    +select('raster-show','Each cell shows',[['','From the raster\u2019s unit: a count per km², or the value'],['per-km2','A count, per km²'],['cell-value','The cell\u2019s value']],r.show)
+    +select('raster-ramp','Colours',[['','From what is shown: yellow to red for a count, viridis for a value'],['YlOrRd','Yellow to red (YlOrRd)'],['viridis','Viridis']],r.ramp)
+    +select('raster-classes','Classes',[['','Quantiles: about as many cells in each'],['equal','Equal steps from lowest to highest']],r.classes==='equal'?'equal':'')
+    +`<p class="muted">Used when the map draws rasters in panels. Panels in the same unit share one scale and one key.</p>`;
+}
 function mapArrangeSection(n:WorkflowNode<'map_output'>):string{
   const names=drawnPolygonLayers(n.id),a=n.params.arrangement;
   const layers=[...new Set([...names,...(a?.panels??[]).map(p=>p.layer)])];
@@ -3143,7 +3155,7 @@ function mapSettingsFlat(n:WorkflowNode<'map_output'>):string{
       // potential point layer in the map gets a configurable/selectable symbol." Only the point
       // layers actually wired are offered, because a control for a layer that does not exist is
       // a setting nobody can check against the picture.
-      +mapBasemapControls(n)+mapArrangeSection(n)+(n.params.arrangement?'':mapInsetSection(n))+`<span class="inspector-section">Layers</span>`
+      +mapBasemapControls(n)+mapArrangeSection(n)+mapRasterSection(n)+(n.params.arrangement?'':mapInsetSection(n))+`<span class="inspector-section">Layers</span>`
       +`<p class="muted">Order, name and group the layers.</p>`
       +`<button class="button" data-manage-layers="${esc(n.id)}">Manage layers</button>`
       +(()=>{
@@ -5912,7 +5924,7 @@ function renderInspector(){
     let baseline=JSON.stringify(workflow);
     const keptAsset=getNode(workflow,n.id,'raster_input').params.asset;
     const open=(kept?:Parameters<typeof openRasterEditor>[6])=>openRasterEditor(boundary,asset=>{if(JSON.stringify(workflow)!==baseline)throw new Error('The workflow changed. Reopen Prepare GeoTIFF input.');return change(w=>{getNode(w,n.id,'raster_input').params.asset=asset;},{requirePersistence:true});},keptAsset,
-      {html:populationHtml,wire:wirePopulation},node.params.label,name=>worldPopRecordFor(name)??grid3RecordFor(name,countryName),kept);
+      {html:populationHtml,wire:wirePopulation},node.params.label,name=>worldPopRecordFor(name)??grid3RecordFor(name,countryName)??ghsRecordFor(name),kept);
     if(!keptAsset){open();return;}
     void (async()=>{
       const {rereadable,rereadWindow}=await import('./raster-workflow.js');
@@ -6481,7 +6493,7 @@ function renderResults(){
       declared:runWorkflow&&shown?declaredKinds(runWorkflow,shown.sourceNodeId||shown.nodeId):{}},esc);
   };
   $('#result-rows').querySelectorAll<HTMLElement & SVGElement>('[data-place]').forEach(el=>{el.onclick=()=>selectResult(el.dataset.place!);el.onkeydown=e=>{if(e.key==='Enter')selectResult(el.dataset.place!);};});
-  const raster=output?.raster;$('#raster-download').hidden=!raster;$('#raster-download').onclick=()=>{if(raster)try{downloadRaster(raster);}catch(e){toast(errorMessage(e),{tone:'failure'});}};const panelsOf=(output as {rasterPanels?:import('./raster-panels.js').DrawnDensity[]}|undefined)?.rasterPanels;if(panelsOf?.length){$('#result-metrics').textContent=`${panelsOf.length} rasters side by side · people per km² in each cell, one scale · drawn cells about ${Math.round(Math.max(...panelsOf.map(p=>p.drawnCellM))).toLocaleString('en')} m across`;$('.map-legend').hidden=true;}else if(raster){$('#result-metrics').textContent=`${raster.metadata.width} x ${raster.metadata.height} cells | ${validCells(raster.values).toLocaleString('en')} valid | ${raster.mask?(raster.mask.method==='all-touched'?'All-touched polygon mask':'Cell-center polygon mask')+' / margin '+(raster.mask.marginPixels||0)+' px':'Unmasked input window'} | Source-reported units: ${raster.asset.provenance?.units||'Not supplied'}`;$('.map-legend').hidden=true;}else $('.map-legend').hidden=false;
+  const raster=output?.raster;$('#raster-download').hidden=!raster;$('#raster-download').onclick=()=>{if(raster)try{downloadRaster(raster);}catch(e){toast(errorMessage(e),{tone:'failure'});}};const panelsOf=(output as {rasterPanels?:import('./raster-panels.js').DrawnDensity[]}|undefined)?.rasterPanels;if(panelsOf?.length){const scalesNow=panelScalesOf(output,panelsOf);$('#result-metrics').textContent=`${panelsOf.length} rasters side by side · ${scalesNow.length===1?`${scalesNow[0]!.label} in each cell, one scale`:scalesNow.map(x=>`${x.label} for ${x.layers.join(', ')}`).join('; ')} · drawn cells about ${Math.round(Math.max(...panelsOf.map(p=>p.drawnCellM))).toLocaleString('en')} m across`;$('.map-legend').hidden=true;}else if(raster){$('#result-metrics').textContent=`${raster.metadata.width} x ${raster.metadata.height} cells | ${validCells(raster.values).toLocaleString('en')} valid | ${raster.mask?(raster.mask.method==='all-touched'?'All-touched polygon mask':'Cell-center polygon mask')+' / margin '+(raster.mask.marginPixels||0)+' px':'Unmasked input window'} | Source-reported units: ${raster.asset.provenance?.units||'Not supplied'}`;$('.map-legend').hidden=true;}else $('.map-legend').hidden=false;
   if(output?.polygons){const p=output.polygons;$('.map-legend').hidden=true;$('#map-note').textContent=p.method;$('#result-metrics').textContent=p.kind==='hexbin'?`${p.features.length} released H3 cells / ${p.summary?.matched} locations represented / ${p.summary?.unmatched} locations in omitted sparse cells`:p.summary?`${p.summary.records} locations / ${p.summary.matched} matched / ${p.summary.unmatched} outside / ${p.summary.missingLocation} missing location / ${p.summary.multiple} multiple memberships`:p.features.length+' polygon'+(p.features.length===1?'':'s');$('#map-note').textContent=p.method+' / '+p.notes.join(' ');}
   if(exampleKey(workflow)==='snow-geoprivacy'&&output)$('#map-note').textContent=(output.nodeId.startsWith('before-')?'PRIVATE SOURCE · original coordinates. ':'DERIVED DISPLAY · educational transformation; no anonymity guarantee. ')+$('#map-note').textContent;
   if(output?.comparison){$('#map-note').textContent='PRIVATE EVALUATION · original and moved coordinates, mean centers and pumps';$('.map-legend').hidden=true;}
@@ -6731,21 +6743,30 @@ function mountMapPanels(host:HTMLElement,shown:NonNullable<ReturnType<typeof act
 }
 /** GRID CELLS IN PANELS, INTERACTIVE (Map's manual, History: panels): one small map per raster, each its cells in the shared classes,
  *  linked as they move. The key is drawn once, above. */
-function mountRasterPanels(host:HTMLElement,panels:import('./raster-panels.js').DrawnDensity[],breaks:number[],
+/** THE SCALES A RESULT'S PANELS ARE DRAWN ON; a result from before scales were recorded (2026-11-17) had one, people per km². */
+function panelScalesOf(result:unknown,panels:readonly import('./raster-panels.js').DrawnDensity[]):import('./raster-panels.js').PanelScale[]{
+  const held=(result as {panelScales?:import('./raster-panels.js').PanelScale[]}).panelScales;
+  if(held?.length)return held;
+  return [{mode:'density',label:'people per km²',ramp:'YlOrRd',classes:'quantile',noun:'people',
+    breaks:(result as {densityBreaks?:number[]}).densityBreaks??[],layers:panels.map(p=>p.layer)}];
+}
+function mountRasterPanels(host:HTMLElement,panels:import('./raster-panels.js').DrawnDensity[],scales:import('./raster-panels.js').PanelScale[],
     mapNode:WorkflowNode<'map_output'>):()=>void{
   const arranged=mapNode.params.arrangement;
   const order=arranged?arranged.panels.map(p=>p.layer):panels.map(p=>p.layer);
   const shown=order.map(name=>panels.find(p=>p.layer===name)).filter((p):p is NonNullable<typeof p>=>!!p);
   const title=(layer:string)=>arranged?.panels.find(p=>p.layer===layer)?.title?.trim()||layer;
-  const columns=panelColumns(arranged?.grid??'grid',shown.length),colours=rampFor(breaks);
+  const columns=panelColumns(arranged?.grid??'grid',shown.length);
   host.classList.add('map-panels-host');
-  host.innerHTML=`<div class="map-panels-key" data-density-key>${colours.map((c,i)=>`<span><i style="background:${c}"></i>${
+  // ONE KEY PER SCALE: counts share one, each unit of value its own (2026-11-17).
+  host.innerHTML=scales.map((scale,j)=>{const colours=rampFor(scale.breaks,scale.ramp),breaks=scale.breaks,words=scaleWords(scale,scales.length===1);
+    return `<div class="map-panels-key" data-density-key data-scale-key="${j}">${colours.map((c,i)=>`<span><i style="background:${c}"></i>${
       i===0?`up to ${roundTo(breaks[0])}`:i===colours.length-1?`over ${roundTo(breaks[i-1])}`:`${roundTo(breaks[i-1])} to ${roundTo(breaks[i])}`}</span>`).join('')}`
-    +` <span class="muted">people per km², one scale for every panel; side by side, not a difference</span></div>`
+    +` <span class="muted">${esc(words.shade.replace(/^Cell shade: /,''))}</span></div>`;}).join('')
     +`<label class="map-panels-sync"><input type="checkbox" id="map-panels-sync" ${panelsMoveTogether?'checked':''}> Move the panels together</label>`
     +`<div class="map-panels-grid" style="grid-template-columns:repeat(${columns},minmax(0,1fr))">`
     +shown.map((p,i)=>`<section class="map-panel" data-map-panel="${esc(p.layer)}"><h4>${esc(title(p.layer))}</h4><div data-map-panel-host="${i}" class="raster-panel-map"></div></section>`).join('')+`</div>`
-    +`<p class="muted">Drawn cells about ${Math.round(Math.max(...shown.map(p=>p.drawnCellM))).toLocaleString('en')} m across: each the people in the source cells under it over their area.</p>`;
+    +`<p class="muted">${esc(drawnWords(scales,Math.max(...shown.map(p=>p.drawnCellM))))}.</p>`;
   host.querySelector<HTMLInputElement>('#map-panels-sync')!.onchange=e=>{panelsMoveTogether=(e.target as HTMLInputElement).checked;};
   const maps:import('leaflet').Map[]=[];let moving=false,ready=false;
   const follow=(from:import('leaflet').Map)=>{
@@ -6753,7 +6774,7 @@ function mountRasterPanels(host:HTMLElement,panels:import('./raster-panels.js').
     try{for(const other of maps)if(other!==from&&other.getContainer().isConnected)other.setView(from.getCenter(),from.getZoom(),{animate:false});}
     finally{moving=false;}};
   const basemap=basemapOf(mapNode.params.basemap);
-  const disposers=shown.map((p,i)=>mountDensityPanel(host.querySelector<HTMLElement>(`[data-map-panel-host="${i}"]`)!,densityImage(p,breaks),p.bounds,basemap,
+  const disposers=shown.map((p,i)=>mountDensityPanel(host.querySelector<HTMLElement>(`[data-map-panel-host="${i}"]`)!,densityImage(p,scales[p.scale]??scales[0]!),p.bounds,basemap,
     map=>{maps.push(map);map.on('move zoom',()=>follow(map));},p.outline));
   // FITTED ONCE THE PANELS HAVE A SIZE: fitted before, they opened zoomed into the middle (Rwanda, 2026-11-13).
   const all=[Math.min(...shown.map(p=>p.bounds[0])),Math.min(...shown.map(p=>p.bounds[1])),Math.max(...shown.map(p=>p.bounds[2])),Math.max(...shown.map(p=>p.bounds[3]))];
@@ -6777,10 +6798,10 @@ async function drawStaticFigure(svg:SVGSVGElement,result:Output,mapNode:Workflow
   // the areas they are drawn within as polygons too, and the polygon branch drew those alone: Botswana's districts and
   // no cells in Notes (2026-11-14).
   if(rasterPanels?.length){
-    const breaks=(result as unknown as {densityBreaks:number[]}).densityBreaks;
+    const scales=panelScalesOf(result,rasterPanels);
     const order=arranged?arranged.panels.map(p=>p.layer):rasterPanels.map(p=>p.layer);
     const shownPanels=order.map(name=>rasterPanels.find(p=>p.layer===name)).filter((p):p is NonNullable<typeof p>=>!!p);
-    svg.innerHTML=rasterPanelsSvg(shownPanels,breaks,arranged?.grid??'grid',Object.fromEntries((arranged?.panels??[]).map(p=>[p.layer,p.title])),esc);
+    svg.innerHTML=rasterPanelsSvg(shownPanels,scales,arranged?.grid??'grid',Object.fromEntries((arranged?.panels??[]).map(p=>[p.layer,p.title])),esc);
     applyFrame(svg,svg.innerHTML);
     return true;
   }
@@ -7037,7 +7058,7 @@ function renderMap(){
       label:mapImageCredit(livePlate),...(livePlate.corners?{corners:livePlate.corners,width:livePlate.width,height:livePlate.height}:{})}));
     const withPlate=plates.length?{...result,plate:plates[0]!,...(plates.length>1?{plates}:{})}:result;
     if(rasterPanels?.length&&mapNode)disposeCatchmentMap=mountRasterPanels(host,rasterPanels,
-      (result as unknown as {densityBreaks:number[]}).densityBreaks,mapNode);
+      panelScalesOf(result,rasterPanels),mapNode);
     else if(arranged&&result.polygons&&mapNode)disposeCatchmentMap=mountMapPanels(host,withPlate,mapNode,arranged);
     else disposeCatchmentMap=mountCatchmentMap(host,withPlate.polygons?{...withPlate,polygons:withPlate.polygons}:withPlate,
       result.contextPoints,esc,mapNode?basemapOf(mapNode.params.basemap):'none',

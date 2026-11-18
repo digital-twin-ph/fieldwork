@@ -186,3 +186,17 @@ made to show.
 - A practitioner cannot reorder layers, set a layer's role, or restyle one.
 - Nine of the ten published maps have no basemap control, and none can embed one in an
   export. See above for the two ways out and what each costs.
+
+### Raster panels shown by their unit (2026-11-17)
+
+The practitioner, with the Rwanda panels on screen: *"I can't seem to find how Map output enables rendering of pop
+density as YlOrRd hues"*, then *"How do you detect that a raster is a population raster? From its source?"* There was
+nothing to find: every raster in panels was divided by its cells' area and shaded yellow to red as people per km², a
+count or not, and Configure… had no control for it. An NDVI or elevation raster beside another would have been drawn as
+people. Now the unit decides, found as the Inspector finds it (`src/raster-units.ts`: the source record, then the
+publisher's record for a file recognised by its name, then the file's band tag): a count per cell is shown per km² in
+YlOrRd, any other unit as the cell's mean value in viridis, none stated as a count with the key saying so. Panels in the
+same unit share a scale; different units get a key each. Configure… overrides each of the three. GHS-POP's file is now
+recognised, its unit *people per pixel*, and a file read by its address is recognised as one chosen from disk is. The
+practitioner: *"We can potentially include NDVI in Brazil worked example"*, the case the second scale is for; not done.
+A Map given one raster, without panels, still draws its cells as before.

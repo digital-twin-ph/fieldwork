@@ -184,7 +184,9 @@ test('the static plot draws points on the raster, and the key names them',async(
   // is on it. The label is the layer's own, so this asserts the text the application composes
   // rather than a wording chosen here.
   const key=page.locator('#map-communication-key');
-  await expect(key).toContainText('Relative cell value');
+  // Since 2026-11-17 the raster's entries are its classes, each with its range and unit, not "Relative cell value".
+  await expect(key).toContainText('per km²: up to');
+  await expect(key).not.toContainText('Relative cell value');
   await expect(key).toContainText('death locations');
 
   // The study area outline is drawn, and always was: `loadRaster` attaches the area to every

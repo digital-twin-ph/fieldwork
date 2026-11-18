@@ -95,6 +95,8 @@ export interface MapLayers {
    *  Arrives as a layer rather than as a mode, so a map showing streets and facilities can
    *  show the population they are to be read against. */
   raster?:import('./raster.js').RasterGrid;
+  /** How that raster is shaded and keyed, by its unit (2026-11-17); absent on an older result. */
+  rasterScale?:import('./raster-panels.js').PanelScale;
   /** Points carried on a value rather than arriving at a port of their own. */
   rows?:{id:string;name:string;coordinates?:Position|null;status?:string;relation?:string;excluded?:boolean;sourceNodeId?:string;fill?:FillClass;pinClass?:string}[];
   /** What the fill channel stands for. The renderer prints the words and draws the classes; it
@@ -223,10 +225,11 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
     place(key,sheet.label,plate);});
   if(layers.raster?.metadata){
     const [west,south,east,north]=layers.raster.metadata.bounds;
-    const overlay=L.imageOverlay(rasterImage(layers.raster),[[south,west],[north,east]],
+    const overlay=L.imageOverlay(rasterImage(layers.raster,undefined,layers.rasterScale),[[south,west],[north,east]],
       {opacity:.75,interactive:false,className:'raster-result-image'});
     if(!hiddenPort('raster')){overlay.addTo(map);all.addLayer(overlay);}
-    place('raster','Population raster',overlay);
+    // Named for its source and what it shows, not "Population raster" whatever it holds (2026-11-17).
+    place('raster',layers.rasterScale?`${layers.rasterScale.layers[0]} \u00b7 ${layers.rasterScale.label}`:'Raster',overlay);
   }
   if(layers.boundary){
     // Canvas for the same reason the streets use it: a published boundary can be tens of

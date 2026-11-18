@@ -11,7 +11,7 @@ import {travelTimeBand,validateBandNode} from './travel-time-band.js';
 import {collectPolygonLayers,isPolygonPort,polygonPort,MAX_POLYGON_LAYERS} from './polygon-layers.js';
 import {applyFeatureEdits,applyTableEdits,editsFacts,editsSentence,validEdits,editsAt} from './cell-edits.js';
 import {rasterUnitsOf} from './raster-units.js';
-import {drawnDensity,pooledBreaks,isRasterPort,rasterPort,rasterMeasure,validRasterShading,RAMPS,MAX_RASTER_LAYERS,MAX_DRAWN_SIDE,type PanelScale} from './raster-panels.js';
+import {singleRasterScale,drawnDensity,pooledBreaks,isRasterPort,rasterPort,rasterMeasure,validRasterShading,RAMPS,MAX_RASTER_LAYERS,MAX_DRAWN_SIDE,type PanelScale} from './raster-panels.js';
 import {fillInteriorGaps,validateFillNode} from './fill-interior-gaps.js';
 /** Resolves a named credential to its secret. No current widget needs one; the credential
  *  manager stands on its own (experiment 30) and executeWorkflow still accepts a resolver so a
@@ -2591,9 +2591,12 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         // carry it. When points are wired the map is built as the spatial map it is, and the
         // raster joins it as ground.
         const rasterLayers=pointInputs().layers;
+        // ONE RASTER, SHADED BY THE PANELS' RULE (2026-11-17): its unit decides a count per km² or its value.
+        const rasterScale=singleRasterScale(inputs.raster,workflow.nodes.find(n=>n.id===source)?.params.label||source,
+          inputs.raster.asset?rasterUnitsOf(inputs.raster.asset)?.units:undefined,node.params.rasterShading);
         if(rasterLayers.length&&inputs.area){
           const mapped=mapOutput(node,{area:inputs.area,points:pointInputs()},runId);
-          value={...mapped.value,raster:inputs.raster} as unknown as DisplayValue;
+          value={...mapped.value,raster:inputs.raster,rasterScale} as unknown as DisplayValue;
           if(mapped.receipt){
             mapped.receipt.facts+=`<urn:fieldwork:run:${runId}:map:${node.id}> `
               +`prov:used <urn:fieldwork:run:${runId}:output:${source}>.\n`;
@@ -2604,7 +2607,10 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           }
           break;
         }
-        const shown=decisionPresentation(node,{kind:'raster-map',raster:inputs.raster,boundary:inputs.raster.boundary,rows:[],centers:[]},source,runId);value=shown.value;receipts.push(shown.receipt);break;}// A MAP OF POINTS NEEDS SOMETHING TO PUT THEM ON. The relation every row carries -- inside,
+        const shown=decisionPresentation(node,{kind:'raster-map',raster:inputs.raster,boundary:inputs.raster.boundary,rows:[],centers:[]},source,runId);
+        value={...shown.value,rasterScale} as unknown as DisplayValue;
+        shown.receipt.facts+=`<urn:fieldwork:run:${runId}:map:${node.id}> fw:drawnAs ${JSON.stringify(`${rasterScale.mode==='density'?`${rasterScale.label} of each cell's area on the sphere`:`${rasterScale.label}, as each cell holds it`}, in ${rasterScale.breaks.length+1} ${rasterScale.classes==='equal'?'equal steps':'quantile classes'}`)}^^<http://www.w3.org/2001/XMLSchema#string>.\n`;
+        shown.receipt.input=shown.receipt.facts;receipts.push(shown.receipt);break;}// A MAP OF POINTS NEEDS SOMETHING TO PUT THEM ON. The relation every row carries -- inside,
         // on the boundary, outside -- is a relation TO the study area, so without one there is no
         // map to draw and `mapOutput` read `boundary` off nothing: "Cannot read properties of
         // undefined (reading 'boundary')", reported 2026-10-21 on a Map wired to a deduplication

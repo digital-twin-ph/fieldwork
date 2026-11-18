@@ -1,6 +1,6 @@
 # Map · specification
 
-_Created 2026-10-14 · Updated 2026-10-23_
+_Created 2026-10-14 · Updated 2026-11-17_
 
 **This is the record, not the manual.** The manual a practitioner reads is
 [../widgets/map_output.md](../widgets/map_output.md); this is what the widget assumes, what has
@@ -199,4 +199,8 @@ YlOrRd, any other unit as the cell's mean value in viridis, none stated as a cou
 same unit share a scale; different units get a key each. Configure… overrides each of the three. GHS-POP's file is now
 recognised, its unit *people per pixel*, and a file read by its address is recognised as one chosen from disk is. The
 practitioner: *"We can potentially include NDVI in Brazil worked example"*, the case the second scale is for; not done.
-A Map given one raster, without panels, still draws its cells as before.
+A Map given one raster, without panels, still drew its cells as before: a green stretch between its lowest and highest
+values, keyed "Relative cell value (see scale)" and listed as "Population raster" whatever it held. The practitioner:
+*"Let's do the one raster on a map next."* Now it follows the same rule at its own resolution, a count per km² or its
+value, classed as a panel is, keyed under the static figure and in the map's key, and named for its source. A result
+saved before has no scale recorded and is drawn the old way.

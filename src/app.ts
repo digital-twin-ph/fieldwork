@@ -6802,7 +6802,8 @@ async function drawStaticFigure(svg:SVGSVGElement,result:Output,mapNode:Workflow
     const order=arranged?arranged.panels.map(p=>p.layer):rasterPanels.map(p=>p.layer);
     const shownPanels=order.map(name=>rasterPanels.find(p=>p.layer===name)).filter((p):p is NonNullable<typeof p>=>!!p);
     svg.innerHTML=rasterPanelsSvg(shownPanels,scales,arranged?.grid??'grid',Object.fromEntries((arranged?.panels??[]).map(p=>[p.layer,p.title])),esc);
-    applyFrame(svg,svg.innerHTML);
+    // No background to read the height from: the cells' mask leaves the outside clear. Framed by what is drawn.
+    applyFrame(svg,(result as {rasterScale?:unknown}).rasterScale?'<rect width="850" height="375"/>':'');
     return true;
   }
   if(result.network&&!result.pointLayers?.length){
@@ -6854,7 +6855,9 @@ async function drawStaticFigure(svg:SVGSVGElement,result:Output,mapNode:Workflow
         +`<path d="${markPath(symbol.shape||'circle',x,y,radius)}" fill="${symbol.colour}" stroke="white" stroke-width="1.2"/></g>`;
     }).join('');
     const rasterLinks=(result as {links?:import('./map-links.js').MapLink[]}).links;
-    svg.innerHTML=rasterSvg(result.raster,(rasterLinks?.length?linkLinesSvg(rasterLinks,rows,c=>frame.project(c) as [number,number],hidden):'')+marks);
+    svg.innerHTML=rasterSvg(result.raster,(rasterLinks?.length?linkLinesSvg(rasterLinks,rows,c=>frame.project(c) as [number,number],hidden):'')+marks,
+      (result as {rasterScale?:import('./raster-panels.js').PanelScale}).rasterScale);
+    applyFrame(svg,svg.innerHTML);
     return true;
   }
   if(result.pointTable){svg.innerHTML='';return false;}

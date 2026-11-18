@@ -3,7 +3,7 @@ import {RASTER_SOURCE_FIELDS,validateRasterProvenance,WORLDPOP_BOTSWANA,WORLDPOP
 import type {RasterProvenance} from './raster-provenance.js';
 import type {Boundary,Position} from './types.js';
 import type {RasterAsset,RasterGrid,RasterMetadata} from './raster.js';
-import {rasterImage,rasterImageFactor} from './raster-image.js';
+import {rasterImage,rasterImageFactor,scaleKeySvg,scaleWords} from './raster-image.js';
 export {rasterImage} from './raster-image.js';
 import {inspectRaster,rasterWindow,readRasterWindow,encodeRaster,savedWindowCells,rasterOverhang,overhangSentence,rasterFileByteLimit,MAX_RASTER_CELLS} from './raster.js';
 import {contentHash} from './project-files.js';
@@ -191,7 +191,7 @@ export function rasterFrame(grid:RasterGrid){
 /** `overlay` is SVG already projected by `rasterFrame(grid).project`, drawn over the cells and
  *  under the caption. Empty when nothing else was wired, which is the only time this map is
  *  honestly a picture of a raster alone. */
-export function rasterSvg(grid:RasterGrid,overlay=''):string{
+export function rasterSvg(grid:RasterGrid,overlay='',shade?:import('./raster-panels.js').PanelScale):string{
   const m=grid.metadata;
   const {west,north,cos,scale,width,height,x,y}=rasterFrame(grid);
   const path=grid.boundary?(grid.boundary.type==='Polygon'?[grid.boundary.coordinates]:grid.boundary.coordinates).flatMap(poly=>poly.map(ring=>ring.map((p,i)=>`${i?'L':'M'}${x+(p[0]-west)*cos*scale},${y+(north-p[1])*scale}`).join(' ')+'Z')).join(' '):'';
@@ -200,6 +200,8 @@ export function rasterSvg(grid:RasterGrid,overlay=''):string{
   const transform=`translate(${x} ${y}) scale(${width/m.width} ${height/m.height})`,margin=grid.mask?.marginPixels||0,maskId='raster-visible-footprint';
   const shapes=(color:string)=>pixelPaths.map(d=>`<path data-raster-mask-shape d="${d}" fill="${color}" fill-rule="evenodd" stroke="${color}" stroke-width="${2*margin}" stroke-linejoin="round" stroke-linecap="round"/>`).join('');
   const background=grid.mask?`<defs><mask id="${maskId}" maskUnits="userSpaceOnUse" x="0" y="0" width="850" height="295" style="mask-type:alpha"><g transform="${transform}">${shapes('white')}</g></mask></defs><g transform="${transform}">${shapes('#e8ece5').replaceAll('data-raster-mask-shape','data-raster-nodata-background')}</g>`:`<rect x="${x}" y="${y}" width="${width}" height="${height}" fill="#e8ece5"/>`;
-  return `${background}<image ${grid.mask?`mask="url(#${maskId})"`:''} href="${rasterImage(grid)}" x="${x}" y="${y}" width="${width}" height="${height}" preserveAspectRatio="none" style="image-rendering:pixelated"/><path d="${path}" fill="none" stroke="#193d33" stroke-width="1.4"/>${overlay}<text x="15" y="18" font-size="14">${rasterImageFactor(m)>1?`Raster cells, each pixel the mean of ${rasterImageFactor(m)} × ${rasterImageFactor(m)}`:'Native raster cells'} · ${grid.mask?`${grid.mask.method} · margin ${margin} px · outside footprint = transparent`:'unmasked input window'} · gray inside = NoData</text>`;
+  // SHADED BY ITS UNIT, WITH ITS KEY UNDER IT (2026-11-17): the caller frames it 375 high, its key below the cells.
+  const key='',keyBelow=shade?scaleKeySvg(shade,300,scaleWords(shade,'single'),esc):'';
+  return `${key}${background}<image ${grid.mask?`mask="url(#${maskId})"`:''} href="${rasterImage(grid,undefined,shade)}" x="${x}" y="${y}" width="${width}" height="${height}" preserveAspectRatio="none" style="image-rendering:pixelated"/><path d="${path}" fill="none" stroke="#193d33" stroke-width="1.4"/>${overlay}<text x="15" y="18" font-size="14">${rasterImageFactor(m)>1?`Raster cells, each pixel the mean of ${rasterImageFactor(m)} × ${rasterImageFactor(m)}`:'Native raster cells'} · ${grid.mask?`${grid.mask.method} · margin ${margin} px · outside footprint = transparent`:'unmasked input window'} · ${shade?'clear inside = nothing to shade':'gray inside = NoData'}</text>${keyBelow}`;
 }
 export function downloadRaster(grid:RasterGrid):void{const url=URL.createObjectURL(new Blob([encodeRaster(grid)],{type:'image/tiff'})),link=document.createElement('a');link.href=url;link.download=grid.mask?'fieldwork-clipped.tif':'fieldwork-raster-window.tif';link.click();setTimeout(()=>URL.revokeObjectURL(url),2000);}

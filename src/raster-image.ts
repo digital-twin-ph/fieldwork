@@ -17,7 +17,9 @@ import type {RasterGrid} from './raster.js';
 export const MAX_IMAGE_SIDE=2048;
 /** How many cells on a side one drawn pixel covers: 1 when the window fits. */
 export const rasterImageFactor=(m:{width:number;height:number},maxSide=MAX_IMAGE_SIDE)=>Math.max(1,Math.ceil(Math.max(m.width,m.height)/maxSide));
-export function rasterImage(grid:Pick<RasterGrid,'metadata'|'values'>,maxSide=MAX_IMAGE_SIDE):string{
+export function rasterImage(grid:Pick<RasterGrid,'metadata'|'values'>,maxSide=MAX_IMAGE_SIDE,
+    scale?:Pick<PanelScale,'mode'|'breaks'|'ramp'>):string{
+  if(scale)return shadedRasterImage(grid,maxSide,scale);
   const {metadata:m,values}=grid,factor=rasterImageFactor(m,maxSide),width=Math.ceil(m.width/factor),height=Math.ceil(m.height/factor);
   let min=Infinity,max=-Infinity;
   for(let i=0;i<values.length;i++){const value=values[i]!;if(Number.isFinite(value)){if(value<min)min=value;if(value>max)max=value;}}
@@ -35,6 +37,38 @@ export function rasterImage(grid:Pick<RasterGrid,'metadata'|'values'>,maxSide=MA
   return canvas.toDataURL();
 }
 
+const R_KM=6371.0088;
+/** A RASTER SHADED BY ITS SCALE (2026-11-17): each drawn pixel the count per km² of the cells under it, or their mean
+ *  value, in the scale's classes and colours; clear where there is nothing to shade. At the raster's own resolution
+ *  where it fits, as before. */
+function shadedRasterImage(grid:Pick<RasterGrid,'metadata'|'values'>,maxSide:number,scale:Pick<PanelScale,'mode'|'breaks'|'ramp'>):string{
+  const {metadata:m,values}=grid,factor=rasterImageFactor(m,maxSide),width=Math.ceil(m.width/factor),height=Math.ceil(m.height/factor);
+  const noData=typeof m.noData==='number'?m.noData:undefined,[,oy]=m.origin as [number,number],[rx,ry]=m.resolution as [number,number];
+  const colours=rampFor(scale.breaks,scale.ramp).map(hex=>[parseInt(hex.slice(1,3),16),parseInt(hex.slice(3,5),16),parseInt(hex.slice(5,7),16)]);
+  const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;
+  const context=canvas.getContext('2d')!,pixels=context.createImageData(width,height),data=pixels.data;
+  const sum=new Float64Array(width),weight=new Float64Array(width);
+  for(let y=0;y<height;y++){sum.fill(0);weight.fill(0);
+    for(let row=y*factor;row<Math.min(m.height,(y+1)*factor);row++){
+      const north=oy+row*ry,south=north+ry;
+      const area=scale.mode==='density'?R_KM*R_KM*Math.abs(rx*Math.PI/180)*Math.abs(Math.sin(north*Math.PI/180)-Math.sin(south*Math.PI/180)):1;
+      const base=row*m.width;
+      for(let col=0;col<m.width;col++){const v=values[base+col] as number|null|undefined;
+        if(v===null||v===undefined||!Number.isFinite(v)||v===noData||(scale.mode==='density'&&v<0))continue;
+        const x=(col/factor)|0;sum[x]+=v;weight[x]+=area;}}
+    for(let x=0;x<width;x++){if(!weight[x])continue;
+      const k=classOfDensity(sum[x]!/weight[x]!,scale.breaks,scale.mode);if(k<0)continue;
+      data.set([...colours[k]!,255],(y*width+x)*4);}}
+  context.putImageData(pixels,0,0);
+  return canvas.toDataURL();
+}
+/** THE KEY OF ONE SCALE, as SVG, from `top`: its classes, their edges, and two lines saying what is shaded. */
+export function scaleKeySvg(scale:PanelScale,top:number,words:{shade:string;classes:string},esc:(v:unknown)=>string):string{
+  const width=90,colours=rampFor(scale.breaks,scale.ramp);
+  return `<g data-scale-key="0">`+colours.map((c,i)=>`<rect x="${40+i*width}" y="${top}" width="${width}" height="10" fill="${c}" stroke="#4d4d4d" stroke-width=".4"/>`).join('')
+    +scale.breaks.map((b,i)=>`<text x="${40+(i+1)*width}" y="${top+23}" font-size="14" text-anchor="middle" fill="#4d4d4d">${roundDensity(b)}</text>`).join('')
+    +`<text x="20" y="${top+44}" font-size="14">${esc(words.shade)}</text><text x="20" y="${top+62}" font-size="14">${esc(words.classes)}</text></g>`;
+}
 /** A panel's drawn cells in its scale's classes (Map's manual, History: panels): clear where there is nothing to shade. */
 export function densityImage(panel:DrawnDensity,scale:Pick<PanelScale,'breaks'|'ramp'|'mode'>):string{
   const canvas=document.createElement('canvas');canvas.width=panel.width;canvas.height=panel.height;
@@ -50,9 +84,9 @@ export const rampFor=(breaks:readonly number[],ramp:RampName='YlOrRd'):string[]=
   return Array.from({length:n},(_,k)=>colours[n===1?colours.length-1:Math.round(k*(colours.length-1)/(n-1))]!);
 };
 /** WHAT A SCALE'S KEY SAYS, in words: the shade, its classes and what is clear. One people scale reads as it always has. */
-export function scaleWords(scale:PanelScale,only:boolean):{shade:string;classes:string}{
+export function scaleWords(scale:PanelScale,only:boolean|'single'):{shade:string;classes:string}{
   const counted=scale.mode==='density',n=scale.breaks.length+1,how=scale.classes==='equal'?'equal steps':'quantile classes';
-  return {shade:`Cell shade: ${scale.label}${only?', one scale for every panel':` (${scale.layers.join(', ')})`}; side by side, not a difference`,
+  return {shade:only==='single'?`Cell shade: ${scale.label}`:`Cell shade: ${scale.label}${only?', one scale for every panel':` (${scale.layers.join(', ')})`}; side by side, not a difference`,
     classes:counted?`${n} ${how} of the cells with ${scale.noun||'a count'}; clear: ${scale.noun==='people'?'no one modelled':'none counted'}`
       :`${n} ${how} of the cells with a value; clear: no value`};
 }

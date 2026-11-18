@@ -125,6 +125,8 @@ export interface DisplayValue {
   contextPoints?:PointCollection;
   polygons?:import('./catchments.js').Polygons;
   raster?:import('./raster.js').RasterGrid;
+  /** How a single raster is shaded and keyed (2026-11-17); absent on a result from before, drawn the old way. */
+  rasterScale?:import('./raster-panels.js').PanelScale;
   /** A street network shown as itself. Carried here rather than converted to polygons, because
    *  the thing a practitioner is checking is the graph that was downloaded. */
   network?:import('./catchments.js').Network;

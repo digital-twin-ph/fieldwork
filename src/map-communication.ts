@@ -1,3 +1,4 @@
+import {rampFor} from './raster-image.js';
 import type {Output,Receipt} from './results.js';
 import {generationColours} from './presentation.js';
 import {outputOf} from './core.js';
@@ -113,7 +114,12 @@ export function mapPresentation(node:WorkflowNode<'map_output'>,output:Output,wo
     // named the cells and neither the facilities nor their mark -- the same "winning mode throws
     // the others away" the renderer and the value builder both had. A mark on a map with no entry
     // in its key is exactly what MapMarkContrast cannot save a reader from.
-    items=[{label:'Relative cell value (see scale)',color:R.primary},{label:'NoData / outside mask',color:R.unknown}];
+    // THE CELLS' OWN CLASSES (2026-11-17): each colour with its range and unit, where "Relative cell value" said neither.
+    const scale=(output as {rasterScale?:import('./raster-panels.js').PanelScale}).rasterScale;
+    if(scale){const colours=rampFor(scale.breaks,scale.ramp),b=scale.breaks,round=(v:number|undefined)=>v===undefined?'':Number(Math.abs(v)>=100?v.toFixed(0):Math.abs(v)>=10?v.toFixed(1):v.toFixed(2)).toLocaleString('en');
+      items=colours.map((color,i)=>({label:`${scale.label}: ${i===0?`up to ${round(b[0])}`:i===colours.length-1?`over ${round(b[i-1])}`:`${round(b[i-1])} to ${round(b[i])}`}`,color}));
+      items.push({label:scale.mode==='density'?'Clear: none counted, NoData or outside the mask':'Clear: no value, NoData or outside the mask',color:R.unknown});}
+    else items=[{label:'Relative cell value (see scale)',color:R.primary},{label:'NoData / outside mask',color:R.unknown}];
     for(const [index,layer] of (output.pointLayers||[]).entries()){
       const symbol=resolveLayerSymbol(index,node.params.layerSymbols?.[layer.sourceNodeId]);
       items.push({label:`${layer.label} (${layer.count})`,color:symbol.colour,shape:symbol.shape});

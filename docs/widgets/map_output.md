@@ -1,6 +1,6 @@
 # Map
 
-_Created 2026-10-14 · Updated 2026-11-15_
+_Created 2026-10-14 · Updated 2026-11-17_
 
 **An output widget.** It draws what your workflow produced. It computes nothing, changes
 nothing and decides nothing — if a number looks wrong on the map, the step that produced it is
@@ -231,7 +231,11 @@ Panels showing the same thing in the same unit share one scale and one key; a co
 have two. A panel is drawn at no more than 1,000 cells a side: each drawn cell is the count in the cells under it over
 their area, or the mean of their values. The figure says how large a drawn cell is.
 
-**Raster panels**, in **Configure…**, overrides what the unit decides: **Each cell shows** a count per km² or the cell's
+**One raster follows the same rule.** A Map given a single raster shades it the same way, at the raster's own resolution:
+a count per km² in yellow to red, any other unit as its value in viridis, keyed under the map with each class's range,
+and named in the layer list by its source and what it shows.
+
+**Raster panels**, in **Configure…**, overrides what the unit decides, for one raster or several: **Each cell shows** a count per km² or the cell's
 value; **Colours**, yellow to red or viridis; **Classes**, quantiles (about as many cells in each) or equal steps from the
 lowest value to the highest.
 

@@ -163,3 +163,17 @@ export const classOfDensity=(v:number,breaks:readonly number[],mode:'density'|'v
   let k=0;while(k<breaks.length&&v>breaks[k]!)k++;
   return k;
 };
+
+/** ONE RASTER'S SCALE, by the rule the panels follow (2026-11-17): a Map given a single raster shades it as a panel would be
+ *  shaded, a count per km² in YlOrRd or a value as it is in viridis, and keys it in those words. The breaks are taken
+ *  over the drawn cells, as a panel's are; the raster itself is drawn at its own resolution. */
+export function singleRasterScale(grid:Pick<RasterGrid,'metadata'|'values'>&{boundary?:Boundary|null},layer:string,
+    units:string|undefined,shading:RasterShading={}):PanelScale{
+  const measure=rasterMeasure(units);
+  const mode=shading.show==='cell-value'?'value':shading.show==='per-km2'?'density':measure.kind==='count'?'density':'value';
+  const ramp=shading.ramp??(mode==='density'?'YlOrRd':'viridis'),classes=shading.classes??'quantile';
+  const panel=drawnDensity(grid,layer,MAX_DRAWN_SIDE,mode,0);
+  const label=mode==='density'?`${measure.stated?measure.noun:'count'} per km²${measure.stated?'':' (unit not stated; read as a count per cell)'}`
+    :measure.unit||'value, unit not stated';
+  return {mode,label,ramp,classes,breaks:pooledBreaks([panel],RAMPS[ramp].length,classes,mode),layers:[layer],noun:mode==='density'&&measure.stated?measure.noun:''};
+}

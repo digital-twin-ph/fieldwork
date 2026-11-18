@@ -3,7 +3,7 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## 0.147.0 — In development
+## 0.147.0 — 2026-11-18
 
 - **terrio is Fieldwork's raster engine** (experiment 221): it decodes every GeoTIFF in Raster input, Georeferenced
   map image and Sample satellite files, where geotiff.js did. Fieldwork still reads the header and makes its own checks
@@ -12,7 +12,7 @@ shown in a local build is not a claim that it has been published.
 - **The engine is fetched the first time a raster is read**: 16 MB, 6.1 MB as sent. It is kept on the device, so
   rasters read offline afterwards; a project without a raster never fetches it.
 
-## 0.146.0 — In development
+## 0.146.0 — 2026-11-18
 
 - **An inset never covers what the map represents**: its boundary, its marks or its north arrow. A corner chosen is used
   where it is clear; otherwise the nearest clear place, or a band below the map. A boundary around the whole map is its
@@ -27,14 +27,14 @@ shown in a local build is not a claim that it has been published.
 - **The NYC test no longer depends on a live satellite service by default**: the part that reads 19 Sentinel-5P files
   runs when asked (`FIELDWORK_LIVE_SATELLITE=1`), after taking from 52 seconds to over six minutes on the same code.
 
-## 0.145.0 — In development
+## 0.145.0 — 2026-11-18
 
 - **A focus inset is a third of the figure by default, and never more than 40% of the map's shorter side**; Configure…
   says so beside *Its size*. MERS's inset is a third, re-pinned.
 - **A focus inset is named with another workflow open**: the figure in Notes reads the study area from the map's own
   workflow. Map 0.34.1.
 
-## 0.144.0 — In development
+## 0.144.0 — 2026-11-18
 
 - **A notes audit, on request and per target**: how many parts are written, as a number and a bar; each part written,
   planned or empty, with the length it asks for and, where it is in words or sentences, whether the writing is short,
@@ -49,7 +49,7 @@ shown in a local build is not a claim that it has been published.
 - **The identity locks after 10 minutes without its own use**: working in its dialog, or signing.
 - **The research on the response to measles in Württemberg, 1861**, is in `docs/research/`.
 
-## 0.143.0 — In development
+## 0.143.0 — 2026-11-18
 
 - **Notes shows the project's plan** above the outline: one part per slot of what it is writing towards, each written
   before the analysis, marked complete with a dated version of every part, and never part of any product. The
@@ -58,7 +58,7 @@ shown in a local build is not a claim that it has been published.
 - **Credentials lock after 10 minutes without their own use**: working in their dialog, or a key read for a request.
   Until now any click anywhere in Fieldwork kept them open. The lock warning's *Keep them open* still keeps them open.
 
-## 0.142.0 — In development
+## 0.142.0 — 2026-11-18
 
 - **A disease model can be run under a response scenario**: how cases are detected (a daily chance of notice, in a
   state or on a network while it meets), how soon detection is notified, and each action with its start and its effect
@@ -72,7 +72,7 @@ shown in a local build is not a claim that it has been published.
 - **Hagelloch's note on what is not established says the 27% school closure traces to no source**: Groendyke and
   colleagues simulated a closure, and Aaby and colleagues mention none.
 
-## 0.141.0 — In development
+## 0.141.0 — 2026-11-18
 
 - **Hagelloch's write-up carries seven notes by its author** on how the outbreak was met in 1861: the village and its
   care, how Pfeilsticker found the cases, a school that stayed open, what else was done, whether measles was reportable,

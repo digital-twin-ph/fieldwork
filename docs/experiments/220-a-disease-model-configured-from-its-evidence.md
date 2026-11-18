@@ -91,6 +91,27 @@ the source's own words, its page, how a derived value was worked out, when it wa
 changed value asks for its new source or is marked assumed, and the run's record keeps both. Each parameter's record
 follows the shape `widgets/caps.json` already gives a limit: value, basis in a closed vocabulary, evidence.
 
+## The trainee's work, agreed 2026-11-17
+
+The practitioner: *"So the main tasks for the trainee using an ABM workflow would be calibration?"* Not mainly. The
+weight goes where epidemiological judgement is built; the model does the arithmetic, the trainee the judging. Agreed
+as the workflow this experiment designs for:
+
+1. **Gather the evidence for each parameter**: find it, judge its source (setting, year, open or closed), decide when
+   an assumption is acceptable.
+2. **Build the population and its contacts from data**: households, schools, routes from census counts and maps, and
+   what each contact network adds.
+3. **Check the model before trusting it**: does it reproduce what is known (R0, the final size, the observed curve)?
+   Calibration belongs here, run by Fieldwork and shown with its evidence (the fit, its bounds, a value on a bound),
+   read and questioned by the trainee rather than tuned by hand.
+4. **Ask the scenario question**: what detecting in 7 days rather than 20 would change; which response action matters
+   most. Possible from the start, on a model calibrated by someone else.
+5. **Interpret and communicate with uncertainty**: scenarios compared, not single forecasts; what the model does not
+   establish, said.
+
+A worked example may ship calibrated, so a trainee starts at step 4 and works back: why a scenario moves so much,
+which parameter it is most sensitive to, and how good that parameter's evidence is.
+
 ## What the research found, 2026-11-17
 
 Report: reports/Declaring disease models with evidence.md, in the workspace beside this repository, with its notes;

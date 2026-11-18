@@ -270,7 +270,10 @@ export function notesPanel(notes:readonly Note[],
   references:readonly ReferenceEntry[]=[],
   /** WHERE A WORKED EXAMPLE LIVES ONLINE, as two QR codes at the foot of References (experiment 203). Markup, assembled
    *  by the application from the catalog and the project; empty for a project that is not a worked example. */
-  online=''):string{
+  online='',
+  /** WHAT THE PROJECT WRITES TOWARDS, each a draft to open (the practitioner, 2026-11-18: MERS with its sit rep unticked
+   *  still offered "Publication"). None chosen, one plain Draft, which says nothing of a target. */
+  drafts:readonly {kind:string;label:string}[]=[]):string{
   const fromRun:Note[]=[...(machined||[])];
   const all=[...notes,...derived,...fromRun];
   const objectiveNo=new Map(objectivesOf(notes).map(o=>[o.id,o.n] as const));
@@ -292,7 +295,9 @@ export function notesPanel(notes:readonly Note[],
     +` · ${extent.words.toLocaleString()} words`
     +` · ${extent.characters.toLocaleString()} characters</span>`
     // THE PUBLICATION (experiment 202): the same notes laid out as a paper, to print or save as PDF.
-    +(extent.notes?`<button class="button small" data-publication>Publication</button>`:'')+`</div>`
+    +(extent.notes?(drafts.length?drafts.map(d=>`<button class="button small" data-publication data-publication-open="${esc(d.kind)}">Draft: ${esc(d.label)}</button>`).join(' ')
+      :`<button class="button small" data-publication>Draft</button>`):'')
+    +(drafts.length?` <button class="button small" data-notes-audit>Notes audit</button>`:'')+`</div>`
     +`<p class="description">What survives into the write-up, in the order a reader meets it. `
     +`Quoted and authored notes belong to the investigation; derived and machined ones come from `
     +`the last run of each workflow in this project.</p>`;

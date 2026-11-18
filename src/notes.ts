@@ -313,6 +313,9 @@ export interface AuthoredNote {
   author?:string;
   /** The note or node this annotates. */
   about?:string;
+  /** THE PLAN PART IT WAS STARTED FROM, by role (experiment 202, 2026-11-18), so the plan and what was written stay
+   *  traceable when the note is rewritten or moved. */
+  fromPlan?:string;
   /** WHERE IT CAME FROM WHEN IT WAS NOT WRITTEN FROM NOTHING.
    *
    *  The practitioner, 2026-10-29: *"A machined note can also be edited but once it is, it is
@@ -505,6 +508,7 @@ export function readNotes(raw:unknown):{notes:Note[]; unreadable:number}{
         ...(text(entry.fn)?{fn:text(entry.fn)}:{}),
         ...(author?{author}:{}),
         ...(text(entry.about)?{about:text(entry.about)}:{}),
+        ...(text(entry.fromPlan)?{fromPlan:text(entry.fromPlan)}:{}),
         ...(was?{forkedFrom:{text:was,
           ...(text(from!.nodeId)?{nodeId:text(from!.nodeId)}:{}),
           ...(widgetOf(from!.widget)?{widget:widgetOf(from!.widget)!}:{}),

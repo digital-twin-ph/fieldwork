@@ -204,3 +204,15 @@ values, keyed "Relative cell value (see scale)" and listed as "Population raster
 *"Let's do the one raster on a map next."* Now it follows the same rule at its own resolution, a count per km² or its
 value, classed as a panel is, keyed under the static figure and in the map's key, and named for its source. A result
 saved before has no scale recorded and is drawn the old way.
+
+### Insets by shape: square for overview, circle for focus (2026-11-18)
+
+The practitioner, 2026-11-18, showing a published map with an overview inset in a square and a focus inset in a circle:
+*"For the inset maps let's adopt this convention. Square for overview and Circle for focus. And let's make sure we have
+them labeled properly using existing metadata."* Map 0.34.0 renames the two arrangements (Inset becomes the focus
+inset, Locator the overview inset), draws the focus inset as a circle joined to a circle on the map along their outer
+tangents, and names each from the boundary record. MERS's study area joins seventeen provinces, so its stored name is
+the whole list: the overview takes the country instead, and the focus the unit at its centre, *Gyeonggi*. The saved
+setting keeps its values, so no workflow needs migrating. Several focus insets on one map, for a road traffic example,
+are in TODO.
+

@@ -195,3 +195,23 @@ test('the key page a phone opens from the QR code shows the key, offers Copy and
   await expect(page.locator('#missing')).toBeVisible();
   await expect(page.locator('#found')).toBeHidden();
 });
+
+// ONLY ITS OWN USE KEEPS IT OPEN (2026-11-18, as for the credentials): clicks elsewhere in Fieldwork do not.
+test('an open identity locks after ten minutes without its own use, however much Fieldwork is used',async({page})=>{
+  test.setTimeout(120000);
+  await page.clock.install();
+  await page.goto('/?example=blank');
+  await expect(page.locator('html[data-ready="true"]')).toHaveCount(1,{timeout:30000});
+  await page.locator('#identity-button').click();
+  const dialog=page.locator('#identity-dialog');
+  await dialog.locator('#identity-name').fill('Ada Lovelace');
+  await dialog.locator('#identity-new-passphrase').fill(PASS);
+  await dialog.locator('#identity-confirm').fill(PASS);
+  const download=page.waitForEvent('download');
+  await dialog.locator('#identity-create').click();
+  await download;
+  await expect(page.locator('#identity-button')).toHaveAttribute('aria-label','Identity: Ada Lovelace');
+  await page.keyboard.press('Escape');
+  for(let minute=0;minute<11;minute++){await page.clock.fastForward(60*1000);await page.locator('body').click({position:{x:5,y:300}});}
+  await expect(page.locator('#identity-button')).toHaveAttribute('aria-label','Identity');
+});

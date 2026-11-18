@@ -3,6 +3,21 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.144.0 — In development
+
+- **A notes audit, on request and per target**: how many parts are written, as a number and a bar; each part written,
+  planned or empty, with the length it asks for and, where it is in words or sentences, whether the writing is short,
+  within or long; planned and unwritten, written and unplanned, and notes the target does not use; objectives, figures
+  and references. It never stops a draft.
+- **The plan's shells and links**: a part lists the tables, charts and maps it will show, each marked when made;
+  **Start a note from this** copies a part into a note that keeps the link; the plan counts parts with notes and no plan.
+- **Draft buttons follow the targets**: one per target chosen, opening as that target; a plain Draft when none is.
+  *Draft as* lists the targets first.
+- **Insets by shape**: the focus inset is a circle, the overview inset a square, each named from the study area's
+  boundary record. MERS's focus reads *Gyeonggi*. Map 0.34.0.
+- **The identity locks after 10 minutes without its own use**: working in its dialog, or signing.
+- **The research on the response to measles in Württemberg, 1861**, is in `docs/research/`.
+
 ## 0.143.0 — In development
 
 - **Notes shows the project's plan** above the outline: one part per slot of what it is writing towards, each written

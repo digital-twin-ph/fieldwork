@@ -1,6 +1,6 @@
 # 202 · One record, several products
 
-_Created 2026-11-10 · Updated 2026-11-16_
+_Created 2026-11-10 · Updated 2026-11-18_
 
 **Status:** tried. A design for the Notes tab, built on [141](141-organising-snows-notes.md). Reordered 2026-11-14: the
 publication render first. Stages A and B are built (0.128.0, 0.129.0), and the planning note (0.143.0, 2026-11-18).
@@ -617,8 +617,24 @@ references slot has no part, since the record lists them itself. Marking complet
 written part with experiment 218's `noteVersion`, signed where an identity is open; undoing keeps the versions; a part
 changed since the mark is said. The counts report: parts written of all parts, and per part what fills it so far.
 
-**Not built yet:** a non-planning note that maps to no planned part is not yet counted (the "written and not planned"
-half of the reflection); shells per part; copying a part's words into a product note with its link kept.
+**Built next, 0.144.0** (the practitioner, 2026-11-18, *"Yes to all 4"*): parts with notes and no plan are counted;
+a part's shells, planned tables, charts and maps, each marked made when a note filling the part names a component of
+its kind; and **Start a note from this**, which copies a part's words into a note of its section, with `fromPlan`
+keeping the link.
+
+## The notes audit, built 2026-11-18
+
+The practitioner: *"We can have a notes audit step before render. It should give visual and stats cues about gaps."*
+Asked when and how: *"1-on request. 2-per target for now"*. Built (`src/notes-audit.ts`, 0.144.0): per target, each
+slot written, planned or empty, with a shape and a word for each and never colour alone; lengths counted where a
+format gives them in words or sentences; planned-not-written, written-not-planned and notes the target does not use;
+objectives and their components; tables, charts and maps named by a note; works cited and named-but-unread. A
+**hard stop** in the other direction: the audit holds no draft back, and no draft waits for it.
+
+**Not established:** whether a trainee reads the audit as a list of gaps to close or as a grade; whether counted
+lengths help, given that most slots declare lengths in paragraphs or bullets, which are not counted.
+
+**Validation:** `tests/notes-audit.test.mjs` (3), `tests/plan.test.mjs` (7), `tests/plan.browser.mjs` (1), Chromium.
 
 **Validation:** `tests/plan.test.mjs` (5) and `tests/plan.browser.mjs` (1), Chromium.
 

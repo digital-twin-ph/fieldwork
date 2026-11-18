@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-const {composeInset,boxInside,chooseCorner,niceMetres}=await import('../build/map-inset.js');
+const {composeInset,boxInside,chooseCorner,niceMetres,outerTangents}=await import('../build/map-inset.js');
 const {staticBoundaryMap,staticMapFrame}=await import('../build/static-map.js');
 
 // Experiment 213: an enlarged part in a corner of the whole, or the whole small in a corner of the part.
@@ -87,4 +87,31 @@ test('A LOCATOR NAMES THE WHOLE: the boundary named in its frame, escaped; an in
   assert.match(locator.content,/font-size="15"/);
   assert.doesNotMatch(composeInset(drawing(),drawing(box),{box},[],{whole:'New York'}).content,/data-inset-name/);
   assert.doesNotMatch(composeInset(drawing(),drawing(box),{box,arrange:'locator'}).content,/data-inset-name/);
+});
+
+// SQUARE FOR OVERVIEW, CIRCLE FOR FOCUS (the practitioner, 2026-11-18).
+test('the focus inset is a circle: a circle round the part, the part in a circular frame, joined along the outer tangents',()=>{
+  const r=composeInset(drawing(),drawing(box),{box},hospitals,{focus:'Gyeonggi'});
+  assert.match(r.content,/<circle data-inset-box /);
+  assert.match(r.content,/<circle data-inset-circle /);
+  assert.match(r.content,/<clipPath id="focus-[^"]+"><circle /);
+  assert.equal((r.content.match(/data-inset-line/g)||[]).length,2);
+  assert.match(r.content,/data-inset-name[\s\S]*?Gyeonggi/);
+  assert.doesNotMatch(composeInset(drawing(),drawing(box),{box},hospitals).content,/data-inset-name/);
+  // The overview stays a square: no circle in it.
+  assert.doesNotMatch(composeInset(drawing(),drawing(box),{box,arrange:'locator'}).content,/<circle data-inset/);
+});
+
+test('the joining lines touch both circles and do not cross between them',()=>{
+  const a={x:100,y:300,r:20},b={x:600,y:120,r:150};
+  const lines=outerTangents(a,b);
+  assert.equal(lines.length,2);
+  for(const [x1,y1,x2,y2] of lines){
+    assert.ok(Math.abs(Math.hypot(x1-a.x,y1-a.y)-a.r)<1e-6);
+    assert.ok(Math.abs(Math.hypot(x2-b.x,y2-b.y)-b.r)<1e-6);
+    // Tangent: each line is at right angles to the radius at both ends.
+    const dx=x2-x1,dy=y2-y1;
+    assert.ok(Math.abs(dx*(x1-a.x)+dy*(y1-a.y))<1e-6*Math.hypot(dx,dy)*a.r+1e-6);
+  }
+  assert.deepEqual(outerTangents({x:0,y:0,r:50},{x:5,y:0,r:10}),[]);
 });

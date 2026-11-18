@@ -13,7 +13,9 @@ export type Corner='ne'|'nw'|'se'|'sw';
 export interface InsetSettings {box:Box; arrange?:'inset'|'locator'; corner?:Corner; size?:'third'|'half'}
 /** The whole extent's name, such as the study area's boundary, written in the locator's frame (the practitioner,
  *  2026-11-15: "We should label the admin boundary for the map inset"). */
-export interface InsetLabels {whole?:string}
+export interface InsetLabels {whole?:string;
+  /** The name of the boundary unit the focus's centre falls in, where the map has named units (2026-11-18). */
+  focus?:string}
 /** How many of the figure's 850 units the small frame is wide, so its marks can be drawn to keep their size on the page. */
 export const insetWidth=(settings:Pick<InsetSettings,'size'>):number=>Math.round(850*(settings.size==='half'?0.5:1/3));
 export interface Drawing {content:string; height:number; project:(c:[number,number])=>[number,number];
@@ -83,9 +85,57 @@ function pointer(box:Rect,frame:Rect,corner:Corner):string{
   return pairs.map(([x1,y1,x2,y2])=>`<line data-inset-line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#1f2a24" stroke-width="1" stroke-dasharray="4 3"/>`).join('');
 }
 
+/** THE TWO LINES JOINING TWO CIRCLES, along their outer tangents: the circle on the map and the focus inset's frame. */
+export function outerTangents(a:{x:number;y:number;r:number},b:{x:number;y:number;r:number}):[number,number,number,number][]{
+  const dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy);
+  if(d<=Math.abs(a.r-b.r)+1e-9)return [];
+  const theta=Math.atan2(dy,dx),gamma=Math.acos((a.r-b.r)/d);
+  return [theta+gamma,theta-gamma].map(t=>[a.x+a.r*Math.cos(t),a.y+a.r*Math.sin(t),b.x+b.r*Math.cos(t),b.y+b.r*Math.sin(t)]);
+}
+/** A name on a white backing, centred at (cx, y): the page's 15 units, its width estimated at 0.58 of the size a character. */
+function nameAt(cx:number,y:number,name:string,attr:string):string{
+  const size=15,width=Math.ceil(name.length*size*0.58)+10;
+  return `<g ${attr}><rect x="${cx-width/2}" y="${y}" width="${width}" height="${size+8}" fill="#ffffff" fill-opacity="0.9"/>`
+    +`<text x="${cx}" y="${y+size+1}" text-anchor="middle" font-size="${size}" font-weight="600" fill="#1f2a24">${escapeText(name)}</text></g>`;
+}
+
+/** THE FOCUS INSET, A CIRCLE (the practitioner, 2026-11-18: "Square for overview and Circle for focus"). A circle on the
+ *  map around the part, the part enlarged in a circular frame in the corner where it covers least, joined by the two
+ *  lines along their outer tangents; the scale bar inside the frame's foot, the name of the unit at its centre above. */
+function composeFocus(whole:Drawing,part:Drawing,settings:InsetSettings,points:readonly [number,number][],labels:InsetLabels):{content:string;height:number;corner:Corner}{
+  const w=insetWidth(settings);
+  const r=rectOf(settings.box,whole.project);
+  const ring={x:r.x+r.w/2,y:r.y+r.h/2,r:Math.max(Math.hypot(r.w,r.h)/2,9)};
+  const avoid={x:ring.x-ring.r,y:ring.y-ring.r,w:2*ring.r,h:2*ring.r};
+  const corner=settings.corner??chooseCorner(points.map(p=>whole.project(p)),w,w,whole.height,avoid);
+  const frame=frameAt(corner,w,w,whole.height);
+  const big={x:frame.x+w/2,y:frame.y+w/2,r:w/2};
+  const id=`focus-${Math.round(frame.x)}-${Math.round(frame.y)}`;
+  // The part's drawing fills the circle: its box is drawn 850 wide, so the circle shows its middle, as wide as the box.
+  const nested=`<clipPath id="${id}"><circle cx="${big.x}" cy="${big.y}" r="${big.r}"/></clipPath>`
+    +`<g clip-path="url(#${id})"><rect x="${frame.x}" y="${frame.y}" width="${w}" height="${w}" fill="#ffffff"/>`
+    +`<svg data-inset-frame x="${frame.x}" y="${frame.y}" width="${w}" height="${w}" viewBox="0 0 850 ${part.height}" preserveAspectRatio="xMidYMid slice">${part.content}</svg></g>`;
+  const lines=outerTangents(ring,big).map(([x1,y1,x2,y2])=>`<line data-inset-line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#1f2a24" stroke-width="1.2"/>`).join('');
+  // As enlarged on the page: the frame is filled, so the part is scaled by the larger of the two ratios.
+  const k=Math.max(w/850,w/part.height),metresPerPixel=111_320/part.scale/k;
+  const metres=niceMetres(metresPerPixel*w/4),length=metres/metresPerPixel;
+  const bx=big.x-length/2,by=big.y+big.r*0.72;
+  const bar=`<g data-inset-scale><rect x="${bx-4}" y="${by-20}" width="${length+8}" height="26" fill="#ffffff" fill-opacity="0.85"/>`
+    +`<path d="M${bx},${by-4}V${by}H${bx+length}V${by-4}" fill="none" stroke="#1f2a24" stroke-width="1.5"/>`
+    +`<text x="${bx}" y="${by-8}" font-size="13" fill="#1f2a24">${metresLabel(metres)}</text></g>`;
+  const name=labels.focus?.trim()?nameAt(big.x,frame.y+big.r*0.22,labels.focus.trim(),'data-inset-name'):'';
+  const content=whole.content
+    +`<circle data-inset-box cx="${ring.x}" cy="${ring.y}" r="${ring.r}" fill="none" stroke="#1f2a24" stroke-width="2"/>`
+    +lines+nested
+    +`<circle data-inset-circle cx="${big.x}" cy="${big.y}" r="${big.r}" fill="none" stroke="#1f2a24" stroke-width="2.5"/>`
+    +bar+name;
+  return {content,height:whole.height,corner};
+}
+
 /** THE FIGURE. `whole` is drawn over the whole extent, `part` over the box; which is large is the arrangement's. */
 export function composeInset(whole:Drawing,part:Drawing,settings:InsetSettings,points:readonly [number,number][]=[],labels:InsetLabels={}):{content:string;height:number;corner:Corner}{
   const locator=settings.arrange==='locator';
+  if(!locator)return composeFocus(whole,part,settings,points,labels);
   const large=locator?part:whole,small=locator?whole:part;
   const w=insetWidth(settings),h=Math.round(w*small.height/850);
   const boxOnLarge=locator?undefined:rectOf(settings.box,whole.project);

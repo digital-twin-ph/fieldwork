@@ -121,6 +121,7 @@ import {MAX_RASTER_LAYERS,rasterPort,isRasterPort} from './raster-panels.js';
 import {partsTable,partsTableMarkup} from './map-parts-table.js';
 import {TARGETS,projectOutline,outlineMarkup,slotsForNote} from './outline.js';
 import {planView,planMarkup,openPlanDialog,withPart,markedComplete,unmarked,type Plan} from './plan.js';
+import {auditTarget,openAuditDialog} from './notes-audit.js';
 import {publicationMarkup,promptFor,PRODUCT_KINDS,isProductKind,layoutKey,type ProductKind,type PublicationInput} from './publication.js';
 import {CHAIN_COLUMNS,transmissionChains} from './transmission-chains.js';
 import {boxInside,composeInset,insetWidth,type Corner} from './map-inset.js';
@@ -135,7 +136,7 @@ import {typeset} from './prose.js';
 import {readNotes,WRITE_UP_PARTS,type Note,type WriteUpPart,moveNote,forkMachinedNote,
   UNWRITTEN,objectivesOf,type MachinedNote,FIGURE_SECTIONS,DEFAULT_FIGURE_SECTIONS,figureSection,type FigureSection,LEFT_OUT,inWriteUp} from './notes.js';
 import {readAuthors,currentIdentity,attestIdentity,setCurrentIdentity,authorLabel,DEVICE_REPOSITORY_FIELDS,readRepository} from './identity.js';
-import {installIdentity,openIdentity,identityUntilLock} from './identity-ui.js';
+import {installIdentity,openIdentity,identityUntilLock,signingIdentity,identityKeepOpen} from './identity-ui.js';
 import {signStatement,verifyStatement} from './identity-file.js';
 import {affiliationLabel} from './affiliations-ui.js';
 import {noteVersion} from './identity-file.js';
@@ -167,7 +168,8 @@ import {TILE_PROVIDERS,basemapImages,fetchTileAsDataURI,useTileStore} from './ba
 import {rasteriseFigure,FIGURE_PIXEL_SCALE} from './figure-export.js';
 import {COUNTRIES,countryName,iso3Of,countryOfArea} from './boundary-source.js';
 import {worldPopRastersForCountry,worldPopRecordFor,GLOBAL2,WORLDPOP_LICENCE,WORLDPOP_TAKEN,WORLDPOP_BYTES_PER_SECOND,downloadWait} from './worldpop-catalogue.js';
-import type {BoundaryProvenance} from './types.js';
+import type {BoundaryProvenance,AreaParams} from './types.js';
+import {containsPoint} from './point-grid.js';
 import {basemapAvailable,basemapOf,extentSpanKm,NATURAL_EARTH_MIN_SPAN_KM} from './basemaps.js';
 import {naturalEarthMarkup,NATURAL_EARTH,NATURAL_EARTH_CREDIT} from './natural-earth.js';
 import {mapImage,mapImageMarkup,mapImageCredit,withGroundUnder,type MapImage} from './map-image.js';
@@ -3098,8 +3100,8 @@ function mapInsetSection(n:WorkflowNode<'map_output'>):string{
   const opt=(v:string,label:string,at:string)=>`<option value="${v}" ${v===at?'selected':''}>${label}</option>`;
   return `<span class="inspector-section">Inset</span>`
     +`<div class="field"><label class="field-label" for="map-inset-arrange">Show</label><select id="map-inset-arrange">`
-    +opt('inset','Inset: the part enlarged, in a corner of the whole map',i.arrange??'inset')
-    +opt('locator','Locator: the whole map small, in a corner of the part',i.arrange??'inset')
+    +opt('inset','Focus inset: the part enlarged in a circle, on the whole map',i.arrange??'inset')
+    +opt('locator','Overview inset: the whole map small in a square, on the part',i.arrange??'inset')
     +opt('','No inset',i.arrange??'inset')+`</select></div>`
     +`<div class="field"><label class="field-label" for="map-inset-corner">In the corner</label><select id="map-inset-corner">`
     +opt('','Where it covers least',i.corner??'')+opt('ne','Top right',i.corner??'')+opt('nw','Top left',i.corner??'')
@@ -6875,7 +6877,7 @@ async function drawStaticFigure(svg:SVGSVGElement,result:Output,mapNode:Workflow
       const composed=composeInset(drawing(staticBoundaryMap(result,o.selected??null,esc,statusLabel,labels,undefined,locator?shrink:1),wholeFrame),
         drawing(staticBoundaryMap(result,o.selected??null,esc,statusLabel,labels,inset.box,locator?1:shrink),partFrame),inset,
         result.rows.filter(r=>r.coordinates).map(r=>r.coordinates as [number,number]),
-        {whole:(workflow.nodes.find(x=>x.id===workflow.edges.find(e=>e.to===mapNode?.id&&e.port==='area')?.from)?.params as {label?:string}|undefined)?.label});
+        insetNames(workflow.nodes.find(x=>x.id===workflow.edges.find(e=>e.to===mapNode?.id&&e.port==='area')?.from)?.params as AreaParams|undefined,inset.box));
       svg.innerHTML=composed.content;
       applyFrame(svg,svg.innerHTML);
       svg.querySelectorAll<SVGElement>('[data-place]').forEach(el=>{el.style.display=hidden.has(el.dataset.layer!)?'none':'';});
@@ -7962,6 +7964,8 @@ const keptHere=(project:Project|undefined):string|null=>{
     +`make a project of your own on the Project tab.`;
 };
 /** The open project's plan as stored now, and writing it back: kept with the project, as its notes are. */
+/** The audit the Notes board last drew, so a draft can open it for its own kind. */
+let lastAudit:{targets:{id:string;label:string}[];of:(target:string)=>import('./notes-audit.js').Audit}|null=null;
 function planOfProject():Plan|undefined{const project=projectNow();
   return project?(readProjects().find(p=>p.id===project.id)?.plan??project.plan):undefined;}
 function writePlan(plan:Plan):boolean{
@@ -7970,6 +7974,23 @@ function writePlan(plan:Plan):boolean{
   const {plan:_was,...rest}=stored[at]!;void _was;
   stored[at]=plan.parts.length||plan.complete?{...rest,plan}:rest;
   return writeProjects(stored);
+}
+/** THE INSETS' NAMES, FROM THE BOUNDARY'S OWN RECORD (the practitioner, 2026-11-18: "make sure we have them labeled
+ *  properly using existing metadata"). The overview names the whole: the unit, where there is one; the country, where the
+ *  boundary joins several units (MERS's seventeen provinces are not a name); the study area's label, where no boundary
+ *  was acquired. The focus names the unit its centre falls in, where the units are named; otherwise nothing is invented. */
+function insetNames(area:AreaParams|undefined,box:[number,number,number,number]):{whole?:string;focus?:string}{
+  if(!area)return {};
+  const b=area.boundary,units=b?.units??[],country=iso3Of(b);
+  const whole=!b?area.label:units.length>1?(country?countryName(country):area.label):b.unitName||area.label;
+  const centre:[number,number]=[(box[0]+box[2])/2,(box[1]+box[3])/2];
+  let focus:string|undefined;
+  const g=area.geometry;
+  if(g&&units.length>1&&g.type==='MultiPolygon'){
+    const at=g.coordinates.findIndex(part=>containsPoint(centre,{type:'Polygon',coordinates:part}));
+    focus=at>=0?units[at]?.name:undefined;
+  }else if(g&&b?.unitName&&containsPoint(centre,g))focus=b.unitName;
+  return {...(whole?{whole}:{}),...(focus?{focus}:{})};
 }
 /** Write notes back to the project they belong to. A note is about the investigation, so it does
  *  not travel on the workflow -- which also means `change()` is the wrong door for it. */
@@ -8166,36 +8187,62 @@ function renderNotesView(){
     // AND HOW MANY THERE ARE AT ALL, so the control can tell a project whose workflows have all
     // run from a workflow that is in no project. 0 is the second of those, not the first.
     {pending,waiting,total:(project?.workflows||[]).length,readOnly:keptHere(project)},
-    figureOf,references,exampleLinksBlock(onlineLinks(project),esc));
+    figureOf,references,exampleLinksBlock(onlineLinks(project),esc),
+    // THE DRAFTS OFFERED ARE THE TARGETS CHOSEN, as stored now.
+    ((project&&readProjects().find(p=>p.id===project.id)?.targets)??project?.targets??[])
+      .map(id=>({kind:id,label:TARGETS.find(t=>t.id===id)?.label??id})));
   // THE OUTLINE OF WHAT THE PROJECT IS WRITING TOWARDS (experiment 202, Stage A), above the notes it is filled from.
   {const stored=project&&readProjects().find(p=>p.id===project.id);
    const targets=stored?.targets??project?.targets??[];
    if(targets.length)$('#notes-view').insertAdjacentHTML('afterbegin',outlineMarkup(projectOutline(targets,
      [...(project?.notes||[]),...derived,...machined],stored?.publication??project?.publication??{},
      references.filter(r=>!r.uncited).length,{isComponent,workflowName:nameOfKey}),esc,!keptHere(project)));
+   // THE NOTES AUDIT, ON REQUEST AND PER TARGET (the practitioner, 2026-11-18).
+   const auditOf=(target:string)=>auditTarget(target,[...(project?.notes||[]),...derived,...machined],
+     stored?.publication??project?.publication??{},stored?.plan??project?.plan,
+     {works:references.filter(r=>!r.uncited).length,uncited:references.filter(r=>r.uncited).length},{isComponent,workflowName:nameOfKey});
+   const auditTargets=targets.map(id=>({id,label:TARGETS.find(t=>t.id===id)?.label??id}));
+   const auditButton=document.querySelector<HTMLButtonElement>('#notes-view [data-notes-audit]');
+   if(auditButton)auditButton.onclick=()=>openAuditDialog(auditTargets,targets[0]!,auditOf,esc);
+   lastAudit={targets:auditTargets,of:auditOf};
    // THE PLAN, above the outline (experiment 202, 2026-11-18): never in a product, so drawn here and nowhere else.
    if(targets.length){
      const view=planView(targets,stored?.plan??project?.plan,[...(project?.notes||[]),...derived,...machined],
-       stored?.publication??project?.publication??{},references.filter(r=>!r.uncited).length,{isComponent,workflowName:nameOfKey});
+       stored?.publication??project?.publication??{},references.filter(r=>!r.uncited).length,{isComponent,workflowName:nameOfKey,
+         // A COMPONENT'S KIND, by the widget that published it; a picture in a note is none of the three.
+         componentKind:note=>{const type=note.kind==='machined'?note.widget?.type??workflow.nodes.find(n=>n.id===note.nodeId)?.type:undefined;
+           return type==='map_output'?'map':type==='chart_output'?'chart':type==='table_output'?'table':undefined;}});
      const label=(id:string)=>TARGETS.find(t=>t.id===id)?.label??id;
      $('#notes-view').insertAdjacentHTML('afterbegin',planMarkup(view,esc,!keptHere(project),label));
      for(const b of document.querySelectorAll<HTMLButtonElement>('#notes-view [data-plan-role]'))b.onclick=()=>{
        const role=b.dataset.planRole!,part=view.parts.find(p=>p.role===role),kept=view.unplaced.find(p=>p.role===role);
        const wants=part?Object.entries(part.byTarget).map(([t,w])=>`${esc(label(t))}: <em>${esc(w.heading)}</em>, ${esc(w.length)}`).join('; ')
          :'Planned for a target no longer chosen.';
-       openPlanDialog({role,label:part?.label??role,wants,text:part?.text??kept?.text??''},esc,
-         text=>{const ok=writePlan(withPart(planOfProject(),role,text));if(ok)renderNotesView();return ok;});};
+       openPlanDialog({role,label:part?.label??role,wants,text:part?.text??kept?.text??'',
+         shells:planOfProject()?.parts.find(p=>p.role===role)?.shells??[]},esc,
+         (text,shells)=>{const ok=writePlan(withPart(planOfProject(),role,text,shells));if(ok)renderNotesView();return ok;});};
+     // START A NOTE FROM A PART: its words copied into a new note of the part's section and function, the link kept.
+     for(const b of document.querySelectorAll<HTMLButtonElement>('#notes-view [data-plan-note]'))b.onclick=()=>{
+       const part=view.parts.find(p=>p.role===b.dataset.planNote);const held=[...(projectNow()?.notes||[])] as Note[];
+       if(!part?.part||!part.text.trim())return;
+       const made:Note={kind:'authored',id:crypto.randomUUID(),section:part.part,text:part.text.trim(),
+         ...(part.fn?{fn:part.fn}:{}),fromPlan:part.role};
+       if(!writeNotes([...held,made])){toast('That note could not be kept on this device.',{tone:'failure'});return;}
+       renderNotesView();writeInNoteDialog(made);};
      const mark=document.querySelector<HTMLButtonElement>('#notes-view [data-plan-mark]');
      if(mark)mark.onclick=async()=>{const plan=planOfProject();if(!plan?.parts.length)return;
        const marked=await markedComplete(plan,new Date().toISOString(),
-         (part,at)=>noteVersion({kind:'authored',id:`plan:${part.role}`,section:'Introduction',text:part.text},at,openIdentity()));
+         (part,at)=>noteVersion({kind:'authored',id:`plan:${part.role}`,section:'Introduction',text:part.text},at,signingIdentity()));
        if(!writePlan(marked)){toast('The plan could not be kept on this device.',{tone:'failure'});return;}
        renderNotesView();};
      const unmark=document.querySelector<HTMLButtonElement>('#notes-view [data-plan-unmark]');
      if(unmark)unmark.onclick=()=>{const plan=planOfProject();if(plan&&writePlan(unmarked(plan)))renderNotesView();};
    }}
   // EVERY "Write" that opens the draft, the outline's among them.
-  for(const opener of document.querySelectorAll('#notes-view [data-publication]'))opener.addEventListener('click',()=>openPublication({
+  for(const opener of document.querySelectorAll<HTMLElement>('#notes-view [data-publication]'))opener.addEventListener('click',()=>openPublication({
+    // A TARGET'S DRAFT OPENS AS THAT TARGET; a plain Draft as the kind last chosen.
+    ...(isProductKind(opener.dataset.publicationOpen)?{kind:opener.dataset.publicationOpen as ProductKind}:{}),
+    targets:(project&&readProjects().find(p=>p.id===project.id)?.targets)??project?.targets??[],
     title:project?.name||workflow.name,
     authors:(project?.authors||[]).map(a=>a.name||a.login),
     date:new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}),
@@ -8255,11 +8302,17 @@ function openPublication(input:PublicationInput,keep:(key:string,text:string)=>R
     view.setAttribute('aria-modal','true');view.setAttribute('aria-label','Publication');document.body.append(view);}
   // DRAFT AS (experiment 202, 2026-11-15): which kind of document the record is laid out as, kept with the project where
   // it can be, so a shipped example opens as the kind it was made to show.
-  let kind:ProductKind=isProductKind(input.written?.kind)?input.written!.kind as ProductKind:'publication';
+  let kind:ProductKind=input.kind??(isProductKind(input.written?.kind)?input.written!.kind as ProductKind
+    :isProductKind(input.targets?.[0])?input.targets![0] as ProductKind:'publication');
+  // DRAFT AS: the project's targets first, then the other formats, kept apart.
+  const chosen=PRODUCT_KINDS.filter(k=>input.targets?.includes(k.kind)),others=PRODUCT_KINDS.filter(k=>!input.targets?.includes(k.kind));
+  const option=(k:typeof PRODUCT_KINDS[number])=>`<option value="${k.kind}"${k.kind===kind?' selected':''}>${esc(k.label)}</option>`;
   const draw=()=>{const top=view!.scrollTop;
     view!.innerHTML=`<div class="publication-bar"><button class="button" data-publication-back>Back to Notes</button>`
-      +`<label class="pub-kind">Draft as <select data-publication-kind>${PRODUCT_KINDS.map(k=>
-        `<option value="${k.kind}"${k.kind===kind?' selected':''}>${esc(k.label)}</option>`).join('')}</select></label>`
+      +`<label class="pub-kind">Draft as <select data-publication-kind>`
+        +(chosen.length?`<optgroup label="Writing towards">${chosen.map(option).join('')}</optgroup><optgroup label="Other formats">${others.map(option).join('')}</optgroup>`
+          :PRODUCT_KINDS.map(option).join(''))+`</select></label>`
+      +(lastAudit?`<button class="button" data-publication-audit>Notes audit</button>`:'')
       +`<button class="button primary" data-publication-print>Print or save as PDF</button></div>`
       +publicationMarkup({...input,kind},esc);
     view!.scrollTop=top;void typeset(view!);};
@@ -8308,6 +8361,8 @@ function openPublication(input:PublicationInput,keep:(key:string,text:string)=>R
     }
     if(target.closest('[data-publication-back]'))close();
     else if(target.closest('[data-publication-print]'))window.print();
+    else if(target.closest('[data-publication-audit]')&&lastAudit)
+      openAuditDialog(lastAudit.targets.some(t=>t.id===kind)?lastAudit.targets:[...lastAudit.targets,{id:kind,label:PRODUCT_KINDS.find(k=>k.kind===kind)?.label??kind}],kind,lastAudit.of,esc);
   };
   // BACK TO NOTES REDRAWS THEM: the outline counts what the draft holds, and a title or abstract written there was
   // still "empty" in it until something else redrew Notes (the practitioner, 2026-11-16).
@@ -8333,7 +8388,7 @@ async function versionNote(id:string){
   const find=()=>{const notes=[...(projectNow()?.notes||[])] as Note[];
     return {notes,at:notes.findIndex(n=>n.kind==='authored'&&n.id===id)};};
   const before=find();if(before.at<0)return;
-  const version=await noteVersion(before.notes[before.at]!,new Date().toISOString(),openIdentity());
+  const version=await noteVersion(before.notes[before.at]!,new Date().toISOString(),signingIdentity());
   // READ AGAIN AFTER THE WAIT: another save may have landed while the signature was made.
   const {notes,at}=find();if(at<0)return;
   const note=notes[at] as Note&{versions?:import('./identity-file.js').NoteVersion[]};
@@ -10159,7 +10214,7 @@ function renderSharedProject(project:Project|undefined,builtIn:boolean){
         const {members:_m,...without}=p;return members.length?{...without,members}:without as Project;}));
       void refresh(false);});
     $('#shared-people').querySelectorAll<HTMLButtonElement>('[data-member-me]').forEach(button=>button.onclick=async()=>{
-      const identity=openIdentity();if(!identity)return;
+      const identity=signingIdentity();if(!identity)return;
       const login=button.dataset.memberMe!;
       const statement={login,name:identity.profile.name,...(identity.profile.orcid?{orcid:identity.profile.orcid}:{}),
         ...(identity.profile.affiliations?.length?{affiliations:identity.profile.affiliations}:{})};
@@ -10347,8 +10402,8 @@ function renderSharedProject(project:Project|undefined,builtIn:boolean){
    finally{send.disabled=false;}};}
 
 // A MINUTE'S WARNING BEFORE THE LOCK (Section 508, WCAG 2.2.1 Timing adjustable; 2026-11-16, with the lock at ten
-// minutes): said in words, with a button that keeps them open. For the identity any press counts as use; for the
-// credentials only their own use does (2026-11-18), so the button keeps them open itself. Nothing is lost when they
+// minutes): said in words, with a button that keeps them open. Only their own use counts (2026-11-18), so the
+// button keeps them open itself. Nothing is lost when they
 // lock; opening the files again is the cost.
 {const warning=document.createElement('div');warning.id='lock-warning';warning.className='lock-warning';warning.setAttribute('role','alert');warning.hidden=true;
  document.body.append(warning);let shown='';
@@ -10359,7 +10414,7 @@ function renderSharedProject(project:Project|undefined,builtIn:boolean){
    if(text===shown)return;shown=text;
    warning.hidden=!text;
    if(text){warning.innerHTML=`<span>${esc(text)}</span><button type="button" class="button primary" id="lock-keep">Keep them open</button>`;
-     ($('#lock-keep') as HTMLButtonElement).onclick=()=>{credentials?.keepOpen();warning.hidden=true;shown='';};}};
+     ($('#lock-keep') as HTMLButtonElement).onclick=()=>{credentials?.keepOpen();identityKeepOpen();warning.hidden=true;shown='';};}};
  setInterval(tick,5_000);}
 
 const showCatalog=()=>{try{openCatalogDialog(esc);}catch(error){toast(errorMessage(error),{tone:'failure'});}};

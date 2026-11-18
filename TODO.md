@@ -1699,6 +1699,26 @@ _Carried over whole from the root `TODO.md` of 2026-10-10 in the merge above, he
 demoted one level and nothing else changed. An item here is a decision to do it later._
 
 
+### A road traffic injury worked example (asked 2026-11-18, not urgent)
+
+The practitioner, 2026-11-18: *"Road traffic safety not urgent so we can to a later TODO."* A research pass the same
+day is kept outside the repository (`reports/Road traffic injury worked example.md`); move it into `docs/research/`
+when this starts. What it found:
+
+- **Settings:** Bogotá for the data (crash points and road-user tables since 2015; the 2020 base CC BY-SA 4.0, each file's
+  licence still to read); Nairobi for the story (Kenya FELTP's hospital surveillance pilot beside Ma3Route's
+  crowd-sourced points, licence not named); Great Britain's STATS19 as the clean-licence check (Open Government Licence).
+- **TAP, suggested by another AI tool as "Ren et al., 2023":** the authors are Huang, Hooi and Shu (ACM SIGSPATIAL 2023);
+  its crashes are traffic-feed incidents from Kaggle's US-Accidents, its severity is delay, not injury, and its data has
+  no licence. Not usable.
+- **The teaching gap:** no FETP investigation found maps crashes or looks for clusters; police records miss most
+  injuries, pedestrians and motorcyclists most of all.
+- **First step:** read three licence pages (Bogotá's files, the World Bank's Ma3Route terms, Mexico City's portal).
+
+**Several focus insets on one map** (the practitioner, 2026-11-18, showing a published crash map with four): a circle
+around each cluster on the map, each enlarged in its own circle placed where it covers least, one line from each small
+circle to its large one. The single circular focus inset of 0.144.0 is its first case; this makes the inset a list.
+
 ### Fieldwork in other languages: localisation, not a model (asked 2026-11-15)
 
 The practitioner, on translation for Africa: *"The interface is more deterministic in terms of translation, and so

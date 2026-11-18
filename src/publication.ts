@@ -47,6 +47,8 @@ export function readLayout(value:string|undefined):{width:FigureWidth;place:Figu
 export interface PublicationInput {
   /** Publication when absent. */
   kind?:ProductKind;
+  /** The project's targets, which the draft offers first. */
+  targets?:readonly string[];
   title:string;
   authors:readonly string[];
   /** The date it was laid out, as a reader sees it. */

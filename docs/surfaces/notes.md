@@ -1,6 +1,6 @@
 # Notes
 
-_Created 2026-11-07 · Updated 2026-11-16_
+_Created 2026-11-07 · Updated 2026-11-18_
 
 ## What it does
 
@@ -167,8 +167,29 @@ slot of the outline, shared by the targets that use it. Each part starts empty, 
   afterwards, the plan says so. **Undo complete** removes the mark and keeps the versions.
 - Add or drop a target at any time. An added target brings its parts, empty. A dropped target's written parts stay,
   under *Planned for a target no longer chosen*.
+- A part can list the **tables, charts and maps** it will show, one a line, such as *map: cases by village*. Each is
+  marked made once a note that fills the part names a map, chart or table of that kind.
+- **Start a note from this** copies a part's words into a new note of the part's section, ready to rewrite. The note
+  keeps which part it came from.
+- The plan says how many parts have notes and no plan: written, not planned.
 
 The plan is never part of any product: not the draft, the publication, a report or a download.
+
+## The notes audit
+
+**Notes audit**, beside the draft buttons and in the draft's own bar, shows where a target's write-up has gaps. It
+opens on request and never stops a draft. One target at a time, as tabs:
+
+- How many of the target's parts are written, as a number and a bar.
+- Each part marked *written* (●), *planned, not written* (◐) or *empty* (○), with the length it asks for. Where the
+  length is given in words or sentences, the written part is counted against it: *shorter than asked*, *within the
+  length* or *longer than asked*.
+- Parts planned and not written; parts written and not planned; notes this target does not use.
+- Each objective, answered or not, and how many tables, charts and maps support it.
+- How many tables, charts and maps there are, and how many a note names as resting on them.
+- How many works are cited, and how many are named but not read.
+
+It scores no sentence and writes none.
 
 ## Draft as a document
 

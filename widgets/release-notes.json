@@ -427,12 +427,12 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.33.2",
-   "released": "2026-11-15",
+   "version": "0.34.0",
+   "released": "2026-11-18",
    "changes": [
     {
-     "kind": "patch",
-     "description": "The figure in Notes and the downloaded SVG are the map in Results: a shaded map keeps the key line under its ramp, saying what the shade is and how it was classed (\"5 quantile classes, about equal counts, so the shade shows rank\"), which the figure had stripped while keeping the ramp, so it showed the classes twice and their meaning nowhere; the legend's entries run along a line, each as wide as its label, rather than in two fixed columns; and the heading sits closer to the map. The practitioner, 2026-11-14: each static map in Results \"is more complete\" than the same map in Notes."
+     "kind": "minor",
+     "description": "Insets follow the practitioner's convention of 2026-11-18, \"Square for overview and Circle for focus\": the focus inset (until now Inset) is a circle round the part on the map and the part enlarged in a circular frame, joined along their outer tangents, its scale bar inside the frame; the overview inset (until now Locator) keeps its square frame and red box. Each is named from the study area's boundary record: the overview by the unit, by the country where the boundary joins several units, or by the study area's label; the focus by the unit its centre falls in, where the units are named. MERS's focus reads Gyeonggi; Oswego's overview New York. The saved setting is unchanged (arrange inset or locator), so saved workflows draw the new shapes without migration."
     }
    ],
    "breaking": false,

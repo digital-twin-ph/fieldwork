@@ -24,6 +24,10 @@ export function openIdentity():OpenIdentity|null{
   if(open&&Date.now()-lastActivity>=IDLE_MS)lock();
   return open;
 }
+/** THE IDENTITY, FOR SIGNING: a signature is a use of it, and keeps it open (2026-11-18). */
+export function signingIdentity():OpenIdentity|null{const identity=openIdentity();if(identity)used();return identity;}
+/** Counts as use: the lock warning's Keep them open. */
+export function identityKeepOpen(){if(openIdentity())used();}
 export function onIdentityChange(listener:()=>void){listeners.add(listener);}
 /** Milliseconds until the open identity locks for want of use, or null when none is open. */
 export function identityUntilLock():number|null{return open?Math.max(0,lastActivity+IDLE_MS-Date.now()):null;}
@@ -161,8 +165,12 @@ export function installIdentity(button:HTMLButtonElement,esc:Escape){
     button.setAttribute('aria-label',open?`Identity: ${open.profile.name}`:'Identity');};
   onIdentityChange(label);label();
   let redraw=()=>{};onIdentityChange(()=>redraw());
-  for(const event of ['pointerdown','keydown'])document.addEventListener(event,()=>{
-    if(open&&Date.now()-lastActivity>=IDLE_MS)lock();used();},{capture:true});
+  // USE IS USE OF THE IDENTITY: working in its dialog, or signing (2026-11-18, as for the credentials). Until then any
+  // click or key anywhere on the page counted, so an identity stayed open for as long as anyone worked in Fieldwork.
+  for(const event of ['pointerdown','keydown'])document.addEventListener(event,e=>{
+    if(open&&Date.now()-lastActivity>=IDLE_MS)lock();
+    const d=document.querySelector('#identity-dialog');
+    if(d&&e.target instanceof Node&&d.contains(e.target))used();},{capture:true});
   setInterval(()=>{if(open&&Date.now()-lastActivity>=IDLE_MS)lock();},10_000);
   // NOT LOCKED ON LEAVING THE PAGE any more: a reload keeps it, until ten minutes without use or Lock.
   void restore<{profile:OpenIdentity['profile'];algorithm:OpenIdentity['algorithm'];publicKey:string}>('identity').then(kept=>{

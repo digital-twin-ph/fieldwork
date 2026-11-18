@@ -247,23 +247,29 @@ shows four sources' shares of each district's people this way.
 Where marks crowd each other at the scale of the whole map, enlarge a part of it beside the whole. On the interactive
 map in Results, zoom to the part and choose **Use this view as the inset**, on the map at its top left; or, for a map shown as a static figure,
 zoom the preview in **Configure…** and choose **Use the preview's view as the inset**. The view is kept as the inset's
-box. The static figure, in Notes, in the publication and in the downloads, then draws the box on the map, the part
-enlarged in a framed corner with its own scale bar, and two dashed lines from the box to the frame. **Clear the inset**
-removes it.
+box. **Clear the inset** removes it.
+
+There are two kinds, each with its own shape, so a reader can tell them apart:
+
+| Kind | Shape | What the figure shows | Its name |
+| --- | --- | --- | --- |
+| **Focus inset** | circle | the whole map, a circle round the part, and the part enlarged in a circle in a corner, the two circles joined by two lines, with its own scale bar | the boundary unit the part's centre falls in, such as *Gyeonggi* |
+| **Overview inset** | square | the part as the figure, and the whole map small in a square frame in a corner with the part's extent as a red box, for a reader who needs to know where the place is | the study area's unit, such as *New York*; the country where the boundary joins several units; or the study area's label |
+
+The names come from the study area's boundary record, never typed. Where the units have no names, the focus inset has
+none.
 
 In **Configure…**, under **Inset**:
 
-- **Show**: *Inset*, the part enlarged in a corner of the whole map; or *Locator*, the part as the figure with the
-  whole map small in a corner and the box drawn on it, for a reader who needs to know where the place is. The small
-  map is named in its top-left corner by the study area's name, such as *New York State*.
-- **In the corner**: where the frame covers fewest marks and not the box, or a corner you choose.
+- **Show**: *Focus inset* or *Overview inset*.
+- **In the corner**: where the frame covers fewest marks and not the part, or a corner you choose.
 - **Its width**: a third or half of the figure.
 
-Marks keep their size on the page in the inset, so marks that overlap on the whole map stand apart: the inset enlarges
-the distances, not the marks, and the same mark is the same colour in both. How far apart they stand depends on the box
-and the frame's width: MERS's four hospitals at Pyeongtaek, in a box about 18 km across shown half the figure wide,
-stand at least two marks' widths apart. An inset is offered for a map over its study
-area; maps in panels have none. The basemap is drawn under the large frame only.
+Marks keep their size on the page in the focus inset, so marks that overlap on the whole map stand apart: the inset
+enlarges the distances, not the marks, and the same mark is the same colour in both. How far apart they stand depends on
+the box and the frame's width: MERS's four hospitals at Pyeongtaek, in a box about 18 km across shown half the figure
+wide, stand at least two marks' widths apart. An inset is offered for a map over its study area; maps in panels have
+none. The basemap is drawn under the large frame only.
 
 ## Playing through frames
 

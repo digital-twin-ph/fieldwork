@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readPlan,planView,withPart,markedComplete,unmarked} from '../build/plan.js';
+import {readPlan,planView,withPart,markedComplete,unmarked,shellsFromLines,shellsToLines} from '../build/plan.js';
 
 /** THE PLAN (experiment 202, the planning note; the practitioner's four answers, 2026-11-18): one part per outline slot
  *  shared by the targets; targets added or dropped after planning begins; the objectives note is the objectives part;
@@ -53,4 +53,24 @@ test('read back tolerantly: a part with no role or no words is dropped, a role t
   assert.deepEqual(plan,{parts:[{role:'background',text:'A'}]});
   assert.equal(readPlan({parts:[]}),undefined);
   assert.equal(readPlan('plan'),undefined);
+});
+
+test('shells are read one a line by kind, and made when a note filling the part names a component of that kind',()=>{
+  const shells=shellsFromLines('map: cases by village\nChart: cases by week\na line with no kind');
+  assert.deepEqual(shells.map(s=>s.kind),['map','chart','table']);
+  assert.equal(shellsToLines(shells),'map: cases by village\nchart: cases by week\ntable: a line with no kind');
+  const plan=withPart(undefined,'situation','What happened, week by week.',shells.slice(0,2));
+  const map={kind:'machined',id:'m:description',nodeId:'m',section:'Results',text:'A map.',widget:{type:'map_output',title:'Map',version:'1'}};
+  const result={kind:'authored',id:'r',section:'Results',text:'Cases rose in the north.',components:['m:description']};
+  const kind={componentKind:n=>n.widget?.type==='map_output'?'map':undefined};
+  const part=planView(['publication'],plan,[map,result],{},0,kind).parts.find(p=>p.role==='situation');
+  assert.deepEqual(part.shells.map(s=>[s.kind,s.made]),[['map',true],['chart',false]]);
+  const unnamed=planView(['publication'],plan,[map,{...result,components:[]}],{},0,kind).parts.find(p=>p.role==='situation');
+  assert.equal(unnamed.shells[0].made,false);
+});
+
+test('a part that notes fill and no plan names is counted as written, not planned',()=>{
+  const finding={kind:'authored',id:'f',section:'Discussion',fn:'finding',text:'The school carried it.'};
+  assert.equal(planView(['publication'],undefined,[finding],{},0).unplanned,1);
+  assert.equal(planView(['publication'],withPart(undefined,'principalFinding','What we found.'),[finding],{},0).unplanned,0);
 });

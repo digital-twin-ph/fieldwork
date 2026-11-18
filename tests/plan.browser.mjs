@@ -42,9 +42,23 @@ test('a plan is written part by part, marked complete and undone, and never rend
   const versions=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-projects-v1'))
     .find(p=>p.name==='Measles in a district').plan.parts[0].versions.length);
   expect(versions).toBe(1);
+  // Started from the plan: a note of the part's section and function, its words copied, the link kept.
+  await plan.locator('[data-plan-part="background"] [data-plan-note]').click();
+  await expect(page.locator('#note-dialog')).toBeVisible();
+  const started=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-projects-v1'))
+    .find(p=>p.name==='Measles in a district').notes.at(-1));
+  expect([started.section,started.fn,started.fromPlan,started.text]).toEqual(['Introduction','context','background','Why this district.']);
+  await page.keyboard.press('Escape');
+  // The audit, on request: the target's parts, the background written.
+  await page.locator('.notes-head [data-notes-audit]').click();
+  const audit=page.locator('#notes-audit-dialog');
+  await expect(audit).toContainText(/\d+ of \d+ parts written/);
+  await expect(audit.locator('[data-audit-role="background"]')).toContainText('written');
+  await expect(audit.locator('[data-audit-role="background"]')).toContainText('shorter than asked');
+  await audit.locator('#notes-audit-close').click();
   // Never rendered: the publication carries none of it.
   await page.locator('#notes-view [data-publication]').first().click();
   await expect(page.locator('#publication-view')).toBeVisible();
-  await expect(page.locator('#publication-view')).not.toContainText('Why this district');
+  await expect(page.locator('#publication-view [data-plan-part], #publication-view .notes-plan')).toHaveCount(0);
   expect(errors).toEqual([]);
 });

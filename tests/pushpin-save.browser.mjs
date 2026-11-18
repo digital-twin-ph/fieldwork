@@ -61,7 +61,12 @@ test('switching from a rejected import to pushpins allows saving existing pin ed
   await expect(page.locator('#input-error')).toBeVisible();
   await expect(page.locator('#input-error-message')).not.toBeEmpty();
   await page.locator('#input-mode').selectOption('pins');
-  await page.locator('#pin-name').fill('Saved after rejected import');
+  // TYPED ONCE THE FORM HAS SETTLED (WebKit CI, 2026-11-17): switching mode redraws the pin form, and a fill begun
+  // before that typed into the field being replaced ("InsiSaved after rexajected impleort"). Typed again until it holds.
+  await expect(async()=>{
+    await page.locator('#pin-name').fill('Saved after rejected import');
+    await expect(page.locator('#pin-name')).toHaveValue('Saved after rejected import',{timeout:500});
+  }).toPass({timeout:10000});
   await expect(page.getByRole('button',{name:'Save Edits',exact:true})).toBeEnabled();
   await page.getByRole('button',{name:'Save Edits',exact:true}).click();
   await expect(page.locator('#input-dialog')).not.toBeVisible();

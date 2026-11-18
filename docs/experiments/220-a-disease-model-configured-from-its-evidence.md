@@ -42,8 +42,7 @@ As described by the practitioner; being read for this experiment.
 - **Contact networks from data.** Households, schools, churches, and kombi routes: people sharing a route at the same
   time are in contact.
 - **Three intervention scenarios.** The practitioner: *"Then we also have three intervention scenarios, which might be
-  important for 7-1-7 work."* In the repository as Do Nothing, Bare Minimum, and Optimal and Integrated (appendix
-  notebooks 11 to 13), compared in notebook 17. A scenario changes parameters and events from a date, so it is
+  important for 7-1-7 work."* The scenarios of the current model are compared in notebooks 17 and 18. A scenario changes parameters and events from a date, so it is
   configured like a parameter set, each change with its evidence; where it sets the delay from an event to a response
   (detection, notification, diagnosis, treatment, contact tracing), it is the bridge to 7-1-7's targets
   ([200](200-operational-epidemiology.md)).
@@ -66,10 +65,10 @@ models' authors.
 
 | | Gaborone TB | North Kivu and Ituri Ebola |
 | --- | --- | --- |
-| State | in use; scenarios on the current Starsim model and, for the three named ones, on an older Mesa model | about half built: data preparation finished, the simulation unfinished; its fit to the case curve removed |
+| State | in use, on Starsim; its archived older model left out at the practitioner's word (*"Skip archive"*, 2026-11-17) | about half built: data preparation finished, the simulation unfinished; its fit to the case curve removed |
 | Parameters in the simulation | 100: 10 cited, 10 derived, 9 fitted, 71 assumed | 52: 8 cited, 5 derived, 4 fitted, 1 placeholder, 34 assumed |
-| Networks | households, neighbourhoods, kombi routes; no church or school network in either the current or the older model, where church and school appear only in comments; the older model's runs, at one step a day, read as home contact only | zones and venues; Lake Albert crossings, roads, forest and buildings prepared but not read by the simulation |
-| Timing for 7-1-7 | none: treatment start counted as notification, contacts found at once, scenarios on from the start; the three named scenarios (older model) set only daily chances, unsourced, with detection about 500, 125 and 67 days on average | none: detection at once, no notification, fixed delays without a source |
+| Networks | households, neighbourhoods, kombi routes; no church or school network | zones and venues; Lake Albert crossings, roads, forest and buildings prepared but not read by the simulation |
+| Timing for 7-1-7 | none: treatment start counted as notification, contacts found at once, scenarios on from the start | none: detection at once, no notification, fixed delays without a source |
 | Code against its documents | 11 disagreements | 7 noted, among them an at-risk fraction labelled as evidence that the evidence does not give |
 
 What it means here: in both, most values would show as assumed in a dialog that shows evidence, which is the dialog's

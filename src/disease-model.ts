@@ -24,7 +24,8 @@ export interface ModelStructure {
   schema:'fieldwork/model-structure/1'; id:string; version:string; title:string; step:'day';
   states:{id:string;label:string}[];
   infection:{from:string;to:string;infectious:string[]};
-  course:{from:string;to:string;duration:string}[];
+  /** Steps from the same state are branches, each with a share: a probability parameter, or 'rest' for one of them. */
+  course:{from:string;to:string;duration:string;share?:string}[];
   networks:({id:string;label:string;probability:string}&({groups:string;none?:number}|{everyone:true}))[];
   parameters:{id:string;label:string;kind:'duration'|'probability';unit:string}[];
 }
@@ -47,14 +48,29 @@ export function validateStructure(s:ModelStructure):ModelStructure{
   if(!states.has(from)||!states.has(to)||from===to)fail(`${s.id}: an infection goes from one declared state to another.`);
   if(!infectious.length||infectious.some(x=>!states.has(x))||infectious.includes(from))
     fail(`${s.id}: the infectious states are declared states, and the susceptible one is not among them.`);
-  if(!s.course.length||s.course.length>16)fail(`${s.id}: between 1 and 16 periods follow an infection.`);
-  let at=to;
+  if(!s.course.length||s.course.length>16)fail(`${s.id}: between 1 and 16 steps follow an infection.`);
   for(const step of s.course){
-    if(step.from!==at)fail(`${s.id}: the period from ${step.from} does not start where the one before it ends (${at}).`);
-    if(!states.has(step.to))fail(`${s.id}: the period from ${step.from} ends in an undeclared state, ${step.to}.`);
+    if(!states.has(step.from)||!states.has(step.to)||step.from===step.to)fail(`${s.id}: a step goes from one declared state to another (${step.from} to ${step.to}).`);
+    if(step.to===from)fail(`${s.id}: no step leads back to ${from}; immunity that wanes is not yet declarable.`);
     if(params.get(step.duration)?.kind!=='duration')fail(`${s.id}: ${step.duration} is not a declared duration.`);
-    at=step.to;
   }
+  // Branches: every step from a state with more than one way on has a share, at most one of them 'rest'.
+  for(const state of new Set(s.course.map(c=>c.from))){
+    const ways=s.course.filter(c=>c.from===state);
+    if(ways.length===1){if(ways[0]!.share!==undefined)fail(`${s.id}: ${state} has one way on, so it takes no share.`);continue;}
+    if(ways.some(w=>w.share===undefined))fail(`${s.id}: each branch from ${state} has a share.`);
+    if(ways.filter(w=>w.share==='rest').length>1)fail(`${s.id}: at most one branch from ${state} is the rest.`);
+    for(const w of ways)if(w.share!=='rest'&&params.get(w.share!)?.kind!=='probability')fail(`${s.id}: ${w.share} is not a declared probability.`);
+  }
+  // Every step is reached from where an infection leads, and the course ends: no state is reached twice on a path.
+  const reached=new Set([to]);let grew=true;
+  while(grew){grew=false;for(const c of s.course)if(reached.has(c.from)&&!reached.has(c.to)){reached.add(c.to);grew=true;}}
+  for(const c of s.course)if(!reached.has(c.from))fail(`${s.id}: the step from ${c.from} is never reached from ${to}.`);
+  const walk=(state:string,path:Set<string>):void=>{
+    if(path.has(state))fail(`${s.id}: the course comes back to ${state}, and would never end.`);
+    for(const c of s.course.filter(x=>x.from===state))walk(c.to,new Set([...path,state]));
+  };
+  walk(to,new Set());
   if(!s.networks.length||s.networks.length>16)fail(`${s.id}: between 1 and 16 contact networks.`);
   for(const n of s.networks)if(params.get(n.probability)?.kind!=='probability')fail(`${s.id}: ${n.probability} is not a declared probability.`);
   return s;
@@ -109,6 +125,8 @@ export interface Program {
   n:number; states:number; susceptible:number; infected:number; infectious:number;
   nets:{kind:0|1;none:number;probability:number;groups?:ArrayLike<number>}[];
   steps:[number,number,number,number][];
+  /** For each step, its share of those leaving its state; 1 where there is no alternative. */
+  shares:number[];
 }
 
 export function compile(structure:ModelStructure,set:ParameterSet,population:Population):Program{
@@ -124,9 +142,22 @@ export function compile(structure:ModelStructure,set:ParameterSet,population:Pop
     if(groups.length!==population.n)fail(`The population's ${net.groups} has ${groups.length} entries for ${population.n} people.`);
     return {kind:0 as const,none:net.none??-1,probability,groups};
   });
-  return {n:population.n,states:structure.states.length,susceptible:state(structure.infection.from),infected:state(structure.infection.to),
+  const program:Program={n:population.n,states:structure.states.length,susceptible:state(structure.infection.from),infected:state(structure.infection.to),
     infectious:structure.infection.infectious.reduce((mask,id)=>mask|(1<<state(id)),0)>>>0,nets,
-    steps:structure.course.map(c=>{const v=set.values[c.duration]!;return [state(c.from),state(c.to),v.min!,v.max!];})};
+    steps:structure.course.map(c=>{const v=set.values[c.duration]!;return [state(c.from),state(c.to),v.min!,v.max!];}),
+    shares:structure.course.map(c=>{
+      if(c.share===undefined)return 1;
+      if(c.share!=='rest')return set.values[c.share]!.value!;
+      const rest=1-structure.course.filter(x=>x.from===c.from&&x.share!=='rest').reduce((t,x)=>t+set.values[x.share!]!.value!,0);
+      if(rest<-1e-9)fail(`${set.id}: the shares of the branches from ${c.from} come to more than 1.`);
+      return Math.max(0,rest);
+    })};
+  for(const state of new Set(structure.course.map(c=>c.from))){
+    const total=program.steps.reduce((t,step,k)=>step[0]===index.get(state)?t+program.shares[k]!:t,0);
+    if(structure.course.filter(c=>c.from===state).length>1&&Math.abs(total-1)>1e-9)
+      fail(`${set.id}: the shares of the branches from ${state} come to ${total.toFixed(3)}, not 1.`);
+  }
+  return program;
 }
 
 /** What `decl_run` needs of the kernel, so a test can pass the WebAssembly module's exports directly. */
@@ -148,6 +179,7 @@ export function runDeclared(kernel:DeclaredKernel,program:Program,{seed,index,da
   view(Int32Array,2,nets.length).set(nets.map(x=>x.none));
   view(Int32Array,3,nets.length).set(nets.map(x=>x.kind));
   view(Int32Array,4,steps.length*4).set(steps.flat());
+  view(Float64Array,10,steps.length).set(program.shares);
   // A u32 comes back signed: read unsigned. 4294967295 is a declaration or parameters the kernel refused.
   const ever=kernel.decl_run(BigInt(seed),index,program.susceptible,program.infected,program.infectious)>>>0;
   if(ever===0xffffffff)fail('The kernel refused this declaration.');

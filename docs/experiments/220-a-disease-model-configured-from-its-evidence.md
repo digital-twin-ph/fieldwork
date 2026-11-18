@@ -113,6 +113,24 @@ as the workflow this experiment designs for:
 A worked example may ship calibrated, so a trainee starts at step 4 and works back: why a scenario moves so much,
 which parameter it is most sensitive to, and how good that parameter's evidence is.
 
+## Branches, added 2026-11-17
+
+The first row of the spike's table of what the format lacked: a course that branches. Steps from the same state are
+now branches, each with a `share`, a probability parameter or `rest` for one of them; recover or die for Ebola, fast or
+slow latency for TB. At infection the course is walked to its end, one random number choosing at each branch, then the
+period; a course without branches draws only its periods, as before.
+
+| Check | Result |
+| --- | --- |
+| Measles, declared, against measles written by hand | still identical: 300 seeds natively, 500 in WebAssembly, 500 on Hagelloch's 188 children |
+| A branch taken in its share | an Ebola-shaped course (recover, or die and stay infectious until burial) with a case fatality of 0.67: the share dying within four binomial standard errors of 0.67, natively over 400 outbreaks and in WebAssembly over 400 |
+| The unburied dead transmit | the same outbreaks with the dead not transmitting infect fewer, over 300 seeds |
+| Refused | a step never reached; a course that comes round again; a branch with no share; two `rest`; shares coming to 1.170 |
+
+Not yet: the check of a branching model against Starsim 4.0's Ebola, which needs its release candidate installed;
+rates over years, strains and a weekly step, the other rows of that table. The Ebola-shaped course is a check of the
+format with assumed values, not an Ebola model.
+
 ## Homes, kombis, and a laptop, 2026-11-17
 
 **Homes from classified buildings.** The practitioner: *"For home transmission, in Gaborone, I remember classifying
@@ -245,7 +263,7 @@ run, the kernel 0.32.
 
 | Needed | Measles | Ebola | TB | Dengue |
 | --- | --- | --- | --- | --- |
-| A course that branches (die or recover; fast or slow latency) | no | yes: death to an infectious unburied state | yes: fast or slow at infection | no |
+| A course that branches (die or recover; fast or slow latency), added 2026-11-17, below | no | yes: death to an infectious unburied state | yes: fast or slow at infection | no |
 | A period given as a rate, not whole days between bounds | no | no | yes: reactivation over years | no |
 | More than one state an infection can come from | no | no | yes: reinfection of the latent | yes: a second serotype |
 | Strains | no | no | yes: drug-susceptible, MDR, XDR, with resistance acquired on treatment | yes: four serotypes |

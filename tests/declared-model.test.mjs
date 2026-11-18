@@ -59,9 +59,50 @@ test('evidence that does not say what it rests on, and a set for another structu
   assert.throws(()=>validateParameterSet(outOfRange,structure),/a probability between 0 and 1/);
 });
 
-test('a structure whose course does not follow on from the infection is refused',()=>{
-  const broken=structuredClone(structure);broken.course[0].from='I';
-  assert.throws(()=>validateStructure(broken),/does not start where the one before it ends/);
+test('a course with a step never reached, or one that comes round again, is refused',()=>{
+  const unreached=structuredClone(structure);unreached.course[0].from='R';
+  assert.throws(()=>validateStructure(unreached),/never reached from E/);
+  const round=structuredClone(structure);round.course.push({from:'R',to:'I',duration:'infectious_period'});
+  assert.throws(()=>validateStructure(round),/comes back to/);
+});
+
+/** BRANCHES (2026-11-17): an infectious person recovers or dies, and the dead transmit until burial; the shares are
+ *  parameters, one branch the rest. Illustrative values, assumed: this is a check of the format, not an Ebola model. */
+const ebola={...structuredClone(structure),id:'ebola-shaped-check',title:'An Ebola-shaped course, for checking branches',
+  states:[...structure.states,{id:'D',label:'Dead, not yet buried'},{id:'B',label:'Buried'}],
+  infection:{from:'S',to:'E',infectious:['I','D']},
+  course:[{from:'E',to:'I',duration:'latent_period'},{from:'I',to:'R',duration:'infectious_period',share:'rest'},
+    {from:'I',to:'D',duration:'time_to_death',share:'case_fatality'},{from:'D',to:'B',duration:'time_to_burial'}],
+  parameters:[...structure.parameters,{id:'time_to_death',label:'Infectious to death',kind:'duration',unit:'day'},
+    {id:'time_to_burial',label:'Death to burial',kind:'duration',unit:'day'},{id:'case_fatality',label:'Dying',kind:'probability',unit:'share'}]};
+const assumed=(v)=>({...v,evidence:{basis:'assumed',note:'a check of the format'}});
+const ebolaSet={...structuredClone(spike),id:'ebola-shaped-check-values',structure:{id:ebola.id,version:ebola.version},values:{
+  ...spike.values,p_household:assumed({value:0.12}),p_class:assumed({value:0.12}),p_village:assumed({value:0.012}),
+  latent_period:assumed({min:8,max:10}),infectious_period:assumed({min:6,max:9}),time_to_death:assumed({min:5,max:8}),
+  time_to_burial:assumed({min:2,max:3}),case_fatality:assumed({value:0.67})}};
+
+test('a branching course runs, each branch taken in its share',()=>{
+  validateStructure(ebola);validateParameterSet(ebolaSet,ebola);
+  const program=compile(ebola,ebolaSet,population);
+  assert.deepEqual(program.shares,[1,0.32999999999999996,0.67,1]);
+  let died=0,ended=0;
+  for(let seed=0;seed<400;seed++){
+    const run=runDeclared(kernel,program,{seed,index:seed%n,days:120}),last=119*6;
+    for(let day=0;day<120;day++)assert.equal(run.counts.slice(day*6,day*6+6).reduce((a,b)=>a+b,0),n);
+    died+=run.counts[last+4]+run.counts[last+5];ended+=run.counts[last+3]+run.counts[last+4]+run.counts[last+5];
+  }
+  const spread=Math.sqrt(0.67*0.33/ended);
+  assert.ok(ended>5000&&Math.abs(died/ended-0.67)<4*spread,`${died} of ${ended} died`);
+});
+
+test('branches without a share each, two rests, or shares past a whole are refused',()=>{
+  const noShare=structuredClone(ebola);delete noShare.course[2].share;
+  assert.throws(()=>validateStructure(noShare),/each branch from I has a share/);
+  const twoRests=structuredClone(ebola);twoRests.course[2].share='rest';
+  assert.throws(()=>validateStructure(twoRests),/at most one branch from I is the rest/);
+  const over=structuredClone(ebola);over.course[1].share='p_household';
+  const overSet=structuredClone(ebolaSet);overSet.values.p_household.value=0.5;overSet.values.case_fatality.value=0.67;
+  assert.throws(()=>compile(over,overSet,population),/the shares of the branches from I come to 1.170, not 1/);
 });
 
 test('the Pink Book periods run: a child infected on day 0 is not yet infectious to day 9, infectious from 10 to 18, recovered from 19',()=>{

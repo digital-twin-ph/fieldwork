@@ -21,7 +21,10 @@ const NOT_PRESSED=/delete|remove|run|clear|reset|download|export|save|discard|un
 
 const found=[];
 const scanner=(page,info)=>async(surface,theme,scope)=>{
-  let b=new AxeBuilder({page}).withTags(['wcag2a','wcag2aa']);
+  // THE TOAST IS MEASURED ON ITS OWN (2026-11-17): its timer can start a fade while axe is reading the page, which no wait
+  // beforehand prevents (1.79 on the Widgets tab, dark, gate 199). tests/toast-contrast.browser.mjs holds every tone in
+  // both themes, after its fade.
+  let b=new AxeBuilder({page}).withTags(['wcag2a','wcag2aa']).exclude('#toast');
   if(scope)b=b.include(scope);
   // SETTLED BEFORE IT IS MEASURED (found on WebKit's CI run of 2026-11-16): a toast caught mid-fade in the dark theme
   // read as contrast 1.41, its colours halfway through the transition. Running animations finish before the scan.

@@ -121,6 +121,10 @@ scrollable and unreachable by keyboard: scrollable-region-focusable (2.1.1), in 
 earlier scans had measured the pane before the image filled it. The pane is now a named region in the Tab order,
 scrolled with the arrow keys. Gate 196 found it on Chromium; WebKit does not run the examples' Inspector scans.
 
+The toast was then caught fading once more (1.79, the Widgets tab, dark theme, gate 199): its timer can start a fade
+while the scan is reading the page. The scans now leave the toast out, and its contrast is held by its own test, every
+tone in both themes, measured after the fade.
+
 ## What it does not establish
 
 Anything yet. An automated scan finding nothing would not establish conformance; only the full method would, and

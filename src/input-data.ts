@@ -1,4 +1,5 @@
 
+import {readCoordinate,coordinateReport,type ReadCoordinate,type CoordinateReport} from './coordinates.js';
 import type {Database,SqlJsStatic,SqlValue} from 'sql.js';
 import type {Boundary,Position,PointFeature,PointCollection,Scalar} from './types.js';
 import {READABLE_SOURCE_EPSG,utmFromEPSGCode} from './metric-crs.js';
@@ -58,11 +59,31 @@ function checkRange(x:number,y:number,units:'degree'|'metre',record:number):void
     throw new Error(`CSV record ${record} has coordinates (${x}, ${y}) too large to be UTM metres.`);
 }
 
-export function csvPoints(table:CSVTable,mapping:CSVMapping):PointCollection{
+/** What reading the coordinates came to, for the dialog to say: values read as degrees, minutes and seconds, those with
+ *  no hemisphere, and the records whose coordinates could not be read, with why. */
+export interface CSVCoordinateReport {x:CoordinateReport; y:CoordinateReport; unread:{record:number; reason:string}[]}
+export function csvPoints(table:CSVTable,mapping:CSVMapping,report?:CSVCoordinateReport):PointCollection{
   const {x:xColumn,y:yColumn,id,name}=mapping;
   if(!Number.isInteger(xColumn)||!Number.isInteger(yColumn)||xColumn===yColumn||![xColumn,yColumn].every(i=>i>=0&&i<table.headers.length))throw new Error('Select distinct longitude and latitude columns.');
-  return {type:'FeatureCollection',features:table.rows.map((r,i)=>{const lon=r[xColumn].trim(),lat=r[yColumn].trim();if(lon&&lat&&![Number(lon),Number(lat)].every(Number.isFinite))throw new Error(`CSV record ${i+1} has nonnumeric coordinates.`);
-    if(lon&&lat)checkRange(Number(lon),Number(lat),mapping.units,i+1);const f=feature(id>=0?r[id].trim():`row-${i+1}`,name>=0?r[name]:`Record ${i+1}`,lon&&lat?[Number(lon),Number(lat)]:null);f.properties={...Object.fromEntries(table.headers.map((h,j)=>[h,r[j]])),name:f.properties.name};return f;})};
+  const readX:ReadCoordinate[]=[],readY:ReadCoordinate[]=[],unread:CSVCoordinateReport['unread']=[];
+  const features=table.rows.map((r,i)=>{
+    const lon=r[xColumn].trim(),lat=r[yColumn].trim();
+    let position:Position|null=null;
+    if(lon&&lat){
+      // IN DEGREES, decimal or degrees, minutes and seconds (2026-11-18); in metres, numbers only, as before. A value
+      // that cannot be read leaves its record unplaced and said, not the file refused.
+      const rx=mapping.units==='degree'?readCoordinate(lon,'x'):{value:Number(lon),dms:false,hemisphereStated:true};
+      const ry=mapping.units==='degree'?readCoordinate(lat,'y'):{value:Number(lat),dms:false,hemisphereStated:true};
+      readX.push(rx);readY.push(ry);
+      if(rx.value===null||ry.value===null||!Number.isFinite(rx.value)||!Number.isFinite(ry.value)){
+        if(mapping.units==='metre')throw new Error(`CSV record ${i+1} has nonnumeric coordinates.`);
+        unread.push({record:i+1,reason:(rx.value===null?rx.reason:ry.reason)??`(${lon}, ${lat}) is not a pair of coordinates`});
+      }else{checkRange(rx.value,ry.value,mapping.units,i+1);position=[rx.value,ry.value];}
+    }
+    const f=feature(id>=0?r[id].trim():`row-${i+1}`,name>=0?r[name]:`Record ${i+1}`,position);
+    f.properties={...Object.fromEntries(table.headers.map((h,j)=>[h,r[j]])),name:f.properties.name};return f;});
+  if(report){report.x=coordinateReport(readX);report.y=coordinateReport(readY);report.unread=unread;}
+  return {type:'FeatureCollection',features};
 }
 export function syntheticPoints(boundary:Boundary,{inside=20,outside=2,seed=42}={}):PointCollection{
   if(![inside,outside,seed].every(Number.isInteger)||inside<1||outside<0||inside+outside>2000||seed<0||seed>4294967295)throw new Error('Use 1–2,000 total points and an integer seed from 0 to 4294967295.');

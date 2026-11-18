@@ -10,6 +10,10 @@ shown in a local build is not a claim that it has been published.
   background. MERS's circle moves into the Yellow Sea; Oswego's overview stays in its corner. Map 0.35.0.
 - **A map with no basemap says so**, adds a scale bar and names up to five marks: Oswego's dot is the church, 500 m
   across, when the tiles cannot be read.
+- **Coordinates written in degrees, minutes and seconds are read**, in a CSV of points and in points from a table:
+  `05° 56' 00" S` becomes −5.9333. The column keeps its text. Values with no hemisphere are counted and said; a value
+  that cannot be read leaves its record without a position, where a CSV used to be refused.
+- **The NYC test that reads 19 satellite files from a live service waits as long as a slow day takes.**
 
 ## 0.145.0 — In development
 

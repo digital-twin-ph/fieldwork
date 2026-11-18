@@ -1,4 +1,5 @@
 import type {PointCollection,PointFeature,Position} from './types.js';
+import {readCoordinate,coordinateReport,coordinateSentence,type ReadCoordinate,type CoordinateReport} from './coordinates.js';
 
 const feature=(id:string,name:string,coordinates:Position|null):PointFeature=>({type:'Feature',id,properties:{name},geometry:coordinates?{type:'Point',coordinates}:null});
 /** POINTS FROM X AND Y IN A TABLE A WORKFLOW COMPUTED, the run-time sibling of `csvPoints` (experiment 178).
@@ -14,6 +15,8 @@ export interface TablePointsResult {
   unplaced:{row:number; reason:string}[];
   /** Distinct positions, and how many placed rows share one with an earlier row. */
   positions:number; sharedPosition:number;
+  /** How many values were read as degrees, minutes and seconds, and how many of those stated no hemisphere. */
+  coordinates:{x:CoordinateReport;y:CoordinateReport};
 }
 type TableRows={keys:string[]; valueField:string; rows:{key:Record<string,unknown>; value:unknown}[]};
 export function tablePoints(table:TableRows,mapping:TableMapping):TablePointsResult{
@@ -29,11 +32,14 @@ export function tablePoints(table:TableRows,mapping:TableMapping):TablePointsRes
     return value===null||value===undefined?'':String(value).trim();};
   const unplaced:TablePointsResult['unplaced']=[];
   const seen=new Set<string>();let sharedPosition=0;
+  const readX:ReadCoordinate[]=[],readY:ReadCoordinate[]=[];
   const features=table.rows.map((row,i)=>{
     const lon=read(row,mapping.x),lat=read(row,mapping.y);
-    const x=Number(lon),y=Number(lat);
+    // DECIMAL DEGREES, OR DEGREES, MINUTES AND SECONDS converted (2026-11-18): the column keeps its text.
+    const rx=readCoordinate(lon,'x'),ry=readCoordinate(lat,'y');readX.push(rx);readY.push(ry);
+    const x=rx.value??NaN,y=ry.value??NaN;
     const reason=!lon||!lat?'a coordinate is empty'
-      :!Number.isFinite(x)||!Number.isFinite(y)?`(${lon}, ${lat}) is not a pair of numbers`
+      :rx.value===null||ry.value===null?(rx.reason&&rx.value===null?rx.reason:ry.reason)??`(${lon}, ${lat}) is not a pair of coordinates`
       :Math.abs(x)>180||Math.abs(y)>90?`(${lon}, ${lat}) is outside the longitude and latitude range`
       :null;
     if(reason)unplaced.push({row:i+1,reason});
@@ -43,7 +49,8 @@ export function tablePoints(table:TableRows,mapping:TableMapping):TablePointsRes
     f.properties={...Object.fromEntries(columns.map(c=>{const v=read(row,c);return [c,v];})),name:f.properties.name};
     return f;
   });
-  return {points:{type:'FeatureCollection',features},unplaced,positions:seen.size,sharedPosition};
+  return {points:{type:'FeatureCollection',features},unplaced,positions:seen.size,sharedPosition,
+    coordinates:{x:coordinateReport(readX),y:coordinateReport(readY)}};
 }
 
 /** The sentence a run states about what it placed. */
@@ -51,6 +58,7 @@ export const tablePointsSentence=(r:TablePointsResult,mapping:TableMapping):stri
   const placed=r.points.features.length-r.unplaced.length;
   return `${placed.toLocaleString('en-US')} of ${r.points.features.length.toLocaleString('en-US')} rows placed as points, `
     +`x (longitude) from "${mapping.x}" and y (latitude) from "${mapping.y}", read as CRS84.`
+    +(r.coordinates?coordinateSentence(r.coordinates,mapping.x,mapping.y):'')
     +(r.unplaced.length?` ${r.unplaced.length.toLocaleString('en-US')} not placed: row ${r.unplaced[0].row}, ${r.unplaced[0].reason}`
       +(r.unplaced.length>1?', and others':'')+'.':'')
     +(r.sharedPosition?` ${r.sharedPosition.toLocaleString('en-US')} rows share a position with an earlier row, at `

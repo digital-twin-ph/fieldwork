@@ -5,7 +5,8 @@ import {element,optionalElement} from './dom.js';
 import {errorMessage,required} from './guards.js';
 const attributeType=(value:string):AttributeType=>{if(!ATTRIBUTE_TYPES.includes(value))throw new Error('Choose a supported attribute type.');return value as AttributeType;};
 import L from 'leaflet';
-import {parseCSV,csvPoints,syntheticPoints,loadSQLite,geoPackageLayers,geoPackagePoints,geoJSONDeclaredCRS} from './input-data.js';
+import {parseCSV,csvPoints,syntheticPoints,loadSQLite,geoPackageLayers,geoPackagePoints,geoJSONDeclaredCRS,type CSVCoordinateReport} from './input-data.js';
+import {coordinateSentence} from './coordinates.js';
 import {reprojectToCRS84,utmDefinition} from './reproject.js';
 import {utmFromEPSGCode} from './metric-crs.js';
 import {geometryBounds} from './study-area.js';
@@ -89,7 +90,16 @@ export function openInputDataEditor(node:WorkflowNode<'point_input'>,areas:{id:s
       frame();
       $('#csv-preview').onclick=()=>{try{
         const mapping={x:csvColumn('longitude'),y:csvColumn('latitude'),id:csvColumn('id'),name:csvColumn('name'),units:projected()?'metre' as const:'degree' as const};
-        const read=csvPoints(required(csv),mapping);
+        const report:CSVCoordinateReport={x:{dms:0,noHemisphere:0},y:{dms:0,noHemisphere:0},unread:[]};
+        const read=csvPoints(required(csv),mapping,report);
+        // WHAT THE COORDINATES WERE READ AS, said beside the columns (2026-11-18): degrees, minutes and seconds converted,
+        // any with no hemisphere, and any record that could not be placed and why.
+        {let said=dialog.querySelector<HTMLElement>('#csv-coordinates-note');
+         if(!said){($('#csv-frame-note') as HTMLElement).insertAdjacentHTML('afterend','<p id="csv-coordinates-note" role="status"></p>');said=dialog.querySelector<HTMLElement>('#csv-coordinates-note');}
+         const headers=required(csv).headers;
+         const text=(projected()?'':coordinateSentence(report,headers[mapping.x]??'',headers[mapping.y]??'').trim())
+           +(report.unread.length?` ${report.unread.length.toLocaleString('en-US')} ${report.unread.length===1?'record is':'records are'} not placed: record ${report.unread[0]!.record}, ${report.unread[0]!.reason}${report.unread.length>1?', and others':''}.`:'');
+         said!.textContent=text.trim();said!.hidden=!text.trim();}
         if(!projected()){accept(read,{...metadata(file),crs:'CRS84'});return;}
         const converted=reprojectToCRS84(read,utmZone(),utmHemisphere());
         accept(converted.collection,{...metadata(file),crs:'CRS84',sourceCRS:converted.provenance.sourceCRS,reprojection:converted.provenance});

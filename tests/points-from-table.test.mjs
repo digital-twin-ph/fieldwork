@@ -33,7 +33,7 @@ test('a row it cannot place is kept with no position and counted, and the table 
     row({site:'c',Latitude:'-95',Longitude:'140.8'}),row({site:'d',Latitude:'40.8',Longitude:'-73.9'})]),mapping);
   assert.equal(r.points.features.length,4);
   assert.deepEqual(r.unplaced.map(u=>[u.row,u.reason]),[[1,'a coordinate is empty'],
-    [2,'(-73.9, north) is not a pair of numbers'],[3,'(140.8, -95) is outside the longitude and latitude range']]);
+    [2,'"north" is not a number or degrees, minutes and seconds'],[3,'(140.8, -95) is outside the longitude and latitude range']]);
   assert.equal(r.points.features.filter(f=>f.geometry).length,1);
   assert.match(tablePointsSentence(r,mapping),/^1 of 4 rows placed as points, x \(longitude\) from "Longitude" and y \(latitude\) from "Latitude", read as CRS84\. 3 not placed: row 1, a coordinate is empty, and others\.$/);
 });

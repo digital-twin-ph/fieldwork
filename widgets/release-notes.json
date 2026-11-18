@@ -576,12 +576,12 @@
    "migrationFrom": []
   },
   "point_input": {
-   "version": "0.9.0",
-   "released": "2026-11-14",
+   "version": "0.10.0",
+   "released": "2026-11-18",
    "changes": [
     {
      "kind": "minor",
-     "description": "Points can carry a provenance record, as Tabular data does: a source note in Methods and a reference in References."
+     "description": "Coordinates in degrees may be written as degrees, minutes and seconds, such as 05° 56' 00\" S, as well as decimal numbers, in a CSV imported here and in points from a connected table (the practitioner, 2026-11-18, of a USGS table of Africa's mineral facilities: \"the more urgent thing is the degrees decimal conversion assuming the format is correct\"). They are converted to decimal degrees for the point; the column keeps its text. A value with no hemisphere is read as north or east and counted in the step's sentence. A value that cannot be read leaves its record without a position, with the reason, where a CSV in degrees used to be refused whole. Checked on the USGS table: 582 of 652 rows agree exactly with its own decimal columns and 13 within rounding; 57 disagree, mostly errors in those columns."
     }
    ],
    "breaking": false,

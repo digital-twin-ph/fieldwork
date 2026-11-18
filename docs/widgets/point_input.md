@@ -14,6 +14,13 @@ Records arrive three ways. **Import a file** — GeoJSON, or a CSV with longitud
 columns. **Place pins** by clicking a map, for a handful of locations you know. **Connect a
 source** that produces points, such as a facility search.
 
+**Coordinates in degrees** may be written as decimal numbers, such as `-5.9333`, or as degrees, minutes and seconds,
+such as `05° 56' 00" S`. The second are converted to decimal degrees for the point, and the column keeps its text as
+written. S and W, or a minus sign, mean south and west. A value with no hemisphere is read as north or east, and the
+step says how many there were, because in much of Africa a missing S puts a place on the wrong side of the equator. A
+value that cannot be read, such as 90 seconds or two hemispheres, leaves its record without a position, and the step
+says which and why.
+
 A record may have no position. That is kept rather than dropped, because a case with no recorded
 address is still a case, and steps that need geometry say how many they had to leave out instead of
 quietly working with fewer.

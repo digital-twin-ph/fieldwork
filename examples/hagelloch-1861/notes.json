@@ -74,9 +74,11 @@
       "id": "hagelloch-response-not-established",
       "section": "Discussion",
       "fn": "limitation",
-      "text": "These notes rest mostly on one source, Pfeilsticker's dissertation, read as OCR text. The November day the news arrived is not known, and it decides how much of the delay was detection and how much was response. The laws of the time were found mostly as snippets, because the main law books were behind bot checks. A recent paper is said to report the school closing at 27% of pupils ill. That claim has not been traced to any 1861 source, so these notes do not use it.",
+      "text": "These notes rest mostly on one source, Pfeilsticker's dissertation, read as OCR text. The November day the news arrived is not known, and it decides how much of the delay was detection and how much was response. The laws of the time were found mostly as snippets, because the main law books were behind bot checks. A search summary claimed the school closed once 27% of pupils were ill. No source says so: Groendyke and colleagues (2012) simulated closing the school, they did not report a closure, and Aaby, Thoma and Dietz (2022), who re-analysed the same thesis, mention none. So these notes do not use it.",
       "works": [
-        "pfeilsticker-1863"
+        "pfeilsticker-1863",
+        "groendyke-2012",
+        "aaby-2022"
       ],
       "argument": "own"
     }
@@ -199,6 +201,57 @@
       "published": "2021",
       "url": "https://europepmc.org/article/PMC/PMC9636000",
       "retrieved": "2026-11-18"
+    },
+    "groendyke-2012": {
+      "citation": {
+        "type": "article",
+        "authors": [
+          {
+            "family": "Groendyke",
+            "given": "Chris"
+          },
+          {
+            "family": "Welch",
+            "given": "David"
+          },
+          {
+            "family": "Hunter",
+            "given": "David R."
+          }
+        ],
+        "title": "A network-based analysis of the 1861 Hagelloch measles data",
+        "container": "Biometrics",
+        "volume": "68",
+        "issue": "3",
+        "pages": "755-765",
+        "doi": "10.1111/j.1541-0420.2012.01748.x"
+      },
+      "published": "2012"
+    },
+    "aaby-2022": {
+      "citation": {
+        "type": "article",
+        "authors": [
+          {
+            "family": "Aaby",
+            "given": "Peter"
+          },
+          {
+            "family": "Thoma",
+            "given": "Heike"
+          },
+          {
+            "family": "Dietz",
+            "given": "Klaus"
+          }
+        ],
+        "title": "Measles in the European past: outbreak of severe measles in an isolated German village, 1861",
+        "container": "Journal of Infection",
+        "volume": "84",
+        "pages": "668-674",
+        "doi": "10.1016/j.jinf.2022.02.010"
+      },
+      "published": "2022"
     }
   }
 }

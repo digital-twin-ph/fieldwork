@@ -113,3 +113,54 @@ test('the Pink Book periods run: a child infected on day 0 is not yet infectious
   assert.equal(run.ever,1);
   assert.deepEqual([0,9,10,18,19,29].map(stateOn),['E','E','I','I','R','R']);
 });
+
+/** THE 7-1-7 SPIKE (2026-11-18): a response scenario dates detection, notification and each action from a run, and
+ *  closing the school changes the timing more than the size, as Groendyke, Welch and Hunter (2012) found. */
+const split=json('structures/measles-prodrome-rash-household-class-village/1.0.0.json');
+const splitSet=json('parameter-sets/measles-hagelloch-prodrome-rash/1.0.0.json');
+const scenario=id=>json(`response-scenarios/${id}/1.0.0.json`);
+const SCENARIOS=['hagelloch-as-in-1861','hagelloch-school-closed-from-day-0','hagelloch-7-1-7-met','hagelloch-7-1-7-missed'];
+const {validateResponseScenario,compileResponse,sevenOneSeven}=await import('../build/disease-model.js');
+
+test('the four response scenarios are valid for the measles structure with a prodrome and a rash',()=>{
+  validateStructure(split);validateParameterSet(splitSet,split);
+  for(const id of SCENARIOS)validateResponseScenario(scenario(id),split);
+  assert.throws(()=>validateResponseScenario(scenario('hagelloch-7-1-7-met'),structure),/is for measles-prodrome-rash/);
+  const bad=structuredClone(scenario('hagelloch-7-1-7-met'));bad.values.p_teacher_notices.value=2;
+  assert.throws(()=>validateResponseScenario(bad,split),/a chance between 0 and 1/);
+  const noNotice=structuredClone(scenario('hagelloch-7-1-7-met'));delete noNotice.notification;
+  assert.throws(()=>validateResponseScenario(noNotice,split),/a scenario with actions notifies/);
+});
+
+test('the calendar closes the class on Sundays from 30 October 1861, a Wednesday',()=>{
+  const r=compileResponse(split,scenario('hagelloch-as-in-1861'),14);
+  const classOpen=Array.from({length:14},(_,day)=>r.open[day*3+1]);
+  assert.deepEqual(classOpen,[1,1,1,1,0,1,1,1,1,1,1,0,1,1]);
+  assert.ok(Array.from({length:14},(_,day)=>r.open[day*3]).every(x=>x===1));
+});
+
+test('a run under a response dates its events, and 7-1-7 is scored from them',()=>{
+  const program=compile(split,splitSet,population);
+  const met=compileResponse(split,scenario('hagelloch-7-1-7-met'),120);
+  const run=runDeclared(kernel,program,{seed:3,index:0,days:120,response:met});
+  assert.equal(run.emergedOn,10);
+  assert.ok(run.detectedOn>=run.emergedOn||run.detectedOn<0);
+  if(run.detectedOn>=0){
+    assert.equal(run.notifiedOn,run.detectedOn+1);
+    assert.deepEqual(run.actionsOn,[run.notifiedOn+1,run.notifiedOn+3]);
+    const s=sevenOneSeven(run);
+    assert.equal(s.notify,1);assert.equal(s.respond,3);assert.equal(s.met.notify,true);
+  }
+  const none=runDeclared(kernel,program,{seed:3,index:0,days:120,response:compileResponse(split,scenario('hagelloch-school-closed-from-day-0'),120)});
+  assert.equal(none.detectedOn,-1);assert.equal(sevenOneSeven(none).detect,null);
+});
+
+test('closed from the first day, the school changes when the outbreak peaks more than how many it reaches',()=>{
+  const program=compile(split,splitSet,population);
+  const mean=(id,key)=>{const r=compileResponse(split,scenario(id),150);let t=0;
+    for(let seed=0;seed<200;seed++)t+=runDeclared(kernel,program,{seed,index:0,days:150,response:r})[key];return t/200;};
+  const [openSize,closedSize]=[mean('hagelloch-as-in-1861','ever'),mean('hagelloch-school-closed-from-day-0','ever')];
+  const [openPeak,closedPeak]=[mean('hagelloch-as-in-1861','peakOn'),mean('hagelloch-school-closed-from-day-0','peakOn')];
+  assert.ok(closedPeak>openPeak,`peak ${openPeak} open, ${closedPeak} closed`);
+  assert.ok(closedSize<=openSize,`size ${openSize} open, ${closedSize} closed`);
+});

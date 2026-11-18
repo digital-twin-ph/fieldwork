@@ -300,6 +300,74 @@ evidence dialog, which was not built; anything on a population other than Hagell
 periods suit 1861 Hagelloch: they are a 2024 reference for children of another century, placed `global` and
 `indirect` on their records; or that the three probabilities are right, which no one has fitted.
 
+## Dated 7-1-7 events, 2026-11-18
+
+**The question,** set by the practitioner on 2026-11-18: can the Hagelloch model date its own 7-1-7 milestones, and
+what changes when they are met? The framing is theirs: *"Perhaps the contrast for Hagelloch is what it means not to
+have a 717 approach."* The research found no published model that scores 7-1-7 from its own simulated events.
+
+**What 1861 did** (the research report is kept outside the repository; the seven authored notes in the Hagelloch
+project carry it): news reached the Tübingen hospital in
+November through families seeking care there (Pfeilsticker, printed page 7, checked against the page image; no day is
+given); Pfeilsticker and the district physician went out on 29 November, day 30; the school stayed open, and the
+schoolmaster sent visibly ill children home. No closure is recorded by Pfeilsticker, Aaby and colleagues (1992, 2022)
+or Groendyke, Welch and Hunter (2012). Groendyke's closure is a simulation, not a report.
+
+**What was added**, each a default that leaves an undeclared model drawing exactly as before (the 300-seed equality
+with the hand-written model still holds, and 500 seeds in the TypeScript test):
+
+| Added | In the declaration | In the kernel |
+| --- | --- | --- |
+| A state left off a network | `states` on a network: the infectious states that transmit there | a mask per network |
+| Days a network does not meet | a response scenario's `calendar`: day 0's date and the weekdays each network is closed | one flag per day and network |
+| Detection | a daily chance of notice, in a state (care sought) or on a network while it meets (a teacher) | drawn before transmission until the first notice |
+| Notification | days from detection | a date |
+| Response actions | a network, a factor on its daily chance, days after notification | applied from their start |
+
+A third declaration, the **response scenario** (the practitioner's name, 2026-11-18, now in the glossary), holds the
+calendar, detection, notification and actions with their evidence, apart from the parameter set. A new model
+structure splits the infectious state into prodrome and rash, with only the prodrome on the class network: a child
+with the rash kept home is the one response that 1861 did make. Its parameter set derives the 4-day prodrome from
+Pfeilsticker, who upholds Panum's 14 days from infection to the rash and reports 10 to 11 days rash to rash in a
+house, because the prodrome transmits.
+
+**Result, 500 runs each, Hagelloch's 188 children in their households and two classes, the index the child ill on 30
+October** (median, with the 10th to 90th percentile):
+
+| Response scenario | Children infected | Peak day | Detection, days after emergence | 7-1-7 met (all three) |
+| --- | --- | --- | --- | --- |
+| As in 1861: care sought, nothing done | 187 (186–188) | 50 (48–52) | 21 (14–29) | 0% |
+| School closed from day 0 (Groendyke's check) | 186 (184–188) | 66 (56–77) | — | — |
+| 7-1-7 met: teacher and families report, notified next day, school closed after 1 day, households apart after 3 | 176 (171–181) | 66 (52–82) | 3 (0–12) | 79% |
+| 7-1-7 missed: notified after 7 days, the same actions 21 days later | 187 (185–188) | 50 (48–52) | 21 (14–29) | 0% |
+
+**What it shows:**
+
+- **Groendyke's result reproduces.** Closing the school from the first day barely changes how many are infected and
+  moves the peak 16 days later.
+- **Meeting 7-1-7 slows the outbreak more than it shrinks it.** In a village with no vaccine and every child
+  susceptible, about 11 fewer of 188 children are infected; the peak comes 16 days later. Households carry it on once
+  the school is shut. What a response action can do depends on the countermeasure it has: in 1861 there was none
+  beyond separation.
+- **Missing 7-1-7 by two weeks is the same as doing nothing,** because the actions start after the peak.
+- **In 1861 the model detects on day 21**, inside the November the record gives; that is an assumed daily chance of
+  care being sought (0.02 a day for a child with the rash), chosen so, not a finding.
+
+**What it does not establish:**
+
+- The transmission chances are the spike's assumptions, not fitted. The modelled outbreak is too slow: it peaks on day
+  50, where the real one was over in about seven weeks. Fitted to the 1861 curve, the response would come later
+  relative to the outbreak, and do less.
+- Every detection chance and every action's effect is assumed and marked so in its evidence record.
+- Contacts outside school after a closure are not raised, which Groendyke and colleagues warn overstates a closure.
+- The school calendar of 1861 is unknown; Monday to Saturday is assumed.
+- Nothing here is a judgement of what 1861's physicians could have done.
+
+**HIV among key populations, raised the same day.** The practitioner: *"There is potential work for ABM for HIV/AIDS key
+populations (e.g., FSW, MSM)."* Recorded as said. What it would ask of the format, not yet checked: partnerships that
+form and end over months and years rather than fixed groups, a step longer than a day, infectiousness that changes
+with stage and treatment, and a care cascade like TB's.
+
 ## Open questions
 
 - Reading the Gaborone model and its notebooks, under digitaltwin-aas. The practitioner, 2026-11-17: *"Yes you can

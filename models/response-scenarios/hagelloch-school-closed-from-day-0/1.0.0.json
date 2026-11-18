@@ -1,0 +1,28 @@
+{
+  "schema": "fieldwork/response-scenario/1",
+  "id": "hagelloch-school-closed-from-day-0",
+  "version": "1.0.0",
+  "title": "Hagelloch with the school closed from the first day, Groendyke's check",
+  "structure": {
+    "id": "measles-prodrome-rash-household-class-village",
+    "version": "1.0.0"
+  },
+  "calendar": {
+    "start": "1861-10-30",
+    "closed": {
+      "class": [
+        "Sunday",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday"
+      ]
+    },
+    "note": "The class network never meets: Groendyke, Welch and Hunter (2012) set their two classroom effects to zero for the whole outbreak and found it smaller only slightly, and later."
+  },
+  "detection": [],
+  "actions": [],
+  "values": {}
+}

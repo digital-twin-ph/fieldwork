@@ -1,0 +1,99 @@
+{
+  "schema": "fieldwork/parameter-set/1",
+  "id": "measles-hagelloch-prodrome-rash",
+  "version": "1.0.0",
+  "title": "Hagelloch 1861: the Pink Book's periods, the prodrome from Pfeilsticker",
+  "structure": {
+    "id": "measles-prodrome-rash-household-class-village",
+    "version": "1.0.0"
+  },
+  "values": {
+    "latent_period": {
+      "min": 10,
+      "max": 10,
+      "evidence": {
+        "basis": "derived",
+        "place": "global",
+        "time": {
+          "same": false,
+          "note": "a 2024 reference for an 1861 outbreak"
+        },
+        "directness": "indirect",
+        "credibility": "unverified",
+        "source": {
+          "citation": "CDC. Epidemiology and Prevention of Vaccine-Preventable Diseases (the Pink Book), chapter 13: Measles. Page dated 24 April 2024.",
+          "url": "https://www.cdc.gov/pinkbook/hcp/table-of-contents/chapter-13-measles.html",
+          "open": true,
+          "read": "full text, 2026-11-17"
+        },
+        "quote": "The time from exposure to rash onset averages 14 days",
+        "working": "14 days from exposure to the rash, less the 4 days a person transmits before it: 10 days infected and not yet infectious, on average. The chapter gives averages only; no spread is assumed here, so every child takes 10."
+      }
+    },
+    "prodrome": {
+      "min": 4,
+      "max": 4,
+      "evidence": {
+        "basis": "derived",
+        "place": "direct",
+        "time": {
+          "same": true
+        },
+        "directness": "direct",
+        "credibility": "unverified",
+        "source": {
+          "citation": "Pfeilsticker A. Beiträge zur Pathologie der Masern mit besonderer Berücksichtigung der statistischen Verhältnisse. Tübingen: Eberhard-Karls-Universität; 1863.",
+          "url": "https://archive.org/details/beitrgezurpatho00pfeigoog",
+          "open": true,
+          "read": "OCR text of the incubation chapter, 2026-11-18"
+        },
+        "quote": "dass die Zeit von der Ansteckung bis zur Eruption … constant 14 Tage sei (that the time from infection to the rash is a constant 14 days)",
+        "working": "Pfeilsticker upholds Panum's rule, quoting him: the first symptoms come usually 10 to 12 days after infection, the rash on the 14th. The 10 days of the latent period, taken from the Pink Book, leave 4 days of prodrome before the rash. He reports the rash-to-rash interval in a household as usually 10 or 11 days, not 14, because a child infects others before its own rash: the prodrome transmits.",
+        "note": "Aaby, Thoma and Dietz (2022, J Infect 84:668–674, closed) give a mean prodrome of 3.8 days for children Pfeilsticker saw and 4.2 for those recalled. Every child takes 4 here."
+      }
+    },
+    "rash_infectious": {
+      "min": 5,
+      "max": 5,
+      "evidence": {
+        "basis": "derived",
+        "place": "global",
+        "time": {
+          "same": false,
+          "note": "a 2024 reference for an 1861 outbreak"
+        },
+        "directness": "indirect",
+        "credibility": "unverified",
+        "source": {
+          "citation": "CDC. Epidemiology and Prevention of Vaccine-Preventable Diseases (the Pink Book), chapter 13: Measles. Page dated 24 April 2024.",
+          "url": "https://www.cdc.gov/pinkbook/hcp/table-of-contents/chapter-13-measles.html",
+          "open": true,
+          "read": "full text, 2026-11-17"
+        },
+        "quote": "transmissible from 4 days before through 4 days after rash onset",
+        "working": "The day of the rash and the 4 days after it: 5 days. With the 4-day prodrome, 9 infectious days in all, as in the Pink Book set."
+      }
+    },
+    "p_household": {
+      "value": 0.08,
+      "evidence": {
+        "basis": "assumed",
+        "note": "The spike's assumption; to be fitted to the 1861 curve. The chapter's secondary attack rate of more than 90% among susceptible close contacts would need at least 0.23 a day over 9 days; a Hagelloch household is not the same setting."
+      }
+    },
+    "p_class": {
+      "value": 0.02,
+      "evidence": {
+        "basis": "assumed",
+        "note": "The spike's assumption; to be fitted to the 1861 curve."
+      }
+    },
+    "p_village": {
+      "value": 0.002,
+      "evidence": {
+        "basis": "assumed",
+        "note": "The spike's assumption; to be fitted to the 1861 curve."
+      }
+    }
+  }
+}

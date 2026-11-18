@@ -1,0 +1,101 @@
+{
+  "schema": "fieldwork/response-scenario/1",
+  "id": "hagelloch-7-1-7-missed",
+  "version": "1.0.0",
+  "title": "Hagelloch with 7-1-7 missed: no one asked to report, notified after a week, the same actions begun two weeks late",
+  "structure": {
+    "id": "measles-prodrome-rash-household-class-village",
+    "version": "1.0.0"
+  },
+  "calendar": {
+    "start": "1861-10-30",
+    "closed": {
+      "class": [
+        "Sunday"
+      ]
+    },
+    "note": "30 October 1861, the first child's first symptoms, was a Wednesday. The school is taken to meet Monday to Saturday: assumed, since the 1861 school calendar is not in any open source found."
+  },
+  "detection": [
+    {
+      "id": "care",
+      "label": "A family seeks care for a child with the rash",
+      "state": "Q",
+      "chance": "p_care_sought"
+    }
+  ],
+  "notification": {
+    "after": "notify_after"
+  },
+  "actions": [
+    {
+      "id": "close_school",
+      "label": "Close the school",
+      "network": "class",
+      "factor": "close_school_factor",
+      "after": "close_school_after"
+    },
+    {
+      "id": "keep_apart",
+      "label": "Keep children of different households apart",
+      "network": "village",
+      "factor": "keep_apart_factor",
+      "after": "keep_apart_after"
+    }
+  ],
+  "values": {
+    "p_care_sought": {
+      "value": 0.02,
+      "evidence": {
+        "basis": "assumed",
+        "place": "direct",
+        "time": {
+          "same": true
+        },
+        "source": {
+          "citation": "Pfeilsticker A. Beiträge zur Pathologie der Masern mit besonderer Berücksichtigung der statistischen Verhältnisse. Tübingen: Eberhard-Karls-Universität; 1863.",
+          "url": "https://archive.org/details/beitrgezurpatho00pfeigoog",
+          "open": true,
+          "read": "page image, printed page 7, 2026-11-18"
+        },
+        "quote": "wird meist die ärztliche Hilfe im Tübinger Krankenhaus gesucht (medical help is mostly sought at the Tübingen hospital)",
+        "note": "The pathway is cited: news of the outbreak reached the hospital through care sought there. The daily chance is assumed. As in 1861: no one is asked to report."
+      }
+    },
+    "notify_after": {
+      "value": 7,
+      "evidence": {
+        "basis": "assumed",
+        "note": "7 days: the 1-day target missed by six."
+      }
+    },
+    "close_school_factor": {
+      "value": 0,
+      "evidence": {
+        "basis": "assumed",
+        "note": "Closing the school stops transmission in class. Groendyke, Welch and Hunter (2012) note that children's contacts outside school probably rise after a closure, which this does not model."
+      }
+    },
+    "close_school_after": {
+      "value": 21,
+      "evidence": {
+        "basis": "assumed",
+        "note": "21 days after notification: the 7-day target missed by two weeks."
+      }
+    },
+    "keep_apart_factor": {
+      "value": 0.5,
+      "evidence": {
+        "basis": "assumed",
+        "note": "Families asked to keep children apart halve transmission between households. In 1861 one family did so wholly, and three of its children escaped (Pfeilsticker)."
+      }
+    },
+    "keep_apart_after": {
+      "value": 21,
+      "evidence": {
+        "basis": "assumed",
+        "note": "21 days after notification."
+      }
+    }
+  }
+}

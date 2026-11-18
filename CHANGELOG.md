@@ -3,6 +3,20 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.142.0 — In development
+
+- **A disease model can be run under a response scenario**: how cases are detected (a daily chance of notice, in a
+  state or on a network while it meets), how soon detection is notified, and each action with its start and its effect
+  on a contact network, with a calendar of the days each network meets. Each run dates detection, notification and
+  each action, and is scored against 7-1-7. A model with no response runs exactly as before.
+- **A network can carry only some infectious states**: Hagelloch's measles now has a prodrome and a rash, and a child
+  with the rash is kept home from school, as in 1861.
+- **Four response scenarios for Hagelloch**: as in 1861, the school closed from the first day, 7-1-7 met, 7-1-7 missed.
+  Experiment 220 records the result: meeting 7-1-7 slows the outbreak more than it shrinks it.
+- **The glossary defines model structure, parameter set and response scenario.**
+- **Hagelloch's note on what is not established says the 27% school closure traces to no source**: Groendyke and
+  colleagues simulated a closure, and Aaby and colleagues mention none.
+
 ## 0.141.0 — In development
 
 - **Hagelloch's write-up carries seven notes by its author** on how the outbreak was met in 1861: the village and its

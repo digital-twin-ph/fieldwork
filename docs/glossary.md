@@ -506,6 +506,15 @@ _For understanding how the project works, and why it is organised around experim
 | <a id="route-distance-legs"></a>**Route distance legs (D1, D2, D3)** | **D is distance.** A route from a site to a destination over a street network has three: **D1** from the origin to the network, **D2** along the network, **D3** from the network to the destination. The practitioner's framing, taken from the [Cholera Advanced 1 notebooks](https://github.com/PHI-Case-Studies), which use OSMnx and are the same upstream work that produced the `soho.graphml` this project ships (see `examples/john-snow/NOTICE.txt`). Used in `src/catchments.ts`, where D1 is charged against the travel budget. **Collides with the primitive design audit's D1–D10**, which are checks and not distances; where both could be meant, the audit keeps the bare form and the legs are written out |
 | **Thin domain layer** | The target shape for domain-specific work. A thick one means a primitive is missing underneath; a thin one may still sit over a gap, since pushing a step outside the application makes the layer look thin either way ([59](experiments/59-pattern-for-engineered-knowledge.md), [62](experiments/62-workflow-traversal.md)) |
 
+## Disease models
+
+_For a disease model declared as data and run by the kernel ([220](experiments/220-a-disease-model-configured-from-its-evidence.md)). Three things kept apart, so the same disease can be given other numbers, and the same numbers run under other responses._
+| Term | Meaning |
+| --- | --- |
+| **Model structure** | The shape of a disease model, with no numbers: its states (S, E, I, R, and any others), how infection moves a person from one to the next, the course a person follows once infected and where it branches, and the contact networks infection travels over. `models/structures/`. Example: measles over households, school classes and the village. |
+| **Parameter set** | The numbers for one model structure, each with its evidence record: its basis (cited, derived, fitted or assumed), place, time, directness, credibility, source and working. One structure may have several. `models/parameter-sets/`. Example: the Pink Book periods for Hagelloch. Named by the practitioner, 2026-11-17. |
+| **Response scenario** | What is done during a run, and when: how cases are detected, how soon detection is notified, and each response action with its start and its effect on a contact network. Kept apart from the parameter set, so one disease can be run under several responses. `models/response-scenarios/`. Example: Hagelloch as in 1861, against the same outbreak with 7-1-7 met. Named by the practitioner, 2026-11-18, over plain *scenario*, which also means another setting or other numbers. |
+
 ## Not yet defined, and open to you
 
 Named so the gaps are visible rather than discovered one reader at a time. If you are

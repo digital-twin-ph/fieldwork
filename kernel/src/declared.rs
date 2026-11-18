@@ -22,7 +22,7 @@
 const PAGE: usize = 65_536;
 static mut BASE: usize = 0;
 static mut CAPACITY: usize = 0;
-static mut OFF: [usize; 12] = [0; 12];
+static mut OFF: [usize; 19] = [0; 19];
 static mut N: usize = 0;
 static mut DAYS: usize = 0;
 static mut NETS: usize = 0;
@@ -42,6 +42,16 @@ const INFECTED_ON: usize = 8; // i32[n]: the day each agent was infected, -1 nev
 const SCRATCH: usize = 9; // u32[nets*n]: infectious agents by network and group
 const SHARE: usize = 10; // f64[steps]: the caller's; a branch's share of those leaving its state, unread for a step with no alternative
 const CURSOR: usize = 11; // u32[n]: how far along its course each agent is
+// A RESPONSE (experiment 220, the 7-1-7 spike, 2026-11-18). Each defaults, at `decl_prepare`, to what a run did before
+// it existed, so a model declared without a response draws exactly as it did.
+const NET_STATES: usize = 12; // u32[nets]: bit s set when an infectious agent in state s transmits on the network; all set by default
+const OPEN: usize = 13; // u8[days*nets]: 1 where the network meets that day (a school day); all 1 by default
+const NOTICE_NET: usize = 14; // f64[nets]: the daily chance an agent transmitting on an open network is noticed there; 0 by default
+const NOTICE_STATE: usize = 15; // f64[states]: the daily chance an agent in the state is noticed (care sought); 0 by default
+const ACTION: usize = 16; // f64[MAX_ACTIONS*3]: network, factor on its daily probability, days after notification it starts
+const EVENTS: usize = 17; // i32[2+MAX_ACTIONS]: the day detected, the day notified, the day each action starts; -1 never
+const RESPONSE: usize = 18; // i32[2]: days from detection to notification (-1 no notification), how many actions
+const MAX_ACTIONS: usize = 16;
 
 fn ptr<T>(which: usize) -> *mut T {
     unsafe { (BASE + OFF[which]) as *mut T }
@@ -91,8 +101,9 @@ pub extern "C" fn decl_prepare(n: u32, days: u32, nets: u32, steps: u32, states:
     if n == 0 || days == 0 || nets == 0 || nets > 16 || steps == 0 || steps > 16 || states < 2 || states > 32 {
         return 0;
     }
-    let sizes = [4 * nets * n, 8 * nets, 4 * nets, 4 * nets, 16 * steps, n, 8 * n * steps, 4 * days * states, 4 * n, 4 * nets * n, 8 * steps, 4 * n];
-    let mut offsets = [0usize; 12];
+    let sizes = [4 * nets * n, 8 * nets, 4 * nets, 4 * nets, 16 * steps, n, 8 * n * steps, 4 * days * states, 4 * n, 4 * nets * n, 8 * steps, 4 * n,
+        4 * nets, days * nets, 8 * nets, 8 * states, 8 * MAX_ACTIONS * 3, 4 * (2 + MAX_ACTIONS), 8];
+    let mut offsets = [0usize; 19];
     let mut total = 0usize;
     for (i, size) in sizes.iter().enumerate() {
         total = (total + 7) & !7;
@@ -110,6 +121,18 @@ pub extern "C" fn decl_prepare(n: u32, days: u32, nets: u32, steps: u32, states:
         STEPS = steps;
         STATES = states;
     }
+    for j in 0..nets {
+        put::<u32>(NET_STATES, j, u32::MAX);
+        put::<f64>(NOTICE_NET, j, 0.0);
+    }
+    for k in 0..days * nets {
+        put::<u8>(OPEN, k, 1);
+    }
+    for s in 0..states {
+        put::<f64>(NOTICE_STATE, s, 0.0);
+    }
+    put::<i32>(RESPONSE, 0, -1);
+    put::<i32>(RESPONSE, 1, 0);
     1
 }
 
@@ -227,7 +250,31 @@ pub extern "C" fn decl_run(seed: u64, index: u32, susceptible: u32, infected: u3
             }
         }
     }
+    let (delay, actions) = (at::<i32>(RESPONSE, 0), at::<i32>(RESPONSE, 1));
+    if actions < 0 || actions as usize > MAX_ACTIONS || delay < -1 {
+        return u32::MAX;
+    }
+    let chance = |c: f64| c.is_finite() && (0.0..=1.0).contains(&c);
+    if (0..nets).any(|j| !chance(at(NOTICE_NET, j))) || (0..states).any(|s| !chance(at(NOTICE_STATE, s))) {
+        return u32::MAX;
+    }
+    for a in 0..actions as usize {
+        let (net, factor, start): (f64, f64, f64) = (at(ACTION, 3 * a), at(ACTION, 3 * a + 1), at(ACTION, 3 * a + 2));
+        if !(net >= 0.0 && (net as usize) < nets && libm::trunc(net) == net) || !factor.is_finite() || factor < 0.0
+            || !(start >= 0.0 && libm::trunc(start) == start) {
+            return u32::MAX;
+        }
+    }
+    for k in 0..2 + MAX_ACTIONS {
+        put::<i32>(EVENTS, k, -1);
+    }
+    let noticing = (0..nets).any(|j| at::<f64>(NOTICE_NET, j) > 0.0) || (0..states).any(|s| at::<f64>(NOTICE_STATE, s) > 0.0);
+    let mut detected = -1i32;
+    let mut notified = -1i32;
+    let base = q;
     let transmits = |s: u8| infectious & (1u32 << s) != 0;
+    let on = |s: u8, j: usize| transmits(s) && at::<u32>(NET_STATES, j) & (1u32 << s) != 0;
+    let member = |i: usize, j: usize| at::<i32>(NET_KIND, j) == 1 || at::<i32>(GROUPS, j * n + i) != at::<i32>(NET_NONE, j);
     let mut rng = SplitMix(seed);
     for i in 0..n {
         put::<u8>(STATE, i, susceptible as u8);
@@ -284,15 +331,69 @@ pub extern "C" fn decl_run(seed: u64, index: u32, susceptible: u32, infected: u3
             }
             put::<u32>(CURSOR, i, k as u32);
         }
+        let open = |j: usize| at::<u8>(OPEN, day * nets + j) != 0;
+        // DETECTION, before transmission: each agent, in order, may be noticed, by the state it is in (care sought) and
+        // on each open network it transmits on (a teacher). The first notice is the detection; nothing is drawn once
+        // there is one, nor in a model that notices nothing.
+        if noticing && detected < 0 {
+            for i in 0..n {
+                let s = at::<u8>(STATE, i);
+                let mut missed = 1.0 - at::<f64>(NOTICE_STATE, s as usize);
+                for j in 0..nets {
+                    if open(j) && on(s, j) && member(i, j) {
+                        missed *= 1.0 - at::<f64>(NOTICE_NET, j);
+                    }
+                }
+                if missed < 1.0 && rng.unit() < 1.0 - missed {
+                    detected = today;
+                    put::<i32>(EVENTS, 0, detected);
+                    if delay >= 0 {
+                        notified = detected + delay;
+                        put::<i32>(EVENTS, 1, notified);
+                        for a in 0..actions as usize {
+                            put::<i32>(EVENTS, 2 + a, notified + at::<f64>(ACTION, 3 * a + 2) as i32);
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+        // TODAY'S PROBABILITIES: a network that does not meet today carries nothing; an action under way scales its own.
+        for j in 0..nets {
+            // Unchanged, the network keeps the very value it started with: 1 - (1 - p) is not always p.
+            q[j] = base[j];
+            if !open(j) {
+                q[j] = 1.0;
+                continue;
+            }
+            let mut factor = 1.0f64;
+            let mut acted = false;
+            for a in 0..actions as usize {
+                if notified >= 0 && at::<f64>(ACTION, 3 * a) as usize == j && notified + at::<f64>(ACTION, 3 * a + 2) as i32 <= today {
+                    factor *= at::<f64>(ACTION, 3 * a + 1);
+                    acted = true;
+                }
+            }
+            if acted {
+                q[j] = 1.0 - (at::<f64>(NET_P, j) * factor).min(1.0);
+            }
+        }
         for i in 0..nets * n {
             put::<u32>(SCRATCH, i, 0);
         }
-        let mut everyone = 0u32;
+        let mut everyone = [0u32; 16];
+        let mut anyone = false;
         for i in 0..n {
-            if transmits(at::<u8>(STATE, i)) {
-                everyone += 1;
+            let s = at::<u8>(STATE, i);
+            if transmits(s) {
+                anyone = true;
                 for j in 0..nets {
-                    if at::<i32>(NET_KIND, j) == 0 {
+                    if !on(s, j) {
+                        continue;
+                    }
+                    if at::<i32>(NET_KIND, j) == 1 {
+                        everyone[j] += 1;
+                    } else {
                         let g: i32 = at(GROUPS, j * n + i);
                         if g != at::<i32>(NET_NONE, j) {
                             let slot = j * n + g as usize;
@@ -302,7 +403,7 @@ pub extern "C" fn decl_run(seed: u64, index: u32, susceptible: u32, infected: u3
                 }
             }
         }
-        if everyone > 0 {
+        if anyone {
             for i in 0..n {
                 if at::<u8>(STATE, i) as usize != susceptible {
                     continue;
@@ -310,7 +411,7 @@ pub extern "C" fn decl_run(seed: u64, index: u32, susceptible: u32, infected: u3
                 let mut escape = 1.0f64;
                 for j in 0..nets {
                     let count = if at::<i32>(NET_KIND, j) == 1 {
-                        everyone
+                        everyone[j]
                     } else {
                         let g: i32 = at(GROUPS, j * n + i);
                         if g == at::<i32>(NET_NONE, j) { 0 } else { at::<u32>(SCRATCH, j * n + g as usize) }
@@ -512,5 +613,86 @@ mod tests {
         assert_eq!(decl_run(9, 4, 0, 1, (1 << 2) | (1 << 3)), 1);
         let state_on = |day: usize| (0..5).find(|s| at::<u32>(COUNTS, day * 5 + s) == 1 && *s != 0).unwrap();
         assert_eq!([state_on(4), state_on(5), state_on(8), state_on(10)], [1, 2, 3, 4]);
+    }
+    fn infected_days(n: usize) -> Vec<i32> {
+        (0..n).map(|i| at::<i32>(INFECTED_ON, i)).collect()
+    }
+
+    #[test]
+    fn a_network_that_never_meets_draws_as_one_with_no_chance_of_infection() {
+        let (h, c) = hagelloch_like();
+        for seed in 0..50u64 {
+            declare_measles(&h, &c, 90, [0.08, 0.0, 0.002], (10, 12), (8, 9));
+            let without = decl_run(seed, 7, 0, 1, 1 << 2);
+            let (t, d) = (table(90), infected_days(60));
+            declare_measles(&h, &c, 90, [0.08, 0.02, 0.002], (10, 12), (8, 9));
+            for day in 0..90 {
+                put::<u8>(OPEN, day * 3 + 1, 0);
+            }
+            assert_eq!(decl_run(seed, 7, 0, 1, 1 << 2), without, "seed {seed}");
+            assert_eq!(table(90), t, "seed {seed}");
+            assert_eq!(infected_days(60), d, "seed {seed}");
+        }
+    }
+
+    #[test]
+    fn a_state_left_off_a_network_does_not_transmit_there() {
+        // Class only from no state at all: the same as a class with no chance.
+        let (h, c) = hagelloch_like();
+        for seed in 0..50u64 {
+            declare_measles(&h, &c, 90, [0.08, 0.0, 0.002], (10, 12), (8, 9));
+            let without = decl_run(seed, 7, 0, 1, 1 << 2);
+            declare_measles(&h, &c, 90, [0.08, 0.02, 0.002], (10, 12), (8, 9));
+            put::<u32>(NET_STATES, 1, 0);
+            assert_eq!(decl_run(seed, 7, 0, 1, 1 << 2), without, "seed {seed}");
+        }
+    }
+
+    #[test]
+    fn a_sure_notice_dates_detection_notification_and_each_action() {
+        let (h, c) = hagelloch_like();
+        declare_measles(&h, &c, 90, [0.08, 0.02, 0.002], (10, 10), (8, 9));
+        put::<f64>(NOTICE_STATE, 2, 1.0);
+        put::<i32>(RESPONSE, 0, 1);
+        put::<i32>(RESPONSE, 1, 2);
+        for (k, v) in [1.0, 0.0, 7.0, 2.0, 0.5, 3.0].iter().enumerate() {
+            put::<f64>(ACTION, k, *v);
+        }
+        assert_ne!(decl_run(5, 7, 0, 1, 1 << 2), u32::MAX);
+        // The index is infectious on day 10, noticed that day, notified the next, and the actions start 7 and 3 days on.
+        assert_eq!((0..4).map(|k| at::<i32>(EVENTS, k)).collect::<Vec<_>>(), [10, 11, 18, 14]);
+    }
+
+    #[test]
+    fn closing_the_class_from_the_start_never_infects_more_than_leaving_it_open_on_average() {
+        let (h, c) = hagelloch_like();
+        let (mut open, mut closed) = (0u64, 0u64);
+        for seed in 0..200u64 {
+            declare_measles(&h, &c, 120, [0.08, 0.05, 0.002], (10, 12), (8, 9));
+            open += decl_run(seed, 7, 0, 1, 1 << 2) as u64;
+            declare_measles(&h, &c, 120, [0.08, 0.05, 0.002], (10, 12), (8, 9));
+            put::<f64>(NOTICE_STATE, 1, 1.0);
+            put::<i32>(RESPONSE, 0, 0);
+            put::<i32>(RESPONSE, 1, 1);
+            for (k, v) in [1.0, 0.0, 0.0].iter().enumerate() {
+                put::<f64>(ACTION, k, *v);
+            }
+            closed += decl_run(seed, 7, 0, 1, 1 << 2) as u64;
+        }
+        assert!(closed < open, "closed {closed}, open {open}");
+    }
+
+    #[test]
+    fn a_response_out_of_range_is_refused() {
+        let (h, c) = hagelloch_like();
+        declare_measles(&h, &c, 30, [0.08, 0.02, 0.002], (10, 12), (8, 9));
+        put::<f64>(NOTICE_NET, 0, 1.5);
+        assert_eq!(decl_run(1, 0, 0, 1, 1 << 2), u32::MAX);
+        declare_measles(&h, &c, 30, [0.08, 0.02, 0.002], (10, 12), (8, 9));
+        put::<i32>(RESPONSE, 1, 1);
+        for (k, v) in [3.0, 0.0, 0.0].iter().enumerate() {
+            put::<f64>(ACTION, k, *v);
+        }
+        assert_eq!(decl_run(1, 0, 0, 1, 1 << 2), u32::MAX);
     }
 }

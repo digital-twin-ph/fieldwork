@@ -1,0 +1,33 @@
+{
+  "schema": "fieldwork/model-structure/1",
+  "id": "measles-prodrome-rash-household-class-village",
+  "version": "1.0.0",
+  "title": "Measles over households, school classes and the village, a child with the rash kept home",
+  "step": "day",
+  "states": [
+    {"id": "S", "label": "Susceptible"},
+    {"id": "E", "label": "Infected, not yet infectious"},
+    {"id": "P", "label": "Infectious, before the rash (prodrome)"},
+    {"id": "Q", "label": "Infectious, with the rash"},
+    {"id": "R", "label": "Recovered"}
+  ],
+  "infection": {"from": "S", "to": "E", "infectious": ["P", "Q"]},
+  "course": [
+    {"from": "E", "to": "P", "duration": "latent_period"},
+    {"from": "P", "to": "Q", "duration": "prodrome"},
+    {"from": "Q", "to": "R", "duration": "rash_infectious"}
+  ],
+  "networks": [
+    {"id": "household", "label": "Household", "groups": "household", "probability": "p_household"},
+    {"id": "class", "label": "School class", "groups": "class", "none": 0, "probability": "p_class", "states": ["P"]},
+    {"id": "village", "label": "Village", "everyone": true, "probability": "p_village"}
+  ],
+  "parameters": [
+    {"id": "latent_period", "label": "Infected, not yet infectious", "kind": "duration", "unit": "day"},
+    {"id": "prodrome", "label": "Infectious before the rash", "kind": "duration", "unit": "day"},
+    {"id": "rash_infectious", "label": "Infectious from the day of the rash", "kind": "duration", "unit": "day"},
+    {"id": "p_household", "label": "Infection from one infectious housemate", "kind": "probability", "unit": "per day"},
+    {"id": "p_class", "label": "Infection from one infectious classmate", "kind": "probability", "unit": "per day"},
+    {"id": "p_village", "label": "Infection from one infectious child elsewhere in the village", "kind": "probability", "unit": "per day"}
+  ]
+}

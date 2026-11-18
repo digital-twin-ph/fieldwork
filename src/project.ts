@@ -3,6 +3,7 @@ import {readMembers} from './project-roles.js';
 import {isRecord} from './guards.js';
 import {readNotes} from './notes.js';
 import {readAuthors,readRepository} from './identity.js';
+import {readPlan} from './plan.js';
 import hagellochNotes from '../examples/hagelloch-1861/notes.json';
 
 /** A project is one investigation. One subject, several questions, one workflow per question.
@@ -85,6 +86,9 @@ export interface Project {
   /** WHAT THE PROJECT IS WRITING TOWARDS (experiment 202, Stage A): the publication or declared formats, by id, chosen
    *  with its question. Absent means not chosen yet, which is allowed: the outline appears once one is named. */
   targets?:string[];
+  /** THE PLAN (experiment 202, 2026-11-18): what each part of the outline will hold, kept beside the notes and never
+   *  rendered. See `src/plan.ts`. */
+  plan?:import('./plan.js').Plan;
   /** WHEN THIS PROJECT BEGAN, as distinct from when it last changed.
    *
    *  Added 2026-10-29 while answering whether a solo project can become collaborative, where the
@@ -296,6 +300,8 @@ export function validateProject(raw:unknown):Project{
   // Each part a string of its own, kept as written; anything else is dropped, never coerced.
   // Targets named, kept only where they are the publication or a declared format, each once, in the order given.
   const known=['publication',...REPORT_FORMATS.formats.map(f=>f.id)];
+  // The plan, read as notes are: a part that cannot be read is dropped, never coerced.
+  const plan=readPlan(raw.plan);
   const targets=Array.isArray(raw.targets)?[...new Set((raw.targets as unknown[]).filter((t):t is string=>typeof t==='string'&&known.includes(t)))]:[];
   const publication:Record<string,string>=isRecord(raw.publication)?Object.fromEntries(Object.entries(raw.publication as Record<string,unknown>)
     .filter(([key,value])=>typeof value==='string'&&isPublicationEntry(key,value)&&value.trim()&&value.length<=MAX_PUBLICATION_PART) as [string,string][]):{};
@@ -305,7 +311,7 @@ export function validateProject(raw:unknown):Project{
     ...(notes.length?{notes}:{}),...(authors.length?{authors}:{}),
     ...(createdAt?{createdAt}:{}),...(repository?{repository}:{}),...(dictionaries.length?{dictionaries}:{}),
     ...(Object.keys(publication).length?{publication}:{}),
-    ...(targets.length?{targets}:{}),...(members.length?{members}:{})};
+    ...(targets.length?{targets}:{}),...(members.length?{members}:{}),...(plan?{plan}:{})};
 }
 
 /** The input widgets whose payload two workflows can genuinely share.

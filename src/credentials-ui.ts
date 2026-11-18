@@ -12,6 +12,8 @@ export interface CredentialAccess {
  setRepository(ref:string,repository:string):void;
  /** Milliseconds until they lock for want of use, or null while locked. */
  readonly untilLock:number|null;
+ /** Counts as use: the lock warning's Keep them open. */
+ keepOpen():void;
 }
 
 /** Given the GitHub token, says who it belongs to -- or throws saying why it could not.
@@ -32,7 +34,11 @@ export function installCredentials(button:HTMLButtonElement,identify?:Identify):
  let dialog:HTMLDialogElement|undefined,dirty=false,operation=0,lastInteraction=Date.now();
  // KEPT THROUGH A RELOAD while unlocked (2026-11-16, `session-keep.ts`), encrypted; dropped the moment it locks.
  let resuming=false,extendedAt=0;
- const session=new CredentialSession(()=>{button.innerHTML=session.unlocked?`${OPEN_PADLOCK}Credentials: unlocked`:'Credentials';button.classList.toggle('is-unlocked',session.unlocked);if(!session.unlocked){dirty=false;operation++;dialog?.close();}refresh();
+ // HOW MANY KEYS ARE OPEN, not only that the session is (2026-11-18: the practitioner saw "unlocked" having opened no
+ // file; "Start a new collection" opens an empty one). An empty collection holds nothing to protect, and says so.
+ const label=()=>{if(!session.unlocked)return 'Credentials';const n=session.list().length;
+  return n?`${OPEN_PADLOCK}Credentials: ${n} ${n===1?'key':'keys'} unlocked`:'Credentials: new, empty';};
+ const session=new CredentialSession(()=>{button.innerHTML=label();button.classList.toggle('is-unlocked',session.unlocked&&session.list().length>0);if(!session.unlocked){dirty=false;operation++;dialog?.close();}refresh();
   if(session.unlocked){if(!resuming)void keep('credentials',session.snapshot(),session.lastUsed+session.idleMs);}else void drop('credentials');});
  const refresh=()=>{if(!dialog)return;const status=dialog.querySelector<HTMLElement>('#credential-status')!;// Three states, each naming what to do next rather than reporting a count. An empty
  // collection is ready for entries, not a failure, and said so badly before.
@@ -52,7 +58,11 @@ export function installCredentials(button:HTMLButtonElement,identify?:Identify):
  };
  // Expire before accepting activity; a suspended tab must not revive an expired key.
  const expire=()=>{session.expire();if(dialog&&Date.now()-lastInteraction>=session.idleMs)session.lock();};
- for(const event of ['pointerdown','keydown'])document.addEventListener(event,()=>{expire();lastInteraction=Date.now();session.touch();
+ // USE IS USE OF THE CREDENTIALS: working in the dialog, or a key being read for a request. Until 2026-11-18 any click
+ // or key anywhere on the page counted, so a session stayed unlocked for as long as anyone kept working in Fieldwork.
+ for(const event of ['pointerdown','keydown'])document.addEventListener(event,e=>{expire();
+  if(!(dialog&&e.target instanceof Node&&dialog.contains(e.target)))return;
+  lastInteraction=Date.now();session.touch();
   if(session.unlocked&&session.lastUsed-extendedAt>30_000){extendedAt=session.lastUsed;void extend('credentials',session.lastUsed+session.idleMs);}},{capture:true});
  // NOT LOCKED ON LEAVING THE PAGE any more: a reload keeps them, until ten minutes without use or Lock.
  document.addEventListener('visibilitychange',expire);setInterval(expire,10_000);
@@ -117,10 +127,13 @@ export function installCredentials(button:HTMLButtonElement,identify?:Identify):
   d.querySelector<HTMLButtonElement>('#credential-unlock')!.onclick=()=>void perform('unlock');d.querySelector<HTMLButtonElement>('#credential-download')!.onclick=()=>void perform('download');refresh();d.showModal();
  };
  return {
-  resolve:(ref,provider,origin)=>session.resolve(ref,provider,origin),
+  // READING A KEY IS USE: it moves the lock on, and the kept copy's expiry with it.
+  resolve:(ref,provider,origin)=>{const secret=session.resolve(ref,provider,origin);
+   if(session.lastUsed-extendedAt>30_000){extendedAt=session.lastUsed;void extend('credentials',session.lastUsed+session.idleMs);}return secret;},
   get unlocked(){return session.unlocked;},
   references:()=>session.list().map(({ref,provider,label,repository})=>({ref,provider,label,...(repository?{repository}:{})})),
   setRepository:(ref,repository)=>{session.setRepository(ref,repository);dirty=true;},
   get untilLock(){return session.unlocked?Math.max(0,session.lastUsed+session.idleMs-Date.now()):null;},
+  keepOpen:()=>{expire();session.touch();if(session.unlocked){extendedAt=session.lastUsed;void extend('credentials',session.lastUsed+session.idleMs);}},
  };
 }

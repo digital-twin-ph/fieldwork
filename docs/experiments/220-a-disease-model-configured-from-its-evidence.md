@@ -1,6 +1,6 @@
 # 220 · A disease model configured from its evidence
 
-_Created 2026-11-17 · Updated 2026-11-17_
+_Created 2026-11-17 · Updated 2026-11-18_
 
 **Status:** tried. Spike run 2026-11-17: **yes, for measles; not yet like this for TB, Ebola or dengue.** Measles declared
 as data runs in the kernel and reproduces measles written by hand, seed for seed. Follows [199](199-an-agent-based-model-in-the-browser.md), whose kernel runs one

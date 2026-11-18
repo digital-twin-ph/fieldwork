@@ -120,6 +120,7 @@ import {MAX_POLYGON_LAYERS,polygonPort} from './polygon-layers.js';
 import {MAX_RASTER_LAYERS,rasterPort,isRasterPort} from './raster-panels.js';
 import {partsTable,partsTableMarkup} from './map-parts-table.js';
 import {TARGETS,projectOutline,outlineMarkup,slotsForNote} from './outline.js';
+import {planView,planMarkup,openPlanDialog,withPart,markedComplete,unmarked,type Plan} from './plan.js';
 import {publicationMarkup,promptFor,PRODUCT_KINDS,isProductKind,layoutKey,type ProductKind,type PublicationInput} from './publication.js';
 import {CHAIN_COLUMNS,transmissionChains} from './transmission-chains.js';
 import {boxInside,composeInset,insetWidth,type Corner} from './map-inset.js';
@@ -7960,6 +7961,16 @@ const keptHere=(project:Project|undefined):string|null=>{
     +`read-only. Its notes, tables, charts and maps are below; to write your own, `
     +`make a project of your own on the Project tab.`;
 };
+/** The open project's plan as stored now, and writing it back: kept with the project, as its notes are. */
+function planOfProject():Plan|undefined{const project=projectNow();
+  return project?(readProjects().find(p=>p.id===project.id)?.plan??project.plan):undefined;}
+function writePlan(plan:Plan):boolean{
+  const project=projectNow();if(!project)return false;
+  const stored=readProjects();const at=stored.findIndex(p=>p.id===project.id);if(at<0)return false;
+  const {plan:_was,...rest}=stored[at]!;void _was;
+  stored[at]=plan.parts.length||plan.complete?{...rest,plan}:rest;
+  return writeProjects(stored);
+}
 /** Write notes back to the project they belong to. A note is about the investigation, so it does
  *  not travel on the workflow -- which also means `change()` is the wrong door for it. */
 function writeNotes(notes:Note[]):boolean{
@@ -8161,7 +8172,28 @@ function renderNotesView(){
    const targets=stored?.targets??project?.targets??[];
    if(targets.length)$('#notes-view').insertAdjacentHTML('afterbegin',outlineMarkup(projectOutline(targets,
      [...(project?.notes||[]),...derived,...machined],stored?.publication??project?.publication??{},
-     references.filter(r=>!r.uncited).length,{isComponent,workflowName:nameOfKey}),esc,!keptHere(project)));}
+     references.filter(r=>!r.uncited).length,{isComponent,workflowName:nameOfKey}),esc,!keptHere(project)));
+   // THE PLAN, above the outline (experiment 202, 2026-11-18): never in a product, so drawn here and nowhere else.
+   if(targets.length){
+     const view=planView(targets,stored?.plan??project?.plan,[...(project?.notes||[]),...derived,...machined],
+       stored?.publication??project?.publication??{},references.filter(r=>!r.uncited).length,{isComponent,workflowName:nameOfKey});
+     const label=(id:string)=>TARGETS.find(t=>t.id===id)?.label??id;
+     $('#notes-view').insertAdjacentHTML('afterbegin',planMarkup(view,esc,!keptHere(project),label));
+     for(const b of document.querySelectorAll<HTMLButtonElement>('#notes-view [data-plan-role]'))b.onclick=()=>{
+       const role=b.dataset.planRole!,part=view.parts.find(p=>p.role===role),kept=view.unplaced.find(p=>p.role===role);
+       const wants=part?Object.entries(part.byTarget).map(([t,w])=>`${esc(label(t))}: <em>${esc(w.heading)}</em>, ${esc(w.length)}`).join('; ')
+         :'Planned for a target no longer chosen.';
+       openPlanDialog({role,label:part?.label??role,wants,text:part?.text??kept?.text??''},esc,
+         text=>{const ok=writePlan(withPart(planOfProject(),role,text));if(ok)renderNotesView();return ok;});};
+     const mark=document.querySelector<HTMLButtonElement>('#notes-view [data-plan-mark]');
+     if(mark)mark.onclick=async()=>{const plan=planOfProject();if(!plan?.parts.length)return;
+       const marked=await markedComplete(plan,new Date().toISOString(),
+         (part,at)=>noteVersion({kind:'authored',id:`plan:${part.role}`,section:'Introduction',text:part.text},at,openIdentity()));
+       if(!writePlan(marked)){toast('The plan could not be kept on this device.',{tone:'failure'});return;}
+       renderNotesView();};
+     const unmark=document.querySelector<HTMLButtonElement>('#notes-view [data-plan-unmark]');
+     if(unmark)unmark.onclick=()=>{const plan=planOfProject();if(plan&&writePlan(unmarked(plan)))renderNotesView();};
+   }}
   // EVERY "Write" that opens the draft, the outline's among them.
   for(const opener of document.querySelectorAll('#notes-view [data-publication]'))opener.addEventListener('click',()=>openPublication({
     title:project?.name||workflow.name,
@@ -10315,8 +10347,9 @@ function renderSharedProject(project:Project|undefined,builtIn:boolean){
    finally{send.disabled=false;}};}
 
 // A MINUTE'S WARNING BEFORE THE LOCK (Section 508, WCAG 2.2.1 Timing adjustable; 2026-11-16, with the lock at ten
-// minutes): said in words, with a button that keeps them open. Any press counts as use, so the button needs no work of
-// its own beyond hiding the warning. Nothing is lost when they lock; opening the files again is the cost.
+// minutes): said in words, with a button that keeps them open. For the identity any press counts as use; for the
+// credentials only their own use does (2026-11-18), so the button keeps them open itself. Nothing is lost when they
+// lock; opening the files again is the cost.
 {const warning=document.createElement('div');warning.id='lock-warning';warning.className='lock-warning';warning.setAttribute('role','alert');warning.hidden=true;
  document.body.append(warning);let shown='';
  const tick=()=>{
@@ -10326,7 +10359,7 @@ function renderSharedProject(project:Project|undefined,builtIn:boolean){
    if(text===shown)return;shown=text;
    warning.hidden=!text;
    if(text){warning.innerHTML=`<span>${esc(text)}</span><button type="button" class="button primary" id="lock-keep">Keep them open</button>`;
-     ($('#lock-keep') as HTMLButtonElement).onclick=()=>{warning.hidden=true;shown='';};}};
+     ($('#lock-keep') as HTMLButtonElement).onclick=()=>{credentials?.keepOpen();warning.hidden=true;shown='';};}};
  setInterval(tick,5_000);}
 
 const showCatalog=()=>{try{openCatalogDialog(esc);}catch(error){toast(errorMessage(error),{tone:'failure'});}};

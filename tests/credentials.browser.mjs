@@ -48,3 +48,18 @@ test('a minute before the lock a warning says so, and Keep them open keeps crede
  await page.clock.fastForward(2*60*1000);
  await expect(page.locator('#credentials-button')).toContainText('unlocked');
 });
+
+// WHAT THE BUTTON SAYS, AND WHAT KEEPS IT OPEN (the practitioner, 2026-11-18: "Credentials: unlocked" with no file
+// opened). An empty collection is not called unlocked, and working elsewhere in Fieldwork does not keep keys open.
+test('an empty collection is not called unlocked, and clicks elsewhere in Fieldwork do not keep keys open',async({page})=>{
+ await page.clock.install();await page.goto('/?example=blank');
+ await page.locator('#credentials-button').click();await page.locator('#credential-new').click();
+ await expect(page.locator('#credentials-button')).toHaveText('Credentials: new, empty');
+ await expect(page.locator('#credentials-button')).not.toHaveClass(/is-unlocked/);
+ await page.locator('#credential-ref').fill('example');await page.locator('#credential-provider').fill('healthsites');
+ await page.locator('#credential-origin').fill('https://healthsites.io');await page.locator('#credential-secret').fill(secret);
+ await page.locator('#credential-add').click();await page.locator('#credential-close').click();
+ await expect(page.locator('#credentials-button')).toContainText('1 key unlocked');
+ for(let minute=0;minute<11;minute++){await page.clock.fastForward(60*1000);await page.locator('body').click({position:{x:5,y:300}});}
+ await expect(page.locator('#credentials-button')).toHaveText('Credentials');
+});

@@ -53,5 +53,5 @@ export class CredentialSession {
  /** Which repository a GitHub token is for, chosen once and kept in the credential; the file is downloaded again to keep it. */
  setRepository(ref:string,repository:string){this.expire();requireValue(this.#entries,'Unlock credentials first.');this.replace(this.#entries.map(v=>v.ref===ref?{...v,repository}:v));}
  snapshot(){this.expire();requireValue(this.#entries,'Unlock credentials first.');return structuredClone(this.#entries);}
- resolve(ref:string,provider:string,origin:string){this.expire();const entry=this.#entries?.find(v=>v.ref===ref&&v.provider===provider&&v.origin===origin);requireValue(entry,'Matching credentials are unavailable.');return entry.secret;}
+ resolve(ref:string,provider:string,origin:string){this.expire();const entry=this.#entries?.find(v=>v.ref===ref&&v.provider===provider&&v.origin===origin);requireValue(entry,'Matching credentials are unavailable.');this.#last=this.now();return entry.secret;}
 }

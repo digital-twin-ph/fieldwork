@@ -32,7 +32,10 @@ There is no way to recover a forgotten passphrase. Write it in your password man
 3. **File passphrase**: type it.
 4. Press **Unlock and activate**.
 
-It stays unlocked for 10 minutes after you last use it, or until you press **Lock and discard session**.
+It stays unlocked for 10 minutes after you last use it, or until you press **Lock and discard session**. Using it
+means working in this dialog, or Fieldwork reading a key for a request; working elsewhere in Fieldwork does not keep
+it open. The button says how many keys are unlocked. **Start a new collection** opens an empty one, shown as
+*Credentials: new, empty*, until you add a key.
 
 ## Make a GitHub token for one repository
 

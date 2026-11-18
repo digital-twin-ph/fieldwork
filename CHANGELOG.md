@@ -3,6 +3,15 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.143.0 — In development
+
+- **Notes shows the project's plan** above the outline: one part per slot of what it is writing towards, each written
+  before the analysis, marked complete with a dated version of every part, and never part of any product. The
+  objectives note is the plan's objectives part. A dropped target's written parts are kept.
+- **Credentials say how many keys are unlocked**, and an empty new collection says *new, empty* instead of *unlocked*.
+- **Credentials lock after 10 minutes without their own use**: working in their dialog, or a key read for a request.
+  Until now any click anywhere in Fieldwork kept them open. The lock warning's *Keep them open* still keeps them open.
+
 ## 0.142.0 — In development
 
 - **A disease model can be run under a response scenario**: how cases are detected (a daily chance of notice, in a

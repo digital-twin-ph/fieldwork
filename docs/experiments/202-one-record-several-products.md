@@ -2,8 +2,8 @@
 
 _Created 2026-11-10 · Updated 2026-11-16_
 
-**Status:** asked. A design for the Notes tab, built on [141](141-organising-snows-notes.md). Reordered 2026-11-14: the
-publication render first. Nothing is built.
+**Status:** tried. A design for the Notes tab, built on [141](141-organising-snows-notes.md). Reordered 2026-11-14: the
+publication render first. Stages A and B are built (0.128.0, 0.129.0), and the planning note (0.143.0, 2026-11-18).
 
 ## The question
 
@@ -598,4 +598,27 @@ which the reflection needs as much as the gaps.
    dropped target's filled parts kept rather than lost.
 3. The first open question above, the Stage B objectives note and the plan's objectives part.
 4. Whether *complete* can be undone, and whether a version is taken when it is marked.
+
+## The planning note, built 2026-11-18
+
+**The practitioner's answers** to the four open questions above, 2026-11-18:
+
+| Question | Answer |
+| --- | --- |
+| One planning note per target, or one per part shared by the targets | *"Agree with 1"*: one part per slot, shared |
+| A target added or dropped after planning begins | *"Target can be added or dropped after planning starts"*: an added one brings its parts empty; a dropped one keeps its written parts |
+| The Stage B objectives note and the plan's objectives part | *"yes"*: they are one; the objectives note is the plan's objectives part |
+| Whether *complete* can be undone, and whether marking takes a version | *"yes to both"* |
+
+**Built** (`src/plan.ts`, 0.143.0): the plan is kept on the project beside the notes, not among them, so no product
+can draw it from the notes. That makes "a plan is the author's working, not the product" a **hard stop** by
+construction, where the design above had it as a rule in the render. A part is a template until written; the
+references slot has no part, since the record lists them itself. Marking complete takes a dated version of every
+written part with experiment 218's `noteVersion`, signed where an identity is open; undoing keeps the versions; a part
+changed since the mark is said. The counts report: parts written of all parts, and per part what fills it so far.
+
+**Not built yet:** a non-planning note that maps to no planned part is not yet counted (the "written and not planned"
+half of the reflection); shells per part; copying a part's words into a product note with its link kept.
+
+**Validation:** `tests/plan.test.mjs` (5) and `tests/plan.browser.mjs` (1), Chromium.
 

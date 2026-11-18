@@ -155,6 +155,21 @@ In the draft's Results, each objective is a numbered subsection, in the objectiv
 the results of the workflow that answers it. Results that answer no objective come first. An objective with nothing yet
 says what belongs there.
 
+## The plan: what each part will hold
+
+Once a project names what it is writing towards, Notes shows its **plan** above the outline. It has one part for each
+slot of the outline, shared by the targets that use it. Each part starts empty, with the slot's heading and length.
+
+- **Plan it** opens a box for what that part will hold. Write it before the analysis, in a line or two.
+- **The objectives part is your objectives note.** It is the one part a product shows, as the numbered objectives.
+- Each part says how much fills it so far: notes, objectives, or the draft's own part.
+- **Mark the plan complete** when you judge it done. Fieldwork keeps a dated version of every part. If a part changes
+  afterwards, the plan says so. **Undo complete** removes the mark and keeps the versions.
+- Add or drop a target at any time. An added target brings its parts, empty. A dropped target's written parts stay,
+  under *Planned for a target no longer chosen*.
+
+The plan is never part of any product: not the draft, the publication, a report or a download.
+
 ## Draft as a document
 
 **Publication**, at the top of Notes, lays the write-up out as a document on a page, to read and to print. **Draft as**

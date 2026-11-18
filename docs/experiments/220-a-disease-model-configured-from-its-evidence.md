@@ -143,6 +143,12 @@ every source marked open or closed and by how it was read. In short:
   source is replaced by an open one or stated as a gap.
 - How a fitted value's evidence is shown.
 - Where a church network's data comes from: likely the least documented of the four.
+- **A second Gaborone model in JupyterLite, after the TB model is in Fieldwork**: for a future experiment to answer.
+  The practitioner, 2026-11-17: *"do you think we can build version 2 of the Gaborone ABM in JupyterLite after we build
+  the ABM for TB in FW?"* Two routes, neither checked: Starsim in Pyodide (it may depend on numba, which does not run
+  in the browser), or the notebooks calling Fieldwork's own kernel in WebAssembly, one engine behind two interfaces with
+  Starsim as the outside reference for both. Either way calibration and the heavy data preparation would ship done.
+  That experiment would begin with a spike: does Starsim load in JupyterLite, and can Pyodide call the kernel.
 
 ## What it commits to, written before the result
 

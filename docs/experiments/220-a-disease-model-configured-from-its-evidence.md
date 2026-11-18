@@ -41,6 +41,12 @@ As described by the practitioner; being read for this experiment.
 - **A population from the census.** People in households, by age and sex, by district.
 - **Contact networks from data.** Households, schools, churches, and kombi routes: people sharing a route at the same
   time are in contact.
+- **Three intervention scenarios.** The practitioner: *"Then we also have three intervention scenarios, which might be
+  important for 7-1-7 work."* In the repository as Do Nothing, Bare Minimum, and Optimal and Integrated (appendix
+  notebooks 11 to 13), compared in notebook 17. A scenario changes parameters and events from a date, so it is
+  configured like a parameter set, each change with its evidence; where it sets the delay from an event to a response
+  (detection, notification, diagnosis, treatment, contact tracing), it is the bridge to 7-1-7's targets
+  ([200](200-operational-epidemiology.md)).
 
 ## The configuration, as first proposed
 

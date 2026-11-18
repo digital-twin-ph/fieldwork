@@ -112,6 +112,33 @@ as the workflow this experiment designs for:
 A worked example may ship calibrated, so a trainee starts at step 4 and works back: why a scenario moves so much,
 which parameter it is most sensitive to, and how good that parameter's evidence is.
 
+## How far each value's evidence travelled, agreed 2026-11-17
+
+The practitioner, asked what happens when an adaptation lacks evidence for some parameters: *"somewhere in the
+digital-twin-aas repo we actually automated evidence parameter search and came up with the conclusion that sometimes
+the evidence could be directly relevant (same place, same time), relevant (same place, different time), adjacent
+(same time, nearby setting), or generalized (the weakest)."* Found, read only, in the Community Health Simulation
+Platform's evidence module (digitaltwin-aas, `digitaltwin/src/chsp/evidence/`, schema `chsp_core.yaml`), the
+practitioner's and JLT's work. It grades place but not time: no grade for the period was found there.
+
+A model still runs when evidence is thin; a value is refused only when it is missing. Each parameter's evidence record
+carries:
+
+| Field | Values | From |
+| --- | --- | --- |
+| Basis | cited, derived, fitted, assumed | this experiment |
+| Place | direct, adjacent, national, regional, global | CHSP's `GeoFidelity`, as it stands |
+| Time | same period, or a different period and how far apart | the practitioner's tiers; new |
+| Directness | direct, indirect, very indirect | GRADE, as CHSP uses it |
+| Credibility | peer-reviewed, preprint, unverified | CHSP, which never counts it against a local or national journal outside the major indexes |
+
+The practitioner's four tiers follow from place and time together: **directly relevant** (direct, same period),
+**relevant** (direct, another period), **adjacent** (adjacent, same period), **generalized** (national, regional or
+global, any period). The dialog lists the weakest first: assumed, then generalized. A range may stand in for a single
+assumed value. After a run, a sensitivity check shows which uncertain values moved the result most, so evidence is
+sought where it would change the conclusion; and the run's record states, as a limitation, how many values are
+assumed or generalized and which one the result depends on most.
+
 ## What the research found, 2026-11-17
 
 Report: reports/Declaring disease models with evidence.md, in the workspace beside this repository, with its notes;

@@ -427,12 +427,12 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.34.0",
+   "version": "0.34.1",
    "released": "2026-11-18",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Insets follow the practitioner's convention of 2026-11-18, \"Square for overview and Circle for focus\": the focus inset (until now Inset) is a circle round the part on the map and the part enlarged in a circular frame, joined along their outer tangents, its scale bar inside the frame; the overview inset (until now Locator) keeps its square frame and red box. Each is named from the study area's boundary record: the overview by the unit, by the country where the boundary joins several units, or by the study area's label; the focus by the unit its centre falls in, where the units are named. MERS's focus reads Gyeonggi; Oswego's overview New York. The saved setting is unchanged (arrange inset or locator), so saved workflows draw the new shapes without migration."
+     "kind": "patch",
+     "description": "A focus circle is never more than 40% of the map's shorter side, whatever size is chosen, and Configure… says so beside the choice (the practitioner, 2026-11-18, of MERS's half-width circle: \"How can we ensure the size/diameter of the focus inset is not too big\"; then \"A and B\": a third by default, and a limit). Its name is read from the map's own workflow, so a figure in Notes is named while another workflow is open, and from the outline the map drew where the stored workflow keeps it apart."
     }
    ],
    "breaking": false,

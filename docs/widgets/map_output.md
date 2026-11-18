@@ -263,7 +263,8 @@ In **Configure…**, under **Inset**:
 
 - **Show**: *Focus inset* or *Overview inset*.
 - **In the corner**: where the frame covers fewest marks and not the part, or a corner you choose.
-- **Its width**: a third or half of the figure.
+- **Its size**: a third (the default) or half of the figure's width. A focus circle is never more than 40% of the
+  map's shorter side, so on a wide or short map it may be drawn smaller than chosen; Configure… says so.
 
 Marks keep their size on the page in the focus inset, so marks that overlap on the whole map stand apart: the inset
 enlarges the distances, not the marks, and the same mark is the same colour in both. How far apart they stand depends on

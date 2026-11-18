@@ -826,7 +826,7 @@
       "id": "urn:fieldwork:example:mers-korea-2015",
       "title": "MERS-CoV, South Korea, 2015",
       "repository": "https://github.com/digital-twin-ph/example-2015-mers-korea",
-      "commit": "6d617bf53a9b90644e847841e9c5158002974a71",
+      "commit": "bc2d8f31437dc534b275cb5d243ceb46041f7023",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2015-mers-korea",
       "licence": {
         "data": "No licence stated for the data; used for teaching, as the outbreaks package describes it. The repository’s own files are CC0-1.0.",
@@ -857,8 +857,8 @@
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "ed8687c33657cf48be38707a0f445562acd36dae883fe91d1d193b397abc6055",
-          "bytes": 156737
+          "sha256": "efaf3bf4328e1b553d15c4790e98812f21da18134d8852e22bc62e05292a98ce",
+          "bytes": 156868
         },
         {
           "path": "data/mers_korea_2015_linelist.csv",
@@ -887,8 +887,8 @@
         },
         {
           "path": "README.md",
-          "sha256": "a258dfca535d0a2b69366b15d78b5debe04dbfbeb4a56f595e04bb3d9e2444d0",
-          "bytes": 10687
+          "sha256": "bfea8bbf0eeb5b3c678a882e2174045e8b1ec23be9ad88e26988d2d18a929ca1",
+          "bytes": 10863
         },
         {
           "path": "NOTICE.txt",

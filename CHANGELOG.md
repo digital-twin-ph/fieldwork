@@ -3,6 +3,13 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.145.0 — In development
+
+- **A focus inset is a third of the figure by default, and never more than 40% of the map's shorter side**; Configure…
+  says so beside *Its size*. MERS's inset is a third, re-pinned.
+- **A focus inset is named with another workflow open**: the figure in Notes reads the study area from the map's own
+  workflow. Map 0.34.1.
+
 ## 0.144.0 — In development
 
 - **A notes audit, on request and per target**: how many parts are written, as a number and a bar; each part written,

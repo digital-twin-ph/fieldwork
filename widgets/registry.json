@@ -949,7 +949,7 @@
     {
       "id": "urn:fieldwork:widget:map_output",
       "nodeType": "map_output",
-      "currentVersion": "0.34.0",
+      "currentVersion": "0.34.1",
       "releases": [
         {
           "version": "0.1.0",
@@ -1225,6 +1225,11 @@
           "version": "0.34.0",
           "path": "widgets/releases/map_output/0.34.0.json",
           "sha256": "350d9cecf7cbe766d2526246943ed4552f117c14258d7e46beb1a3598383f5c8"
+        },
+        {
+          "version": "0.34.1",
+          "path": "widgets/releases/map_output/0.34.1.json",
+          "sha256": "d99647224a1716a136f7bb058d94c4b7a9722c46c421de46bb6b4456a40db14b"
         }
       ]
     },

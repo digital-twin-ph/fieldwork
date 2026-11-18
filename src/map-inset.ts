@@ -85,6 +85,15 @@ function pointer(box:Rect,frame:Rect,corner:Corner):string{
   return pairs.map(([x1,y1,x2,y2])=>`<line data-inset-line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#1f2a24" stroke-width="1" stroke-dasharray="4 3"/>`).join('');
 }
 
+/** A FOCUS CIRCLE'S DIAMETER: the width chosen, but never more than 40% of the map's shorter side (the practitioner,
+ *  2026-11-18, of MERS's half-width circle: "How can we ensure the size/diameter of the focus inset is not too big").
+ *  `limited` says when the limit, not the choice, set it, so Configure… can say so. */
+export const FOCUS_LIMIT=0.4;
+export function focusDiameter(settings:Pick<InsetSettings,'size'>,height:number):{diameter:number;limited:boolean}{
+  const chosen=insetWidth(settings),most=Math.round(FOCUS_LIMIT*Math.min(850,height));
+  return chosen>most?{diameter:most,limited:true}:{diameter:chosen,limited:false};
+}
+
 /** THE TWO LINES JOINING TWO CIRCLES, along their outer tangents: the circle on the map and the focus inset's frame. */
 export function outerTangents(a:{x:number;y:number;r:number},b:{x:number;y:number;r:number}):[number,number,number,number][]{
   const dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy);
@@ -103,7 +112,7 @@ function nameAt(cx:number,y:number,name:string,attr:string):string{
  *  map around the part, the part enlarged in a circular frame in the corner where it covers least, joined by the two
  *  lines along their outer tangents; the scale bar inside the frame's foot, the name of the unit at its centre above. */
 function composeFocus(whole:Drawing,part:Drawing,settings:InsetSettings,points:readonly [number,number][],labels:InsetLabels):{content:string;height:number;corner:Corner}{
-  const w=insetWidth(settings);
+  const w=focusDiameter(settings,whole.height).diameter;
   const r=rectOf(settings.box,whole.project);
   const ring={x:r.x+r.w/2,y:r.y+r.h/2,r:Math.max(Math.hypot(r.w,r.h)/2,9)};
   const avoid={x:ring.x-ring.r,y:ring.y-ring.r,w:2*ring.r,h:2*ring.r};

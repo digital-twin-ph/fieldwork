@@ -216,3 +216,9 @@ the whole list: the overview takes the country instead, and the focus the unit a
 setting keeps its values, so no workflow needs migrating. Several focus insets on one map, for a road traffic example,
 are in TODO.
 
+**The same day, after seeing MERS's circle live** (*"How can we ensure the size/diameter of the focus inset is not too
+big as in this case?"*, then *"A and B"*): a third of the figure by default, and a limit, never more than 40% of the
+map's shorter side, said in Configure… rather than applied silently. MERS's example moves from half to a third. Its
+name was missing with another workflow open: the figure in Notes looked for the study area in the open workflow, not
+the map's own. Map 0.34.1.
+

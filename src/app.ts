@@ -124,7 +124,7 @@ import {planView,planMarkup,openPlanDialog,withPart,markedComplete,unmarked,type
 import {auditTarget,openAuditDialog} from './notes-audit.js';
 import {publicationMarkup,promptFor,PRODUCT_KINDS,isProductKind,layoutKey,type ProductKind,type PublicationInput} from './publication.js';
 import {CHAIN_COLUMNS,transmissionChains} from './transmission-chains.js';
-import {boxInside,composeInset,insetWidth,type Corner} from './map-inset.js';
+import {boxInside,composeInset,insetWidth,focusDiameter,FOCUS_LIMIT,type Corner} from './map-inset.js';
 import {notesPanel,openNoteDialog,noteKey} from './notes-ui.js';
 // THE WRITE-UP IS THE PROJECT'S. A run contributes its notes to a store the Notes tab reads
 // across every workflow of the project, rather than the tab reading the open run alone.
@@ -3106,8 +3106,11 @@ function mapInsetSection(n:WorkflowNode<'map_output'>):string{
     +`<div class="field"><label class="field-label" for="map-inset-corner">In the corner</label><select id="map-inset-corner">`
     +opt('','Where it covers least',i.corner??'')+opt('ne','Top right',i.corner??'')+opt('nw','Top left',i.corner??'')
     +opt('se','Bottom right',i.corner??'')+opt('sw','Bottom left',i.corner??'')+`</select></div>`
-    +`<div class="field"><label class="field-label" for="map-inset-size">Its width</label><select id="map-inset-size">`
-    +opt('third','A third of the figure',i.size??'third')+opt('half','Half the figure',i.size??'third')+`</select></div>`+pick;
+    +`<div class="field"><label class="field-label" for="map-inset-size">Its size</label><select id="map-inset-size">`
+    +opt('third','A third of the figure\u2019s width',i.size??'third')+opt('half','Half the figure\u2019s width',i.size??'third')+`</select>`
+    // SAID, NOT DONE SILENTLY: the limit that can hold a circle under the size chosen.
+    +((i.arrange??'inset')==='inset'?`<p class="muted">A focus circle is never more than ${Math.round(FOCUS_LIMIT*100)}% of the map\u2019s shorter side, so on a wide or short map it may be drawn smaller than chosen.</p>`:'')
+    +`</div>`+pick;
 }
 /** RASTER PANELS, SHOWN AS CHOSEN (2026-11-17; the practitioner: "I can't seem to find how Map output enables rendering of pop
  *  density as YlOrRd hues"). Each left at its first option, the rasters' stated units decide. */
@@ -6793,6 +6796,9 @@ const roundTo=(v:number|undefined)=>v===undefined?'':Number(Math.abs(v)>=100?v.t
 async function drawStaticFigure(svg:SVGSVGElement,result:Output,mapNode:WorkflowNode<'map_output'>|undefined,
   o:{selected?:string|null;hidden?:Set<string>;offPage?:{workflow:Workflow}}={}):Promise<boolean>{
   const rows=result.rows||[],arranged=mapNode?.params.arrangement;
+  // THE MAP'S OWN WORKFLOW: in Notes a figure may come from a workflow other than the one open (2026-11-18: MERS's
+  // inset unnamed while another workflow was open).
+  const own=o.offPage?.workflow??workflow;
   const rasterPanels=(result as {rasterPanels?:import('./raster-panels.js').DrawnDensity[]}).rasterPanels;
   const hidden=o.hidden??new Set<string>();
   const ground=(frame:{bounds:[number,number,number,number];project:(c:Position)=>[number,number]})=>
@@ -6817,7 +6823,7 @@ async function drawStaticFigure(svg:SVGSVGElement,result:Output,mapNode:Workflow
   if(result.polygons){
     const banded=result.polygons.features.some(f=>f.minutes!==undefined);
     // The study area drawn under the polygons only where one is wired to this Map, so it is the area, not the polygons' own.
-    const wiredArea=workflow.edges.some(e=>e.to===mapNode?.id&&e.port==='area')?result.boundary:undefined;
+    const wiredArea=own.edges.some(e=>e.to===mapNode?.id&&e.port==='area')?result.boundary:undefined;
     if(banded){svg.setAttribute('viewBox','0 0 850 650');svg.innerHTML=catchmentPlot(result.polygons,esc,result.contextPoints);}
     // PANELS SIDE BY SIDE, on one scale (Map's manual, History: panels): each panel its own frame, so no single basemap or point overlay
     // projects onto the figure; those are drawn on one map only.
@@ -6873,11 +6879,14 @@ async function drawStaticFigure(svg:SVGSVGElement,result:Output,mapNode:Workflow
       const partFrame=staticMapFrame(result,inset.box);
       const drawing=(content:string,f:typeof wholeFrame)=>({content,height:f.height,project:f.project as (c:[number,number])=>[number,number],scale:f.scale});
       // THE SMALL FRAME'S MARKS KEEP THEIR SIZE ON THE PAGE: drawn larger by as much as the frame is shrunk.
-      const shrink=850/insetWidth(inset),locator=inset.arrange==='locator';
+      const locator=inset.arrange==='locator';
+      // As wide as it is drawn: a focus circle may be held under the width chosen by the limit.
+      const shrink=850/(locator?insetWidth(inset):focusDiameter(inset,wholeFrame.height).diameter);
       const composed=composeInset(drawing(staticBoundaryMap(result,o.selected??null,esc,statusLabel,labels,undefined,locator?shrink:1),wholeFrame),
         drawing(staticBoundaryMap(result,o.selected??null,esc,statusLabel,labels,inset.box,locator?1:shrink),partFrame),inset,
         result.rows.filter(r=>r.coordinates).map(r=>r.coordinates as [number,number]),
-        insetNames(workflow.nodes.find(x=>x.id===workflow.edges.find(e=>e.to===mapNode?.id&&e.port==='area')?.from)?.params as AreaParams|undefined,inset.box));
+        insetNames(own.nodes.find(x=>x.id===own.edges.find(e=>e.to===mapNode?.id&&e.port==='area')?.from)?.params as AreaParams|undefined,inset.box,
+          result.boundary as Boundary|undefined));
       svg.innerHTML=composed.content;
       applyFrame(svg,svg.innerHTML);
       svg.querySelectorAll<SVGElement>('[data-place]').forEach(el=>{el.style.display=hidden.has(el.dataset.layer!)?'none':'';});
@@ -7979,13 +7988,14 @@ function writePlan(plan:Plan):boolean{
  *  properly using existing metadata"). The overview names the whole: the unit, where there is one; the country, where the
  *  boundary joins several units (MERS's seventeen provinces are not a name); the study area's label, where no boundary
  *  was acquired. The focus names the unit its centre falls in, where the units are named; otherwise nothing is invented. */
-function insetNames(area:AreaParams|undefined,box:[number,number,number,number]):{whole?:string;focus?:string}{
+function insetNames(area:AreaParams|undefined,box:[number,number,number,number],drawn?:Boundary):{whole?:string;focus?:string}{
   if(!area)return {};
   const b=area.boundary,units=b?.units??[],country=iso3Of(b);
   const whole=!b?area.label:units.length>1?(country?countryName(country):area.label):b.unitName||area.label;
   const centre:[number,number]=[(box[0]+box[2])/2,(box[1]+box[3])/2];
   let focus:string|undefined;
-  const g=area.geometry;
+  // The outline as kept on the node, or as the map drew it: a stored workflow keeps the outline in the payload store.
+  const g=area.geometry??drawn;
   if(g&&units.length>1&&g.type==='MultiPolygon'){
     const at=g.coordinates.findIndex(part=>containsPoint(centre,{type:'Polygon',coordinates:part}));
     focus=at>=0?units[at]?.name:undefined;

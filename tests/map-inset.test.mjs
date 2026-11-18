@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-const {composeInset,boxInside,chooseCorner,niceMetres,outerTangents}=await import('../build/map-inset.js');
+const {composeInset,boxInside,chooseCorner,niceMetres,outerTangents,focusDiameter}=await import('../build/map-inset.js');
 const {staticBoundaryMap,staticMapFrame}=await import('../build/static-map.js');
 
 // Experiment 213: an enlarged part in a corner of the whole, or the whole small in a corner of the part.
@@ -114,4 +114,13 @@ test('the joining lines touch both circles and do not cross between them',()=>{
     assert.ok(Math.abs(dx*(x1-a.x)+dy*(y1-a.y))<1e-6*Math.hypot(dx,dy)*a.r+1e-6);
   }
   assert.deepEqual(outerTangents({x:0,y:0,r:50},{x:5,y:0,r:10}),[]);
+});
+
+test('a focus circle is the size chosen, but never more than 40% of the map\'s shorter side, and says when held',()=>{
+  assert.deepEqual(focusDiameter({},900),{diameter:283,limited:false});
+  assert.deepEqual(focusDiameter({size:'half'},900),{diameter:340,limited:true});
+  assert.deepEqual(focusDiameter({size:'half'},500),{diameter:200,limited:true});
+  const r=composeInset(drawing(),drawing(box),{box,size:'half'},hospitals);
+  const d=Number(/<circle data-inset-circle cx="[\d.]+" cy="[\d.]+" r="([\d.]+)"/.exec(r.content)[1])*2;
+  assert.ok(d<=0.4*Math.min(850,r.height)+1,`diameter ${d}, height ${r.height}`);
 });

@@ -74,6 +74,21 @@ test('the hospitals’ map carries its inset: the box, the enlarged part, two li
   expect(apart.least).toBeGreaterThanOrEqual(1);
   console.log('inset marks',JSON.stringify(apart));
   await figure.screenshot({path:'test-results/mers-inset-figure.png'});
+  // A CIRCLE, A THIRD OF THE FIGURE AT MOST, NAMED FROM THE BOUNDARY (2026-11-18), and named still with another workflow
+  // open: Notes draws the figure from the map's own workflow.
+  await expect(figure.locator('svg [data-inset-circle]')).toHaveCount(1);
+  await expect(figure.locator('svg [data-inset-name]')).toHaveText('Gyeonggi');
+  const r=Number(await figure.locator('svg [data-inset-circle]').getAttribute('r'));
+  expect(2*r).toBeLessThanOrEqual(Math.round(850/3)+1);
+  await page.locator('[data-view="workflow"]').click();
+  const other=page.locator('#workflow-select option',{hasText:'How quickly was each case detected and reported?'});
+  await page.locator('#workflow-select').selectOption(await other.getAttribute('value'));
+  await page.locator('[data-view="notes"]').click();
+  const pending=page.locator('[data-run-pending]');
+  if(await pending.count()){await pending.click();await expect(page.locator('.toast').last()).toContainText('ran',{timeout:180000});}
+  await expect(page.locator('#notes-view svg:has([data-inset-circle]) [data-inset-name]')).toHaveText('Gyeonggi',{timeout:60000});
+  await page.locator('[data-view="workflow"]').click();
+  await page.locator('#workflow-select').selectOption(await page.locator('#workflow-select option',{hasText:'Where were the cases in hospital?'}).getAttribute('value'));
   // Picked again on Configure…'s preview, which can be zoomed where the static figure cannot: the box changes, and
   // Apply keeps it.
   await page.locator('[data-view="workflow"]').click();

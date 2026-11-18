@@ -427,12 +427,12 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.34.1",
+   "version": "0.35.0",
    "released": "2026-11-18",
    "changes": [
     {
-     "kind": "patch",
-     "description": "A focus circle is never more than 40% of the map's shorter side, whatever size is chosen, and Configure… says so beside the choice (the practitioner, 2026-11-18, of MERS's half-width circle: \"How can we ensure the size/diameter of the focus inset is not too big\"; then \"A and B\": a third by default, and a limit). Its name is read from the map's own workflow, so a figure in Notes is named while another workflow is open, and from the outline the map drew where the stored workflow keeps it apart."
+     "kind": "minor",
+     "description": "An inset never covers what the map represents (the practitioner, 2026-11-18: \"insets should never cover the map features being represented\"): the study area's boundary, its marks and the north arrow. A corner chosen is used where it is clear; otherwise the inset goes to the clear place nearest the part (a focus) or nearest a corner (an overview), and where nothing is clear, into a band added below the map. A boundary enclosing the whole map is its background (\"Corner over area\", for Oswego's Lycoming inside New York State). MERS's focus circle moves from over Gangwon to the Yellow Sea. Configure… names the control Where it goes. A static figure with no basemap drawn says Basemap not shown, adds a scale bar, and names up to five marks from their records (\"With no basemap the dot in the middle of light green emptiness is hard to interpret\")."
     }
    ],
    "breaking": false,

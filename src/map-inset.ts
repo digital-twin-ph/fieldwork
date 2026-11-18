@@ -85,6 +85,76 @@ function pointer(box:Rect,frame:Rect,corner:Corner):string{
   return pairs.map(([x1,y1,x2,y2])=>`<line data-inset-line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#1f2a24" stroke-width="1" stroke-dasharray="4 3"/>`).join('');
 }
 
+/** WHAT THE MAP REPRESENTS, in the large drawing's own coordinates: its boundary's rings and its marks. An inset never
+ *  covers any of it (the practitioner, 2026-11-18: "insets should never cover the map features being represented"). */
+export interface Features {rings:[number,number][][]; points:[number,number][]}
+const CELL=5;
+/** The map's north arrow, at the top right of every static map (static-map.ts), kept clear like a feature. */
+const NORTH_ARROW:Rect={x:805,y:5,w:42,h:28};
+/** WHERE THE FEATURES LIE, on a grid of 5-unit cells: rows filled between a boundary's edges, scanline by scanline, and
+ *  a margin round each mark. Built once per figure; a candidate frame then asks only its own cells. */
+export function occupancy(features:Features,height:number,extra:Rect[]=[]):{cols:number;rows:number;taken:Uint8Array}{
+  const cols=Math.ceil(850/CELL),rows=Math.ceil(height/CELL),taken=new Uint8Array(cols*rows);
+  // A BOUNDARY THAT ENCLOSES THE WHOLE MAP IS ITS BACKGROUND (the practitioner, 2026-11-18, of Oswego's Lycoming inside New
+  // York State: "Corner over area"): its inside is not counted, its lines and the marks still are.
+  const inside=(ring:[number,number][],x:number,y:number)=>{let c=false;for(let i=0,j=ring.length-1;i<ring.length;j=i++){
+    const [xi,yi]=ring[i]!,[xj,yj]=ring[j]!;if((yi>y)!==(yj>y)&&x<(xj-xi)*(y-yi)/(yj-yi)+xi)c=!c;}return c;};
+  const filled=features.rings.filter(ring=>![[0,0],[850,0],[0,height],[850,height]].every(([x,y])=>inside(ring,x!,y!)));
+  for(let r=0;r<rows;r++){
+    const y=(r+0.5)*CELL,xs:number[]=[];
+    for(const ring of filled)for(let i=0,j=ring.length-1;i<ring.length;j=i++){
+      const [x1,y1]=ring[i]!,[x2,y2]=ring[j]!;
+      if((y1>y)!==(y2>y))xs.push(x1+(y-y1)*(x2-x1)/(y2-y1));
+    }
+    xs.sort((a,b)=>a-b);
+    for(let k=0;k+1<xs.length;k+=2){
+      const c1=Math.max(0,Math.floor(xs[k]!/CELL)),c2=Math.min(cols-1,Math.floor(xs[k+1]!/CELL));
+      for(let c=c1;c<=c2;c++)taken[r*cols+c]=1;
+    }
+  }
+  // A boundary's own line, even where its inside is thin: each edge's cells.
+  for(const ring of features.rings)for(let i=0,j=ring.length-1;i<ring.length;j=i++){
+    const [x1,y1]=ring[j]!,[x2,y2]=ring[i]!,n=Math.max(1,Math.ceil(Math.hypot(x2-x1,y2-y1)/CELL));
+    for(let t=0;t<=n;t++){const c=Math.floor((x1+(x2-x1)*t/n)/CELL),r=Math.floor((y1+(y2-y1)*t/n)/CELL);
+      if(c>=0&&c<cols&&r>=0&&r<rows)taken[r*cols+c]=1;}
+  }
+  const mark=(x:number,y:number,m:number)=>{for(let r=Math.floor((y-m)/CELL);r<=Math.floor((y+m)/CELL);r++)
+    for(let c=Math.floor((x-m)/CELL);c<=Math.floor((x+m)/CELL);c++)if(c>=0&&c<cols&&r>=0&&r<rows)taken[r*cols+c]=1;};
+  for(const [x,y] of features.points)mark(x,y,8);
+  for(const e of extra)for(let r=Math.floor(e.y/CELL);r<=Math.floor((e.y+e.h)/CELL);r++)
+    for(let c=Math.floor(e.x/CELL);c<=Math.floor((e.x+e.w)/CELL);c++)if(c>=0&&c<cols&&r>=0&&r<rows)taken[r*cols+c]=1;
+  return {cols,rows,taken};
+}
+/** Whether a frame, a circle or a rectangle, covers no feature. */
+function isFree(grid:ReturnType<typeof occupancy>,f:Rect,circle:boolean):boolean{
+  const cx=f.x+f.w/2,cy=f.y+f.h/2,rr=f.w/2;
+  for(let r=Math.floor(f.y/CELL);r<=Math.floor((f.y+f.h)/CELL);r++)for(let c=Math.floor(f.x/CELL);c<=Math.floor((f.x+f.w)/CELL);c++){
+    if(c<0||r<0||c>=grid.cols||r>=grid.rows)continue;
+    if(circle&&Math.hypot((c+0.5)*CELL-cx,(r+0.5)*CELL-cy)>rr+CELL)continue;
+    if(grid.taken[r*grid.cols+c])return false;
+  }
+  return true;
+}
+/** WHERE THE FRAME GOES: the corner asked for, if it covers nothing; else the free place nearest the part (a focus) or
+ *  nearest a corner (an overview); else, where nothing is free, a band added below the map. */
+export function placeFrame(w:number,h:number,height:number,grid:ReturnType<typeof occupancy>|null,circle:boolean,
+  prefer?:Corner,near?:[number,number]):{frame:Rect;band:number;corner:Corner;moved:boolean}{
+  const cornerOf=(f:Rect):Corner=>`${f.y+f.h/2<height/2?'n':'s'}${f.x+f.w/2>425?'e':'w'}` as Corner;
+  if(!grid){const corner=prefer??'ne';return {frame:frameAt(corner,w,h,height),band:0,corner,moved:false};}
+  if(prefer){const f=frameAt(prefer,w,h,height);if(isFree(grid,f,circle))return {frame:f,band:0,corner:prefer,moved:false};}
+  let best:Rect|null=null,score=Infinity;
+  for(let y=PAD;y+h<=height-PAD;y+=10)for(let x=PAD;x+w<=850-PAD;x+=10){
+    const f={x,y,w,h};if(!isFree(grid,f,circle))continue;
+    const cx=x+w/2,cy=y+h/2;
+    const d=near?Math.hypot(cx-near[0],cy-near[1]):Math.min(...CORNERS.map(c=>{const k=frameAt(c,w,h,height);return Math.hypot(k.x-x,k.y-y);}));
+    if(d<score){score=d;best=f;}
+  }
+  if(best)return {frame:best,band:0,corner:cornerOf(best),moved:!!prefer};
+  const x=Math.min(850-PAD-w,Math.max(PAD,(near?.[0]??425)-w/2));
+  const frame={x,y:height+PAD,w,h};
+  return {frame,band:h+2*PAD,corner:cornerOf(frame),moved:!!prefer};
+}
+
 /** A FOCUS CIRCLE'S DIAMETER: the width chosen, but never more than 40% of the map's shorter side (the practitioner,
  *  2026-11-18, of MERS's half-width circle: "How can we ensure the size/diameter of the focus inset is not too big").
  *  `limited` says when the limit, not the choice, set it, so Configure… can say so. */
@@ -111,13 +181,17 @@ function nameAt(cx:number,y:number,name:string,attr:string):string{
 /** THE FOCUS INSET, A CIRCLE (the practitioner, 2026-11-18: "Square for overview and Circle for focus"). A circle on the
  *  map around the part, the part enlarged in a circular frame in the corner where it covers least, joined by the two
  *  lines along their outer tangents; the scale bar inside the frame's foot, the name of the unit at its centre above. */
-function composeFocus(whole:Drawing,part:Drawing,settings:InsetSettings,points:readonly [number,number][],labels:InsetLabels):{content:string;height:number;corner:Corner}{
+function composeFocus(whole:Drawing,part:Drawing,settings:InsetSettings,points:readonly [number,number][],labels:InsetLabels,
+  features?:Features):{content:string;height:number;corner:Corner;moved:boolean}{
   const w=focusDiameter(settings,whole.height).diameter;
   const r=rectOf(settings.box,whole.project);
   const ring={x:r.x+r.w/2,y:r.y+r.h/2,r:Math.max(Math.hypot(r.w,r.h)/2,9)};
   const avoid={x:ring.x-ring.r,y:ring.y-ring.r,w:2*ring.r,h:2*ring.r};
-  const corner=settings.corner??chooseCorner(points.map(p=>whole.project(p)),w,w,whole.height,avoid);
-  const frame=frameAt(corner,w,w,whole.height);
+  let frame:Rect,corner:Corner,band=0,moved=false;
+  if(features){
+    const placed=placeFrame(w,w,whole.height,occupancy(features,whole.height,[avoid,NORTH_ARROW]),true,settings.corner,[ring.x,ring.y]);
+    ({frame,corner,band,moved}=placed);
+  }else{corner=settings.corner??chooseCorner(points.map(p=>whole.project(p)),w,w,whole.height,avoid);frame=frameAt(corner,w,w,whole.height);}
   const big={x:frame.x+w/2,y:frame.y+w/2,r:w/2};
   const id=`focus-${Math.round(frame.x)}-${Math.round(frame.y)}`;
   // The part's drawing fills the circle: its box is drawn 850 wide, so the circle shows its middle, as wide as the box.
@@ -133,23 +207,28 @@ function composeFocus(whole:Drawing,part:Drawing,settings:InsetSettings,points:r
     +`<path d="M${bx},${by-4}V${by}H${bx+length}V${by-4}" fill="none" stroke="#1f2a24" stroke-width="1.5"/>`
     +`<text x="${bx}" y="${by-8}" font-size="13" fill="#1f2a24">${metresLabel(metres)}</text></g>`;
   const name=labels.focus?.trim()?nameAt(big.x,frame.y+big.r*0.22,labels.focus.trim(),'data-inset-name'):'';
-  const content=whole.content
+  const height=whole.height+band;
+  const content=(band?`<rect width="850" height="${height}" fill="#ffffff"/>`:'')+whole.content
     +`<circle data-inset-box cx="${ring.x}" cy="${ring.y}" r="${ring.r}" fill="none" stroke="#1f2a24" stroke-width="2"/>`
     +lines+nested
     +`<circle data-inset-circle cx="${big.x}" cy="${big.y}" r="${big.r}" fill="none" stroke="#1f2a24" stroke-width="2.5"/>`
     +bar+name;
-  return {content,height:whole.height,corner};
+  return {content,height,corner,moved};
 }
 
 /** THE FIGURE. `whole` is drawn over the whole extent, `part` over the box; which is large is the arrangement's. */
-export function composeInset(whole:Drawing,part:Drawing,settings:InsetSettings,points:readonly [number,number][]=[],labels:InsetLabels={}):{content:string;height:number;corner:Corner}{
+export function composeInset(whole:Drawing,part:Drawing,settings:InsetSettings,points:readonly [number,number][]=[],labels:InsetLabels={},
+  /** What the large drawing represents, in its own coordinates; given, the inset never covers it. */
+  features?:Features):{content:string;height:number;corner:Corner;moved:boolean}{
   const locator=settings.arrange==='locator';
-  if(!locator)return composeFocus(whole,part,settings,points,labels);
+  if(!locator)return composeFocus(whole,part,settings,points,labels,features);
   const large=locator?part:whole,small=locator?whole:part;
   const w=insetWidth(settings),h=Math.round(w*small.height/850);
   const boxOnLarge=locator?undefined:rectOf(settings.box,whole.project);
-  const corner=settings.corner??chooseCorner(locator?points.map(p=>part.project(p)):points.map(p=>whole.project(p)),w,h,large.height,boxOnLarge);
-  const frame=frameAt(corner,w,h,large.height);
+  let frame:Rect,corner:Corner,band=0,moved=false;
+  if(features)({frame,corner,band,moved}=placeFrame(w,h,large.height,occupancy(features,large.height,[NORTH_ARROW]),false,settings.corner));
+  else{corner=settings.corner??chooseCorner(locator?points.map(p=>part.project(p)):points.map(p=>whole.project(p)),w,h,large.height,boxOnLarge);
+    frame=frameAt(corner,w,h,large.height);}
   // THE BOX IS ALWAYS FINDABLE: drawn in the small frame, a part a few kilometres across in a state is under a pixel, so
   // it is drawn at least 18 px on the page, centred where it is, its outline as thick on the page as on the whole map.
   const box=(r:Rect,scale=1)=>{const least=18*scale,w=Math.max(r.w,least),h=Math.max(r.h,least);
@@ -157,10 +236,10 @@ export function composeInset(whole:Drawing,part:Drawing,settings:InsetSettings,p
   // The small drawing in its frame, clipped to it; the box drawn on the whole, wherever the whole is.
   const nested=`<svg data-inset-frame x="${frame.x}" y="${frame.y}" width="${frame.w}" height="${frame.h}" viewBox="0 0 850 ${small.height}" preserveAspectRatio="xMidYMid meet">`
     +small.content+(locator?box(rectOf(settings.box,whole.project),850/w):'')+`</svg>`;
-  const content=large.content+(boxOnLarge?box(boxOnLarge)+pointer(boxOnLarge,frame,corner):'')
+  const content=(band?`<rect width="850" height="${large.height+band}" fill="#ffffff"/>`:'')+large.content+(boxOnLarge?box(boxOnLarge)+pointer(boxOnLarge,frame,corner):'')
     +`<rect x="${frame.x-2}" y="${frame.y-2}" width="${frame.w+4}" height="${frame.h+4}" fill="#ffffff"/>`
     +nested+`<rect x="${frame.x}" y="${frame.y}" width="${frame.w}" height="${frame.h}" fill="none" stroke="#1f2a24" stroke-width="1.5"/>`
     +(locator?'':scaleBar(part,frame))
     +(locator&&labels.whole?.trim()?nameIn(frame,labels.whole.trim()):'');
-  return {content,height:large.height,corner};
+  return {content,height:large.height+band,corner,moved};
 }

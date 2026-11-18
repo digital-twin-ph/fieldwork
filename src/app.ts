@@ -3103,9 +3103,10 @@ function mapInsetSection(n:WorkflowNode<'map_output'>):string{
     +opt('inset','Focus inset: the part enlarged in a circle, on the whole map',i.arrange??'inset')
     +opt('locator','Overview inset: the whole map small in a square, on the part',i.arrange??'inset')
     +opt('','No inset',i.arrange??'inset')+`</select></div>`
-    +`<div class="field"><label class="field-label" for="map-inset-corner">In the corner</label><select id="map-inset-corner">`
-    +opt('','Where it covers least',i.corner??'')+opt('ne','Top right',i.corner??'')+opt('nw','Top left',i.corner??'')
-    +opt('se','Bottom right',i.corner??'')+opt('sw','Bottom left',i.corner??'')+`</select></div>`
+    +`<div class="field"><label class="field-label" for="map-inset-corner">Where it goes</label><select id="map-inset-corner">`
+    +opt('','Where it covers nothing the map shows',i.corner??'')+opt('ne','Top right',i.corner??'')+opt('nw','Top left',i.corner??'')
+    +opt('se','Bottom right',i.corner??'')+opt('sw','Bottom left',i.corner??'')+`</select>`
+    +`<p class="muted">An inset never covers the boundary, the marks or the north arrow. A corner you choose is used where it is clear; otherwise the inset goes to the nearest clear place, or below the map.</p></div>`
     +`<div class="field"><label class="field-label" for="map-inset-size">Its size</label><select id="map-inset-size">`
     +opt('third','A third of the figure\u2019s width',i.size??'third')+opt('half','Half the figure\u2019s width',i.size??'third')+`</select>`
     // SAID, NOT DONE SILENTLY: the limit that can hold a circle under the size chosen.
@@ -6603,7 +6604,7 @@ async function drawStaticBasemap(result:Output,svg:SVGSVGElement,
   frame:{bounds:[number,number,number,number];project:(c:Position)=>[number,number]},
   /** OFF THE PAGE, for the write-up (2026-11-14): the figure is drawn into an element that is never shown, so its tiles
    *  are kept when they arrive, the page's map note is left alone, and the workflow is the one the run came from. */
-  offPage?:{workflow:Workflow;hidden?:Set<string>}):Promise<void>{
+  offPage?:{workflow:Workflow;hidden?:Set<string>}):Promise<boolean>{
   // READ FROM THE LIVE WORKFLOW, not from the snapshot as run. A basemap is presentation: it
   // changes nothing the run computed, so it must appear the moment it is chosen. Reading
   // `runWorkflow` here meant choosing one did nothing at all until the workflow was run again,
@@ -6632,7 +6633,7 @@ async function drawStaticBasemap(result:Output,svg:SVGSVGElement,
       +`${plate.groundResolutionM.toFixed(0)} m per pixel`).join('; ')+'. Context: a plate is ink, not measurement.';
   }
   const choice=node?basemapOf(node.params.basemap):undefined;
-  if(!node||!choice||choice==='none')return;
+  if(!node||!choice||choice==='none')return drawnPlates.length>0;
   const note=offPage?null:$('#map-panel').querySelector('#map-note');
   // THE GROUND'S CREDIT FOLLOWS THE MAP'S OWN NOTE, never replaces it: once OpenStreetMap became the default (2026-11-10)
   // every map lost its caption to "9 of 9 tiles ..." this way. Only what this added before is taken back out.
@@ -6655,13 +6656,13 @@ async function drawStaticBasemap(result:Output,svg:SVGSVGElement,
         +'lines are generalised to kilometres and are not a frame to measure or report by.'
       :`${NATURAL_EARTH_CREDIT} covers no land inside this extent, so this figure has no ground `
         +'under it.');
-    return;
+    return drawnPlates.length>0||!!drawn;
   }
   const provider=choice==='osm'||choice==='topo'?TILE_PROVIDERS[choice]:undefined;
   if(!provider){
     say(`${BASEMAP_OPTIONS.find(o=>o.value===choice)?.label||choice} is drawn from vector tiles, which this `
       +'static plot cannot bake in. Choose OpenStreetMap or OpenTopoMap here, or the interactive presentation for that style.');
-    return;
+    return drawnPlates.length>0;
   }
   const stamp=svg.dataset.renderStamp=String(Date.now());
   // GROUND THAT CANNOT BE FETCHED IS A FIGURE WITHOUT GROUND, not a broken application. Both
@@ -6672,16 +6673,16 @@ async function drawStaticBasemap(result:Output,svg:SVGSVGElement,
   let images;
   try{images=await basemapImages(frame.bounds,frame.project,provider,fetchTileAsDataURI);}
   catch{
-    if(svg.dataset.renderStamp!==stamp||(!offPage&&!svg.isConnected))return;
+    if(svg.dataset.renderStamp!==stamp||(!offPage&&!svg.isConnected))return true;
     const name=BASEMAP_OPTIONS.find(o=>o.value===choice)?.label||choice;
     say(`${name} tiles could not be fetched, so this figure is drawn `
       +'without its ground. The plot above is unaffected: a basemap is layer 0 and carries none of '
       +'what the workflow computed.');
-    return;
+    return drawnPlates.length>0;
   }
   const {markup,drawn,requested,zoom}=images;
   // The figure may have been replaced while the tiles were in flight; off the page, it is the write-up's and kept.
-  if(svg.dataset.renderStamp!==stamp||(!offPage&&!svg.isConnected))return;
+  if(svg.dataset.renderStamp!==stamp||(!offPage&&!svg.isConnected))return true;
   // AFTER THE BACKGROUND, NOT BEFORE IT. `oldMap` opens by painting an opaque rect across the
   // whole frame, so inserting the tiles at `afterbegin` drew the ground and then covered it --
   // the practitioner saw a sliver of basemap above the plot and nothing within it: *"look at the
@@ -6710,6 +6711,7 @@ async function drawStaticBasemap(result:Output,svg:SVGSVGElement,
   say(drawn
     ?`${provider.attribution} · ${drawn} of ${requested} tiles at zoom ${zoom}, drawn into this figure.`
     :`No basemap tiles could be fetched, so this figure has no ground under it. ${provider.attribution}`);
+  return drawnPlates.length>0||!!drawn;
 }
 /** MAPS SIDE BY SIDE, INTERACTIVE (Map's manual, History: panels): one small map per panel, in the grid chosen, each classed over every
  *  panel's values so a shade is one number everywhere, and moving one moves the others unless that is turned off. JLT's
@@ -6801,8 +6803,13 @@ async function drawStaticFigure(svg:SVGSVGElement,result:Output,mapNode:Workflow
   const own=o.offPage?.workflow??workflow;
   const rasterPanels=(result as {rasterPanels?:import('./raster-panels.js').DrawnDensity[]}).rasterPanels;
   const hidden=o.hidden??new Set<string>();
-  const ground=(frame:{bounds:[number,number,number,number];project:(c:Position)=>[number,number]})=>
-    drawStaticBasemap(result,svg,frame,o.offPage?{workflow:o.offPage.workflow,hidden}:undefined);
+  // WITHOUT GROUND, CUES (the practitioner, 2026-11-18: "With no basemap the dot in the middle of light green emptiness
+  // is hard to interpret"): where no basemap or plate is drawn, a few marks are named, a scale bar gives the emptiness a
+  // size, and the figure says the basemap is not shown.
+  const ground=async(frame:{bounds:[number,number,number,number];project:(c:Position)=>[number,number]})=>{
+    const grounded=await drawStaticBasemap(result,svg,frame,o.offPage?{workflow:o.offPage.workflow,hidden}:undefined);
+    if(!grounded)svg.insertAdjacentHTML('beforeend',bareMapCues(result,frame.project as (c:[number,number])=>[number,number],frame.bounds));
+  };
   // GRID CELLS IN PANELS (Map's manual, History: panels): the static figure, every panel on one scale. FIRST, because the panels carry
   // the areas they are drawn within as polygons too, and the polygon branch drew those alone: Botswana's districts and
   // no cells in Notes (2026-11-14).
@@ -6886,7 +6893,9 @@ async function drawStaticFigure(svg:SVGSVGElement,result:Output,mapNode:Workflow
         drawing(staticBoundaryMap(result,o.selected??null,esc,statusLabel,labels,inset.box,locator?1:shrink),partFrame),inset,
         result.rows.filter(r=>r.coordinates).map(r=>r.coordinates as [number,number]),
         insetNames(own.nodes.find(x=>x.id===own.edges.find(e=>e.to===mapNode?.id&&e.port==='area')?.from)?.params as AreaParams|undefined,inset.box,
-          result.boundary as Boundary|undefined));
+          result.boundary as Boundary|undefined),
+        // WHAT THE MAP REPRESENTS, as the large frame draws it: the inset is placed clear of it (2026-11-18).
+        insetFeatures(result.boundary as Boundary|undefined,result.rows,(locator?partFrame:wholeFrame).project as (c:[number,number])=>[number,number]));
       svg.innerHTML=composed.content;
       applyFrame(svg,svg.innerHTML);
       svg.querySelectorAll<SVGElement>('[data-place]').forEach(el=>{el.style.display=hidden.has(el.dataset.layer!)?'none':'';});
@@ -7983,6 +7992,33 @@ function writePlan(plan:Plan):boolean{
   const {plan:_was,...rest}=stored[at]!;void _was;
   stored[at]=plan.parts.length||plan.complete?{...rest,plan}:rest;
   return writeProjects(stored);
+}
+/** CUES FOR A MAP WITH NO GROUND: up to five marks named from their records, a scale bar, and a line saying the basemap
+ *  is not shown. Drawn on the page's scale, 14 units and up. */
+function bareMapCues(result:Output,project:(c:[number,number])=>[number,number],bounds:[number,number,number,number]):string{
+  const marks=(result.rows??[]).filter(r=>Array.isArray(r.coordinates));
+  const names=marks.length<=5?marks.map(r=>{const [x,y]=project(r.coordinates as [number,number]);
+    const name=String((r as {name?:unknown}).name??'').trim();
+    if(!name||x<0||x>850)return '';
+    const anchor=x>640?'end':'start',dx=x>640?-10:10;
+    return `<text data-bare-name x="${x+dx}" y="${y+5}" text-anchor="${anchor}" font-size="14" fill="#1f2a24" stroke="#ffffff" stroke-width="3" paint-order="stroke">${esc(name)}</text>`;}).join(''):'';
+  const lat=(bounds[1]+bounds[3])/2,lon=(bounds[0]+bounds[2])/2;
+  // At the foot of the map as drawn, which is not always 295 tall.
+  const foot=Math.round(Math.max(project([lon,bounds[1]])[1],project([lon,bounds[3]])[1]));
+  const [x0]=project([lon,lat]),[x1]=project([lon+1000/(111_320*Math.cos(lat*Math.PI/180)),lat]);
+  const perKm=Math.abs(x1-x0);let bar='';
+  if(perKm>0&&Number.isFinite(perKm)){
+    const target=170/perKm,km=[0.1,0.2,0.5,1,2,5,10,20,50,100,200,500,1000].filter(v=>v<=target).pop()??0.1,len=km*perKm;
+    bar=`<g data-bare-scale><path d="M20,${foot-23}V${foot-19}H${20+len}V${foot-23}" fill="none" stroke="#1f2a24" stroke-width="1.5"/>`
+      +`<text x="20" y="${foot-29}" font-size="14" fill="#1f2a24">${km<1?`${km*1000} m`:`${km} km`}</text></g>`;
+  }
+  return names+bar+`<text data-bare-note x="830" y="${foot-10}" text-anchor="end" font-size="14" fill="#3d3d3d">Basemap not shown</text>`;
+}
+/** A map's features for placing an inset: the boundary's rings and the marks, projected as the large frame draws them. */
+function insetFeatures(boundary:Boundary|undefined,rows:readonly {coordinates?:unknown}[],project:(c:[number,number])=>[number,number]):import('./map-inset.js').Features{
+  const polys=!boundary?[]:boundary.type==='Polygon'?[boundary.coordinates]:boundary.coordinates;
+  return {rings:polys.flatMap(p=>p.map(ring=>ring.map(c=>project(c as [number,number])))),
+    points:rows.filter(r=>Array.isArray(r.coordinates)).map(r=>project(r.coordinates as [number,number]))};
 }
 /** THE INSETS' NAMES, FROM THE BOUNDARY'S OWN RECORD (the practitioner, 2026-11-18: "make sure we have them labeled
  *  properly using existing metadata"). The overview names the whole: the unit, where there is one; the country, where the

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-const {composeInset,boxInside,chooseCorner,niceMetres,outerTangents,focusDiameter}=await import('../build/map-inset.js');
+const {composeInset,boxInside,chooseCorner,niceMetres,outerTangents,focusDiameter,occupancy,placeFrame}=await import('../build/map-inset.js');
 const {staticBoundaryMap,staticMapFrame}=await import('../build/static-map.js');
 
 // Experiment 213: an enlarged part in a corner of the whole, or the whole small in a corner of the part.
@@ -123,4 +123,27 @@ test('a focus circle is the size chosen, but never more than 40% of the map\'s s
   const r=composeInset(drawing(),drawing(box),{box,size:'half'},hospitals);
   const d=Number(/<circle data-inset-circle cx="[\d.]+" cy="[\d.]+" r="([\d.]+)"/.exec(r.content)[1])*2;
   assert.ok(d<=0.4*Math.min(850,r.height)+1,`diameter ${d}, height ${r.height}`);
+});
+
+// NEVER OVER WHAT THE MAP REPRESENTS (the practitioner, 2026-11-18).
+const rectRing=(x,y,w,h)=>[[x,y],[x+w,y],[x+w,y+h],[x,y+h],[x,y]];
+test('an inset is placed where it covers no boundary and no mark',()=>{
+  const features={rings:[rectRing(300,100,250,400)],points:[[100,80]]};
+  const grid=occupancy(features,600);
+  const {frame,band}=placeFrame(200,200,600,grid,true,undefined,[400,300]);
+  assert.equal(band,0);
+  const overlaps=(a,b)=>a.x<b.x+b.w&&b.x<a.x+a.w&&a.y<b.y+b.h&&b.y<a.y+a.h;
+  assert.ok(!overlaps(frame,{x:300,y:100,w:250,h:400}),JSON.stringify(frame));
+  assert.ok(!(100>=frame.x&&100<=frame.x+frame.w&&80>=frame.y&&80<=frame.y+frame.h));
+});
+
+test('a corner asked for is kept only if it is free; where nothing is free, a band is added below',()=>{
+  const free=occupancy({rings:[],points:[]},600);
+  assert.deepEqual(placeFrame(200,150,600,free,false,'sw').corner,'sw');
+  const full=occupancy({rings:[rectRing(-10,-10,870,620)],points:[[425,300]]},600);
+  // A boundary filling the whole figure is the background: its inside does not count.
+  assert.equal(placeFrame(200,150,600,full,false,'ne').band,0);
+  const crowded=occupancy({rings:[rectRing(20,20,810,560)],points:[]},600);
+  const r=placeFrame(200,150,600,crowded,false,'ne',[425,300]);
+  assert.ok(r.band>0);assert.equal(r.moved,true);assert.ok(r.frame.y>=600);
 });

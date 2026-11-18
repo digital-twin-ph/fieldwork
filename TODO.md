@@ -1699,6 +1699,29 @@ _Carried over whole from the root `TODO.md` of 2026-10-10 in the merge above, he
 demoted one level and nothing else changed. An item here is a decision to do it later._
 
 
+### Immunization microplanning, planned in Fieldwork and simulated (asked 2026-11-18)
+
+The practitioner, 2026-11-18, after a CDC GIS Day talk on polio microplanning: *"It seems we can also use ABM for
+immunization micro planning"*; then *"There's two things to consider: 1-the planning itself can be conducted within FW.
+2-the plan can be simulated"*; *"The population to be vaccinated do not move, they are allocated to houses in the
+district"*; and *"We can do this with Nigeria example?"* — yes: one of the LGAs the Nigeria example's fourth workflow
+marks.
+
+- **The plan, as widgets:** facilities chosen; a **travel-cost surface** from roads, water, slope and land cover (new);
+  **catchments over that surface**, each cell to the site it reaches soonest (extends catchments); under-5 children per
+  area by Sample a raster; teams per area by a declared ruleset; team areas by the same allocation.
+- **The simulation, experiment 220's way:** children allocated to houses from building footprints; teams move house to
+  house over the cost surface at a declared pace and daily capacity; a child is missed when no team reaches the house;
+  coverage by day, cell by cell, set against the plan; missed houses feed a declared disease model.
+- **Design reference:** the WHO-UNICEF COVAX GIS Working Group's *Geo-enabled Microplanning Handbook* (GRID3, 2023),
+  shared by the practitioner: its four applications (master lists, population, accessibility and route models,
+  thematic maps) and its Nigeria polio case. No licence found in it: cited, never copied; its public link still to find.
+- **Data, from the research of 2026-11-18** (`reports/Open immunization case study data.md`, outside the repository):
+  GRID3 health facilities and WorldPop under-5 are CC BY 4.0; GRID3 wards, settlements, roads and friction are CC BY-SA,
+  so what is built from them is too; Microsoft or Google building footprints, not GRID3's Ecopia/Maxar ones; the
+  tracking method of Touray et al. (2016, open). No vaccinator tracks or settlement-visit records are open anywhere, so
+  tracks would be simulated and said to be.
+
 ### A road traffic injury worked example (asked 2026-11-18, not urgent)
 
 The practitioner, 2026-11-18: *"Road traffic safety not urgent so we can to a later TODO."* A research pass the same

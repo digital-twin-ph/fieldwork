@@ -368,6 +368,17 @@ populations (e.g., FSW, MSM)."* Recorded as said. What it would ask of the forma
 form and end over months and years rather than fixed groups, a step longer than a day, infectiousness that changes
 with stage and treatment, and a care cascade like TB's.
 
+## Teams as agents: a campaign microplan simulated, raised 2026-11-18
+
+The practitioner, after a CDC GIS Day talk on polio microplanning: *"There's two things to consider: 1-the planning
+itself can be conducted within FW. 2-the plan can be simulated."* And, correcting a first reading in which households
+moved: *"The population to be vaccinated do not move, they are allocated to houses in the district."* Recorded as said;
+the plan is in TODO, set in the Nigeria example.
+
+What it would ask of the declaration: agents that are teams, not people; a cost surface they move over; houses that
+hold children and are visited or not; and the outcome a coverage map by day, which a disease model then takes as its
+susceptibles. A district is tens of thousands of houses and a few dozen teams, which fits a browser tab.
+
 ## Open questions
 
 - Reading the Gaborone model and its notebooks, under digitaltwin-aas. The practitioner, 2026-11-17: *"Yes you can

@@ -222,3 +222,15 @@ map's shorter side, said in Configure… rather than applied silently. MERS's ex
 name was missing with another workflow open: the figure in Notes looked for the study area in the open workflow, not
 the map's own. Map 0.34.1.
 
+**And never over the map's features** (the same day: *"insets should never cover the map features being represented"*).
+Map 0.35.0 places an inset from a coarse map of where the boundary, the marks and the north arrow lie, scanline-filled
+on 5-unit cells: the corner chosen where it is clear, else the clear place nearest the part or a corner, else a band
+below the map. Built first as strictly as said, Oswego went to the band, because Lycoming's whole frame lies inside New
+York State. Asked, the practitioner chose *"Corner over area"*: a boundary that encloses the whole map is its
+background. MERS's circle moved from over Gangwon to the Yellow Sea.
+
+**And with no basemap, cues** (the same day, of Oswego drawn without its tiles: *"With no basemap the dot in the middle of
+light green emptiness is hard to interpret"*). `drawStaticBasemap` now says whether it drew any ground; where it drew
+none, the figure names up to five marks, draws a scale bar and says *Basemap not shown*. The sources line still credits
+the basemap chosen, since it is written from the settings before the tiles are known: a gap, recorded.
+

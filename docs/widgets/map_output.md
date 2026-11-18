@@ -242,6 +242,12 @@ lowest value to the highest.
 Side by side shows where layers differ. It does not say which is right, and the key says so. The population example
 shows four sources' shares of each district's people this way.
 
+## When there is no basemap
+
+A static figure drawn with no basemap, because none is chosen or its tiles could not be read, says so: *Basemap not
+shown*, at the foot of the map. It adds a scale bar, and where there are five marks or fewer, names each one from its
+record. A single dot on an empty map then still says what it is and how large the area is.
+
 ## An inset
 
 Where marks crowd each other at the scale of the whole map, enlarge a part of it beside the whole. On the interactive
@@ -262,7 +268,11 @@ none.
 In **Configure…**, under **Inset**:
 
 - **Show**: *Focus inset* or *Overview inset*.
-- **In the corner**: where the frame covers fewest marks and not the part, or a corner you choose.
+- **Where it goes**: where it covers nothing the map shows, or a corner you prefer. An inset never covers the study
+  area's boundary, its marks or the north arrow. A chosen corner is used where it is clear; otherwise the inset goes to
+  the clear place nearest the part (a focus) or nearest a corner (an overview), and where nothing is clear, into a band
+  added below the map. A boundary that encloses the whole map, such as New York State around Lycoming, is the map's
+  background: its inside does not count.
 - **Its size**: a third (the default) or half of the figure's width. A focus circle is never more than 40% of the
   map's shorter side, so on a wide or short map it may be drawn smaller than chosen; Configure… says so.
 

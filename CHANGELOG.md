@@ -3,6 +3,14 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.146.0 — In development
+
+- **An inset never covers what the map represents**: its boundary, its marks or its north arrow. A corner chosen is used
+  where it is clear; otherwise the nearest clear place, or a band below the map. A boundary around the whole map is its
+  background. MERS's circle moves into the Yellow Sea; Oswego's overview stays in its corner. Map 0.35.0.
+- **A map with no basemap says so**, adds a scale bar and names up to five marks: Oswego's dot is the church, 500 m
+  across, when the tiles cannot be read.
+
 ## 0.145.0 — In development
 
 - **A focus inset is a third of the figure by default, and never more than 40% of the map's shorter side**; Configure…

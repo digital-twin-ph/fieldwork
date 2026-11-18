@@ -177,3 +177,26 @@ test('Oswego’s map is a locator: Lycoming fills the figure, New York State sma
   await expect(page.locator('#notes-view')).toContainText('New York State');
   expect(errors).toEqual([]);
 });
+
+// WITHOUT A BASEMAP, CUES (the practitioner, 2026-11-18: "With no basemap the dot in the middle of light green emptiness
+// is hard to interpret"): the tiles refused, the one mark is named, a scale bar is drawn, and the figure says so; the
+// overview is clear of the north arrow and the mark.
+test('Oswego without its basemap: the church named, a scale bar, and "Basemap not shown"',async({page})=>{
+  const OSWEGO=new URL('../../example-1940-oswego-church-supper/fieldwork-project.json.gz',import.meta.url);
+  test.skip(!existsSync(OSWEGO),'example-1940-oswego-church-supper is not checked out beside this repository.');
+  test.setTimeout(240000);
+  const bundle=readFileSync(OSWEGO);
+  await page.route(/tile\.openstreetmap|tile\.opentopomap/,r=>r.abort());
+  await page.route(/raw\.githubusercontent\.com\/digital-twin-ph\/example-1940-oswego-church-supper\/[^/]+\/fieldwork-project\.json\.gz/,r=>r.fulfill({status:200,body:bundle}));
+  await page.goto('/');await page.evaluate(()=>localStorage.clear());
+  await page.goto('/?example=blank');
+  await page.locator('[data-view="project"]').click();
+  await page.locator('[data-open-example="urn:fieldwork:example:oswego-1940"]').click();
+  await expect(page.locator('[data-example-status="urn:fieldwork:example:oswego-1940"]')).toContainText('digest matched',{timeout:60000});
+  await run(page,'Where was the church supper?');
+  await page.locator('[data-view="notes"]').click();
+  const svg=page.locator('#notes-view figure[data-figure="map"] svg').first();
+  await expect(svg.locator('[data-bare-note]')).toHaveText('Basemap not shown',{timeout:30000});
+  await expect(svg.locator('[data-bare-name]')).toContainText('Methodist Church');
+  await expect(svg.locator('[data-bare-scale]')).toContainText(/\d+ (m|km)/);
+});

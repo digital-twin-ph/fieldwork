@@ -137,8 +137,10 @@ test('a remote band whose connection drops is tried again, and the cells are the
 
 test('a connection that stays down is said plainly, and Apply again carries on from what was read',async()=>{
   const s=await servedGrid();
-  try{let at=0;s.setFail(n=>{if(!at&&n>4)at=n;return at>0;});
-    await assert.rejects(readRasterWindow(s.url,s.m,s.window,()=>{},1),
+  // DOWN FROM THE FIRST BAND ON: counted by bands read, not requests, since how many requests opening a file takes is
+  // the engine's business (geotiff.js took four, terrio more; experiment 221).
+  try{let down=false;s.setFail(()=>down);
+    await assert.rejects(readRasterWindow(s.url,s.m,s.window,rows=>{if(rows>0)down=true;},1),
       e=>/^The connection to grid\.example\.org dropped at \d+% \(.+ rows\) and did not come back after 4 tries \(the browser said: Failed to fetch\)\. What was read is kept: press Apply again/.test(e.message)||assert.fail(e.message));
     s.setFail(()=>false);const seen=[];
     const read=await readRasterWindow(s.url,s.m,s.window,(rows,of,note)=>seen.push([rows,note]),1);

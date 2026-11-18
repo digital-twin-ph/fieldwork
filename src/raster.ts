@@ -1,25 +1,23 @@
-import {fromBlob,fromUrl,fromArrayBuffer} from 'geotiff';
 import {pictureOrValues} from './geotiff-picture.js';
+import {TiffHeader} from './tiff-header.js';
+import {openRaster,readCells,type TerrioDataset} from './terrio.js';
 /** A GEOTIFF FROM THIS DEVICE OR AT A URL (experiment 198). A URL is read by HTTP range: only the header and the window's
  *  blocks are fetched, so a published grid of tens of megabytes yields a window of a few kilobytes. */
 /** A GeoTIFF read from a file, a URL, or bytes already in memory. Bytes in memory are read in place: a 1 GB window kept on
  *  this device, read back through a Blob, failed in the browser's FileReader (2026-11-13, GHS-POP over Botswana). */
 export type RasterSource=Blob|string|ArrayBuffer;
-const openTiff=(source:RasterSource)=>typeof source==='string'?fromUrl(source):source instanceof ArrayBuffer?fromArrayBuffer(source):fromBlob(source);
 /** THE CELLS OF A WINDOW FIELDWORK WROTE, read in place: uncompressed, little-endian, one band, its strips one after
  *  another from an offset aligned to 8 bytes, no data already NaN (see writeGeoTiff). Undefined for any other layout, which
  *  is then read the ordinary way. */
 export async function keptCells(buffer:ArrayBuffer,metadata:RasterMetadata):Promise<RasterValues|undefined>{
-  const tiff=await fromArrayBuffer(buffer);
-  try{const image=await tiff.getImage(),dir=image.getFileDirectory() as unknown as {loadValue?:(tag:string)=>Promise<unknown>;getValue?:(tag:string)=>unknown;StripOffsets?:unknown;Compression?:unknown};
-    const read=async(tag:string)=>dir.loadValue?await dir.loadValue(tag):(dir.getValue?dir.getValue(tag):(dir as Record<string,unknown>)[tag]);
-    const offsets=Array.from((await read('StripOffsets')) as ArrayLike<number>??[]),compression=Number((await read('Compression'))??1);
+  {const header=await TiffHeader.open(buffer),stored=await header.value('StripOffsets');
+    const offsets=typeof stored==='number'?[stored]:Array.isArray(stored)?stored:[],compression=header.compression;
     const bytes=metadata.bytesPerPixel,cells=metadata.width*metadata.height,first=offsets[0];
     if(compression!==1||first===undefined||(bytes!==4&&bytes!==8)||first%bytes!==0||first+cells*bytes>buffer.byteLength)return undefined;
     const rowBytes=metadata.width*bytes,rowsPerStrip=offsets.length>1?(offsets[1]!-first)/rowBytes:metadata.height;
     if(!offsets.every((o,i)=>o===first+i*rowsPerStrip*rowBytes))return undefined;
     return bytes===8?new Float64Array(buffer,first,cells):new Float32Array(buffer,first,cells);
-  }finally{await tiff.close();}
+  }
 }
 import type {Boundary,Bounds} from './types.js';
 import {geometryBounds} from './study-area.js';
@@ -74,29 +72,28 @@ export function rasterValues(raw:ArrayLike<number>,metadata:Pick<RasterMetadata,
 export interface RasterGrid {metadata:RasterMetadata;values:RasterValues;asset:RasterAsset;boundary?:Boundary;mask?:{method:RasterMaskMethod;marginPixels?:number;inside:number;valid:number;outside:number}}
 function check(value:unknown,message:string):asserts value{if(!value)throw new Error(message);}
 export async function inspectRaster(blob:RasterSource):Promise<RasterMetadata>{
-  const tiff=await openTiff(blob);try{const image=await tiff.getImage(),keys=image.getGeoKeys()||{},dir=image.getFileDirectory();
-    // A PICTURE IS NAMED AND SENT ON (TODO 35): a scanned map's colour bands are ink, not values to measure.
-    const kind=pictureOrValues({samplesPerPixel:image.getSamplesPerPixel(),bitsPerSample:image.getBitsPerSample(),
-      photometric:(image.fileDirectory as unknown as {PhotometricInterpretation?:number}).PhotometricInterpretation,sampleFormat:image.getSampleFormat()});
-    check(kind.kind==='values',`This GeoTIFF holds ${kind.said}. Add it with Georeferenced map image, which draws it as ground under a map; Raster input measures values.`);
-    check(image.getSamplesPerPixel()===1,'Choose a single-band GeoTIFF. Multi-band selection is not implemented yet.');
-    check(keys.GeographicTypeGeoKey===4326&&keys.GTModelTypeGeoKey===2,'This raster needs reprojection: the prototype requires explicit WGS84 / EPSG:4326.');
-    check((keys.GTRasterTypeGeoKey===1||keys.GTRasterTypeGeoKey===2)&&!dir.hasTag('ModelTransformation'),'Use a north-up GeoTIFF without a rotated transform.');
-    // A POINT-REGISTERED GRID's tie point is its first node; the cell around that node starts half a cell out. Read as
-    // cells, its corners are shifted by half a cell, and that is recorded, not hidden (experiment 198).
-    const point=keys.GTRasterTypeGeoKey===2;
-    const tie=await image.getOrigin(),resolution=await image.getResolution(),nodata=await image.getGDALNoData();
-    const origin=point?[tie[0]-resolution[0]/2,tie[1]-resolution[1]/2]:tie;
-    const bounds=[origin[0],origin[1]+image.getHeight()*resolution[1],origin[0]+image.getWidth()*resolution[0],origin[1]];
-    // Half a cell beyond the world's edge is a point grid's outer cells, not an error; and a global grid may carry a cell
-    // more at the edges, as GHS-POP R2023A's does: 432,002 columns of 3 arc-seconds, from 180.0004° W to 180.0012° E
-    // (2026-11-13: refused, reading Rwanda's window from JRC's copy). Two cells beyond the edge are allowed; more is refused.
-    const slack=Math.max(resolution[0],-resolution[1])*2+1e-9;
-    check(origin.slice(0,2).every(Number.isFinite)&&resolution[0]>0&&resolution[1]<0&&bounds.every(Number.isFinite)&&bounds[0]>=-180-slack&&bounds[2]<=180+slack&&bounds[1]>=-90-slack&&bounds[3]<=90+slack,'Unsupported raster coordinates or resolution.');
-    check([1,2,3].includes(image.getSampleFormat())&&[8,16,32,64].includes(image.getBitsPerSample())&&(image.getBitsPerSample()!==64||image.getSampleFormat()===3),'Unsupported raster sample type.');
-    const result:RasterMetadata={width:image.getWidth(),height:image.getHeight(),bands:1,bounds:bounds as Bounds,origin:[origin[0],origin[1]],resolution:[resolution[0],resolution[1]],crs:'EPSG:4326',rasterType:'PixelIsArea',...(point?{sourceRegistration:'PixelIsPoint' as const}:{}),noData:nodata===null?null:Number.isFinite(nodata)?nodata:'NaN',bits:image.getBitsPerSample(),sampleFormat:image.getSampleFormat(),compression:Number(dir.getValue('Compression')||1),blockWidth:image.getTileWidth(),blockHeight:image.getTileHeight(),bytesPerPixel:image.getBytesPerPixel(),geoKeys:JSON.parse(JSON.stringify(keys)),gdal:await image.getGDALMetadata(),band:await image.getGDALMetadata(0),description:String(await dir.loadValue('ImageDescription')||'')};
-    check(JSON.stringify(result).length<=65536,'Raster metadata exceeds the 64 KB prototype limit.');return result;
-  }finally{await tiff.close();}
+  // FIELDWORK'S OWN CHECKS, ON THE HEADER, before terrio reads a cell (experiment 221).
+  const h=await TiffHeader.open(blob),keys=h.geoKeys;
+  // A PICTURE IS NAMED AND SENT ON (TODO 35): a scanned map's colour bands are ink, not values to measure.
+  const kind=pictureOrValues({samplesPerPixel:h.samplesPerPixel,bitsPerSample:h.bitsPerSample,photometric:h.photometric,sampleFormat:h.sampleFormat});
+  check(kind.kind==='values',`This GeoTIFF holds ${kind.said}. Add it with Georeferenced map image, which draws it as ground under a map; Raster input measures values.`);
+  check(h.samplesPerPixel===1,'Choose a single-band GeoTIFF. Multi-band selection is not implemented yet.');
+  check(keys.GeographicTypeGeoKey===4326&&keys.GTModelTypeGeoKey===2,'This raster needs reprojection: the prototype requires explicit WGS84 / EPSG:4326.');
+  check((keys.GTRasterTypeGeoKey===1||keys.GTRasterTypeGeoKey===2)&&!h.has('ModelTransformation'),'Use a north-up GeoTIFF without a rotated transform.');
+  // A POINT-REGISTERED GRID's tie point is its first node; the cell around that node starts half a cell out. Read as
+  // cells, its corners are shifted by half a cell, and that is recorded, not hidden (experiment 198).
+  const point=keys.GTRasterTypeGeoKey===2;
+  const tie=h.origin,resolution=h.resolution,nodata=h.gdalNoData,width=h.width,height=h.height;
+  const origin=point?[tie[0]-resolution[0]/2,tie[1]-resolution[1]/2]:tie;
+  const bounds=[origin[0],origin[1]+height*resolution[1],origin[0]+width*resolution[0],origin[1]];
+  // Half a cell beyond the world's edge is a point grid's outer cells, not an error; and a global grid may carry a cell
+  // more at the edges, as GHS-POP R2023A's does: 432,002 columns of 3 arc-seconds, from 180.0004° W to 180.0012° E
+  // (2026-11-13: refused, reading Rwanda's window from JRC's copy). Two cells beyond the edge are allowed; more is refused.
+  const slack=Math.max(resolution[0],-resolution[1])*2+1e-9;
+  check(origin.slice(0,2).every(Number.isFinite)&&resolution[0]>0&&resolution[1]<0&&bounds.every(Number.isFinite)&&bounds[0]>=-180-slack&&bounds[2]<=180+slack&&bounds[1]>=-90-slack&&bounds[3]<=90+slack,'Unsupported raster coordinates or resolution.');
+  check([1,2,3].includes(h.sampleFormat)&&[8,16,32,64].includes(h.bitsPerSample)&&(h.bitsPerSample!==64||h.sampleFormat===3),'Unsupported raster sample type.');
+  const result:RasterMetadata={width,height,bands:1,bounds:bounds as Bounds,origin:[origin[0]!,origin[1]!],resolution:[resolution[0],resolution[1]],crs:'EPSG:4326',rasterType:'PixelIsArea',...(point?{sourceRegistration:'PixelIsPoint' as const}:{}),noData:nodata===null?null:Number.isFinite(nodata)?nodata:'NaN',bits:h.bitsPerSample,sampleFormat:h.sampleFormat,compression:h.compression,blockWidth:h.blockWidth,blockHeight:h.blockHeight,bytesPerPixel:h.bytesPerPixel,geoKeys:JSON.parse(JSON.stringify(keys)),gdal:h.gdalMetadata(),band:h.gdalMetadata(0),description:h.description};
+  check(JSON.stringify(result).length<=65536,'Raster metadata exceeds the 64 KB prototype limit.');return result;
 }
 export function rasterWindow(metadata:RasterMetadata,boundary:Boundary,paddingPixels=0):[number,number,number,number]{
   check(Number.isFinite(paddingPixels)&&paddingPixels>=0&&paddingPixels<=1.000000002,'Raster padding must be between 0 and 1 pixel.');
@@ -139,11 +136,11 @@ export const overhangSentence=(o:ReturnType<typeof rasterOverhang>):string=>!o.l
 const RETRIES=4,RETRY_MS=1500,bandsRead=new Map<string,{values:RasterValues;bands:number}>();
 export async function readRasterWindow(blob:RasterSource,metadata:RasterMetadata,window:[number,number,number,number],
   onProgress?:(rows:number,of:number,note?:string)=>void,retryMs=RETRY_MS,into?:RasterValues):Promise<{metadata:RasterMetadata;values:RasterValues}>{
-  let tiff=await openTiff(blob);try{let image=await tiff.getImage();const width=window[2]-window[0],height=window[3]-window[1],origin:[number,number]=[metadata.origin[0]+window[0]*metadata.resolution[0],metadata.origin[1]+window[1]*metadata.resolution[1]];
+  let dataset:TerrioDataset=await openRaster(blob);try{const width=window[2]-window[0],height=window[3]-window[1],origin:[number,number]=[metadata.origin[0]+window[0]*metadata.resolution[0],metadata.origin[1]+window[1]*metadata.resolution[1]];
     let values:RasterValues;
-    if(!onProgress)values=rasterValues(await image.readRasters({window,samples:[0],interleave:true}) as unknown as ArrayLike<number>,metadata);
+    if(!onProgress)values=rasterValues(await readCells(dataset,window),metadata);
     else{
-      const tile=Math.max(1,image.getTileHeight?.()||1),band=Math.max(tile,Math.ceil(height/20/tile)*tile);
+      const tile=Math.max(1,metadata.blockHeight||1),band=Math.max(tile,Math.ceil(height/20/tile)*tile);
       const remote=typeof blob==='string',key=remote?`${blob}|${window.join(',')}`:'';
       // ONE ARRAY, FILLED A BAND AT A TIME (2026-11-17): the bands, their join and the converted copy were three windows'
       // worth at once, about 1.5 GB for WorldPop over Botswana, before anything was saved.
@@ -156,8 +153,8 @@ export async function readRasterWindow(blob:RasterSource,metadata:RasterMetadata
         for(let attempt=1;;attempt++){
           try{
             // A FRESH CONNECTION after a failure, so nothing half-received is reused; opening it can fail too, and is retried.
-            if(stale){await Promise.resolve(tiff.close()).catch(()=>undefined);tiff=await openTiff(blob);image=await tiff.getImage();stale=false;}
-            fillValues(state.values,await image.readRasters({window:[window[0],top,window[2],bottom],samples:[0],interleave:true}) as unknown as ArrayLike<number>,done*width,metadata);
+            if(stale){try{dataset.free();}catch{/* already gone */}dataset=await openRaster(blob);stale=false;}
+            fillValues(state.values,await readCells(dataset,[window[0],top,window[2],bottom]),done*width,metadata);
             state.bands++;break;}
           catch(error){
             if(!remote)throw error;
@@ -174,7 +171,7 @@ export async function readRasterWindow(blob:RasterSource,metadata:RasterMetadata
       if(remote)bandsRead.delete(key);
     }
     check(values.length===width*height,'Raster window size mismatch.');return {metadata:{...metadata,width,height,origin,bounds:[origin[0],origin[1]+height*metadata.resolution[1],origin[0]+width*metadata.resolution[0],origin[1]]},values};
-  }finally{await tiff.close();}
+  }finally{try{dataset.free();}catch{/* already gone */}}
 }
 export function encodeRaster(grid:Pick<RasterGrid,'metadata'|'values'> & Partial<Pick<RasterGrid,'asset'|'boundary'|'mask'>>):Uint8Array<ArrayBuffer>{
   const m=grid.metadata;check(grid.values.length===m.width*m.height&&grid.values.length<=MAX_RASTER_CELLS,'Invalid retained raster dimensions.');

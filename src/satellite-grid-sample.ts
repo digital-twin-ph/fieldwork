@@ -2,7 +2,7 @@
  *
  *  The second reader of Sample satellite files at points or over areas, beside the Sentinel-5P swath reader. A gridded
  *  product (MODIS land surface temperature, a Cloud-Optimized GeoTIFF per layer in the sinusoidal projection) is read
- *  by range with geotiff.js. Each area is projected into the file's grid and its cells chosen by centre once per tile
+ *  by range with terrio (experiment 221; geotiff.js until then). Each area is projected into the file's grid and its cells chosen by centre once per tile
  *  grid, since every file of a tile shares it; a point is the cell that contains it. Tiles are added before anything is
  *  divided. One row per place per period per platform: Terra and Aqua are different measurements and are never pooled.
  *
@@ -45,7 +45,7 @@ export function areasFrom(features:readonly {id:string|number;name?:string;geome
 export interface PlaceReading {placeId:string; period:string; end:string|null; platform:string; sums:AreaSums}
 
 interface Image {getOrigin():number[]; getResolution():number[]; getWidth():number; getHeight():number;
-  readRasters(o:{window:number[];pool?:unknown}):Promise<ArrayLike<number>[]>; getGDALMetadata?(sample?:number):Promise<Record<string,string>|null>}
+  readRasters(o:{window:number[]}):Promise<ArrayLike<number>[]>; getGDALMetadata?(sample?:number):Promise<Record<string,string>|null>}
 
 /** What the files said about their own values: how many stated their unit and scale factor, and that every one that
  *  did agreed with the product's. The practitioner, 2026-11-06: *"How do we know the unit is in K if we don't have a
@@ -78,9 +78,8 @@ export const platformOf=(item:{id:string;platform:string|null})=>
   item.platform||(/^MOD/.test(item.id)?'terra':/^MYD/.test(item.id)?'aqua':'');
 
 /** HOW A RUN READS ITS FILES (experiment 182). `concurrency` files are in flight at once: the time is network waiting,
- *  not arithmetic, so files overlap. `attempts` tries a file before the run stops, naming it. `pool` is geotiff.js's
- *  decoder pool, which decompresses in workers so the page stays responsive. */
-export interface ReadOptions {concurrency?:number; attempts?:number; retryMs?:number; pool?:unknown;
+ *  not arithmetic, so files overlap. `attempts` tries a file before the run stops, naming it. */
+export interface ReadOptions {concurrency?:number; attempts?:number; retryMs?:number;
   /** Readings kept on this device across sessions (satellite-reading-store.ts). `reread` reads every file anyway, and
    *  keeps what it reads. */
   saved?:import('./satellite-reading-store.js').ReadingStore; reread?:boolean}
@@ -104,7 +103,7 @@ const placesKey=(places:readonly Place[])=>{
   return `${places.length}:${h.toString(16)}`;
 };
 
-/** Reads every file at every place. `open` is geotiff.js's `fromUrl(...).getImage()`, passed in so Node and the
+/** Reads every file at every place. `open` is terrio's `openImage` (src/terrio.ts), passed in so Node and the
  *  browser use the same code. One window per file covers all its places; the masks are made once per tile grid. */
 export async function readGridFiles(items:readonly CatalogItem[],reader:GridReader,layerKey:string,rule:ModisQualityRule,
   places:readonly Place[],open:Open,fetcher:typeof fetch=fetch,onFile:(done:number,of:number)=>void=()=>{},
@@ -149,7 +148,7 @@ export async function readGridFiles(items:readonly CatalogItem[],reader:GridRead
     if(present.length){
       const U=[Math.min(...present.map(c=>c.window[0])),Math.min(...present.map(c=>c.window[1])),
         Math.max(...present.map(c=>c.window[2])),Math.max(...present.map(c=>c.window[3]))];
-      const read=(image:Awaited<ReturnType<Open>>)=>image.readRasters({window:U,...(options.pool?{pool:options.pool}:{})});
+      const read=(image:Awaited<ReturnType<Open>>)=>image.readRasters({window:U});
       const [[V],[Q],[C]]=await Promise.all([read(value),read(qc),read(clear)]);
       const UW=U[2]!-U[0]!;
       cells.forEach((c,index)=>{

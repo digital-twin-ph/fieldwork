@@ -1,6 +1,6 @@
 {
   "name": "fieldwork-semantic-gis",
-  "version": "0.146.0",
+  "version": "0.147.0",
   "private": true,
   "license": "Apache-2.0",
   "type": "module",
@@ -80,7 +80,6 @@
     "@xyflow/react": "^12.12.0",
     "@zip.js/zip.js": "2.23.0",
     "fflate": "^0.8.3",
-    "geotiff": "3.0.5",
     "h3-js": "4.5.0",
     "h5wasm": "^0.10.3",
     "hyparquet": "^1.31.3",
@@ -95,6 +94,7 @@
     "react-dom": "^19.3.0",
     "sql.js": "1.14.1",
     "temml": "0.14.0",
+    "terrio-js": "0.9.0",
     "vega": "6.4.0",
     "vega-embed": "7.3.0",
     "vega-lite": "6.4.3"
@@ -110,6 +110,7 @@
     "@types/sql.js": "1.4.11",
     "axe-core": "4.14.1",
     "esbuild": "^0.28.2",
+    "geotiff": "3.0.5",
     "n3": "2.13.8",
     "rdf-validate-shacl": "0.6.5",
     "typescript": "7.0.2"

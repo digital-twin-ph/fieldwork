@@ -3,6 +3,15 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.147.0 — In development
+
+- **terrio is Fieldwork's raster engine** (experiment 221): it decodes every GeoTIFF in Raster input, Georeferenced
+  map image and Sample satellite files, where geotiff.js did. Fieldwork still reads the header and makes its own checks
+  first. On WorldPop and GHS-POP windows the cells and metadata are the same, value for value, and reading is 2 to 9
+  times faster. geotiff.js is now used only in tests, to check terrio against.
+- **The engine is fetched the first time a raster is read**: 16 MB, 6.1 MB as sent. It is kept on the device, so
+  rasters read offline afterwards; a project without a raster never fetches it.
+
 ## 0.146.0 — In development
 
 - **An inset never covers what the map represents**: its boundary, its marks or its north arrow. A corner chosen is used

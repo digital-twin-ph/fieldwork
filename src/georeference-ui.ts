@@ -493,24 +493,37 @@ export function openMapImageConfig(o:{step:string;initial:MapImageDraft;esc:Esca
 }
 let expect:[number,number]|undefined;
 
+/** A PICTURE'S WINDOW AS RED, GREEN AND BLUE, one byte each: its first three bands, or one band through its palette
+ *  (a TIFF palette holds 16-bit levels; the top 8 bits are kept, as geotiff.js kept them). */
+async function pictureRgb(file:File,h:import('./tiff-header.js').TiffHeader,window:[number,number,number,number]):Promise<Uint8Array>{
+  const {openRaster,readCells}=await import('./terrio.js');
+  const dataset=await openRaster(file);
+  try{
+    const n=(window[2]-window[0])*(window[3]-window[1]),out=new Uint8Array(n*3);
+    if(h.photometric===3){
+      const map=await h.value('ColorMap'),levels=Array.isArray(map)?map:[],third=levels.length/3,index=await readCells(dataset,window,1);
+      for(let i=0;i<n;i++){const k=index[i]!;out[i*3]=levels[k]!>>8;out[i*3+1]=levels[third+k]!>>8;out[i*3+2]=levels[2*third+k]!>>8;}
+    }else for(let b=0;b<3;b++){const band=await readCells(dataset,window,b+1);for(let i=0;i<n;i++)out[i*3+b]=band[i]!;}
+    return out;
+  }finally{try{dataset.free();}catch{/* already gone */}}
+}
 /** A GEOTIFF READ AS A PICTURE (TODO 35): its tags say whether it is one and where it lies; the part over the study area,
  *  with a margin, is redrawn north-up and kept as a JPEG, placed by a world file of that box. A values raster is named
  *  and sent to Raster input; nothing is guessed. */
 async function readTiffPicture(file:File,near?:[number,number,number,number]):Promise<{image:NonNullable<MapImageDraft['image']>;tags:NonNullable<MapImageDraft['tags']>}>{
-  const {fromArrayBuffer}=await import('geotiff');
-  const tif=await fromArrayBuffer(await file.arrayBuffer()),img=await tif.getImage(),dir=img.fileDirectory as unknown as Record<string,unknown>;
-  const tags:PictureTags={samplesPerPixel:img.getSamplesPerPixel(),bitsPerSample:img.getBitsPerSample(),
-    photometric:dir.PhotometricInterpretation as number|undefined,sampleFormat:img.getSampleFormat(),
-    geoKeys:img.getGeoKeys() as Record<string,unknown>,width:img.getWidth(),height:img.getHeight(),
-    origin:img.getOrigin().slice(0,2) as [number,number],resolution:img.getResolution().slice(0,2) as [number,number]};
+  // FIELDWORK'S HEADER, TERRIO'S CELLS (experiment 221).
+  const {TiffHeader}=await import('./tiff-header.js');
+  const h=await TiffHeader.open(file);
+  const tags:PictureTags={samplesPerPixel:h.samplesPerPixel,bitsPerSample:h.bitsPerSample,photometric:h.photometric,
+    sampleFormat:h.sampleFormat,geoKeys:h.geoKeys,width:h.width,height:h.height,origin:h.origin,resolution:h.resolution};
   const kind=pictureOrValues(tags);
   if(kind.kind==='values')throw new Error(`${file.name} holds ${kind.said}. A picture goes here; add it with Raster input instead.`);
-  if(dir.ModelTransformation)throw new Error(`${file.name} is placed by a turned transform, which this does not read. Export it north up, or place it by matching points.`);
+  if(h.has('ModelTransformation'))throw new Error(`${file.name} is placed by a turned transform, which this does not read. Export it north up, or place it by matching points.`);
   const projection=projectionOf(tags.geoKeys),foot=footprintOf(tags,projection.proj),footOnDatum=footprintOf(tags,projection.proj,projection.geographic);
   const want:Box=near?(()=>{const mx=(near[2]-near[0])*0.25,my=(near[3]-near[1])*0.25;return [near[0]-mx,near[1]-my,near[2]+mx,near[3]+my];})():foot;
   const plan=northUpPlan(tags,projection.proj,want);
   if(!plan)throw new Error(`${file.name} does not cover the study area: it lies from ${dms(foot[0],['E','W'])} to ${dms(foot[2],['E','W'])}, ${dms(foot[1],['N','S'])} to ${dms(foot[3],['N','S'])}.`);
-  const rgb=await img.readRGB({window:plan.window,interleave:true}) as unknown as Uint8Array;
+  const rgb=await pictureRgb(file,h,plan.window);
   const pixels=northUpPixels(tags,projection.proj,plan,rgb);
   const canvas=document.createElement('canvas');canvas.width=plan.width;canvas.height=plan.height;
   canvas.getContext('2d')!.putImageData(new ImageData(new Uint8ClampedArray(pixels),plan.width,plan.height),0,0);

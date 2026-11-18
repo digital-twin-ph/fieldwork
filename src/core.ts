@@ -1428,7 +1428,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         const polygons=(inputs as unknown as {areas?:{features?:{id:string|number;name?:string;geometry?:import('./types.js').Boundary|null}[]}}).areas??fromStudy;
         if([raw,(inputs as {areas?:unknown}).areas,study].filter(Boolean).length>1)
           throw new Error('Connect one kind of place: points, a polygon layer, or a study area. One table holds one kind.');
-        // A GRIDDED PRODUCT (MODIS, experiment 180) is read over areas or at points by geotiff.js; a swath (Sentinel-5P) at
+        // A GRIDDED PRODUCT (MODIS, experiment 180) is read over areas or at points by terrio (experiment 221); a swath (Sentinel-5P) at
         // points by h5wasm. Which reader is the product's, not a setting.
         const grids=await import('./satellite-grid-sample.js');
         const gridReader=grids.gridReaderFor(files.product);
@@ -1441,13 +1441,13 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           if(!places.length)throw new Error(polygons?'The areas connected have no polygons to read over.':'Connect a point layer to points, or polygons to areas: the values are read there.');
           const kind=polygons?'area' as const:'point' as const;
           const layer=node.params.layer??'day',rule=node.params.qualityRule??gridReader.quality.default;
-          const {fromUrl}=await import('geotiff');
+          const {openImage}=await import('./terrio.js');
           const tags={files:0,stated:0,saved:0};
           const {deviceReadings}=await import('./satellite-reading-store.js');
           const {runDetail}=await import('./run-progress.js');
           const report=(done:number,of:number)=>runDetail({nodeId:node.id,label:node.params.label||'Sample satellite files',done,of,what:'satellite files'});
           report(0,files.search.items.length);
-          const readings=await grids.readGridFiles(files.search.items,gridReader,layer,rule,places,async url=>(await fromUrl(url)).getImage() as never,fetch,report,tags,
+          const readings=await grids.readGridFiles(files.search.items,gridReader,layer,rule,places,openImage as never,fetch,report,tags,
             {saved:deviceReadings,...(rereadOnce.delete(node.id)?{reread:true}:{})})
             .finally(()=>runDetail(null));
           const column=node.params.placeColumn?.trim()||(kind==='area'?'area':'point_id');

@@ -3,7 +3,7 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## 0.139.0 — In development
+## 0.139.0 — 2026-11-17
 
 - **A disease model declared as data, in the kernel (experiment 220).** A model structure says the states, how an
   infection happens, the course that follows and the contact networks; a parameter set gives its values, each with the

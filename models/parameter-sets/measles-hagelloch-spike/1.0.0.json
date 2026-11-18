@@ -1,0 +1,14 @@
+{
+  "schema": "fieldwork/parameter-set/1",
+  "id": "measles-hagelloch-spike",
+  "version": "1.0.0",
+  "title": "Hagelloch 1861, as the spike ran it (experiment 199)",
+  "structure": {"id": "measles-seir-household-class-village", "version": "1.0.0"},
+  "values": {
+    "latent_period": {"min": 10, "max": 12, "evidence": {"basis": "assumed", "note": "The spike's assumption, 2026-11-17, before any source was read."}},
+    "infectious_period": {"min": 8, "max": 9, "evidence": {"basis": "assumed", "note": "The spike's assumption, 2026-11-17, before any source was read."}},
+    "p_household": {"value": 0.08, "evidence": {"basis": "assumed", "note": "The spike's assumption; to be fitted to the 1861 curve."}},
+    "p_class": {"value": 0.02, "evidence": {"basis": "assumed", "note": "The spike's assumption; to be fitted to the 1861 curve."}},
+    "p_village": {"value": 0.002, "evidence": {"basis": "assumed", "note": "The spike's assumption; to be fitted to the 1861 curve."}}
+  }
+}

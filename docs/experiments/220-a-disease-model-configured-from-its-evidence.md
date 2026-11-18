@@ -1,8 +1,9 @@
 # 220 · A disease model configured from its evidence
 
-_Created 2026-11-18 · Updated 2026-11-18_
+_Created 2026-11-17 · Updated 2026-11-17_
 
-**Status:** asked. Nothing built. Follows [199](199-an-agent-based-model-in-the-browser.md), whose kernel runs one
+**Status:** tried. Spike run 2026-11-17: **yes, for measles; not yet like this for TB, Ebola or dengue.** Measles declared
+as data runs in the kernel and reproduces measles written by hand, seed for seed. Follows [199](199-an-agent-based-model-in-the-browser.md), whose kernel runs one
 model with its states and networks fixed in Rust.
 
 ## The question
@@ -130,7 +131,7 @@ carries:
 | Place | direct, adjacent, national, regional, global | CHSP's `GeoFidelity`, as it stands |
 | Time | same period, or a different period and how far apart | the practitioner's tiers; new |
 | Directness | direct, indirect, very indirect | GRADE, as CHSP uses it |
-| Credibility | peer-reviewed, preprint, unverified | CHSP, which never counts it against a local or national journal outside the major indexes |
+| Credibility | indexed, preprint, unverified, unresolved | CHSP, which never counts it against a local or national journal outside the major indexes |
 
 The practitioner's four tiers follow from place and time together: **directly relevant** (direct, same period),
 **relevant** (direct, another period), **adjacent** (adjacent, same period), **generalized** (national, regional or
@@ -161,6 +162,67 @@ every source marked open or closed and by how it was read. In short:
 - **7-1-7:** no published model scores it from its own events. To do so a model must date emergence (for an endemic
   disease, by a declared threshold), detect through an observation process apart from infection, notify, and date the
   start of each of the seven actions.
+
+## The spike, 2026-11-17
+
+The practitioner: *"Spike"*. One question: can measles, declared as a model structure and a parameter set with the
+evidence for each value, run in the kernel Fieldwork ships and give exactly the runs already recorded?
+
+**What was built.** `kernel/src/declared.rs`, a runner that steps whatever is declared: the states, the state an
+infection takes a person from and to, which states transmit, the chain of periods drawn at infection, and the contact
+networks, each a set of groups or everyone, with a daily probability per infectious contact. `src/disease-model.ts`
+checks a declaration, names a parameter set's missing values, counts its values by basis, and compiles both for the
+kernel. Two declarations in `models/`: the structure `measles-seir-household-class-village` 1.0.0, and two parameter
+sets for it, `measles-hagelloch-spike` (all five values assumed, as 199 ran them) and `measles-hagelloch-pink-book`
+(the two periods derived from CDC's Pink Book with their working, the three probabilities assumed).
+
+The Pink Book periods, as derived: **10 days** infected and not yet infectious (14 days from exposure to the rash, less
+the 4 days a person transmits before it) and **9 days** infectious (4 before the rash, its day, 4 after). The chapter
+gives averages only, so no spread is assumed: every child takes 10 and 9. Its secondary attack rate of more than 90%
+among susceptible close contacts would need at least 0.23 a day in a household over 9 days, against the 0.08 assumed;
+recorded on the value, not acted on, since a Hagelloch household is not the chapter's setting and the probabilities are
+to be fitted.
+
+| Check | Result |
+| --- | --- |
+| Measles declared against measles written by hand, natively | 300 seeds: same table, same count, same day of infection for every child (Rust, `declared.rs`) |
+| The same in WebAssembly, the module Fieldwork ships | 500 seeds: the same (`tests/declared-model.test.mjs`) |
+| The recorded seed | 16 infected, table checksum 967,536, as recorded in 199 |
+| Hagelloch's 188 children, the spike's set | 500 runs: identical to the hand-written kernel's, 0.33 ms a run |
+| An empty parameter set | valid to hold; refused when run, naming the five missing values |
+| A derived value with no working or no source; a set for another structure; a probability of 1.4 | refused |
+
+**With the Pink Book periods, against Starsim 3.7.4**, 500 runs each on the 188 children:
+
+| | Fieldwork, declared | Starsim | KS p |
+| --- | --- | --- | --- |
+| Children ever infected | 187.13 ± 0.94 | 187.18 ± 0.89 | 0.999 |
+| Peak infectious | 77.99 ± 5.01 | 77.85 ± 5.16 | 0.989 |
+| Day of the peak | 43.91 ± 4.38 | 43.63 ± 4.33 | 0.498 |
+
+The largest difference in a day's mean infectious is z = 2.74, on day 90 of 150, in the tail where few remain
+infectious; over 150 days compared, a largest |z| of about that size is what chance alone gives. Starsim took 287 ms a
+run, the kernel 0.32.
+
+**The format, tried on paper against the other three diseases.** Where it breaks:
+
+| Needed | Measles | Ebola | TB | Dengue |
+| --- | --- | --- | --- | --- |
+| A course that branches (die or recover; fast or slow latency) | no | yes: death to an infectious unburied state | yes: fast or slow at infection | no |
+| A period given as a rate, not whole days between bounds | no | no | yes: reactivation over years | no |
+| More than one state an infection can come from | no | no | yes: reinfection of the latent | yes: a second serotype |
+| Strains | no | no | yes: drug-susceptible, MDR, XDR, with resistance acquired on treatment | yes: four serotypes |
+| A population counted, not agents | no | no | no | yes: mosquitoes by place |
+| Events from the care system | no | yes: isolation, safe burial, vaccination | yes: diagnosis, treatment, loss to follow-up | no |
+| A step other than a day | no | no | yes: a week | no |
+
+Measles needs none of these, which is why it passed. Each row is an addition to the structure's format, and the
+measles reproduction is the regression that each must keep passing.
+
+**What the spike does not establish.** That the format will hold once branching, rates and strains are added; the
+evidence dialog, which was not built; anything on a population other than Hagelloch's 188 children; that the Pink Book
+periods suit 1861 Hagelloch: they are a 2024 reference for children of another century, placed `global` and
+`indirect` on their records; or that the three probabilities are right, which no one has fitted.
 
 ## Open questions
 

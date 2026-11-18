@@ -3,6 +3,18 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.139.0 — In development
+
+- **A disease model declared as data, in the kernel (experiment 220).** A model structure says the states, how an
+  infection happens, the course that follows and the contact networks; a parameter set gives its values, each with the
+  evidence it rests on. Measles declared this way gives what measles written by hand gives, run for run, over 500
+  seeds. Nothing of it is in the application's interface yet.
+- **Measles' periods from CDC's Pink Book**: 10 days infected and not yet infectious, 9 days infectious, each derived
+  with its working. With them, the declared model agrees with Starsim 3.7.4 over 500 runs on Hagelloch's 188 children.
+- **Experiment 220** records the Gaborone TB and North Kivu–Ituri Ebola models as inventoried, the research on
+  declaring models with evidence, the trainee's five steps, and how far each value's evidence travelled.
+- **A WebKit test race fixed**: a pin's name is typed once the pin form has settled after a change of mode.
+
 ## 0.138.0 — 2026-11-17
 
 - **DR Congo whole at 100 m.** Raster input keeps a window of up to 518.9 million cells and 2.1 GB, raised from 166.4

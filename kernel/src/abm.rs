@@ -249,6 +249,26 @@ pub extern "C" fn abm_run(
     ever
 }
 
+/// For `declared`'s tests, which check that measles declared reproduces measles written here, draw for draw.
+#[cfg(test)]
+pub mod tests_support {
+    use super::*;
+    extern crate std;
+    pub fn setup(households: &[i32], classes: &[i32], days: u32) {
+        assert_eq!(abm_prepare(households.len() as u32, days), 1);
+        for (i, (h, c)) in households.iter().zip(classes).enumerate() {
+            put::<i32>(HOUSEHOLD, i, *h);
+            put::<i32>(CLASS, i, *c);
+        }
+    }
+    pub fn table(days: usize) -> std::vec::Vec<u32> {
+        (0..days * 4).map(|i| at::<u32>(COUNTS, i)).collect()
+    }
+    pub fn infected_on(n: usize) -> std::vec::Vec<i32> {
+        (0..n).map(|i| at::<i32>(INFECTED_ON, i)).collect()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

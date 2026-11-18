@@ -5,7 +5,8 @@ _Created 2026-11-11 · Updated 2026-11-17_
 **Status:** asked. A spike proposed 2026-11-10 and placed after MERS (TODO 29); moved ahead of MERS by the practitioner on
 2026-11-17 (*"Let's investigate the ABM spike next"*), on Hagelloch's measles. **Spike run 2026-11-17: yes.** A
 kernel in Fieldwork's own Rust crate gives the same tables natively and in WebAssembly, and agrees with Starsim
-3.7.4 within run-to-run spread; nothing of it is in the application yet. The number was reserved
+3.7.4 within run-to-run spread; nothing of it is in the application yet. Its measles periods were set from CDC's Pink Book, and the model declared
+as data rather than written in Rust, on 2026-11-17 in [220](220-a-disease-model-configured-from-its-evidence.md). The number was reserved
 in [200](200-operational-epidemiology.md) on 2026-11-09, and the proposal went unrecorded for a day.
 
 ## The question

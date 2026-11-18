@@ -33,6 +33,10 @@ export interface Kernel {
   abm_prepare(n:number,days:number):number; abm_ptr(which:number):number;
   abm_run(seed:bigint,index:number,pHousehold:number,pClass:number,pVillage:number,latentMin:number,latentMax:number,
     infectiousMin:number,infectiousMax:number):number;
+  // A disease model declared as data (experiment 220's spike): see src/disease-model.ts, which lays a declaration out
+  // through decl_ptr and reads decl_run's count unsigned.
+  decl_prepare(n:number,days:number,nets:number,steps:number,states:number):number; decl_ptr(which:number):number;
+  decl_run(seed:bigint,index:number,susceptible:number,infected:number,infectious:number):number;
 }
 const bytes=Uint8Array.from(atob(KERNEL_BASE64),character=>character.charCodeAt(0));
 export const kernel=(await WebAssembly.instantiate(bytes,{})).instance.exports as unknown as Kernel;

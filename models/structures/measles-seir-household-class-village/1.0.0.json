@@ -1,0 +1,30 @@
+{
+  "schema": "fieldwork/model-structure/1",
+  "id": "measles-seir-household-class-village",
+  "version": "1.0.0",
+  "title": "Measles over households, school classes and the village",
+  "step": "day",
+  "states": [
+    {"id": "S", "label": "Susceptible"},
+    {"id": "E", "label": "Infected, not yet infectious"},
+    {"id": "I", "label": "Infectious"},
+    {"id": "R", "label": "Recovered"}
+  ],
+  "infection": {"from": "S", "to": "E", "infectious": ["I"]},
+  "course": [
+    {"from": "E", "to": "I", "duration": "latent_period"},
+    {"from": "I", "to": "R", "duration": "infectious_period"}
+  ],
+  "networks": [
+    {"id": "household", "label": "Household", "groups": "household", "probability": "p_household"},
+    {"id": "class", "label": "School class", "groups": "class", "none": 0, "probability": "p_class"},
+    {"id": "village", "label": "Village", "everyone": true, "probability": "p_village"}
+  ],
+  "parameters": [
+    {"id": "latent_period", "label": "Infected, not yet infectious", "kind": "duration", "unit": "day"},
+    {"id": "infectious_period", "label": "Infectious", "kind": "duration", "unit": "day"},
+    {"id": "p_household", "label": "Infection from one infectious housemate", "kind": "probability", "unit": "per day"},
+    {"id": "p_class", "label": "Infection from one infectious classmate", "kind": "probability", "unit": "per day"},
+    {"id": "p_village", "label": "Infection from one infectious child elsewhere in the village", "kind": "probability", "unit": "per day"}
+  ]
+}

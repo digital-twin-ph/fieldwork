@@ -17,6 +17,7 @@ pub mod scan;
 
 /// An agent-based model of an outbreak over households, classes and a village. Experiment 199's spike.
 pub mod abm;
+pub mod declared;
 
 fn ratio(numerator: f64, denominator: f64) -> f64 {
     if denominator > 0.0 {

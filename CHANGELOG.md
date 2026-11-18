@@ -3,6 +3,21 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.140.0 — In development
+
+- **Map shades a raster by its unit.** A raster whose unit is a count per cell, such as *people per pixel*, is shown per
+  km² in yellow to red, as before; any other unit, such as *NDVI* or *metres*, as its value in viridis, below zero
+  included. Rasters in panels share a scale only when they share a unit, each scale with its own key. One raster on a
+  map follows the same rule, keyed with each class's range, where it was a green stretch keyed "Relative cell value".
+- **Raster panels in Map's Configure…**: what each cell shows, the colours, and quantiles or equal steps.
+- **GHS-POP's file is recognised**, its unit *people per pixel*, and a file read by its address is recognised as one chosen
+  from disk is.
+- **Raster input's Inspector is the standard one.** Reading a kept window again, its record and **Download GeoTIFF** are in
+  **Configure…**; the Result line says when the window is not on this device.
+- **A declared disease course may branch** (experiment 220): recover or die, fast or slow latency, each branch's share a
+  parameter. Measles is unchanged run for run; an Ebola-shaped course agrees with Starsim 4.0's Ebola on infections,
+  deaths and safe burials.
+
 ## 0.139.0 — 2026-11-17
 
 - **A disease model declared as data, in the kernel (experiment 220).** A model structure says the states, how an

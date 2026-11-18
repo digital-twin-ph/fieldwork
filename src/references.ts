@@ -96,6 +96,9 @@ export function referenceList(entries:readonly CitingEntry[],
     for(const note of entry.derived||[]){
       // THE WORK, cited whatever its licence; the licence's own attribution where there is no work to cite.
       const cited=clean(note.reference)||clean(note.detail);
+      // ONE WORK, ONE ENTRY: an input's source that a note also cites is the note's work, listed once.
+      const asWork=[...works.values()].find(w=>w.text===cited);
+      if(asWork){if(!asWork.citedBy.includes(workflow))asWork.citedBy.push(workflow);continue;}
       if(cited)add(cited,'source',workflow);
     }
     for(const note of entry.machined||[])

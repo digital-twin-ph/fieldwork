@@ -3,6 +3,7 @@ import {readMembers} from './project-roles.js';
 import {isRecord} from './guards.js';
 import {readNotes} from './notes.js';
 import {readAuthors,readRepository} from './identity.js';
+import hagellochNotes from '../examples/hagelloch-1861/notes.json';
 
 /** A project is one investigation. One subject, several questions, one workflow per question.
  *
@@ -142,9 +143,19 @@ export function attachRepository(project:Project,owner:string,repo:string,
  *  belongs to whatever investigation the practitioner is starting, and the practitioner,
  *  2026-10-19: *"the first step is not even study area - it's create a project."* An "Unfiled"
  *  project would have been a way to avoid asking. */
+/** A WORKED EXAMPLE'S OWN NOTES, as its author wrote them (the practitioner, 2026-11-18, of the research on how Hagelloch
+ *  was answered in 1861: "We can incorporate those as authored notes in Hagelloch"). The file names the author's login,
+ *  each note's section, text and the works it cites by key; `readNotes` reads them as any project's notes are read, so a
+ *  note it cannot read is dropped here as it would be anywhere. */
+function authoredNotesOf(file:{author:string;notes:Record<string,unknown>[];works:Record<string,unknown>}):Pick<Project,'notes'|'authors'>{
+  const raw=file.notes.map(n=>({...n,kind:'authored',author:file.author,
+    works:((n.works as string[]|undefined)??[]).map(key=>file.works[key]).filter(Boolean)}));
+  return {notes:readNotes(raw).notes,authors:[{login:file.author,basis:'declared'}]};
+}
 export const BUILT_IN_PROJECTS:readonly Project[]=[
   {schema:'fieldwork/project/2',id:'cholera-london-1854',name:'1854 Cholera Outbreak in London',subject:'One cholera outbreak, one question to each workflow: where and when people died, which pump was nearest, who lived within a walk of it, how far it spread, and what the source coordinates disclose',workflows:['snow-deaths','snow-curve','snow-voronoi','snow-isochrone','snow-extent','snow-geoprivacy']},
-  {schema:'fieldwork/project/2',id:'hagelloch-1861',name:'Measles in Hagelloch, 1861',subject:'A closed outbreak with a complete line list',workflows:['hagelloch','hagelloch-chains','hagelloch-cluster','hagelloch-sheet','hagelloch-people']},
+  {schema:'fieldwork/project/2',id:'hagelloch-1861',name:'Measles in Hagelloch, 1861',subject:'A closed outbreak with a complete line list',workflows:['hagelloch','hagelloch-chains','hagelloch-cluster','hagelloch-sheet','hagelloch-people'],
+    ...authoredNotesOf(hagellochNotes)},
 ];
 /** Labels for the picker, kept beside the grouping so a workflow is named in one place. */
 /** NUMBERED WITHIN THEIR PROJECT, 1 to N (the practitioner, 2026-11-10: *"if we are numbering workflows it should be 1 to

@@ -243,3 +243,15 @@ test('A PROJECT KEEPS WHAT IS WRITTEN BY ROLE, THE FORMAT AND ITS FIGURES\' PLAC
     'role:highlights','role:period','title']);
   assert.equal(validateProject({...raw,publication:{kind:'poster'}}).publication,undefined,'an unknown kind is dropped');
 });
+
+test('Hagelloch carries its author\'s notes on the 1861 response, each read as any project\'s notes are', ()=>{
+  const p=projectById('hagelloch-1861');
+  assert.equal(p.notes.length,7);
+  assert.deepEqual(p.authors.map(a=>a.login),['hermantolentino']);
+  for(const n of p.notes){
+    assert.equal(n.kind,'authored');assert.equal(n.author,'hermantolentino');
+    assert.ok(n.works?.length,`${n.id} cites a work`);
+  }
+  assert.deepEqual([...new Set(p.notes.map(n=>n.section))],['Introduction','Methods','Results','Discussion']);
+  assert.equal(projectById('cholera-london-1854').notes,undefined);
+});

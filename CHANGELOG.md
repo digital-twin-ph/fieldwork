@@ -3,6 +3,14 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.141.0 — In development
+
+- **Hagelloch's write-up carries seven notes by its author** on how the outbreak was met in 1861: the village and its
+  care, how Pfeilsticker found the cases, a school that stayed open, what else was done, whether measles was reportable,
+  the outbreak against 7-1-7, and what this does not establish. Each cites its works, and the publication lists them.
+- **A work cited by a note and declared by an input is one reference**, cited by both, where it was listed twice.
+- **Pfeilsticker's thesis is cited with its own spelling**, umlauts included.
+
 ## 0.140.0 — 2026-11-18
 
 - **Map shades a raster by its unit.** A raster whose unit is a count per cell, such as *people per pixel*, is shown per

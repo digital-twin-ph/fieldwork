@@ -100,3 +100,13 @@ test('an input whose licence is absent is credited, not credited to "undefined"'
   // Unchanged where a licence IS stated.
   assert.equal(attributionFor({source:'X',licence:'CC0-1.0'}),'X · CC0-1.0');
 });
+
+test('a work a note cites and an input declares is one reference, cited by both', ()=>{
+  const work={citation:{type:'report',authors:[{family:'Pfeilsticker',given:'Albert'}],title:'Beiträge zur Pathologie der Masern',
+    place:'Tübingen',publisher:'Eberhard-Karls-Universität'},published:'1863'};
+  const note={kind:'authored',id:'n',section:'Methods',text:'x',works:[work]};
+  const [first]=referenceList([],[note]);
+  const list=referenceList([{workflowName:'Measles',derived:[{reference:first.text}]}],[note]);
+  assert.equal(list.length,1);
+  assert.deepEqual(list[0].citedBy,['Notes','Measles']);
+});

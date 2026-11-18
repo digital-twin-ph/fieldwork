@@ -1,0 +1,204 @@
+{
+  "author": "hermantolentino",
+  "notes": [
+    {
+      "id": "hagelloch-village-and-care",
+      "section": "Introduction",
+      "fn": "context",
+      "text": "Hagelloch had 577 people in 1861, a Protestant parish an hour's walk north-west of Tübingen. No physician lived there. Families went to the Tübingen hospital for care. The village school had one building with two rooms: one for children of about 6 to 9, one for 10 to 14. These are the file's classes 1 and 2.",
+      "works": [
+        "pfeilsticker-1863",
+        "oberamt-tuebingen-1867"
+      ],
+      "words": "points",
+      "argument": "reports"
+    },
+    {
+      "id": "hagelloch-how-cases-were-found",
+      "section": "Methods",
+      "fn": "method",
+      "text": "News of children with red spots reached the Tübingen hospital in November 1861. The text gives no day and does not say who sent it. On 29 November the district physician (Oberamtsarzt) took Pfeilsticker to the village and introduced him to the pastor, the mayor and the schoolmaster. From 30 November to 18 December Pfeilsticker visited every morning, and Professor Niemeyer came on Sundays and Thursdays. A trainee teacher counted every household twice by age and sex, and recorded each child's rash date. Pfeilsticker checked these against his own notes. A few early cases, already recovered, were taken from what families said.",
+      "works": [
+        "pfeilsticker-1863"
+      ],
+      "words": "passage",
+      "argument": "reports"
+    },
+    {
+      "id": "hagelloch-school-stayed-open",
+      "section": "Results",
+      "fn": "finding",
+      "text": "No school closure is recorded. Children went to school and church during the prodrome, before the rash: \"von 50 Erkrankten gehen 42 in die Schule\" (of 50 sick, 42 go to school). Teachers said no child with a rash came to school, and the schoolmaster sent visibly ill children home. Healthy brothers and sisters were not kept out. The first wave, peaking around 21 November, was in the younger class.",
+      "works": [
+        "pfeilsticker-1863"
+      ],
+      "words": "passage",
+      "argument": "reports"
+    },
+    {
+      "id": "hagelloch-what-else-was-done",
+      "section": "Results",
+      "fn": "finding",
+      "text": "Treatment was comfort care, which Pfeilsticker judged made no difference to the outcome. One farmer, W. Seyboldt, kept his children shut away for the whole epidemic, and three of them escaped infection. That was his own choice. Inside houses, keeping a sick child apart was hardly possible, because brothers and sisters shared one bed or one room. No disinfection, house placards or limits on church or gatherings are recorded.",
+      "works": [
+        "pfeilsticker-1863"
+      ],
+      "words": "passage",
+      "argument": "reports"
+    },
+    {
+      "id": "hagelloch-was-measles-reportable",
+      "section": "Discussion",
+      "fn": "context",
+      "text": "No open source settles whether measles had to be reported in Württemberg in 1861. The only Württemberg reporting list found, from 1883, names typhus, typhoid, dysentery, diphtheria and scarlet fever, not measles. As late as 1914, measles was reportable only in some German states. So it was probably not reportable in 1861, but that is an inference. The one reporting duty with a date was the district physician's yearly report, due each January.",
+      "works": [
+        "amtsblatt-1883",
+        "archivalia-oberamtsaerzte",
+        "wilhelm-ii-gesundheitspolizei"
+      ],
+      "words": "points",
+      "argument": "own"
+    },
+    {
+      "id": "hagelloch-against-7-1-7",
+      "section": "Discussion",
+      "text": "Day 0 is the first case, 30 October. Detection, the news reaching Tübingen, was some day in November: between day 2 and day 30. Notification cannot be scored. There was probably no duty to notify, and the district physician knew by day 30. The response began on day 30 with the field visit, and it was case finding, a census and comfort care. No action was taken to stop the spread. However detection and response split those 30 days, emergence to response took far longer than 7-1-7 allows.",
+      "works": [
+        "pfeilsticker-1863",
+        "frieden-2021"
+      ],
+      "words": "points",
+      "argument": "own"
+    },
+    {
+      "id": "hagelloch-response-not-established",
+      "section": "Discussion",
+      "fn": "limitation",
+      "text": "These notes rest mostly on one source, Pfeilsticker's dissertation, read as OCR text. The November day the news arrived is not known, and it decides how much of the delay was detection and how much was response. The laws of the time were found mostly as snippets, because the main law books were behind bot checks. A recent paper is said to report the school closing at 27% of pupils ill. That claim has not been traced to any 1861 source, so these notes do not use it.",
+      "works": [
+        "pfeilsticker-1863"
+      ],
+      "argument": "own"
+    }
+  ],
+  "works": {
+    "pfeilsticker-1863": {
+      "citation": {
+        "type": "report",
+        "authors": [
+          {
+            "family": "Pfeilsticker",
+            "given": "Albert"
+          }
+        ],
+        "title": "Beiträge zur Pathologie der Masern mit besonderer Berücksichtigung der statistischen Verhältnisse",
+        "place": "Tübingen",
+        "publisher": "Eberhard-Karls-Universität"
+      },
+      "published": "1863",
+      "url": "https://archive.org/details/beitrgezurpatho00pfeigoog",
+      "retrieved": "2026-11-18"
+    },
+    "oberamt-tuebingen-1867": {
+      "citation": {
+        "type": "book",
+        "authors": [
+          {
+            "family": "Königlich statistisch-topographisches Bureau",
+            "corporate": true
+          }
+        ],
+        "title": "Beschreibung des Oberamts Tübingen",
+        "place": "Stuttgart"
+      },
+      "published": "1867",
+      "url": "https://de.wikisource.org/wiki/Beschreibung_des_Oberamts_Tübingen/Kapitel_B_12",
+      "retrieved": "2026-11-18"
+    },
+    "amtsblatt-1883": {
+      "citation": {
+        "type": "report",
+        "authors": [
+          {
+            "family": "Württembergisches Ministerium des Innern",
+            "corporate": true
+          }
+        ],
+        "title": "Amtsblatt des Königlich Württembergischen Ministeriums des Innern",
+        "place": "Stuttgart"
+      },
+      "published": "1883",
+      "url": "https://digital-beta.staatsbibliothek-berlin.de/werkansicht?PPN=PPN74658587X&PHYSID=PHYS_0115&view=fulltext-endless",
+      "retrieved": "2026-11-18"
+    },
+    "archivalia-oberamtsaerzte": {
+      "citation": {
+        "type": "webpage",
+        "authors": [
+          {
+            "family": "Graf",
+            "given": "Klaus"
+          }
+        ],
+        "title": "Württembergische Physikatsberichte im 19. Jahrhundert",
+        "container": "Archivalia"
+      },
+      "published": "2023-05-06",
+      "url": "https://archivalia.hypotheses.org/172790",
+      "retrieved": "2026-11-18"
+    },
+    "wilhelm-ii-gesundheitspolizei": {
+      "citation": {
+        "type": "chapter",
+        "authors": [
+          {
+            "family": "Dochow",
+            "given": "F."
+          }
+        ],
+        "title": "Gesundheitspolizei",
+        "container": "Handbuch der Politik, Band 3",
+        "place": "Berlin"
+      },
+      "published": "1914",
+      "url": "https://de.wikisource.org/wiki/Gesundheitspolizei",
+      "retrieved": "2026-11-18"
+    },
+    "frieden-2021": {
+      "citation": {
+        "type": "article",
+        "authors": [
+          {
+            "family": "Frieden",
+            "given": "Thomas R."
+          },
+          {
+            "family": "Lee",
+            "given": "Christopher T."
+          },
+          {
+            "family": "Bochner",
+            "given": "Aaron F."
+          },
+          {
+            "family": "Buissonnière",
+            "given": "Marine"
+          },
+          {
+            "family": "McClelland",
+            "given": "Amanda"
+          }
+        ],
+        "title": "7-1-7: an organising principle, target, and accountability metric to make the world safer from pandemics",
+        "container": "The Lancet",
+        "volume": "398",
+        "issue": "10300",
+        "pages": "638-640",
+        "doi": "10.1016/S0140-6736(21)01250-2"
+      },
+      "published": "2021",
+      "url": "https://europepmc.org/article/PMC/PMC9636000",
+      "retrieved": "2026-11-18"
+    }
+  }
+}

@@ -13,7 +13,10 @@ shown in a local build is not a claim that it has been published.
 - **Coordinates written in degrees, minutes and seconds are read**, in a CSV of points and in points from a table:
   `05° 56' 00" S` becomes −5.9333. The column keeps its text. Values with no hemisphere are counted and said; a value
   that cannot be read leaves its record without a position, where a CSV used to be refused.
-- **The NYC test that reads 19 satellite files from a live service waits as long as a slow day takes.**
+- **Running the project's workflows from Notes no longer counts a workflow as run when one of its steps could not
+  finish**: it says which, and does not say the write-up holds the whole project.
+- **The NYC test no longer depends on a live satellite service by default**: the part that reads 19 Sentinel-5P files
+  runs when asked (`FIELDWORK_LIVE_SATELLITE=1`), after taking from 52 seconds to over six minutes on the same code.
 
 ## 0.145.0 — In development
 

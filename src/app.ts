@@ -8316,26 +8316,33 @@ function renderNotesView(){
     if(!todo.length)return;
     const button=optionalElement('[data-run-pending]') as HTMLButtonElement|null;
     if(button){button.disabled=true;button.textContent='Running\u2026';}
-    let ran=0,failed=0;const stillWaiting:string[]=[];
+    let ran=0,failed=0;const stillWaiting:string[]=[],unfinished:string[]=[];
     for(const key of todo){
       try{
         await loadExample(key);
         // LOADED IS NOT RAN. A workflow whose fetched table is not on this device loads and does not run; counting it
         // as run told the practitioner the write-up held the whole project when it held half (2026-11-04).
         const why=waitsFor(workflow);
-        if(!why)ran++;else stillWaiting.push(`${workflow.name}: ${why}`);
+        // AND RAN IS NOT FINISHED (2026-11-18): a step that could not read its data leaves its part of the write-up
+        // empty, and "the whole project" was said all the same, found with NYC's satellite files refused.
+        const stuck=result?.unfinished?.[0];
+        if(why)stillWaiting.push(`${workflow.name}: ${why}`);
+        else if(stuck)unfinished.push(`${workflow.name}: ${stuck.message}`);
+        else ran++;
       }
       catch{failed++;/* The one that failed says so on its own canvas; the rest still run. */}
     }
     // Back to the workflow they were reading, and back to the write-up.
     if(was&&was!==storageKey(workflow))await loadExample(was);
     switchView('notes');renderNotesView();
-    toast(stillWaiting.length
-      ?`${ran} of ${todo.length} ran. Waiting for you: ${stillWaiting.join('; ')}.`
+    toast(stillWaiting.length||unfinished.length
+      ?`${ran} of ${todo.length} ran in full.`
+        +(unfinished.length?` A step could not finish in ${unfinished.join('; ')}.`:'')
+        +(stillWaiting.length?` Waiting for you: ${stillWaiting.join('; ')}.`:'')
       :failed
       ?`${ran} of ${todo.length} ran; ${failed} could not. The write-up holds what ran.`
       :`${ran} workflow${ran===1?'':'s'} ran. The write-up now holds the whole project.`,
-      {tone:failed||stillWaiting.length?'warning':'notice'});
+      {tone:failed||stillWaiting.length||unfinished.length?'warning':'notice'});
   });
   const total=(project?.notes||[]).length+derived.length+machined.length;
   $('#notes-view-count').textContent=total?String(total):'';

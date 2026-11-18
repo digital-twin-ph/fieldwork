@@ -127,9 +127,29 @@ period; a course without branches draws only its periods, as before.
 | The unburied dead transmit | the same outbreaks with the dead not transmitting infect fewer, over 300 seeds |
 | Refused | a step never reached; a course that comes round again; a branch with no share; two `rest`; shares coming to 1.170 |
 
-Not yet: the check of a branching model against Starsim 4.0's Ebola, which needs its release candidate installed;
-rates over years, strains and a weekly step, the other rows of that table. The Ebola-shaped course is a check of the
-format with assumed values, not an Ebola model.
+**Against Starsim 4.0's Ebola**, installed with the practitioner's yes (4.0.0rc4, the latest tag, in its own scratchpad
+environment, 562 MB with its dependencies). Its Ebola branches twice: symptomatic to severe or recovered, then severe to
+death and a later unsafe burial, a safe burial at once, or recovery. Set to what the format declares: every infectious
+state equally infectious, whole-day periods, Hagelloch's 188 children on the same three networks. 300 runs each:
+
+| | Fieldwork, declared | Starsim 4.0.0rc4 | KS p |
+| --- | --- | --- | --- |
+| Children ever infected | 184.50 ± 2.05 | 184.35 ± 2.13 | 0.986 |
+| Deaths | 70.69 ± 6.33 | 71.12 ± 6.91 | 0.571 |
+| Safe burials | 17.64 ± 3.97 | 17.70 ± 4.21 | 0.709 |
+| Deaths per infection (expected 0.3850) | 0.3832 | 0.3858 | |
+| Safe burials per infection (expected 0.0963) | 0.0956 | 0.0960 | |
+
+Run time: 0.48 ms against 299 ms. Dates were not compared, for this reason: **in Starsim 4.0.0rc4 a person infected by
+transmission becomes infectious a day later than declared.** On measles with the Pink Book periods, a child infected on
+day 10 is infectious from day 20 in Fieldwork and in Starsim 3.7.4, and from day 21 in 4.0.0rc4; the index child, infected
+at the start, is on time in all three. Whether 4.0 changed its convention or the release candidate has a fault is not
+known here. Starsim 3.7.4 stays the reference for timing. And Starsim 4 runs on Numba, which bears on the JupyterLite
+question below.
+
+Not yet: rates over years, strains and a weekly step; and **a weight per infectious state**, which Starsim's Ebola has
+(severe cases 2.2 times, unburied bodies 2.1 times as infectious) and the format does not: set to 1 for this check, a row
+to add to the table. The Ebola-shaped course is a check of the format with assumed values, not an Ebola model.
 
 ## Homes, kombis, and a laptop, 2026-11-17
 
@@ -270,6 +290,7 @@ run, the kernel 0.32.
 | A population counted, not agents | no | no | no | yes: mosquitoes by place |
 | Events from the care system | no | yes: isolation, safe burial, vaccination | yes: diagnosis, treatment, loss to follow-up | no |
 | A step other than a day | no | no | yes: a week | no |
+| A weight per infectious state | no | yes: severe cases and the unburied dead more infectious | no | no |
 
 Measles needs none of these, which is why it passed. Each row is an addition to the structure's format, and the
 measles reproduction is the regression that each must keep passing.

@@ -66,6 +66,20 @@ interactive map only, until Esri confirms in writing that published figures are 
 says that a person using Esri is bound by their own Location Platform agreement (`docs/usage.md`, *Credentials*).
 **Open:** CARTO's terms on figures, not yet read.
 
+## Observed: a colleague followed the manual, 2026-11-19
+
+The practitioner: *"JLT was able to follow the manual to the letter successfully for ESRI and CARTO."* A second person,
+not the one the manual was written with, made a CARTO key and an Esri key from the Credentials manual's steps alone and
+had both basemaps working in Fieldwork. This is the first evidence that the manual's steps are complete for someone
+reading them cold, which no automated test can give.
+
+The same colleague, making a GitHub token for a shared project, left GitHub's **Resource owner** as their own name and
+found "No repositories found". The manual had the step, as one line; it now leads the section in a box, says what goes
+wrong without it, and adds the organization owner's part, approving the token (0.151.2).
+
+**Not established:** whether a trainee with no GitHub, CARTO or Esri account gets through the account creation, which
+the manual does not cover beyond pointing to it.
+
 ## What it does not establish
 
 - That CARTO and Esri accept the practitioner's keys from the published site: seen only after publishing.

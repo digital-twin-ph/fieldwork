@@ -1698,6 +1698,16 @@ _Carried over whole from the root `TODO.md` of 2026-10-10 in the merge above, he
 demoted one level and nothing else changed. An item here is a decision to do it later._
 
 
+### Conflict events as a layer or a country repository (asked 2026-11-19, shelved the same day)
+
+Raised beside the tide-gauge research ([docs/research/tide-gauges-2026-11-19.md](docs/research/tide-gauges-2026-11-19.md)):
+insecurity decides which settlements a vaccination team reaches (Nigeria's northeast) and interrupted the Ebola response
+(North Kivu, Ituri). Settled before it was shelved, by the practitioner: **ACLED is a non-starter because of its terms**;
+organized armed conflict probably tends to be more disruptive, which points at UCDP; GDELT reaches lower-level
+insecurity but **denoising is the problem**, and a language model for it was judged too involved (*"Too involved. We
+can shelve GDELT and conflict for now."*). Research was stopped before it reported: nothing on terms, browser reach
+or coverage was established. Picking it up starts with UCDP's terms and the attacks-on-health-care sources.
+
 ### Immunization microplanning, planned in Fieldwork and simulated (asked 2026-11-18)
 
 The practitioner, 2026-11-18, after a CDC GIS Day talk on polio microplanning: *"It seems we can also use ABM for

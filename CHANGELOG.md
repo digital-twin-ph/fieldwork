@@ -3,6 +3,19 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.148.0 — In development
+
+- **CARTO and Esri basemaps on your own key** (experiment 222). With a CARTO or Esri key in your credentials, unlocked,
+  an interactive map offers CARTO Positron, Voyager and Dark Matter, or Esri satellite imagery, streets and outdoor.
+  The project keeps the style's name, never the key; locked or without a key, the map shows OpenStreetMap and says
+  why. Figures keep OpenStreetMap until each provider's terms on exported images are read. Map 0.36.0.
+- **The Credentials manual says how to get each key**: a CARTO key by email, an Esri key in seven screens, each locked
+  to Fieldwork's address.
+- **Marks are named over a basemap too**: up to five, from their records' names. Oswego's point reads *Lycoming United
+  Methodist Church* over its tiles.
+- **A figure whose basemap was not drawn no longer credits it** in its sources line.
+- **The first raster read on a device says the raster engine is being fetched**, about 6 MB, once.
+
 ## 0.147.0 — 2026-11-18
 
 - **terrio is Fieldwork's raster engine** (experiment 221): it decodes every GeoTIFF in Raster input, Georeferenced

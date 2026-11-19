@@ -170,7 +170,7 @@ import {COUNTRIES,countryName,iso3Of,countryOfArea} from './boundary-source.js';
 import {worldPopRastersForCountry,worldPopRecordFor,GLOBAL2,WORLDPOP_LICENCE,WORLDPOP_TAKEN,WORLDPOP_BYTES_PER_SECOND,downloadWait} from './worldpop-catalogue.js';
 import type {BoundaryProvenance,AreaParams} from './types.js';
 import {containsPoint} from './point-grid.js';
-import {basemapAvailable,basemapOf,extentSpanKm,NATURAL_EARTH_MIN_SPAN_KM} from './basemaps.js';
+import {basemapAvailable,basemapOf,extentSpanKm,NATURAL_EARTH_MIN_SPAN_KM,useBasemapKeys,KEY_ORIGINS,staticGround} from './basemaps.js';
 import {naturalEarthMarkup,NATURAL_EARTH,NATURAL_EARTH_CREDIT} from './natural-earth.js';
 import {mapImage,mapImageMarkup,mapImageCredit,withGroundUnder,type MapImage} from './map-image.js';
 import {mapImageInspector} from './map-image-ui.js';
@@ -6632,7 +6632,8 @@ async function drawStaticBasemap(result:Output,svg:SVGSVGElement,
     if(plateNote)plateNote.textContent=drawnPlates.map(plate=>`${mapImageCredit(plate)} \u00b7 drawn as ground at about `
       +`${plate.groundResolutionM.toFixed(0)} m per pixel`).join('; ')+'. Context: a plate is ink, not measurement.';
   }
-  const choice=node?basemapOf(node.params.basemap):undefined;
+  // A STYLE ON THE PERSON'S OWN KEY is not drawn into a figure (experiment 222): its ground here is OpenStreetMap's.
+  const choice=node?staticGround(basemapOf(node.params.basemap)):undefined;
   if(!node||!choice||choice==='none')return drawnPlates.length>0;
   const note=offPage?null:$('#map-panel').querySelector('#map-note');
   // THE GROUND'S CREDIT FOLLOWS THE MAP'S OWN NOTE, never replaces it: once OpenStreetMap became the default (2026-11-10)
@@ -6804,11 +6805,14 @@ async function drawStaticFigure(svg:SVGSVGElement,result:Output,mapNode:Workflow
   const rasterPanels=(result as {rasterPanels?:import('./raster-panels.js').DrawnDensity[]}).rasterPanels;
   const hidden=o.hidden??new Set<string>();
   // WITHOUT GROUND, CUES (the practitioner, 2026-11-18: "With no basemap the dot in the middle of light green emptiness
-  // is hard to interpret"): where no basemap or plate is drawn, a few marks are named, a scale bar gives the emptiness a
-  // size, and the figure says the basemap is not shown.
+  // is hard to interpret"): where no basemap or plate is drawn, a scale bar gives the emptiness a size, and the figure
+  // says the basemap is not shown. A FEW MARKS ARE NAMED EITHER WAY (the practitioner, the same day, of Oswego over its
+  // basemap: "Why doesn't the point have a label - church where supper was held?"): the tiles show the village, not which
+  // building is the church.
   const ground=async(frame:{bounds:[number,number,number,number];project:(c:Position)=>[number,number]})=>{
     const grounded=await drawStaticBasemap(result,svg,frame,o.offPage?{workflow:o.offPage.workflow,hidden}:undefined);
-    if(!grounded)svg.insertAdjacentHTML('beforeend',bareMapCues(result,frame.project as (c:[number,number])=>[number,number],frame.bounds));
+    const project=frame.project as (c:[number,number])=>[number,number];
+    svg.insertAdjacentHTML('beforeend',markNames(result,project)+(grounded?'':bareMapCues(project,frame.bounds)));
   };
   // GRID CELLS IN PANELS (Map's manual, History: panels): the static figure, every panel on one scale. FIRST, because the panels carry
   // the areas they are drawn within as polygons too, and the polygon branch drew those alone: Botswana's districts and
@@ -7995,13 +7999,16 @@ function writePlan(plan:Plan):boolean{
 }
 /** CUES FOR A MAP WITH NO GROUND: up to five marks named from their records, a scale bar, and a line saying the basemap
  *  is not shown. Drawn on the page's scale, 14 units and up. */
-function bareMapCues(result:Output,project:(c:[number,number])=>[number,number],bounds:[number,number,number,number]):string{
+/** Up to five marks named beside themselves, from their records' names, outlined so they read over a basemap. */
+function markNames(result:Output,project:(c:[number,number])=>[number,number]):string{
   const marks=(result.rows??[]).filter(r=>Array.isArray(r.coordinates));
-  const names=marks.length<=5?marks.map(r=>{const [x,y]=project(r.coordinates as [number,number]);
+  return marks.length<=5?marks.map(r=>{const [x,y]=project(r.coordinates as [number,number]);
     const name=String((r as {name?:unknown}).name??'').trim();
     if(!name||x<0||x>850)return '';
     const anchor=x>640?'end':'start',dx=x>640?-10:10;
-    return `<text data-bare-name x="${x+dx}" y="${y+5}" text-anchor="${anchor}" font-size="14" fill="#1f2a24" stroke="#ffffff" stroke-width="3" paint-order="stroke">${esc(name)}</text>`;}).join(''):'';
+    return `<text data-mark-name x="${x+dx}" y="${y+5}" text-anchor="${anchor}" font-size="14" font-weight="600" fill="#1f2a24" stroke="#ffffff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">${esc(name)}</text>`;}).join(''):'';
+}
+function bareMapCues(project:(c:[number,number])=>[number,number],bounds:[number,number,number,number]):string{
   const lat=(bounds[1]+bounds[3])/2,lon=(bounds[0]+bounds[2])/2;
   // At the foot of the map as drawn, which is not always 295 tall.
   const foot=Math.round(Math.max(project([lon,bounds[1]])[1],project([lon,bounds[3]])[1]));
@@ -8012,7 +8019,7 @@ function bareMapCues(result:Output,project:(c:[number,number])=>[number,number],
     bar=`<g data-bare-scale><path d="M20,${foot-23}V${foot-19}H${20+len}V${foot-23}" fill="none" stroke="#1f2a24" stroke-width="1.5"/>`
       +`<text x="20" y="${foot-29}" font-size="14" fill="#1f2a24">${km<1?`${km*1000} m`:`${km} km`}</text></g>`;
   }
-  return names+bar+`<text data-bare-note x="830" y="${foot-10}" text-anchor="end" font-size="14" fill="#3d3d3d">Basemap not shown</text>`;
+  return bar+`<text data-bare-note x="830" y="${foot-10}" text-anchor="end" font-size="14" fill="#3d3d3d">Basemap not shown</text>`;
 }
 /** A map's features for placing an inset: the boundary's rings and the marks, projected as the large frame draws them. */
 function insetFeatures(boundary:Boundary|undefined,rows:readonly {coordinates?:unknown}[],project:(c:[number,number])=>[number,number]):import('./map-inset.js').Features{
@@ -10035,6 +10042,13 @@ credentials=installCredentials(document.querySelector<HTMLButtonElement>('#crede
         +'so projects you create will not carry the name.');
     return authorLabel(who);
   });
+// BASEMAP KEYS (experiment 222): a CARTO or Esri key is read from the unlocked credentials when a map draws its style,
+// by provider and the origin the manual gives; nothing is kept here, and a locked file answers nothing.
+useBasemapKeys(provider=>{
+  if(!credentials?.unlocked)return null;
+  const ref=credentials.references().find(r=>r.provider===provider);
+  return ref?credentials.resolve(ref.ref,provider,KEY_ORIGINS[provider]):null;
+});
 
 // A PROJECT SHARED THROUGH ITS REPOSITORY (experiment 150, 2026-11-16). The project here is a working copy and the
 // repository is the record: saving here stays automatic, saving there is a press, one commit, never forced. What this

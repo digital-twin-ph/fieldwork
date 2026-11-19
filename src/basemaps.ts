@@ -17,7 +17,8 @@
  *  style is a stylesheet a renderer applies, and a static figure carries no renderer. That is a
  *  property of the format, not of the provider, which is why this list is not "OpenFreeMap".
  */
-export const BASEMAP_CHOICES=['none','osm','topo','natural-earth-110m','ofm-liberty','ofm-positron','ofm-bright','tile-extract'] as const;
+export const BASEMAP_CHOICES=['none','osm','topo','natural-earth-110m','ofm-liberty','ofm-positron','ofm-bright','tile-extract',
+  'carto-positron','carto-voyager','carto-dark-matter','esri-imagery','esri-streets','esri-outdoor'] as const;
 export type BasemapChoice=typeof BASEMAP_CHOICES[number];
 /** What a map draws under its layers when nobody has chosen (2026-11-10). */
 export const DEFAULT_BASEMAP:BasemapChoice='osm';
@@ -29,6 +30,24 @@ export const VECTOR_BASEMAP_CHOICES=['ofm-liberty','ofm-positron','ofm-bright','
 export const isVectorBasemapChoice=(choice:BasemapChoice):boolean=>
   (VECTOR_BASEMAP_CHOICES as readonly string[]).includes(choice);
 
+/** BASEMAPS ON THE PERSON'S OWN KEY (the practitioner, 2026-11-18: "Let's use Carto and Esri"): offered on the interactive
+ *  map only while the credentials hold a key for their provider, and never drawn into a static figure until each
+ *  provider's terms on exported images are read. A project keeps the choice by name, never the key. */
+export type BasemapProvider='carto'|'esri';
+export const KEYED_BASEMAPS:Partial<Record<BasemapChoice,BasemapProvider>>={
+  'carto-positron':'carto','carto-voyager':'carto','carto-dark-matter':'carto',
+  'esri-imagery':'esri','esri-streets':'esri','esri-outdoor':'esri'};
+/** The origin a key is entered for in the credentials, as the manual says. One Esri key also reads its imagery host. */
+export const KEY_ORIGINS:Record<BasemapProvider,string>={carto:'https://basemaps.cartocdn.com',esri:'https://static-map-tiles-api.arcgis.com'};
+export const PROVIDER_NAMES:Record<BasemapProvider,string>={carto:'CARTO',esri:'Esri'};
+export const keyedProvider=(choice:BasemapChoice):BasemapProvider|undefined=>KEYED_BASEMAPS[choice];
+/** Who can answer for a key: the credentials, once the application registers them. Null while locked or absent. */
+let keyLookup:(provider:BasemapProvider)=>string|null=()=>null;
+export function useBasemapKeys(lookup:(provider:BasemapProvider)=>string|null):void{keyLookup=lookup;}
+export const basemapKey=(provider:BasemapProvider):string|null=>{try{return keyLookup(provider);}catch{return null;}};
+/** The ground a static figure draws for a choice it cannot bake from a key: OpenStreetMap's. */
+export const staticGround=(choice:BasemapChoice):BasemapChoice=>keyedProvider(choice)?'osm':choice;
+
 /** What each presentation can draw. Derived, so a basemap added above appears in the right list
  *  without anybody remembering -- the defect `catchment-map.ts` already records from 2026-10-20,
  *  when the Inspector carried its own copy of this list and drifted from the map's toolbar. */
@@ -37,6 +56,7 @@ export const basemapsFor=(presentation:'plot'|'interactive',spanKm?:number):read
   BASEMAP_CHOICES.filter(choice=>{
     // A static figure bakes raster tiles and cannot bake a vector style.
     if(presentation!=='interactive'&&isVectorBasemapChoice(choice))return false;
+    if(presentation!=='interactive'&&keyedProvider(choice))return false;
     if(choice==='natural-earth-110m'){
       // Bundled for static figures, which is the job experiment 52 assigned it. An interactive
       // map reaches live tiles and has no use for a 1:110m outline.
@@ -82,6 +102,12 @@ export const BASEMAP_LABELS:Record<BasemapChoice,string>={
   // are displaced by kilometres and a reader has to see which generalisation they are looking at
   // without opening a receipt.
   'natural-earth-110m':'Natural Earth 1:110m \u00b7 bundled, works offline',
+  'carto-positron':'CARTO Positron (light) \u00b7 your CARTO key',
+  'carto-voyager':'CARTO Voyager \u00b7 your CARTO key',
+  'carto-dark-matter':'CARTO Dark Matter (dark) \u00b7 your CARTO key',
+  'esri-imagery':'Esri satellite imagery \u00b7 your Esri key',
+  'esri-streets':'Esri streets \u00b7 your Esri key',
+  'esri-outdoor':'Esri outdoor \u00b7 your Esri key',
 };
 export const BASEMAP_OPTIONS:readonly {value:BasemapChoice;label:string}[]=
   BASEMAP_CHOICES.map(value=>({value,label:BASEMAP_LABELS[value]}));
@@ -93,6 +119,8 @@ export const BASEMAP_OPTIONS:readonly {value:BasemapChoice;label:string}[]=
 export const basemapOptions=(selected:BasemapChoice|undefined,
   presentation?:'plot'|'interactive',spanKm?:number):string=>BASEMAP_OPTIONS
   .filter(option=>!presentation||basemapAvailable(option.value,presentation,spanKm))
+  // A KEYED STYLE IS OFFERED WHILE ITS KEY IS UNLOCKED; the one already chosen stays listed, so the control shows it.
+  .filter(option=>{const provider=keyedProvider(option.value);return !provider||basemapOf(selected)===option.value||!!basemapKey(provider);})
   .map(option=>`<option value="${option.value}" ${basemapOf(selected)===option.value?'selected':''}>${option.label}</option>`)
   .join('');
 

@@ -12,7 +12,7 @@
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {BASEMAP_CHOICES,VECTOR_BASEMAP_CHOICES,basemapsFor,basemapAvailable,
+import {BASEMAP_CHOICES,VECTOR_BASEMAP_CHOICES,basemapsFor,basemapAvailable,keyedProvider,useBasemapKeys,basemapKey,staticGround,
   isVectorBasemapChoice,basemapOptions,BASEMAP_LABELS} from '../build/basemaps.js';
 
 test('a static figure is offered the raster basemaps and no vector style',()=>{
@@ -60,11 +60,28 @@ test('the options markup offers only what the presentation can draw',()=>{
   assert.ok(plot.includes('value="osm"'));
   const live=basemapOptions('none','interactive');
   for(const choice of BASEMAP_CHOICES)
-    assert.equal(live.includes(`value="${choice}"`),choice!=='natural-earth-110m');
-  // Called without a presentation it still offers everything, which is what the map's own
+    assert.equal(live.includes(`value="${choice}"`),choice!=='natural-earth-110m'&&!keyedProvider(choice));
+  // Called without a presentation it still offers everything without a key, which is what the map's own
   // toolbar wants: that control only exists on an interactive map.
   const all=basemapOptions('none');
-  for(const choice of BASEMAP_CHOICES)assert.ok(all.includes(`value="${choice}"`));
+  for(const choice of BASEMAP_CHOICES)assert.equal(all.includes(`value="${choice}"`),!keyedProvider(choice));
+});
+
+// A STYLE ON THE PERSON'S OWN KEY (experiment 222): offered on the interactive map while that provider's key answers, kept
+// in view once chosen, and never offered to a static figure.
+test('a keyed style is offered while its key is unlocked, stays listed once chosen, and never reaches a static figure',()=>{
+  try{
+    useBasemapKeys(provider=>provider==='carto'?'k':null);
+    const live=basemapOptions('none','interactive');
+    for(const choice of ['carto-positron','carto-voyager','carto-dark-matter'])assert.ok(live.includes(`value="${choice}"`));
+    for(const choice of ['esri-imagery','esri-streets','esri-outdoor'])assert.ok(!live.includes(`value="${choice}"`));
+    assert.ok(!basemapOptions('none','plot').includes('carto-'),'a static figure is offered a keyed style');
+    useBasemapKeys(()=>null);
+    assert.match(basemapOptions('esri-imagery','interactive'),/value="esri-imagery" selected/);
+    assert.equal(staticGround('carto-positron'),'osm');assert.equal(staticGround('topo'),'topo');
+    useBasemapKeys(()=>{throw new Error('locked');});
+    assert.equal(basemapKey('carto'),null);
+  }finally{useBasemapKeys(()=>null);}
 });
 
 test('the selected choice is marked, and an absent one falls back to OpenStreetMap, the default from 2026-11-10',()=>{

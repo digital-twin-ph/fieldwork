@@ -156,6 +156,9 @@ export function openRasterEditor(boundary:Boundary,onSave:(asset:RasterAsset)=>b
       const from=file??url;if(!from||!metadata)throw new Error('Choose a supported raster file.');
       say('Reading the selected window…');
       const window=rasterWindow(metadata,boundary,Number(d.padding));
+      // THE ENGINE'S FIRST FETCH, SAID (experiment 221): 6 MB the first time a raster is read on this device, then kept.
+      if(!(file&&netcdf)){const {terrio,terrioLoaded}=await import('./terrio.js');
+        if(!terrioLoaded()){say('Fetching Fieldwork\u2019s raster engine, about 6 MB, once for this device…');await terrio();}}
       let data:Pick<RasterGrid,'metadata'|'values'>|null=file&&netcdf?await readNetcdfWindow(file,netcdf,metadata,window)
         :await readRasterWindow(from,metadata,window,(rows,of,note)=>say(`Reading the selected window: ${Math.round(100*rows/of)}%, `
           +`${rows.toLocaleString('en')} of ${of.toLocaleString('en')} rows${file?'':` from ${nameOf(url!)}`}${note?`; ${note}`:''}…`,rows/of),undefined,

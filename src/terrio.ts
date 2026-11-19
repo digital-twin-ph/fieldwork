@@ -38,11 +38,15 @@ async function wasmBytes():Promise<Response|BufferSource>{
     return fetch(url);
   }
 }
+/** Whether the engine is already in this page, so a first read can say it is being fetched. */
+export const terrioLoaded=():boolean=>loaded;
+let loaded=false;
 /** The engine, loaded once. */
 export function terrio():Promise<Terrio>{
   loading??=(async()=>{
     const t=await import('terrio-js/core');
     await t.default({module_or_path:await wasmBytes()});
+    loaded=true;
     return t;
   })();
   loading.catch(()=>{loading=undefined;});

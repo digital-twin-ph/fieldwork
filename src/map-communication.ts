@@ -3,7 +3,7 @@ import type {Output,Receipt} from './results.js';
 import {generationColours} from './presentation.js';
 import {outputOf} from './core.js';
 import type {WorkflowNode,Workflow} from './types.js';
-import {basemapAvailable,basemapOf} from './basemaps.js';
+import {basemapAvailable,basemapOf,keyedProvider} from './basemaps.js';
 import {attributionsFor,provenanceOf} from './input-provenance.js';
 import type {LayerShape} from './presentation.js';
 import {RING_RED,RING_BLUE,polygonShading,shadedValues,classRanges,markPath,resolveLayerSymbol,SPATIAL_RELATION_FILL,FIGURE_PALETTE_NAME,FIGURE_PALETTE_AUTHORITY,MARK_VOCABULARY,FIGURE_ROLE,FIGURE_TYPE,FIGURE_PALETTE,scaleBarSvg,northArrowSvg,metresPerPixel,classifyValues,categoricalSteps} from './presentation.js';
@@ -14,7 +14,9 @@ export interface MapPresentation {title:string; subtitle:string; sourceNote:stri
    *  editorial and this is an obligation: an OSM-derived layer must say ODbL and credit
    *  contributors wherever the figure ends up, and a figure that travels without it is not
    *  publishable however complete it otherwise looks. */
-  attribution:string}
+  attribution:string;
+  /** The part of `attribution` that credits the basemap, so a figure drawn without its ground can leave it out. */
+  basemapCredit?:string}
 
 /** A map specification describes presentation; it never changes source geometries or decisions. */
 
@@ -209,7 +211,8 @@ export function mapPresentation(node:WorkflowNode<'map_output'>,output:Output,wo
   // the figure has no renderer for it, `drawStaticBasemap` says so in the note, and the
   // Inspector no longer offers it there.
   const chosen=basemapOf(node.params.basemap);
-  const basemap=interactive?chosen:(basemapAvailable(chosen,'plot')?chosen:'none');
+  // A keyed style is credited where it is drawn, on the interactive map; a figure draws OpenStreetMap in its place.
+  const basemap=interactive?chosen:keyedProvider(chosen)?'osm':(basemapAvailable(chosen,'plot')?chosen:'none');
   // Derived, not authored: a basemap carries an obligation the practitioner cannot opt out of by
   // leaving a field blank, and a street network reached this figure through an ODbL download.
   const credits=[
@@ -222,6 +225,8 @@ export function mapPresentation(node:WorkflowNode<'map_output'>,output:Output,wo
     // OpenTopoMap is a style over OSM data under a different licence, so crediting it as
     // OpenStreetMap alone -- which this did until 2026-10-14 -- under-credits the style.
     basemap==='topo'?'Basemap style © OpenTopoMap, CC-BY-SA; data © OpenStreetMap contributors, ODbL':'',
+    keyedProvider(basemap)==='carto'?'Basemap © CARTO; data © OpenStreetMap contributors, ODbL':'',
+    keyedProvider(basemap)==='esri'?'Basemap powered by Esri; imagery and data as credited on the map':'',
   ].filter(Boolean);
   // EVERY INPUT'S OWN OBLIGATION, read from the node that incurs it.
   //
@@ -260,7 +265,7 @@ export function mapPresentation(node:WorkflowNode<'map_output'>,output:Output,wo
     provenanceOf(n!.params as unknown as Record<string,unknown>))))
     if(!credits.includes(text))credits.push(text);
   return {title:node.params.mapTitle?.trim()||node.params.label,subtitle:node.params.mapSubtitle?.trim()||'',sourceNote,legend:node.params.showLegend!==false,items,presentation:interactive?'interactive':'plot',basemap,
-    attribution:credits.join(' · ')};
+    attribution:credits.join(' · '),...(credits[0]&&basemap!=='none'&&!/^Ground: Natural Earth/.test(credits[0])?{basemapCredit:credits[0]}:{})};
 }
 
 /** `metresPerPixel` comes from the plot's own frame (`catchmentFrame`), so the scale bar is drawn
@@ -289,7 +294,12 @@ export function standaloneMapSvg(content:string,viewBox:string,spec:MapPresentat
   {let x=28,row=0;for(const item of spec.legend?spec.items:[]){const w=17+Math.ceil(item.label.length*7.4)+22;
     if(x>28&&x+w>850-20){x=28;row++;}placed.push({x,row});x+=w;}}
   const width=850,height=Number(viewBox.trim().split(/\s+/)[3])||295,base=40+titleLines.length*24+subtitleLines.length*19,legendRows=spec.legend&&placed.length?placed[placed.length-1]!.row+1:0,noteLines=lines(spec.sourceNote,94);
-  const creditLines=spec.attribution?lines(spec.attribution,94):[];
+  // THE BASEMAP'S CREDIT ON ITS OWN LINES, marked, so a figure whose tiles did not arrive can take it out (2026-11-18).
+  const others=spec.basemapCredit?spec.attribution.slice(spec.basemapCredit.length).replace(/^ · /,''):spec.attribution;
+  // NO GROUND, NO CREDIT FOR IT (2026-11-18): a drawing that says its basemap is not shown does not credit the provider.
+  const grounded=!content.includes('data-bare-note');
+  const creditLines=[...(spec.basemapCredit&&grounded?lines(spec.basemapCredit,94).map(text=>({text,basemap:true})):[]),
+    ...(others?lines(others,94).map(text=>({text,basemap:false})):[])];
   const footer=38+legendRows*22+(noteLines.length+creditLines.length)*19,total=base+height+footer;
   const legend=spec.legend?spec.items.map((item,i)=>{const x=placed[i]!.x,y=base+height+24+placed[i]!.row*22;
     return (item.line?`<path d="M${x-2} ${y-4}H${x+8}" stroke="${item.color}" stroke-width="1.6"/><path d="M${x+7} ${y-8}L${x+13} ${y-4}L${x+7} ${y}z" fill="${item.color}"/>`
@@ -301,7 +311,7 @@ export function standaloneMapSvg(content:string,viewBox:string,spec:MapPresentat
   const furniture=(frame?.metresPerPixel?scaleBarSvg({x:110,y:base+height-26,metresPerPixel:frame.metresPerPixel}):'')
     +(frame?.metresPerPixel?northArrowSvg({x:width-52,y:base+28}):'');
   // THE HEADING'S HEIGHT, so a publication, whose caption carries the title, can drop it (experiment 202, finding 3).
-  return `<svg data-heading="${Math.max(0,base-14)}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${total}" width="${width}" height="${total}" role="img" aria-label="${escape(spec.title)}"><title>${escape(spec.title)}</title><desc>${escape(spec.subtitle+' '+spec.sourceNote)}</desc><style>text{font-family:${t.family}}.gridline{stroke:#CDD8C5;stroke-width:.5;stroke-dasharray:2 6}.location-label{font-size:${t.tick}px;fill:${FIGURE_ROLE.quietInk}}</style><rect width="${width}" height="${total}" fill="${FIGURE_ROLE.background}"/>${titleLines.map((line,i)=>`<text data-figure-heading="" x="28" y="${31+i*24}" font-size="${t.title}" font-weight="${t.titleWeight}" fill="${FIGURE_ROLE.ink}">${escape(line)}</text>`).join('')}${subtitleLines.map((line,i)=>`<text data-figure-heading="" x="28" y="${35+titleLines.length*24+i*19}" font-size="${t.subtitle}" fill="${FIGURE_ROLE.quietInk}">${escape(line)}</text>`).join('')}<svg x="0" y="${base}" width="850" height="${height}" viewBox="${escape(viewBox)}">${content}</svg>${furniture}${legend}${[...noteLines,...creditLines].map((line,i)=>`<text x="28" y="${noteY+i*19}" font-size="${t.note}" fill="${FIGURE_ROLE.quietInk}">${escape(line)}</text>`).join('')}</svg>`;
+  return `<svg data-heading="${Math.max(0,base-14)}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${total}" width="${width}" height="${total}" role="img" aria-label="${escape(spec.title)}"><title>${escape(spec.title)}</title><desc>${escape(spec.subtitle+' '+spec.sourceNote)}</desc><style>text{font-family:${t.family}}.gridline{stroke:#CDD8C5;stroke-width:.5;stroke-dasharray:2 6}.location-label{font-size:${t.tick}px;fill:${FIGURE_ROLE.quietInk}}</style><rect width="${width}" height="${total}" fill="${FIGURE_ROLE.background}"/>${titleLines.map((line,i)=>`<text data-figure-heading="" x="28" y="${31+i*24}" font-size="${t.title}" font-weight="${t.titleWeight}" fill="${FIGURE_ROLE.ink}">${escape(line)}</text>`).join('')}${subtitleLines.map((line,i)=>`<text data-figure-heading="" x="28" y="${35+titleLines.length*24+i*19}" font-size="${t.subtitle}" fill="${FIGURE_ROLE.quietInk}">${escape(line)}</text>`).join('')}<svg x="0" y="${base}" width="850" height="${height}" viewBox="${escape(viewBox)}">${content}</svg>${furniture}${legend}${[...noteLines,...creditLines.map(c=>c.text)].map((line,i)=>`<text x="28" y="${noteY+i*19}" font-size="${t.note}" fill="${FIGURE_ROLE.quietInk}"${i>=noteLines.length&&creditLines[i-noteLines.length]!.basemap?' data-basemap-credit':''}>${escape(line)}</text>`).join('')}</svg>`;
 }
 
 export function mapSpecificationFacts(node:WorkflowNode<'map_output'>,output:Output,workflow:Workflow,runId:string,receipt:Receipt):string{

@@ -234,3 +234,21 @@ light green emptiness is hard to interpret"*). `drawStaticBasemap` now says whet
 none, the figure names up to five marks, draws a scale bar and says *Basemap not shown*. The sources line still credits
 the basemap chosen, since it is written from the settings before the tiles are known: a gap, recorded.
 
+**Names over a basemap too, and no credit for ground not drawn** (the same day, of Oswego over its tiles: *"Why doesn't
+the point have a label - church where supper was held?"*). The names had been a cue for a bare map only; the tiles show
+the village, not which building is the church. Map 0.36.0 names up to five marks whether or not a basemap is drawn,
+outlined to read over it. The gap above is closed: the basemap's credit is set on its own lines, and a figure whose
+drawing says *Basemap not shown* leaves them out.
+
+### Basemaps on the person's own key (2026-11-18)
+
+Asked first for Mapbox (*"Users can get their own free account and add credentials to their credentials file"*). Mapbox's
+card-free trial is 20,000 tiles a month, the smallest of the providers compared; the practitioner then chose *"Forget
+about Mapbox. Let's use Carto and Esri"*. Map 0.36.0 offers CARTO Positron, Voyager and Dark Matter (5 million requests a
+month for non-commercial use, no card) and Esri satellite imagery, streets and outdoor (2 million tiles a month on an
+ArcGIS Location Platform account with pay-as-you-go off), on the interactive map only, while the credentials hold that
+provider's key. The key travels in each tile's address, as both providers require, so the manual asks for it to be
+locked to Fieldwork's address. A project keeps the style's name and never the key; another person without a key, or a
+locked file, gets OpenStreetMap and a sentence saying why. A static figure draws OpenStreetMap in their place: whether
+each provider's tiles may be drawn into an exported figure is not yet read. See experiment 222.
+

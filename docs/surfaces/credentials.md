@@ -80,11 +80,93 @@ Then:
 
 Fieldwork checks the token with GitHub as it unlocks it, and shows whose it is.
 
+## Make a CARTO basemap key
+
+A CARTO key lets the interactive map show CARTO's light and dark basemaps (Positron, Voyager, Dark Matter), which keep
+your data in front, while your credentials are unlocked.
+
+You do not need a CARTO account. CARTO's Workspace has its own **Create new credential** page: that is for CARTO's data
+platform, not for basemaps, so do not use it.
+
+1. Go to [carto.com/basemaps/apikey](https://carto.com/basemaps/apikey/).
+2. **Request a key** with your email address. Say the use is **not commercial**: research, teaching and non-profit
+   work count. That allows 5 million requests a month.
+3. Copy the key from the email.
+4. To limit the key to Fieldwork, sign in at [dashboard.basemaps.carto.com](https://dashboard.basemaps.carto.com/)
+   with the link CARTO emails you, and add the website `digital-twin-ph.github.io`. Type the host only: no `https://`,
+   no path. A key limited this way does not work on your own computer's test server (`localhost`).
+
+## Fill in the form for a CARTO key
+
+| Field | What to type | Example |
+| --- | --- | --- |
+| **Reference** | A short name of your own, unique in this file. | `carto` |
+| **Provider identifier** | Exactly `carto`, lower case. | `carto` |
+| **Label** | Optional: what you will recognise in a list. | `CARTO basemaps` |
+| **Allowed HTTPS origin** | Exactly `https://basemaps.cartocdn.com`, with no slash at the end. | `https://basemaps.cartocdn.com` |
+| **Repository it is for** | Leave empty. | |
+| **API key** | Paste the key from CARTO's email. | |
+
+Then press **Add and activate**, and **Download encrypted credentials** to keep it.
+
+A CARTO key travels in the address of every tile, so anyone watching the network can read it.
+CARTO asks that a key not be shared between unrelated projects: everyone makes their own.
+
+## Make an Esri basemap key
+
+An Esri key lets the interactive map show Esri's satellite imagery and its street and outdoor maps. It is optional, and
+takes longer to make than a CARTO key: make one if you want satellite imagery. For street maps, CARTO is simpler.
+
+Use an **ArcGIS Location Platform** account. An ArcGIS Online account, or the license strings for Esri's app kits,
+will not work. New accounts have pay-as-you-go **off**: the maps then stop for the month if the free 2 million tiles
+run out, and nothing is charged. Leave it off.
+
+Esri's pages do not say whether signing up asks for a card. If it does, you can still leave pay-as-you-go off.
+
+1. Go to [location.arcgis.com/sign-up](https://location.arcgis.com/sign-up/) and create a free account.
+2. Sign in and open **Create developer credentials** (in **My portal**: **Content**, **New item**, **Developer
+   credentials**).
+3. **Select credential type**: **API key credentials**. **Next**.
+4. **Where will you use these credentials?**: **Public application**. Never either *Private application* choice: those
+   give the key your own account's powers. **Next**.
+5. **Item access**: **No item access**. **Next**.
+6. **Privileges**: turn on the **Basemaps** switch only, so it reads 2 of 2. Not the *Location services* switch above
+   it, and not *Static maps*. **Next**.
+7. **Settings**:
+   - **Expiration date**: the latest the calendar allows, a year from today. Put the date in your calendar.
+   - **Referrer URLs**: `https://digital-twin-ph.github.io`, with no path and no slash at the end.
+   **Next**.
+8. Give it a title, such as `Fieldwork basemaps`, and finish.
+9. The page then shows a **client ID** and a **client secret**. Fieldwork needs neither: do not copy them anywhere.
+   Generate the **API key** on that page and copy it at once. Esri shows it only this one time.
+
+These are Esri's screens as of November 2026. If they change, follow Esri's names and tell us, so this page can be
+corrected.
+
+## Fill in the form for an Esri key
+
+| Field | What to type | Example |
+| --- | --- | --- |
+| **Reference** | A short name of your own, unique in this file. | `esri` |
+| **Provider identifier** | Exactly `esri`, lower case. | `esri` |
+| **Label** | Optional: what you will recognise in a list. | `Esri basemaps` |
+| **Allowed HTTPS origin** | Exactly `https://static-map-tiles-api.arcgis.com`, with no slash at the end. | `https://static-map-tiles-api.arcgis.com` |
+| **Repository it is for** | Leave empty. | |
+| **API key** | Paste the key you copied. | |
+
+Then press **Add and activate**, and **Download encrypted credentials** to keep it.
+
+Before the key expires, make a new one on the same page (Esri lets a key hold two at once) and replace it here.
+
 ## When something does not work
 
 - **The repository is not listed in Open shared GitHub project**: check **Repository it is for** is spelled exactly
   as the repository's address, and **Provider identifier** is `github`.
 - **GitHub refuses the token**: it may have expired, or still be waiting for the organization's approval, or have
   been given the wrong **Resource owner**. Make a new one.
+- **CARTO maps do not appear**: check **Provider identifier** is `carto` and **Allowed HTTPS origin** is exactly
+  `https://basemaps.cartocdn.com`. A key limited to Fieldwork's address works only there.
+- **Esri maps do not appear**: the key may have expired, or the free tiles for the month are used up. Check
+  **Provider identifier** is `esri` and **Allowed HTTPS origin** is exactly `https://static-map-tiles-api.arcgis.com`.
 - **A lost laptop**: on GitHub, **Fine-grained tokens**, delete that laptop's token. The file on the laptop is then
   useless even to someone who learns its passphrase.

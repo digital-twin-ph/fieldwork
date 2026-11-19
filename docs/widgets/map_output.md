@@ -47,6 +47,9 @@ You connect what you want drawn. There is no setting that says what kind of map 
 6. **The basemap is OpenStreetMap** unless you choose otherwise. On a static plot its tiles are fetched once and
    drawn into the figure, with their credit, so the SVG and PNG carry them. Choose *None* to keep the map working
    with no connection at all.
+   With your own CARTO or Esri key in your credentials, an interactive map also offers CARTO's light, Voyager and
+   dark styles, or Esri's satellite imagery, streets and outdoor maps, while your credentials are unlocked. See
+   *Credentials* for how to get a key. A static plot draws OpenStreetMap in their place.
 7. **Title it**, and write the source note. Both appear on the map and in its export.
 8. **Run the workflow.** The map appears as a Results tab. **Manage layers…** orders, names and groups the
    layers it draws.
@@ -157,6 +160,8 @@ being rewritten by every run.
 - **An interactive map's basemap is not included in its export.** Its tiles come from an outside service as you
   look at the map, so it exports as a static plot. A static plot's OpenStreetMap or OpenTopoMap tiles are drawn into
   the figure and its SVG and PNG.
+- **A CARTO or Esri basemap needs your own key, unlocked.** Someone opening your project without one sees
+  OpenStreetMap. The key is never kept in the project, but it is visible in the address of every tile.
 - **A basemap sends the area you are viewing to its service**, and OpenStreetMap is the default. Everything else
   about this map works offline. For maps of sensitive locations, choose *None* first.
 - **It cannot tell you whether a map is honest.** Emphasis, framing and colour all change how a
@@ -245,8 +250,11 @@ shows four sources' shares of each district's people this way.
 ## When there is no basemap
 
 A static figure drawn with no basemap, because none is chosen or its tiles could not be read, says so: *Basemap not
-shown*, at the foot of the map. It adds a scale bar, and where there are five marks or fewer, names each one from its
-record. A single dot on an empty map then still says what it is and how large the area is.
+shown*, at the foot of the map, adds a scale bar, and does not credit a basemap it did not draw. A single dot on an
+empty map then still says how large the area is.
+
+Where there are five marks or fewer, each is named from its record, with or without a basemap: the tiles show the
+streets, not which building the marks are.
 
 ## An inset
 

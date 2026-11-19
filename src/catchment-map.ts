@@ -12,7 +12,7 @@ export const INTERACTIVE_SEGMENT_LIMIT=200_000;
 import type {Polygons} from './catchments.js';
 import type {PointCollection,Escape,Position} from './types.js';
 
-import {BASEMAP_CHOICES,basemapAvailable,basemapOptions,BASEMAP_LABELS,type BasemapChoice} from './basemaps.js';
+import {BASEMAP_CHOICES,basemapAvailable,basemapOptions,BASEMAP_LABELS,basemapKey,keyedProvider,PROVIDER_NAMES,type BasemapChoice} from './basemaps.js';
 import {RING_RED,RING_BLUE,layerSymbol,markPath,markRadius,polygonShading,shadedValues,classRanges,categoricalSteps,FIGURE_ROLE} from './presentation.js';
 import type {LayerShape,FillClass,FillEncoding} from './presentation.js';
 import {fillClass,SPATIAL_RELATION_FILL,MARK_HALO} from './presentation.js';
@@ -57,6 +57,34 @@ const BASEMAPS={
   osm:{label:'OpenStreetMap streets',url:'https://tile.openstreetmap.org/{z}/{x}/{y}.png',attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',maxZoom:19},
   topo:{label:'OpenTopoMap terrain',url:'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',attribution:'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, SRTM | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (CC BY-SA)',maxZoom:17}
 } as const;
+
+/** BASEMAPS ON THE PERSON'S OWN KEY (experiment 222): CARTO's raster styles and Esri's static basemap tiles and imagery.
+ *  The key travels in every tile address, as both providers require; the credentials manual says so, and says to lock the
+ *  key to Fieldwork's address. Esri's credit is the service's own copyright text after "Powered by Esri", read once a style
+ *  is drawn. Undefined where the choice needs no key. */
+const ESRI_STATIC='https://static-map-tiles-api.arcgis.com/arcgis/rest/services/static-basemap-tiles-service/v1';
+const ESRI_IMAGERY='https://ibasemaps-api.arcgis.com/arcgis/rest/services/World_Imagery/MapServer';
+const CARTO_ATTRIBUTION='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="https://carto.com/attributions">CARTO</a>';
+const ESRI_POWERED='Powered by <a href="https://www.esri.com">Esri</a>';
+interface KeyedSource {label:string;url:string;attribution:string;maxZoom:number;tileSize?:number;zoomOffset?:number;detectRetina?:boolean;credit?:string}
+function keyedSource(choice:BasemapChoice,key:string):KeyedSource|undefined{
+  const k=encodeURIComponent(key),label=BASEMAP_LABELS[choice].split(' \u00b7 ')[0]!;
+  const carto={'carto-positron':'light_all','carto-voyager':'voyager','carto-dark-matter':'dark_all'}[choice as string];
+  if(carto)return {label,url:`https://basemaps.cartocdn.com/rastertiles/${carto}/{z}/{x}/{y}{r}.png?key=${k}`,attribution:CARTO_ATTRIBUTION,maxZoom:20};
+  if(choice==='esri-imagery')return {label,url:`${ESRI_IMAGERY}/tile/{z}/{y}/{x}?token=${k}`,attribution:ESRI_POWERED,maxZoom:19,
+    credit:`${ESRI_IMAGERY}?f=json&token=${k}`};
+  const style={'esri-streets':'arcgis/streets','esri-outdoor':'arcgis/outdoor'}[choice as string];
+  if(style)return {label,url:`${ESRI_STATIC}/${style}/static/tile/{z}/{y}/{x}?token=${k}`,attribution:ESRI_POWERED,maxZoom:19,
+    tileSize:512,zoomOffset:-1,credit:`${ESRI_STATIC}/${style}/static?f=json&token=${k}`};
+  return undefined;
+}
+/** The provider's own words for whose imagery and data these are, after "Powered by Esri". */
+async function esriCredit(url:string):Promise<string|null>{
+  try{const r=await fetch(url,{referrerPolicy:'origin'});if(!r.ok)return null;const j=await r.json() as {copyrightText?:unknown};
+    const text=typeof j.copyrightText==='string'?j.copyrightText.trim():'';
+    return text?`${ESRI_POWERED} | ${text.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]!)}`:null;}
+  catch{return null;}
+}
 
 /** THE basemap list, for every control that offers one.
  *
@@ -846,6 +874,33 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
         // no longer credited.
         status.textContent=`${design.label} online \u00b7 viewed area sent to provider`;
       }).catch(()=>{status.textContent='Vector basemap unavailable; local layers remain visible.';});
+      return;
+    }
+    // A STYLE ON THE PERSON'S OWN KEY: drawn while the key is unlocked; otherwise OpenStreetMap, and the reason said.
+    const provider=keyedProvider(choice);
+    if(provider){
+      const key=basemapKey(provider),source=key?keyedSource(choice,key):undefined;
+      if(!source){
+        tiles=L.tileLayer(BASEMAPS.osm.url,{maxZoom:BASEMAPS.osm.maxZoom,referrerPolicy:'origin',updateWhenIdle:true,keepBuffer:0,attribution:BASEMAPS.osm.attribution});
+        tiles.addTo(map);tiles.bringToBack();
+        status.textContent=`${BASEMAP_LABELS[choice].split(' \u00b7 ')[0]} needs your ${PROVIDER_NAMES[provider]} key: unlock your credentials, `
+          +'then choose it again. OpenStreetMap is shown meanwhile.';
+        return;
+      }
+      const layer=L.tileLayer(source.url,{maxZoom:source.maxZoom,referrerPolicy:'origin',updateWhenIdle:true,keepBuffer:0,attribution:source.attribution,
+        ...(source.tileSize?{tileSize:source.tileSize,zoomOffset:source.zoomOffset??0}:{}),detectRetina:false});
+      tiles=layer;
+      let loaded=0,failed=0;
+      const say=()=>{status.textContent=!failed?`${source.label} online \u00b7 viewed area sent to ${PROVIDER_NAMES[provider]}`
+        :!loaded?`${source.label} unavailable: ${PROVIDER_NAMES[provider]} did not answer for this key. Local layers remain visible.`
+        :`${source.label} online \u00b7 ${failed} of ${loaded+failed} tiles in view could not be fetched; local layers remain visible.`;};
+      layer.on('tileload',()=>{loaded++;if(failed)say();});
+      layer.on('tileerror',()=>{failed++;say();});
+      layer.on('loading',()=>{loaded=0;failed=0;});
+      layer.addTo(map);layer.bringToBack();say();
+      if(source.credit)void esriCredit(source.credit).then(credit=>{
+        if(!credit||generation!==pending||tiles!==layer)return;
+        map.attributionControl.removeAttribution(source.attribution);layer.options.attribution=credit;map.attributionControl.addAttribution(credit);});
       return;
     }
     // A choice this map has no tile source for draws nothing and says so, rather than throwing.

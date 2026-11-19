@@ -1742,6 +1742,36 @@ when this starts. What it found:
 around each cluster on the map, each enlarged in its own circle placed where it covers least, one line from each small
 circle to its large one. The single circular focus inset of 0.144.0 is its first case; this makes the inset a list.
 
+### Open immunization data fetched on first use: VCQI's coverage survey (asked 2026-11-18)
+
+The practitioner, after the immunization data research: *"Add to TODO"*, for an example that fetches its data on first
+use as NYC's does. The WHO VCQI test dataset (a coverage survey's records) is the candidate: fetched from its published
+repository pinned to a commit, checked by digest, never redistributed. First step: read its licence and where each file
+lives; ask before downloading.
+
+### Elevation in the sea level rise example (asked 2026-11-18: "All three")
+
+1. **The DEM shown** under the Philippines example's map.
+2. **Hillshade and slope** computed with terrio's `dem` (experiment 221 checked slope on a known plane).
+3. **Ground below the 2100 projection**, as cells of the DEM against the projected level.
+
+### An infographic output, after publication, sit rep and surveillance summary (asked 2026-11-18)
+
+The practitioner: *"Infographic will be for later. Let's refine publication, sit rep and surveillance summary first."*
+From Kenya's sitrep infographic (structure only, never its design): key-figure tiles, and one map of several events.
+
+### Clip raster's Inspector to the standard (asked 2026-11-18)
+
+Clip raster still has its own panel: Node label, inputs as selects, Pixel inclusion and margin inline. Move it to
+experiment 186's standard (Name, Inputs, Settings with Configure…, Result), as Raster input was in 0.140.0, with its
+manual and a test. Left out of 0.148.0 to publish the keyed basemaps sooner.
+
+### Keyed basemaps in figures (found 2026-11-18, experiment 222)
+
+CARTO and Esri basemaps draw on the interactive map only; a figure draws OpenStreetMap in their place. Read each
+provider's terms on tiles in exported and printed figures (Esri's Location Platform terms are a PDF: ask first), and
+draw them into figures where allowed, with their credit.
+
 ### Fieldwork in other languages: localisation, not a model (asked 2026-11-15)
 
 The practitioner, on translation for Africa: *"The interface is more deterministic in terms of translation, and so

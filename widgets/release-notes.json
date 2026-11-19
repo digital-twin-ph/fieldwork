@@ -427,12 +427,20 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.35.0",
+   "version": "0.36.0",
    "released": "2026-11-18",
    "changes": [
     {
      "kind": "minor",
-     "description": "An inset never covers what the map represents (the practitioner, 2026-11-18: \"insets should never cover the map features being represented\"): the study area's boundary, its marks and the north arrow. A corner chosen is used where it is clear; otherwise the inset goes to the clear place nearest the part (a focus) or nearest a corner (an overview), and where nothing is clear, into a band added below the map. A boundary enclosing the whole map is its background (\"Corner over area\", for Oswego's Lycoming inside New York State). MERS's focus circle moves from over Gangwon to the Yellow Sea. Configure… names the control Where it goes. A static figure with no basemap drawn says Basemap not shown, adds a scale bar, and names up to five marks from their records (\"With no basemap the dot in the middle of light green emptiness is hard to interpret\")."
+     "description": "Basemaps on the person's own key (the practitioner, 2026-11-18: \"Let's use Carto and Esri\"): CARTO Positron, Voyager and Dark Matter, and Esri satellite imagery, streets and outdoor, offered on the interactive map while the credentials hold that provider's key. A project keeps the choice by name, never the key; locked, the map shows OpenStreetMap and says why. A static figure draws OpenStreetMap in their place until each provider's terms on exported images are read."
+    },
+    {
+     "kind": "minor",
+     "description": "Marks are named over a basemap too (the practitioner, 2026-11-18, of Oswego: \"Why doesn't the point have a label - church where supper was held?\"): up to five marks, from their records' names, outlined to read over the tiles."
+    },
+    {
+     "kind": "patch",
+     "description": "A figure whose basemap tiles were not drawn no longer credits their provider in its sources line."
     }
    ],
    "breaking": false,

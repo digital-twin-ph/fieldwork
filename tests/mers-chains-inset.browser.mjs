@@ -197,6 +197,34 @@ test('Oswego without its basemap: the church named, a scale bar, and "Basemap no
   await page.locator('[data-view="notes"]').click();
   const svg=page.locator('#notes-view figure[data-figure="map"] svg').first();
   await expect(svg.locator('[data-bare-note]')).toHaveText('Basemap not shown',{timeout:30000});
-  await expect(svg.locator('[data-bare-name]')).toContainText('Methodist Church');
+  await expect(svg.locator('[data-mark-name]')).toContainText('Methodist Church');
   await expect(svg.locator('[data-bare-scale]')).toContainText(/\d+ (m|km)/);
+  // The tiles were not drawn, so OpenStreetMap is not credited for them.
+  await expect(svg.locator('[data-basemap-credit]')).toHaveCount(0);
+  await expect(svg).not.toContainText('Basemap © OpenStreetMap');
+});
+
+// A FEW MARKS ARE NAMED OVER A BASEMAP TOO (the practitioner, 2026-11-18, of Oswego: "Why doesn't the point have a
+// label - church where supper was held?"). The tiles are answered here with a blank image, so the basemap draws without
+// the network; the bare-map cues are then absent and the name is not.
+test('Oswego over its basemap: the church still named, and no bare-map cues',async({page})=>{
+  const OSWEGO=new URL('../../example-1940-oswego-church-supper/fieldwork-project.json.gz',import.meta.url);
+  test.skip(!existsSync(OSWEGO),'example-1940-oswego-church-supper is not checked out beside this repository.');
+  test.setTimeout(240000);
+  const bundle=readFileSync(OSWEGO);
+  const blank=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/58BAwAI/AL+hc2rNAAAAABJRU5ErkJggg==','base64');
+  await page.route(/tile\.openstreetmap|tile\.opentopomap/,r=>r.fulfill({status:200,contentType:'image/png',body:blank,headers:{'access-control-allow-origin':'*'}}));
+  await page.route(/raw\.githubusercontent\.com\/digital-twin-ph\/example-1940-oswego-church-supper\/[^/]+\/fieldwork-project\.json\.gz/,r=>r.fulfill({status:200,body:bundle}));
+  await page.goto('/');await page.evaluate(()=>localStorage.clear());
+  await page.goto('/?example=blank');
+  await page.locator('[data-view="project"]').click();
+  await page.locator('[data-open-example="urn:fieldwork:example:oswego-1940"]').click();
+  await expect(page.locator('[data-example-status="urn:fieldwork:example:oswego-1940"]')).toContainText('digest matched',{timeout:60000});
+  await run(page,'Where was the church supper?');
+  await page.locator('[data-view="notes"]').click();
+  const svg=page.locator('#notes-view figure[data-figure="map"] svg').first();
+  await expect(svg.locator('[data-mark-name]')).toContainText('Methodist Church',{timeout:30000});
+  await expect(svg.locator('image').first()).toBeAttached();
+  await expect(svg.locator('[data-bare-note]')).toHaveCount(0);
+  await expect(svg.locator('[data-basemap-credit]').first()).toContainText('OpenStreetMap');
 });

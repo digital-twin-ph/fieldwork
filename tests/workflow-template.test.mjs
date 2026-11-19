@@ -131,6 +131,7 @@ test('a template of every example workflow holding a raster can be made and open
       checked++;
     }
   }
-  if(!bundles.length)return;
+  // CI checks out some example repositories and not others: the floor holds only where the population example is here.
+  if(!existsSync(new URL('example-population-models-census/fieldwork-project.json.gz',root)))return;
   assert.ok(checked>=2,`at least the population example's two workflows, found ${checked}`);
 });

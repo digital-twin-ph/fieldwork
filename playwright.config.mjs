@@ -12,7 +12,9 @@ export default defineConfig({
   testDir:'./tests',
   testMatch:'**/*.browser.mjs',
   fullyParallel:false,
-  workers:1,
+  // HOW MANY TEST FILES RUN AT ONCE, measured before it changes (the gating audit, 2026-11-19). One until a measured run
+  // says otherwise: nothing recorded why it was one, and a gate on a 14-core machine spent 38 minutes doing one at a time.
+  workers:Number(process.env.FIELDWORK_WORKERS||1),
   retries:0,
   forbidOnly:true,
   timeout:180_000,

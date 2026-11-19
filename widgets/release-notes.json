@@ -427,12 +427,12 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.36.2",
+   "version": "0.36.3",
    "released": "2026-11-19",
    "changes": [
     {
      "kind": "patch",
-     "description": "The interactive map's key is the figure's: a class drawn only as rings is keyed as a ring, and a ring among filled marks is keyed beside them. It keyed Hagelloch's clusters as two filled squares over a red ring, blue rings and orange discs."
+     "description": "A study area of tens of thousands of vertices is drawn: the static map's frame was measured by spreading every vertex into Math.min, which threw past about 100,000 (DR Congo's 26 provinces, 194,009 vertices, drew a blank map). A map that cannot be drawn now says so where it would be."
     }
    ],
    "breaking": false,

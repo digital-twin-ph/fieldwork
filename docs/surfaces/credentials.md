@@ -45,8 +45,11 @@ On GitHub, signed in as yourself:
 2. At the bottom of the left column, **Developer settings**.
 3. **Personal access tokens**, then **Fine-grained tokens**, then **Generate new token**.
 4. **Token name**: the project and the computer, for example `fieldwork measles-2026 windows`.
-5. **Resource owner**: whoever owns the repository, shown before the slash in its address. For
-   `digital-twin-ph/project-test-collaboration` that is `digital-twin-ph`, not you.
+5. **Resource owner: change it before anything else.** It is the drop-down at the top of the form, above
+   **Expiration**, and it starts as **your own name**. Set it to whoever owns the repository, shown before the slash
+   in its address: for `digital-twin-ph/project-test-collaboration` that is `digital-twin-ph`, not you. **Left as your
+   name, the project's repository never appears in step 7, however you search for it.** The organization is offered
+   only once you are a member of it; if it is missing from the drop-down, ask one of its owners to add you.
 6. **Expiration**: 90 days. GitHub emails you before it ends.
 7. **Repository access**: **Only select repositories**, and choose the project's repository. Only that one.
 8. **Permissions**, **Repository permissions**:
@@ -160,6 +163,8 @@ Before the key expires, make a new one on the same page (Esri lets a key hold tw
 
 ## When something does not work
 
+- **"No repositories found" when choosing the repository on GitHub's token page**: the **Resource owner** at the top of
+  the form is still your own name. Change it to the repository's owner, `digital-twin-ph` for example, and search again.
 - **The repository is not listed in Open shared GitHub project**: check **Repository it is for** is spelled exactly
   as the repository's address, and **Provider identifier** is `github`.
 - **GitHub refuses the token**: it may have expired, or still be waiting for the organization's approval, or have

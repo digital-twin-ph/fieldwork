@@ -11,6 +11,8 @@ shown in a local build is not a claim that it has been published.
   map, because the figure's frame passed every vertex at once to a function that takes about 100,000. A map that cannot
   be drawn now says why where it would be. Map 0.36.3.
 - **CI's template test** asks for the population example's workflows only where that example is checked out.
+- **The Credentials manual says where GitHub's Resource owner is, and what goes wrong without it**: it starts as your
+  own name, and left so, the project's repository never appears when choosing it ("No repositories found").
 - **The Credentials dialog's manual is a button you can't miss**: "Read the manual for Credentials", with a book's
   mark, bold and outlined, where a line of plain text was.
 
